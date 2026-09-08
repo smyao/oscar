@@ -137,13 +137,12 @@ if triton is not None:
     def _prepare_kv_batch(
         KCache8, VCache8, BlockTables, Prefixes, OutStarts,
         FreshK, FreshV, FreshStarts, StageK, StageV, Owner, KOut, VOut,
-        DenseK, DenseV, DenseTags, DenseTagGen, PageGen,
         stride_bt, stride_kb, stride_kp, stride_kh,
         stride_vb, stride_vp, stride_vh,
         BS: tl.constexpr, HK: tl.constexpr, D: tl.constexpr,
         BD: tl.constexpr, HAS_STAGE: tl.constexpr,
         HAS_FRESH_SOURCE: tl.constexpr, STAGE_ROWS: tl.constexpr,
-        HAS_DENSE: tl.constexpr, DENSE_PAGES: tl.constexpr, BT: tl.constexpr,
+        BT: tl.constexpr,
     ):
         request = tl.program_id(0)
         pos = tl.program_id(1) * BT + tl.arange(0, BT)
@@ -163,16 +162,7 @@ if triton is not None:
         vslot = block * stride_vb + offset.to(tl.int64) * stride_vp + head * stride_vh
         dims = tl.arange(0, BD)
         dmask = dims < D
-        dense_hit = historical & False
-        if HAS_DENSE:
-            dense_page = block % DENSE_PAGES
-            tag = tl.load(DenseTags + dense_page, mask=historical, other=-1)
-            tag_gen = tl.load(DenseTagGen + dense_page,
-                              mask=historical, other=-1)
-            generation = tl.load(PageGen + block, mask=historical, other=-2)
-            dense_hit = historical & (tag == block) & (tag_gen == generation)
-            dense_base = ((dense_page * BS + offset) * HK + head) * D
-        cache_history = historical & ~dense_hit
+        cache_history = historical
         mask = cache_history[:, None] & dmask[None, :]
         byte_idx = dims[None, :] // 4
         shift = (dims[None, :] % 4) * 2
@@ -197,13 +187,6 @@ if triton is not None:
         vz = (vzl | (vzh << 8)).to(tl.float16, bitcast=True).to(tl.float32)
         kval = kq * ks[:, None] + kz[:, None]
         vval = vq * vs[:, None] + vz[:, None]
-        if HAS_DENSE:
-            dk = tl.load(DenseK + dense_base[:, None] + dims[None, :],
-                         mask=dense_hit[:, None] & dmask[None, :], other=0.0)
-            dv = tl.load(DenseV + dense_base[:, None] + dims[None, :],
-                         mask=dense_hit[:, None] & dmask[None, :], other=0.0)
-            kval = tl.where(dense_hit[:, None], dk, kval)
-            vval = tl.where(dense_hit[:, None], dv, vval)
         if HAS_STAGE:
             seat = (block % STAGE_ROWS) * BS + offset
             owner = tl.load(Owner + seat, mask=historical, other=-1)
@@ -324,7 +307,6 @@ def prepare_native_kv(
 def prepare_native_kv_batch(
     kc, vc, block_tables, prefixes, k_parts, v_parts, stage=None, *, use_triton=True,
     fresh_source=None, fresh_starts=None, prepared_metadata=None,
-    dense=None,
 ):
     """Prepare a packed TND KV buffer without per-request concat buffers.
 
@@ -377,26 +359,16 @@ def prepare_native_kv_batch(
             fs = fresh_starts
         fresh_tensor = (cached_fresh_tensor if prepared_metadata is not None else
                         torch.as_tensor(fs, dtype=torch.int32, device=device))
-        if dense is None:
-            dense_k, dense_v, dense_tags, dense_tag_gen, page_gen = (
-                k_all, v_all, prefix_tensor, prefix_tensor, prefix_tensor
-            )
-            dense_pages = 1
-        else:
-            dense_k, dense_v, dense_tags, dense_tag_gen, page_gen = dense
-            dense_pages = dense_tags.shape[0]
         bt = 32 if os.environ.get("OSCAR_ASCEND_PREP_BT", "16") == "32" else 16
         _prepare_kv_batch[(count, triton.cdiv(max(lengths), bt), hk)](
             k8, v8, block_tables, prefix_tensor, boundary_tensor,
             fresh_k, fresh_v, fresh_tensor, sk, sv, owner, k_all, v_all,
-            dense_k, dense_v, dense_tags, dense_tag_gen, page_gen,
             block_tables.stride(0),
             k8.stride(0), k8.stride(1), k8.stride(2),
             v8.stride(0), v8.stride(1), v8.stride(2),
             BS=kc.shape[1], HK=hk, D=d, BD=triton.next_power_of_2(d),
             HAS_STAGE=stage is not None, HAS_FRESH_SOURCE=True,
-            STAGE_ROWS=stage_rows, HAS_DENSE=dense is not None,
-            DENSE_PAGES=dense_pages, BT=bt, num_warps=1, num_stages=1,
+            STAGE_ROWS=stage_rows, BT=bt, num_warps=1, num_stages=1,
         )
         return k_all, v_all, kv_ends
     start = 0

@@ -123,7 +123,6 @@ grep '\[oscar-ascend\] PERF' /tmp/oscar_ascend_logs/serve.log
 | `OSCAR_ASCEND_STAGING_TOKENS` | 默认8192；0禁用窗口 |
 | `OSCAR_ASCEND_PREP_BT` | 默认16；可设32进行 grouped prepare 真机A/B |
 | `OSCAR_ASCEND_GQA_TILE` | 默认0=整个GQA组；Hq/Hk=8时可设4测试4×2程序布局 |
-| `OSCAR_ASCEND_DENSE_CACHE_PAGES` | 每FULL层completed-page dense直映缓存页数，默认64；0禁用 |
 | `OSCAR_ASCEND_BATCHED_TOKENS` | packed默认15360，legacy默认16384 |
 
 内存接缝当前要求 PP=1，并拒绝绕过预算的 `num_gpu_blocks_override`。当前路径依赖 eager，尚未支持图捕获、KV传输/换出对插件额外arena的同步；这些不是已验证能力。

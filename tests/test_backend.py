@@ -273,7 +273,7 @@ def test_short_mtp_layout_preserves_request_causality_and_is_cached():
     assert prefixes.tolist() == [8, 8, 17, 17, 17]
 
 
-def test_spec_decode_short_query_bypasses_dense_history(monkeypatch):
+def test_spec_decode_multi_query_uses_grouped_history_once(monkeypatch):
     impl, layer, cache = fixture()
     impl._oscar_use_triton = True
     impl._oscar.window_enabled = False
@@ -283,15 +283,20 @@ def test_spec_decode_short_query_bypasses_dense_history(monkeypatch):
     k = torch.randn(4, 1, 64)
     v = torch.randn(4, 1, 64)
     marker = torch.randn_like(q)
+    calls = []
     monkeypatch.setattr(
         impl, "do_kv_cache_update", lambda *a, **kw: (k.float(), v.float())
     )
-    monkeypatch.setattr(impl, "_short_query_attention", lambda *a, **kw: marker)
+    monkeypatch.setattr(
+        impl, "_short_query_attention",
+        lambda *a, **kw: pytest.fail("MTP expanded into independent decode rows"),
+    )
     monkeypatch.setattr(
         impl, "_prefill_attention",
-        lambda *a, **kw: pytest.fail("dense history reconstructed for short MTP"),
+        lambda *a, **kw: calls.append(kw.get("request_indices")) or marker,
     )
     out = impl.forward(layer, q, k, v, cache, md, output=torch.empty_like(q))
+    assert calls == [None]
     torch.testing.assert_close(out, marker)
 
 
@@ -520,70 +525,40 @@ def test_worker_hooks_budget_then_initialize_and_report(monkeypatch, capsys):
     assert records[0]["shadow_layers"] == [draft_name]
 
 
-def test_forward_routes_mtp_to_paged_without_full_dequant(monkeypatch):
-    from oscar_ascend import backend
-
+def test_forward_routes_only_single_query_requests_to_paged(monkeypatch):
     impl, layer, cache = fixture()
     impl._oscar.use_paged = True
     impl._oscar_use_triton = True
+    q = torch.randn(5, 2, 64)
+    k = torch.randn(5, 1, 64)
+    v = torch.randn(5, 1, 64)
+    md = meta(list(range(5)), [1, 5], [8, 12], bt=[[0, 1, 0], [2, 3, 4]])
+    md.attn_state = "SpecDecoding"
+    marker = torch.randn_like(q)
+    eye = torch.eye(64)
+    layer._oscar_rots = (eye, eye)
+    grouped = []
     monkeypatch.setattr(
-        "oscar_ascend.kernels.store_kernel.oscar_store_triton", oscar_store_ref
+        impl, "do_kv_cache_update", lambda *a, **kw: (k.float(), v.float())
     )
-    calls = []
-
-    def paged(*args):
-        calls.append(args[6:8])
-        return oscar_paged_attention_ref(*args)
-
     monkeypatch.setattr(
-        "oscar_ascend.kernels.paged_attention.oscar_paged_attention_triton", paged
+        impl, "_short_query_attention", lambda *a, **kw: None,
     )
-    with patch.object(
-        backend,
-        "oscar_full_dequant",
-        side_effect=AssertionError("dense history path used"),
-    ):
-        for step, length in enumerate([4, 2]):
-            start = 0 if step == 0 else 4
-            q, k, v = (
-                torch.randn(length, 2, 64),
-                torch.randn(length, 1, 64),
-                torch.randn(length, 1, 64),
-            )
-            md = meta(list(range(start, start + length)), [length], [start + length])
-            md.attn_state = "SpecDecoding"
-            out = impl.forward(
-                layer, q, k, v, cache, md, output=torch.empty(length, 128)
-            )
-            assert torch.isfinite(out).all()
-            if step == 0:
-                expected = torch.nn.functional.scaled_dot_product_attention(
-                    q.transpose(0, 1),
-                    k.transpose(0, 1).repeat_interleave(2, 0),
-                    v.transpose(0, 1).repeat_interleave(2, 0),
-                    is_causal=True,
-                    scale=impl.scale,
-                )
-                torch.testing.assert_close(
-                    out.reshape(length, 2, 64), expected.transpose(0, 1)
-                )
-    assert calls == [([0, 4], [4]), ([0, 2], [6])]
+    monkeypatch.setattr(
+        "oscar_ascend.kernels.paged_attention.oscar_paged_attention_triton",
+        lambda *a, **kw: marker[:1],
+    )
 
-    # A long prefill plus a short MTP query still routes the short request to
-    # paged attention, while preserving each request's independent causal mask.
-    q, k, v = torch.randn(19, 2, 64), torch.randn(19, 1, 64), torch.randn(19, 1, 64)
-    md = meta(list(range(19)), [17, 19], [17, 2], bt=[[0, 1, 2, 3, 4], [4, 5, 0, 0, 0]])
-    md.attn_state = "ChunkedPrefill"
-    out = impl.forward(layer, q, k, v, cache, md, output=torch.empty(19, 128))
-    empty = k[:0]
-    expected = torch.cat(
-        [
-            oscar_prefill_ref(q[:17], k[:17], v[:17], empty, empty, impl.scale, 1, 64),
-            oscar_prefill_ref(q[17:], k[17:], v[17:], empty, empty, impl.scale, 1, 64),
-        ]
-    )
-    torch.testing.assert_close(out.reshape(19, 2, 64), expected)
-    assert calls[-1] == ([0, 2], [2])
+    def grouped_attention(*args, **kwargs):
+        grouped.append(kwargs["request_indices"])
+        result = marker.clone()
+        result[:1].zero_()
+        return result
+
+    monkeypatch.setattr(impl, "_prefill_attention", grouped_attention)
+    out = impl.forward(layer, q, k, v, cache, md, output=torch.empty_like(q))
+    assert grouped == [[1]]
+    torch.testing.assert_close(out, marker)
 
 
 def test_forward_without_attention_state_uses_prefill():

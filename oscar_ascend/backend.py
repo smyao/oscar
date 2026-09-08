@@ -363,7 +363,6 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         D = self.head_size
         Hk = self.num_kv_heads
         self._set_caches(kv_cache)
-        self._ensure_dense_cache(layer, kv_cache)
         k_cache, v_cache = self.key_cache, self.value_cache
         k = key[:N].view(N, Hk, D)
         v = value[:N].view(N, Hk, D)
@@ -397,7 +396,6 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     staging=stage_args,
                     k_clip_ratio=self._oscar.k_clip_ratio,
                     v_clip_ratio=self._oscar.v_clip_ratio,
-                    dense=getattr(layer, "_oscar_dense_cache", None),
                 )
                 layer._oscar_store_staged = stage_args is not None
                 return raw_k, raw_v
@@ -444,29 +442,6 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 f"[oscar-ascend] ★ 几何对账: K 槽 {slot_k}B / V 槽 {slot_v}B → {mode}；"
                 f"槽内落位 K{need_k}B+V{need_v}B 无越界"
             )
-
-    def _ensure_dense_cache(self, layer, kv_cache) -> None:
-        if getattr(layer, "_oscar_dense_ready", False):
-            return
-        pages = self._oscar.dense_cache_pages
-        if pages <= 0:
-            layer._oscar_dense_cache = None
-            layer._oscar_dense_ready = True
-            return
-        blocks, bs = kv_cache[0].shape[:2]
-        dev = kv_cache[0].device
-        dense_k = torch.empty(
-            pages, bs, self.num_kv_heads, self.head_size,
-            dtype=torch.float16, device=dev,
-        )
-        dense_v = torch.empty_like(dense_k)
-        tags = torch.full((pages,), -1, dtype=torch.int64, device=dev)
-        tag_generations = torch.full_like(tags, -1)
-        generations = torch.zeros(blocks, dtype=torch.int64, device=dev)
-        layer._oscar_dense_cache = (
-            dense_k, dense_v, tags, tag_generations, generations
-        )
-        layer._oscar_dense_ready = True
 
     def _layer_rots(self, layer: torch.nn.Module, device: torch.device):
         if not getattr(layer, "_oscar_rots", None):
@@ -526,12 +501,13 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     layer, "_oscar_store_staged", False):
                 self._staging_write(layer, key, value, attn_metadata, rotated=rotated)
 
-        # MTP/speculative verification has only a handful of queries but a
-        # very long prefix. Treat every query as a causal decode row and read
-        # paged INT2 KV in-place; this avoids materializing dense BF16 history.
+        # True decode has one query per request and can read paged INT2 KV
+        # directly.  Multi-token MTP must stay grouped by request below so its
+        # long history is not reread once per speculative query.
         if key is not None and value is not None and self._oscar_use_triton:
             layout = metadata_short_decode_layout(
-                attn_metadata, query.device, attn_metadata.num_actual_tokens
+                attn_metadata, query.device, attn_metadata.num_actual_tokens,
+                max_query_len=1,
             )
             if layout is not None:
                 try:
@@ -575,7 +551,10 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
             qsl, seqs = metadata_batch_lists(attn_metadata)
             actual = attn_metadata.num_actual_tokens
             pairs = [(i, a, min(b, actual), seqs[i]) for i, (a, b) in enumerate(zip(qsl, qsl[1:])) if a < actual]
-            short = [(i, a, b, seq) for i, a, b, seq in pairs if 0 < b - a <= 16]
+            # The paged decode kernel assigns one program to each query row.
+            # Restrict it to true decode (q_len == 1); routing MTP rows here
+            # rereads the same request history once for every speculative token.
+            short = [(i, a, b, seq) for i, a, b, seq in pairs if b - a == 1]
             if short:
                 from .kernels.paged_attention import oscar_paged_attention_triton
                 rk, rv = self._layer_rots(layer, query.device)
@@ -595,7 +574,9 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     self.key_cache, self.value_cache, attn_metadata.block_tables[request_ids],
                     starts, [seq for _, _, _, seq in short], self.scale, stage,
                 ) @ rv.t()
-                large = [i for i, a, b, _ in pairs if b - a > 16]
+                # All multi-token requests use the grouped native path below,
+                # which reconstructs historical KV once per request.
+                large = [i for i, a, b, _ in pairs if b - a > 1]
                 if large:
                     attn_out = self._prefill_attention(
                         query, key, value, kv_cache, attn_metadata, layer,
@@ -791,7 +772,6 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                         fresh_source=(native_k, native_v),
                         fresh_starts=fresh_starts,
                         prepared_metadata=prep_metadata,
-                        dense=getattr(layer, "_oscar_dense_cache", None),
                     )
                 q_all = (q_rotated[first_q:last_q] if contiguous_q else
                          torch.cat(q_parts, dim=0).contiguous())

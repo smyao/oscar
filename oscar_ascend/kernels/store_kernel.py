@@ -193,8 +193,7 @@ if triton is not None:
         q_grp = tl.reshape(q, [BLOCK_D // 4, 4])
         shifts = tl.arange(0, 4) * 2
         packed = tl.sum((q_grp & 0x3) << shifts[None, :], axis=1).to(tl.uint8)
-        dequant = q.to(tl.float32) * scale + zero
-        return packed, scale, zero, dequant
+        return packed, scale, zero
 
     @triton.jit
     def _oscar_store_kernel(
@@ -202,7 +201,6 @@ if triton is not None:
         KCache8_ptr, VCache8_ptr,
         Slot_mapping_ptr,         # [N]
         RawKey_ptr, RawValue_ptr, StageK_ptr, StageV_ptr, StageSeats_ptr,
-        DenseK_ptr, DenseV_ptr, DenseTags_ptr, DenseTagGen_ptr, PageGen_ptr,
         stride_kb, stride_kp, stride_kh,
         stride_vb, stride_vp, stride_vh,
         D: tl.constexpr, H: tl.constexpr, BLOCK_SIZE: tl.constexpr,
@@ -210,7 +208,6 @@ if triton is not None:
         HAS_STAGE: tl.constexpr,
         K_CLIP_INDEX: tl.constexpr, V_CLIP_INDEX: tl.constexpr,
         CLIP_K: tl.constexpr, CLIP_V: tl.constexpr,
-        HAS_DENSE: tl.constexpr, DENSE_PAGES: tl.constexpr,
     ):
         pid = tl.program_id(0)
         token_idx = pid // H
@@ -232,12 +229,12 @@ if triton is not None:
         packed_offs = tl.arange(0, BLOCK_PACK)
         pack_mask = packed_offs < (D // 4)
 
-        k_packed, k_scale, k_zero, k_dequant = _quant_pack_vec(
+        k_packed, k_scale, k_zero = _quant_pack_vec(
             Key_ptr, base, d_offs, d_mask,
             D=D, LEVELS=4, BLOCK_D=BLOCK_D,
             CLIP_INDEX=K_CLIP_INDEX, DO_CLIP=CLIP_K,
         )
-        v_packed, v_scale, v_zero, v_dequant = _quant_pack_vec(
+        v_packed, v_scale, v_zero = _quant_pack_vec(
             Value_ptr, base, d_offs, d_mask,
             D=D, LEVELS=4, BLOCK_D=BLOCK_D,
             CLIP_INDEX=V_CLIP_INDEX, DO_CLIP=CLIP_V,
@@ -276,26 +273,13 @@ if triton is not None:
                      mask=stage_valid & d_mask)
             tl.store(StageV_ptr + stage_base + d_offs, raw_v,
                      mask=stage_valid & d_mask)
-        if HAS_DENSE:
-            dense_page = blk % DENSE_PAGES
-            dense_base = ((dense_page * BLOCK_SIZE + off) * H + head_idx) * D
-            tl.store(DenseK_ptr + dense_base + d_offs, k_dequant,
-                     mask=d_mask)
-            tl.store(DenseV_ptr + dense_base + d_offs, v_dequant,
-                     mask=d_mask)
-            # A complete page is published only by its final token. Kernel
-            # completion is the visibility barrier before prepare can consume it.
-            if off == BLOCK_SIZE - 1 and head_idx == 0:
-                generation = tl.load(PageGen_ptr + blk)
-                tl.store(DenseTags_ptr + dense_page, blk)
-                tl.store(DenseTagGen_ptr + dense_page, generation)
 
 
 def oscar_store_triton(
     k_rot: torch.Tensor, v_rot: torch.Tensor,
     k_cache: torch.Tensor, v_cache: torch.Tensor,
     slot_mapping: torch.Tensor,
-    *, staging=None, k_clip_ratio=0.0, v_clip_ratio=0.0, dense=None,
+    *, staging=None, k_clip_ratio=0.0, v_clip_ratio=0.0,
 ) -> None:
     """Triton INT2 量化打包散写（与 oscar_store_ref 逐字节一致）。"""
     if triton is None:
@@ -319,25 +303,10 @@ def oscar_store_triton(
             raise ValueError("Invalid fused OSCAR staging inputs")
         raw_k = raw_k.reshape(N * H, D).contiguous()
         raw_v = raw_v.reshape(N * H, D).contiguous()
-    if dense is None:
-        dense_k, dense_v, dense_tags, dense_tag_gen, page_gen = (
-            k_flat, v_flat, slot_mapping, slot_mapping, slot_mapping
-        )
-        dense_pages = 1
-    else:
-        dense_k, dense_v, dense_tags, dense_tag_gen, page_gen = dense
-        valid_slots = slot_mapping[slot_mapping >= 0]
-        if valid_slots.numel():
-            blocks = torch.unique(torch.div(valid_slots, bs, rounding_mode="floor"))
-            page_gen[blocks] += 1
-            dense_slots = blocks % dense_tags.shape[0]
-            dense_tags[dense_slots] = -1
-        dense_pages = dense_tags.shape[0]
     _oscar_store_kernel[(N * H,)](
         k_flat, v_flat,
         k8, v8, slot_mapping,
         raw_k, raw_v, stage_k, stage_v, stage_seats,
-        dense_k, dense_v, dense_tags, dense_tag_gen, page_gen,
         k8.stride(0), k8.stride(1), k8.stride(2),
         v8.stride(0), v8.stride(1), v8.stride(2),
         D=D, H=H, BLOCK_SIZE=bs,
@@ -347,6 +316,5 @@ def oscar_store_triton(
         K_CLIP_INDEX=min(int(k_clip_ratio * D), D - 1),
         V_CLIP_INDEX=min(int(v_clip_ratio * D), D - 1),
         CLIP_K=k_clip_ratio > 0.0, CLIP_V=v_clip_ratio > 0.0,
-        HAS_DENSE=dense is not None, DENSE_PAGES=dense_pages,
         num_warps=4, num_stages=1,
     )

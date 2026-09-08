@@ -5,7 +5,7 @@
 面向 Qwen3.5-27B W8A8 + MTP、TP4、eager 执行的插件。通过
 `vllm.general_plugins` 替换 FULL attention impl，并包装 worker 的显存预算与缓存初始化接口；不修改 reference 或安装目录内的 vllm/vllm-ascend 源码。GDN 继续使用原生实现。
 
-**当前版本 0.2.0：默认采用INT2历史反量化 + 原生融合注意力，保留窗口和旋转，已取得MTP实测改善。自写paged与KV准备融合均保留为实验路径，默认关闭。**
+**当前版本 0.2.0：普通 decode 与 q≤8 的 MTP/短查询默认直接读取分页 INT2 KV；长查询采用历史反量化 + 原生融合注意力。窗口和旋转语义保持不变。**
 
 并发短查询默认启用 batched TND FIA：同一层内的多个 decode/MTP/continuation
 请求按累计 KV token 预算分组，组内只调用一次原生融合 attention。默认预算为
@@ -17,6 +17,9 @@ ChunkedPrefill/MTP 的组内历史现在直接反量化到最终 TND KV allocati
 每个请求建立完整 KV、随后再做一次 batch `cat`。组内输出也统一做一次 V 逆旋转。
 同一调度 step 的 staging 窗口筛选、slot 碰撞排序和 owner 规划会缓存在 attention
 metadata 上并由全部 FULL 层复用；各层只写自己的 owner 与旋转后 K/V。
+普通 DecodeOnly 即使携带当前 K/V 也会在写缓存后进入两阶段 INT2 decode；q≤8
+的 MTP verification 会展开为带独立 causal end 的 decode 行，不再生成 BF16 全历史。
+窗口 owner 检查与 staged K/V 选择已融合进 decode stage1，旧 torch windowed 链仅作回退。
 
 真机复测：原生融合读取使重复MTP步骤的execute_model由约4.72秒降至0.556秒（同步诊断口径约8.5倍，非端到端吞吐倍数）。随后KV准备融合在另一次运行中记录约0.599秒，没有证明进一步提速，因此默认恢复独立反量化/窗口拼接；性能实验采用同进程交错A/B比较。
 

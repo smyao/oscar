@@ -196,11 +196,15 @@ def install_diagnostics(runner_class):
         "_staging_write",
         "_prefill_attention",
         "_decode_attention",
+        "_short_query_attention",
     ):
         setattr(cls, name, timed(name.removeprefix("_"), getattr(cls, name)))
     backend.staging_order = timed("staging_sort", backend.staging_order)
     backend.metadata_staging_plan = timed(
         "staging_plan", backend.metadata_staging_plan
+    )
+    backend.metadata_short_decode_layout = timed(
+        "short_decode_layout", backend.metadata_short_decode_layout
     )
     backend.prepare_native_kv = timed("prepare_native_kv", backend.prepare_native_kv)
     backend.prepare_native_kv_batch = timed(

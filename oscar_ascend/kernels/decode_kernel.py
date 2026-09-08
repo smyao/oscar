@@ -151,6 +151,8 @@ if triton is not None:
     def _oscar_decode_stage1(
         Q_rot_ptr,          # [B, Hq, D] fp32
         KCache8_ptr, VCache8_ptr,   # flat uint8
+        StageK_ptr, StageV_ptr, Owner_ptr,
+        FreshK_ptr, FreshV_ptr, FreshStarts_ptr, Prefixes_ptr,
         BlockTable_ptr,     # [B, T] int32
         SeqLens_ptr,        # [B] int32
         Mid_o_ptr,          # [B, Hq, NUM_SPLITS, D+1] fp32
@@ -163,6 +165,8 @@ if triton is not None:
         NUM_KV_SPLITS: tl.constexpr, KV_GROUP_SIZE: tl.constexpr,
         DATA_BYTES: tl.constexpr, ATTN_SCALE: tl.constexpr,
         K_IDX_OFF: tl.constexpr,
+        HAS_STAGE: tl.constexpr, STAGE_ROWS: tl.constexpr,
+        HAS_FRESH: tl.constexpr,
         BLOCK_D: tl.constexpr, BLOCK_KV: tl.constexpr,
     ):
         bid = tl.program_id(0)
@@ -217,6 +221,27 @@ if triton is not None:
             kzr_hi = tl.load(KCache8_ptr + k_meta_base + 3, mask=kv_mask, other=0).to(tl.uint16)
             k_zero = (kzr_lo | (kzr_hi << 8)).to(tl.float16, bitcast=True).to(tl.float32)
             k_deq = q_k * k_scale[:, None] + k_zero[:, None]
+            if HAS_STAGE:
+                seat = (block_nums % STAGE_ROWS) * BLOCK_SIZE + page_off
+                owner = tl.load(Owner_ptr + seat, mask=kv_mask, other=-1)
+                stage_hit = kv_mask & (owner == block_nums)
+                stage_base = (seat * NUM_KV_HEADS + kv_head) * HEAD_DIM
+                staged_k = tl.load(
+                    StageK_ptr + stage_base[:, None] + d_offs[None, :],
+                    mask=stage_hit[:, None] & d_mask[None, :], other=0.0,
+                ).to(tl.float32)
+                k_deq = tl.where(stage_hit[:, None], staged_k, k_deq)
+            if HAS_FRESH:
+                prefix = tl.load(Prefixes_ptr + bid)
+                fresh_start = tl.load(FreshStarts_ptr + bid)
+                fresh_hit = kv_mask & (kv_offs >= prefix)
+                fresh_idx = fresh_start + kv_offs - prefix
+                fresh_base = (fresh_idx * NUM_KV_HEADS + kv_head) * HEAD_DIM
+                fresh_k = tl.load(
+                    FreshK_ptr + fresh_base[:, None] + d_offs[None, :],
+                    mask=fresh_hit[:, None] & d_mask[None, :], other=0.0,
+                ).to(tl.float32)
+                k_deq = tl.where(fresh_hit[:, None], fresh_k, k_deq)
             scores = (
                 tl.sum(tl.where(d_mask[None, :], q_rot[None, :] * k_deq, 0.0), axis=1)
                 * ATTN_SCALE
@@ -239,6 +264,18 @@ if triton is not None:
             vzr_hi = tl.load(KCache8_ptr + k_meta_base + 7, mask=kv_mask, other=0).to(tl.uint16)
             v_zero = (vzr_lo | (vzr_hi << 8)).to(tl.float16, bitcast=True).to(tl.float32)
             values = q_v * v_scale[:, None] + v_zero[:, None]
+            if HAS_STAGE:
+                staged_v = tl.load(
+                    StageV_ptr + stage_base[:, None] + d_offs[None, :],
+                    mask=stage_hit[:, None] & d_mask[None, :], other=0.0,
+                ).to(tl.float32)
+                values = tl.where(stage_hit[:, None], staged_v, values)
+            if HAS_FRESH:
+                fresh_v = tl.load(
+                    FreshV_ptr + fresh_base[:, None] + d_offs[None, :],
+                    mask=fresh_hit[:, None] & d_mask[None, :], other=0.0,
+                ).to(tl.float32)
+                values = tl.where(fresh_hit[:, None], fresh_v, values)
             acc = acc * re_scale + tl.sum(p[:, None] * values, 0)
             l_prev = l_prev * re_scale + tl.sum(p, 0)
             m_prev = n_e_max
@@ -305,21 +342,54 @@ if triton is not None:  # noqa: E305
         hk: int,
         D: int,
         max_num_kv_splits: int = 16,
+        stage=None,
+        fresh=None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """返回 (out_rot [B,Hq,D] fp32, lse [B,Hq] fp32)。"""
         B, Hq = q_rot.shape[0], q_rot.shape[1]
         k8, v8 = k_cache.view(torch.uint8), v_cache.view(torch.uint8)
         bs = k8.shape[1]
         BLOCK_D = triton.next_power_of_2(D)
-        NUM_SPLITS = max(1, max_num_kv_splits)
+        NUM_SPLITS = max(1, min(16, max_num_kv_splits))
         q_rot = q_rot.contiguous().float()
         seq_lens = seq_lens.to(device=q_rot.device, dtype=torch.int32).contiguous()
         block_table = block_table.to(device=q_rot.device).contiguous()
         mid_o = torch.empty(B, Hq, NUM_SPLITS, D + 1, dtype=torch.float32, device=q_rot.device)
+        if stage is None:
+            stage_k, stage_v, owner = q_rot, q_rot, seq_lens
+            stage_rows = 1
+        else:
+            stage_k, stage_v, owner = stage
+            if (stage_k.shape != stage_v.shape or stage_k.ndim != 4
+                    or owner.shape != stage_k.shape[:2]
+                    or stage_k.shape[1] != bs or stage_k.shape[2:] != (hk, D)
+                    or not stage_k.is_contiguous() or not stage_v.is_contiguous()
+                    or not owner.is_contiguous()):
+                raise ValueError("Invalid OSCAR decode staging buffers")
+            stage_rows = stage_k.shape[0]
+        if fresh is None:
+            fresh_k, fresh_v, fresh_starts, prefixes = q_rot, q_rot, seq_lens, seq_lens
+        else:
+            fresh_k, fresh_v, fresh_starts, prefixes = fresh
+            if (fresh_k.shape != fresh_v.shape or fresh_k.ndim != 3
+                    or fresh_k.shape[1:] != (hk, D)
+                    or fresh_starts.shape != seq_lens.shape
+                    or prefixes.shape != seq_lens.shape
+                    or fresh_k.device != q_rot.device or fresh_v.device != q_rot.device):
+                raise ValueError("Invalid OSCAR fresh decode buffers")
+            fresh_k = fresh_k.contiguous().float()
+            fresh_v = fresh_v.contiguous().float()
+            fresh_starts = fresh_starts.to(
+                device=q_rot.device, dtype=torch.int32
+            ).contiguous()
+            prefixes = prefixes.to(
+                device=q_rot.device, dtype=torch.int32
+            ).contiguous()
         grid = (B, Hq, NUM_SPLITS)
         _oscar_decode_stage1[grid](
-            q_rot.contiguous().float(),
-            k8, v8, block_table, seq_lens, mid_o,
+            q_rot, k8, v8, stage_k, stage_v, owner,
+            fresh_k, fresh_v, fresh_starts, prefixes,
+            block_table, seq_lens, mid_o,
             q_rot.stride(0), q_rot.stride(1),
             k8.stride(0), k8.stride(1), k8.stride(2),
             v8.stride(0), v8.stride(1), v8.stride(2),
@@ -329,6 +399,8 @@ if triton is not None:  # noqa: E305
             NUM_KV_SPLITS=NUM_SPLITS, KV_GROUP_SIZE=Hq // hk,
             DATA_BYTES=D // VALUES_PER_BYTE, ATTN_SCALE=scale,
             K_IDX_OFF=K_IDX_OFF,
+            HAS_STAGE=stage is not None, STAGE_ROWS=stage_rows,
+            HAS_FRESH=fresh is not None,
             BLOCK_D=BLOCK_D, BLOCK_KV=4,
             num_warps=1, num_stages=1,
         )

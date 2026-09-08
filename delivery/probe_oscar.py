@@ -171,7 +171,7 @@ def main() -> int:
             return 1
         print(f"✅ [triton] dequant 内核 err = {ed:.3e}（≤{2 * ulp:.3e} = 2×fp16 ulp @amp={amp:.2f}）")
 
-        # ---- triton decode 内核对照（本部署 MTP 下不路由，但保持与 ref 同判据门禁）。
+        # ---- triton decode 内核对照（普通 decode / 短 MTP 生产热路径）。
         from oscar_ascend.kernels.decode_kernel import oscar_decode_triton
 
         out_t, _ = oscar_decode_triton(q, k_cache, v_cache, bt, seq, 0.125, Hk, D)
@@ -180,6 +180,53 @@ def main() -> int:
             print(f"❌ [triton] decode 内核 err = {et:.3e}（判据 ≤1e-4）")
             return 1
         print(f"✅ [triton] decode 内核 err = {et:.3e}（≤1e-4）")
+
+        # ---- staging 融合读取：owner 命中时必须直接使用未量化 K/V。
+        rows = 2
+        sk = torch.zeros(rows, bs, Hk, D, dtype=torch.float32, device=dev)
+        sv = torch.zeros_like(sk)
+        owner = torch.full((rows, bs), -1, dtype=torch.int64, device=dev)
+        sk[0, 0], sv[0, 0], owner[0, 0] = k_rec[0] + 0.25, v_rec[0] - 0.25, 0
+        staged_k, staged_v = k_rec.clone(), v_rec.clone()
+        staged_k[0], staged_v[0] = sk[0, 0], sv[0, 0]
+        staged_scores = torch.einsum(
+            "hd,lhd->hl", q[0], staged_k.repeat_interleave(Hq // Hk, dim=1)
+        ) * 0.125
+        staged_p = torch.softmax(staged_scores, dim=-1)
+        staged_ref = torch.einsum(
+            "hl,lhd->hd", staged_p,
+            staged_v.repeat_interleave(Hq // Hk, dim=1),
+        )
+        staged_out, _ = oscar_decode_triton(
+            q, k_cache, v_cache, bt, seq, 0.125, Hk, D,
+            stage=(sk, sv, owner),
+        )
+        es = (staged_out[0] - staged_ref).abs().max().item()
+        if not math.isfinite(es) or es > 1e-4:
+            print(f"❌ [triton] staging decode err = {es:.3e}（判据 ≤1e-4）")
+            return 1
+        print(f"✅ [triton] staging decode err = {es:.3e}（≤1e-4）")
+
+        # ---- 当前 chunk 必须绕过 INT2，保持 MTP verification 的 fresh-KV 语义。
+        fresh_ends = torch.tensor([N], dtype=torch.int32, device=dev)
+        fresh_starts = torch.zeros(1, dtype=torch.int32, device=dev)
+        fresh_prefixes = torch.zeros(1, dtype=torch.int32, device=dev)
+        fresh_out, _ = oscar_decode_triton(
+            q, k_cache, v_cache, bt, fresh_ends, 0.125, Hk, D,
+            fresh=(k.float(), v.float(), fresh_starts, fresh_prefixes),
+        )
+        fresh_scores = torch.einsum(
+            "hd,lhd->hl", q[0], k.float().repeat_interleave(Hq // Hk, dim=1)
+        ) * 0.125
+        fresh_ref = torch.einsum(
+            "hl,lhd->hd", torch.softmax(fresh_scores, dim=-1),
+            v.float().repeat_interleave(Hq // Hk, dim=1),
+        )
+        ef = (fresh_out[0] - fresh_ref).abs().max().item()
+        if not math.isfinite(ef) or ef > 1e-4:
+            print(f"❌ [triton] fresh-KV decode err = {ef:.3e}（判据 ≤1e-4）")
+            return 1
+        print(f"✅ [triton] fresh-KV decode err = {ef:.3e}（≤1e-4）")
 
     print(f"🎉 probe 全 PASS（mode={args.mode}）—— 允许 serve")
     return 0

@@ -194,6 +194,46 @@ def metadata_staging_plan(attn_metadata, device, n, block_size, stage_rows,
     return result
 
 
+def metadata_short_decode_layout(attn_metadata, device, actual, max_query_len=8):
+    """Return per-query block-table rows and causal ends for short queries."""
+    qsl, seqs = metadata_batch_lists(attn_metadata)
+    qlens = [max(0, min(b, actual) - min(a, actual))
+             for a, b in zip(qsl, qsl[1:])]
+    active = [i for i, length in enumerate(qlens) if length]
+    if (not active or max(qlens) > max_query_len
+            or sum(qlens) != actual):
+        return None
+    bt = attn_metadata.block_tables
+    key = (
+        str(device), actual, max_query_len, tuple(qsl), tuple(seqs),
+        id(bt), getattr(bt, "_version", None),
+    )
+    cached = getattr(attn_metadata, "_oscar_short_decode_layout", None)
+    if cached is not None and cached[0] == key:
+        return cached[1]
+    request_ids, causal_ends, fresh_starts, prefixes = [], [], [], []
+    for i in active:
+        q_len = qlens[i]
+        prefix = max(0, int(seqs[i]) - q_len)
+        request_ids.extend([i] * q_len)
+        causal_ends.extend(prefix + j + 1 for j in range(q_len))
+        fresh_starts.extend([qsl[i]] * q_len)
+        prefixes.extend([prefix] * q_len)
+    request_ids = torch.tensor(request_ids, dtype=torch.int64, device=bt.device)
+    result = (
+        bt.index_select(0, request_ids).contiguous(),
+        torch.tensor(causal_ends, dtype=torch.int32, device=device),
+        max(causal_ends),
+        torch.tensor(fresh_starts, dtype=torch.int32, device=device),
+        torch.tensor(prefixes, dtype=torch.int32, device=device),
+    )
+    try:
+        attn_metadata._oscar_short_decode_layout = (key, result)
+    except Exception:
+        pass
+    return result
+
+
 class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: ignore[misc]
     """OSCAR INT2 FULL 层注意力实现（参考 OSCAR PR oscar_attn.py 的 impl 部分）。"""
 
@@ -380,6 +420,49 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 self._ensure_staging(layer, kv_cache)
                 self._staging_write(layer, key, value, attn_metadata, rotated=rotated)
 
+        # MTP/speculative verification has only a handful of queries but a
+        # very long prefix. Treat every query as a causal decode row and read
+        # paged INT2 KV in-place; this avoids materializing dense BF16 history.
+        if key is not None and value is not None and self._oscar_use_triton:
+            layout = metadata_short_decode_layout(
+                attn_metadata, query.device, attn_metadata.num_actual_tokens
+            )
+            if layout is not None:
+                try:
+                    attn_out = self._short_query_attention(
+                        query[:attn_metadata.num_actual_tokens], layout, layer,
+                        rotated=rotated,
+                    )
+                except Exception as exc:  # pragma: no cover - vendor/runtime fallback
+                    if not getattr(self, "_oscar_warned_short_decode", False):
+                        self._oscar_warned_short_decode = True
+                        print(f"[oscar-ascend] short INT2 decode 失败，回退 dense FIA: {exc}")
+                else:
+                    output[:attn_metadata.num_actual_tokens] = attn_out.reshape(
+                        output[:attn_metadata.num_actual_tokens].shape
+                    ).to(output.dtype)
+                    if attn_metadata.num_actual_tokens < num_tokens:
+                        output[attn_metadata.num_actual_tokens:num_tokens].zero_()
+                    return output
+
+        # DecodeOnly still supplies the current token's K/V in vLLM. It has
+        # already been stored above, so route one-query requests directly to
+        # paged INT2 decode instead of rebuilding dense history for FIA.
+        if state == getattr(AscendAttentionState, "DecodeOnly", None):
+            qsl, _ = metadata_batch_lists(attn_metadata)
+            actual = attn_metadata.num_actual_tokens
+            qlens = [max(0, min(b, actual) - min(a, actual))
+                     for a, b in zip(qsl, qsl[1:])]
+            if (qlens and qlens[:actual] == [1] * actual
+                    and all(length == 0 for length in qlens[actual:])):
+                attn_out = self._decode_attention(
+                    query[:actual], kv_cache, attn_metadata, layer
+                )
+                output[:actual] = attn_out.reshape(output[:actual].shape).to(output.dtype)
+                if actual < num_tokens:
+                    output[actual:num_tokens].zero_()
+                return output
+
         # MTP and mixed batches: retain each request's actual q_len. The fused
         # kernel supports causal multi-query attention, unlike DecodeOnly.
         if self._oscar.use_paged and self._oscar_use_triton and key is not None and value is not None:
@@ -446,7 +529,8 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 f"seq_len={int(attn_metadata.seq_lens.max()) if attn_metadata.seq_lens.numel() else 0}, "
                 f"窗口={'开' if self._oscar.window_enabled and self._oscar_stage_ready else '关(纯INT2)'}"
             )
-        if self._oscar.window_enabled and self._oscar_stage_ready:
+        if (self._oscar.window_enabled and self._oscar_stage_ready
+                and not self._oscar_use_triton):
             return self._decode_attention_windowed(query, kv_cache, attn_metadata, layer)
         q = query.float()
         rk, _ = self._layer_rots(layer, q.device)
@@ -456,10 +540,17 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         if self._oscar_use_triton:
             try:
                 from .kernels.decode_kernel import oscar_decode_triton
-
+                stage = None
+                if self._oscar.window_enabled and self._oscar_stage_ready:
+                    stage = (layer._oscar_stage_k, layer._oscar_stage_v,
+                             layer._oscar_slot_owner)
+                _, seqs = metadata_batch_lists(attn_metadata)
+                longest = max(seqs, default=1)
+                splits = min(16, max(1, 1 << max(0, (longest - 1).bit_length() - 10)))
                 out_rot, _ = oscar_decode_triton(
                     q_rot, self.key_cache, self.value_cache, bt, seq,
                     self.scale, self.num_kv_heads, self.head_size,
+                    max_num_kv_splits=splits, stage=stage,
                 )
             except Exception as e:  # pragma: no cover
                 print(f"[oscar-ascend] triton decode 失败，回退 torch: {e}")
@@ -474,6 +565,31 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
             )
         _, rv = self._layer_rots(layer, q.device)
         return torch.matmul(out_rot, rv.t().contiguous())
+
+    def _short_query_attention(self, query, layout, layer, rotated=None):
+        """Causal q<=8 attention without dense historical KV reconstruction."""
+        from .kernels.decode_kernel import oscar_decode_triton
+
+        bt, seq, longest, fresh_starts, prefixes = layout
+        rk, rv = self._layer_rots(layer, query.device)
+        q_rot = query.float() @ rk
+        # `longest` comes from cached host metadata, so split selection does
+        # not synchronize the NPU seq tensor.
+        splits = min(16, max(1, 1 << max(0, (longest - 1).bit_length() - 10)))
+        stage = None
+        if self._oscar.window_enabled and self._oscar_stage_ready:
+            stage = (layer._oscar_stage_k, layer._oscar_stage_v,
+                     layer._oscar_slot_owner)
+        out_rot, _ = oscar_decode_triton(
+            q_rot, self.key_cache, self.value_cache, bt, seq,
+            self.scale, self.num_kv_heads, self.head_size,
+            max_num_kv_splits=splits, stage=stage,
+            fresh=None if rotated is None else (
+                rotated[0][:query.shape[0]], rotated[1][:query.shape[0]],
+                fresh_starts, prefixes,
+            ),
+        )
+        return (out_rot @ rv.t()).to(query.dtype)
 
     # ------------------------------------------------------------------ prefill
     def _prefill_attention(self, query, key, value, kv_cache, attn_metadata, layer,

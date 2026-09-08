@@ -15,6 +15,7 @@ from oscar_ascend import format as fmt
 from oscar_ascend.backend import AscendOscarAttentionBackendImpl as Impl
 from oscar_ascend.backend import metadata_batch_lists
 from oscar_ascend.backend import metadata_token_positions
+from oscar_ascend.backend import metadata_short_decode_layout
 from oscar_ascend.integration import memory_budget, verify_layers
 from oscar_ascend.kernels.decode_kernel import oscar_full_dequant_ref, oscar_prefill_ref
 from oscar_ascend.kernels.paged_attention import oscar_paged_attention_ref, query_layout
@@ -201,6 +202,70 @@ def test_forward_reuses_rotated_kv_for_store_staging_and_attention(monkeypatch):
     assert seen == [("stage", marker), ("attention", marker)]
 
 
+def test_decodeonly_with_current_kv_routes_to_decode_after_store(monkeypatch):
+    from oscar_ascend import backend
+
+    impl, layer, cache = fixture()
+    impl._oscar.window_enabled = False
+    md = meta([0, 1], [1, 2], [1, 1], bt=[[0], [1]])
+    md.attn_state = backend.AscendAttentionState.DecodeOnly
+    q = torch.randn(2, 2, 64)
+    k = torch.randn(2, 1, 64)
+    v = torch.randn(2, 1, 64)
+    marker = torch.randn_like(q)
+    calls = []
+    monkeypatch.setattr(
+        impl, "do_kv_cache_update",
+        lambda *args, **kwargs: calls.append("store") or (k.float(), v.float()),
+    )
+    monkeypatch.setattr(
+        impl, "_decode_attention",
+        lambda *args, **kwargs: calls.append("decode") or marker,
+    )
+    monkeypatch.setattr(
+        impl, "_prefill_attention",
+        lambda *args, **kwargs: pytest.fail("dense prefill used for DecodeOnly"),
+    )
+    out = impl.forward(layer, q, k, v, cache, md, output=torch.empty_like(q))
+    assert calls == ["store", "decode"]
+    torch.testing.assert_close(out, marker)
+
+
+def test_short_mtp_layout_preserves_request_causality_and_is_cached():
+    md = meta([0] * 5, [2, 5], [10, 20], bt=[[3, 4], [7, 8]])
+    first = metadata_short_decode_layout(md, torch.device("cpu"), 5)
+    second = metadata_short_decode_layout(md, torch.device("cpu"), 5)
+    assert first is second
+    bt, ends, longest, starts, prefixes = first
+    assert bt[:, 0].tolist() == [3, 3, 7, 7, 7]
+    assert ends.tolist() == [9, 10, 18, 19, 20]
+    assert longest == 20
+    assert starts.tolist() == [0, 0, 2, 2, 2]
+    assert prefixes.tolist() == [8, 8, 17, 17, 17]
+
+
+def test_spec_decode_short_query_bypasses_dense_history(monkeypatch):
+    impl, layer, cache = fixture()
+    impl._oscar_use_triton = True
+    impl._oscar.window_enabled = False
+    md = meta([0, 1, 2, 3], [4], [20], bt=[[0, 1, 2, 3, 4]])
+    md.attn_state = "SpecDecoding"
+    q = torch.randn(4, 2, 64)
+    k = torch.randn(4, 1, 64)
+    v = torch.randn(4, 1, 64)
+    marker = torch.randn_like(q)
+    monkeypatch.setattr(
+        impl, "do_kv_cache_update", lambda *a, **kw: (k.float(), v.float())
+    )
+    monkeypatch.setattr(impl, "_short_query_attention", lambda *a, **kw: marker)
+    monkeypatch.setattr(
+        impl, "_prefill_attention",
+        lambda *a, **kw: pytest.fail("dense history reconstructed for short MTP"),
+    )
+    out = impl.forward(layer, q, k, v, cache, md, output=torch.empty_like(q))
+    torch.testing.assert_close(out, marker)
+
+
 def test_decode_failure_falls_back_to_tensor_result():
     impl, layer, cache = fixture()
     impl._oscar.window_enabled = False
@@ -217,6 +282,29 @@ def test_decode_failure_falls_back_to_tensor_result():
     ):
         actual = impl._decode_attention(query, cache, md, layer)
     torch.testing.assert_close(actual, expected)
+
+
+def test_triton_decode_fuses_window_stage_and_adapts_splits(monkeypatch):
+    impl, layer, cache = fixture()
+    impl._ensure_staging(layer, cache)
+    impl._oscar_use_triton = True
+    query = torch.randn(2, 2, 64)
+    md = meta([0, 4], [1, 2], [700, 1300], bt=[[0] * 400, [1] * 400])
+    seen = {}
+
+    def decode(*args, **kwargs):
+        seen.update(kwargs)
+        return torch.zeros_like(query, dtype=torch.float32), torch.zeros(2, 2)
+
+    monkeypatch.setattr(
+        "oscar_ascend.kernels.decode_kernel.oscar_decode_triton", decode,
+        raising=False,
+    )
+    impl._decode_attention(query, cache, md, layer)
+    assert seen["stage"] == (
+        layer._oscar_stage_k, layer._oscar_stage_v, layer._oscar_slot_owner
+    )
+    assert seen["max_num_kv_splits"] == 2
 
 
 def test_failed_surgery_restores_class_and_state():

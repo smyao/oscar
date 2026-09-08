@@ -83,9 +83,9 @@ class OscarAscendConfig:
             recent_tokens=max(0, _env_int("OSCAR_ASCEND_RECENT_TOKENS", 256)),
             staging_tokens=max(0, _env_int("OSCAR_ASCEND_STAGING_TOKENS", 8192)),
             group_size=_env_int("OSCAR_ASCEND_GROUP_SIZE", 0),
-            # 真机 01:18 实测 torch-npu 位运算偏 `>>` 向量广播 bug；Triton-ascend 未上机验证
-            # → 默认 torch 参考路径（全 NPU 算子），显式 OSCAR_ASCEND_USE_TRITON=1 才启用 Triton
-            use_triton=os.environ.get("OSCAR_ASCEND_USE_TRITON", "0") == "1",
+            # 安装流程会先执行两档槽几何的 Triton 数值 probe，失败时显式置 0。
+            # 直接启动也默认使用生产 kernel；可用环境变量一键回退参考路径。
+            use_triton=os.environ.get("OSCAR_ASCEND_USE_TRITON", "1") == "1",
             verbose=os.environ.get("OSCAR_ASCEND_VERBOSE", "1") != "0",
         )
         cfg.window_enabled = cfg.staging_tokens > 0 and (cfg.sink_tokens > 0 or cfg.recent_tokens > 0)

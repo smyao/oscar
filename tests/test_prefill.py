@@ -11,6 +11,7 @@ from oscar_ascend.kernels.prefill import (
     npu_prefill,
     npu_prefill_prepared,
     npu_prefill_prepared_batch,
+    npu_prefill_packed,
 )
 
 
@@ -109,3 +110,22 @@ def test_native_prefill_batch_uses_cumulative_tnd_lengths(monkeypatch):
     out = npu_prefill_prepared_batch(q_parts, k_parts, v_parts, 0.125, 1, 64)
     assert [x.shape[0] for x in out] == [2, 1]
     assert len(seen) == 1
+
+
+def test_native_prefill_packed_preserves_input_allocations(monkeypatch):
+    q = torch.randn(3, 4, 64, dtype=torch.bfloat16)
+    k = torch.randn(13, 1, 64, dtype=torch.bfloat16)
+    v = torch.randn_like(k)
+    seen = []
+
+    def native(**kw):
+        seen.append((kw["query"].data_ptr(), kw["key"].data_ptr(),
+                     kw["value"].data_ptr()))
+        return torch.zeros_like(kw["query"]), None
+
+    monkeypatch.setitem(sys.modules, "torch_npu", SimpleNamespace(
+        npu_fused_infer_attention_score=native
+    ))
+    out = npu_prefill_packed(q, k, v, [2, 3], [5, 13], 0.125, 1, 64)
+    assert out.shape == q.shape
+    assert seen == [(q.data_ptr(), k.data_ptr(), v.data_ptr())]

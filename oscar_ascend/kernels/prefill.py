@@ -75,6 +75,24 @@ def npu_prefill_prepared_batch(q_parts, k_parts, v_parts, scale, hk, d):
     q_all = torch.cat(q_parts, dim=0).contiguous()
     k_all = torch.cat(k_parts, dim=0).contiguous()
     v_all = torch.cat(v_parts, dim=0).contiguous()
+    out_all = npu_prefill_packed(
+        q_all, k_all, v_all, q_ends, kv_ends, scale, hk, d
+    )
+    return list(out_all.split([q.shape[0] for q in q_parts], dim=0))
+
+
+def npu_prefill_packed(q_all, k_all, v_all, q_ends, kv_ends, scale, hk, d):
+    """Consume already packed variable-length TND inputs without another cat."""
+    import torch_npu
+
+    if (not q_ends or len(q_ends) != len(kv_ends)
+            or q_ends[-1] != q_all.shape[0] or kv_ends[-1] != k_all.shape[0]
+            or k_all.shape != v_all.shape):
+        raise ValueError("Invalid packed OSCAR TND boundaries")
+    if q_all.dtype not in (torch.bfloat16, torch.float16):
+        raise ValueError("Native OSCAR prefill requires bf16/fp16 queries")
+    if k_all.dtype != q_all.dtype or v_all.dtype != q_all.dtype:
+        raise ValueError("Packed OSCAR TND inputs must share one dtype")
     out, _ = torch_npu.npu_fused_infer_attention_score(
         query=q_all,
         key=k_all,
@@ -88,9 +106,7 @@ def npu_prefill_prepared_batch(q_parts, k_parts, v_parts, scale, hk, d):
         sparse_mode=3,
         scale=scale,
     )
-    return list(out.view(q_all.shape[0], q_all.shape[1], d).split(
-        [q.shape[0] for q in q_parts], dim=0
-    ))
+    return out.view(q_all.shape[0], q_all.shape[1], d)
 
 
 def oscar_prefill_prepared(q, k_full, v_full, scale, hk, d):

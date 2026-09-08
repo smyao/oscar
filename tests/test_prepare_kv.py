@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from oscar_ascend.kernels.decode_kernel import oscar_full_dequant_ref
-from oscar_ascend.kernels.prepare_kv import prepare_native_kv
+from oscar_ascend.kernels.prepare_kv import prepare_native_kv, prepare_native_kv_batch
 from oscar_ascend.kernels.store_kernel import oscar_store_ref
 
 
@@ -43,3 +43,30 @@ def test_no_prefix_needs_no_kernel_or_extra_buffer():
     actual = prepare_native_kv(None, None, None, 0, k, v)
     assert actual[0].data_ptr() == k.data_ptr()
     assert actual[1].data_ptr() == v.data_ptr()
+
+
+def test_batch_preparation_writes_directly_to_packed_ranges():
+    torch.manual_seed(44)
+    bs, hk, d = 4, 1, 64
+    cache = [torch.zeros(5, bs, hk, d, dtype=torch.int8) for _ in range(2)]
+    tables = torch.tensor([[2, 0, 1], [3, 4, 0]], dtype=torch.int32)
+    prefixes = [5, 3]
+    old = [[torch.randn(p, hk, d) for _ in range(2)] for p in prefixes]
+    for i, prefix in enumerate(prefixes):
+        pos = torch.arange(prefix)
+        blocks = tables[i, pos // bs].long()
+        oscar_store_ref(*old[i], *cache, blocks * bs + pos % bs)
+    fresh_k = [torch.randn(2, hk, d, dtype=torch.bfloat16),
+               torch.randn(1, hk, d, dtype=torch.bfloat16)]
+    fresh_v = [torch.randn_like(x) for x in fresh_k]
+    k_all, v_all, ends = prepare_native_kv_batch(
+        *cache, tables, prefixes, fresh_k, fresh_v, use_triton=False
+    )
+    assert ends == [7, 11]
+    expected = [
+        prepare_native_kv(*cache, tables[i], prefixes[i], fresh_k[i], fresh_v[i],
+                          use_triton=False)
+        for i in range(2)
+    ]
+    torch.testing.assert_close(k_all, torch.cat([x[0] for x in expected]))
+    torch.testing.assert_close(v_all, torch.cat([x[1] for x in expected]))

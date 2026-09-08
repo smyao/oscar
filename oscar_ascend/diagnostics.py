@@ -200,6 +200,9 @@ def install_diagnostics(runner_class):
         setattr(cls, name, timed(name.removeprefix("_"), getattr(cls, name)))
     backend.staging_order = timed("staging_sort", backend.staging_order)
     backend.prepare_native_kv = timed("prepare_native_kv", backend.prepare_native_kv)
+    backend.prepare_native_kv_batch = timed(
+        "prepare_native_kv_batch", backend.prepare_native_kv_batch
+    )
     paged_attention.oscar_paged_attention_triton = timed(
         "paged_attention", paged_attention.oscar_paged_attention_triton
     )
@@ -211,6 +214,9 @@ def install_diagnostics(runner_class):
     )
     backend.npu_prefill_prepared_batch = timed(
         "native_attention_batch", backend.npu_prefill_prepared_batch
+    )
+    backend.npu_prefill_packed = timed(
+        "native_attention_packed", backend.npu_prefill_packed
     )
     original_execute = runner_class.execute_model
     original_sample = runner_class.sample_tokens

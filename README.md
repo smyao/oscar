@@ -13,6 +13,8 @@
 可用 `OSCAR_ASCEND_BATCHED_NATIVE=0` 一键回退逐请求调用，或通过
 `OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS` 调整峰值内存/调用次数折中。当前 token 的
 K/V 旋转结果同时复用于 INT2 store、BF16 staging 和 attention，不再重复旋转。
+ChunkedPrefill/MTP 的组内历史现在直接反量化到最终 TND KV allocation；不再先为
+每个请求建立完整 KV、随后再做一次 batch `cat`。组内输出也统一做一次 V 逆旋转。
 
 真机复测：原生融合读取使重复MTP步骤的execute_model由约4.72秒降至0.556秒（同步诊断口径约8.5倍，非端到端吞吐倍数）。随后KV准备融合在另一次运行中记录约0.599秒，没有证明进一步提速，因此默认恢复独立反量化/窗口拼接；性能实验采用同进程交错A/B比较。
 

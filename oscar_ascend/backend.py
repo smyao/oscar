@@ -18,10 +18,11 @@ from .kernels.dequant_kernel import oscar_full_dequant
 from .kernels.dequant_kernel import triton as _k_triton
 from .kernels.prefill import (
     npu_prefill_prepared_batch,
+    npu_prefill_packed,
     oscar_prefill,
     oscar_prefill_prepared,
 )
-from .kernels.prepare_kv import prepare_native_kv
+from .kernels.prepare_kv import prepare_native_kv, prepare_native_kv_batch
 from .kernels.store_kernel import oscar_store_ref
 from .rotation import get_layer_rotation
 
@@ -439,7 +440,7 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         q_rotated = (_q_rotated if _q_rotated is not None else
                      (query.float() @ rk).to(query.dtype))
         if (query.device.type == "npu" and self._oscar.use_batched_native
-                and not _grouped and len(indices) > 1):
+                and not _grouped and indices):
             groups, group, tokens = [], [], 0
             for i in indices:
                 kv_tokens = max(0, int(seq_lens_list[i]))
@@ -459,6 +460,52 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
             return output
         rotated_k = rotated[0] if rotated is not None else key.float() @ rk
         rotated_v = rotated[1] if rotated is not None else value.float() @ rv
+        if (query.device.type == "npu" and self._oscar.use_batched_native
+                and _grouped and indices):
+            q_parts, k_parts, v_parts, prefixes, q_ends, active = [], [], [], [], [], []
+            # Convert the whole group once. Per-request casts create two tiny
+            # NPU kernels per sequence and are especially visible during MTP.
+            native_k = rotated_k.to(query.dtype)
+            native_v = rotated_v.to(query.dtype)
+            for i in indices:
+                start, end = qsl_list[i], min(qsl_list[i + 1], actual)
+                if end <= start:
+                    continue
+                active.append(i)
+                q_parts.append(q_rotated[start:end])
+                k_parts.append(native_k[start:end])
+                v_parts.append(native_v[start:end])
+                prefixes.append(max(0, int(seq_lens_list[i]) - (end - start)))
+                q_ends.append((q_ends[-1] if q_ends else 0) + end - start)
+            if q_parts:
+                stage = None
+                if self._oscar.window_enabled and self._oscar_stage_ready:
+                    stage = (layer._oscar_stage_k, layer._oscar_stage_v,
+                             layer._oscar_slot_owner)
+                rows = torch.stack([attn_metadata.block_tables[i] for i in active])
+                k_all, v_all, kv_ends = prepare_native_kv_batch(
+                    self.key_cache, self.value_cache, rows, prefixes,
+                    k_parts, v_parts, stage, use_triton=self._oscar_use_triton,
+                )
+                first_q = qsl_list[active[0]]
+                last_q = min(qsl_list[active[-1] + 1], actual)
+                contiguous_q = last_q - first_q == q_ends[-1]
+                q_all = (q_rotated[first_q:last_q] if contiguous_q else
+                         torch.cat(q_parts, dim=0).contiguous())
+                out_all = npu_prefill_packed(
+                    q_all, k_all, v_all, q_ends, kv_ends, self.scale, Hk, D
+                )
+                out_all = (out_all.float() @ rv.t()).to(query.dtype)
+                if contiguous_q:
+                    output[first_q:last_q] = out_all
+                else:
+                    offset = 0
+                    for i, q_part in zip(active, q_parts):
+                        start = qsl_list[i]
+                        length = q_part.shape[0]
+                        output[start:start + length] = out_all[offset:offset + length]
+                        offset += length
+            return output
         prepared = []
         for i in indices:
             q_start, q_end = qsl_list[i], min(qsl_list[i + 1], actual)

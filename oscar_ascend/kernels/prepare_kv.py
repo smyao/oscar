@@ -77,12 +77,27 @@ if triton is not None:
         tl.store(Out + target, values, mask=mask)
 
 
-def prepare_native_kv(kc, vc, bt, prefix, k_new, v_new, stage=None, *, use_triton=True):
+def prepare_native_kv(
+    kc, vc, bt, prefix, k_new, v_new, stage=None, *, use_triton=True, out=None
+):
     """Return contiguous [prefix + new, Hk, D] buffers in new K/V dtype."""
     if prefix < 0 or k_new.shape != v_new.shape or k_new.dtype != v_new.dtype:
         raise ValueError("Invalid native KV preparation inputs")
+    expected_shape = (prefix + k_new.shape[0], *k_new.shape[1:])
+    if out is not None:
+        k_out, v_out = out
+        if (k_out.shape != expected_shape or v_out.shape != expected_shape
+                or k_out.dtype != k_new.dtype or v_out.dtype != k_new.dtype
+                or k_out.device != k_new.device or v_out.device != k_new.device
+                or not k_out.is_contiguous() or not v_out.is_contiguous()):
+            raise ValueError("Invalid native KV output buffers")
     if prefix == 0:
-        return k_new.contiguous(), v_new.contiguous()
+        if out is None:
+            return k_new.contiguous(), v_new.contiguous()
+        k_out, v_out = out
+        k_out.copy_(k_new)
+        v_out.copy_(v_new)
+        return k_out, v_out
     n, hk, d = k_new.shape
     bs = kc.shape[1]
     if not use_triton:
@@ -95,14 +110,23 @@ def prepare_native_kv(kc, vc, bt, prefix, k_new, v_new, stage=None, *, use_trito
             hit = (owner[rows, offsets] == blocks).view(-1, 1, 1)
             k = torch.where(hit, sk[rows, offsets], k)
             v = torch.where(hit, sv[rows, offsets], v)
-        return (
-            torch.cat((k.half().to(k_new.dtype), k_new)),
-            torch.cat((v.half().to(v_new.dtype), v_new)),
-        )
+        if out is None:
+            k_out = torch.empty(prefix + n, hk, d, dtype=k_new.dtype, device=kc.device)
+            v_out = torch.empty_like(k_out)
+        else:
+            k_out, v_out = out
+        k_out[:prefix].copy_(k.half().to(k_new.dtype))
+        v_out[:prefix].copy_(v.half().to(v_new.dtype))
+        k_out[prefix:].copy_(k_new)
+        v_out[prefix:].copy_(v_new)
+        return k_out, v_out
     if triton is None:
         raise RuntimeError("Triton unavailable for fused KV preparation")
-    k_out = torch.empty(prefix + n, hk, d, dtype=k_new.dtype, device=kc.device)
-    v_out = torch.empty_like(k_out)
+    if out is None:
+        k_out = torch.empty(prefix + n, hk, d, dtype=k_new.dtype, device=kc.device)
+        v_out = torch.empty_like(k_out)
+    else:
+        k_out, v_out = out
     k8, v8 = kc.view(torch.uint8), vc.view(torch.uint8)
     sk, sv, owner = (k_out, v_out, bt) if stage is None else stage
     rows = 1 if stage is None else owner.shape[0]
@@ -140,3 +164,54 @@ def prepare_native_kv(kc, vc, bt, prefix, k_new, v_new, stage=None, *, use_trito
     k_out[prefix:].copy_(k_new)
     v_out[prefix:].copy_(v_new)
     return k_out, v_out
+
+
+def prepare_native_kv_batch(
+    kc, vc, block_tables, prefixes, k_parts, v_parts, stage=None, *, use_triton=True
+):
+    """Prepare a packed TND KV buffer without per-request concat buffers.
+
+    Each request owns one contiguous range in the returned tensors. Historical
+    INT2 values are decoded directly into that final range and current K/V are
+    copied only once into its tail. ``kv_ends`` are cumulative TND boundaries.
+    """
+    count = len(prefixes)
+    if not (count and len(k_parts) == count and len(v_parts) == count):
+        raise ValueError("Invalid OSCAR KV batch parts")
+    if block_tables.shape[0] != count:
+        raise ValueError("Block-table rows must match OSCAR KV batch size")
+    first = k_parts[0]
+    if first.ndim != 3:
+        raise ValueError("OSCAR KV parts must have shape [tokens, heads, dim]")
+    hk, d, dtype, device = first.shape[1], first.shape[2], first.dtype, first.device
+    lengths, kv_ends = [], []
+    for prefix, k_new, v_new in zip(prefixes, k_parts, v_parts):
+        prefix = int(prefix)
+        if prefix < 0 or k_new.shape != v_new.shape:
+            raise ValueError("Invalid OSCAR KV batch request")
+        if (k_new.ndim != 3 or k_new.shape[1:] != (hk, d)
+                or k_new.dtype != dtype or k_new.device != device
+                or v_new.dtype != dtype or v_new.device != device):
+            raise ValueError("OSCAR KV batch parts must share shape, dtype and device")
+        length = prefix + k_new.shape[0]
+        lengths.append(length)
+        kv_ends.append((kv_ends[-1] if kv_ends else 0) + length)
+    k_all = torch.empty(kv_ends[-1], hk, d, dtype=dtype, device=device)
+    v_all = torch.empty_like(k_all)
+    start = 0
+    for i, (prefix, k_new, v_new, length) in enumerate(
+        zip(prefixes, k_parts, v_parts, lengths)
+    ):
+        # Slices are contiguous and point into the final FIA input allocation.
+        k_dst = k_all[start:start + length]
+        v_dst = v_all[start:start + length]
+        if prefix:
+            prepare_native_kv(
+                kc, vc, block_tables[i], int(prefix), k_new, v_new, stage,
+                use_triton=use_triton, out=(k_dst, v_dst),
+            )
+        else:
+            k_dst.copy_(k_new)
+            v_dst.copy_(v_new)
+        start += length
+    return k_all, v_all, kv_ends

@@ -140,7 +140,58 @@ def staging_order(seats, capacity):
     # Every integer below 2**24 is exact in fp32. Ascend integer argsort
     # falls back to AiCPU; retain int64 for exceptionally large arenas.
     keys = seats.float() if capacity <= 2**24 else seats
-    return torch.argsort(keys, stable=True)
+    try:
+        return torch.argsort(keys, stable=True)
+    except TypeError:  # torch < 1.8, CPU-only compatibility path
+        order = sorted(range(seats.numel()), key=lambda i: (seats[i].item(), i))
+        return torch.tensor(order, dtype=torch.int64, device=seats.device)
+
+
+def metadata_staging_plan(attn_metadata, device, n, block_size, stage_rows,
+                          sink_tokens, recent_tokens):
+    """Build layer-independent staging indices once per scheduler step.
+
+    FULL layers have different staged values but share slot mapping, token
+    positions and collision winners. Caching this plan avoids repeating the
+    same nonzero/sort/window bookkeeping on every layer.
+    """
+    slot_source = attn_metadata.slot_mapping
+    qsl, seqs = metadata_batch_lists(attn_metadata)
+    key = (
+        str(device), n, block_size, stage_rows, sink_tokens, recent_tokens,
+        id(slot_source), getattr(slot_source, "_version", None),
+        tuple(qsl), tuple(seqs),
+    )
+    cached = getattr(attn_metadata, "_oscar_staging_plan", None)
+    if cached is not None and cached[0] == key:
+        return cached[1]
+    slot = slot_source[:n].to(device=device, dtype=torch.int64)
+    pos, token_seq = metadata_token_positions(attn_metadata, device, n)
+    keep = ((pos >= token_seq - recent_tokens) | (pos < sink_tokens))
+    valid = torch.nonzero(slot >= 0, as_tuple=True)[0]
+    capacity = stage_rows * block_size
+    seats = ((slot[valid] // block_size % stage_rows) * block_size
+             + slot[valid] % block_size)
+    order = staging_order(seats, capacity)
+    sorted_seats = seats[order]
+    last = torch.cat([
+        sorted_seats[1:] != sorted_seats[:-1],
+        torch.ones(min(1, sorted_seats.numel()), device=device, dtype=torch.bool),
+    ])
+    selected = valid[order[last]]
+    seats = sorted_seats[last]
+    rows, offsets = seats // block_size, seats % block_size
+    retained = keep[selected]
+    result = (
+        rows, offsets,
+        torch.where(retained, slot[selected] // block_size, -1),
+        selected[retained], rows[retained], offsets[retained],
+    )
+    try:
+        attn_metadata._oscar_staging_plan = (key, result)
+    except Exception:
+        pass
+    return result
 
 
 class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: ignore[misc]
@@ -614,29 +665,12 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         if N == 0:
             return
         dev = key.device
-        slot = attn_metadata.slot_mapping[:N].to(device=dev, dtype=torch.int64)
-        # Request/token positions are identical for every layer in this step.
-        # Build them once on device and reuse them across all FULL layers.
-        pos, token_seq = metadata_token_positions(attn_metadata, dev, N)
-        keep = ((pos >= token_seq - self._oscar.recent_tokens)
-                | (pos < self.sink_eff))
         bs = self.stage_block
-        valid = torch.nonzero(slot >= 0, as_tuple=True)[0]
-        seats = (slot[valid] // bs % layer._oscar_stage_rows) * bs + slot[valid] % bs
-        # Hash collisions: choose one deterministic writer per seat. Owners and
-        # values must come from the SAME token, including invalidating non-window
-        # writes after a physical block is recycled or a draft token is rejected.
-        order = staging_order(seats, layer._oscar_stage_rows * bs)
-        sorted_seats = seats[order]
-        last = torch.cat([sorted_seats[1:] != sorted_seats[:-1],
-                          torch.ones(min(1, sorted_seats.numel()), device=dev, dtype=torch.bool)])
-        selected = valid[order[last]]
-        seats = sorted_seats[last]
-        rows, offsets = seats // bs, seats % bs
-        owner = torch.where(keep[selected], slot[selected] // bs, -1)
+        rows, offsets, owner, selected, value_rows, value_offsets = metadata_staging_plan(
+            attn_metadata, dev, N, bs, layer._oscar_stage_rows,
+            self.sink_eff, self._oscar.recent_tokens,
+        )
         layer._oscar_slot_owner[rows, offsets] = owner
-        retained = keep[selected]
-        selected, rows, offsets = selected[retained], rows[retained], offsets[retained]
         if selected.numel() == 0:
             return
         rk, rv = self._layer_rots(layer, dev)
@@ -648,8 +682,8 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
             v_rot = value[:N].reshape(N, self.num_kv_heads, self.head_size).float() @ rv
         else:
             k_rot, v_rot = rotated
-        layer._oscar_stage_k[rows, offsets] = k_rot[selected]
-        layer._oscar_stage_v[rows, offsets] = v_rot[selected]
+        layer._oscar_stage_k[value_rows, value_offsets] = k_rot[selected]
+        layer._oscar_stage_v[value_rows, value_offsets] = v_rot[selected]
 
     def _stage_splice(self, layer, bt_row, cached_len, k_cached, v_cached):
         bs = self.stage_block

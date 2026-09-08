@@ -199,6 +199,9 @@ def install_diagnostics(runner_class):
     ):
         setattr(cls, name, timed(name.removeprefix("_"), getattr(cls, name)))
     backend.staging_order = timed("staging_sort", backend.staging_order)
+    backend.metadata_staging_plan = timed(
+        "staging_plan", backend.metadata_staging_plan
+    )
     backend.prepare_native_kv = timed("prepare_native_kv", backend.prepare_native_kv)
     backend.prepare_native_kv_batch = timed(
         "prepare_native_kv_batch", backend.prepare_native_kv_batch

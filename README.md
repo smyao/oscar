@@ -15,6 +15,8 @@
 K/V 旋转结果同时复用于 INT2 store、BF16 staging 和 attention，不再重复旋转。
 ChunkedPrefill/MTP 的组内历史现在直接反量化到最终 TND KV allocation；不再先为
 每个请求建立完整 KV、随后再做一次 batch `cat`。组内输出也统一做一次 V 逆旋转。
+同一调度 step 的 staging 窗口筛选、slot 碰撞排序和 owner 规划会缓存在 attention
+metadata 上并由全部 FULL 层复用；各层只写自己的 owner 与旋转后 K/V。
 
 真机复测：原生融合读取使重复MTP步骤的execute_model由约4.72秒降至0.556秒（同步诊断口径约8.5倍，非端到端吞吐倍数）。随后KV准备融合在另一次运行中记录约0.599秒，没有证明进一步提速，因此默认恢复独立反量化/窗口拼接；性能实验采用同进程交错A/B比较。
 

@@ -106,6 +106,31 @@ def test_staging_collision_owners_match_values_and_padding_is_ignored():
     torch.testing.assert_close(layer._oscar_stage_k[0, 0], k[1])
 
 
+def test_staging_plan_is_reused_across_layers(monkeypatch):
+    from oscar_ascend import backend
+
+    impl, layer1, cache = fixture()
+    layer2 = NS(layer_name="model.layers.1.self_attn.attn")
+    impl._ensure_staging(layer1, cache)
+    impl._ensure_staging(layer2, cache)
+    md = meta([0, 1, 2, 3], [4], [4])
+    k, v = torch.randn(4, 1, 64), torch.randn(4, 1, 64)
+    calls = 0
+    original = backend.staging_order
+
+    def counted(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(backend, "staging_order", counted)
+    impl._staging_write(layer1, k, v, md)
+    impl._staging_write(layer2, k + 1, v + 1, md)
+    assert calls == 1
+    assert layer1._oscar_slot_owner.equal(layer2._oscar_slot_owner)
+    torch.testing.assert_close(layer2._oscar_stage_k[0], layer1._oscar_stage_k[0] + 1)
+
+
 def test_host_metadata_does_not_read_device_query_starts():
     class NoRead:
         def tolist(self):

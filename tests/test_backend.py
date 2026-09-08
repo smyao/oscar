@@ -207,7 +207,7 @@ def test_forward_fused_store_skips_second_staging_scatter(monkeypatch):
     impl._oscar_use_triton = True
     seen = []
 
-    def fused_store(k, v, kc, vc, slots, *, staging=None):
+    def fused_store(k, v, kc, vc, slots, *, staging=None, **_):
         assert staging is not None
         raw_k, raw_v, stage_k, stage_v, seats = staging
         selected = torch.nonzero(seats >= 0, as_tuple=True)[0]
@@ -333,7 +333,7 @@ def test_triton_decode_fuses_window_stage_and_adapts_splits(monkeypatch):
     assert seen["stage"] == (
         layer._oscar_stage_k, layer._oscar_stage_v, layer._oscar_slot_owner
     )
-    assert seen["max_num_kv_splits"] == 2
+    assert seen["max_num_kv_splits"] == 1
 
 
 def test_failed_surgery_restores_class_and_state():

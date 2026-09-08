@@ -51,6 +51,7 @@ class OscarAscendConfig:
     use_fused_prep: bool = False  # enable after native MTP preparation probe
     use_batched_native: bool = True
     native_group_kv_tokens: int = 131072
+    dense_cache_pages: int = 64
     verbose: bool = True
     extra: dict = field(default_factory=dict)
 
@@ -94,6 +95,9 @@ class OscarAscendConfig:
         cfg.use_batched_native = os.environ.get("OSCAR_ASCEND_BATCHED_NATIVE", "1") == "1"
         cfg.native_group_kv_tokens = max(
             1, _env_int("OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS", 131072)
+        )
+        cfg.dense_cache_pages = max(
+            0, _env_int("OSCAR_ASCEND_DENSE_CACHE_PAGES", 64)
         )
         if not all(0 <= r <= 1 for r in (cfg.k_clip_ratio, cfg.v_clip_ratio)):
             raise ValueError("OSCAR clip ratios must be finite and in [0, 1]")

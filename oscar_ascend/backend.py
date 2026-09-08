@@ -239,6 +239,52 @@ def metadata_short_decode_layout(attn_metadata, device, actual, max_query_len=8)
     return result
 
 
+def metadata_native_prepare(attn_metadata, active, prefixes, kv_ends, fresh_starts,
+                            device):
+    """Cache grouped prepare routing tensors once per scheduler step."""
+    key = (str(device), tuple(active), tuple(prefixes), tuple(kv_ends),
+           tuple(fresh_starts), id(attn_metadata.block_tables),
+           getattr(attn_metadata.block_tables, "_version", None))
+    cache = getattr(attn_metadata, "_oscar_native_prepare", None)
+    if cache is not None and cache[0] == key:
+        return cache[1]
+    rows = attn_metadata.block_tables[active].contiguous()
+    starts = [0] + list(kv_ends[:-1])
+    tensors = (
+        torch.tensor(prefixes, dtype=torch.int32, device=device),
+        torch.tensor(starts + [kv_ends[-1]], dtype=torch.int32, device=device),
+        torch.tensor(fresh_starts, dtype=torch.int32, device=device),
+    )
+    result = rows, tensors
+    try:
+        attn_metadata._oscar_native_prepare = (key, result)
+    except Exception:
+        pass
+    return result
+
+
+def metadata_decode_buckets(attn_metadata, device):
+    """Host-metadata length buckets with cached device row indices."""
+    _, seqs = metadata_batch_lists(attn_metadata)
+    key = (str(device), tuple(seqs))
+    cached = getattr(attn_metadata, "_oscar_decode_buckets", None)
+    if cached is not None and cached[0] == key:
+        return cached[1]
+    grouped = {}
+    for row, length in enumerate(seqs):
+        splits = 1 if length <= 2048 else 4 if length <= 8192 else 8 if length <= 32768 else 16
+        grouped.setdefault(splits, []).append(row)
+    result = tuple(
+        (splits, torch.tensor(rows, dtype=torch.int64, device=device))
+        for splits, rows in sorted(grouped.items())
+    )
+    try:
+        attn_metadata._oscar_decode_buckets = (key, result)
+    except Exception:
+        pass
+    return result
+
+
 class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: ignore[misc]
     """OSCAR INT2 FULL 层注意力实现（参考 OSCAR PR oscar_attn.py 的 impl 部分）。"""
 
@@ -317,13 +363,16 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         D = self.head_size
         Hk = self.num_kv_heads
         self._set_caches(kv_cache)
+        self._ensure_dense_cache(layer, kv_cache)
         k_cache, v_cache = self.key_cache, self.value_cache
         k = key[:N].view(N, Hk, D)
         v = value[:N].view(N, Hk, D)
         rk, rv = self._layer_rots(layer, k.device)
         raw_k, raw_v = rotated or (torch.matmul(k.float(), rk), torch.matmul(v.float(), rv))
-        k_rot = self._clip_rotated(raw_k, self._oscar.k_clip_ratio)
-        v_rot = self._clip_rotated(raw_v, self._oscar.v_clip_ratio)
+        # The production Triton store performs clipping and quantization
+        # reductions in its single write kernel.  Keep torch clipping only for
+        # the numerical fallback path.
+        k_rot, v_rot = raw_k, raw_v
         if not getattr(layer, "_oscar_wrote_once", False):
             layer._oscar_wrote_once = True
             # ★ 自证点 3：INT2 写路径真实执行（每层首写一次日志 + 字节统计）
@@ -346,11 +395,16 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 oscar_store_triton(
                     k_rot, v_rot, k_cache, v_cache, slot_mapping,
                     staging=stage_args,
+                    k_clip_ratio=self._oscar.k_clip_ratio,
+                    v_clip_ratio=self._oscar.v_clip_ratio,
+                    dense=getattr(layer, "_oscar_dense_cache", None),
                 )
                 layer._oscar_store_staged = stage_args is not None
                 return raw_k, raw_v
             except Exception as e:  # pragma: no cover — triton 编译/执行失败则回退
                 print(f"[oscar-ascend] triton store 失败，回退 torch 参考路径: {e}")
+        k_rot = self._clip_rotated(raw_k, self._oscar.k_clip_ratio)
+        v_rot = self._clip_rotated(raw_v, self._oscar.v_clip_ratio)
         oscar_store_ref(k_rot, v_rot, k_cache, v_cache, slot_mapping)
         return raw_k, raw_v
 
@@ -390,6 +444,29 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 f"[oscar-ascend] ★ 几何对账: K 槽 {slot_k}B / V 槽 {slot_v}B → {mode}；"
                 f"槽内落位 K{need_k}B+V{need_v}B 无越界"
             )
+
+    def _ensure_dense_cache(self, layer, kv_cache) -> None:
+        if getattr(layer, "_oscar_dense_ready", False):
+            return
+        pages = self._oscar.dense_cache_pages
+        if pages <= 0:
+            layer._oscar_dense_cache = None
+            layer._oscar_dense_ready = True
+            return
+        blocks, bs = kv_cache[0].shape[:2]
+        dev = kv_cache[0].device
+        dense_k = torch.empty(
+            pages, bs, self.num_kv_heads, self.head_size,
+            dtype=torch.float16, device=dev,
+        )
+        dense_v = torch.empty_like(dense_k)
+        tags = torch.full((pages,), -1, dtype=torch.int64, device=dev)
+        tag_generations = torch.full_like(tags, -1)
+        generations = torch.zeros(blocks, dtype=torch.int64, device=dev)
+        layer._oscar_dense_cache = (
+            dense_k, dense_v, tags, tag_generations, generations
+        )
+        layer._oscar_dense_ready = True
 
     def _layer_rots(self, layer: torch.nn.Module, device: torch.device):
         if not getattr(layer, "_oscar_rots", None):
@@ -576,11 +653,25 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 _, seqs = metadata_batch_lists(attn_metadata)
                 longest = max(seqs, default=1)
                 splits = min(16, max(1, 1 << max(0, (longest - 1).bit_length() - 10)))
-                out_rot, _ = oscar_decode_triton(
-                    q_rot, self.key_cache, self.value_cache, bt, seq,
-                    self.scale, self.num_kv_heads, self.head_size,
-                    max_num_kv_splits=splits, stage=stage,
-                )
+                # Requests with very different lengths must not all inherit the
+                # longest request's split/reducer cost.
+                buckets = metadata_decode_buckets(attn_metadata, q.device)
+                if len(buckets) == 1:
+                    out_rot, _ = oscar_decode_triton(
+                        q_rot, self.key_cache, self.value_cache, bt, seq,
+                        self.scale, self.num_kv_heads, self.head_size,
+                        max_num_kv_splits=buckets[0][0], stage=stage,
+                    )
+                else:
+                    out_rot = torch.empty_like(q_rot)
+                    for bucket_splits, rows in buckets:
+                        bucket_out, _ = oscar_decode_triton(
+                            q_rot[rows], self.key_cache, self.value_cache,
+                            bt[rows], seq[rows], self.scale, self.num_kv_heads,
+                            self.head_size, max_num_kv_splits=bucket_splits,
+                            stage=stage,
+                        )
+                        out_rot[rows] = bucket_out
             except Exception as e:  # pragma: no cover
                 print(f"[oscar-ascend] triton decode 失败，回退 torch: {e}")
                 out_rot, _ = oscar_decode_ref(
@@ -688,13 +779,19 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     v_all = native_v[first_q:last_q]
                     kv_ends = list(q_ends)
                 else:
-                    rows = torch.stack([
-                        attn_metadata.block_tables[i] for i in active
-                    ])
+                    fresh_starts = [qsl_list[i] for i in active]
+                    rows, prep_metadata = metadata_native_prepare(
+                        attn_metadata, active, prefixes, kv_ends,
+                        fresh_starts, query.device,
+                    )
                     k_all, v_all, kv_ends = prepare_native_kv_batch(
                         self.key_cache, self.value_cache, rows, prefixes,
                         k_parts, v_parts, stage,
                         use_triton=self._oscar_use_triton,
+                        fresh_source=(native_k, native_v),
+                        fresh_starts=fresh_starts,
+                        prepared_metadata=prep_metadata,
+                        dense=getattr(layer, "_oscar_dense_cache", None),
                     )
                 q_all = (q_rotated[first_q:last_q] if contiguous_q else
                          torch.cat(q_parts, dim=0).contiguous())

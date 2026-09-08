@@ -111,6 +111,13 @@ def install_runner_hooks():
                     fixed += (
                         rows * bs * (2 * impl.num_kv_heads * impl.head_size * 4 + 8)
                     )
+                if c.dense_cache_pages > 0:
+                    fixed += (
+                        c.dense_cache_pages * specs[name].block_size
+                        * impl.num_kv_heads * impl.head_size * 4
+                        + c.dense_cache_pages * 16
+                        + provisional.num_blocks * 8
+                    )
         budget = memory_budget(available, native, shadow, fixed)
         runner._oscar_memory_plan = {
             "available": available,
@@ -152,6 +159,12 @@ def install_runner_hooks():
                             module._oscar_stage_v,
                             module._oscar_slot_owner,
                         )
+                    )
+                impl._ensure_dense_cache(module, cache)
+                if module._oscar_dense_cache is not None:
+                    persistent += sum(
+                        t.numel() * t.element_size()
+                        for t in module._oscar_dense_cache
                     )
                 names.append(name)
                 ids.append(layer_index_from_name(name))

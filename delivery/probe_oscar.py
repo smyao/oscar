@@ -64,13 +64,25 @@ def main() -> int:
 
     # ---- 1) store（ref 或 triton）----
     use_triton = args.mode == "triton"
+    k_ratio, v_ratio = 0.96, 0.92
+    def clipped(x, ratio):
+        idx = min(int(ratio * D), D - 1)
+        threshold = torch.topk(
+            x.float().abs(), max(1, D - idx), dim=-1,
+            largest=True, sorted=True,
+        ).values[..., -1:]
+        return torch.clamp(x.float(), -threshold, threshold)
+    k_expected, v_expected = clipped(k, k_ratio), clipped(v, v_ratio)
     if use_triton:
         from oscar_ascend.kernels.store_kernel import oscar_store_triton
 
-        oscar_store_triton(k, v, k_cache, v_cache, slot_mapping)
+        oscar_store_triton(
+            k, v, k_cache, v_cache, slot_mapping,
+            k_clip_ratio=k_ratio, v_clip_ratio=v_ratio,
+        )
     else:
-        oscar_store_ref(k, v, k_cache, v_cache, slot_mapping)
-    ref_slot = fmt.make_slot_bytes(k.float(), v.float())                    # [N,Hk,160]
+        oscar_store_ref(k_expected, v_expected, k_cache, v_cache, slot_mapping)
+    ref_slot = fmt.make_slot_bytes(k_expected, v_expected)                 # [N,Hk,160]
     k8, v8 = k_cache.view(torch.uint8), v_cache.view(torch.uint8)
     db = D // 4
     got = torch.zeros(N, Hk, 160, dtype=torch.uint8, device=dev)
@@ -94,10 +106,10 @@ def main() -> int:
     bnums = (slot_mapping // bs)
     pos = slot_mapping % bs
     k_rec, v_rec = dequant_split_ref(k8, v8, bnums, pos, Hk, D)   # [N,Hk,D]
-    _, ks, kz = fmt.quantize(k.float())
-    _, vs, vz = fmt.quantize(v.float())
-    qk = torch.clamp(torch.floor((k.float() - kz) / ks + 0.5), 0, 3)
-    qv = torch.clamp(torch.floor((v.float() - vz) / vs + 0.5), 0, 3)
+    _, ks, kz = fmt.quantize(k_expected)
+    _, vs, vz = fmt.quantize(v_expected)
+    qk = torch.clamp(torch.floor((k_expected - kz) / ks + 0.5), 0, 3)
+    qv = torch.clamp(torch.floor((v_expected - vz) / vs + 0.5), 0, 3)
     ek = (k_rec - (qk * ks + kz)).abs().max().item()
     ev = (v_rec - (qv * vs + vz)).abs().max().item()
     if not all(math.isfinite(x) for x in (ek, ev)) or max(ek, ev) > 1e-5:
@@ -124,7 +136,7 @@ def main() -> int:
     # ---- triton ↔ ref 一致性（triton 模式比 ref，ref 模式比 triton）----
     if args.mode == "triton":
         k2, v2 = torch.zeros_like(k_cache), torch.zeros_like(v_cache)
-        oscar_store_ref(k, v, k2, v2, slot_mapping)
+        oscar_store_ref(k_expected, v_expected, k2, v2, slot_mapping)
         equal = torch.equal(k2.view(torch.uint8), k_cache.view(torch.uint8)) and torch.equal(
             v2.view(torch.uint8), v_cache.view(torch.uint8)
         )

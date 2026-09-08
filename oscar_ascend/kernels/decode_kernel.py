@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import math
 import os
+import os
 
 import torch
 import torch.nn.functional as F
@@ -168,9 +169,12 @@ if triton is not None:
         HAS_STAGE: tl.constexpr, STAGE_ROWS: tl.constexpr,
         HAS_FRESH: tl.constexpr,
         BLOCK_D: tl.constexpr, BLOCK_KV: tl.constexpr, BLOCK_G: tl.constexpr,
+        GROUP_TILES: tl.constexpr,
     ):
         bid = tl.program_id(0)
-        kv_head = tl.program_id(1)
+        group_program = tl.program_id(1)
+        kv_head = group_program // GROUP_TILES
+        group_tile = group_program % GROUP_TILES
         sid = tl.program_id(2)
         seq_len = tl.load(SeqLens_ptr + bid)
         split_len = tl.cdiv(seq_len, NUM_KV_SPLITS)
@@ -181,7 +185,7 @@ if triton is not None:
         d_offs = tl.arange(0, BLOCK_D)
         d_mask = d_offs < HEAD_DIM
         kv_range = tl.arange(0, BLOCK_KV)
-        group = tl.arange(0, BLOCK_G)
+        group = group_tile * BLOCK_G + tl.arange(0, BLOCK_G)
         group_mask = group < KV_GROUP_SIZE
         query_heads = kv_head * KV_GROUP_SIZE + group
         byte_idx = d_offs // 4
@@ -409,8 +413,13 @@ if triton is not None:  # noqa: E305
                 device=q_rot.device, dtype=torch.int32
             ).contiguous()
         group_size = Hq // hk
-        block_g = triton.next_power_of_2(group_size)
-        grid = (B, hk, NUM_SPLITS)
+        requested_tile = int(os.environ.get("OSCAR_ASCEND_GQA_TILE", "0") or 0)
+        tile = group_size if requested_tile <= 0 else min(requested_tile, group_size)
+        if group_size % tile:
+            raise ValueError("OSCAR GQA tile must divide the query/KV head ratio")
+        group_tiles = group_size // tile
+        block_g = triton.next_power_of_2(tile)
+        grid = (B, hk * group_tiles, NUM_SPLITS)
         _oscar_decode_stage1[grid](
             q_rot, k8, v8, stage_k, stage_v, owner,
             fresh_k, fresh_v, fresh_starts, prefixes,
@@ -427,6 +436,7 @@ if triton is not None:  # noqa: E305
             HAS_STAGE=stage is not None, STAGE_ROWS=stage_rows,
             HAS_FRESH=fresh is not None,
             BLOCK_D=BLOCK_D, BLOCK_KV=4, BLOCK_G=block_g,
+            GROUP_TILES=group_tiles,
             num_warps=1, num_stages=1,
         )
         if NUM_SPLITS == 1:

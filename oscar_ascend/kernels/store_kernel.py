@@ -157,19 +157,35 @@ def gather_kv_ref(
 # ---------------------------------------------------------------------------
 # Triton 内核（port PR#46774 triton_oscar_store.py，按本插件拆槽偏移；字节=ref）
 #
-# 字节一致性关键：scale/zero 由 torch 侧按契约预计算为**已 fp16 舍入**的精确值
-# （format.vector_scales），内核再做 fp32→fp16 转换（对可精确表示值任意舍入模式
-# 恒等）→ 消除 triton-ascend cast 舍入语义差异（真机 4 字节差根因）。
+# Production path performs clipping, scale/zero reduction, fp16 contract
+# rounding, packing and optional staging in one program.  The wrapper keeps
+# the reference implementation as the fail-safe numerical oracle.
 # ---------------------------------------------------------------------------
 if triton is not None:
 
     @triton.jit
     def _quant_pack_vec(
         Src_ptr, base, d_offs, d_mask,
-        scale, zero,
         D: tl.constexpr, LEVELS: tl.constexpr, BLOCK_D: tl.constexpr,
+        CLIP_INDEX: tl.constexpr, DO_CLIP: tl.constexpr,
     ):
         vec = tl.load(Src_ptr + base + d_offs, mask=d_mask, other=0.0).to(tl.float32)
+        if DO_CLIP:
+            # CLIP_INDEX is the same ascending order statistic as the torch
+            # top-k oracle: tail=D-index, threshold=topk(tail)[-1].
+            ordered = tl.sort(
+                tl.where(d_mask, tl.abs(vec), float("inf")),
+                dim=0, descending=False,
+            )
+            threshold = ordered[CLIP_INDEX]
+            vec = tl.minimum(tl.maximum(vec, -threshold), threshold)
+        vmin = tl.min(tl.where(d_mask, vec, float("inf")), axis=0)
+        vmax = tl.max(tl.where(d_mask, vec, -float("inf")), axis=0)
+        scale = (vmax - vmin) / (LEVELS - 1)
+        scale = tl.maximum(scale, 0.00006103515625)
+        # N-02 mandates fp16 rounding before quantization and metadata store.
+        scale = scale.to(tl.float16).to(tl.float32)
+        zero = vmin.to(tl.float16).to(tl.float32)
         # N-02：q = clamp(floor((x - zero)/scale + 0.5), 0, LEVELS-1)
         q = tl.minimum(
             tl.maximum(((vec - zero) / scale + 0.5).to(tl.int32), 0), LEVELS - 1
@@ -177,20 +193,24 @@ if triton is not None:
         q_grp = tl.reshape(q, [BLOCK_D // 4, 4])
         shifts = tl.arange(0, 4) * 2
         packed = tl.sum((q_grp & 0x3) << shifts[None, :], axis=1).to(tl.uint8)
-        return packed
+        dequant = q.to(tl.float32) * scale + zero
+        return packed, scale, zero, dequant
 
     @triton.jit
     def _oscar_store_kernel(
-        Key_ptr, Value_ptr,       # [NH, D] fp32 已旋转（+裁剪）
-        KScale_ptr, KZero_ptr, VScale_ptr, VZero_ptr,   # [NH] fp32（已 fp16 舍入的精确值）
+        Key_ptr, Value_ptr,       # [NH, D] fp32 已旋转（未裁剪）
         KCache8_ptr, VCache8_ptr,
         Slot_mapping_ptr,         # [N]
         RawKey_ptr, RawValue_ptr, StageK_ptr, StageV_ptr, StageSeats_ptr,
+        DenseK_ptr, DenseV_ptr, DenseTags_ptr, DenseTagGen_ptr, PageGen_ptr,
         stride_kb, stride_kp, stride_kh,
         stride_vb, stride_vp, stride_vh,
         D: tl.constexpr, H: tl.constexpr, BLOCK_SIZE: tl.constexpr,
         BLOCK_D: tl.constexpr, BLOCK_PACK: tl.constexpr, K_IDX_OFF: tl.constexpr,
         HAS_STAGE: tl.constexpr,
+        K_CLIP_INDEX: tl.constexpr, V_CLIP_INDEX: tl.constexpr,
+        CLIP_K: tl.constexpr, CLIP_V: tl.constexpr,
+        HAS_DENSE: tl.constexpr, DENSE_PAGES: tl.constexpr,
     ):
         pid = tl.program_id(0)
         token_idx = pid // H
@@ -198,10 +218,6 @@ if triton is not None:
         slot = tl.load(Slot_mapping_ptr + token_idx)
         if slot < 0:
             return
-        k_scale = tl.load(KScale_ptr + pid)
-        k_zero = tl.load(KZero_ptr + pid)
-        v_scale = tl.load(VScale_ptr + pid)
-        v_zero = tl.load(VZero_ptr + pid)
         blk = (slot // BLOCK_SIZE).to(tl.int64)
         off = (slot % BLOCK_SIZE).to(tl.int64)
         k_slot_base = (
@@ -216,13 +232,15 @@ if triton is not None:
         packed_offs = tl.arange(0, BLOCK_PACK)
         pack_mask = packed_offs < (D // 4)
 
-        k_packed = _quant_pack_vec(
-            Key_ptr, base, d_offs, d_mask, k_scale, k_zero,
+        k_packed, k_scale, k_zero, k_dequant = _quant_pack_vec(
+            Key_ptr, base, d_offs, d_mask,
             D=D, LEVELS=4, BLOCK_D=BLOCK_D,
+            CLIP_INDEX=K_CLIP_INDEX, DO_CLIP=CLIP_K,
         )
-        v_packed = _quant_pack_vec(
-            Value_ptr, base, d_offs, d_mask, v_scale, v_zero,
+        v_packed, v_scale, v_zero, v_dequant = _quant_pack_vec(
+            Value_ptr, base, d_offs, d_mask,
             D=D, LEVELS=4, BLOCK_D=BLOCK_D,
+            CLIP_INDEX=V_CLIP_INDEX, DO_CLIP=CLIP_V,
         )
         # K 槽 meta[0..7]：K scale/zero @0..3，V scale/zero @4..7（拼接后=N-01）
         # 精确 fp16 值 → 任意舍入模式转换恒等
@@ -258,13 +276,26 @@ if triton is not None:
                      mask=stage_valid & d_mask)
             tl.store(StageV_ptr + stage_base + d_offs, raw_v,
                      mask=stage_valid & d_mask)
+        if HAS_DENSE:
+            dense_page = blk % DENSE_PAGES
+            dense_base = ((dense_page * BLOCK_SIZE + off) * H + head_idx) * D
+            tl.store(DenseK_ptr + dense_base + d_offs, k_dequant,
+                     mask=d_mask)
+            tl.store(DenseV_ptr + dense_base + d_offs, v_dequant,
+                     mask=d_mask)
+            # A complete page is published only by its final token. Kernel
+            # completion is the visibility barrier before prepare can consume it.
+            if off == BLOCK_SIZE - 1 and head_idx == 0:
+                generation = tl.load(PageGen_ptr + blk)
+                tl.store(DenseTags_ptr + dense_page, blk)
+                tl.store(DenseTagGen_ptr + dense_page, generation)
 
 
 def oscar_store_triton(
     k_rot: torch.Tensor, v_rot: torch.Tensor,
     k_cache: torch.Tensor, v_cache: torch.Tensor,
     slot_mapping: torch.Tensor,
-    *, staging=None,
+    *, staging=None, k_clip_ratio=0.0, v_clip_ratio=0.0, dense=None,
 ) -> None:
     """Triton INT2 量化打包散写（与 oscar_store_ref 逐字节一致）。"""
     if triton is None:
@@ -277,11 +308,6 @@ def oscar_store_triton(
     BLOCK_PACK = triton.next_power_of_2(D // VALUES_PER_BYTE)
     k_flat = k_rot.reshape(N * H, D).contiguous().float()
     v_flat = v_rot.reshape(N * H, D).contiguous().float()
-    # 预计算已 fp16 舍入的 scale/zero（精确值 → 内核转换为恒等）
-    from ..format import vector_scales
-
-    ks, kz = vector_scales(k_rot.reshape(N, H, D))
-    vs, vz = vector_scales(v_rot.reshape(N, H, D))
     if staging is None:
         raw_k, raw_v, stage_k, stage_v, stage_seats = (
             k_flat, v_flat, k_flat, v_flat, slot_mapping
@@ -293,17 +319,34 @@ def oscar_store_triton(
             raise ValueError("Invalid fused OSCAR staging inputs")
         raw_k = raw_k.reshape(N * H, D).contiguous()
         raw_v = raw_v.reshape(N * H, D).contiguous()
+    if dense is None:
+        dense_k, dense_v, dense_tags, dense_tag_gen, page_gen = (
+            k_flat, v_flat, slot_mapping, slot_mapping, slot_mapping
+        )
+        dense_pages = 1
+    else:
+        dense_k, dense_v, dense_tags, dense_tag_gen, page_gen = dense
+        valid_slots = slot_mapping[slot_mapping >= 0]
+        if valid_slots.numel():
+            blocks = torch.unique(torch.div(valid_slots, bs, rounding_mode="floor"))
+            page_gen[blocks] += 1
+            dense_slots = blocks % dense_tags.shape[0]
+            dense_tags[dense_slots] = -1
+        dense_pages = dense_tags.shape[0]
     _oscar_store_kernel[(N * H,)](
         k_flat, v_flat,
-        ks.reshape(-1).contiguous(), kz.reshape(-1).contiguous(),
-        vs.reshape(-1).contiguous(), vz.reshape(-1).contiguous(),
         k8, v8, slot_mapping,
         raw_k, raw_v, stage_k, stage_v, stage_seats,
+        dense_k, dense_v, dense_tags, dense_tag_gen, page_gen,
         k8.stride(0), k8.stride(1), k8.stride(2),
         v8.stride(0), v8.stride(1), v8.stride(2),
         D=D, H=H, BLOCK_SIZE=bs,
         BLOCK_D=triton.next_power_of_2(D), BLOCK_PACK=BLOCK_PACK,
         K_IDX_OFF=K_IDX_OFF,
         HAS_STAGE=staging is not None,
+        K_CLIP_INDEX=min(int(k_clip_ratio * D), D - 1),
+        V_CLIP_INDEX=min(int(v_clip_ratio * D), D - 1),
+        CLIP_K=k_clip_ratio > 0.0, CLIP_V=v_clip_ratio > 0.0,
+        HAS_DENSE=dense is not None, DENSE_PAGES=dense_pages,
         num_warps=4, num_stages=1,
     )

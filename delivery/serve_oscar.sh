@@ -42,6 +42,10 @@ export OSCAR_ASCEND_STAGING_TOKENS="${OSCAR_ASCEND_STAGING_TOKENS:-8192}"
 # ⚠️ 直接运行本脚本不经过 probe 门禁：若 triton-ascend 编译异常，用
 #    OSCAR_ASCEND_USE_TRITON=0 bash delivery/serve_oscar.sh 回退 torch 参考路径。
 export OSCAR_ASCEND_USE_TRITON="${OSCAR_ASCEND_USE_TRITON:-1}"
+# 将并发请求按累计KV token预算合并为TND FIA，减少逐请求原生算子调用。
+# 131072 tokens 对 Hk=1,D=256,bf16 的K+V输入约128MiB/rank（不含workspace）。
+export OSCAR_ASCEND_BATCHED_NATIVE="${OSCAR_ASCEND_BATCHED_NATIVE:-1}"
+export OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS="${OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS:-131072}"
 
 for rotation_path in "$OSCAR_ASCEND_K_ROTATION_PATH" "$OSCAR_ASCEND_V_ROTATION_PATH"; do
   if [ ! -f "$rotation_path" ]; then

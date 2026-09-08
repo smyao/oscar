@@ -6,7 +6,12 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from oscar_ascend.kernels.prefill import _causal_mask, npu_prefill, npu_prefill_prepared
+from oscar_ascend.kernels.prefill import (
+    _causal_mask,
+    npu_prefill,
+    npu_prefill_prepared,
+    npu_prefill_prepared_batch,
+)
 
 
 @pytest.mark.parametrize("prefix,n", [(0, 17), (65, 1), (2049, 33)])
@@ -79,3 +84,28 @@ def test_native_prefill_does_not_silently_downcast_fp32(monkeypatch):
     x = torch.zeros(1, 1, 64)
     with pytest.raises(ValueError, match="bf16/fp16"):
         npu_prefill(x, x, x, x[:0], x[:0], 0.125, 1, 64)
+
+
+def test_native_prefill_batch_uses_cumulative_tnd_lengths(monkeypatch):
+    q_parts = [torch.randn(2, 4, 64, dtype=torch.bfloat16),
+               torch.randn(1, 4, 64, dtype=torch.bfloat16)]
+    k_parts = [torch.randn(5, 1, 64, dtype=torch.bfloat16),
+               torch.randn(8, 1, 64, dtype=torch.bfloat16)]
+    v_parts = [torch.randn_like(x) for x in k_parts]
+    seen = []
+
+    def native(**kw):
+        seen.append(kw)
+        assert kw["actual_seq_lengths"] == [2, 3]
+        assert kw["actual_seq_lengths_kv"] == [5, 13]
+        # This test checks packing/API boundaries; numerical causality is
+        # covered independently by the single-request contract above.
+        return torch.zeros_like(kw["query"]), None
+
+    monkeypatch.setitem(
+        sys.modules, "torch_npu",
+        SimpleNamespace(npu_fused_infer_attention_score=native),
+    )
+    out = npu_prefill_prepared_batch(q_parts, k_parts, v_parts, 0.125, 1, 64)
+    assert [x.shape[0] for x in out] == [2, 1]
+    assert len(seen) == 1

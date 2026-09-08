@@ -115,6 +115,46 @@ def test_host_metadata_does_not_read_device_query_starts():
     assert metadata_batch_lists(md) == ([0, 1, 2], [9, 12])
 
 
+def test_host_metadata_is_cached_across_layers():
+    class Once:
+        def __init__(self, value):
+            self.value, self.calls = value, 0
+
+        def tolist(self):
+            self.calls += 1
+            if self.calls > 1:
+                raise AssertionError("metadata synchronized more than once")
+            return self.value
+
+    md = meta([0, 1], [1, 2], [9, 12])
+    md.actual_seq_lengths_q = None
+    md.query_start_loc = Once([0, 1, 2])
+    md.seq_lens_list = None
+    md.seq_lens_cpu = Once([9, 12])
+    assert metadata_batch_lists(md) == ([0, 1, 2], [9, 12])
+    assert metadata_batch_lists(md) == ([0, 1, 2], [9, 12])
+
+
+def test_forward_reuses_rotated_kv_for_store_staging_and_attention(monkeypatch):
+    impl, layer, cache = fixture()
+    impl._oscar.use_paged = False
+    impl._oscar_use_triton = False
+    marker = (torch.randn(2, 1, 64), torch.randn(2, 1, 64))
+    seen = []
+    monkeypatch.setattr(impl, "do_kv_cache_update", lambda *a, **k: marker)
+    monkeypatch.setattr(
+        impl, "_staging_write",
+        lambda *a, **k: seen.append(("stage", k.get("rotated"))),
+    )
+    monkeypatch.setattr(
+        impl, "_prefill_attention",
+        lambda *a, **k: seen.append(("attention", k.get("rotated"))) or torch.zeros(2, 2, 64),
+    )
+    q, k, v = torch.randn(2, 2, 64), torch.randn(2, 1, 64), torch.randn(2, 1, 64)
+    impl.forward(layer, q, k, v, cache, meta([0, 1], [2], [2]), output=torch.empty_like(q))
+    assert seen == [("stage", marker), ("attention", marker)]
+
+
 def test_decode_failure_falls_back_to_tensor_result():
     impl, layer, cache = fixture()
     impl._oscar.window_enabled = False

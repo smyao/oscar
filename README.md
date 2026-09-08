@@ -7,6 +7,13 @@
 
 **当前版本 0.2.0：默认采用INT2历史反量化 + 原生融合注意力，保留窗口和旋转，已取得MTP实测改善。自写paged与KV准备融合均保留为实验路径，默认关闭。**
 
+并发短查询默认启用 batched TND FIA：同一层内的多个 decode/MTP/continuation
+请求按累计 KV token 预算分组，组内只调用一次原生融合 attention。默认预算为
+131072 KV tokens（Hk=1、D=256、bf16 的 K+V 约 128MiB/rank，不含 workspace）。
+可用 `OSCAR_ASCEND_BATCHED_NATIVE=0` 一键回退逐请求调用，或通过
+`OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS` 调整峰值内存/调用次数折中。当前 token 的
+K/V 旋转结果同时复用于 INT2 store、BF16 staging 和 attention，不再重复旋转。
+
 真机复测：原生融合读取使重复MTP步骤的execute_model由约4.72秒降至0.556秒（同步诊断口径约8.5倍，非端到端吞吐倍数）。随后KV准备融合在另一次运行中记录约0.599秒，没有证明进一步提速，因此默认恢复独立反量化/窗口拼接；性能实验采用同进程交错A/B比较。
 
 ## 本轮变化

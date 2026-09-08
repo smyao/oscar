@@ -114,6 +114,8 @@ def timed(label, fn):
                 "use_triton": impl._oscar_use_triton,
                 "use_paged": impl._oscar.use_paged,
                 "use_fused_prep": impl._oscar.use_fused_prep,
+                "use_batched_native": impl._oscar.use_batched_native,
+                "native_group_kv_tokens": impl._oscar.native_group_kv_tokens,
                 "cache_shape": list(impl.key_cache.shape)
                 if impl.key_cache is not None
                 else None,
@@ -203,6 +205,12 @@ def install_diagnostics(runner_class):
     )
     prefill.npu_prefill_prepared = timed(
         "native_attention", prefill.npu_prefill_prepared
+    )
+    prefill.npu_prefill_prepared_batch = timed(
+        "native_attention_batch", prefill.npu_prefill_prepared_batch
+    )
+    backend.npu_prefill_prepared_batch = timed(
+        "native_attention_batch", backend.npu_prefill_prepared_batch
     )
     original_execute = runner_class.execute_model
     original_sample = runner_class.sample_tokens

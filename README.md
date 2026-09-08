@@ -20,6 +20,9 @@ metadata 上并由全部 FULL 层复用；各层只写自己的 owner 与旋转�
 普通 DecodeOnly 即使携带当前 K/V 也会在写缓存后进入两阶段 INT2 decode；q≤8
 的 MTP verification 会展开为带独立 causal end 的 decode 行，不再生成 BF16 全历史。
 窗口 owner 检查与 staged K/V 选择已融合进 decode stage1，旧 torch windowed 链仅作回退。
+decode stage1 会先判定 fresh/staging 命中，只对其余历史位置读取 INT2；单 split
+直接复用 stage1 结果，省去归并 kernel。无历史的首次 prefill 直接复用连续 K/V，
+不再为 FIA 重新分配并复制整段 prompt。
 
 真机复测：原生融合读取使重复MTP步骤的execute_model由约4.72秒降至0.556秒（同步诊断口径约8.5倍，非端到端吞吐倍数）。随后KV准备融合在另一次运行中记录约0.599秒，没有证明进一步提速，因此默认恢复独立反量化/窗口拼接；性能实验采用同进程交错A/B比较。
 

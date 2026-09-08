@@ -198,6 +198,22 @@ if triton is not None:
             block_nums = tl.load(
                 BlockTable_ptr + bt_base + page_idx, mask=kv_mask, other=0
             ).to(tl.int64)
+            stage_hit = kv_mask & False
+            if HAS_STAGE:
+                seat = (block_nums % STAGE_ROWS) * BLOCK_SIZE + page_off
+                owner = tl.load(Owner_ptr + seat, mask=kv_mask, other=-1)
+                stage_hit = kv_mask & (owner == block_nums)
+                stage_base = (seat * NUM_KV_HEADS + kv_head) * HEAD_DIM
+            fresh_hit = kv_mask & False
+            if HAS_FRESH:
+                prefix = tl.load(Prefixes_ptr + bid)
+                fresh_start = tl.load(FreshStarts_ptr + bid)
+                fresh_hit = kv_mask & (kv_offs >= prefix)
+                fresh_idx = fresh_start + kv_offs - prefix
+                fresh_base = (fresh_idx * NUM_KV_HEADS + kv_head) * HEAD_DIM
+            # Fresh K/V has highest priority, followed by staging. Do not read
+            # or dequantize INT2 bytes that will immediately be overwritten.
+            cache_mask = kv_mask & ~stage_hit & ~fresh_hit
             k_slot = (
                 block_nums * stride_kb + page_off.to(tl.int64) * stride_kp
                 + tl.cast(kv_head, tl.int64) * stride_kh
@@ -209,34 +225,25 @@ if triton is not None:
             # ---- K: meta[0..7] + idx[32..32+D/4] ----
             k_byte = tl.load(
                 KCache8_ptr + k_slot[:, None] + (K_IDX_OFF + byte_idx[None, :]),
-                mask=kv_mask[:, None] & d_mask[None, :],
+                mask=cache_mask[:, None] & d_mask[None, :],
                 other=0,
             ).to(tl.int32)
             q_k = ((k_byte >> bit_shift[None, :]) & 3).to(tl.float32)
             k_meta_base = k_slot
-            ksc_lo = tl.load(KCache8_ptr + k_meta_base, mask=kv_mask, other=0).to(tl.uint16)
-            ksc_hi = tl.load(KCache8_ptr + k_meta_base + 1, mask=kv_mask, other=0).to(tl.uint16)
+            ksc_lo = tl.load(KCache8_ptr + k_meta_base, mask=cache_mask, other=0).to(tl.uint16)
+            ksc_hi = tl.load(KCache8_ptr + k_meta_base + 1, mask=cache_mask, other=0).to(tl.uint16)
             k_scale = (ksc_lo | (ksc_hi << 8)).to(tl.float16, bitcast=True).to(tl.float32)
-            kzr_lo = tl.load(KCache8_ptr + k_meta_base + 2, mask=kv_mask, other=0).to(tl.uint16)
-            kzr_hi = tl.load(KCache8_ptr + k_meta_base + 3, mask=kv_mask, other=0).to(tl.uint16)
+            kzr_lo = tl.load(KCache8_ptr + k_meta_base + 2, mask=cache_mask, other=0).to(tl.uint16)
+            kzr_hi = tl.load(KCache8_ptr + k_meta_base + 3, mask=cache_mask, other=0).to(tl.uint16)
             k_zero = (kzr_lo | (kzr_hi << 8)).to(tl.float16, bitcast=True).to(tl.float32)
             k_deq = q_k * k_scale[:, None] + k_zero[:, None]
             if HAS_STAGE:
-                seat = (block_nums % STAGE_ROWS) * BLOCK_SIZE + page_off
-                owner = tl.load(Owner_ptr + seat, mask=kv_mask, other=-1)
-                stage_hit = kv_mask & (owner == block_nums)
-                stage_base = (seat * NUM_KV_HEADS + kv_head) * HEAD_DIM
                 staged_k = tl.load(
                     StageK_ptr + stage_base[:, None] + d_offs[None, :],
                     mask=stage_hit[:, None] & d_mask[None, :], other=0.0,
                 ).to(tl.float32)
                 k_deq = tl.where(stage_hit[:, None], staged_k, k_deq)
             if HAS_FRESH:
-                prefix = tl.load(Prefixes_ptr + bid)
-                fresh_start = tl.load(FreshStarts_ptr + bid)
-                fresh_hit = kv_mask & (kv_offs >= prefix)
-                fresh_idx = fresh_start + kv_offs - prefix
-                fresh_base = (fresh_idx * NUM_KV_HEADS + kv_head) * HEAD_DIM
                 fresh_k = tl.load(
                     FreshK_ptr + fresh_base[:, None] + d_offs[None, :],
                     mask=fresh_hit[:, None] & d_mask[None, :], other=0.0,
@@ -253,15 +260,15 @@ if triton is not None:
             # ---- V: idx[0..D/4]（meta 在 K 槽 +4/+6）----
             v_byte = tl.load(
                 VCache8_ptr + v_slot[:, None] + byte_idx[None, :],
-                mask=kv_mask[:, None] & d_mask[None, :],
+                mask=cache_mask[:, None] & d_mask[None, :],
                 other=0,
             ).to(tl.int32)
             q_v = ((v_byte >> bit_shift[None, :]) & 3).to(tl.float32)
-            vsc_lo = tl.load(KCache8_ptr + k_meta_base + 4, mask=kv_mask, other=0).to(tl.uint16)
-            vsc_hi = tl.load(KCache8_ptr + k_meta_base + 5, mask=kv_mask, other=0).to(tl.uint16)
+            vsc_lo = tl.load(KCache8_ptr + k_meta_base + 4, mask=cache_mask, other=0).to(tl.uint16)
+            vsc_hi = tl.load(KCache8_ptr + k_meta_base + 5, mask=cache_mask, other=0).to(tl.uint16)
             v_scale = (vsc_lo | (vsc_hi << 8)).to(tl.float16, bitcast=True).to(tl.float32)
-            vzr_lo = tl.load(KCache8_ptr + k_meta_base + 6, mask=kv_mask, other=0).to(tl.uint16)
-            vzr_hi = tl.load(KCache8_ptr + k_meta_base + 7, mask=kv_mask, other=0).to(tl.uint16)
+            vzr_lo = tl.load(KCache8_ptr + k_meta_base + 6, mask=cache_mask, other=0).to(tl.uint16)
+            vzr_hi = tl.load(KCache8_ptr + k_meta_base + 7, mask=cache_mask, other=0).to(tl.uint16)
             v_zero = (vzr_lo | (vzr_hi << 8)).to(tl.float16, bitcast=True).to(tl.float32)
             values = q_v * v_scale[:, None] + v_zero[:, None]
             if HAS_STAGE:
@@ -404,6 +411,10 @@ if triton is not None:  # noqa: E305
             BLOCK_D=BLOCK_D, BLOCK_KV=4,
             num_warps=1, num_stages=1,
         )
+        if NUM_SPLITS == 1:
+            # stage1 already stores a normalized result and LSE. Returning
+            # views avoids one launch plus a redundant mid_o read/write pass.
+            return mid_o[:, :, 0, :D], mid_o[:, :, 0, D]
         out = torch.empty(B, Hq, D, dtype=torch.float32, device=q_rot.device)
         lse = torch.empty(B, Hq, dtype=torch.float32, device=q_rot.device)
         _oscar_decode_stage2[(B, Hq)](

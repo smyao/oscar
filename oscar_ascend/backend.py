@@ -649,14 +649,24 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 if self._oscar.window_enabled and self._oscar_stage_ready:
                     stage = (layer._oscar_stage_k, layer._oscar_stage_v,
                              layer._oscar_slot_owner)
-                rows = torch.stack([attn_metadata.block_tables[i] for i in active])
-                k_all, v_all, kv_ends = prepare_native_kv_batch(
-                    self.key_cache, self.value_cache, rows, prefixes,
-                    k_parts, v_parts, stage, use_triton=self._oscar_use_triton,
-                )
                 first_q = qsl_list[active[0]]
                 last_q = min(qsl_list[active[-1] + 1], actual)
                 contiguous_q = last_q - first_q == q_ends[-1]
+                if contiguous_q and not any(prefixes):
+                    # First prefill already has packed contiguous current K/V.
+                    # Avoid allocating k_all/v_all and copying the whole prompt.
+                    k_all = native_k[first_q:last_q]
+                    v_all = native_v[first_q:last_q]
+                    kv_ends = list(q_ends)
+                else:
+                    rows = torch.stack([
+                        attn_metadata.block_tables[i] for i in active
+                    ])
+                    k_all, v_all, kv_ends = prepare_native_kv_batch(
+                        self.key_cache, self.value_cache, rows, prefixes,
+                        k_parts, v_parts, stage,
+                        use_triton=self._oscar_use_triton,
+                    )
                 q_all = (q_rotated[first_q:last_q] if contiguous_q else
                          torch.cat(q_parts, dim=0).contiguous())
                 out_all = npu_prefill_packed(

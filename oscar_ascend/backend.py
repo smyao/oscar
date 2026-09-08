@@ -79,6 +79,31 @@ def metadata_batch_lists(attn_metadata) -> tuple[list, list]:
         pass
     return result
 
+
+def metadata_token_positions(attn_metadata, device, n: int):
+    """Cache token positions used identically by every attention layer."""
+    qsl, seqs = metadata_batch_lists(attn_metadata)
+    key = (str(device), n, tuple(qsl), tuple(seqs))
+    cached = getattr(attn_metadata, "_oscar_token_positions", None)
+    if cached is not None and cached[0] == key:
+        return cached[1]
+    lengths = [max(0, min(end, n) - min(start, n))
+               for start, end in zip(qsl, qsl[1:])]
+    req = torch.repeat_interleave(
+        torch.arange(len(lengths), device=device),
+        torch.tensor(lengths, device=device), output_size=n,
+    )
+    seq = torch.tensor(seqs[:len(lengths)], device=device)
+    ends = torch.tensor(qsl[1:], device=device)
+    token_seq = seq[req]
+    pos = token_seq - ends[req] + torch.arange(n, device=device)
+    result = (pos, token_seq)
+    try:
+        attn_metadata._oscar_token_positions = (key, result)
+    except Exception:
+        pass
+    return result
+
 class _CPUAttentionState(Enum):
     """Reference-only states when neither serving package is installed."""
 
@@ -156,15 +181,19 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
             if not self._oscar_warned_quantile:
                 self._oscar_warned_quantile = True
                 print(
-                    "[oscar-ascend] 裁剪实现 = 排序分位数（sort-based，对齐论文内核"
-                    " test_oscar_rotation_clip_int2.py；不依赖 torch.quantile）"
+                    "[oscar-ascend] 裁剪实现 = top-k分位数（阈值语义对齐论文内核；"
+                    "不物化完整排序结果）"
                 )
             try:
                 # 论文内核同款：idx = int(ratio*D)，阈值 = 第 idx 大 |x|（per-vector）
                 D = x_rot.shape[-1]
                 idx = min(int(clip_ratio * D), D - 1)
-                sorted_abs, _ = x_rot.abs().sort(dim=-1)
-                thr = sorted_abs[..., idx : idx + 1]
+                # Only the threshold is needed. For production ratios 0.96/0.92,
+                # topk retains 11/21 values at D=256 instead of materializing a
+                # complete sorted vector for every token and head.
+                tail = max(1, D - idx)
+                thr = torch.topk(x_rot.abs(), tail, dim=-1, largest=True,
+                                 sorted=True).values[..., -1:]
                 x_rot = torch.clamp(x_rot, -thr, thr)
             except Exception as e:  # pragma: no cover
                 print(f"[oscar-ascend] sort 裁剪不可用，跳过: {e}")
@@ -396,14 +425,19 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
 
     # ------------------------------------------------------------------ prefill
     def _prefill_attention(self, query, key, value, kv_cache, attn_metadata, layer,
-                           request_indices=None, rotated=None, _grouped=False) -> torch.Tensor:
+                           request_indices=None, rotated=None, _grouped=False,
+                           _output=None, _q_rotated=None) -> torch.Tensor:
         N, Hq, D = query.shape
         Hk = self.num_kv_heads
         qsl_list, seq_lens_list = metadata_batch_lists(attn_metadata)
-        output = torch.zeros(N, Hq, D, device=query.device, dtype=query.dtype)
+        output = (_output if _output is not None else
+                  torch.zeros(N, Hq, D, device=query.device, dtype=query.dtype))
         actual = min(N, getattr(attn_metadata, "num_actual_tokens", N))
         num_reqs = len(qsl_list) - 1
         indices = list(range(num_reqs) if request_indices is None else request_indices)
+        rk, rv = self._layer_rots(layer, query.device)
+        q_rotated = (_q_rotated if _q_rotated is not None else
+                     (query.float() @ rk).to(query.dtype))
         if (query.device.type == "npu" and self._oscar.use_batched_native
                 and not _grouped and len(indices) > 1):
             groups, group, tokens = [], [], 0
@@ -417,15 +451,12 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
             if group:
                 groups.append(group)
             for group in groups:
-                part = self._prefill_attention(
+                self._prefill_attention(
                     query, key, value, kv_cache, attn_metadata, layer,
                     request_indices=group, rotated=rotated, _grouped=True,
+                    _output=output, _q_rotated=q_rotated,
                 )
-                for i in group:
-                    start, end = qsl_list[i], min(qsl_list[i + 1], actual)
-                    output[start:end] = part[start:end]
             return output
-        rk, rv = self._layer_rots(layer, query.device)
         rotated_k = rotated[0] if rotated is not None else key.float() @ rk
         rotated_v = rotated[1] if rotated is not None else value.float() @ rv
         prepared = []
@@ -440,7 +471,7 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
             v_seq = rotated_v[q_start:q_end].to(query.dtype)
             cached_len = seq_len - q_len
             if cached_len <= 0:
-                q_rot = (q_seq.float() @ rk).to(query.dtype)
+                q_rot = q_rotated[q_start:q_end]
                 if query.device.type == "npu" and self._oscar.use_batched_native:
                     prepared.append((i, q_start, q_end, q_rot, k_seq.contiguous(), v_seq.contiguous()))
                     continue
@@ -459,7 +490,7 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     k_seq, v_seq,
                     stage, use_triton=self._oscar_use_triton,
                 )
-                prepared.append((i, q_start, q_end, (q_seq.float() @ rk).to(query.dtype), k_full, v_full))
+                prepared.append((i, q_start, q_end, q_rotated[q_start:q_end], k_full, v_full))
                 continue
             else:
                 bt_row = attn_metadata.block_tables[i]
@@ -471,7 +502,7 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     k_cached, v_cached = self._stage_splice(
                         layer, bt_row, cached_len, k_cached, v_cached
                     )
-                q_rot = (q_seq.float() @ rk).to(query.dtype)
+                q_rot = q_rotated[q_start:q_end]
                 if query.device.type == "npu" and self._oscar.use_batched_native:
                     prepared.append((
                         i, q_start, q_end, q_rot,
@@ -537,18 +568,11 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
             return
         dev = key.device
         slot = attn_metadata.slot_mapping[:N].to(device=dev, dtype=torch.int64)
-        # Ascend already provides cumulative query ends on the host. Clip out
-        # dummy padding requests before repeat_interleave, whose size is fixed.
-        qsl, seqs = metadata_batch_lists(attn_metadata)
-        lengths = [max(0, min(end, N) - min(start, N)) for start, end in zip(qsl, qsl[1:])]
-        req = torch.repeat_interleave(
-            torch.arange(len(lengths), device=dev),
-            torch.tensor(lengths, device=dev), output_size=N,
-        )
-        seq = torch.tensor(seqs[:len(lengths)], device=dev)
-        ends = torch.tensor(qsl[1:], device=dev)
-        pos = seq[req] - ends[req] + torch.arange(N, device=dev)
-        keep = (pos >= seq[req] - self._oscar.recent_tokens) | (pos < self.sink_eff)
+        # Request/token positions are identical for every layer in this step.
+        # Build them once on device and reuse them across all FULL layers.
+        pos, token_seq = metadata_token_positions(attn_metadata, dev, N)
+        keep = ((pos >= token_seq - self._oscar.recent_tokens)
+                | (pos < self.sink_eff))
         bs = self.stage_block
         valid = torch.nonzero(slot >= 0, as_tuple=True)[0]
         seats = (slot[valid] // bs % layer._oscar_stage_rows) * bs + slot[valid] % bs

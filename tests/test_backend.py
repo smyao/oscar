@@ -14,6 +14,7 @@ from delivery.check_ready import validate
 from oscar_ascend import format as fmt
 from oscar_ascend.backend import AscendOscarAttentionBackendImpl as Impl
 from oscar_ascend.backend import metadata_batch_lists
+from oscar_ascend.backend import metadata_token_positions
 from oscar_ascend.integration import memory_budget, verify_layers
 from oscar_ascend.kernels.decode_kernel import oscar_full_dequant_ref, oscar_prefill_ref
 from oscar_ascend.kernels.paged_attention import oscar_paged_attention_ref, query_layout
@@ -133,6 +134,26 @@ def test_host_metadata_is_cached_across_layers():
     md.seq_lens_cpu = Once([9, 12])
     assert metadata_batch_lists(md) == ([0, 1, 2], [9, 12])
     assert metadata_batch_lists(md) == ([0, 1, 2], [9, 12])
+
+
+def test_token_positions_are_cached_across_layers():
+    md = meta([0, 1, 2], [2, 3], [10, 7])
+    first = metadata_token_positions(md, torch.device("cpu"), 3)
+    second = metadata_token_positions(md, torch.device("cpu"), 3)
+    assert first[0].data_ptr() == second[0].data_ptr()
+    assert first[1].data_ptr() == second[1].data_ptr()
+    assert first[0].tolist() == [8, 9, 6]
+    assert first[1].tolist() == [10, 10, 7]
+
+
+def test_topk_clip_matches_sort_threshold():
+    impl, _, _ = fixture()
+    x = torch.randn(7, 2, 64)
+    ratio = 0.92
+    idx = int(ratio * x.shape[-1])
+    threshold = x.abs().sort(dim=-1).values[..., idx:idx + 1]
+    expected = torch.clamp(x, -threshold, threshold)
+    torch.testing.assert_close(impl._clip_rotated(x, ratio), expected)
 
 
 def test_forward_reuses_rotated_kv_for_store_staging_and_attention(monkeypatch):

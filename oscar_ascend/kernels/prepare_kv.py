@@ -76,6 +76,62 @@ if triton is not None:
         target = (pos[:, None] * HK + head) * D + dims[None, :]
         tl.store(Out + target, values, mask=mask)
 
+    @triton.jit
+    def _prepare_side_batch(
+        Cache8, Meta8, BlockTables, Prefixes, OutStarts,
+        Stage, Owner, Out,
+        stride_bt,
+        stride_cb, stride_cp, stride_ch,
+        stride_mb, stride_mp, stride_mh,
+        BS: tl.constexpr, HK: tl.constexpr, D: tl.constexpr,
+        BD: tl.constexpr, INDEX_OFFSET: tl.constexpr,
+        META_OFFSET: tl.constexpr, HAS_STAGE: tl.constexpr,
+        STAGE_ROWS: tl.constexpr, BT: tl.constexpr,
+    ):
+        request = tl.program_id(0)
+        pos = tl.program_id(1) * BT + tl.arange(0, BT)
+        head = tl.program_id(2)
+        length = tl.load(Prefixes + request)
+        valid = pos < length
+        block = tl.load(
+            BlockTables + request * stride_bt + pos // BS,
+            mask=valid, other=0,
+        ).to(tl.int64)
+        offset = pos % BS
+        slot = block * stride_cb + offset.to(tl.int64) * stride_cp + head * stride_ch
+        meta = (
+            block * stride_mb + offset.to(tl.int64) * stride_mp
+            + head * stride_mh + META_OFFSET
+        )
+        dims = tl.arange(0, BD)
+        mask = valid[:, None] & (dims[None, :] < D)
+        byte = tl.load(
+            Cache8 + slot[:, None] + INDEX_OFFSET + dims[None, :] // 4,
+            mask=mask, other=0,
+        ).to(tl.int32)
+        quant = ((byte >> ((dims[None, :] % 4) * 2)) & 3).to(tl.float32)
+        lo = tl.load(Meta8 + meta, mask=valid, other=0).to(tl.uint16)
+        hi = tl.load(Meta8 + meta + 1, mask=valid, other=0).to(tl.uint16)
+        scale = (lo | (hi << 8)).to(tl.float16, bitcast=True).to(tl.float32)
+        lo = tl.load(Meta8 + meta + 2, mask=valid, other=0).to(tl.uint16)
+        hi = tl.load(Meta8 + meta + 3, mask=valid, other=0).to(tl.uint16)
+        zero = (lo | (hi << 8)).to(tl.float16, bitcast=True).to(tl.float32)
+        values = quant * scale[:, None] + zero[:, None]
+        if HAS_STAGE:
+            seat = (block % STAGE_ROWS) * BS + offset
+            owner = tl.load(Owner + seat, mask=valid, other=-1)
+            hit = valid & (owner == block)
+            stage_offset = (seat * HK + head) * D
+            staged = tl.load(
+                Stage + stage_offset[:, None] + dims[None, :],
+                mask=hit[:, None] & (dims[None, :] < D), other=0.0,
+            )
+            values = tl.where(hit[:, None], staged, values)
+        values = values.to(tl.float16).to(tl.float32)
+        out_start = tl.load(OutStarts + request)
+        target = ((out_start + pos)[:, None] * HK + head) * D + dims[None, :]
+        tl.store(Out + target, values, mask=mask)
+
 
 def prepare_native_kv(
     kc, vc, bt, prefix, k_new, v_new, stage=None, *, use_triton=True, out=None
@@ -198,6 +254,34 @@ def prepare_native_kv_batch(
         kv_ends.append((kv_ends[-1] if kv_ends else 0) + length)
     k_all = torch.empty(kv_ends[-1], hk, d, dtype=dtype, device=device)
     v_all = torch.empty_like(k_all)
+    if use_triton and triton is not None and count > 1 and max(prefixes) > 0:
+        prefix_tensor = torch.tensor(prefixes, dtype=torch.int32, device=device)
+        starts = [0] + kv_ends[:-1]
+        start_tensor = torch.tensor(starts, dtype=torch.int32, device=device)
+        k8, v8 = kc.view(torch.uint8), vc.view(torch.uint8)
+        sk, sv, owner = (k_all, v_all, prefix_tensor) if stage is None else stage
+        stage_rows = 1 if stage is None else owner.shape[0]
+        max_prefix = max(int(x) for x in prefixes)
+        for source, staged, output, index_offset, meta_offset in (
+            (k8, sk, k_all, K_IDX_OFF, 0),
+            (v8, sv, v_all, 0, 4),
+        ):
+            _prepare_side_batch[(count, triton.cdiv(max_prefix, 4), hk)](
+                source, k8, block_tables, prefix_tensor, start_tensor,
+                staged, owner, output,
+                block_tables.stride(0),
+                source.stride(0), source.stride(1), source.stride(2),
+                k8.stride(0), k8.stride(1), k8.stride(2),
+                BS=kc.shape[1], HK=hk, D=d, BD=triton.next_power_of_2(d),
+                INDEX_OFFSET=index_offset, META_OFFSET=meta_offset,
+                HAS_STAGE=stage is not None, STAGE_ROWS=stage_rows, BT=4,
+                num_warps=1, num_stages=1,
+            )
+        for start, prefix, k_new, v_new in zip(starts, prefixes, k_parts, v_parts):
+            tail = start + int(prefix)
+            k_all[tail:tail + k_new.shape[0]].copy_(k_new)
+            v_all[tail:tail + v_new.shape[0]].copy_(v_new)
+        return k_all, v_all, kv_ends
     start = 0
     for i, (prefix, k_new, v_new, length) in enumerate(
         zip(prefixes, k_parts, v_parts, lengths)

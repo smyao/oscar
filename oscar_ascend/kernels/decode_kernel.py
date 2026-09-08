@@ -167,12 +167,11 @@ if triton is not None:
         K_IDX_OFF: tl.constexpr,
         HAS_STAGE: tl.constexpr, STAGE_ROWS: tl.constexpr,
         HAS_FRESH: tl.constexpr,
-        BLOCK_D: tl.constexpr, BLOCK_KV: tl.constexpr,
+        BLOCK_D: tl.constexpr, BLOCK_KV: tl.constexpr, BLOCK_G: tl.constexpr,
     ):
         bid = tl.program_id(0)
-        hid = tl.program_id(1)
+        kv_head = tl.program_id(1)
         sid = tl.program_id(2)
-        kv_head = hid // KV_GROUP_SIZE
         seq_len = tl.load(SeqLens_ptr + bid)
         split_len = tl.cdiv(seq_len, NUM_KV_SPLITS)
         split_start = split_len * sid
@@ -182,13 +181,19 @@ if triton is not None:
         d_offs = tl.arange(0, BLOCK_D)
         d_mask = d_offs < HEAD_DIM
         kv_range = tl.arange(0, BLOCK_KV)
+        group = tl.arange(0, BLOCK_G)
+        group_mask = group < KV_GROUP_SIZE
+        query_heads = kv_head * KV_GROUP_SIZE + group
         byte_idx = d_offs // 4
         bit_shift = (d_offs % 4) * 2
-        q_base = bid * stride_qb + hid * stride_qh
-        q_rot = tl.load(Q_rot_ptr + q_base + d_offs, mask=d_mask, other=0.0).to(tl.float32)
-        m_prev = -float("inf")
-        l_prev = 0.0
-        acc = tl.zeros([BLOCK_D], dtype=tl.float32)
+        q_base = bid * stride_qb + query_heads[:, None] * stride_qh
+        q_rot = tl.load(
+            Q_rot_ptr + q_base + d_offs[None, :],
+            mask=group_mask[:, None] & d_mask[None, :], other=0.0,
+        ).to(tl.float32)
+        m_prev = tl.full([BLOCK_G], -float("inf"), tl.float32)
+        l_prev = tl.zeros([BLOCK_G], tl.float32)
+        acc = tl.zeros([BLOCK_G, BLOCK_D], dtype=tl.float32)
         bt_base = bid * stride_bt_b
         for start_n in range(split_start, split_end, BLOCK_KV):
             kv_offs = start_n + kv_range
@@ -249,14 +254,14 @@ if triton is not None:
                     mask=fresh_hit[:, None] & d_mask[None, :], other=0.0,
                 ).to(tl.float32)
                 k_deq = tl.where(fresh_hit[:, None], fresh_k, k_deq)
-            scores = (
-                tl.sum(tl.where(d_mask[None, :], q_rot[None, :] * k_deq, 0.0), axis=1)
-                * ATTN_SCALE
-            )
-            scores = tl.where(kv_mask, scores, -float("inf"))
-            n_e_max = tl.maximum(tl.max(scores, 0), m_prev)
+            scores = tl.sum(
+                q_rot[:, None, :] * k_deq[None, :, :], axis=2
+            ) * ATTN_SCALE
+            score_mask = group_mask[:, None] & kv_mask[None, :]
+            scores = tl.where(score_mask, scores, -float("inf"))
+            n_e_max = tl.maximum(tl.max(scores, axis=1), m_prev)
             re_scale = tl.exp(m_prev - n_e_max)
-            p = tl.exp(scores - n_e_max)
+            p = tl.exp(scores - n_e_max[:, None])
             # ---- V: idx[0..D/4]（meta 在 K 槽 +4/+6）----
             v_byte = tl.load(
                 VCache8_ptr + v_slot[:, None] + byte_idx[None, :],
@@ -283,13 +288,24 @@ if triton is not None:
                     mask=fresh_hit[:, None] & d_mask[None, :], other=0.0,
                 ).to(tl.float32)
                 values = tl.where(fresh_hit[:, None], fresh_v, values)
-            acc = acc * re_scale + tl.sum(p[:, None] * values, 0)
-            l_prev = l_prev * re_scale + tl.sum(p, 0)
+            acc = acc * re_scale[:, None] + tl.sum(
+                p[:, :, None] * values[None, :, :], axis=1
+            )
+            l_prev = l_prev * re_scale + tl.sum(p, axis=1)
             m_prev = n_e_max
-        out_base = bid * stride_mid_b + hid * stride_mid_h + sid * stride_mid_s
+        out_base = (bid * stride_mid_b + query_heads[:, None] * stride_mid_h
+                    + sid * stride_mid_s)
         safe_l = tl.where(l_prev > 0.0, l_prev, 1.0)
-        tl.store(Mid_o_ptr + out_base + d_offs, acc / safe_l, mask=d_mask)
-        tl.store(Mid_o_ptr + out_base + HEAD_DIM, m_prev + tl.log(safe_l))
+        tl.store(
+            Mid_o_ptr + out_base + d_offs[None, :],
+            acc / safe_l[:, None],
+            mask=group_mask[:, None] & d_mask[None, :],
+        )
+        lse_base = (bid * stride_mid_b + query_heads * stride_mid_h
+                    + sid * stride_mid_s + HEAD_DIM)
+        tl.store(
+            Mid_o_ptr + lse_base, m_prev + tl.log(safe_l), mask=group_mask
+        )
 
     @triton.jit
     def _oscar_decode_stage2(
@@ -392,7 +408,9 @@ if triton is not None:  # noqa: E305
             prefixes = prefixes.to(
                 device=q_rot.device, dtype=torch.int32
             ).contiguous()
-        grid = (B, Hq, NUM_SPLITS)
+        group_size = Hq // hk
+        block_g = triton.next_power_of_2(group_size)
+        grid = (B, hk, NUM_SPLITS)
         _oscar_decode_stage1[grid](
             q_rot, k8, v8, stage_k, stage_v, owner,
             fresh_k, fresh_v, fresh_starts, prefixes,
@@ -403,12 +421,12 @@ if triton is not None:  # noqa: E305
             block_table.stride(0),
             mid_o.stride(0), mid_o.stride(1), mid_o.stride(2),
             NUM_KV_HEADS=hk, HEAD_DIM=D, BLOCK_SIZE=bs,
-            NUM_KV_SPLITS=NUM_SPLITS, KV_GROUP_SIZE=Hq // hk,
+            NUM_KV_SPLITS=NUM_SPLITS, KV_GROUP_SIZE=group_size,
             DATA_BYTES=D // VALUES_PER_BYTE, ATTN_SCALE=scale,
             K_IDX_OFF=K_IDX_OFF,
             HAS_STAGE=stage is not None, STAGE_ROWS=stage_rows,
             HAS_FRESH=fresh is not None,
-            BLOCK_D=BLOCK_D, BLOCK_KV=4,
+            BLOCK_D=BLOCK_D, BLOCK_KV=4, BLOCK_G=block_g,
             num_warps=1, num_stages=1,
         )
         if NUM_SPLITS == 1:

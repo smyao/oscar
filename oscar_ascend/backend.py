@@ -182,10 +182,15 @@ def metadata_staging_plan(attn_metadata, device, n, block_size, stage_rows,
     seats = sorted_seats[last]
     rows, offsets = seats // block_size, seats % block_size
     retained = keep[selected]
+    # Dense token -> staging-seat routing is shared by every FULL layer in the
+    # scheduler step.  Building it here once lets the INT2 store kernel write
+    # the retained fp32 value without a second gather/scatter kernel per layer.
+    stage_seats = torch.full((n,), -1, dtype=torch.int64, device=device)
+    stage_seats[selected[retained]] = seats[retained]
     result = (
         rows, offsets,
         torch.where(retained, slot[selected] // block_size, -1),
-        selected[retained], rows[retained], offsets[retained],
+        selected[retained], rows[retained], offsets[retained], stage_seats,
     )
     try:
         attn_metadata._oscar_staging_plan = (key, result)
@@ -303,6 +308,7 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         kv_cache,
         slot_mapping: torch.Tensor,
         rotated: tuple[torch.Tensor, torch.Tensor] | None = None,
+        staging=None,
     ) -> tuple[torch.Tensor, torch.Tensor] | None:
         slot_mapping = slot_mapping.to(device=key.device, dtype=torch.int64) if key is not None else slot_mapping
         N = slot_mapping.shape[0]
@@ -328,11 +334,20 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
             )
         self._oscar_stats["writes"] += 1
         self._oscar_stats["kv_bytes_written"] += N * Hk * 160
+        layer._oscar_store_staged = False
         if self._oscar_use_triton:
             try:
                 from .kernels.store_kernel import oscar_store_triton
 
-                oscar_store_triton(k_rot, v_rot, k_cache, v_cache, slot_mapping)
+                stage_args = None
+                if staging is not None:
+                    stage_k, stage_v, stage_seats = staging
+                    stage_args = (raw_k, raw_v, stage_k, stage_v, stage_seats)
+                oscar_store_triton(
+                    k_rot, v_rot, k_cache, v_cache, slot_mapping,
+                    staging=stage_args,
+                )
+                layer._oscar_store_staged = stage_args is not None
                 return raw_k, raw_v
             except Exception as e:  # pragma: no cover — triton 编译/执行失败则回退
                 print(f"[oscar-ascend] triton store 失败，回退 torch 参考路径: {e}")
@@ -412,12 +427,26 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         # 1) 写路径：本步新 token K/V → INT2（decode/prefill 均写；前缀命中时旧前缀已在缓存）
         rotated = None
         if key is not None and value is not None:
+            staging = None
+            if self._oscar.window_enabled:
+                self._ensure_staging(layer, kv_cache)
+                plan = metadata_staging_plan(
+                    attn_metadata, key.device, attn_metadata.num_actual_tokens,
+                    self.stage_block, layer._oscar_stage_rows, self.sink_eff,
+                    self._oscar.recent_tokens,
+                )
+                rows, offsets, owners = plan[:3]
+                layer._oscar_slot_owner[rows, offsets] = owners
+                staging = (
+                    layer._oscar_stage_k, layer._oscar_stage_v, plan[6]
+                )
             rotated = self.do_kv_cache_update(
                 layer, key, value, kv_cache,
                 attn_metadata.slot_mapping[: attn_metadata.num_actual_tokens],
+                staging=staging,
             )
-            if self._oscar.window_enabled:
-                self._ensure_staging(layer, kv_cache)
+            if self._oscar.window_enabled and not getattr(
+                    layer, "_oscar_store_staged", False):
                 self._staging_write(layer, key, value, attn_metadata, rotated=rotated)
 
         # MTP/speculative verification has only a handful of queries but a
@@ -792,7 +821,7 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
             return
         dev = key.device
         bs = self.stage_block
-        rows, offsets, owner, selected, value_rows, value_offsets = metadata_staging_plan(
+        rows, offsets, owner, selected, value_rows, value_offsets, _ = metadata_staging_plan(
             attn_metadata, dev, N, bs, layer._oscar_stage_rows,
             self.sink_eff, self._oscar.recent_tokens,
         )

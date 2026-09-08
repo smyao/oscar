@@ -202,6 +202,35 @@ def test_forward_reuses_rotated_kv_for_store_staging_and_attention(monkeypatch):
     assert seen == [("stage", marker), ("attention", marker)]
 
 
+def test_forward_fused_store_skips_second_staging_scatter(monkeypatch):
+    impl, layer, cache = fixture()
+    impl._oscar_use_triton = True
+    seen = []
+
+    def fused_store(k, v, kc, vc, slots, *, staging=None):
+        assert staging is not None
+        raw_k, raw_v, stage_k, stage_v, seats = staging
+        selected = torch.nonzero(seats >= 0, as_tuple=True)[0]
+        rows, offsets = seats[selected] // impl.stage_block, seats[selected] % impl.stage_block
+        stage_k[rows, offsets] = raw_k[selected]
+        stage_v[rows, offsets] = raw_v[selected]
+        oscar_store_ref(k, v, kc, vc, slots)
+        seen.append("fused")
+
+    monkeypatch.setattr(
+        "oscar_ascend.kernels.store_kernel.oscar_store_triton", fused_store
+    )
+    monkeypatch.setattr(
+        impl, "_staging_write", lambda *a, **k: pytest.fail("duplicate staging write")
+    )
+    monkeypatch.setattr(
+        impl, "_prefill_attention", lambda *a, **k: torch.zeros(2, 2, 64)
+    )
+    q, k, v = torch.randn(2, 2, 64), torch.randn(2, 1, 64), torch.randn(2, 1, 64)
+    impl.forward(layer, q, k, v, cache, meta([0, 1], [2], [2]), output=torch.empty_like(q))
+    assert seen == ["fused"]
+
+
 def test_decodeonly_with_current_kv_routes_to_decode_after_store(monkeypatch):
     from oscar_ascend import backend
 

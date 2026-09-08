@@ -185,10 +185,12 @@ if triton is not None:
         KScale_ptr, KZero_ptr, VScale_ptr, VZero_ptr,   # [NH] fp32（已 fp16 舍入的精确值）
         KCache8_ptr, VCache8_ptr,
         Slot_mapping_ptr,         # [N]
+        RawKey_ptr, RawValue_ptr, StageK_ptr, StageV_ptr, StageSeats_ptr,
         stride_kb, stride_kp, stride_kh,
         stride_vb, stride_vp, stride_vh,
         D: tl.constexpr, H: tl.constexpr, BLOCK_SIZE: tl.constexpr,
         BLOCK_D: tl.constexpr, BLOCK_PACK: tl.constexpr, K_IDX_OFF: tl.constexpr,
+        HAS_STAGE: tl.constexpr,
     ):
         pid = tl.program_id(0)
         token_idx = pid // H
@@ -242,12 +244,27 @@ if triton is not None:
             k_packed, mask=pack_mask,
         )
         tl.store(VCache8_ptr + v_slot_base + packed_offs, v_packed, mask=pack_mask)
+        if HAS_STAGE:
+            stage_seat = tl.load(StageSeats_ptr + token_idx)
+            stage_valid = stage_seat >= 0
+            stage_base = (stage_seat * H + head_idx) * D
+            raw_k = tl.load(
+                RawKey_ptr + base + d_offs, mask=stage_valid & d_mask, other=0.0
+            )
+            raw_v = tl.load(
+                RawValue_ptr + base + d_offs, mask=stage_valid & d_mask, other=0.0
+            )
+            tl.store(StageK_ptr + stage_base + d_offs, raw_k,
+                     mask=stage_valid & d_mask)
+            tl.store(StageV_ptr + stage_base + d_offs, raw_v,
+                     mask=stage_valid & d_mask)
 
 
 def oscar_store_triton(
     k_rot: torch.Tensor, v_rot: torch.Tensor,
     k_cache: torch.Tensor, v_cache: torch.Tensor,
     slot_mapping: torch.Tensor,
+    *, staging=None,
 ) -> None:
     """Triton INT2 量化打包散写（与 oscar_store_ref 逐字节一致）。"""
     if triton is None:
@@ -265,15 +282,28 @@ def oscar_store_triton(
 
     ks, kz = vector_scales(k_rot.reshape(N, H, D))
     vs, vz = vector_scales(v_rot.reshape(N, H, D))
+    if staging is None:
+        raw_k, raw_v, stage_k, stage_v, stage_seats = (
+            k_flat, v_flat, k_flat, v_flat, slot_mapping
+        )
+    else:
+        raw_k, raw_v, stage_k, stage_v, stage_seats = staging
+        if (raw_k.shape != k_rot.shape or raw_v.shape != v_rot.shape
+                or stage_seats.shape != (N,)):
+            raise ValueError("Invalid fused OSCAR staging inputs")
+        raw_k = raw_k.reshape(N * H, D).contiguous()
+        raw_v = raw_v.reshape(N * H, D).contiguous()
     _oscar_store_kernel[(N * H,)](
         k_flat, v_flat,
         ks.reshape(-1).contiguous(), kz.reshape(-1).contiguous(),
         vs.reshape(-1).contiguous(), vz.reshape(-1).contiguous(),
         k8, v8, slot_mapping,
+        raw_k, raw_v, stage_k, stage_v, stage_seats,
         k8.stride(0), k8.stride(1), k8.stride(2),
         v8.stride(0), v8.stride(1), v8.stride(2),
         D=D, H=H, BLOCK_SIZE=bs,
         BLOCK_D=triton.next_power_of_2(D), BLOCK_PACK=BLOCK_PACK,
         K_IDX_OFF=K_IDX_OFF,
+        HAS_STAGE=staging is not None,
         num_warps=4, num_stages=1,
     )

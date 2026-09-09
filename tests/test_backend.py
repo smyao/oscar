@@ -14,6 +14,7 @@ from delivery.check_ready import validate
 from oscar_ascend import format as fmt
 from oscar_ascend.backend import AscendOscarAttentionBackendImpl as Impl
 from oscar_ascend.backend import metadata_batch_lists
+from oscar_ascend.backend import metadata_execution_plan
 from oscar_ascend.backend import metadata_token_positions
 from oscar_ascend.backend import metadata_short_decode_layout
 from oscar_ascend.integration import memory_budget, verify_layers
@@ -170,6 +171,25 @@ def test_token_positions_are_cached_across_layers():
     assert first[1].data_ptr() == second[1].data_ptr()
     assert first[0].tolist() == [8, 9, 6]
     assert first[1].tolist() == [10, 10, 7]
+
+
+def test_execution_plan_classifies_and_caches_request_rows():
+    md = meta([0] * 6, [1, 5, 6], [8, 12, 3])
+    first = metadata_execution_plan(md, torch.device("cpu"))
+    second = metadata_execution_plan(md, torch.device("cpu"))
+    assert first is second
+    assert first.decode_requests == (0, 2)
+    assert first.multi_query_requests == (1,)
+    assert first.decode_rows.tolist() == [0, 2]
+    assert first.multi_query_rows.tolist() == [1]
+
+
+def test_empty_rotation_paths_are_true_zero_operator_fast_path():
+    impl, layer, _ = fixture()
+    value = torch.randn(3, 1, 64, dtype=torch.bfloat16)
+    assert impl._rotate_k(value, layer) is value
+    assert impl._rotate_v(value, layer) is value
+    assert impl._restore_v(value, layer) is value
 
 
 def test_topk_clip_matches_sort_threshold():

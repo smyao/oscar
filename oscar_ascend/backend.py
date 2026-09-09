@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import Enum
 from importlib import import_module, util
 
@@ -285,6 +286,59 @@ def metadata_decode_buckets(attn_metadata, device):
     return result
 
 
+@dataclass(frozen=True)
+class OscarExecutionPlan:
+    """Layer-independent routing for one scheduler step.
+
+    Request classification stays on the host; device row tensors are cached
+    once on metadata and shared by every FULL attention layer.
+    """
+
+    actual_tokens: int
+    q_starts: tuple[int, ...]
+    seq_lens: tuple[int, ...]
+    decode_requests: tuple[int, ...]
+    multi_query_requests: tuple[int, ...]
+    empty_requests: tuple[int, ...]
+    decode_rows: torch.Tensor
+    multi_query_rows: torch.Tensor
+
+    @property
+    def all_active_are_decode(self) -> bool:
+        return bool(self.decode_requests) and not self.multi_query_requests
+
+
+def metadata_execution_plan(attn_metadata, device) -> OscarExecutionPlan:
+    """Build and cache the common decode/MTP/prefill routing decision."""
+    actual = int(attn_metadata.num_actual_tokens)
+    qsl, seqs = metadata_batch_lists(attn_metadata)
+    q_starts = tuple(int(x) for x in qsl)
+    seq_lens = tuple(int(x) for x in seqs)
+    key = (str(device), actual, q_starts, seq_lens)
+    cached = getattr(attn_metadata, "_oscar_execution_plan", None)
+    if cached is not None and cached[0] == key:
+        return cached[1]
+    decode, multi, empty = [], [], []
+    for request, (start, end) in enumerate(zip(q_starts, q_starts[1:])):
+        q_len = max(0, min(end, actual) - min(start, actual))
+        (empty if q_len == 0 else decode if q_len == 1 else multi).append(request)
+    plan = OscarExecutionPlan(
+        actual_tokens=actual,
+        q_starts=q_starts,
+        seq_lens=seq_lens,
+        decode_requests=tuple(decode),
+        multi_query_requests=tuple(multi),
+        empty_requests=tuple(empty),
+        decode_rows=torch.tensor(decode, dtype=torch.int64, device=device),
+        multi_query_rows=torch.tensor(multi, dtype=torch.int64, device=device),
+    )
+    try:
+        attn_metadata._oscar_execution_plan = (key, plan)
+    except Exception:
+        pass
+    return plan
+
+
 class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: ignore[misc]
     """OSCAR INT2 FULL 层注意力实现（参考 OSCAR PR oscar_attn.py 的 impl 部分）。"""
 
@@ -366,8 +420,7 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         k_cache, v_cache = self.key_cache, self.value_cache
         k = key[:N].view(N, Hk, D)
         v = value[:N].view(N, Hk, D)
-        rk, rv = self._layer_rots(layer, k.device)
-        raw_k, raw_v = rotated or (torch.matmul(k.float(), rk), torch.matmul(v.float(), rv))
+        raw_k, raw_v = rotated or (self._rotate_k(k, layer), self._rotate_v(v, layer))
         # The production Triton store performs clipping and quantization
         # reductions in its single write kernel.  Keep torch clipping only for
         # the numerical fallback path.
@@ -451,7 +504,33 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
             layer._oscar_rots = (rk, rv)
             layer._oscar_rkT = rk.t().contiguous()
             layer._oscar_rvT = rv.t().contiguous()
+            # Empty paths are defined by rotation.py as exact identities.  Do
+            # not launch four GEMMs per layer merely to multiply by I.
+            layer._oscar_identity_rk = not bool(cfg.k_rotation_path)
+            layer._oscar_identity_rv = not bool(cfg.v_rotation_path)
+        elif not hasattr(layer, "_oscar_identity_rk"):
+            # Tests and external integrations may inject rotations directly;
+            # conservatively treat those as real matrices.
+            layer._oscar_identity_rk = False
+            layer._oscar_identity_rv = False
+            rk, rv = layer._oscar_rots
+            layer._oscar_rkT = rk.t().contiguous()
+            layer._oscar_rvT = rv.t().contiguous()
         return layer._oscar_rots
+
+    def _rotate_k(self, value: torch.Tensor, layer) -> torch.Tensor:
+        rk, _ = self._layer_rots(layer, value.device)
+        return value if layer._oscar_identity_rk else value.float() @ rk
+
+    def _rotate_v(self, value: torch.Tensor, layer) -> torch.Tensor:
+        _, rv = self._layer_rots(layer, value.device)
+        return value if layer._oscar_identity_rv else value.float() @ rv
+
+    def _restore_v(self, value: torch.Tensor, layer,
+                   dtype: torch.dtype | None = None) -> torch.Tensor:
+        self._layer_rots(layer, value.device)
+        out = value if layer._oscar_identity_rv else value.float() @ layer._oscar_rvT
+        return out if dtype is None or out.dtype == dtype else out.to(dtype)
 
     # ------------------------------------------------------------------ 主入口
     def forward(
@@ -475,6 +554,7 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
 
         self._set_caches(kv_cache)
         state = getattr(attn_metadata, "attn_state", AscendAttentionState.ChunkedPrefill)
+        execution = metadata_execution_plan(attn_metadata, query.device)
 
         # 1) 写路径：本步新 token K/V → INT2（decode/prefill 均写；前缀命中时旧前缀已在缓存）
         rotated = None
@@ -505,10 +585,10 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         # directly.  Multi-token MTP must stay grouped by request below so its
         # long history is not reread once per speculative query.
         if key is not None and value is not None and self._oscar_use_triton:
-            layout = metadata_short_decode_layout(
-                attn_metadata, query.device, attn_metadata.num_actual_tokens,
+            layout = (metadata_short_decode_layout(
+                attn_metadata, query.device, execution.actual_tokens,
                 max_query_len=1,
-            )
+            ) if execution.all_active_are_decode else None)
             if layout is not None:
                 try:
                     attn_out = self._short_query_attention(
@@ -531,12 +611,8 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         # already been stored above, so route one-query requests directly to
         # paged INT2 decode instead of rebuilding dense history for FIA.
         if state == getattr(AscendAttentionState, "DecodeOnly", None):
-            qsl, _ = metadata_batch_lists(attn_metadata)
-            actual = attn_metadata.num_actual_tokens
-            qlens = [max(0, min(b, actual) - min(a, actual))
-                     for a, b in zip(qsl, qsl[1:])]
-            if (qlens and qlens[:actual] == [1] * actual
-                    and all(length == 0 for length in qlens[actual:])):
+            actual = execution.actual_tokens
+            if execution.all_active_are_decode:
                 attn_out = self._decode_attention(
                     query[:actual], kv_cache, attn_metadata, layer
                 )
@@ -545,19 +621,21 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     output[actual:num_tokens].zero_()
                 return output
 
-        # MTP and mixed batches: retain each request's actual q_len. The fused
-        # kernel supports causal multi-query attention, unlike DecodeOnly.
+        # Mixed batches are partitioned by the shared execution plan.  The
+        # current paged kernel is safe here only for q_len=1; multi-query rows
+        # stay on grouped FIA until the request/KV-head tiled kernel is ready.
         if self._oscar.use_paged and self._oscar_use_triton and key is not None and value is not None:
-            qsl, seqs = metadata_batch_lists(attn_metadata)
-            actual = attn_metadata.num_actual_tokens
-            pairs = [(i, a, min(b, actual), seqs[i]) for i, (a, b) in enumerate(zip(qsl, qsl[1:])) if a < actual]
+            qsl, seqs = execution.q_starts, execution.seq_lens
+            actual = execution.actual_tokens
             # The paged decode kernel assigns one program to each query row.
             # Restrict it to true decode (q_len == 1); routing MTP rows here
             # rereads the same request history once for every speculative token.
-            short = [(i, a, b, seq) for i, a, b, seq in pairs if b - a == 1]
+            short = [
+                (i, qsl[i], min(qsl[i + 1], actual), seqs[i])
+                for i in execution.decode_requests
+            ]
             if short:
                 from .kernels.paged_attention import oscar_paged_attention_triton
-                rk, rv = self._layer_rots(layer, query.device)
                 stage = None
                 if self._oscar.window_enabled and self._oscar_stage_ready:
                     stage = (layer._oscar_stage_k, layer._oscar_stage_v, layer._oscar_slot_owner)
@@ -568,15 +646,19 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     starts.append(starts[-1] + b - a)
                 # Pack only short-query requests. A simultaneous long prefill
                 # must not force the entire MTP/decode batch onto the dense path.
-                k_rot, v_rot = rotated or (key.float() @ rk, value.float() @ rv)
+                k_rot, v_rot = rotated or (
+                    self._rotate_k(key, layer), self._rotate_v(value, layer)
+                )
                 out_short = oscar_paged_attention_triton(
-                    query[token_ids].float() @ rk, k_rot[token_ids], v_rot[token_ids],
+                    self._rotate_k(query[token_ids], layer),
+                    k_rot[token_ids], v_rot[token_ids],
                     self.key_cache, self.value_cache, attn_metadata.block_tables[request_ids],
                     starts, [seq for _, _, _, seq in short], self.scale, stage,
-                ) @ rv.t()
+                )
+                out_short = self._restore_v(out_short, layer, query.dtype)
                 # All multi-token requests use the grouped native path below,
                 # which reconstructs historical KV once per request.
-                large = [i for i, a, b, _ in pairs if b - a > 1]
+                large = list(execution.multi_query_requests)
                 if large:
                     attn_out = self._prefill_attention(
                         query, key, value, kv_cache, attn_metadata, layer,
@@ -619,11 +701,9 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         if (self._oscar.window_enabled and self._oscar_stage_ready
                 and not self._oscar_use_triton):
             return self._decode_attention_windowed(query, kv_cache, attn_metadata, layer)
-        q = query.float()
-        rk, _ = self._layer_rots(layer, q.device)
-        q_rot = torch.matmul(q, rk)
+        q_rot = self._rotate_k(query, layer)
         bt = attn_metadata.block_tables
-        seq = attn_metadata.seq_lens.to(device=q.device, dtype=torch.int32)
+        seq = attn_metadata.seq_lens.to(device=q_rot.device, dtype=torch.int32)
         if self._oscar_use_triton:
             try:
                 from .kernels.decode_kernel import oscar_decode_triton
@@ -631,12 +711,9 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 if self._oscar.window_enabled and self._oscar_stage_ready:
                     stage = (layer._oscar_stage_k, layer._oscar_stage_v,
                              layer._oscar_slot_owner)
-                _, seqs = metadata_batch_lists(attn_metadata)
-                longest = max(seqs, default=1)
-                splits = min(16, max(1, 1 << max(0, (longest - 1).bit_length() - 10)))
                 # Requests with very different lengths must not all inherit the
                 # longest request's split/reducer cost.
-                buckets = metadata_decode_buckets(attn_metadata, q.device)
+                buckets = metadata_decode_buckets(attn_metadata, q_rot.device)
                 if len(buckets) == 1:
                     out_rot, _ = oscar_decode_triton(
                         q_rot, self.key_cache, self.value_cache, bt, seq,
@@ -664,16 +741,14 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 q_rot, self.key_cache, self.value_cache, bt, seq,
                 self.scale, self.num_kv_heads, self.head_size,
             )
-        _, rv = self._layer_rots(layer, q.device)
-        return torch.matmul(out_rot, rv.t().contiguous())
+        return self._restore_v(out_rot, layer, query.dtype)
 
     def _short_query_attention(self, query, layout, layer, rotated=None):
-        """Causal q<=8 attention without dense historical KV reconstruction."""
+        """True q=1 decode without dense historical KV reconstruction."""
         from .kernels.decode_kernel import oscar_decode_triton
 
         bt, seq, longest, fresh_starts, prefixes = layout
-        rk, rv = self._layer_rots(layer, query.device)
-        q_rot = query.float() @ rk
+        q_rot = self._rotate_k(query, layer)
         # `longest` comes from cached host metadata, so split selection does
         # not synchronize the NPU seq tensor.
         splits = min(16, max(1, 1 << max(0, (longest - 1).bit_length() - 10)))
@@ -690,7 +765,7 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 fresh_starts, prefixes,
             ),
         )
-        return (out_rot @ rv.t()).to(query.dtype)
+        return self._restore_v(out_rot, layer, query.dtype)
 
     # ------------------------------------------------------------------ prefill
     def _prefill_attention(self, query, key, value, kv_cache, attn_metadata, layer,
@@ -704,9 +779,9 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         actual = min(N, getattr(attn_metadata, "num_actual_tokens", N))
         num_reqs = len(qsl_list) - 1
         indices = list(range(num_reqs) if request_indices is None else request_indices)
-        rk, rv = self._layer_rots(layer, query.device)
+        self._layer_rots(layer, query.device)
         q_rotated = (_q_rotated if _q_rotated is not None else
-                     (query.float() @ rk).to(query.dtype))
+                     self._rotate_k(query, layer).to(query.dtype))
         if (query.device.type == "npu" and self._oscar.use_batched_native
                 and not _grouped and indices):
             groups, group, tokens = [], [], 0
@@ -726,8 +801,8 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     _output=output, _q_rotated=q_rotated,
                 )
             return output
-        rotated_k = rotated[0] if rotated is not None else key.float() @ rk
-        rotated_v = rotated[1] if rotated is not None else value.float() @ rv
+        rotated_k = rotated[0] if rotated is not None else self._rotate_k(key, layer)
+        rotated_v = rotated[1] if rotated is not None else self._rotate_v(value, layer)
         if (query.device.type == "npu" and self._oscar.use_batched_native
                 and _grouped and indices):
             q_parts, k_parts, v_parts, prefixes, q_ends, active = [], [], [], [], [], []
@@ -778,7 +853,7 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 out_all = npu_prefill_packed(
                     q_all, k_all, v_all, q_ends, kv_ends, self.scale, Hk, D
                 )
-                out_all = (out_all.float() @ rv.t()).to(query.dtype)
+                out_all = self._restore_v(out_all, layer, query.dtype)
                 if contiguous_q:
                     output[first_q:last_q] = out_all
                 else:
@@ -845,7 +920,7 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     k_cached.to(query.dtype), v_cached.to(query.dtype),
                     self.scale, Hk, D,
                 )
-            output[q_start:q_end] = (out.float() @ rv.t()).to(query.dtype)
+            output[q_start:q_end] = self._restore_v(out, layer, query.dtype)
         if prepared:
             groups, group, tokens = [], [], 0
             for item in prepared:
@@ -867,7 +942,9 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     outs = [oscar_prefill_prepared(x[3], x[4], x[5], self.scale, Hk, D)
                             for x in group]
                 for item, out in zip(group, outs):
-                    output[item[1]:item[2]] = (out.float() @ rv.t()).to(query.dtype)
+                    output[item[1]:item[2]] = self._restore_v(
+                        out, layer, query.dtype
+                    )
         return output
 
     # ------------------------------------------------------------------ 窗口（BF16 sink/recent staging，port PR oscar_attn.py:245-336/618-750）
@@ -905,13 +982,16 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         layer._oscar_slot_owner[rows, offsets] = owner
         if selected.numel() == 0:
             return
-        rk, rv = self._layer_rots(layer, dev)
         # Preserve the model's unquantized K/V in fp32 rotated space. No clipping
         # or INT2 rounding is applied to staging, and historical tokens never
         # need to be rotated again on the read path.
         if rotated is None:
-            k_rot = key[:N].reshape(N, self.num_kv_heads, self.head_size).float() @ rk
-            v_rot = value[:N].reshape(N, self.num_kv_heads, self.head_size).float() @ rv
+            k_rot = self._rotate_k(
+                key[:N].reshape(N, self.num_kv_heads, self.head_size), layer
+            )
+            v_rot = self._rotate_v(
+                value[:N].reshape(N, self.num_kv_heads, self.head_size), layer
+            )
         else:
             k_rot, v_rot = rotated
         layer._oscar_stage_k[value_rows, value_offsets] = k_rot[selected]
@@ -985,7 +1065,7 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         seq_eff = (cut - si * bs).to(torch.int32)
         gidx = (torch.arange(maxpg, device=dev).unsqueeze(0) + si.unsqueeze(1)).clamp(max=maxpg - 1)
         bt_eff = torch.gather(bt, 1, gidx)
-        q_rot = torch.matmul(query.float(), self._layer_rots(layer, dev)[0])
+        q_rot = self._rotate_k(query, layer)
         out1, lse1 = self._oscar_int2_decode(q_rot, bt_eff, seq_eff.clamp(min=0))
         o1 = out1
         empty1 = (seq_eff <= 0).view(B, 1)
@@ -1023,7 +1103,9 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         safe_lse = torch.where(torch.isfinite(new_lse), new_lse, torch.zeros_like(new_lse))
         w1 = torch.exp(lse1 - safe_lse).unsqueeze(-1)
         w2 = torch.exp(lse2 - safe_lse).unsqueeze(-1)
-        return ((o1 * w1 + torch.nan_to_num(o2) * w2) @ self._layer_rots(layer, dev)[1].t()).to(query.dtype)
+        return self._restore_v(
+            o1 * w1 + torch.nan_to_num(o2) * w2, layer, query.dtype
+        )
 
     def _oscar_int2_decode(self, q_rot, bt_eff, seq_eff):
         """INT2 段 decode → (out_rot[B,Hq,D], lse[B,Hq])；seq_eff<=0 时返回空。"""

@@ -1,8 +1,10 @@
-"""Paged multi-query OSCAR attention for MTP verification (rotated space).
+"""Paged OSCAR attention prototype in rotated space.
 
 One query/head/split per program. Reads packed history in registers and raw
 current/staged K/V, applies a per-query causal bound, and shares the decode
-split reducer. No dense historical K/V allocation or inverse rotation.
+split reducer. The production backend deliberately uses this only for q_len=1:
+multi-query requests would reread history per row until a request/KV-head tiled
+replacement is available. No dense historical K/V allocation is performed.
 """
 
 from __future__ import annotations

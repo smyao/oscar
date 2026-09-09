@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import torch
 
 from oscar_ascend.kernels.paged_attention import (
+    oscar_grouped_mtp_attention_triton,
     oscar_paged_attention_ref,
     oscar_paged_attention_triton,
     paged_block_kv,
@@ -19,7 +20,7 @@ from oscar_ascend.kernels.paged_attention import (
 from oscar_ascend.kernels.store_kernel import oscar_store_ref, oscar_store_triton
 
 
-def run(device, use_triton):
+def run(device, use_triton, grouped_only=False):
     if device == "npu" and use_triton:
         # A standalone script does not pass through vLLM's CLI bootstrap.
         # Apply the same global vendor patches before importing attention.
@@ -81,7 +82,8 @@ def run(device, use_triton):
                 q, k, v, kc, vc, bt, qsl, seqs, d**-0.5, stage
             )
             actual = (
-                oscar_paged_attention_triton(
+                (oscar_grouped_mtp_attention_triton if grouped_only
+                 else oscar_paged_attention_triton)(
                     q, k, v, kc, vc, bt, qsl, seqs, d**-0.5, stage
                 )
                 if use_triton
@@ -92,7 +94,12 @@ def run(device, use_triton):
                 and torch.isfinite(actual).all().item()
             )
             torch.testing.assert_close(actual, expected, atol=1e-3, rtol=1e-3)
-        if use_triton:
+            if use_triton and not grouped_only:
+                grouped = oscar_grouped_mtp_attention_triton(
+                    q, k, v, kc, vc, bt, qsl, seqs, d**-0.5, stage
+                )
+                torch.testing.assert_close(grouped, expected, atol=1e-3, rtol=1e-3)
+        if use_triton and not grouped_only:
             # Reducer empty splits/empty sequences must produce zero/-inf, not NaN.
             from oscar_ascend.kernels.decode_kernel import (
                 oscar_decode_ref,
@@ -167,10 +174,10 @@ def run(device, use_triton):
         print(
             f"PAGED PASS device={device} triton={use_triton} dtype={dtype} q_len=1/4/2 prefix=0/129/257"
         )
-    check_long_context(device, use_triton)
+    check_long_context(device, use_triton, grouped_only)
 
 
-def check_long_context(device, use_triton):
+def check_long_context(device, use_triton, grouped_only=False):
     # Actual packed serving uses 1536-token pages. Include tile/page tails,
     # long split loops, GQA, and staging hits/misses absent from the tiny probe.
     torch.manual_seed(91)
@@ -210,7 +217,9 @@ def check_long_context(device, use_triton):
                 stage_dev = (
                     None if stage is None else tuple(t.to(device) for t in stage)
                 )
-                actual = oscar_paged_attention_triton(
+                kernel = (oscar_grouped_mtp_attention_triton if grouped_only
+                          else oscar_paged_attention_triton)
+                actual = kernel(
                     *tensors,
                     [0, nq],
                     [prefix + nq],
@@ -218,6 +227,11 @@ def check_long_context(device, use_triton):
                     stage_dev,
                 ).cpu()
                 torch.testing.assert_close(actual, expected, atol=1e-3, rtol=1e-3)
+                if not grouped_only:
+                    grouped = oscar_grouped_mtp_attention_triton(
+                        *tensors, [0, nq], [prefix + nq], d**-0.5, stage_dev
+                    ).cpu()
+                    torch.testing.assert_close(grouped, expected, atol=1e-3, rtol=1e-3)
             assert torch.isfinite(expected).all()
         print(
             f"PAGED LONG PASS device={device} triton={use_triton} dtype={dtype} "
@@ -230,7 +244,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--device", choices=["cpu", "npu"], default="npu")
     ap.add_argument("--triton", action="store_true")
+    ap.add_argument("--grouped-only", action="store_true")
     args = ap.parse_args()
     if args.device == "npu":
         import torch_npu  # noqa: F401
-    run(args.device, args.triton)
+    run(args.device, args.triton, args.grouped_only)

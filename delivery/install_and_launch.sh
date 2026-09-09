@@ -244,6 +244,15 @@ else
     export OSCAR_ASCEND_FUSED_PREP=0
 fi
 
+# q<=4 grouped MTP is a production path: its request/KV-head kernel must pass
+# multi-request, staging and long packed-page numerics before serve starts.
+if [ "${OSCAR_SKIP_PROBES:-0}" != "1" ] && [ "${OSCAR_ASCEND_USE_TRITON:-1}" == "1" ] \
+        && [ "${OSCAR_ASCEND_GROUPED_MTP:-1}" == "1" ]; then
+    "$PYTHON" delivery/probe_paged.py --device npu --triton --grouped-only \
+        || fail "grouped MTP paged probe FAIL — 拒绝 serve（可设 OSCAR_ASCEND_GROUPED_MTP=0 回退 dense FIA）"
+    export OSCAR_ASCEND_GROUPED_MTP=1
+fi
+
 # The vector paged kernel is an explicit experiment: target profiling measured
 # ~4.35 s / 16 FULL layers. Default to INT2 reconstruction + native attention.
 if [ "${OSCAR_SKIP_PROBES:-0}" != "1" ] && [ "${OSCAR_ASCEND_USE_TRITON:-1}" == "1" ] && [ "${OSCAR_ASCEND_USE_PAGED:-0}" == "1" ]; then

@@ -626,6 +626,44 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                         output[attn_metadata.num_actual_tokens:num_tokens].zero_()
                     return output
 
+        # MTP/common speculative step: one request program handles q<=4 and a
+        # GQA tile together, so every historical INT2 K/V vector is loaded and
+        # dequantized once rather than once per speculative row.
+        if (key is not None and value is not None and self._oscar_use_triton
+                and self._oscar.use_grouped_mtp
+                and execution.multi_query_requests
+                and not execution.decode_requests and not execution.empty_requests
+                and max(b - a for a, b in zip(
+                    execution.q_starts, execution.q_starts[1:])) <= 4):
+            try:
+                from .kernels.paged_attention import oscar_grouped_mtp_attention_triton
+                stage = None
+                if self._oscar.window_enabled and self._oscar_stage_ready:
+                    stage = (layer._oscar_stage_k, layer._oscar_stage_v,
+                             layer._oscar_slot_owner)
+                q_rot = self._rotate_k(
+                    query[:execution.actual_tokens], layer
+                )
+                grouped = oscar_grouped_mtp_attention_triton(
+                    q_rot, rotated[0][:execution.actual_tokens],
+                    rotated[1][:execution.actual_tokens],
+                    self.key_cache, self.value_cache, attn_metadata.block_tables,
+                    list(execution.q_starts), list(execution.seq_lens),
+                    self.scale, stage,
+                )
+                attn_out = self._restore_v(grouped, layer, query.dtype)
+            except Exception as exc:  # pragma: no cover - device gate/fallback
+                if not getattr(self, "_oscar_warned_grouped_mtp", False):
+                    self._oscar_warned_grouped_mtp = True
+                    print(f"[oscar-ascend] grouped MTP paged 失败，回退 dense FIA: {exc}")
+            else:
+                output[:execution.actual_tokens] = attn_out.reshape(
+                    output[:execution.actual_tokens].shape
+                ).to(output.dtype)
+                if execution.actual_tokens < num_tokens:
+                    output[execution.actual_tokens:num_tokens].zero_()
+                return output
+
         # DecodeOnly still supplies the current token's K/V in vLLM. It has
         # already been stored above, so route one-query requests directly to
         # paged INT2 decode instead of rebuilding dense history for FIA.

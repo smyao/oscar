@@ -50,6 +50,7 @@ class OscarAscendConfig:
     use_paged: bool = False  # enable only after NPU paged probe
     use_fused_prep: bool = False  # enable after native MTP preparation probe
     use_batched_native: bool = True
+    use_grouped_mtp: bool = True
     native_group_kv_tokens: int = 262144
     verbose: bool = True
     extra: dict = field(default_factory=dict)
@@ -92,6 +93,7 @@ class OscarAscendConfig:
         cfg.use_paged = os.environ.get("OSCAR_ASCEND_USE_PAGED", "0") == "1"
         cfg.use_fused_prep = os.environ.get("OSCAR_ASCEND_FUSED_PREP", "0") == "1"
         cfg.use_batched_native = os.environ.get("OSCAR_ASCEND_BATCHED_NATIVE", "1") == "1"
+        cfg.use_grouped_mtp = os.environ.get("OSCAR_ASCEND_GROUPED_MTP", "1") == "1"
         cfg.native_group_kv_tokens = max(
             1, _env_int("OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS", 262144)
         )

@@ -69,6 +69,126 @@ def oscar_paged_attention_ref(q, k, v, kc, vc, bt, qsl, seqs, scale, stage=None)
 if triton is not None:
 
     @triton.jit
+    def _oscar_grouped_mtp_stage1(
+        QStarts, QLens, Prefixes, KNew, VNew,
+        StageK, StageV, Owner, QRot, KCache8, VCache8, BlockTables, Mid,
+        stride_qh, stride_bt, stride_kb, stride_kp, stride_kh,
+        stride_vb, stride_vp, stride_vh,
+        stride_mb, stride_mh, stride_ms,
+        NUM_BLOCKS: tl.constexpr, NUM_BT_BLOCKS: tl.constexpr,
+        NUM_KV_HEADS: tl.constexpr, HEAD_DIM: tl.constexpr,
+        BLOCK_SIZE: tl.constexpr, NUM_SPLITS: tl.constexpr,
+        KV_GROUP_SIZE: tl.constexpr, GROUP_TILES: tl.constexpr,
+        BLOCK_G: tl.constexpr, BLOCK_Q: tl.constexpr,
+        BLOCK_D: tl.constexpr, ATTN_SCALE: tl.constexpr,
+        K_IDX_OFF: tl.constexpr, HAS_STAGE: tl.constexpr,
+        STAGE_ROWS: tl.constexpr,
+    ):
+        req = tl.program_id(0)
+        grouped_head = tl.program_id(1)
+        split = tl.program_id(2)
+        kv_head = grouped_head // GROUP_TILES
+        group_tile = grouped_head % GROUP_TILES
+        q_start = tl.load(QStarts + req)
+        q_len = tl.load(QLens + req)
+        prefix = tl.load(Prefixes + req)
+        seq_len = prefix + q_len
+        split_len = tl.cdiv(seq_len, NUM_SPLITS)
+        split_start = split * split_len
+        split_end = tl.minimum(split_start + split_len, seq_len)
+        if split_start >= split_end:
+            return
+
+        lanes = tl.arange(0, BLOCK_Q * BLOCK_G)
+        qi = lanes // BLOCK_G
+        gi = lanes % BLOCK_G
+        group = group_tile * BLOCK_G + gi
+        lane_valid = (qi < q_len) & (group < KV_GROUP_SIZE)
+        q_head = kv_head * KV_GROUP_SIZE + group
+        dims = tl.arange(0, BLOCK_D)
+        dmask = dims < HEAD_DIM
+        q_base = (q_start + qi)[:, None] * (NUM_KV_HEADS * KV_GROUP_SIZE * HEAD_DIM)
+        q_base += q_head[:, None] * stride_qh
+        qv = tl.load(QRot + q_base + dims[None, :],
+                     mask=lane_valid[:, None] & dmask[None, :], other=0.0).to(tl.float32)
+        m = tl.full([BLOCK_Q * BLOCK_G], -float("inf"), tl.float32)
+        denom = tl.zeros([BLOCK_Q * BLOCK_G], tl.float32)
+        acc = tl.zeros([BLOCK_Q * BLOCK_G, BLOCK_D], tl.float32)
+        byte_idx = dims // 4
+        shift = (dims % 4) * 2
+        bt_base = req * stride_bt
+
+        for kv_pos in range(split_start, split_end):
+            causal = lane_valid & (kv_pos < prefix + qi + 1)
+            history = kv_pos < prefix
+            page = kv_pos // BLOCK_SIZE
+            page_valid = history & (page < NUM_BT_BLOCKS)
+            safe_page = tl.where(page_valid, page, 0)
+            block = tl.load(BlockTables + bt_base + safe_page,
+                            mask=page_valid, other=0).to(tl.int64)
+            cache_valid = page_valid & (block >= 0) & (block < NUM_BLOCKS)
+            safe_block = tl.where(cache_valid, block, 0)
+            off = kv_pos % BLOCK_SIZE
+            kslot = safe_block * stride_kb + off * stride_kp + kv_head * stride_kh
+            vslot = safe_block * stride_vb + off * stride_vp + kv_head * stride_vh
+            kb = tl.load(KCache8 + kslot + K_IDX_OFF + byte_idx,
+                         mask=cache_valid & dmask, other=0).to(tl.int32)
+            vb = tl.load(VCache8 + vslot + byte_idx,
+                         mask=cache_valid & dmask, other=0).to(tl.int32)
+            kq = ((kb >> shift) & 3).to(tl.float32)
+            vq = ((vb >> shift) & 3).to(tl.float32)
+            ksl = tl.load(KCache8 + kslot, mask=cache_valid, other=0).to(tl.uint16)
+            ksh = tl.load(KCache8 + kslot + 1, mask=cache_valid, other=0).to(tl.uint16)
+            kzl = tl.load(KCache8 + kslot + 2, mask=cache_valid, other=0).to(tl.uint16)
+            kzh = tl.load(KCache8 + kslot + 3, mask=cache_valid, other=0).to(tl.uint16)
+            vsl = tl.load(KCache8 + kslot + 4, mask=cache_valid, other=0).to(tl.uint16)
+            vsh = tl.load(KCache8 + kslot + 5, mask=cache_valid, other=0).to(tl.uint16)
+            vzl = tl.load(KCache8 + kslot + 6, mask=cache_valid, other=0).to(tl.uint16)
+            vzh = tl.load(KCache8 + kslot + 7, mask=cache_valid, other=0).to(tl.uint16)
+            ks = (ksl | (ksh << 8)).to(tl.float16, bitcast=True).to(tl.float32)
+            kz = (kzl | (kzh << 8)).to(tl.float16, bitcast=True).to(tl.float32)
+            vs = (vsl | (vsh << 8)).to(tl.float16, bitcast=True).to(tl.float32)
+            vz = (vzl | (vzh << 8)).to(tl.float16, bitcast=True).to(tl.float32)
+            kval = kq * ks + kz
+            vval = vq * vs + vz
+            if HAS_STAGE:
+                seat = (safe_block % STAGE_ROWS) * BLOCK_SIZE + off
+                tag = tl.load(Owner + seat, mask=cache_valid, other=-1)
+                hit = cache_valid & (tag == safe_block)
+                stage_base = (seat * NUM_KV_HEADS + kv_head) * HEAD_DIM
+                sk = tl.load(StageK + stage_base + dims, mask=hit & dmask, other=0.0)
+                sv = tl.load(StageV + stage_base + dims, mask=hit & dmask, other=0.0)
+                kval = tl.where(hit, sk, kval)
+                vval = tl.where(hit, sv, vval)
+            fresh = kv_pos >= prefix
+            fresh_idx = q_start + kv_pos - prefix
+            safe_fresh = tl.where(fresh, fresh_idx, 0)
+            fresh_base = (safe_fresh * NUM_KV_HEADS + kv_head) * HEAD_DIM
+            fk = tl.load(KNew + fresh_base + dims, mask=fresh & dmask, other=0.0)
+            fv = tl.load(VNew + fresh_base + dims, mask=fresh & dmask, other=0.0)
+            kval = tl.where(fresh, fk, kval)
+            vval = tl.where(fresh, fv, vval)
+
+            score = tl.sum(qv * kval[None, :], axis=1) * ATTN_SCALE
+            score = tl.where(causal, score, -float("inf"))
+            # Earlier speculative rows may have no causal token in a late
+            # split. Keep their empty softmax state stable (avoid -inf--inf).
+            new_m = tl.where(causal, tl.maximum(m, score), m)
+            old_scale = tl.where(causal, tl.exp(m - new_m), 1.0)
+            prob = tl.where(causal, tl.exp(score - new_m), 0.0)
+            acc = acc * old_scale[:, None] + prob[:, None] * vval[None, :]
+            denom = denom * old_scale + prob
+            m = new_m
+
+        safe_denom = tl.where(denom > 0.0, denom, 1.0)
+        out_base = ((q_start + qi) * stride_mb + q_head * stride_mh
+                    + split * stride_ms)
+        tl.store(Mid + out_base[:, None] + dims[None, :],
+                 acc / safe_denom[:, None],
+                 mask=lane_valid[:, None] & dmask[None, :])
+        tl.store(Mid + out_base + HEAD_DIM, m + tl.log(safe_denom), mask=lane_valid)
+
+    @triton.jit
     def _oscar_paged_stage1(
         TokenReq_ptr,
         Prefix_ptr,
@@ -360,3 +480,76 @@ def oscar_paged_attention_triton(
         num_stages=1,
     )
     return output
+
+
+def oscar_grouped_mtp_attention_triton(
+    q, k, v, kc, vc, bt, qsl, seqs, scale, stage=None, *, max_query_len=4
+):
+    """Paged MTP attention with one historical KV read per request/GQA tile."""
+    if triton is None:
+        raise RuntimeError("Triton is unavailable")
+    lengths = [b - a for a, b in itertools.pairwise(qsl)]
+    if (not lengths or len(lengths) != len(seqs) or max(lengths) > max_query_len
+            or any(n <= 0 or s < n for n, s in zip(lengths, seqs))
+            or sum(lengths) != q.shape[0]):
+        raise ValueError("Grouped OSCAR MTP requires dense q_len in [1, 4]")
+    n, hq, d = q.shape
+    hk = k.shape[1]
+    if hq % hk or k.shape != v.shape or k.shape != (n, hk, d):
+        raise ValueError("Invalid grouped OSCAR MTP Q/K/V shapes")
+    q = q.contiguous().float()
+    k = k.contiguous().float()
+    v = v.contiguous().float()
+    bt = bt.to(device=q.device).contiguous()
+    q_starts = torch.tensor(qsl[:-1], dtype=torch.int32, device=q.device)
+    q_lens = torch.tensor(lengths, dtype=torch.int32, device=q.device)
+    prefixes = torch.tensor(
+        [s - n_q for s, n_q in zip(seqs, lengths)],
+        dtype=torch.int32, device=q.device,
+    )
+    ends = torch.tensor(
+        [s - n_q + j + 1 for s, n_q in zip(seqs, lengths)
+         for j in range(n_q)], dtype=torch.int32, device=q.device,
+    )
+    k8, v8 = kc.view(torch.uint8), vc.view(torch.uint8)
+    if stage is None:
+        sk, sv, owner, stage_rows = k, v, q_lens, 1
+    else:
+        sk, sv, owner = stage
+        stage_rows = owner.shape[0]
+    group_size = hq // hk
+    tile = max(x for x in range(1, min(4, group_size) + 1)
+               if group_size % x == 0)
+    group_tiles = group_size // tile
+    block_g = triton.next_power_of_2(tile)
+    block_q = triton.next_power_of_2(max_query_len)
+    longest = max(seqs)
+    splits = 1 if longest <= 2048 else 4 if longest <= 8192 else 8 if longest <= 32768 else 16
+    mid = torch.empty(n, hq, splits, d + 1, dtype=torch.float32, device=q.device)
+    _oscar_grouped_mtp_stage1[(len(lengths), hk * group_tiles, splits)](
+        q_starts, q_lens, prefixes, k, v, sk, sv, owner, q, k8, v8, bt, mid,
+        q.stride(1), bt.stride(0),
+        k8.stride(0), k8.stride(1), k8.stride(2),
+        v8.stride(0), v8.stride(1), v8.stride(2),
+        mid.stride(0), mid.stride(1), mid.stride(2),
+        NUM_BLOCKS=kc.shape[0], NUM_BT_BLOCKS=bt.shape[1],
+        NUM_KV_HEADS=hk, HEAD_DIM=d, BLOCK_SIZE=kc.shape[1],
+        NUM_SPLITS=splits, KV_GROUP_SIZE=group_size, GROUP_TILES=group_tiles,
+        BLOCK_G=block_g, BLOCK_Q=block_q, BLOCK_D=triton.next_power_of_2(d),
+        ATTN_SCALE=scale, K_IDX_OFF=K_IDX_OFF,
+        HAS_STAGE=stage is not None, STAGE_ROWS=stage_rows,
+        num_warps=1, num_stages=1,
+    )
+    if splits == 1:
+        return mid[:, :, 0, :d]
+    from .decode_kernel import _oscar_decode_stage2
+    out = torch.empty(n, hq, d, dtype=torch.float32, device=q.device)
+    lse = torch.empty(n, hq, dtype=torch.float32, device=q.device)
+    _oscar_decode_stage2[(n, hq)](
+        mid, out, lse, ends,
+        mid.stride(0), mid.stride(1), mid.stride(2),
+        out.stride(0), out.stride(1), lse.stride(0),
+        NUM_KV_SPLITS=splits, BLOCK_D=triton.next_power_of_2(d), HEAD_DIM=d,
+        num_warps=4, num_stages=1,
+    )
+    return out

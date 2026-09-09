@@ -28,6 +28,21 @@ from .kernels.store_kernel import oscar_store_ref
 from .rotation import get_layer_rotation
 
 
+def _cache_identity(value):
+    """Return an identity token without reading forbidden inference state.
+
+    ``Tensor._version`` raises (rather than returning no value) for tensors
+    created in ``torch.inference_mode``. vLLM constructs attention metadata in
+    that mode. The metadata object is the scheduler-step owner of these caches,
+    so object identity remains the correct fallback for inference tensors.
+    """
+    try:
+        version = value._version
+    except (AttributeError, RuntimeError):
+        version = None
+    return id(value), version
+
+
 def metadata_batch_lists(attn_metadata) -> tuple[list, list]:
     """提取 (query_start_loc, seq_lens) 的 host 列表——**禁止 Tensor 作布尔值**。
 
@@ -44,18 +59,15 @@ def metadata_batch_lists(attn_metadata) -> tuple[list, list]:
             return x.tolist()
         return list(x)
 
-    def _version(x):
-        return (id(x), getattr(x, "_version", None))
-
     source_key = (
         getattr(attn_metadata, "num_actual_tokens", None),
-        _version(getattr(attn_metadata, "query_start_loc_cpu", None)),
-        _version(getattr(attn_metadata, "actual_seq_lengths_q", None)),
-        _version(getattr(attn_metadata, "query_start_loc", None)),
-        _version(getattr(attn_metadata, "seq_lens_list", None)),
-        _version(getattr(attn_metadata, "seq_lens_cpu", None)),
-        _version(getattr(attn_metadata, "_seq_lens_cpu", None)),
-        _version(getattr(attn_metadata, "seq_lens", None)),
+        _cache_identity(getattr(attn_metadata, "query_start_loc_cpu", None)),
+        _cache_identity(getattr(attn_metadata, "actual_seq_lengths_q", None)),
+        _cache_identity(getattr(attn_metadata, "query_start_loc", None)),
+        _cache_identity(getattr(attn_metadata, "seq_lens_list", None)),
+        _cache_identity(getattr(attn_metadata, "seq_lens_cpu", None)),
+        _cache_identity(getattr(attn_metadata, "_seq_lens_cpu", None)),
+        _cache_identity(getattr(attn_metadata, "seq_lens", None)),
     )
     cached = getattr(attn_metadata, "_oscar_batch_lists", None)
     if cached is not None and cached[0] == source_key:
@@ -160,7 +172,7 @@ def metadata_staging_plan(attn_metadata, device, n, block_size, stage_rows,
     qsl, seqs = metadata_batch_lists(attn_metadata)
     key = (
         str(device), n, block_size, stage_rows, sink_tokens, recent_tokens,
-        id(slot_source), getattr(slot_source, "_version", None),
+        _cache_identity(slot_source),
         tuple(qsl), tuple(seqs),
     )
     cached = getattr(attn_metadata, "_oscar_staging_plan", None)
@@ -212,7 +224,7 @@ def metadata_short_decode_layout(attn_metadata, device, actual, max_query_len=8)
     bt = attn_metadata.block_tables
     key = (
         str(device), actual, max_query_len, tuple(qsl), tuple(seqs),
-        id(bt), getattr(bt, "_version", None),
+        _cache_identity(bt),
     )
     cached = getattr(attn_metadata, "_oscar_short_decode_layout", None)
     if cached is not None and cached[0] == key:
@@ -244,8 +256,7 @@ def metadata_native_prepare(attn_metadata, active, prefixes, kv_ends, fresh_star
                             device):
     """Cache grouped prepare routing tensors once per scheduler step."""
     key = (str(device), tuple(active), tuple(prefixes), tuple(kv_ends),
-           tuple(fresh_starts), id(attn_metadata.block_tables),
-           getattr(attn_metadata.block_tables, "_version", None))
+           tuple(fresh_starts), _cache_identity(attn_metadata.block_tables))
     cache = getattr(attn_metadata, "_oscar_native_prepare", None)
     if cache is not None and cache[0] == key:
         return cache[1]

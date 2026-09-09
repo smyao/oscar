@@ -46,6 +46,11 @@ export OSCAR_ASCEND_USE_TRITON="${OSCAR_ASCEND_USE_TRITON:-1}"
 # 131072 tokens 对 Hk=1,D=256,bf16 的K+V输入约128MiB/rank（不含workspace）。
 export OSCAR_ASCEND_BATCHED_NATIVE="${OSCAR_ASCEND_BATCHED_NATIVE:-1}"
 export OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS="${OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS:-131072}"
+# vLLM checks this reservation against free memory before loading weights.
+# Keep the serving default, but make it overridable for differently sized
+# deployments instead of baking an opaque literal into the command line.
+GPU_MEMORY_UTILIZATION="${OSCAR_GPU_MEMORY_UTILIZATION:-0.9}"
+echo "🧠 [oscar-ascend] devices=$ASCEND_RT_VISIBLE_DEVICES, gpu-memory-utilization=$GPU_MEMORY_UTILIZATION"
 
 for rotation_path in "$OSCAR_ASCEND_K_ROTATION_PATH" "$OSCAR_ASCEND_V_ROTATION_PATH"; do
   if [ ! -f "$rotation_path" ]; then
@@ -86,7 +91,7 @@ exec vllm serve "$MODEL_PATH" \
     --max-model-len 262144 \
     --max-num-batched-tokens "$BATCHED_TOKENS" \
     --max-num-seqs 128 \
-    --gpu-memory-utilization 0.9 \
+    --gpu-memory-utilization "$GPU_MEMORY_UTILIZATION" \
     --compilation-config '{"cudagraph_capture_sizes":[1,4,8,12,16,24,32,48,56,64,72,84,96,108,112,128,160,172,196,200,212,232,272,288,312,328,344,360,384,400,416,432,448,480,512], "cudagraph_mode":"FULL_DECODE_ONLY"}' \
     --speculative_config '{"method": "qwen3_5_mtp", "num_speculative_tokens": 3, "enforce_eager": true}' \
     --trust-remote-code \

@@ -185,6 +185,25 @@ def test_execution_plan_classifies_and_caches_request_rows():
     assert first.multi_query_rows.tolist() == [1]
 
 
+def test_metadata_cache_accepts_inference_tensors():
+    """Real vLLM metadata tensors are created inside inference_mode."""
+    with torch.inference_mode():
+        md = NS(
+            num_actual_tokens=3,
+            query_start_loc=torch.tensor([0, 1, 3]),
+            seq_lens=torch.tensor([7, 11]),
+        )
+    assert metadata_batch_lists(md) == ([0, 1, 3], [7, 11])
+    first = metadata_execution_plan(md, torch.device("cpu"))
+    second = metadata_execution_plan(md, torch.device("cpu"))
+    assert first is second
+    assert first.decode_requests == (0,)
+    assert first.multi_query_requests == (1,)
+    assert first.decode_rows.tolist() == [0]
+    assert first.decode_tokens.tolist() == [0]
+    assert first.multi_query_rows.tolist() == [1]
+
+
 def test_empty_rotation_paths_are_true_zero_operator_fast_path():
     impl, layer, _ = fixture()
     value = torch.randn(3, 1, 64, dtype=torch.bfloat16)

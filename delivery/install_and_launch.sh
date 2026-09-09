@@ -48,6 +48,24 @@ export ASCEND_RT_VISIBLE_DEVICES="${ASCEND_RT_VISIBLE_DEVICES:-0,1,2,3}"
 fail() { echo "❌ [oscar-ascend] $1" >&2; echo "   日志: $LOG_DIR/*$STAMP*" >&2; exit 1; }
 step() { echo "==> [oscar-ascend] $1"; }
 
+# Triton compiler regressions must fail closed instead of hanging serve startup
+# indefinitely. GNU coreutils `timeout` is present in the target Linux image;
+# keep a portable fallback for developer hosts such as macOS.
+PROBE_TIMEOUT_SECONDS="${OSCAR_ASCEND_PROBE_TIMEOUT_SECONDS:-180}"
+run_numeric_probe() {
+    if command -v timeout >/dev/null 2>&1; then
+        local rc=0
+        timeout --signal=TERM --kill-after=15s "${PROBE_TIMEOUT_SECONDS}s" \
+            "$PYTHON" delivery/probe_oscar.py "$@" || rc=$?
+        if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+            echo "❌ probe 超过 ${PROBE_TIMEOUT_SECONDS}s，已终止（疑似 Triton 编译卡死）" >&2
+        fi
+        return "$rc"
+    else
+        "$PYTHON" delivery/probe_oscar.py "$@"
+    fi
+}
+
 # ---------- 阶段1 自检（Docker 预装环境） ----------
 step "自检: vllm/vllm-ascend/triton/NPU 可见性/插件入口点"
 $PYTHON - <<'PY' > "$LOG_DIR/selfcheck_$STAMP.log" 2>&1 || { cat "$LOG_DIR/selfcheck_$STAMP.log"; fail "自检失败（Python 环境异常）"; }
@@ -180,20 +198,20 @@ step "真机数值 probe（ref + triton；FAIL 阻断 serve）"
 # USE_TRITON=0 降级 torch 参考路径（绝不带未验证内核进 serve）。
 REQUIRE_TRITON="${OSCAR_ASCEND_REQUIRE_TRITON:-1}"
 if [ "${OSCAR_SKIP_PROBES:-0}" != "1" ]; then
-    "$PYTHON" delivery/probe_oscar.py --mode ref \
+    run_numeric_probe --mode ref \
         || fail "数值 probe(ref) FAIL —— 拒绝 serve"
-    "$PYTHON" delivery/probe_oscar.py --mode ref --slot-bytes 256 \
+    run_numeric_probe --mode ref --slot-bytes 256 \
         || fail "数值 probe(ref, packed 256B 槽) FAIL —— 拒绝 serve（DESIGN-E 几何）"
     if $PYTHON -c "from vllm.triton_utils import HAS_TRITON; import sys; sys.exit(0 if HAS_TRITON else 1)"; then
         if [ "$REQUIRE_TRITON" == "1" ]; then
-            "$PYTHON" delivery/probe_oscar.py --mode triton \
+            run_numeric_probe --mode triton \
                 || fail "数值 probe(triton) FAIL —— 拒绝 serve（默认硬门禁；降级逃生门：OSCAR_ASCEND_REQUIRE_TRITON=0）"
-            "$PYTHON" delivery/probe_oscar.py --mode triton --slot-bytes 256 \
+            run_numeric_probe --mode triton --slot-bytes 256 \
                 || fail "数值 probe(triton, packed 256B 槽) FAIL —— 拒绝 serve（DESIGN-E 几何）"
             echo "  ✅ triton probe PASS（512B+256B 两档几何）→ serve 将以 OSCAR_ASCEND_USE_TRITON=1 启动（serve_oscar.sh 默认）"
         else
-            if "$PYTHON" delivery/probe_oscar.py --mode triton; then
-                if "$PYTHON" delivery/probe_oscar.py --mode triton --slot-bytes 256; then
+            if run_numeric_probe --mode triton; then
+                if run_numeric_probe --mode triton --slot-bytes 256; then
                     echo "  ✅ triton probe PASS（512B+256B）→ USE_TRITON 保持默认 1"
                 else
                     echo "  ⚠️ triton probe(packed 256B 槽) 未通过（观察模式）→ 强制 OSCAR_ASCEND_USE_TRITON=0"

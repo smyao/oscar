@@ -157,9 +157,10 @@ def gather_kv_ref(
 # ---------------------------------------------------------------------------
 # Triton 内核（port PR#46774 triton_oscar_store.py，按本插件拆槽偏移；字节=ref）
 #
-# Production path performs clipping, scale/zero reduction, fp16 contract
-# rounding, packing and optional staging in one program.  The wrapper keeps
-# the reference implementation as the fail-safe numerical oracle.
+# Triton-Ascend currently cannot compile a practical 256-lane order statistic:
+# tl.sort either fails lowering or spends minutes in code generation.  Keep the
+# exact top-k clipping contract in the wrapper, then fuse scale/zero reduction,
+# packing and optional staging in one program.
 # ---------------------------------------------------------------------------
 if triton is not None:
 
@@ -167,21 +168,8 @@ if triton is not None:
     def _quant_pack_vec(
         Src_ptr, base, d_offs, d_mask,
         D: tl.constexpr, LEVELS: tl.constexpr, BLOCK_D: tl.constexpr,
-        CLIP_INDEX: tl.constexpr, DO_CLIP: tl.constexpr,
     ):
         vec = tl.load(Src_ptr + base + d_offs, mask=d_mask, other=0.0).to(tl.float32)
-        if DO_CLIP:
-            ordered = tl.sort(
-                tl.where(d_mask, tl.abs(vec), float("inf")),
-                dim=0, descending=False,
-            )
-            # Triton-Ascend cannot lower tensor[constexpr] indexing. Select
-            # the same scalar order statistic with a vector mask + reduction.
-            # CLIP_INDEX is always in [0, D), so exactly one lane contributes.
-            threshold = tl.sum(
-                tl.where(d_offs == CLIP_INDEX, ordered, 0.0), axis=0
-            )
-            vec = tl.minimum(tl.maximum(vec, -threshold), threshold)
         vmin = tl.min(tl.where(d_mask, vec, float("inf")), axis=0)
         vmax = tl.max(tl.where(d_mask, vec, -float("inf")), axis=0)
         scale = (vmax - vmin) / (LEVELS - 1)
@@ -200,7 +188,7 @@ if triton is not None:
 
     @triton.jit
     def _oscar_store_kernel(
-        Key_ptr, Value_ptr,       # [NH, D] fp32 已旋转（未裁剪）
+        Key_ptr, Value_ptr,       # [NH, D] fp32 已旋转、已裁剪的量化输入
         KCache8_ptr, VCache8_ptr,
         Slot_mapping_ptr,         # [N]
         RawKey_ptr, RawValue_ptr, StageK_ptr, StageV_ptr, Owner_ptr,
@@ -210,8 +198,6 @@ if triton is not None:
         D: tl.constexpr, H: tl.constexpr, BLOCK_SIZE: tl.constexpr,
         BLOCK_D: tl.constexpr, BLOCK_PACK: tl.constexpr, K_IDX_OFF: tl.constexpr,
         HAS_STAGE: tl.constexpr,
-        K_CLIP_INDEX: tl.constexpr, V_CLIP_INDEX: tl.constexpr,
-        CLIP_K: tl.constexpr, CLIP_V: tl.constexpr,
     ):
         pid = tl.program_id(0)
         token_idx = pid // H
@@ -236,12 +222,10 @@ if triton is not None:
         k_packed, k_scale, k_zero = _quant_pack_vec(
             Key_ptr, base, d_offs, d_mask,
             D=D, LEVELS=4, BLOCK_D=BLOCK_D,
-            CLIP_INDEX=K_CLIP_INDEX, DO_CLIP=CLIP_K,
         )
         v_packed, v_scale, v_zero = _quant_pack_vec(
             Value_ptr, base, d_offs, d_mask,
             D=D, LEVELS=4, BLOCK_D=BLOCK_D,
-            CLIP_INDEX=V_CLIP_INDEX, DO_CLIP=CLIP_V,
         )
         # K 槽 meta[0..7]：K scale/zero @0..3，V scale/zero @4..7（拼接后=N-01）
         # 精确 fp16 值 → 任意舍入模式转换恒等
@@ -298,8 +282,24 @@ def oscar_store_triton(
     k8, v8 = k_cache.view(torch.uint8), v_cache.view(torch.uint8)
     bs = k8.shape[1]
     BLOCK_PACK = triton.next_power_of_2(D // VALUES_PER_BYTE)
-    k_flat = k_rot.reshape(N * H, D).contiguous()
-    v_flat = v_rot.reshape(N * H, D).contiguous()
+
+    def _clip_without_triton_sort(x: torch.Tensor, ratio: float) -> torch.Tensor:
+        if ratio <= 0.0:
+            return x
+        # Identical order statistic to the reference/probe contract.  This is
+        # deliberately outside the JIT kernel: a 256-lane tl.sort is not a
+        # viable primitive on current Triton-Ascend.
+        index = min(int(ratio * D), D - 1)
+        threshold = torch.topk(
+            x.float().abs(), max(1, D - index), dim=-1,
+            largest=True, sorted=True,
+        ).values[..., -1:]
+        return torch.clamp(x.float(), -threshold, threshold)
+
+    k_quant = _clip_without_triton_sort(k_rot, float(k_clip_ratio))
+    v_quant = _clip_without_triton_sort(v_rot, float(v_clip_ratio))
+    k_flat = k_quant.reshape(N * H, D).contiguous()
+    v_flat = v_quant.reshape(N * H, D).contiguous()
     if staging is None:
         raw_k, raw_v, stage_k, stage_v, owner, stage_seats = (
             k_flat, v_flat, k_flat, v_flat, slot_mapping, slot_mapping
@@ -321,8 +321,5 @@ def oscar_store_triton(
         BLOCK_D=triton.next_power_of_2(D), BLOCK_PACK=BLOCK_PACK,
         K_IDX_OFF=K_IDX_OFF,
         HAS_STAGE=staging is not None,
-        K_CLIP_INDEX=min(int(k_clip_ratio * D), D - 1),
-        V_CLIP_INDEX=min(int(v_clip_ratio * D), D - 1),
-        CLIP_K=k_clip_ratio > 0.0, CLIP_V=v_clip_ratio > 0.0,
         num_warps=4, num_stages=1,
     )

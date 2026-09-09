@@ -181,6 +181,7 @@ def test_execution_plan_classifies_and_caches_request_rows():
     assert first.decode_requests == (0, 2)
     assert first.multi_query_requests == (1,)
     assert first.decode_rows.tolist() == [0, 2]
+    assert first.decode_tokens.tolist() == [0, 5]
     assert first.multi_query_rows.tolist() == [1]
 
 
@@ -229,11 +230,12 @@ def test_forward_fused_store_skips_second_staging_scatter(monkeypatch):
 
     def fused_store(k, v, kc, vc, slots, *, staging=None, **_):
         assert staging is not None
-        raw_k, raw_v, stage_k, stage_v, seats = staging
+        raw_k, raw_v, stage_k, stage_v, owner, seats = staging
         selected = torch.nonzero(seats >= 0, as_tuple=True)[0]
         rows, offsets = seats[selected] // impl.stage_block, seats[selected] % impl.stage_block
         stage_k[rows, offsets] = raw_k[selected]
         stage_v[rows, offsets] = raw_v[selected]
+        owner[rows, offsets] = slots[selected] // impl.stage_block
         oscar_store_ref(k, v, kc, vc, slots)
         seen.append("fused")
 
@@ -545,7 +547,7 @@ def test_worker_hooks_budget_then_initialize_and_report(monkeypatch, capsys):
     assert records[0]["shadow_layers"] == [draft_name]
 
 
-def test_forward_routes_only_single_query_requests_to_paged(monkeypatch):
+def test_forward_routes_mixed_single_query_to_grouped_decode(monkeypatch):
     impl, layer, cache = fixture()
     impl._oscar.use_paged = True
     impl._oscar_use_triton = True
@@ -564,10 +566,14 @@ def test_forward_routes_only_single_query_requests_to_paged(monkeypatch):
     monkeypatch.setattr(
         impl, "_short_query_attention", lambda *a, **kw: None,
     )
-    monkeypatch.setattr(
-        "oscar_ascend.kernels.paged_attention.oscar_paged_attention_triton",
-        lambda *a, **kw: marker[:1],
-    )
+    decode = []
+
+    def selected_decode(query, rows, host_rows, *args):
+        decode.append((rows.tolist(), host_rows))
+        assert query.shape[0] == 1
+        return marker[:1]
+
+    monkeypatch.setattr(impl, "_decode_attention_rows", selected_decode)
 
     def grouped_attention(*args, **kwargs):
         grouped.append(kwargs["request_indices"])
@@ -577,6 +583,7 @@ def test_forward_routes_only_single_query_requests_to_paged(monkeypatch):
 
     monkeypatch.setattr(impl, "_prefill_attention", grouped_attention)
     out = impl.forward(layer, q, k, v, cache, md, output=torch.empty_like(q))
+    assert decode == [([0], (0,))]
     assert grouped == [[1]]
     torch.testing.assert_close(out, marker)
 

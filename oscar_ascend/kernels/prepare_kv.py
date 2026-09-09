@@ -337,7 +337,7 @@ def prepare_native_kv_batch(
         kv_ends.append((kv_ends[-1] if kv_ends else 0) + length)
     k_all = torch.empty(kv_ends[-1], hk, d, dtype=dtype, device=device)
     v_all = torch.empty_like(k_all)
-    if use_triton and triton is not None and count > 1:
+    if use_triton and triton is not None:
         starts = [0] + kv_ends[:-1]
         if prepared_metadata is None:
             prefix_tensor = torch.tensor(prefixes, dtype=torch.int32, device=device)

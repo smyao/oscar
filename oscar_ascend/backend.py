@@ -301,6 +301,7 @@ class OscarExecutionPlan:
     multi_query_requests: tuple[int, ...]
     empty_requests: tuple[int, ...]
     decode_rows: torch.Tensor
+    decode_tokens: torch.Tensor
     multi_query_rows: torch.Tensor
 
     @property
@@ -330,6 +331,9 @@ def metadata_execution_plan(attn_metadata, device) -> OscarExecutionPlan:
         multi_query_requests=tuple(multi),
         empty_requests=tuple(empty),
         decode_rows=torch.tensor(decode, dtype=torch.int64, device=device),
+        decode_tokens=torch.tensor(
+            [q_starts[i] for i in decode], dtype=torch.int64, device=device
+        ),
         multi_query_rows=torch.tensor(multi, dtype=torch.int64, device=device),
     )
     try:
@@ -442,8 +446,10 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
 
                 stage_args = None
                 if staging is not None:
-                    stage_k, stage_v, stage_seats = staging
-                    stage_args = (raw_k, raw_v, stage_k, stage_v, stage_seats)
+                    stage_k, stage_v, owner, stage_seats = staging
+                    stage_args = (
+                        raw_k, raw_v, stage_k, stage_v, owner, stage_seats
+                    )
                 oscar_store_triton(
                     k_rot, v_rot, k_cache, v_cache, slot_mapping,
                     staging=stage_args,
@@ -568,9 +574,11 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     self._oscar.recent_tokens,
                 )
                 rows, offsets, owners = plan[:3]
-                layer._oscar_slot_owner[rows, offsets] = owners
+                if not self._oscar_use_triton:
+                    layer._oscar_slot_owner[rows, offsets] = owners
                 staging = (
-                    layer._oscar_stage_k, layer._oscar_stage_v, plan[6]
+                    layer._oscar_stage_k, layer._oscar_stage_v,
+                    layer._oscar_slot_owner, plan[6]
                 )
             rotated = self.do_kv_cache_update(
                 layer, key, value, kv_cache,
@@ -624,51 +632,22 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         # Mixed batches are partitioned by the shared execution plan.  The
         # current paged kernel is safe here only for q_len=1; multi-query rows
         # stay on grouped FIA until the request/KV-head tiled kernel is ready.
-        if self._oscar.use_paged and self._oscar_use_triton and key is not None and value is not None:
-            qsl, seqs = execution.q_starts, execution.seq_lens
-            actual = execution.actual_tokens
-            # The paged decode kernel assigns one program to each query row.
-            # Restrict it to true decode (q_len == 1); routing MTP rows here
-            # rereads the same request history once for every speculative token.
-            short = [
-                (i, qsl[i], min(qsl[i + 1], actual), seqs[i])
-                for i in execution.decode_requests
-            ]
-            if short:
-                from .kernels.paged_attention import oscar_paged_attention_triton
-                stage = None
-                if self._oscar.window_enabled and self._oscar_stage_ready:
-                    stage = (layer._oscar_stage_k, layer._oscar_stage_v, layer._oscar_slot_owner)
-                token_ids = torch.tensor([t for _, a, b, _ in short for t in range(a, b)], device=query.device)
-                request_ids = torch.tensor([i for i, _, _, _ in short], device=attn_metadata.block_tables.device)
-                starts = [0]
-                for _, a, b, _ in short:
-                    starts.append(starts[-1] + b - a)
-                # Pack only short-query requests. A simultaneous long prefill
-                # must not force the entire MTP/decode batch onto the dense path.
-                k_rot, v_rot = rotated or (
-                    self._rotate_k(key, layer), self._rotate_v(value, layer)
-                )
-                out_short = oscar_paged_attention_triton(
-                    self._rotate_k(query[token_ids], layer),
-                    k_rot[token_ids], v_rot[token_ids],
-                    self.key_cache, self.value_cache, attn_metadata.block_tables[request_ids],
-                    starts, [seq for _, _, _, seq in short], self.scale, stage,
-                )
-                out_short = self._restore_v(out_short, layer, query.dtype)
-                # All multi-token requests use the grouped native path below,
-                # which reconstructs historical KV once per request.
-                large = list(execution.multi_query_requests)
-                if large:
-                    attn_out = self._prefill_attention(
-                        query, key, value, kv_cache, attn_metadata, layer,
-                        request_indices=large, rotated=rotated,
-                    )
-                else:
-                    attn_out = torch.zeros_like(query)
-                attn_out[token_ids] = out_short.to(attn_out.dtype)
-                output.copy_(attn_out.reshape(output.shape).to(output.dtype))
-                return output
+        if (self._oscar_use_triton and key is not None and value is not None
+                and execution.decode_requests
+                and execution.multi_query_requests):
+            out_short = self._decode_attention_rows(
+                query.index_select(0, execution.decode_tokens),
+                execution.decode_rows, execution.decode_requests,
+                attn_metadata, layer,
+            )
+            attn_out = self._prefill_attention(
+                query, key, value, kv_cache, attn_metadata, layer,
+                request_indices=list(execution.multi_query_requests),
+                rotated=rotated,
+            )
+            attn_out.index_copy_(0, execution.decode_tokens, out_short)
+            output.copy_(attn_out.reshape(output.shape).to(output.dtype))
+            return output
 
         # The vector paged kernel took ~4.35 s over 16 layers for a 4-token
         # MTP step on the target NPU. With fresh K/V, use dense reconstruction
@@ -741,6 +720,31 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 q_rot, self.key_cache, self.value_cache, bt, seq,
                 self.scale, self.num_kv_heads, self.head_size,
             )
+        return self._restore_v(out_rot, layer, query.dtype)
+
+    def _decode_attention_rows(self, query, request_rows, host_rows,
+                               attn_metadata, layer) -> torch.Tensor:
+        """Decode selected q=1 requests without the legacy paged-row kernel."""
+        from .kernels.decode_kernel import oscar_decode_triton
+
+        q_rot = self._rotate_k(query, layer)
+        bt = attn_metadata.block_tables.index_select(0, request_rows)
+        seq = attn_metadata.seq_lens.to(
+            device=q_rot.device, dtype=torch.int32
+        ).index_select(0, request_rows)
+        host_seqs = metadata_batch_lists(attn_metadata)[1]
+        longest = max((int(host_seqs[i]) for i in host_rows), default=1)
+        splits = (1 if longest <= 2048 else 2 if longest <= 8192
+                  else 4 if longest <= 16384 else 8 if longest <= 32768 else 16)
+        stage = None
+        if self._oscar.window_enabled and self._oscar_stage_ready:
+            stage = (layer._oscar_stage_k, layer._oscar_stage_v,
+                     layer._oscar_slot_owner)
+        out_rot, _ = oscar_decode_triton(
+            q_rot, self.key_cache, self.value_cache, bt, seq,
+            self.scale, self.num_kv_heads, self.head_size,
+            max_num_kv_splits=splits, stage=stage,
+        )
         return self._restore_v(out_rot, layer, query.dtype)
 
     def _short_query_attention(self, query, layout, layer, rotated=None):

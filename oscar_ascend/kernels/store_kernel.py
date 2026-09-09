@@ -200,7 +200,8 @@ if triton is not None:
         Key_ptr, Value_ptr,       # [NH, D] fp32 已旋转（未裁剪）
         KCache8_ptr, VCache8_ptr,
         Slot_mapping_ptr,         # [N]
-        RawKey_ptr, RawValue_ptr, StageK_ptr, StageV_ptr, StageSeats_ptr,
+        RawKey_ptr, RawValue_ptr, StageK_ptr, StageV_ptr, Owner_ptr,
+        StageSeats_ptr,
         stride_kb, stride_kp, stride_kh,
         stride_vb, stride_vp, stride_vh,
         D: tl.constexpr, H: tl.constexpr, BLOCK_SIZE: tl.constexpr,
@@ -273,6 +274,10 @@ if triton is not None:
                      mask=stage_valid & d_mask)
             tl.store(StageV_ptr + stage_base + d_offs, raw_v,
                      mask=stage_valid & d_mask)
+            tl.store(
+                Owner_ptr + stage_seat, blk,
+                mask=stage_valid & (head_idx == 0),
+            )
 
 
 def oscar_store_triton(
@@ -290,23 +295,23 @@ def oscar_store_triton(
     k8, v8 = k_cache.view(torch.uint8), v_cache.view(torch.uint8)
     bs = k8.shape[1]
     BLOCK_PACK = triton.next_power_of_2(D // VALUES_PER_BYTE)
-    k_flat = k_rot.reshape(N * H, D).contiguous().float()
-    v_flat = v_rot.reshape(N * H, D).contiguous().float()
+    k_flat = k_rot.reshape(N * H, D).contiguous()
+    v_flat = v_rot.reshape(N * H, D).contiguous()
     if staging is None:
-        raw_k, raw_v, stage_k, stage_v, stage_seats = (
-            k_flat, v_flat, k_flat, v_flat, slot_mapping
+        raw_k, raw_v, stage_k, stage_v, owner, stage_seats = (
+            k_flat, v_flat, k_flat, v_flat, slot_mapping, slot_mapping
         )
     else:
-        raw_k, raw_v, stage_k, stage_v, stage_seats = staging
+        raw_k, raw_v, stage_k, stage_v, owner, stage_seats = staging
         if (raw_k.shape != k_rot.shape or raw_v.shape != v_rot.shape
-                or stage_seats.shape != (N,)):
+                or stage_seats.shape != (N,) or owner.shape != stage_k.shape[:2]):
             raise ValueError("Invalid fused OSCAR staging inputs")
         raw_k = raw_k.reshape(N * H, D).contiguous()
         raw_v = raw_v.reshape(N * H, D).contiguous()
     _oscar_store_kernel[(N * H,)](
         k_flat, v_flat,
         k8, v8, slot_mapping,
-        raw_k, raw_v, stage_k, stage_v, stage_seats,
+        raw_k, raw_v, stage_k, stage_v, owner, stage_seats,
         k8.stride(0), k8.stride(1), k8.stride(2),
         v8.stride(0), v8.stride(1), v8.stride(2),
         D=D, H=H, BLOCK_SIZE=bs,

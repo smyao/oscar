@@ -809,7 +809,8 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         rotated_v = rotated[1] if rotated is not None else self._rotate_v(value, layer)
         if (query.device.type == "npu" and self._oscar.use_batched_native
                 and _grouped and indices):
-            q_parts, k_parts, v_parts, prefixes, q_ends, active = [], [], [], [], [], []
+            q_parts, k_parts, v_parts = [], [], []
+            prefixes, q_ends, kv_ends, active = [], [], [], []
             # Convert the whole group once. Per-request casts create two tiny
             # NPU kernels per sequence and are especially visible during MTP.
             native_k = rotated_k.to(query.dtype)
@@ -822,8 +823,12 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 q_parts.append(q_rotated[start:end])
                 k_parts.append(native_k[start:end])
                 v_parts.append(native_v[start:end])
-                prefixes.append(max(0, int(seq_lens_list[i]) - (end - start)))
+                prefix = max(0, int(seq_lens_list[i]) - (end - start))
+                prefixes.append(prefix)
                 q_ends.append((q_ends[-1] if q_ends else 0) + end - start)
+                kv_ends.append(
+                    (kv_ends[-1] if kv_ends else 0) + prefix + end - start
+                )
             if q_parts:
                 stage = None
                 if self._oscar.window_enabled and self._oscar_stage_ready:
@@ -837,7 +842,8 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     # Avoid allocating k_all/v_all and copying the whole prompt.
                     k_all = native_k[first_q:last_q]
                     v_all = native_v[first_q:last_q]
-                    kv_ends = list(q_ends)
+                    # With no historical prefix the Q and KV packed boundaries
+                    # are identical; kv_ends was already built above.
                 else:
                     fresh_starts = [qsl_list[i] for i in active]
                     rows, prep_metadata = metadata_native_prepare(

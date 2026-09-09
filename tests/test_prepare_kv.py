@@ -70,3 +70,15 @@ def test_batch_preparation_writes_directly_to_packed_ranges():
     ]
     torch.testing.assert_close(k_all, torch.cat([x[0] for x in expected]))
     torch.testing.assert_close(v_all, torch.cat([x[1] for x in expected]))
+
+
+def test_batch_preparation_rejects_prefix_beyond_block_table():
+    bs, hk, d = 4, 1, 64
+    cache = [torch.zeros(2, bs, hk, d, dtype=torch.int8) for _ in range(2)]
+    tables = torch.zeros(1, 2, dtype=torch.int32)
+    fresh = [torch.randn(1, hk, d, dtype=torch.bfloat16) for _ in range(2)]
+    with pytest.raises(ValueError, match="prefix exceeds block-table capacity"):
+        prepare_native_kv_batch(
+            *cache, tables, [bs * tables.shape[1] + 1],
+            [fresh[0]], [fresh[1]], use_triton=False,
+        )

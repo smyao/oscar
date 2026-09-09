@@ -142,7 +142,8 @@ if triton is not None:
         BS: tl.constexpr, HK: tl.constexpr, D: tl.constexpr,
         BD: tl.constexpr, HAS_STAGE: tl.constexpr,
         HAS_FRESH_SOURCE: tl.constexpr, STAGE_ROWS: tl.constexpr,
-        BT: tl.constexpr,
+        NUM_BLOCKS: tl.constexpr, NUM_BT_BLOCKS: tl.constexpr,
+        NUM_FRESH: tl.constexpr, BT: tl.constexpr,
     ):
         request = tl.program_id(0)
         pos = tl.program_id(1) * BT + tl.arange(0, BT)
@@ -153,16 +154,23 @@ if triton is not None:
         length = next_start - out_start
         valid = pos < length
         historical = valid & (pos < prefix)
+        # Ascend MTE can validate vector addresses before applying the lane
+        # predicate. Tail lanes therefore must form in-range addresses too.
+        bt_col = pos // BS
+        bt_valid = historical & (bt_col < NUM_BT_BLOCKS)
+        safe_bt_col = tl.where(bt_valid, bt_col, 0)
         block = tl.load(
-            BlockTables + request * stride_bt + pos // BS,
-            mask=historical, other=0,
+            BlockTables + request * stride_bt + safe_bt_col,
+            mask=bt_valid, other=0,
         ).to(tl.int64)
+        cache_history = bt_valid & (block >= 0) & (block < NUM_BLOCKS)
+        safe_block = tl.where(cache_history, block, 0)
         offset = pos % BS
-        kslot = block * stride_kb + offset.to(tl.int64) * stride_kp + head * stride_kh
-        vslot = block * stride_vb + offset.to(tl.int64) * stride_vp + head * stride_vh
+        safe_offset = tl.where(valid, offset, 0).to(tl.int64)
+        kslot = safe_block * stride_kb + safe_offset * stride_kp + head * stride_kh
+        vslot = safe_block * stride_vb + safe_offset * stride_vp + head * stride_vh
         dims = tl.arange(0, BD)
         dmask = dims < D
-        cache_history = historical
         mask = cache_history[:, None] & dmask[None, :]
         byte_idx = dims[None, :] // 4
         shift = (dims[None, :] % 4) * 2
@@ -188,9 +196,9 @@ if triton is not None:
         kval = kq * ks[:, None] + kz[:, None]
         vval = vq * vs[:, None] + vz[:, None]
         if HAS_STAGE:
-            seat = (block % STAGE_ROWS) * BS + offset
-            owner = tl.load(Owner + seat, mask=historical, other=-1)
-            hit = historical & (owner == block)
+            seat = (safe_block % STAGE_ROWS) * BS + safe_offset
+            owner = tl.load(Owner + seat, mask=cache_history, other=-1)
+            hit = cache_history & (owner == safe_block)
             stage_base = (seat * HK + head) * D
             sk = tl.load(StageK + stage_base[:, None] + dims[None, :],
                          mask=hit[:, None] & dmask[None, :], other=0.0)
@@ -201,7 +209,10 @@ if triton is not None:
         if HAS_FRESH_SOURCE:
             fresh = valid & ~historical
             fresh_start = tl.load(FreshStarts + request)
-            fresh_base = ((fresh_start + pos - prefix) * HK + head) * D
+            fresh_idx = fresh_start + pos - prefix
+            fresh = fresh & (fresh_idx >= 0) & (fresh_idx < NUM_FRESH)
+            safe_fresh_idx = tl.where(fresh, fresh_idx, 0)
+            fresh_base = (safe_fresh_idx * HK + head) * D
             fk = tl.load(FreshK + fresh_base[:, None] + dims[None, :],
                          mask=fresh[:, None] & dmask[None, :], other=0.0)
             fv = tl.load(FreshV + fresh_base[:, None] + dims[None, :],
@@ -210,7 +221,8 @@ if triton is not None:
             vval = tl.where(fresh[:, None], fv, vval)
         kval = kval.to(tl.float16).to(tl.float32)
         vval = vval.to(tl.float16).to(tl.float32)
-        target = ((out_start + pos)[:, None] * HK + head) * D + dims[None, :]
+        safe_out_pos = tl.where(valid, out_start + pos, 0)
+        target = (safe_out_pos[:, None] * HK + head) * D + dims[None, :]
         tl.store(KOut + target, kval, mask=valid[:, None] & dmask[None, :])
         tl.store(VOut + target, vval, mask=valid[:, None] & dmask[None, :])
 
@@ -328,6 +340,11 @@ def prepare_native_kv_batch(
         prefix = int(prefix)
         if prefix < 0 or k_new.shape != v_new.shape:
             raise ValueError("Invalid OSCAR KV batch request")
+        if prefix > block_tables.shape[1] * kc.shape[1]:
+            raise ValueError(
+                "OSCAR prefix exceeds block-table capacity: "
+                f"prefix={prefix}, capacity={block_tables.shape[1] * kc.shape[1]}"
+            )
         if (k_new.ndim != 3 or k_new.shape[1:] != (hk, d)
                 or k_new.dtype != dtype or k_new.device != device
                 or v_new.dtype != dtype or v_new.device != device):
@@ -368,7 +385,9 @@ def prepare_native_kv_batch(
             v8.stride(0), v8.stride(1), v8.stride(2),
             BS=kc.shape[1], HK=hk, D=d, BD=triton.next_power_of_2(d),
             HAS_STAGE=stage is not None, HAS_FRESH_SOURCE=True,
-            STAGE_ROWS=stage_rows, BT=bt, num_warps=1, num_stages=1,
+            STAGE_ROWS=stage_rows, NUM_BLOCKS=kc.shape[0],
+            NUM_BT_BLOCKS=block_tables.shape[1], NUM_FRESH=fresh_k.shape[0],
+            BT=bt, num_warps=1, num_stages=1,
         )
         return k_all, v_all, kv_ends
     start = 0

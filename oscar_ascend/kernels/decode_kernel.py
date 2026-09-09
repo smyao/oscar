@@ -414,7 +414,15 @@ if triton is not None:  # noqa: E305
             ).contiguous()
         group_size = Hq // hk
         requested_tile = int(os.environ.get("OSCAR_ASCEND_GQA_TILE", "0") or 0)
-        tile = group_size if requested_tile <= 0 else min(requested_tile, group_size)
+        if requested_tile <= 0:
+            # Full GQA groups (notably G=6/8 at D=256) keep too many fp32
+            # accumulators live in one Ascend vector program. Pick the largest
+            # divisor no greater than four to avoid spill while retaining KV
+            # reuse within each tile.
+            tile = max(d for d in range(1, min(4, group_size) + 1)
+                       if group_size % d == 0)
+        else:
+            tile = min(requested_tile, group_size)
         if group_size % tile:
             raise ValueError("OSCAR GQA tile must divide the query/KV head ratio")
         group_tiles = group_size // tile

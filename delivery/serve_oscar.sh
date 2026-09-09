@@ -43,9 +43,10 @@ export OSCAR_ASCEND_STAGING_TOKENS="${OSCAR_ASCEND_STAGING_TOKENS:-8192}"
 #    OSCAR_ASCEND_USE_TRITON=0 bash delivery/serve_oscar.sh 回退 torch 参考路径。
 export OSCAR_ASCEND_USE_TRITON="${OSCAR_ASCEND_USE_TRITON:-1}"
 # 将并发请求按累计KV token预算合并为TND FIA，减少逐请求原生算子调用。
-# 131072 tokens 对 Hk=1,D=256,bf16 的K+V输入约128MiB/rank（不含workspace）。
+# 262144 tokens 对 Hk=1,D=256,bf16 的K+V输入约256MiB/rank（不含workspace）。
+# 目标 25~32 并发长上下文下可把每层 FIA 调用数约减半；仍可通过环境变量回退。
 export OSCAR_ASCEND_BATCHED_NATIVE="${OSCAR_ASCEND_BATCHED_NATIVE:-1}"
-export OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS="${OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS:-131072}"
+export OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS="${OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS:-262144}"
 # vLLM checks this reservation against free memory before loading weights.
 # Keep the serving default, but make it overridable for differently sized
 # deployments instead of baking an opaque literal into the command line.

@@ -171,13 +171,16 @@ if triton is not None:
     ):
         vec = tl.load(Src_ptr + base + d_offs, mask=d_mask, other=0.0).to(tl.float32)
         if DO_CLIP:
-            # CLIP_INDEX is the same ascending order statistic as the torch
-            # top-k oracle: tail=D-index, threshold=topk(tail)[-1].
             ordered = tl.sort(
                 tl.where(d_mask, tl.abs(vec), float("inf")),
                 dim=0, descending=False,
             )
-            threshold = ordered[CLIP_INDEX]
+            # Triton-Ascend cannot lower tensor[constexpr] indexing. Select
+            # the same scalar order statistic with a vector mask + reduction.
+            # CLIP_INDEX is always in [0, D), so exactly one lane contributes.
+            threshold = tl.sum(
+                tl.where(d_offs == CLIP_INDEX, ordered, 0.0), axis=0
+            )
             vec = tl.minimum(tl.maximum(vec, -threshold), threshold)
         vmin = tl.min(tl.where(d_mask, vec, float("inf")), axis=0)
         vmax = tl.max(tl.where(d_mask, vec, -float("inf")), axis=0)

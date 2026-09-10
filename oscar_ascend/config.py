@@ -52,7 +52,7 @@ class OscarAscendConfig:
     use_batched_native: bool = True
     use_grouped_mtp: bool = True
     grouped_mtp_max_seq_len: int = 8192
-    native_group_kv_tokens: int = 262144
+    native_group_kv_tokens: int = 131072
     verbose: bool = True
     extra: dict = field(default_factory=dict)
 
@@ -99,7 +99,7 @@ class OscarAscendConfig:
             0, _env_int("OSCAR_ASCEND_GROUPED_MTP_MAX_SEQ_LEN", 8192)
         )
         cfg.native_group_kv_tokens = max(
-            1, _env_int("OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS", 262144)
+            1, _env_int("OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS", 131072)
         )
         if not all(0 <= r <= 1 for r in (cfg.k_clip_ratio, cfg.v_clip_ratio)):
             raise ValueError("OSCAR clip ratios must be finite and in [0, 1]")

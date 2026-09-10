@@ -105,10 +105,12 @@ if triton is not None:
         group = group_tile * BLOCK_G + gi
         lane_valid = (qi < q_len) & (group < KV_GROUP_SIZE)
         q_head = kv_head * KV_GROUP_SIZE + group
+        safe_qi = tl.where(lane_valid, qi, 0)
+        safe_q_head = tl.where(lane_valid, q_head, kv_head * KV_GROUP_SIZE)
         dims = tl.arange(0, BLOCK_D)
         dmask = dims < HEAD_DIM
-        q_base = (q_start + qi)[:, None] * (NUM_KV_HEADS * KV_GROUP_SIZE * HEAD_DIM)
-        q_base += q_head[:, None] * stride_qh
+        q_base = (q_start + safe_qi)[:, None] * (NUM_KV_HEADS * KV_GROUP_SIZE * HEAD_DIM)
+        q_base += safe_q_head[:, None] * stride_qh
         qv = tl.load(QRot + q_base + dims[None, :],
                      mask=lane_valid[:, None] & dmask[None, :], other=0.0).to(tl.float32)
         m = tl.full([BLOCK_Q * BLOCK_G], -float("inf"), tl.float32)
@@ -170,18 +172,24 @@ if triton is not None:
             vval = tl.where(fresh, fv, vval)
 
             score = tl.sum(qv * kval[None, :], axis=1) * ATTN_SCALE
-            score = tl.where(causal, score, -float("inf"))
-            # Earlier speculative rows may have no causal token in a late
-            # split. Keep their empty softmax state stable (avoid -inf--inf).
-            new_m = tl.where(causal, tl.maximum(m, score), m)
-            old_scale = tl.where(causal, tl.exp(m - new_m), 1.0)
-            prob = tl.where(causal, tl.exp(score - new_m), 0.0)
+            # `tl.where` is not lazy. Feeding -inf operands to expressions in
+            # its unselected branch still creates -inf--inf NaNs on Ascend and
+            # can contaminate neighbouring vector lanes. Use finite operands
+            # for non-causal lanes before exp, then select the state update.
+            safe_m = tl.where(causal, m, 0.0)
+            safe_score = tl.where(causal, score, 0.0)
+            candidate_m = tl.maximum(safe_m, safe_score)
+            candidate_old_scale = tl.exp(safe_m - candidate_m)
+            candidate_prob = tl.exp(safe_score - candidate_m)
+            new_m = tl.where(causal, candidate_m, m)
+            old_scale = tl.where(causal, candidate_old_scale, 1.0)
+            prob = tl.where(causal, candidate_prob, 0.0)
             acc = acc * old_scale[:, None] + prob[:, None] * vval[None, :]
             denom = denom * old_scale + prob
             m = new_m
 
         safe_denom = tl.where(denom > 0.0, denom, 1.0)
-        out_base = ((q_start + qi) * stride_mb + q_head * stride_mh
+        out_base = ((q_start + safe_qi) * stride_mb + safe_q_head * stride_mh
                     + split * stride_ms)
         tl.store(Mid + out_base[:, None] + dims[None, :],
                  acc / safe_denom[:, None],

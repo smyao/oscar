@@ -61,10 +61,9 @@ export OSCAR_ASCEND_STAGING_TOKENS="${OSCAR_ASCEND_STAGING_TOKENS:-8192}"
 
 # prefill/chunked-prefill：跨请求合批及 prepare kernel 调优。
 export OSCAR_ASCEND_BATCHED_NATIVE="${OSCAR_ASCEND_BATCHED_NATIVE:-1}"
-# 16K~32K、24 并发实测 KV cache 稳定在 67.7%，使用 128K 预算可让每次
-# native FIA 合并约 4~8 个请求，较 64K 约减半 prepare/FIA 调用；仍只有旧
-# 256K 配置的一半，避免 32 路、92.9% cache 时出现的大工作集 stall。
-export OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS="${OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS:-131072}"
+# 16K~32K 真机 A/B 中，128K 相比 64K 的高并发均值仅提升约 3%，中位数
+# 反而下降；保持 64K 以控制 dense prepare 临时工作集和长尾。
+export OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS="${OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS:-65536}"
 export OSCAR_ASCEND_FUSED_PREP="${OSCAR_ASCEND_FUSED_PREP:-0}"
 export OSCAR_ASCEND_PREP_BT="${OSCAR_ASCEND_PREP_BT:-16}"
 export OSCAR_ASCEND_PREFILL_QBLOCK="${OSCAR_ASCEND_PREFILL_QBLOCK:-512}"

@@ -51,6 +51,7 @@ class OscarAscendConfig:
     use_fused_prep: bool = False  # enable after native MTP preparation probe
     use_batched_native: bool = True
     use_grouped_mtp: bool = True
+    grouped_mtp_max_seq_len: int = 8192
     native_group_kv_tokens: int = 262144
     verbose: bool = True
     extra: dict = field(default_factory=dict)
@@ -94,6 +95,9 @@ class OscarAscendConfig:
         cfg.use_fused_prep = os.environ.get("OSCAR_ASCEND_FUSED_PREP", "0") == "1"
         cfg.use_batched_native = os.environ.get("OSCAR_ASCEND_BATCHED_NATIVE", "1") == "1"
         cfg.use_grouped_mtp = os.environ.get("OSCAR_ASCEND_GROUPED_MTP", "1") == "1"
+        cfg.grouped_mtp_max_seq_len = max(
+            0, _env_int("OSCAR_ASCEND_GROUPED_MTP_MAX_SEQ_LEN", 8192)
+        )
         cfg.native_group_kv_tokens = max(
             1, _env_int("OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS", 262144)
         )

@@ -181,7 +181,9 @@ def check_long_context(device, use_triton, grouped_only=False):
     # Actual packed serving uses 1536-token pages. Include tile/page tails,
     # long split loops, GQA, and staging hits/misses absent from the tiny probe.
     torch.manual_seed(91)
-    d, hk, hq, bs, prefix, nq = 256, 1, 16, 1536, 16387, 4
+    # Production routes histories above 8K to native FIA: keep this probe at
+    # the upper edge of the grouped kernel's supported performance envelope.
+    d, hk, hq, bs, prefix, nq = 256, 1, 16, 1536, 8187, 4
     blocks = (prefix + nq + bs - 1) // bs
     bt = torch.arange(blocks - 1, -1, -1, dtype=torch.int32).unsqueeze(0)
     pos = torch.arange(prefix)

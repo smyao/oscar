@@ -660,6 +660,12 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 and self._oscar.use_grouped_mtp
                 and execution.multi_query_requests
                 and not execution.decode_requests and not execution.empty_requests
+                # On the target 910B a single 15K request spent more than two
+                # minutes in the 16 FULL-layer pure-Vector grouped path.  Past
+                # the measured crossover, reconstruct once per request/layer
+                # and use native FIA (Cube) instead of stalling generation.
+                and max(execution.seq_lens, default=0)
+                    <= self._oscar.grouped_mtp_max_seq_len
                 and max(b - a for a, b in zip(
                     execution.q_starts, execution.q_starts[1:])) <= 4):
             try:

@@ -51,12 +51,13 @@ export OSCAR_ASCEND_GROUPED_MTP="${OSCAR_ASCEND_GROUPED_MTP:-1}"
 export OSCAR_ASCEND_GROUPED_MTP_BLOCK_KV="${OSCAR_ASCEND_GROUPED_MTP_BLOCK_KV:-4}"
 export OSCAR_ASCEND_GROUPED_MTP_TARGET_KV_PER_SPLIT="${OSCAR_ASCEND_GROUPED_MTP_TARGET_KV_PER_SPLIT:-1024}"
 export OSCAR_ASCEND_GROUPED_MTP_MAX_SPLITS="${OSCAR_ASCEND_GROUPED_MTP_MAX_SPLITS:-64}"
+export OSCAR_ASCEND_GROUPED_MTP_MAX_SEQ_LEN="${OSCAR_ASCEND_GROUPED_MTP_MAX_SEQ_LEN:-8192}"
 # vLLM checks this reservation against free memory before loading weights.
 # Keep the serving default, but make it overridable for differently sized
 # deployments instead of baking an opaque literal into the command line.
 GPU_MEMORY_UTILIZATION="${OSCAR_GPU_MEMORY_UTILIZATION:-0.9}"
 MAX_NUM_SEQS="${OSCAR_MAX_NUM_SEQS:-24}"
-echo "🧠 [oscar-ascend] devices=$ASCEND_RT_VISIBLE_DEVICES, gpu-memory-utilization=$GPU_MEMORY_UTILIZATION, max-num-seqs=$MAX_NUM_SEQS, native-group-kv-tokens=$OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS, grouped-mtp-split-target=$OSCAR_ASCEND_GROUPED_MTP_TARGET_KV_PER_SPLIT, grouped-mtp-max-splits=$OSCAR_ASCEND_GROUPED_MTP_MAX_SPLITS"
+echo "🧠 [oscar-ascend] devices=$ASCEND_RT_VISIBLE_DEVICES, gpu-memory-utilization=$GPU_MEMORY_UTILIZATION, max-num-seqs=$MAX_NUM_SEQS, native-group-kv-tokens=$OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS, grouped-mtp-max-seq=$OSCAR_ASCEND_GROUPED_MTP_MAX_SEQ_LEN, grouped-mtp-split-target=$OSCAR_ASCEND_GROUPED_MTP_TARGET_KV_PER_SPLIT, grouped-mtp-max-splits=$OSCAR_ASCEND_GROUPED_MTP_MAX_SPLITS"
 
 for rotation_path in "$OSCAR_ASCEND_K_ROTATION_PATH" "$OSCAR_ASCEND_V_ROTATION_PATH"; do
   if [ ! -f "$rotation_path" ]; then

@@ -44,6 +44,49 @@ export VLLM_ALLOW_INSECURE_SERIALIZATION="${VLLM_ALLOW_INSECURE_SERIALIZATION:-1
 # 显式选择 0-3 号卡：npu-smi 显示 4-7 卡被其它作业占满（各 ~26GB），TP4 必须落到空闲卡
 export ASCEND_RT_VISIBLE_DEVICES="${ASCEND_RT_VISIBLE_DEVICES:-0,1,2,3}"
 
+# ---------- OSCAR 统一运行参数 ----------
+# 这里是 install/probe/serve 的唯一默认参数入口。所有值仍可在调用脚本前通过
+# 同名环境变量覆盖；serve_oscar.sh 中的默认值只用于绕过本脚本直接启动的场景。
+export OSCAR_ASCEND_ENABLE="${OSCAR_ASCEND_ENABLE:-auto}"
+export OSCAR_ASCEND_USE_TRITON="${OSCAR_ASCEND_USE_TRITON:-1}"
+export OSCAR_ASCEND_REQUIRE_TRITON="${OSCAR_ASCEND_REQUIRE_TRITON:-1}"
+export OSCAR_ASCEND_PROBE_TIMEOUT_SECONDS="${OSCAR_ASCEND_PROBE_TIMEOUT_SECONDS:-180}"
+
+# INT2 数值、窗口与 staging 容量。
+export OSCAR_ASCEND_K_CLIP_RATIO="${OSCAR_ASCEND_K_CLIP_RATIO:-0.96}"
+export OSCAR_ASCEND_V_CLIP_RATIO="${OSCAR_ASCEND_V_CLIP_RATIO:-0.92}"
+export OSCAR_ASCEND_SINK_TOKENS="${OSCAR_ASCEND_SINK_TOKENS:-128}"
+export OSCAR_ASCEND_RECENT_TOKENS="${OSCAR_ASCEND_RECENT_TOKENS:-256}"
+export OSCAR_ASCEND_STAGING_TOKENS="${OSCAR_ASCEND_STAGING_TOKENS:-8192}"
+
+# prefill/chunked-prefill：跨请求合批及 prepare kernel 调优。
+export OSCAR_ASCEND_BATCHED_NATIVE="${OSCAR_ASCEND_BATCHED_NATIVE:-1}"
+# 长上下文组装会临时生成 dense K/V。日志显示 32 路、KV cache 92.9% 时出现
+# 60s worker stall；把单组历史预算限制到 64K，防止多个长请求合成超大 FIA 工作集。
+export OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS="${OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS:-65536}"
+export OSCAR_ASCEND_FUSED_PREP="${OSCAR_ASCEND_FUSED_PREP:-0}"
+export OSCAR_ASCEND_PREP_BT="${OSCAR_ASCEND_PREP_BT:-16}"
+export OSCAR_ASCEND_PREFILL_QBLOCK="${OSCAR_ASCEND_PREFILL_QBLOCK:-512}"
+
+# MTP/decode：q<=4 共享历史 KV、paged 实验路径及 GQA 分块。
+export OSCAR_ASCEND_GROUPED_MTP="${OSCAR_ASCEND_GROUPED_MTP:-1}"
+export OSCAR_ASCEND_GROUPED_MTP_BLOCK_KV="${OSCAR_ASCEND_GROUPED_MTP_BLOCK_KV:-4}"
+export OSCAR_ASCEND_USE_PAGED="${OSCAR_ASCEND_USE_PAGED:-0}"
+export OSCAR_ASCEND_PAGED_BLOCK_KV="${OSCAR_ASCEND_PAGED_BLOCK_KV:-4}"
+export OSCAR_ASCEND_GQA_TILE="${OSCAR_ASCEND_GQA_TILE:-0}"
+
+# KV 几何、调度预算和模型装载显存比例。
+export OSCAR_ASCEND_PACKED="${OSCAR_ASCEND_PACKED:-1}"
+if [ "$OSCAR_ASCEND_PACKED" == "1" ]; then
+    export OSCAR_ASCEND_BATCHED_TOKENS="${OSCAR_ASCEND_BATCHED_TOKENS:-15360}"
+else
+    export OSCAR_ASCEND_BATCHED_TOKENS="${OSCAR_ASCEND_BATCHED_TOKENS:-16384}"
+fi
+export OSCAR_GPU_MEMORY_UTILIZATION="${OSCAR_GPU_MEMORY_UTILIZATION:-0.9}"
+# 该模型的实测并发拐点在 25~32 路之间：32 路时 KV 使用率达到 92.9%，随后
+# worker 连续数分钟无响应。默认留出调度/临时张量余量，吞吐型部署可显式调高。
+export OSCAR_MAX_NUM_SEQS="${OSCAR_MAX_NUM_SEQS:-24}"
+
 
 fail() { echo "❌ [oscar-ascend] $1" >&2; echo "   日志: $LOG_DIR/*$STAMP*" >&2; exit 1; }
 step() { echo "==> [oscar-ascend] $1"; }
@@ -51,7 +94,7 @@ step() { echo "==> [oscar-ascend] $1"; }
 # Triton compiler regressions must fail closed instead of hanging serve startup
 # indefinitely. GNU coreutils `timeout` is present in the target Linux image;
 # keep a portable fallback for developer hosts such as macOS.
-PROBE_TIMEOUT_SECONDS="${OSCAR_ASCEND_PROBE_TIMEOUT_SECONDS:-180}"
+PROBE_TIMEOUT_SECONDS="$OSCAR_ASCEND_PROBE_TIMEOUT_SECONDS"
 run_numeric_probe() {
     if command -v timeout >/dev/null 2>&1; then
         local rc=0

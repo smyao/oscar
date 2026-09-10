@@ -43,17 +43,18 @@ export OSCAR_ASCEND_STAGING_TOKENS="${OSCAR_ASCEND_STAGING_TOKENS:-8192}"
 #    OSCAR_ASCEND_USE_TRITON=0 bash delivery/serve_oscar.sh 回退 torch 参考路径。
 export OSCAR_ASCEND_USE_TRITON="${OSCAR_ASCEND_USE_TRITON:-1}"
 # 将并发请求按累计KV token预算合并为TND FIA，减少逐请求原生算子调用。
-# 262144 tokens 对 Hk=1,D=256,bf16 的K+V输入约256MiB/rank（不含workspace）。
-# 目标 25~32 并发长上下文下可把每层 FIA 调用数约减半；仍可通过环境变量回退。
+# 65536 tokens 对 Hk=1,D=256,bf16 的K+V输入约64MiB/rank（不含workspace）。
+# 避免长上下文高并发时一次 prepare/FIA 占用设备数十秒；仍可通过环境变量调高。
 export OSCAR_ASCEND_BATCHED_NATIVE="${OSCAR_ASCEND_BATCHED_NATIVE:-1}"
-export OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS="${OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS:-262144}"
+export OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS="${OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS:-65536}"
 export OSCAR_ASCEND_GROUPED_MTP="${OSCAR_ASCEND_GROUPED_MTP:-1}"
 export OSCAR_ASCEND_GROUPED_MTP_BLOCK_KV="${OSCAR_ASCEND_GROUPED_MTP_BLOCK_KV:-4}"
 # vLLM checks this reservation against free memory before loading weights.
 # Keep the serving default, but make it overridable for differently sized
 # deployments instead of baking an opaque literal into the command line.
 GPU_MEMORY_UTILIZATION="${OSCAR_GPU_MEMORY_UTILIZATION:-0.9}"
-echo "🧠 [oscar-ascend] devices=$ASCEND_RT_VISIBLE_DEVICES, gpu-memory-utilization=$GPU_MEMORY_UTILIZATION"
+MAX_NUM_SEQS="${OSCAR_MAX_NUM_SEQS:-24}"
+echo "🧠 [oscar-ascend] devices=$ASCEND_RT_VISIBLE_DEVICES, gpu-memory-utilization=$GPU_MEMORY_UTILIZATION, max-num-seqs=$MAX_NUM_SEQS, native-group-kv-tokens=$OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS"
 
 for rotation_path in "$OSCAR_ASCEND_K_ROTATION_PATH" "$OSCAR_ASCEND_V_ROTATION_PATH"; do
   if [ ! -f "$rotation_path" ]; then
@@ -93,7 +94,7 @@ exec vllm serve "$MODEL_PATH" \
     --tensor-parallel-size 4 \
     --max-model-len 262144 \
     --max-num-batched-tokens "$BATCHED_TOKENS" \
-    --max-num-seqs 128 \
+    --max-num-seqs "$MAX_NUM_SEQS" \
     --gpu-memory-utilization "$GPU_MEMORY_UTILIZATION" \
     --compilation-config '{"cudagraph_capture_sizes":[1,4,8,12,16,24,32,48,56,64,72,84,96,108,112,128,160,172,196,200,212,232,272,288,312,328,344,360,384,400,416,432,448,480,512], "cudagraph_mode":"FULL_DECODE_ONLY"}' \
     --speculative_config '{"method": "qwen3_5_mtp", "num_speculative_tokens": 3, "enforce_eager": true}' \

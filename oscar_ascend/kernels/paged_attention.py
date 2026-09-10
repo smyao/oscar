@@ -509,7 +509,8 @@ def oscar_paged_attention_triton(
 
 
 def oscar_grouped_mtp_attention_triton(
-    q, k, v, kc, vc, bt, qsl, seqs, scale, stage=None, *, max_query_len=4
+    q, k, v, kc, vc, bt, qsl, seqs, scale, stage=None, *, max_query_len=4,
+    prepared_metadata=None,
 ):
     """Paged MTP attention with one historical KV read per request/GQA tile."""
     if triton is None:
@@ -527,16 +528,24 @@ def oscar_grouped_mtp_attention_triton(
     k = k.contiguous().float()
     v = v.contiguous().float()
     bt = bt.to(device=q.device).contiguous()
-    q_starts = torch.tensor(qsl[:-1], dtype=torch.int32, device=q.device)
-    q_lens = torch.tensor(lengths, dtype=torch.int32, device=q.device)
-    prefixes = torch.tensor(
-        [s - n_q for s, n_q in zip(seqs, lengths)],
-        dtype=torch.int32, device=q.device,
-    )
-    ends = torch.tensor(
-        [s - n_q + j + 1 for s, n_q in zip(seqs, lengths)
-         for j in range(n_q)], dtype=torch.int32, device=q.device,
-    )
+    if prepared_metadata is None:
+        q_starts = torch.tensor(qsl[:-1], dtype=torch.int32, device=q.device)
+        q_lens = torch.tensor(lengths, dtype=torch.int32, device=q.device)
+        prefixes = torch.tensor(
+            [s - n_q for s, n_q in zip(seqs, lengths)],
+            dtype=torch.int32, device=q.device,
+        )
+        ends = torch.tensor(
+            [s - n_q + j + 1 for s, n_q in zip(seqs, lengths)
+             for j in range(n_q)], dtype=torch.int32, device=q.device,
+        )
+    else:
+        q_starts, q_lens, prefixes, ends = prepared_metadata
+        expected = ((len(lengths),), (len(lengths),), (len(lengths),), (n,))
+        for tensor, shape in zip(prepared_metadata, expected):
+            if (tensor.shape != shape or tensor.device != q.device
+                    or tensor.dtype != torch.int32 or not tensor.is_contiguous()):
+                raise ValueError("Invalid grouped MTP prepared metadata")
     k8, v8 = kc.view(torch.uint8), vc.view(torch.uint8)
     if stage is None:
         sk, sv, owner, stage_rows = k, v, q_lens, 1

@@ -297,6 +297,33 @@ def metadata_decode_buckets(attn_metadata, device):
     return result
 
 
+def metadata_grouped_mtp_layout(attn_metadata, device, q_starts, seq_lens):
+    """Cache the four device vectors consumed by every grouped-MTP layer."""
+    starts = tuple(int(x) for x in q_starts)
+    seqs = tuple(int(x) for x in seq_lens)
+    lengths = tuple(b - a for a, b in zip(starts, starts[1:]))
+    key = (str(device), starts, seqs)
+    cached = getattr(attn_metadata, "_oscar_grouped_mtp_layout", None)
+    if cached is not None and cached[0] == key:
+        return cached[1]
+    prefixes = tuple(s - n for s, n in zip(seqs, lengths))
+    result = (
+        torch.tensor(starts[:-1], dtype=torch.int32, device=device),
+        torch.tensor(lengths, dtype=torch.int32, device=device),
+        torch.tensor(prefixes, dtype=torch.int32, device=device),
+        torch.tensor(
+            [prefix + j + 1 for prefix, n in zip(prefixes, lengths)
+             for j in range(n)],
+            dtype=torch.int32, device=device,
+        ),
+    )
+    try:
+        attn_metadata._oscar_grouped_mtp_layout = (key, result)
+    except Exception:
+        pass
+    return result
+
+
 @dataclass(frozen=True)
 class OscarExecutionPlan:
     """Layer-independent routing for one scheduler step.
@@ -650,6 +677,10 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     self.key_cache, self.value_cache, attn_metadata.block_tables,
                     list(execution.q_starts), list(execution.seq_lens),
                     self.scale, stage,
+                    prepared_metadata=metadata_grouped_mtp_layout(
+                        attn_metadata, query.device, execution.q_starts,
+                        execution.seq_lens,
+                    ),
                 )
                 attn_out = self._restore_v(grouped, layer, query.dtype)
             except Exception as exc:  # pragma: no cover - device gate/fallback

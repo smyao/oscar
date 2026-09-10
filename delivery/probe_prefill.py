@@ -153,6 +153,11 @@ def check_native_mtp(
             impl.key_cache = impl.value_cache = None
             impl._oscar_setup()
             impl._oscar.use_paged = False
+            # This probe measures dense INT2 preparation + native FIA.  Do not
+            # let the production q<=4 grouped-MTP router intercept it; the
+            # paged/grouped kernel (including its 16K long-context case) has a
+            # separate hard gate in probe_paged.py --grouped-only.
+            impl._oscar.use_grouped_mtp = False
             impl._oscar.use_fused_prep = (
                 os.environ.get("OSCAR_ASCEND_FUSED_PREP", "0") == "1"
             )

@@ -99,18 +99,22 @@ step() { echo "==> [oscar-ascend] $1"; }
 # indefinitely. GNU coreutils `timeout` is present in the target Linux image;
 # keep a portable fallback for developer hosts such as macOS.
 PROBE_TIMEOUT_SECONDS="$OSCAR_ASCEND_PROBE_TIMEOUT_SECONDS"
-run_numeric_probe() {
+run_probe_command() {
     if command -v timeout >/dev/null 2>&1; then
         local rc=0
         timeout --signal=TERM --kill-after=15s "${PROBE_TIMEOUT_SECONDS}s" \
-            "$PYTHON" delivery/probe_oscar.py "$@" || rc=$?
+            "$@" || rc=$?
         if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
             echo "❌ probe 超过 ${PROBE_TIMEOUT_SECONDS}s，已终止（疑似 Triton 编译卡死）" >&2
         fi
         return "$rc"
     else
-        "$PYTHON" delivery/probe_oscar.py "$@"
+        "$@"
     fi
+}
+
+run_numeric_probe() {
+    run_probe_command "$PYTHON" delivery/probe_oscar.py "$@"
 }
 
 # ---------- 阶段1 自检（Docker 预装环境） ----------
@@ -284,7 +288,8 @@ fi
 if [ "${OSCAR_SKIP_PROBES:-0}" != "1" ]; then
     # Fused preparation passed numerics but did not improve target NPU timing.
     PREP_MODE="${OSCAR_ASCEND_FUSED_PREP:-0}"
-    OSCAR_ASCEND_FUSED_PREP="$PREP_MODE" "$PYTHON" delivery/probe_prefill.py --device npu \
+    OSCAR_ASCEND_FUSED_PREP="$PREP_MODE" run_probe_command \
+        "$PYTHON" delivery/probe_prefill.py --device npu \
         || fail "原生融合 prefill probe FAIL — 拒绝 serve"
     export OSCAR_ASCEND_FUSED_PREP="$PREP_MODE"
 else
@@ -295,7 +300,8 @@ fi
 # multi-request, staging and long packed-page numerics before serve starts.
 if [ "${OSCAR_SKIP_PROBES:-0}" != "1" ] && [ "${OSCAR_ASCEND_USE_TRITON:-1}" == "1" ] \
         && [ "${OSCAR_ASCEND_GROUPED_MTP:-1}" == "1" ]; then
-    "$PYTHON" delivery/probe_paged.py --device npu --triton --grouped-only \
+    run_probe_command "$PYTHON" delivery/probe_paged.py \
+        --device npu --triton --grouped-only \
         || fail "grouped MTP paged probe FAIL — 拒绝 serve（可设 OSCAR_ASCEND_GROUPED_MTP=0 回退 dense FIA）"
     export OSCAR_ASCEND_GROUPED_MTP=1
 fi
@@ -303,7 +309,7 @@ fi
 # The vector paged kernel is an explicit experiment: target profiling measured
 # ~4.35 s / 16 FULL layers. Default to INT2 reconstruction + native attention.
 if [ "${OSCAR_SKIP_PROBES:-0}" != "1" ] && [ "${OSCAR_ASCEND_USE_TRITON:-1}" == "1" ] && [ "${OSCAR_ASCEND_USE_PAGED:-0}" == "1" ]; then
-    if "$PYTHON" delivery/probe_paged.py --device npu --triton; then
+    if run_probe_command "$PYTHON" delivery/probe_paged.py --device npu --triton; then
         export OSCAR_ASCEND_USE_PAGED=1
         echo "  ✅ MTP paged probe PASS → USE_PAGED=1"
     elif [ "$REQUIRE_TRITON" == "1" ]; then

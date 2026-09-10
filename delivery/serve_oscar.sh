@@ -48,6 +48,7 @@ export OSCAR_ASCEND_USE_TRITON="${OSCAR_ASCEND_USE_TRITON:-1}"
 export OSCAR_ASCEND_BATCHED_NATIVE="${OSCAR_ASCEND_BATCHED_NATIVE:-1}"
 export OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS="${OSCAR_ASCEND_NATIVE_GROUP_KV_TOKENS:-262144}"
 export OSCAR_ASCEND_GROUPED_MTP="${OSCAR_ASCEND_GROUPED_MTP:-1}"
+export OSCAR_ASCEND_GROUPED_MTP_BLOCK_KV="${OSCAR_ASCEND_GROUPED_MTP_BLOCK_KV:-4}"
 # vLLM checks this reservation against free memory before loading weights.
 # Keep the serving default, but make it overridable for differently sized
 # deployments instead of baking an opaque literal into the command line.

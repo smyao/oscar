@@ -80,7 +80,7 @@ if triton is not None:
         BLOCK_SIZE: tl.constexpr, NUM_SPLITS: tl.constexpr,
         KV_GROUP_SIZE: tl.constexpr, GROUP_TILES: tl.constexpr,
         BLOCK_G: tl.constexpr, BLOCK_Q: tl.constexpr,
-        BLOCK_D: tl.constexpr, ATTN_SCALE: tl.constexpr,
+        BLOCK_D: tl.constexpr, BLOCK_KV: tl.constexpr, ATTN_SCALE: tl.constexpr,
         K_IDX_OFF: tl.constexpr, HAS_STAGE: tl.constexpr,
         STAGE_ROWS: tl.constexpr,
     ):
@@ -120,9 +120,14 @@ if triton is not None:
         shift = (dims % 4) * 2
         bt_base = req * stride_bt
 
-        for kv_pos in range(split_start, split_end):
-            causal = lane_valid & (kv_pos < prefix + qi + 1)
-            history = kv_pos < prefix
+        kv_range = tl.arange(0, BLOCK_KV)
+        for kv_start in range(split_start, split_end, BLOCK_KV):
+            kv_pos = kv_start + kv_range
+            kv_valid = kv_pos < split_end
+            causal = lane_valid[:, None] & kv_valid[None, :] & (
+                kv_pos[None, :] < prefix + qi[:, None] + 1
+            )
+            history = kv_valid & (kv_pos < prefix)
             page = kv_pos // BLOCK_SIZE
             page_valid = history & (page < NUM_BT_BLOCKS)
             safe_page = tl.where(page_valid, page, 0)
@@ -130,15 +135,15 @@ if triton is not None:
                             mask=page_valid, other=0).to(tl.int64)
             cache_valid = page_valid & (block >= 0) & (block < NUM_BLOCKS)
             safe_block = tl.where(cache_valid, block, 0)
-            off = kv_pos % BLOCK_SIZE
+            off = tl.where(kv_valid, kv_pos % BLOCK_SIZE, 0)
             kslot = safe_block * stride_kb + off * stride_kp + kv_head * stride_kh
             vslot = safe_block * stride_vb + off * stride_vp + kv_head * stride_vh
-            kb = tl.load(KCache8 + kslot + K_IDX_OFF + byte_idx,
-                         mask=cache_valid & dmask, other=0).to(tl.int32)
-            vb = tl.load(VCache8 + vslot + byte_idx,
-                         mask=cache_valid & dmask, other=0).to(tl.int32)
-            kq = ((kb >> shift) & 3).to(tl.float32)
-            vq = ((vb >> shift) & 3).to(tl.float32)
+            kb = tl.load(KCache8 + kslot[:, None] + K_IDX_OFF + byte_idx[None, :],
+                         mask=cache_valid[:, None] & dmask[None, :], other=0).to(tl.int32)
+            vb = tl.load(VCache8 + vslot[:, None] + byte_idx[None, :],
+                         mask=cache_valid[:, None] & dmask[None, :], other=0).to(tl.int32)
+            kq = ((kb >> shift[None, :]) & 3).to(tl.float32)
+            vq = ((vb >> shift[None, :]) & 3).to(tl.float32)
             ksl = tl.load(KCache8 + kslot, mask=cache_valid, other=0).to(tl.uint16)
             ksh = tl.load(KCache8 + kslot + 1, mask=cache_valid, other=0).to(tl.uint16)
             kzl = tl.load(KCache8 + kslot + 2, mask=cache_valid, other=0).to(tl.uint16)
@@ -151,41 +156,54 @@ if triton is not None:
             kz = (kzl | (kzh << 8)).to(tl.float16, bitcast=True).to(tl.float32)
             vs = (vsl | (vsh << 8)).to(tl.float16, bitcast=True).to(tl.float32)
             vz = (vzl | (vzh << 8)).to(tl.float16, bitcast=True).to(tl.float32)
-            kval = kq * ks + kz
-            vval = vq * vs + vz
+            kval = kq * ks[:, None] + kz[:, None]
+            vval = vq * vs[:, None] + vz[:, None]
             if HAS_STAGE:
                 seat = (safe_block % STAGE_ROWS) * BLOCK_SIZE + off
                 tag = tl.load(Owner + seat, mask=cache_valid, other=-1)
                 hit = cache_valid & (tag == safe_block)
                 stage_base = (seat * NUM_KV_HEADS + kv_head) * HEAD_DIM
-                sk = tl.load(StageK + stage_base + dims, mask=hit & dmask, other=0.0)
-                sv = tl.load(StageV + stage_base + dims, mask=hit & dmask, other=0.0)
-                kval = tl.where(hit, sk, kval)
-                vval = tl.where(hit, sv, vval)
-            fresh = kv_pos >= prefix
+                sk = tl.load(StageK + stage_base[:, None] + dims[None, :],
+                             mask=hit[:, None] & dmask[None, :], other=0.0)
+                sv = tl.load(StageV + stage_base[:, None] + dims[None, :],
+                             mask=hit[:, None] & dmask[None, :], other=0.0)
+                kval = tl.where(hit[:, None], sk, kval)
+                vval = tl.where(hit[:, None], sv, vval)
+            fresh = kv_valid & (kv_pos >= prefix)
             fresh_idx = q_start + kv_pos - prefix
             safe_fresh = tl.where(fresh, fresh_idx, 0)
             fresh_base = (safe_fresh * NUM_KV_HEADS + kv_head) * HEAD_DIM
-            fk = tl.load(KNew + fresh_base + dims, mask=fresh & dmask, other=0.0)
-            fv = tl.load(VNew + fresh_base + dims, mask=fresh & dmask, other=0.0)
-            kval = tl.where(fresh, fk, kval)
-            vval = tl.where(fresh, fv, vval)
+            fk = tl.load(KNew + fresh_base[:, None] + dims[None, :],
+                         mask=fresh[:, None] & dmask[None, :], other=0.0)
+            fv = tl.load(VNew + fresh_base[:, None] + dims[None, :],
+                         mask=fresh[:, None] & dmask[None, :], other=0.0)
+            kval = tl.where(fresh[:, None], fk, kval)
+            vval = tl.where(fresh[:, None], fv, vval)
 
-            score = tl.sum(qv * kval[None, :], axis=1) * ATTN_SCALE
+            score = tl.sum(
+                qv[:, None, :] * kval[None, :, :], axis=2
+            ) * ATTN_SCALE
             # `tl.where` is not lazy. Feeding -inf operands to expressions in
             # its unselected branch still creates -inf--inf NaNs on Ascend and
             # can contaminate neighbouring vector lanes. Use finite operands
             # for non-causal lanes before exp, then select the state update.
-            safe_m = tl.where(causal, m, 0.0)
-            safe_score = tl.where(causal, score, 0.0)
-            candidate_m = tl.maximum(safe_m, safe_score)
+            has_causal = tl.sum(causal.to(tl.int32), axis=1) > 0
+            block_max = tl.max(
+                tl.where(causal, score, -float("inf")), axis=1
+            )
+            safe_m = tl.where(has_causal, m, 0.0)
+            safe_block_max = tl.where(has_causal, block_max, 0.0)
+            candidate_m = tl.maximum(safe_m, safe_block_max)
             candidate_old_scale = tl.exp(safe_m - candidate_m)
-            candidate_prob = tl.exp(safe_score - candidate_m)
-            new_m = tl.where(causal, candidate_m, m)
-            old_scale = tl.where(causal, candidate_old_scale, 1.0)
-            prob = tl.where(causal, candidate_prob, 0.0)
-            acc = acc * old_scale[:, None] + prob[:, None] * vval[None, :]
-            denom = denom * old_scale + prob
+            prob = tl.where(
+                causal, tl.exp(score - candidate_m[:, None]), 0.0
+            )
+            new_m = tl.where(has_causal, candidate_m, m)
+            old_scale = tl.where(has_causal, candidate_old_scale, 1.0)
+            acc = acc * old_scale[:, None] + tl.sum(
+                prob[:, :, None] * vval[None, :, :], axis=1
+            )
+            denom = denom * old_scale + tl.sum(prob, axis=1)
             m = new_m
 
         safe_denom = tl.where(denom > 0.0, denom, 1.0)
@@ -531,6 +549,9 @@ def oscar_grouped_mtp_attention_triton(
     group_tiles = group_size // tile
     block_g = triton.next_power_of_2(tile)
     block_q = triton.next_power_of_2(max_query_len)
+    block_kv = int(os.environ.get("OSCAR_ASCEND_GROUPED_MTP_BLOCK_KV", "4"))
+    if block_kv not in (1, 2, 4):
+        raise ValueError("OSCAR_ASCEND_GROUPED_MTP_BLOCK_KV must be 1, 2 or 4")
     longest = max(seqs)
     splits = 1 if longest <= 2048 else 4 if longest <= 8192 else 8 if longest <= 32768 else 16
     mid = torch.empty(n, hq, splits, d + 1, dtype=torch.float32, device=q.device)
@@ -544,6 +565,7 @@ def oscar_grouped_mtp_attention_triton(
         NUM_KV_HEADS=hk, HEAD_DIM=d, BLOCK_SIZE=kc.shape[1],
         NUM_SPLITS=splits, KV_GROUP_SIZE=group_size, GROUP_TILES=group_tiles,
         BLOCK_G=block_g, BLOCK_Q=block_q, BLOCK_D=triton.next_power_of_2(d),
+        BLOCK_KV=block_kv,
         ATTN_SCALE=scale, K_IDX_OFF=K_IDX_OFF,
         HAS_STAGE=stage is not None, STAGE_ROWS=stage_rows,
         num_warps=1, num_stages=1,

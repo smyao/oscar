@@ -667,7 +667,10 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                 execution.q_starts, execution.q_starts[1:])) <= 4
         )
         if self._oscar_use_ascendc and grouped_shape:
-            from .kernels.ascendc_attention import oscar_ascendc_attention
+            from .kernels.ascendc_attention import (
+                ascendc_required,
+                oscar_ascendc_attention,
+            )
             q_rot = self._rotate_k(query[:execution.actual_tokens], layer)
             q_starts, q_lens, prefixes, _ = metadata_grouped_mtp_layout(
                 attn_metadata, query.device, execution.q_starts,
@@ -677,19 +680,32 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
             if self._oscar.window_enabled and self._oscar_stage_ready:
                 stage = (layer._oscar_stage_k, layer._oscar_stage_v,
                          layer._oscar_slot_owner)
-            grouped = oscar_ascendc_attention(
-                q_rot.contiguous(), rotated[0][:execution.actual_tokens].contiguous(),
-                rotated[1][:execution.actual_tokens].contiguous(), self.key_cache,
-                self.value_cache, attn_metadata.block_tables.contiguous(),
-                q_starts, q_lens, prefixes, self.scale, stage=stage,
-            )
-            attn_out = self._restore_v(grouped, layer, query.dtype)
-            output[:execution.actual_tokens] = attn_out.reshape(
-                output[:execution.actual_tokens].shape
-            ).to(output.dtype)
-            if execution.actual_tokens < num_tokens:
-                output[execution.actual_tokens:num_tokens].zero_()
-            return output
+            try:
+                grouped = oscar_ascendc_attention(
+                    q_rot.contiguous(),
+                    rotated[0][:execution.actual_tokens].contiguous(),
+                    rotated[1][:execution.actual_tokens].contiguous(),
+                    self.key_cache, self.value_cache,
+                    attn_metadata.block_tables.contiguous(), q_starts, q_lens,
+                    prefixes, self.scale, stage=stage,
+                )
+            except Exception as exc:
+                if ascendc_required():
+                    raise
+                if not getattr(self, "_oscar_warned_ascendc", False):
+                    self._oscar_warned_ascendc = True
+                    print(
+                        "[oscar-ascend] AscendC grouped MTP 失败，保持原路径: "
+                        f"{exc}"
+                    )
+            else:
+                attn_out = self._restore_v(grouped, layer, query.dtype)
+                output[:execution.actual_tokens] = attn_out.reshape(
+                    output[:execution.actual_tokens].shape
+                ).to(output.dtype)
+                if execution.actual_tokens < num_tokens:
+                    output[execution.actual_tokens:num_tokens].zero_()
+                return output
 
         if (key is not None and value is not None and self._oscar_use_triton
                 and self._oscar.use_grouped_mtp

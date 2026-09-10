@@ -26,6 +26,10 @@ def ascendc_mode() -> str:
     return mode
 
 
+def ascendc_required() -> bool:
+    return ascendc_mode() == "required"
+
+
 @lru_cache(maxsize=1)
 def _load_library() -> None:
     path = os.environ.get("OSCAR_ASCEND_ASCENDC_LIBRARY", "").strip()

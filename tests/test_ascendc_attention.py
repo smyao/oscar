@@ -21,3 +21,10 @@ def test_invalid_ascendc_mode_is_rejected(monkeypatch):
     monkeypatch.setenv("OSCAR_ASCEND_USE_ASCENDC", "maybe")
     with pytest.raises(ValueError, match="OSCAR_ASCEND_USE_ASCENDC"):
         ascendc_attention.ascendc_mode()
+
+
+def test_required_mode_helper(monkeypatch):
+    monkeypatch.setenv("OSCAR_ASCEND_USE_ASCENDC", "required")
+    assert ascendc_attention.ascendc_required()
+    monkeypatch.setenv("OSCAR_ASCEND_USE_ASCENDC", "1")
+    assert not ascendc_attention.ascendc_required()

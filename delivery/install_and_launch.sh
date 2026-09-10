@@ -102,6 +102,12 @@ export OSCAR_MAX_NUM_SEQS="${OSCAR_MAX_NUM_SEQS:-24}"
 fail() { echo "❌ [oscar-ascend] $1" >&2; echo "   日志: $LOG_DIR/*$STAMP*" >&2; exit 1; }
 step() { echo "==> [oscar-ascend] $1"; }
 
+# Released vllm-ascend wheels are not required to expose
+# ``vllm_ascend.__version__``.  Distribution metadata is authoritative.
+if [ "$OSCAR_ASCEND_USE_ASCENDC" != "0" ]; then
+    "$PYTHON" tools/diag_ascendc_env.py || fail "AscendC 构建/运行环境不完整"
+fi
+
 # Triton compiler regressions must fail closed instead of hanging serve startup
 # indefinitely. GNU coreutils `timeout` is present in the target Linux image;
 # keep a portable fallback for developer hosts such as macOS.

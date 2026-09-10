@@ -19,6 +19,22 @@ from .decode_kernel import oscar_prefill_ref, tl, triton
 from .store_kernel import dequant_split_ref
 
 
+def grouped_mtp_splits(longest: int) -> int:
+    """Bound work per grouped-MTP program without rebuilding dense history."""
+    target = int(os.environ.get(
+        "OSCAR_ASCEND_GROUPED_MTP_TARGET_KV_PER_SPLIT", "1024"
+    ))
+    maximum = int(os.environ.get("OSCAR_ASCEND_GROUPED_MTP_MAX_SPLITS", "64"))
+    if target <= 0:
+        raise ValueError("OSCAR_ASCEND_GROUPED_MTP_TARGET_KV_PER_SPLIT must be positive")
+    if maximum not in (1, 2, 4, 8, 16, 32, 64, 128):
+        raise ValueError(
+            "OSCAR_ASCEND_GROUPED_MTP_MAX_SPLITS must be a power of two in [1, 128]"
+        )
+    needed = max(1, (int(longest) + target - 1) // target)
+    return min(maximum, 1 << (needed - 1).bit_length())
+
+
 def query_layout(qsl, seqs, device):
     lengths = [b - a for a, b in itertools.pairwise(qsl)]
     if len(seqs) != len(lengths) or any(n < 0 or s < n for n, s in zip(lengths, seqs)):
@@ -138,20 +154,28 @@ if triton is not None:
             off = tl.where(kv_valid, kv_pos % BLOCK_SIZE, 0)
             kslot = safe_block * stride_kb + off * stride_kp + kv_head * stride_kh
             vslot = safe_block * stride_vb + off * stride_vp + kv_head * stride_vh
+            stage_hit = cache_valid & False
+            if HAS_STAGE:
+                seat = (safe_block % STAGE_ROWS) * BLOCK_SIZE + off
+                tag = tl.load(Owner + seat, mask=cache_valid, other=-1)
+                stage_hit = cache_valid & (tag == safe_block)
+                stage_base = (seat * NUM_KV_HEADS + kv_head) * HEAD_DIM
+            fresh = kv_valid & (kv_pos >= prefix)
+            cache_mask = cache_valid & ~stage_hit & ~fresh
             kb = tl.load(KCache8 + kslot[:, None] + K_IDX_OFF + byte_idx[None, :],
-                         mask=cache_valid[:, None] & dmask[None, :], other=0).to(tl.int32)
+                         mask=cache_mask[:, None] & dmask[None, :], other=0).to(tl.int32)
             vb = tl.load(VCache8 + vslot[:, None] + byte_idx[None, :],
-                         mask=cache_valid[:, None] & dmask[None, :], other=0).to(tl.int32)
+                         mask=cache_mask[:, None] & dmask[None, :], other=0).to(tl.int32)
             kq = ((kb >> shift[None, :]) & 3).to(tl.float32)
             vq = ((vb >> shift[None, :]) & 3).to(tl.float32)
-            ksl = tl.load(KCache8 + kslot, mask=cache_valid, other=0).to(tl.uint16)
-            ksh = tl.load(KCache8 + kslot + 1, mask=cache_valid, other=0).to(tl.uint16)
-            kzl = tl.load(KCache8 + kslot + 2, mask=cache_valid, other=0).to(tl.uint16)
-            kzh = tl.load(KCache8 + kslot + 3, mask=cache_valid, other=0).to(tl.uint16)
-            vsl = tl.load(KCache8 + kslot + 4, mask=cache_valid, other=0).to(tl.uint16)
-            vsh = tl.load(KCache8 + kslot + 5, mask=cache_valid, other=0).to(tl.uint16)
-            vzl = tl.load(KCache8 + kslot + 6, mask=cache_valid, other=0).to(tl.uint16)
-            vzh = tl.load(KCache8 + kslot + 7, mask=cache_valid, other=0).to(tl.uint16)
+            ksl = tl.load(KCache8 + kslot, mask=cache_mask, other=0).to(tl.uint16)
+            ksh = tl.load(KCache8 + kslot + 1, mask=cache_mask, other=0).to(tl.uint16)
+            kzl = tl.load(KCache8 + kslot + 2, mask=cache_mask, other=0).to(tl.uint16)
+            kzh = tl.load(KCache8 + kslot + 3, mask=cache_mask, other=0).to(tl.uint16)
+            vsl = tl.load(KCache8 + kslot + 4, mask=cache_mask, other=0).to(tl.uint16)
+            vsh = tl.load(KCache8 + kslot + 5, mask=cache_mask, other=0).to(tl.uint16)
+            vzl = tl.load(KCache8 + kslot + 6, mask=cache_mask, other=0).to(tl.uint16)
+            vzh = tl.load(KCache8 + kslot + 7, mask=cache_mask, other=0).to(tl.uint16)
             ks = (ksl | (ksh << 8)).to(tl.float16, bitcast=True).to(tl.float32)
             kz = (kzl | (kzh << 8)).to(tl.float16, bitcast=True).to(tl.float32)
             vs = (vsl | (vsh << 8)).to(tl.float16, bitcast=True).to(tl.float32)
@@ -159,17 +183,12 @@ if triton is not None:
             kval = kq * ks[:, None] + kz[:, None]
             vval = vq * vs[:, None] + vz[:, None]
             if HAS_STAGE:
-                seat = (safe_block % STAGE_ROWS) * BLOCK_SIZE + off
-                tag = tl.load(Owner + seat, mask=cache_valid, other=-1)
-                hit = cache_valid & (tag == safe_block)
-                stage_base = (seat * NUM_KV_HEADS + kv_head) * HEAD_DIM
                 sk = tl.load(StageK + stage_base[:, None] + dims[None, :],
-                             mask=hit[:, None] & dmask[None, :], other=0.0)
+                             mask=stage_hit[:, None] & dmask[None, :], other=0.0)
                 sv = tl.load(StageV + stage_base[:, None] + dims[None, :],
-                             mask=hit[:, None] & dmask[None, :], other=0.0)
-                kval = tl.where(hit[:, None], sk, kval)
-                vval = tl.where(hit[:, None], sv, vval)
-            fresh = kv_valid & (kv_pos >= prefix)
+                             mask=stage_hit[:, None] & dmask[None, :], other=0.0)
+                kval = tl.where(stage_hit[:, None], sk, kval)
+                vval = tl.where(stage_hit[:, None], sv, vval)
             fresh_idx = q_start + kv_pos - prefix
             safe_fresh = tl.where(fresh, fresh_idx, 0)
             fresh_base = (safe_fresh * NUM_KV_HEADS + kv_head) * HEAD_DIM
@@ -562,7 +581,7 @@ def oscar_grouped_mtp_attention_triton(
     if block_kv not in (1, 2, 4):
         raise ValueError("OSCAR_ASCEND_GROUPED_MTP_BLOCK_KV must be 1, 2 or 4")
     longest = max(seqs)
-    splits = 1 if longest <= 2048 else 4 if longest <= 8192 else 8 if longest <= 32768 else 16
+    splits = grouped_mtp_splits(longest)
     mid = torch.empty(n, hq, splits, d + 1, dtype=torch.float32, device=q.device)
     _oscar_grouped_mtp_stage1[(len(lengths), hk * group_tiles, splits)](
         q_starts, q_lens, prefixes, k, v, sk, sv, owner, q, k8, v8, bt, mid,

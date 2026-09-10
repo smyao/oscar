@@ -42,6 +42,8 @@ export OSCAR_ASCEND_STAGING_TOKENS="${OSCAR_ASCEND_STAGING_TOKENS:-8192}"
 # ⚠️ 直接运行本脚本不经过 probe 门禁：若 triton-ascend 编译异常，用
 #    OSCAR_ASCEND_USE_TRITON=0 bash delivery/serve_oscar.sh 回退 torch 参考路径。
 export OSCAR_ASCEND_USE_TRITON="${OSCAR_ASCEND_USE_TRITON:-1}"
+export OSCAR_ASCEND_USE_ASCENDC="${OSCAR_ASCEND_USE_ASCENDC:-0}"
+export OSCAR_ASCEND_ASCENDC_LIBRARY="${OSCAR_ASCEND_ASCENDC_LIBRARY:-}"
 # 将并发请求按累计KV token预算合并为TND FIA，减少逐请求原生算子调用。
 # 65536 tokens 对 Hk=1,D=256,bf16 的K+V输入约64MiB/rank（不含workspace）。
 # 128K真机A/B收益不足且中位数更差，默认控制临时工作集以降低长尾。

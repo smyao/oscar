@@ -399,6 +399,8 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         self._oscar_use_triton = (
             self._oscar_cfg.use_triton and _k_triton is not None
         )
+        from .kernels.ascendc_attention import ascendc_enabled
+        self._oscar_use_ascendc = ascendc_enabled()
         # ★ 自证点 2：配置生效摘要（每层首次 setup 打一次）
         print(
             f"[oscar-ascend] ★ OSCAR 配置生效: D={self.head_size}, 逻辑槽=160B "
@@ -406,6 +408,7 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
             f"V旋转={'已加载' if self._oscar_cfg.v_rotation_path else '单位阵(未加载)'}, "
             f"路径={self._oscar_cfg.k_rotation_path or '-'}, "
             f"triton={'启用' if self._oscar_use_triton else 'torch参考路径'}, "
+            f"ascendc={'启用' if self._oscar_use_ascendc else '未加载'}, "
             f"窗口(sink={self._oscar_cfg.sink_tokens}, recent={self._oscar_cfg.recent_tokens})"
         )
         self._oscar_stats = {"writes": 0, "kv_bytes_written": 0, "reads": 0}
@@ -656,10 +659,41 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
         # MTP/common speculative step: one request program handles q<=4 and a
         # GQA tile together, so every historical INT2 K/V vector is loaded and
         # dequantized once rather than once per speculative row.
+        grouped_shape = (
+            key is not None and value is not None
+            and execution.multi_query_requests
+            and not execution.decode_requests and not execution.empty_requests
+            and max(b - a for a, b in zip(
+                execution.q_starts, execution.q_starts[1:])) <= 4
+        )
+        if self._oscar_use_ascendc and grouped_shape:
+            from .kernels.ascendc_attention import oscar_ascendc_attention
+            q_rot = self._rotate_k(query[:execution.actual_tokens], layer)
+            q_starts, q_lens, prefixes, _ = metadata_grouped_mtp_layout(
+                attn_metadata, query.device, execution.q_starts,
+                execution.seq_lens,
+            )
+            stage = None
+            if self._oscar.window_enabled and self._oscar_stage_ready:
+                stage = (layer._oscar_stage_k, layer._oscar_stage_v,
+                         layer._oscar_slot_owner)
+            grouped = oscar_ascendc_attention(
+                q_rot.contiguous(), rotated[0][:execution.actual_tokens].contiguous(),
+                rotated[1][:execution.actual_tokens].contiguous(), self.key_cache,
+                self.value_cache, attn_metadata.block_tables.contiguous(),
+                q_starts, q_lens, prefixes, self.scale, stage=stage,
+            )
+            attn_out = self._restore_v(grouped, layer, query.dtype)
+            output[:execution.actual_tokens] = attn_out.reshape(
+                output[:execution.actual_tokens].shape
+            ).to(output.dtype)
+            if execution.actual_tokens < num_tokens:
+                output[execution.actual_tokens:num_tokens].zero_()
+            return output
+
         if (key is not None and value is not None and self._oscar_use_triton
                 and self._oscar.use_grouped_mtp
-                and execution.multi_query_requests
-                and not execution.decode_requests and not execution.empty_requests
+                and grouped_shape
                 # On the target 910B a single 15K request spent more than two
                 # minutes in the 16 FULL-layer pure-Vector grouped path.  Past
                 # the measured crossover, reconstruct once per request/layer

@@ -51,6 +51,10 @@ export OSCAR_ASCEND_ENABLE="${OSCAR_ASCEND_ENABLE:-auto}"
 export OSCAR_ASCEND_USE_TRITON="${OSCAR_ASCEND_USE_TRITON:-1}"
 export OSCAR_ASCEND_REQUIRE_TRITON="${OSCAR_ASCEND_REQUIRE_TRITON:-1}"
 export OSCAR_ASCEND_PROBE_TIMEOUT_SECONDS="${OSCAR_ASCEND_PROBE_TIMEOUT_SECONDS:-180}"
+# AscendC operator uses an explicit gate.  Keep the validated hybrid backend
+# unless a compiled library is supplied and required by the caller.
+export OSCAR_ASCEND_USE_ASCENDC="${OSCAR_ASCEND_USE_ASCENDC:-0}"
+export OSCAR_ASCEND_ASCENDC_LIBRARY="${OSCAR_ASCEND_ASCENDC_LIBRARY:-}"
 
 # INT2 数值、窗口与 staging 容量。
 export OSCAR_ASCEND_K_CLIP_RATIO="${OSCAR_ASCEND_K_CLIP_RATIO:-0.96}"

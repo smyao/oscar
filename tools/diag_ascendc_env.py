@@ -9,6 +9,8 @@ import shutil
 import subprocess
 import sys
 
+from delivery.runtime_versions import check_runtime_version
+
 
 def _distribution_version(name: str) -> str:
     try:
@@ -18,8 +20,18 @@ def _distribution_version(name: str) -> str:
 
 
 def main() -> int:
-    for name in ("torch", "torch-npu", "vllm", "vllm-ascend"):
-        print(f"{name}: {_distribution_version(name)}")
+    versions = {
+        name: _distribution_version(name)
+        for name in ("torch", "torch-npu", "vllm", "vllm-ascend")
+    }
+    for name, version in versions.items():
+        print(f"{name}: {version}")
+    try:
+        check_runtime_version("vllm", versions["vllm"])
+        check_runtime_version("vllm-ascend", versions["vllm-ascend"])
+    except (TypeError, ValueError) as exc:
+        print(f"Unsupported runtime ABI: {exc}", file=sys.stderr)
+        return 3
 
     cann = Path(os.environ.get("ASCEND_HOME_PATH", "/usr/local/Ascend/latest"))
     required = (

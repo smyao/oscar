@@ -666,7 +666,16 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
             and max(b - a for a, b in zip(
                 execution.q_starts, execution.q_starts[1:])) <= 4
         )
-        if self._oscar_use_ascendc and grouped_shape:
+        ascendc_shape = grouped_shape
+        if self._oscar_use_ascendc and ascendc_shape:
+            from .kernels.ascendc_attention import (
+                ascendc_max_seq_len,
+                ascendc_required,
+                oscar_ascendc_attention,
+            )
+            if max(execution.seq_lens, default=0) > ascendc_max_seq_len():
+                ascendc_shape = False
+        if self._oscar_use_ascendc and ascendc_shape:
             from .kernels.ascendc_attention import (
                 ascendc_required,
                 oscar_ascendc_attention,

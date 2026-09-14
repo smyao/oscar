@@ -30,6 +30,14 @@ def test_required_mode_helper(monkeypatch):
     assert not ascendc_attention.ascendc_required()
 
 
+def test_reference_kernel_has_conservative_length_gate(monkeypatch):
+    monkeypatch.delenv("OSCAR_ASCEND_ASCENDC_MAX_SEQ_LEN", raising=False)
+    assert ascendc_attention.ascendc_max_seq_len() == 256
+    monkeypatch.setenv("OSCAR_ASCEND_ASCENDC_MAX_SEQ_LEN", "0")
+    with pytest.raises(ValueError, match="must be positive"):
+        ascendc_attention.ascendc_max_seq_len()
+
+
 def test_source_contract_is_packed_int8_only():
     from pathlib import Path
 

@@ -43,8 +43,9 @@ using LongPvMatmul = AscendC::Matmul<LongA, LongBV, LongC, LongBias>;
 template <class QkMatmul, class PvMatmul, class TilingData>
 class OscarInt2AttentionLong {
  public:
-  __aicore__ inline OscarInt2AttentionLong(QkMatmul& qk, PvMatmul& pv)
-      : qk_(qk), pv_(pv) {}
+  __aicore__ inline OscarInt2AttentionLong(
+      QkMatmul& qk0, QkMatmul& qk1, PvMatmul& pv0, PvMatmul& pv1)
+      : qk0_(qk0), qk1_(qk1), pv0_(pv0), pv1_(pv1) {}
 
   __aicore__ inline void Init(
       GM_ADDR qRot, GM_ADDR kNew, GM_ADDR vNew, GM_ADDR kCache,
@@ -82,8 +83,10 @@ class OscarInt2AttentionLong {
          work += AscendC::GetBlockNum()) {
       ProcessGroup(work, work / shape_.kvHeads, work % shape_.kvHeads);
     }
-    qk_.End();
-    pv_.End();
+    qk0_.End();
+    qk1_.End();
+    pv0_.End();
+    pv1_.End();
   }
 
  private:
@@ -200,29 +203,31 @@ class OscarInt2AttentionLong {
   }
 
   __aicore__ inline void CubeQk() {
-    qk_.SetOrgShape(LONG_CUBE_M, LONG_N, HEAD_DIM);
-    qk_.SetSingleShape(LONG_CUBE_M, LONG_N, HEAD_DIM);
-    for (uint32_t batch = 0; batch < LONG_M / LONG_CUBE_M; ++batch) {
-      const uint32_t row = batch * LONG_CUBE_M;
-      qk_.SetTensorA(qWork_[row * HEAD_DIM], false);
-      qk_.SetTensorB(kWork_, true);
-      // Submit one stable 16-row Cube program.  Both programs reuse kWork_, so
-      // compressed historical KV is still loaded exactly once per KV tile.
-      qk_.template IterateAll<false>(scoreWork_[row * LONG_N], 0, false, true);
-      qk_.WaitIterateAll();
-    }
+    CubeQkHalf(qk0_, 0);
+    CubeQkHalf(qk1_, LONG_CUBE_M);
+  }
+
+  __aicore__ inline void CubeQkHalf(QkMatmul& mm, uint32_t row) {
+    mm.SetOrgShape(LONG_CUBE_M, LONG_N, HEAD_DIM);
+    mm.SetSingleShape(LONG_CUBE_M, LONG_N, HEAD_DIM);
+    mm.SetTensorA(qWork_[row * HEAD_DIM], false);
+    mm.SetTensorB(kWork_, true);
+    mm.template IterateAll<false>(scoreWork_[row * LONG_N], 0, false, true);
+    mm.WaitIterateAll();
   }
 
   __aicore__ inline void CubePv() {
-    pv_.SetOrgShape(LONG_CUBE_M, HEAD_DIM, LONG_N);
-    pv_.SetSingleShape(LONG_CUBE_M, HEAD_DIM, LONG_N);
-    for (uint32_t batch = 0; batch < LONG_M / LONG_CUBE_M; ++batch) {
-      const uint32_t row = batch * LONG_CUBE_M;
-      pv_.SetTensorA(probWork_[row * LONG_N], false);
-      pv_.SetTensorB(vWork_, false);
-      pv_.template IterateAll<false>(pvWork_[row * HEAD_DIM], 0, false, true);
-      pv_.WaitIterateAll();
-    }
+    CubePvHalf(pv0_, 0);
+    CubePvHalf(pv1_, LONG_CUBE_M);
+  }
+
+  __aicore__ inline void CubePvHalf(PvMatmul& mm, uint32_t row) {
+    mm.SetOrgShape(LONG_CUBE_M, HEAD_DIM, LONG_N);
+    mm.SetSingleShape(LONG_CUBE_M, HEAD_DIM, LONG_N);
+    mm.SetTensorA(probWork_[row * LONG_N], false);
+    mm.SetTensorB(vWork_, false);
+    mm.template IterateAll<false>(pvWork_[row * HEAD_DIM], 0, false, true);
+    mm.WaitIterateAll();
   }
 
   __aicore__ inline void ProcessGroup(uint32_t work, uint32_t request,
@@ -305,8 +310,10 @@ class OscarInt2AttentionLong {
 
   RuntimeShape shape_{};
   uint32_t statePrefix_ = 0;
-  QkMatmul& qk_;
-  PvMatmul& pv_;
+  QkMatmul& qk0_;
+  QkMatmul& qk1_;
+  PvMatmul& pv0_;
+  PvMatmul& pv1_;
   Int2KvCacheLoader<half> cache_;
   __gm__ uint8_t* workspaceAddr_ = nullptr;
   AscendC::GlobalTensor<half> q_, kNew_, vNew_, out_;

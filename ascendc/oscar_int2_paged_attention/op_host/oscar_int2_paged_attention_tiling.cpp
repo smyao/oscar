@@ -76,7 +76,12 @@ ge::graphStatus Tiling(gert::TilingContext* context) {
                 matmul_tiling::DataType::DT_FLOAT);
   cube.SetBias(false);
   cube.SetShape(kCubeM, kCubeN, kHeadDim);
-  cube.SetFixSplit(16, 128, 128);
+  // One work item owns q_len(<=4) * GQA(<=8) == 32 rows.  Splitting M at 16
+  // makes the KFC client expose only the first row block to the surrounding
+  // online-softmax loop on 910B: q[0:2] is correct while q[2:4] consumes an
+  // incomplete Cube result.  Keep the whole GQA group in one M program; N/K
+  // remain tiled for Cube occupancy and long-context streaming.
+  cube.SetFixSplit(kCubeM, 128, 128);
   cube.SetOrgShape(kCubeM, kCubeN, kHeadDim);
   cube.SetBufferSpace(-1, -1, -1);
 

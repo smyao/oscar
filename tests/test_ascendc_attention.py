@@ -99,3 +99,14 @@ def test_standalone_torch_binding_contract_is_present():
     assert "TORCH_LIBRARY(oscar_ascend" in binding
     assert "aclnnOscarInt2PagedAttention" in binding
     assert "liboscar_ascend_torch.so" in script
+
+
+def test_real_npu_probe_covers_decode_and_q4_history():
+    from pathlib import Path
+
+    root = Path(__file__).parents[1]
+    probe = (root / "delivery/probe_ascendc.py").read_text()
+    assert "(0, 1)" in probe
+    assert "(252, 4)" in probe
+    assert "torch.npu.synchronize()" in probe
+    assert "equal_nan=False" in probe

@@ -181,11 +181,11 @@ extern "C" __global__ __aicore__ void oscar_int2_paged_attention(
             prefixes, stageK, stageV, owner, attentionOut, &tilingData, &pipe);
     op.Process();
   } else if (TILING_KEY_IS(2)) {
-    LongQkImpl::MT qk;
-    LongPvImpl::MT pv;
+    LongQkMatmul qk;
+    LongPvMatmul pv;
     qk.Init(&tilingData.cubeTiling, &pipe);
     pv.Init(&tilingData.cubeTiling, &pipe);
-    OscarInt2AttentionLong<LongQkImpl::MT, LongPvImpl::MT,
+    OscarInt2AttentionLong<LongQkMatmul, LongPvMatmul,
                            decltype(tilingData)> op(qk, pv);
     op.Init(qRot, kNew, vNew, kCache, vCache, blockTables, qStarts, qLens,
             prefixes, stageK, stageV, owner, attentionOut,

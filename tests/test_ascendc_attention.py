@@ -129,8 +129,10 @@ def test_long_context_kernel_has_cube_qk_pv_and_tiling_key():
              "oscar_int2_paged_attention.cpp").read_text()
     tiling = (root / "ascendc/oscar_int2_paged_attention/op_host/"
               "oscar_int2_paged_attention_tiling.cpp").read_text()
-    assert "LongQkImpl" in long_kernel
-    assert "LongPvImpl" in long_kernel
+    assert "LongQkMatmul" in long_kernel
+    assert "LongPvMatmul" in long_kernel
+    assert "AscendC::Matmul<" in long_kernel
+    assert "MMImplTypeStatic" not in long_kernel
     assert "CubeQk();" in long_kernel
     assert "CubePv();" in long_kernel
     assert "AscendC::Exp(rowExp_, rowExp_, LONG_N)" in long_kernel

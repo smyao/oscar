@@ -15,16 +15,21 @@ constexpr uint32_t LONG_MATRIX_ELEMS = LONG_M * LONG_N;
 constexpr uint32_t LONG_WORK_ELEMS =
     LONG_Q_ELEMS + 2 * LONG_KV_ELEMS + 3 * LONG_MATRIX_ELEMS;
 
-using LongA = matmul::MatmulType<AscendC::TPosition::GM,
-                                 AscendC::CubeFormat::ND, half, false>;
-using LongBK = matmul::MatmulType<AscendC::TPosition::GM,
-                                  AscendC::CubeFormat::ND, half, true>;
-using LongBV = matmul::MatmulType<AscendC::TPosition::GM,
-                                  AscendC::CubeFormat::ND, half, false>;
-using LongC = matmul::MatmulType<AscendC::TPosition::GM,
-                                 AscendC::CubeFormat::ND, half, false>;
-using LongQkImpl = matmul::MMImplTypeStatic<LongA, LongBK, LongC>;
-using LongPvImpl = matmul::MMImplTypeStatic<LongA, LongBV, LongC>;
+// CubeFormat is intentionally a global device-side enum in CANN 9.1, while
+// TPosition and Matmul live in AscendC.  Use the public Matmul interface here;
+// Avoid internal implementation aliases that are not shipped by every CANN SDK.
+using LongA = AscendC::MatmulType<AscendC::TPosition::GM,
+                                  CubeFormat::ND, half, false>;
+using LongBK = AscendC::MatmulType<AscendC::TPosition::GM,
+                                   CubeFormat::ND, half, true>;
+using LongBV = AscendC::MatmulType<AscendC::TPosition::GM,
+                                   CubeFormat::ND, half, false>;
+using LongC = AscendC::MatmulType<AscendC::TPosition::GM,
+                                  CubeFormat::ND, half, false>;
+using LongBias = AscendC::MatmulType<AscendC::TPosition::GM,
+                                     CubeFormat::ND, half, false>;
+using LongQkMatmul = AscendC::Matmul<LongA, LongBK, LongC, LongBias>;
+using LongPvMatmul = AscendC::Matmul<LongA, LongBV, LongC, LongBias>;
 
 // Long-context implementation.  One work item owns a request/KV-head pair;
 // all q<=4 rows and its complete GQA group share every decompressed KV tile.

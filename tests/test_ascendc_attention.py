@@ -68,3 +68,4 @@ def test_kvcache_loader_matches_oscar_split_layout_contract():
     assert "owner_.GetValue" in source
     assert "(kb >> 6) & 3U" in source
     assert "(vb >> 6) & 3U" in source
+    assert "../op_host" not in common

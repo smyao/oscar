@@ -1,7 +1,6 @@
 #pragma once
 
 #include "kernel_operator.h"
-#include "../op_host/oscar_int2_paged_attention_tiling.h"
 
 namespace OscarAscendC {
 
@@ -33,21 +32,21 @@ struct RuntimeShape {
   float scale;
 };
 
-__aicore__ inline RuntimeShape ReadShape(
-    const optiling::OscarInt2PagedAttentionTilingData* tiling) {
+template <typename TilingData>
+__aicore__ inline RuntimeShape ReadShape(const TilingData* tiling) {
   RuntimeShape s{};
-  s.tokens = tiling->get_numTokens();
-  s.requests = tiling->get_numRequests();
-  s.queryHeads = tiling->get_numQueryHeads();
-  s.kvHeads = tiling->get_numKvHeads();
-  s.gqa = tiling->get_gqaSize();
-  s.blockSize = tiling->get_blockSize();
-  s.blocks = tiling->get_numBlocks();
-  s.maxBlocks = tiling->get_maxBlocksPerRequest();
-  s.slotBytes = tiling->get_cacheSlotBytes();
-  s.hasStage = tiling->get_hasStage() != 0;
-  s.stageRows = tiling->get_stageRows();
-  s.scale = tiling->get_scaleValue();
+  s.tokens = tiling->numTokens;
+  s.requests = tiling->numRequests;
+  s.queryHeads = tiling->numQueryHeads;
+  s.kvHeads = tiling->numKvHeads;
+  s.gqa = tiling->gqaSize;
+  s.blockSize = tiling->blockSize;
+  s.blocks = tiling->numBlocks;
+  s.maxBlocks = tiling->maxBlocksPerRequest;
+  s.slotBytes = tiling->cacheSlotBytes;
+  s.hasStage = tiling->hasStage != 0;
+  s.stageRows = tiling->stageRows;
+  s.scale = tiling->scaleValue;
   return s;
 }
 

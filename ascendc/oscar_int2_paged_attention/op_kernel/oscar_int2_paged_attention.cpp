@@ -14,12 +14,13 @@ constexpr uint32_t MAX_LANES = MAX_QUERY * MAX_GQA;
 template <typename T>
 class OscarInt2AttentionReference {
  public:
+  template <typename TilingData>
   __aicore__ inline void Init(
       GM_ADDR qRot, GM_ADDR kNew, GM_ADDR vNew, GM_ADDR kCache,
       GM_ADDR vCache, GM_ADDR blockTables, GM_ADDR qStarts, GM_ADDR qLens,
       GM_ADDR prefixes, GM_ADDR stageK, GM_ADDR stageV, GM_ADDR owner,
       GM_ADDR attentionOut,
-      const optiling::OscarInt2PagedAttentionTilingData* tiling,
+      const TilingData* tiling,
       TPipe* pipe) {
     shape_ = ReadShape(tiling);
     q_.SetGlobalBuffer(reinterpret_cast<__gm__ T*>(qRot));

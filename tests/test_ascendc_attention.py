@@ -46,11 +46,13 @@ def test_source_contract_is_packed_int8_only():
                   "oscar_int2_paged_attention_def.cpp").read_text()
     tiling = (root / "ascendc/oscar_int2_paged_attention/op_host/"
               "oscar_int2_paged_attention_tiling.cpp").read_text()
-    assert definition.count("ge::DT_INT8, ge::DT_INT8") >= 2
+    assert definition.count(".DataType({ge::DT_INT8})") >= 2
     assert "kHeadDim = 256" in tiling
     assert "hq % hk" in tiling
     assert "GetLibApiWorkSpaceSize" in tiling
     assert "ge::DT_BF16" not in definition
+    assert "DataType(fp)" not in definition
+    assert "Format(nd)" not in definition
     assert "SetTilingKey(0)" in tiling
 
 

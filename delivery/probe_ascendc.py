@@ -99,6 +99,16 @@ def main() -> int:
                 f"first_bad_flat={first}",
                 flush=True,
             )
+            for qi in range(q_len):
+                qdiff = diff[qi]
+                qbad = bad[qi]
+                print(
+                    f"  q[{qi}]: bad={qbad.sum().item()}/{qbad.numel()} "
+                    f"max={qdiff.max().item():.6g} "
+                    f"mean={qdiff.mean().item():.6g} "
+                    f"actual_l1={actual_cpu[qi].abs().sum().item():.6g}",
+                    flush=True,
+                )
             raise
         if not torch.isfinite(actual).all().item():
             raise AssertionError("AscendC attention produced NaN/Inf")

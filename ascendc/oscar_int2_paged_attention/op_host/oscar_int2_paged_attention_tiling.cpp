@@ -15,7 +15,8 @@ constexpr uint32_t kCubeM = 32;
 constexpr uint32_t kCubeN = 256;
 constexpr uint64_t kWorkspacePerItem =
     (kCubeM * kHeadDim + 2 * kCubeN * kHeadDim +
-     3 * kCubeM * kCubeN) * sizeof(uint16_t);
+     kCubeM * kCubeN) * sizeof(uint16_t) +
+    2ULL * kCubeM * kCubeN * sizeof(float);
 
 uint32_t DtypeBytes(ge::DataType dtype) {
   return dtype == ge::DT_INT8 ? 1U : 2U;
@@ -72,7 +73,7 @@ ge::graphStatus Tiling(gert::TilingContext* context) {
   cube.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND,
                 matmul_tiling::DataType::DT_FLOAT16);
   cube.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND,
-                matmul_tiling::DataType::DT_FLOAT16);
+                matmul_tiling::DataType::DT_FLOAT);
   cube.SetBias(false);
   cube.SetShape(kCubeM, kCubeN, kHeadDim);
   cube.SetFixSplit(16, 128, 128);

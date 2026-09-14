@@ -12,8 +12,14 @@ constexpr uint32_t LONG_N = 256;
 constexpr uint32_t LONG_Q_ELEMS = LONG_M * HEAD_DIM;
 constexpr uint32_t LONG_KV_ELEMS = LONG_N * HEAD_DIM;
 constexpr uint32_t LONG_MATRIX_ELEMS = LONG_M * LONG_N;
-constexpr uint32_t LONG_WORK_ELEMS =
-    LONG_Q_ELEMS + 2 * LONG_KV_ELEMS + 3 * LONG_MATRIX_ELEMS;
+constexpr uint64_t LONG_Q_BYTES = LONG_Q_ELEMS * sizeof(half);
+constexpr uint64_t LONG_KV_BYTES = LONG_KV_ELEMS * sizeof(half);
+constexpr uint64_t LONG_SCORE_BYTES = LONG_MATRIX_ELEMS * sizeof(float);
+constexpr uint64_t LONG_PROB_BYTES = LONG_MATRIX_ELEMS * sizeof(half);
+constexpr uint64_t LONG_PV_BYTES = LONG_MATRIX_ELEMS * sizeof(float);
+constexpr uint64_t LONG_WORK_BYTES =
+    LONG_Q_BYTES + 2 * LONG_KV_BYTES + LONG_SCORE_BYTES +
+    LONG_PROB_BYTES + LONG_PV_BYTES;
 
 // CubeFormat is intentionally a global device-side enum in CANN 9.1, while
 // TPosition and Matmul live in AscendC.  Use the public Matmul interface here;
@@ -25,7 +31,7 @@ using LongBK = AscendC::MatmulType<AscendC::TPosition::GM,
 using LongBV = AscendC::MatmulType<AscendC::TPosition::GM,
                                    CubeFormat::ND, half, false>;
 using LongC = AscendC::MatmulType<AscendC::TPosition::GM,
-                                  CubeFormat::ND, half, false>;
+                                  CubeFormat::ND, float, false>;
 using LongBias = AscendC::MatmulType<AscendC::TPosition::GM,
                                      CubeFormat::ND, half, false>;
 using LongQkMatmul = AscendC::Matmul<LongA, LongBK, LongC, LongBias>;
@@ -53,7 +59,7 @@ class OscarInt2AttentionLong {
     qLens_.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(qLens));
     prefixes_.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(prefixes));
     out_.SetGlobalBuffer(reinterpret_cast<__gm__ half*>(attentionOut));
-    workspace_.SetGlobalBuffer(reinterpret_cast<__gm__ half*>(userWorkspace));
+    workspaceAddr_ = reinterpret_cast<__gm__ uint8_t*>(userWorkspace);
     cache_.Init(kCache, vCache, blockTables, stageK, stageV, owner, shape_);
     pipe->InitBuffer(kBuf_, HEAD_DIM * sizeof(half));
     pipe->InitBuffer(vBuf_, HEAD_DIM * sizeof(half));
@@ -106,8 +112,7 @@ class OscarInt2AttentionLong {
       const bool valid = tileStart + col < total &&
                          tileStart + col <= statePrefix_ + qi;
       const float value = valid
-          ? static_cast<float>(scoreWork_.GetValue(row * LONG_N + col)) *
-                    shape_.scale - newMax
+          ? scoreWork_.GetValue(row * LONG_N + col) * shape_.scale - newMax
           : -3.402823466e+38F;
       rowExp_.SetValue(col, value);
     }
@@ -130,15 +135,19 @@ class OscarInt2AttentionLong {
   }
 
   __aicore__ inline void BindWorkspace(uint32_t work) {
-    const uint64_t base = static_cast<uint64_t>(work) * LONG_WORK_ELEMS;
-    qWork_ = workspace_[base];
-    kWork_ = workspace_[base + LONG_Q_ELEMS];
-    vWork_ = workspace_[base + LONG_Q_ELEMS + LONG_KV_ELEMS];
-    scoreWork_ = workspace_[base + LONG_Q_ELEMS + 2 * LONG_KV_ELEMS];
-    probWork_ = workspace_[base + LONG_Q_ELEMS + 2 * LONG_KV_ELEMS +
-                           LONG_MATRIX_ELEMS];
-    pvWork_ = workspace_[base + LONG_Q_ELEMS + 2 * LONG_KV_ELEMS +
-                         2 * LONG_MATRIX_ELEMS];
+    const uint64_t base = static_cast<uint64_t>(work) * LONG_WORK_BYTES;
+    uint64_t offset = base;
+    qWork_.SetGlobalBuffer(reinterpret_cast<__gm__ half*>(workspaceAddr_ + offset));
+    offset += LONG_Q_BYTES;
+    kWork_.SetGlobalBuffer(reinterpret_cast<__gm__ half*>(workspaceAddr_ + offset));
+    offset += LONG_KV_BYTES;
+    vWork_.SetGlobalBuffer(reinterpret_cast<__gm__ half*>(workspaceAddr_ + offset));
+    offset += LONG_KV_BYTES;
+    scoreWork_.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(workspaceAddr_ + offset));
+    offset += LONG_SCORE_BYTES;
+    probWork_.SetGlobalBuffer(reinterpret_cast<__gm__ half*>(workspaceAddr_ + offset));
+    offset += LONG_PROB_BYTES;
+    pvWork_.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(workspaceAddr_ + offset));
   }
 
   __aicore__ inline void LoadFresh(uint32_t token, uint32_t kvHead) {
@@ -245,8 +254,7 @@ class OscarInt2AttentionLong {
           const bool valid = rowValid && start + col < total &&
                              start + col <= prefix + qi;
           float score = valid
-              ? static_cast<float>(scoreWork_.GetValue(row * LONG_N + col)) *
-                    shape_.scale
+              ? scoreWork_.GetValue(row * LONG_N + col) * shape_.scale
               : -3.402823466e+38F;
           if (score > tileMax) tileMax = score;
         }
@@ -274,7 +282,7 @@ class OscarInt2AttentionLong {
         for (uint32_t d = 0; d < HEAD_DIM; ++d)
           acc_.SetValue(row * HEAD_DIM + d,
                         acc_.GetValue(row * HEAD_DIM + d) +
-                        static_cast<float>(pvWork_.GetValue(row * HEAD_DIM + d)));
+                        pvWork_.GetValue(row * HEAD_DIM + d));
     }
     for (uint32_t row = 0; row < lanes; ++row) {
       const uint32_t qi = row / shape_.gqa;
@@ -296,9 +304,11 @@ class OscarInt2AttentionLong {
   QkMatmul& qk_;
   PvMatmul& pv_;
   Int2KvCacheLoader<half> cache_;
-  AscendC::GlobalTensor<half> q_, kNew_, vNew_, out_, workspace_;
+  __gm__ uint8_t* workspaceAddr_ = nullptr;
+  AscendC::GlobalTensor<half> q_, kNew_, vNew_, out_;
   AscendC::GlobalTensor<int32_t> qStarts_, qLens_, prefixes_;
-  AscendC::GlobalTensor<half> qWork_, kWork_, vWork_, scoreWork_, probWork_, pvWork_;
+  AscendC::GlobalTensor<half> qWork_, kWork_, vWork_, probWork_;
+  AscendC::GlobalTensor<float> scoreWork_, pvWork_;
   AscendC::TBuf<AscendC::TPosition::VECCALC> kBuf_, vBuf_, accBuf_, stateBuf_, expBuf_, rowExpBuf_;
   AscendC::LocalTensor<half> kLocal_, vLocal_;
   AscendC::LocalTensor<float> acc_, state_, exp_, rowExp_;

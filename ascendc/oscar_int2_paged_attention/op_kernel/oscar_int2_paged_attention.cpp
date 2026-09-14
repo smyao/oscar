@@ -1,5 +1,3 @@
-#include <cmath>
-
 #include "kernel_operator.h"
 #include "oscar_int2_paged_attention_common.h"
 #include "oscar_int2_paged_attention_kvcache.h"
@@ -35,10 +33,14 @@ class OscarInt2AttentionReference {
     pipe->InitBuffer(vBuf_, HEAD_DIM * sizeof(T));
     pipe->InitBuffer(accBuf_, MAX_LANES * HEAD_DIM * sizeof(float));
     pipe->InitBuffer(stateBuf_, MAX_LANES * 2 * sizeof(float));
+    // AscendC vector intrinsics operate on LocalTensor.  Reserve one aligned
+    // vector as scalar scratch instead of calling the host-only libc expf.
+    pipe->InitBuffer(expBuf_, 32);
     kLocal_ = kBuf_.Get<T>();
     vLocal_ = vBuf_.Get<T>();
     acc_ = accBuf_.Get<float>();
     state_ = stateBuf_.Get<float>();
+    exp_ = expBuf_.Get<float>();
   }
 
   __aicore__ inline void Process() {
@@ -53,6 +55,14 @@ class OscarInt2AttentionReference {
   }
 
  private:
+  __aicore__ inline float DeviceExp(float value) {
+    exp_.SetValue(0, value);
+    AscendC::PipeBarrier<PIPE_ALL>();
+    AscendC::Exp(exp_, exp_, 1);
+    AscendC::PipeBarrier<PIPE_V>();
+    return exp_.GetValue(0);
+  }
+
   __aicore__ inline void LoadFresh(uint32_t token, uint32_t kvHead) {
     const uint64_t base =
         (static_cast<uint64_t>(token) * shape_.kvHeads + kvHead) * HEAD_DIM;
@@ -104,8 +114,9 @@ class OscarInt2AttentionReference {
           score *= shape_.scale;
           const float oldMax = state_.GetValue(lane);
           const float newMax = score > oldMax ? score : oldMax;
-          const float oldFactor = oldMax < -3.0e+38F ? 0.0F : expf(oldMax - newMax);
-          const float weight = expf(score - newMax);
+          const float oldFactor =
+              oldMax < -3.0e+38F ? 0.0F : DeviceExp(oldMax - newMax);
+          const float weight = DeviceExp(score - newMax);
           const float oldSum = state_.GetValue(MAX_LANES + lane);
           state_.SetValue(lane, newMax);
           state_.SetValue(MAX_LANES + lane, oldSum * oldFactor + weight);
@@ -137,9 +148,10 @@ class OscarInt2AttentionReference {
   GlobalTensor<T> q_, kNew_, vNew_, out_;
   GlobalTensor<int32_t> qStarts_, qLens_, prefixes_;
   Int2KvCacheLoader<T> cache_;
-  TBuf<TPosition::VECCALC> kBuf_, vBuf_, accBuf_, stateBuf_;
+  TBuf<TPosition::VECCALC> kBuf_, vBuf_, accBuf_, stateBuf_, expBuf_;
   LocalTensor<T> kLocal_, vLocal_;
   LocalTensor<float> acc_, state_;
+  LocalTensor<float> exp_;
 };
 }  // namespace
 

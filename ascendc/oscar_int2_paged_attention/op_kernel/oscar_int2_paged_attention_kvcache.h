@@ -47,8 +47,8 @@ class Int2KvCacheLoader {
   }
 
   __aicore__ inline void Load(uint32_t block, uint32_t offset,
-                              uint32_t kvHead, LocalTensor<T> k,
-                              LocalTensor<T> v) const {
+                              uint32_t kvHead, AscendC::LocalTensor<T> k,
+                              AscendC::LocalTensor<T> v) const {
     if (StageHit(block, offset)) {
       LoadStage(block, offset, kvHead, k, v);
       return;
@@ -65,18 +65,27 @@ class Int2KvCacheLoader {
       const uint8_t kb = kCache_.GetValue(slot + K_PACKED_OFFSET + packed);
       const uint8_t vb = vCache_.GetValue(slot + V_PACKED_OFFSET + packed);
       const uint32_t d = packed * VALUES_PER_BYTE;
-      k.SetValue(d + 0, static_cast<T>(static_cast<float>(kb & 3U) * ks + kz));
-      k.SetValue(d + 1, static_cast<T>(static_cast<float>((kb >> 2) & 3U) * ks + kz));
-      k.SetValue(d + 2, static_cast<T>(static_cast<float>((kb >> 4) & 3U) * ks + kz));
-      k.SetValue(d + 3, static_cast<T>(static_cast<float>((kb >> 6) & 3U) * ks + kz));
-      v.SetValue(d + 0, static_cast<T>(static_cast<float>(vb & 3U) * vs + vz));
-      v.SetValue(d + 1, static_cast<T>(static_cast<float>((vb >> 2) & 3U) * vs + vz));
-      v.SetValue(d + 2, static_cast<T>(static_cast<float>((vb >> 4) & 3U) * vs + vz));
-      v.SetValue(d + 3, static_cast<T>(static_cast<float>((vb >> 6) & 3U) * vs + vz));
+      k.SetValue(d + 0, Dequant<T>(kb & 3U, ks, kz));
+      k.SetValue(d + 1, Dequant<T>((kb >> 2) & 3U, ks, kz));
+      k.SetValue(d + 2, Dequant<T>((kb >> 4) & 3U, ks, kz));
+      k.SetValue(d + 3, Dequant<T>((kb >> 6) & 3U, ks, kz));
+      v.SetValue(d + 0, Dequant<T>(vb & 3U, vs, vz));
+      v.SetValue(d + 1, Dequant<T>((vb >> 2) & 3U, vs, vz));
+      v.SetValue(d + 2, Dequant<T>((vb >> 4) & 3U, vs, vz));
+      v.SetValue(d + 3, Dequant<T>((vb >> 6) & 3U, vs, vz));
     }
   }
 
  private:
+  template <typename OutT>
+  __aicore__ inline OutT Dequant(uint32_t quantized, float scale,
+                                 float zero) const {
+    // ccec rejects a direct unsigned-integer to floating-point conversion in
+    // AICore code.  INT2 is in [0, 3], so the signed intermediate is exact.
+    const int32_t signedValue = static_cast<int32_t>(quantized);
+    return static_cast<OutT>(static_cast<float>(signedValue) * scale + zero);
+  }
+
   __aicore__ inline float DecodeHalf(uint64_t byteOffset) const {
     union HalfBits {
       uint16_t bits;
@@ -88,8 +97,8 @@ class Int2KvCacheLoader {
   }
 
   __aicore__ inline void LoadStage(uint32_t block, uint32_t offset,
-                                   uint32_t kvHead, LocalTensor<T> k,
-                                   LocalTensor<T> v) const {
+                                   uint32_t kvHead, AscendC::LocalTensor<T> k,
+                                   AscendC::LocalTensor<T> v) const {
     const uint32_t row = block % shape_.stageRows;
     const uint64_t base =
         (static_cast<uint64_t>(row) * shape_.blockSize + offset) *
@@ -102,12 +111,12 @@ class Int2KvCacheLoader {
   }
 
   RuntimeShape shape_{};
-  GlobalTensor<uint8_t> kCache_;
-  GlobalTensor<uint8_t> vCache_;
-  GlobalTensor<int32_t> blockTables_;
-  GlobalTensor<float> stageK_;
-  GlobalTensor<float> stageV_;
-  GlobalTensor<int64_t> owner_;
+  AscendC::GlobalTensor<uint8_t> kCache_;
+  AscendC::GlobalTensor<uint8_t> vCache_;
+  AscendC::GlobalTensor<int32_t> blockTables_;
+  AscendC::GlobalTensor<float> stageK_;
+  AscendC::GlobalTensor<float> stageV_;
+  AscendC::GlobalTensor<int64_t> owner_;
 };
 
 }  // namespace OscarAscendC

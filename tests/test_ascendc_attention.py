@@ -69,3 +69,17 @@ def test_kvcache_loader_matches_oscar_split_layout_contract():
     assert "(kb >> 6) & 3U" in source
     assert "(vb >> 6) & 3U" in source
     assert "../op_host" not in common
+
+
+def test_kernel_uses_aicore_math_and_qualified_tensor_types():
+    from pathlib import Path
+
+    root = Path(__file__).parents[1]
+    source = (root / "ascendc/oscar_int2_paged_attention/op_kernel/"
+              "oscar_int2_paged_attention.cpp").read_text()
+    cache = (root / "ascendc/oscar_int2_paged_attention/op_kernel/"
+             "oscar_int2_paged_attention_kvcache.h").read_text()
+    assert "expf(" not in source
+    assert "AscendC::Exp(" in source
+    assert " LocalTensor<" not in cache
+    assert "\n  GlobalTensor<" not in cache

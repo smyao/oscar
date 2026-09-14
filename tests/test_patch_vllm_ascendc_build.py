@@ -29,3 +29,10 @@ def test_patch_rejects_unknown_layout(tmp_path: Path):
     path.write_text("CUSTOM_OPS_ARRAY=()\n")
     with pytest.raises(RuntimeError, match="refusing"):
         patch_build_script(path, "oscar_int2_paged_attention")
+
+
+def test_build_script_orders_pkg_before_ops():
+    script = (Path(__file__).parents[1] / "delivery/build_ascendc.sh").read_text()
+    command = script[script.index("bash build.sh"):]
+    assert command.index("--pkg") < command.index("--ops=oscar_int2_paged_attention")
+    assert "--opgraph" not in command

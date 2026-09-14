@@ -96,20 +96,20 @@ echo "[oscar-ascendc] compiling operator for $SOC"
 (
     cd "$BUILD_ROOT/csrc"
     bash build.sh \
+        --pkg \
         --ops=oscar_int2_paged_attention \
         --soc="$SOC" \
-        --ophost --opkernel --opapi --pkg \
         -O3 "-j$JOBS"
 )
 
 OUTPUT_DIR="$REPO_ROOT/build/ascendc"
 mkdir -p "$OUTPUT_DIR"
 find "$BUILD_ROOT/csrc" -type f \
-    \( -name 'custom_opp_*.run' -o -name 'CANN-custom_ops*.run' \) \
+    \( -name 'cann-ops-transformer*.run' -o -name 'custom_opp_*.run' -o -name 'CANN-custom_ops*.run' \) \
     -exec cp {} "$OUTPUT_DIR/" \;
 
 PACKAGE="$(find "$OUTPUT_DIR" -maxdepth 1 -type f \
-    \( -name 'custom_opp_*.run' -o -name 'CANN-custom_ops*.run' \) \
+    \( -name 'cann-ops-transformer*.run' -o -name 'custom_opp_*.run' -o -name 'CANN-custom_ops*.run' \) \
     -print -quit)"
 [ -n "$PACKAGE" ] || {
     echo "build completed but no custom-op package was produced" >&2

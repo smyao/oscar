@@ -56,9 +56,12 @@ class OscarInt2AttentionReference {
 
  private:
   __aicore__ inline float DeviceExp(float value) {
-    exp_.SetValue(0, value);
-    AscendC::PipeBarrier<PIPE_ALL>();
-    AscendC::Exp(exp_, exp_, 1);
+    // Vector math on 910B must cover a complete 32-byte data block.  A
+    // one-element Exp can be accepted by ccec but leaves the scalar scratch
+    // undefined at runtime.  Broadcast to 8 fp32 lanes and consume lane zero.
+    AscendC::Duplicate(exp_, value, 8);
+    AscendC::PipeBarrier<PIPE_V>();
+    AscendC::Exp(exp_, exp_, 8);
     AscendC::PipeBarrier<PIPE_V>();
     return exp_.GetValue(0);
   }

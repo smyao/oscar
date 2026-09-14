@@ -85,6 +85,8 @@ def test_kernel_uses_aicore_math_and_qualified_tensor_types():
              "oscar_int2_paged_attention_kvcache.h").read_text()
     assert "expf(" not in source
     assert "AscendC::Exp(" in source
+    assert "AscendC::Exp(exp_, exp_, 8)" in source
+    assert "AscendC::Duplicate(exp_, value, 8)" in source
     assert "bfloat16_t" not in source
     assert " LocalTensor<" not in cache
     assert "\n  GlobalTensor<" not in cache

@@ -15,7 +15,7 @@ def main() -> int:
                     / "build/ascendc/liboscar_ascend_torch.so"),
     )
     ap.add_argument("--long", action="store_true",
-                    help="also exercise the experimental Cube tiling key")
+                    help="exercise only the long-context Cube tiling key")
     ap.add_argument("--long-length", type=int, default=16384)
     args = ap.parse_args()
 
@@ -47,7 +47,11 @@ def main() -> int:
     if args.long:
         if args.long_length <= 256:
             raise ValueError("--long-length must be greater than 256")
-        cases.append((args.long_length - 4, 4))
+        # Long validation is deliberately independent of the scalar/reference
+        # tiling key.  Production dispatch uses this operator for grouped MTP;
+        # a short-path regression must not prevent us from observing the first
+        # real Cube result (and vice versa).
+        cases = [(args.long_length - 4, 4)]
     for prefix, q_len in cases:
         blocks = max(1, (prefix + bs - 1) // bs)
         q = torch.randn(q_len, hq, d, dtype=torch.float16) * 0.25
@@ -77,9 +81,25 @@ def main() -> int:
             q.float(), k_new.float(), v_new.float(), k_cache.cpu(),
             v_cache.cpu(), block_table, [0, q_len], [prefix + q_len], scale,
         )
-        torch.testing.assert_close(actual.cpu().float(), expected,
-                                   atol=2e-2, rtol=2e-2,
-                                   equal_nan=False)
+        actual_cpu = actual.cpu().float()
+        try:
+            torch.testing.assert_close(actual_cpu, expected,
+                                       atol=2e-2, rtol=2e-2,
+                                       equal_nan=False)
+        except AssertionError:
+            diff = (actual_cpu - expected).abs()
+            bad = diff > (2e-2 + 2e-2 * expected.abs())
+            flat_bad = bad.flatten().nonzero()
+            first = int(flat_bad[0].item()) if flat_bad.numel() else -1
+            print(
+                "ASCENDC FAIL "
+                f"prefix={prefix} q_len={q_len} "
+                f"actual_nonzero={(actual_cpu != 0).sum().item()}/"
+                f"{actual_cpu.numel()} max_abs_diff={diff.max().item():.6g} "
+                f"first_bad_flat={first}",
+                flush=True,
+            )
+            raise
         if not torch.isfinite(actual).all().item():
             raise AssertionError("AscendC attention produced NaN/Inf")
         print(f"ASCENDC PASS prefix={prefix} q_len={q_len} hq={hq}",

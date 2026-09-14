@@ -174,17 +174,24 @@ extern "C" __global__ __aicore__ void oscar_int2_paged_attention(
     GM_ADDR attentionOut, GM_ADDR workspace, GM_ADDR tiling) {
   TPipe pipe;
   GET_TILING_DATA(tilingData, tiling);
-  KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIC_ONLY);
+  // The long path combines AIV dequant/softmax with Cube matmul.  Public
+  // AscendC::Matmul is a KFC client/server API and therefore requires a MIX
+  // task.  Keep the already validated scalar key on its original AIC-only
+  // execution type.
+  KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_1);
   if (TILING_KEY_IS(0)) {
+    KERNEL_TASK_TYPE(0, KERNEL_TYPE_AIC_ONLY);
     OscarInt2AttentionReference<half> op;
     op.Init(qRot, kNew, vNew, kCache, vCache, blockTables, qStarts, qLens,
             prefixes, stageK, stageV, owner, attentionOut, &tilingData, &pipe);
     op.Process();
   } else if (TILING_KEY_IS(2)) {
+    KERNEL_TASK_TYPE(2, KERNEL_TYPE_MIX_AIC_1_1);
     LongQkMatmul qk;
     LongPvMatmul pv;
-    qk.Init(&tilingData.cubeTiling, &pipe);
-    pv.Init(&tilingData.cubeTiling, &pipe);
+    REGIST_MATMUL_OBJ(&pipe, GetSysWorkSpacePtr(),
+                      qk, &tilingData.cubeTiling,
+                      pv, &tilingData.cubeTiling);
     OscarInt2AttentionLong<LongQkMatmul, LongPvMatmul,
                            decltype(tilingData)> op(qk, pv);
     op.Init(qRot, kNew, vNew, kCache, vCache, blockTables, qStarts, qLens,

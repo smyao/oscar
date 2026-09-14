@@ -64,11 +64,11 @@ ge::graphStatus Tiling(gert::TilingContext* context) {
 
   using namespace matmul_tiling;
   MatmulApiTiling cube(platform);
-  cube.SetAType(AscendC::TPosition::GM, CubeFormat::ND,
+  cube.SetAType(AscendC::TPosition::GM, AscendC::CubeFormat::ND,
                 matmul_tiling::DataType::DT_FLOAT16);
-  cube.SetBType(AscendC::TPosition::GM, CubeFormat::ND,
+  cube.SetBType(AscendC::TPosition::GM, AscendC::CubeFormat::ND,
                 matmul_tiling::DataType::DT_FLOAT16);
-  cube.SetCType(AscendC::TPosition::GM, CubeFormat::ND,
+  cube.SetCType(AscendC::TPosition::GM, AscendC::CubeFormat::ND,
                 matmul_tiling::DataType::DT_FLOAT16);
   cube.SetBias(false);
   cube.SetShape(kCubeM, kCubeN, kHeadDim);

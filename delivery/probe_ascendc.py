@@ -16,7 +16,7 @@ def main() -> int:
     )
     ap.add_argument("--long", action="store_true",
                     help="also exercise the experimental Cube tiling key")
-    ap.add_argument("--long-length", type=int, default=512)
+    ap.add_argument("--long-length", type=int, default=16384)
     args = ap.parse_args()
 
     # op_api_common snapshots this path when the binding shared library loads.

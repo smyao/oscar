@@ -34,6 +34,10 @@ def ascendc_max_seq_len() -> int:
     value = int(os.environ.get("OSCAR_ASCEND_ASCENDC_MAX_SEQ_LEN", "256"))
     if value <= 0:
         raise ValueError("OSCAR_ASCEND_ASCENDC_MAX_SEQ_LEN must be positive")
+    if value > 32768:
+        raise ValueError(
+            "OSCAR_ASCEND_ASCENDC_MAX_SEQ_LEN currently supports at most 32768"
+        )
     return value
 
 

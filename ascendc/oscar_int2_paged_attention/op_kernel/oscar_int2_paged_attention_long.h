@@ -55,11 +55,13 @@ class OscarInt2AttentionLong {
     pipe->InitBuffer(accBuf_, LONG_M * HEAD_DIM * sizeof(float));
     pipe->InitBuffer(stateBuf_, LONG_M * 2 * sizeof(float));
     pipe->InitBuffer(expBuf_, 32);
+    pipe->InitBuffer(rowExpBuf_, LONG_N * sizeof(float));
     kLocal_ = kBuf_.Get<half>();
     vLocal_ = vBuf_.Get<half>();
     acc_ = accBuf_.Get<float>();
     state_ = stateBuf_.Get<float>();
     exp_ = expBuf_.Get<float>();
+    rowExp_ = rowExpBuf_.Get<float>();
   }
 
   __aicore__ inline void Process() {
@@ -85,6 +87,39 @@ class OscarInt2AttentionLong {
     AscendC::SetFlag<AscendC::HardEvent::S_V>(sv);
     AscendC::WaitFlag<AscendC::HardEvent::S_V>(sv);
     return result;
+  }
+
+  __aicore__ inline float PrepareProbabilityRow(
+      uint32_t row, uint32_t qi, uint32_t tileStart, uint32_t total,
+      float newMax) {
+    // Build one FP32 score row with causal/tail masking, then issue a single
+    // 256-wide vector Exp.  This replaces 256 scalar-sized Exp launches per
+    // row/tile, which is the dominant small-op cost at 16K-32K.
+    for (uint32_t col = 0; col < LONG_N; ++col) {
+      const bool valid = tileStart + col < total &&
+                         tileStart + col <= statePrefix_ + qi;
+      const float value = valid
+          ? static_cast<float>(scoreWork_.GetValue(row * LONG_N + col)) *
+                    shape_.scale - newMax
+          : -3.402823466e+38F;
+      rowExp_.SetValue(col, value);
+    }
+    const event_t scalarToVector = static_cast<event_t>(
+        GetTPipePtr()->FetchEventID(AscendC::HardEvent::S_V));
+    AscendC::SetFlag<AscendC::HardEvent::S_V>(scalarToVector);
+    AscendC::WaitFlag<AscendC::HardEvent::S_V>(scalarToVector);
+    AscendC::Exp(rowExp_, rowExp_, LONG_N);
+    const event_t vectorToScalar = static_cast<event_t>(
+        GetTPipePtr()->FetchEventID(AscendC::HardEvent::V_S));
+    AscendC::SetFlag<AscendC::HardEvent::V_S>(vectorToScalar);
+    AscendC::WaitFlag<AscendC::HardEvent::V_S>(vectorToScalar);
+    float sum = 0.0F;
+    for (uint32_t col = 0; col < LONG_N; ++col) {
+      const float weight = rowExp_.GetValue(col);
+      probWork_.SetValue(row * LONG_N + col, static_cast<half>(weight));
+      sum += weight;
+    }
+    return sum;
   }
 
   __aicore__ inline void BindWorkspace(uint32_t work) {
@@ -173,6 +208,7 @@ class OscarInt2AttentionLong {
     const uint32_t qStart = static_cast<uint32_t>(qStartRaw);
     const uint32_t qLen = static_cast<uint32_t>(qLenRaw);
     const uint32_t prefix = static_cast<uint32_t>(prefixRaw);
+    statePrefix_ = prefix;
     const uint32_t total = prefix + qLen;
     const uint32_t lanes = qLen * shape_.gqa;
     BindWorkspace(work);
@@ -204,16 +240,11 @@ class OscarInt2AttentionLong {
         const float newMax = tileMax > oldMax ? tileMax : oldMax;
         const float oldFactor =
             rowValid && oldMax > -3.0e+38F ? DeviceExp(oldMax - newMax) : 0.0F;
-        float tileSum = 0.0F;
-        for (uint32_t col = 0; col < LONG_N; ++col) {
-          const bool valid = rowValid && start + col < total &&
-                             start + col <= prefix + qi;
-          const float weight = valid
-              ? DeviceExp(static_cast<float>(scoreWork_.GetValue(
-                              row * LONG_N + col)) * shape_.scale - newMax)
-              : 0.0F;
-          probWork_.SetValue(row * LONG_N + col, static_cast<half>(weight));
-          tileSum += weight;
+        const float tileSum = rowValid
+            ? PrepareProbabilityRow(row, qi, start, total, newMax) : 0.0F;
+        if (!rowValid) {
+          for (uint32_t col = 0; col < LONG_N; ++col)
+            probWork_.SetValue(row * LONG_N + col, half(0));
         }
         if (rowValid) {
           state_.SetValue(row, newMax);
@@ -247,15 +278,16 @@ class OscarInt2AttentionLong {
   }
 
   RuntimeShape shape_{};
+  uint32_t statePrefix_ = 0;
   QkMatmul& qk_;
   PvMatmul& pv_;
   Int2KvCacheLoader<half> cache_;
   AscendC::GlobalTensor<half> q_, kNew_, vNew_, out_, workspace_;
   AscendC::GlobalTensor<int32_t> qStarts_, qLens_, prefixes_;
   AscendC::GlobalTensor<half> qWork_, kWork_, vWork_, scoreWork_, probWork_, pvWork_;
-  AscendC::TBuf<AscendC::TPosition::VECCALC> kBuf_, vBuf_, accBuf_, stateBuf_, expBuf_;
+  AscendC::TBuf<AscendC::TPosition::VECCALC> kBuf_, vBuf_, accBuf_, stateBuf_, expBuf_, rowExpBuf_;
   AscendC::LocalTensor<half> kLocal_, vLocal_;
-  AscendC::LocalTensor<float> acc_, state_, exp_;
+  AscendC::LocalTensor<float> acc_, state_, exp_, rowExp_;
 };
 
 }  // namespace OscarAscendC

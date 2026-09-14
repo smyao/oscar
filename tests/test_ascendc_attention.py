@@ -36,6 +36,9 @@ def test_reference_kernel_has_conservative_length_gate(monkeypatch):
     monkeypatch.setenv("OSCAR_ASCEND_ASCENDC_MAX_SEQ_LEN", "0")
     with pytest.raises(ValueError, match="must be positive"):
         ascendc_attention.ascendc_max_seq_len()
+    monkeypatch.setenv("OSCAR_ASCEND_ASCENDC_MAX_SEQ_LEN", "32769")
+    with pytest.raises(ValueError, match="at most 32768"):
+        ascendc_attention.ascendc_max_seq_len()
 
 
 def test_source_contract_is_packed_int8_only():
@@ -130,5 +133,6 @@ def test_long_context_kernel_has_cube_qk_pv_and_tiling_key():
     assert "LongPvImpl" in long_kernel
     assert "CubeQk();" in long_kernel
     assert "CubePv();" in long_kernel
+    assert "AscendC::Exp(rowExp_, rowExp_, LONG_N)" in long_kernel
     assert "TILING_KEY_IS(2)" in entry
     assert "MatmulApiTiling" in tiling

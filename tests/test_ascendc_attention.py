@@ -88,3 +88,14 @@ def test_kernel_uses_aicore_math_and_qualified_tensor_types():
     assert "bfloat16_t" not in source
     assert " LocalTensor<" not in cache
     assert "\n  GlobalTensor<" not in cache
+
+
+def test_standalone_torch_binding_contract_is_present():
+    from pathlib import Path
+
+    root = Path(__file__).parents[1]
+    binding = (root / "ascendc/torch_binding/oscar_ascend_torch.cpp").read_text()
+    script = (root / "delivery/build_ascendc_torch_binding.sh").read_text()
+    assert "TORCH_LIBRARY(oscar_ascend" in binding
+    assert "aclnnOscarInt2PagedAttention" in binding
+    assert "liboscar_ascend_torch.so" in script

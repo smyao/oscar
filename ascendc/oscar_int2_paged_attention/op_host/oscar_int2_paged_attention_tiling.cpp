@@ -11,12 +11,13 @@ constexpr uint32_t kHeadDim = 256;
 constexpr uint32_t kMaxQuery = 4;
 constexpr uint32_t kTargetKvPerSplit = 1024;
 constexpr uint32_t kLongThreshold = 256;
-constexpr uint32_t kCubeM = 32;
+constexpr uint32_t kRowsPerItem = 32;
+constexpr uint32_t kCubeM = 16;
 constexpr uint32_t kCubeN = 256;
 constexpr uint64_t kWorkspacePerItem =
-    (kCubeM * kHeadDim + 2 * kCubeN * kHeadDim +
-     kCubeM * kCubeN) * sizeof(uint16_t) +
-    2ULL * kCubeM * kCubeN * sizeof(float);
+    (kRowsPerItem * kHeadDim + 2 * kCubeN * kHeadDim +
+     kRowsPerItem * kCubeN) * sizeof(uint16_t) +
+    2ULL * kRowsPerItem * kCubeN * sizeof(float);
 
 uint32_t DtypeBytes(ge::DataType dtype) {
   return dtype == ge::DT_INT8 ? 1U : 2U;
@@ -76,11 +77,9 @@ ge::graphStatus Tiling(gert::TilingContext* context) {
                 matmul_tiling::DataType::DT_FLOAT);
   cube.SetBias(false);
   cube.SetShape(kCubeM, kCubeN, kHeadDim);
-  // One work item owns q_len(<=4) * GQA(<=8) == 32 rows.  Splitting M at 16
-  // makes the KFC client expose only the first row block to the surrounding
-  // online-softmax loop on 910B: q[0:2] is correct while q[2:4] consumes an
-  // incomplete Cube result.  Keep the whole GQA group in one M program; N/K
-  // remain tiled for Cube occupancy and long-context streaming.
+  // CANN 9.1 reliably exposes one 16-row result per KFC IterateAll call on
+  // 910B.  The device kernel invokes this tiling twice for the 32 GQA lanes,
+  // while sharing the same unpacked KV tile.
   cube.SetFixSplit(kCubeM, 128, 128);
   cube.SetOrgShape(kCubeM, kCubeN, kHeadDim);
   cube.SetBufferSpace(-1, -1, -1);

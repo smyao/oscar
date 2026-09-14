@@ -8,6 +8,7 @@
 namespace OscarAscendC {
 
 constexpr uint32_t LONG_M = 32;
+constexpr uint32_t LONG_CUBE_M = 16;
 constexpr uint32_t LONG_N = 256;
 constexpr uint32_t LONG_Q_ELEMS = LONG_M * HEAD_DIM;
 constexpr uint32_t LONG_KV_ELEMS = LONG_N * HEAD_DIM;
@@ -199,26 +200,29 @@ class OscarInt2AttentionLong {
   }
 
   __aicore__ inline void CubeQk() {
-    qk_.SetOrgShape(LONG_M, LONG_N, HEAD_DIM);
-    qk_.SetSingleShape(LONG_M, LONG_N, HEAD_DIM);
-    qk_.SetTensorA(qWork_, false);
-    qk_.SetTensorB(kWork_, true);
-    // The score matrix is consumed immediately by scalar/vector softmax.
-    // Submit asynchronously but request and wait for the completion event.
-    // End() is intentionally deferred until all KV tiles have run so that the
-    // Matmul object remains reusable for 16K-32K contexts.
-    qk_.template IterateAll<false>(scoreWork_, 0, false, true);
-    qk_.WaitIterateAll();
+    qk_.SetOrgShape(LONG_CUBE_M, LONG_N, HEAD_DIM);
+    qk_.SetSingleShape(LONG_CUBE_M, LONG_N, HEAD_DIM);
+    for (uint32_t batch = 0; batch < LONG_M / LONG_CUBE_M; ++batch) {
+      const uint32_t row = batch * LONG_CUBE_M;
+      qk_.SetTensorA(qWork_[row * HEAD_DIM], false);
+      qk_.SetTensorB(kWork_, true);
+      // Submit one stable 16-row Cube program.  Both programs reuse kWork_, so
+      // compressed historical KV is still loaded exactly once per KV tile.
+      qk_.template IterateAll<false>(scoreWork_[row * LONG_N], 0, false, true);
+      qk_.WaitIterateAll();
+    }
   }
 
   __aicore__ inline void CubePv() {
-    pv_.SetOrgShape(LONG_M, HEAD_DIM, LONG_N);
-    pv_.SetSingleShape(LONG_M, HEAD_DIM, LONG_N);
-    pv_.SetTensorA(probWork_, false);
-    pv_.SetTensorB(vWork_, false);
-    // PV is accumulated into FP32 state immediately after this call.
-    pv_.template IterateAll<false>(pvWork_, 0, false, true);
-    pv_.WaitIterateAll();
+    pv_.SetOrgShape(LONG_CUBE_M, HEAD_DIM, LONG_N);
+    pv_.SetSingleShape(LONG_CUBE_M, HEAD_DIM, LONG_N);
+    for (uint32_t batch = 0; batch < LONG_M / LONG_CUBE_M; ++batch) {
+      const uint32_t row = batch * LONG_CUBE_M;
+      pv_.SetTensorA(probWork_[row * LONG_N], false);
+      pv_.SetTensorB(vWork_, false);
+      pv_.template IterateAll<false>(pvWork_[row * HEAD_DIM], 0, false, true);
+      pv_.WaitIterateAll();
+    }
   }
 
   __aicore__ inline void ProcessGroup(uint32_t work, uint32_t request,

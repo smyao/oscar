@@ -3,12 +3,19 @@
 #include <algorithm>
 #include "register/op_def_registry.h"
 #include "tiling/platform/platform_ascendc.h"
+#include "tiling/tiling_api.h"
 
 namespace optiling {
 namespace {
 constexpr uint32_t kHeadDim = 256;
 constexpr uint32_t kMaxQuery = 4;
 constexpr uint32_t kTargetKvPerSplit = 1024;
+constexpr uint32_t kLongThreshold = 256;
+constexpr uint32_t kCubeM = 32;
+constexpr uint32_t kCubeN = 256;
+constexpr uint64_t kWorkspacePerItem =
+    (kCubeM * kHeadDim + 2 * kCubeN * kHeadDim +
+     3 * kCubeM * kCubeN) * sizeof(uint16_t);
 
 uint32_t DtypeBytes(ge::DataType dtype) {
   return dtype == ge::DT_INT8 ? 1U : 2U;
@@ -42,15 +49,32 @@ ge::graphStatus Tiling(gert::TilingContext* context) {
   const int64_t* attrHk = context->GetAttrs()->GetInt(1);
   const int64_t* attrD = context->GetAttrs()->GetInt(2);
   const float* scale = context->GetAttrs()->GetFloat(0);
+  const int64_t* maxSeqLen = context->GetAttrs()->GetInt(3);
   if (attrHk == nullptr || attrD == nullptr || scale == nullptr ||
-      *attrHk != hk || *attrD != d) return ge::GRAPH_FAILED;
+      maxSeqLen == nullptr || *attrHk != hk || *attrD != d ||
+      *maxSeqLen <= 0) return ge::GRAPH_FAILED;
 
   auto platform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
   uint32_t cores = platform.GetCoreNum();
   if (cores == 0) return ge::GRAPH_FAILED;
   const uint32_t workItems = requests * hk;
   context->SetBlockDim(std::min(cores, std::max(1U, workItems)));
-  context->SetTilingKey(0);
+  const bool longContext = static_cast<uint64_t>(*maxSeqLen) > kLongThreshold;
+  context->SetTilingKey(longContext ? 2 : 0);
+
+  using namespace matmul_tiling;
+  MatmulApiTiling cube(platform);
+  cube.SetAType(AscendC::TPosition::GM, CubeFormat::ND,
+                matmul_tiling::DataType::DT_FLOAT16);
+  cube.SetBType(AscendC::TPosition::GM, CubeFormat::ND,
+                matmul_tiling::DataType::DT_FLOAT16);
+  cube.SetCType(AscendC::TPosition::GM, CubeFormat::ND,
+                matmul_tiling::DataType::DT_FLOAT16);
+  cube.SetBias(false);
+  cube.SetShape(kCubeM, kCubeN, kHeadDim);
+  cube.SetFixSplit(16, 128, 128);
+  cube.SetOrgShape(kCubeM, kCubeN, kHeadDim);
+  cube.SetBufferSpace(-1, -1, -1);
 
   OscarInt2PagedAttentionTilingData data;
   data.set_numTokens(tokens);
@@ -68,9 +92,15 @@ ge::graphStatus Tiling(gert::TilingContext* context) {
   data.set_hasStage(hasStage ? 1U : 0U);
   data.set_stageRows(hasStage ? static_cast<uint32_t>(stage->GetStorageShape().GetDim(0)) : 0U);
   data.set_splitKv(1U);
+  data.set_maxSeqLen(static_cast<uint32_t>(*maxSeqLen));
+  data.set_kvTile(kCubeN);
+  const uint64_t workspaceBytes =
+      static_cast<uint64_t>(workItems) * kWorkspacePerItem;
+  data.set_userWorkspaceBytes(workspaceBytes);
   data.set_scaleValue(*scale);
+  if (cube.GetTiling(data.cubeTiling) == -1) return ge::GRAPH_FAILED;
   size_t* workspace = context->GetWorkspaceSizes(1);
-  workspace[0] = platform.GetLibApiWorkSpaceSize();
+  workspace[0] = platform.GetLibApiWorkSpaceSize() + workspaceBytes;
   data.SaveToBuffer(context->GetRawTilingData()->GetData(),
                     context->GetRawTilingData()->GetCapacity());
   context->GetRawTilingData()->SetDataSize(data.GetDataSize());

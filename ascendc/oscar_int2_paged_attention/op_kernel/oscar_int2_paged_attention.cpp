@@ -1,6 +1,7 @@
 #include "kernel_operator.h"
 #include "oscar_int2_paged_attention_common.h"
 #include "oscar_int2_paged_attention_kvcache.h"
+#include "oscar_int2_paged_attention_long.h"
 
 using namespace AscendC;
 using namespace OscarAscendC;
@@ -173,10 +174,22 @@ extern "C" __global__ __aicore__ void oscar_int2_paged_attention(
     GM_ADDR attentionOut, GM_ADDR workspace, GM_ADDR tiling) {
   TPipe pipe;
   GET_TILING_DATA(tilingData, tiling);
+  KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIC_ONLY);
   if (TILING_KEY_IS(0)) {
     OscarInt2AttentionReference<half> op;
     op.Init(qRot, kNew, vNew, kCache, vCache, blockTables, qStarts, qLens,
             prefixes, stageK, stageV, owner, attentionOut, &tilingData, &pipe);
+    op.Process();
+  } else if (TILING_KEY_IS(2)) {
+    LongQkImpl::MT qk;
+    LongPvImpl::MT pv;
+    qk.Init(&tilingData.cubeTiling, &pipe);
+    pv.Init(&tilingData.cubeTiling, &pipe);
+    OscarInt2AttentionLong<LongQkImpl::MT, LongPvImpl::MT,
+                           decltype(tilingData)> op(qk, pv);
+    op.Init(qRot, kNew, vNew, kCache, vCache, blockTables, qStarts, qLens,
+            prefixes, stageK, stageV, owner, attentionOut,
+            GetUserWorkspace(workspace), &tilingData, &pipe);
     op.Process();
   }
 }

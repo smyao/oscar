@@ -1,6 +1,7 @@
 #pragma once
 
 #include "register/tilingdata_base.h"
+#include "tiling/tiling_api.h"
 
 namespace optiling {
 BEGIN_TILING_DATA_DEF(OscarInt2PagedAttentionTilingData)
@@ -17,7 +18,11 @@ TILING_DATA_FIELD_DEF(uint32_t, cacheSlotBytes);
 TILING_DATA_FIELD_DEF(uint32_t, hasStage);
 TILING_DATA_FIELD_DEF(uint32_t, stageRows);
 TILING_DATA_FIELD_DEF(uint32_t, splitKv);
+TILING_DATA_FIELD_DEF(uint32_t, maxSeqLen);
+TILING_DATA_FIELD_DEF(uint32_t, kvTile);
+TILING_DATA_FIELD_DEF(uint64_t, userWorkspaceBytes);
 TILING_DATA_FIELD_DEF(float, scaleValue);
+TILING_DATA_FIELD_DEF_STRUCT(TCubeTiling, cubeTiling);
 END_TILING_DATA_DEF;
 
 REGISTER_TILING_DATA_CLASS(OscarInt2PagedAttention,

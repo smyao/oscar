@@ -697,6 +697,7 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                     self.key_cache, self.value_cache,
                     attn_metadata.block_tables.contiguous(), q_starts, q_lens,
                     prefixes, self.scale, stage=stage,
+                    max_seq_len=max(execution.seq_lens),
                 )
             except Exception as exc:
                 if ascendc_required():

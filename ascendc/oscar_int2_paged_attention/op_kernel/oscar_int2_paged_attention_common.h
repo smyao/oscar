@@ -28,6 +28,8 @@ struct RuntimeShape {
   uint32_t maxBlocks;
   uint32_t slotBytes;
   uint32_t stageRows;
+  uint32_t maxSeqLen;
+  uint32_t kvTile;
   bool hasStage;
   float scale;
 };
@@ -46,6 +48,8 @@ __aicore__ inline RuntimeShape ReadShape(const TilingData* tiling) {
   s.slotBytes = tiling->cacheSlotBytes;
   s.hasStage = tiling->hasStage != 0;
   s.stageRows = tiling->stageRows;
+  s.maxSeqLen = tiling->maxSeqLen;
+  s.kvTile = tiling->kvTile;
   s.scale = tiling->scaleValue;
   return s;
 }

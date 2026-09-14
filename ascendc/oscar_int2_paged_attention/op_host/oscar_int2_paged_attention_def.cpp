@@ -38,6 +38,7 @@ class OscarInt2PagedAttention : public OpDef {
     this->Attr("scaleValue").AttrType(REQUIRED).Float(1.0);
     this->Attr("numKvHeads").AttrType(REQUIRED).Int(1);
     this->Attr("headDim").AttrType(REQUIRED).Int(256);
+    this->Attr("maxSeqLen").AttrType(REQUIRED).Int(256);
     OpAICoreConfig config;
     config.DynamicCompileStaticFlag(true)
         .DynamicFormatFlag(true)

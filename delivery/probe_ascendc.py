@@ -14,6 +14,9 @@ def main() -> int:
         default=str(Path(__file__).resolve().parents[1]
                     / "build/ascendc/liboscar_ascend_torch.so"),
     )
+    ap.add_argument("--long", action="store_true",
+                    help="also exercise the experimental Cube tiling key")
+    ap.add_argument("--long-length", type=int, default=512)
     args = ap.parse_args()
 
     # op_api_common snapshots this path when the binding shared library loads.
@@ -40,7 +43,12 @@ def main() -> int:
     device = torch.device("npu")
     d, hk, hq, bs = 256, 1, 8, 128
     scale = d ** -0.5
-    for prefix, q_len in ((0, 1), (17, 4), (129, 4), (252, 4)):
+    cases = [(0, 1), (17, 4), (129, 4), (252, 4)]
+    if args.long:
+        if args.long_length <= 256:
+            raise ValueError("--long-length must be greater than 256")
+        cases.append((args.long_length - 4, 4))
+    for prefix, q_len in cases:
         blocks = max(1, (prefix + bs - 1) // bs)
         q = torch.randn(q_len, hq, d, dtype=torch.float16) * 0.25
         k_new = torch.randn(q_len, hk, d, dtype=torch.float16) * 0.25
@@ -62,6 +70,7 @@ def main() -> int:
             q.to(device), k_new.to(device), v_new.to(device),
             k_cache, v_cache, block_table.to(device), q_starts, q_lens,
             prefixes, scale,
+            max_seq_len=prefix + q_len,
         )
         torch.npu.synchronize()
         expected = oscar_paged_attention_ref(

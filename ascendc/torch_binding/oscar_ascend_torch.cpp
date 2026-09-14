@@ -18,7 +18,7 @@ at::Tensor int2_paged_attention(
     const at::Tensor& qLens, const at::Tensor& prefixes,
     const at::Tensor& stageK, const at::Tensor& stageV,
     const at::Tensor& owner, double scaleValue, int64_t numKvHeads,
-    int64_t headDim) {
+    int64_t headDim, int64_t maxSeqLen) {
   TORCH_CHECK(q.scalar_type() == at::kHalf,
               "OscarInt2PagedAttention device ABI requires FP16 Q/K/V");
   TORCH_CHECK(kNew.scalar_type() == at::kHalf &&
@@ -28,7 +28,7 @@ at::Tensor int2_paged_attention(
   EXEC_NPU_CMD(aclnnOscarInt2PagedAttention,
                q, kNew, vNew, kCache, vCache, blockTables, qStarts, qLens,
                prefixes, stageK, stageV, owner, scaleValue, numKvHeads,
-               headDim, out);
+               headDim, maxSeqLen, out);
   return out;
 }
 
@@ -39,7 +39,7 @@ TORCH_LIBRARY(oscar_ascend, m) {
         "Tensor k_cache, Tensor v_cache, Tensor block_tables, "
         "Tensor q_starts, Tensor q_lens, Tensor prefixes, Tensor stage_k, "
         "Tensor stage_v, Tensor owner, float scale_value, int num_kv_heads, "
-        "int head_dim) -> Tensor");
+        "int head_dim, int max_seq_len) -> Tensor");
 }
 
 TORCH_LIBRARY_IMPL(oscar_ascend, PrivateUse1, m) {

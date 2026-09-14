@@ -84,6 +84,7 @@ def oscar_ascendc_attention(
     scale: float,
     *,
     stage: Sequence[torch.Tensor] | None = None,
+    max_seq_len: int | None = None,
 ) -> torch.Tensor:
     """Invoke the fused INT2-unpack + Cube attention custom operator."""
     op = _resolve_op()
@@ -133,6 +134,12 @@ def oscar_ascendc_attention(
                 or owner.dtype != torch.int64):
             raise ValueError("AscendC OSCAR staging must be FP32 K/V and INT64 owner")
     result_dtype = q_rot.dtype
+    if max_seq_len is None:
+        # Direct probes may omit the host value.  This fallback synchronizes;
+        # production passes scheduler-owned host metadata below.
+        max_seq_len = int((prefixes + q_lens).max().item())
+    if max_seq_len <= 0:
+        raise ValueError("AscendC OSCAR max_seq_len must be positive")
     # CANN 9.1 / 910B does not support the scalar BF16 casts in this reference
     # AICore implementation.  Attention still accumulates in FP32; only the
     # custom-op boundary uses FP16 for BF16 models.
@@ -143,6 +150,7 @@ def oscar_ascendc_attention(
         q_device, k_device, v_device,
         k_cache, v_cache, block_tables, q_starts, q_lens, prefixes,
         stage_k, stage_v, owner, float(scale), int(hk), int(d),
+        int(max_seq_len),
     )
     if out.shape != q_rot.shape or out.device != q_rot.device:
         raise RuntimeError("AscendC OSCAR operator returned an invalid output")

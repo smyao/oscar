@@ -53,7 +53,7 @@ def test_source_contract_is_packed_int8_only():
     assert "ge::DT_BF16" not in definition
     assert "DataType(fp)" not in definition
     assert "Format(nd)" not in definition
-    assert "SetTilingKey(0)" in tiling
+    assert "longContext ? 2 : 0" in tiling
 
 
 def test_kvcache_loader_matches_oscar_split_layout_contract():
@@ -114,3 +114,21 @@ def test_real_npu_probe_covers_decode_and_q4_history():
     assert "(252, 4)" in probe
     assert "torch.npu.synchronize()" in probe
     assert "equal_nan=False" in probe
+
+
+def test_long_context_kernel_has_cube_qk_pv_and_tiling_key():
+    from pathlib import Path
+
+    root = Path(__file__).parents[1]
+    long_kernel = (root / "ascendc/oscar_int2_paged_attention/op_kernel/"
+                   "oscar_int2_paged_attention_long.h").read_text()
+    entry = (root / "ascendc/oscar_int2_paged_attention/op_kernel/"
+             "oscar_int2_paged_attention.cpp").read_text()
+    tiling = (root / "ascendc/oscar_int2_paged_attention/op_host/"
+              "oscar_int2_paged_attention_tiling.cpp").read_text()
+    assert "LongQkImpl" in long_kernel
+    assert "LongPvImpl" in long_kernel
+    assert "CubeQk();" in long_kernel
+    assert "CubePv();" in long_kernel
+    assert "TILING_KEY_IS(2)" in entry
+    assert "MatmulApiTiling" in tiling

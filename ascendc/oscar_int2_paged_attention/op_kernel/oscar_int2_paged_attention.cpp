@@ -62,8 +62,16 @@ class OscarInt2AttentionReference {
     AscendC::Duplicate(exp_, value, 8);
     AscendC::PipeBarrier<PIPE_V>();
     AscendC::Exp(exp_, exp_, 8);
-    AscendC::PipeBarrier<PIPE_V>();
-    return exp_.GetValue(0);
+    const event_t vectorToScalar = static_cast<event_t>(
+        GetTPipePtr()->FetchEventID(AscendC::HardEvent::V_S));
+    AscendC::SetFlag<AscendC::HardEvent::V_S>(vectorToScalar);
+    AscendC::WaitFlag<AscendC::HardEvent::V_S>(vectorToScalar);
+    const float result = exp_.GetValue(0);
+    const event_t scalarToVector = static_cast<event_t>(
+        GetTPipePtr()->FetchEventID(AscendC::HardEvent::S_V));
+    AscendC::SetFlag<AscendC::HardEvent::S_V>(scalarToVector);
+    AscendC::WaitFlag<AscendC::HardEvent::S_V>(scalarToVector);
+    return result;
   }
 
   __aicore__ inline void LoadFresh(uint32_t token, uint32_t kvHead) {

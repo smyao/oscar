@@ -104,15 +104,13 @@ echo "[oscar-ascendc] compiling operator for $SOC"
 
 OUTPUT_DIR="$REPO_ROOT/build/ascendc"
 mkdir -p "$OUTPUT_DIR"
-find "$BUILD_ROOT/csrc" -type f \
-    \( -name 'cann-ops-transformer*.run' -o -name 'custom_opp_*.run' -o -name 'CANN-custom_ops*.run' \) \
-    -exec cp {} "$OUTPUT_DIR/" \;
-
-PACKAGE="$(find "$OUTPUT_DIR" -maxdepth 1 -type f \
+BUILT_PACKAGE="$(find "$BUILD_ROOT/csrc" -type f \
     \( -name 'cann-ops-transformer*.run' -o -name 'custom_opp_*.run' -o -name 'CANN-custom_ops*.run' \) \
     -print -quit)"
-[ -n "$PACKAGE" ] || {
+[ -n "$BUILT_PACKAGE" ] || {
     echo "build completed but no custom-op package was produced" >&2
     exit 3
 }
+PACKAGE="$OUTPUT_DIR/$(basename "$BUILT_PACKAGE")"
+cp "$BUILT_PACKAGE" "$PACKAGE"
 echo "[oscar-ascendc] package: $PACKAGE"

@@ -64,11 +64,14 @@ ge::graphStatus Tiling(gert::TilingContext* context) {
 
   using namespace matmul_tiling;
   MatmulApiTiling cube(platform);
-  cube.SetAType(AscendC::TPosition::GM, AscendC::CubeFormat::ND,
+  // Host-side matmul tiling owns a separate enum namespace from the
+  // device-side AscendC API.  CANN 9.1 deliberately does not expose
+  // AscendC::TPosition/CubeFormat to op_host translation units.
+  cube.SetAType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND,
                 matmul_tiling::DataType::DT_FLOAT16);
-  cube.SetBType(AscendC::TPosition::GM, AscendC::CubeFormat::ND,
+  cube.SetBType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND,
                 matmul_tiling::DataType::DT_FLOAT16);
-  cube.SetCType(AscendC::TPosition::GM, AscendC::CubeFormat::ND,
+  cube.SetCType(matmul_tiling::TPosition::GM, matmul_tiling::CubeFormat::ND,
                 matmul_tiling::DataType::DT_FLOAT16);
   cube.SetBias(false);
   cube.SetShape(kCubeM, kCubeN, kHeadDim);

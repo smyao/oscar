@@ -50,6 +50,8 @@ def test_source_contract_is_packed_int8_only():
     assert "kHeadDim = 256" in tiling
     assert "hq % hk" in tiling
     assert "GetLibApiWorkSpaceSize" in tiling
+    assert "ge::DT_BF16" not in definition
+    assert "SetTilingKey(0)" in tiling
 
 
 def test_kvcache_loader_matches_oscar_split_layout_contract():
@@ -81,5 +83,6 @@ def test_kernel_uses_aicore_math_and_qualified_tensor_types():
              "oscar_int2_paged_attention_kvcache.h").read_text()
     assert "expf(" not in source
     assert "AscendC::Exp(" in source
+    assert "bfloat16_t" not in source
     assert " LocalTensor<" not in cache
     assert "\n  GlobalTensor<" not in cache

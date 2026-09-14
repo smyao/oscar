@@ -162,12 +162,7 @@ extern "C" __global__ __aicore__ void oscar_int2_paged_attention(
     GM_ADDR attentionOut, GM_ADDR workspace, GM_ADDR tiling) {
   TPipe pipe;
   GET_TILING_DATA(tilingData, tiling);
-  if (TILING_KEY_IS(1)) {
-    OscarInt2AttentionReference<bfloat16_t> op;
-    op.Init(qRot, kNew, vNew, kCache, vCache, blockTables, qStarts, qLens,
-            prefixes, stageK, stageV, owner, attentionOut, &tilingData, &pipe);
-    op.Process();
-  } else {
+  if (TILING_KEY_IS(0)) {
     OscarInt2AttentionReference<half> op;
     op.Init(qRot, kNew, vNew, kCache, vCache, blockTables, qStarts, qLens,
             prefixes, stageK, stageV, owner, attentionOut, &tilingData, &pipe);

@@ -4,8 +4,11 @@ namespace ops {
 class OscarInt2PagedAttention : public OpDef {
  public:
   explicit OscarInt2PagedAttention(const char* name) : OpDef(name) {
-    auto fp = std::initializer_list<ge::DataType>{ge::DT_FLOAT16, ge::DT_BF16};
-    auto nd = std::initializer_list<ge::Format>{ge::FORMAT_ND, ge::FORMAT_ND};
+    // The 910B ccec backend cannot lower scalar bfloat16 casts used by the
+    // reference kernel.  Keep the device ABI FP16; the Python adapter converts
+    // BF16 model tensors at the boundary and restores the result dtype.
+    auto fp = std::initializer_list<ge::DataType>{ge::DT_FLOAT16};
+    auto nd = std::initializer_list<ge::Format>{ge::FORMAT_ND};
     this->Input("qRot").ParamType(REQUIRED).DataType(fp).Format(nd).AutoContiguous();
     this->Input("kNew").ParamType(REQUIRED).DataType(fp).Format(nd).AutoContiguous();
     this->Input("vNew").ParamType(REQUIRED).DataType(fp).Format(nd).AutoContiguous();

@@ -50,7 +50,7 @@ ge::graphStatus Tiling(gert::TilingContext* context) {
   if (cores == 0) return ge::GRAPH_FAILED;
   const uint32_t workItems = requests * hk;
   context->SetBlockDim(std::min(cores, std::max(1U, workItems)));
-  context->SetTilingKey(context->GetInputDesc(0)->GetDataType() == ge::DT_BF16 ? 1 : 0);
+  context->SetTilingKey(0);
 
   OscarInt2PagedAttentionTilingData data;
   data.set_numTokens(tokens);

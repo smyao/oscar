@@ -28,3 +28,35 @@ def test_required_mode_helper(monkeypatch):
     assert ascendc_attention.ascendc_required()
     monkeypatch.setenv("OSCAR_ASCEND_USE_ASCENDC", "1")
     assert not ascendc_attention.ascendc_required()
+
+
+def test_source_contract_is_packed_int8_only():
+    from pathlib import Path
+
+    root = Path(__file__).parents[1]
+    definition = (root / "ascendc/oscar_int2_paged_attention/op_host/"
+                  "oscar_int2_paged_attention_def.cpp").read_text()
+    tiling = (root / "ascendc/oscar_int2_paged_attention/op_host/"
+              "oscar_int2_paged_attention_tiling.cpp").read_text()
+    assert definition.count("ge::DT_INT8, ge::DT_INT8") >= 2
+    assert "kHeadDim = 256" in tiling
+    assert "hq % hk" in tiling
+    assert "GetLibApiWorkSpaceSize" in tiling
+
+
+def test_kvcache_loader_matches_oscar_split_layout_contract():
+    from pathlib import Path
+
+    root = Path(__file__).parents[1]
+    source = (root / "ascendc/oscar_int2_paged_attention/op_kernel/"
+              "oscar_int2_paged_attention_kvcache.h").read_text()
+    common = (root / "ascendc/oscar_int2_paged_attention/op_kernel/"
+              "oscar_int2_paged_attention_common.h").read_text()
+    assert "K_PACKED_OFFSET = 32" in common
+    assert "V_PACKED_OFFSET = 0" in common
+    assert "V_SCALE_OFFSET = 4" in common
+    assert "V_ZERO_OFFSET = 6" in common
+    assert "block % shape_.stageRows" in source
+    assert "owner_.GetValue" in source
+    assert "(kb >> 6) & 3U" in source
+    assert "(vb >> 6) & 3U" in source

@@ -102,6 +102,14 @@ def oscar_ascendc_attention(
                q_starts, q_lens, prefixes)
     if any(t.device != q_rot.device or not t.is_contiguous() for t in tensors):
         raise ValueError("AscendC OSCAR inputs must be contiguous on one NPU")
+    if k_cache.dtype != torch.int8 or v_cache.dtype != torch.int8:
+        raise ValueError(
+            "AscendC OSCAR requires packed int8 physical cache geometry"
+        )
+    if q_rot.dtype not in (torch.float16, torch.bfloat16):
+        raise ValueError("AscendC OSCAR Q/K/V must be float16 or bfloat16")
+    if k_new.dtype != q_rot.dtype or v_new.dtype != q_rot.dtype:
+        raise ValueError("AscendC OSCAR fresh K/V dtype must match Q")
     if stage is None:
         stage_k = torch.empty(0, device=q_rot.device, dtype=torch.float32)
         stage_v = stage_k
@@ -114,6 +122,9 @@ def oscar_ascendc_attention(
                 or stage_k.device != q_rot.device or stage_v.device != q_rot.device
                 or owner.device != q_rot.device):
             raise ValueError("Invalid AscendC OSCAR staging tensors")
+        if (stage_k.dtype != torch.float32 or stage_v.dtype != torch.float32
+                or owner.dtype != torch.int64):
+            raise ValueError("AscendC OSCAR staging must be FP32 K/V and INT64 owner")
     out = op(
         q_rot.contiguous(), k_new.contiguous(), v_new.contiguous(),
         k_cache, v_cache, block_tables, q_starts, q_lens, prefixes,

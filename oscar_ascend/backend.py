@@ -682,9 +682,9 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                          layer._oscar_slot_owner)
             try:
                 grouped = oscar_ascendc_attention(
-                    q_rot.contiguous(),
-                    rotated[0][:execution.actual_tokens].contiguous(),
-                    rotated[1][:execution.actual_tokens].contiguous(),
+                    q_rot.to(query.dtype).contiguous(),
+                    rotated[0][:execution.actual_tokens].to(query.dtype).contiguous(),
+                    rotated[1][:execution.actual_tokens].to(query.dtype).contiguous(),
                     self.key_cache, self.value_cache,
                     attn_metadata.block_tables.contiguous(), q_starts, q_lens,
                     prefixes, self.scale, stage=stage,

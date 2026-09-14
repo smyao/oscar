@@ -75,6 +75,8 @@ class OscarInt2AttentionLong {
          work += AscendC::GetBlockNum()) {
       ProcessGroup(work, work / shape_.kvHeads, work % shape_.kvHeads);
     }
+    qk_.End();
+    pv_.End();
   }
 
  private:
@@ -192,7 +194,12 @@ class OscarInt2AttentionLong {
     qk_.SetSingleShape(LONG_M, LONG_N, HEAD_DIM);
     qk_.SetTensorA(qWork_, false);
     qk_.SetTensorB(kWork_, true);
-    qk_.template IterateAll<false>(scoreWork_, 0);
+    // The score matrix is consumed immediately by scalar/vector softmax.
+    // Submit asynchronously but request and wait for the completion event.
+    // End() is intentionally deferred until all KV tiles have run so that the
+    // Matmul object remains reusable for 16K-32K contexts.
+    qk_.template IterateAll<false>(scoreWork_, 0, false, true);
+    qk_.WaitIterateAll();
   }
 
   __aicore__ inline void CubePv() {
@@ -200,7 +207,9 @@ class OscarInt2AttentionLong {
     pv_.SetSingleShape(LONG_M, HEAD_DIM, LONG_N);
     pv_.SetTensorA(probWork_, false);
     pv_.SetTensorB(vWork_, false);
-    pv_.template IterateAll<false>(pvWork_, 0);
+    // PV is accumulated into FP32 state immediately after this call.
+    pv_.template IterateAll<false>(pvWork_, 0, false, true);
+    pv_.WaitIterateAll();
   }
 
   __aicore__ inline void ProcessGroup(uint32_t work, uint32_t request,

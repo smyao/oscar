@@ -187,17 +187,13 @@ extern "C" __global__ __aicore__ void oscar_int2_paged_attention(
     op.Process();
   } else if (TILING_KEY_IS(2)) {
     KERNEL_TASK_TYPE(2, KERNEL_TYPE_MIX_AIC_1_1);
-    LongQkMatmul qk0;
-    LongQkMatmul qk1;
-    LongPvMatmul pv0;
-    LongPvMatmul pv1;
+    LongQkMatmul qk;
+    LongPvMatmul pv;
     REGIST_MATMUL_OBJ(&pipe, GetSysWorkSpacePtr(),
-                      qk0, &tilingData.cubeTiling,
-                      qk1, &tilingData.cubeTiling,
-                      pv0, &tilingData.cubeTiling,
-                      pv1, &tilingData.cubeTiling);
+                      qk, &tilingData.cubeTiling,
+                      pv, &tilingData.cubeTiling);
     OscarInt2AttentionLong<LongQkMatmul, LongPvMatmul,
-                           decltype(tilingData)> op(qk0, qk1, pv0, pv1);
+                           decltype(tilingData)> op(qk, pv);
     op.Init(qRot, kNew, vNew, kCache, vCache, blockTables, qStarts, qLens,
             prefixes, stageK, stageV, owner, attentionOut,
             GetUserWorkspace(workspace), &tilingData, &pipe);

@@ -7,8 +7,8 @@
 
 namespace OscarAscendC {
 
-constexpr uint32_t LONG_M = 32;
-constexpr uint32_t LONG_CUBE_M = 16;
+constexpr uint32_t LONG_M = 16;
+constexpr uint32_t LONG_GQA_PER_WORK = 4;
 constexpr uint32_t LONG_N = 256;
 constexpr uint32_t LONG_Q_ELEMS = LONG_M * HEAD_DIM;
 constexpr uint32_t LONG_KV_ELEMS = LONG_N * HEAD_DIM;
@@ -38,14 +38,15 @@ using LongBias = AscendC::MatmulType<AscendC::TPosition::GM,
 using LongQkMatmul = AscendC::Matmul<LongA, LongBK, LongC, LongBias>;
 using LongPvMatmul = AscendC::Matmul<LongA, LongBV, LongC, LongBias>;
 
-// Long-context implementation.  One work item owns a request/KV-head pair;
-// all q<=4 rows and its complete GQA group share every decompressed KV tile.
+// Long-context implementation.  One work item owns one request/KV-head and
+// at most four query heads.  All q<=4 speculative rows in that tile share a
+// decompressed KV tile.  GQA=8 is deliberately split into two work items
+// because CANN 9.1 does not reliably expose M=32/four-client KFC results.
 template <class QkMatmul, class PvMatmul, class TilingData>
 class OscarInt2AttentionLong {
  public:
-  __aicore__ inline OscarInt2AttentionLong(
-      QkMatmul& qk0, QkMatmul& qk1, PvMatmul& pv0, PvMatmul& pv1)
-      : qk0_(qk0), qk1_(qk1), pv0_(pv0), pv1_(pv1) {}
+  __aicore__ inline OscarInt2AttentionLong(QkMatmul& qk, PvMatmul& pv)
+      : qk_(qk), pv_(pv) {}
 
   __aicore__ inline void Init(
       GM_ADDR qRot, GM_ADDR kNew, GM_ADDR vNew, GM_ADDR kCache,
@@ -78,15 +79,18 @@ class OscarInt2AttentionLong {
   }
 
   __aicore__ inline void Process() {
-    const uint32_t workItems = shape_.requests * shape_.kvHeads;
+    const uint32_t groupsPerKv =
+        (shape_.gqa + LONG_GQA_PER_WORK - 1) / LONG_GQA_PER_WORK;
+    const uint32_t workItems = shape_.requests * shape_.kvHeads * groupsPerKv;
     for (uint32_t work = AscendC::GetBlockIdx(); work < workItems;
          work += AscendC::GetBlockNum()) {
-      ProcessGroup(work, work / shape_.kvHeads, work % shape_.kvHeads);
+      const uint32_t requestKv = work / groupsPerKv;
+      const uint32_t groupTile = work % groupsPerKv;
+      ProcessGroup(work, requestKv / shape_.kvHeads,
+                   requestKv % shape_.kvHeads, groupTile);
     }
-    qk0_.End();
-    qk1_.End();
-    pv0_.End();
-    pv1_.End();
+    qk_.End();
+    pv_.End();
   }
 
  private:
@@ -164,13 +168,14 @@ class OscarInt2AttentionLong {
   }
 
   __aicore__ inline void PrepareQueries(uint32_t qStart, uint32_t qLen,
-                                        uint32_t kvHead) {
-    const uint32_t lanes = qLen * shape_.gqa;
+                                        uint32_t kvHead, uint32_t groupBase,
+                                        uint32_t groupWidth) {
+    const uint32_t lanes = qLen * groupWidth;
     for (uint32_t row = 0; row < LONG_M; ++row) {
-      const uint32_t qi = row / shape_.gqa;
-      const uint32_t group = row % shape_.gqa;
+      const uint32_t qi = row / groupWidth;
+      const uint32_t group = row % groupWidth;
       const bool valid = row < lanes;
-      const uint32_t qHead = kvHead * shape_.gqa + group;
+      const uint32_t qHead = kvHead * shape_.gqa + groupBase + group;
       const uint64_t src =
           (static_cast<uint64_t>(qStart + qi) * shape_.queryHeads + qHead) *
           HEAD_DIM;
@@ -203,35 +208,25 @@ class OscarInt2AttentionLong {
   }
 
   __aicore__ inline void CubeQk() {
-    CubeQkHalf(qk0_, 0);
-    CubeQkHalf(qk1_, LONG_CUBE_M);
-  }
-
-  __aicore__ inline void CubeQkHalf(QkMatmul& mm, uint32_t row) {
-    mm.SetOrgShape(LONG_CUBE_M, LONG_N, HEAD_DIM);
-    mm.SetSingleShape(LONG_CUBE_M, LONG_N, HEAD_DIM);
-    mm.SetTensorA(qWork_[row * HEAD_DIM], false);
-    mm.SetTensorB(kWork_, true);
-    mm.template IterateAll<false>(scoreWork_[row * LONG_N], 0, false, true);
-    mm.WaitIterateAll();
+    qk_.SetOrgShape(LONG_M, LONG_N, HEAD_DIM);
+    qk_.SetSingleShape(LONG_M, LONG_N, HEAD_DIM);
+    qk_.SetTensorA(qWork_, false);
+    qk_.SetTensorB(kWork_, true);
+    qk_.template IterateAll<false>(scoreWork_, 0, false, true);
+    qk_.WaitIterateAll();
   }
 
   __aicore__ inline void CubePv() {
-    CubePvHalf(pv0_, 0);
-    CubePvHalf(pv1_, LONG_CUBE_M);
-  }
-
-  __aicore__ inline void CubePvHalf(PvMatmul& mm, uint32_t row) {
-    mm.SetOrgShape(LONG_CUBE_M, HEAD_DIM, LONG_N);
-    mm.SetSingleShape(LONG_CUBE_M, HEAD_DIM, LONG_N);
-    mm.SetTensorA(probWork_[row * LONG_N], false);
-    mm.SetTensorB(vWork_, false);
-    mm.template IterateAll<false>(pvWork_[row * HEAD_DIM], 0, false, true);
-    mm.WaitIterateAll();
+    pv_.SetOrgShape(LONG_M, HEAD_DIM, LONG_N);
+    pv_.SetSingleShape(LONG_M, HEAD_DIM, LONG_N);
+    pv_.SetTensorA(probWork_, false);
+    pv_.SetTensorB(vWork_, false);
+    pv_.template IterateAll<false>(pvWork_, 0, false, true);
+    pv_.WaitIterateAll();
   }
 
   __aicore__ inline void ProcessGroup(uint32_t work, uint32_t request,
-                                      uint32_t kvHead) {
+                                      uint32_t kvHead, uint32_t groupTile) {
     const int32_t qStartRaw = qStarts_.GetValue(request);
     const int32_t qLenRaw = qLens_.GetValue(request);
     const int32_t prefixRaw = prefixes_.GetValue(request);
@@ -242,9 +237,14 @@ class OscarInt2AttentionLong {
     const uint32_t prefix = static_cast<uint32_t>(prefixRaw);
     statePrefix_ = prefix;
     const uint32_t total = prefix + qLen;
-    const uint32_t lanes = qLen * shape_.gqa;
+    const uint32_t groupBase = groupTile * LONG_GQA_PER_WORK;
+    if (groupBase >= shape_.gqa) return;
+    const uint32_t groupWidth =
+        shape_.gqa - groupBase < LONG_GQA_PER_WORK
+            ? shape_.gqa - groupBase : LONG_GQA_PER_WORK;
+    const uint32_t lanes = qLen * groupWidth;
     BindWorkspace(work);
-    PrepareQueries(qStart, qLen, kvHead);
+    PrepareQueries(qStart, qLen, kvHead, groupBase, groupWidth);
     for (uint32_t row = 0; row < lanes; ++row) {
       state_.SetValue(row, -3.402823466e+38F);
       state_.SetValue(LONG_M + row, 0.0F);
@@ -256,7 +256,7 @@ class OscarInt2AttentionLong {
       PrepareKvTile(request, kvHead, qStart, prefix, total, start);
       CubeQk();
       for (uint32_t row = 0; row < LONG_M; ++row) {
-        const uint32_t qi = row / shape_.gqa;
+        const uint32_t qi = row / groupWidth;
         const bool rowValid = row < lanes;
         float tileMax = -3.402823466e+38F;
         for (uint32_t col = 0; col < LONG_N; ++col) {
@@ -294,9 +294,9 @@ class OscarInt2AttentionLong {
                         pvWork_.GetValue(row * HEAD_DIM + d));
     }
     for (uint32_t row = 0; row < lanes; ++row) {
-      const uint32_t qi = row / shape_.gqa;
-      const uint32_t group = row % shape_.gqa;
-      const uint32_t qHead = kvHead * shape_.gqa + group;
+      const uint32_t qi = row / groupWidth;
+      const uint32_t group = row % groupWidth;
+      const uint32_t qHead = kvHead * shape_.gqa + groupBase + group;
       const uint64_t dst =
           (static_cast<uint64_t>(qStart + qi) * shape_.queryHeads + qHead) *
           HEAD_DIM;
@@ -310,10 +310,8 @@ class OscarInt2AttentionLong {
 
   RuntimeShape shape_{};
   uint32_t statePrefix_ = 0;
-  QkMatmul& qk0_;
-  QkMatmul& qk1_;
-  PvMatmul& pv0_;
-  PvMatmul& pv1_;
+  QkMatmul& qk_;
+  PvMatmul& pv_;
   Int2KvCacheLoader<half> cache_;
   __gm__ uint8_t* workspaceAddr_ = nullptr;
   AscendC::GlobalTensor<half> q_, kNew_, vNew_, out_;

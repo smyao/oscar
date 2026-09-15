@@ -1,6 +1,7 @@
 #include "oscar_int2_paged_attention_tiling.h"
 
 #include <algorithm>
+#include <limits>
 #include "register/op_def_registry.h"
 #include "tiling/platform/platform_ascendc.h"
 #include "tiling/tiling_api.h"
@@ -11,7 +12,7 @@ constexpr uint32_t kHeadDim = 256;
 constexpr uint32_t kMaxQuery = 4;
 constexpr uint32_t kTargetKvPerSplit = 1024;
 constexpr uint32_t kLongThreshold = 256;
-constexpr uint32_t kRowsPerItem = 32;
+constexpr uint32_t kRowsPerItem = 16;
 constexpr uint32_t kCubeM = 16;
 constexpr uint32_t kCubeN = 256;
 constexpr uint64_t kWorkspacePerItem =
@@ -59,7 +60,16 @@ ge::graphStatus Tiling(gert::TilingContext* context) {
   auto platform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
   uint32_t cores = platform.GetCoreNum();
   if (cores == 0) return ge::GRAPH_FAILED;
-  const uint32_t workItems = requests * hk;
+  const uint32_t gqa = hq / hk;
+  if (gqa > 8U) return ge::GRAPH_FAILED;
+  const uint32_t gqaGroups = (gqa + 3U) / 4U;
+  const uint64_t workItems64 =
+      static_cast<uint64_t>(requests) * hk * gqaGroups;
+  if (workItems64 == 0 ||
+      workItems64 > std::numeric_limits<uint32_t>::max()) {
+    return ge::GRAPH_FAILED;
+  }
+  const uint32_t workItems = static_cast<uint32_t>(workItems64);
   context->SetBlockDim(std::min(cores, std::max(1U, workItems)));
   const bool longContext = static_cast<uint64_t>(*maxSeqLen) > kLongThreshold;
   context->SetTilingKey(longContext ? 2 : 0);
@@ -77,9 +87,9 @@ ge::graphStatus Tiling(gert::TilingContext* context) {
                 matmul_tiling::DataType::DT_FLOAT);
   cube.SetBias(false);
   cube.SetShape(kCubeM, kCubeN, kHeadDim);
-  // CANN 9.1 reliably exposes one 16-row result per KFC IterateAll call on
-  // 910B.  The device kernel invokes this tiling twice for the 32 GQA lanes,
-  // while sharing the same unpacked KV tile.
+  // CANN 9.1 reliably exposes one 16-row result per KFC client on 910B.  A
+  // work item therefore owns four GQA heads (q<=4 => M<=16); GQA=8 is split
+  // into two independently scheduled work items.
   cube.SetFixSplit(kCubeM, 128, 128);
   cube.SetOrgShape(kCubeM, kCubeN, kHeadDim);
   cube.SetBufferSpace(-1, -1, -1);
@@ -102,8 +112,11 @@ ge::graphStatus Tiling(gert::TilingContext* context) {
   data.set_splitKv(1U);
   data.set_maxSeqLen(static_cast<uint32_t>(*maxSeqLen));
   data.set_kvTile(kCubeN);
-  const uint64_t workspaceBytes =
-      static_cast<uint64_t>(workItems) * kWorkspacePerItem;
+  if (workItems64 > std::numeric_limits<uint64_t>::max() /
+                        kWorkspacePerItem) {
+    return ge::GRAPH_FAILED;
+  }
+  const uint64_t workspaceBytes = workItems64 * kWorkspacePerItem;
   data.set_userWorkspaceBytes(workspaceBytes);
   data.set_scaleValue(*scale);
   if (cube.GetTiling(data.cubeTiling) == -1) return ge::GRAPH_FAILED;

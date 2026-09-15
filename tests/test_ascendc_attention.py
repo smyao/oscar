@@ -138,3 +138,14 @@ def test_long_context_kernel_has_cube_qk_pv_and_tiling_key():
     assert "AscendC::Exp(rowExp_, rowExp_, LONG_N)" in long_kernel
     assert "TILING_KEY_IS(2)" in entry
     assert "MatmulApiTiling" in tiling
+    assert "LONG_GQA_PER_WORK = 4" in long_kernel
+    assert "groupBase + group" in long_kernel
+    assert "gqaGroups = (gqa + 3U) / 4U" in tiling
+
+
+def test_ascendc_adapter_rejects_unsupported_gqa_before_device_launch():
+    import inspect
+
+    source = inspect.getsource(ascendc_attention.oscar_ascendc_attention)
+    assert "gqa = hq // hk" in source
+    assert "if gqa > 8" in source

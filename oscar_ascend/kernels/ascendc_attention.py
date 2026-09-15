@@ -103,6 +103,12 @@ def oscar_ascendc_attention(
     hk = k_new.shape[1]
     if hk <= 0 or hq % hk:
         raise ValueError("AscendC OSCAR requires integral GQA groups")
+    gqa = hq // hk
+    if gqa > 8:
+        raise ValueError(
+            "AscendC OSCAR currently supports at most 8 query heads per "
+            "KV head"
+        )
     if (q_starts.dtype != torch.int32 or q_lens.dtype != torch.int32
             or prefixes.dtype != torch.int32
             or q_starts.shape != q_lens.shape

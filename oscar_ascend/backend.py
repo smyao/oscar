@@ -656,9 +656,9 @@ class AscendOscarAttentionBackendImpl(AscendAttentionBackendImpl):  # type: igno
                         output[attn_metadata.num_actual_tokens:num_tokens].zero_()
                     return output
 
-        # MTP/common speculative step: one request program handles q<=4 and a
-        # GQA tile together, so every historical INT2 K/V vector is loaded and
-        # dequantized once rather than once per speculative row.
+        # MTP/common speculative step: one work item handles q<=4 and up to
+        # four query heads.  All speculative rows in that GQA tile share one
+        # historical INT2 KV read; GQA=8 uses two disjoint four-head tiles.
         grouped_shape = (
             key is not None and value is not None
             and execution.multi_query_requests

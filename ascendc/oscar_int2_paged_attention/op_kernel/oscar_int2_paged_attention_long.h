@@ -81,13 +81,16 @@ class OscarInt2AttentionLong {
   __aicore__ inline void Process() {
     const uint32_t groupsPerKv =
         (shape_.gqa + LONG_GQA_PER_WORK - 1) / LONG_GQA_PER_WORK;
-    const uint32_t workItems = shape_.requests * shape_.kvHeads * groupsPerKv;
-    for (uint32_t work = AscendC::GetBlockIdx(); work < workItems;
-         work += AscendC::GetBlockNum()) {
-      const uint32_t requestKv = work / groupsPerKv;
-      const uint32_t groupTile = work % groupsPerKv;
-      ProcessGroup(work, requestKv / shape_.kvHeads,
-                   requestKv % shape_.kvHeads, groupTile);
+    const uint32_t requestKvItems = shape_.requests * shape_.kvHeads;
+    for (uint32_t requestKv = AscendC::GetBlockIdx();
+         requestKv < requestKvItems; requestKv += AscendC::GetBlockNum()) {
+      // Serialize all GQA tiles owned by one request/KV head on the same KFC
+      // client.  Different request/KV-head pairs remain parallel.
+      for (uint32_t groupTile = 0; groupTile < groupsPerKv; ++groupTile) {
+        const uint32_t work = requestKv * groupsPerKv + groupTile;
+        ProcessGroup(work, requestKv / shape_.kvHeads,
+                     requestKv % shape_.kvHeads, groupTile);
+      }
     }
     qk_.End();
     pv_.End();

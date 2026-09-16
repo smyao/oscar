@@ -140,6 +140,8 @@ def test_long_context_kernel_has_cube_qk_pv_and_tiling_key():
     assert "MatmulApiTiling" in tiling
     assert "LONG_GQA_PER_WORK = 4" in long_kernel
     assert "groupBase + group" in long_kernel
+    assert "requestKv * groupsPerKv + groupTile" in long_kernel
+    assert "concurrentItems = requests * hk" in tiling
     assert "gqaGroups = (gqa + 3U) / 4U" in tiling
 
 

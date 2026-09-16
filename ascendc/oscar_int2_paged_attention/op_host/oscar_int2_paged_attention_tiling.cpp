@@ -70,7 +70,14 @@ ge::graphStatus Tiling(gert::TilingContext* context) {
     return ge::GRAPH_FAILED;
   }
   const uint32_t workItems = static_cast<uint32_t>(workItems64);
-  context->SetBlockDim(std::min(cores, std::max(1U, workItems)));
+  // KFC Matmul clients from two GQA tiles of the same request/KV head must
+  // not execute concurrently on CANN 9.1: they share the operator's system
+  // workspace/event channels and corrupt each other's Cube result.  Launch at
+  // most one AIV client per request/KV-head; that client processes its GQA
+  // tiles serially.  User workspace remains per tile to keep addresses
+  // disjoint and to preserve the flattened device work mapping.
+  const uint32_t concurrentItems = requests * hk;
+  context->SetBlockDim(std::min(cores, std::max(1U, concurrentItems)));
   const bool longContext = static_cast<uint64_t>(*maxSeqLen) > kLongThreshold;
   context->SetTilingKey(longContext ? 2 : 0);
 

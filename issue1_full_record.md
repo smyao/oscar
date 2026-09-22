@@ -28131,3 +28131,35 @@ User report: 5分钟过去了依然没好，请你debug
 [oscar] REQUEST_WAIT mixed-1-16384 elapsed=75.3s remaining=224.7s workers=[]
 [oscar] phase=service-probe running seconds=840.6 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
 ```
+
+
+## [131] 真机条目（gpt_new_oscar_kimi，2026-09-22 用户回传）· phase=service-probe/mixed-timeout
+
+**症状**：运行20260922T081333.912496Z，串行128/16K/32K/50K请求均完成并各生成16token；混合并发阶段mixed-0-128完成，mixed-1-16384、mixed-2-32768、mixed-3-50000在300.0s墙钟死线全部超时，`SERVICE_ERROR TimeoutError: 3 (of 4) futures unfinished`，service-probe相位失败。owned server清理complete=True、exit=0，NPU资源回收检查照常执行。
+
+**历史同族**：#130（串行长请求完成、混合未验收）；#129（请求硬截止与进度可见性）；#70–73/D.4（host与device耗时必须分离）。
+
+**心跳证据与定量账**：本轮`attention_progress`心跳证明混合阶段worker全程推进，非死锁：`max_seq_len`沿16380→16384→32752→32768/32772→49112前进，49K KV下每个FULL层组（3 GDN+1 FULL）约4–15秒，50K请求在死线时处于第3/4个16384块的层扫描中段。混合四请求prompt合计约99K token，共享max_num_batched_tokens=16384的引擎步；串行阶段相同token量已耗时约364秒（16K≈19s、32K≈110s、50K≈235s），并发不减少每步16K token的内核总工作量，300s请求死线在当前CV内核速度下必然撞线。串行chunk耗时随KV增长（16K KV≈20s、32K≈38s、49K≈95s），decode约6s/token（50K上下文，图回放绕过Python attention路径）。失败性质是时间预算，不是并发正确性。
+
+**未定案**：需OSCAR_TIMING=1真机打点把49K chunk拆至prepare/rotate/fia/merge/stores与GDN段，再定内核优化点；300s死线与PROBE_LENGTHS为冻结验收边界，未动。ArgSort AiCpu告警按#130用户明示属原生基线，不计本项目新错误。本日志未见graph_replay_progress（decode回放心跳在该轮之后合入）。
+
+### 用户日志摘录（非完整文件）
+
+```text
+Source: user-provided console excerpts, 2026-09-22, run 20260922T081333.912496Z (gpt_new_oscar_kimi).
+Selected verbatim lines, not a complete server log.
+
+[oscar] service request complete prompt=50000 generated=16
+[oscar] REQUEST_START mixed-0-128 prompt=128 timeout=300.0s
+[oscar] REQUEST_START mixed-1-16384 prompt=16384 timeout=300.0s
+[oscar] REQUEST_START mixed-2-32768 prompt=32768 timeout=300.0s
+[oscar] REQUEST_START mixed-3-50000 prompt=50000 timeout=300.0s
+[oscar] REQUEST_WAIT mixed-3-50000 elapsed=241.1s remaining=58.9s workers=[{"event": "attention_progress", "layer": "language_model.model.layers.35.self_attn.attn", "tokens": 16384, "max_seq_len": 49112, ...}]
+[oscar] REQUEST_WAIT mixed-3-50000 elapsed=286.3s remaining=13.7s workers=[{"event": "attention_progress", "layer": "language_model.model.layers.63.self_attn.attn", "tokens": 16384, "max_seq_len": 49112, ...}]
+[oscar] REQUEST_ERROR mixed-1-16384: TimeoutError: mixed-1-16384: wall deadline 300.0s exceeded
+[oscar] REQUEST_ERROR mixed-2-32768: TimeoutError: mixed-2-32768: wall deadline 300.0s exceeded
+[oscar] REQUEST_ERROR mixed-3-50000: TimeoutError: mixed-3-50000: wall deadline 300.0s exceeded
+SERVICE_ERROR TimeoutError: 3 (of 4) futures unfinished
+[oscar] CLEANUP_END owned_server complete=True exit=0
+SERVICE_RESULT {"status": "failed", "error": "TimeoutError: 3 (of 4) futures unfinished", "cleanup_complete": true, "exit_code": 0, "startup_seconds": 341.895644, "elapsed_seconds": 1010.357171}
+```

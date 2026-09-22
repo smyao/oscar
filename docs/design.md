@@ -1,6 +1,6 @@
 # OSCAR Ascend：端到端设计与可证边界
 
-本设计以 PR `57286d5d`、vLLM `0fc695fc`、Ascend `19e43698` 为准，历史故障来自工作区档案 G1–G34、#1–#126。本轮已完成源码调用链、VM CANN编译和官方CPU-debug；设计证明、CPU调试、设备完成、图捕获、图回放、性能分别记账。待验证项不能勾选。
+本设计以 PR `57286d5d`、vLLM `0fc695fc`、Ascend `19e43698` 为准，历史故障来自工作区档案 G1–G34、#1–#127。本轮已完成源码调用链、VM CANN编译和官方CPU-debug；设计证明、CPU调试、设备完成、图捕获、图回放、性能分别记账。待验证项不能勾选。
 
 ## 1. 全局生命周期
 
@@ -52,9 +52,9 @@ MTP：draft 三步 → target verify 最多四 query → 原生 acceptance 得�
 
 每 head/token：`K=ceil(Dk/4)+4`，`V=ceil(Dv/4)+4`，其中每侧4 B是 FP16 scale/zero。Dk=Dv=256 时136 B，BF16是1024 B。顺序为 K payload/meta 后 V payload/meta；无无依据160 B常量。
 
-GDN 原生为 SoA：conv 位于 `b*C`，SSM 位于 `nb*C+b*M`。因此 FULL packed 页只能使用对应 SSM 区，不可按 `b*P` AoS 写。`U=lcm(B_mamba,128)`，`B_full=floor(M/(Hkv*slotbytes*U))*U`。虚拟页 v 的物理页 `v//(B_full/128)`，页内 token `(v%(B_full/128))*128+t`。C/M 从真实状态形状与dtype取得，P另从原生 `MambaSpec.page_size_bytes` 读取，不能用P减conv反推SSM。
+GDN 原生为 SoA：conv 位于 `b*C`，SSM 位于 `nb*C+b*M`。因此 FULL packed 页只能使用对应 SSM 区，不可按 `b*P` AoS 写。缓存模式为align/all时 `U=lcm(B_mamba,128)`；原生none模式不共享前缀状态，`U=128`。两种模式均按 `B_full=floor(M/(Hkv*slotbytes*U))*U` 计算。虚拟页 v 的物理页 `v//(B_full/128)`，页内 token `(v%(B_full/128))*128+t`。C/M 从真实状态形状与dtype取得，P另从原生 `MambaSpec.page_size_bytes` 读取，不能用P减conv反推SSM。
 
-原生 `patch/platform/patch_mamba_config.py:94–119` 以单K页对齐SSM，随后计算双K/V页并增加conv padding，因此典型 `P=C+2*M`。历史/无spec形状示例 M=393216、C=15360 时P=801792；给定linear heads16/48、D128、TP4、convK4与MTP3，实际原生函数推导 C=30720、P=817152（真实目标config仍须现场核实）；**801792不是FP32 SSM的证据**。单本地KV head、D256时nativeB=768；prefix启用且mamba align时 `:143–146` 令 `B_mamba=nativeB`，本布局得到 `B_full=2304`、scheduler LCM=2304。若原生采用 `B_mamba=max_model_len`，当前容量公式会显式拒绝，相关模式仍未实现，不能改变GDN语义绕过。
+原生 `patch/platform/patch_mamba_config.py:94–119` 以单K页对齐SSM，随后计算双K/V页并增加conv padding，因此典型 `P=C+2*M`。历史/无spec形状示例 M=393216、C=15360 时P=801792；给定linear heads16/48、D128、TP4、convK4与MTP3，实际原生函数推导 C=30720、P=817152（真实目标config仍须现场核实）；**801792不是FP32 SSM的证据**。单本地KV head、D256时nativeB=768；prefix启用且mamba align时 `:143–146` 令 `B_mamba=nativeB`，本布局得到 `B_full=2304`、scheduler LCM=2304。本次真机prefix关闭、mode=none时，原生保留 `B_mamba=max_model_len=262144`；它表示请求状态跨度，不是FULL物理页对齐。外部FULL spec保留此原生字段和模式，以128为页内对齐，得到 `B_full=2816`、22个虚拟128块、payload=382976B。原生分组仍计算scheduler/hash LCM=2883584（prefix关闭，无前缀哈希消费），原生GDN manager保持每请求1个运行状态+3个MTP状态。没有修改GDN对象、启动参数或原生调度器。Snapshot仍为333336B，位于原生393216B尾padding中。原生配置/分组/manager/释放/GDN reshape/input-batch及两种块长下MTP跨页方法已有可执行回归，真机整机初始化结果待回传。
 
 池 bytes=`num_tensors*nb*P`，包括原生尾padding `nb*(P-C-M)`；packed只使用实际SSM区，padding按物理页放精确snapshot（每页不超过原生已计费空间）。单请求 FULL token容量随 B_full 改变，但实际 capacity 还受3个 GDN group 的状态块、LCM、MTP、prefix占用制约。额外独立预算包括旋转常量、固定split workspace和当前chunk scratch；这些在model构造期预分配，计入原生profile，不能在KV预算确定后才偷分配。Snapshot BF16/tag已在P内，不重复计费。**不能仅根据136/1024宣布全模型显存收益。**
 
@@ -107,6 +107,7 @@ A2 Cube/Vector片上交接也需实际CANN编译/运行证据；不能把经GM�
 |#70–73|全历史恢复/慢store|禁止独立全历史dequant生产路径|分相位device计时 |
 |#94–95/#101/#116–117/#120/#125|shell吞错误/日志/cwd/挂起|Python相位管理、绝对cwd、独立日志、实时终端输出、进程组超时；服务子进程输出一并转发|故障注入确认进程退出前能看到错误，并保留原退出码 |
 |#98–110/#112–115/#118–122|构建产物/符号/运行加载口径|明确direct-launch单路径、产物manifest、真实call probe|加载≠设备完成 |
+|#34/#36/#127|prefix关闭时把GDN请求跨度262144当FULL页对齐，容量为0|按原生none/align模式计算FULL页，保留GDN原对象与原生LCM、MTP状态数|真实native配置/分组/manager增长释放/reshape/input-batch/MTP跨页回归；目标复跑待回传|
 |#74–76/#123|部署设备为null，安装前配置阻断|按本次附录F固定0–3卡和ascend910b4；移除默认环境/源码/readiness审计，保留全部真实探针|默认配置及部署相位本地回归；目标复跑待回传 |
 |#124|README混淆真机与开发机命令，缺.venv/limactl|真机首屏一条命令使用现有Python；本地CPU与Mac/Lima命令单列开发说明|文档与默认部署命令核对；目标复跑待回传 |
 |G18/#98/#107/#125|扩展的签名kernel依赖库存在但动态加载路径不含实际目录；CANN禁用RPATH|仅在本工程恢复RPATH并包含相邻lib目录；按manifest绝对路径加载已校验kernel，再导入扩展；不修改系统CANN或原生源码|VM旧ELF已证实NEEDED存在而RPATH/RUNPATH缺失；修订链接及Linux加载回归通过，node93后续75项原语NPU执行通过确认已越过该故障 |
@@ -135,7 +136,7 @@ A2 Cube/Vector片上交接也需实际CANN编译/运行证据；不能把经GM�
 
 每项更完整六问/ABI/同步与预算在 cv_implementation.md、rotation_pipeline.md、runtime_implementation.md；它们与本表共同构成本设计。Hadamard是明确算法选择，dense旋转也已实现，不是运行失败后的替代路线。默认无profiling事件；显式OSCAR_TIMING的host_s不写成device_ms，设备时间由真实NPU trace归因（profiling.md）。
 
-运行调用链为prepare→rotate→CV→merge→新KV store→guard；native源方法实际执行测试还验证了spec merge的AssertionError协议、17/16/16/16分组和共享页manager分配。C、M、P和GDN保留页数均动态读取。若假定三个GDN组保留全历史状态，Bfull由768到2304仅将总块数12L/2304降为10L/2304，理论上限约1.2倍而非3倍；默认align的实际保留与prefix/LRU另按原生manager核算，最终收益待实机。
+运行调用链为prepare→rotate→CV→merge→新KV store→guard；native源方法实际执行测试还验证了spec merge的AssertionError协议、17/16/16/16分组和共享页manager分配。C、M、P和GDN保留页数均动态读取。若假定三个GDN组保留全历史状态，Bfull由768到2304仅将总块数12L/2304降为10L/2304，理论上限约1.2倍而非3倍；align的实际保留与prefix/LRU另按原生manager核算；本次none配置则保留每个GDN组1+3状态，FULL块长2816，最终收益待实机。
 
 工程差异：本工程使用原生已有ascendc_library/direct-launch，不产出custom OPP vendor。PR窗口驱逐到INT2的退化行为被精确snapshot取代；所有不可用snapshot或非法量化metadata显式报错。常量向量导致FP16 scale下溢为0的PR未定义域仍显式报错，未私改epsilon。全部工程差异与真实未验项保留在checklist中。
 

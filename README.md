@@ -27,7 +27,7 @@ python3 -m tools.deploy --only probe-ops
 python3 -m tools.service_probe --config configs/target.json --output reports/service.json --log-dir logs/service
 ```
 
-**最新真机结果：node93 已通过75项 store/merge 原语 NPU 探针，随后首个 CV 数值用例失败（D64、Q1、context17，64/384元素超差，最大绝对误差0.688596）。** 动态库加载错误已越过，CV修复后的真机结果仍待回传。原始输出见 [目标日志](reports/target_cv_failure_input.txt)。CANN 9.1.0 / Ascend910B4 编译和官方 CPU 调试已通过；完整 NPU、图捕获/回放、模型质量、实际显存收益及性能尚未验收。 VM 没有 NPU 设备或模型权重，不能把编译和 CPU 调试当作这些结果。H18 的严格亚线性历史读取与精确全注意力存在冲突，当前实现线性读取 INT2、固定大小 tile 通信，不生成全历史 BF16 副本。
+**最新真机结果：已进入TP4/MTP模型加载，止于关闭前缀缓存时的KV布局初始化（#127）。** 修复区分GDN请求状态块与FULL物理页：保留原生GDN块长262144和none模式，FULL页按SSM字节容量取2816 token；原生源码、启动参数和探针不变。此前75项store/merge原语NPU探针已有直接通过记录；本次日志没有前序CV/旋转探针明细，完整服务、图及性能仍待真机复验。[最新原文](reports/target_uncached_layout_failure.txt)。CANN编译及官方CPU调试已有通过记录，不能替代真实模型验收。H18严格亚线性历史读取与精确全注意力存在冲突，当前实现线性读取INT2、固定大小tile通信，不生成全历史BF16副本。
 
 以下仅用于本地开发，不是 node93 的部署步骤。已配置本项目 `.venv` 的开发机可运行 CPU 测试：
 

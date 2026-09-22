@@ -4,6 +4,7 @@ Archive #17–20: byte offsets and fp16 metadata must agree with the PR.
 Archive #34/#36: graph and speculative capacities come from real buffers.
 Archive #37–49: physical identity is separate from batch-row identity.
 Native evidence: model_runner_v1.py:4696 stores GDN state as SoA, not AoS.
+Archive #127: uncached GDN's request-span block is not a FULL page alignment.
 """
 
 from dataclasses import dataclass
@@ -98,10 +99,13 @@ class HybridPageLayout:
     native_mamba_block_size: int
     kernel_block_size: int = 128
     native_page_size_bytes: int | None = None
+    native_mamba_cache_mode: str = "align"
 
     def __post_init__(self) -> None:
         for name in ("conv_bytes", "ssm_bytes", "native_mamba_block_size", "kernel_block_size"):
             _positive(name, getattr(self, name))
+        if self.native_mamba_cache_mode not in {"none", "align", "all"}:
+            raise ValueError(f"unsupported native Mamba cache mode: {self.native_mamba_cache_mode!r}")
         if self.native_page_size_bytes is None:
             object.__setattr__(self, "native_page_size_bytes", self.conv_bytes + self.ssm_bytes)
         _positive("native_page_size_bytes", self.native_page_size_bytes)
@@ -116,6 +120,11 @@ class HybridPageLayout:
 
     @property
     def alignment_tokens(self) -> int:
+        # In mode=none the native manager keeps one running state (+MTP
+        # states) for a whole request. That span is NOT the token capacity of
+        # one compressed FULL page. Native grouping still owns scheduler LCM.
+        if self.native_mamba_cache_mode == "none":
+            return self.kernel_block_size
         return lcm(self.native_mamba_block_size, self.kernel_block_size)
 
     @property

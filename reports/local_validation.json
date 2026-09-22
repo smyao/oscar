@@ -1,12 +1,12 @@
 {
-  "overall": "local_and_vm_validation_passed; target_primitives_passed; cv_fix_target_retest_pending",
+  "overall": "local_validation_passed; target_uncached_cache_layout_fix_retest_pending",
   "cpu_tests": {
     "status": "passed",
-    "pytest_passed": 404,
-    "subtests_passed": 4,
+    "pytest_passed": 423,
+    "subtests_passed": 6,
     "npu_tests_skipped": 118,
     "junit": {
-      "tests": 527,
+      "tests": 548,
       "failures": 0,
       "errors": 0,
       "skipped": 119
@@ -52,7 +52,7 @@
     }
   },
   "target_torch_2_10_npu_load": "extension_load_passed_in_user_report; installed_torch_version_not_independently_verified",
-  "device_completion": "store_merge_primitives_passed; first_cv_case_failed_before_fix; fix_target_retest_pending",
+  "device_completion": "prior_store_merge_probe_passed; latest_user_run_reached_TP4_MTP_model_loading_and_failed_cache_spec; full_service_not_passed",
   "graph_capture": "not_run",
   "graph_replay": "not_run",
   "tp4_mtp_service": "not_run",
@@ -66,14 +66,15 @@
   "known_limits": [
     "H18 literal sublinear total history reads conflicts with exact dense attention; implementation uses linear compressed reads and bounded GM tile staging",
     "PR fp16 zero-scale domain explicitly fails; epsilon is not silently changed",
-    "native Mamba max_model_len block mode is rejected; supplied target prefix/align mode is implemented",
+    "Native mode none and align layout conversion is implemented; target full-service cache initialization after the none-mode fix remains unverified",
     "independent direct-launch libraries are delivered rather than a custom OPP vendor package"
   ],
   "local_observations": [
     "One earlier temporary HTTP-server cleanup test reported PermissionError; isolated rerun and current complete suite passed, cause not established; no cleanup assertion was weakened",
     "Startup revision full suite: 379 passed, 1 failed, 110 skipped, 4 subtests passed. Same previously observed macOS fake-server cleanup PermissionError recurred. User requested immediate push; no assertion was weakened and no full-suite pass is claimed.",
     "Library/logging revision full suite:396 passed,111 skipped,4 subtests passed. Prior local cleanup PermissionError did not recur; no cleanup assertion was weakened. VM actual kernel dlopen resolved dependencies but failed in native CANN SoC constructor; see linkage_validation.json, not NPU evidence.",
-    "CV revision initial suite hit the previously observed macOS cleanup EPERM. Reproduction identified an owned zombie-group exit/reap race; bounded wait plus fresh ESRCH confirmation fixed it without weakening cleanup assertions. Final local suite404passed119skipped4subtests, Linux workflow40passed. Original failure logs retained."
+    "CV revision initial suite hit the previously observed macOS cleanup EPERM. Reproduction identified an owned zombie-group exit/reap race; bounded wait plus fresh ESRCH confirmation fixed it without weakening cleanup assertions. Final local suite404passed119skipped4subtests, Linux workflow40passed. Original failure logs retained.",
+    "Latest user log reaches TP4/MTP model loading then fails at KV spec conversion with prefix caching disabled. Added real native configuration/grouping/manager/input-batch/reshape/MTP tests for mode none. One new AST harness initially omitted EncoderOnlyAttentionSpec; corrected harness import, then focused55/full423 tests pass. No numerical kernel or target flag change; previous CANN/CPU-debug evidence retained without rerunning unchanged kernels."
   ],
   "source_sha256": {
     "oscar_ascend/__init__.py": "886a48beeedcedf3da2ee7430eddf8d64c7ece3527b0cb073b8363223e5c22e0",
@@ -82,8 +83,8 @@
     "oscar_ascend/integration/impl.py": "451789f6bc36205e4b7709aebbf39967a3374d112b9f39d71b396f766dde1c22",
     "oscar_ascend/integration/metadata.py": "6b8c9a8d4a9b3b8a80f011933ab0e302db547677237ec665574eb2a5b5369b1d",
     "oscar_ascend/integration/runtime_api.py": "83403d97ae99ae86786729939c0032f67d8d4e1f38ddd2eac78b5577b7a50bed",
-    "oscar_ascend/integration/specs.py": "69611720b92a2856457a83633bd942ba39aaebf64d136521a12f18c4b8db89ed",
-    "oscar_ascend/layout.py": "2a7760dbee7785cde18c09d588093ec870e3d7072658fd5bfc142f62218a7949",
+    "oscar_ascend/integration/specs.py": "3bbfac5bf7572bd7248442fa48d1c1e3c4d8499c154112507728ec3d7d9e68fc",
+    "oscar_ascend/layout.py": "87bbee7a38f55545563823d798172e807f774c0bad8f72a07ec668ec562e3fc0",
     "oscar_ascend/lifecycle.py": "8791998aabe84dd076e9366b87d0d158722135e5370e2ede09f443c6f67a314d",
     "oscar_ascend/ops/__init__.py": "121a4a46ea91e1a0a4336de76e6003fc18a5fde411d3a1d1eaa706bb01710d08",
     "oscar_ascend/ops/contracts.py": "918e8e7f865cc94988512647523a7daa5a37072517ccb72b2ce10f32e6d9d41b",
@@ -145,7 +146,7 @@
     "tests/test_benchmark_measure.py": "193c08a8f6621959b3ae0a3c6765ee47706c7dbdfd81200f9a0c00395693c5f6",
     "tests/test_cv_contracts.py": "b6ee997c461e8d9e9dbe67d755aa4b68f05908588477396b8b933a3964c8be4a",
     "tests/test_integration_contracts.py": "86ad68469f5898c0ff5c3314da7800dc6d29a2943c341629350b33cf1252bd41",
-    "tests/test_layout.py": "7b428f57c2106e244c2e41580c383d098aa1b836f99f4036da109aaf01940ea2",
+    "tests/test_layout.py": "5bf9fa81e6baec18f32547f405f457fe6d96a317d7fb7e115d282d2ccc848be5",
     "tests/test_lifecycle.py": "149a6d115b6730d7dfc3c1b4ee6aacc748623d0e02a32434812ad62fc4d70435",
     "tests/test_meta_dispatch.py": "b1e718a2a07b3fd813622d48780c80011cf6b587d62dd0550bf62b3fa0280ca3",
     "tests/test_no_fallback_static.py": "23109d060af97dbfab37ec2ef27dd52b1a9750859dfc1b6b2e49216927ce4b60",
@@ -158,7 +159,7 @@
     "tests/test_rotation_pipeline.py": "ebc2f176e6220dddb30b4e44a5dd0173121cb2e891f7e9d4637e458d8ee317d9",
     "tests/test_rotations.py": "80f5713429c38510becbabb300528cd9b32a07d3b92d28bf31270a274425fbf7",
     "tests/test_runtime.py": "5ac7447f0e257979412d3b526bd918b402b11433aae2daeb566c37c12fa1cddb",
-    "tests/test_runtime_native.py": "1d5dee44a46cf32763bb6e1bedb7305726f2f4bc20d36cfa12c305b4d88042e4",
+    "tests/test_runtime_native.py": "530cf57698bcaddaa0153288ea062c51083f010c4e78aa5bd80dd7c5f594d7e7",
     "tests/test_service_workflow.py": "a2b731b4aec05728aaff1c0cf096705d50f84eb4e532231f4dc595df1aca6842",
     "tests/test_workflow.py": "41e778cc8619f5932e630f746a1765eec56834b17029199d59ca0ca690396d32",
     "tests/test_deploy_launcher.py": "d2d49450c3dc17de322da9e996d9f1282a63a66a67ee5ae07cead039674723ce",
@@ -224,5 +225,13 @@
     "reproduction": "reports/cv_fix_darwin_cleanup_repro.json",
     "first_suite_failure_preserved": "reports/cv_fix_first_pytest.log",
     "scope": "owned child exit race only; persistent permission errors still fail"
+  },
+  "uncached_layout_fix": {
+    "report": "reports/uncached_layout_validation.json",
+    "focused_tests_passed": 55,
+    "target_retest": "not_run",
+    "native_gdn_preserved": true,
+    "startup_arguments_changed": false,
+    "cann_kernel_sources_changed": false
   }
 }

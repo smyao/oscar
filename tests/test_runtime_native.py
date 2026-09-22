@@ -65,7 +65,7 @@ def native_specs(monkeypatch):
         "references/vllm/vllm/v1/kv_cache_interface.py", "vllm.v1.kv_cache_interface",
         {"KVQuantMode", "get_kv_quant_mode", "KVCacheSpec", "AttentionSpec", "FullAttentionSpec", "MambaSpec",
          "MLAAttentionSpec", "SlidingWindowMLASpec", "HiddenStateCacheSpec", "SlidingWindowSpec",
-         "ChunkedLocalAttentionSpec", "TQFullAttentionSpec",
+         "ChunkedLocalAttentionSpec", "TQFullAttentionSpec", "EncoderOnlyAttentionSpec",
          "UniformTypeKVCacheSpecs", "KVCacheTensor", "KVCacheGroupSpec", "KVCacheConfig"},
         {"dataclass": dataclass, "fields": fields, "replace": replace, "Enum": Enum, "IntEnum": IntEnum,
          "torch": torch, "copy": copy, "prod": math.prod, "Counter": Counter, "get_dtype_size": dtype_size,
@@ -113,8 +113,11 @@ def test_real_native_spec_conversion_and_registry_preserve_gdn(native_specs):
 
 
 @pytest.fixture
-def native_groups(native_specs, monkeypatch):
+def native_groups(native_specs, monkeypatch, request):
     interface, ours, registry = native_specs
+    prefix = getattr(request, "param", True)
+    mode = "align" if prefix else "none"
+    page_size = 801792 if prefix else 817152
     functions = {
         "resolve_kv_cache_block_sizes", "get_kv_cache_groups", "is_kv_cache_type_attention_free",
         "is_kv_cache_spec_uniform", "_get_kv_cache_groups_uniform_spec", "_get_kv_cache_groups_uniform_type",
@@ -129,15 +132,16 @@ def native_groups(native_specs, monkeypatch):
          "cdiv": lambda x, y: (x + y - 1) // y, "logger": logging.getLogger("native-group-test")}, monkeypatch)
     config = SimpleNamespace(
         scheduler_config=SimpleNamespace(disable_hybrid_kv_cache_manager=False),
-        cache_config=SimpleNamespace(block_size=768, enable_prefix_caching=True, hash_block_size=None,
-                                     num_gpu_blocks_override=None, mamba_cache_mode="align"),
+        cache_config=SimpleNamespace(block_size=768, enable_prefix_caching=prefix, hash_block_size=None,
+                                     num_gpu_blocks_override=None, mamba_cache_mode=mode),
         parallel_config=SimpleNamespace(decode_context_parallel_size=1, prefill_context_parallel_size=1),
         kv_transfer_config=None)
     full = interface.FullAttentionSpec(block_size=768, num_kv_heads=1, head_size=256,
-                                       dtype=torch.bfloat16, page_size_padded=801792)
-    gdn = interface.MambaSpec(block_size=768, shapes=((3, 2560), (12, 128, 128)),
-                              dtypes=(torch.bfloat16, torch.bfloat16), page_size_padded=801792,
-                              num_speculative_blocks=3, mamba_cache_mode="align")
+                                       dtype=torch.bfloat16, page_size_padded=page_size)
+    gdn = interface.MambaSpec(block_size=768 if prefix else 262144,
+                              shapes=((3 if prefix else 6, 2560), (12, 128, 128)),
+                              dtypes=(torch.bfloat16, torch.bfloat16), page_size_padded=page_size,
+                              num_speculative_blocks=3, mamba_cache_mode=mode)
     # Match the actual runner's FULL-before-Mamba insertion order. This is
     # essential: uniform detection dispatches merge() on the first spec.
     specs = {f"full.{i}": full for i in range(17)} | {f"gdn.{i}": gdn for i in range(48)}
@@ -160,7 +164,8 @@ def test_actual_native_grouping_lcm_hashing_and_shared_pool(native_groups):
     assert list(hashes) == [bytes([0, 1, 2]), bytes([3, 4, 5]), bytes([6, 7, 8])]
 
 
-def test_real_qwen_shape_and_ascend_config_account_for_speculative_conv_width(native_specs, monkeypatch):
+@pytest.mark.parametrize("prefix", [True, False])
+def test_real_qwen_shape_and_ascend_config_account_for_speculative_conv_width(native_specs, monkeypatch, prefix):
     interface, ours, registry = native_specs
     state = definitions(
         "references/vllm/vllm/model_executor/layers/mamba/mamba_utils.py", "native_mamba_shape_contract",
@@ -194,25 +199,29 @@ def test_real_qwen_shape_and_ascend_config_account_for_speculative_conv_width(na
                                            linear_key_head_dim=128, linear_value_head_dim=128,
                                            linear_conv_kernel_dim=4)),
         cache_config=SimpleNamespace(cache_dtype="auto", block_size=None, mamba_page_size_padded=None,
-                                     mamba_block_size=None, enable_prefix_caching=True, mamba_cache_mode="none"),
+                                     mamba_block_size=None, enable_prefix_caching=prefix, mamba_cache_mode="none"),
         parallel_config=SimpleNamespace(tensor_parallel_size=4),
         speculative_config=SimpleNamespace(num_speculative_tokens=3, method="mtp"), kv_transfer_config=None)
     ascend.verify_and_update_config.__func__(None, config)
     shapes = model_cls.get_mamba_state_shape_from_config(config)
     assert shapes == ((6, 2560), (12, 128, 128))
-    assert config.cache_config.block_size == config.cache_config.mamba_block_size == 768
-    assert config.cache_config.mamba_cache_mode == "align"
+    assert config.cache_config.block_size == 768
+    assert config.cache_config.mamba_block_size == (768 if prefix else 262144)
+    assert config.cache_config.mamba_cache_mode == ("align" if prefix else "none")
     assert config.cache_config.mamba_page_size_padded == 817152
-    gdn = interface.MambaSpec(block_size=768, shapes=shapes, dtypes=(torch.bfloat16, torch.bfloat16),
-                              page_size_padded=config.cache_config.mamba_page_size_padded)
+    gdn = interface.MambaSpec(block_size=config.cache_config.mamba_block_size, shapes=shapes,
+                              dtypes=(torch.bfloat16, torch.bfloat16),
+                              page_size_padded=config.cache_config.mamba_page_size_padded,
+                              mamba_cache_mode=config.cache_config.mamba_cache_mode)
     full = interface.FullAttentionSpec(block_size=768, num_kv_heads=1, head_size=256, dtype=torch.bfloat16,
                                        page_size_padded=config.cache_config.mamba_page_size_padded)
     spec = ours.transform_native_specs({"full": full, "gdn": gdn})["full"]
-    assert (spec.conv_bytes, spec.ssm_bytes, spec.page_size_bytes, spec.block_size) == (30720, 393216, 817152, 2304)
+    assert (spec.conv_bytes, spec.ssm_bytes, spec.page_size_bytes, spec.block_size) == (30720, 393216, 817152, 2304 if prefix else 2816)
+    assert spec.native_mamba_cache_mode == config.cache_config.mamba_cache_mode
     assert spec.layout.native_padding_bytes == 393216
 
 
-def test_actual_ascend_coordinator_initializes_native_managers_for_different_block_sizes(native_groups, monkeypatch):
+def _native_coordinator(native_groups, monkeypatch):
     interface, ours, registry, utils, config, groups = native_groups
     managers = sys.modules["vllm.v1.core.single_type_kv_cache_manager"]
     pool_types = definitions(
@@ -234,11 +243,19 @@ def test_actual_ascend_coordinator_initializes_native_managers_for_different_blo
          "get_manager_for_kv_cache_spec": factory.get_manager_for_kv_cache_spec,
          "SlidingWindowManager": managers.SlidingWindowManager, "envs_vllm": SimpleNamespace(),
          "vllm_kv_cache_coordinator": SimpleNamespace()}, monkeypatch)
-    pool_config = utils.get_kv_cache_config_from_groups(config, groups, 17 * 801792 * 100)
+    page_size = groups[0].kv_cache_spec.page_size_bytes
+    pool_config = utils.get_kv_cache_config_from_groups(config, groups, 17 * page_size * 400)
+    scheduler_block_size, hash_block_size = utils.resolve_kv_cache_block_sizes(pool_config, config)
     instance = coordinator.AscendHybridKVCacheCoordinator(
-        pool_config, max_model_len=262144, use_eagle=True, enable_caching=True,
+        pool_config, max_model_len=262144, use_eagle=True, enable_caching=config.cache_config.enable_prefix_caching,
         enable_kv_cache_events=False, dcp_world_size=1, pcp_world_size=1,
-        hash_block_size=768, max_num_batched_tokens=16384, scheduler_block_size=2304)
+        hash_block_size=hash_block_size, max_num_batched_tokens=16384, scheduler_block_size=scheduler_block_size)
+    return instance
+
+
+def test_actual_ascend_coordinator_initializes_native_managers_for_different_block_sizes(native_groups, monkeypatch):
+    managers = sys.modules["vllm.v1.core.single_type_kv_cache_manager"]
+    instance = _native_coordinator(native_groups, monkeypatch)
     assert instance.lcm_block_size == 2304 and instance.hash_block_size == 768
     assert [manager.block_size for manager in instance.single_type_managers] == [2304, 768, 768, 768]
     full_manager, *gdn_managers = instance.single_type_managers
@@ -258,12 +275,91 @@ def test_actual_ascend_coordinator_initializes_native_managers_for_different_blo
     assert instance.block_pool.null_block.is_null
 
 
-def test_real_native_gdn_reshape_runs_with_original_objects_and_byte_ranges(native_specs, monkeypatch):
+@pytest.mark.parametrize("native_groups", [False], indirect=True)
+def test_uncached_native_groups_allocate_grow_and_release_without_changing_gdn(native_groups, monkeypatch):
+    interface, ours, registry, utils, config, groups = native_groups
+    instance = _native_coordinator(native_groups, monkeypatch)
+    assert not config.cache_config.enable_prefix_caching
+    assert config.cache_config.block_size == 768 and config.cache_config.mamba_cache_mode == "none"
+    assert [g.kv_cache_spec.block_size for g in groups] == [2816, 262144, 262144, 262144]
+    assert instance.lcm_block_size == instance.scheduler_block_size == 2883584
+    assert instance.hash_block_size == 2883584  # native resolver, no active prefix hashing
+    assert len(instance.kv_cache_config.kv_cache_tensors) == 17
+    assert sum(t.size for t in instance.kv_cache_config.kv_cache_tensors) == 17 * 817152 * 400
+    managers = instance.single_type_managers
+    assert all(m.kv_cache_spec is group.kv_cache_spec for m, group in zip(managers, groups))
+    assert all(isinstance(m.kv_cache_spec, interface.MambaSpec) and m.mamba_cache_mode == "none"
+               for m in managers[1:])
+    free_before = instance.block_pool.get_num_free_blocks()
+    for main_tokens in (16384, 50000, 262140):
+        for manager in managers:
+            needed = manager.get_num_blocks_to_allocate("request", main_tokens + 3, [],
+                                                        0, main_tokens)
+            allocated = manager.allocate_new_blocks("request", main_tokens + 3, main_tokens)
+            assert len(allocated) == needed
+        ids = [[b.block_id for b in manager.req_to_blocks["request"]] for manager in managers]
+        assert len(ids[0]) == math.ceil((main_tokens + 3) / 2816)
+        assert list(map(len, ids[1:])) == [4, 4, 4]  # one running state plus three MTP states
+        assert 0 not in set(itertools.chain.from_iterable(ids))
+        assert len(set(itertools.chain.from_iterable(ids))) == sum(map(len, ids))
+    for manager in managers:
+        manager.free("request")
+    assert instance.block_pool.get_num_free_blocks() == free_before
+
+
+def test_mamba_cache_mode_survives_spec_copy_and_rejects_mixed_geometry(native_specs):
+    interface, ours, _ = native_specs
+    gdn = interface.MambaSpec(block_size=262144, shapes=((6, 2560), (12, 128, 128)),
+                              dtypes=(torch.bfloat16, torch.bfloat16), page_size_padded=817152,
+                              num_speculative_blocks=3, mamba_cache_mode="none")
+    full = interface.FullAttentionSpec(block_size=768, num_kv_heads=1, head_size=256,
+                                       dtype=torch.bfloat16, page_size_padded=817152)
+    converted = ours.transform_native_specs({"full": full, "gdn": gdn})
+    assert converted["gdn"] is gdn
+    copied = copy.deepcopy(converted["full"])
+    assert copied.native_mamba_block_size == 262144 and copied.native_mamba_cache_mode == "none"
+    assert copied.layout.block_size == copied.block_size == 2816
+    assert ours.OscarFullAttentionSpec.merge([copied, converted["full"]]) == copied
+    with pytest.raises(ValueError, match="uniform GDN page geometry"):
+        ours.transform_native_specs({"full": full, "gdn": gdn, "mixed": replace(gdn, mamba_cache_mode="align")})
+
+
+@pytest.mark.parametrize("native_groups", [False], indirect=True)
+def test_uncached_native_input_batch_keeps_mamba_slots_and_splits_full_pages(native_groups, monkeypatch):
+    interface, ours, registry, utils, config, groups = native_groups
+    selector = definitions("references/vllm/vllm/v1/worker/utils.py", "native_block_selector_contract",
+                           {"select_common_block_size"}, {}, monkeypatch)
+    native = definitions(
+        "references/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", "native_batch_reinit_contract",
+        set(), {**interface.__dict__, "__name__": "native_batch_reinit_contract",
+                "cdiv": lambda x, y: (x + y - 1) // y, "get_total_cp_world_size": lambda: 1,
+                "select_common_block_size": selector.select_common_block_size,
+                "NPUInputBatch": lambda **kwargs: SimpleNamespace(**kwargs)}, monkeypatch,
+        methods=[("NPUModelRunner", "may_reinitialize_input_batch")])
+    runner = SimpleNamespace(
+        pcp_size=1, max_model_len=262144, max_encoder_len=0, max_num_reqs=128,
+        max_num_tokens=16384, device="cpu", pin_memory=False, is_pooling_model=False,
+        cache_config=config.cache_config, input_batch=SimpleNamespace(logitsprocs=[]),
+        model_config=SimpleNamespace(get_vocab_size=lambda: 152064),
+        offload_config=SimpleNamespace(uva=SimpleNamespace(cpu_offload_gb=0)),
+        parallel_config=SimpleNamespace(cp_kv_cache_interleave_size=1),
+        vllm_config=SimpleNamespace(speculative_config=SimpleNamespace(num_speculative_tokens=3)),
+        attn_groups=[[SimpleNamespace(backend=SimpleNamespace(get_supported_kernel_block_sizes=lambda: [128]))]])
+    native.may_reinitialize_input_batch(runner, SimpleNamespace(kv_cache_groups=groups))
+    assert runner.input_batch.block_sizes == [2816, 262144, 262144, 262144]
+    assert runner.input_batch.kernel_block_sizes == [[128], [0], [0], [0]]
+    assert runner.input_batch.max_num_blocks_per_req == [94, 4, 4, 4]
+
+
+@pytest.mark.parametrize("prefix", [True, False])
+def test_real_native_gdn_reshape_runs_with_original_objects_and_byte_ranges(native_specs, monkeypatch, prefix):
     interface, ours, registry = native_specs
     full_name = "language_model.model.layers.3.self_attn.attn"
     gdn_name = "language_model.model.layers.0.linear_attn"
-    native_gdn = interface.MambaSpec(block_size=768, shapes=((3, 2560), (12, 128, 128)),
-                                   dtypes=(torch.bfloat16, torch.bfloat16), page_size_padded=801792)
+    native_gdn = interface.MambaSpec(block_size=768 if prefix else 262144,
+                                   shapes=((3, 2560), (12, 128, 128)),
+                                   dtypes=(torch.bfloat16, torch.bfloat16), page_size_padded=801792,
+                                   mamba_cache_mode="align" if prefix else "none")
     native_full = interface.FullAttentionSpec(block_size=768, num_kv_heads=1, head_size=256,
                                              dtype=torch.bfloat16, page_size_padded=801792)
     specs = ours.transform_native_specs({full_name: native_full, gdn_name: native_gdn})
@@ -301,7 +397,7 @@ def test_real_native_gdn_reshape_runs_with_original_objects_and_byte_ranges(nati
     assert conv.data_ptr() == allocation.data_ptr()
     assert ssm.data_ptr() == allocation.data_ptr() + 3 * 15360
     assert conv.dtype == ssm.dtype == torch.bfloat16
-    assert views[full_name].shape == (3, 2304, 1, 136)
+    assert views[full_name].shape == (3, 2304 if prefix else 2816, 1, 136)
     assert provider.layers[full_name].window_key.data_ptr() >= allocation.data_ptr() + 3 * (15360 + 393216)
     torch.testing.assert_close(allocation[:gdn_original_bytes.numel()], gdn_original_bytes, rtol=0, atol=0)
 
@@ -400,9 +496,11 @@ def test_native_extra_fia_dummy_does_not_require_a_new_physical_request_row():
         from_common(common)
 
 
-@pytest.mark.parametrize("base", [100, 2302, 2303])
+@pytest.mark.parametrize("physical_block", [2304, 2816])
+@pytest.mark.parametrize("base", [100, -2, -1])
 @pytest.mark.parametrize("accepted_proposals", [0, 1, 2, 3])
-def test_native_padded_mtp_requires_slot_derived_draft_position(monkeypatch, base, accepted_proposals):
+def test_native_padded_mtp_requires_slot_derived_draft_position(monkeypatch, base, accepted_proposals, physical_block):
+    base = physical_block + base if base < 0 else base
     # Execute the actual native step-update method, including its seq_lens
     # increment and its separate accepted-position slot computation. This
     # reproduces the disagreement instead of inventing a corrected mock.
@@ -427,13 +525,14 @@ def test_native_padded_mtp_requires_slot_derived_draft_position(monkeypatch, bas
         shallow_copy_metadata=copy.copy, arange=torch.arange(5, dtype=torch.int32),
         token_arange_np=torch.arange(5, dtype=torch.int32), method="mtp", uses_mrope=False,
         max_model_len=262144, runner=SimpleNamespace(), has_gdn=True, kernel_block_size=128,
-        block_size=2304, pcp_size=1, use_compress=False,
+        block_size=physical_block, pcp_size=1, use_compress=False,
         slot_mapping_group=[torch.full((8,), -1, dtype=torch.int32) for _ in range(3)],
         seq_lens_group=[torch.zeros(4, dtype=torch.int32) for _ in range(3)],
         query_start_loc_group=[torch.zeros(5, dtype=torch.int32) for _ in range(3)])
     # The second physical page has a smaller ID: physical IDs are not sorted
     # by logical position, so slot-to-logical recovery cannot binary-search it.
-    table = torch.tensor([[7 * 18 + i for i in range(18)] + [18 + i for i in range(18)]], dtype=torch.int32)
+    ratio = physical_block // 128
+    table = torch.tensor([[7 * ratio + i for i in range(ratio)] + [ratio + i for i in range(ratio)]], dtype=torch.int32)
     common = SimpleNamespace(
         query_start_loc=torch.tensor([0, 4], dtype=torch.int32),
         query_start_loc_cpu=torch.tensor([0, 4], dtype=torch.int32),

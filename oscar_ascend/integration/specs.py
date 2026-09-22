@@ -4,6 +4,7 @@ Archive #28/#77/#78: register() never imports this heavy module.
 Archive #17–20/#34/#36: packed byte geometry is explicit and preserved
 across spec merging. GDN shapes/dtypes/spec instances remain unchanged.
 Archive #27: merge follows native grouping's AssertionError protocol.
+Archive #127: preserve GDN's none/align mode when deriving FULL page capacity.
 """
 
 from dataclasses import dataclass
@@ -24,6 +25,7 @@ class OscarFullAttentionSpec(FullAttentionSpec):
     native_mamba_block_size: int
     kernel_block_size: int = 128
     native_page_size_bytes: int | None = None
+    native_mamba_cache_mode: str = "align"
 
     def __post_init__(self):
         super().__post_init__()
@@ -42,7 +44,7 @@ class OscarFullAttentionSpec(FullAttentionSpec):
         return HybridPageLayout(
             SlotLayout(self.head_size, self.head_size_v, self.num_kv_heads),
             self.conv_bytes, self.ssm_bytes, self.native_mamba_block_size, self.kernel_block_size,
-            self.native_page_size_bytes)
+            self.native_page_size_bytes, self.native_mamba_cache_mode)
 
     @property
     def real_page_size_bytes(self) -> int:
@@ -89,24 +91,25 @@ def transform_native_specs(native_specs: dict) -> dict:
         ssm = prod(spec.shapes[1]) * get_dtype_size(spec.dtypes[1])
         if conv + ssm > spec.page_size_bytes:
             raise ValueError("native GDN page budget cannot contain conv and SSM states")
-        geometry.add((conv, ssm, spec.block_size, spec.page_size_bytes))
+        geometry.add((conv, ssm, spec.block_size, spec.page_size_bytes, spec.mamba_cache_mode))
     if len(geometry) != 1:
         raise ValueError(f"OSCAR requires uniform GDN page geometry, got {sorted(geometry)}")
-    conv, ssm, mamba_block, native_page = next(iter(geometry))
+    conv, ssm, mamba_block, native_page, mamba_mode = next(iter(geometry))
     converted = {}
     for name, spec in native_specs.items():
         if type(spec) is not FullAttentionSpec:
             converted[name] = spec
             continue
         layout = HybridPageLayout(SlotLayout(spec.head_size, spec.head_size_v, spec.num_kv_heads),
-                                  conv, ssm, mamba_block, native_page_size_bytes=native_page)
+                                  conv, ssm, mamba_block, native_page_size_bytes=native_page,
+                                  native_mamba_cache_mode=mamba_mode)
         converted[name] = OscarFullAttentionSpec(
             block_size=layout.block_size, num_kv_heads=spec.num_kv_heads,
             head_size=spec.head_size, head_size_v=spec.head_size_v, dtype=spec.dtype,
             kv_quant_mode=spec.kv_quant_mode, page_size_padded=layout.page_size_bytes,
             sliding_window=spec.sliding_window, attention_chunk_size=spec.attention_chunk_size,
             conv_bytes=conv, ssm_bytes=ssm, native_mamba_block_size=mamba_block,
-            native_page_size_bytes=native_page)
+            native_page_size_bytes=native_page, native_mamba_cache_mode=mamba_mode)
     if not any(isinstance(spec, OscarFullAttentionSpec) for spec in converted.values()):
         raise ValueError("no native FULL attention layer was converted to OSCAR")
     return converted

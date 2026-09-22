@@ -1,0 +1,39 @@
+{
+  "source": "reports/target_uncached_layout_failure.txt",
+  "sha256": "5f6045e75fd981973928f72b382d4c51e204d2ce6a4bfe4cb1a9d09f679d0e4e",
+  "run": "20260922T044524.274951Z",
+  "target_reported": {
+    "phase": "service-probe/get_kv_cache_spec",
+    "prefix_caching": false,
+    "ssm_bytes": 393216,
+    "slot_bytes": 136,
+    "incorrect_alignment_tokens": 262144,
+    "tp": 4,
+    "error": "native SSM page cannot contain one aligned OSCAR block"
+  },
+  "fix": {
+    "source": "native MambaSpec.mamba_cache_mode",
+    "none_full_block_tokens": 2816,
+    "none_alignment_tokens": 128,
+    "gdn_block_tokens_preserved": 262144,
+    "native_scheduler_lcm": 2883584,
+    "original_startup_arguments_preserved": true
+  },
+  "preceding_cv_rotation_probe_details": "not_in_supplied_log",
+  "target_fix_retest": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "http_requests": "not_run",
+  "local_tests": {
+    "passed": 423,
+    "skipped": 119,
+    "subtests_passed": 6,
+    "log": "reports/pytest.log"
+  },
+  "focused_native_layout_tests": {
+    "passed": 55,
+    "log": "reports/uncached_layout_tests.log"
+  },
+  "wheel_build": "passed",
+  "kernel_sources_changed": false
+}

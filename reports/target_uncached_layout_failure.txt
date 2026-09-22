@@ -1,0 +1,468 @@
+[W922 04:49:28.379727490 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+INFO 09-22 04:49:30 [platform.py:62] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe/server.log
+STARTUP_WAIT elapsed=105.2 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=135.1 log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe.log
+(EngineCore pid=4918) 2026-09-22 04:49:42,663 - 4918 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.23.0+empty: default 1
+(EngineCore pid=4918) INFO 09-22 04:49:42 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+(EngineCore pid=4918) INFO 09-22 04:49:42 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+(EngineCore pid=4918) INFO 09-22 04:49:42 [core.py:113] Initializing a V1 LLM engine (v0.23.0) with config: model='/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', speculative_config=SpeculativeConfig(method='mtp', model='/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', num_spec_tokens=3), tokenizer='/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=262144, download_dir=None, load_format=auto, tensor_parallel_size=4, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=ascend, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=npu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=qwen3.5, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'vllm_ascend.compilation.compiler_interface.AscendCompiler', 'custom_ops': ['all'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [16384], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY: (2, 0)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 4, 8, 12, 16, 24, 32, 48, 56, 64, 72, 84, 96, 108, 112, 128, 160, 172, 196, 200, 212, 232, 272, 288, 312, 328, 344, 360, 384, 400, 416, 432, 448, 480, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native']), enable_flashinfer_autotune=True, moe_backend='auto', linear_backend='auto')
+(EngineCore pid=4918) INFO 09-22 04:49:42 [multiproc_executor.py:140] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=135.82.26.93 (local), world_size=4, local_world_size=4
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe/server.log
+STARTUP_WAIT elapsed=120.3 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=150.1 log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe.log
+INFO 09-22 04:49:49 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 09-22 04:49:49 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 09-22 04:49:49 [__init__.py:49] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 09-22 04:49:49 [__init__.py:238] Platform plugin ascend is activated
+[W922 04:49:49.479196460 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+INFO 09-22 04:49:51 [platform.py:62] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+2026-09-22 04:50:03,081 - 4967 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.23.0+empty: default 1
+INFO 09-22 04:50:03 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 09-22 04:50:03 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe/server.log
+STARTUP_WAIT elapsed=135.3 health=<urlopen error [Errno 111] Connection refused>
+`Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+[oscar] phase=service-probe running seconds=165.1 log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe.log
+INFO 09-22 04:50:06 [ascend_config.py:893] Dynamic EPLB is False
+INFO 09-22 04:50:06 [ascend_config.py:894] The number of redundant experts is 0
+INFO 09-22 04:50:06 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 09-22 04:50:06 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 09-22 04:50:06 [__init__.py:49] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 09-22 04:50:06 [__init__.py:238] Platform plugin ascend is activated
+[W922 04:50:07.707160770 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+INFO 09-22 04:50:08 [platform.py:62] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+(Worker pid=4967) INFO 09-22 04:50:09 [parallel_state.py:1568] world_size=4 rank=0 local_rank=0 distributed_init_method=tcp://127.0.0.1:44015 backend=hccl
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe/server.log
+STARTUP_WAIT elapsed=150.3 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=180.1 log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe.log
+2026-09-22 04:50:19,906 - 5004 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.23.0+empty: default 1
+INFO 09-22 04:50:19 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 09-22 04:50:19 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+`Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+INFO 09-22 04:50:23 [ascend_config.py:893] Dynamic EPLB is False
+INFO 09-22 04:50:23 [ascend_config.py:894] The number of redundant experts is 0
+INFO 09-22 04:50:23 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 09-22 04:50:23 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 09-22 04:50:23 [__init__.py:49] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 09-22 04:50:23 [__init__.py:238] Platform plugin ascend is activated
+[W922 04:50:24.851422970 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+INFO 09-22 04:50:25 [platform.py:62] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+(Worker pid=5004) INFO 09-22 04:50:25 [parallel_state.py:1568] world_size=4 rank=1 local_rank=1 distributed_init_method=tcp://127.0.0.1:44015 backend=hccl
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe/server.log
+STARTUP_WAIT elapsed=165.4 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=195.1 log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe.log
+2026-09-22 04:50:37,140 - 5061 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.23.0+empty: default 1
+INFO 09-22 04:50:37 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 09-22 04:50:37 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+`Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+INFO 09-22 04:50:40 [ascend_config.py:893] Dynamic EPLB is False
+INFO 09-22 04:50:40 [ascend_config.py:894] The number of redundant experts is 0
+INFO 09-22 04:50:40 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 09-22 04:50:40 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 09-22 04:50:40 [__init__.py:49] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 09-22 04:50:40 [__init__.py:238] Platform plugin ascend is activated
+[W922 04:50:41.854689310 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+INFO 09-22 04:50:42 [platform.py:62] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+(Worker pid=5061) INFO 09-22 04:50:43 [parallel_state.py:1568] world_size=4 rank=2 local_rank=2 distributed_init_method=tcp://127.0.0.1:44015 backend=hccl
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe/server.log
+STARTUP_WAIT elapsed=180.4 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=210.1 log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe.log
+2026-09-22 04:50:54,284 - 5121 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.23.0+empty: default 1
+INFO 09-22 04:50:54 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 09-22 04:50:54 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+`Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+INFO 09-22 04:50:57 [ascend_config.py:893] Dynamic EPLB is False
+INFO 09-22 04:50:57 [ascend_config.py:894] The number of redundant experts is 0
+(Worker pid=5121) INFO 09-22 04:51:00 [parallel_state.py:1568] world_size=4 rank=3 local_rank=3 distributed_init_method=tcp://127.0.0.1:44015 backend=hccl
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe/server.log
+STARTUP_WAIT elapsed=195.4 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=225.2 log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe.log
+[Gloo] Rank 0 is connected to 3 peer ranks. Expected number of connected peer ranks is : 3
+[Gloo] Rank [Gloo] Rank 31 is connected to  is connected to 33 peer ranks.  peer ranks. Expected number of connected peer ranks is : [Gloo] Rank Expected number of connected peer ranks is : 323 is connected to 
+3
+ peer ranks. Expected number of connected peer ranks is : 3
+[Gloo] Rank 0 is connected to 3 peer ranks. Expected number of connected peer ranks is : 3
+[Gloo] Rank [Gloo] Rank 12 is connected to  is connected to 33 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 33
+
+[Gloo] Rank 3 is connected to 3 peer ranks. Expected number of connected peer ranks is : 3
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+(Worker pid=4967) INFO 09-22 04:51:04 [parallel_state.py:1903] rank 0 in world size 4 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+[Gloo] Rank [Gloo] Rank 00 is connected to  is connected to 00 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 00
+
+[Gloo] Rank [Gloo] Rank 00 is connected to  is connected to 00 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 00
+
+[Gloo] Rank [Gloo] Rank 00 is connected to  is connected to 00 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 00
+
+[Gloo] Rank 0 is connected to [Gloo] Rank 0[Gloo] Rank 0 peer ranks. 0 is connected to Expected number of connected peer ranks is :  is connected to 000 peer ranks. 
+ peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 00
+
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank [Gloo] Rank 10 is connected to  is connected to 33 peer ranks.  peer ranks. Expected number of connected peer ranks is : Expected number of connected peer ranks is : 33
+
+[Gloo] Rank 2 is connected to 3 peer ranks. Expected number of connected peer ranks is : 3
+[Gloo] Rank 3 is connected to 3 peer ranks. Expected number of connected peer ranks is : 3
+[rank0]:[W922 04:51:04.329101980 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[rank3]:[W922 04:51:04.329253290 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[rank2]:[W922 04:51:04.329383080 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+[rank1]:[W922 04:51:04.331993700 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+(Worker pid=5004) WARNING 09-22 04:51:05 [__init__.py:204] min_p and logit_bias parameters won't work with speculative decoding.
+(Worker pid=5121) WARNING 09-22 04:51:05 [__init__.py:204] min_p and logit_bias parameters won't work with speculative decoding.
+(Worker pid=4967) WARNING 09-22 04:51:05 [__init__.py:204] min_p and logit_bias parameters won't work with speculative decoding.
+(Worker pid=5061) WARNING 09-22 04:51:05 [__init__.py:204] min_p and logit_bias parameters won't work with speculative decoding.
+(Worker pid=5121) The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(Worker pid=4967) The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(Worker pid=5004) The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(Worker pid=5061) The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(Worker pid=4967) WARNING 09-22 04:51:11 [__init__.py:204] min_p and logit_bias parameters won't work with speculative decoding.
+(Worker_TP0 pid=4967) INFO 09-22 04:51:11 [model_runner_v1.py:3718] Starting to load model /softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp...
+(Worker pid=5004) WARNING 09-22 04:51:11 [__init__.py:204] min_p and logit_bias parameters won't work with speculative decoding.
+(Worker_TP1 pid=5004) INFO 09-22 04:51:11 [model_runner_v1.py:3718] Starting to load model /softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp...
+(Worker pid=5121) WARNING 09-22 04:51:11 [__init__.py:204] min_p and logit_bias parameters won't work with speculative decoding.
+(Worker_TP3 pid=5121) INFO 09-22 04:51:11 [model_runner_v1.py:3718] Starting to load model /softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp...
+(Worker pid=5061) WARNING 09-22 04:51:12 [__init__.py:204] min_p and logit_bias parameters won't work with speculative decoding.
+(Worker_TP2 pid=5061) INFO 09-22 04:51:12 [model_runner_v1.py:3718] Starting to load model /softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp...
+(Worker_TP0 pid=4967) INFO 09-22 04:51:12 [modelslim_config.py:543] Applied hf_to_vllm_mapper to quant_description keys
+(Worker_TP3 pid=5121) INFO 09-22 04:51:12 [modelslim_config.py:543] Applied hf_to_vllm_mapper to quant_description keys
+(Worker_TP0 pid=4967) INFO 09-22 04:51:12 [interface.py:301] Using default backend AttentionBackendEnum.TORCH_SDPA for vit attention
+(Worker_TP0 pid=4967) INFO 09-22 04:51:12 [mm_encoder_attention.py:372] Using AttentionBackendEnum.TORCH_SDPA for MMEncoderAttention.
+(Worker_TP0 pid=4967) INFO 09-22 04:51:12 [qwen_gdn_linear_attn.py:228] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).
+(Worker_TP0 pid=4967) INFO 09-22 04:51:12 [modelslim_config.py:434] Using the vLLM Ascend modelslim Quantization now!
+(Worker_TP1 pid=5004) INFO 09-22 04:51:12 [modelslim_config.py:543] Applied hf_to_vllm_mapper to quant_description keys
+(Worker_TP2 pid=5061) INFO 09-22 04:51:12 [modelslim_config.py:543] Applied hf_to_vllm_mapper to quant_description keys
+(Worker_TP0 pid=4967) INFO 09-22 04:51:13 [compilation.py:1075] Using OOT custom backend for compilation.
+(Worker_TP3 pid=5121) INFO 09-22 04:51:13 [compilation.py:1075] Using OOT custom backend for compilation.
+(Worker_TP1 pid=5004) INFO 09-22 04:51:13 [compilation.py:1075] Using OOT custom backend for compilation.
+(Worker_TP0 pid=4967) INFO 09-22 04:51:13 [weight_utils.py:922] Filesystem type for checkpoints: NFS. Checkpoint size: 33.92 GiB. Available RAM: 944.10 GiB.
+(Worker_TP0 pid=4967) INFO 09-22 04:51:13 [weight_utils.py:884] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+Loading safetensors checkpoint shards:   0% Completed | 0/9 [00:00<?, ?it/s]
+(Worker_TP3 pid=5121) INFO 09-22 04:51:13 [weight_utils.py:884] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+(Worker_TP1 pid=5004) INFO 09-22 04:51:13 [weight_utils.py:884] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+(Worker_TP2 pid=5061) INFO 09-22 04:51:13 [compilation.py:1075] Using OOT custom backend for compilation.
+Loading safetensors checkpoint shards:  11% Completed | 1/9 [00:00<00:05,  1.49it/s]
+(Worker_TP2 pid=5061) INFO 09-22 04:51:14 [weight_utils.py:884] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+Loading safetensors checkpoint shards:  22% Completed | 2/9 [00:01<00:04,  1.59it/s]
+(Worker_TP0 pid=4967) INFO 09-22 04:51:15 [weight_utils.py:856] Prefetching checkpoint files: 10% (1/3)
+Loading safetensors checkpoint shards:  33% Completed | 3/9 [00:01<00:03,  1.66it/s]
+Loading safetensors checkpoint shards:  44% Completed | 4/9 [00:02<00:02,  1.74it/s]
+(Worker_TP3 pid=5121) INFO 09-22 04:51:16 [weight_utils.py:856] Prefetching checkpoint files: 10% (1/2)
+(Worker_TP3 pid=5121) INFO 09-22 04:51:16 [weight_utils.py:856] Prefetching checkpoint files: 20% (2/2)
+(Worker_TP3 pid=5121) INFO 09-22 04:51:16 [weight_utils.py:879] Prefetching checkpoint files into page cache finished in 2.77s
+(Worker_TP0 pid=4967) INFO 09-22 04:51:16 [weight_utils.py:856] Prefetching checkpoint files: 20% (2/3)
+Loading safetensors checkpoint shards:  56% Completed | 5/9 [00:02<00:02,  1.81it/s]
+(Worker_TP1 pid=5004) INFO 09-22 04:51:16 [weight_utils.py:856] Prefetching checkpoint files: 10% (1/2)
+(Worker_TP0 pid=4967) INFO 09-22 04:51:16 [weight_utils.py:856] Prefetching checkpoint files: 30% (3/3)
+(Worker_TP0 pid=4967) INFO 09-22 04:51:16 [weight_utils.py:879] Prefetching checkpoint files into page cache finished in 3.02s
+(Worker_TP1 pid=5004) INFO 09-22 04:51:16 [weight_utils.py:856] Prefetching checkpoint files: 20% (2/2)
+(Worker_TP1 pid=5004) INFO 09-22 04:51:16 [weight_utils.py:879] Prefetching checkpoint files into page cache finished in 3.08s
+Loading safetensors checkpoint shards:  67% Completed | 6/9 [00:03<00:01,  1.90it/s]
+(Worker_TP2 pid=5061) INFO 09-22 04:51:16 [weight_utils.py:856] Prefetching checkpoint files: 10% (1/2)
+Loading safetensors checkpoint shards:  78% Completed | 7/9 [00:03<00:00,  2.01it/s]
+(Worker_TP2 pid=5061) INFO 09-22 04:51:17 [weight_utils.py:856] Prefetching checkpoint files: 20% (2/2)
+(Worker_TP2 pid=5061) INFO 09-22 04:51:17 [weight_utils.py:879] Prefetching checkpoint files into page cache finished in 3.13s
+Loading safetensors checkpoint shards:  89% Completed | 8/9 [00:04<00:00,  2.33it/s]
+Loading safetensors checkpoint shards: 100% Completed | 9/9 [00:04<00:00,  3.03it/s]
+Loading safetensors checkpoint shards: 100% Completed | 9/9 [00:04<00:00,  2.15it/s]
+(Worker_TP0 pid=4967) 
+(Worker_TP0 pid=4967) INFO 09-22 04:51:17 [default_loader.py:397] Loading weights took 4.24 seconds
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe/server.log
+STARTUP_WAIT elapsed=210.5 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=240.2 log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe.log
+(Worker_TP3 pid=5121) INFO 09-22 04:51:21 [model_runner_v1.py:3743] Loading drafter model...
+(Worker_TP3 pid=5121) INFO 09-22 04:51:21 [kernel.py:270] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(Worker_TP0 pid=4967) INFO 09-22 04:51:21 [model_runner_v1.py:3743] Loading drafter model...
+(Worker_TP3 pid=5121) WARNING 09-22 04:51:21 [platform.py:1067] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+(Worker_TP3 pid=5121) INFO 09-22 04:51:21 [platform.py:1277] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+(Worker_TP3 pid=5121) INFO 09-22 04:51:21 [ascend_config.py:893] Dynamic EPLB is False
+(Worker_TP3 pid=5121) INFO 09-22 04:51:21 [ascend_config.py:894] The number of redundant experts is 0
+(Worker_TP0 pid=4967) INFO 09-22 04:51:21 [vllm.py:999] Asynchronous scheduling is enabled.
+(Worker_TP0 pid=4967) WARNING 09-22 04:51:21 [vllm.py:1023] Disabling cascade attention (not yet compatible with async speculative decoding).
+(Worker_TP0 pid=4967) INFO 09-22 04:51:21 [kernel.py:270] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(Worker_TP0 pid=4967) WARNING 09-22 04:51:21 [platform.py:1067] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+(Worker_TP0 pid=4967) INFO 09-22 04:51:21 [platform.py:1277] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+(Worker_TP0 pid=4967) INFO 09-22 04:51:21 [ascend_config.py:893] Dynamic EPLB is False
+(Worker_TP0 pid=4967) INFO 09-22 04:51:21 [ascend_config.py:894] The number of redundant experts is 0
+(Worker_TP3 pid=5121) INFO 09-22 04:51:21 [platform.py:790] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+(Worker_TP3 pid=5121) INFO 09-22 04:51:21 [llm_base_proposer.py:305] [spec_decode/base] Loading draft model: method=mtp, load_format=None, model=/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp
+(Worker_TP0 pid=4967) INFO 09-22 04:51:21 [platform.py:790] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+(Worker_TP0 pid=4967) INFO 09-22 04:51:21 [compilation.py:321] Enabled custom fusions: norm_quant, act_quant
+(Worker_TP0 pid=4967) INFO 09-22 04:51:21 [llm_base_proposer.py:305] [spec_decode/base] Loading draft model: method=mtp, load_format=None, model=/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp
+(Worker_TP1 pid=5004) INFO 09-22 04:51:21 [model_runner_v1.py:3743] Loading drafter model...
+(Worker_TP1 pid=5004) INFO 09-22 04:51:21 [kernel.py:270] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(Worker_TP1 pid=5004) WARNING 09-22 04:51:21 [platform.py:1067] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+(Worker_TP1 pid=5004) INFO 09-22 04:51:21 [platform.py:1277] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+(Worker_TP1 pid=5004) INFO 09-22 04:51:21 [ascend_config.py:893] Dynamic EPLB is False
+(Worker_TP1 pid=5004) INFO 09-22 04:51:21 [ascend_config.py:894] The number of redundant experts is 0
+(Worker_TP1 pid=5004) INFO 09-22 04:51:21 [platform.py:790] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+(Worker_TP1 pid=5004) INFO 09-22 04:51:21 [llm_base_proposer.py:305] [spec_decode/base] Loading draft model: method=mtp, load_format=None, model=/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp
+(Worker_TP2 pid=5061) INFO 09-22 04:51:22 [model_runner_v1.py:3743] Loading drafter model...
+(Worker_TP2 pid=5061) INFO 09-22 04:51:22 [kernel.py:270] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(Worker_TP2 pid=5061) WARNING 09-22 04:51:22 [platform.py:1067] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+(Worker_TP2 pid=5061) INFO 09-22 04:51:22 [platform.py:1277] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+(Worker_TP2 pid=5061) INFO 09-22 04:51:22 [ascend_config.py:893] Dynamic EPLB is False
+(Worker_TP2 pid=5061) INFO 09-22 04:51:22 [ascend_config.py:894] The number of redundant experts is 0
+(Worker_TP2 pid=5061) INFO 09-22 04:51:22 [platform.py:790] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+(Worker_TP2 pid=5061) INFO 09-22 04:51:22 [llm_base_proposer.py:305] [spec_decode/base] Loading draft model: method=mtp, load_format=None, model=/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp
+(Worker_TP2 pid=5061) /usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe/impl/ops_legacy/dynamic/gelu_grad_v2.py:97: SyntaxWarning: invalid escape sequence '\h'
+(Worker_TP2 pid=5061)   gelu_grad_erf = erfc(-\hat{x}) / 2 + (1 /sqrt(Pi)) * (\hat{x}) * exp(-\hat{x}^2)
+(Worker_TP2 pid=5061) /usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe/impl/ops_legacy/dynamic/gelu_grad_v2.py:157: SyntaxWarning: invalid escape sequence '\h'
+(Worker_TP2 pid=5061)   gelu_grad_erf = erfc(-\hat{x}) / 2 + (1 /sqrt(Pi)) * (\hat{x}) * exp(-\hat{x}^2)
+(Worker_TP0 pid=4967) /usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe/impl/ops_legacy/dynamic/gelu_grad_v2.py:97: SyntaxWarning: invalid escape sequence '\h'
+(Worker_TP0 pid=4967)   gelu_grad_erf = erfc(-\hat{x}) / 2 + (1 /sqrt(Pi)) * (\hat{x}) * exp(-\hat{x}^2)
+(Worker_TP3 pid=5121) /usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe/impl/ops_legacy/dynamic/gelu_grad_v2.py:97: SyntaxWarning: invalid escape sequence '\h'
+(Worker_TP3 pid=5121)   gelu_grad_erf = erfc(-\hat{x}) / 2 + (1 /sqrt(Pi)) * (\hat{x}) * exp(-\hat{x}^2)
+(Worker_TP1 pid=5004) /usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe/impl/ops_legacy/dynamic/gelu_grad_v2.py:97: SyntaxWarning: invalid escape sequence '\h'
+(Worker_TP1 pid=5004)   gelu_grad_erf = erfc(-\hat{x}) / 2 + (1 /sqrt(Pi)) * (\hat{x}) * exp(-\hat{x}^2)
+(Worker_TP0 pid=4967) /usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe/impl/ops_legacy/dynamic/gelu_grad_v2.py:157: SyntaxWarning: invalid escape sequence '\h'
+(Worker_TP0 pid=4967)   gelu_grad_erf = erfc(-\hat{x}) / 2 + (1 /sqrt(Pi)) * (\hat{x}) * exp(-\hat{x}^2)
+(Worker_TP3 pid=5121) /usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe/impl/ops_legacy/dynamic/gelu_grad_v2.py:157: SyntaxWarning: invalid escape sequence '\h'
+(Worker_TP3 pid=5121)   gelu_grad_erf = erfc(-\hat{x}) / 2 + (1 /sqrt(Pi)) * (\hat{x}) * exp(-\hat{x}^2)
+(Worker_TP1 pid=5004) /usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe/impl/ops_legacy/dynamic/gelu_grad_v2.py:157: SyntaxWarning: invalid escape sequence '\h'
+(Worker_TP1 pid=5004)   gelu_grad_erf = erfc(-\hat{x}) / 2 + (1 /sqrt(Pi)) * (\hat{x}) * exp(-\hat{x}^2)
+(Worker_TP1 pid=5004) INFO 09-22 04:51:31 [compilation.py:1075] Using OOT custom backend for compilation.
+(Worker_TP1 pid=5004) INFO 09-22 04:51:31 [compilation.py:1075] Using OOT custom backend for compilation.
+(Worker_TP0 pid=4967) INFO 09-22 04:51:31 [compilation.py:1075] Using OOT custom backend for compilation.
+(Worker_TP0 pid=4967) INFO 09-22 04:51:31 [compilation.py:1075] Using OOT custom backend for compilation.
+(Worker_TP1 pid=5004) INFO 09-22 04:51:31 [weight_utils.py:884] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+(Worker_TP2 pid=5061) INFO 09-22 04:51:31 [compilation.py:1075] Using OOT custom backend for compilation.
+(Worker_TP0 pid=4967) INFO 09-22 04:51:31 [weight_utils.py:922] Filesystem type for checkpoints: NFS. Checkpoint size: 33.92 GiB. Available RAM: 925.98 GiB.
+(Worker_TP0 pid=4967) INFO 09-22 04:51:31 [weight_utils.py:884] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+Loading safetensors checkpoint shards:   0% Completed | 0/9 [00:00<?, ?it/s]
+(Worker_TP2 pid=5061) INFO 09-22 04:51:31 [compilation.py:1075] Using OOT custom backend for compilation.
+(Worker_TP2 pid=5061) INFO 09-22 04:51:31 [weight_utils.py:884] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+Loading safetensors checkpoint shards:  44% Completed | 4/9 [00:00<00:00, 34.87it/s]
+(Worker_TP3 pid=5121) INFO 09-22 04:51:31 [compilation.py:1075] Using OOT custom backend for compilation.
+(Worker_TP3 pid=5121) INFO 09-22 04:51:31 [compilation.py:1075] Using OOT custom backend for compilation.
+(Worker_TP3 pid=5121) INFO 09-22 04:51:31 [weight_utils.py:884] Prefetching checkpoint files into page cache started (in background, num_threads=8, block_size=16777216 bytes)
+Loading safetensors checkpoint shards:  89% Completed | 8/9 [00:00<00:00, 22.29it/s]
+(Worker_TP1 pid=5004) INFO 09-22 04:51:31 [llm_base_proposer.py:440] [spec_decode/base] Detected MTP model. Sharing target model embedding weights with the draft model.
+(Worker_TP2 pid=5061) INFO 09-22 04:51:31 [llm_base_proposer.py:440] [spec_decode/base] Detected MTP model. Sharing target model embedding weights with the draft model.
+Loading safetensors checkpoint shards: 100% Completed | 9/9 [00:00<00:00, 18.72it/s]
+(Worker_TP0 pid=4967) 
+(Worker_TP0 pid=4967) INFO 09-22 04:51:31 [default_loader.py:397] Loading weights took 0.53 seconds
+(Worker_TP0 pid=4967) INFO 09-22 04:51:31 [llm_base_proposer.py:440] [spec_decode/base] Detected MTP model. Sharing target model embedding weights with the draft model.
+(Worker_TP3 pid=5121) INFO 09-22 04:51:32 [llm_base_proposer.py:440] [spec_decode/base] Detected MTP model. Sharing target model embedding weights with the draft model.
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe/server.log
+STARTUP_WAIT elapsed=225.6 health=<urlopen error [Errno 111] Connection refused>
+(Worker_TP2 pid=5061) INFO 09-22 04:51:33 [model_runner_v1.py:3794] Loading model weights took 10.1418 GB
+(Worker_TP2 pid=5061) INFO 09-22 04:51:33 [model_runner_v1.py:3821] Model runner load_model total time: 21.59 seconds
+(Worker_TP1 pid=5004) INFO 09-22 04:51:33 [model_runner_v1.py:3794] Loading model weights took 10.1418 GB
+(Worker_TP1 pid=5004) INFO 09-22 04:51:33 [model_runner_v1.py:3821] Model runner load_model total time: 22.18 seconds
+(Worker_TP0 pid=4967) INFO 09-22 04:51:33 [model_runner_v1.py:3794] Loading model weights took 10.1418 GB
+(Worker_TP0 pid=4967) INFO 09-22 04:51:33 [model_runner_v1.py:3821] Model runner load_model total time: 22.29 seconds
+(Worker_TP3 pid=5121) INFO 09-22 04:51:33 [model_runner_v1.py:3794] Loading model weights took 10.1418 GB
+(Worker_TP3 pid=5121) INFO 09-22 04:51:33 [model_runner_v1.py:3821] Model runner load_model total time: 22.24 seconds
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 892, in get_kv_cache_spec
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return self.model_runner.get_kv_cache_spec()
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/plugin.py", line 109, in wrapped
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return provider.transform_kv_cache_specs(runner, original(runner))
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/runtime.py", line 237, in transform_kv_cache_specs
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     converted = transform_native_specs(native_specs)
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 101, in transform_native_specs
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     layout = HybridPageLayout(SlotLayout(spec.head_size, spec.head_size_v, spec.num_kv_heads),
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "<string>", line 9, in __init__
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/layout.py", line 111, in __post_init__
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     raise ValueError(
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987] ValueError: native SSM page cannot contain one aligned OSCAR block: ssm_bytes=393216, token_bytes=136, alignment_tokens=262144
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP3 pid=5121) (Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 892, in get_kv_cache_spec
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return self.model_runner.get_kv_cache_spec()
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/plugin.py", line 109, in wrapped
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return provider.transform_kv_cache_specs(runner, original(runner))
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/runtime.py", line 237, in transform_kv_cache_specs
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     converted = transform_native_specs(native_specs)
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 101, in transform_native_specs
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     layout = HybridPageLayout(SlotLayout(spec.head_size, spec.head_size_v, spec.num_kv_heads),
+(Worker_TP1 pid=5004) (Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987] WorkerProc hit an exception.
+ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "<string>", line 9, in __init__
+(Worker_TP2 pid=5061) (Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987] Traceback (most recent call last):
+ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/layout.py", line 111, in __post_init__
+(Worker_TP2 pid=5061) (Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+ERROR 09-22 04:51:34 [multiproc_executor.py:987]     raise ValueError(
+(Worker_TP2 pid=5061) (Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+ERROR 09-22 04:51:34 [multiproc_executor.py:987] ValueError: native SSM page cannot contain one aligned OSCAR block: ssm_bytes=393216, token_bytes=136, alignment_tokens=262144
+(Worker_TP2 pid=5061) (Worker_TP1 pid=5004) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 09-22 04:51:34 [multiproc_executor.py:987] 
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 892, in get_kv_cache_spec
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return self.model_runner.get_kv_cache_spec()
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/plugin.py", line 109, in wrapped
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return provider.transform_kv_cache_specs(runner, original(runner))
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/runtime.py", line 237, in transform_kv_cache_specs
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     converted = transform_native_specs(native_specs)
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 101, in transform_native_specs
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     layout = HybridPageLayout(SlotLayout(spec.head_size, spec.head_size_v, spec.num_kv_heads),
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "<string>", line 9, in __init__
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/layout.py", line 111, in __post_init__
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     raise ValueError(
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987] ValueError: native SSM page cannot contain one aligned OSCAR block: ssm_bytes=393216, token_bytes=136, alignment_tokens=262144
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 892, in get_kv_cache_spec
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return self.model_runner.get_kv_cache_spec()
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/plugin.py", line 109, in wrapped
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return provider.transform_kv_cache_specs(runner, original(runner))
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/runtime.py", line 237, in transform_kv_cache_specs
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     converted = transform_native_specs(native_specs)
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 101, in transform_native_specs
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     layout = HybridPageLayout(SlotLayout(spec.head_size, spec.head_size_v, spec.num_kv_heads),
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "<string>", line 9, in __init__
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/layout.py", line 111, in __post_init__
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     raise ValueError(
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987] ValueError: native SSM page cannot contain one aligned OSCAR block: ssm_bytes=393216, token_bytes=136, alignment_tokens=262144
+(Worker_TP2 pid=5061) ERROR 09-22 04:51:34 [multiproc_executor.py:987] 
+ERROR 09-22 04:51:34 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 892, in get_kv_cache_spec
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return self.model_runner.get_kv_cache_spec()
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/plugin.py", line 109, in wrapped
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return provider.transform_kv_cache_specs(runner, original(runner))
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/runtime.py", line 237, in transform_kv_cache_specs
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     converted = transform_native_specs(native_specs)
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 101, in transform_native_specs
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     layout = HybridPageLayout(SlotLayout(spec.head_size, spec.head_size_v, spec.num_kv_heads),
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "<string>", line 9, in __init__
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/layout.py", line 111, in __post_init__
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     raise ValueError(
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987] ValueError: native SSM page cannot contain one aligned OSCAR block: ssm_bytes=393216, token_bytes=136, alignment_tokens=262144
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 892, in get_kv_cache_spec
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return self.model_runner.get_kv_cache_spec()
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/plugin.py", line 109, in wrapped
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return provider.transform_kv_cache_specs(runner, original(runner))
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/runtime.py", line 237, in transform_kv_cache_specs
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     converted = transform_native_specs(native_specs)
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 101, in transform_native_specs
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     layout = HybridPageLayout(SlotLayout(spec.head_size, spec.head_size_v, spec.num_kv_heads),
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "<string>", line 9, in __init__
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/layout.py", line 111, in __post_init__
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     raise ValueError(
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987] ValueError: native SSM page cannot contain one aligned OSCAR block: ssm_bytes=393216, token_bytes=136, alignment_tokens=262144
+(Worker_TP3 pid=5121) ERROR 09-22 04:51:34 [multiproc_executor.py:987] 
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 892, in get_kv_cache_spec
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return self.model_runner.get_kv_cache_spec()
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/plugin.py", line 109, in wrapped
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return provider.transform_kv_cache_specs(runner, original(runner))
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/runtime.py", line 237, in transform_kv_cache_specs
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     converted = transform_native_specs(native_specs)
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 101, in transform_native_specs
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     layout = HybridPageLayout(SlotLayout(spec.head_size, spec.head_size_v, spec.num_kv_heads),
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "<string>", line 9, in __init__
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/layout.py", line 111, in __post_init__
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     raise ValueError(
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987] ValueError: native SSM page cannot contain one aligned OSCAR block: ssm_bytes=393216, token_bytes=136, alignment_tokens=262144
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 892, in get_kv_cache_spec
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return self.model_runner.get_kv_cache_spec()
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/plugin.py", line 109, in wrapped
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     return provider.transform_kv_cache_specs(runner, original(runner))
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/runtime.py", line 237, in transform_kv_cache_specs
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     converted = transform_native_specs(native_specs)
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 101, in transform_native_specs
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     layout = HybridPageLayout(SlotLayout(spec.head_size, spec.head_size_v, spec.num_kv_heads),
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "<string>", line 9, in __init__
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/layout.py", line 111, in __post_init__
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987]     raise ValueError(
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987] ValueError: native SSM page cannot contain one aligned OSCAR block: ssm_bytes=393216, token_bytes=136, alignment_tokens=262144
+(Worker_TP0 pid=4967) ERROR 09-22 04:51:34 [multiproc_executor.py:987] 
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195] EngineCore failed to start.
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195] Traceback (most recent call last):
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 1164, in run_engine_core
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]     return func(*args, **kwargs)
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 930, in __init__
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]     super().__init__(
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 132, in __init__
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]     kv_cache_config = self._initialize_kv_caches(vllm_config)
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]     return func(*args, **kwargs)
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 243, in _initialize_kv_caches
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]     kv_cache_specs = self.model_executor.get_kv_cache_specs()
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/abstract.py", line 150, in get_kv_cache_specs
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]     return self.collective_rpc("get_kv_cache_spec")
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 404, in collective_rpc
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]     return future if non_block else future.result()
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]                                     ^^^^^^^^^^^^^^^
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 91, in result
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]     return super().result()
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]            ^^^^^^^^^^^^^^^^
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]   File "/usr/local/python3.12.13/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]     return self.__get_result()
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]            ^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]   File "/usr/local/python3.12.13/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]     raise self._exception
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 95, in _wait_for_response
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]     response = self.aggregate(self.get_response())
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]                               ^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 391, in get_response
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195]     raise RuntimeError(
+(EngineCore pid=4918) ERROR 09-22 04:51:34 [core.py:1195] RuntimeError: Worker failed with error 'native SSM page cannot contain one aligned OSCAR block: ssm_bytes=393216, token_bytes=136, alignment_tokens=262144', please check the stack trace above for the root cause
+[oscar] phase=service-probe running seconds=255.2 log=/workspace/gpt_new_oscar/logs/20260922T044524.274951Z/service-probe.log
+(Worker_TP0 pid=4967) INFO 09-22 04:51:34 [weight_utils.py:856] Prefetching checkpoint files: 10% (1/3)

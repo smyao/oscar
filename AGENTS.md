@@ -1,6 +1,6 @@
 # 当前工程约束
 
-先读 `oscar_ascend_agent_start.md`，按其档案引用制度执行。`issue1_full_record.md` 实际为160条（G1–G34、#1–#126），按标题定位；旧标题条数与旧行号存在漂移。
+先读 `oscar_ascend_agent_start.md`，按其档案引用制度执行。`issue1_full_record.md` 实际为161条（G1–G34、#1–#127），按标题定位；旧标题条数与旧行号存在漂移。
 
 - 只允许参考本项目 `references/` 内指定PR和原生实现；禁止读任何失败OSCAR项目代码。所有参考树只读，不运行格式化或修改。
 - 适配代码为外部插件与独立AscendC工程，不能覆盖原生vLLM/Ascend源码，不使用 `cp` 部署。
@@ -8,7 +8,7 @@
 - 用户最新要求：保留真实 NPU 算子、CV/旋转和完整服务探针；移除默认部署中的环境清单、原生源码扫描、readiness 前置审计。正常流程为安装/编译/探针/自动旋转文件/服务探针/资源清理/正式服务，任何探针失败不得继续。该要求优先于启动文档旧的环境审计步骤。
 - 部署阶段及服务子进程的输出和错误必须实时打印到当前终端，同时保留相位日志、状态和真实退出码；不能只把 traceback 写入文件后让用户手工查找（档案 #94/#95/#125）。
 - `docs/checklist.md` 是42个稳定checkpoint；源码、CPU、CANN、设备完成、图捕获、图回放、质量、性能分别记录。
-- CV/history/window、production RuntimeProvider、物理页精确快照、MTP位置修正和全服务probe已有实现。CANN VM编译与官方CPU-debug通过；node93已通过75项store/merge原语真NPU探针，但首个CV数值用例失败（#126）；完整NPU/图/性能未验收，readiness或编译成功不能冒充这些证据。
+- CV/history/window、production RuntimeProvider、物理页精确快照、MTP位置修正和全服务probe已有实现。CANN VM编译与官方CPU-debug通过；node93已通过75项store/merge原语真NPU探针，后续日志已进入TP4/MTP模型加载，止于关闭prefix时的KV布局初始化（#127）；已支持none与align两种原生布局，完整NPU/图/性能未验收，readiness或编译成功不能冒充这些证据。
 - `ops/reference.py` 是独立测试oracle，绝不加入生产路由。精度冻结于 `configs/acceptance.json`，不能事后放宽。
 - 凡修改CANN算子，先亲读档案同类条目与D.4完整原始打点，文件头加入档案引用及D.4四问。
 - 新真机错误才追加档案；本机CPU测试或理论判断不能伪写为真机记录。

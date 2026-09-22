@@ -43,6 +43,31 @@ class CommonMetadata:
 
 
 class LayoutTests(unittest.TestCase):
+    def test_uncached_request_span_is_not_full_page_alignment(self):
+        layout = HybridPageLayout(SlotLayout(256), 30720, 393216, 262144,
+                                  native_page_size_bytes=817152,
+                                  native_mamba_cache_mode="none")
+        self.assertEqual(layout.alignment_tokens, 128)
+        self.assertEqual(layout.block_size, 2816)
+        self.assertEqual(layout.virtual_blocks_per_page, 22)
+        self.assertLessEqual(layout.payload_bytes, layout.ssm_bytes)
+        self.assertGreater((layout.block_size + 128) * 136, layout.ssm_bytes)
+        self.assertEqual(layout.scheduler_block_size, 2883584)
+        from oscar_ascend.lifecycle import SnapshotLayout
+        snapshot = SnapshotLayout(layout, 64, 256, 3)
+        self.assertEqual(snapshot.required_bytes, 333336)
+        for page in range(3):
+            start, end = layout.packed_interval(3, page)
+            self.assertGreaterEqual(start, 3 * 30720)
+            self.assertLessEqual(end, 3 * 30720 + (page + 1) * 393216)
+            self.assertLessEqual(snapshot.interval(3, page)[1], 3 * 817152)
+
+    def test_request_span_alignment_remains_required_for_cached_modes(self):
+        for mode in ("align", "all"):
+            with self.subTest(mode=mode), self.assertRaisesRegex(ValueError, "aligned OSCAR block"):
+                HybridPageLayout(SlotLayout(256), 30720, 393216, 262144,
+                                 native_mamba_cache_mode=mode)
+
     def test_pr_byte_offsets(self):
         slot = SlotLayout(256)
         self.assertEqual((slot.k_scale_offset, slot.k_zero_offset, slot.v_codes_offset,

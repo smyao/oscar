@@ -19,6 +19,7 @@ import signal
 import socket
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -38,6 +39,14 @@ PROBE_LENGTHS = (128, 16384, 32768, 50000)
 MIN_OUTPUT_TOKENS = 16
 MAX_RESPONSE_BYTES = 4 * 1024 * 1024
 REQUEST_HEARTBEAT_SECONDS = 15.0
+
+_PRINT_LOCK = threading.Lock()
+
+
+def _terminal(line, *, stderr=False):
+    # Mixed-phase request threads print concurrently; keep each line whole.
+    with _PRINT_LOCK:
+        print(line, file=sys.stderr if stderr else sys.stdout, flush=True)
 
 
 class ServiceProbeError(RuntimeError):
@@ -243,7 +252,7 @@ def worker_progress(server):
                     except ValueError:
                         continue
                     result.append({"state": "last_host_event_only", "event": record.get("event"),
-                                   **{k: record.get(k) for k in ("pid", "rank", "layer", "tokens", "wall_time")},
+                                   **{k: record.get(k) for k in ("pid", "rank", "layer", "tokens", "max_seq_len", "wall_time")},
                                    "device_completion": "not_established"})
                     break
             except OSError as error:
@@ -272,7 +281,7 @@ def request_with_deadline(server, payload, *, label, timeout):
     atomic_json(state_path, state)
     atomic_json(directory / "request.json", {"url": server.base_url + "/v1/completions",
                                              "payload": payload, "timeout": timeout})
-    print(f"[oscar] REQUEST_START {label} prompt={state['prompt_tokens']} timeout={timeout:.1f}s status={state_path}", flush=True)
+    _terminal(f"[oscar] REQUEST_START {label} prompt={state['prompt_tokens']} timeout={timeout:.1f}s status={state_path}")
     process = None
     environment = dict(os.environ, PYTHONUNBUFFERED="1", TORCH_DEVICE_BACKEND_AUTOLOAD="0")
     try:
@@ -293,8 +302,8 @@ def request_with_deadline(server, payload, *, label, timeout):
                     state.update(elapsed_seconds=now-started, remaining_seconds=deadline-now,
                                  worker_progress=worker_progress(server), client_state=client_state)
                     atomic_json(state_path, state)
-                    print(f"[oscar] REQUEST_WAIT {label} elapsed={now-started:.1f}s remaining={deadline-now:.1f}s "
-                          f"client={client_state.get('state')} workers={json.dumps(state['worker_progress'], ensure_ascii=False)}", flush=True)
+                    _terminal(f"[oscar] REQUEST_WAIT {label} elapsed={now-started:.1f}s remaining={deadline-now:.1f}s "
+                              f"client={client_state.get('state')} workers={json.dumps(state['worker_progress'], ensure_ascii=False)}")
                     heartbeat = now + REQUEST_HEARTBEAT_SECONDS
                 time.sleep(min(.1, max(0, deadline-now)))
             if time.monotonic() >= deadline:
@@ -309,8 +318,8 @@ def request_with_deadline(server, payload, *, label, timeout):
         state.update(status="failed", error=f"{type(error).__name__}: {error}",
                      worker_progress=worker_progress(server))
         atomic_json(state_path, state)  # visible before any potentially slow cleanup
-        print(f"[oscar] REQUEST_ERROR {label}: {state['error']}; workers={json.dumps(state['worker_progress'])}",
-              file=sys.stderr, flush=True)
+        _terminal(f"[oscar] REQUEST_ERROR {label}: {state['error']}; workers={json.dumps(state['worker_progress'])}",
+                  stderr=True)
         raise
     finally:
         if process is not None and process.poll() is None:
@@ -511,7 +520,7 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
                                     timeout=_remaining(deadline, request_limit), prompt_ids=prompts[length])
                 report["requests"].append(record)
                 atomic_json(output, report)
-                print(f"[oscar] service request complete prompt={length} generated={record['completion_tokens']}", flush=True)
+                _terminal(f"[oscar] service request complete prompt={length} generated={record['completion_tokens']}")
             if not serve:
                 pool = ThreadPoolExecutor(max_workers=4)
                 futures = []

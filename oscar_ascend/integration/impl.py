@@ -9,7 +9,7 @@ import torch
 from vllm.v1.attention.backend import AttentionImpl
 
 from .runtime_api import OscarReadinessError, require_runtime
-from ..telemetry import emit_once
+from ..telemetry import emit_once, emit_throttled
 from ..timing import phase
 
 
@@ -143,4 +143,9 @@ class OscarAttentionImpl(AttentionImpl):
                   source_splits=source_splits,
                   capture_origin=attn_metadata.capture_origin,
                   route="ascendc_int2_cv", device_completion="not_observed_here")
+        emit_throttled("attention_progress", key=layer.layer_name,
+                       layer=layer.layer_name, tokens=n, requests=attn_metadata.num_reqs,
+                       max_query_len=attn_metadata.max_query_len,
+                       max_seq_len=attn_metadata.max_seq_len,
+                       route="ascendc_int2_cv", device_completion="not_observed_here")
         return output

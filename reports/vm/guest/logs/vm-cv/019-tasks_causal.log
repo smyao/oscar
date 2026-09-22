@@ -1,0 +1,72 @@
+START phase=019-tasks_causal cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "tasks_causal", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases"]
+scheduled_cores=2 min_live=819 max_live=820
+scheduled_cores=20 min_live=81 max_live=82
+scheduled_cores=24 min_live=68 max_live=69
+scheduled_cores=32 min_live=51 max_live=52
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 110994] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 110995] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 110996] exit success!
+[SUCCESS][CORE_3][pid 110997] exit success!
+[SUCCESS][CORE_4][pid 110998] exit success!
+[SUCCESS][CORE_5][pid 110999] exit success!
+[SUCCESS][CORE_6][pid 111000] exit success!
+[SUCCESS][CORE_7][pid 111001] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_8][pid 111002] exit success!
+[SUCCESS][CORE_9][pid 111003] exit success!
+[SUCCESS][CORE_10][pid 111004] exit success!
+[SUCCESS][CORE_11][pid 111005] exit success!
+[SUCCESS][CORE_12][pid 111006] exit success!
+[SUCCESS][CORE_13][pid 111007] exit success!
+[SUCCESS][CORE_14][pid 111008] exit success!
+[SUCCESS][CORE_15][pid 111009] exit success!
+[SUCCESS][CORE_16][pid 111010] exit success!
+[SUCCESS][CORE_17][pid 111011] exit success!
+[SUCCESS][CORE_18][pid 111012] exit success!
+[SUCCESS][CORE_19][pid 111013] exit success!
+[SUCCESS][CORE_20][pid 111014] exit success!
+[SUCCESS][CORE_21][pid 111015] exit success!
+[SUCCESS][CORE_22][pid 111016] exit success!
+[SUCCESS][CORE_23][pid 111017] exit success!
+[SUCCESS][CORE_24][pid 111018] exit success!
+[SUCCESS][CORE_25][pid 111019] exit success!
+[SUCCESS][CORE_26][pid 111020] exit success!
+[SUCCESS][CORE_27][pid 111021] exit success!
+[SUCCESS][CORE_28][pid 111022] exit success!
+[SUCCESS][CORE_29][pid 111023] exit success!
+[SUCCESS][CORE_30][pid 111024] exit success!
+[SUCCESS][CORE_31][pid 111025] exit success!
+causal_task_leaders=1640 current_tiles=421828 previous_unsplit_tiles=839169
+{"backend":"ascendc_cpu_debug","op":"tasks_causal","status":"passed"}
+RESULT {"phase": "019-tasks_causal", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "tasks_causal", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases"], "returncode": 0, "elapsed_seconds": 37.45457, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/019-tasks_causal.log", "cleanup_complete": true}

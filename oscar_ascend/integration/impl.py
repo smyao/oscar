@@ -104,7 +104,8 @@ class OscarAttentionImpl(AttentionImpl):
         with phase("rotate", layer=layer.layer_name, tokens=n, hadamard=state.hadamard):
             ops.rotate_out(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
         with phase("fia", layer=layer.layer_name, tokens=n, max_query_len=attn_metadata.max_query_len,
-                   max_seq_len=attn_metadata.max_seq_len, splits=source_splits):
+                   max_seq_len=attn_metadata.max_seq_len, splits=source_splits,
+                   cube_cores=g.cube_cores, tasks=task_count):
             ops.attention_cv_out(
                 q, qr, k, v, state.rotation_v, state.raw, attn_metadata.block_tables,
                 state.window_key, state.window_value, state.window_tags, tasks,

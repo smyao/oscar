@@ -1,4 +1,4 @@
-START phase=configure-1 cwd=/home/sunao2000.linux/gpt_new_oscar command=["cmake", "-S", "/home/sunao2000.linux/gpt_new_oscar/csrc", "-B", "/home/sunao2000.linux/gpt_new_oscar/build/ascendc", "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0", "-DSOC_VERSION=ascend910b4", "-DASCEND_COMPUTE_UNIT=ascend910b4", "-DTORCH_NPU_PATH=/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu", "-DOSCAR_BUILD_SIGNATURE=13cf469f64ed7050b77062559e14dc58f62307138b4a75cfec679a73042a3a89", "-DPython3_EXECUTABLE=/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python", "-DCMAKE_BUILD_TYPE=Release"]
+START phase=configure-1 cwd=/home/sunao2000.linux/gpt_new_oscar command=["cmake", "-S", "/home/sunao2000.linux/gpt_new_oscar/csrc", "-B", "/home/sunao2000.linux/gpt_new_oscar/build/ascendc", "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0", "-DSOC_VERSION=ascend910b4", "-DASCEND_COMPUTE_UNIT=ascend910b4", "-DTORCH_NPU_PATH=/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu", "-DOSCAR_BUILD_SIGNATURE=d822252e169cca9c67631a55425fcda5c91ea25c31dbe623b271f954d6532f53", "-DPython3_EXECUTABLE=/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python", "-DCMAKE_BUILD_TYPE=Release"]
 -- The CXX compiler identification is GNU 13.3.0
 -- Detecting CXX compiler ABI info
 -- Detecting CXX compiler ABI info - done
@@ -17,7 +17,7 @@ Call Stack (most recent call first):
 
 
 -- Found Torch: /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/lib/libtorch.so  
--- Configuring done (1.3s)
+-- Configuring done (1.7s)
 -- Generating done (0.0s)
 CMake Warning:
   Manually-specified variables were not used by the project:
@@ -26,4 +26,4 @@ CMake Warning:
 
 
 -- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/ascendc
-RESULT {"phase": "configure-1", "command": ["cmake", "-S", "/home/sunao2000.linux/gpt_new_oscar/csrc", "-B", "/home/sunao2000.linux/gpt_new_oscar/build/ascendc", "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0", "-DSOC_VERSION=ascend910b4", "-DASCEND_COMPUTE_UNIT=ascend910b4", "-DTORCH_NPU_PATH=/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu", "-DOSCAR_BUILD_SIGNATURE=13cf469f64ed7050b77062559e14dc58f62307138b4a75cfec679a73042a3a89", "-DPython3_EXECUTABLE=/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python", "-DCMAKE_BUILD_TYPE=Release"], "returncode": 0, "elapsed_seconds": 1.445855, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-verify-device/configure-1.log", "cleanup_complete": true}
+RESULT {"phase": "configure-1", "command": ["cmake", "-S", "/home/sunao2000.linux/gpt_new_oscar/csrc", "-B", "/home/sunao2000.linux/gpt_new_oscar/build/ascendc", "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0", "-DSOC_VERSION=ascend910b4", "-DASCEND_COMPUTE_UNIT=ascend910b4", "-DTORCH_NPU_PATH=/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu", "-DOSCAR_BUILD_SIGNATURE=d822252e169cca9c67631a55425fcda5c91ea25c31dbe623b271f954d6532f53", "-DPython3_EXECUTABLE=/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python", "-DCMAKE_BUILD_TYPE=Release"], "returncode": 0, "elapsed_seconds": 1.852807, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-verify-device/configure-1.log", "cleanup_complete": true}

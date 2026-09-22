@@ -1,8 +1,7 @@
 {
   "build": "passed",
   "scope": "Lima compiler-only VM CANN9.1 Ascend910B4",
-  "signature": "1020db3336b3c40f15a8e8a7aec97a695cb5d509662d8edd45d9527b0c07372a",
+  "signature": "d822252e169cca9c67631a55425fcda5c91ea25c31dbe623b271f954d6532f53",
   "device_completion": "not_run_by_this_build",
-  "report": "reports/vm/guest/reports/build.json",
-  "initial_macos_attempt": "reports/initial_macos_build_attempt.json"
+  "report": "reports/vm/guest/reports/build.json"
 }

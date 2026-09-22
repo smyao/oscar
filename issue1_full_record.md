@@ -1,6 +1,6 @@
 # oscar-ascendc 昇腾调试报错全量记录（Agent 报错查表版 · 共 120 条 · 已脱敏）
 
-> 2026-09-22 本项目续录：实际共 **162 条（G1–G34、#1–#128）**；旧标题条数与索引行号保留为历史材料，定位以条目标题为准。#123–#126 来自用户回传的 node93 日志；早先75项store/merge原语NPU探针通过；最新日志已完成编译/初次profiling与KV预算，止于 #128 的MTP元数据虚拟块复制。完整服务、图与性能尚未验收。
+> 2026-09-22 本项目续录：实际共 **163 条（G1–G34、#1–#129）**；旧标题条数与索引行号保留为历史材料，定位以条目标题为准。#123–#126 来自用户回传的 node93 日志；早先75项store/merge原语NPU探针通过；最新日志已完成编译/初次profiling与KV预算，止于 #128 的MTP元数据虚拟块复制。完整服务、图与性能尚未验收。
 
 > **本文档是给调试 agent 用的"报错 → 日志"查表档案，禁止从头线性阅读。** 使用方法：
 > 1. 先在下面【症状速查表】按报错关键字定位条目编号（前半段 **G1~G34**，后半段 **1~73**，第三部分 **74~86**）；
@@ -144,6 +144,8 @@
 | `RuntimeError: Expected all tensors to be on the same device`（npu:0 vs cpu，matmul） | 69 |
 
 | `OSCAR block_size=128 differs from physical layout=2816`（MTP原生metadata复制误触物理页检查） | 128 |
+
+| 128-token请求完成后长请求无进展，持续shm broadcast 60秒提示 | 129 |
 
 ## F0. kimi_oscar 首轮新增症状（第三部分 [74]~[86]）
 
@@ -27935,4 +27937,41 @@ STARTUP_WAIT elapsed=271.3 health=<urlopen error [Errno 111] Connection refused>
 (EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 391, in get_response
 (EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]     raise RuntimeError(
 (EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195] RuntimeError: Worker failed with error 'OSCAR block_size=128 differs from physical layout=2816', please check the stack trace above for the root cause
+```
+
+
+## [129] 真机条目（gpt_new_oscar，2026-09-22 用户回传）· phase=service-probe/long-request
+
+**症状**：运行20260922T053137.509986Z，health返回200，128输入生成16token完成并出现图回放与MTP接受记录；后续持续Running=1、吞吐0、shared-memory broadcast等待，用户报告五分钟后仍无完成。所提供日志最后phase累计645.4秒，未包含明确的16K发送标记、请求超时或设备首错；按脚本顺序下一项为16384。
+
+**历史同族**：G31/#51/#52/#68（设备/worker等待与有界退出）；#70–73/D.4（性能归因必须区分host和device）。
+
+### 已确认的源码问题与修订
+
+1. 任务表按每token的三个source占位，但有效queryleader每10token出现一次。原始按task_id逐核取模调度，GQA6/S1时有效current任务stride30，20核中仅2核分得此源。改为每source/head/split内连续querytile分配，仍扫描每个tile内所有槽（含请求边界和padding孔），每条任务恰好一次；不改数值路径或固定workspace。
+2. current源每querytile原先扫描整段chunk，未来KV全部在之后才mask。改为只到最后可见query的因果末尾，保留逐行mask、分段LSE和全部可见KV。
+3. 原300秒是urllib socket操作超时，不是请求全生命周期硬截止。现在独立HTTP客户端由父进程计时，输出REQUEST_START/WAIT/ERROR及CLEANUP_START/END；原超时数值不增加，不跳过失败probe。
+4. 显式debug_service入口为大token非捕图调用记录逐rank各阶段提交/设备完成；捕图不sync，默认生产关闭。inspect_run只采本次日志和所属PID的CANN证据，不发信号、不读设备张量。
+
+### 验证与未定案事项
+
+源码工作量与分配问题已确认，不代表它们已被证明是本轮停滞唯一原因。CANN编译、原数值对拍及新增Q65/Causal任务检查用于验证实现；最终仍需目标逐rank完成或首错证据，不能靠延长超时判通过。首次16K任务表CPU-debug用4个AIV超出120秒；保留原失败记录，随后按生产实际32个AIV运行同一完整16K用例通过，未减小输入/放宽断言/增加超时。
+
+### 用户日志摘录（非完整文件）
+
+```text
+Source: user-provided node93 console excerpts, 2026-09-22.
+These are selected verbatim lines, not a complete server log. The last supplied warning was truncated.
+
+(APIServer pid=13566) INFO:     Application startup complete.
+(APIServer pid=13566) INFO:     127.0.0.1:36738 - "GET /health HTTP/1.1" 200 OK
+(Worker_TP0 pid=13675) INFO 09-22 05:38:57 [acl_graph.py:243] Replaying aclgraph
+(APIServer pid=13566) INFO:     127.0.0.1:36754 - "POST /v1/completions HTTP/1.1" 200 OK
+[oscar] service request complete prompt=128 generated=16
+(APIServer pid=13566) INFO 09-22 05:39:20 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 0.0 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 1.6%, Prefix cache hit rate: 0.0%
+(EngineCore pid=13626) INFO 09-22 05:40:08 [patch_shm_broadcast.py:74] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+[oscar] phase=service-probe running seconds=480.3 log=/workspace/gpt_new_oscar/logs/20260922T053137.509986Z/service-probe.log
+[oscar] phase=service-probe running seconds=645.4 log=/workspace/gpt_new_oscar/logs/20260922T053137.509986Z/service-probe.log
+
+User report: 5分钟过去了依然没好，请你debug
 ```

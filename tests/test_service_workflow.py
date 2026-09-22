@@ -11,6 +11,7 @@ import time
 import pytest
 
 from tools.npu_resources import compare_release, wait_for_release
+from tools import service_probe
 from tools.phase import cleanup_group, group_exists
 from tools.service_probe import (
     ServiceProbeError, evaluate_mtp_metrics, evaluate_telemetry, exact_prompt,
@@ -91,6 +92,8 @@ class Handler(BaseHTTPRequestHandler):
         data = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
         assert self.path == '/v1/completions'
         assert data['min_tokens'] == 16 and data['ignore_eos']
+        if mode == 'hang_long' and len(data['prompt']) > 128:
+            time.sleep(30)
         with lock:
             count += 1
             if mode != 'no_trace':
@@ -99,7 +102,12 @@ class Handler(BaseHTTPRequestHandler):
         response = {'choices':[{'text':'Sixteen generated tokens from the test fixture.', 'finish_reason':'length'}],
                     'usage': {'prompt_tokens':len(data['prompt'])+(1 if mode=='wrong_usage' else 0), 'completion_tokens':16}}
         body=json.dumps(response).encode()
-        self.send_response(200);self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
+        self.send_response(200);self.send_header('Content-Length',str(len(body)));self.end_headers()
+        if mode == 'trickle_long' and len(data['prompt']) > 128:
+            for byte in body:
+                self.wfile.write(bytes([byte]));self.wfile.flush();time.sleep(.05)
+        else:
+            self.wfile.write(body)
         if mode == 'stop':
             threading.Timer(.5, lambda:os.kill(os.getppid(),signal.SIGINT)).start()
 ThreadingHTTPServer(('127.0.0.1',port),Handler).serve_forever()
@@ -130,6 +138,29 @@ def test_exact_prompt_uses_local_encoded_ids_and_no_special_tokens():
     assert exact_prompt(Tokenizer(), 12) == [17,32,901,7,10,17,32,901,7,10,17,32]
     with pytest.raises(ValueError):
         exact_prompt(Tokenizer(), 0)
+
+
+@pytest.mark.parametrize("mode", ["hang_long", "trickle_long"])
+def test_long_request_has_wall_deadline_progress_and_reaped_client(tmp_path, monkeypatch, capsys, mode):
+    config, path = configured(tmp_path)
+    config["service_request_timeout_seconds"] = .8
+    path.write_text(json.dumps(config))
+    monkeypatch.setattr(service_probe, "REQUEST_HEARTBEAT_SECONDS", .05)
+    started = time.monotonic()
+    report, reads = invoke(tmp_path, path, fake_command(tmp_path, config, mode))
+    assert time.monotonic() - started < 5
+    assert report["status"] == "failed" and "serial-16384" in report["error"]
+    assert report["server"]["cleanup_complete"] and len(reads) == 2
+    assert [r["prompt_tokens"] for r in report["requests"]] == [128]
+    states = [json.loads(p.read_text()) for p in (tmp_path / "logs/requests").glob("*/status.json")]
+    failed = next(r for r in states if r["label"] == "serial-16384")
+    assert failed["status"] == "failed" and failed["client_returncode"] is not None
+    assert failed["elapsed_seconds"] < 2
+    terminal = capsys.readouterr()
+    assert "REQUEST_START serial-16384" in terminal.out
+    assert "REQUEST_WAIT serial-16384" in terminal.out
+    assert "REQUEST_ERROR serial-16384" in terminal.err
+    assert "CLEANUP_START" in terminal.out and "CLEANUP_END" in terminal.out
 
 
 def test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch(tmp_path):

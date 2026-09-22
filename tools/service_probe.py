@@ -1,6 +1,7 @@
 # Archive G21/G22/G31/#27/#50-52/#68/#72-78/#84/#94-95/#117: owned server
 # lifecycle, bounded real requests, per-rank route/graph evidence, always-final
 # logs and release accounting. #118/#122: only current owned-PID CANN plog evidence.
+# #129: per-request wall deadlines, active progress and visible cleanup stages.
 """Exercise the configured TP4/MTP service and preserve independent evidence."""
 from __future__ import annotations
 
@@ -36,6 +37,7 @@ PROMPT_SENTENCE = (
 PROBE_LENGTHS = (128, 16384, 32768, 50000)
 MIN_OUTPUT_TOKENS = 16
 MAX_RESPONSE_BYTES = 4 * 1024 * 1024
+REQUEST_HEARTBEAT_SECONDS = 15.0
 
 
 class ServiceProbeError(RuntimeError):
@@ -192,6 +194,7 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
             stream.write("SERVICE_ERROR " + lifecycle["error"] + "\n")
             raise
         finally:
+            print(f"[oscar] CLEANUP_START owned_server pid={None if process is None else process.pid} log={log}", flush=True)
             if ownership is not None:
                 ownership.refresh(force=True)
                 lifecycle["owned_pids"] = sorted(ownership.pids)
@@ -209,6 +212,91 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
                 lifecycle.setdefault("cleanup_error", "owned process group remains after bounded SIGTERM/SIGKILL")
             stream.write("SERVICE_RESULT " + json.dumps(lifecycle, allow_nan=False) + "\n")
             atomic_json(log_dir / "server_lifecycle.json", lifecycle)
+            print(f"[oscar] CLEANUP_END owned_server complete={lifecycle['cleanup_complete']} exit={lifecycle['exit_code']}", flush=True)
+
+
+def worker_progress(server):
+    """Read bounded host-side progress files, never query a blocked NPU."""
+    result = []
+    for path in sorted(server.trace_dir.glob("phase-*.json"))[:16]:
+        try:
+            if path.stat().st_size > 65536:
+                continue
+            record = json.loads(path.read_text())
+            result.append({key: record.get(key) for key in
+                           ("pid", "rank", "state", "phase", "layer", "tokens", "wall_time")})
+        except (OSError, ValueError) as error:
+            result.append({"path": str(path), "read_error": str(error)})
+    return result
+
+
+def request_with_deadline(server, payload, *, label, timeout):
+    """One child per HTTP request: socket progress cannot extend the deadline.
+
+    The client inherits the supervisor's group (no detached subprocess). It
+    imports no NPU backend. This also works in the mixed-request worker threads.
+    """
+    if not math.isfinite(timeout) or timeout <= 0 or Path(label).name != label:
+        raise ValueError("request needs a positive finite timeout and a simple label")
+    directory = server.log.parent / "requests" / f"{label}-{uuid.uuid4().hex}"
+    directory.mkdir(parents=True)
+    state_path, response_path = directory / "status.json", directory / "response.json"
+    started = time.monotonic()
+    deadline = started + timeout
+    state = {"label": label, "status": "running", "prompt_tokens": len(payload["prompt"]),
+             "timeout_seconds": timeout, "started_unix": time.time()}
+    atomic_json(state_path, state)
+    atomic_json(directory / "request.json", {"url": server.base_url + "/v1/completions",
+                                             "payload": payload, "timeout": timeout})
+    print(f"[oscar] REQUEST_START {label} prompt={state['prompt_tokens']} timeout={timeout:.1f}s status={state_path}", flush=True)
+    process = None
+    environment = dict(os.environ, PYTHONUNBUFFERED="1", TORCH_DEVICE_BACKEND_AUTOLOAD="0")
+    try:
+        with (directory / "client.log").open("w") as log:
+            process = subprocess.Popen([sys.executable, "-m", "tools.http_request",
+                str(directory / "request.json"), str(response_path)], cwd=ROOT, env=environment,
+                stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
+            state["client_pid"] = process.pid
+            heartbeat = started + REQUEST_HEARTBEAT_SECONDS
+            while process.poll() is None:
+                now = time.monotonic()
+                if now >= deadline:
+                    raise TimeoutError(f"{label}: wall deadline {timeout:.1f}s exceeded")
+                server.check_alive()
+                if now >= heartbeat:
+                    state.update(elapsed_seconds=now-started, remaining_seconds=deadline-now,
+                                 worker_progress=worker_progress(server))
+                    atomic_json(state_path, state)
+                    print(f"[oscar] REQUEST_WAIT {label} elapsed={now-started:.1f}s remaining={deadline-now:.1f}s "
+                          f"workers={json.dumps(state['worker_progress'], ensure_ascii=False)}", flush=True)
+                    heartbeat = now + REQUEST_HEARTBEAT_SECONDS
+                time.sleep(min(.1, max(0, deadline-now)))
+            if time.monotonic() >= deadline:
+                raise TimeoutError(f"{label}: wall deadline {timeout:.1f}s exceeded")
+        response = json.loads(response_path.read_text()) if response_path.is_file() else {}
+        if process.returncode or response.get("status") != "passed":
+            raise ServiceProbeError(f"{label}: HTTP client rc={process.returncode}: "
+                                    f"{response.get('error', 'missing response')} log={directory/'client.log'}")
+        state["status"] = "received"
+        return response["body"]
+    except BaseException as error:
+        state.update(status="failed", error=f"{type(error).__name__}: {error}",
+                     worker_progress=worker_progress(server))
+        atomic_json(state_path, state)  # visible before any potentially slow cleanup
+        print(f"[oscar] REQUEST_ERROR {label}: {state['error']}; workers={json.dumps(state['worker_progress'])}",
+              file=sys.stderr, flush=True)
+        raise
+    finally:
+        if process is not None and process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=1)
+        state["elapsed_seconds"] = time.monotonic() - started
+        state["client_returncode"] = None if process is None else process.returncode
+        atomic_json(state_path, state)
 
 
 def completion(server, config, tokenizer, length, *, label, timeout, prompt_ids=None):
@@ -221,7 +309,7 @@ def completion(server, config, tokenizer, length, *, label, timeout, prompt_ids=
                "ignore_eos": True, "temperature": 0, "seed": 46774,
                "stream": False, "add_special_tokens": False}
     started = time.monotonic()
-    response = json.loads(_http(server.base_url + "/v1/completions", payload=payload, timeout=timeout))
+    response = request_with_deadline(server, payload, label=label, timeout=timeout)
     if not isinstance(response, dict) or response.get("error"):
         raise ServiceProbeError(f"{label}: completion returned an error: {response}")
     usage, choices = response.get("usage", {}), response.get("choices")

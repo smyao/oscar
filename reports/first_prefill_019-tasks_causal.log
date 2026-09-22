@@ -1,0 +1,7 @@
+START phase=019-tasks_causal cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "tasks_causal", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases"]
+scheduled_cores=2 min_live=819 max_live=820
+scheduled_cores=20 min_live=81 max_live=82
+scheduled_cores=24 min_live=68 max_live=69
+scheduled_cores=32 min_live=51 max_live=52
+TIMEOUT phase=019-tasks_causal limit=120s
+RESULT {"phase": "019-tasks_causal", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "tasks_causal", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases"], "returncode": 124, "elapsed_seconds": 120.056983, "timed_out": true, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/019-tasks_causal.log", "cleanup_complete": true}

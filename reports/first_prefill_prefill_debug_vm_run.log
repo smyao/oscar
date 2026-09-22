@@ -1,0 +1,3284 @@
+START phase=install cwd=/Users/sunao2000/gpt_new_oscar command=["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m pip install --no-build-isolation --no-deps -e ."]
+Obtaining file:///home/sunao2000.linux/gpt_new_oscar
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: oscar-ascend-external
+  Building editable for oscar-ascend-external (pyproject.toml): started
+  Building editable for oscar-ascend-external (pyproject.toml): finished with status 'done'
+  Created wheel for oscar-ascend-external: filename=oscar_ascend_external-0.1.0-0.editable-py3-none-any.whl size=3301 sha256=f75cc805c851caf21c88bd32bf6797e48f26bf8e8a5e964457c5e16fc0bc319b
+  Stored in directory: /tmp/pip-ephem-wheel-cache-dpdtz366/wheels/02/cd/80/1e1853719533a3016144b42cef34e511abab4432a6701f8f94
+Successfully built oscar-ascend-external
+Installing collected packages: oscar-ascend-external
+  Attempting uninstall: oscar-ascend-external
+    Found existing installation: oscar-ascend-external 0.1.0
+    Uninstalling oscar-ascend-external-0.1.0:
+      Successfully uninstalled oscar-ascend-external-0.1.0
+Successfully installed oscar-ascend-external-0.1.0
+RESULT {"phase": "install", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m pip install --no-build-isolation --no-deps -e ."], "returncode": 0, "elapsed_seconds": 0.839228, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/install.log", "cleanup_complete": true}
+[oscar] PASSED phase=install rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/install.log
+START phase=device-build cwd=/Users/sunao2000/gpt_new_oscar command=["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.build_ops --soc ascend910b4 --log-dir logs/vm-verify-device"]
+START phase=configure-1 cwd=/home/sunao2000.linux/gpt_new_oscar command=["cmake", "-S", "/home/sunao2000.linux/gpt_new_oscar/csrc", "-B", "/home/sunao2000.linux/gpt_new_oscar/build/ascendc", "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0", "-DSOC_VERSION=ascend910b4", "-DASCEND_COMPUTE_UNIT=ascend910b4", "-DTORCH_NPU_PATH=/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu", "-DOSCAR_BUILD_SIGNATURE=ba5d40b1cbf7d050f7d5a8c8499836507c86b2948d84976cd4578a3fdfeb107d", "-DPython3_EXECUTABLE=/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python", "-DCMAKE_BUILD_TYPE=Release"]
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Python3: /home/sunao2000.linux/gpt_new_oscar/.venv/bin/python (found version "3.12.3") found components: Interpreter Development.Module 
+-- Performing Test HAS_FLTO_AUTO
+-- Performing Test HAS_FLTO_AUTO - Success
+-- Found pybind11: /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/pybind11/include (found version "3.1.0")
+CMake Warning at /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:22 (message):
+  library kineto not found.
+Call Stack (most recent call first):
+  /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:119 (append_torchlib_if_found)
+  CMakeLists.txt:19 (find_package)
+
+
+-- Found Torch: /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/lib/libtorch.so  
+-- Configuring done (1.2s)
+-- Generating done (0.0s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    ASCEND_TOOLKIT_HOME
+
+
+-- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/ascendc
+RESULT {"phase": "configure-1", "command": ["cmake", "-S", "/home/sunao2000.linux/gpt_new_oscar/csrc", "-B", "/home/sunao2000.linux/gpt_new_oscar/build/ascendc", "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0", "-DSOC_VERSION=ascend910b4", "-DASCEND_COMPUTE_UNIT=ascend910b4", "-DTORCH_NPU_PATH=/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu", "-DOSCAR_BUILD_SIGNATURE=ba5d40b1cbf7d050f7d5a8c8499836507c86b2948d84976cd4578a3fdfeb107d", "-DPython3_EXECUTABLE=/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python", "-DCMAKE_BUILD_TYPE=Release"], "returncode": 0, "elapsed_seconds": 1.239694, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-verify-device/configure-1.log", "cleanup_complete": true}
+[oscar] PASSED phase=configure-1 rc=0 log=logs/vm-verify-device/configure-1.log
+START phase=compile-1 cwd=/home/sunao2000.linux/gpt_new_oscar command=["cmake", "--build", "/home/sunao2000.linux/gpt_new_oscar/build/ascendc", "--parallel", "8"]
+[  2%] Creating directories for 'oscar_ascend_kernels_precompile'
+[  4%] No download step for 'oscar_ascend_kernels_precompile'
+[  6%] No update step for 'oscar_ascend_kernels_precompile'
+[  8%] No patch step for 'oscar_ascend_kernels_precompile'
+[ 10%] Performing configure step for 'oscar_ascend_kernels_precompile'
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    DYNAMIC_MODE
+    INCLUDE_DIR
+
+
+-- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_precompile-prefix/src/oscar_ascend_kernels_precompile-build
+[ 12%] Performing build step for 'oscar_ascend_kernels_precompile'
+[ 50%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
+[ 50%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o
+[ 50%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
+[ 66%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
+[ 83%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o
+[100%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
+[100%] Built target precompile_obj
+[100%] Built target check_src_template
+[ 14%] No install step for 'oscar_ascend_kernels_precompile'
+[ 17%] Completed 'oscar_ascend_kernels_precompile'
+[ 17%] Built target oscar_ascend_kernels_precompile
+[ 19%] Creating directories for 'oscar_ascend_kernels_preprocess'
+[ 21%] No download step for 'oscar_ascend_kernels_preprocess'
+[ 23%] No update step for 'oscar_ascend_kernels_preprocess'
+[ 25%] No patch step for 'oscar_ascend_kernels_preprocess'
+[ 27%] Performing configure step for 'oscar_ascend_kernels_preprocess'
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build
+[ 29%] Performing build step for 'oscar_ascend_kernels_preprocess'
+[ 22%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o
+[ 22%] Building CXX object CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
+[ 22%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
+[ 33%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o
+[ 38%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
+[ 38%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
+[ 38%] Building CXX object CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
+[ 44%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
+[ 50%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
+[ 55%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
+[ 61%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o
+[ 66%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
+[ 72%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
+[ 72%] Built target preprocess_obj
+[ 77%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o
+[ 83%] Building CXX object CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o
+[ 88%] Building CXX object CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
+[ 94%] Building CXX object CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
+[100%] Building CXX object CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o
+[100%] Built target aiv_obj
+gmake[5]: Warning: File 'CMakeFiles/merge_aiv_obj_text.dir/progress.make' has modification time 0.91 s in the future
+gmake[5]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[5]: Warning: File 'CMakeFiles/merge_aiv_obj_text.dir/progress.make' has modification time 0.91 s in the future
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.ogmake[5]: warning:  Clock skew detected.  Your build may be incomplete.
+[100%] Built target merge_aiv_obj_text
+[100%] Built target aic_obj
+gmake[5]: Warning: File 'CMakeFiles/merge_aic_obj_text.dir/progress.make' has modification time 0.83 s in the future
+gmake[5]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[5]: Warning: File 'CMakeFiles/merge_aic_obj_text.dir/progress.make' has modification time 0.83 s in the future
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.ogmake[5]: warning:  Clock skew detected.  Your build may be incomplete.
+[100%] Built target merge_aic_obj_text
+gmake[5]: Warning: File 'CMakeFiles/_host_cpp.dir/progress.make' has modification time 0.79 s in the future
+gmake[5]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[5]: Warning: File 'CMakeFiles/_host_cpp.dir/progress.make' has modification time 0.79 s in the future
+[WARNING]: Multiple kernel functions are detected. It is recommended to define only one kernel function per file.
+gmake[5]: warning:  Clock skew detected.  Your build may be incomplete.
+[100%] Built target _host_cpp
+[ 31%] No install step for 'oscar_ascend_kernels_preprocess'
+[ 34%] Completed 'oscar_ascend_kernels_preprocess'
+[ 34%] Built target oscar_ascend_kernels_preprocess
+[ 40%] Creating directories for 'oscar_ascend_kernels_host'
+[ 40%] Creating directories for 'oscar_ascend_kernels_aic_device'
+[ 40%] Creating directories for 'oscar_ascend_kernels_aiv_device'
+[ 44%] No download step for 'oscar_ascend_kernels_host'
+[ 44%] No download step for 'oscar_ascend_kernels_aic_device'
+[ 46%] No download step for 'oscar_ascend_kernels_aiv_device'
+[ 51%] No update step for 'oscar_ascend_kernels_host'
+[ 51%] No update step for 'oscar_ascend_kernels_aiv_device'
+[ 53%] No update step for 'oscar_ascend_kernels_aic_device'
+[ 57%] No patch step for 'oscar_ascend_kernels_host'
+[ 57%] No patch step for 'oscar_ascend_kernels_aiv_device'
+[ 59%] No patch step for 'oscar_ascend_kernels_aic_device'
+[ 63%] Performing configure step for 'oscar_ascend_kernels_host'
+[ 63%] Performing configure step for 'oscar_ascend_kernels_aiv_device'
+[ 65%] Performing configure step for 'oscar_ascend_kernels_aic_device'
+-- The C compiler identification is GNU 13.3.0
+-- The C compiler identification is GNU 13.3.0
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compiler ABI info - done
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting C compile features - done
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting CXX compile features - done
+-- Detecting CXX compile features - done
+-- Configuring done (0.2s)
+-- Configuring done (0.2s)
+-- Configuring done (0.2s)
+-- Generating done (0.0s)
+-- Generating done (0.0s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    ASCEND_PYTHON_EXECUTABLE
+
+-- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aic_device-prefix/src/oscar_ascend_kernels_aic_device-build
+
+-- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host-prefix/src/oscar_ascend_kernels_host-build
+-- Generating done (0.0s)
+-- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build
+[ 70%] Performing build step for 'oscar_ascend_kernels_aic_device'
+[ 70%] Performing build step for 'oscar_ascend_kernels_host'
+[ 72%] Performing build step for 'oscar_ascend_kernels_aiv_device'
+[100%] Building CXX object CMakeFiles/device_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_attention_cv.cpp.o
+[ 33%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o
+[ 33%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
+[ 50%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
+[ 83%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
+[ 83%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
+[ 16%] Building CXX object CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_store_int2.cpp.o
+[ 33%] Building CXX object CMakeFiles/device_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_attention_cv.cpp.o
+[100%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o
+[ 50%] Building CXX object CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_merge_lse.cpp.o
+[ 66%] Building CXX object CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_rotate_clip_store.cpp.o
+[ 83%] Building CXX object CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_attention_tasks.cpp.o
+[100%] Building CXX object CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_status_guard.cpp.o
+[100%] Built target host_bisheng_obj
+[ 74%] Performing install step for 'oscar_ascend_kernels_host'
+[100%] Built target host_bisheng_obj
+Install the project...
+-- Install configuration: "Release"
+-- Installing: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/./objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
+-- Installing: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/./objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
+-- Installing: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/./objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o
+-- Installing: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/./objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
+-- Installing: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/./objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
+-- Installing: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/./objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o
+[ 76%] Completed 'oscar_ascend_kernels_host'
+[ 76%] Built target oscar_ascend_kernels_host
+[100%] Built target device_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aic_device-prefix/src/oscar_ascend_kernels_aic_device-build/CMakeFiles/device_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_attention_cv.cpp.o -static -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aic_device_dir/device.o
+[100%] Built target merge_device_obj
+[ 78%] No install step for 'oscar_ascend_kernels_aic_device'
+[ 80%] Completed 'oscar_ascend_kernels_aic_device'
+[ 80%] Built target oscar_ascend_kernels_aic_device
+[100%] Built target device_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build/CMakeFiles/device_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_attention_cv.cpp.o -static -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device_dir/device.o
+[100%] Built target merge_device_obj
+[100%] Built target device_aiv_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build/CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_store_int2.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build/CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_merge_lse.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build/CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_rotate_clip_store.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build/CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_attention_tasks.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build/CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_status_guard.cpp.o -static -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device_dir/device_aiv.o
+[100%] Built target merge_aiv_device_obj
+[ 82%] No install step for 'oscar_ascend_kernels_aiv_device'
+[ 85%] Completed 'oscar_ascend_kernels_aiv_device'
+[ 85%] Built target oscar_ascend_kernels_aiv_device
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -x -m aicorelinux   -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aic_device_dir/device.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device_dir/device.o -static -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_merge_obj_dir/device.o
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -x -m aicorelinux   -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device_dir/device_aiv.o -static -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_merge_obj_dir/device_aiv.o
+[ 85%] Built target oscar_ascend_kernels_merge_obj
+[ 87%] Building CXX object CMakeFiles/oscar_ascend_kernels_host_stub_obj.dir/auto_gen/oscar_ascend_kernels/host_stub.cpp.o
+[ 87%] Built target oscar_ascend_kernels_host_stub_obj
+[ 89%] Linking CXX shared library lib/liboscar_ascend_kernels_ba5d40b1cbf7d050.so
+/usr/local/Ascend/cann-9.1.0/bin/ascendc_pack_kernel /home/sunao2000.linux/gpt_new_oscar/build/ascendc/CMakeFiles/oscar_ascend_kernels_host_stub_obj.dir/auto_gen/oscar_ascend_kernels/host_stub.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_merge_obj_dir/device.o 0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/CMakeFiles/oscar_ascend_kernels_host_stub_obj.dir/auto_gen/oscar_ascend_kernels/host_stub.cpp.o
+/usr/local/Ascend/cann-9.1.0/bin/ascendc_pack_kernel /home/sunao2000.linux/gpt_new_oscar/build/ascendc/CMakeFiles/oscar_ascend_kernels_host_stub_obj.dir/auto_gen/oscar_ascend_kernels/host_stub.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_merge_obj_dir/device_aiv.o 1 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/CMakeFiles/oscar_ascend_kernels_host_stub_obj.dir/auto_gen/oscar_ascend_kernels/host_stub.cpp.o
+recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,defs -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -s -shared -Wl,-soname,liboscar_ascend_kernels_ba5d40b1cbf7d050.so -o lib/liboscar_ascend_kernels_ba5d40b1cbf7d050.so CMakeFiles/oscar_ascend_kernels_host_stub_obj.dir/auto_gen/oscar_ascend_kernels/host_stub.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o    -L/usr/local/Ascend/cann-9.1.0/lib64  -L/usr/local/Ascend/cann-9.1.0/tools/simulator/ascend910b4/lib  -Wl,-rpath,/usr/local/Ascend/cann-9.1.0/lib64 /usr/local/Ascend/cann-9.1.0/lib64/libascendc_runtime.a -lascend_dump -lc_sec -lascendcl -lruntime -lprofapi -lunified_dlog -lmmpa
+[ 89%] Built target oscar_ascend_kernels
+[ 97%] Building CXX object CMakeFiles/_oscar_ascend_ops.dir/torch_bindings.cpp.o
+[ 97%] Building CXX object CMakeFiles/_oscar_ascend_ops.dir/rotation_bindings.cpp.o
+[ 97%] Building CXX object CMakeFiles/_oscar_ascend_ops.dir/status_bindings.cpp.o
+[ 97%] Building CXX object CMakeFiles/_oscar_ascend_ops.dir/attention_bindings.cpp.o
+[oscar] phase=device-build running seconds=15.1 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/device-build.log
+[oscar] phase=compile-1 running seconds=15.0 log=logs/vm-verify-device/compile-1.log
+[100%] Linking CXX shared module _oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so
+[100%] Built target _oscar_ascend_ops
+RESULT {"phase": "compile-1", "command": ["cmake", "--build", "/home/sunao2000.linux/gpt_new_oscar/build/ascendc", "--parallel", "8"], "returncode": 0, "elapsed_seconds": 19.59192, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-verify-device/compile-1.log", "cleanup_complete": true}
+[oscar] PASSED phase=compile-1 rc=0 log=logs/vm-verify-device/compile-1.log
+{
+  "signature": "ba5d40b1cbf7d050f7d5a8c8499836507c86b2948d84976cd4578a3fdfeb107d",
+  "configuration": {
+    "source": {
+      "CMakeLists.txt": "3eff29d9c530a3d29d609f15c9c28b0bb3c35a1491aee25d2cee833deb1fbb09",
+      "attention_bindings.cpp": "a3f23dee8aa33f2e58becfc32442e8c3e8ca024d499ccefde8fe0b65db0f8d3f",
+      "rotation_bindings.cpp": "48af05b40ad563e2d3b1fe36737e8a54b78906cd9141f2451cc3358126787a5d",
+      "status_bindings.cpp": "2912ac6aa6be89eb0e6b8507b16c10a3ac8c996182bc52ed0afc87c45d3b2c40",
+      "torch_bindings.cpp": "9ce12c775f9bab5331fbd2b4704b960c2d6ea575e1beb858f15eff1caac3cd17",
+      "cpu/CMakeLists.txt": "1e7d67f47b4f330f1fa6c59a083246c6672105f81f1538fded57593a5eb819bb",
+      "cpu/cv_probe.cpp": "a126dac590bf1948520cd2579c258108517ec53923fc78b0699091a51774cdf5",
+      "cpu/primitive_probe.cpp": "f1cd3c8fca22d4b03d175762025e8446d6bc937324ccc9441b543a281005a453",
+      "cpu/rotation_probe.cpp": "02245026bd7561568e12f58c54225f083f1f8e0d91bc9393c0e661e83ad91c2a",
+      "include/oscar_attention_launch.h": "1283c6086b387c167a6ec26f9994c6385fe082bfc82862a0f386bf0ec16f6fd2",
+      "include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+      "include/oscar_launch.h": "c8b51d610755a8053455757ce9a921aa401e756edc6234318edcf2b7d422bbe9",
+      "include/oscar_rotation_launch.h": "f231519ac7fd73b1e2316947e75d3c3351c00e095ccf16aa67df944d42ffe180",
+      "kernels/attention_cv.cpp": "0a4d3e583cb3e8ebb197b8b4dcd59c08e98d7c0f59bdf742d55126e39699cf7e",
+      "kernels/attention_tasks.cpp": "82290f1831064bbc6f58011a0dd9a826ae7ffc368da4b3ab43f8a5d5133589df",
+      "kernels/merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+      "kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+      "kernels/rotate_clip_store.cpp": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+      "kernels/status_guard.cpp": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+      "kernels/store_int2.cpp": "5a6fa9619e399bb80bc0455c4426396d98510326bb899900b4b96c65d2b58506"
+    },
+    "cann": "/usr/local/Ascend/cann-9.1.0",
+    "cann_versions": {
+      "/usr/local/Ascend/cann-9.1.0/compiler/version.info": "f20359296d5a7127f841aa35f4a788137f444dc36d72641e948cb9e39e47e4f4"
+    },
+    "soc": "ascend910b4",
+    "package_versions": {
+      "torch": "2.12.0+cpu",
+      "torch_npu": "2.12.0",
+      "pybind11": "3.1.0"
+    },
+    "python": "/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python",
+    "torch_npu": "/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu",
+    "flags": {
+      "CXX": null,
+      "CC": null,
+      "CXXFLAGS": null
+    }
+  },
+  "extension": "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so",
+  "kernel_library": "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/lib/liboscar_ascend_kernels_ba5d40b1cbf7d050.so",
+  "sha256": {
+    "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so": "23023734ba660942652bb73a0644e12c41cef9b75accd4afdfb37e06e5b16d36",
+    "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/lib/liboscar_ascend_kernels_ba5d40b1cbf7d050.so": "e8ef3e6f6ffba0e751fe24ca358176f6136a9bdb90e280560d74fcebcb2268e7"
+  },
+  "build": "passed",
+  "device_completion": "not_run",
+  "reused": false
+}
+RESULT {"phase": "device-build", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.build_ops --soc ascend910b4 --log-dir logs/vm-verify-device"], "returncode": 0, "elapsed_seconds": 21.080621, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/device-build.log", "cleanup_complete": true}
+[oscar] PASSED phase=device-build rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/device-build.log
+START phase=cpu-build cwd=/Users/sunao2000/gpt_new_oscar command=["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; cmake -S csrc/cpu -B build/cpu -DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0 -Dtikicpulib_DIR=/usr/local/Ascend/cann-9.1.0/tools/tikicpulib/lib/cmake && cmake --build build/cpu --parallel 4"]
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/cpu
+[ 23%] Built target oscar_rotation_cpu
+[ 61%] Built target oscar_primitive_cpu
+[ 69%] Building CXX object CMakeFiles/oscar_cv_cpu.dir/cv_probe.cpp.o
+[ 76%] Building CXX object CMakeFiles/oscar_cv_cpu.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
+[ 84%] Building CXX object CMakeFiles/oscar_cv_cpu.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
+[ 92%] Linking CXX executable oscar_cv_cpu
+[100%] Built target oscar_cv_cpu
+RESULT {"phase": "cpu-build", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; cmake -S csrc/cpu -B build/cpu -DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0 -Dtikicpulib_DIR=/usr/local/Ascend/cann-9.1.0/tools/tikicpulib/lib/cmake && cmake --build build/cpu --parallel 4"], "returncode": 0, "elapsed_seconds": 3.415723, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cpu-build.log", "cleanup_complete": true}
+[oscar] PASSED phase=cpu-build rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cpu-build.log
+START phase=primitive-goldens cwd=/Users/sunao2000/gpt_new_oscar command=["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.generate_cpu_cases --output artifacts/cpu_cases"]
+[
+  {
+    "op": "store",
+    "path": "artifacts/cpu_cases/store_64_0"
+  },
+  {
+    "op": "store",
+    "path": "artifacts/cpu_cases/store_64_1"
+  },
+  {
+    "op": "merge",
+    "path": "artifacts/cpu_cases/merge_64_1"
+  },
+  {
+    "op": "merge",
+    "path": "artifacts/cpu_cases/merge_64_3"
+  },
+  {
+    "op": "merge",
+    "path": "artifacts/cpu_cases/merge_64_128"
+  },
+  {
+    "op": "store",
+    "path": "artifacts/cpu_cases/store_128_0"
+  },
+  {
+    "op": "store",
+    "path": "artifacts/cpu_cases/store_128_1"
+  },
+  {
+    "op": "merge",
+    "path": "artifacts/cpu_cases/merge_128_1"
+  },
+  {
+    "op": "merge",
+    "path": "artifacts/cpu_cases/merge_128_3"
+  },
+  {
+    "op": "merge",
+    "path": "artifacts/cpu_cases/merge_128_128"
+  },
+  {
+    "op": "store",
+    "path": "artifacts/cpu_cases/store_256_0"
+  },
+  {
+    "op": "store",
+    "path": "artifacts/cpu_cases/store_256_1"
+  },
+  {
+    "op": "merge",
+    "path": "artifacts/cpu_cases/merge_256_1"
+  },
+  {
+    "op": "merge",
+    "path": "artifacts/cpu_cases/merge_256_3"
+  },
+  {
+    "op": "merge",
+    "path": "artifacts/cpu_cases/merge_256_128"
+  },
+  {
+    "op": "guard",
+    "path": "artifacts/cpu_cases/guard_zero",
+    "expect_kernel_error": false
+  },
+  {
+    "op": "guard",
+    "path": "artifacts/cpu_cases/guard_error",
+    "expect_kernel_error": true
+  }
+]
+RESULT {"phase": "primitive-goldens", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.generate_cpu_cases --output artifacts/cpu_cases"], "returncode": 0, "elapsed_seconds": 0.830467, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/primitive-goldens.log", "cleanup_complete": true}
+[oscar] PASSED phase=primitive-goldens rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/primitive-goldens.log
+START phase=primitive-debug cwd=/Users/sunao2000/gpt_new_oscar command=["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --log-dir logs/vm-primitives"]
+START phase=000-store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_64_0"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106106] exit success!
+[SUCCESS][CORE_1][pid 106107] exit success!
+[SUCCESS][CORE_2][pid 106108] exit success!
+[SUCCESS][CORE_3][pid 106109] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"store"}
+RESULT {"phase": "000-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_64_0"], "returncode": 0, "elapsed_seconds": 0.206017, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/000-store.log", "cleanup_complete": true}
+[oscar] PASSED phase=000-store rc=0 log=logs/vm-primitives/000-store.log
+START phase=001-store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_64_1"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106113] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106114] exit success!
+[SUCCESS][CORE_2][pid 106115] exit success!
+[SUCCESS][CORE_3][pid 106116] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"store"}
+RESULT {"phase": "001-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_64_1"], "returncode": 0, "elapsed_seconds": 0.101005, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/001-store.log", "cleanup_complete": true}
+[oscar] PASSED phase=001-store rc=0 log=logs/vm-primitives/001-store.log
+START phase=002-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_1"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106119] exit success!
+[SUCCESS][CORE_1][pid 106120] exit success!
+[SUCCESS][CORE_2][pid 106121] exit success!
+[SUCCESS][CORE_3][pid 106122] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
+RESULT {"phase": "002-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_1"], "returncode": 0, "elapsed_seconds": 0.103234, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/002-merge.log", "cleanup_complete": true}
+[oscar] PASSED phase=002-merge rc=0 log=logs/vm-primitives/002-merge.log
+START phase=003-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_3"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106125] exit success!
+[SUCCESS][CORE_1][pid 106126] exit success!
+[SUCCESS][CORE_2][pid 106127] exit success!
+[SUCCESS][CORE_3][pid 106128] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
+RESULT {"phase": "003-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_3"], "returncode": 0, "elapsed_seconds": 0.105507, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/003-merge.log", "cleanup_complete": true}
+[oscar] PASSED phase=003-merge rc=0 log=logs/vm-primitives/003-merge.log
+START phase=004-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_128"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106131] exit success!
+[SUCCESS][CORE_1][pid 106132] exit success!
+[SUCCESS][CORE_2][pid 106133] exit success!
+[SUCCESS][CORE_3][pid 106134] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
+RESULT {"phase": "004-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_128"], "returncode": 0, "elapsed_seconds": 0.203895, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/004-merge.log", "cleanup_complete": true}
+[oscar] PASSED phase=004-merge rc=0 log=logs/vm-primitives/004-merge.log
+START phase=005-store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_128_0"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106137] exit success!
+[SUCCESS][CORE_1][pid 106138] exit success!
+[SUCCESS][CORE_2][pid 106139] exit success!
+[SUCCESS][CORE_3][pid 106140] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"store"}
+RESULT {"phase": "005-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_128_0"], "returncode": 0, "elapsed_seconds": 0.206972, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/005-store.log", "cleanup_complete": true}
+[oscar] PASSED phase=005-store rc=0 log=logs/vm-primitives/005-store.log
+START phase=006-store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_128_1"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106143] exit success!
+[SUCCESS][CORE_1][pid 106144] exit success!
+[SUCCESS][CORE_2][pid 106145] exit success!
+[SUCCESS][CORE_3][pid 106146] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"store"}
+RESULT {"phase": "006-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_128_1"], "returncode": 0, "elapsed_seconds": 0.209069, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/006-store.log", "cleanup_complete": true}
+[oscar] PASSED phase=006-store rc=0 log=logs/vm-primitives/006-store.log
+START phase=007-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_1"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106149] exit success!
+[SUCCESS][CORE_1][pid 106150] exit success!
+[SUCCESS][CORE_2][pid 106151] exit success!
+[SUCCESS][CORE_3][pid 106152] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
+RESULT {"phase": "007-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_1"], "returncode": 0, "elapsed_seconds": 0.101049, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/007-merge.log", "cleanup_complete": true}
+[oscar] PASSED phase=007-merge rc=0 log=logs/vm-primitives/007-merge.log
+START phase=008-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_3"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106155] exit success!
+[SUCCESS][CORE_1][pid 106156] exit success!
+[SUCCESS][CORE_2][pid 106157] exit success!
+[SUCCESS][CORE_3][pid 106158] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
+RESULT {"phase": "008-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_3"], "returncode": 0, "elapsed_seconds": 0.104809, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/008-merge.log", "cleanup_complete": true}
+[oscar] PASSED phase=008-merge rc=0 log=logs/vm-primitives/008-merge.log
+START phase=009-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_128"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106161] exit success!
+[SUCCESS][CORE_1][pid 106162] exit success!
+[SUCCESS][CORE_2][pid 106163] exit success!
+[SUCCESS][CORE_3][pid 106164] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
+RESULT {"phase": "009-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_128"], "returncode": 0, "elapsed_seconds": 0.20725, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/009-merge.log", "cleanup_complete": true}
+[oscar] PASSED phase=009-merge rc=0 log=logs/vm-primitives/009-merge.log
+START phase=010-store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_256_0"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106167] exit success!
+[SUCCESS][CORE_1][pid 106168] exit success!
+[SUCCESS][CORE_2][pid 106169] exit success!
+[SUCCESS][CORE_3][pid 106170] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"store"}
+RESULT {"phase": "010-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_256_0"], "returncode": 0, "elapsed_seconds": 0.209999, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/010-store.log", "cleanup_complete": true}
+[oscar] PASSED phase=010-store rc=0 log=logs/vm-primitives/010-store.log
+START phase=011-store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_256_1"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106173] exit success!
+[SUCCESS][CORE_1][pid 106174] exit success!
+[SUCCESS][CORE_2][pid 106175] exit success!
+[SUCCESS][CORE_3][pid 106176] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"store"}
+RESULT {"phase": "011-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_256_1"], "returncode": 0, "elapsed_seconds": 0.210177, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/011-store.log", "cleanup_complete": true}
+[oscar] PASSED phase=011-store rc=0 log=logs/vm-primitives/011-store.log
+START phase=012-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_1"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106179] exit success!
+[SUCCESS][CORE_1][pid 106180] exit success!
+[SUCCESS][CORE_2][pid 106181] exit success!
+[SUCCESS][CORE_3][pid 106182] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
+RESULT {"phase": "012-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_1"], "returncode": 0, "elapsed_seconds": 0.104168, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/012-merge.log", "cleanup_complete": true}
+[oscar] PASSED phase=012-merge rc=0 log=logs/vm-primitives/012-merge.log
+START phase=013-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_3"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106185] exit success!
+[SUCCESS][CORE_1][pid 106186] exit success!
+[SUCCESS][CORE_2][pid 106187] exit success!
+[SUCCESS][CORE_3][pid 106188] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
+RESULT {"phase": "013-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_3"], "returncode": 0, "elapsed_seconds": 0.10147, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/013-merge.log", "cleanup_complete": true}
+[oscar] PASSED phase=013-merge rc=0 log=logs/vm-primitives/013-merge.log
+START phase=014-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_128"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106191] exit success!
+[SUCCESS][CORE_1][pid 106192] exit success!
+[SUCCESS][CORE_2][pid 106193] exit success!
+[SUCCESS][CORE_3][pid 106194] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
+RESULT {"phase": "014-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_128"], "returncode": 0, "elapsed_seconds": 0.315829, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/014-merge.log", "cleanup_complete": true}
+[oscar] PASSED phase=014-merge rc=0 log=logs/vm-primitives/014-merge.log
+START phase=015-guard cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "guard", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_zero"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106197] exit success!
+[SUCCESS][CORE_1][pid 106198] exit success!
+[SUCCESS][CORE_2][pid 106199] exit success!
+[SUCCESS][CORE_3][pid 106200] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"guard"}
+RESULT {"phase": "015-guard", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "guard", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_zero"], "returncode": 0, "elapsed_seconds": 0.105941, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/015-guard.log", "cleanup_complete": true}
+[oscar] PASSED phase=015-guard rc=0 log=logs/vm-primitives/015-guard.log
+START phase=016-guard cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "guard", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_error"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+OSCAR_GUARD segment=3 index=1024 status=3
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106203] exit success!
+[TmSim]: Run in serial mode.
+[ERROR][Block_1][AIV_0][kernel_utils.cpp:1216][trap][106204] Aicore error exception, triggered by trap();
+[ERROR][CORE_1][pid 106204] error happened! ========= 
+SIGABRT Signal (Abort Signal from abort) catched, backtrace info:
+[#0] 0x00000000000bc8af: AscendC::StackTrace() at ??:?
+[#1] 0x00000000000bcc93: AscendC::BacktracePrint(int) at ??:?
+[#2] 0x0000000000022143: Handler(int) at /usr/local/Ascend/cann-9.1.0/tools/cpudebug/include/kern_fwk.h:43
+[#3] 0x000000000015e9b7: AscendC::trap() at ??:?
+[#4] 0x00000000000603f3: AscendC::TrapImpl() at /usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/basic_api/dav_c220/kernel_operator_sys_var_impl.h:116
+[#5] 0x000000000006040b: AscendC::Trap() at /usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/basic_api/kernel_operator_sys_var_intf_impl.h:123
+[#6] 0x000000000005fe23: oscar_status_guard_kernel at /home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp:39
+[#7] 0x000000000002653f: void AscendC::RunKernelFunctionOnCpu<void (*)(unsigned char*, unsigned char*, unsigned char*, unsigned char*, long, long, long, long), unsigned char*, unsigned char*, unsigned char*, unsigned char*, long, long, long, long>(void (*)(unsigned char*, unsigned char*, unsigned char*, unsigned char*, long, long, long, long), char const*, unsigned int, unsigned char*, unsigned char*, unsigned char*, unsigned char*, long, long, long, long) at /usr/local/Ascend/cann-9.1.0/tools/cpudebug/include/kern_fwk.h:142
+[#8] 0x000000000001dd27: main at /home/sunao2000.linux/gpt_new_oscar/csrc/cpu/primitive_probe.cpp:73
+[#9] 0x000000000001c8ef: _start at ??:?
+
+[SUCCESS][CORE_2][pid 106205] exit success!
+[SUCCESS][CORE_3][pid 106206] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"guard"}
+RESULT {"phase": "016-guard", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "guard", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_error"], "returncode": 0, "elapsed_seconds": 0.210298, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/016-guard.log", "cleanup_complete": true}
+[oscar] PASSED phase=016-guard rc=0 log=logs/vm-primitives/016-guard.log
+{
+  "backend": "official_ascendc_cpu_debug",
+  "status": "passed",
+  "cases": [
+    {
+      "op": "store",
+      "path": "artifacts/cpu_cases/store_64_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/000-store.log"
+    },
+    {
+      "op": "store",
+      "path": "artifacts/cpu_cases/store_64_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/001-store.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_64_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/002-merge.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_64_3",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/003-merge.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_64_128",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/004-merge.log"
+    },
+    {
+      "op": "store",
+      "path": "artifacts/cpu_cases/store_128_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/005-store.log"
+    },
+    {
+      "op": "store",
+      "path": "artifacts/cpu_cases/store_128_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/006-store.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_128_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/007-merge.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_128_3",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/008-merge.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_128_128",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/009-merge.log"
+    },
+    {
+      "op": "store",
+      "path": "artifacts/cpu_cases/store_256_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/010-store.log"
+    },
+    {
+      "op": "store",
+      "path": "artifacts/cpu_cases/store_256_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/011-store.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_256_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/012-merge.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_256_3",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/013-merge.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_256_128",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/014-merge.log"
+    },
+    {
+      "op": "guard",
+      "path": "artifacts/cpu_cases/guard_zero",
+      "expect_kernel_error": false,
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/015-guard.log"
+    },
+    {
+      "op": "guard",
+      "path": "artifacts/cpu_cases/guard_error",
+      "expect_kernel_error": true,
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/016-guard.log"
+    }
+  ],
+  "npu_acceptance": "not_run"
+}
+RESULT {"phase": "primitive-debug", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --log-dir logs/vm-primitives"], "returncode": 0, "elapsed_seconds": 3.003819, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/primitive-debug.log", "cleanup_complete": true}
+[oscar] PASSED phase=primitive-debug rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/primitive-debug.log
+START phase=rotation-goldens cwd=/Users/sunao2000/gpt_new_oscar command=["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.generate_rotation_cpu_cases --output artifacts/rotation_cpu_cases"]
+[
+  {
+    "op": "rotate",
+    "path": "artifacts/rotation_cpu_cases/rotate_64_0"
+  },
+  {
+    "op": "rotate",
+    "path": "artifacts/rotation_cpu_cases/rotate_masked_64_0"
+  },
+  {
+    "op": "rotate_store",
+    "path": "artifacts/rotation_cpu_cases/rotate_store_64_0_0.00"
+  },
+  {
+    "op": "rotate_store",
+    "path": "artifacts/rotation_cpu_cases/rotate_store_64_0_0.95"
+  },
+  {
+    "op": "rotate",
+    "path": "artifacts/rotation_cpu_cases/rotate_64_1"
+  },
+  {
+    "op": "rotate",
+    "path": "artifacts/rotation_cpu_cases/rotate_masked_64_1"
+  },
+  {
+    "op": "rotate_store",
+    "path": "artifacts/rotation_cpu_cases/rotate_store_64_1_0.00"
+  },
+  {
+    "op": "rotate_store",
+    "path": "artifacts/rotation_cpu_cases/rotate_store_64_1_0.95"
+  },
+  {
+    "op": "rotate",
+    "path": "artifacts/rotation_cpu_cases/rotate_128_0"
+  },
+  {
+    "op": "rotate",
+    "path": "artifacts/rotation_cpu_cases/rotate_masked_128_0"
+  },
+  {
+    "op": "rotate_store",
+    "path": "artifacts/rotation_cpu_cases/rotate_store_128_0_0.00"
+  },
+  {
+    "op": "rotate_store",
+    "path": "artifacts/rotation_cpu_cases/rotate_store_128_0_0.95"
+  },
+  {
+    "op": "rotate",
+    "path": "artifacts/rotation_cpu_cases/rotate_128_1"
+  },
+  {
+    "op": "rotate",
+    "path": "artifacts/rotation_cpu_cases/rotate_masked_128_1"
+  },
+  {
+    "op": "rotate_store",
+    "path": "artifacts/rotation_cpu_cases/rotate_store_128_1_0.00"
+  },
+  {
+    "op": "rotate_store",
+    "path": "artifacts/rotation_cpu_cases/rotate_store_128_1_0.95"
+  },
+  {
+    "op": "rotate",
+    "path": "artifacts/rotation_cpu_cases/rotate_256_0"
+  },
+  {
+    "op": "rotate",
+    "path": "artifacts/rotation_cpu_cases/rotate_masked_256_0"
+  },
+  {
+    "op": "rotate_store",
+    "path": "artifacts/rotation_cpu_cases/rotate_store_256_0_0.00"
+  },
+  {
+    "op": "rotate_store",
+    "path": "artifacts/rotation_cpu_cases/rotate_store_256_0_0.95"
+  },
+  {
+    "op": "rotate",
+    "path": "artifacts/rotation_cpu_cases/rotate_256_1"
+  },
+  {
+    "op": "rotate",
+    "path": "artifacts/rotation_cpu_cases/rotate_masked_256_1"
+  },
+  {
+    "op": "rotate_store",
+    "path": "artifacts/rotation_cpu_cases/rotate_store_256_1_0.00"
+  },
+  {
+    "op": "rotate_store",
+    "path": "artifacts/rotation_cpu_cases/rotate_store_256_1_0.95"
+  },
+  {
+    "op": "rotate_store",
+    "path": "artifacts/rotation_cpu_cases/rotate_store_errors"
+  },
+  {
+    "op": "rotate_store",
+    "path": "artifacts/rotation_cpu_cases/rotate_store_sink_only"
+  }
+]
+RESULT {"phase": "rotation-goldens", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.generate_rotation_cpu_cases --output artifacts/rotation_cpu_cases"], "returncode": 0, "elapsed_seconds": 0.945031, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/rotation-goldens.log", "cleanup_complete": true}
+[oscar] PASSED phase=rotation-goldens rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/rotation-goldens.log
+START phase=rotation-debug cwd=/Users/sunao2000/gpt_new_oscar command=["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --executable build/cpu/oscar_rotation_cpu --cases artifacts/rotation_cpu_cases/cases.json --output reports/rotation_cpu_debug.json --log-dir logs/vm-rotation"]
+START phase=000-rotate cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_64_0"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106333] exit success!
+[SUCCESS][CORE_1][pid 106334] exit success!
+[SUCCESS][CORE_2][pid 106335] exit success!
+[SUCCESS][CORE_3][pid 106336] exit success!
+max_abs_error=1.19209e-06
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate"}
+RESULT {"phase": "000-rotate", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_64_0"], "returncode": 0, "elapsed_seconds": 0.412992, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/000-rotate.log", "cleanup_complete": true}
+[oscar] PASSED phase=000-rotate rc=0 log=logs/vm-rotation/000-rotate.log
+START phase=001-rotate cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_64_0"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106339] exit success!
+[SUCCESS][CORE_1][pid 106340] exit success!
+[SUCCESS][CORE_2][pid 106341] exit success!
+[SUCCESS][CORE_3][pid 106342] exit success!
+max_abs_error=7.15256e-07
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate"}
+RESULT {"phase": "001-rotate", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_64_0"], "returncode": 0, "elapsed_seconds": 0.412405, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/001-rotate.log", "cleanup_complete": true}
+[oscar] PASSED phase=001-rotate rc=0 log=logs/vm-rotation/001-rotate.log
+START phase=002-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_64_0_0.00"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106345] exit success!
+[SUCCESS][CORE_1][pid 106346] exit success!
+[SUCCESS][CORE_2][pid 106347] exit success!
+[SUCCESS][CORE_3][pid 106348] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "002-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_64_0_0.00"], "returncode": 0, "elapsed_seconds": 0.833582, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/002-rotate_store.log", "cleanup_complete": true}
+[oscar] PASSED phase=002-rotate_store rc=0 log=logs/vm-rotation/002-rotate_store.log
+START phase=003-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_64_0_0.95"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106351] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106352] exit success!
+[SUCCESS][CORE_2][pid 106353] exit success!
+[SUCCESS][CORE_3][pid 106354] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "003-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_64_0_0.95"], "returncode": 0, "elapsed_seconds": 0.838377, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/003-rotate_store.log", "cleanup_complete": true}
+[oscar] PASSED phase=003-rotate_store rc=0 log=logs/vm-rotation/003-rotate_store.log
+START phase=004-rotate cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_64_1"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106358] exit success!
+[SUCCESS][CORE_1][pid 106359] exit success!
+[SUCCESS][CORE_2][pid 106360] exit success!
+[SUCCESS][CORE_3][pid 106361] exit success!
+max_abs_error=0
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate"}
+RESULT {"phase": "004-rotate", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_64_1"], "returncode": 0, "elapsed_seconds": 0.204749, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/004-rotate.log", "cleanup_complete": true}
+[oscar] PASSED phase=004-rotate rc=0 log=logs/vm-rotation/004-rotate.log
+START phase=005-rotate cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_64_1"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106364] exit success!
+[SUCCESS][CORE_1][pid 106365] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 106366] exit success!
+[SUCCESS][CORE_3][pid 106367] exit success!
+max_abs_error=0
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate"}
+RESULT {"phase": "005-rotate", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_64_1"], "returncode": 0, "elapsed_seconds": 0.203918, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/005-rotate.log", "cleanup_complete": true}
+[oscar] PASSED phase=005-rotate rc=0 log=logs/vm-rotation/005-rotate.log
+START phase=006-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_64_1_0.00"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106370] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106371] exit success!
+[SUCCESS][CORE_2][pid 106372] exit success!
+[SUCCESS][CORE_3][pid 106373] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "006-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_64_1_0.00"], "returncode": 0, "elapsed_seconds": 0.314546, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/006-rotate_store.log", "cleanup_complete": true}
+[oscar] PASSED phase=006-rotate_store rc=0 log=logs/vm-rotation/006-rotate_store.log
+START phase=007-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_64_1_0.95"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106376] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106377] exit success!
+[SUCCESS][CORE_2][pid 106378] exit success!
+[SUCCESS][CORE_3][pid 106379] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "007-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_64_1_0.95"], "returncode": 0, "elapsed_seconds": 0.314197, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/007-rotate_store.log", "cleanup_complete": true}
+[oscar] PASSED phase=007-rotate_store rc=0 log=logs/vm-rotation/007-rotate_store.log
+START phase=008-rotate cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_128_0"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106382] exit success!
+[SUCCESS][CORE_1][pid 106383] exit success!
+[SUCCESS][CORE_2][pid 106384] exit success!
+[SUCCESS][CORE_3][pid 106385] exit success!
+max_abs_error=1.19209e-06
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate"}
+RESULT {"phase": "008-rotate", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_128_0"], "returncode": 0, "elapsed_seconds": 1.145865, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/008-rotate.log", "cleanup_complete": true}
+[oscar] PASSED phase=008-rotate rc=0 log=logs/vm-rotation/008-rotate.log
+START phase=009-rotate cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_128_0"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106389] exit success!
+[SUCCESS][CORE_1][pid 106390] exit success!
+[SUCCESS][CORE_2][pid 106391] exit success!
+[SUCCESS][CORE_3][pid 106392] exit success!
+max_abs_error=1.19209e-06
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate"}
+RESULT {"phase": "009-rotate", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_128_0"], "returncode": 0, "elapsed_seconds": 1.135635, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/009-rotate.log", "cleanup_complete": true}
+[oscar] PASSED phase=009-rotate rc=0 log=logs/vm-rotation/009-rotate.log
+START phase=010-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_128_0_0.00"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106396] exit success!
+[SUCCESS][CORE_1][pid 106397] exit success!
+[SUCCESS][CORE_2][pid 106398] exit success!
+[SUCCESS][CORE_3][pid 106399] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "010-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_128_0_0.00"], "returncode": 0, "elapsed_seconds": 2.271212, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/010-rotate_store.log", "cleanup_complete": true}
+[oscar] PASSED phase=010-rotate_store rc=0 log=logs/vm-rotation/010-rotate_store.log
+START phase=011-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_128_0_0.95"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106403] exit success!
+[SUCCESS][CORE_1][pid 106404] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 106405] exit success!
+[SUCCESS][CORE_3][pid 106406] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "011-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_128_0_0.95"], "returncode": 0, "elapsed_seconds": 2.389732, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/011-rotate_store.log", "cleanup_complete": true}
+[oscar] PASSED phase=011-rotate_store rc=0 log=logs/vm-rotation/011-rotate_store.log
+START phase=012-rotate cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_128_1"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106409] exit success!
+[SUCCESS][CORE_1][pid 106410] exit success!
+[SUCCESS][CORE_2][pid 106411] exit success!
+[SUCCESS][CORE_3][pid 106412] exit success!
+max_abs_error=1.43051e-06
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate"}
+RESULT {"phase": "012-rotate", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_128_1"], "returncode": 0, "elapsed_seconds": 0.310261, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/012-rotate.log", "cleanup_complete": true}
+[oscar] PASSED phase=012-rotate rc=0 log=logs/vm-rotation/012-rotate.log
+START phase=013-rotate cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_128_1"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106415] exit success!
+[SUCCESS][CORE_1][pid 106416] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 106417] exit success!
+[SUCCESS][CORE_3][pid 106418] exit success!
+max_abs_error=9.53674e-07
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate"}
+RESULT {"phase": "013-rotate", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_128_1"], "returncode": 0, "elapsed_seconds": 0.313388, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/013-rotate.log", "cleanup_complete": true}
+[oscar] PASSED phase=013-rotate rc=0 log=logs/vm-rotation/013-rotate.log
+START phase=014-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_128_1_0.00"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106422] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106423] exit success!
+[SUCCESS][CORE_2][pid 106424] exit success!
+[SUCCESS][CORE_3][pid 106425] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "014-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_128_1_0.00"], "returncode": 0, "elapsed_seconds": 0.520813, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/014-rotate_store.log", "cleanup_complete": true}
+[oscar] PASSED phase=014-rotate_store rc=0 log=logs/vm-rotation/014-rotate_store.log
+START phase=015-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_128_1_0.95"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106428] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106429] exit success!
+[SUCCESS][CORE_2][pid 106430] exit success!
+[SUCCESS][CORE_3][pid 106431] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "015-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_128_1_0.95"], "returncode": 0, "elapsed_seconds": 0.621096, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/015-rotate_store.log", "cleanup_complete": true}
+[oscar] PASSED phase=015-rotate_store rc=0 log=logs/vm-rotation/015-rotate_store.log
+START phase=016-rotate cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_256_0"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106434] exit success!
+[SUCCESS][CORE_1][pid 106435] exit success!
+[SUCCESS][CORE_2][pid 106436] exit success!
+[SUCCESS][CORE_3][pid 106437] exit success!
+max_abs_error=1.90735e-06
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate"}
+RESULT {"phase": "016-rotate", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_256_0"], "returncode": 0, "elapsed_seconds": 2.391329, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/016-rotate.log", "cleanup_complete": true}
+[oscar] PASSED phase=016-rotate rc=0 log=logs/vm-rotation/016-rotate.log
+START phase=017-rotate cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_256_0"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[oscar] phase=rotation-debug running seconds=15.0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/rotation-debug.log
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106441] exit success!
+[SUCCESS][CORE_1][pid 106442] exit success!
+[SUCCESS][CORE_2][pid 106443] exit success!
+[SUCCESS][CORE_3][pid 106444] exit success!
+max_abs_error=1.90735e-06
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate"}
+RESULT {"phase": "017-rotate", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_256_0"], "returncode": 0, "elapsed_seconds": 2.481229, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/017-rotate.log", "cleanup_complete": true}
+[oscar] PASSED phase=017-rotate rc=0 log=logs/vm-rotation/017-rotate.log
+START phase=018-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_256_0_0.00"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106448] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106449] exit success!
+[SUCCESS][CORE_2][pid 106450] exit success!
+[SUCCESS][CORE_3][pid 106451] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "018-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_256_0_0.00"], "returncode": 0, "elapsed_seconds": 5.179103, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/018-rotate_store.log", "cleanup_complete": true}
+[oscar] PASSED phase=018-rotate_store rc=0 log=logs/vm-rotation/018-rotate_store.log
+START phase=019-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_256_0_0.95"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106455] exit success!
+[SUCCESS][CORE_1][pid 106456] exit success!
+[SUCCESS][CORE_2][pid 106457] exit success!
+[SUCCESS][CORE_3][pid 106458] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "019-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_256_0_0.95"], "returncode": 0, "elapsed_seconds": 4.973177, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/019-rotate_store.log", "cleanup_complete": true}
+[oscar] PASSED phase=019-rotate_store rc=0 log=logs/vm-rotation/019-rotate_store.log
+START phase=020-rotate cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_256_1"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106464] exit success!
+[SUCCESS][CORE_1][pid 106465] exit success!
+[SUCCESS][CORE_2][pid 106466] exit success!
+[SUCCESS][CORE_3][pid 106467] exit success!
+max_abs_error=1.19209e-07
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate"}
+RESULT {"phase": "020-rotate", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_256_1"], "returncode": 0, "elapsed_seconds": 0.619365, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/020-rotate.log", "cleanup_complete": true}
+[oscar] PASSED phase=020-rotate rc=0 log=logs/vm-rotation/020-rotate.log
+START phase=021-rotate cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_256_1"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106470] exit success!
+[SUCCESS][CORE_1][pid 106471] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 106472] exit success!
+[SUCCESS][CORE_3][pid 106473] exit success!
+max_abs_error=1.19209e-07
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate"}
+RESULT {"phase": "021-rotate", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_256_1"], "returncode": 0, "elapsed_seconds": 0.624224, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/021-rotate.log", "cleanup_complete": true}
+[oscar] PASSED phase=021-rotate rc=0 log=logs/vm-rotation/021-rotate.log
+START phase=022-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_256_1_0.00"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106476] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106477] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 106478] exit success!
+[SUCCESS][CORE_3][pid 106479] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "022-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_256_1_0.00"], "returncode": 0, "elapsed_seconds": 0.928862, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/022-rotate_store.log", "cleanup_complete": true}
+[oscar] PASSED phase=022-rotate_store rc=0 log=logs/vm-rotation/022-rotate_store.log
+START phase=023-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_256_1_0.95"]
+[TmSim]: Run in serial mode.
+[oscar] phase=rotation-debug running seconds=30.1 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/rotation-debug.log
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106483] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106484] exit success!
+[SUCCESS][CORE_2][pid 106485] exit success!
+[SUCCESS][CORE_3][pid 106486] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "023-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_256_1_0.95"], "returncode": 0, "elapsed_seconds": 1.03289, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/023-rotate_store.log", "cleanup_complete": true}
+[oscar] PASSED phase=023-rotate_store rc=0 log=logs/vm-rotation/023-rotate_store.log
+START phase=024-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_errors"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106489] exit success!
+[SUCCESS][CORE_1][pid 106490] exit success!
+[SUCCESS][CORE_2][pid 106491] exit success!
+[SUCCESS][CORE_3][pid 106492] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "024-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_errors"], "returncode": 0, "elapsed_seconds": 0.732634, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/024-rotate_store.log", "cleanup_complete": true}
+[oscar] PASSED phase=024-rotate_store rc=0 log=logs/vm-rotation/024-rotate_store.log
+START phase=025-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_sink_only"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106495] exit success!
+[SUCCESS][CORE_1][pid 106496] exit success!
+[SUCCESS][CORE_2][pid 106497] exit success!
+[SUCCESS][CORE_3][pid 106498] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "025-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_sink_only"], "returncode": 0, "elapsed_seconds": 0.51128, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/025-rotate_store.log", "cleanup_complete": true}
+[oscar] PASSED phase=025-rotate_store rc=0 log=logs/vm-rotation/025-rotate_store.log
+{
+  "backend": "official_ascendc_cpu_debug",
+  "status": "passed",
+  "cases": [
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_64_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/000-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_64_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/001-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_64_0_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/002-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_64_0_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/003-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_64_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/004-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_64_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/005-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_64_1_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/006-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_64_1_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/007-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_128_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/008-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_128_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/009-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_128_0_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/010-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_128_0_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/011-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_128_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/012-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_128_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/013-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_128_1_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/014-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_128_1_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/015-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_256_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/016-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_256_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/017-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_256_0_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/018-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_256_0_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/019-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_256_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/020-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_256_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/021-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_256_1_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/022-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_256_1_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/023-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_errors",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/024-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_sink_only",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/025-rotate_store.log"
+    }
+  ],
+  "npu_acceptance": "not_run"
+}
+RESULT {"phase": "rotation-debug", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --executable build/cpu/oscar_rotation_cpu --cases artifacts/rotation_cpu_cases/cases.json --output reports/rotation_cpu_debug.json --log-dir logs/vm-rotation"], "returncode": 0, "elapsed_seconds": 31.881346, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/rotation-debug.log", "cleanup_complete": true}
+[oscar] PASSED phase=rotation-debug rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/rotation-debug.log
+START phase=cv-goldens cwd=/Users/sunao2000/gpt_new_oscar command=["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python tests/test_cv_contracts.py artifacts/cv_cpu_cases"]
+artifacts/cv_cpu_cases
+RESULT {"phase": "cv-goldens", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python tests/test_cv_contracts.py artifacts/cv_cpu_cases"], "returncode": 0, "elapsed_seconds": 1.234966, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-goldens.log", "cleanup_complete": true}
+[oscar] PASSED phase=cv-goldens rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-goldens.log
+START phase=cv-debug cwd=/Users/sunao2000/gpt_new_oscar command=["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --executable build/cpu/oscar_cv_cpu --cases artifacts/cv_cpu_cases/cases.json --output reports/cv_cpu_debug.json --log-dir logs/vm-cv"]
+START phase=000-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q1_c17"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106605] exit success!
+[SUCCESS][CORE_1][pid 106606] exit success!
+[SUCCESS][CORE_2][pid 106607] exit success!
+[SUCCESS][CORE_3][pid 106608] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106609] exit success!
+[SUCCESS][CORE_1][pid 106610] exit success!
+[SUCCESS][CORE_2][pid 106611] exit success!
+[SUCCESS][CORE_3][pid 106612] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106613] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106614] exit success!
+[SUCCESS][CORE_2][pid 106615] exit success!
+[SUCCESS][CORE_3][pid 106616] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106617] exit success!
+[SUCCESS][CORE_1][pid 106618] exit success!
+[SUCCESS][CORE_2][pid 106619] exit success!
+[SUCCESS][CORE_3][pid 106620] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106621] exit success!
+[SUCCESS][CORE_1][pid 106622] exit success!
+[SUCCESS][CORE_2][pid 106623] exit success!
+[SUCCESS][CORE_3][pid 106624] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106625] exit success!
+[SUCCESS][CORE_1][pid 106626] exit success!
+[SUCCESS][CORE_2][pid 106627] exit success!
+[SUCCESS][CORE_3][pid 106628] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 106629] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 106630] exit success!
+[SUCCESS][AIV_1][pid 106631] exit success!
+[SUCCESS][AIC_1][pid 106632] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_2][pid 106633] exit success!
+[SUCCESS][AIV_3][pid 106634] exit success!
+splits=1 empty_segments=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106635] exit success!
+[SUCCESS][CORE_1][pid 106636] exit success!
+[SUCCESS][CORE_2][pid 106637] exit success!
+[SUCCESS][CORE_3][pid 106638] exit success!
+max_abs=1.78814e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q1_c17/expected_output.bin
+max_abs=2.38419e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q1_c17/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "000-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q1_c17"], "returncode": 0, "elapsed_seconds": 0.508826, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/000-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=000-attention_cv rc=0 log=logs/vm-cv/000-attention_cv.log
+START phase=001-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106641] exit success!
+[SUCCESS][CORE_1][pid 106642] exit success!
+[SUCCESS][CORE_2][pid 106643] exit success!
+[SUCCESS][CORE_3][pid 106644] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106645] exit success!
+[SUCCESS][CORE_1][pid 106646] exit success!
+[SUCCESS][CORE_2][pid 106647] exit success!
+[SUCCESS][CORE_3][pid 106648] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106649] exit success!
+[SUCCESS][CORE_1][pid 106650] exit success!
+[SUCCESS][CORE_2][pid 106651] exit success!
+[SUCCESS][CORE_3][pid 106652] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106653] exit success!
+[SUCCESS][CORE_1][pid 106654] exit success!
+[SUCCESS][CORE_2][pid 106655] exit success!
+[SUCCESS][CORE_3][pid 106656] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106657] exit success!
+[SUCCESS][CORE_1][pid 106658] exit success!
+[SUCCESS][CORE_2][pid 106659] exit success!
+[SUCCESS][CORE_3][pid 106660] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106661] exit success!
+[SUCCESS][CORE_1][pid 106662] exit success!
+[SUCCESS][CORE_2][pid 106663] exit success!
+[SUCCESS][CORE_3][pid 106664] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 106665] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 106666] exit success!
+[SUCCESS][AIV_1][pid 106667] exit success!
+[SUCCESS][AIC_1][pid 106668] exit success!
+[SUCCESS][AIV_2][pid 106669] exit success!
+[SUCCESS][AIV_3][pid 106670] exit success!
+splits=1 empty_segments=0
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106671] exit success!
+[SUCCESS][CORE_1][pid 106672] exit success!
+[SUCCESS][CORE_2][pid 106673] exit success!
+[SUCCESS][CORE_3][pid 106674] exit success!
+max_abs=4.17233e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65/expected_output.bin
+max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "001-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"], "returncode": 0, "elapsed_seconds": 1.02715, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/001-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=001-attention_cv rc=0 log=logs/vm-cv/001-attention_cv.log
+START phase=002-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c0"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106677] exit success!
+[SUCCESS][CORE_1][pid 106678] exit success!
+[SUCCESS][CORE_2][pid 106679] exit success!
+[SUCCESS][CORE_3][pid 106680] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106681] exit success!
+[SUCCESS][CORE_1][pid 106682] exit success!
+[SUCCESS][CORE_2][pid 106683] exit success!
+[SUCCESS][CORE_3][pid 106684] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106685] exit success!
+[SUCCESS][CORE_1][pid 106686] exit success!
+[SUCCESS][CORE_2][pid 106687] exit success!
+[SUCCESS][CORE_3][pid 106688] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106689] exit success!
+[SUCCESS][CORE_1][pid 106690] exit success!
+[SUCCESS][CORE_2][pid 106691] exit success!
+[SUCCESS][CORE_3][pid 106692] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106693] exit success!
+[SUCCESS][CORE_1][pid 106694] exit success!
+[SUCCESS][CORE_2][pid 106695] exit success!
+[SUCCESS][CORE_3][pid 106696] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106697] exit success!
+[SUCCESS][CORE_1][pid 106698] exit success!
+[SUCCESS][CORE_2][pid 106699] exit success!
+[SUCCESS][CORE_3][pid 106700] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 106701] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 106702] exit success!
+[SUCCESS][AIV_1][pid 106703] exit success!
+[SUCCESS][AIC_1][pid 106704] exit success!
+[SUCCESS][AIV_2][pid 106705] exit success!
+[SUCCESS][AIV_3][pid 106706] exit success!
+splits=1 empty_segments=2
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106708] exit success!
+[SUCCESS][CORE_1][pid 106709] exit success!
+[SUCCESS][CORE_2][pid 106710] exit success!
+[SUCCESS][CORE_3][pid 106711] exit success!
+max_abs=2.38419e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c0/expected_output.bin
+max_abs=2.38419e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c0/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "002-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c0"], "returncode": 0, "elapsed_seconds": 0.608826, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/002-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=002-attention_cv rc=0 log=logs/vm-cv/002-attention_cv.log
+START phase=003-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d128_q4_c129"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106714] exit success!
+[SUCCESS][CORE_1][pid 106715] exit success!
+[SUCCESS][CORE_2][pid 106716] exit success!
+[SUCCESS][CORE_3][pid 106717] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106718] exit success!
+[SUCCESS][CORE_1][pid 106719] exit success!
+[SUCCESS][CORE_2][pid 106720] exit success!
+[SUCCESS][CORE_3][pid 106721] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106722] exit success!
+[SUCCESS][CORE_1][pid 106723] exit success!
+[SUCCESS][CORE_2][pid 106724] exit success!
+[SUCCESS][CORE_3][pid 106725] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106726] exit success!
+[SUCCESS][CORE_1][pid 106727] exit success!
+[SUCCESS][CORE_2][pid 106728] exit success!
+[SUCCESS][CORE_3][pid 106729] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106730] exit success!
+[SUCCESS][CORE_1][pid 106731] exit success!
+[SUCCESS][CORE_2][pid 106732] exit success!
+[SUCCESS][CORE_3][pid 106733] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106734] exit success!
+[SUCCESS][CORE_1][pid 106735] exit success!
+[SUCCESS][CORE_2][pid 106736] exit success!
+[SUCCESS][CORE_3][pid 106737] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 106738] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 106739] exit success!
+[SUCCESS][AIV_1][pid 106740] exit success!
+[SUCCESS][AIC_1][pid 106741] exit success!
+[SUCCESS][AIV_2][pid 106742] exit success!
+[SUCCESS][AIV_3][pid 106743] exit success!
+splits=1 empty_segments=0
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106744] exit success!
+[SUCCESS][CORE_1][pid 106745] exit success!
+[SUCCESS][CORE_2][pid 106746] exit success!
+[SUCCESS][CORE_3][pid 106747] exit success!
+max_abs=6.55651e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d128_q4_c129/expected_output.bin
+max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d128_q4_c129/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "003-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d128_q4_c129"], "returncode": 0, "elapsed_seconds": 1.75568, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/003-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=003-attention_cv rc=0 log=logs/vm-cv/003-attention_cv.log
+START phase=004-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d256_q4_c511"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106750] exit success!
+[SUCCESS][CORE_1][pid 106751] exit success!
+[SUCCESS][CORE_2][pid 106752] exit success!
+[SUCCESS][CORE_3][pid 106753] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106754] exit success!
+[SUCCESS][CORE_1][pid 106755] exit success!
+[SUCCESS][CORE_2][pid 106756] exit success!
+[SUCCESS][CORE_3][pid 106757] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106758] exit success!
+[SUCCESS][CORE_1][pid 106759] exit success!
+[SUCCESS][CORE_2][pid 106760] exit success!
+[SUCCESS][CORE_3][pid 106761] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106762] exit success!
+[SUCCESS][CORE_1][pid 106763] exit success!
+[SUCCESS][CORE_2][pid 106764] exit success!
+[SUCCESS][CORE_3][pid 106765] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106766] exit success!
+[SUCCESS][CORE_1][pid 106767] exit success!
+[SUCCESS][CORE_2][pid 106768] exit success!
+[SUCCESS][CORE_3][pid 106769] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106770] exit success!
+[SUCCESS][CORE_1][pid 106771] exit success!
+[SUCCESS][CORE_2][pid 106772] exit success!
+[SUCCESS][CORE_3][pid 106773] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 106774] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 106775] exit success!
+[SUCCESS][AIV_1][pid 106776] exit success!
+[SUCCESS][AIC_1][pid 106777] exit success!
+[SUCCESS][AIV_2][pid 106778] exit success!
+[SUCCESS][AIV_3][pid 106779] exit success!
+splits=1 empty_segments=0
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106785] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106786] exit success!
+[SUCCESS][CORE_2][pid 106787] exit success!
+[SUCCESS][CORE_3][pid 106788] exit success!
+max_abs=8.34465e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d256_q4_c511/expected_output.bin
+max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d256_q4_c511/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "004-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d256_q4_c511"], "returncode": 0, "elapsed_seconds": 6.220027, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/004-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=004-attention_cv rc=0 log=logs/vm-cv/004-attention_cv.log
+START phase=005-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q17_c65"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106791] exit success!
+[SUCCESS][CORE_1][pid 106792] exit success!
+[SUCCESS][CORE_2][pid 106793] exit success!
+[SUCCESS][CORE_3][pid 106794] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106795] exit success!
+[SUCCESS][CORE_1][pid 106796] exit success!
+[SUCCESS][CORE_2][pid 106797] exit success!
+[SUCCESS][CORE_3][pid 106798] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106799] exit success!
+[SUCCESS][CORE_1][pid 106800] exit success!
+[SUCCESS][CORE_2][pid 106801] exit success!
+[SUCCESS][CORE_3][pid 106802] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106803] exit success!
+[SUCCESS][CORE_1][pid 106804] exit success!
+[SUCCESS][CORE_2][pid 106805] exit success!
+[SUCCESS][CORE_3][pid 106806] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106807] exit success!
+[SUCCESS][CORE_1][pid 106808] exit success!
+[SUCCESS][CORE_2][pid 106809] exit success!
+[SUCCESS][CORE_3][pid 106810] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106811] exit success!
+[SUCCESS][CORE_1][pid 106812] exit success!
+[SUCCESS][CORE_2][pid 106813] exit success!
+[SUCCESS][CORE_3][pid 106814] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 106815] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 106816] exit success!
+[SUCCESS][AIV_1][pid 106817] exit success!
+[SUCCESS][AIC_1][pid 106818] exit success!
+[SUCCESS][AIV_2][pid 106819] exit success!
+[SUCCESS][AIV_3][pid 106820] exit success!
+splits=1 empty_segments=0
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106823] exit success!
+[SUCCESS][CORE_1][pid 106824] exit success!
+[SUCCESS][CORE_2][pid 106825] exit success!
+[SUCCESS][CORE_3][pid 106826] exit success!
+max_abs=9.53674e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q17_c65/expected_output.bin
+max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q17_c65/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "005-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q17_c65"], "returncode": 0, "elapsed_seconds": 1.860661, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/005-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=005-attention_cv rc=0 log=logs/vm-cv/005-attention_cv.log
+START phase=006-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_hk2"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106829] exit success!
+[SUCCESS][CORE_1][pid 106830] exit success!
+[SUCCESS][CORE_2][pid 106831] exit success!
+[SUCCESS][CORE_3][pid 106832] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106833] exit success!
+[SUCCESS][CORE_1][pid 106834] exit success!
+[SUCCESS][CORE_2][pid 106835] exit success!
+[SUCCESS][CORE_3][pid 106836] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106837] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106838] exit success!
+[SUCCESS][CORE_2][pid 106839] exit success!
+[SUCCESS][CORE_3][pid 106840] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106841] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106842] exit success!
+[SUCCESS][CORE_2][pid 106843] exit success!
+[SUCCESS][CORE_3][pid 106844] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106845] exit success!
+[SUCCESS][CORE_1][pid 106846] exit success!
+[SUCCESS][CORE_2][pid 106847] exit success!
+[SUCCESS][CORE_3][pid 106848] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106849] exit success!
+[SUCCESS][CORE_1][pid 106850] exit success!
+[SUCCESS][CORE_2][pid 106851] exit success!
+[SUCCESS][CORE_3][pid 106852] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 106853] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 106854] exit success!
+[SUCCESS][AIV_1][pid 106855] exit success!
+[SUCCESS][AIC_1][pid 106856] exit success!
+[SUCCESS][AIV_2][pid 106857] exit success!
+[SUCCESS][AIV_3][pid 106858] exit success!
+splits=1 empty_segments=0
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106859] exit success!
+[SUCCESS][CORE_1][pid 106860] exit success!
+[SUCCESS][CORE_2][pid 106861] exit success!
+[SUCCESS][CORE_3][pid 106862] exit success!
+max_abs=5.36442e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_hk2/expected_output.bin
+max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_hk2/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "006-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_hk2"], "returncode": 0, "elapsed_seconds": 1.447161, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/006-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=006-attention_cv rc=0 log=logs/vm-cv/006-attention_cv.log
+START phase=007-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q2_c320"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106865] exit success!
+[SUCCESS][CORE_1][pid 106866] exit success!
+[SUCCESS][CORE_2][pid 106867] exit success!
+[SUCCESS][CORE_3][pid 106868] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106869] exit success!
+[SUCCESS][CORE_1][pid 106870] exit success!
+[SUCCESS][CORE_2][pid 106871] exit success!
+[SUCCESS][CORE_3][pid 106872] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106873] exit success!
+[SUCCESS][CORE_1][pid 106874] exit success!
+[SUCCESS][CORE_2][pid 106875] exit success!
+[SUCCESS][CORE_3][pid 106876] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106877] exit success!
+[SUCCESS][CORE_1][pid 106878] exit success!
+[SUCCESS][CORE_2][pid 106879] exit success!
+[SUCCESS][CORE_3][pid 106880] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106881] exit success!
+[SUCCESS][CORE_1][pid 106882] exit success!
+[SUCCESS][CORE_2][pid 106883] exit success!
+[SUCCESS][CORE_3][pid 106884] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106885] exit success!
+[SUCCESS][CORE_1][pid 106886] exit success!
+[SUCCESS][CORE_2][pid 106887] exit success!
+[SUCCESS][CORE_3][pid 106888] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[oscar] phase=cv-debug running seconds=15.1 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 106889] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 106890] exit success!
+[SUCCESS][AIV_1][pid 106891] exit success!
+[SUCCESS][AIC_1][pid 106892] exit success!
+[SUCCESS][AIV_2][pid 106893] exit success!
+[SUCCESS][AIV_3][pid 106894] exit success!
+splits=1 empty_segments=0
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106896] exit success!
+[SUCCESS][CORE_1][pid 106897] exit success!
+[SUCCESS][CORE_2][pid 106898] exit success!
+[SUCCESS][CORE_3][pid 106899] exit success!
+max_abs=2.23517e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q2_c320/expected_output.bin
+max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q2_c320/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "007-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q2_c320"], "returncode": 0, "elapsed_seconds": 1.937415, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/007-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=007-attention_cv rc=0 log=logs/vm-cv/007-attention_cv.log
+START phase=008-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d128_q3_c511"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106902] exit success!
+[SUCCESS][CORE_1][pid 106903] exit success!
+[SUCCESS][CORE_2][pid 106904] exit success!
+[SUCCESS][CORE_3][pid 106905] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106906] exit success!
+[SUCCESS][CORE_1][pid 106907] exit success!
+[SUCCESS][CORE_2][pid 106908] exit success!
+[SUCCESS][CORE_3][pid 106909] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106910] exit success!
+[SUCCESS][CORE_1][pid 106911] exit success!
+[SUCCESS][CORE_2][pid 106912] exit success!
+[SUCCESS][CORE_3][pid 106913] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106914] exit success!
+[SUCCESS][CORE_1][pid 106915] exit success!
+[SUCCESS][CORE_2][pid 106916] exit success!
+[SUCCESS][CORE_3][pid 106917] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106918] exit success!
+[SUCCESS][CORE_1][pid 106919] exit success!
+[SUCCESS][CORE_2][pid 106920] exit success!
+[SUCCESS][CORE_3][pid 106921] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106922] exit success!
+[SUCCESS][CORE_1][pid 106923] exit success!
+[SUCCESS][CORE_2][pid 106924] exit success!
+[SUCCESS][CORE_3][pid 106925] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 106926] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 106927] exit success!
+[SUCCESS][AIV_1][pid 106928] exit success!
+[SUCCESS][AIC_1][pid 106929] exit success!
+[SUCCESS][AIV_2][pid 106930] exit success!
+[SUCCESS][AIV_3][pid 106931] exit success!
+splits=1 empty_segments=0
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106933] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106934] exit success!
+[SUCCESS][CORE_2][pid 106935] exit success!
+[SUCCESS][CORE_3][pid 106936] exit success!
+max_abs=3.8743e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d128_q3_c511/expected_output.bin
+max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d128_q3_c511/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "008-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d128_q3_c511"], "returncode": 0, "elapsed_seconds": 4.043338, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/008-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=008-attention_cv rc=0 log=logs/vm-cv/008-attention_cv.log
+START phase=009-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q65_c17"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106939] exit success!
+[SUCCESS][CORE_1][pid 106940] exit success!
+[SUCCESS][CORE_2][pid 106941] exit success!
+[SUCCESS][CORE_3][pid 106942] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106943] exit success!
+[SUCCESS][CORE_1][pid 106944] exit success!
+[SUCCESS][CORE_2][pid 106945] exit success!
+[SUCCESS][CORE_3][pid 106946] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106947] exit success!
+[SUCCESS][CORE_1][pid 106948] exit success!
+[SUCCESS][CORE_2][pid 106949] exit success!
+[SUCCESS][CORE_3][pid 106950] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106951] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 106952] exit success!
+[SUCCESS][CORE_2][pid 106953] exit success!
+[SUCCESS][CORE_3][pid 106954] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106955] exit success!
+[SUCCESS][CORE_1][pid 106956] exit success!
+[SUCCESS][CORE_2][pid 106957] exit success!
+[SUCCESS][CORE_3][pid 106958] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106959] exit success!
+[SUCCESS][CORE_1][pid 106960] exit success!
+[SUCCESS][CORE_2][pid 106961] exit success!
+[SUCCESS][CORE_3][pid 106962] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 106963] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 106964] exit success!
+[SUCCESS][AIV_1][pid 106965] exit success!
+[SUCCESS][AIC_1][pid 106966] exit success!
+[SUCCESS][AIV_2][pid 106967] exit success!
+[SUCCESS][AIV_3][pid 106968] exit success!
+splits=1 empty_segments=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106972] exit success!
+[SUCCESS][CORE_1][pid 106973] exit success!
+[SUCCESS][CORE_2][pid 106974] exit success!
+[SUCCESS][CORE_3][pid 106975] exit success!
+max_abs=8.9407e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q65_c17/expected_output.bin
+max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q65_c17/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "009-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q65_c17"], "returncode": 0, "elapsed_seconds": 5.787655, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/009-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=009-attention_cv rc=0 log=logs/vm-cv/009-attention_cv.log
+START phase=010-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_s2"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106978] exit success!
+[SUCCESS][CORE_1][pid 106979] exit success!
+[SUCCESS][CORE_2][pid 106980] exit success!
+[SUCCESS][CORE_3][pid 106981] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106982] exit success!
+[SUCCESS][CORE_1][pid 106983] exit success!
+[SUCCESS][CORE_2][pid 106984] exit success!
+[SUCCESS][CORE_3][pid 106985] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106986] exit success!
+[SUCCESS][CORE_1][pid 106987] exit success!
+[SUCCESS][CORE_2][pid 106988] exit success!
+[SUCCESS][CORE_3][pid 106989] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106990] exit success!
+[SUCCESS][CORE_1][pid 106991] exit success!
+[SUCCESS][CORE_2][pid 106992] exit success!
+[SUCCESS][CORE_3][pid 106993] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106994] exit success!
+[SUCCESS][CORE_1][pid 106995] exit success!
+[SUCCESS][CORE_2][pid 106996] exit success!
+[SUCCESS][CORE_3][pid 106997] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 106998] exit success!
+[SUCCESS][CORE_1][pid 106999] exit success!
+[SUCCESS][CORE_2][pid 107000] exit success!
+[SUCCESS][CORE_3][pid 107001] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 107002] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 107003] exit success!
+[SUCCESS][AIV_1][pid 107004] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_1][pid 107005] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_2][pid 107006] exit success!
+[SUCCESS][AIV_3][pid 107007] exit success!
+[SUCCESS][AIC_2][pid 107008] exit success!
+[SUCCESS][AIV_4][pid 107009] exit success!
+[SUCCESS][AIV_5][pid 107010] exit success!
+[SUCCESS][AIC_3][pid 107011] exit success!
+[SUCCESS][AIV_6][pid 107012] exit success!
+[SUCCESS][AIV_7][pid 107013] exit success!
+[SUCCESS][AIC_4][pid 107014] exit success!
+[SUCCESS][AIV_8][pid 107015] exit success!
+[SUCCESS][AIV_9][pid 107016] exit success!
+[SUCCESS][AIC_5][pid 107017] exit success!
+[SUCCESS][AIV_10][pid 107018] exit success!
+[SUCCESS][AIV_11][pid 107019] exit success!
+[SUCCESS][AIC_6][pid 107020] exit success!
+[SUCCESS][AIV_12][pid 107021] exit success!
+[SUCCESS][AIV_13][pid 107022] exit success!
+[SUCCESS][AIC_7][pid 107023] exit success!
+[SUCCESS][AIV_14][pid 107024] exit success!
+[SUCCESS][AIV_15][pid 107025] exit success!
+[SUCCESS][AIC_8][pid 107026] exit success!
+[SUCCESS][AIV_16][pid 107027] exit success!
+[SUCCESS][AIV_17][pid 107028] exit success!
+[SUCCESS][AIC_9][pid 107029] exit success!
+[SUCCESS][AIV_18][pid 107030] exit success!
+[SUCCESS][AIV_19][pid 107031] exit success!
+[SUCCESS][AIC_10][pid 107032] exit success!
+[SUCCESS][AIV_20][pid 107033] exit success!
+[SUCCESS][AIV_21][pid 107034] exit success!
+[SUCCESS][AIC_11][pid 107035] exit success!
+[SUCCESS][AIV_22][pid 107036] exit success!
+[SUCCESS][AIV_23][pid 107037] exit success!
+[SUCCESS][AIC_12][pid 107038] exit success!
+[SUCCESS][AIV_24][pid 107039] exit success!
+[SUCCESS][AIV_25][pid 107040] exit success!
+[SUCCESS][AIC_13][pid 107041] exit success!
+[SUCCESS][AIV_26][pid 107042] exit success!
+[SUCCESS][AIV_27][pid 107043] exit success!
+[SUCCESS][AIC_14][pid 107044] exit success!
+[SUCCESS][AIV_28][pid 107045] exit success!
+[SUCCESS][AIV_29][pid 107046] exit success!
+[SUCCESS][AIC_15][pid 107047] exit success!
+[SUCCESS][AIV_30][pid 107048] exit success!
+[SUCCESS][AIV_31][pid 107049] exit success!
+[SUCCESS][AIC_16][pid 107050] exit success!
+[SUCCESS][AIV_32][pid 107051] exit success!
+[SUCCESS][AIV_33][pid 107052] exit success!
+[SUCCESS][AIC_17][pid 107053] exit success!
+[SUCCESS][AIV_34][pid 107054] exit success!
+[SUCCESS][AIV_35][pid 107055] exit success!
+[SUCCESS][AIC_18][pid 107056] exit success!
+[SUCCESS][AIV_36][pid 107057] exit success!
+[SUCCESS][AIV_37][pid 107058] exit success!
+[SUCCESS][AIC_19][pid 107059] exit success!
+[SUCCESS][AIV_38][pid 107060] exit success!
+[SUCCESS][AIV_39][pid 107061] exit success!
+splits=2 empty_segments=0
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107062] exit success!
+[SUCCESS][CORE_1][pid 107063] exit success!
+[SUCCESS][CORE_2][pid 107064] exit success!
+[SUCCESS][CORE_3][pid 107065] exit success!
+max_abs=3.57628e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_s2/expected_output.bin
+max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_s2/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "010-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_s2"], "returncode": 0, "elapsed_seconds": 0.923968, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/010-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=010-attention_cv rc=0 log=logs/vm-cv/010-attention_cv.log
+START phase=011-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_s20"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107069] exit success!
+[SUCCESS][CORE_1][pid 107070] exit success!
+[SUCCESS][CORE_2][pid 107071] exit success!
+[SUCCESS][CORE_3][pid 107072] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107073] exit success!
+[SUCCESS][CORE_1][pid 107074] exit success!
+[SUCCESS][CORE_2][pid 107075] exit success!
+[SUCCESS][CORE_3][pid 107076] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107077] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 107078] exit success!
+[SUCCESS][CORE_2][pid 107079] exit success!
+[SUCCESS][CORE_3][pid 107080] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107081] exit success!
+[SUCCESS][CORE_1][pid 107082] exit success!
+[SUCCESS][CORE_2][pid 107083] exit success!
+[SUCCESS][CORE_3][pid 107084] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107085] exit success!
+[SUCCESS][CORE_1][pid 107086] exit success!
+[SUCCESS][CORE_2][pid 107087] exit success!
+[SUCCESS][CORE_3][pid 107088] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107089] exit success!
+[SUCCESS][CORE_1][pid 107090] exit success!
+[SUCCESS][CORE_2][pid 107091] exit success!
+[SUCCESS][CORE_3][pid 107092] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 107093] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 107094] exit success!
+[SUCCESS][AIV_1][pid 107095] exit success!
+[SUCCESS][AIC_1][pid 107096] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_2][pid 107097] exit success!
+[SUCCESS][AIV_3][pid 107098] exit success!
+[SUCCESS][AIC_2][pid 107099] exit success!
+[SUCCESS][AIV_4][pid 107100] exit success!
+[SUCCESS][AIV_5][pid 107101] exit success!
+[SUCCESS][AIC_3][pid 107102] exit success!
+[SUCCESS][AIV_6][pid 107103] exit success!
+[SUCCESS][AIV_7][pid 107104] exit success!
+[SUCCESS][AIC_4][pid 107105] exit success!
+[SUCCESS][AIV_8][pid 107106] exit success!
+[SUCCESS][AIV_9][pid 107107] exit success!
+[SUCCESS][AIC_5][pid 107108] exit success!
+[SUCCESS][AIV_10][pid 107109] exit success!
+[SUCCESS][AIV_11][pid 107110] exit success!
+[SUCCESS][AIC_6][pid 107111] exit success!
+[SUCCESS][AIV_12][pid 107112] exit success!
+[SUCCESS][AIV_13][pid 107113] exit success!
+[SUCCESS][AIC_7][pid 107114] exit success!
+[SUCCESS][AIV_14][pid 107115] exit success!
+[SUCCESS][AIV_15][pid 107116] exit success!
+[SUCCESS][AIC_8][pid 107117] exit success!
+[SUCCESS][AIV_16][pid 107118] exit success!
+[SUCCESS][AIV_17][pid 107119] exit success!
+[SUCCESS][AIC_9][pid 107120] exit success!
+[SUCCESS][AIV_18][pid 107121] exit success!
+[SUCCESS][AIV_19][pid 107122] exit success!
+[SUCCESS][AIC_10][pid 107123] exit success!
+[SUCCESS][AIV_20][pid 107124] exit success!
+[SUCCESS][AIV_21][pid 107125] exit success!
+[SUCCESS][AIC_11][pid 107126] exit success!
+[SUCCESS][AIV_22][pid 107127] exit success!
+[SUCCESS][AIV_23][pid 107128] exit success!
+[SUCCESS][AIC_12][pid 107129] exit success!
+[SUCCESS][AIV_24][pid 107130] exit success!
+[SUCCESS][AIV_25][pid 107131] exit success!
+[SUCCESS][AIC_13][pid 107132] exit success!
+[SUCCESS][AIV_26][pid 107133] exit success!
+[SUCCESS][AIV_27][pid 107134] exit success!
+[SUCCESS][AIC_14][pid 107135] exit success!
+[SUCCESS][AIV_28][pid 107136] exit success!
+[SUCCESS][AIV_29][pid 107137] exit success!
+[SUCCESS][AIC_15][pid 107138] exit success!
+[SUCCESS][AIV_30][pid 107139] exit success!
+[SUCCESS][AIV_31][pid 107140] exit success!
+[SUCCESS][AIC_16][pid 107141] exit success!
+[SUCCESS][AIV_32][pid 107142] exit success!
+[SUCCESS][AIV_33][pid 107143] exit success!
+[SUCCESS][AIC_17][pid 107144] exit success!
+[SUCCESS][AIV_34][pid 107145] exit success!
+[SUCCESS][AIV_35][pid 107146] exit success!
+[SUCCESS][AIC_18][pid 107147] exit success!
+[SUCCESS][AIV_36][pid 107148] exit success!
+[SUCCESS][AIV_37][pid 107149] exit success!
+[SUCCESS][AIC_19][pid 107150] exit success!
+[SUCCESS][AIV_38][pid 107151] exit success!
+[SUCCESS][AIV_39][pid 107152] exit success!
+splits=20 empty_segments=21
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107154] exit success!
+[SUCCESS][CORE_1][pid 107155] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 107156] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_3][pid 107157] exit success!
+max_abs=3.57628e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_s20/expected_output.bin
+max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_s20/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "011-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_s20"], "returncode": 0, "elapsed_seconds": 3.654161, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/011-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=011-attention_cv rc=0 log=logs/vm-cv/011-attention_cv.log
+START phase=012-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d256_q4_c511_s20"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107160] exit success!
+[SUCCESS][CORE_1][pid 107161] exit success!
+[SUCCESS][CORE_2][pid 107162] exit success!
+[SUCCESS][CORE_3][pid 107163] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107164] exit success!
+[SUCCESS][CORE_1][pid 107165] exit success!
+[SUCCESS][CORE_2][pid 107166] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_3][pid 107167] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107168] exit success!
+[SUCCESS][CORE_1][pid 107169] exit success!
+[SUCCESS][CORE_2][pid 107170] exit success!
+[SUCCESS][CORE_3][pid 107171] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107172] exit success!
+[SUCCESS][CORE_1][pid 107173] exit success!
+[SUCCESS][CORE_2][pid 107174] exit success!
+[SUCCESS][CORE_3][pid 107175] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107176] exit success!
+[SUCCESS][CORE_1][pid 107177] exit success!
+[SUCCESS][CORE_2][pid 107178] exit success!
+[SUCCESS][CORE_3][pid 107179] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107180] exit success!
+[SUCCESS][CORE_1][pid 107181] exit success!
+[SUCCESS][CORE_2][pid 107182] exit success!
+[SUCCESS][CORE_3][pid 107183] exit success!
+[oscar] phase=cv-debug running seconds=30.2 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 107184] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 107185] exit success!
+[SUCCESS][AIV_1][pid 107186] exit success!
+[SUCCESS][AIC_1][pid 107187] exit success!
+[SUCCESS][AIV_2][pid 107188] exit success!
+[SUCCESS][AIV_3][pid 107189] exit success!
+[SUCCESS][AIC_2][pid 107190] exit success!
+[SUCCESS][AIV_4][pid 107191] exit success!
+[SUCCESS][AIV_5][pid 107192] exit success!
+[SUCCESS][AIC_3][pid 107193] exit success!
+[SUCCESS][AIV_6][pid 107194] exit success!
+[SUCCESS][AIV_7][pid 107195] exit success!
+[SUCCESS][AIC_4][pid 107196] exit success!
+[SUCCESS][AIV_8][pid 107197] exit success!
+[SUCCESS][AIV_9][pid 107198] exit success!
+[SUCCESS][AIC_5][pid 107199] exit success!
+[SUCCESS][AIV_10][pid 107200] exit success!
+[SUCCESS][AIV_11][pid 107201] exit success!
+[SUCCESS][AIC_6][pid 107202] exit success!
+[SUCCESS][AIV_12][pid 107203] exit success!
+[SUCCESS][AIV_13][pid 107204] exit success!
+[SUCCESS][AIC_7][pid 107205] exit success!
+[SUCCESS][AIV_14][pid 107206] exit success!
+[SUCCESS][AIV_15][pid 107207] exit success!
+[SUCCESS][AIC_8][pid 107208] exit success!
+[SUCCESS][AIV_16][pid 107209] exit success!
+[SUCCESS][AIV_17][pid 107210] exit success!
+[SUCCESS][AIC_9][pid 107211] exit success!
+[SUCCESS][AIV_18][pid 107212] exit success!
+[SUCCESS][AIV_19][pid 107213] exit success!
+[SUCCESS][AIC_10][pid 107214] exit success!
+[SUCCESS][AIV_20][pid 107215] exit success!
+[SUCCESS][AIV_21][pid 107216] exit success!
+[SUCCESS][AIC_11][pid 107217] exit success!
+[SUCCESS][AIV_22][pid 107218] exit success!
+[SUCCESS][AIV_23][pid 107219] exit success!
+[SUCCESS][AIC_12][pid 107220] exit success!
+[SUCCESS][AIV_24][pid 107221] exit success!
+[SUCCESS][AIV_25][pid 107222] exit success!
+[SUCCESS][AIC_13][pid 107223] exit success!
+[SUCCESS][AIV_26][pid 107224] exit success!
+[SUCCESS][AIV_27][pid 107225] exit success!
+[SUCCESS][AIC_14][pid 107226] exit success!
+[SUCCESS][AIV_28][pid 107227] exit success!
+[SUCCESS][AIV_29][pid 107228] exit success!
+[SUCCESS][AIC_15][pid 107229] exit success!
+[SUCCESS][AIV_30][pid 107230] exit success!
+[SUCCESS][AIV_31][pid 107231] exit success!
+[SUCCESS][AIC_16][pid 107232] exit success!
+[SUCCESS][AIV_32][pid 107233] exit success!
+[SUCCESS][AIV_33][pid 107234] exit success!
+[SUCCESS][AIC_17][pid 107235] exit success!
+[SUCCESS][AIV_34][pid 107236] exit success!
+[SUCCESS][AIV_35][pid 107237] exit success!
+[SUCCESS][AIC_18][pid 107238] exit success!
+[SUCCESS][AIV_36][pid 107239] exit success!
+[SUCCESS][AIV_37][pid 107240] exit success!
+[SUCCESS][AIC_19][pid 107241] exit success!
+[SUCCESS][AIV_38][pid 107242] exit success!
+[SUCCESS][AIV_39][pid 107243] exit success!
+splits=20 empty_segments=18
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107247] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 107248] exit success!
+[SUCCESS][CORE_2][pid 107249] exit success!
+[SUCCESS][CORE_3][pid 107250] exit success!
+max_abs=8.9407e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d256_q4_c511_s20/expected_output.bin
+max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d256_q4_c511_s20/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "012-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d256_q4_c511_s20"], "returncode": 0, "elapsed_seconds": 7.26898, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/012-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=012-attention_cv rc=0 log=logs/vm-cv/012-attention_cv.log
+START phase=013-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c0_s20"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107253] exit success!
+[SUCCESS][CORE_1][pid 107254] exit success!
+[SUCCESS][CORE_2][pid 107255] exit success!
+[SUCCESS][CORE_3][pid 107256] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107257] exit success!
+[SUCCESS][CORE_1][pid 107258] exit success!
+[SUCCESS][CORE_2][pid 107259] exit success!
+[SUCCESS][CORE_3][pid 107260] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107261] exit success!
+[SUCCESS][CORE_1][pid 107262] exit success!
+[SUCCESS][CORE_2][pid 107263] exit success!
+[SUCCESS][CORE_3][pid 107264] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107265] exit success!
+[SUCCESS][CORE_1][pid 107266] exit success!
+[SUCCESS][CORE_2][pid 107267] exit success!
+[SUCCESS][CORE_3][pid 107268] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107269] exit success!
+[SUCCESS][CORE_1][pid 107270] exit success!
+[SUCCESS][CORE_2][pid 107271] exit success!
+[SUCCESS][CORE_3][pid 107272] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107273] exit success!
+[SUCCESS][CORE_1][pid 107274] exit success!
+[SUCCESS][CORE_2][pid 107275] exit success!
+[SUCCESS][CORE_3][pid 107276] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 107277] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 107278] exit success!
+[SUCCESS][AIV_1][pid 107279] exit success!
+[SUCCESS][AIC_1][pid 107280] exit success!
+[SUCCESS][AIV_2][pid 107281] exit success!
+[SUCCESS][AIV_3][pid 107282] exit success!
+[SUCCESS][AIC_2][pid 107283] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_4][pid 107284] exit success!
+[SUCCESS][AIV_5][pid 107285] exit success!
+[SUCCESS][AIC_3][pid 107286] exit success!
+[SUCCESS][AIV_6][pid 107287] exit success!
+[SUCCESS][AIV_7][pid 107288] exit success!
+[SUCCESS][AIC_4][pid 107289] exit success!
+[SUCCESS][AIV_8][pid 107290] exit success!
+[SUCCESS][AIV_9][pid 107291] exit success!
+[SUCCESS][AIC_5][pid 107292] exit success!
+[SUCCESS][AIV_10][pid 107293] exit success!
+[SUCCESS][AIV_11][pid 107294] exit success!
+[SUCCESS][AIC_6][pid 107295] exit success!
+[SUCCESS][AIV_12][pid 107296] exit success!
+[SUCCESS][AIV_13][pid 107297] exit success!
+[SUCCESS][AIC_7][pid 107298] exit success!
+[SUCCESS][AIV_14][pid 107299] exit success!
+[SUCCESS][AIV_15][pid 107300] exit success!
+[SUCCESS][AIC_8][pid 107301] exit success!
+[SUCCESS][AIV_16][pid 107302] exit success!
+[SUCCESS][AIV_17][pid 107303] exit success!
+[SUCCESS][AIC_9][pid 107304] exit success!
+[SUCCESS][AIV_18][pid 107305] exit success!
+[SUCCESS][AIV_19][pid 107306] exit success!
+[SUCCESS][AIC_10][pid 107307] exit success!
+[SUCCESS][AIV_20][pid 107308] exit success!
+[SUCCESS][AIV_21][pid 107309] exit success!
+[SUCCESS][AIC_11][pid 107310] exit success!
+[SUCCESS][AIV_22][pid 107311] exit success!
+[SUCCESS][AIV_23][pid 107312] exit success!
+[SUCCESS][AIC_12][pid 107313] exit success!
+[SUCCESS][AIV_24][pid 107314] exit success!
+[SUCCESS][AIV_25][pid 107315] exit success!
+[SUCCESS][AIC_13][pid 107316] exit success!
+[SUCCESS][AIV_26][pid 107317] exit success!
+[SUCCESS][AIV_27][pid 107318] exit success!
+[SUCCESS][AIC_14][pid 107319] exit success!
+[SUCCESS][AIV_28][pid 107320] exit success!
+[SUCCESS][AIV_29][pid 107321] exit success!
+[SUCCESS][AIC_15][pid 107322] exit success!
+[SUCCESS][AIV_30][pid 107323] exit success!
+[SUCCESS][AIV_31][pid 107324] exit success!
+[SUCCESS][AIC_16][pid 107325] exit success!
+[SUCCESS][AIV_32][pid 107326] exit success!
+[SUCCESS][AIV_33][pid 107327] exit success!
+[SUCCESS][AIC_17][pid 107328] exit success!
+[SUCCESS][AIV_34][pid 107329] exit success!
+[SUCCESS][AIV_35][pid 107330] exit success!
+[SUCCESS][AIC_18][pid 107331] exit success!
+[SUCCESS][AIV_36][pid 107332] exit success!
+[SUCCESS][AIV_37][pid 107333] exit success!
+[SUCCESS][AIC_19][pid 107334] exit success!
+[SUCCESS][AIV_38][pid 107335] exit success!
+[SUCCESS][AIV_39][pid 107336] exit success!
+splits=20 empty_segments=56
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107338] exit success!
+[SUCCESS][CORE_1][pid 107339] exit success!
+[SUCCESS][CORE_2][pid 107340] exit success!
+[SUCCESS][CORE_3][pid 107341] exit success!
+max_abs=2.38419e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c0_s20/expected_output.bin
+max_abs=2.38419e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c0_s20/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "013-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c0_s20"], "returncode": 0, "elapsed_seconds": 1.521789, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/013-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=013-attention_cv rc=0 log=logs/vm-cv/013-attention_cv.log
+START phase=014-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_mixed_q1q4"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107344] exit success!
+[SUCCESS][CORE_1][pid 107345] exit success!
+[SUCCESS][CORE_2][pid 107346] exit success!
+[SUCCESS][CORE_3][pid 107347] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107348] exit success!
+[SUCCESS][CORE_1][pid 107349] exit success!
+[SUCCESS][CORE_2][pid 107350] exit success!
+[SUCCESS][CORE_3][pid 107351] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107352] exit success!
+[SUCCESS][CORE_1][pid 107353] exit success!
+[SUCCESS][CORE_2][pid 107354] exit success!
+[SUCCESS][CORE_3][pid 107355] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107356] exit success!
+[SUCCESS][CORE_1][pid 107357] exit success!
+[SUCCESS][CORE_2][pid 107358] exit success!
+[SUCCESS][CORE_3][pid 107359] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107360] exit success!
+[SUCCESS][CORE_1][pid 107361] exit success!
+[SUCCESS][CORE_2][pid 107362] exit success!
+[SUCCESS][CORE_3][pid 107363] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107364] exit success!
+[SUCCESS][CORE_1][pid 107365] exit success!
+[SUCCESS][CORE_2][pid 107366] exit success!
+[SUCCESS][CORE_3][pid 107367] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 107368] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 107369] exit success!
+[SUCCESS][AIV_1][pid 107370] exit success!
+[SUCCESS][AIC_1][pid 107371] exit success!
+[SUCCESS][AIV_2][pid 107372] exit success!
+[SUCCESS][AIV_3][pid 107373] exit success!
+splits=1 empty_segments=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107374] exit success!
+[SUCCESS][CORE_1][pid 107375] exit success!
+[SUCCESS][CORE_2][pid 107376] exit success!
+[SUCCESS][CORE_3][pid 107377] exit success!
+max_abs=4.17233e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_mixed_q1q4/expected_output.bin
+max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_mixed_q1q4/expected_lse.bin
+{"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
+RESULT {"phase": "014-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_mixed_q1q4"], "returncode": 0, "elapsed_seconds": 1.221134, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/014-attention_cv.log", "cleanup_complete": true}
+[oscar] PASSED phase=014-attention_cv rc=0 log=logs/vm-cv/014-attention_cv.log
+START phase=015-bad_tag cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "bad_tag", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107380] exit success!
+[SUCCESS][CORE_1][pid 107381] exit success!
+[SUCCESS][CORE_2][pid 107382] exit success!
+[SUCCESS][CORE_3][pid 107383] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107384] exit success!
+[SUCCESS][CORE_1][pid 107385] exit success!
+[SUCCESS][CORE_2][pid 107386] exit success!
+[SUCCESS][CORE_3][pid 107387] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107388] exit success!
+[SUCCESS][CORE_1][pid 107389] exit success!
+[SUCCESS][CORE_2][pid 107390] exit success!
+[SUCCESS][CORE_3][pid 107391] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107392] exit success!
+[SUCCESS][CORE_1][pid 107393] exit success!
+[SUCCESS][CORE_2][pid 107394] exit success!
+[SUCCESS][CORE_3][pid 107395] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107396] exit success!
+[SUCCESS][CORE_1][pid 107397] exit success!
+[SUCCESS][CORE_2][pid 107398] exit success!
+[SUCCESS][CORE_3][pid 107399] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107400] exit success!
+[SUCCESS][CORE_1][pid 107401] exit success!
+[SUCCESS][CORE_2][pid 107402] exit success!
+[SUCCESS][CORE_3][pid 107403] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 107404] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 107405] exit success!
+[SUCCESS][AIV_1][pid 107406] exit success!
+[SUCCESS][AIC_1][pid 107407] exit success!
+[SUCCESS][AIV_2][pid 107408] exit success!
+[SUCCESS][AIV_3][pid 107409] exit success!
+{"backend":"ascendc_cpu_debug","op":"bad_tag","status":"passed"}
+RESULT {"phase": "015-bad_tag", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "bad_tag", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"], "returncode": 0, "elapsed_seconds": 0.916732, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/015-bad_tag.log", "cleanup_complete": true}
+[oscar] PASSED phase=015-bad_tag rc=0 log=logs/vm-cv/015-bad_tag.log
+START phase=016-nan_query cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "nan_query", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107412] exit success!
+[SUCCESS][CORE_1][pid 107413] exit success!
+[SUCCESS][CORE_2][pid 107414] exit success!
+[SUCCESS][CORE_3][pid 107415] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107416] exit success!
+[SUCCESS][CORE_1][pid 107417] exit success!
+[SUCCESS][CORE_2][pid 107418] exit success!
+[SUCCESS][CORE_3][pid 107419] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107420] exit success!
+[SUCCESS][CORE_1][pid 107421] exit success!
+[SUCCESS][CORE_2][pid 107422] exit success!
+[SUCCESS][CORE_3][pid 107423] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107424] exit success!
+[SUCCESS][CORE_1][pid 107425] exit success!
+[SUCCESS][CORE_2][pid 107426] exit success!
+[SUCCESS][CORE_3][pid 107427] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107428] exit success!
+[SUCCESS][CORE_1][pid 107429] exit success!
+[SUCCESS][CORE_2][pid 107430] exit success!
+[SUCCESS][CORE_3][pid 107431] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107432] exit success!
+[SUCCESS][CORE_1][pid 107433] exit success!
+[SUCCESS][CORE_2][pid 107434] exit success!
+[SUCCESS][CORE_3][pid 107435] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 107436] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 107437] exit success!
+[SUCCESS][AIV_1][pid 107438] exit success!
+[SUCCESS][AIC_1][pid 107439] exit success!
+[SUCCESS][AIV_2][pid 107440] exit success!
+[SUCCESS][AIV_3][pid 107441] exit success!
+{"backend":"ascendc_cpu_debug","op":"nan_query","status":"passed"}
+RESULT {"phase": "016-nan_query", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "nan_query", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"], "returncode": 0, "elapsed_seconds": 1.038624, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/016-nan_query.log", "cleanup_complete": true}
+[oscar] PASSED phase=016-nan_query rc=0 log=logs/vm-cv/016-nan_query.log
+START phase=017-bad_meta cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "bad_meta", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107446] exit success!
+[SUCCESS][CORE_1][pid 107447] exit success!
+[SUCCESS][CORE_2][pid 107448] exit success!
+[SUCCESS][CORE_3][pid 107449] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107450] exit success!
+[SUCCESS][CORE_1][pid 107451] exit success!
+[SUCCESS][CORE_2][pid 107452] exit success!
+[SUCCESS][CORE_3][pid 107453] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107454] exit success!
+[SUCCESS][CORE_1][pid 107455] exit success!
+[SUCCESS][CORE_2][pid 107456] exit success!
+[SUCCESS][CORE_3][pid 107457] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107458] exit success!
+[SUCCESS][CORE_1][pid 107459] exit success!
+[SUCCESS][CORE_2][pid 107460] exit success!
+[SUCCESS][CORE_3][pid 107461] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107462] exit success!
+[SUCCESS][CORE_1][pid 107463] exit success!
+[SUCCESS][CORE_2][pid 107464] exit success!
+[SUCCESS][CORE_3][pid 107465] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107466] exit success!
+[SUCCESS][CORE_1][pid 107467] exit success!
+[SUCCESS][CORE_2][pid 107468] exit success!
+[SUCCESS][CORE_3][pid 107469] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 107470] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 107471] exit success!
+[SUCCESS][AIV_1][pid 107472] exit success!
+[SUCCESS][AIC_1][pid 107473] exit success!
+[SUCCESS][AIV_2][pid 107474] exit success!
+[SUCCESS][AIV_3][pid 107475] exit success!
+{"backend":"ascendc_cpu_debug","op":"bad_meta","status":"passed"}
+RESULT {"phase": "017-bad_meta", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "bad_meta", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"], "returncode": 0, "elapsed_seconds": 1.030557, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/017-bad_meta.log", "cleanup_complete": true}
+[oscar] PASSED phase=017-bad_meta rc=0 log=logs/vm-cv/017-bad_meta.log
+START phase=018-nan_value cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "nan_value", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107478] exit success!
+[SUCCESS][CORE_1][pid 107479] exit success!
+[SUCCESS][CORE_2][pid 107480] exit success!
+[SUCCESS][CORE_3][pid 107481] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107482] exit success!
+[SUCCESS][CORE_1][pid 107483] exit success!
+[SUCCESS][CORE_2][pid 107484] exit success!
+[SUCCESS][CORE_3][pid 107485] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107486] exit success!
+[SUCCESS][CORE_1][pid 107487] exit success!
+[SUCCESS][CORE_2][pid 107488] exit success!
+[SUCCESS][CORE_3][pid 107489] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107490] exit success!
+[SUCCESS][CORE_1][pid 107491] exit success!
+[SUCCESS][CORE_2][pid 107492] exit success!
+[SUCCESS][CORE_3][pid 107493] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107494] exit success!
+[SUCCESS][CORE_1][pid 107495] exit success!
+[SUCCESS][CORE_2][pid 107496] exit success!
+[SUCCESS][CORE_3][pid 107497] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107498] exit success!
+[SUCCESS][CORE_1][pid 107499] exit success!
+[SUCCESS][CORE_2][pid 107500] exit success!
+[SUCCESS][CORE_3][pid 107501] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 107502] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 107503] exit success!
+[SUCCESS][AIV_1][pid 107504] exit success!
+[SUCCESS][AIC_1][pid 107505] exit success!
+[SUCCESS][AIV_2][pid 107506] exit success!
+[SUCCESS][AIV_3][pid 107507] exit success!
+{"backend":"ascendc_cpu_debug","op":"nan_value","status":"passed"}
+RESULT {"phase": "018-nan_value", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "nan_value", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"], "returncode": 0, "elapsed_seconds": 1.031188, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/018-nan_value.log", "cleanup_complete": true}
+[oscar] PASSED phase=018-nan_value rc=0 log=logs/vm-cv/018-nan_value.log
+START phase=019-tasks_causal cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "tasks_causal", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases"]
+scheduled_cores=2 min_live=819 max_live=820
+scheduled_cores=20 min_live=81 max_live=82
+scheduled_cores=24 min_live=68 max_live=69
+scheduled_cores=32 min_live=51 max_live=52
+[oscar] phase=cv-debug running seconds=45.2 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log
+[oscar] phase=019-tasks_causal running seconds=15.0 log=logs/vm-cv/019-tasks_causal.log
+[oscar] phase=cv-debug running seconds=60.3 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log
+[oscar] phase=019-tasks_causal running seconds=30.1 log=logs/vm-cv/019-tasks_causal.log
+[oscar] phase=cv-debug running seconds=75.3 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log
+[oscar] phase=019-tasks_causal running seconds=45.2 log=logs/vm-cv/019-tasks_causal.log
+[oscar] phase=cv-debug running seconds=90.3 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log
+[oscar] phase=019-tasks_causal running seconds=60.2 log=logs/vm-cv/019-tasks_causal.log
+[oscar] phase=cv-debug running seconds=105.3 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log
+[oscar] phase=019-tasks_causal running seconds=75.3 log=logs/vm-cv/019-tasks_causal.log
+[oscar] phase=cv-debug running seconds=120.4 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log
+[oscar] phase=019-tasks_causal running seconds=90.3 log=logs/vm-cv/019-tasks_causal.log
+[oscar] phase=cv-debug running seconds=135.4 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log
+[oscar] phase=019-tasks_causal running seconds=105.4 log=logs/vm-cv/019-tasks_causal.log
+[oscar] phase=cv-debug running seconds=150.5 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log
+TIMEOUT phase=019-tasks_causal limit=120s
+RESULT {"phase": "019-tasks_causal", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "tasks_causal", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases"], "returncode": 124, "elapsed_seconds": 120.056983, "timed_out": true, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/019-tasks_causal.log", "cleanup_complete": true}
+[oscar] FAILED phase=019-tasks_causal rc=124 log=logs/vm-cv/019-tasks_causal.log
+RESULT {"phase": "cv-debug", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --executable build/cpu/oscar_cv_cpu --cases artifacts/cv_cpu_cases/cases.json --output reports/cv_cpu_debug.json --log-dir logs/vm-cv"], "returncode": 1, "elapsed_seconds": 164.139022, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log", "cleanup_complete": true}
+[oscar] FAILED phase=cv-debug rc=1 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log

@@ -16,7 +16,7 @@
     "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.build_ops --soc ascend910b4 --log-dir logs/vm-verify-device"
   ],
   "returncode": 0,
-  "elapsed_seconds": 0.10174,
+  "elapsed_seconds": 22.259477,
   "timed_out": false,
   "interrupted": false,
   "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/device-build.log",

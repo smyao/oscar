@@ -17,11 +17,18 @@
 // precision/latency is claimed before fixed-tolerance NPU/profiler validation.
 // #126 adds one local MTE3->V dependency before padding writes; tile storage,
 // arithmetic and history traffic stay unchanged (no CPU/global sync or retry).
+// #129/D.4: schedule consecutive query tiles within each source/head/split.
+// Raw token-task striding aliases GQA6 leaders (stride30) onto 2/20 Cubes.
+// This changes ownership only: fixed scratch, identical CV math, no fallback;
+// causal task bounds avoid future-only work. NPU latency remains unverified.
 // Native precedents: hc_pre_m_k_split_core.h mode-2 Cube/Vector flags;
 // hc_pre_cube_compute.h FP32 Mmad; moe_grouped_matmul.h MatmulImpl;
 // add_rms_norm_bias_multi_n.h Gather; PR triton_oscar_decode.py INT2 and LSE.
 #include "oscar_common.h"
 #include "../include/oscar_attention_launch.h"
+#define OSCAR_SCHEDULE_FN __aicore__ inline
+#include "../include/oscar_cv_schedule.h"
+#undef OSCAR_SCHEDULE_FN
 #include "lib/matmul_intf.h"
 #include "lib/matmul/constant_tiling.h"
 using namespace oscar_ascend_device;
@@ -108,15 +115,25 @@ template<int32_t D> class AttentionCv {
     if ASCEND_IS_AIC {
       DataCacheCleanAndInvalid<int64_t,CacheLine::ENTIRE_DATA_CACHE>(taskGm);
     }
-    for(int64_t id=coreIndex;id<g.taskCount;id+=GetBlockNum()) {
-      LoadTask(id);
-      if(qcount==0) {if ASCEND_IS_AIV {PublishStatus(id,0);} continue;}
-      if(qcount<0 || taskError || !TaskValid()) {
-        if ASCEND_IS_AIV {PublishEmpty(id,taskError?taskError:(!TaskValid()?1:0));}
-        continue;
+    const int64_t queryTile=kQueryRows/(g.hq/g.hk);
+    const int64_t perToken=g.hk*3*g.splits;
+    const oscar_ascend_schedule::CvTaskSchedule schedule{g.tokens,queryTile,perToken};
+    // A work item owns one global token tile and one source/head/split.
+    // Scan every slot in it: request boundaries/padding holes may put the
+    // active leader anywhere, so no task is discarded or counted twice.
+    for(int64_t workId=coreIndex;workId<schedule.WorkItems();workId+=GetBlockNum()) {
+      const int64_t tokenBegin=schedule.TokenBegin(workId);
+      for(int64_t token=tokenBegin;token<Min64(tokenBegin+queryTile,g.tokens);++token) {
+        const int64_t id=schedule.TaskId(workId,token);
+        LoadTask(id);
+        if(qcount==0) {if ASCEND_IS_AIV {PublishStatus(id,0);} continue;}
+        if(qcount<0 || taskError || !TaskValid()) {
+          if ASCEND_IS_AIV {PublishEmpty(id,taskError?taskError:(!TaskValid()?1:0));}
+          continue;
+        }
+        if ASCEND_IS_AIC {CubeTask();}
+        else {VectorTask(id);}
       }
-      if ASCEND_IS_AIC {CubeTask();}
-      else {VectorTask(id);}
     }
     if ASCEND_IS_AIC {mm.End();}
   }

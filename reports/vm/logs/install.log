@@ -7,8 +7,8 @@ Obtaining file:///home/sunao2000.linux/gpt_new_oscar
 Building wheels for collected packages: oscar-ascend-external
   Building editable for oscar-ascend-external (pyproject.toml): started
   Building editable for oscar-ascend-external (pyproject.toml): finished with status 'done'
-  Created wheel for oscar-ascend-external: filename=oscar_ascend_external-0.1.0-0.editable-py3-none-any.whl size=3301 sha256=a73dd7a00625f19951bbb87f1076527723105b01c59340faeba0e4911e4b7435
-  Stored in directory: /tmp/pip-ephem-wheel-cache-_a0k_bb2/wheels/02/cd/80/1e1853719533a3016144b42cef34e511abab4432a6701f8f94
+  Created wheel for oscar-ascend-external: filename=oscar_ascend_external-0.1.0-0.editable-py3-none-any.whl size=3301 sha256=d6a3de34015572527a6ded5140dcc103a4ff81206329405bf916c9d07ec2b5c1
+  Stored in directory: /tmp/pip-ephem-wheel-cache-3jzozzpu/wheels/02/cd/80/1e1853719533a3016144b42cef34e511abab4432a6701f8f94
 Successfully built oscar-ascend-external
 Installing collected packages: oscar-ascend-external
   Attempting uninstall: oscar-ascend-external
@@ -16,4 +16,4 @@ Installing collected packages: oscar-ascend-external
     Uninstalling oscar-ascend-external-0.1.0:
       Successfully uninstalled oscar-ascend-external-0.1.0
 Successfully installed oscar-ascend-external-0.1.0
-RESULT {"phase": "install", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m pip install --no-build-isolation --no-deps -e ."], "returncode": 0, "elapsed_seconds": 0.935427, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/install.log", "cleanup_complete": true}
+RESULT {"phase": "install", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m pip install --no-build-isolation --no-deps -e ."], "returncode": 0, "elapsed_seconds": 1.031182, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/install.log", "cleanup_complete": true}

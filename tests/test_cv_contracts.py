@@ -181,7 +181,7 @@ def _assert_cv_result(data, buffers, expected, expected_lse):
 
 
 @pytest.mark.parametrize("dim,qlen,context", [(64, 1, 17), (64, 4, 65),
-    (128, 4, 129), (256, 1, 401), (256, 4, 511), (256, 4, 0)])
+    (128, 4, 129), (256, 1, 401), (256, 4, 511), (256, 4, 0), (64, 65, 17)])
 def test_npu_cv_matches_independent_dense_pr_oracle(dim, qlen, context):
     ops = _npu_ops()
     data, expected, expected_lse = _case(dim, qlen, context)
@@ -246,7 +246,7 @@ def export_cpu_debug_goldens(directory):
     for dim, qlen, context, hk in [(64, 1, 17, 1), (64, 4, 65, 1), (64, 4, 0, 1),
                                   (128, 4, 129, 1), (256, 4, 511, 1),
                                   (64, 17, 65, 1), (64, 4, 65, 2),
-                                  (64, 2, 320, 1), (128, 3, 511, 1)]:
+                                  (64, 2, 320, 1), (128, 3, 511, 1), (64, 65, 17, 1)]:
         data, output, lse = _case(dim, qlen, context, hk)
         case = directory / (f"d{dim}_q{qlen}_c{context}" + (f"_hk{hk}" if hk!=1 else ""))
         case.mkdir(exist_ok=True)
@@ -290,6 +290,7 @@ def export_cpu_debug_goldens(directory):
     cases.append({"op":"attention_cv","path":str(case)})
     for mode in ("bad_tag","nan_query","bad_meta","nan_value"):
         cases.append({"op":mode,"path":str(directory / "d64_q4_c65")})
+    cases.append({"op":"tasks_causal","path":str(directory)})
     (directory / "cases.json").write_text(json.dumps(cases,indent=2)+"\n")
     return directory
 

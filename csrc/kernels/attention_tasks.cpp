@@ -6,6 +6,8 @@
 // arrays and emits all tasks, no online CPU values or Python request loops.
 // Work O(N log R + N*Hkv*splits), UB <=50KiB, no history reads/restore. Budget
 // should be below short FIA 0.6-1.1ms; only a device profiler can establish it.
+// Archive #129/D.4: the current source stops at this query tile's causal end,
+// not the whole prefill chunk. No future-only QK/PV tiles are submitted.
 #include "oscar_common.h"
 #include "../include/oscar_attention_launch.h"
 using namespace oscar_ascend_device;
@@ -127,7 +129,7 @@ template<class Slot> class AttentionTasks {
             last=Min(context,Max(sink,firstPos+count-recent));}
           if(kind==1) {first=0; last=Min(sink,context)+
               context-Min(context,Max(sink,firstPos+1-recent));}
-          if(kind==2) {first=context;last=context+starts.GetValue(r+1)-begin;}
+          if(kind==2) {first=context;last=firstPos+count;}
         }
         const int64_t width=(last-first+splits-1)/splits;
         const int64_t splitBegin=Min(last,first+split*width);

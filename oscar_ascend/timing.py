@@ -1,8 +1,9 @@
-"""Explicit profiling scopes without production events or synchronization.
+"""Explicit profiling scopes; optional eager-only debug completion checkpoints.
 
 Archive #70-73 and startup D.4: distinguish 725ms host prepare from 6500ms
 NPU dequant, 18.7ms FIA and 209ms stores. Host launch time is never device time.
 Native precedent: references/vllm-ascend/vllm_ascend/profiler/torch_npu_profiler.py.
+Archive #51/#68/#129: separate submitted work from completed device phases.
 """
 from __future__ import annotations
 
@@ -27,7 +28,7 @@ def _enabled(name: str) -> bool:
 
 
 def enabled() -> bool:
-    return _enabled("OSCAR_TIMING") or _enabled("OSCAR_PROFILER")
+    return _enabled("OSCAR_TIMING") or _enabled("OSCAR_PROFILER") or _enabled("OSCAR_DEBUG_SYNC")
 
 
 def _write(record):
@@ -38,11 +39,45 @@ def _write(record):
 class _Phase:
     def __init__(self, name, fields):
         self.name, self.fields = name, fields
-        self.clock = _enabled("OSCAR_TIMING")
+        self.debug = _enabled("OSCAR_DEBUG_SYNC") and fields.get("tokens", 0) >= _debug_min_tokens()
+        self.clock = _enabled("OSCAR_TIMING") or self.debug
         self.scope = None
         self.started = None
+        self.stream = None
+
+    def _progress(self, state, **extra):
+        import torch
+        distributed = getattr(torch, "distributed", None)
+        rank = distributed.get_rank() if distributed is not None and distributed.is_initialized() else None
+        record = {"t": "oscar-debug", "phase": self.name, "state": state,
+                  "pid": os.getpid(), "rank": rank, "wall_time": time.time(),
+                  **self.fields, **extra}
+        _write(record)
+        directory = os.environ.get("OSCAR_TRACE_DIR")
+        if directory:
+            root = Path(directory); root.mkdir(parents=True, exist_ok=True)
+            path = root / f"phase-{os.getpid()}.json"
+            temporary = path.with_suffix(".tmp")
+            temporary.write_text(json.dumps(record, allow_nan=False) + "\n")
+            temporary.replace(path)
 
     def __enter__(self):
+        if self.debug:
+            import torch
+            # Same capture query used by native Ascend offloader/graph code.
+            # Never insert synchronize into captured work or alter graph mode.
+            if torch.npu.is_current_stream_capturing():
+                self._progress("capture_sync_skipped")
+                self.debug = False
+            else:
+                self._progress("waiting_for_prior_work")
+                self.stream = torch.npu.current_stream()
+                try:
+                    self.stream.synchronize()
+                except BaseException as error:
+                    self._progress("prior_work_error", error=f"{type(error).__name__}: {error}")
+                    raise
+                self._progress("phase_begin")
         from torch.profiler import record_function
         label = "oscar::" + self.name + "::" + json.dumps(self.fields, sort_keys=True, separators=(",", ":"))
         self.scope = record_function(label)
@@ -52,14 +87,34 @@ class _Phase:
         return self
 
     def __exit__(self, kind, value, traceback):
+        if self.debug:
+            if kind is None:
+                self._progress("waiting_for_device")
+                try:
+                    self.stream.synchronize()
+                except BaseException as error:
+                    self._progress("device_error", error=f"{type(error).__name__}: {error}")
+                    self.scope.__exit__(type(error), error, error.__traceback__)
+                    raise
+                self._progress("device_completed")
+            else:
+                self._progress("host_error", error=f"{kind.__name__}: {value}")
         elapsed = (time.perf_counter_ns() - self.started) / 1e9 if self.clock else None
         self.scope.__exit__(kind, value, traceback)
         if self.clock:
             _write({"t": "oscar-timing", "phase_end": self.name, "host_s": elapsed,
                     "pid": os.getpid(), "ts_unix": time.time(), "device_ms": None,
                     "device_evidence": "requires_npu_trace", "failed": kind is not None,
+                    "debug_synchronization": self.debug,
                     **self.fields})
         return False
+
+
+def _debug_min_tokens():
+    value = int(os.environ.get("OSCAR_DEBUG_MIN_TOKENS", "1024"))
+    if value < 1:
+        raise ValueError("OSCAR_DEBUG_MIN_TOKENS must be positive")
+    return value
 
 
 def phase(name: str, **fields):
@@ -70,6 +125,9 @@ def phase(name: str, **fields):
     Fields must be already available host scalars, never tensor values.
     """
     if not enabled():
+        return _NOOP
+    if (not _enabled("OSCAR_TIMING") and not _enabled("OSCAR_PROFILER")
+            and fields.get("tokens", 0) < _debug_min_tokens()):
         return _NOOP
     if name not in PHASES:
         raise ValueError(f"unknown OSCAR timing phase: {name}")

@@ -1,6 +1,6 @@
 # OSCAR Ascend：端到端设计与可证边界
 
-本设计以 PR `57286d5d`、vLLM `0fc695fc`、Ascend `19e43698` 为准，历史故障来自工作区档案 G1–G34、#1–#128。本轮已完成源码调用链、VM CANN编译和官方CPU-debug；设计证明、CPU调试、设备完成、图捕获、图回放、性能分别记账。待验证项不能勾选。
+本设计以 PR `57286d5d`、vLLM `0fc695fc`、Ascend `19e43698` 为准，历史故障来自工作区档案 G1–G34、#1–#129。本轮已完成源码调用链、VM CANN编译和官方CPU-debug；设计证明、CPU调试、设备完成、图捕获、图回放、性能分别记账。待验证项不能勾选。
 
 ## 1. 全局生命周期
 
@@ -109,6 +109,7 @@ A2 Cube/Vector片上交接也需实际CANN编译/运行证据；不能把经GM�
 |#70–73|全历史恢复/慢store|禁止独立全历史dequant生产路径|分相位device计时 |
 |#94–95/#101/#116–117/#120/#125|shell吞错误/日志/cwd/挂起|Python相位管理、绝对cwd、独立日志、实时终端输出、进程组超时；服务子进程输出一并转发|故障注入确认进程退出前能看到错误，并保留原退出码 |
 |#98–110/#112–115/#118–122|构建产物/符号/运行加载口径|明确direct-launch单路径、产物manifest、真实call probe|加载≠设备完成 |
+|#51/#68/#71/#129|短请求成功后长请求无进展；有效任务行号stride30与20核分配共因子导致仅2核做current源|按source/head/split内连续querytile分配；current源止于该tile因果末尾；显式同步诊断、请求硬截止|CANN/CPU-debug、16K任务全覆盖及20/24/32核均衡检查；实机性能/停滞复验仍待回传|
 |#34/#36/#128|MTP元数据复制block_size128被物理页2816校验拒绝|显式metadata副本保留physical layout/storage_block_size，原始group不变|真实原生MTP初始化/AttentionGroup builder与复制/非法大小回归；目标重跑待确认|
 |#34/#36/#127|prefix关闭时把GDN请求跨度262144当FULL页对齐，容量为0|按原生none/align模式计算FULL页，保留GDN原对象与原生LCM、MTP状态数|真实native配置/分组/manager增长释放/reshape/input-batch/MTP跨页回归；目标复跑待回传|
 |#74–76/#123|部署设备为null，安装前配置阻断|按本次附录F固定0–3卡和ascend910b4；移除默认环境/源码/readiness审计，保留全部真实探针|默认配置及部署相位本地回归；目标复跑待回传 |
@@ -146,3 +147,5 @@ A2 Cube/Vector片上交接也需实际CANN编译/运行证据；不能把经GM�
 ### 9.1 静态形状自适应分块
 
 默认arena容量不变，设 `qtile=floor(64/GQA)`、`groups=ceil(n/qtile)*Hkv`，选择 `S=max(1,min(32,ceil(CubeCores/groups),floor(arena_token_capacity/n)))`。只读取已经给定的shape/设备属性；同一捕获n始终得到同S/地址/stride，不读取CPU seq_lens。原partial/LSE/tasks/status平面arena复用为3*S段，保证n*S不超预分配容量。实际20Cube/GQA6时n4→S20，n16384→S1，避免单请求历史只有一个task。新增S2/S20真实CPU-debug已证明互斥历史分区、query复用、empty splits与真实3*S merge的数值一致；没有因此宣称NPU提速。
+
+#129 性能排查：D.4重新逐行对照。该算子对应dequant+FIA；历史全量恢复6499.8–6655.1ms而FIA18.5–18.9ms的结构仍禁止。本次没有增加历史恢复或另一路attention：仅改变任务归属顺序、移除因果上不可见的future-only tile。固定GM/UB预算、GQA querytile及数学精度不变；实际有效计算仍为精确attention复杂度，不声称亚线性。GQA6/Q16K/S1示例旧current任务只落在2/20核；新分配每核81–82个querytile。原始current源KVtile为839168，因果裁剪后为420761，见reports/prefill_work_analysis.json（按程序计算值为准）；这些是静态工作量，不是实测加速。新63项官方CPU-debug通过，仍需NPU逐相位证据及与原生0.6–1.1ms短步/18.5–18.9ms FIA量级比较。

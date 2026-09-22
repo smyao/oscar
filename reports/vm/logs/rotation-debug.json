@@ -16,7 +16,7 @@
     "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --executable build/cpu/oscar_rotation_cpu --cases artifacts/rotation_cpu_cases/cases.json --output reports/rotation_cpu_debug.json --log-dir logs/vm-rotation"
   ],
   "returncode": 0,
-  "elapsed_seconds": 31.638931,
+  "elapsed_seconds": 32.99865,
   "timed_out": false,
   "interrupted": false,
   "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/rotation-debug.log",

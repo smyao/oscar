@@ -1,0 +1,65 @@
+START phase=015-bad_tag cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "bad_tag", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 110865] exit success!
+[SUCCESS][CORE_1][pid 110866] exit success!
+[SUCCESS][CORE_2][pid 110867] exit success!
+[SUCCESS][CORE_3][pid 110868] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 110869] exit success!
+[SUCCESS][CORE_1][pid 110870] exit success!
+[SUCCESS][CORE_2][pid 110871] exit success!
+[SUCCESS][CORE_3][pid 110872] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 110873] exit success!
+[SUCCESS][CORE_1][pid 110874] exit success!
+[SUCCESS][CORE_2][pid 110875] exit success!
+[SUCCESS][CORE_3][pid 110876] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 110877] exit success!
+[SUCCESS][CORE_1][pid 110878] exit success!
+[SUCCESS][CORE_2][pid 110879] exit success!
+[SUCCESS][CORE_3][pid 110880] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 110881] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 110882] exit success!
+[SUCCESS][CORE_2][pid 110883] exit success!
+[SUCCESS][CORE_3][pid 110884] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 110885] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 110886] exit success!
+[SUCCESS][CORE_2][pid 110887] exit success!
+[SUCCESS][CORE_3][pid 110888] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 110889] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 110890] exit success!
+[SUCCESS][AIV_1][pid 110891] exit success!
+[SUCCESS][AIC_1][pid 110892] exit success!
+[SUCCESS][AIV_2][pid 110893] exit success!
+[SUCCESS][AIV_3][pid 110894] exit success!
+{"backend":"ascendc_cpu_debug","op":"bad_tag","status":"passed"}
+RESULT {"phase": "015-bad_tag", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "bad_tag", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"], "returncode": 0, "elapsed_seconds": 1.033602, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/015-bad_tag.log", "cleanup_complete": true}

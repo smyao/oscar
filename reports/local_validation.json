@@ -1,15 +1,15 @@
 {
-  "overall": "local_validation_passed; target_metadata_virtual_block_fix_retest_pending",
+  "overall": "local_and_vm_checks_passed; short_target_request_passed; long_request_stall_fix_retest_pending",
   "cpu_tests": {
     "status": "passed",
-    "pytest_passed": 429,
+    "pytest_passed": 437,
     "subtests_passed": 6,
-    "npu_tests_skipped": 118,
+    "npu_tests_skipped": 119,
     "junit": {
-      "tests": 554,
+      "tests": 563,
       "failures": 0,
       "errors": 0,
-      "skipped": 119
+      "skipped": 120
     },
     "log": "reports/pytest.log",
     "xml": "reports/pytest.xml",
@@ -27,12 +27,12 @@
     "status": "passed",
     "scope": "Lima VM, CANN 9.1, Ascend910B4, Torch 2.12 CPU / torch_npu 2.12",
     "source_matches_current_csrc": true,
-    "signature": "1020db3336b3c40f15a8e8a7aec97a695cb5d509662d8edd45d9527b0c07372a",
+    "signature": "d822252e169cca9c67631a55425fcda5c91ea25c31dbe623b271f954d6532f53",
     "report": "reports/vm/guest/reports/build.json"
   },
   "official_ascendc_cpu_debug": {
     "status": "passed",
-    "cases": 61,
+    "cases": 63,
     "suites": {
       "ascendc_cpu_debug": {
         "status": "passed",
@@ -46,13 +46,13 @@
       },
       "cv_cpu_debug": {
         "status": "passed",
-        "cases": 18,
+        "cases": 20,
         "report": "reports/vm/guest/reports/cv_cpu_debug.json"
       }
     }
   },
   "target_torch_2_10_npu_load": "extension_load_passed_in_user_report; installed_torch_version_not_independently_verified",
-  "device_completion": "prior_store_merge_probe_passed; newer_target_compile_and_initial_profiling_returned; MTP_metadata_copy_failed_before_full_service",
+  "device_completion": "user_reported_health200_and_128_prompt_16_generated_completed; subsequent_long_request_stalled",
   "graph_capture": "not_run",
   "graph_replay": "not_run",
   "tp4_mtp_service": "not_run",
@@ -75,13 +75,14 @@
     "Library/logging revision full suite:396 passed,111 skipped,4 subtests passed. Prior local cleanup PermissionError did not recur; no cleanup assertion was weakened. VM actual kernel dlopen resolved dependencies but failed in native CANN SoC constructor; see linkage_validation.json, not NPU evidence.",
     "CV revision initial suite hit the previously observed macOS cleanup EPERM. Reproduction identified an owned zombie-group exit/reap race; bounded wait plus fresh ESRCH confirmation fixed it without weakening cleanup assertions. Final local suite404passed119skipped4subtests, Linux workflow40passed. Original failure logs retained.",
     "Latest user log reaches TP4/MTP model loading then fails at KV spec conversion with prefix caching disabled. Added real native configuration/grouping/manager/input-batch/reshape/MTP tests for mode none. One new AST harness initially omitted EncoderOnlyAttentionSpec; corrected harness import, then focused55/full423 tests pass. No numerical kernel or target flag change; previous CANN/CPU-debug evidence retained without rerunning unchanged kernels.",
-    "Target log now completes torch.compile/initial profiling and computes KV budget, then native MTP AttentionGroup requests a128-token metadata copy. Added explicit metadata_block_view copy with physical storage preserved, original resizing guards retained.71focused/429full local tests pass; actual native proposer and builder creation exercised. No CANN source or startup flag change; graph capture/replay and HTTP remain unverified."
+    "Target log now completes torch.compile/initial profiling and computes KV budget, then native MTP AttentionGroup requests a128-token metadata copy. Added explicit metadata_block_view copy with physical storage preserved, original resizing guards retained.71focused/429full local tests pass; actual native proposer and builder creation exercised. No CANN source or startup flag change; graph capture/replay and HTTP remain unverified.",
+    "Prefill debug revision: local437passed120skipped6subtests; CANN build and63officialCPU-debugcases passed. Initial16KmetadataCPUcase with4AIVs timedoutat120s; original logs retained. Same full16Kcase then passed with production32AIV launch, noinputreduction/tolerance/timeoutrelaxation. Tests prove HTTPwall deadlines includingtricklingresponses anddebug sync skipped duringcapture. Targetlongrequest remains unverified."
   ],
   "source_sha256": {
     "oscar_ascend/__init__.py": "886a48beeedcedf3da2ee7430eddf8d64c7ece3527b0cb073b8363223e5c22e0",
     "oscar_ascend/integration/__init__.py": "b3dd8e07c5f89c5cb47c900b680da2bd6d88b8fb3f28c7eddf18efeddabd74bf",
     "oscar_ascend/integration/backend.py": "fc99888d9409a9a77ec0b6bb938daf4b0bebbc08db2141df3e09e2e42e2d3851",
-    "oscar_ascend/integration/impl.py": "451789f6bc36205e4b7709aebbf39967a3374d112b9f39d71b396f766dde1c22",
+    "oscar_ascend/integration/impl.py": "8c298c42705b44f00b68cf42759bb678ec7246f5d47f0f262daad41ee64d13b7",
     "oscar_ascend/integration/metadata.py": "6b8c9a8d4a9b3b8a80f011933ab0e302db547677237ec665574eb2a5b5369b1d",
     "oscar_ascend/integration/runtime_api.py": "83403d97ae99ae86786729939c0032f67d8d4e1f38ddd2eac78b5577b7a50bed",
     "oscar_ascend/integration/specs.py": "d2c6d1c9d731ec9d0c009ace23269a94ab1d9129c827006e3d40ccbace7e4996",
@@ -96,7 +97,7 @@
     "oscar_ascend/rotations.py": "478cb0a20994e0ac6119e8a921ad2f4719cc35610dd90f80e9b089d9b0fb1481",
     "oscar_ascend/runtime.py": "0b5ae876fe35c649903472e0b4b61a7f241a9e868f35704211a86dafe9a59e57",
     "oscar_ascend/telemetry.py": "1da58f18889a66194d5004573d69af0140b4a9c30d475bcee0b5ea6b7d4fefdc",
-    "oscar_ascend/timing.py": "6beea5db28acad653ae9068144eeb54979878a3d92ea8c552a3ced3dc6b550af",
+    "oscar_ascend/timing.py": "00ee90fa0ecfdfc67c68a56a6dfff279e27adef24e2f0446a3642ae6746981da",
     "tools/__init__.py": "638eebca9af17b3926d058f9115ba13a882951b3787192212a37c4a2afd73c26",
     "tools/build_ops.py": "f9e73b92e7b4fdd8646702cb2c788b09d5fb7d392975c64273a5ffd584509d36",
     "tools/deploy.py": "f2fab2b251b5111aa243341ea418a8df8aee90927140c79145ee566b66b5f860",
@@ -110,7 +111,7 @@
     "tools/probe_ops.py": "6cb839888883052ffc5bf1d354757f97e88b7770914ffc8b3031f0d34946eca8",
     "tools/readiness.py": "541c2d6fcf03651c0ddda53db1ccbf21f163bf6565086b6c46e1c8d9187a5ff0",
     "tools/run_cpu_debug.py": "0b1989cea79c2863e45a22053a687804e24ebeb856bf5c7997539db41421a5d1",
-    "tools/service_probe.py": "b61ddecbd875637b0411a2341cbea509915ca45dc3b81eda22f3f51a7e17deca",
+    "tools/service_probe.py": "7d5bfdde887abb1ffb15338ad753ac5fc07295b22f63d7f9303d259798030415",
     "tools/summarize_profile.py": "970b9a687568503e61426c090bdb916d42bb5425c2e5f2ea5ab7475da2946e98",
     "tools/target_cli.py": "75e8bae681e37bb209e25f51f549b1be9fde2879014fbceef8feedf5efdade7b",
     "tools/vm_validate.py": "585b0383de8162632e1ade0438880ac9fa8cdd313db5d35fbda54a54ad560e33",
@@ -122,14 +123,14 @@
     "csrc/CMakeLists.txt": "3eff29d9c530a3d29d609f15c9c28b0bb3c35a1491aee25d2cee833deb1fbb09",
     "csrc/attention_bindings.cpp": "a3f23dee8aa33f2e58becfc32442e8c3e8ca024d499ccefde8fe0b65db0f8d3f",
     "csrc/cpu/CMakeLists.txt": "1e7d67f47b4f330f1fa6c59a083246c6672105f81f1538fded57593a5eb819bb",
-    "csrc/cpu/cv_probe.cpp": "ae30b9887fa51e239f307e5b5b98943587a1803b1999b43c7833a67c51058490",
+    "csrc/cpu/cv_probe.cpp": "e32a97163557f3d38a1515b9f065ed2f75de9fdb9fa232d48ae3cfce49a263d3",
     "csrc/cpu/primitive_probe.cpp": "f1cd3c8fca22d4b03d175762025e8446d6bc937324ccc9441b543a281005a453",
     "csrc/cpu/rotation_probe.cpp": "02245026bd7561568e12f58c54225f083f1f8e0d91bc9393c0e661e83ad91c2a",
     "csrc/include/oscar_attention_launch.h": "1283c6086b387c167a6ec26f9994c6385fe082bfc82862a0f386bf0ec16f6fd2",
     "csrc/include/oscar_launch.h": "c8b51d610755a8053455757ce9a921aa401e756edc6234318edcf2b7d422bbe9",
     "csrc/include/oscar_rotation_launch.h": "f231519ac7fd73b1e2316947e75d3c3351c00e095ccf16aa67df944d42ffe180",
-    "csrc/kernels/attention_cv.cpp": "43651258fd4dc318237399563792f1c9fa08cfb87b1c1abde4140b1635f3aa26",
-    "csrc/kernels/attention_tasks.cpp": "2e8403290aeb6057b3192b1b7c91918169ddef8f4ef0a149b7ae1789c3851589",
+    "csrc/kernels/attention_cv.cpp": "a53f5b874ca956831fada7ac94c6a055656c46b4620059cc548e274d1e45f539",
+    "csrc/kernels/attention_tasks.cpp": "82290f1831064bbc6f58011a0dd9a826ae7ffc368da4b3ab43f8a5d5133589df",
     "csrc/kernels/merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
     "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
     "csrc/kernels/rotate_clip_store.cpp": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
@@ -145,7 +146,7 @@
     "scripts/validate_vm.sh": "82626b7a9b459245784348e19d78c6069ea1f88663f888548650106e3b5bb2d7",
     "tests/test_benchmark_compare.py": "277718caf83360a1023f47a4571a748d1c4061764acc950b5fe20a9b5130247f",
     "tests/test_benchmark_measure.py": "193c08a8f6621959b3ae0a3c6765ee47706c7dbdfd81200f9a0c00395693c5f6",
-    "tests/test_cv_contracts.py": "b6ee997c461e8d9e9dbe67d755aa4b68f05908588477396b8b933a3964c8be4a",
+    "tests/test_cv_contracts.py": "74c3b1b8de0ce7cdb862f655828aa937659501563823be44e2660fa65c9ce7ba",
     "tests/test_integration_contracts.py": "86ad68469f5898c0ff5c3314da7800dc6d29a2943c341629350b33cf1252bd41",
     "tests/test_layout.py": "5bf9fa81e6baec18f32547f405f457fe6d96a317d7fb7e115d282d2ccc848be5",
     "tests/test_lifecycle.py": "149a6d115b6730d7dfc3c1b4ee6aacc748623d0e02a32434812ad62fc4d70435",
@@ -154,19 +155,24 @@
     "tests/test_op_contracts.py": "323b674a188f677ce27d80169b780be7f1ca8d82c3c8368b678459614d8b1f6d",
     "tests/test_plog.py": "1e410f5242a242a4c5dbfb105867a9ebd888ffa662ed97d45f79dd3582c7f1bc",
     "tests/test_plugin.py": "c9311bd11d43da818c2412dd4a5e5ce52085642e3bd65e479cf1b9bda1e52376",
-    "tests/test_profile_evidence.py": "00b260f08047fcdb832d09d83db60c638a25e76326489070e1829674f9d09749",
+    "tests/test_profile_evidence.py": "fc63c5d251c8a3b3296cf97c127ab96bf5f2fecf60a61bc76d41ad8a356691b3",
     "tests/test_reference.py": "6e33135b908d2273bc295fa4b36ab166512ab349e6d9d3c070023bf2afbf516d",
     "tests/test_rotation_npu.py": "b711248db8f8e38d6ae050802182468fdf49309498690a5b52af448693e5691b",
     "tests/test_rotation_pipeline.py": "ebc2f176e6220dddb30b4e44a5dd0173121cb2e891f7e9d4637e458d8ee317d9",
     "tests/test_rotations.py": "80f5713429c38510becbabb300528cd9b32a07d3b92d28bf31270a274425fbf7",
     "tests/test_runtime.py": "5ac7447f0e257979412d3b526bd918b402b11433aae2daeb566c37c12fa1cddb",
     "tests/test_runtime_native.py": "687786b4229273d0a7c2662b0b489ca2ca06c9ba7ac1538a24de994c8fdc3c05",
-    "tests/test_service_workflow.py": "a2b731b4aec05728aaff1c0cf096705d50f84eb4e532231f4dc595df1aca6842",
+    "tests/test_service_workflow.py": "13cb0ace2819cb2ebde2dd1ac8a267c393d9cf2c62ec792dda28d0d9be03ff43",
     "tests/test_workflow.py": "41e778cc8619f5932e630f746a1765eec56834b17029199d59ca0ca690396d32",
     "tests/test_deploy_launcher.py": "d2d49450c3dc17de322da9e996d9f1282a63a66a67ee5ae07cead039674723ce",
     "tests/test_build_reuse.py": "49e9a34e9b7b201f155eb68bc8d99a24b194bf7d2009e1a26eadd1459fba7c11",
     "tests/test_live_output.py": "055dd7bd9e90c3c1965c2759ee59994a584a0388dc910cd38ff055074bc267c4",
-    "tests/test_loader_linkage.py": "920e7fc4331cdf44aa3d7f810d190c09493a36e88d8db55aef0a61241f380eba"
+    "tests/test_loader_linkage.py": "920e7fc4331cdf44aa3d7f810d190c09493a36e88d8db55aef0a61241f380eba",
+    "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+    "tools/http_request.py": "c10c894816e329548e1f51411bca2664d823902713a09763a335accdf97b4124",
+    "tools/inspect_run.py": "3fbea2d796f662f36adc5081b1195c3bcd9e115677e3fa26e8806a09b5ea9604",
+    "scripts/debug_service.sh": "9b63a9d39d50742d10e4ef41af599dc1f783ec02f243877381cf8684e032d51e",
+    "tests/test_inspect_run.py": "7317a650e7de832543d79b481492919027fb6da37ddbac1354764cc9c96a91a6"
   },
   "startup_revision": {
     "default_devices": [
@@ -244,5 +250,18 @@
     "physical_layout_unchanged": true,
     "native_mtp_builder_tests": "passed",
     "target_retest": "not_run"
+  },
+  "prefill_stall_debug": {
+    "source_analysis": "reports/prefill_work_analysis.json",
+    "target_excerpt": "reports/target_long_request_stall_excerpt.txt",
+    "fixes": [
+      "distribute consecutive query tiles per source to Cube cores",
+      "bound current-source KV to query-tile causal endpoint"
+    ],
+    "request_wall_deadline_seconds_default": 300,
+    "debug_entry": "scripts/debug_service.sh",
+    "read_only_inspection": "python3 -m tools.inspect_run --run-dir <this-run>",
+    "target_fix_verified": false,
+    "root_cause_fully_proven": false
   }
 }

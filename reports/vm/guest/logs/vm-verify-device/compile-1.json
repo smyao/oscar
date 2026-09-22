@@ -8,7 +8,7 @@
     "8"
   ],
   "returncode": 0,
-  "elapsed_seconds": 21.998687,
+  "elapsed_seconds": 20.202472,
   "timed_out": false,
   "interrupted": false,
   "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-verify-device/compile-1.log",

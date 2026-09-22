@@ -27,12 +27,55 @@ def _trace(*events):
 def test_disabled_timing_does_not_create_events_clock_or_import_torch(monkeypatch):
     monkeypatch.delenv("OSCAR_TIMING", raising=False)
     monkeypatch.delenv("OSCAR_PROFILER", raising=False)
+    monkeypatch.delenv("OSCAR_DEBUG_SYNC", raising=False)
     with patch("builtins.__import__", side_effect=AssertionError("unexpected import")), \
          patch.object(timing.time, "perf_counter_ns", side_effect=AssertionError("unexpected clock")):
         with timing.phase("prepare", tokens=128):
             pass
         with timing.profile_session():
             pass
+
+
+@pytest.mark.parametrize("capturing", [False, True])
+def test_explicit_debug_sync_records_progress_and_never_syncs_capture(monkeypatch, tmp_path, capturing):
+    import torch
+    from types import SimpleNamespace
+    calls = []
+    monkeypatch.setenv("OSCAR_DEBUG_SYNC", "1")
+    monkeypatch.setenv("OSCAR_TRACE_DIR", str(tmp_path))
+    monkeypatch.delenv("OSCAR_TIMING", raising=False)
+    monkeypatch.delenv("OSCAR_PROFILER", raising=False)
+    monkeypatch.setattr(torch, "npu", SimpleNamespace(
+        is_current_stream_capturing=lambda: capturing,
+        current_stream=lambda: SimpleNamespace(synchronize=lambda: calls.append("sync"))), raising=False)
+    with timing.phase("fia", tokens=16384, layer="test.layer"):
+        calls.append("launch")
+    assert calls == (["launch"] if capturing else ["sync", "launch", "sync"])
+    record = json.loads(next(tmp_path.glob("phase-*.json")).read_text())
+    assert record["state"] == ("capture_sync_skipped" if capturing else "device_completed")
+    assert record["phase"] == "fia" and record["tokens"] == 16384
+    with patch("builtins.__import__", side_effect=AssertionError("short shape must stay untouched")):
+        with timing.phase("fia", tokens=128):
+            pass
+
+
+def test_debug_sync_failure_retains_last_device_phase(monkeypatch, tmp_path):
+    import torch
+    from types import SimpleNamespace
+    calls = []
+    def sync():
+        calls.append(1)
+        if len(calls) == 2:
+            raise RuntimeError("injected device failure")
+    monkeypatch.setenv("OSCAR_DEBUG_SYNC", "1")
+    monkeypatch.setenv("OSCAR_TRACE_DIR", str(tmp_path))
+    monkeypatch.setattr(torch, "npu", SimpleNamespace(is_current_stream_capturing=lambda: False,
+                        current_stream=lambda: SimpleNamespace(synchronize=sync)), raising=False)
+    with pytest.raises(RuntimeError, match="injected device failure"):
+        with timing.phase("fia", tokens=16384):
+            pass
+    record = json.loads(next(tmp_path.glob("phase-*.json")).read_text())
+    assert record["state"] == "device_error" and "injected" in record["error"]
 
 
 def test_phase_rejects_tensor_like_metadata_and_reserved_fields(monkeypatch):

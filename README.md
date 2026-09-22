@@ -27,7 +27,21 @@ python3 -m tools.deploy --only probe-ops
 python3 -m tools.service_probe --config configs/target.json --output reports/service.json --log-dir logs/service
 ```
 
-**最新真机结果：模型编译、初次profiling和KV显存预算已经完成，随后MTP元数据初始化失败（#128）。** 已修复物理页与128-token虚拟元数据块的区分，物理缓存容量、GDN状态、启动参数和探针保持不变。[最新原文](reports/target_metadata_block_failure.txt)。日志中的torch.compile完成和容量估算不代表图捕获、回放或HTTP服务成功；修复后仍需真机复跑。此前75项store/merge原语NPU探针已有直接通过记录，完整模型质量、容量收益及性能尚未验收。
+**最新真机结果：health及128-token输入/16-token输出已完成，后续长请求停滞（#129）。** 已修复CV有效任务集中到少数Cube核、prefill扫描不可见未来token两个源码问题；尚不能据此认定实机停滞已经消除。标准入口现在打印每个请求的开始、耗时、剩余时间及清理阶段；每个请求由独立HTTP客户端执行，父进程实施300秒墙钟截止，慢速响应不能不断延长socket等待。
+
+当前运行的采证（只读本轮进程、日志、trace和所属PID的CANN日志，不启动模型、不接触设备、不发信号）：
+
+```bash
+python3 -m tools.inspect_run --run-dir logs/20260922T053137.509986Z
+```
+
+采证结果写到该目录的 `stall-inspection.json`。停止本轮后，可用显式调试入口重跑完整流程：
+
+```bash
+bash scripts/debug_service.sh
+```
+
+它保留目标参数、全部探针和图模式，对tokens≥1024的非捕图调用增加NPU流同步检查点，逐rank记录 `phase_begin`、`waiting_for_device`、`device_completed`。`waiting_for_prior_work` 表示还在等待此前原生工作。捕图期间不会插入同步；普通入口默认关闭这些检查点。同步调试会改变调度和耗时，不能当作性能验收数据。
 
 以下仅用于本地开发，不是 node93 的部署步骤。已配置本项目 `.venv` 的开发机可运行 CPU 测试：
 

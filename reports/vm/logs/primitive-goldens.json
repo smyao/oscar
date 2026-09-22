@@ -16,7 +16,7 @@
     "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.generate_cpu_cases --output artifacts/cpu_cases"
   ],
   "returncode": 0,
-  "elapsed_seconds": 0.820437,
+  "elapsed_seconds": 1.231153,
   "timed_out": false,
   "interrupted": false,
   "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/primitive-goldens.log",

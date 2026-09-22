@@ -1,0 +1,76 @@
+[ 23%] Built target oscar_rotation_cpu
+[ 61%] Built target oscar_primitive_cpu
+[ 69%] Building CXX object CMakeFiles/oscar_cv_cpu.dir/cv_probe.cpp.o
+[ 76%] Building CXX object CMakeFiles/oscar_cv_cpu.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
+[ 84%] Linking CXX executable oscar_cv_cpu
+[100%] Built target oscar_cv_cpu
+scheduled_cores=2 min_live=819 max_live=820
+scheduled_cores=20 min_live=81 max_live=82
+scheduled_cores=24 min_live=68 max_live=69
+scheduled_cores=32 min_live=51 max_live=52
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 107708] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 107709] exit success!
+[SUCCESS][CORE_2][pid 107710] exit success!
+[SUCCESS][CORE_3][pid 107711] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_4][pid 107712] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_5][pid 107713] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_6][pid 107714] exit success!
+[SUCCESS][CORE_7][pid 107715] exit success!
+[SUCCESS][CORE_8][pid 107716] exit success!
+[SUCCESS][CORE_9][pid 107717] exit success!
+[SUCCESS][CORE_10][pid 107718] exit success!
+[SUCCESS][CORE_11][pid 107719] exit success!
+[SUCCESS][CORE_12][pid 107720] exit success!
+[SUCCESS][CORE_13][pid 107721] exit success!
+[SUCCESS][CORE_14][pid 107722] exit success!
+[SUCCESS][CORE_15][pid 107723] exit success!
+[SUCCESS][CORE_16][pid 107724] exit success!
+[SUCCESS][CORE_17][pid 107725] exit success!
+[SUCCESS][CORE_18][pid 107726] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_19][pid 107727] exit success!
+[SUCCESS][CORE_20][pid 107728] exit success!
+[SUCCESS][CORE_21][pid 107729] exit success!
+[SUCCESS][CORE_22][pid 107730] exit success!
+[SUCCESS][CORE_23][pid 107731] exit success!
+[SUCCESS][CORE_24][pid 107732] exit success!
+[SUCCESS][CORE_25][pid 107733] exit success!
+[SUCCESS][CORE_26][pid 107734] exit success!
+[SUCCESS][CORE_27][pid 107735] exit success!
+[SUCCESS][CORE_28][pid 107736] exit success!
+[SUCCESS][CORE_29][pid 107737] exit success!
+[SUCCESS][CORE_30][pid 107738] exit success!
+[SUCCESS][CORE_31][pid 107739] exit success!
+causal_task_leaders=1640 current_tiles=421828 previous_unsplit_tiles=839169
+{"backend":"ascendc_cpu_debug","op":"tasks_causal","status":"passed"}

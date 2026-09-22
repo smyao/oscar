@@ -135,6 +135,35 @@ _callbacks = {
 }
 
 
+def _patch_graph_evidence(module):
+    # Native acl_graph.py:138-257 owns the capture/replay branch. Hook only
+    # when explicitly collecting probe evidence, not in performance runs.
+    if not os.environ.get("OSCAR_TRACE_DIR"):
+        return
+    def observe(original):
+        def wrapped(wrapper,*args,**kwargs):
+            context=module.get_forward_context()
+            active=context.cudagraph_runtime_mode==wrapper.runtime_mode
+            descriptor=context.batch_descriptor
+            entry=wrapper.concrete_aclgraph_entries.get(descriptor) if active else None
+            replay=entry is not None and entry.aclgraph is not None
+            result=original(wrapper,*args,**kwargs)
+            if active:
+                entry=wrapper.concrete_aclgraph_entries.get(descriptor)
+                if entry is not None and entry.aclgraph is not None:
+                    from .telemetry import emit_once
+                    emit_once("graph_replay_launch_return" if replay else "graph_capture_return",
+                              key=(id(wrapper),str(descriptor),replay),
+                              descriptor=str(descriptor),mode=str(wrapper.runtime_mode),
+                              device_completion="not_established_by_launch")
+            return result
+        return wrapped
+    _patch(module.ACLGraphWrapper,"__call__",observe)
+
+
+_callbacks["vllm_ascend.compilation.acl_graph"]=_patch_graph_evidence
+
+
 def _apply_callback(callback, module: ModuleType) -> None:
     first = len(_patches)
     try:
@@ -208,6 +237,8 @@ def register() -> None:
         return
     if _enabled:
         return
+    from .integration.runtime_api import ensure_default_runtime_factory
+    ensure_default_runtime_factory()
     _enabled = True
     _finder = _NativeSeamFinder()
     sys.meta_path.insert(0, _finder)

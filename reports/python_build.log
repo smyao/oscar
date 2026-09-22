@@ -11,13 +11,7 @@ writing manifest file 'oscar_ascend_external.egg-info/SOURCES.txt'
 running bdist_wheel
 running build
 running build_py
-copying tools/deploy.py -> build/lib/tools
-copying tools/probe_ops.py -> build/lib/tools
-copying oscar_ascend/layout.py -> build/lib/oscar_ascend
-copying benchmarks/compare.py -> build/lib/benchmarks
-copying oscar_ascend/integration/specs.py -> build/lib/oscar_ascend/integration
-copying oscar_ascend/ops/loader.py -> build/lib/oscar_ascend/ops
-copying oscar_ascend/ops/contracts.py -> build/lib/oscar_ascend/ops
+copying tools/vm_validate.py -> build/lib/tools
 running egg_info
 writing oscar_ascend_external.egg-info/PKG-INFO
 writing dependency_links to oscar_ascend_external.egg-info/dependency_links.txt
@@ -32,10 +26,18 @@ running install_lib
 creating build/bdist.macosx-10.13-universal2/wheel
 creating build/bdist.macosx-10.13-universal2/wheel/tools
 copying build/lib/tools/phase.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
+copying build/lib/tools/generate_cpu_cases.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
+copying build/lib/tools/service_probe.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
 copying build/lib/tools/deploy.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
+copying build/lib/tools/run_cpu_debug.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
+copying build/lib/tools/plog.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
 copying build/lib/tools/target_cli.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
 copying build/lib/tools/build_ops.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
+copying build/lib/tools/npu_resources.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
 copying build/lib/tools/__init__.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
+copying build/lib/tools/summarize_profile.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
+copying build/lib/tools/generate_rotation_cpu_cases.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
+copying build/lib/tools/vm_validate.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
 copying build/lib/tools/environment.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
 copying build/lib/tools/readiness.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
 copying build/lib/tools/prepare_rotations.py -> build/bdist.macosx-10.13-universal2/wheel/./tools
@@ -48,46 +50,68 @@ copying build/lib/oscar_ascend/integration/backend.py -> build/bdist.macosx-10.1
 copying build/lib/oscar_ascend/integration/runtime_api.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend/integration
 copying build/lib/oscar_ascend/integration/metadata.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend/integration
 copying build/lib/oscar_ascend/integration/__init__.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/impl.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend/integration
 copying build/lib/oscar_ascend/__init__.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/telemetry.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/runtime.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend
 copying build/lib/oscar_ascend/rotations.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/timing.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/lifecycle.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend
 copying build/lib/oscar_ascend/plugin.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend
 creating build/bdist.macosx-10.13-universal2/wheel/oscar_ascend/ops
 copying build/lib/oscar_ascend/ops/__init__.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend/ops
 copying build/lib/oscar_ascend/ops/loader.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend/ops
 copying build/lib/oscar_ascend/ops/contracts.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend/ops
 copying build/lib/oscar_ascend/ops/reference.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend/ops
+copying build/lib/oscar_ascend/ops/meta.py -> build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend/ops
 creating build/bdist.macosx-10.13-universal2/wheel/benchmarks
+copying build/lib/benchmarks/measure.py -> build/bdist.macosx-10.13-universal2/wheel/./benchmarks
 copying build/lib/benchmarks/__init__.py -> build/bdist.macosx-10.13-universal2/wheel/./benchmarks
 copying build/lib/benchmarks/compare.py -> build/bdist.macosx-10.13-universal2/wheel/./benchmarks
 running install_egg_info
 Copying oscar_ascend_external.egg-info to build/bdist.macosx-10.13-universal2/wheel/./oscar_ascend_external-0.1.0-py3.12.egg-info
 running install_scripts
 creating build/bdist.macosx-10.13-universal2/wheel/oscar_ascend_external-0.1.0.dist-info/WHEEL
-creating '/Users/sunao2000/gpt_new_oscar/dist/.tmp-eozjtumo/oscar_ascend_external-0.1.0-py3-none-any.whl' and adding 'build/bdist.macosx-10.13-universal2/wheel' to it
+creating '/Users/sunao2000/gpt_new_oscar/dist/.tmp-4fdk70yi/oscar_ascend_external-0.1.0-py3-none-any.whl' and adding 'build/bdist.macosx-10.13-universal2/wheel' to it
 adding 'benchmarks/__init__.py'
 adding 'benchmarks/compare.py'
+adding 'benchmarks/measure.py'
 adding 'oscar_ascend/__init__.py'
 adding 'oscar_ascend/layout.py'
+adding 'oscar_ascend/lifecycle.py'
 adding 'oscar_ascend/plugin.py'
 adding 'oscar_ascend/rotations.py'
+adding 'oscar_ascend/runtime.py'
+adding 'oscar_ascend/telemetry.py'
+adding 'oscar_ascend/timing.py'
 adding 'oscar_ascend/integration/__init__.py'
 adding 'oscar_ascend/integration/backend.py'
+adding 'oscar_ascend/integration/impl.py'
 adding 'oscar_ascend/integration/metadata.py'
 adding 'oscar_ascend/integration/runtime_api.py'
 adding 'oscar_ascend/integration/specs.py'
 adding 'oscar_ascend/ops/__init__.py'
 adding 'oscar_ascend/ops/contracts.py'
 adding 'oscar_ascend/ops/loader.py'
+adding 'oscar_ascend/ops/meta.py'
 adding 'oscar_ascend/ops/reference.py'
 adding 'tools/__init__.py'
 adding 'tools/build_ops.py'
 adding 'tools/deploy.py'
 adding 'tools/environment.py'
+adding 'tools/generate_cpu_cases.py'
+adding 'tools/generate_rotation_cpu_cases.py'
+adding 'tools/npu_resources.py'
 adding 'tools/phase.py'
+adding 'tools/plog.py'
 adding 'tools/prepare_rotations.py'
 adding 'tools/probe_ops.py'
 adding 'tools/readiness.py'
+adding 'tools/run_cpu_debug.py'
+adding 'tools/service_probe.py'
+adding 'tools/summarize_profile.py'
 adding 'tools/target_cli.py'
+adding 'tools/vm_validate.py'
 adding 'oscar_ascend_external-0.1.0.dist-info/METADATA'
 adding 'oscar_ascend_external-0.1.0.dist-info/WHEEL'
 adding 'oscar_ascend_external-0.1.0.dist-info/entry_points.txt'

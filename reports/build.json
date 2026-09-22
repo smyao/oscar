@@ -1,5 +1,9 @@
 {
-  "build": "failed",
+  "build": "passed",
+  "scope": "CANN cross-compilation in Lima VM; not an NPU execution result",
+  "signature": "13cf469f64ed7050b77062559e14dc58f62307138b4a75cfec679a73042a3a89",
+  "source_matches_current_csrc": true,
+  "report": "reports/vm/guest/reports/build.json",
   "device_completion": "not_run",
-  "error": "CANN with AscendC CMake support is missing; inspected ['/usr/local/Ascend/ascend-toolkit/latest', '/usr/local/Ascend/cann/latest', '/usr/local/Ascend/cann-9.1.0']"
+  "target_environment_build": "not_run"
 }

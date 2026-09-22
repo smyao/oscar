@@ -1,0 +1,29 @@
+START phase=configure-1 cwd=/home/sunao2000.linux/gpt_new_oscar command=["cmake", "-S", "/home/sunao2000.linux/gpt_new_oscar/csrc", "-B", "/home/sunao2000.linux/gpt_new_oscar/build/ascendc", "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0", "-DSOC_VERSION=ascend910b4", "-DASCEND_COMPUTE_UNIT=ascend910b4", "-DTORCH_NPU_PATH=/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu", "-DOSCAR_BUILD_SIGNATURE=13cf469f64ed7050b77062559e14dc58f62307138b4a75cfec679a73042a3a89", "-DPython3_EXECUTABLE=/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python", "-DCMAKE_BUILD_TYPE=Release"]
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Python3: /home/sunao2000.linux/gpt_new_oscar/.venv/bin/python (found version "3.12.3") found components: Interpreter Development.Module 
+-- Performing Test HAS_FLTO_AUTO
+-- Performing Test HAS_FLTO_AUTO - Success
+-- Found pybind11: /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/pybind11/include (found version "3.1.0")
+CMake Warning at /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:22 (message):
+  library kineto not found.
+Call Stack (most recent call first):
+  /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:119 (append_torchlib_if_found)
+  CMakeLists.txt:19 (find_package)
+
+
+-- Found Torch: /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/lib/libtorch.so  
+-- Configuring done (1.3s)
+-- Generating done (0.0s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    ASCEND_TOOLKIT_HOME
+
+
+-- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/ascendc
+RESULT {"phase": "configure-1", "command": ["cmake", "-S", "/home/sunao2000.linux/gpt_new_oscar/csrc", "-B", "/home/sunao2000.linux/gpt_new_oscar/build/ascendc", "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0", "-DSOC_VERSION=ascend910b4", "-DASCEND_COMPUTE_UNIT=ascend910b4", "-DTORCH_NPU_PATH=/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu", "-DOSCAR_BUILD_SIGNATURE=13cf469f64ed7050b77062559e14dc58f62307138b4a75cfec679a73042a3a89", "-DPython3_EXECUTABLE=/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python", "-DCMAKE_BUILD_TYPE=Release"], "returncode": 0, "elapsed_seconds": 1.445855, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-verify-device/configure-1.log", "cleanup_complete": true}

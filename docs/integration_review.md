@@ -57,34 +57,11 @@ Late registration supports fully initialized native modules, and refuses
 in-flight native imports. It does not replace already-constructed model layer
 instances: registration must precede model construction.
 
-## Work not implemented, distinct from hardware validation
+## Current implementation and target boundary
 
-The following cannot be resolved merely by providing an NPU or running existing
-tests; their implementations are still absent:
+The concrete RuntimeProvider, AttentionImpl, allocator/GDN delegation, native page snapshots, MTP slot-derived positions, graph workspace, fused CV/rotation/store, status guard, service probes and cleanup are implemented. Official CANN CPU-debug and cross-compilation evidence is in reports/vm; additional real native method execution tests cover grouping, manager/hash/LCM, shape derivation and rejected-token draft updates.
 
-- Concrete `RuntimeProvider`, real `AttentionImpl`, and process initialization
-  that installs the provider before enabled route selection.
-- Complete shared-pool allocation and native GDN-view delegation.
-- Persistent Sink/Recent ownership, generation/eviction protocol, prefix
-  sharing/restoration, cancellation/preemption, and MTP commit/rollback.
-- Fused INT2 Cube/Vector history attention, window attention, rotation/clip/store
-  fusion, device metadata preparation and required lifecycle operators.
-- Graph workspace construction and dummy capture/real replay cache protocol.
-- TP4 full-service correctness/route probe and NPU process/HBM release probe.
-- Real sample capture/calibration orchestration and resolved draft-layer policy.
-- The `op_host/op_kernel` custom OPP distribution/install path described in the
-  startup document. Current CMake builds a direct-launch shared library and
-  PyBind extension; archive #122's vendor resolver route is not exercised.
-
-The device selection is intentionally still an explicit missing deployment
-input in `configs/target.json`. Historical device use is not a live reservation.
-The current source quantization/merge operator implementations also still need
-actual target build and numerical validation. Hadamard generation is labeled
-data-free, not sample calibration, and does not establish model quality.
-
-The plugin and deployment code fail explicitly while production capabilities
-are absent. No source-level readiness declaration, primitive probe result, HTTP
-response or host test should be used to mark service completion.
+Remaining acceptance: target NPU execution, actual capture/replay, model quality, memory benefit and paired performance. Direct launch is the chosen native-supported independent-library interface; no custom OPP vendor package is produced. H18 literal sublinear reads remains an explicit conflict.
 
 ## Local verification
 
@@ -97,6 +74,7 @@ python3 -m unittest discover -s tests -p 'test_integration_contracts.py' -v
 ```
 
 The reviewed suite comprises 15 layout/metadata tests, 11 plugin tests, and
-10 integration contract tests. This is host-only evidence. NPU compilation,
-device completion, actual native worker binding, graph capture, graph replay,
-accuracy and performance remain not run here.
+10 integration contract tests in the initial review. The final suite is recorded
+in reports/pytest.log. CANN VM cross-compilation and official CPU debugging have
+since passed. Target device completion, actual worker binding, graph capture,
+graph replay, model accuracy and performance remain not run.

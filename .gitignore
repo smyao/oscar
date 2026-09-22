@@ -7,6 +7,10 @@ __pycache__/
 build/
 dist/
 logs/
+!reports/vm/logs/
+!reports/vm/logs/**
+!reports/vm/guest/logs/
+!reports/vm/guest/logs/**
 artifacts/
 references/
 reports/reference_fingerprints.json

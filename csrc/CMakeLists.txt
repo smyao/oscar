@@ -41,8 +41,16 @@ if(NOT ASCENDC_CMAKE_DIR)
   message(FATAL_ERROR "No ascendc.cmake found under ASCEND_HOME_PATH; target CANN toolkit required")
 endif()
 include("${ASCENDC_CMAKE_DIR}/ascendc.cmake")
-ascendc_library(oscar_ascend_kernels SHARED kernels/store_int2.cpp kernels/merge_lse.cpp)
-pybind11_add_module(_oscar_ascend_ops torch_bindings.cpp)
+ascendc_library(oscar_ascend_kernels SHARED kernels/store_int2.cpp kernels/merge_lse.cpp
+  kernels/rotate_clip_store.cpp kernels/attention_cv.cpp kernels/attention_tasks.cpp kernels/status_guard.cpp)
+# Archive G18/#85/#98: a versioned ELF SONAME cannot bind to an older OSCAR
+# library with the same generic filename through inherited LD_LIBRARY_PATH.
+if(NOT OSCAR_BUILD_SIGNATURE MATCHES "^[0-9a-f]+$")
+  message(FATAL_ERROR "Build with tools.build_ops so the kernel SONAME is bound to its source signature")
+endif()
+string(SUBSTRING "${OSCAR_BUILD_SIGNATURE}" 0 16 OSCAR_BINARY_ID)
+set_target_properties(oscar_ascend_kernels PROPERTIES OUTPUT_NAME "oscar_ascend_kernels_${OSCAR_BINARY_ID}")
+pybind11_add_module(_oscar_ascend_ops torch_bindings.cpp rotation_bindings.cpp attention_bindings.cpp status_bindings.cpp)
 target_include_directories(_oscar_ascend_ops PRIVATE ${TORCH_INCLUDE_DIRS}
   "${TORCH_NPU_PATH}/include" "${ASCEND_HOME_PATH}/include")
 target_link_directories(_oscar_ascend_ops PRIVATE "${TORCH_NPU_PATH}/lib"
@@ -52,5 +60,5 @@ target_link_libraries(_oscar_ascend_ops PRIVATE oscar_ascend_kernels
 set_target_properties(_oscar_ascend_ops PROPERTIES BUILD_RPATH
   "$ORIGIN;${TORCH_NPU_PATH}/lib;${ASCEND_HOME_PATH}/lib64")
 file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/build_manifest.json" CONTENT
-"{\n  \"abi_version\": 1,\n  \"execution_interface\": \"direct_launch\",\n  \"soc\": \"${SOC_VERSION}\",\n  \"extension\": \"$<TARGET_FILE:_oscar_ascend_ops>\",\n  \"kernel_library\": \"$<TARGET_FILE:oscar_ascend_kernels>\",\n  \"source_capabilities\": [\"store_int2_out\", \"merge_lse_out\"],\n  \"missing_capabilities\": [\"fused_int2_cv_attention\", \"rotate_clip_store\", \"window_cv_attention\", \"window_transaction\", \"prepare_metadata\", \"prefix_snapshot_restore\"],\n  \"target_numerics_verified\": false,\n  \"graph_capture_verified\": false,\n  \"graph_replay_verified\": false,\n  \"performance_verified\": false\n}\n")
+"{\n  \"abi_version\": 1,\n  \"execution_interface\": \"direct_launch\",\n  \"soc\": \"${SOC_VERSION}\",\n  \"extension\": \"$<TARGET_FILE:_oscar_ascend_ops>\",\n  \"kernel_library\": \"$<TARGET_FILE:oscar_ascend_kernels>\",\n  \"source_capabilities\": [\"store_int2_out\", \"merge_lse_out\", \"rotate_out\", \"rotate_clip_store_out\", \"prepare_attention_tasks_out\", \"attention_cv_out\", \"status_guard\"],\n  \"missing_capabilities\": [],\n  \"target_numerics_verified\": false,\n  \"graph_capture_verified\": false,\n  \"graph_replay_verified\": false,\n  \"performance_verified\": false\n}\n")
 install(TARGETS _oscar_ascend_ops oscar_ascend_kernels LIBRARY DESTINATION oscar_ascend)

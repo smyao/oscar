@@ -1,0 +1,25 @@
+{
+  "phase": "configure-1",
+  "command": [
+    "cmake",
+    "-S",
+    "/home/sunao2000.linux/gpt_new_oscar/csrc",
+    "-B",
+    "/home/sunao2000.linux/gpt_new_oscar/build/ascendc",
+    "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0",
+    "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0",
+    "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0",
+    "-DSOC_VERSION=ascend910b4",
+    "-DASCEND_COMPUTE_UNIT=ascend910b4",
+    "-DTORCH_NPU_PATH=/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu",
+    "-DOSCAR_BUILD_SIGNATURE=13cf469f64ed7050b77062559e14dc58f62307138b4a75cfec679a73042a3a89",
+    "-DPython3_EXECUTABLE=/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python",
+    "-DCMAKE_BUILD_TYPE=Release"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 1.445855,
+  "timed_out": false,
+  "interrupted": false,
+  "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-verify-device/configure-1.log",
+  "cleanup_complete": true
+}

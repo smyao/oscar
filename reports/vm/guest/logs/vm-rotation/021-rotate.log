@@ -1,0 +1,12 @@
+START phase=021-rotate cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_256_1"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 90859] exit success!
+[SUCCESS][CORE_1][pid 90860] exit success!
+[SUCCESS][CORE_2][pid 90861] exit success!
+[SUCCESS][CORE_3][pid 90862] exit success!
+max_abs_error=1.19209e-07
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate"}
+RESULT {"phase": "021-rotate", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_256_1"], "returncode": 0, "elapsed_seconds": 0.618645, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/021-rotate.log", "cleanup_complete": true}

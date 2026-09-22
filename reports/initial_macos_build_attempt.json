@@ -1,0 +1,5 @@
+{
+  "build": "failed",
+  "device_completion": "not_run",
+  "error": "CANN with AscendC CMake support is missing; inspected ['/usr/local/Ascend/ascend-toolkit/latest', '/usr/local/Ascend/cann/latest', '/usr/local/Ascend/cann-9.1.0']"
+}

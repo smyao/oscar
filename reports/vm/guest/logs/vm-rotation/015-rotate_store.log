@@ -1,0 +1,11 @@
+START phase=015-rotate_store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_128_1_0.95"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 90824] exit success!
+[SUCCESS][CORE_1][pid 90825] exit success!
+[SUCCESS][CORE_2][pid 90826] exit success!
+[SUCCESS][CORE_3][pid 90827] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_store"}
+RESULT {"phase": "015-rotate_store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu", "rotate_store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_128_1_0.95"], "returncode": 0, "elapsed_seconds": 0.623854, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/015-rotate_store.log", "cleanup_complete": true}

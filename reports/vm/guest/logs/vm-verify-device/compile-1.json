@@ -1,0 +1,16 @@
+{
+  "phase": "compile-1",
+  "command": [
+    "cmake",
+    "--build",
+    "/home/sunao2000.linux/gpt_new_oscar/build/ascendc",
+    "--parallel",
+    "8"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 21.998687,
+  "timed_out": false,
+  "interrupted": false,
+  "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-verify-device/compile-1.log",
+  "cleanup_complete": true
+}

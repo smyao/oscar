@@ -47,6 +47,18 @@ def install_runtime_factory(factory: Callable[[], RuntimeProvider]) -> None:
     _factory = factory
 
 
+def _create_default_runtime():
+    # Archive #28/#77/#78: this import occurs when the native engine requests
+    # an implementation, never while the general-plugin entrypoint registers.
+    from ..runtime import create_runtime
+    return create_runtime()
+
+
+def ensure_default_runtime_factory() -> None:
+    if _provider is None and _factory is None:
+        install_runtime_factory(_create_default_runtime)
+
+
 def clear_runtime() -> None:
     global _provider, _factory
     _provider = None

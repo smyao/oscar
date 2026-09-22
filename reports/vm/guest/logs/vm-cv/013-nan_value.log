@@ -1,0 +1,65 @@
+START phase=013-nan_value cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "nan_value", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 82080] exit success!
+[SUCCESS][CORE_1][pid 82081] exit success!
+[SUCCESS][CORE_2][pid 82082] exit success!
+[SUCCESS][CORE_3][pid 82083] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 82084] exit success!
+[SUCCESS][CORE_1][pid 82085] exit success!
+[SUCCESS][CORE_2][pid 82086] exit success!
+[SUCCESS][CORE_3][pid 82087] exit success!
+metadata padded request and changed-slot cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 82088] exit success!
+[SUCCESS][CORE_1][pid 82089] exit success!
+[SUCCESS][CORE_2][pid 82090] exit success!
+[SUCCESS][CORE_3][pid 82091] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 82092] exit success!
+[SUCCESS][CORE_1][pid 82093] exit success!
+[SUCCESS][CORE_2][pid 82094] exit success!
+[SUCCESS][CORE_3][pid 82095] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 82096] exit success!
+[SUCCESS][CORE_1][pid 82097] exit success!
+[SUCCESS][CORE_2][pid 82098] exit success!
+[SUCCESS][CORE_3][pid 82099] exit success!
+MTP slot-derived context, duplicate and missing page cases passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 82100] exit success!
+[SUCCESS][CORE_1][pid 82101] exit success!
+[SUCCESS][CORE_2][pid 82102] exit success!
+[SUCCESS][CORE_3][pid 82103] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 82104] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 82105] exit success!
+[SUCCESS][AIV_1][pid 82106] exit success!
+[SUCCESS][AIC_1][pid 82107] exit success!
+[SUCCESS][AIV_2][pid 82108] exit success!
+[SUCCESS][AIV_3][pid 82109] exit success!
+{"backend":"ascendc_cpu_debug","op":"nan_value","status":"passed"}
+RESULT {"phase": "013-nan_value", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "nan_value", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"], "returncode": 0, "elapsed_seconds": 0.93164, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/013-nan_value.log", "cleanup_complete": true}

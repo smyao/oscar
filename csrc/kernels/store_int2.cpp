@@ -3,7 +3,8 @@
 // Structure: one launch, vector quantizer, UB packing, one exact-size scatter
 // per (token,head); no intermediate HBM quantized tensor or host token loop.
 // Complexity: O(N*H*D), fixed < 8 KiB UB/core, independent of history length.
-// Target: materially below 215 ms/16K. NOT compiled/timed on CANN/NPU here.
+// Target: materially below 215 ms/16K. CANN VM compilation/CPU-debug passed;
+// target-NPU latency remains unmeasured (reports/vm is not NPU timing).
 // This is a quant/pack component, not fused rotation/percentile clipping.
 // Archive: G2-G13, #3/#21, G25-G34/#4-22, #79-83/#85, #87-93/#111.
 // Native API evidence (references/vllm-ascend/csrc/):
@@ -151,6 +152,7 @@ extern "C" __global__ __aicore__ void oscar_store_int2_kernel(GM_ADDR key,
         blockTokens,blocks,ssmOffset,pageStride); op.Process();
   }
 }
+#ifndef ASCENDC_CPU_DEBUG
 namespace oscar_ascend {
 void store_int2_launch(void* stream, void* key, void* value, void* slots,
     void* raw, void* status, int64_t tokens, int64_t heads, int64_t dim,
@@ -162,3 +164,4 @@ void store_int2_launch(void* stream, void* key, void* value, void* slots,
       blockTokens,blocks,ssmOffset,pageStride,slotsI64);
 }
 }
+#endif

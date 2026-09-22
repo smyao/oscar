@@ -1,0 +1,14 @@
+[oscar] PASSED phase=install rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/install.log
+[oscar] phase=device-build running seconds=15.0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/device-build.log
+[oscar] PASSED phase=device-build rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/device-build.log
+[oscar] PASSED phase=cpu-build rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cpu-build.log
+[oscar] PASSED phase=primitive-goldens rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/primitive-goldens.log
+[oscar] PASSED phase=primitive-debug rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/primitive-debug.log
+[oscar] PASSED phase=rotation-goldens rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/rotation-goldens.log
+[oscar] phase=rotation-debug running seconds=15.0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/rotation-debug.log
+[oscar] phase=rotation-debug running seconds=30.0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/rotation-debug.log
+[oscar] PASSED phase=rotation-debug rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/rotation-debug.log
+[oscar] PASSED phase=cv-goldens rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-goldens.log
+[oscar] phase=cv-debug running seconds=15.1 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log
+[oscar] phase=cv-debug running seconds=30.2 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log
+[oscar] PASSED phase=cv-debug rc=0 log=/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log

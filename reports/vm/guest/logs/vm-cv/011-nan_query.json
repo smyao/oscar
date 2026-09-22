@@ -1,0 +1,14 @@
+{
+  "phase": "011-nan_query",
+  "command": [
+    "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu",
+    "nan_query",
+    "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.942392,
+  "timed_out": false,
+  "interrupted": false,
+  "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/011-nan_query.log",
+  "cleanup_complete": true
+}

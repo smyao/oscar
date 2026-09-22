@@ -20,6 +20,8 @@ def serve_argv(config: dict) -> list[str]:
         args += [flag, json.dumps(config[key], separators=(",", ":"))]
     args += ["--trust-remote-code", "--async-scheduling", "--allowed-local-media-path", "/",
              "--mm-processor-cache-gb", "0", "--mamba-cache-dtype", "bfloat16", "--mamba-ssm-cache-dtype", "bfloat16"]
+    if config.get("profiler_config") is not None:
+        args += ["--profiler-config",json.dumps(config["profiler_config"],separators=(",",":"))]
     return args
 
 
@@ -44,6 +46,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
     parser.add_argument("--print-command", action="store_true")
+    parser.add_argument("--native",action="store_true",help="explicit unmodified native baseline, never selected after an OSCAR failure")
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     command = serve_argv(config)
@@ -52,8 +55,14 @@ def main() -> int:
         print("vllm " + shlex.join(command))
         return 0
     os.environ.update(target_env(config))
-    from oscar_ascend.integration.runtime_api import require_runtime
-    require_runtime().assert_ready()
+    os.environ["OSCAR_TARGET_CONFIG"]=str(args.config.resolve())
+    if args.native:
+        os.environ["OSCAR_ENABLED"]="0"
+    else:
+        from oscar_ascend.plugin import register
+        register()
+        from oscar_ascend.integration.runtime_api import require_runtime
+        require_runtime().assert_ready()
     import torch
     torch.set_num_threads(int(os.environ.get("OMP_NUM_THREADS", "1")))
     # Same order as the engine, archive #28/#78.

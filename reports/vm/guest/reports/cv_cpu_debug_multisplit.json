@@ -1,0 +1,42 @@
+{
+  "backend": "official_ascendc_cpu_debug",
+  "status": "passed",
+  "cases": [
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65_s2",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-multisplit/000-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65_s20",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-multisplit/001-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d256_q4_c511_s20",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-multisplit/002-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c0_s20",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-multisplit/003-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-multisplit/004-attention_cv.log"
+    }
+  ],
+  "npu_acceptance": "not_run"
+}

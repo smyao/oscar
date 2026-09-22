@@ -1,0 +1,14 @@
+{
+  "phase": "019-rotate_store",
+  "command": [
+    "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu",
+    "rotate_store",
+    "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_store_256_0_0.95"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 5.263037,
+  "timed_out": false,
+  "interrupted": false,
+  "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/019-rotate_store.log",
+  "cleanup_complete": true
+}

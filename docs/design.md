@@ -1,6 +1,6 @@
 # OSCAR Ascend：端到端设计与可证边界
 
-本设计以 PR `57286d5d`、vLLM `0fc695fc`、Ascend `19e43698` 为准，历史故障来自工作区档案 G1–G34、#1–#122。当前是本地开发；设计证明、CPU 测试、AscendC 编译、设备完成、图捕获、图回放、性能分别记账。待验证项不能勾选。
+本设计以 PR `57286d5d`、vLLM `0fc695fc`、Ascend `19e43698` 为准，历史故障来自工作区档案 G1–G34、#1–#122。本轮已完成源码调用链、VM CANN编译和官方CPU-debug；设计证明、CPU调试、设备完成、图捕获、图回放、性能分别记账。待验证项不能勾选。
 
 ## 1. 全局生命周期
 
@@ -33,18 +33,18 @@ flowchart TD
 | MTP | spec_decode/llm_base_proposer.py:215 | 复用 target/draft 生命周期 | draft eager 不改变 target 图 |
 | 图/异步 | platform.py:630; runner:3093 | 固定 buffer/device metadata | 无 D2H，dummy slots不写持久页 |
 | TP/W8A8 | runner 原生模型路径 | FULL attention 之外不替换 | 4 rank / ascend 权重量化保留 |
-| prefix/抢占 | 原生 block 分配/共享 | 精确窗口所有权协议待完成 | 无 owner 丢失后 INT2 替代 |
+| prefix/抢占 | 原生 block 分配/共享 | 原生padding中的页边界精确snapshot | 无 owner 丢失后 INT2 替代 |
 | 校准 | PR rotation.py; 论文 compute_kv_rotation.py | 模型/PR指纹 artifact | Hadamard 标明 data-free |
 
 接缝路径均相对 `references/vllm-ascend/vllm_ascend/`，vLLM 管理文件相对 `references/vllm/vllm/v1/`。详尽证据见 `native_integration.md`。
 
 ## 3. 时间线与窗口
 
-单 token：projection → 请求窗口判定 → 留在 BF16 recent → 仅在越过最终已提交窗口边界时旋转/clip/quant/pack → INT2 页 → attention tile 消费 → 页回收。当前 chunk 的原始 KV 可直接被 causal attention 消费，不必压缩后立即重建。
+单 token：projection → 当前chunk直接参与精确causal attention → fused rotate/clip/quant/pack仅处理新K/V并写INT2页 → 在同一launch保留精确sink或页内recent snapshot/tag → 后续attention按全局窗口选INT2/BF16 → 原生页回收。与PR一致，新token先保存INT2表示；精确窗口只保留一份canonical BF16，后续滑入History无需重复量化，也无需恢复已压缩旧chunk。
 
-MTP：draft 三步 → target verify 最多四 query → 原生 acceptance 得到有效长度 → 只提交被接受部分 → rejected tail 下轮覆盖。计算中的可见长度、持久提交长度和 staging 已物化长度是三个量，不能把 seq_len 当已提交长度（#37–49）。verify 必须复用历史 tile；固定窗口不能因为拒绝而丢失 BF16 行。
+MTP：draft 三步 → target verify 最多四 query → 原生 acceptance 得到有效长度 → 可见范围排除被拒绝部分 → rejected物理尾部下轮覆盖（无独立shadow历史）。计算中的可见长度、持久提交长度和 staging 已物化长度是三个量，不能把 seq_len 当已提交长度（#37–49）。verify 必须复用历史 tile；固定窗口不能因为拒绝而丢失 BF16 行。
 
-抢占/恢复：原生页与 GDN 状态按原生协议处理；FULL 窗口身份必须随着页共享/写时复制/释放同步。具体 owner-generation 协议尚未完成，不发布虚假的生产 provider。
+抢占/恢复：原生页与 GDN 状态按原生协议处理；FULL 窗口身份必须随着页共享/写时复制/释放同步。本实现用原生物理页自身持有唯一snapshot，无独立request-owner arena。完整不可变前缀页保留尾R+spec行供任意prefix边界重用；只在逻辑首部写Sink，不把每页局部边界当全局窗口。后续MTP draft的seq_lens可能仍含拒绝token，device prepare通过真实slot与无序virtual块表恢复逻辑位置（原生方法已执行复现），不使用mrope坐标。详见 runtime_implementation.md。
 
 窗口公式：`s=min(S,L); r=min(R,L-s); h=L-s-r`。Sink `[0,s)`、History `[s,L-r)`、Recent `[L-r,L)`。PR sink 向下对齐整页以及 staging 驱逐后的 INT2 替代不能作为本任务固定窗口的实现，列为需独立验证的工程差异。
 
@@ -54,16 +54,16 @@ MTP：draft 三步 → target verify 最多四 query → 原生 acceptance 得�
 
 GDN 原生为 SoA：conv 位于 `b*C`，SSM 位于 `nb*C+b*M`。因此 FULL packed 页只能使用对应 SSM 区，不可按 `b*P` AoS 写。`U=lcm(B_mamba,128)`，`B_full=floor(M/(Hkv*slotbytes*U))*U`。虚拟页 v 的物理页 `v//(B_full/128)`，页内 token `(v%(B_full/128))*128+t`。C/M 从真实状态形状与dtype取得，P另从原生 `MambaSpec.page_size_bytes` 读取，不能用P减conv反推SSM。
 
-原生 `patch/platform/patch_mamba_config.py:94–119` 以单K页对齐SSM，随后计算双K/V页并增加conv padding，因此典型 `P=C+2*M`。例如目标BF16 SSM若为393216 B、conv为15360 B，P仍为801792 B；**801792不是FP32 SSM的证据**。单本地KV head、D256时nativeB=768；prefix启用且mamba align时 `:143–146` 令 `B_mamba=nativeB`，本布局得到 `B_full=2304`、scheduler LCM=2304。若原生采用 `B_mamba=max_model_len`，当前容量公式会显式拒绝，相关模式仍未实现，不能改变GDN语义绕过。
+原生 `patch/platform/patch_mamba_config.py:94–119` 以单K页对齐SSM，随后计算双K/V页并增加conv padding，因此典型 `P=C+2*M`。历史/无spec形状示例 M=393216、C=15360 时P=801792；给定linear heads16/48、D128、TP4、convK4与MTP3，实际原生函数推导 C=30720、P=817152（真实目标config仍须现场核实）；**801792不是FP32 SSM的证据**。单本地KV head、D256时nativeB=768；prefix启用且mamba align时 `:143–146` 令 `B_mamba=nativeB`，本布局得到 `B_full=2304`、scheduler LCM=2304。若原生采用 `B_mamba=max_model_len`，当前容量公式会显式拒绝，相关模式仍未实现，不能改变GDN语义绕过。
 
-池 bytes=`num_tensors*nb*P`，包括原生尾padding `nb*(P-C-M)`；packed只使用实际SSM区，padding未被声明回收。单请求 FULL token容量随 B_full 改变，但实际 capacity 还受3个 GDN group 的状态块、LCM、MTP、prefix占用制约。额外预算包括 BF16 窗口、owner、旋转常量、固定 split workspace、图缓冲。**不能仅根据136/1024宣布全模型显存收益。**
+池 bytes=`num_tensors*nb*P`，包括原生尾padding `nb*(P-C-M)`；packed只使用实际SSM区，padding按物理页放精确snapshot（每页不超过原生已计费空间）。单请求 FULL token容量随 B_full 改变，但实际 capacity 还受3个 GDN group 的状态块、LCM、MTP、prefix占用制约。额外独立预算包括旋转常量、固定split workspace和当前chunk scratch；这些在model构造期预分配，计入原生profile，不能在KV预算确定后才偷分配。Snapshot BF16/tag已在P内，不重复计费。**不能仅根据136/1024宣布全模型显存收益。**
 
 ## 5. 性能账与长度标尺
 
 | 相位 | 计算/流量 | D.4历史量级 | 本轮结论 |
 |---|---|---|---|
 | prepare | 批量设备元数据 O(batch+new tokens) | 725ms host 异常 | 禁止逐请求 Python 热循环 |
-| store | O(new/migrated tokens·D²) rotation，O(tokens·D) quant | 16K约215ms | clip+quant+pack+scatter需融合 |
+| store | O(new/migrated tokens·D²) rotation，O(tokens·D) quant | 16K约215ms | rotate+clip+quant+pack+scatter已有融合实现 |
 | history attention | Θ(LD/4) compressed读取，O(qLD)算术 | full dequant 6.5s、FIA18.7ms | 不准全历史BF16物化；CV未验收 |
 | windows | O((S+R+q)D) | FIA子相位 | 只需精确有界BF16 |
 | merge | O(q·Hq·splits·D) | materialize约0.5ms | FP32稳定LSE合并 |
@@ -82,18 +82,18 @@ GDN 原生为 SoA：conv 位于 `b*C`，SSM 位于 `nb*C+b*M`。因此 FULL pack
 
 H18的“历史读取亚线性”与任意数据的精确 dense attention 不可同时成立：若算法不读取某个历史V，改变该V即可改变正确输出。至少Ω(L)读取不可消除。可以满足的是全历史BF16物化量为0，MTP跨query共享tile。这个冲突仍未被用户修订，不勾选H18。
 
-A2 Cube/Vector片上交接也需实际CANN编译/运行证据；不能把经GM中转的 `VECIN` 当作零HBM解包。参见 `ascendc_design.md`。本地缺CANN/NPU，C04仍未完成。
+A2 Cube/Vector片上交接也需实际CANN编译/运行证据；不能把经GM中转的 `VECIN` 当作零HBM解包。参见 `ascendc_design.md`。本机Lima VM中CANN9.1、910B4编译及官方CPU-debug已通过。实现使用每Cube固定GM通信，容量与L无关，但总通信流量线性；不将其冒充纯片上零HBM。C04真实NPU执行/性能仍未签。
 
 ## 6. 每个节点固定六问
 
 | 节点 | 原生机制 | OSCAR语义 | 接入 | 边界不变量 | 失败 | 验证 |
 |---|---|---|---|---|---|---|
 | quant | PR store:41–77 | FP32输入、FP16 meta先舍入 | AscendC vector | 单head组、LSB-first尾块 | 非有限/零scale显式错误 | 独立oracle位级对拍 |
-| rotation | PR attn:219–243 | x@R和abs quantile clip | AscendC融合待实现 | 正交、来源可追溯 | artifact缺失或不匹配中止 | orthogonality+模型质量 |
+| rotation | PR attn:219–243 | x@R和abs quantile clip | AscendC融合算子 | 正交、来源可追溯 | artifact缺失或不匹配中止 | orthogonality+模型质量 |
 | layout | runner:4696 | 压缩仅FULL | 外部spec/view | GDN地址隔离 | 无法容纳则显式错误 | byte区间与真实allocator |
 | metadata | runner:3034 | 批量长度和slot | 独立builder | native容量与device不变 | 容量/形状契约错误 | capture/replay真机 |
-| lifecycle | MTP/native blocks | BF16窗口不可遗失 | owner协议待实现 | prefix/COW/reject一致 | provider未就绪中止 | 状态机及真实调度 |
-| attention | PR decode+LSE merge | 等价Q旋转/输出逆旋转 | CV kernel待完成 | causal/GQA/全长度 | 无production替代路径 | device→graph→TP4 |
+| lifecycle | MTP/native blocks | BF16窗口不可遗失 | 原生页+canonical snapshot | prefix/COW/reject一致 | provider未就绪中止 | 状态机及真实调度 |
+| attention | PR decode+LSE merge | 等价Q旋转/输出逆旋转 | 真实Cube/Vector kernel | causal/GQA/全长度 | 无production替代路径 | device→graph→TP4 |
 | deployment | 原生serve参数 | 压缩路由确实命中 | 外部包+当前stream | 原生源码不变 | phase非零+资源清理 | 故障注入+硬件证据 |
 
 ## 7. 历史故障回归
@@ -112,8 +112,29 @@ A2 Cube/Vector片上交接也需实际CANN编译/运行证据；不能把经GM�
 
 - [x] 全局数据旅程、预算与原生接缝已建立。
 - [x] PR工程差异、数学冲突和历史失败未隐藏。
-- [ ] owner/prefix/MTP完整生产协议及其等价证明。
-- [ ] 真正fused CV、融合旋转裁剪和设备元数据实现。
-- [ ] CANN编译、NPU数值、图回放、性能和实际容量通过。
+- [x] 原生页/snapshot/MTP可见性源码及原生方法、CPU-debug回归已完成；真机生命周期另列。
+- [x] 真正fused CV、融合旋转裁剪、设备metadata和guard已实现并经CANN编译。
+- [x] CANN编译和官方CPU-debug通过。
+- [ ] 真实NPU数值、图回放、性能和实际容量通过。
 
 设计尚未达到四条性质全绿；任何拒绝启动的门禁都不能计作实现完成。
+
+## 9. 已落地内核的D.4四问与实现差异
+
+| 内核/相位 | 前次故障量级 | 本实现结构 | 量级和证据边界 |
+|---|---|---|---|
+| prepare | host约725ms | 一次设备metadata launch；后续draft由BT/slot定位，CPU不读长度值 | O(new_tokens log requests + metadata)，后续draft每req查有效表列；CPU-debug，NPU耗时未测 |
+| rotate/fused store | 16K写约215ms | Hadamard蝶形或FP32 dense tile；精确sort percentile；只写新token和canonical snapshot | O(NHDlogD)或O(NHD²)，固定UB<64KiB；26个CPU-debug用例 |
+| history/window/current CV | dequant6499.8–6655.1ms vs FIA18.5–18.9ms | 同一kernel流式读码、Vector解包/softmax、Cube QK/PV/输出逆旋转；Mq64容纳GQA6×MTP4 | INT2读取Θ(L)，每Cube固定278528B(D256) GM，显式UB161024B/AIV；无[L,D]恢复；实际NPU耗时未测 |
+| merge | materialize约0.5ms | FP32稳定LSE，空split poison不参与，独立Log输出buf | O(N*Hq*splits*D)，CPU-debug S1/3/128 |
+| guard | host/串行小op易累积 | 单设备核聚合四状态并Trap，替代eq/all/assert多launch | O(status元素)，无D2H；CPU-debug真错误注入通过 |
+
+每项更完整六问/ABI/同步与预算在 cv_implementation.md、rotation_pipeline.md、runtime_implementation.md；它们与本表共同构成本设计。Hadamard是明确算法选择，dense旋转也已实现，不是运行失败后的替代路线。默认无profiling事件；显式OSCAR_TIMING的host_s不写成device_ms，设备时间由真实NPU trace归因（profiling.md）。
+
+运行调用链为prepare→rotate→CV→merge→新KV store→guard；native源方法实际执行测试还验证了spec merge的AssertionError协议、17/16/16/16分组和共享页manager分配。C、M、P和GDN保留页数均动态读取。若假定三个GDN组保留全历史状态，Bfull由768到2304仅将总块数12L/2304降为10L/2304，理论上限约1.2倍而非3倍；默认align的实际保留与prefix/LRU另按原生manager核算，最终收益待实机。
+
+工程差异：本工程使用原生已有ascendc_library/direct-launch，不产出custom OPP vendor。PR窗口驱逐到INT2的退化行为被精确snapshot取代；所有不可用snapshot或非法量化metadata显式报错。常量向量导致FP16 scale下溢为0的PR未定义域仍显式报错，未私改epsilon。全部工程差异与真实未验项保留在checklist中。
+
+### 9.1 静态形状自适应分块
+
+默认arena容量不变，设 `qtile=floor(64/GQA)`、`groups=ceil(n/qtile)*Hkv`，选择 `S=max(1,min(32,ceil(CubeCores/groups),floor(arena_token_capacity/n)))`。只读取已经给定的shape/设备属性；同一捕获n始终得到同S/地址/stride，不读取CPU seq_lens。原partial/LSE/tasks/status平面arena复用为3*S段，保证n*S不超预分配容量。实际20Cube/GQA6时n4→S20，n16384→S1，避免单请求历史只有一个task。新增S2/S20真实CPU-debug已证明互斥历史分区、query复用、empty splits与真实3*S merge的数值一致；没有因此宣称NPU提速。

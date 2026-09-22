@@ -1,0 +1,153 @@
+START phase=cv-debug cwd=/Users/sunao2000/gpt_new_oscar command=["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --executable build/cpu/oscar_cv_cpu --cases artifacts/cv_cpu_cases/cases.json --output reports/cv_cpu_debug.json --log-dir logs/vm-cv"]
+[oscar] PASSED phase=000-attention_cv rc=0 log=logs/vm-cv/000-attention_cv.log
+[oscar] PASSED phase=001-attention_cv rc=0 log=logs/vm-cv/001-attention_cv.log
+[oscar] PASSED phase=002-attention_cv rc=0 log=logs/vm-cv/002-attention_cv.log
+[oscar] PASSED phase=003-attention_cv rc=0 log=logs/vm-cv/003-attention_cv.log
+[oscar] PASSED phase=004-attention_cv rc=0 log=logs/vm-cv/004-attention_cv.log
+[oscar] PASSED phase=005-attention_cv rc=0 log=logs/vm-cv/005-attention_cv.log
+[oscar] PASSED phase=006-attention_cv rc=0 log=logs/vm-cv/006-attention_cv.log
+[oscar] PASSED phase=007-attention_cv rc=0 log=logs/vm-cv/007-attention_cv.log
+[oscar] PASSED phase=008-attention_cv rc=0 log=logs/vm-cv/008-attention_cv.log
+[oscar] PASSED phase=009-attention_cv rc=0 log=logs/vm-cv/009-attention_cv.log
+[oscar] PASSED phase=010-attention_cv rc=0 log=logs/vm-cv/010-attention_cv.log
+[oscar] PASSED phase=011-attention_cv rc=0 log=logs/vm-cv/011-attention_cv.log
+[oscar] PASSED phase=012-attention_cv rc=0 log=logs/vm-cv/012-attention_cv.log
+[oscar] PASSED phase=013-attention_cv rc=0 log=logs/vm-cv/013-attention_cv.log
+[oscar] PASSED phase=014-bad_tag rc=0 log=logs/vm-cv/014-bad_tag.log
+[oscar] PASSED phase=015-nan_query rc=0 log=logs/vm-cv/015-nan_query.log
+[oscar] PASSED phase=016-bad_meta rc=0 log=logs/vm-cv/016-bad_meta.log
+[oscar] PASSED phase=017-nan_value rc=0 log=logs/vm-cv/017-nan_value.log
+{
+  "backend": "official_ascendc_cpu_debug",
+  "status": "passed",
+  "cases": [
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q1_c17",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/000-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/001-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/002-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d128_q4_c129",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/003-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d256_q4_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/004-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q17_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/005-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65_hk2",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/006-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q2_c320",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/007-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d128_q3_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/008-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65_s2",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/009-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65_s20",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/010-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d256_q4_c511_s20",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/011-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c0_s20",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/012-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_mixed_q1q4",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/013-attention_cv.log"
+    },
+    {
+      "op": "bad_tag",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/014-bad_tag.log"
+    },
+    {
+      "op": "nan_query",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/015-nan_query.log"
+    },
+    {
+      "op": "bad_meta",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/016-bad_meta.log"
+    },
+    {
+      "op": "nan_value",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/017-nan_value.log"
+    }
+  ],
+  "npu_acceptance": "not_run"
+}
+RESULT {"phase": "cv-debug", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --executable build/cpu/oscar_cv_cpu --cases artifacts/cv_cpu_cases/cases.json --output reports/cv_cpu_debug.json --log-dir logs/vm-cv"], "returncode": 0, "elapsed_seconds": 40.11783, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log", "cleanup_complete": true}

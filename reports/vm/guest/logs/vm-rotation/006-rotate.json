@@ -1,0 +1,14 @@
+{
+  "phase": "006-rotate",
+  "command": [
+    "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_rotation_cpu",
+    "rotate",
+    "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_128_0"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 1.138361,
+  "timed_out": false,
+  "interrupted": false,
+  "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/006-rotate.log",
+  "cleanup_complete": true
+}

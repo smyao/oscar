@@ -1,0 +1,54 @@
+{
+  "scope": "CANN compiler and official CPU debugger",
+  "instance": "oscar",
+  "workspace": "/home/sunao2000.linux/gpt_new_oscar",
+  "status": "passed",
+  "npu_acceptance": "not_run",
+  "phases": [
+    {
+      "phase": "install",
+      "returncode": 0,
+      "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/install.log"
+    },
+    {
+      "phase": "device-build",
+      "returncode": 0,
+      "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/device-build.log"
+    },
+    {
+      "phase": "cpu-build",
+      "returncode": 0,
+      "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cpu-build.log"
+    },
+    {
+      "phase": "primitive-goldens",
+      "returncode": 0,
+      "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/primitive-goldens.log"
+    },
+    {
+      "phase": "primitive-debug",
+      "returncode": 0,
+      "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/primitive-debug.log"
+    },
+    {
+      "phase": "rotation-goldens",
+      "returncode": 0,
+      "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/rotation-goldens.log"
+    },
+    {
+      "phase": "rotation-debug",
+      "returncode": 0,
+      "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/rotation-debug.log"
+    },
+    {
+      "phase": "cv-goldens",
+      "returncode": 0,
+      "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-goldens.log"
+    },
+    {
+      "phase": "cv-debug",
+      "returncode": 0,
+      "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "backend": "official_ascendc_cpu_debug",
+  "status": "passed",
+  "cases": [
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q1_c17",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-extended/000-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-extended/001-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-extended/002-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d128_q4_c129",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-extended/003-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d256_q4_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-extended/004-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_mixed_q1q4",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-extended/005-attention_cv.log"
+    },
+    {
+      "op": "bad_tag",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-extended/006-bad_tag.log"
+    },
+    {
+      "op": "nan_query",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-extended/007-nan_query.log"
+    },
+    {
+      "op": "bad_meta",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-extended/008-bad_meta.log"
+    },
+    {
+      "op": "nan_value",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-extended/009-nan_value.log"
+    }
+  ],
+  "npu_acceptance": "not_run"
+}

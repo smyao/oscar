@@ -1,0 +1,189 @@
+{
+  "backend": "official_ascendc_cpu_debug",
+  "status": "passed",
+  "cases": [
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_64_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/000-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_64_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/001-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_64_0_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/002-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_64_0_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/003-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_64_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/004-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_64_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/005-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_64_1_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/006-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_64_1_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/007-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_128_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/008-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_128_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/009-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_128_0_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/010-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_128_0_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/011-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_128_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/012-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_128_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/013-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_128_1_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/014-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_128_1_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/015-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_256_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/016-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_256_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/017-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_256_0_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/018-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_256_0_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/019-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_256_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/020-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_256_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/021-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_256_1_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/022-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_256_1_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/023-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_errors",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/024-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_sink_only",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/025-rotate_store.log"
+    }
+  ],
+  "npu_acceptance": "not_run"
+}

@@ -1,6 +1,6 @@
 # AscendC 算子 ABI、数值与真实缺口
 
-本地已写 **store INT2 quant/pack/scatter 与 LSE merge 的候选 AscendC 源码**，以及 direct-launch PyTorch 注册/构建工程。当前机器没有 CANN/NPU，尚未编译、加载或运行这些 kernel；不能据此将 C01/C03/C04/C05/E01 标成 passed。完整服务算子集合不齐，loader 必须拒绝生产启动。
+已实现七个独立AscendC符号，真实CANN9.1/Ascend910B4编译、链接和官方CPU-debug通过。完整CV与窗口/current路径见 `cv_implementation.md`，旋转融合见 `rotation_pipeline.md`，runtime见 `runtime_implementation.md`。本文件保留基础quant/merge ABI与硬件路线分析；真实NPU数值、图和性能均未通过本轮验收。
 
 ## 档案与 PR 证据
 
@@ -24,16 +24,10 @@
 构建参数：
 
 ```bash
-cmake -S csrc -B build/ascendc \
-  -DSOC_VERSION=ascend910b4 \
-  -DASCEND_HOME_PATH="$ASCEND_HOME_PATH" \
-  -DTORCH_NPU_PATH="<torch_npu package root>" \
-  -DPython3_EXECUTABLE="<target Python>" \
-  -DCMAKE_PREFIX_PATH="<Torch cmake prefix>;<pybind11 cmake prefix>"
-cmake --build build/ascendc --parallel 4
+python -m tools.build_ops --soc ascend910b4
 ```
 
-产物：`liboscar_ascend_kernels.so`、`_oscar_ascend_ops*.so`、`build_manifest.json`。manifest 记录 ABI=1、接口=direct_launch、绝对产物路径、实际源码能力与未完成能力；所有 NPU数值/图捕获/图重放/性能标志初始 false。CMake configure 会写 manifest，只有后续真实文件检查、模块加载、NPU同步与数值断言才能升级对应检查项。禁止把 manifest 当构建通过证据。
+产物：`liboscar_ascend_kernels_<source-signature>.so`、`_oscar_ascend_ops*.so`、`build_manifest.json`。manifest 记录 ABI=1、接口=direct_launch、绝对产物路径和七个实际符号；所有 NPU数值/图捕获/图重放/性能标志初始 false。CMake configure 会写 manifest，只有后续真实文件检查、模块加载、NPU同步与数值断言才能升级对应检查项。禁止把 manifest 当构建通过证据。
 
 loader现在要求构建工具写入 `build=passed`，校验runtime manifest与同目录 `oscar_build_signature.json`一致，重算configuration JSON的SHA256，再分别重算extension和kernel库的SHA256。仅保留mtime、缺构建签名记录、或只执行configure均不能通过加载。签名代表构建记录完整性，不能替代实际NPU或图验证，也不自动证明当前runtime版本与构建时相同。
 
@@ -67,7 +61,7 @@ loader现在要求构建工具写入 `build=passed`，校验runtime manifest与�
 
 原生 virtual128 子页映射 `v=b*(B/128)+i`，因此 `s=v*128+token_in_virtual` 自然还原 physical 页。SSM剩余空间与conv区不写。禁止追加完整 BF16 history allocation。
 
-**D.4 四问**：相位是 phase1_stores；失败量级209–216ms/16K，原因是重复搬运和小算子堆积；当前 component 在一个 launch 内完成FP32归约/量化、UB位打包与一次准确136B scatter，不产生中间量化HBM张量；复杂度O(NHD)，UB固定<8KiB/core，目标显著低于215ms/16K但无实测。源代码尚用每向量16/32/64字节的有界scalar-UB pack，必须用profiler证实或替换为native vector gather/shift；它不能因写成C++就自动获得“高性能”结论。旋转/percentile clip fusion仍未实现，不能把此component写成完整C03。
+**D.4 四问**：相位是 phase1_stores；失败量级209–216ms/16K，原因是重复搬运和小算子堆积；当前 component 在一个 launch 内完成FP32归约/量化、UB位打包与一次准确136B scatter，不产生中间量化HBM张量；复杂度O(NHD)，UB固定<8KiB/core，目标显著低于215ms/16K但无实测。源代码尚用每向量16/32/64字节的有界scalar-UB pack，必须用profiler证实或替换为native vector gather/shift；它不能因写成C++就自动获得“高性能”结论。完整旋转/percentile clip已在rotate_clip_store.cpp融合；此standalone quant component仍可独立验证。
 
 ## Merge ABI 与 D.4 对照
 
@@ -75,23 +69,21 @@ loader现在要求构建工具写入 `build=passed`，校验runtime manifest与�
 
 输入 FP32 `[R,S,D]`、FP32 `[R,S]`；输出 FP32 `[R,D]`、FP32 `[R]`、int32 `[R]`。S∈[1,128]，D同store。输入为已经归一化的各分段输出与自然对数LSE，所有分段必须在同一个V旋转空间。
 
-`m=max(lse_s)`；`w_s=exp(lse_s-m)`；`out=sum(w_s*out_s)/sum(w_s)`；`lse=m+log(sum(w_s))`。空split用 `lse=-inf`；全空行返回0与-inf；NaN/+inf LSE为错误，不能伪装空split。非空partial_out必须有限；该条件由Stage1数值gate保证，当前没有可用Stage1。
+`m=max(lse_s)`；`w_s=exp(lse_s-m)`；`out=sum(w_s*out_s)/sum(w_s)`；`lse=m+log(sum(w_s))`。空split用 `lse=-inf`；全空行返回0与-inf；NaN/+inf LSE为错误，不能伪装空split。非空partial_out必须有限；该条件由Stage1数值gate保证，Stage1由attention_cv.cpp提供，目标NPU验证仍独立进行。
 
 **D.4 四问**：对应materialize/merge；旧materialize约0.5ms，但host prepare约725ms；本实现只读有界split输出，一个launch无历史恢复、无host请求循环；复杂度O(RSD)、每core UB<4KiB，workspace是调用方预分配输出，S不随历史L无界增长；目标低于decode FIA的0.6–1.1ms参考，尚无NPU实测。每row循环S个tile依然可能带来延迟，需要实测决定是否改分层向量归约。
 
-## C04 fused INT2 Cube/Vector：方案与阻碍
+## C04 fused INT2 Cube/Vector：实现与硬件边界
 
-期望调度单元为 `(request, kv_head, history_split)`，一次读压缩历史tile供本head所有GQA query rows与MTP q_len复用，QK与PV必须发往Cube，softmax/metadata处理在Vector，FP32统计量/累计保持到最终输出。候选tile `Tk=64,Mq=16/32,D=256`，double buffer；不构造 `[L,D]` FP16/BF16 history workspace，不执行历史逆旋转。
+调度单元为(request,kv_head,query_tile,source_kind,history_split)，Mq64、KV tile32。一次压缩tile读取供GQA×MTP各query共用，QK、PV与历史输出逆旋转由真实Cube MatmulImpl执行，INT2 SIMD解包与FP32在线softmax由Vector执行，禁用HF32近似。源码在attention_cv.cpp，设备任务表在attention_tasks.cpp，完整ABI见cv_implementation.md。
 
-资源估算（单buffer）：INT2 K/V `64*136=8704B`；解包FP32 K/V `2*64*256*4=131072B`；Q `Mq*256*4`；score `Mq*64*4`；acc `Mq*256*4`。**全部双缓冲塞入同一AIV UB不可默认成立**。需将K/V按阶段复用或拆码与scale代数，查询platform UB容量后给出严格预算；不能重复 #92 的欠分配。
+A2的Vector→Cube使用每Cube固定 `(256*D+4096)*4` B GM通信（D256为278528B），显式AIV UB预算161024B。容量与历史L无关，没有[L,D]完整历史buffer；总通信流量仍线性，不能把有界tile staging说成零HBM。此差异如实保留。
 
-A2实际数据通路是目前最重要的阻碍：官方 CANN 9.1 `DataCopyPad(UBToL1)` 表明该路径由 Matmul workspace 中转，实际为UB→GM→L1，并带AIC/AIV通信。不能把表面的LocalTensor参数宣称为“解包从不落HBM”。[官方接口说明](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/910/API/ascendcopapi/docs/api/SIMD-API/基础API/cube_compute_ISASI/矩阵计算的搬入/DataCopyPad_UBToL1.md)。原生 `hc_pre_m_k_split_core.h` 同样用每Cube固定大小GM双缓冲和CrossCoreFlag连接Vector/Cube。目标FP32 Cube输入与FP32累计有[官方类型组合](https://www.hiascend.com/document/detail/en/canncommercial/850/API/ascendcopapi/atlasascendc_api_07_0614.html)，但输入精度模式仍需核实，不把TF32等近似默认为可接受。
+D.4对应dequant+FIA：旧6500ms全历史dequant被流式解包/矩阵乘替换，不做历史逆旋转；输出逆旋转只对query partial做。目标是接近原生18.7ms相位，但当前只有真实CANN编译与官方CPU-debug证据，没有NPU时延证据。
 
-固定大小的每core GM双缓冲与“全历史物化”有区别，其**容量**O(core_count*tile_size)不随L增长，但恢复后的K/V**流量**仍是Θ(LD)写+读；不满足严格“解包不落HBM/只读136B一次”要求。当前不将这种方案冒充完成实现，也没有用标量dot替代Cube。需目标CANN下验证直接通路/码域Cube代数方案，或由需求方明确接受有界GM中转后的流量上界；这不是可以在代码里悄悄放宽的要求。
+CPU-debug覆盖GQA6/Q1/2/3/4/17、Hkv2、mixed batch、无序物理页、空历史/分段、非法tag/metadata/NaN，以及MTP后续draft从slot/BT纠正seq_lens。自适应S只依赖捕获shape，在同一arena内分块；S2/S20真实对拍通过，未宣称提速。
 
-**D.4 四问**：对应dequant+FIA；旧32K dequant6499.8–6655.1ms吃掉95.4%，FIA仅18.5–18.9ms；设计禁止独立全历史解包/逆旋转/物化，采用tile流式和query复用；精确full attention仍需要Θ(LHD)必要读取/计算，目标达到原生相位预算，仅为目标，当前C04未实现、未编译、未实测。
-
-**复杂度冲突**：H18字面要求“历史读取对L亚线性”与任意输入的exact full attention不相容。任一未读取value token都可在相同其余输入下改变答案；因此至少要读取每个可能有权重的token。准确可实现的约束是固定压缩字节/token、MTP共享一次tile读取、无额外全历史恢复、固定workspace，而不是虚报o(L)。prefill q_len大于query tile时还必须明确重复读取次数；仅小MTP q_len能装入同tile时读取不随q_len线性增大。
+H18字面亚线性与任意输入的精确full attention矛盾：不读取某个V就不能对其任意变化产生正确输出。因此本工程不伪称o(L)，仍需需求口径澄清，最终性能必须配对实测。
 
 ## 尚须完成的目标验证
 

@@ -1,22 +1,21 @@
 # 算子清单与验证状态
 
-本清单区分数学oracle、候选AscendC源码和真实NPU验证。**尚无任何算子获得目标NPU数值/graph/performance通过状态。** `ops/reference.py` 只服务测试，生产loader没有oracle fallback。
+命名空间 `torch.ops.oscar_ascend_ops`，所有算子采用调用方预分配输出，无CPU数值执行路线。七个符号均已通过VM中的CANN9.1/Ascend910B4编译与链接。同一kernel body的官方CPU调试结果在 `reports/vm/guest/reports/`；这些不等于NPU验收。
 
-| 能力 | 输入/输出和数据量 | 阶段/融合归属 | 入口与当前实现 | 同步/验证状态 |
-|---|---|---|---|---|
-| rotate_clip_quant_int2 | 原始K/V `[N,H,D]`；旋转 `[D,D]`；输出136B/head/token(D256) | store融合Cube旋转、Vector分位裁剪/量化/打包 | reference oracle；AscendC旋转/clip尚未实现，store只接FP32已处理输入 | C03未完成；不得用torch小算子拼接填补 |
-| INT2 quant/pack/scatter | FP32 `[N,H,D]`→raw u8 SSM页，status i32 `[N,H]` | 增量History写入，一个launch，O(NHD) | `csrc/kernels/store_int2.cpp`; `store_int2_out`候选源码 | 设备事件；未编译/数值/性能实测；scale0明确拒绝 |
-| INT2 unpack | u8压缩码+fp16元数据→FP32向量 | 应融合于C04 tile流水 | oracle存在；生产AscendC尚无 | 位序/metadata oracle可测，不等于device通过 |
-| Sink/Recent store与迁移 | 原始BF16窗口 `[requests,W,H,D]`+position+commit事件 | window事务与History驱逐 | 需要device transaction/store kernel；未实现 | 不能发布未接受MTP token；不能双写全历史 |
-| 有界解包/逆旋转 | 仅window/前缀所需的有界行与rotation | prefix restore/debug，禁止decode历史恢复 | oracle；device尚无 | 有界恢复测试待完成 |
-| History Decode Stage1 | rotated Q `[R,Hq,D]`、INT2物理页、虚拟页表、GPU长度→partial FP32 | fused Cube QK/PV + Vector解包softmax | C04设计见ascendc_design；尚未实现 | 真实A2 UB→L1通路/GM流量约束待解，禁止假CV |
-| Sink/Recent/window attention | Q+BF16窗口+positions→rotated-space partial/LSE | 与history统一causal/softmax | 尚无AscendC | FIA LSE/mask风险#53-69仍需实测 |
-| LSE merge | partial FP32 `[R,S,D]`、LSE `[R,S]`→out `[R,D]`、LSE `[R]` | Stage2，单launch，O(RSD)，S≤128 | `csrc/kernels/merge_lse.cpp`; `merge_lse_out`候选源码 | 空段mask/全空写入已设计，未NPU验证 |
-| MTP多query | query positions+接受长度+pending窗口 | C04query tile复用、窗口原子提交 | 只有集成契约；device算法未实现 | q_len1–4、全部/部分/零接受必须独立验证 |
-| Prefill/chunked prefill | 原生QKV当前chunk，历史压缩tile | 当前chunk必要计算+增量store | native seam核实与oracle；缺device执行 | 禁止旧chunk全量dequant/重复量化 |
-| 批量metadata | native qsl/seq_lens/block_table/slot、accepted→固定地址device描述 | prepare，消除Python逐请求热循环 | schema/CPU调试代数；device kernel未实现 | padding/query长度/事务错误状态待probe |
-| 图与workspace | 输入/输出/status固定地址；small bounded partials | FULL_DECODE_ONLY，原生MTP scope | direct-launch出入口已写；没有捕获证据 | capture、replay、数值、性能全部独立pending |
+| 符号 | 契约/阶段 | 实现 | 验证 |
+|---|---|---|---|
+|store_int2_out|FP32[N,H,D]→136B/head/token(D256)，fp16 metadata，SSM SoA scatter|store_int2.cpp|D64/128/256，i32/i64，页边界/负slot/越界，CPU-debug逐位 |
+|merge_lse_out|FP32 partial[R,S,D]+LSE[R,S]→FP32输出/LSE，所有空行写0/-inf|merge_lse.cpp|S1/3/128、poison空split，CPU-debug；修复真实Log禁止inplace问题 |
+|rotate_out|BF16/FP16/FP32当前query→FP32旋转结果，原始/逆旋转均由R转置契约决定|rotate_clip_store.cpp|Hadamard蝶形与dense FP32，CPU-debug |
+|rotate_clip_store_out|新K/V→旋转、精确percentile clip、quant/pack、BF16 page snapshot和tag|rotate_clip_store.cpp|26种旋转/融合写用例：精确码/meta/guard/tag；非法行不发布 |
+|prepare_attention_tasks_out|device qstarts/seq_lens/slots→固定tasks/positions；后续draft从BT恢复真实位置|attention_tasks.cpp|dummy、padding孔洞、stale MTP seq_len、重复/缺失页，CPU-debug |
+|attention_cv_out|INT2 history、BF16窗口/current→FP32分段输出/LSE；Cube QK/PV/逆旋转，Vector解包/softmax|attention_cv.cpp|Q1/2/3/4/17，GQA6、Hkv2、mixed batch、物理页置换、bad tags/metadata/NaN，CPU-debug |
+|status_guard|同stream合并检查四组int32状态，错误触发AscendC::Trap，无D2H|status_guard.cpp|真实CPU-debug正例与故意坏status触发Trap负例 |
 
-所有数据同步仅允许明确的device事件和probe端设备同步；不以`.item()`把metadata拉回host。当前store的scalar-UB pack与merge的bounded split循环都有性能风险，已在kernel头和 `ascendc_design.md` 的D.4段登记，不能标成已满足预算。
+生产forward为 prepare→query rotate→三段CV→LSE merge→新KV融合写→status guard。先读取旧窗口，再写当前chunk；不恢复全历史到HBM，不重复量化旧chunk。窗口snapshot位于原生padding，随物理页共享/回收。所有dims、dtype、stride、capacity和输入输出alias由C++与metadata契约校验。
 
-唯一C++运行命名空间为 `oscar_ascend_ops`，两个out算子返回void，PyTorch schema和C++返回类型一致。构建manifest及extension.capabilities都只声明真实存在的两个component。`require_production_ops()`要求完整集合并明确抛出未实现列表；它不会自动回到原生BF16历史、Torch attention或Vector-only dot。
+CV固定GM通信为每Cube `(256*D+4096)*4` B；Mq64同时容纳目标GQA6×MTP4=24行，历史tile跨query复用。A2的Vector→Cube需要此有界通信，总流量仍线性；不能宣称零HBM解包流量或H18字面亚线性。
+
+每个kernel头与[CV设计](cv_implementation.md)、[旋转设计](rotation_pipeline.md)、[主设计](design.md)均有D.4四问。性能目标未实测，不从压缩比或CPU调试时长推导NPU吞吐。
+
+独立NPU gates：`tools.probe_ops`、`tests/test_cv_contracts.py`、`tests/test_rotation_npu.py`（显式opt-in），随后完整TP4服务probe。NPU、graph capture/replay、32K/50K性能和模型精度分别保持未运行直到实际证据到位。

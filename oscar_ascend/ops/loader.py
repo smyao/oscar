@@ -92,6 +92,14 @@ def validate_build_artifacts(manifest_path=None):
 def load_extension(manifest_path=None):
     global _loaded, _loaded_path
     manifest = validate_build_artifacts(manifest_path)
+    state_path = _manifest_path(manifest_path).parent / "oscar_build_signature.json"
+    configuration = json.loads(state_path.read_text())["configuration"]
+    source_root = Path(__file__).resolve().parents[2] / "csrc"
+    if not source_root.is_dir():
+        raise OperatorUnavailable("The source checkout is required to verify the compiled AscendC package")
+    from tools.environment import file_fingerprint
+    if file_fingerprint(source_root) != configuration.get("source"):
+        raise OperatorUnavailable("AscendC source changed since compilation; rebuild before loading")
     extension = Path(manifest["extension"]).resolve()
     kernels = Path(manifest["kernel_library"]).resolve()
     for path in (extension, kernels):
@@ -115,6 +123,8 @@ def load_extension(manifest_path=None):
         raise OperatorUnavailable("Loaded extension ABI differs from manifest")
     if set(module.capabilities()) != set(manifest["source_capabilities"]):
         raise OperatorUnavailable("Extension capabilities differ from build manifest")
+    from .meta import register_meta
+    register_meta()
     sys.modules["_oscar_ascend_ops"] = module
     _loaded = module
     _loaded_path = artifact_key

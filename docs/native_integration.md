@@ -168,8 +168,7 @@ a required module is halfway through import fails explicitly.
 
 `from_common()` reuses tensor objects without slicing, values inspection,
 host readback, Python per-request loops, or modifications to native buffers.
-Native exact device `seq_lens` controls async MTP visibility; optimistic CPU
-mirrors must not decide accepted lengths. The frozen metadata carries actual
+Main-target device lengths control visibility. Later MTP draft steps retain rejected suffixes in native seq_lens; the device task builder instead derives their logical position from the unique native physical slot / block-table mapping. Optimistic CPU mirrors do not decide accepted lengths. The frozen metadata carries actual
 request/token counts, padded tensors and maximum dimensions.
 
 `MetadataCapacity.from_native_buffers()` records actual rows, offset count,
@@ -179,8 +178,7 @@ wrong 2048 plugin capacity.
 
 The builder advertises the intended `UNIFORM_BATCH` graph capability and records
 capture origin. This is an interface declaration, not a passed graph test.
-The runtime must still preallocate workspaces and establish safe dummy capture
-state. A Python capture flag must **not** permanently suppress captured writes,
+The runtime preallocates shared workspaces during model construction and normalizes dummy slot inputs before capture. A Python capture flag must **not** permanently suppress captured writes,
 because replay needs to update the real cache. Capture return and real-request
 replay require separate target-NPU evidence.
 
@@ -194,8 +192,5 @@ fresh-interpreter import differences, future import hooks, readiness rejection,
 binding preservation and restoration. These tests do not import torch/NPU or
 claim native worker execution.
 
-Still pending: import against installed native dependencies, concrete runtime
-provider, real raw allocation/GDN view delegation, bounded window ownership and
-generation protocol, prefix sharing/reuse, MTP rollback, real AscendC calls,
-all-rank worker probes, graph capture/replay and paired accuracy/performance.
+Implemented and tested at source/CPU-debug level: concrete runtime, native raw allocation and exact GDN delegation, page snapshots, MTP slot-derived positions, real AscendC calls, and bounded all-rank service probes. Actual target worker execution, graph capture/replay, model quality, memory gain and paired performance remain unverified. See runtime_implementation.md and reports/vm/validation.json.
 There is no native FULL fallback when OSCAR is enabled.

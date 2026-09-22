@@ -1,0 +1,24 @@
+{
+  "phase": "cv-debug",
+  "command": [
+    "limactl",
+    "shell",
+    "--workdir",
+    "/home/sunao2000.linux/gpt_new_oscar",
+    "oscar",
+    "--",
+    "timeout",
+    "--signal=TERM",
+    "--kill-after=10s",
+    "1900",
+    "bash",
+    "-lc",
+    "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --executable build/cpu/oscar_cv_cpu --cases artifacts/cv_cpu_cases/cases.json --output reports/cv_cpu_debug.json --log-dir logs/vm-cv"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 40.11783,
+  "timed_out": false,
+  "interrupted": false,
+  "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-debug.log",
+  "cleanup_complete": true
+}

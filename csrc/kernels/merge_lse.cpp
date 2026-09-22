@@ -4,7 +4,7 @@
 // recovery, no Python per-request loop, no host synchronization or allocation.
 // Complexity: O(rows*splits*D), splits<=128, <4 KiB UB/core, independent of
 // history except the chosen bounded split count. Target below decode FIA's
-// 0.6-1.1 ms reference; NOT compiled or timed on target CANN/NPU here.
+// 0.6-1.1 ms reference; CANN VM compilation/CPU-debug passed, NPU timing pending.
 // Archive G30-G34/#4-16 require every output/LSE row written, including empty.
 // Native: moe_gating_top_k_generalized.h:185-204 reduction/event sequence;
 // moe_gating_top_k_without_group.h:238 ReduceSum; swiglu_group_quant_base.h:53-56 infinity.
@@ -31,13 +31,14 @@ class OscarMerge {
     pipe_.InitBuffer(valuesBuf_,kMaxDim*4);
     pipe_.InitBuffer(accBuf_,kMaxDim*4);
     pipe_.InitBuffer(scalarBuf_,32);
+    pipe_.InitBuffer(logBuf_,32);
     pipe_.InitBuffer(reduceBuf_,kMaxDim*4);
     pipe_.InitBuffer(publishBuf_,64);
   }
   __aicore__ inline void Process() {
     auto weights=weightsBuf_.Get<float>(); auto values=valuesBuf_.Get<float>();
     auto acc=accBuf_.Get<float>(); auto scalar=scalarBuf_.Get<float>();
-    auto reduce=reduceBuf_.Get<float>();
+    auto reduce=reduceBuf_.Get<float>(); auto logarithm=logBuf_.Get<float>();
     for (int64_t row=GetBlockIdx(); row<rows_; row+=GetBlockNum()) {
       int32_t rowStatus=0;
       float maximum=kNegInf;
@@ -88,8 +89,9 @@ class OscarMerge {
       DataCopy(output_[row*dim_],acc,dim_);
       // #91: scalar Exp/Log return overload is not supported on A2.
       scalar.SetValue(0,sum); Fence<HardEvent::S_V>();
-      Log(scalar,scalar,1); Fence<HardEvent::V_S>();
-      Publish(row,maximum+scalar.GetValue(0),rowStatus);
+      // Official CPU debugger validates Log's non-aliasing contract (#91).
+      Log(logarithm,scalar,1); Fence<HardEvent::V_S>();
+      Publish(row,maximum+logarithm.GetValue(0),rowStatus);
       Fence<HardEvent::MTE3_V>();
     }
   }
@@ -105,7 +107,7 @@ class OscarMerge {
     Fence<HardEvent::MTE3_S>();
   }
   TPipe pipe_;
-  TBuf<TPosition::VECCALC> weightsBuf_,valuesBuf_,accBuf_,scalarBuf_,reduceBuf_,publishBuf_;
+  TBuf<TPosition::VECCALC> weightsBuf_,valuesBuf_,accBuf_,scalarBuf_,logBuf_,reduceBuf_,publishBuf_;
   GlobalTensor<float> partial_,partialLse_,output_,lse_;
   GlobalTensor<int32_t> status_;
   int64_t rows_,splits_,dim_;
@@ -116,6 +118,7 @@ extern "C" __global__ __aicore__ void oscar_merge_lse_kernel(GM_ADDR partial,
   OscarMerge op;op.Init(partial,partialLse,output,lse,status,rows,splits,dim);
   op.Process();
 }
+#ifndef ASCENDC_CPU_DEBUG
 namespace oscar_ascend {
 void merge_lse_launch(void* stream,void* partial,void* partialLse,void* output,
     void* lse,void* status,int64_t rows,int64_t splits,int64_t dim,uint32_t cores) {
@@ -124,3 +127,4 @@ void merge_lse_launch(void* stream,void* partial,void* partialLse,void* output,
       static_cast<uint8_t*>(lse),static_cast<uint8_t*>(status),rows,splits,dim);
 }
 }
+#endif

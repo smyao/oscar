@@ -1,0 +1,147 @@
+START phase=primitive-debug cwd=/Users/sunao2000/gpt_new_oscar command=["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --log-dir logs/vm-primitives"]
+[oscar] PASSED phase=000-store rc=0 log=logs/vm-primitives/000-store.log
+[oscar] PASSED phase=001-store rc=0 log=logs/vm-primitives/001-store.log
+[oscar] PASSED phase=002-merge rc=0 log=logs/vm-primitives/002-merge.log
+[oscar] PASSED phase=003-merge rc=0 log=logs/vm-primitives/003-merge.log
+[oscar] PASSED phase=004-merge rc=0 log=logs/vm-primitives/004-merge.log
+[oscar] PASSED phase=005-store rc=0 log=logs/vm-primitives/005-store.log
+[oscar] PASSED phase=006-store rc=0 log=logs/vm-primitives/006-store.log
+[oscar] PASSED phase=007-merge rc=0 log=logs/vm-primitives/007-merge.log
+[oscar] PASSED phase=008-merge rc=0 log=logs/vm-primitives/008-merge.log
+[oscar] PASSED phase=009-merge rc=0 log=logs/vm-primitives/009-merge.log
+[oscar] PASSED phase=010-store rc=0 log=logs/vm-primitives/010-store.log
+[oscar] PASSED phase=011-store rc=0 log=logs/vm-primitives/011-store.log
+[oscar] PASSED phase=012-merge rc=0 log=logs/vm-primitives/012-merge.log
+[oscar] PASSED phase=013-merge rc=0 log=logs/vm-primitives/013-merge.log
+[oscar] PASSED phase=014-merge rc=0 log=logs/vm-primitives/014-merge.log
+[oscar] PASSED phase=015-guard rc=0 log=logs/vm-primitives/015-guard.log
+[oscar] PASSED phase=016-guard rc=0 log=logs/vm-primitives/016-guard.log
+{
+  "backend": "official_ascendc_cpu_debug",
+  "status": "passed",
+  "cases": [
+    {
+      "op": "store",
+      "path": "artifacts/cpu_cases/store_64_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/000-store.log"
+    },
+    {
+      "op": "store",
+      "path": "artifacts/cpu_cases/store_64_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/001-store.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_64_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/002-merge.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_64_3",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/003-merge.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_64_128",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/004-merge.log"
+    },
+    {
+      "op": "store",
+      "path": "artifacts/cpu_cases/store_128_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/005-store.log"
+    },
+    {
+      "op": "store",
+      "path": "artifacts/cpu_cases/store_128_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/006-store.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_128_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/007-merge.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_128_3",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/008-merge.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_128_128",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/009-merge.log"
+    },
+    {
+      "op": "store",
+      "path": "artifacts/cpu_cases/store_256_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/010-store.log"
+    },
+    {
+      "op": "store",
+      "path": "artifacts/cpu_cases/store_256_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/011-store.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_256_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/012-merge.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_256_3",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/013-merge.log"
+    },
+    {
+      "op": "merge",
+      "path": "artifacts/cpu_cases/merge_256_128",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/014-merge.log"
+    },
+    {
+      "op": "guard",
+      "path": "artifacts/cpu_cases/guard_zero",
+      "expect_kernel_error": false,
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/015-guard.log"
+    },
+    {
+      "op": "guard",
+      "path": "artifacts/cpu_cases/guard_error",
+      "expect_kernel_error": true,
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/016-guard.log"
+    }
+  ],
+  "npu_acceptance": "not_run"
+}
+RESULT {"phase": "primitive-debug", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --log-dir logs/vm-primitives"], "returncode": 0, "elapsed_seconds": 3.097733, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/primitive-debug.log", "cleanup_complete": true}

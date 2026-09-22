@@ -9,11 +9,12 @@ cannot use these components until the complete capability/acceptance gate passes
 from dataclasses import dataclass
 
 ABI_VERSION = 1
-SOURCE_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out"})
-PRODUCTION_CAPABILITIES = SOURCE_CAPABILITIES | frozenset({
-    "fused_int2_cv_attention", "rotate_clip_store", "window_cv_attention",
-    "window_transaction", "prepare_metadata", "prefix_snapshot_restore",
-})
+SOURCE_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "rotate_out",
+    "rotate_clip_store_out", "prepare_attention_tasks_out", "attention_cv_out", "status_guard"})
+# Exact callable symbols, not names of abstract components. Compilation,
+# CPU simulation, NPU execution and service acceptance remain separate gates.
+PRODUCTION_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "rotate_out",
+    "rotate_clip_store_out", "prepare_attention_tasks_out", "attention_cv_out", "status_guard"})
 SUPPORTED_HEAD_DIMS = (64, 128, 256)
 MAX_SPLITS = 128
 DEVICE_STATUS = {
@@ -21,6 +22,7 @@ DEVICE_STATUS = {
     1: "slot_mapping exceeds the physical page pool",
     2: "non-finite quantizer extrema or invalid partial LSE",
     3: "fp16 quantizer scale is zero/non-finite, or merge denominator is invalid",
+    4: "negative logical token position in a valid write slot",
 }
 
 

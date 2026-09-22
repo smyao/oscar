@@ -16,6 +16,7 @@ import json
 import math
 from pathlib import Path
 import re
+from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Sequence
 
 
@@ -24,6 +25,63 @@ PR_FINGERPRINT = "57286d5d2cb08c3dcd8c17bb59e132d6985e6796"
 ORTHOGONALITY_ATOL = 5e-4
 EIGEN_RESIDUAL_RTOL = 5e-4
 _LAYER = re.compile(r"^model\.layers\.(\d+)\.self_attn\.attn$")
+
+
+@dataclass(frozen=True)
+class DeviceRotation:
+    """Persistent, validated FP32 matrices for the out-only AscendC operators.
+
+    Kernels consume transposed matrices for contiguous vector dot products.
+    These allocations belong to initialization, never an inference step.
+    The exact Hadamard pattern is checked before enabling its butterfly path.
+    """
+
+    key_transposed: Any
+    value_transposed: Any
+    inverse_value_transposed: Any
+    hadamard: bool
+
+
+def prepare_device_rotations(artifact: Mapping[str, Any], *, device: str = "npu",
+                             testing: bool = False) -> dict[str, DeviceRotation]:
+    """Prepare already validated artifact matrices once, outside graph capture.
+
+    Archive #111: keep rotation inputs/outputs FP32; do not narrow rotated K/V
+    to FP16. Archive G27/#38: this transforms neither exact raw window data
+    nor prefix state. A forged ``objective=hadamard`` cannot select a wrong
+    numerical implementation: both matrices must equal the Sylvester pattern.
+    """
+    torch, selected = _runtime(device, testing)
+    if artifact.get("test_only") and not testing:
+        raise ValueError("CPU test rotation artifacts cannot enter production")
+    dim = artifact.get("head_dim")
+    if dim not in (64, 128, 256):
+        raise ValueError("AscendC rotations require head_dim 64/128/256")
+    layers = artifact.get("layers")
+    if not isinstance(layers, Mapping) or not layers:
+        raise ValueError("rotation artifact must contain layer matrices")
+    pattern = None
+    if artifact.get("objective") == "hadamard":
+        # Integer signs are dimension-only metadata. Numerical equality is a
+        # one-time device check and cannot introduce a per-token host sync.
+        signs = [[-1.0 if (i & j).bit_count() & 1 else 1.0
+                  for j in range(dim)] for i in range(dim)]
+        pattern = torch.tensor(signs, dtype=torch.float32, device=selected)
+    result = {}
+    for name, entry in layers.items():
+        k, v = entry.get("Rk"), entry.get("Rv")
+        for label, matrix in (("Rk", k), ("Rv", v)):
+            if (not torch.is_tensor(matrix) or matrix.dtype != torch.float32
+                    or tuple(matrix.shape) != (dim, dim) or matrix.device != selected
+                    or not bool(torch.isfinite(matrix).all())):
+                raise ValueError(f"{name}/{label}: expected finite FP32 rotation on {selected}")
+        fast = pattern is not None
+        if fast:
+            for label, matrix in (("Rk", k), ("Rv", v)):
+                if not bool(matrix[0, 0] > 0) or not torch.equal(matrix, pattern * matrix[0, 0]):
+                    raise ValueError(f"{name}/{label}: hadamard objective does not match exact Sylvester pattern")
+        result[name] = DeviceRotation(k.T.contiguous(), v.T.contiguous(), v.contiguous(), fast)
+    return result
 
 
 def model_fingerprint(config: Mapping[str, Any], weight_manifest_sha256: str) -> str:

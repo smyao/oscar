@@ -105,5 +105,6 @@ TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
 }
 PYBIND11_MODULE(_oscar_ascend_ops,m) {
   m.def("abi_version",[]{return 1;});
-  m.def("capabilities",[]{return std::vector<std::string>{"store_int2_out","merge_lse_out"};});
+  m.def("capabilities",[]{return std::vector<std::string>{"store_int2_out","merge_lse_out",
+      "rotate_out","rotate_clip_store_out","prepare_attention_tasks_out","attention_cv_out","status_guard"};});
 }

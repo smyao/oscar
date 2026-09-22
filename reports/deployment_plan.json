@@ -7,7 +7,7 @@
         "-m",
         "tools.environment",
         "--output",
-        "/Users/sunao2000/gpt_new_oscar/logs/20260922T010947.019045Z/environment.json",
+        "/Users/sunao2000/gpt_new_oscar/logs/20260922T023504.151292Z/environment.json",
         "--native-root",
         "/vllm-workspace/vllm",
         "--native-root",
@@ -20,8 +20,22 @@
         "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3",
         "-m",
         "tools.readiness",
+        "--source-only",
         "--output",
-        "/Users/sunao2000/gpt_new_oscar/logs/20260922T010947.019045Z/readiness.json"
+        "/Users/sunao2000/gpt_new_oscar/logs/20260922T023504.151292Z/source-readiness.json"
+      ]
+    ],
+    [
+      "build-dependencies",
+      [
+        "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3",
+        "-m",
+        "pip",
+        "install",
+        "pybind11>=3",
+        "cmake>=3.26",
+        "ninja",
+        "pytest"
       ]
     ],
     [
@@ -43,7 +57,17 @@
         "-m",
         "tools.build_ops",
         "--log-dir",
-        "/Users/sunao2000/gpt_new_oscar/logs/20260922T010947.019045Z/build"
+        "/Users/sunao2000/gpt_new_oscar/logs/20260922T023504.151292Z/build"
+      ]
+    ],
+    [
+      "binary-readiness",
+      [
+        "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3",
+        "-m",
+        "tools.readiness",
+        "--output",
+        "/Users/sunao2000/gpt_new_oscar/logs/20260922T023504.151292Z/binary-readiness.json"
       ]
     ],
     [
@@ -53,7 +77,20 @@
         "-m",
         "tools.probe_ops",
         "--output",
-        "/Users/sunao2000/gpt_new_oscar/logs/20260922T010947.019045Z/operators.json"
+        "/Users/sunao2000/gpt_new_oscar/logs/20260922T023504.151292Z/operators.json"
+      ]
+    ],
+    [
+      "probe-cv",
+      [
+        "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "--maxfail=1",
+        "/Users/sunao2000/gpt_new_oscar/tests/test_cv_contracts.py",
+        "/Users/sunao2000/gpt_new_oscar/tests/test_rotation_npu.py",
+        "--junitxml=/Users/sunao2000/gpt_new_oscar/logs/20260922T023504.151292Z/cv-npu.xml"
       ]
     ],
     [
@@ -67,19 +104,33 @@
       ]
     ],
     [
+      "service-probe",
+      [
+        "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3",
+        "-m",
+        "tools.service_probe",
+        "--config",
+        "/Users/sunao2000/gpt_new_oscar/configs/target.json",
+        "--log-dir",
+        "/Users/sunao2000/gpt_new_oscar/logs/20260922T023504.151292Z/service-probe",
+        "--output",
+        "/Users/sunao2000/gpt_new_oscar/logs/20260922T023504.151292Z/service-probe.json"
+      ]
+    ],
+    [
       "native-integrity",
       [
         "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3",
         "-m",
         "tools.environment",
         "--output",
-        "/Users/sunao2000/gpt_new_oscar/logs/20260922T010947.019045Z/environment-after.json",
+        "/Users/sunao2000/gpt_new_oscar/logs/20260922T023504.151292Z/environment-after.json",
         "--native-root",
         "/vllm-workspace/vllm",
         "--native-root",
         "/vllm-workspace/vllm-ascend",
         "--compare",
-        "/Users/sunao2000/gpt_new_oscar/logs/20260922T010947.019045Z/environment.json"
+        "/Users/sunao2000/gpt_new_oscar/logs/20260922T023504.151292Z/environment.json"
       ]
     ]
   ],
@@ -91,5 +142,5 @@
     "/Users/sunao2000/gpt_new_oscar/configs/target.json"
   ],
   "target_devices": null,
-  "production_status": "incomplete_runtime; not deployable yet"
+  "production_status": "requires_target_probes_and_resource_release"
 }

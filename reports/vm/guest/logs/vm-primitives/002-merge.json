@@ -1,0 +1,14 @@
+{
+  "phase": "002-merge",
+  "command": [
+    "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu",
+    "merge",
+    "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_1"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.104777,
+  "timed_out": false,
+  "interrupted": false,
+  "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/002-merge.log",
+  "cleanup_complete": true
+}

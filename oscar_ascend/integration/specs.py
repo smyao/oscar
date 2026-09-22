@@ -3,6 +3,7 @@
 Archive #28/#77/#78: register() never imports this heavy module.
 Archive #17–20/#34/#36: packed byte geometry is explicit and preserved
 across spec merging. GDN shapes/dtypes/spec instances remain unchanged.
+Archive #27: merge follows native grouping's AssertionError protocol.
 """
 
 from dataclasses import dataclass
@@ -53,10 +54,13 @@ class OscarFullAttentionSpec(FullAttentionSpec):
 
     @classmethod
     def merge(cls, specs):
+        # Native kv_cache_utils.is_kv_cache_spec_uniform deliberately tries
+        # merging mixed groups and catches AssertionError to partition them.
+        # A ValueError here aborts initialization before hybrid grouping runs.
         if not specs or any(type(spec) is not cls for spec in specs):
-            raise ValueError("OSCAR cache group must contain OSCAR specs")
+            raise AssertionError("OSCAR cache group must contain OSCAR specs")
         if any(spec != specs[0] for spec in specs[1:]):
-            raise ValueError("OSCAR cache group contains incompatible geometry")
+            raise AssertionError("OSCAR cache group contains incompatible geometry")
         return specs[0]
 
 

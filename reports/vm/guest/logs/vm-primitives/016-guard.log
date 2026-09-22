@@ -1,0 +1,25 @@
+START phase=016-guard cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "guard", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_error"]
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+OSCAR_GUARD segment=3 index=1024 status=3
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 90616] exit success!
+[TmSim]: Run in serial mode.
+[ERROR][Block_1][AIV_0][kernel_utils.cpp:1216][trap][90617] Aicore error exception, triggered by trap();
+[ERROR][CORE_1][pid 90617] error happened! ========= 
+SIGABRT Signal (Abort Signal from abort) catched, backtrace info:
+[#0] 0x00000000000bc8af: AscendC::StackTrace() at ??:?
+[#1] 0x00000000000bcc93: AscendC::BacktracePrint(int) at ??:?
+[#2] 0x0000000000022143: Handler(int) at /usr/local/Ascend/cann-9.1.0/tools/cpudebug/include/kern_fwk.h:43
+[#3] 0x000000000015e9b7: AscendC::trap() at ??:?
+[#4] 0x00000000000603f3: AscendC::TrapImpl() at /usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/basic_api/dav_c220/kernel_operator_sys_var_impl.h:116
+[#5] 0x000000000006040b: AscendC::Trap() at /usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/basic_api/kernel_operator_sys_var_intf_impl.h:123
+[#6] 0x000000000005fe23: oscar_status_guard_kernel at /home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp:39
+[#7] 0x000000000002653f: void AscendC::RunKernelFunctionOnCpu<void (*)(unsigned char*, unsigned char*, unsigned char*, unsigned char*, long, long, long, long), unsigned char*, unsigned char*, unsigned char*, unsigned char*, long, long, long, long>(void (*)(unsigned char*, unsigned char*, unsigned char*, unsigned char*, long, long, long, long), char const*, unsigned int, unsigned char*, unsigned char*, unsigned char*, unsigned char*, long, long, long, long) at /usr/local/Ascend/cann-9.1.0/tools/cpudebug/include/kern_fwk.h:142
+[#8] 0x000000000001dd27: main at /home/sunao2000.linux/gpt_new_oscar/csrc/cpu/primitive_probe.cpp:73
+[#9] 0x000000000001c8ef: _start at ??:?
+
+[SUCCESS][CORE_2][pid 90618] exit success!
+[SUCCESS][CORE_3][pid 90619] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"guard"}
+RESULT {"phase": "016-guard", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "guard", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_error"], "returncode": 0, "elapsed_seconds": 0.205603, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/016-guard.log", "cleanup_complete": true}

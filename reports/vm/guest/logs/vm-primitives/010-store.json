@@ -1,0 +1,14 @@
+{
+  "phase": "010-store",
+  "command": [
+    "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu",
+    "store",
+    "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_256_0"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.210599,
+  "timed_out": false,
+  "interrupted": false,
+  "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/010-store.log",
+  "cleanup_complete": true
+}

@@ -1,10 +1,17 @@
-........................................................................ [ 46%]
-.................................................................... [ 90%]
-...............                                                          [100%]
+.........................................................ssssss......... [ 15%]
+........................................................................ [ 30%]
+.................................................................... [ 45%]
+........................ssssssssssssssssssssssssssssssssssssssssssssssss [ 60%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssss................ [ 75%]
+........................................................................ [ 90%]
+...........................................                              [100%]
 =============================== warnings summary ===============================
 .venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368
   /Users/sunao2000/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
     cpu = _conversion_method_template(device=torch.device("cpu"))
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-155 passed, 1 warning, 4 subtests passed in 2.49s
+=========================== short test summary info ============================
+SKIPPED [6] tests/test_cv_contracts.py:56: real NPU test is opt-in; CPU is not substituted
+SKIPPED [104] tests/test_rotation_npu.py:145: not_run: real NPU rotation gate requires OSCAR_RUN_NPU_TESTS=1
+361 passed, 110 skipped, 1 warning, 4 subtests passed in 8.11s

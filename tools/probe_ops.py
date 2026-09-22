@@ -1,4 +1,4 @@
-# 档案 G25–G34/#13–22/#53/#69/#98/#111：真设备提交后同步并数值核对；库加载不算通过。
+# 档案 G25–G34/#13–22/#53/#69/#98/#111/#118/#122：真设备完成和限定本任务PID的CANN诊断。
 """Real-NPU primitive probe. No CPU execution route for operators under test."""
 from __future__ import annotations
 import argparse
@@ -8,6 +8,7 @@ from pathlib import Path
 import sys
 import time
 from .phase import atomic_json
+from .plog import attach_plog
 
 
 def probe() -> dict:
@@ -208,6 +209,7 @@ def main() -> int:
         report = {"status": "failed", "error_type": type(exc).__name__, "error": str(exc),
                   "device_completion": "not_established", "full_service_acceptance": "not_run"}
         code = 1
+        attach_plog(report, started_at=started, owned_pids={os.getpid()})
     report["elapsed_seconds"] = time.time()-started
     atomic_json(args.output, report)
     print(json.dumps(report, indent=2))

@@ -71,6 +71,10 @@ def build(log_dir: Path, timeout: float, soc: str | None = None) -> dict:
         env[key] = str(cann)
     env["SOC_VERSION"] = soc
     env["ASCEND_COMPUTE_UNIT"] = soc
+    # Archive #96/#107: build-time Torch CMake discovery must not initialize
+    # torch_npu or dlopen runtime driver/HCCL libraries on a compiler-only VM.
+    # NPU execution tools import torch_npu explicitly in their own process.
+    env["TORCH_DEVICE_BACKEND_AUTOLOAD"] = "0"
     build_dir = ROOT / "build/ascendc"
     versions = {}
     for path in (cann / "version.cfg", cann / "version.info", cann / "compiler/version.info"):
@@ -94,6 +98,7 @@ def build(log_dir: Path, timeout: float, soc: str | None = None) -> dict:
     command = ["cmake", "-S", str(ROOT / "csrc"), "-B", str(build_dir),
                f"-DASCEND_HOME_PATH={cann}", f"-DASCEND_CANN_PACKAGE_PATH={cann}", f"-DASCEND_TOOLKIT_HOME={cann}",
                f"-DSOC_VERSION={soc}", f"-DASCEND_COMPUTE_UNIT={soc}", f"-DTORCH_NPU_PATH={npu_path}",
+               f"-DOSCAR_BUILD_SIGNATURE={signature}",
                f"-DPython3_EXECUTABLE={sys.executable}", "-DCMAKE_BUILD_TYPE=Release"]
     for attempt in (1, 2):
         configured = run_phase(f"configure-{attempt}", command, cwd=ROOT, log_dir=log_dir, env=env, timeout=timeout)
@@ -108,7 +113,7 @@ def build(log_dir: Path, timeout: float, soc: str | None = None) -> dict:
         print("clean build retry once: archive G7/G8/#85; original failure retained", flush=True)
         clear_owned_build(build_dir)
     extensions = list(build_dir.rglob("_oscar_ascend_ops*.so"))
-    kernels = list(build_dir.rglob("liboscar_ascend_kernels.so"))
+    kernels = list(build_dir.rglob("liboscar_ascend_kernels*.so"))
     if len(extensions) != 1 or len(kernels) != 1:
         raise RuntimeError(f"expected exactly one extension and kernel library: extensions={extensions}, kernels={kernels}")
     manifest = {"signature": signature, "configuration": signature_data,

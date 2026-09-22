@@ -1,0 +1,91 @@
+{
+  "backend": "official_ascendc_cpu_debug",
+  "status": "passed",
+  "cases": [
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q1_c17",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-final/000-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-final/001-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-final/002-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d128_q4_c129",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-final/003-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d256_q4_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-final/004-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_mixed_q1q4",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-final/005-attention_cv.log"
+    },
+    {
+      "op": "bad_tag",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-final/006-bad_tag.log"
+    },
+    {
+      "op": "nan_query",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-final/007-nan_query.log"
+    },
+    {
+      "op": "bad_meta",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-final/008-bad_meta.log"
+    },
+    {
+      "op": "nan_value",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-final/009-nan_value.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q17_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-final/010-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65_hk2",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/cv-cpu-debug-final/011-attention_cv.log"
+    }
+  ],
+  "npu_acceptance": "not_run"
+}

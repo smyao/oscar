@@ -24,7 +24,7 @@ def file_fingerprint(root: Path) -> dict[str, str]:
         dirs[:] = sorted(d for d in dirs if d not in {".git", "__pycache__", ".pytest_cache", "build", ".venv"})
         for name in sorted(files):
             path = Path(parent) / name
-            if path.is_symlink() or name == ".DS_Store" or path.suffix in {".pyc", ".pyo"}:
+            if path.is_symlink() or name == ".DS_Store" or name.startswith("._") or path.suffix in {".pyc", ".pyo"}:
                 continue
             result[str(path.relative_to(root))] = hashlib.sha256(path.read_bytes()).hexdigest()
     return result

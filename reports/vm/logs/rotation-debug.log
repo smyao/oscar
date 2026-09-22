@@ -1,0 +1,217 @@
+START phase=rotation-debug cwd=/Users/sunao2000/gpt_new_oscar command=["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --executable build/cpu/oscar_rotation_cpu --cases artifacts/rotation_cpu_cases/cases.json --output reports/rotation_cpu_debug.json --log-dir logs/vm-rotation"]
+[oscar] PASSED phase=000-rotate rc=0 log=logs/vm-rotation/000-rotate.log
+[oscar] PASSED phase=001-rotate rc=0 log=logs/vm-rotation/001-rotate.log
+[oscar] PASSED phase=002-rotate_store rc=0 log=logs/vm-rotation/002-rotate_store.log
+[oscar] PASSED phase=003-rotate_store rc=0 log=logs/vm-rotation/003-rotate_store.log
+[oscar] PASSED phase=004-rotate rc=0 log=logs/vm-rotation/004-rotate.log
+[oscar] PASSED phase=005-rotate rc=0 log=logs/vm-rotation/005-rotate.log
+[oscar] PASSED phase=006-rotate_store rc=0 log=logs/vm-rotation/006-rotate_store.log
+[oscar] PASSED phase=007-rotate_store rc=0 log=logs/vm-rotation/007-rotate_store.log
+[oscar] PASSED phase=008-rotate rc=0 log=logs/vm-rotation/008-rotate.log
+[oscar] PASSED phase=009-rotate rc=0 log=logs/vm-rotation/009-rotate.log
+[oscar] PASSED phase=010-rotate_store rc=0 log=logs/vm-rotation/010-rotate_store.log
+[oscar] PASSED phase=011-rotate_store rc=0 log=logs/vm-rotation/011-rotate_store.log
+[oscar] PASSED phase=012-rotate rc=0 log=logs/vm-rotation/012-rotate.log
+[oscar] PASSED phase=013-rotate rc=0 log=logs/vm-rotation/013-rotate.log
+[oscar] PASSED phase=014-rotate_store rc=0 log=logs/vm-rotation/014-rotate_store.log
+[oscar] PASSED phase=015-rotate_store rc=0 log=logs/vm-rotation/015-rotate_store.log
+[oscar] PASSED phase=016-rotate rc=0 log=logs/vm-rotation/016-rotate.log
+[oscar] PASSED phase=017-rotate rc=0 log=logs/vm-rotation/017-rotate.log
+[oscar] PASSED phase=018-rotate_store rc=0 log=logs/vm-rotation/018-rotate_store.log
+[oscar] PASSED phase=019-rotate_store rc=0 log=logs/vm-rotation/019-rotate_store.log
+[oscar] PASSED phase=020-rotate rc=0 log=logs/vm-rotation/020-rotate.log
+[oscar] PASSED phase=021-rotate rc=0 log=logs/vm-rotation/021-rotate.log
+[oscar] PASSED phase=022-rotate_store rc=0 log=logs/vm-rotation/022-rotate_store.log
+[oscar] PASSED phase=023-rotate_store rc=0 log=logs/vm-rotation/023-rotate_store.log
+[oscar] PASSED phase=024-rotate_store rc=0 log=logs/vm-rotation/024-rotate_store.log
+[oscar] PASSED phase=025-rotate_store rc=0 log=logs/vm-rotation/025-rotate_store.log
+{
+  "backend": "official_ascendc_cpu_debug",
+  "status": "passed",
+  "cases": [
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_64_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/000-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_64_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/001-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_64_0_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/002-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_64_0_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/003-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_64_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/004-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_64_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/005-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_64_1_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/006-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_64_1_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/007-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_128_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/008-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_128_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/009-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_128_0_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/010-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_128_0_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/011-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_128_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/012-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_128_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/013-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_128_1_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/014-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_128_1_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/015-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_256_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/016-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_256_0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/017-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_256_0_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/018-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_256_0_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/019-rotate_store.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_256_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/020-rotate.log"
+    },
+    {
+      "op": "rotate",
+      "path": "artifacts/rotation_cpu_cases/rotate_masked_256_1",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/021-rotate.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_256_1_0.00",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/022-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_256_1_0.95",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/023-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_errors",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/024-rotate_store.log"
+    },
+    {
+      "op": "rotate_store",
+      "path": "artifacts/rotation_cpu_cases/rotate_store_sink_only",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/025-rotate_store.log"
+    }
+  ],
+  "npu_acceptance": "not_run"
+}
+RESULT {"phase": "rotation-debug", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --executable build/cpu/oscar_rotation_cpu --cases artifacts/rotation_cpu_cases/cases.json --output reports/rotation_cpu_debug.json --log-dir logs/vm-rotation"], "returncode": 0, "elapsed_seconds": 31.680838, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/rotation-debug.log", "cleanup_complete": true}

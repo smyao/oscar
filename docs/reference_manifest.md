@@ -11,7 +11,7 @@
 
 原始溯源：`references/PROVENANCE.md` / `PROVENANCE.json`。文件指纹在本地 `reports/reference_fingerprints.json`（不入Git）；新的验收必须重新检查实际代码，而不是仅对版本字符串作相等判断（档案 #74–76）。
 
-本地开发环境是 macOS arm64、Python3.12.6。独立 `.venv` 使用 torch2.14.0 做CPU oracle测试，**不代表目标torch2.10.0**。没有 `cmake`、`bisheng`、`npu-smi` 或 CANN/NPU；详见 `reports/environment.json`、`local_environment.json`。
+本地开发环境是 macOS arm64、Python3.12.6。独立 `.venv` 使用 torch2.14.0 做CPU oracle测试，**不代表目标torch2.10.0**。macOS本体没有CANN/NPU；本轮已发现并使用Lima oscar内的CANN9.1、bisheng15、aarch64 Linux与官方CPU调试库。VM独立环境为Torch2.12.0+cpu/torch_npu2.12.0/pybind11 3.1.0，与目标Torch2.10版本不同，不能代替目标运行。详见 reports/vm/validation.json 及 `reports/environment.json`、`local_environment.json`。
 
 目标模型位置、TP4、图、MTP等保留于 `configs/target.json`。真机连接方式未提供；模型config与权重不在本机，FULL层数/head_dim/GDN实际dtype形状必须由目标环境核实。档案中的设备号与旧项目约定冲突，等待本任务选择；设备未选择时不会启动NPU进程。
 
@@ -21,7 +21,7 @@
 - 同快照 `vllm/v1/attention/backends/oscar_attn.py:219`：旋转、裁剪；`:259`起窗口；`:745`起输出合并。PR工程限制见 `docs/semantics.md`。
 - `references/oscar-paper/rotation/compute_kv_rotation.py`：真实数据二阶矩与data-free Hadamard两种明确方法。
 - `docs/native_integration.md`：本轮核实的后端/spec/allocator/metadata/MTP/graph完整接缝。
-- `docs/ascendc_design.md`：AscendC接口先例、D.4四问、官方A2数据通路与未实现CV问题。
+- `docs/ascendc_design.md`：AscendC接口先例、D.4四问、官方A2数据通路与已实现CV的验证边界。
 
 ## 已纠正的历史假设
 
@@ -34,4 +34,4 @@
 
 ## 仍缺少的输入/证据
 
-真机连接与NPU所有权；同环境原生基线；实际模型config与权重指纹；质量评估数据和预先冻结的logits/任务指标/MTP容差；CANN编译/设备/图/profiler结果；H18复杂度冲突的需求结论。
+真机连接与NPU所有权；同环境原生基线；实际模型config与权重指纹；质量评估数据和预先冻结的logits/任务指标/MTP容差；目标Torch2.10环境的加载/设备/图/profiler结果；H18复杂度冲突的需求结论。VM CANN交叉编译结果已经存在，不属于缺失项。

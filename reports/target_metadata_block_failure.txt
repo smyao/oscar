@@ -1,0 +1,326 @@
+(Worker_TP2 pid=8194) INFO 09-22 05:18:36 [weight_utils.py:856] Prefetching checkpoint files: 10% (1/2)
+(Worker_TP2 pid=8194) INFO 09-22 05:18:36 [weight_utils.py:856] Prefetching checkpoint files: 20% (2/2)
+(Worker_TP2 pid=8194) INFO 09-22 05:18:36 [weight_utils.py:879] Prefetching checkpoint files into page cache finished in 5.21s
+(Worker_TP0 pid=8100) INFO 09-22 05:18:36 [weight_utils.py:856] Prefetching checkpoint files: 10% (1/3)
+(Worker_TP1 pid=8136) INFO 09-22 05:18:36 [weight_utils.py:856] Prefetching checkpoint files: 10% (1/2)
+(Worker_TP1 pid=8136) INFO 09-22 05:18:37 [weight_utils.py:856] Prefetching checkpoint files: 20% (2/2)
+(Worker_TP1 pid=8136) INFO 09-22 05:18:37 [weight_utils.py:879] Prefetching checkpoint files into page cache finished in 5.25s
+(Worker_TP0 pid=8100) INFO 09-22 05:18:37 [weight_utils.py:856] Prefetching checkpoint files: 20% (2/3)
+(Worker_TP3 pid=8254) INFO 09-22 05:18:38 [weight_utils.py:856] Prefetching checkpoint files: 10% (1/2)
+(Worker_TP0 pid=8100) INFO 09-22 05:18:38 [weight_utils.py:856] Prefetching checkpoint files: 30% (3/3)
+(Worker_TP0 pid=8100) INFO 09-22 05:18:38 [weight_utils.py:879] Prefetching checkpoint files into page cache finished in 5.90s
+(Worker_TP3 pid=8254) INFO 09-22 05:18:38 [weight_utils.py:856] Prefetching checkpoint files: 20% (2/2)
+(Worker_TP3 pid=8254) INFO 09-22 05:18:38 [weight_utils.py:879] Prefetching checkpoint files into page cache finished in 5.84s
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe/server.log
+STARTUP_WAIT elapsed=165.5 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=195.1 log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe.log
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe/server.log
+STARTUP_WAIT elapsed=180.7 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=210.1 log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe.log
+(Worker_TP2 pid=8194) INFO 09-22 05:19:02 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP1 pid=8136) INFO 09-22 05:19:02 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP3 pid=8254) INFO 09-22 05:19:03 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP0 pid=8100) INFO 09-22 05:19:03 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP0 pid=8100) INFO 09-22 05:19:03 [backends.py:1089] Using cache directory: /root/.cache/vllm/torch_compile_cache/e436ed4b15/rank_0_0/backbone for vLLM's torch.compile
+(Worker_TP0 pid=8100) INFO 09-22 05:19:03 [backends.py:1148] Dynamo bytecode transform time: 20.93 s
+(Worker_TP0 pid=8100) INFO 09-22 05:19:04 [compiler_interface.py:285] enable_npugraph_ex is enabled, which will bring graph compilation optimization.
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe/server.log
+STARTUP_WAIT elapsed=195.8 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=225.1 log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe.log
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe/server.log
+STARTUP_WAIT elapsed=210.9 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=240.2 log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe.log
+(EngineCore pid=8050) INFO 09-22 05:19:35 [patch_shm_broadcast.py:74] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe/server.log
+STARTUP_WAIT elapsed=226.0 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=255.2 log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe.log
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe/server.log
+STARTUP_WAIT elapsed=241.1 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=270.2 log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe.log
+(Worker_TP2 pid=8194) INFO 09-22 05:20:08 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/e436ed4b15/rank_2_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP0 pid=8100) INFO 09-22 05:20:10 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/e436ed4b15/rank_0_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP0 pid=8100) INFO 09-22 05:20:10 [backends.py:378] Cache the graph of compile range (1, 16384) for later use
+(Worker_TP0 pid=8100) INFO 09-22 05:20:10 [backends.py:393] Compiling a graph for compile range (1, 16384) takes 65.66 s
+(Worker_TP1 pid=8136) INFO 09-22 05:20:10 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/e436ed4b15/rank_1_0/backbone/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP3 pid=8254) INFO 09-22 05:20:11 [compiler_interface.py:190] Skipping npugraph_ex cache for graph containing Triton kernels (kernel_side_table indices are process-local): /root/.cache/vllm/torch_compile_cache/e436ed4b15/rank_3_0/backbone/artifact_compile_range_1_16384_subgraph_0
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe/server.log
+STARTUP_WAIT elapsed=256.2 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=285.2 log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe.log
+(Worker_TP0 pid=8100) INFO 09-22 05:20:18 [decorators.py:708] saved AOT compiled function to /root/.cache/vllm/torch_compile_cache/torch_aot_compile/189d098540492832c89485ab0d2e104c75bdc247450d0fc37f4b428bc3ffdc9f/rank_0_0/model
+(Worker_TP0 pid=8100) INFO 09-22 05:20:18 [monitor.py:53] torch.compile took 96.03 s in total
+[oscar] waiting for service health log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe/server.log
+STARTUP_WAIT elapsed=271.3 health=<urlopen error [Errno 111] Connection refused>
+[oscar] phase=service-probe running seconds=300.2 log=/workspace/gpt_new_oscar/logs/20260922T051437.326586Z/service-probe.log
+(Worker_TP0 pid=8100) INFO 09-22 05:20:31 [monitor.py:81] Initial profiling/warmup run took 13.17 s
+(Worker_TP2 pid=8194) INFO 09-22 05:20:31 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP0 pid=8100) INFO 09-22 05:20:31 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP0 pid=8100) INFO 09-22 05:20:31 [backends.py:1089] Using cache directory: /root/.cache/vllm/torch_compile_cache/e436ed4b15/rank_0_0/eagle_head for vLLM's torch.compile
+(Worker_TP0 pid=8100) INFO 09-22 05:20:31 [backends.py:1148] Dynamo bytecode transform time: 0.57 s
+(Worker_TP3 pid=8254) INFO 09-22 05:20:32 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP1 pid=8136) INFO 09-22 05:20:32 [compiler_interface.py:248] AscendCompiler hash factors: {'torch_npu_version': '2.10.0.post4', 'enable_npugraph_ex': True, 'enable_static_kernel': False}
+(Worker_TP2 pid=8194) INFO 09-22 05:20:34 [compiler_interface.py:199] Saved compiled graph to cache: /root/.cache/vllm/torch_compile_cache/e436ed4b15/rank_2_0/eagle_head/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP0 pid=8100) INFO 09-22 05:20:34 [compiler_interface.py:199] Saved compiled graph to cache: /root/.cache/vllm/torch_compile_cache/e436ed4b15/rank_0_0/eagle_head/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP0 pid=8100) INFO 09-22 05:20:34 [backends.py:393] Compiling a graph for compile range (1, 16384) takes 2.37 s
+(Worker_TP1 pid=8136) INFO 09-22 05:20:34 [compiler_interface.py:199] Saved compiled graph to cache: /root/.cache/vllm/torch_compile_cache/e436ed4b15/rank_1_0/eagle_head/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP3 pid=8254) INFO 09-22 05:20:34 [compiler_interface.py:199] Saved compiled graph to cache: /root/.cache/vllm/torch_compile_cache/e436ed4b15/rank_3_0/eagle_head/artifact_compile_range_1_16384_subgraph_0
+(Worker_TP0 pid=8100) INFO 09-22 05:20:34 [decorators.py:708] saved AOT compiled function to /root/.cache/vllm/torch_compile_cache/torch_aot_compile/fb379c8a0a8f7c1c3d375bc143e1c46d75ebe84c72d6960c663d623e68c0542b/rank_0_0/model
+(Worker_TP0 pid=8100) INFO 09-22 05:20:34 [monitor.py:53] torch.compile took 3.22 s in total
+(Worker_TP0 pid=8100) INFO 09-22 05:20:34 [monitor.py:81] Initial profiling/warmup run took 0.04 s
+(EngineCore pid=8050) INFO 09-22 05:20:35 [patch_shm_broadcast.py:74] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(Worker_TP0 pid=8100) INFO 09-22 05:20:38 [worker.py:593] Available KV cache memory: 14.55 GiB
+(EngineCore pid=8050) WARNING 09-22 05:20:38 [kv_cache_utils.py:1174] Add 3 padding layers, may waste at most 6.25% KV cache memory
+(EngineCore pid=8050) INFO 09-22 05:20:38 [kv_cache_utils.py:1744] GPU KV cache size: 2,779,715 tokens
+(EngineCore pid=8050) INFO 09-22 05:20:38 [kv_cache_utils.py:1745] Maximum concurrency for 262,144 tokens per request: 10.60x
+(Worker_TP0 pid=8100) /workspace/gpt_new_oscar/oscar_ascend/runtime.py:320: RuntimeWarning: OSCAR MTP rotation is explicit PR identity: mtp.layers.0.self_attn.attn
+(Worker_TP0 pid=8100)   warnings.warn(f"OSCAR MTP rotation is explicit PR identity: {name}", RuntimeWarning)
+(Worker_TP2 pid=8194) /workspace/gpt_new_oscar/oscar_ascend/runtime.py:320: RuntimeWarning: OSCAR MTP rotation is explicit PR identity: mtp.layers.0.self_attn.attn
+(Worker_TP2 pid=8194)   warnings.warn(f"OSCAR MTP rotation is explicit PR identity: {name}", RuntimeWarning)
+(Worker_TP3 pid=8254) /workspace/gpt_new_oscar/oscar_ascend/runtime.py:320: RuntimeWarning: OSCAR MTP rotation is explicit PR identity: mtp.layers.0.self_attn.attn
+(Worker_TP3 pid=8254)   warnings.warn(f"OSCAR MTP rotation is explicit PR identity: {name}", RuntimeWarning)
+(Worker_TP1 pid=8136) /workspace/gpt_new_oscar/oscar_ascend/runtime.py:320: RuntimeWarning: OSCAR MTP rotation is explicit PR identity: mtp.layers.0.self_attn.attn
+(Worker_TP1 pid=8136)   warnings.warn(f"OSCAR MTP rotation is explicit PR identity: {name}", RuntimeWarning)
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 319, in initialize_from_config
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.worker.initialize_from_config(kv_cache_config)  # type: ignore
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 918, in initialize_from_config
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.model_runner.initialize_kv_cache(kv_cache_config)
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3879, in initialize_kv_cache
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.drafter.initialize_attn_backend(kv_cache_config, block_size)
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/spec_decode/llm_base_proposer.py", line 1626, in initialize_attn_backend
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     attn_group.create_metadata_builders(
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/utils.py", line 243, in create_metadata_builders
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.kv_cache_spec.copy_with_new_block_size(kernel_block_size)
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/kv_cache_interface.py", line 131, in copy_with_new_block_size
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return replace(self, block_size=block_size)
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/dataclasses.py", line 1588, in replace
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return obj.__class__(**changes)
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "<string>", line 18, in __init__
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 38, in __post_init__
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     raise ValueError(f"OSCAR block_size={self.block_size} differs from physical layout={layout.block_size}")
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987] ValueError: OSCAR block_size=128 differs from physical layout=2816
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 319, in initialize_from_config
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.worker.initialize_from_config(kv_cache_config)  # type: ignore
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 918, in initialize_from_config
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.model_runner.initialize_kv_cache(kv_cache_config)
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3879, in initialize_kv_cache
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.drafter.initialize_attn_backend(kv_cache_config, block_size)
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/spec_decode/llm_base_proposer.py", line 1626, in initialize_attn_backend
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     attn_group.create_metadata_builders(
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/utils.py", line 243, in create_metadata_builders
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.kv_cache_spec.copy_with_new_block_size(kernel_block_size)
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/kv_cache_interface.py", line 131, in copy_with_new_block_size
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return replace(self, block_size=block_size)
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/dataclasses.py", line 1588, in replace
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return obj.__class__(**changes)
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "<string>", line 18, in __init__
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 38, in __post_init__
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     raise ValueError(f"OSCAR block_size={self.block_size} differs from physical layout={layout.block_size}")
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987] ValueError: OSCAR block_size=128 differs from physical layout=2816
+(Worker_TP0 pid=8100) ERROR 09-22 05:20:39 [multiproc_executor.py:987] 
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 319, in initialize_from_config
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.worker.initialize_from_config(kv_cache_config)  # type: ignore
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 918, in initialize_from_config
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.model_runner.initialize_kv_cache(kv_cache_config)
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3879, in initialize_kv_cache
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.drafter.initialize_attn_backend(kv_cache_config, block_size)
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/spec_decode/llm_base_proposer.py", line 1626, in initialize_attn_backend
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     attn_group.create_metadata_builders(
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/utils.py", line 243, in create_metadata_builders
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.kv_cache_spec.copy_with_new_block_size(kernel_block_size)
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/kv_cache_interface.py", line 131, in copy_with_new_block_size
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return replace(self, block_size=block_size)
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/dataclasses.py", line 1588, in replace
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return obj.__class__(**changes)
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "<string>", line 18, in __init__
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 38, in __post_init__
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     raise ValueError(f"OSCAR block_size={self.block_size} differs from physical layout={layout.block_size}")
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987] ValueError: OSCAR block_size=128 differs from physical layout=2816
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 319, in initialize_from_config
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.worker.initialize_from_config(kv_cache_config)  # type: ignore
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 918, in initialize_from_config
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.model_runner.initialize_kv_cache(kv_cache_config)
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3879, in initialize_kv_cache
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.drafter.initialize_attn_backend(kv_cache_config, block_size)
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/spec_decode/llm_base_proposer.py", line 1626, in initialize_attn_backend
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     attn_group.create_metadata_builders(
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/utils.py", line 243, in create_metadata_builders
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.kv_cache_spec.copy_with_new_block_size(kernel_block_size)
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/kv_cache_interface.py", line 131, in copy_with_new_block_size
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return replace(self, block_size=block_size)
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/dataclasses.py", line 1588, in replace
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return obj.__class__(**changes)
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "<string>", line 18, in __init__
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 38, in __post_init__
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     raise ValueError(f"OSCAR block_size={self.block_size} differs from physical layout={layout.block_size}")
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987] ValueError: OSCAR block_size=128 differs from physical layout=2816
+(Worker_TP3 pid=8254) ERROR 09-22 05:20:39 [multiproc_executor.py:987] 
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 319, in initialize_from_config
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.worker.initialize_from_config(kv_cache_config)  # type: ignore
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 918, in initialize_from_config
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.model_runner.initialize_kv_cache(kv_cache_config)
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3879, in initialize_kv_cache
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.drafter.initialize_attn_backend(kv_cache_config, block_size)
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/spec_decode/llm_base_proposer.py", line 1626, in initialize_attn_backend
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     attn_group.create_metadata_builders(
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/utils.py", line 243, in create_metadata_builders
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.kv_cache_spec.copy_with_new_block_size(kernel_block_size)
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/kv_cache_interface.py", line 131, in copy_with_new_block_size
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return replace(self, block_size=block_size)
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/dataclasses.py", line 1588, in replace
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return obj.__class__(**changes)
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "<string>", line 18, in __init__
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 38, in __post_init__
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     raise ValueError(f"OSCAR block_size={self.block_size} differs from physical layout={layout.block_size}")
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987] ValueError: OSCAR block_size=128 differs from physical layout=2816
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 319, in initialize_from_config
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.worker.initialize_from_config(kv_cache_config)  # type: ignore
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 918, in initialize_from_config
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.model_runner.initialize_kv_cache(kv_cache_config)
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3879, in initialize_kv_cache
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.drafter.initialize_attn_backend(kv_cache_config, block_size)
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/spec_decode/llm_base_proposer.py", line 1626, in initialize_attn_backend
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     attn_group.create_metadata_builders(
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/utils.py", line 243, in create_metadata_builders
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.kv_cache_spec.copy_with_new_block_size(kernel_block_size)
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/kv_cache_interface.py", line 131, in copy_with_new_block_size
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return replace(self, block_size=block_size)
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/dataclasses.py", line 1588, in replace
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return obj.__class__(**changes)
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "<string>", line 18, in __init__
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 38, in __post_init__
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     raise ValueError(f"OSCAR block_size={self.block_size} differs from physical layout={layout.block_size}")
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987] ValueError: OSCAR block_size=128 differs from physical layout=2816
+(Worker_TP2 pid=8194) ERROR 09-22 05:20:39 [multiproc_executor.py:987] 
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 319, in initialize_from_config
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.worker.initialize_from_config(kv_cache_config)  # type: ignore
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 918, in initialize_from_config
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.model_runner.initialize_kv_cache(kv_cache_config)
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3879, in initialize_kv_cache
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.drafter.initialize_attn_backend(kv_cache_config, block_size)
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/spec_decode/llm_base_proposer.py", line 1626, in initialize_attn_backend
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     attn_group.create_metadata_builders(
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/utils.py", line 243, in create_metadata_builders
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.kv_cache_spec.copy_with_new_block_size(kernel_block_size)
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/kv_cache_interface.py", line 131, in copy_with_new_block_size
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return replace(self, block_size=block_size)
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/dataclasses.py", line 1588, in replace
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return obj.__class__(**changes)
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "<string>", line 18, in __init__
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 38, in __post_init__
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     raise ValueError(f"OSCAR block_size={self.block_size} differs from physical layout={layout.block_size}")
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987] ValueError: OSCAR block_size=128 differs from physical layout=2816
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 319, in initialize_from_config
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.worker.initialize_from_config(kv_cache_config)  # type: ignore
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 918, in initialize_from_config
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.model_runner.initialize_kv_cache(kv_cache_config)
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3879, in initialize_kv_cache
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.drafter.initialize_attn_backend(kv_cache_config, block_size)
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/spec_decode/llm_base_proposer.py", line 1626, in initialize_attn_backend
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     attn_group.create_metadata_builders(
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/utils.py", line 243, in create_metadata_builders
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     self.kv_cache_spec.copy_with_new_block_size(kernel_block_size)
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/kv_cache_interface.py", line 131, in copy_with_new_block_size
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return replace(self, block_size=block_size)
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/dataclasses.py", line 1588, in replace
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     return obj.__class__(**changes)
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "<string>", line 18, in __init__
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar/oscar_ascend/integration/specs.py", line 38, in __post_init__
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987]     raise ValueError(f"OSCAR block_size={self.block_size} differs from physical layout={layout.block_size}")
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987] ValueError: OSCAR block_size=128 differs from physical layout=2816
+(Worker_TP1 pid=8136) ERROR 09-22 05:20:39 [multiproc_executor.py:987] 
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195] EngineCore failed to start.
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195] Traceback (most recent call last):
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 1164, in run_engine_core
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]     return func(*args, **kwargs)
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 930, in __init__
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]     super().__init__(
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 132, in __init__
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]     kv_cache_config = self._initialize_kv_caches(vllm_config)
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]     return func(*args, **kwargs)
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 290, in _initialize_kv_caches
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]     self.model_executor.initialize_from_config(kv_cache_configs)
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/abstract.py", line 123, in initialize_from_config
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]     self.collective_rpc("initialize_from_config", args=(kv_cache_configs,))
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 404, in collective_rpc
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]     return future if non_block else future.result()
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]                                     ^^^^^^^^^^^^^^^
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 91, in result
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]     return super().result()
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]            ^^^^^^^^^^^^^^^^
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]   File "/usr/local/python3.12.13/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]     return self.__get_result()
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]            ^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]   File "/usr/local/python3.12.13/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]     raise self._exception
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 95, in _wait_for_response
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]     response = self.aggregate(self.get_response())
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]                               ^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 391, in get_response
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195]     raise RuntimeError(
+(EngineCore pid=8050) ERROR 09-22 05:20:39 [core.py:1195] RuntimeError: Worker failed with error 'OSCAR block_size=128 differs from physical layout=2816', please check the stack trace above for the root cause

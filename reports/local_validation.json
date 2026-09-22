@@ -1,12 +1,12 @@
 {
-  "overall": "local_validation_passed; target_uncached_cache_layout_fix_retest_pending",
+  "overall": "local_validation_passed; target_metadata_virtual_block_fix_retest_pending",
   "cpu_tests": {
     "status": "passed",
-    "pytest_passed": 423,
+    "pytest_passed": 429,
     "subtests_passed": 6,
     "npu_tests_skipped": 118,
     "junit": {
-      "tests": 548,
+      "tests": 554,
       "failures": 0,
       "errors": 0,
       "skipped": 119
@@ -52,7 +52,7 @@
     }
   },
   "target_torch_2_10_npu_load": "extension_load_passed_in_user_report; installed_torch_version_not_independently_verified",
-  "device_completion": "prior_store_merge_probe_passed; latest_user_run_reached_TP4_MTP_model_loading_and_failed_cache_spec; full_service_not_passed",
+  "device_completion": "prior_store_merge_probe_passed; newer_target_compile_and_initial_profiling_returned; MTP_metadata_copy_failed_before_full_service",
   "graph_capture": "not_run",
   "graph_replay": "not_run",
   "tp4_mtp_service": "not_run",
@@ -74,7 +74,8 @@
     "Startup revision full suite: 379 passed, 1 failed, 110 skipped, 4 subtests passed. Same previously observed macOS fake-server cleanup PermissionError recurred. User requested immediate push; no assertion was weakened and no full-suite pass is claimed.",
     "Library/logging revision full suite:396 passed,111 skipped,4 subtests passed. Prior local cleanup PermissionError did not recur; no cleanup assertion was weakened. VM actual kernel dlopen resolved dependencies but failed in native CANN SoC constructor; see linkage_validation.json, not NPU evidence.",
     "CV revision initial suite hit the previously observed macOS cleanup EPERM. Reproduction identified an owned zombie-group exit/reap race; bounded wait plus fresh ESRCH confirmation fixed it without weakening cleanup assertions. Final local suite404passed119skipped4subtests, Linux workflow40passed. Original failure logs retained.",
-    "Latest user log reaches TP4/MTP model loading then fails at KV spec conversion with prefix caching disabled. Added real native configuration/grouping/manager/input-batch/reshape/MTP tests for mode none. One new AST harness initially omitted EncoderOnlyAttentionSpec; corrected harness import, then focused55/full423 tests pass. No numerical kernel or target flag change; previous CANN/CPU-debug evidence retained without rerunning unchanged kernels."
+    "Latest user log reaches TP4/MTP model loading then fails at KV spec conversion with prefix caching disabled. Added real native configuration/grouping/manager/input-batch/reshape/MTP tests for mode none. One new AST harness initially omitted EncoderOnlyAttentionSpec; corrected harness import, then focused55/full423 tests pass. No numerical kernel or target flag change; previous CANN/CPU-debug evidence retained without rerunning unchanged kernels.",
+    "Target log now completes torch.compile/initial profiling and computes KV budget, then native MTP AttentionGroup requests a128-token metadata copy. Added explicit metadata_block_view copy with physical storage preserved, original resizing guards retained.71focused/429full local tests pass; actual native proposer and builder creation exercised. No CANN source or startup flag change; graph capture/replay and HTTP remain unverified."
   ],
   "source_sha256": {
     "oscar_ascend/__init__.py": "886a48beeedcedf3da2ee7430eddf8d64c7ece3527b0cb073b8363223e5c22e0",
@@ -83,7 +84,7 @@
     "oscar_ascend/integration/impl.py": "451789f6bc36205e4b7709aebbf39967a3374d112b9f39d71b396f766dde1c22",
     "oscar_ascend/integration/metadata.py": "6b8c9a8d4a9b3b8a80f011933ab0e302db547677237ec665574eb2a5b5369b1d",
     "oscar_ascend/integration/runtime_api.py": "83403d97ae99ae86786729939c0032f67d8d4e1f38ddd2eac78b5577b7a50bed",
-    "oscar_ascend/integration/specs.py": "3bbfac5bf7572bd7248442fa48d1c1e3c4d8499c154112507728ec3d7d9e68fc",
+    "oscar_ascend/integration/specs.py": "d2c6d1c9d731ec9d0c009ace23269a94ab1d9129c827006e3d40ccbace7e4996",
     "oscar_ascend/layout.py": "87bbee7a38f55545563823d798172e807f774c0bad8f72a07ec668ec562e3fc0",
     "oscar_ascend/lifecycle.py": "8791998aabe84dd076e9366b87d0d158722135e5370e2ede09f443c6f67a314d",
     "oscar_ascend/ops/__init__.py": "121a4a46ea91e1a0a4336de76e6003fc18a5fde411d3a1d1eaa706bb01710d08",
@@ -159,7 +160,7 @@
     "tests/test_rotation_pipeline.py": "ebc2f176e6220dddb30b4e44a5dd0173121cb2e891f7e9d4637e458d8ee317d9",
     "tests/test_rotations.py": "80f5713429c38510becbabb300528cd9b32a07d3b92d28bf31270a274425fbf7",
     "tests/test_runtime.py": "5ac7447f0e257979412d3b526bd918b402b11433aae2daeb566c37c12fa1cddb",
-    "tests/test_runtime_native.py": "530cf57698bcaddaa0153288ea062c51083f010c4e78aa5bd80dd7c5f594d7e7",
+    "tests/test_runtime_native.py": "687786b4229273d0a7c2662b0b489ca2ca06c9ba7ac1538a24de994c8fdc3c05",
     "tests/test_service_workflow.py": "a2b731b4aec05728aaff1c0cf096705d50f84eb4e532231f4dc595df1aca6842",
     "tests/test_workflow.py": "41e778cc8619f5932e630f746a1765eec56834b17029199d59ca0ca690396d32",
     "tests/test_deploy_launcher.py": "d2d49450c3dc17de322da9e996d9f1282a63a66a67ee5ae07cead039674723ce",
@@ -229,9 +230,19 @@
   "uncached_layout_fix": {
     "report": "reports/uncached_layout_validation.json",
     "focused_tests_passed": 55,
-    "target_retest": "not_run",
+    "target_retest": "previous_alignment_error_absent_in_new_target_log; cache_budget_computed_then_metadata_copy_failed",
     "native_gdn_preserved": true,
     "startup_arguments_changed": false,
     "cann_kernel_sources_changed": false
+  },
+  "target_reported_runtime_versions": {
+    "torch_npu": "2.10.0.post4",
+    "source": "reports/target_metadata_block_failure.txt"
+  },
+  "metadata_block_view_fix": {
+    "report": "reports/metadata_block_view_validation.json",
+    "physical_layout_unchanged": true,
+    "native_mtp_builder_tests": "passed",
+    "target_retest": "not_run"
   }
 }

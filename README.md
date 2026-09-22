@@ -27,7 +27,7 @@ python3 -m tools.deploy --only probe-ops
 python3 -m tools.service_probe --config configs/target.json --output reports/service.json --log-dir logs/service
 ```
 
-**最新真机结果：已进入TP4/MTP模型加载，止于关闭前缀缓存时的KV布局初始化（#127）。** 修复区分GDN请求状态块与FULL物理页：保留原生GDN块长262144和none模式，FULL页按SSM字节容量取2816 token；原生源码、启动参数和探针不变。此前75项store/merge原语NPU探针已有直接通过记录；本次日志没有前序CV/旋转探针明细，完整服务、图及性能仍待真机复验。[最新原文](reports/target_uncached_layout_failure.txt)。CANN编译及官方CPU调试已有通过记录，不能替代真实模型验收。H18严格亚线性历史读取与精确全注意力存在冲突，当前实现线性读取INT2、固定大小tile通信，不生成全历史BF16副本。
+**最新真机结果：模型编译、初次profiling和KV显存预算已经完成，随后MTP元数据初始化失败（#128）。** 已修复物理页与128-token虚拟元数据块的区分，物理缓存容量、GDN状态、启动参数和探针保持不变。[最新原文](reports/target_metadata_block_failure.txt)。日志中的torch.compile完成和容量估算不代表图捕获、回放或HTTP服务成功；修复后仍需真机复跑。此前75项store/merge原语NPU探针已有直接通过记录，完整模型质量、容量收益及性能尚未验收。
 
 以下仅用于本地开发，不是 node93 的部署步骤。已配置本项目 `.venv` 的开发机可运行 CPU 测试：
 

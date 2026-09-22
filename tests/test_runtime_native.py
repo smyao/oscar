@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from collections.abc import Sequence, Mapping
 import copy
-from dataclasses import dataclass, fields, replace
+from dataclasses import dataclass, field, fields, replace
 from enum import Enum, IntEnum
 import importlib.util
 import math
@@ -110,6 +110,89 @@ def test_real_native_spec_conversion_and_registry_preserve_gdn(native_specs):
     cloned = copy.deepcopy(spec)
     assert cloned == spec and cloned.layout == spec.layout
     assert ours.OscarFullAttentionSpec.merge([spec, cloned]) == spec
+
+
+@pytest.mark.parametrize("native_groups", [True, False], indirect=True)
+def test_native_kernel_spec_copy_preserves_physical_storage_and_rejects_resizing(native_groups):
+    _, ours, _, _, _, groups = native_groups
+    physical = groups[0].kv_cache_spec
+    original = copy.deepcopy(physical)
+    view = physical.copy_with_new_block_size(128)
+    assert physical == original and not physical.metadata_block_view
+    assert view.block_size == 128 and view.metadata_block_view
+    assert view.storage_block_size == physical.block_size
+    assert view.layout == physical.layout
+    assert view.page_size_bytes == physical.page_size_bytes
+    assert view.real_page_size_bytes == physical.real_page_size_bytes
+    assert view.native_mamba_cache_mode == physical.native_mamba_cache_mode
+    assert copy.deepcopy(view) == view
+    assert view.copy_with_new_block_size(128) == view
+    assert view.copy_with_new_block_size(physical.block_size) == physical
+    # Retain the original allocation guard: a plain dataclass resize is not
+    # the explicit metadata-copy seam, and unknown kernel sizes stay errors.
+    with pytest.raises(ValueError, match="differs from physical layout"):
+        replace(physical, block_size=128)
+    with pytest.raises(AssertionError, match="incompatible geometry"):
+        ours.OscarFullAttentionSpec.merge([physical, view])
+    for size in (0, -128, 256, physical.block_size + 128, 128.0, True):
+        with pytest.raises(ValueError, match="unsupported OSCAR metadata block size"):
+            physical.copy_with_new_block_size(size)
+
+
+@pytest.mark.parametrize("native_groups", [True, False], indirect=True)
+@pytest.mark.parametrize("kernel_sizes", [[128], None])
+def test_real_native_mtp_initialization_creates_metadata_without_resizing_pool(
+        native_groups, monkeypatch, kernel_sizes):
+    interface, ours, _, _, _, groups = native_groups
+    physical = groups[0].kv_cache_spec
+    original_groups = copy.deepcopy(groups)
+    base = definitions(
+        "references/vllm/vllm/v1/attention/backend.py", "vllm.v1.attention.backend",
+        {"AttentionType", "MultipleOf", "AttentionBackend", "AttentionCGSupport", "AttentionMetadataBuilder"},
+        {"ABC": ABC, "abstractmethod": abstractmethod, "Enum": Enum, "Generic": Generic,
+         "ClassVar": ClassVar, "M": TypeVar("M"), "torch": torch}, monkeypatch)
+    backend = load_our_module("oscar_ascend.integration.backend", monkeypatch)
+    utility = definitions("references/vllm/vllm/v1/worker/utils.py", "native_attention_group_contract",
+                          {"AttentionGroup"}, {"dataclass": dataclass, "field": field}, monkeypatch)
+    draft_name = groups[0].layer_names[-1]
+    layers = {draft_name: SimpleNamespace(get_attn_backend=lambda: backend.OscarAttentionBackend)}
+    native = definitions(
+        "references/vllm/vllm/v1/spec_decode/llm_base_proposer.py", "native_mtp_initialize_contract",
+        set(), {"AttentionGroup": utility.AttentionGroup,
+                "UniformTypeKVCacheSpecs": interface.UniformTypeKVCacheSpecs,
+                "AttentionLayerBase": object, "get_layers_from_vllm_config": lambda *_args: layers,
+                "logger": logging.getLogger("native-mtp-init-test")}, monkeypatch,
+        methods=[("SpecDecodeBaseProposer", "validate_same_kv_cache_group"),
+                 ("SpecDecodeBaseProposer", "initialize_attn_backend")])
+    config = SimpleNamespace(kv_cache_groups=groups)
+    proposer = SimpleNamespace(vllm_config=object(), device="cpu", _draft_attn_layer_names={draft_name})
+    proposer.validate_same_kv_cache_group = MethodType(native.validate_same_kv_cache_group, proposer)
+    native.initialize_attn_backend(proposer, config, kernel_sizes)
+    group = proposer.draft_attn_groups[0]
+    builder = group.get_metadata_builder()
+    expected_block_size = 128 if kernel_sizes is not None else physical.block_size
+    assert proposer.block_size == builder.kv_cache_spec.block_size == expected_block_size
+    assert isinstance(builder, backend.OscarMetadataBuilder)
+    assert group.kv_cache_spec is physical  # allocation/group identity is preserved
+    assert builder.kv_cache_spec.layout == physical.layout
+    assert builder.kv_cache_spec.storage_block_size == physical.block_size
+    assert groups == original_groups and not physical.metadata_block_view
+    # Real AttentionGroup also supports multiple independent builder buffers.
+    group.create_metadata_builders(proposer.vllm_config, "cpu", kernel_block_size=128,
+                                   num_metadata_builders=2)
+    assert len(group.metadata_builders) == 2
+    assert group.metadata_builders[0].bindings is not group.metadata_builders[1].bindings
+    assert group.kv_cache_spec is physical
+    common = SimpleNamespace(query_start_loc=torch.tensor([0, 1], dtype=torch.int32),
+        seq_lens=torch.tensor([physical.block_size + 1], dtype=torch.int32),
+        block_table_tensor=torch.arange(44, dtype=torch.int32).reshape(1, 44),
+        slot_mapping=torch.tensor([physical.block_size], dtype=torch.int64),
+        num_reqs=1, num_actual_tokens=1, num_input_tokens=1, max_query_len=1,
+        max_seq_len=0, causal=True)
+    metadata = group.get_metadata_builder().build_for_drafting(common, 1)
+    assert metadata.draft_index == 1
+    assert metadata.block_tables is common.block_table_tensor
+    assert metadata.slot_mapping is common.slot_mapping
 
 
 @pytest.fixture
@@ -525,7 +608,9 @@ def test_native_padded_mtp_requires_slot_derived_draft_position(monkeypatch, bas
         shallow_copy_metadata=copy.copy, arange=torch.arange(5, dtype=torch.int32),
         token_arange_np=torch.arange(5, dtype=torch.int32), method="mtp", uses_mrope=False,
         max_model_len=262144, runner=SimpleNamespace(), has_gdn=True, kernel_block_size=128,
-        block_size=physical_block, pcp_size=1, use_compress=False,
+        # Native MTP initialize_attn_backend reads block_size from its copied
+        # metadata spec. Physical storage still comes from the pool/table.
+        block_size=128, pcp_size=1, use_compress=False,
         slot_mapping_group=[torch.full((8,), -1, dtype=torch.int32) for _ in range(3)],
         seq_lens_group=[torch.zeros(4, dtype=torch.int32) for _ in range(3)],
         query_start_loc_group=[torch.zeros(5, dtype=torch.int32) for _ in range(3)])

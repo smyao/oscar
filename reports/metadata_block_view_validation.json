@@ -1,0 +1,30 @@
+{
+  "archive_entry": 128,
+  "source": "reports/target_metadata_block_failure.txt",
+  "sha256": "f3fe800eb5afcfeb045e6f5c5b2af23f30ded64ad5410dce817425b30849a835",
+  "run": "20260922T051437.326586Z",
+  "failure": "OSCAR block_size=128 differs from physical layout=2816",
+  "target_observed": [
+    "torch.compile returned",
+    "initial profiling returned",
+    "KV memory budget reported",
+    "MTP metadata builder copy failed"
+  ],
+  "fix": "explicit native metadata-copy view preserves physical storage while reporting kernel block_size128",
+  "physical_bytes_changed": false,
+  "native_source_modified": false,
+  "kernel_sources_changed": false,
+  "focused_tests_passed": 71,
+  "target_retest": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "http_service": "not_passed",
+  "local_tests": {
+    "passed": 429,
+    "skipped": 119,
+    "subtests_passed": 6,
+    "log": "reports/pytest.log"
+  },
+  "focused_test_log": "reports/metadata_block_view_tests.log",
+  "wheel_build": "passed"
+}

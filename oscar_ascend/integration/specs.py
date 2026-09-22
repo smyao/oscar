@@ -5,9 +5,10 @@ Archive #17–20/#34/#36: packed byte geometry is explicit and preserved
 across spec merging. GDN shapes/dtypes/spec instances remain unchanged.
 Archive #27: merge follows native grouping's AssertionError protocol.
 Archive #127: preserve GDN's none/align mode when deriving FULL page capacity.
+Archive #128: native metadata copies use virtual128, not a new allocation.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from math import prod
 
 from vllm.utils.torch_utils import get_dtype_size
@@ -26,6 +27,7 @@ class OscarFullAttentionSpec(FullAttentionSpec):
     kernel_block_size: int = 128
     native_page_size_bytes: int | None = None
     native_mamba_cache_mode: str = "align"
+    metadata_block_view: bool = False
 
     def __post_init__(self):
         super().__post_init__()
@@ -34,7 +36,10 @@ class OscarFullAttentionSpec(FullAttentionSpec):
         if int(self.kv_quant_mode) != 0:
             raise ValueError("native KV quantization cannot be combined with OSCAR INT2")
         layout = self.layout
-        if self.block_size != layout.block_size:
+        if type(self.metadata_block_view) is not bool:
+            raise ValueError("metadata_block_view must be boolean")
+        expected_block_size = self.kernel_block_size if self.metadata_block_view else layout.block_size
+        if self.block_size != expected_block_size:
             raise ValueError(f"OSCAR block_size={self.block_size} differs from physical layout={layout.block_size}")
         if self.page_size_padded is not None and self.page_size_padded != layout.page_size_bytes:
             raise ValueError("OSCAR page size must exactly match the native GDN allocation")
@@ -53,6 +58,23 @@ class OscarFullAttentionSpec(FullAttentionSpec):
     @property
     def page_size_bytes(self) -> int:
         return self.layout.page_size_bytes
+
+    @property
+    def storage_block_size(self) -> int:
+        return self.layout.block_size
+
+    def copy_with_new_block_size(self, block_size: int):
+        """Return the native builder's virtual-block view without resizing storage.
+
+        AttentionGroup creates this copy for draft metadata. The pool/group
+        spec remains physical; all byte geometry and GDN state stay intact.
+        Only this explicit native seam enables the supported kernel view.
+        """
+        if type(block_size) is not int or block_size not in {self.storage_block_size, self.kernel_block_size}:
+            raise ValueError(f"unsupported OSCAR metadata block size {block_size!r}; "
+                             f"expected {self.kernel_block_size} or {self.storage_block_size}")
+        return replace(self, block_size=block_size,
+                       metadata_block_view=block_size != self.storage_block_size)
 
     @classmethod
     def merge(cls, specs):

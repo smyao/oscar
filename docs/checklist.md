@@ -17,12 +17,12 @@
 | [x] B04 | passed | 完成算子清单、AscendC 融合划分、Decode Stage1 伪代码和逐阶段读写流程。 | 七个AscendC符号完整源码、ABI、Cube/Vector/同步/UB与GM预算；docs/operator_inventory.md、cv_implementation.md、rotation_pipeline.md。 |
 | [ ] B05 | blocked | 给出 decode 计算量、HBM 流量、MTP 跨 query 复用和 Host 调度预算。 | H18总历史读取亚线性与精确dense attention存在数学冲突，已提出澄清。 |
 | [ ] B06 | in_progress | 固定功能、精度、性能测试方法和验收门槛，设计一键脚本及错误清理流程。 | PR容差未改，部署/故障处理/测量与profiler工具已实现；模型级质量门槛仍待实测前定义。 |
-| [ ] C01 | in_progress | 独立插件/算子工程可安装、可编译、可加载，原生源码未修改，安装脚本不使用 `cp`。 | Python包及CANN9.1/910B4交叉编译/链接通过；独立direct-launch库采用源签名SONAME，非custom OPP vendor。node93后续构建及75项store/merge原语NPU执行通过，确认已越过#125加载故障；后续日志进入TP4/MTP模型加载，止于#127的none模式布局初始化。 |
-| [ ] C02 | in_progress | 版本能力 probe、延迟注册和幂等 Hook 通过 CLI、API server、各 worker 初始化验证。 | 轻量可撤销hook、factory、binding、真实native类/方法契约通过；实际API/server/所有worker未运行。 |
+| [ ] C01 | in_progress | 独立插件/算子工程可安装、可编译、可加载，原生源码未修改，安装脚本不使用 `cp`。 | Python包及CANN9.1/910B4交叉编译/链接通过；独立direct-launch库采用源签名SONAME，非custom OPP vendor。node93后续构建及75项store/merge原语NPU执行通过，确认已越过#125加载故障；后续已完成TP4/MTP编译及KV预算，止于#128的metadata虚拟块复制。 |
+| [ ] C02 | in_progress | 版本能力 probe、延迟注册和幂等 Hook 通过 CLI、API server、各 worker 初始化验证。 | 轻量可撤销hook、factory、binding、真实native类/方法契约通过；实际TP4 worker已走到缓存分配后的MTP metadata初始化；#128修复显式虚拟块副本，后续启动待真机确认。 |
 | [ ] C03 | in_progress | 实现并验证 INT2 编码、旋转/裁剪/量化、KV store 与 Recent→History 增量迁移。 | AscendC rotate/clip/quant/pack/raw snapshot已实现，官方CPU-debug通过；node93的store原语及非法值/边界NPU用例通过，融合旋转/裁剪路径仍未验收。 |
 | [ ] C04 | in_progress | 实现真实 fused INT2 CV Decode Stage1（CV=Cube/Vector，见 H07 注），并完成必要的分块/分段输出合并。 | 真正Cube QK/PV/逆旋转与Vector SIMD解包/softmax已编译、CPU-debug通过；node93首个CV用例D64/Q1/context17输出超差（#126）。已定位并修订query有效行→padding的MTE3→V同步缺口，目标复验/性能未完成，H18冲突保留。 |
 | [ ] C05 | in_progress | Sink/Recent Attention、History Attention 和参考数学语义一致，数值稳定。 | 三source causal/GQA与稳定LSE真实CPU-debug通过；node93 merge原语NPU用例通过，但CV首用例输出超差，其LSE断言尚未到达（#126）；完整数值验收未通过。 |
-| [ ] C06 | in_progress | 实现原生页表兼容的物理分配与视图，GDN 不受影响，HBM 中无冗余完整历史副本。 | 真实native grouping、BlockPool、Full/Mamba managers与GDN reshape执行通过；production raw分配与view已接通；#127修正none模式容量，保留GDN原对象、分组、原生状态数；NPU缓存初始化复验待回传。 |
+| [ ] C06 | in_progress | 实现原生页表兼容的物理分配与视图，GDN 不受影响，HBM 中无冗余完整历史副本。 | 真实native grouping、BlockPool、Full/Mamba managers与GDN reshape执行通过；production raw分配与view已接通；#127修正none模式容量，保留GDN原对象、分组、原生状态数；最新真机已通过KV容量计算并进入分配后MTP初始化；#128元数据副本修复后需继续复验。 |
 | [ ] C07 | in_progress | 在确有需要的路径提供有界恢复能力，证明 decode/verify 不走全历史恢复。 | prefix直接保留有界canonical BF16 snapshot，无全历史恢复函数；设备tag不匹配显式错误，CPU-debug故障注入通过。 |
 | [ ] D01 | in_progress | 首次 prefill 正确，未引入不必要的重复压缩和恢复。 | current chunk直接精确attention后仅压缩新KV，AscendC CPU-debug通过；真实模型首次prefill未测。 |
 | [ ] D02 | in_progress | chunked prefill 正确，已处理历史不随每个新 chunk 重搬运或重压缩。 | 旧history在CV tile内消费，无旧chunk重复quant或完整恢复；真实模型chunked prefill未测。 |
@@ -41,7 +41,7 @@
 | [ ] E06 | not_run | 按第 10 节逐工况比较原生性能；无未解释退化，不以平均值掩盖慢项；**任何算子/相位耗时不得差于附录 D.1 原生基线**（上一版 dequant 6.5s/卡的崩盘即判失败的标准，见附录 D.3）。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
 | [ ] E07 | in_progress | 对照第 8.2 节验证历史故障防护，保存实际覆盖结果而非仅声明"已避免"。 | 历史故障约束已落实；本轮VM发现Log alias与Matmul Init重载问题并修复；CANN plog本任务PID诊断与失败保码通过本地测试。node93回传已登记#123–#126；后续75项原语NPU执行通过确认加载错误已越过，首个CV数值用例暴露query缓冲同步缺口；源码修订后的CV真机复验待回传。 |
 | [ ] E08 | in_progress | **无回退逻辑验证**：静态审查 + 全量工况扫描证明代码中不存在任何回退/降级路径；16K/32K/50K 与各种 batch size 下 OSCAR 压缩路径全部实际命中（H13/H17），不存在静默走原生 BF16 全历史的分支。 | 静态/路由/错误注入通过；长序列真实压缩路径命中仍需目标probe。 |
-| [ ] F01 | in_progress | 一条 Bash 命令完成安装、编译、所需校准、probe、资源清理和正式启动。 | 一键安装/编译/NPU算子与CV/旋转对拍/自动旋转文件/TP4服务probe/清理/正式服务；保留探针并移除环境/原生源码/readiness审计，默认0–3卡和8989端口；阶段及服务日志实时输出并落盘。最新node93复跑进入TP4/MTP加载，止于none模式KV初始化（#127）；新日志不含CV/旋转探针明细，全目标流程未完成。 |
+| [ ] F01 | in_progress | 一条 Bash 命令完成安装、编译、所需校准、probe、资源清理和正式启动。 | 一键安装/编译/NPU算子与CV/旋转对拍/自动旋转文件/TP4服务probe/清理/正式服务；保留探针并移除环境/原生源码/readiness审计，默认0–3卡和8989端口；阶段及服务日志实时输出并落盘。最新node93复跑完成编译/profiling和KV预算，止于MTP metadata spec复制（#128）；真实服务/捕图/回放未完成。 |
 | [ ] F02 | in_progress | 验证正常退出、失败退出和中断后的清理，重复执行不会遗留 worker 或加载旧产物。 | 真实CPU子进程/HTTP/超时/信号/释放失败与诊断故障注入通过；NPU资源回收尚无实证。 |
 | [ ] F03 | not_run | 正式服务按目标配置启动并完成真实请求，记录 OSCAR compressed decode/MTP 路由证据。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
 | [ ] F04 | in_progress | 交付代码、设计、完整 Checklist、测试/性能/显存报告、日志及 README 中的一键命令。 | 源码、设计、VM日志/报告、README和测量工具已交付；真实模型精度/性能/容量报告尚缺。 |
@@ -52,9 +52,11 @@
 1. H18复杂度口径；精确attention需要读取全部压缩历史。
 2. 已实现的CV/rotation/clip在目标NPU上的精度、图、性能验证。
 3. 已实现的prefix、GDN隔离、MTP和固定buffer在真实完整模型上验收。
-4. 本次配置已按附录 A/F 固定0–3卡、8989端口和ascend910b4；最新node93复跑进入service-probe并加载TP4/MTP模型；#127的none模式KV布局修复后需重新验证服务启动。
+4. 本次配置已按附录 A/F 固定0–3卡、8989端口和ascend910b4；最新node93复跑进入service-probe并加载TP4/MTP模型；#127已被后续运行越过；#128的MTP虚拟块视图修复后需重新验证服务启动。
 5. 模型质量门槛在实测前冻结；paired基线、NPU精度/图/资源/性能逐项过门。
 
 本地构建/测试结果与失败细节见 `reports/local_validation.json`、`reports/pytest.xml`、`reports/build.json`、`reports/readiness.json`。档案#123–#126记录用户回传的node93真实故障与源码修订；#125加载故障已由后续75项原语NPU成功执行越过。最新原文保存在`reports/target_cv_failure_input.txt`，其中首个CV数值用例失败，完整模型、图和性能仍未验收。
 
 本轮 #127：原文 `reports/target_uncached_layout_failure.txt`，关闭prefix时的FULL页布局修复保留全部原生GDN状态。新日志到达服务探针但没有HTTP健康/图捕获/回放成功证据。
+
+本轮 #128 原文为 `reports/target_metadata_block_failure.txt`：编译及初次profiling已返回，容量值仅为原生估算；MTP虚拟块副本修复后仍无正式请求/图回放成功证据。

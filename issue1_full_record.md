@@ -28163,3 +28163,33 @@ SERVICE_ERROR TimeoutError: 3 (of 4) futures unfinished
 [oscar] CLEANUP_END owned_server complete=True exit=0
 SERVICE_RESULT {"status": "failed", "error": "TimeoutError: 3 (of 4) futures unfinished", "cleanup_complete": true, "exit_code": 0, "startup_seconds": 341.895644, "elapsed_seconds": 1010.357171}
 ```
+
+
+## [132] 真机条目（gpt_new_oscar_kimi，2026-09-22 用户回传）· phase=service-probe/oscar-timing
+
+**性质**：#131混合超时后的OSCAR_TIMING=1打点回传（运行20260922T084539.494672Z），不是新故障；用于定位CV内核性能瓶颈。
+
+**数据**（host相位记录，device_ms=null为设计使然）：
+
+1. 全部FULL层的prepare/rotate/fia/merge/phase1_stores/status_guard的host_s均在0.07–0.23ms——host launch开销可忽略。
+2. 墙钟只以enqueue背压形式出现在prepare：串行50000第3块（max_seq_len=49152）mtp.layers.0 prepare host_s=7.382–7.384秒（四rank一致）；layers.63窗口前有约22秒无记录段（1790067394.74→1790067416.73）。
+3. 混合阶段（requests=3）prepare背压：max_seq_len=16384时1.502–1.510秒，32752时4.302–4.439秒；fia/merge/stores仍为亚毫秒。
+
+**结论**：每层组（3 GDN+1 FULL）设备成本随KV近似线性增长——16K约1.5s、32K约4.4s、49K约7.4s+，与chunk墙钟20/38/95s吻合；CV历史扫描是随KV增长的主项。背压块是设备队列的累积排空点，不是逐kernel归因；GDN与FULL attention的设备时间拆分host打点无法给出，需要设备级trace。
+
+**下一步与边界**：用原生TorchNPUProfilerWrapper窗口（profiler=torch+torch_profiler_dir，/start_profile与/stop_profile夹住一个32K/50K请求）或独立ProfileSession采集，再用tools/summarize_profile --require-complete做逐kernel归因。300s死线、PROBE_LENGTHS、精度阈值均未动；host记录本身不证明任何设备时间结论。
+
+### 用户日志摘录（非完整文件）
+
+```text
+Source: user-provided console excerpts, 2026-09-22, run 20260922T084539.494672Z, OSCAR_TIMING=1.
+Selected verbatim records, not a complete log.
+
+(Worker_TP2 pid=16909) {"host_s": 7.3825117, "layer": "mtp.layers.0.self_attn.attn", "phase_end": "prepare", "tokens": 16384, "ts_unix": 1790067424.1214647, "t": "oscar-timing"}
+(Worker_TP1 pid=16851) {"host_s": 7.38396636, "layer": "mtp.layers.0.self_attn.attn", "phase_end": "prepare", "tokens": 16384, "ts_unix": 1790067424.1215065, "t": "oscar-timing"}
+(Worker_TP1 pid=16851) {"host_s": 0.00228097, "layer": "language_model.model.layers.63.self_attn.attn", "phase_end": "rotate", "tokens": 16384, "ts_unix": 1790067416.7267761, "t": "oscar-timing"}
+(Worker_TP0 pid=16815) {"host_s": 1.5098052, "layer": "language_model.model.layers.51.self_attn.attn", "phase_end": "prepare", "requests": 3, "tokens": 16384, "ts_unix": 1790067563.4021323, "t": "oscar-timing"}
+(Worker_TP0 pid=16815) {"host_s": 4.3213698, "layer": "language_model.model.layers.39.self_attn.attn", "phase_end": "prepare", "requests": 3, "tokens": 16384, "ts_unix": 1790067587.9830885, "t": "oscar-timing"}
+(Worker_TP0 pid=16815) {"host_s": 4.43902962, "layer": "language_model.model.layers.43.self_attn.attn", "phase_end": "prepare", "requests": 3, "tokens": 16384, "ts_unix": 1790067592.4405284, "t": "oscar-timing"}
+(Worker_TP0 pid=16815) {"host_s": 8.879e-05, "layer": "language_model.model.layers.47.self_attn.attn", "phase_end": "fia", "max_seq_len": 49152, "splits": 1, "tasks": 49152, "tokens": 16384, "t": "oscar-timing"}
+```

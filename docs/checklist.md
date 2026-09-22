@@ -66,3 +66,5 @@
 #130：用户新日志确认128/16K/32K/50K串行HTTP请求均完成，各生成16token；混合并发仍在进行，不能宣称全流程/质量/性能通过。原文见reports/target_serial_50k_progress.txt。本轮分块DMA优化经过438项本地测试和67项官方CPU-debug，目标性能复验待回传。
 
 #131：混合并发四请求中mixed-1/2/3全部撞300s请求死线，service-probe相位失败（mixed-0-128完成，清理与资源回收正常）。attention_progress心跳证明全程推进、非死锁：49K KV每FULL层组4–15s，混合约99K prompt token共享16384-token引擎步，失败性质为当前CV内核速度下的时间预算。300s死线与PROBE_LENGTHS未动；内核级优化待OSCAR_TIMING=1真机打点定位。原文为用户回传摘录及真机20260922T081333.912496Z日志。
+
+#132：OSCAR_TIMING=1打点（20260922T084539.494672Z）确认host launch全部亚毫秒，墙钟为设备执行以prepare背压形式呈现：串行49K KV mtp prepare host_s=7.38s×4rank、layers.63窗口约22s；混合16K约1.5s/层组、32K约4.4s/层组。设备成本随KV近似线性，CV历史扫描为主项；GDN与FULL的逐kernel拆分需设备trace（原生profiler窗口或ProfileSession+tools/summarize_profile）。验收边界未动。

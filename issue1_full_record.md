@@ -28221,3 +28221,34 @@ ERROR: External init callback must run in same thread as registerClient (9059595
 (EngineCore pid=28760) ERROR 09-22 09:49:38 [core.py:1197] RuntimeError: Executor failed.
 (APIServer pid=28698) ERROR 09-22 09:49:38 [async_llm.py:704] vllm.v1.engine.exceptions.EngineDeadError: EngineCore encountered an issue.
 ```
+
+
+## [134] 真机条目（gpt_new_oscar_kimi，2026-09-22 用户回传）· phase=service-probe/debug-sync-attribution
+
+**性质**：`bash scripts/debug_service.sh`一键归因运行20260922T104823.837447Z。混合仍因300s死线失败（TimeoutError: 3 (of 4) futures unfinished，预期——归因运行不作验收）；`[oscar] TIMING_SUMMARY`自动产出；oscar-plog附件为HCCL/TDT/GE的INFO初始化记录，无错误。
+
+**数据**（四rank合计，debug-sync相位墙，unpaired_waiting=4）：
+
+- **fia device_s=2463.859（868次，p95=7.166s，host_s=2464.69同步等待一致）——约占全部相位设备时间99.3%**；
+- phase1_stores 7.563s、rotate 6.074s、merge 3.578s、status_guard 0.613s、prepare 0.725s；
+- prepare≈0同时证明原生GDN层（无oscar相位，其背压会落入下一FULL层的prepare同步窗）设备开销可忽略。
+
+**结论**：设备时间瓶颈单一——CV注意力内核（fia）的历史扫描。修复方向限于该内核内部（KV按query tile共享读取、splits并行、INT2解包向量化等），修改前须亲读#123–#126/#129/#130与D.4。同步值仅用于归因；性能验收仍以同配置原生基线对照为准。
+
+### 用户日志摘录（非完整文件）
+
+```text
+Source: user-provided console excerpts, 2026-09-22, run 20260922T104823.837447Z (gpt_new_oscar_kimi).
+Selected verbatim lines, not a complete log.
+
+[oscar] TIMING_SUMMARY phase=fia device_count=868 device_s=2463.859 device_p95_s=7.166 host_s=2464.6913
+[oscar] TIMING_SUMMARY phase=merge device_count=868 device_s=3.578 device_p95_s=0.005 host_s=4.3825
+[oscar] TIMING_SUMMARY phase=phase1_stores device_count=868 device_s=7.563 device_p95_s=0.036 host_s=8.2508
+[oscar] TIMING_SUMMARY phase=prepare device_count=872 device_s=0.725 device_p95_s=0.001 host_s=1.6634
+[oscar] TIMING_SUMMARY phase=rotate device_count=872 device_s=6.074 device_p95_s=0.089 host_s=6.8003
+[oscar] TIMING_SUMMARY phase=status_guard device_count=868 device_s=0.613 device_p95_s=0.001 host_s=1.2763
+[oscar] TIMING_SUMMARY status=observed unpaired_waiting=4 output=.../service-probe/timing-summary.json
+[oscar] service detail: TimeoutError: 3 (of 4) futures unfinished
+[oscar] whole-service failed report=.../service-probe.json
+RESULT {"phase": "service-probe", "returncode": 1, "elapsed_seconds": 1057.680155, "cleanup_complete": true}
+```

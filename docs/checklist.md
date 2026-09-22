@@ -70,3 +70,5 @@
 #132：OSCAR_TIMING=1打点（20260922T084539.494672Z）确认host launch全部亚毫秒，墙钟为设备执行以prepare背压形式呈现：串行49K KV mtp prepare host_s=7.38s×4rank、layers.63窗口约22s；混合16K约1.5s/层组、32K约4.4s/层组。设备成本随KV近似线性，CV历史扫描为主项；GDN与FULL的逐kernel拆分需设备trace（原生profiler窗口或ProfileSession+tools/summarize_profile）。验收边界未动。
 
 #133：原生TorchNPUProfilerWrapper的/start_profile与/stop_profile窗口在真机20260922T093958Z杀死全部四个worker（start报线程亲和错误，stop在RECORD状态触发四份segfault→EngineDeadError），探针失败。该HTTP profiler集成已整体移除；逐相位设备时间改由OSCAR_DEBUG_SYNC检查点+tools/summarize_timing提供（一键入口scripts/debug_service.sh），同步值仅用于归因。
+
+#134：debug-sync归因（20260922T104823.837447Z）给出设备时间单瓶颈：fia（CV注意力内核）device_s=2463.859/868次/p95=7.166s，约占99.3%；stores/rotate/merge/guard合计≈18s，prepare≈0.7s（原生GDN开销可忽略）。混合超时依旧（归因运行不验收）。CV内核历史扫描是唯一优化目标。

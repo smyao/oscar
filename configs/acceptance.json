@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "frozen_before_measurement": true,
+  "reference": "vllm PR46774@57286d5d2cb08c3dcd8c17bb59e132d6985e6796",
+  "pack_unpack": {"exact": true},
+  "store_dequant": {"atol": 0.002, "rtol": 0.002},
+  "fused_attention": {"atol": 0.005, "rtol": 0.005},
+  "prefill_window": {"relative_l2_lt": 0.02},
+  "staging_eviction_reference_only": {"atol": 0.0001, "rtol": 0.0001, "note": "PR staging eviction test exercises an INT2 substitution; not permission to lose exact production windows"},
+  "performance": {"max_latency_ratio": 1.0, "min_throughput_ratio": 1.0, "repeats": 5, "warmup": 2, "statistic": "median", "per_case_required": true, "noise_allowance": 0.0},
+  "required_input_lengths": [16384, 32768, 50000, 100000, 262144],
+  "required_concurrency": [1, 4, 16, 128],
+  "required_q_lens": [1, 2, 3, 4],
+  "model_quality": {"logits_tolerance": null, "task_metric_tolerance": null, "mtp_acceptance_tolerance": null, "status": "requires_premeasurement_definition"},
+  "hardware_gates": ["build", "load", "device_completion", "graph_capture", "graph_replay", "tp4", "mtp", "accuracy", "memory", "performance"]
+}

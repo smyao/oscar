@@ -1,0 +1,35 @@
+{
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "python": "3.12.6 (v3.12.6:a4a2d2b0d85, Sep  6 2024, 16:08:03) [Clang 13.0.0 (clang-1300.0.29.30)]",
+  "executable": "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3",
+  "tools": {
+    "cmake": null,
+    "bisheng": null,
+    "npu-smi": null
+  },
+  "references": [
+    {
+      "name": "vllm",
+      "file_count": 5440,
+      "head": "0fc695fc6d1d82e9a5ac6835ac8e4e1c83703665",
+      "status": ""
+    },
+    {
+      "name": "vllm-ascend",
+      "file_count": 3039,
+      "head": "19e436985102f4ed3aad36c137a6481653688a6c",
+      "status": ""
+    },
+    {
+      "name": "oscar-paper",
+      "file_count": 4493,
+      "git": "snapshot_without_git_metadata"
+    },
+    {
+      "name": "oscar-vllm-pr46774",
+      "file_count": 11,
+      "git": "snapshot_without_git_metadata"
+    }
+  ],
+  "npu_acceptance": "not_run"
+}

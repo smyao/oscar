@@ -1,0 +1,45 @@
+{
+  "python": "3.12.6 (v3.12.6:a4a2d2b0d85, Sep  6 2024, 16:08:03) [Clang 13.0.0 (clang-1300.0.29.30)]",
+  "executable": "/Users/sunao2000/gpt_new_oscar/.venv/bin/python",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "packages": {
+    "torch": {
+      "installed": true,
+      "version": "2.14.0",
+      "location": "/Users/sunao2000/gpt_new_oscar/.venv/lib/python3.12/site-packages"
+    },
+    "torch_npu": {
+      "installed": false
+    },
+    "vllm": {
+      "installed": false
+    },
+    "vllm-ascend": {
+      "installed": false
+    },
+    "pybind11": {
+      "installed": false
+    },
+    "triton": {
+      "installed": false
+    }
+  },
+  "tools": {
+    "cmake": null,
+    "bisheng": null,
+    "npu-smi": null,
+    "c++": "/usr/bin/c++"
+  },
+  "environment": {
+    "ASCEND_HOME_PATH": null,
+    "ASCEND_CANN_PACKAGE_PATH": null,
+    "ASCEND_TOOLKIT_HOME": null,
+    "ASCEND_OPP_PATH": null,
+    "ASCEND_CUSTOM_OPP_PATH": null,
+    "ASCEND_RT_VISIBLE_DEVICES": null,
+    "OMP_NUM_THREADS": null
+  },
+  "policy": "observations_only",
+  "npu_acceptance": "not_run",
+  "native_trees": {}
+}

@@ -1,0 +1,25 @@
+# 档案 #77/#100/#117：纯 Python 包安装不导入设备运行时，不覆盖原生源码。
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oscar-ascend-external"
+version = "0.1.0"
+description = "External OSCAR INT2 research integration for vLLM Ascend"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8", "torch>=2.10"]
+build = ["cmake>=3.26", "pybind11>=3", "ninja"]
+
+[project.entry-points."vllm.general_plugins"]
+oscar_ascend = "oscar_ascend.plugin:register"
+
+[tool.setuptools.packages.find]
+include = ["oscar_ascend*", "tools*", "benchmarks*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

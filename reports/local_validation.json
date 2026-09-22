@@ -1,0 +1,93 @@
+{
+  "overall": "incomplete",
+  "cpu_tests": {
+    "status": "passed",
+    "junit": {
+      "tests": 159,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "log": "reports/pytest.log",
+    "xml": "reports/pytest.xml"
+  },
+  "python_wheel": {
+    "status": "passed",
+    "path": "dist/oscar_ascend_external-0.1.0-py3-none-any.whl",
+    "includes_ascendc_binaries": false
+  },
+  "installed_plugin_entrypoint": {
+    "status": "passed",
+    "heavy_import_delta": []
+  },
+  "python_compileall": "passed",
+  "bash_syntax": "passed",
+  "references_unchanged": true,
+  "ascendc_build": {
+    "status": "not_run",
+    "reason": "CANN/AscendC compiler missing on macOS; build-tool invocation failed explicitly"
+  },
+  "device_completion": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "tp4_mtp": "not_run",
+  "model_accuracy": "not_run",
+  "memory_benefit": "not_run",
+  "performance": "not_run",
+  "missing_implementation": [
+    "fused INT2 Cube/Vector attention",
+    "fused rotate/clip/store",
+    "window ownership/prefix/MTP transactions",
+    "concrete RuntimeProvider/AttentionImpl",
+    "fixed graph workspace",
+    "TP4 service and NPU release probes",
+    "OPP package (current candidates use direct launch)"
+  ],
+  "source_sha256": {
+    "oscar_ascend/__init__.py": "886a48beeedcedf3da2ee7430eddf8d64c7ece3527b0cb073b8363223e5c22e0",
+    "oscar_ascend/integration/__init__.py": "b3dd8e07c5f89c5cb47c900b680da2bd6d88b8fb3f28c7eddf18efeddabd74bf",
+    "oscar_ascend/integration/backend.py": "11d5ad5c3fdb8fa13556addab6913dca2dc24a67ae7eb1c6cc958344fc295b43",
+    "oscar_ascend/integration/metadata.py": "1bf35775105763372d2af1f25e412b122566aa74cd467c7b642801dc40663676",
+    "oscar_ascend/integration/runtime_api.py": "594bd4480012f0345d83fd00e9dcb92f1d481d223b08da793ecef661a949a49d",
+    "oscar_ascend/integration/specs.py": "821f69ae696536245a36d36e1ec18bee4d8024421bd2944da6ecc190f7acdfd0",
+    "oscar_ascend/layout.py": "2a7760dbee7785cde18c09d588093ec870e3d7072658fd5bfc142f62218a7949",
+    "oscar_ascend/ops/__init__.py": "121a4a46ea91e1a0a4336de76e6003fc18a5fde411d3a1d1eaa706bb01710d08",
+    "oscar_ascend/ops/contracts.py": "7c204ca5a3aa95bd07314415980e2a845684f5fd07447f92a417063046c6edd8",
+    "oscar_ascend/ops/loader.py": "bb6e7e2584b3a9ccdd84d9584b9c2934b25a1329cd8ed8e95b31a912d84b966b",
+    "oscar_ascend/ops/reference.py": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
+    "oscar_ascend/plugin.py": "ab554100acee70f5faa552f7cda92b0e133aef2b14ac86b9a699821a5e7bfad0",
+    "oscar_ascend/rotations.py": "0c9de7c0e0c2c89c820524012f917c37b2428405007640357d60e9617e263416",
+    "tools/__init__.py": "638eebca9af17b3926d058f9115ba13a882951b3787192212a37c4a2afd73c26",
+    "tools/build_ops.py": "1b1755b23563f976b72cb33bae688fa033d9c75a059d26779ea3eedb396914e3",
+    "tools/deploy.py": "ccf5e9c9f48056b1a558ec6f0425cdde512cdb9cf64397cd00e67dec6e5c6187",
+    "tools/environment.py": "96fb02da6449dcb7cecd993ccf7cb53ba0efbd3469e421785ee50c188033cb9a",
+    "tools/phase.py": "90f306b9c74f9b35b37360ff003bc709bb1f6731aee3733c4f2b27d2aee6fadf",
+    "tools/prepare_rotations.py": "95d9e52a09b2b897b6a38b30ca0edae0ef7315b95b3877e10c335619992396d5",
+    "tools/probe_ops.py": "0c5ca145a948289b069e75ed27d3de2eaa34e33538d9c05a21d4df117dafd5ad",
+    "tools/readiness.py": "806edbd262e352ec14766d4a46aa8398e73a56ecef94fc2b447f74514f11147c",
+    "tools/target_cli.py": "2dffded3193ff13c701f9b3b561a13b7574575dbd389421afb1adec16ae73514",
+    "benchmarks/README.md": "c45323ee6d8d2923716fae63824173cf547f9ab2cc2094d35bbdc545bac72bad",
+    "benchmarks/__init__.py": "6b546ee97ba3c18e42e5a343c26a62ec7e4d6e95960798157fd66b8110b5f5e2",
+    "benchmarks/compare.py": "23f11991cab781c3c702659845f5522344066660226c1584301cc7958e7276fe",
+    "benchmarks/examples/run.template.json": "c6c2318fdec30d857ca5282ce652e4aba27f9b3d04de82901478d06cbf79abc5",
+    "csrc/CMakeLists.txt": "6f26c2de4075a20b35a194bf48f87095cf2f9b7137eca0699b8ca0ff006dbab7",
+    "csrc/include/oscar_launch.h": "c8b51d610755a8053455757ce9a921aa401e756edc6234318edcf2b7d422bbe9",
+    "csrc/kernels/merge_lse.cpp": "c74f4660538cdf24d6a273c544328c9620bb9049b1a9c774aab4bd236f244371",
+    "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+    "csrc/kernels/store_int2.cpp": "eb912cb604bb179749d159185d4f901f06086b7c939380a0a7942dcc94ccb7d0",
+    "csrc/torch_bindings.cpp": "301c1d5a1c92e0806c9ffd1610a9cf4876ea718ccc3def09483a985b6c415e92",
+    "configs/acceptance.json": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+    "configs/target.json": "aa8e33c49f57f344bba9fd3aadfcaafd76d283af51c8919009ee614e5e02fff1",
+    "scripts/install_probe_serve.sh": "6ac0f5fd42ce35893ea5cd46e3857aee2381f820f4a69fede4e65f2768eb00ea",
+    "scripts/serve.sh": "0b216fadfc215691946d60694aca0233c71d6cf75692bc76afbaaaabaa16d7fa",
+    "tests/test_benchmark_compare.py": "277718caf83360a1023f47a4571a748d1c4061764acc950b5fe20a9b5130247f",
+    "tests/test_integration_contracts.py": "cf13f1c990575d0435dfbd2ffb77140b35218a175fc4ae8e1d2216a1cbee43ae",
+    "tests/test_layout.py": "7b428f57c2106e244c2e41580c383d098aa1b836f99f4036da109aaf01940ea2",
+    "tests/test_no_fallback_static.py": "23109d060af97dbfab37ec2ef27dd52b1a9750859dfc1b6b2e49216927ce4b60",
+    "tests/test_op_contracts.py": "7b6172812c255b8b4dff489a60f36b50da593cf1f1476e21b4b72168dc3670c2",
+    "tests/test_plugin.py": "c9311bd11d43da818c2412dd4a5e5ce52085642e3bd65e479cf1b9bda1e52376",
+    "tests/test_reference.py": "6e33135b908d2273bc295fa4b36ab166512ab349e6d9d3c070023bf2afbf516d",
+    "tests/test_rotations.py": "80f5713429c38510becbabb300528cd9b32a07d3b92d28bf31270a274425fbf7",
+    "tests/test_workflow.py": "329b2ecc9aeffafda7b1d5debf91a102b49bb3d0fb837bc2aec045fe43e29c2c"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "status": "incomplete",
+  "implemented_operator_sources": [
+    "merge_lse_out",
+    "store_int2_out"
+  ],
+  "missing_operator_capabilities": [
+    "fused_int2_cv_attention",
+    "prefix_snapshot_restore",
+    "prepare_metadata",
+    "rotate_clip_store",
+    "window_cv_attention",
+    "window_transaction"
+  ],
+  "missing_integration": [
+    "concrete_runtime_provider",
+    "prefix_window_ownership",
+    "mtp_commit_rollback",
+    "fixed_graph_workspace",
+    "tp4_service_probe",
+    "npu_resource_release_probe"
+  ],
+  "npu_build": "not_run",
+  "device_completion": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "accuracy": "not_run",
+  "performance": "not_run",
+  "constraint_conflicts": [
+    "H18 sublinear total history reads conflicts with exact dense attention"
+  ]
+}

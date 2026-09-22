@@ -1,0 +1,55 @@
+{
+  "_note": "档案 #70-#73：这是未测量模板；null/空数组须保留至真实证据取得，不是实测报告。",
+  "schema_version": 1,
+  "kind": "oscar",
+  "run_id": null,
+  "measurement_type": "template_not_measured",
+  "acceptance_sha256": null,
+  "pair": {
+    "model_fingerprint": null,
+    "dataset_sha256": null,
+    "workload_sha256": null,
+    "software": {
+      "vllm_commit": null,
+      "vllm_ascend_commit": null,
+      "torch": null,
+      "torch_npu": null,
+      "cann": null,
+      "driver": null,
+      "firmware": null,
+      "compiler": null
+    },
+    "devices": null,
+    "npu_model": null,
+    "tp": 4,
+    "mtp": {"method": "qwen3_5_mtp", "num_speculative_tokens": 3},
+    "graph": "FULL_DECODE_ONLY",
+    "draft_graph_scope": "eager",
+    "workload": {
+      "output_tokens": null,
+      "sampling": null,
+      "arrival": null,
+      "prefix_cache": null,
+      "max_model_len": 262144,
+      "max_num_seqs": 128,
+      "async_scheduling": true
+    }
+  },
+  "phase_definitions": {},
+  "cases": [
+    {
+      "input_tokens": 32768,
+      "concurrency": 1,
+      "q_len": 4,
+      "input_sha256": null,
+      "warmup": [],
+      "samples": [],
+      "evidence": {
+        "npu": {"path": null, "sha256": null},
+        "accuracy": {"path": null, "sha256": null},
+        "route": {"path": null, "sha256": null},
+        "memory": {"path": null, "sha256": null}
+      }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # OSCAR Ascend：端到端设计与可证边界
 
-本设计以 PR `57286d5d`、vLLM `0fc695fc`、Ascend `19e43698` 为准，历史故障来自工作区档案 G1–G34、#1–#129。本轮已完成源码调用链、VM CANN编译和官方CPU-debug；设计证明、CPU调试、设备完成、图捕获、图回放、性能分别记账。待验证项不能勾选。
+本设计以 PR `57286d5d`、vLLM `0fc695fc`、Ascend `19e43698` 为准，历史故障来自工作区档案 G1–G34、#1–#130。本轮已完成源码调用链、VM CANN编译和官方CPU-debug；设计证明、CPU调试、设备完成、图捕获、图回放、性能分别记账。待验证项不能勾选。
 
 ## 1. 全局生命周期
 
@@ -149,3 +149,5 @@ A2 Cube/Vector片上交接也需实际CANN编译/运行证据；不能把经GM�
 默认arena容量不变，设 `qtile=floor(64/GQA)`、`groups=ceil(n/qtile)*Hkv`，选择 `S=max(1,min(32,ceil(CubeCores/groups),floor(arena_token_capacity/n)))`。只读取已经给定的shape/设备属性；同一捕获n始终得到同S/地址/stride，不读取CPU seq_lens。原partial/LSE/tasks/status平面arena复用为3*S段，保证n*S不超预分配容量。实际20Cube/GQA6时n4→S20，n16384→S1，避免单请求历史只有一个task。新增S2/S20真实CPU-debug已证明互斥历史分区、query复用、empty splits与真实3*S merge的数值一致；没有因此宣称NPU提速。
 
 #129 性能排查：D.4重新逐行对照。该算子对应dequant+FIA；历史全量恢复6499.8–6655.1ms而FIA18.5–18.9ms的结构仍禁止。本次没有增加历史恢复或另一路attention：仅改变任务归属顺序、移除因果上不可见的future-only tile。固定GM/UB预算、GQA querytile及数学精度不变；实际有效计算仍为精确attention复杂度，不声称亚线性。GQA6/Q16K/S1示例旧current任务只落在2/20核；新分配每核81–82个querytile。原始current源KVtile为839168，因果裁剪后为420761，见reports/prefill_work_analysis.json（按程序计算值为准）；这些是静态工作量，不是实测加速。新63项官方CPU-debug通过，仍需NPU逐相位证据及与原生0.6–1.1ms短步/18.5–18.9ms FIA量级比较。
+
+#130/D.4：对应历史解包+FIA及current精确FIA。历史全量恢复曾6499.8–6655.1ms，而FIA18.5–18.9ms；本轮仍不恢复全历史。每个AIV半tile最多16行：history按虚拟128边界切连续段，用带head stride的2D DMA一次搬入，跨边界重新查表；current使用一次2D DMA与一次BF16→FP32 Cast，复用naturalBuf。逐行finite校验、量化metadata与FP32数学均保持，窗口tag路径不改，UB/GM预算不增加。减少的是DMA/Cast提交数量，最多16行合并，不等同16倍实测提速；仍需达到原生0.6–1.1ms短步和18.5–18.9ms FIA量级。67项官方CPU-debug（含多head/跨页/尾行）通过，真实设备性能尚待复验。用户确认ArgSort/AiCPU告警基线也存在，不据此归因OSCAR，也不修改原生排序类型。

@@ -156,7 +156,9 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
     process = None
     ownership = None
     lifecycle.update(status="starting", command=command, target_argv=serve_argv(config),
-                     log=str(log), trace_dir=str(trace_dir), cleanup_complete=False)
+                     log=str(log), trace_dir=str(trace_dir), cleanup_complete=False,
+                     debug_sync=environment.get("OSCAR_DEBUG_SYNC", "0").lower() in {"1", "true"})
+    print(f"[oscar] worker checkpoints debug_sync={lifecycle['debug_sync']} trace={trace_dir}", flush=True)
     atomic_json(log_dir / "server_lifecycle.json", lifecycle)
     with live_log(log) as stream:
         stream.write(f"START owned_service cwd={ROOT} command={json.dumps(command)}\n")
@@ -227,6 +229,28 @@ def worker_progress(server):
                            ("pid", "rank", "state", "phase", "layer", "tokens", "wall_time")})
         except (OSError, ValueError) as error:
             result.append({"path": str(path), "read_error": str(error)})
+    if not result:
+        # Normal serving does not force synchronization. Show the latest host
+        # event instead of an ambiguous empty list; it is NOT device completion.
+        for path in sorted(server.trace_dir.glob("worker-*.jsonl"))[:16]:
+            try:
+                with path.open("rb") as stream:
+                    stream.seek(0, 2);stream.seek(max(0, stream.tell()-16384))
+                    lines = stream.read(16384).decode("utf-8", errors="replace").splitlines()
+                for line in reversed(lines):
+                    try:
+                        record = json.loads(line)
+                    except ValueError:
+                        continue
+                    result.append({"state": "last_host_event_only", "event": record.get("event"),
+                                   **{k: record.get(k) for k in ("pid", "rank", "layer", "tokens", "wall_time")},
+                                   "device_completion": "not_established"})
+                    break
+            except OSError as error:
+                result.append({"path": str(path), "read_error": str(error)})
+    if not result:
+        result.append({"state": "no_worker_progress_yet", "debug_sync": server.lifecycle.get("debug_sync", False),
+                       "device_completion": "not_established"})
     return result
 
 
@@ -264,11 +288,13 @@ def request_with_deadline(server, payload, *, label, timeout):
                     raise TimeoutError(f"{label}: wall deadline {timeout:.1f}s exceeded")
                 server.check_alive()
                 if now >= heartbeat:
+                    client_state_path = directory / "client-state.json"
+                    client_state = json.loads(client_state_path.read_text()) if client_state_path.is_file() else {"state": "client_starting"}
                     state.update(elapsed_seconds=now-started, remaining_seconds=deadline-now,
-                                 worker_progress=worker_progress(server))
+                                 worker_progress=worker_progress(server), client_state=client_state)
                     atomic_json(state_path, state)
                     print(f"[oscar] REQUEST_WAIT {label} elapsed={now-started:.1f}s remaining={deadline-now:.1f}s "
-                          f"workers={json.dumps(state['worker_progress'], ensure_ascii=False)}", flush=True)
+                          f"client={client_state.get('state')} workers={json.dumps(state['worker_progress'], ensure_ascii=False)}", flush=True)
                     heartbeat = now + REQUEST_HEARTBEAT_SECONDS
                 time.sleep(min(.1, max(0, deadline-now)))
             if time.monotonic() >= deadline:

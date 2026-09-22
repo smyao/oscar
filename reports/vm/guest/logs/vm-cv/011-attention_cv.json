@@ -3,10 +3,10 @@
   "command": [
     "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu",
     "attention_cv",
-    "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_s20"
+    "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d128_q17_c511_hk2"
   ],
   "returncode": 0,
-  "elapsed_seconds": 3.863873,
+  "elapsed_seconds": 11.942141,
   "timed_out": false,
   "interrupted": false,
   "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/011-attention_cv.log",

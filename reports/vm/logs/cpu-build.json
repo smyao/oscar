@@ -16,7 +16,7 @@
     "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; cmake -S csrc/cpu -B build/cpu -DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0 -Dtikicpulib_DIR=/usr/local/Ascend/cann-9.1.0/tools/tikicpulib/lib/cmake && cmake --build build/cpu --parallel 4"
   ],
   "returncode": 0,
-  "elapsed_seconds": 0.208721,
+  "elapsed_seconds": 3.428554,
   "timed_out": false,
   "interrupted": false,
   "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cpu-build.log",

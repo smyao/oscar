@@ -190,6 +190,20 @@ def test_npu_cv_matches_independent_dense_pr_oracle(dim, qlen, context):
     _assert_cv_result(data, buffers, expected, expected_lse)
 
 
+@pytest.mark.parametrize("dim,qlen,context,hk,splits", [
+    (64, 33, 511, 2, 1), (128, 17, 511, 2, 1), (256, 17, 511, 2, 1),
+    (128, 4, 511, 1, 7)])
+def test_npu_batched_dma_preserves_heads_page_boundaries_and_partial_rows(dim, qlen, context, hk, splits):
+    # Archive #17-20/#130: non-identity rotations, interleaved heads, virtual128
+    # boundaries and non-tile-aligned splits keep the unchanged dense oracle.
+    ops = _npu_ops()
+    data, expected, expected_lse = _case(dim, qlen, context, hk)
+    data["splits"] = splits
+    tensors, buffers = _device_case(data)
+    _execute_cv(ops, data, tensors, buffers)
+    _assert_cv_result(data, buffers, expected, expected_lse)
+
+
 @pytest.mark.parametrize("dim,qlen", [(64, 1), (64, 2), (64, 4), (64, 5),
     (64, 6), (64, 10), (128, 6), (256, 10)])
 def test_npu_cv_query_tail_survives_padding_and_reused_workspace(dim, qlen):
@@ -246,7 +260,8 @@ def export_cpu_debug_goldens(directory):
     for dim, qlen, context, hk in [(64, 1, 17, 1), (64, 4, 65, 1), (64, 4, 0, 1),
                                   (128, 4, 129, 1), (256, 4, 511, 1),
                                   (64, 17, 65, 1), (64, 4, 65, 2),
-                                  (64, 2, 320, 1), (128, 3, 511, 1), (64, 65, 17, 1)]:
+                                  (64, 2, 320, 1), (128, 3, 511, 1), (64, 65, 17, 1),
+                                  (64, 33, 511, 2), (128, 17, 511, 2), (256, 17, 511, 2)]:
         data, output, lse = _case(dim, qlen, context, hk)
         case = directory / (f"d{dim}_q{qlen}_c{context}" + (f"_hk{hk}" if hk!=1 else ""))
         case.mkdir(exist_ok=True)
@@ -257,7 +272,7 @@ def export_cpu_debug_goldens(directory):
             f"{qlen} {hk*6} {hk} {dim} {context} 4 32 3 512 2 64 {512*(dim//2+8)*hk} 2\n")
         cases.append({"op":"attention_cv","path":str(case)})
     for dim, qlen, context, splits in [(64, 4, 65, 2), (64, 4, 65, 20),
-                                      (256, 4, 511, 20), (64, 4, 0, 20)]:
+                                      (256, 4, 511, 20), (64, 4, 0, 20), (128, 4, 511, 7)]:
         data, output, lse = _case(dim, qlen, context)
         case = directory / f"d{dim}_q{qlen}_c{context}_s{splits}"
         case.mkdir(exist_ok=True)

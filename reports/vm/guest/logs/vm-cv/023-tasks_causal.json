@@ -1,0 +1,14 @@
+{
+  "phase": "023-tasks_causal",
+  "command": [
+    "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu",
+    "tasks_causal",
+    "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 39.20175,
+  "timed_out": false,
+  "interrupted": false,
+  "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/023-tasks_causal.log",
+  "cleanup_complete": true
+}

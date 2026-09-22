@@ -1,11 +1,11 @@
 ......................................................................ss [ 12%]
-sssssssssssss......................................................... [ 25%]
-.........................................................s.............. [ 38%]
+sssssssssssssssss..................................................... [ 25%]
+.............................................................s.......... [ 38%]
 .................................................................... [ 50%]
-........ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 63%]
-ssssssssssssssssssssssssssssssssssssssss................................ [ 76%]
-........................................................................ [ 89%]
-...........................................................              [100%]
+............ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 62%]
+ssssssssssssssssssssssssssssssssssssssssssss............................ [ 75%]
+........................................................................ [ 88%]
+................................................................         [100%]
 =============================== warnings summary ===============================
 .venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368
   /Users/sunao2000/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
@@ -13,7 +13,7 @@ ssssssssssssssssssssssssssssssssssssssss................................ [ 76%]
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
-SKIPPED [15] tests/test_cv_contracts.py:58: real NPU test is opt-in; CPU is not substituted
+SKIPPED [19] tests/test_cv_contracts.py:58: real NPU test is opt-in; CPU is not substituted
 SKIPPED [1] tests/test_loader_linkage.py:202: ELF DT_NEEDED/SONAME regression requires Linux
 SKIPPED [104] tests/test_rotation_npu.py:145: not_run: real NPU rotation gate requires OSCAR_RUN_NPU_TESTS=1
-437 passed, 120 skipped, 1 warning, 6 subtests passed in 15.43s
+438 passed, 124 skipped, 1 warning, 6 subtests passed in 19.27s

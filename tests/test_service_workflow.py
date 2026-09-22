@@ -3,6 +3,7 @@
 # exist only in these tests and never constitute NPU acceptance evidence.
 import json
 from pathlib import Path
+from types import SimpleNamespace
 import socket
 import subprocess
 import sys
@@ -140,6 +141,22 @@ def test_exact_prompt_uses_local_encoded_ids_and_no_special_tokens():
         exact_prompt(Tokenizer(), 0)
 
 
+def test_worker_progress_distinguishes_no_debug_host_dispatch_and_device_checkpoint(tmp_path):
+    server = SimpleNamespace(trace_dir=tmp_path, lifecycle={"debug_sync": False})
+    initial = service_probe.worker_progress(server)
+    assert initial == [{"state": "no_worker_progress_yet", "debug_sync": False,
+                        "device_completion": "not_established"}]
+    (tmp_path / "worker-1.jsonl").write_text(json.dumps({"event": "attention_dispatched",
+        "pid": 1, "rank": 0, "layer": "model.layer", "tokens": 16384}) + "\n")
+    host = service_probe.worker_progress(server)[0]
+    assert host["state"] == "last_host_event_only" and host["tokens"] == 16384
+    assert host["device_completion"] == "not_established"
+    (tmp_path / "phase-1.json").write_text(json.dumps({"pid": 1, "rank": 0,
+        "state": "waiting_for_device", "phase": "fia", "tokens": 16384}))
+    checkpoint = service_probe.worker_progress(server)[0]
+    assert checkpoint["state"] == "waiting_for_device" and checkpoint["phase"] == "fia"
+
+
 @pytest.mark.parametrize("mode", ["hang_long", "trickle_long"])
 def test_long_request_has_wall_deadline_progress_and_reaped_client(tmp_path, monkeypatch, capsys, mode):
     config, path = configured(tmp_path)
@@ -159,6 +176,7 @@ def test_long_request_has_wall_deadline_progress_and_reaped_client(tmp_path, mon
     terminal = capsys.readouterr()
     assert "REQUEST_START serial-16384" in terminal.out
     assert "REQUEST_WAIT serial-16384" in terminal.out
+    assert "client=waiting_for_http_response" in terminal.out
     assert "REQUEST_ERROR serial-16384" in terminal.err
     assert "CLEANUP_START" in terminal.out and "CLEANUP_END" in terminal.out
 

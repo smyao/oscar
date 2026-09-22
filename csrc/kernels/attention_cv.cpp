@@ -21,6 +21,11 @@
 // Raw token-task striding aliases GQA6 leaders (stride30) onto 2/20 Cubes.
 // This changes ownership only: fixed scratch, identical CV math, no fallback;
 // causal task bounds avoid future-only work. NPU latency remains unverified.
+// #130/D.4: batch contiguous KV rows into strided DMA instead of per-token
+// table/DMA/fence calls. History runs stop at virtual128 boundaries; current
+// BF16 uses one DMA+Cast per half-tile. Reuse existing UB, preserve FP32 math,
+// metadata/finite checks and GQA reuse. No full-history allocation or restore;
+// target remains native FIA's 0.6-1.1ms/18.5-18.9ms order, not a claimed result.
 // Native precedents: hc_pre_m_k_split_core.h mode-2 Cube/Vector flags;
 // hc_pre_cube_compute.h FP32 Mmad; moe_grouped_matmul.h MatmulImpl;
 // add_rms_norm_bias_multi_n.h Gather; PR triton_oscar_decode.py INT2 and LSE.
@@ -251,16 +256,20 @@ template<int32_t D> class AttentionCv {
     auto packed=packedBuf.Get<uint8_t>();
     Duplicate(packed.ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),
         kHalfKv*kPackedStride/2);Fence<HardEvent::V_MTE2>();
-    for(int32_t j=0;j<kHalfKv;++j) {
+    for(int32_t j=0;j<liveKvRows;) {
       const int64_t candidate=start+lane*kHalfKv+j;
-      if(candidate>=kvend)continue;
+      const int32_t rows=static_cast<int32_t>(Min64(liveKvRows-j,128-candidate%128));
       int64_t block=0,inpage=0;
-      if(!Physical(candidate,block,inpage))continue;
+      if(!Physical(candidate,block,inpage)) {j+=rows;continue;}
       const int64_t off=g.ssmOffset+block*g.pageStride+
           (inpage*g.hk+kvhead)*kSlotBytes;
-      DataCopyExtParams copy{1,kSlotBytes,0,0,0};
+      // GM rows are interleaved by KV head; UB rows are padded to 32 bytes.
+      // Never assume adjacent virtual128 entries point to adjacent pages.
+      DataCopyExtParams copy{static_cast<uint16_t>(rows),kSlotBytes,
+          static_cast<uint32_t>((g.hk-1)*kSlotBytes),0,0};
       DataCopyPadExtParams<uint8_t> pad{false,0,0,0};
       DataCopyPad(packed[j*kPackedStride],bytes[off],copy,pad);
+      j+=rows;
     }
     Fence<HardEvent::MTE2_V>();
   }
@@ -292,16 +301,35 @@ template<int32_t D> class AttentionCv {
   __aicore__ void LoadPrecise(int64_t start,bool value) {
     auto dst=dequantBuf.Get<float>();auto src=qBf16Buf.Get<bfloat16_t>();
     Duplicate(dst,0.0F,kElements);PipeBarrier<PIPE_V>();
+    if(kind==2) {
+      const int32_t rows=static_cast<int32_t>(Max64(0,Min64(kHalfKv,kvend-start-lane*kHalfKv)));
+      if(rows==0)return;
+      const int64_t token=requestBegin+start+lane*kHalfKv-context;
+      if(token<0 || token+rows>g.tokens) {error=1;return;}
+      // The natural unpack buffer is not used by the precise source. Reuse
+      // it for contiguous BF16 rows; no extra UB or full-history buffer.
+      auto batch=naturalBuf.Get<bfloat16_t>();
+      Duplicate(batch.ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),kElements);
+      Fence<HardEvent::V_MTE2>();
+      DataCopyExtParams copy{static_cast<uint16_t>(rows),D*2,
+          static_cast<uint32_t>((g.hk-1)*D*2),0,0};
+      DataCopyPadExtParams<bfloat16_t> pad{false,0,0,0};
+      const int64_t off=(token*g.hk+kvhead)*D;
+      if(value)DataCopyPad(batch,cv[off],copy,pad);else DataCopyPad(batch,ck[off],copy,pad);
+      Fence<HardEvent::MTE2_V>();Cast(dst,batch,RoundMode::CAST_NONE,kElements);
+      PipeBarrier<PIPE_V>();
+      auto check=scratchBuf.Get<float>();
+      for(int32_t row=0;row<rows;++row) {
+        ReduceSum(check,dst[row*D],check[16],D);Fence<HardEvent::V_S>();
+        if(!Finite(check.GetValue(0)))error=2;
+      }
+      return;
+    }
     for(int32_t j=0;j<kHalfKv;++j) {
       const int64_t candidate=start+lane*kHalfKv+j;
       if(candidate>=kvend)continue;
       const int64_t position=LogicalPosition(candidate);
-      if(kind==2) {
-        const int64_t token=requestBegin+position-context;
-        if(token<0 || token>=g.tokens) {error=1;continue;}
-        if(value)DataCopy(src,cv[(token*g.hk+kvhead)*D],D);
-        else DataCopy(src,ck[(token*g.hk+kvhead)*D],D);
-      } else {
+      {
         int64_t block=0,inpage=0;
         if(!Physical(position,block,inpage))continue;
         const int64_t row=position<g.sink?position:g.sink+inpage%(g.recent+g.speculative);

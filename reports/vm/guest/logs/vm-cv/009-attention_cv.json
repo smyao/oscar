@@ -6,7 +6,7 @@
     "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q65_c17"
   ],
   "returncode": 0,
-  "elapsed_seconds": 5.808448,
+  "elapsed_seconds": 5.552668,
   "timed_out": false,
   "interrupted": false,
   "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/009-attention_cv.log",

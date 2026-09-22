@@ -1,0 +1,140 @@
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /ping, Methods: GET
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /ping, Methods: POST
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /invocations, Methods: POST
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /v1/chat/completions, Methods: POST
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /v1/chat/completions/batch, Methods: POST
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /v1/responses, Methods: POST
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /v1/responses/{response_id}, Methods: GET
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /v1/responses/{response_id}/cancel, Methods: POST
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /v1/completions, Methods: POST
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /v1/messages, Methods: POST
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /v1/messages/count_tokens, Methods: POST
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /generative_scoring, Methods: POST
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /inference/v1/generate, Methods: POST
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /scale_elastic_ep, Methods: POST
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /is_scaling_elastic_ep, Methods: POST
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /v1/chat/completions/render, Methods: POST
+(APIServer pid=22141) INFO 09-22 06:25:34 [launcher.py:46] Route: /v1/completions/render, Methods: POST
+(APIServer pid=22141) INFO:     Started server process [22141]
+(APIServer pid=22141) INFO:     Waiting for application startup.
+(APIServer pid=22141) INFO:     Application startup complete.
+(APIServer pid=22141) INFO:     127.0.0.1:57368 - "GET /health HTTP/1.1" 200 OK
+[oscar] REQUEST_START serial-128 prompt=128 timeout=300.0s status=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe/requests/serial-128-a25e4f04454943b7a0e800ac62de3e65/status.json
+(APIServer pid=22141) INFO:     127.0.0.1:57384 - "GET /metrics HTTP/1.1" 200 OK
+(Worker_TP0 pid=22251) INFO 09-22 06:25:36 [acl_graph.py:243] Replaying aclgraph
+[oscar] service request complete prompt=128 generated=16
+(APIServer pid=22141) INFO:     127.0.0.1:57394 - "POST /v1/completions HTTP/1.1" 200 OK
+[oscar] REQUEST_START serial-16384 prompt=16384 timeout=300.0s status=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe/requests/serial-16384-7cfc5efba0204ba8ac9e16e6adfa6426/status.json
+[oscar] phase=service-probe running seconds=375.3 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+(APIServer pid=22141) INFO 09-22 06:25:45 [loggers.py:271] Engine 000: Avg prompt throughput: 4.6 tokens/s, Avg generation throughput: 0.6 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%
+(APIServer pid=22141) INFO 09-22 06:25:45 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 4.00, Accepted throughput: 0.43 tokens/s, Drafted throughput: 0.43 tokens/s, Accepted: 12 tokens, Drafted: 12 tokens, Per-position acceptance rate: 1.000, 1.000, 1.000, Avg Draft acceptance rate: 100.0%
+[oscar] REQUEST_WAIT serial-16384 elapsed=15.1s remaining=284.9s workers=[]
+[oscar] phase=service-probe running seconds=390.3 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+(APIServer pid=22141) INFO 09-22 06:25:55 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 0.0 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%
+(APIServer pid=22141) INFO:     127.0.0.1:57396 - "POST /v1/completions HTTP/1.1" 200 OK
+[oscar] service request complete prompt=16384 generated=16
+[oscar] REQUEST_START serial-32768 prompt=32768 timeout=300.0s status=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe/requests/serial-32768-4312a92587db44adaab56a3a3a80f2bd/status.json
+(APIServer pid=22141) INFO 09-22 06:26:05 [loggers.py:271] Engine 000: Avg prompt throughput: 1638.1 tokens/s, Avg generation throughput: 1.6 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%
+(APIServer pid=22141) INFO 09-22 06:26:05 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.75, Accepted throughput: 0.55 tokens/s, Drafted throughput: 0.60 tokens/s, Accepted: 11 tokens, Drafted: 12 tokens, Per-position acceptance rate: 1.000, 1.000, 0.750, Avg Draft acceptance rate: 91.7%
+[oscar] phase=service-probe running seconds=405.3 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+(APIServer pid=22141) INFO 09-22 06:26:15 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 0.0 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%
+[oscar] REQUEST_WAIT serial-32768 elapsed=15.0s remaining=285.0s workers=[]
+[oscar] phase=service-probe running seconds=420.3 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-32768 elapsed=30.1s remaining=269.9s workers=[]
+[oscar] phase=service-probe running seconds=435.3 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-32768 elapsed=45.2s remaining=254.8s workers=[]
+[oscar] phase=service-probe running seconds=450.3 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-32768 elapsed=60.3s remaining=239.7s workers=[]
+[oscar] phase=service-probe running seconds=465.4 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-32768 elapsed=75.4s remaining=224.6s workers=[]
+[oscar] phase=service-probe running seconds=480.4 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-32768 elapsed=90.5s remaining=209.5s workers=[]
+[oscar] phase=service-probe running seconds=495.4 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+(EngineCore pid=22203) INFO 09-22 06:27:48 [patch_shm_broadcast.py:74] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+[oscar] REQUEST_WAIT serial-32768 elapsed=105.6s remaining=194.4s workers=[]
+(APIServer pid=22141) INFO:     127.0.0.1:44392 - "POST /v1/completions HTTP/1.1" 200 OK
+[oscar] service request complete prompt=32768 generated=16
+[oscar] REQUEST_START serial-50000 prompt=50000 timeout=300.0s status=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe/requests/serial-50000-0a3bd78fc8204b229c4abf9c0192f100/status.json
+(APIServer pid=22141) INFO 09-22 06:27:55 [loggers.py:271] Engine 000: Avg prompt throughput: 3276.5 tokens/s, Avg generation throughput: 1.6 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%
+(APIServer pid=22141) INFO 09-22 06:27:55 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.75, Accepted throughput: 0.10 tokens/s, Drafted throughput: 0.11 tokens/s, Accepted: 11 tokens, Drafted: 12 tokens, Per-position acceptance rate: 1.000, 1.000, 0.750, Avg Draft acceptance rate: 91.7%
+[oscar] phase=service-probe running seconds=510.4 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+(APIServer pid=22141) INFO 09-22 06:28:05 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 0.0 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%
+[oscar] REQUEST_WAIT serial-50000 elapsed=15.0s remaining=285.0s workers=[]
+[oscar] phase=service-probe running seconds=525.4 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-50000 elapsed=30.1s remaining=269.9s workers=[]
+[oscar] phase=service-probe running seconds=540.4 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-50000 elapsed=45.2s remaining=254.8s workers=[]
+[oscar] phase=service-probe running seconds=555.4 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-50000 elapsed=60.3s remaining=239.7s workers=[]
+[oscar] phase=service-probe running seconds=570.4 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-50000 elapsed=75.4s remaining=224.6s workers=[]
+[oscar] phase=service-probe running seconds=585.4 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-50000 elapsed=90.5s remaining=209.5s workers=[]
+[oscar] phase=service-probe running seconds=600.5 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+(EngineCore pid=22203) INFO 09-22 06:29:36 [patch_shm_broadcast.py:74] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+[oscar] REQUEST_WAIT serial-50000 elapsed=105.6s remaining=194.4s workers=[]
+[oscar] phase=service-probe running seconds=615.5 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-50000 elapsed=120.7s remaining=179.3s workers=[]
+[oscar] phase=service-probe running seconds=630.5 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-50000 elapsed=135.7s remaining=164.3s workers=[]
+[oscar] phase=service-probe running seconds=645.5 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-50000 elapsed=150.8s remaining=149.2s workers=[]
+[oscar] phase=service-probe running seconds=660.5 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-50000 elapsed=165.9s remaining=134.1s workers=[]
+[oscar] phase=service-probe running seconds=675.5 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-50000 elapsed=181.0s remaining=119.0s workers=[]
+[oscar] phase=service-probe running seconds=690.5 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+(EngineCore pid=22203) INFO 09-22 06:31:04 [patch_shm_broadcast.py:74] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+[oscar] REQUEST_WAIT serial-50000 elapsed=196.1s remaining=103.9s workers=[]
+[oscar] phase=service-probe running seconds=705.5 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-50000 elapsed=211.1s remaining=88.9s workers=[]
+[oscar] phase=service-probe running seconds=720.5 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-50000 elapsed=226.2s remaining=73.8s workers=[]
+[oscar] phase=service-probe running seconds=735.5 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT serial-50000 elapsed=241.3s remaining=58.7s workers=[]
+[oscar] phase=service-probe running seconds=750.6 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+(APIServer pid=22141) INFO:     127.0.0.1:59746 - "POST /v1/completions HTTP/1.1" 200 OK
+[oscar] service request complete prompt=50000 generated=16
+[oscar] REQUEST_START mixed-0-128 prompt=128 timeout=300.0s status=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe/requests/mixed-0-128-feee13cbb1784af8aa84688cc28dd5da/status.json
+[oscar] REQUEST_START mixed-1-16384 prompt=16384 timeout=300.0s status=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe/requests/mixed-1-16384-43196e92660f45c48c2e50e8df8e5d4a/status.json[oscar] REQUEST_START mixed-2-32768 prompt=32768 timeout=300.0s status=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe/requests/mixed-2-32768-9cad5936f5294055889fb56dbb80089f/status.json
+
+[oscar] REQUEST_START mixed-3-50000 prompt=50000 timeout=300.0s status=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe/requests/mixed-3-50000-4e02d2933e0b49808276192732e6819e/status.json
+[rank0]:[W922 06:32:02.347597130 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank1]:[W922 06:32:02.348052770 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank2]:[W922 06:32:02.351340290 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank3]:[W922 06:32:02.351576740 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+(APIServer pid=22141) INFO 09-22 06:32:05 [loggers.py:271] Engine 000: Avg prompt throughput: 5012.4 tokens/s, Avg generation throughput: 2.1 tokens/s, Running: 2 reqs, Waiting: 2 reqs, GPU KV cache usage: 2.8%, Prefix cache hit rate: 0.0%
+(APIServer pid=22141) INFO 09-22 06:32:05 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.80, Accepted throughput: 0.06 tokens/s, Drafted throughput: 0.06 tokens/s, Accepted: 14 tokens, Drafted: 15 tokens, Per-position acceptance rate: 1.000, 1.000, 0.800, Avg Draft acceptance rate: 93.3%
+[oscar] phase=service-probe running seconds=765.6 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+(APIServer pid=22141) INFO 09-22 06:32:15 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 0.0 tokens/s, Running: 2 reqs, Waiting: 2 reqs, GPU KV cache usage: 2.8%, Prefix cache hit rate: 0.0%
+[oscar] REQUEST_WAIT mixed-2-32768 elapsed=15.1s remaining=284.9s workers=[][oscar] REQUEST_WAIT mixed-3-50000 elapsed=15.1s remaining=284.9s workers=[]
+
+[oscar] REQUEST_WAIT mixed-0-128 elapsed=15.1s remaining=284.9s workers=[]
+[oscar] REQUEST_WAIT mixed-1-16384 elapsed=15.1s remaining=284.9s workers=[]
+[oscar] phase=service-probe running seconds=780.6 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT mixed-1-16384 elapsed=30.1s remaining=269.9s workers=[]
+[oscar] REQUEST_WAIT mixed-2-32768 elapsed=30.1s remaining=269.9s workers=[][oscar] REQUEST_WAIT mixed-3-50000 elapsed=30.1s remaining=269.9s workers=[]
+
+[oscar] REQUEST_WAIT mixed-0-128 elapsed=30.1s remaining=269.9s workers=[]
+(APIServer pid=22141) INFO 09-22 06:32:35 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 0.4 tokens/s, Running: 3 reqs, Waiting: 1 reqs, GPU KV cache usage: 4.4%, Prefix cache hit rate: 0.0%
+(APIServer pid=22141) INFO 09-22 06:32:35 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 4.00, Accepted throughput: 0.10 tokens/s, Drafted throughput: 0.10 tokens/s, Accepted: 3 tokens, Drafted: 3 tokens, Per-position acceptance rate: 1.000, 1.000, 1.000, Avg Draft acceptance rate: 100.0%
+[oscar] phase=service-probe running seconds=795.6 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+(APIServer pid=22141) INFO 09-22 06:32:45 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 0.0 tokens/s, Running: 3 reqs, Waiting: 1 reqs, GPU KV cache usage: 4.4%, Prefix cache hit rate: 0.0%
+[oscar] REQUEST_WAIT mixed-0-128 elapsed=45.2s remaining=254.8s workers=[]
+[oscar] REQUEST_WAIT mixed-1-16384 elapsed=45.2s remaining=254.8s workers=[]
+[oscar] REQUEST_WAIT mixed-2-32768 elapsed=45.2s remaining=254.8s workers=[]
+[oscar] REQUEST_WAIT mixed-3-50000 elapsed=45.2s remaining=254.8s workers=[]
+[oscar] phase=service-probe running seconds=810.6 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+[oscar] REQUEST_WAIT mixed-3-50000 elapsed=60.2s remaining=239.8s workers=[]
+[oscar] REQUEST_WAIT mixed-0-128 elapsed=60.2s remaining=239.8s workers=[]
+[oscar] REQUEST_WAIT mixed-1-16384 elapsed=60.3s remaining=239.7s workers=[]
+[oscar] REQUEST_WAIT mixed-2-32768 elapsed=60.2s remaining=239.8s workers=[]
+(APIServer pid=22141) INFO 09-22 06:33:05 [loggers.py:271] Engine 000: Avg prompt throughput: 1638.3 tokens/s, Avg generation throughput: 0.5 tokens/s, Running: 3 reqs, Waiting: 1 reqs, GPU KV cache usage: 4.9%, Prefix cache hit rate: 0.0%
+(APIServer pid=22141) INFO 09-22 06:33:05 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 4.00, Accepted throughput: 0.10 tokens/s, Drafted throughput: 0.10 tokens/s, Accepted: 3 tokens, Drafted: 3 tokens, Per-position acceptance rate: 1.000, 1.000, 1.000, Avg Draft acceptance rate: 100.0%
+[oscar] phase=service-probe running seconds=825.6 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log
+(APIServer pid=22141) INFO 09-22 06:33:15 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 0.0 tokens/s, Running: 3 reqs, Waiting: 1 reqs, GPU KV cache usage: 4.9%, Prefix cache hit rate: 0.0%
+[oscar] REQUEST_WAIT mixed-3-50000 elapsed=75.3s remaining=224.7s workers=[]
+[oscar] REQUEST_WAIT mixed-2-32768 elapsed=75.3s remaining=224.7s workers=[]
+[oscar] REQUEST_WAIT mixed-0-128 elapsed=75.3s remaining=224.7s workers=[]
+[oscar] REQUEST_WAIT mixed-1-16384 elapsed=75.3s remaining=224.7s workers=[]
+[oscar] phase=service-probe running seconds=840.6 log=/workspace/gpt_new_oscar/logs/20260922T061730.208765Z/service-probe.log

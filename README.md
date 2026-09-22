@@ -27,7 +27,7 @@ python3 -m tools.deploy --only probe-ops
 python3 -m tools.service_probe --config configs/target.json --output reports/service.json --log-dir logs/service
 ```
 
-**最新真机结果：health及128-token输入/16-token输出已完成，后续长请求停滞（#129）。** 已修复CV有效任务集中到少数Cube核、prefill扫描不可见未来token两个源码问题；尚不能据此认定实机停滞已经消除。标准入口现在打印每个请求的开始、耗时、剩余时间及清理阶段；每个请求由独立HTTP客户端执行，父进程实施300秒墙钟截止，慢速响应不能不断延长socket等待。
+**最新真机结果：128、16K、32K、50K四个串行请求均已生成16个token，并开始混合并发探针（#130）。** 32K和50K仍很慢，完整并发/质量/性能尚未验收。本轮将历史INT2与当前BF16的逐token搬运改为有界分块DMA，保持计算公式、精度阈值与固定UB/GM预算；提速幅度待目标实测。日志会明确debug_sync是否启用，并区分客户端等待、host事件及设备同步检查点。ArgSort转AiCPU告警已由用户确认基线也有，本轮未改该原生路径。[最新原文](reports/target_serial_50k_progress.txt)。
 
 当前运行的采证（只读本轮进程、日志、trace和所属PID的CANN日志，不启动模型、不接触设备、不发信号）：
 

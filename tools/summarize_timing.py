@@ -37,6 +37,7 @@ def summarize_timing(directory) -> dict:
         if record.get("t") == "oscar-debug" and isinstance(record.get("wall_time"), (int, float)):
             per_pid.setdefault(record.get("pid"), []).append(record)
     device = {}
+    buckets = {}
     unpaired = 0
     for rows in per_pid.values():
         rows.sort(key=lambda row: row["wall_time"])
@@ -45,9 +46,16 @@ def summarize_timing(directory) -> dict:
             key = (row.get("phase"), row.get("layer"), row.get("tokens"))
             state = row.get("state")
             if state == "waiting_for_device":
-                pending[key] = row["wall_time"]
+                pending[key] = (row["wall_time"], row.get("tokens"), row.get("max_seq_len"))
             elif state == "device_completed" and key in pending:
-                device.setdefault(row.get("phase"), []).append(row["wall_time"] - pending.pop(key))
+                wall, tokens, max_seq = pending.pop(key)
+                value = row["wall_time"] - wall
+                device.setdefault(row.get("phase"), []).append(value)
+                if isinstance(max_seq, (int, float)) and math.isfinite(max_seq):
+                    # Coarse KV buckets (16K granularity) attribute the fia cost
+                    # curve without per-request flooding.
+                    kv = int(round(max_seq / 16384.0)) * 16
+                    buckets.setdefault((row.get("phase"), tokens, kv), []).append(value)
         for key in pending:
             device.setdefault(key[0], [])
         unpaired += len(pending)
@@ -69,8 +77,16 @@ def summarize_timing(directory) -> dict:
             "host_count": len(hosts),
         }
     observed = any(row["device_count"] for row in phases.values())
+    bucket_list = []
+    for (phase, tokens, kv), values in buckets.items():
+        bucket_list.append({"phase": phase, "tokens": tokens, "kv_bucket_k": kv,
+                            "device_count": len(values), "device_s_sum": sum(values),
+                            "device_s_p95": _percentile(values, 0.95),
+                            "device_s_max": max(values)})
+    bucket_list.sort(key=lambda row: -(row["device_s_sum"] or 0))
     return {"t": "oscar-timing-summary", "source": str(Path(directory).resolve()),
             "status": "observed" if observed else "not_run", "phases": phases,
+            "buckets": bucket_list,
             "unpaired_waiting": unpaired,
             "scope": "debug-sync phase walls attribute device time per phase; "
                      "synchronized absolutes are not native-performance numbers"}

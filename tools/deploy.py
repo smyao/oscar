@@ -99,7 +99,9 @@ def main() -> int:
                 evidence=log_dir/"service-probe.json"
                 probe=json.loads(evidence.read_text()) if evidence.is_file() else {}
                 if probe.get("status")!="passed" or probe.get("resource_release")!="passed":
-                    error="full-service evidence or owned NPU resource release is missing; formal serve prohibited"
+                    error=("full-service evidence or owned NPU resource release is missing; formal serve prohibited "
+                           f"(read status={probe.get('status')!r} resource_release={probe.get('resource_release')!r} "
+                           f"evidence={evidence})")
                     (log_dir / "full-service-probe.log").write_text("FAILED phase=full-service-probe: "+error+"\n")
                     print(f"[oscar] FAILED phase=full-service-probe: {error}", file=sys.stderr, flush=True)
                     status.update(status="failed",failed_phase="full-service-probe",error=error)

@@ -40,6 +40,23 @@ def test_empty_dir_is_not_run_and_exit_code_two(tmp_path, capsys):
     assert json.loads((tmp_path / "out.json").read_text())["status"] == "not_run"
 
 
+def test_device_buckets_split_by_kv_length(tmp_path):
+    rows = []
+    for index, (wall, kv) in enumerate([(100.0, 16384), (110.0, 16384), (200.0, 49152)]):
+        rows.append({"t": "oscar-debug", "pid": 7, "phase": "fia", "layer": "l3",
+                     "tokens": 16384, "max_seq_len": kv,
+                     "state": "waiting_for_device", "wall_time": wall})
+        rows.append({"t": "oscar-debug", "pid": 7, "phase": "fia", "layer": "l3",
+                     "tokens": 16384, "max_seq_len": kv,
+                     "state": "device_completed", "wall_time": wall + (1.0 if kv < 40000 else 5.0)})
+    write_records(tmp_path, 7, rows)
+    report = summarize_timing(tmp_path)
+    buckets = {(row["phase"], row["kv_bucket_k"]): row for row in report["buckets"]}
+    assert abs(buckets[("fia", 48)]["device_s_sum"] - 5.0) < 1e-9
+    assert abs(buckets[("fia", 16)]["device_s_sum"] - 2.0) < 1e-9
+    assert report["buckets"][0]["kv_bucket_k"] == 48  # sorted by device time
+
+
 def test_malformed_record_fails_loudly(tmp_path):
     (tmp_path / "timing-1.jsonl").write_text('{"t": "oscar-debug"\n')
     try:

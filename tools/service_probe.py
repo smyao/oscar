@@ -494,6 +494,10 @@ def _timing_summary(trace_dir: Path, log_dir: Path):
                   f"device_s={None if row['device_s_sum'] is None else round(row['device_s_sum'], 3)} "
                   f"device_p95_s={None if row['device_s_p95'] is None else round(row['device_s_p95'], 3)} "
                   f"host_s={None if row['host_s_sum'] is None else round(row['host_s_sum'], 4)}")
+    for row in summary.get("buckets", [])[:8]:
+        _terminal(f"[oscar] TIMING_BUCKET phase={row['phase']} tokens={row['tokens']} "
+                  f"kv≈{row['kv_bucket_k']}K count={row['device_count']} "
+                  f"device_s={round(row['device_s_sum'], 3)} p95_s={round(row['device_s_p95'], 3)}")
     _terminal(f"[oscar] TIMING_SUMMARY status={summary.get('status', 'failed')} "
               f"unpaired_waiting={summary.get('unpaired_waiting')} output={output}")
     return {"status": summary.get("status", "failed"), "returncode": result.returncode,

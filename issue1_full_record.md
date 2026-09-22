@@ -28252,3 +28252,30 @@ Selected verbatim lines, not a complete log.
 [oscar] whole-service failed report=.../service-probe.json
 RESULT {"phase": "service-probe", "returncode": 1, "elapsed_seconds": 1057.680155, "cleanup_complete": true}
 ```
+
+
+## [135] 真机条目（gpt_new_oscar_kimi，2026-09-22 用户回传）· phase=service-probe/debug-sync-attribution + full-service-gate
+
+**运行**：20260922T115015.297402Z（debug_service.sh，含#134内核微调）。
+
+**内核微调效果（同口径对照#134）**：fia device_s/call均值2.839→2.054s（-28%），p95 7.166→5.043s（-30%）；device_count 868→912（本轮完成请求更多，口径近似）。方向确认有效但不达量级目标；混合并发在本轮（debug_sync=true）首次于300s内完成（12:07:01三个POST 200+遥测/MTP过门），`whole-service passed`。debug-sync运行不作性能验收（#129边界）。
+
+**新暴露矛盾**：探针自报passed在逻辑上蕴含resource_release=passed（finally强制），但deploy的full-service-probe门仍判证据缺失并阻止正式服务。两侧矛盾需service-probe.json的status/resource_release实读值裁决；门已改为打印实读值。shutdown期host侧124 semaphore/6 shared_memory泄漏警告为既有项（host资源，非设备）。
+
+### 用户日志摘录（非完整文件）
+
+```text
+Source: user-provided console excerpts, 2026-09-22, run 20260922T115015.297402Z (gpt_new_oscar_kimi).
+Selected verbatim lines, not a complete log.
+
+[oscar] TIMING_SUMMARY phase=fia device_count=912 device_s=1873.305 device_p95_s=5.043 host_s=1874.1547
+[oscar] TIMING_SUMMARY phase=merge device_count=912 device_s=3.781 device_p95_s=0.005 host_s=4.6118
+[oscar] TIMING_SUMMARY phase=phase1_stores device_count=912 device_s=8.114 device_p95_s=0.036 host_s=8.8258
+[oscar] TIMING_SUMMARY phase=prepare device_count=912 device_s=0.751 device_p95_s=0.001 host_s=1.7224
+[oscar] TIMING_SUMMARY phase=rotate device_count=912 device_s=6.512 device_p95_s=0.089 host_s=7.2569
+[oscar] TIMING_SUMMARY phase=status_guard device_count=912 device_s=0.635 device_p95_s=0.001 host_s=1.3237
+[oscar] TIMING_SUMMARY status=observed unpaired_waiting=0
+[oscar] whole-service passed report=.../service-probe.json
+[oscar] PASSED phase=service-probe rc=0
+[oscar] FAILED phase=full-service-probe: full-service evidence or owned NPU resource release is missing; formal serve prohibited
+```

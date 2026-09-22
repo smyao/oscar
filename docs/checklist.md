@@ -72,3 +72,5 @@
 #133：原生TorchNPUProfilerWrapper的/start_profile与/stop_profile窗口在真机20260922T093958Z杀死全部四个worker（start报线程亲和错误，stop在RECORD状态触发四份segfault→EngineDeadError），探针失败。该HTTP profiler集成已整体移除；逐相位设备时间改由OSCAR_DEBUG_SYNC检查点+tools/summarize_timing提供（一键入口scripts/debug_service.sh），同步值仅用于归因。
 
 #134：debug-sync归因（20260922T104823.837447Z）给出设备时间单瓶颈：fia（CV注意力内核）device_s=2463.859/868次/p95=7.166s，约占99.3%；stores/rotate/merge/guard合计≈18s，prepare≈0.7s（原生GDN开销可忽略）。混合超时依旧（归因运行不验收）。CV内核历史扫描是唯一优化目标。
+
+#135：#134内核微调（逐行区间masking替代逐元素标量读写）真机复测：fia均值2.839→2.054s/call（-28%）、p95 7.166→5.043s（-30%），有效但未达量级；debug-sync下混合并发首次300s内完成、whole-service passed。deploy的full-service门却与探针自报passed矛盾（门已改为打印实读status/resource_release），待service-probe.json实读值裁决。CPU-debug 24项与CANN VM编译、20000例等价模拟、450项本地测试通过。

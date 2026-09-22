@@ -16,7 +16,7 @@ START phase=compile-1 cwd=/home/sunao2000.linux/gpt_new_oscar command=["cmake", 
 -- Check for working CXX compiler: /usr/bin/c++ - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
--- Configuring done (0.2s)
+-- Configuring done (0.1s)
 -- Generating done (0.0s)
 CMake Warning:
   Manually-specified variables were not used by the project:
@@ -27,12 +27,12 @@ CMake Warning:
 
 -- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_precompile-prefix/src/oscar_ascend_kernels_precompile-build
 [ 12%] Performing build step for 'oscar_ascend_kernels_precompile'
-[ 33%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
+[ 33%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
 [ 33%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
-[ 83%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
-[ 83%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
-[ 83%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o
-[100%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o
+[ 66%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o
+[ 66%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
+[ 83%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o
+[100%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
 [100%] Built target precompile_obj
 [100%] Built target check_src_template
 [ 14%] No install step for 'oscar_ascend_kernels_precompile'
@@ -55,21 +55,21 @@ CMake Warning:
 -- Check for working CXX compiler: /usr/bin/c++ - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
--- Configuring done (0.1s)
+-- Configuring done (0.2s)
 -- Generating done (0.0s)
 -- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build
 [ 29%] Performing build step for 'oscar_ascend_kernels_preprocess'
-[ 11%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
-[ 11%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
-[ 33%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o
-[ 33%] Building CXX object CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
-[ 33%] Building CXX object CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
-[ 33%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
-[ 44%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
-[ 44%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
-[ 50%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
-[ 55%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o
-[ 61%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o
+[ 33%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
+[ 22%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
+[ 22%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
+[ 44%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o
+[ 44%] Building CXX object CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
+[ 22%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
+[ 44%] Building CXX object CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
+[ 44%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o
+[ 50%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
+[ 55%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
+[ 61%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o
 [ 66%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
 [ 72%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
 [ 72%] Built target preprocess_obj
@@ -78,30 +78,30 @@ CMake Warning:
 [ 88%] Building CXX object CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
 [ 94%] Building CXX object CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
 [100%] Building CXX object CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o
-[100%] Built target aiv_obj
-/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o[100%] Built target merge_aiv_obj_text
 [100%] Built target aic_obj
-/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o[100%] Built target merge_aic_obj_text
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o[100%] Built target aiv_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o[100%] Built target merge_aic_obj_text
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o[100%] Built target merge_aiv_obj_text
 [WARNING]: Multiple kernel functions are detected. It is recommended to define only one kernel function per file.
 [100%] Built target _host_cpp
 [ 31%] No install step for 'oscar_ascend_kernels_preprocess'
 [ 34%] Completed 'oscar_ascend_kernels_preprocess'
 [ 34%] Built target oscar_ascend_kernels_preprocess
-[ 38%] Creating directories for 'oscar_ascend_kernels_aiv_device'
-[ 38%] Creating directories for 'oscar_ascend_kernels_aic_device'
 [ 40%] Creating directories for 'oscar_ascend_kernels_host'
+[ 38%] Creating directories for 'oscar_ascend_kernels_aic_device'
+[ 38%] Creating directories for 'oscar_ascend_kernels_aiv_device'
 [ 44%] No download step for 'oscar_ascend_kernels_host'
-[ 44%] No download step for 'oscar_ascend_kernels_aic_device'
-[ 46%] No download step for 'oscar_ascend_kernels_aiv_device'
-[ 51%] No update step for 'oscar_ascend_kernels_aiv_device'
+[ 44%] No download step for 'oscar_ascend_kernels_aiv_device'
+[ 46%] No download step for 'oscar_ascend_kernels_aic_device'
+[ 48%] No update step for 'oscar_ascend_kernels_aiv_device'
 [ 51%] No update step for 'oscar_ascend_kernels_host'
 [ 53%] No update step for 'oscar_ascend_kernels_aic_device'
-[ 55%] No patch step for 'oscar_ascend_kernels_host'
 [ 57%] No patch step for 'oscar_ascend_kernels_aiv_device'
+[ 55%] No patch step for 'oscar_ascend_kernels_host'
 [ 59%] No patch step for 'oscar_ascend_kernels_aic_device'
 [ 61%] Performing configure step for 'oscar_ascend_kernels_host'
+[ 63%] Performing configure step for 'oscar_ascend_kernels_aiv_device'
 [ 65%] Performing configure step for 'oscar_ascend_kernels_aic_device'
-[ 65%] Performing configure step for 'oscar_ascend_kernels_aiv_device'
 -- The C compiler identification is GNU 13.3.0
 -- The C compiler identification is GNU 13.3.0
 -- The C compiler identification is GNU 13.3.0
@@ -118,9 +118,9 @@ CMake Warning:
 -- Detecting C compile features
 -- Check for working C compiler: /usr/bin/cc - skipped
 -- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features
 -- Detecting C compile features - done
--- Detecting C compile features
--- Detecting C compile features
 -- Detecting C compile features - done
 -- Detecting C compile features - done
 -- Detecting CXX compiler ABI info
@@ -131,19 +131,18 @@ CMake Warning:
 -- Detecting CXX compiler ABI info - done
 -- Check for working CXX compiler: /usr/bin/c++ - skipped
 -- Detecting CXX compile features
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features - done
+-- Detecting CXX compile features
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
 -- Detecting CXX compile features - done
 -- Configuring done (0.1s)
--- Check for working CXX compiler: /usr/bin/c++ - skipped
--- Detecting CXX compile features
--- Detecting CXX compile features - done
 -- Configuring done (0.1s)
--- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Configuring done (0.1s)
 -- Generating done (0.0s)
--- Detecting CXX compile features
--- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aic_device-prefix/src/oscar_ascend_kernels_aic_device-build
--- Detecting CXX compile features - done
 -- Generating done (0.0s)
--- Configuring done (0.2s)
 CMake Warning:
   Manually-specified variables were not used by the project:
 
@@ -151,21 +150,22 @@ CMake Warning:
 
 
 -- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host-prefix/src/oscar_ascend_kernels_host-build
+-- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aic_device-prefix/src/oscar_ascend_kernels_aic_device-build
 -- Generating done (0.0s)
 -- Build files have been written to: /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build
-[ 68%] Performing build step for 'oscar_ascend_kernels_host'
-[ 70%] Performing build step for 'oscar_ascend_kernels_aic_device'
+[ 72%] Performing build step for 'oscar_ascend_kernels_aic_device'
+[ 72%] Performing build step for 'oscar_ascend_kernels_host'
 [ 72%] Performing build step for 'oscar_ascend_kernels_aiv_device'
-[ 16%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
-[100%] Building CXX object CMakeFiles/device_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_attention_cv.cpp.o
-[ 33%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
-[ 66%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o
-[ 66%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
-[ 83%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
-[ 33%] Building CXX object CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_store_int2.cpp.o
 [ 33%] Building CXX object CMakeFiles/device_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_attention_cv.cpp.o
+[ 33%] Building CXX object CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_store_int2.cpp.o
+[100%] Building CXX object CMakeFiles/device_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_attention_cv.cpp.o
+[ 16%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o
 [ 66%] Building CXX object CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_rotate_clip_store.cpp.o
+[ 50%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o
+[ 50%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o
 [ 66%] Building CXX object CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_merge_lse.cpp.o
+[ 66%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o
+[ 83%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o
 [100%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o
 [ 83%] Building CXX object CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_attention_tasks.cpp.o
 [100%] Building CXX object CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_status_guard.cpp.o
@@ -188,12 +188,12 @@ Install the project...
 [ 78%] No install step for 'oscar_ascend_kernels_aic_device'
 [ 80%] Completed 'oscar_ascend_kernels_aic_device'
 [ 80%] Built target oscar_ascend_kernels_aic_device
-[100%] Built target device_obj
-/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build/CMakeFiles/device_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_attention_cv.cpp.o -static -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device_dir/device.o
-[100%] Built target merge_device_obj
 [100%] Built target device_aiv_obj
 /usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build/CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_store_int2.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build/CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_merge_lse.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build/CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_rotate_clip_store.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build/CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_attention_tasks.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build/CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_status_guard.cpp.o -static -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device_dir/device_aiv.o
 [100%] Built target merge_aiv_device_obj
+[100%] Built target device_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build/CMakeFiles/device_obj.dir/home/sunao2000.linux/gpt_new_oscar/build/ascendc/auto_gen/oscar_ascend_kernels/auto_gen_attention_cv.cpp.o -static -o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_aiv_device_dir/device.o
+[100%] Built target merge_device_obj
 [ 82%] No install step for 'oscar_ascend_kernels_aiv_device'
 [ 85%] Completed 'oscar_ascend_kernels_aiv_device'
 [ 85%] Built target oscar_ascend_kernels_aiv_device
@@ -202,15 +202,15 @@ Install the project...
 [ 85%] Built target oscar_ascend_kernels_merge_obj
 [ 87%] Building CXX object CMakeFiles/oscar_ascend_kernels_host_stub_obj.dir/auto_gen/oscar_ascend_kernels/host_stub.cpp.o
 [ 87%] Built target oscar_ascend_kernels_host_stub_obj
-[ 89%] Linking CXX shared library lib/liboscar_ascend_kernels_cc1c3534bba475ed.so
+[ 89%] Linking CXX shared library lib/liboscar_ascend_kernels_1a74cb1f9355cd1e.so
 /usr/local/Ascend/cann-9.1.0/bin/ascendc_pack_kernel /home/sunao2000.linux/gpt_new_oscar/build/ascendc/CMakeFiles/oscar_ascend_kernels_host_stub_obj.dir/auto_gen/oscar_ascend_kernels/host_stub.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_merge_obj_dir/device.o 0 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/CMakeFiles/oscar_ascend_kernels_host_stub_obj.dir/auto_gen/oscar_ascend_kernels/host_stub.cpp.o
 /usr/local/Ascend/cann-9.1.0/bin/ascendc_pack_kernel /home/sunao2000.linux/gpt_new_oscar/build/ascendc/CMakeFiles/oscar_ascend_kernels_host_stub_obj.dir/auto_gen/oscar_ascend_kernels/host_stub.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_merge_obj_dir/device_aiv.o 1 /home/sunao2000.linux/gpt_new_oscar/build/ascendc/CMakeFiles/oscar_ascend_kernels_host_stub_obj.dir/auto_gen/oscar_ascend_kernels/host_stub.cpp.o
-recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,defs -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -s -shared -Wl,-soname,liboscar_ascend_kernels_cc1c3534bba475ed.so -o lib/liboscar_ascend_kernels_cc1c3534bba475ed.so CMakeFiles/oscar_ascend_kernels_host_stub_obj.dir/auto_gen/oscar_ascend_kernels/host_stub.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o    -L/usr/local/Ascend/cann-9.1.0/lib64  -L/usr/local/Ascend/cann-9.1.0/tools/simulator/ascend910b4/lib  -Wl,-rpath,/usr/local/Ascend/cann-9.1.0/lib64 /usr/local/Ascend/cann-9.1.0/lib64/libascendc_runtime.a -lascend_dump -lc_sec -lascendcl -lruntime -lprofapi -lunified_dlog -lmmpa
+recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,defs -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -s -shared -Wl,-soname,liboscar_ascend_kernels_1a74cb1f9355cd1e.so -o lib/liboscar_ascend_kernels_1a74cb1f9355cd1e.so CMakeFiles/oscar_ascend_kernels_host_stub_obj.dir/auto_gen/oscar_ascend_kernels/host_stub.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_cv.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/attention_tasks.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/merge_lse.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/rotate_clip_store.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/status_guard.cpp.o /home/sunao2000.linux/gpt_new_oscar/build/ascendc/oscar_ascend_kernels_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/gpt_new_oscar/csrc/kernels/store_int2.cpp.o    -L/usr/local/Ascend/cann-9.1.0/lib64  -L/usr/local/Ascend/cann-9.1.0/tools/simulator/ascend910b4/lib  -Wl,-rpath,/usr/local/Ascend/cann-9.1.0/lib64 /usr/local/Ascend/cann-9.1.0/lib64/libascendc_runtime.a -lascend_dump -lc_sec -lascendcl -lruntime -lprofapi -lunified_dlog -lmmpa
 [ 89%] Built target oscar_ascend_kernels
-[ 91%] Building CXX object CMakeFiles/_oscar_ascend_ops.dir/torch_bindings.cpp.o
-[ 95%] Building CXX object CMakeFiles/_oscar_ascend_ops.dir/rotation_bindings.cpp.o
-[ 95%] Building CXX object CMakeFiles/_oscar_ascend_ops.dir/attention_bindings.cpp.o
 [ 97%] Building CXX object CMakeFiles/_oscar_ascend_ops.dir/status_bindings.cpp.o
+[ 97%] Building CXX object CMakeFiles/_oscar_ascend_ops.dir/torch_bindings.cpp.o
+[ 97%] Building CXX object CMakeFiles/_oscar_ascend_ops.dir/rotation_bindings.cpp.o
+[ 97%] Building CXX object CMakeFiles/_oscar_ascend_ops.dir/attention_bindings.cpp.o
 [100%] Linking CXX shared module _oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so
 [100%] Built target _oscar_ascend_ops
-RESULT {"phase": "compile-1", "command": ["cmake", "--build", "/home/sunao2000.linux/gpt_new_oscar/build/ascendc", "--parallel", "8"], "returncode": 0, "elapsed_seconds": 18.623732, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-verify-device/compile-1.log", "cleanup_complete": true}
+RESULT {"phase": "compile-1", "command": ["cmake", "--build", "/home/sunao2000.linux/gpt_new_oscar/build/ascendc", "--parallel", "8"], "returncode": 0, "elapsed_seconds": 19.010539, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-verify-device/compile-1.log", "cleanup_complete": true}

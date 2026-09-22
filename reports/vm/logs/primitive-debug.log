@@ -1,205 +1,205 @@
-START phase=primitive-debug cwd=/Users/sunao2000/gpt_new_oscar command=["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --log-dir logs/vm-primitives"]
+START phase=primitive-debug cwd=/Users/sunao2000/gpt_new_oscar_kimi command=["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --log-dir logs/vm-primitives"]
 START phase=000-store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_64_0"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113353] exit success!
-[SUCCESS][CORE_1][pid 113354] exit success!
+[SUCCESS][CORE_0][pid 126226] exit success!
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_2][pid 113355] exit success!
-[SUCCESS][CORE_3][pid 113356] exit success!
+[SUCCESS][CORE_1][pid 126227] exit success!
+[SUCCESS][CORE_2][pid 126228] exit success!
+[SUCCESS][CORE_3][pid 126229] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"store"}
-RESULT {"phase": "000-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_64_0"], "returncode": 0, "elapsed_seconds": 0.204136, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/000-store.log", "cleanup_complete": true}
+RESULT {"phase": "000-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_64_0"], "returncode": 0, "elapsed_seconds": 0.11039, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/000-store.log", "cleanup_complete": true}
 [oscar] PASSED phase=000-store rc=0 log=logs/vm-primitives/000-store.log
 START phase=001-store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_64_1"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113359] exit success!
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_1][pid 113360] exit success!
-[SUCCESS][CORE_2][pid 113361] exit success!
-[SUCCESS][CORE_3][pid 113362] exit success!
+[SUCCESS][CORE_0][pid 126232] exit success!
+[SUCCESS][CORE_1][pid 126233] exit success!
+[SUCCESS][CORE_2][pid 126234] exit success!
+[SUCCESS][CORE_3][pid 126235] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"store"}
-RESULT {"phase": "001-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_64_1"], "returncode": 0, "elapsed_seconds": 0.20488, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/001-store.log", "cleanup_complete": true}
+RESULT {"phase": "001-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_64_1"], "returncode": 0, "elapsed_seconds": 0.11068, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/001-store.log", "cleanup_complete": true}
 [oscar] PASSED phase=001-store rc=0 log=logs/vm-primitives/001-store.log
 START phase=002-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_1"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113365] exit success!
-[SUCCESS][CORE_1][pid 113366] exit success!
-[SUCCESS][CORE_2][pid 113367] exit success!
-[SUCCESS][CORE_3][pid 113368] exit success!
+[SUCCESS][CORE_0][pid 126238] exit success!
+[SUCCESS][CORE_1][pid 126239] exit success!
+[SUCCESS][CORE_2][pid 126240] exit success!
+[SUCCESS][CORE_3][pid 126241] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
-RESULT {"phase": "002-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_1"], "returncode": 0, "elapsed_seconds": 0.104389, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/002-merge.log", "cleanup_complete": true}
+RESULT {"phase": "002-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_1"], "returncode": 0, "elapsed_seconds": 0.10877, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/002-merge.log", "cleanup_complete": true}
 [oscar] PASSED phase=002-merge rc=0 log=logs/vm-primitives/002-merge.log
 START phase=003-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_3"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113371] exit success!
-[SUCCESS][CORE_1][pid 113372] exit success!
-[SUCCESS][CORE_2][pid 113373] exit success!
-[SUCCESS][CORE_3][pid 113374] exit success!
+[SUCCESS][CORE_0][pid 126244] exit success!
+[SUCCESS][CORE_1][pid 126245] exit success!
+[SUCCESS][CORE_2][pid 126246] exit success!
+[SUCCESS][CORE_3][pid 126247] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
-RESULT {"phase": "003-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_3"], "returncode": 0, "elapsed_seconds": 0.106813, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/003-merge.log", "cleanup_complete": true}
+RESULT {"phase": "003-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_3"], "returncode": 0, "elapsed_seconds": 0.104226, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/003-merge.log", "cleanup_complete": true}
 [oscar] PASSED phase=003-merge rc=0 log=logs/vm-primitives/003-merge.log
 START phase=004-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_128"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113377] exit success!
-[SUCCESS][CORE_1][pid 113378] exit success!
-[SUCCESS][CORE_2][pid 113379] exit success!
-[SUCCESS][CORE_3][pid 113380] exit success!
+[SUCCESS][CORE_0][pid 126250] exit success!
+[SUCCESS][CORE_1][pid 126251] exit success!
+[SUCCESS][CORE_2][pid 126252] exit success!
+[SUCCESS][CORE_3][pid 126253] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
-RESULT {"phase": "004-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_128"], "returncode": 0, "elapsed_seconds": 0.210698, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/004-merge.log", "cleanup_complete": true}
+RESULT {"phase": "004-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_64_128"], "returncode": 0, "elapsed_seconds": 0.216182, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/004-merge.log", "cleanup_complete": true}
 [oscar] PASSED phase=004-merge rc=0 log=logs/vm-primitives/004-merge.log
 START phase=005-store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_128_0"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113383] exit success!
-[SUCCESS][CORE_1][pid 113384] exit success!
-[SUCCESS][CORE_2][pid 113385] exit success!
-[SUCCESS][CORE_3][pid 113386] exit success!
+[SUCCESS][CORE_0][pid 126256] exit success!
+[SUCCESS][CORE_1][pid 126257] exit success!
+[SUCCESS][CORE_2][pid 126258] exit success!
+[SUCCESS][CORE_3][pid 126259] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"store"}
-RESULT {"phase": "005-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_128_0"], "returncode": 0, "elapsed_seconds": 0.20678, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/005-store.log", "cleanup_complete": true}
+RESULT {"phase": "005-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_128_0"], "returncode": 0, "elapsed_seconds": 0.213184, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/005-store.log", "cleanup_complete": true}
 [oscar] PASSED phase=005-store rc=0 log=logs/vm-primitives/005-store.log
 START phase=006-store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_128_1"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113389] exit success!
-[SUCCESS][CORE_1][pid 113390] exit success!
-[SUCCESS][CORE_2][pid 113391] exit success!
-[SUCCESS][CORE_3][pid 113392] exit success!
+[SUCCESS][CORE_0][pid 126262] exit success!
+[SUCCESS][CORE_1][pid 126263] exit success!
+[SUCCESS][CORE_2][pid 126264] exit success!
+[SUCCESS][CORE_3][pid 126265] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"store"}
-RESULT {"phase": "006-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_128_1"], "returncode": 0, "elapsed_seconds": 0.208184, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/006-store.log", "cleanup_complete": true}
+RESULT {"phase": "006-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_128_1"], "returncode": 0, "elapsed_seconds": 0.212531, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/006-store.log", "cleanup_complete": true}
 [oscar] PASSED phase=006-store rc=0 log=logs/vm-primitives/006-store.log
 START phase=007-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_1"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113395] exit success!
-[SUCCESS][CORE_1][pid 113396] exit success!
-[SUCCESS][CORE_2][pid 113397] exit success!
-[SUCCESS][CORE_3][pid 113398] exit success!
+[SUCCESS][CORE_0][pid 126268] exit success!
+[SUCCESS][CORE_1][pid 126269] exit success!
+[SUCCESS][CORE_2][pid 126270] exit success!
+[SUCCESS][CORE_3][pid 126271] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
-RESULT {"phase": "007-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_1"], "returncode": 0, "elapsed_seconds": 0.104482, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/007-merge.log", "cleanup_complete": true}
+RESULT {"phase": "007-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_1"], "returncode": 0, "elapsed_seconds": 0.101957, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/007-merge.log", "cleanup_complete": true}
 [oscar] PASSED phase=007-merge rc=0 log=logs/vm-primitives/007-merge.log
 START phase=008-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_3"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113401] exit success!
-[SUCCESS][CORE_1][pid 113402] exit success!
-[SUCCESS][CORE_2][pid 113403] exit success!
-[SUCCESS][CORE_3][pid 113404] exit success!
+[SUCCESS][CORE_0][pid 126274] exit success!
+[SUCCESS][CORE_1][pid 126275] exit success!
+[SUCCESS][CORE_2][pid 126276] exit success!
+[SUCCESS][CORE_3][pid 126277] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
-RESULT {"phase": "008-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_3"], "returncode": 0, "elapsed_seconds": 0.105424, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/008-merge.log", "cleanup_complete": true}
+RESULT {"phase": "008-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_3"], "returncode": 0, "elapsed_seconds": 0.100552, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/008-merge.log", "cleanup_complete": true}
 [oscar] PASSED phase=008-merge rc=0 log=logs/vm-primitives/008-merge.log
 START phase=009-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_128"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 126280] exit success!
+[SUCCESS][CORE_1][pid 126281] exit success!
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113407] exit success!
-[SUCCESS][CORE_1][pid 113408] exit success!
-[SUCCESS][CORE_2][pid 113409] exit success!
-[SUCCESS][CORE_3][pid 113410] exit success!
+[SUCCESS][CORE_2][pid 126282] exit success!
+[SUCCESS][CORE_3][pid 126283] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
-RESULT {"phase": "009-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_128"], "returncode": 0, "elapsed_seconds": 0.205175, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/009-merge.log", "cleanup_complete": true}
+RESULT {"phase": "009-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_128"], "returncode": 0, "elapsed_seconds": 0.209211, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/009-merge.log", "cleanup_complete": true}
 [oscar] PASSED phase=009-merge rc=0 log=logs/vm-primitives/009-merge.log
 START phase=010-store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_256_0"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113413] exit success!
-[SUCCESS][CORE_1][pid 113414] exit success!
 [TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 126286] exit success!
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_2][pid 113415] exit success!
-[SUCCESS][CORE_3][pid 113416] exit success!
+[SUCCESS][CORE_1][pid 126287] exit success!
+[SUCCESS][CORE_2][pid 126288] exit success!
+[SUCCESS][CORE_3][pid 126289] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"store"}
-RESULT {"phase": "010-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_256_0"], "returncode": 0, "elapsed_seconds": 0.210715, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/010-store.log", "cleanup_complete": true}
+RESULT {"phase": "010-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_256_0"], "returncode": 0, "elapsed_seconds": 0.213372, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/010-store.log", "cleanup_complete": true}
 [oscar] PASSED phase=010-store rc=0 log=logs/vm-primitives/010-store.log
 START phase=011-store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_256_1"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113419] exit success!
-[SUCCESS][CORE_1][pid 113420] exit success!
-[SUCCESS][CORE_2][pid 113421] exit success!
-[SUCCESS][CORE_3][pid 113422] exit success!
+[SUCCESS][CORE_0][pid 126292] exit success!
+[SUCCESS][CORE_1][pid 126293] exit success!
+[SUCCESS][CORE_2][pid 126294] exit success!
+[SUCCESS][CORE_3][pid 126295] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"store"}
-RESULT {"phase": "011-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_256_1"], "returncode": 0, "elapsed_seconds": 0.209819, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/011-store.log", "cleanup_complete": true}
+RESULT {"phase": "011-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_256_1"], "returncode": 0, "elapsed_seconds": 0.213545, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/011-store.log", "cleanup_complete": true}
 [oscar] PASSED phase=011-store rc=0 log=logs/vm-primitives/011-store.log
 START phase=012-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_1"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113425] exit success!
-[SUCCESS][CORE_1][pid 113426] exit success!
-[SUCCESS][CORE_2][pid 113427] exit success!
-[SUCCESS][CORE_3][pid 113428] exit success!
+[SUCCESS][CORE_0][pid 126298] exit success!
+[SUCCESS][CORE_1][pid 126299] exit success!
+[SUCCESS][CORE_2][pid 126300] exit success!
+[SUCCESS][CORE_3][pid 126301] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
-RESULT {"phase": "012-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_1"], "returncode": 0, "elapsed_seconds": 0.105473, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/012-merge.log", "cleanup_complete": true}
+RESULT {"phase": "012-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_1"], "returncode": 0, "elapsed_seconds": 0.11076, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/012-merge.log", "cleanup_complete": true}
 [oscar] PASSED phase=012-merge rc=0 log=logs/vm-primitives/012-merge.log
 START phase=013-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_3"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113431] exit success!
-[SUCCESS][CORE_1][pid 113432] exit success!
-[SUCCESS][CORE_2][pid 113433] exit success!
-[SUCCESS][CORE_3][pid 113434] exit success!
+[SUCCESS][CORE_0][pid 126304] exit success!
+[SUCCESS][CORE_1][pid 126305] exit success!
+[SUCCESS][CORE_2][pid 126306] exit success!
+[SUCCESS][CORE_3][pid 126307] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
-RESULT {"phase": "013-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_3"], "returncode": 0, "elapsed_seconds": 0.105398, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/013-merge.log", "cleanup_complete": true}
+RESULT {"phase": "013-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_3"], "returncode": 0, "elapsed_seconds": 0.110728, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/013-merge.log", "cleanup_complete": true}
 [oscar] PASSED phase=013-merge rc=0 log=logs/vm-primitives/013-merge.log
 START phase=014-merge cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_128"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113437] exit success!
-[SUCCESS][CORE_1][pid 113438] exit success!
-[SUCCESS][CORE_2][pid 113439] exit success!
-[SUCCESS][CORE_3][pid 113440] exit success!
+[SUCCESS][CORE_0][pid 126310] exit success!
+[SUCCESS][CORE_1][pid 126311] exit success!
+[SUCCESS][CORE_2][pid 126312] exit success!
+[SUCCESS][CORE_3][pid 126313] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"merge"}
-RESULT {"phase": "014-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_128"], "returncode": 0, "elapsed_seconds": 0.324572, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/014-merge.log", "cleanup_complete": true}
+RESULT {"phase": "014-merge", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "merge", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_256_128"], "returncode": 0, "elapsed_seconds": 0.328123, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/014-merge.log", "cleanup_complete": true}
 [oscar] PASSED phase=014-merge rc=0 log=logs/vm-primitives/014-merge.log
 START phase=015-guard cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "guard", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_zero"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113444] exit success!
-[SUCCESS][CORE_1][pid 113445] exit success!
-[SUCCESS][CORE_2][pid 113446] exit success!
-[SUCCESS][CORE_3][pid 113447] exit success!
+[SUCCESS][CORE_0][pid 126317] exit success!
+[SUCCESS][CORE_1][pid 126318] exit success!
+[SUCCESS][CORE_2][pid 126319] exit success!
+[SUCCESS][CORE_3][pid 126320] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"guard"}
-RESULT {"phase": "015-guard", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "guard", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_zero"], "returncode": 0, "elapsed_seconds": 0.10587, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/015-guard.log", "cleanup_complete": true}
+RESULT {"phase": "015-guard", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "guard", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_zero"], "returncode": 0, "elapsed_seconds": 0.109008, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/015-guard.log", "cleanup_complete": true}
 [oscar] PASSED phase=015-guard rc=0 log=logs/vm-primitives/015-guard.log
 START phase=016-guard cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "guard", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_error"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 OSCAR_GUARD segment=3 index=1024 status=3
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113450] exit success!
+[SUCCESS][CORE_0][pid 126323] exit success!
 [TmSim]: Run in serial mode.
-[ERROR][Block_1][AIV_0][kernel_utils.cpp:1216][trap][113451] Aicore error exception, triggered by trap();
-[ERROR][CORE_1][pid 113451] error happened! ========= 
+[ERROR][Block_1][AIV_0][kernel_utils.cpp:1216][trap][126324] Aicore error exception, triggered by trap();
+[ERROR][CORE_1][pid 126324] error happened! ========= 
 SIGABRT Signal (Abort Signal from abort) catched, backtrace info:
 [#0] 0x00000000000bc8af: AscendC::StackTrace() at ??:?
 [#1] 0x00000000000bcc93: AscendC::BacktracePrint(int) at ??:?
@@ -212,10 +212,10 @@ SIGABRT Signal (Abort Signal from abort) catched, backtrace info:
 [#8] 0x000000000001dd27: main at /home/sunao2000.linux/gpt_new_oscar/csrc/cpu/primitive_probe.cpp:73
 [#9] 0x000000000001c8ef: _start at ??:?
 
-[SUCCESS][CORE_2][pid 113452] exit success!
-[SUCCESS][CORE_3][pid 113453] exit success!
+[SUCCESS][CORE_2][pid 126325] exit success!
+[SUCCESS][CORE_3][pid 126326] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"guard"}
-RESULT {"phase": "016-guard", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "guard", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_error"], "returncode": 0, "elapsed_seconds": 0.205447, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/016-guard.log", "cleanup_complete": true}
+RESULT {"phase": "016-guard", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "guard", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_error"], "returncode": 0, "elapsed_seconds": 0.201791, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/016-guard.log", "cleanup_complete": true}
 [oscar] PASSED phase=016-guard rc=0 log=logs/vm-primitives/016-guard.log
 {
   "backend": "official_ascendc_cpu_debug",
@@ -345,4 +345,4 @@ RESULT {"phase": "016-guard", "command": ["/home/sunao2000.linux/gpt_new_oscar/b
   ],
   "npu_acceptance": "not_run"
 }
-RESULT {"phase": "primitive-debug", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --log-dir logs/vm-primitives"], "returncode": 0, "elapsed_seconds": 3.113844, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/primitive-debug.log", "cleanup_complete": true}
+RESULT {"phase": "primitive-debug", "command": ["limactl", "shell", "--workdir", "/home/sunao2000.linux/gpt_new_oscar", "oscar", "--", "timeout", "--signal=TERM", "--kill-after=10s", "1900", "bash", "-lc", "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python -m tools.run_cpu_debug --log-dir logs/vm-primitives"], "returncode": 0, "elapsed_seconds": 2.943585, "timed_out": false, "interrupted": false, "log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm/logs/primitive-debug.log", "cleanup_complete": true}

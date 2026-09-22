@@ -6,7 +6,7 @@
     "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_64_1"
   ],
   "returncode": 0,
-  "elapsed_seconds": 0.20488,
+  "elapsed_seconds": 0.11068,
   "timed_out": false,
   "interrupted": false,
   "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/001-store.log",

@@ -1,11 +1,11 @@
 START phase=010-store cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_256_0"]
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 113413] exit success!
-[SUCCESS][CORE_1][pid 113414] exit success!
 [TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 126286] exit success!
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_2][pid 113415] exit success!
-[SUCCESS][CORE_3][pid 113416] exit success!
+[SUCCESS][CORE_1][pid 126287] exit success!
+[SUCCESS][CORE_2][pid 126288] exit success!
+[SUCCESS][CORE_3][pid 126289] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"store"}
-RESULT {"phase": "010-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_256_0"], "returncode": 0, "elapsed_seconds": 0.210715, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/010-store.log", "cleanup_complete": true}
+RESULT {"phase": "010-store", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "store", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/store_256_0"], "returncode": 0, "elapsed_seconds": 0.213372, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/010-store.log", "cleanup_complete": true}

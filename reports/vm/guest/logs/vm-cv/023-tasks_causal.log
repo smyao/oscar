@@ -6,10 +6,6 @@ scheduled_cores=32 min_live=51 max_live=52
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 114967] exit success!
-[TmSim]: Run in serial mode.
-[TmSim]: Run in serial mode.
-[SUCCESS][CORE_1][pid 114968] exit success!
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
@@ -22,51 +18,55 @@ scheduled_cores=32 min_live=51 max_live=52
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[TmSim]: Run in serial mode.
-[TmSim]: Run in serial mode.
-[TmSim]: Run in serial mode.
-[TmSim]: Run in serial mode.
-[TmSim]: Run in serial mode.
-[SUCCESS][CORE_2][pid 114969] exit success!
-[SUCCESS][CORE_3][pid 114970] exit success!
-[SUCCESS][CORE_4][pid 114971] exit success!
-[SUCCESS][CORE_5][pid 114972] exit success!
-[SUCCESS][CORE_6][pid 114973] exit success!
-[SUCCESS][CORE_7][pid 114974] exit success!
-[SUCCESS][CORE_8][pid 114975] exit success!
+[SUCCESS][CORE_0][pid 127837] exit success!
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 127838] exit success!
+[SUCCESS][CORE_2][pid 127839] exit success!
+[SUCCESS][CORE_3][pid 127840] exit success!
+[SUCCESS][CORE_4][pid 127841] exit success!
+[SUCCESS][CORE_5][pid 127842] exit success!
+[SUCCESS][CORE_6][pid 127843] exit success!
+[SUCCESS][CORE_7][pid 127844] exit success!
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_9][pid 114976] exit success!
-[SUCCESS][CORE_10][pid 114977] exit success!
-[SUCCESS][CORE_11][pid 114978] exit success!
-[SUCCESS][CORE_12][pid 114979] exit success!
-[SUCCESS][CORE_13][pid 114980] exit success!
-[SUCCESS][CORE_14][pid 114981] exit success!
-[SUCCESS][CORE_15][pid 114982] exit success!
-[SUCCESS][CORE_16][pid 114983] exit success!
-[SUCCESS][CORE_17][pid 114984] exit success!
-[SUCCESS][CORE_18][pid 114985] exit success!
-[SUCCESS][CORE_19][pid 114986] exit success!
-[SUCCESS][CORE_20][pid 114987] exit success!
-[SUCCESS][CORE_21][pid 114988] exit success!
-[SUCCESS][CORE_22][pid 114989] exit success!
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_23][pid 114990] exit success!
-[SUCCESS][CORE_24][pid 114991] exit success!
-[SUCCESS][CORE_25][pid 114992] exit success!
-[SUCCESS][CORE_26][pid 114993] exit success!
-[SUCCESS][CORE_27][pid 114994] exit success!
-[SUCCESS][CORE_28][pid 114995] exit success!
-[SUCCESS][CORE_29][pid 114996] exit success!
-[SUCCESS][CORE_30][pid 114997] exit success!
-[SUCCESS][CORE_31][pid 114998] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_8][pid 127845] exit success!
+[SUCCESS][CORE_9][pid 127846] exit success!
+[SUCCESS][CORE_10][pid 127847] exit success!
+[SUCCESS][CORE_11][pid 127848] exit success!
+[SUCCESS][CORE_12][pid 127849] exit success!
+[SUCCESS][CORE_13][pid 127850] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_14][pid 127851] exit success!
+[SUCCESS][CORE_15][pid 127852] exit success!
+[SUCCESS][CORE_16][pid 127853] exit success!
+[SUCCESS][CORE_17][pid 127854] exit success!
+[SUCCESS][CORE_18][pid 127855] exit success!
+[SUCCESS][CORE_19][pid 127856] exit success!
+[SUCCESS][CORE_20][pid 127857] exit success!
+[SUCCESS][CORE_21][pid 127858] exit success!
+[SUCCESS][CORE_22][pid 127859] exit success!
+[SUCCESS][CORE_23][pid 127860] exit success!
+[SUCCESS][CORE_24][pid 127861] exit success!
+[SUCCESS][CORE_25][pid 127862] exit success!
+[SUCCESS][CORE_26][pid 127863] exit success!
+[SUCCESS][CORE_27][pid 127864] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_28][pid 127865] exit success!
+[SUCCESS][CORE_29][pid 127866] exit success!
+[SUCCESS][CORE_30][pid 127867] exit success!
+[SUCCESS][CORE_31][pid 127868] exit success!
 causal_task_leaders=1640 current_tiles=421828 previous_unsplit_tiles=839169
 {"backend":"ascendc_cpu_debug","op":"tasks_causal","status":"passed"}
-RESULT {"phase": "023-tasks_causal", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "tasks_causal", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases"], "returncode": 0, "elapsed_seconds": 39.20175, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/023-tasks_causal.log", "cleanup_complete": true}
+RESULT {"phase": "023-tasks_causal", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "tasks_causal", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases"], "returncode": 0, "elapsed_seconds": 33.823338, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/023-tasks_causal.log", "cleanup_complete": true}

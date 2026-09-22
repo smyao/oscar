@@ -26,6 +26,20 @@
 // BF16 uses one DMA+Cast per half-tile. Reuse existing UB, preserve FP32 math,
 // metadata/finite checks and GQA reuse. No full-history allocation or restore;
 // target remains native FIA's 0.6-1.1ms/18.5-18.9ms order, not a claimed result.
+// #134/D.4 (this change): (1) phase=fia. (2) Failure mode: per-element scalar
+// SetValue/GetValue masking+finite loops (~512/tile/lane) made the per-tile
+// cost latency-bound; measured fia p95 7.166s at 49K KV on the target.
+// (3) Structural avoidance: the row-independent LogicalPosition map is hoisted
+// per tile; each row's visible set is a union of at most two index intervals;
+// only masked slots are scalar-written, and non-finite coverage is one aligned
+// whole-row ReduceSum (masked slots are finite by construction since inputs
+// were checked at load). Softmax FP32 math, -inf placement, LSE, tiling, UB
+// budget and workspace layout are all unchanged; no fallback or history restore.
+// (4) Expected: per-tile UB element write/read drops from ~512 slots to the
+// masked-slot count (zero on fully visible rows); the remaining interval scan
+// is 32 register-level compares per row. p95 must measurably fall on the
+// target TIMING_SUMMARY before any further pipelining; parity with native FIA
+// is NOT claimed by this change alone.
 // Native precedents: hc_pre_m_k_split_core.h mode-2 Cube/Vector flags;
 // hc_pre_cube_compute.h FP32 Mmad; moe_grouped_matmul.h MatmulImpl;
 // add_rms_norm_bias_multi_n.h Gather; PR triton_oscar_decode.py INT2 and LSE.
@@ -361,11 +375,8 @@ template<int32_t D> class AttentionCv {
       Fence<HardEvent::MTE3_V>();
     }
   }
-  __aicore__ bool Visible(int64_t queryPosition,int64_t candidate) {
-    if(candidate>=kvend)return false;
-    const int64_t pos=LogicalPosition(candidate);
-    if(pos>queryPosition)return false;
-    const int64_t cut=Max64(g.sink,queryPosition+1-g.recent);
+  __aicore__ bool VisiblePos(int64_t position,int64_t pos,int64_t cut) {
+    if(pos>position)return false;
     if(kind==0)return pos>=g.sink && pos<cut && pos<context;
     if(kind==1)return pos<context && (pos<g.sink || pos>=cut);
     return pos>=context;
@@ -377,18 +388,49 @@ template<int32_t D> class AttentionCv {
     Fence<HardEvent::MTE2_V>();Muls(scores,scores,g.scale,kHalfRows*kKvRows);
     Fence<HardEvent::V_S>();
     const int64_t group=g.hq/g.hk;
+    // Archive #134/D.4: the per-element scalar SetValue/GetValue loop dominated
+    // per-tile cost at long history. The candidate->position map is row
+    // independent and hoisted per tile; each row's visible set is a union of at
+    // most two index intervals (kind1 = prefix + suffix). Only masked slots are
+    // written with -inf, exactly where the old loop wrote them. Non-finite
+    // coverage is one aligned whole-row ReduceSum: visible elements match the
+    // old per-element checks, and masked slots are finite by construction
+    // (Q/K/V and scales were finite-checked at load), so task-level error=2
+    // coverage is unchanged.
+    int64_t posTile[kKvRows];
+    for(int32_t j=0;j<kKvRows;++j) posTile[j]=LogicalPosition(start+j);
+    const int32_t jEnd=static_cast<int32_t>(Min64(kKvRows,kvend-start));
     for(int32_t r=0;r<kHalfRows;++r) {
       const int64_t row=lane*kHalfRows+r;
       const bool validRow=row<qcount*group;
       const int64_t position=context+qbegin+row/group-requestBegin;
-      bool any=false;
-      for(int32_t j=0;j<kKvRows;++j) {
-        if(!validRow || !Visible(position,start+j))scores.SetValue(r*kKvRows+j,kNegativeInfinity);
-        else {any=true;if(!Finite(scores.GetValue(r*kKvRows+j)))error=2;}
+      int32_t lo0=jEnd,hi0=jEnd,lo1=jEnd,hi1=jEnd;
+      if(validRow) {
+        const int64_t cut=Max64(g.sink,position+1-g.recent);
+        bool open=false;
+        for(int32_t j=0;j<=jEnd;++j) {
+          const bool visible=j<jEnd && VisiblePos(position,posTile[j],cut);
+          if(visible==open)continue;
+          if(visible) {if(lo0==jEnd)lo0=j;else lo1=j;}
+          else {if(hi0==jEnd)hi0=j;else hi1=j;}
+          open=visible;
+        }
       }
-      const float oldMax=stats.GetValue(r*4),oldSum=stats.GetValue(r*4+1);
+      const bool any=hi0>lo0||hi1>lo1;
       if(!any) {Fence<HardEvent::S_V>();Duplicate(scores[r*kKvRows],0.0F,kKvRows);
         Fence<HardEvent::V_S>();continue;}
+      PipeBarrier<PIPE_V>();
+      ReduceSum(tmp,scores[r*kKvRows],tmp[16],kKvRows);Fence<HardEvent::V_S>();
+      if(!Finite(tmp.GetValue(0)))error=2;
+      if(lo0>0 || hi0<kKvRows) {
+        Fence<HardEvent::S_V>();
+        for(int32_t j=0;j<kKvRows;++j) {
+          const bool visible=(j>=lo0&&j<hi0)||(j>=lo1&&j<hi1);
+          if(!visible)scores.SetValue(r*kKvRows+j,kNegativeInfinity);
+        }
+        Fence<HardEvent::S_V>();
+      }
+      const float oldMax=stats.GetValue(r*4),oldSum=stats.GetValue(r*4+1);
       Fence<HardEvent::S_V>();ReduceMax(tmp,scores[r*kKvRows],tmp[16],kKvRows);
       Fence<HardEvent::V_S>();
       const float tileMax=tmp.GetValue(0),newMax=oldMax>tileMax?oldMax:tileMax;

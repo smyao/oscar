@@ -1,5 +1,5 @@
 {
-  "signature": "cc1c3534bba475ed8e2625e7166a792aec28ce16544003c41ed1ec26027ae5e3",
+  "signature": "1a74cb1f9355cd1ef53c377e428c7c0cd9b3332882d4361a6046c96caa88b396",
   "configuration": {
     "source": {
       "CMakeLists.txt": "3eff29d9c530a3d29d609f15c9c28b0bb3c35a1491aee25d2cee833deb1fbb09",
@@ -15,7 +15,7 @@
       "include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
       "include/oscar_launch.h": "c8b51d610755a8053455757ce9a921aa401e756edc6234318edcf2b7d422bbe9",
       "include/oscar_rotation_launch.h": "f231519ac7fd73b1e2316947e75d3c3351c00e095ccf16aa67df944d42ffe180",
-      "kernels/attention_cv.cpp": "b6ba0de3b42b51d7412b3d55ecb958063085cf6243aa6f521999a7e4ee92c009",
+      "kernels/attention_cv.cpp": "b3e35ac1aa3a4cc42c3bba4ab2bd4ac1c36751ba1e665fba29e4735aa528d937",
       "kernels/attention_tasks.cpp": "82290f1831064bbc6f58011a0dd9a826ae7ffc368da4b3ab43f8a5d5133589df",
       "kernels/merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
       "kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
@@ -42,10 +42,10 @@
     }
   },
   "extension": "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so",
-  "kernel_library": "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/lib/liboscar_ascend_kernels_cc1c3534bba475ed.so",
+  "kernel_library": "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/lib/liboscar_ascend_kernels_1a74cb1f9355cd1e.so",
   "sha256": {
-    "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so": "79537a3e606772030f06b1576f604a8c7b5c079f0ea9a37767a482fde0fd66b6",
-    "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/lib/liboscar_ascend_kernels_cc1c3534bba475ed.so": "696a20bc1a7595570c890e5ab336ce99d7d8dd715d5526061c0d5134590d563c"
+    "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so": "60038e0f1c38e17a76c4ec734414e2e1b5fd2b6befc23d9d3071ab710819c2b2",
+    "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/lib/liboscar_ascend_kernels_1a74cb1f9355cd1e.so": "0c638df8e6bd910c7145799afcf6d0b169cfff9d3216cf15e37f40fb5083ac65"
   },
   "build": "passed",
   "device_completion": "not_run",

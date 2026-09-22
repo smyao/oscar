@@ -16,9 +16,9 @@
     "source /usr/local/Ascend/cann-9.1.0/set_env.sh; export TORCH_DEVICE_BACKEND_AUTOLOAD=0; .venv/bin/python tests/test_cv_contracts.py artifacts/cv_cpu_cases"
   ],
   "returncode": 0,
-  "elapsed_seconds": 1.850718,
+  "elapsed_seconds": 1.56676,
   "timed_out": false,
   "interrupted": false,
-  "log": "/Users/sunao2000/gpt_new_oscar/reports/vm/logs/cv-goldens.log",
+  "log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm/logs/cv-goldens.log",
   "cleanup_complete": true
 }

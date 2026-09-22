@@ -6,7 +6,7 @@
     "/home/sunao2000.linux/gpt_new_oscar/artifacts/rotation_cpu_cases/rotate_masked_64_1"
   ],
   "returncode": 0,
-  "elapsed_seconds": 0.207023,
+  "elapsed_seconds": 0.218921,
   "timed_out": false,
   "interrupted": false,
   "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-rotation/005-rotate.log",

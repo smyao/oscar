@@ -88,7 +88,12 @@ def main():
         if result.returncode==0:
             target=args.output/"guest";target.mkdir(exist_ok=True)
             with tarfile.open(fileobj=io.BytesIO(result.stdout),mode="r:") as bundle:
-                bundle.extractall(target,filter="data")
+                # The bundle is produced by the guest tar above; extraction
+                # filters need Python >=3.12 and older hosts still collect.
+                try:
+                    bundle.extractall(target,filter="data")
+                except TypeError:
+                    bundle.extractall(target)
         else:
             report["collection_error"]=result.stderr.decode(errors="replace")
         atomic_json(args.output/"validation.json",report)

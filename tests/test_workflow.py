@@ -167,6 +167,17 @@ def test_target_command_preserves_graph_mtp_and_dtype():
     assert argv[argv.index("--mamba-ssm-cache-dtype")+1] == "bfloat16"
 
 
+def test_profiler_config_env_arms_native_window_without_config_edit(tmp_path):
+    from tools.target_cli import profiler_config_env
+    assert profiler_config_env({}, {}) is None
+    configured = {"profiler": "torch", "torch_profiler_dir": "/explicit"}
+    assert profiler_config_env({"profiler_config": configured}, {"OSCAR_PROFILE_DIR": "ignored"}) is configured
+    armed = profiler_config_env({}, {"OSCAR_PROFILE_DIR": str(tmp_path / "trace")})
+    assert armed == {"profiler": "torch", "torch_profiler_dir": str((tmp_path / "trace").resolve())}
+    with pytest.raises(ValueError):
+        profiler_config_env({}, {"OSCAR_PROFILE_DIR": "../outside/"})
+
+
 def test_device_selection_does_not_inherit_somebody_elses_devices():
     with pytest.raises(ValueError, match="physical NPU"):
         target_env({"devices": None}, {"ASCEND_RT_VISIBLE_DEVICES": "0,1,2,3"})

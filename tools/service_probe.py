@@ -263,6 +263,65 @@ def worker_progress(server):
     return result
 
 
+def compact_workers(progress):
+    """One short chunk per rank for terminal lines; full records stay in state files."""
+    parts = []
+    for entry in progress:
+        if entry.get("rank") is None:
+            parts.append(json.dumps(entry, ensure_ascii=False, sort_keys=True))
+            continue
+        layer = str(entry.get("layer") or "-")
+        layer = layer.removeprefix("language_model.model.").removesuffix(".self_attn.attn")
+        fields = [str(entry.get("event") or entry.get("state") or "?"), layer]
+        if entry.get("tokens") is not None:
+            fields.append(f"n={entry['tokens']}")
+        if entry.get("max_seq_len") is not None:
+            fields.append(f"kv={entry['max_seq_len']}")
+        wall = entry.get("wall_time")
+        if isinstance(wall, (int, float)) and math.isfinite(wall):
+            fields.append(f"age={max(0.0, time.time() - wall):.0f}s")
+        parts.append(f"r{entry['rank']}:" + " ".join(fields))
+    return "; ".join(parts)
+
+
+def _profile_endpoint(server, action, deadline):
+    _http(server.base_url + f"/{action}_profile", payload={}, timeout=_remaining(deadline, 30))
+
+
+def collect_profile(profile_dir, *, since, output, deadline, timeout=120):
+    """Summarize only this window's fresh traces; stale files never count."""
+    wait_until = time.monotonic() + _remaining(deadline, 60)
+    traces = []
+    while time.monotonic() < wait_until:
+        traces = sorted(path for pattern in ("ASCEND_PROFILER_OUTPUT/trace_view.json",
+                                             "ASCEND_PROFILER_OUTPUT/trace_view.json.gz")
+                        for path in profile_dir.glob(f"**/{pattern}")
+                        if path.is_file() and path.stat().st_mtime >= since)
+        if traces:
+            break
+        time.sleep(1)
+    if not traces:
+        return {"status": "not_run", "reason": "no fresh trace_view.json after the profiled request"}
+    command = [sys.executable, "-m", "tools.summarize_profile", *map(str, traces),
+               "--output", str(output)]
+    environment = dict(os.environ, PYTHONUNBUFFERED="1", TORCH_DEVICE_BACKEND_AUTOLOAD="0")
+    try:
+        result = subprocess.run(command, cwd=ROOT, env=environment, stdin=subprocess.DEVNULL,
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                timeout=_remaining(deadline, timeout))
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return {"status": "failed", "reason": f"{type(error).__name__}: {error}",
+                "traces": [str(x) for x in traces]}
+    for line in result.stdout.splitlines():
+        if line.strip():
+            _terminal(f"[oscar] PROFILE {line}")
+    summary = json.loads(output.read_text()) if output.is_file() else {}
+    return {"status": "observed" if result.returncode == 0 else "failed",
+            "summarize_returncode": result.returncode,
+            "phase_attribution_complete": summary.get("phase_attribution_complete"),
+            "traces": [str(x) for x in traces], "summary": str(output)}
+
+
 def request_with_deadline(server, payload, *, label, timeout):
     """One child per HTTP request: socket progress cannot extend the deadline.
 
@@ -303,7 +362,7 @@ def request_with_deadline(server, payload, *, label, timeout):
                                  worker_progress=worker_progress(server), client_state=client_state)
                     atomic_json(state_path, state)
                     _terminal(f"[oscar] REQUEST_WAIT {label} elapsed={now-started:.1f}s remaining={deadline-now:.1f}s "
-                              f"client={client_state.get('state')} workers={json.dumps(state['worker_progress'], ensure_ascii=False)}")
+                              f"client={client_state.get('state')} workers={compact_workers(state['worker_progress'])}")
                     heartbeat = now + REQUEST_HEARTBEAT_SECONDS
                 time.sleep(min(.1, max(0, deadline-now)))
             if time.monotonic() >= deadline:
@@ -318,7 +377,7 @@ def request_with_deadline(server, payload, *, label, timeout):
         state.update(status="failed", error=f"{type(error).__name__}: {error}",
                      worker_progress=worker_progress(server))
         atomic_json(state_path, state)  # visible before any potentially slow cleanup
-        _terminal(f"[oscar] REQUEST_ERROR {label}: {state['error']}; workers={json.dumps(state['worker_progress'])}",
+        _terminal(f"[oscar] REQUEST_ERROR {label}: {state['error']}; workers={compact_workers(state['worker_progress'])}",
                   stderr=True)
         raise
     finally:
@@ -515,9 +574,38 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
             (log_dir / "metrics_before.prom").write_text(metrics_before_text)
             metrics_before = parse_mtp_metrics(metrics_before_text)
             request_limit = _positive_time(config, "service_request_timeout_seconds", 300)
+            profile_dir = os.environ.get("OSCAR_PROFILE_DIR", "").strip()
+            profile_label = os.environ.get("OSCAR_PROFILE_REQUEST", "serial-32768")
+            report["npu_profile"] = {"status": "not_run", "request": profile_label if profile_dir else None}
             for length in lengths:
-                record = completion(server, config, tokenizer, length, label=f"serial-{length}",
+                label = f"serial-{length}"
+                window = bool(profile_dir) and label == profile_label
+                started_wall = time.time()
+                if window:
+                    try:
+                        _profile_endpoint(server, "start", deadline)
+                    except (ServiceProbeError, TimeoutError) as error:
+                        window = False
+                        report["npu_profile"] = {"status": "failed", "request": label,
+                                                 "reason": f"start_profile: {error}"}
+                        _terminal(f"[oscar] PROFILE_ERROR start_profile: {error}", stderr=True)
+                record = completion(server, config, tokenizer, length, label=label,
                                     timeout=_remaining(deadline, request_limit), prompt_ids=prompts[length])
+                if window:
+                    try:
+                        _profile_endpoint(server, "stop", deadline)
+                    except (ServiceProbeError, TimeoutError) as error:
+                        report["npu_profile"] = {"status": "failed", "request": label,
+                                                 "reason": f"stop_profile: {error}"}
+                        _terminal(f"[oscar] PROFILE_ERROR stop_profile: {error}", stderr=True)
+                    else:
+                        _terminal(f"[oscar] PROFILE_WINDOW {label} stopped; collecting fresh traces from {profile_dir}")
+                        report["npu_profile"] = collect_profile(Path(profile_dir), since=started_wall,
+                            output=log_dir / "profile-summary.json", deadline=deadline)
+                        report["npu_profile"]["request"] = label
+                        _terminal(f"[oscar] PROFILE_RESULT status={report['npu_profile']['status']} "
+                                  f"complete={report['npu_profile'].get('phase_attribution_complete')} "
+                                  f"traces={len(report['npu_profile'].get('traces', ()))}")
                 report["requests"].append(record)
                 atomic_json(output, report)
                 _terminal(f"[oscar] service request complete prompt={length} generated={record['completion_tokens']}")

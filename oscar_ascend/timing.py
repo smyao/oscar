@@ -33,7 +33,15 @@ def enabled() -> bool:
 
 def _write(record):
     # Only explicit timing uses host IO. No tensor values are inspected.
-    print(json.dumps(record, sort_keys=True, allow_nan=False), file=sys.stderr, flush=True)
+    line = json.dumps(record, sort_keys=True, allow_nan=False)
+    directory = os.environ.get("OSCAR_TRACE_DIR")
+    if directory and not _enabled("OSCAR_TIMING_STDERR"):
+        # Probe runs own a per-serve trace dir; keep the terminal readable.
+        path = Path(directory); path.mkdir(parents=True, exist_ok=True)
+        with (path / f"timing-{os.getpid()}.jsonl").open("a") as output:
+            output.write(line + "\n")
+        return
+    print(line, file=sys.stderr, flush=True)
 
 
 class _Phase:

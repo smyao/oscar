@@ -157,6 +157,24 @@ def test_worker_progress_distinguishes_no_debug_host_dispatch_and_device_checkpo
     assert checkpoint["state"] == "waiting_for_device" and checkpoint["phase"] == "fia"
 
 
+def test_compact_workers_renders_one_short_chunk_per_rank():
+    now = time.time()
+    progress = [
+        {"state": "last_host_event_only", "event": "attention_progress", "pid": 1, "rank": 0,
+         "layer": "language_model.model.layers.51.self_attn.attn", "tokens": 16384,
+         "max_seq_len": 49152, "wall_time": now - 3.2, "device_completion": "not_established"},
+        {"state": "last_host_event_only", "event": "graph_replay_progress", "pid": 2, "rank": 1,
+         "layer": None, "tokens": None, "max_seq_len": None, "wall_time": now - 0.4,
+         "device_completion": "not_established"},
+        {"state": "no_worker_progress_yet", "debug_sync": False, "device_completion": "not_established"},
+    ]
+    rendered = service_probe.compact_workers(progress)
+    first, second, third = rendered.split("; ")
+    assert first.startswith("r0:attention_progress layers.51 n=16384 kv=49152 age=")
+    assert second.startswith("r1:graph_replay_progress - age=")
+    assert json.loads(third)["state"] == "no_worker_progress_yet"
+
+
 @pytest.mark.parametrize("mode", ["hang_long", "trickle_long"])
 def test_long_request_has_wall_deadline_progress_and_reaped_client(tmp_path, monkeypatch, capsys, mode):
     config, path = configured(tmp_path)

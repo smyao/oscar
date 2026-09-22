@@ -6,7 +6,15 @@
 
 显式 `OSCAR_TIMING=1` 输出 `oscar-timing` JSON host相位日志；其中`device_ms=null`、`device_evidence=requires_npu_trace`，永不把host launch时间改名device时间。`OSCAR_PROFILER=1` 开启record_function标签；相位标签本身不启动/停止全局profiler。
 
-服务沿用原生vLLM Ascend `TorchNPUProfilerWrapper` 的启动/停止方式与torch profiler配置；只在需要的实际请求窗口收集。不得为了测量改变 `FULL_DECODE_ONLY`、MTP、TP4、异步调度或量化配置。调用链中的标签形如 `oscar::fia::{"layer":"...","tokens":...}`；graph capture里的host标签不等于后续graph replay执行证据，必须看实际硬件kernel事件。
+一键有界设备 trace（不要手工改配置或手工调端点）：
+
+```bash
+git pull --ff-only && bash scripts/profile_service.sh
+```
+
+该入口在标准 install/probe/serve 流程内完成全部测量：`OSCAR_PROFILE_DIR`（默认 `reports/npu_profile`，可预先覆盖）让 `tools.target_cli` 以服务参数形式武装原生 `TorchNPUProfilerWrapper`（`profiler=torch` + `torch_profiler_dir`）；`OSCAR_PROFILER=1` 打开 `record_function` 相位标签；服务探针在 `OSCAR_PROFILE_REQUEST`（默认 `serial-32768`）这一个请求前后自动调用原生 `/start_profile`、`/stop_profile`，随后只收集本窗口 mtime 更新的 `trace_view.json`，运行 `tools.summarize_profile` 并把逐 rank 的每相位 device_ms 以 `[oscar] PROFILE` 单行打到终端，结果写入探针报告的 `npu_profile` 字段。测量失败记录 `status=failed/not_run` 并响亮打印，不阻塞探针自身证据门，也不伪造设备时间。正式 serve 阶段不受该窗口影响。
+
+服务沿用原生vLLM Ascend `TorchNPUProfilerWrapper` 的启动/停止方式与torch profiler配置；只在需要的实际请求窗口收集。不得为了测量改变 `FULL_DECODE_ONLY`、MTP、TP4、异步调度或量化配置。调用链中的标签形如 `oscar::fia::{"layer":"...","tokens":...}`；graph capture里的host标签不等于后续graph replay执行证据，必须看实际硬件kernel事件。`OSCAR_TIMING=1`/`OSCAR_PROFILER=1` 的 host 相位记录在探针流程中写入本轮 trace 目录的 `timing-<pid>.jsonl`（终端不再逐条刷屏），需要旧行为时显式 `OSCAR_TIMING_STDERR=1`。
 
 独立NPU probe可使用显式会话：
 

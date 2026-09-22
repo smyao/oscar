@@ -25,6 +25,25 @@ def serve_argv(config: dict) -> list[str]:
     return args
 
 
+def profiler_config_env(config: dict, env: dict[str, str] | None = None) -> dict | None:
+    """Arm the native profiler via OSCAR_PROFILE_DIR without editing target.json.
+
+    An explicit profiler_config in the target config always wins. The native
+    wrapper stays idle until the probe's /start_profile window; serving and
+    numerics are unchanged outside the bounded measurement.
+    """
+    configured = config.get("profiler_config")
+    if configured is not None:
+        return configured
+    directory = str((os.environ if env is None else env).get("OSCAR_PROFILE_DIR", "")).strip()
+    if not directory:
+        return None
+    parts = Path(directory).parts
+    if ".." in parts or directory.endswith("/"):
+        raise ValueError("OSCAR_PROFILE_DIR must be a plain directory path")
+    return {"profiler": "torch", "torch_profiler_dir": str(Path(directory).resolve())}
+
+
 def target_env(config: dict, base: dict[str, str] | None = None) -> dict[str, str]:
     env = dict(os.environ if base is None else base)
     devices = config.get("devices")
@@ -49,6 +68,9 @@ def main() -> int:
     parser.add_argument("--native",action="store_true",help="explicit unmodified native baseline, never selected after an OSCAR failure")
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
+    profiler = profiler_config_env(config)
+    if profiler is not config.get("profiler_config"):
+        config = dict(config, profiler_config=profiler)
     command = serve_argv(config)
     if args.print_command:
         import shlex

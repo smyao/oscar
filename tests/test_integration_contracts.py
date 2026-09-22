@@ -99,7 +99,7 @@ class TargetContracts(unittest.TestCase):
             with self.assertRaises(ValueError):
                 prepare_rotations.model_geometry(path)
 
-    def test_failed_phase_still_checks_native_integrity_and_preserves_first_code(self):
+    def test_failed_probe_preserves_code_and_stops_later_phases(self):
         config = json.loads((ROOT / "configs/target.json").read_text())
         config["devices"] = [4, 5, 6, 7]
         with tempfile.TemporaryDirectory() as directory:
@@ -109,11 +109,10 @@ class TargetContracts(unittest.TestCase):
             logs = root / "logs"
 
             def plan(_config, log_dir):
-                marker = "from pathlib import Path; Path(" + repr(str(log_dir / "environment.json")) + ").write_text('{}')"
+                marker = "from pathlib import Path; Path(" + repr(str(log_dir / "must-not-start")) + ").write_text('started')"
                 return [
-                    ("environment", [sys.executable, "-c", marker]),
                     ("probe-failed", [sys.executable, "-c", "raise SystemExit(7)"]),
-                    ("native-integrity", [sys.executable, "-c", "raise SystemExit(3)"]),
+                    ("service-probe", [sys.executable, "-c", marker]),
                 ]
 
             with patch.object(deploy, "plan", plan), patch.object(sys, "argv", ["deploy", "--config", str(config_path), "--log-dir", str(logs)]):
@@ -122,7 +121,8 @@ class TargetContracts(unittest.TestCase):
             state = json.loads((logs / "status.json").read_text())
             self.assertEqual(state["failed_phase"], "probe-failed")
             self.assertEqual([(x["phase"], x["returncode"]) for x in state["phases"]],
-                             [("environment", 0), ("probe-failed", 7), ("native-integrity", 3)])
+                             [("probe-failed", 7)])
+            self.assertFalse((logs / "must-not-start").exists())
 
     def test_missing_full_service_probe_cannot_leave_running_status(self):
         config = json.loads((ROOT / "configs/target.json").read_text())

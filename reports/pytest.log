@@ -1,10 +1,31 @@
-.........................................................ssssss......... [ 15%]
-........................................................................ [ 30%]
-.................................................................... [ 45%]
-........................ssssssssssssssssssssssssssssssssssssssssssssssss [ 60%]
-ssssssssssssssssssssssssssssssssssssssssssssssssssssssss................ [ 75%]
-........................................................................ [ 90%]
-...........................................                              [100%]
+......................................................................ss [ 14%]
+ssss.................................................................... [ 29%]
+.................................................................... [ 43%]
+...........................................sssssssssssssssssssssssssssss [ 57%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 72%]
+sss..................................................................... [ 87%]
+............................................F.................           [100%]
+=================================== FAILURES ===================================
+_ test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint _
+
+tmp_path = PosixPath('/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-234/test_formal_serve_validates_on0')
+
+    def test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint(tmp_path):
+        config, path = configured(tmp_path)
+        report, reads = invoke(tmp_path, path, fake_command(tmp_path, config, "stop"), serve=True)
+>       assert report["status"] == "stopped" and len(report["requests"]) == 1
+E       AssertionError: assert ('failed' == 'stopped'
+E         
+E         - stopped
+E         + failed)
+
+tests/test_service_workflow.py:189: AssertionError
+----------------------------- Captured stdout call -----------------------------
+[oscar] service request complete prompt=128 generated=16
+[oscar] validated server ready http://127.0.0.1:53097; report=/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-234/test_formal_serve_validates_on0/report.json
+[oscar] whole-service failed report=/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-234/test_formal_serve_validates_on0/report.json
+----------------------------- Captured stderr call -----------------------------
+[oscar] service detail: signal 2
 =============================== warnings summary ===============================
 .venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368
   /Users/sunao2000/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
@@ -14,4 +35,5 @@ ssssssssssssssssssssssssssssssssssssssssssssssssssssssss................ [ 75%]
 =========================== short test summary info ============================
 SKIPPED [6] tests/test_cv_contracts.py:56: real NPU test is opt-in; CPU is not substituted
 SKIPPED [104] tests/test_rotation_npu.py:145: not_run: real NPU rotation gate requires OSCAR_RUN_NPU_TESTS=1
-361 passed, 110 skipped, 1 warning, 4 subtests passed in 8.11s
+FAILED tests/test_service_workflow.py::test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint
+1 failed, 379 passed, 110 skipped, 1 warning, 4 subtests passed in 7.58s

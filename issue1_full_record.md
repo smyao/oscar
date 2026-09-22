@@ -1,5 +1,7 @@
 # oscar-ascendc 昇腾调试报错全量记录（Agent 报错查表版 · 共 120 条 · 已脱敏）
 
+> 2026-09-22 本项目续录：实际共 **158 条（G1–G34、#1–#124）**；旧标题条数与索引行号保留为历史材料，定位以条目标题为准。#123/#124 来自用户回传的 node93 启动日志，修订后尚无真机复跑结果。
+
 > **本文档是给调试 agent 用的"报错 → 日志"查表档案，禁止从头线性阅读。** 使用方法：
 > 1. 先在下面【症状速查表】按报错关键字定位条目编号（前半段 **G1~G34**，后半段 **1~73**，第三部分 **74~86**）；
 > 2. 再用文本搜索 `## [编号]`（如 `## [G12]`、`## [55]`）跳转，或按【总索引】里的行号直接定位；
@@ -74,6 +76,8 @@
 | 自检脚本「heredoc 喂 stdin + 管道接 tee」→ 两者抢同一个 stdin → 整条命令**永久挂住**（心跳照常，只是永不结束） | 120 |
 | implMode 改名只作用于暂存树，包更早就打好了 → 安装进去仍是旧文件名（且自检因模式写错，把带后缀的正确状态报成"不一致"） | 121 |
 | 包已装、`.o` 与 `binary_info_config.json` 齐全、`AddConfig` 已声明，第一次调算子仍报通用三连：`ASCEND_CUSTOM_OPP_PATH` 被写成 **OPP 根**（应为 vendor 目录）**且** `<OPP 根>/vendors/config.ini` 未登记本 vendor——nnopbase 两条解析路径同时不通 | 122 |
+| `configs/target.json devices must contain the four physical NPU IDs selected for this task`（默认 devices 为 null，安装前即停止） | 123 |
+| `bash: .venv/bin/python: No such file or directory` / `FileNotFoundError: ... 'limactl'`（真机误跑本地开发/Lima 验证命令） | 124 |
 
 ## B. 环境 / 基础设施
 
@@ -26249,3 +26253,82 @@ oscar-ascend/logs/phases/install-ops.log, oscar-ascend/logs/phases/probe-ascendc
 * `tests/test_opp_env.py` 11 项含两条**反向用例**：把 `ASCEND_CUSTOM_OPP_PATH` 写回 OPP 根、
   以及把"以 root 为根再找 vendors/*"这种像似规则塞回 `resolve_routes`，都必须让测试变红
   （两条都已实测复现过红）。
+
+
+---
+
+## [123] 真机条目（gpt_new_oscar 项目，2026-09-22 用户回传）· phase=config
+
+**症状**：node93 上执行正式入口，尚未安装、编译或执行 NPU 探针就被默认设备配置阻断。
+
+**命中的历史同族条目**：#74/#75/#76（部署前置流程阻断）、#94/#95（失败日志与状态保留）。
+
+### 关键报错信息（用户原文摘录）
+
+```text
+root@node93:/workspace# cd gpt_new_oscar/
+root@node93:/workspace/gpt_new_oscar# bash scripts/install_probe_serve.sh
+[oscar] FAILED deployment: configs/target.json devices must contain the four physical NPU IDs selected for this task
+```
+
+### 根因
+
+交付的 `configs/target.json` 将 `devices` 留为 `null`，而 `tools.deploy` 在运行安装阶段前就调用 `target_env`，后者要求四个唯一的非负物理设备号。README 要求现场手动补设备号，因此一条命令不能直接完成部署。当前启动文档附录 F 已明确本任务使用物理卡 0–3；此前未将其落实为本项目默认值。该错误发生在 Python 配置解析阶段，日志没有提供任何 NPU 算子执行、图捕获或模型推理结果。
+
+### 修法
+
+本项目默认设备改为 `[0,1,2,3]`，SOC 使用本次附录 F 的 `ascend910b4`，端口保留附录 A 的 `8989`；子进程统一使用本项目配置，不继承其他任务卡号。按用户“不要任何真机上的环境检查”及随后“探针要的”的要求，默认部署移除环境清单、原生源码扫描和 readiness 前置审计，保留真实 NPU 算子、CV/旋转、TP4/MTP/长输入/图服务探针及资源回收；探针失败必须停止。配置本身非法、实际编译或运行失败仍保留错误与退出码。
+
+### 证据与复验边界
+
+故障证据为本次用户回传的上述 node93 输出。修订落实在 `configs/target.json`、`tools/deploy.py` 和部署说明；回归项登记在 `docs/design.md` 第 7 节。源码修订不等于真机通过，尚无 node93 复跑结果；NPU、图、质量和性能仍未验收。
+
+---
+
+## [124] 真机条目（gpt_new_oscar 项目，2026-09-22 用户回传）· phase=developer-command-on-target
+
+**症状**：用户在 node93 继续执行 README 展示的本地开发命令，分别因没有项目 `.venv` 和 Mac Lima 管理器 `limactl` 而失败。
+
+**命中的历史同族条目**：#74/#76（环境组成不应误阻部署）、#96（工具运行前提与实际任务不符）、#117（脚本运行位置与部署入口）。
+
+### 关键报错信息（用户原文摘录）
+
+```text
+root@node93:/workspace/gpt_new_oscar# .venv/bin/python -m pytest -q
+bash scripts/validate_vm.sh
+bash: .venv/bin/python: No such file or directory
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/gpt_new_oscar/tools/vm_validate.py", line 99, in <module>
+```
+
+```text
+    sys.exit(main())
+            ^^^^^^
+  File "/workspace/gpt_new_oscar/tools/vm_validate.py", line 44, in main
+    subprocess.run(["limactl","shell","--workdir","/tmp",args.instance,"--","mkdir","-p",args.workspace],check=True,timeout=30)
+  File "/usr/local/python3.12.13/lib/python3.12/subprocess.py", line 548, in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/subprocess.py", line 1026, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "/usr/local/python3.12.13/lib/python3.12/subprocess.py", line 1955, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+FileNotFoundError: [Errno 2] No such file or directory: 'limactl'
+root@node93:/workspace/gpt_new_oscar#
+```
+
+用户在两段 traceback 之间补充：“我不要任何真机上的环境检查，要做高效 之间就能跑”；随后明确：“探针要的”。
+
+### 根因
+
+README 在目标部署入口之前展示 `.venv/bin/python` 和 `scripts/validate_vm.sh`，但没有在命令旁明确其运行地点。前者依赖开发机已创建的项目虚拟环境；后者是 Mac 宿主机调用 Lima VM 的开发验证工具，内部直接调用 `limactl`。这两条命令都不是 node93 的生产安装前置条件。真实目标已有 Python，正式入口本身使用 `OSCAR_PYTHON` 或 `python3`，并不依赖项目 `.venv`。
+
+### 修法
+
+README 首先给出真机唯一命令 `git pull --ff-only && bash scripts/install_probe_serve.sh`，明确使用现有 Python 并自动完成安装、编译和全部所需探针。CPU 单测与 Mac/Lima 验证命令移到后面的开发说明，明确 node93 无需执行、无需创建 `.venv` 或安装 Lima。`AGENTS.md` 同步这个边界，避免继续把开发宿主机命令当成真机补救步骤。真实探针仍执行且失败即停。
+
+### 证据与复验边界
+
+故障证据为本次用户回传的终端输出。此项修复部署说明及默认流程，不将缺失 `limactl` 解释成 CANN 或 NPU 故障，也不声称目标已部署成功；回归项登记在 `docs/design.md` 第 7 节，等待 node93 复跑日志。

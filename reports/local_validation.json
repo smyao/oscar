@@ -1,18 +1,20 @@
 {
-  "overall": "source_and_vm_validated; target_acceptance_not_run",
+  "overall": "startup_revision_validated_with_one_local_cleanup_test_failure; target_acceptance_not_run",
   "cpu_tests": {
-    "status": "passed",
-    "pytest_passed": 361,
+    "status": "failed",
+    "pytest_passed": 379,
     "subtests_passed": 4,
     "npu_tests_skipped": 110,
     "junit": {
-      "tests": 475,
-      "failures": 0,
+      "tests": 494,
+      "failures": 1,
       "errors": 0,
       "skipped": 110
     },
     "log": "reports/pytest.log",
-    "xml": "reports/pytest.xml"
+    "xml": "reports/pytest.xml",
+    "failed_test": "tests/test_service_workflow.py::test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint",
+    "failure_detail": "macOS owned fake HTTP server cleanup raised PermissionError: [Errno 1] Operation not permitted; assertion retained; cause not established"
   },
   "python_wheel": {
     "status": "passed",
@@ -59,7 +61,6 @@
   "memory_benefit": "not_run",
   "performance": "not_run",
   "remaining_inputs": [
-    "current-task physical NPU selection",
     "target model and NPU access",
     "premesurement model-quality policy"
   ],
@@ -70,7 +71,8 @@
     "independent direct-launch libraries are delivered rather than a custom OPP vendor package"
   ],
   "local_observations": [
-    "One earlier temporary HTTP-server cleanup test reported PermissionError; isolated rerun and current complete suite passed, cause not established; no cleanup assertion was weakened"
+    "One earlier temporary HTTP-server cleanup test reported PermissionError; isolated rerun and current complete suite passed, cause not established; no cleanup assertion was weakened",
+    "Startup revision full suite: 379 passed, 1 failed, 110 skipped, 4 subtests passed. Same previously observed macOS fake-server cleanup PermissionError recurred. User requested immediate push; no assertion was weakened and no full-suite pass is claimed."
   ],
   "source_sha256": {
     "oscar_ascend/__init__.py": "886a48beeedcedf3da2ee7430eddf8d64c7ece3527b0cb073b8363223e5c22e0",
@@ -93,8 +95,8 @@
     "oscar_ascend/telemetry.py": "1da58f18889a66194d5004573d69af0140b4a9c30d475bcee0b5ea6b7d4fefdc",
     "oscar_ascend/timing.py": "6beea5db28acad653ae9068144eeb54979878a3d92ea8c552a3ced3dc6b550af",
     "tools/__init__.py": "638eebca9af17b3926d058f9115ba13a882951b3787192212a37c4a2afd73c26",
-    "tools/build_ops.py": "9fbf17d153b8bb4a5eaf8504cfa854cfa1deeb9f8cb28186bd893b7bbdbe3506",
-    "tools/deploy.py": "bb03ade946085a6624415ef4e470be689b59d5b3da0206796f741c68679ebfef",
+    "tools/build_ops.py": "f9e73b92e7b4fdd8646702cb2c788b09d5fb7d392975c64273a5ffd584509d36",
+    "tools/deploy.py": "cc41ad3b41e593602a94278269f3caa4bbc9f11312063deef13d1c8836deaff8",
     "tools/environment.py": "fc725539278d3498491276ba1a204afd73398ebbaf54f791676b84ced2c73aad",
     "tools/generate_cpu_cases.py": "af94f2f9c3a51cc295409e78d6eb217d5b1a6f65b646ea03feb5ed70736a0779",
     "tools/generate_rotation_cpu_cases.py": "12a9a08fac8705ec112e8d3cf03bf4d3385773b82b417ca3f81243678c2bb1a9",
@@ -134,14 +136,14 @@
     "csrc/status_bindings.cpp": "2912ac6aa6be89eb0e6b8507b16c10a3ac8c996182bc52ed0afc87c45d3b2c40",
     "csrc/torch_bindings.cpp": "9ce12c775f9bab5331fbd2b4704b960c2d6ea575e1beb858f15eff1caac3cd17",
     "configs/acceptance.json": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
-    "configs/target.json": "aa8e33c49f57f344bba9fd3aadfcaafd76d283af51c8919009ee614e5e02fff1",
+    "configs/target.json": "9fa32dbd4d8d7b7fbaee0652ae29d81552b782fa637bbe23671392e307da11cf",
     "scripts/install_probe_serve.sh": "6ac0f5fd42ce35893ea5cd46e3857aee2381f820f4a69fede4e65f2768eb00ea",
     "scripts/serve.sh": "0b216fadfc215691946d60694aca0233c71d6cf75692bc76afbaaaabaa16d7fa",
     "scripts/validate_vm.sh": "82626b7a9b459245784348e19d78c6069ea1f88663f888548650106e3b5bb2d7",
     "tests/test_benchmark_compare.py": "277718caf83360a1023f47a4571a748d1c4061764acc950b5fe20a9b5130247f",
     "tests/test_benchmark_measure.py": "193c08a8f6621959b3ae0a3c6765ee47706c7dbdfd81200f9a0c00395693c5f6",
     "tests/test_cv_contracts.py": "08b029196ead3ef7c6ab2116e93e8a57f420c9e2c5b2eae983475536ab644156",
-    "tests/test_integration_contracts.py": "cf13f1c990575d0435dfbd2ffb77140b35218a175fc4ae8e1d2216a1cbee43ae",
+    "tests/test_integration_contracts.py": "86ad68469f5898c0ff5c3314da7800dc6d29a2943c341629350b33cf1252bd41",
     "tests/test_layout.py": "7b428f57c2106e244c2e41580c383d098aa1b836f99f4036da109aaf01940ea2",
     "tests/test_lifecycle.py": "149a6d115b6730d7dfc3c1b4ee6aacc748623d0e02a32434812ad62fc4d70435",
     "tests/test_meta_dispatch.py": "b1e718a2a07b3fd813622d48780c80011cf6b587d62dd0550bf62b3fa0280ca3",
@@ -157,6 +159,36 @@
     "tests/test_runtime.py": "5ac7447f0e257979412d3b526bd918b402b11433aae2daeb566c37c12fa1cddb",
     "tests/test_runtime_native.py": "1d5dee44a46cf32763bb6e1bedb7305726f2f4bc20d36cfa12c305b4d88042e4",
     "tests/test_service_workflow.py": "a2b731b4aec05728aaff1c0cf096705d50f84eb4e532231f4dc595df1aca6842",
-    "tests/test_workflow.py": "329b2ecc9aeffafda7b1d5debf91a102b49bb3d0fb837bc2aec045fe43e29c2c"
+    "tests/test_workflow.py": "329b2ecc9aeffafda7b1d5debf91a102b49bb3d0fb837bc2aec045fe43e29c2c",
+    "tests/test_deploy_launcher.py": "d2d49450c3dc17de322da9e996d9f1282a63a66a67ee5ae07cead039674723ce",
+    "tests/test_build_reuse.py": "49e9a34e9b7b201f155eb68bc8d99a24b194bf7d2009e1a26eadd1459fba7c11"
+  },
+  "startup_revision": {
+    "default_devices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "soc_version": "ascend910b4",
+    "port": 8989,
+    "environment_audit_phases_removed": true,
+    "operator_cv_rotation_service_probes_retained": true,
+    "focused_launcher_tests": {
+      "passed": 26
+    },
+    "focused_build_tests": {
+      "passed": 32,
+      "subtests_passed": 4
+    },
+    "vm_build_cache": {
+      "status": "passed",
+      "reused": true,
+      "log": "reports/startup_build_reuse.log",
+      "device_completion": "not_run"
+    },
+    "shell_plan_from_outside_checkout": "passed",
+    "wheel_build": "passed",
+    "target_rerun": "not_run"
   }
 }

@@ -5,7 +5,7 @@
 | ID | 状态 | 要求 | 本轮证据/缺口 |
 |---|---|---|---|
 | [x] A01 | passed | 建立 reference 清单，锁定 OSCAR PR 与相关 vLLM/Ascend commit，确认未参考失败仓库。 | docs/reference_manifest.md；reports/local_environment.json；两棵native树HEAD/status和全参考文件指纹。PR/paper为提供的快照pin，无独立git历史。 |
-| [ ] A02 | in_progress | 记录实际软件、NPU、CANN/编译环境、模型配置和原生源码状态。 | macOS与Lima VM环境已记录；VM CANN9.1/Torch2.12 CPU，非目标Torch2.10/NPU。真实模型/设备现场仍未读取。 |
+| [ ] A02 | in_progress | 记录实际软件、NPU、CANN/编译环境、模型配置和原生源码状态。 | macOS与Lima VM环境已记录；VM CANN9.1/Torch2.12 CPU，非目标Torch2.10/NPU。用户要求移除真机启动环境审计，实际目标调用结果由探针记录；该项不作为部署前置闸。 |
 | [ ] A03 | not_run | 跑通原生目标配置的基线，保存命令、输入、版本、MTP/图模式与资源记录。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
 | [x] A04 | passed | 读懂第 3.3 节调用链，记录 FULL/GDN、TP、KV 分组、MTP 和图模式的真实入口。 | docs/runtime_implementation.md；tests/test_runtime_native.py执行真实native分组、manager、reshape、MTP/图builder方法；目标worker执行另列D08。 |
 | [ ] A05 | in_progress | 核实第 4 节全部歧义，给出层/组/Tensor/地址映射与字节来源。 | 动态C/M/P与B2304公式、真实native config/形状函数已验证；MTP3示例C30720/P817152，最终目标config仍待现场确认。 |
@@ -39,9 +39,9 @@
 | [ ] E04 | not_run | 固定 token 数和固定 HBM 预算两种口径下证明真实缓存收益，计入全部新增开销。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
 | [ ] E05 | not_run | profiler 证明无禁止的 CPU/AiCPU 数据处理、同步、冗余 KV 双写及全历史恢复。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
 | [ ] E06 | not_run | 按第 10 节逐工况比较原生性能；无未解释退化，不以平均值掩盖慢项；**任何算子/相位耗时不得差于附录 D.1 原生基线**（上一版 dequant 6.5s/卡的崩盘即判失败的标准，见附录 D.3）。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
-| [ ] E07 | in_progress | 对照第 8.2 节验证历史故障防护，保存实际覆盖结果而非仅声明"已避免"。 | 历史故障约束已落实；本轮VM发现Log alias与Matmul Init重载问题并修复；CANN plog本任务PID诊断与失败保码通过本地测试。 |
+| [ ] E07 | in_progress | 对照第 8.2 节验证历史故障防护，保存实际覆盖结果而非仅声明"已避免"。 | 历史故障约束已落实；本轮VM发现Log alias与Matmul Init重载问题并修复；CANN plog本任务PID诊断与失败保码通过本地测试。node93 回传的 devices:null 与开发命令误用已登记 #123/#124，修订默认配置及部署文档，真机复跑待回传。 |
 | [ ] E08 | in_progress | **无回退逻辑验证**：静态审查 + 全量工况扫描证明代码中不存在任何回退/降级路径；16K/32K/50K 与各种 batch size 下 OSCAR 压缩路径全部实际命中（H13/H17），不存在静默走原生 BF16 全历史的分支。 | 静态/路由/错误注入通过；长序列真实压缩路径命中仍需目标probe。 |
-| [ ] F01 | in_progress | 一条 Bash 命令完成安装、编译、所需校准、probe、资源清理和正式启动。 | 一键完整安装/编译/NPU对拍/旋转/TP4服务probe/清理/正式服务代码已完成；全目标流程未运行。 |
+| [ ] F01 | in_progress | 一条 Bash 命令完成安装、编译、所需校准、probe、资源清理和正式启动。 | 一键安装/编译/NPU算子与CV/旋转对拍/自动旋转文件/TP4服务probe/清理/正式服务；按最新要求保留探针并移除环境/原生源码/readiness审计，默认0–3卡和8989端口；全目标流程未运行。 |
 | [ ] F02 | in_progress | 验证正常退出、失败退出和中断后的清理，重复执行不会遗留 worker 或加载旧产物。 | 真实CPU子进程/HTTP/超时/信号/释放失败与诊断故障注入通过；NPU资源回收尚无实证。 |
 | [ ] F03 | not_run | 正式服务按目标配置启动并完成真实请求，记录 OSCAR compressed decode/MTP 路由证据。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
 | [ ] F04 | in_progress | 交付代码、设计、完整 Checklist、测试/性能/显存报告、日志及 README 中的一键命令。 | 源码、设计、VM日志/报告、README和测量工具已交付；真实模型精度/性能/容量报告尚缺。 |
@@ -52,7 +52,7 @@
 1. H18复杂度口径；精确attention需要读取全部压缩历史。
 2. 已实现的CV/rotation/clip在目标NPU上的精度、图、性能验证。
 3. 已实现的prefix、GDN隔离、MTP和固定buffer在真实完整模型上验收。
-4. 本次设备号/端口、真机连接及目标编译环境。
+4. 本次配置已按附录 A/F 固定0–3卡、8989端口和ascend910b4；目标真机复跑结果仍待回传。
 5. 模型质量门槛在实测前冻结；paired基线、NPU精度/图/资源/性能逐项过门。
 
-本地构建/测试结果与失败细节见 `reports/local_validation.json`、`reports/pytest.xml`、`reports/build.json`、`reports/readiness.json`。原始档案不追加虚构的真机修复条目。
+本地构建/测试结果与失败细节见 `reports/local_validation.json`、`reports/pytest.xml`、`reports/build.json`、`reports/readiness.json`。档案 #123/#124 仅记录用户回传的 node93 真实启动错误与源码修订，未声称真机修复已通过。

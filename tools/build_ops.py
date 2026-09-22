@@ -1,4 +1,4 @@
-# 档案 G7/G8/G10/G11/#79–#85/#100–#109：自动 CANN/SOC、单配置build、一次干净重试、真实产物。
+# 档案 G7/G8/G10/G11/#79–#85/#98–#109：仅完整同配置产物可复用；漂移/损坏清建、一次干净重试。
 """Build the standalone direct-launch AscendC package; never modifies CANN/vLLM."""
 from __future__ import annotations
 import argparse
@@ -14,6 +14,8 @@ import subprocess
 import sys
 from .environment import file_fingerprint
 from .phase import atomic_json, run_phase
+from oscar_ascend.ops.contracts import SOURCE_CAPABILITIES
+from oscar_ascend.ops.loader import OperatorUnavailable, validate_build_artifacts
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -45,11 +47,36 @@ def clear_owned_build(path: Path) -> None:
     path.mkdir(parents=True)
 
 
+def reusable_build(build_dir: Path, signature: str) -> dict | None:
+    """Reuse only completed, unchanged artifacts; this is not NPU evidence."""
+    if build_dir.is_symlink() or build_dir.resolve() != ROOT / "build/ascendc":
+        return None
+    try:
+        previous = json.loads((build_dir / "oscar_build_signature.json").read_text())
+        if previous.get("signature") != signature or previous.get("build") != "passed":
+            return None
+        manifest = validate_build_artifacts(build_dir / "build_manifest.json")
+        if set(manifest.get("source_capabilities", ())) != SOURCE_CAPABILITIES:
+            return None
+        if manifest.get("soc") != previous["configuration"].get("soc"):
+            return None
+        for kind, pattern in (("extension", "_oscar_ascend_ops*.so"),
+                              ("kernel_library", "liboscar_ascend_kernels*.so")):
+            paths = list(build_dir.rglob(pattern))
+            if len(paths) != 1 or paths[0].is_symlink():
+                return None
+            if paths[0].resolve() != Path(manifest[kind]):
+                return None
+        return previous
+    except (OperatorUnavailable, OSError, ValueError, TypeError, AttributeError):
+        # Archive #85/#98: malformed/missing/stale cache means a clean build,
+        # never a bypass of compilation or a claim of successful execution.
+        return None
+
+
 def build(log_dir: Path, timeout: float, soc: str | None = None) -> dict:
     env = os.environ.copy()
     cann = cann_root(env)
-    if not shutil.which("cmake"):
-        raise RuntimeError("cmake is not installed")
     npu_spec = importlib.util.find_spec("torch_npu")
     if npu_spec is None or npu_spec.origin is None:
         raise RuntimeError("torch_npu package with C++ headers is required for the target build")
@@ -92,9 +119,15 @@ def build(log_dir: Path, timeout: float, soc: str | None = None) -> dict:
                       "python": sys.executable, "torch_npu": str(npu_path), "flags": {k: env.get(k) for k in ("CXX", "CC", "CXXFLAGS")}}
     signature = hashlib.sha256(json.dumps(signature_data, sort_keys=True).encode()).hexdigest()
     state = build_dir / "oscar_build_signature.json"
-    previous = json.loads(state.read_text()) if state.exists() else {}
-    if previous.get("signature") != signature:
-        clear_owned_build(build_dir)
+    previous = reusable_build(build_dir, signature)
+    if previous is not None:
+        manifest = {**previous, "reused": True}
+        atomic_json(ROOT / "reports/build.json", manifest)
+        print("reuse completed AscendC build: source, configuration and artifact hashes match", flush=True)
+        return manifest
+    if not shutil.which("cmake"):
+        raise RuntimeError("cmake is not installed")
+    clear_owned_build(build_dir)
     command = ["cmake", "-S", str(ROOT / "csrc"), "-B", str(build_dir),
                f"-DASCEND_HOME_PATH={cann}", f"-DASCEND_CANN_PACKAGE_PATH={cann}", f"-DASCEND_TOOLKIT_HOME={cann}",
                f"-DSOC_VERSION={soc}", f"-DASCEND_COMPUTE_UNIT={soc}", f"-DTORCH_NPU_PATH={npu_path}",
@@ -119,7 +152,7 @@ def build(log_dir: Path, timeout: float, soc: str | None = None) -> dict:
     manifest = {"signature": signature, "configuration": signature_data,
                 "extension": str(extensions[0].resolve()), "kernel_library": str(kernels[0].resolve()),
                 "sha256": {str(x.resolve()): hashlib.sha256(x.read_bytes()).hexdigest() for x in extensions+kernels},
-                "build": "passed", "device_completion": "not_run"}
+                "build": "passed", "device_completion": "not_run", "reused": False}
     atomic_json(state, manifest)
     generated_manifest = build_dir / "build_manifest.json"
     if not generated_manifest.is_file():

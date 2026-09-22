@@ -1,0 +1,58 @@
+......................................................................ss [ 13%]
+ssssssssssss............................................................ [ 27%]
+.................................................s.................. [ 41%]
+.....................................................................sss [ 55%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 68%]
+sssssssssssssssssssssssssssss........................................... [ 82%]
+..................................................................F..... [ 96%]
+................                                                         [100%]
+=================================== FAILURES ===================================
+_ test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_mtp-mandatory] _
+
+tmp_path = PosixPath('/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2')
+mode = 'no_mtp', diagnostic = 'mandatory'
+
+    @pytest.mark.parametrize("mode, diagnostic", [("no_trace", "mandatory"), ("wrong_usage", "exactly 128"), ("no_mtp", "mandatory")])
+    def test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count(tmp_path, mode, diagnostic):
+        config, path = configured(tmp_path)
+        report, reads = invoke(tmp_path, path, fake_command(tmp_path, config, mode))
+        assert report["status"] == "failed" and diagnostic in report["error"]
+>       assert len(reads) == 2 and report["server"]["cleanup_complete"]
+E       assert (2 == 2 and False)
+E        +  where 2 = len([[40, 41, 42, 43], [40, 41, 42, 43]])
+
+tests/test_service_workflow.py:151: AssertionError
+----------------------------- Captured stdout call -----------------------------
+START owned_service cwd=/Users/sunao2000/gpt_new_oscar command=["/Users/sunao2000/gpt_new_oscar/.venv/bin/python", "/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2/fake_server.py", "58952", "no_mtp", "/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2/fake_telemetry.json"]
+[oscar] service request complete prompt=128 generated=16
+[oscar] service request complete prompt=16384 generated=16
+[oscar] service request complete prompt=32768 generated=16
+[oscar] service request complete prompt=50000 generated=16
+127.0.0.1 - - [22/Sep/2026 12:40:22] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2026 12:40:22] "GET /metrics HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2026 12:40:22] "POST /v1/completions HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2026 12:40:22] "POST /v1/completions HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2026 12:40:22] "POST /v1/completions HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2026 12:40:22] "POST /v1/completions HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2026 12:40:22] "POST /v1/completions HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2026 12:40:22] "POST /v1/completions HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2026 12:40:22] "POST /v1/completions HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2026 12:40:22] "POST /v1/completions HTTP/1.1" 200 -
+127.0.0.1 - - [22/Sep/2026 12:40:22] "GET /metrics HTTP/1.1" 200 -
+SERVICE_ERROR ServiceProbeError: HTTP completed, but mandatory TP4/FULL/graph/MTP evidence did not pass
+SERVICE_RESULT {"status": "failed", "command": ["/Users/sunao2000/gpt_new_oscar/.venv/bin/python", "/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2/fake_server.py", "58952", "no_mtp", "/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2/fake_telemetry.json"], "target_argv": ["serve", "/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2/model", "--served-model-name", "qwen3.5", "--host", "127.0.0.1", "--port", "58952", "--data-parallel-size", "1", "--tensor-parallel-size", "4", "--max-model-len", "262144", "--max-num-batched-tokens", "16384", "--max-num-seqs", "128", "--gpu-memory-utilization", "0.9", "--quantization", "ascend", "--compilation-config", "{\"cudagraph_capture_sizes\":[1,4,8,12,16,24,32,48,56,64,72,84,96,108,112,128,160,172,196,200,212,232,272,288,312,328,344,360,384,400,416,432,448,480,512],\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}", "--speculative_config", "{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":3,\"enforce_eager\":true}", "--additional-config", "{\"enable_cpu_binding\":true}", "--hf-overrides", "{\"text_config\":{\"rope_parameters\":{\"mrope_interleaved\":true,\"mrope_section\":[11,11,10],\"rope_type\":\"yarn\",\"rope_theta\":10000000,\"partial_rotary_factor\":0.25,\"factor\":4.0,\"original_max_position_embeddings\":262144}}}", "--trust-remote-code", "--async-scheduling", "--allowed-local-media-path", "/", "--mm-processor-cache-gb", "0", "--mamba-cache-dtype", "bfloat16", "--mamba-ssm-cache-dtype", "bfloat16"], "log": "/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2/logs/server.log", "trace_dir": "/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2/logs/trace-8b0164a334314c99a3c377585a51764a", "cleanup_complete": false, "pid": 39200, "owned_pids": [39200], "last_health_error": "URLError: <urlopen error [Errno 61] Connection refused>", "startup_seconds": 0.230845, "error": "ServiceProbeError: HTTP completed, but mandatory TP4/FULL/graph/MTP evidence did not pass", "cleanup_error": "PermissionError: [Errno 1] Operation not permitted", "exit_code": null, "elapsed_seconds": 0.290345}
+[oscar] whole-service failed report=/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2/report.json
+----------------------------- Captured stderr call -----------------------------
+[oscar] service detail: ServiceProbeError: HTTP completed, but mandatory TP4/FULL/graph/MTP evidence did not pass
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368
+  /Users/sunao2000/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+    cpu = _conversion_method_template(device=torch.device("cpu"))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [14] tests/test_cv_contracts.py:58: real NPU test is opt-in; CPU is not substituted
+SKIPPED [1] tests/test_loader_linkage.py:202: ELF DT_NEEDED/SONAME regression requires Linux
+SKIPPED [104] tests/test_rotation_npu.py:145: not_run: real NPU rotation gate requires OSCAR_RUN_NPU_TESTS=1
+FAILED tests/test_service_workflow.py::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_mtp-mandatory]
+1 failed, 396 passed, 119 skipped, 1 warning, 4 subtests passed in 9.85s

@@ -91,32 +91,58 @@ def group_exists(pgid: int) -> bool:
         return False
 
 
+def _reap_exiting_child(proc: subprocess.Popen, error: PermissionError) -> None:
+    # Local Darwin evidence: killpg can return EPERM for a dying/zombie-only
+    # owned group before waitpid(WNOHANG) can reap its leader. Reap only our
+    # direct child, with a finite bound; EPERM itself never means "gone".
+    if proc.poll() is None:
+        try:
+            proc.wait(timeout=0.2)
+        except subprocess.TimeoutExpired:
+            raise error
+
+
+def _owned_group_exists(proc: subprocess.Popen) -> bool:
+    try:
+        return group_exists(proc.pid)
+    except PermissionError as error:
+        _reap_exiting_child(proc, error)
+        return group_exists(proc.pid)  # one fresh probe; persistent EPERM fails
+
+
+def _signal_owned_group(proc: subprocess.Popen, signum: int) -> bool:
+    try:
+        os.killpg(proc.pid, signum)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError as error:
+        _reap_exiting_child(proc, error)
+        if group_exists(proc.pid):
+            raise error
+        return False  # disappearance was established by ESRCH, not EPERM
+
+
 def cleanup_group(proc: subprocess.Popen, grace: float) -> bool:
     """Only touch the session created by this runner; never match process names."""
-    if group_exists(proc.pid):
-        try:
-            os.killpg(proc.pid, signal.SIGTERM)
-        except ProcessLookupError:
-            return True
+    if _owned_group_exists(proc) and not _signal_owned_group(proc, signal.SIGTERM):
+        return True
     deadline = time.monotonic() + grace
     while time.monotonic() < deadline:
         proc.poll()  # reap the direct child before checking the group
-        if not group_exists(proc.pid):
+        if not _owned_group_exists(proc):
             return True
         time.sleep(0.05)
-    if group_exists(proc.pid):
-        try:
-            os.killpg(proc.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            return True
+    if _owned_group_exists(proc) and not _signal_owned_group(proc, signal.SIGKILL):
+        return True
     try:
         proc.wait(timeout=max(grace, 1))
     except subprocess.TimeoutExpired:
         return False
     deadline = time.monotonic() + max(grace, 1)
-    while group_exists(proc.pid) and time.monotonic() < deadline:
+    while _owned_group_exists(proc) and time.monotonic() < deadline:
         time.sleep(0.05)
-    return not group_exists(proc.pid)
+    return not _owned_group_exists(proc)
 
 
 def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,

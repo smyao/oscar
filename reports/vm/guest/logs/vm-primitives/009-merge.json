@@ -6,7 +6,7 @@
     "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/merge_128_128"
   ],
   "returncode": 0,
-  "elapsed_seconds": 0.205706,
+  "elapsed_seconds": 0.2107,
   "timed_out": false,
   "interrupted": false,
   "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/009-merge.log",

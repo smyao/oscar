@@ -1,0 +1,53 @@
+{
+  "change": "Preserve Q UB until outbound DMA completes before padding zero-fill",
+  "archive_entry": 126,
+  "target_before_fix": "75 store/merge cases passed; first CV case failed",
+  "target_evidence": "reports/target_probe_evidence.json",
+  "numerical_diagnosis": "reports/cv_fence_diagnosis.json",
+  "source_review": "Missing MTE3_V for valid-to-padding transition; valid-to-valid protected by MTE3_MTE2 followed by MTE2_V",
+  "fix": "Insert MTE3_V immediately before padding Duplicate; preserve tiling, data types, arithmetic, tolerances and all probes",
+  "cann_build": {
+    "status": "passed",
+    "signature": "1020db3336b3c40f15a8e8a7aec97a695cb5d509662d8edd45d9527b0c07372a",
+    "source_matches_current_csrc": true,
+    "report": "reports/vm/guest/reports/build.json"
+  },
+  "official_cpu_debug": {
+    "status": "passed",
+    "cases": 61,
+    "cv_cases": 18,
+    "validation": "reports/vm/validation.json"
+  },
+  "new_target_probes": {
+    "cases": 8,
+    "iterations_per_case": 3,
+    "query_lengths": [
+      1,
+      2,
+      4,
+      5,
+      6,
+      10
+    ],
+    "head_dims": [
+      64,
+      128,
+      256
+    ],
+    "scope": "exact staged Q plus frozen dense output/LSE oracle on reused addresses; covers both AIV lanes"
+  },
+  "target_after_fix": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "performance": "not_run",
+  "local_pytest": {
+    "passed": 404,
+    "skipped": 119,
+    "subtests_passed": 4,
+    "log": "reports/pytest.log"
+  },
+  "linux_workflow_tests": {
+    "passed": 40,
+    "log": "reports/cv_fix_linux_workflow_tests.log"
+  }
+}

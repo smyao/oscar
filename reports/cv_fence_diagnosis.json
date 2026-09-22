@@ -1,0 +1,40 @@
+{
+  "scope": "CPU counterfactual diagnosis using unchanged test data, not NPU retest",
+  "case": {
+    "dim": 64,
+    "qlen": 1,
+    "context": 17,
+    "query_heads": 6
+  },
+  "counterfactual": "only final query head becomes zero before QK, giving the uniform mean of 18 values",
+  "predicted": {
+    "mismatched_dimensions": 64,
+    "max_absolute_error": 0.6885955333709717,
+    "absolute_error_dimension": 12,
+    "max_relative_error": 23.056453704833984,
+    "relative_error_dimension": 58
+  },
+  "target_reported": {
+    "mismatched_elements": 64,
+    "total_elements": 384,
+    "max_absolute_error": 0.6885956525802612,
+    "absolute_error_index": [
+      0,
+      5,
+      12
+    ],
+    "max_relative_error": 23.0565128326416,
+    "relative_error_index": [
+      0,
+      5,
+      58
+    ]
+  },
+  "source_defect": "LoadQueries outbound MTE3 reading qFloatBuf lacks an MTE3_V edge before following padding Duplicate overwrites the same UB; MTE3_MTE2 only guards the input-DMA successor",
+  "fix": "MTE3_V fence immediately before padding Duplicate; keep existing MTE3_MTE2 fence",
+  "acceptance_tolerances_unchanged": {
+    "atol": 0.005,
+    "rtol": 0.005
+  },
+  "target_retest": "not_run"
+}

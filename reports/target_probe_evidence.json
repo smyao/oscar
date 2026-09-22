@@ -1,0 +1,36 @@
+{
+  "source": "reports/target_cv_failure_input.txt",
+  "run": "20260922T033934.426635Z",
+  "reported_by": "user from node93",
+  "project": "/workspace/gpt_new_oscar",
+  "build": "passed",
+  "extension_load": "passed",
+  "primitive_probe": {
+    "status": "primitive_probe_passed",
+    "device": "npu:0",
+    "device_name": "Ascend910B4",
+    "case_count": 75,
+    "by_family": {
+      "store": 54,
+      "merge": 21
+    },
+    "device_completion": true,
+    "elapsed_seconds": 9.744359731674194
+  },
+  "cv_probe": {
+    "status": "failed",
+    "case": "64-1-17",
+    "host_contract_tests_passed": 3,
+    "npu_cases_passed": 0,
+    "mismatched_elements": 64,
+    "total_elements": 384,
+    "max_absolute_error": 0.6885956525802612,
+    "atol": 0.005,
+    "rtol": 0.005
+  },
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "full_service_acceptance": "not_run",
+  "performance": "not_run",
+  "fix_target_retest": "not_run"
+}

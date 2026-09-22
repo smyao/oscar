@@ -3,9 +3,9 @@ START phase=015-guard cwd=/home/sunao2000.linux/gpt_new_oscar command=["/home/su
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 90611] exit success!
-[SUCCESS][CORE_1][pid 90612] exit success!
-[SUCCESS][CORE_2][pid 90613] exit success!
-[SUCCESS][CORE_3][pid 90614] exit success!
+[SUCCESS][CORE_0][pid 99824] exit success!
+[SUCCESS][CORE_1][pid 99825] exit success!
+[SUCCESS][CORE_2][pid 99826] exit success!
+[SUCCESS][CORE_3][pid 99827] exit success!
 {"backend":"ascendc_cpu_debug","status":"passed","op":"guard"}
-RESULT {"phase": "015-guard", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "guard", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_zero"], "returncode": 0, "elapsed_seconds": 0.105598, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/015-guard.log", "cleanup_complete": true}
+RESULT {"phase": "015-guard", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_primitive_cpu", "guard", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_zero"], "returncode": 0, "elapsed_seconds": 0.101697, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/015-guard.log", "cleanup_complete": true}

@@ -6,7 +6,7 @@
     "/home/sunao2000.linux/gpt_new_oscar/artifacts/cpu_cases/guard_zero"
   ],
   "returncode": 0,
-  "elapsed_seconds": 0.105598,
+  "elapsed_seconds": 0.101697,
   "timed_out": false,
   "interrupted": false,
   "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-primitives/015-guard.log",

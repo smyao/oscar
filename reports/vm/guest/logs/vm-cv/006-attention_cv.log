@@ -3,74 +3,74 @@ START phase=006-attention_cv cwd=/home/sunao2000.linux/gpt_new_oscar command=["/
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 91203] exit success!
-[SUCCESS][CORE_1][pid 91204] exit success!
-[SUCCESS][CORE_2][pid 91205] exit success!
-[SUCCESS][CORE_3][pid 91206] exit success!
+[SUCCESS][CORE_0][pid 100449] exit success!
+[SUCCESS][CORE_1][pid 100450] exit success!
+[SUCCESS][CORE_2][pid 100451] exit success!
+[SUCCESS][CORE_3][pid 100452] exit success!
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 91207] exit success!
-[SUCCESS][CORE_1][pid 91208] exit success!
-[SUCCESS][CORE_2][pid 91209] exit success!
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_3][pid 91210] exit success!
+[SUCCESS][CORE_0][pid 100453] exit success!
+[SUCCESS][CORE_1][pid 100454] exit success!
+[SUCCESS][CORE_2][pid 100455] exit success!
+[SUCCESS][CORE_3][pid 100456] exit success!
 metadata padded request and changed-slot cases passed
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 91211] exit success!
-[SUCCESS][CORE_1][pid 91212] exit success!
-[SUCCESS][CORE_2][pid 91213] exit success!
-[SUCCESS][CORE_3][pid 91214] exit success!
+[SUCCESS][CORE_0][pid 100457] exit success!
+[SUCCESS][CORE_1][pid 100458] exit success!
+[SUCCESS][CORE_2][pid 100459] exit success!
+[SUCCESS][CORE_3][pid 100460] exit success!
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 91215] exit success!
-[SUCCESS][CORE_1][pid 91216] exit success!
-[SUCCESS][CORE_2][pid 91217] exit success!
-[SUCCESS][CORE_3][pid 91218] exit success!
+[SUCCESS][CORE_0][pid 100461] exit success!
+[SUCCESS][CORE_1][pid 100462] exit success!
+[SUCCESS][CORE_2][pid 100463] exit success!
+[SUCCESS][CORE_3][pid 100464] exit success!
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 91219] exit success!
-[SUCCESS][CORE_1][pid 91220] exit success!
-[SUCCESS][CORE_2][pid 91221] exit success!
-[SUCCESS][CORE_3][pid 91222] exit success!
+[SUCCESS][CORE_0][pid 100465] exit success!
+[SUCCESS][CORE_1][pid 100466] exit success!
+[SUCCESS][CORE_2][pid 100467] exit success!
+[SUCCESS][CORE_3][pid 100468] exit success!
 MTP slot-derived context, duplicate and missing page cases passed
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 100469] exit success!
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 91223] exit success!
-[SUCCESS][CORE_1][pid 91224] exit success!
-[SUCCESS][CORE_2][pid 91225] exit success!
-[SUCCESS][CORE_3][pid 91226] exit success!
-[TmSim]: Run in serial mode.
-[TmSim]: Run in serial mode.
-[TmSim]: Run in serial mode.
-[SUCCESS][AIC_0][pid 91227] exit success!
+[SUCCESS][CORE_1][pid 100470] exit success!
+[SUCCESS][CORE_2][pid 100471] exit success!
+[SUCCESS][CORE_3][pid 100472] exit success!
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][AIV_0][pid 91228] exit success!
-[SUCCESS][AIV_1][pid 91229] exit success!
-[SUCCESS][AIC_1][pid 91230] exit success!
-[SUCCESS][AIV_2][pid 91231] exit success!
-[SUCCESS][AIV_3][pid 91232] exit success!
+[SUCCESS][AIC_0][pid 100473] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 100474] exit success!
+[SUCCESS][AIV_1][pid 100475] exit success!
+[SUCCESS][AIC_1][pid 100476] exit success!
+[SUCCESS][AIV_2][pid 100477] exit success!
+[SUCCESS][AIV_3][pid 100478] exit success!
 splits=1 empty_segments=0
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
 [TmSim]: Run in serial mode.
-[SUCCESS][CORE_0][pid 91234] exit success!
-[SUCCESS][CORE_1][pid 91235] exit success!
-[SUCCESS][CORE_2][pid 91236] exit success!
-[SUCCESS][CORE_3][pid 91237] exit success!
+[SUCCESS][CORE_0][pid 100480] exit success!
+[SUCCESS][CORE_1][pid 100481] exit success!
+[SUCCESS][CORE_2][pid 100482] exit success!
+[SUCCESS][CORE_3][pid 100483] exit success!
 max_abs=5.36442e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_hk2/expected_output.bin
 max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_hk2/expected_lse.bin
 {"backend":"ascendc_cpu_debug","op":"attention_cv","status":"passed"}
-RESULT {"phase": "006-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_hk2"], "returncode": 0, "elapsed_seconds": 1.559706, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/006-attention_cv.log", "cleanup_complete": true}
+RESULT {"phase": "006-attention_cv", "command": ["/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu", "attention_cv", "/home/sunao2000.linux/gpt_new_oscar/artifacts/cv_cpu_cases/d64_q4_c65_hk2"], "returncode": 0, "elapsed_seconds": 1.444486, "timed_out": false, "interrupted": false, "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv/006-attention_cv.log", "cleanup_complete": true}

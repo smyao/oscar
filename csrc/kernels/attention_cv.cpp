@@ -3,6 +3,8 @@
 // primitive launch ABI, signed conversions and explicit event dependencies.
 // Archive G26-G34/#4-20/#53-69: FP32 QK/PV/softmax accumulation, exact INT2
 // layout, per-query causal masks, all output/LSE rows written, checked tags.
+// Archive #126: last valid Q row must finish MTE3 reads before V zeroes the
+// reused UB for padding. MTE3_MTE2 alone cannot order a V-only padding path.
 // D.4 four questions: this replaces dequant+FIA and precise-window FIA.
 // Prior full-history restore cost 6499.8-6655.1ms vs FIA 18.5-18.9ms at 32K.
 // Here Vector unpacks one 32-token tile with SIMD Gather/Shift/And/Cast;
@@ -13,6 +15,8 @@
 // remains linear in history. UB is statically <192KiB/AIV for D<=256.
 // Target: short step <=0.6-1.1ms and 32K same-order as native FIA; NO target
 // precision/latency is claimed before fixed-tolerance NPU/profiler validation.
+// #126 adds one local MTE3->V dependency before padding writes; tile storage,
+// arithmetic and history traffic stay unchanged (no CPU/global sync or retry).
 // Native precedents: hc_pre_m_k_split_core.h mode-2 Cube/Vector flags;
 // hc_pre_cube_compute.h FP32 Mmad; moe_grouped_matmul.h MatmulImpl;
 // add_rms_norm_bias_multi_n.h Gather; PR triton_oscar_decode.py INT2 and LSE.
@@ -196,7 +200,13 @@ template<int32_t D> class AttentionCv {
         ReduceSum(check,dst,check[16],D);Fence<HardEvent::V_S>();
         if(!Finite(check.GetValue(0)))error=2;
         Fence<HardEvent::V_MTE3>();
-      } else {Duplicate(dst,0.0F,D);Fence<HardEvent::V_MTE3>();}
+      } else {
+        // The preceding row may still be reading dst on MTE3. Valid rows
+        // chain MTE3_MTE2 -> MTE2_V, but padding does no MTE2 load: without
+        // this edge Duplicate can zero the last valid query before its DMA.
+        Fence<HardEvent::MTE3_V>();
+        Duplicate(dst,0.0F,D);Fence<HardEvent::V_MTE3>();
+      }
       DataCopy(work[qOffset+row*D],dst,D);Fence<HardEvent::MTE3_MTE2>();
     }
   }

@@ -1,0 +1,517 @@
+{
+  "status": "failed",
+  "mode": "probe",
+  "config": "/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2/target.json",
+  "requests": [
+    {
+      "label": "serial-128",
+      "status": "passed",
+      "prompt_tokens": 128,
+      "completion_tokens": 16,
+      "elapsed_seconds": 0.0016514160088263452,
+      "prompt_ids_sha256": "fb63031a785eaf7df823c90a9602ce77f23d4d8bc0f96133dc3b5cf1771e2031",
+      "response": {
+        "choices": [
+          {
+            "text": "Sixteen generated tokens from the test fixture.",
+            "finish_reason": "length"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 128,
+          "completion_tokens": 16
+        }
+      }
+    },
+    {
+      "label": "serial-16384",
+      "status": "passed",
+      "prompt_tokens": 16384,
+      "completion_tokens": 16,
+      "elapsed_seconds": 0.002214208012446761,
+      "prompt_ids_sha256": "ecba92e23c2f9ad0571608c235210aa6c76c74cdba0daa6d7b62425e1b03b61e",
+      "response": {
+        "choices": [
+          {
+            "text": "Sixteen generated tokens from the test fixture.",
+            "finish_reason": "length"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 16384,
+          "completion_tokens": 16
+        }
+      }
+    },
+    {
+      "label": "serial-32768",
+      "status": "passed",
+      "prompt_tokens": 32768,
+      "completion_tokens": 16,
+      "elapsed_seconds": 0.0037558330222964287,
+      "prompt_ids_sha256": "704a76e083a227434df56947b219c9c8d391f87d3b9e713de425ca34421caa13",
+      "response": {
+        "choices": [
+          {
+            "text": "Sixteen generated tokens from the test fixture.",
+            "finish_reason": "length"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 32768,
+          "completion_tokens": 16
+        }
+      }
+    },
+    {
+      "label": "serial-50000",
+      "status": "passed",
+      "prompt_tokens": 50000,
+      "completion_tokens": 16,
+      "elapsed_seconds": 0.004991167021216825,
+      "prompt_ids_sha256": "6aafc47d8dd643d7fcbc1db4d972a07ee89783ad3f63b7be7f9dc1bdf58ddc76",
+      "response": {
+        "choices": [
+          {
+            "text": "Sixteen generated tokens from the test fixture.",
+            "finish_reason": "length"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 50000,
+          "completion_tokens": 16
+        }
+      }
+    },
+    {
+      "label": "mixed-0-128",
+      "status": "passed",
+      "prompt_tokens": 128,
+      "completion_tokens": 16,
+      "elapsed_seconds": 0.009728250006446615,
+      "prompt_ids_sha256": "fb63031a785eaf7df823c90a9602ce77f23d4d8bc0f96133dc3b5cf1771e2031",
+      "response": {
+        "choices": [
+          {
+            "text": "Sixteen generated tokens from the test fixture.",
+            "finish_reason": "length"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 128,
+          "completion_tokens": 16
+        }
+      }
+    },
+    {
+      "label": "mixed-2-32768",
+      "status": "passed",
+      "prompt_tokens": 32768,
+      "completion_tokens": 16,
+      "elapsed_seconds": 0.01070358298602514,
+      "prompt_ids_sha256": "704a76e083a227434df56947b219c9c8d391f87d3b9e713de425ca34421caa13",
+      "response": {
+        "choices": [
+          {
+            "text": "Sixteen generated tokens from the test fixture.",
+            "finish_reason": "length"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 32768,
+          "completion_tokens": 16
+        }
+      }
+    },
+    {
+      "label": "mixed-1-16384",
+      "status": "passed",
+      "prompt_tokens": 16384,
+      "completion_tokens": 16,
+      "elapsed_seconds": 0.013236207974841818,
+      "prompt_ids_sha256": "ecba92e23c2f9ad0571608c235210aa6c76c74cdba0daa6d7b62425e1b03b61e",
+      "response": {
+        "choices": [
+          {
+            "text": "Sixteen generated tokens from the test fixture.",
+            "finish_reason": "length"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 16384,
+          "completion_tokens": 16
+        }
+      }
+    },
+    {
+      "label": "mixed-3-50000",
+      "status": "passed",
+      "prompt_tokens": 50000,
+      "completion_tokens": 16,
+      "elapsed_seconds": 0.009801583015359938,
+      "prompt_ids_sha256": "6aafc47d8dd643d7fcbc1db4d972a07ee89783ad3f63b7be7f9dc1bdf58ddc76",
+      "response": {
+        "choices": [
+          {
+            "text": "Sixteen generated tokens from the test fixture.",
+            "finish_reason": "length"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 50000,
+          "completion_tokens": 16
+        }
+      }
+    }
+  ],
+  "server": {
+    "status": "failed",
+    "command": [
+      "/Users/sunao2000/gpt_new_oscar/.venv/bin/python",
+      "/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2/fake_server.py",
+      "58952",
+      "no_mtp",
+      "/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2/fake_telemetry.json"
+    ],
+    "target_argv": [
+      "serve",
+      "/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2/model",
+      "--served-model-name",
+      "qwen3.5",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "58952",
+      "--data-parallel-size",
+      "1",
+      "--tensor-parallel-size",
+      "4",
+      "--max-model-len",
+      "262144",
+      "--max-num-batched-tokens",
+      "16384",
+      "--max-num-seqs",
+      "128",
+      "--gpu-memory-utilization",
+      "0.9",
+      "--quantization",
+      "ascend",
+      "--compilation-config",
+      "{\"cudagraph_capture_sizes\":[1,4,8,12,16,24,32,48,56,64,72,84,96,108,112,128,160,172,196,200,212,232,272,288,312,328,344,360,384,400,416,432,448,480,512],\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+      "--speculative_config",
+      "{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":3,\"enforce_eager\":true}",
+      "--additional-config",
+      "{\"enable_cpu_binding\":true}",
+      "--hf-overrides",
+      "{\"text_config\":{\"rope_parameters\":{\"mrope_interleaved\":true,\"mrope_section\":[11,11,10],\"rope_type\":\"yarn\",\"rope_theta\":10000000,\"partial_rotary_factor\":0.25,\"factor\":4.0,\"original_max_position_embeddings\":262144}}}",
+      "--trust-remote-code",
+      "--async-scheduling",
+      "--allowed-local-media-path",
+      "/",
+      "--mm-processor-cache-gb",
+      "0",
+      "--mamba-cache-dtype",
+      "bfloat16",
+      "--mamba-ssm-cache-dtype",
+      "bfloat16"
+    ],
+    "log": "/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2/logs/server.log",
+    "trace_dir": "/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pytest-of-sunao2000/pytest-254/test_http_success_cannot_hide_2/logs/trace-8b0164a334314c99a3c377585a51764a",
+    "cleanup_complete": false,
+    "pid": 39200,
+    "owned_pids": [
+      39200
+    ],
+    "last_health_error": "URLError: <urlopen error [Errno 61] Connection refused>",
+    "startup_seconds": 0.230845,
+    "error": "ServiceProbeError: HTTP completed, but mandatory TP4/FULL/graph/MTP evidence did not pass",
+    "cleanup_error": "PermissionError: [Errno 1] Operation not permitted",
+    "exit_code": null,
+    "elapsed_seconds": 0.290345
+  },
+  "device_completion": "not_run",
+  "quality": "not_run",
+  "performance": "not_run",
+  "resource_release": "passed",
+  "resource_evidence": {
+    "before": {
+      "devices": [
+        40,
+        41,
+        42,
+        43
+      ],
+      "memory": [
+        {
+          "physical_device": 40,
+          "logical_device": 0,
+          "free_bytes": 2000000000,
+          "total_bytes": 4000000000
+        },
+        {
+          "physical_device": 41,
+          "logical_device": 1,
+          "free_bytes": 2000000000,
+          "total_bytes": 4000000000
+        },
+        {
+          "physical_device": 42,
+          "logical_device": 2,
+          "free_bytes": 2000000000,
+          "total_bytes": 4000000000
+        },
+        {
+          "physical_device": 43,
+          "logical_device": 3,
+          "free_bytes": 2000000000,
+          "total_bytes": 4000000000
+        }
+      ]
+    },
+    "release": {
+      "status": "passed",
+      "attempts": [
+        {
+          "snapshot": {
+            "devices": [
+              40,
+              41,
+              42,
+              43
+            ],
+            "memory": [
+              {
+                "physical_device": 40,
+                "logical_device": 0,
+                "free_bytes": 2000000000,
+                "total_bytes": 4000000000
+              },
+              {
+                "physical_device": 41,
+                "logical_device": 1,
+                "free_bytes": 2000000000,
+                "total_bytes": 4000000000
+              },
+              {
+                "physical_device": 42,
+                "logical_device": 2,
+                "free_bytes": 2000000000,
+                "total_bytes": 4000000000
+              },
+              {
+                "physical_device": 43,
+                "logical_device": 3,
+                "free_bytes": 2000000000,
+                "total_bytes": 4000000000
+              }
+            ]
+          },
+          "check": {
+            "status": "passed",
+            "tolerance_bytes": 1024,
+            "devices": [
+              {
+                "physical_device": 40,
+                "before_free_bytes": 2000000000,
+                "after_free_bytes": 2000000000,
+                "free_deficit_bytes": 0,
+                "total_unchanged": true,
+                "passed": true
+              },
+              {
+                "physical_device": 41,
+                "before_free_bytes": 2000000000,
+                "after_free_bytes": 2000000000,
+                "free_deficit_bytes": 0,
+                "total_unchanged": true,
+                "passed": true
+              },
+              {
+                "physical_device": 42,
+                "before_free_bytes": 2000000000,
+                "after_free_bytes": 2000000000,
+                "free_deficit_bytes": 0,
+                "total_unchanged": true,
+                "passed": true
+              },
+              {
+                "physical_device": 43,
+                "before_free_bytes": 2000000000,
+                "after_free_bytes": 2000000000,
+                "free_deficit_bytes": 0,
+                "total_unchanged": true,
+                "passed": true
+              }
+            ],
+            "scope": "resource release observation, not a performance or ownership attribution"
+          }
+        }
+      ],
+      "tolerance_bytes": 1024
+    }
+  },
+  "devices": [
+    40,
+    41,
+    42,
+    43
+  ],
+  "target_config_sha256": "46433b70de95b5df4e2f9b8b327b2d74575aa7a3dc2786299302469233dc6ca5",
+  "model_fingerprint": "a2e13ad99f2b8213436afbdf7019f97805851bf0e055bd68e60da7ee499d9103",
+  "mtp": {
+    "status": "failed",
+    "before": {
+      "vllm:spec_decode_num_drafts": 0.0,
+      "vllm:spec_decode_num_draft_tokens": 0.0,
+      "vllm:spec_decode_num_accepted_tokens": 0.0
+    },
+    "after": {
+      "vllm:spec_decode_num_drafts": 0.0,
+      "vllm:spec_decode_num_draft_tokens": 0.0,
+      "vllm:spec_decode_num_accepted_tokens": 0.0
+    },
+    "delta": {
+      "vllm:spec_decode_num_drafts": 0.0,
+      "vllm:spec_decode_num_draft_tokens": 0.0,
+      "vllm:spec_decode_num_accepted_tokens": 0.0
+    },
+    "before_missing": [],
+    "acceptance_rate": null,
+    "mean_acceptance_length": null,
+    "scope": "native MTP execution observation, not a quality comparison"
+  },
+  "telemetry": {
+    "status": "passed",
+    "errors": [],
+    "ranks": {
+      "0": {
+        "cache_layers": [
+          "language_model.model.layers.3.self_attn.attn",
+          "mtp.layers.0.self_attn.attn"
+        ],
+        "routed_layers": [
+          "language_model.model.layers.3.self_attn.attn",
+          "mtp.layers.0.self_attn.attn"
+        ],
+        "capture_records": [
+          {
+            "event": "graph_capture_return",
+            "rank": 0,
+            "descriptor": "batch=4",
+            "mode": "CUDAGraphMode.FULL"
+          }
+        ],
+        "replay_records": [
+          {
+            "event": "graph_replay_launch_return",
+            "rank": 0,
+            "descriptor": "batch=4",
+            "mode": "CUDAGraphMode.FULL"
+          }
+        ]
+      },
+      "1": {
+        "cache_layers": [
+          "language_model.model.layers.3.self_attn.attn",
+          "mtp.layers.0.self_attn.attn"
+        ],
+        "routed_layers": [
+          "language_model.model.layers.3.self_attn.attn",
+          "mtp.layers.0.self_attn.attn"
+        ],
+        "capture_records": [
+          {
+            "event": "graph_capture_return",
+            "rank": 1,
+            "descriptor": "batch=4",
+            "mode": "CUDAGraphMode.FULL"
+          }
+        ],
+        "replay_records": [
+          {
+            "event": "graph_replay_launch_return",
+            "rank": 1,
+            "descriptor": "batch=4",
+            "mode": "CUDAGraphMode.FULL"
+          }
+        ]
+      },
+      "2": {
+        "cache_layers": [
+          "language_model.model.layers.3.self_attn.attn",
+          "mtp.layers.0.self_attn.attn"
+        ],
+        "routed_layers": [
+          "language_model.model.layers.3.self_attn.attn",
+          "mtp.layers.0.self_attn.attn"
+        ],
+        "capture_records": [
+          {
+            "event": "graph_capture_return",
+            "rank": 2,
+            "descriptor": "batch=4",
+            "mode": "CUDAGraphMode.FULL"
+          }
+        ],
+        "replay_records": [
+          {
+            "event": "graph_replay_launch_return",
+            "rank": 2,
+            "descriptor": "batch=4",
+            "mode": "CUDAGraphMode.FULL"
+          }
+        ]
+      },
+      "3": {
+        "cache_layers": [
+          "language_model.model.layers.3.self_attn.attn",
+          "mtp.layers.0.self_attn.attn"
+        ],
+        "routed_layers": [
+          "language_model.model.layers.3.self_attn.attn",
+          "mtp.layers.0.self_attn.attn"
+        ],
+        "capture_records": [
+          {
+            "event": "graph_capture_return",
+            "rank": 3,
+            "descriptor": "batch=4",
+            "mode": "CUDAGraphMode.FULL"
+          }
+        ],
+        "replay_records": [
+          {
+            "event": "graph_replay_launch_return",
+            "rank": 3,
+            "descriptor": "batch=4",
+            "mode": "CUDAGraphMode.FULL"
+          }
+        ]
+      }
+    },
+    "event_count": 24,
+    "graph_capture": "returned",
+    "graph_replay": "launch_returned",
+    "device_completion": "established separately by completed service requests, not telemetry alone"
+  },
+  "error": "ServiceProbeError: HTTP completed, but mandatory TP4/FULL/graph/MTP evidence did not pass",
+  "cann_plog": {
+    "status": "no_matching_evidence",
+    "started_at": 1790052022.650296,
+    "owned_pids": [
+      39052,
+      39200
+    ],
+    "roots": [
+      "/Users/sunao2000/ascend/log"
+    ],
+    "files_read": 0,
+    "bytes_read": 0,
+    "entries_scanned": 0,
+    "truncated": false,
+    "excerpts": [],
+    "diagnostic_errors": [],
+    "scope": "recent task-owned CANN log excerpts; not a device-completion or root-cause certificate"
+  },
+  "elapsed_seconds": 0.2923109999974258
+}

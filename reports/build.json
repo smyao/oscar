@@ -1,9 +1,8 @@
 {
   "build": "passed",
-  "scope": "CANN cross-compilation in Lima VM; not an NPU execution result",
-  "signature": "13cf469f64ed7050b77062559e14dc58f62307138b4a75cfec679a73042a3a89",
-  "source_matches_current_csrc": true,
+  "scope": "Lima compiler-only VM CANN9.1 Ascend910B4",
+  "signature": "1020db3336b3c40f15a8e8a7aec97a695cb5d509662d8edd45d9527b0c07372a",
+  "device_completion": "not_run_by_this_build",
   "report": "reports/vm/guest/reports/build.json",
-  "device_completion": "not_run",
-  "target_environment_build": "not_run"
+  "initial_macos_attempt": "reports/initial_macos_build_attempt.json"
 }

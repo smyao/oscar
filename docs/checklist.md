@@ -17,11 +17,11 @@
 | [x] B04 | passed | 完成算子清单、AscendC 融合划分、Decode Stage1 伪代码和逐阶段读写流程。 | 七个AscendC符号完整源码、ABI、Cube/Vector/同步/UB与GM预算；docs/operator_inventory.md、cv_implementation.md、rotation_pipeline.md。 |
 | [ ] B05 | blocked | 给出 decode 计算量、HBM 流量、MTP 跨 query 复用和 Host 调度预算。 | H18总历史读取亚线性与精确dense attention存在数学冲突，已提出澄清。 |
 | [ ] B06 | in_progress | 固定功能、精度、性能测试方法和验收门槛，设计一键脚本及错误清理流程。 | PR容差未改，部署/故障处理/测量与profiler工具已实现；模型级质量门槛仍待实测前定义。 |
-| [ ] C01 | in_progress | 独立插件/算子工程可安装、可编译、可加载，原生源码未修改，安装脚本不使用 `cp`。 | Python包及CANN9.1/910B4交叉编译/链接通过；独立direct-launch库采用源签名SONAME，非custom OPP vendor。node93扩展依赖库加载失败见#125；修订RPATH与绝对路径加载，目标成功复验待回传。 |
+| [ ] C01 | in_progress | 独立插件/算子工程可安装、可编译、可加载，原生源码未修改，安装脚本不使用 `cp`。 | Python包及CANN9.1/910B4交叉编译/链接通过；独立direct-launch库采用源签名SONAME，非custom OPP vendor。node93后续构建及75项store/merge原语NPU执行通过，确认已越过#125加载故障；完整目标流程仍止于#126的CV数值失败。 |
 | [ ] C02 | in_progress | 版本能力 probe、延迟注册和幂等 Hook 通过 CLI、API server、各 worker 初始化验证。 | 轻量可撤销hook、factory、binding、真实native类/方法契约通过；实际API/server/所有worker未运行。 |
-| [ ] C03 | in_progress | 实现并验证 INT2 编码、旋转/裁剪/量化、KV store 与 Recent→History 增量迁移。 | AscendC rotate/clip/quant/pack/raw snapshot已实现，官方CPU-debug通过；目标NPU数值未测。 |
-| [ ] C04 | in_progress | 实现真实 fused INT2 CV Decode Stage1（CV=Cube/Vector，见 H07 注），并完成必要的分块/分段输出合并。 | 真正Cube QK/PV/逆旋转与Vector SIMD解包/softmax已编译、CPU-debug通过，S2/S20对拍及MTP共tile复用；NPU/性能未测，H18冲突保留。 |
-| [ ] C05 | in_progress | Sink/Recent Attention、History Attention 和参考数学语义一致，数值稳定。 | 三source causal/GQA与稳定LSE真实CPU-debug通过，含mixed batch/empty/非法数据；NPU未测。 |
+| [ ] C03 | in_progress | 实现并验证 INT2 编码、旋转/裁剪/量化、KV store 与 Recent→History 增量迁移。 | AscendC rotate/clip/quant/pack/raw snapshot已实现，官方CPU-debug通过；node93的store原语及非法值/边界NPU用例通过，融合旋转/裁剪路径仍未验收。 |
+| [ ] C04 | in_progress | 实现真实 fused INT2 CV Decode Stage1（CV=Cube/Vector，见 H07 注），并完成必要的分块/分段输出合并。 | 真正Cube QK/PV/逆旋转与Vector SIMD解包/softmax已编译、CPU-debug通过；node93首个CV用例D64/Q1/context17输出超差（#126）。已定位并修订query有效行→padding的MTE3→V同步缺口，目标复验/性能未完成，H18冲突保留。 |
+| [ ] C05 | in_progress | Sink/Recent Attention、History Attention 和参考数学语义一致，数值稳定。 | 三source causal/GQA与稳定LSE真实CPU-debug通过；node93 merge原语NPU用例通过，但CV首用例输出超差，其LSE断言尚未到达（#126）；完整数值验收未通过。 |
 | [ ] C06 | in_progress | 实现原生页表兼容的物理分配与视图，GDN 不受影响，HBM 中无冗余完整历史副本。 | 真实native grouping、BlockPool、Full/Mamba managers与GDN reshape执行通过；production raw分配与view已接通，NPU分配未跑。 |
 | [ ] C07 | in_progress | 在确有需要的路径提供有界恢复能力，证明 decode/verify 不走全历史恢复。 | prefix直接保留有界canonical BF16 snapshot，无全历史恢复函数；设备tag不匹配显式错误，CPU-debug故障注入通过。 |
 | [ ] D01 | in_progress | 首次 prefill 正确，未引入不必要的重复压缩和恢复。 | current chunk直接精确attention后仅压缩新KV，AscendC CPU-debug通过；真实模型首次prefill未测。 |
@@ -33,15 +33,15 @@
 | [ ] D07 | not_run | 16K、32K、50K 长输入实际使用 OSCAR，跨页与跨窗口边界均正确。 | 16K/32K/50K真实请求probe已实现，本机VM无模型/NPU，未实际运行。 |
 | [ ] D08 | not_run | TP=4、异步调度、目标图模式和 W8A8 权重量化共存，所有 rank 路由正确。 | 固定地址/实际输入视图契约、dtype与core属性处理已实现；TP4/异步/W8A8/图实机未跑。 |
 | [ ] D09 | in_progress | 前缀缓存、页共享/复用、请求取消/结束、抢占恢复等目标环境可达生命周期通过验证。 | 真实native block manager与canonical snapshot/回收代数已验证；全服务prefix/取消/抢占待NPU。 |
-| [ ] E01 | in_progress | 核心算子对齐参考；覆盖 pack/unpack、量化边界、尾块和 attention 数值误差。 | CANN交叉编译、官方CPU-debug和CPU oracle通过；110个显式NPU测试在本机not_run，不计通过。 |
+| [ ] E01 | in_progress | 核心算子对齐参考；覆盖 pack/unpack、量化边界、尾块和 attention 数值误差。 | CANN交叉编译、官方CPU-debug和CPU oracle通过；node93逻辑npu:0通过75项原语NPU探针（54store/21merge），随后首个CV数值用例失败；probe-cv的3项通过仅为Python/源码契约测试，其余CV/旋转用例因maxfail=1未由该日志证明完成。 |
 | [ ] E02 | not_run | GDN 隔离检查通过；FULL 量化后的层输出、模型输出与约定质量指标达标。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
 | [ ] E03 | not_run | MTP 接受率、接受长度、输出正确性和有效生成吞吐完成对照。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
 | [ ] E04 | not_run | 固定 token 数和固定 HBM 预算两种口径下证明真实缓存收益，计入全部新增开销。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
 | [ ] E05 | not_run | profiler 证明无禁止的 CPU/AiCPU 数据处理、同步、冗余 KV 双写及全历史恢复。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
 | [ ] E06 | not_run | 按第 10 节逐工况比较原生性能；无未解释退化，不以平均值掩盖慢项；**任何算子/相位耗时不得差于附录 D.1 原生基线**（上一版 dequant 6.5s/卡的崩盘即判失败的标准，见附录 D.3）。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
-| [ ] E07 | in_progress | 对照第 8.2 节验证历史故障防护，保存实际覆盖结果而非仅声明"已避免"。 | 历史故障约束已落实；本轮VM发现Log alias与Matmul Init重载问题并修复；CANN plog本任务PID诊断与失败保码通过本地测试。node93 回传的 devices:null、开发命令误用及扩展依赖库加载失败已登记 #123–#125；修订加载路径及实时日志，真机成功复验待回传。 |
+| [ ] E07 | in_progress | 对照第 8.2 节验证历史故障防护，保存实际覆盖结果而非仅声明"已避免"。 | 历史故障约束已落实；本轮VM发现Log alias与Matmul Init重载问题并修复；CANN plog本任务PID诊断与失败保码通过本地测试。node93回传已登记#123–#126；后续75项原语NPU执行通过确认加载错误已越过，首个CV数值用例暴露query缓冲同步缺口；源码修订后的CV真机复验待回传。 |
 | [ ] E08 | in_progress | **无回退逻辑验证**：静态审查 + 全量工况扫描证明代码中不存在任何回退/降级路径；16K/32K/50K 与各种 batch size 下 OSCAR 压缩路径全部实际命中（H13/H17），不存在静默走原生 BF16 全历史的分支。 | 静态/路由/错误注入通过；长序列真实压缩路径命中仍需目标probe。 |
-| [ ] F01 | in_progress | 一条 Bash 命令完成安装、编译、所需校准、probe、资源清理和正式启动。 | 一键安装/编译/NPU算子与CV/旋转对拍/自动旋转文件/TP4服务probe/清理/正式服务；保留探针并移除环境/原生源码/readiness审计，默认0–3卡和8989端口；阶段及服务日志实时输出并落盘。最新node93复跑止于probe-ops加载错误，全目标流程未完成。 |
+| [ ] F01 | in_progress | 一条 Bash 命令完成安装、编译、所需校准、probe、资源清理和正式启动。 | 一键安装/编译/NPU算子与CV/旋转对拍/自动旋转文件/TP4服务probe/清理/正式服务；保留探针并移除环境/原生源码/readiness审计，默认0–3卡和8989端口；阶段及服务日志实时输出并落盘。最新node93复跑通过75项原语探针，止于probe-cv数值错误，全目标流程未完成。 |
 | [ ] F02 | in_progress | 验证正常退出、失败退出和中断后的清理，重复执行不会遗留 worker 或加载旧产物。 | 真实CPU子进程/HTTP/超时/信号/释放失败与诊断故障注入通过；NPU资源回收尚无实证。 |
 | [ ] F03 | not_run | 正式服务按目标配置启动并完成真实请求，记录 OSCAR compressed decode/MTP 路由证据。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
 | [ ] F04 | in_progress | 交付代码、设计、完整 Checklist、测试/性能/显存报告、日志及 README 中的一键命令。 | 源码、设计、VM日志/报告、README和测量工具已交付；真实模型精度/性能/容量报告尚缺。 |
@@ -52,7 +52,7 @@
 1. H18复杂度口径；精确attention需要读取全部压缩历史。
 2. 已实现的CV/rotation/clip在目标NPU上的精度、图、性能验证。
 3. 已实现的prefix、GDN隔离、MTP和固定buffer在真实完整模型上验收。
-4. 本次配置已按附录 A/F 固定0–3卡、8989端口和ascend910b4；最新node93复跑已进入probe-ops但扩展加载失败，#125修订后的结果待回传。
+4. 本次配置已按附录 A/F 固定0–3卡、8989端口和ascend910b4；最新node93复跑通过75项原语NPU探针、首个CV数值用例失败，#126同步修订后的结果待回传。
 5. 模型质量门槛在实测前冻结；paired基线、NPU精度/图/资源/性能逐项过门。
 
-本地构建/测试结果与失败细节见 `reports/local_validation.json`、`reports/pytest.xml`、`reports/build.json`、`reports/readiness.json`。档案 #123–#125 记录用户回传的 node93 真实启动错误与源码修订；#125的RPATH缺失在VM旧产物上另有ELF证据，仍不等于目标库已成功加载或NPU算子已执行。
+本地构建/测试结果与失败细节见 `reports/local_validation.json`、`reports/pytest.xml`、`reports/build.json`、`reports/readiness.json`。档案#123–#126记录用户回传的node93真实故障与源码修订；#125加载故障已由后续75项原语NPU成功执行越过。最新原文保存在`reports/target_cv_failure_input.txt`，其中首个CV数值用例失败，完整模型、图和性能仍未验收。

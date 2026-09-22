@@ -1,6 +1,6 @@
 # oscar-ascendc 昇腾调试报错全量记录（Agent 报错查表版 · 共 120 条 · 已脱敏）
 
-> 2026-09-22 本项目续录：实际共 **159 条（G1–G34、#1–#125）**；旧标题条数与索引行号保留为历史材料，定位以条目标题为准。#123–#125 来自用户回传的 node93 启动日志；最新复跑止于 #125 的扩展依赖库加载错误，尚无 NPU 算子完成证据。
+> 2026-09-22 本项目续录：实际共 **160 条（G1–G34、#1–#126）**；旧标题条数与索引行号保留为历史材料，定位以条目标题为准。#123–#126 来自用户回传的 node93 日志；最新复跑通过75项store/merge原语NPU探针，止于 #126 的首个CV数值用例；完整模型、图与性能尚未验收。
 
 > **本文档是给调试 agent 用的"报错 → 日志"查表档案，禁止从头线性阅读。** 使用方法：
 > 1. 先在下面【症状速查表】按报错关键字定位条目编号（前半段 **G1~G34**，后半段 **1~73**，第三部分 **74~86**）；
@@ -107,6 +107,7 @@
 | 报错关键字 | 条目 |
 |-----------|------|
 | `AssertionError: Tensor-likes are not close!`（47/768 不匹配，max_abs 0.0533 vs 阈值 0.005） | G26 |
+| `test_npu_cv_matches_independent_dense_pr_oracle[64-1-17]`，64/384元素超差、max_abs 0.6885956525802612、最大误差位于head5 | 126 |
 | `AssertionError: Tensor-likes are not equal!`（window_k vs k，2044/2048 不匹配，max_abs 0.90625，rel 808） | G27 |
 | `eigensolver_known_spectrum` 特征值误差 7.90 / 71.14 / **139.44**（dim 8/64/128） | G28、G29 |
 | `history_attention` max_abs_error 超阈（0.010~0.104；后期降到 0.010~0.042 仍判 failed） | G28~G30、G32~G34、4、5、13~16 |
@@ -26412,3 +26413,672 @@ RESULT {"phase": "probe-ops", "command": ["/usr/local/python3.12.13/bin/python3"
 ### 证据与复验边界
 
 真机证据仅为上方用户回传片段：`returncode=1`、`device_completion=not_established`、`full_service_acceptance=not_run`；本轮未取得目标连接信息或成功复跑日志。VM 的旧 ELF、修订后的构建产物和本地实时输出/故障注入回归分别留存，不冒充真机设备、图或服务验收。回归项登记在 `docs/design.md` 第 7 节。
+
+
+### 后续本地补充证据（不作为新真机错误编号）
+
+加载修订后，本地396项测试通过、111项跳过、4项subtest通过；Linux ELF loader的10项用例通过，CANN最终编译及共享库RUNPATH/自身DT_NEEDED检查通过。VM中直接加载真实CANN kernel仍在自动生成的`__register_kernels → AscendCheckSoCVersion`构造路径中止：`aclrtGetSocName()`返回空指针，随后`std::string(char*)`抛出`std::logic_error`。这是无有效SoC设备的本地VM限制，不能计作真实kernel已加载或设备执行通过，也没有通过伪造SoC或修改CANN绕过。证据分别见`reports/linkage_after.txt`、`reports/linkage_vm_runtime.txt`、`reports/linkage_vm_constructor_trace.txt`、`reports/linkage_vm_constructor_disassembly.txt`。
+
+### 后续真机复验
+
+用户随后回传`20260922T033934.426635Z`这一轮node93日志（全文见下一条#126及`reports/target_cv_failure_input.txt`）：`build-ops`和`probe-ops`均返回0，75项store/merge探针均为`device_completion=passed`。这份实际设备执行证据确认本轮已越过#125的依赖库加载错误；仍不能推导CV、图、完整服务或性能通过。
+
+---
+
+## [126] 真机条目（gpt_new_oscar 项目，2026-09-22 用户回传）· phase=probe-cv
+
+**症状**：node93通过构建和75项store/merge原语真NPU探针后，首个CV数值用例`test_npu_cv_matches_independent_dense_pr_oracle[64-1-17]`失败。64/384个元素不满足冻结的0.005绝对/相对容差；最大绝对误差0.6885956525802612位于`(0,5,12)`，最大相对误差23.0565128326416位于`(0,5,58)`。日志仅明确最大误差落在head5，不能据此断言全部64个失配元素都属于该head。
+
+**命中的历史同族条目**：G26/G28/G30（设备执行完成但数值不对）、#13（LSE或部分指标正确仍不能放过输出超差）；性能设计同时遵守启动文档D.4，不得以全历史解压路径掩盖数值问题。
+
+### 已核实事实与验收边界
+
+- 本条原始日志属于`/workspace/gpt_new_oscar`，直接保存于`reports/target_cv_failure_input.txt`，共18162字节，SHA256为`87d314470d6428ad1e0f9c6f92d6ab1404afc2480e0d21e78292c696bbb16e2a`。该文件逐字节保留用户附件；没有使用其他项目日志。
+- `build-ops`返回0；`probe-ops`报告`primitive_probe_passed`、`device=npu:0`、`device_name=Ascend910B4`。解析其cases数组共有75项（54项store、21项merge），每项`device_completion=passed`，覆盖D64/D128/D256、边界、非法数值及地址复用。它们仅在逻辑设备`npu:0`运行，不是TP4多卡验收。这证明原语调用实际完成，并确认#125加载故障已越过。
+- `probe-cv`调用真实NPU算子并同步。失败发生在输出与独立dense PR oracle比较；此前status全零及positions比较通过，但这不能代表输出精度通过。测试在输出断言处终止，后续LSE正确性不能据此签成通过。
+- `--maxfail=1`使测试在首个失败后停止：本轮`1 failed, 3 passed`，返回码1。前3项是Python/源码契约测试，不是3项CV真NPU用例通过。其余CV用例、旋转探针、自动旋转文件、完整服务探针及正式服务未由这份日志证明执行或通过。
+- 原语报告明确`graph_capture=not_run`、`graph_replay=not_run`、`full_service_acceptance=not_run`、`performance=not_run`。本次不能把原语成功或status零记作完整NPU/图/性能验收。
+
+### 根因（源码同步缺口与数值复现）
+
+`LoadQueries`反复复用同一个`qFloatBuf`：有效query行通过MTE3搬出后，旧代码只设置`MTE3 → MTE2`依赖。下一行仍为有效query时，后续MTE2载入及`MTE2 → V`依赖间接保护了这块缓冲；下一行是padding时，直接在Vector上`Duplicate(dst,0)`，没有等待上一行MTE3读完。因此有效行后的padding清零可覆盖仍在向GM搬出的上一行query。
+
+首个用例`q_len=1、GQA=6`恰好在第5号有效query head之后进入第6行padding，符合该同步缺口的边界。本工程相同输入的独立数值复现中，仅把head5的Q置零，就得到对18个V均匀平均的输出，64个元素全部超差；最大绝对误差0.688595533发生于维度12、最大相对误差23.056454发生于维度58，与用户日志的0.6885956525802612/23.0565128326416及位置吻合。context17小于recent窗口32，该用例不消费INT2 history，不能把这一次错误归因于历史反量化。
+
+这是**源码中实际缺少的依赖与匹配错误形态的数值复现**，不是对真机流水线时序的直接采样证据；数值复现记录见`reports/cv_fence_diagnosis.json`。修订后是否在目标设备消除故障仍需复跑确认。分配器padding警告、status零以及CPU-debug此前通过均不替代这项确认。
+
+### 修法与后续复验
+
+在padding分支的`Duplicate`之前增加`MTE3 → V`事件等待，确保上一行的MTE3搬出完成后才在Vector上清零复用缓冲。改动只约束固定query tile内的已有缓冲生命周期：不增加历史恢复量，不新增全历史BF16存储，不加入Host逐head处理或CPU数值替代路径。按启动文档D.4继续保留CV融合路径和有界workspace，性能仍由真机实测判定。
+
+保留`configs/acceptance.json`冻结容差及失败用例，并以有效行转padding行的边界作为同步回归。任何源码修订、CPU或CANN VM验证都单独记账；目标CV数值、旋转、图、服务与性能仍需修订后的真机日志逐项确认。默认部署在本次探针失败后立即停止，真实退出码及traceback保持实时可见。回归项登记在`docs/design.md`第7节。
+
+### 用户回传日志全文
+
+```text
+  "reused": false
+}
+RESULT {"phase": "build-ops", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "tools.build_ops", "--soc", "ascend910b4", "--log-dir", "/workspace/gpt_new_oscar/logs/20260922T033934.426635Z/build"], "returncode": 0, "elapsed_seconds": 62.350903, "timed_out": false, "interrupted": false, "log": "/workspace/gpt_new_oscar/logs/20260922T033934.426635Z/build-ops.log", "cleanup_complete": true}
+[oscar] PASSED phase=build-ops rc=0 log=/workspace/gpt_new_oscar/logs/20260922T033934.426635Z/build-ops.log
+START phase=probe-ops cwd=/workspace/gpt_new_oscar command=["/usr/local/python3.12.13/bin/python3", "-m", "tools.probe_ops", "--output", "/workspace/gpt_new_oscar/logs/20260922T033934.426635Z/operators.json"]
+[W922 03:40:44.438458080 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[W922 03:40:51.249209240 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+{
+  "status": "primitive_probe_passed",
+  "device": "npu:0",
+  "device_name": "Ascend910B4",
+  "cases": [
+    {
+      "op": "store",
+      "dim": 64,
+      "tokens": 1,
+      "exact_bytes": true,
+      "gdn_guard_untouched": true,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store",
+      "dim": 64,
+      "tokens": 7,
+      "exact_bytes": true,
+      "gdn_guard_untouched": true,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store",
+      "dim": 64,
+      "tokens": 129,
+      "exact_bytes": true,
+      "gdn_guard_untouched": true,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_boundaries",
+      "dim": 64,
+      "block": 128,
+      "slot_dtype": "torch.int32",
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_boundaries",
+      "dim": 64,
+      "block": 128,
+      "slot_dtype": "torch.int64",
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_boundaries",
+      "dim": 64,
+      "block": 256,
+      "slot_dtype": "torch.int32",
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_boundaries",
+      "dim": 64,
+      "block": 256,
+      "slot_dtype": "torch.int64",
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 64,
+      "side": "key",
+      "fault": "constant",
+      "expected_status": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 64,
+      "side": "key",
+      "fault": "narrow",
+      "expected_status": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 64,
+      "side": "key",
+      "fault": "nan",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 64,
+      "side": "key",
+      "fault": "inf",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 64,
+      "side": "key",
+      "fault": "-inf",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 64,
+      "side": "value",
+      "fault": "constant",
+      "expected_status": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 64,
+      "side": "value",
+      "fault": "narrow",
+      "expected_status": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 64,
+      "side": "value",
+      "fault": "nan",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 64,
+      "side": "value",
+      "fault": "inf",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 64,
+      "side": "value",
+      "fault": "-inf",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_reused_addresses",
+      "dim": 64,
+      "device_completion": "passed",
+      "graph_replay": "not_run"
+    },
+    {
+      "op": "merge",
+      "dim": 64,
+      "splits": 1,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge",
+      "dim": 64,
+      "splits": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge",
+      "dim": 64,
+      "splits": 128,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge_invalid_input",
+      "dim": 64,
+      "fault": "nan_lse",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge_invalid_input",
+      "dim": 64,
+      "fault": "inf_lse",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge_invalid_input",
+      "dim": 64,
+      "fault": "nan_output",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge_reused_addresses",
+      "dim": 64,
+      "device_completion": "passed",
+      "graph_replay": "not_run"
+    },
+    {
+      "op": "store",
+      "dim": 128,
+      "tokens": 1,
+      "exact_bytes": true,
+      "gdn_guard_untouched": true,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store",
+      "dim": 128,
+      "tokens": 7,
+      "exact_bytes": true,
+      "gdn_guard_untouched": true,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store",
+      "dim": 128,
+      "tokens": 129,
+      "exact_bytes": true,
+      "gdn_guard_untouched": true,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_boundaries",
+      "dim": 128,
+      "block": 128,
+      "slot_dtype": "torch.int32",
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_boundaries",
+      "dim": 128,
+      "block": 128,
+      "slot_dtype": "torch.int64",
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_boundaries",
+      "dim": 128,
+      "block": 256,
+      "slot_dtype": "torch.int32",
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_boundaries",
+      "dim": 128,
+      "block": 256,
+      "slot_dtype": "torch.int64",
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 128,
+      "side": "key",
+      "fault": "constant",
+      "expected_status": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 128,
+      "side": "key",
+      "fault": "narrow",
+      "expected_status": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 128,
+      "side": "key",
+      "fault": "nan",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 128,
+      "side": "key",
+      "fault": "inf",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 128,
+      "side": "key",
+      "fault": "-inf",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 128,
+      "side": "value",
+      "fault": "constant",
+      "expected_status": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 128,
+      "side": "value",
+      "fault": "narrow",
+      "expected_status": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 128,
+      "side": "value",
+      "fault": "nan",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 128,
+      "side": "value",
+      "fault": "inf",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 128,
+      "side": "value",
+      "fault": "-inf",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_reused_addresses",
+      "dim": 128,
+      "device_completion": "passed",
+      "graph_replay": "not_run"
+    },
+    {
+      "op": "merge",
+      "dim": 128,
+      "splits": 1,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge",
+      "dim": 128,
+      "splits": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge",
+      "dim": 128,
+      "splits": 128,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge_invalid_input",
+      "dim": 128,
+      "fault": "nan_lse",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge_invalid_input",
+      "dim": 128,
+      "fault": "inf_lse",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge_invalid_input",
+      "dim": 128,
+      "fault": "nan_output",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge_reused_addresses",
+      "dim": 128,
+      "device_completion": "passed",
+      "graph_replay": "not_run"
+    },
+    {
+      "op": "store",
+      "dim": 256,
+      "tokens": 1,
+      "exact_bytes": true,
+      "gdn_guard_untouched": true,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store",
+      "dim": 256,
+      "tokens": 7,
+      "exact_bytes": true,
+      "gdn_guard_untouched": true,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store",
+      "dim": 256,
+      "tokens": 129,
+      "exact_bytes": true,
+      "gdn_guard_untouched": true,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_boundaries",
+      "dim": 256,
+      "block": 128,
+      "slot_dtype": "torch.int32",
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_boundaries",
+      "dim": 256,
+      "block": 128,
+      "slot_dtype": "torch.int64",
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_boundaries",
+      "dim": 256,
+      "block": 256,
+      "slot_dtype": "torch.int32",
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_boundaries",
+      "dim": 256,
+      "block": 256,
+      "slot_dtype": "torch.int64",
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 256,
+      "side": "key",
+      "fault": "constant",
+      "expected_status": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 256,
+      "side": "key",
+      "fault": "narrow",
+      "expected_status": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 256,
+      "side": "key",
+      "fault": "nan",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 256,
+      "side": "key",
+      "fault": "inf",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 256,
+      "side": "key",
+      "fault": "-inf",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 256,
+      "side": "value",
+      "fault": "constant",
+      "expected_status": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 256,
+      "side": "value",
+      "fault": "narrow",
+      "expected_status": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 256,
+      "side": "value",
+      "fault": "nan",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 256,
+      "side": "value",
+      "fault": "inf",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_domain_error",
+      "dim": 256,
+      "side": "value",
+      "fault": "-inf",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "store_reused_addresses",
+      "dim": 256,
+      "device_completion": "passed",
+      "graph_replay": "not_run"
+    },
+    {
+      "op": "merge",
+      "dim": 256,
+      "splits": 1,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge",
+      "dim": 256,
+      "splits": 3,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge",
+      "dim": 256,
+      "splits": 128,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge_invalid_input",
+      "dim": 256,
+      "fault": "nan_lse",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge_invalid_input",
+      "dim": 256,
+      "fault": "inf_lse",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge_invalid_input",
+      "dim": 256,
+      "fault": "nan_output",
+      "expected_status": 2,
+      "device_completion": "passed"
+    },
+    {
+      "op": "merge_reused_addresses",
+      "dim": 256,
+      "device_completion": "passed",
+      "graph_replay": "not_run"
+    }
+  ],
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "full_service_acceptance": "not_run",
+  "performance": "not_run",
+  "elapsed_seconds": 9.744359731674194
+}
+RESULT {"phase": "probe-ops", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "tools.probe_ops", "--output", "/workspace/gpt_new_oscar/logs/20260922T033934.426635Z/operators.json"], "returncode": 0, "elapsed_seconds": 13.41138, "timed_out": false, "interrupted": false, "log": "/workspace/gpt_new_oscar/logs/20260922T033934.426635Z/probe-ops.log", "cleanup_complete": true}
+[oscar] PASSED phase=probe-ops rc=0 log=/workspace/gpt_new_oscar/logs/20260922T033934.426635Z/probe-ops.log
+START phase=probe-cv cwd=/workspace/gpt_new_oscar command=["/usr/local/python3.12.13/bin/python3", "-m", "pytest", "-q", "--maxfail=1", "/workspace/gpt_new_oscar/tests/test_cv_contracts.py", "/workspace/gpt_new_oscar/tests/test_rotation_npu.py", "--junitxml=/workspace/gpt_new_oscar/logs/20260922T033934.426635Z/cv-npu.xml"]
+...F
+=================================== FAILURES ===================================
+___________ test_npu_cv_matches_independent_dense_pr_oracle[64-1-17] ___________
+
+dim = 64, qlen = 1, context = 17
+
+    @pytest.mark.parametrize("dim,qlen,context", [(64, 1, 17), (64, 4, 65),
+        (128, 4, 129), (256, 1, 401), (256, 4, 511), (256, 4, 0)])
+    def test_npu_cv_matches_independent_dense_pr_oracle(dim, qlen, context):
+        ops = _npu_ops()
+        data, expected, expected_lse = _case(dim, qlen, context)
+        tensors = {key: value.npu() for key, value in data.items() if isinstance(value, torch.Tensor)}
+        tasks = torch.empty((qlen * 3, 16), dtype=torch.int64, device="npu")
+        positions = torch.empty(qlen, dtype=torch.int64, device="npu")
+        partial = torch.full((qlen, 6, 3, dim), float("nan"), device="npu")
+        lse = torch.full((qlen, 6, 3), float("nan"), device="npu")
+        status = torch.full((qlen * 3, 2), -99, dtype=torch.int32, device="npu")
+        workspace = torch.empty(2 * (256 * dim + 4096) * 4, dtype=torch.uint8, device="npu")
+        ops.prepare_attention_tasks_out(tensors["starts"], tensors["lens"], tensors["slots"],
+                                       tasks, positions, 6, 1, 4, 32, 1)
+        ops.attention_cv_out(tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"],
+            tensors["rv"], tensors["raw"], tensors["table"], tensors["wk"], tensors["wv"],
+            tensors["tags"], tasks, partial, lse, status, workspace, 512, 2,
+            data["prefix"], data["stride"], 4, 32, 3, 1, dim ** -0.5, 2)
+        torch.npu.synchronize()
+        assert torch.count_nonzero(status).item() == 0
+        torch.testing.assert_close(positions.cpu(), torch.arange(context, context + qlen))
+        got_lse = torch.logsumexp(lse.float(), dim=-1)
+        got = (partial * torch.exp(lse - got_lse[..., None])[..., None]).sum(dim=2)
+        tolerance = json.loads((ROOT / "configs/acceptance.json").read_text())["fused_attention"]
+>       torch.testing.assert_close(got.cpu(), expected, **tolerance)
+E       AssertionError: Tensor-likes are not close!
+E       
+E       Mismatched elements: 64 / 384 (16.7%)
+E       Greatest absolute difference: 0.6885956525802612 at index (0, 5, 12) (up to 0.005 allowed)
+E       Greatest relative difference: 23.0565128326416 at index (0, 5, 58) (up to 0.005 allowed)
+
+tests/test_cv_contracts.py:155: AssertionError
+----------------------------- Captured stderr call -----------------------------
+[W922 03:41:05.525036410 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+=============================== warnings summary ===============================
+../../usr/local/python3.12.13/lib/python3.12/site-packages/torch/jit/_script.py:362: 14 warnings
+  /usr/local/python3.12.13/lib/python3.12/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: /workspace/gpt_new_oscar/logs/20260922T033934.426635Z/cv-npu.xml -
+=========================== short test summary info ============================
+FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_oracle[64-1-17]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 3 passed, 14 warnings in 9.83s
+RESULT {"phase": "probe-cv", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "pytest", "-q", "--maxfail=1", "/workspace/gpt_new_oscar/tests/test_cv_contracts.py", "/workspace/gpt_new_oscar/tests/test_rotation_npu.py", "--junitxml=/workspace/gpt_new_oscar/logs/20260922T033934.426635Z/cv-npu.xml"], "returncode": 1, "elapsed_seconds": 14.112283, "timed_out": false, "interrupted": false, "log": "/workspace/gpt_new_oscar/logs/20260922T033934.426635Z/probe-cv.log", "cleanup_complete": true}
+[oscar] FAILED phase=probe-cv rc=1 log=/workspace/gpt_new_oscar/logs/20260922T033934.426635Z/probe-cv.log
+root@node93:/workspace/gpt_new_oscar#
+```

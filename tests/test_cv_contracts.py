@@ -3,6 +3,8 @@
 CPU assertions enforce published ABI/workspace and genuine Cube structure.
 Opt-in NPU cases execute the compiled operators against the independent PR
 oracle, including GQA6 MTP4 and precise/history boundaries.
+The node93 2026-09-22 head5 failure adds Q-tail/DMA ownership regressions;
+its CPU numerical fingerprint is diagnostic, never device acceptance.
 D.4: no full-history allocation in production; only this test oracle may
 materialize history. Tests do not turn CPU results into NPU/performance evidence.
 """
@@ -67,7 +69,7 @@ def _npu_ops():
     return torch.ops.oscar_ascend_ops
 
 
-def _case(dim, qlen, context, hk=1):
+def _case(dim, qlen, context, hk=1, *, query_seed=None):
     from oscar_ascend.ops.reference import attention, encode_kv, decode_kv
     generator = torch.Generator().manual_seed(47 + dim + context)
     hq, sink, recent, speculative = 6 * hk, 4, 32, 3
@@ -77,6 +79,9 @@ def _case(dim, qlen, context, hk=1):
     oldv = torch.randn(context, hk, dim, generator=generator).to(torch.bfloat16)
     currentk = torch.randn(qlen, hk, dim, generator=generator).to(torch.bfloat16)
     currentv = torch.randn(qlen, hk, dim, generator=generator).to(torch.bfloat16)
+    if query_seed is not None:
+        q = torch.randn(qlen, hq, dim,
+                        generator=torch.Generator().manual_seed(query_seed)).to(torch.bfloat16)
     rotation_generator = torch.Generator().manual_seed(1900 + dim)
     rk = torch.linalg.qr(torch.randn(dim, dim, generator=rotation_generator)).Q.contiguous()
     rv = torch.linalg.qr(torch.randn(dim, dim, generator=rotation_generator)).Q.contiguous()
@@ -128,27 +133,43 @@ def _case(dim, qlen, context, hk=1):
     return args, torch.cat(expected), torch.cat(expected_lse)
 
 
-@pytest.mark.parametrize("dim,qlen,context", [(64, 1, 17), (64, 4, 65),
-    (128, 4, 129), (256, 1, 401), (256, 4, 511), (256, 4, 0)])
-def test_npu_cv_matches_independent_dense_pr_oracle(dim, qlen, context):
-    ops = _npu_ops()
-    data, expected, expected_lse = _case(dim, qlen, context)
+def _device_case(data):
+    qlen, dim, hq, hk, splits = (data[key] for key in ("qlen", "dim", "hq", "hk", "splits"))
     tensors = {key: value.npu() for key, value in data.items() if isinstance(value, torch.Tensor)}
-    tasks = torch.empty((qlen * 3, 16), dtype=torch.int64, device="npu")
-    positions = torch.empty(qlen, dtype=torch.int64, device="npu")
-    partial = torch.full((qlen, 6, 3, dim), float("nan"), device="npu")
-    lse = torch.full((qlen, 6, 3), float("nan"), device="npu")
-    status = torch.full((qlen * 3, 2), -99, dtype=torch.int32, device="npu")
-    workspace = torch.empty(2 * (256 * dim + 4096) * 4, dtype=torch.uint8, device="npu")
+    buffers = dict(
+        tasks=torch.empty((qlen * hk * 3 * splits, 16), dtype=torch.int64, device="npu"),
+        positions=torch.empty(qlen, dtype=torch.int64, device="npu"),
+        partial=torch.empty((qlen, hq, 3 * splits, dim), dtype=torch.float32, device="npu"),
+        lse=torch.empty((qlen, hq, 3 * splits), dtype=torch.float32, device="npu"),
+        status=torch.empty((qlen * hk * 3 * splits, 2), dtype=torch.int32, device="npu"),
+        workspace=torch.empty(data["cores"] * (256 * dim + 4096) * 4, dtype=torch.uint8, device="npu"),
+    )
+    return tensors, buffers
+
+
+def _execute_cv(ops, data, tensors, buffers):
+    tasks, positions, partial, lse, status, workspace = (
+        buffers[key] for key in ("tasks", "positions", "partial", "lse", "status", "workspace"))
+    partial.fill_(float("nan"))
+    lse.fill_(float("nan"))
+    status.fill_(-99)
+    positions.fill_(-99)
     ops.prepare_attention_tasks_out(tensors["starts"], tensors["lens"], tensors["slots"],
-                                   tasks, positions, 6, 1, 4, 32, 1)
+                                   tasks, positions, data["hq"], data["hk"], data["sink"],
+                                   data["recent"], data["splits"])
     ops.attention_cv_out(tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"],
         tensors["rv"], tensors["raw"], tensors["table"], tensors["wk"], tensors["wv"],
-        tensors["tags"], tasks, partial, lse, status, workspace, 512, 2,
-        data["prefix"], data["stride"], 4, 32, 3, 1, dim ** -0.5, 2)
+        tensors["tags"], tasks, partial, lse, status, workspace, data["block_tokens"], data["blocks"],
+        data["prefix"], data["stride"], data["sink"], data["recent"], data["speculative"],
+        data["splits"], data["dim"] ** -0.5, data["cores"])
     torch.npu.synchronize()
+
+
+def _assert_cv_result(data, buffers, expected, expected_lse):
+    partial, lse, status, positions = (buffers[key] for key in ("partial", "lse", "status", "positions"))
+    context = int(data["lens"][0]) - data["qlen"]
     assert torch.count_nonzero(status).item() == 0
-    torch.testing.assert_close(positions.cpu(), torch.arange(context, context + qlen))
+    torch.testing.assert_close(positions.cpu(), torch.arange(context, context + data["qlen"]))
     got_lse = torch.logsumexp(lse.float(), dim=-1)
     got = (partial * torch.exp(lse - got_lse[..., None])[..., None]).sum(dim=2)
     tolerance = json.loads((ROOT / "configs/acceptance.json").read_text())["fused_attention"]
@@ -157,6 +178,64 @@ def test_npu_cv_matches_independent_dense_pr_oracle(dim, qlen, context):
     # Archive G30/#12: every segment, including empty history, wrote finite output.
     assert torch.isfinite(partial).all().item()
     assert not torch.isnan(lse).any().item()
+
+
+@pytest.mark.parametrize("dim,qlen,context", [(64, 1, 17), (64, 4, 65),
+    (128, 4, 129), (256, 1, 401), (256, 4, 511), (256, 4, 0)])
+def test_npu_cv_matches_independent_dense_pr_oracle(dim, qlen, context):
+    ops = _npu_ops()
+    data, expected, expected_lse = _case(dim, qlen, context)
+    tensors, buffers = _device_case(data)
+    _execute_cv(ops, data, tensors, buffers)
+    _assert_cv_result(data, buffers, expected, expected_lse)
+
+
+@pytest.mark.parametrize("dim,qlen", [(64, 1), (64, 2), (64, 4), (64, 5),
+    (64, 6), (64, 10), (128, 6), (256, 10)])
+def test_npu_cv_query_tail_survives_padding_and_reused_workspace(dim, qlen):
+    # GQA6 produces 6/12/24/30/36/60 live Q rows: tails before and after the
+    # AIV lane boundary at row32. Context17 keeps this test entirely precise,
+    # isolating Q publication from quantization and inverse-rotation behavior.
+    # D.4: keep the 64-row reuse tile; no serial fallback or extra kernel route.
+    ops = _npu_ops()
+    data, expected, expected_lse = _case(dim, qlen, 17)
+    tensors, buffers = _device_case(data)
+    addresses = {key: value.data_ptr() for key, value in {**tensors, **buffers}.items()}
+    for iteration in range(3):
+        if iteration:
+            changed, expected, expected_lse = _case(dim, qlen, 17, query_seed=9100 + iteration)
+            assert not torch.equal(data["q"], changed["q"])
+            data = changed
+            tensors["q"].copy_(data["q"])
+            tensors["qr"].copy_(data["qr"])
+        _execute_cv(ops, data, tensors, buffers)
+        assert {key: value.data_ptr() for key, value in {**tensors, **buffers}.items()} == addresses
+        # The final live tasks on both Cube cores are precise-window/current
+        # tasks. Their documented workspace starts with Q[64,D], so inspect
+        # the actual device-published Q as a bounded diagnostic before merge.
+        staged = buffers["workspace"].cpu().view(torch.float32).reshape(data["cores"], -1)
+        staged = staged[:, :64 * dim].reshape(data["cores"], 64, dim)
+        target = torch.zeros(64, dim, dtype=torch.float32)
+        target[:qlen * data["hq"]] = data["q"].float().reshape(-1, dim)
+        torch.testing.assert_close(staged, target.expand_as(staged), atol=0, rtol=0,
+            msg=f"Q DMA staging corrupted before padding, iteration={iteration}, D={dim}, qlen={qlen}")
+        _assert_cv_result(data, buffers, expected, expected_lse)
+
+
+def test_cpu_zeroed_tail_query_matches_reported_failure_fingerprint_only():
+    # Diagnostic for node93's first failing D64/q1/context17 probe. This does
+    # not execute the operator or establish that its NPU race has been fixed.
+    data, expected, _ = _case(64, 1, 17)
+    rows = torch.tensor([p if p < 4 else 4 + p % 35 for p in range(17)])
+    values = torch.cat((data["wv"][1, rows].float(), data["cv"].float()))
+    zero_query_output = values.mean(dim=0)[0]
+    reference = expected[0, 5]
+    error = (zero_query_output - reference).abs()
+    tolerance = json.loads((ROOT / "configs/acceptance.json").read_text())["fused_attention"]
+    assert torch.count_nonzero(~torch.isclose(zero_query_output, reference, **tolerance)).item() == 64
+    assert error.argmax().item() == 12
+    assert error.max().item() == pytest.approx(0.6885956525802612, abs=2e-6)
+    assert (error / reference.abs()).argmax().item() == 58
 
 
 def export_cpu_debug_goldens(directory):

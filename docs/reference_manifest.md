@@ -13,7 +13,7 @@
 
 本地开发环境是 macOS arm64、Python3.12.6。独立 `.venv` 使用 torch2.14.0 做CPU oracle测试，**不代表目标torch2.10.0**。macOS本体没有CANN/NPU；本轮已发现并使用Lima oscar内的CANN9.1、bisheng15、aarch64 Linux与官方CPU调试库。VM独立环境为Torch2.12.0+cpu/torch_npu2.12.0/pybind11 3.1.0，与目标Torch2.10版本不同，不能代替目标运行。详见 reports/vm/validation.json 及 `reports/environment.json`、`local_environment.json`。
 
-目标模型位置、TP4、图、MTP等保留于 `configs/target.json`。真机连接方式未提供；模型config与权重不在本机，FULL层数/head_dim/GDN实际dtype形状必须由目标环境核实。设备与编译目标按本次启动文档附录 F 固定为物理卡0–3和ascend910b4，端口按附录 A 保留8989；其他项目记忆不构成本任务配置来源。用户回传的 node93 默认设备空值错误见档案 #123；最新复跑已进入 `probe-ops`，但扩展依赖库加载失败，见 #125，尚无 NPU 算子完成证据。
+目标模型位置、TP4、图、MTP等保留于 `configs/target.json`。真机连接方式未提供；模型config与权重不在本机，FULL层数/head_dim/GDN实际dtype形状必须由目标环境核实。设备与编译目标按本次启动文档附录 F 固定为物理卡0–3和ascend910b4，端口按附录 A 保留8989；其他项目记忆不构成本任务配置来源。用户回传的 node93 默认设备空值错误见档案 #123；最新复跑已通过 `probe-ops` 的75项 store/merge 原语 NPU 探针，越过 #125 的依赖库加载错误；随后首个 CV 数值用例失败，见 #126。
 
 ## 权威语义入口
 
@@ -29,9 +29,9 @@
 2. 原生GDN是SoA；FULL按AoS页首寻址可能覆盖其他GDN页。
 3. `136 B` 是D256/head的PR实际slot大小；`160 B`并非必需语义。
 4. `vllm-ascend-v023-seam-map.md` 的强制eager结论过时；当前native代码保留FULL_DECODE_ONLY。
-5. 档案实际为G1–G34及#1–#125，合计159条。标题里的120条以及部分旧索引行号已过时，按标题定位。
+5. 档案实际为G1–G34及#1–#126，合计160条。标题里的120条以及部分旧索引行号已过时，按标题定位。
 6. #122修正#113/#118/#119的OPP路径推断：自定义路径每项应是vendor目录。本工程采用原生已有的direct-launch单路径，不覆盖ASCEND_OPP_PATH。
 
 ## 仍缺少的输入/证据
 
-真机连接及完整执行日志（用户已回传配置失败、开发命令误用和 `probe-ops` 加载失败片段）；同环境原生基线；实际模型config与权重指纹；质量评估数据和预先冻结的logits/任务指标/MTP容差；目标Torch2.10环境加载成功及设备/图/profiler结果；H18复杂度冲突的需求结论。VM CANN交叉编译结果已经存在，不属于缺失项。
+真机连接及完整执行日志（用户已回传配置失败、开发命令误用、加载失败及其后75项原语通过/首个CV数值失败片段）；同环境原生基线；实际模型config与权重指纹；质量评估数据和预先冻结的logits/任务指标/MTP容差；完整目标设备/图/profiler结果；H18复杂度冲突的需求结论。VM CANN交叉编译结果已经存在，不属于缺失项。

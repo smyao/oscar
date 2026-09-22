@@ -1,0 +1,30 @@
+{
+  "scope": "Local macOS subprocess cleanup investigation; not target NPU evidence or a hardware archive entry",
+  "trigger": "reports/pytest.log: no_mtp fixture cleanup PermissionError, cleanup_complete=false, exit_code=null",
+  "initial_reproduction": {
+    "iteration": 0,
+    "owned_pid": 39816,
+    "successful_calls": ["killpg(39816, 0)", "killpg(39816, SIGTERM)"],
+    "failing_call": "killpg(39816, 0)",
+    "error": "PermissionError: [Errno 1] Operation not permitted",
+    "ps_columns": ["pid", "ppid", "pgid", "stat", "uid", "command"],
+    "ps_output": "39816 39815 39816 Z 501 <defunct>",
+    "stack": ["cleanup_group tools/phase.py:104", "group_exists tools/phase.py:88", "os.killpg(pgid, 0)"],
+    "subsequent_owned_child_poll": -15
+  },
+  "immediate_poll_retry_experiment": {
+    "status": "failed",
+    "finding": "poll() can still return None in the exit transition; an immediate group probe can raise EPERM again"
+  },
+  "bounded_wait_experiment": {
+    "owned_children": 80,
+    "cleanup_passed": 80,
+    "eperm_events": 80,
+    "wait_seconds_when_poll_returned_none": 0.1,
+    "reaped_returncode": -15,
+    "fresh_probe_result_after_reap": "ESRCH in all 80 cases",
+    "sample": {"pid": 40158, "signal": 0, "initial_poll": null, "reaped_returncode": -15, "retry": "ESRCH"}
+  },
+  "implemented_policy": "On group EPERM, poll and if needed wait at most 0.2 seconds for the known direct child, then probe the owned group once. Only ESRCH establishes absence. A live child wait timeout, persistent probe EPERM or a remaining group after signal denial still fails.",
+  "acceptance_boundary": "No assertions relaxed; local cleanup repair does not establish NPU, graph, precision or performance acceptance"
+}

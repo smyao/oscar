@@ -2,9 +2,12 @@
 import json
 from pathlib import Path
 import sys
+import signal
+import subprocess
 import time
 import pytest
 from tools.phase import run_phase
+from tools import phase
 from tools.environment import compare_integrity, file_fingerprint
 from tools.build_ops import normalize_soc, cann_root, clear_owned_build
 from tools.target_cli import serve_argv, target_env
@@ -38,6 +41,99 @@ def test_timeout_is_bounded_and_reaped(tmp_path):
 def test_exec_failure_recorded(tmp_path):
     result = run_phase("missing", [str(tmp_path / "no-executable")], cwd=ROOT, log_dir=tmp_path, timeout=1)
     assert result.returncode == 127 and "EXEC_ERROR" in Path(result.log).read_text()
+
+
+class ExitingChild:
+    """A deterministic owned child in Darwin's exit-before-waitpid window."""
+    pid = 42900
+
+    def __init__(self, *, live=False):
+        self.returncode = None
+        self.waits = []
+        self.live = live
+
+    def poll(self):
+        return self.returncode
+
+    def wait(self, timeout):
+        self.waits.append(timeout)
+        if self.live:
+            raise subprocess.TimeoutExpired(["owned-fixture"], timeout)
+        self.returncode = -15
+        return self.returncode
+
+
+@pytest.mark.parametrize("failing_signal", [0, signal.SIGTERM, signal.SIGKILL])
+def test_cleanup_reaps_exiting_owned_child_before_confirming_group_disappearance(monkeypatch, failing_signal):
+    # Local macOS reproduction, not target NPU evidence: killpg(0) EPERM for
+    # a Z/<defunct> child disappears after waitpid reaps that owned child.
+    child = ExitingChild()
+    calls = []
+    injected = False
+
+    def killpg(pid, signum):
+        nonlocal injected
+        assert pid == child.pid
+        calls.append(signum)
+        if child.returncode is not None:
+            raise ProcessLookupError("group is now absent")
+        if signum == failing_signal and not injected:
+            injected = True
+            raise PermissionError("owned child exiting")
+
+    monkeypatch.setattr(phase.os, "killpg", killpg)
+    assert phase.cleanup_group(child, grace=0)
+    assert injected and child.returncode == -15
+    assert child.waits and max(child.waits) <= 1
+    assert calls[-1] == 0  # only a fresh ESRCH probe establishes disappearance
+
+
+def test_cleanup_never_treats_persistent_group_permission_error_as_absence(monkeypatch):
+    child = ExitingChild()
+    calls = []
+    denied = PermissionError("persistent group denial")
+
+    def killpg(pid, signum):
+        calls.append((pid, signum))
+        raise denied
+
+    monkeypatch.setattr(phase.os, "killpg", killpg)
+    with pytest.raises(PermissionError) as failure:
+        phase.cleanup_group(child, grace=0)
+    assert failure.value is denied and child.returncode == -15
+    assert calls == [(child.pid, 0), (child.pid, 0)]
+
+
+def test_cleanup_live_child_permission_error_has_one_bounded_wait_and_still_fails(monkeypatch):
+    child = ExitingChild(live=True)
+    denied = PermissionError("live child denied")
+    calls = []
+
+    def killpg(pid, signum):
+        calls.append((pid, signum))
+        raise denied
+
+    monkeypatch.setattr(phase.os, "killpg", killpg)
+    with pytest.raises(PermissionError) as failure:
+        phase.cleanup_group(child, grace=0)
+    assert failure.value is denied and child.returncode is None
+    assert child.waits == [.2] and calls == [(child.pid, 0)]
+
+
+@pytest.mark.parametrize("failing_signal", [signal.SIGTERM, signal.SIGKILL])
+def test_signal_denial_is_not_hidden_when_owned_group_still_exists(monkeypatch, failing_signal):
+    child = ExitingChild()
+    denied = PermissionError("signal denied for remaining group")
+
+    def killpg(pid, signum):
+        assert pid == child.pid
+        if signum == failing_signal:
+            raise denied
+
+    monkeypatch.setattr(phase.os, "killpg", killpg)
+    with pytest.raises(PermissionError) as failure:
+        phase.cleanup_group(child, grace=0)
+    assert failure.value is denied and child.returncode == -15
 
 
 def test_native_mutation_detects_new_deleted_and_changed(tmp_path):

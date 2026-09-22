@@ -1,6 +1,6 @@
 # OSCAR Ascend：端到端设计与可证边界
 
-本设计以 PR `57286d5d`、vLLM `0fc695fc`、Ascend `19e43698` 为准，历史故障来自工作区档案 G1–G34、#1–#125。本轮已完成源码调用链、VM CANN编译和官方CPU-debug；设计证明、CPU调试、设备完成、图捕获、图回放、性能分别记账。待验证项不能勾选。
+本设计以 PR `57286d5d`、vLLM `0fc695fc`、Ascend `19e43698` 为准，历史故障来自工作区档案 G1–G34、#1–#126。本轮已完成源码调用链、VM CANN编译和官方CPU-debug；设计证明、CPU调试、设备完成、图捕获、图回放、性能分别记账。待验证项不能勾选。
 
 ## 1. 全局生命周期
 
@@ -109,7 +109,8 @@ A2 Cube/Vector片上交接也需实际CANN编译/运行证据；不能把经GM�
 |#98–110/#112–115/#118–122|构建产物/符号/运行加载口径|明确direct-launch单路径、产物manifest、真实call probe|加载≠设备完成 |
 |#74–76/#123|部署设备为null，安装前配置阻断|按本次附录F固定0–3卡和ascend910b4；移除默认环境/源码/readiness审计，保留全部真实探针|默认配置及部署相位本地回归；目标复跑待回传 |
 |#124|README混淆真机与开发机命令，缺.venv/limactl|真机首屏一条命令使用现有Python；本地CPU与Mac/Lima命令单列开发说明|文档与默认部署命令核对；目标复跑待回传 |
-|G18/#98/#107/#125|扩展的签名kernel依赖库存在但动态加载路径不含实际目录；CANN禁用RPATH|仅在本工程恢复RPATH并包含相邻lib目录；按manifest绝对路径加载已校验kernel，再导入扩展；不修改系统CANN或原生源码|VM旧ELF已证实NEEDED存在而RPATH/RUNPATH缺失；修订产物与加载回归另留证据，真机复跑待回传 |
+|G18/#98/#107/#125|扩展的签名kernel依赖库存在但动态加载路径不含实际目录；CANN禁用RPATH|仅在本工程恢复RPATH并包含相邻lib目录；按manifest绝对路径加载已校验kernel，再导入扩展；不修改系统CANN或原生源码|VM旧ELF已证实NEEDED存在而RPATH/RUNPATH缺失；修订链接及Linux加载回归通过，node93后续75项原语NPU执行通过确认已越过该故障 |
+|G26/G28/G30/#13/#126|CV有效query之后进入padding时，Vector清零复用缓冲未等待上一行MTE3搬出，造成末个有效head的Q被覆盖|padding的Duplicate之前建立MTE3→V依赖；仅约束固定query tile已有缓冲，不扩大历史恢复/存储，不加Host逐head或CPU替代路径|源码同步缺口与head5置零数值复现匹配目标最大误差/位置；保留0.005冻结容差，修订后的目标CV/图/性能待复跑 |
 
 ## 8. 自审
 

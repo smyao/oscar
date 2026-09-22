@@ -1,7 +1,8 @@
 """One strict AscendC direct-launch loader. No CPU/torch/ATB fallback route.
 
-Archive G18/#77/#85/#98-110/#122: lazy import, actual artifacts, one interface.
+Archive G18/#77/#85/#98-110/#122/#125: load the verified dependency by absolute path.
 """
+import ctypes
 import importlib
 import importlib.util
 import hashlib
@@ -20,6 +21,7 @@ class OperatorUnavailable(RuntimeError):
 
 _loaded = None
 _loaded_path = None
+_kernel_library = None
 
 
 def _manifest_path(path=None):
@@ -90,7 +92,7 @@ def validate_build_artifacts(manifest_path=None):
 
 
 def load_extension(manifest_path=None):
-    global _loaded, _loaded_path
+    global _loaded, _loaded_path, _kernel_library
     manifest = validate_build_artifacts(manifest_path)
     state_path = _manifest_path(manifest_path).parent / "oscar_build_signature.json"
     configuration = json.loads(state_path.read_text())["configuration"]
@@ -114,6 +116,13 @@ def load_extension(manifest_path=None):
         return _loaded
     # Registration stays lightweight; backend import occurs only at this seam.
     importlib.import_module("torch_npu")
+    # CANN's CMake helpers can suppress RPATH (#125). The signed kernel SONAME
+    # must resolve to this already-verified artifact, independent of the cwd or
+    # inherited library search path. Keep the handle alive with the extension.
+    try:
+        _kernel_library = ctypes.CDLL(str(kernels), mode=os.RTLD_NOW | os.RTLD_LOCAL)
+    except OSError as exc:
+        raise OperatorUnavailable(f"Cannot load verified AscendC kernel library {kernels}: {exc}") from exc
     spec = importlib.util.spec_from_file_location("_oscar_ascend_ops", extension)
     if spec is None or spec.loader is None:
         raise OperatorUnavailable(f"Cannot load native extension: {extension}")

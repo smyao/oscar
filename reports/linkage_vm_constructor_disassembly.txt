@@ -1,0 +1,108 @@
+
+build/ascendc/lib/liboscar_ascend_kernels_1e481c5de2e400e9.so:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+000000000002f840 <_ZN12oscar_ascend17store_int2_launchEPvS0_S0_S0_S0_S0_lllllllbj@@Base+0xb5c>:
+   2f840:	aa1403e1 	mov	x1, x20
+   2f844:	aa1503e2 	mov	x2, x21
+   2f848:	97fff552 	bl	2cd90 <_ZNSt13unordered_mapISsSsSt4hashISsESt8equal_toISsESaISt4pairIKSsSsEEEC1ESt16initializer_listIS6_EmRKS1_RKS3_RKS7_@plt>
+   2f84c:	d0000340 	adrp	x0, 99000 <_ZZN26KernelHandleGradUnregister11GetInstanceEvE8instance@@Base+0x158>
+   2f850:	91138000 	add	x0, x0, #0x4e0
+   2f854:	97ffeca3 	bl	2aae0 <__cxa_guard_release@plt>
+   2f858:	b0000200 	adrp	x0, 70000 <_ZTISt11_Mutex_baseILN9__gnu_cxx12_Lock_policyE2EE@@Base+0x2150>
+   2f85c:	91000002 	add	x2, x0, #0x0
+   2f860:	d0000340 	adrp	x0, 99000 <_ZZN26KernelHandleGradUnregister11GetInstanceEvE8instance@@Base+0x158>
+   2f864:	9112a001 	add	x1, x0, #0x4a8
+   2f868:	b0000040 	adrp	x0, 38000 <_ZNSt4pairIKSsSsEC1IRA18_KcRA10_S3_Lb1EEEOT_OT0_@@Base+0x8c>
+   2f86c:	910e3000 	add	x0, x0, #0x38c
+   2f870:	97fff09c 	bl	2bae0 <__cxa_atexit@plt>
+   2f874:	910263a0 	add	x0, x29, #0x98
+   2f878:	97fff2ea 	bl	2c420 <_ZNSaISt4pairIKSsSsEED1Ev@plt>
+   2f87c:	910323b3 	add	x19, x29, #0xc8
+   2f880:	9107c273 	add	x19, x19, #0x1f0
+   2f884:	910323a0 	add	x0, x29, #0xc8
+   2f888:	eb00027f 	cmp	x19, x0
+   2f88c:	540000a0 	b.eq	2f8a0 <_ZN12oscar_ascend17store_int2_launchEPvS0_S0_S0_S0_S0_lllllllbj@@Base+0xbbc>  // b.none
+   2f890:	d1004273 	sub	x19, x19, #0x10
+   2f894:	aa1303e0 	mov	x0, x19
+   2f898:	9400200f 	bl	378d4 <_ZNKSt16initializer_listIlE4sizeEv@@Base+0x334>
+   2f89c:	17fffffa 	b	2f884 <_ZN12oscar_ascend17store_int2_launchEPvS0_S0_S0_S0_S0_lllllllbj@@Base+0xba0>
+   2f8a0:	910263a0 	add	x0, x29, #0x98
+   2f8a4:	97fff58f 	bl	2cee0 <_ZNSaIcEC1Ev@plt>
+   2f8a8:	910263a1 	add	x1, x29, #0x98
+   2f8ac:	910163a0 	add	x0, x29, #0x58
+   2f8b0:	aa0103e2 	mov	x2, x1
+   2f8b4:	f94027a1 	ldr	x1, [x29, #72]
+   2f8b8:	97fff59a 	bl	2cf20 <_ZNSsC1EPKcRKSaIcE@plt>
+   2f8bc:	910263a0 	add	x0, x29, #0x98
+   2f8c0:	97fff010 	bl	2b900 <_ZNSaIcED1Ev@plt>
+   2f8c4:	97fff3d7 	bl	2c820 <aclrtGetSocName@plt>
+   2f8c8:	aa0003f3 	mov	x19, x0
+   2f8cc:	910263a0 	add	x0, x29, #0x98
+   2f8d0:	97fff584 	bl	2cee0 <_ZNSaIcEC1Ev@plt>
+   2f8d4:	910263a1 	add	x1, x29, #0x98
+   2f8d8:	910183a0 	add	x0, x29, #0x60
+   2f8dc:	aa0103e2 	mov	x2, x1
+   2f8e0:	aa1303e1 	mov	x1, x19
+   2f8e4:	97fff58f 	bl	2cf20 <_ZNSsC1EPKcRKSaIcE@plt>
+   2f8e8:	910263a0 	add	x0, x29, #0x98
+   2f8ec:	97fff005 	bl	2b900 <_ZNSaIcED1Ev@plt>
+   2f8f0:	9101a3a0 	add	x0, x29, #0x68
+   2f8f4:	97fff65f 	bl	2d270 <_ZNSsC1Ev@plt>
+   2f8f8:	910183a0 	add	x0, x29, #0x60
+   2f8fc:	f90053a0 	str	x0, [x29, #160]
+   2f900:	f94053a0 	ldr	x0, [x29, #160]
+   2f904:	97fff32f 	bl	2c5c0 <_ZNSs5beginEv@plt>
+   2f908:	f9004ba0 	str	x0, [x29, #144]
+   2f90c:	f94053a0 	ldr	x0, [x29, #160]
+   2f910:	97fff528 	bl	2cdb0 <_ZNSs3endEv@plt>
+   2f914:	f9004fa0 	str	x0, [x29, #152]
+   2f918:	910263a1 	add	x1, x29, #0x98
+   2f91c:	910243a0 	add	x0, x29, #0x90
+   2f920:	97fff3f0 	bl	2c8e0 <_ZN9__gnu_cxxneIPcSsEEbRKNS_17__normal_iteratorIT_T0_EES7_@plt>
+   2f924:	12001c00 	and	w0, w0, #0xff
+   2f928:	7100001f 	cmp	w0, #0x0
+   2f92c:	540001a0 	b.eq	2f960 <_ZN12oscar_ascend17store_int2_launchEPvS0_S0_S0_S0_S0_lllllllbj@@Base+0xc7c>  // b.none
+
+build/ascendc/lib/liboscar_ascend_kernels_1e481c5de2e400e9.so:     file format elf64-littleaarch64
+
+
+Disassembly of section .plt:
+
+000000000002d4e0 <_ZNKSt8__detail15_Hash_code_baseI17KernelMetaTypeAscSt4pairIKS1_jENS_10_Select1stESt4hashIS1_ENS_18_Mod_range_hashingENS_20_Default_ranged_hashELb0EE10_M_extractEv@plt>:
+   2d4e0:	d0000210 	adrp	x16, 6f000 <_Znwm@GLIBCXX_3.4>
+   2d4e4:	f947aa11 	ldr	x17, [x16, #3920]
+   2d4e8:	913d4210 	add	x16, x16, #0xf50
+   2d4ec:	d61f0220 	br	x17
+
+000000000002d4f0 <_ZNKSt12__shared_ptrISt5mutexLN9__gnu_cxx12_Lock_policyE2EE3getEv@plt>:
+   2d4f0:	d0000210 	adrp	x16, 6f000 <_Znwm@GLIBCXX_3.4>
+   2d4f4:	f947ae11 	ldr	x17, [x16, #3928]
+   2d4f8:	913d6210 	add	x16, x16, #0xf58
+   2d4fc:	d61f0220 	br	x17
+
+Disassembly of section .text:
+
+000000000002d500 <_Z44launch_and_profiling_oscar_store_int2_kernelmjPvPS_j@@Base-0x200>:
+   2d500:	d10103ff 	sub	sp, sp, #0x40
+   2d504:	f00000c0 	adrp	x0, 48000 <_ZNSt10_HashtableIccSaIcENSt8__detail9_IdentityESt8equal_toIcESt4hashIcENS1_18_Mod_range_hashingENS1_20_Default_ranged_hashENS1_20_Prime_rehash_policyENS1_17_Hashtable_traitsILb0ELb1ELb1EEEE13_M_rehash_auxEmSt17integral_constantIbLb1EE@@Base+0xb8>
+   2d508:	d0000202 	adrp	x2, 6f000 <_Znwm@GLIBCXX_3.4>
+   2d50c:	f947c442 	ldr	x2, [x2, #3976]
+   2d510:	913fc000 	add	x0, x0, #0xff0
+   2d514:	a9017bfd 	stp	x29, x30, [sp, #16]
+   2d518:	910043fd 	add	x29, sp, #0x10
+   2d51c:	a90253f3 	stp	x19, x20, [sp, #32]
+   2d520:	f0000353 	adrp	x19, 98000 <__ascend_kernel_ascend910b4_oscar_ascend_kernels@@Base+0x27ff0>
+   2d524:	912a4274 	add	x20, x19, #0xa90
+   2d528:	f9400043 	ldr	x3, [x2]
+   2d52c:	f90007e3 	str	x3, [sp, #8]
+   2d530:	d2800003 	mov	x3, #0x0                   	// #0
+   2d534:	91004281 	add	x1, x20, #0x10
+   2d538:	940006ab 	bl	2efe4 <_ZN12oscar_ascend17store_int2_launchEPvS0_S0_S0_S0_S0_lllllllbj@@Base+0x300>
+   2d53c:	37000180 	tbnz	w0, #0, 2d56c <_ZNKSt12__shared_ptrISt5mutexLN9__gnu_cxx12_Lock_policyE2EE3getEv@plt+0x7c>
+   2d540:	d0000200 	adrp	x0, 6f000 <_Znwm@GLIBCXX_3.4>
+   2d544:	f947c400 	ldr	x0, [x0, #3976]
+   2d548:	f94007e2 	ldr	x2, [sp, #8]
+   2d54c:	f9400001 	ldr	x1, [x0]

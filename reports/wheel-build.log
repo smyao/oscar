@@ -4,7 +4,6 @@ Processing /Users/sunao2000/gpt_new_oscar
 Building wheels for collected packages: oscar-ascend-external
   Building wheel for oscar-ascend-external (pyproject.toml): started
   Building wheel for oscar-ascend-external (pyproject.toml): finished with status 'done'
-  Created wheel for oscar-ascend-external: filename=oscar_ascend_external-0.1.0-py3-none-any.whl size=106467 sha256=355af2a1929693b028c6331c4c8b7a0f158087c2278879f2ac1146fd03531742
-  Stored in directory: /private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pip-ephem-wheel-cache-4gov5hlj/wheels/5e/a1/03/488c7c23b0d1f95d7ee525166f002a8b1e294bd356ae215351
+  Created wheel for oscar-ascend-external: filename=oscar_ascend_external-0.1.0-py3-none-any.whl size=107521 sha256=9775c8c33ae8d2d52d73939da134284f474b75133282acba8d0322b4ab3c2a2c
+  Stored in directory: /private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pip-ephem-wheel-cache-yireramg/wheels/5e/a1/03/488c7c23b0d1f95d7ee525166f002a8b1e294bd356ae215351
 Successfully built oscar-ascend-external
-Could not fetch URL https://pypi.org/simple/pip/: There was a problem confirming the ssl certificate: HTTPSConnectionPool(host='pypi.org', port=443): Max retries exceeded with url: /simple/pip/ (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)'))) - skipping

@@ -1,6 +1,6 @@
 # oscar-ascendc 昇腾调试报错全量记录（Agent 报错查表版 · 共 120 条 · 已脱敏）
 
-> 2026-09-22 本项目续录：实际共 **158 条（G1–G34、#1–#124）**；旧标题条数与索引行号保留为历史材料，定位以条目标题为准。#123/#124 来自用户回传的 node93 启动日志，修订后尚无真机复跑结果。
+> 2026-09-22 本项目续录：实际共 **159 条（G1–G34、#1–#125）**；旧标题条数与索引行号保留为历史材料，定位以条目标题为准。#123–#125 来自用户回传的 node93 启动日志；最新复跑止于 #125 的扩展依赖库加载错误，尚无 NPU 算子完成证据。
 
 > **本文档是给调试 agent 用的"报错 → 日志"查表档案，禁止从头线性阅读。** 使用方法：
 > 1. 先在下面【症状速查表】按报错关键字定位条目编号（前半段 **G1~G34**，后半段 **1~73**，第三部分 **74~86**）；
@@ -78,6 +78,7 @@
 | 包已装、`.o` 与 `binary_info_config.json` 齐全、`AddConfig` 已声明，第一次调算子仍报通用三连：`ASCEND_CUSTOM_OPP_PATH` 被写成 **OPP 根**（应为 vendor 目录）**且** `<OPP 根>/vendors/config.ini` 未登记本 vendor——nnopbase 两条解析路径同时不通 | 122 |
 | `configs/target.json devices must contain the four physical NPU IDs selected for this task`（默认 devices 为 null，安装前即停止） | 123 |
 | `bash: .venv/bin/python: No such file or directory` / `FileNotFoundError: ... 'limactl'`（真机误跑本地开发/Lima 验证命令） | 124 |
+| `ImportError: liboscar_ascend_kernels_<签名>.so: cannot open shared object file`（probe-ops 在扩展 dlopen 时失败，traceback 仅在相位日志可见） | 125 |
 
 ## B. 环境 / 基础设施
 
@@ -26332,3 +26333,82 @@ README 首先给出真机唯一命令 `git pull --ff-only && bash scripts/instal
 ### 证据与复验边界
 
 故障证据为本次用户回传的终端输出。此项修复部署说明及默认流程，不将缺失 `limactl` 解释成 CANN 或 NPU 故障，也不声称目标已部署成功；回归项登记在 `docs/design.md` 第 7 节，等待 node93 复跑日志。
+
+---
+
+## [125] 真机条目（gpt_new_oscar 项目，2026-09-22 用户回传）· phase=probe-ops
+
+**症状**：node93 已进入 `probe-ops`，在 Python 扩展 `dlopen` 时找不到带构建签名的 kernel 依赖库，尚未执行算子。用户需要用 vim 打开相位日志才能看到 traceback，要求流程报错实时打印到当前窗口。
+
+**命中的历史同族条目**：G18（kernel 依赖库 dlopen 失败）、#98（构建产物与运行加载口径不一致）、#107（链接成功不代表运行时依赖可解析）、#94/#95（失败输出与日志可见性）。
+
+### 用户回传日志（完整保留本次提供的片段）
+
+```text
+START phase=probe-ops cwd=/workspace/gpt_new_oscar command=["/usr/local/python3.12.13/bin/python3", "-m", "tools.probe_ops", "--output", "/workspace/gpt_new_oscar/logs/20260922T032259.520815Z/operators.json"]
+[W922 03:24:15.572232440 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+Traceback (most recent call last):
+  File "/workspace/gpt_new_oscar/tools/probe_ops.py", line 203, in main
+    report = probe()
+             ^^^^^^^
+  File "/workspace/gpt_new_oscar/tools/probe_ops.py", line 21, in probe
+    require_capabilities({"store_int2_out", "merge_lse_out"})
+  File "/workspace/gpt_new_oscar/oscar_ascend/ops/loader.py", line 139, in require_capabilities
+    return load_extension(manifest_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/gpt_new_oscar/oscar_ascend/ops/loader.py", line 120, in load_extension
+    module = importlib.util.module_from_spec(spec)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 813, in module_from_spec
+  File "<frozen importlib._bootstrap_external>", line 1293, in create_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+ImportError: liboscar_ascend_kernels_4644bc82d3d0fa56.so: cannot open shared object file: No such file or directory
+{
+  "status": "failed",
+  "error_type": "ImportError",
+  "error": "liboscar_ascend_kernels_4644bc82d3d0fa56.so: cannot open shared object file: No such file or directory",
+  "device_completion": "not_established",
+  "full_service_acceptance": "not_run",
+  "cann_plog": {
+    "status": "no_matching_evidence",
+    "started_at": 1790047452.4883747,
+    "owned_pids": [
+      1647
+    ],
+    "roots": [
+      "/root/ascend/log"
+    ],
+    "files_read": 1,
+    "bytes_read": 841,
+    "entries_scanned": 10,
+    "truncated": false,
+    "excerpts": [],
+    "diagnostic_errors": [],
+    "scope": "recent task-owned CANN log excerpts; not a device-completion or root-cause certificate"
+  },
+  "elapsed_seconds": 8.345470905303955
+}
+RESULT {"phase": "probe-ops", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "tools.probe_ops", "--output", "/workspace/gpt_new_oscar/logs/20260922T032259.520815Z/operators.json"], "returncode": 1, "elapsed_seconds": 10.208613, "timed_out": false, "interrupted": false, "log": "/workspace/gpt_new_oscar/logs/20260922T032259.520815Z/probe-ops.log", "cleanup_complete": true}
+```
+
+用户原文补充：“当前你这个真机bug是我vim看到的”；“你先修复，然后要改脚本 如果流程出bug了，请实时打印在窗口上”。
+
+### 根因与已核实证据
+
+1. **运行时依赖搜索路径缺失**：本工程的 Python 扩展位于 `build/ascendc/`，其 kernel 共享库位于 `build/ascendc/lib/`。旧 loader 校验 manifest/产物后只按绝对路径导入扩展；依赖库仍由动态链接器按扩展的 `DT_NEEDED` 查找，扩展本身使用绝对路径并不会把其子目录自动加入搜索路径。
+2. **VM 中确认了同一构建缺陷**：对本项目原有 CANN 9.1.0 构建产物读取 ELF 动态段，可见签名 kernel 的 `NEEDED`，但没有 `RPATH/RUNPATH`。CANN 的 `tools/tikcpp/ascendc_kernel_cmake/legacy_modules/host_config.cmake:87` 与 `bisheng_config.cmake:33` 设置普通变量 `CMAKE_SKIP_RPATH TRUE`；它覆盖缓存中的 `NO`，导致工程设置的 `BUILD_RPATH` 没有进入 ELF。此外旧设置仅有 `$ORIGIN`，即使恢复生效，也不覆盖 kernel 所在的 `$ORIGIN/lib`。
+3. **终端输出未实时转发**：相位 runner 将子进程 stdout/stderr 直接写文件，完整 traceback 留在 `probe-ops.log` 中，当前终端只能看到阶段级状态。服务启动还包含嵌套子进程，修订必须同时覆盖这条输出链。
+
+上述 ELF/CANN 文件证据来自本机 Lima VM，**没有读取 node93 的实际 ELF**。它确认工程存在与真机症状一致的加载缺陷；将该机制归因到 node93 是结合用户 traceback 的判断，最终仍须目标复跑确认。`LD_PRELOAD` 警告和 `cann_plog.status=no_matching_evidence` 均不能单独证明本次根因，不能据此清除用户环境或声称设备执行成功。
+
+### 修法
+
+- 仅在本工程 CMake 包含 CANN 配置之后恢复 RPATH，覆盖扩展目录、相邻 `lib`、实际 kernel target 目录及所链接的 Torch/torch_npu/CANN 库目录；保留源签名 SONAME，不修改系统 CANN 文件、原生源码或全局 OPP 路径。
+- kernel 共享库自身显式链接其 CANN 运行依赖，写入 `DT_NEEDED`，并用 `-z defs` 在链接时拒绝未解析符号；不依赖父扩展或宿主进程碰巧预载这些库。
+- loader 在正常导入 torch_npu 后，使用 manifest 中经过指纹校验的 kernel **绝对路径**执行 `ctypes.CDLL`，采用 `RTLD_NOW | RTLD_LOCAL` 并保留句柄，再导入 Python 扩展。库缺失、加载或符号解析失败继续报错，不把错误转换为 CPU 或原生 FULL 路由。
+- 相位和服务子进程的输出实时转发到当前终端，并保留原始日志；Python 子进程使用无缓冲输出。启动、结果、traceback、失败阶段、退出码和日志路径均可见，超时/中断仍清理本任务进程组。
+- 保留真实 NPU 算子、CV/旋转及完整服务探针；任何探针失败不得进入后续正式服务，不重新加入环境清单或 readiness 前置审计。
+
+### 证据与复验边界
+
+真机证据仅为上方用户回传片段：`returncode=1`、`device_completion=not_established`、`full_service_acceptance=not_run`；本轮未取得目标连接信息或成功复跑日志。VM 的旧 ELF、修订后的构建产物和本地实时输出/故障注入回归分别留存，不冒充真机设备、图或服务验收。回归项登记在 `docs/design.md` 第 7 节。

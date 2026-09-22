@@ -24,7 +24,7 @@ import urllib.request
 import uuid
 
 from .npu_resources import DEFAULT_RELEASE_TOLERANCE, read_npu_resources, wait_for_release
-from .phase import atomic_json, cleanup_group
+from .phase import atomic_json, cleanup_group, live_log
 from .plog import OwnedProcessGroup, attach_plog
 from .prepare_rotations import model_geometry
 from .target_cli import ROOT, serve_argv, target_env
@@ -156,7 +156,7 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
     lifecycle.update(status="starting", command=command, target_argv=serve_argv(config),
                      log=str(log), trace_dir=str(trace_dir), cleanup_complete=False)
     atomic_json(log_dir / "server_lifecycle.json", lifecycle)
-    with log.open("w", buffering=1) as stream:
+    with live_log(log) as stream:
         stream.write(f"START owned_service cwd={ROOT} command={json.dumps(command)}\n")
         try:
             process = subprocess.Popen(command, cwd=ROOT, env=environment, stdin=subprocess.DEVNULL,

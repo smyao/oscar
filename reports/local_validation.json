@@ -1,20 +1,19 @@
 {
-  "overall": "startup_revision_validated_with_one_local_cleanup_test_failure; target_acceptance_not_run",
+  "overall": "local_regressions_and_cann_build_passed; target_acceptance_not_run",
   "cpu_tests": {
-    "status": "failed",
-    "pytest_passed": 379,
+    "status": "passed",
+    "pytest_passed": 396,
     "subtests_passed": 4,
     "npu_tests_skipped": 110,
     "junit": {
-      "tests": 494,
-      "failures": 1,
+      "tests": 511,
+      "failures": 0,
       "errors": 0,
-      "skipped": 110
+      "skipped": 111
     },
     "log": "reports/pytest.log",
     "xml": "reports/pytest.xml",
-    "failed_test": "tests/test_service_workflow.py::test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint",
-    "failure_detail": "macOS owned fake HTTP server cleanup raised PermissionError: [Errno 1] Operation not permitted; assertion retained; cause not established"
+    "platform_tests_skipped": 1
   },
   "python_wheel": {
     "status": "passed",
@@ -28,8 +27,8 @@
     "status": "passed",
     "scope": "Lima VM, CANN 9.1, Ascend910B4, Torch 2.12 CPU / torch_npu 2.12",
     "source_matches_current_csrc": true,
-    "signature": "13cf469f64ed7050b77062559e14dc58f62307138b4a75cfec679a73042a3a89",
-    "report": "reports/vm/guest/reports/build.json"
+    "signature": "1e481c5de2e400e918aa7fa3a40de30f4489401d18af7c5ce7c08008fa5e0415",
+    "report": "reports/linkage_build.json"
   },
   "official_ascendc_cpu_debug": {
     "status": "passed",
@@ -72,7 +71,8 @@
   ],
   "local_observations": [
     "One earlier temporary HTTP-server cleanup test reported PermissionError; isolated rerun and current complete suite passed, cause not established; no cleanup assertion was weakened",
-    "Startup revision full suite: 379 passed, 1 failed, 110 skipped, 4 subtests passed. Same previously observed macOS fake-server cleanup PermissionError recurred. User requested immediate push; no assertion was weakened and no full-suite pass is claimed."
+    "Startup revision full suite: 379 passed, 1 failed, 110 skipped, 4 subtests passed. Same previously observed macOS fake-server cleanup PermissionError recurred. User requested immediate push; no assertion was weakened and no full-suite pass is claimed.",
+    "Library/logging revision full suite:396 passed,111 skipped,4 subtests passed. Prior local cleanup PermissionError did not recur; no cleanup assertion was weakened. VM actual kernel dlopen resolved dependencies but failed in native CANN SoC constructor; see linkage_validation.json, not NPU evidence."
   ],
   "source_sha256": {
     "oscar_ascend/__init__.py": "886a48beeedcedf3da2ee7430eddf8d64c7ece3527b0cb073b8363223e5c22e0",
@@ -86,7 +86,7 @@
     "oscar_ascend/lifecycle.py": "8791998aabe84dd076e9366b87d0d158722135e5370e2ede09f443c6f67a314d",
     "oscar_ascend/ops/__init__.py": "121a4a46ea91e1a0a4336de76e6003fc18a5fde411d3a1d1eaa706bb01710d08",
     "oscar_ascend/ops/contracts.py": "918e8e7f865cc94988512647523a7daa5a37072517ccb72b2ce10f32e6d9d41b",
-    "oscar_ascend/ops/loader.py": "d31b6b1c24d44a4ee768ce8aa49a7c1653d1a65c7d65e81b0facc7ef76e0e802",
+    "oscar_ascend/ops/loader.py": "f1643c42a7f63d500e13a6433e83064875a43f831c611c6557689f0092bbd07c",
     "oscar_ascend/ops/meta.py": "57d2e50d2c4db515eac6f0e8ab8fb6c93bc318f8af2a196d7c0e6db34b4617dc",
     "oscar_ascend/ops/reference.py": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
     "oscar_ascend/plugin.py": "72693c5e1967ef3cd1a957f7ba4099304f27d87c62e5f2f44a24e949ca52c540",
@@ -96,18 +96,18 @@
     "oscar_ascend/timing.py": "6beea5db28acad653ae9068144eeb54979878a3d92ea8c552a3ced3dc6b550af",
     "tools/__init__.py": "638eebca9af17b3926d058f9115ba13a882951b3787192212a37c4a2afd73c26",
     "tools/build_ops.py": "f9e73b92e7b4fdd8646702cb2c788b09d5fb7d392975c64273a5ffd584509d36",
-    "tools/deploy.py": "cc41ad3b41e593602a94278269f3caa4bbc9f11312063deef13d1c8836deaff8",
+    "tools/deploy.py": "f2fab2b251b5111aa243341ea418a8df8aee90927140c79145ee566b66b5f860",
     "tools/environment.py": "fc725539278d3498491276ba1a204afd73398ebbaf54f791676b84ced2c73aad",
     "tools/generate_cpu_cases.py": "af94f2f9c3a51cc295409e78d6eb217d5b1a6f65b646ea03feb5ed70736a0779",
     "tools/generate_rotation_cpu_cases.py": "12a9a08fac8705ec112e8d3cf03bf4d3385773b82b417ca3f81243678c2bb1a9",
     "tools/npu_resources.py": "d298c0fb0ca3e7dcc6b4143ca46ac5865e6ceec379ffaaa5661195d0beebdbd1",
-    "tools/phase.py": "90f306b9c74f9b35b37360ff003bc709bb1f6731aee3733c4f2b27d2aee6fadf",
+    "tools/phase.py": "57e60bf16a6ae721dd901bf7b8fcc251f59699fbd9d070c90109e81f6fce4631",
     "tools/plog.py": "c40c91c156a36ea3f7e6a78f15db03895e0efa54c8f70431f52df102197c0224",
     "tools/prepare_rotations.py": "95d9e52a09b2b897b6a38b30ca0edae0ef7315b95b3877e10c335619992396d5",
     "tools/probe_ops.py": "6cb839888883052ffc5bf1d354757f97e88b7770914ffc8b3031f0d34946eca8",
     "tools/readiness.py": "541c2d6fcf03651c0ddda53db1ccbf21f163bf6565086b6c46e1c8d9187a5ff0",
     "tools/run_cpu_debug.py": "0b1989cea79c2863e45a22053a687804e24ebeb856bf5c7997539db41421a5d1",
-    "tools/service_probe.py": "41514039f5ebbbd1e31f0e632b426903d5f1023fc369baf0a37279f42f3b1c3f",
+    "tools/service_probe.py": "b61ddecbd875637b0411a2341cbea509915ca45dc3b81eda22f3f51a7e17deca",
     "tools/summarize_profile.py": "970b9a687568503e61426c090bdb916d42bb5425c2e5f2ea5ab7475da2946e98",
     "tools/target_cli.py": "75e8bae681e37bb209e25f51f549b1be9fde2879014fbceef8feedf5efdade7b",
     "tools/vm_validate.py": "585b0383de8162632e1ade0438880ac9fa8cdd313db5d35fbda54a54ad560e33",
@@ -116,7 +116,7 @@
     "benchmarks/compare.py": "23f11991cab781c3c702659845f5522344066660226c1584301cc7958e7276fe",
     "benchmarks/examples/run.template.json": "c6c2318fdec30d857ca5282ce652e4aba27f9b3d04de82901478d06cbf79abc5",
     "benchmarks/measure.py": "155cd4f60bc4a87f1bbb28dd044403a7450fe6bb3ef0fee3155ab15365bcccbd",
-    "csrc/CMakeLists.txt": "b29282de1605532384e957322ae6a6c9495b7ba8bb266580bbb67ca5a9c80419",
+    "csrc/CMakeLists.txt": "3eff29d9c530a3d29d609f15c9c28b0bb3c35a1491aee25d2cee833deb1fbb09",
     "csrc/attention_bindings.cpp": "a3f23dee8aa33f2e58becfc32442e8c3e8ca024d499ccefde8fe0b65db0f8d3f",
     "csrc/cpu/CMakeLists.txt": "1e7d67f47b4f330f1fa6c59a083246c6672105f81f1538fded57593a5eb819bb",
     "csrc/cpu/cv_probe.cpp": "ae30b9887fa51e239f307e5b5b98943587a1803b1999b43c7833a67c51058490",
@@ -161,7 +161,9 @@
     "tests/test_service_workflow.py": "a2b731b4aec05728aaff1c0cf096705d50f84eb4e532231f4dc595df1aca6842",
     "tests/test_workflow.py": "329b2ecc9aeffafda7b1d5debf91a102b49bb3d0fb837bc2aec045fe43e29c2c",
     "tests/test_deploy_launcher.py": "d2d49450c3dc17de322da9e996d9f1282a63a66a67ee5ae07cead039674723ce",
-    "tests/test_build_reuse.py": "49e9a34e9b7b201f155eb68bc8d99a24b194bf7d2009e1a26eadd1459fba7c11"
+    "tests/test_build_reuse.py": "49e9a34e9b7b201f155eb68bc8d99a24b194bf7d2009e1a26eadd1459fba7c11",
+    "tests/test_live_output.py": "055dd7bd9e90c3c1965c2759ee59994a584a0388dc910cd38ff055074bc267c4",
+    "tests/test_loader_linkage.py": "920e7fc4331cdf44aa3d7f810d190c09493a36e88d8db55aef0a61241f380eba"
   },
   "startup_revision": {
     "default_devices": [
@@ -189,6 +191,13 @@
     },
     "shell_plan_from_outside_checkout": "passed",
     "wheel_build": "passed",
+    "target_rerun": "not_run"
+  },
+  "shared_library_and_live_logging": {
+    "report": "reports/linkage_validation.json",
+    "linux_loader_tests_passed": 10,
+    "cann_rebuild": "passed",
+    "vm_actual_kernel_dlopen": "failed_at_native_cann_soc_constructor",
     "target_rerun": "not_run"
   }
 }

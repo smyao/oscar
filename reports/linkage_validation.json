@@ -1,0 +1,48 @@
+{
+  "change": "Fix kernel shared-library discovery and stream all deployment/service output to terminal",
+  "reported_target_error": "ImportError: liboscar_ascend_kernels_4644bc82d3d0fa56.so: cannot open shared object file: No such file or directory",
+  "archive_entry": 125,
+  "root_cause_evidence": {
+    "vm_original_extension": "NEEDED signed kernel SONAME but no RPATH/RUNPATH",
+    "cann_cmake": "legacy_modules/host_config.cmake:87 and bisheng_config.cmake:33 set CMAKE_SKIP_RPATH TRUE",
+    "layout": "extension in build/ascendc, kernel library in build/ascendc/lib",
+    "target_elf_read_directly": false,
+    "report": "reports/linkage_before.txt"
+  },
+  "cann_rebuild": {
+    "status": "passed",
+    "signature": "1e481c5de2e400e918aa7fa3a40de30f4489401d18af7c5ce7c08008fa5e0415",
+    "report": "reports/linkage_build.json",
+    "log": "reports/linkage_rebuild.log",
+    "source_matches_current_csrc": true
+  },
+  "elf_runpath_and_dependencies": {
+    "status": "passed",
+    "report": "reports/linkage_after.txt",
+    "scope": "ELF metadata, separate from the failed VM CANN constructor attempt appended to that file"
+  },
+  "linux_elf_loader_tests": {
+    "passed": 10,
+    "log": "reports/linkage_elf_tests.log",
+    "scope": "Includes real gcc-built ELF dependency resolution through production loader preload; no NPU"
+  },
+  "live_output_tests": {
+    "focused_suites_passed": 33,
+    "scope": "Real subprocess FIFO handshakes cover stdout, stderr, partial lines, nested phases, startup and ongoing service logs, timeout flush, failure code preservation"
+  },
+  "vm_actual_kernel_dlopen": {
+    "status": "failed_at_cann_constructor",
+    "error": "std::logic_error: basic_string::_S_construct null not valid",
+    "evidence": "Generated __register_kernels calls AscendCheckSoCVersion; native code calls aclrtGetSocName then constructs std::string from its result. Direct VM call returned None. Throw trace and disassembly identify that constructor path.",
+    "logs": [
+      "reports/linkage_vm_runtime.txt",
+      "reports/linkage_vm_constructor_trace.txt",
+      "reports/linkage_vm_constructor_disassembly.txt"
+    ],
+    "trace_method": "VM-only diagnostic __cxa_throw interposer prints backtrace and exits134; no production change or substitute SoC"
+  },
+  "target_device_execution": "not_run",
+  "target_graph_capture": "not_run",
+  "target_graph_replay": "not_run",
+  "target_performance": "not_run"
+}

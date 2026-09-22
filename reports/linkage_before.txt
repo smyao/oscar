@@ -1,0 +1,40 @@
+
+Dynamic section at offset 0x3fbe8 contains 34 entries:
+  Tag        Type                         Name/Value
+ 0x0000000000000001 (NEEDED)             Shared library: [liboscar_ascend_kernels_13cf469f64ed7050.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libtorch.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc10.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libtorch_npu.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libruntime.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [liberror_manager.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libtorch_cpu.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-aarch64.so.1]
+ 0x000000000000000c (INIT)               0x7d08
+ 0x000000000000000d (FINI)               0x29bb0
+ 0x0000000000000019 (INIT_ARRAY)         0x4f768
+ 0x000000000000001b (INIT_ARRAYSZ)       24 (bytes)
+ 0x000000000000001a (FINI_ARRAY)         0x4f780
+ 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)
+ 0x000000006ffffef5 (GNU_HASH)           0x1f0
+ 0x0000000000000005 (STRTAB)             0x1df8
+ 0x0000000000000006 (SYMTAB)             0x2e0
+ 0x000000000000000a (STRSZ)              9513 (bytes)
+ 0x000000000000000b (SYMENT)             24 (bytes)
+ 0x0000000000000003 (PLTGOT)             0x4ffe8
+ 0x0000000000000002 (PLTRELSZ)           4968 (bytes)
+ 0x0000000000000014 (PLTREL)             RELA
+ 0x0000000000000017 (JMPREL)             0x69a0
+ 0x0000000000000007 (RELA)               0x4678
+ 0x0000000000000008 (RELASZ)             9000 (bytes)
+ 0x0000000000000009 (RELAENT)            24 (bytes)
+ 0x000000006ffffffe (VERNEED)            0x4568
+ 0x000000006fffffff (VERNEEDNUM)         4
+ 0x000000006ffffff0 (VERSYM)             0x4322
+ 0x000000006ffffff9 (RELACOUNT)          261
+ 0x0000000000000000 (NULL)               0x0
+/usr/bin/c++ -fPIC -O3 -DNDEBUG -flto=auto -shared  -o _oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so CMakeFiles/_oscar_ascend_ops.dir/torch_bindings.cpp.o CMakeFiles/_oscar_ascend_ops.dir/rotation_bindings.cpp.o CMakeFiles/_oscar_ascend_ops.dir/attention_bindings.cpp.o CMakeFiles/_oscar_ascend_ops.dir/status_bindings.cpp.o   -L/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu/lib  -L/usr/local/Ascend/cann-9.1.0/lib64  -L/usr/local/Ascend/cann-9.1.0/tools/simulator/ascend910b4/lib  lib/liboscar_ascend_kernels_13cf469f64ed7050.so /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/lib/libtorch.so /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/lib/libc10.so -ltorch_npu -lascendcl -lruntime -ltiling_api -lregister -lplatform -lerror_manager -lprofapi -lge_common_base -lunified_dlog -lmmpa -ldl -lascend_dump -lc_sec -Wl,--no-as-needed,"/home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so" -Wl,--as-needed /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/lib/libc10.so -Wl,--no-as-needed,"/home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/lib/libtorch.so" -Wl,--as-needed 
+/usr/local/Ascend/cann-9.1.0/tools/tikcpp/ascendc_kernel_cmake/legacy_modules/host_config.cmake:87:set(CMAKE_SKIP_RPATH TRUE)
+/usr/local/Ascend/cann-9.1.0/tools/tikcpp/ascendc_kernel_cmake/legacy_modules/bisheng_config.cmake:33:set(CMAKE_SKIP_RPATH TRUE)

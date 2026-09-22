@@ -1,4 +1,4 @@
-# Archive G2-G13/#79-85/#98-110: native direct-library build, no copied OPP layer.
+# Archive G2-G13/G18/#79-85/#98-110/#125: native direct-library build and explicit runtime paths.
 # Native references/vllm-ascend/CMakeLists.txt:41-81,96-105,159-197.
 cmake_minimum_required(VERSION 3.18)
 project(oscar_ascend_ops LANGUAGES CXX)
@@ -50,6 +50,19 @@ if(NOT OSCAR_BUILD_SIGNATURE MATCHES "^[0-9a-f]+$")
 endif()
 string(SUBSTRING "${OSCAR_BUILD_SIGNATURE}" 0 16 OSCAR_BINARY_ID)
 set_target_properties(oscar_ascend_kernels PROPERTIES OUTPUT_NAME "oscar_ascend_kernels_${OSCAR_BINARY_ID}")
+# CANN legacy_modules/{host,bisheng}_config.cmake sets CMAKE_SKIP_RPATH TRUE
+# in directory scope even when the cache says NO. Restore it in OUR project;
+# the extension lives in the build root while AscendC emits its library in lib/.
+set(CMAKE_SKIP_RPATH FALSE)
+set(CMAKE_SKIP_INSTALL_RPATH FALSE)
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set_target_properties(oscar_ascend_kernels PROPERTIES
+  BUILD_WITH_INSTALL_RPATH TRUE
+  INSTALL_RPATH "${ASCEND_HOME_PATH}/lib64")
+# AscendC puts these host-stub dependencies on its INTERFACE only. The kernel
+# library must also carry its own DT_NEEDED entries for absolute-path dlopen.
+target_link_libraries(oscar_ascend_kernels PRIVATE ascendcl runtime profapi unified_dlog mmpa)
+target_link_options(oscar_ascend_kernels PRIVATE "LINKER:-z,defs")
 pybind11_add_module(_oscar_ascend_ops torch_bindings.cpp rotation_bindings.cpp attention_bindings.cpp status_bindings.cpp)
 target_include_directories(_oscar_ascend_ops PRIVATE ${TORCH_INCLUDE_DIRS}
   "${TORCH_NPU_PATH}/include" "${ASCEND_HOME_PATH}/include")
@@ -57,8 +70,11 @@ target_link_directories(_oscar_ascend_ops PRIVATE "${TORCH_NPU_PATH}/lib"
   "${ASCEND_HOME_PATH}/lib64")
 target_link_libraries(_oscar_ascend_ops PRIVATE oscar_ascend_kernels
   ${TORCH_LIBRARIES} torch_npu ascendcl)
-set_target_properties(_oscar_ascend_ops PROPERTIES BUILD_RPATH
-  "$ORIGIN;${TORCH_NPU_PATH}/lib;${ASCEND_HOME_PATH}/lib64")
+# Use only the intended runtime paths, not CANN's simulator link directory.
+# $ORIGIN handles both the checkout's lib/ layout and co-installed libraries.
+set_target_properties(_oscar_ascend_ops PROPERTIES
+  BUILD_WITH_INSTALL_RPATH TRUE
+  INSTALL_RPATH "$ORIGIN;$ORIGIN/lib;$<TARGET_FILE_DIR:oscar_ascend_kernels>;${TORCH_NPU_PATH}/lib;${ASCEND_HOME_PATH}/lib64;${TORCH_INSTALL_PREFIX}/lib")
 file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/build_manifest.json" CONTENT
 "{\n  \"abi_version\": 1,\n  \"execution_interface\": \"direct_launch\",\n  \"soc\": \"${SOC_VERSION}\",\n  \"extension\": \"$<TARGET_FILE:_oscar_ascend_ops>\",\n  \"kernel_library\": \"$<TARGET_FILE:oscar_ascend_kernels>\",\n  \"source_capabilities\": [\"store_int2_out\", \"merge_lse_out\", \"rotate_out\", \"rotate_clip_store_out\", \"prepare_attention_tasks_out\", \"attention_cv_out\", \"status_guard\"],\n  \"missing_capabilities\": [],\n  \"target_numerics_verified\": false,\n  \"graph_capture_verified\": false,\n  \"graph_replay_verified\": false,\n  \"performance_verified\": false\n}\n")
 install(TARGETS _oscar_ascend_ops oscar_ascend_kernels LIBRARY DESTINATION oscar_ascend)

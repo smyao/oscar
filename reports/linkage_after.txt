@@ -1,0 +1,28 @@
+extension /home/sunao2000.linux/gpt_new_oscar/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so
+ 0x0000000000000001 (NEEDED)             Shared library: [liboscar_ascend_kernels_1e481c5de2e400e9.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libtorch.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc10.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libtorch_npu.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [liberror_manager.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libtorch_cpu.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-aarch64.so.1]
+ 0x000000000000001d (RUNPATH)            Library runpath: [$ORIGIN:$ORIGIN/lib:/home/sunao2000.linux/gpt_new_oscar/build/ascendc/lib:/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu/lib:/usr/local/Ascend/cann-9.1.0/lib64:/home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/lib]
+kernel_library /home/sunao2000.linux/gpt_new_oscar/build/ascendc/lib/liboscar_ascend_kernels_1e481c5de2e400e9.so
+ 0x0000000000000001 (NEEDED)             Shared library: [libc_sec.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libascendcl.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libruntime.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libprofapi.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libunified_dlog.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libmmpa.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-aarch64.so.1]
+ 0x000000000000000e (SONAME)             Library soname: [liboscar_ascend_kernels_1e481c5de2e400e9.so]
+ 0x000000000000001d (RUNPATH)            Library runpath: [/usr/local/Ascend/cann-9.1.0/lib64]
+Loading actual CANN-built kernel library with RTLD_NOW|RTLD_LOCAL (no device call)
+terminate called after throwing an instance of 'std::logic_error'
+  what():  basic_string::_S_construct null not valid

@@ -2,12 +2,15 @@
 """Run a phase in an owned process group, always recording its outcome."""
 from __future__ import annotations
 
+import codecs
+from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
 import signal
 import subprocess
 import sys
+import threading
 import time
 from dataclasses import asdict, dataclass
 
@@ -29,6 +32,55 @@ def atomic_json(path: Path, value: object) -> None:
     temporary = path.with_name(path.name + f".{os.getpid()}.tmp")
     temporary.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
     temporary.replace(path)
+
+
+@contextmanager
+def live_log(path: Path):
+    """Keep a durable child log while mirroring new bytes to the terminal.
+
+    Children inherit a regular file, never a pipe that can fill during cleanup
+    or while the service supervisor is making a blocking HTTP request. A reader
+    with its own file offset mirrors chunks, including incomplete lines. Nested
+    phases naturally forward their output through the same outer log.
+    """
+    stopped = threading.Event()
+    failures = []
+    terminal = sys.stdout
+    with path.open("w", buffering=1, encoding="utf-8") as stream, path.open("rb") as reader:
+        def mirror():
+            decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+            try:
+                while True:
+                    chunk = reader.read(65536)
+                    if chunk:
+                        text = decoder.decode(chunk)
+                        if text:
+                            terminal.write(text)
+                            terminal.flush()
+                    elif stopped.is_set():
+                        tail = decoder.decode(b"", final=True)
+                        if tail:
+                            terminal.write(tail)
+                            terminal.flush()
+                        return
+                    else:
+                        stopped.wait(0.05)
+            except Exception as error:
+                failures.append(error)
+
+        worker = threading.Thread(target=mirror, name=f"oscar-log-{path.stem}", daemon=True)
+        worker.start()
+        try:
+            yield stream
+        finally:
+            stream.flush()
+            stopped.set()
+            # Do not let a disconnected or blocked output consumer hang cleanup.
+            worker.join(timeout=5)
+            if worker.is_alive():
+                raise RuntimeError(f"terminal log forwarding did not finish; full log={path}")
+            if failures:
+                raise RuntimeError(f"terminal log forwarding failed; full log={path}: {failures[0]}") from failures[0]
 
 
 def group_exists(pgid: int) -> bool:
@@ -84,12 +136,14 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
     def on_signal(signum, _frame):
         raise KeyboardInterrupt(f"signal {signum}")
 
-    with logfile.open("w", buffering=1) as stream:
+    environment = dict(os.environ if env is None else env)
+    environment["PYTHONUNBUFFERED"] = "1"
+    with live_log(logfile) as stream:
         stream.write(f"START phase={name} cwd={cwd.resolve()} command={json.dumps(command)}\n")
         try:
             for sig in (signal.SIGTERM, signal.SIGINT):
                 old_signals[sig] = signal.signal(sig, on_signal)
-            proc = subprocess.Popen(command, cwd=cwd, env=env, stdin=subprocess.DEVNULL,
+            proc = subprocess.Popen(command, cwd=cwd, env=environment, stdin=subprocess.DEVNULL,
                                     stdout=stream, stderr=subprocess.STDOUT,
                                     start_new_session=True)
             next_heartbeat = started + heartbeat
@@ -113,10 +167,15 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
         except OSError as exc:
             stream.write(f"EXEC_ERROR phase={name}: {exc}\n")
         finally:
-            if proc is not None:
-                cleaned = cleanup_group(proc, grace)
-            for sig, handler in old_signals.items():
-                signal.signal(sig, handler)
+            try:
+                if proc is not None:
+                    cleaned = cleanup_group(proc, grace)
+            except BaseException as exc:
+                cleaned = False
+                stream.write(f"CLEANUP_ERROR phase={name}: {type(exc).__name__}: {exc}\n")
+            finally:
+                for sig, handler in old_signals.items():
+                    signal.signal(sig, handler)
             if not cleaned and rc == 0:
                 rc = 125
             result = PhaseResult(name, command, rc, round(time.monotonic()-started, 6),

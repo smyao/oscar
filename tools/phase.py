@@ -34,6 +34,27 @@ def atomic_json(path: Path, value: object) -> None:
     temporary.replace(path)
 
 
+def terminal_line(line: str, *, stderr: bool = False) -> None:
+    """Write one whole line in a single write() call.
+
+    The deploy parent and the service-probe child are separate processes that
+    share one terminal; multi-call prints can split a line between them. Falls
+    back to print when the stream has no real descriptor (test capture).
+    """
+    stream = sys.stderr if stderr else sys.stdout
+    try:
+        descriptor = stream.fileno()
+    except (AttributeError, OSError):
+        print(line, file=stream, flush=True)
+        return
+    view = memoryview((line + "\n").encode(errors="replace"))
+    while view:
+        written = os.write(descriptor, view)
+        if written <= 0:
+            raise OSError("terminal write returned 0 bytes")
+        view = view[written:]
+
+
 @contextmanager
 def live_log(path: Path):
     """Keep a durable child log while mirroring new bytes to the terminal.
@@ -181,7 +202,7 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
                     stream.write(f"TIMEOUT phase={name} limit={timeout}s\n")
                     break
                 if now >= next_heartbeat:
-                    print(f"[oscar] phase={name} running seconds={now-started:.1f} log={logfile}", flush=True)
+                    terminal_line(f"[oscar] phase={name} running seconds={now-started:.1f} log={logfile}")
                     next_heartbeat = now + heartbeat
                 time.sleep(min(0.1, max(timeout-(now-started), 0.001)))
             if not expired:
@@ -209,7 +230,7 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
             stream.write("RESULT " + json.dumps(asdict(result)) + "\n")
             atomic_json(log_dir / f"{name}.json", asdict(result))
     state = "PASSED" if rc == 0 else "FAILED"
-    print(f"[oscar] {state} phase={name} rc={rc} log={logfile}", flush=True)
+    terminal_line(f"[oscar] {state} phase={name} rc={rc} log={logfile}")
     return result
 
 

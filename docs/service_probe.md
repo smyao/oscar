@@ -32,7 +32,7 @@ HTTP 200 只说明请求返回。最终通过还必须满足：
 
 每次服务启动使用唯一 `OSCAR_TRACE_DIR=.../trace-<uuid>`，不会把旧 trace 当成此次执行的证据。图回放事件只声称 launch 返回；真实请求完成记录为另一个状态。HTTP 输出不建立 kernel 精度门、logits/任务质量、MTP 质量对照或性能通过，这些字段仍为 `not_run`。
 
-`attention_dispatched`/`cache_layout` 等 `emit_once` 证据按签名去重，长 prefill 或 decode 期间不再重复写入。为让 REQUEST_WAIT 的 worker 进展不冻结在旧签名上，每个 FULL 层还按 `OSCAR_PROGRESS_INTERVAL_SECONDS`（默认 5 秒）写入 `attention_progress` 心跳，`wall_time` 与 `max_seq_len` 随 chunk 推进刷新。心跳只证明宿主侧存活与推进，不是设备完成或性能证据。
+`attention_dispatched`/`cache_layout` 等 `emit_once` 证据按签名去重，长 prefill 或 decode 期间不再重复写入。为让 REQUEST_WAIT 的 worker 进展不冻结在旧签名上，每个 FULL 层还按 `OSCAR_PROGRESS_INTERVAL_SECONDS`（默认 5 秒）写入 `attention_progress` 心跳，`wall_time` 与 `max_seq_len` 随 chunk 推进刷新。FULL_DECODE_ONLY 图回放绕过 Python attention 路径，decode 阶段的存活心跳由图回放包装器以同间隔写入 `graph_replay_progress`。心跳只证明宿主侧存活与推进，不是设备完成或性能证据。
 
 ## 进程与资源边界
 

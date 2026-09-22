@@ -26,7 +26,7 @@ import urllib.request
 import uuid
 
 from .npu_resources import DEFAULT_RELEASE_TOLERANCE, read_npu_resources, wait_for_release
-from .phase import atomic_json, cleanup_group, live_log
+from .phase import atomic_json, cleanup_group, live_log, terminal_line
 from .plog import OwnedProcessGroup, attach_plog
 from .prepare_rotations import model_geometry
 from .target_cli import ROOT, serve_argv, target_env
@@ -46,7 +46,7 @@ _PRINT_LOCK = threading.Lock()
 def _terminal(line, *, stderr=False):
     # Mixed-phase request threads print concurrently; keep each line whole.
     with _PRINT_LOCK:
-        print(line, file=sys.stderr if stderr else sys.stdout, flush=True)
+        terminal_line(line, stderr=stderr)
 
 
 class ServiceProbeError(RuntimeError):

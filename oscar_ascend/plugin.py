@@ -151,11 +151,17 @@ def _patch_graph_evidence(module):
             if active:
                 entry=wrapper.concrete_aclgraph_entries.get(descriptor)
                 if entry is not None and entry.aclgraph is not None:
-                    from .telemetry import emit_once
+                    from .telemetry import emit_once, emit_throttled
                     emit_once("graph_replay_launch_return" if replay else "graph_capture_return",
                               key=(id(wrapper),str(descriptor),replay),
                               descriptor=str(descriptor),mode=str(wrapper.runtime_mode),
                               device_completion="not_established_by_launch")
+                    if replay:
+                        # FULL_DECODE_ONLY replay bypasses the Python attention
+                        # path, so this is the only decode-phase liveness record.
+                        emit_throttled("graph_replay_progress", key=id(wrapper),
+                                       descriptor=str(descriptor),mode=str(wrapper.runtime_mode),
+                                       device_completion="not_established_by_launch")
             return result
         return wrapped
     _patch(module.ACLGraphWrapper,"__call__",observe)

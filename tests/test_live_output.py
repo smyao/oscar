@@ -165,6 +165,33 @@ def test_service_startup_and_ongoing_output_reach_terminal_before_response(
     assert "SERVICE_RESULT " in sink.getvalue() and lifecycle["cleanup_complete"]
 
 
+def test_terminal_line_uses_one_descriptor_write_and_falls_back(monkeypatch, capsys):
+    class DescriptorTerminal(io.StringIO):
+        def __init__(self, descriptor):
+            super().__init__()
+            self.descriptor = descriptor
+
+        def fileno(self):
+            return self.descriptor
+
+    read_end, write_end = os.pipe()
+    try:
+        sink = DescriptorTerminal(write_end)
+        monkeypatch.setattr(sys, "stdout", sink)
+        phase.terminal_line("whole-line")
+        os.close(write_end)
+        write_end = -1
+        assert os.read(read_end, 4096) == b"whole-line\n"
+        assert sink.getvalue() == ""
+    finally:
+        os.close(read_end)
+        if write_end >= 0:
+            os.close(write_end)
+    monkeypatch.undo()
+    phase.terminal_line("fallback-line")
+    assert "fallback-line\n" in capsys.readouterr().out
+
+
 def test_large_output_and_split_unicode_are_preserved(tmp_path, capsys):
     program = tmp_path / "many_bytes.py"
     program.write_text(

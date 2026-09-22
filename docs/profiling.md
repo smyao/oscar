@@ -6,15 +6,17 @@
 
 显式 `OSCAR_TIMING=1` 输出 `oscar-timing` JSON host相位日志；其中`device_ms=null`、`device_evidence=requires_npu_trace`，永不把host launch时间改名device时间。`OSCAR_PROFILER=1` 开启record_function标签；相位标签本身不启动/停止全局profiler。
 
-一键有界设备 trace（不要手工改配置或手工调端点）：
+一键逐相位设备时间（不要手工改配置或手工调端点）：
 
 ```bash
-git pull --ff-only && bash scripts/profile_service.sh
+git pull --ff-only && bash scripts/debug_service.sh
 ```
 
-该入口在标准 install/probe/serve 流程内完成全部测量：`OSCAR_PROFILE_DIR`（默认 `reports/npu_profile`，可预先覆盖）让 `tools.target_cli` 以服务参数形式武装原生 `TorchNPUProfilerWrapper`（`profiler=torch` + `torch_profiler_dir`）；`OSCAR_PROFILER=1` 打开 `record_function` 相位标签；服务探针在 `OSCAR_PROFILE_REQUEST`（默认 `serial-32768`）这一个请求前后自动调用原生 `/start_profile`、`/stop_profile`，随后只收集本窗口 mtime 更新的 `trace_view.json`，运行 `tools.summarize_profile` 并把逐 rank 的每相位 device_ms 以 `[oscar] PROFILE` 单行打到终端，结果写入探针报告的 `npu_profile` 字段。测量失败记录 `status=failed/not_run` 并响亮打印，不阻塞探针自身证据门，也不伪造设备时间。正式 serve 阶段不受该窗口影响。
+`OSCAR_DEBUG_SYNC=1` 让 `_Phase` 在每个大 token 相位边界做显式 stream 同步并写 `waiting_for_device`/`device_completed` 检查点（wall_time 差即该相位设备侧耗时）；探针结束时自动对本轮 trace 目录运行 `tools/summarize_timing`，把每相位的 device_count/device_s_sum/device_s_p95/host_s_sum 以 `[oscar] TIMING_SUMMARY` 单行打到终端并写入 `timing-summary.json`。同步打点用于**归因**（哪类相位吃掉了设备时间）；同步后的绝对值不是原生性能数字（#129），性能验收仍需同配置原生基线对照。
 
-服务沿用原生vLLM Ascend `TorchNPUProfilerWrapper` 的启动/停止方式与torch profiler配置；只在需要的实际请求窗口收集。不得为了测量改变 `FULL_DECODE_ONLY`、MTP、TP4、异步调度或量化配置。调用链中的标签形如 `oscar::fia::{"layer":"...","tokens":...}`；graph capture里的host标签不等于后续graph replay执行证据，必须看实际硬件kernel事件。`OSCAR_TIMING=1`/`OSCAR_PROFILER=1` 的 host 相位记录在探针流程中写入本轮 trace 目录的 `timing-<pid>.jsonl`（终端不再逐条刷屏），需要旧行为时显式 `OSCAR_TIMING_STDERR=1`。
+原生 `TorchNPUProfilerWrapper` 的 `/start_profile`/`/stop_profile` HTTP 窗口**已禁用**：真机 20260922T093958Z 上 start 报 `External init callback must run in same thread as registerClient`，stop 时 torch_npu profiler 在 RECORD 状态被停，四个 worker 全部 segfault、EngineCore 死亡（档案 #133）。测量路径不得杀死被测服务，该集成已从 `tools.target_cli`/`tools.service_probe` 移除。
+
+服务侧 record_function 标签沿 `OSCAR_PROFILER=1` 开启；相位标签本身不启动/停止全局profiler。调用链中的标签形如 `oscar::fia::{"layer":"...","tokens":...}`；graph capture里的host标签不等于后续graph replay执行证据，必须看实际硬件kernel事件。`OSCAR_TIMING=1`/`OSCAR_PROFILER=1`/`OSCAR_DEBUG_SYNC=1` 的 host 相位记录在探针流程中写入本轮 trace 目录的 `timing-<pid>.jsonl`（终端不再逐条刷屏），需要旧行为时显式 `OSCAR_TIMING_STDERR=1`。
 
 独立NPU probe可使用显式会话：
 

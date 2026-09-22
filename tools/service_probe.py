@@ -284,44 +284,6 @@ def compact_workers(progress):
     return "; ".join(parts)
 
 
-def _profile_endpoint(server, action, deadline):
-    _http(server.base_url + f"/{action}_profile", payload={}, timeout=_remaining(deadline, 30))
-
-
-def collect_profile(profile_dir, *, since, output, deadline, timeout=120):
-    """Summarize only this window's fresh traces; stale files never count."""
-    wait_until = time.monotonic() + _remaining(deadline, 60)
-    traces = []
-    while time.monotonic() < wait_until:
-        traces = sorted(path for pattern in ("ASCEND_PROFILER_OUTPUT/trace_view.json",
-                                             "ASCEND_PROFILER_OUTPUT/trace_view.json.gz")
-                        for path in profile_dir.glob(f"**/{pattern}")
-                        if path.is_file() and path.stat().st_mtime >= since)
-        if traces:
-            break
-        time.sleep(1)
-    if not traces:
-        return {"status": "not_run", "reason": "no fresh trace_view.json after the profiled request"}
-    command = [sys.executable, "-m", "tools.summarize_profile", *map(str, traces),
-               "--output", str(output)]
-    environment = dict(os.environ, PYTHONUNBUFFERED="1", TORCH_DEVICE_BACKEND_AUTOLOAD="0")
-    try:
-        result = subprocess.run(command, cwd=ROOT, env=environment, stdin=subprocess.DEVNULL,
-                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                                timeout=_remaining(deadline, timeout))
-    except (OSError, subprocess.TimeoutExpired) as error:
-        return {"status": "failed", "reason": f"{type(error).__name__}: {error}",
-                "traces": [str(x) for x in traces]}
-    for line in result.stdout.splitlines():
-        if line.strip():
-            _terminal(f"[oscar] PROFILE {line}")
-    summary = json.loads(output.read_text()) if output.is_file() else {}
-    return {"status": "observed" if result.returncode == 0 else "failed",
-            "summarize_returncode": result.returncode,
-            "phase_attribution_complete": summary.get("phase_attribution_complete"),
-            "traces": [str(x) for x in traces], "summary": str(output)}
-
-
 def request_with_deadline(server, payload, *, label, timeout):
     """One child per HTTP request: socket progress cannot extend the deadline.
 
@@ -519,6 +481,25 @@ def evaluate_mtp_metrics(before, after):
             "scope": "native MTP execution observation, not a quality comparison"}
 
 
+def _timing_summary(trace_dir: Path, log_dir: Path):
+    output = log_dir / "timing-summary.json"
+    command = [sys.executable, "-m", "tools.summarize_timing", str(trace_dir), "--output", str(output)]
+    environment = dict(os.environ, PYTHONUNBUFFERED="1", TORCH_DEVICE_BACKEND_AUTOLOAD="0")
+    result = subprocess.run(command, cwd=ROOT, env=environment, stdin=subprocess.DEVNULL,
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=120)
+    summary = json.loads(output.read_text()) if output.is_file() else {}
+    phases = summary.get("phases", {})
+    for name, row in sorted(phases.items()):
+        _terminal(f"[oscar] TIMING_SUMMARY phase={name} device_count={row['device_count']} "
+                  f"device_s={None if row['device_s_sum'] is None else round(row['device_s_sum'], 3)} "
+                  f"device_p95_s={None if row['device_s_p95'] is None else round(row['device_s_p95'], 3)} "
+                  f"host_s={None if row['host_s_sum'] is None else round(row['host_s_sum'], 4)}")
+    _terminal(f"[oscar] TIMING_SUMMARY status={summary.get('status', 'failed')} "
+              f"unpaired_waiting={summary.get('unpaired_waiting')} output={output}")
+    return {"status": summary.get("status", "failed"), "returncode": result.returncode,
+            "output": str(output)}
+
+
 def run_service(config_path, *, output, log_dir, serve=False, command=None,
                 tokenizer_factory=None, resource_reader=None):
     """Run real service requests; injectable boundaries are only for fault tests."""
@@ -574,38 +555,9 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
             (log_dir / "metrics_before.prom").write_text(metrics_before_text)
             metrics_before = parse_mtp_metrics(metrics_before_text)
             request_limit = _positive_time(config, "service_request_timeout_seconds", 300)
-            profile_dir = os.environ.get("OSCAR_PROFILE_DIR", "").strip()
-            profile_label = os.environ.get("OSCAR_PROFILE_REQUEST", "serial-32768")
-            report["npu_profile"] = {"status": "not_run", "request": profile_label if profile_dir else None}
             for length in lengths:
-                label = f"serial-{length}"
-                window = bool(profile_dir) and label == profile_label
-                started_wall = time.time()
-                if window:
-                    try:
-                        _profile_endpoint(server, "start", deadline)
-                    except (ServiceProbeError, TimeoutError) as error:
-                        window = False
-                        report["npu_profile"] = {"status": "failed", "request": label,
-                                                 "reason": f"start_profile: {error}"}
-                        _terminal(f"[oscar] PROFILE_ERROR start_profile: {error}", stderr=True)
-                record = completion(server, config, tokenizer, length, label=label,
+                record = completion(server, config, tokenizer, length, label=f"serial-{length}",
                                     timeout=_remaining(deadline, request_limit), prompt_ids=prompts[length])
-                if window:
-                    try:
-                        _profile_endpoint(server, "stop", deadline)
-                    except (ServiceProbeError, TimeoutError) as error:
-                        report["npu_profile"] = {"status": "failed", "request": label,
-                                                 "reason": f"stop_profile: {error}"}
-                        _terminal(f"[oscar] PROFILE_ERROR stop_profile: {error}", stderr=True)
-                    else:
-                        _terminal(f"[oscar] PROFILE_WINDOW {label} stopped; collecting fresh traces from {profile_dir}")
-                        report["npu_profile"] = collect_profile(Path(profile_dir), since=started_wall,
-                            output=log_dir / "profile-summary.json", deadline=deadline)
-                        report["npu_profile"]["request"] = label
-                        _terminal(f"[oscar] PROFILE_RESULT status={report['npu_profile']['status']} "
-                                  f"complete={report['npu_profile'].get('phase_attribution_complete')} "
-                                  f"traces={len(report['npu_profile'].get('traces', ()))}")
                 report["requests"].append(record)
                 atomic_json(output, report)
                 _terminal(f"[oscar] service request complete prompt={length} generated={record['completion_tokens']}")
@@ -671,6 +623,14 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
         if report["server"].get("cleanup_complete") is False:
             report["status"] = "failed"
             report.setdefault("error", report["server"].get("cleanup_error", "owned service process group cleanup failed"))
+        if report["server"].get("debug_sync") and report["server"].get("trace_dir"):
+            # Debug-sync phase walls attribute device time per phase. Summary
+            # failures never mask the probe outcome.
+            try:
+                report["timing_summary"] = _timing_summary(Path(report["server"]["trace_dir"]), log_dir)
+            except Exception as error:
+                report["timing_summary"] = {"status": "failed", "reason": f"{type(error).__name__}: {error}"}
+                _terminal(f"[oscar] TIMING_SUMMARY_ERROR {report['timing_summary']['reason']}", stderr=True)
         if report["status"] == "requests_passed_cleanup_pending":
             report["status"] = "passed"
         if report["status"] in {"failed", "interrupted"}:

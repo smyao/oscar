@@ -28193,3 +28193,31 @@ Selected verbatim records, not a complete log.
 (Worker_TP0 pid=16815) {"host_s": 4.43902962, "layer": "language_model.model.layers.43.self_attn.attn", "phase_end": "prepare", "requests": 3, "tokens": 16384, "ts_unix": 1790067592.4405284, "t": "oscar-timing"}
 (Worker_TP0 pid=16815) {"host_s": 8.879e-05, "layer": "language_model.model.layers.47.self_attn.attn", "phase_end": "fia", "max_seq_len": 49152, "splits": 1, "tasks": 49152, "tokens": 16384, "t": "oscar-timing"}
 ```
+
+
+## [133] 真机条目（gpt_new_oscar_kimi，2026-09-22 用户回传）· phase=service-probe/native-profiler-segfault
+
+**症状**：运行20260922T093958.700512Z（profile窗口集成首测）。serial-128/16384完成；`/start_profile`报`ERROR: External init callback must run in same thread as registerClient (905959552 != -1543700448)`后称Profiler started；serial-32768窗口内完成（200 OK）；`/stop_profile`时四rank同报`Incorrect schedule: Stop profiler while current state is RECORD`，随后四个worker进程全部`Segfault encountered`（obmalloc/_PyObject_Free栈），EngineCore报Worker proc died→Executor failed→EngineDeadError，`/stop_profile`返回HTTP 500（cancelled），探针失败；服务进程组后续清理完成。profile路径自身PROFILE_ERROR打印与状态记录按设计工作。
+
+**历史同族**：G31/#51/#52/#68（worker死亡与有界退出）；#70–73/D.4（设备时间证据纪律）。
+
+**处置**：原生`TorchNPUProfilerWrapper`的HTTP start/stop窗口在此CANN/torch_npu栈上会在stop导出时杀死全部worker——测量路径不得摧毁被测服务。已从`tools.target_cli`/`tools.service_probe`移除`OSCAR_PROFILE_DIR`武装与窗口调用，删除`scripts/profile_service.sh`。逐相位设备时间改用#70–73验证过的方法：`OSCAR_DEBUG_SYNC=1`相位同步检查点（`waiting_for_device`→`device_completed`的wall_time差），新增`tools/summarize_timing.py`聚合trace目录`timing-*.jsonl`为每相位device_s_sum/p95紧凑表，探针finally中自动打印`[oscar] TIMING_SUMMARY`单行；一键入口为已有的`scripts/debug_service.sh`。同步绝对值只用于归因，不作原生性能比较（#129）。独立ProfileSession保留但同栈风险未知，非默认路径。
+
+### 用户日志摘录（非完整文件）
+
+```text
+Source: user-provided console excerpts, 2026-09-22, run 20260922T093958.700512Z (gpt_new_oscar_kimi).
+Selected verbatim lines, not a complete server log.
+
+(APIServer pid=28698) INFO 09-22 09:47:33 [api_router.py:23] Starting profiler...
+ERROR: External init callback must run in same thread as registerClient (905959552 != -1543700448)
+(APIServer pid=28698) INFO:     127.0.0.1:37196 - "POST /start_profile HTTP/1.1" 200 OK
+(APIServer pid=28698) INFO:     127.0.0.1:37198 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=28698) INFO 09-22 09:49:16 [api_router.py:31] Stopping profiler...
+(Worker_TP2 pid=28904) [2026-09-22 09:49:16] [WARNING] [28904] profiler.py: Incorrect schedule: Stop profiler while current state is RECORD which may result in incomplete parsed data.
+!!!!!!! Segfault encountered !!!!!!!
+(EngineCore pid=28760) ERROR 09-22 09:49:30 [multiproc_executor.py:284] Worker proc VllmWorker-2 died unexpectedly, shutting down executor.
+[oscar] PROFILE_ERROR stop_profile: HTTP 500 from http://127.0.0.1:8989/stop_profile: {"error":{"message":"Call to profile method failed: cancelled","type":"InternalServerError","param":null,"code":500}}
+(EngineCore pid=28760) ERROR 09-22 09:49:38 [core.py:1197] RuntimeError: Executor failed.
+(APIServer pid=28698) ERROR 09-22 09:49:38 [async_llm.py:704] vllm.v1.engine.exceptions.EngineDeadError: EngineCore encountered an issue.
+```

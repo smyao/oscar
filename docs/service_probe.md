@@ -30,7 +30,7 @@ HTTP 200 只说明请求返回。最终通过还必须满足：
 - 原生 `/metrics` 的 speculative drafts 和 draft tokens 确实增长，同时记录 accepted tokens、接受率及平均接受长度。
 - 所属服务进程组已退出，并且所选 NPU 的 free memory 按下面规则恢复。
 
-上述功能证据门全部通过后（非 serve 模式），探针在同一只托管服务上执行**真实负载性能测量**（只测量、不验收）：默认 32 路并发 `/v1/completions`，prompt 长度按固定种子在 20000–30000 间取样，输出 16 token，有界预算 `performance_timeout_seconds`（默认 600，受相位总期限约束）。聚合 prefill/decode 吞吐来自原生 `/metrics` 计数器差值；爬坡过程由每 5 秒的 running/waiting 采样记录；MTP 接受率同步记录。结果写入报告的 `performance` 字段与 `performance.json`，状态为 `measured`/`failed`/`disabled`（`performance_request_count: 0` 显式关闭）；超时与未完成的请求逐条记录，绝不隐藏。该测量不通过不等于探针失败，也不构成 E06 性能验收。
+上述功能证据门全部通过后（非 serve 模式），探针在同一只托管服务上执行**并发阶梯对比测量**（只测量、不验收）：按 `concurrency_arms`（默认 `[1,4]`，空列表显式关闭）逐臂发起 K 路并发 `/v1/completions`，所有臂使用同一 prompt 长度 `concurrency_prompt_tokens`（默认 16384）与同一服务，每臂预算 `concurrency_arm_timeout_seconds`（默认 300）。每臂记录：原生 `/metrics` 计数器差值得到的聚合 prefill/decode 吞吐、每请求 wall 分布、每 5 秒 running/waiting 爬坡采样、MTP 接受率；未完成与失败请求逐条记账。收尾打印每臂一行 `CONCURRENCY_ARM` 与一行 `CONCURRENCY_VERDICT`（吞吐/耗时缩放比与分类提示：调度看爬坡采样、算子看各臂吞吐、访存看 TIMING_BUCKET 的 reqs= 维度每步成本）。结果写入报告的 `performance` 字段与 `concurrency.json`，状态为 `measured`/`failed`/`disabled`。该测量不通过不等于探针失败，也不构成 E06 性能验收。
 
 每次服务启动使用唯一 `OSCAR_TRACE_DIR=.../trace-<uuid>`，不会把旧 trace 当成此次执行的证据。图回放事件只声称 launch 返回；真实请求完成记录为另一个状态。HTTP 输出不建立 kernel 精度门、logits/任务质量、MTP 质量对照或性能通过，这些字段仍为 `not_run`。
 

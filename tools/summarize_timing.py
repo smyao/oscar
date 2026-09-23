@@ -46,16 +46,17 @@ def summarize_timing(directory) -> dict:
             key = (row.get("phase"), row.get("layer"), row.get("tokens"))
             state = row.get("state")
             if state == "waiting_for_device":
-                pending[key] = (row["wall_time"], row.get("tokens"), row.get("max_seq_len"))
+                pending[key] = (row["wall_time"], row.get("tokens"), row.get("requests"), row.get("max_seq_len"))
             elif state == "device_completed" and key in pending:
-                wall, tokens, max_seq = pending.pop(key)
+                wall, tokens, requests, max_seq = pending.pop(key)
                 value = row["wall_time"] - wall
                 device.setdefault(row.get("phase"), []).append(value)
                 if isinstance(max_seq, (int, float)) and math.isfinite(max_seq):
                     # Coarse KV buckets (16K granularity) attribute the fia cost
-                    # curve without per-request flooding.
+                    # curve without per-request flooding; num_reqs separates the
+                    # single- and multi-concurrency ladder arms.
                     kv = int(round(max_seq / 16384.0)) * 16
-                    buckets.setdefault((row.get("phase"), tokens, kv), []).append(value)
+                    buckets.setdefault((row.get("phase"), tokens, requests, kv), []).append(value)
         for key in pending:
             device.setdefault(key[0], [])
         unpaired += len(pending)
@@ -78,8 +79,9 @@ def summarize_timing(directory) -> dict:
         }
     observed = any(row["device_count"] for row in phases.values())
     bucket_list = []
-    for (phase, tokens, kv), values in buckets.items():
-        bucket_list.append({"phase": phase, "tokens": tokens, "kv_bucket_k": kv,
+    for (phase, tokens, requests, kv), values in buckets.items():
+        bucket_list.append({"phase": phase, "tokens": tokens, "requests": requests,
+                            "kv_bucket_k": kv,
                             "device_count": len(values), "device_s_sum": sum(values),
                             "device_s_p95": _percentile(values, 0.95),
                             "device_s_max": max(values)})

@@ -78,3 +78,5 @@
 #136：full-service门失败根因为文件名冲突——探针报告`service-probe.json`与run_phase相位账本`<name>.json`同路径，探针退出后账本覆盖报告。探针全门本就通过（probe_result.log：passed/passed）。报告改名`service-probe-report.json`，测试含账本覆盖回归；门保持严格。正式服务仍待下一次真机全绿。
 
 #137：用户提供OSCAR与原生同配置同数据集32并发对照：原生Running 1→26、聚合gen 156 tok/s；OSCAR Running停滞2–4、gen 0–0.7 tok/s。差异链闭合于CV内核（#134/#135），MTP/调度/GDN/量化排除。功能探针保留为验收证据；新增真实负载性能测量相位（32并发20–30K、计数器吞吐、爬坡采样），只测量不验收，写入report["performance"]。
+
+#138：一键流程首次走完探针→清理→正式服务（#136修复生效）；真实负载首测completed=3/32、prompt_tps=499、gen_tps=0.2。修正收集循环误捕单请求超时的记账bug。按用户指令改为并发阶梯probe（臂1/4×16384，调度/算子/访存三层分离，收尾自打CONCURRENCY_ARM/VERDICT）；impl相位补requests字段，TIMING_BUCKET加reqs维度。

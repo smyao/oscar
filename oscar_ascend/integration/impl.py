@@ -101,11 +101,12 @@ class OscarAttentionImpl(AttentionImpl):
                 state.snapshots.sink_tokens, state.snapshots.recent_tokens, source_splits,
                 attn_metadata.block_tables[:attn_metadata.num_reqs] if attn_metadata.draft_index > 0 else None,
                 attn_metadata.draft_index > 0)
-        with phase("rotate", layer=layer.layer_name, tokens=n, hadamard=state.hadamard):
+        with phase("rotate", layer=layer.layer_name, tokens=n, hadamard=state.hadamard,
+                   requests=attn_metadata.num_reqs):
             ops.rotate_out(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
         with phase("fia", layer=layer.layer_name, tokens=n, max_query_len=attn_metadata.max_query_len,
                    max_seq_len=attn_metadata.max_seq_len, splits=source_splits,
-                   cube_cores=g.cube_cores, tasks=task_count):
+                   cube_cores=g.cube_cores, tasks=task_count, requests=attn_metadata.num_reqs):
             ops.attention_cv_out(
                 q, qr, k, v, state.rotation_v, state.raw, attn_metadata.block_tables,
                 state.window_key, state.window_value, state.window_tags, tasks,
@@ -114,7 +115,8 @@ class OscarAttentionImpl(AttentionImpl):
                 state.num_blocks * state.spec.conv_bytes, state.spec.ssm_bytes,
                 state.snapshots.sink_tokens, state.snapshots.recent_tokens,
                 state.snapshots.speculative_tokens, source_splits, self.scale, g.cube_cores)
-        with phase("merge", layer=layer.layer_name, tokens=n, splits=splits):
+        with phase("merge", layer=layer.layer_name, tokens=n, splits=splits,
+                   requests=attn_metadata.num_reqs):
             ops.merge_lse_out(
                 partial.view(n * h, splits, d), partial_lse.view(n * h, splits),
                 workspace.output[:n].view(n * h, d), workspace.lse[:n].view(n * h),
@@ -123,7 +125,8 @@ class OscarAttentionImpl(AttentionImpl):
         # Read before write is essential for a chunk longer than the ring:
         # every query sees the previous exact window until attention completes.
         # Current K/V was read directly; only now publish the new physical data.
-        with phase("phase1_stores", layer=layer.layer_name, tokens=n, hadamard=state.hadamard):
+        with phase("phase1_stores", layer=layer.layer_name, tokens=n, hadamard=state.hadamard,
+                   requests=attn_metadata.num_reqs):
             ops.rotate_clip_store_out(
                 k, v, state.rotation_k_transpose, state.rotation_v_transpose,
                 slots, positions, state.raw,
@@ -133,7 +136,8 @@ class OscarAttentionImpl(AttentionImpl):
                 state.snapshots.sink_tokens, state.snapshots.ring_tokens,
                 float(self.provider.config.get("k_clip_ratio", 0.0)),
                 float(self.provider.config.get("v_clip_ratio", 0.0)), state.hadamard)
-        with phase("status_guard", layer=layer.layer_name, tokens=n):
+        with phase("status_guard", layer=layer.layer_name, tokens=n,
+                   requests=attn_metadata.num_reqs):
             ops.status_guard(statuses, workspace.rotate_status[:n],
                              workspace.merge_status[:n], workspace.store_status[:n])
         emit_once("attention_dispatched", key=(layer.layer_name, n, attn_metadata.max_query_len),

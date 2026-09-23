@@ -28320,3 +28320,23 @@ OSCAR:  Running: 2 reqs, Waiting: 30 reqs ... Running: 4 reqs, Waiting: 28 reqs
 Native: Running: 1 -> 26 reqs, GPU KV cache usage -> 95.0%
         Avg generation throughput climbs to 156.4 tokens/s; Avg prompt throughput 3632.9-8979.9 tokens/s
 ```
+
+
+## [138] 真机条目（gpt_new_oscar_kimi，2026-09-23 用户回传）· 性能测量首跑与并发阶梯改版
+
+**运行**：20260923T005836.361566Z（含#136门修复与#137真实负载测量相位）。一键流程首次走完探针→资源清理→正式服务拉起（serve/目录证据）；性能相位实测：completed=3/32、prompt_tps=499.0、gen_tps=0.2（对照原生同负载：prefill约6.9K tok/s、聚合gen 156 tok/s），worker心跳kv=30010持续推进无挂死。
+
+**发现并修复的实现bug（本机代码审查，非真机新错误形态）**：as_completed循环内单请求TimeoutError被外层预算耗尽分支误捕（3.11+与concurrent.futures.TimeoutError同类），提前中断收集并丢失28条记录；改为逐请求failed记账、相位等全部请求resolved再收尾；记账字段改为completed/failed/unfinished。
+
+**按用户指令的probe改版**：撤回固定负载测量，改为并发阶梯（同服务同16384长度，臂K=1,4）：调度由每臂running/waiting采样分离，算子由各臂原生计数器吞吐分离，访存由相位打点新增num_reqs字段后的TIMING_BUCKET reqs=维度分离；收尾自动打印CONCURRENCY_ARM/CONCURRENCY_VERDICT。impl.py的fia/rotate/merge/phase1_stores/status_guard相位补requests=attn_metadata.num_reqs（host标量，无回读）。
+
+### 用户日志摘录（非完整文件）
+
+```text
+Source: user-provided console excerpts, 2026-09-23, run 20260923T005836.361566Z (gpt_new_oscar_kimi).
+
+[oscar] PERFORMANCE done wall=300.0s completed=3/32 timeout=28 failed=1 prompt_tps=499.0 gen_tps=0.2
+[oscar] whole-service passed report=.../service-probe-report.json
+[oscar] PASSED phase=service-probe rc=0
+(随后进入 serve/ 目录证据链：正式服务拉起)
+```

@@ -24,7 +24,6 @@ import time
 import urllib.error
 import urllib.request
 import uuid
-import random
 
 from .npu_resources import DEFAULT_RELEASE_TOLERANCE, read_npu_resources, wait_for_release
 from .phase import atomic_json, cleanup_group, live_log, terminal_line
@@ -498,7 +497,7 @@ def _timing_summary(trace_dir: Path, log_dir: Path):
                   f"host_s={None if row['host_s_sum'] is None else round(row['host_s_sum'], 4)}")
     for row in summary.get("buckets", [])[:8]:
         _terminal(f"[oscar] TIMING_BUCKET phase={row['phase']} tokens={row['tokens']} "
-                  f"kv≈{row['kv_bucket_k']}K count={row['device_count']} "
+                  f"reqs={row['requests']} kv≈{row['kv_bucket_k']}K count={row['device_count']} "
                   f"device_s={round(row['device_s_sum'], 3)} p95_s={round(row['device_s_p95'], 3)}")
     _terminal(f"[oscar] TIMING_SUMMARY status={summary.get('status', 'failed')} "
               f"unpaired_waiting={summary.get('unpaired_waiting')} output={output}")
@@ -525,70 +524,62 @@ def parse_gauges(text, names):
     return values
 
 
-PERF_COUNTER_NAMES = ("vllm:prompt_tokens_total", "vllm:generation_tokens_total")
-PERF_GAUGE_NAMES = ("vllm:num_requests_running", "vllm:num_requests_waiting")
-PERF_SAMPLE_SECONDS = 5.0
+LADDER_COUNTER_NAMES = ("vllm:prompt_tokens_total", "vllm:generation_tokens_total")
+LADDER_GAUGE_NAMES = ("vllm:num_requests_running", "vllm:num_requests_waiting")
+LADDER_SAMPLE_SECONDS = 5.0
 
 
-def run_performance(server, config, tokenizer, *, log_dir, deadline):
-    """Measure realistic concurrent load; report only, never an acceptance gate.
+def _sample_loop(server, deadline, started, samples, stop):
+    while not stop.is_set():
+        try:
+            gauges = parse_gauges(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 5)),
+                                  LADDER_GAUGE_NAMES)
+            samples.append({"t": round(time.monotonic() - started, 3),
+                            "running": gauges.get("vllm:num_requests_running"),
+                            "waiting": gauges.get("vllm:num_requests_waiting")})
+        except (OSError, ServiceProbeError, TimeoutError) as error:
+            samples.append({"t": round(time.monotonic() - started, 3),
+                            "error": f"{type(error).__name__}: {error}"})
+        stop.wait(LADDER_SAMPLE_SECONDS)
 
-    Archive #137: fixed serial lengths were functional evidence, not a workload.
-    This phase fires the deployed workload shape (32 concurrent 20K-30K-token
-    completions) and reads native counters for aggregate rates. Incomplete
-    requests are recorded, never hidden; failures here never mask probe gates.
-    """
-    count = int(config.get("performance_request_count", 32))
-    if count == 0:
-        return {"status": "disabled", "scope": "performance_request_count=0 disables the load measurement"}
-    low = int(config.get("performance_prompt_min_tokens", 20000))
-    high = int(config.get("performance_prompt_max_tokens", 30000))
-    budget = _remaining(deadline, _positive_time(config, "performance_timeout_seconds", 600))
-    if not 0 < count <= 128 or not 0 < low <= high:
-        raise ValueError("performance probe needs 1..128 requests and min<=max prompt tokens")
-    rng = random.Random(46774)
-    lengths = [rng.randint(low, high) for _ in range(count)]
-    prompts = {i: exact_prompt(tokenizer, lengths[i]) for i in range(count)}
+
+def _run_arm(server, config, tokenizer, length, concurrency, *, log_dir, deadline, label_prefix):
+    """One ladder arm: `concurrency` identical-length requests at once."""
+    budget = _remaining(deadline, _positive_time(config, "concurrency_arm_timeout_seconds", 300))
     request_limit = _positive_time(config, "service_request_timeout_seconds", 300)
-    started = time.monotonic()
+    prompt = exact_prompt(tokenizer, length)
     counters_before = parse_gauges(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 10)),
-                                   PERF_COUNTER_NAMES)
+                                   LADDER_COUNTER_NAMES)
     mtp_before = parse_mtp_metrics(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 10)))
     samples = []
     stop = threading.Event()
-
-    def sampler():
-        while not stop.is_set():
-            try:
-                gauges = parse_gauges(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 5)),
-                                      PERF_GAUGE_NAMES)
-                samples.append({"t": round(time.monotonic() - started, 3),
-                                "running": gauges.get("vllm:num_requests_running"),
-                                "waiting": gauges.get("vllm:num_requests_waiting")})
-            except (OSError, ServiceProbeError, TimeoutError) as error:
-                samples.append({"t": round(time.monotonic() - started, 3),
-                                "error": f"{type(error).__name__}: {error}"})
-            stop.wait(PERF_SAMPLE_SECONDS)
-
-    thread = threading.Thread(target=sampler, name="oscar-perf-sampler", daemon=True)
-    _terminal(f"[oscar] PERFORMANCE start requests={count} prompt={low}..{high} output={MIN_OUTPUT_TOKENS} "
-              f"budget={budget:.0f}s")
+    started = time.monotonic()
+    thread = threading.Thread(target=_sample_loop, args=(server, deadline, started, samples, stop),
+                              name=f"oscar-ladder-sampler-{concurrency}", daemon=True)
+    _terminal(f"[oscar] CONCURRENCY_ARM start K={concurrency} prompt={length} budget={budget:.0f}s")
     thread.start()
-    pool = ThreadPoolExecutor(max_workers=count)
-    futures = []
+    pool = ThreadPoolExecutor(max_workers=concurrency)
+    futures = {}
     records = []
     try:
-        for i in range(count):
-            futures.append(pool.submit(completion, server, config, tokenizer, lengths[i],
-                label=f"perf-{i}-{lengths[i]}", timeout=_remaining(deadline, request_limit),
-                prompt_ids=prompts[i], quiet=True))
+        for i in range(concurrency):
+            label = f"{label_prefix}-{i}"
+            future = pool.submit(completion, server, config, tokenizer, length,
+                                 label=label, timeout=_remaining(deadline, request_limit),
+                                 prompt_ids=prompt, quiet=True)
+            futures[future] = label
         try:
             for future in as_completed(futures, timeout=budget):
-                records.append(future.result())
-                atomic_json(log_dir / "performance.json", {"requests": records})
+                try:
+                    records.append(future.result())
+                except Exception as error:
+                    # A request's own deadline is one failed record; only the arm
+                    # budget timeout escapes to the outer handler.
+                    records.append({"label": futures[future], "status": "failed",
+                                    "error": f"{type(error).__name__}: {error}"})
         except TimeoutError:
-            unfinished = sum(1 for future in futures if not future.done())
-            _terminal(f"[oscar] PERFORMANCE budget {budget:.0f}s exhausted with {unfinished} requests unfinished")
+            pending = sum(1 for future in futures if not future.done())
+            _terminal(f"[oscar] CONCURRENCY_ARM budget {budget:.0f}s exhausted with {pending} requests unfinished")
     finally:
         stop.set()
         thread.join(timeout=2)
@@ -596,40 +587,99 @@ def run_performance(server, config, tokenizer, *, log_dir, deadline):
             future.cancel()
         pool.shutdown(wait=False, cancel_futures=True)
     wall = time.monotonic() - started
-    timed_out = sum(1 for future in futures if not future.done() or future.cancelled())
-    failed = 0
-    for future in futures:
-        if future.done() and not future.cancelled():
-            try:
-                future.result()
-            except Exception:
-                failed += 1
+    completed = [record for record in records if record.get("status") == "passed"]
+    failed = [record for record in records if record.get("status") == "failed"]
     counters_after = parse_gauges(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 10)),
-                                  PERF_COUNTER_NAMES)
+                                  LADDER_COUNTER_NAMES)
     mtp_after = parse_mtp_metrics(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 10)))
     rates = {}
-    for name in PERF_COUNTER_NAMES:
+    for name in LADDER_COUNTER_NAMES:
         if name in counters_before and name in counters_after:
             delta = counters_after[name] - counters_before[name]
             rates[name] = {"delta_tokens": delta, "tokens_per_second": delta / wall if wall > 0 else None}
         else:
             rates[name] = None
-    latencies = sorted(record["elapsed_seconds"] for record in records)
+    latencies = sorted(record["elapsed_seconds"] for record in completed)
+    arm = {"concurrency": concurrency, "prompt_tokens": length, "wall_seconds": wall,
+           "completed": len(completed), "failed": len(failed),
+           "unfinished": concurrency - len(records),
+           "prompt_throughput": rates["vllm:prompt_tokens_total"],
+           "generation_throughput": rates["vllm:generation_tokens_total"],
+           "latency_seconds": None if not latencies else {"min": latencies[0],
+               "p50": latencies[len(latencies) // 2], "max": latencies[-1]},
+           "mtp": evaluate_mtp_metrics(mtp_before, mtp_after),
+           "samples": samples, "requests": records}
+    gen = rates["vllm:generation_tokens_total"]
+    prompt_rate = rates["vllm:prompt_tokens_total"]
+    _terminal(f"[oscar] CONCURRENCY_ARM done K={concurrency} wall={wall:.1f}s "
+              f"completed={len(completed)}/{concurrency} failed={len(failed)} "
+              f"unfinished={concurrency - len(records)} "
+              f"prompt_tps={None if prompt_rate is None else round(prompt_rate['tokens_per_second'], 1)} "
+              f"gen_tps={None if gen is None else round(gen['tokens_per_second'], 1)}")
+    return arm
+
+
+def ladder_verdict(arms):
+    """Scaling ratios vs the first usable arm; hints are evidence words, not proof."""
+    usable = [arm for arm in arms if arm["completed"] > 0 and arm["generation_throughput"]]
+    if len(usable) < 2:
+        return {"status": "insufficient_arms", "usable_arms": len(usable)}
+    base = usable[0]
+    base_gen = base["generation_throughput"]["tokens_per_second"]
+    if not base_gen or base_gen <= 0 or base["wall_seconds"] <= 0:
+        return {"status": "insufficient_baseline", "baseline": base["concurrency"]}
+    comparisons = []
+    for arm in usable[1:]:
+        gen = arm["generation_throughput"]["tokens_per_second"]
+        comparisons.append({
+            "concurrency": arm["concurrency"],
+            "ideal_scaling": arm["concurrency"] / base["concurrency"],
+            "generation_throughput_scaling": None if not gen else gen / base_gen,
+            "makespan_scaling": arm["wall_seconds"] / base["wall_seconds"],
+        })
+    worst = min(comparisons, key=lambda item: item["generation_throughput_scaling"]
+                if item["generation_throughput_scaling"] is not None else 0)
+    scaling = worst["generation_throughput_scaling"]
+    if scaling is not None and scaling >= 0.8 * worst["ideal_scaling"]:
+        hint = "concurrency-scales"
+    elif worst["makespan_scaling"] <= 1.5 * worst["ideal_scaling"]:
+        hint = "operator-serialized-or-shared-step; check TIMING_BUCKET reqs= for per-step operator cost"
+    else:
+        hint = ("superlinear-makespan; check ramp samples for scheduler stalls and TIMING_BUCKET "
+                "reqs= buckets for memory contention")
+    return {"status": "measured", "baseline": base["concurrency"], "comparisons": comparisons,
+            "hint": hint}
+
+
+def run_concurrency(server, config, tokenizer, *, log_dir, deadline):
+    """Compare single- vs multi-concurrency arms; report only, never a gate.
+
+    Archive #137/#138: arms share one managed server and identical prompt
+    length, so the suspects separate: scheduling from running/waiting ramp
+    samples, operator cost from native token counters per arm, and memory
+    contention from per-step cost vs num_reqs in TIMING_BUCKET. Unfinished
+    requests are recorded, never hidden; failures here never mask probe gates.
+    """
+    arms_value = config.get("concurrency_arms", [1, 4])
+    if isinstance(arms_value, str):
+        arms_value = [int(x) for x in arms_value.split(",") if x.strip()]
+    if not arms_value:
+        return {"status": "disabled", "scope": "concurrency_arms=[] disables the ladder"}
+    length = int(config.get("concurrency_prompt_tokens", 16384))
+    if any(type(x) is not int or x < 1 or x > 128 for x in arms_value) or length < 1:
+        raise ValueError("concurrency_arms must be 1..128 integers and prompt tokens positive")
+    arms = []
+    for k in arms_value:
+        arm = _run_arm(server, config, tokenizer, length, k, log_dir=log_dir, deadline=deadline,
+                       label_prefix=f"conc{k}")
+        arms.append(arm)
+        atomic_json(log_dir / "concurrency.json", {"arms": arms})
+    verdict = ladder_verdict(arms)
     report = {"status": "measured",
-              "scope": "realistic concurrent load measurement; no acceptance gate (E06 pending)",
-              "request_count": count, "prompt_range": [low, high], "output_tokens": MIN_OUTPUT_TOKENS,
-              "wall_seconds": wall, "completed": len(records), "timed_out": timed_out, "failed": failed,
-              "prompt_throughput": rates["vllm:prompt_tokens_total"],
-              "generation_throughput": rates["vllm:generation_tokens_total"],
-              "latency_seconds": None if not latencies else {"min": latencies[0],
-                  "p50": latencies[len(latencies) // 2], "max": latencies[-1]},
-              "samples": samples,
-              "mtp": evaluate_mtp_metrics(mtp_before, mtp_after)}
-    atomic_json(log_dir / "performance.json", {**report, "requests": records})
-    _terminal(f"[oscar] PERFORMANCE done wall={wall:.1f}s completed={len(records)}/{count} "
-              f"timeout={timed_out} failed={failed} "
-              f"prompt_tps={None if rates['vllm:prompt_tokens_total'] is None else round(rates['vllm:prompt_tokens_total']['tokens_per_second'], 1)} "
-              f"gen_tps={None if rates['vllm:generation_tokens_total'] is None else round(rates['vllm:generation_tokens_total']['tokens_per_second'], 1)}")
+              "scope": "single- vs multi-concurrency comparison; no acceptance gate (E06 pending)",
+              "prompt_tokens": length, "arms": arms, "verdict": verdict}
+    atomic_json(log_dir / "concurrency.json", report)
+    _terminal(f"[oscar] CONCURRENCY_VERDICT {json.dumps(verdict, ensure_ascii=False, sort_keys=True)}")
     return report
 
 
@@ -727,11 +777,11 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
             report["device_completion"] = "real_service_requests_completed"
             if not serve:
                 try:
-                    report["performance"] = run_performance(server, config, tokenizer,
+                    report["performance"] = run_concurrency(server, config, tokenizer,
                                                             log_dir=log_dir, deadline=deadline)
                 except Exception as error:
                     report["performance"] = {"status": "failed", "error": f"{type(error).__name__}: {error}"}
-                    _terminal(f"[oscar] PERFORMANCE_ERROR {report['performance']['error']}", stderr=True)
+                    _terminal(f"[oscar] CONCURRENCY_ERROR {report['performance']['error']}", stderr=True)
             report["status"] = "serving" if serve else "requests_passed_cleanup_pending"
             atomic_json(output, report)
             if serve:

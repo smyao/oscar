@@ -199,16 +199,17 @@ def test_long_request_has_wall_deadline_progress_and_reaped_client(tmp_path, mon
     assert "CLEANUP_START" in terminal.out and "CLEANUP_END" in terminal.out
 
 
-def test_healthy_run_records_realistic_load_performance(tmp_path):
+def test_healthy_run_records_concurrency_ladder(tmp_path):
     config, path = configured(tmp_path)
     report, reads = invoke(tmp_path, path, fake_command(tmp_path, config))
     performance = report["performance"]
     assert performance["status"] == "measured"
-    assert performance["request_count"] == 32 and performance["completed"] == 32
-    assert performance["failed"] == 0 and performance["timed_out"] == 0
-    assert performance["scope"].startswith("realistic concurrent load")
+    assert [arm["concurrency"] for arm in performance["arms"]] == [1, 4]
+    assert all(arm["completed"] == arm["concurrency"] and arm["failed"] == 0
+               for arm in performance["arms"])
+    assert performance["verdict"]["status"] in {"measured", "insufficient_arms", "insufficient_baseline"}
     assert sorted(x["prompt_tokens"] for x in report["requests"]) == [128,128,16384,16384,32768,32768,50000,50000]
-    assert (tmp_path / "logs/performance.json").is_file()
+    assert (tmp_path / "logs/concurrency.json").is_file()
 
 
 def test_parse_gauges_sums_named_series_and_rejects_bad_values():
@@ -221,15 +222,46 @@ def test_parse_gauges_sums_named_series_and_rejects_bad_values():
         service_probe.parse_gauges("vllm:prompt_tokens_total nan\n", {"vllm:prompt_tokens_total"})
 
 
-def test_performance_probe_validates_config_and_supports_disable(tmp_path):
+def test_concurrency_ladder_validates_config_and_supports_disable(tmp_path):
     server = SimpleNamespace(base_url="http://127.0.0.1:1")
-    bad = {"performance_request_count": 200, "performance_timeout_seconds": 10}
     with pytest.raises(ValueError):
-        service_probe.run_performance(server, bad, Tokenizer(), log_dir=tmp_path,
-                                      deadline=time.monotonic() + 10)
-    disabled = {"performance_request_count": 0}
-    assert service_probe.run_performance(server, disabled, Tokenizer(), log_dir=tmp_path,
+        service_probe.run_concurrency(server, {"concurrency_arms": [1, 200]}, Tokenizer(),
+                                      log_dir=tmp_path, deadline=time.monotonic() + 10)
+    assert service_probe.run_concurrency(server, {"concurrency_arms": []}, Tokenizer(),
+                                         log_dir=tmp_path,
                                          deadline=time.monotonic() + 10)["status"] == "disabled"
+
+
+def test_concurrency_ladder_records_each_request_timeout(tmp_path, monkeypatch):
+    config, path = configured(tmp_path)
+    real_completion = service_probe.completion
+
+    def failing(server, cfg, tokenizer, length, *, label, timeout, prompt_ids=None, quiet=False):
+        if label.startswith("conc"):
+            raise TimeoutError(f"{label}: wall deadline exceeded")
+        return real_completion(server, cfg, tokenizer, length, label=label,
+                               timeout=timeout, prompt_ids=prompt_ids, quiet=quiet)
+
+    monkeypatch.setattr(service_probe, "completion", failing)
+    report, reads = invoke(tmp_path, path, fake_command(tmp_path, config))
+    arms = report["performance"]["arms"]
+    assert [arm["failed"] for arm in arms] == [1, 4]
+    assert all(arm["completed"] == 0 and arm["unfinished"] == 0 for arm in arms)
+    detail = json.loads((tmp_path / "logs/concurrency.json").read_text())
+    assert sum(len(arm["requests"]) for arm in detail["arms"]) == 5
+
+
+def test_ladder_verdict_scaling_ratios_and_hints():
+    arm1 = {"concurrency": 1, "completed": 1, "wall_seconds": 10.0,
+            "generation_throughput": {"tokens_per_second": 2.0}}
+    arm4 = {"concurrency": 4, "completed": 4, "wall_seconds": 40.0,
+            "generation_throughput": {"tokens_per_second": 2.2}}
+    verdict = service_probe.ladder_verdict([arm1, arm4])
+    comparison = verdict["comparisons"][0]
+    assert comparison["ideal_scaling"] == 4 and abs(comparison["makespan_scaling"] - 4.0) < 1e-9
+    assert abs(comparison["generation_throughput_scaling"] - 1.1) < 1e-9
+    assert verdict["hint"].startswith("operator-serialized")
+    assert service_probe.ladder_verdict([arm1])["status"] == "insufficient_arms"
 
 
 def test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch(tmp_path):

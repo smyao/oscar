@@ -12,7 +12,7 @@
 git pull --ff-only && bash scripts/debug_service.sh
 ```
 
-该入口在标准 install/probe/serve 流程内完成全部测量：`OSCAR_DEBUG_SYNC=1` 让 `_Phase` 在每个大 token 相位边界做显式 stream 同步并写 `waiting_for_device`/`device_completed` 检查点（wall_time 差即该相位设备侧耗时）；探针结束时自动对本轮 trace 目录运行 `tools/summarize_timing`，把每相位的 device_count/device_s_sum/device_s_p95/host_s_sum 以 `[oscar] TIMING_SUMMARY` 单行打到终端，并按 KV 长度（16K 粒度分桶，取每行 `max_seq_len`）追加至多 8 行 `[oscar] TIMING_BUCKET`（phase×tokens×kv 的 device_s/p95），写入 `timing-summary.json`。同步打点用于**归因**（哪类相位吃掉了设备时间）；同步后的绝对值不是原生性能数字（#129），性能验收仍需同配置原生基线对照。
+该入口在标准 install/probe/serve 流程内完成全部测量：`OSCAR_DEBUG_SYNC=1` 让 `_Phase` 在每个大 token 相位边界做显式 stream 同步并写 `waiting_for_device`/`device_completed` 检查点（wall_time 差即该相位设备侧耗时）；探针结束时自动对本轮 trace 目录运行 `tools/summarize_timing`，把每相位的 device_count/device_s_sum/device_s_p95/host_s_sum 以 `[oscar] TIMING_SUMMARY` 单行打到终端，并按（相位×tokens×reqs×KV）分桶（KV 取每行 `max_seq_len` 的 16K 粒度，`reqs` 取 `attn_metadata.num_reqs`）追加至多 8 行 `[oscar] TIMING_BUCKET`——reqs 维度把并发阶梯的单/多并发臂每步算子成本分开。写入 `timing-summary.json`。同步打点用于**归因**（哪类相位吃掉了设备时间）；同步后的绝对值不是原生性能数字（#129），性能验收仍需同配置原生基线对照。
 
 原生 `TorchNPUProfilerWrapper` 的 `/start_profile`/`/stop_profile` HTTP 窗口**已禁用**：真机 20260922T093958Z 上 start 报 `External init callback must run in same thread as registerClient`，stop 时 torch_npu profiler 在 RECORD 状态被停，四个 worker 全部 segfault、EngineCore 死亡（档案 #133）。测量路径不得杀死被测服务，该集成已从 `tools.target_cli`/`tools.service_probe` 移除。
 

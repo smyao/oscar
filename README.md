@@ -57,6 +57,8 @@ bash scripts/validate_vm.sh
 
 此命令在 Lima `oscar` VM 的独立 `/home/sunao2000.linux/gpt_new_oscar` 目录编译、链接，并运行同一份 AscendC kernel 的官方 CPU 调试器。首次配置可加 `--bootstrap`，仅安装该目录独立虚拟环境的依赖；不访问 VM 中旧项目代码。报告在 [reports/vm/validation.json](reports/vm/validation.json)，最新一轮共61个算子用例通过，另含 MTP/padding 元数据检查。
 
+性能诊断：`bash scripts/probe_concurrency.sh` 只发 4 条 **synthetic** 的 20K/23K/27K/30K streaming 请求，报告逐请求 TTFT/TPOT/E2E；`--native` 显式选择原生基线。正式一键部署在功能探针后执行同一 synthetic 诊断，失败即阻断正式服务。正式服务就绪后等待 `OBSERVER_READY`，再用用户自己的压测程序发送 32 并发 20–30K 请求；被动报告保存同一窗口的 `/metrics` 与 OSCAR 心跳，不生成数据集或请求。被动观察不能从服务端指标还原客户端每条请求的 TTFT/ITL、实际输入长度或失败率，需配对用户原压测结果。详见[服务探针](docs/service_probe.md)。
+
 显式原生基线与测量：
 
 ```bash

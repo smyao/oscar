@@ -1,7 +1,8 @@
 """Measure an explicitly selected native/OSCAR HTTP service, never a fallback.
 
-Archive G31/#70-73: bounded requests, actual streaming timing, paired inputs,
-no invented device-phase durations. #94/#95: persist errors and partial runs.
+Archive G31/#70-73/#130-#139: bounded requests, actual streaming timing,
+paired inputs, no invented device-phase durations. #94/#95: persist errors
+and partial runs.
 Native protocol evidence: completion/protocol.py return_token_ids documents
 delta IDs per SSE chunk; receive timing is not NPU execution timing.
 """
@@ -79,13 +80,15 @@ def stream_request(url, payload, *, timeout, request_id, barrier=None):
     end = started + timeout
     result = {"request_id": request_id, "status": "failed", "prompt_tokens_requested": len(payload["prompt"]),
               "output_tokens_requested": payload["max_tokens"], "token_arrivals_ms": [], "bursts": [],
-              "timing_clock": "client_monotonic_SSE_receive", "usage": None}
+              "timing_clock": "client_monotonic_SSE_receive", "usage": None,
+              "request_start_monotonic_ns": time.perf_counter_ns()}
     connection = _connection(url, timeout)
     output_ids, text_parts, usage, finish, done = [], [], None, None, False
     try:
         connection.request("POST", "/v1/completions", body, {"Content-Type": "application/json", "Accept": "text/event-stream"})
         _deadline(connection, end)
         response = connection.getresponse()
+        result["response_headers_ms"] = (time.perf_counter() - started) * 1000
         result["http_status"] = response.status
         if response.status != 200:
             raise RuntimeError(f"HTTP {response.status}: {response.read(65536).decode('utf-8', errors='replace')}")

@@ -48,7 +48,7 @@ def configured(tmp_path):
         phase_timeout_seconds=10, service_startup_timeout_seconds=3,
         service_request_timeout_seconds=2, shutdown_timeout_seconds=.1,
         resource_release_timeout_seconds=.1, resource_release_tolerance_bytes=1024,
-        mtp_metrics_timeout_seconds=.1)
+        mtp_metrics_timeout_seconds=.1, synthetic_sample_interval_seconds=.01)
     path = tmp_path / "target.json"
     path.write_text(json.dumps(config))
     return config, path
@@ -74,6 +74,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 port, mode = int(sys.argv[1]), sys.argv[2]
 records = json.loads(pathlib.Path(sys.argv[3]).read_text())
 count = 0
+prompt_total = 0
+generation_total = 0
+running = 0
 lock = threading.Lock()
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -84,12 +87,16 @@ class Handler(BaseHTTPRequestHandler):
             body = ('vllm:spec_decode_num_drafts_total{model_name="qwen3.5"} %s\n'
                     'vllm:spec_decode_num_draft_tokens_total{model_name="qwen3.5"} %s\n'
                     'vllm:spec_decode_num_accepted_tokens_total{model_name="qwen3.5"} %s\n'
-                    % (value, value*3, value*2)).encode().replace(b'\\n', b'\n')
+                    'vllm:prompt_tokens_total %s\n'
+                    'vllm:generation_tokens_total %s\n'
+                    'vllm:num_requests_running %s\n'
+                    'vllm:num_requests_waiting 0\n'
+                    % (value, value*3, value*2, prompt_total, generation_total, running)).encode().replace(b'\\n', b'\n')
         else:
             self.send_error(404); return
         self.send_response(200); self.send_header('Content-Length', str(len(body)));self.end_headers();self.wfile.write(body)
     def do_POST(self):
-        global count
+        global count, prompt_total, generation_total, running
         data = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
         assert self.path == '/v1/completions'
         assert data['min_tokens'] == 16 and data['ignore_eos']
@@ -97,11 +104,30 @@ class Handler(BaseHTTPRequestHandler):
             time.sleep(30)
         with lock:
             count += 1
+            prompt_total += len(data['prompt'])
+            generation_total += 16
             if mode != 'no_trace':
                 trace = pathlib.Path(os.environ['OSCAR_TRACE_DIR']);trace.mkdir(exist_ok=True)
                 (trace/'worker-1.jsonl').write_text(''.join(json.dumps(x)+'\n' for x in records).replace('\\n', '\n'))
         response = {'choices':[{'text':'Sixteen generated tokens from the test fixture.', 'finish_reason':'length'}],
                     'usage': {'prompt_tokens':len(data['prompt'])+(1 if mode=='wrong_usage' else 0), 'completion_tokens':16}}
+        if data.get('stream'):
+            with lock:
+                running += 1
+            self.send_response(200);self.send_header('Content-Type','text/event-stream');self.end_headers()
+            def event(value):
+                raw = value if isinstance(value, bytes) else json.dumps(value).encode()
+                self.wfile.write(b'data: '+raw+b'\n\n');self.wfile.flush()
+            event({'choices':[{'index':0,'text':'test','token_ids':[100], 'finish_reason':None}]})
+            time.sleep(.03)
+            event({'choices':[{'index':0,'text':'test','token_ids':list(range(101,115)), 'finish_reason':None}]})
+            time.sleep(.03)
+            event({'choices':[{'index':0,'text':'test','token_ids':[115], 'finish_reason':'length'}]})
+            event({'choices':[], 'usage':response['usage']})
+            event(b'[DONE]')
+            with lock:
+                running -= 1
+            return
         body=json.dumps(response).encode()
         self.send_response(200);self.send_header('Content-Length',str(len(body)));self.end_headers()
         if mode == 'trickle_long' and len(data['prompt']) > 128:
@@ -199,17 +225,20 @@ def test_long_request_has_wall_deadline_progress_and_reaped_client(tmp_path, mon
     assert "CLEANUP_START" in terminal.out and "CLEANUP_END" in terminal.out
 
 
-def test_healthy_run_records_concurrency_ladder(tmp_path):
+def test_healthy_run_records_streaming_synthetic_mixed_probe(tmp_path):
     config, path = configured(tmp_path)
     report, reads = invoke(tmp_path, path, fake_command(tmp_path, config))
     performance = report["performance"]
     assert performance["status"] == "measured"
-    assert [arm["concurrency"] for arm in performance["arms"]] == [1, 4]
-    assert all(arm["completed"] == arm["concurrency"] and arm["failed"] == 0
-               for arm in performance["arms"])
-    assert performance["verdict"]["status"] in {"measured", "insufficient_arms", "insufficient_baseline"}
+    assert performance["prompt_lengths"] == [20000, 23000, 27000, 30000]
+    assert performance["workload_source"] == "synthetic_repeated_sentence"
+    assert performance["sample"]["completed_requests"] == 4
+    assert performance["valid_running_waiting_samples"] >= 1
+    assert performance["native_counter_check"]["status"] == "passed"
+    assert all(0 < request["ttft_ms"] < request["e2e_ms"]
+               for request in performance["sample"]["requests"])
     assert sorted(x["prompt_tokens"] for x in report["requests"]) == [128,128,16384,16384,32768,32768,50000,50000]
-    assert (tmp_path / "logs/concurrency.json").is_file()
+    assert (tmp_path / "logs/synthetic-mixed.json").is_file()
 
 
 def test_parse_gauges_sums_named_series_and_rejects_bad_values():
@@ -232,23 +261,26 @@ def test_concurrency_ladder_validates_config_and_supports_disable(tmp_path):
                                          deadline=time.monotonic() + 10)["status"] == "disabled"
 
 
-def test_concurrency_ladder_records_each_request_timeout(tmp_path, monkeypatch):
+def test_synthetic_mixed_timeout_blocks_formal_service(tmp_path, monkeypatch):
     config, path = configured(tmp_path)
-    real_completion = service_probe.completion
+    from benchmarks import mixed
+    real_stream = mixed.stream_request
 
-    def failing(server, cfg, tokenizer, length, *, label, timeout, prompt_ids=None, quiet=False):
-        if label.startswith("conc"):
-            raise TimeoutError(f"{label}: wall deadline exceeded")
-        return real_completion(server, cfg, tokenizer, length, label=label,
-                               timeout=timeout, prompt_ids=prompt_ids, quiet=quiet)
+    def failing(url, payload, *, timeout, request_id, barrier=None):
+        if request_id.startswith("synthetic-"):
+            if barrier is not None:
+                barrier.wait(timeout=timeout)
+            return {"request_id": request_id, "status": "timeout", "error": "fixture wall deadline"}
+        return real_stream(url, payload, timeout=timeout, request_id=request_id, barrier=barrier)
 
-    monkeypatch.setattr(service_probe, "completion", failing)
+    monkeypatch.setattr(mixed, "stream_request", failing)
     report, reads = invoke(tmp_path, path, fake_command(tmp_path, config))
-    arms = report["performance"]["arms"]
-    assert [arm["failed"] for arm in arms] == [1, 4]
-    assert all(arm["completed"] == 0 and arm["unfinished"] == 0 for arm in arms)
-    detail = json.loads((tmp_path / "logs/concurrency.json").read_text())
-    assert sum(len(arm["requests"]) for arm in detail["arms"]) == 5
+    assert report["status"] == "failed"
+    assert report["performance"]["status"] == "failed"
+    assert report["performance"]["sample"]["timeouts"] == 4
+    assert report["server"]["cleanup_complete"]
+    detail = json.loads((tmp_path / "logs/synthetic-mixed.json").read_text())
+    assert len(detail["sample"]["requests"]) == 4
 
 
 def test_ladder_mode_runs_only_the_concurrency_diagnostic(tmp_path):
@@ -264,16 +296,41 @@ def test_ladder_mode_runs_only_the_concurrency_diagnostic(tmp_path):
     assert not group_exists(report["server"]["pid"])
 
 
+def test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up(tmp_path):
+    config, path = configured(tmp_path)
+    report = service_probe.run_ladder_only(path, output=tmp_path / "synthetic.json",
+        log_dir=tmp_path / "synthetic", command=fake_command(tmp_path, config),
+        tokenizer_factory=lambda model: Tokenizer(), synthetic=True)
+    assert report["status"] == "measured"
+    assert report["synthetic_mixed"]["sample"]["completed_requests"] == 4
+    assert report["synthetic_mixed"]["prompt_lengths"] == [20000,23000,27000,30000]
+    assert len(report["synthetic_mixed"]["window"]) == 3
+    assert report["server"]["cleanup_complete"]
+    assert not group_exists(report["server"]["pid"])
+    from benchmarks.mixed import compare_mixed
+    native_fixture = json.loads(json.dumps(report))
+    native_fixture["variant"] = "native"  # Synthetic comparison logic only; no NPU claim.
+    comparison = compare_mixed(native_fixture, report)
+    assert comparison["status"] == "diagnostic_measured"
+    assert len(comparison["batches"][0]["requests"]) == 4
+    assert all(row["oscar_over_native"]["ttft_ms"] == 1
+               for row in comparison["batches"][0]["requests"])
+
+
 def test_ladder_verdict_scaling_ratios_and_hints():
-    arm1 = {"concurrency": 1, "completed": 1, "wall_seconds": 10.0,
+    arm1 = {"concurrency": 1, "completed": 1, "failed": 0, "unfinished": 0,
+            "prompt_tokens": 16384, "wall_seconds": 10.0,
             "generation_throughput": {"tokens_per_second": 2.0}}
-    arm4 = {"concurrency": 4, "completed": 4, "wall_seconds": 40.0,
+    arm4 = {"concurrency": 4, "completed": 4, "failed": 0, "unfinished": 0,
+            "prompt_tokens": 16384, "wall_seconds": 40.0,
             "generation_throughput": {"tokens_per_second": 2.2}}
-    verdict = service_probe.ladder_verdict([arm1, arm4])
+    verdict = service_probe.ladder_verdict([arm1, arm4], max_num_batched_tokens=16384)
     comparison = verdict["comparisons"][0]
-    assert comparison["ideal_scaling"] == 4 and abs(comparison["makespan_scaling"] - 4.0) < 1e-9
+    assert comparison["prompt_work_ratio"] == 4
+    assert comparison["min_prefill_steps"] == {"baseline": 1, "candidate": 4}
+    assert comparison["prefill_step_floor_ratio"] == comparison["makespan_scaling"] == 4
     assert abs(comparison["generation_throughput_scaling"] - 1.1) < 1e-9
-    assert verdict["hint"].startswith("operator-serialized")
+    assert "not device time" in verdict["hint"]
     assert service_probe.ladder_verdict([arm1])["status"] == "insufficient_arms"
 
 

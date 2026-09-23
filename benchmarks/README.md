@@ -1,9 +1,17 @@
 # 配对 HTTP 测量与性能证据比较
 
-档案 #70/#71 要求区分 host launch 时间与 device 时间、逐相位定位慢点；#72 要求自动创建
+档案 #70/#71/#130–#139 要求区分 host launch 时间与 device 时间、逐相位定位慢点；#72 要求自动创建
 输出目录；#73 的 31897-token/4.6s 历史数字不能替代本轮同环境配对基线。本工具只审查输入
 报告与证据。`benchmarks.measure` 向已启动的本地服务生成测量请求；`benchmarks.compare`
 只审查报告，不启动模型。两者都不能用 HTTP 时间或历史日志冒充 NPU 设备证据。
+
+当前目标负载分两种：`bash scripts/probe_concurrency.sh` 发 4 条明确标注 **synthetic** 的
+20K/23K/27K/30K 请求；正式服务自带 `benchmarks.passive`，等用户原压测程序发送真实
+32 并发 20–30K 请求，仅采 `/metrics`、Running/Waiting 和同窗口 OSCAR trace。
+前者能记录客户端 SSE TTFT/TPOT/ITL/E2E、失败率，后者不能从服务端计数器重建这些
+请求级数据。被动报告的 `client_request_count`、`prompt_length_distribution` 与
+`ttft_itl_e2e_completion` 会保持未观测，直到用户提供原客户端产物；synthetic 报告
+不作为真实负载证据。详见[服务探针](../docs/service_probe.md)。
 
 ## 真实 HTTP 测量入口
 

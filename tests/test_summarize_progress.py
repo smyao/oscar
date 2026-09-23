@@ -1,4 +1,5 @@
-# Archive #138: ladder arm windows split production heartbeat deltas.
+# Archive #70-73/#132/#134/#138/#139: ladder heartbeat deltas are host gaps,
+# and four TP ranks must not be presented as one request's device latency.
 """Unit tests for reconstructing per-state residence walls from heartbeats."""
 import json
 
@@ -50,3 +51,17 @@ def test_malformed_progress_record_fails_loudly(tmp_path):
     (tmp_path / "worker-1.jsonl").write_text('{"event": "attention_progress"\n')
     with pytest.raises(ValueError, match="malformed progress record"):
         summarize_progress(tmp_path)
+
+
+def test_tp_rank_seconds_are_not_client_makespan_or_kernel_time(tmp_path):
+    for pid in range(4):
+        write_records(tmp_path, pid, [
+            heart(pid, 100.0, requests=1, kv=16384),
+            heart(pid, 119.0, requests=1, kv=16384, layer="l7"),
+        ])
+    report = summarize_progress(tmp_path, [[99.0, 120.0, "K=1"]])
+    row = report["buckets"][0]
+    assert row["rank_count"] == 4
+    assert row["wall_s_sum"] == 76.0  # Four rank-seconds, not 76 s request time.
+    assert row["wall_s_mean_per_rank"] == 19.0
+    assert "not operator or NPU device latency" in report["scope"]

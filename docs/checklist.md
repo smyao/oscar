@@ -6,7 +6,7 @@
 |---|---|---|---|
 | [x] A01 | passed | 建立 reference 清单，锁定 OSCAR PR 与相关 vLLM/Ascend commit，确认未参考失败仓库。 | docs/reference_manifest.md；reports/local_environment.json；两棵native树HEAD/status和全参考文件指纹。PR/paper为提供的快照pin，无独立git历史。 |
 | [ ] A02 | in_progress | 记录实际软件、NPU、CANN/编译环境、模型配置和原生源码状态。 | macOS与Lima VM环境已记录；VM CANN9.1/Torch2.12 CPU，非目标Torch2.10/NPU。用户要求移除真机启动环境审计，实际目标调用结果由探针记录；该项不作为部署前置闸。 |
-| [ ] A03 | not_run | 跑通原生目标配置的基线，保存命令、输入、版本、MTP/图模式与资源记录。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
+| [ ] A03 | in_progress | 跑通原生目标配置的基线，保存命令、输入、版本、MTP/图模式与资源记录。 | 用户提供了2026-09-07原生同负载服务片段（档案#137），但本轮版本、完整命令、逐请求输入和计时证据未配对核实；不可作为当前正式基线。 |
 | [x] A04 | passed | 读懂第 3.3 节调用链，记录 FULL/GDN、TP、KV 分组、MTP 和图模式的真实入口。 | docs/runtime_implementation.md；tests/test_runtime_native.py执行真实native分组、manager、reshape、MTP/图builder方法；目标worker执行另列D08。 |
 | [ ] A05 | in_progress | 核实第 4 节全部歧义，给出层/组/Tensor/地址映射与字节来源。 | 动态C/M/P与B2304公式、真实native config/形状函数已验证；MTP3示例C30720/P817152；#127补齐prefix关闭的none模式，Bfull2816、GDN请求块262144，真实页初始化复验待回传。 |
 | [x] A06 | passed | 读取 PR 的配置、旋转、量化和精度验证方法，完善本 Checklist，列出仍缺失的输入。 | docs/semantics.md；ops/reference.py、rotations.py与独立PR语义测试。 |
@@ -30,20 +30,20 @@
 | [ ] D04 | in_progress | MTP draft/verify 与原生流程一致，完整接受、部分接受、完全拒绝后的缓存和 GDN 状态正确。 | 实际native MTP拒绝语义已复现并修正：后续draft按slot/无序BT恢复逻辑位置；CPU回归与CANN CPU-debug通过，NPU未测。 |
 | [ ] D05 | in_progress | MTP 多 query 复用历史 tile，读取量测量支持“不随 `q_len` 线性倍增”。 | Mq64容纳GQA6×MTP4；split历史分区互斥、真实多split CPU对拍通过。NPU读取流量待profiler。 |
 | [ ] D06 | in_progress | 混合长度和 prefill/decode/verify 混合调度正确，不依赖逐请求 Python 热循环。 | 设备批量metadata、mixed Q1/Q4、多KVhead、padding孔洞与17query跨tile CPU-debug通过；真实异步混合调度未跑。 |
-| [ ] D07 | not_run | 16K、32K、50K 长输入实际使用 OSCAR，跨页与跨窗口边界均正确。 | 16K/32K/50K真实请求probe已实现，本机VM无模型/NPU，未实际运行。 |
-| [ ] D08 | not_run | TP=4、异步调度、目标图模式和 W8A8 权重量化共存，所有 rank 路由正确。 | 固定地址/实际输入视图契约、dtype与core属性处理已实现；TP4/异步/W8A8/图实机未跑。 |
+| [ ] D07 | in_progress | 16K、32K、50K 长输入实际使用 OSCAR，跨页与跨窗口边界均正确。 | node93串行16K/32K/50K请求已HTTP完成（档案#130）；混合并发曾撞300s死线（#131），完整跨页/窗口数值对拍未验收。 |
+| [ ] D08 | in_progress | TP=4、异步调度、目标图模式和 W8A8 权重量化共存，所有 rank 路由正确。 | TP4/MTP服务和图回放日志已出现（档案#129/#135/#138）；需保留图捕获返回、逐rank路由、真实回放及精度各自证据，不能以HTTP 200代替整项通过。 |
 | [ ] D09 | in_progress | 前缀缓存、页共享/复用、请求取消/结束、抢占恢复等目标环境可达生命周期通过验证。 | 真实native block manager与canonical snapshot/回收代数已验证；全服务prefix/取消/抢占待NPU。 |
 | [ ] E01 | in_progress | 核心算子对齐参考；覆盖 pack/unpack、量化边界、尾块和 attention 数值误差。 | CANN交叉编译、官方CPU-debug和CPU oracle通过；node93逻辑npu:0通过75项原语NPU探针（54store/21merge），随后首个CV数值用例失败；probe-cv的3项通过仅为Python/源码契约测试，其余CV/旋转用例因maxfail=1未由该日志证明完成。 |
 | [ ] E02 | not_run | GDN 隔离检查通过；FULL 量化后的层输出、模型输出与约定质量指标达标。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
 | [ ] E03 | not_run | MTP 接受率、接受长度、输出正确性和有效生成吞吐完成对照。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
 | [ ] E04 | not_run | 固定 token 数和固定 HBM 预算两种口径下证明真实缓存收益，计入全部新增开销。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
 | [ ] E05 | not_run | profiler 证明无禁止的 CPU/AiCPU 数据处理、同步、冗余 KV 双写及全历史恢复。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
-| [ ] E06 | not_run | 按第 10 节逐工况比较原生性能；无未解释退化，不以平均值掩盖慢项；**任何算子/相位耗时不得差于附录 D.1 原生基线**（上一版 dequant 6.5s/卡的崩盘即判失败的标准，见附录 D.3）。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
+| [ ] E06 | failed | 按第 10 节逐工况比较原生性能；无未解释退化，不以平均值掩盖慢项；**任何算子/相位耗时不得差于附录 D.1 原生基线**（上一版 dequant 6.5s/卡的崩盘即判失败的标准，见附录 D.3）。 | node93的16K阶梯与用户32并发日志已暴露严重性能问题（档案#134/#135/#137-#139）；本轮没有严格配对的当前原生报告，也没有修复后性能通过证据。K1→K4约4倍墙钟受16K每步token预算混淆，不能单独归因算子串行。 |
 | [ ] E07 | in_progress | 对照第 8.2 节验证历史故障防护，保存实际覆盖结果而非仅声明"已避免"。 | 历史故障约束已落实；本轮VM发现Log alias与Matmul Init重载问题并修复；CANN plog本任务PID诊断与失败保码通过本地测试。node93回传已登记#123–#126；后续75项原语NPU执行通过确认加载错误已越过，首个CV数值用例暴露query缓冲同步缺口；源码修订后的CV真机复验待回传。 |
 | [ ] E08 | in_progress | **无回退逻辑验证**：静态审查 + 全量工况扫描证明代码中不存在任何回退/降级路径；16K/32K/50K 与各种 batch size 下 OSCAR 压缩路径全部实际命中（H13/H17），不存在静默走原生 BF16 全历史的分支。 | 静态/路由/错误注入通过；长序列真实压缩路径命中仍需目标probe。 |
-| [ ] F01 | in_progress | 一条 Bash 命令完成安装、编译、所需校准、probe、资源清理和正式启动。 | 一键安装/编译/NPU算子与CV/旋转对拍/自动旋转文件/TP4服务probe/清理/正式服务；保留探针并移除环境/原生源码/readiness审计，默认0–3卡和8989端口；阶段及服务日志实时输出并落盘。最新node93复跑完成编译/profiling和KV预算，止于MTP metadata spec复制（#128）；health及128→16短请求已完成；长请求未完成，图/性能整体验收仍未通过。 |
+| [ ] F01 | in_progress | 一条 Bash 命令完成安装、编译、所需校准、probe、资源清理和正式启动。 | 一键安装/编译/NPU算子与CV/旋转对拍/自动旋转文件/TP4服务probe/清理/正式服务；默认0–3卡和8989端口，实时输出并落盘。#138确认探针→清理→正式服务首度走通；后续性能实测严重退化，不能据流程完成宣称性能或精度通过。 |
 | [ ] F02 | in_progress | 验证正常退出、失败退出和中断后的清理，重复执行不会遗留 worker 或加载旧产物。 | 真实CPU子进程/HTTP/超时/信号/释放失败与诊断故障注入通过；NPU资源回收尚无实证。 |
-| [ ] F03 | not_run | 正式服务按目标配置启动并完成真实请求，记录 OSCAR compressed decode/MTP 路由证据。 | 真实目标环境尚未运行；所需生产核心或验证仍未完成。 |
+| [ ] F03 | in_progress | 正式服务按目标配置启动并完成真实请求，记录 OSCAR compressed decode/MTP 路由证据。 | #138一键流程已进入正式serve；用户随后通过service_direct.sh对OSCAR服务发出请求并获HTTP 200（#137），但正式服务的完整路由、质量与负载性能证据尚未验收。 |
 | [ ] F04 | in_progress | 交付代码、设计、完整 Checklist、测试/性能/显存报告、日志及 README 中的一键命令。 | 源码、设计、VM日志/报告、README和测量工具已交付；真实模型精度/性能/容量报告尚缺。 |
 | [x] F05 | passed | 检查所有硬约束和未完成项，最终结论准确列出已验证范围、失败项及阻塞项。 | 本表和reports/local_validation.json严格区分源码、编译、CPU-debug、NPU/图/性能；未测项保留未通过。 |
 
@@ -82,3 +82,7 @@
 #138：一键流程首次走完探针→清理→正式服务（#136修复生效）；真实负载首测completed=3/32、prompt_tps=499、gen_tps=0.2。修正收集循环误捕单请求超时的记账bug。按用户指令改为并发阶梯probe（臂1/4×16384，调度/算子/访存三层分离，收尾自打CONCURRENCY_ARM/VERDICT）；impl相位补requests字段，TIMING_BUCKET加reqs维度。
 
 #139：并发阶梯诊断快路径`scripts/probe_concurrency.sh`（--ladder模式，跳过安装/编译/功能相位）；心跳1秒间隔下用`summarize_progress`从心跳差重建每层驻留wall（臂窗口×reqs×KV分桶，跨臂空档单列）。一条命令出齐调度/算子/访存三层证据，诊断不冒充验收。
+
+2026-09-23复核（档案#130–#139；分析见`docs/performance_findings_2026-09-23.md`）：#137中“差异链闭合于CV、排除调度/MTP/GDN”和#139中“心跳差为每层算子/访存成本”的表述超出所贴生产日志。#134/#135的独立debug-sync运行确实把主要同步时间归于FIA，但与本轮生产负载不是同一计时；本轮16K阶梯K1=19.0秒、K4=76.5秒，每条请求恰好占满16384-token调度预算，约4倍墙钟不足以单独证明算子串行。`PROGRESS_BUCKET wall_s`是四rank宿主心跳间隔之和，含其他工作，不是设备算子时间或HBM访存量。用户32并发服务片段缺逐请求usage/TTFT、当前版本配对原生证据和模型级精度门；E06仍为failed，E02/E03未验收。此处为旧条目解释边界的更正，不追加新的真机错误编号。
+
+本轮探针改版（防档案#94/#95/#129/#131/#136/#138/#139）：`tools/service_probe.py`在正式一键功能门后发4条20/23/27/30K不等长的synthetic streaming请求，严格记录TTFT/TPOT、终态usage、metrics及失败；任一诊断请求或指标缺失即阻断正式serve。正式serve中的`benchmarks/passive.py`只观察用户原客户端负载；`tools/summarize_progress.py`明确区分四rank心跳累计与设备算子时间。独立`tools/probe_native_current_fia.py`仅为真机可行性实验，不进入生产路由。此轮本地全仓pytest 466 passed、124 skipped、6 subtests passed；未运行新一轮目标NPU，未修改AscendC、`references/`或冻结精度阈值，E06仍不通过。

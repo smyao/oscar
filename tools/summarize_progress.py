@@ -1,6 +1,6 @@
-# Archive #70-73/#137/#138: production-mode per-layer residence walls come from
-# heartbeat deltas, never from inserted synchronization.
-"""Rebuild per-step operator cost from attention_progress heartbeat deltas."""
+# Archive #70-73/#132/#134/#138/#139: production attention_progress is a
+# throttled host heartbeat, not a device completion or an operator timer.
+"""Summarize host heartbeat gaps without claiming device or kernel time."""
 from __future__ import annotations
 
 import argparse
@@ -21,13 +21,13 @@ def _percentile(values, fraction):
 
 
 def summarize_progress(directory, windows=None) -> dict:
-    """Attribute inter-heartbeat wall deltas to (arm window, requests, KV bucket).
+    """Group inter-heartbeat gaps by (arm window, requests, KV bucket).
 
-    Each delta between two consecutive attention_progress records of one worker
-    is charged to the FIRST record's (tokens, requests, max_seq_len) bucket:
-    that worker was residing in that state for the whole delta. Windows split
-    the ladder arms by epoch wall time; deltas outside every arm are kept under
-    the "outside_arms" label rather than silently dropped.
+    Labels come from the first heartbeat; work in the gap may have a different
+    state. A gap can include GDN, scheduling, graph waits and host IO. Every TP
+    worker contributes its own wall seconds, so their sum is rank-seconds and
+    must not be compared directly to the client makespan. Windows split arms;
+    cross-window gaps are kept separate rather than charged to either arm.
     """
     rows = []
     for path in sorted(Path(directory).glob("worker-*.jsonl")):
@@ -72,20 +72,26 @@ def summarize_progress(directory, windows=None) -> dict:
             kv_raw = previous.get("max_seq_len")
             kv = int(round(kv_raw / 16384.0)) * 16 if isinstance(kv_raw, (int, float)) and math.isfinite(kv_raw) else None
             key = (label, previous.get("requests"), previous.get("tokens"), kv)
-            buckets.setdefault(key, []).append(delta)
+            buckets.setdefault(key, []).append((previous.get("pid"), delta))
     bucket_list = []
-    for (label, requests, tokens, kv), values in buckets.items():
+    for (label, requests, tokens, kv), samples in buckets.items():
+        values = [delta for _, delta in samples]
+        ranks = {pid for pid, _ in samples}
         bucket_list.append({"arm": label, "requests": requests, "tokens": tokens,
                             "kv_bucket_k": kv, "count": len(values),
                             "wall_s_sum": sum(values),
+                            "rank_count": len(ranks),
+                            "wall_s_mean_per_rank": sum(values) / len(ranks),
                             "wall_s_p50": _percentile(values, 0.5),
                             "wall_s_p95": _percentile(values, 0.95),
                             "wall_s_max": max(values)})
     bucket_list.sort(key=lambda row: (row["arm"], -(row["wall_s_sum"] or 0)))
     return {"t": "oscar-progress-summary", "source": str(Path(directory).resolve()),
             "status": "observed" if bucket_list else "not_run", "buckets": bucket_list,
-            "scope": "host heartbeat cadence between layer dispatches; production mode, "
-                     "no synchronization inserted"}
+            "scope": "throttled host attention_progress gaps; includes unobserved work, "
+                     "not operator or NPU device latency",
+            "wall_s_sum_unit": "TP rank-seconds; divide by rank_count for an approximate per-rank gap sum",
+            "synchronization_inserted": False}
 
 
 def main(argv=None):

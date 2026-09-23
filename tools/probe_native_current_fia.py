@@ -1,11 +1,13 @@
-# Archive #55–69/#126/#129–135: native FIA tiling, causal mask, LSE shape,
+# Archive #55–69/#126/#129–140: native FIA tiling, causal mask, LSE shape,
 # output precision, live progress and device-time attribution must be tested on
-# the target NPU. This isolated experiment never participates in service routing.
+# the target NPU. This probe gates the current-chunk production primitive;
+# only the independent offline oracle below materializes diagnostic history.
 # D.4 four questions: (1) phase=fia, for the exact current-chunk source only;
-# (2) the failed implementation spent 6499.8–6655.1 ms dequantizing history,
-# while native FIA took 18.5–18.9 ms at 32K and ~7 ms at 16K;
-# (3) this probe passes only current BF16 K/V to native causal FIA, creates no
-# historical tensor, and checks output plus LSE against the independent oracle;
+# (2) the failed implementation spent 6499.8–6655.1 ms dequantizing history;
+# its old FIA phase took 18.5–18.9 ms at 32K and ~7 ms at 16K, not a
+# current-only timing;
+# (3) native causal FIA receives only current BF16 K/V; a separate offline
+# oracle checks its output/LSE and the merge with packed-history/window parts;
 # (4) those D.4 times are reference order only—this script reports measured
 # 16K device-event time and never claims a performance or service pass.
 """Fail-closed target-NPU experiment for native current-chunk FIA and LSE."""
@@ -87,13 +89,13 @@ def _select_target_npu(target: dict) -> None:
 
 
 def _call_fia(torch, query, key, value, cumulative, mask, scale, heads, kv_heads):
-    # Native vllm-ascend attention/context_parallel/attention_cp.py:1017–1032.
-    # Block table is absent because every K/V passed here is in this chunk.
-    return torch.ops.npu.npu_fused_infer_attention_score(
-        query, key, value, num_heads=heads, num_key_value_heads=kv_heads,
-        input_layout="TND", atten_mask=mask, scale=scale, sparse_mode=3,
-        antiquant_mode=0, antiquant_scale=None, softmax_lse_flag=True,
-        actual_seq_lengths_kv=cumulative, actual_seq_lengths=cumulative)
+    # Exercise the actual production helper, including its native mask and
+    # output/LSE shape checks; the oracle stays independent below.
+    from oscar_ascend.integration.current_attention import native_current_partial
+    # Production stores this once per native step as an immutable tuple.
+    # Exercise that exact Python binding type, not only a list microprobe.
+    return native_current_partial(query, key, value, tuple(cumulative),
+                                  heads=heads, kv_heads=kv_heads, scale=scale)
 
 
 def _validate_result(torch, output, lse, tokens, heads, dim, device) -> None:
@@ -145,6 +147,200 @@ def _small_case(torch, reference_attention, device, mask, lengths, heads, kv_hea
     errors = _assert_oracle(torch, output, lse, expected, tolerance)
     return {"lengths": list(lengths), "tokens": total, "output_shape": list(output.shape),
             "lse_shape": list(lse.shape), "oracle": "passed", **errors}
+
+
+def _task_rewrite_case(torch, device, heads, kv_heads):
+    """Check the production strided source2 write and same-stream slot guard."""
+    from oscar_ascend.integration.current_attention import (
+        guard_current_slots, suppress_current_source_tasks)
+    from oscar_ascend.ops.loader import require_capabilities
+    require_capabilities({"status_guard"})
+    tokens, splits = 7, 3
+    cpu = torch.zeros((tokens, kv_heads, 3, splits, 16), dtype=torch.int64)
+    cpu[..., 1] = 1
+    cpu[..., 3] = 11
+    cpu[..., 4] = 27
+    cpu[..., 7] = torch.arange(3).view(1, 1, 3, 1)
+    cpu[0, :, 2, 0, 10] = 5
+    cpu[1, :, 2, 0, 4] = 10
+    cpu[2, :, 2, 0, 1] = -1
+    expected = cpu.clone()
+    for token in range(tokens):
+        for head in range(kv_heads):
+            for split in range(splits):
+                row = expected[token, head, 2, split]
+                if row[10] == 0 and row[4] >= row[3]:
+                    row[4] = row[3]
+    tasks = cpu.view(-1, 16).to(device)
+    suppress_current_source_tasks(tasks, tokens, kv_heads, splits)
+    slots = torch.arange(tokens + 2, dtype=torch.int64, device=device)
+    slots[tokens:] = -1
+    status = torch.full((tokens + 2, heads), -99, dtype=torch.int32, device=device)
+    guard_current_slots(torch.ops.oscar_ascend_ops, status, slots, tokens)
+    torch.npu.synchronize()
+    torch.testing.assert_close(tasks.cpu().view_as(cpu), expected, atol=0, rtol=0)
+    torch.testing.assert_close(status[:tokens].cpu(), torch.zeros(tokens, heads, dtype=torch.int32),
+                               atol=0, rtol=0)
+    torch.testing.assert_close(status[tokens:].cpu(), torch.full((2, heads), -99, dtype=torch.int32),
+                               atol=0, rtol=0)
+    return {"source2_range_rewrite": "passed", "metadata_error_preserved": True,
+            "slot_guard": "passed", "padding_excluded": True}
+
+
+def _mixed_merge_case(torch, reference_attention, device, mask, heads, kv_heads, dim,
+                      scale, tolerance):
+    """Run the actual three-source device pipeline against an offline oracle.
+
+    Each request owns disjoint, permuted physical pages. Only the independent
+    expected-output calculation materializes history on CPU (#71/D.4).
+    """
+    from oscar_ascend.ops.reference import encode_kv, decode_kv
+    from oscar_ascend.ops.loader import require_capabilities
+    from oscar_ascend.integration.current_attention import (
+        guard_current_slots, suppress_current_source_tasks,
+        write_current_partial)
+
+    require_capabilities({"prepare_attention_tasks_out", "attention_cv_out",
+                          "merge_lse_out", "status_guard"})
+    ops = torch.ops.oscar_ascend_ops
+    lengths, contexts = (1, 17, 129), (17, 511, 2049)
+    page_assignments = ((2,), (7, 0), (4, 1, 6, 3, 5))
+    block_tokens, blocks, sink, recent, speculative = 512, 8, 64, 256, 3
+    splits, cores, prefix = 3, 2, 64
+    if sorted(page for request in page_assignments for page in request) != list(range(blocks)):
+        raise NativeCurrentFIAProbeError("mixed oracle physical pages are not disjoint")
+    generator = torch.Generator(device="cpu").manual_seed(46776)
+    tokens = sum(lengths)
+    q = torch.randn((tokens, heads, dim), generator=generator).to(torch.bfloat16)
+    ck = torch.randn((tokens, kv_heads, dim), generator=generator).to(torch.bfloat16)
+    cv = torch.randn((tokens, kv_heads, dim), generator=generator).to(torch.bfloat16)
+    rotation_k = torch.ones((1, 1), dtype=torch.float32)
+    while rotation_k.shape[0] < dim:
+        rotation_k = torch.cat((torch.cat((rotation_k, rotation_k), 1),
+                                torch.cat((rotation_k, -rotation_k), 1)), 0) / math.sqrt(2)
+    rotation_v = rotation_k.flip(1).contiguous()
+    slot_bytes = dim // 2 + 8
+    stride = block_tokens * slot_bytes * kv_heads
+    raw = torch.full((prefix + blocks * stride,), 0xA5, dtype=torch.uint8)
+    window_rows = sink + recent + speculative
+    window_k = torch.full((blocks, window_rows, kv_heads, dim), float("nan"), dtype=torch.bfloat16)
+    window_v = window_k.clone()
+    window_tags = torch.full((blocks, window_rows), -1, dtype=torch.int64)
+    columns = math.ceil(max(context + length for context, length in zip(contexts, lengths)) / 128)
+    table = torch.full((len(lengths) + 1, columns), -1, dtype=torch.int32)
+    slots_cpu = torch.full((tokens + 3,), -1, dtype=torch.int64)
+    starts_cpu = [0]
+    lens_cpu = []
+    expected_outputs, expected_lses = [], []
+    begin = 0
+    for request, (length, context, pages) in enumerate(zip(lengths, contexts, page_assignments)):
+        if len(pages) != math.ceil((context + length) / block_tokens):
+            raise NativeCurrentFIAProbeError("mixed oracle request page budget is wrong")
+        for logical_page, physical in enumerate(pages):
+            for quarter in range(block_tokens // 128):
+                column = logical_page * (block_tokens // 128) + quarter
+                if column < columns:
+                    table[request, column] = physical * (block_tokens // 128) + quarter
+        old_k = torch.randn((context, kv_heads, dim), generator=generator).to(torch.bfloat16)
+        old_v = torch.randn((context, kv_heads, dim), generator=generator).to(torch.bfloat16)
+        packed = encode_kv(old_k.float() @ rotation_k, old_v.float() @ rotation_v)
+        decoded_k, decoded_v = decode_kv(packed, dim)
+        restored_k, restored_v = decoded_k @ rotation_k.T, decoded_v @ rotation_v.T
+        for position in range(context):
+            physical, inpage = pages[position // block_tokens], position % block_tokens
+            address = prefix + physical * stride + inpage * slot_bytes * kv_heads
+            raw[address:address + slot_bytes * kv_heads] = packed[position].reshape(-1)
+            row = position if position < sink else sink + inpage % (recent + speculative)
+            window_k[physical, row] = old_k[position]
+            window_v[physical, row] = old_v[position]
+            window_tags[physical, row] = inpage
+        for local in range(length):
+            position = context + local
+            physical, inpage = pages[position // block_tokens], position % block_tokens
+            slots_cpu[begin + local] = physical * block_tokens + inpage
+        old_positions = torch.arange(context)
+        for local in range(length):
+            index = begin + local
+            cut = min(context, max(sink, context + local + 1 - recent))
+            compressed = (old_positions >= sink) & (old_positions < cut)
+            exact_k = torch.where(compressed[:, None, None], restored_k, old_k.float())
+            exact_v = torch.where(compressed[:, None, None], restored_v, old_v.float())
+            dense_k = torch.cat((exact_k, ck[begin:index + 1].float()))
+            dense_v = torch.cat((exact_v, cv[begin:index + 1].float()))
+            dense = reference_attention(q[index:index+1], dense_k, dense_v,
+                                        scale=scale, causal=False)
+            expected_outputs.append(dense.output[0])
+            expected_lses.append(dense.lse[0])
+        begin += length
+        starts_cpu.append(begin)
+        lens_cpu.append(context + length)
+    if begin != tokens or bool(torch.any(slots_cpu[:tokens] < 0)):
+        raise NativeCurrentFIAProbeError("mixed oracle left an active current slot unassigned")
+    padded = tokens + 3
+    starts_cpu.append(padded)  # Native FIA's synthetic terminal padding row.
+    lens_cpu.append(1)
+    q_padded_cpu = torch.cat((q, torch.zeros((3, heads, dim), dtype=torch.bfloat16)))
+    q_padded = q_padded_cpu.to(device)
+    k_padded = torch.cat((ck, torch.zeros((3, kv_heads, dim), dtype=torch.bfloat16))).to(device)
+    v_padded = torch.cat((cv, torch.zeros((3, kv_heads, dim), dtype=torch.bfloat16))).to(device)
+    q_rot = (q_padded_cpu.float() @ rotation_k).to(device)
+    starts = torch.tensor(starts_cpu, dtype=torch.int32, device=device)
+    lens = torch.tensor(lens_cpu, dtype=torch.int32, device=device)
+    slots = slots_cpu.to(device)
+    tasks = torch.empty((padded * kv_heads * 3 * splits, 16), dtype=torch.int64, device=device)
+    positions = torch.empty((padded,), dtype=torch.int64, device=device)
+    partial = torch.full((padded, heads, 3 * splits, dim), float("nan"), dtype=torch.float32, device=device)
+    lse = torch.full((padded, heads, 3 * splits), float("nan"), dtype=torch.float32, device=device)
+    cv_status = torch.full((tasks.shape[0], 2), -99, dtype=torch.int32, device=device)
+    workspace = torch.empty(cores * (384 * dim + 8192) * 4, dtype=torch.uint8, device=device)
+    ops.prepare_attention_tasks_out(starts, lens, slots, tasks, positions,
+                                    heads, kv_heads, sink, recent, splits)
+    suppress_current_source_tasks(tasks, padded, kv_heads, splits)
+    ops.attention_cv_out(q_padded, q_rot, k_padded, v_padded, rotation_v.to(device),
+        raw.to(device), table.to(device), window_k.to(device), window_v.to(device),
+        window_tags.to(device), tasks, partial, lse, cv_status, workspace,
+        block_tokens, blocks, prefix, stride, sink, recent, speculative,
+        splits, scale, cores)
+    guard_status = torch.full((padded, heads), -99, dtype=torch.int32, device=device)
+    guard_current_slots(ops, guard_status, slots, tokens)
+    native_output, native_lse = _call_fia(torch, q_padded[:tokens], k_padded[:tokens],
+        v_padded[:tokens], _cumulative_lengths(lengths), mask, scale, heads, kv_heads)
+    _validate_result(torch, native_output, native_lse, tokens, heads, dim, device)
+    write_current_partial(partial, lse, native_output, native_lse, tokens, splits)
+    output = torch.empty((padded * heads, dim), dtype=torch.float32, device=device)
+    output_lse = torch.empty(padded * heads, dtype=torch.float32, device=device)
+    status = torch.full((padded * heads,), -1, dtype=torch.int32, device=device)
+    ops.merge_lse_out(partial.view(padded * heads, 3 * splits, dim),
+        lse.view(padded * heads, 3 * splits), output, output_lse, status)
+    torch.npu.synchronize()
+    torch.testing.assert_close(cv_status.cpu(), torch.zeros_like(cv_status.cpu()), atol=0, rtol=0)
+    torch.testing.assert_close(guard_status[:tokens].cpu(),
+                               torch.zeros(tokens, heads, dtype=torch.int32), atol=0, rtol=0)
+    torch.testing.assert_close(status.cpu(), torch.zeros(padded * heads, dtype=torch.int32),
+                               atol=0, rtol=0)
+    expected_positions = torch.cat([torch.arange(context, context + length)
+                                    for context, length in zip(contexts, lengths)])
+    torch.testing.assert_close(positions[:tokens].cpu(), expected_positions, atol=0, rtol=0)
+    torch.testing.assert_close(positions[tokens:].cpu(), torch.full((3,), -1, dtype=torch.int64),
+                               atol=0, rtol=0)
+    from oscar_ascend.ops.reference import AttentionResult
+    expected = AttentionResult(torch.stack(expected_outputs), torch.stack(expected_lses))
+    output = output.view(padded, heads, dim)
+    output_lse = output_lse.view(padded, heads, 1)
+    errors = _assert_oracle(torch, output[:tokens], output_lse[:tokens], expected, tolerance)
+    torch.testing.assert_close(output[tokens:].cpu(), torch.zeros(3, heads, dim), atol=0, rtol=0)
+    if not bool(torch.isneginf(output_lse[tokens:]).all()):
+        raise NativeCurrentFIAProbeError("current-source padding did not preserve empty LSE")
+    return {"lengths": list(lengths), "contexts": list(contexts), "tokens": tokens,
+            "rotation": "distinct_orthonormal_hadamard_K_V", "history": "production_INT2_CV",
+            "window": "exact_BF16_moving_cut", "prepare": "production_NPU_prepare_attention_tasks_out",
+            "source2": "production_NPU_suppress_current_source_tasks",
+            "history_window": "production_NPU_attention_cv_out",
+            "current": "production_native_current_partial",
+            "merge": "production_NPU_merge_lse_out",
+            "physical_pages": [list(pages) for pages in page_assignments],
+            "source_splits": splits,
+            "padding_rows": 3, "oracle": "passed", **errors}
 
 
 def _long_case(torch, reference_attention, device, mask, heads, kv_heads, dim, scale,
@@ -212,7 +408,7 @@ def probe(target_path: Path, acceptance_path: Path) -> dict:
         raise NativeCurrentFIAProbeError("native npu_fused_infer_attention_score is unavailable")
     from oscar_ascend.ops.reference import attention as reference_attention
     # Native attention_mask.py:53–79: int8 upper triangle, 1 means masked.
-    mask = torch.triu(torch.ones((2048, 2048), dtype=torch.int8, device=device), diagonal=1)
+    mask = None  # The production helper owns the native mask for this device.
     scale = dim ** -0.5
     cases = [_small_case(torch, reference_attention, device, mask, lengths, heads, kv_heads,
                          dim, scale, tolerance, seed=46774 + index)
@@ -223,13 +419,19 @@ def probe(target_path: Path, acceptance_path: Path) -> dict:
         raise NativeCurrentFIAProbeError("frozen timing repetition counts are invalid")
     long_case = _long_case(torch, reference_attention, device, mask, heads, kv_heads,
                            dim, scale, tolerance, warmup, repeats)
-    return {"status": "isolated_probe_passed", "scope": "native_current_chunk_fia_only",
+    merged_case = _mixed_merge_case(torch, reference_attention, device, mask, heads, kv_heads,
+                                   dim, scale, tolerance)
+    task_case = _task_rewrite_case(torch, device, heads, kv_heads)
+    return {"status": "current_partial_probe_passed", "scope": "native_current_and_three_source_merge",
             "device": str(device), "device_name": torch.npu.get_device_name(0),
             "target_devices": target["devices"], "head_geometry": {"query": heads, "kv": kv_heads, "dim": dim},
             "causal_mask": "native 2048x2048 int8 upper triangle", "softmax_lse_flag": True,
             "frozen_tolerance": tolerance, "small_cases": cases, "long_case": long_case,
-            "device_completion": "isolated_fia_completed", "oscar_cv_replaced": False,
-            "production_route_modified": False, "graph_capture": "not_run", "graph_replay": "not_run",
+            "mixed_history_window_current_merge": merged_case,
+            "production_task_contract": task_case,
+            "device_completion": "integrated_current_cv_merge_completed",
+            "current_source_replaced": True, "history_window_cv_preserved": True,
+            "production_route_modified": True, "graph_capture": "not_run", "graph_replay": "not_run",
             "mtp": "not_run", "full_service_acceptance": "not_run", "performance_acceptance": "not_run"}
 
 

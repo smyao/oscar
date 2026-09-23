@@ -1,9 +1,10 @@
-"""Archive #27/#31-36/#77/#78/#86: concrete host/runtime contracts.
+"""Archive #27/#31-36/#77/#78/#86/#140: concrete host/runtime contracts.
 
 No fake NPU results are reported by these tests. CPU tensors are used only
 for shape/address metadata and independent native-lifetime verification.
 """
 import importlib
+from dataclasses import replace
 import json
 import os
 from pathlib import Path
@@ -259,6 +260,6 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     common.slot_mapping = torch.arange(n + 4, dtype=torch.int32)
     output = torch.empty_like(q)
     result = impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),
-                          q, k, value, packed, from_common(common), output)
+                          q, k, value, packed, replace(from_common(common), is_draft=True), output)
     assert result is output and bool(torch.all(result == 7))
     assert calls == ["prepare", "rotate", "cv", "merge", "store", "guard"]

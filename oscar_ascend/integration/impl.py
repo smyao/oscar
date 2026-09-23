@@ -1,13 +1,17 @@
 """Native AttentionImpl backed entirely by the external AscendC operators.
 
-Archive #27/#34/#36/#37-49/#69/#111: complete forward dispatch, fixed buffers,
+Archive #27/#34/#36/#37-49/#55-69/#111/#140: complete forward dispatch, fixed buffers,
 device metadata, exact physical-page snapshots, and no BF16 history restore.
 PR oscar_attn.py:486-577: current-chunk K/V are exact; cached history is INT2.
 Native acl_graph.py:270 and attention_v1.py:454: graph-update interface.
+Native attention_cp.py:1017-1032: exact current TND FIA yields output plus LSE.
 """
 import torch
 from vllm.v1.attention.backend import AttentionImpl
 
+from .current_attention import (guard_current_slots, native_current_partial,
+                                suppress_current_source_tasks, use_native_current,
+                                write_current_partial)
 from .runtime_api import OscarReadinessError, require_runtime
 from ..telemetry import emit_once, emit_throttled
 from ..timing import phase
@@ -72,6 +76,7 @@ class OscarAttentionImpl(AttentionImpl):
             raise OscarReadinessError("native slot_mapping must cover the complete padded query buffer")
         if attn_metadata.slot_mapping.dtype not in (torch.int32, torch.int64):
             raise OscarReadinessError("native slot mapping must be int32 or int64")
+        native_current = use_native_current(attn_metadata)
         workspace = state.workspace
         workspace.validate(n, h, hk, d)
         g = workspace.geometry
@@ -101,6 +106,13 @@ class OscarAttentionImpl(AttentionImpl):
                 state.snapshots.sink_tokens, state.snapshots.recent_tokens, source_splits,
                 attn_metadata.block_tables[:attn_metadata.num_reqs] if attn_metadata.draft_index > 0 else None,
                 attn_metadata.draft_index > 0)
+        if native_current:
+            # Preserve CV task errors and padding. Only the healthy current
+            # source has an empty KV interval; history/window still execute in
+            # the same fused INT2 CV kernel. No path restores BF16 history.
+            with phase("current_source_suppress", layer=layer.layer_name, tokens=n,
+                       requests=attn_metadata.num_reqs):
+                suppress_current_source_tasks(tasks, n, hk, source_splits)
         with phase("rotate", layer=layer.layer_name, tokens=n, hadamard=state.hadamard,
                    requests=attn_metadata.num_reqs):
             ops.rotate_out(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
@@ -115,6 +127,23 @@ class OscarAttentionImpl(AttentionImpl):
                 state.num_blocks * state.spec.conv_bytes, state.spec.ssm_bytes,
                 state.snapshots.sink_tokens, state.snapshots.recent_tokens,
                 state.snapshots.speculative_tokens, source_splits, self.scale, g.cube_cores)
+        if native_current:
+            active = attn_metadata.num_actual_tokens
+            if type(active) is not int or not 0 < active <= n:
+                raise OscarReadinessError("native current FIA requires exact active tokens within the padded buffer")
+            cumulative = attn_metadata.current_cumulative
+            if not isinstance(cumulative, tuple) or not cumulative or cumulative[-1] != active:
+                raise OscarReadinessError("native CPU current lengths were not prepared for this step")
+            with phase("current_slot_guard", layer=layer.layer_name, tokens=active,
+                       requests=attn_metadata.num_reqs):
+                guard_current_slots(ops, workspace.merge_status, slots, active)
+            with phase("current_native_fia", layer=layer.layer_name, tokens=active,
+                       requests=attn_metadata.num_reqs, source_splits=source_splits):
+                current_out, current_lse = native_current_partial(
+                    q[:active], k[:active], v[:active], cumulative,
+                    heads=h, kv_heads=hk, scale=self.scale)
+                write_current_partial(partial, partial_lse, current_out, current_lse,
+                                      active, source_splits)
         with phase("merge", layer=layer.layer_name, tokens=n, splits=splits,
                    requests=attn_metadata.num_reqs):
             ops.merge_lse_out(
@@ -145,11 +174,13 @@ class OscarAttentionImpl(AttentionImpl):
                   max_query_len=attn_metadata.max_query_len,
                   max_seq_len=attn_metadata.max_seq_len,
                   source_splits=source_splits,
+                  current_source="native_fia" if native_current else "ascendc_cv",
                   capture_origin=attn_metadata.capture_origin,
                   route="ascendc_int2_cv", device_completion="not_observed_here")
         emit_throttled("attention_progress", key=layer.layer_name,
                        layer=layer.layer_name, tokens=n, requests=attn_metadata.num_reqs,
                        max_query_len=attn_metadata.max_query_len,
                        max_seq_len=attn_metadata.max_seq_len,
+                       current_source="native_fia" if native_current else "ascendc_cv",
                        route="ascendc_int2_cv", device_completion="not_observed_here")
         return output

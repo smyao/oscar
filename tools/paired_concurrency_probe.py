@@ -214,6 +214,69 @@ def _observe_resources(config: dict, directory: Path, *, before=None):
                                            DEFAULT_RELEASE_TOLERANCE))
 
 
+def ensure_native_current_attention(config_path: Path, config: dict,
+                                    acceptance_path: Path, log_dir: Path) -> dict:
+    """Test native current output/LSE and the three-source merge on real NPU.
+
+    Archive #55–69/#126: an available FIA symbol or placeholder LSE is not
+    sufficient. This runs before either model service and never uses CPU as
+    the operator under test.
+    """
+    output = log_dir / "native-current-fia-report.json"
+    output.unlink(missing_ok=True)
+    env = target_env(config)
+    env.update(OSCAR_TARGET_CONFIG=str(config_path), OSCAR_TERMINAL_LOG_MODE="compact")
+    before = _observe_resources(config, log_dir / "resources-before-current")
+    result = None
+    phase_error = None
+    try:
+        result = run_phase("native-current-fia", [sys.executable, "-m", "tools.probe_native_current_fia",
+            "--target", str(config_path), "--acceptance", str(acceptance_path), "--output", str(output)],
+            cwd=ROOT, log_dir=log_dir, env=env,
+            timeout=min(300.0, float(config.get("phase_timeout_seconds", 1800))),
+            grace=float(config.get("shutdown_timeout_seconds", 30)), heartbeat=60)
+    except Exception as error:
+        phase_error = error
+    finally:
+        try:
+            release = _observe_resources(config, log_dir / "resources-after-current", before=before)
+        except Exception as error:
+            release = {"status": "failed", "reason": f"{type(error).__name__}: {error}"}
+        atomic_json(log_dir / "native-current-release.json", release)
+    code = result.returncode if result is not None else 1
+    log = result.log if result is not None else str(log_dir / "native-current-fia.log")
+    evidence = {"status": "failed", "report": str(output), "resource_release": release["status"],
+                "returncode": code, "log": log}
+    if (phase_error is not None or result is None or code != 0
+            or not result.cleanup_complete or release["status"] != "passed"):
+        raise OperatorGateError("native-current-fia", f"native-current NPU oracle/release failed; log={log}",
+                                returncode=code, evidence=evidence) from phase_error
+    try:
+        checked = read_json(output)
+        merged = checked["mixed_history_window_current_merge"]
+        task_contract = checked["production_task_contract"]
+        if (checked.get("status") != "current_partial_probe_passed" or merged.get("oracle") != "passed"
+                or merged.get("history_window") != "production_NPU_attention_cv_out"
+                or merged.get("prepare") != "production_NPU_prepare_attention_tasks_out"
+                or merged.get("source2") != "production_NPU_suppress_current_source_tasks"
+                or checked.get("long_case", {}).get("sampled_oracle") != "passed"
+                or task_contract.get("source2_range_rewrite") != "passed"
+                or task_contract.get("slot_guard") != "passed"
+                or task_contract.get("metadata_error_preserved") is not True
+                or task_contract.get("padding_excluded") is not True
+                or not checked.get("small_cases")
+                or any(case.get("oracle") != "passed" for case in checked["small_cases"])):
+            raise ValueError("native-current output/LSE/three-source merge proof is incomplete")
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+        raise OperatorGateError("native-current-fia", f"native-current NPU report invalid: {error}; report={output}",
+                                evidence=evidence) from error
+    evidence.update(status="passed", device_completion="fresh_native_current_and_merge",
+                    device_event_median_ms=checked["long_case"].get("device_event_median_ms"))
+    terminal_line(f"[oscar] PERF_CURRENT_FIA_GATE accuracy=passed mixed_sources=passed task_contract=passed "
+                  f"current16k_device_ms={evidence['device_event_median_ms']} release=passed")
+    return evidence
+
+
 def ensure_current_operators(config_path: Path, config: dict, acceptance: dict,
                              log_dir: Path, *, require_fresh_npu: bool = False) -> dict:
     """Verify the current signed build and true NPU oracle before either server."""
@@ -414,7 +477,8 @@ def run_paired(config_path: Path, *, output: Path, log_dir: Path,
     report = {"status": "running", "mode": "native_synthetic_mixed" if native_only else "paired_synthetic_mixed",
               "config": str(config_path), "acceptance": str(acceptance_path),
               "native": "not_run", "oscar": "not_run", "comparison": "not_run",
-              "operator_gate": "not_run", "performance_acceptance": "not_run", "exit_code": 1,
+              "operator_gate": "not_run", "native_current_gate": "not_run",
+              "performance_acceptance": "not_run", "exit_code": 1,
               "warmup_scope": "fresh_service_before_batch"}
     atomic_json(output, report)
     try:
@@ -427,6 +491,9 @@ def run_paired(config_path: Path, *, output: Path, log_dir: Path,
         report["operator_gate"] = ensure_current_operators(
             config_path, config, acceptance, log_dir,
             require_fresh_npu=require_fresh_npu)
+        atomic_json(output, report)
+        report["native_current_gate"] = ensure_native_current_attention(
+            config_path, config, acceptance_path, log_dir)
         atomic_json(output, report)
         baseline = _observe_resources(config, log_dir / "resources-before-native")
         atomic_json(log_dir / "resources-before-native.json", baseline)
@@ -465,9 +532,10 @@ def run_paired(config_path: Path, *, output: Path, log_dir: Path,
         if comparison["issues"]:
             report["error"] = "; ".join(comparison["issues"][:6])
     except OperatorGateError as error:
+        gate_name = "native_current_gate" if error.phase == "native-current-fia" else "operator_gate"
+        report[gate_name] = error.evidence
         report.update(status="failed", failed_phase=error.phase,
-                      operator_gate=error.evidence, error=str(error),
-                      exit_code=error.returncode)
+                      error=str(error), exit_code=error.returncode)
     except KeyboardInterrupt:
         report.update(status="interrupted", error="interrupted", exit_code=130)
     except Exception as error:

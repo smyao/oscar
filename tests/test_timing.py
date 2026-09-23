@@ -7,11 +7,12 @@ import pytest
 from oscar_ascend import timing
 
 
-def test_timing_record_goes_to_trace_file_not_stderr(tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("phase_name", ["fia", "current_source_suppress", "current_slot_guard", "current_native_fia"])
+def test_timing_record_goes_to_trace_file_not_stderr(tmp_path, monkeypatch, capsys, phase_name):
     monkeypatch.setenv("OSCAR_TIMING", "1")
     monkeypatch.setenv("OSCAR_TRACE_DIR", str(tmp_path))
     monkeypatch.delenv("OSCAR_TIMING_STDERR", raising=False)
-    with timing.phase("fia", layer="model.layers.3.self_attn.attn", tokens=4):
+    with timing.phase(phase_name, layer="model.layers.3.self_attn.attn", tokens=4):
         pass
     assert capsys.readouterr().err == ""
     records = list(tmp_path.glob("timing-*.jsonl"))
@@ -19,7 +20,7 @@ def test_timing_record_goes_to_trace_file_not_stderr(tmp_path, monkeypatch, caps
     lines = records[0].read_text().splitlines()
     assert len(lines) == 1
     record = json.loads(lines[0])
-    assert record["t"] == "oscar-timing" and record["phase_end"] == "fia"
+    assert record["t"] == "oscar-timing" and record["phase_end"] == phase_name
     assert record["device_ms"] is None and record["host_s"] >= 0
 
 

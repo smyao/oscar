@@ -20,7 +20,8 @@ import sys
 from tools.phase import atomic_json
 
 PHASES = ("prepare", "rotate", "fia", "merge", "phase1_stores", "status_guard",
-          "stage_restore", "phase0_store", "materialize", "dequant")
+          "stage_restore", "phase0_store", "materialize", "dequant",
+          "current_source_suppress", "current_slot_guard", "current_native_fia")
 REQUIRED_PHASES = ("prepare", "rotate", "fia", "merge", "phase1_stores")
 KERNEL_PHASES = (
     ("oscar_prepare_attention_tasks", "prepare"),

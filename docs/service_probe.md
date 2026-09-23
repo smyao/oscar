@@ -42,6 +42,8 @@ git pull --ff-only && bash scripts/probe_concurrency.sh
 
 配对在脚本内自动完成：先核对target配置、模型指纹、精确prompt ID、输出长度、cache salt和到达方式，再列出TTFT/TPOT/E2E与吞吐比；SSE单次批量到达导致TPOT无法计时时明确报`needs_evidence`。终端的`PERF_STATUS`、`PERF_QUEUE`、`PERF_TTFT_MS`、`PERF_TPOT_MS`、`PERF_E2E_MS`、`PERF_THROUGHPUT`、`PERF_VERDICT`、`PERF_EVIDENCE`就是直接复制给维护者的重点行。完整证据路径在最后一行。
 
+#141修订后，同一条命令在模型启动前还运行`native-current-fia`真NPU门：生产causal TND current FIA的output/LSE、小batch与16K边界、CV history/window与current的三源merge、source2任务改写和active-slot guard。终端只新增一行`PERF_CURRENT_FIA_GATE`，完整数值误差在`native-current-fia-report.json`；任一失败或资源未释放立即停止。16K设备事件时间是current算子的独立测量，不是已移除的16-token服务性能阶梯，也不用于替代K4端到端比值门。
+
 **用户自己的 32 并发 20–30K 压测**：`bash scripts/install_probe_serve.sh` 全门通过并拉起正式服务后，等待终端的 `OBSERVER_READY`，再运行原有压测程序向配置端口（当前 `8989`）发流量。正式 supervisor 自带被动观察器，只发 `/metrics` GET，**不发送任何压测请求**。它按同一负载窗口保存每秒 Running/Waiting、prompt/generation 累计计数器、MTP 增量、原始 metrics 前后快照，并在服务停止后把 OSCAR trace 按窗口汇总。观察结果在本轮 `logs/<时间戳>/serve/external-load.json`，trace 汇总在同目录的 `progress-summary.json`；常规INFO保存在完整日志，终端只实时显示阶段结果和错误。若用户仍以 `scripts/serve_direct.sh` 直拉服务，可另开终端运行 `python3 -m benchmarks.passive --variant oscar --url http://127.0.0.1:8989 --output reports/external-oscar.json` 接入相同的被动 metrics 观察。
 
 被动 `/metrics` 无法得知客户端恰好提交了 32 条、每条实际 token 长度、请求级 TTFT/ITL/E2E 或失败率；这些要从用户原压测程序的结果、请求清单与终态统计并入配对分析。首次采样已在流量中、metrics 缺计数器或采样有断点时，窗口标 `partial`，不报告完整窗口吞吐。原生对照须显式拉起同配置的 native 服务、跑**同一客户端与数据集**，再比较相同窗口；设备相位成本另需独立 device timing。健康、图回放、CPU 测试或 synthetic 请求均不推出性能追平。

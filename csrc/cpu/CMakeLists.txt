@@ -1,4 +1,4 @@
-# Archive G25-G34/#4-22/#79-83: execute the identical AscendC kernel bodies with the official CPU debugger.
+# Archive G25-G34/#4-22/#79-83/#126/#140: execute identical AscendC bodies with official CPU debugger and CANN V2 headers.
 cmake_minimum_required(VERSION 3.18)
 project(oscar_ascendc_cpu_debug LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
@@ -11,4 +11,11 @@ target_link_libraries(oscar_rotation_cpu PRIVATE tikicpulib::Ascend910B4)
 target_compile_options(oscar_rotation_cpu PRIVATE -O0 -g)
 add_executable(oscar_cv_cpu cv_probe.cpp ../kernels/attention_tasks.cpp ../kernels/attention_cv.cpp ../kernels/merge_lse.cpp)
 target_link_libraries(oscar_cv_cpu PRIVATE tikicpulib::Ascend910B4)
+set(_oscar_softmax_v2_header "${ASCEND_HOME_PATH}/aarch64-linux/asc/include/adv_api/activation/softmaxflashv2.h")
+if(NOT EXISTS "${_oscar_softmax_v2_header}")
+  message(FATAL_ERROR "Official CANN SoftmaxFlashV2 header missing: ${_oscar_softmax_v2_header}")
+endif()
+# Keep tikicpulib's simulation headers first; use only the official V2 API
+# declaration/implementation absent from that include tree, never a CPU stub.
+target_include_directories(oscar_cv_cpu SYSTEM AFTER PRIVATE "${ASCEND_HOME_PATH}/aarch64-linux/asc/include")
 target_compile_options(oscar_cv_cpu PRIVATE -O0 -g)

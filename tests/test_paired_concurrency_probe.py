@@ -43,6 +43,42 @@ def _acceptance():
                             "min_throughput_ratio": 1.0}}
 
 
+def test_native_current_gate_requires_three_source_oracle_and_release(tmp_path, monkeypatch):
+    report = {"status": "current_partial_probe_passed", "small_cases": [{"oracle": "passed"}],
+              "long_case": {"sampled_oracle": "passed", "device_event_median_ms": 10},
+              "mixed_history_window_current_merge": {"oracle": "passed",
+                "history_window": "production_NPU_attention_cv_out",
+                "prepare": "production_NPU_prepare_attention_tasks_out",
+                "source2": "production_NPU_suppress_current_source_tasks"},
+              "production_task_contract": {"source2_range_rewrite": "passed", "slot_guard": "passed",
+                                           "metadata_error_preserved": True, "padding_excluded": True}}
+    released = {"status": "passed"}
+
+    def phase(_name, command, **kwargs):
+        destination = command[command.index("--output") + 1]
+        Path(destination).write_text(json.dumps(report))
+        return SimpleNamespace(returncode=0, cleanup_complete=True, log="current-fia.log")
+
+    from pathlib import Path
+    monkeypatch.setattr(paired, "run_phase", phase)
+    monkeypatch.setattr(paired, "_observe_resources",
+                        lambda *_args, before=None: released if before is not None else {"snapshot": True})
+    config = {"devices": [0, 1, 2, 3]}
+    args = (tmp_path / "target.json", config, tmp_path / "acceptance.json", tmp_path)
+    assert paired.ensure_native_current_attention(*args)["status"] == "passed"
+    report["mixed_history_window_current_merge"]["oracle"] = "not_run"
+    with pytest.raises(paired.OperatorGateError, match="report invalid"):
+        paired.ensure_native_current_attention(*args)
+    report["mixed_history_window_current_merge"]["oracle"] = "passed"
+    report["production_task_contract"]["metadata_error_preserved"] = False
+    with pytest.raises(paired.OperatorGateError, match="report invalid"):
+        paired.ensure_native_current_attention(*args)
+    report["production_task_contract"]["metadata_error_preserved"] = True
+    released["status"] = "failed"
+    with pytest.raises(paired.OperatorGateError, match="oracle/release failed"):
+        paired.ensure_native_current_attention(*args)
+
+
 def test_paired_comparison_requires_every_ratio_and_exact_workload():
     native = _report("native")
     oscar = _report("oscar", latency=.8, throughput=1.2)
@@ -71,6 +107,7 @@ def test_zero_tpot_fails_closed_and_full_service_warmup_is_disclosed():
 
 
 def test_native_failure_stops_before_oscar_and_preserves_child_exit(tmp_path, monkeypatch):
+    monkeypatch.setattr(paired, "ensure_native_current_attention", lambda *_args: {"status": "passed"})
     config_path = tmp_path / "target.json"
     acceptance_path = tmp_path / "acceptance.json"
     config_path.write_text(json.dumps({"devices": [0, 1, 2, 3]}))
@@ -99,6 +136,7 @@ def test_native_failure_stops_before_oscar_and_preserves_child_exit(tmp_path, mo
 
 
 def test_native_only_requires_release_before_reporting_success(tmp_path, monkeypatch):
+    monkeypatch.setattr(paired, "ensure_native_current_attention", lambda *_args: {"status": "passed"})
     config_path = tmp_path / "target.json"
     acceptance_path = tmp_path / "acceptance.json"
     config_path.write_text(json.dumps({"devices": [0, 1, 2, 3]}))
@@ -122,6 +160,7 @@ def test_native_only_requires_release_before_reporting_success(tmp_path, monkeyp
 
 
 def test_one_call_runs_native_then_oscar_and_writes_paired_ratios(tmp_path, monkeypatch):
+    monkeypatch.setattr(paired, "ensure_native_current_attention", lambda *_args: {"status": "passed"})
     config_path = tmp_path / "target.json"
     acceptance_path = tmp_path / "acceptance.json"
     config_path.write_text(json.dumps({"devices": [0, 1, 2, 3]}))

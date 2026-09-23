@@ -1,11 +1,11 @@
-"""Shape-only metadata validation; archive #34/#36/#37–49/#77/#78.
+"""Native metadata validation; archive #34/#36/#37–49/#55–69/#77/#78/#140.
 
-No .item(), .cpu(), .tolist(), or per-request assembly is used. In
-particular the deprecated CommonAttentionMetadata CPU properties are
-never read. Tensor values remain on the native device and stream.
+The native runner already maintains query_start_loc_cpu. Carry that CPU mirror
+for causal current-chunk FIA without an NPU readback; device metadata and
+physical page tables remain on the native stream.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 
@@ -27,6 +27,10 @@ class OscarMetadata:
     capture_origin: bool = False
     num_input_tokens: int | None = None
     draft_index: int = 0
+    query_start_loc_cpu: Any = None
+    attn_state: Any = None
+    is_draft: bool = False
+    current_cumulative: tuple[int, ...] | None = None
 
     @property
     def block_table(self):
@@ -59,7 +63,8 @@ class MetadataCapacity:
                 f"tokens={tokens}/{self.token_slots}, block_columns={columns}/{self.block_columns}")
 
 
-def from_common(common: Any, *, capacity: MetadataCapacity | None = None, capture_origin: bool = False) -> OscarMetadata:
+def from_common(common: Any, *, capacity: MetadataCapacity | None = None,
+                capture_origin: bool = False, is_draft: bool = False) -> OscarMetadata:
     if not common.causal:
         raise OscarMetadataError("OSCAR FULL attention requires causal decoder metadata")
     tensors = (common.query_start_loc, common.seq_lens, common.slot_mapping, common.block_table_tensor)
@@ -83,13 +88,37 @@ def from_common(common: Any, *, capacity: MetadataCapacity | None = None, captur
         capacity.validate(rows=current.rows, tokens=current.token_slots, columns=current.block_columns)
         if current.query_offsets > capacity.query_offsets:
             raise OscarMetadataError("native query-start buffer exceeds fixed graph capacity")
-    return OscarMetadata(
+    state = getattr(common, "attn_state", None)
+    main_prefill = (not capture_origin and not is_draft and
+                    type(state).__name__ == "AscendAttentionState" and
+                    state.name in {"PrefillNoCache", "ChunkedPrefill", "PrefillCacheHit"})
+    # Only this eager main-model stage needs CPU qstarts. Existing graph/draft
+    # and decode callers never touch the CPU property (#34/#36/#140).
+    cpu_starts = getattr(common, "query_start_loc_cpu", None) if main_prefill else None
+    metadata = OscarMetadata(
         query_start_loc=query_start_loc, seq_lens=common.seq_lens,
         block_tables=common.block_table_tensor, slot_mapping=common.slot_mapping,
         num_reqs=rows, num_actual_tokens=common.num_actual_tokens,
         max_query_len=common.max_query_len, max_seq_len=common.max_seq_len,
         positions=getattr(common, "positions", None), capture_origin=capture_origin,
-        num_input_tokens=getattr(common, "num_input_tokens", common.slot_mapping.shape[0]))
+        num_input_tokens=getattr(common, "num_input_tokens", common.slot_mapping.shape[0]),
+        query_start_loc_cpu=cpu_starts[:rows + 1] if cpu_starts is not None else None,
+        attn_state=state, is_draft=is_draft)
+    if main_prefill:
+        # The native model runner constructs a new CommonAttentionMetadata per
+        # step (model_runner_v1.py:3161). Every FULL builder sees that same
+        # immutable step object; derive the short CPU list once, then share it
+        # across layers. Never cache by tensor address, which is reused later.
+        cumulative = getattr(common, "_oscar_current_cumulative", None)
+        if cumulative is None:
+            from .current_attention import current_cumulative_lengths
+            cumulative = tuple(current_cumulative_lengths(metadata, common.num_actual_tokens))
+            common._oscar_current_cumulative = cumulative
+        if (not isinstance(cumulative, tuple) or not cumulative or
+                cumulative[-1] != common.num_actual_tokens):
+            raise OscarMetadataError("cached current sequence lengths do not match this native step")
+        metadata = replace(metadata, current_cumulative=cumulative)
+    return metadata
 
 
 def buffer_signature(metadata: OscarMetadata):

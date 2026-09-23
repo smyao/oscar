@@ -1,4 +1,5 @@
-# 档案 #27/#28/#69/#77/#110；H01/H02/H05/H09：扫描可执行语法，不用注释关键词假判据。
+# 档案 #27/#28/#69/#77/#110/#140；H01/H02/H05/H09：扫描可执行语法，
+# 只允许已验证为 CPU 的原生 query_start_loc_cpu 镜像转列表，不放行 NPU 回读。
 import ast
 from pathlib import Path
 import re
@@ -30,9 +31,31 @@ def test_no_silent_exception_swallowing():
 def test_online_hooks_do_not_copy_device_data_to_host():
     for path in (ROOT / "oscar_ascend/integration").rglob("*.py"):
         tree = ast.parse(path.read_text())
+        cpu_mirror = None
+        if path.name == "current_attention.py":
+            cpu_mirror = next((node for node in tree.body if isinstance(node, ast.FunctionDef)
+                               and node.name == "current_cumulative_lengths"), None)
+            assert cpu_mirror is not None
+            # Verify the explicit `starts.device.type != "cpu"` rejection
+            # remains in the same helper as the one allowed CPU conversion.
+            assert any(isinstance(node, ast.Compare)
+                       and isinstance(node.left, ast.Attribute) and node.left.attr == "type"
+                       and isinstance(node.left.value, ast.Attribute)
+                       and node.left.value.attr == "device"
+                       and isinstance(node.left.value.value, ast.Name)
+                       and node.left.value.value.id == "starts"
+                       and any(isinstance(value, ast.Constant) and value.value == "cpu"
+                               for value in node.comparators)
+                       for node in ast.walk(cpu_mirror))
         for node in ast.walk(tree):
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
-                assert node.func.attr not in {"cpu", "numpy", "item", "tolist"}, path
+                if node.func.attr == "tolist":
+                    assert cpu_mirror is not None and node in ast.walk(cpu_mirror), path
+                    value = node.func.value
+                    assert isinstance(value, ast.Subscript) and isinstance(value.value, ast.Name)
+                    assert value.value.id == "starts", path
+                else:
+                    assert node.func.attr not in {"cpu", "numpy", "item"}, path
                 if node.func.attr == "to":
                     values = [a.value for a in node.args if isinstance(a, ast.Constant)]
                     assert "cpu" not in values, path

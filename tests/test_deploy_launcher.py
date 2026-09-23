@@ -44,6 +44,7 @@ def _native_evidence(log_dir):
         "status": "passed", "operator_gate": {
             "status": "passed", "build": "reused", "accuracy": "fresh_device_completion",
             "resource_release": "passed"},
+        "native_current_gate": {"status": "passed", "resource_release": "passed"},
         "native": {"status": "passed", "returncode": 0, "resource_release": "passed",
                    "owned_server_cleanup_complete": True, "runner_cleanup_complete": True}}))
 

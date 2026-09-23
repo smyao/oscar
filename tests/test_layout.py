@@ -1,4 +1,4 @@
-"""Archive #17–20/#34/#36/#37–49: independent byte/identity regressions.
+"""Archive #17–20/#34/#36/#37–49/#140: independent byte/identity regressions.
 
 These are host geometry tests. They establish no NPU numerical, graph,
 throughput, or real cache-lifecycle acceptance.
@@ -39,7 +39,7 @@ class CommonMetadata:
 
     @property
     def query_start_loc_cpu(self):
-        raise AssertionError("query offsets were copied to the host")
+        raise AssertionError("CPU query starts are only for eager native current FIA")
 
 
 class LayoutTests(unittest.TestCase):

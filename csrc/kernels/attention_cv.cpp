@@ -68,6 +68,40 @@
 // static task formula). D256 GM capacity is 425984 B/core; AIV score UB grows
 // by 12KiB. Neither number is a speed claim; exact output/LSE tolerance,
 // CANN build, device completion, graph replay and paired K4 remain gates.
+// #140/D.4 analytic masks: (1) fused fia row masking; (2) the prior 6.5s
+// full-history dequant and this kernel's 128-candidate scalar scan per query
+// row are unacceptable long-context work; (3) derive the exact visible
+// prefix/suffix intervals from causal/sink/recent boundaries in O(1), without
+// changing QK/PV, FP32 softmax or history bytes; (4) for GQA6 a full query
+// tile avoids up to 60*128 scalar visibility tests per KV unit. SDK/device
+// timing, frozen accuracy and graph replay decide the actual benefit.
+// #140/D.4 Cube FP32 tiling: (1) source0/history and source2/current fused
+// fia use the same QK/PV MatmulImpl; (2) the old D.4 full dequant was ~6.5s,
+// while this kernel's basic16x32x32 split QK/PV into many small MMADs with
+// a PIPE_M barrier when the SDK's tile-area threshold is missed. (3) Keep
+// SetHF32Mode(false), FP32 buffers and the exact online softmax; use an A2
+// L0-safe basic64x64x128 (32KiB A/B each with double buffering, 16KiB C),
+// with no history materialization. (4) At M≈60, QK/PV nominal MMAD counts
+// per 128-KV work unit fall from 128 each to 4 each; q_len1 tails retain
+// smaller actual M and may still barrier. CANN compile and target timing,
+// not this arithmetic count, decide whether the #140 9x gap closes.
+// #140/D.4 metadata arithmetic: (1) source0 fused dequant+fia; (2) old
+// full-history restore cost ~6.5s and per-row Muls/Adds here launch 32
+// arithmetic vectors per 16-row K/V subtile. (3) Preserve exact FP16 metadata
+// conversion/validation, but Brcb each of 16 FP32 scalars into one 32B block
+// and apply one row-strided FP32 Mul then Add per 64D chunk; no history tensor,
+// HF32 relaxation or new UB. (4) At D256, arithmetic calls fall 32 -> 8 per
+// K/V subtile (plus two Brcb); native A2 hc_pre_base.h uses this exact stride
+// pattern. CANN compile, frozen oracle and target device timing must verify.
+// #140/D.4 online-softmax follow-up: (1) the AIV score/P phase follows each
+// bounded Cube QK work unit. (2) Per-row ReduceMax/Exp/ReduceSum and scalar
+// fences serialize up to 32 query rows after Cube tiling improved. (3) CANN
+// A2 SoftmaxFlashV2 updates live FP32 rows together, reusing dequant UB only
+// after K/V publication; a finite old-max sentinel preserves empty rows.
+// Alpha is Brcb-multiplied across accumulator rows in the dead natural UB;
+// exact causal masks and FP32 online sum remain. (4) It removes per-row
+// reductions/alpha fences, not history bytes or the Cube/Vector flags;
+// frozen oracle, real CANN/CPU-debug and target timing still decide speed.
 // Native precedents: hc_pre_m_k_split_core.h mode-2 Cube/Vector flags;
 // hc_pre_cube_compute.h FP32 Mmad; moe_grouped_matmul.h MatmulImpl;
 // add_rms_norm_bias_multi_n.h Gather; PR triton_oscar_decode.py INT2 and LSE.
@@ -78,19 +112,22 @@
 #undef OSCAR_SCHEDULE_FN
 #include "lib/matmul_intf.h"
 #include "lib/matmul/constant_tiling.h"
+#include "adv_api/activation/softmaxflashv2.h"
 using namespace oscar_ascend_device;
 namespace {
 constexpr int32_t kQueryRows=64, kHalfRows=32, kKvRows=128, kHalfKv=16;
 constexpr int32_t kKvSubtiles=kKvRows/(2*kHalfKv);
 constexpr uint16_t kVectorReady=8, kCubeReady=9;
 constexpr float kNegativeInfinity=-__builtin_inff();
+constexpr float kEmptyMax=-__FLT_MAX__;
+constexpr SoftmaxConfig kCvSoftmaxConfig={false,0,0,SoftmaxMode::SOFTMAX_OUTPUT_WITHOUT_BRC};
 __aicore__ inline int64_t Min64(int64_t a,int64_t b){return a<b?a:b;}
 __aicore__ inline int64_t Max64(int64_t a,int64_t b){return a>b?a:b;}
 using Matrix=MatmulType<TPosition::GM,CubeFormat::ND,float,false>;
 using TransposedMatrix=MatmulType<TPosition::GM,CubeFormat::ND,float,true>;
 __aicore__ constexpr MatmulConfig CvConfig() {
   auto cfg=GetNormalConfig();
-  cfg.basicM=16;cfg.basicN=32;cfg.basicK=32;
+  cfg.basicM=64;cfg.basicN=64;cfg.basicK=128;
   cfg.singleCoreM=64;cfg.singleCoreN=256;cfg.singleCoreK=256;
   cfg.enableSetBias=false;
   return cfg;
@@ -333,15 +370,33 @@ template<int32_t D> class AttentionCv {
     Gather(natural,planes.ReinterpretCast<int16_t>(),laneIndexBuf.Get<uint32_t>(),0,kElements);
     PipeBarrier<PIPE_V>();Cast(values,natural,RoundMode::CAST_NONE,kElements);
     Fence<HardEvent::V_S>();
-    auto halves=packedBuf.Get<half>();
+    auto halves=packedBuf.Get<half>();auto metadata=naturalBuf.Get<float>();
     for(int32_t row=0;row<kHalfKv;++row) {
       const int32_t meta=(row*kPackedStride+byteBase+D/4)/2;
       const float scale=static_cast<float>(halves.GetValue(meta));
       const float zero=static_cast<float>(halves.GetValue(meta+1));
       if(row<liveKvRows && (!Finite(scale)||!Finite(zero)||scale<=0.0F))error=3;
-      Muls(values[row*D],values[row*D],scale,D);PipeBarrier<PIPE_V>();
-      Adds(values[row*D],values[row*D],zero,D);PipeBarrier<PIPE_V>();
+      metadata.SetValue(row,scale);metadata.SetValue(kHalfKv+row,zero);
     }
+    // Cast(values,natural) completed at V->S above; naturalBuf can now hold
+    // the already-validated FP32 metadata. Brcb writes 16 contiguous 32B
+    // blocks in the existing 512B scratch. Each binary repeat covers one
+    // query row's 64 values, reusing that row's one broadcast block across
+    // eight 32B lanes. Loop only along D, not along the 16 metadata rows.
+    auto rowBlocks=scratchBuf.Get<float>();
+    const BinaryRepeatParams rowParams{1,1,0,static_cast<uint8_t>(D/8),
+        static_cast<uint8_t>(D/8),1};
+    Fence<HardEvent::S_V>();
+    Brcb(rowBlocks,metadata,2,{1,8});PipeBarrier<PIPE_V>();
+    for(int32_t chunk=0;chunk<D/64;++chunk)
+      Mul(values[chunk*64],values[chunk*64],rowBlocks,static_cast<uint64_t>(64),
+          static_cast<uint8_t>(kHalfKv),rowParams);
+    PipeBarrier<PIPE_V>();
+    Brcb(rowBlocks,metadata[kHalfKv],2,{1,8});PipeBarrier<PIPE_V>();
+    for(int32_t chunk=0;chunk<D/64;++chunk)
+      Add(values[chunk*64],values[chunk*64],rowBlocks,static_cast<uint64_t>(64),
+          static_cast<uint8_t>(kHalfKv),rowParams);
+    PipeBarrier<PIPE_V>();
   }
   __aicore__ void LoadPrecise(int64_t start,bool value) {
     auto dst=dequantBuf.Get<float>();auto src=qBf16Buf.Get<bfloat16_t>();
@@ -408,11 +463,14 @@ template<int32_t D> class AttentionCv {
       Fence<HardEvent::MTE3_V>();
     }
   }
-  __aicore__ bool VisiblePos(int64_t position,int64_t pos,int64_t cut) {
-    if(pos>position)return false;
-    if(kind==0)return pos>=g.sink && pos<cut && pos<context;
-    if(kind==1)return pos<context && (pos<g.sink || pos>=cut);
-    return pos>=context;
+  __aicore__ void AddVisibleRange(int64_t begin,int64_t end,int64_t start,
+      int32_t& lo0,int32_t& hi0,int32_t& lo1,int32_t& hi1) {
+    if(end<=begin)return;
+    const int32_t lo=static_cast<int32_t>(begin-start);
+    const int32_t hi=static_cast<int32_t>(end-start);
+    if(hi0==lo0) {lo0=lo;hi0=hi;}
+    else if(lo<=hi0) hi0=static_cast<int32_t>(Max64(hi0,hi));
+    else {lo1=lo;hi1=hi;}
   }
   __aicore__ void Softmax(int64_t start) {
     auto scores=scoreBuf.Get<float>();auto acc=accBuf.Get<float>();
@@ -433,41 +491,54 @@ template<int32_t D> class AttentionCv {
     DataCopy(scores,work[scoreOffset+lane*kHalfRows*kKvRows],kHalfRows*kKvRows);
     Fence<HardEvent::MTE2_V>();Muls(scores,scores,g.scale,kHalfRows*kKvRows);
     Fence<HardEvent::V_S>();
-    if(activeRows<kHalfRows) {
-      // Previously each padded row entered the scalar loop and issued its
-      // own zero/fence. One Vector write keeps the full published P shape.
+    const int32_t softmaxRows=(activeRows+7)/8*8;
+    if(activeRows<softmaxRows) {
+      // -inf plus the finite empty-max sentinel gives P=0, sum=0 even when
+      // this query has no prior visible tile. V2 never sees -inf - (-inf).
       Fence<HardEvent::S_V>();
-      Duplicate(scores[activeRows*kKvRows],0.0F,
-          (kHalfRows-activeRows)*kKvRows);
+      Duplicate(scores[activeRows*kKvRows],kNegativeInfinity,
+          (softmaxRows-activeRows)*kKvRows);
       Fence<HardEvent::V_S>();
     }
-    // Archive #134/D.4: the per-element scalar SetValue/GetValue loop dominated
-    // per-tile cost at long history. The candidate->position map is row
-    // independent and hoisted per tile; each row's visible set is a union of at
-    // most two index intervals (kind1 = prefix + suffix). Only masked slots are
-    // written with -inf, exactly where the old loop wrote them. Non-finite
-    // coverage is one aligned whole-row ReduceSum: visible elements match the
-    // old per-element checks, and masked slots are finite by construction
-    // (Q/K/V and scales were finite-checked at load), so task-level error=2
-    // coverage is unchanged.
-    int64_t posTile[kKvRows];
-    for(int32_t j=0;j<kKvRows;++j) posTile[j]=LogicalPosition(start+j);
+    if(softmaxRows<kHalfRows) {
+      Fence<HardEvent::S_V>();
+      Duplicate(scores[softmaxRows*kKvRows],0.0F,
+          (kHalfRows-softmaxRows)*kKvRows);
+      Fence<HardEvent::V_S>();
+    }
+    // Archive #134/#140/D.4: every source has at most two visible candidate
+    // intervals. Derive them once per query row instead of scanning all 128
+    // candidate positions. The remaining mask writes and finite check are
+    // unchanged, including padded tail columns and empty source rows.
     const int32_t jEnd=static_cast<int32_t>(Min64(kKvRows,kvend-start));
+    const int64_t tileEnd=start+jEnd;
+    const int64_t sinkCount=Min64(g.sink,context);
+    const int64_t firstPosition=context+qbegin-requestBegin;
+    const int64_t tailBegin=Min64(context,Max64(g.sink,firstPosition+1-g.recent));
     for(int32_t r=0;r<activeRows;++r) {
       const int64_t row=lane*kHalfRows+r;
       const int64_t position=context+qbegin+row/group-requestBegin;
-      int32_t lo0=jEnd,hi0=jEnd,lo1=jEnd,hi1=jEnd;
+      int32_t lo0=0,hi0=0,lo1=0,hi1=0;
       const int64_t cut=Max64(g.sink,position+1-g.recent);
-      bool open=false;
-      for(int32_t j=0;j<=jEnd;++j) {
-        const bool visible=j<jEnd && VisiblePos(position,posTile[j],cut);
-        if(visible==open)continue;
-        if(visible) {if(lo0==jEnd)lo0=j;else lo1=j;}
-        else {if(hi0==jEnd)hi0=j;else hi1=j;}
-        open=visible;
+      if(kind==0) {
+        AddVisibleRange(Max64(start,g.sink),
+            Min64(tileEnd,Min64(context,Min64(cut,position+1))),start,
+            lo0,hi0,lo1,hi1);
+      } else if(kind==1) {
+        // LogicalPosition maps [0,sinkCount) to the exact sink, and the
+        // remaining candidate interval to [tailBegin,context). Every query
+        // position is >=context, so only the recent cut affects the tail.
+        AddVisibleRange(Max64(start,0),Min64(tileEnd,sinkCount),start,
+            lo0,hi0,lo1,hi1);
+        AddVisibleRange(Max64(start,sinkCount+Max64(0,cut-tailBegin)),
+            Min64(tileEnd,sinkCount+context-tailBegin),start,
+            lo0,hi0,lo1,hi1);
+      } else {
+        AddVisibleRange(Max64(start,context),Min64(tileEnd,position+1),start,
+            lo0,hi0,lo1,hi1);
       }
       const bool any=hi0>lo0||hi1>lo1;
-      if(!any) {Fence<HardEvent::S_V>();Duplicate(scores[r*kKvRows],0.0F,kKvRows);
+      if(!any) {Fence<HardEvent::S_V>();Duplicate(scores[r*kKvRows],kNegativeInfinity,kKvRows);
         Fence<HardEvent::V_S>();continue;}
       PipeBarrier<PIPE_V>();
       ReduceSum(tmp,scores[r*kKvRows],tmp[16],kKvRows);Fence<HardEvent::V_S>();
@@ -480,20 +551,39 @@ template<int32_t D> class AttentionCv {
         }
         Fence<HardEvent::S_V>();
       }
-      const float oldMax=stats.GetValue(r*4),oldSum=stats.GetValue(r*4+1);
-      Fence<HardEvent::S_V>();ReduceMax(tmp,scores[r*kKvRows],tmp[16],kKvRows);
-      Fence<HardEvent::V_S>();
-      const float tileMax=tmp.GetValue(0),newMax=oldMax>tileMax?oldMax:tileMax;
-      tmp.SetValue(0,oldSum>0.0F?oldMax-newMax:kNegativeInfinity);
-      Fence<HardEvent::S_V>();Exp(tmp[8],tmp,1);Fence<HardEvent::V_S>();
-      const float alpha=tmp.GetValue(8);
-      Adds(scores[r*kKvRows],scores[r*kKvRows],-newMax,kKvRows);PipeBarrier<PIPE_V>();
-      Exp(scores[r*kKvRows],scores[r*kKvRows],kKvRows);PipeBarrier<PIPE_V>();
-      ReduceSum(tmp,scores[r*kKvRows],tmp[16],kKvRows);Fence<HardEvent::V_S>();
-      const float sum=oldSum*alpha+tmp.GetValue(0);
-      stats.SetValue(r*4,newMax);stats.SetValue(r*4+1,sum);
-      Muls(acc[r*D],acc[r*D],alpha,D);PipeBarrier<PIPE_V>();
     }
+    // Four disjoint 32-float state lanes fit the existing 512B stats buffer.
+    // CANN's WITHOUT_BRC FP32 path stores one max/sum/alpha per query row.
+    auto outMax=stats, outSum=stats[kHalfRows];
+    auto inMax=stats[2*kHalfRows],inSum=stats[3*kHalfRows];
+    Adds(inMax,outMax,0.0F,softmaxRows);
+    Adds(inSum,outSum,0.0F,softmaxRows);
+    PipeBarrier<PIPE_V>();
+    // All K/V staging into GM finished before CubeReady. The final dequant
+    // UB values are dead until the next outer KV tile, so its D64/128/256
+    // capacity gives the SDK 4/8/16KiB of temporary space with no new UB.
+    auto softWork=dequantBuf.Get<float>();
+    const SoftMaxShapeInfo shape{static_cast<uint32_t>(softmaxRows),
+        static_cast<uint32_t>(kKvRows),static_cast<uint32_t>(softmaxRows),
+        static_cast<uint32_t>(kKvRows)};
+    const auto tiling=SoftMaxFlashV2TilingFunc(shape,sizeof(float),sizeof(float),
+        softWork.GetSize()*sizeof(float),true,false);
+    SoftmaxFlashV2<float,true,true,false,false,kCvSoftmaxConfig>(
+        scores,outSum,outMax,scores,tmp,inSum,inMax,
+        softWork.ReinterpretCast<uint8_t>(),tiling,shape);
+    Fence<HardEvent::V_S>();
+    // Reuse the now-dead natural unpack UB for the same row-strided Brcb
+    // pattern as the validated scale/zero path. This multiplies all active
+    // accumulator rows by their FP32 online alpha without scalar readback.
+    auto alphaBlocks=naturalBuf.Get<float>();
+    Brcb(alphaBlocks,tmp,static_cast<uint8_t>((activeRows+7)/8),{1,8});
+    PipeBarrier<PIPE_V>();
+    const BinaryRepeatParams alphaParams{1,1,0,static_cast<uint8_t>(D/8),
+        static_cast<uint8_t>(D/8),1};
+    for(int32_t chunk=0;chunk<D/64;++chunk)
+      Mul(acc[chunk*64],acc[chunk*64],alphaBlocks,static_cast<uint64_t>(64),
+          static_cast<uint8_t>(activeRows),alphaParams);
+    PipeBarrier<PIPE_V>();
     Fence<HardEvent::V_MTE3>();
     DataCopy(work[pOffset+lane*kHalfRows*kKvRows],scores,kHalfRows*kKvRows);
     Fence<HardEvent::MTE3_V>();
@@ -502,8 +592,9 @@ template<int32_t D> class AttentionCv {
     error=0;
     auto acc=accBuf.Get<float>();auto stats=statsBuf.Get<float>();
     Duplicate(acc,0.0F,kHalfRows*D);Fence<HardEvent::V_S>();
-    for(int32_t r=0;r<kHalfRows;++r) {stats.SetValue(r*4,kNegativeInfinity);
-      stats.SetValue(r*4+1,0.0F);}
+    Duplicate(stats,kEmptyMax,kHalfRows);
+    Duplicate(stats[kHalfRows],0.0F,kHalfRows);
+    Fence<HardEvent::V_S>();
     LoadQueries();
     for(int64_t start=kvbegin;start<kvend;start+=kKvRows) {
       // Four bounded 32-token subtiles fill one 128-token K/V work unit.
@@ -529,7 +620,7 @@ template<int32_t D> class AttentionCv {
     }
     Fence<HardEvent::V_S>();
     for(int32_t r=0;r<kHalfRows;++r) {
-      const float sum=stats.GetValue(r*4+1);
+      const float sum=stats.GetValue(kHalfRows+r);
       if(sum>0.0F && Finite(sum))Muls(acc[r*D],acc[r*D],1.0F/sum,D);
       else {if(sum!=0.0F)error=2;Duplicate(acc[r*D],0.0F,D);}
       PipeBarrier<PIPE_V>();
@@ -550,7 +641,7 @@ template<int32_t D> class AttentionCv {
     for(int32_t r=0;r<kHalfRows && lane*kHalfRows+r<rows;++r) {
       const int64_t row=lane*kHalfRows+r;
       const int64_t outRow=((qbegin+row/group)*g.hq+kvhead*group+row%group)*3*g.splits+split;
-      const float sum=stats.GetValue(r*4+1),maximum=stats.GetValue(r*4);
+      const float sum=stats.GetValue(kHalfRows+r),maximum=stats.GetValue(r);
       float lse=kNegativeInfinity;
       if(sum>0.0F && Finite(sum)) {
         scalar.SetValue(0,sum);Fence<HardEvent::S_V>();
@@ -571,7 +662,9 @@ template<int32_t D> class AttentionCv {
       qcount=1;error=code;
       auto stats=statsBuf.Get<float>();auto acc=accBuf.Get<float>();
       Duplicate(acc,code?__builtin_nanf(""):0.0F,kHalfRows*D);Fence<HardEvent::V_S>();
-      for(int32_t r=0;r<kHalfRows;++r) {stats.SetValue(r*4,kNegativeInfinity);stats.SetValue(r*4+1,0.0F);}
+      Duplicate(stats,kEmptyMax,kHalfRows);
+      Duplicate(stats[kHalfRows],0.0F,kHalfRows);
+      Fence<HardEvent::V_S>();
       PublishRows(id);
     }else PublishStatus(id,code?code:1);
   }

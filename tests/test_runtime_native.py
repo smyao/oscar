@@ -543,6 +543,8 @@ def test_real_native_metadata_base_builds_capture_then_replay(monkeypatch):
     first = draft_builder.build(0, draft, object())
     later = draft_builder.build_for_drafting(draft, 1)
     assert first.max_seq_len == later.max_seq_len == 0
+    assert first.is_draft and later.is_draft  # First draft has index 0 (#140).
+    assert first.draft_index == 0 and later.draft_index == 1
     assert first.slot_mapping.dtype == later.slot_mapping.dtype == torch.int32
     assert backend.OscarAttentionBackend.supports_dtype(torch.bfloat16)
     assert not backend.OscarAttentionBackend.supports_dtype(torch.float16)

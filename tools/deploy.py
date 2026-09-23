@@ -183,6 +183,10 @@ def main() -> int:
                             or operator_gate.get("accuracy") != "fresh_device_completion"
                             or operator_gate.get("resource_release") != "passed"):
                         raise RuntimeError(f"current signed build or real NPU CV/rotation evidence missing; report={native_wrapper_path}")
+                    current_gate = native_wrapper.get("native_current_gate")
+                    if (not isinstance(current_gate, dict) or current_gate.get("status") != "passed"
+                            or current_gate.get("resource_release") != "passed"):
+                        raise RuntimeError(f"native-current partial/LSE merge NPU evidence missing; report={native_wrapper_path}")
                     if (native_wrapper.get("status") != "passed" or not isinstance(variant, dict)
                             or variant.get("status") != "passed" or variant.get("returncode") != 0
                             or variant.get("resource_release") != "passed"

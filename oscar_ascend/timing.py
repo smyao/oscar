@@ -16,7 +16,8 @@ import time
 
 PHASES = frozenset({"prepare", "rotate", "fia", "history_window", "merge",
                     "phase1_stores", "stage_restore", "phase0_store",
-                    "materialize", "dequant", "status_guard"})
+                    "materialize", "dequant", "status_guard",
+                    "current_source_suppress", "current_slot_guard", "current_native_fia"})
 _NOOP = nullcontext()
 
 

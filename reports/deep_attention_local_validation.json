@@ -1,0 +1,39 @@
+{
+  "scope": "local host tests, real CANN cross-compilation, official CPU debugger; not target NPU acceptance",
+  "source_sha256": {
+    "csrc/kernels/attention_cv.cpp": "c8c21266c09dbbd9784274a983913666e06a8ff98921f9017af8441d1ce8c1dc",
+    "csrc/cpu/CMakeLists.txt": "b89ec8d6a89fda9fd8249454c96ca15e3b799621fce15514500cfea3f6f8e9e3"
+  },
+  "cann": {
+    "soc": "ascend910b4",
+    "status": "passed",
+    "returncode": 0,
+    "vm": "oscar",
+    "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-softmax-v2-fixed-build/compile-1.log"
+  },
+  "official_cpu_debug": {
+    "status": "passed",
+    "cases": 27,
+    "report": "reports/deep_attention_cv_cpu_debug.json",
+    "report_sha256": "2f6d76e6166aa86fd103174194d6db3ef664a24b847589ef5a8d3ce36f7804f0"
+  },
+  "host_tests": {
+    "command": ".venv/bin/python -m pytest -q",
+    "passed": 517,
+    "skipped": 127,
+    "subtests_passed": 6
+  },
+  "structural_changes": [
+    "FP32 basic64x64x128 Cube tiling, HF32 disabled",
+    "analytic causal visibility intervals",
+    "Brcb metadata scale/zero, FP32 mul then add",
+    "FP32 SoftmaxFlashV2 online update and batched accumulator scaling, bounded UB reuse",
+    "native exact current-chunk causal FIA on eager main-model prefill; INT2 history and exact window remain CV"
+  ],
+  "target_npu_accuracy": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "target_paired_k4_performance": "not_run",
+  "one_command": "git pull --ff-only && bash scripts/probe_concurrency.sh",
+  "target_gate": "signed build and NPU CV/rotation gate, production current/CV/merge oracle, native and OSCAR paired 20K/23K/27K/30K requests with 64 output tokens"
+}

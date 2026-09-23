@@ -151,3 +151,25 @@ A2 Cube/Vector片上交接也需实际CANN编译/运行证据；不能把经GM�
 #129 性能排查：D.4重新逐行对照。该算子对应dequant+FIA；历史全量恢复6499.8–6655.1ms而FIA18.5–18.9ms的结构仍禁止。本次没有增加历史恢复或另一路attention：仅改变任务归属顺序、移除因果上不可见的future-only tile。固定GM/UB预算、GQA querytile及数学精度不变；实际有效计算仍为精确attention复杂度，不声称亚线性。GQA6/Q16K/S1示例旧current任务只落在2/20核；新分配每核81–82个querytile。原始current源KVtile为839168，因果裁剪后为420761，见reports/prefill_work_analysis.json（按程序计算值为准）；这些是静态工作量，不是实测加速。新63项官方CPU-debug通过，仍需NPU逐相位证据及与原生0.6–1.1ms短步/18.5–18.9ms FIA量级比较。
 
 #130/D.4：对应历史解包+FIA及current精确FIA。历史全量恢复曾6499.8–6655.1ms，而FIA18.5–18.9ms；本轮仍不恢复全历史。每个AIV半tile最多16行：history按虚拟128边界切连续段，用带head stride的2D DMA一次搬入，跨边界重新查表；current使用一次2D DMA与一次BF16→FP32 Cast，复用naturalBuf。逐行finite校验、量化metadata与FP32数学均保持，窗口tag路径不改，UB/GM预算不增加。减少的是DMA/Cast提交数量，最多16行合并，不等同16倍实测提速；仍需达到原生0.6–1.1ms短步和18.5–18.9ms FIA量级。67项官方CPU-debug（含多head/跨页/尾行）通过，真实设备性能尚待复验。用户确认ArgSort/AiCPU告警基线也存在，不据此归因OSCAR，也不修改原生排序类型。
+
+### 9.2 长请求并发的结构修订（#141）
+
+D.4四问：相位是fused history/window/current attention；旧全历史解码需6.5s、FIA仅18.5–18.9ms。本轮继续禁止全历史物化，修正CV内部矩阵分块与可见性扫描，并将主模型eager prefill的精确current源交给原生causal TND FIA。目标仍是同硬件同负载追平原生，以下操作数是结构预算，尚非设备速度。
+
+| 成本 | 旧路径 | 本轮路径与边界 |
+|---|---|---|
+| FP32 Cube QK/PV | basic16×32×32；M≈60,N128,K256时各约128次MMAD | basic64×64×128；各约4次，L0A/B各32KiB×双缓冲，L0C16KiB；HF32关闭；短query仍可能触发SDK小M barrier |
+| 每query可见性 | 逐个扫描128候选位置 | history/current单区间、window至多两个区间，直接由causal/sink/recent推导；mask与FP32 softmax不变 |
+| INT2 scale/zero | 每16行分别发16次Muls、16次Adds | 原生Brcb和row-stride Mul/Add；D256变成4次Mul、4次Add及2次Brcb，保持FP16 metadata校验、FP32先乘后加，无新增UB |
+| 在线softmax | 每query行独立max/exp/sum、alpha标量回读与同步 | 原生A2 FP32 SoftmaxFlashV2按有效行向上对齐8更新；alpha用Brcb批量乘acc；有限性检查和精确mask保留；临时空间复用已消费的dequant/natural缓冲 |
+| current prefill | 全部经FP32 CV softmax/GM通信 | 原生BF16 current FIA返回完整output/LSE，写source2 split0；CV source2空任务仍校验并写padding/状态；history/window仍CV |
+| CPU元数据 | 无设备值回读 | 原生已存在的CPU qstart镜像，每个CommonAttentionMetadata对象构造一次tuple；不对NPU调用tolist/cpu/item；无逐层同步 |
+| 语义路由 | 全CV | 仅主模型PrefillNoCache/ChunkedPrefill/PrefillCacheHit；所有MTP draft（含index0）、capture与decode继续CV；失败立即报错 |
+
+当前请求内部负slot在FIA前由同stream status_guard拒绝；尾部padding从active tokens与累积长度排除。每层最多暂存当前步output/LSE和固定4MiB causal mask，无历史BF16副本。先完成所有读与merge，再写新KV，保持旧window快照可见性。
+
+SoftmaxFlashV2使用`WITHOUT_BRC`的一行一个FP32 max/sum/alpha；stats仍512B，旧/新max与sum分为四个32元素区间。空状态max用`-FLT_MAX`且sum=0，避免全mask行出现`-inf-(-inf)`；零sum仍发布零输出和`-inf` LSE。临时空间随D64/128/256分别为4/8/16KiB，SDK按容量拆分行，不额外分配UB；CubeReady后才复用解包区，完整P tile发布及CV跨核flag保持。此处改变归约调度，不改变FP32累计类型或冻结容差。
+
+4条长度的注意力配对计算中，current源占比随每请求chunk上限4K/8K/16K约为15.5%/29.8%/55.9%；不能将最大值套用实际混合调度。新旧Matmul都可能在单次调用内完整装载A/B到L1；改basic块降低L1→L0、MMAD与barrier次数，不声称减少相同比例的GM/HBM流量。固定GM scratch和CV跨核同步仍存在。
+
+一键入口自动先校验当前构建及CV/旋转NPU精度，再检查实际current FIA、生产三源合并和任务改写，失败不启动服务。client K4比值门不放宽；本机CANN/CPU-debug只能排除编译与数值契约错误，不能证明NPU性能。

@@ -16,7 +16,7 @@
 | #34/#36 | graph 固定 N/R/task/workspace 容量；qstarts、seq_lens、slot_mapping 每次从设备读取；Cube scalar metadata 在入口清 DCache，Vector 使用 DMA |
 | #37–49 | 窗口从物理页＋页内位置查找；tag 必须匹配页内位置；verify 每个 query 使用独立绝对位置与 recent 边界 |
 | #53–69 | 不依赖 FIA 可选 LSE，不猜测 reshape；Q/K/V 同设备，causal 在每个 score row 显式处理 |
-| #71/#140 / D.4 | 整历史恢复曾为6499.8–6655.1ms、原生FIA仅18.5–18.9ms：四份32-token子块组成一份128-token工作单元，供同一query tile复用；禁止先物化全长历史。K4当前端到端仍比原生慢约12.4倍，改动后必须真机复测。 |
+| #71/#140–141 / D.4 | 整历史恢复曾为6499.8–6655.1ms、原生FIA仅18.5–18.9ms：四份32-token子块组成一份128-token工作单元，供同一query tile复用；禁止先物化全长历史。K4实测由182.5s降到约131.7s，仍比原生慢约9倍；后续结构修订必须真机复测。 |
 | #98–122 | direct-launch 单路径；不复制原生文件，不替换 OPP 环境，不把 config/符号存在当执行通过 |
 
 只读原生先例：`references/vllm-ascend/csrc/moe/hc_pre/op_kernel/hc_pre_m_k_split_core.h` 的 mode-2 CV flag 与固定 GM 通信；`hc_pre_cube_compute.h` 的 FP32 Cube 数据通路；`moe_grouped_matmul.h` 的 MatmulImpl；`add_rms_norm_bias_multi_n.h` 的 Gather。指定 PR：`triton_oscar_decode.py` 的 INT2 解包、FP32 score/PV 与自然对数 LSE；`oscar_attn.py` 的 window BF16 与历史输出逆旋转后合并。

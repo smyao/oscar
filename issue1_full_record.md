@@ -28373,3 +28373,20 @@ Source: 2026-09-23 node93 user-pasted console, attachment 9c2f8499-0da8-4731-922
 [oscar] PERF_THROUGHPUT scope=client_wall_tokens_per_s prompt_native=6807.8 prompt_oscar=547.9 prompt_ratio=0.08 generation_native=17.4 generation_oscar=1.4 generation_ratio=0.08
 [oscar] PERF_RESULT status=failed rc=2 report=.../paired-report.json
 ```
+
+## [141] 真机条目（gpt_new_oscar_kimi，2026-09-23 用户回传）· 128-KV 修订有效但仍慢约9倍
+
+**证据**：用户回传 `paired-concurrency-20260923T070846.051374Z` 的完整 PERF 摘要，synthetic K4、20/23/27/30K、各64输出token，两边4/4完成、无失败/超时、资源释放passed。OSCAR吞吐759.4 prompt token/s，等价批次墙钟约131.7s；前轮#140为182.5s，约缩短28%。p50 TPOT由前轮1086.59ms降到571.21ms，约缩短47%。这不是无效修订，保留128-KV及有效query行优化；仍未达到原生，性能门正确退出2。
+
+**最新关键原文**（用户粘贴摘要，Markdown转义已还原；不是逐kernel trace）：
+
+```text
+[oscar] PERF_STATUS pairing=complete native=4/4 failed=0 timeout=0 oscar=4/4 failed=0 timeout=0 scope=synthetic_K4 inputs=20000,23000,27000,30000 output_tokens=64 warmup_pairing=unpaired
+[oscar] PERF_TTFT_MS scope=client_SSE_ms p50_native=9743.72 p50_oscar=95385.43 p50_ratio=9.79 p95_native=13464.43 p95_oscar=128546.87 p95_ratio=9.55
+[oscar] PERF_TPOT_MS scope=client_SSE_ms p50_native=74.55 p50_oscar=571.21 p50_ratio=7.66 p95_native=158.28 p95_oscar=1487.21 p95_ratio=9.40
+[oscar] PERF_E2E_MS scope=client_SSE_ms p50_native=14440.43 p50_oscar=131371.96 p50_ratio=9.10 p95_native=14622.94 p95_oscar=131652.93 p95_ratio=9.00
+[oscar] PERF_THROUGHPUT scope=client_wall_tokens_per_s prompt_native=6835.5 prompt_oscar=759.4 prompt_ratio=0.11 generation_native=17.5 generation_oscar=1.9 generation_ratio=0.11
+[oscar] PERF_RESULT status=failed rc=2 report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260923T070846.051374Z/paired-report.json
+```
+
+**本机排查与改动，非真机结论**：SDK证实FP32 basic16×32×32让QK/PV各约128次内部MMAD，并触发小块PIPE_M barrier；改basic64×64×128，各约4次，FP32/HF32-off保留。可见区间改为解析边界。主模型eager prefill的current源走原生BF16 causal TND FIA，历史仍由INT2 CV直接读取，精确window继续由CV计算；三源在原有FP32 LSE merge合并。MTP draft与图decode继续CV。原生current实际收益依赖调度分块，不能拿16K块的55.9%配对计算占比冒充所有混合批次。冻结数值门、图回放和相同K4真机结果分别验收，不把理论操作数下降写成已追平。

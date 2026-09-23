@@ -1,6 +1,6 @@
 """Native backend and metadata construction seams.
 
-Archive #27/#28/#34/#36/#37–49: no placeholder attention, host length
+Archive #27/#28/#34/#36/#37–49/#140: no placeholder attention, host length
 readback, or capture-only suppression masquerading as graph replay.
 Only an installed, ready runtime can provide the real AttentionImpl.
 """
@@ -61,7 +61,14 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
         return False
 
     def build(self, common_prefix_len, common_attn_metadata, fast_build=False):
-        return self.bindings.bind(from_common(common_attn_metadata, capacity=self.capacity))
+        # Native llm_base_proposer.py:913 calls first draft with its model as
+        # positional argument 3; later drafts call build_for_drafting. Mark
+        # both, including draft_index=0, so eager prefill FIA cannot consume
+        # an MTP draft under a misleading ChunkedPrefill host state.
+        first_draft = type(fast_build) is not bool
+        metadata = from_common(common_attn_metadata, capacity=self.capacity,
+                               is_draft=first_draft)
+        return self.bindings.bind(metadata)
 
     def build_for_graph_capture(self, common_attn_metadata, attn_state=None):
         # Native _dummy_run does not necessarily initialize slot values when
@@ -81,4 +88,6 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
         # query position from slot + virtual block table on device, not mRoPE.
         if type(draft_index) is not int or draft_index < 0:
             raise ValueError("draft_index must be a nonnegative integer")
-        return replace(self.build(0, common_attn_metadata, fast_build=True), draft_index=draft_index)
+        metadata = from_common(common_attn_metadata, capacity=self.capacity,
+                               is_draft=True)
+        return replace(self.bindings.bind(metadata), draft_index=draft_index)

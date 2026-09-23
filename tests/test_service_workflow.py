@@ -199,6 +199,39 @@ def test_long_request_has_wall_deadline_progress_and_reaped_client(tmp_path, mon
     assert "CLEANUP_START" in terminal.out and "CLEANUP_END" in terminal.out
 
 
+def test_healthy_run_records_realistic_load_performance(tmp_path):
+    config, path = configured(tmp_path)
+    report, reads = invoke(tmp_path, path, fake_command(tmp_path, config))
+    performance = report["performance"]
+    assert performance["status"] == "measured"
+    assert performance["request_count"] == 32 and performance["completed"] == 32
+    assert performance["failed"] == 0 and performance["timed_out"] == 0
+    assert performance["scope"].startswith("realistic concurrent load")
+    assert sorted(x["prompt_tokens"] for x in report["requests"]) == [128,128,16384,16384,32768,32768,50000,50000]
+    assert (tmp_path / "logs/performance.json").is_file()
+
+
+def test_parse_gauges_sums_named_series_and_rejects_bad_values():
+    text = ('# comment\nvllm:prompt_tokens_total{model_name="q"} 120\n'
+            'vllm:prompt_tokens_total{model_name="q"} 30\n'
+            'vllm:num_requests_running 3\nvllm:other 9\n')
+    values = service_probe.parse_gauges(text, {"vllm:prompt_tokens_total", "vllm:num_requests_running"})
+    assert values == {"vllm:prompt_tokens_total": 150.0, "vllm:num_requests_running": 3.0}
+    with pytest.raises(ServiceProbeError):
+        service_probe.parse_gauges("vllm:prompt_tokens_total nan\n", {"vllm:prompt_tokens_total"})
+
+
+def test_performance_probe_validates_config_and_supports_disable(tmp_path):
+    server = SimpleNamespace(base_url="http://127.0.0.1:1")
+    bad = {"performance_request_count": 200, "performance_timeout_seconds": 10}
+    with pytest.raises(ValueError):
+        service_probe.run_performance(server, bad, Tokenizer(), log_dir=tmp_path,
+                                      deadline=time.monotonic() + 10)
+    disabled = {"performance_request_count": 0}
+    assert service_probe.run_performance(server, disabled, Tokenizer(), log_dir=tmp_path,
+                                         deadline=time.monotonic() + 10)["status"] == "disabled"
+
+
 def test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch(tmp_path):
     config, path = configured(tmp_path)
     report, reads = invoke(tmp_path, path, fake_command(tmp_path, config))
@@ -207,7 +240,8 @@ def test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch(tm
     assert report["telemetry"]["status"] == report["mtp"]["status"] == "passed"
     assert report["resource_release"] == "passed" and len(reads) == 2
     assert report["server"]["cleanup_complete"] and not group_exists(report["server"]["pid"])
-    assert report["quality"] == report["performance"] == "not_run"
+    assert report["quality"] == "not_run"
+    assert report["performance"]["status"] == "measured"  # measurement, not acceptance
 
 
 @pytest.mark.parametrize("mode, diagnostic", [("no_trace", "mandatory"), ("wrong_usage", "exactly 128"), ("no_mtp", "mandatory")])

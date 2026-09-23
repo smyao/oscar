@@ -28298,3 +28298,25 @@ dict ['cleanup_complete', 'command', 'elapsed_seconds', 'interrupted', 'log', 'p
 -rw-r--r-- service-probe/probe_result.log 2026-09-22 12:07:21 (81414B)
 status.json: "status": "failed", "failed_phase": "full-service-probe"
 ```
+
+
+## [137] 真机条目（gpt_new_oscar_kimi，2026-09-23 用户回传）· 真实负载对照与性能probe改版
+
+**输入**：用户回传两组真机日志——OSCAR `serve_direct.sh` 32并发、平均输入20–30K数据集（2026-09-23 00:21起）与同机型同配置同数据集的原生基线（2026-09-07 03:04材料，无OSCAR逻辑）。
+
+**对照事实**：原生 Running 1→26 两分钟爬满、KV cache 95%、聚合 generation 156 tok/s、prompt 持续 3.6–9K tok/s、单请求 decode≈6 tok/s；OSCAR Running 停滞于 2–4、Waiting 27–30、聚合 generation 0–0.7 tok/s、prompt 仅间歇 1.7–2.5K tok/s。折算：单请求25K prefill 原生≈3.6s vs OSCAR≈60–100s（约20–30倍），并发 decode 差约40倍。
+
+**结论**：差异链闭合于 prefill 过慢→请求堆积→并发度上不去→decode 无聚合；唯一设备侧主项仍是 CV 内核逐 tile 串行延迟（#134/#135 证据）。MTP 接受率两侧正常波动，ArgSort 告警两侧同现（原生基线项，#130用户明示）——均非差异来源。
+
+**处置**：固定长度串行+混合请求保留为功能验收证据；新增真实负载性能测量相位（32并发、固定种子20–30K、输出16token、600s有界预算、原生/metrics计数器差值得聚合吞吐、每5秒running/waiting爬坡采样、未完成逐条记录），写入report["performance"]，状态measured/failed/disabled，不构成E06验收。终端只有PERFORMANCE start/done两行与心跳静默（quiet）。
+
+### 用户日志摘录（非完整文件）
+
+```text
+Source: user-provided console excerpts, OSCAR run 2026-09-23 00:21 (gpt_new_oscar_kimi) vs native baseline 2026-09-07 03:04.
+
+OSCAR:  Running: 2 reqs, Waiting: 30 reqs ... Running: 4 reqs, Waiting: 28 reqs
+        Avg generation throughput: 0.0 ~ 0.7 tokens/s under load; prompt bursts 1667-2535 tokens/s
+Native: Running: 1 -> 26 reqs, GPU KV cache usage -> 95.0%
+        Avg generation throughput climbs to 156.4 tokens/s; Avg prompt throughput 3632.9-8979.9 tokens/s
+```

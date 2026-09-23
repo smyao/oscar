@@ -1,6 +1,6 @@
 # 当前工程约束
 
-先读 `oscar_ascend_agent_start.md`，按其档案引用制度执行。`issue1_full_record.md` 实际为170条（G1–G34、#1–#136），按标题定位；旧标题条数与旧行号存在漂移。
+先读 `oscar_ascend_agent_start.md`，按其档案引用制度执行。`issue1_full_record.md` 实际为171条（G1–G34、#1–#137），按标题定位；旧标题条数与旧行号存在漂移。
 
 - 只允许参考本项目 `references/` 内指定PR和原生实现；禁止读任何失败OSCAR项目代码。所有参考树只读，不运行格式化或修改。
 - 适配代码为外部插件与独立AscendC工程，不能覆盖原生vLLM/Ascend源码，不使用 `cp` 部署。

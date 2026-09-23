@@ -24,6 +24,7 @@ import time
 import urllib.error
 import urllib.request
 import uuid
+import random
 
 from .npu_resources import DEFAULT_RELEASE_TOLERANCE, read_npu_resources, wait_for_release
 from .phase import atomic_json, cleanup_group, live_log, terminal_line
@@ -284,7 +285,7 @@ def compact_workers(progress):
     return "; ".join(parts)
 
 
-def request_with_deadline(server, payload, *, label, timeout):
+def request_with_deadline(server, payload, *, label, timeout, quiet=False):
     """One child per HTTP request: socket progress cannot extend the deadline.
 
     The client inherits the supervisor's group (no detached subprocess). It
@@ -323,8 +324,9 @@ def request_with_deadline(server, payload, *, label, timeout):
                     state.update(elapsed_seconds=now-started, remaining_seconds=deadline-now,
                                  worker_progress=worker_progress(server), client_state=client_state)
                     atomic_json(state_path, state)
-                    _terminal(f"[oscar] REQUEST_WAIT {label} elapsed={now-started:.1f}s remaining={deadline-now:.1f}s "
-                              f"client={client_state.get('state')} workers={compact_workers(state['worker_progress'])}")
+                    if not quiet:
+                        _terminal(f"[oscar] REQUEST_WAIT {label} elapsed={now-started:.1f}s remaining={deadline-now:.1f}s "
+                                  f"client={client_state.get('state')} workers={compact_workers(state['worker_progress'])}")
                     heartbeat = now + REQUEST_HEARTBEAT_SECONDS
                 time.sleep(min(.1, max(0, deadline-now)))
             if time.monotonic() >= deadline:
@@ -355,7 +357,7 @@ def request_with_deadline(server, payload, *, label, timeout):
         atomic_json(state_path, state)
 
 
-def completion(server, config, tokenizer, length, *, label, timeout, prompt_ids=None):
+def completion(server, config, tokenizer, length, *, label, timeout, prompt_ids=None, quiet=False):
     server.check_alive()
     ids = exact_prompt(tokenizer, length) if prompt_ids is None else prompt_ids
     if len(ids) != length or any(type(x) is not int or x < 0 for x in ids):
@@ -365,7 +367,7 @@ def completion(server, config, tokenizer, length, *, label, timeout, prompt_ids=
                "ignore_eos": True, "temperature": 0, "seed": 46774,
                "stream": False, "add_special_tokens": False}
     started = time.monotonic()
-    response = request_with_deadline(server, payload, label=label, timeout=timeout)
+    response = request_with_deadline(server, payload, label=label, timeout=timeout, quiet=quiet)
     if not isinstance(response, dict) or response.get("error"):
         raise ServiceProbeError(f"{label}: completion returned an error: {response}")
     usage, choices = response.get("usage", {}), response.get("choices")
@@ -504,6 +506,133 @@ def _timing_summary(trace_dir: Path, log_dir: Path):
             "output": str(output)}
 
 
+def parse_gauges(text, names):
+    """Sum counter/gauge series with the given names; missing names stay absent."""
+    values = {}
+    for line in text.splitlines():
+        if not line or line.startswith("#"):
+            continue
+        match = re.fullmatch(r"([^\s{]+)(?:\{.*\})?\s+([^\s]+)(?:\s+[^\s]+)?", line)
+        if not match:
+            continue
+        name = match[1]
+        if name not in names:
+            continue
+        value = float(match[2])
+        if not math.isfinite(value) or value < 0:
+            raise ServiceProbeError(f"invalid native metric {name}={value}")
+        values[name] = values.get(name, 0.0) + value
+    return values
+
+
+PERF_COUNTER_NAMES = ("vllm:prompt_tokens_total", "vllm:generation_tokens_total")
+PERF_GAUGE_NAMES = ("vllm:num_requests_running", "vllm:num_requests_waiting")
+PERF_SAMPLE_SECONDS = 5.0
+
+
+def run_performance(server, config, tokenizer, *, log_dir, deadline):
+    """Measure realistic concurrent load; report only, never an acceptance gate.
+
+    Archive #137: fixed serial lengths were functional evidence, not a workload.
+    This phase fires the deployed workload shape (32 concurrent 20K-30K-token
+    completions) and reads native counters for aggregate rates. Incomplete
+    requests are recorded, never hidden; failures here never mask probe gates.
+    """
+    count = int(config.get("performance_request_count", 32))
+    if count == 0:
+        return {"status": "disabled", "scope": "performance_request_count=0 disables the load measurement"}
+    low = int(config.get("performance_prompt_min_tokens", 20000))
+    high = int(config.get("performance_prompt_max_tokens", 30000))
+    budget = _remaining(deadline, _positive_time(config, "performance_timeout_seconds", 600))
+    if not 0 < count <= 128 or not 0 < low <= high:
+        raise ValueError("performance probe needs 1..128 requests and min<=max prompt tokens")
+    rng = random.Random(46774)
+    lengths = [rng.randint(low, high) for _ in range(count)]
+    prompts = {i: exact_prompt(tokenizer, lengths[i]) for i in range(count)}
+    request_limit = _positive_time(config, "service_request_timeout_seconds", 300)
+    started = time.monotonic()
+    counters_before = parse_gauges(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 10)),
+                                   PERF_COUNTER_NAMES)
+    mtp_before = parse_mtp_metrics(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 10)))
+    samples = []
+    stop = threading.Event()
+
+    def sampler():
+        while not stop.is_set():
+            try:
+                gauges = parse_gauges(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 5)),
+                                      PERF_GAUGE_NAMES)
+                samples.append({"t": round(time.monotonic() - started, 3),
+                                "running": gauges.get("vllm:num_requests_running"),
+                                "waiting": gauges.get("vllm:num_requests_waiting")})
+            except (OSError, ServiceProbeError, TimeoutError) as error:
+                samples.append({"t": round(time.monotonic() - started, 3),
+                                "error": f"{type(error).__name__}: {error}"})
+            stop.wait(PERF_SAMPLE_SECONDS)
+
+    thread = threading.Thread(target=sampler, name="oscar-perf-sampler", daemon=True)
+    _terminal(f"[oscar] PERFORMANCE start requests={count} prompt={low}..{high} output={MIN_OUTPUT_TOKENS} "
+              f"budget={budget:.0f}s")
+    thread.start()
+    pool = ThreadPoolExecutor(max_workers=count)
+    futures = []
+    records = []
+    try:
+        for i in range(count):
+            futures.append(pool.submit(completion, server, config, tokenizer, lengths[i],
+                label=f"perf-{i}-{lengths[i]}", timeout=_remaining(deadline, request_limit),
+                prompt_ids=prompts[i], quiet=True))
+        try:
+            for future in as_completed(futures, timeout=budget):
+                records.append(future.result())
+                atomic_json(log_dir / "performance.json", {"requests": records})
+        except TimeoutError:
+            unfinished = sum(1 for future in futures if not future.done())
+            _terminal(f"[oscar] PERFORMANCE budget {budget:.0f}s exhausted with {unfinished} requests unfinished")
+    finally:
+        stop.set()
+        thread.join(timeout=2)
+        for future in futures:
+            future.cancel()
+        pool.shutdown(wait=False, cancel_futures=True)
+    wall = time.monotonic() - started
+    timed_out = sum(1 for future in futures if not future.done() or future.cancelled())
+    failed = 0
+    for future in futures:
+        if future.done() and not future.cancelled():
+            try:
+                future.result()
+            except Exception:
+                failed += 1
+    counters_after = parse_gauges(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 10)),
+                                  PERF_COUNTER_NAMES)
+    mtp_after = parse_mtp_metrics(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 10)))
+    rates = {}
+    for name in PERF_COUNTER_NAMES:
+        if name in counters_before and name in counters_after:
+            delta = counters_after[name] - counters_before[name]
+            rates[name] = {"delta_tokens": delta, "tokens_per_second": delta / wall if wall > 0 else None}
+        else:
+            rates[name] = None
+    latencies = sorted(record["elapsed_seconds"] for record in records)
+    report = {"status": "measured",
+              "scope": "realistic concurrent load measurement; no acceptance gate (E06 pending)",
+              "request_count": count, "prompt_range": [low, high], "output_tokens": MIN_OUTPUT_TOKENS,
+              "wall_seconds": wall, "completed": len(records), "timed_out": timed_out, "failed": failed,
+              "prompt_throughput": rates["vllm:prompt_tokens_total"],
+              "generation_throughput": rates["vllm:generation_tokens_total"],
+              "latency_seconds": None if not latencies else {"min": latencies[0],
+                  "p50": latencies[len(latencies) // 2], "max": latencies[-1]},
+              "samples": samples,
+              "mtp": evaluate_mtp_metrics(mtp_before, mtp_after)}
+    atomic_json(log_dir / "performance.json", {**report, "requests": records})
+    _terminal(f"[oscar] PERFORMANCE done wall={wall:.1f}s completed={len(records)}/{count} "
+              f"timeout={timed_out} failed={failed} "
+              f"prompt_tps={None if rates['vllm:prompt_tokens_total'] is None else round(rates['vllm:prompt_tokens_total']['tokens_per_second'], 1)} "
+              f"gen_tps={None if rates['vllm:generation_tokens_total'] is None else round(rates['vllm:generation_tokens_total']['tokens_per_second'], 1)}")
+    return report
+
+
 def run_service(config_path, *, output, log_dir, serve=False, command=None,
                 tokenizer_factory=None, resource_reader=None):
     """Run real service requests; injectable boundaries are only for fault tests."""
@@ -596,6 +725,13 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
             if report["mtp"]["status"] != "passed" or report["telemetry"]["status"] != "passed":
                 raise ServiceProbeError("HTTP completed, but mandatory TP4/FULL/graph/MTP evidence did not pass")
             report["device_completion"] = "real_service_requests_completed"
+            if not serve:
+                try:
+                    report["performance"] = run_performance(server, config, tokenizer,
+                                                            log_dir=log_dir, deadline=deadline)
+                except Exception as error:
+                    report["performance"] = {"status": "failed", "error": f"{type(error).__name__}: {error}"}
+                    _terminal(f"[oscar] PERFORMANCE_ERROR {report['performance']['error']}", stderr=True)
             report["status"] = "serving" if serve else "requests_passed_cleanup_pending"
             atomic_json(output, report)
             if serve:

@@ -40,6 +40,19 @@
 // is 32 register-level compares per row. p95 must measurably fall on the
 // target TIMING_SUMMARY before any further pipelining; parity with native FIA
 // is NOT claimed by this change alone.
+// #126/#129-135/#140/D.4 short-query follow-up: (1) This is only the fused
+// fia softmax phase for each 32-KV tile; prepare, phase1 stores and the INT2
+// unpack/Cube QK/PV paths are unchanged. (2) D.4's old full-history dequant
+// took 6499.8-6655.1ms versus FIA 18.5-18.9ms at 32K; stores took ~209ms
+// and host prepare ~725ms. Do not reintroduce restoration or host work.
+// (3) AIV still unpacks its KV half and follows every Cube/Vector flag, but
+// softmax visits only real query rows. Padded score rows are bulk-zeroed once
+// before publishing the same full P tile; all statuses, LSE/output owners and
+// FP32 arithmetic for live rows remain unchanged. (4) GQA6 q_len=1/4 uses
+// 6/24 of 64 available rows: scalar softmax row visits fall by 90.6%/62.5%
+// per KV tile, not the QK/PV or INT2 work. This is a source-work prediction,
+// not a target-NPU speed or precision claim; frozen oracle and graph probes
+// must decide whether it improves the measured #140 12.4x K4 wall gap.
 // Native precedents: hc_pre_m_k_split_core.h mode-2 Cube/Vector flags;
 // hc_pre_cube_compute.h FP32 Mmad; moe_grouped_matmul.h MatmulImpl;
 // add_rms_norm_bias_multi_n.h Gather; PR triton_oscar_decode.py INT2 and LSE.
@@ -384,10 +397,30 @@ template<int32_t D> class AttentionCv {
   __aicore__ void Softmax(int64_t start) {
     auto scores=scoreBuf.Get<float>();auto acc=accBuf.Get<float>();
     auto stats=statsBuf.Get<float>();auto tmp=scratchBuf.Get<float>();
+    const int64_t group=g.hq/g.hk;
+    const int32_t activeRows=static_cast<int32_t>(Max64(0,
+        Min64(kHalfRows,qcount*group-lane*kHalfRows)));
+    if(activeRows==0) {
+      // Cube uses only qcount*group rows; this AIV lane owns no query rows,
+      // but it must still publish a fully initialized P tile and participate
+      // in every cross-core flag. It continues to load/dequantize its KV half.
+      Duplicate(scores,0.0F,kHalfRows*kKvRows);
+      Fence<HardEvent::V_MTE3>();
+      DataCopy(work[pOffset+lane*kHalfRows*kKvRows],scores,kHalfRows*kKvRows);
+      Fence<HardEvent::MTE3_V>();
+      return;
+    }
     DataCopy(scores,work[scoreOffset+lane*kHalfRows*kKvRows],kHalfRows*kKvRows);
     Fence<HardEvent::MTE2_V>();Muls(scores,scores,g.scale,kHalfRows*kKvRows);
     Fence<HardEvent::V_S>();
-    const int64_t group=g.hq/g.hk;
+    if(activeRows<kHalfRows) {
+      // Previously each padded row entered the scalar loop and issued its
+      // own zero/fence. One Vector write keeps the full published P shape.
+      Fence<HardEvent::S_V>();
+      Duplicate(scores[activeRows*kKvRows],0.0F,
+          (kHalfRows-activeRows)*kKvRows);
+      Fence<HardEvent::V_S>();
+    }
     // Archive #134/D.4: the per-element scalar SetValue/GetValue loop dominated
     // per-tile cost at long history. The candidate->position map is row
     // independent and hoisted per tile; each row's visible set is a union of at
@@ -400,21 +433,18 @@ template<int32_t D> class AttentionCv {
     int64_t posTile[kKvRows];
     for(int32_t j=0;j<kKvRows;++j) posTile[j]=LogicalPosition(start+j);
     const int32_t jEnd=static_cast<int32_t>(Min64(kKvRows,kvend-start));
-    for(int32_t r=0;r<kHalfRows;++r) {
+    for(int32_t r=0;r<activeRows;++r) {
       const int64_t row=lane*kHalfRows+r;
-      const bool validRow=row<qcount*group;
       const int64_t position=context+qbegin+row/group-requestBegin;
       int32_t lo0=jEnd,hi0=jEnd,lo1=jEnd,hi1=jEnd;
-      if(validRow) {
-        const int64_t cut=Max64(g.sink,position+1-g.recent);
-        bool open=false;
-        for(int32_t j=0;j<=jEnd;++j) {
-          const bool visible=j<jEnd && VisiblePos(position,posTile[j],cut);
-          if(visible==open)continue;
-          if(visible) {if(lo0==jEnd)lo0=j;else lo1=j;}
-          else {if(hi0==jEnd)hi0=j;else hi1=j;}
-          open=visible;
-        }
+      const int64_t cut=Max64(g.sink,position+1-g.recent);
+      bool open=false;
+      for(int32_t j=0;j<=jEnd;++j) {
+        const bool visible=j<jEnd && VisiblePos(position,posTile[j],cut);
+        if(visible==open)continue;
+        if(visible) {if(lo0==jEnd)lo0=j;else lo1=j;}
+        else {if(hi0==jEnd)hi0=j;else hi1=j;}
+        open=visible;
       }
       const bool any=hi0>lo0||hi1>lo1;
       if(!any) {Fence<HardEvent::S_V>();Duplicate(scores[r*kKvRows],0.0F,kKvRows);

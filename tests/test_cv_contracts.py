@@ -5,6 +5,9 @@ Opt-in NPU cases execute the compiled operators against the independent PR
 oracle, including GQA6 MTP4 and precise/history boundaries.
 The node93 2026-09-22 head5 failure adds Q-tail/DMA ownership regressions;
 its CPU numerical fingerprint is diagnostic, never device acceptance.
+D.4/#126/#140: q1/q6 at context511 exercise short-q padded P rows in both
+Vector lanes while compressed history is live; FP32 output/LSE and every
+status still face the independent frozen oracle before a speed claim.
 D.4: no full-history allocation in production; only this test oracle may
 materialize history. Tests do not turn CPU results into NPU/performance evidence.
 """
@@ -181,7 +184,8 @@ def _assert_cv_result(data, buffers, expected, expected_lse):
 
 
 @pytest.mark.parametrize("dim,qlen,context", [(64, 1, 17), (64, 4, 65),
-    (128, 4, 129), (256, 1, 401), (256, 4, 511), (256, 4, 0), (64, 65, 17)])
+    (64, 1, 511), (64, 6, 511), (128, 4, 129), (256, 1, 401),
+    (256, 4, 511), (256, 4, 0), (64, 65, 17)])
 def test_npu_cv_matches_independent_dense_pr_oracle(dim, qlen, context):
     ops = _npu_ops()
     data, expected, expected_lse = _case(dim, qlen, context)
@@ -257,7 +261,8 @@ def export_cpu_debug_goldens(directory):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     cases=[]
-    for dim, qlen, context, hk in [(64, 1, 17, 1), (64, 4, 65, 1), (64, 4, 0, 1),
+    for dim, qlen, context, hk in [(64, 1, 17, 1), (64, 1, 511, 1),
+                                  (64, 6, 511, 1), (64, 4, 65, 1), (64, 4, 0, 1),
                                   (128, 4, 129, 1), (256, 4, 511, 1),
                                   (64, 17, 65, 1), (64, 4, 65, 2),
                                   (64, 2, 320, 1), (128, 3, 511, 1), (64, 65, 17, 1),

@@ -251,6 +251,19 @@ def test_concurrency_ladder_records_each_request_timeout(tmp_path, monkeypatch):
     assert sum(len(arm["requests"]) for arm in detail["arms"]) == 5
 
 
+def test_ladder_mode_runs_only_the_concurrency_diagnostic(tmp_path):
+    config, path = configured(tmp_path)
+    report = service_probe.run_ladder_only(path, output=tmp_path / "ladder.json",
+        log_dir=tmp_path / "ladder", command=fake_command(tmp_path, config),
+        tokenizer_factory=lambda model: Tokenizer())
+    assert report["status"] == "measured"
+    assert [arm["concurrency"] for arm in report["ladder"]["arms"]] == [1, 4]
+    assert report["ladder"]["verdict"]["status"] in {"measured", "insufficient_arms"}
+    assert report["progress"]["status"] == "not_run"  # fixture writes no attention_progress
+    assert report["server"]["cleanup_complete"]
+    assert not group_exists(report["server"]["pid"])
+
+
 def test_ladder_verdict_scaling_ratios_and_hints():
     arm1 = {"concurrency": 1, "completed": 1, "wall_seconds": 10.0,
             "generation_throughput": {"tokens_per_second": 2.0}}

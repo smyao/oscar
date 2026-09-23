@@ -554,6 +554,7 @@ def _run_arm(server, config, tokenizer, length, concurrency, *, log_dir, deadlin
     samples = []
     stop = threading.Event()
     started = time.monotonic()
+    started_wall = time.time()
     thread = threading.Thread(target=_sample_loop, args=(server, deadline, started, samples, stop),
                               name=f"oscar-ladder-sampler-{concurrency}", daemon=True)
     _terminal(f"[oscar] CONCURRENCY_ARM start K={concurrency} prompt={length} budget={budget:.0f}s")
@@ -608,7 +609,8 @@ def _run_arm(server, config, tokenizer, length, concurrency, *, log_dir, deadlin
            "latency_seconds": None if not latencies else {"min": latencies[0],
                "p50": latencies[len(latencies) // 2], "max": latencies[-1]},
            "mtp": evaluate_mtp_metrics(mtp_before, mtp_after),
-           "samples": samples, "requests": records}
+           "samples": samples, "requests": records,
+           "window": [started_wall, time.time(), f"K={concurrency}"]}
     gen = rates["vllm:generation_tokens_total"]
     prompt_rate = rates["vllm:prompt_tokens_total"]
     _terminal(f"[oscar] CONCURRENCY_ARM done K={concurrency} wall={wall:.1f}s "
@@ -837,13 +839,93 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
     return report
 
 
+def _progress_summary(trace_dir: Path, log_dir: Path, windows_path: Path, deadline):
+    output = log_dir / "progress-summary.json"
+    command = [sys.executable, "-m", "tools.summarize_progress", str(trace_dir),
+               "--windows", str(windows_path), "--output", str(output)]
+    environment = dict(os.environ, PYTHONUNBUFFERED="1", TORCH_DEVICE_BACKEND_AUTOLOAD="0")
+    result = subprocess.run(command, cwd=ROOT, env=environment, stdin=subprocess.DEVNULL,
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                            timeout=_remaining(deadline, 120))
+    summary = json.loads(output.read_text()) if output.is_file() else {}
+    for row in summary.get("buckets", [])[:16]:
+        _terminal(f"[oscar] PROGRESS_BUCKET arm={row['arm']} reqs={row['requests']} "
+                  f"kv={row['kv_bucket_k']}K count={row['count']} "
+                  f"wall_s={round(row['wall_s_sum'], 3)} p95_s={round(row['wall_s_p95'], 3)}")
+    _terminal(f"[oscar] PROGRESS_SUMMARY status={summary.get('status', 'failed')} output={output}")
+    return {"status": summary.get("status", "failed"), "output": str(output),
+            "returncode": result.returncode}
+
+
+def run_ladder_only(config_path, *, output, log_dir, command=None, tokenizer_factory=None):
+    """Diagnostic ladder only: no install, no functional gates, no acceptance.
+
+    Archive #138: the single-purpose fast path for the multi-concurrency
+    question. Bounded cleanup still applies to the owned server; there is no
+    acceptance claim and no resource-release gate here.
+    """
+    config_path, output, log_dir = Path(config_path).resolve(), Path(output).resolve(), Path(log_dir).resolve()
+    log_dir.mkdir(parents=True, exist_ok=True)
+    started = time.monotonic()
+    report = {"status": "running", "mode": "ladder", "config": str(config_path),
+              "ladder": "not_run", "progress": "not_run", "server": {}}
+    atomic_json(output, report)
+    old_signals = {}
+    config = None
+
+    def interrupt(signum, _frame):
+        raise KeyboardInterrupt(f"signal {signum}")
+
+    try:
+        config = json.loads(config_path.read_text())
+        target_env(config)  # Fail before any NPU touch when selection is absent.
+        report["devices"] = config["devices"]
+        duration = _positive_time(config, "ladder_timeout_seconds", 1800)
+        deadline = started + duration
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            old_signals[sig] = signal.signal(sig, interrupt)
+        tokenizer = (load_tokenizer if tokenizer_factory is None else tokenizer_factory)(config["model"])
+        managed_config = dict(config)
+        managed_config["service_startup_timeout_seconds"] = _remaining(deadline,
+            _positive_time(config, "service_startup_timeout_seconds", duration))
+        with managed_server(managed_config, config_path, log_dir=log_dir,
+                            lifecycle=report["server"], command=command) as server:
+            report["ladder"] = run_concurrency(server, config, tokenizer,
+                                               log_dir=log_dir, deadline=deadline)
+            atomic_json(output, report)
+            windows = [arm["window"] for arm in report["ladder"].get("arms", []) if "window" in arm]
+            windows_path = log_dir / "arm-windows.json"
+            atomic_json(windows_path, windows)
+            report["progress"] = _progress_summary(Path(report["server"]["trace_dir"]),
+                                                   log_dir, windows_path, deadline)
+        report["status"] = "measured" if report["ladder"].get("status") == "measured" else "failed"
+    except KeyboardInterrupt as error:
+        report.update(status="interrupted", error=str(error))
+    except Exception as error:
+        report.update(status="failed", error=f"{type(error).__name__}: {error}")
+    finally:
+        for sig, handler in old_signals.items():
+            signal.signal(sig, handler)
+        report["elapsed_seconds"] = time.monotonic() - started
+        atomic_json(output, report)
+        if report.get("error"):
+            print(f"[oscar] ladder detail: {report['error']}", file=sys.stderr, flush=True)
+        print(f"[oscar] ladder {report['status']} report={output}", flush=True)
+    return report
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
     parser.add_argument("--output", type=Path, default=ROOT / "reports/service_probe.json")
     parser.add_argument("--log-dir", type=Path, default=ROOT / "logs/service-probe")
     parser.add_argument("--serve", action="store_true", help="keep the validated owned service running until interrupted")
+    parser.add_argument("--ladder", action="store_true",
+                        help="run only the concurrency ladder diagnostic; no functional gates or acceptance")
     args = parser.parse_args()
+    if args.ladder:
+        report = run_ladder_only(args.config, output=args.output, log_dir=args.log_dir)
+        return 0 if report["status"] == "measured" else 130 if report["status"] == "interrupted" else 1
     report = run_service(args.config, output=args.output, log_dir=args.log_dir, serve=args.serve)
     return 0 if report["status"] in {"passed", "stopped"} else 130 if report["status"] == "interrupted" else 1
 

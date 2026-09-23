@@ -80,3 +80,5 @@
 #137：用户提供OSCAR与原生同配置同数据集32并发对照：原生Running 1→26、聚合gen 156 tok/s；OSCAR Running停滞2–4、gen 0–0.7 tok/s。差异链闭合于CV内核（#134/#135），MTP/调度/GDN/量化排除。功能探针保留为验收证据；新增真实负载性能测量相位（32并发20–30K、计数器吞吐、爬坡采样），只测量不验收，写入report["performance"]。
 
 #138：一键流程首次走完探针→清理→正式服务（#136修复生效）；真实负载首测completed=3/32、prompt_tps=499、gen_tps=0.2。修正收集循环误捕单请求超时的记账bug。按用户指令改为并发阶梯probe（臂1/4×16384，调度/算子/访存三层分离，收尾自打CONCURRENCY_ARM/VERDICT）；impl相位补requests字段，TIMING_BUCKET加reqs维度。
+
+#139：并发阶梯诊断快路径`scripts/probe_concurrency.sh`（--ladder模式，跳过安装/编译/功能相位）；心跳1秒间隔下用`summarize_progress`从心跳差重建每层驻留wall（臂窗口×reqs×KV分桶，跨臂空档单列）。一条命令出齐调度/算子/访存三层证据，诊断不冒充验收。

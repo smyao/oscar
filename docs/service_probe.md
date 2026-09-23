@@ -32,6 +32,14 @@ HTTP 200 只说明请求返回。最终通过还必须满足：
 
 上述功能证据门全部通过后（非 serve 模式），探针在同一只托管服务上执行**并发阶梯对比测量**（只测量、不验收）：按 `concurrency_arms`（默认 `[1,4]`，空列表显式关闭）逐臂发起 K 路并发 `/v1/completions`，所有臂使用同一 prompt 长度 `concurrency_prompt_tokens`（默认 16384）与同一服务，每臂预算 `concurrency_arm_timeout_seconds`（默认 300）。每臂记录：原生 `/metrics` 计数器差值得到的聚合 prefill/decode 吞吐、每请求 wall 分布、每 5 秒 running/waiting 爬坡采样、MTP 接受率；未完成与失败请求逐条记账。收尾打印每臂一行 `CONCURRENCY_ARM` 与一行 `CONCURRENCY_VERDICT`（吞吐/耗时缩放比与分类提示：调度看爬坡采样、算子看各臂吞吐、访存看 TIMING_BUCKET 的 reqs= 维度每步成本）。结果写入报告的 `performance` 字段与 `concurrency.json`，状态为 `measured`/`failed`/`disabled`。该测量不通过不等于探针失败，也不构成 E06 性能验收。
 
+**多并发诊断快路径**（不跑安装/编译/功能相位，只测阶梯）：
+
+```bash
+git pull --ff-only && bash scripts/probe_concurrency.sh
+```
+
+它把心跳间隔收紧到 `OSCAR_PROGRESS_INTERVAL_SECONDS=1`（生产时序、不插同步），拉起托管服务后只跑并发阶梯，结束时自动打印每臂 `CONCURRENCY_ARM`、一行 `CONCURRENCY_VERDICT`，并对 trace 目录运行 `tools/summarize_progress` 打印 `PROGRESS_BUCKET`（臂窗口×reqs×KV 的层驻留 wall 统计，跨臂空档单列 between_arms）。这是诊断输出，不是验收记录；资源释放门与功能证据在此模式下不执行。
+
 每次服务启动使用唯一 `OSCAR_TRACE_DIR=.../trace-<uuid>`，不会把旧 trace 当成此次执行的证据。图回放事件只声称 launch 返回；真实请求完成记录为另一个状态。HTTP 输出不建立 kernel 精度门、logits/任务质量、MTP 质量对照或性能通过，这些字段仍为 `not_run`。
 
 `attention_dispatched`/`cache_layout` 等 `emit_once` 证据按签名去重，长 prefill 或 decode 期间不再重复写入。为让 REQUEST_WAIT 的 worker 进展不冻结在旧签名上，每个 FULL 层还按 `OSCAR_PROGRESS_INTERVAL_SECONDS`（默认 5 秒）写入 `attention_progress` 心跳，`wall_time` 与 `max_seq_len` 随 chunk 推进刷新。FULL_DECODE_ONLY 图回放绕过 Python attention 路径，decode 阶段的存活心跳由图回放包装器以同间隔写入 `graph_replay_progress`。心跳只证明宿主侧存活与推进，不是设备完成或性能证据。终端上的 REQUEST_WAIT/REQUEST_ERROR 行是每 rank 一段的紧凑摘要（event、层、kv、age）；完整 worker 记录仍保存在逐请求 `status.json` 与 trace 目录，host 相位打点写入 `timing-<pid>.jsonl`，不向终端刷屏。

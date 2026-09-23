@@ -28340,3 +28340,12 @@ Source: user-provided console excerpts, 2026-09-23, run 20260923T005836.361566Z 
 [oscar] PASSED phase=service-probe rc=0
 (随后进入 serve/ 目录证据链：正式服务拉起)
 ```
+
+
+## [139] 真机条目（gpt_new_oscar_kimi，2026-09-23 用户指令）· 并发阶梯诊断快路径
+
+**指令**：只要一个脚本；不重复跑全部相位；只测多并发最关键项；打点不刷屏；收尾自含关键log。
+
+**设计**（本轮实现）：新快路径`bash scripts/probe_concurrency.sh`→`tools.service_probe --ladder`（跳过安装/编译/功能门，拉起托管服务只跑并发阶梯）；心跳间隔收紧到1秒（生产时序，不插同步——debug-sync的归因留给debug_service.sh）；新`tools/summarize_progress.py`从attention_progress心跳差重建每层驻留wall，按臂窗口×reqs×KV分桶，跨臂空档单列between_arms不外溢。三层分离：调度=每臂running/waiting采样；算子=每臂原生计数器吞吐+verdict缩放比；访存=reqs维度每桶驻留成本（正常流）与TIMING_BUCKET reqs=（debug流）。收尾自动打印CONCURRENCY_ARM/CONCURRENCY_VERDICT/PROGRESS_BUCKET。该路径是诊断不是验收，无资源释放门。
+
+**用户运行方式**：git pull --ff-only && bash scripts/probe_concurrency.sh；贴回CONCURRENCY_ARM/VERDICT与PROGRESS_BUCKET行。

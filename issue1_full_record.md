@@ -28349,3 +28349,27 @@ Source: user-provided console excerpts, 2026-09-23, run 20260923T005836.361566Z 
 **设计**（本轮实现）：新快路径`bash scripts/probe_concurrency.sh`→`tools.service_probe --ladder`（跳过安装/编译/功能门，拉起托管服务只跑并发阶梯）；心跳间隔收紧到1秒（生产时序，不插同步——debug-sync的归因留给debug_service.sh）；新`tools/summarize_progress.py`从attention_progress心跳差重建每层驻留wall，按臂窗口×reqs×KV分桶，跨臂空档单列between_arms不外溢。三层分离：调度=每臂running/waiting采样；算子=每臂原生计数器吞吐+verdict缩放比；访存=reqs维度每桶驻留成本（正常流）与TIMING_BUCKET reqs=（debug流）。收尾自动打印CONCURRENCY_ARM/CONCURRENCY_VERDICT/PROGRESS_BUCKET。该路径是诊断不是验收，无资源释放门。
 
 **用户运行方式**：git pull --ff-only && bash scripts/probe_concurrency.sh；贴回CONCURRENCY_ARM/VERDICT与PROGRESS_BUCKET行。
+
+
+## [140] 真机条目（gpt_new_oscar_kimi，2026-09-23 用户回传）· 20–30K/K4 原生配对性能门失败
+
+**症状**：当前单命令 `scripts/probe_concurrency.sh` 对同一组 20000/23000/27000/30000-token、每请求64输出token的synthetic负载先跑原生再跑OSCAR；两边各4/4完成、服务清理`complete=True exit=0`、NPU资源释放`passed`。最终性能门`status=failed rc=2`，**不是原生启动失败或请求超时**。原生14.7秒，OSCAR182.5秒；客户端SSE p50 TTFT 9866.74→113728.47毫秒（11.53倍），p50 TPOT 74.01→1086.59毫秒（14.68倍），p50 E2E 14529.34→182184.03毫秒（12.54倍）。聚合prompt/generation吞吐比均约0.0805；两者以同一batch墙钟作分母，不能当作两个独立的设备瓶颈证据。两边采样到的peak Running均为4、peak Waiting均为2；这些一秒采样不足以排除调度或量化设备成本。
+
+**关停日志判读**：`platform.py:1277` 的HCCL 1836秒/RPC 3000秒提示是INFO，且两边都出现。`STARTUP_WAIT` 位于图捕获期间，之后两边请求均完成。`tbe/common/repository_manager/utils/multiprocess_util.py` 的 `EOFError` 在主动`[shutdown]`之后、`CLEANUP_END`之前出现；原生与OSCAR均同形，随后的清理及NPU释放为passed。宿主resource_tracker的124 semaphore/6 shared_memory警告与#135同族，不是本次性能门失败的原因。终端compact过滤若把这些INFO/关停噪声误当启动错误，须修终端呈现而非改变模型数据路径。
+
+**归因边界与下一步**：这轮证实长请求多并发有严重端到端退化；`PERF_TPOT`是SSE客户端时间，不是单个设备内核时间。#134/#135另一次debug-sync将当时主要相位时间归于自研CV attention（相位名`fia`），但不能把它当作这轮逐source设备计时。下一轮应在同一长请求形状下区分current/window/history的CV成本与GDN/调度间隙，冻结算子精度不变；不得靠加宽300秒请求死线或回退原生BF16历史制造通过。旧#139的16K阶梯已从当前脚本移除；当前快路径是一条命令原生→OSCAR配对。
+
+### 用户回传关键行（完整日志为本轮用户附件；此处非完整文件）
+
+```text
+Source: 2026-09-23 node93 user-pasted console, attachment 9c2f8499-0da8-4731-9223-6cafcd3b45d8/已粘贴的文本.txt, lines 1–128.
+[oscar] SYNTHETIC_MIXED done status=measured completed=4/4 failed=0 timeouts=0 wall=14.7s report=.../native/synthetic-mixed.json
+[oscar] PERF_VARIANT done=native result=4/4 release=passed
+[oscar] SYNTHETIC_MIXED done status=measured completed=4/4 failed=0 timeouts=0 wall=182.5s report=.../oscar/synthetic-mixed.json
+[oscar] PERF_VARIANT done=oscar result=4/4 release=passed
+[oscar] PERF_TTFT_MS scope=client_SSE_ms p50_native=9866.74 p50_oscar=113728.47 p50_ratio=11.53 p95_native=13484.18 p95_oscar=178775.97 p95_ratio=13.26
+[oscar] PERF_TPOT_MS scope=client_SSE_ms p50_native=74.01 p50_oscar=1086.59 p50_ratio=14.68 p95_native=156.87 p95_oscar=2441.33 p95_ratio=15.56
+[oscar] PERF_E2E_MS scope=client_SSE_ms p50_native=14529.34 p50_oscar=182184.03 p50_ratio=12.54 p95_native=14667.92 p95_oscar=182507.77 p95_ratio=12.44
+[oscar] PERF_THROUGHPUT scope=client_wall_tokens_per_s prompt_native=6807.8 prompt_oscar=547.9 prompt_ratio=0.08 generation_native=17.4 generation_oscar=1.4 generation_ratio=0.08
+[oscar] PERF_RESULT status=failed rc=2 report=.../paired-report.json
+```

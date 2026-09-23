@@ -1,4 +1,4 @@
-# 档案 #35/#51/#52/#75/#94/#95/#101/#116/#117/#120：有界进程组、保留原始退出码、独立日志和固定 cwd。
+# 档案 #35/#51/#52/#75/#94/#95/#101/#116/#117/#120/#125/#135：有界进程组、保留原始退出码与完整日志；仅精确折叠成功关闭期噪声。
 """Run a phase in an owned process group, always recording its outcome."""
 from __future__ import annotations
 
@@ -62,6 +62,26 @@ _COMPACT_ALERT = re.compile(
     re.IGNORECASE,
 )
 _TRACEBACK_END = re.compile(r"\b[A-Za-z_]*(?:Error|Exception):|\bKeyboardInterrupt\b")
+_HCCL_TIMEOUT_INFO = re.compile(
+    r"^\([^)]* pid=\d+\) INFO \d\d-\d\d \d\d:\d\d:\d\d \[platform\.py:\d+\] "
+    r"The timeout interval of the HCCL operator is \d+s\. Timeout in seconds for "
+    r"execute_model RPC calls in multiprocessing must be greater than \d+s, "
+    r"Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=\d+$"
+)
+_STARTUP_CONNECTION_REFUSED = re.compile(
+    r"^(?:Capturing CUDA graphs[^\n]*?)?STARTUP_WAIT elapsed=\d+(?:\.\d+)? "
+    r"health=<urlopen error \[Errno 111\] Connection refused>$"
+)
+_SHUTDOWN_TIMEOUT_INFO = re.compile(
+    r"^\([^)]* pid=\d+\) INFO \d\d-\d\d \d\d:\d\d:\d\d "
+    r"\[[^]]+\] \[shutdown\] (?:API server: stopping engine client mode=abort "
+    r"timeout=0s|EngineCore: start mode=abort timeout=0s|MPClient: start timeout=0s)$"
+)
+_TBE_THREAD_START = re.compile(r"^\(Worker_TP\d+ pid=\d+\) Exception in thread Thread-\d+:")
+_TBE_WORKER_LINE = re.compile(r"^\(Worker_TP\d+ pid=\d+\) ")
+_TBE_REPOSITORY_FRAME = "tbe/common/repository_manager/utils/multiprocess_util.py"
+_TBE_MAX_LINES = 128
+_TBE_MAX_SECONDS = 2.0
 
 
 def _compact_should_mirror(line: str, state: dict[str, int]) -> bool:
@@ -71,7 +91,18 @@ def _compact_should_mirror(line: str, state: dict[str, int]) -> bool:
     traceback is mirrored through its terminal exception line in real time.
     Normal INFO/build chatter is saved to disk without flooding the terminal.
     """
-    if line.startswith(("START phase=", "START owned_service", "STARTUP_WAIT ",
+    if _HCCL_TIMEOUT_INFO.fullmatch(line):
+        return False
+    if (_STARTUP_CONNECTION_REFUSED.fullmatch(line)
+            and not _COMPACT_ALERT.search(line.split("STARTUP_WAIT", 1)[0])):
+        return False
+    if _SHUTDOWN_TIMEOUT_INFO.fullmatch(line):
+        return False
+    if "STARTUP_WAIT " in line:
+        return True
+    if line.startswith("SERVICE_ERROR ") or line.startswith("[oscar] CLEANUP_END owned_server complete=False"):
+        return True
+    if line.startswith(("START phase=", "START owned_service",
                         "RESULT ", "SERVICE_RESULT ")):
         return False
     if "Traceback (most recent call last)" in line or "Exception in thread" in line:
@@ -88,6 +119,91 @@ def _compact_should_mirror(line: str, state: dict[str, int]) -> bool:
     return bool(_COMPACT_ALERT.search(line))
 
 
+class _CompactTerminalFilter:
+    """Delay only a candidate TBE shutdown traceback until service exit is known.
+
+    Archive #94/#95/#125 requires an unexpected traceback to remain visible.
+    Therefore an incomplete, long, failed-shutdown or non-EOF traceback is
+    replayed, while the durable log is never filtered. The small time/line cap
+    also keeps an unexpected worker exception from being hidden indefinitely.
+    """
+
+    def __init__(self) -> None:
+        self.state: dict[str, int] = {}
+        self.shutdown_seen = False
+        self.candidate: list[str] = []
+        self.candidate_started = 0.0
+
+    def _flush_candidate(self) -> list[str]:
+        lines = self.candidate
+        self.candidate = []
+        if lines:
+            self.state["traceback_left"] = 96
+        return lines
+
+    @staticmethod
+    def _unexpected_candidate_error(line: str) -> bool:
+        # EOFError is the one expected terminal exception. Another error on
+        # the same interleaved line must still end buffering immediately.
+        without_eof = line.replace("EOFError", "")
+        return bool(_COMPACT_ALERT.search(without_eof) or _TRACEBACK_END.search(without_eof))
+
+    def _candidate_is_known_tbe_eof(self) -> bool:
+        if not self.candidate:
+            return False
+        body = "\n".join(self.candidate)
+        starts = sum(bool(_TBE_THREAD_START.match(line)) for line in self.candidate)
+        traces = body.count("Traceback (most recent call last):")
+        frames = body.count(_TBE_REPOSITORY_FRAME)
+        final_eofs = body.count("EOFError") - body.count("raise EOFError")
+        return (starts > 0 and starts == traces == frames
+                and final_eofs == starts
+                and not any(self._unexpected_candidate_error(line)
+                            for line in self.candidate))
+
+    @staticmethod
+    def _service_finished(line: str) -> bool:
+        try:
+            result = json.loads(line.removeprefix("SERVICE_RESULT "))
+        except (ValueError, TypeError):
+            return False
+        return (result.get("status") == "finished"
+                and result.get("cleanup_complete") is True
+                and result.get("exit_code") == 0)
+
+    def feed(self, line: str) -> list[str]:
+        forwarded = self.expire()
+        if "[shutdown]" in line:
+            self.shutdown_seen = True
+        if self.candidate and line.startswith("SERVICE_RESULT "):
+            if not (self._service_finished(line) and self._candidate_is_known_tbe_eof()):
+                forwarded.extend(self._flush_candidate())
+            else:
+                self.candidate = []
+        elif self.candidate and _TBE_WORKER_LINE.match(line):
+            self.candidate.append(line)
+            if (len(self.candidate) > _TBE_MAX_LINES
+                    or self._unexpected_candidate_error(line)):
+                forwarded.extend(self._flush_candidate())
+            return forwarded
+        elif not self.candidate and self.shutdown_seen and _TBE_THREAD_START.match(line):
+            self.candidate = [line]
+            self.candidate_started = time.monotonic()
+            return forwarded
+        if _compact_should_mirror(line, self.state):
+            forwarded.append(line)
+        return forwarded
+
+    def expire(self) -> list[str]:
+        if (self.candidate and not self._candidate_is_known_tbe_eof()
+                and time.monotonic() - self.candidate_started >= _TBE_MAX_SECONDS):
+            return self._flush_candidate()
+        return []
+
+    def finish(self) -> list[str]:
+        return self._flush_candidate()
+
+
 @contextmanager
 def live_log(path: Path, *, mode: str | None = None):
     """Keep a durable child log and mirror full or compact terminal output.
@@ -96,7 +212,8 @@ def live_log(path: Path, *, mode: str | None = None):
     or while the service supervisor is making a blocking HTTP request. A reader
     with its own file offset mirrors chunks. Nested phases naturally forward
     their output through the same outer log. Compact mode mirrors critical
-    lines and tracebacks as they arrive; the phase log remains complete.
+    lines and tracebacks as they arrive, except a bounded candidate TBE EOF
+    during graceful shutdown; the phase log remains complete.
     """
     stopped = threading.Event()
     failures = []
@@ -108,7 +225,7 @@ def live_log(path: Path, *, mode: str | None = None):
         def mirror():
             decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
             pending = ""
-            state: dict[str, int] = {}
+            compact_filter = _CompactTerminalFilter()
 
             def forward(decoded: str, *, final: bool = False) -> None:
                 nonlocal pending
@@ -120,12 +237,15 @@ def live_log(path: Path, *, mode: str | None = None):
                 pending += decoded
                 while "\n" in pending:
                     line, pending = pending.split("\n", 1)
-                    if _compact_should_mirror(line, state):
-                        terminal_line(line)
+                    for visible in compact_filter.feed(line):
+                        terminal_line(visible)
                 if final and pending:
-                    if _compact_should_mirror(pending, state):
-                        terminal_line(pending)
+                    for visible in compact_filter.feed(pending):
+                        terminal_line(visible)
                     pending = ""
+                if final:
+                    for visible in compact_filter.finish():
+                        terminal_line(visible)
 
             try:
                 while True:
@@ -136,6 +256,9 @@ def live_log(path: Path, *, mode: str | None = None):
                         forward(decoder.decode(b"", final=True), final=True)
                         return
                     else:
+                        if mode == "compact":
+                            for visible in compact_filter.expire():
+                                terminal_line(visible)
                         stopped.wait(0.05)
             except Exception as error:
                 failures.append(error)

@@ -51,4 +51,18 @@ API 的 `Avg prompt throughput` 是报告周期内的速率，单个非零周期
 
 任何性能优化须保持真实 OSCAR INT2、CV、旋转、窗口、MTP 与图路径，并先通过独立 oracle 和 `configs/acceptance.json:5–9` 的冻结门：pack/unpack 位级精确、store↔dequant `atol/rtol=0.002`、fused attention `0.005`、prefill/window relative L2 `<0.02`、参考 staging eviction `0.0001`。逐工况比较原生性能必须遵守 `configs/acceptance.json:10–15`，不能放宽阈值或以均值掩盖慢项。模型级 logits/任务指标/MTP 接受率容差目前仍为 `null`（`configs/acceptance.json:14`）；必须在测量前定义并冻结，当前不能宣称模型质量已通过。图捕获、图回放、设备完成、质量、容量与性能分别记录。
 
-本文只复核已有附件和档案。**未完成新的配对 NPU 运行，未证明任何性能修复，也未证明最终精度。**
+本文初稿只复核此前附件和档案；当时**未完成新的配对 NPU 运行，未证明任何性能修复**。后续同日真机配对结果补记如下。
+
+## 2026-09-23 后续真机配对更新（档案 #140）
+
+本节覆盖上文写成时尚未取得的新证据：同一条脚本先原生后OSCAR，对精确20K/23K/27K/30K、K=4、每请求64输出token进行配对。两边均4/4完成、进程清理与NPU释放通过；性能门失败`rc=2`。关键终端原文在用户附件`/Users/sunao2000/.codex/attachments/9c2f8499-0da8-4731-9223-6cafcd3b45d8/已粘贴的文本.txt:1–128`，档案#140在`issue1_full_record.md`末尾。
+
+| 指标 | 原生 | OSCAR | 比值/说明 |
+| --- | ---: | ---: | --- |
+| 四请求墙钟 | 14.7 s | 182.5 s | OSCAR约12.4倍 |
+| TTFT p50 | 9,866.74 ms | 113,728.47 ms | 11.53倍，含排队/预填充/首解码 |
+| TPOT p50 | 74.01 ms | 1,086.59 ms | 14.68倍，SSE客户端接收时钟 |
+| E2E p50 | 14,529.34 ms | 182,184.03 ms | 12.54倍 |
+| prompt与generation聚合吞吐比 | — | — | 均约0.0805；固定token总量除同一batch墙钟，非两个独立瓶颈证据 |
+
+原生和OSCAR的peak Running都采到4、peak Waiting都采到2；一秒采样不能还原调度步或证明设备空闲。宿主HCCL timeout INFO、捕图期间STARTUP_WAIT、主动shutdown后的TBE `EOFError`两边同现，且资源释放均passed，不能解释12倍性能差。旧#134/#135的debug-sync记录仍指向自研CV attention是首要设备侧候选，但**本轮缺逐source/逐相位设备计时，不能将旧归因冒充当前证明**。生产优化必须同时处理长prefill与decode；只替换精确current chunk无法从这些客户端数据推出会追平原生。冻结数值门、300秒请求死线和原生/OSCAR相同配置均不改变。

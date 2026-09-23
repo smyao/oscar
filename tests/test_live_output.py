@@ -1,4 +1,4 @@
-# Archive #35/#75/#94/#95/#117/#120: errors must be visible before exit,
+# Archive #35/#75/#94/#95/#117/#120/#125/#135: errors must be visible before exit,
 # without losing logs, original exit codes, bounded cleanup or fixed cwd.
 """Real subprocess handshakes prove terminal output is not delayed to exit."""
 import io
@@ -130,6 +130,116 @@ def test_compact_terminal_keeps_summary_and_traceback_while_log_stays_complete(
     assert "RuntimeError: device phase failed" in terminal
     assert "INFO routine startup" in disk
     assert "RuntimeError: device phase failed" in disk
+
+
+@pytest.mark.parametrize("variant", ["native_interleaved", "oscar_single"])
+def test_compact_filters_only_successful_tbe_shutdown_eof_and_startup_chatter(
+    tmp_path, capsys, variant
+):
+    # Archive #94/#95/#125: preserve the complete service evidence on disk.
+    # The native trace is deliberately interleaved across TP ranks, as in the
+    # user-provided 2026-09-23 paired performance run.
+    if variant == "native_interleaved":
+        traceback_lines = [
+            "(Worker_TP3 pid=84152) Exception in thread Thread-2:",
+            "(Worker_TP2 pid=84092) Exception in thread Thread-2:",
+            "(Worker_TP3 pid=84152) Traceback (most recent call last):",
+            "(Worker_TP2 pid=84092) Traceback (most recent call last):",
+            '(Worker_TP3 pid=84152)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner',
+            '(Worker_TP2 pid=84092)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner',
+            '(Worker_TP3 pid=84152)   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run',
+            '(Worker_TP2 pid=84092)   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run',
+            "(Worker_TP3 pid=84152)     raise EOFError",
+            "(Worker_TP2 pid=84092)     raise EOFError",
+            "(Worker_TP3 pid=84152) EOFErrorbuf = self._recv(4)",
+            "(Worker_TP2 pid=84092) EOFError",
+        ]
+    else:
+        traceback_lines = [
+            "(Worker_TP0 pid=89131) Exception in thread Thread-3:",
+            "(Worker_TP0 pid=89131) Traceback (most recent call last):",
+            '(Worker_TP0 pid=89131)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner',
+            '(Worker_TP0 pid=89131)   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run',
+            "(Worker_TP0 pid=89131)     raise EOFError",
+            "(Worker_TP0 pid=89131) EOFError",
+        ]
+    lines = [
+        "(APIServer pid=83886) INFO 09-23 05:14:21 [platform.py:1277] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000",
+        "Capturing CUDA graphs (decode, FULL):  44%|████▍     | 15/34 [00:12<00:13,  1.42it/s]STARTUP_WAIT elapsed=286.0 health=<urlopen error [Errno 111] Connection refused>",
+        "[oscar] SYNTHETIC_MIXED done status=measured completed=4/4 failed=0",
+        "(APIServer pid=83886) INFO 09-23 05:19:56 [launcher.py:116] [shutdown] API server: stopping engine client mode=abort timeout=0s",
+        "(EngineCore pid=83948) INFO 09-23 05:19:56 [core.py:1297] [shutdown] EngineCore: start mode=abort timeout=0s",
+        "(APIServer pid=83886) INFO 09-23 05:19:56 [core_client.py:652] [shutdown] MPClient: start timeout=0s",
+        *traceback_lines,
+        "SERVICE_RESULT " + json.dumps({"status": "finished", "cleanup_complete": True, "exit_code": 0}),
+    ]
+    path = tmp_path / f"{variant}.log"
+    with phase.live_log(path, mode="compact") as stream:
+        stream.write("\n".join(lines) + "\n")
+    terminal = capsys.readouterr().out
+    assert "[oscar] SYNTHETIC_MIXED done" in terminal
+    assert "HCCL operator" not in terminal
+    assert "STARTUP_WAIT" not in terminal
+    assert "[shutdown]" not in terminal
+    assert "Exception in thread" not in terminal
+    assert "EOFError" not in terminal
+    assert path.read_text() == "\n".join(lines) + "\n"
+
+
+def test_compact_replays_unexpected_worker_traceback_before_service_result():
+    # Archive #125: an actual worker failure must not wait for shutdown or
+    # disappear just because its first frames resemble the TBE EOF case.
+    compact = phase._CompactTerminalFilter()
+    compact.feed("(EngineCore pid=1) INFO 09-23 05:19:56 [core.py:1297] [shutdown] EngineCore: start mode=abort timeout=0s")
+    assert not compact.feed("(Worker_TP0 pid=2) Exception in thread Thread-3:")
+    assert not compact.feed("(Worker_TP0 pid=2) Traceback (most recent call last):")
+    visible = compact.feed("(Worker_TP0 pid=2) RuntimeError: device execution failed")
+    assert "Exception in thread" in "\n".join(visible)
+    assert "RuntimeError: device execution failed" in "\n".join(visible)
+
+
+@pytest.mark.parametrize("result", [
+    {"status": "failed", "cleanup_complete": True, "exit_code": 0},
+    {"status": "finished", "cleanup_complete": False, "exit_code": 0},
+    {"status": "finished", "cleanup_complete": True, "exit_code": 1},
+])
+def test_compact_replays_tbe_eof_when_shutdown_did_not_succeed(result):
+    compact = phase._CompactTerminalFilter()
+    compact.feed("(EngineCore pid=1) INFO 09-23 05:19:56 [core.py:1297] [shutdown] EngineCore: start mode=abort timeout=0s")
+    for line in (
+        "(Worker_TP0 pid=2) Exception in thread Thread-3:",
+        "(Worker_TP0 pid=2) Traceback (most recent call last):",
+        '(Worker_TP0 pid=2)   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run',
+        "(Worker_TP0 pid=2)     raise EOFError",
+        "(Worker_TP0 pid=2) EOFError",
+    ):
+        assert compact.feed(line) == []
+    visible = compact.feed("SERVICE_RESULT " + json.dumps(result))
+    assert "Exception in thread" in "\n".join(visible)
+    assert "EOFError" in "\n".join(visible)
+
+
+def test_compact_replays_incomplete_tbe_trace_even_after_successful_shutdown():
+    compact = phase._CompactTerminalFilter()
+    compact.feed("(EngineCore pid=1) INFO 09-23 05:19:56 [core.py:1297] [shutdown] EngineCore: start mode=abort timeout=0s")
+    compact.feed("(Worker_TP0 pid=2) Exception in thread Thread-3:")
+    compact.feed("(Worker_TP0 pid=2) Traceback (most recent call last):")
+    compact.feed('(Worker_TP0 pid=2)   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run')
+    visible = compact.feed("SERVICE_RESULT " + json.dumps(
+        {"status": "finished", "cleanup_complete": True, "exit_code": 0}))
+    assert "Traceback (most recent call last)" in "\n".join(visible)
+
+
+def test_compact_keeps_unexpected_startup_and_hccl_errors():
+    state = {}
+    assert phase._compact_should_mirror(
+        "STARTUP_WAIT elapsed=286.0 health=HTTP 500 from /health", state)
+    assert phase._compact_should_mirror(
+        "Capturing CUDA graphs ERROR STARTUP_WAIT elapsed=286.0 health=<urlopen error [Errno 111] Connection refused>", state)
+    assert phase._compact_should_mirror(
+        "(Worker_TP0 pid=2) ERROR 09-23 05:22:59 [platform.py:1277] HCCL timeout", state)
+    assert phase._compact_should_mirror("SERVICE_ERROR ServiceProbeError: startup failed", state)
+    assert phase._compact_should_mirror("[oscar] CLEANUP_END owned_server complete=False exit=1", state)
 
 
 def test_cleanup_error_is_visible_without_erasing_original_exit_code(monkeypatch, tmp_path, capsys):

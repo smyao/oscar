@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // Archive G5/G6/G12/G13/#53/#108: primitive-only, single authoritative ABI.
-// D.4: prepare/history/window; fixed task/workspace shapes prevent host loops
-// and full-history allocations. D.4's 725ms prepare / 6.5s restore are forbidden
-// targets, not claimed measurements. See docs/cv_implementation.md four questions.
+// D.4/#140: fixed task/workspace shapes prevent host loops and full-history
+// allocations. A 128-KV work unit reuses score as P and PV as final rotation;
+// K/V each hold one bounded tile. The old 725ms prepare / 6.5s restore remain
+// forbidden, not claimed measurements. See docs/cv_implementation.md.
 #pragma once
 #include <cstdint>
 namespace oscar_ascend {
 constexpr int64_t kAttentionTaskColumns = 16;
 constexpr int64_t attention_workspace_per_core(int64_t dim) {
-  return (256 * dim + 4096) * 4;
+  return (384 * dim + 8192) * 4;
 }
 void prepare_attention_tasks_launch(void* stream, void* qstarts, void* lengths,
     void* slots, void* tasks, void* positions, int64_t requests, int64_t tokens,

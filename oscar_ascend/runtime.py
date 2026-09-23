@@ -70,7 +70,9 @@ class WorkspaceGeometry:
 
     @property
     def cv_bytes(self):
-        return self.cube_cores * (256 * self.head_dim + 4096) * 4
+        # Archive #71/#140, D.4: one 128-token tile, never a full history.
+        # Q 64D + K 128D + V 128D + score/P 64x128 + PV/rotation 64D.
+        return self.cube_cores * (384 * self.head_dim + 8192) * 4
 
     @property
     def total_bytes(self):

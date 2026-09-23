@@ -49,11 +49,26 @@ def test_regression_is_copyable_and_never_claims_device_acceptance():
     assert any("PERF_QUEUE" in line and "peak_running_native=18" in line
                and "peak_running_oscar=4" in line for line in lines)
     assert any("PERF_TTFT_MS scope=client_SSE_ms" in line and "p50_ratio=2.00" in line for line in lines)
+    assert any("PERF_TPOT_MS" in line and "zero=unresolved_SSE_burst" not in line for line in lines)
     assert any("PERF_THROUGHPUT scope=client_wall_tokens_per_s" in line
                and "prompt_ratio=0.50" in line and "generation_ratio=0.50" in line for line in lines)
     assert any("client_ratio_gate=regressed acceptance=not_established" in line for line in lines)
     assert any("device_cause=unknown" in line for line in lines)
     assert lines[-1] == "[oscar] PERF_EVIDENCE native=/e/native.json oscar=/e/oscar.json comparison=/e/paired.json"
+
+
+def test_compact_queue_line_includes_mtp_acceptance_when_native_counters_exist():
+    native, oscar = _report("native"), _report("oscar")
+    names = ("vllm:spec_decode_num_drafts", "vllm:spec_decode_num_draft_tokens",
+             "vllm:spec_decode_num_accepted_tokens")
+    native["synthetic_mixed"]["mtp_counter_delta"] = {"status": "observed",
+        "mtp_counter_delta": dict(zip(names, (10, 30, 24)))}
+    oscar["synthetic_mixed"]["mtp_counter_delta"] = {"status": "observed",
+        "mtp_counter_delta": dict(zip(names, (10, 30, 18)))}
+    lines = _lines(native, oscar)
+    assert len(lines) <= 8
+    assert any("PERF_QUEUE" in line and "mtp_acceptance_native=0.800"
+               in line and "mtp_acceptance_oscar=0.600" in line for line in lines)
 
 
 def test_strict_client_gate_requires_every_request_and_both_throughputs():

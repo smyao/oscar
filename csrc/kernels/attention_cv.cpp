@@ -7,12 +7,13 @@
 // reused UB for padding. MTE3_MTE2 alone cannot order a V-only padding path.
 // D.4 four questions: this replaces dequant+FIA and precise-window FIA.
 // Prior full-history restore cost 6499.8-6655.1ms vs FIA 18.5-18.9ms at 32K.
-// Here Vector unpacks one 32-token tile with SIMD Gather/Shift/And/Cast;
+// Here Vector unpacks one 128-token work unit in four 32-token subtiles with
+// SIMD Gather/Shift/And/Cast, keeping each packed history read single-use;
 // Cube computes QK, PV and final Rv^T. Up to 64 GQA/query rows reuse each
 // compressed read, including all q_len=4 when GQA<=16. No full-history tensor
 // or history inverse rotation. A2 uses bounded per-Cube GM tile communication
-// (not an on-chip-only claim): capacity (256*D+4096)*4 B/core, total traffic
-// remains linear in history. UB is statically <192KiB/AIV for D<=256.
+// (not an on-chip-only claim): capacity (384*D+8192)*4 B/core, total traffic
+// remains linear in history. Explicit UB is bounded below 192KiB/AIV for D<=256.
 // Target: short step <=0.6-1.1ms and 32K same-order as native FIA; NO target
 // precision/latency is claimed before fixed-tolerance NPU/profiler validation.
 // #126 adds one local MTE3->V dependency before padding writes; tile storage,
@@ -53,6 +54,20 @@
 // per KV tile, not the QK/PV or INT2 work. This is a source-work prediction,
 // not a target-NPU speed or precision claim; frozen oracle and graph probes
 // must decide whether it improves the measured #140 12.4x K4 wall gap.
+// #126/#129-135/#140/D.4 128-KV follow-up: (1) source0 fused dequant+fia
+// and source1/2 precise fia share this work unit. (2) D.4's old full-history
+// restore cost 6499.8-6655.1ms vs native FIA 18.5-18.9ms at 32K;
+// phase1_stores ~209ms and host prepare ~725ms were separate failures.
+// (3) Four 32-KV subtiles assemble one bounded 128-KV K/V tile in GM, with
+// no [history,D] tensor. Score is reused as P only after Cube QK completes;
+// PV is reused for final rotation only after Vector consumes it. All AIVs
+// retain the three cross-core handshakes per work unit. FP32 QK/PV/online
+// softmax, page/causal/window masks, MTP positions and status remain intact.
+// (4) QK/PV MatmulImpl calls and flag rounds fall up to 4x per long sequence
+// (16K first-chunk current source: 420761 -> 105805 work units per FULL layer,
+// static task formula). D256 GM capacity is 425984 B/core; AIV score UB grows
+// by 12KiB. Neither number is a speed claim; exact output/LSE tolerance,
+// CANN build, device completion, graph replay and paired K4 remain gates.
 // Native precedents: hc_pre_m_k_split_core.h mode-2 Cube/Vector flags;
 // hc_pre_cube_compute.h FP32 Mmad; moe_grouped_matmul.h MatmulImpl;
 // add_rms_norm_bias_multi_n.h Gather; PR triton_oscar_decode.py INT2 and LSE.
@@ -65,7 +80,8 @@
 #include "lib/matmul/constant_tiling.h"
 using namespace oscar_ascend_device;
 namespace {
-constexpr int32_t kQueryRows=64, kHalfRows=32, kKvRows=32, kHalfKv=16;
+constexpr int32_t kQueryRows=64, kHalfRows=32, kKvRows=128, kHalfKv=16;
+constexpr int32_t kKvSubtiles=kKvRows/(2*kHalfKv);
 constexpr uint16_t kVectorReady=8, kCubeReady=9;
 constexpr float kNegativeInfinity=-__builtin_inff();
 __aicore__ inline int64_t Min64(int64_t a,int64_t b){return a<b?a:b;}
@@ -116,11 +132,13 @@ template<int32_t D> class AttentionCv {
     int64_t core=GetBlockIdx();
     if ASCEND_IS_AIV {lane=core%2;core/=2;}
     coreIndex=core;
-    const int64_t floatsPerCore=256*D+4096;
+    const int64_t floatsPerCore=384*D+8192;
     work.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(workspace)+core*floatsPerCore);
-    // Q(64D), K(32D), V^T(32D), score(64*32), P(64*32), PV(64D), rotation(64D).
-    qOffset=0;kOffset=64*D;vOffset=96*D;scoreOffset=128*D;
-    pOffset=scoreOffset+2048;pvOffset=pOffset+2048;rotOffset=pvOffset+64*D;
+    // Q(64D), K(128D), V^T(128D), score/P(64*128), PV/rotation(64D).
+    // QK is complete before Vector overwrites score with P; PV is consumed
+    // before the final Rv rotation reuses that same GM tile. No active aliases.
+    qOffset=0;kOffset=64*D;vOffset=192*D;scoreOffset=320*D;
+    pOffset=scoreOffset;pvOffset=pOffset+64*kKvRows;rotOffset=pvOffset;
     if ASCEND_IS_AIC {
       // Static tiling is compiler-derived by the real SDK. SetOrg/SingleShape
       // below specify each QK/PV/rotation matrix, never hand-written tiling POD.
@@ -375,16 +393,18 @@ template<int32_t D> class AttentionCv {
       Fence<HardEvent::V_MTE2>();
     }
   }
-  __aicore__ void PublishKv(bool value) {
+  __aicore__ void PublishKv(bool value,int32_t subtile) {
     auto src=dequantBuf.Get<float>();
+    const int64_t slot=subtile*(2*kHalfKv)+lane*kHalfKv;
     if(!value) {Fence<HardEvent::V_MTE3>();
-      DataCopy(work[kOffset+lane*kElements],src,kElements);Fence<HardEvent::MTE3_V>();}
+      DataCopy(work[kOffset+slot*D],src,kElements);Fence<HardEvent::MTE3_V>();}
     else {
       auto transposed=transposeBuf.Get<float>();
       Gather(transposed,src,transposeIndexBuf.Get<uint32_t>(),0,kElements);
       Fence<HardEvent::V_MTE3>();
-      DataCopyExtParams copy{D,kHalfKv*4,0,kHalfKv*4,0};
-      DataCopyPad(work[vOffset+lane*kHalfKv],transposed,copy);
+      // The source is [D,16], while all four subtiles assemble [D,128].
+      DataCopyExtParams copy{D,kHalfKv*4,0,(kKvRows-kHalfKv)*4,0};
+      DataCopyPad(work[vOffset+slot],transposed,copy);
       Fence<HardEvent::MTE3_V>();
     }
   }
@@ -486,10 +506,17 @@ template<int32_t D> class AttentionCv {
       stats.SetValue(r*4+1,0.0F);}
     LoadQueries();
     for(int64_t start=kvbegin;start<kvend;start+=kKvRows) {
-      if(kind==0) {LoadPacked(start);Unpack(false);}else LoadPrecise(start,false);
-      PublishKv(false);
-      if(kind==0)Unpack(true);else LoadPrecise(start,true);
-      PublishKv(true);
+      // Four bounded 32-token subtiles fill one 128-token K/V work unit.
+      // Packed history is read once per subtile and reused for K and V;
+      // all incomplete tail slots are published as zero before Cube QK.
+      for(int32_t subtile=0;subtile<kKvSubtiles;++subtile) {
+        const int64_t subStart=start+subtile*(2*kHalfKv);
+        if(kind==0) {LoadPacked(subStart);Unpack(false);}
+        else LoadPrecise(subStart,false);
+        PublishKv(false,subtile);
+        if(kind==0)Unpack(true);else LoadPrecise(subStart,true);
+        PublishKv(true,subtile);
+      }
       CrossCoreSetFlag<2,PIPE_MTE3>(kVectorReady);
       CrossCoreWaitFlag(kCubeReady);
       Softmax(start);

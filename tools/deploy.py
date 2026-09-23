@@ -1,4 +1,4 @@
-# 档案 #27/#51/#52/#70–73/#94–95/#125/#131–139：单入口、配对性能门、真实退出码和精简终端证据。
+# 档案 #27/#51/#52/#70–73/#94–95/#125–126/#131–140：单入口、配对性能门、真实退出码和精简终端证据。
 """Install, build, probe and serve using the target's existing Python environment."""
 from __future__ import annotations
 import argparse
@@ -25,12 +25,10 @@ def plan(config_path: Path, log_dir: Path) -> list[tuple[str, list[str]]]:
         ("build-ops", [python, "-m", "tools.build_ops", "--soc", config.get("soc_version", "ascend910b4"),
                        "--log-dir", str(log_dir / "build")]),
         ("probe-ops", [python, "-m", "tools.probe_ops", "--output", str(log_dir / "operators.json")]),
-        ("probe-cv", [python,"-m","pytest","-q","--maxfail=1",str(ROOT/"tests/test_cv_contracts.py"),str(ROOT/"tests/test_rotation_npu.py"),
-                      "--junitxml="+str(log_dir/"cv-npu.xml")]),
         ("prepare-rotations", [python, "-m", "tools.prepare_rotations", "--config", cfg]),
-        # A separate native baseline must finish and release its owned NPU
-        # resources before the OSCAR full-service probe starts (#131/#136).
-        ("native-synthetic", [python, "-m", "tools.paired_concurrency_probe", "--native-only",
+        # The paired preflight verifies this signed build and runs the real
+        # CV/rotation NPU gate once, with resource release, before native (#126/#140).
+        ("native-synthetic", [python, "-m", "tools.paired_concurrency_probe", "--native-only", "--require-fresh-npu",
                               "--config", cfg, "--acceptance", str(ROOT / "configs/acceptance.json"),
                               "--log-dir", str(log_dir / "native-synthetic"),
                               "--output", str(log_dir / "native-synthetic-report.json")]),
@@ -45,6 +43,9 @@ def diagnostic_plan(log_dir: Path) -> list[tuple[str, list[str]]]:
         ("environment", [sys.executable, "-m", "tools.environment", "--output", str(log_dir / "environment.json"),
                          "--native-root", "/vllm-workspace/vllm", "--native-root", "/vllm-workspace/vllm-ascend"]),
         ("runtime-readiness", [sys.executable, "-m", "tools.readiness", "--source-only", "--output", str(log_dir / "source-readiness.json")]),
+        ("probe-cv", [sys.executable,"-m","pytest","-q","--maxfail=1",
+                      str(ROOT/"tests/test_cv_contracts.py"),str(ROOT/"tests/test_rotation_npu.py"),
+                      "--junitxml="+str(log_dir/"cv-npu.xml")]),
     ]
 
 
@@ -127,6 +128,11 @@ def main() -> int:
     stages = plan(args.config, log_dir)
     if args.only:
         stages = [x for x in stages + diagnostic_plan(log_dir) if x[0] == args.only]
+        if len(stages) != 1:
+            error = f"selected phase {args.only!r} must resolve to exactly one command, found {len(stages)}"
+            if args.plan:
+                raise RuntimeError(error)
+            return _gate_failed(status, log_dir, args.only, error)
     if args.plan:
         print(json.dumps({"stages": stages, "serve": [sys.executable, "-m", "tools.target_cli", "--config", str(args.config.resolve())],
                           "target_devices": config["devices"], "production_status": "requires_target_probes_and_resource_release"}, indent=2))
@@ -171,6 +177,12 @@ def main() -> int:
                 try:
                     native_wrapper = _report(native_wrapper_path)
                     variant = native_wrapper.get("native")
+                    operator_gate = native_wrapper.get("operator_gate")
+                    if (not isinstance(operator_gate, dict) or operator_gate.get("status") != "passed"
+                            or operator_gate.get("build") not in {"reused", "rebuilt"}
+                            or operator_gate.get("accuracy") != "fresh_device_completion"
+                            or operator_gate.get("resource_release") != "passed"):
+                        raise RuntimeError(f"current signed build or real NPU CV/rotation evidence missing; report={native_wrapper_path}")
                     if (native_wrapper.get("status") != "passed" or not isinstance(variant, dict)
                             or variant.get("status") != "passed" or variant.get("returncode") != 0
                             or variant.get("resource_release") != "passed"

@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include "../include/oscar_cv_schedule.h"
+#include "../include/oscar_attention_launch.h"
 extern "C" void oscar_prepare_attention_tasks_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,bool,uint8_t*,int64_t,bool);
 extern "C" void oscar_attention_cv_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
@@ -193,7 +194,7 @@ int main(int argc,char** argv) {
   Gm tags(dir+"/tags.bin",nb*windowRows*8);
   Gm starts(dir+"/starts.bin",(requests+1)*4),lens(dir+"/lens.bin",requests*4),slots(dir+"/slots.bin",n*8);
   Gm tasks(tasksCount*16*8),positions(n*8),partial(n*hq*segments*d*4),partLse(n*hq*segments*4);
-  Gm status(tasksCount*2*4),workspace(cores*(256*d+4096)*4);
+  Gm status(tasksCount*2*4),workspace(cores*oscar_ascend::attention_workspace_per_core(d));
   Gm output(n*hq*d*4),lse(n*hq*4),mergeStatus(n*hq*4);
   AscendC::SetKernelMode(KernelMode::AIV_MODE);
   ICPU_RUN_KF(oscar_prepare_attention_tasks_kernel,4,starts.ptr,lens.ptr,slots.ptr,

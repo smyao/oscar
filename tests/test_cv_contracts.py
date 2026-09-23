@@ -41,8 +41,8 @@ def test_mtp_target_rows_share_one_tile_and_workspace_is_bounded():
     assert "kQueryRows=64" in source
     assert 4 * 6 <= 64  # Qwen3.5 TP4: Hq6/Hkv1; all verify queries in one tile.
     header = (ROOT / "csrc/include/oscar_attention_launch.h").read_text()
-    assert "return (256 * dim + 4096) * 4" in header
-    assert (256 * 256 + 4096) * 4 == 278528
+    assert "return (384 * dim + 8192) * 4" in header
+    assert (384 * 256 + 8192) * 4 == 425984
     # Full-history length is deliberately absent from this exact allocation.
     assert "attention_workspace_per_core(int64_t dim)" in header
 
@@ -145,7 +145,7 @@ def _device_case(data):
         partial=torch.empty((qlen, hq, 3 * splits, dim), dtype=torch.float32, device="npu"),
         lse=torch.empty((qlen, hq, 3 * splits), dtype=torch.float32, device="npu"),
         status=torch.empty((qlen * hk * 3 * splits, 2), dtype=torch.int32, device="npu"),
-        workspace=torch.empty(data["cores"] * (256 * dim + 4096) * 4, dtype=torch.uint8, device="npu"),
+        workspace=torch.empty(data["cores"] * (384 * dim + 8192) * 4, dtype=torch.uint8, device="npu"),
     )
     return tensors, buffers
 
@@ -185,7 +185,7 @@ def _assert_cv_result(data, buffers, expected, expected_lse):
 
 @pytest.mark.parametrize("dim,qlen,context", [(64, 1, 17), (64, 4, 65),
     (64, 1, 511), (64, 6, 511), (128, 4, 129), (256, 1, 401),
-    (256, 4, 511), (256, 4, 0), (64, 65, 17)])
+    (256, 4, 511), (256, 4, 0), (64, 65, 17), (64, 129, 0)])
 def test_npu_cv_matches_independent_dense_pr_oracle(dim, qlen, context):
     ops = _npu_ops()
     data, expected, expected_lse = _case(dim, qlen, context)
@@ -266,6 +266,7 @@ def export_cpu_debug_goldens(directory):
                                   (128, 4, 129, 1), (256, 4, 511, 1),
                                   (64, 17, 65, 1), (64, 4, 65, 2),
                                   (64, 2, 320, 1), (128, 3, 511, 1), (64, 65, 17, 1),
+                                  (64, 129, 0, 1),
                                   (64, 33, 511, 2), (128, 17, 511, 2), (256, 17, 511, 2)]:
         data, output, lse = _case(dim, qlen, context, hk)
         case = directory / (f"d{dim}_q{qlen}_c{context}" + (f"_hk{hk}" if hk!=1 else ""))

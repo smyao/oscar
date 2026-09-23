@@ -60,7 +60,7 @@ def test_workspace_byte_account_includes_all_live_buffers():
         (n * h * s * d, 4), (n * h * s, 4), (n * h * d, 4),
         (n * h, 4), (n * h, 4), (n * h, 4), (n * k, 4),
         (n * k * s * 16, 8), (n * k * s * 2, 4), (n, 8), (n, 8),
-        (24 * (256 * d + 4096) * 4, 1)]
+        (24 * (384 * d + 8192) * 4, 1)]
     assert geometry.total_bytes == sum(count * size for count, size in elements)
     # History capacity 262144 is absent from the scratch shape. Only current
     # query rows and fixed split count contribute to the partial-output arena.

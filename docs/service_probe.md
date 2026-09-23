@@ -32,13 +32,13 @@ HTTP 200 只说明请求返回。最终通过还必须满足：
 
 一键入口先启动原生服务，对 **4 路 20K/23K/27K/30K 不等长 synthetic streaming 请求**建立本轮基线，确认原生 worker 和 NPU 资源释放，再运行上述 OSCAR 完整功能探针与同一组性能请求。输入由固定句子重复生成，报告标为 `synthetic_repeated_sentence`，不代表用户自有负载。四条请求同时释放，每条使用不同的确定性 `cache_salt`，性能诊断每条输出 **64 token**、请求截止仍为 300 秒；原有串行与混合功能探针继续输出16 token。报告保留精确 prompt ID hash、SSE 接收时钟的 TTFT/TPOT/ITL/E2E、输出 token ID、失败/超时、每秒 Running/Waiting、`/metrics` 前后快照和累计 token 差值。原生或 OSCAR 请求不完整、资源未释放、指标缺失，或 OSCAR 任一已测请求延迟/吞吐未达冻结的原生比值门时，**一键部署停止，不进入正式服务**。这是单批客户端速度诊断门；预热状态不完全配对，也不构成完整多工况性能验收或设备算子计时。
 
-**4 路 synthetic 诊断快路径**（不跑安装/编译/功能相位；同一命令自动跑原生→OSCAR）：
+**4 路 synthetic 诊断快路径**（不跑完整安装/功能相位；同一命令自动校验算子并跑原生→OSCAR）：
 
 ```bash
 git pull --ff-only && bash scripts/probe_concurrency.sh
 ```
 
-快路径也只需执行一次；它依次拉起两只托管服务，对相同四条 synthetic streaming 请求测量，确认每轮进程与NPU资源释放，然后自动比较。原生只是显式配对基线，OSCAR失败不会切换执行路由。终端只保留少量阶段/资源状态、错误和最多8行配对 `PERF_*` 摘要；完整日志与JSON在本轮`logs/paired-concurrency-*/`。`PROGRESS_BUCKET`若在详细报告中出现，只是跨TP rank的 **host 心跳间隔**，不是单步设备算子时间。快路径跳过完整功能门，不能代替正式部署。
+快路径也只需执行一次；它先按当前源码/CANN/SOC签名检查算子产物，签名不变则复用，变更则自动重编，并在新构建后跑冻结oracle的真NPU CV/旋转数值探针及资源释放门，任何失败都会阻止服务启动。只有构建产物、选卡、验收配置和oracle指纹完全一致时，快路径才标注`reused_prior_evidence`复用前次NPU数值证据；正式一键流程始终要求本轮新鲜数值探针。随后依次拉起两只托管服务，对相同四条 synthetic streaming 请求测量，确认每轮进程与NPU资源释放，再自动比较。原生只是显式配对基线，OSCAR失败不会切换执行路由。终端只保留少量阶段/资源状态、错误和最多8行配对 `PERF_*` 摘要；完整日志与JSON在本轮`logs/paired-concurrency-*/`。`PROGRESS_BUCKET`若在详细报告中出现，只是跨TP rank的 **host 心跳间隔**，不是单步设备算子时间。快路径跳过完整功能门，不能代替正式部署。
 
 配对在脚本内自动完成：先核对target配置、模型指纹、精确prompt ID、输出长度、cache salt和到达方式，再列出TTFT/TPOT/E2E与吞吐比；SSE单次批量到达导致TPOT无法计时时明确报`needs_evidence`。终端的`PERF_STATUS`、`PERF_QUEUE`、`PERF_TTFT_MS`、`PERF_TPOT_MS`、`PERF_E2E_MS`、`PERF_THROUGHPUT`、`PERF_VERDICT`、`PERF_EVIDENCE`就是直接复制给维护者的重点行。完整证据路径在最后一行。
 

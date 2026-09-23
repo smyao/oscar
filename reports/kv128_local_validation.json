@@ -1,0 +1,28 @@
+{
+  "cv_cpu_debug_cases": 27,
+  "cv_cpu_debug_status": "passed",
+  "device_build": 0,
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "phase_returncodes": {
+    "cpu-build": 0,
+    "cv-debug": 0,
+    "cv-goldens": 0,
+    "device-build": 0,
+    "install": 0,
+    "primitive-debug": 0,
+    "primitive-goldens": 0,
+    "rotation-debug": 0,
+    "rotation-goldens": 0
+  },
+  "scope": "local CANN ascend910b4 compilation and official AscendC CPU-debug only",
+  "source_sha256": {
+    "csrc/cpu/cv_probe.cpp": "01610e35306c7cadeb6c6be47194e549751b6d10aab50b7a180ad68c2a838f52",
+    "csrc/include/oscar_attention_launch.h": "e5ac57f78df89486c2fc91dcbe76edd5edcf8d03432c76cf40fe5a085968749d",
+    "csrc/kernels/attention_cv.cpp": "c7282dbac330f21147990fbf7e97494faf69e2878e090108489cf7b50abf020f",
+    "oscar_ascend/runtime.py": "13a5b159ab2f6776a6e89ec65ab5119f71538ca87d502fe1c7f256497fcdf11c"
+  },
+  "status": "passed",
+  "target_npu_accuracy": "not_run",
+  "target_performance": "not_run"
+}

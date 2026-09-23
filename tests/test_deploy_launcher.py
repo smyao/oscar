@@ -1,4 +1,4 @@
-# 档案 #70–73/#94–95/#125/#131–139：一键先原生后OSCAR，同输入性能回归或证据缺失时阻断正式服务。
+# 档案 #70–73/#94–95/#125–126/#131–140：一键先原生后OSCAR，真实CV门只执行一次且失败阻断服务。
 # 本次用户指令：保留探针，取消真机环境检查；附录 F 指定本任务设备与 SOC。
 """Exercise deployment orchestration without installing or opening an NPU."""
 import json
@@ -16,7 +16,7 @@ from tools.target_cli import target_env
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PROBES = ("probe-ops", "probe-cv", "native-synthetic", "service-probe")
+PROBES = ("probe-ops", "native-synthetic", "service-probe")
 AUDITS = {"environment", "runtime-readiness", "binary-readiness", "native-integrity"}
 
 
@@ -40,9 +40,12 @@ def _native_evidence(log_dir):
     child = log_dir / "native-synthetic" / "native"
     child.mkdir(parents=True, exist_ok=True)
     (child / "report.json").write_text(json.dumps({"status": "measured", "mode": "synthetic_mixed", "variant": "native"}))
-    (log_dir / "native-synthetic-report.json").write_text(json.dumps({"status": "passed", "native": {
-        "status": "passed", "returncode": 0, "resource_release": "passed",
-        "owned_server_cleanup_complete": True, "runner_cleanup_complete": True}}))
+    (log_dir / "native-synthetic-report.json").write_text(json.dumps({
+        "status": "passed", "operator_gate": {
+            "status": "passed", "build": "reused", "accuracy": "fresh_device_completion",
+            "resource_release": "passed"},
+        "native": {"status": "passed", "returncode": 0, "resource_release": "passed",
+                   "owned_server_cleanup_complete": True, "runner_cleanup_complete": True}}))
 
 
 def test_checked_in_target_has_current_task_devices_and_build_soc():
@@ -102,6 +105,7 @@ def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypa
     names = [name for name, _ in calls]
     assert set(names).isdisjoint(AUDITS)
     assert [name for name in names if name in PROBES] == list(PROBES)
+    assert "probe-cv" not in names  # native preflight owns the sole CV/rotation gate.
     assert names.index("install-plugin") < names.index("build-ops") < names.index("probe-ops")
     assert names.index("prepare-rotations") < names.index("native-synthetic") < names.index("service-probe")
     commands = dict(calls)
@@ -112,12 +116,47 @@ def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypa
     assert "--no-deps" in install
     native = commands["native-synthetic"]
     assert "--native-only" in native
+    assert "--require-fresh-npu" in native
     assert native[native.index("--config") + 1] == str(config_path)
     assert (logs / "paired-performance-report.json").is_file()
     assert len(served) == 1
     final_status = json.loads((logs / "status.json").read_text())
     assert len(final_status["phases"]) == len(calls)
     assert final_status["paired_performance"]["performance_acceptance"] == "not_run"
+
+
+@pytest.mark.parametrize("selected", ["build-ops", "probe-cv"])
+def test_explicit_operator_diagnostic_remains_available_without_formal_service(monkeypatch, tmp_path, selected):
+    config, config_path, logs = _configure(monkeypatch, tmp_path)
+    monkeypatch.setattr(sys, "argv", ["deploy", "--config", str(config_path),
+                                      "--log-dir", str(logs), "--only", selected])
+    calls = []
+
+    def phase(name, command, *, log_dir, **kwargs):
+        calls.append((name, command))
+        return _phase_result(name, command, log_dir)
+
+    monkeypatch.setattr(deploy, "run_phase", phase)
+    monkeypatch.setattr(service_probe, "main", lambda: pytest.fail("formal serve must not start"))
+    assert deploy.main() == 0
+    assert len(calls) == 1 and calls[0][0] == selected
+    command = calls[0][1]
+    if selected == "build-ops":
+        assert command[command.index("--soc") + 1] == config["soc_version"]
+    else:
+        assert str(ROOT / "tests/test_cv_contracts.py") in command
+        assert str(ROOT / "tests/test_rotation_npu.py") in command
+    assert json.loads((logs / "status.json").read_text())["status"] == "selected_phase_passed"
+
+
+def test_only_phase_missing_from_plan_fails_instead_of_silent_pass(monkeypatch, tmp_path):
+    _, config_path, logs = _configure(monkeypatch, tmp_path)
+    monkeypatch.setattr(sys, "argv", ["deploy", "--config", str(config_path),
+                                      "--log-dir", str(logs), "--only", "build-ops"])
+    monkeypatch.setattr(deploy, "plan", lambda *_args: [])
+    assert deploy.main() == 1
+    state = json.loads((logs / "status.json").read_text())
+    assert state["status"] == "failed" and state["failed_phase"] == "build-ops"
 
 
 @pytest.mark.parametrize("failure", PROBES)
@@ -251,6 +290,27 @@ def test_native_npu_release_failure_blocks_oscar(monkeypatch, tmp_path):
             wrapper = json.loads((log_dir / "native-synthetic-report.json").read_text())
             wrapper["native"]["resource_release"] = "failed"
             (log_dir / "native-synthetic-report.json").write_text(json.dumps(wrapper))
+        return _phase_result(name, command, log_dir)
+
+    monkeypatch.setattr(deploy, "run_phase", phase)
+    monkeypatch.setattr(service_probe, "main", lambda: pytest.fail("formal serve must not start"))
+    assert deploy.main() != 0
+    assert calls[-1] == "native-synthetic"
+    assert json.loads((logs / "status.json").read_text())["failed_phase"] == "native-synthetic"
+
+
+def test_one_click_rejects_reused_cv_evidence(monkeypatch, tmp_path):
+    _, _, logs = _configure(monkeypatch, tmp_path)
+    calls = []
+
+    def phase(name, command, *, log_dir, **kwargs):
+        calls.append(name)
+        if name == "native-synthetic":
+            _native_evidence(log_dir)
+            path = log_dir / "native-synthetic-report.json"
+            wrapper = json.loads(path.read_text())
+            wrapper["operator_gate"]["accuracy"] = "reused_prior_evidence"
+            path.write_text(json.dumps(wrapper))
         return _phase_result(name, command, log_dir)
 
     monkeypatch.setattr(deploy, "run_phase", phase)

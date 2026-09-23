@@ -57,7 +57,7 @@ bash scripts/validate_vm.sh
 
 此命令在 Lima `oscar` VM 的独立 `/home/sunao2000.linux/gpt_new_oscar` 目录编译、链接，并运行同一份 AscendC kernel 的官方 CPU 调试器。首次配置可加 `--bootstrap`，仅安装该目录独立虚拟环境的依赖；不访问 VM 中旧项目代码。报告在 [reports/vm/validation.json](reports/vm/validation.json)，最新一轮共61个算子用例通过，另含 MTP/padding 元数据检查。
 
-一键性能诊断已并入 `git pull --ff-only && bash scripts/install_probe_serve.sh`：它自动依次启动原生和 OSCAR 服务，对同一组 **synthetic** 的 20K/23K/27K/30K 四路并发、每路64输出 token 测量 TTFT/TPOT/E2E 与吞吐，确认两轮资源释放，再按冻结的速度比值决定是否进入正式服务。终端仅打印少量阶段/资源状态、故障与最多8行配对 `PERF_*` 摘要；完整输出仍在本轮 `logs/`。只需把这些摘要或失败行直接贴回。`bash scripts/probe_concurrency.sh` 是跳过安装/编译/功能门的单命令快路径，也自动跑原生→OSCAR两轮，无需第二条 `--native` 命令。正式服务就绪后等待 `OBSERVER_READY`，再用自己的压测程序发送32并发长请求；被动报告只观测该流量，不生成数据集或请求。单批 synthetic 速度门不是全工况性能验收。详见[服务探针](docs/service_probe.md)。
+一键性能诊断已并入 `git pull --ff-only && bash scripts/install_probe_serve.sh`：它自动依次启动原生和 OSCAR 服务，对同一组 **synthetic** 的 20K/23K/27K/30K 四路并发、每路64输出 token 测量 TTFT/TPOT/E2E 与吞吐，确认两轮资源释放，再按冻结的速度比值决定是否进入正式服务。终端仅打印少量阶段/资源状态、故障与最多8行配对 `PERF_*` 摘要；完整输出仍在本轮 `logs/`。只需把这些摘要或失败行直接贴回。`bash scripts/probe_concurrency.sh` 是省去完整安装/功能门的单命令快路径：它先校验AscendC构建签名，源码漂移则自动重编并跑真NPU CV/旋转数值门，然后自动跑原生→OSCAR两轮，无需第二条 `--native` 命令。正式服务就绪后等待 `OBSERVER_READY`，再用自己的压测程序发送32并发长请求；被动报告只观测该流量，不生成数据集或请求。单批 synthetic 速度门不是全工况性能验收。详见[服务探针](docs/service_probe.md)。
 
 一键配对中的原生阶段只用于明确的基线测量，OSCAR失败绝不会切换到原生服务。HTTP测量不伪造设备时间或MTP query长度；硬件、数值、显存、profiler证据齐全后才能做最终验收。[性能协议](benchmarks/README.md)与[分相位profiling](docs/profiling.md)给出数据格式和命令。
 

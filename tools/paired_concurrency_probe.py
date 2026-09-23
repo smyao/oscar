@@ -1,28 +1,108 @@
-# 档案 #70-#73/#94/#95/#125/#129-#139：同配置配对测量、逐次释放和失败证据。
-"""Run one synthetic 20/23/27/30K K4 native→OSCAR diagnostic.
+# 档案 #70-#73/#85/#94/#95/#125/#126/#129-#140：同配置配对测量；
+# 当前签名构建、真 NPU 数值门、逐次释放与失败证据先于性能服务。
+"""Verify current AscendC operators, then run one 20/23/27/30K K4 pair.
 
-This is a single HTTP diagnostic batch, not the frozen multi-case performance
-acceptance matrix. No private user dataset or historical baseline is used.
+This one-command synthetic diagnostic builds on source drift, gates real-NPU
+CV/rotation accuracy, and checks resource release. It is not the frozen
+multi-case performance acceptance matrix or the user's private dataset.
 """
 from __future__ import annotations
 
 import argparse
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime, timezone
+import hashlib
 import json
 import math
 from pathlib import Path
 import subprocess
 import sys
 import time
+import xml.etree.ElementTree as ET
 
 from benchmarks.compare import canonical_sha256, read_json
 from benchmarks.mixed import compare_mixed
+from .environment import file_fingerprint
 from .npu_resources import (DEFAULT_RELEASE_TOLERANCE, read_npu_resources,
                             wait_for_release)
-from .phase import atomic_json, cleanup_group, live_log, terminal_line
+from .phase import atomic_json, cleanup_group, live_log, run_phase, terminal_line
 from .service_probe import SYNTHETIC_MIXED_LENGTHS
 from .target_cli import ROOT, target_env
+
+
+CV_NPU_MIN_CASES = 21  # Frozen CV oracle matrix in tests/test_cv_contracts.py (#126).
+ROTATION_NPU_MIN_CASES = 104  # 26 goldens on each selected card.
+
+
+class OperatorGateError(RuntimeError):
+    """A pre-service build or real-device gate failed with its actual phase rc."""
+
+    def __init__(self, phase: str, message: str, *, returncode: int = 1,
+                 evidence: dict | None = None):
+        super().__init__(message)
+        self.phase = phase
+        self.returncode = returncode if returncode else 1
+        self.evidence = evidence or {}
+
+
+def _operator_gate_identity(manifest: dict, config: dict, acceptance: dict) -> dict:
+    """Bind prior NPU evidence to the built bits, selected cards and oracle."""
+    tracked = [ROOT / "tests/test_cv_contracts.py", ROOT / "tests/test_rotation_npu.py",
+               ROOT / "tools/generate_rotation_cpu_cases.py"]
+    if any(not path.is_file() for path in tracked):
+        raise RuntimeError("real NPU accuracy test or golden generator is missing")
+    oracle = {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
+              for path in tracked}
+    runtime_source = file_fingerprint(ROOT / "oscar_ascend")
+    if not runtime_source:
+        raise RuntimeError("OSCAR runtime source fingerprint is empty")
+    return {"build_signature": manifest["signature"],
+            "source_sha256": canonical_sha256(manifest["configuration"]["source"]),
+            "artifact_sha256": manifest["sha256"],
+            "target_config_sha256": canonical_sha256(config),
+            "acceptance_sha256": canonical_sha256(acceptance),
+            "oracle_sha256": canonical_sha256(oracle),
+            "runtime_sha256": canonical_sha256(runtime_source),
+            "devices": config["devices"]}
+
+
+def _real_npu_junit(path: Path, devices: list[int]) -> dict:
+    """Pytest rc=0 alone can include skipped NPU cases; inspect the real gate."""
+    root = ET.parse(path).getroot()
+    cases = list(root.iter("testcase"))
+    cv = [case for case in cases if case.get("name", "").startswith("test_npu_")]
+    rotation = [case for case in cases
+                if case.get("name", "").startswith("test_rotation_ascendc_real_npu")]
+    selected = cv + rotation
+    if len(cv) < CV_NPU_MIN_CASES or len(rotation) < ROTATION_NPU_MIN_CASES:
+        raise RuntimeError(f"real NPU CV/rotation cases missing: cv={len(cv)} rotation={len(rotation)}")
+    if any(case.find(kind) is not None for case in selected
+           for kind in ("skipped", "failure", "error")):
+        raise RuntimeError("real NPU CV/rotation case skipped or failed in JUnit")
+    observed = {value for case in rotation for prop in case.findall("./properties/property")
+                if prop.get("name") == "physical_device"
+                for value in [prop.get("value")]}
+    if observed != {str(device) for device in devices}:
+        raise RuntimeError(f"rotation gate did not complete on all selected physical cards: {sorted(observed)}")
+    return {"cv_cases": len(cv), "rotation_cases": len(rotation),
+            "physical_devices": sorted(observed),
+            "junit": str(path.resolve()), "junit_sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+def _prior_npu_gate(path: Path, identity: dict, devices: list[int]) -> dict | None:
+    """Reuse only an intact, exact prior device gate; never call it fresh proof."""
+    try:
+        previous = read_json(path)
+        if previous.get("status") != "passed" or previous.get("identity") != identity:
+            return None
+        verified = _real_npu_junit(Path(previous["junit"]).resolve(), devices)
+        if verified["junit_sha256"] != previous.get("junit_sha256"):
+            return None
+        if previous.get("resource_release") != "passed":
+            return None
+        return previous
+    except (OSError, ValueError, TypeError, KeyError, AttributeError, ET.ParseError, RuntimeError):
+        return None
 
 
 def _normalize_synthetic(report: dict, variant: str) -> dict:
@@ -134,6 +214,143 @@ def _observe_resources(config: dict, directory: Path, *, before=None):
                                            DEFAULT_RELEASE_TOLERANCE))
 
 
+def ensure_current_operators(config_path: Path, config: dict, acceptance: dict,
+                             log_dir: Path, *, require_fresh_npu: bool = False) -> dict:
+    """Verify the current signed build and true NPU oracle before either server."""
+    from .build_ops import reusable_build
+
+    evidence = {"status": "running", "build": "not_run", "accuracy": "not_run",
+                "resource_release": "not_run", "devices": config["devices"]}
+    evidence_path = log_dir / "operator-gate.json"
+    atomic_json(evidence_path, evidence)
+    env = target_env(config)
+    env.update(OSCAR_TARGET_CONFIG=str(config_path.resolve()), OSCAR_RUN_NPU_TESTS="1",
+               OSCAR_TERMINAL_LOG_MODE="compact")
+    build_report = ROOT / "reports/build.json"
+    build_report.unlink(missing_ok=True)  # #94/#95: no previous success can satisfy this run.
+    try:
+        build_result = run_phase("operator-build",
+            [sys.executable, "-m", "tools.build_ops", "--soc", config["soc_version"],
+             "--log-dir", str(log_dir / "build")], cwd=ROOT, log_dir=log_dir,
+            timeout=float(config.get("phase_timeout_seconds", 1800)), env=env,
+            grace=float(config.get("shutdown_timeout_seconds", 30)), heartbeat=60)
+    except Exception as error:
+        evidence.update(status="failed", build="failed", error=f"{type(error).__name__}: {error}")
+        atomic_json(evidence_path, evidence)
+        raise OperatorGateError("operator-build", f"AscendC build runner failed: {error}; "
+                                f"log={log_dir / 'operator-build.log'}", evidence=evidence) from error
+    evidence["build_phase"] = {"returncode": build_result.returncode, "log": build_result.log,
+                               "cleanup_complete": build_result.cleanup_complete}
+    if build_result.returncode != 0 or not build_result.cleanup_complete:
+        evidence.update(status="failed", build="failed")
+        atomic_json(evidence_path, evidence)
+        raise OperatorGateError("operator-build", f"current AscendC build failed; log={build_result.log}",
+                                returncode=build_result.returncode, evidence=evidence)
+    try:
+        manifest = read_json(build_report)
+        signature = manifest["signature"]
+        verified = reusable_build(ROOT / "build/ascendc", signature)
+        if (manifest.get("build") != "passed" or type(manifest.get("reused")) is not bool
+                or verified is None or verified.get("sha256") != manifest.get("sha256")
+                or verified.get("configuration") != manifest.get("configuration")
+                or manifest.get("configuration", {}).get("source") != file_fingerprint(ROOT / "csrc")):
+            raise RuntimeError("completed AscendC artifact or current-source signature is missing/mismatched")
+        if manifest["configuration"].get("soc") != config["soc_version"]:
+            raise RuntimeError("AscendC SOC signature differs from target.json")
+        identity = _operator_gate_identity(manifest, config, acceptance)
+    except (OSError, ValueError, TypeError, KeyError, AttributeError, RuntimeError) as error:
+        evidence.update(status="failed", build="failed", error=f"{type(error).__name__}: {error}")
+        atomic_json(evidence_path, evidence)
+        raise OperatorGateError("operator-build", f"build evidence invalid: {error}; log={build_result.log}",
+                                evidence=evidence) from error
+    evidence.update(build="reused" if manifest["reused"] else "rebuilt",
+                    build_signature=signature, source_sha256=identity["source_sha256"],
+                    identity=identity)
+    atomic_json(evidence_path, evidence)
+
+    gate_path = ROOT / "build/ascendc/oscar_fast_probe_cv_gate.json"
+    previous = (_prior_npu_gate(gate_path, identity, config["devices"])
+                if manifest["reused"] and not require_fresh_npu else None)
+    if previous is not None:
+        evidence.update(status="passed", accuracy="reused_prior_evidence",
+                        resource_release="reused_prior_evidence", accuracy_log=previous["log"],
+                        junit=previous["junit"], cv_cases=previous["cv_cases"],
+                        rotation_cases=previous["rotation_cases"])
+        atomic_json(evidence_path, evidence)
+        terminal_line(f"[oscar] PERF_OPERATOR_GATE build=reused npu_cv=reused_prior_evidence "
+                      f"signature={signature[:12]} devices={','.join(map(str, config['devices']))}")
+        return evidence
+
+    # #125/#126 and H15: completed numerical assertions do not excuse an NPU
+    # context leak that could contaminate the following native baseline.
+    try:
+        before = _observe_resources(config, log_dir / "resources-before-cv")
+    except Exception as error:
+        evidence.update(status="failed", accuracy="not_run",
+                        error=f"pre-probe NPU resource snapshot failed: {type(error).__name__}: {error}")
+        atomic_json(evidence_path, evidence)
+        raise OperatorGateError("operator-cv-npu-resources", f"pre-probe NPU resource snapshot failed: "
+                                f"{error}; log={log_dir / 'resources-before-cv'}",
+                                evidence=evidence) from error
+    atomic_json(log_dir / "resources-before-cv.json", before)
+    junit = log_dir / "cv-npu.xml"
+    junit.unlink(missing_ok=True)
+    gate_result = None
+    gate_error = None
+    try:
+        gate_result = run_phase("operator-cv-npu",
+            [sys.executable, "-m", "pytest", "-q", "--maxfail=1",
+             str(ROOT / "tests/test_cv_contracts.py"), str(ROOT / "tests/test_rotation_npu.py"),
+             "--junitxml=" + str(junit)], cwd=ROOT, log_dir=log_dir,
+            timeout=float(config.get("phase_timeout_seconds", 1800)), env=env,
+            grace=float(config.get("shutdown_timeout_seconds", 30)), heartbeat=60)
+    except Exception as error:
+        gate_error = error
+    finally:
+        try:
+            release = _observe_resources(config, log_dir / "resources-after-cv", before=before)
+        except Exception as error:
+            release = {"status": "failed", "reason": f"{type(error).__name__}: {error}"}
+        atomic_json(log_dir / "resources-after-cv.json", release)
+        evidence["resource_release"] = release["status"]
+        evidence["resource_release_evidence"] = str(log_dir / "resources-after-cv.json")
+    if gate_result is not None:
+        evidence["accuracy_phase"] = {"returncode": gate_result.returncode, "log": gate_result.log,
+                                      "cleanup_complete": gate_result.cleanup_complete}
+    if gate_error is not None or gate_result is None or gate_result.returncode != 0 or not gate_result.cleanup_complete:
+        rc = gate_result.returncode if gate_result is not None else 1
+        log = gate_result.log if gate_result is not None else str(log_dir / "operator-cv-npu.log")
+        evidence.update(status="failed", accuracy="failed")
+        atomic_json(evidence_path, evidence)
+        raise OperatorGateError("operator-cv-npu", f"real NPU CV/rotation gate failed; log={log}; "
+                                f"resource_release={release['status']}", returncode=rc,
+                                evidence=evidence) from gate_error
+    try:
+        case_counts = _real_npu_junit(junit, config["devices"])
+    except (OSError, ValueError, ET.ParseError, RuntimeError) as error:
+        evidence.update(status="failed", accuracy="failed", error=f"{type(error).__name__}: {error}")
+        atomic_json(evidence_path, evidence)
+        raise OperatorGateError("operator-cv-npu", f"real NPU JUnit evidence invalid: {error}; "
+                                f"log={gate_result.log}", evidence=evidence) from error
+    if release["status"] != "passed":
+        evidence.update(status="failed", accuracy="passed", error="NPU memory not released after accuracy gate")
+        atomic_json(evidence_path, evidence)
+        raise OperatorGateError("operator-cv-npu-release", f"NPU memory did not return after CV gate; "
+                                f"evidence={log_dir / 'resources-after-cv.json'}", evidence=evidence)
+    gate = {"status": "passed", "identity": identity, **case_counts,
+            "resource_release": "passed", "resource_release_evidence": evidence["resource_release_evidence"],
+            "log": gate_result.log, "returncode": gate_result.returncode,
+            "scope": "real NPU CV and rotation device completion, not graph or service acceptance"}
+    atomic_json(gate_path, gate)
+    evidence.update(status="passed", accuracy="fresh_device_completion", accuracy_log=gate_result.log,
+                    junit=str(junit), cv_cases=case_counts["cv_cases"],
+                    rotation_cases=case_counts["rotation_cases"])
+    atomic_json(evidence_path, evidence)
+    terminal_line(f"[oscar] PERF_OPERATOR_GATE build={evidence['build']} npu_cv=fresh_device_completion "
+                  f"signature={signature[:12]} devices={','.join(map(str, config['devices']))}")
+    return evidence
+
+
 def _run_variant(variant: str, config_path: Path, config: dict, directory: Path) -> dict:
     """Capture full service output and always reclaim the runner's process group."""
     directory.mkdir(parents=True, exist_ok=True)
@@ -188,7 +405,8 @@ def _run_variant(variant: str, config_path: Path, config: dict, directory: Path)
 
 
 def run_paired(config_path: Path, *, output: Path, log_dir: Path,
-               acceptance_path: Path, native_only: bool = False) -> dict:
+               acceptance_path: Path, native_only: bool = False,
+               require_fresh_npu: bool = False) -> dict:
     """Run native→OSCAR sequentially, with release proof between owners."""
     config_path, output = config_path.resolve(), output.resolve()
     acceptance_path, log_dir = acceptance_path.resolve(), log_dir.resolve()
@@ -196,7 +414,7 @@ def run_paired(config_path: Path, *, output: Path, log_dir: Path,
     report = {"status": "running", "mode": "native_synthetic_mixed" if native_only else "paired_synthetic_mixed",
               "config": str(config_path), "acceptance": str(acceptance_path),
               "native": "not_run", "oscar": "not_run", "comparison": "not_run",
-              "performance_acceptance": "not_run", "exit_code": 1,
+              "operator_gate": "not_run", "performance_acceptance": "not_run", "exit_code": 1,
               "warmup_scope": "fresh_service_before_batch"}
     atomic_json(output, report)
     try:
@@ -204,6 +422,12 @@ def run_paired(config_path: Path, *, output: Path, log_dir: Path,
         target_env(config)  # Archive #123: reject invalid selection before NPU touch.
         report["config_sha256"] = canonical_sha256(config)
         report["acceptance_sha256"] = canonical_sha256(acceptance)
+        # #85/#125/#126/#140: the fast one-command path must not compare a
+        # freshly pulled AscendC source tree against stale local .so files.
+        report["operator_gate"] = ensure_current_operators(
+            config_path, config, acceptance, log_dir,
+            require_fresh_npu=require_fresh_npu)
+        atomic_json(output, report)
         baseline = _observe_resources(config, log_dir / "resources-before-native")
         atomic_json(log_dir / "resources-before-native.json", baseline)
         for variant in (("native",) if native_only else ("native", "oscar")):
@@ -240,6 +464,10 @@ def run_paired(config_path: Path, *, output: Path, log_dir: Path,
         report["exit_code"] = 0 if report["status"] == "passed" else 2
         if comparison["issues"]:
             report["error"] = "; ".join(comparison["issues"][:6])
+    except OperatorGateError as error:
+        report.update(status="failed", failed_phase=error.phase,
+                      operator_gate=error.evidence, error=str(error),
+                      exit_code=error.returncode)
     except KeyboardInterrupt:
         report.update(status="interrupted", error="interrupted", exit_code=130)
     except Exception as error:
@@ -260,12 +488,15 @@ def main(argv=None) -> int:
     parser.add_argument("--output", type=Path)
     parser.add_argument("--native-only", action="store_true",
                         help="one-click pipeline: collect native side; compare with its existing OSCAR service probe")
+    parser.add_argument("--require-fresh-npu", action="store_true",
+                        help="full one-click flow: rerun real CV/rotation NPU gate even with prior matching evidence")
     args = parser.parse_args(argv)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     log_dir = args.log_dir or ROOT / "logs" / f"paired-concurrency-{stamp}"
     output = args.output or log_dir / "paired-report.json"
     return run_paired(args.config, output=output, log_dir=log_dir,
-                      acceptance_path=args.acceptance, native_only=args.native_only)["exit_code"]
+                      acceptance_path=args.acceptance, native_only=args.native_only,
+                      require_fresh_npu=args.require_fresh_npu)["exit_code"]
 
 
 if __name__ == "__main__":

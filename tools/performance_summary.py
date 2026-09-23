@@ -109,14 +109,32 @@ def _queue_peaks(sample):
     return max(r for r, _ in pairs), max(w for _, w in pairs), max(r + w for r, w in pairs)
 
 
+def _mtp_acceptance(report):
+    section = report.get("synthetic_mixed") if isinstance(report, dict) else None
+    raw = section.get("mtp_counter_delta") if isinstance(section, dict) else None
+    delta = raw.get("mtp_counter_delta") if isinstance(raw, dict) and raw.get("status") == "observed" else None
+    if not isinstance(delta, dict):
+        return None
+    proposed = delta.get("vllm:spec_decode_num_draft_tokens")
+    accepted = delta.get("vllm:spec_decode_num_accepted_tokens")
+    drafts = delta.get("vllm:spec_decode_num_drafts")
+    if (not _finite_positive(proposed) or not _finite_nonnegative(accepted)
+            or accepted > proposed or not _finite_positive(drafts)):
+        return None
+    return accepted / proposed, 1 + accepted / drafts
+
+
 def _latency_line(name, native, oscar):
     fields = []
+    zero_burst = False
     for percentile in ("p50", "p95"):
         baseline, candidate = _metric(native, name, percentile), _metric(oscar, name, percentile)
+        if name == "tpot_ms" and (baseline == 0 or candidate == 0):
+            zero_burst = True
         fields.append(f"{percentile}_native={_number(baseline, allow_zero=name == 'tpot_ms')}")
         fields.append(f"{percentile}_oscar={_number(candidate, allow_zero=name == 'tpot_ms')}")
         fields.append(f"{percentile}_ratio={_number(_ratio(candidate, baseline))}")
-    note = " zero=unresolved_SSE_burst" if name == "tpot_ms" else ""
+    note = " zero=unresolved_SSE_burst" if zero_burst else ""
     return f"[oscar] PERF_{name.upper()} scope=client_SSE_ms" + note + " " + " ".join(fields)
 
 
@@ -236,6 +254,18 @@ def format_performance_summary(native_report, oscar_report, comparison, *,
                          f"peak_waiting_native={left[1]} peak_waiting_oscar={right[1]} "
                          f"peak_inflight_native={left[2]} peak_inflight_oscar={right[2]} "
                          "scope=sampled_1s")
+        native_mtp, oscar_mtp = _mtp_acceptance(native_report), _mtp_acceptance(oscar_report)
+        if native_mtp is not None or oscar_mtp is not None:
+            left = native_mtp or (None, None)
+            right = oscar_mtp or (None, None)
+            mtp_text = (f" mtp_acceptance_native={_number(left[0], 3, allow_zero=True)}"
+                        f" mtp_acceptance_oscar={_number(right[0], 3, allow_zero=True)}"
+                        f" mtp_mean_length_native={_number(left[1], 2)}"
+                        f" mtp_mean_length_oscar={_number(right[1], 2)}")
+            if lines[-1].startswith("[oscar] PERF_QUEUE"):
+                lines[-1] += mtp_text
+            else:
+                lines.append("[oscar] PERF_MTP scope=native_metrics" + mtp_text)
         lines.append(_latency_line("ttft_ms", native, oscar))
         lines.append(_latency_line("tpot_ms", native, oscar))
         lines.append(_latency_line("e2e_ms", native, oscar))

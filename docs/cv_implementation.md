@@ -16,7 +16,7 @@
 | #34/#36 | graph 固定 N/R/task/workspace 容量；qstarts、seq_lens、slot_mapping 每次从设备读取；Cube scalar metadata 在入口清 DCache，Vector 使用 DMA |
 | #37–49 | 窗口从物理页＋页内位置查找；tag 必须匹配页内位置；verify 每个 query 使用独立绝对位置与 recent 边界 |
 | #53–69 | 不依赖 FIA 可选 LSE，不猜测 reshape；Q/K/V 同设备，causal 在每个 score row 显式处理 |
-| #71 / D.4 | 整历史恢复曾为6499.8–6655.1ms、FIA仅18.5–18.9ms：一份32token解包供64query/head行复用，禁止先物化全长历史 |
+| #71/#140 / D.4 | 整历史恢复曾为6499.8–6655.1ms、原生FIA仅18.5–18.9ms：四份32-token子块组成一份128-token工作单元，供同一query tile复用；禁止先物化全长历史。K4当前端到端仍比原生慢约12.4倍，改动后必须真机复测。 |
 | #98–122 | direct-launch 单路径；不复制原生文件，不替换 OPP 环境，不把 config/符号存在当执行通过 |
 
 只读原生先例：`references/vllm-ascend/csrc/moe/hc_pre/op_kernel/hc_pre_m_k_split_core.h` 的 mode-2 CV flag 与固定 GM 通信；`hc_pre_cube_compute.h` 的 FP32 Cube 数据通路；`moe_grouped_matmul.h` 的 MatmulImpl；`add_rms_norm_bias_multi_n.h` 的 Gather。指定 PR：`triton_oscar_decode.py` 的 INT2 解包、FP32 score/PV 与自然对数 LSE；`oscar_attn.py` 的 window BF16 与历史输出逆旋转后合并。
@@ -40,7 +40,7 @@ CANN VM 中只读核实了 9.1 SDK 的 `matmul/constant_tiling.h`、`MatmulImplB
 - raw 为 uint8 flat native SoA allocation；block_table int32 `[R,columns]`，存原生virtual128页号。`virtual_block/(block_tokens/128)` 得物理页，余数和 `position%128` 得页内位置。
 - window K/V 为 BF16 `[physical_blocks,S+R+spec,Hkv,D]`；后三维连续，允许页stride大于有效数据字节；tags int64 `[physical_blocks,S+R+spec]` 同理。binding 读取真实tensor stride，不伪设整张窗口连续。
 - partial FP32 `[N,Hq,3*splits,D]`；LSE FP32 `[N,Hq,3*splits]`；status int32 `[task_count,2]`，每AIV独立写状态，无错误位丢失竞态。非0状态必须由 runtime 的设备异步断言/探针检查拒绝，不能忽略。
-- workspace uint8 flat，至少 `cube_cores*(256*D+4096)*4` bytes；cube_cores∈[1,32]。同stream不做动态分配、主机值拷贝或同步。
+- workspace uint8 flat，至少 `cube_cores*(384*D+8192)*4` bytes；cube_cores∈[1,32]。同stream不做动态分配、主机值拷贝或同步。
 
 所有partial均为原始 V 空间。source0在整段online-softmax完成后，只对64query行的结果作Cube `@Rv.T`；不对历史K/V逆旋转。随后可把partial展平为 `[N*Hq,3*splits,D]`，交给已有 `merge_lse_out`。
 
@@ -48,9 +48,11 @@ CANN VM 中只读核实了 9.1 SDK 的 `matmul/constant_tiling.h`、`MatmulImplB
 
 令旧context长度 C，当前query绝对位置 p，sink S、recent R。历史mask：`S <= key_pos < max(S,p+1-R)` 且 `key_pos<C`。旧精确mask：`key_pos<C` 且 `(key_pos<S or key_pos>=max(S,p+1-R))`。当前forward K/V按 `C<=key_pos<=p` 直接用BF16；它们尚未经过INT2往返。
 
-在同一个querytile里，source0读取上述历史集合的并集，source1读取旧精确集合的并集，然后按每个query再mask。并集内部没有按query重新读取INT2；每份32token tile供最多64query/head行共用。目标TP4 Hq6/Hkv1、MTP4共有24行，完全位于单个tile。prefill超过 `floor(64/GQA)` queries需要后续querytile重新扫描，这是精确attention的计算/带宽事实。
+在同一个querytile里，source0读取上述历史集合的并集，source1读取旧精确集合的并集，然后按每个query再mask。并集内部没有按query重新读取INT2；每份128-token工作单元供最多64个query/head行共用。目标TP4 Hq6/Hkv1、MTP4共有24行，完全位于单个querytile。prefill超过 `floor(64/GQA)` queries需要后续querytile重新扫描，这是精确attention的计算/带宽事实。
 
-每次只对32个KV tokens构建FP32 tile。32×D的K与转置V供Cube使用，两个AIV各负责16个KV row和32个query row。SIMD Gather提取16bit编码字，8次Shift/And生成bit planes，再Gather还原维度顺序；scale/zero只在每向量应用，数据映射与PR保持一致。
+每次仅对128个KV tokens构建FP32工作单元，不随全历史长度分配。两个AIV各负责32个query row；在每个32-token子块里，各AIV读取并解包16个KV row，四个子块按行写入K `[128,D]`，按列写入转置V `[D,128]`，每个INT2 slot只读取一次。SIMD Gather提取16bit编码字，8次Shift/And生成bit planes，再Gather还原维度顺序；scale/zero只在每向量应用，数据映射与PR保持一致。四个子块全部发布后，Cube只做一次QK和一次PV，Vector只做一次128列FP32在线softmax更新，跨核握手由每32列一轮变成每128列一轮。末尾不足128列仍写入K/V和P的零尾、每query精确因果mask与原始LSE/输出owner。
+
+GM scratch的活跃区间明确互斥：Q `[64,D]`，K `[128,D]`，V `[D,128]`，score/P `[64,128]`，PV/最终`Rv^T`结果 `[64,D]`。QK的CubeReady在Vector覆盖score为P之前；PV读P只在VectorReady之后；PV被Vector累加后才用于最终旋转。K与V、score/P与PV区间不重叠。GraphWorkspace及C++ ABI用相同字节公式，不能让单独算子调用方传旧尺寸。
 
 Softmax统计全程FP32：每row有running maximum与denominator，旧acc按max变化重标度，Cube完成 `P@V` 后累加。每个空tile概率置0；整段全空输出0/LSE-inf。Log采用不同输入/输出buffer，避免官方CPU-debug已发现的默认非原地API约束。
 
@@ -58,10 +60,10 @@ Softmax统计全程FP32：每row有running maximum与denominator，旧acc按max�
 
 1. **相位**：tasks对应prepare；source0替代dequant+FIA；source1/2对应精确FIA部分；最终已有merge只处理有界partial。
 2. **历史失败**：D.4主因是全历史恢复独立路径导致6.5s；prepare达到725ms；phase1_stores209–216ms与本读kernel分开验收。
-3. **结构规避**：无 `[L,D]` FP32/BF16历史tensor；固定32token tile，GQA/MTP复用；QK/PV是真Cube，SIMD解包是真Vector；当前chunk直接BF16；host只传固定属性和指针。
-4. **量级**：目标是short decode对照0.6–1.1ms、32K attention对照18.5–18.9ms，必须同硬件实测。这些数字不是本kernel已达到的性能。
+3. **结构规避**：无 `[L,D]` FP32/BF16历史tensor；固定128-token工作单元、内部四个32-token子块，GQA/MTP复用；QK/PV是真Cube，SIMD解包是真Vector；当前chunk直接BF16；host只传固定属性和指针。旧全历史读/恢复路径没有出现。source0的INT2字节数不变，K/V bounded GM通信仍为Θ(LD)。
+4. **量级**：16K首次prefill的current源每FULL层静态Q×KV工作单元从420761个32列变为105805个128列，Cube QK/PV调用和跨核flag轮次约减四分之三；每query的点积与历史字节数没有减四分之三。目标是short decode对照0.6–1.1ms、32K attention对照18.5–18.9ms，必须同硬件实测。这些数字不是本kernel已达到的性能；#140的12.4倍端到端差距也不能由静态计数推断已收敛。
 
-D256每Cube workspace=278528B，32Cube共8912896B（8.5MiB），和L无关。单AIV显式UB分配共161024B（含两个4096-entry Gather索引），小于192KiB。`TCubeTiling`由SDK编译期算法推导，不手填未经验证的字段。Matmul内部Cube L1/L0分配另由SDK静态tiling检查。
+D256每Cube workspace=425984B，20Cube共8519680B（8.125MiB）、32Cube共13631488B（13MiB），和L无关。单AIV显式UB分配约173312B（原161024B加score buffer 12288B；含两个4096-entry Gather索引），小于192KiB；编译器内部资源和实际容量必须由CANN编译确认。`TCubeTiling`由SDK编译期算法推导，不手填未经验证的字段。Matmul内部Cube L1/L0分配另由SDK静态tiling检查。
 
 A2 Vector→Cube通信使用原生precedent的固定GM buffer，**没有把UB→GM→L1称作直接片上通路**。压缩源每token/head读136B(D256)；每tile仍写/读FP32 K/V通信，总通信量是Θ(LD)，只容量有界。严格H18“历史读取对L亚线性”与任意精确full attention冲突，本实现不声称满足o(L)，不以此停止其它可实现工作。
 

@@ -28279,3 +28279,22 @@ Selected verbatim lines, not a complete log.
 [oscar] PASSED phase=service-probe rc=0
 [oscar] FAILED phase=full-service-probe: full-service evidence or owned NPU resource release is missing; formal serve prohibited
 ```
+
+
+## [136] 真机条目（gpt_new_oscar_kimi，2026-09-22 用户回传）· phase=full-service-probe/filename-collision
+
+**症状**：#135运行探针全门通过（含资源释放）但正式服务被门拦下。用户实读裁决：probe_result.log为`passed passed None`；service-probe.json为`dict ['cleanup_complete','command','elapsed_seconds','interrupted','log','phase','returncode','timed_out']`（PhaseResult键集，无status/resource_release）；mtime显示.json在probe_result.log之后1.7秒落盘。
+
+**根因**：文件名冲突。探针报告`--output=log_dir/service-probe.json`与`run_phase`相位账本`log_dir/<name>.json`（该相位名恰为service-probe）是同一路径；探针退出后run_phase的finally把PhaseResult原子覆盖到报告上。探针此前从未全绿，门从未执行，存量bug首次暴露。与#134内核改动、遥测改动无关。
+
+**修复**：探针报告改名`service-probe-report.json`（plan与门同步）；`tests/test_deploy_launcher.py`更新并在通过/阻断两个用例中模拟账本覆盖场景作为回归。门保持严格（缺键仍拒绝）。本次教训并入#94/#95家族：证据文件的写入者集合必须互斥命名。
+
+### 用户回传裁决输出（逐字）
+
+```text
+passed passed None
+dict ['cleanup_complete', 'command', 'elapsed_seconds', 'interrupted', 'log', 'phase', 'returncode', 'timed_out']
+-rw-r--r-- service-probe.json 2026-09-22 12:07:23 (616B)
+-rw-r--r-- service-probe/probe_result.log 2026-09-22 12:07:21 (81414B)
+status.json: "status": "failed", "failed_phase": "full-service-probe"
+```

@@ -3,6 +3,7 @@
 """Exercise deployment orchestration without installing or opening an NPU."""
 import json
 import os
+from dataclasses import asdict
 from pathlib import Path
 import sys
 from unittest.mock import patch
@@ -61,7 +62,10 @@ def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypa
         assert env["OSCAR_RUN_NPU_TESTS"] == "1"
         assert {"ascend", "oscar_ascend", "another_plugin"} <= set(env["VLLM_PLUGINS"].split(","))
         if name == "service-probe":
-            (log_dir / "service-probe.json").write_text(json.dumps({"status": "passed", "resource_release": "passed"}))
+            (log_dir / "service-probe-report.json").write_text(json.dumps({"status": "passed", "resource_release": "passed"}))
+            # The phase ledger writes <name>.json after the phase exits; it must
+            # not clobber the probe report the full-service gate reads (#136).
+            (log_dir / "service-probe.json").write_text(json.dumps(asdict(_phase_result(name, command, log_dir))))
         return _phase_result(name, command, log_dir)
 
     def serve():
@@ -119,7 +123,8 @@ def test_resource_release_failure_blocks_formal_serve_even_when_probe_exits_zero
 
     def phase(name, command, *, log_dir, **kwargs):
         if name == "service-probe":
-            (log_dir / "service-probe.json").write_text(json.dumps({"status": "passed", "resource_release": "failed"}))
+            (log_dir / "service-probe-report.json").write_text(json.dumps({"status": "passed", "resource_release": "failed"}))
+            (log_dir / "service-probe.json").write_text(json.dumps(asdict(_phase_result(name, command, log_dir))))
         return _phase_result(name, command, log_dir)
 
     def serve():

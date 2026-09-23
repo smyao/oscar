@@ -28,7 +28,7 @@ def plan(config_path: Path, log_dir: Path) -> list[tuple[str, list[str]]]:
                       "--junitxml="+str(log_dir/"cv-npu.xml")]),
         ("prepare-rotations", [python, "-m", "tools.prepare_rotations", "--config", cfg]),
         ("service-probe", [python,"-m","tools.service_probe","--config",cfg,
-                           "--log-dir",str(log_dir/"service-probe"),"--output",str(log_dir/"service-probe.json")]),
+                           "--log-dir",str(log_dir/"service-probe"),"--output",str(log_dir/"service-probe-report.json")]),
     ]
 
 
@@ -96,7 +96,9 @@ def main() -> int:
             if args.only:
                 status["status"] = "selected_phase_passed"
             else:
-                evidence=log_dir/"service-probe.json"
+                # The phase ledger writes <name>.json; the probe report must
+                # live under its own name or the ledger clobbers it (#136).
+                evidence=log_dir/"service-probe-report.json"
                 probe=json.loads(evidence.read_text()) if evidence.is_file() else {}
                 if probe.get("status")!="passed" or probe.get("resource_release")!="passed":
                     error=("full-service evidence or owned NPU resource release is missing; formal serve prohibited "

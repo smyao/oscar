@@ -5,8 +5,9 @@
 报告与证据。`benchmarks.measure` 向已启动的本地服务生成测量请求；`benchmarks.compare`
 只审查报告，不启动模型。两者都不能用 HTTP 时间或历史日志冒充 NPU 设备证据。
 
-当前目标负载分两种：`bash scripts/probe_concurrency.sh` 发 4 条明确标注 **synthetic** 的
-20K/23K/27K/30K 请求；正式服务自带 `benchmarks.passive`，等用户原压测程序发送真实
+当前目标负载分两种：`bash scripts/probe_concurrency.sh` 在**一次命令**中自动先跑原生、再跑OSCAR，
+各发相同的4条明确标注 **synthetic** 的20K/23K/27K/30K、64输出token请求并自动比较；
+正式一键部署也包含该配对门。正式服务自带 `benchmarks.passive`，等用户原压测程序发送
 32 并发 20–30K 请求，仅采 `/metrics`、Running/Waiting 和同窗口 OSCAR trace。
 前者能记录客户端 SSE TTFT/TPOT/ITL/E2E、失败率，后者不能从服务端计数器重建这些
 请求级数据。被动报告的 `client_request_count`、`prompt_length_distribution` 与

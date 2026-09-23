@@ -1,6 +1,7 @@
-# Archive G21/G22/G31/#27/#50-52/#68/#72/#75/#94-95/#117: real subprocess
+# Archive G21/G22/G31/#27/#50-52/#68/#72/#75/#94-95/#117/#137-#139: real subprocess
 # fault injection around the service supervisor. Fake HTTP/telemetry/memory
-# exist only in these tests and never constitute NPU acceptance evidence.
+# exist only in these tests and never constitute NPU acceptance evidence;
+# synthetic mixed-length performance does not replace 16-token function gates.
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -99,18 +100,19 @@ class Handler(BaseHTTPRequestHandler):
         global count, prompt_total, generation_total, running
         data = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
         assert self.path == '/v1/completions'
-        assert data['min_tokens'] == 16 and data['ignore_eos']
+        tokens = data['min_tokens']
+        assert tokens == data['max_tokens'] and tokens in (16, 64) and data['ignore_eos']
         if mode == 'hang_long' and len(data['prompt']) > 128:
             time.sleep(30)
         with lock:
             count += 1
             prompt_total += len(data['prompt'])
-            generation_total += 16
+            generation_total += tokens
             if mode != 'no_trace':
                 trace = pathlib.Path(os.environ['OSCAR_TRACE_DIR']);trace.mkdir(exist_ok=True)
                 (trace/'worker-1.jsonl').write_text(''.join(json.dumps(x)+'\n' for x in records).replace('\\n', '\n'))
-        response = {'choices':[{'text':'Sixteen generated tokens from the test fixture.', 'finish_reason':'length'}],
-                    'usage': {'prompt_tokens':len(data['prompt'])+(1 if mode=='wrong_usage' else 0), 'completion_tokens':16}}
+        response = {'choices':[{'text':'Generated tokens from the test fixture.', 'finish_reason':'length'}],
+                    'usage': {'prompt_tokens':len(data['prompt'])+(1 if mode=='wrong_usage' else 0), 'completion_tokens':tokens}}
         if data.get('stream'):
             with lock:
                 running += 1
@@ -120,9 +122,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(b'data: '+raw+b'\n\n');self.wfile.flush()
             event({'choices':[{'index':0,'text':'test','token_ids':[100], 'finish_reason':None}]})
             time.sleep(.03)
-            event({'choices':[{'index':0,'text':'test','token_ids':list(range(101,115)), 'finish_reason':None}]})
+            event({'choices':[{'index':0,'text':'test','token_ids':list(range(101, 101 + tokens - 2)), 'finish_reason':None}]})
             time.sleep(.03)
-            event({'choices':[{'index':0,'text':'test','token_ids':[115], 'finish_reason':'length'}]})
+            event({'choices':[{'index':0,'text':'test','token_ids':[100 + tokens - 1], 'finish_reason':'length'}]})
             event({'choices':[], 'usage':response['usage']})
             event(b'[DONE]')
             with lock:
@@ -251,16 +253,6 @@ def test_parse_gauges_sums_named_series_and_rejects_bad_values():
         service_probe.parse_gauges("vllm:prompt_tokens_total nan\n", {"vllm:prompt_tokens_total"})
 
 
-def test_concurrency_ladder_validates_config_and_supports_disable(tmp_path):
-    server = SimpleNamespace(base_url="http://127.0.0.1:1")
-    with pytest.raises(ValueError):
-        service_probe.run_concurrency(server, {"concurrency_arms": [1, 200]}, Tokenizer(),
-                                      log_dir=tmp_path, deadline=time.monotonic() + 10)
-    assert service_probe.run_concurrency(server, {"concurrency_arms": []}, Tokenizer(),
-                                         log_dir=tmp_path,
-                                         deadline=time.monotonic() + 10)["status"] == "disabled"
-
-
 def test_synthetic_mixed_timeout_blocks_formal_service(tmp_path, monkeypatch):
     config, path = configured(tmp_path)
     from benchmarks import mixed
@@ -283,27 +275,17 @@ def test_synthetic_mixed_timeout_blocks_formal_service(tmp_path, monkeypatch):
     assert len(detail["sample"]["requests"]) == 4
 
 
-def test_ladder_mode_runs_only_the_concurrency_diagnostic(tmp_path):
-    config, path = configured(tmp_path)
-    report = service_probe.run_ladder_only(path, output=tmp_path / "ladder.json",
-        log_dir=tmp_path / "ladder", command=fake_command(tmp_path, config),
-        tokenizer_factory=lambda model: Tokenizer())
-    assert report["status"] == "measured"
-    assert [arm["concurrency"] for arm in report["ladder"]["arms"]] == [1, 4]
-    assert report["ladder"]["verdict"]["status"] in {"measured", "insufficient_arms"}
-    assert report["progress"]["status"] == "not_run"  # fixture writes no attention_progress
-    assert report["server"]["cleanup_complete"]
-    assert not group_exists(report["server"]["pid"])
-
-
 def test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up(tmp_path):
     config, path = configured(tmp_path)
-    report = service_probe.run_ladder_only(path, output=tmp_path / "synthetic.json",
+    report = service_probe.run_synthetic_only(path, output=tmp_path / "synthetic.json",
         log_dir=tmp_path / "synthetic", command=fake_command(tmp_path, config),
-        tokenizer_factory=lambda model: Tokenizer(), synthetic=True)
+        tokenizer_factory=lambda model: Tokenizer())
     assert report["status"] == "measured"
     assert report["synthetic_mixed"]["sample"]["completed_requests"] == 4
     assert report["synthetic_mixed"]["prompt_lengths"] == [20000,23000,27000,30000]
+    assert report["synthetic_mixed"]["pair_identity"]["output_tokens"] == 64
+    assert all(row["usage"]["completion_tokens"] == 64
+               for row in report["synthetic_mixed"]["sample"]["requests"])
     assert len(report["synthetic_mixed"]["window"]) == 3
     assert report["server"]["cleanup_complete"]
     assert not group_exists(report["server"]["pid"])
@@ -315,23 +297,6 @@ def test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up(tmp_path
     assert len(comparison["batches"][0]["requests"]) == 4
     assert all(row["oscar_over_native"]["ttft_ms"] == 1
                for row in comparison["batches"][0]["requests"])
-
-
-def test_ladder_verdict_scaling_ratios_and_hints():
-    arm1 = {"concurrency": 1, "completed": 1, "failed": 0, "unfinished": 0,
-            "prompt_tokens": 16384, "wall_seconds": 10.0,
-            "generation_throughput": {"tokens_per_second": 2.0}}
-    arm4 = {"concurrency": 4, "completed": 4, "failed": 0, "unfinished": 0,
-            "prompt_tokens": 16384, "wall_seconds": 40.0,
-            "generation_throughput": {"tokens_per_second": 2.2}}
-    verdict = service_probe.ladder_verdict([arm1, arm4], max_num_batched_tokens=16384)
-    comparison = verdict["comparisons"][0]
-    assert comparison["prompt_work_ratio"] == 4
-    assert comparison["min_prefill_steps"] == {"baseline": 1, "candidate": 4}
-    assert comparison["prefill_step_floor_ratio"] == comparison["makespan_scaling"] == 4
-    assert abs(comparison["generation_throughput_scaling"] - 1.1) < 1e-9
-    assert "not device time" in verdict["hint"]
-    assert service_probe.ladder_verdict([arm1])["status"] == "insufficient_arms"
 
 
 def test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch(tmp_path):

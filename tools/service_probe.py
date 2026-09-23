@@ -2,8 +2,11 @@
 # lifecycle, bounded real requests, per-rank route/graph evidence, always-final
 # logs and release accounting. #118/#122: only current owned-PID CANN plog evidence.
 # #129: per-request wall deadlines, active progress and visible cleanup stages.
-# #137-#139: concurrency diagnostics are workload-bound HTTP observations;
-# prefill capacity and incomplete arms must be explicit, never a device-time claim.
+# #137-#139: synthetic 20-30K concurrency diagnostics preserve workload
+# identity and distinguish client timing from NPU device time; the retired
+# 16K concurrency ladder is not a performance acceptance result.
+# #139: 64-token synthetic output separates decode SSE events while the
+# mandatory 16-token functional service gates remain intact.
 """Exercise the configured TP4/MTP service and preserve independent evidence."""
 from __future__ import annotations
 
@@ -528,193 +531,12 @@ def parse_gauges(text, names):
     return values
 
 
-LADDER_COUNTER_NAMES = ("vllm:prompt_tokens_total", "vllm:generation_tokens_total")
-LADDER_GAUGE_NAMES = ("vllm:num_requests_running", "vllm:num_requests_waiting")
-LADDER_SAMPLE_SECONDS = 5.0
+SYNTHETIC_COUNTER_NAMES = ("vllm:prompt_tokens_total", "vllm:generation_tokens_total")
 
-
-def _sample_loop(server, deadline, started, samples, stop):
-    while not stop.is_set():
-        try:
-            gauges = parse_gauges(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 5)),
-                                  LADDER_GAUGE_NAMES)
-            samples.append({"t": round(time.monotonic() - started, 3),
-                            "running": gauges.get("vllm:num_requests_running"),
-                            "waiting": gauges.get("vllm:num_requests_waiting")})
-        except (OSError, ServiceProbeError, TimeoutError) as error:
-            samples.append({"t": round(time.monotonic() - started, 3),
-                            "error": f"{type(error).__name__}: {error}"})
-        stop.wait(LADDER_SAMPLE_SECONDS)
-
-
-def _run_arm(server, config, tokenizer, length, concurrency, *, log_dir, deadline, label_prefix):
-    """One ladder arm: `concurrency` identical-length requests at once."""
-    budget = _remaining(deadline, _positive_time(config, "concurrency_arm_timeout_seconds", 300))
-    request_limit = _positive_time(config, "service_request_timeout_seconds", 300)
-    prompt = exact_prompt(tokenizer, length)
-    counters_before = parse_gauges(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 10)),
-                                   LADDER_COUNTER_NAMES)
-    mtp_before = parse_mtp_metrics(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 10)))
-    samples = []
-    stop = threading.Event()
-    started = time.monotonic()
-    started_wall = time.time()
-    thread = threading.Thread(target=_sample_loop, args=(server, deadline, started, samples, stop),
-                              name=f"oscar-ladder-sampler-{concurrency}", daemon=True)
-    _terminal(f"[oscar] CONCURRENCY_ARM start K={concurrency} prompt={length} budget={budget:.0f}s")
-    thread.start()
-    pool = ThreadPoolExecutor(max_workers=concurrency)
-    futures = {}
-    records = []
-    try:
-        for i in range(concurrency):
-            label = f"{label_prefix}-{i}"
-            future = pool.submit(completion, server, config, tokenizer, length,
-                                 label=label, timeout=min(budget, _remaining(deadline, request_limit)),
-                                 prompt_ids=prompt, quiet=True)
-            futures[future] = label
-        try:
-            for future in as_completed(futures, timeout=budget):
-                try:
-                    records.append(future.result())
-                except Exception as error:
-                    # A request's own deadline is one failed record; only the arm
-                    # budget timeout escapes to the outer handler.
-                    records.append({"label": futures[future], "status": "failed",
-                                    "error": f"{type(error).__name__}: {error}"})
-        except TimeoutError:
-            pending = sum(1 for future in futures if not future.done())
-            _terminal(f"[oscar] CONCURRENCY_ARM budget {budget:.0f}s exhausted with {pending} requests unfinished")
-    finally:
-        stop.set()
-        thread.join(timeout=2)
-        # Every client has a wall deadline at or before the arm budget. Drain
-        # all futures so the following arm cannot inherit live requests.
-        pool.shutdown(wait=True, cancel_futures=False)
-        recorded = {record["label"] for record in records}
-        for future, label in futures.items():
-            if label in recorded:
-                continue
-            try:
-                records.append(future.result())
-            except Exception as error:
-                records.append({"label": label, "status": "failed",
-                                "error": f"{type(error).__name__}: {error}"})
-    wall = time.monotonic() - started
-    completed = [record for record in records if record.get("status") == "passed"]
-    failed = [record for record in records if record.get("status") == "failed"]
-    counters_after = parse_gauges(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 10)),
-                                  LADDER_COUNTER_NAMES)
-    mtp_after = parse_mtp_metrics(_http(server.base_url + "/metrics", timeout=_remaining(deadline, 10)))
-    rates = {}
-    for name in LADDER_COUNTER_NAMES:
-        if name in counters_before and name in counters_after:
-            delta = counters_after[name] - counters_before[name]
-            rates[name] = {"delta_tokens": delta, "tokens_per_second": delta / wall if wall > 0 else None}
-        else:
-            rates[name] = None
-    latencies = sorted(record["elapsed_seconds"] for record in completed)
-    arm = {"concurrency": concurrency, "prompt_tokens": length, "wall_seconds": wall,
-           "completed": len(completed), "failed": len(failed),
-           "unfinished": concurrency - len(records),
-           "prompt_throughput": rates["vllm:prompt_tokens_total"],
-           "generation_throughput": rates["vllm:generation_tokens_total"],
-           "latency_seconds": None if not latencies else {"min": latencies[0],
-               "p50": latencies[len(latencies) // 2], "max": latencies[-1]},
-           "mtp": evaluate_mtp_metrics(mtp_before, mtp_after),
-           "samples": samples, "requests": records,
-           "window": [started_wall, time.time(), f"K={concurrency}"]}
-    gen = rates["vllm:generation_tokens_total"]
-    prompt_rate = rates["vllm:prompt_tokens_total"]
-    _terminal(f"[oscar] CONCURRENCY_ARM done K={concurrency} wall={wall:.1f}s "
-              f"completed={len(completed)}/{concurrency} failed={len(failed)} "
-              f"unfinished={concurrency - len(records)} "
-              f"prompt_tps={None if prompt_rate is None else round(prompt_rate['tokens_per_second'], 1)} "
-              f"gen_tps={None if gen is None else round(gen['tokens_per_second'], 1)}")
-    return arm
-
-
-def ladder_verdict(arms, *, max_num_batched_tokens=None):
-    """Report capacity-normalized scaling, without inferring a kernel cause.
-
-    Archive #131/#138/#139: K identical long prompts contain K times the
-    prefill work. With a 16K batch-token cap, K=4 at 16K requires at least
-    four scheduler steps. A roughly 4x makespan is therefore expected even
-    when each step is perfectly efficient.
-    """
-    usable = [arm for arm in arms if arm["completed"] == arm["concurrency"]
-              and arm["failed"] == 0 and arm["unfinished"] == 0
-              and arm["generation_throughput"]]
-    if len(usable) < 2:
-        return {"status": "insufficient_arms", "usable_arms": len(usable)}
-    base = usable[0]
-    base_gen = base["generation_throughput"]["tokens_per_second"]
-    if not base_gen or base_gen <= 0 or base["wall_seconds"] <= 0:
-        return {"status": "insufficient_baseline", "baseline": base["concurrency"]}
-    comparisons = []
-    for arm in usable[1:]:
-        gen = arm["generation_throughput"]["tokens_per_second"]
-        base_tokens = base.get("prompt_tokens")
-        arm_tokens = arm.get("prompt_tokens")
-        capacity = max_num_batched_tokens
-        if (type(capacity) is int and capacity > 0 and type(base_tokens) is int and base_tokens > 0
-                and type(arm_tokens) is int and arm_tokens > 0):
-            base_floor = math.ceil(base["concurrency"] * base_tokens / capacity)
-            arm_floor = math.ceil(arm["concurrency"] * arm_tokens / capacity)
-            prefill_step_floor_ratio = arm_floor / base_floor
-        else:
-            base_floor = arm_floor = prefill_step_floor_ratio = None
-        comparisons.append({
-            "concurrency": arm["concurrency"],
-            "prompt_work_ratio": arm["concurrency"] * arm_tokens / (base["concurrency"] * base_tokens)
-                if type(base_tokens) is int and base_tokens > 0 and type(arm_tokens) is int else None,
-            "min_prefill_steps": {"baseline": base_floor, "candidate": arm_floor},
-            "prefill_step_floor_ratio": prefill_step_floor_ratio,
-            "generation_throughput_scaling": None if not gen else gen / base_gen,
-            "makespan_scaling": arm["wall_seconds"] / base["wall_seconds"],
-        })
-    hint = ("Capacity lower bounds describe token work, not device time. "
-            "Compare paired native/OSCAR request timing and synchronized device phases before attributing a kernel cause.")
-    return {"status": "measured", "baseline": base["concurrency"], "comparisons": comparisons,
-            "hint": hint}
-
-
-def run_concurrency(server, config, tokenizer, *, log_dir, deadline):
-    """Compare single- vs multi-concurrency arms; report only, never a gate.
-
-    Archive #137/#138: arms share one managed server and identical prompt
-    length, so the suspects separate: scheduling from running/waiting ramp
-    samples, operator cost from native token counters per arm, and memory
-    contention hypotheses from same-scope device timing when available. Host
-    progress heartbeats cannot by themselves measure per-step device cost. Unfinished
-    requests are recorded, never hidden; failures here never mask probe gates.
-    """
-    arms_value = config.get("concurrency_arms", [1, 4])
-    if isinstance(arms_value, str):
-        arms_value = [int(x) for x in arms_value.split(",") if x.strip()]
-    if not arms_value:
-        return {"status": "disabled", "scope": "concurrency_arms=[] disables the ladder"}
-    length = int(config.get("concurrency_prompt_tokens", 16384))
-    if any(type(x) is not int or x < 1 or x > 128 for x in arms_value) or length < 1:
-        raise ValueError("concurrency_arms must be 1..128 integers and prompt tokens positive")
-    arms = []
-    for k in arms_value:
-        arm = _run_arm(server, config, tokenizer, length, k, log_dir=log_dir, deadline=deadline,
-                       label_prefix=f"conc{k}")
-        arms.append(arm)
-        atomic_json(log_dir / "concurrency.json", {"arms": arms})
-    verdict = ladder_verdict(arms, max_num_batched_tokens=config["max_num_batched_tokens"])
-    complete = all(arm["completed"] == arm["concurrency"] and arm["failed"] == 0
-                   and arm["unfinished"] == 0 for arm in arms)
-    report = {"status": "measured" if complete else "failed",
-              "scope": "single- vs multi-concurrency comparison; no acceptance gate (E06 pending)",
-              "prompt_tokens": length, "arms": arms, "verdict": verdict}
-    atomic_json(log_dir / "concurrency.json", report)
-    _terminal(f"[oscar] CONCURRENCY_VERDICT {json.dumps(verdict, ensure_ascii=False, sort_keys=True)}")
-    return report
 
 
 SYNTHETIC_MIXED_LENGTHS = (20000, 23000, 27000, 30000)
+SYNTHETIC_MIXED_OUTPUT_TOKENS = 64
 
 
 def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline):
@@ -729,7 +551,7 @@ def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline):
     from benchmarks.measure import metrics_delta, metrics_snapshot
 
     lengths = SYNTHETIC_MIXED_LENGTHS
-    if max(lengths) + MIN_OUTPUT_TOKENS > config["max_model_len"]:
+    if max(lengths) + SYNTHETIC_MIXED_OUTPUT_TOKENS > config["max_model_len"]:
         raise ServiceProbeError("synthetic mixed prompts exceed target max_model_len")
     if config["max_num_seqs"] < len(lengths):
         raise ServiceProbeError("synthetic mixed concurrency exceeds max_num_seqs")
@@ -742,7 +564,7 @@ def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline):
                  "prompt_sha256": canonical_sha256(row["token_ids"])} for row in rows]
     pair_identity = {"target_config_sha256": canonical_sha256(config),
                      "model_fingerprint": model_fingerprint, "manifest": manifest,
-                     "output_tokens": MIN_OUTPUT_TOKENS,
+                     "output_tokens": SYNTHETIC_MIXED_OUTPUT_TOKENS,
                      "arrival": "simultaneous_barrier",
                      "cache_salt": "distinct deterministic per request"}
     before = metrics_snapshot(server.base_url, timeout=_remaining(deadline, 10),
@@ -750,7 +572,7 @@ def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline):
     _terminal(f"[oscar] SYNTHETIC_MIXED start lengths={list(lengths)} K=4 budget={budget:.0f}s")
     window_start = time.time()
     sample = run_batch(server.base_url, rows, model=config["served_model_name"],
-                       output_tokens=MIN_OUTPUT_TOKENS, timeout=budget,
+                       output_tokens=SYNTHETIC_MIXED_OUTPUT_TOKENS, timeout=budget,
                        repeat=0,
                        sample_interval=_positive_time(config, "synthetic_sample_interval_seconds", 1.0))
     window_end = time.time()
@@ -760,12 +582,12 @@ def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline):
              else {"status": "failed", "error": "phase deadline expired before final /metrics snapshot"})
     counter_check = {"status": "failed", "reason": "required native token counters missing or nonmonotonic"}
     if before.get("status") == "observed" and after.get("status") == "observed":
-        first = parse_gauges(Path(before["path"]).read_text(), LADDER_COUNTER_NAMES)
-        last = parse_gauges(Path(after["path"]).read_text(), LADDER_COUNTER_NAMES)
+        first = parse_gauges(Path(before["path"]).read_text(), SYNTHETIC_COUNTER_NAMES)
+        last = parse_gauges(Path(after["path"]).read_text(), SYNTHETIC_COUNTER_NAMES)
         if all(name in first and name in last and last[name] >= first[name]
-               for name in LADDER_COUNTER_NAMES):
+               for name in SYNTHETIC_COUNTER_NAMES):
             counter_check = {"status": "passed", "delta": {
-                name: last[name] - first[name] for name in LADDER_COUNTER_NAMES}}
+                name: last[name] - first[name] for name in SYNTHETIC_COUNTER_NAMES}}
     valid_gauges = sum("running" in observation and "waiting" in observation
                        for observation in sample["running_waiting_samples"])
     busy_gauges = sum(observation.get("running", 0) + observation.get("waiting", 0) > 0
@@ -1025,20 +847,19 @@ def _progress_summary(trace_dir: Path, log_dir: Path, windows_path: Path, deadli
             "returncode": result.returncode}
 
 
-def run_ladder_only(config_path, *, output, log_dir, command=None, tokenizer_factory=None,
-                    synthetic=False, native=False):
-    """Single-purpose diagnostic: no install, no functional gates, no acceptance.
+def run_synthetic_only(config_path, *, output, log_dir, command=None, tokenizer_factory=None,
+                       native=False):
+    """Run one bounded mixed-length batch on an owned service.
 
-    Archive #138: the single-purpose fast path for the multi-concurrency
-    question. Bounded cleanup still applies to the owned server; there is no
-    acceptance claim and no resource-release gate here.
+    Archive #137-#139: this dedicated diagnostic supports paired native and
+    OSCAR observations, with no standalone performance acceptance claim.
     """
     config_path, output, log_dir = Path(config_path).resolve(), Path(output).resolve(), Path(log_dir).resolve()
     log_dir.mkdir(parents=True, exist_ok=True)
     started = time.monotonic()
-    mode = "synthetic_mixed" if synthetic else "ladder"
+    mode = "synthetic_mixed"
     report = {"status": "running", "mode": mode, "config": str(config_path),
-              "variant": "native" if native else "oscar", "ladder": "not_run",
+              "variant": "native" if native else "oscar",
               "synthetic_mixed": "not_run", "progress": "not_run", "server": {},
               "performance_acceptance": "not_run"}
     atomic_json(output, report)
@@ -1052,7 +873,7 @@ def run_ladder_only(config_path, *, output, log_dir, command=None, tokenizer_fac
         config = json.loads(config_path.read_text())
         target_env(config)  # Fail before any NPU touch when selection is absent.
         report["devices"] = config["devices"]
-        duration = _positive_time(config, "ladder_timeout_seconds", 1800)
+        duration = _positive_time(config, "synthetic_timeout_seconds", 1800)
         deadline = started + duration
         for sig in (signal.SIGTERM, signal.SIGINT):
             old_signals[sig] = signal.signal(sig, interrupt)
@@ -1062,15 +883,10 @@ def run_ladder_only(config_path, *, output, log_dir, command=None, tokenizer_fac
             _positive_time(config, "service_startup_timeout_seconds", duration))
         with managed_server(managed_config, config_path, log_dir=log_dir,
                             lifecycle=report["server"], command=command, native=native) as server:
-            if synthetic:
-                report["synthetic_mixed"] = run_synthetic_mixed(server, config, tokenizer,
-                    log_dir=log_dir, deadline=deadline)
-            else:
-                report["ladder"] = run_concurrency(server, config, tokenizer,
-                                                   log_dir=log_dir, deadline=deadline)
+            report["synthetic_mixed"] = run_synthetic_mixed(server, config, tokenizer,
+                log_dir=log_dir, deadline=deadline)
             atomic_json(output, report)
-            windows = ([report["synthetic_mixed"]["window"]] if synthetic else
-                       [arm["window"] for arm in report["ladder"].get("arms", []) if "window" in arm])
+            windows = [report["synthetic_mixed"]["window"]]
             if not native:
                 windows_path = log_dir / "arm-windows.json"
                 atomic_json(windows_path, windows)
@@ -1078,8 +894,8 @@ def run_ladder_only(config_path, *, output, log_dir, command=None, tokenizer_fac
                                                        log_dir, windows_path, deadline)
             else:
                 report["progress"] = {"status": "not_applicable", "reason": "native has no OSCAR trace"}
-        selected = report["synthetic_mixed"] if synthetic else report["ladder"]
-        report["status"] = "measured" if selected.get("status") == "measured" else "failed"
+        report["status"] = ("measured" if report["synthetic_mixed"].get("status") == "measured"
+                            else "failed")
     except KeyboardInterrupt as error:
         report.update(status="interrupted", error=str(error))
     except Exception as error:
@@ -1101,21 +917,17 @@ def main():
     parser.add_argument("--output", type=Path, default=ROOT / "reports/service_probe.json")
     parser.add_argument("--log-dir", type=Path, default=ROOT / "logs/service-probe")
     parser.add_argument("--serve", action="store_true", help="keep the validated owned service running until interrupted")
-    parser.add_argument("--ladder", action="store_true",
-                        help="legacy 16K concurrency ladder diagnostic; no acceptance")
     parser.add_argument("--synthetic", action="store_true",
                         help="run only four synthetic 20/23/27/30K concurrent streaming requests")
     parser.add_argument("--native", action="store_true",
-                        help="explicit native baseline for --ladder/--synthetic; never an OSCAR fallback")
+                        help="explicit native baseline for --synthetic; never an OSCAR fallback")
     args = parser.parse_args()
-    if args.ladder or args.synthetic:
-        if args.ladder and args.synthetic:
-            parser.error("select only one of --ladder and --synthetic")
-        report = run_ladder_only(args.config, output=args.output, log_dir=args.log_dir,
-                                 synthetic=args.synthetic, native=args.native)
+    if args.synthetic:
+        report = run_synthetic_only(args.config, output=args.output, log_dir=args.log_dir,
+                                    native=args.native)
         return 0 if report["status"] == "measured" else 130 if report["status"] == "interrupted" else 1
     if args.native:
-        parser.error("--native requires --ladder or --synthetic")
+        parser.error("--native requires --synthetic")
     report = run_service(args.config, output=args.output, log_dir=args.log_dir, serve=args.serve)
     return 0 if report["status"] in {"passed", "stopped"} else 130 if report["status"] == "interrupted" else 1
 

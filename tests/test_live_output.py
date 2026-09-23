@@ -110,6 +110,28 @@ def test_spawn_error_is_visible_and_logged(tmp_path, capsys):
     assert "EXEC_ERROR phase=missing" in Path(result.log).read_text()
 
 
+def test_compact_terminal_keeps_summary_and_traceback_while_log_stays_complete(
+    tmp_path, capsys
+):
+    # Archive #94/#95/#125: concise terminal output must still expose the
+    # actual failure, while the durable phase log preserves routine chatter.
+    child = ("print('INFO routine startup')\n"
+             "print('[oscar] PERF_NATIVE complete=4/4 ttft_p50_ms=10')\n"
+             "raise RuntimeError('device phase failed')\n")
+    result = phase.run_phase("compact", [sys.executable, "-c", child],
+                             cwd=ROOT, log_dir=tmp_path, timeout=5,
+                             env={**os.environ, "OSCAR_TERMINAL_LOG_MODE": "compact"})
+    terminal = capsys.readouterr().out
+    disk = Path(result.log).read_text()
+    assert result.returncode != 0
+    assert "INFO routine startup" not in terminal
+    assert "[oscar] PERF_NATIVE complete=4/4" in terminal
+    assert "Traceback (most recent call last)" in terminal
+    assert "RuntimeError: device phase failed" in terminal
+    assert "INFO routine startup" in disk
+    assert "RuntimeError: device phase failed" in disk
+
+
 def test_cleanup_error_is_visible_without_erasing_original_exit_code(monkeypatch, tmp_path, capsys):
     def failed_cleanup(process, grace):
         assert process.poll() == 7

@@ -57,17 +57,9 @@ bash scripts/validate_vm.sh
 
 此命令在 Lima `oscar` VM 的独立 `/home/sunao2000.linux/gpt_new_oscar` 目录编译、链接，并运行同一份 AscendC kernel 的官方 CPU 调试器。首次配置可加 `--bootstrap`，仅安装该目录独立虚拟环境的依赖；不访问 VM 中旧项目代码。报告在 [reports/vm/validation.json](reports/vm/validation.json)，最新一轮共61个算子用例通过，另含 MTP/padding 元数据检查。
 
-性能诊断：`bash scripts/probe_concurrency.sh` 只发 4 条 **synthetic** 的 20K/23K/27K/30K streaming 请求，报告逐请求 TTFT/TPOT/E2E；`--native` 显式选择原生基线。正式一键部署在功能探针后执行同一 synthetic 诊断，失败即阻断正式服务。正式服务就绪后等待 `OBSERVER_READY`，再用用户自己的压测程序发送 32 并发 20–30K 请求；被动报告保存同一窗口的 `/metrics` 与 OSCAR 心跳，不生成数据集或请求。被动观察不能从服务端指标还原客户端每条请求的 TTFT/ITL、实际输入长度或失败率，需配对用户原压测结果。详见[服务探针](docs/service_probe.md)。
+一键性能诊断已并入 `git pull --ff-only && bash scripts/install_probe_serve.sh`：它自动依次启动原生和 OSCAR 服务，对同一组 **synthetic** 的 20K/23K/27K/30K 四路并发、每路64输出 token 测量 TTFT/TPOT/E2E 与吞吐，确认两轮资源释放，再按冻结的速度比值决定是否进入正式服务。终端仅打印少量阶段/资源状态、故障与最多8行配对 `PERF_*` 摘要；完整输出仍在本轮 `logs/`。只需把这些摘要或失败行直接贴回。`bash scripts/probe_concurrency.sh` 是跳过安装/编译/功能门的单命令快路径，也自动跑原生→OSCAR两轮，无需第二条 `--native` 命令。正式服务就绪后等待 `OBSERVER_READY`，再用自己的压测程序发送32并发长请求；被动报告只观测该流量，不生成数据集或请求。单批 synthetic 速度门不是全工况性能验收。详见[服务探针](docs/service_probe.md)。
 
-显式原生基线与测量：
-
-```bash
-python3 -m tools.target_cli --native --config configs/target.json
-python3 -m benchmarks.measure --help
-python3 -m benchmarks.compare --help
-```
-
-原生基线仅由 `--native` 明确选择，绝不由 OSCAR 失败自动触发。HTTP测量不伪造设备时间或MTP query长度；硬件、数值、显存、profiler证据齐全后才能做最终验收。[性能协议](benchmarks/README.md)与[分相位profiling](docs/profiling.md)给出数据格式和命令。
+一键配对中的原生阶段只用于明确的基线测量，OSCAR失败绝不会切换到原生服务。HTTP测量不伪造设备时间或MTP query长度；硬件、数值、显存、profiler证据齐全后才能做最终验收。[性能协议](benchmarks/README.md)与[分相位profiling](docs/profiling.md)给出数据格式和命令。
 
 算子采用独立 `ascendc_library` + 同流 direct-launch 的原生已有工程方式；交付两个共享库和带签名manifest，不安装custom OPP vendor。这一实现方式的差异见[算子设计](docs/ascendc_design.md)。Python wheel本身不含NPU二进制，目标入口首次使用本机CANN编译。扩展保留相邻 `lib` 的运行搜索路径，loader 使用 manifest 中校验过的 kernel 绝对路径加载，不要求手工设置本项目的 `LD_LIBRARY_PATH`（档案 #125）。后续源码、工具链、参数签名及产物指纹一致时复用已有产物，跳过 CMake 配置和编译；有变化或产物损坏时重新构建。
 

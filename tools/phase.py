@@ -7,6 +7,7 @@ from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
+import re
 import signal
 import subprocess
 import sys
@@ -55,34 +56,84 @@ def terminal_line(line: str, *, stderr: bool = False) -> None:
         view = view[written:]
 
 
+_COMPACT_ALERT = re.compile(
+    r"\b(?:ERROR|FATAL|FAILED|RuntimeError|AssertionError|EngineDeadError|"
+    r"Segfault|CLEANUP_ERROR|EXEC_ERROR|TIMEOUT)\b|fatal error:|^E\s+",
+    re.IGNORECASE,
+)
+_TRACEBACK_END = re.compile(r"\b[A-Za-z_]*(?:Error|Exception):|\bKeyboardInterrupt\b")
+
+
+def _compact_should_mirror(line: str, state: dict[str, int]) -> bool:
+    """Keep a small terminal stream while surfacing failures immediately.
+
+    Archive #94/#95/#125: full tracebacks remain in the phase log, and a
+    traceback is mirrored through its terminal exception line in real time.
+    Normal INFO/build chatter is saved to disk without flooding the terminal.
+    """
+    if line.startswith(("START phase=", "START owned_service", "STARTUP_WAIT ",
+                        "RESULT ", "SERVICE_RESULT ")):
+        return False
+    if "Traceback (most recent call last)" in line or "Exception in thread" in line:
+        state["traceback_left"] = 96
+        return True
+    if state.get("traceback_left", 0) > 0:
+        state["traceback_left"] -= 1
+        if _TRACEBACK_END.search(line):
+            state["traceback_left"] = 0
+        return True
+    if line.startswith(("[oscar] PERF_", "[oscar] FAILED", "[oscar] REQUEST_ERROR",
+                        "[oscar] SYNTHETIC_MIXED done", "[oscar-observe] OBSERVER_READY")):
+        return True
+    return bool(_COMPACT_ALERT.search(line))
+
+
 @contextmanager
-def live_log(path: Path):
-    """Keep a durable child log while mirroring new bytes to the terminal.
+def live_log(path: Path, *, mode: str | None = None):
+    """Keep a durable child log and mirror full or compact terminal output.
 
     Children inherit a regular file, never a pipe that can fill during cleanup
     or while the service supervisor is making a blocking HTTP request. A reader
-    with its own file offset mirrors chunks, including incomplete lines. Nested
-    phases naturally forward their output through the same outer log.
+    with its own file offset mirrors chunks. Nested phases naturally forward
+    their output through the same outer log. Compact mode mirrors critical
+    lines and tracebacks as they arrive; the phase log remains complete.
     """
     stopped = threading.Event()
     failures = []
     terminal = sys.stdout
+    mode = os.environ.get("OSCAR_TERMINAL_LOG_MODE", "full") if mode is None else mode
+    if mode not in {"full", "compact"}:
+        raise ValueError(f"invalid OSCAR_TERMINAL_LOG_MODE={mode!r}")
     with path.open("w", buffering=1, encoding="utf-8") as stream, path.open("rb") as reader:
         def mirror():
             decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+            pending = ""
+            state: dict[str, int] = {}
+
+            def forward(decoded: str, *, final: bool = False) -> None:
+                nonlocal pending
+                if mode == "full":
+                    if decoded:
+                        terminal.write(decoded)
+                        terminal.flush()
+                    return
+                pending += decoded
+                while "\n" in pending:
+                    line, pending = pending.split("\n", 1)
+                    if _compact_should_mirror(line, state):
+                        terminal_line(line)
+                if final and pending:
+                    if _compact_should_mirror(pending, state):
+                        terminal_line(pending)
+                    pending = ""
+
             try:
                 while True:
                     chunk = reader.read(65536)
                     if chunk:
-                        text = decoder.decode(chunk)
-                        if text:
-                            terminal.write(text)
-                            terminal.flush()
+                        forward(decoder.decode(chunk))
                     elif stopped.is_set():
-                        tail = decoder.decode(b"", final=True)
-                        if tail:
-                            terminal.write(tail)
-                            terminal.flush()
+                        forward(decoder.decode(b"", final=True), final=True)
                         return
                     else:
                         stopped.wait(0.05)
@@ -185,7 +236,7 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
 
     environment = dict(os.environ if env is None else env)
     environment["PYTHONUNBUFFERED"] = "1"
-    with live_log(logfile) as stream:
+    with live_log(logfile, mode=environment.get("OSCAR_TERMINAL_LOG_MODE")) as stream:
         stream.write(f"START phase={name} cwd={cwd.resolve()} command={json.dumps(command)}\n")
         try:
             for sig in (signal.SIGTERM, signal.SIGINT):

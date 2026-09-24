@@ -1,0 +1,301 @@
+{
+  "backend": "official_ascendc_cpu_debug",
+  "status": "passed",
+  "cases": [
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_q1_c17",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/000-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_q1_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/001-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_q6_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/002-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/003-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_q4_c0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/004-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d128_q4_c129",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/005-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d256_q4_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/006-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_q17_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/007-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_q4_c65_hk2",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/008-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_q2_c320",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/009-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d128_q3_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/010-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_q65_c17",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/011-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_q129_c0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/012-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_q33_c511_hk2",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/013-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d128_q17_c511_hk2",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/014-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d256_q17_c511_hk2",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/015-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d256_q21_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/016-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d256_q22_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/017-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d128_q43_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/018-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d128_q11_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/019-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d256_q17_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/020-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_q4_c65_s2",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/021-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_q4_c65_s20",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/022-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d256_q4_c511_s20",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/023-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_q4_c0_s20",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/024-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d128_q4_c511_s7",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/025-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "reports/vm-cv-ar146/goldens/d64_mixed_q1q4",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/026-attention_cv.log"
+    },
+    {
+      "op": "bad_tag",
+      "path": "reports/vm-cv-ar146/goldens/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/027-bad_tag.log"
+    },
+    {
+      "op": "nan_query",
+      "path": "reports/vm-cv-ar146/goldens/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/028-nan_query.log"
+    },
+    {
+      "op": "bad_meta",
+      "path": "reports/vm-cv-ar146/goldens/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/029-bad_meta.log"
+    },
+    {
+      "op": "nan_value",
+      "path": "reports/vm-cv-ar146/goldens/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/030-nan_value.log"
+    },
+    {
+      "op": "finite_row_sum",
+      "path": "reports/vm-cv-ar146/goldens/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/031-finite_row_sum.log"
+    },
+    {
+      "op": "overflow_row_sum",
+      "path": "reports/vm-cv-ar146/goldens/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/032-overflow_row_sum.log"
+    },
+    {
+      "op": "poison_workspace",
+      "path": "reports/vm-cv-ar146/goldens/d64_q1_c17",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/033-poison_workspace.log"
+    },
+    {
+      "op": "poison_workspace",
+      "path": "reports/vm-cv-ar146/goldens/d256_q4_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/034-poison_workspace.log"
+    },
+    {
+      "op": "poison_workspace",
+      "path": "reports/vm-cv-ar146/goldens/d256_q21_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/035-poison_workspace.log"
+    },
+    {
+      "op": "poison_workspace",
+      "path": "reports/vm-cv-ar146/goldens/d64_q6_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/036-poison_workspace.log"
+    },
+    {
+      "op": "poison_workspace",
+      "path": "reports/vm-cv-ar146/goldens/d128_q11_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/037-poison_workspace.log"
+    },
+    {
+      "op": "poison_workspace",
+      "path": "reports/vm-cv-ar146/goldens/d256_q17_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/038-poison_workspace.log"
+    },
+    {
+      "op": "profile",
+      "path": "reports/vm-cv-ar146/goldens/d64_q6_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/039-profile.log"
+    },
+    {
+      "op": "profile",
+      "path": "reports/vm-cv-ar146/goldens/d256_q17_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/040-profile.log"
+    },
+    {
+      "op": "tasks_causal",
+      "path": "reports/vm-cv-ar146/goldens",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-ar146-cv/041-tasks_causal.log"
+    }
+  ],
+  "npu_acceptance": "not_run"
+}

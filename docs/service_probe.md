@@ -72,4 +72,10 @@ git pull --ff-only && bash scripts/probe_concurrency.sh
 
 ## 本地验证范围
 
+### #146 核内诊断与当前旧版对照
+
+仍使用`git pull --ff-only && bash scripts/probe_concurrency.sh`。算子A/B的旧版固定为本项目fe0e925（M128/KV256）；旧产物必须通过原有签名及源码校验，不满足则明确not_comparable。候选正常2次预热、5次NPU Event测量后，再单独调用一次诊断内核；profile不进入中位数或速度判据。随后继续原生/OSCAR的20/23/27/30K、K4、64输出，以及原有失败与释放门。
+
+终端增加每个算子场景至多3行`PERF_CV_PROFILE`，按history/window/current列出计数和阶段最大raw SYS_CNT ticks、诊断外层Event毫秒及相对正常中位数的扰动比。每个字段的最大值可能来自不同core，不能将它们相加为wall；mask/finite与V2是softmax子区间，不能重复相加。逐core原始数据、正常/profile差值、冻结oracle、CPU fixture构造耗时全部落盘。profile数值或证据不完整仍失败；生产内核不启用核内计时和诊断同步。
+
 `tests/test_service_workflow.py` 启动真实的测试 HTTP 子进程，注入错误 token 计数、无路由证据、无 MTP、早退、启动挂起、SIGTERM、SIGINT 和显存未回收，验证 supervisor 的故障处理。测试中的 HTTP、trace 和资源数据明确是 fixture，不能作为任何 NPU、TP4、图、MTP 或性能验收记录。没有 NPU 的 VM 只能验证这些流程与 CANN CPU debugger，不会产出真实服务通过。

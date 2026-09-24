@@ -28484,3 +28484,27 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **回归与一键边界**：保留失败的冻结oracle病例，新增D64/Q6、D128/Q11、D256/Q17在context511下重复3次重填NaN工作区的NPU回归，覆盖前lane第二块、后lane首块及第二块；失败先打印最多8个token/head/segment位置与分段坏行数。CPU导出同形poison边界。本地CANN/CPU结果单独记账，目标复验仍须同一条`git pull --ff-only && bash scripts/probe_concurrency.sh`，依次经过数值、算子热点、原生/OSCAR长请求K4和资源释放门。任何门失败仍停止，完整性能流程未被缩成数值测试。
 
 **本机复验结果**：同一最终kernel SHA `febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4` 通过CANN ascend910b4编译；官方CPU-debug 38/38通过（含新增3个poison边界），相关主机24 passed/28 NPU skipped。证据`reports/cv_score_handoff_validation.json`和`reports/cv_score_handoff_cpu_debug.json`。修订后的目标NPU/图/性能尚未执行，不把这些本机结果写成真机已修好。
+
+## [146] 真机条目（gpt_new_oscar_kimi，2026-09-24 用户回传）· K4已降至29.2s，批量分数检查与核内诊断
+
+**原始证据**：`reports/target_k4_29s_performance.txt`完整保留本次附件，运行目录`paired-concurrency-20260924T050459.813467Z`。构建和CV数值门复用了签名`8b73d38e9509`的已有证据，不能写成此次重新执行全部数值门。current/FIA混合源门fresh通过；候选热点main 204.427ms、decode32 15.296ms且各自oracle通过。旧产物已不再匹配5288b2e的csrc，故A/B明确not_comparable，不把不同形状的历史计时冒充同输入加速比。
+
+| 同轮合成K4，20/23/27/30K，64输出 | 原生 | OSCAR |
+|---|---:|---:|
+| 原始无插桩批次墙钟 | 14.7s | 29.2s |
+| TTFT p50 / p95 | 9838.37 / 13475.64ms | 15294.38 / 27207.83ms |
+| TPOT p50 / p95 | 72.81 / 158.74ms | 213.89 / 356.61ms |
+| prompt / generation吞吐 | 6780.0 / 17.4/s | 3429.3 / 8.8/s |
+| MTP接受率 / 平均接受长度 | .980 / 3.94 | .886 / 3.66 |
+
+双方4/4完成，无请求失败/超时，资源释放passed；性能门仍failed/rc2。相对#144的46.2s，OSCAR本轮墙钟下降约36.8%，仍约为本轮原生两倍。两类吞吐共享墙钟分母，TPOT包含长prefill混合调度的等待，不能当纯decode kernel速度。MTP平均长度变化只对应约7.7%的同成本验证轮数差，不能单独解释2倍墙钟。日志中的EngineDeadError出现在诊断摘要之后，最终释放passed；此节选没有shutdown起点，不能仅凭报错单独认定启动/请求失败，也不能无条件证明它一定无害。
+
+**独立同步诊断**：4/4 rank、5885事件；关键rank CV总计12079.4ms（前轮26629ms），prefill CV10651.8ms、draft CV1430.1ms、整图1257.4ms。store1077.7ms、rotate852.2ms、current573.1ms、merge523.5ms。最大prefill样本形状已变为N16384/R4/maxQ8900/maxSeq30000，p50 155.30ms；不能与前轮N11504/maxQ11492的493.71ms直接作同形比较。这些诊断区间不与原始29.2s直接相加/相减。
+
+**先确认代码，再评估收益**：当前M128代码对每个活跃score行调用基础`ReduceSum`；CANN9.1 A2实现内部包含V_S、标量get_acc_val、S_V、S_MTE3。固定hotshape主请求在source0有39993个KV单元、5032110个行检查。真正需要遮罩的只有549个history单元（69024行）及窗口约69306行，因此逐元素mask虽慢，不能单独当完整历史瓶颈。扩大到M256超出D256可用UB约34816B，M512 accumulator自身就超限；spill增加每层GB级流量。M192也要缓冲别名复用且只多约1.52倍历史复用，收益不足以独立覆盖整体差距。本轮不引入这些新存储风险，也不改只占约1.43s的draft分流。
+
+**修订方向及精度边界**：使用官方按行AR批量归约，保留每个256分数行的非有限行和错误检查，不用全块总和代替；有限行和但全块和溢出的输入必须继续通过，单行溢出仍status2。D256一个32行块的基础归约调用可由32次降为1次；D64/D128复用现有dequant空间分4/2批。mask改为精确区间位图与向量Select，全可见history跳过bitmap/Select。FP32 QK/PV、SoftmaxFlashV2、INT2编码、精确窗口及冻结容差不变。减少调用次数不是已测得的耗时下降，尤其不能宣称等比例追平。
+
+**收益测量**：旧CV A/B基线推进到本工程fe0e925，仍必须验证实际旧产物完整签名/源码/环境，绝不伪造不可用基线。正常候选测速保持无核内计时；之后单独profile kernel收集每core、每AIC/AIV、每source的raw SYS_CNT区间和外层NPU Event耗时，profile专属同步在生产模板中编译期移除。wait区间含另一lane和通知等待，不叫纯Cube执行；mask/finite与V2是softmax子区间，不能重复相加；跨核周期不能冒充wall。CPU模拟时钟不校准NPU频率。仍以同一命令继续原生/OSCAR完整K4、错误保码与资源释放，未触碰用户自己的数据集。
+
+**本机验证，非新真机结论**：最终kernel SHA `3e3dc407f9113e6f72ffa65ddfad886013e844749efc728b5befdaa68dc2dc29`，CANN ascend910b4编译通过；官方CPU-debug42/42（含有限行和/单行溢出、normal/profile oracle及计数owner），相关主机57 passed、33 skipped、4 subtests。`reports/cv_ar146_validation.json`与`reports/cv_ar146_cpu_debug.json`保存证据。新增位图后D256显式UB158208B；文件头早期157184B段是加位图前预算，以本条更正为准。目标新数值、图及达到原生速度均未复跑，不写成已追平。

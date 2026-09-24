@@ -10,6 +10,8 @@ Vector lanes while compressed history is live; FP32 output/LSE and every
 status still face the independent frozen oracle before a speed claim.
 #145: repeated NaN-poisoned workspace probes cross each lane's 32-row
 score-buffer handoff; CPU-debug cannot certify asynchronous DMA ordering.
+#146: batch score guards must retain per-row overflow detection without
+incorrectly reducing several finite rows into one overflowing block sum.
 D.4: no full-history allocation in production; only this test oracle may
 materialize history. Tests do not turn CPU results into NPU/performance evidence.
 """
@@ -158,7 +160,7 @@ def _device_case(data):
     return tensors, buffers
 
 
-def _execute_cv(ops, data, tensors, buffers):
+def _execute_cv(ops, data, tensors, buffers, profile=None):
     tasks, positions, partial, lse, status, workspace = (
         buffers[key] for key in ("tasks", "positions", "partial", "lse", "status", "workspace"))
     partial.fill_(float("nan"))
@@ -168,11 +170,13 @@ def _execute_cv(ops, data, tensors, buffers):
     ops.prepare_attention_tasks_out(tensors["starts"], tensors["lens"], tensors["slots"],
                                    tasks, positions, data["hq"], data["hk"], data["sink"],
                                    data["recent"], data["splits"])
-    ops.attention_cv_out(tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"],
+    call = ops.attention_cv_out if profile is None else ops.attention_cv_profile_out
+    extra = () if profile is None else (profile,)
+    call(tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"],
         tensors["rv"], tensors["raw"], tensors["table"], tensors["wk"], tensors["wv"],
         tensors["tags"], tasks, partial, lse, status, workspace, data["block_tokens"], data["blocks"],
         data["prefix"], data["stride"], data["sink"], data["recent"], data["speculative"],
-        data["splits"], data["dim"] ** -0.5, data["cores"])
+        data["splits"], data["dim"] ** -0.5, data["cores"], *extra)
     torch.npu.synchronize()
 
 
@@ -222,6 +226,52 @@ def test_npu_cv_score_block_handoff_with_repeated_workspace_poison(dim, qlen):
         buffers["workspace"].view(torch.float32).fill_(float("nan"))
         _execute_cv(ops, data, tensors, buffers)
         _assert_cv_result(data, buffers, expected, expected_lse)
+
+
+@pytest.mark.parametrize("key_value,overflow", [(3e17, False), (1.5e18, True)])
+def test_npu_cv_score_guard_preserves_individual_row_sum_overflow(key_value, overflow):
+    # #146: each QK element is finite in both cases. With 35 precise old KV
+    # rows, the first case has finite row sums but an overflowing block sum;
+    # the second overflows only the last head of the last query, checking
+    # the final row of the second softmax block. QR/history stay ordinary to isolate
+    # the score guard in the precise-window source (no merged-output oracle).
+    ops = _npu_ops()
+    data, _, _ = _case(64, 6, 65)
+    if overflow:
+        data["q"][-1, -1].fill_(1.5e18)
+    else:
+        data["q"].fill_(1.5e18)
+    data["wk"].fill_(key_value)
+    tensors, buffers = _device_case(data)
+    _execute_cv(ops, data, tensors, buffers)
+    status = buffers["status"].cpu()
+    if overflow:
+        assert (status == 2).any().item(), "finite QK row-sum overflow must remain error 2"
+        assert ((status == 0) | (status == 2)).all().item()
+    else:
+        assert (status == 0).all().item(), "separate finite row sums must not become a block-sum failure"
+        assert torch.isfinite(buffers["partial"]).all().item()
+        assert not torch.isnan(buffers["lse"]).any().item()
+
+
+@pytest.mark.parametrize("dim,qlen", [(64, 6), (256, 17)])
+def test_npu_cv_diagnostic_profile_preserves_oracle_and_counter_ownership(dim, qlen):
+    # #146: profiling has its own kernel; its clocks/synchronization must not
+    # change math. Each Cube and its two AIVs own separate counter rows.
+    ops = _npu_ops()
+    data, expected, expected_lse = _case(dim, qlen, 511)
+    tensors, buffers = _device_case(data)
+    profile = torch.full((data["cores"], 3, 4, 20), -1, dtype=torch.int64, device="npu")
+    _execute_cv(ops, data, tensors, buffers, profile=profile)
+    _assert_cv_result(data, buffers, expected, expected_lse)
+    observed = profile.cpu()
+    assert (observed >= 0).all().item(), "every profile field must be written by its owner"
+    torch.testing.assert_close(observed[:, :, :3, :17].sum(dim=2),
+                               observed[:, :, 3, :17], atol=0, rtol=0)
+    for lane in (1, 2):
+        torch.testing.assert_close(observed[:, 0, :, :3], observed[:, lane, :, :3], atol=0, rtol=0)
+    assert (observed[:, :, 3, 17] > 0).all().item()
+    assert (observed[..., 19] == 0).all().item()
 
 
 @pytest.mark.parametrize("dim,qlen,context,hk,splits", [
@@ -343,9 +393,13 @@ def export_cpu_debug_goldens(directory):
     cases.append({"op":"attention_cv","path":str(case)})
     for mode in ("bad_tag","nan_query","bad_meta","nan_value"):
         cases.append({"op":mode,"path":str(directory / "d64_q4_c65")})
+    for mode in ("finite_row_sum", "overflow_row_sum"):
+        cases.append({"op": mode, "path": str(directory / "d64_q4_c65")})
     for name in ("d64_q1_c17", "d256_q4_c511", "d256_q21_c511",
                  "d64_q6_c511", "d128_q11_c511", "d256_q17_c511"):
         cases.append({"op": "poison_workspace", "path": str(directory / name)})
+    for name in ("d64_q6_c511", "d256_q17_c511"):
+        cases.append({"op": "profile", "path": str(directory / name)})
     cases.append({"op":"tasks_causal","path":str(directory)})
     (directory / "cases.json").write_text(json.dumps(cases,indent=2)+"\n")
     return directory

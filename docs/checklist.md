@@ -104,3 +104,7 @@
 #145：cf97bb1真NPU CV门在D64/Q6/context511出现1024/2304 NaN，候选尚未进入模型性能比较。当前源码确认两个32行score块之间缺MTE3→MTE2所有权依赖；只替换这道事件方向，保留数学与冻结容差。重复NaN工作区回归覆盖36/66/102行。相关主机回归24 passed、28 NPU skipped；目标CV数值、图、性能必须由完整`git pull --ff-only && bash scripts/probe_concurrency.sh`重新验收，不能以CPU-debug通过解锁。C04/C05/E01仍未完成，E06仍失败/待复验。
 
 #145本机复验：CANN ascend910b4编译通过，官方CPU-debug38/38；证据`reports/cv_score_handoff_validation.json`。该模拟也能通过修复前的同形Q6，故真机数值与完整K4速度结论仍由下一轮一键日志确认。
+
+#146：新目标K4原生14.7s、OSCAR29.2s，双方4/4及释放通过；数值门为签名一致的既有证据复用，候选热点main204.427ms/decode32 15.296ms各自oracle通过。诊断prefill CV10.652s仍为主项，E06未通过。当前源码逐行基础ReduceSum含SDK内部标量同步，改为按行AR批处理并保持每行溢出错误门；区间bitmap替代标量mask，全可见历史跳过bitmap。独立profile内核记录raw cycles，正常性能轮不含诊断同步；一键自动以fe0e925旧产物做算子A/B，再完整跑模型K4。目标新精度、图、净收益及追平仍待下一轮真机，不以静态调用数推导通过。原文`reports/target_k4_29s_performance.txt`。
+
+#146本机复验：相同最终内核通过CANN910B4编译与42/42官方CPU-debug；相关主机57 passed、33 skipped、4 subtests。证据`reports/cv_ar146_validation.json`；新目标NPU/图/性能仍待一键实测，E06不解锁。

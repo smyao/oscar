@@ -1,4 +1,4 @@
-# Archive #70-73/#85/#125/#126/#143 and startup D.4: this is a diagnostic
+# Archive #70-73/#85/#125/#126/#143-#146 and startup D.4: this is a diagnostic
 # comparison of one bounded CV operator, not a whole-service speed certificate.
 # D.4 four questions: (1) measure only attention_cv_out for a long mixed
 # prefill shape; (2) the old failed route spent ~6.5 s restoring full history,
@@ -31,13 +31,14 @@ import random
 import statistics
 import subprocess
 import sys
+import time
 import traceback
 
 from .environment import file_fingerprint
 from .phase import atomic_json
 
 ROOT = Path(__file__).resolve().parents[1]
-BASELINE_REVISION = "5288b2e85d1cb920d8c852b2884c1feac8a0120a"
+BASELINE_REVISION = "fe0e925e7ef78bfb64217a300031502fc4a7b7bc"
 REQUIRED_OPS = frozenset({"prepare_attention_tasks_out", "attention_cv_out", "merge_lse_out"})
 QLENS = (4, 4, 4, 11492)
 CONTEXTS = (20032, 23032, 27032, 18508)
@@ -48,7 +49,17 @@ BLOCK_TOKENS, SINK, RECENT, SPECULATIVE = 512, 64, 256, 3
 PREFIX_BYTES = 64
 SEED = 46783
 WARMUP, REPEATS = 2, 5
-OLD_QUERY_ROWS, OLD_KV_ROWS = 64, 128
+OLD_QUERY_ROWS, OLD_KV_ROWS = 128, 256
+PROFILE_ENGINES = ("aic", "aiv0", "aiv1")
+PROFILE_SOURCES = ("history", "window", "current", "total")
+PROFILE_FIELDS = (
+    "tasks", "kv_tiles", "kv_rows", "aiv_load_publish", "aiv_wait_qk",
+    "aiv_softmax_total", "aiv_mask_finite", "aiv_v2", "aiv_wait_pv",
+    "aiv_pv_add", "aiv_final", "aic_wait_kv", "aic_qk", "aic_wait_p",
+    "aic_pv", "aic_wait_consume", "aic_rotation", "process_span",
+    "empty_tasks", "errors",
+)
+PROFILE_COUNT_FIELDS = frozenset({"tasks", "kv_tiles", "kv_rows", "empty_tasks", "errors"})
 
 
 class HotShapeError(RuntimeError):
@@ -131,9 +142,10 @@ def _verify_artifact(variant: str, manifest_path: Path, target: dict) -> tuple[d
     if manifest.get("soc") != target["soc_version"] or configuration.get("soc") != target["soc_version"]:
         exception = BaselineUnavailable if variant == "baseline" else HotShapeError
         raise exception("artifact SOC differs from explicit target SOC")
-    if not REQUIRED_OPS.issubset(set(manifest.get("source_capabilities", ()))):
+    required = REQUIRED_OPS | ({"attention_cv_profile_out"} if variant == "candidate" else set())
+    if not required.issubset(set(manifest.get("source_capabilities", ()))):
         exception = BaselineUnavailable if variant == "baseline" else HotShapeError
-        raise exception("artifact lacks required CV/prepare/merge capabilities")
+        raise exception("artifact lacks required CV/prepare/merge/profile capabilities")
     source_digest = _source_check(configuration, variant)
     if configuration.get("python") != sys.executable:
         exception = BaselineUnavailable if variant == "baseline" else HotShapeError
@@ -216,7 +228,7 @@ def _load_ops(variant: str, manifest: dict, manifest_path: Path):
         handle, module = _load_baseline_extension(manifest)
         return handle, module
     from oscar_ascend.ops.loader import require_capabilities
-    module = require_capabilities(REQUIRED_OPS, manifest_path)
+    module = require_capabilities(REQUIRED_OPS | {"attention_cv_profile_out"}, manifest_path)
     return None, module
 
 
@@ -230,7 +242,8 @@ def splits_for_shape(tokens: int, cores: int, *, query_rows: int, capacity: int)
 
 
 def workspace_per_core_bytes(dim: int, current_rows: int, current_kv_rows: int) -> int:
-    old = (384 * dim + 8192) * 4
+    old = ((2 * OLD_QUERY_ROWS + 2 * OLD_KV_ROWS) * dim
+           + OLD_QUERY_ROWS * OLD_KV_ROWS) * 4
     current = ((2 * current_rows + 2 * current_kv_rows) * dim
                + current_rows * current_kv_rows) * 4
     return max(old, current)
@@ -510,12 +523,132 @@ def _prepare_ops(torch, ops, tensors: dict, buffers: dict, fixture: dict, *, spl
     return _tensor_hash({"tasks": buffers["tasks"].cpu()})
 
 
-def _run_cv(ops, tensors: dict, buffers: dict, fixture: dict, *, splits: int, cores: int, scale: float):
-    ops.attention_cv_out(tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"],
+def _run_cv(ops, tensors: dict, buffers: dict, fixture: dict, *, splits: int, cores: int,
+            scale: float, profile=None):
+    arguments = (tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"],
         tensors["rv"], tensors["raw"], tensors["table"], tensors["wk"], tensors["wv"],
         tensors["tags"], buffers["tasks"], buffers["partial"], buffers["lse"],
         buffers["status"], buffers["workspace"], BLOCK_TOKENS, fixture["blocks"],
         PREFIX_BYTES, fixture["stride"], SINK, RECENT, SPECULATIVE, splits, scale, cores)
+    if profile is None:
+        ops.attention_cv_out(*arguments)
+    else:
+        ops.attention_cv_profile_out(*arguments, profile)
+
+
+def _nearest_rank(values: list[int], fraction: float) -> int:
+    ordered = sorted(values)
+    return ordered[max(0, math.ceil(fraction * len(ordered)) - 1)]
+
+
+def summarize_raw_profile(profile_cpu, *, cores: int) -> dict:
+    """Distributions across cores, never an additive raw-tick wall time."""
+    if tuple(profile_cpu.shape) != (cores, 3, 4, len(PROFILE_FIELDS)) or \
+            str(profile_cpu.dtype) != "torch.int64" or profile_cpu.device.type != "cpu":
+        raise HotShapeError("profile kernel returned an invalid int64 [cores,3,4,20] buffer")
+    raw = profile_cpu.tolist()
+    if any(value < 0 for core in raw for engine in core for source in engine for value in source):
+        raise HotShapeError("profile kernel returned negative raw counters")
+    if any(raw[core][engine][source][17] != 0
+           for core in range(cores) for engine in range(3) for source in range(3)):
+        raise HotShapeError("source-local profile process_span must be zero; only total records it")
+    if any(raw[core][engine][3][field] != sum(raw[core][engine][source][field]
+                                            for source in range(3))
+           for core in range(cores) for engine in range(3)
+           for field in (*range(17), 18, 19)):
+        raise HotShapeError("profile total counters differ from per-source counters")
+    if any(len({raw[core][engine][source][field] for engine in range(3)}) != 1
+           for core in range(cores) for source in range(4) for field in (0, 1, 2)):
+        raise HotShapeError("profile Cube/AIV task, KV tile or KV row counters differ")
+    if sum(raw[core][0][3][0] for core in range(cores)) <= 0 or \
+            sum(raw[core][0][3][1] for core in range(cores)) <= 0:
+        raise HotShapeError("profile recorded no valid tasks or KV work")
+    if any(raw[core][engine][3][19] != 0 for core in range(cores) for engine in range(3)):
+        raise HotShapeError("profile kernel reported task errors")
+    if any(not any(raw[core][engine][3][17] > 0 for core in range(cores)) for engine in range(3)):
+        raise HotShapeError("profile kernel did not record a process span on each engine type")
+    sources = {}
+    for source_index, source_name in enumerate(PROFILE_SOURCES):
+        engines = {}
+        for engine_index, engine_name in enumerate(PROFILE_ENGINES):
+            fields = {}
+            for field_index, field_name in enumerate(PROFILE_FIELDS):
+                values = [int(raw[core][engine_index][source_index][field_index])
+                          for core in range(cores)]
+                nonzero = [value for value in values if value > 0]
+                unit = "count" if field_name in PROFILE_COUNT_FIELDS else "raw_SYS_CNT"
+                item = {"unit": unit, "nonzero_cores": len(nonzero),
+                        "max": max(nonzero, default=0),
+                        "p50": _nearest_rank(nonzero, 0.50) if nonzero else 0,
+                        "p95": _nearest_rank(nonzero, 0.95) if nonzero else 0}
+                if unit == "count":
+                    item["sum_across_cores"] = sum(values)
+                fields[field_name] = item
+            engines[engine_name] = fields
+        sources[source_name] = engines
+    return {"engines": PROFILE_ENGINES, "source_names": PROFILE_SOURCES,
+            "field_names": PROFILE_FIELDS,
+            "units": "raw SYS_CNT ticks; overlapping cores/lanes never summed as wall time",
+            "nested_fields": "aiv_mask_finite and aiv_v2 are subsets of aiv_softmax_total; never add them",
+            "field_scope": {
+                "aiv_mask_finite": "visibility intervals, batched row finite checks and bitmap Select; excludes score GM-to-UB load, scale and padding",
+                "aiv_v2": "includes online-stat copy, device tiling function and SoftmaxFlashV2 call"},
+            "sources": sources, "raw": raw}
+
+
+def _profile_once(torch, ops, tensors: dict, buffers: dict, fixture: dict, *,
+                  splits: int, cores: int, scale: float, normal_median_ms: float,
+                  tolerance: dict, stream) -> dict:
+    """One instrumented invocation after the normal speed and oracle gates."""
+    diagnostic = {"tasks": buffers["tasks"],
+        "partial": torch.full_like(buffers["partial"], float("nan")),
+        "lse": torch.full_like(buffers["lse"], float("nan")),
+        "status": torch.full_like(buffers["status"], -99),
+        "workspace": torch.empty_like(buffers["workspace"])}
+    profile = _aligned_profile_tensor(torch, cores, buffers["partial"].device)
+    begin, end = torch.npu.Event(enable_timing=True), torch.npu.Event(enable_timing=True)
+    begin.record(stream)
+    _run_cv(ops, tensors, diagnostic, fixture, splits=splits, cores=cores,
+            scale=scale, profile=profile)
+    end.record(stream)
+    end.synchronize()
+    event_ms = float(begin.elapsed_time(end))
+    if not math.isfinite(event_ms) or event_ms <= 0:
+        raise HotShapeError("profile kernel returned an invalid outer NPU Event duration")
+    _check_cv_status(torch, diagnostic)
+    torch.testing.assert_close(diagnostic["partial"], buffers["partial"], **tolerance)
+    torch.testing.assert_close(diagnostic["lse"], buffers["lse"], **tolerance)
+    output_maxdiff = float((diagnostic["partial"] - buffers["partial"]).abs().max())
+    finite_lse = torch.isfinite(diagnostic["lse"]) & torch.isfinite(buffers["lse"])
+    lse_difference = torch.where(finite_lse,
+        (diagnostic["lse"] - buffers["lse"]).abs(), torch.zeros_like(diagnostic["lse"]))
+    lse_maxdiff = float(lse_difference.max())
+    oracle = _check_oracle(torch, ops, fixture, diagnostic, tolerance)
+    raw_summary = summarize_raw_profile(profile.cpu(), cores=cores)
+    return {"status": "passed", "profiling_only": True,
+            "mode": "instrumented_kernel_diagnostic",
+            "normal_profile_frozen_close": True,
+            "normal_profile_max_abs": {"partial": output_maxdiff, "lse": lse_maxdiff},
+            "frozen_tolerance": tolerance, "sample_oracle": oracle,
+            "outer_event_ms": event_ms,
+            "outer_event_over_normal_median": event_ms / normal_median_ms,
+            "normal_median_ms": normal_median_ms,
+            "raw_shape": [cores, 3, 4, len(PROFILE_FIELDS)],
+            "rank_scope": "standalone_logical_device0_not_TP_rank",
+            "physical_device": 0, "raw_counters": raw_summary}
+
+
+def _aligned_profile_tensor(torch, cores: int, device):
+    """Allocate a 64-byte aligned contiguous diagnostic output view."""
+    count = cores * 3 * 4 * len(PROFILE_FIELDS)
+    storage = torch.empty((count + 8,), dtype=torch.int64, device=device)
+    offset_words = ((-storage.data_ptr()) % 64) // 8
+    profile = storage[offset_words:offset_words + count].view(
+        cores, 3, 4, len(PROFILE_FIELDS))
+    if profile.data_ptr() % 64 or not profile.is_contiguous():
+        raise HotShapeError("profile buffer cannot satisfy diagnostic 64-byte alignment")
+    profile.zero_()  # Outside the timing Event; C++ owners write disjoint rows.
+    return profile
 
 
 def _check_cv_status(torch, buffers: dict):
@@ -570,6 +703,9 @@ def run_probe(variant: str, manifest_path: Path, target_path: Path,
         raise HotShapeError("target model TP4 head geometry differs from fixed Hq6/Hkv1/D256 fixture")
     import torch
     import torch_npu  # noqa: F401 - enables the real PrivateUse1 backend
+    # Isolated child only: bound CPU fixture/oracle overhead and make paired
+    # baseline/candidate construction use the same host thread count.
+    torch.set_num_threads(min(torch.get_num_threads(), 4))
     torch.npu.set_device(0)
     from .build_ops import normalize_soc
     if normalize_soc(torch.npu.get_device_name(0)) != target["soc_version"]:
@@ -589,7 +725,9 @@ def run_probe(variant: str, manifest_path: Path, target_path: Path,
     cases = {}
     stream = torch.npu.current_stream()
     for name, make_fixture in (("main", build_fixture), ("decode32", build_decode_fixture)):
+        build_started = time.monotonic()
         fixture = make_fixture(torch, scale=scale)
+        fixture_build_seconds = time.monotonic() - build_started
         splits = splits_for_shape(fixture["tokens"], cores, query_rows=query_rows, capacity=capacity)
         tensors, buffers = _device_buffers(torch, fixture, device, splits=splits, cores=cores,
                                            current_rows=ATTENTION_QUERY_ROWS,
@@ -616,6 +754,7 @@ def run_probe(variant: str, manifest_path: Path, target_path: Path,
             _check_cv_status(torch, buffers)
         oracle = _check_oracle(torch, ops, fixture, buffers, tolerance)
         cases[name] = {"fixture_sha256": fixture["hash"], "task_sha256": task_hash,
+            "fixture_build_seconds": fixture_build_seconds,
             "query_lengths": fixture["qlens"], "contexts": fixture["contexts"],
             "tokens": fixture["tokens"], "requests": len(fixture["qlens"]),
             "query_heads": HEADS, "kv_heads": KV_HEADS, "head_dim": DIM,
@@ -626,6 +765,11 @@ def run_probe(variant: str, manifest_path: Path, target_path: Path,
             "warmup": WARMUP, "repeats": REPEATS, "device_event_ms": durations,
             "median_ms": statistics.median(durations), "sample_oracle": oracle,
             "device_completion": "passed", "timing_evidence": "NPU_Event_attention_cv_out_only"}
+        if variant == "candidate":
+            cases[name]["profile"] = _profile_once(
+                torch, ops, tensors, buffers, fixture, splits=splits, cores=cores,
+                scale=scale, normal_median_ms=cases[name]["median_ms"],
+                tolerance=tolerance, stream=stream)
         del fixture, tensors, buffers
         gc.collect()
         torch.npu.empty_cache()
@@ -633,6 +777,7 @@ def run_probe(variant: str, manifest_path: Path, target_path: Path,
             "scope": "operator_only_attention_cv_out; synthetic_main_and_decode32; no_user_dataset",
             "device": str(device), "physical_devices": target["devices"],
             "device_name": torch.npu.get_device_name(0), "device_completion": "passed",
+            "fixture_cpu_threads": torch.get_num_threads(),
             "source": {"revision": BASELINE_REVISION if variant == "baseline" else "current_checkout",
                        "sha256": source_digest, "signature": manifest["signature"]},
             "source_sha256": source_digest, "build_signature": manifest["signature"],

@@ -1,0 +1,49 @@
+{
+  "archive": 146,
+  "source": "csrc/kernels/attention_cv.cpp",
+  "source_sha256": "3e3dc407f9113e6f72ffa65ddfad886013e844749efc728b5befdaa68dc2dc29",
+  "change": "Batch per-row score sum guards with official AR reduction; exact interval bitmap Select; independent diagnostic CV kernel",
+  "production_geometry": {
+    "query_rows": 128,
+    "kv_rows": 256,
+    "d256_explicit_aiv_ub_bytes": 158208,
+    "a2_usable_ub_bytes": 188416,
+    "note": "The legacy pre-AR header paragraph states 157184 B; the added 1024-byte bitmap makes the current explicit total 158208 B."
+  },
+  "cann_build": {
+    "status": "passed",
+    "soc": "ascend910b4",
+    "returncode": 0,
+    "reused": false,
+    "log": "reports/vm-cv-ar146/logs/device-build.log"
+  },
+  "cpu_debug": {
+    "status": "passed",
+    "cases": 42,
+    "report": "reports/cv_ar146_cpu_debug.json",
+    "includes": [
+      "finite_row_sum",
+      "overflow_row_sum",
+      "profile D64 Q6",
+      "profile D256 Q17"
+    ]
+  },
+  "host_pytest": {
+    "passed": 57,
+    "skipped": 33,
+    "subtests_passed": 4,
+    "skips": "32 real NPU cases and one Linux ELF-only case",
+    "command": "PYTHONPATH=. .venv/bin/python -m pytest -q tests/test_cv_contracts.py tests/test_paired_concurrency_probe.py tests/test_probe_cv_hotshape.py tests/test_build_reuse.py tests/test_loader_linkage.py tests/test_op_contracts.py"
+  },
+  "target_input_report": "reports/target_k4_29s_performance.txt",
+  "baseline_revision": "fe0e925e7ef78bfb64217a300031502fc4a7b7bc",
+  "target_candidate_numerics": "not_run",
+  "target_candidate_graph": "not_run",
+  "target_candidate_performance": "not_run",
+  "target_retest": "git pull --ff-only && bash scripts/probe_concurrency.sh",
+  "limitations": [
+    "Static AR call reductions are not measured speedup.",
+    "CPU-debug uses a host clock and cannot establish NPU timing or asynchronous correctness.",
+    "Instrumented raw ticks remain separate from normal NPU Event median and full-service paired speed."
+  ]
+}

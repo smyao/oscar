@@ -1,4 +1,4 @@
-"""Archive #70-73/#85/#125/#126/#143: paired CV diagnostic host contracts.
+"""Archive #70-73/#85/#125/#126/#143-#146: paired CV host contracts.
 
 They do not stand in for the target NPU numerical or Event measurements.
 """
@@ -58,10 +58,12 @@ def test_cli_baseline_unavailable_is_explicit_zero_rc_skip(monkeypatch, tmp_path
     assert json.loads(output.read_text())["status"] == "not_available"
 
 
-def test_shape_splits_capture_old_and_candidate_query_tile_difference():
-    assert hot.splits_for_shape(11504, 32, query_rows=64, capacity=16384) == 1
+def test_pinned_m128_geometry_matches_current_source_and_workspace():
+    assert hot.BASELINE_REVISION == "fe0e925e7ef78bfb64217a300031502fc4a7b7bc"
+    assert (hot.OLD_QUERY_ROWS, hot.OLD_KV_ROWS) == (128, 256)
+    assert hot.splits_for_shape(11504, 32, query_rows=hot.OLD_QUERY_ROWS, capacity=16384) == 1
     assert hot.splits_for_shape(11504, 32, query_rows=128, capacity=16384) == 1
-    assert hot.splits_for_shape(128, 32, query_rows=64, capacity=16384) == 3
+    assert hot.splits_for_shape(128, 32, query_rows=hot.OLD_QUERY_ROWS, capacity=16384) == 5
     assert hot.splits_for_shape(128, 32, query_rows=128, capacity=16384) == 5
     assert hot.workspace_per_core_bytes(256, 128, 256) == 917504
 
@@ -103,3 +105,58 @@ def test_decode_fixture_keeps_disjoint_histories_and_full_causal_oracle(monkeypa
     assert sorted(pages) == list(range(first["blocks"]))
     assert all(bool(torch.isfinite(output).all()) and bool(torch.isfinite(lse).all())
                for output, lse in first["expected"].values())
+
+
+def test_profile_summary_keeps_source_ticks_and_overlapping_engines_separate():
+    torch = pytest.importorskip("torch")
+    raw = torch.zeros((2, 3, 4, 20), dtype=torch.int64)
+    for engine in range(3):
+        raw[0, engine, 3, 17] = 100 + engine
+        raw[1, engine, 3, 17] = 200 + engine
+        raw[0, engine, 0, 0] = 2
+        raw[1, engine, 0, 0] = 3
+        raw[0, engine, 3, 0] = 2
+        raw[1, engine, 3, 0] = 3
+        raw[0, engine, 0, 1] = raw[0, engine, 3, 1] = 1
+        raw[1, engine, 0, 1] = raw[1, engine, 3, 1] = 1
+    raw[0, 0, 0, 12] = raw[0, 0, 3, 12] = 50
+    raw[1, 0, 0, 12] = raw[1, 0, 3, 12] = 100
+    raw[0, 1, 0, 5] = raw[0, 1, 3, 5] = 30
+    raw[1, 1, 0, 5] = raw[1, 1, 3, 5] = 40
+    summary = hot.summarize_raw_profile(raw, cores=2)
+    history_aic = summary["sources"]["history"]["aic"]
+    assert history_aic["tasks"]["sum_across_cores"] == 5
+    assert history_aic["aic_qk"]["p50"] == 50
+    assert history_aic["aic_qk"]["p95"] == 100
+    assert summary["sources"]["history"]["aic"]["process_span"]["max"] == 0
+    assert summary["sources"]["total"]["aic"]["process_span"]["max"] == 200
+    from tools.paired_concurrency_probe import cv_profile_terminal_rows
+    case = {"profile": {"raw_counters": summary, "outer_event_ms": 5.0,
+                        "outer_event_over_normal_median": 1.25}}
+    lines = cv_profile_terminal_rows("main", case)
+    assert len(lines) == 3
+    assert all("pv_max_raw_ticks=" in line and
+               "aiv_waitqk_max_raw_ticks=" in line and
+               "aiv_waitpv_max_raw_ticks=" in line and
+               "scope=instrumented_kernel_diagnostic" in line
+               for line in lines)
+    assert "source=history" in lines[0]
+    assert "source=window" in lines[1]
+    assert "source=current" in lines[2]
+    raw[0, 0, 3, 12] = 51  # Source3 is not a second independent contribution.
+    with pytest.raises(hot.HotShapeError, match="total counters differ"):
+        hot.summarize_raw_profile(raw, cores=2)
+    raw[0, 0, 3, 12] = 50
+    raw[0, 1, 0, 1] = 2
+    raw[0, 1, 3, 1] = 2
+    with pytest.raises(hot.HotShapeError, match="Cube/AIV"):
+        hot.summarize_raw_profile(raw, cores=2)
+
+
+def test_profile_buffer_meets_binding_alignment_and_is_zeroed():
+    torch = pytest.importorskip("torch")
+    profile = hot._aligned_profile_tensor(torch, 3, "cpu")
+    assert profile.shape == (3, 3, 4, 20)
+    assert profile.dtype == torch.int64 and profile.is_contiguous()
+    assert profile.data_ptr() % 64 == 0
+    assert not bool(profile.any())

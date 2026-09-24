@@ -119,6 +119,10 @@ A2 Cube/Vector片上交接也需实际CANN编译/运行证据；不能把经GM�
 
 ## 8. 自审
 
+#146 / D.4：剩余实测热点为长历史prefill CV。本轮以官方按行AR归约替代基础ReduceSum的逐行隐式V/S同步，保留每行非有限/溢出状态；mask用精确区间位图Select，完整可见history不创建位图。D256新增位图1KiB，显式AIV UB由157184增至158208B，仍低于188416B；GM tile与FP32计算不变，不引入D.4失败的全历史恢复。M192/256/512的UB别名或GM spill方案因收益上界与新增流量不足以支持追平判断，本轮未采用。约503万行检查减少为约16万AR批调用是静态工作量，收益须由同输入旧/新CV和完整K4测量确认。
+
+独立`AttentionCv<D,true>`仅用于诊断，记录每core/AIC/AIV/source的SYS_CNT；`AttentionCv<D,false>`生产模板移除计时、计数写回及诊断专属FIX_S/MTE3_S/V_S。计数缓冲每engine占640B、按64B缓存线独占，SetValue后显式写回。相位6是score初始化之后的mask/finite，7含统计量准备和V2，两者都属于softmax总区间5。等待桶含通知与另一lane等待，跨核不能相加作wall；CPU模拟时钟不转换为NPU毫秒。profile独立运行、独立输出并过冻结oracle，外层Event与正常中位数同时报告扰动。该诊断不能替代未插桩性能门。
+
 #145 / D.4：fused FIA的两个32行score块复用同一UB，P由MTE3写出后，下一块在MTE2读入前必须等待MTE3；`MTE3_V`不能约束MTE2。块尾改为`MTE3_MTE2`，后续既有`MTE2_V`保护计算，不叠加事件、不改变数学或tile容量，仍禁止D.4约6.5秒的全历史恢复。源码缺口和Q6首错形态吻合，CPU串行模拟不能证明异步竞争已在NPU消失。冻结oracle及重复NaN工作区回归后，继续完整算子/模型配对门；事件数量相同不能替代真实性能测量。
 
 - [x] 全局数据旅程、预算与原生接缝已建立。

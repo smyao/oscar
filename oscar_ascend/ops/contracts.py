@@ -10,7 +10,8 @@ from dataclasses import dataclass
 
 ABI_VERSION = 1
 SOURCE_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "rotate_out",
-    "rotate_clip_store_out", "prepare_attention_tasks_out", "attention_cv_out", "status_guard"})
+    "rotate_clip_store_out", "prepare_attention_tasks_out", "attention_cv_out",
+    "attention_cv_profile_out", "status_guard"})
 # Exact callable symbols, not names of abstract components. Compilation,
 # CPU simulation, NPU execution and service acceptance remain separate gates.
 PRODUCTION_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "rotate_out",

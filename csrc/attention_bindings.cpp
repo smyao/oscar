@@ -67,14 +67,18 @@ void Prepare(const at::Tensor& starts,const at::Tensor& lens,const at::Tensor& s
       slots.numel(),hq,hk,sink,recent,splits,slots.scalar_type()==at::kLong,
       slotContext?blockTable->data_ptr():nullptr,slotContext?blockTable->size(1):0,slotContext,32);
 }
-void Attention(const at::Tensor& query,const at::Tensor& queryRot,
-    const at::Tensor& currentKey,const at::Tensor& currentValue,
-    const at::Tensor& rotation,const at::Tensor& raw,const at::Tensor& table,
-    const at::Tensor& windowKey,const at::Tensor& windowValue,
-    const at::Tensor& windowTags,const at::Tensor& tasks,at::Tensor partial,
-    at::Tensor lse,at::Tensor status,at::Tensor workspace,int64_t blockTokens,
-    int64_t blocks,int64_t ssmOffset,int64_t pageStride,int64_t sink,
-    int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores) {
+#define OSCAR_CV_BINDING_ARGS const at::Tensor& query,const at::Tensor& queryRot, \
+    const at::Tensor& currentKey,const at::Tensor& currentValue, \
+    const at::Tensor& rotation,const at::Tensor& raw,const at::Tensor& table, \
+    const at::Tensor& windowKey,const at::Tensor& windowValue, \
+    const at::Tensor& windowTags,const at::Tensor& tasks,at::Tensor partial, \
+    at::Tensor lse,at::Tensor status,at::Tensor workspace,int64_t blockTokens, \
+    int64_t blocks,int64_t ssmOffset,int64_t pageStride,int64_t sink, \
+    int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores
+#define OSCAR_CV_BINDING_PASS query,queryRot,currentKey,currentValue,rotation,raw,table, \
+    windowKey,windowValue,windowTags,tasks,partial,lse,status,workspace,blockTokens, \
+    blocks,ssmOffset,pageStride,sink,recent,speculative,splits,scale,cores
+void AttentionCommon(OSCAR_CV_BINDING_ARGS,const std::optional<at::Tensor>& profile) {
   Check(query,query,at::kBFloat16,"query");Check(queryRot,query,at::kFloat,"query_rot");
   Check(currentKey,query,at::kBFloat16,"current_key");
   Check(currentValue,query,at::kBFloat16,"current_value");
@@ -127,17 +131,50 @@ void Attention(const at::Tensor& query,const at::Tensor& queryRot,
                           windowKey,windowValue,windowTags,tasks}) Disjoint(written,input);
   Disjoint(partial,lse);Disjoint(partial,status);Disjoint(partial,workspace);
   Disjoint(lse,status);Disjoint(lse,workspace);Disjoint(status,workspace);
+  if(profile.has_value()) {
+    Check(*profile,query,at::kLong,"profile");
+    TORCH_CHECK(profile->dim()==4 && profile->size(0)==cores &&
+        profile->size(1)==oscar_ascend::kAttentionProfileEngines &&
+        profile->size(2)==oscar_ascend::kAttentionProfileSources &&
+        profile->size(3)==oscar_ascend::kAttentionProfileFields,
+        "profile must be int64 [cube_cores,3,4,20]");
+    TORCH_CHECK(reinterpret_cast<uintptr_t>(profile->data_ptr()) %
+        oscar_ascend::kAttentionProfileCacheLineBytes==0,
+        "profile buffer must be 64-byte aligned for per-owner DCache flushing");
+    for(const auto& existing:{query,queryRot,currentKey,currentValue,rotation,raw,table,
+                              windowKey,windowValue,windowTags,tasks,partial,lse,status,workspace})
+      Disjoint(*profile,existing);
+    TORCH_CHECK(n>0,"CV diagnostic profile requires at least one token");
+  }
   if(!n) return;
   const c10_npu::OptionalNPUGuard guard(query.device());
-  oscar_ascend::attention_cv_launch(c10_npu::getCurrentNPUStream().stream(),
-      query.data_ptr(),queryRot.data_ptr(),currentKey.data_ptr(),currentValue.data_ptr(),
-      rotation.data_ptr(),raw.data_ptr(),table.data_ptr(),windowKey.data_ptr(),
-      windowValue.data_ptr(),windowTags.data_ptr(),tasks.data_ptr(),partial.data_ptr(),
-      lse.data_ptr(),status.data_ptr(),workspace.data_ptr(),n,hq,hk,d,table.size(0),
-      table.size(1),tasks.size(0),blockTokens,blocks,ssmOffset,pageStride,
-      windowKey.stride(0),windowTags.stride(0),sink,recent,speculative,splits,
-      static_cast<float>(scale),static_cast<uint32_t>(cores));
+  if(profile.has_value())
+    oscar_ascend::attention_cv_profile_launch(c10_npu::getCurrentNPUStream().stream(),
+        query.data_ptr(),queryRot.data_ptr(),currentKey.data_ptr(),currentValue.data_ptr(),
+        rotation.data_ptr(),raw.data_ptr(),table.data_ptr(),windowKey.data_ptr(),
+        windowValue.data_ptr(),windowTags.data_ptr(),tasks.data_ptr(),partial.data_ptr(),
+        lse.data_ptr(),status.data_ptr(),workspace.data_ptr(),n,hq,hk,d,table.size(0),
+        table.size(1),tasks.size(0),blockTokens,blocks,ssmOffset,pageStride,
+        windowKey.stride(0),windowTags.stride(0),sink,recent,speculative,splits,
+        static_cast<float>(scale),static_cast<uint32_t>(cores),profile->data_ptr());
+  else
+    oscar_ascend::attention_cv_launch(c10_npu::getCurrentNPUStream().stream(),
+        query.data_ptr(),queryRot.data_ptr(),currentKey.data_ptr(),currentValue.data_ptr(),
+        rotation.data_ptr(),raw.data_ptr(),table.data_ptr(),windowKey.data_ptr(),
+        windowValue.data_ptr(),windowTags.data_ptr(),tasks.data_ptr(),partial.data_ptr(),
+        lse.data_ptr(),status.data_ptr(),workspace.data_ptr(),n,hq,hk,d,table.size(0),
+        table.size(1),tasks.size(0),blockTokens,blocks,ssmOffset,pageStride,
+        windowKey.stride(0),windowTags.stride(0),sink,recent,speculative,splits,
+        static_cast<float>(scale),static_cast<uint32_t>(cores));
 }
+void Attention(OSCAR_CV_BINDING_ARGS) {
+  AttentionCommon(OSCAR_CV_BINDING_PASS,std::nullopt);
+}
+void AttentionProfile(OSCAR_CV_BINDING_ARGS,at::Tensor profile) {
+  AttentionCommon(OSCAR_CV_BINDING_PASS,profile);
+}
+#undef OSCAR_CV_BINDING_ARGS
+#undef OSCAR_CV_BINDING_PASS
 }
 TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
   m.def("prepare_attention_tasks_out(Tensor query_start_loc, Tensor seq_lens, Tensor slot_mapping, "
@@ -148,7 +185,14 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
       "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
       "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
       "int splits, float scale, int cube_cores) -> ()");
+  m.def("attention_cv_profile_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+      "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
+      "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
+      "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
+      "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
+      "int splits, float scale, int cube_cores, Tensor(e!) profile) -> ()");
 }
 TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
   m.impl("prepare_attention_tasks_out",&Prepare);m.impl("attention_cv_out",&Attention);
+  m.impl("attention_cv_profile_out",&AttentionProfile);
 }

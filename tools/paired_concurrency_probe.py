@@ -1,4 +1,4 @@
-# 档案 #70-#73/#85/#94/#95/#125/#126/#129-#140：同配置配对测量；
+# 档案 #70-#73/#85/#94/#95/#125/#126/#129-#146：同配置配对测量；
 # 当前签名构建、真 NPU 数值门、逐次释放与失败证据先于性能服务。
 """Verify current AscendC operators, then run one 20/23/27/30K K4 pair.
 
@@ -30,7 +30,7 @@ from .service_probe import SYNTHETIC_MIXED_LENGTHS
 from .target_cli import ROOT, target_env
 
 
-CV_NPU_MIN_CASES = 25  # #126/#144: include the new Q21/Q22/Q43 reuse boundaries.
+CV_NPU_MIN_CASES = 32  # #126/#144-146: include guard plus profile target cases.
 ROTATION_NPU_MIN_CASES = 104  # 26 goldens on each selected card.
 
 
@@ -258,6 +258,32 @@ def measure_cv_hotshape(variant: str, config_path: Path, config: dict,
                    not math.isfinite(row["median_ms"]) or row["median_ms"] <= 0
                    for row in cases.values())):
         raise OperatorGateError(phase_name, f"{phase_name} lacks completed numerical/timing evidence", evidence=evidence)
+    if variant == "candidate":
+        for name, row in cases.items():
+            profile = row.get("profile")
+            if (not isinstance(profile, dict) or profile.get("status") != "passed" or
+                    profile.get("profiling_only") is not True or
+                    profile.get("mode") != "instrumented_kernel_diagnostic" or
+                    profile.get("normal_profile_frozen_close") is not True or
+                    not isinstance(profile.get("normal_profile_max_abs"), dict) or
+                    any(type(profile["normal_profile_max_abs"].get(field)) not in (int, float) or
+                        not math.isfinite(profile["normal_profile_max_abs"][field])
+                        for field in ("partial", "lse")) or
+                    not isinstance(profile.get("sample_oracle"), dict) or
+                    profile["sample_oracle"].get("status") != "passed" or
+                    not isinstance(profile.get("raw_shape"), list) or
+                    len(profile["raw_shape"]) != 4 or
+                    profile["raw_shape"][1:] != [3, 4, 20] or
+                    type(profile.get("outer_event_ms")) not in (int, float) or
+                    not math.isfinite(profile["outer_event_ms"]) or profile["outer_event_ms"] <= 0 or
+                    type(profile.get("outer_event_over_normal_median")) not in (int, float) or
+                    not math.isfinite(profile["outer_event_over_normal_median"]) or
+                    profile["outer_event_over_normal_median"] <= 0 or
+                    not isinstance(profile.get("raw_counters"), dict) or
+                    not isinstance(profile["raw_counters"].get("sources"), dict) or
+                    not {"history", "window", "current"}.issubset(profile["raw_counters"]["sources"])):
+                raise OperatorGateError(phase_name,
+                    f"{phase_name}/{name} lacks completed diagnostic kernel/accuracy evidence", evidence=evidence)
     evidence.update(status="passed", measurement=checked)
     return evidence
 
@@ -282,6 +308,35 @@ def compare_cv_hotshapes(baseline: dict, candidate: dict, acceptance: dict) -> d
             issues.append(f"{name}: candidate operator regressed ({ratio:.4f})")
     return {"status": "failed" if issues else "passed", "issues": issues, "cases": rows,
             "scope": "synthetic signed CV operator A/B; not native model speed acceptance"}
+
+
+def cv_profile_terminal_rows(name: str, case: dict) -> list[str]:
+    """Three source lines, with raw critical-core ticks kept apart from ms."""
+    profile = case["profile"]
+    sources = profile["raw_counters"]["sources"]
+    lines = []
+    for source_name in ("history", "window", "current"):
+        engines = sources[source_name]
+        aic = engines["aic"]
+        aiv = (engines["aiv0"], engines["aiv1"])
+        max_field = lambda field: max(engine[field]["max"] for engine in aiv)
+        lines.append(
+            f"[oscar] PERF_CV_PROFILE case={name} source={source_name} physical=0 "
+            f"tasks_aic={aic['tasks']['sum_across_cores']} "
+            f"kv_tiles_aic={aic['kv_tiles']['sum_across_cores']} "
+            f"empty_aic={aic['empty_tasks']['sum_across_cores']} "
+            f"qk_max_raw_ticks={aic['aic_qk']['max']} "
+            f"pv_max_raw_ticks={aic['aic_pv']['max']} "
+            f"aiv_load_max_raw_ticks={max_field('aiv_load_publish')} "
+            f"aiv_waitqk_max_raw_ticks={max_field('aiv_wait_qk')} "
+            f"aiv_softmax_max_raw_ticks={max_field('aiv_softmax_total')} "
+            f"mask_finite_subset_max_raw_ticks={max_field('aiv_mask_finite')} "
+            f"v2_stats_subset_max_raw_ticks={max_field('aiv_v2')} "
+            f"aiv_waitpv_max_raw_ticks={max_field('aiv_wait_pv')} "
+            f"profile_event_ms={profile['outer_event_ms']:.3f} "
+            f"over_normal={profile['outer_event_over_normal_median']:.2f} "
+            "scope=instrumented_kernel_diagnostic")
+    return lines
 
 
 def ensure_native_current_attention(config_path: Path, config: dict,
@@ -587,6 +642,12 @@ def run_paired(config_path: Path, *, output: Path, log_dir: Path,
             for name, row in report["cv_hotshape_candidate"]["measurement"]["cases"].items():
                 terminal_line(f"[oscar] PERF_CV_OP case={name} candidate_ms={row['median_ms']:.3f} "
                               "sample_oracle=passed baseline=unavailable scope=synthetic_operator_only")
+        for name, row in report["cv_hotshape_candidate"]["measurement"]["cases"].items():
+            # The real measure_cv_hotshape gate requires this profile. Host
+            # flow tests may replace that gate with a minimal fake report.
+            if isinstance(row.get("profile"), dict):
+                for line in cv_profile_terminal_rows(name, row):
+                    terminal_line(line)
         if cv_comparison["status"] == "failed":
             raise OperatorGateError("cv-hotshape-comparison", "; ".join(cv_comparison["issues"]),
                                     evidence=cv_comparison)

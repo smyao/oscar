@@ -7,6 +7,8 @@
 // device completion, graph capture/replay, timing or the 32K performance gate.
 // Archive #129/#144: large task-table causal bounds use the production M/B
 // geometry without a dense 16K oracle; shared workspace sizing stays exact.
+// #146: retain per-row finite/overflow guards when batching score reduction;
+// these guard fixtures are distinct from the normal frozen output/LSE oracle.
 #include "tikicpulib.h"
 #include <algorithm>
 #include <cmath>
@@ -25,6 +27,10 @@ extern "C" void oscar_attention_cv_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,ui
     uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
+extern "C" void oscar_attention_cv_profile_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float,uint8_t*);
 extern "C" void oscar_merge_lse_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     int64_t,int64_t,int64_t);
 namespace {
@@ -249,13 +255,49 @@ int main(int argc,char** argv) {
     const uint16_t nanBf16=0x7fc0;const float nanFloat=std::nanf("");
     std::memcpy(q.ptr,&nanBf16,2);std::memcpy(qr.ptr,&nanFloat,4);
   }
+  if(mode=="finite_row_sum" || mode=="overflow_row_sum") {
+    // #146: preserve row-sum overflow diagnostics when checking scores in
+    // batches. BF16 round-to-nearest values of 1.5e18 and 3e17; each QK is
+    // finite, while only the high-key case overflows one 35-KV score sum.
+    const uint16_t queryLarge=0x5da7;
+    const uint16_t keyLarge=mode=="overflow_row_sum"?0x5da7:0x5c85;
+    for(size_t off=0;off<q.size;off+=2)std::memcpy(q.ptr+off,&queryLarge,2);
+    for(size_t off=0;off<wk.size;off+=2)std::memcpy(wk.ptr+off,&keyLarge,2);
+  }
   AscendC::SetKernelMode(KernelMode::MIX_MODE);
+  if(mode=="profile") {
+    // CPU SYS_CNT is not a target clock: validate math, ownership and sums,
+    // never use these values for a performance result or clock calibration.
+    Gm profile(cores*3*4*20*sizeof(int64_t));
+    std::memset(profile.ptr,0xff,profile.size);
+    ICPU_RUN_KF(oscar_attention_cv_profile_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,raw.ptr,
+        table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,partial.ptr,partLse.ptr,status.ptr,
+        workspace.ptr,n,hq,hk,d,requests,int64_t{8},tasksCount,b,nb,prefix,stride,
+        windowRows*hk*d,windowRows,sink,recent,spec,splits,1.0F/std::sqrt(float(d)),profile.ptr);
+    const auto* counters=reinterpret_cast<const int64_t*>(profile.ptr);
+    for(int64_t core=0;core<cores;++core)for(int engine=0;engine<3;++engine) {
+      const auto* row=counters+(core*3+engine)*4*20;
+      for(int field=0;field<20;++field) {
+        for(int source=0;source<4;++source)
+          if(row[source*20+field]<0)throw std::runtime_error("unwritten/negative profile field");
+        if(field<17 && row[field]+row[20+field]+row[40+field]!=row[60+field])
+          throw std::runtime_error("profile source counters do not sum to engine total");
+      }
+      if(row[60+17]<=0 || row[60+19]!=0)
+        throw std::runtime_error("profile span/error counter invalid");
+      for(int source=0;source<4;++source)for(int field=0;field<3;++field)
+        if(row[source*20+field]!=counters[core*3*4*20+source*20+field])
+          throw std::runtime_error("Cube and Vector profile work ownership differs");
+    }
+  } else {
   ICPU_RUN_KF(oscar_attention_cv_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,raw.ptr,
       table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,partial.ptr,partLse.ptr,status.ptr,
       workspace.ptr,n,hq,hk,d,requests,int64_t{8},tasksCount,b,nb,prefix,stride,
       windowRows*hk*d,windowRows,sink,recent,spec,splits,1.0F/std::sqrt(float(d)));
+  }
   if(std::string(argv[1])=="bad_tag" || std::string(argv[1])=="nan_query" ||
-      std::string(argv[1])=="bad_meta" || std::string(argv[1])=="nan_value") {
+      std::string(argv[1])=="bad_meta" || std::string(argv[1])=="nan_value" ||
+      mode=="overflow_row_sum") {
     const int32_t wanted=std::string(argv[1])=="bad_tag"?4:(std::string(argv[1])=="bad_meta"?3:2);
     bool seen=false;
     for(int64_t i=0;i<tasksCount*2;++i) {int32_t code;std::memcpy(&code,status.ptr+i*4,4);
@@ -267,6 +309,18 @@ int main(int argc,char** argv) {
     return 0;
   }
   StatusZero(status);
+  if(mode=="finite_row_sum") {
+    for(size_t off=0;off<partial.size;off+=4) {
+      float value;std::memcpy(&value,partial.ptr+off,4);
+      if(!std::isfinite(value))throw std::runtime_error("finite row guard corrupted output");
+    }
+    for(size_t off=0;off<partLse.size;off+=4) {
+      float value;std::memcpy(&value,partLse.ptr+off,4);
+      if(std::isnan(value))throw std::runtime_error("finite row guard corrupted LSE");
+    }
+    std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\"finite_row_sum\",\"status\":\"passed\"}"<<std::endl;
+    return 0;
+  }
   for(int64_t i=0;i<n*hq*segments*d;++i) {
     float x;std::memcpy(&x,partial.ptr+i*4,4);
     if(!std::isfinite(x))throw std::runtime_error("unwritten/nonfinite partial at "+std::to_string(i));
@@ -293,7 +347,7 @@ int main(int argc,char** argv) {
       mergeStatus.ptr,n*hq,segments,d);
   StatusZero(mergeStatus);Close(output,dir+"/expected_output.bin");Close(lse,dir+"/expected_lse.bin");
   std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\""
-           <<(mode=="poison_workspace"?"poison_workspace":"attention_cv")
+           <<(mode=="poison_workspace"?"poison_workspace":(mode=="profile"?"profile":"attention_cv"))
            <<"\",\"status\":\"passed\"}"<<std::endl;
   return 0;
  }catch(const std::exception& e){std::cerr<<"CPU_DEBUG_FAILED: "<<e.what()<<std::endl;return 1;}

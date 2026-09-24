@@ -1,0 +1,45 @@
+[oscar] PASSED phase=operator-build rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T050459.813467Z/operator-build.log
+[oscar] PERF_OPERATOR_GATE build=reused npu_cv=reused_prior_evidence signature=8b73d38e9509 devices=0,1,2,3
+[oscar] PASSED phase=native-current-fia rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T050459.813467Z/native-current-fia.log
+[oscar] PERF_CURRENT_FIA_GATE accuracy=passed mixed_sources=passed task_contract=passed current16k_device_ms=6.562339782714844 release=passed
+[oscar] phase=cv-hotshape-candidate running seconds=60.0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T050459.813467Z/cv-hotshape-candidate.log
+[oscar] phase=cv-hotshape-candidate running seconds=120.1 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T050459.813467Z/cv-hotshape-candidate.log
+[oscar] PASSED phase=cv-hotshape-candidate rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T050459.813467Z/cv-hotshape-candidate.log
+[oscar] PERF_CV_AB status=not_comparable reason=baseline artifact source does not match its required csrc fingerprint
+[oscar] PERF_CV_OP case=main candidate_ms=204.427 sample_oracle=passed baseline=unavailable scope=synthetic_operator_only
+[oscar] PERF_CV_OP case=decode32 candidate_ms=15.296 sample_oracle=passed baseline=unavailable scope=synthetic_operator_only
+[oscar] PERF_VARIANT start=native lengths=20K,23K,27K,30K K=4
+Capturing CUDA graphs (decode, FULL):  44%|████▍     | 15/34 [00:12<00:13,  1.40it/s]STARTUP_WAIT elapsed=286.1 health=<urlopen error [Errno 111] Connection refused>
+[oscar] SYNTHETIC_MIXED done status=measured completed=4/4 failed=0 timeouts=0 wall=14.7s report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T050459.813467Z/native/synthetic-mixed.json
+[oscar] PERF_VARIANT done=native result=4/4 release=passed
+[oscar] PERF_VARIANT start=oscar lengths=20K,23K,27K,30K K=4
+Capturing CUDA graphs (decode, FULL):  38%|███▊      | 13/34 [00:10<00:15,  1.34it/s]STARTUP_WAIT elapsed=286.2 health=<urlopen error [Errno 111] Connection refused>
+[oscar] SYNTHETIC_MIXED done status=measured completed=4/4 failed=0 timeouts=0 wall=29.2s report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T050459.813467Z/oscar/synthetic-mixed.json
+[oscar] PERF_DIAG_START scope=synchronized_repeat1 K=4 inputs=20K,23K,27K,30K output_tokens=64 budget=300s primary=uninstrumented report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T050459.813467Z/oscar/diagnostic/diagnostic-report.json
+[oscar] PERF_DIAG_EVENTS status=observed ranks=4/4 events=5885 top6_critical_rank_ms=fia:12079.4,graph_replay:1257.4,phase1_stores:1077.7,rotate:852.2,current_native_fia:573.1,merge:523.5 graph=whole_graph_event_observed_all_ranks scope=synchronized_diagnostic_only report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T050459.813467Z/oscar/diagnostic/device-event-summary.json
+[oscar] PERF_DIAG_STAGE stage=prefill critical_rank_phase_sum_ms=12532.6 top3_critical_rank_ms=fia:10651.8,current_native_fia:573.1,merge:457.5 scope=synchronized_diagnostic_only
+[oscar] PERF_DIAG_STAGE stage=draft critical_rank_phase_sum_ms=2772.1 top3_critical_rank_ms=fia:1430.1,phase1_stores:682.0,rotate:566.3 scope=synchronized_diagnostic_only
+[oscar] PERF_DIAG_STAGE stage=graph critical_rank_phase_sum_ms=1257.4 top3_critical_rank_ms=graph_replay:1257.4 scope=synchronized_diagnostic_only
+[oscar] PERF_DIAG_CV case=candidate_no_old_context stage=prefill rank=0 tokens=16384 requests=1 max_query_len=16384 max_seq_len=16384 splits=1 count=16 p50_ms=6.48 p95_ms=6.48 rank_sum_ms=103.61 context=not_proven_empty
+[oscar] PERF_DIAG_CV case=largest_other_prefill stage=prefill rank=2 tokens=16384 requests=4 max_query_len=8900 max_seq_len=30000 splits=1 count=16 p50_ms=155.30 p95_ms=156.16 rank_sum_ms=2485.26 context=not_proven_empty
+[oscar] PERF_DIAG_CV case=largest_draft stage=draft rank=2 tokens=16384 requests=4 max_query_len=16372 max_seq_len=0 splits=1 count=1 p50_ms=231.70 p95_ms=231.70 rank_sum_ms=231.70 context=unknown_max_seq_zero
+(APIServer pid=152044) ERROR 09-24 05:22:33 [async_llm.py:704] AsyncLLM output_handler failed.
+(APIServer pid=152044) ERROR 09-24 05:22:33 [async_llm.py:704] Traceback (most recent call last):
+(APIServer pid=152044) ERROR 09-24 05:22:33 [async_llm.py:704]   File "/vllm-workspace/vllm/vllm/v1/engine/async_llm.py", line 660, in output_handler
+(APIServer pid=152044) ERROR 09-24 05:22:33 [async_llm.py:704]     outputs = await engine_core.get_output_async()
+(APIServer pid=152044) ERROR 09-24 05:22:33 [async_llm.py:704]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=152044) ERROR 09-24 05:22:33 [async_llm.py:704]   File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 1046, in get_output_async
+(APIServer pid=152044) ERROR 09-24 05:22:33 [async_llm.py:704]     raise self._format_exception(outputs) from None
+(APIServer pid=152044) ERROR 09-24 05:22:33 [async_llm.py:704] vllm.v1.engine.exceptions.EngineDeadError: EngineCore encountered an issue. See stack trace (above) for the root cause.
+[oscar] PERF_VARIANT done=oscar result=4/4 release=passed
+[oscar] PERF_STATUS pairing=complete native=4/4 failed=0 timeout=0 oscar=4/4 failed=0 timeout=0 scope=synthetic_K4 inputs=20000,23000,27000,30000 output_tokens=64 warmup_pairing=unpaired
+[oscar] PERF_QUEUE peak_running_native=4.0 peak_running_oscar=4.0 peak_waiting_native=2.0 peak_waiting_oscar=1.0 peak_inflight_native=4.0 peak_inflight_oscar=4.0 scope=sampled_1s mtp_acceptance_native=0.980 mtp_acceptance_oscar=0.886 mtp_mean_length_native=3.94 mtp_mean_length_oscar=3.66
+[oscar] PERF_TTFT_MS scope=client_SSE_ms p50_native=9838.37 p50_oscar=15294.38 p50_ratio=1.55 p95_native=13475.64 p95_oscar=27207.83 p95_ratio=2.02
+[oscar] PERF_TPOT_MS scope=client_SSE_ms p50_native=72.81 p50_oscar=213.89 p50_ratio=2.94 p95_native=158.74 p95_oscar=356.61 p95_ratio=2.25
+[oscar] PERF_E2E_MS scope=client_SSE_ms p50_native=14425.49 p50_oscar=28769.55 p50_ratio=1.99 p95_native=14732.12 p95_oscar=29153.86 p95_ratio=1.98
+[oscar] PERF_THROUGHPUT scope=client_wall_tokens_per_s prompt_native=6780.0 prompt_oscar=3429.3 prompt_ratio=0.51 generation_native=17.4 generation_oscar=8.8 generation_ratio=0.51
+[oscar] PERF_VERDICT client_ratio_gate=regressed acceptance=not_established hint=queue_or_prefill_plus_generation; device_cause=unknown
+[oscar] PERF_EVIDENCE native=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T050459.813467Z/native/report.json oscar=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T050459.813467Z/oscar/report.json comparison=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T050459.813467Z/comparison.json
+[oscar] PERF_ERROR prompt_throughput_ratio=0.5058 < 1.0000; generation_throughput_ratio=0.5058 < 1.0000; synthetic-0-20000 tpot_ms=6.3512 > 1.0000; synthetic-0-20000 e2e_ms=1.9819 > 1.0000; synthetic-1-23000 tpot_ms=14.1442 > 1.0000; synthetic-1-23000 e2e_ms=1.9450 > 1.0000 report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T050459.813467Z/paired-report.json
+[oscar] PERF_RESULT status=failed rc=2 report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T050459.813467Z/paired-report.json
+root@node93:/workspace/gpt_new_oscar_kimi#

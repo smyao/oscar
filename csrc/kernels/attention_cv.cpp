@@ -136,6 +136,20 @@
 // writes. Keep bounded tiles, FP32 math and all cross-core flags unchanged.
 // (4) Replace the incorrectly directed local event, without adding a global
 // sync or history traffic; this fixes ownership, not a claimed speedup.
+// #143/#145/D.4 vector softmax follow-up: (1) source0 fused dequant+fia and
+// precise source1/2 FIA, not phase1 store; (2) D.4's full-history restore
+// took 6499.8-6655.1ms/device versus native FIA 18.5-18.9ms, while the
+// current K4 29.2s vs native 14.7s still spends most measured prefill time
+// in CV. (3) Keep bounded INT2 unpack/FP32 QK/PV/online V2 and exact per-row
+// sum/error semantics; batch row-axis ReduceSum in dead dequant UB, and use
+// an exact two-interval bitmap Select only when a tile needs masking. Empty
+// rows remain excluded from the finite check before becoming -inf. (4) The
+// synthetic long-context main shape has about 5.03M live source0 row checks
+// per CV invocation; at D256 one AR call replaces up to 32 basic reductions
+// with their implicit V/S sync. Masked rows are about 0.14M across history
+// tail and window, so mask alone cannot explain a 2x wall gap. These are
+// static work counts, not a speed claim: CANN/CPU-debug, frozen target NPU
+// accuracy, graph replay, operator A/B and paired K4 remain required.
 // #143/D.4 INT2 plane sequencing: (1) source0 Unpack inside fused fia;
 // (2) historical full-history dequant took ~6.5s while native FIA was ~18.7ms,
 // and target K4 events now place most prefill time in CV. (3) Eight independent
@@ -155,6 +169,7 @@
 #include "lib/matmul_intf.h"
 #include "lib/matmul/constant_tiling.h"
 #include "adv_api/activation/softmaxflashv2.h"
+#include "adv_api/reduce/reduce.h"
 using namespace oscar_ascend_device;
 namespace {
 constexpr int32_t kQueryRows=oscar_ascend::kAttentionQueryRows;
@@ -163,6 +178,16 @@ constexpr int32_t kHalfRows=32, kHalfKv=16;
 constexpr int32_t kLaneRows=kQueryRows/2, kRowBlocks=kLaneRows/kHalfRows;
 constexpr int32_t kKvSubtiles=kKvRows/(2*kHalfKv);
 constexpr uint16_t kVectorReady=8, kCubeReady=9;
+// Archive #134/#140/#143-145 and D.4: raw-cycle attribution is isolated in a
+// separate diagnostic instantiation. The production instantiation has no
+// GetSystemCycle reads, profile writes, or profile-only local fences.
+constexpr int32_t kProfileTasks=0, kProfileKvTiles=1, kProfileKvRows=2;
+constexpr int32_t kProfileLoadPublish=3, kProfileWaitQk=4, kProfileSoftmax=5;
+constexpr int32_t kProfileMaskFinite=6, kProfileV2=7, kProfileWaitPv=8;
+constexpr int32_t kProfilePvAdd=9, kProfileFinal=10, kProfileCubeWaitKv=11;
+constexpr int32_t kProfileCubeQk=12, kProfileCubeWaitP=13, kProfileCubePv=14;
+constexpr int32_t kProfileCubeWaitConsume=15, kProfileCubeRotation=16;
+constexpr int32_t kProfileProcessSpan=17, kProfileEmptyTasks=18, kProfileErrors=19;
 constexpr float kNegativeInfinity=-__builtin_inff();
 constexpr float kEmptyMax=-__FLT_MAX__;
 constexpr SoftmaxConfig kCvSoftmaxConfig={false,0,0,SoftmaxMode::SOFTMAX_OUTPUT_WITHOUT_BRC};
@@ -186,7 +211,13 @@ struct Geometry {
   float scale;
 };
 
-template<int32_t D> class AttentionCv {
+template<bool Enabled> struct CvProfileStorage {};
+template<> struct CvProfileStorage<true> {
+  int64_t counters[oscar_ascend::kAttentionProfileSources]
+                  [oscar_ascend::kAttentionProfileFields];
+};
+
+template<int32_t D,bool Profile=false> class AttentionCv {
   static constexpr int32_t kSlotBytes=D/2+8;
   static constexpr int32_t kPackedStride=(kSlotBytes+31)/32*32;
   static constexpr int32_t kElements=kHalfKv*D;
@@ -195,7 +226,8 @@ template<int32_t D> class AttentionCv {
   __aicore__ void Init(GM_ADDR query,GM_ADDR queryRot,GM_ADDR key,GM_ADDR value,
       GM_ADDR rotation,GM_ADDR raw,GM_ADDR table,GM_ADDR windowKey,
       GM_ADDR windowValue,GM_ADDR tags,GM_ADDR tasks,GM_ADDR partial,
-      GM_ADDR lse,GM_ADDR status,GM_ADDR workspace,const Geometry& geometry) {
+      GM_ADDR lse,GM_ADDR status,GM_ADDR workspace,const Geometry& geometry,
+      GM_ADDR profile=nullptr) {
     g=geometry;
     q.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(query));
     qr.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(queryRot));
@@ -211,6 +243,12 @@ template<int32_t D> class AttentionCv {
     out.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(partial));
     outLse.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(lse));
     outStatus.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(status));
+    if constexpr(Profile) {
+      profileGm.SetGlobalBuffer(reinterpret_cast<__gm__ int64_t*>(profile));
+      for(int32_t source=0;source<oscar_ascend::kAttentionProfileSources;++source)
+        for(int32_t field=0;field<oscar_ascend::kAttentionProfileFields;++field)
+          profileStorage.counters[source][field]=0;
+    }
     int64_t core=GetBlockIdx();
     if ASCEND_IS_AIV {lane=core%2;core/=2;}
     coreIndex=core;
@@ -235,6 +273,7 @@ template<int32_t D> class AttentionCv {
       pipe.InitBuffer(wordIndexBuf,kWords*4);pipe.InitBuffer(laneIndexBuf,kElements*4);
       pipe.InitBuffer(dequantBuf,kElements*4);
       pipe.InitBuffer(scoreBuf,kHalfRows*kKvRows*4);
+      pipe.InitBuffer(bitmapBuf,kHalfRows*kKvRows/8);
       pipe.InitBuffer(accBuf,kLaneRows*D*4);
       pipe.InitBuffer(qFloatBuf,D*4);pipe.InitBuffer(qBf16Buf,D*2);
       pipe.InitBuffer(statsBuf,(2*kLaneRows+2*kHalfRows)*4);pipe.InitBuffer(scratchBuf,512);
@@ -242,7 +281,42 @@ template<int32_t D> class AttentionCv {
       InitIndices();
     }
   }
+  __aicore__ inline void ProfileAdd(int32_t field,int64_t delta) {
+    if constexpr(Profile) {
+      if(kind>=0 && kind<3) profileStorage.counters[kind][field]+=delta;
+      profileStorage.counters[3][field]+=delta;
+    }
+  }
+  __aicore__ void ProfileFlush() {
+    if constexpr(Profile) {
+      int64_t engine=0;
+      if ASCEND_IS_AIV {engine=lane+1;}
+      constexpr int64_t kOwnerElements=oscar_ascend::kAttentionProfileSources*
+          oscar_ascend::kAttentionProfileFields;
+      static_assert(kOwnerElements*sizeof(int64_t)%
+          oscar_ascend::kAttentionProfileCacheLineBytes==0,
+          "a profile writer must own complete cache lines");
+      const int64_t ownerBase=(coreIndex*oscar_ascend::kAttentionProfileEngines+engine)*
+          kOwnerElements;
+      for(int32_t source=0;source<oscar_ascend::kAttentionProfileSources;++source)
+        for(int32_t field=0;field<oscar_ascend::kAttentionProfileFields;++field) {
+          const int64_t index=ownerBase+source*
+              oscar_ascend::kAttentionProfileFields+field;
+          profileGm.SetValue(index,profileStorage.counters[source][field]);
+        }
+      // Native reshape_and_cache_bnsd flushes scalar GM SetValue tails: A2
+      // DCache need not write back at kernel exit. Each writer owns exactly
+      // ten aligned 64-byte lines; source rows within it share only this core.
+      for(int32_t line=0;line<kOwnerElements*sizeof(int64_t)/
+          oscar_ascend::kAttentionProfileCacheLineBytes;++line)
+        DataCacheCleanAndInvalid<int64_t,CacheLine::SINGLE_CACHE_LINE,
+            DcciDst::CACHELINE_OUT>(profileGm[ownerBase+line*
+                (oscar_ascend::kAttentionProfileCacheLineBytes/sizeof(int64_t))]);
+    }
+  }
   __aicore__ void Process() {
+    int64_t processStart=0;
+    if constexpr(Profile) processStart=GetSystemCycle();
     // Scalar Cube metadata reads must invalidate stale cache on changed-input
     // graph replay. The Vector side exclusively DMA-loads mutable metadata.
     if ASCEND_IS_AIC {
@@ -260,7 +334,14 @@ template<int32_t D> class AttentionCv {
         const int64_t id=schedule.TaskId(workId,token);
         LoadTask(id);
         if(qcount==0) {if ASCEND_IS_AIV {PublishStatus(id,0);} continue;}
-        if(qcount<0 || taskError || !TaskValid()) {
+        const bool invalid=qcount<0 || taskError || !TaskValid();
+        if constexpr(Profile) {
+          if(qcount>0 && !invalid) ProfileAdd(kProfileTasks,1);
+          if(qcount<0 || (qcount>0 && !invalid && kvbegin==kvend))
+            ProfileAdd(kProfileEmptyTasks,1);
+          if(taskError || (qcount>0 && invalid)) ProfileAdd(kProfileErrors,1);
+        }
+        if(invalid) {
           if ASCEND_IS_AIV {PublishEmpty(id,taskError?taskError:(!TaskValid()?1:0));}
           continue;
         }
@@ -269,6 +350,14 @@ template<int32_t D> class AttentionCv {
       }
     }
     if ASCEND_IS_AIC {mm.End();}
+    if constexpr(Profile) {
+      // Only the diagnostic version closes the producer pipeline before its
+      // own clock/readback. This is a local event, never PIPE_ALL.
+      if ASCEND_IS_AIC {Fence<HardEvent::FIX_S>();}
+      else {Fence<HardEvent::MTE3_S>();}
+      profileStorage.counters[3][kProfileProcessSpan]=GetSystemCycle()-processStart;
+      ProfileFlush();
+    }
   }
  private:
   __aicore__ void LoadTask(int64_t id) {
@@ -317,20 +406,55 @@ template<int32_t D> class AttentionCv {
   __aicore__ void CubeTask() {
     const int32_t rows=static_cast<int32_t>(qcount*(g.hq/g.hk));
     for(int64_t start=kvbegin;start<kvend;start+=kKvRows) {
+      int64_t tick=0;
+      if constexpr(Profile) {
+        ProfileAdd(kProfileKvTiles,1);
+        ProfileAdd(kProfileKvRows,Min64(kKvRows,kvend-start));
+        tick=GetSystemCycle();
+      }
       CrossCoreWaitFlag(kVectorReady);
+      if constexpr(Profile) {
+        ProfileAdd(kProfileCubeWaitKv,GetSystemCycle()-tick);
+        tick=GetSystemCycle();
+      }
       Matmul(qOffset,kOffset,scoreOffset,rows,kKvRows,D);
+      if constexpr(Profile) {
+        Fence<HardEvent::FIX_S>();
+        ProfileAdd(kProfileCubeQk,GetSystemCycle()-tick);
+      }
       CrossCoreSetFlag<2,PIPE_FIX>(kCubeReady);
+      if constexpr(Profile) tick=GetSystemCycle();
       CrossCoreWaitFlag(kVectorReady);
+      if constexpr(Profile) {
+        ProfileAdd(kProfileCubeWaitP,GetSystemCycle()-tick);
+        tick=GetSystemCycle();
+      }
       Matmul(pOffset,vOffset,pvOffset,rows,D,kKvRows,false,false);
+      if constexpr(Profile) {
+        Fence<HardEvent::FIX_S>();
+        ProfileAdd(kProfileCubePv,GetSystemCycle()-tick);
+      }
       CrossCoreSetFlag<2,PIPE_FIX>(kCubeReady);
       // Vector consumes PV before the next tile may overwrite shared buffers.
+      if constexpr(Profile) tick=GetSystemCycle();
       CrossCoreWaitFlag(kVectorReady);
+      if constexpr(Profile) ProfileAdd(kProfileCubeWaitConsume,GetSystemCycle()-tick);
     }
     if(kind==0 && kvbegin<kvend) {
+      int64_t tick=0;
+      if constexpr(Profile) tick=GetSystemCycle();
       CrossCoreWaitFlag(kVectorReady);
+      if constexpr(Profile) ProfileAdd(kProfileCubeWaitKv,GetSystemCycle()-tick);
+      if constexpr(Profile) tick=GetSystemCycle();
       Matmul(qOffset,0,rotOffset,rows,D,D,true);
+      if constexpr(Profile) {
+        Fence<HardEvent::FIX_S>();
+        ProfileAdd(kProfileCubeRotation,GetSystemCycle()-tick);
+      }
       CrossCoreSetFlag<2,PIPE_FIX>(kCubeReady);
+      if constexpr(Profile) tick=GetSystemCycle();
       CrossCoreWaitFlag(kVectorReady);
+      if constexpr(Profile) ProfileAdd(kProfileCubeWaitConsume,GetSystemCycle()-tick);
     }
   }
   __aicore__ void LoadQueries() {
@@ -519,6 +643,14 @@ template<int32_t D> class AttentionCv {
     else if(lo<=hi0) hi0=static_cast<int32_t>(Max64(hi0,hi));
     else {lo1=lo;hi1=hi;}
   }
+  __aicore__ uint32_t VisibleWord(int32_t lo,int32_t hi,int32_t wordBegin) {
+    const int32_t begin=static_cast<int32_t>(Max64(lo,wordBegin))-wordBegin;
+    const int32_t end=static_cast<int32_t>(Min64(hi,wordBegin+32))-wordBegin;
+    if(end<=begin)return 0;
+    const uint32_t lower=begin==0?0xffffffffU:(0xffffffffU<<begin);
+    const uint32_t upper=end==32?0xffffffffU:((1U<<end)-1U);
+    return lower&upper;
+  }
   __aicore__ void Softmax(int64_t start,int32_t rowBase) {
     auto scores=scoreBuf.Get<float>();
     auto acc=accBuf.Get<float>()[(rowBase-lane*kLaneRows)*D];
@@ -549,52 +681,95 @@ template<int32_t D> class AttentionCv {
           (kHalfRows-softmaxRows)*kKvRows);
       Fence<HardEvent::V_S>();
     }
-    // Archive #134/#140/D.4: every source has at most two visible candidate
-    // intervals. Derive them once per query row instead of scanning all 128
-    // candidate positions. The remaining mask writes and finite check are
-    // unchanged, including padded tail columns and empty source rows.
+    int64_t maskStart=0;
+    if constexpr(Profile) maskStart=GetSystemCycle();
+    // Archive #134/#140/#146/D.4: every source has at most two visible
+    // intervals. The common historical tile is completely visible to all
+    // query rows and does not need a bitmap or Select at all.
     const int32_t jEnd=static_cast<int32_t>(Min64(kKvRows,kvend-start));
     const int64_t tileEnd=start+jEnd;
     const int64_t sinkCount=Min64(g.sink,context);
     const int64_t firstPosition=context+qbegin-requestBegin;
     const int64_t tailBegin=Min64(context,Max64(g.sink,firstPosition+1-g.recent));
-    for(int32_t r=0;r<activeRows;++r) {
-      const int64_t row=rowBase+r;
-      const int64_t position=context+qbegin+row/group-requestBegin;
-      int32_t lo0=0,hi0=0,lo1=0,hi1=0;
-      const int64_t cut=Max64(g.sink,position+1-g.recent);
-      if(kind==0) {
-        AddVisibleRange(Max64(start,g.sink),
-            Min64(tileEnd,Min64(context,Min64(cut,position+1))),start,
-            lo0,hi0,lo1,hi1);
-      } else if(kind==1) {
-        // LogicalPosition maps [0,sinkCount) to the exact sink, and the
-        // remaining candidate interval to [tailBegin,context). Every query
-        // position is >=context, so only the recent cut affects the tail.
-        AddVisibleRange(Max64(start,0),Min64(tileEnd,sinkCount),start,
-            lo0,hi0,lo1,hi1);
-        AddVisibleRange(Max64(start,sinkCount+Max64(0,cut-tailBegin)),
-            Min64(tileEnd,sinkCount+context-tailBegin),start,
-            lo0,hi0,lo1,hi1);
-      } else {
-        AddVisibleRange(Max64(start,context),Min64(tileEnd,position+1),start,
-            lo0,hi0,lo1,hi1);
-      }
-      const bool any=hi0>lo0||hi1>lo1;
-      if(!any) {Fence<HardEvent::S_V>();Duplicate(scores[r*kKvRows],kNegativeInfinity,kKvRows);
-        Fence<HardEvent::V_S>();continue;}
-      PipeBarrier<PIPE_V>();
-      ReduceSum(tmp,scores[r*kKvRows],tmp[16],kKvRows);Fence<HardEvent::V_S>();
-      if(!Finite(tmp.GetValue(0)))error=2;
-      if(lo0>0 || hi0<kKvRows) {
-        Fence<HardEvent::S_V>();
-        for(int32_t j=0;j<kKvRows;++j) {
-          const bool visible=(j>=lo0&&j<hi0)||(j>=lo1&&j<hi1);
-          if(!visible)scores.SetValue(r*kKvRows+j,kNegativeInfinity);
+    const bool fullHistoryTile=kind==0 && start>=g.sink && jEnd==kKvRows &&
+        tileEnd<=Min64(context,Max64(g.sink,firstPosition+1-g.recent));
+    bool needsMask=false,zeroedInvisible=false;
+    auto bounds=naturalBuf.Get<int32_t>();
+    if(!fullHistoryTile) {
+      for(int32_t r=0;r<activeRows;++r) {
+        const int64_t row=rowBase+r;
+        const int64_t position=context+qbegin+row/group-requestBegin;
+        int32_t lo0=0,hi0=0,lo1=0,hi1=0;
+        const int64_t cut=Max64(g.sink,position+1-g.recent);
+        if(kind==0) {
+          AddVisibleRange(Max64(start,g.sink),
+              Min64(tileEnd,Min64(context,Min64(cut,position+1))),start,
+              lo0,hi0,lo1,hi1);
+        } else if(kind==1) {
+          // Sink and recent candidates can be two disjoint intervals.
+          AddVisibleRange(Max64(start,0),Min64(tileEnd,sinkCount),start,
+              lo0,hi0,lo1,hi1);
+          AddVisibleRange(Max64(start,sinkCount+Max64(0,cut-tailBegin)),
+              Min64(tileEnd,sinkCount+context-tailBegin),start,
+              lo0,hi0,lo1,hi1);
+        } else {
+          AddVisibleRange(Max64(start,context),Min64(tileEnd,position+1),start,
+              lo0,hi0,lo1,hi1);
         }
-        Fence<HardEvent::S_V>();
+        bounds.SetValue(4*r,lo0);bounds.SetValue(4*r+1,hi0);
+        bounds.SetValue(4*r+2,lo1);bounds.SetValue(4*r+3,hi1);
+        const bool any=hi0>lo0||hi1>lo1;
+        needsMask=needsMask || !any || lo0>0 || hi0<kKvRows || hi1>lo1;
+        if(!any) {
+          // The old row loop skipped finite checking for an invisible row.
+          // Zero it only until the batched row-sum check has completed; Select
+          // below will restore the original all-masked (-inf) softmax input.
+          Fence<HardEvent::S_V>();
+          Duplicate(scores[r*kKvRows],0.0F,kKvRows);
+          zeroedInvisible=true;
+        }
       }
+      if(zeroedInvisible) {PipeBarrier<PIPE_V>();Fence<HardEvent::V_MTE2>();}
     }
+    // A2's basic 1-D ReduceSum synchronizes V->S on every call. The official
+    // row-axis AR reduction preserves the per-row sum/error guard while
+    // folding up to D/8 rows with one API call. Its non-reuse 256-column
+    // scratch is 128 FP32 values per row and fits the dead 16*D dequant UB.
+    auto rowSums=planeBuf.Get<float>();
+    auto reduceWork=dequantBuf.Get<uint8_t>();
+    constexpr int32_t kRowsPerReduce=D/8;
+    for(int32_t first=0;first<activeRows;first+=kRowsPerReduce) {
+      const uint32_t shape[2]={static_cast<uint32_t>(Min64(kRowsPerReduce,activeRows-first)),
+          static_cast<uint32_t>(kKvRows)};
+      ReduceSum<float,Pattern::Reduce::AR,false>(rowSums[first],scores[first*kKvRows],
+          reduceWork,shape,true);
+      PipeBarrier<PIPE_V>();
+    }
+    Fence<HardEvent::V_S>();
+    for(int32_t r=0;r<activeRows;++r)
+      if(!Finite(rowSums.GetValue(r)))error=2;
+    if(needsMask) {
+      auto bits=bitmapBuf.Get<uint32_t>();
+      for(int32_t r=0;r<activeRows;++r) {
+        const int32_t lo0=bounds.GetValue(4*r),hi0=bounds.GetValue(4*r+1);
+        const int32_t lo1=bounds.GetValue(4*r+2),hi1=bounds.GetValue(4*r+3);
+        for(int32_t word=0;word<kKvRows/32;++word) {
+          const int32_t wordBegin=word*32;
+          bits.SetValue(r*(kKvRows/32)+word,
+              VisibleWord(lo0,hi0,wordBegin)|VisibleWord(lo1,hi1,wordBegin));
+        }
+      }
+      Fence<HardEvent::S_V>();
+      Select(scores,bits,scores,kNegativeInfinity,
+          SELMODE::VSEL_TENSOR_SCALAR_MODE,activeRows*kKvRows);
+      PipeBarrier<PIPE_V>();
+    }
+    if constexpr(Profile) {
+      Fence<HardEvent::V_S>();
+      ProfileAdd(kProfileMaskFinite,GetSystemCycle()-maskStart);
+    }
+    int64_t v2Start=0;
+    if constexpr(Profile) v2Start=GetSystemCycle();
     // The two 64-row max/sum arrays persist across KV work units. Two shared
     // 32-row input arrays let CANN's FP32 WITHOUT_BRC V2 update one score
     // block at a time without spilling the running state to GM.
@@ -617,6 +792,7 @@ template<int32_t D> class AttentionCv {
         scores,outSum,outMax,scores,tmp,inSum,inMax,
         softWork.ReinterpretCast<uint8_t>(),tiling,shape);
     Fence<HardEvent::V_S>();
+    if constexpr(Profile) ProfileAdd(kProfileV2,GetSystemCycle()-v2Start);
     // Reuse the now-dead natural unpack UB for the same row-strided Brcb
     // pattern as the validated scale/zero path. This multiplies all active
     // accumulator rows by their FP32 online alpha without scalar readback.
@@ -647,7 +823,13 @@ template<int32_t D> class AttentionCv {
     Fence<HardEvent::V_S>();
     LoadQueries();
     for(int64_t start=kvbegin;start<kvend;start+=kKvRows) {
-      // Four bounded 32-token subtiles fill one 128-token K/V work unit.
+      int64_t tick=0;
+      if constexpr(Profile) {
+        ProfileAdd(kProfileKvTiles,1);
+        ProfileAdd(kProfileKvRows,Min64(kKvRows,kvend-start));
+        tick=GetSystemCycle();
+      }
+      // Eight bounded 32-token subtiles fill one 256-token K/V work unit.
       // Packed history is read once per subtile and reused for K and V;
       // all incomplete tail slots are published as zero before Cube QK.
       for(int32_t subtile=0;subtile<kKvSubtiles;++subtile) {
@@ -658,12 +840,32 @@ template<int32_t D> class AttentionCv {
         if(kind==0)Unpack(true);else LoadPrecise(subStart,true);
         PublishKv(true,subtile);
       }
+      if constexpr(Profile) {
+        // The normal MTE3 flag protects Cube consumption. This local S wait
+        // makes the separate diagnostic timestamp mean completed publication.
+        Fence<HardEvent::MTE3_S>();
+        ProfileAdd(kProfileLoadPublish,GetSystemCycle()-tick);
+        tick=GetSystemCycle();
+      }
       CrossCoreSetFlag<2,PIPE_MTE3>(kVectorReady);
       CrossCoreWaitFlag(kCubeReady);
+      if constexpr(Profile) {
+        ProfileAdd(kProfileWaitQk,GetSystemCycle()-tick);
+        tick=GetSystemCycle();
+      }
       for(int32_t block=0;block<kRowBlocks;++block)
         Softmax(start,lane*kLaneRows+block*kHalfRows);
+      if constexpr(Profile) {
+        Fence<HardEvent::MTE3_S>();
+        ProfileAdd(kProfileSoftmax,GetSystemCycle()-tick);
+        tick=GetSystemCycle();
+      }
       CrossCoreSetFlag<2,PIPE_MTE3>(kVectorReady);
       CrossCoreWaitFlag(kCubeReady);
+      if constexpr(Profile) {
+        ProfileAdd(kProfileWaitPv,GetSystemCycle()-tick);
+        tick=GetSystemCycle();
+      }
       // P is fully consumed by Cube before this point. Reuse the now-dead
       // dequant UB for bounded 16-row PV reads; the 64-row FP32 accumulator
       // stays in UB across every 256-KV unit in the same query task.
@@ -678,8 +880,14 @@ template<int32_t D> class AttentionCv {
         Add(target,target,result,count*D);PipeBarrier<PIPE_V>();
         Fence<HardEvent::V_MTE2>();
       }
+      if constexpr(Profile) {
+        Fence<HardEvent::V_S>();
+        ProfileAdd(kProfilePvAdd,GetSystemCycle()-tick);
+      }
       CrossCoreSetFlag<2,PIPE_MTE2>(kVectorReady);
     }
+    int64_t finalTick=0;
+    if constexpr(Profile) finalTick=GetSystemCycle();
     Fence<HardEvent::V_S>();
     for(int32_t r=0;r<kLaneRows;++r) {
       const float sum=stats.GetValue(kLaneRows+r);
@@ -695,6 +903,11 @@ template<int32_t D> class AttentionCv {
       Fence<HardEvent::MTE2_V>();CrossCoreSetFlag<2,PIPE_MTE2>(kVectorReady);
     }
     PublishRows(id);
+    if constexpr(Profile) {
+      Fence<HardEvent::MTE3_S>();
+      ProfileAdd(kProfileFinal,GetSystemCycle()-finalTick);
+      if(error) ProfileAdd(kProfileErrors,1);
+    }
   }
   __aicore__ void PublishRows(int64_t id) {
     auto acc=accBuf.Get<float>();auto stats=statsBuf.Get<float>();auto scalar=scratchBuf.Get<float>();
@@ -740,13 +953,14 @@ template<int32_t D> class AttentionCv {
   GlobalTensor<bfloat16_t> q,ck,cv,wk,wv;
   GlobalTensor<float> qr,rv,out,outLse,work;
   GlobalTensor<uint8_t> bytes;GlobalTensor<int32_t> bt,outStatus;
-  GlobalTensor<int64_t> wt,taskGm;
+  GlobalTensor<int64_t> wt,taskGm,profileGm;
   TBuf<TPosition::VECCALC> taskBuf,packedBuf,planeBuf,naturalBuf,wordBuf,maskBuf,
       wordIndexBuf,laneIndexBuf,dequantBuf,
-      scoreBuf,accBuf,qFloatBuf,qBf16Buf,statsBuf,scratchBuf,addressBuf;
+      scoreBuf,bitmapBuf,accBuf,qFloatBuf,qBf16Buf,statsBuf,scratchBuf,addressBuf;
   int64_t coreIndex,qbegin,qcount,kvhead,kvbegin,kvend,request,split,kind,context,requestBegin;
   int64_t qOffset,kOffset,vOffset,scoreOffset,pOffset,pvOffset,rotOffset;
   int32_t lane=0,error=0,taskError=0,liveKvRows=0;
+  CvProfileStorage<Profile> profileStorage;
 };
 }
 #define OSCAR_CV_ARGUMENTS GM_ADDR query, GM_ADDR queryRot, GM_ADDR key, GM_ADDR value, \
@@ -758,6 +972,8 @@ template<int32_t D> class AttentionCv {
     int64_t sink, int64_t recent, int64_t speculative, int64_t splits, float scale
 #define OSCAR_CV_INIT op.Init(query,queryRot,key,value,rotation,raw,table,wk,wv,tags, \
     tasks,output,lse,status,workspace,g);op.Process()
+#define OSCAR_CV_PROFILE_INIT op.Init(query,queryRot,key,value,rotation,raw,table,wk,wv,tags, \
+    tasks,output,lse,status,workspace,g,profile);op.Process()
 extern "C" __global__ __aicore__ void oscar_attention_cv_kernel(OSCAR_CV_ARGUMENTS) {
   KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
   const Geometry g{tokens,hq,hk,requests,columns,taskCount,blockTokens,blocks,ssmOffset,
@@ -765,6 +981,15 @@ extern "C" __global__ __aicore__ void oscar_attention_cv_kernel(OSCAR_CV_ARGUMEN
   if(dim==64) {AttentionCv<64> op;OSCAR_CV_INIT;}
   else if(dim==128) {AttentionCv<128> op;OSCAR_CV_INIT;}
   else {AttentionCv<256> op;OSCAR_CV_INIT;}
+}
+extern "C" __global__ __aicore__ void oscar_attention_cv_profile_kernel(
+    OSCAR_CV_ARGUMENTS, GM_ADDR profile) {
+  KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
+  const Geometry g{tokens,hq,hk,requests,columns,taskCount,blockTokens,blocks,ssmOffset,
+      pageStride,windowStride,tagStride,sink,recent,speculative,splits,scale};
+  if(dim==64) {AttentionCv<64,true> op;OSCAR_CV_PROFILE_INIT;}
+  else if(dim==128) {AttentionCv<128,true> op;OSCAR_CV_PROFILE_INIT;}
+  else {AttentionCv<256,true> op;OSCAR_CV_PROFILE_INIT;}
 }
 #ifndef ASCENDC_CPU_DEBUG
 namespace oscar_ascend {
@@ -784,6 +1009,24 @@ void attention_cv_launch(void* stream,void* query,void* queryRot,void* key,void*
       static_cast<uint8_t*>(lse),static_cast<uint8_t*>(status),static_cast<uint8_t*>(workspace),
       tokens,hq,hk,dim,requests,columns,taskCount,blockTokens,blocks,ssmOffset,
       pageStride,windowStride,tagStride,sink,recent,speculative,splits,scale);
+}
+void attention_cv_profile_launch(void* stream,void* query,void* queryRot,void* key,void* value,
+    void* rotation,void* raw,void* table,void* wk,void* wv,void* tags,void* tasks,
+    void* output,void* lse,void* status,void* workspace,int64_t tokens,int64_t hq,
+    int64_t hk,int64_t dim,int64_t requests,int64_t columns,int64_t taskCount,
+    int64_t blockTokens,int64_t blocks,int64_t ssmOffset,int64_t pageStride,
+    int64_t windowStride,int64_t tagStride,int64_t sink,int64_t recent,
+    int64_t speculative,int64_t splits,float scale,uint32_t cores,void* profile) {
+  oscar_attention_cv_profile_kernel<<<cores,nullptr,stream>>>(
+      static_cast<uint8_t*>(query),static_cast<uint8_t*>(queryRot),
+      static_cast<uint8_t*>(key),static_cast<uint8_t*>(value),
+      static_cast<uint8_t*>(rotation),static_cast<uint8_t*>(raw),
+      static_cast<uint8_t*>(table),static_cast<uint8_t*>(wk),static_cast<uint8_t*>(wv),
+      static_cast<uint8_t*>(tags),static_cast<uint8_t*>(tasks),static_cast<uint8_t*>(output),
+      static_cast<uint8_t*>(lse),static_cast<uint8_t*>(status),static_cast<uint8_t*>(workspace),
+      tokens,hq,hk,dim,requests,columns,taskCount,blockTokens,blocks,ssmOffset,
+      pageStride,windowStride,tagStride,sink,recent,speculative,splits,scale,
+      static_cast<uint8_t*>(profile));
 }
 }
 #endif

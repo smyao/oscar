@@ -10,6 +10,13 @@ namespace oscar_ascend {
 constexpr int64_t kAttentionTaskColumns = 16;
 constexpr int64_t kAttentionQueryRows = 128;
 constexpr int64_t kAttentionKvRows = 256;
+// Diagnostic-only CV profile ABI: [cube_core, AIC/AIV0/AIV1,
+// history/window/current/all, field]. Values that represent time are raw
+// SYS_CNT ticks; callers must not infer a clock frequency from this schema.
+constexpr int64_t kAttentionProfileEngines = 3;
+constexpr int64_t kAttentionProfileSources = 4;
+constexpr int64_t kAttentionProfileFields = 20;
+constexpr int64_t kAttentionProfileCacheLineBytes = 64;
 constexpr int64_t attention_workspace_per_core(int64_t dim) {
   // Q[M,D], natural K/V[B,D], score/P[M,B], PV/rotation[M,D].
   return ((2 * kAttentionQueryRows + 2 * kAttentionKvRows) * dim
@@ -30,4 +37,14 @@ void attention_cv_launch(void* stream, void* query, void* query_rot,
     int64_t page_stride, int64_t window_stride, int64_t tag_stride,
     int64_t sink, int64_t recent, int64_t speculative, int64_t splits,
     float scale, uint32_t cores);
+void attention_cv_profile_launch(void* stream, void* query, void* query_rot,
+    void* current_key, void* current_value, void* rotation_v, void* raw,
+    void* block_table, void* window_key, void* window_value, void* window_tags,
+    void* tasks, void* partial, void* lse, void* status, void* workspace,
+    int64_t tokens, int64_t query_heads, int64_t kv_heads, int64_t dim,
+    int64_t requests, int64_t table_columns, int64_t task_count,
+    int64_t block_tokens, int64_t physical_blocks, int64_t ssm_offset,
+    int64_t page_stride, int64_t window_stride, int64_t tag_stride,
+    int64_t sink, int64_t recent, int64_t speculative, int64_t splits,
+    float scale, uint32_t cores, void* profile);
 }

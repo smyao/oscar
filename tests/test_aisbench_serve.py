@@ -34,7 +34,7 @@ def test_plan_and_environment_exclude_diagnostic_and_paired_work(monkeypatch, tm
         monkeypatch.setenv(key, "1")
     actual, env = aisbench_serve._config(path)
     assert actual == config
-    assert env["ASCEND_RT_VISIBLE_DEVICES"] == "0,1,2,3"
+    assert env["ASCEND_RT_VISIBLE_DEVICES"] == "4,5,6,7"
     assert env["OSCAR_TERMINAL_LOG_MODE"] == "compact"
     assert env["OSCAR_TARGET_CONFIG"] == str(path)
     assert not set(aisbench_serve._DIAGNOSTIC_ENV) & set(env)
@@ -111,7 +111,7 @@ def test_ready_only_after_observer_then_clean_stop(monkeypatch, tmp_path):
     assert os.environ == prior_env
     assert phases == ["build-dependencies", "install-plugin", "probe-ops", "prepare-rotations"]
     ready = json.loads((logs / "ready.json").read_text())
-    assert ready["url"] == "http://127.0.0.1:8989/v1/chat/completions"
+    assert ready["url"] == "http://127.0.0.1:9595/v1/chat/completions"
     assert ready["model"] == "qwen3.5"
     assert ready["performance_acceptance"] == "not_run"
     assert len([line for line in printed if "AISBENCH_READY" in line]) == 1

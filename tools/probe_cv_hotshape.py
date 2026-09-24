@@ -116,8 +116,8 @@ def _source_check(configuration: dict, variant: str, *, root: Path = ROOT) -> st
 
 def _select_device(target: dict) -> str:
     devices = target.get("devices")
-    if devices != [0, 1, 2, 3] or any(type(device) is not int for device in devices):
-        raise HotShapeError("hot-shape target must select explicit physical devices 0,1,2,3")
+    if devices != [4, 5, 6, 7] or any(type(device) is not int for device in devices):
+        raise HotShapeError("hot-shape target must select explicit physical devices 4,5,6,7")
     selected = ",".join(map(str, devices))
     inherited = os.environ.get("ASCEND_RT_VISIBLE_DEVICES")
     if inherited is not None and inherited != selected:

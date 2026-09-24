@@ -41,7 +41,7 @@ def test_source_check_fails_closed_for_wrong_baseline(monkeypatch, tmp_path):
 
 def test_baseline_availability_reports_missing_evidence_without_torch(monkeypatch, tmp_path):
     target = tmp_path / "target.json"
-    target.write_text('{"devices":[0,1,2,3],"soc_version":"ascend910b4"}')
+    target.write_text('{"devices":[4,5,6,7],"soc_version":"ascend910b4"}')
     monkeypatch.setattr(hot, "_verify_artifact",
                         lambda *args: (_ for _ in ()).throw(hot.BaselineUnavailable("missing old SO")))
     assert hot.baseline_availability(tmp_path / "missing.json", target) == {

@@ -1,0 +1,119 @@
+root@node93:/workspace/gpt_new_oscar_kimi# git pull --ff-only && bash scripts/probe_concurrency.sh
+remote: Enumerating objects: 30, done.
+remote: Counting objects: 100% (30/30), done.
+remote: Compressing objects: 100% (17/17), done.
+remote: Total 17 (delta 13), reused 0 (delta 0), pack-reused 0 (from 0)
+Unpacking objects: 100% (17/17), 11.81 KiB | 165.00 KiB/s, done.
+From https://gitcode.com/jpl123/gpt_new_oscar_kimi
+   83cb8d6..d7ba977  codex/oscar-ascend -> origin/codex/oscar-ascend
+Updating 83cb8d6..d7ba977
+Fast-forward
+ docs/checklist.md                             |   2 ++
+ issue1_full_record.md                         |  20 ++++++++++++++++
+ oscar_ascend/integration/current_attention.py |   7 ++++--
+ oscar_ascend/integration/dummy_context.py     |  25 ++++++++++++++++++++
+ oscar_ascend/integration/metadata.py          |  10 +++++---
+ oscar_ascend/plugin.py                        |  14 ++++++++++++
+ reports/target_graph_warmup_failure.txt       | 281 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ tests/test_current_attention.py               |   8 +++----
+ tests/test_plugin.py                          |  56 ++++++++++++++++++++++++++++++++++++++++++++-
+ tests/test_runtime_native.py                  |  68 +++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 10 files changed, 480 insertions(+), 11 deletions(-)
+ create mode 100644 oscar_ascend/integration/dummy_context.py
+ create mode 100644 reports/target_graph_warmup_failure.txt
+[oscar] PASSED phase=operator-build rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T003530.842905Z/operator-build.log
+[oscar] PASSED phase=operator-cv-npu rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T003530.842905Z/operator-cv-npu.log
+[oscar] PERF_OPERATOR_GATE build=reused npu_cv=fresh_device_completion signature=3648470f2722 devices=0,1,2,3
+[oscar] PASSED phase=native-current-fia rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T003530.842905Z/native-current-fia.log
+[oscar] PERF_CURRENT_FIA_GATE accuracy=passed mixed_sources=passed task_contract=passed current16k_device_ms=6.595860004425049 release=passed
+[oscar] PERF_VARIANT start=native lengths=20K,23K,27K,30K K=4
+Capturing CUDA graphs (decode, FULL):  38%|███▊      | 13/34 [00:10<00:15,  1.36it/s]STARTUP_WAIT elapsed=286.2 health=<urlopen error [Errno 111] Connection refused>
+[oscar] SYNTHETIC_MIXED done status=measured completed=4/4 failed=0 timeouts=0 wall=14.7s report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T003530.842905Z/native/synthetic-mixed.json
+INFO 09-24 00:43:36 [core_client.py:652] [shutdown] MPClient: start timeout=0s
+Exception in thread Thread-2:
+Exception in thread (Worker_TP0 pid=117611) (Worker_TP3 pid=117766) Thread-2  File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run
+  File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+:
+      (Worker_TP3 pid=117766)           ^ ^ ^ ^ ^ ^ ^^^^^^^^^^
+^(Worker_TP0 pid=117611) ^(Worker_TP1 pid=117648)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 250, in recv
+^    ^self.run()^
+^^^^^^^
+    buf = self._recv_bytes()
+^^^^
+  (Worker_TP3 pid=117766)       kind, result = conn.recv() 
+     (Worker_TP3 pid=117766)   ^ ^ ^ ^ ^ (Worker_TP0 pid=117611) ^     ^ buf = self._recv(4)^ 
+^ ^ ^(Worker_TP0 pid=117611)  ^  ^  ^  ^  ^  ^  
+  (Worker_TP1 pid=117648)  ^  File "<string>", line 2, in get
+ ^(Worker_TP1 pid=117648)  ^  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py", line 828, in _callmethod
+^^^^^^^^^^^^^^^^^
+^(Worker_TP3 pid=117766) ^  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 250, in recv
+^^
+
+     (Worker_TP0 pid=117611)   EOFError  
+          ^ ^ ^ ^ ^ ^ ^ ^ ^ ^^^^^^^^^^^^^^^^^^
+^(Worker_TP3 pid=117766) ^  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 430, in _recv_bytes
+
+     (Worker_TP3 pid=117766)         ^ ^ ^ ^ ^ ^ ^^^^^^^^^^^^^^^^^^^^^^^^
+^(Worker_TP1 pid=117648) 
+  File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 430, in _recv_bytes
+
+        ^^^^^^^^^^^^^
+(APIServer pid=117502) INFO 09-24 00:43:36 [core_client.py:656] [shutdown] MPClient: engine manager stopped
+(APIServer pid=117502) INFO 09-24 00:43:36 [core_client.py:657] [shutdown] MPClient: cleaning up background resources
+(APIServer pid=117502) INFO 09-24 00:43:36 [core_client.py:659] [shutdown] MPClient: complete
+(APIServer pid=117502) ERROR 09-24 00:43:36 [async_llm.py:704] AsyncLLM output_handler failed.
+(APIServer pid=117502) ERROR 09-24 00:43:36 [async_llm.py:704] Traceback (most recent call last):
+(APIServer pid=117502) ERROR 09-24 00:43:36 [async_llm.py:704]   File "/vllm-workspace/vllm/vllm/v1/engine/async_llm.py", line 660, in output_handler
+(APIServer pid=117502) ERROR 09-24 00:43:36 [async_llm.py:704]     outputs = await engine_core.get_output_async()
+(APIServer pid=117502) ERROR 09-24 00:43:36 [async_llm.py:704]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=117502) ERROR 09-24 00:43:36 [async_llm.py:704]   File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 1046, in get_output_async
+(APIServer pid=117502) ERROR 09-24 00:43:36 [async_llm.py:704]     raise self._format_exception(outputs) from None
+(APIServer pid=117502) ERROR 09-24 00:43:36 [async_llm.py:704] vllm.v1.engine.exceptions.EngineDeadError: EngineCore encountered an issue. See stack trace (above) for the root cause.
+(Worker_TP0 pid=117611) Exception in thread Thread-3:
+(Worker_TP0 pid=117611) Traceback (most recent call last):
+(Worker_TP0 pid=117611)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+(Worker_TP0 pid=117611)     self.run()(Worker_TP3 pid=117766) 
+(Worker_TP1 pid=117648) (Worker_TP3 pid=117766) Traceback (most recent call last):
+(Worker_TP1 pid=117648) Traceback (most recent call last):
+(Worker_TP1 pid=117648)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+(Worker_TP0 pid=117611)     item = self.task_q.get()
+(Worker_TP0 pid=117611)            ^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=117611)   File "<string>", line 2, in get
+(Worker_TP0 pid=117611)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py", line 828, in _callmethod
+(Worker_TP3 pid=117766)     self.run()
+(Worker_TP3 pid=117766)   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run
+(Worker_TP0 pid=117611)     kind, result = conn.recv()
+(Worker_TP0 pid=117611)      (Worker_TP3 pid=117766)       item = self.task_q.get() 
+(Worker_TP3 pid=117766)   File "<string>", line 2, in get
+(Worker_TP3 pid=117766)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py", line 828, in _callmethod
+(Worker_TP1 pid=117648) (Worker_TP0 pid=117611)   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run
+(Worker_TP0 pid=117611)           ^^^^^^^^^^^(Worker_TP1 pid=117648) ^    ^item = self.task_q.get()^
+(Worker_TP0 pid=117611) (Worker_TP1 pid=117648)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 430, in _recv_bytes
+(Worker_TP0 pid=117611)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 399, in _recv
+(Worker_TP3 pid=117766) (Worker_TP1 pid=117648)         buf = self._recv_bytes()kind, result = conn.recv()
+(Worker_TP0 pid=117611)     (Worker_TP3 pid=117766) raise EOFError(Worker_TP1 pid=117648)  
+(Worker_TP1 pid=117648)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 250, in recv
+(Worker_TP1 pid=117648)     buf = self._recv_bytes()
+(Worker_TP3 pid=117766)     (Worker_TP1 pid=117648) buf = self._recv(4) 
+(Worker_TP3 pid=117766)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 399, in _recv
+(Worker_TP1 pid=117648) (Worker_TP3 pid=117766)         buf = self._recv(4)raise EOFError
+(Worker_TP1 pid=117648) (Worker_TP3 pid=117766)  EOFError 
+(Worker_TP1 pid=117648)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 399, in _recv
+(Worker_TP1 pid=117648)     raise EOFError
+(Worker_TP1 pid=117648) EOFError
+[oscar] PERF_VARIANT done=native result=4/4 release=passed
+[oscar] PERF_VARIANT start=oscar lengths=20K,23K,27K,30K K=4
+Capturing CUDA graphs (decode, FULL):  53%|█████▎    | 18/34 [00:14<00:11,  1.43it/s]STARTUP_WAIT elapsed=286.4 health=<urlopen error [Errno 111] Connection refused>
+[oscar] SYNTHETIC_MIXED done status=measured completed=4/4 failed=0 timeouts=0 wall=43.3s report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T003530.842905Z/oscar/synthetic-mixed.json
+[oscar] PERF_VARIANT done=oscar result=4/4 release=passed
+[oscar] PERF_STATUS pairing=complete native=4/4 failed=0 timeout=0 oscar=4/4 failed=0 timeout=0 scope=synthetic_K4 inputs=20000,23000,27000,30000 output_tokens=64 warmup_pairing=unpaired
+[oscar] PERF_QUEUE peak_running_native=4.0 peak_running_oscar=4.0 peak_waiting_native=2.0 peak_waiting_oscar=2.0 peak_inflight_native=4.0 peak_inflight_oscar=4.0 scope=sampled_1s mtp_acceptance_native=0.990 mtp_acceptance_oscar=0.908 mtp_mean_length_native=3.97 mtp_mean_length_oscar=3.72
+[oscar] PERF_TTFT_MS scope=client_SSE_ms p50_native=9824.20 p50_oscar=27334.10 p50_ratio=2.78 p95_native=13471.27 p95_oscar=41168.71 p95_ratio=3.06
+[oscar] PERF_TPOT_MS scope=client_SSE_ms p50_native=73.48 p50_oscar=251.29 p50_ratio=3.42 p95_native=157.46 p95_oscar=548.43 p95_ratio=3.48
+[oscar] PERF_E2E_MS scope=client_SSE_ms p50_native=14453.37 p50_oscar=43165.36 p50_ratio=2.99 p95_native=14638.21 p95_oscar=43311.81 p95_ratio=2.96
+[oscar] PERF_THROUGHPUT scope=client_wall_tokens_per_s prompt_native=6821.7 prompt_oscar=2307.7 prompt_ratio=0.34 generation_native=17.5 generation_oscar=5.9 generation_ratio=0.34
+[oscar] PERF_VERDICT client_ratio_gate=regressed acceptance=not_established hint=queue_or_prefill_plus_generation; device_cause=unknown
+[oscar] PERF_EVIDENCE native=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T003530.842905Z/native/report.json oscar=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T003530.842905Z/oscar/report.json comparison=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T003530.842905Z/comparison.json
+[oscar] PERF_ERROR prompt_throughput_ratio=0.3383 < 1.0000; generation_throughput_ratio=0.3383 < 1.0000; synthetic-0-20000 ttft_ms=2.3700 > 1.0000; synthetic-0-20000 tpot_ms=9.7565 > 1.0000; synthetic-0-20000 e2e_ms=2.9588 > 1.0000; synthetic-1-23000 tpot_ms=5.9784 > 1.0000 report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T003530.842905Z/paired-report.json
+[oscar] PERF_RESULT status=failed rc=2 report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T003530.842905Z/paired-report.json
+root@node93:/workspace/gpt_new_oscar_kimi#

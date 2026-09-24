@@ -414,7 +414,8 @@ def ensure_current_operators(config_path: Path, config: dict, acceptance: dict,
     return evidence
 
 
-def _run_variant(variant: str, config_path: Path, config: dict, directory: Path) -> dict:
+def _run_variant(variant: str, config_path: Path, config: dict, directory: Path,
+                 acceptance_path: Path = ROOT / "configs/acceptance.json") -> dict:
     """Capture full service output and always reclaim the runner's process group."""
     directory.mkdir(parents=True, exist_ok=True)
     report_path, console_path = directory / "report.json", directory / "console.log"
@@ -423,6 +424,9 @@ def _run_variant(variant: str, config_path: Path, config: dict, directory: Path)
                "--output", str(report_path)]
     if variant == "native":
         command.append("--native")
+    else:
+        command += ["--native-report", str(directory.parent / "native" / "report.json"),
+                    "--acceptance", str(acceptance_path)]
     env = target_env(config)
     env["OSCAR_TERMINAL_LOG_MODE"] = "compact"
     duration = float(config.get("synthetic_timeout_seconds", 1800)) + float(
@@ -499,7 +503,7 @@ def run_paired(config_path: Path, *, output: Path, log_dir: Path,
         atomic_json(log_dir / "resources-before-native.json", baseline)
         for variant in (("native",) if native_only else ("native", "oscar")):
             terminal_line(f"[oscar] PERF_VARIANT start={variant} lengths=20K,23K,27K,30K K=4")
-            result = _run_variant(variant, config_path, config, log_dir / variant)
+            result = _run_variant(variant, config_path, config, log_dir / variant, acceptance_path)
             report[variant] = result
             atomic_json(output, report)
             release = _observe_resources(config, log_dir / f"resources-after-{variant}",

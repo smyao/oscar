@@ -14,10 +14,12 @@ from pathlib import Path
 import sys
 import time
 
+from . import device_timing
+
 PHASES = frozenset({"prepare", "rotate", "fia", "history_window", "merge",
                     "phase1_stores", "stage_restore", "phase0_store",
                     "materialize", "dequant", "status_guard",
-                    "current_source_suppress", "current_slot_guard", "current_native_fia"})
+                    "current_source_suppress", "current_slot_guard", "current_native_fia", "graph_replay"})
 _NOOP = nullcontext()
 
 
@@ -133,9 +135,10 @@ def phase(name: str, **fields):
     a clock, creating events, recording scopes or synchronizing any stream.
     Fields must be already available host scalars, never tensor values.
     """
-    if not enabled():
+    diagnostic = device_timing.active()
+    if not diagnostic and not enabled():
         return _NOOP
-    if (not _enabled("OSCAR_TIMING") and not _enabled("OSCAR_PROFILER")
+    if (not diagnostic and not _enabled("OSCAR_TIMING") and not _enabled("OSCAR_PROFILER")
             and fields.get("tokens", 0) < _debug_min_tokens()):
         return _NOOP
     if name not in PHASES:
@@ -145,7 +148,7 @@ def phase(name: str, **fields):
             raise TypeError("timing metadata must contain host scalars only")
     if set(fields) & {"t", "phase_end", "host_s", "pid", "ts_unix", "device_ms", "device_evidence", "failed"}:
         raise ValueError("timing metadata cannot replace evidence fields")
-    return _Phase(name, fields)
+    return device_timing.DevicePhase(name, fields) if diagnostic else _Phase(name, fields)
 
 
 class ProfilingUnavailable(RuntimeError):

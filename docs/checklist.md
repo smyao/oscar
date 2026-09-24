@@ -96,3 +96,5 @@
 #141：用户新实测OSCAR K4墙钟约131.7s（前轮182.5s），有收益但仍比原生慢约9倍，E06未通过。本轮进一步改FP32 Cube basic64×64×128、解析mask、Brcb scale/zero、整块FP32 SoftmaxFlashV2及批量alpha；主模型eager prefill current改用原生causal FIA，与实际CV history/window合并，draft/graph decode仍CV。最终同一内核通过CANN ascend910b4编译和27/27官方CPU-debug；主机517 passed、127 skipped、6 subtests。源码哈希与证据在`reports/deep_attention_local_validation.json`和`reports/deep_attention_cv_cpu_debug.json`。一键脚本自动新增实际current/CV/merge的真NPU门，失败不拉模型。**本轮目标NPU精度、图、服务和追平原生的结果仍待实测**，不以SDK指令数量或本地对拍解锁性能。
 
 #142：用户回传OSCAR捕图0/34时507035/vector trap。原生非capture的MTP dummy warmup标为ChunkedPrefill且slot全-1，新增current路由误启用真实slot guard；用外部`_dummy_run` ContextVar显式区分dummy，完整CV padding仍执行。49项相关主机回归通过（含原生预热编排与真实prefill恢复），AscendC及冻结配置未变。**修订后目标捕图/服务/性能仍待复验**；故障原文见`reports/target_graph_warmup_failure.txt`。
+
+#143：用户回传真NPU数值门及current/CV/merge门通过，原生与OSCAR各4/4完成并释放；OSCAR墙钟从约131.7s降至43.3s，原生14.7s，E06仍未通过。保留实测有效计算路径。快路径增加同服务、仅退化时自动运行的独立K4 NPU事件诊断轮；正常速度比仍来自原始无事件轮。细分prefill/draft/整图回放及TP rank，捕图和dummy不插事件，缺失设备证据拒绝完整结论。新计时仅主机契约验证，**目标设备归因与追平仍待回传**。原文`reports/target_k4_43s_performance.txt`。

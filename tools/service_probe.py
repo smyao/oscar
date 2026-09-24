@@ -7,6 +7,8 @@
 # 16K concurrency ladder is not a performance acceptance result.
 # #139: 64-token synthetic output separates decode SSE events while the
 # mandatory 16-token functional service gates remain intact.
+# #133/#140-#142: a separately marked same-server NPU-event diagnostic may
+# follow the uninstrumented K4 batch; the native HTTP profiler is excluded.
 """Exercise the configured TP4/MTP service and preserve independent evidence."""
 from __future__ import annotations
 
@@ -155,6 +157,10 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
     environment = target_env(config)
     environment["OSCAR_TRACE_DIR"] = str(trace_dir)
     environment["OSCAR_TARGET_CONFIG"] = str(Path(config_path).resolve())
+    if not native and config.get("diagnostic_device_timing") is True:
+        environment["OSCAR_DEVICE_TIMING_CONTROL"] = str(trace_dir / "device-timing-control.json")
+    else:
+        environment.pop("OSCAR_DEVICE_TIMING_CONTROL", None)
     environment["PYTHONUNBUFFERED"] = "1"
     command = list(command) if command is not None else [sys.executable, "-m", "tools.target_cli",
         "--config", str(Path(config_path).resolve()), *(["--native"] if native else [])]
@@ -618,6 +624,120 @@ def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline):
     return report
 
 
+def _require_uninstrumented_synthetic() -> None:
+    """Reject inherited timing modes before they contaminate paired K4 wall."""
+    for name in ("OSCAR_DEBUG_SYNC", "OSCAR_TIMING", "OSCAR_PROFILER"):
+        value = os.environ.get(name, "0").lower()
+        if value not in {"0", "false", "1", "true"}:
+            raise ServiceProbeError(f"{name} must be 0/1/false/true for synthetic measurement")
+        if value in {"1", "true"}:
+            raise ServiceProbeError(f"paired synthetic baseline requires {name}=0; diagnostic runs separately")
+
+
+def run_device_event_diagnostic(server, config, tokenizer, *, primary: dict,
+                                native_report_path: Path, log_dir: Path,
+                                deadline: float, acceptance_path: Path = ROOT / "configs/acceptance.json") -> dict:
+    """Run one synchronized event repeat on the existing OSCAR service.
+
+    Archive #133: never start/stop torch_npu's HTTP profiler in this stack.
+    Repeat1 has its own salt, report and timing scope; no value from this run
+    enters the uninstrumented native-vs-OSCAR ratio gate.
+    """
+    from benchmarks.compare import canonical_sha256, read_json
+    from benchmarks.measure import metrics_delta, metrics_snapshot
+    from benchmarks.mixed import run_batch
+    from .paired_concurrency_probe import compare_synthetic_reports
+    from .summarize_device_events import (compact_cv_shape_lines,
+                                          compact_device_event_line,
+                                          compact_device_stage_lines, summarize_device_events)
+
+    diagnostic_dir = log_dir / "diagnostic"
+    diagnostic_dir.mkdir(parents=True, exist_ok=True)
+    report_path = diagnostic_dir / "diagnostic-report.json"
+    result = {"status": "not_run", "scope": "synchronized second K4 batch on the same OSCAR service; "
+              "never a paired speed or kernel-level CANN trace",
+              "native_report": str(native_report_path), "primary_status": primary.get("status"),
+              "performance_acceptance": "not_established_by_diagnostic"}
+    atomic_json(report_path, result)
+    try:
+        native = read_json(native_report_path)
+        oscar = {"mode": "synthetic_mixed", "variant": "oscar", "status": primary.get("status"),
+                 "synthetic_mixed": primary}
+        acceptance = read_json(acceptance_path)
+        comparison = compare_synthetic_reports(native, oscar, acceptance)
+        result["primary_ratio_screen"] = comparison["status"]
+        if comparison.get("diagnostic_status") != "diagnostic_measured":
+            result.update(status="needs_evidence", reason="primary native/OSCAR exact pairing was incomplete")
+            return result
+        if comparison["status"] != "failed":
+            result.update(status="not_needed", reason="unmodified K4 client ratio screen did not regress")
+            return result
+        lengths = SYNTHETIC_MIXED_LENGTHS
+        rows = [{"id": f"synthetic-{index}-{length}", "token_ids": exact_prompt(tokenizer, length)}
+                for index, length in enumerate(lengths)]
+        observed_manifest = [{"id": row["id"], "prompt_tokens": len(row["token_ids"]),
+                              "prompt_sha256": canonical_sha256(row["token_ids"])} for row in rows]
+        if observed_manifest != primary.get("prompt_manifest"):
+            raise ServiceProbeError("diagnostic repeat prompt IDs differ from primary paired workload")
+        run_id = uuid.uuid4().hex
+        control = server.trace_dir / "device-timing-control.json"
+        result.update(status="running", run_id=run_id, control=str(control),
+                      workload="synthetic_K4_20K_23K_27K_30K_64_output",
+                      cache_salt="same deterministic prompts, repeat=1 new salt")
+        atomic_json(report_path, result)
+        before = metrics_snapshot(server.base_url, timeout=_remaining(deadline, 10),
+                                  path=diagnostic_dir / "metrics-before.prom")
+        request_limit = _positive_time(config, "service_request_timeout_seconds", 300)
+        budget = _remaining(deadline, request_limit)
+        _terminal(f"[oscar] PERF_DIAG_START scope=synchronized_repeat1 K=4 "
+                  f"inputs=20K,23K,27K,30K output_tokens=64 budget={budget:.0f}s "
+                  f"primary=uninstrumented report={report_path}")
+        atomic_json(control, {"enabled": True, "run_id": run_id})
+        try:
+            window_start = time.time()
+            sample = run_batch(server.base_url, rows, model=config["served_model_name"],
+                               output_tokens=SYNTHETIC_MIXED_OUTPUT_TOKENS, timeout=budget,
+                               repeat=1,
+                               sample_interval=_positive_time(config, "synthetic_sample_interval_seconds", 1.0))
+            window_end = time.time()
+        finally:
+            atomic_json(control, {"enabled": False, "run_id": run_id})
+        server.check_alive()
+        result["sample"] = str(diagnostic_dir / "synthetic-mixed-repeat1.json")
+        atomic_json(Path(result["sample"]), sample)
+        result["window"] = [window_start, window_end, "synchronized-diagnostic-K4"]
+        left = deadline - time.monotonic()
+        after = (metrics_snapshot(server.base_url, timeout=min(left, 10),
+                                  path=diagnostic_dir / "metrics-after.prom") if left > 0 else
+                 {"status": "failed", "error": "diagnostic deadline expired before final metrics"})
+        result["mtp_counter_delta"] = metrics_delta(before, after)
+        summary_path = diagnostic_dir / "device-event-summary.json"
+        summary = summarize_device_events(server.trace_dir, run_id=run_id,
+                                          expected_ranks=config["tensor_parallel_size"],
+                                          output=summary_path)
+        result["device_event_summary"] = str(summary_path)
+        result["device_event_status"] = summary["status"]
+        result["completed_requests"] = sample["completed_requests"]
+        result["failed_requests"] = sample["failed_requests"]
+        result["timeouts"] = sample["timeouts"]
+        result["status"] = ("observed" if sample["status"] == "completed" and
+                            summary["status"] == "observed" else "needs_evidence")
+        _terminal(compact_device_event_line(summary, output=summary_path))
+        for line in compact_device_stage_lines(summary):
+            _terminal(line)
+        for line in compact_cv_shape_lines(summary):
+            _terminal(line)
+    except KeyboardInterrupt:
+        raise
+    except Exception as error:
+        result.update(status="failed", error=f"{type(error).__name__}: {error}")
+        _terminal(f"[oscar] PERF_DIAG_EVENTS status=failed error={result['error']} report={report_path}",
+                  stderr=True)
+    finally:
+        atomic_json(report_path, result)
+    return result
+
+
 def run_service(config_path, *, output, log_dir, serve=False, command=None,
                 tokenizer_factory=None, resource_reader=None):
     """Run real service requests; injectable boundaries are only for fault tests."""
@@ -848,7 +968,8 @@ def _progress_summary(trace_dir: Path, log_dir: Path, windows_path: Path, deadli
 
 
 def run_synthetic_only(config_path, *, output, log_dir, command=None, tokenizer_factory=None,
-                       native=False):
+                       native=False, native_report_path: Path | None = None,
+                       acceptance_path: Path = ROOT / "configs/acceptance.json"):
     """Run one bounded mixed-length batch on an owned service.
 
     Archive #137-#139: this dedicated diagnostic supports paired native and
@@ -860,7 +981,7 @@ def run_synthetic_only(config_path, *, output, log_dir, command=None, tokenizer_
     mode = "synthetic_mixed"
     report = {"status": "running", "mode": mode, "config": str(config_path),
               "variant": "native" if native else "oscar",
-              "synthetic_mixed": "not_run", "progress": "not_run", "server": {},
+              "synthetic_mixed": "not_run", "diagnostic": "not_run", "progress": "not_run", "server": {},
               "performance_acceptance": "not_run"}
     atomic_json(output, report)
     old_signals = {}
@@ -870,6 +991,11 @@ def run_synthetic_only(config_path, *, output, log_dir, command=None, tokenizer_
         raise KeyboardInterrupt(f"signal {signum}")
 
     try:
+        _require_uninstrumented_synthetic()
+        if native and native_report_path is not None:
+            raise ServiceProbeError("native synthetic baseline cannot consume another baseline report")
+        if native_report_path is not None:
+            native_report_path = Path(native_report_path).resolve()
         config = json.loads(config_path.read_text())
         target_env(config)  # Fail before any NPU touch when selection is absent.
         report["devices"] = config["devices"]
@@ -881,11 +1007,19 @@ def run_synthetic_only(config_path, *, output, log_dir, command=None, tokenizer_
         managed_config = dict(config)
         managed_config["service_startup_timeout_seconds"] = _remaining(deadline,
             _positive_time(config, "service_startup_timeout_seconds", duration))
+        if native_report_path is not None:
+            managed_config["diagnostic_device_timing"] = True
         with managed_server(managed_config, config_path, log_dir=log_dir,
                             lifecycle=report["server"], command=command, native=native) as server:
             report["synthetic_mixed"] = run_synthetic_mixed(server, config, tokenizer,
                 log_dir=log_dir, deadline=deadline)
             atomic_json(output, report)
+            if native_report_path is not None and report["synthetic_mixed"].get("status") == "measured":
+                report["diagnostic"] = run_device_event_diagnostic(
+                    server, config, tokenizer, primary=report["synthetic_mixed"],
+                    native_report_path=native_report_path, log_dir=log_dir, deadline=deadline,
+                    acceptance_path=acceptance_path)
+                atomic_json(output, report)
             windows = [report["synthetic_mixed"]["window"]]
             if not native:
                 windows_path = log_dir / "arm-windows.json"
@@ -921,13 +1055,20 @@ def main():
                         help="run only four synthetic 20/23/27/30K concurrent streaming requests")
     parser.add_argument("--native", action="store_true",
                         help="explicit native baseline for --synthetic; never an OSCAR fallback")
+    parser.add_argument("--native-report", type=Path,
+                        help="OSCAR synthetic only: run one separately timed NPU-event repeat if the primary batch regresses")
+    parser.add_argument("--acceptance", type=Path, default=ROOT / "configs/acceptance.json",
+                        help="frozen policy used by the paired runner's diagnostic trigger")
     args = parser.parse_args()
     if args.synthetic:
         report = run_synthetic_only(args.config, output=args.output, log_dir=args.log_dir,
-                                    native=args.native)
+                                    native=args.native, native_report_path=args.native_report,
+                                    acceptance_path=args.acceptance)
         return 0 if report["status"] == "measured" else 130 if report["status"] == "interrupted" else 1
     if args.native:
         parser.error("--native requires --synthetic")
+    if args.native_report is not None:
+        parser.error("--native-report requires --synthetic")
     report = run_service(args.config, output=args.output, log_dir=args.log_dir, serve=args.serve)
     return 0 if report["status"] in {"passed", "stopped"} else 130 if report["status"] == "interrupted" else 1
 

@@ -167,7 +167,8 @@ def test_one_call_runs_native_then_oscar_and_writes_paired_ratios(tmp_path, monk
     acceptance_path.write_text(json.dumps(_acceptance()))
     order = []
 
-    def variant(name, _config_path, _config, directory):
+    def variant(name, _config_path, _config, directory, policy):
+        assert policy == acceptance_path.resolve()
         order.append(name)
         directory.mkdir(parents=True)
         path = directory / "report.json"

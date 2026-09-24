@@ -161,7 +161,21 @@ def _patch_graph_evidence(module):
             descriptor=context.batch_descriptor
             entry=wrapper.concrete_aclgraph_entries.get(descriptor) if active else None
             replay=entry is not None and entry.aclgraph is not None
-            result=original(wrapper,*args,**kwargs)
+            # #133/#142-143: arm only at the model boundary after the primary
+            # batch. Captured kernels stay unchanged; time whole replay from
+            # outside its graph. Eager attention has its own phase events.
+            from . import device_timing
+            from .integration.dummy_context import is_native_dummy_run
+            if not is_native_dummy_run():
+                device_timing.refresh()
+            if replay and device_timing.active():
+                from .timing import phase
+                with phase("graph_replay", tokens=getattr(descriptor, "num_tokens", None),
+                           requests=getattr(descriptor, "num_reqs", None),
+                           graph_scope="whole_model_graph"):
+                    result=original(wrapper,*args,**kwargs)
+            else:
+                result=original(wrapper,*args,**kwargs)
             if active:
                 entry=wrapper.concrete_aclgraph_entries.get(descriptor)
                 if entry is not None and entry.aclgraph is not None:

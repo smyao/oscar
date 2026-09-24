@@ -28410,3 +28410,24 @@ RuntimeError: Engine core initialization failed. See root cause above. Failed co
 **修复**：外部插件用可撤销wrapper在原生`_dummy_run`调用范围设置ContextVar；metadata记录dummy_origin，并在组装current长度及路由选择前排除dummy。预热仍执行完整CV/padding链路；真实请求的负slot检查继续生效。异常、嵌套与返回均恢复标记，不由NPU张量值或可能陈旧的is_prefilling猜测dummy。未修改AscendC、原生源码、图配置或冻结容差。
 
 **关键验证**：49项相关主机回归通过，包含执行只读原生`_warmup_and_capture`方法的512-token/128-request预热→捕图契约、预热后真实prefill路由恢复、MTP/capture分流、负slot错误检查、wrapper异常恢复和卸载。修订后的目标图捕获、请求完成与性能仍待真机重跑；本次未重复无关CANN编译或完整测试矩阵。
+
+## [143] 真机条目（gpt_new_oscar_kimi，2026-09-24 用户回传）· K4降至43.3s，剩余3倍差距需设备分相位测量
+
+**原文**：`reports/target_k4_43s_performance.txt`完整保留本轮附件。运行`paired-concurrency-20260924T003530.842905Z`，构建复用、真NPU CV/旋转门fresh通过，实际current/CV/merge门通过，current16K设备事件中位数6.59586ms。原生与OSCAR均4/4完成、无超时、资源释放passed；#142捕图前的启动故障不再阻止请求执行。性能门仍failed/rc2。
+
+| 同一K4/20,23,27,30K/64输出 | 原生 | OSCAR | OSCAR/原生 |
+|---|---:|---:|---:|
+| 批次墙钟 | 14.7s | 43.3s | 2.95 |
+| TTFT p50 | 9824.20ms | 27334.10ms | 2.78 |
+| TPOT p50 | 73.48ms | 251.29ms | 3.42 |
+| E2E p50 | 14453.37ms | 43165.36ms | 2.99 |
+| prompt吞吐 | 6821.7/s | 2307.7/s | 0.3383 |
+| MTP平均接受长度 | 3.97 | 3.72 | — |
+
+**判断**：相对#141约131.7s，OSCAR墙钟缩短约67%，相对#140的182.5s缩短约76%；已有收益应保留。接受长度变化只对应约6.7%的预估验证轮次差（假设每轮成本不变），不能单独解释近3倍墙钟差。peak Running=4、Waiting=2是采样峰值，不等于设备批处理效率相同。两类吞吐共享同一墙钟分母，不是两份独立瓶颈证据。原生EOF/EngineDeadError位于主动shutdown之后，最终请求与释放均passed，不是本轮性能门的失败原因。
+
+**只读深查结论，非设备归因**：CV空源仍加载Q、归一化并逐行写partial/LSE；16K/GQA6/S1的三源约4917个leader，任务表49152行，非leader仍有metadata/status访问。短query的统一20个source split使4-token current有大量空split。写路径默认clip=0不执行Sort；每D256 K/V行仍有64次标量字节组装，另有小块slot/position DMA。Hadamard输入旋转仍需保留；每个history split末尾的稠密Rv约占25K/q4/S20的QK/PV+Rv MMAD次数9%，不能独自解释3倍差距。未依据这些静态计数修改已通过真NPU的计算内核。
+
+**本轮处置**：一键快路径先跑原生与OSCAR原始K4，原始轮不创建NPU计时事件；若配对退化，在同一OSCAR服务上自动运行一次独立repeat1，输入及64输出不变，使用新的cache_salt。仅该轮用原生NPU Event时间戳与end.synchronize记录prepare/rotate/CV/current/merge/store/guard，按prefill、MTP draft和整图回放、TP rank及query/KV形状汇总。整图事件包在replay外，不给图内相位伪造耗时；dummy/capture不插事件。标记在模型入口读取，相位热路径不轮询文件。避开#133已造成四worker崩溃的HTTP profiler。同步诊断改变时序，不能替代正常轮速度比；缺rank/必要相位/整图回放明确needs_evidence。
+
+**验证边界**：相关主机回归覆盖未武装无事件/无同步、捕图与dummy不计时、设备错误记录、同服务自动repeat、独立cache salt、诊断关闭和TP缺失证据检查。本轮没有新增目标NPU计时结果，剩余性能原因及追平结论继续待测。

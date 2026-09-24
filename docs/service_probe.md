@@ -44,6 +44,10 @@ git pull --ff-only && bash scripts/probe_concurrency.sh
 
 #141修订后，同一条命令在模型启动前还运行`native-current-fia`真NPU门：生产causal TND current FIA的output/LSE、小batch与16K边界、CV history/window与current的三源merge、source2任务改写和active-slot guard。终端只新增一行`PERF_CURRENT_FIA_GATE`，完整数值误差在`native-current-fia-report.json`；任一失败或资源未释放立即停止。16K设备事件时间是current算子的独立测量，不是已移除的16-token服务性能阶梯，也不用于替代K4端到端比值门。
 
+#143后，`scripts/probe_concurrency.sh`还会在原始配对退化时，**复用同一OSCAR服务**自动跑一次独立诊断批次：相同20/23/27/30K与64输出，repeat1使用新cache_salt。原始批次没有NPU计时事件或相位同步；诊断批次每相位记录真实NPU Event区间并同步确认完成，明确标为`synchronized_diagnostic_only`，不参与速度比。它按TP rank、prefill/MTP draft、query/KV形状统计CV/旋转/current/merge/store/guard；整图回放只计整图，图内细项不推断。事件区间可能包含提交间隙和流依赖，不等同单kernel CANN trace，也不能把四rank之和当作墙钟。
+
+终端新增`PERF_DIAG_START`、`PERF_DIAG_EVENTS`、最多三行`PERF_DIAG_STAGE`和三行`PERF_DIAG_CV`，与原有`PERF_*`一并复制即可。CV行给出关键rank、query/KV形状、split、次数与p50/p95；`max_seq_len=0`明确表示上下文未知，maxseq与maxquery相等也只是无旧上下文候选。完整事件在OSCAR本轮trace目录`device-events-<pid>.jsonl`，摘要在`oscar/diagnostic/device-event-summary.json`。无须另开命令、重载第三次模型或操作profiler HTTP端点；#133的崩溃路径不再使用。dummy和capture不插入事件；只有正常轮结束后模型入口才读取武装标记，相位内部不轮询文件。若继承了`OSCAR_DEBUG_SYNC/TIMING/PROFILER=1`，正常测速明确拒绝，防止同步数据混入速度对比。
+
 **用户自己的 32 并发 20–30K 压测**：`bash scripts/install_probe_serve.sh` 全门通过并拉起正式服务后，等待终端的 `OBSERVER_READY`，再运行原有压测程序向配置端口（当前 `8989`）发流量。正式 supervisor 自带被动观察器，只发 `/metrics` GET，**不发送任何压测请求**。它按同一负载窗口保存每秒 Running/Waiting、prompt/generation 累计计数器、MTP 增量、原始 metrics 前后快照，并在服务停止后把 OSCAR trace 按窗口汇总。观察结果在本轮 `logs/<时间戳>/serve/external-load.json`，trace 汇总在同目录的 `progress-summary.json`；常规INFO保存在完整日志，终端只实时显示阶段结果和错误。若用户仍以 `scripts/serve_direct.sh` 直拉服务，可另开终端运行 `python3 -m benchmarks.passive --variant oscar --url http://127.0.0.1:8989 --output reports/external-oscar.json` 接入相同的被动 metrics 观察。
 
 被动 `/metrics` 无法得知客户端恰好提交了 32 条、每条实际 token 长度、请求级 TTFT/ITL/E2E 或失败率；这些要从用户原压测程序的结果、请求清单与终态统计并入配对分析。首次采样已在流量中、metrics 缺计数器或采样有断点时，窗口标 `partial`，不报告完整窗口吞吐。原生对照须显式拉起同配置的 native 服务、跑**同一客户端与数据集**，再比较相同窗口；设备相位成本另需独立 device timing。健康、图回放、CPU 测试或 synthetic 请求均不推出性能追平。

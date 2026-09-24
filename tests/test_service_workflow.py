@@ -2,6 +2,7 @@
 # fault injection around the service supervisor. Fake HTTP/telemetry/memory
 # exist only in these tests and never constitute NPU acceptance evidence;
 # synthetic mixed-length performance does not replace 16-token function gates.
+# #133/#143: a second synchronized device-event repeat is separately labelled.
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -297,6 +298,52 @@ def test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up(tmp_path
     assert len(comparison["batches"][0]["requests"]) == 4
     assert all(row["oscar_over_native"]["ttft_ms"] == 1
                for row in comparison["batches"][0]["requests"])
+
+
+def test_regressed_synthetic_runs_one_separate_same_server_device_diagnostic(tmp_path, monkeypatch):
+    from tools import paired_concurrency_probe as paired
+    config, path = configured(tmp_path)
+    native_report = tmp_path / "native-report.json"
+    native_report.write_text("{}")
+    monkeypatch.setattr(paired, "compare_synthetic_reports", lambda *_args: {
+        "status": "failed", "diagnostic_status": "diagnostic_measured"})
+    report = service_probe.run_synthetic_only(path, output=tmp_path / "synthetic.json",
+        log_dir=tmp_path / "synthetic", command=fake_command(tmp_path, config),
+        tokenizer_factory=lambda model: Tokenizer(), native_report_path=native_report)
+    assert report["status"] == "measured"  # Primary K4 wall remains authoritative.
+    assert report["synthetic_mixed"]["sample"]["repeat"] == 0
+    diagnostic = report["diagnostic"]
+    assert diagnostic["status"] == "needs_evidence"  # Fake HTTP server emits no NPU events.
+    assert diagnostic["completed_requests"] == 4
+    assert json.loads(Path(diagnostic["sample"]).read_text())["repeat"] == 1
+    assert json.loads(Path(diagnostic["control"]).read_text()) == {
+        "enabled": False, "run_id": diagnostic["run_id"]}
+    assert Path(diagnostic["device_event_summary"]).exists()
+    assert report["server"]["cleanup_complete"] and not group_exists(report["server"]["pid"])
+
+
+def test_nonregressed_synthetic_does_not_arm_diagnostic(tmp_path, monkeypatch):
+    from tools import paired_concurrency_probe as paired
+    config, path = configured(tmp_path)
+    native_report = tmp_path / "native-report.json"
+    native_report.write_text("{}")
+    monkeypatch.setattr(paired, "compare_synthetic_reports", lambda *_args: {
+        "status": "passed", "diagnostic_status": "diagnostic_measured"})
+    report = service_probe.run_synthetic_only(path, output=tmp_path / "synthetic.json",
+        log_dir=tmp_path / "synthetic", command=fake_command(tmp_path, config),
+        tokenizer_factory=lambda model: Tokenizer(), native_report_path=native_report)
+    assert report["status"] == "measured" and report["diagnostic"]["status"] == "not_needed"
+    assert not (Path(report["server"]["trace_dir"]) / "device-timing-control.json").exists()
+
+
+def test_synthetic_refuses_inherited_debug_sync_before_service_start(tmp_path, monkeypatch):
+    config, path = configured(tmp_path)
+    monkeypatch.setenv("OSCAR_DEBUG_SYNC", "1")
+    report = service_probe.run_synthetic_only(path, output=tmp_path / "synthetic.json",
+        log_dir=tmp_path / "synthetic", command=fake_command(tmp_path, config),
+        tokenizer_factory=lambda model: Tokenizer())
+    assert report["status"] == "failed" and "OSCAR_DEBUG_SYNC=0" in report["error"]
+    assert report["server"] == {}
 
 
 def test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch(tmp_path):

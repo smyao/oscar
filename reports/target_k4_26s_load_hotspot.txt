@@ -1,0 +1,154 @@
+root@node93:/workspace/gpt_new_oscar_kimi# git pull --ff-only && bash scripts/probe_concurrency.sh
+remote: Enumerating objects: 57, done.
+remote: Counting objects: 100% (57/57), done.
+remote: Compressing objects: 100% (31/31), done.
+remote: Total 31 (delta 25), reused 0 (delta 0), pack-reused 0 (from 0)
+Unpacking objects: 100% (31/31), 33.38 KiB | 392.00 KiB/s, done.
+From https://gitcode.com/jpl123/gpt_new_oscar_kimi
+   fe0e925..f292852  codex/oscar-ascend -> origin/codex/oscar-ascend
+Updating fe0e925..f292852
+Fast-forward
+ csrc/CMakeLists.txt                   |   2 +-
+ csrc/attention_bindings.cpp           |  76 ++++++++++++++++++++++++++++++++++++++++++------------
+ csrc/cpu/cv_probe.cpp                 |  58 +++++++++++++++++++++++++++++++++++++++--
+ csrc/include/oscar_attention_launch.h |  17 +++++++++++++
+ csrc/kernels/attention_cv.cpp         | 327 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++------------------------------
+ csrc/torch_bindings.cpp               |   3 ++-
+ docs/checklist.md                     |   4 +++
+ docs/design.md                        |   4 +++
+ docs/service_probe.md                 |   6 +++++
+ issue1_full_record.md                 |  24 +++++++++++++++++
+ oscar_ascend/ops/contracts.py         |   3 ++-
+ oscar_ascend_agent_start.md           |   1 +
+ reports/cv_ar146_cpu_debug.json       | 301 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ reports/cv_ar146_validation.json      |  49 +++++++++++++++++++++++++++++++++++
+ reports/target_k4_29s_performance.txt |  45 ++++++++++++++++++++++++++++++++
+ tests/test_cv_contracts.py            |  60 ++++++++++++++++++++++++++++++++++++++++---
+ tests/test_probe_cv_hotshape.py       |  65 +++++++++++++++++++++++++++++++++++++++++++---
+ tools/paired_concurrency_probe.py     |  65 ++++++++++++++++++++++++++++++++++++++++++++--
+ tools/probe_cv_hotshape.py            | 163 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-------
+ 19 files changed, 1192 insertions(+), 81 deletions(-)
+ create mode 100644 reports/cv_ar146_cpu_debug.json
+ create mode 100644 reports/cv_ar146_validation.json
+ create mode 100644 reports/target_k4_29s_performance.txt
+[oscar] phase=cv-hotshape-baseline running seconds=60.0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/cv-hotshape-baseline.log
+[oscar] phase=cv-hotshape-baseline running seconds=120.1 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/cv-hotshape-baseline.log
+[oscar] PASSED phase=cv-hotshape-baseline rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/cv-hotshape-baseline.log
+[oscar] phase=operator-build running seconds=60.0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/operator-build.log
+[oscar] PASSED phase=operator-build rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/operator-build.log
+[oscar] PASSED phase=operator-cv-npu rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/operator-cv-npu.log
+[oscar] PERF_OPERATOR_GATE build=rebuilt npu_cv=fresh_device_completion signature=5602e6ca38bb devices=0,1,2,3
+[oscar] PASSED phase=native-current-fia rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/native-current-fia.log
+[oscar] PERF_CURRENT_FIA_GATE accuracy=passed mixed_sources=passed task_contract=passed current16k_device_ms=6.700119972229004 release=passed
+[oscar] phase=cv-hotshape-candidate running seconds=60.0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/cv-hotshape-candidate.log
+[oscar] phase=cv-hotshape-candidate running seconds=120.1 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/cv-hotshape-candidate.log
+[oscar] phase=cv-hotshape-candidate running seconds=180.1 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/cv-hotshape-candidate.log
+[oscar] PASSED phase=cv-hotshape-candidate rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/cv-hotshape-candidate.log
+[oscar] PERF_CV_AB case=decode32 baseline_ms=15.375 candidate_ms=14.193 ratio=0.923 scope=synthetic_operator_only status=passed
+[oscar] PERF_CV_AB case=main baseline_ms=202.633 candidate_ms=183.993 ratio=0.908 scope=synthetic_operator_only status=passed
+[oscar] PERF_CV_PROFILE case=main source=history physical=0 tasks_aic=551 kv_tiles_aic=40265 empty_aic=0 qk_max_raw_ticks=719589 pv_max_raw_ticks=742872 aiv_load_max_raw_ticks=6496359 aiv_waitqk_max_raw_ticks=819613 aiv_softmax_max_raw_ticks=657341 mask_finite_subset_max_raw_ticks=229857 v2_stats_subset_max_raw_ticks=191124 aiv_waitpv_max_raw_ticks=842834 profile_event_ms=185.285 over_normal=1.01 scope=instrumented_kernel_diagnostic
+[oscar] PERF_CV_PROFILE case=main source=window physical=0 tasks_aic=551 kv_tiles_aic=557 empty_aic=0 qk_max_raw_ticks=10438 pv_max_raw_ticks=10512 aiv_load_max_raw_ticks=97381 aiv_waitqk_max_raw_ticks=15149 aiv_softmax_max_raw_ticks=28054 mask_finite_subset_max_raw_ticks=21384 v2_stats_subset_max_raw_ticks=3387 aiv_waitpv_max_raw_ticks=14010 profile_event_ms=185.285 over_normal=1.01 scope=instrumented_kernel_diagnostic
+[oscar] PERF_CV_PROFILE case=main source=current physical=0 tasks_aic=551 kv_tiles_aic=0 empty_aic=551 qk_max_raw_ticks=0 pv_max_raw_ticks=0 aiv_load_max_raw_ticks=0 aiv_waitqk_max_raw_ticks=0 aiv_softmax_max_raw_ticks=0 mask_finite_subset_max_raw_ticks=0 v2_stats_subset_max_raw_ticks=0 aiv_waitpv_max_raw_ticks=0 profile_event_ms=185.285 over_normal=1.01 scope=instrumented_kernel_diagnostic
+[oscar] PERF_CV_PROFILE case=decode32 source=history physical=0 tasks_aic=96 kv_tiles_aic=3120 empty_aic=0 qk_max_raw_ticks=29978 pv_max_raw_ticks=33387 aiv_load_max_raw_ticks=561359 aiv_waitqk_max_raw_ticks=48818 aiv_softmax_max_raw_ticks=25483 mask_finite_subset_max_raw_ticks=9095 v2_stats_subset_max_raw_ticks=7546 aiv_waitpv_max_raw_ticks=62405 profile_event_ms=14.289 over_normal=1.01 scope=instrumented_kernel_diagnostic
+[oscar] PERF_CV_PROFILE case=decode32 source=window physical=0 tasks_aic=96 kv_tiles_aic=96 empty_aic=0 qk_max_raw_ticks=932 pv_max_raw_ticks=938 aiv_load_max_raw_ticks=25255 aiv_waitqk_max_raw_ticks=10612 aiv_softmax_max_raw_ticks=2332 mask_finite_subset_max_raw_ticks=1692 v2_stats_subset_max_raw_ticks=361 aiv_waitpv_max_raw_ticks=3413 profile_event_ms=14.289 over_normal=1.01 scope=instrumented_kernel_diagnostic
+[oscar] PERF_CV_PROFILE case=decode32 source=current physical=0 tasks_aic=96 kv_tiles_aic=64 empty_aic=32 qk_max_raw_ticks=955 pv_max_raw_ticks=1000 aiv_load_max_raw_ticks=1791 aiv_waitqk_max_raw_ticks=6390 aiv_softmax_max_raw_ticks=2122 mask_finite_subset_max_raw_ticks=1555 v2_stats_subset_max_raw_ticks=283 aiv_waitpv_max_raw_ticks=3271 profile_event_ms=14.289 over_normal=1.01 scope=instrumented_kernel_diagnostic
+[oscar] PERF_VARIANT start=native lengths=20K,23K,27K,30K K=4
+Capturing CUDA graphs (decode, FULL):  47%|████▋     | 16/34 [00:12<00:12,  1.46it/s]STARTUP_WAIT elapsed=286.4 health=<urlopen error [Errno 111] Connection refused>
+[oscar] SYNTHETIC_MIXED done status=measured completed=4/4 failed=0 timeouts=0 wall=14.7s report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/native/synthetic-mixed.json
+(Worker_TP2 pid=163931) Exception in thread Thread-2:
+(Worker_TP2 pid=163931) Traceback (most recent call last):
+(Worker_TP2 pid=163931)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+(Worker_TP2 pid=163931)     self.run()
+(Worker_TP2 pid=163931)   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run
+(Worker_TP2 pid=163931)     item = self.task_q.get()
+(Worker_TP2 pid=163931)            ^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=163931)   File "<string>", line 2, in get
+(Worker_TP2 pid=163931)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py", line 828, in _callmethod
+(Worker_TP2 pid=163931)     kind, result = conn.recv()
+(Worker_TP2 pid=163931)                    ^^^^^^^^^^^
+(Worker_TP2 pid=163931)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 250, in recv
+(Worker_TP2 pid=163931)     buf = self._recv_bytes()
+(Worker_TP2 pid=163931)           ^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=163931)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 430, in _recv_bytes
+(Worker_TP2 pid=163931)     buf = self._recv(4)
+(Worker_TP2 pid=163931)           ^^^^^^^^^^^^^
+(Worker_TP2 pid=163931)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 399, in _recv
+(Worker_TP2 pid=163931)     raise EOFError
+(Worker_TP2 pid=163931) EOFError
+(Worker_TP1 pid=163873) Exception in thread Thread-2:
+(Worker_TP1 pid=163873) Traceback (most recent call last):
+(Worker_TP1 pid=163873)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+(Worker_TP1 pid=163873)     self.run()
+(Worker_TP1 pid=163873)   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run
+(Worker_TP0 pid=163836) Exception in thread Thread-3:
+(Worker_TP0 pid=163836) Traceback (most recent call last):
+(Worker_TP0 pid=163836)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+(Worker_TP1 pid=163873)     item = self.task_q.get()
+(Worker_TP1 pid=163873)            ^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=163873)   File "<string>", line 2, in get
+(Worker_TP1 pid=163873)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py", line 828, in _callmethod
+(Worker_TP1 pid=163873)     kind, result = conn.recv()
+(Worker_TP1 pid=163873)  (Worker_TP0 pid=163836)  INFO 09-24 06:36:38 [multiproc_executor.py:790] Parent process exited, terminating worker queues
+(Worker_TP1 pid=163873)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 250, in recv
+(Worker_TP1 pid=163873)     buf = self._recv_bytes()
+(Worker_TP1 pid=163873)           ^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=163873)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 430, in _recv_bytes
+(Worker_TP1 pid=163873)     buf = self._recv(4)
+(Worker_TP1 pid=163873)           ^^^^^(APIServer pid=163726) INFO 09-24 06:36:38 [core_client.py:656] [shutdown] MPClient: engine manager stopped
+[oscar] synthetic_mixed measured report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/native/report.json
+[oscar] PERF_VARIANT done=native result=4/4 release=passed
+[oscar] PERF_VARIANT start=oscar lengths=20K,23K,27K,30K K=4
+Capturing CUDA graphs (decode, FULL):  47%|████▋     | 16/34 [00:12<00:12,  1.40it/s]STARTUP_WAIT elapsed=286.4 health=<urlopen error [Errno 111] Connection refused>
+[oscar] SYNTHETIC_MIXED done status=measured completed=4/4 failed=0 timeouts=0 wall=26.9s report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/oscar/synthetic-mixed.json
+[oscar] PERF_DIAG_START scope=synchronized_repeat1 K=4 inputs=20K,23K,27K,30K output_tokens=64 budget=300s primary=uninstrumented report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/oscar/diagnostic/diagnostic-report.json
+[oscar] PERF_DIAG_EVENTS status=observed ranks=4/4 events=5810 top6_critical_rank_ms=fia:10842.3,phase1_stores:1075.6,graph_replay:1032.9,rotate:849.5,current_native_fia:588.1,merge:542.5 graph=whole_graph_event_observed_all_ranks scope=synchronized_diagnostic_only report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/oscar/diagnostic/device-event-summary.json
+[oscar] PERF_DIAG_STAGE stage=prefill critical_rank_phase_sum_ms=11448.9 top3_critical_rank_ms=fia:9538.9,current_native_fia:588.1,merge:477.9 scope=synchronized_diagnostic_only
+[oscar] PERF_DIAG_STAGE stage=draft critical_rank_phase_sum_ms=2640.4 top3_critical_rank_ms=fia:1304.1,phase1_stores:681.0,rotate:564.7 scope=synchronized_diagnostic_only
+[oscar] PERF_DIAG_STAGE stage=graph critical_rank_phase_sum_ms=1032.9 top3_critical_rank_ms=graph_replay:1032.9 scope=synchronized_diagnostic_only
+[oscar] PERF_DIAG_CV case=candidate_no_old_context stage=prefill rank=0 tokens=16384 requests=1 max_query_len=16384 max_seq_len=16384 splits=1 count=16 p50_ms=6.53 p95_ms=6.54 rank_sum_ms=104.51 context=not_proven_empty
+[oscar] PERF_DIAG_CV case=largest_other_prefill stage=prefill rank=0 tokens=16384 requests=3 max_query_len=8528 max_seq_len=30000 splits=1 count=16 p50_ms=143.62 p95_ms=144.12 rank_sum_ms=2294.69 context=not_proven_empty
+[oscar] PERF_DIAG_CV case=largest_draft stage=draft rank=1 tokens=16384 requests=3 max_query_len=8528 max_seq_len=0 splits=1 count=1 p50_ms=179.75 p95_ms=179.75 rank_sum_ms=179.75 context=unknown_max_seq_zero
+(Worker_TP3 pid=169123) Exception in thread Thread-2:
+(Worker_TP3 pid=169123) Traceback (most recent call last):
+(Worker_TP3 pid=169123)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+(Worker_TP2 pid=169064) Exception in thread Thread-2:
+(Worker_TP2 pid=169064) Traceback (most recent call last):
+(Worker_TP2 pid=169064)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+(Worker_TP3 pid=169123)     self.run()
+(Worker_TP3 pid=169123)   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run
+(Worker_TP3 pid=169123)     item = self.task_q.get()
+(Worker_TP3 pid=169123)         (Worker_TP2 pid=169064)       self.run() 
+(Worker_TP3 pid=169123)   File "<string>", line 2, in get
+(Worker_TP3 pid=169123)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py", line 828, in _callmethod
+(Worker_TP2 pid=169064)     item = self.task_q.get()
+(Worker_TP2 pid=169064)            ^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=169064)   File "<string>", line 2, in get
+(Worker_TP2 pid=169064)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py", line 828, in _callmethod
+(Worker_TP3 pid=169123)     kind, result = conn.recv()
+(Worker_TP3 pid=169123)                    ^^^^^^^^^^^
+(Worker_TP3 pid=169123)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 250, in recv
+(Worker_TP2 pid=169064)     kind, result = conn.recv()
+(Worker_TP3 pid=169123) (Worker_TP2 pid=169064)      buf = self._recv_bytes() 
+(Worker_TP3 pid=169123)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 430, in _recv_bytes
+(Worker_TP2 pid=169064)     buf = self._recv_bytes()
+(Worker_TP2 pid=169064)        (Worker_TP3 pid=169123)       buf = self._recv(4) 
+(Worker_TP3 pid=169123)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 399, in _recv
+(Worker_TP2 pid=169064)     buf = self._recv(4)
+(Worker_TP3 pid=169123) (Worker_TP2 pid=169064)      raise EOFError 
+(Worker_TP2 pid=169064)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 399, in _recv
+(Worker_TP2 pid=169064)     raise EOFError
+(Worker_TP2 pid=169064) EOFError
+[oscar] synthetic_mixed measured report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/oscar/report.json
+[oscar] PERF_VARIANT done=oscar result=4/4 release=passed
+[oscar] PERF_STATUS pairing=complete native=4/4 failed=0 timeout=0 oscar=4/4 failed=0 timeout=0 scope=synthetic_K4 inputs=20000,23000,27000,30000 output_tokens=64 warmup_pairing=unpaired
+[oscar] PERF_QUEUE peak_running_native=4.0 peak_running_oscar=4.0 peak_waiting_native=2.0 peak_waiting_oscar=2.0 peak_inflight_native=4.0 peak_inflight_oscar=4.0 scope=sampled_1s mtp_acceptance_native=0.980 mtp_acceptance_oscar=0.936 mtp_mean_length_native=3.94 mtp_mean_length_oscar=3.81
+[oscar] PERF_TTFT_MS scope=client_SSE_ms p50_native=9837.69 p50_oscar=15728.21 p50_ratio=1.60 p95_native=13485.16 p95_oscar=25173.75 p95_ratio=1.87
+[oscar] PERF_TPOT_MS scope=client_SSE_ms p50_native=74.66 p50_oscar=173.75 p50_ratio=2.33 p95_native=157.12 p95_oscar=352.75 p95_ratio=2.25
+[oscar] PERF_E2E_MS scope=client_SSE_ms p50_native=14541.28 p50_oscar=26674.46 p50_ratio=1.83 p95_native=14681.90 p95_oscar=26854.95 p95_ratio=1.83
+[oscar] PERF_THROUGHPUT scope=client_wall_tokens_per_s prompt_native=6801.8 prompt_oscar=3722.7 prompt_ratio=0.55 generation_native=17.4 generation_oscar=9.5 generation_ratio=0.55
+[oscar] PERF_VERDICT client_ratio_gate=regressed acceptance=not_established hint=queue_or_prefill_plus_generation; device_cause=unknown
+[oscar] PERF_EVIDENCE native=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/native/report.json oscar=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/oscar/report.json comparison=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/comparison.json
+[oscar] PERF_ERROR prompt_throughput_ratio=0.5473 < 1.0000; generation_throughput_ratio=0.5473 < 1.0000; synthetic-0-20000 tpot_ms=18.5711 > 1.0000; synthetic-0-20000 e2e_ms=1.7955 > 1.0000; synthetic-1-23000 ttft_ms=2.2380 > 1.0000; synthetic-1-23000 tpot_ms=1.2596 > 1.0000 report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/paired-report.json
+[oscar] PERF_RESULT status=failed rc=2 report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T062023.802553Z/paired-report.json
+root@node93:/workspace/gpt_new_oscar_kimi# 
+root@node93:/workspace/gpt_new_oscar_kimi#

@@ -28508,3 +28508,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **收益测量**：旧CV A/B基线推进到本工程fe0e925，仍必须验证实际旧产物完整签名/源码/环境，绝不伪造不可用基线。正常候选测速保持无核内计时；之后单独profile kernel收集每core、每AIC/AIV、每source的raw SYS_CNT区间和外层NPU Event耗时，profile专属同步在生产模板中编译期移除。wait区间含另一lane和通知等待，不叫纯Cube执行；mask/finite与V2是softmax子区间，不能重复相加；跨核周期不能冒充wall。CPU模拟时钟不校准NPU频率。仍以同一命令继续原生/OSCAR完整K4、错误保码与资源释放，未触碰用户自己的数据集。
 
 **本机验证，非新真机结论**：最终kernel SHA `3e3dc407f9113e6f72ffa65ddfad886013e844749efc728b5befdaa68dc2dc29`，CANN ascend910b4编译通过；官方CPU-debug42/42（含有限行和/单行溢出、normal/profile oracle及计数owner），相关主机57 passed、33 skipped、4 subtests。`reports/cv_ar146_validation.json`与`reports/cv_ar146_cpu_debug.json`保存证据。新增位图后D256显式UB158208B；文件头早期157184B段是加位图前预算，以本条更正为准。目标新数值、图及达到原生速度均未复跑，不写成已追平。
+
+## [147] 真机条目（gpt_new_oscar_kimi，2026-09-24 用户回传）· f292852数值及算子A/B通过，26.9s K4与AISBench稳定入口
+
+**原文**：`reports/target_k4_26s_load_hotspot.txt`保存完整附件。运行`paired-concurrency-20260924T062023.802553Z`明确拉取f292852；构建重编，签名5602e6ca38bb的真NPU CV/旋转门本轮fresh通过；native-current精度/混合源/task门通过，16K current 6.700ms。旧/新相同输入算子A/B：main202.633→183.993ms（0.908），decode32 15.375→14.193ms（0.923），冻结oracle及独立profile均通过。不能把前一轮约31倍的AR调用数量减少等同于速度收益；本轮真实收益为约9.2%/7.7%，应保留而不夸大。
+
+原始无插桩K4：native14.7s、OSCAR26.9s（上一轮29.2s），两侧4/4完成且资源释放passed；OSCAR/native墙钟约1.83，速度门仍failed/rc2。OSCAR prompt吞吐3722.7/s vs6801.8/s，generation9.5/s vs17.4/s。TTFT p50为15728.21ms vs9837.69ms；TPOT p50为173.75ms vs74.66ms。MTP接受率.936 vs.980、平均接受长度3.81 vs3.94，不能独立解释剩余差距。服务关闭期间出现TBE线程EOF；不以这些栈代替本轮明确的性能门失败事实。
+
+**已测主项改变**：独立同形profile约为正常kernel耗时的1.01倍。main/history各字段的跨core最大raw SYS_CNT：load/unpack/publish6496359，QK719589、PV742872、softmax657341（mask/finite229857、V2 191124为子项）；decode32/history load561359，QK29978、PV33387、softmax25483。字段最大值可能来自不同core，不能相加为wall或假定时钟频率换毫秒；但两种形状均明确指向历史KV载入、解包及发布组合，不能继续把softmax当主要未解瓶颈。服务级同步诊断prefill CV9538.9ms、draft CV1304.1ms，整图1032.9ms。
+
+**用户最新用途与交付边界**：用户当天时间有限，明确要求用当前最好的版本一键安装/编译/启动vLLM，自己运行AISBench，同时继续演进。新增`install_aisbench_serve.sh`用于该用途，计算内核以已实测f292852为基底，固定在`codex/aisbench-stable`；后续优化继续在`codex/oscar-ascend`，不自动更改稳定入口的计算版本。该入口复用严格签名构建与真NPU数值门、自动旋转和受管常驻服务，允许在已知性能尚未通过时由用户自行压测，明确标记experimental_aisbench/performance_acceptance=not_run；不重跑原生/K4/profile，不改原有完整验收入口的失败门。编译、数值或服务失败仍中止，不退回原生。此为用户授权的实验服务用途，不是将性能failed改写passed。

@@ -2,6 +2,22 @@
 
 已实现 FULL 层 INT2 缓存、真正的 Cube/Vector attention、融合旋转/裁剪/写入、精确窗口、MTP 位置修正、固定图缓冲、外部插件及一键安装/探针/服务流程。GDN 使用原生状态和 reshape。新增代码不覆盖原生 vLLM/Ascend 源文件。
 
+## AISBench：启动当前已测最佳版本
+
+`codex/aisbench-stable`固定使用已在node93验证的`f292852`计算内核，附带安装启动入口。该版本本轮合成K4为26.9s（原生14.7s），真NPU数值门与新旧算子A/B通过，性能尚未追平。后续优化在`codex/oscar-ascend`继续，不会随之改变此稳定分支。
+
+在现有项目目录复制这一条：
+
+```bash
+git fetch origin codex/aisbench-stable && git switch codex/aisbench-stable && git pull --ff-only && bash scripts/install_aisbench_serve.sh
+```
+
+脚本使用当前Python安装插件、按签名编译或复用算子、核对真NPU数值门、自动准备旋转文件，然后启动常驻OSCAR服务。它用于用户自行跑AISBench，不运行原生对照、K4压测或核内profile，也不把实验服务启动写成性能验收通过。编译、数值、启动或清理出错仍停止；原有`install_probe_serve.sh`和`probe_concurrency.sh`的验收流程保留。
+
+等待终端`AISBENCH_READY`，再由AISBench请求`http://<node93地址>:8989/v1/chat/completions`，模型名`qwen3.5`。该就绪行在短功能检查及被动观察器启动后才显示。默认设备0/1/2/3、TP4、MTP3及其余参数取自`configs/target.json`。被动观察器只采集服务指标，不生成用户数据集或压测流量；Ctrl+C停止本次服务并清理所属进程，完整日志保存在此次`logs/`目录。
+
+## 完整验收与正式服务流程
+
 在 node93 的本项目目录执行这一条命令：
 
 ```bash

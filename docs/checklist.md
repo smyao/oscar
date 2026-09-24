@@ -108,3 +108,5 @@
 #146：新目标K4原生14.7s、OSCAR29.2s，双方4/4及释放通过；数值门为签名一致的既有证据复用，候选热点main204.427ms/decode32 15.296ms各自oracle通过。诊断prefill CV10.652s仍为主项，E06未通过。当前源码逐行基础ReduceSum含SDK内部标量同步，改为按行AR批处理并保持每行溢出错误门；区间bitmap替代标量mask，全可见历史跳过bitmap。独立profile内核记录raw cycles，正常性能轮不含诊断同步；一键自动以fe0e925旧产物做算子A/B，再完整跑模型K4。目标新精度、图、净收益及追平仍待下一轮真机，不以静态调用数推导通过。原文`reports/target_k4_29s_performance.txt`。
 
 #146本机复验：相同最终内核通过CANN910B4编译与42/42官方CPU-debug；相关主机57 passed、33 skipped、4 subtests。证据`reports/cv_ar146_validation.json`；新目标NPU/图/性能仍待一键实测，E06不解锁。
+
+#147：f292852目标fresh NPU数值门、current混合源及同输入CV A/B通过（main0.908、decode32 0.923），K4由29.2降为26.9s，原生14.7s，E06仍失败。核内profile将当前主项指向history load/unpack/publish，不能继续从归约调用数量推断速度。用户授权自行AISBench实验服务；新增稳定分支一键安装/编译/数值门/旋转/常驻服务入口，不重跑性能对比，不改变原有完整验收门。计算代码保持已测f292852，证据`reports/target_k4_26s_load_hotspot.txt`。

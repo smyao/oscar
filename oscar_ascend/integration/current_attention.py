@@ -1,4 +1,4 @@
-# Archive #55-#69/#126/#129-#140: native causal current-chunk FIA must return
+# Archive #55-#69/#126/#129-#142: native causal current-chunk FIA must return
 # exact BF16 output and a complete LSE while CV keeps INT2 history/window.
 # D.4 four questions: (1) this replaces only the current part of `fia`;
 # (2) the failed route spent 6.5s dequantizing historical INT2; its separate
@@ -31,7 +31,10 @@ def use_native_current(metadata) -> bool:
     graph capture/replay records and reuses the existing complete CV route.
     No decision depends on request length, NPU tensor values, or a failed op.
     """
-    if metadata.capture_origin or metadata.is_draft:
+    # #142: native MTP warmup is labelled ChunkedPrefill but all its slots
+    # are -1. The runner scope marks both warmup and capture explicitly;
+    # preserve CV's full padding path without disabling the real-slot guard.
+    if metadata.capture_origin or metadata.is_draft or metadata.dummy_origin:
         return False
     state = metadata.attn_state
     if type(state).__name__ != "AscendAttentionState" or not isinstance(getattr(state, "name", None), str):

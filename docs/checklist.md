@@ -94,3 +94,5 @@
 #140后的局部性能修订：CV在短query时只处理有效softmax行，并把四个32-token KV子块合成一次128-token有界工作单元，减少重复Cube调用与跨核握手；没有全历史物化、原生路径回退或精度阈值变更。`reports/kv128_local_validation.json`记录CANN ascend910b4编译及官方CPU-debug 27/27通过、源码指纹；**目标NPU精度、FULL_DECODE_ONLY图捕获/回放和20–30K/K4性能尚未运行**。快路径现先核实当前签名，必要时重建并跑真NPU CV/旋转数值门，避免用旧`.so`误报新内核速度；正式一键流程强制每轮新鲜数值门。E06继续保持失败/待复验，不能从静态约4倍tile轮次减少推导已经追平原生。
 
 #141：用户新实测OSCAR K4墙钟约131.7s（前轮182.5s），有收益但仍比原生慢约9倍，E06未通过。本轮进一步改FP32 Cube basic64×64×128、解析mask、Brcb scale/zero、整块FP32 SoftmaxFlashV2及批量alpha；主模型eager prefill current改用原生causal FIA，与实际CV history/window合并，draft/graph decode仍CV。最终同一内核通过CANN ascend910b4编译和27/27官方CPU-debug；主机517 passed、127 skipped、6 subtests。源码哈希与证据在`reports/deep_attention_local_validation.json`和`reports/deep_attention_cv_cpu_debug.json`。一键脚本自动新增实际current/CV/merge的真NPU门，失败不拉模型。**本轮目标NPU精度、图、服务和追平原生的结果仍待实测**，不以SDK指令数量或本地对拍解锁性能。
+
+#142：用户回传OSCAR捕图0/34时507035/vector trap。原生非capture的MTP dummy warmup标为ChunkedPrefill且slot全-1，新增current路由误启用真实slot guard；用外部`_dummy_run` ContextVar显式区分dummy，完整CV padding仍执行。49项相关主机回归通过（含原生预热编排与真实prefill恢复），AscendC及冻结配置未变。**修订后目标捕图/服务/性能仍待复验**；故障原文见`reports/target_graph_warmup_failure.txt`。

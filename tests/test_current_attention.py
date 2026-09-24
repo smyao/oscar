@@ -1,4 +1,4 @@
-"""Archive #55-#69/#126/#129-#140: current-source host/ABI contracts.
+"""Archive #55-#69/#126/#129-#142: current-source host/ABI contracts.
 
 These CPU checks cover stage, padding and error preservation. They do not
 establish native FIA device completion, fused merge accuracy or throughput.
@@ -30,7 +30,7 @@ class AscendAttentionState(Enum):
                                    AscendAttentionState.PrefillCacheHit,
                                    AscendAttentionState.ChunkedPrefill])
 def test_main_model_eager_prefill_and_mixed_use_exact_current(stage):
-    metadata = SimpleNamespace(attn_state=stage, capture_origin=False, is_draft=False)
+    metadata = SimpleNamespace(attn_state=stage, capture_origin=False, is_draft=False, dummy_origin=False)
     assert use_native_current(metadata)
     metadata.is_draft = True  # First draft_index=0 is still a draft.
     assert not use_native_current(metadata)
@@ -42,12 +42,12 @@ def test_main_model_eager_prefill_and_mixed_use_exact_current(stage):
 @pytest.mark.parametrize("stage", [AscendAttentionState.DecodeOnly,
                                    AscendAttentionState.SpecDecoding])
 def test_decode_and_spec_graph_keep_complete_cv_current(stage):
-    metadata = SimpleNamespace(attn_state=stage, capture_origin=False, is_draft=False)
+    metadata = SimpleNamespace(attn_state=stage, capture_origin=False, is_draft=False, dummy_origin=False)
     assert not use_native_current(metadata)
 
 
 def test_missing_native_stage_fails_instead_of_silent_route_change():
-    metadata = SimpleNamespace(attn_state=None, capture_origin=False, is_draft=False)
+    metadata = SimpleNamespace(attn_state=None, capture_origin=False, is_draft=False, dummy_origin=False)
     with pytest.raises(CurrentAttentionError, match="AscendAttentionState"):
         use_native_current(metadata)
 

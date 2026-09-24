@@ -1,4 +1,4 @@
-"""Native metadata validation; archive #34/#36/#37–49/#55–69/#77/#78/#140.
+"""Native metadata validation; archive #34/#36/#37–49/#55–69/#77/#78/#140/#142.
 
 The native runner already maintains query_start_loc_cpu. Carry that CPU mirror
 for causal current-chunk FIA without an NPU readback; device metadata and
@@ -7,6 +7,8 @@ physical page tables remain on the native stream.
 
 from dataclasses import dataclass, replace
 from typing import Any
+
+from .dummy_context import is_native_dummy_run
 
 
 class OscarMetadataError(ValueError):
@@ -31,6 +33,7 @@ class OscarMetadata:
     attn_state: Any = None
     is_draft: bool = False
     current_cumulative: tuple[int, ...] | None = None
+    dummy_origin: bool = False
 
     @property
     def block_table(self):
@@ -89,7 +92,8 @@ def from_common(common: Any, *, capacity: MetadataCapacity | None = None,
         if current.query_offsets > capacity.query_offsets:
             raise OscarMetadataError("native query-start buffer exceeds fixed graph capacity")
     state = getattr(common, "attn_state", None)
-    main_prefill = (not capture_origin and not is_draft and
+    dummy_origin = is_native_dummy_run()
+    main_prefill = (not capture_origin and not dummy_origin and not is_draft and
                     type(state).__name__ == "AscendAttentionState" and
                     state.name in {"PrefillNoCache", "ChunkedPrefill", "PrefillCacheHit"})
     # Only this eager main-model stage needs CPU qstarts. Existing graph/draft
@@ -103,7 +107,7 @@ def from_common(common: Any, *, capacity: MetadataCapacity | None = None,
         positions=getattr(common, "positions", None), capture_origin=capture_origin,
         num_input_tokens=getattr(common, "num_input_tokens", common.slot_mapping.shape[0]),
         query_start_loc_cpu=cpu_starts[:rows + 1] if cpu_starts is not None else None,
-        attn_state=state, is_draft=is_draft)
+        attn_state=state, is_draft=is_draft, dummy_origin=dummy_origin)
     if main_prefill:
         # The native model runner constructs a new CommonAttentionMetadata per
         # step (model_runner_v1.py:3161). Every FULL builder sees that same

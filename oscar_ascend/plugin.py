@@ -3,6 +3,7 @@
 Archive #28/#77/#78: register must not initialize torch/NPU/native modules.
 Archive #27/#31–33: enabled routing requires an external ready runtime;
 never attach undeclared fields to VllmConfig or silently keep native FULL.
+Archive #34/#36: native dummy warmup must not masquerade as eager prefill.
 """
 
 import functools
@@ -124,9 +125,22 @@ def _patch_runner(module: ModuleType) -> None:
                 lambda config, raw: original(runner, config, raw))
         return wrapped
 
+    def dummy_run(original):
+        def wrapped(runner, *args, **kwargs):
+            # Native model_runner_v1.py warmup may use ordinary builder.build
+            # with ChunkedPrefill even though every dummy slot is -1. Keep an
+            # exact, nested scope around the original call; the builder marks
+            # dummy_origin without reading slots back from NPU. Import only
+            # when this deferred native seam actually executes (#77/#78).
+            from .integration.dummy_context import native_dummy_run
+            with native_dummy_run():
+                return original(runner, *args, **kwargs)
+        return wrapped
+
     _patch(cls, "get_kv_cache_spec", specs)
     _patch(cls, "_allocate_kv_cache_tensors", allocate)
     _patch(cls, "_reshape_kv_cache_tensors", reshape)
+    _patch(cls, "_dummy_run", dummy_run)
 
 
 _callbacks = {

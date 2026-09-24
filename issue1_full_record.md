@@ -28390,3 +28390,23 @@ Source: 2026-09-23 node93 user-pasted console, attachment 9c2f8499-0da8-4731-922
 ```
 
 **本机排查与改动，非真机结论**：SDK证实FP32 basic16×32×32让QK/PV各约128次内部MMAD，并触发小块PIPE_M barrier；改basic64×64×128，各约4次，FP32/HF32-off保留。可见区间改为解析边界。主模型eager prefill的current源走原生BF16 causal TND FIA，历史仍由INT2 CV直接读取，精确window继续由CV计算；三源在原有FP32 LSE merge合并。MTP draft与图decode继续CV。原生current实际收益依赖调度分块，不能拿16K块的55.9%配对计算占比冒充所有混合批次。冻结数值门、图回放和相同K4真机结果分别验收，不把理论操作数下降写成已追平。
+
+## [142] 真机条目（gpt_new_oscar_kimi，2026-09-24 用户回传）· 捕图前 MTP dummy warmup 误进真实 current 路由
+
+**症状原文**：完整用户附件保存在`reports/target_graph_warmup_failure.txt`。OSCAR侧刚打印`PERF_VARIANT start=oscar`，`Capturing CUDA graphs (decode, FULL): 0%|0/34`便出现507035、`timeout or trap error`，随后worker退出、EngineCore初始化失败；尚未执行K4性能请求。
+
+```text
+[oscar] PERF_VARIANT start=oscar lengths=20K,23K,27K,30K K=4
+[ERROR] 2026-09-24-00:10:40 (PID:112962, Device:2, RankID:-1) ERR00100 PTA call acl api failed
+pc start: 0x1244021f087c, current: 0x1244021f0ae0
+errorStr: timeout or trap error
+RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+```
+
+**已复现的分流缺陷**：原生`GPUModelRunner._warmup_and_capture`先调用`_dummy_run(force_attention=True, cudagraph_runtime_mode=NONE)`，此时`is_graph_capturing`仍为默认false。Ascend `_dummy_run`在MTP下把state设为ChunkedPrefill，经普通builder.build构造metadata，再把所有slot置为-1。新增current路由仅排除capture_origin与draft，因而把这轮预热误作真实prefill，`guard_current_slots`把这些-1标为错误并触发状态核。真实捕图入口才有capture_origin，因此仅检查capture标记覆盖不全。
+
+**PC对照边界**：本机相同内核的CANN merged AIV对象中，`oscar_status_guard_kernel_5`入口为0x1587c，故障相对偏移为0x264，对应0x15ae0；两者低12位均与目标0x87c/0xae0吻合。支持状态检查核故障判断。CANN objdump未解码该私有指令，不能称已解出Trap opcode，也没有目标状态张量回读证据。
+
+**修复**：外部插件用可撤销wrapper在原生`_dummy_run`调用范围设置ContextVar；metadata记录dummy_origin，并在组装current长度及路由选择前排除dummy。预热仍执行完整CV/padding链路；真实请求的负slot检查继续生效。异常、嵌套与返回均恢复标记，不由NPU张量值或可能陈旧的is_prefilling猜测dummy。未修改AscendC、原生源码、图配置或冻结容差。
+
+**关键验证**：49项相关主机回归通过，包含执行只读原生`_warmup_and_capture`方法的512-token/128-request预热→捕图契约、预热后真实prefill路由恢复、MTP/capture分流、负slot错误检查、wrapper异常恢复和卸载。修订后的目标图捕获、请求完成与性能仍待真机重跑；本次未重复无关CANN编译或完整测试矩阵。

@@ -1,4 +1,4 @@
-"""Archive #27/#28/#34/#36/#37-49/#78: execute pinned native contracts.
+"""Archive #27/#28/#34/#36/#37-49/#78/#142: execute pinned native contracts.
 
 Native class/method AST nodes are compiled unchanged from the read-only
 reference tree. Dependencies outside each tested contract are supplied by
@@ -559,6 +559,72 @@ def test_native_profile_selects_metadata_none_before_kv_cache_initialization(mon
     predicate = native._should_build_dummy_attn_metadata
     assert not predicate(object(), force_attention=False, is_profile=True, cudagraph_runtime_mode=modes.NONE)
     assert predicate(object(), force_attention=False, is_profile=False, cudagraph_runtime_mode=modes.FULL)
+
+
+def test_native_mtp_graph_warmup_does_not_enter_real_current_slot_guard(monkeypatch):
+    # #142: execute the pinned orchestration unchanged. Its eager warmup
+    # precedes capture and has no is_graph_capturing flag, yet Ascend MTP
+    # labels both calls ChunkedPrefill and supplies all-negative dummy slots.
+    from oscar_ascend import plugin
+    from oscar_ascend.integration.current_attention import use_native_current
+    from oscar_ascend.integration.dummy_context import is_native_dummy_run
+    from oscar_ascend.integration.metadata import from_common
+
+    class AscendAttentionState(Enum):
+        ChunkedPrefill = 3
+
+    modes = SimpleNamespace(NONE=object(), FULL=object())
+    native = definitions(
+        "references/vllm/vllm/v1/worker/gpu_model_runner.py", "native_graph_warmup_contract",
+        set(), {"CUDAGraphMode": modes}, monkeypatch,
+        methods=[("GPUModelRunner", "_warmup_and_capture")])
+    calls = []
+
+    class DummyCommon:
+        causal = True
+        attn_state = AscendAttentionState.ChunkedPrefill
+        query_start_loc = torch.arange(0, 513, 4, dtype=torch.int32)
+        seq_lens = torch.full((128,), 4, dtype=torch.int32)
+        block_table_tensor = torch.zeros((128, 8), dtype=torch.int32)
+        slot_mapping = torch.full((512,), -1, dtype=torch.int64)
+        num_reqs, num_actual_tokens, num_input_tokens = 128, 512, 512
+        max_query_len, max_seq_len = 4, 4
+
+        @property
+        def query_start_loc_cpu(self):
+            raise AssertionError("dummy warmup must not prepare native-current CPU lengths")
+
+    class Runner:
+        compilation_config = SimpleNamespace(cudagraph_num_of_warmups=1)
+
+        def get_kv_cache_spec(self):
+            raise AssertionError("unrelated seam called")
+
+        _allocate_kv_cache_tensors = _reshape_kv_cache_tensors = get_kv_cache_spec
+
+        def _dummy_run(self, num_tokens, **kwargs):
+            assert num_tokens == 512 and is_native_dummy_run()
+            capture = kwargs.get("is_graph_capturing", False)
+            metadata = from_common(DummyCommon(), capture_origin=capture)
+            assert metadata.dummy_origin and metadata.current_cumulative is None
+            assert not use_native_current(metadata)
+            calls.append((capture, kwargs["cudagraph_runtime_mode"]))
+
+    try:
+        plugin._patch_runner(SimpleNamespace(NPUModelRunner=Runner))
+        native._warmup_and_capture(Runner(),
+            SimpleNamespace(num_tokens=512, uniform=True, num_active_loras=0), modes.FULL)
+        assert calls == [(False, modes.NONE), (True, modes.FULL)]
+        assert not is_native_dummy_run()
+    finally:
+        plugin.unregister()
+
+    # A real request immediately afterwards must retain native current FIA.
+    real = SimpleNamespace(**{name: getattr(DummyCommon, name) for name in (
+        "causal", "attn_state", "query_start_loc", "seq_lens", "block_table_tensor",
+        "num_reqs", "num_actual_tokens", "num_input_tokens", "max_query_len", "max_seq_len")},
+        query_start_loc_cpu=DummyCommon.query_start_loc, slot_mapping=torch.arange(512))
+    assert use_native_current(from_common(real))
 
 
 def test_native_extra_fia_dummy_does_not_require_a_new_physical_request_row():

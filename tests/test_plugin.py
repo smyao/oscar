@@ -68,6 +68,9 @@ def runner_module():
         def _reshape_kv_cache_tensors(self, kv_cache_config, kv_cache_raw_tensors):
             return {"native": (kv_cache_config, kv_cache_raw_tensors)}
 
+        def _dummy_run(self, *args, probe=None, **kwargs):
+            return probe(self, *args, **kwargs) if probe is not None else "native dummy"
+
     module.NPUModelRunner = NPUModelRunner
     return module
 
@@ -152,7 +155,8 @@ unregister()
     def test_runner_hooks_delegate_to_concrete_provider(self):
         module = runner_module()
         cls = module.NPUModelRunner
-        originals = {name: cls.__dict__[name] for name in ("get_kv_cache_spec", "_allocate_kv_cache_tensors", "_reshape_kv_cache_tensors")}
+        originals = {name: cls.__dict__[name] for name in (
+            "get_kv_cache_spec", "_allocate_kv_cache_tensors", "_reshape_kv_cache_tensors", "_dummy_run")}
         with patch.dict(sys.modules, {module.__name__: module}), patch.dict(os.environ, {"OSCAR_ENABLED": "1"}):
             install_runtime(Provider())
             plugin.register()
@@ -163,6 +167,56 @@ unregister()
             plugin.unregister()
             for name, original in originals.items():
                 self.assertIs(cls.__dict__[name], original)
+
+    def test_dummy_run_scope_resets_on_success_and_failure(self):
+        from oscar_ascend.integration.dummy_context import is_native_dummy_run
+        module = runner_module()
+        cls = module.NPUModelRunner
+        original = cls.__dict__["_dummy_run"]
+        with patch.dict(sys.modules, {module.__name__: module}), patch.dict(os.environ, {"OSCAR_ENABLED": "1"}):
+            install_runtime(Provider())
+            plugin.register()
+            runner = cls()
+            self.assertFalse(is_native_dummy_run())
+            self.assertEqual(runner._dummy_run(17, probe=lambda _runner, count: (is_native_dummy_run(), count)),
+                             (True, 17))
+            self.assertFalse(is_native_dummy_run())
+
+            def fail(_runner):
+                self.assertTrue(is_native_dummy_run())
+                raise RuntimeError("dummy warmup failed")
+
+            with self.assertRaisesRegex(RuntimeError, "dummy warmup failed"):
+                runner._dummy_run(probe=fail)
+            self.assertFalse(is_native_dummy_run())
+            plugin.unregister()
+            self.assertIs(cls.__dict__["_dummy_run"], original)
+            self.assertFalse(is_native_dummy_run())
+
+    def test_dummy_run_nested_scope_and_idempotent_reversible_patch(self):
+        from oscar_ascend.integration.dummy_context import is_native_dummy_run
+        module = runner_module()
+        cls = module.NPUModelRunner
+        original = cls.__dict__["_dummy_run"]
+        signature = inspect.signature(cls._dummy_run)
+        with patch.dict(sys.modules, {module.__name__: module}), patch.dict(os.environ, {"OSCAR_ENABLED": "1"}):
+            install_runtime(Provider())
+            plugin.register()
+            replacement = cls.__dict__["_dummy_run"]
+            plugin.register()
+            self.assertIs(cls.__dict__["_dummy_run"], replacement)
+            self.assertEqual(inspect.signature(cls._dummy_run), signature)
+            runner = cls()
+
+            def outer(instance):
+                before = is_native_dummy_run()
+                nested = instance._dummy_run(probe=lambda _runner: is_native_dummy_run())
+                return before, nested, is_native_dummy_run()
+
+            self.assertEqual(runner._dummy_run(probe=outer), (True, True, True))
+            self.assertFalse(is_native_dummy_run())
+            plugin.unregister()
+            self.assertIs(cls.__dict__["_dummy_run"], original)
 
     def test_future_import_runs_the_existing_loader_before_patching(self):
         target = "oscar_fake_seam"

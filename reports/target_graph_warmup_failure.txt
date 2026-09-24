@@ -1,0 +1,281 @@
+[oscar] PERF_VARIANT start=oscar lengths=20K,23K,27K,30K K=4
+Capturing CUDA graphs (decode, FULL):   0%|          | 0/34 [00:00<?, ?it/s][rank2]:[E924 00:10:40.421926720 OpParamMaker.cpp:453] operator():../third_party/op-plugin/op_plugin/utils/op_api_common.h:192 NPU function error: call failed, error code is 507035
+[ERROR] 2026-09-24-00:10:40 (PID:112962, Device:2, RankID:-1) ERR00100 PTA call acl api failed
+[Error]: The vector core execution is abnormal. 
+        Rectify the fault based on the error information in the ascend log.
+[PID: 112962] 2026-09-24-00:08:37.832.622 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+        The error from device(chipId:2, dieId:0), serial number is 67, there is an exception of aivec error, core id is 33, error code = 0, dump info: pc start: 0x1244021f087c, current: 0x1244021f0ae0, vec error info: 0x4b168a62b1, mte error info: 0xfc03040080, ifu error info: 0x212d03f5826c0, ccu error info: 0xfb2824816f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c14017b000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3040080, fixp_error1 info: 0xfc, fsmId:1, tslot:0, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        The error from device(chipId:2, dieId:0), serial number is 67, there is an exception of aivec error, core id is 34, error code = 0, dump info: pc start: 0x1244021f087c, current: 0x1244021f0ae0, vec error info: 0xff011c3856, mte error info: 0xfc03040080, ifu error info: 0x212d03f582740, ccu error info: 0x80de18606f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c14017b000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3040080, fixp_error1 info: 0xfc, fsmId:1, tslot:0, thread:0, ctxid:0, blk:1, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        The error from device(chipId:2, dieId:0), serial number is 67, there is an exception of aivec error, core id is 35, error code = 0, dump info: pc start: 0x1244021f087c, current: 0x1244021f0ae0, vec error info: 0xd1008364e6, mte error info: 0xfc03046080, ifu error info: 0x212d03f5827c0, ccu error info: 0xc9cd813f6f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c14017b000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3046080, fixp_error1 info: 0xfc, fsmId:1, tslot:0, thread:0, ctxid:0, blk:2, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+        Failed to submit kernel task, retCode=0x715005e.[FUNC:InternalLaunchKernelSubmit][FILE:aix_stars.cc][LINE:462]
+        kernel launch submit failed.[FUNC:StreamLaunchKernelV2][FILE:aix_stars.cc][LINE:609]
+        rtsLaunchKernelWithHostArgs execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+        aclrtLaunchKernelWithHostArgs failed: 507035
+        Kernel launch from cache failed.
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0xc8 (0xffff95d95978 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+[rank1]:[E924 00:10:40.421928030 OpParamMaker.cpp:453] operator():../third_party/op-plugin/op_plugin/utils/op_api_common.h:192 NPU function error: call failed, error code is 507035
+[ERROR] 2026-09-24-00:10:40 (PID:112905, Device:1, RankID:-1) ERR00100 PTA call acl api failed
+[Error]: The vector core execution is abnormal. 
+        Rectify the fault based on the error information in the ascend log.
+[PID: 112905] 2026-09-24-00:08:37.472.344 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+        The error from device(chipId:1, dieId:0), serial number is 68, there is an exception of aivec error, core id is 44, error code = 0, dump info: pc start: 0x1242021f087c, current: 0x1242021f0ae0, vec error info: 0xb000000049, mte error info: 0xfc0304a080, ifu error info: 0x212d03f582100, ccu error info: 0x2031212c6f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c14017b000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x304a080, fixp_error1 info: 0xfc, fsmId:0, tslot:6, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        The error from device(chipId:1, dieId:0), serial number is 68, there is an exception of aivec error, core id is 46, error code = 0, dump info: pc start: 0x1242021f087c, current: 0x1242021f0ae0, vec error info: 0xb000000049, mte error info: 0xfc03040080, ifu error info: 0x212d03f582200, ccu error info: 0x3e30f0216f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c14017b000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3040080, fixp_error1 info: 0xfc, fsmId:0, tslot:6, thread:0, ctxid:0, blk:2, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        The error from device(chipId:1, dieId:0), serial number is 68, there is an exception of aivec error, core id is 45, error code = 0, dump info: pc start: 0x1242021f087c, current: 0x1242021f0ae0, vec error info: 0xb000000049, mte error info: 0xfc03040080, ifu error info: 0x212d03f582180, ccu error info: 0x2b09102b6f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c14017b000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3040080, fixp_error1 info: 0xfc, fsmId:1, tslot:6, thread:0, ctxid:0, blk:1, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+        Failed to submit kernel task, retCode=0x715005e.[FUNC:InternalLaunchKernelSubmit][FILE:aix_stars.cc][LINE:462]
+        kernel launch submit failed.[FUNC:StreamLaunchKernelV2][FILE:aix_stars.cc][LINE:609]
+        rtsLaunchKernelWithHostArgs execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+        aclrtLaunchKernelWithHostArgs failed: 507035
+        Kernel launch from cache failed.
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0xc8 (0xffffa1445978 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+[rank0]:[E924 00:10:40.422643680 OpParamMaker.cpp:453] operator():../third_party/op-plugin/op_plugin/utils/op_api_common.h:192 NPU function error: call failed, error code is 507035
+[ERROR] 2026-09-24-00:10:40 (PID:112869, Device:0, RankID:-1) ERR00100 PTA call acl api failed
+[Error]: The vector core execution is abnormal. 
+        Rectify the fault based on the error information in the ascend log.
+[PID: 112869] 2026-09-24-00:08:38.607.270 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+        The error from device(chipId:0, dieId:0), serial number is 85, there is an exception of aivec error, core id is 27, error code = 0, dump info: pc start: 0x1240021f087c, current: 0x1240021f0ae0, vec error info: 0x2600000070, mte error info: 0xfc030520ac, ifu error info: 0x212d03f5825c0, ccu error info: 0xcdc8e10a6f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c14017b000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x30520ac, fixp_error1 info: 0xfc, fsmId:0, tslot:2, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        The error from device(chipId:0, dieId:0), serial number is 85, there is an exception of aivec error, core id is 32, error code = 0, dump info: pc start: 0x1240021f087c, current: 0x1240021f0ae0, vec error info: 0x2a000000ea, mte error info: 0xfc030520ac, ifu error info: 0x212d03f582640, ccu error info: 0x8000c06f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c14017b000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x30520ac, fixp_error1 info: 0xfc, fsmId:1, tslot:2, thread:0, ctxid:0, blk:1, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        The error from device(chipId:0, dieId:0), serial number is 85, there is an exception of aivec error, core id is 33, error code = 0, dump info: pc start: 0x1240021f087c, current: 0x1240021f0ae0, vec error info: 0x2600000070, mte error info: 0xfc030500ac, ifu error info: 0x212d03f5826c0, ccu error info: 0xb4080c776f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c14017b000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x30500ac, fixp_error1 info: 0xfc, fsmId:1, tslot:2, thread:0, ctxid:0, blk:2, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+        Failed to submit kernel task, retCode=0x715005e.[FUNC:InternalLaunchKernelSubmit][FILE:aix_stars.cc][LINE:462]
+        kernel launch submit failed.[FUNC:StreamLaunchKernelV2][FILE:aix_stars.cc][LINE:609]
+        rtsLaunchKernelWithHostArgs execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+        aclrtLaunchKernelWithHostArgs failed: 507035
+        Kernel launch from cache failed.
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0xc8 (0xffff89a45978 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+[rank1]:[W924 00:10:41.694474680 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[ERROR] 2026-09-24-00:10:41 (PID:112905, Device:1, RankID:-1) ERR02005 DIST internal error
+[ERROR] 2026-09-24-00:10:41 (PID:112905, Device:1, RankID:-1) ERR02005 DIST internal error
+[rank0]:[W924 00:10:41.694652330 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[ERROR] 2026-09-24-00:10:41 (PID:112869, Device:0, RankID:-1) ERR02005 DIST internal error
+[ERROR] 2026-09-24-00:10:41 (PID:112869, Device:0, RankID:-1) ERR02005 DIST internal error
+[rank3]:[W924 00:10:41.695245390 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[rank2]:[W924 00:10:41.695245600 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[ERROR] 2026-09-24-00:10:41 (PID:113022, Device:3, RankID:-1) ERR02005 DIST internal error
+[ERROR] 2026-09-24-00:10:41 (PID:112962, Device:2, RankID:-1) ERR02005 DIST internal error
+[ERROR] 2026-09-24-00:10:41 (PID:112962, Device:2, RankID:-1) ERR02005 DIST internal error[Rank 3] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-09-24-00:10:41 (PID:113022, Device:3, RankID:-1) ERR02005 DIST internal error
+(EngineCore pid=112820) ERROR 09-24 00:10:52 [multiproc_executor.py:284] Worker proc VllmWorker-1 died unexpectedly, shutting down executor.
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195] EngineCore failed to start.
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195] Traceback (most recent call last):
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 1164, in run_engine_core
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     return func(*args, **kwargs)
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 930, in __init__
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     super().__init__(
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 132, in __init__
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     kv_cache_config = self._initialize_kv_caches(vllm_config)
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     return func(*args, **kwargs)
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 290, in _initialize_kv_caches
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     self.model_executor.initialize_from_config(kv_cache_configs)
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/abstract.py", line 124, in initialize_from_config
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     compilation_times: list[CompilationTimes] = self.collective_rpc(
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]                                                 ^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 404, in collective_rpc
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     return future if non_block else future.result()
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]                                     ^^^^^^^^^^^^^^^
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 91, in result
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     return super().result()
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]            ^^^^^^^^^^^^^^^^
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/usr/local/python3.12.13/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     return self.__get_result()
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]            ^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/usr/local/python3.12.13/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     raise self._exception
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 95, in _wait_for_response
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     response = self.aggregate(self.get_response())
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]                               ^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 387, in get_response
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     status, result = mq.dequeue(timeout=dequeue_timeout)
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/vllm-workspace/vllm/vllm/distributed/device_communicators/shm_broadcast.py", line 779, in dequeue
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     with self.acquire_read(timeout, indefinite) as buf:
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 137, in __enter__
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     return next(self.gen)
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]            ^^^^^^^^^^^^^^
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/platform/patch_shm_broadcast.py", line 70, in acquire_read
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195]     raise RuntimeError("cancelled")
+(EngineCore pid=112820) ERROR 09-24 00:10:56 [core.py:1195] RuntimeError: cancelled
+(EngineCore pid=112820) Traceback (most recent call last):
+(EngineCore pid=112820)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+(EngineCore pid=112820)     self.run()
+(EngineCore pid=112820)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/process.py", line 108, in run
+(EngineCore pid=112820)     self._target(*self._args, **self._kwargs)
+(EngineCore pid=112820)   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/platform/patch_balance_schedule.py", line 692, in run_engine_core
+(EngineCore pid=112820)     return _ORIGINAL_RUN_ENGINE_CORE(*args, dp_rank=dp_rank, local_dp_rank=local_dp_rank, **kwargs)
+(EngineCore pid=112820)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820)   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 1199, in run_engine_core
+(EngineCore pid=112820)     raise e
+(EngineCore pid=112820)   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 1164, in run_engine_core
+(EngineCore pid=112820)     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=112820)                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820)   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=112820)     return func(*args, **kwargs)
+(EngineCore pid=112820)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820)   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 930, in __init__
+(EngineCore pid=112820)     super().__init__(
+(EngineCore pid=112820)   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 132, in __init__
+(EngineCore pid=112820)     kv_cache_config = self._initialize_kv_caches(vllm_config)
+(EngineCore pid=112820)                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820)   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=112820)     return func(*args, **kwargs)
+(EngineCore pid=112820)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820)   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 290, in _initialize_kv_caches
+(EngineCore pid=112820)     self.model_executor.initialize_from_config(kv_cache_configs)
+(EngineCore pid=112820)   File "/vllm-workspace/vllm/vllm/v1/executor/abstract.py", line 124, in initialize_from_config
+(EngineCore pid=112820)     compilation_times: list[CompilationTimes] = self.collective_rpc(
+(EngineCore pid=112820)                                                 ^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 404, in collective_rpc
+(EngineCore pid=112820)     return future if non_block else future.result()
+(EngineCore pid=112820)                                     ^^^^^^^^^^^^^^^
+(EngineCore pid=112820)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 91, in result
+(EngineCore pid=112820)     return super().result()
+(EngineCore pid=112820)            ^^^^^^^^^^^^^^^^
+(EngineCore pid=112820)   File "/usr/local/python3.12.13/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+(EngineCore pid=112820)     return self.__get_result()
+(EngineCore pid=112820)            ^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820)   File "/usr/local/python3.12.13/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+(EngineCore pid=112820)     raise self._exception
+(EngineCore pid=112820)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 95, in _wait_for_response
+(EngineCore pid=112820)     response = self.aggregate(self.get_response())
+(EngineCore pid=112820)                               ^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 387, in get_response
+(EngineCore pid=112820)     status, result = mq.dequeue(timeout=dequeue_timeout)
+(EngineCore pid=112820)                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820)   File "/vllm-workspace/vllm/vllm/distributed/device_communicators/shm_broadcast.py", line 779, in dequeue
+(EngineCore pid=112820)     with self.acquire_read(timeout, indefinite) as buf:
+(EngineCore pid=112820)          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=112820)   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 137, in __enter__
+(EngineCore pid=112820)     return next(self.gen)
+(EngineCore pid=112820)            ^^^^^^^^^^^^^^
+(EngineCore pid=112820)   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/platform/patch_shm_broadcast.py", line 70, in acquire_read
+(EngineCore pid=112820)     raise RuntimeError("cancelled")
+(EngineCore pid=112820) RuntimeError: cancelled
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+[ERROR] TBE Subprocess[task_distribute] raise error[], main process disappeared!
+(APIServer pid=112758) Traceback (most recent call last):
+(APIServer pid=112758)   File "<frozen runpy>", line 198, in _run_module_as_main
+(APIServer pid=112758)   File "<frozen runpy>", line 88, in _run_code
+(APIServer pid=112758)   File "/workspace/gpt_new_oscar_kimi/tools/target_cli.py", line 77, in <module>
+(APIServer pid=112758)     sys.exit(main())
+(APIServer pid=112758)              ^^^^^^
+(APIServer pid=112758)   File "/workspace/gpt_new_oscar_kimi/tools/target_cli.py", line 72, in main
+(APIServer pid=112758)     vllm_main()
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/entrypoints/cli/main.py", line 95, in main
+(APIServer pid=112758)     args.dispatch_function(args)
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/entrypoints/cli/serve.py", line 148, in cmd
+(APIServer pid=112758)     uvloop.run(run_server(args))
+(APIServer pid=112758)   File "/usr/local/python3.12.13/lib/python3.12/site-packages/uvloop/__init__.py", line 96, in run
+(APIServer pid=112758)     return __asyncio.run(
+(APIServer pid=112758)            ^^^^^^^^^^^^^^
+(APIServer pid=112758)   File "/usr/local/python3.12.13/lib/python3.12/asyncio/runners.py", line 195, in run
+(APIServer pid=112758)     return runner.run(main)
+(APIServer pid=112758)            ^^^^^^^^^^^^^^^^
+(APIServer pid=112758)   File "/usr/local/python3.12.13/lib/python3.12/asyncio/runners.py", line 118, in run
+(APIServer pid=112758)     return self._loop.run_until_complete(task)
+(APIServer pid=112758)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=112758)   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+(APIServer pid=112758)   File "/usr/local/python3.12.13/lib/python3.12/site-packages/uvloop/__init__.py", line 48, in wrapper
+(APIServer pid=112758)     return await main
+(APIServer pid=112758)            ^^^^^^^^^^
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/entrypoints/openai/api_server.py", line 665, in run_server
+(APIServer pid=112758)     await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/entrypoints/openai/api_server.py", line 679, in run_server_worker
+(APIServer pid=112758)     async with build_async_engine_client(
+(APIServer pid=112758)                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=112758)   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=112758)     return await anext(self.gen)
+(APIServer pid=112758)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/entrypoints/openai/api_server.py", line 99, in build_async_engine_client
+(APIServer pid=112758)     async with build_async_engine_client_from_engine_args(
+(APIServer pid=112758)                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=112758)   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=112758)     return await anext(self.gen)
+(APIServer pid=112758)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/entrypoints/openai/api_server.py", line 135, in build_async_engine_client_from_engine_args
+(APIServer pid=112758)     async_llm = AsyncLLM.from_vllm_config(
+(APIServer pid=112758)                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/v1/engine/async_llm.py", line 217, in from_vllm_config
+(APIServer pid=112758)     return cls(
+(APIServer pid=112758)            ^^^^
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/v1/engine/async_llm.py", line 146, in __init__
+(APIServer pid=112758)     self.engine_core = EngineCoreClient.make_async_mp_client(
+(APIServer pid=112758)                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(APIServer pid=112758)     return func(*args, **kwargs)
+(APIServer pid=112758)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 131, in make_async_mp_client
+(APIServer pid=112758)     return AsyncMPClient(*client_args)
+(APIServer pid=112758)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(APIServer pid=112758)     return func(*args, **kwargs)
+(APIServer pid=112758)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 948, in __init__
+(APIServer pid=112758)     super().__init__(
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 570, in __init__
+(APIServer pid=112758)     with launch_core_engines(
+(APIServer pid=112758)          ^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=112758)   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 144, in __exit__
+(APIServer pid=112758)     next(self.gen)
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/v1/engine/utils.py", line 1190, in launch_core_engines
+(APIServer pid=112758)     wait_for_engine_startup(
+(APIServer pid=112758)   File "/vllm-workspace/vllm/vllm/v1/engine/utils.py", line 1249, in wait_for_engine_startup
+(APIServer pid=112758)     raise RuntimeError(
+(APIServer pid=112758) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+(APIServer pid=112758) [ERROR] 2026-09-24-00:10:59 (PID:112758, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception

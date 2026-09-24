@@ -2,7 +2,7 @@
   "model": "/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp",
   "served_model_name": "qwen3.5",
   "host": "0.0.0.0",
-  "port": 8989,
+  "port": 9595,
   "devices": [0, 1, 2, 3],
   "device_policy": "Current task Appendix F: physical NPU 0-3; all child processes use this explicit selection",
   "soc_version": "ascend910b4",

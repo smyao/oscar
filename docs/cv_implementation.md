@@ -1,6 +1,6 @@
 # Cube / Vector attention 实现与证据边界
 
-本轮新增 `attention_cv.cpp`、`attention_tasks.cpp` 和独立 torch registration。实现是 Ascend A2 的 `MIX_AIC_1_2`：一个 Cube 配两个 Vector。QK、PV、历史输出的 `Rv.T` 均由 `matmul::MatmulImpl` 执行；向量核处理 INT2 解包、精确 BF16 搬入、因果 mask、稳定 softmax 与分块累计。没有标量 dot 或调用 Python oracle 的生产路线。
+`attention_cv.cpp`、`attention_tasks.cpp` 和独立 torch registration使用 Ascend A2 `MIX_AIC_1_2`：一个 Cube 配两个 Vector。当前#144为M128×KV256；QK、PV、历史输出的 `Rv.T` 均由 `matmul::MatmulImpl` 执行；向量核处理 INT2 解包、精确 BF16 搬入、因果 mask、稳定 softmax 与分块累计。没有标量 dot 或调用 Python oracle 的生产路线。本文后半保留历史迭代记录，旧资源数字以各条目当时版本为限。
 
 源码、真实 CANN 编译、官方 CPU-debug、设备执行、图捕获、图重放、精度与性能是独立状态。此文件的资源/流量数字是源码推导，不能视为实测性能。
 
@@ -29,7 +29,7 @@ CANN VM 中只读核实了 9.1 SDK 的 `matmul/constant_tiling.h`、`MatmulImplB
 
 - starts / lengths 是 int32 `[R+1]` / `[R]`；slots 是 int32/int64 `[N]`。
 - tasks 是预分配 int64 `[N*Hkv*3*splits,16]`，128B/row；positions 是 int64 `[N]`，padding 写 -1。
-- 不依赖 host token 数值；二分定位 request。R≤4096。`qtile=floor(64/GQA)`；GQA≤16，所以 q_len4 一定共享历史 tile。
+- 不依赖 host token 数值；二分定位 request。R≤4096。当前`qtile=floor(128/GQA)`；GQA≤16，GQA6可复用21个query；slot组缓冲同为128容量。
 - tasks 前11列：`q_begin,q_count,kv_head,kv_begin,kv_end,request,output_split,source_kind,context,request_query_begin,metadata_status`。后5列置0。
 - source0 为压缩历史；source1 为旧 BF16 sink/recent；source2 为当前 forward 的 BF16 K/V。`output_split=source_kind*splits+split`。
 - q_count=0 为同querytile的非leader task；q_count=-1 为padding/非法metadata，输出行由该token自己的task初始化。带负slot的请求不因dummy seq_len=0触发有效请求错误；querytile遇内部负slot截断，后续valid run单独成为leader，避免两个task覆盖同一输出行。
@@ -40,9 +40,11 @@ CANN VM 中只读核实了 9.1 SDK 的 `matmul/constant_tiling.h`、`MatmulImplB
 - raw 为 uint8 flat native SoA allocation；block_table int32 `[R,columns]`，存原生virtual128页号。`virtual_block/(block_tokens/128)` 得物理页，余数和 `position%128` 得页内位置。
 - window K/V 为 BF16 `[physical_blocks,S+R+spec,Hkv,D]`；后三维连续，允许页stride大于有效数据字节；tags int64 `[physical_blocks,S+R+spec]` 同理。binding 读取真实tensor stride，不伪设整张窗口连续。
 - partial FP32 `[N,Hq,3*splits,D]`；LSE FP32 `[N,Hq,3*splits]`；status int32 `[task_count,2]`，每AIV独立写状态，无错误位丢失竞态。非0状态必须由 runtime 的设备异步断言/探针检查拒绝，不能忽略。
-- workspace uint8 flat，至少 `cube_cores*(384*D+8192)*4` bytes；cube_cores∈[1,32]。同stream不做动态分配、主机值拷贝或同步。
+- workspace uint8 flat，至少 `cube_cores*(768*D+32768)*4` bytes；cube_cores∈[1,32]。同stream不做动态分配、主机值拷贝或同步。
 
 所有partial均为原始 V 空间。source0在整段online-softmax完成后，只对64query行的结果作Cube `@Rv.T`；不对历史K/V逆旋转。随后可把partial展平为 `[N*Hq,3*splits,D]`，交给已有 `merge_lse_out`。
+
+**#144当前资源与收益边界**：以上逆旋转当前最多处理128个query/head行。每个256KV工作单元由8个32KV子块组成，K/V均为自然`[256,D]`；QK使用B转置，PV使用B不转置，V不再经Vector Gather与D个64B分散写。每AIV的64行FP32累积状态常驻UB，score按两个32行块处理，PV分16行读回；P只写实际M行。D256每Cube固定GM917504B、显式UB157184B/AIV。CANN编译及33/33官方CPU-debug通过，包括3例NaN workspace；真实净收益以新旧同输入NPU算子A/B及K4为准，不能由复用次数推导。以下128KV/64行描述属于#140及之前历史迭代。
 
 ## 因果窗口与 query 复用
 

@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Archive G26-G34/#12/#13-20/#34/#36/#53-69/#92: execute the actual AscendC
 // task/CV/merge kernel bodies under official tikicpulib with independent gold.
-// D.4: this checks numerical correctness only; CPU-debug cannot establish NPU
+// D.4/#143: NaN-poisoned bounded workspace proves live rows do not depend on
+// unwritten padded score/P rows; CPU-debug cannot establish target NPU timing.
+// This checks numerical correctness only; CPU-debug cannot establish NPU
 // device completion, graph capture/replay, timing or the 32K performance gate.
-// Archive #129: large task-table causal bounds are checked without a dense 16K oracle.
+// Archive #129/#144: large task-table causal bounds use the production M/B
+// geometry without a dense 16K oracle; shared workspace sizing stays exact.
 #include "tikicpulib.h"
 #include <algorithm>
 #include <cmath>
@@ -46,7 +49,8 @@ void StatusZero(const Gm& status) {
 void CheckLargeCausalTasks() {
   constexpr int64_t n=16384,hq=6,hk=1,splits=3;
   for(int64_t cores:{2,20,24,32}) {
-    const oscar_ascend_schedule::CvTaskSchedule schedule{n,64/hq,3};
+    const oscar_ascend_schedule::CvTaskSchedule schedule{
+        n,oscar_ascend::kAttentionQueryRows/(hq/hk),hk*3};
     std::vector<int> seen(n*3,0),live(cores,0);
     for(int64_t core=0;core<cores;++core)
     for(int64_t item=core;item<schedule.WorkItems();item+=cores)
@@ -82,10 +86,12 @@ void CheckLargeCausalTasks() {
       const auto* part=row+split*16;
       if(part[3]!=end || part[4]<part[3] || part[4]>expectedEnd)
         throw std::runtime_error("current source scans future tokens or has a split gap");
-      tiles+=(part[4]-part[3]+31)/32;end=part[4];
+      tiles+=(part[4]-part[3]+oscar_ascend::kAttentionKvRows-1)/
+          oscar_ascend::kAttentionKvRows;end=part[4];
     }
     if(end!=expectedEnd)throw std::runtime_error("causal current source misses visible tokens");
-    oldTiles+=(s[request+1]-begin+31)/32;
+    oldTiles+=(s[request+1]-begin+oscar_ascend::kAttentionKvRows-1)/
+        oscar_ascend::kAttentionKvRows;
   }
   std::cout<<"causal_task_leaders="<<leaders<<" current_tiles="<<tiles
            <<" previous_unsplit_tiles="<<oldTiles<<std::endl;
@@ -173,8 +179,9 @@ void Close(const Gm& output,const std::string& path) {
 }
 int main(int argc,char** argv) {
  try {
-  if(argc!=3)throw std::runtime_error("usage: oscar_cv_cpu attention_cv case_directory");
-  if(std::string(argv[1])=="tasks_causal") {CheckLargeCausalTasks();return 0;}
+  if(argc!=3)throw std::runtime_error("usage: oscar_cv_cpu mode case_directory");
+  const std::string mode=argv[1];
+  if(mode=="tasks_causal") {CheckLargeCausalTasks();return 0;}
   CheckPaddedMetadata();
   CheckSlotContext();
   const std::string dir=argv[2];
@@ -196,6 +203,14 @@ int main(int argc,char** argv) {
   Gm tasks(tasksCount*16*8),positions(n*8),partial(n*hq*segments*d*4),partLse(n*hq*segments*4);
   Gm status(tasksCount*2*4),workspace(cores*oscar_ascend::attention_workspace_per_core(d));
   Gm output(n*hq*d*4),lse(n*hq*4),mergeStatus(n*hq*4);
+  if(mode=="poison_workspace") {
+    // The full per-Cube GM arena starts as NaN. Every consumed live Q/K/V/P
+    // value must be published in this invocation, including M tails; padding
+    // rows are intentionally left poisoned by the short-query P optimization.
+    const uint32_t poison=0x7fc00000U;
+    for(size_t offset=0;offset<workspace.size;offset+=sizeof(poison))
+      std::memcpy(workspace.ptr+offset,&poison,sizeof(poison));
+  }
   AscendC::SetKernelMode(KernelMode::AIV_MODE);
   ICPU_RUN_KF(oscar_prepare_attention_tasks_kernel,4,starts.ptr,lens.ptr,slots.ptr,
       tasks.ptr,positions.ptr,requests,n,hq,hk,sink,recent,splits,true,static_cast<uint8_t*>(nullptr),int64_t{0},false);
@@ -277,7 +292,9 @@ int main(int argc,char** argv) {
   ICPU_RUN_KF(oscar_merge_lse_kernel,4,partial.ptr,partLse.ptr,output.ptr,lse.ptr,
       mergeStatus.ptr,n*hq,segments,d);
   StatusZero(mergeStatus);Close(output,dir+"/expected_output.bin");Close(lse,dir+"/expected_lse.bin");
-  std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\"attention_cv\",\"status\":\"passed\"}"<<std::endl;
+  std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\""
+           <<(mode=="poison_workspace"?"poison_workspace":"attention_cv")
+           <<"\",\"status\":\"passed\"}"<<std::endl;
   return 0;
  }catch(const std::exception& e){std::cerr<<"CPU_DEBUG_FAILED: "<<e.what()<<std::endl;return 1;}
 }

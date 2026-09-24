@@ -30,7 +30,7 @@ from .service_probe import SYNTHETIC_MIXED_LENGTHS
 from .target_cli import ROOT, target_env
 
 
-CV_NPU_MIN_CASES = 21  # Frozen CV oracle matrix in tests/test_cv_contracts.py (#126).
+CV_NPU_MIN_CASES = 25  # #126/#144: include the new Q21/Q22/Q43 reuse boundaries.
 ROTATION_NPU_MIN_CASES = 104  # 26 goldens on each selected card.
 
 
@@ -212,6 +212,76 @@ def _observe_resources(config: dict, directory: Path, *, before=None):
                 timeout=float(config.get("resource_release_timeout_seconds", 30)),
                 tolerance_bytes=config.get("resource_release_tolerance_bytes",
                                            DEFAULT_RELEASE_TOLERANCE))
+
+
+def measure_cv_hotshape(variant: str, config_path: Path, config: dict,
+                        acceptance_path: Path, log_dir: Path) -> dict:
+    """#144: measure the old signed artifact BEFORE rebuild, then the candidate.
+
+    The reference is an isolated operator benchmark pinned to this project's
+    deployed source, never a production fallback or a replay of user data.
+    """
+    from .probe_cv_hotshape import baseline_availability
+    manifest = ROOT / "build/ascendc/build_manifest.json"
+    if variant == "baseline":
+        availability = baseline_availability(manifest, config_path)
+        if availability["status"] != "available":
+            return availability
+    phase_name = f"cv-hotshape-{variant}"
+    output = log_dir / f"{phase_name}-report.json"
+    env = target_env(config)
+    env.update(OSCAR_TARGET_CONFIG=str(config_path), OSCAR_TERMINAL_LOG_MODE="compact")
+    before = _observe_resources(config, log_dir / f"resources-before-{phase_name}")
+    result = None
+    try:
+        result = run_phase(phase_name,
+            [sys.executable, "-m", "tools.probe_cv_hotshape", "--variant", variant,
+             "--target", str(config_path), "--acceptance", str(acceptance_path),
+             "--manifest", str(manifest), "--output", str(output)],
+            cwd=ROOT, log_dir=log_dir, env=env,
+            timeout=min(300.0, float(config.get("phase_timeout_seconds", 1800))),
+            grace=float(config.get("shutdown_timeout_seconds", 30)), heartbeat=60)
+    finally:
+        release = _observe_resources(config, log_dir / f"resources-after-{phase_name}", before=before)
+        atomic_json(log_dir / f"{phase_name}-release.json", release)
+    evidence = {"status": "failed", "report": str(output), "resource_release": release["status"],
+                "returncode": result.returncode, "log": result.log}
+    if result.returncode != 0 or not result.cleanup_complete or release["status"] != "passed":
+        raise OperatorGateError(phase_name, f"{phase_name} failed; log={result.log}",
+                                returncode=result.returncode, evidence=evidence)
+    checked = read_json(output)
+    cases = checked.get("cases")
+    if (checked.get("status") != "passed" or not isinstance(cases, dict) or not cases
+            or any(not isinstance(row.get("sample_oracle"), dict) or
+                   row["sample_oracle"].get("status") != "passed" or
+                   type(row.get("median_ms")) not in (int, float) or
+                   not math.isfinite(row["median_ms"]) or row["median_ms"] <= 0
+                   for row in cases.values())):
+        raise OperatorGateError(phase_name, f"{phase_name} lacks completed numerical/timing evidence", evidence=evidence)
+    evidence.update(status="passed", measurement=checked)
+    return evidence
+
+
+def compare_cv_hotshapes(baseline: dict, candidate: dict, acceptance: dict) -> dict:
+    """Same-input operator A/B only; end-to-end native pairing remains required."""
+    if baseline.get("status") != "passed":
+        return {"status": "not_comparable", "reason": baseline.get("reason", "baseline artifact unavailable"),
+                "candidate": candidate, "performance_acceptance": "not_established"}
+    before, after = baseline["measurement"]["cases"], candidate["measurement"]["cases"]
+    issues, rows = [], {}
+    if set(before) != set(after):
+        issues.append("operator cases differ")
+    for name in sorted(set(before) & set(after)):
+        left, right = before[name], after[name]
+        if not left.get("fixture_sha256") or left.get("fixture_sha256") != right.get("fixture_sha256"):
+            issues.append(f"{name}: operator input fingerprints differ")
+        ratio = right["median_ms"] / left["median_ms"]
+        rows[name] = {"baseline_ms": left["median_ms"], "candidate_ms": right["median_ms"],
+                      "candidate_over_baseline": ratio}
+        if ratio > acceptance["performance"]["max_latency_ratio"]:
+            issues.append(f"{name}: candidate operator regressed ({ratio:.4f})")
+    return {"status": "failed" if issues else "passed", "issues": issues, "cases": rows,
+            "scope": "synthetic signed CV operator A/B; not native model speed acceptance"}
 
 
 def ensure_native_current_attention(config_path: Path, config: dict,
@@ -482,6 +552,7 @@ def run_paired(config_path: Path, *, output: Path, log_dir: Path,
               "config": str(config_path), "acceptance": str(acceptance_path),
               "native": "not_run", "oscar": "not_run", "comparison": "not_run",
               "operator_gate": "not_run", "native_current_gate": "not_run",
+              "cv_hotshape_baseline": "not_run", "cv_hotshape_candidate": "not_run",
               "performance_acceptance": "not_run", "exit_code": 1,
               "warmup_scope": "fresh_service_before_batch"}
     atomic_json(output, report)
@@ -490,6 +561,9 @@ def run_paired(config_path: Path, *, output: Path, log_dir: Path,
         target_env(config)  # Archive #123: reject invalid selection before NPU touch.
         report["config_sha256"] = canonical_sha256(config)
         report["acceptance_sha256"] = canonical_sha256(acceptance)
+        report["cv_hotshape_baseline"] = measure_cv_hotshape(
+            "baseline", config_path, config, acceptance_path, log_dir)
+        atomic_json(output, report)
         # #85/#125/#126/#140: the fast one-command path must not compare a
         # freshly pulled AscendC source tree against stale local .so files.
         report["operator_gate"] = ensure_current_operators(
@@ -499,6 +573,23 @@ def run_paired(config_path: Path, *, output: Path, log_dir: Path,
         report["native_current_gate"] = ensure_native_current_attention(
             config_path, config, acceptance_path, log_dir)
         atomic_json(output, report)
+        report["cv_hotshape_candidate"] = measure_cv_hotshape(
+            "candidate", config_path, config, acceptance_path, log_dir)
+        cv_comparison = compare_cv_hotshapes(report["cv_hotshape_baseline"], report["cv_hotshape_candidate"], acceptance)
+        report["cv_hotshape_comparison"] = cv_comparison
+        atomic_json(log_dir / "cv-hotshape-comparison.json", cv_comparison)
+        for name, row in cv_comparison.get("cases", {}).items():
+            terminal_line(f"[oscar] PERF_CV_AB case={name} baseline_ms={row['baseline_ms']:.3f} "
+                          f"candidate_ms={row['candidate_ms']:.3f} ratio={row['candidate_over_baseline']:.3f} "
+                          f"scope=synthetic_operator_only status={cv_comparison['status']}")
+        if cv_comparison["status"] == "not_comparable":
+            terminal_line(f"[oscar] PERF_CV_AB status=not_comparable reason={cv_comparison['reason']}")
+            for name, row in report["cv_hotshape_candidate"]["measurement"]["cases"].items():
+                terminal_line(f"[oscar] PERF_CV_OP case={name} candidate_ms={row['median_ms']:.3f} "
+                              "sample_oracle=passed baseline=unavailable scope=synthetic_operator_only")
+        if cv_comparison["status"] == "failed":
+            raise OperatorGateError("cv-hotshape-comparison", "; ".join(cv_comparison["issues"]),
+                                    evidence=cv_comparison)
         baseline = _observe_resources(config, log_dir / "resources-before-native")
         atomic_json(log_dir / "resources-before-native.json", baseline)
         for variant in (("native",) if native_only else ("native", "oscar")):
@@ -536,7 +627,8 @@ def run_paired(config_path: Path, *, output: Path, log_dir: Path,
         if comparison["issues"]:
             report["error"] = "; ".join(comparison["issues"][:6])
     except OperatorGateError as error:
-        gate_name = "native_current_gate" if error.phase == "native-current-fia" else "operator_gate"
+        gate_name = ("cv_hotshape_error" if error.phase.startswith("cv-hotshape") else
+                     "native_current_gate" if error.phase == "native-current-fia" else "operator_gate")
         report[gate_name] = error.evidence
         report.update(status="failed", failed_phase=error.phase,
                       error=str(error), exit_code=error.returncode)

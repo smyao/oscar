@@ -1,0 +1,238 @@
+{
+  "backend": "official_ascendc_cpu_debug",
+  "status": "passed",
+  "cases": [
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q1_c17",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/000-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q1_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/001-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q6_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/002-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/003-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/004-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d128_q4_c129",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/005-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d256_q4_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/006-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q17_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/007-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65_hk2",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/008-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q2_c320",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/009-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d128_q3_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/010-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q65_c17",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/011-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q129_c0",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/012-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q33_c511_hk2",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/013-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d128_q17_c511_hk2",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/014-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d256_q17_c511_hk2",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/015-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d256_q21_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/016-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d256_q22_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/017-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d128_q43_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/018-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65_s2",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/019-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65_s20",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/020-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d256_q4_c511_s20",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/021-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c0_s20",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/022-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d128_q4_c511_s7",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/023-attention_cv.log"
+    },
+    {
+      "op": "attention_cv",
+      "path": "artifacts/cv_cpu_cases/d64_mixed_q1q4",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/024-attention_cv.log"
+    },
+    {
+      "op": "bad_tag",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/025-bad_tag.log"
+    },
+    {
+      "op": "nan_query",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/026-nan_query.log"
+    },
+    {
+      "op": "bad_meta",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/027-bad_meta.log"
+    },
+    {
+      "op": "nan_value",
+      "path": "artifacts/cv_cpu_cases/d64_q4_c65",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/028-nan_value.log"
+    },
+    {
+      "op": "poison_workspace",
+      "path": "artifacts/cv_cpu_cases/d64_q1_c17",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/029-poison_workspace.log"
+    },
+    {
+      "op": "poison_workspace",
+      "path": "artifacts/cv_cpu_cases/d256_q4_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/030-poison_workspace.log"
+    },
+    {
+      "op": "poison_workspace",
+      "path": "artifacts/cv_cpu_cases/d256_q21_c511",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/031-poison_workspace.log"
+    },
+    {
+      "op": "tasks_causal",
+      "path": "artifacts/cv_cpu_cases",
+      "status": "passed",
+      "returncode": 0,
+      "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-active-p-cv/032-tasks_causal.log"
+    }
+  ],
+  "npu_acceptance": "not_run"
+}

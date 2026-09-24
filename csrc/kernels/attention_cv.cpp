@@ -7,13 +7,14 @@
 // reused UB for padding. MTE3_MTE2 alone cannot order a V-only padding path.
 // D.4 four questions: this replaces dequant+FIA and precise-window FIA.
 // Prior full-history restore cost 6499.8-6655.1ms vs FIA 18.5-18.9ms at 32K.
-// Here Vector unpacks one 128-token work unit in four 32-token subtiles with
-// SIMD Gather/Shift/And/Cast, keeping each packed history read single-use;
-// Cube computes QK, PV and final Rv^T. Up to 64 GQA/query rows reuse each
-// compressed read, including all q_len=4 when GQA<=16. No full-history tensor
-// or history inverse rotation. A2 uses bounded per-Cube GM tile communication
-// (not an on-chip-only claim): capacity (384*D+8192)*4 B/core, total traffic
-// remains linear in history. Explicit UB is bounded below 192KiB/AIV for D<=256.
+// Here Vector unpacks one bounded 256-token work unit in eight 32-token
+// subtiles with SIMD Gather/Shift/And/Cast, keeping each packed read single-use;
+// Cube computes QK, PV and final Rv^T. Up to 128 GQA/query rows reuse each
+// compressed read. No full-history tensor or history inverse rotation.
+// A2 uses bounded per-Cube GM tile communication
+// (not an on-chip-only claim): capacity (768*D+32768)*4 B/core, total traffic
+// remains linear in history. D256 explicit UB is 157184B/AIV, below the
+// A2 184KiB usable vector-local limit.
 // Target: short step <=0.6-1.1ms and 32K same-order as native FIA; NO target
 // precision/latency is claimed before fixed-tolerance NPU/profiler validation.
 // #126 adds one local MTE3->V dependency before padding writes; tile storage,
@@ -54,7 +55,7 @@
 // per KV tile, not the QK/PV or INT2 work. This is a source-work prediction,
 // not a target-NPU speed or precision claim; frozen oracle and graph probes
 // must decide whether it improves the measured #140 12.4x K4 wall gap.
-// #126/#129-135/#140/D.4 128-KV follow-up: (1) source0 fused dequant+fia
+// #126/#129-135/#140/D.4 prior 128-KV follow-up: (1) source0 fused dequant+fia
 // and source1/2 precise fia share this work unit. (2) D.4's old full-history
 // restore cost 6499.8-6655.1ms vs native FIA 18.5-18.9ms at 32K;
 // phase1_stores ~209ms and host prepare ~725ms were separate failures.
@@ -102,6 +103,40 @@
 // exact causal masks and FP32 online sum remain. (4) It removes per-row
 // reductions/alpha fences, not history bytes or the Cube/Vector flags;
 // frozen oracle, real CANN/CPU-debug and target timing still decide speed.
+// #143/D.4 larger query reuse and natural V: (1) fused history/window FIA;
+// (2) D.4's full-history dequant took 6499.8-6655.1ms while native FIA was
+// 18.5-18.9ms, and the current #143 synchronized long-context prefill showed
+// about 494ms/CV layer versus about 6.6ms for a no-old-context candidate.
+// (3) Preserve every INT2/window/current mask and FP32 online state, but let
+// 21 GQA6 queries share one 256-KV unit. Keep each lane's 64-row FP32 running
+// accumulator in UB, process its score as two 32-row V2 blocks, and stream PV
+// back through dead dequant UB. V stays natural [KV,D] in GM; the SDK/native
+// MatmulImpl permits runtime SetTensorB(false) on a transpose-capable B type.
+// This removes a per-16-row Gather and a D-block strided 64-byte GM write.
+// No [history,D] HBM tensor, precision relaxation or native fallback exists.
+// (4) For a long GQA6 query span, query groups shrink from ceil(Q/10) to
+// ceil(Q/21); doubling KV width then cuts cross-core rounds and MatmulImpl
+// calls by another factor of about two, while packed reads/unpacks shrink only
+// with query groups. At D256 the V publish changes 256 scattered 64-byte
+// blocks per 16-row subtile to one contiguous 16KiB copy. These are source
+// work counts, not a measured 3-5x speedup: CANN/CPU-debug, frozen target NPU
+// accuracy, graph replay and paired K4 timing remain mandatory gates.
+// #143/D.4 short-query P tail: (1) only the bounded FIA score/P publish;
+// (2) writing four padded 32x256 P blocks for a six-row decode would add GM
+// traffic after the old 6.5s restore failure. (3) CANN SetSingleShape keeps
+// PV's M equal to the real row count, so empty P blocks are never consumed;
+// V2 still initializes its local padded rows and the three cross-core flags
+// remain unchanged. (4) At GQA6 q_len1, three empty 32-row P writes vanish
+// per 256-KV unit and the live block publishes only six rows. Real target
+// graph timing and frozen accuracy, not this byte count, decide acceptance.
+// #143/D.4 INT2 plane sequencing: (1) source0 Unpack inside fused fia;
+// (2) historical full-history dequant took ~6.5s while native FIA was ~18.7ms,
+// and target K4 events now place most prefill time in CV. (3) Eight independent
+// ShiftRight writes share one PIPE_V barrier, then eight disjoint in-place And
+// writes share one barrier before Gather; exact two-bit positions, FP32 scales
+// and single-use packed reads are unchanged. (4) This removes 14 vector
+// barriers per K/V unpack, 112 per 128-KV unit; target speed remains unclaimed
+// until frozen oracle, CANN CPU-debug and target NPU timing all pass.
 // Native precedents: hc_pre_m_k_split_core.h mode-2 Cube/Vector flags;
 // hc_pre_cube_compute.h FP32 Mmad; moe_grouped_matmul.h MatmulImpl;
 // add_rms_norm_bias_multi_n.h Gather; PR triton_oscar_decode.py INT2 and LSE.
@@ -115,7 +150,10 @@
 #include "adv_api/activation/softmaxflashv2.h"
 using namespace oscar_ascend_device;
 namespace {
-constexpr int32_t kQueryRows=64, kHalfRows=32, kKvRows=128, kHalfKv=16;
+constexpr int32_t kQueryRows=oscar_ascend::kAttentionQueryRows;
+constexpr int32_t kKvRows=oscar_ascend::kAttentionKvRows;
+constexpr int32_t kHalfRows=32, kHalfKv=16;
+constexpr int32_t kLaneRows=kQueryRows/2, kRowBlocks=kLaneRows/kHalfRows;
 constexpr int32_t kKvSubtiles=kKvRows/(2*kHalfKv);
 constexpr uint16_t kVectorReady=8, kCubeReady=9;
 constexpr float kNegativeInfinity=-__builtin_inff();
@@ -128,7 +166,7 @@ using TransposedMatrix=MatmulType<TPosition::GM,CubeFormat::ND,float,true>;
 __aicore__ constexpr MatmulConfig CvConfig() {
   auto cfg=GetNormalConfig();
   cfg.basicM=64;cfg.basicN=64;cfg.basicK=128;
-  cfg.singleCoreM=64;cfg.singleCoreN=256;cfg.singleCoreK=256;
+  cfg.singleCoreM=128;cfg.singleCoreN=256;cfg.singleCoreK=256;
   cfg.enableSetBias=false;
   return cfg;
 }
@@ -169,13 +207,15 @@ template<int32_t D> class AttentionCv {
     int64_t core=GetBlockIdx();
     if ASCEND_IS_AIV {lane=core%2;core/=2;}
     coreIndex=core;
-    const int64_t floatsPerCore=384*D+8192;
+    const int64_t floatsPerCore=oscar_ascend::attention_workspace_per_core(D)/4;
     work.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(workspace)+core*floatsPerCore);
-    // Q(64D), K(128D), V^T(128D), score/P(64*128), PV/rotation(64D).
+    // Q(128D), K(256D), natural V(256D), score/P(128*256),
+    // PV/rotation(128D). Query accumulator stays in UB across KV units.
     // QK is complete before Vector overwrites score with P; PV is consumed
     // before the final Rv rotation reuses that same GM tile. No active aliases.
-    qOffset=0;kOffset=64*D;vOffset=192*D;scoreOffset=320*D;
-    pOffset=scoreOffset;pvOffset=pOffset+64*kKvRows;rotOffset=pvOffset;
+    qOffset=0;kOffset=kQueryRows*D;vOffset=(kQueryRows+kKvRows)*D;
+    scoreOffset=(kQueryRows+2*kKvRows)*D;
+    pOffset=scoreOffset;pvOffset=pOffset+kQueryRows*kKvRows;rotOffset=pvOffset;
     if ASCEND_IS_AIC {
       // Static tiling is compiler-derived by the real SDK. SetOrg/SingleShape
       // below specify each QK/PV/rotation matrix, never hand-written tiling POD.
@@ -186,12 +226,11 @@ template<int32_t D> class AttentionCv {
       pipe.InitBuffer(planeBuf,kElements*2);pipe.InitBuffer(naturalBuf,kElements*2);
       pipe.InitBuffer(wordBuf,kWords*2);pipe.InitBuffer(maskBuf,kWords*2);
       pipe.InitBuffer(wordIndexBuf,kWords*4);pipe.InitBuffer(laneIndexBuf,kElements*4);
-      pipe.InitBuffer(transposeIndexBuf,kElements*4);
-      pipe.InitBuffer(dequantBuf,kElements*4);pipe.InitBuffer(transposeBuf,kElements*4);
+      pipe.InitBuffer(dequantBuf,kElements*4);
       pipe.InitBuffer(scoreBuf,kHalfRows*kKvRows*4);
-      pipe.InitBuffer(accBuf,kHalfRows*D*4);pipe.InitBuffer(pvBuf,kHalfRows*D*4);
+      pipe.InitBuffer(accBuf,kLaneRows*D*4);
       pipe.InitBuffer(qFloatBuf,D*4);pipe.InitBuffer(qBf16Buf,D*2);
-      pipe.InitBuffer(statsBuf,kHalfRows*4*4);pipe.InitBuffer(scratchBuf,512);
+      pipe.InitBuffer(statsBuf,(2*kLaneRows+2*kHalfRows)*4);pipe.InitBuffer(scratchBuf,512);
       pipe.InitBuffer(addressBuf,128);
       InitIndices();
     }
@@ -238,7 +277,7 @@ template<int32_t D> class AttentionCv {
     taskError=static_cast<int32_t>(data[10]);
   }
   __aicore__ bool TaskValid() {
-    return qbegin>=0 && qbegin<g.tokens && qcount<=64/(g.hq/g.hk) &&
+    return qbegin>=0 && qbegin<g.tokens && qcount<=kQueryRows/(g.hq/g.hk) &&
         (qcount<0 || qbegin+qcount<=g.tokens) && kvhead>=0 && kvhead<g.hk &&
         kvbegin>=0 && kvend>=kvbegin && request>=0 && request<g.requests &&
         split>=0 && split<3*g.splits && kind>=0 && kind<3 && context>=0 &&
@@ -248,25 +287,22 @@ template<int32_t D> class AttentionCv {
   }
   __aicore__ void InitIndices() {
     auto wi=wordIndexBuf.Get<uint32_t>();auto li=laneIndexBuf.Get<uint32_t>();
-    auto ti=transposeIndexBuf.Get<uint32_t>();
     for(int32_t i=0;i<kWords;++i)
       wi.SetValue(i,static_cast<uint32_t>((i/(D/8))*kPackedStride+(i%(D/8))*2));
     for(int32_t i=0;i<kElements;++i) {
       const int32_t r=i/D,d=i%D;
       li.SetValue(i,static_cast<uint32_t>(((d%8)*kWords+r*(D/8)+d/8)*2));
-      // Output [D,16] gathers from input [16,D].
-      ti.SetValue(i,static_cast<uint32_t>(((i%kHalfKv)*D+i/kHalfKv)*4));
     }
     Fence<HardEvent::S_V>();
     Duplicate(maskBuf.Get<uint16_t>(),static_cast<uint16_t>(3),kWords);
     PipeBarrier<PIPE_V>();
   }
   __aicore__ void Matmul(int64_t a,int64_t b,int64_t c,int32_t m,int32_t n,int32_t k,
-      bool rotation=false) {
+      bool rotation=false,bool transposeB=true) {
     SetHF32Mode(false); // no implicit HF32/TF32 relaxation of the frozen oracle.
     mm.SetOrgShape(m,n,k);mm.SetSingleShape(m,n,k);
     mm.SetTensorA(work[a],false);
-    if(rotation) mm.SetTensorB(rv,true);else mm.SetTensorB(work[b],true);
+    if(rotation) mm.SetTensorB(rv,true);else mm.SetTensorB(work[b],transposeB);
     mm.template IterateAll<true>(work[c]);
     // End closes the iteration state; buffers remain initialized for reuse.
     mm.End();
@@ -278,7 +314,7 @@ template<int32_t D> class AttentionCv {
       Matmul(qOffset,kOffset,scoreOffset,rows,kKvRows,D);
       CrossCoreSetFlag<2,PIPE_FIX>(kCubeReady);
       CrossCoreWaitFlag(kVectorReady);
-      Matmul(pOffset,vOffset,pvOffset,rows,D,kKvRows);
+      Matmul(pOffset,vOffset,pvOffset,rows,D,kKvRows,false,false);
       CrossCoreSetFlag<2,PIPE_FIX>(kCubeReady);
       // Vector consumes PV before the next tile may overwrite shared buffers.
       CrossCoreWaitFlag(kVectorReady);
@@ -294,24 +330,29 @@ template<int32_t D> class AttentionCv {
     auto dst=qFloatBuf.Get<float>();auto src=qBf16Buf.Get<bfloat16_t>();
     const int64_t group=g.hq/g.hk;
     const int64_t rows=qcount*group;
-    for(int32_t row=lane*kHalfRows;row<(lane+1)*kHalfRows;++row) {
-      if(row<rows) {
-        const int64_t off=((qbegin+row/group)*g.hq+kvhead*group+row%group)*D;
-        if(kind==0) {DataCopy(dst,qr[off],D);Fence<HardEvent::MTE2_V>();}
-        else {DataCopy(src,q[off],D);Fence<HardEvent::MTE2_V>();
-          Cast(dst,src,RoundMode::CAST_NONE,D);PipeBarrier<PIPE_V>();}
-        auto check=scratchBuf.Get<float>();
-        ReduceSum(check,dst,check[16],D);Fence<HardEvent::V_S>();
-        if(!Finite(check.GetValue(0)))error=2;
-        Fence<HardEvent::V_MTE3>();
-      } else {
-        // The preceding row may still be reading dst on MTE3. Valid rows
-        // chain MTE3_MTE2 -> MTE2_V, but padding does no MTE2 load: without
-        // this edge Duplicate can zero the last valid query before its DMA.
-        Fence<HardEvent::MTE3_V>();
-        Duplicate(dst,0.0F,D);Fence<HardEvent::V_MTE3>();
-      }
+    const int32_t laneBegin=lane*kLaneRows,laneEnd=(lane+1)*kLaneRows;
+    const int32_t validEnd=static_cast<int32_t>(Min64(laneEnd,Max64(laneBegin,rows)));
+    for(int32_t row=laneBegin;row<validEnd;++row) {
+      const int64_t off=((qbegin+row/group)*g.hq+kvhead*group+row%group)*D;
+      if(kind==0) {DataCopy(dst,qr[off],D);Fence<HardEvent::MTE2_V>();}
+      else {DataCopy(src,q[off],D);Fence<HardEvent::MTE2_V>();
+        Cast(dst,src,RoundMode::CAST_NONE,D);PipeBarrier<PIPE_V>();}
+      auto check=scratchBuf.Get<float>();
+      ReduceSum(check,dst,check[16],D);Fence<HardEvent::V_S>();
+      if(!Finite(check.GetValue(0)))error=2;
+      Fence<HardEvent::V_MTE3>();
       DataCopy(work[qOffset+row*D],dst,D);Fence<HardEvent::MTE3_MTE2>();
+    }
+    // Pad the inactive query rows in bounded contiguous pieces. This keeps
+    // the full initialized Q tile required by the Cube contract without
+    // adding one scalar/GM copy per padded row to q_len=1/4 graph replay.
+    // The previous live-row MTE3 must finish before Vector reuses the scratch.
+    auto zeros=dequantBuf.Get<float>();
+    Fence<HardEvent::MTE3_V>();
+    for(int32_t row=validEnd;row<laneEnd;row+=kHalfKv) {
+      const int32_t count=static_cast<int32_t>(Min64(kHalfKv,laneEnd-row));
+      Duplicate(zeros,0.0F,count*D);Fence<HardEvent::V_MTE3>();
+      DataCopy(work[qOffset+row*D],zeros,count*D);Fence<HardEvent::MTE3_V>();
     }
   }
   __aicore__ int64_t LogicalPosition(int64_t candidate) {
@@ -364,9 +405,14 @@ template<int32_t D> class AttentionCv {
     PipeBarrier<PIPE_V>();
     for(int32_t bit=0;bit<8;++bit) {
       ShiftRight(planes[bit*kWords],words,static_cast<uint16_t>(bit*2),kWords);
-      PipeBarrier<PIPE_V>();And(planes[bit*kWords],planes[bit*kWords],mask,kWords);
-      PipeBarrier<PIPE_V>();
     }
+    // Each bit-plane is disjoint and reads the same immutable source. Wait
+    // once for all eight shifts, then mask the eight disjoint planes and wait
+    // once before Gather. The LSB-first two-bit mapping is unchanged (#17-20).
+    PipeBarrier<PIPE_V>();
+    for(int32_t bit=0;bit<8;++bit)
+      And(planes[bit*kWords],planes[bit*kWords],mask,kWords);
+    PipeBarrier<PIPE_V>();
     Gather(natural,planes.ReinterpretCast<int16_t>(),laneIndexBuf.Get<uint32_t>(),0,kElements);
     PipeBarrier<PIPE_V>();Cast(values,natural,RoundMode::CAST_NONE,kElements);
     Fence<HardEvent::V_S>();
@@ -451,17 +497,11 @@ template<int32_t D> class AttentionCv {
   __aicore__ void PublishKv(bool value,int32_t subtile) {
     auto src=dequantBuf.Get<float>();
     const int64_t slot=subtile*(2*kHalfKv)+lane*kHalfKv;
-    if(!value) {Fence<HardEvent::V_MTE3>();
-      DataCopy(work[kOffset+slot*D],src,kElements);Fence<HardEvent::MTE3_V>();}
-    else {
-      auto transposed=transposeBuf.Get<float>();
-      Gather(transposed,src,transposeIndexBuf.Get<uint32_t>(),0,kElements);
-      Fence<HardEvent::V_MTE3>();
-      // The source is [D,16], while all four subtiles assemble [D,128].
-      DataCopyExtParams copy{D,kHalfKv*4,0,(kKvRows-kHalfKv)*4,0};
-      DataCopyPad(work[vOffset+slot],transposed,copy);
-      Fence<HardEvent::MTE3_V>();
-    }
+    // Both K and V are natural [KV,D] FP32. QK requests B transpose=true;
+    // PV requests false, as permitted by the same static B matmul type.
+    Fence<HardEvent::V_MTE3>();
+    DataCopy(work[(value?vOffset:kOffset)+slot*D],src,kElements);
+    Fence<HardEvent::MTE3_V>();
   }
   __aicore__ void AddVisibleRange(int64_t begin,int64_t end,int64_t start,
       int32_t& lo0,int32_t& hi0,int32_t& lo1,int32_t& hi1) {
@@ -472,23 +512,19 @@ template<int32_t D> class AttentionCv {
     else if(lo<=hi0) hi0=static_cast<int32_t>(Max64(hi0,hi));
     else {lo1=lo;hi1=hi;}
   }
-  __aicore__ void Softmax(int64_t start) {
-    auto scores=scoreBuf.Get<float>();auto acc=accBuf.Get<float>();
+  __aicore__ void Softmax(int64_t start,int32_t rowBase) {
+    auto scores=scoreBuf.Get<float>();
+    auto acc=accBuf.Get<float>()[(rowBase-lane*kLaneRows)*D];
     auto stats=statsBuf.Get<float>();auto tmp=scratchBuf.Get<float>();
     const int64_t group=g.hq/g.hk;
     const int32_t activeRows=static_cast<int32_t>(Max64(0,
-        Min64(kHalfRows,qcount*group-lane*kHalfRows)));
+        Min64(kHalfRows,qcount*group-rowBase)));
     if(activeRows==0) {
-      // Cube uses only qcount*group rows; this AIV lane owns no query rows,
-      // but it must still publish a fully initialized P tile and participate
-      // in every cross-core flag. It continues to load/dequantize its KV half.
-      Duplicate(scores,0.0F,kHalfRows*kKvRows);
-      Fence<HardEvent::V_MTE3>();
-      DataCopy(work[pOffset+lane*kHalfRows*kKvRows],scores,kHalfRows*kKvRows);
-      Fence<HardEvent::MTE3_V>();
+      // Matmul SetSingleShape(M=real rows) excludes this full block from PV.
+      // Keep the outer flag protocol, but publish no unused GM P rows.
       return;
     }
-    DataCopy(scores,work[scoreOffset+lane*kHalfRows*kKvRows],kHalfRows*kKvRows);
+    DataCopy(scores,work[scoreOffset+rowBase*kKvRows],kHalfRows*kKvRows);
     Fence<HardEvent::MTE2_V>();Muls(scores,scores,g.scale,kHalfRows*kKvRows);
     Fence<HardEvent::V_S>();
     const int32_t softmaxRows=(activeRows+7)/8*8;
@@ -516,7 +552,7 @@ template<int32_t D> class AttentionCv {
     const int64_t firstPosition=context+qbegin-requestBegin;
     const int64_t tailBegin=Min64(context,Max64(g.sink,firstPosition+1-g.recent));
     for(int32_t r=0;r<activeRows;++r) {
-      const int64_t row=lane*kHalfRows+r;
+      const int64_t row=rowBase+r;
       const int64_t position=context+qbegin+row/group-requestBegin;
       int32_t lo0=0,hi0=0,lo1=0,hi1=0;
       const int64_t cut=Max64(g.sink,position+1-g.recent);
@@ -552,10 +588,12 @@ template<int32_t D> class AttentionCv {
         Fence<HardEvent::S_V>();
       }
     }
-    // Four disjoint 32-float state lanes fit the existing 512B stats buffer.
-    // CANN's WITHOUT_BRC FP32 path stores one max/sum/alpha per query row.
-    auto outMax=stats, outSum=stats[kHalfRows];
-    auto inMax=stats[2*kHalfRows],inSum=stats[3*kHalfRows];
+    // The two 64-row max/sum arrays persist across KV work units. Two shared
+    // 32-row input arrays let CANN's FP32 WITHOUT_BRC V2 update one score
+    // block at a time without spilling the running state to GM.
+    const int32_t block=rowBase-lane*kLaneRows;
+    auto outMax=stats[block],outSum=stats[kLaneRows+block];
+    auto inMax=stats[2*kLaneRows],inSum=stats[2*kLaneRows+kHalfRows];
     Adds(inMax,outMax,0.0F,softmaxRows);
     Adds(inSum,outSum,0.0F,softmaxRows);
     PipeBarrier<PIPE_V>();
@@ -585,15 +623,17 @@ template<int32_t D> class AttentionCv {
           static_cast<uint8_t>(activeRows),alphaParams);
     PipeBarrier<PIPE_V>();
     Fence<HardEvent::V_MTE3>();
-    DataCopy(work[pOffset+lane*kHalfRows*kKvRows],scores,kHalfRows*kKvRows);
+    // V2 may use padded UB rows to satisfy its 8-row shape, but Cube PV has
+    // M=qcount*group and consumes only the real P rows from this block.
+    DataCopy(work[pOffset+rowBase*kKvRows],scores,activeRows*kKvRows);
     Fence<HardEvent::MTE3_V>();
   }
   __aicore__ void VectorTask(int64_t id) {
     error=0;
     auto acc=accBuf.Get<float>();auto stats=statsBuf.Get<float>();
-    Duplicate(acc,0.0F,kHalfRows*D);Fence<HardEvent::V_S>();
-    Duplicate(stats,kEmptyMax,kHalfRows);
-    Duplicate(stats[kHalfRows],0.0F,kHalfRows);
+    Duplicate(acc,0.0F,kLaneRows*D);Fence<HardEvent::V_S>();
+    Duplicate(stats,kEmptyMax,kLaneRows);
+    Duplicate(stats[kLaneRows],0.0F,kLaneRows);
     Fence<HardEvent::V_S>();
     LoadQueries();
     for(int64_t start=kvbegin;start<kvend;start+=kKvRows) {
@@ -610,26 +650,38 @@ template<int32_t D> class AttentionCv {
       }
       CrossCoreSetFlag<2,PIPE_MTE3>(kVectorReady);
       CrossCoreWaitFlag(kCubeReady);
-      Softmax(start);
+      for(int32_t block=0;block<kRowBlocks;++block)
+        Softmax(start,lane*kLaneRows+block*kHalfRows);
       CrossCoreSetFlag<2,PIPE_MTE3>(kVectorReady);
       CrossCoreWaitFlag(kCubeReady);
-      auto result=pvBuf.Get<float>();
-      DataCopy(result,work[pvOffset+lane*kHalfRows*D],kHalfRows*D);
-      Fence<HardEvent::MTE2_V>();Add(acc,acc,result,kHalfRows*D);PipeBarrier<PIPE_V>();
+      // P is fully consumed by Cube before this point. Reuse the now-dead
+      // dequant UB for bounded 16-row PV reads; the 64-row FP32 accumulator
+      // stays in UB across every 256-KV unit in the same query task.
+      auto result=dequantBuf.Get<float>();
+      const int32_t activeRows=static_cast<int32_t>(qcount*(g.hq/g.hk));
+      for(int32_t row=lane*kLaneRows;row<(lane+1)*kLaneRows && row<activeRows;
+          row+=kHalfKv) {
+        const int32_t count=static_cast<int32_t>(Min64(kHalfKv,activeRows-row));
+        DataCopy(result,work[pvOffset+row*D],count*D);
+        Fence<HardEvent::MTE2_V>();
+        auto target=acc[(row-lane*kLaneRows)*D];
+        Add(target,target,result,count*D);PipeBarrier<PIPE_V>();
+        Fence<HardEvent::V_MTE2>();
+      }
       CrossCoreSetFlag<2,PIPE_MTE2>(kVectorReady);
     }
     Fence<HardEvent::V_S>();
-    for(int32_t r=0;r<kHalfRows;++r) {
-      const float sum=stats.GetValue(kHalfRows+r);
+    for(int32_t r=0;r<kLaneRows;++r) {
+      const float sum=stats.GetValue(kLaneRows+r);
       if(sum>0.0F && Finite(sum))Muls(acc[r*D],acc[r*D],1.0F/sum,D);
       else {if(sum!=0.0F)error=2;Duplicate(acc[r*D],0.0F,D);}
       PipeBarrier<PIPE_V>();
     }
     if(kind==0 && kvbegin<kvend) {
-      Fence<HardEvent::V_MTE3>();DataCopy(work[qOffset+lane*kHalfRows*D],acc,kHalfRows*D);
+      Fence<HardEvent::V_MTE3>();DataCopy(work[qOffset+lane*kLaneRows*D],acc,kLaneRows*D);
       CrossCoreSetFlag<2,PIPE_MTE3>(kVectorReady);
       CrossCoreWaitFlag(kCubeReady);
-      DataCopy(acc,work[rotOffset+lane*kHalfRows*D],kHalfRows*D);
+      DataCopy(acc,work[rotOffset+lane*kLaneRows*D],kLaneRows*D);
       Fence<HardEvent::MTE2_V>();CrossCoreSetFlag<2,PIPE_MTE2>(kVectorReady);
     }
     PublishRows(id);
@@ -638,10 +690,10 @@ template<int32_t D> class AttentionCv {
     auto acc=accBuf.Get<float>();auto stats=statsBuf.Get<float>();auto scalar=scratchBuf.Get<float>();
     const int64_t group=g.hq/g.hk,rows=qcount*group;
     Fence<HardEvent::V_S>();
-    for(int32_t r=0;r<kHalfRows && lane*kHalfRows+r<rows;++r) {
-      const int64_t row=lane*kHalfRows+r;
+    for(int32_t r=0;r<kLaneRows && lane*kLaneRows+r<rows;++r) {
+      const int64_t row=lane*kLaneRows+r;
       const int64_t outRow=((qbegin+row/group)*g.hq+kvhead*group+row%group)*3*g.splits+split;
-      const float sum=stats.GetValue(kHalfRows+r),maximum=stats.GetValue(r);
+      const float sum=stats.GetValue(kLaneRows+r),maximum=stats.GetValue(r);
       float lse=kNegativeInfinity;
       if(sum>0.0F && Finite(sum)) {
         scalar.SetValue(0,sum);Fence<HardEvent::S_V>();
@@ -661,9 +713,9 @@ template<int32_t D> class AttentionCv {
         split>=0 && split<3*g.splits) {
       qcount=1;error=code;
       auto stats=statsBuf.Get<float>();auto acc=accBuf.Get<float>();
-      Duplicate(acc,code?__builtin_nanf(""):0.0F,kHalfRows*D);Fence<HardEvent::V_S>();
-      Duplicate(stats,kEmptyMax,kHalfRows);
-      Duplicate(stats[kHalfRows],0.0F,kHalfRows);
+      Duplicate(acc,code?__builtin_nanf(""):0.0F,kLaneRows*D);Fence<HardEvent::V_S>();
+      Duplicate(stats,kEmptyMax,kLaneRows);
+      Duplicate(stats[kLaneRows],0.0F,kLaneRows);
       Fence<HardEvent::V_S>();
       PublishRows(id);
     }else PublishStatus(id,code?code:1);
@@ -680,8 +732,8 @@ template<int32_t D> class AttentionCv {
   GlobalTensor<uint8_t> bytes;GlobalTensor<int32_t> bt,outStatus;
   GlobalTensor<int64_t> wt,taskGm;
   TBuf<TPosition::VECCALC> taskBuf,packedBuf,planeBuf,naturalBuf,wordBuf,maskBuf,
-      wordIndexBuf,laneIndexBuf,transposeIndexBuf,dequantBuf,transposeBuf,
-      scoreBuf,accBuf,pvBuf,qFloatBuf,qBf16Buf,statsBuf,scratchBuf,addressBuf;
+      wordIndexBuf,laneIndexBuf,dequantBuf,
+      scoreBuf,accBuf,qFloatBuf,qBf16Buf,statsBuf,scratchBuf,addressBuf;
   int64_t coreIndex,qbegin,qcount,kvhead,kvbegin,kvend,request,split,kind,context,requestBegin;
   int64_t qOffset,kOffset,vOffset,scoreOffset,pOffset,pvOffset,rotOffset;
   int32_t lane=0,error=0,taskError=0,liveKvRows=0;

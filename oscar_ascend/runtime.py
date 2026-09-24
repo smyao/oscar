@@ -19,6 +19,10 @@ from typing import Any
 from .integration.runtime_api import OscarReadinessError
 from .lifecycle import SnapshotLayout
 
+# Archive #144: mirrored by oscar_attention_launch.h and checked in contracts.
+ATTENTION_QUERY_ROWS = 128
+ATTENTION_KV_ROWS = 256
+
 
 def canonical_rotation_name(name: str) -> str | None:
     """Qwen3.5 multimodal wrapper prefixes do not alter layer identity."""
@@ -62,7 +66,7 @@ class WorkspaceGeometry:
         """
         if type(tokens) is not int or not 1 <= tokens <= self.tokens:
             raise ValueError(f"active tokens must be in [1,{self.tokens}]")
-        query_tile = 64 // (self.query_heads // self.kv_heads)
+        query_tile = ATTENTION_QUERY_ROWS // (self.query_heads // self.kv_heads)
         groups = ((tokens + query_tile - 1) // query_tile) * self.kv_heads
         cube_parallelism = (self.cube_cores + groups - 1) // groups
         arena_limit = self.tokens * self.splits // tokens
@@ -70,9 +74,9 @@ class WorkspaceGeometry:
 
     @property
     def cv_bytes(self):
-        # Archive #71/#140, D.4: one 128-token tile, never a full history.
-        # Q 64D + K 128D + V 128D + score/P 64x128 + PV/rotation 64D.
-        return self.cube_cores * (384 * self.head_dim + 8192) * 4
+        # Archive #71/#144, D.4: bounded Q128/KV256; acc stays in Vector UB.
+        m, b = ATTENTION_QUERY_ROWS, ATTENTION_KV_ROWS
+        return self.cube_cores * ((2 * m + 2 * b) * self.head_dim + m * b) * 4
 
     @property
     def total_bytes(self):

@@ -173,3 +173,11 @@ SoftmaxFlashV2使用`WITHOUT_BRC`的一行一个FP32 max/sum/alpha；stats仍512
 4条长度的注意力配对计算中，current源占比随每请求chunk上限4K/8K/16K约为15.5%/29.8%/55.9%；不能将最大值套用实际混合调度。新旧Matmul都可能在单次调用内完整装载A/B到L1；改basic块降低L1→L0、MMAD与barrier次数，不声称减少相同比例的GM/HBM流量。固定GM scratch和CV跨核同步仍存在。
 
 一键入口自动先校验当前构建及CV/旋转NPU精度，再检查实际current FIA、生产三源合并和任务改写，失败不启动服务。client K4比值门不放宽；本机CANN/CPU-debug只能排除编译与数值契约错误，不能证明NPU性能。
+
+### 9.3 根据已测历史CV热点修改（#144）
+
+D.4四问：本轮修改的是fused dequant+FIA内部；历史全量恢复6.5s而FIA约19ms的失败路径仍禁止。新诊断给出prefill CV23.535s与单层约494ms。已确认当前GQA6每组仅10 query复用历史，以及V的UB Gather/分散GM写。候选改为M128×KV256、21 query复用；K/V自然[256,D]，PV用运行期B不转置；位平面独立操作共用屏障。FP32/HF32关闭、精确窗口/因果mask/slot/MTP位置/错误状态保持，冻结数值门不变。
+
+GM每Cube为Q128D+K256D+V256D+score/P32768+PV128D个FP32，D256合917504B；20Cube固定17.5MiB，比前版多9.375MiB，与历史长度无关。每AIV的64行acc常驻UB，32行score块复用；删除V转置索引、V转置缓冲和独立PV缓冲，D256显式UB157184B。未采用M256的GM累积状态spill，避免以更多读写抵消复用收益。短query仅发布实际M行的P，NaN poison测试验证不依赖未初始化pad行。
+
+这套修改减少的是重复历史读取、解包、细碎V搬运与握手；QK/PV总算术量近似不变。布局变更也可能改变Cube搬运效率、softmax分块的舍入和decode的split数量，故通过新旧同输入算子A/B及冻结输出/LSE门检验净收益，再由无诊断同步的native/OSCAR K4判断端到端目标；静态操作数不能代替这两个结果。只用独立合成输入，禁止重跑用户自有127请求数据集。

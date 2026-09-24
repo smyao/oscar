@@ -61,15 +61,15 @@ def test_workspace_byte_account_includes_all_live_buffers():
         (n * h * s * d, 4), (n * h * s, 4), (n * h * d, 4),
         (n * h, 4), (n * h, 4), (n * h, 4), (n * k, 4),
         (n * k * s * 16, 8), (n * k * s * 2, 4), (n, 8), (n, 8),
-        (24 * (384 * d + 8192) * 4, 1)]
+        (24 * (768 * d + 32768) * 4, 1)]
     assert geometry.total_bytes == sum(count * size for count, size in elements)
     # History capacity 262144 is absent from the scratch shape. Only current
     # query rows and fixed split count contribute to the partial-output arena.
     assert geometry.total_bytes < 600 * 1024**2
 
 
-@pytest.mark.parametrize("tokens,expected", [(1, 20), (4, 20), (8, 20), (16, 10),
-                                            (64, 3), (128, 2), (512, 1), (16384, 1)])
+@pytest.mark.parametrize("tokens,expected", [(1, 20), (4, 20), (8, 20), (16, 20),
+                                            (64, 5), (128, 3), (512, 1), (16384, 1)])
 def test_shape_splits_use_measured_cube_parallelism_without_more_workspace(tokens, expected):
     geometry = WorkspaceGeometry(16384, 6, 1, 256, cube_cores=20)
     budget_before = geometry.total_bytes

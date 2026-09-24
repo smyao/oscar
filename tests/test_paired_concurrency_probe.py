@@ -43,6 +43,27 @@ def _acceptance():
                             "min_throughput_ratio": 1.0}}
 
 
+def _mock_hotshape(monkeypatch):
+    monkeypatch.setattr(paired, "measure_cv_hotshape", lambda variant, *_args: {
+        "status": "passed", "measurement": {"cases": {"main": {
+            "sample_oracle": {"status": "passed"}, "fixture_sha256": "same-synthetic-input",
+            "median_ms": 10.0 if variant == "baseline" else 5.0}}}})
+
+
+def test_cv_operator_ab_requires_same_inputs_and_no_regression():
+    baseline = {"status": "passed", "measurement": {"cases": {"main": {
+        "fixture_sha256": "same", "median_ms": 10.0}}}}
+    candidate = {"status": "passed", "measurement": {"cases": {"main": {
+        "fixture_sha256": "same", "median_ms": 5.0}}}}
+    assert paired.compare_cv_hotshapes(baseline, candidate, _acceptance())["status"] == "passed"
+    candidate["measurement"]["cases"]["main"]["median_ms"] = 10.1
+    assert paired.compare_cv_hotshapes(baseline, candidate, _acceptance())["status"] == "failed"
+    candidate["measurement"]["cases"]["main"].update(median_ms=5.0, fixture_sha256="different")
+    assert paired.compare_cv_hotshapes(baseline, candidate, _acceptance())["status"] == "failed"
+    assert paired.compare_cv_hotshapes({"status": "not_available"}, candidate,
+                                       _acceptance())["status"] == "not_comparable"
+
+
 def test_native_current_gate_requires_three_source_oracle_and_release(tmp_path, monkeypatch):
     report = {"status": "current_partial_probe_passed", "small_cases": [{"oracle": "passed"}],
               "long_case": {"sampled_oracle": "passed", "device_event_median_ms": 10},
@@ -107,6 +128,7 @@ def test_zero_tpot_fails_closed_and_full_service_warmup_is_disclosed():
 
 
 def test_native_failure_stops_before_oscar_and_preserves_child_exit(tmp_path, monkeypatch):
+    _mock_hotshape(monkeypatch)
     monkeypatch.setattr(paired, "ensure_native_current_attention", lambda *_args: {"status": "passed"})
     config_path = tmp_path / "target.json"
     acceptance_path = tmp_path / "acceptance.json"
@@ -136,6 +158,7 @@ def test_native_failure_stops_before_oscar_and_preserves_child_exit(tmp_path, mo
 
 
 def test_native_only_requires_release_before_reporting_success(tmp_path, monkeypatch):
+    _mock_hotshape(monkeypatch)
     monkeypatch.setattr(paired, "ensure_native_current_attention", lambda *_args: {"status": "passed"})
     config_path = tmp_path / "target.json"
     acceptance_path = tmp_path / "acceptance.json"
@@ -160,7 +183,15 @@ def test_native_only_requires_release_before_reporting_success(tmp_path, monkeyp
 
 
 def test_one_call_runs_native_then_oscar_and_writes_paired_ratios(tmp_path, monkeypatch):
-    monkeypatch.setattr(paired, "ensure_native_current_attention", lambda *_args: {"status": "passed"})
+    _mock_hotshape(monkeypatch)
+    steps = []
+    hotshape = paired.measure_cv_hotshape
+    def measure(variant, *args):
+        steps.append(f"operator-{variant}")
+        return hotshape(variant, *args)
+    monkeypatch.setattr(paired, "measure_cv_hotshape", measure)
+    monkeypatch.setattr(paired, "ensure_native_current_attention",
+                        lambda *_args: steps.append("current-oracle") or {"status": "passed"})
     config_path = tmp_path / "target.json"
     acceptance_path = tmp_path / "acceptance.json"
     config_path.write_text(json.dumps({"devices": [0, 1, 2, 3]}))
@@ -170,6 +201,7 @@ def test_one_call_runs_native_then_oscar_and_writes_paired_ratios(tmp_path, monk
     def variant(name, _config_path, _config, directory, policy):
         assert policy == acceptance_path.resolve()
         order.append(name)
+        steps.append(name)
         directory.mkdir(parents=True)
         path = directory / "report.json"
         path.write_text(json.dumps(_report(name, latency=.8 if name == "oscar" else 1,
@@ -180,7 +212,7 @@ def test_one_call_runs_native_then_oscar_and_writes_paired_ratios(tmp_path, monk
 
     monkeypatch.setattr(paired, "_run_variant", variant)
     monkeypatch.setattr(paired, "ensure_current_operators",
-                        lambda *_args, **_kwargs: {"status": "passed", "build": "reused",
+                        lambda *_args, **_kwargs: steps.append("build-and-oracle") or {"status": "passed", "build": "reused",
                                         "accuracy": "reused_prior_evidence"})
     monkeypatch.setattr(paired, "_observe_resources",
                         lambda *_args, before=None: ({"status": "passed"} if before else
@@ -188,6 +220,8 @@ def test_one_call_runs_native_then_oscar_and_writes_paired_ratios(tmp_path, monk
     report = paired.run_paired(config_path, output=tmp_path / "paired.json",
                                log_dir=tmp_path / "logs", acceptance_path=acceptance_path)
     assert order == ["native", "oscar"]
+    assert steps == ["operator-baseline", "build-and-oracle", "current-oracle",
+                     "operator-candidate", "native", "oscar"]
     assert report["status"] == "passed" and report["exit_code"] == 0
     assert report["comparison"]["status"] == "passed"
     assert report["comparison"]["warmup_pairing"] == "fresh_service_before_batch"
@@ -269,7 +303,7 @@ def test_fast_probe_rebuilds_drift_runs_npu_gate_and_reuses_exact_prior_evidence
     assert first["build"] == "rebuilt" and first["accuracy"] == "fresh_device_completion"
     assert first["source_sha256"] == first["identity"]["source_sha256"]
     assert first["resource_release"] == "passed"
-    assert first["cv_cases"] == 21 and first["rotation_cases"] == 104
+    assert first["cv_cases"] == paired.CV_NPU_MIN_CASES and first["rotation_cases"] == 104
     assert phases == ["operator-build", "operator-cv-npu"]
     second = paired.ensure_current_operators(config_path, config, acceptance, tmp_path / "run2")
     assert second["build"] == "reused" and second["accuracy"] == "reused_prior_evidence"
@@ -319,6 +353,7 @@ def test_cli_threads_fresh_npu_gate_to_default_native_baseline(tmp_path, monkeyp
 
 
 def test_operator_gate_failure_blocks_both_variants_and_keeps_phase_rc(tmp_path, monkeypatch):
+    _mock_hotshape(monkeypatch)
     config_path = tmp_path / "target.json"
     acceptance_path = tmp_path / "acceptance.json"
     config_path.write_text(json.dumps({"devices": [0, 1, 2, 3]}))

@@ -8,6 +8,11 @@
 // should be below short FIA 0.6-1.1ms; only a device profiler can establish it.
 // Archive #129/D.4: the current source stops at this query tile's causal end,
 // not the whole prefill chunk. No future-only QK/PV tiles are submitted.
+// Archive #144/D.4: (1) task preparation for the shared query tile; (2) a
+// smaller leader group repeats long-history reads across adjacent queries;
+// (3) use the single M128 geometry constant for leader spacing and bounded
+// slot-group DMA, preserving holes, request boundaries and every task field;
+// (4) fewer leaders are expected, while device speed remains unverified.
 #include "oscar_common.h"
 #include "../include/oscar_attention_launch.h"
 using namespace oscar_ascend_device;
@@ -31,7 +36,8 @@ template<class Slot> class AttentionTasks {
     pipe.InitBuffer(metadata, (2*kMetadataRequests+16)*4);
     pipe.InitBuffer(taskBuf, 128);
     pipe.InitBuffer(slotBuf, 32);
-    pipe.InitBuffer(slotGroupBuf,64*sizeof(Slot));
+    pipe.InitBuffer(slotGroupBuf,
+        static_cast<int32_t>(oscar_ascend::kAttentionQueryRows*sizeof(Slot)));
     pipe.InitBuffer(tableBuf,512*4);
     auto starts=metadata.Get<int32_t>();
     auto lens=starts[kMetadataRequests+8];
@@ -43,7 +49,7 @@ template<class Slot> class AttentionTasks {
     Fence<HardEvent::MTE2_S>();
     auto row=taskBuf.Get<int64_t>();
     auto slot=slotBuf.Get<Slot>();
-    const int64_t qtile=64/(hq/hk);
+    const int64_t qtile=oscar_ascend::kAttentionQueryRows/(hq/hk);
     const int64_t perToken=hk*3*splits;
     bool malformed=starts.GetValue(0)!=0;
     for(int64_t r=0;r<requests;++r) {

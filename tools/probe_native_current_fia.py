@@ -292,7 +292,9 @@ def _mixed_merge_case(torch, reference_attention, device, mask, heads, kv_heads,
     partial = torch.full((padded, heads, 3 * splits, dim), float("nan"), dtype=torch.float32, device=device)
     lse = torch.full((padded, heads, 3 * splits), float("nan"), dtype=torch.float32, device=device)
     cv_status = torch.full((tasks.shape[0], 2), -99, dtype=torch.int32, device=device)
-    workspace = torch.empty(cores * (384 * dim + 8192) * 4, dtype=torch.uint8, device=device)
+    from oscar_ascend.runtime import WorkspaceGeometry
+    workspace = torch.empty(WorkspaceGeometry(padded, heads, kv_heads, dim,
+        cube_cores=cores).cv_bytes, dtype=torch.uint8, device=device)
     ops.prepare_attention_tasks_out(starts, lens, slots, tasks, positions,
                                     heads, kv_heads, sink, recent, splits)
     suppress_current_source_tasks(tasks, padded, kv_heads, splits)

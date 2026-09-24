@@ -19,6 +19,8 @@ from pathlib import Path
 import pytest
 import torch
 
+from oscar_ascend.runtime import ATTENTION_QUERY_ROWS, ATTENTION_KV_ROWS, WorkspaceGeometry
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -38,11 +40,11 @@ def test_cv_uses_cube_for_both_products_and_keeps_hf32_disabled():
 
 def test_mtp_target_rows_share_one_tile_and_workspace_is_bounded():
     source = (ROOT / "csrc/kernels/attention_cv.cpp").read_text()
-    assert "kQueryRows=64" in source
-    assert 4 * 6 <= 64  # Qwen3.5 TP4: Hq6/Hkv1; all verify queries in one tile.
+    assert ATTENTION_QUERY_ROWS == 128 and ATTENTION_KV_ROWS == 256
+    assert 4 * 6 <= ATTENTION_QUERY_ROWS  # Qwen3.5 TP4: all verify queries share a tile.
     header = (ROOT / "csrc/include/oscar_attention_launch.h").read_text()
-    assert "return (384 * dim + 8192) * 4" in header
-    assert (384 * 256 + 8192) * 4 == 425984
+    assert "kAttentionQueryRows = 128" in header and "kAttentionKvRows = 256" in header
+    assert WorkspaceGeometry(16384, 6, 1, 256).cv_bytes == 917504
     # Full-history length is deliberately absent from this exact allocation.
     assert "attention_workspace_per_core(int64_t dim)" in header
 
@@ -145,8 +147,12 @@ def _device_case(data):
         partial=torch.empty((qlen, hq, 3 * splits, dim), dtype=torch.float32, device="npu"),
         lse=torch.empty((qlen, hq, 3 * splits), dtype=torch.float32, device="npu"),
         status=torch.empty((qlen * hk * 3 * splits, 2), dtype=torch.int32, device="npu"),
-        workspace=torch.empty(data["cores"] * (384 * dim + 8192) * 4, dtype=torch.uint8, device="npu"),
+        workspace=torch.empty(WorkspaceGeometry(qlen, hq, hk, dim,
+            cube_cores=data["cores"]).cv_bytes, dtype=torch.uint8, device="npu"),
     )
+    # #144: actual-M P publication may leave inactive scratch rows unwritten.
+    # Poison proves live outputs never depend on those rows, including replay.
+    buffers["workspace"].view(torch.float32).fill_(float("nan"))
     return tensors, buffers
 
 
@@ -185,7 +191,8 @@ def _assert_cv_result(data, buffers, expected, expected_lse):
 
 @pytest.mark.parametrize("dim,qlen,context", [(64, 1, 17), (64, 4, 65),
     (64, 1, 511), (64, 6, 511), (128, 4, 129), (256, 1, 401),
-    (256, 4, 511), (256, 4, 0), (64, 65, 17), (64, 129, 0)])
+    (256, 4, 511), (256, 4, 0), (64, 65, 17), (64, 129, 0),
+    (256, 21, 511), (256, 22, 511), (128, 43, 511)])
 def test_npu_cv_matches_independent_dense_pr_oracle(dim, qlen, context):
     ops = _npu_ops()
     data, expected, expected_lse = _case(dim, qlen, context)
@@ -232,8 +239,8 @@ def test_npu_cv_query_tail_survives_padding_and_reused_workspace(dim, qlen):
         # tasks. Their documented workspace starts with Q[64,D], so inspect
         # the actual device-published Q as a bounded diagnostic before merge.
         staged = buffers["workspace"].cpu().view(torch.float32).reshape(data["cores"], -1)
-        staged = staged[:, :64 * dim].reshape(data["cores"], 64, dim)
-        target = torch.zeros(64, dim, dtype=torch.float32)
+        staged = staged[:, :ATTENTION_QUERY_ROWS * dim].reshape(data["cores"], ATTENTION_QUERY_ROWS, dim)
+        target = torch.zeros(ATTENTION_QUERY_ROWS, dim, dtype=torch.float32)
         target[:qlen * data["hq"]] = data["q"].float().reshape(-1, dim)
         torch.testing.assert_close(staged, target.expand_as(staged), atol=0, rtol=0,
             msg=f"Q DMA staging corrupted before padding, iteration={iteration}, D={dim}, qlen={qlen}")
@@ -267,7 +274,8 @@ def export_cpu_debug_goldens(directory):
                                   (64, 17, 65, 1), (64, 4, 65, 2),
                                   (64, 2, 320, 1), (128, 3, 511, 1), (64, 65, 17, 1),
                                   (64, 129, 0, 1),
-                                  (64, 33, 511, 2), (128, 17, 511, 2), (256, 17, 511, 2)]:
+                                  (64, 33, 511, 2), (128, 17, 511, 2), (256, 17, 511, 2),
+                                  (256, 21, 511, 1), (256, 22, 511, 1), (128, 43, 511, 1)]:
         data, output, lse = _case(dim, qlen, context, hk)
         case = directory / (f"d{dim}_q{qlen}_c{context}" + (f"_hk{hk}" if hk!=1 else ""))
         case.mkdir(exist_ok=True)
@@ -311,6 +319,8 @@ def export_cpu_debug_goldens(directory):
     cases.append({"op":"attention_cv","path":str(case)})
     for mode in ("bad_tag","nan_query","bad_meta","nan_value"):
         cases.append({"op":mode,"path":str(directory / "d64_q4_c65")})
+    for name in ("d64_q1_c17", "d256_q4_c511", "d256_q21_c511"):
+        cases.append({"op": "poison_workspace", "path": str(directory / name)})
     cases.append({"op":"tasks_causal","path":str(directory)})
     (directory / "cases.json").write_text(json.dumps(cases,indent=2)+"\n")
     return directory

@@ -44,6 +44,8 @@ git pull --ff-only && bash scripts/probe_concurrency.sh
 
 #141修订后，同一条命令在模型启动前还运行`native-current-fia`真NPU门：生产causal TND current FIA的output/LSE、小batch与16K边界、CV history/window与current的三源merge、source2任务改写和active-slot guard。终端只新增一行`PERF_CURRENT_FIA_GATE`，完整数值误差在`native-current-fia-report.json`；任一失败或资源未释放立即停止。16K设备事件时间是current算子的独立测量，不是已移除的16-token服务性能阶梯，也不用于替代K4端到端比值门。
 
+#144增加**同输入新旧CV算子A/B**，仍只需上面一条命令：重编前先测本项目5288b2e对应的已签名旧产物，重编及新数值门后再测候选。每侧是独立子进程，固定2次预热、5次事件中位数；场景包括4请求长prefill，以及32请求q4、20–30K独立随机历史（物理页互不共享）。这些是独立随机张量，不是用户的127条数据集。两侧输入hash必须一致，任务hash因tiling可不同，输出/LSE必须通过冻结oracle；若候选更慢则停在模型启动前。`PERF_CV_AB`给出两侧毫秒和比值；旧产物缺失或不能验证时标`not_comparable`，仅报告候选`PERF_CV_OP`时间，绝不伪造旧版结果。算子A/B不能替代随后native/OSCAR K4速度门。
+
 #143后，`scripts/probe_concurrency.sh`还会在原始配对退化时，**复用同一OSCAR服务**自动跑一次独立诊断批次：相同20/23/27/30K与64输出，repeat1使用新cache_salt。原始批次没有NPU计时事件或相位同步；诊断批次每相位记录真实NPU Event区间并同步确认完成，明确标为`synchronized_diagnostic_only`，不参与速度比。它按TP rank、prefill/MTP draft、query/KV形状统计CV/旋转/current/merge/store/guard；整图回放只计整图，图内细项不推断。事件区间可能包含提交间隙和流依赖，不等同单kernel CANN trace，也不能把四rank之和当作墙钟。
 
 终端新增`PERF_DIAG_START`、`PERF_DIAG_EVENTS`、最多三行`PERF_DIAG_STAGE`和三行`PERF_DIAG_CV`，与原有`PERF_*`一并复制即可。CV行给出关键rank、query/KV形状、split、次数与p50/p95；`max_seq_len=0`明确表示上下文未知，maxseq与maxquery相等也只是无旧上下文候选。完整事件在OSCAR本轮trace目录`device-events-<pid>.jsonl`，摘要在`oscar/diagnostic/device-event-summary.json`。无须另开命令、重载第三次模型或操作profiler HTTP端点；#133的崩溃路径不再使用。dummy和capture不插入事件；只有正常轮结束后模型入口才读取武装标记，相位内部不轮询文件。若继承了`OSCAR_DEBUG_SYNC/TIMING/PROFILER=1`，正常测速明确拒绝，防止同步数据混入速度对比。

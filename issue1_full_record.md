@@ -28431,3 +28431,29 @@ RuntimeError: Engine core initialization failed. See root cause above. Failed co
 **本轮处置**：一键快路径先跑原生与OSCAR原始K4，原始轮不创建NPU计时事件；若配对退化，在同一OSCAR服务上自动运行一次独立repeat1，输入及64输出不变，使用新的cache_salt。仅该轮用原生NPU Event时间戳与end.synchronize记录prepare/rotate/CV/current/merge/store/guard，按prefill、MTP draft和整图回放、TP rank及query/KV形状汇总。整图事件包在replay外，不给图内相位伪造耗时；dummy/capture不插事件。标记在模型入口读取，相位热路径不轮询文件。避开#133已造成四worker崩溃的HTTP profiler。同步诊断改变时序，不能替代正常轮速度比；缺rank/必要相位/整图回放明确needs_evidence。
 
 **验证边界**：相关主机回归覆盖未武装无事件/无同步、捕图与dummy不计时、设备错误记录、同服务自动repeat、独立cache salt、诊断关闭和TP缺失证据检查。本轮没有新增目标NPU计时结果，剩余性能原因及追平结论继续待测。
+
+## [144] 真机条目（gpt_new_oscar_kimi，2026-09-24 用户回传）· 历史 CV 热点已测得，扩大复用并消除 V 转置搬运
+
+**原文与范围**：`reports/target_history_cv_hotspot.txt`完整保留用户提供的两组材料。最新5288b2e的K4配对原生14.6s、OSCAR46.2s，双方4/4完成并释放。独立同步诊断有4/4 rank、5828个设备事件；用户另报告d7ba977的自有127请求/32并发整体原生约8分钟、OSCAR约31分钟。后者禁止再次重跑；OSCAR服务端节选只覆盖01:00:24–01:17:34，不含结束，不能据它重新积分推导完整31分钟，也不与同步K4事件直接相加。
+
+**关键设备证据**（均为诊断轮NPU Event区间，不是未同步原始测速的逐项可加分解）：
+
+| 相位/形状 | 关键rank计时 |
+|---|---:|
+| prefill全部已计相位 | 25,439.8ms |
+| prefill CV（fia） | 23,535.1ms |
+| draft CV（fia） | 3,135.3ms |
+| 整图replay | 1,534.7ms |
+| 全阶段store / rotate / current FIA / merge | 1,077.7 / 850.8 / 608.9 / 513.5ms |
+| N16384/R1/maxQ=maxSeq16384，CV16次 | p50 6.62ms，合计105.97ms |
+| N11504/R4/maxQ11492/maxSeq30000，CV16次 | p50 493.71ms，合计7895.12ms |
+
+**先确认问题存在，再质疑收益**：已部署源码的query/head tile确为64，GQA6每组最多10个query；每组重复解包自己的完整历史区间。V每16行先Gather为[D,16]，再以D个64B小块写[D,128]；D256一个128KV单元产生2048个分散64B写块。INT2八个位平面互相独立，却各自Shift/barrier/And/barrier。这些开销确实位于已测的带历史CV热路径。相反，空历史候选仅约106ms、写入与旋转也不足以单独解释大差距，因此没有把空任务清零、写kernel或MTP接受率当作主要根因。
+
+**本轮生产修改**：M128×KV256让21个GQA6 query复用历史；V自然布局[KV,D]直接连续写，PV用同一MatmulImpl的运行期B不转置。SDK的static B=true允许运行期true/false，原生chunk GDN同一mm1已有两种用法。八次Shift合并到一道barrier前，八次And合并到另一道前。每AIV保留64行FP32累积状态在UB，以32行块算softmax，复用失活dequant空间读PV；拒绝了M256把累积状态反复写GM的方案。query任务、slot组缓存、workspace与测试同步使用共享常量。
+
+**成本与反证**：长query的历史读取/解包静态次数约减2.1倍，跨核轮次/Matmul调用约减4.2倍；浮点乘加总量近似不变，不能宣称等比例加速。D256 UB=157184B，低于A2可用188416B；每Cube GM=917504B，20Cube较旧版多约9.38MiB。扩大query tile本来会增加q1/q4的无效P零写，已按实际M只发布活跃P行；空块不写P，保留flags/所有partial/LSE/status owner。SDK tail契约及3个GM全NaN poison病例检验该改动。KV128→256改变FP32归约分组，冻结5e-3门仍须真NPU裁决。自然V可能把成本移到Cube读取，实际收益必须对照测量。
+
+**直接收益门**：一键快路径在重编前，若旧产物与本项目5288b2e的csrc指纹、构建签名、CANN/SOC/包版本及二进制SHA全部匹配，先用隔离子进程测旧CV；新构建通过数值门后再用相同输入测新CV。主场景为合成的4请求长prefill；另有32条独立随机历史、互不共享物理页的q4 decode，防止只看prefill改善而漏掉decode退化。两侧均预热2次、测5次中位数，比较输入hash并检查冻结输出/LSE。旧产物不存在则明确not_comparable；有对照且候选更慢则停止模型启动。算子A/B通过仍不等于原生速度达标，随后继续正常native/OSCAR K4门。
+
+**本机证据**：最终生产内核SHA `6565a8dfc9c7dcb47de4798ea5f4a3167d277a84cac636ebca8165382d5b2af8`，CANN910B4编译通过；官方CPU-debug33/33，含Q21/Q22/Q43边界与3个NaN workspace病例；相关主机回归通过。`reports/history_cv_local_validation.json`分别记录生产编译源与后加CPU-only poison harness指纹，未伪称两者完整源码快照相同。新NPU精度、图回放、算子净收益与端到端追平尚待一键实测；未运行用户的127条数据集。

@@ -8,6 +8,8 @@ its CPU numerical fingerprint is diagnostic, never device acceptance.
 D.4/#126/#140: q1/q6 at context511 exercise short-q padded P rows in both
 Vector lanes while compressed history is live; FP32 output/LSE and every
 status still face the independent frozen oracle before a speed claim.
+#145: repeated NaN-poisoned workspace probes cross each lane's 32-row
+score-buffer handoff; CPU-debug cannot certify asynchronous DMA ordering.
 D.4: no full-history allocation in production; only this test oracle may
 materialize history. Tests do not turn CPU results into NPU/performance evidence.
 """
@@ -179,6 +181,14 @@ def _assert_cv_result(data, buffers, expected, expected_lse):
     context = int(data["lens"][0]) - data["qlen"]
     assert torch.count_nonzero(status).item() == 0
     torch.testing.assert_close(positions.cpu(), torch.arange(context, context + data["qlen"]))
+    # #145: identify the source segment before NaN propagates through merge.
+    bad_partial = (~torch.isfinite(partial)).any(dim=-1).cpu()
+    assert not bad_partial.any().item(), (
+        f"CV_NONFINITE_PARTIAL first_token_head_segment={bad_partial.nonzero()[:8].tolist()} "
+        f"bad_rows_by_segment={bad_partial.sum(dim=(0, 1)).tolist()}")
+    bad_lse = torch.isnan(lse).cpu()
+    assert not bad_lse.any().item(), (
+        f"CV_NAN_LSE first_token_head_segment={bad_lse.nonzero()[:8].tolist()}")
     got_lse = torch.logsumexp(lse.float(), dim=-1)
     got = (partial * torch.exp(lse - got_lse[..., None])[..., None]).sum(dim=2)
     tolerance = json.loads((ROOT / "configs/acceptance.json").read_text())["fused_attention"]
@@ -199,6 +209,19 @@ def test_npu_cv_matches_independent_dense_pr_oracle(dim, qlen, context):
     tensors, buffers = _device_case(data)
     _execute_cv(ops, data, tensors, buffers)
     _assert_cv_result(data, buffers, expected, expected_lse)
+
+
+@pytest.mark.parametrize("dim,qlen", [(64, 6), (128, 11), (256, 17)])
+def test_npu_cv_score_block_handoff_with_repeated_workspace_poison(dim, qlen):
+    # #145: GQA6 gives 36/66/102 rows. Cover the reported first-lane handoff,
+    # entry into lane 1, and lane 1's second block, with fresh poison each run.
+    ops = _npu_ops()
+    data, expected, expected_lse = _case(dim, qlen, 511)
+    tensors, buffers = _device_case(data)
+    for _ in range(3):
+        buffers["workspace"].view(torch.float32).fill_(float("nan"))
+        _execute_cv(ops, data, tensors, buffers)
+        _assert_cv_result(data, buffers, expected, expected_lse)
 
 
 @pytest.mark.parametrize("dim,qlen,context,hk,splits", [
@@ -275,7 +298,8 @@ def export_cpu_debug_goldens(directory):
                                   (64, 2, 320, 1), (128, 3, 511, 1), (64, 65, 17, 1),
                                   (64, 129, 0, 1),
                                   (64, 33, 511, 2), (128, 17, 511, 2), (256, 17, 511, 2),
-                                  (256, 21, 511, 1), (256, 22, 511, 1), (128, 43, 511, 1)]:
+                                  (256, 21, 511, 1), (256, 22, 511, 1), (128, 43, 511, 1),
+                                  (128, 11, 511, 1), (256, 17, 511, 1)]:
         data, output, lse = _case(dim, qlen, context, hk)
         case = directory / (f"d{dim}_q{qlen}_c{context}" + (f"_hk{hk}" if hk!=1 else ""))
         case.mkdir(exist_ok=True)
@@ -319,7 +343,8 @@ def export_cpu_debug_goldens(directory):
     cases.append({"op":"attention_cv","path":str(case)})
     for mode in ("bad_tag","nan_query","bad_meta","nan_value"):
         cases.append({"op":mode,"path":str(directory / "d64_q4_c65")})
-    for name in ("d64_q1_c17", "d256_q4_c511", "d256_q21_c511"):
+    for name in ("d64_q1_c17", "d256_q4_c511", "d256_q21_c511",
+                 "d64_q6_c511", "d128_q11_c511", "d256_q17_c511"):
         cases.append({"op": "poison_workspace", "path": str(directory / name)})
     cases.append({"op":"tasks_causal","path":str(directory)})
     (directory / "cases.json").write_text(json.dumps(cases,indent=2)+"\n")

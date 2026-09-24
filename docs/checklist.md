@@ -100,3 +100,7 @@
 #143：用户回传真NPU数值门及current/CV/merge门通过，原生与OSCAR各4/4完成并释放；OSCAR墙钟从约131.7s降至43.3s，原生14.7s，E06仍未通过。保留实测有效计算路径。快路径增加同服务、仅退化时自动运行的独立K4 NPU事件诊断轮；正常速度比仍来自原始无事件轮。细分prefill/draft/整图回放及TP rank，捕图和dummy不插事件，缺失设备证据拒绝完整结论。新计时仅主机契约验证，**目标设备归因与追平仍待回传**。原文`reports/target_k4_43s_performance.txt`。
 
 #144：目标诊断已将主要开销定位到带历史prefill CV（23.535s），空历史候选16层只106ms。用户自有127请求/32并发约31min对8min仅用作已提供的对照，禁止重跑。本轮M128×KV256、自然V连续写、位平面屏障合并及有效P行写回已完成；FP32累积仍在UB。CANN编译及33/33官方CPU-debug通过，含3个全NaN工作区案例。新旧同输入CV算子A/B加入重编前/后流程，数值/资源/速度退化阻断模型启动；仍保留原生K4门。**候选真NPU精度、图及达到原生速度尚待实测**。证据见`reports/history_cv_local_validation.json`，目标原文见`reports/target_history_cv_hotspot.txt`。
+
+#145：cf97bb1真NPU CV门在D64/Q6/context511出现1024/2304 NaN，候选尚未进入模型性能比较。当前源码确认两个32行score块之间缺MTE3→MTE2所有权依赖；只替换这道事件方向，保留数学与冻结容差。重复NaN工作区回归覆盖36/66/102行。相关主机回归24 passed、28 NPU skipped；目标CV数值、图、性能必须由完整`git pull --ff-only && bash scripts/probe_concurrency.sh`重新验收，不能以CPU-debug通过解锁。C04/C05/E01仍未完成，E06仍失败/待复验。
+
+#145本机复验：CANN ascend910b4编译通过，官方CPU-debug38/38；证据`reports/cv_score_handoff_validation.json`。该模拟也能通过修复前的同形Q6，故真机数值与完整K4速度结论仍由下一轮一键日志确认。

@@ -107,6 +107,7 @@
 | 报错关键字 | 条目 |
 |-----------|------|
 | `AssertionError: Tensor-likes are not close!`（47/768 不匹配，max_abs 0.0533 vs 阈值 0.005） | G26 |
+| `cf97bb1` CV D64/Q6/context511：1024/2304 NaN，前3个NPU数值病例通过 | 145 |
 | `test_npu_cv_matches_independent_dense_pr_oracle[64-1-17]`，64/384元素超差、max_abs 0.6885956525802612、最大误差位于head5 | 126 |
 | `AssertionError: Tensor-likes are not equal!`（window_k vs k，2044/2048 不匹配，max_abs 0.90625，rel 808） | G27 |
 | `eigensolver_known_spectrum` 特征值误差 7.90 / 71.14 / **139.44**（dim 8/64/128） | G28、G29 |
@@ -28457,3 +28458,29 @@ RuntimeError: Engine core initialization failed. See root cause above. Failed co
 **直接收益门**：一键快路径在重编前，若旧产物与本项目5288b2e的csrc指纹、构建签名、CANN/SOC/包版本及二进制SHA全部匹配，先用隔离子进程测旧CV；新构建通过数值门后再用相同输入测新CV。主场景为合成的4请求长prefill；另有32条独立随机历史、互不共享物理页的q4 decode，防止只看prefill改善而漏掉decode退化。两侧均预热2次、测5次中位数，比较输入hash并检查冻结输出/LSE。旧产物不存在则明确not_comparable；有对照且候选更慢则停止模型启动。算子A/B通过仍不等于原生速度达标，随后继续正常native/OSCAR K4门。
 
 **本机证据**：最终生产内核SHA `6565a8dfc9c7dcb47de4798ea5f4a3167d277a84cac636ebca8165382d5b2af8`，CANN910B4编译通过；官方CPU-debug33/33，含Q21/Q22/Q43边界与3个NaN workspace病例；相关主机回归通过。`reports/history_cv_local_validation.json`分别记录生产编译源与后加CPU-only poison harness指纹，未伪称两者完整源码快照相同。新NPU精度、图回放、算子净收益与端到端追平尚待一键实测；未运行用户的127条数据集。
+
+## [145] 真机条目（gpt_new_oscar_kimi，2026-09-24 用户回传）· M128 的第二个 softmax 块覆盖未完成写回的 score 缓冲
+
+**目标事实**：用户执行 `git pull --ff-only && bash scripts/probe_concurrency.sh`，从5288b2e更新到cf97bb1。旧CV热点基线与新operator-build均rc0，随后新算子的NPU数值门失败。`6 passed`包括3项主机契约和3个NPU数值病例；未执行完整候选热点/模型K4，不能宣称本轮提速或通过。
+
+```text
+[oscar] PASSED phase=cv-hotshape-baseline rc=0
+[oscar] PASSED phase=operator-build rc=0
+E       AssertionError: Tensor-likes are not close!
+E       Mismatched elements: 1024 / 2304 (44.4%)
+E       Greatest absolute difference: nan at index (1, 0, 0) (up to 0.005 allowed)
+E       Greatest relative difference: nan at index (1, 0, 0) (up to 0.005 allowed)
+tests/test_cv_contracts.py:185: AssertionError
+FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_oracle[64-6-511]
+1 failed, 6 passed, 14 warnings in 10.55s
+```
+
+**当前源码中确认存在的缺口**：M128改动后，每个AIV顺序处理两个32行score块，并复用同一个`scoreBuf`。第一块由MTE3读取该UB、写出GM P，末尾只有`MTE3_V`；第二块立即由MTE2读入新的QK并覆盖同一UB。Vector等待不能阻止另一条MTE2流水先覆写。第二块的`MTE2_V`只约束后续计算，无法补回此前缺失的MTE3→MTE2依赖。只读原生A2 `sparse_flash_attention_service_vector_mla.h` 的merge UB复用使用对应的`MTE3_MTE2`（CopyOut后Set、下次CopyIn前Wait）。
+
+**与故障的关联及边界**：Q1/Q4分别6/24行，均只有一个活跃块；Q6为36行，首次跨块。首NaN在query1/head0，即前块row6；1024个D64元素对应16行，符合前块P写回被后块载入覆盖的形态。第二块还会读入尚未写过的poison尾行。此为代码中的真实数据竞争及匹配故障边界，尚不是硬件流水采样对根因的最终证明。修复前官方CPU-debug追加同形D64/Q6/context511全NaN workspace仍通过（output max_abs=2.38e-7、LSE=4.77e-7），说明串行模拟未覆盖该异步竞争，不能把CPU通过当NPU通过。
+
+**修法与D.4四问**：①属于fused FIA的softmax/P发布；②前代D.4全历史dequant达6499.8–6655.1ms，本次是固定UB所有权故障；③将块尾`MTE3_V`替换为`MTE3_MTE2`，下一次读入后的既有`MTE2_V`继续保护Vector写入，无须叠加全局同步、扩大workspace或恢复全历史；④只更正一道事件方向，浮点运算、INT2/window语义、容差和跨核flags不变，不能据此宣称性能提升。原来的有效P行写回保留。
+
+**回归与一键边界**：保留失败的冻结oracle病例，新增D64/Q6、D128/Q11、D256/Q17在context511下重复3次重填NaN工作区的NPU回归，覆盖前lane第二块、后lane首块及第二块；失败先打印最多8个token/head/segment位置与分段坏行数。CPU导出同形poison边界。本地CANN/CPU结果单独记账，目标复验仍须同一条`git pull --ff-only && bash scripts/probe_concurrency.sh`，依次经过数值、算子热点、原生/OSCAR长请求K4和资源释放门。任何门失败仍停止，完整性能流程未被缩成数值测试。
+
+**本机复验结果**：同一最终kernel SHA `febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4` 通过CANN ascend910b4编译；官方CPU-debug 38/38通过（含新增3个poison边界），相关主机24 passed/28 NPU skipped。证据`reports/cv_score_handoff_validation.json`和`reports/cv_score_handoff_cpu_debug.json`。修订后的目标NPU/图/性能尚未执行，不把这些本机结果写成真机已修好。

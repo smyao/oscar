@@ -129,6 +129,13 @@
 // remain unchanged. (4) At GQA6 q_len1, three empty 32-row P writes vanish
 // per 256-KV unit and the live block publishes only six rows. Real target
 // graph timing and frozen accuracy, not this byte count, decide acceptance.
+// #145/D.4 score-buffer ownership: (1) fused FIA softmax/P publication;
+// (2) Q6/GQA6 first reuses the same UB for a second score block, exposing
+// an MTE3-read/MTE2-write race. (3) Order P copy-out before the next score
+// copy-in with MTE3_MTE2; that copy-in's MTE2_V also protects later Vector
+// writes. Keep bounded tiles, FP32 math and all cross-core flags unchanged.
+// (4) Replace the incorrectly directed local event, without adding a global
+// sync or history traffic; this fixes ownership, not a claimed speedup.
 // #143/D.4 INT2 plane sequencing: (1) source0 Unpack inside fused fia;
 // (2) historical full-history dequant took ~6.5s while native FIA was ~18.7ms,
 // and target K4 events now place most prefill time in CV. (3) Eight independent
@@ -626,7 +633,10 @@ template<int32_t D> class AttentionCv {
     // V2 may use padded UB rows to satisfy its 8-row shape, but Cube PV has
     // M=qcount*group and consumes only the real P rows from this block.
     DataCopy(work[pOffset+rowBase*kKvRows],scores,activeRows*kKvRows);
-    Fence<HardEvent::MTE3_V>();
+    // The next Softmax block refills scoreBuf on MTE2, not Vector. MTE3_V
+    // cannot prevent that DMA from overwriting P while MTE3 still reads it.
+    // The next copy-in is followed by MTE2_V before any Vector score writes.
+    Fence<HardEvent::MTE3_MTE2>();
   }
   __aicore__ void VectorTask(int64_t id) {
     error=0;

@@ -1,0 +1,31 @@
+{
+  "archive": 145,
+  "source": "csrc/kernels/attention_cv.cpp",
+  "source_sha256": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+  "change": "Replace softmax P copy-out MTE3_V with MTE3_MTE2 before shared score UB refill",
+  "cann_build": {
+    "status": "passed",
+    "soc": "ascend910b4",
+    "returncode": 0,
+    "reused": false,
+    "log": "reports/vm-cv-fence145/device-build.log"
+  },
+  "cpu_debug": {
+    "status": "passed",
+    "cases": 38,
+    "report": "reports/cv_score_handoff_cpu_debug.json"
+  },
+  "host_pytest": {
+    "passed": 24,
+    "npu_skipped": 28,
+    "command": "PYTHONPATH=. .venv/bin/python -m pytest -q tests/test_cv_contracts.py tests/test_paired_concurrency_probe.py tests/test_probe_cv_hotshape.py"
+  },
+  "limitations": [
+    "Official CPU-debug also passed the failing Q6 poison case before the fence fix; it does not certify asynchronous DMA ordering.",
+    "NPU numerical regression, graph replay and end-to-end performance require the unchanged one-command target probe."
+  ],
+  "target_retest": {
+    "status": "not_run",
+    "command": "git pull --ff-only && bash scripts/probe_concurrency.sh"
+  }
+}

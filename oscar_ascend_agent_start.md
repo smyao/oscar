@@ -559,6 +559,7 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 | 历史现象 | 必须落实的检查与处理 |
 | --- | --- |
+| #145 M128 CV在D64/Q6/context511出现NaN，Q1/Q4通过 | 同一score UB从MTE3读出切换到MTE2覆写必须建立MTE3→MTE2依赖；重复NaN工作区覆盖32行块及双lane边界。CPU-debug串行DMA不替代真NPU数值门；一键继续完整热点与native/OSCAR长请求并发性能门。 |
 | `Unsupported vllm-ascend version: 0.23.1.dev0+g5cb98caaa.d20260822` | 区分目标版本与开发构建版本，核实 commit/接口兼容性，不误拒绝，也不盲目放行。 |
 | `DeviceOperator` partially initialized / circular import | 调整外部插件导入依赖和注册时机，测试全新进程启动；不能捕获后跳过 OSCAR 注入。 |
 | `Device string must not be empty` | 在创建 LLM/校准引擎前确认平台识别成功；定位先前导入失败，不用硬填 device 字符串掩盖问题。 |

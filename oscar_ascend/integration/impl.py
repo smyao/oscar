@@ -2,6 +2,8 @@
 
 Archive #27/#34/#36/#37-49/#55-69/#111/#140: complete forward dispatch, fixed buffers,
 device metadata, exact physical-page snapshots, and no BF16 history restore.
+#148: only an explicit experimental workspace selects cluster4; default
+#keeps the accepted fe0 operator and original FP32 arithmetic.
 PR oscar_attn.py:486-577: current-chunk K/V are exact; cached history is INT2.
 Native acl_graph.py:270 and attention_v1.py:454: graph-update interface.
 Native attention_cp.py:1017-1032: exact current TND FIA yields output plus LSE.
@@ -124,10 +126,13 @@ class OscarAttentionImpl(AttentionImpl):
             ops.rotate_out(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
         with phase("fia", layer=layer.layer_name, tokens=n, splits=source_splits,
                    cube_cores=g.cube_cores, tasks=task_count, requests=attn_metadata.num_reqs, **timing_fields):
-            ops.attention_cv_out(
+            cluster_size = getattr(g, "history_cluster_size", 1)
+            cv_op = ops.attention_cv_cluster4_out if cluster_size == 4 else ops.attention_cv_out
+            cv_extra = (workspace.cluster_stats,) if cluster_size == 4 else ()
+            cv_op(
                 q, qr, k, v, state.rotation_v, state.raw, attn_metadata.block_tables,
                 state.window_key, state.window_value, state.window_tags, tasks,
-                partial, partial_lse, statuses, workspace.cv,
+                partial, partial_lse, statuses, workspace.cv, *cv_extra,
                 state.spec.block_size, state.num_blocks,
                 state.num_blocks * state.spec.conv_bytes, state.spec.ssm_bytes,
                 state.snapshots.sink_tokens, state.snapshots.recent_tokens,

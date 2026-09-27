@@ -1,0 +1,177 @@
+当前版本34639abe6af4c4a32ede108e2d9114b6e0da9ff5 出来了log
+root@node93:/workspace/gpt_new_oscar_kimi# git fetch origin codex/oscar-ascend && git switch codex/oscar-ascend && git pull --ff-only && bash scripts/probe_concurrency.sh
+remote: Enumerating objects: 42, done.
+remote: Counting objects: 100% (42/42), done.
+remote: Compressing objects: 100% (23/23), done.
+remote: Total 23 (delta 19), reused 0 (delta 0), pack-reused 0 (from 0)
+Unpacking objects: 100% (23/23), 18.59 KiB | 244.00 KiB/s, done.
+From https://gitcode.com/jpl123/gpt_new_oscar_kimi
+ * branch            codex/oscar-ascend -> FETCH_HEAD
+   9bedebb..34639ab  codex/oscar-ascend -> origin/codex/oscar-ascend
+M       reports/build.json
+Switched to branch 'codex/oscar-ascend'
+Your branch is behind 'origin/codex/oscar-ascend' by 1 commit, and can be fast-forwarded.
+  (use "git pull" to update your local branch)
+Updating 9bedebb..34639ab
+Fast-forward
+ csrc/attention_bindings.cpp                  |   3 +-
+ csrc/cpu/cv_probe.cpp                        |  20 ++++++++-----
+ csrc/include/oscar_attention_launch.h        |   2 +-
+ csrc/kernels/attention_cv.cpp                |  53 ++++++++++++++++++++++++++++++---
+ docs/checklist.md                            |   2 ++
+ docs/service_probe.md                        |   2 ++
+ issue1_full_record.md                        |   4 +++
+ reports/cv_load147_profile24_cpu_debug.json  | 371 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ reports/cv_load147_profile24_validation.json |  41 +++++++++++++++++++++++++
+ tests/test_cv_contracts.py                   |  10 +++++--
+ tests/test_probe_cv_hotshape.py              |  15 ++++++++--
+ tools/paired_concurrency_probe.py            |  10 ++++++-
+ tools/probe_cv_hotshape.py                   |  20 +++++++++----
+ 13 files changed, 529 insertions(+), 24 deletions(-)
+ create mode 100644 reports/cv_load147_profile24_cpu_debug.json
+ create mode 100644 reports/cv_load147_profile24_validation.json
+[oscar] phase=cv-hotshape-baseline running seconds=60.0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/cv-hotshape-baseline.log
+[oscar] phase=cv-hotshape-baseline running seconds=120.1 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/cv-hotshape-baseline.log
+[oscar] PASSED phase=cv-hotshape-baseline rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/cv-hotshape-baseline.log
+[oscar] phase=operator-build running seconds=60.0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/operator-build.log
+[oscar] PASSED phase=operator-build rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/operator-build.log
+[oscar] PASSED phase=operator-cv-npu rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/operator-cv-npu.log
+[oscar] PERF_OPERATOR_GATE build=rebuilt npu_cv=fresh_device_completion signature=33b4781dc194 devices=0,1,2,3
+[oscar] PASSED phase=native-current-fia rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/native-current-fia.log
+[oscar] PERF_CURRENT_FIA_GATE accuracy=passed mixed_sources=passed task_contract=passed current16k_device_ms=6.653079986572266 release=passed
+[oscar] phase=cv-hotshape-candidate running seconds=60.0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/cv-hotshape-candidate.log
+[oscar] phase=cv-hotshape-candidate running seconds=120.1 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/cv-hotshape-candidate.log
+[oscar] phase=cv-hotshape-candidate running seconds=180.1 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/cv-hotshape-candidate.log
+[oscar] PASSED phase=cv-hotshape-candidate rc=0 log=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/cv-hotshape-candidate.log
+[oscar] PERF_CV_AB case=decode32 baseline_ms=14.240 candidate_ms=11.937 ratio=0.838 scope=synthetic_operator_only status=passed
+[oscar] PERF_CV_AB case=main baseline_ms=183.133 candidate_ms=161.942 ratio=0.884 scope=synthetic_operator_only status=passed
+[oscar] PERF_CV_PROFILE case=main source=history physical=0 tasks_aic=551 kv_tiles_aic=40265 empty_aic=0 qk_max_raw_ticks=733711 pv_max_raw_ticks=734093 aiv_load_max_raw_ticks=5687002 aiv_waitqk_max_raw_ticks=841338 aiv_softmax_max_raw_ticks=646557 mask_finite_subset_max_raw_ticks=232125 v2_stats_subset_max_raw_ticks=201081 aiv_waitpv_max_raw_ticks=846041 packed_load_max_raw_ticks=360892 int2_expand_max_raw_ticks=4040882 metadata_max_raw_ticks=649134 kv_publish_max_raw_ticks=434986 profile_event_ms=169.767 over_normal=1.05 scope=instrumented_kernel_diagnostic
+[oscar] PERF_CV_PROFILE case=main source=window physical=0 tasks_aic=551 kv_tiles_aic=557 empty_aic=0 qk_max_raw_ticks=10692 pv_max_raw_ticks=10890 aiv_load_max_raw_ticks=99722 aiv_waitqk_max_raw_ticks=15937 aiv_softmax_max_raw_ticks=27645 mask_finite_subset_max_raw_ticks=20891 v2_stats_subset_max_raw_ticks=3512 aiv_waitpv_max_raw_ticks=14713 profile_event_ms=169.767 over_normal=1.05 scope=instrumented_kernel_diagnostic
+[oscar] PERF_CV_PROFILE case=main source=current physical=0 tasks_aic=551 kv_tiles_aic=0 empty_aic=551 qk_max_raw_ticks=0 pv_max_raw_ticks=0 aiv_load_max_raw_ticks=0 aiv_waitqk_max_raw_ticks=0 aiv_softmax_max_raw_ticks=0 mask_finite_subset_max_raw_ticks=0 v2_stats_subset_max_raw_ticks=0 aiv_waitpv_max_raw_ticks=0 profile_event_ms=169.767 over_normal=1.05 scope=instrumented_kernel_diagnostic
+[oscar] PERF_CV_PROFILE case=decode32 source=history physical=0 tasks_aic=96 kv_tiles_aic=3120 empty_aic=0 qk_max_raw_ticks=30724 pv_max_raw_ticks=31775 aiv_load_max_raw_ticks=486933 aiv_waitqk_max_raw_ticks=53523 aiv_softmax_max_raw_ticks=26482 mask_finite_subset_max_raw_ticks=9197 v2_stats_subset_max_raw_ticks=8382 aiv_waitpv_max_raw_ticks=62056 packed_load_max_raw_ticks=38999 int2_expand_max_raw_ticks=340405 metadata_max_raw_ticks=54702 kv_publish_max_raw_ticks=35980 profile_event_ms=12.911 over_normal=1.08 scope=instrumented_kernel_diagnostic
+[oscar] PERF_CV_PROFILE case=decode32 source=window physical=0 tasks_aic=96 kv_tiles_aic=96 empty_aic=0 qk_max_raw_ticks=883 pv_max_raw_ticks=959 aiv_load_max_raw_ticks=26457 aiv_waitqk_max_raw_ticks=11213 aiv_softmax_max_raw_ticks=2418 mask_finite_subset_max_raw_ticks=1711 v2_stats_subset_max_raw_ticks=378 aiv_waitpv_max_raw_ticks=3444 profile_event_ms=12.911 over_normal=1.08 scope=instrumented_kernel_diagnostic
+[oscar] PERF_CV_PROFILE case=decode32 source=current physical=0 tasks_aic=96 kv_tiles_aic=64 empty_aic=32 qk_max_raw_ticks=883 pv_max_raw_ticks=964 aiv_load_max_raw_ticks=2179 aiv_waitqk_max_raw_ticks=6120 aiv_softmax_max_raw_ticks=2266 mask_finite_subset_max_raw_ticks=1603 v2_stats_subset_max_raw_ticks=338 aiv_waitpv_max_raw_ticks=3288 profile_event_ms=12.911 over_normal=1.08 scope=instrumented_kernel_diagnostic
+[oscar] PERF_VARIANT start=native lengths=20K,23K,27K,30K K=4
+Capturing CUDA graphs (decode, FULL):  32%|███▏      | 11/34 [00:09<00:17,  1.31it/s]STARTUP_WAIT elapsed=286.3 health=<urlopen error [Errno 111] Connection refused>
+[oscar] SYNTHETIC_MIXED done status=measured completed=4/4 failed=0 timeouts=0 wall=14.7s report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/native/synthetic-mixed.json
+(Worker_TP0 pid=187612) Exception in thread Thread-3:
+(Worker_TP0 pid=187612) Traceback (most recent call last):
+(Worker_TP0 pid=187612)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+(Worker_TP0 pid=187612)     self.run()
+(Worker_TP0 pid=187612)   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run
+[oscar] synthetic_mixed measured report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/native/report.json
+[oscar] PERF_VARIANT done=native result=4/4 release=passed
+[oscar] PERF_VARIANT start=oscar lengths=20K,23K,27K,30K K=4
+Capturing CUDA graphs (decode, FULL):  53%|█████▎    | 18/34 [00:14<00:10,  1.46it/s]STARTUP_WAIT elapsed=286.1 health=<urlopen error [Errno 111] Connection refused>
+[oscar] SYNTHETIC_MIXED done status=measured completed=4/4 failed=0 timeouts=0 wall=26.2s report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/oscar/synthetic-mixed.json
+[oscar] PERF_DIAG_START scope=synchronized_repeat1 K=4 inputs=20K,23K,27K,30K output_tokens=64 budget=300s primary=uninstrumented report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/oscar/diagnostic/diagnostic-report.json
+[oscar] PERF_DIAG_EVENTS status=observed ranks=4/4 events=5885 top6_critical_rank_ms=fia:8668.8,phase1_stores:1077.0,graph_replay:1038.7,rotate:850.9,current_native_fia:620.6,merge:487.7 graph=whole_graph_event_observed_all_ranks scope=synchronized_diagnostic_only report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/oscar/diagnostic/device-event-summary.json
+[oscar] PERF_DIAG_STAGE stage=prefill critical_rank_phase_sum_ms=9414.4 top3_critical_rank_ms=fia:7526.5,current_native_fia:620.6,merge:425.6 scope=synchronized_diagnostic_only
+[oscar] PERF_DIAG_STAGE stage=draft critical_rank_phase_sum_ms=2482.5 top3_critical_rank_ms=fia:1143.9,phase1_stores:682.4,rotate:566.1 scope=synchronized_diagnostic_only
+[oscar] PERF_DIAG_STAGE stage=graph critical_rank_phase_sum_ms=1038.7 top3_critical_rank_ms=graph_replay:1038.7 scope=synchronized_diagnostic_only
+[oscar] PERF_DIAG_CV case=candidate_no_old_context stage=prefill rank=0 tokens=16384 requests=1 max_query_len=16384 max_seq_len=16384 splits=1 count=16 p50_ms=6.52 p95_ms=6.54 rank_sum_ms=104.38 context=not_proven_empty
+[oscar] PERF_DIAG_CV case=largest_other_prefill stage=prefill rank=0 tokens=16384 requests=3 max_query_len=16376 max_seq_len=29136 splits=1 count=16 p50_ms=150.69 p95_ms=151.24 rank_sum_ms=2411.56 context=not_proven_empty
+[oscar] PERF_DIAG_CV case=largest_draft stage=draft rank=1 tokens=16384 requests=3 max_query_len=16376 max_seq_len=0 splits=1 count=1 p50_ms=223.00 p95_ms=223.00 rank_sum_ms=223.00 context=unknown_max_seq_zero
+(Worker_TP0 pid=192745) Exception in thread Thread-3:
+(Worker_TP0 pid=192745) Traceback (most recent call last):
+(Worker_TP0 pid=192745)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+(Worker_TP0 pid=192745)     self.run()
+(Worker_TP0 pid=192745)   File "/usr/local/Ascend/cann-9.1.0/python/site-packages/tbe/common/repository_manager/utils/multiprocess_util.py", line 68, in run
+(Worker_TP0 pid=192745)     item = self.task_q.get()
+(Worker_TP0 pid=192745)            ^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=192745)   File "<string>", line 2, in get
+(Worker_TP0 pid=192745)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py", line 828, in _callmethod
+(Worker_TP0 pid=192745)     kind, result = conn.recv()
+(Worker_TP0 pid=192745)                    ^^^^^^(Worker_TP2 pid=192840) ^^Exception in thread ^Thread-2^:
+(Worker_TP2 pid=192840) (Worker_TP0 pid=192745) Traceback (most recent call last):
+(Worker_TP2 pid=192840)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+(Worker_TP0 pid=192745)     buf = self._recv_bytes()
+(Worker_TP0 pid=192745)           ^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=192745)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 430, in _recv_bytes
+(Worker_TP0 pid=192745)     buf = self._recv(4)
+(Worker_TP2 pid=192840) (Worker_TP0 pid=192745)      self.run() 
+(Worker_TP0 pid=192745)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 399, in _recv
+(Worker_TP0 pid=192745)     raise EOFError
+(Worker_TP0 pid=192745) EOFError
+(Worker_TP2 pid=192840)     item = self.task_q.get()
+(Worker_TP2 pid=192840)            ^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=192840)   File "<string>", line 2, in get
+(Worker_TP2 pid=192840)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/managers.py", line 828, in _callmethod
+(Worker_TP2 pid=192840)     kind, result = conn.recv()
+(Worker_TP2 pid=192840)                    ^^^^^^^^^^^
+(Worker_TP2 pid=192840)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 250, in recv
+(Worker_TP2 pid=192840)     buf = self._recv_bytes()
+(Worker_TP2 pid=192840)           ^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=192840)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 430, in _recv_bytes
+(Worker_TP2 pid=192840)     buf = self._recv(4)
+(Worker_TP2 pid=192840)           ^^^^^^^^^^^^^
+(Worker_TP2 pid=192840)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/connection.py", line 399, in _recv
+(Worker_TP2 pid=192840)     raise EOFError
+(Worker_TP2 pid=192840) EOFError
+[oscar] synthetic_mixed measured report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/oscar/report.json
+[oscar] PERF_VARIANT done=oscar result=4/4 release=passed
+[oscar] PERF_STATUS pairing=complete native=4/4 failed=0 timeout=0 oscar=4/4 failed=0 timeout=0 scope=synthetic_K4 inputs=20000,23000,27000,30000 output_tokens=64 warmup_pairing=unpaired
+[oscar] PERF_QUEUE peak_running_native=4.0 peak_running_oscar=4.0 peak_waiting_native=1.0 peak_waiting_oscar=2.0 peak_inflight_native=4.0 peak_inflight_oscar=4.0 scope=sampled_1s mtp_acceptance_native=0.980 mtp_acceptance_oscar=0.897 mtp_mean_length_native=3.94 mtp_mean_length_oscar=3.69
+[oscar] PERF_TTFT_MS scope=client_SSE_ms p50_native=8625.75 p50_oscar=14480.99 p50_ratio=1.68 p95_native=13438.43 p95_oscar=24550.78 p95_ratio=1.83
+[oscar] PERF_TPOT_MS scope=client_SSE_ms p50_native=91.57 p50_oscar=183.01 p50_ratio=2.00 p95_native=158.51 p95_oscar=331.58 p95_ratio=2.09
+[oscar] PERF_E2E_MS scope=client_SSE_ms p50_native=14394.94 p50_oscar=26010.72 p50_ratio=1.81 p95_native=14652.95 p95_oscar=26224.76 p95_ratio=1.79
+[oscar] PERF_THROUGHPUT scope=client_wall_tokens_per_s prompt_native=6816.6 prompt_oscar=3811.9 prompt_ratio=0.56 generation_native=17.5 generation_oscar=9.8 generation_ratio=0.56
+[oscar] PERF_VERDICT client_ratio_gate=regressed acceptance=not_established hint=queue_or_prefill_plus_generation; device_cause=unknown
+[oscar] PERF_EVIDENCE native=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/native/report.json oscar=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/oscar/report.json comparison=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/comparison.json
+[oscar] PERF_ERROR prompt_throughput_ratio=0.5592 < 1.0000; generation_throughput_ratio=0.5592 < 1.0000; synthetic-0-20000 ttft_ms=3.9097 > 1.0000; synthetic-0-20000 e2e_ms=1.8418 > 1.0000; synthetic-1-23000 tpot_ms=2.6313 > 1.0000; synthetic-1-23000 e2e_ms=1.8050 > 1.0000 report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/paired-report.json
+[oscar] PERF_RESULT status=failed rc=2 report=/workspace/gpt_new_oscar_kimi/logs/paired-concurrency-20260924T082309.287490Z/paired-report.json
+root@node93:/workspace/gpt_new_oscar_kimi#
+
+但是有严重的精度错误，我自己测了aisbench的longbenchv2，Progress: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 127/127 [20:15<00:00,  9.57s/case]
+POST=127 (0.0/s)  RECV=127 (0.0/s)  FAIL=0 (0.0/s)  FINISH=127 (0.0/s)   
+[2026-09-24 09:18:18,178] [ais_bench] [INFO] Api infer task time elapsed: 1244.43s
+[2026-09-24 09:18:20,685] [ais_bench] [INFO] Inference tasks completed.
+[2026-09-24 09:18:20,686] [ais_bench] [INFO] Starting evaluation tasks...
+[2026-09-24 09:18:20,694] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-09-24 09:18:20,721] [ais_bench] [INFO] Launch TasksMonitor, PID: 42374, Refresh interval: 0.5, Run in background: True
+[W924 09:18:30.703128660 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-09-24 09:18:39,512] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-09-24 09:18:45,899] [ais_bench] [INFO] Running 1-th replica of evaluation
+[2026-09-24 09:18:45,930] [ais_bench] [INFO] Task vllm-api-stream-chat/LongBenchv2: {'accuracy': 48.031496062992126, 'accuracy_easy': 55.81395348837209, 'accuracy_hard': 44.047619047619044, 'accuracy_short': 48.031496062992126}
+[2026-09-24 09:18:45,932] [ais_bench] [INFO] Evaluation task time elapsed: 6.42s
+[2026-09-24 09:18:48,574] [ais_bench] [INFO] Evaluation tasks completed.
+[2026-09-24 09:18:48,574] [ais_bench] [INFO] Summarizing evaluation results...
+dataset        version  metric          mode      vllm-api-stream-chat
+-----------  ---------  --------------  ------  ----------------------
+LongBenchv2     324293  accuracy        gen                      48.03
+LongBenchv2     324293  accuracy_easy   gen                      55.81
+LongBenchv2     324293  accuracy_hard   gen                      44.05
+LongBenchv2     324293  accuracy_short  gen                      48.03
+[2026-09-24 09:18:48,583] [ais_bench] [INFO] write summary to /workspace/outputs/default/20260924_085657/summary/summary_20260924_085657.txt
+[2026-09-24 09:18:48,583] [ais_bench] [INFO] write csv to /workspace/outputs/default/20260924_085657/summary/summary_20260924_085657.csv
+
+
+The markdown format results is as below:
+
+| dataset | version | metric | mode | vllm-api-stream-chat |
+|----- | ----- | ----- | ----- | -----|
+| LongBenchv2 | 324293 | accuracy | gen | 48.03 |
+| LongBenchv2 | 324293 | accuracy_easy | gen | 55.81 |
+| LongBenchv2 | 324293 | accuracy_hard | gen | 44.05 |
+| LongBenchv2 | 324293 | accuracy_short | gen | 48.03 |
+精度有问题
+
+
+
+
+53.54
+62.79
+48.81
+53.54
+
+请你系统性做几件事情，首先git和当前本地，请回退到这个版本fe0e925e7ef78bfb64217a300031502fc4a7b7bc。这个版本的aisbench
+Progress: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 127/127 [22:22<00:00,  9.57s/case]
+POST=127 (0.0/s)  RECV=127 (0.0/s)  FAIL=0 (0.0/s)  FINISH=127 (0.0/s)   
+dataset        version  metric          mode      vllm-api-stream-chat
+-----------  ---------  --------------  ------  ----------------------
+LongBenchv2     324293  accuracy        gen                      53.54
+LongBenchv2     324293  accuracy_easy   gen                      62.79
+LongBenchv2     324293  accuracy_hard   gen                      48.81
+LongBenchv2     324293  accuracy_short  gen                      53.54
+
+你可以发现，经过了你好几次的git commit push迭代，从fe0e925e7ef78bfb64217a300031502fc4a7b7bc再到你最新有错误的34639abe6af4c4a32ede108e2d9114b6e0da9ff5，相同的aisbench，从22:22到20:15，只快了短短2分钟，而且精度还严重有问题。这说明你这几次的commit其实约等于是无效的，因为基线只有8分钟，你从22到20分钟这些你之前认为的改进其实都是徒劳。请你直接回退到fe0e925e7ef78bfb64217a300031502fc4a7b7bc。然后一定要在保证精度的前提下，好好仔细反思，你这几版commit，为什么会出现你自认为会有性能的改善，但其实效果微乎甚微的这样的局面。请你自己真的静下心来好好分析，整个端对端的流程里面，真正拖累速度的，到底是哪些地方。请从第一性原理分析。基线8分钟是不用你任何的oscar的逻辑，可以实现8分钟。但现在用了你oscar的逻辑，就要花22分钟了，那到底是你自己oscar的哪些地方是真正拖累的整个过程，请你把它分析出来，然后给出真正的能追回基线的优化方案，一定要在保证精度的前提下。你要说做不好我依然会回退到fe0e925e7ef78bfb64217a300031502fc4a7b7bc的，所以请你谨慎。

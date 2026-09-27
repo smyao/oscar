@@ -4,6 +4,8 @@ Archive #27/#31-49: real operators, module-owned state, physical-page lifetime,
 and fixed workspaces. #28/#77/#78: imported only after native initialization.
 #86/#97: fingerprinted target rotations and explicit PR draft identity.
 #69/#111: NPU-only production; exact BF16 projection and FP32 rotation.
+#148: fe0 is the accepted precision baseline. Cluster4 is an explicit
+# experimental operator with separate bounded state, never the default route.
 """
 from __future__ import annotations
 
@@ -44,6 +46,7 @@ class WorkspaceGeometry:
     # shapes can use otherwise idle arena rows without enlarging this budget.
     splits: int = 1
     cube_cores: int = 1
+    history_cluster_size: int = 1
 
     def __post_init__(self):
         if any(type(x) is not int or x <= 0 for x in self.__dict__.values()):
@@ -52,6 +55,8 @@ class WorkspaceGeometry:
             raise ValueError("CV query grouping requires integral GQA ratio <= 16")
         if self.head_dim not in (64, 128, 256) or self.splits > 32 or self.cube_cores > 32:
             raise ValueError("unsupported CV workspace geometry")
+        if self.history_cluster_size not in (1, 4):
+            raise ValueError("history cluster size must be 1 or 4")
 
     @property
     def task_count(self):
@@ -74,6 +79,10 @@ class WorkspaceGeometry:
 
     @property
     def cv_bytes(self):
+        if self.history_cluster_size == 4:
+            # Original Q buffer holds group0; extra3 Q +4 FP32 accumulators
+            # and4 independent max/sum arrays. Independent of history length.
+            return self.cube_cores * (1664 * self.head_dim + 33792) * 4
         # Archive #71/#144, D.4: bounded Q128/KV256; acc stays in Vector UB.
         m, b = ATTENTION_QUERY_ROWS, ATTENTION_KV_ROWS
         return self.cube_cores * ((2 * m + 2 * b) * self.head_dim + m * b) * 4
@@ -84,7 +93,8 @@ class WorkspaceGeometry:
         return (n * h * d * 4 * 2 + n * (h + 2 * self.kv_heads) * d * 2
                 + n * h * p * d * 4 + n * h * p * 4
                 + n * h * 8 + self.task_count * (128 + 8)
-                + n * self.kv_heads * 4 + n * h * 4 + n * 16 + self.cv_bytes)
+                + n * self.kv_heads * 4 + n * h * 4 + n * 16 + self.cv_bytes
+                + (self.cube_cores * 8 * 8 if self.history_cluster_size == 4 else 0))
 
 
 class GraphWorkspace:
@@ -114,6 +124,8 @@ class GraphWorkspace:
         self.positions = torch.empty((n,), dtype=torch.int64, device=device)
         self.slots = torch.empty((n,), dtype=torch.int64, device=device)
         self.cv = torch.empty((geometry.cv_bytes,), dtype=torch.uint8, device=device)
+        self.cluster_stats = (torch.empty((geometry.cube_cores, 8), dtype=torch.int64, device=device)
+                              if geometry.history_cluster_size == 4 else None)
 
     def validate(self, tokens, heads, kv_heads, dim):
         g = self.geometry
@@ -166,6 +178,8 @@ class AscendRuntimeProvider:
     def __init__(self, config=None):
         path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
         self.config = dict(config) if config is not None else json.loads(path.read_text())
+        if type(self.config.get("experimental_history_reuse", False)) is not bool:
+            raise OscarReadinessError("experimental_history_reuse must be an explicit boolean")
         self._ready = False
         self.layers: dict[str, LayerState] = {}
         self.workspaces: dict[tuple, GraphWorkspace] = {}
@@ -184,6 +198,9 @@ class AscendRuntimeProvider:
         if os.environ.get("ASCEND_RT_VISIBLE_DEVICES") != expected:
             raise OscarReadinessError("visible NPU selection does not match the current target configuration")
         require_production_ops()
+        if self.config.get("experimental_history_reuse", False):
+            from .ops.loader import require_capabilities
+            require_capabilities({"attention_cv_cluster4_out"})
         import torch
         if not torch.npu.is_available():
             raise OscarReadinessError("OSCAR production requires an available NPU")
@@ -200,7 +217,8 @@ class AscendRuntimeProvider:
         capacity = max(int(self.config["max_num_batched_tokens"]), max(captures, default=0))
         geometry = WorkspaceGeometry(capacity, heads, kv_heads, dim,
                                      int(self.config.get("attention_splits", 1)),
-                                     self._device_cube_cores(device))
+                                     self._device_cube_cores(device),
+                                     4 if self.config.get("experimental_history_reuse", False) else 1)
         key = (str(device), geometry)
         if key not in self.workspaces:
             self.workspaces[key] = GraphWorkspace(geometry, device)

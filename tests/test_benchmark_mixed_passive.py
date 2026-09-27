@@ -13,7 +13,8 @@ from benchmarks.passive import observe
 
 
 def test_passive_observer_captures_only_external_metrics_window(tmp_path):
-    state = {"running": 0, "waiting": 0, "prompt": 0, "generation": 0, "posts": 0}
+    state = {"running": 0, "waiting": 0, "prompt": 0, "generation": 0,
+             "kv": .1, "preemptions": 0, "posts": 0}
     lock = threading.Lock()
 
     class Handler(BaseHTTPRequestHandler):
@@ -26,6 +27,8 @@ def test_passive_observer_captures_only_external_metrics_window(tmp_path):
                 snapshot = dict(state)
             body = (f"vllm:num_requests_running {snapshot['running']}\n"
                     f"vllm:num_requests_waiting {snapshot['waiting']}\n"
+                    f"vllm:kv_cache_usage_perc {snapshot['kv']}\n"
+                    f"vllm:num_preemptions {snapshot['preemptions']}\n"
                     f"vllm:prompt_tokens_total {snapshot['prompt']}\n"
                     f"vllm:generation_tokens_total {snapshot['generation']}\n").encode()
             self.send_response(200)
@@ -43,20 +46,26 @@ def test_passive_observer_captures_only_external_metrics_window(tmp_path):
     server_thread.start()
     stop, ready = threading.Event(), threading.Event()
     result = {}
+    window_callbacks = []
     output = tmp_path / "external.json"
     url = f"http://127.0.0.1:{server.server_port}"
     thread = threading.Thread(target=lambda: result.update(report=observe(url,
         output=output, stop=stop, ready=ready, variant="oscar",
-        sample_interval=.02, idle_seconds=.06, max_seconds=2)), daemon=True)
+        sample_interval=.02, idle_seconds=.06, max_seconds=2,
+        on_window_start=lambda index: window_callbacks.append(("start", index)),
+        on_window_end=lambda index, window: window_callbacks.append(
+            ("end", index, window["preemptions_delta"])) )), daemon=True)
     try:
         thread.start()
         assert ready.wait(1)
         with lock:
             state["running"] = 4
             state["waiting"] = 28
+            state["kv"] = .8
         time.sleep(.1)
         with lock:
-            state.update(running=0, waiting=0, prompt=800000, generation=512)
+            state.update(running=0, waiting=0, prompt=800000, generation=512,
+                         preemptions=2)
         time.sleep(.2)
         stop.set()
         thread.join(2)
@@ -67,6 +76,9 @@ def test_passive_observer_captures_only_external_metrics_window(tmp_path):
         window = report["windows"][0]
         assert window["status"] == "observed"
         assert window["peak_observed_inflight_lower_bound"] == 32
+        assert window["peak_observed_kv_cache_usage_perc"] == .8
+        assert window["preemptions_delta"] == 2
+        assert window_callbacks == [("start", 0), ("end", 0, 2)]
         assert window["counter_delta"]["vllm:prompt_tokens_total"] == 800000
         assert window["throughput_tps"]["prompt"] > 0
         assert window["prompt_length_distribution"] == "unobserved_without_client_artifact"

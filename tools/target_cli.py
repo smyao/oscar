@@ -58,6 +58,11 @@ def main() -> int:
     os.environ["OSCAR_TARGET_CONFIG"]=str(args.config.resolve())
     if args.native:
         os.environ["OSCAR_ENABLED"]="0"
+        if os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL"):
+            # Passive runner/graph timing only; platform/cache routing stays
+            # native and no OSCAR runtime is installed.
+            from oscar_ascend.plugin import register_passive_observer
+            register_passive_observer()
     else:
         from oscar_ascend.plugin import register
         register()

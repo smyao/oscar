@@ -14,7 +14,7 @@ from pathlib import Path
 import sys
 import time
 
-from . import device_timing
+from . import device_timing, passive_timing
 
 PHASES = frozenset({"prepare", "rotate", "fia", "history_window", "merge",
                     "phase1_stores", "stage_restore", "phase0_store",
@@ -135,10 +135,13 @@ def phase(name: str, **fields):
     a clock, creating events, recording scopes or synchronizing any stream.
     Fields must be already available host scalars, never tensor values.
     """
+    passive = passive_timing.active()
     diagnostic = device_timing.active()
-    if not diagnostic and not enabled():
+    if passive and diagnostic:
+        raise RuntimeError("passive async events cannot share a synchronized diagnostic run")
+    if not passive and not diagnostic and not enabled():
         return _NOOP
-    if (not diagnostic and not _enabled("OSCAR_TIMING") and not _enabled("OSCAR_PROFILER")
+    if (not passive and not diagnostic and not _enabled("OSCAR_TIMING") and not _enabled("OSCAR_PROFILER")
             and fields.get("tokens", 0) < _debug_min_tokens()):
         return _NOOP
     if name not in PHASES:
@@ -148,6 +151,8 @@ def phase(name: str, **fields):
             raise TypeError("timing metadata must contain host scalars only")
     if set(fields) & {"t", "phase_end", "host_s", "pid", "ts_unix", "device_ms", "device_evidence", "failed"}:
         raise ValueError("timing metadata cannot replace evidence fields")
+    if passive:
+        return passive_timing.phase(name, **fields)
     return device_timing.DevicePhase(name, fields) if diagnostic else _Phase(name, fields)
 
 

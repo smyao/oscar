@@ -1,0 +1,237 @@
+# 档案 #94/#95/#125/#133/#140-145：一键观察不发推理请求，fe0 pin与
+# candidate/native标签不能虚构已配对的用户负载，图内残差保持missing。
+import json
+from contextlib import contextmanager
+from pathlib import Path
+
+import pytest
+
+from tools import observe_serve
+from tools.phase import PhaseResult
+
+
+def test_fe0_kernel_pin_and_candidate_flag():
+    baseline = observe_serve._source_identity("baseline", {"experimental_history_reuse": False})
+    assert baseline["fe0_production_kernels_match"] is True
+    with pytest.raises(RuntimeError, match="requires experimental_history_reuse"):
+        observe_serve._source_identity("candidate", {"experimental_history_reuse": False})
+    assert observe_serve._source_identity("candidate", {"experimental_history_reuse": True})["variant"] == "candidate"
+
+
+def test_step_summary_keeps_rank_buckets_and_missing_graph_separate(tmp_path):
+    trace = tmp_path / "trace"
+    trace.mkdir()
+    rows = [
+        {"t": "oscar-passive-step", "step_id": "one", "rank": 0, "bucket": "prefill",
+         "status": "pending"},
+        {"t": "oscar-passive-step", "step_id": "one", "rank": 0, "bucket": "prefill",
+         "status": "measured", "step_device_ms": 10.0, "oscar_union_ms": 7.0,
+         "residual_ms": 3.0, "scheduled_prompt_tokens": 512,
+         "scopes": [{"phase": "target_forward", "duration_ms": 9.0},
+                    {"phase": "fia", "duration_ms": 7.0}]},
+        {"t": "oscar-passive-step", "step_id": "two", "rank": 1, "bucket": "decode",
+         "status": "missing", "missing_reason": "graph_replay_has_no_python_oscar_phase_breakdown"},
+    ]
+    (trace / "passive-step-123.jsonl").write_text("\n".join(json.dumps(row) for row in rows) + "\n")
+    report = observe_serve._step_summary(trace, tmp_path / "summary.json", "baseline")
+    assert report["by_rank_bucket"]["0"]["prefill"]["residual_p50_ms"] == 3.0
+    assert report["by_rank_bucket"]["1"]["decode"]["missing"] == 1
+    assert len(report["samples"]) == 2
+
+
+def test_graph_only_step_keeps_whole_graph_time_but_no_attention_residual(tmp_path):
+    trace = tmp_path / "trace"
+    trace.mkdir()
+    record = {"t": "oscar-passive-step", "step_id": "graph-step", "rank": 2,
+        "bucket": "decode", "status": "missing", "step_device_ms": 12.0,
+        "attention_union_ms": None, "oscar_union_ms": None, "residual_ms": None,
+        "missing_reason": "graph_replay_has_no_python_oscar_phase_breakdown",
+        "scopes": [{"phase": "target_forward", "duration_ms": 11.0},
+                   {"phase": "graph_replay", "duration_ms": 10.0}]}
+    (trace / "passive-step-321.jsonl").write_text(json.dumps(record) + "\n")
+    report = observe_serve._step_summary(trace, tmp_path / "summary.json", "baseline")
+    row = report["by_rank_bucket"]["2"]["decode"]
+    assert report["status"] == row["coverage"] == "graph_opaque"
+    assert row["step_p50_ms"] == 12.0
+    assert row["scopes"]["graph_replay"]["p50_ms"] == 10.0
+    assert row["residual_p50_ms"] is None
+    assert "decode=rank2:step12.00ms" in observe_serve._headline(report)
+    assert "residualmissing/graph10.0" in observe_serve._headline(report)
+
+
+def test_plan_makes_no_requests(capsys):
+    assert observe_serve.main(["--plan"]) == 0
+    plan = json.loads(capsys.readouterr().out)
+    assert plan["variant"] == "baseline"
+    assert plan["inference_requests_generated"] == 0
+    assert "managed_service_health" in plan["phases"]
+
+
+def test_candidate_gate_requires_signed_artifact_graph_and_precision(monkeypatch, tmp_path):
+    from oscar_ascend.ops import loader
+    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    config_path = tmp_path / "effective-target.json"
+    config_path.write_text(json.dumps({**config, "experimental_history_reuse": True}))
+    log_dir = tmp_path / "logs"
+    log_dir.mkdir()
+    status = {"phases": []}
+    manifest = {"signature": "abc", "sha256": {"extension": "def"}}
+    monkeypatch.setattr(loader, "validate_build_artifacts", lambda *_args: manifest)
+    monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
+    monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
+    allowed = True
+    def phase(name, command, *, log_dir, **kwargs):
+        assert name == "history-reuse-npu"
+        assert command[command.index("--config") + 1] == str(config_path)
+        report = {"status": "passed", "candidate_evaluation_allowed": allowed,
+            "default_route": "fe0", "graph_capture": "passed", "graph_replay": "passed",
+            "artifact_signature": "abc", "artifact_sha256": manifest["sha256"],
+            "reference_commit": "fe0e925e7ef78bfb64217a300031502fc4a7b7bc",
+            "production_promotion": "blocked_pending_full_model_quality_and_service_performance",
+            "fe0_source_sha256": {
+                "csrc/kernels/attention_cv.cpp": observe_serve.FE0_KERNEL_SHA256["attention_cv.cpp"],
+                "csrc/kernels/oscar_common.h": observe_serve.FE0_KERNEL_SHA256["oscar_common.h"]}}
+        (log_dir / "history-reuse.json").write_text(json.dumps(report))
+        return PhaseResult(name, command, 0, 1.0, False, False, str(log_dir / "gate.log"), True)
+    monkeypatch.setattr(observe_serve, "run_phase", phase)
+    observe_serve._candidate_gate(config_path, config, {}, log_dir, status)
+    assert status["candidate_gate"]["candidate_evaluation_allowed"] is True
+    allowed = False
+    with pytest.raises(RuntimeError, match="lacks exact signed artifact"):
+        observe_serve._candidate_gate(config_path, config, {}, log_dir, status)
+
+
+def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeypatch, tmp_path):
+    source = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    source["experimental_history_reuse"] = False
+    config_path = tmp_path / "target.json"
+    config_path.write_text(json.dumps(source))
+    logs = tmp_path / "logs"
+    observed = []
+    monkeypatch.setattr(observe_serve, "_preflight", lambda path, *_args: observed.append(path))
+    def gate(path, *_args):
+        observed.append(path)
+        raise RuntimeError("candidate graph gate rejected")
+    monkeypatch.setattr(observe_serve, "_candidate_gate", gate)
+    monkeypatch.setattr(observe_serve, "managed_server", lambda *_args, **kwargs:
+                        pytest.fail("candidate service must not start after gate failure"))
+    monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
+    assert observe_serve.run(config_path, logs, "candidate") == 1
+    assert len(observed) == 2 and observed[0] == observed[1] == logs / "effective-target.json"
+    assert json.loads((logs / "effective-target.json").read_text())["experimental_history_reuse"] is True
+    assert json.loads(config_path.read_text())["experimental_history_reuse"] is False
+    status = json.loads((logs / "status.json").read_text())
+    assert status["status"] == "failed"
+    assert status["target_config"]["original_sha256"] != status["target_config"]["effective_sha256"]
+
+
+def test_candidate_child_rc2_reaches_outer_status_without_serving(monkeypatch, tmp_path):
+    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    config_path = tmp_path / "target.json"
+    config_path.write_text(json.dumps(config))
+    logs = tmp_path / "logs"
+    monkeypatch.setattr(observe_serve, "_preflight", lambda *_args: None)
+    monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
+    monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
+    monkeypatch.setattr(observe_serve, "run_phase", lambda name, command, *, log_dir, **kwargs:
+        PhaseResult(name, command, 2, 1.0, False, False, str(log_dir / "gate.log"), True))
+    monkeypatch.setattr(observe_serve, "managed_server", lambda *_args, **kwargs:
+                        pytest.fail("candidate service must not start after rc2"))
+    monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
+    assert observe_serve.run(config_path, logs, "candidate") == 2
+    state = json.loads((logs / "status.json").read_text())
+    assert state["failed_phase"] == "history-reuse-npu"
+    assert state["returncode"] == 2
+    assert state["candidate_resource_release"]["status"] == "passed"
+
+
+def test_managed_service_only_observes_external_load(monkeypatch, tmp_path):
+    from benchmarks import passive
+    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    config["experimental_history_reuse"] = False
+    config_path = tmp_path / "target.json"
+    config_path.write_text(json.dumps(config))
+    logs = tmp_path / "logs"
+    calls = []
+
+    class Server:
+        base_url = "http://127.0.0.1:8989"
+        trace_dir = tmp_path / "trace"
+        def check_alive(self):
+            raise KeyboardInterrupt("test stop after READY")
+
+    @contextmanager
+    def managed(_config, _path, *, log_dir, lifecycle, native):
+        calls.append(("managed", native))
+        Server.trace_dir.mkdir()
+        lifecycle["trace_dir"] = str(Server.trace_dir)
+        yield Server()
+        # This record appears only after the server context exits. The final
+        # summary must be reread after cleanup, not frozen while it is live.
+        (Server.trace_dir / "passive-step-99.jsonl").write_text(json.dumps({
+            "t": "oscar-passive-step", "step_id": "late", "rank": 0,
+            "bucket": "prefill", "status": "measured", "step_device_ms": 5.0,
+            "attention_union_ms": 2.0, "oscar_union_ms": 2.0,
+            "residual_ms": 3.0, "scopes": []}) + "\n")
+        lifecycle["cleanup_complete"] = True
+
+    def passive_only(_url, *, stop, ready, output, on_window_end, **kwargs):
+        calls.append(("passive", kwargs["variant"]))
+        ready.set()
+        stop.wait(1)
+        return {"status": "not_run", "windows": [], "performance_acceptance": "not_run"}
+
+    monkeypatch.setattr(observe_serve, "_preflight", lambda *args: calls.append(("preflight",)))
+    monkeypatch.setattr(observe_serve, "managed_server", managed)
+    monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {"status": "observed"})
+    monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
+    monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
+    monkeypatch.setattr(passive, "observe", passive_only)
+    assert observe_serve.run(config_path, logs, "baseline") == 0
+    assert ("managed", False) in calls and ("passive", "oscar") in calls
+    assert json.loads((logs / "status.json").read_text())["status"] == "stopped"
+    assert json.loads((logs / "summary.json").read_text())["status"] == "observed"
+    assert json.loads((logs / "status.json").read_text())["step_evidence"]["samples"][0]["step_id"] == "late"
+
+
+def test_cleanup_resource_error_preserves_server_rc_and_late_summary(monkeypatch, tmp_path):
+    from benchmarks import passive
+    config_path = tmp_path / "target.json"
+    config_path.write_text((observe_serve.ROOT / "configs/target.json").read_text())
+    logs = tmp_path / "logs"
+    trace = tmp_path / "trace"
+    class ServerFailure(RuntimeError):
+        returncode = 7
+        phase = "serve"
+    class Server:
+        base_url = "http://127.0.0.1:8989"
+        trace_dir = trace
+        def check_alive(self):
+            raise KeyboardInterrupt("test stop")
+    @contextmanager
+    def managed(_config, _path, *, lifecycle, **kwargs):
+        trace.mkdir()
+        lifecycle["trace_dir"] = str(trace)
+        yield Server()
+        (trace / "passive-step-1.jsonl").write_text(json.dumps({
+            "t": "oscar-passive-step", "step_id": "late", "rank": 0,
+            "bucket": "prefill", "status": "measured", "step_device_ms": 4.0,
+            "attention_union_ms": 1.0, "oscar_union_ms": 1.0,
+            "residual_ms": 3.0, "scopes": []}) + "\n")
+        lifecycle["cleanup_complete"] = True
+        raise ServerFailure("owned server rc7")
+    def observe(_url, *, stop, ready, **kwargs):
+        ready.set(); stop.wait(1)
+        return {"status": "not_run", "windows": []}
+    monkeypatch.setattr(observe_serve, "_preflight", lambda *args: None)
+    monkeypatch.setattr(observe_serve, "managed_server", managed)
+    monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
+    monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs:
+                        (_ for _ in ()).throw(OSError("resource observer unavailable")))
+    monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
+    monkeypatch.setattr(passive, "observe", observe)
+    assert observe_serve.run(config_path, logs, "baseline") == 7
+    state = json.loads((logs / "status.json").read_text())
+    assert state["failed_phase"] == "serve" and state["returncode"] == 7
+    assert state["resource_release"]["status"] == "failed"
+    assert state["step_evidence"]["samples"][0]["step_id"] == "late"

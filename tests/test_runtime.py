@@ -68,6 +68,25 @@ def test_workspace_byte_account_includes_all_live_buffers():
     assert geometry.total_bytes < 600 * 1024**2
 
 
+def test_cluster4_state_is_explicit_bounded_and_includes_counter_buffer():
+    baseline = WorkspaceGeometry(16384, 6, 1, 256, cube_cores=20)
+    candidate = replace(baseline, history_cluster_size=4)
+    assert baseline.history_cluster_size == 1
+    assert baseline.cv_bytes == 20 * 917504
+    assert candidate.cv_bytes == 20 * 1839104
+    assert candidate.total_bytes - baseline.total_bytes == 20 * (1839104 - 917504 + 64)
+    assert replace(candidate, tokens=128).cv_bytes == candidate.cv_bytes
+    with pytest.raises(ValueError, match="cluster size"):
+        replace(baseline, history_cluster_size=2)
+
+
+@pytest.mark.parametrize("value", [1, "true", None])
+def test_candidate_route_requires_explicit_boolean(value):
+    with pytest.raises(runtime_api.OscarReadinessError, match="explicit boolean"):
+        AscendRuntimeProvider({"experimental_history_reuse": value})
+    assert AscendRuntimeProvider({}).config.get("experimental_history_reuse", False) is False
+
+
 @pytest.mark.parametrize("tokens,expected", [(1, 20), (4, 20), (8, 20), (16, 20),
                                             (64, 5), (128, 3), (512, 1), (16384, 1)])
 def test_shape_splits_use_measured_cube_parallelism_without_more_workspace(tokens, expected):
@@ -168,7 +187,8 @@ def test_online_forward_contains_no_host_request_loop_or_tensor_readback():
 
 
 @pytest.mark.parametrize("capacity,cube_cores,expected_splits", [(8, 1, 1), (64, 20, 8)])
-def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits):
+@pytest.mark.parametrize("cluster_size", [1, 4])
+def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, cluster_size):
     """Host ABI exercise only: fake ops establish ordering, never accuracy."""
     backend = types.ModuleType("vllm.v1.attention.backend")
     backend.AttentionImpl = type("AttentionImpl", (), {})
@@ -179,7 +199,9 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         spec.loader.exec_module(module)
     n, h, hk, d, parts = 8, 4, 1, 64, 3
     w = object.__new__(GraphWorkspace)
-    w.geometry = WorkspaceGeometry(capacity, h, hk, d, cube_cores=cube_cores)
+    w.geometry = WorkspaceGeometry(capacity, h, hk, d, cube_cores=cube_cores,
+                                   history_cluster_size=cluster_size)
+    w.cluster_stats = torch.empty((cube_cores, 8), dtype=torch.int64) if cluster_size == 4 else None
     w.query_input = torch.empty(capacity, h, d, dtype=torch.bfloat16)
     w.key_input = torch.empty(capacity, hk, d, dtype=torch.bfloat16)
     w.value_input = torch.empty_like(w.key_input)
@@ -224,6 +246,12 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             args[12].zero_()
             args[13].zero_()
 
+        def attention_cv_cluster4_out(self, *args):
+            assert cluster_size == 4
+            assert args[15] is w.cluster_stats
+            self.attention_cv_out(*(args[:15] + args[16:]))
+            calls[-1] = "cluster4"
+
         def merge_lse_out(self, partial, lse, output, output_lse, status):
             calls.append("merge")
             assert partial.shape == (n * h, 3 * expected_splits, d)
@@ -262,4 +290,4 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     result = impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),
                           q, k, value, packed, replace(from_common(common), is_draft=True), output)
     assert result is output and bool(torch.all(result == 7))
-    assert calls == ["prepare", "rotate", "cv", "merge", "store", "guard"]
+    assert calls == ["prepare", "rotate", "cluster4" if cluster_size == 4 else "cv", "merge", "store", "guard"]

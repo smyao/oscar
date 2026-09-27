@@ -33,6 +33,7 @@ class _Patch:
 _patches: list[_Patch] = []
 _finder = None
 _enabled = False
+_passive_only = False
 
 
 def _clear_loaded_selector_cache() -> None:
@@ -141,11 +142,96 @@ def _patch_runner(module: ModuleType) -> None:
     _patch(cls, "_allocate_kv_cache_tensors", allocate)
     _patch(cls, "_reshape_kv_cache_tensors", reshape)
     _patch(cls, "_dummy_run", dummy_run)
+    _patch_passive_runner(module)
+
+
+def _patch_passive_runner(module: ModuleType) -> None:
+    """Observe native runner boundaries without touching their arguments."""
+    if not os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL"):
+        return
+    cls = module.NPUModelRunner
+
+    def execute(original):
+        def wrapped(runner, scheduler_output, *args, **kwargs):
+            from . import passive_timing
+            passive_timing.begin_step(scheduler_output)
+            try:
+                result = original(runner, scheduler_output, *args, **kwargs)
+            except BaseException as error:
+                passive_timing.end_step(error)
+                raise
+            if result is not None:
+                passive_timing.end_step()
+            return result
+        return wrapped
+
+    def sample(original):
+        def wrapped(runner, *args, **kwargs):
+            from . import passive_timing
+            try:
+                result = original(runner, *args, **kwargs)
+            except BaseException as error:
+                passive_timing.end_step(error)
+                raise
+            passive_timing.end_step()
+            return result
+        return wrapped
+
+    def forward(original):
+        def wrapped(runner, *args, **kwargs):
+            from . import passive_timing
+            with passive_timing.phase("target_forward"):
+                return original(runner, *args, **kwargs)
+        return wrapped
+
+    def draft(original):
+        def wrapped(runner, *args, **kwargs):
+            from . import passive_timing
+            with passive_timing.phase("draft_proposal"):
+                return original(runner, *args, **kwargs)
+        return wrapped
+
+    _patch(cls, "execute_model", execute)
+    _patch(cls, "sample_tokens", sample)
+    _patch(cls, "_model_forward", forward)
+    _patch(cls, "propose_draft_token_ids", draft)
+
+
+def _patch_mtp_forward(module: ModuleType) -> None:
+    """Measure the actual Qwen3.5 draft model call within draft proposal."""
+    if not os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL"):
+        return
+    cls = getattr(module, "Qwen3_5MTP", None)
+    if cls is None:
+        return
+    def draft_model(original):
+        def wrapped(model, *args, **kwargs):
+            from . import passive_timing
+            with passive_timing.phase("draft_forward"):
+                return original(model, *args, **kwargs)
+        return wrapped
+    _patch(cls, "forward", draft_model)
+
+
+def _patch_native_attention(module: ModuleType) -> None:
+    """Record native attention, including CP inheritance and C8 override."""
+    if not os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL"):
+        return
+    def observe(original):
+        def wrapped(impl, *args, **kwargs):
+            from . import passive_timing
+            with passive_timing.phase("native_attention", backend=type(impl).__name__):
+                return original(impl, *args, **kwargs)
+        return wrapped
+    _patch(module.AscendAttentionBackendImpl, "forward", observe)
+    _patch(module.AscendC8AttentionBackendImpl, "forward", observe)
 
 
 _callbacks = {
     "vllm_ascend.platform": _patch_platform,
     "vllm_ascend.worker.model_runner_v1": _patch_runner,
+    "vllm_ascend.attention.attention_v1": _patch_native_attention,
+    "vllm.model_executor.models.qwen3_5_mtp": _patch_mtp_forward,
 }
 
 
@@ -165,10 +251,16 @@ def _patch_graph_evidence(module):
             # batch. Captured kernels stay unchanged; time whole replay from
             # outside its graph. Eager attention has its own phase events.
             from . import device_timing
+            from . import passive_timing
             from .integration.dummy_context import is_native_dummy_run
             if not is_native_dummy_run():
                 device_timing.refresh()
-            if replay and device_timing.active():
+            if replay and passive_timing.active():
+                with passive_timing.phase("graph_replay", tokens=getattr(descriptor, "num_tokens", None),
+                                          requests=getattr(descriptor, "num_reqs", None),
+                                          graph_scope="whole_model_graph"):
+                    result=original(wrapper,*args,**kwargs)
+            elif replay and device_timing.active():
                 from .timing import phase
                 with phase("graph_replay", tokens=getattr(descriptor, "num_tokens", None),
                            requests=getattr(descriptor, "num_reqs", None),
@@ -199,6 +291,12 @@ _callbacks["vllm_ascend.compilation.acl_graph"]=_patch_graph_evidence
 
 
 def _apply_callback(callback, module: ModuleType) -> None:
+    if _passive_only:
+        if callback is _patch_runner:
+            callback = _patch_passive_runner
+        elif callback not in {_patch_graph_evidence, _patch_mtp_forward,
+                              _patch_native_attention}:
+            return
     first = len(_patches)
     try:
         callback(module)
@@ -291,9 +389,28 @@ def register() -> None:
         raise
 
 
+def register_passive_observer() -> None:
+    """Instrument an explicitly native service without routing OSCAR FULL."""
+    global _enabled, _finder, _passive_only
+    if not os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL") or _enabled:
+        return
+    _passive_only = True
+    _enabled = True
+    _finder = _NativeSeamFinder()
+    sys.meta_path.insert(0, _finder)
+    try:
+        for name, callback in _callbacks.items():
+            module = sys.modules.get(name)
+            if module is not None:
+                _apply_callback(callback, module)
+    except BaseException:
+        unregister()
+        raise
+
+
 def unregister() -> None:
     """Restore exact original descriptors; refuse to erase another plugin."""
-    global _enabled, _finder
+    global _enabled, _finder, _passive_only
     for patch in _patches:
         if patch.owner.__dict__.get(patch.name) is not patch.replacement:
             raise OscarHookConflictError(f"cannot restore externally changed {patch.owner.__name__}.{patch.name}")
@@ -307,6 +424,7 @@ def unregister() -> None:
         sys.meta_path.remove(_finder)
     _finder = None
     _enabled = False
+    _passive_only = False
     _clear_loaded_selector_cache()
 
 

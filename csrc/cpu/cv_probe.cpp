@@ -7,6 +7,9 @@
 // device completion, graph capture/replay, timing or the 32K performance gate.
 // Archive #129/#144: large task-table causal bounds use the production M/B
 // geometry without a dense 16K oracle; shared workspace sizing stays exact.
+// Archive #126/#129/#140-145 and D.4: cluster4 mode executes both the fe0
+// kernel and the separate experimental C4 kernel on identical bytes, compares
+// partial/LSE/status exactly, then checks the independent frozen dense oracle.
 #include "tikicpulib.h"
 #include <algorithm>
 #include <cmath>
@@ -14,6 +17,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -24,6 +28,10 @@ extern "C" void oscar_prepare_attention_tasks_kernel(uint8_t*,uint8_t*,uint8_t*,
 extern "C" void oscar_attention_cv_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
+extern "C" void oscar_attention_cv_cluster4_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    uint8_t*,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
 extern "C" void oscar_merge_lse_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     int64_t,int64_t,int64_t);
@@ -181,6 +189,8 @@ int main(int argc,char** argv) {
  try {
   if(argc!=3)throw std::runtime_error("usage: oscar_cv_cpu mode case_directory");
   const std::string mode=argv[1];
+  const bool clusterMode=mode=="cluster4" || mode=="cluster4_required" ||
+      mode=="cluster4_bad_meta" || mode=="cluster4_nan_query";
   if(mode=="tasks_causal") {CheckLargeCausalTasks();return 0;}
   CheckPaddedMetadata();
   CheckSlotContext();
@@ -249,11 +259,70 @@ int main(int argc,char** argv) {
     const uint16_t nanBf16=0x7fc0;const float nanFloat=std::nanf("");
     std::memcpy(q.ptr,&nanBf16,2);std::memcpy(qr.ptr,&nanFloat,4);
   }
+  if(mode=="cluster4_bad_meta") {
+    if(n<168 || context<=100 || hk!=1)
+      throw std::runtime_error("cluster4_bad_meta requires the mature q168/hk1 fixture");
+    const int64_t offset=prefix+stride+100*(d/2+8)+d/4;
+    std::memset(raw.ptr+offset,0,2); // live K scale in shared history.
+  }
+  if(mode=="cluster4_nan_query") {
+    if(n<168 || hk!=1)
+      throw std::runtime_error("cluster4_nan_query requires the mature q168/hk1 fixture");
+    const float nanFloat=std::nanf("");
+    const int64_t offset=(105*hq)*d*4; // grouped leader 1, head 0 only.
+    std::memcpy(qr.ptr+offset,&nanFloat,4);
+  }
   AscendC::SetKernelMode(KernelMode::MIX_MODE);
   ICPU_RUN_KF(oscar_attention_cv_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,raw.ptr,
       table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,partial.ptr,partLse.ptr,status.ptr,
       workspace.ptr,n,hq,hk,d,requests,int64_t{8},tasksCount,b,nb,prefix,stride,
       windowRows*hk*d,windowRows,sink,recent,spec,splits,1.0F/std::sqrt(float(d)));
+  if(clusterMode) {
+    Gm candidatePartial(partial.size),candidateLse(partLse.size),
+       candidateStatus(status.size),candidateWorkspace(
+           cores*oscar_ascend::attention_cluster4_workspace_per_core(d)),
+       stats(cores*8*sizeof(int64_t));
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
+    ICPU_RUN_KF(oscar_attention_cv_cluster4_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,raw.ptr,
+        table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,candidatePartial.ptr,candidateLse.ptr,
+        candidateStatus.ptr,candidateWorkspace.ptr,stats.ptr,n,hq,hk,d,requests,
+        int64_t{8},tasksCount,b,nb,prefix,stride,windowRows*hk*d,windowRows,
+        sink,recent,spec,splits,1.0F/std::sqrt(float(d)));
+    for(const auto* pair: {&candidatePartial,&candidateLse,&candidateStatus}) {
+      const Gm& baseline=pair==&candidatePartial?partial:(pair==&candidateLse?partLse:status);
+      if(pair->size!=baseline.size || std::memcmp(pair->ptr,baseline.ptr,pair->size)!=0) {
+        size_t first=0;while(first<pair->size && pair->ptr[first]==baseline.ptr[first])++first;
+        throw std::runtime_error("cluster4 differs from fe0 bytewise at output byte "+
+            std::to_string(first));
+      }
+    }
+    int64_t totals[8]={};
+    for(int64_t core=0;core<cores;++core)for(int32_t field=0;field<8;++field) {
+      int64_t x;std::memcpy(&x,stats.ptr+(core*8+field)*8,8);
+      if(x<0)throw std::runtime_error("negative cluster4 diagnostic counter");
+      totals[field]+=x;
+    }
+    if(totals[1]!=4*totals[0] || totals[4]!=3*totals[3] ||
+        totals[6]!=totals[1] || totals[7]!=totals[0])
+      throw std::runtime_error("cluster4 counters violate ownership/reuse identities");
+    if(mode!="cluster4" && (totals[0]==0 || totals[3]==0))
+      throw std::runtime_error("cluster4 fixture did not execute a shared history tile");
+    std::cout<<"cluster4_clusters="<<totals[0]<<" grouped="<<totals[1]
+             <<" solo="<<totals[2]<<" shared_kv_tiles="<<totals[3]
+             <<" avoided_kv_loads="<<totals[4]<<std::endl;
+  }
+  if(mode=="cluster4_bad_meta" || mode=="cluster4_nan_query") {
+    const int32_t wanted=mode=="cluster4_bad_meta"?3:2;
+    const int64_t taskId=105*hk*segments; // mature grouped leader, source0.
+    int32_t left=0,right=0;
+    std::memcpy(&left,status.ptr+(taskId*2)*4,4);
+    std::memcpy(&right,status.ptr+(taskId*2+1)*4,4);
+    if(left!=wanted && right!=wanted)
+      throw std::runtime_error("cluster4 error fixture did not reach grouped leader");
+    std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\""
+             <<mode<<"\",\"status\":\"passed\"}"<<std::endl;
+    return 0;
+  }
   if(std::string(argv[1])=="bad_tag" || std::string(argv[1])=="nan_query" ||
       std::string(argv[1])=="bad_meta" || std::string(argv[1])=="nan_value") {
     const int32_t wanted=std::string(argv[1])=="bad_tag"?4:(std::string(argv[1])=="bad_meta"?3:2);

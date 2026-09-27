@@ -104,3 +104,5 @@
 #145：cf97bb1真NPU CV门在D64/Q6/context511出现1024/2304 NaN，候选尚未进入模型性能比较。当前源码确认两个32行score块之间缺MTE3→MTE2所有权依赖；只替换这道事件方向，保留数学与冻结容差。重复NaN工作区回归覆盖36/66/102行。相关主机回归24 passed、28 NPU skipped；目标CV数值、图、性能必须由完整`git pull --ff-only && bash scripts/probe_concurrency.sh`重新验收，不能以CPU-debug通过解锁。C04/C05/E01仍未完成，E06仍失败/待复验。
 
 #145本机复验：CANN ascend910b4编译通过，官方CPU-debug38/38；证据`reports/cv_score_handoff_validation.json`。该模拟也能通过修复前的同形Q6，故真机数值与完整K4速度结论仍由下一轮一键日志确认。
+
+#148：用户确认fe0精度正确（自有LongBenchv2为53.54%、22:22）；后续34639ab为48.03%、20:15，已按用户要求回到fe0，不保留这些后续数学改动。新C4算子只复用四组完全同域历史的解包，fe0原生产kernel逐字节不变、默认仍fe0。CANN ascend910b4编译和官方CPU-debug51/51通过；相关主机95 passed、28 NPU skipped、4 subtests passed。证据`reports/history_reuse_cpu_validation.json`及`reports/target_longbench_regression.txt`。两个过重CPU模拟器配置超时记录保留，不写成NPU错误。新入口`install_observe_serve.sh --variant candidate`先过同输入逐位/冻结oracle/图/速度门再启动候选；被动观察用户负载，不自动重跑127题。C04/C05/E01的新候选NPU/图仍待测，E06追平原生仍未通过；用户已认可的fe0精度不因本候选未测而撤销。42个稳定checkpoint编号不变。设计、计时口径与一键命令见`docs/history_reuse_experiment.md`。

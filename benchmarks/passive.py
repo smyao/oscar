@@ -20,9 +20,9 @@ from tools.phase import atomic_json
 from tools.service_probe import _http, parse_gauges, parse_mtp_metrics
 
 
+COUNTERS = ("vllm:prompt_tokens_total", "vllm:generation_tokens_total")
 METRICS = ("vllm:num_requests_running", "vllm:num_requests_waiting",
-           "vllm:prompt_tokens_total", "vllm:generation_tokens_total")
-COUNTERS = METRICS[2:]
+           "vllm:kv_cache_usage_perc", "vllm:num_preemptions", *COUNTERS)
 
 
 def _snapshot(raw, path):
@@ -62,6 +62,12 @@ def _close_window(window, raw, values, when, *, output, end_reason, mtp_after):
             window["status"] = "failed"
         elif delta is None and window["status"] == "observed":
             window["status"] = "partial"
+    before_preemptions = window.get("preemptions_before")
+    after_preemptions = values.get("vllm:num_preemptions")
+    window["preemptions_delta"] = (after_preemptions-before_preemptions
+        if before_preemptions is not None and after_preemptions is not None else None)
+    if window["preemptions_delta"] is not None and window["preemptions_delta"] < 0:
+        window["status"] = "failed"
     window["throughput_tps"] = {
         "prompt": None if window["counter_delta"][COUNTERS[0]] is None else
             window["counter_delta"][COUNTERS[0]] / wall,
@@ -76,6 +82,9 @@ def _close_window(window, raw, values, when, *, output, end_reason, mtp_after):
     samples = window["samples"]
     window["peak_observed_running"] = max((s["running"] for s in samples if "running" in s), default=None)
     window["peak_observed_waiting"] = max((s["waiting"] for s in samples if "waiting" in s), default=None)
+    window["peak_observed_kv_cache_usage_perc"] = max(
+        (s["kv_cache_usage_perc"] for s in samples if s.get("kv_cache_usage_perc") is not None),
+        default=None)
     window["peak_observed_inflight_lower_bound"] = max(
         (s["running"] + s["waiting"] for s in samples if "running" in s), default=None)
     window["client_request_count"] = "unobserved_without_client_artifact"
@@ -85,7 +94,8 @@ def _close_window(window, raw, values, when, *, output, end_reason, mtp_after):
 
 
 def observe(url, *, output, stop=None, sample_interval=1.0, idle_seconds=15.0,
-            await_seconds=None, max_seconds=None, variant="oscar", ready=None):
+            await_seconds=None, max_seconds=None, variant="oscar", ready=None,
+            on_window_start=None, on_window_end=None, announce_ready=True):
     """Poll metrics; detect one or more external traffic windows without requests.
 
     `stop` allows the formal service supervisor to terminate this observer.
@@ -145,7 +155,8 @@ def observe(url, *, output, stop=None, sample_interval=1.0, idle_seconds=15.0,
             if active is None and not busy and not ready_announced:
                 if ready is not None:
                     ready.set()
-                print(f"[oscar-observe] OBSERVER_READY url={url} report={output}; start your existing load client", flush=True)
+                if announce_ready:
+                    print(f"[oscar-observe] OBSERVER_READY url={url} report={output}; start your existing load client", flush=True)
                 ready_announced = True
             if active is None and busy:
                 index = len(report["windows"])
@@ -153,23 +164,30 @@ def observe(url, *, output, stop=None, sample_interval=1.0, idle_seconds=15.0,
                 active = {"index": index, "status": "observing", "start_unix": now,
                     "partial_start": prior is None,
                     "counter_before": {key: before_values.get(key) for key in COUNTERS},
+                    "preemptions_before": before_values.get("vllm:num_preemptions"),
                     "mtp_before": parse_mtp_metrics(before_raw), "samples": [],
                     "sampling_errors": [],
                     "metrics_before": _snapshot(before_raw,
                         output.parent / f"{output.stem}-window{index}-before.prom")}
                 report["windows"].append(active)
                 report["status"] = "observing"
+                if on_window_start is not None:
+                    on_window_start(index)
                 print(f"[oscar-observe] external traffic window={index} started report={output}", flush=True)
             if active is not None:
                 sample = {"unix": now, "elapsed_seconds": now - active["start_unix"],
                           "running": values[METRICS[0]], "waiting": values[METRICS[1]],
+                          "kv_cache_usage_perc": values.get("vllm:kv_cache_usage_perc"),
                           "prompt_tokens_total": values.get(COUNTERS[0]),
-                          "generation_tokens_total": values.get(COUNTERS[1])}
+                          "generation_tokens_total": values.get(COUNTERS[1]),
+                          "num_preemptions_total": values.get("vllm:num_preemptions")}
                 active["samples"].append(sample)
                 quiet_since = None if busy else (now if quiet_since is None else quiet_since)
                 if quiet_since is not None and now - quiet_since >= idle_seconds:
                     _close_window(active, raw, values, quiet_since, output=output,
                                   end_reason="idle_after_activity", mtp_after=parse_mtp_metrics(raw))
+                    if on_window_end is not None:
+                        on_window_end(active["index"], active)
                     print(f"[oscar-observe] external window={active['index']} "
                           f"status={active['status']} peak_inflight_observed={active['peak_observed_inflight_lower_bound']} "
                           f"prompt_tps={active['throughput_tps']['prompt']} "
@@ -185,6 +203,8 @@ def observe(url, *, output, stop=None, sample_interval=1.0, idle_seconds=15.0,
             raw, values = prior
             _close_window(active, raw, values, time.time(), output=output,
                           end_reason="observer_stopped_while_busy", mtp_after=parse_mtp_metrics(raw))
+            if on_window_end is not None:
+                on_window_end(active["index"], active)
         if report["windows"]:
             states = {window["status"] for window in report["windows"]}
             report["status"] = ("failed" if "failed" in states else

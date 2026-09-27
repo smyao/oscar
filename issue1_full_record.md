@@ -28484,3 +28484,19 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **回归与一键边界**：保留失败的冻结oracle病例，新增D64/Q6、D128/Q11、D256/Q17在context511下重复3次重填NaN工作区的NPU回归，覆盖前lane第二块、后lane首块及第二块；失败先打印最多8个token/head/segment位置与分段坏行数。CPU导出同形poison边界。本地CANN/CPU结果单独记账，目标复验仍须同一条`git pull --ff-only && bash scripts/probe_concurrency.sh`，依次经过数值、算子热点、原生/OSCAR长请求K4和资源释放门。任何门失败仍停止，完整性能流程未被缩成数值测试。
 
 **本机复验结果**：同一最终kernel SHA `febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4` 通过CANN ascend910b4编译；官方CPU-debug 38/38通过（含新增3个poison边界），相关主机24 passed/28 NPU skipped。证据`reports/cv_score_handoff_validation.json`和`reports/cv_score_handoff_cpu_debug.json`。修订后的目标NPU/图/性能尚未执行，不把这些本机结果写成真机已修好。
+
+## [148] 真机条目（gpt_new_oscar_kimi，2026-09-27 用户回传）· 局部加速未追平且模型精度下降，回到 fe0 后独立验证历史复用
+
+**编号说明**：用户要求回退到fe0后，本工作树恢复到#145；#146/#147位于被回退的本项目提交历史，不复用其编号。本条保留用户新提供的真实LongBenchv2退化，后面的本地实验明确单列，不写成目标机结果。
+
+**原始证据与用户裁决**：完整材料存于`reports/target_longbench_regression.txt`。用户提供fe0e925的自有127请求结果为22:22、accuracy53.54%，34639ab为20:15、accuracy48.03%，两轮均127/127、FAIL=0。用户明确确认fe0精度OK，并要求撤销后续修改；本轮开始前已将开发分支和稳定分支恢复到fe0。HTTP完成和独立算子数值门通过不能抵销模型结果退化。尚无逐请求输出/logits，不能从7题净差直接确定是哪一道数学改动造成；因此不捏造数值根因，也不保留被撤销的改法。
+
+**性能证据边界**：34639ab材料中的CV局部中位数183.133→161.942ms、decode14.240→11.937ms，K4原生14.7s/OSCAR26.2s，与用户完整负载8分钟/22:22的计时范围不同。不得用这些局部百分比相加、换算862秒归因，也不得把不同核心的原始tick最大值相加成wall。完整负载追平约480s需要从1342s消掉约862s、64.2%；只消除metadata/行检查等局部工作没有证明能达到此预算。
+
+**当前fe0中已确认的结构性重复**：M128/GQA6每组21个query，组间独立重扫相同历史。256KV/D256单元读取34816B packed K/V及元数据，再发布524288B FP32 K/V给Cube；相邻组重复同样的INT2展开与GM通信。分块使峰值workspace有界，却没有消除累计重复工作。这里是源码字节账，不是实测HBM流量。该路径与#144带历史prefill CV热点一致；仍需要用户相同负载的阶段计时确定其端到端占比，不能断言它解释全部差距。
+
+**新实验与D.4四问**：①属于历史INT2恢复与CV；②D.4失败方案仅全历史dequant已6499.8–6655.1ms/卡，高于原生整段prefill，故必须减少重复恢复而非继续修边角；③独立C4算子仅让同request/head/split/context/kvbegin/kvend、kvend=context的四个完整query组共用一次有界KV256解包，其余任务仍原OSCAR INT2计算；四组各自保存FP32累积，原QK/PV/softmax/旋转/有限性检查和KV顺序不变。尤其不把不同域union后mask，因为fe0在mask前检查有限性。原生产kernel逐字节保持fe0，候选只通过显式选项启用；④合格簇展开次数最多4→1，QK/PV算量不变且增加FP32状态通信、调度扫描；新workspace每Cube D256为1839104B，旧917504B。以上不足以宣称净提速，必须逐位与设备速度门判决。
+
+**验收入口**：`git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate`安装/编译、原有NPU原语/CV/旋转/current门、候选fe0同输入逐位/冻结oracle/图回放/速度门和资源清理后才启动服务。候选门失败即打印错误并保留真实rc，不切换其他路径。baseline保留fe0，native禁用OSCAR数学路径；无自动推理POST，无私有数据集生成，无自动重跑127题。被动采样按rank/step/stream求事件区间并集，覆盖target/MTP/attention/整图，未完成Event不强制同步，图内和跨stream不明细项写missing。该稀疏采样仍可能有扰动，不能替代最终无观测速度验收。
+
+**本地证据，非新真机结论**：CANN ascend910b4编译通过，官方CPU-debug51/51通过，含C4实际参与的逐字节partial/LSE/status、独立oracle、非法共享metadata和单组QR NaN。同一D256/Hkv2/q168/context641的2/20核心CPU模拟器配置分别达到120s；保留超时，以D64长多tile、D128双head与D256大维度的互补病例验证，未提高时限。证据`reports/history_reuse_cpu_validation.json`。新候选的真NPU逐位、图、模型质量和追平8分钟均待用户执行；用户已认可的fe0精度保持有效。

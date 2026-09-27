@@ -12,6 +12,8 @@ status still face the independent frozen oracle before a speed claim.
 score-buffer handoff; CPU-debug cannot certify asynchronous DMA ordering.
 D.4: no full-history allocation in production; only this test oracle may
 materialize history. Tests do not turn CPU results into NPU/performance evidence.
+#148: fe0 remains the trusted numerical baseline; separate C4 CPU cases
+compare all partial/LSE/status bits and require positive cluster engagement.
 """
 import json
 import math
@@ -299,15 +301,20 @@ def export_cpu_debug_goldens(directory):
                                   (64, 129, 0, 1),
                                   (64, 33, 511, 2), (128, 17, 511, 2), (256, 17, 511, 2),
                                   (256, 21, 511, 1), (256, 22, 511, 1), (128, 43, 511, 1),
-                                  (128, 11, 511, 1), (256, 17, 511, 1)]:
+                                  (128, 11, 511, 1), (256, 17, 511, 1),
+                                  (64, 168, 641, 1), (128, 168, 65, 2), (256, 168, 65, 1),
+                                  (64, 147, 641, 1)]:
         data, output, lse = _case(dim, qlen, context, hk)
         case = directory / (f"d{dim}_q{qlen}_c{context}" + (f"_hk{hk}" if hk!=1 else ""))
         case.mkdir(exist_ok=True)
         for key, value in {**data, "expected_output": output, "expected_lse": lse}.items():
             if isinstance(value, torch.Tensor):
                 (case / f"{key}.bin").write_bytes(bytes(value.contiguous().view(torch.uint8).flatten().tolist()))
+        # #129/#148: this larger C4/Hkv2 simulator case uses the target's
+        # 20-Cube work distribution; do not stretch the per-case deadline.
+        cpu_cores = 20 if qlen == 168 and dim >= 128 else 2
         (case / "shape.txt").write_text(
-            f"{qlen} {hk*6} {hk} {dim} {context} 4 32 3 512 2 64 {512*(dim//2+8)*hk} 2\n")
+            f"{qlen} {hk*6} {hk} {dim} {context} 4 32 3 512 2 64 {512*(dim//2+8)*hk} {cpu_cores}\n")
         cases.append({"op":"attention_cv","path":str(case)})
     for dim, qlen, context, splits in [(64, 4, 65, 2), (64, 4, 65, 20),
                                       (256, 4, 511, 20), (64, 4, 0, 20), (128, 4, 511, 7)]:
@@ -346,6 +353,14 @@ def export_cpu_debug_goldens(directory):
     for name in ("d64_q1_c17", "d256_q4_c511", "d256_q21_c511",
                  "d64_q6_c511", "d128_q11_c511", "d256_q17_c511"):
         cases.append({"op": "poison_workspace", "path": str(directory / name)})
+    # #148: mature plateau triggers C4; frontier/short shapes remain original
+    # INT2 scheduling. The CPU mode also performs a bitwise fe0 comparison.
+    for name in ("d64_q168_c641", "d128_q168_c65_hk2", "d256_q168_c65"):
+        cases.append({"op": "cluster4_required", "path": str(directory / name)})
+    for name in ("d64_q147_c641", "d64_q6_c511", "d64_q4_c65_s20", "d64_mixed_q1q4"):
+        cases.append({"op": "cluster4", "path": str(directory / name)})
+    for mode in ("cluster4_bad_meta", "cluster4_nan_query"):
+        cases.append({"op": mode, "path": str(directory / "d64_q168_c641")})
     cases.append({"op":"tasks_causal","path":str(directory)})
     (directory / "cases.json").write_text(json.dumps(cases,indent=2)+"\n")
     return directory

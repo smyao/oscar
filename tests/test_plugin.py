@@ -106,6 +106,51 @@ unregister()
             self.assertIs(module.NPUPlatform.__dict__["get_attn_backend_cls"], original)
             self.assertFalse(plugin.hook_status()["enabled"])
 
+    def test_native_passive_registration_never_routes_platform_or_cache(self):
+        platform = platform_module()
+        runner = runner_module()
+        cls = runner.NPUModelRunner
+        cls.execute_model = lambda self, scheduler_output: None
+        cls.sample_tokens = lambda self: "sampled"
+        cls._model_forward = lambda self: "forward"
+        cls.propose_draft_token_ids = lambda self: "draft"
+        native_route = platform.NPUPlatform.__dict__["get_attn_backend_cls"]
+        native_specs = cls.__dict__["get_kv_cache_spec"]
+        native_execute = cls.__dict__["execute_model"]
+        attention = types.ModuleType("vllm_ascend.attention.attention_v1")
+        class AscendAttentionBackendImpl:
+            def forward(self):
+                return "native attention"
+        class AscendC8AttentionBackendImpl(AscendAttentionBackendImpl):
+            def forward(self):
+                return "native c8 attention"
+        attention.AscendAttentionBackendImpl = AscendAttentionBackendImpl
+        attention.AscendC8AttentionBackendImpl = AscendC8AttentionBackendImpl
+        base_forward = AscendAttentionBackendImpl.__dict__["forward"]
+        c8_forward = AscendC8AttentionBackendImpl.__dict__["forward"]
+        mtp = types.ModuleType("vllm.model_executor.models.qwen3_5_mtp")
+        class Qwen3_5MTP:
+            def forward(self):
+                return "draft model"
+        mtp.Qwen3_5MTP = Qwen3_5MTP
+        native_draft_forward = Qwen3_5MTP.__dict__["forward"]
+        with patch.dict(sys.modules, {platform.__name__: platform, runner.__name__: runner,
+                                      attention.__name__: attention,
+                                      mtp.__name__: mtp}), \
+             patch.dict(os.environ, {"OSCAR_ENABLED": "0", "OSCAR_PASSIVE_TIMING_CONTROL": "/tmp/passive-control.json"}):
+            plugin.register_passive_observer()
+            self.assertIs(platform.NPUPlatform.__dict__["get_attn_backend_cls"], native_route)
+            self.assertIs(cls.__dict__["get_kv_cache_spec"], native_specs)
+            self.assertIsNot(cls.__dict__["execute_model"], native_execute)
+            self.assertIsNot(AscendAttentionBackendImpl.__dict__["forward"], base_forward)
+            self.assertIsNot(AscendC8AttentionBackendImpl.__dict__["forward"], c8_forward)
+            self.assertIsNot(Qwen3_5MTP.__dict__["forward"], native_draft_forward)
+            plugin.unregister()
+            self.assertIs(cls.__dict__["execute_model"], native_execute)
+            self.assertIs(AscendAttentionBackendImpl.__dict__["forward"], base_forward)
+            self.assertIs(AscendC8AttentionBackendImpl.__dict__["forward"], c8_forward)
+            self.assertIs(Qwen3_5MTP.__dict__["forward"], native_draft_forward)
+
     def test_classmethod_signature_idempotence_and_exact_restore(self):
         module = platform_module()
         cls = module.NPUPlatform

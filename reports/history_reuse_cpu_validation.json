@@ -1,0 +1,466 @@
+{
+  "scope": "experimental C4 CANN ascend910b4 compile and official CPU-debug; no target NPU",
+  "status": "passed",
+  "device_build_rc": 0,
+  "cpu_build_rc": 0,
+  "cpu_debug": {
+    "passed": 51,
+    "total": 51,
+    "cases": [
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q1_c17",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/000-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/000-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q1_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/001-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/001-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q6_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/002-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/002-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q4_c65",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/003-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/003-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q4_c0",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/004-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/004-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d128_q4_c129",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/005-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/005-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d256_q4_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/006-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/006-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q17_c65",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/007-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/007-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q4_c65_hk2",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/008-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/008-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q2_c320",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/009-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/009-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d128_q3_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/010-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/010-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q65_c17",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/011-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/011-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q129_c0",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/012-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/012-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q33_c511_hk2",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/013-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/013-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d128_q17_c511_hk2",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/014-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/014-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d256_q17_c511_hk2",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/015-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/015-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d256_q21_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/016-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/016-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d256_q22_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/017-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/017-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d128_q43_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/018-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/018-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d128_q11_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/019-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/019-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d256_q17_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/020-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/020-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q168_c641",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases/021-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/021-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d128_q168_c65_hk2",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/000-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/000-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d256_q168_c65",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/001-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/001-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q147_c641",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/002-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/002-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q4_c65_s2",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/003-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/003-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q4_c65_s20",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/004-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/004-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d256_q4_c511_s20",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/005-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/005-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q4_c0_s20",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/006-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/006-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d128_q4_c511_s7",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/007-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/007-attention_cv.log"
+      },
+      {
+        "op": "attention_cv",
+        "path": "reports/vm-cv-cluster4/goldens/d64_mixed_q1q4",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/008-attention_cv.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/008-attention_cv.log"
+      },
+      {
+        "op": "bad_tag",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q4_c65",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/009-bad_tag.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/009-bad_tag.log"
+      },
+      {
+        "op": "nan_query",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q4_c65",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/010-nan_query.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/010-nan_query.log"
+      },
+      {
+        "op": "bad_meta",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q4_c65",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/011-bad_meta.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/011-bad_meta.log"
+      },
+      {
+        "op": "nan_value",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q4_c65",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/012-nan_value.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/012-nan_value.log"
+      },
+      {
+        "op": "poison_workspace",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q1_c17",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/013-poison_workspace.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/013-poison_workspace.log"
+      },
+      {
+        "op": "poison_workspace",
+        "path": "reports/vm-cv-cluster4/goldens/d256_q4_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/014-poison_workspace.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/014-poison_workspace.log"
+      },
+      {
+        "op": "poison_workspace",
+        "path": "reports/vm-cv-cluster4/goldens/d256_q21_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/015-poison_workspace.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/015-poison_workspace.log"
+      },
+      {
+        "op": "poison_workspace",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q6_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/016-poison_workspace.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/016-poison_workspace.log"
+      },
+      {
+        "op": "poison_workspace",
+        "path": "reports/vm-cv-cluster4/goldens/d128_q11_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/017-poison_workspace.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/017-poison_workspace.log"
+      },
+      {
+        "op": "poison_workspace",
+        "path": "reports/vm-cv-cluster4/goldens/d256_q17_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/018-poison_workspace.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/018-poison_workspace.log"
+      },
+      {
+        "op": "cluster4_required",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q168_c641",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/019-cluster4_required.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/019-cluster4_required.log"
+      },
+      {
+        "op": "cluster4_required",
+        "path": "reports/vm-cv-cluster4/goldens/d128_q168_c65_hk2",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/020-cluster4_required.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/020-cluster4_required.log"
+      },
+      {
+        "op": "cluster4_required",
+        "path": "reports/vm-cv-cluster4/goldens/d256_q168_c65",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/021-cluster4_required.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/021-cluster4_required.log"
+      },
+      {
+        "op": "cluster4",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q147_c641",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/022-cluster4.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/022-cluster4.log"
+      },
+      {
+        "op": "cluster4",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q6_c511",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/023-cluster4.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/023-cluster4.log"
+      },
+      {
+        "op": "cluster4",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q4_c65_s20",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/024-cluster4.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/024-cluster4.log"
+      },
+      {
+        "op": "cluster4",
+        "path": "reports/vm-cv-cluster4/goldens/d64_mixed_q1q4",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/025-cluster4.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/025-cluster4.log"
+      },
+      {
+        "op": "cluster4_bad_meta",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q168_c641",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/026-cluster4_bad_meta.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/026-cluster4_bad_meta.log"
+      },
+      {
+        "op": "cluster4_nan_query",
+        "path": "reports/vm-cv-cluster4/goldens/d64_q168_c641",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/027-cluster4_nan_query.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/027-cluster4_nan_query.log"
+      },
+      {
+        "op": "tasks_causal",
+        "path": "reports/vm-cv-cluster4/goldens",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-cv-cluster4/cases-final/028-tasks_causal.log",
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-final/028-tasks_causal.log"
+      }
+    ]
+  },
+  "source_sha256": {
+    "csrc/kernels/attention_cv.cpp": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+    "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+    "csrc/kernels/attention_cv_cluster.cpp": "c2412de931041f92a6fd340ad690accb32c12b1012f069342d296b3aa335ec82",
+    "csrc/include/oscar_attention_launch.h": "218dc868a2b8dae02e2e9f8e9c1ec0cec8cc203721bcfd4cc546e7fc70dd74da",
+    "csrc/attention_bindings.cpp": "736500acb7f18e663940023c097274ddfeca40c753d57b6e9e07e991a591bc91",
+    "csrc/cpu/cv_probe.cpp": "ab3c3abe1a3dc64a46224baa5de951d1d99b834ca589795f35a2e0a7c167dc27",
+    "csrc/CMakeLists.txt": "585412dfe86b15fce8e909bd5571e0a70bfe1cb27cb33a36e867988bd2d9b2fe"
+  },
+  "build_signature": "8e050caf1154183004a82ac28b6e5362a4108ba5ccc77260af75c22de0cc6331",
+  "logs": {
+    "device_build": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/reports/vm-cv-cluster4/device-build.log",
+    "cpu_configure": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/reports/vm-cv-cluster4/cpu-configure.log",
+    "cpu_build": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/reports/vm-cv-cluster4/cpu-build.log",
+    "cpu_debug": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/reports/vm-cv-cluster4/cpu-debug-final.log"
+  },
+  "superseded_cpu_simulator_timeouts": [
+    {
+      "shape": "D256/Hkv2/q168/context641",
+      "cube_cores": 2,
+      "returncode": 124,
+      "log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases/022-attention_cv.log"
+    },
+    {
+      "shape": "D256/Hkv2/q168/context641",
+      "cube_cores": 20,
+      "returncode": 124,
+      "log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-cluster4/guest/logs/vm-cv-cluster4/cases-remaining/000-attention_cv.log"
+    }
+  ],
+  "npu_accuracy": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "model_quality": "not_run",
+  "performance": "not_run",
+  "host_validation": {
+    "environment": "macOS Python 3.12; current checkout via PYTHONPATH=.",
+    "command": "PYTHONPATH=. .venv/bin/python -m pytest -q tests/test_runtime.py tests/test_meta_dispatch.py tests/test_probe_history_reuse.py tests/test_cv_contracts.py tests/test_passive_timing.py tests/test_observe_serve.py tests/test_plugin.py tests/test_benchmark_mixed_passive.py tests/test_build_reuse.py tests/test_op_contracts.py",
+    "passed": 95,
+    "npu_skipped": 28,
+    "subtests_passed": 4,
+    "warnings": [
+      "Torch CPU NumPy unavailable; tensor numerical tests completed"
+    ],
+    "target_npu_acceptance": "not_run"
+  }
+}

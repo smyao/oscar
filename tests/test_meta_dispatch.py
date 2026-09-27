@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 import torch
 from oscar_ascend.ops.meta import register_meta
-from oscar_ascend.ops.contracts import PRODUCTION_CAPABILITIES
+from oscar_ascend.ops.contracts import SOURCE_CAPABILITIES
 
 
 def test_cpp_schemas_accept_out_only_abstract_dispatch():
@@ -16,7 +16,7 @@ def test_cpp_schemas_accept_out_only_abstract_dispatch():
         for match in re.finditer(r'm\.def\(\s*((?:"(?:[^"\\]|\\.)*"\s*)+)\)',text):
             schema="".join(json.loads(literal) for literal in re.findall(r'"(?:[^"\\]|\\.)*"',match.group(1)))
             library.define(schema);names.append(schema.split("(",1)[0])
-    assert set(names)==set(PRODUCTION_CAPABILITIES)
+    assert set(names)==set(SOURCE_CAPABILITIES)
     register_meta("oscar_meta_contract")
     q=torch.empty((4,6,256),device="meta",dtype=torch.bfloat16)
     rot=torch.empty((256,256),device="meta")

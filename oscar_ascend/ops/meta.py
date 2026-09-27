@@ -1,4 +1,5 @@
 # Archive #27/#34/#36/#50: abstract shape propagation is separate from actual NPU graph capture/replay.
+# #148: optional cluster schema mutates caller-owned buffers; never computes fake outputs.
 """Meta implementations for out-only operators; never a numerical execution path."""
 _registered=set()
 
@@ -14,6 +15,10 @@ def register_meta(namespace="oscar_ascend_ops"):
         # schema mutations; no numerical tensors or fake success are produced.
         return None
 
-    for name in sorted(PRODUCTION_CAPABILITIES):
+    names = set(PRODUCTION_CAPABILITIES)
+    # #148: this optional experimental schema is never a numerical fallback.
+    if hasattr(getattr(torch.ops, namespace), "attention_cv_cluster4_out"):
+        names.add("attention_cv_cluster4_out")
+    for name in sorted(names):
         torch.library.register_fake(f"{namespace}::{name}")(out_only)
     _registered.add(namespace)

@@ -2,6 +2,32 @@
 
 已实现 FULL 层 INT2 缓存、真正的 Cube/Vector attention、融合旋转/裁剪/写入、精确窗口、MTP 位置修正、固定图缓冲、外部插件及一键安装/探针/服务流程。GDN 使用原生状态和 reshape。新增代码不覆盖原生 vLLM/Ascend 源文件。
 
+## fe0 精度基准与历史复用实验
+
+当前以用户确认精度正确的`fe0e925`为基准。原`attention_cv.cpp`及store/rotate/merge等计算内核保持该版本字节一致；默认仍运行原算子。`codex/aisbench-stable`保持精确的fe0提交。新C4算子仅在显式候选模式中使用，冻结容差没有放宽，也未重新加入已回退的AR/位图或元数据向量化。
+
+### 一键验证候选并启动，用户自行运行 AISBench
+
+```bash
+git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate
+```
+
+它安装/编译，先执行fe0数值门，再对新旧算子做相同输入逐位对拍、图回放及交替A/B测速；任何失败立即停止，绝不自动换成另一个服务。通过后才启动候选测试服务。模型质量与8分钟目标仍待用户完整评测，算子通过不代表这些目标完成。
+
+### 一键观察 fe0 的实际 AISBench 负载
+
+```bash
+git pull --ff-only && bash scripts/install_observe_serve.sh --variant baseline
+```
+
+也可用`--variant native`启动不含OSCAR计算逻辑的原生对照。三种模式均从`configs/target.json`生成本次有效配置，不改原文件；同卡同端口的上一服务须先停止。看到`OBSERVE_READY`后，用自己的AISBench请求端口8989、模型名`qwen3.5`。脚本不发送测试推理请求，不生成用户数据集。
+
+仅打印关键`PERF_HISTORY_REUSE_*`和`OBSERVE_*`行，完整数据保存在本次`logs/observe-*`。采证使用有界异步NPU Event，区分同rank、同step、同stream的attention并集与其余时间；原生扣原生attention，OSCAR扣接管的FULL路径。图回放保留整图时间，图内细项标缺失。事件采样仍有扰动，不能用稀疏样本直接反推整轮墙钟。详见[端到端方案与实验边界](docs/history_reuse_experiment.md)。
+
+## 现有完整部署与 K4 探针入口
+
+以下入口保留原fe0默认路径；本轮C4实验和外部负载采证使用上面的`install_observe_serve.sh`。
+
 在 node93 的本项目目录执行这一条命令：
 
 ```bash

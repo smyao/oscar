@@ -1,4 +1,4 @@
-# 档案 #70-#73/#85/#94/#95/#125/#126/#129-#146：同配置配对测量；
+# 档案 #70-#73/#85/#94/#95/#125/#126/#129-#148：同配置配对测量；
 # 当前签名构建、真 NPU 数值门、逐次释放与失败证据先于性能服务。
 """Verify current AscendC operators, then run one 20/23/27/30K K4 pair.
 
@@ -15,6 +15,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import statistics
 import subprocess
 import sys
 import time
@@ -125,8 +126,11 @@ def _normalize_synthetic(report: dict, variant: str) -> dict:
 def compare_synthetic_reports(native: dict, oscar: dict, acceptance: dict) -> dict:
     """Apply frozen ratios to exact paired prompts; never claim full acceptance.
 
-    Archive #73/#137-#139: a prior native log is not a matching baseline, and
-    one K4 batch cannot satisfy the frozen warmup/repeat and coverage matrix.
+    Archive #73/#137-#140/#148: a prior native log is not a matching baseline,
+    and one K4 batch cannot satisfy the frozen warmup/repeat and coverage
+    matrix. Simultaneous requests may complete in a different order, so exact
+    request identities remain integrity evidence while latency direction is
+    screened on the batch distribution rather than request-by-request ratios.
     """
     left = _normalize_synthetic(native, "native")
     right = _normalize_synthetic(oscar, "oscar")
@@ -143,6 +147,7 @@ def compare_synthetic_reports(native: dict, oscar: dict, acceptance: dict) -> di
         raise ValueError("performance latency/throughput ratios must be finite and positive")
     issues = list(diagnostic["issues"])
     unresolved = False
+    aggregate_ratios = {}
     if diagnostic["status"] == "diagnostic_measured":
         native_section, oscar_section = left["synthetic_mixed"], right["synthetic_mixed"]
         for name, section in (("native", native_section), ("oscar", oscar_section)):
@@ -165,10 +170,10 @@ def compare_synthetic_reports(native: dict, oscar: dict, acceptance: dict) -> di
                     issues.append(f"{metric} ratio missing or nonfinite")
                 elif ratio < min_throughput:
                     issues.append(f"{metric}={ratio:.4f} < {min_throughput:.4f}")
+            source = {row["request_id"]: row for row in native_section["sample"]["requests"]}
+            candidate = {row["request_id"]: row for row in oscar_section["sample"]["requests"]}
             for request in batch["requests"]:
                 request_id = request["request_id"]
-                source = {row["request_id"]: row for row in native_section["sample"]["requests"]}
-                candidate = {row["request_id"]: row for row in oscar_section["sample"]["requests"]}
                 n_salt = source[request_id].get("cache_salt_sha256")
                 o_salt = candidate[request_id].get("cache_salt_sha256")
                 if not isinstance(n_salt, str) or len(n_salt) != 64 or n_salt != o_salt:
@@ -182,10 +187,33 @@ def compare_synthetic_reports(native: dict, oscar: dict, acceptance: dict) -> di
                             unresolved = True
                         else:
                             issues.append(f"{request_id} {metric} ratio missing or nonfinite")
-                    elif ratio > max_latency:
-                        issues.append(f"{request['request_id']} {metric}={ratio:.4f} > {max_latency:.4f}")
+            for metric in ("ttft_ms", "tpot_ms", "e2e_ms"):
+                native_values = sorted(row.get(metric) for row in source.values()
+                                       if type(row.get(metric)) in (int, float)
+                                       and math.isfinite(row[metric]))
+                oscar_values = sorted(row.get(metric) for row in candidate.values()
+                                      if type(row.get(metric)) in (int, float)
+                                      and math.isfinite(row[metric]))
+                if (len(native_values) != len(SYNTHETIC_MIXED_LENGTHS)
+                        or len(oscar_values) != len(SYNTHETIC_MIXED_LENGTHS)):
+                    issues.append(f"aggregate {metric} lacks four finite samples")
+                    continue
+                for percentile, baseline, value in (
+                        ("p50", statistics.median(native_values), statistics.median(oscar_values)),
+                        ("p95", native_values[-1], oscar_values[-1])):
+                    if baseline == 0 or value == 0:
+                        if metric == "tpot_ms":
+                            issues.append(f"aggregate {metric}.{percentile}_unresolved_SSE_burst")
+                            unresolved = True
+                        else:
+                            issues.append(f"aggregate {metric}.{percentile} must be positive")
+                        continue
+                    ratio = value / baseline
+                    aggregate_ratios[f"{metric}.{percentile}"] = ratio
+                    if ratio > max_latency:
+                        issues.append(f"aggregate {metric}.{percentile}={ratio:.4f} > {max_latency:.4f}")
     status = ("passed" if not issues and diagnostic["status"] == "diagnostic_measured"
-              else "needs_evidence" if unresolved and all("tpot_unresolved_SSE_burst" in item
+              else "needs_evidence" if unresolved and all("unresolved_SSE_burst" in item
                                                            for item in issues) else "failed")
     return {"status": status,
             "scope": "single-batch client-side synthetic K4 directional ratio screen",
@@ -196,6 +224,7 @@ def compare_synthetic_reports(native: dict, oscar: dict, acceptance: dict) -> di
             "performance_acceptance": "not_run",
             "max_latency_ratio": max_latency, "min_throughput_ratio": min_throughput,
             "issues": issues, "pair_sha256": diagnostic.get("pair_sha256"),
+            "aggregate_latency_ratios": aggregate_ratios,
             "batches": diagnostic.get("batches", []),
             "diagnostic_status": diagnostic["status"]}
 

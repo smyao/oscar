@@ -28518,3 +28518,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **已测主项改变**：独立同形profile约为正常kernel耗时的1.01倍。main/history各字段的跨core最大raw SYS_CNT：load/unpack/publish6496359，QK719589、PV742872、softmax657341（mask/finite229857、V2 191124为子项）；decode32/history load561359，QK29978、PV33387、softmax25483。字段最大值可能来自不同core，不能相加为wall或假定时钟频率换毫秒；但两种形状均明确指向历史KV载入、解包及发布组合，不能继续把softmax当主要未解瓶颈。服务级同步诊断prefill CV9538.9ms、draft CV1304.1ms，整图1032.9ms。
 
 **用户最新用途与交付边界**：用户当天时间有限，明确要求用当前最好的版本一键安装/编译/启动vLLM，自己运行AISBench，同时继续演进。新增`install_aisbench_serve.sh`用于该用途，计算内核以已实测f292852为基底，固定在`codex/aisbench-stable`；后续优化继续在`codex/oscar-ascend`，不自动更改稳定入口的计算版本。该入口复用严格签名构建与真NPU数值门、自动旋转和受管常驻服务，允许在已知性能尚未通过时由用户自行压测，明确标记experimental_aisbench/performance_acceptance=not_run；不重跑原生/K4/profile，不改原有完整验收入口的失败门。编译、数值或服务失败仍中止，不退回原生。此为用户授权的实验服务用途，不是将性能failed改写passed。
+
+## [148] 真机条目（gpt_new_oscar_kimi，2026-09-28 用户回传）· K4整体领先却被逐请求TPOT错配误判
+
+**原始事实**：用户在node93执行`git pull --ff-only && bash scripts/probe_concurrency.sh`。operator build、fresh真NPU CV门、native-current精度/混合源/task门均通过；current16K设备事件6.684ms，候选CV main 183.110ms、decode32 14.265ms且sample oracle通过。原生与OSCAR的20/23/27/30K同时到达K4均4/4完成、无失败/超时、资源释放passed。OSCAR相对原生的客户端分布全面改善：TTFT p50/p95比0.43/0.46，TPOT 0.63/0.54，E2E 0.48/0.48，prompt与generation吞吐比均2.07；但最终仍因`synthetic-2-27000 tpot_ms=5.8423 > 1.0000`退出2。
+
+**根因**：该`5.8423`是相同prompt ID的OSCAR/native逐请求比值，不是OSCAR的绝对TPOT。四请求由simultaneous barrier同时释放，调度与完成顺序可在两次独立服务运行间改变；把某个prompt ID在两个并发批次中的排队位置当作稳定配对性能样本，会在整体p50/p95及吞吐均明显改善时制造假回归。此K4本来就明确为`performance_acceptance=not_run`的方向性诊断，冻结的正式多轮/多场景`per_case_required`验收策略不得因此放宽。
+
+**修复**：`compare_synthetic_reports`继续逐请求严格核验request ID、prompt hash/status、cache salt、有限计时值并保留全部逐请求ratio作为诊断证据；方向性失败门改为从四条实际请求重新计算TTFT/TPOT/E2E的p50与nearest-rank p95，再与同批吞吐共同应用冻结的1.0方向阈值。零TPOT/SSE burst继续返回`needs_evidence`，缺样本、非有限值、身份不一致、整体分布或吞吐退化仍失败。未修改`configs/acceptance.json`，未把单批K4冒充正式性能验收。
+
+**本机验证边界**：新增回归覆盖“逐请求TPOT ratio=5.8423但两侧分布p50/p95 ratio=0.8”的同时到达重排病例，比较器返回passed并保留5.8423诊断值；Python编译、定向调用和`git diff --check`通过。本机无项目`.venv`/pytest，完整pytest未运行；修复后的node93 K4仍待真机重跑。

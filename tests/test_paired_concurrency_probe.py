@@ -107,12 +107,26 @@ def test_paired_comparison_requires_every_ratio_and_exact_workload():
     assert result["status"] == "passed"
     assert result["performance_acceptance"] == "not_run"
     assert len(result["batches"][0]["requests"]) == 4
-    oscar["synthetic_mixed"]["sample"]["requests"][2]["ttft_ms"] = 101.0
+    for request in oscar["synthetic_mixed"]["sample"]["requests"]:
+        request["ttft_ms"] = 101.0
     result = paired.compare_synthetic_reports(native, oscar, _acceptance())
     assert result["status"] == "failed"
-    assert any("ttft_ms" in issue for issue in result["issues"])
+    assert any("aggregate ttft_ms" in issue for issue in result["issues"])
     oscar["synthetic_mixed"]["prompt_manifest"][0]["prompt_sha256"] = "different"
     assert paired.compare_synthetic_reports(native, oscar, _acceptance())["status"] == "failed"
+
+
+def test_simultaneous_k4_single_request_ratio_does_not_override_better_distribution():
+    native = _report("native")
+    oscar = _report("oscar", latency=.8, throughput=1.2)
+    # Completion order is not stable under a simultaneous barrier. Preserve
+    # this per-request diagnostic ratio, but gate the K4 screen on p50/p95.
+    native["synthetic_mixed"]["sample"]["requests"][0]["tpot_ms"] = 1.0
+    oscar["synthetic_mixed"]["sample"]["requests"][0]["tpot_ms"] = 5.8423
+    result = paired.compare_synthetic_reports(native, oscar, _acceptance())
+    assert result["batches"][0]["requests"][0]["oscar_over_native"]["tpot_ms"] == pytest.approx(5.8423)
+    assert result["status"] == "passed"
+    assert result["aggregate_latency_ratios"]["tpot_ms.p95"] < 1.0
 
 
 def test_zero_tpot_fails_closed_and_full_service_warmup_is_disclosed():

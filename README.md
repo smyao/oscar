@@ -1,5 +1,7 @@
 # OSCAR Ascend 外部适配工程
 
+固定优化交付入口：`git pull --ff-only && bash scripts/install_serve.sh --variant candidate`。每轮实现均须同步编译、候选配置和实际算子路由；直启与probe共用`tools/serving_variants.py`候选预设。该直启命令仍不运行测试/probe/AISBench，后四卡只需追加`--rear-cards`。
+
 已实现 FULL 层 INT2 缓存、真正的 Cube/Vector attention、融合旋转/裁剪/写入、精确窗口、MTP 位置修正、固定图缓冲、外部插件及一键安装/探针/服务流程。GDN 使用原生状态和 reshape。新增代码不覆盖原生 vLLM/Ascend 源文件。
 
 ## fe0 精度基准与历史复用实验

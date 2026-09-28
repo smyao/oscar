@@ -28556,3 +28556,9 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **本地证据**：CANN ascend910b4编译通过；官方CPU-debug共22项通过：65536个packed word×8码穷举，以及21项整CV/q1/C4/特殊half/错误/poison病例。旧→新partial/LSE/status及统计逐位，独立oracle通过。证据`reports/fast_unpack_local_validation.json`。新half向量Cast的目标子正规/负零、NPU图和性能仍未验收。
 
 **真机门与交付范围**：新`tools.probe_fast_unpack`覆盖18数值例、5个2+5交替A/B性能例、q4/q1两个同地址改变输入图门，输出独立`fast-unpack-report.json`，任一失败停止。非法metadata对比fe0最终status，不能硬断言中间error3（后续Softmax可覆成2）。同一`--variant candidate --probe-only`跑新门后退出；旧q4 profile默认不重复，仅显式`--diagnose-q4`。新candidate有效配置启用fast_unpack，baseline/默认原配置和设备/端口不改，后四卡仍用显式rear-cards。完整模型速度保持未验收。
+
+### #151 fast unpack真机复验通过与固定启动入口约定
+
+0677bcb、`observe-20260928T064725.021030Z`全部fast precision/graph/performance门passed，failed_cases为空，正常短probe结束；原文`reports/target_fast_unpack_pass_20260928.txt`。q4 N128/S3 15.297940→11.281520ms；q1 N128/S3 13.854560→9.842060ms；q1 N16384/S1 20.468300→15.765760ms；C4 mature20K 55.009899→48.772461ms；mixed q1/q4/long 19.301439→15.852880ms。五例逐位通过，q4/q1指定独立图passed，其余行graph not_run。记录实测，不另立错误编号，也不外推完整模型总时长。
+
+用户明确要求每轮均同步到`git pull --ff-only && bash scripts/install_serve.sh --variant candidate`。当前该路径已启用C4/q1/fast；本轮统一候选预设供直启与probe共同调用，补计划/子进程/实际路由回归并写入AGENTS。默认配置与后四卡模式保持各自既有行为；直启不因该约定变成自动跑测试或AISBench。

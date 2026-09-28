@@ -14,6 +14,7 @@
 - 凡修改CANN算子，先亲读档案同类条目与D.4完整原始打点，文件头加入档案引用及D.4四问。
 - 新真机错误才追加档案；本机CPU测试或理论判断不能伪写为真机记录。
 - 用户已授权完成后推送至 https://gitcode.com/jpl123/gpt_new_oscar_kimi.git；只推送本工程，保留真实验收边界。
+- 每轮交付必须同步到固定直启命令 `git pull --ff-only && bash scripts/install_serve.sh --variant candidate`：不仅编译最新产物，还要实际启用本轮候选优化；不得仅更新probe。候选开关统一由`tools/serving_variants.py`维护，直启与probe共用；回归须验证配置传到服务且q4/q1/C4选择了对应算子。后四卡模式仍叠加`--rear-cards`，默认设备与端口不变。
 - 用户已在835fc22完整运行过AISBench；后续不得再要求重跑AISBench。分析已有复制日志和片段，必要验证只用短时合成算子/图/服务probe；片段缺失时不得伪造全程占比，也不能把短probe当成完整模型质量或8分钟性能验收。
 
 真机部署只需 `git pull --ff-only && bash scripts/install_probe_serve.sh`，使用当前 Python 环境。`.venv/bin/python -m pytest -q` 仅用于已配置虚拟环境的本地开发机；`bash scripts/validate_vm.sh` 仅用于带 Lima 的 Mac 宿主机，均不是真机前置步骤。单独 NPU probe 是 `python3 -m tools.deploy --only probe-ops`，无 NPU 时必须失败，不能用 CPU 替代。已在真机跑通过完整探针后，可用 `bash scripts/install_serve.sh` 仅编译安装并直接启动正式服务（无任何测试/probe）；它不提供验收证据。

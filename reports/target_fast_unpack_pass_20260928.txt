@@ -1,0 +1,78 @@
+root@node93:/workspace/gpt_new_oscar_kimi# git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate --probe-only
+remote: Enumerating objects: 108, done.
+remote: Counting objects: 100% (108/108), done.
+remote: Compressing objects: 100% (73/73), done.
+remote: Total 73 (delta 54), reused 0 (delta 0), pack-reused 0 (from 0)
+Unpacking objects: 100% (73/73), 69.10 KiB | 299.00 KiB/s, done.
+From https://gitcode.com/jpl123/gpt_new_oscar_kimi
+   dc66d6e..0677bcb  codex/oscar-ascend -> origin/codex/oscar-ascend
+Updating dc66d6e..0677bcb
+Fast-forward
+ AGENTS.md                                       |   1 +
+ README.md                                       |  14 +++-
+ csrc/CMakeLists.txt                             |   5 +-
+ csrc/attention_bindings.cpp                     | 241 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ csrc/cpu/CMakeLists.txt                         |   6 +-
+ csrc/cpu/cv_probe.cpp                           | 179 +++++++++++++++++++++++++++++++++++++----
+ csrc/cpu/fast_unpack_probe.cpp                  |  67 ++++++++++++++++
+ csrc/include/oscar_attention_launch.h           |  32 ++++++++
+ csrc/kernels/attention_cv_fast.cpp              | 750 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ csrc/kernels/attention_cv_fast_cluster4.cpp     | 979 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ csrc/kernels/attention_cv_fast_q1.cpp           | 767 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ csrc/kernels/attention_fast_unpack.h            | 132 ++++++++++++++++++++++++++++++
+ csrc/torch_bindings.cpp                         |   1 +
+ docs/checklist.md                               |   6 ++
+ docs/fast_unpack.md                             |  44 ++++++++++
+ docs/q4_diagnostic.md                           |  12 ++-
+ issue1_full_record.md                           |  20 +++++
+ oscar_ascend/integration/impl.py                |   7 +-
+ oscar_ascend/ops/contracts.py                   |   3 +-
+ oscar_ascend/ops/cv_dispatch.py                 |  16 +++-
+ oscar_ascend/ops/meta.py                        |   3 +-
+ oscar_ascend/runtime.py                         |   7 ++
+ oscar_ascend_agent_start.md                     |   2 +
+ reports/fast_unpack_local_validation.json       | 226 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ reports/q4_hotpath_findings_20260928.json       | 148 ++++++++++++++++++++++++++++++++++
+ reports/target_q4_report_collision_20260928.txt |  62 ++++++++++++++
+ scripts/install_serve.sh                        |   3 +-
+ tests/test_export_fast_unpack_cpu_cases.py      | 115 ++++++++++++++++++++++++++
+ tests/test_install_serve.py                     |  27 +++++--
+ tests/test_observe_serve.py                     |  60 +++++++++++++-
+ tests/test_probe_fast_unpack.py                 | 195 +++++++++++++++++++++++++++++++++++++++++++++
+ tests/test_runtime.py                           |  24 +++++-
+ tools/export_fast_unpack_cpu_cases.py           | 245 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ tools/install_serve.py                          |  31 +++++--
+ tools/observe_serve.py                          | 100 +++++++++++++++++++----
+ tools/probe_fast_unpack.py                      | 754 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 36 files changed, 5219 insertions(+), 65 deletions(-)
+ create mode 100644 csrc/cpu/fast_unpack_probe.cpp
+ create mode 100644 csrc/kernels/attention_cv_fast.cpp
+ create mode 100644 csrc/kernels/attention_cv_fast_cluster4.cpp
+ create mode 100644 csrc/kernels/attention_cv_fast_q1.cpp
+ create mode 100644 csrc/kernels/attention_fast_unpack.h
+ create mode 100644 docs/fast_unpack.md
+ create mode 100644 reports/fast_unpack_local_validation.json
+ create mode 100644 reports/q4_hotpath_findings_20260928.json
+ create mode 100644 reports/target_q4_report_collision_20260928.txt
+ create mode 100644 tests/test_export_fast_unpack_cpu_cases.py
+ create mode 100644 tests/test_probe_fast_unpack.py
+ create mode 100644 tools/export_fast_unpack_cpu_cases.py
+ create mode 100644 tools/probe_fast_unpack.py
+[oscar] OBSERVE_START variant=candidate devices=0,1,2,3 port=8989 log=/workspace/gpt_new_oscar_kimi/logs/observe-20260928T064725.021030Z user_load_only=true
+[oscar] PERF_HISTORY_REUSE_A_B {"accuracy": "bitwise_passed", "baseline_ms": 15.395999908447266, "candidate_ms": 15.35614013671875, "case": "decode32", "clusters": 0, "gate": "identical_fe0_operator", "production_operator": "attention_cv_out", "ratio": 0.9974110306595516, "ratio_scope": "same_operator_repeatability_not_speedup", "source_splits": 3, "split_source": "production_geometry"}
+[oscar] PERF_HISTORY_REUSE_A_B {"accuracy": "bitwise_passed", "baseline_ms": 75.722900390625, "candidate_ms": 55.09217834472656, "case": "mature_20k", "clusters": 45, "gate": "passed", "production_operator": "attention_cv_cluster4_out", "ratio": 0.7275497644771587, "ratio_scope": "different_operators", "source_splits": 1, "split_source": "fixed_fixture"}
+[oscar] PERF_FAST_UNPACK_RESULT {"failed_cases": [], "graph_capture": "passed", "graph_replay": "passed", "performance": "passed", "precision": "passed", "report": "/workspace/gpt_new_oscar_kimi/logs/observe-20260928T064725.021030Z/fast-unpack-report.json", "status": "passed"}
+[oscar] PERF_Q1_SCHEDULE {"actual_tokens": 32, "baseline_ms": 136.88479614257812, "case": "q1_mixed32_n16384_s1", "gate": "passed", "padded_tokens": 16384, "q1_graph_capture": "not_run", "q1_graph_replay": "not_run", "q1_ms": 20.57110023498535, "q1_precision": "bitwise_passed", "ratio": 0.1502803877032381, "requests": 32, "splits": 1}
+[oscar] PERF_FAST_UNPACK {"case": "q1_decode32_n128_s3", "fast_ms": 9.842060089111328, "fast_operator": "attention_cv_fast_q1_out", "graph": "passed", "mode": "q1", "old_ms": 13.854559898376465, "old_operator": "attention_cv_q1_out", "precision": "bitwise_passed", "ratio": 0.7103841739689373, "status": "passed"}
+[oscar] PERF_Q1_SCHEDULE {"actual_tokens": 32, "baseline_ms": 45.42020034790039, "case": "q1_decode32_n128_s3", "gate": "passed", "padded_tokens": 128, "q1_graph_capture": "passed", "q1_graph_replay": "passed", "q1_ms": 13.816340446472168, "q1_precision": "bitwise_passed", "ratio": 0.30418933295416095, "requests": 32, "splits": 3}
+[oscar] PERF_FAST_UNPACK {"case": "mixed_q1_q4_long", "fast_ms": 15.852879524230957, "fast_operator": "attention_cv_fast_cluster4_out", "graph": "not_run", "mode": "c4", "old_ms": 19.30143928527832, "old_operator": "attention_cv_cluster4_out", "precision": "bitwise_passed", "ratio": 0.8213314711883862, "status": "passed"}
+[oscar] PERF_HISTORY_REUSE_RESULT {"candidate_evaluation_allowed": true, "production_promotion": "blocked_pending_full_model_quality_and_service_performance", "q1_graph_capture": "passed", "q1_graph_replay": "passed", "q1_performance": "passed", "q1_precision": "passed", "q1_schedule_gate": "passed", "reason": null, "report": "/workspace/gpt_new_oscar_kimi/logs/observe-20260928T064725.021030Z/history-reuse.json", "status": "passed"}
+[oscar] PERF_HISTORY_REUSE_ACCURACY {"cases_bitwise": 9, "cases_total": 9, "frontier_distinct_kvend": 5, "frozen_oracle_valid_cases": 6, "invalid_live_status": "passed", "nonterminal_clusters": 0, "unaligned_mature_clusters": 2}
+[oscar] PERF_FAST_UNPACK {"case": "q4_decode32_n128_s3", "fast_ms": 11.281519889831543, "fast_operator": "attention_cv_fast_out", "graph": "passed", "mode": "base", "old_ms": 15.297940254211426, "old_operator": "attention_cv_out", "precision": "bitwise_passed", "ratio": 0.7374535200401121, "status": "passed"}
+[oscar] PERF_FAST_UNPACK {"case": "q1_mixed32_n16384_s1", "fast_ms": 15.76576042175293, "fast_operator": "attention_cv_fast_q1_out", "graph": "not_run", "mode": "q1", "old_ms": 20.468299865722656, "old_operator": "attention_cv_q1_out", "precision": "bitwise_passed", "ratio": 0.7702525625078974, "status": "passed"}
+[oscar] PERF_FAST_UNPACK {"case": "mature_20k", "fast_ms": 48.7724609375, "fast_operator": "attention_cv_fast_cluster4_out", "graph": "not_run", "mode": "c4", "old_ms": 55.0098991394043, "old_operator": "attention_cv_cluster4_out", "precision": "bitwise_passed", "ratio": 0.8866124406791297, "status": "passed"}
+[oscar] PERF_HISTORY_REUSE_GRAPH {"accuracy": "bitwise_passed", "case": "graph_changed_inputs", "clusters": 0, "graph_capture": "passed", "graph_replay": "passed", "oracle": "passed"}
+[oscar] PERF_OPERATOR_GATE build=rebuilt npu_cv=fresh_device_completion signature=a1304fb6f1dd devices=0,1,2,3
+[oscar] PERF_CURRENT_FIA_GATE accuracy=passed mixed_sources=passed task_contract=passed current16k_device_ms=6.5359601974487305 release=passed
+[oscar] OBSERVE_PROBE_DONE variant=candidate service_started=false report=/workspace/gpt_new_oscar_kimi/logs/observe-20260928T064725.021030Z/status.json
+root@node93:/workspace/gpt_new_oscar_kimi#

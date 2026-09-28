@@ -12,6 +12,7 @@ import sys
 from .deploy import plan as deploy_plan
 from .phase import atomic_json, run_phase, terminal_line
 from .target_cli import target_env
+from .serving_variants import variant_config, variant_features
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -37,16 +38,7 @@ def main(argv=None) -> int:
         atomic_json(log_dir / "status.json", status)
         print(f"[oscar] install → build → rotations → serve (no tests, no probes); logs={log_dir}", flush=True)
     try:
-        config = json.loads(args.config.read_text())
-        if not isinstance(config, dict) or type(config.get("experimental_history_reuse", False)) is not bool:
-            raise ValueError("experimental_history_reuse must be an explicit boolean")
-        if type(config.get("experimental_fast_unpack", False)) is not bool:
-            raise ValueError("experimental_fast_unpack must be an explicit boolean")
-        if args.variant is not None:
-            config["experimental_history_reuse"] = args.variant == "candidate"
-            config["experimental_fast_unpack"] = args.variant == "candidate"
-        if config.get("experimental_fast_unpack", False) and not config.get("experimental_history_reuse", False):
-            raise ValueError("fast unpack requires explicit candidate history configuration")
+        config = variant_config(json.loads(args.config.read_text()), args.variant)
         if args.rear_cards:
             # Explicit user-selected placement, never inherited from a prior
             # task's environment. Validate the supplied device config first.
@@ -80,8 +72,7 @@ def main(argv=None) -> int:
                   effective_config=str(effective_path),
                   placement="rear" if args.rear_cards else "configured",
                   target_devices=config["devices"], port=config["port"],
-                  optimizations={"history_cluster4": enabled, "later_mtp_q1": enabled,
-                                 "fast_unpack": config.get("experimental_fast_unpack", False)})
+                  optimizations=variant_features(config))
     if args.plan:
         print(json.dumps({"stages": stages, "serve": serve_command, "probes": "none",
                           "variant": variant, "optimizations": status["optimizations"],

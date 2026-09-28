@@ -23,6 +23,7 @@ from .npu_resources import DEFAULT_RELEASE_TOLERANCE, read_npu_resources, wait_f
 from .phase import atomic_json, live_log, run_phase, terminal_line
 from .service_probe import managed_server
 from .target_cli import target_env
+from .serving_variants import variant_config, variant_features
 
 ROOT = Path(__file__).resolve().parents[1]
 FE0_KERNEL_SHA256 = {
@@ -413,9 +414,8 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
         if diagnose_q4 and variant != "candidate":
             raise ValueError("--diagnose-q4 requires --variant candidate")
         original = config_path.read_bytes()
-        config = json.loads(original)
-        config["experimental_history_reuse"] = variant == "candidate"
-        config["experimental_fast_unpack"] = variant == "candidate"
+        config = variant_config(json.loads(original), variant)
+        status["optimizations"] = variant_features(config)
         effective_path = log_dir / "effective-target.json"
         atomic_json(effective_path, config)
         status["target_config"] = {"original": str(config_path),
@@ -579,7 +579,7 @@ def main(argv=None) -> int:
     log_dir = (args.log_dir or ROOT / "logs" / ("observe-" + datetime.now(timezone.utc).strftime(
         "%Y%m%dT%H%M%S.%fZ"))).resolve()
     if args.plan:
-        config = json.loads(args.config.read_text())
+        config = variant_config(json.loads(args.config.read_text()), args.variant)
         phases = ["install", "signed_operator_gate" if args.variant != "native" else "native_start"]
         if args.variant == "candidate":
             phases += ["candidate_operator_graph_latency_gates", "fast_unpack_gate"]
@@ -588,6 +588,7 @@ def main(argv=None) -> int:
         if not args.probe_only:
             phases += ["managed_service_health", "external_metrics_and_bounded_async_events"]
         print(json.dumps({"variant": args.variant, "devices": config["devices"],
+            "optimizations": variant_features(config),
             "inference_requests_generated": 0,
             "measurement": "operator_microprobe" if args.probe_only else "passive_external_only",
             "probe_only": args.probe_only, "model_will_start": not args.probe_only,

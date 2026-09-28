@@ -42,3 +42,17 @@ git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate 
 终端只新增5行`PERF_FAST_UNPACK`与一行最终结果。输出为`fast-unpack-report.json`，与阶段状态`fast-unpack.json`分离。旧q4原生/profile诊断已经提供了本轮所需数据，默认不重跑；必要时才显式加`--diagnose-q4`。
 
 `--probe-only`不启动模型、不发推理请求、不跑AISBench。新门通过后，已有直启命令仍是`install_serve.sh --variant candidate`，本轮有效配置包含`experimental_fast_unpack=true`，终端显示`FAST_UNPACK=on`。后四卡仍通过`--rear-cards`显式选择，默认卡和端口不变。基准模式及无参数的原配置仍不启用实验路径。
+
+## 0677bcb 真机复验
+
+用户回传`observe-20260928T064725.021030Z`，签名前缀`a1304fb6f1dd`；所有fast精度、独立图及性能门passed，正常`OBSERVE_PROBE_DONE service_started=false`结束。原文`reports/target_fast_unpack_pass_20260928.txt`。
+
+| 场景 | 原路径ms | fast ms | 耗时下降 |
+|---|---:|---:|---:|
+| q4 decode32 N128/S3 | 15.298 | 11.282 | 26.25% |
+| q1 decode32 N128/S3 | 13.855 | 9.842 | 28.96% |
+| q1 mixed32 N16384/S1 | 20.468 | 15.766 | 22.97% |
+| C4 mature20K | 55.010 | 48.772 | 11.34% |
+| mixed q1/q4/long | 19.301 | 15.853 | 17.87% |
+
+这些是同输入算子测量；不推出19分钟已变成某个新总时长。q4/q1指定图门通过，C4行graph=not_run，不伪称所有路径都完成整模型图验收。直启命令在0677bcb已经设置两个候选开关；随后将两入口的开关配置集中到`tools/serving_variants.py`，避免未来只更新probe。不会为这次配置整理要求重跑真机。

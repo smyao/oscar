@@ -49,6 +49,8 @@
 
 ## 当前必须正面解决的事项
 
+0677bcb fast unpack真机门已通过：五个热形状耗时降低11.34%–28.96%，精度/指定独立图/性能门passed，详见`reports/target_fast_unpack_pass_20260928.txt`。E06完整服务8分钟目标仍未验收。固定交付入口为`install_serve.sh --variant candidate`，已与probe共用候选预设并通过68项相关主机回归；每轮须同步实际路由，不能仅更新probe。默认与后四卡行为不改。
+
 最新用户反馈candidate约19min vs原生8min，E06仍未通过。本轮已实现三种独立fast unpack CV（q4/q1/C4），原FE0/C4/q1/profile文件字节未改；CANN及官方CPU-debug22/22通过，含65536×8整数码和21项整CV/特殊half/错误用例。目标NPU精度、图及5个热形状收益由新增fast-unpack门裁决，不能用本地通过宣称8分钟完成。源指纹`reports/fast_unpack_local_validation.json`，分析`docs/fast_unpack.md`；不再要求AISBench。
 
 用户指定的直启部署模式：`install_serve.sh --variant candidate --rear-cards`仅本轮使用物理卡4,5,6,7和端口7878，安装/编译/旋转准备/服务共享有效配置。原target.json及不带rear-cards时的行为不变；11项主机编排测试通过，不记为新真机验收或错误条目。

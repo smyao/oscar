@@ -49,6 +49,8 @@
 
 ## 当前必须正面解决的事项
 
+直启入口配置补齐（#148/#150，主机变更不记新真机错误）：`install_serve.sh --variant candidate`现在向安装/编译/旋转准备和正式服务统一传入启用C4/q1的本轮配置，并打印SERVE_MODE；不修改原target.json，不运行探针。省略variant遵循输入配置，baseline显式选fe0，q4内部profile不进入生产。6项主机编排测试通过；未以此新增设备或端到端验收结论。
+
 2026-09-28 q1真机复验：a13af95、`observe-20260928T031553.257802Z`全部短probe门通过；q1 N128/S3 45.112→13.807ms（独立图/逐位passed），N16384/S1 137.883→20.544ms（逐位passed、该形状graph未跑）。C4继续通过，q4 S3原fe0仍约15.3ms。新q1设备精度/指定独立图/局部收益分别有证据；完整TP4服务和E06的8分钟目标仍未完成。原文见`reports/target_q1_schedule_pass_20260928.txt`，不重跑AISBench。
 
 q4诊断接入同一`--probe-only`：原生paged BF16 FIA与OSCAR CV+merge的未插桩Event对照、独立profile的每核/每引擎/每来源计数，分别验证oracle及fe0逐位。profile不进入生产，fe0/C4/q1三内核字节不变。CANN编译和CPU-debug2/2通过；新native API与profile真NPU仍待测，E06不因诊断工具通过而解锁。见`docs/q4_diagnostic.md`、`reports/q4_profile_local_validation.json`。

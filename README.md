@@ -49,10 +49,12 @@ git pull --ff-only && bash scripts/install_probe_serve.sh
 已跑通过完整探针、只想重新编译安装并直接启动时（不运行任何测试或probe）：
 
 ```bash
-git pull --ff-only && bash scripts/install_serve.sh
+git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 ```
 
 它只执行安装构建依赖/插件 → 编译算子 → 自动准备旋转文件，全部成功后以 `tools.target_cli` 前台路径直接拉起正式服务（与 `scripts/serve_direct.sh` 同一启动入口）；任一相位失败即保留真实退出码并停止，不会拉起服务。该入口不执行算子/服务探针和配对性能门，不能充当验收证据；正式验收仍使用 `scripts/install_probe_serve.sh`。
+
+`--variant candidate`生成本轮有效配置并启用C4历史复用和后续MTP q1调度；终端打印`SERVE_MODE variant=candidate C4=on Q1=on`。它不启用独立q4 profile算子。`--variant baseline`使用fe0；省略该参数时遵循原配置，当前`configs/target.json`默认未启用C4/q1。原配置文件不会被修改。
 
 不启动设备即可查看计划：
 

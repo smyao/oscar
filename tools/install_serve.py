@@ -1,4 +1,5 @@
 # 档案 #75/#94/#95/#116/#117/#120/#125：相位输出实时到终端、完整日志落盘、保留真实退出码；本入口按用户要求只编译安装并直接启动，不含任何测试或probe。
+# #148/#150：安装最新产物不等于启用优化；显式candidate将同一有效配置传给所有相位和服务。
 """Install, compile and prepare rotations, then exec the formal service; no tests, no probes."""
 from __future__ import annotations
 import argparse
@@ -19,12 +20,14 @@ ROOT = Path(__file__).resolve().parents[1]
 BUILD_PHASES = ("build-dependencies", "install-plugin", "build-ops", "prepare-rotations")
 
 
-def main() -> int:
+def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
     parser.add_argument("--plan", action="store_true", help="print commands without installing or touching an NPU")
     parser.add_argument("--log-dir", type=Path)
-    args = parser.parse_args()
+    parser.add_argument("--variant", choices=("baseline", "candidate"),
+                        help="candidate enables C4 and later-MTP q1; baseline selects fe0; omitted respects config")
+    args = parser.parse_args(argv)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     log_dir = (args.log_dir or ROOT / "logs" / stamp).resolve()
     status = {"status": "running", "phases": [], "probes": "none"}
@@ -33,18 +36,38 @@ def main() -> int:
         print(f"[oscar] install → build → rotations → serve (no tests, no probes); logs={log_dir}", flush=True)
     try:
         config = json.loads(args.config.read_text())
+        if not isinstance(config, dict) or type(config.get("experimental_history_reuse", False)) is not bool:
+            raise ValueError("experimental_history_reuse must be an explicit boolean")
+        if args.variant is not None:
+            config["experimental_history_reuse"] = args.variant == "candidate"
     except (OSError, ValueError) as exc:
         if not args.plan:
             (log_dir / "config.log").write_text(f"FAILED phase=config: {exc}\n")
             status.update(status="failed", failed_phase="config", error=str(exc))
             atomic_json(log_dir / "status.json", status)
         raise
-    stages = [(name, command) for name, command in deploy_plan(args.config, log_dir) if name in BUILD_PHASES]
+    enabled = config.get("experimental_history_reuse", False)
+    variant = "candidate" if enabled else "baseline"
+    effective_path = (log_dir / "effective-target.json" if args.variant is not None
+                      else args.config.resolve())
+    stages = []
+    for name, command in deploy_plan(args.config, log_dir):
+        if name not in BUILD_PHASES:
+            continue
+        # Plan mode remains read-only: derive commands from the original
+        # config and bind config-taking phases to the future effective file.
+        if "--config" in command:
+            command[command.index("--config") + 1] = str(effective_path)
+        stages.append((name, command))
     if [name for name, _ in stages] != list(BUILD_PHASES):
         raise RuntimeError(f"deploy plan no longer provides the expected build phases {BUILD_PHASES}; refusing to improvise")
-    serve_command = [sys.executable, "-m", "tools.target_cli", "--config", str(args.config.resolve())]
+    serve_command = [sys.executable, "-m", "tools.target_cli", "--config", str(effective_path)]
+    status.update(variant=variant, original_config=str(args.config.resolve()),
+                  effective_config=str(effective_path),
+                  optimizations={"history_cluster4": enabled, "later_mtp_q1": enabled})
     if args.plan:
         print(json.dumps({"stages": stages, "serve": serve_command, "probes": "none",
+                          "variant": variant, "optimizations": status["optimizations"],
                           "target_devices": config["devices"]}, indent=2))
         return 0
     try:
@@ -54,8 +77,12 @@ def main() -> int:
         status.update(status="failed", failed_phase="config", error=str(exc))
         atomic_json(log_dir / "status.json", status)
         raise
-    env["OSCAR_TARGET_CONFIG"] = str(args.config.resolve())
+    if args.variant is not None:
+        atomic_json(effective_path, config)
+    env["OSCAR_TARGET_CONFIG"] = str(effective_path)
     env["PYTHONUNBUFFERED"] = "1"
+    print(f"[oscar] SERVE_MODE variant={variant} C4={'on' if enabled else 'off'} "
+          f"Q1={'on' if enabled else 'off'} config={effective_path}", flush=True)
     print(f"[oscar] devices={env.get('ASCEND_RT_VISIBLE_DEVICES', 'diagnostic')} port={config['port']}", flush=True)
     rc = 0
     try:

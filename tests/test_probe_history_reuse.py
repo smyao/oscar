@@ -1,4 +1,4 @@
-"""Archive #126/#129/#140-145: fe0-versus-C4 diagnostic host contracts.
+"""Archive #126/#129/#140-145/#148-150: fe0-versus-C4/q1 host contracts.
 
 These tests validate probe inputs and fail-closed evidence, never claim NPU
 accuracy, graph capture or a production performance improvement.
@@ -23,6 +23,62 @@ def test_small_fixture_is_deterministic_and_uses_disjoint_physical_pages():
     assert sorted(pages) == list(range(first["blocks"]))
     assert first["cpu"]["table"].shape[0] == len(shape.qlens)
     assert bool((first["cpu"]["slots"] >= 0).all())
+
+
+def test_decode_measurement_uses_production_splits_not_old_s1():
+    # #150 follow-up: N128 has seven global query tiles and needs S3 for
+    # twenty Cubes in the current runtime. Other oracle shapes stay fixed.
+    target = {"max_num_batched_tokens": 16384}
+    shape = next(case for case in reuse.CASES if case.name == "decode32")
+    assert shape.splits == 1
+    measured = reuse.measurement_shape(shape, target, 20)
+    assert measured.splits == 3 and measured.qlens == shape.qlens
+    assert measured.contexts == shape.contexts
+    assert reuse.measurement_shape(shape, target, 1).splits == 1
+    for case in reuse.CASES:
+        if case.name != "decode32":
+            assert reuse.measurement_shape(case, target, 20) is case
+
+
+def test_q1_shapes_keep_real_32_request_lengths_and_both_native_padding_sizes():
+    assert len(reuse.Q1_CASES) == 2
+    small, large = reuse.Q1_CASES
+    assert small.qlens == large.qlens == (1,) * 32
+    assert small.contexts == large.contexts == (20000, 23000, 27000, 30000) * 8
+    assert (small.padded_tokens, small.splits) == (128, 3)
+    assert (large.padded_tokens, large.splits) == (16384, 1)
+    assert small.slot_context and large.slot_context
+    assert reuse.baseline_workspace_per_core(small.dim) == reuse.baseline_workspace_per_core(large.dim)
+    for shape in reuse.Q1_CASES:
+        shape.validate()
+        assert reuse.select_cv_op(4, shape.heads, shape.kv_heads,
+                                  shape.padded_tokens, 1, q1_draft=True) == reuse.Q1_CV_OP
+        assert reuse.select_cv_op(4, shape.heads, shape.kv_heads,
+                                  shape.padded_tokens, 1) == reuse.FE0_CV_OP
+
+
+def test_q1_padding_fixture_has_32_real_slots_and_96_negative_holes():
+    torch = pytest.importorskip("torch")
+    shape = reuse.Shape("q1_padding_contract", (1,) * 32, (17,) * 32,
+                        64, 1, 3, False, padded_tokens=128, slot_context=True)
+    fixture = reuse.make_fixture(torch, shape)
+    assert fixture["tokens"] == 128 and fixture["actual_tokens"] == 32
+    assert fixture["cpu"]["starts"].tolist() == list(range(33))
+    assert fixture["cpu"]["slots"].shape == (128,)
+    assert bool((fixture["cpu"]["slots"][:32] >= 0).all())
+    assert fixture["cpu"]["slots"][32:].tolist() == [-1] * 96
+    assert len(fixture["expected"]) == 32
+    tasks = torch.zeros((128, 1, 3, 3, 16), dtype=torch.int64)
+    tasks[32:, ..., 1] = -1
+    positions = torch.tensor([17] * 32 + [-1] * 96, dtype=torch.int64)
+    reuse._check_padding_tasks(torch, fixture, tasks, positions)
+    tasks[40, 0, 0, 0, 1] = 0
+    with pytest.raises(reuse.HistoryReuseProbeError, match="harmless qcount=-1"):
+        reuse._check_padding_tasks(torch, fixture, tasks, positions)
+    tasks[40, 0, 0, 0, 1] = -1
+    positions[40] = 0
+    with pytest.raises(reuse.HistoryReuseProbeError, match="slots/positions"):
+        reuse._check_padding_tasks(torch, fixture, tasks, positions)
 
 
 def test_invalid_live_and_dead_tail_corrupt_distinct_slots():
@@ -96,13 +152,14 @@ def test_candidate_argument_is_inserted_after_workspace_before_attributes():
     calls = []
     ops = SimpleNamespace(
         attention_cv_out=lambda *args: calls.append(("fe0", args)),
-        attention_cv_cluster4_out=lambda *args: calls.append(("C4", args)))
+        attention_cv_cluster4_out=lambda *args: calls.append(("C4", args)),
+        attention_cv_q1_out=lambda *args: calls.append(("q1", args)))
     tensors = {key: key for key in ("q", "qr", "ck", "cv", "rv", "raw",
                                     "table", "wk", "wv", "tags")}
     buffers = {key: key for key in ("tasks", "partial", "lse", "status", "workspace")}
     buffers["cluster_stats"] = "stats"
     fixture = {"spec": reuse.Shape("x", (1,), (17,), 64, 1, 1, False),
-               "blocks": 2, "stride": 20480, "scale": 0.125}
+               "blocks": 2, "stride": 20480, "scale": 0.125, "tokens": 1}
     reuse._launch(ops, tensors, fixture, buffers, 2, candidate=False)
     reuse._launch(ops, tensors, fixture, buffers, 2, candidate=True)
     assert calls[0][0] == "fe0" and calls[1][0] == "C4"
@@ -115,6 +172,10 @@ def test_candidate_argument_is_inserted_after_workspace_before_attributes():
                           production_route=True)
     assert route == reuse.FE0_CV_OP
     assert calls[2] == calls[0]
+    q1_route = reuse._launch(ops, tensors, fixture, buffers, 2, candidate=True,
+                             q1_schedule=True, production_route=True)
+    assert q1_route == reuse.Q1_CV_OP
+    assert calls[3][0] == "q1" and calls[3][1] == calls[0][1]
 
 
 @pytest.mark.parametrize("heads,kv_heads,tokens,max_query_len,expected", [
@@ -169,6 +230,21 @@ def test_cluster_counters_two_phase_attribution_is_global_only():
     assert result["eligible_clusters"] == 1
     assert result["grouped_leaders"] == 4
     assert result["original_schedule_skips"] == 4
+
+
+def test_q1_schedule_gate_requires_both_speed_cases_and_changed_input_graph():
+    rows = [{"case": shape.name, "q1_precision": "bitwise_passed",
+             "frozen_oracle": "passed", "q1_performance": "passed",
+             "production_operator": reuse.Q1_CV_OP, "q1_over_fe0": 0.99}
+            for shape in reuse.Q1_CASES]
+    graph = {"q1_graph_capture": "passed", "q1_graph_replay": "passed"}
+    assert reuse._q1_gate(rows, graph)["q1_schedule_gate"] == "passed"
+    with pytest.raises(reuse.HistoryReuseProbeError, match="missing a required"):
+        reuse._q1_gate(rows[:1], graph)
+    assert reuse._q1_gate(rows, None)["q1_schedule_gate"] == "failed"
+    rows[1]["q1_over_fe0"] = 1.0001
+    assert reuse._q1_gate(rows, graph)["q1_performance"] == "failed"
+    assert reuse._q1_gate(rows, graph)["q1_schedule_gate"] == "failed"
 
 
 def test_bitwise_comparison_distinguishes_signed_zero_and_nan_payload():

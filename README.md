@@ -4,6 +4,14 @@
 
 ## fe0 精度基准与历史复用实验
 
+2026-09-28：已从用户实际负载中定位到MTP后两轮q1的历史任务偏载，新增独立调度实验。后续不再要求重跑AISBench；下一轮仅用短probe：
+
+```bash
+git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate --probe-only
+```
+
+此模式完成算子/图/速度门后退出，不加载模型。分析与证据边界见[本次实际负载分析](docs/observation_20260928.md)。
+
 当前以用户确认精度正确的`fe0e925`为基准。原`attention_cv.cpp`及store/rotate/merge等计算内核保持该版本字节一致；默认仍运行原算子。`codex/aisbench-stable`保持精确的fe0提交。新C4算子仅在显式候选模式中使用，冻结容差没有放宽，也未重新加入已回退的AR/位图或元数据向量化。
 
 ### 一键验证候选并启动，用户自行运行 AISBench

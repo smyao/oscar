@@ -1,0 +1,81 @@
+{
+  "scope": "independent q1 schedule; CANN ascend910b4 and official CPU debugger only",
+  "status": "passed",
+  "device_build_rc": 0,
+  "cpu_build_rc": 0,
+  "cpu_debug": {
+    "passed": 5,
+    "total": 5,
+    "cases": [
+      {
+        "op": "q1_schedule",
+        "path": "reports/vm-cv-q1/goldens/q1_32_s3_d64",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-q1/guest/logs/vm-cv-q1/cases/000-q1_schedule.log",
+        "spread": "q1_source0_leaders=96 old_active_cores=6 new_active_cores=20"
+      },
+      {
+        "op": "q1_schedule_bad_meta",
+        "path": "reports/vm-cv-q1/goldens/q1_32_s3_d64",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-q1/guest/logs/vm-cv-q1/cases/001-q1_schedule_bad_meta.log",
+        "spread": "q1_source0_leaders=96 old_active_cores=6 new_active_cores=20"
+      },
+      {
+        "op": "q1_schedule",
+        "path": "reports/vm-cv-q1/goldens/q1_32_s1_d64",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-q1/guest/logs/vm-cv-q1/cases/002-q1_schedule.log",
+        "spread": "q1_source0_leaders=32 old_active_cores=2 new_active_cores=20"
+      },
+      {
+        "op": "q1_schedule",
+        "path": "reports/vm-cv-q1/goldens/q1_32_empty_s3_d64",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-q1/guest/logs/vm-cv-q1/cases/003-q1_schedule.log",
+        "spread": "q1_source0_leaders=96 old_active_cores=6 new_active_cores=20"
+      },
+      {
+        "op": "q1_schedule",
+        "path": "reports/vm-cv-q1/goldens/q1_4_s1_d256",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-q1/guest/logs/vm-cv-q1/cases/004-q1_schedule.log",
+        "spread": "q1_source0_leaders=4 old_active_cores=1 new_active_cores=2"
+      }
+    ]
+  },
+  "source_sha256": {
+    "csrc/kernels/attention_cv.cpp": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+    "csrc/kernels/attention_cv_cluster.cpp": "c2412de931041f92a6fd340ad690accb32c12b1012f069342d296b3aa335ec82",
+    "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+    "csrc/kernels/attention_cv_q1.cpp": "498644c51c4857828e19ec7e8ef5064653b524d1e7bd2344aaec1b82481152d7",
+    "csrc/include/oscar_attention_launch.h": "59fe76778e548bed98f04fc2ca1c78cd7f34345be6bedc3a691d203748b4560a",
+    "csrc/attention_bindings.cpp": "8d753de9e389ad87ab56e7417109fbdef164fe68ee54f04dd89e50556fa04aee",
+    "csrc/cpu/cv_probe.cpp": "eeff26389039c4813bbdd848819cfd4ae0c47d41d265151c00352a64315db34c",
+    "csrc/CMakeLists.txt": "d2a879e3ea158295b8e4688853d1b938d411d7df7ffb5929fe50d7b88e5e5288"
+  },
+  "build_signature": "d8556e4da66748961b0d5865d357ee00c84f81846918c80b2573323fb8ec8a9e",
+  "logs": {
+    "device_build": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-q1/guest/reports/vm-cv-q1/device-build.log",
+    "cpu_configure": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-q1/guest/reports/vm-cv-q1/cpu-configure.log",
+    "cpu_build": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-q1/guest/reports/vm-cv-q1/cpu-build.log",
+    "cpu_debug": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-q1/guest/reports/vm-cv-q1/cpu-debug-run.log"
+  },
+  "npu_accuracy": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "model_quality": "not_run",
+  "performance": "not_run",
+  "host_validation": {
+    "passed": 119,
+    "real_npu_skipped": 28,
+    "subtests_passed": 4,
+    "environment": "macOS local Python 3.12; loopback-only HTTP fixture approved outside sandbox",
+    "scope": "runtime/meta/probe/observer/plugin/build/ABI/export regressions; no target NPU"
+  }
+}

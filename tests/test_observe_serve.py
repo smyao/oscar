@@ -86,6 +86,8 @@ def test_candidate_gate_requires_signed_artifact_graph_and_precision(monkeypatch
         report = {"status": "passed", "candidate_evaluation_allowed": allowed,
             "default_route": "fe0", "graph_capture": "passed", "graph_replay": "passed",
             "artifact_signature": "abc", "artifact_sha256": manifest["sha256"],
+            "q1_schedule_gate": "passed", "q1_precision": "passed", "q1_performance": "passed",
+            "q1_graph_capture": "passed", "q1_graph_replay": "passed",
             "reference_commit": "fe0e925e7ef78bfb64217a300031502fc4a7b7bc",
             "production_promotion": "blocked_pending_full_model_quality_and_service_performance",
             "fe0_source_sha256": {
@@ -99,6 +101,22 @@ def test_candidate_gate_requires_signed_artifact_graph_and_precision(monkeypatch
     allowed = False
     with pytest.raises(RuntimeError, match="lacks exact signed artifact"):
         observe_serve._candidate_gate(config_path, config, {}, log_dir, status)
+
+
+def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_path):
+    config = observe_serve.ROOT / "configs/target.json"
+    seen = []
+    monkeypatch.setattr(observe_serve, "_preflight", lambda *args: seen.append("preflight"))
+    monkeypatch.setattr(observe_serve, "_candidate_gate", lambda *args: seen.append("candidate-gates"))
+    monkeypatch.setattr(observe_serve, "managed_server", lambda *args, **kwargs:
+                        pytest.fail("probe-only must not launch a model or AISBench"))
+    monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
+    logs = tmp_path / "probe"
+    assert observe_serve.run(config, logs, "candidate", probe_only=True) == 0
+    assert seen == ["preflight", "candidate-gates"]
+    status = json.loads((logs / "status.json").read_text())
+    assert status["service_started"] is False
+    assert status["performance_acceptance"] == "operator_only_not_end_to_end"
 
 
 def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeypatch, tmp_path):

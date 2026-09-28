@@ -1,0 +1,1062 @@
+    "duration_ms": 8.66015625,
+          "end_ms": 2597.746826171875,
+          "fields": {
+            "cube_cores": 20,
+            "draft_index": 2,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 16384,
+            "requests": 1,
+            "splits": 1,
+            "stage": "draft",
+            "tasks": 49152,
+            "tokens": 16384
+          },
+          "phase": "fia",
+          "start_ms": 2589.086669921875
+        },
+        {
+          "duration_ms": 1.936279296875,
+          "end_ms": 2599.68310546875,
+          "fields": {
+            "draft_index": 2,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 16384,
+            "requests": 1,
+            "splits": 3,
+            "stage": "draft",
+            "tokens": 16384
+          },
+          "phase": "merge",
+          "start_ms": 2597.746826171875
+        },
+        {
+          "duration_ms": 35.2197265625,
+          "end_ms": 2634.90283203125,
+          "fields": {
+            "draft_index": 2,
+            "hadamard": false,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 16384,
+            "requests": 1,
+            "stage": "draft",
+            "tokens": 16384
+          },
+          "phase": "phase1_stores",
+          "start_ms": 2599.68310546875
+        },
+        {
+          "duration_ms": 0.040283203125,
+          "end_ms": 2634.943359375,
+          "fields": {
+            "draft_index": 2,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 16384,
+            "requests": 1,
+            "stage": "draft",
+            "tokens": 16384
+          },
+          "phase": "status_guard",
+          "start_ms": 2634.903076171875
+        },
+        {
+          "duration_ms": 407.80224609375,
+          "end_ms": 2655.21875,
+          "fields": {},
+          "phase": "draft_proposal",
+          "start_ms": 2247.41650390625
+        }
+      ],
+      "status": "measured",
+      "step_device_ms": 2655.21875,
+      "step_id": "12301-1",
+      "t": "oscar-passive-step",
+      "ts_unix": 1790561926.2255592,
+      "variant": "candidate"
+    },
+    {
+      "accepted_scope": "metrics_window_only",
+      "accepted_tokens": null,
+      "attention_backend": "oscar",
+      "attention_union_ms": null,
+      "bucket": "decode",
+      "missing": null,
+      "missing_reason": "graph_replay_has_no_python_oscar_phase_breakdown",
+      "oscar_union_ms": null,
+      "partial_envelopes": [],
+      "pid": 12301,
+      "preempted_requests": 0,
+      "rank": 1,
+      "residual_ms": null,
+      "run_id": "observe-20260928T020412.084161Z",
+      "scheduled_decode_requests": 1,
+      "scheduled_decode_tokens": 4,
+      "scheduled_draft_tokens": 3,
+      "scheduled_prompt_requests": 0,
+      "scheduled_prompt_tokens": 0,
+      "scheduled_requests": 1,
+      "scopes": [
+        {
+          "duration_ms": 62.701660454273224,
+          "end_ms": 63.2517204284668,
+          "fields": {
+            "graph_scope": "whole_model_graph",
+            "requests": 1,
+            "tokens": 4
+          },
+          "phase": "graph_replay",
+          "start_ms": 0.550059974193573
+        },
+        {
+          "duration_ms": 62.70218062400818,
+          "end_ms": 63.25188064575195,
+          "fields": {},
+          "phase": "target_forward",
+          "start_ms": 0.5497000217437744
+        },
+        {
+          "duration_ms": 0.0195770263671875,
+          "end_ms": 86.76471710205078,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 4,
+            "max_seq_len": 0,
+            "requests": 1,
+            "source_splits": 20,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "prepare",
+          "start_ms": 86.7451400756836
+        },
+        {
+          "duration_ms": 0.23697662353515625,
+          "end_ms": 87.00203704833984,
+          "fields": {
+            "draft_index": 0,
+            "hadamard": false,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 4,
+            "max_seq_len": 0,
+            "requests": 1,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "rotate",
+          "start_ms": 86.76506042480469
+        },
+        {
+          "duration_ms": 0.6771163940429688,
+          "end_ms": 87.6792984008789,
+          "fields": {
+            "cube_cores": 20,
+            "draft_index": 0,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 4,
+            "max_seq_len": 0,
+            "requests": 1,
+            "splits": 20,
+            "stage": "draft",
+            "tasks": 240,
+            "tokens": 4
+          },
+          "phase": "fia",
+          "start_ms": 87.00218200683594
+        },
+        {
+          "duration_ms": 0.019378662109375,
+          "end_ms": 87.69883728027344,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 4,
+            "max_seq_len": 0,
+            "requests": 1,
+            "splits": 60,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "merge",
+          "start_ms": 87.67945861816406
+        },
+        {
+          "duration_ms": 0.2888031005859375,
+          "end_ms": 87.98780059814453,
+          "fields": {
+            "draft_index": 0,
+            "hadamard": false,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 4,
+            "max_seq_len": 0,
+            "requests": 1,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "phase1_stores",
+          "start_ms": 87.6989974975586
+        },
+        {
+          "duration_ms": 0.00360107421875,
+          "end_ms": 87.99156188964844,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 4,
+            "max_seq_len": 0,
+            "requests": 1,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "status_guard",
+          "start_ms": 87.98796081542969
+        },
+        {
+          "duration_ms": 0.0225830078125,
+          "end_ms": 95.29884338378906,
+          "fields": {
+            "draft_index": 1,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 0,
+            "requests": 1,
+            "source_splits": 20,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "prepare",
+          "start_ms": 95.27626037597656
+        },
+        {
+          "duration_ms": 0.236114501953125,
+          "end_ms": 95.53511810302734,
+          "fields": {
+            "draft_index": 1,
+            "hadamard": false,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 0,
+            "requests": 1,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "rotate",
+          "start_ms": 95.29900360107422
+        },
+        {
+          "duration_ms": 0.50823974609375,
+          "end_ms": 96.04351806640625,
+          "fields": {
+            "cube_cores": 20,
+            "draft_index": 1,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 0,
+            "requests": 1,
+            "splits": 20,
+            "stage": "draft",
+            "tasks": 240,
+            "tokens": 4
+          },
+          "phase": "fia",
+          "start_ms": 95.5352783203125
+        },
+        {
+          "duration_ms": 0.01778411865234375,
+          "end_ms": 96.06146240234375,
+          "fields": {
+            "draft_index": 1,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 0,
+            "requests": 1,
+            "splits": 60,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "merge",
+          "start_ms": 96.0436782836914
+        },
+        {
+          "duration_ms": 0.28498077392578125,
+          "end_ms": 96.34660339355469,
+          "fields": {
+            "draft_index": 1,
+            "hadamard": false,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 0,
+            "requests": 1,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "phase1_stores",
+          "start_ms": 96.0616226196289
+        },
+        {
+          "duration_ms": 0.00319671630859375,
+          "end_ms": 96.34996032714844,
+          "fields": {
+            "draft_index": 1,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 0,
+            "requests": 1,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "status_guard",
+          "start_ms": 96.34676361083984
+        },
+        {
+          "duration_ms": 0.01903533935546875,
+          "end_ms": 101.57293701171875,
+          "fields": {
+            "draft_index": 2,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 0,
+            "requests": 1,
+            "source_splits": 20,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "prepare",
+          "start_ms": 101.55390167236328
+        },
+        {
+          "duration_ms": 0.236083984375,
+          "end_ms": 101.8091812133789,
+          "fields": {
+            "draft_index": 2,
+            "hadamard": false,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 0,
+            "requests": 1,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "rotate",
+          "start_ms": 101.5730972290039
+        },
+        {
+          "duration_ms": 0.5059967041015625,
+          "end_ms": 102.31533813476562,
+          "fields": {
+            "cube_cores": 20,
+            "draft_index": 2,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 0,
+            "requests": 1,
+            "splits": 20,
+            "stage": "draft",
+            "tasks": 240,
+            "tokens": 4
+          },
+          "phase": "fia",
+          "start_ms": 101.80934143066406
+        },
+        {
+          "duration_ms": 0.0185394287109375,
+          "end_ms": 102.33403778076172,
+          "fields": {
+            "draft_index": 2,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 0,
+            "requests": 1,
+            "splits": 60,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "merge",
+          "start_ms": 102.31549835205078
+        },
+        {
+          "duration_ms": 0.28600311279296875,
+          "end_ms": 102.62020111083984,
+          "fields": {
+            "draft_index": 2,
+            "hadamard": false,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 0,
+            "requests": 1,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "phase1_stores",
+          "start_ms": 102.33419799804688
+        },
+        {
+          "duration_ms": 0.00318145751953125,
+          "end_ms": 102.62351989746094,
+          "fields": {
+            "draft_index": 2,
+            "is_draft": true,
+            "layer": "mtp.layers.0.self_attn.attn",
+            "max_query_len": 1,
+            "max_seq_len": 0,
+            "requests": 1,
+            "stage": "draft",
+            "tokens": 4
+          },
+          "phase": "status_guard",
+          "start_ms": 102.6203384399414
+        },
+        {
+          "duration_ms": 37.036094665527344,
+          "end_ms": 106.39219665527344,
+          "fields": {},
+          "phase": "draft_proposal",
+          "start_ms": 69.3561019897461
+        }
+      ],
+      "status": "missing",
+      "step_device_ms": 106.39237976074219,
+      "step_id": "12301-2",
+      "t": "oscar-passive-step",
+      "ts_unix": 1790561929.741547,
+      "variant": "candidate"
+    },
+    {
+      "accepted_scope": "metrics_window_only",
+      "accepted_tokens": null,
+      "attention_backend": "oscar",
+      "attention_union_ms": null,
+      "bucket": "unknown",
+      "missing": null,
+      "missing_reason": "no_oscar_phase_events",
+      "oscar_union_ms": null,
+      "partial_envelopes": [],
+      "pid": 12301,
+      "preempted_requests": 0,
+      "rank": 1,
+      "residual_ms": null,
+      "run_id": "observe-20260928T020412.084161Z",
+      "scheduled_decode_requests": 0,
+      "scheduled_decode_tokens": 0,
+      "scheduled_draft_tokens": 0,
+      "scheduled_prompt_requests": 0,
+      "scheduled_prompt_tokens": 0,
+      "scheduled_requests": 0,
+      "scopes": [],
+      "status": "missing",
+      "step_device_ms": 0.00018000000272877514,
+      "step_id": "12301-3",
+      "t": "oscar-passive-step",
+      "ts_unix": 1790561931.549912,
+      "variant": "candidate"
+    },
+    {
+      "accepted_scope": "metrics_window_only",
+      "accepted_tokens": null,
+      "attention_backend": "oscar",
+      "attention_union_ms": 818.4680252075195,
+      "bucket": "mixed",
+      "missing": null,
+      "oscar_union_ms": 818.4680252075195,
+      "partial_envelopes": [],
+      "pid": 12301,
+      "preempted_requests": 0,
+      "rank": 1,
+      "residual_ms": 2018.0617599487305,
+      "residual_scope": "same_rank_same_step_same_stream_envelope",
+      "run_id": "observe-20260928T020412.084161Z",
+      "scheduled_decode_requests": 1,
+      "scheduled_decode_tokens": 4,
+      "scheduled_draft_tokens": 3,
+      "scheduled_prompt_requests": 1,
+      "scheduled_prompt_tokens": 16380,
+      "scheduled_requests": 2,
+      "scopes": [
+        {
+          "duration_ms": 0.5746002197265625,
+          "end_ms": 127.75933837890625,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.3.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "source_splits": 1,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "prepare",
+          "start_ms": 127.18473815917969
+        },
+        {
+          "duration_ms": 0.38562774658203125,
+          "end_ms": 128.14512634277344,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.3.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "current_source_suppress",
+          "start_ms": 127.7594985961914
+        },
+        {
+          "duration_ms": 2.8324737548828125,
+          "end_ms": 130.97775268554688,
+          "fields": {
+            "draft_index": 0,
+            "hadamard": true,
+            "is_draft": false,
+            "layer": "language_model.model.layers.3.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "rotate",
+          "start_ms": 128.14527893066406
+        },
+        {
+          "duration_ms": 12.530731201171875,
+          "end_ms": 143.50863647460938,
+          "fields": {
+            "cube_cores": 20,
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.3.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "splits": 1,
+            "stage": "prefill",
+            "tasks": 49152,
+            "tokens": 16384
+          },
+          "phase": "fia",
+          "start_ms": 130.9779052734375
+        },
+        {
+          "duration_ms": 0.03961181640625,
+          "end_ms": 143.5484161376953,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.3.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "current_slot_guard",
+          "start_ms": 143.50880432128906
+        },
+        {
+          "duration_ms": 7.0308685302734375,
+          "end_ms": 150.57945251464844,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.3.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "source_splits": 1,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "current_native_fia",
+          "start_ms": 143.548583984375
+        },
+        {
+          "duration_ms": 3.5770263671875,
+          "end_ms": 154.15664672851562,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.3.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "splits": 3,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "merge",
+          "start_ms": 150.57962036132812
+        },
+        {
+          "duration_ms": 3.9340362548828125,
+          "end_ms": 158.09083557128906,
+          "fields": {
+            "draft_index": 0,
+            "hadamard": true,
+            "is_draft": false,
+            "layer": "language_model.model.layers.3.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "phase1_stores",
+          "start_ms": 154.15679931640625
+        },
+        {
+          "duration_ms": 0.041473388671875,
+          "end_ms": 158.13247680664062,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.3.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "status_guard",
+          "start_ms": 158.09100341796875
+        },
+        {
+          "duration_ms": 0.578155517578125,
+          "end_ms": 276.2926940917969,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.7.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "source_splits": 1,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "prepare",
+          "start_ms": 275.71453857421875
+        },
+        {
+          "duration_ms": 0.368743896484375,
+          "end_ms": 276.6615905761719,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.7.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "current_source_suppress",
+          "start_ms": 276.2928466796875
+        },
+        {
+          "duration_ms": 2.83245849609375,
+          "end_ms": 279.4942321777344,
+          "fields": {
+            "draft_index": 0,
+            "hadamard": true,
+            "is_draft": false,
+            "layer": "language_model.model.layers.7.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "rotate",
+          "start_ms": 276.6617736816406
+        },
+        {
+          "duration_ms": 12.53094482421875,
+          "end_ms": 292.0252990722656,
+          "fields": {
+            "cube_cores": 20,
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.7.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "splits": 1,
+            "stage": "prefill",
+            "tasks": 49152,
+            "tokens": 16384
+          },
+          "phase": "fia",
+          "start_ms": 279.4943542480469
+        },
+        {
+          "duration_ms": 0.03955078125,
+          "end_ms": 292.06500244140625,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.7.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "current_slot_guard",
+          "start_ms": 292.02545166015625
+        },
+        {
+          "duration_ms": 7.0010986328125,
+          "end_ms": 299.0662536621094,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.7.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "source_splits": 1,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "current_native_fia",
+          "start_ms": 292.0651550292969
+        },
+        {
+          "duration_ms": 3.5413818359375,
+          "end_ms": 302.6077880859375,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.7.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "splits": 3,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "merge",
+          "start_ms": 299.06640625
+        },
+        {
+          "duration_ms": 3.9300537109375,
+          "end_ms": 306.5379638671875,
+          "fields": {
+            "draft_index": 0,
+            "hadamard": true,
+            "is_draft": false,
+            "layer": "language_model.model.layers.7.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "phase1_stores",
+          "start_ms": 302.60791015625
+        },
+        {
+          "duration_ms": 0.041290283203125,
+          "end_ms": 306.57940673828125,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.7.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "status_guard",
+          "start_ms": 306.5381164550781
+        },
+        {
+          "duration_ms": 0.574981689453125,
+          "end_ms": 425.0690612792969,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.11.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "source_splits": 1,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "prepare",
+          "start_ms": 424.49407958984375
+        },
+        {
+          "duration_ms": 0.33935546875,
+          "end_ms": 425.4085693359375,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.11.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "current_source_suppress",
+          "start_ms": 425.0692138671875
+        },
+        {
+          "duration_ms": 2.83282470703125,
+          "end_ms": 428.2415771484375,
+          "fields": {
+            "draft_index": 0,
+            "hadamard": true,
+            "is_draft": false,
+            "layer": "language_model.model.layers.11.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "rotate",
+          "start_ms": 425.40875244140625
+        },
+        {
+          "duration_ms": 12.667144775390625,
+          "end_ms": 440.90887451171875,
+          "fields": {
+            "cube_cores": 20,
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.11.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "splits": 1,
+            "stage": "prefill",
+            "tasks": 49152,
+            "tokens": 16384
+          },
+          "phase": "fia",
+          "start_ms": 428.2417297363281
+        },
+        {
+          "duration_ms": 0.041412353515625,
+          "end_ms": 440.9506530761719,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.11.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "current_slot_guard",
+          "start_ms": 440.90924072265625
+        },
+        {
+          "duration_ms": 6.998321533203125,
+          "end_ms": 447.9491271972656,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.11.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "source_splits": 1,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "current_native_fia",
+          "start_ms": 440.9508056640625
+        },
+        {
+          "duration_ms": 3.536529541015625,
+          "end_ms": 451.48583984375,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.11.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "splits": 3,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "merge",
+          "start_ms": 447.9493103027344
+        },
+        {
+          "duration_ms": 3.931427001953125,
+          "end_ms": 455.4179992675781,
+          "fields": {
+            "draft_index": 0,
+            "hadamard": true,
+            "is_draft": false,
+            "layer": "language_model.model.layers.11.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "phase1_stores",
+          "start_ms": 451.486572265625
+        },
+        {
+          "duration_ms": 0.0421142578125,
+          "end_ms": 455.46063232421875,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.11.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "status_guard",
+          "start_ms": 455.41851806640625
+        },
+        {
+          "duration_ms": 0.578125,
+          "end_ms": 574.0197143554688,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.15.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "source_splits": 1,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "prepare",
+          "start_ms": 573.4415893554688
+        },
+        {
+          "duration_ms": 0.349609375,
+          "end_ms": 574.3695068359375,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.15.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "current_source_suppress",
+          "start_ms": 574.0198974609375
+        },
+        {
+          "duration_ms": 2.832275390625,
+          "end_ms": 577.2019653320312,
+          "fields": {
+            "draft_index": 0,
+            "hadamard": true,
+            "is_draft": false,
+            "layer": "language_model.model.layers.15.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "rotate",
+          "start_ms": 574.3696899414062
+        },
+        {
+          "duration_ms": 12.67266845703125,
+          "end_ms": 589.8748168945312,
+          "fields": {
+            "cube_cores": 20,
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.15.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "splits": 1,
+            "stage": "prefill",
+            "tasks": 49152,
+            "tokens": 16384
+          },
+          "phase": "fia",
+          "start_ms": 577.2021484375
+        },
+        {
+          "duration_ms": 0.04034423828125,
+          "end_ms": 589.9153442382812,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.15.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "current_slot_guard",
+          "start_ms": 589.875
+        },
+        {
+          "duration_ms": 6.9813232421875,
+          "end_ms": 596.8967895507812,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,
+            "layer": "language_model.model.layers.15.self_attn.attn",
+            "max_query_len": 16380,
+            "max_seq_len": 24620,
+            "requests": 2,
+            "source_splits": 1,
+            "stage": "prefill",
+            "tokens": 16384
+          },
+          "phase": "current_native_fia",
+          "start_ms": 589.9154663085938
+        },
+        {
+          "duration_ms": 3.532470703125,
+          "end_ms": 600.4293823242188,
+          "fields": {
+            "draft_index": 0,
+            "is_draft": false,

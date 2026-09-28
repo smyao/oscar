@@ -63,13 +63,16 @@ def _source_identity(variant: str, config: dict) -> dict:
     elif variant == "candidate" and not flag:
         raise RuntimeError("candidate requires experimental_history_reuse=true")
     cluster = ROOT / "csrc/kernels/attention_cv_cluster.cpp"
-    if variant == "candidate" and not cluster.is_file():
+    q1 = ROOT / "csrc/kernels/attention_cv_q1.cpp"
+    if variant == "candidate" and (not cluster.is_file() or not q1.is_file()):
         raise RuntimeError("candidate AscendC source is missing")
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
                               capture_output=True, check=True).stdout.strip()
     return {"variant": variant, "fe0_production_kernels_match": actual == FE0_KERNEL_SHA256,
             "kernel_sha256": actual, "experimental_history_reuse": flag,
             "candidate_kernel_sha256": hashlib.sha256(cluster.read_bytes()).hexdigest()
+                if variant == "candidate" else None,
+            "candidate_q1_kernel_sha256": hashlib.sha256(q1.read_bytes()).hexdigest()
                 if variant == "candidate" else None,
             "checkout_revision": revision,
             "reference_commit": "fe0e925e7ef78bfb64217a300031502fc4a7b7bc"}
@@ -274,6 +277,8 @@ def _candidate_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
             or report.get("production_promotion") !=
                 "blocked_pending_full_model_quality_and_service_performance"
             or report.get("graph_capture") != "passed" or report.get("graph_replay") != "passed"
+            or any(report.get(key) != "passed" for key in (
+                "q1_schedule_gate", "q1_precision", "q1_performance", "q1_graph_capture", "q1_graph_replay"))
             or report.get("artifact_signature") != manifest.get("signature")
             or report.get("artifact_sha256") != manifest.get("sha256")
             or report.get("fe0_source_sha256") != {
@@ -287,13 +292,16 @@ def _candidate_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     atomic_json(log_dir / "status.json", status)
 
 
-def run(config_path: Path, log_dir: Path, variant: str) -> int:
+def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = False) -> int:
     config_path, log_dir = config_path.resolve(), log_dir.resolve()
-    status = {"status": "preparing", "variant": variant, "measurement": "passive_external_only",
+    status = {"status": "preparing", "variant": variant,
+              "measurement": "operator_microprobe" if probe_only else "passive_external_only",
               "performance_acceptance": "not_run", "phases": []}
     atomic_json(log_dir / "status.json", status)
     current_phase = "config"
     try:
+        if probe_only and variant != "candidate":
+            raise ValueError("--probe-only requires --variant candidate")
         original = config_path.read_bytes()
         config = json.loads(original)
         config["experimental_history_reuse"] = variant == "candidate"
@@ -328,6 +336,13 @@ def run(config_path: Path, log_dir: Path, variant: str) -> int:
                     _preflight(effective_path, config, env, log_dir, status, variant)
                     if variant == "candidate":
                         _candidate_gate(effective_path, config, env, log_dir, status)
+            if probe_only:
+                status.update(status="operator_probes_passed", service_started=False,
+                              performance_acceptance="operator_only_not_end_to_end")
+                atomic_json(log_dir / "status.json", status)
+                _terminal(f"[oscar] OBSERVE_PROBE_DONE variant={variant} service_started=false "
+                          f"report={log_dir / 'status.json'}")
+                return 0
             current_phase = "serve"
             before = read_npu_resources(config, log_dir=log_dir / "resources-before", timeout=30)
             try:
@@ -442,17 +457,23 @@ def main(argv=None) -> int:
     parser.add_argument("--variant", choices=("baseline", "candidate", "native"), default="baseline")
     parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--plan", action="store_true")
+    parser.add_argument("--probe-only", action="store_true",
+                        help="finish after candidate operator/graph/latency gates; do not start a model")
     args = parser.parse_args(argv)
     log_dir = (args.log_dir or ROOT / "logs" / ("observe-" + datetime.now(timezone.utc).strftime(
         "%Y%m%dT%H%M%S.%fZ"))).resolve()
     if args.plan:
         config = json.loads(args.config.read_text())
         print(json.dumps({"variant": args.variant, "devices": config["devices"],
-            "inference_requests_generated": 0, "measurement": "passive_external_only",
+            "inference_requests_generated": 0,
+            "measurement": "operator_microprobe" if args.probe_only else "passive_external_only",
+            "probe_only": args.probe_only, "model_will_start": not args.probe_only,
             "phases": ["install", "signed_operator_gate" if args.variant != "native" else "native_start",
+                       "candidate_operator_graph_latency_gates"] if args.probe_only else
+                      ["install", "signed_operator_gate" if args.variant != "native" else "native_start",
                        "managed_service_health", "external_metrics_and_bounded_async_events"]}, indent=2))
         return 0
-    return run(args.config, log_dir, args.variant)
+    return run(args.config, log_dir, args.variant, probe_only=args.probe_only)
 
 
 if __name__ == "__main__":

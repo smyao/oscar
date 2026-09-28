@@ -188,7 +188,8 @@ def test_online_forward_contains_no_host_request_loop_or_tensor_readback():
 
 @pytest.mark.parametrize("capacity,cube_cores,expected_splits,n", [(8, 1, 1, 8), (64, 20, 8, 8), (256, 20, 1, 256)])
 @pytest.mark.parametrize("cluster_size", [1, 4])
-def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size):
+@pytest.mark.parametrize("later_draft", [False, True])
+def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft):
     """Host ABI exercise only: fake ops establish ordering, never accuracy."""
     backend = types.ModuleType("vllm.v1.attention.backend")
     backend.AttentionImpl = type("AttentionImpl", (), {})
@@ -252,6 +253,11 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             self.attention_cv_out(*(args[:15] + args[16:]))
             calls[-1] = "cluster4"
 
+        def attention_cv_q1_out(self, *args):
+            assert cluster_size == 4 and later_draft
+            self.attention_cv_out(*args)  # Identical fe0 ABI; no stats argument.
+            calls[-1] = "q1"
+
         def merge_lse_out(self, partial, lse, output, output_lse, status):
             calls.append("merge")
             assert partial.shape == (n * h, 3 * expected_splits, d)
@@ -288,12 +294,18 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     common.query_start_loc = torch.tensor([0, n // 2, n], dtype=torch.int32)
     common.num_actual_tokens = common.num_input_tokens = n
     common.max_query_len = n // 2
+    if later_draft:
+        common.max_query_len = 1
+        common.num_actual_tokens = 2
+        common.query_start_loc = torch.tensor([0, 1, 2], dtype=torch.int32)
     common.slot_mapping = torch.arange(n + 4, dtype=torch.int32)
     output = torch.empty_like(q)
     result = impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),
-                          q, k, value, packed, replace(from_common(common), is_draft=True), output)
+                          q, k, value, packed, replace(from_common(common), is_draft=True,
+                          draft_index=1 if later_draft else 0), output)
     assert result is output and bool(torch.all(result == 7))
     # #150: short per-request query lengths keep the original OSCAR op even
     # with candidate workspace; long requests keep the C4 ABI/extra buffer.
-    expected_op = "cluster4" if cluster_size == 4 and n == 256 else "cv"
+    expected_op = ("q1" if cluster_size == 4 and later_draft else
+                   "cluster4" if cluster_size == 4 and n == 256 else "cv")
     assert calls == ["prepare", "rotate", expected_op, "merge", "store", "guard"]

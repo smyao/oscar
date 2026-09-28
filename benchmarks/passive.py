@@ -22,7 +22,8 @@ from tools.service_probe import _http, parse_gauges, parse_mtp_metrics
 
 COUNTERS = ("vllm:prompt_tokens_total", "vllm:generation_tokens_total")
 METRICS = ("vllm:num_requests_running", "vllm:num_requests_waiting",
-           "vllm:kv_cache_usage_perc", "vllm:num_preemptions", *COUNTERS)
+           "vllm:kv_cache_usage_perc", "vllm:num_preemptions",
+           "vllm:num_preemptions_total", *COUNTERS)
 
 
 def _snapshot(raw, path):
@@ -40,6 +41,11 @@ def _finite_positive(value, name):
 def _read_metrics(url, timeout):
     raw = _http(url + "/metrics", timeout=timeout)
     values = parse_gauges(raw, METRICS)
+    # Native v1/metrics/loggers.py registers a Prometheus Counter. Its sample
+    # has the _total suffix, unlike the constructor name. Prefer that value;
+    # the unsuffixed spelling remains readable for older saved fixtures.
+    if "vllm:num_preemptions_total" in values:
+        values["vllm:num_preemptions"] = values["vllm:num_preemptions_total"]
     if METRICS[0] not in values or METRICS[1] not in values:
         raise RuntimeError("/metrics lacks running/waiting gauges; external load window cannot be detected")
     return raw, values

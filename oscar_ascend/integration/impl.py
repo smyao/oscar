@@ -125,12 +125,14 @@ class OscarAttentionImpl(AttentionImpl):
         with phase("rotate", layer=layer.layer_name, tokens=n, hadamard=state.hadamard,
                    requests=attn_metadata.num_reqs, **timing_fields):
             ops.rotate_out(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
+        cluster_size = getattr(g, "history_cluster_size", 1)
+        # #150: later q1 MTP uses balanced ownership; q4 stays fe0 INT2.
+        # Host shape selection also fixes the op recorded during capture.
+        cv_name = select_cv_op(cluster_size, h, hk, n, attn_metadata.max_query_len,
+                              q1_draft=attn_metadata.is_draft and attn_metadata.draft_index > 0)
         with phase("fia", layer=layer.layer_name, tokens=n, splits=source_splits,
-                   cube_cores=g.cube_cores, tasks=task_count, requests=attn_metadata.num_reqs, **timing_fields):
-            cluster_size = getattr(g, "history_cluster_size", 1)
-            # #150: q1/q4 decode cannot form a same-request C4 cluster.
-            # Host shape selection also fixes the op recorded during capture.
-            cv_name = select_cv_op(cluster_size, h, hk, n, attn_metadata.max_query_len)
+                   cube_cores=g.cube_cores, tasks=task_count, requests=attn_metadata.num_reqs,
+                   cv_operator=cv_name, **timing_fields):
             cv_op = getattr(ops, cv_name)
             cv_extra = (workspace.cluster_stats,) if cv_name == CLUSTER4_CV_OP else ()
             cv_op(

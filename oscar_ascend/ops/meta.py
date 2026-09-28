@@ -17,8 +17,9 @@ def register_meta(namespace="oscar_ascend_ops"):
 
     names = set(PRODUCTION_CAPABILITIES)
     # #148: this optional experimental schema is never a numerical fallback.
-    if hasattr(getattr(torch.ops, namespace), "attention_cv_cluster4_out"):
-        names.add("attention_cv_cluster4_out")
+    for optional in ("attention_cv_cluster4_out", "attention_cv_q1_out"):
+        if hasattr(getattr(torch.ops, namespace), optional):
+            names.add(optional)
     for name in sorted(names):
         torch.library.register_fake(f"{namespace}::{name}")(out_only)
     _registered.add(namespace)

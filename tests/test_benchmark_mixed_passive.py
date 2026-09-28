@@ -28,7 +28,7 @@ def test_passive_observer_captures_only_external_metrics_window(tmp_path):
             body = (f"vllm:num_requests_running {snapshot['running']}\n"
                     f"vllm:num_requests_waiting {snapshot['waiting']}\n"
                     f"vllm:kv_cache_usage_perc {snapshot['kv']}\n"
-                    f"vllm:num_preemptions {snapshot['preemptions']}\n"
+                    f"vllm:num_preemptions_total {snapshot['preemptions']}\n"
                     f"vllm:prompt_tokens_total {snapshot['prompt']}\n"
                     f"vllm:generation_tokens_total {snapshot['generation']}\n").encode()
             self.send_response(200)

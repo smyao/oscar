@@ -7,7 +7,7 @@
 // device completion, graph capture/replay, timing or the 32K performance gate.
 // Archive #129/#144: large task-table causal bounds use the production M/B
 // geometry without a dense 16K oracle; shared workspace sizing stays exact.
-// Archive #126/#129/#140-145 and D.4: cluster4 mode executes both the fe0
+// Archive #126/#129/#140-150 and D.4: cluster4/q1 modes execute both the fe0
 // kernel and the separate experimental C4 kernel on identical bytes, compares
 // partial/LSE/status exactly, then checks the independent frozen dense oracle.
 #include "tikicpulib.h"
@@ -26,6 +26,10 @@
 extern "C" void oscar_prepare_attention_tasks_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,bool,uint8_t*,int64_t,bool);
 extern "C" void oscar_attention_cv_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
+extern "C" void oscar_attention_cv_q1_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
@@ -191,6 +195,7 @@ int main(int argc,char** argv) {
   const std::string mode=argv[1];
   const bool clusterMode=mode=="cluster4" || mode=="cluster4_required" ||
       mode=="cluster4_bad_meta" || mode=="cluster4_nan_query";
+  const bool q1Mode=mode=="q1_schedule" || mode=="q1_schedule_bad_meta";
   if(mode=="tasks_causal") {CheckLargeCausalTasks();return 0;}
   CheckPaddedMetadata();
   CheckSlotContext();
@@ -272,11 +277,124 @@ int main(int argc,char** argv) {
     const int64_t offset=(105*hq)*d*4; // grouped leader 1, head 0 only.
     std::memcpy(qr.ptr+offset,&nanFloat,4);
   }
+  if(mode=="q1_schedule_bad_meta") {
+    std::ifstream source(dir+"/bad_meta_offset.txt");int64_t offset=-1;
+    if(!(source>>offset) || offset<0 || offset+2>static_cast<int64_t>(raw.size))
+      throw std::runtime_error("invalid q1 bad_meta_offset.txt");
+    std::memset(raw.ptr+offset,0,2);
+  }
   AscendC::SetKernelMode(KernelMode::MIX_MODE);
   ICPU_RUN_KF(oscar_attention_cv_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,raw.ptr,
       table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,partial.ptr,partLse.ptr,status.ptr,
       workspace.ptr,n,hq,hk,d,requests,int64_t{8},tasksCount,b,nb,prefix,stride,
       windowRows*hk*d,windowRows,sink,recent,spec,splits,1.0F/std::sqrt(float(d)));
+  if(q1Mode) {
+    // The producer's qcount/rows and all numerical inputs are unchanged.
+    // One-token work items must cover the identical task table exactly once.
+    const int64_t perToken=hk*segments;
+    int64_t oldLeaders=0,newLeaders=0;
+    std::vector<int64_t> oldCore(cores),newCore(cores);
+    for(int32_t shape=0;shape<2;++shape) {
+      const int64_t tile=shape==0?oscar_ascend::kAttentionQueryRows/(hq/hk):1;
+      const oscar_ascend_schedule::CvTaskSchedule schedule{n,tile,perToken};
+      for(int64_t workId=0;workId<schedule.WorkItems();++workId) {
+        const int64_t segment=schedule.Segment(workId);
+        if(segment%(3*splits)>=splits)continue; // source0 only
+        const int64_t begin=schedule.TokenBegin(workId);
+        for(int64_t token=begin;token<std::min(n,begin+tile);++token) {
+          const int64_t id=schedule.TaskId(workId,token);
+          const auto* row=reinterpret_cast<const int64_t*>(tasks.ptr)+id*16;
+          if(row[1]>0) {
+            if(shape==0) {++oldLeaders;++oldCore[workId%cores];}
+            else {++newLeaders;++newCore[workId%cores];}
+          }
+        }
+      }
+    }
+    if(oldLeaders!=newLeaders)
+      throw std::runtime_error("q1 schedule changed source0 leader count");
+    const int64_t oldActive=std::count_if(oldCore.begin(),oldCore.end(),[](int64_t x){return x>0;});
+    const int64_t newActive=std::count_if(newCore.begin(),newCore.end(),[](int64_t x){return x>0;});
+    if(n==128 && requests==32 && splits==3 && hk==1 && cores==20 &&
+        (oldActive!=6 || newActive!=20))
+      throw std::runtime_error("q1 padded128/S3 owner spread differs from the device-work proof");
+    std::cout<<"q1_source0_leaders="<<newLeaders<<" old_active_cores="<<oldActive
+             <<" new_active_cores="<<newActive<<std::endl;
+    Gm candidatePartial(partial.size),candidateLse(partLse.size),
+       candidateStatus(status.size),candidateWorkspace(workspace.size);
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
+    ICPU_RUN_KF(oscar_attention_cv_q1_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,raw.ptr,
+        table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,candidatePartial.ptr,candidateLse.ptr,
+        candidateStatus.ptr,candidateWorkspace.ptr,n,hq,hk,d,requests,int64_t{8},
+        tasksCount,b,nb,prefix,stride,windowRows*hk*d,windowRows,sink,recent,
+        spec,splits,1.0F/std::sqrt(float(d)));
+    for(const auto* pair:{&candidatePartial,&candidateLse,&candidateStatus}) {
+      const Gm& baseline=pair==&candidatePartial?partial:(pair==&candidateLse?partLse:status);
+      if(pair->size!=baseline.size || std::memcmp(pair->ptr,baseline.ptr,pair->size)!=0) {
+        size_t first=0;while(first<pair->size && pair->ptr[first]==baseline.ptr[first])++first;
+        throw std::runtime_error("q1 schedule differs from fe0 bytewise at output byte "+
+            std::to_string(first));
+      }
+    }
+    if(mode=="q1_schedule_bad_meta") {
+      bool sawError=false;
+      for(int64_t id=0;id<tasksCount;++id)for(int32_t lane=0;lane<2;++lane) {
+        int32_t code;std::memcpy(&code,status.ptr+(id*2+lane)*4,4);
+        if(code==2 || code==3)sawError=true;
+      }
+      if(!sawError)throw std::runtime_error("q1 invalid live metadata did not surface");
+      std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\"q1_schedule_bad_meta\",\"status\":\"passed\"}"<<std::endl;
+      return 0;
+    }
+    StatusZero(status);
+    for(int64_t id=0;id<tasksCount;++id) {
+      const auto* row=reinterpret_cast<const int64_t*>(tasks.ptr)+id*16;
+      if(row[1]<=0 || row[7]!=0 || row[3]!=row[4])continue;
+      for(int64_t gh=0;gh<hq/hk;++gh) {
+        const int64_t outputRow=((row[0]*hq+row[2]*(hq/hk)+gh)*segments+row[6]);
+        float value;std::memcpy(&value,partLse.ptr+outputRow*4,4);
+        if(value!=-INFINITY)throw std::runtime_error("q1 empty history lost -inf LSE");
+        for(int64_t col=0;col<d;++col) {
+          std::memcpy(&value,partial.ptr+(outputRow*d+col)*4,4);
+          if(value!=0.0F)throw std::runtime_error("q1 empty history lost zero partial");
+        }
+      }
+    }
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(oscar_merge_lse_kernel,4,partial.ptr,partLse.ptr,output.ptr,lse.ptr,
+        mergeStatus.ptr,n*hq,segments,d);
+    const auto expectedOutput=Read(dir+"/expected_output.bin",output.size);
+    const auto expectedLse=Read(dir+"/expected_lse.bin",lse.size);
+    int64_t live=0;
+    for(int64_t token=0;token<n;++token) {
+      int64_t slot;std::memcpy(&slot,slots.ptr+token*8,8);
+      if(slot<0)continue;
+      ++live;
+      for(int64_t head=0;head<hq;++head) {
+        const int64_t row=token*hq+head;
+        int32_t mergeCode;std::memcpy(&mergeCode,mergeStatus.ptr+row*4,4);
+        if(mergeCode)throw std::runtime_error("q1 live merge status is nonzero");
+        float actualLse,referenceLse;
+        std::memcpy(&actualLse,lse.ptr+row*4,4);
+        std::memcpy(&referenceLse,expectedLse.data()+row*4,4);
+        if(!std::isfinite(actualLse) ||
+            std::abs(actualLse-referenceLse)>0.005F+0.005F*std::abs(referenceLse))
+          throw std::runtime_error("q1 live LSE differs from frozen oracle");
+        for(int64_t col=0;col<d;++col) {
+          float actual,reference;const int64_t index=row*d+col;
+          std::memcpy(&actual,output.ptr+index*4,4);
+          std::memcpy(&reference,expectedOutput.data()+index*4,4);
+          if(!std::isfinite(actual) ||
+              std::abs(actual-reference)>0.005F+0.005F*std::abs(reference))
+            throw std::runtime_error("q1 live output differs from frozen oracle");
+        }
+      }
+    }
+    if(live==0)throw std::runtime_error("q1 fixture has no live token");
+    std::cout<<"q1_live_tokens="<<live<<std::endl;
+    std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\"q1_schedule\",\"status\":\"passed\"}"<<std::endl;
+    return 0;
+  }
   if(clusterMode) {
     Gm candidatePartial(partial.size),candidateLse(partLse.size),
        candidateStatus(status.size),candidateWorkspace(

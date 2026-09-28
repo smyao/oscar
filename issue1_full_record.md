@@ -28520,3 +28520,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修法**：共享host形状选择函数用于服务和probe。已知max_query_len或总token不足四组时，直接调用既有fe0 OSCAR INT2核；候选工作区足够容纳原核，其余输入和ABI不变，无NPU回读或新增图节点。未知上界保守保留C4。probe原始C4数值/图病例全部保留；速度轮验证实际生产分流的逐位结果，短query两侧为相同fe0算子，时间和比值原样记录作重复性对照，标`identical_fe0_operator`而非伪造ratio=1或快于基线。被实际选中的C4继续原ratio≤1.0门，精度阈值未改。此项只是移除无收益路径并解除采证阻断，真正目标仍是实际负载端到端占比和约8分钟性能。
 
 **本地验证边界**：57项相关主机测试通过，覆盖32×q4与图padding、83/84边界、GQA变化、未知上界、真实forward ABI和长query仍选C4。未修改任何AscendC算子，无新CANN编译必要；修订后的真机分流、服务和用户负载待同一一键命令复验。用户已有fe0精度结论保持有效。
+
+### #150 后续真机回传：门通过并运行实际负载，MTP q1 调度偏载有了同一步证据
+
+用户835fc22运行`observe-20260928T020412.084161Z`，9/9逐位、6个oracle、独立图门通过，C4成熟20K为75.6423→55.3756ms。服务ready后用户完整跑过一次AISBench，并明确今后不再重跑。三份复制片段保存于`reports/target_observation_20260928/`；它们首尾有截断，其中一条scope损伤，不能写成完整原始JSON或推导全程权重。此处续记已存在的#150性能问题，不将本地推论另记成真机错误。
+
+**同一步证据**：rank2 `12371-11` 为32请求/N128 decode，整步428.101ms，目标整图293.687ms，MTP包络122.770ms。MTP三次CV分别14.769/48.480/48.666ms；后两次每请求q1、输入仍N128、S3，合计97.146ms，占这一整步22.69%。目标图和target_forward相互重叠，不能相加，图内OSCAR/GDN比例未知。mixed样本尾部另见q1/N16384/S1的CV约146ms/次；store padding约35ms/次，但占mixed步仅约1.23%，不作为主要提速方案。
+
+**源码确认及D.4四问**：①对应融合history CV的任务归属，不改数值计算；②D.4的6.5秒历史恢复与#129的stride共因子问题说明有效核利用与重复历史工作必须一起检查；③原全局queryTile=128/GQA6=21，N128得到7个tile。32个q1 leader只在前两个tile，source0 S3的work id为{0,1,7,8,14,15}，最多6个核承担历史，分别有21/11请求偏载。q4有18个实际历史核心（不是20，最后tile只有follower）。独立`attention_cv_q1_out`仅将遍历tile设1，保留全部padded task/status、原三源/split/数学/同步/地址，显式候选的后续MTP且max_query_len1才选用。fe0/C4原kernel不变；④6→20个核是工作分配证明，不是实测加速。即使两次q1 CV全消，该decode样本也最多约1.29倍，不能据此宣称8分钟完成。
+
+**验证与一键边界**：真实q1门分别采用32条独立20–30K历史、N128/S3与N16384/S1，逐位partial/LSE/status/合并输出、冻结oracle、N128同地址改变输入图回放及2+5交替设备事件门。`install_observe_serve.sh --variant candidate --probe-only`完成安装/编译/真实算子门后退出，不加载模型、不发推理请求、不跑AISBench。现有decode32 probe此前固定S1，现按生产几何取S3并注明口径，旧40ms不能乘模型层数作为图内归因。采证器同时修正Prometheus preemption Counter的`_total`样本名，旧None保持未知。候选的目标设备收益、完整图和端到端性能仍待短probe裁决；本地CANN/CPU报告另列，不冒充真机结果。

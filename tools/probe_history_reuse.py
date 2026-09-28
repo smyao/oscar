@@ -1,4 +1,4 @@
-# Archive #126/#129/#140-145 and startup D.4: fe0 is the numerical baseline.
+# Archive #126/#129/#140-145/#148-150 and startup D.4: fe0 is the numerical baseline.
 # D.4 four questions: (1) this checks fused history dequant+FIA only;
 # (2) the failed implementation restored full 32K history for 6.5s/device;
 # (3) the experimental C4 op shares one bounded INT2 tile only among four
@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import gc
 import hashlib
 import json
@@ -25,7 +25,7 @@ import time
 import traceback
 
 from .phase import atomic_json
-from oscar_ascend.ops.cv_dispatch import CLUSTER4_CV_OP, FE0_CV_OP, select_cv_op
+from oscar_ascend.ops.cv_dispatch import CLUSTER4_CV_OP, FE0_CV_OP, Q1_CV_OP, select_cv_op
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE_COMMIT = "fe0e925e7ef78bfb64217a300031502fc4a7b7bc"
@@ -63,6 +63,8 @@ class Shape:
     corrupt_position: int = 127
     corrupt_qr_token: int = 84
     required_clusters: int | None = None
+    padded_tokens: int | None = None
+    slot_context: bool = False
 
     @property
     def heads(self) -> int:
@@ -73,7 +75,10 @@ class Shape:
                 any(type(x) is not int or x <= 0 for x in self.qlens) or
                 any(type(x) is not int or x < 0 for x in self.contexts) or
                 self.dim not in (64, 128, 256) or self.kv_heads <= 0 or
-                self.splits <= 0 or self.splits > 32 or self.recent_tokens <= 0):
+                self.splits <= 0 or self.splits > 32 or self.recent_tokens <= 0 or
+                (self.padded_tokens is not None and
+                 (type(self.padded_tokens) is not int or self.padded_tokens < sum(self.qlens))) or
+                (self.slot_context and any(length != 1 for length in self.qlens))):
             raise HistoryReuseProbeError(f"invalid diagnostic shape {self.name}")
 
 
@@ -96,6 +101,35 @@ CASES = (
           speed_gate=False, corrupt_qr=True, recent_tokens=32,
           corrupt_qr_token=105),
 )
+
+# Archive #150 and measured 32-request MTP: q1 has 32 live requests even when
+# native leaves a 128/16384-token graph-shaped buffer. Keep S3/S1 and all
+# negative-slot padding exactly visible to the device task generator.
+Q1_CASES = (
+    Shape("q1_decode32_n128_s3", (1,) * 32,
+          (20000, 23000, 27000, 30000) * 8,
+          256, 1, 3, False, padded_tokens=128, slot_context=True),
+    Shape("q1_mixed32_n16384_s1", (1,) * 32,
+          (20000, 23000, 27000, 30000) * 8,
+          256, 1, 1, False, padded_tokens=16384, slot_context=True),
+)
+
+
+def measurement_shape(spec: Shape, target: dict, cores: int) -> Shape:
+    """#150 follow-up: decode timing uses the service's actual split policy.
+
+    The original S1 probe is an operator contract, not the service's S3 at
+    N128/GQA6/20Cube. Never multiply its old 40ms by the model layer count.
+    Keep all other numerical fixtures unchanged.
+    """
+    if spec.name != "decode32":
+        return spec
+    from oscar_ascend.runtime import WorkspaceGeometry
+    captures = target.get("compilation_config", {}).get("cudagraph_capture_sizes", ())
+    capacity = max(int(target["max_num_batched_tokens"]), max(captures, default=0))
+    geometry = WorkspaceGeometry(capacity, spec.heads, spec.kv_heads, spec.dim,
+                                 int(target.get("attention_splits", 1)), cores)
+    return replace(spec, splits=geometry.splits_for_tokens(sum(spec.qlens)))
 
 
 def candidate_workspace_per_core(dim: int) -> int:
@@ -149,7 +183,8 @@ def make_fixture(torch, shape: Shape) -> dict:
     from oscar_ascend.ops.reference import attention, decode_kv, encode_kv
     shape.validate()
     qlens, contexts, dim, hk, hq = shape.qlens, shape.contexts, shape.dim, shape.kv_heads, shape.heads
-    total = sum(qlens)
+    actual = sum(qlens)
+    total = shape.padded_tokens or actual
     generator = torch.Generator(device="cpu").manual_seed(SEED + total + dim + hk)
     q = torch.randn((total, hq, dim), generator=generator).to(torch.bfloat16)
     ck = torch.randn((total, hk, dim), generator=generator).to(torch.bfloat16)
@@ -178,7 +213,8 @@ def make_fixture(torch, shape: Shape) -> dict:
     tags = torch.full((blocks, window_rows), -1, dtype=torch.int64)
     columns = math.ceil(max(context + length for context, length in zip(contexts, qlens)) / 128)
     table = torch.full((len(qlens), columns), -1, dtype=torch.int32)
-    slots = torch.empty(total, dtype=torch.int64)
+    slots = (torch.full((total,), -1, dtype=torch.int64)
+             if shape.padded_tokens is not None else torch.empty(total, dtype=torch.int64))
     starts = [0]
     lens = []
     expected = {}
@@ -257,7 +293,8 @@ def make_fixture(torch, shape: Shape) -> dict:
                "lens": torch.tensor(lens, dtype=torch.int32), "slots": slots}
     return {"spec": shape, "cpu": tensors, "expected": expected,
             "input_sha256": _fingerprint(tensors), "blocks": blocks,
-            "stride": stride, "tokens": total, "page_assignments": assignments,
+            "stride": stride, "tokens": total, "actual_tokens": actual,
+            "page_assignments": assignments,
             "scale": scale}
 
 
@@ -301,20 +338,47 @@ def _allocate(torch, fixture: dict, device, cores: int, *, candidate: bool):
 
 def _prepare(torch, ops, tensors: dict, fixture: dict, buffers: dict) -> dict:
     spec: Shape = fixture["spec"]
-    ops.prepare_attention_tasks_out(tensors["starts"], tensors["lens"], tensors["slots"],
-        buffers["tasks"], buffers["positions"], spec.heads, spec.kv_heads,
-        SINK, spec.recent_tokens, spec.splits)
+    args = (tensors["starts"], tensors["lens"], tensors["slots"],
+            buffers["tasks"], buffers["positions"], spec.heads, spec.kv_heads,
+            SINK, spec.recent_tokens, spec.splits)
+    if spec.slot_context:
+        ops.prepare_attention_tasks_out(*args, tensors["table"], True)
+    else:
+        ops.prepare_attention_tasks_out(*args)
     torch.npu.synchronize()
     expected = torch.cat([torch.arange(context, context + length)
                           for context, length in zip(spec.contexts, spec.qlens)])
-    torch.testing.assert_close(buffers["positions"].cpu(), expected, atol=0, rtol=0)
+    if fixture["tokens"] > fixture["actual_tokens"]:
+        expected = torch.cat((expected, torch.full(
+            (fixture["tokens"] - fixture["actual_tokens"],), -1, dtype=torch.int64)))
+    positions_cpu = buffers["positions"].cpu()
+    torch.testing.assert_close(positions_cpu, expected, atol=0, rtol=0)
     task_cpu = buffers["tasks"].cpu()
+    _check_padding_tasks(torch, fixture, task_cpu, positions_cpu)
     source0 = task_cpu.view(fixture["tokens"], spec.kv_heads, 3, spec.splits, 16)[:, :, 0]
     leaders = source0[..., 1] > 0
     unique_ends = torch.unique(source0[..., 4][leaders])
     return {"task_sha256": _fingerprint({"tasks": task_cpu}),
             "source0_leaders": int(leaders.sum()),
             "source0_distinct_kvend": int(unique_ends.numel())}
+
+
+def _check_padding_tasks(torch, fixture: dict, tasks_cpu, positions_cpu) -> None:
+    """#126/#129: every padded row must be an explicit harmless task hole."""
+    spec: Shape = fixture["spec"]
+    actual, total = fixture["actual_tokens"], fixture["tokens"]
+    if actual == total:
+        return
+    slots = fixture["cpu"]["slots"]
+    if (slots.shape != (total,) or not bool((slots[:actual] >= 0).all()) or
+            not bool((slots[actual:] == -1).all()) or
+            not bool((positions_cpu[actual:] == -1).all())):
+        raise HistoryReuseProbeError("padded q1 slots/positions are not exactly masked")
+    rows = tasks_cpu.view(total, spec.kv_heads, 3, spec.splits, 16)
+    if (not bool((rows[:actual, ..., 1] >= 0).all()) or
+            not bool((rows[actual:, ..., 1] == -1).all()) or
+            not bool((rows[actual:, ..., 10] == 0).all())):
+        raise HistoryReuseProbeError("padded q1 tasks are not all harmless qcount=-1 holes")
 
 
 def _poison(torch, buffers: dict):
@@ -327,7 +391,7 @@ def _poison(torch, buffers: dict):
 
 
 def _launch(ops, tensors: dict, fixture: dict, buffers: dict, cores: int, *, candidate: bool,
-            production_route: bool = False):
+            production_route: bool = False, q1_schedule: bool = False):
     spec: Shape = fixture["spec"]
     args = (tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"], tensors["rv"],
         tensors["raw"], tensors["table"], tensors["wk"], tensors["wv"], tensors["tags"],
@@ -335,12 +399,15 @@ def _launch(ops, tensors: dict, fixture: dict, buffers: dict, cores: int, *, can
         buffers["workspace"])
     attrs = (BLOCK_TOKENS, fixture["blocks"], PREFIX, fixture["stride"],
              SINK, spec.recent_tokens, SPECULATIVE, spec.splits, fixture["scale"], cores)
-    name = (select_cv_op(4, spec.heads, spec.kv_heads, sum(spec.qlens), max(spec.qlens))
-            if candidate and production_route else CANDIDATE_OP if candidate else FE0_CV_OP)
+    name = (select_cv_op(4, spec.heads, spec.kv_heads, fixture["tokens"],
+                         max(spec.qlens), q1_draft=q1_schedule)
+            if candidate and production_route else
+            Q1_CV_OP if candidate and q1_schedule else
+            CANDIDATE_OP if candidate else FE0_CV_OP)
     if name == CLUSTER4_CV_OP:
         getattr(ops, CANDIDATE_OP)(*args, buffers["cluster_stats"], *attrs)
     else:
-        ops.attention_cv_out(*args, *attrs)
+        getattr(ops, name)(*args, *attrs)
     return name
 
 
@@ -512,7 +579,8 @@ def _check_cluster_stats(stats_cpu, *, expect_clusters: bool,
 
 
 def _timed_pair(torch, ops, tensors, fixture, baseline, candidate_buffers, cores, *,
-                warmup: int, repeats: int, reference_bits: dict) -> tuple[dict, dict]:
+                warmup: int, repeats: int, reference_bits: dict,
+                q1_schedule: bool = False) -> tuple[dict, dict]:
     durations: dict[str, list[float]] = {"fe0": [], "candidate": []}
     stream = torch.npu.current_stream()
     for index in range(warmup + repeats):
@@ -528,7 +596,7 @@ def _timed_pair(torch, ops, tensors, fixture, baseline, candidate_buffers, cores
                 end = torch.npu.Event(enable_timing=True)
                 start.record(stream)
             _launch(ops, tensors, fixture, buffers, cores, candidate=is_candidate,
-                    production_route=True)
+                    production_route=True, q1_schedule=q1_schedule)
             if index >= warmup:
                 end.record(stream)
                 end.synchronize()
@@ -642,6 +710,165 @@ def run_case(torch, ops, spec: Shape, device, cores: int, acceptance: dict) -> d
     return row
 
 
+def _q1_changed_input_graph(torch, ops, tensors: dict, fixture: dict,
+                            baseline: dict, q1: dict, cores: int,
+                            original_bits: dict) -> dict:
+    """#129/#150: two independent N128 graphs read mutated inputs at fixed addresses."""
+    if fixture["spec"].name != Q1_CASES[0].name:
+        raise HistoryReuseProbeError("q1 graph requires the N128/S3 padded fixture")
+    _poison(torch, baseline)
+    _poison(torch, q1)
+    graph_fe0 = torch.npu.NPUGraph()
+    graph_q1 = torch.npu.NPUGraph()
+    torch.npu.synchronize()
+    with torch.npu.graph(graph_fe0, capture_error_mode="thread_local", auto_dispatch_capture=True):
+        _launch(ops, tensors, fixture, baseline, cores, candidate=False)
+    with torch.npu.graph(graph_q1, capture_error_mode="thread_local", auto_dispatch_capture=True):
+        _launch(ops, tensors, fixture, q1, cores, candidate=True, q1_schedule=True)
+    torch.npu.synchronize()
+    _poison(torch, baseline)
+    _poison(torch, q1)
+    graph_fe0.replay()
+    graph_q1.replay()
+    torch.npu.synchronize()
+    _check_status(torch, baseline, invalid=False)
+    _check_status(torch, q1, invalid=False)
+    _assert_same_bits(torch, original_bits, baseline, "q1 fe0 initial graph replay")
+    _assert_same_bits(torch, original_bits, q1, "q1 initial graph replay")
+    # Both graph executables retain all addresses. Change Q and a live source0
+    # range so replay must consume new data, not a captured output snapshot.
+    tensors["q"].copy_(-tensors["q"])
+    tensors["qr"].copy_(-tensors["qr"])
+    changed_tasks = baseline["tasks"].cpu()
+    chosen = next((row for row in changed_tasks
+                   if int(row[7]) == 0 and int(row[1]) == 1 and
+                   int(row[4] - row[3]) >= 32), None)
+    if chosen is None:
+        raise HistoryReuseProbeError("q1 graph fixture has no live source0 range to mutate")
+    chosen[4] -= 16
+    baseline["tasks"].copy_(changed_tasks)
+    _poison(torch, baseline)
+    _poison(torch, q1)
+    graph_fe0.replay()
+    graph_q1.replay()
+    torch.npu.synchronize()
+    _check_status(torch, baseline, invalid=False)
+    _check_status(torch, q1, invalid=False)
+    changed_bits = _snapshot(baseline)
+    _assert_same_bits(torch, changed_bits, q1, "q1 changed-input graph replay")
+    if all(_bitwise_identical(torch, original_bits[name], changed_bits[name])
+           for name in ("partial", "lse")):
+        raise HistoryReuseProbeError("q1 graph replay ignored changed input buffers")
+    changed_fe0_merge = _merge_only(torch, ops, fixture, baseline)
+    changed_q1_merge = _merge_only(torch, ops, fixture, q1)
+    for name in ("output", "lse"):
+        if not _bitwise_identical(torch, changed_fe0_merge[name], changed_q1_merge[name]):
+            raise HistoryReuseProbeError(f"q1 changed graph merged {name} differs from fe0")
+    for candidate, buffers, label in ((False, baseline, "fe0"), (True, q1, "q1")):
+        _poison(torch, buffers)
+        _launch(ops, tensors, fixture, buffers, cores,
+                candidate=candidate, q1_schedule=candidate)
+        torch.npu.synchronize()
+        _check_status(torch, buffers, invalid=False)
+        _assert_same_bits(torch, changed_bits, buffers,
+                          f"{label} changed-input eager versus graph")
+        eager_merge = _merge_only(torch, ops, fixture, buffers)
+        for name in ("output", "lse"):
+            if not _bitwise_identical(torch, changed_fe0_merge[name], eager_merge[name]):
+                raise HistoryReuseProbeError(
+                    f"{label} changed-input eager merged {name} differs from graph")
+    return {"q1_graph_capture": "passed", "q1_graph_replay": "passed",
+            "graph_scope": "standalone_N128_S3_same_address_changed_input_not_full_service",
+            "changed_query_and_task_same_addresses": True,
+            "q1_vs_fe0": "bitwise_passed"}
+
+
+def run_q1_case(torch, ops, spec: Shape, device, cores: int,
+                acceptance: dict) -> tuple[dict, dict | None]:
+    """#126/#129/#150: real padded MTP q1, fe0 exactness before Event speed."""
+    started = time.monotonic()
+    fixture = make_fixture(torch, spec)
+    build_seconds = time.monotonic() - started
+    if (len(spec.qlens) != 32 or any(length != 1 for length in spec.qlens) or
+            fixture["actual_tokens"] != 32 or fixture["tokens"] not in (128, 16384) or
+            not spec.slot_context):
+        raise HistoryReuseProbeError("q1 case does not reproduce 32 live padded MTP requests")
+    route = select_cv_op(4, spec.heads, spec.kv_heads, fixture["tokens"], 1,
+                         q1_draft=True)
+    if route != Q1_CV_OP:
+        raise HistoryReuseProbeError("known later MTP q1 shape did not select q1 kernel")
+    tensors = {name: tensor.to(device) for name, tensor in fixture["cpu"].items()}
+    baseline = _allocate(torch, fixture, device, cores, candidate=False)
+    q1 = _allocate(torch, fixture, device, cores, candidate=False)
+    preparation = _prepare(torch, ops, tensors, fixture, baseline)
+    q1["tasks"] = baseline["tasks"]
+    q1["positions"] = baseline["positions"]
+    _poison(torch, baseline)
+    _launch(ops, tensors, fixture, baseline, cores, candidate=False)
+    torch.npu.synchronize()
+    _check_status(torch, baseline, invalid=False)
+    reference_bits = _snapshot(baseline)
+    first_merge = _merge_and_oracle(torch, ops, fixture, baseline,
+                                    acceptance["fused_attention"])
+    _poison(torch, baseline)
+    _launch(ops, tensors, fixture, baseline, cores, candidate=False)
+    torch.npu.synchronize()
+    _check_status(torch, baseline, invalid=False)
+    _assert_same_bits(torch, reference_bits, baseline, "fe0 repeat q1")
+    repeat_merge = _merge_and_oracle(torch, ops, fixture, baseline,
+                                     acceptance["fused_attention"])
+    for name in ("output", "lse"):
+        if not _bitwise_identical(torch, first_merge[name], repeat_merge[name]):
+            raise BaselineNondeterministic(f"fe0 q1 repeat merged {name} differs bitwise")
+    _poison(torch, q1)
+    _launch(ops, tensors, fixture, q1, cores, candidate=True, q1_schedule=True)
+    torch.npu.synchronize()
+    _check_status(torch, q1, invalid=False)
+    _assert_same_bits(torch, reference_bits, q1, "q1 versus fe0")
+    q1_merge = _merge_and_oracle(torch, ops, fixture, q1,
+                                 acceptance["fused_attention"])
+    for name in ("output", "lse"):
+        if not _bitwise_identical(torch, repeat_merge[name], q1_merge[name]):
+            raise HistoryReuseProbeError(f"q1 merged {name} differs bitwise from fe0")
+    before, after = _timed_pair(torch, ops, tensors, fixture, baseline, q1, cores,
+        warmup=acceptance["performance"]["warmup"],
+        repeats=acceptance["performance"]["repeats"],
+        reference_bits=reference_bits, q1_schedule=True)
+    ratio = after["median_ms"] / before["median_ms"]
+    speed = "passed" if ratio <= acceptance["performance"]["max_latency_ratio"] else "failed"
+    graph = (_q1_changed_input_graph(torch, ops, tensors, fixture, baseline, q1,
+                                     cores, reference_bits)
+             if spec.name == Q1_CASES[0].name else None)
+    row = {"case": spec.name, "status": "passed" if speed == "passed" else "failed",
+           "input_sha256": fixture["input_sha256"],
+           "task_sha256": preparation["task_sha256"],
+           "shape": {"qlens": spec.qlens, "contexts": spec.contexts,
+                     "padded_tokens": fixture["tokens"],
+                     "actual_tokens": fixture["actual_tokens"],
+                     "padding_tokens": fixture["tokens"] - fixture["actual_tokens"],
+                     "head_dim": spec.dim, "kv_heads": spec.kv_heads,
+                     "splits": spec.splits, "cube_cores": cores,
+                     "slot_context": spec.slot_context},
+           "fixture_build_seconds": build_seconds,
+           "source0_leaders": preparation["source0_leaders"],
+           "padding_tasks": "qcount_minus_one_positions_minus_one_status_zero",
+           "q1_precision": "bitwise_passed",
+           "frozen_oracle": "passed", "sampled_queries": len(fixture["expected"]),
+           "baseline_oracle": {key: value for key, value in repeat_merge.items()
+                               if key not in ("output", "lse")},
+           "candidate_oracle": {key: value for key, value in q1_merge.items()
+                                if key not in ("output", "lse")},
+           "baseline_timing": before, "q1_timing": after,
+           "q1_over_fe0": ratio, "q1_performance": speed,
+           "production_operator": route,
+           "q1_graph_capture": graph["q1_graph_capture"] if graph else "not_run",
+           "q1_graph_replay": graph["q1_graph_replay"] if graph else "not_run"}
+    del fixture, tensors, baseline, q1
+    gc.collect()
+    torch.npu.empty_cache()
+    return row, graph
+
+
 def graph_changed_inputs(torch, ops, device, cores: int, acceptance: dict) -> dict:
     """Capture both standalone ops, mutate buffers in place, then replay.
 
@@ -744,6 +971,28 @@ def graph_changed_inputs(torch, ops, device, cores: int, acceptance: dict) -> di
             "speed_gate": "not_measured_graph_contract"}
 
 
+def _q1_gate(cases: list[dict], graph: dict | None) -> dict:
+    """#150: both real padded shapes and the N128 changed-input graph are required."""
+    if ({row.get("case") for row in cases} != {shape.name for shape in Q1_CASES}
+            or len(cases) != len(Q1_CASES)):
+        raise HistoryReuseProbeError("q1 gate is missing a required padded MTP shape")
+    precision = "passed" if all(row.get("q1_precision") == "bitwise_passed" and
+                                 row.get("frozen_oracle") == "passed" for row in cases) else "failed"
+    performance = "passed" if all(row.get("q1_performance") == "passed" and
+                                   row.get("production_operator") == Q1_CV_OP and
+                                   type(row.get("q1_over_fe0")) in (int, float) and
+                                   math.isfinite(row["q1_over_fe0"]) and
+                                   row["q1_over_fe0"] <= 1.0 for row in cases) else "failed"
+    capture = graph.get("q1_graph_capture") if isinstance(graph, dict) else None
+    replay = graph.get("q1_graph_replay") if isinstance(graph, dict) else None
+    return {"q1_precision": precision,
+            "q1_graph_capture": "passed" if capture == "passed" else "failed",
+            "q1_graph_replay": "passed" if replay == "passed" else "failed",
+            "q1_performance": performance,
+            "q1_schedule_gate": "passed" if precision == performance == capture == replay == "passed"
+                                else "failed"}
+
+
 def probe(config_path: Path, acceptance_path: Path) -> dict:
     target = json.loads(config_path.read_text())
     acceptance = json.loads(acceptance_path.read_text())
@@ -766,7 +1015,7 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
     manifest_path = ROOT / "build/ascendc/build_manifest.json"
     manifest = validate_build_artifacts(manifest_path)
     require_capabilities({"prepare_attention_tasks_out", "attention_cv_out",
-                          CANDIDATE_OP, "merge_lse_out"}, manifest_path)
+                          CANDIDATE_OP, Q1_CV_OP, "merge_lse_out"}, manifest_path)
     from .probe_native_current_fia import _target_geometry
     if _target_geometry(target) != (6, 1, 256):
         raise HistoryReuseProbeError("target TP head geometry differs from signed Hq6/Hkv1/D256 shape")
@@ -774,12 +1023,15 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
     cores = _core_count(torch, target)
     cases = []
     for shape in CASES:
+        shape = measurement_shape(shape, target, cores)
         row = run_case(torch, torch.ops.oscar_ascend_ops, shape, device, cores, acceptance)
+        row["split_source"] = "production_geometry" if shape.name == "decode32" else "fixed_fixture"
         cases.append(row)
         if row["case"] in ("mature_20k", "decode32"):
             print("[oscar] PERF_HISTORY_REUSE_A_B " + json.dumps({"case": row["case"],
                 "accuracy": row["fe0_vs_c4"],
                 "clusters": row["cluster_stats"]["eligible_clusters"],
+                "source_splits": row["shape"]["splits"], "split_source": row["split_source"],
                 "baseline_ms": row["baseline_timing"]["median_ms"],
                 "candidate_ms": row["candidate_timing"]["median_ms"],
                 "production_operator": row["production_operator"],
@@ -807,10 +1059,34 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
         "accuracy": graph["fe0_vs_c4"], "oracle": graph["initial_frozen_oracle"],
         "graph_capture": graph["graph_capture"], "graph_replay": graph["graph_replay"],
         "clusters": graph["cluster_stats"]["eligible_clusters"]}, sort_keys=True), flush=True)
+    q1_cases = []
+    q1_graph = None
+    for shape in Q1_CASES:
+        row, graph_result = run_q1_case(torch, torch.ops.oscar_ascend_ops,
+                                         shape, device, cores, acceptance)
+        q1_cases.append(row)
+        if graph_result is not None:
+            q1_graph = graph_result
+        print("[oscar] PERF_Q1_SCHEDULE " + json.dumps({
+            "case": row["case"], "padded_tokens": row["shape"]["padded_tokens"],
+            "actual_tokens": row["shape"]["actual_tokens"],
+            "requests": len(shape.qlens), "splits": row["shape"]["splits"],
+            "q1_precision": row["q1_precision"],
+            "q1_graph_capture": row["q1_graph_capture"],
+            "q1_graph_replay": row["q1_graph_replay"],
+            "baseline_ms": row["baseline_timing"]["median_ms"],
+            "q1_ms": row["q1_timing"]["median_ms"],
+            "ratio": row["q1_over_fe0"], "gate": row["q1_performance"]},
+            sort_keys=True), flush=True)
+    q1_gate = _q1_gate(q1_cases, q1_graph)
     failures = [row["case"] for row in cases if row["speed_gate"] == "failed"]
+    failures.extend(row["case"] for row in q1_cases if row["q1_performance"] != "passed")
+    if q1_gate["q1_schedule_gate"] != "passed" and not any(
+            row["case"] in failures for row in q1_cases):
+        failures.append("q1_schedule_gate")
     return {"status": "passed" if not failures else "failed", "reason": (
-            None if not failures else "candidate slower on " + ",".join(failures)),
-            "scope": "raw_C4_accuracy_and_production_dispatch_operator_timing_real_NPU",
+            None if not failures else "candidate gate failed on " + ",".join(failures)),
+            "scope": "raw_C4_and_q1_accuracy_graph_and_operator_timing_real_NPU",
             "counter_output_timing_scope": "C4 calls include counters; fe0 route has none",
             "default_route": "fe0",
             "production_promotion": "blocked_pending_full_model_quality_and_service_performance",
@@ -820,7 +1096,8 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
             "artifact_sha256": manifest["sha256"], "device": str(device),
             "device_name": torch.npu.get_device_name(0), "physical_devices": target["devices"],
             "cases": cases, "graph_capture": graph["graph_capture"],
-            "graph_replay": graph["graph_replay"]}
+            "graph_replay": graph["graph_replay"], "q1_cases": q1_cases,
+            "q1_graph": q1_graph, **q1_gate}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -835,6 +1112,11 @@ def main(argv: list[str] | None = None) -> int:
         print("[oscar] PERF_HISTORY_REUSE_RESULT " + json.dumps({"status": report["status"],
             "reason": report["reason"],
             "candidate_evaluation_allowed": report["candidate_evaluation_allowed"],
+            "q1_precision": report["q1_precision"],
+            "q1_graph_capture": report["q1_graph_capture"],
+            "q1_graph_replay": report["q1_graph_replay"],
+            "q1_performance": report["q1_performance"],
+            "q1_schedule_gate": report["q1_schedule_gate"],
             "production_promotion": report["production_promotion"],
             "report": str(args.output)}, sort_keys=True), flush=True)
         return 0 if report["status"] == "passed" else 2
@@ -842,20 +1124,29 @@ def main(argv: list[str] | None = None) -> int:
         report = {"status": "needs_evidence", "default_route": "fe0",
                   "production_promotion": "blocked", "candidate_evaluation_allowed": False,
                   "reason": "fe0_same_input_not_bitwise_repeatable", "error": str(exc),
-                  "device_completion": "observed_but_numerical_repeatability_failed"}
+                  "device_completion": "observed_but_numerical_repeatability_failed",
+                  "q1_schedule_gate": "failed", "q1_precision": "not_established",
+                  "q1_graph_capture": "not_established", "q1_graph_replay": "not_established",
+                  "q1_performance": "not_established"}
         atomic_json(args.output, report)
         print("[oscar] PERF_HISTORY_REUSE_RESULT " + json.dumps({"status": report["status"],
-            "reason": report["reason"], "error": str(exc), "report": str(args.output)},
+            "reason": report["reason"], "error": str(exc),
+            "q1_schedule_gate": report["q1_schedule_gate"],
+            "report": str(args.output)},
             sort_keys=True), flush=True)
         return 2
     except Exception as exc:
         report = {"status": "failed", "default_route": "fe0",
                   "production_promotion": "blocked", "candidate_evaluation_allowed": False,
                   "error_type": type(exc).__name__,
-                  "error": str(exc), "device_completion": "not_established"}
+                  "error": str(exc), "device_completion": "not_established",
+                  "q1_schedule_gate": "failed", "q1_precision": "not_established",
+                  "q1_graph_capture": "not_established", "q1_graph_replay": "not_established",
+                  "q1_performance": "not_established"}
         atomic_json(args.output, report)
         traceback.print_exc()
         print("[oscar] PERF_HISTORY_REUSE_RESULT " + json.dumps({"status": "failed", "error": str(exc),
+            "q1_schedule_gate": report["q1_schedule_gate"],
             "report": str(args.output)}, sort_keys=True), flush=True)
         return 1
 

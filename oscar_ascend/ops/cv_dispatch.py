@@ -8,9 +8,10 @@ Unknown bounds conservatively keep C4. This never selects native attention.
 ATTENTION_QUERY_ROWS = 128
 FE0_CV_OP = "attention_cv_out"
 CLUSTER4_CV_OP = "attention_cv_cluster4_out"
+Q1_CV_OP = "attention_cv_q1_out"
 
 
-def select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len):
+def select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len, *, q1_draft=False):
     if cluster_size == 1:
         return FE0_CV_OP
     if cluster_size != 4 or heads <= 0 or kv_heads <= 0 or heads % kv_heads:
@@ -18,6 +19,12 @@ def select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len):
     ratio = heads // kv_heads
     if ratio > 16:
         raise ValueError("unsupported CV GQA ratio")
+    # #150 follow-up: later MTP q1 rounds retain padded model buffers. Keep
+    # their full shape/task table, but distribute independent leaders rather
+    # than serializing 21 requests on a single Cube. Target capture routing
+    # is deliberately excluded by the caller's explicit later-draft marker.
+    if q1_draft and type(max_query_len) is int and max_query_len == 1:
+        return Q1_CV_OP
     minimum = 4 * (ATTENTION_QUERY_ROWS // ratio)
     # Total padded tokens alone do not establish per-request eligibility:
     # 32 independent q4 requests still cannot share any history with each other.

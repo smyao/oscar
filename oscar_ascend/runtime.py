@@ -200,7 +200,7 @@ class AscendRuntimeProvider:
         require_production_ops()
         if self.config.get("experimental_history_reuse", False):
             from .ops.loader import require_capabilities
-            require_capabilities({"attention_cv_cluster4_out"})
+            require_capabilities({"attention_cv_cluster4_out", "attention_cv_q1_out"})
         import torch
         if not torch.npu.is_available():
             raise OscarReadinessError("OSCAR production requires an available NPU")

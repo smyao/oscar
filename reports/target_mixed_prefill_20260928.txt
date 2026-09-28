@@ -1,0 +1,241 @@
+我用了你最新的install servce脚本，跑了asibench发现一个跟基线相比很奇怪的现象
+这是你的开始片段log
+(APIServer pid=41413) INFO 09-28 07:25:30 [launcher.py:46] Route: /is_scaling_elastic_ep, Methods: POST
+(APIServer pid=41413) INFO 09-28 07:25:30 [launcher.py:46] Route: /v1/chat/completions/render, Methods: POST
+(APIServer pid=41413) INFO 09-28 07:25:30 [launcher.py:46] Route: /v1/completions/render, Methods: POST
+(APIServer pid=41413) INFO:     Started server process [41413]
+(APIServer pid=41413) INFO:     Waiting for application startup.
+(APIServer pid=41413) INFO:     Application startup complete.
+(APIServer pid=41413) INFO:     135.82.26.93:35006 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(Worker_TP0 pid=41531) INFO 09-28 07:26:04 [acl_graph.py:243] Replaying aclgraph
+(Worker_TP0 pid=41531) WARNING 09-28 07:26:05 [rejection_sampler.py:649] [sample/rejection_sampler] Using fallback (non-reduce-sample) path in rejection_sample. This path should not be used in the new distributed flow. enable_reduce_sample=False, has_target_indices=False
+(APIServer pid=41413) INFO:     135.82.26.93:35012 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35022 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35038 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35044 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35048 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35060 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35070 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35074 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35090 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35106 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35116 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35128 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35140 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35154 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35168 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35174 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35188 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35198 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35206 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35218 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35228 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35234 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35242 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35248 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35252 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35262 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35276 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35280 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35292 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35308 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35320 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35334 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+[rank2]:[W928 07:26:10.766299800 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank3]:[W928 07:26:10.766659670 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank0]:[W928 07:26:10.767637130 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank1]:[W928 07:26:10.768130980 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+(APIServer pid=41413) INFO 09-28 07:26:11 [loggers.py:271] Engine 000: Avg prompt throughput: 4922.7 tokens/s, Avg generation throughput: 0.9 tokens/s, Running: 2 reqs, Waiting: 30 reqs, GPU KV cache usage: 3.5%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:26:11 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 4.00, Accepted throughput: 0.10 tokens/s, Drafted throughput: 0.10 tokens/s, Accepted: 6 tokens, Drafted: 6 tokens, Per-position acceptance rate: 1.000, 1.000, 1.000, Avg Draft acceptance rate: 100.0%
+(APIServer pid=41413) INFO 09-28 07:26:21 [loggers.py:271] Engine 000: Avg prompt throughput: 4201.9 tokens/s, Avg generation throughput: 1.5 tokens/s, Running: 5 reqs, Waiting: 27 reqs, GPU KV cache usage: 8.5%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:26:21 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.25, Accepted throughput: 0.90 tokens/s, Drafted throughput: 1.20 tokens/s, Accepted: 9 tokens, Drafted: 12 tokens, Per-position acceptance rate: 1.000, 0.750, 0.500, Avg Draft acceptance rate: 75.0%
+(APIServer pid=41413) INFO:     135.82.26.93:35038 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO 09-28 07:26:31 [loggers.py:271] Engine 000: Avg prompt throughput: 4319.5 tokens/s, Avg generation throughput: 3.4 tokens/s, Running: 5 reqs, Waiting: 26 reqs, GPU KV cache usage: 9.2%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:26:31 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.18, Accepted throughput: 2.40 tokens/s, Drafted throughput: 3.30 tokens/s, Accepted: 24 tokens, Drafted: 33 tokens, Per-position acceptance rate: 1.000, 0.727, 0.455, Avg Draft acceptance rate: 72.7%
+(APIServer pid=41413) INFO 09-28 07:26:41 [loggers.py:271] Engine 000: Avg prompt throughput: 4672.5 tokens/s, Avg generation throughput: 3.9 tokens/s, Running: 8 reqs, Waiting: 24 reqs, GPU KV cache usage: 14.1%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:26:41 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.85, Accepted throughput: 2.40 tokens/s, Drafted throughput: 3.90 tokens/s, Accepted: 24 tokens, Drafted: 39 tokens, Per-position acceptance rate: 0.846, 0.615, 0.385, Avg Draft acceptance rate: 61.5%
+(APIServer pid=41413) INFO 09-28 07:26:51 [loggers.py:271] Engine 000: Avg prompt throughput: 2407.5 tokens/s, Avg generation throughput: 3.6 tokens/s, Running: 9 reqs, Waiting: 23 reqs, GPU KV cache usage: 16.2%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:26:51 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.69, Accepted throughput: 2.20 tokens/s, Drafted throughput: 3.90 tokens/s, Accepted: 22 tokens, Drafted: 39 tokens, Per-position acceptance rate: 0.769, 0.538, 0.385, Avg Draft acceptance rate: 56.4%
+(APIServer pid=41413) INFO 09-28 07:27:01 [loggers.py:271] Engine 000: Avg prompt throughput: 6372.0 tokens/s, Avg generation throughput: 7.9 tokens/s, Running: 11 reqs, Waiting: 21 reqs, GPU KV cache usage: 20.1%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:27:01 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.17, Accepted throughput: 5.20 tokens/s, Drafted throughput: 7.20 tokens/s, Accepted: 52 tokens, Drafted: 72 tokens, Per-position acceptance rate: 0.917, 0.667, 0.583, Avg Draft acceptance rate: 72.2%
+(APIServer pid=41413) INFO:     135.82.26.93:35116 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO 09-28 07:27:11 [loggers.py:271] Engine 000: Avg prompt throughput: 4731.9 tokens/s, Avg generation throughput: 9.9 tokens/s, Running: 13 reqs, Waiting: 18 reqs, GPU KV cache usage: 23.2%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:27:11 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.27, Accepted throughput: 6.80 tokens/s, Drafted throughput: 9.00 tokens/s, Accepted: 68 tokens, Drafted: 90 tokens, Per-position acceptance rate: 0.833, 0.767, 0.667, Avg Draft acceptance rate: 75.6%
+(APIServer pid=41413) INFO 09-28 07:27:21 [loggers.py:271] Engine 000: Avg prompt throughput: 1148.1 tokens/s, Avg generation throughput: 7.0 tokens/s, Running: 14 reqs, Waiting: 18 reqs, GPU KV cache usage: 25.4%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:27:21 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.00, Accepted throughput: 4.60 tokens/s, Drafted throughput: 6.90 tokens/s, Accepted: 46 tokens, Drafted: 69 tokens, Per-position acceptance rate: 0.913, 0.739, 0.348, Avg Draft acceptance rate: 66.7%
+(APIServer pid=41413) INFO 09-28 07:27:31 [loggers.py:271] Engine 000: Avg prompt throughput: 7192.7 tokens/s, Avg generation throughput: 11.7 tokens/s, Running: 17 reqs, Waiting: 15 reqs, GPU KV cache usage: 30.2%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:27:31 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.92, Accepted throughput: 7.50 tokens/s, Drafted throughput: 11.70 tokens/s, Accepted: 75 tokens, Drafted: 117 tokens, Per-position acceptance rate: 0.846, 0.692, 0.385, Avg Draft acceptance rate: 64.1%
+(APIServer pid=41413) INFO 09-28 07:27:41 [loggers.py:271] Engine 000: Avg prompt throughput: 4833.1 tokens/s, Avg generation throughput: 13.2 tokens/s, Running: 19 reqs, Waiting: 13 reqs, GPU KV cache usage: 34.1%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:27:41 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.69, Accepted throughput: 8.10 tokens/s, Drafted throughput: 14.40 tokens/s, Accepted: 81 tokens, Drafted: 144 tokens, Per-position acceptance rate: 0.750, 0.583, 0.354, Avg Draft acceptance rate: 56.2%
+(APIServer pid=41413) INFO 09-28 07:27:51 [loggers.py:271] Engine 000: Avg prompt throughput: 2750.5 tokens/s, Avg generation throughput: 11.2 tokens/s, Running: 20 reqs, Waiting: 12 reqs, GPU KV cache usage: 36.2%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:27:51 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.08, Accepted throughput: 7.50 tokens/s, Drafted throughput: 10.80 tokens/s, Accepted: 75 tokens, Drafted: 108 tokens, Per-position acceptance rate: 0.917, 0.778, 0.389, Avg Draft acceptance rate: 69.4%
+(APIServer pid=41413) INFO:     135.82.26.93:35218 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO 09-28 07:28:01 [loggers.py:271] Engine 000: Avg prompt throughput: 6180.4 tokens/s, Avg generation throughput: 15.9 tokens/s, Running: 21 reqs, Waiting: 11 reqs, GPU KV cache usage: 38.4%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:28:01 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.84, Accepted throughput: 10.30 tokens/s, Drafted throughput: 16.80 tokens/s, Accepted: 103 tokens, Drafted: 168 tokens, Per-position acceptance rate: 0.804, 0.607, 0.429, Avg Draft acceptance rate: 61.3%
+(APIServer pid=41413) INFO:     135.82.26.93:35234 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO 09-28 07:28:11 [loggers.py:271] Engine 000: Avg prompt throughput: 2519.0 tokens/s, Avg generation throughput: 10.3 tokens/s, Running: 21 reqs, Waiting: 10 reqs, GPU KV cache usage: 38.4%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:28:11 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.64, Accepted throughput: 6.40 tokens/s, Drafted throughput: 11.70 tokens/s, Accepted: 64 tokens, Drafted: 117 tokens, Per-position acceptance rate: 0.821, 0.513, 0.308, Avg Draft acceptance rate: 54.7%
+(APIServer pid=41413) INFO 09-28 07:28:21 [loggers.py:271] Engine 000: Avg prompt throughput: 4838.4 tokens/s, Avg generation throughput: 17.6 tokens/s, Running: 24 reqs, Waiting: 8 reqs, GPU KV cache usage: 43.3%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:28:21 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.85, Accepted throughput: 11.30 tokens/s, Drafted throughput: 18.30 tokens/s, Accepted: 113 tokens, Drafted: 183 tokens, Per-position acceptance rate: 0.820, 0.639, 0.393, Avg Draft acceptance rate: 61.7%
+(APIServer pid=41413) INFO 09-28 07:28:31 [loggers.py:271] Engine 000: Avg prompt throughput: 4141.8 tokens/s, Avg generation throughput: 17.2 tokens/s, Running: 25 reqs, Waiting: 7 reqs, GPU KV cache usage: 45.9%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:28:31 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.46, Accepted throughput: 10.10 tokens/s, Drafted throughput: 20.70 tokens/s, Accepted: 101 tokens, Drafted: 207 tokens, Per-position acceptance rate: 0.710, 0.478, 0.275, Avg Draft acceptance rate: 48.8%
+(APIServer pid=41413) INFO 09-28 07:28:41 [loggers.py:271] Engine 000: Avg prompt throughput: 3389.8 tokens/s, Avg generation throughput: 13.1 tokens/s, Running: 26 reqs, Waiting: 6 reqs, GPU KV cache usage: 48.1%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:28:41 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.71, Accepted throughput: 8.20 tokens/s, Drafted throughput: 14.40 tokens/s, Accepted: 82 tokens, Drafted: 144 tokens, Per-position acceptance rate: 0.812, 0.562, 0.333, Avg Draft acceptance rate: 56.9%
+(APIServer pid=41413) INFO 09-28 07:28:51 [loggers.py:271] Engine 000: Avg prompt throughput: 4505.5 tokens/s, Avg generation throughput: 13.2 tokens/s, Running: 29 reqs, Waiting: 3 reqs, GPU KV cache usage: 52.5%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:28:51 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.60, Accepted throughput: 8.00 tokens/s, Drafted throughput: 15.00 tokens/s, Accepted: 80 tokens, Drafted: 150 tokens, Per-position acceptance rate: 0.740, 0.520, 0.340, Avg Draft acceptance rate: 53.3%
+(APIServer pid=41413) INFO 09-28 07:29:01 [loggers.py:271] Engine 000: Avg prompt throughput: 3771.7 tokens/s, Avg generation throughput: 22.8 tokens/s, Running: 30 reqs, Waiting: 2 reqs, GPU KV cache usage: 55.1%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:29:01 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.72, Accepted throughput: 14.30 tokens/s, Drafted throughput: 24.90 tokens/s, Accepted: 143 tokens, Drafted: 249 tokens, Per-position acceptance rate: 0.771, 0.530, 0.422, Avg Draft acceptance rate: 57.4%
+(APIServer pid=41413) INFO 09-28 07:29:11 [loggers.py:271] Engine 000: Avg prompt throughput: 3633.2 tokens/s, Avg generation throughput: 17.0 tokens/s, Running: 31 reqs, Waiting: 1 reqs, GPU KV cache usage: 57.2%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:29:11 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.91, Accepted throughput: 11.10 tokens/s, Drafted throughput: 17.40 tokens/s, Accepted: 111 tokens, Drafted: 174 tokens, Per-position acceptance rate: 0.879, 0.586, 0.448, Avg Draft acceptance rate: 63.8%
+(APIServer pid=41413) INFO:     135.82.26.93:35116 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO 09-28 07:29:21 [loggers.py:271] Engine 000: Avg prompt throughput: 5082.1 tokens/s, Avg generation throughput: 37.2 tokens/s, Running: 32 reqs, Waiting: 0 reqs, GPU KV cache usage: 58.4%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:29:21 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.07, Accepted throughput: 25.00 tokens/s, Drafted throughput: 36.30 tokens/s, Accepted: 250 tokens, Drafted: 363 tokens, Per-position acceptance rate: 0.843, 0.678, 0.545, Avg Draft acceptance rate: 68.9%
+(APIServer pid=41413) INFO 09-28 07:29:31 [loggers.py:271] Engine 000: Avg prompt throughput: 2282.3 tokens/s, Avg generation throughput: 258.0 tokens/s, Running: 32 reqs, Waiting: 0 reqs, GPU KV cache usage: 58.9%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:29:31 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.88, Accepted throughput: 168.49 tokens/s, Drafted throughput: 268.18 tokens/s, Accepted: 1685 tokens, Drafted: 2682 tokens, Per-position acceptance rate: 0.847, 0.619, 0.419, Avg Draft acceptance rate: 62.8%
+(APIServer pid=41413) INFO 09-28 07:29:41 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 315.5 tokens/s, Running: 32 reqs, Waiting: 0 reqs, GPU KV cache usage: 59.0%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:29:41 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.82, Accepted throughput: 203.50 tokens/s, Drafted throughput: 336.00 tokens/s, Accepted: 2035 tokens, Drafted: 3360 tokens, Per-position acceptance rate: 0.812, 0.598, 0.406, Avg Draft acceptance rate: 60.6%
+(APIServer pid=41413) INFO 09-28 07:29:51 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 309.3 tokens/s, Running: 32 reqs, Waiting: 0 reqs, GPU KV cache usage: 59.1%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:29:51 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.68, Accepted throughput: 194.08 tokens/s, Drafted throughput: 345.56 tokens/s, Accepted: 1941 tokens, Drafted: 3456 tokens, Per-position acceptance rate: 0.782, 0.552, 0.351, Avg Draft acceptance rate: 56.2%
+(APIServer pid=41413) INFO:     135.82.26.93:35198 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO 09-28 07:30:01 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 264.9 tokens/s, Running: 32 reqs, Waiting: 0 reqs, GPU KV cache usage: 59.1%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:30:01 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.68, Accepted throughput: 165.89 tokens/s, Drafted throughput: 296.99 tokens/s, Accepted: 1659 tokens, Drafted: 2970 tokens, Per-position acceptance rate: 0.790, 0.538, 0.347, Avg Draft acceptance rate: 55.9%
+(APIServer pid=41413) INFO:     135.82.26.93:35188 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO 09-28 07:30:11 [loggers.py:271] Engine 000: Avg prompt throughput: 1952.0 tokens/s, Avg generation throughput: 167.2 tokens/s, Running: 32 reqs, Waiting: 0 reqs, GPU KV cache usage: 59.1%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:30:11 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.77, Accepted throughput: 106.79 tokens/s, Drafted throughput: 181.18 tokens/s, Accepted: 1068 tokens, Drafted: 1812 tokens, Per-position acceptance rate: 0.806, 0.566, 0.396, Avg Draft acceptance rate: 58.9%
+(APIServer pid=41413) INFO:     135.82.26.93:35038 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO 09-28 07:30:21 [loggers.py:271] Engine 000: Avg prompt throughput: 2972.3 tokens/s, Avg generation throughput: 140.2 tokens/s, Running: 32 reqs, Waiting: 0 reqs, GPU KV cache usage: 59.4%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:30:21 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.60, Accepted throughput: 86.39 tokens/s, Drafted throughput: 161.99 tokens/s, Accepted: 864 tokens, Drafted: 1620 tokens, Per-position acceptance rate: 0.752, 0.517, 0.331, Avg Draft acceptance rate: 53.3%
+(APIServer pid=41413) INFO:     135.82.26.93:35140 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO:     135.82.26.93:35116 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=41413) INFO 09-28 07:30:31 [loggers.py:271] Engine 000: Avg prompt throughput: 1290.3 tokens/s, Avg generation throughput: 41.1 tokens/s, Running: 32 reqs, Waiting: 0 reqs, GPU KV cache usage: 59.1%, Prefix cache hit rate: 0.0%
+(APIServer pid=41413) INFO 09-28 07:30:31 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.69, Accepted throughput: 26.10 tokens/s, Drafted throughput: 46.20 tokens/s, Accepted: 261 tokens, Drafted: 462 tokens, Per-position acceptance rate: 0.766, 0.539, 0.390, Avg Draft acceptance rate: 56.5%
+
+
+
+
+下面是基线的(APIServer pid=124149) INFO:     135.82.26.93:38550 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(Worker_TP0 pid=124210) WARNING 09-07 03:10:43 [rejection_sampler.py:649] [sample/rejection_sampler] Using fallback (non-reduce-sample) path in rejection_sample. This path should not be used in the new distributed flow. enable_reduce_sample=False, has_target_indices=False
+(APIServer pid=124149) INFO 09-07 03:10:47 [loggers.py:271] Engine 000: Avg prompt throughput: 2461.4 tokens/s, Avg generation throughput: 4.5 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 3.8%, Prefix cache hit rate: 0.0%
+(APIServer pid=124149) INFO 09-07 03:10:47 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.38, Accepted throughput: 0.08 tokens/s, Drafted throughput: 0.10 tokens/s, Accepted: 31 tokens, Drafted: 39 tokens, Per-position acceptance rate: 0.846, 0.846, 0.692, Avg Draft acceptance rate: 79.5%
+(APIServer pid=124149) INFO 09-07 03:10:57 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 11.3 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 3.8%, Prefix cache hit rate: 0.0%
+(APIServer pid=124149) INFO 09-07 03:10:57 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.05, Accepted throughput: 7.60 tokens/s, Drafted throughput: 11.10 tokens/s, Accepted: 76 tokens, Drafted: 111 tokens, Per-position acceptance rate: 0.811, 0.703, 0.541, Avg Draft acceptance rate: 68.5%
+(APIServer pid=124149) INFO 09-07 03:11:07 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 12.2 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 3.8%, Prefix cache hit rate: 0.0%
+(APIServer pid=124149) INFO 09-07 03:11:07 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.30, Accepted throughput: 8.50 tokens/s, Drafted throughput: 11.10 tokens/s, Accepted: 85 tokens, Drafted: 111 tokens, Per-position acceptance rate: 0.946, 0.730, 0.622, Avg Draft acceptance rate: 76.6%
+(APIServer pid=124149) INFO 09-07 03:11:17 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 10.6 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 3.8%, Prefix cache hit rate: 0.0%
+(APIServer pid=124149) INFO 09-07 03:11:17 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.79, Accepted throughput: 6.80 tokens/s, Drafted throughput: 11.40 tokens/s, Accepted: 68 tokens, Drafted: 114 tokens, Per-position acceptance rate: 0.789, 0.605, 0.395, Avg Draft acceptance rate: 59.6%
+(APIServer pid=124149) INFO 09-07 03:11:27 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 9.9 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 3.8%, Prefix cache hit rate: 0.0%
+(APIServer pid=124149) INFO 09-07 03:11:27 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.83, Accepted throughput: 6.40 tokens/s, Drafted throughput: 10.50 tokens/s, Accepted: 64 tokens, Drafted: 105 tokens, Per-position acceptance rate: 0.829, 0.600, 0.400, Avg Draft acceptance rate: 61.0%
+(APIServer pid=124149) INFO:     135.82.26.93:42704 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42706 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42714 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42722 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42724 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42732 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42742 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42744 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42748 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42758 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42774 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42784 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42788 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42790 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO 09-07 03:11:37 [loggers.py:271] Engine 000: Avg prompt throughput: 80.7 tokens/s, Avg generation throughput: 9.1 tokens/s, Running: 1 reqs, Waiting: 6 reqs, GPU KV cache usage: 2.2%, Prefix cache hit rate: 26.1%
+(APIServer pid=124149) INFO 09-07 03:11:37 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.13, Accepted throughput: 6.40 tokens/s, Drafted throughput: 8.99 tokens/s, Accepted: 64 tokens, Drafted: 90 tokens, Per-position acceptance rate: 0.933, 0.700, 0.500, Avg Draft acceptance rate: 71.1%
+(APIServer pid=124149) INFO:     135.82.26.93:42798 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42814 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42826 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42840 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42844 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42856 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42870 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42878 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42894 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42910 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42926 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42930 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42940 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42954 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42970 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42980 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42986 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42988 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42704 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+[rank1]:[W907 03:11:39.571834370 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank2]:[W907 03:11:39.572183330 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank3]:[W907 03:11:39.573440150 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank0]:[W907 03:11:39.573642340 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+(APIServer pid=124149) INFO:     135.82.26.93:42722 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO 09-07 03:11:47 [loggers.py:271] Engine 000: Avg prompt throughput: 6229.9 tokens/s, Avg generation throughput: 8.2 tokens/s, Running: 3 reqs, Waiting: 28 reqs, GPU KV cache usage: 10.1%, Prefix cache hit rate: 3.8%
+(APIServer pid=124149) INFO 09-07 03:11:47 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.20, Accepted throughput: 5.50 tokens/s, Drafted throughput: 7.50 tokens/s, Accepted: 55 tokens, Drafted: 75 tokens, Per-position acceptance rate: 0.840, 0.720, 0.640, Avg Draft acceptance rate: 73.3%
+(APIServer pid=124149) INFO 09-07 03:11:57 [loggers.py:271] Engine 000: Avg prompt throughput: 6964.8 tokens/s, Avg generation throughput: 19.4 tokens/s, Running: 6 reqs, Waiting: 26 reqs, GPU KV cache usage: 20.8%, Prefix cache hit rate: 2.2%
+(APIServer pid=124149) INFO 09-07 03:11:57 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.24, Accepted throughput: 13.20 tokens/s, Drafted throughput: 17.70 tokens/s, Accepted: 132 tokens, Drafted: 177 tokens, Per-position acceptance rate: 0.881, 0.712, 0.644, Avg Draft acceptance rate: 74.6%
+(APIServer pid=124149) INFO:     135.82.26.93:42758 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO 09-07 03:12:07 [loggers.py:271] Engine 000: Avg prompt throughput: 6731.4 tokens/s, Avg generation throughput: 38.0 tokens/s, Running: 8 reqs, Waiting: 23 reqs, GPU KV cache usage: 28.6%, Prefix cache hit rate: 1.6%
+(APIServer pid=124149) INFO 09-07 03:12:07 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.35, Accepted throughput: 26.50 tokens/s, Drafted throughput: 33.90 tokens/s, Accepted: 265 tokens, Drafted: 339 tokens, Per-position acceptance rate: 0.920, 0.779, 0.646, Avg Draft acceptance rate: 78.2%
+(APIServer pid=124149) INFO:     135.82.26.93:42774 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO 09-07 03:12:17 [loggers.py:271] Engine 000: Avg prompt throughput: 7926.7 tokens/s, Avg generation throughput: 45.8 tokens/s, Running: 11 reqs, Waiting: 21 reqs, GPU KV cache usage: 37.4%, Prefix cache hit rate: 1.2%
+(APIServer pid=124149) INFO 09-07 03:12:17 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.30, Accepted throughput: 31.69 tokens/s, Drafted throughput: 41.39 tokens/s, Accepted: 317 tokens, Drafted: 414 tokens, Per-position acceptance rate: 0.899, 0.739, 0.659, Avg Draft acceptance rate: 76.6%
+(APIServer pid=124149) INFO 09-07 03:12:27 [loggers.py:271] Engine 000: Avg prompt throughput: 5274.4 tokens/s, Avg generation throughput: 58.4 tokens/s, Running: 14 reqs, Waiting: 18 reqs, GPU KV cache usage: 47.9%, Prefix cache hit rate: 1.0%
+(APIServer pid=124149) INFO 09-07 03:12:27 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.23, Accepted throughput: 40.19 tokens/s, Drafted throughput: 53.99 tokens/s, Accepted: 402 tokens, Drafted: 540 tokens, Per-position acceptance rate: 0.872, 0.744, 0.617, Avg Draft acceptance rate: 74.4%
+(APIServer pid=124149) INFO:     135.82.26.93:42844 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42856 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO 09-07 03:12:37 [loggers.py:271] Engine 000: Avg prompt throughput: 6750.8 tokens/s, Avg generation throughput: 78.7 tokens/s, Running: 15 reqs, Waiting: 16 reqs, GPU KV cache usage: 53.1%, Prefix cache hit rate: 0.8%
+(APIServer pid=124149) INFO 09-07 03:12:37 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.18, Accepted throughput: 53.79 tokens/s, Drafted throughput: 74.09 tokens/s, Accepted: 538 tokens, Drafted: 741 tokens, Per-position acceptance rate: 0.891, 0.725, 0.563, Avg Draft acceptance rate: 72.6%
+(APIServer pid=124149) INFO:     135.82.26.93:42878 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO 09-07 03:12:47 [loggers.py:271] Engine 000: Avg prompt throughput: 6020.2 tokens/s, Avg generation throughput: 77.8 tokens/s, Running: 16 reqs, Waiting: 16 reqs, GPU KV cache usage: 57.7%, Prefix cache hit rate: 0.7%
+(APIServer pid=124149) INFO 09-07 03:12:47 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.07, Accepted throughput: 52.40 tokens/s, Drafted throughput: 75.89 tokens/s, Accepted: 524 tokens, Drafted: 759 tokens, Per-position acceptance rate: 0.826, 0.684, 0.561, Avg Draft acceptance rate: 69.0%
+(APIServer pid=124149) INFO 09-07 03:12:57 [loggers.py:271] Engine 000: Avg prompt throughput: 5429.7 tokens/s, Avg generation throughput: 89.0 tokens/s, Running: 19 reqs, Waiting: 13 reqs, GPU KV cache usage: 68.4%, Prefix cache hit rate: 0.6%
+(APIServer pid=124149) INFO 09-07 03:12:57 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.22, Accepted throughput: 61.19 tokens/s, Drafted throughput: 82.79 tokens/s, Accepted: 612 tokens, Drafted: 828 tokens, Per-position acceptance rate: 0.880, 0.746, 0.591, Avg Draft acceptance rate: 73.9%
+(APIServer pid=124149) INFO 09-07 03:13:07 [loggers.py:271] Engine 000: Avg prompt throughput: 8979.9 tokens/s, Avg generation throughput: 108.8 tokens/s, Running: 22 reqs, Waiting: 10 reqs, GPU KV cache usage: 78.6%, Prefix cache hit rate: 0.6%
+(APIServer pid=124149) INFO 09-07 03:13:07 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.38, Accepted throughput: 76.29 tokens/s, Drafted throughput: 96.29 tokens/s, Accepted: 763 tokens, Drafted: 963 tokens, Per-position acceptance rate: 0.919, 0.785, 0.673, Avg Draft acceptance rate: 79.2%
+(APIServer pid=124149) INFO:     135.82.26.93:42798 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO 09-07 03:13:17 [loggers.py:271] Engine 000: Avg prompt throughput: 6791.4 tokens/s, Avg generation throughput: 118.8 tokens/s, Running: 23 reqs, Waiting: 9 reqs, GPU KV cache usage: 82.9%, Prefix cache hit rate: 0.5%
+(APIServer pid=124149) INFO 09-07 03:13:17 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.28, Accepted throughput: 82.49 tokens/s, Drafted throughput: 108.59 tokens/s, Accepted: 825 tokens, Drafted: 1086 tokens, Per-position acceptance rate: 0.898, 0.757, 0.624, Avg Draft acceptance rate: 76.0%
+(APIServer pid=124149) INFO 09-07 03:13:27 [loggers.py:271] Engine 000: Avg prompt throughput: 4875.5 tokens/s, Avg generation throughput: 128.5 tokens/s, Running: 26 reqs, Waiting: 6 reqs, GPU KV cache usage: 93.9%, Prefix cache hit rate: 0.5%
+(APIServer pid=124149) INFO 09-07 03:13:27 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.21, Accepted throughput: 88.19 tokens/s, Drafted throughput: 119.99 tokens/s, Accepted: 882 tokens, Drafted: 1200 tokens, Per-position acceptance rate: 0.880, 0.740, 0.585, Avg Draft acceptance rate: 73.5%
+(APIServer pid=124149) INFO 09-07 03:13:37 [loggers.py:271] Engine 000: Avg prompt throughput: 3632.9 tokens/s, Avg generation throughput: 156.4 tokens/s, Running: 26 reqs, Waiting: 6 reqs, GPU KV cache usage: 95.0%, Prefix cache hit rate: 0.4%
+(APIServer pid=124149) INFO 09-07 03:13:37 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.20, Accepted throughput: 107.49 tokens/s, Drafted throughput: 146.39 tokens/s, Accepted: 1075 tokens, Drafted: 1464 tokens, Per-position acceptance rate: 0.869, 0.740, 0.594, Avg Draft acceptance rate: 73.4%
+(APIServer pid=124149) INFO:     135.82.26.93:42714 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42748 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42732 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO 09-07 03:13:47 [loggers.py:271] Engine 000: Avg prompt throughput: 4600.1 tokens/s, Avg generation throughput: 168.1 tokens/s, Running: 27 reqs, Waiting: 4 reqs, GPU KV cache usage: 95.3%, Prefix cache hit rate: 0.4%
+(APIServer pid=124149) INFO 09-07 03:13:47 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.27, Accepted throughput: 116.99 tokens/s, Drafted throughput: 154.49 tokens/s, Accepted: 1170 tokens, Drafted: 1545 tokens, Per-position acceptance rate: 0.889, 0.759, 0.623, Avg Draft acceptance rate: 75.7%
+(APIServer pid=124149) INFO:     135.82.26.93:42844 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42742 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42814 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42840 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO 09-07 03:13:57 [loggers.py:271] Engine 000: Avg prompt throughput: 6214.8 tokens/s, Avg generation throughput: 136.4 tokens/s, Running: 26 reqs, Waiting: 6 reqs, GPU KV cache usage: 93.4%, Prefix cache hit rate: 0.4%
+(APIServer pid=124149) INFO 09-07 03:13:57 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.26, Accepted throughput: 94.50 tokens/s, Drafted throughput: 125.69 tokens/s, Accepted: 945 tokens, Drafted: 1257 tokens, Per-position acceptance rate: 0.876, 0.747, 0.632, Avg Draft acceptance rate: 75.2%
+(APIServer pid=124149) INFO:     135.82.26.93:42798 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42706 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42826 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42714 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO 09-07 03:14:07 [loggers.py:271] Engine 000: Avg prompt throughput: 3786.2 tokens/s, Avg generation throughput: 125.3 tokens/s, Running: 25 reqs, Waiting: 7 reqs, GPU KV cache usage: 91.4%, Prefix cache hit rate: 0.3%
+(APIServer pid=124149) INFO 09-07 03:14:07 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.13, Accepted throughput: 85.50 tokens/s, Drafted throughput: 120.30 tokens/s, Accepted: 855 tokens, Drafted: 1203 tokens, Per-position acceptance rate: 0.868, 0.703, 0.561, Avg Draft acceptance rate: 71.1%
+(APIServer pid=124149) INFO:     135.82.26.93:42744 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42788 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO 09-07 03:14:17 [loggers.py:271] Engine 000: Avg prompt throughput: 8100.1 tokens/s, Avg generation throughput: 121.8 tokens/s, Running: 25 reqs, Waiting: 7 reqs, GPU KV cache usage: 93.3%, Prefix cache hit rate: 0.3%
+(APIServer pid=124149) INFO 09-07 03:14:17 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.23, Accepted throughput: 83.99 tokens/s, Drafted throughput: 113.09 tokens/s, Accepted: 840 tokens, Drafted: 1131 tokens, Per-position acceptance rate: 0.889, 0.751, 0.589, Avg Draft acceptance rate: 74.3%
+(APIServer pid=124149) INFO:     135.82.26.93:42870 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO:     135.82.26.93:42878 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO 09-07 03:14:27 [loggers.py:271] Engine 000: Avg prompt throughput: 5554.3 tokens/s, Avg generation throughput: 177.0 tokens/s, Running: 26 reqs, Waiting: 6 reqs, GPU KV cache usage: 93.9%, Prefix cache hit rate: 0.3%
+(APIServer pid=124149) INFO 09-07 03:14:27 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.23, Accepted throughput: 122.26 tokens/s, Drafted throughput: 164.34 tokens/s, Accepted: 1223 tokens, Drafted: 1644 tokens, Per-position acceptance rate: 0.892, 0.737, 0.602, Avg Draft acceptance rate: 74.4%
+(APIServer pid=124149) INFO:     135.82.26.93:42784 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=124149) INFO 09-07 03:14:37 [loggers.py:271] Engine 000: Avg prompt throughput: 5637.8 tokens/s, Avg generation throughput: 133.0 tokens/s, Running: 27 reqs, Waiting: 5 reqs, GPU KV cache usage: 98.6%, Prefix cache hit rate: 0.3%
+(APIServer pid=124149) INFO 09-07 03:14:37 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.33, Accepted throughput: 93.00 tokens/s, Drafted throughput: 119.70 tokens/s, Accepted: 930 tokens, Drafted: 1197 tokens, Per-position acceptance rate: 0.917, 0.757, 0.657, Avg Draft acceptance rate: 77.7%
+(APIServer pid=124149) INFO:     135.82.26.93:42980 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+
+
+
+
+
+
+
+
+你可以发现一件事，你的从请求慢慢打进来，最开始都维持在Avg generation throughput: 3.4 tokens/s,9.9 tokens/s,，15.9 tokens/s,等等，然后突然就到Avg generation throughput: 315.5 tokens/s了，总时间是16分钟完成的。
+
+然而反观基线，虽然没有315.5 tokens/s这么高的峰值，但人家一开始迅速就到58.4 tokens/s了，然后基本稳定在118.8 tokens/s左右。总时间8分钟。
+
+不知道这个现象会不会帮助到你
+
+

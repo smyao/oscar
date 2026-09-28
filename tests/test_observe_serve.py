@@ -103,19 +103,22 @@ def test_candidate_gate_requires_signed_artifact_graph_and_precision(monkeypatch
         observe_serve._candidate_gate(config_path, config, {}, log_dir, status)
 
 
-def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_path):
+@pytest.mark.parametrize("diagnose_mixed", [False, True])
+def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_path, diagnose_mixed):
     config = observe_serve.ROOT / "configs/target.json"
     seen = []
     monkeypatch.setattr(observe_serve, "_preflight", lambda *args: seen.append("preflight"))
     monkeypatch.setattr(observe_serve, "_candidate_gate", lambda *args: seen.append("candidate-gates"))
     monkeypatch.setattr(observe_serve, "_fast_unpack_gate", lambda *args: seen.append("fast-unpack-gate"))
     monkeypatch.setattr(observe_serve, "_q4_diagnostic", lambda *args: seen.append("q4-diagnostic"))
+    monkeypatch.setattr(observe_serve, "_mixed_diagnostic", lambda *args: seen.append("mixed-diagnostic"))
     monkeypatch.setattr(observe_serve, "managed_server", lambda *args, **kwargs:
                         pytest.fail("probe-only must not launch a model or AISBench"))
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     logs = tmp_path / "probe"
-    assert observe_serve.run(config, logs, "candidate", probe_only=True) == 0
-    assert seen == ["preflight", "candidate-gates", "fast-unpack-gate"]
+    assert observe_serve.run(config, logs, "candidate", probe_only=True, diagnose_mixed=diagnose_mixed) == 0
+    assert seen == ["preflight", "candidate-gates", "fast-unpack-gate"] + (
+        ["mixed-diagnostic"] if diagnose_mixed else [])
     status = json.loads((logs / "status.json").read_text())
     assert status["service_started"] is False
     assert status["performance_acceptance"] == "operator_only_not_end_to_end"
@@ -215,6 +218,52 @@ def test_q4_child_failure_is_not_hidden_by_resource_observation_error(monkeypatc
         observe_serve._q4_diagnostic(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, status)
     assert error.value.returncode == 2
     assert status["q4_resource_release"]["status"] == "failed"
+
+
+def test_mixed_diagnostic_retains_real_child_report_and_requires_signed_oracle(monkeypatch, tmp_path):
+    import sys
+    from tools.phase import run_phase as real_run_phase
+    from oscar_ascend.ops import loader
+    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    manifest = {"signature": "mixed-signature", "sha256": {"extension": "mixed-binary"}}
+    report = {"status": "observed", "accuracy": "passed",
+              "artifact_signature": manifest["signature"], "artifact_sha256": manifest["sha256"]}
+    monkeypatch.setattr(loader, "validate_build_artifacts", lambda *args: manifest)
+    monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
+    monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
+    def runner(name, command, **kwargs):
+        assert name == "mixed-attention" and "tools.probe_mixed_attention" in command
+        output = command[command.index("--output") + 1]
+        child = [sys.executable, "-c", "import pathlib,sys;pathlib.Path(sys.argv[1]).write_text(sys.argv[2])",
+                 output, json.dumps(report)]
+        return real_run_phase(name, child, **kwargs)
+    monkeypatch.setattr(observe_serve, "run_phase", runner)
+    status = {"phases": []}
+    observe_serve._mixed_diagnostic(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, status)
+    assert json.loads((tmp_path / "mixed-attention-report.json").read_text()) == report
+    assert json.loads((tmp_path / "mixed-attention.json").read_text())["returncode"] == 0
+    assert status["mixed_diagnostic"]["performance_acceptance"] == "not_established"
+    report["accuracy"] = "failed"
+    with pytest.raises(RuntimeError, match="accuracy"):
+        observe_serve._mixed_diagnostic(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, status)
+
+
+def test_mixed_child_failure_survives_resource_observation_error(monkeypatch, tmp_path):
+    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
+    def fail(*args, **kwargs):
+        error = RuntimeError("mixed child failed")
+        error.returncode = 2
+        error.phase = "mixed-attention"
+        raise error
+    monkeypatch.setattr(observe_serve, "_phase", fail)
+    monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs:
+                        (_ for _ in ()).throw(RuntimeError("resource read failed")))
+    status = {}
+    with pytest.raises(RuntimeError, match="mixed child failed") as error:
+        observe_serve._mixed_diagnostic(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, status)
+    assert error.value.returncode == 2
+    assert status["mixed_resource_release"]["status"] == "failed"
 
 
 def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeypatch, tmp_path):

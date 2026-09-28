@@ -1,5 +1,10 @@
 # 全服务探针与资源回收
 
+2026-09-28新增的混合长prefill诊断见[`mixed_prefill_analysis.md`](mixed_prefill_analysis.md)：
+`git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate --probe-only --diagnose-mixed`。
+完成安装/算子门后只测31条q4 decode的两种padding/split及加入一条长prefill的冷/热历史组合，按CV/current FIA/merge计时并核对冻结oracle；不加载模型、不跑AISBench。终端重点为四条`PERF_MIXED_ATTENTION`与一条`PERF_MIXED_RESULT`。独立报告`mixed-attention-report.json`与阶段状态JSON分开，精度、签名或资源释放失败即停止。
+常用的`git pull --ff-only && bash scripts/install_serve.sh --variant candidate`继续安装并启用C4/q1/fast unpack后直接服务，不执行这个诊断。
+
 档案依据：G21/G22（NPU free memory 与错误的无限等待），G31/#50–52/#68（超时和 worker 挂起），#27（只有 readiness 不等于服务实现），#70–73/#130–139（设备与客户端计时分离、并发工作量和真实负载边界），#72/#94–95（失败结果和日志不能丢失），#74–78/#84（原生组成、导入与父进程线程池），#117（固定 cwd）。本流程使用当前 `configs/target.json`，不会从环境或旧任务继承卡号。
 
 临时完整探针：

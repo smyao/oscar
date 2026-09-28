@@ -49,6 +49,8 @@
 
 ## 当前必须正面解决的事项
 
+2026-09-28最新用户报告约16min，原生约8min；E06仍未通过。新片段中相同Running25/Waiting7时OSCAR生成17.2 tok/s、原生125.3 tok/s，而OSCAR prompt吞吐归零的三个窗口生成均值296.6 tok/s。线索集中于混合长prefill期间的推进速度，不能把峰值当作整程收益或把共用eager规则当作唯一根因。源码和计数口径见`docs/mixed_prefill_analysis.md`。新增可选`--probe-only --diagnose-mixed`只测实际candidate CV/current FIA/merge组合；NPU数据待回传，不新增算子精度或性能通过结论，直启candidate继续使用已交付优化。
+
 0677bcb fast unpack真机门已通过：五个热形状耗时降低11.34%–28.96%，精度/指定独立图/性能门passed，详见`reports/target_fast_unpack_pass_20260928.txt`。E06完整服务8分钟目标仍未验收。固定交付入口为`install_serve.sh --variant candidate`，已与probe共用候选预设并通过68项相关主机回归；每轮须同步实际路由，不能仅更新probe。默认与后四卡行为不改。
 
 最新用户反馈candidate约19min vs原生8min，E06仍未通过。本轮已实现三种独立fast unpack CV（q4/q1/C4），原FE0/C4/q1/profile文件字节未改；CANN及官方CPU-debug22/22通过，含65536×8整数码和21项整CV/特殊half/错误用例。目标NPU精度、图及5个热形状收益由新增fast-unpack门裁决，不能用本地通过宣称8分钟完成。源指纹`reports/fast_unpack_local_validation.json`，分析`docs/fast_unpack.md`；不再要求AISBench。

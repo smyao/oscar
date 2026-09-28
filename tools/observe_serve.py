@@ -400,8 +400,52 @@ def _fast_unpack_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     atomic_json(log_dir / "status.json", status)
 
 
+def _mixed_diagnostic(config_path: Path, config: dict, env: dict, log_dir: Path,
+                      status: dict) -> None:
+    """Measure the actual CV + current-FIA composition without loading a model."""
+    from oscar_ascend.ops.loader import validate_build_artifacts
+    output = log_dir / "mixed-attention-report.json"
+    output.unlink(missing_ok=True)
+    before = read_npu_resources(config, log_dir=log_dir / "mixed-resources-before", timeout=30)
+    phase_error, release = None, None
+    try:
+        _phase("mixed-attention", [sys.executable, "-m", "tools.probe_mixed_attention",
+            "--config", str(config_path), "--acceptance", str(ROOT / "configs/acceptance.json"),
+            "--output", str(output)], config=config, env=env, log_dir=log_dir, status=status)
+    except BaseException as error:
+        phase_error = error
+        raise
+    finally:
+        try:
+            release = wait_for_release(config, before, log_dir=log_dir / "mixed-resources-after",
+                timeout=float(config.get("resource_release_timeout_seconds", 30)),
+                tolerance_bytes=config.get("resource_release_tolerance_bytes", DEFAULT_RELEASE_TOLERANCE))
+        except BaseException as error:
+            release = {"status": "failed", "reason": f"{type(error).__name__}: {error}"}
+            if phase_error is None:
+                raise
+        finally:
+            if release is not None:
+                status["mixed_resource_release"] = release
+                atomic_json(log_dir / "status.json", status)
+    if release.get("status") != "passed":
+        raise RuntimeError("mixed diagnostic NPU resources did not release")
+    report = json.loads(output.read_text())
+    manifest = validate_build_artifacts(ROOT / "build/ascendc/build_manifest.json")
+    expected = {"status": "observed", "accuracy": "passed",
+                "artifact_signature": manifest.get("signature"), "artifact_sha256": manifest.get("sha256")}
+    mismatches = [key for key, value in expected.items() if report.get(key) != value]
+    if mismatches:
+        error = RuntimeError(f"mixed diagnostic lacks signed oracle evidence: {','.join(mismatches)} report={output}")
+        error.phase = "mixed-evidence"
+        raise error
+    status["mixed_diagnostic"] = {"status": "observed", "report": str(output),
+                                  "performance_acceptance": "not_established"}
+    atomic_json(log_dir / "status.json", status)
+
+
 def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = False,
-        diagnose_q4: bool = False) -> int:
+        diagnose_q4: bool = False, diagnose_mixed: bool = False) -> int:
     config_path, log_dir = config_path.resolve(), log_dir.resolve()
     status = {"status": "preparing", "variant": variant,
               "measurement": "operator_microprobe" if probe_only else "passive_external_only",
@@ -413,6 +457,8 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
             raise ValueError("--probe-only requires --variant candidate")
         if diagnose_q4 and variant != "candidate":
             raise ValueError("--diagnose-q4 requires --variant candidate")
+        if diagnose_mixed and variant != "candidate":
+            raise ValueError("--diagnose-mixed requires --variant candidate")
         original = config_path.read_bytes()
         config = variant_config(json.loads(original), variant)
         status["optimizations"] = variant_features(config)
@@ -450,6 +496,8 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                         _fast_unpack_gate(effective_path, config, env, log_dir, status)
                         if diagnose_q4:
                             _q4_diagnostic(effective_path, config, env, log_dir, status)
+                        if diagnose_mixed:
+                            _mixed_diagnostic(effective_path, config, env, log_dir, status)
             if probe_only:
                 status.update(status="operator_probes_passed", service_started=False,
                               performance_acceptance="operator_only_not_end_to_end")
@@ -575,6 +623,8 @@ def main(argv=None) -> int:
                         help="finish after candidate operator/graph/latency gates; do not start a model")
     parser.add_argument("--diagnose-q4", action="store_true",
                         help="also rerun the established native q4/profile diagnostic; normally reuse prior evidence")
+    parser.add_argument("--diagnose-mixed", action="store_true",
+                        help="measure 31 decode requests with/without a long prefill in the current candidate attention path")
     args = parser.parse_args(argv)
     log_dir = (args.log_dir or ROOT / "logs" / ("observe-" + datetime.now(timezone.utc).strftime(
         "%Y%m%dT%H%M%S.%fZ"))).resolve()
@@ -585,6 +635,8 @@ def main(argv=None) -> int:
             phases += ["candidate_operator_graph_latency_gates", "fast_unpack_gate"]
             if args.diagnose_q4:
                 phases.append("q4_native_comparison_and_profile")
+            if args.diagnose_mixed:
+                phases.append("mixed_cv_current_fia_merge_diagnostic")
         if not args.probe_only:
             phases += ["managed_service_health", "external_metrics_and_bounded_async_events"]
         print(json.dumps({"variant": args.variant, "devices": config["devices"],
@@ -595,7 +647,7 @@ def main(argv=None) -> int:
             "phases": phases}, indent=2))
         return 0
     return run(args.config, log_dir, args.variant, probe_only=args.probe_only,
-               diagnose_q4=args.diagnose_q4)
+               diagnose_q4=args.diagnose_q4, diagnose_mixed=args.diagnose_mixed)
 
 
 if __name__ == "__main__":

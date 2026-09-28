@@ -229,9 +229,16 @@ def make_fixture(torch, shape: Shape, *, on_request=None) -> dict:
             on_request(request, query_begin, q[query_begin:query_begin + length],
                        old_k, old_v, ck[query_begin:query_begin + length],
                        cv[query_begin:query_begin + length])
-        packed = encode_kv(old_k.float() @ rk, old_v.float() @ rv)
-        restored_k, restored_v = decode_kv(packed, dim)
-        restored_k, restored_v = restored_k @ rk.T, restored_v @ rv.T
+        if context:
+            packed = encode_kv(old_k.float() @ rk, old_v.float() @ rv)
+            restored_k, restored_v = decode_kv(packed, dim)
+            restored_k, restored_v = restored_k @ rk.T, restored_v @ rv.T
+        else:
+            # A first prefill has no historical rows. The independent pack
+            # oracle's reshape cannot infer -1 for a zero-element tensor.
+            packed = torch.empty((0, hk, slot_bytes), dtype=torch.uint8)
+            restored_k = torch.empty((0, hk, dim), dtype=torch.float32)
+            restored_v = torch.empty_like(restored_k)
         for logical_page, physical in enumerate(request_pages):
             first = logical_page * BLOCK_TOKENS
             count = min(BLOCK_TOKENS, context - first)

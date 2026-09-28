@@ -178,7 +178,7 @@ def _fingerprint(named: dict) -> str:
     return _tensor_hash(named)
 
 
-def make_fixture(torch, shape: Shape) -> dict:
+def make_fixture(torch, shape: Shape, *, on_request=None) -> dict:
     """Independent CPU oracle input; production never imports this module."""
     from oscar_ascend.ops.reference import attention, decode_kv, encode_kv
     shape.validate()
@@ -223,6 +223,12 @@ def make_fixture(torch, shape: Shape) -> dict:
     for request, (length, context, request_pages) in enumerate(zip(qlens, contexts, assignments)):
         old_k = torch.randn((context, hk, dim), generator=generator).to(torch.bfloat16)
         old_v = torch.randn((context, hk, dim), generator=generator).to(torch.bfloat16)
+        if on_request is not None:
+            # Diagnostic-only observer of the exact pre-quantization logical
+            # inputs. The default fe0/C4 fixture and RNG order are unchanged.
+            on_request(request, query_begin, q[query_begin:query_begin + length],
+                       old_k, old_v, ck[query_begin:query_begin + length],
+                       cv[query_begin:query_begin + length])
         packed = encode_kv(old_k.float() @ rk, old_v.float() @ rv)
         restored_k, restored_v = decode_kv(packed, dim)
         restored_k, restored_v = restored_k @ rk.T, restored_v @ rv.T

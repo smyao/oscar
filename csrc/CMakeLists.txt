@@ -43,6 +43,7 @@ endif()
 include("${ASCENDC_CMAKE_DIR}/ascendc.cmake")
 ascendc_library(oscar_ascend_kernels SHARED kernels/store_int2.cpp kernels/merge_lse.cpp
   kernels/rotate_clip_store.cpp kernels/attention_cv.cpp kernels/attention_cv_q1.cpp
+  kernels/attention_cv_profile.cpp
   kernels/attention_cv_cluster.cpp
   kernels/attention_tasks.cpp kernels/status_guard.cpp)
 # Archive G18/#85/#98: a versioned ELF SONAME cannot bind to an older OSCAR
@@ -78,5 +79,5 @@ set_target_properties(_oscar_ascend_ops PROPERTIES
   BUILD_WITH_INSTALL_RPATH TRUE
   INSTALL_RPATH "$ORIGIN;$ORIGIN/lib;$<TARGET_FILE_DIR:oscar_ascend_kernels>;${TORCH_NPU_PATH}/lib;${ASCEND_HOME_PATH}/lib64;${TORCH_INSTALL_PREFIX}/lib")
 file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/build_manifest.json" CONTENT
-"{\n  \"abi_version\": 1,\n  \"execution_interface\": \"direct_launch\",\n  \"soc\": \"${SOC_VERSION}\",\n  \"extension\": \"$<TARGET_FILE:_oscar_ascend_ops>\",\n  \"kernel_library\": \"$<TARGET_FILE:oscar_ascend_kernels>\",\n  \"source_capabilities\": [\"store_int2_out\", \"merge_lse_out\", \"rotate_out\", \"rotate_clip_store_out\", \"prepare_attention_tasks_out\", \"attention_cv_out\", \"attention_cv_q1_out\", \"attention_cv_cluster4_out\", \"status_guard\"],\n  \"missing_capabilities\": [],\n  \"target_numerics_verified\": false,\n  \"graph_capture_verified\": false,\n  \"graph_replay_verified\": false,\n  \"performance_verified\": false\n}\n")
+"{\n  \"abi_version\": 1,\n  \"execution_interface\": \"direct_launch\",\n  \"soc\": \"${SOC_VERSION}\",\n  \"extension\": \"$<TARGET_FILE:_oscar_ascend_ops>\",\n  \"kernel_library\": \"$<TARGET_FILE:oscar_ascend_kernels>\",\n  \"source_capabilities\": [\"store_int2_out\", \"merge_lse_out\", \"rotate_out\", \"rotate_clip_store_out\", \"prepare_attention_tasks_out\", \"attention_cv_out\", \"attention_cv_q1_out\", \"attention_cv_profile_out\", \"attention_cv_cluster4_out\", \"status_guard\"],\n  \"missing_capabilities\": [],\n  \"target_numerics_verified\": false,\n  \"graph_capture_verified\": false,\n  \"graph_replay_verified\": false,\n  \"performance_verified\": false\n}\n")
 install(TARGETS _oscar_ascend_ops oscar_ascend_kernels LIBRARY DESTINATION oscar_ascend)

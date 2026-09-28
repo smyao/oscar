@@ -1,0 +1,80 @@
+{
+  "scope": "diagnostic-only fe0 mathematical clone with local completion fences",
+  "status": "passed",
+  "cann_device_build_rc": 0,
+  "official_cpu_build_rc": 0,
+  "official_cpu_debug": {
+    "passed": 2,
+    "total": 2,
+    "cases": [
+      {
+        "op": "profile_fe0",
+        "path": "reports/vm-cv-profile/goldens/d64_q4_c65",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-profile/guest/logs/vm-cv-profile/cases/000-profile_fe0.log",
+        "profile_counter_line": "profile_tasks=3 history_units=1"
+      },
+      {
+        "op": "profile_fe0",
+        "path": "reports/vm-cv-profile/goldens/d256_q4_c511",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-profile/guest/logs/vm-cv-profile/cases/001-profile_fe0.log",
+        "profile_counter_line": "profile_tasks=3 history_units=2"
+      }
+    ]
+  },
+  "profile_abi": {
+    "symbol": "attention_cv_profile_out",
+    "extra_argument": "profile after workspace before block_tokens",
+    "dtype": "int64",
+    "shape": "[cores,3,4,24]",
+    "engines": [
+      "AIC",
+      "AIV0",
+      "AIV1"
+    ],
+    "sources": [
+      "history",
+      "window",
+      "current",
+      "total"
+    ],
+    "field23": "actor_compute_span_ticks including Init and Process, excluding profile flush"
+  },
+  "profile_only_local_fences": [
+    "MTE2_S after LoadPacked",
+    "V_S after Unpack metadata and precise load and PV accumulator",
+    "MTE3_S after Q and K/V publication and P publication",
+    "FIX_S after AIC QK/PV/Rv"
+  ],
+  "interpretation": "NPU SYS_CNT raw ticks; CPU debug CLOCK_REALTIME nanoseconds. Local fences change overlap and timing. Per-actor/source durations are diagnostic; do not sum maxima across cores or engines or treat as wall. Uninstrumented NPU Event separately measures fe0/native throughput.",
+  "source_sha256": {
+    "csrc/kernels/attention_cv.cpp": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+    "csrc/kernels/attention_cv_cluster.cpp": "c2412de931041f92a6fd340ad690accb32c12b1012f069342d296b3aa335ec82",
+    "csrc/kernels/attention_cv_q1.cpp": "498644c51c4857828e19ec7e8ef5064653b524d1e7bd2344aaec1b82481152d7",
+    "csrc/kernels/attention_cv_profile.cpp": "15d9b0800f61b51e85416c53061b3893e33efee69016a03b3454afcfd99b0188",
+    "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+    "csrc/include/oscar_attention_launch.h": "b320a873c29e046165723d330f11fc9fd6a12d4873c827e30ec6b9d2539f2a61",
+    "csrc/attention_bindings.cpp": "32f95b270ac1f6d0146f98df23fae40603fe3e45edb1b2c5afa6f0bc86347f20",
+    "csrc/cpu/cv_probe.cpp": "ba986846f1664b474b5b90072d1ea578aaaa1167aaa096e1d50201b304ea7b02",
+    "csrc/CMakeLists.txt": "23dadbe0632a287f1f1f2007d85a75ee7e46d3af5404f24cc68ea165851ea7d9"
+  },
+  "build_signature": "4aa77716f59080a2b0027fde10bb26578004ad99582abf20111f14f0a857bd00",
+  "logs": {
+    "device_build_final": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-profile/guest/reports/vm-cv-profile/device-build-final.log",
+    "cpu_build": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-profile/guest/reports/vm-cv-profile/cpu-build.log",
+    "cpu_debug": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-profile/guest/reports/vm-cv-profile/cpu-debug-run.log"
+  },
+  "npu_accuracy": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "performance": "not_run",
+  "host_validation": {
+    "passed": 66,
+    "real_npu_skipped": 28,
+    "subtests_passed": 4,
+    "scope": "native paired fixture, profile counters, probe orchestration, meta/ABI and build contracts; no target NPU"
+  }
+}

@@ -51,3 +51,16 @@ git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate 
 ## 本轮本地验证
 
 CANN ascend910b4编译通过；官方CPU-debug5/5通过，包含与fe0逐字节partial/LSE/status、独立oracle、padding/S1/S3/空历史/错误元数据/D256。N128/S3病例的source0任务96个，旧6核、新20核；这是CPU任务归属计数。相关主机回归119 passed、28真NPU skipped、4 subtests passed。编译源码指纹与边界见`reports/q1_schedule_local_validation.json`。新q1真NPU精度、图和速度均待上述短probe验证。
+
+## a13af95 真机短probe回传
+
+`observe-20260928T031553.257802Z`已执行完成，原文`reports/target_q1_schedule_pass_20260928.txt`。下表均为同输入、相同source split、2次预热/5次交替Event中位数；不是全服务时长。
+
+| q1实际形状 | fe0 | 新q1调度 | 耗时下降 | 数值/图 |
+|---|---:|---:|---:|---|
+| 32请求、N128、S3 | 45.112ms | 13.807ms | 69.39%（3.27倍速度） | 逐位、oracle、独立图捕获/回放通过 |
+| 32请求、N16384、S1 | 137.883ms | 20.544ms | 85.10%（6.71倍速度） | 逐位、oracle通过；该形状未运行图门 |
+
+C4成熟20K仍为76.350→55.855ms；q4生产S3的同fe0算子自比15.278/15.302ms，不是候选退化。`OBSERVE_PROBE_DONE service_started=false`为本轮预期完成，不是漏启动。q1调度收益获得设备证据，应保留；用户AISBench不重跑，端到端总收益仍不外推。
+
+下一步只诊断剩余q4：原生实际路径是BF16 paged-cache FIA TND，而不是current-only FIA。独立合成对照需从同一逻辑Q/K/V构造两种cache，分别验证native BF16 oracle和OSCAR INT2 oracle；两者不要求bitwise。缓存构造/编码/任务准备在测速外，报告native FIA和OSCAR CV+merge的明确范围。另以复制fe0数学的独立profile算子采每核AIC/AIV、每source原始时钟；profile新增局部完成栅栏及计数会改变时序，必须与原fe0逐位对照并单列Event开销，不将它的时间替代正常速度，也不跨核相加为wall。三个已验证内核fe0/C4/q1均保持不动。

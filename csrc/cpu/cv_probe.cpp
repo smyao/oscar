@@ -33,6 +33,10 @@ extern "C" void oscar_attention_cv_q1_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*
     uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
+extern "C" void oscar_attention_cv_profile_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    uint8_t*,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
 extern "C" void oscar_attention_cv_cluster4_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     uint8_t*,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
@@ -196,6 +200,7 @@ int main(int argc,char** argv) {
   const bool clusterMode=mode=="cluster4" || mode=="cluster4_required" ||
       mode=="cluster4_bad_meta" || mode=="cluster4_nan_query";
   const bool q1Mode=mode=="q1_schedule" || mode=="q1_schedule_bad_meta";
+  const bool profileMode=mode=="profile_fe0";
   if(mode=="tasks_causal") {CheckLargeCausalTasks();return 0;}
   CheckPaddedMetadata();
   CheckSlotContext();
@@ -288,6 +293,57 @@ int main(int argc,char** argv) {
       table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,partial.ptr,partLse.ptr,status.ptr,
       workspace.ptr,n,hq,hk,d,requests,int64_t{8},tasksCount,b,nb,prefix,stride,
       windowRows*hk*d,windowRows,sink,recent,spec,splits,1.0F/std::sqrt(float(d)));
+  if(profileMode) {
+    constexpr int64_t engines=oscar_ascend::kAttentionProfileEngines;
+    constexpr int64_t sources=oscar_ascend::kAttentionProfileSources;
+    constexpr int64_t fields=oscar_ascend::kAttentionProfileFields;
+    Gm measuredPartial(partial.size),measuredLse(partLse.size),
+       measuredStatus(status.size),measuredWorkspace(workspace.size),
+       ticks(cores*engines*sources*fields*sizeof(int64_t));
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
+    ICPU_RUN_KF(oscar_attention_cv_profile_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,raw.ptr,
+        table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,measuredPartial.ptr,measuredLse.ptr,
+        measuredStatus.ptr,measuredWorkspace.ptr,ticks.ptr,n,hq,hk,d,requests,
+        int64_t{8},tasksCount,b,nb,prefix,stride,windowRows*hk*d,windowRows,
+        sink,recent,spec,splits,1.0F/std::sqrt(float(d)));
+    for(const auto* pair:{&measuredPartial,&measuredLse,&measuredStatus}) {
+      const Gm& baseline=pair==&measuredPartial?partial:(pair==&measuredLse?partLse:status);
+      if(pair->size!=baseline.size || std::memcmp(pair->ptr,baseline.ptr,pair->size)!=0) {
+        size_t first=0;while(first<pair->size && pair->ptr[first]==baseline.ptr[first])++first;
+        throw std::runtime_error("profile differs from fe0 bytewise at output byte "+
+            std::to_string(first));
+      }
+    }
+    int64_t allTasks=0,historyUnits=0;
+    const auto readTick=[&](int64_t core,int64_t engine,int64_t source,int64_t field){
+      int64_t x;const int64_t offset=(((core*engines+engine)*sources+source)*fields+field)*8;
+      std::memcpy(&x,ticks.ptr+offset,8);return x;
+    };
+    for(int64_t core=0;core<cores;++core)for(int64_t engine=0;engine<engines;++engine) {
+      if(readTick(core,engine,3,23)<=0)
+        throw std::runtime_error("profile actor compute span was not published");
+      for(int64_t field=0;field<23;++field) {
+        int64_t sum=0;
+        for(int64_t source=0;source<3;++source) {
+          const int64_t x=readTick(core,engine,source,field);
+          if(x<0)throw std::runtime_error("negative profile source counter");
+          sum+=x;
+        }
+        if(sum!=readTick(core,engine,3,field))
+          throw std::runtime_error("profile source totals are inconsistent");
+      }
+      for(int64_t source=0;source<3;++source)
+        if(readTick(core,engine,source,23)!=0)
+          throw std::runtime_error("actor span must be stored only in total source");
+      if(engine==0) {
+        allTasks+=readTick(core,engine,3,0);
+        historyUnits+=readTick(core,engine,0,1);
+      }
+    }
+    if(allTasks==0 || historyUnits==0)
+      throw std::runtime_error("profile fixture did not exercise history CV");
+    std::cout<<"profile_tasks="<<allTasks<<" history_units="<<historyUnits<<std::endl;
+  }
   if(q1Mode) {
     // The producer's qcount/rows and all numerical inputs are unchanged.
     // One-token work items must cover the identical task table exactly once.
@@ -480,7 +536,8 @@ int main(int argc,char** argv) {
       mergeStatus.ptr,n*hq,segments,d);
   StatusZero(mergeStatus);Close(output,dir+"/expected_output.bin");Close(lse,dir+"/expected_lse.bin");
   std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\""
-           <<(mode=="poison_workspace"?"poison_workspace":"attention_cv")
+           <<(mode=="poison_workspace"?"poison_workspace":
+              (profileMode?"profile_fe0":"attention_cv"))
            <<"\",\"status\":\"passed\"}"<<std::endl;
   return 0;
  }catch(const std::exception& e){std::cerr<<"CPU_DEBUG_FAILED: "<<e.what()<<std::endl;return 1;}

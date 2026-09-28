@@ -108,15 +108,57 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     seen = []
     monkeypatch.setattr(observe_serve, "_preflight", lambda *args: seen.append("preflight"))
     monkeypatch.setattr(observe_serve, "_candidate_gate", lambda *args: seen.append("candidate-gates"))
+    monkeypatch.setattr(observe_serve, "_q4_diagnostic", lambda *args: seen.append("q4-diagnostic"))
     monkeypatch.setattr(observe_serve, "managed_server", lambda *args, **kwargs:
                         pytest.fail("probe-only must not launch a model or AISBench"))
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     logs = tmp_path / "probe"
     assert observe_serve.run(config, logs, "candidate", probe_only=True) == 0
-    assert seen == ["preflight", "candidate-gates"]
+    assert seen == ["preflight", "candidate-gates", "q4-diagnostic"]
     status = json.loads((logs / "status.json").read_text())
     assert status["service_started"] is False
     assert status["performance_acceptance"] == "operator_only_not_end_to_end"
+
+
+def test_q4_diagnostic_records_gap_without_claiming_performance_pass(monkeypatch, tmp_path):
+    from oscar_ascend.ops import loader
+    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    manifest = {"signature": "q4-signature", "sha256": {"extension": "q4-binary"}}
+    monkeypatch.setattr(loader, "validate_build_artifacts", lambda *args: manifest)
+    monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
+    monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
+    report = {"status": "observed", "native_oracle": "passed", "oscar_oracle": "passed",
+              "profile_parity": "bitwise_passed", "profile_observed": True,
+              "artifact_signature": manifest["signature"], "artifact_sha256": manifest["sha256"],
+              "oscar_over_native": 15.0}
+    def phase(name, command, **kwargs):
+        assert name == "q4-hotpath" and "tools.probe_decode_hotpath" in command
+        (tmp_path / "q4-hotpath.json").write_text(json.dumps(report))
+    monkeypatch.setattr(observe_serve, "_phase", phase)
+    status = {}
+    observe_serve._q4_diagnostic(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, status)
+    assert status["q4_diagnostic"]["performance_acceptance"] == "not_established"
+    report["profile_parity"] = "failed"
+    with pytest.raises(RuntimeError, match="lacks signed"):
+        observe_serve._q4_diagnostic(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, {})
+
+
+def test_q4_child_failure_is_not_hidden_by_resource_observation_error(monkeypatch, tmp_path):
+    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
+    def fail(*args, **kwargs):
+        error = RuntimeError("q4 child failed")
+        error.returncode = 2
+        error.phase = "q4-hotpath"
+        raise error
+    monkeypatch.setattr(observe_serve, "_phase", fail)
+    monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs:
+                        (_ for _ in ()).throw(RuntimeError("resource read failed")))
+    status = {}
+    with pytest.raises(RuntimeError, match="q4 child failed") as error:
+        observe_serve._q4_diagnostic(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, status)
+    assert error.value.returncode == 2
+    assert status["q4_resource_release"]["status"] == "failed"
 
 
 def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeypatch, tmp_path):

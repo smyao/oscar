@@ -28530,3 +28530,9 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **源码确认及D.4四问**：①对应融合history CV的任务归属，不改数值计算；②D.4的6.5秒历史恢复与#129的stride共因子问题说明有效核利用与重复历史工作必须一起检查；③原全局queryTile=128/GQA6=21，N128得到7个tile。32个q1 leader只在前两个tile，source0 S3的work id为{0,1,7,8,14,15}，最多6个核承担历史，分别有21/11请求偏载。q4有18个实际历史核心（不是20，最后tile只有follower）。独立`attention_cv_q1_out`仅将遍历tile设1，保留全部padded task/status、原三源/split/数学/同步/地址，显式候选的后续MTP且max_query_len1才选用。fe0/C4原kernel不变；④6→20个核是工作分配证明，不是实测加速。即使两次q1 CV全消，该decode样本也最多约1.29倍，不能据此宣称8分钟完成。
 
 **验证与一键边界**：真实q1门分别采用32条独立20–30K历史、N128/S3与N16384/S1，逐位partial/LSE/status/合并输出、冻结oracle、N128同地址改变输入图回放及2+5交替设备事件门。`install_observe_serve.sh --variant candidate --probe-only`完成安装/编译/真实算子门后退出，不加载模型、不发推理请求、不跑AISBench。现有decode32 probe此前固定S1，现按生产几何取S3并注明口径，旧40ms不能乘模型层数作为图内归因。采证器同时修正Prometheus preemption Counter的`_total`样本名，旧None保持未知。候选的目标设备收益、完整图和端到端性能仍待短probe裁决；本地CANN/CPU报告另列，不冒充真机结果。
+
+### #150 q1修订真机复验通过（a13af95）
+
+用户在node93执行同一`--variant candidate --probe-only`，run=`observe-20260928T031553.257802Z`，签名`9357b546136a`；原文`reports/target_q1_schedule_pass_20260928.txt`。N128/S3 q1：45.112041→13.807460ms、ratio0.306070、逐位精度及独立图capture/replay passed；N16384/S1 q1：137.882706→20.543880ms、ratio0.148995、逐位精度passed，该形状图not_run。C4 9例逐位/6例oracle/图继续通过，成熟20K 76.349716→55.855301ms。q4同fe0 S3自比15.278180/15.301980ms，标identical_fe0_operator；不是新退化。`candidate_evaluation_allowed=true`、q1五门passed、最后`OBSERVE_PROBE_DONE service_started=false`确认短probe正常结束。这是设备验证成功，续记原问题，不另追加错误编号。
+
+此结果支持保留q1调度改动，但不是完整服务或AISBench新时长。下一项针对仍约15ms的q4 CV，与原生实际paged BF16 FIA做同逻辑输入的独立oracle/正常Event对照；独立profile原始时钟仅供找阶段瓶颈。不能恢复已否定的“把不同核ticks最大值相加为wall”口径，不改已有fe0/C4/q1数学，不再要求AISBench。

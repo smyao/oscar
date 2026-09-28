@@ -10,7 +10,7 @@
 git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate --probe-only
 ```
 
-此模式完成算子/图/速度门后退出，不加载模型。分析与证据边界见[本次实际负载分析](docs/observation_20260928.md)。
+此模式完成算子/图/速度门及q4独立诊断后退出，不加载模型。q1真机已逐位通过，N128/S3耗时下降69.39%、N16384/S1下降85.10%；完整服务收益不外推。下一轮新增`PERF_Q4_COMPARE`和`PERF_Q4_PROFILE`，见[q4诊断口径](docs/q4_diagnostic.md)与[本次实际负载分析](docs/observation_20260928.md)。
 
 当前以用户确认精度正确的`fe0e925`为基准。原`attention_cv.cpp`及store/rotate/merge等计算内核保持该版本字节一致；默认仍运行原算子。`codex/aisbench-stable`保持精确的fe0提交。新C4算子仅在显式候选模式中使用，冻结容差没有放宽，也未重新加入已回退的AR/位图或元数据向量化。
 

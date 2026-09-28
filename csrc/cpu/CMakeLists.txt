@@ -10,7 +10,8 @@ add_executable(oscar_rotation_cpu rotation_probe.cpp ../kernels/rotate_clip_stor
 target_link_libraries(oscar_rotation_cpu PRIVATE tikicpulib::Ascend910B4)
 target_compile_options(oscar_rotation_cpu PRIVATE -O0 -g)
 add_executable(oscar_cv_cpu cv_probe.cpp ../kernels/attention_tasks.cpp ../kernels/attention_cv.cpp
-  ../kernels/attention_cv_q1.cpp ../kernels/attention_cv_cluster.cpp ../kernels/merge_lse.cpp)
+  ../kernels/attention_cv_q1.cpp ../kernels/attention_cv_profile.cpp
+  ../kernels/attention_cv_cluster.cpp ../kernels/merge_lse.cpp)
 target_link_libraries(oscar_cv_cpu PRIVATE tikicpulib::Ascend910B4)
 set(_oscar_softmax_v2_header "${ASCEND_HOME_PATH}/aarch64-linux/asc/include/adv_api/activation/softmaxflashv2.h")
 if(NOT EXISTS "${_oscar_softmax_v2_header}")

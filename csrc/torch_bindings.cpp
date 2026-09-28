@@ -107,5 +107,6 @@ PYBIND11_MODULE(_oscar_ascend_ops,m) {
   m.def("abi_version",[]{return 1;});
   m.def("capabilities",[]{return std::vector<std::string>{"store_int2_out","merge_lse_out",
       "rotate_out","rotate_clip_store_out","prepare_attention_tasks_out","attention_cv_out",
-      "attention_cv_cluster4_out","attention_cv_q1_out","status_guard"};});
+      "attention_cv_cluster4_out","attention_cv_q1_out","attention_cv_profile_out",
+      "status_guard"};});
 }

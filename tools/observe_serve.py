@@ -292,6 +292,55 @@ def _candidate_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     atomic_json(log_dir / "status.json", status)
 
 
+def _q4_diagnostic(config_path: Path, config: dict, env: dict, log_dir: Path,
+                   status: dict) -> None:
+    """#150 continuation: diagnose remaining q4 cost without a model/AISBench.
+
+    Native-vs-INT2 differences are observations, not a performance pass. The
+    diagnostic still must complete its own oracle, profile parity and cleanup.
+    """
+    from oscar_ascend.ops.loader import validate_build_artifacts
+    output = log_dir / "q4-hotpath.json"
+    output.unlink(missing_ok=True)
+    before = read_npu_resources(config, log_dir=log_dir / "q4-resources-before", timeout=30)
+    phase_error = None
+    release = None
+    try:
+        _phase("q4-hotpath", [sys.executable, "-m", "tools.probe_decode_hotpath",
+            "--config", str(config_path), "--acceptance", str(ROOT / "configs/acceptance.json"),
+            "--output", str(output)], config=config, env=env, log_dir=log_dir, status=status)
+    except BaseException as error:
+        phase_error = error
+        raise
+    finally:
+        try:
+            release = wait_for_release(config, before, log_dir=log_dir / "q4-resources-after",
+                timeout=float(config.get("resource_release_timeout_seconds", 30)),
+                tolerance_bytes=config.get("resource_release_tolerance_bytes", DEFAULT_RELEASE_TOLERANCE))
+        except BaseException as error:
+            release = {"status": "failed", "reason": f"{type(error).__name__}: {error}"}
+            if phase_error is None:
+                raise
+        finally:
+            if release is not None:
+                status["q4_resource_release"] = release
+                atomic_json(log_dir / "status.json", status)
+    if release.get("status") != "passed":
+        raise RuntimeError("q4 diagnostic NPU resources did not release")
+    report = json.loads(output.read_text())
+    manifest = validate_build_artifacts(ROOT / "build/ascendc/build_manifest.json")
+    if (report.get("status") != "observed" or report.get("native_oracle") != "passed"
+            or report.get("oscar_oracle") != "passed"
+            or report.get("profile_parity") != "bitwise_passed"
+            or report.get("profile_observed") is not True
+            or report.get("artifact_signature") != manifest.get("signature")
+            or report.get("artifact_sha256") != manifest.get("sha256")):
+        raise RuntimeError("q4 diagnostic lacks signed native/OSCAR oracle or profile evidence")
+    status["q4_diagnostic"] = {"status": "observed", "report": str(output),
+                               "performance_acceptance": "not_established"}
+    atomic_json(log_dir / "status.json", status)
+
+
 def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = False) -> int:
     config_path, log_dir = config_path.resolve(), log_dir.resolve()
     status = {"status": "preparing", "variant": variant,
@@ -336,6 +385,8 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                     _preflight(effective_path, config, env, log_dir, status, variant)
                     if variant == "candidate":
                         _candidate_gate(effective_path, config, env, log_dir, status)
+                        if probe_only:
+                            _q4_diagnostic(effective_path, config, env, log_dir, status)
             if probe_only:
                 status.update(status="operator_probes_passed", service_started=False,
                               performance_acceptance="operator_only_not_end_to_end")
@@ -469,7 +520,7 @@ def main(argv=None) -> int:
             "measurement": "operator_microprobe" if args.probe_only else "passive_external_only",
             "probe_only": args.probe_only, "model_will_start": not args.probe_only,
             "phases": ["install", "signed_operator_gate" if args.variant != "native" else "native_start",
-                       "candidate_operator_graph_latency_gates"] if args.probe_only else
+                       "candidate_operator_graph_latency_gates", "q4_native_comparison_and_profile"] if args.probe_only else
                       ["install", "signed_operator_gate" if args.variant != "native" else "native_start",
                        "managed_service_health", "external_metrics_and_bounded_async_events"]}, indent=2))
         return 0

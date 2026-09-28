@@ -1,0 +1,64 @@
+root@node93:/workspace/gpt_new_oscar_kimi# git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate --probe-only
+remote: Enumerating objects: 82, done.
+remote: Counting objects: 100% (82/82), done.
+remote: Compressing objects: 100% (47/47), done.
+remote: Total 47 (delta 33), reused 0 (delta 0), pack-reused 0 (from 0)
+Unpacking objects: 100% (47/47), 69.51 KiB | 574.00 KiB/s, done.
+From https://gitcode.com/jpl123/gpt_new_oscar_kimi
+   835fc22..a13af95  codex/oscar-ascend -> origin/codex/oscar-ascend
+Updating 835fc22..a13af95
+Fast-forward
+ AGENTS.md                                         |    1 +
+ README.md                                         |    8 +
+ benchmarks/passive.py                             |    8 +-
+ csrc/CMakeLists.txt                               |    5 +-
+ csrc/attention_bindings.cpp                       |   78 +++
+ csrc/cpu/CMakeLists.txt                           |    2 +-
+ csrc/cpu/cv_probe.cpp                             |  120 ++++-
+ csrc/include/oscar_attention_launch.h             |   12 +
+ csrc/kernels/attention_cv_q1.cpp                  |  806 +++++++++++++++++++++++++++++++
+ csrc/torch_bindings.cpp                           |    2 +-
+ docs/checklist.md                                 |    4 +
+ docs/observation_20260928.md                      |   53 ++
+ issue1_full_record.md                             |   10 +
+ oscar_ascend/integration/impl.py                  |   12 +-
+ oscar_ascend/ops/contracts.py                     |    2 +-
+ oscar_ascend/ops/cv_dispatch.py                   |    9 +-
+ oscar_ascend/ops/meta.py                          |    5 +-
+ oscar_ascend/runtime.py                           |    2 +-
+ oscar_ascend_agent_start.md                       |    1 +
+ reports/q1_schedule_local_validation.json         |   81 ++++
+ reports/target_observation_20260928/analysis.json |  714 +++++++++++++++++++++++++++
+ reports/target_observation_20260928/snippet-1.txt | 5856 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ reports/target_observation_20260928/snippet-2.txt | 1245 +++++++++++++++++++++++++++++++++++++++++++++++
+ reports/target_observation_20260928/snippet-3.txt | 1062 ++++++++++++++++++++++++++++++++++++++++
+ tests/test_benchmark_mixed_passive.py             |    2 +-
+ tests/test_export_q1_cpu_cases.py                 |   80 +++
+ tests/test_observe_serve.py                       |   18 +
+ tests/test_probe_history_reuse.py                 |   82 +++-
+ tests/test_runtime.py                             |   18 +-
+ tools/export_q1_cpu_cases.py                      |  163 +++++++
+ tools/observe_serve.py                            |   31 +-
+ tools/probe_history_reuse.py                      |  339 ++++++++++++-
+ 32 files changed, 10779 insertions(+), 52 deletions(-)
+ create mode 100644 csrc/kernels/attention_cv_q1.cpp
+ create mode 100644 docs/observation_20260928.md
+ create mode 100644 reports/q1_schedule_local_validation.json
+ create mode 100644 reports/target_observation_20260928/analysis.json
+ create mode 100644 reports/target_observation_20260928/snippet-1.txt
+ create mode 100644 reports/target_observation_20260928/snippet-2.txt
+ create mode 100644 reports/target_observation_20260928/snippet-3.txt
+ create mode 100644 tests/test_export_q1_cpu_cases.py
+ create mode 100644 tools/export_q1_cpu_cases.py
+[oscar] OBSERVE_START variant=candidate devices=0,1,2,3 port=8989 log=/workspace/gpt_new_oscar_kimi/logs/observe-20260928T031553.257802Z user_load_only=true
+[oscar] PERF_OPERATOR_GATE build=rebuilt npu_cv=fresh_device_completion signature=9357b546136a devices=0,1,2,3
+[oscar] PERF_Q1_SCHEDULE {"actual_tokens": 32, "baseline_ms": 45.11204147338867, "case": "q1_decode32_n128_s3", "gate": "passed", "padded_tokens": 128, "q1_graph_capture": "passed", "q1_graph_replay": "passed", "q1_ms": 13.807459831237793, "q1_precision": "bitwise_passed", "ratio": 0.3060703834337165, "requests": 32, "splits": 3}
+[oscar] PERF_Q1_SCHEDULE {"actual_tokens": 32, "baseline_ms": 137.88270568847656, "case": "q1_mixed32_n16384_s1", "gate": "passed", "padded_tokens": 16384, "q1_graph_capture": "not_run", "q1_graph_replay": "not_run", "q1_ms": 20.543880462646484, "q1_precision": "bitwise_passed", "ratio": 0.14899533890103683, "requests": 32, "splits": 1}
+[oscar] PERF_HISTORY_REUSE_A_B {"accuracy": "bitwise_passed", "baseline_ms": 15.278180122375488, "candidate_ms": 15.301980018615723, "case": "decode32", "clusters": 0, "gate": "identical_fe0_operator", "production_operator": "attention_cv_out", "ratio": 1.0015577703659468, "ratio_scope": "same_operator_repeatability_not_speedup", "source_splits": 3, "split_source": "production_geometry"}
+[oscar] PERF_HISTORY_REUSE_RESULT {"candidate_evaluation_allowed": true, "production_promotion": "blocked_pending_full_model_quality_and_service_performance", "q1_graph_capture": "passed", "q1_graph_replay": "passed", "q1_performance": "passed", "q1_precision": "passed", "q1_schedule_gate": "passed", "reason": null, "report": "/workspace/gpt_new_oscar_kimi/logs/observe-20260928T031553.257802Z/history-reuse.json", "status": "passed"}
+[oscar] PERF_HISTORY_REUSE_GRAPH {"accuracy": "bitwise_passed", "case": "graph_changed_inputs", "clusters": 0, "graph_capture": "passed", "graph_replay": "passed", "oracle": "passed"}
+[oscar] PERF_CURRENT_FIA_GATE accuracy=passed mixed_sources=passed task_contract=passed current16k_device_ms=6.5701398849487305 release=passed
+[oscar] PERF_HISTORY_REUSE_ACCURACY {"cases_bitwise": 9, "cases_total": 9, "frontier_distinct_kvend": 5, "frozen_oracle_valid_cases": 6, "invalid_live_status": "passed", "nonterminal_clusters": 0, "unaligned_mature_clusters": 2}
+[oscar] PERF_HISTORY_REUSE_A_B {"accuracy": "bitwise_passed", "baseline_ms": 76.34971618652344, "candidate_ms": 55.85530090332031, "case": "mature_20k", "clusters": 45, "gate": "passed", "production_operator": "attention_cv_cluster4_out", "ratio": 0.7315718209988499, "ratio_scope": "different_operators", "source_splits": 1, "split_source": "fixed_fixture"}
+[oscar] OBSERVE_PROBE_DONE variant=candidate service_started=false report=/workspace/gpt_new_oscar_kimi/logs/observe-20260928T031553.257802Z/status.json
+root@node93:/workspace/gpt_new_oscar_kimi#

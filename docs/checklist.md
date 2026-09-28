@@ -49,6 +49,10 @@
 
 ## 当前必须正面解决的事项
 
+2026-09-28 q1真机复验：a13af95、`observe-20260928T031553.257802Z`全部短probe门通过；q1 N128/S3 45.112→13.807ms（独立图/逐位passed），N16384/S1 137.883→20.544ms（逐位passed、该形状graph未跑）。C4继续通过，q4 S3原fe0仍约15.3ms。新q1设备精度/指定独立图/局部收益分别有证据；完整TP4服务和E06的8分钟目标仍未完成。原文见`reports/target_q1_schedule_pass_20260928.txt`，不重跑AISBench。
+
+q4诊断接入同一`--probe-only`：原生paged BF16 FIA与OSCAR CV+merge的未插桩Event对照、独立profile的每核/每引擎/每来源计数，分别验证oracle及fe0逐位。profile不进入生产，fe0/C4/q1三内核字节不变。CANN编译和CPU-debug2/2通过；新native API与profile真NPU仍待测，E06不因诊断工具通过而解锁。见`docs/q4_diagnostic.md`、`reports/q4_profile_local_validation.json`。
+
 2026-09-28实际负载片段续记：835fc22已过C4 NPU/独立图门并启动服务；用户完成一次AISBench，后续禁止要求重跑。rank2 decode32同一步428.101ms，目标整图293.687ms，MTP后两次q1 CV合计97.146ms；源码确认这些历史任务最多6/20核参与。独立q1调度候选保留fe0数学、全部padding和图地址，只将任务分配粒度改1；原fe0/C4文件不变。短probe新增N128/S3、N16384/S1和图门，`--probe-only`不拉模型。片段无法确定完整AISBench新总耗时或质量，E06仍未通过；采证与分析见`docs/observation_20260928.md`。
 
 本轮q1候选的CANN编译与官方CPU-debug5/5通过，主机119 passed、28 NPU skipped、4 subtests passed；证据`reports/q1_schedule_local_validation.json`。C04/C05/E01的新q1 NPU与图仍待测，C4此前的真机通过证据保留，E06整体仍未验收。

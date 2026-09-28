@@ -187,9 +187,9 @@ def test_online_forward_contains_no_host_request_loop_or_tensor_readback():
 
 
 @pytest.mark.parametrize("capacity,cube_cores,expected_splits,n", [(8, 1, 1, 8), (64, 20, 8, 8), (256, 20, 1, 256)])
-@pytest.mark.parametrize("cluster_size", [1, 4])
+@pytest.mark.parametrize("cluster_size,fast_unpack", [(1, False), (4, False), (4, True)])
 @pytest.mark.parametrize("later_draft", [False, True])
-def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft):
+def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack):
     """Host ABI exercise only: fake ops establish ordering, never accuracy."""
     backend = types.ModuleType("vllm.v1.attention.backend")
     backend.AttentionImpl = type("AttentionImpl", (), {})
@@ -258,6 +258,21 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             self.attention_cv_out(*args)  # Identical fe0 ABI; no stats argument.
             calls[-1] = "q1"
 
+        def attention_cv_fast_out(self, *args):
+            assert fast_unpack
+            self.attention_cv_out(*args)
+            calls[-1] = "fast_cv"
+
+        def attention_cv_fast_q1_out(self, *args):
+            assert fast_unpack
+            self.attention_cv_q1_out(*args)
+            calls[-1] = "fast_q1"
+
+        def attention_cv_fast_cluster4_out(self, *args):
+            assert fast_unpack
+            self.attention_cv_cluster4_out(*args)
+            calls[-1] = "fast_cluster4"
+
         def merge_lse_out(self, partial, lse, output, output_lse, status):
             calls.append("merge")
             assert partial.shape == (n * h, 3 * expected_splits, d)
@@ -285,7 +300,8 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         snapshots=SimpleNamespace(sink_tokens=64, recent_tokens=256, ring_tokens=259, speculative_tokens=3))
     impl = object.__new__(module.OscarAttentionImpl)
     impl.num_heads, impl.num_kv_heads, impl.head_size, impl.scale = h, hk, d, d**-0.5
-    impl.provider = SimpleNamespace(layer_state=lambda _name: state, ops=Ops(), config={})
+    impl.provider = SimpleNamespace(layer_state=lambda _name: state, ops=Ops(),
+                                    config={"experimental_fast_unpack": fast_unpack})
     q = torch.randn(n, h * d, dtype=torch.bfloat16)
     k = torch.randn(n, hk * d, dtype=torch.bfloat16)
     value = torch.randn(n, hk * d * 3, dtype=torch.bfloat16)[:, d:2*d]
@@ -308,4 +324,6 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     # with candidate workspace; long requests keep the C4 ABI/extra buffer.
     expected_op = ("q1" if cluster_size == 4 and later_draft else
                    "cluster4" if cluster_size == 4 and n == 256 else "cv")
+    if fast_unpack:
+        expected_op = "fast_" + expected_op
     assert calls == ["prepare", "rotate", expected_op, "merge", "store", "guard"]

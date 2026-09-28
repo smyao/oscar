@@ -1,0 +1,226 @@
+{
+  "scope": "fast INT2 experimental CV variants, real CANN ascend910b4 and official CPU debugger",
+  "status": "passed",
+  "device_build_rc": 0,
+  "cpu_build_rc": 0,
+  "cpu_debug": {
+    "passed": 22,
+    "total": 22,
+    "word_coverage": {
+      "all_uint16_words": 65536,
+      "lanes_per_word": 8,
+      "fp32_values_checked": 524288
+    },
+    "cases": [
+      {
+        "op": "fast_words",
+        "path": "reports/vm-cv-fast1",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/words/000-fast_words.log"
+      },
+      {
+        "op": "fast_fe0",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q4_c511",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/000-fast_fe0.log"
+      },
+      {
+        "op": "fast_fe0",
+        "path": "reports/vm-cv-fast-unpack/goldens/d128_q4_c511",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/001-fast_fe0.log"
+      },
+      {
+        "op": "fast_fe0",
+        "path": "reports/vm-cv-fast-unpack/goldens/d256_q4_c511",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/002-fast_fe0.log"
+      },
+      {
+        "op": "fast_fe0",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q4_c511_legal_fp16_edges",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/003-fast_fe0.log"
+      },
+      {
+        "op": "fast_fe0_error",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q4_c511_scale_pos_zero",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/004-fast_fe0_error.log"
+      },
+      {
+        "op": "fast_fe0_error",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q4_c511_scale_neg_zero",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/005-fast_fe0_error.log"
+      },
+      {
+        "op": "fast_fe0_error",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q4_c511_scale_pos_inf",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/006-fast_fe0_error.log"
+      },
+      {
+        "op": "fast_fe0_error",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q4_c511_scale_neg_inf",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/007-fast_fe0_error.log"
+      },
+      {
+        "op": "fast_fe0_error",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q4_c511_scale_nan",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/008-fast_fe0_error.log"
+      },
+      {
+        "op": "fast_fe0_error",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q4_c511_zero_pos_inf",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/009-fast_fe0_error.log"
+      },
+      {
+        "op": "fast_fe0_error",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q4_c511_zero_neg_inf",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/010-fast_fe0_error.log"
+      },
+      {
+        "op": "fast_fe0_error",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q4_c511_zero_nan",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/011-fast_fe0_error.log"
+      },
+      {
+        "op": "fast_fe0_dead",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q4_c511_dead_tail_nan",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/012-fast_fe0_dead.log"
+      },
+      {
+        "op": "fast_q1",
+        "path": "reports/vm-cv-fast-unpack/goldens/q1/q1_32_s3_d64",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/013-fast_q1.log"
+      },
+      {
+        "op": "fast_q1",
+        "path": "reports/vm-cv-fast-unpack/goldens/q1/q1_32_s1_d64",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/014-fast_q1.log"
+      },
+      {
+        "op": "fast_q1",
+        "path": "reports/vm-cv-fast-unpack/goldens/q1/q1_32_empty_s3_d64",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/015-fast_q1.log"
+      },
+      {
+        "op": "fast_cluster4",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q168_c641",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/016-fast_cluster4.log"
+      },
+      {
+        "op": "fast_cluster4_poison",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q168_c641",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/017-fast_cluster4_poison.log"
+      },
+      {
+        "op": "fast_cluster4",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q4_c65",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases/018-fast_cluster4.log"
+      },
+      {
+        "op": "fast_cluster4",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q168_c641_legal_fp16_edges",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases-extra/000-fast_cluster4.log"
+      },
+      {
+        "op": "fast_cluster4_error",
+        "path": "reports/vm-cv-fast-unpack/goldens/d64_q168_c641_invalid_live_scale",
+        "status": "passed",
+        "returncode": 0,
+        "local_log": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/logs/vm-cv-fast1/cases-extra/001-fast_cluster4_error.log"
+      }
+    ]
+  },
+  "fast_abi": {
+    "symbols": [
+      "attention_cv_fast_out",
+      "attention_cv_fast_q1_out",
+      "attention_cv_fast_cluster4_out"
+    ],
+    "first_two": "same as fe0/q1 and fe0 workspace",
+    "cluster4": "same as old C4 including cluster_stats after workspace and C4 workspace"
+  },
+  "ub_budget_bytes": {
+    "D64": 65856,
+    "D128": 96448,
+    "D256": 157632,
+    "A2_vector_usable_limit": 188416
+  },
+  "source_sha256": {
+    "csrc/kernels/attention_cv.cpp": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+    "csrc/kernels/attention_cv_q1.cpp": "498644c51c4857828e19ec7e8ef5064653b524d1e7bd2344aaec1b82481152d7",
+    "csrc/kernels/attention_cv_cluster.cpp": "c2412de931041f92a6fd340ad690accb32c12b1012f069342d296b3aa335ec82",
+    "csrc/kernels/attention_cv_profile.cpp": "15d9b0800f61b51e85416c53061b3893e33efee69016a03b3454afcfd99b0188",
+    "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+    "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+    "csrc/kernels/attention_cv_fast.cpp": "39dd2270072590f967b510fef86d22cb9b59f8914715a7039b212dd37ed9b81e",
+    "csrc/kernels/attention_cv_fast_q1.cpp": "3e2eda0e28bf1e577e06a0c05edd7269467a9c4d721901ef9703a6f52c6cc4f1",
+    "csrc/kernels/attention_cv_fast_cluster4.cpp": "bae1fd791b26365a6f6ae3d1e6b9ad3936185d0906c5c5029dfb6f54b49dc9e2",
+    "csrc/cpu/cv_probe.cpp": "0de08d44f10d74d44578cd1689b4cc8e17b699bf41ec11dc908e47267082eb18",
+    "csrc/cpu/fast_unpack_probe.cpp": "f337bdd92194fa118d9232cdf5da30c881a61eba62f843104e4968a096e60de6",
+    "csrc/include/oscar_attention_launch.h": "00b6c4e78a81ded8a83ba8970d22099dd9037b53ffac90bcc81f99481f3c6c49",
+    "csrc/attention_bindings.cpp": "0c061a3b74a6a37f866f34e2d91518594f9ea18dce7e6f54209909c800975c1c",
+    "csrc/CMakeLists.txt": "62ef37e6d094b848c43b70b3d773f58f0b027733f2e3e006fb859ce1b0220b97",
+    "csrc/cpu/CMakeLists.txt": "9af758fdff993d21b8ca99de4c074da671ba80e8a34b265eb9e582db40fa9a73",
+    "csrc/torch_bindings.cpp": "f09f9d5c1fa63537937923d555e436695e5fd7450dc7fb50d2d1e99b3edd4e0f"
+  },
+  "build_signature": "6aecf7ec7b4c7704fc53b33fbb2bac3d11b1aecb56a29086416cc5dceb870e0e",
+  "logs": {
+    "device_build": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/reports/vm-cv-fast1/device-build.log",
+    "cpu_build": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/reports/vm-cv-fast1/cpu-build.log",
+    "cpu_debug": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/reports/vm-cv-fast1/cpu-debug-run.log",
+    "cpu_extra": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/reports/vm-cv-fast1/cpu-debug-extra.log",
+    "cpu_words": "/Users/sunao2000/gpt_new_oscar_kimi/reports/vm-cv-fast1/guest/reports/vm-cv-fast1/fast-words-run.log"
+  },
+  "performance_hypothesis": "16-word padding per uint16 plane may reduce A2 bank conflicts; only same-input target NPU Event can verify benefit",
+  "accuracy_limits": "Official CPU-debug confirms exact integer mapping and whole-CV parity for tested bit patterns; SDK does not guarantee NPU half subnormal or negative-zero vconv parity with old scalar cast.",
+  "npu_accuracy": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "model_quality": "not_run",
+  "performance": "not_run",
+  "host_validation": {
+    "passed": 130,
+    "real_npu_skipped": 28,
+    "subtests_passed": 4,
+    "environment": "macOS Python 3.12 with PYTHONPATH=.",
+    "scope": "runtime/launcher/routing/ABI/probe/fixture/build/no-fallback regression; not target NPU"
+  }
+}

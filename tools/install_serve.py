@@ -26,7 +26,7 @@ def main(argv=None) -> int:
     parser.add_argument("--plan", action="store_true", help="print commands without installing or touching an NPU")
     parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--variant", choices=("baseline", "candidate"),
-                        help="candidate enables C4 and later-MTP q1; baseline selects fe0; omitted respects config")
+                        help="candidate enables C4, later-MTP q1 and fast unpack; baseline selects fe0; omitted respects config")
     parser.add_argument("--rear-cards", action="store_true",
                         help="use physical Ascend devices 4,5,6,7 and port 7878 for this launch only")
     args = parser.parse_args(argv)
@@ -40,8 +40,13 @@ def main(argv=None) -> int:
         config = json.loads(args.config.read_text())
         if not isinstance(config, dict) or type(config.get("experimental_history_reuse", False)) is not bool:
             raise ValueError("experimental_history_reuse must be an explicit boolean")
+        if type(config.get("experimental_fast_unpack", False)) is not bool:
+            raise ValueError("experimental_fast_unpack must be an explicit boolean")
         if args.variant is not None:
             config["experimental_history_reuse"] = args.variant == "candidate"
+            config["experimental_fast_unpack"] = args.variant == "candidate"
+        if config.get("experimental_fast_unpack", False) and not config.get("experimental_history_reuse", False):
+            raise ValueError("fast unpack requires explicit candidate history configuration")
         if args.rear_cards:
             # Explicit user-selected placement, never inherited from a prior
             # task's environment. Validate the supplied device config first.
@@ -75,7 +80,8 @@ def main(argv=None) -> int:
                   effective_config=str(effective_path),
                   placement="rear" if args.rear_cards else "configured",
                   target_devices=config["devices"], port=config["port"],
-                  optimizations={"history_cluster4": enabled, "later_mtp_q1": enabled})
+                  optimizations={"history_cluster4": enabled, "later_mtp_q1": enabled,
+                                 "fast_unpack": config.get("experimental_fast_unpack", False)})
     if args.plan:
         print(json.dumps({"stages": stages, "serve": serve_command, "probes": "none",
                           "variant": variant, "optimizations": status["optimizations"],
@@ -94,7 +100,8 @@ def main(argv=None) -> int:
     env["OSCAR_TARGET_CONFIG"] = str(effective_path)
     env["PYTHONUNBUFFERED"] = "1"
     print(f"[oscar] SERVE_MODE variant={variant} C4={'on' if enabled else 'off'} "
-          f"Q1={'on' if enabled else 'off'} placement={status['placement']} config={effective_path}", flush=True)
+          f"Q1={'on' if enabled else 'off'} FAST_UNPACK={'on' if config.get('experimental_fast_unpack', False) else 'off'} "
+          f"placement={status['placement']} config={effective_path}", flush=True)
     print(f"[oscar] devices={env.get('ASCEND_RT_VISIBLE_DEVICES', 'diagnostic')} port={config['port']}", flush=True)
     rc = 0
     try:

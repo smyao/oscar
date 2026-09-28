@@ -4,13 +4,15 @@
 
 ## fe0 精度基准与历史复用实验
 
+用户最新candidate完整耗时约19分钟，8分钟目标尚未达到。本轮已实现q4/q1/C4共用的精确fast unpack候选（位平面布局和FP16 metadata批量转换），CANN编译与官方CPU-debug22/22通过；目标NPU精度/图/净收益仍须短probe。完整方案与边界见[fast unpack](docs/fast_unpack.md)。
+
 2026-09-28：已从用户实际负载中定位到MTP后两轮q1的历史任务偏载，新增独立调度实验。后续不再要求重跑AISBench；下一轮仅用短probe：
 
 ```bash
 git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate --probe-only
 ```
 
-此模式完成算子/图/速度门及q4独立诊断后退出，不加载模型。q1真机已逐位通过，N128/S3耗时下降69.39%、N16384/S1下降85.10%；完整服务收益不外推。下一轮新增`PERF_Q4_COMPARE`和`PERF_Q4_PROFILE`，见[q4诊断口径](docs/q4_diagnostic.md)与[本次实际负载分析](docs/observation_20260928.md)。
+此模式完成原算子/图/速度门及新增fast unpack门后退出，不加载模型。q1真机已逐位通过，N128/S3耗时下降69.39%、N16384/S1下降85.10%；完整服务收益不外推。下一轮关注`PERF_FAST_UNPACK`。已完成的q4诊断默认不再重复，显式`--diagnose-q4`可重新采证，见[q4诊断口径](docs/q4_diagnostic.md)与[本次实际负载分析](docs/observation_20260928.md)。
 
 当前以用户确认精度正确的`fe0e925`为基准。原`attention_cv.cpp`及store/rotate/merge等计算内核保持该版本字节一致；默认仍运行原算子。`codex/aisbench-stable`保持精确的fe0提交。新C4算子仅在显式候选模式中使用，冻结容差没有放宽，也未重新加入已回退的AR/位图或元数据向量化。
 
@@ -54,7 +56,7 @@ git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 
 它只执行安装构建依赖/插件 → 编译算子 → 自动准备旋转文件，全部成功后以 `tools.target_cli` 前台路径直接拉起正式服务（与 `scripts/serve_direct.sh` 同一启动入口）；任一相位失败即保留真实退出码并停止，不会拉起服务。该入口不执行算子/服务探针和配对性能门，不能充当验收证据；正式验收仍使用 `scripts/install_probe_serve.sh`。
 
-`--variant candidate`生成本轮有效配置并启用C4历史复用和后续MTP q1调度；终端打印`SERVE_MODE variant=candidate C4=on Q1=on`。它不启用独立q4 profile算子。`--variant baseline`使用fe0；省略该参数时遵循原配置，当前`configs/target.json`默认未启用C4/q1。原配置文件不会被修改。
+`--variant candidate`生成本轮有效配置并启用C4历史复用、后续MTP q1调度和新fast unpack；新版本应先通过上面的真实NPU短probe。终端打印`SERVE_MODE variant=candidate C4=on Q1=on FAST_UNPACK=on`。它不启用独立q4 profile算子。`--variant baseline`使用fe0；省略该参数时遵循原配置，当前`configs/target.json`默认未启用这些实验路径。原配置文件不会被修改。
 
 使用后四张物理卡 **4,5,6,7**、端口 **7878**，增加`--rear-cards`：
 

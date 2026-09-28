@@ -180,6 +180,10 @@ class AscendRuntimeProvider:
         self.config = dict(config) if config is not None else json.loads(path.read_text())
         if type(self.config.get("experimental_history_reuse", False)) is not bool:
             raise OscarReadinessError("experimental_history_reuse must be an explicit boolean")
+        if type(self.config.get("experimental_fast_unpack", False)) is not bool:
+            raise OscarReadinessError("experimental_fast_unpack must be an explicit boolean")
+        if self.config.get("experimental_fast_unpack", False) and not self.config.get("experimental_history_reuse", False):
+            raise OscarReadinessError("fast unpack requires explicit candidate history configuration")
         self._ready = False
         self.layers: dict[str, LayerState] = {}
         self.workspaces: dict[tuple, GraphWorkspace] = {}
@@ -201,6 +205,9 @@ class AscendRuntimeProvider:
         if self.config.get("experimental_history_reuse", False):
             from .ops.loader import require_capabilities
             require_capabilities({"attention_cv_cluster4_out", "attention_cv_q1_out"})
+        if self.config.get("experimental_fast_unpack", False):
+            from .ops.cv_dispatch import FAST_CV_OPS
+            require_capabilities(FAST_CV_OPS)
         import torch
         if not torch.npu.is_available():
             raise OscarReadinessError("OSCAR production requires an available NPU")

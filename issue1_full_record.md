@@ -28546,3 +28546,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修法**：数据改为`q4-hotpath-report.json`，阶段状态仍为`q4-hotpath.json`；保留全部数值/签名门，校验失败打印具体mismatched_fields并标q4-evidence相位。新增真实本机子进程和真实run_phase集成回归，证明两份JSON共存且结果不会覆盖；13项相关主机测试通过。不为这个编排错误要求用户再跑一次NPU，更不运行AISBench。原始完整profile报告已经覆盖，无法从终端还原全部核计数，只保存实际打印的关键向量。
 
 **已获得的性能证据**：CV+merge/native同形算子比为约10.61。关键history AIV0/core11的task span722999 ticks，unpack_total467845（64.71%），其中bits338686（46.84%）与meta119753（16.56%）是子项；packed读取71292（9.86%）、KV发布33879（4.69%）。同core AIC span724308、KV等待588470（81.25%），QK+PV计算59430（8.21%）。这些是同actor插桩时钟，不能把AIC等待与AIV工作相加，不能直接外推全场22分钟。测量支持优先优化INT2展开/重排，再处理元数据与搬运，而不是优先改Cube数学或merge。SDK dav_c220 Gather已核实16位路径使用真实vgather，不能误称AiCPU/软件fallback。
+
+### #151后续性能工作：用户最新约19分钟，针对同一解包热点实现三路径候选
+
+用户反馈最新`install_serve.sh --variant candidate`完整AISBench约19分钟，原生目标约8分钟，要求全量推进。未提供新的逐请求明细或质量分数，不补造这些指标，不再要求AISBench重跑。本轮工作沿用#151已经测得的解包热点，不把本地理论或CPU用例追加成新真机错误。
+
+**实现与D.4四问**：①融合CV内部有界INT2展开；②D.4失败dequant6.5秒/卡及本轮q4关键AIV解包64.71%表明不能只改小相位；③独立fast q4/q1/C4克隆使用共享helper，plane stride增加16个uint16（D256 1024→1056B）且索引同步调整，16行FP16 scale/zero一次Gather+向量Cast到FP32，保留每live行检查和原Mul→Add顺序。新增UB448B，D256157632B<188416B；外部INT2布局、GM工作区、图地址和原三核字节不变；④bank缓解是假设，设备速度尚未测。64.71%部分即使4倍加速，单actor上界约1.94倍，不能据此承诺整体19→8需要的2.375倍。SDK A2 AIV→L1实际经GM软件通道，未将其当作捷径。
+
+**本地证据**：CANN ascend910b4编译通过；官方CPU-debug共22项通过：65536个packed word×8码穷举，以及21项整CV/q1/C4/特殊half/错误/poison病例。旧→新partial/LSE/status及统计逐位，独立oracle通过。证据`reports/fast_unpack_local_validation.json`。新half向量Cast的目标子正规/负零、NPU图和性能仍未验收。
+
+**真机门与交付范围**：新`tools.probe_fast_unpack`覆盖18数值例、5个2+5交替A/B性能例、q4/q1两个同地址改变输入图门，输出独立`fast-unpack-report.json`，任一失败停止。非法metadata对比fe0最终status，不能硬断言中间error3（后续Softmax可覆成2）。同一`--variant candidate --probe-only`跑新门后退出；旧q4 profile默认不重复，仅显式`--diagnose-q4`。新candidate有效配置启用fast_unpack，baseline/默认原配置和设备/端口不改，后四卡仍用显式rear-cards。完整模型速度保持未验收。

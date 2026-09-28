@@ -54,8 +54,11 @@ def _source_identity(variant: str, config: dict) -> dict:
     actual = {name: hashlib.sha256((ROOT / "csrc/kernels" / name).read_bytes()).hexdigest()
               for name in FE0_KERNEL_SHA256}
     flag = config.get("experimental_history_reuse", False)
+    fast = config.get("experimental_fast_unpack", False)
     if type(flag) is not bool:
         raise ValueError("experimental_history_reuse must be an explicit boolean")
+    if type(fast) is not bool or (fast and not flag):
+        raise ValueError("experimental_fast_unpack requires explicit candidate history configuration")
     if variant in {"baseline", "candidate"} and actual != FE0_KERNEL_SHA256:
         raise RuntimeError("OSCAR observation requires byte-identical fe0 production kernels")
     if variant == "baseline" and flag:
@@ -66,10 +69,16 @@ def _source_identity(variant: str, config: dict) -> dict:
     q1 = ROOT / "csrc/kernels/attention_cv_q1.cpp"
     if variant == "candidate" and (not cluster.is_file() or not q1.is_file()):
         raise RuntimeError("candidate AscendC source is missing")
+    fast_sources = {}
+    if fast:
+        for name in ("attention_cv_fast.cpp", "attention_cv_fast_q1.cpp",
+                     "attention_cv_fast_cluster4.cpp", "attention_fast_unpack.h"):
+            fast_sources[name] = hashlib.sha256((ROOT / "csrc/kernels" / name).read_bytes()).hexdigest()
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
                               capture_output=True, check=True).stdout.strip()
     return {"variant": variant, "fe0_production_kernels_match": actual == FE0_KERNEL_SHA256,
             "kernel_sha256": actual, "experimental_history_reuse": flag,
+            "experimental_fast_unpack": fast, "fast_source_sha256": fast_sources,
             "candidate_kernel_sha256": hashlib.sha256(cluster.read_bytes()).hexdigest()
                 if variant == "candidate" else None,
             "candidate_q1_kernel_sha256": hashlib.sha256(q1.read_bytes()).hexdigest()
@@ -345,7 +354,53 @@ def _q4_diagnostic(config_path: Path, config: dict, env: dict, log_dir: Path,
     atomic_json(log_dir / "status.json", status)
 
 
-def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = False) -> int:
+def _fast_unpack_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
+                      status: dict) -> None:
+    """#151: a new unpack implementation needs its own signed real-NPU gate."""
+    from oscar_ascend.ops.loader import validate_build_artifacts
+    output = log_dir / "fast-unpack-report.json"
+    output.unlink(missing_ok=True)
+    before = read_npu_resources(config, log_dir=log_dir / "fast-unpack-resources-before", timeout=30)
+    phase_error, release = None, None
+    try:
+        _phase("fast-unpack", [sys.executable, "-m", "tools.probe_fast_unpack",
+            "--config", str(config_path), "--acceptance", str(ROOT / "configs/acceptance.json"),
+            "--output", str(output)], config=config, env=env, log_dir=log_dir, status=status)
+    except BaseException as error:
+        phase_error = error
+        raise
+    finally:
+        try:
+            release = wait_for_release(config, before, log_dir=log_dir / "fast-unpack-resources-after",
+                timeout=float(config.get("resource_release_timeout_seconds", 30)),
+                tolerance_bytes=config.get("resource_release_tolerance_bytes", DEFAULT_RELEASE_TOLERANCE))
+        except BaseException as error:
+            release = {"status": "failed", "reason": f"{type(error).__name__}: {error}"}
+            if phase_error is None:
+                raise
+        finally:
+            if release is not None:
+                status["fast_unpack_resource_release"] = release
+                atomic_json(log_dir / "status.json", status)
+    if release.get("status") != "passed":
+        raise RuntimeError("fast unpack NPU resources did not release")
+    report = json.loads(output.read_text())
+    manifest = validate_build_artifacts(ROOT / "build/ascendc/build_manifest.json")
+    expected = {key: "passed" for key in ("status", "precision", "graph_capture", "graph_replay", "performance")}
+    expected.update(artifact_signature=manifest.get("signature"), artifact_sha256=manifest.get("sha256"))
+    mismatches = [key for key, value in expected.items() if report.get(key) != value]
+    if mismatches:
+        error = RuntimeError(f"fast unpack gate lacks matching evidence: {','.join(mismatches)} report={output}")
+        error.phase = "fast-unpack-evidence"
+        raise error
+    status["fast_unpack_gate"] = {"status": "passed", "report": str(output),
+                                   "artifact_signature": manifest["signature"],
+                                   "full_service_performance": "not_established"}
+    atomic_json(log_dir / "status.json", status)
+
+
+def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = False,
+        diagnose_q4: bool = False) -> int:
     config_path, log_dir = config_path.resolve(), log_dir.resolve()
     status = {"status": "preparing", "variant": variant,
               "measurement": "operator_microprobe" if probe_only else "passive_external_only",
@@ -355,9 +410,12 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
     try:
         if probe_only and variant != "candidate":
             raise ValueError("--probe-only requires --variant candidate")
+        if diagnose_q4 and variant != "candidate":
+            raise ValueError("--diagnose-q4 requires --variant candidate")
         original = config_path.read_bytes()
         config = json.loads(original)
         config["experimental_history_reuse"] = variant == "candidate"
+        config["experimental_fast_unpack"] = variant == "candidate"
         effective_path = log_dir / "effective-target.json"
         atomic_json(effective_path, config)
         status["target_config"] = {"original": str(config_path),
@@ -389,7 +447,8 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                     _preflight(effective_path, config, env, log_dir, status, variant)
                     if variant == "candidate":
                         _candidate_gate(effective_path, config, env, log_dir, status)
-                        if probe_only:
+                        _fast_unpack_gate(effective_path, config, env, log_dir, status)
+                        if diagnose_q4:
                             _q4_diagnostic(effective_path, config, env, log_dir, status)
             if probe_only:
                 status.update(status="operator_probes_passed", service_started=False,
@@ -514,21 +573,28 @@ def main(argv=None) -> int:
     parser.add_argument("--plan", action="store_true")
     parser.add_argument("--probe-only", action="store_true",
                         help="finish after candidate operator/graph/latency gates; do not start a model")
+    parser.add_argument("--diagnose-q4", action="store_true",
+                        help="also rerun the established native q4/profile diagnostic; normally reuse prior evidence")
     args = parser.parse_args(argv)
     log_dir = (args.log_dir or ROOT / "logs" / ("observe-" + datetime.now(timezone.utc).strftime(
         "%Y%m%dT%H%M%S.%fZ"))).resolve()
     if args.plan:
         config = json.loads(args.config.read_text())
+        phases = ["install", "signed_operator_gate" if args.variant != "native" else "native_start"]
+        if args.variant == "candidate":
+            phases += ["candidate_operator_graph_latency_gates", "fast_unpack_gate"]
+            if args.diagnose_q4:
+                phases.append("q4_native_comparison_and_profile")
+        if not args.probe_only:
+            phases += ["managed_service_health", "external_metrics_and_bounded_async_events"]
         print(json.dumps({"variant": args.variant, "devices": config["devices"],
             "inference_requests_generated": 0,
             "measurement": "operator_microprobe" if args.probe_only else "passive_external_only",
             "probe_only": args.probe_only, "model_will_start": not args.probe_only,
-            "phases": ["install", "signed_operator_gate" if args.variant != "native" else "native_start",
-                       "candidate_operator_graph_latency_gates", "q4_native_comparison_and_profile"] if args.probe_only else
-                      ["install", "signed_operator_gate" if args.variant != "native" else "native_start",
-                       "managed_service_health", "external_metrics_and_bounded_async_events"]}, indent=2))
+            "phases": phases}, indent=2))
         return 0
-    return run(args.config, log_dir, args.variant, probe_only=args.probe_only)
+    return run(args.config, log_dir, args.variant, probe_only=args.probe_only,
+               diagnose_q4=args.diagnose_q4)
 
 
 if __name__ == "__main__":

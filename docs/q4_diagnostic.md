@@ -26,10 +26,10 @@
 ## 一键与证据
 
 ```bash
-git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate --probe-only
+git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate --probe-only --diagnose-q4
 ```
 
-先跑已有算子、C4/q1门，再跑q4诊断，随后退出。不加载模型、不发推理请求、不运行AISBench。终端新增`PERF_Q4_COMPARE`一行和`PERF_Q4_PROFILE`三行，完整数据写本轮`q4-hotpath-report.json`；`q4-hotpath.json`仅记录阶段退出状态。
+该诊断已有真机证据，现默认不重复；显式`--diagnose-q4`时，在已有算子、C4/q1和fast unpack门之后运行它并退出。不加载模型、不发推理请求、不运行AISBench。终端新增`PERF_Q4_COMPARE`一行和`PERF_Q4_PROFILE`三行，完整数据写本轮`q4-hotpath-report.json`；`q4-hotpath.json`仅记录阶段退出状态。
 
 本地CANN ascend910b4编译、D64/q4/context65和D256/q4/context511的官方CPU-debug通过，含fe0逐字节输出与计数覆盖；证据`reports/q4_profile_local_validation.json`。原生paged FIA调用及profile的目标NPU结果尚待本轮短probe，局部或全服务追平结果不预先判定。
 

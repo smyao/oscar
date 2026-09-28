@@ -108,16 +108,18 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     seen = []
     monkeypatch.setattr(observe_serve, "_preflight", lambda *args: seen.append("preflight"))
     monkeypatch.setattr(observe_serve, "_candidate_gate", lambda *args: seen.append("candidate-gates"))
+    monkeypatch.setattr(observe_serve, "_fast_unpack_gate", lambda *args: seen.append("fast-unpack-gate"))
     monkeypatch.setattr(observe_serve, "_q4_diagnostic", lambda *args: seen.append("q4-diagnostic"))
     monkeypatch.setattr(observe_serve, "managed_server", lambda *args, **kwargs:
                         pytest.fail("probe-only must not launch a model or AISBench"))
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     logs = tmp_path / "probe"
     assert observe_serve.run(config, logs, "candidate", probe_only=True) == 0
-    assert seen == ["preflight", "candidate-gates", "q4-diagnostic"]
+    assert seen == ["preflight", "candidate-gates", "fast-unpack-gate"]
     status = json.loads((logs / "status.json").read_text())
     assert status["service_started"] is False
     assert status["performance_acceptance"] == "operator_only_not_end_to_end"
+    assert json.loads((logs / "effective-target.json").read_text())["experimental_fast_unpack"] is True
 
 
 def test_q4_diagnostic_records_gap_without_claiming_performance_pass(monkeypatch, tmp_path):
@@ -141,6 +143,32 @@ def test_q4_diagnostic_records_gap_without_claiming_performance_pass(monkeypatch
     report["profile_parity"] = "failed"
     with pytest.raises(RuntimeError, match="lacks signed"):
         observe_serve._q4_diagnostic(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, {})
+
+
+def test_fast_unpack_gate_requires_exact_new_npu_evidence(monkeypatch, tmp_path):
+    from oscar_ascend.ops import loader
+    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    manifest = {"signature": "fast-signature", "sha256": {"extension": "fast-binary"}}
+    monkeypatch.setattr(loader, "validate_build_artifacts", lambda *args: manifest)
+    monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
+    monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
+    report = {key: "passed" for key in ("status", "precision", "graph_capture", "graph_replay", "performance")}
+    report.update(artifact_signature=manifest["signature"], artifact_sha256=manifest["sha256"])
+    def phase(name, command, **kwargs):
+        assert name == "fast-unpack" and "tools.probe_fast_unpack" in command
+        output = Path(command[command.index("--output") + 1])
+        assert output.name != name + ".json"
+        output.write_text(json.dumps(report))
+    monkeypatch.setattr(observe_serve, "_phase", phase)
+    status = {}
+    observe_serve._fast_unpack_gate(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, status)
+    assert status["fast_unpack_gate"]["full_service_performance"] == "not_established"
+    for key in ("precision", "graph_capture", "graph_replay", "performance", "artifact_signature"):
+        saved = report[key]
+        report[key] = "failed"
+        with pytest.raises(RuntimeError, match=key):
+            observe_serve._fast_unpack_gate(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, {})
+        report[key] = saved
 
 
 def test_real_phase_status_cannot_overwrite_q4_measurement(monkeypatch, tmp_path):

@@ -17,7 +17,7 @@ from .current_attention import (guard_current_slots, native_current_partial,
 from .runtime_api import OscarReadinessError, require_runtime
 from ..telemetry import emit_once, emit_throttled
 from ..timing import phase
-from ..ops.cv_dispatch import CLUSTER4_CV_OP, select_cv_op
+from ..ops.cv_dispatch import CLUSTER_CV_OPS, select_cv_op
 
 
 class OscarAttentionImpl(AttentionImpl):
@@ -129,12 +129,13 @@ class OscarAttentionImpl(AttentionImpl):
         # #150: later q1 MTP uses balanced ownership; q4 stays fe0 INT2.
         # Host shape selection also fixes the op recorded during capture.
         cv_name = select_cv_op(cluster_size, h, hk, n, attn_metadata.max_query_len,
-                              q1_draft=attn_metadata.is_draft and attn_metadata.draft_index > 0)
+                              q1_draft=attn_metadata.is_draft and attn_metadata.draft_index > 0,
+                              fast_unpack=self.provider.config.get("experimental_fast_unpack", False))
         with phase("fia", layer=layer.layer_name, tokens=n, splits=source_splits,
                    cube_cores=g.cube_cores, tasks=task_count, requests=attn_metadata.num_reqs,
                    cv_operator=cv_name, **timing_fields):
             cv_op = getattr(ops, cv_name)
-            cv_extra = (workspace.cluster_stats,) if cv_name == CLUSTER4_CV_OP else ()
+            cv_extra = (workspace.cluster_stats,) if cv_name in CLUSTER_CV_OPS else ()
             cv_op(
                 q, qr, k, v, state.rotation_v, state.raw, attn_metadata.block_tables,
                 state.window_key, state.window_value, state.window_tags, tasks,

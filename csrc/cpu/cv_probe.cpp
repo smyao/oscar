@@ -33,11 +33,24 @@ extern "C" void oscar_attention_cv_q1_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*
     uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
+extern "C" void oscar_attention_cv_fast_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
+extern "C" void oscar_attention_cv_fast_q1_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
 extern "C" void oscar_attention_cv_profile_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     uint8_t*,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
+extern "C" void oscar_fast_unpack_words_kernel(uint8_t*);
 extern "C" void oscar_attention_cv_cluster4_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    uint8_t*,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
+extern "C" void oscar_attention_cv_fast_cluster4_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     uint8_t*,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
@@ -197,10 +210,39 @@ int main(int argc,char** argv) {
  try {
   if(argc!=3)throw std::runtime_error("usage: oscar_cv_cpu mode case_directory");
   const std::string mode=argv[1];
+  if(mode=="fast_words") {
+    // #17-20/#151: execute the real AscendC unpack helper on all 65536
+    // possible uint16 words and compare all 8 LSB-first 2-bit lanes exactly.
+    constexpr int64_t words=65536,values=words*8;
+    Gm expanded(values*4);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(oscar_fast_unpack_words_kernel,16,expanded.ptr);
+    for(int64_t batch=0;batch<128;++batch)
+    for(int32_t row=0;row<16;++row)
+    for(int32_t col=0;col<256;++col) {
+      const int64_t wordIndex=row*32+col/8;
+      const uint16_t word=static_cast<uint16_t>(batch*512+wordIndex);
+      const float expected=static_cast<float>((word>>(2*(col%8)))&3);
+      const int64_t outputIndex=batch*4096+row*256+col;
+      float actual;std::memcpy(&actual,expanded.ptr+outputIndex*4,4);
+      if(actual!=expected)
+        throw std::runtime_error("fast INT2 word mismatch word="+
+            std::to_string(word)+" lane="+std::to_string(col%8));
+    }
+    std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\"fast_words\",\"status\":\"passed\"}"<<std::endl;
+    return 0;
+  }
   const bool clusterMode=mode=="cluster4" || mode=="cluster4_required" ||
-      mode=="cluster4_bad_meta" || mode=="cluster4_nan_query";
-  const bool q1Mode=mode=="q1_schedule" || mode=="q1_schedule_bad_meta";
+      mode=="cluster4_bad_meta" || mode=="cluster4_nan_query" ||
+      mode=="fast_cluster4" || mode=="fast_cluster4_poison" ||
+      mode=="fast_cluster4_error";
+  const bool fastCluster=mode=="fast_cluster4" || mode=="fast_cluster4_poison" ||
+      mode=="fast_cluster4_error";
+  const bool q1Mode=mode=="q1_schedule" || mode=="q1_schedule_bad_meta" ||
+      mode=="fast_q1";
   const bool profileMode=mode=="profile_fe0";
+  const bool fastFe0=mode=="fast_fe0" || mode=="fast_fe0_dead" ||
+      mode=="fast_fe0_error";
   if(mode=="tasks_causal") {CheckLargeCausalTasks();return 0;}
   CheckPaddedMetadata();
   CheckSlotContext();
@@ -289,10 +331,51 @@ int main(int argc,char** argv) {
     std::memset(raw.ptr+offset,0,2);
   }
   AscendC::SetKernelMode(KernelMode::MIX_MODE);
-  ICPU_RUN_KF(oscar_attention_cv_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,raw.ptr,
-      table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,partial.ptr,partLse.ptr,status.ptr,
-      workspace.ptr,n,hq,hk,d,requests,int64_t{8},tasksCount,b,nb,prefix,stride,
-      windowRows*hk*d,windowRows,sink,recent,spec,splits,1.0F/std::sqrt(float(d)));
+  if(!fastCluster) {
+    ICPU_RUN_KF(oscar_attention_cv_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,raw.ptr,
+        table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,partial.ptr,partLse.ptr,status.ptr,
+        workspace.ptr,n,hq,hk,d,requests,int64_t{8},tasksCount,b,nb,prefix,stride,
+        windowRows*hk*d,windowRows,sink,recent,spec,splits,1.0F/std::sqrt(float(d)));
+  }
+  if(fastFe0) {
+    Gm fastPartial(partial.size),fastLse(partLse.size),
+       fastStatus(status.size),fastWorkspace(workspace.size);
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
+    ICPU_RUN_KF(oscar_attention_cv_fast_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,raw.ptr,
+        table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,fastPartial.ptr,fastLse.ptr,
+        fastStatus.ptr,fastWorkspace.ptr,n,hq,hk,d,requests,int64_t{8},
+        tasksCount,b,nb,prefix,stride,windowRows*hk*d,windowRows,sink,recent,
+        spec,splits,1.0F/std::sqrt(float(d)));
+    if(fastStatus.size!=status.size ||
+        std::memcmp(fastStatus.ptr,status.ptr,status.size)!=0)
+      throw std::runtime_error("fast fe0 status differs bytewise");
+    if(mode=="fast_fe0_error") {
+      bool sawError=false;
+      for(int64_t i=0;i<tasksCount*2;++i) {
+        int32_t code;std::memcpy(&code,status.ptr+i*4,4);
+        if(code!=0)sawError=true;
+      }
+      if(!sawError)throw std::runtime_error("fast malformed live metadata was ignored");
+      for(const auto* pair:{&fastPartial,&fastLse}) {
+        const Gm& baseline=pair==&fastPartial?partial:partLse;
+        for(size_t i=0;i<pair->size/4;++i) {
+          float a,b;std::memcpy(&a,pair->ptr+i*4,4);
+          std::memcpy(&b,baseline.ptr+i*4,4);
+          if((std::isnan(a)!=std::isnan(b)) ||
+              (std::isfinite(a)!=std::isfinite(b)) ||
+              (std::isfinite(a) && a!=b))
+            throw std::runtime_error("fast invalid output classification differs from fe0");
+        }
+      }
+      std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\"fast_fe0_error\",\"status\":\"passed\"}"<<std::endl;
+      return 0;
+    }
+    for(const auto* pair:{&fastPartial,&fastLse}) {
+      const Gm& baseline=pair==&fastPartial?partial:partLse;
+      if(pair->size!=baseline.size || std::memcmp(pair->ptr,baseline.ptr,pair->size)!=0)
+        throw std::runtime_error("fast fe0 valid partial/LSE differs bytewise");
+    }
+  }
   if(profileMode) {
     constexpr int64_t engines=oscar_ascend::kAttentionProfileEngines;
     constexpr int64_t sources=oscar_ascend::kAttentionProfileSources;
@@ -392,6 +475,22 @@ int main(int argc,char** argv) {
             std::to_string(first));
       }
     }
+    if(mode=="fast_q1") {
+      Gm fastPartial(partial.size),fastLse(partLse.size),
+         fastStatus(status.size),fastWorkspace(workspace.size);
+      AscendC::SetKernelMode(KernelMode::MIX_MODE);
+      ICPU_RUN_KF(oscar_attention_cv_fast_q1_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,
+          raw.ptr,table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,fastPartial.ptr,
+          fastLse.ptr,fastStatus.ptr,fastWorkspace.ptr,n,hq,hk,d,requests,
+          int64_t{8},tasksCount,b,nb,prefix,stride,windowRows*hk*d,windowRows,
+          sink,recent,spec,splits,1.0F/std::sqrt(float(d)));
+      for(const auto* pair:{&fastPartial,&fastLse,&fastStatus}) {
+        const Gm& baseline=pair==&fastPartial?candidatePartial:
+            (pair==&fastLse?candidateLse:candidateStatus);
+        if(pair->size!=baseline.size || std::memcmp(pair->ptr,baseline.ptr,pair->size)!=0)
+          throw std::runtime_error("fast q1 differs bytewise from old q1");
+      }
+    }
     if(mode=="q1_schedule_bad_meta") {
       bool sawError=false;
       for(int64_t id=0;id<tasksCount;++id)for(int32_t lane=0;lane<2;++lane) {
@@ -448,7 +547,9 @@ int main(int argc,char** argv) {
     }
     if(live==0)throw std::runtime_error("q1 fixture has no live token");
     std::cout<<"q1_live_tokens="<<live<<std::endl;
-    std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\"q1_schedule\",\"status\":\"passed\"}"<<std::endl;
+    std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\""
+             <<(mode=="fast_q1"?"fast_q1":"q1_schedule")
+             <<"\",\"status\":\"passed\"}"<<std::endl;
     return 0;
   }
   if(clusterMode) {
@@ -456,18 +557,25 @@ int main(int argc,char** argv) {
        candidateStatus(status.size),candidateWorkspace(
            cores*oscar_ascend::attention_cluster4_workspace_per_core(d)),
        stats(cores*8*sizeof(int64_t));
+    if(mode=="fast_cluster4_poison") {
+      const uint32_t poison=0x7fc00000U;
+      for(size_t offset=0;offset<candidateWorkspace.size;offset+=4)
+        std::memcpy(candidateWorkspace.ptr+offset,&poison,4);
+    }
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     ICPU_RUN_KF(oscar_attention_cv_cluster4_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,raw.ptr,
         table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,candidatePartial.ptr,candidateLse.ptr,
         candidateStatus.ptr,candidateWorkspace.ptr,stats.ptr,n,hq,hk,d,requests,
         int64_t{8},tasksCount,b,nb,prefix,stride,windowRows*hk*d,windowRows,
         sink,recent,spec,splits,1.0F/std::sqrt(float(d)));
-    for(const auto* pair: {&candidatePartial,&candidateLse,&candidateStatus}) {
-      const Gm& baseline=pair==&candidatePartial?partial:(pair==&candidateLse?partLse:status);
-      if(pair->size!=baseline.size || std::memcmp(pair->ptr,baseline.ptr,pair->size)!=0) {
-        size_t first=0;while(first<pair->size && pair->ptr[first]==baseline.ptr[first])++first;
-        throw std::runtime_error("cluster4 differs from fe0 bytewise at output byte "+
-            std::to_string(first));
+    if(!fastCluster) {
+      for(const auto* pair: {&candidatePartial,&candidateLse,&candidateStatus}) {
+        const Gm& baseline=pair==&candidatePartial?partial:(pair==&candidateLse?partLse:status);
+        if(pair->size!=baseline.size || std::memcmp(pair->ptr,baseline.ptr,pair->size)!=0) {
+          size_t first=0;while(first<pair->size && pair->ptr[first]==baseline.ptr[first])++first;
+          throw std::runtime_error("cluster4 differs from fe0 bytewise at output byte "+
+              std::to_string(first));
+        }
       }
     }
     int64_t totals[8]={};
@@ -479,11 +587,49 @@ int main(int argc,char** argv) {
     if(totals[1]!=4*totals[0] || totals[4]!=3*totals[3] ||
         totals[6]!=totals[1] || totals[7]!=totals[0])
       throw std::runtime_error("cluster4 counters violate ownership/reuse identities");
-    if(mode!="cluster4" && (totals[0]==0 || totals[3]==0))
+    if(mode!="cluster4" && mode!="fast_cluster4" &&
+        (totals[0]==0 || totals[3]==0))
       throw std::runtime_error("cluster4 fixture did not execute a shared history tile");
     std::cout<<"cluster4_clusters="<<totals[0]<<" grouped="<<totals[1]
              <<" solo="<<totals[2]<<" shared_kv_tiles="<<totals[3]
              <<" avoided_kv_loads="<<totals[4]<<std::endl;
+    if(fastCluster) {
+      Gm fastPartial(partial.size),fastLse(partLse.size),
+         fastStatus(status.size),fastWorkspace(candidateWorkspace.size),
+         fastStats(stats.size);
+      if(mode=="fast_cluster4_poison") {
+        const uint32_t poison=0x7fc00000U;
+        for(size_t offset=0;offset<fastWorkspace.size;offset+=4)
+          std::memcpy(fastWorkspace.ptr+offset,&poison,4);
+      }
+      AscendC::SetKernelMode(KernelMode::MIX_MODE);
+      ICPU_RUN_KF(oscar_attention_cv_fast_cluster4_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,
+          rv.ptr,raw.ptr,table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,fastPartial.ptr,
+          fastLse.ptr,fastStatus.ptr,fastWorkspace.ptr,fastStats.ptr,n,hq,hk,d,
+          requests,int64_t{8},tasksCount,b,nb,prefix,stride,windowRows*hk*d,
+          windowRows,sink,recent,spec,splits,1.0F/std::sqrt(float(d)));
+      if(std::memcmp(fastStatus.ptr,candidateStatus.ptr,status.size)!=0 ||
+          std::memcmp(fastStats.ptr,stats.ptr,stats.size)!=0)
+        throw std::runtime_error("fast C4 status/counters differ from old C4");
+      if(mode=="fast_cluster4_error") {
+        bool sawError=false;
+        for(int64_t id=0;id<tasksCount*2;++id) {
+          int32_t code;std::memcpy(&code,candidateStatus.ptr+id*4,4);
+          if(code)sawError=true;
+        }
+        if(!sawError)throw std::runtime_error("fast C4 invalid metadata was ignored");
+        std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\"fast_cluster4_error\",\"status\":\"passed\"}"<<std::endl;
+        return 0;
+      }
+      for(const auto* pair:{&fastPartial,&fastLse}) {
+        const Gm& baseline=pair==&fastPartial?candidatePartial:candidateLse;
+        if(std::memcmp(pair->ptr,baseline.ptr,pair->size)!=0)
+          throw std::runtime_error("fast C4 valid partial/LSE differs bytewise");
+      }
+      std::memcpy(partial.ptr,candidatePartial.ptr,partial.size);
+      std::memcpy(partLse.ptr,candidateLse.ptr,partLse.size);
+      std::memcpy(status.ptr,candidateStatus.ptr,status.size);
+    }
   }
   if(mode=="cluster4_bad_meta" || mode=="cluster4_nan_query") {
     const int32_t wanted=mode=="cluster4_bad_meta"?3:2;
@@ -536,8 +682,9 @@ int main(int argc,char** argv) {
       mergeStatus.ptr,n*hq,segments,d);
   StatusZero(mergeStatus);Close(output,dir+"/expected_output.bin");Close(lse,dir+"/expected_lse.bin");
   std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\""
-           <<(mode=="poison_workspace"?"poison_workspace":
-              (profileMode?"profile_fe0":"attention_cv"))
+           <<((fastFe0 || fastCluster)?mode:
+              (mode=="poison_workspace"?"poison_workspace":
+               (profileMode?"profile_fe0":"attention_cv")))
            <<"\",\"status\":\"passed\"}"<<std::endl;
   return 0;
  }catch(const std::exception& e){std::cerr<<"CPU_DEBUG_FAILED: "<<e.what()<<std::endl;return 1;}

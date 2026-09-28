@@ -49,6 +49,8 @@
 
 ## 当前必须正面解决的事项
 
+最新用户反馈candidate约19min vs原生8min，E06仍未通过。本轮已实现三种独立fast unpack CV（q4/q1/C4），原FE0/C4/q1/profile文件字节未改；CANN及官方CPU-debug22/22通过，含65536×8整数码和21项整CV/特殊half/错误用例。目标NPU精度、图及5个热形状收益由新增fast-unpack门裁决，不能用本地通过宣称8分钟完成。源指纹`reports/fast_unpack_local_validation.json`，分析`docs/fast_unpack.md`；不再要求AISBench。
+
 用户指定的直启部署模式：`install_serve.sh --variant candidate --rear-cards`仅本轮使用物理卡4,5,6,7和端口7878，安装/编译/旋转准备/服务共享有效配置。原target.json及不带rear-cards时的行为不变；11项主机编排测试通过，不记为新真机验收或错误条目。
 
 #151：928edb3真机q4原生与OSCAR oracle/profile比较已完成，native1.4509ms、CV+merge15.4011ms；关键历史AIV解包占其task span64.71%，AIC KV等待81.25%。最终报告被run_phase同名状态JSON覆盖导致父门失败；现分离`q4-hotpath-report.json`并以真实子进程回归（13 passed），不放宽证据门、不要求重跑。保留终端关键向量，完整被覆盖报告不可恢复，不能称已保存全部profile。E06仍未通过；下一优化依据见`reports/q4_hotpath_findings_20260928.json`。

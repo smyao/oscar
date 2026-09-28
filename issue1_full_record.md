@@ -28536,3 +28536,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 用户在node93执行同一`--variant candidate --probe-only`，run=`observe-20260928T031553.257802Z`，签名`9357b546136a`；原文`reports/target_q1_schedule_pass_20260928.txt`。N128/S3 q1：45.112041→13.807460ms、ratio0.306070、逐位精度及独立图capture/replay passed；N16384/S1 q1：137.882706→20.543880ms、ratio0.148995、逐位精度passed，该形状图not_run。C4 9例逐位/6例oracle/图继续通过，成熟20K 76.349716→55.855301ms。q4同fe0 S3自比15.278180/15.301980ms，标identical_fe0_operator；不是新退化。`candidate_evaluation_allowed=true`、q1五门passed、最后`OBSERVE_PROBE_DONE service_started=false`确认短probe正常结束。这是设备验证成功，续记原问题，不另追加错误编号。
 
 此结果支持保留q1调度改动，但不是完整服务或AISBench新时长。下一项针对仍约15ms的q4 CV，与原生实际paged BF16 FIA做同逻辑输入的独立oracle/正常Event对照；独立profile原始时钟仅供找阶段瓶颈。不能恢复已否定的“把不同核ticks最大值相加为wall”口径，不改已有fe0/C4/q1数学，不再要求AISBench。
+
+## [151] 真机条目（2026-09-28）· q4测量完成，阶段状态同名覆盖结果使最终证据校验失败
+
+**原文**：`reports/target_q4_report_collision_20260928.txt`；928edb3、`observe-20260928T043028.083013Z`。native FIA=1.450899959ms，fe0 CV=15.330120087ms，CV+merge=15.401080132ms；三源profile已打印，profile Event=15.890159607ms、相对正常CV=1.036532。随后`tools/observe_serve.py:_q4_diagnostic`报`q4 diagnostic lacks signed native/OSCAR oracle or profile evidence`，OBSERVE_FAILED preflight rc1。q1/C4原数值、图与速度门均继续通过。
+
+**源码可复现根因**：q4子进程`--output`指向`log_dir/q4-hotpath.json`；父`run_phase(name='q4-hotpath')`在finally无条件把`PhaseResult`写入同一`<name>.json`。因此子进程真实测量报告先写成功并打印，随后被阶段退出记录覆盖。父进程再读时拿到的是command/returncode等字段，缺少native_oracle、profile_parity、artifact_signature，严格校验按设计拒绝。此前单测mock掉了整个_phase，没有真实写入阶段状态文件，漏掉该碰撞。不是算子数值错误、资源残留或原生API失败。
+
+**修法**：数据改为`q4-hotpath-report.json`，阶段状态仍为`q4-hotpath.json`；保留全部数值/签名门，校验失败打印具体mismatched_fields并标q4-evidence相位。新增真实本机子进程和真实run_phase集成回归，证明两份JSON共存且结果不会覆盖；13项相关主机测试通过。不为这个编排错误要求用户再跑一次NPU，更不运行AISBench。原始完整profile报告已经覆盖，无法从终端还原全部核计数，只保存实际打印的关键向量。
+
+**已获得的性能证据**：CV+merge/native同形算子比为约10.61。关键history AIV0/core11的task span722999 ticks，unpack_total467845（64.71%），其中bits338686（46.84%）与meta119753（16.56%）是子项；packed读取71292（9.86%）、KV发布33879（4.69%）。同core AIC span724308、KV等待588470（81.25%），QK+PV计算59430（8.21%）。这些是同actor插桩时钟，不能把AIC等待与AIV工作相加，不能直接外推全场22分钟。测量支持优先优化INT2展开/重排，再处理元数据与搬运，而不是优先改Cube数学或merge。SDK dav_c220 Gather已核实16位路径使用真实vgather，不能误称AiCPU/软件fallback。

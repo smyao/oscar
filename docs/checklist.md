@@ -49,6 +49,8 @@
 
 ## 当前必须正面解决的事项
 
+#151：928edb3真机q4原生与OSCAR oracle/profile比较已完成，native1.4509ms、CV+merge15.4011ms；关键历史AIV解包占其task span64.71%，AIC KV等待81.25%。最终报告被run_phase同名状态JSON覆盖导致父门失败；现分离`q4-hotpath-report.json`并以真实子进程回归（13 passed），不放宽证据门、不要求重跑。保留终端关键向量，完整被覆盖报告不可恢复，不能称已保存全部profile。E06仍未通过；下一优化依据见`reports/q4_hotpath_findings_20260928.json`。
+
 直启入口配置补齐（#148/#150，主机变更不记新真机错误）：`install_serve.sh --variant candidate`现在向安装/编译/旋转准备和正式服务统一传入启用C4/q1的本轮配置，并打印SERVE_MODE；不修改原target.json，不运行探针。省略variant遵循输入配置，baseline显式选fe0，q4内部profile不进入生产。6项主机编排测试通过；未以此新增设备或端到端验收结论。
 
 2026-09-28 q1真机复验：a13af95、`observe-20260928T031553.257802Z`全部短probe门通过；q1 N128/S3 45.112→13.807ms（独立图/逐位passed），N16384/S1 137.883→20.544ms（逐位passed、该形状graph未跑）。C4继续通过，q4 S3原fe0仍约15.3ms。新q1设备精度/指定独立图/局部收益分别有证据；完整TP4服务和E06的8分钟目标仍未完成。原文见`reports/target_q1_schedule_pass_20260928.txt`，不重跑AISBench。

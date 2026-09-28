@@ -1,0 +1,148 @@
+{
+  "source_revision": "928edb3",
+  "source_sha256": "005f838c24ec9a7bcbd44f45f75b71bff0ab1d17b4624f648ce84e1f665ff9c1",
+  "source_file": "reports/target_q4_report_collision_20260928.txt",
+  "observed_compare": {
+    "native_fia_ms": 1.4508999586105347,
+    "oscar_cv_merge_ms": 15.401080131530762,
+    "oscar_cv_ms": 15.330120086669922,
+    "scope": "model_free_operator_eager_q4_not_whole_model_graph",
+    "speed_gate": "diagnostic_not_service_acceptance",
+    "status": "observed"
+  },
+  "oscar_cv_merge_over_native": 10.614846351143136,
+  "profile_sources": {
+    "history": {
+      "actors": {
+        "AIC": {
+          "core": 11,
+          "engine": "AIC",
+          "same_actor_top_stages_raw_ticks": {
+            "aic_acc_wait": 11602,
+            "aic_kv_wait": 588470,
+            "aic_p_wait": 61614,
+            "aic_pv_compute": 29692,
+            "aic_qk_compute": 29738,
+            "aic_rv_compute": 877,
+            "rotation_wait": 1160
+          },
+          "task_span_raw_ticks": 724308
+        },
+        "AIV": {
+          "core": 11,
+          "engine": "AIV0",
+          "same_actor_top_stages_raw_ticks": {
+            "aiv_pv_wait": 36059,
+            "aiv_qk_wait": 36455,
+            "kv_publish": 33879,
+            "packed_dma": 71292,
+            "rotation_wait": 1204,
+            "softmax_p": 55226,
+            "unpack_bits": 338686,
+            "unpack_meta": 119753,
+            "unpack_total": 467845
+          },
+          "task_span_raw_ticks": 722999
+        }
+      },
+      "nested_subitems": "bits/meta belong to unpack_total; AIV rotation_wait belongs to finalize; AIC rotation_wait is separate",
+      "over_normal_cv_median": 1.0365319721631303,
+      "profile_event_ms": 15.890159606933594,
+      "scope": "same_actor_source_raw_ticks_profile_only",
+      "source": "history"
+    },
+    "window": {
+      "actors": {
+        "AIC": {
+          "core": 1,
+          "engine": "AIC",
+          "same_actor_top_stages_raw_ticks": {
+            "aic_acc_wait": 317,
+            "aic_kv_wait": 32909,
+            "aic_p_wait": 17874,
+            "aic_pv_compute": 871,
+            "aic_qk_compute": 890
+          },
+          "task_span_raw_ticks": 52914
+        },
+        "AIV": {
+          "core": 1,
+          "engine": "AIV1",
+          "same_actor_top_stages_raw_ticks": {
+            "aiv_finalize": 589,
+            "aiv_pv_wait": 18716,
+            "aiv_qk_wait": 11240,
+            "kv_publish": 1012,
+            "precise_load": 20584,
+            "q_stage": 299
+          },
+          "task_span_raw_ticks": 52810
+        }
+      },
+      "nested_subitems": "bits/meta belong to unpack_total; AIV rotation_wait belongs to finalize; AIC rotation_wait is separate",
+      "scope": "same_actor_source_raw_ticks_profile_only",
+      "source": "window"
+    },
+    "current": {
+      "actors": {
+        "AIC": {
+          "core": 6,
+          "engine": "AIC",
+          "same_actor_top_stages_raw_ticks": {
+            "aic_acc_wait": 348,
+            "aic_kv_wait": 7854,
+            "aic_p_wait": 23527,
+            "aic_pv_compute": 943,
+            "aic_qk_compute": 959
+          },
+          "task_span_raw_ticks": 33684
+        },
+        "AIV": {
+          "core": 6,
+          "engine": "AIV1",
+          "same_actor_top_stages_raw_ticks": {
+            "aiv_finalize": 577,
+            "aiv_pv_wait": 24438,
+            "aiv_qk_wait": 6403,
+            "kv_publish": 1063,
+            "precise_load": 357,
+            "q_stage": 318
+          },
+          "task_span_raw_ticks": 33505
+        }
+      },
+      "nested_subitems": "bits/meta belong to unpack_total; AIV rotation_wait belongs to finalize; AIC rotation_wait is separate",
+      "scope": "same_actor_source_raw_ticks_profile_only",
+      "source": "current"
+    }
+  },
+  "same_history_actor_fractions": {
+    "AIV": {
+      "aiv_pv_wait": 0.049874204528636966,
+      "aiv_qk_wait": 0.05042192312852438,
+      "kv_publish": 0.04685898597370121,
+      "packed_dma": 0.09860594551306433,
+      "rotation_wait": 0.0016652858441021357,
+      "softmax_p": 0.07638461463985427,
+      "unpack_bits": 0.46844601444815276,
+      "unpack_meta": 0.1656337007381753,
+      "unpack_total": 0.6470894150614316
+    },
+    "AIC": {
+      "aic_acc_wait": 0.01601804757092287,
+      "aic_kv_wait": 0.8124582359990501,
+      "aic_p_wait": 0.08506602163720406,
+      "aic_pv_compute": 0.040993610453011704,
+      "aic_qk_compute": 0.04105711934701812,
+      "aic_rv_compute": 0.001210810870513649,
+      "rotation_wait": 0.001601528631466172
+    }
+  },
+  "report_failure": "q4-hotpath.json is also the run_phase status path and was overwritten on child completion",
+  "limitations": [
+    "Raw profile JSON was overwritten; this report preserves only the printed vectors.",
+    "Profile has added local fences and about 3.65 percent Event overhead; fractions are actor-local diagnostic spans, not full-model wall shares.",
+    "unpack_bits/unpack_meta are inside unpack_total; AIC waiting overlaps AIV work; never add them.",
+    "End-to-end AISBench performance is not derived from these operator measurements."
+  ]
+}

@@ -300,7 +300,8 @@ def _q4_diagnostic(config_path: Path, config: dict, env: dict, log_dir: Path,
     diagnostic still must complete its own oracle, profile parity and cleanup.
     """
     from oscar_ascend.ops.loader import validate_build_artifacts
-    output = log_dir / "q4-hotpath.json"
+    # #151: run_phase owns <phase>.json; never let it overwrite probe data.
+    output = log_dir / "q4-hotpath-report.json"
     output.unlink(missing_ok=True)
     before = read_npu_resources(config, log_dir=log_dir / "q4-resources-before", timeout=30)
     phase_error = None
@@ -329,13 +330,16 @@ def _q4_diagnostic(config_path: Path, config: dict, env: dict, log_dir: Path,
         raise RuntimeError("q4 diagnostic NPU resources did not release")
     report = json.loads(output.read_text())
     manifest = validate_build_artifacts(ROOT / "build/ascendc/build_manifest.json")
-    if (report.get("status") != "observed" or report.get("native_oracle") != "passed"
-            or report.get("oscar_oracle") != "passed"
-            or report.get("profile_parity") != "bitwise_passed"
-            or report.get("profile_observed") is not True
-            or report.get("artifact_signature") != manifest.get("signature")
-            or report.get("artifact_sha256") != manifest.get("sha256")):
-        raise RuntimeError("q4 diagnostic lacks signed native/OSCAR oracle or profile evidence")
+    expected = {"status": "observed", "native_oracle": "passed", "oscar_oracle": "passed",
+                "profile_parity": "bitwise_passed", "profile_observed": True,
+                "artifact_signature": manifest.get("signature"), "artifact_sha256": manifest.get("sha256")}
+    mismatches = [key for key, value in expected.items()
+                  if report.get(key) != value or (key == "profile_observed" and report.get(key) is not True)]
+    if mismatches:
+        error = RuntimeError("q4 diagnostic lacks signed native/OSCAR oracle or profile evidence; "
+                             f"mismatched_fields={','.join(mismatches)} report={output}")
+        error.phase = "q4-evidence"
+        raise error
     status["q4_diagnostic"] = {"status": "observed", "report": str(output),
                                "performance_acceptance": "not_established"}
     atomic_json(log_dir / "status.json", status)

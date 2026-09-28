@@ -133,7 +133,7 @@ def test_q4_diagnostic_records_gap_without_claiming_performance_pass(monkeypatch
               "oscar_over_native": 15.0}
     def phase(name, command, **kwargs):
         assert name == "q4-hotpath" and "tools.probe_decode_hotpath" in command
-        (tmp_path / "q4-hotpath.json").write_text(json.dumps(report))
+        Path(command[command.index("--output") + 1]).write_text(json.dumps(report))
     monkeypatch.setattr(observe_serve, "_phase", phase)
     status = {}
     observe_serve._q4_diagnostic(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, status)
@@ -141,6 +141,34 @@ def test_q4_diagnostic_records_gap_without_claiming_performance_pass(monkeypatch
     report["profile_parity"] = "failed"
     with pytest.raises(RuntimeError, match="lacks signed"):
         observe_serve._q4_diagnostic(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, {})
+
+
+def test_real_phase_status_cannot_overwrite_q4_measurement(monkeypatch, tmp_path):
+    # #151: use the real subprocess/phase writer, not the previous _phase mock
+    # that failed to expose its reserved <phase>.json output path.
+    import sys
+    from tools.phase import run_phase as real_run_phase
+    from oscar_ascend.ops import loader
+    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    manifest = {"signature": "probe-signature", "sha256": {"extension": "probe-binary"}}
+    report = {"status": "observed", "native_oracle": "passed", "oscar_oracle": "passed",
+              "profile_parity": "bitwise_passed", "profile_observed": True,
+              "artifact_signature": manifest["signature"], "artifact_sha256": manifest["sha256"]}
+    monkeypatch.setattr(loader, "validate_build_artifacts", lambda *args: manifest)
+    monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
+    monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
+    def runner(name, command, **kwargs):
+        output = command[command.index("--output") + 1]
+        child = [sys.executable, "-c", "import pathlib,sys;pathlib.Path(sys.argv[1]).write_text(sys.argv[2])",
+                 output, json.dumps(report)]
+        return real_run_phase(name, child, **kwargs)
+    monkeypatch.setattr(observe_serve, "run_phase", runner)
+    status = {"phases": []}
+    observe_serve._q4_diagnostic(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, status)
+    assert json.loads((tmp_path / "q4-hotpath-report.json").read_text()) == report
+    phase = json.loads((tmp_path / "q4-hotpath.json").read_text())
+    assert phase["phase"] == "q4-hotpath" and phase["returncode"] == 0
+    assert status["q4_diagnostic"]["status"] == "observed"
 
 
 def test_q4_child_failure_is_not_hidden_by_resource_observation_error(monkeypatch, tmp_path):

@@ -49,6 +49,8 @@
 
 ## 当前必须正面解决的事项
 
+用户指定的直启部署模式：`install_serve.sh --variant candidate --rear-cards`仅本轮使用物理卡4,5,6,7和端口7878，安装/编译/旋转准备/服务共享有效配置。原target.json及不带rear-cards时的行为不变；11项主机编排测试通过，不记为新真机验收或错误条目。
+
 #151：928edb3真机q4原生与OSCAR oracle/profile比较已完成，native1.4509ms、CV+merge15.4011ms；关键历史AIV解包占其task span64.71%，AIC KV等待81.25%。最终报告被run_phase同名状态JSON覆盖导致父门失败；现分离`q4-hotpath-report.json`并以真实子进程回归（13 passed），不放宽证据门、不要求重跑。保留终端关键向量，完整被覆盖报告不可恢复，不能称已保存全部profile。E06仍未通过；下一优化依据见`reports/q4_hotpath_findings_20260928.json`。
 
 直启入口配置补齐（#148/#150，主机变更不记新真机错误）：`install_serve.sh --variant candidate`现在向安装/编译/旋转准备和正式服务统一传入启用C4/q1的本轮配置，并打印SERVE_MODE；不修改原target.json，不运行探针。省略variant遵循输入配置，baseline显式选fe0，q4内部profile不进入生产。6项主机编排测试通过；未以此新增设备或端到端验收结论。

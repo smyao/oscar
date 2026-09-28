@@ -27,6 +27,8 @@ def main(argv=None) -> int:
     parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--variant", choices=("baseline", "candidate"),
                         help="candidate enables C4 and later-MTP q1; baseline selects fe0; omitted respects config")
+    parser.add_argument("--rear-cards", action="store_true",
+                        help="use physical Ascend devices 4,5,6,7 and port 7878 for this launch only")
     args = parser.parse_args(argv)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     log_dir = (args.log_dir or ROOT / "logs" / stamp).resolve()
@@ -40,6 +42,12 @@ def main(argv=None) -> int:
             raise ValueError("experimental_history_reuse must be an explicit boolean")
         if args.variant is not None:
             config["experimental_history_reuse"] = args.variant == "candidate"
+        if args.rear_cards:
+            # Explicit user-selected placement, never inherited from a prior
+            # task's environment. Validate the supplied device config first.
+            target_env(config, base={})
+            config.update(devices=[4, 5, 6, 7], port=7878,
+                          device_policy="Explicit install_serve --rear-cards: physical NPU 4-7, port 7878")
     except (OSError, ValueError) as exc:
         if not args.plan:
             (log_dir / "config.log").write_text(f"FAILED phase=config: {exc}\n")
@@ -48,7 +56,8 @@ def main(argv=None) -> int:
         raise
     enabled = config.get("experimental_history_reuse", False)
     variant = "candidate" if enabled else "baseline"
-    effective_path = (log_dir / "effective-target.json" if args.variant is not None
+    write_effective = args.variant is not None or args.rear_cards
+    effective_path = (log_dir / "effective-target.json" if write_effective
                       else args.config.resolve())
     stages = []
     for name, command in deploy_plan(args.config, log_dir):
@@ -64,11 +73,14 @@ def main(argv=None) -> int:
     serve_command = [sys.executable, "-m", "tools.target_cli", "--config", str(effective_path)]
     status.update(variant=variant, original_config=str(args.config.resolve()),
                   effective_config=str(effective_path),
+                  placement="rear" if args.rear_cards else "configured",
+                  target_devices=config["devices"], port=config["port"],
                   optimizations={"history_cluster4": enabled, "later_mtp_q1": enabled})
     if args.plan:
         print(json.dumps({"stages": stages, "serve": serve_command, "probes": "none",
                           "variant": variant, "optimizations": status["optimizations"],
-                          "target_devices": config["devices"]}, indent=2))
+                          "target_devices": config["devices"], "port": config["port"],
+                          "placement": status["placement"]}, indent=2))
         return 0
     try:
         env = target_env(config)
@@ -77,12 +89,12 @@ def main(argv=None) -> int:
         status.update(status="failed", failed_phase="config", error=str(exc))
         atomic_json(log_dir / "status.json", status)
         raise
-    if args.variant is not None:
+    if write_effective:
         atomic_json(effective_path, config)
     env["OSCAR_TARGET_CONFIG"] = str(effective_path)
     env["PYTHONUNBUFFERED"] = "1"
     print(f"[oscar] SERVE_MODE variant={variant} C4={'on' if enabled else 'off'} "
-          f"Q1={'on' if enabled else 'off'} config={effective_path}", flush=True)
+          f"Q1={'on' if enabled else 'off'} placement={status['placement']} config={effective_path}", flush=True)
     print(f"[oscar] devices={env.get('ASCEND_RT_VISIBLE_DEVICES', 'diagnostic')} port={config['port']}", flush=True)
     rc = 0
     try:

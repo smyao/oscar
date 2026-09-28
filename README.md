@@ -56,6 +56,14 @@ git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 
 `--variant candidate`生成本轮有效配置并启用C4历史复用和后续MTP q1调度；终端打印`SERVE_MODE variant=candidate C4=on Q1=on`。它不启用独立q4 profile算子。`--variant baseline`使用fe0；省略该参数时遵循原配置，当前`configs/target.json`默认未启用C4/q1。原配置文件不会被修改。
 
+使用后四张物理卡 **4,5,6,7**、端口 **7878**，增加`--rear-cards`：
+
+```bash
+git pull --ff-only && bash scripts/install_serve.sh --variant candidate --rear-cards
+```
+
+设备与端口写入本轮有效配置，安装/编译/旋转准备和服务统一使用该配置。省略`--rear-cards`时，默认仍为0,1,2,3和8989；不修改`configs/target.json`。
+
 不启动设备即可查看计划：
 
 ```bash

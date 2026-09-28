@@ -129,6 +129,28 @@ def test_simultaneous_k4_single_request_ratio_does_not_override_better_distribut
     assert result["aggregate_latency_ratios"]["tpot_ms.p95"] < 1.0
 
 
+def test_repeated_k4_uses_frozen_median_statistic_not_one_noisy_batch():
+    native = _report("native")
+    oscar = _report("oscar", throughput=1.01)
+    native_sample = native["synthetic_mixed"].pop("sample")
+    oscar_sample = oscar["synthetic_mixed"].pop("sample")
+    native["synthetic_mixed"]["samples"] = []
+    oscar["synthetic_mixed"]["samples"] = []
+    for repeat, ratio in enumerate((1.093, .90, .95, .98, .97)):
+        left = json.loads(json.dumps(native_sample))
+        right = json.loads(json.dumps(oscar_sample))
+        left["repeat"] = right["repeat"] = repeat
+        for request in right["requests"]:
+            request["tpot_ms"] *= ratio
+        native["synthetic_mixed"]["samples"].append(left)
+        oscar["synthetic_mixed"]["samples"].append(right)
+    acceptance = _acceptance()
+    acceptance["performance"].update(repeats=5, statistic="median")
+    result = paired.compare_synthetic_reports(native, oscar, acceptance)
+    assert result["status"] == "passed"
+    assert result["aggregate_latency_ratios"]["tpot_ms.p50"] == pytest.approx(.97)
+
+
 def test_zero_tpot_fails_closed_and_full_service_warmup_is_disclosed():
     native = _report("native", tpot=0.0)
     oscar = _report("oscar", tpot=0.0)

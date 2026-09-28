@@ -28528,3 +28528,15 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修复**：`compare_synthetic_reports`继续逐请求严格核验request ID、prompt hash/status、cache salt、有限计时值并保留全部逐请求ratio作为诊断证据；方向性失败门改为从四条实际请求重新计算TTFT/TPOT/E2E的p50与nearest-rank p95，再与同批吞吐共同应用冻结的1.0方向阈值。零TPOT/SSE burst继续返回`needs_evidence`，缺样本、非有限值、身份不一致、整体分布或吞吐退化仍失败。未修改`configs/acceptance.json`，未把单批K4冒充正式性能验收。
 
 **本机验证边界**：新增回归覆盖“逐请求TPOT ratio=5.8423但两侧分布p50/p95 ratio=0.8”的同时到达重排病例，比较器返回passed并保留5.8423诊断值；Python编译、定向调用和`git diff --check`通过。本机无项目`.venv`/pytest，完整pytest未运行；修复后的node93 K4仍待真机重跑。
+
+## [149] 真机条目（gpt_new_oscar_kimi，2026-09-28 用户回传）· 单批K4方向翻转，需按冻结重复数取中位数
+
+**原始事实**：node93已fast-forward至`0a1bdea`。build复用签名5602e6ca38bb；native-current精度/混合源/task门通过，16K为6.766ms；候选CV main 183.443ms、decode32 14.288ms且oracle通过。native与OSCAR均4/4完成、无失败/超时且释放passed。本轮OSCAR/native：TTFT p50/p95=0.93/约1.00，TPOT=1.09/0.86，E2E=0.99/0.99，prompt/generation吞吐=1.01；仅TPOT p50的1.093触发失败。上一轮同代码同负载TPOT p50为0.63，方向相反。
+
+**判断**：`0a1bdea`已经消除了逐request ID错配；本次1.093来自真实批次分布，但单个同时到达K4批次没有足够统计稳定性。p50与p95方向相反、E2E和吞吐均未退化，不能据单批断言kernel回归，也不能把它直接改写为通过。冻结策略本来已规定`warmup=2`、`repeats=5`、`statistic=median`，快路径只执行一次与策略不一致。
+
+**修复**：native和OSCAR各自在同一已启动服务上先跑2批不计分warmup，再跑5个独立cache-salt测量批；每批仍为20/23/27/30K同时到达、64输出。比较器逐repeat核验request/prompt/status/cache salt和有限值，先计算每批TTFT/TPOT/E2E p50与nearest-rank p95及两类吞吐比，再按冻结策略取5批中位数应用原1.0阈值。终端摘要使用5批统计中位数，不再展示第一批冒充总体。完整原始samples、metrics窗口、资源释放及失败退出码保留；未修改容差、阈值、算子或正式验收覆盖矩阵，结果仍标记`performance_acceptance=not_run`。
+
+**其他日志边界**：`PERF_DIAG_EVENTS ranks=0/4`表示额外同步归因轮未取得事件，不否定无插桩请求完成；EOF/EngineDeadError发生在明确shutdown期间且两侧同形、最终资源释放passed，不是本轮性能门首因。
+
+**本机验证边界**：Python编译、5-repeat定向比较（首批TPOT 1.093、其余0.90/0.95/0.98/0.97，中位数0.97）和`git diff --check`通过。目标NPU重复采样结果仍待同一命令复跑，不能预写为通过。

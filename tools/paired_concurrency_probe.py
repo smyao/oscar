@@ -159,19 +159,27 @@ def compare_synthetic_reports(native: dict, oscar: dict, acceptance: dict) -> di
         for name, side in (("native", left), ("oscar", right)):
             if side["synthetic_mixed"].get("prompt_lengths") != list(SYNTHETIC_MIXED_LENGTHS):
                 issues.append(f"{name} prompt lengths differ from fixed 20/23/27/30K")
-        if len(diagnostic["batches"]) != 1:
-            issues.append("the diagnostic requires exactly one batch per variant")
-        for batch in diagnostic["batches"]:
+        expected_repeats = policy.get("repeats")
+        if (type(expected_repeats) is int and expected_repeats > 0
+                and len(diagnostic["batches"]) != expected_repeats):
+            issues.append(f"the diagnostic requires {expected_repeats} measured batches per variant")
+        native_samples = native_section.get("samples", [native_section.get("sample")])
+        oscar_samples = oscar_section.get("samples", [oscar_section.get("sample")])
+        latency_repeats = {f"{metric}.{percentile}": []
+                           for metric in ("ttft_ms", "tpot_ms", "e2e_ms")
+                           for percentile in ("p50", "p95")}
+        throughput_repeats = {"prompt_throughput_ratio": [], "generation_throughput_ratio": []}
+        for batch_index, batch in enumerate(diagnostic["batches"]):
             if len(batch["requests"]) != len(SYNTHETIC_MIXED_LENGTHS):
                 issues.append("paired batch lacks one of the four requests")
             for metric in ("prompt_throughput_ratio", "generation_throughput_ratio"):
                 ratio = batch.get(metric)
                 if type(ratio) not in (int, float) or not math.isfinite(ratio):
                     issues.append(f"{metric} ratio missing or nonfinite")
-                elif ratio < min_throughput:
-                    issues.append(f"{metric}={ratio:.4f} < {min_throughput:.4f}")
-            source = {row["request_id"]: row for row in native_section["sample"]["requests"]}
-            candidate = {row["request_id"]: row for row in oscar_section["sample"]["requests"]}
+                else:
+                    throughput_repeats[metric].append(ratio)
+            source = {row["request_id"]: row for row in native_samples[batch_index]["requests"]}
+            candidate = {row["request_id"]: row for row in oscar_samples[batch_index]["requests"]}
             for request in batch["requests"]:
                 request_id = request["request_id"]
                 n_salt = source[request_id].get("cache_salt_sha256")
@@ -209,14 +217,24 @@ def compare_synthetic_reports(native: dict, oscar: dict, acceptance: dict) -> di
                             issues.append(f"aggregate {metric}.{percentile} must be positive")
                         continue
                     ratio = value / baseline
-                    aggregate_ratios[f"{metric}.{percentile}"] = ratio
-                    if ratio > max_latency:
-                        issues.append(f"aggregate {metric}.{percentile}={ratio:.4f} > {max_latency:.4f}")
+                    latency_repeats[f"{metric}.{percentile}"].append(ratio)
+        for metric, ratios in throughput_repeats.items():
+            if ratios:
+                ratio = statistics.median(ratios)
+                aggregate_ratios[metric] = ratio
+                if ratio < min_throughput:
+                    issues.append(f"median {metric}={ratio:.4f} < {min_throughput:.4f}")
+        for metric, ratios in latency_repeats.items():
+            if ratios:
+                ratio = statistics.median(ratios)
+                aggregate_ratios[metric] = ratio
+                if ratio > max_latency:
+                    issues.append(f"median aggregate {metric}={ratio:.4f} > {max_latency:.4f}")
     status = ("passed" if not issues and diagnostic["status"] == "diagnostic_measured"
               else "needs_evidence" if unresolved and all("unresolved_SSE_burst" in item
                                                            for item in issues) else "failed")
     return {"status": status,
-            "scope": "single-batch client-side synthetic K4 directional ratio screen",
+            "scope": "repeated client-side synthetic K4 median directional ratio screen",
             "warmup_pairing": warmup_pairing,
             "warmup_note": ("OSCAR synthetic follows functional probes while native synthetic follows startup"
                             if warmup_pairing == "unpaired" else

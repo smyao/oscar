@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import math
 from pathlib import Path
+import statistics
 
 from benchmarks.compare import read_json
 
@@ -38,7 +39,21 @@ def _ratio(candidate, baseline):
 def _sample(report):
     if report.get("mode") == "synthetic_mixed":
         section = report.get("synthetic_mixed")
-        return section.get("sample") if isinstance(section, dict) else None
+        if not isinstance(section, dict):
+            return None
+        samples = section.get("samples")
+        if not isinstance(samples, list) or not samples:
+            return section.get("sample")
+        first = dict(samples[0])
+        first["latency_ms"] = {name: {percentile: statistics.median(
+            sample["latency_ms"][name][percentile] for sample in samples)
+            for percentile in ("p50", "p95")} for name in ("ttft_ms", "tpot_ms", "e2e_ms")}
+        first["throughput_tps"] = {name: statistics.median(
+            sample["throughput_tps"][name] for sample in samples)
+            for name in ("prompt", "generation")}
+        first["running_waiting_samples"] = [row for sample in samples
+                                               for row in sample.get("running_waiting_samples", [])]
+        return first
     batches = report.get("batches")
     return batches[0] if isinstance(batches, list) and len(batches) == 1 else None
 
@@ -160,7 +175,13 @@ def _hint(native, oscar, comparable):
 
 
 def _strict_client_gate(comparison, native, oscar):
-    """A single-run client ratio screen, never an NPU acceptance decision."""
+    """Report the comparator's repeated directional screen, never acceptance."""
+    if comparison.get("diagnostic_status") == "diagnostic_measured":
+        if comparison.get("status") == "passed":
+            return "met"
+        if comparison.get("status") == "failed":
+            return "regressed"
+        return "unavailable"
     rows = comparison.get("batches")
     if not isinstance(rows, list) or len(rows) != 1:
         return "unavailable"

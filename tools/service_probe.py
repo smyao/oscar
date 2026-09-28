@@ -545,7 +545,8 @@ SYNTHETIC_MIXED_LENGTHS = (20000, 23000, 27000, 30000)
 SYNTHETIC_MIXED_OUTPUT_TOKENS = 64
 
 
-def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline):
+def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline,
+                        warmups=0, repeats=1):
     """Four unequal long prompts, one bounded diagnostic batch.
 
     Archive #131/#137-#139: this deliberately exercises shared prefill,
@@ -573,14 +574,27 @@ def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline):
                      "output_tokens": SYNTHETIC_MIXED_OUTPUT_TOKENS,
                      "arrival": "simultaneous_barrier",
                      "cache_salt": "distinct deterministic per request"}
+    if (type(warmups) is not int or warmups < 0 or type(repeats) is not int
+            or repeats <= 0):
+        raise ServiceProbeError("synthetic warmups/repeats must be nonnegative/positive integers")
+    for repeat in range(-warmups, 0):
+        budget = _remaining(deadline, request_limit)
+        warmup = run_batch(server.base_url, rows, model=config["served_model_name"],
+                           output_tokens=SYNTHETIC_MIXED_OUTPUT_TOKENS, timeout=budget,
+                           repeat=repeat,
+                           sample_interval=_positive_time(config, "synthetic_sample_interval_seconds", 1.0))
+        if warmup["status"] != "completed":
+            raise ServiceProbeError(f"synthetic warmup {repeat + warmups} did not complete")
     before = metrics_snapshot(server.base_url, timeout=_remaining(deadline, 10),
                               path=log_dir / "synthetic-mixed-before.prom")
     _terminal(f"[oscar] SYNTHETIC_MIXED start lengths={list(lengths)} K=4 budget={budget:.0f}s")
     window_start = time.time()
-    sample = run_batch(server.base_url, rows, model=config["served_model_name"],
-                       output_tokens=SYNTHETIC_MIXED_OUTPUT_TOKENS, timeout=budget,
-                       repeat=0,
-                       sample_interval=_positive_time(config, "synthetic_sample_interval_seconds", 1.0))
+    samples = []
+    for repeat in range(repeats):
+        budget = _remaining(deadline, request_limit)
+        samples.append(run_batch(server.base_url, rows, model=config["served_model_name"],
+            output_tokens=SYNTHETIC_MIXED_OUTPUT_TOKENS, timeout=budget, repeat=repeat,
+            sample_interval=_positive_time(config, "synthetic_sample_interval_seconds", 1.0)))
     window_end = time.time()
     left = deadline - time.monotonic()
     after = (metrics_snapshot(server.base_url, timeout=min(left, 10),
@@ -594,12 +608,14 @@ def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline):
                for name in SYNTHETIC_COUNTER_NAMES):
             counter_check = {"status": "passed", "delta": {
                 name: last[name] - first[name] for name in SYNTHETIC_COUNTER_NAMES}}
+    sample = samples[0]
     valid_gauges = sum("running" in observation and "waiting" in observation
-                       for observation in sample["running_waiting_samples"])
+                       for measured in samples for observation in measured["running_waiting_samples"])
     busy_gauges = sum(observation.get("running", 0) + observation.get("waiting", 0) > 0
-                      for observation in sample["running_waiting_samples"]
+                      for measured in samples for observation in measured["running_waiting_samples"]
                       if "running" in observation and "waiting" in observation)
-    complete = (sample["status"] == "completed" and valid_gauges > 0 and busy_gauges > 0
+    complete = (all(measured["status"] == "completed" for measured in samples)
+                and valid_gauges > 0 and busy_gauges > 0
                 and counter_check["status"] == "passed")
     report = {"status": "measured" if complete else "failed",
               "scope": "synthetic four-request mixed-length HTTP diagnostic; not the user's 32-request load or E06 acceptance",
@@ -610,7 +626,8 @@ def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline):
               "theoretical_min_prefill_steps": math.ceil(sum(lengths) / config["max_num_batched_tokens"]),
               "step_floor_scope": "token-capacity lower bound only; not measured device steps",
               "window": [window_start, window_end, "synthetic-mixed-K4"],
-              "sample": sample, "metrics_before": before, "metrics_after": after,
+              "sample": sample, "samples": samples, "warmups": warmups, "repeats": repeats,
+              "metrics_before": before, "metrics_after": after,
               "native_counter_check": counter_check,
               "valid_running_waiting_samples": valid_gauges,
               "busy_running_waiting_samples": busy_gauges,
@@ -618,8 +635,10 @@ def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline):
               "client_timing_scope": "TTFT/TPOT/ITL/E2E are SSE receive times, not NPU device times"}
     atomic_json(log_dir / "synthetic-mixed.json", report)
     _terminal(f"[oscar] SYNTHETIC_MIXED done status={report['status']} "
-              f"completed={sample['completed_requests']}/4 failed={sample['failed_requests']} "
-              f"timeouts={sample['timeouts']} wall={sample['batch_elapsed_seconds']:.1f}s "
+              f"completed={sum(x['completed_requests'] for x in samples)}/{4 * repeats} "
+              f"failed={sum(x['failed_requests'] for x in samples)} "
+              f"timeouts={sum(x['timeouts'] for x in samples)} "
+              f"wall={sum(x['batch_elapsed_seconds'] for x in samples):.1f}s "
               f"report={log_dir/'synthetic-mixed.json'}")
     return report
 
@@ -681,9 +700,10 @@ def run_device_event_diagnostic(server, config, tokenizer, *, primary: dict,
             raise ServiceProbeError("diagnostic repeat prompt IDs differ from primary paired workload")
         run_id = uuid.uuid4().hex
         control = server.trace_dir / "device-timing-control.json"
+        diagnostic_repeat = primary.get("warmups", 0) + primary.get("repeats", 1)
         result.update(status="running", run_id=run_id, control=str(control),
                       workload="synthetic_K4_20K_23K_27K_30K_64_output",
-                      cache_salt="same deterministic prompts, repeat=1 new salt")
+                      cache_salt=f"same deterministic prompts, repeat={diagnostic_repeat} new salt")
         atomic_json(report_path, result)
         before = metrics_snapshot(server.base_url, timeout=_remaining(deadline, 10),
                                   path=diagnostic_dir / "metrics-before.prom")
@@ -697,7 +717,7 @@ def run_device_event_diagnostic(server, config, tokenizer, *, primary: dict,
             window_start = time.time()
             sample = run_batch(server.base_url, rows, model=config["served_model_name"],
                                output_tokens=SYNTHETIC_MIXED_OUTPUT_TOKENS, timeout=budget,
-                               repeat=1,
+                               repeat=diagnostic_repeat,
                                sample_interval=_positive_time(config, "synthetic_sample_interval_seconds", 1.0))
             window_end = time.time()
         finally:
@@ -970,10 +990,10 @@ def _progress_summary(trace_dir: Path, log_dir: Path, windows_path: Path, deadli
 def run_synthetic_only(config_path, *, output, log_dir, command=None, tokenizer_factory=None,
                        native=False, native_report_path: Path | None = None,
                        acceptance_path: Path = ROOT / "configs/acceptance.json"):
-    """Run one bounded mixed-length batch on an owned service.
+    """Run frozen warmups and repeated mixed-length batches on an owned service.
 
-    Archive #137-#139: this dedicated diagnostic supports paired native and
-    OSCAR observations, with no standalone performance acceptance claim.
+    Archive #137-#140/#148-#149: this dedicated diagnostic supports paired
+    native and OSCAR observations, with no standalone acceptance claim.
     """
     config_path, output, log_dir = Path(config_path).resolve(), Path(output).resolve(), Path(log_dir).resolve()
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -997,6 +1017,14 @@ def run_synthetic_only(config_path, *, output, log_dir, command=None, tokenizer_
         if native_report_path is not None:
             native_report_path = Path(native_report_path).resolve()
         config = json.loads(config_path.read_text())
+        acceptance = json.loads(Path(acceptance_path).read_text())
+        performance = acceptance.get("performance", {})
+        warmups, repeats = performance.get("warmup"), performance.get("repeats")
+        if (acceptance.get("frozen_before_measurement") is not True
+                or performance.get("statistic") != "median"
+                or type(warmups) is not int or warmups < 0
+                or type(repeats) is not int or repeats <= 0):
+            raise ServiceProbeError("frozen median warmup/repeat policy is required")
         target_env(config)  # Fail before any NPU touch when selection is absent.
         report["devices"] = config["devices"]
         duration = _positive_time(config, "synthetic_timeout_seconds", 1800)
@@ -1012,7 +1040,7 @@ def run_synthetic_only(config_path, *, output, log_dir, command=None, tokenizer_
         with managed_server(managed_config, config_path, log_dir=log_dir,
                             lifecycle=report["server"], command=command, native=native) as server:
             report["synthetic_mixed"] = run_synthetic_mixed(server, config, tokenizer,
-                log_dir=log_dir, deadline=deadline)
+                log_dir=log_dir, deadline=deadline, warmups=warmups, repeats=repeats)
             atomic_json(output, report)
             if native_report_path is not None and report["synthetic_mixed"].get("status") == "measured":
                 report["diagnostic"] = run_device_event_diagnostic(

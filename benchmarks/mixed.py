@@ -1,6 +1,6 @@
 """Bounded 20-30K mixed-length concurrency diagnostic for an explicit service.
 
-Archive #70-#73/#130-#139: preserve exact request IDs, client SSE times,
+Archive #70-#73/#130-#140/#148-#149: preserve exact request IDs, client SSE times,
 incomplete requests, scheduler gauges, and native counters. This is an HTTP
 diagnostic only; it cannot establish device phase time, graph, or accuracy.
 """
@@ -136,10 +136,13 @@ def compare_mixed(native, oscar):
         sample = report.get("synthetic_mixed")
         if not isinstance(sample, dict):
             return report
+        batches = sample.get("samples")
+        if not isinstance(batches, list):
+            batches = [sample["sample"]] if isinstance(sample.get("sample"), dict) else []
         return {"kind": report.get("variant"), "pair_sha256": sample.get("pair_sha256"),
                 "prompt_manifest": sample.get("prompt_manifest"),
                 "status": "needs_evidence" if report.get("status") == "measured" else "failed",
-                "batches": [sample["sample"]] if isinstance(sample.get("sample"), dict) else []}
+                "batches": batches}
 
     native, oscar = normalize(native), normalize(oscar)
     issues = []

@@ -315,7 +315,7 @@ def test_regressed_synthetic_runs_one_separate_same_server_device_diagnostic(tmp
     diagnostic = report["diagnostic"]
     assert diagnostic["status"] == "needs_evidence"  # Fake HTTP server emits no NPU events.
     assert diagnostic["completed_requests"] == 4
-    assert json.loads(Path(diagnostic["sample"]).read_text())["repeat"] == 1
+    assert json.loads(Path(diagnostic["sample"]).read_text())["repeat"] == 7
     assert json.loads(Path(diagnostic["control"]).read_text()) == {
         "enabled": False, "run_id": diagnostic["run_id"]}
     assert Path(diagnostic["device_event_summary"]).exists()

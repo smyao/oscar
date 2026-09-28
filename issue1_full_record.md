@@ -28431,3 +28431,11 @@ RuntimeError: Engine core initialization failed. See root cause above. Failed co
 **本轮处置**：一键快路径先跑原生与OSCAR原始K4，原始轮不创建NPU计时事件；若配对退化，在同一OSCAR服务上自动运行一次独立repeat1，输入及64输出不变，使用新的cache_salt。仅该轮用原生NPU Event时间戳与end.synchronize记录prepare/rotate/CV/current/merge/store/guard，按prefill、MTP draft和整图回放、TP rank及query/KV形状汇总。整图事件包在replay外，不给图内相位伪造耗时；dummy/capture不插事件。标记在模型入口读取，相位热路径不轮询文件。避开#133已造成四worker崩溃的HTTP profiler。同步诊断改变时序，不能替代正常轮速度比；缺rank/必要相位/整图回放明确needs_evidence。
 
 **验证边界**：相关主机回归覆盖未武装无事件/无同步、捕图与dummy不计时、设备错误记录、同服务自动repeat、独立cache salt、诊断关闭和TP缺失证据检查。本轮没有新增目标NPU计时结果，剩余性能原因及追平结论继续待测。
+
+## [144] 真机条目（gpt_new_oscar_kimi，2026-09-24 用户回传）· 原生视觉 profile 的 eager FIA 触发 L0C 冲突
+
+**症状**：服务在 `determine_available_memory/profile_run` 的Qwen3-VL视觉dummy输入阶段失败。物理`chipId:4`的原生多模态编码器attention进入`mm_encoder_attention._forward_eager_fia`，AI Core报告`L0C read/write conflict`：FIXP读取L0C与Cube写L0C冲突，随后在`cu_seqlens.cpu()`同步点抛出507015；HCCL watchdog及其他worker退出均为连锁结果。
+
+**根因边界**：栈尚未进入OSCAR FULL KV/CV算子；`.cpu()`是异步错误的暴露点而非首因。工程此前同版本成功日志明确视觉attention选择`AttentionBackendEnum.TORCH_SDPA`。本错误属于原生视觉eager FIA在本次profile形状/设备上的硬件流水冲突，不能通过捕获507015后重试或切换OSCAR数据路径掩盖。
+
+**修复**：目标配置新增并强制`mm_encoder_attn_backend=TORCH_SDPA`，统一启动命令显式传递`--mm-encoder-attn-backend TORCH_SDPA`；其他值在启动前fail-closed。该选择在模型构造前完成，不是运行时异常回退；只作用于MM encoder，语言FULL层仍走OSCAR，GDN/MTP不变。修复后的物理4–7卡启动、视觉profile完成及服务请求仍待真机复验。

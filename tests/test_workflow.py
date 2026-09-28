@@ -165,6 +165,14 @@ def test_target_command_preserves_graph_mtp_and_dtype():
     assert argv[argv.index("--max-model-len")+1] == "262144"
     assert "--enforce-eager" not in argv
     assert argv[argv.index("--mamba-ssm-cache-dtype")+1] == "bfloat16"
+    assert argv[argv.index("--mm-encoder-attn-backend")+1] == "TORCH_SDPA"
+
+
+def test_target_command_rejects_unsafe_visual_encoder_backend():
+    config = json.loads((ROOT / "configs/target.json").read_text())
+    config["mm_encoder_attn_backend"] = "ASCEND_FIA"
+    with pytest.raises(ValueError, match="TORCH_SDPA"):
+        serve_argv(config)
 
 
 def test_device_selection_does_not_inherit_somebody_elses_devices():

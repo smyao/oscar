@@ -15,6 +15,7 @@
   "compilation_config": {"cudagraph_capture_sizes":[1,4,8,12,16,24,32,48,56,64,72,84,96,108,112,128,160,172,196,200,212,232,272,288,312,328,344,360,384,400,416,432,448,480,512],"cudagraph_mode":"FULL_DECODE_ONLY"},
   "speculative_config": {"method":"qwen3_5_mtp","num_speculative_tokens":3,"enforce_eager":true},
   "quantization": "ascend",
+  "mm_encoder_attn_backend": "TORCH_SDPA",
   "additional_config": {"enable_cpu_binding":true},
   "hf_overrides": {"text_config":{"rope_parameters":{"mrope_interleaved":true,"mrope_section":[11,11,10],"rope_type":"yarn","rope_theta":10000000,"partial_rotary_factor":0.25,"factor":4.0,"original_max_position_embeddings":262144}}},
   "sink_tokens": 64,

@@ -1,4 +1,4 @@
-# 档案 #28/#29/#30/#84：建引擎前初始化父进程线程池；保留附录 A 参数及 MTP eager 作用域。
+# 档案 #28/#29/#30/#84/#144：建引擎前初始化父进程线程池；视觉 profile 固定安全后端。
 from __future__ import annotations
 import argparse
 import json
@@ -10,6 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def serve_argv(config: dict) -> list[str]:
+    mm_backend = config.get("mm_encoder_attn_backend")
+    if mm_backend != "TORCH_SDPA":
+        raise ValueError("target visual encoder requires mm_encoder_attn_backend=TORCH_SDPA")
     args = ["serve", config["model"]]
     for key in ("served_model_name", "host", "port", "data_parallel_size", "tensor_parallel_size",
                 "max_model_len", "max_num_batched_tokens", "max_num_seqs", "gpu_memory_utilization", "quantization"):
@@ -19,7 +22,8 @@ def serve_argv(config: dict) -> list[str]:
         flag = "--speculative_config" if key == "speculative_config" else "--" + key.replace("_", "-")
         args += [flag, json.dumps(config[key], separators=(",", ":"))]
     args += ["--trust-remote-code", "--async-scheduling", "--allowed-local-media-path", "/",
-             "--mm-processor-cache-gb", "0", "--mamba-cache-dtype", "bfloat16", "--mamba-ssm-cache-dtype", "bfloat16"]
+             "--mm-processor-cache-gb", "0", "--mm-encoder-attn-backend", mm_backend,
+             "--mamba-cache-dtype", "bfloat16", "--mamba-ssm-cache-dtype", "bfloat16"]
     if config.get("profiler_config") is not None:
         args += ["--profiler-config",json.dumps(config["profiler_config"],separators=(",",":"))]
     return args

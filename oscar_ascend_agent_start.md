@@ -762,7 +762,7 @@ oscar-ascend/
 vllm serve /softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp \
     --served-model-name "qwen3.5" \
     --host 0.0.0.0 \
-    --port 8989 \
+    --port 9595 \
     --data-parallel-size 1 \
     --tensor-parallel-size 4 \
     --max-model-len 262144 \
@@ -776,6 +776,7 @@ vllm serve /softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp \
     --allowed-local-media-path / \
     --quantization ascend \
     --mm-processor-cache-gb 0 \
+    --mm-encoder-attn-backend TORCH_SDPA \
     --additional-config '{"enable_cpu_binding":true}' \
     --mamba-cache-dtype bfloat16 \
     --mamba-ssm-cache-dtype bfloat16 \

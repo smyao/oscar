@@ -10,6 +10,13 @@ from tools import install_serve
 from tools.phase import PhaseResult
 
 
+def test_aisbench_shell_entry_selects_rear_cards_and_7878_contract():
+    script = (install_serve.ROOT / "scripts/install_aisbench_serve.sh").read_text()
+    assert "set -euo pipefail" in script
+    assert "-m tools.install_serve --rear-cards" in script
+    assert "端口 7878" in script
+
+
 def config_file(tmp_path, enabled=False):
     config = json.loads((install_serve.ROOT / "configs/target.json").read_text())
     config["experimental_history_reuse"] = enabled

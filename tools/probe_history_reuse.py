@@ -25,6 +25,7 @@ import time
 import traceback
 
 from .phase import atomic_json
+from oscar_ascend.ops.cv_dispatch import CLUSTER4_CV_OP, FE0_CV_OP, select_cv_op
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE_COMMIT = "fe0e925e7ef78bfb64217a300031502fc4a7b7bc"
@@ -325,7 +326,8 @@ def _poison(torch, buffers: dict):
         buffers["cluster_stats"].zero_()
 
 
-def _launch(ops, tensors: dict, fixture: dict, buffers: dict, cores: int, *, candidate: bool):
+def _launch(ops, tensors: dict, fixture: dict, buffers: dict, cores: int, *, candidate: bool,
+            production_route: bool = False):
     spec: Shape = fixture["spec"]
     args = (tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"], tensors["rv"],
         tensors["raw"], tensors["table"], tensors["wk"], tensors["wv"], tensors["tags"],
@@ -333,10 +335,13 @@ def _launch(ops, tensors: dict, fixture: dict, buffers: dict, cores: int, *, can
         buffers["workspace"])
     attrs = (BLOCK_TOKENS, fixture["blocks"], PREFIX, fixture["stride"],
              SINK, spec.recent_tokens, SPECULATIVE, spec.splits, fixture["scale"], cores)
-    if candidate:
+    name = (select_cv_op(4, spec.heads, spec.kv_heads, sum(spec.qlens), max(spec.qlens))
+            if candidate and production_route else CANDIDATE_OP if candidate else FE0_CV_OP)
+    if name == CLUSTER4_CV_OP:
         getattr(ops, CANDIDATE_OP)(*args, buffers["cluster_stats"], *attrs)
     else:
         ops.attention_cv_out(*args, *attrs)
+    return name
 
 
 def _bitwise_identical(torch, left, right) -> bool:
@@ -522,7 +527,8 @@ def _timed_pair(torch, ops, tensors, fixture, baseline, candidate_buffers, cores
                 start = torch.npu.Event(enable_timing=True)
                 end = torch.npu.Event(enable_timing=True)
                 start.record(stream)
-            _launch(ops, tensors, fixture, buffers, cores, candidate=is_candidate)
+            _launch(ops, tensors, fixture, buffers, cores, candidate=is_candidate,
+                    production_route=True)
             if index >= warmup:
                 end.record(stream)
                 end.synchronize()
@@ -616,13 +622,17 @@ def run_case(torch, ops, spec: Shape, device, cores: int, acceptance: dict) -> d
             torch, ops, tensors, fixture, baseline, candidate, cores,
             preparation["source0_leaders"])
     if spec.speed_gate:
+        route = select_cv_op(4, spec.heads, spec.kv_heads, sum(spec.qlens), max(spec.qlens))
         before, after = _timed_pair(torch, ops, tensors, fixture, baseline, candidate, cores,
             warmup=acceptance["performance"]["warmup"],
             repeats=acceptance["performance"]["repeats"], reference_bits=reference_bits)
         ratio = after["median_ms"] / before["median_ms"]
         row.update(baseline_timing=before, candidate_timing=after,
                    candidate_over_fe0=ratio,
-                   speed_gate="passed" if ratio <= acceptance["performance"]["max_latency_ratio"]
+                   production_operator=route,
+                   production_route_accuracy="bitwise_passed",
+                   speed_gate="identical_fe0_operator" if route == FE0_CV_OP else
+                   "passed" if ratio <= acceptance["performance"]["max_latency_ratio"]
                    else "failed")
     else:
         row.update(speed_gate="not_applicable_invalid_or_padding_case")
@@ -772,6 +782,9 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
                 "clusters": row["cluster_stats"]["eligible_clusters"],
                 "baseline_ms": row["baseline_timing"]["median_ms"],
                 "candidate_ms": row["candidate_timing"]["median_ms"],
+                "production_operator": row["production_operator"],
+                "ratio_scope": "different_operators" if row["production_operator"] == CANDIDATE_OP
+                    else "same_operator_repeatability_not_speedup",
                 "ratio": row["candidate_over_fe0"], "gate": row["speed_gate"]},
                 sort_keys=True), flush=True)
     print("[oscar] PERF_HISTORY_REUSE_ACCURACY " + json.dumps({
@@ -797,8 +810,8 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
     failures = [row["case"] for row in cases if row["speed_gate"] == "failed"]
     return {"status": "passed" if not failures else "failed", "reason": (
             None if not failures else "candidate slower on " + ",".join(failures)),
-            "scope": "experimental_operator_only_real_NPU; no_production_route_change",
-            "candidate_timing_includes_counter_output": True,
+            "scope": "raw_C4_accuracy_and_production_dispatch_operator_timing_real_NPU",
+            "counter_output_timing_scope": "C4 calls include counters; fe0 route has none",
             "default_route": "fe0",
             "production_promotion": "blocked_pending_full_model_quality_and_service_performance",
             "candidate_evaluation_allowed": not failures,

@@ -28510,3 +28510,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **为何此前未见**：该相位为f5fd2b3新增，本轮是候选首次真NPU执行（#148已记"真NPU逐位/图均待用户执行"）。官方CPU-debug（`csrc/cpu/cv_probe.cpp`）只核对跨核求和后的恒等式，口径本就正确；D256的2/20核CPU模拟配置在#148保留120s超时，多核计数分布从未完整执行；主机单测只喂逐核自洽合成行。bitwise partial/LSE/status与冻结oracle等真实精度门位于计数检查之前且已通过——本失败是宿主侧契约过严，不是C4内核数值错误，也不是设备残留。
 
 **修法与边界**：`_check_cluster_stats`逐核循环只保留同点累加恒等式（grouped==4*clusters、avoided==3*shared_tiles、anchors==clusters），skips==grouped保留在全局和校验，与CPU-debug totals oracle口径一致；新增两阶段归属回归测试。未改任何CANN算子及fe0/C4数值路径，无须重编译。真NPU复验（全部病例、图回放、速度门及服务）仍待用户重跑同一命令，本条不宣称候选已合格。
+
+## [150] 真机条目（gpt_new_oscar_kimi，2026-09-28 用户回传）· C4数值及图通过，零复用decode因0.104%比值阻断服务
+
+**真实结果**：55981e2，`observe-20260928T014056.760632Z`。9/9病例逐位通过、6个有效oracle通过、非法live状态通过；frontier区间5种、未对齐成熟簇2、非terminal簇0。独立q4图capture/replay逐位通过。mature_20k为45簇，fe0=76.37908172607422ms、C4=56.18550109863281ms、ratio=0.7356137286402104；decode32为0簇，fe0=40.22589874267578ms、C4=40.267738342285156ms、ratio=1.0010401159679991。严格速度门rc2，服务尚未启动；不将独立图结果升级为完整TP4服务通过。
+
+**当前代码核实**：服务仅按workspace候选开关选C4，不检查单请求query上界。C4要求4个完整query组，Hq6/Hkv1时至少单请求84个query；decode32每请求4个，总计128个不能跨请求组簇，但仍执行候选成员判断、第二遍任务扫描和计数发布。因此存在无收益的额外工作。不过一次41.84微秒差值不足以证明这些工作的真实时长，不能排除测量波动，更不能用来解释约14分钟差距。用户亦明确指出本项与整体目标关系很小。
+
+**修法**：共享host形状选择函数用于服务和probe。已知max_query_len或总token不足四组时，直接调用既有fe0 OSCAR INT2核；候选工作区足够容纳原核，其余输入和ABI不变，无NPU回读或新增图节点。未知上界保守保留C4。probe原始C4数值/图病例全部保留；速度轮验证实际生产分流的逐位结果，短query两侧为相同fe0算子，时间和比值原样记录作重复性对照，标`identical_fe0_operator`而非伪造ratio=1或快于基线。被实际选中的C4继续原ratio≤1.0门，精度阈值未改。此项只是移除无收益路径并解除采证阻断，真正目标仍是实际负载端到端占比和约8分钟性能。
+
+**本地验证边界**：57项相关主机测试通过，覆盖32×q4与图padding、83/84边界、GQA变化、未知上界、真实forward ABI和长query仍选C4。未修改任何AscendC算子，无新CANN编译必要；修订后的真机分流、服务和用户负载待同一一键命令复验。用户已有fe0精度结论保持有效。

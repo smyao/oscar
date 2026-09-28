@@ -22,7 +22,7 @@ from .integration.runtime_api import OscarReadinessError
 from .lifecycle import SnapshotLayout
 
 # Archive #144: mirrored by oscar_attention_launch.h and checked in contracts.
-ATTENTION_QUERY_ROWS = 128
+from .ops.cv_dispatch import ATTENTION_QUERY_ROWS
 ATTENTION_KV_ROWS = 256
 
 

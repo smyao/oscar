@@ -109,6 +109,29 @@ def test_candidate_argument_is_inserted_after_workspace_before_attributes():
     assert calls[1][1][15] == "stats"
     assert calls[1][1][:15] == calls[0][1][:15]
     assert calls[1][1][16:] == calls[0][1][15:]
+    # #150: raw C4 remains exercised for accuracy; production q1/q4 routes
+    # the same original INT2 symbol and exact ABI with the candidate workspace.
+    route = reuse._launch(ops, tensors, fixture, buffers, 2, candidate=True,
+                          production_route=True)
+    assert route == reuse.FE0_CV_OP
+    assert calls[2] == calls[0]
+
+
+@pytest.mark.parametrize("heads,kv_heads,tokens,max_query_len,expected", [
+    (6, 1, 128, 4, reuse.FE0_CV_OP),  # 32 q4 requests, not one q128
+    (6, 1, 512, 1, reuse.FE0_CV_OP),  # graph padding cannot create a cluster
+    (6, 1, 83, 83, reuse.FE0_CV_OP),
+    (6, 1, 84, 84, reuse.CANDIDATE_OP),
+    (12, 2, 388, 385, reuse.CANDIDATE_OP),
+    (4, 1, 127, 127, reuse.FE0_CV_OP),
+    (4, 1, 128, 128, reuse.CANDIDATE_OP),
+    (6, 1, 512, None, reuse.CANDIDATE_OP),
+])
+def test_production_dispatch_requires_four_groups_in_one_request(heads, kv_heads,
+                                                                tokens, max_query_len, expected):
+    # #150: eligibility is a structural bound, never inferred from timing.
+    assert reuse.select_cv_op(4, heads, kv_heads, tokens, max_query_len) == expected
+    assert reuse.select_cv_op(1, heads, kv_heads, tokens, max_query_len) == reuse.FE0_CV_OP
 
 
 def test_cluster_counters_require_real_sharing_and_exact_owner_algebra():

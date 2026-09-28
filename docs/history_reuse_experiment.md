@@ -42,6 +42,10 @@ fe0的长prefill每21个query一组，每组扫描相同历史。每256KV/D256�
 
 ## 如何找出端到端剩余时间
 
+2026-09-28真机更新（#150）：9/9逐位病例、6个有效oracle及独立图捕获/回放通过；mature_20k的C4为56.1855ms、fe0为76.3791ms（耗时下降26.44%）。decode32无簇，40.2677ms对40.2259ms，仅差0.04184ms，原严格比值门因此关闭服务；单轮不足以区分这0.104%中的波动与真实调度开销。
+
+当前生产分流用原生host `max_query_len` 与总token形状判断必要条件：单请求不足4个完整query组（GQA6为84token）就直接调用fe0的OSCAR INT2算子，不记录C4扫描和计数。未知上界保守保留C4，所有可能复用的长请求仍由C4内部严查同域。无设备回读、不改AscendC和图数据地址。probe保留原始C4全部精度/图对照，性能部分使用与服务相同的分流；短请求两侧为同一fe0算子，保留实测时间/比值作重复性对照，标`identical_fe0_operator`，不把自比噪声当优化成败。实际选中的C4仍严格要求ratio≤1.0。该分流的目标是真实负载采证可继续，不把0.042ms宣称为追回14分钟的优化。
+
 `install_observe_serve.sh`不替用户发AISBench请求。默认baseline为fe0，candidate显式选择C4，native禁用OSCAR数学路径；启动前锁定fe0原内核哈希，候选也保留这些原内核，并记录实验文件及构建签名。
 
 worker在非dummy、非capture阶段按prefill/decode/mixed配额稀疏采样，异步Event仅在完成后读时间；pending满停止新采样，保留未完成handles，不强制同步或在热路径销毁。没有每相位同步，也不使用旧HTTP profiler。

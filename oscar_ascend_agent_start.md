@@ -559,6 +559,7 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 | 历史现象 | 必须落实的检查与处理 |
 | --- | --- |
+| #150 decode32无复用簇仍运行C4，0.104%差值阻断服务 | 用单请求query上界证明不可能成簇时选择既有fe0 INT2核；生产/probe共享分流，保留原始C4数值/图门。相同算子自比记重复性，实际C4仍执行ratio≤1.0；小差值不得冒充端到端根因。 |
 | #148 局部 CV/K4 加速而用户 LongBenchv2 精度下降，整批仍远慢于原生 | 保留用户确认精度正确的 fe0 原内核；候选独立入口须同输入逐位、冻结 oracle、图回放和速度门全部通过。局部时间不得折算为用户整批占比；用同 rank/step/stream 的异步区间并集观察真实负载，完整模型精度与约8分钟目标仍由用户验收。 |
 | #145 M128 CV在D64/Q6/context511出现NaN，Q1/Q4通过 | 同一score UB从MTE3读出切换到MTE2覆写必须建立MTE3→MTE2依赖；重复NaN工作区覆盖32行块及双lane边界。CPU-debug串行DMA不替代真NPU数值门；一键继续完整热点与native/OSCAR长请求并发性能门。 |
 | `Unsupported vllm-ascend version: 0.23.1.dev0+g5cb98caaa.d20260822` | 区分目标版本与开发构建版本，核实 commit/接口兼容性，不误拒绝，也不盲目放行。 |

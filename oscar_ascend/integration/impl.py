@@ -17,6 +17,7 @@ from .current_attention import (guard_current_slots, native_current_partial,
 from .runtime_api import OscarReadinessError, require_runtime
 from ..telemetry import emit_once, emit_throttled
 from ..timing import phase
+from ..ops.cv_dispatch import CLUSTER4_CV_OP, select_cv_op
 
 
 class OscarAttentionImpl(AttentionImpl):
@@ -127,8 +128,11 @@ class OscarAttentionImpl(AttentionImpl):
         with phase("fia", layer=layer.layer_name, tokens=n, splits=source_splits,
                    cube_cores=g.cube_cores, tasks=task_count, requests=attn_metadata.num_reqs, **timing_fields):
             cluster_size = getattr(g, "history_cluster_size", 1)
-            cv_op = ops.attention_cv_cluster4_out if cluster_size == 4 else ops.attention_cv_out
-            cv_extra = (workspace.cluster_stats,) if cluster_size == 4 else ()
+            # #150: q1/q4 decode cannot form a same-request C4 cluster.
+            # Host shape selection also fixes the op recorded during capture.
+            cv_name = select_cv_op(cluster_size, h, hk, n, attn_metadata.max_query_len)
+            cv_op = getattr(ops, cv_name)
+            cv_extra = (workspace.cluster_stats,) if cv_name == CLUSTER4_CV_OP else ()
             cv_op(
                 q, qr, k, v, state.rotation_v, state.raw, attn_metadata.block_tables,
                 state.window_key, state.window_value, state.window_tags, tasks,

@@ -186,9 +186,9 @@ def test_online_forward_contains_no_host_request_loop_or_tensor_readback():
             assert node.func.attr not in {"item", "tolist", "numpy", "cpu", "synchronize"}
 
 
-@pytest.mark.parametrize("capacity,cube_cores,expected_splits", [(8, 1, 1), (64, 20, 8)])
+@pytest.mark.parametrize("capacity,cube_cores,expected_splits,n", [(8, 1, 1, 8), (64, 20, 8, 8), (256, 20, 1, 256)])
 @pytest.mark.parametrize("cluster_size", [1, 4])
-def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, cluster_size):
+def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size):
     """Host ABI exercise only: fake ops establish ordering, never accuracy."""
     backend = types.ModuleType("vllm.v1.attention.backend")
     backend.AttentionImpl = type("AttentionImpl", (), {})
@@ -197,7 +197,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         spec = importlib.util.spec_from_file_location("oscar_ascend.integration._dispatch_test", path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-    n, h, hk, d, parts = 8, 4, 1, 64, 3
+    h, hk, d, parts = 4, 1, 64, 3
     w = object.__new__(GraphWorkspace)
     w.geometry = WorkspaceGeometry(capacity, h, hk, d, cube_cores=cube_cores,
                                    history_cluster_size=cluster_size)
@@ -226,7 +226,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             assert slots.dtype == torch.int64 and slots.numel() == n
             assert geometry[4] == expected_splits
             assert tasks.shape == (n * hk * 3 * expected_splits, 16)
-            positions.copy_(torch.arange(4, 12))
+            positions.copy_(torch.arange(4, n + 4))
             tasks.zero_()
 
         def rotate_out(self, q, rotation, out, status, hadamard, slots):
@@ -261,7 +261,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
 
         def rotate_clip_store_out(self, *args):
             calls.append("store")
-            assert torch.equal(args[5], torch.arange(4, 12))
+            assert torch.equal(args[5], torch.arange(4, n + 4))
             assert args[0].is_contiguous() and args[1].is_contiguous()
             args[10].zero_()
 
@@ -285,9 +285,15 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     value = torch.randn(n, hk * d * 3, dtype=torch.bfloat16)[:, d:2*d]
     assert not value.is_contiguous()
     common = _common()
+    common.query_start_loc = torch.tensor([0, n // 2, n], dtype=torch.int32)
+    common.num_actual_tokens = common.num_input_tokens = n
+    common.max_query_len = n // 2
     common.slot_mapping = torch.arange(n + 4, dtype=torch.int32)
     output = torch.empty_like(q)
     result = impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),
                           q, k, value, packed, replace(from_common(common), is_draft=True), output)
     assert result is output and bool(torch.all(result == 7))
-    assert calls == ["prepare", "rotate", "cluster4" if cluster_size == 4 else "cv", "merge", "store", "guard"]
+    # #150: short per-request query lengths keep the original OSCAR op even
+    # with candidate workspace; long requests keep the C4 ABI/extra buffer.
+    expected_op = "cluster4" if cluster_size == 4 and n == 256 else "cv"
+    assert calls == ["prepare", "rotate", expected_op, "merge", "store", "guard"]

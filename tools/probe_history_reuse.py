@@ -481,9 +481,13 @@ def _check_cluster_stats(stats_cpu, *, expect_clusters: bool,
                          expected_source0_leaders: int | None = None) -> dict:
     if stats_cpu.ndim != 2 or stats_cpu.shape[1] != len(STATS_FIELDS):
         raise HistoryReuseProbeError("candidate cluster_stats shape is invalid")
+    # Archive #129/#148/#149: pass one charges each deferred member's skip to
+    # the core owning its query tile, while pass two charges the four grouped
+    # leaders to the single core owning the remapped bucket. skips == grouped
+    # is therefore a global identity only; per core just the same-site
+    # identities hold, matching the CPU-debug totals oracle.
     for core, row in enumerate(stats_cpu.tolist()):
-        if row[1] != 4 * row[0] or row[4] != 3 * row[3] or \
-                row[6] != row[1] or row[7] != row[0]:
+        if row[1] != 4 * row[0] or row[4] != 3 * row[3] or row[7] != row[0]:
             raise HistoryReuseProbeError(f"candidate cluster owner {core} counters are inconsistent")
     values = [int(x) for x in stats_cpu.sum(0).tolist()]
     if any(value < 0 for value in values):

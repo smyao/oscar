@@ -134,6 +134,20 @@ def test_cluster_counters_require_real_sharing_and_exact_owner_algebra():
         reuse._check_cluster_stats(broken, expect_clusters=True)
 
 
+def test_cluster_counters_two_phase_attribution_is_global_only():
+    torch = pytest.importorskip("torch")
+    # Archive #149: pass one charges skips to each member tile's core, pass two
+    # charges the cluster to the remapped bucket's core. Per-core skips need
+    # not equal grouped leaders; the global identity must still hold.
+    two_phase = torch.tensor([[1, 4, 0, 2, 6, 0, 0, 1],
+                              [0, 0, 0, 0, 0, 0, 4, 0]], dtype=torch.int64)
+    result = reuse._check_cluster_stats(two_phase, expect_clusters=True,
+                                        expected_source0_leaders=4)
+    assert result["eligible_clusters"] == 1
+    assert result["grouped_leaders"] == 4
+    assert result["original_schedule_skips"] == 4
+
+
 def test_bitwise_comparison_distinguishes_signed_zero_and_nan_payload():
     torch = pytest.importorskip("torch")
     positive = torch.tensor([0.0, float("nan")], dtype=torch.float32)

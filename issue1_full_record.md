@@ -28500,3 +28500,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **验收入口**：`git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate`安装/编译、原有NPU原语/CV/旋转/current门、候选fe0同输入逐位/冻结oracle/图回放/速度门和资源清理后才启动服务。候选门失败即打印错误并保留真实rc，不切换其他路径。baseline保留fe0，native禁用OSCAR数学路径；无自动推理POST，无私有数据集生成，无自动重跑127题。被动采样按rank/step/stream求事件区间并集，覆盖target/MTP/attention/整图，未完成Event不强制同步，图内和跨stream不明细项写missing。该稀疏采样仍可能有扰动，不能替代最终无观测速度验收。
 
 **本地证据，非新真机结论**：CANN ascend910b4编译通过，官方CPU-debug51/51通过，含C4实际参与的逐字节partial/LSE/status、独立oracle、非法共享metadata和单组QR NaN。同一D256/Hkv2/q168/context641的2/20核心CPU模拟器配置分别达到120s；保留超时，以D64长多tile、D128双head与D256大维度的互补病例验证，未提高时限。证据`reports/history_reuse_cpu_validation.json`。新候选的真NPU逐位、图、模型质量和追平8分钟均待用户执行；用户已认可的fe0精度保持有效。
+
+## [149] 真机条目（gpt_new_oscar_kimi，2026-09-28 用户回传）· 候选统计逐核恒等式越过内核两阶段归属，首次真NPU候选门在计数契约处关闭
+
+**原始证据**：用户在node93执行 `git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate`（f5fd2b3，observe-20260928T011250.307839Z）。编译签名与NPU算子门通过后，history-reuse相位报 `HistoryReuseProbeError: candidate cluster owner 0 counters are inconsistent`（`tools/probe_history_reuse.py:487`，probe→run_case→`_check_cluster_stats`），报告 `history-reuse.json`，rc=1；候选门按设计fail-closed，未启动服务。用户同传npu-smi：8卡健康、无残留进程，与故障无关。
+
+**定位**：失败的逐核条件是 `row[6]==row[1]`（original_schedule_skips==grouped_leaders）。C4内核两遍调度的计数归属不同：第一遍按CvTaskSchedule的workId条带，把被推迟成员记到其query tile所属核——一簇4个成员在连续4个tile上、最多落到4个不同核；第二遍按#129改造后的84-token bucket重映射，把4个grouped_leaders记到受理该bucket的单个核。逐核相等一般不成立，恒等式只在全局和成立。以首个病例mature_20k（4096 token、queryTile=21、bucket=84、20 Cube）核算：core0第二遍受理簇k∈{0,20,40}→row[1]=12；第一遍仅k≡0(mod 5)的成员tile 4k落在core0→row[6]=10，确定性报"owner 0 inconsistent"，与观测逐字一致。
+
+**为何此前未见**：该相位为f5fd2b3新增，本轮是候选首次真NPU执行（#148已记"真NPU逐位/图均待用户执行"）。官方CPU-debug（`csrc/cpu/cv_probe.cpp`）只核对跨核求和后的恒等式，口径本就正确；D256的2/20核CPU模拟配置在#148保留120s超时，多核计数分布从未完整执行；主机单测只喂逐核自洽合成行。bitwise partial/LSE/status与冻结oracle等真实精度门位于计数检查之前且已通过——本失败是宿主侧契约过严，不是C4内核数值错误，也不是设备残留。
+
+**修法与边界**：`_check_cluster_stats`逐核循环只保留同点累加恒等式（grouped==4*clusters、avoided==3*shared_tiles、anchors==clusters），skips==grouped保留在全局和校验，与CPU-debug totals oracle口径一致；新增两阶段归属回归测试。未改任何CANN算子及fe0/C4数值路径，无须重编译。真NPU复验（全部病例、图回放、速度门及服务）仍待用户重跑同一命令，本条不宣称候选已合格。

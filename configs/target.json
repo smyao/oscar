@@ -2,7 +2,7 @@
   "model": "/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp",
   "served_model_name": "qwen3.5",
   "host": "0.0.0.0",
-  "port": 9595,
+  "port": 7878,
   "devices": [4, 5, 6, 7],
   "device_policy": "Current task override: physical NPU 4-7; all child processes use this explicit selection",
   "soc_version": "ascend910b4",

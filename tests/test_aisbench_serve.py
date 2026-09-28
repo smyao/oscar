@@ -111,7 +111,7 @@ def test_ready_only_after_observer_then_clean_stop(monkeypatch, tmp_path):
     assert os.environ == prior_env
     assert phases == ["build-dependencies", "install-plugin", "probe-ops", "prepare-rotations"]
     ready = json.loads((logs / "ready.json").read_text())
-    assert ready["url"] == "http://127.0.0.1:9595/v1/chat/completions"
+    assert ready["url"] == "http://127.0.0.1:7878/v1/chat/completions"
     assert ready["model"] == "qwen3.5"
     assert ready["performance_acceptance"] == "not_run"
     assert len([line for line in printed if "AISBENCH_READY" in line]) == 1

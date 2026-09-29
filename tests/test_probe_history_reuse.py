@@ -1,4 +1,4 @@
-"""Archive #126/#129/#140-145/#148-150: fe0-versus-C4/q1 host contracts.
+"""Archive #126/#129/#140-145/#148-152: fe0-versus-C4/q1 host contracts.
 
 These tests validate probe inputs and fail-closed evidence, never claim NPU
 accuracy, graph capture or a production performance improvement.
@@ -10,6 +10,31 @@ from types import SimpleNamespace
 import pytest
 
 from tools import probe_history_reuse as reuse
+
+
+def test_active_device_accepts_any_explicit_four_card_target(monkeypatch):
+    monkeypatch.delenv("ASCEND_RT_VISIBLE_DEVICES", raising=False)
+    reuse._active_device({"devices": [4, 5, 6, 7], "soc_version": "ascend910b4"})
+    assert reuse.os.environ["ASCEND_RT_VISIBLE_DEVICES"] == "4,5,6,7"
+
+
+@pytest.mark.parametrize("devices", (
+    None, [4, 5, 6], [4, 5, 6, 6], [4, 5, 6, -1], [4, 5, 6, True],
+    [4, 5, 6, []],
+))
+def test_active_device_rejects_invalid_explicit_targets(monkeypatch, devices):
+    monkeypatch.delenv("ASCEND_RT_VISIBLE_DEVICES", raising=False)
+    with pytest.raises(reuse.HistoryReuseProbeError, match="four explicit unique"):
+        reuse._active_device({"devices": devices, "soc_version": "ascend910b4"})
+
+
+def test_active_device_rejects_soc_or_inherited_selection_mismatch(monkeypatch):
+    monkeypatch.delenv("ASCEND_RT_VISIBLE_DEVICES", raising=False)
+    with pytest.raises(reuse.HistoryReuseProbeError, match="ascend910b4"):
+        reuse._active_device({"devices": [4, 5, 6, 7], "soc_version": "ascend910b3"})
+    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "0,1,2,3")
+    with pytest.raises(reuse.HistoryReuseProbeError, match="differs from target"):
+        reuse._active_device({"devices": [4, 5, 6, 7], "soc_version": "ascend910b4"})
 
 
 def test_small_fixture_is_deterministic_and_uses_disjoint_physical_pages():

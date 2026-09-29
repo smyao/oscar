@@ -28562,3 +28562,9 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 0677bcb、`observe-20260928T064725.021030Z`全部fast precision/graph/performance门passed，failed_cases为空，正常短probe结束；原文`reports/target_fast_unpack_pass_20260928.txt`。q4 N128/S3 15.297940→11.281520ms；q1 N128/S3 13.854560→9.842060ms；q1 N16384/S1 20.468300→15.765760ms；C4 mature20K 55.009899→48.772461ms；mixed q1/q4/long 19.301439→15.852880ms。五例逐位通过，q4/q1指定独立图passed，其余行graph not_run。记录实测，不另立错误编号，也不外推完整模型总时长。
 
 用户明确要求每轮均同步到`git pull --ff-only && bash scripts/install_serve.sh --variant candidate`。当前该路径已启用C4/q1/fast；本轮统一候选预设供直启与probe共同调用，补计划/子进程/实际路由回归并写入AGENTS。默认配置与后四卡模式保持各自既有行为；直启不因该约定变成自动跑测试或AISBench。
+
+## [152] 真机条目（2026-09-29）· 后四卡observe已生效，但history-reuse宿主门仍写死前四卡
+
+**真实结果**：用户在node93执行`git pull && bash scripts/install_observe_serve.sh --variant candidate --probe-only --diagnose-mixed`（1a0fa5f，`observe-20260929T024045.941988Z`）。入口明确打印`devices=4,5,6,7 port=7878`，current FIA与operator gate通过，资源清理通过；`history-reuse-npu`报`HistoryReuseProbeError: explicit target devices 0,1,2,3 and ascend910b4 are required`并以rc=1关闭候选门。服务及mixed诊断均未启动，不能把此前通过项写成此次完整probe通过；该失败也不是8卡进程清理。
+
+**根因与修法**：`tools/probe_history_reuse.py:_active_device`把设备列表和值同时写死为`[0,1,2,3]`/`"0,1,2,3"`，与observe显式后四卡有效配置冲突。修订后仍要求恰好4个互异、非负、严格整数的显式物理设备以及`ascend910b4`，但掩码由本次target设备顺序生成；若继承的`ASCEND_RT_VISIBLE_DEVICES`与target不逐字一致仍失败。新增后四卡接受、非法设备/SOC及继承掩码冲突回归。本修订只改宿主侧设备选择契约，不改AscendC算子、精度阈值、图或性能门；目标NPU重跑结果仍待同一命令验证。

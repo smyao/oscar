@@ -1,4 +1,4 @@
-# Archive #126/#129/#140-145/#148-150 and startup D.4: fe0 is the numerical baseline.
+# Archive #126/#129/#140-145/#148-152 and startup D.4: fe0 is the numerical baseline.
 # D.4 four questions: (1) this checks fused history dequant+FIA only;
 # (2) the failed implementation restored full 32K history for 6.5s/device;
 # (3) the experimental C4 op shares one bounded INT2 tile only among four
@@ -312,9 +312,14 @@ def make_fixture(torch, shape: Shape, *, on_request=None) -> dict:
 
 
 def _active_device(target: dict):
-    if target.get("devices") != [0, 1, 2, 3] or target.get("soc_version") != "ascend910b4":
-        raise HistoryReuseProbeError("explicit target devices 0,1,2,3 and ascend910b4 are required")
-    selection = "0,1,2,3"
+    devices = target.get("devices")
+    if (not isinstance(devices, list) or len(devices) != 4 or
+            any(type(device) is not int or device < 0 for device in devices) or
+            len(set(devices)) != 4 or
+            target.get("soc_version") != "ascend910b4"):
+        raise HistoryReuseProbeError(
+            "four explicit unique non-negative target devices and ascend910b4 are required")
+    selection = ",".join(map(str, devices))
     inherited = os.environ.get("ASCEND_RT_VISIBLE_DEVICES")
     if inherited is not None and inherited != selection:
         raise HistoryReuseProbeError(f"physical device selection {inherited!r} differs from target")

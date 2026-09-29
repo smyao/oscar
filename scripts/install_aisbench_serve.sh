@@ -6,4 +6,5 @@ set -euo pipefail
 TASK_ROOT="${BASH_SOURCE[0]%/*}/.."
 cd -- "${TASK_ROOT}"
 export PYTHONUNBUFFERED=1
+export ASCEND_RT_VISIBLE_DEVICES="4,5,6,7"
 exec "${OSCAR_PYTHON:-python3}" -m tools.install_serve --rear-cards "$@"

@@ -13,8 +13,17 @@ from tools.phase import PhaseResult
 def test_aisbench_shell_entry_selects_rear_cards_and_7878_contract():
     script = (install_serve.ROOT / "scripts/install_aisbench_serve.sh").read_text()
     assert "set -euo pipefail" in script
+    assert 'ASCEND_RT_VISIBLE_DEVICES="4,5,6,7"' in script
     assert "-m tools.install_serve --rear-cards" in script
     assert "端口 7878" in script
+
+
+def test_install_shell_hides_front_cards_before_rear_card_python_entry():
+    script = (install_serve.ROOT / "scripts/install_serve.sh").read_text()
+    mask = script.index('export ASCEND_RT_VISIBLE_DEVICES="4,5,6,7"')
+    launch = script.index('-m tools.install_serve "$@"')
+    assert mask < launch
+    assert "pkill" not in script and "killall" not in script and "npu-smi" not in script
 
 
 def config_file(tmp_path, enabled=False):

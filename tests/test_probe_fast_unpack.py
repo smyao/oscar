@@ -1,4 +1,4 @@
-"""Archive #126/#129/#148-151: fast INT2 probe host contracts, not NPU proof."""
+"""Archive #126/#129/#148-151/#150-P0: fast INT2 probe contracts, not NPU proof."""
 
 import json
 from types import SimpleNamespace
@@ -46,6 +46,13 @@ def _rows():
         if shape.name == "mixed_unaligned_mature_s3":
             row["terminal_split_counterfactual"] = {
                 "fe0_old_fast_partial_lse_status_merge": "bitwise_passed"}
+        if shape.name == "q4_decode32_n128_s3":
+            row["p0_weighted"] = {"operator": fast.P0_WEIGHTED,
+                "predicted_kv256_per_core": [32] * 20,
+                "performance": {"gate": "passed", "warmup": 2, "repeats": 5,
+                    "order": "alternating_AB_BA", "weighted_over_fast": 0.8,
+                    "fast": {"device_event_ms": [10.0] * 5, "median_ms": 10.0},
+                    "weighted": {"device_event_ms": [8.0] * 5, "median_ms": 8.0}}}
         rows.append(row)
     return rows
 
@@ -78,6 +85,22 @@ def test_case_plan_keeps_original_nine_and_measures_five_distinct_modes():
     assert mixed.expect_clusters
     assert {(by_name[name][1], by_name[name][0].dim) for name in fast._META_CASES} == {
         ("base", 256), ("q1", 256), ("c4", 256)}
+
+
+def test_p0_predictor_balances_real_kv256_width_and_ignores_dead_rows():
+    torch = pytest.importorskip("torch")
+    tasks = torch.zeros((44, 16), dtype=torch.int64)
+    for task_id in range(20):
+        tasks[task_id, 1] = 1; tasks[task_id, 3] = 64
+        tasks[task_id, 4] = 64 + (task_id % 5 + 1) * 256
+    for task_id in range(20, 40):
+        tasks[task_id, 1] = 1; tasks[task_id, 4] = 1
+    tasks[40, 1] = -1
+    tasks[41, 1] = 1; tasks[41, 10] = 2
+    tasks[43, 1] = 1; tasks[43, 3] = 9; tasks[43, 4] = 8
+    loads = fast.predicted_kv256_weights(tasks, 20)
+    assert sum(loads) == sum(task_id % 5 + 1 for task_id in range(20)) + 20
+    assert max(loads) - min(loads) <= 4
 
 
 def test_fast_symbols_preserve_old_abi_and_c4_stats_position():
@@ -166,6 +189,10 @@ def test_verdict_requires_every_precision_graph_and_ratio_gate():
     row["performance"]["fast"]["median_ms"] = 10.0001
     row["performance"]["fast_over_old"] = 1.00001
     assert fast.verdict(bad)["performance"] == "failed"
+    bad = _rows()
+    next(row for row in bad if row["case"] == "q4_decode32_n128_s3")[
+        "p0_weighted"]["performance"]["gate"] = "failed"
+    assert fast.verdict(bad)["p0_performance"] == "failed"
     bad = _rows()
     next(row for row in bad if row["case"] == "mature_20k")["fast_operator"] = fast.reuse.CANDIDATE_OP
     assert fast.verdict(bad)["precision"] == "failed"

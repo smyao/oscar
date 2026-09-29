@@ -1,4 +1,4 @@
-# Archive #126/#129/#148-151 and startup D.4: an independent real-NPU gate
+# Archive #126/#129/#148-151 and #150/P0 startup D.4: an independent real-NPU gate
 # for faster fused INT2 unpack. D.4's 6.5s full-history restore is forbidden;
 # this probe tests the bounded CV tile, exact fe0 outputs, and measured speed.
 """Compare old and fast INT2 CV symbols on identical padded/long task tables."""
@@ -19,6 +19,7 @@ from .phase import atomic_json
 
 ROOT = Path(__file__).resolve().parents[1]
 FAST_BASE = "attention_cv_fast_out"
+P0_WEIGHTED = "attention_cv_fast_weighted_out"
 FAST_Q1 = "attention_cv_fast_q1_out"
 FAST_C4 = "attention_cv_fast_cluster4_out"
 _MODES = {
@@ -214,6 +215,40 @@ def _launch(ops, tensors: dict, fixture: dict, buffers: dict,
             raise FastUnpackProbeError("base/q1 call unexpectedly carries C4 stats")
         getattr(ops, name)(*args, *attrs)
     return name
+
+
+def _launch_weighted(ops, tensors: dict, fixture: dict, buffers: dict,
+                     cores: int) -> str:
+    """#150/P0: independent q4 symbol; never selected by production dispatch."""
+    spec: reuse.Shape = fixture["spec"]
+    args = (tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"],
+            tensors["rv"], tensors["raw"], tensors["table"], tensors["wk"],
+            tensors["wv"], tensors["tags"], buffers["tasks"],
+            buffers["partial"], buffers["lse"], buffers["status"],
+            buffers["workspace"])
+    attrs = (reuse.BLOCK_TOKENS, fixture["blocks"], reuse.PREFIX,
+             fixture["stride"], reuse.SINK, spec.recent_tokens,
+             reuse.SPECULATIVE, spec.splits, fixture["scale"], cores)
+    getattr(ops, P0_WEIGHTED)(*args, *attrs)
+    return P0_WEIGHTED
+
+
+def predicted_kv256_weights(tasks, cores: int) -> list[int]:
+    """Mirror the kernel's stable least-loaded assignment from actual task rows."""
+    if cores <= 0 or cores > 32 or tasks.ndim != 2 or tasks.shape[1] != 16:
+        raise FastUnpackProbeError("invalid P0 prediction geometry")
+    loads = [0] * cores
+    for task_id, row in enumerate(tasks.tolist()):
+        qcount, begin, end, error = (int(row[1]), int(row[3]),
+                                     int(row[4]), int(row[10]))
+        weight = 0 if qcount <= 0 or error or begin < 0 or end < begin else \
+            max(1, (end - begin + 255) // 256)
+        if weight:
+            owner = min(range(cores), key=lambda core: loads[core])
+            loads[owner] += weight
+        else:
+            owner = task_id % cores
+    return loads
 
 
 def _check_one(torch, fixture: dict, buffers: dict, *, invalid: bool,
@@ -413,13 +448,55 @@ def _timed_pair(torch, ops, tensors: dict, fixture: dict, old: dict,
             "scope": "distinct_old_vs_fast_operator_real_NPU_Event_no_profiler"}
 
 
+def _timed_p0(torch, ops, tensors: dict, fixture: dict, fast: dict,
+              weighted: dict, cores: int, reference_bits: dict,
+              acceptance: dict) -> dict:
+    policy = acceptance["performance"]
+    samples = {"fast": [], "weighted": []}
+    stream = torch.npu.current_stream()
+    for index in range(policy["warmup"] + policy["repeats"]):
+        order = ("fast", "weighted") if index < policy["warmup"] or \
+            (index - policy["warmup"]) % 2 == 0 else ("weighted", "fast")
+        for label in order:
+            buffers = fast if label == "fast" else weighted
+            reuse._poison(torch, buffers)
+            if index >= policy["warmup"]:
+                begin, end = (torch.npu.Event(enable_timing=True),
+                              torch.npu.Event(enable_timing=True))
+                begin.record(stream)
+            if label == "fast":
+                _launch(ops, tensors, fixture, buffers, cores, "base", fast=True)
+            else:
+                _launch_weighted(ops, tensors, fixture, buffers, cores)
+            if index >= policy["warmup"]:
+                end.record(stream);end.synchronize()
+                elapsed = float(begin.elapsed_time(end))
+                if not math.isfinite(elapsed) or elapsed <= 0:
+                    raise FastUnpackProbeError("invalid P0 NPU Event duration")
+                samples[label].append(elapsed)
+            else:
+                torch.npu.synchronize()
+            _check_one(torch, fixture, buffers, invalid=False)
+            _same_bits(torch, reference_bits, buffers, f"P0 {label} timed repeat")
+    medians = {name: statistics.median(values) for name, values in samples.items()}
+    ratio = medians["weighted"] / medians["fast"]
+    return {"fast": {"device_event_ms": samples["fast"], "median_ms": medians["fast"]},
+            "weighted": {"device_event_ms": samples["weighted"],
+                         "median_ms": medians["weighted"]},
+            "weighted_over_fast": ratio,
+            "gate": "passed" if ratio < policy["max_latency_ratio"] else "failed",
+            "warmup": 2, "repeats": 5, "order": "alternating_AB_BA",
+            "scope": "independent_q4_fast_vs_weighted_real_NPU_Event"}
+
+
 def _changed_input_graph(torch, ops, tensors: dict, fixture: dict,
                          old: dict, fast: dict, cores: int, mode: str,
-                         original_bits: dict) -> dict:
+                         original_bits: dict, weighted: dict | None = None) -> dict:
     """#129/#151: old and fast standalone graphs replay changed Q/tasks in place."""
     if mode not in {"base", "q1"} or fixture["tokens"] != 128:
         raise FastUnpackProbeError("fast graph gate requires q4/q1 N128")
     graph_old, graph_fast = torch.npu.NPUGraph(), torch.npu.NPUGraph()
+    graph_weighted = torch.npu.NPUGraph() if weighted is not None else None
     reuse._poison(torch, old)
     reuse._poison(torch, fast)
     torch.npu.synchronize()
@@ -427,16 +504,24 @@ def _changed_input_graph(torch, ops, tensors: dict, fixture: dict,
         _launch(ops, tensors, fixture, old, cores, mode, fast=False)
     with torch.npu.graph(graph_fast, capture_error_mode="thread_local", auto_dispatch_capture=True):
         _launch(ops, tensors, fixture, fast, cores, mode, fast=True)
+    if weighted is not None:
+        reuse._poison(torch, weighted)
+        with torch.npu.graph(graph_weighted, capture_error_mode="thread_local", auto_dispatch_capture=True):
+            _launch_weighted(ops, tensors, fixture, weighted, cores)
     torch.npu.synchronize()
     reuse._poison(torch, old)
     reuse._poison(torch, fast)
     graph_old.replay()
     graph_fast.replay()
+    if graph_weighted is not None:graph_weighted.replay()
     torch.npu.synchronize()
     _check_one(torch, fixture, old, invalid=False)
     _check_one(torch, fixture, fast, invalid=False)
     _same_bits(torch, original_bits, old, "old initial graph replay")
     _same_bits(torch, original_bits, fast, "fast initial graph replay")
+    if weighted is not None:
+        _check_one(torch, fixture, weighted, invalid=False)
+        _same_bits(torch, original_bits, weighted, "weighted initial graph replay")
     tensors["q"].copy_(-tensors["q"])
     tensors["qr"].copy_(-tensors["qr"])
     changed_tasks = old["tasks"].cpu()
@@ -449,13 +534,18 @@ def _changed_input_graph(torch, ops, tensors: dict, fixture: dict,
     old["tasks"].copy_(changed_tasks)
     reuse._poison(torch, old)
     reuse._poison(torch, fast)
+    if weighted is not None:reuse._poison(torch, weighted)
     graph_old.replay()
     graph_fast.replay()
+    if graph_weighted is not None:graph_weighted.replay()
     torch.npu.synchronize()
     _check_one(torch, fixture, old, invalid=False)
     _check_one(torch, fixture, fast, invalid=False)
     changed_bits = reuse._snapshot(old)
     _same_bits(torch, changed_bits, fast, "fast changed-input graph replay")
+    if weighted is not None:
+        _check_one(torch, fixture, weighted, invalid=False)
+        _same_bits(torch, changed_bits, weighted, "weighted changed-input graph replay")
     if all(reuse._bitwise_identical(torch, original_bits[name], changed_bits[name])
            for name in ("partial", "lse")):
         raise FastUnpackProbeError("fast graph replay ignored changed input")
@@ -474,6 +564,7 @@ def _changed_input_graph(torch, ops, tensors: dict, fixture: dict,
                     f"{label} changed-input eager versus graph")
     return {"capture": "passed", "replay": "passed",
             "changed_query_and_task_same_addresses": True,
+            "weighted_operator": P0_WEIGHTED if weighted is not None else "not_run",
             "scope": "standalone_N128_operator_graph_not_full_service"}
 
 
@@ -487,10 +578,15 @@ def run_case(torch, ops, spec: reuse.Shape, mode: str, timed: bool,
     baseline = reuse._allocate(torch, fixture, device, cores, candidate=False)
     old = _buffers(torch, fixture, device, cores, mode)
     fast = _buffers(torch, fixture, device, cores, mode)
+    weighted = (_buffers(torch, fixture, device, cores, "base")
+                if spec.name == "q4_decode32_n128_s3" else None)
     preparation = reuse._prepare(torch, ops, tensors, fixture, baseline)
     for buffers in (old, fast):
         buffers["tasks"] = baseline["tasks"]
         buffers["positions"] = baseline["positions"]
+    if weighted is not None:
+        weighted["tasks"] = baseline["tasks"]
+        weighted["positions"] = baseline["positions"]
     invalid = spec.corrupt_metadata or spec.corrupt_qr
     reuse._poison(torch, baseline)
     reuse._launch(ops, tensors, fixture, baseline, cores, candidate=False)
@@ -528,6 +624,24 @@ def run_case(torch, ops, spec: reuse.Shape, mode: str, timed: bool,
         _same_merge(torch, candidate_results["old"]["merge"],
                     candidate_results["fast"]["merge"],
                     f"{spec.name} fast versus old")
+    p0 = None
+    if weighted is not None:
+        reuse._poison(torch, weighted)
+        _launch_weighted(ops, tensors, fixture, weighted, cores)
+        torch.npu.synchronize()
+        _check_one(torch, fixture, weighted, invalid=False)
+        _same_bits(torch, reference_bits, weighted, "P0 weighted versus fe0")
+        _same_merge(torch, repeat_merge,
+                    reuse._merge_only(torch, ops, fixture, weighted),
+                    "P0 weighted versus fe0")
+        p0 = {"operator": P0_WEIGHTED,
+              "predicted_kv256_per_core": predicted_kv256_weights(
+                  baseline["tasks"].cpu(), cores)}
+        p0["max_over_mean"] = max(p0["predicted_kv256_per_core"]) / (
+            sum(p0["predicted_kv256_per_core"]) / cores)
+        p0["performance"] = _timed_p0(
+            torch, ops, tensors, fixture, fast, weighted, cores,
+            reference_bits, acceptance)
     counterfactual = (_terminal_counterfactual(torch, ops, tensors, fixture,
                                                baseline, old, fast, cores)
                       if spec.name == "mixed_unaligned_mature_s3" else None)
@@ -537,7 +651,7 @@ def run_case(torch, ops, spec: reuse.Shape, mode: str, timed: bool,
     timing = (_timed_pair(torch, ops, tensors, fixture, old, fast, cores,
                           mode, reference_bits, acceptance) if timed else None)
     graph = (_changed_input_graph(torch, ops, tensors, fixture, old, fast,
-                                  cores, mode, reference_bits)
+                                  cores, mode, reference_bits, weighted)
              if spec.name in _GRAPHS else None)
     row = {"case": spec.name, "status": "passed" if timing is None or
            timing["gate"] == "passed" else "failed",
@@ -566,8 +680,8 @@ def run_case(torch, ops, spec: reuse.Shape, mode: str, timed: bool,
            "fp16_metadata_invalid_and_dead_tail": invalid_metadata,
            "graph_capture": graph["capture"] if graph else "not_run",
            "graph_replay": graph["replay"] if graph else "not_run",
-           "graph": graph, "performance": timing}
-    del fixture, tensors, baseline, old, fast
+           "graph": graph, "performance": timing, "p0_weighted": p0}
+    del fixture, tensors, baseline, old, fast, weighted
     gc.collect()
     torch.npu.empty_cache()
     return row
@@ -638,12 +752,37 @@ def verdict(rows: list[dict]) -> dict:
         except (KeyError, TypeError, ValueError, ZeroDivisionError):
             return False
     performance = "passed" if all(speed_ok(by_name[name]) for name in _TIMED) else "failed"
+    p0 = by_name["q4_decode32_n128_s3"].get("p0_weighted")
+    def p0_ok() -> bool:
+        try:
+            timing = p0["performance"]
+            old = timing["fast"]["device_event_ms"]
+            new = timing["weighted"]["device_event_ms"]
+            weights = p0["predicted_kv256_per_core"]
+            old_median, new_median = statistics.median(old), statistics.median(new)
+            ratio = new_median / old_median
+            return (p0.get("operator") == P0_WEIGHTED and len(weights) == 20 and
+                    all(type(value) is int and value >= 0 for value in weights) and
+                    sum(weights) > 0 and len(old) == len(new) == 5 and
+                    all(type(value) in (int, float) and math.isfinite(value) and
+                        value > 0 for value in old + new) and
+                    timing.get("gate") == "passed" and ratio < 1.0 and
+                    math.isclose(timing["fast"]["median_ms"], old_median, rel_tol=1e-12) and
+                    math.isclose(timing["weighted"]["median_ms"], new_median, rel_tol=1e-12) and
+                    math.isclose(timing["weighted_over_fast"], ratio, rel_tol=1e-12) and
+                    timing.get("warmup") == 2 and timing.get("repeats") == 5 and
+                    timing.get("order") == "alternating_AB_BA")
+        except (KeyError, TypeError, ValueError, ZeroDivisionError):
+            return False
+    p0_performance = "passed" if isinstance(p0, dict) and p0_ok() else "failed"
     failures = [name for name, value in (("precision", precision),
                 ("graph_capture", graph_capture), ("graph_replay", graph_replay),
-                ("performance", performance)) if value != "passed"]
+                ("performance", performance), ("p0_performance", p0_performance))
+                if value != "passed"]
     return {"status": "passed" if not failures else "failed",
             "precision": precision, "graph_capture": graph_capture,
             "graph_replay": graph_replay, "performance": performance,
+            "p0_performance": p0_performance,
             "failed_gates": failures,
             "failed_cases": [row["case"] for row in rows if row.get("status") != "passed"]}
 
@@ -674,7 +813,7 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
     manifest = validate_build_artifacts(manifest_path)
     require_capabilities({"prepare_attention_tasks_out", "merge_lse_out",
                           reuse.FE0_CV_OP, reuse.Q1_CV_OP, reuse.CANDIDATE_OP,
-                          FAST_BASE, FAST_Q1, FAST_C4}, manifest_path)
+                          FAST_BASE, P0_WEIGHTED, FAST_Q1, FAST_C4}, manifest_path)
     from .probe_native_current_fia import _target_geometry
     if _target_geometry(target) != (6, 1, 256):
         raise FastUnpackProbeError("target TP head geometry differs from Hq6/Hkv1/D256")
@@ -700,6 +839,18 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
                 "precision": row["precision"],
                 "graph": row["graph_replay"],
                 "status": row["status"]}, sort_keys=True), flush=True)
+            if row.get("p0_weighted") is not None:
+                p0 = row["p0_weighted"]
+                timing = p0["performance"]
+                print("[oscar] PERF_P0_WEIGHTED " + json.dumps({
+                    "case": row["case"], "operator": p0["operator"],
+                    "predicted_kv256_per_core": p0["predicted_kv256_per_core"],
+                    "max_over_mean": p0["max_over_mean"],
+                    "fast_ms": timing["fast"]["median_ms"],
+                    "weighted_ms": timing["weighted"]["median_ms"],
+                    "ratio": timing["weighted_over_fast"],
+                    "graph": row["graph_replay"], "gate": timing["gate"]},
+                    sort_keys=True), flush=True)
     gates = verdict(rows)
     return {**gates, "scope": "independent_real_NPU_operator_precision_graph_and_Event_AB",
             "baseline": "fe0_old_C4_old_q1_mode_matched",

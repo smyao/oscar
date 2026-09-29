@@ -59,6 +59,17 @@ void attention_cv_fast_launch(void* stream, void* query, void* query_rot,
     int64_t page_stride, int64_t window_stride, int64_t tag_stride,
     int64_t sink, int64_t recent, int64_t speculative, int64_t splits,
     float scale, uint32_t cores);
+// Archive #150/P0: diagnostic q4 KV256-weighted ownership, same tensor ABI.
+void attention_cv_fast_weighted_launch(void* stream, void* query, void* query_rot,
+    void* current_key, void* current_value, void* rotation_v, void* raw,
+    void* block_table, void* window_key, void* window_value, void* window_tags,
+    void* tasks, void* partial, void* lse, void* status, void* workspace,
+    int64_t tokens, int64_t query_heads, int64_t kv_heads, int64_t dim,
+    int64_t requests, int64_t table_columns, int64_t task_count,
+    int64_t block_tokens, int64_t physical_blocks, int64_t ssm_offset,
+    int64_t page_stride, int64_t window_stride, int64_t tag_stride,
+    int64_t sink, int64_t recent, int64_t speculative, int64_t splits,
+    float scale, uint32_t cores);
 void attention_cv_fast_q1_launch(void* stream, void* query, void* query_rot,
     void* current_key, void* current_value, void* rotation_v, void* raw,
     void* block_table, void* window_key, void* window_value, void* window_tags,

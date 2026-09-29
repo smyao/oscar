@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-// Archive G5/G6/#34/#36/#53/#58/#69/#92/#108: explicit same-device schema,
+// Archive G5/G6/#34/#36/#53/#58/#69/#92/#108/#150: explicit same-device schema,
 // fixed graph capacities and validated strided native page views.
 // D.4: prepare and fused attention; one metadata launch and one CV launch,
-// fixed per-Cube tile workspace, no full-history tensor or host request loop.
+// fixed per-Cube tile workspace, no full-history tensor or host request loop;
+// P0 weighted q4 is a bounded diagnostic symbol, not a production fallback.
 // Previous 725ms host prepare / 6499.8-6655.1ms dequant must be measured anew;
 // source presence and successful compilation are not numerical/performance proof.
 #include <algorithm>
@@ -367,14 +368,15 @@ void AttentionCluster(const at::Tensor& query,const at::Tensor& queryRot,
       windowKey.stride(0),windowTags.stride(0),sink,recent,speculative,splits,
       static_cast<float>(scale),static_cast<uint32_t>(cores));
 }
-void AttentionFast(const at::Tensor& query,const at::Tensor& queryRot,
+void AttentionFastImpl(const at::Tensor& query,const at::Tensor& queryRot,
     const at::Tensor& currentKey,const at::Tensor& currentValue,
     const at::Tensor& rotation,const at::Tensor& raw,const at::Tensor& table,
     const at::Tensor& windowKey,const at::Tensor& windowValue,
     const at::Tensor& windowTags,const at::Tensor& tasks,at::Tensor partial,
     at::Tensor lse,at::Tensor status,at::Tensor workspace,int64_t blockTokens,
     int64_t blocks,int64_t ssmOffset,int64_t pageStride,int64_t sink,
-    int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores) {
+    int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores,
+    bool weighted) {
   Check(query,query,at::kBFloat16,"query");Check(queryRot,query,at::kFloat,"query_rot");
   Check(currentKey,query,at::kBFloat16,"current_key");
   Check(currentValue,query,at::kBFloat16,"current_value");
@@ -414,6 +416,8 @@ void AttentionFast(const at::Tensor& query,const at::Tensor& queryRot,
   TORCH_CHECK(table.dim()==2 && table.size(0)>0 && table.size(1)>0,"invalid block table");
   TORCH_CHECK(tasks.dim()==2 && tasks.size(0)==n*hk*3*splits && tasks.size(1)==16,
       "invalid attention task capacity");
+  TORCH_CHECK(!weighted || n<=128,
+      "weighted q4 diagnostic is bounded to N<=128; production routing is unchanged");
   TORCH_CHECK(partial.dim()==4 && partial.size(0)==n && partial.size(1)==hq &&
       partial.size(2)==3*splits && partial.size(3)==d,"partial must be [N,Hq,3*splits,D]");
   TORCH_CHECK(lse.dim()==3 && lse.size(0)==n && lse.size(1)==hq &&
@@ -429,7 +433,9 @@ void AttentionFast(const at::Tensor& query,const at::Tensor& queryRot,
   Disjoint(lse,status);Disjoint(lse,workspace);Disjoint(status,workspace);
   if(!n) return;
   const c10_npu::OptionalNPUGuard guard(query.device());
-  oscar_ascend::attention_cv_fast_launch(c10_npu::getCurrentNPUStream().stream(),
+  auto launch=weighted?oscar_ascend::attention_cv_fast_weighted_launch:
+      oscar_ascend::attention_cv_fast_launch;
+  launch(c10_npu::getCurrentNPUStream().stream(),
       query.data_ptr(),queryRot.data_ptr(),currentKey.data_ptr(),currentValue.data_ptr(),
       rotation.data_ptr(),raw.data_ptr(),table.data_ptr(),windowKey.data_ptr(),
       windowValue.data_ptr(),windowTags.data_ptr(),tasks.data_ptr(),partial.data_ptr(),
@@ -437,6 +443,32 @@ void AttentionFast(const at::Tensor& query,const at::Tensor& queryRot,
       table.size(1),tasks.size(0),blockTokens,blocks,ssmOffset,pageStride,
       windowKey.stride(0),windowTags.stride(0),sink,recent,speculative,splits,
       static_cast<float>(scale),static_cast<uint32_t>(cores));
+}
+void AttentionFast(const at::Tensor& query,const at::Tensor& queryRot,
+    const at::Tensor& currentKey,const at::Tensor& currentValue,
+    const at::Tensor& rotation,const at::Tensor& raw,const at::Tensor& table,
+    const at::Tensor& windowKey,const at::Tensor& windowValue,
+    const at::Tensor& windowTags,const at::Tensor& tasks,at::Tensor partial,
+    at::Tensor lse,at::Tensor status,at::Tensor workspace,int64_t blockTokens,
+    int64_t blocks,int64_t ssmOffset,int64_t pageStride,int64_t sink,
+    int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores) {
+  AttentionFastImpl(query,queryRot,currentKey,currentValue,rotation,raw,table,
+      windowKey,windowValue,windowTags,tasks,partial,lse,status,workspace,
+      blockTokens,blocks,ssmOffset,pageStride,sink,recent,speculative,splits,
+      scale,cores,false);
+}
+void AttentionFastWeighted(const at::Tensor& query,const at::Tensor& queryRot,
+    const at::Tensor& currentKey,const at::Tensor& currentValue,
+    const at::Tensor& rotation,const at::Tensor& raw,const at::Tensor& table,
+    const at::Tensor& windowKey,const at::Tensor& windowValue,
+    const at::Tensor& windowTags,const at::Tensor& tasks,at::Tensor partial,
+    at::Tensor lse,at::Tensor status,at::Tensor workspace,int64_t blockTokens,
+    int64_t blocks,int64_t ssmOffset,int64_t pageStride,int64_t sink,
+    int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores) {
+  AttentionFastImpl(query,queryRot,currentKey,currentValue,rotation,raw,table,
+      windowKey,windowValue,windowTags,tasks,partial,lse,status,workspace,
+      blockTokens,blocks,ssmOffset,pageStride,sink,recent,speculative,splits,
+      scale,cores,true);
 }
 void AttentionFastQ1(const at::Tensor& query,const at::Tensor& queryRot,
     const at::Tensor& currentKey,const at::Tensor& currentValue,
@@ -603,6 +635,12 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
       "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
       "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
       "int splits, float scale, int cube_cores) -> ()");
+  m.def("attention_cv_fast_weighted_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+      "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
+      "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
+      "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
+      "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
+      "int splits, float scale, int cube_cores) -> ()");
   m.def("attention_cv_fast_q1_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
       "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
       "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
@@ -637,6 +675,7 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
 TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
   m.impl("prepare_attention_tasks_out",&Prepare);m.impl("attention_cv_out",&Attention);
   m.impl("attention_cv_fast_out",&AttentionFast);
+  m.impl("attention_cv_fast_weighted_out",&AttentionFastWeighted);
   m.impl("attention_cv_fast_q1_out",&AttentionFastQ1);
   m.impl("attention_cv_fast_cluster4_out",&AttentionFastCluster);
   m.impl("attention_cv_profile_out",&AttentionProfile);

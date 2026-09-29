@@ -1,4 +1,4 @@
-# 档案 #94/#95/#125/#133/#140-145：一键观察不发推理请求，fe0 pin与
+# 档案 #94/#95/#125/#133/#140-145/#150：一键观察不发推理请求，fe0 pin与
 # candidate/native标签不能虚构已配对的用户负载，图内残差保持missing。
 import json
 from contextlib import contextmanager
@@ -166,7 +166,9 @@ def test_fast_unpack_gate_requires_exact_new_npu_evidence(monkeypatch, tmp_path)
     monkeypatch.setattr(loader, "validate_build_artifacts", lambda *args: manifest)
     monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
     monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
-    report = {key: "passed" for key in ("status", "precision", "graph_capture", "graph_replay", "performance")}
+    report = {key: "passed" for key in ("status", "precision", "graph_capture",
+                                          "graph_replay", "performance",
+                                          "p0_performance")}
     report.update(artifact_signature=manifest["signature"], artifact_sha256=manifest["sha256"])
     def phase(name, command, **kwargs):
         assert name == "fast-unpack" and "tools.probe_fast_unpack" in command
@@ -177,7 +179,8 @@ def test_fast_unpack_gate_requires_exact_new_npu_evidence(monkeypatch, tmp_path)
     status = {}
     observe_serve._fast_unpack_gate(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, status)
     assert status["fast_unpack_gate"]["full_service_performance"] == "not_established"
-    for key in ("precision", "graph_capture", "graph_replay", "performance", "artifact_signature"):
+    for key in ("precision", "graph_capture", "graph_replay", "performance",
+                "p0_performance", "artifact_signature"):
         saved = report[key]
         report[key] = "failed"
         with pytest.raises(RuntimeError, match=key):

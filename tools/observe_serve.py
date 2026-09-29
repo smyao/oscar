@@ -1,4 +1,4 @@
-# 档案 #70-73/#94/#95/#125/#133/#140-145：只伴随用户外部负载采证；
+# 档案 #70-73/#94/#95/#125/#133/#140-145/#150：只伴随用户外部负载采证；
 # 不发送推理请求、不启HTTP profiler、不把同步诊断或四rank和冒充速度。
 """One-command signed service and passive AISBench phase observation."""
 from __future__ import annotations
@@ -387,7 +387,9 @@ def _fast_unpack_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
         raise RuntimeError("fast unpack NPU resources did not release")
     report = json.loads(output.read_text())
     manifest = validate_build_artifacts(ROOT / "build/ascendc/build_manifest.json")
-    expected = {key: "passed" for key in ("status", "precision", "graph_capture", "graph_replay", "performance")}
+    expected = {key: "passed" for key in ("status", "precision", "graph_capture",
+                                            "graph_replay", "performance",
+                                            "p0_performance")}
     expected.update(artifact_signature=manifest.get("signature"), artifact_sha256=manifest.get("sha256"))
     mismatches = [key for key, value in expected.items() if report.get(key) != value]
     if mismatches:

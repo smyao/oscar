@@ -144,6 +144,13 @@
 // writes. Keep bounded tiles, FP32 math and all cross-core flags unchanged.
 // (4) Replace the incorrectly directed local event, without adding a global
 // sync or history traffic; this fixes ownership, not a claimed speedup.
+// #150/P0/D.4 weighted diagnostic: (1) fused history CV task ownership;
+// (2) index-stride gives a KV256-heavy history leader the same ownership
+// weight as an empty/window/current row; (3) the independent weighted symbol
+// greedily assigns live tasks by ceil((kvend-kvbegin)/256), preserving math,
+// addresses, task/status rows and workspace; (4) per-core predicted KV256 load
+// plus paired Event wall decides acceptance. It is not production-routed until
+// bitwise/oracle/changed-input graph and strict wall-improvement gates pass.
 // #143/D.4 INT2 plane sequencing: (1) source0 Unpack inside fused fia;
 // (2) historical full-history dequant took ~6.5s while native FIA was ~18.7ms,
 // and target K4 events now place most prefill time in CV. (3) Eight independent
@@ -195,7 +202,7 @@ struct Geometry {
   float scale;
 };
 
-template<int32_t D> class AttentionCv {
+template<int32_t D,bool Weighted=false> class AttentionCv {
   static constexpr int32_t kSlotBytes=D/2+8;
   static constexpr int32_t kPackedStride=(kSlotBytes+31)/32*32;
   static constexpr int32_t kElements=kHalfKv*D;
@@ -260,6 +267,7 @@ template<int32_t D> class AttentionCv {
     if ASCEND_IS_AIC {
       DataCacheCleanAndInvalid<int64_t,CacheLine::ENTIRE_DATA_CACHE>(taskGm);
     }
+    if constexpr(Weighted) {ProcessWeighted();if ASCEND_IS_AIC {mm.End();}return;}
     const int64_t queryTile=kQueryRows/(g.hq/g.hk);
     const int64_t perToken=g.hk*3*g.splits;
     const oscar_ascend_schedule::CvTaskSchedule schedule{g.tokens,queryTile,perToken};
@@ -283,6 +291,35 @@ template<int32_t D> class AttentionCv {
     if ASCEND_IS_AIC {mm.End();}
   }
  private:
+  __aicore__ int64_t ScheduleWeight() {
+    if(qcount<=0 || taskError || kvbegin<0 || kvend<kvbegin)return 0;
+    return Max64(1,(kvend-kvbegin+kKvRows-1)/kKvRows);
+  }
+  __aicore__ void ProcessWeighted() {
+    // Every actor reconstructs the same deterministic least-loaded owner map.
+    // The host limits this diagnostic to q4's N<=128 capture shape. LoadTask's
+    // DMA path preserves changed-input graph semantics on Vector actors.
+    int64_t loads[32];for(int32_t core=0;core<32;++core)loads[core]=0;
+    const int64_t cores=GetBlockNum();
+    for(int64_t id=0;id<g.taskCount;++id) {
+      LoadTask(id);
+      const int64_t weight=ScheduleWeight();
+      int64_t owner=id%cores;
+      if(weight>0) {
+        owner=0;
+        for(int64_t core=1;core<cores;++core)
+          if(loads[core]<loads[owner])owner=core;
+        loads[owner]+=weight;
+      }
+      if(owner!=coreIndex)continue;
+      if(qcount==0) {if ASCEND_IS_AIV {PublishStatus(id,0);}continue;}
+      if(qcount<0 || taskError || !TaskValid()) {
+        if ASCEND_IS_AIV {PublishEmpty(id,taskError?taskError:(!TaskValid()?1:0));}
+        continue;
+      }
+      if ASCEND_IS_AIC {CubeTask();} else {VectorTask(id);}
+    }
+  }
   __aicore__ void LoadTask(int64_t id) {
     int64_t data[11];
     if ASCEND_IS_AIC {for(int32_t i=0;i<11;++i)data[i]=taskGm.GetValue(id*16+i);}
@@ -727,6 +764,14 @@ extern "C" __global__ __aicore__ void oscar_attention_cv_fast_kernel(OSCAR_CV_AR
   else if(dim==128) {AttentionCv<128> op;OSCAR_CV_INIT;}
   else {AttentionCv<256> op;OSCAR_CV_INIT;}
 }
+extern "C" __global__ __aicore__ void oscar_attention_cv_fast_weighted_kernel(OSCAR_CV_ARGUMENTS) {
+  KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
+  const Geometry g{tokens,hq,hk,requests,columns,taskCount,blockTokens,blocks,ssmOffset,
+      pageStride,windowStride,tagStride,sink,recent,speculative,splits,scale};
+  if(dim==64) {AttentionCv<64,true> op;OSCAR_CV_INIT;}
+  else if(dim==128) {AttentionCv<128,true> op;OSCAR_CV_INIT;}
+  else {AttentionCv<256,true> op;OSCAR_CV_INIT;}
+}
 #ifndef ASCENDC_CPU_DEBUG
 namespace oscar_ascend {
 void attention_cv_fast_launch(void* stream,void* query,void* queryRot,void* key,void* value,
@@ -737,6 +782,23 @@ void attention_cv_fast_launch(void* stream,void* query,void* queryRot,void* key,
     int64_t windowStride,int64_t tagStride,int64_t sink,int64_t recent,
     int64_t speculative,int64_t splits,float scale,uint32_t cores) {
   oscar_attention_cv_fast_kernel<<<cores,nullptr,stream>>>(
+      static_cast<uint8_t*>(query),static_cast<uint8_t*>(queryRot),
+      static_cast<uint8_t*>(key),static_cast<uint8_t*>(value),
+      static_cast<uint8_t*>(rotation),static_cast<uint8_t*>(raw),
+      static_cast<uint8_t*>(table),static_cast<uint8_t*>(wk),static_cast<uint8_t*>(wv),
+      static_cast<uint8_t*>(tags),static_cast<uint8_t*>(tasks),static_cast<uint8_t*>(output),
+      static_cast<uint8_t*>(lse),static_cast<uint8_t*>(status),static_cast<uint8_t*>(workspace),
+      tokens,hq,hk,dim,requests,columns,taskCount,blockTokens,blocks,ssmOffset,
+      pageStride,windowStride,tagStride,sink,recent,speculative,splits,scale);
+}
+void attention_cv_fast_weighted_launch(void* stream,void* query,void* queryRot,void* key,void* value,
+    void* rotation,void* raw,void* table,void* wk,void* wv,void* tags,void* tasks,
+    void* output,void* lse,void* status,void* workspace,int64_t tokens,int64_t hq,
+    int64_t hk,int64_t dim,int64_t requests,int64_t columns,int64_t taskCount,
+    int64_t blockTokens,int64_t blocks,int64_t ssmOffset,int64_t pageStride,
+    int64_t windowStride,int64_t tagStride,int64_t sink,int64_t recent,
+    int64_t speculative,int64_t splits,float scale,uint32_t cores) {
+  oscar_attention_cv_fast_weighted_kernel<<<cores,nullptr,stream>>>(
       static_cast<uint8_t*>(query),static_cast<uint8_t*>(queryRot),
       static_cast<uint8_t*>(key),static_cast<uint8_t*>(value),
       static_cast<uint8_t*>(rotation),static_cast<uint8_t*>(raw),

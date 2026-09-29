@@ -56,10 +56,13 @@ def _source_identity(variant: str, config: dict) -> dict:
               for name in FE0_KERNEL_SHA256}
     flag = config.get("experimental_history_reuse", False)
     fast = config.get("experimental_fast_unpack", False)
+    weighted = config.get("experimental_weighted_q4", False)
     if type(flag) is not bool:
         raise ValueError("experimental_history_reuse must be an explicit boolean")
     if type(fast) is not bool or (fast and not flag):
         raise ValueError("experimental_fast_unpack requires explicit candidate history configuration")
+    if type(weighted) is not bool or (weighted and not fast):
+        raise ValueError("experimental_weighted_q4 requires explicit fast candidate configuration")
     if variant in {"baseline", "candidate"} and actual != FE0_KERNEL_SHA256:
         raise RuntimeError("OSCAR observation requires byte-identical fe0 production kernels")
     if variant == "baseline" and flag:
@@ -79,7 +82,8 @@ def _source_identity(variant: str, config: dict) -> dict:
                               capture_output=True, check=True).stdout.strip()
     return {"variant": variant, "fe0_production_kernels_match": actual == FE0_KERNEL_SHA256,
             "kernel_sha256": actual, "experimental_history_reuse": flag,
-            "experimental_fast_unpack": fast, "fast_source_sha256": fast_sources,
+            "experimental_fast_unpack": fast, "experimental_weighted_q4": weighted,
+            "fast_source_sha256": fast_sources,
             "candidate_kernel_sha256": hashlib.sha256(cluster.read_bytes()).hexdigest()
                 if variant == "candidate" else None,
             "candidate_q1_kernel_sha256": hashlib.sha256(q1.read_bytes()).hexdigest()

@@ -1,4 +1,4 @@
-"""Archive #148-151: the user's fixed serving command selects the probed bundle."""
+"""Archive #148-151/#150-P0: fixed serving command selects the probed bundle."""
 import json
 
 import pytest
@@ -14,7 +14,8 @@ def test_install_and_probe_plans_select_the_same_bundle(variant, enabled, capsys
     assert observe_serve.main(["--variant", variant, "--plan"]) == 0
     probe = json.loads(capsys.readouterr().out)
     assert install["optimizations"] == probe["optimizations"] == {
-        "history_cluster4": enabled, "later_mtp_q1": enabled, "fast_unpack": enabled}
+        "history_cluster4": enabled, "later_mtp_q1": enabled,
+        "fast_unpack": enabled, "weighted_q4": enabled}
     assert install["probes"] == "none"
 
 
@@ -29,3 +30,5 @@ def test_default_retains_config_and_candidate_does_not_mutate_input():
         variant_config({"experimental_fast_unpack": "true"}, "candidate")
     with pytest.raises(ValueError, match="requires"):
         variant_config({"experimental_fast_unpack": True}, None)
+    with pytest.raises(ValueError, match="requires"):
+        variant_config({"experimental_weighted_q4": True}, None)

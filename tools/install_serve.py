@@ -1,5 +1,5 @@
 # 档案 #75/#94/#95/#116/#117/#120/#125：相位输出实时到终端、完整日志落盘、保留真实退出码；本入口按用户要求只编译安装并直接启动，不含任何测试或probe。
-# #148/#150：安装最新产物不等于启用优化；显式candidate将同一有效配置传给所有相位和服务。
+# #148/#150/P0：显式candidate将已过真NPU门的weighted q4传给正式服务。
 """Install, compile and prepare rotations, then exec the formal service; no tests, no probes."""
 from __future__ import annotations
 import argparse
@@ -27,7 +27,7 @@ def main(argv=None) -> int:
     parser.add_argument("--plan", action="store_true", help="print commands without installing or touching an NPU")
     parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--variant", choices=("baseline", "candidate"),
-                        help="candidate enables C4, later-MTP q1 and fast unpack; baseline selects fe0; omitted respects config")
+                        help="candidate enables C4, later-MTP q1, fast unpack and weighted q4; baseline selects fe0; omitted respects config")
     parser.add_argument("--rear-cards", action="store_true",
                         help="use physical Ascend devices 4,5,6,7 and port 7878 for this launch only")
     args = parser.parse_args(argv)
@@ -92,6 +92,7 @@ def main(argv=None) -> int:
     env["PYTHONUNBUFFERED"] = "1"
     print(f"[oscar] SERVE_MODE variant={variant} C4={'on' if enabled else 'off'} "
           f"Q1={'on' if enabled else 'off'} FAST_UNPACK={'on' if config.get('experimental_fast_unpack', False) else 'off'} "
+          f"WEIGHTED_Q4={'on' if config.get('experimental_weighted_q4', False) else 'off'} "
           f"placement={status['placement']} config={effective_path}", flush=True)
     print(f"[oscar] devices={env.get('ASCEND_RT_VISIBLE_DEVICES', 'diagnostic')} port={config['port']}", flush=True)
     rc = 0

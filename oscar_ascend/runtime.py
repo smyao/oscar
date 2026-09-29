@@ -182,8 +182,12 @@ class AscendRuntimeProvider:
             raise OscarReadinessError("experimental_history_reuse must be an explicit boolean")
         if type(self.config.get("experimental_fast_unpack", False)) is not bool:
             raise OscarReadinessError("experimental_fast_unpack must be an explicit boolean")
+        if type(self.config.get("experimental_weighted_q4", False)) is not bool:
+            raise OscarReadinessError("experimental_weighted_q4 must be an explicit boolean")
         if self.config.get("experimental_fast_unpack", False) and not self.config.get("experimental_history_reuse", False):
             raise OscarReadinessError("fast unpack requires explicit candidate history configuration")
+        if self.config.get("experimental_weighted_q4", False) and not self.config.get("experimental_fast_unpack", False):
+            raise OscarReadinessError("weighted q4 requires the proven fast candidate")
         self._ready = False
         self.layers: dict[str, LayerState] = {}
         self.workspaces: dict[tuple, GraphWorkspace] = {}

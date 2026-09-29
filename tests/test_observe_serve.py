@@ -133,6 +133,7 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     assert status["performance_acceptance"] == "operator_only_not_end_to_end"
     effective = json.loads((logs / "effective-target.json").read_text())
     assert effective["experimental_fast_unpack"] is True
+    assert effective["experimental_weighted_q4"] is True
     assert effective["devices"] == [4, 5, 6, 7] and effective["port"] == 7878
 
 

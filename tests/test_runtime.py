@@ -198,6 +198,14 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         spec = importlib.util.spec_from_file_location("oscar_ascend.integration._dispatch_test", path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
+    selected = []
+    real_select_cv_op = module.select_cv_op
+
+    def recording_select_cv_op(*args, **kwargs):
+        selected.append((args, kwargs))
+        return real_select_cv_op(*args, **kwargs)
+
+    module.select_cv_op = recording_select_cv_op
     h, hk, d, parts = 4, 1, 64, 3
     w = object.__new__(GraphWorkspace)
     w.geometry = WorkspaceGeometry(capacity, h, hk, d, cube_cores=cube_cores,
@@ -301,7 +309,8 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     impl = object.__new__(module.OscarAttentionImpl)
     impl.num_heads, impl.num_kv_heads, impl.head_size, impl.scale = h, hk, d, d**-0.5
     impl.provider = SimpleNamespace(layer_state=lambda _name: state, ops=Ops(),
-                                    config={"experimental_fast_unpack": fast_unpack})
+                                    config={"experimental_fast_unpack": fast_unpack,
+                                            "experimental_weighted_q4": fast_unpack})
     q = torch.randn(n, h * d, dtype=torch.bfloat16)
     k = torch.randn(n, hk * d, dtype=torch.bfloat16)
     value = torch.randn(n, hk * d * 3, dtype=torch.bfloat16)[:, d:2*d]
@@ -327,3 +336,6 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     if fast_unpack:
         expected_op = "fast_" + expected_op
     assert calls == ["prepare", "rotate", expected_op, "merge", "store", "guard"]
+    assert len(selected) == 1
+    assert selected[0][1]["weighted_q4"] is fast_unpack
+    assert selected[0][1]["head_dim"] == d

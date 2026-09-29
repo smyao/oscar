@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from tools import probe_history_reuse as reuse
+from oscar_ascend.ops.cv_dispatch import FAST_CV_OP, FAST_WEIGHTED_CV_OP
 
 
 def test_active_device_accepts_any_explicit_four_card_target(monkeypatch):
@@ -218,6 +219,19 @@ def test_production_dispatch_requires_four_groups_in_one_request(heads, kv_heads
     # #150: eligibility is a structural bound, never inferred from timing.
     assert reuse.select_cv_op(4, heads, kv_heads, tokens, max_query_len) == expected
     assert reuse.select_cv_op(1, heads, kv_heads, tokens, max_query_len) == reuse.FE0_CV_OP
+
+
+def test_target_proven_q4_routes_weighted_only_in_candidate_geometry():
+    common = dict(q1_draft=False, fast_unpack=True, weighted_q4=True, head_dim=256)
+    assert reuse.select_cv_op(4, 6, 1, 128, 4, **common) == FAST_WEIGHTED_CV_OP
+    # Do not broaden the single target proof to another q length, D, GQA,
+    # padded capacity, baseline, or a candidate with weighted disabled.
+    assert reuse.select_cv_op(4, 6, 1, 128, 3, **common) == FAST_CV_OP
+    assert reuse.select_cv_op(4, 6, 1, 256, 4, **common) == FAST_CV_OP
+    assert reuse.select_cv_op(4, 6, 1, 128, 4, **{**common, "head_dim": 128}) == FAST_CV_OP
+    assert reuse.select_cv_op(4, 12, 2, 128, 4, **common) == FAST_CV_OP
+    assert reuse.select_cv_op(4, 6, 1, 128, 4, fast_unpack=True,
+                              weighted_q4=False, head_dim=256) == FAST_CV_OP
 
 
 def test_cluster_counters_require_real_sharing_and_exact_owner_algebra():

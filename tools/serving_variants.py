@@ -1,4 +1,4 @@
-"""Archive #148-151: one candidate preset for probes and direct serving.
+"""Archive #148-151/#150-P0: one candidate preset for probes and direct serving.
 
 Every delivered optimization flag belongs here so installation and observation
 cannot silently select different numerical paths. Physical placement is separate.
@@ -8,6 +8,7 @@ FEATURE_FLAGS = {
     "history_cluster4": "experimental_history_reuse",
     "later_mtp_q1": "experimental_history_reuse",
     "fast_unpack": "experimental_fast_unpack",
+    "weighted_q4": "experimental_weighted_q4",
 }
 
 
@@ -24,6 +25,8 @@ def variant_config(config: dict, variant: str | None) -> dict:
             selected[flag] = variant == "candidate"
     if selected.get("experimental_fast_unpack", False) and not selected.get("experimental_history_reuse", False):
         raise ValueError("fast unpack requires explicit candidate history configuration")
+    if selected.get("experimental_weighted_q4", False) and not selected.get("experimental_fast_unpack", False):
+        raise ValueError("weighted q4 requires the proven fast candidate")
     return selected
 
 

@@ -169,7 +169,7 @@ def test_fast_unpack_gate_requires_exact_new_npu_evidence(monkeypatch, tmp_path)
     monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
     report = {key: "passed" for key in ("status", "precision", "graph_capture",
                                           "graph_replay", "performance",
-                                          "p0_performance")}
+                                          "p0_performance", "q4_split_scan_gate")}
     report.update(artifact_signature=manifest["signature"], artifact_sha256=manifest["sha256"])
     def phase(name, command, **kwargs):
         assert name == "fast-unpack" and "tools.probe_fast_unpack" in command
@@ -181,7 +181,7 @@ def test_fast_unpack_gate_requires_exact_new_npu_evidence(monkeypatch, tmp_path)
     observe_serve._fast_unpack_gate(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, status)
     assert status["fast_unpack_gate"]["full_service_performance"] == "not_established"
     for key in ("precision", "graph_capture", "graph_replay", "performance",
-                "p0_performance", "artifact_signature"):
+                "p0_performance", "q4_split_scan_gate", "artifact_signature"):
         saved = report[key]
         report[key] = "failed"
         with pytest.raises(RuntimeError, match=key):

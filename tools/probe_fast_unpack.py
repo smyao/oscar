@@ -33,6 +33,7 @@ _GRAPHS = frozenset({"q4_decode32_n128_s3", "q1_decode32_n128_s3"})
 _EXTRA_NUMERIC = frozenset({"base_frontier_d64", "base_mixed_hkv2_d128"})
 _META_CASES = frozenset({"meta_half_base_d256", "meta_half_q1_d256",
                          "meta_half_c4_d256"})
+_Q4_SPLIT_SCAN = (1, 2, 3, 4)
 _VALID_HALF_BITS = (
     (64, "k", "scale", 0x0001), (64, "k", "zero", 0x8000),
     (65, "v", "scale", 0x03FF), (65, "v", "zero", 0x0001),
@@ -249,6 +250,106 @@ def predicted_kv256_weights(tasks, cores: int) -> list[int]:
         else:
             owner = task_id % cores
     return loads
+
+
+def split_scan_decision(samples: dict[int, list[float]]) -> dict:
+    """Choose only a repeatably faster split; the production S3 remains default."""
+    if set(samples) != set(_Q4_SPLIT_SCAN):
+        raise FastUnpackProbeError("q4 split scan is missing S1/S2/S3/S4")
+    for split, values in samples.items():
+        if (len(values) != 5 or any(type(value) not in (int, float) or
+                not math.isfinite(value) or value <= 0 for value in values)):
+            raise FastUnpackProbeError(f"q4 S{split} has invalid Event samples")
+    medians = {split: statistics.median(values) for split, values in samples.items()}
+    best = min(medians, key=lambda split: (medians[split], split))
+    stable = best != 3 and all(candidate < baseline for candidate, baseline in
+                               zip(samples[best], samples[3]))
+    return {"measured_best_split": best,
+            "recommended_split": best if stable else 3,
+            "decision": f"promote_s{best}_after_graph_gate" if stable else "retain_s3",
+            "stable_all_five_faster_than_s3": stable,
+            "median_ms": {f"s{split}": medians[split] for split in _Q4_SPLIT_SCAN},
+            "best_over_s3": medians[best] / medians[3]}
+
+
+def _q4_split_scan(torch, ops, target: dict, device, cores: int,
+                   acceptance: dict) -> dict:
+    """P1.5: compare S1-S4 on one exact q4 input without changing routing."""
+    base = reuse.measurement_shape(next(shape for shape in reuse.CASES
+                                        if shape.name == "decode32"), target, cores)
+    base = replace(base, name="q4_split_scan", splits=3)
+    fixture = reuse.make_fixture(torch, base)
+    tensors = {name: tensor.to(device) for name, tensor in fixture["cpu"].items()}
+    variants = {}
+    input_hash = fixture["input_sha256"]
+    for split in _Q4_SPLIT_SCAN:
+        split_fixture = dict(fixture)
+        split_fixture["spec"] = replace(base, splits=split)
+        buffers = _buffers(torch, split_fixture, device, cores, "base")
+        preparation = reuse._prepare(torch, ops, tensors, split_fixture, buffers)
+        reuse._poison(torch, buffers)
+        _launch_weighted(ops, tensors, split_fixture, buffers, cores)
+        torch.npu.synchronize()
+        _check_one(torch, split_fixture, buffers, invalid=False)
+        oracle = reuse._merge_and_oracle(
+            torch, ops, split_fixture, buffers, acceptance["fused_attention"])
+        weights = predicted_kv256_weights(buffers["tasks"].cpu(), cores)
+        variants[split] = {"fixture": split_fixture, "buffers": buffers,
+                           "task_sha256": preparation["task_sha256"],
+                           "weights": weights,
+                           "oracle": {key: value for key, value in oracle.items()
+                                      if key not in ("output", "lse")}}
+
+    policy = acceptance["performance"]
+    if (policy["warmup"], policy["repeats"]) != (2, 5):
+        raise FastUnpackProbeError("q4 split scan requires frozen 2+5 policy")
+    samples = {split: [] for split in _Q4_SPLIT_SCAN}
+    stream = torch.npu.current_stream()
+    for index in range(policy["warmup"] + policy["repeats"]):
+        order = _Q4_SPLIT_SCAN if index < policy["warmup"] or \
+            (index - policy["warmup"]) % 2 == 0 else tuple(reversed(_Q4_SPLIT_SCAN))
+        for split in order:
+            item = variants[split]
+            buffers, split_fixture = item["buffers"], item["fixture"]
+            reuse._poison(torch, buffers)
+            if index >= policy["warmup"]:
+                begin, end = (torch.npu.Event(enable_timing=True),
+                              torch.npu.Event(enable_timing=True))
+                begin.record(stream)
+            _launch_weighted(ops, tensors, split_fixture, buffers, cores)
+            if index >= policy["warmup"]:
+                end.record(stream); end.synchronize()
+                elapsed = float(begin.elapsed_time(end))
+                if not math.isfinite(elapsed) or elapsed <= 0:
+                    raise FastUnpackProbeError("invalid q4 split-scan Event duration")
+                samples[split].append(elapsed)
+            else:
+                torch.npu.synchronize()
+            _check_one(torch, split_fixture, buffers, invalid=False)
+            reuse._merge_and_oracle(
+                torch, ops, split_fixture, buffers, acceptance["fused_attention"])
+
+    decision = split_scan_decision(samples)
+    rows = []
+    for split in _Q4_SPLIT_SCAN:
+        item = variants[split]
+        mean = sum(item["weights"]) / cores
+        rows.append({"split": split, "operator": P0_WEIGHTED,
+                     "input_sha256": input_hash,
+                     "task_sha256": item["task_sha256"],
+                     "predicted_kv256_per_core": item["weights"],
+                     "max_over_mean": max(item["weights"]) / mean,
+                     "device_event_ms": samples[split],
+                     "median_ms": statistics.median(samples[split]),
+                     "precision": "passed", "frozen_oracle": "passed",
+                     "oracle": item["oracle"]})
+    return {"status": "passed", "shape": "32*q4/Hq6/Hkv1/D256/N128",
+            "splits": rows, "warmup": 2, "repeats": 5,
+            "order": "alternating_forward_reverse",
+            "same_input_all_splits": len({row["input_sha256"] for row in rows}) == 1,
+            **decision,
+            "production_route_changed": False,
+            "promotion_gate": "winner_requires_changed_input_graph_before_routing"}
 
 
 def _check_one(torch, fixture: dict, buffers: dict, *, invalid: bool,
@@ -851,8 +952,22 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
                     "ratio": timing["weighted_over_fast"],
                     "graph": row["graph_replay"], "gate": timing["gate"]},
                     sort_keys=True), flush=True)
+    split_scan = _q4_split_scan(torch, torch.ops.oscar_ascend_ops, target,
+                                device, cores, acceptance)
+    print("[oscar] PERF_Q4_SPLIT_SCAN " + json.dumps({
+        "status": split_scan["status"],
+        "decision": split_scan["decision"],
+        "measured_best_split": split_scan["measured_best_split"],
+        "recommended_split": split_scan["recommended_split"],
+        "best_over_s3": split_scan["best_over_s3"],
+        "median_ms": split_scan["median_ms"],
+        "stable_all_five_faster_than_s3":
+            split_scan["stable_all_five_faster_than_s3"],
+        "production_route_changed": False}, sort_keys=True), flush=True)
     gates = verdict(rows)
-    return {**gates, "scope": "independent_real_NPU_operator_precision_graph_and_Event_AB",
+    return {**gates, "q4_split_scan_gate": split_scan["status"],
+            "q4_split_scan": split_scan,
+            "scope": "independent_real_NPU_operator_precision_graph_and_Event_AB",
             "baseline": "fe0_old_C4_old_q1_mode_matched",
             "full_service_acceptance": "not_run",
             "default_route": "fe0",
@@ -882,6 +997,7 @@ def main(argv: list[str] | None = None) -> int:
             "graph_capture": report["graph_capture"],
             "graph_replay": report["graph_replay"],
             "performance": report["performance"],
+            "q4_split_scan_gate": report["q4_split_scan_gate"],
             "failed_cases": report["failed_cases"],
             "report": str(args.output)}, sort_keys=True), flush=True)
         return 0 if report["status"] == "passed" else 2

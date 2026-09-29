@@ -103,6 +103,23 @@ def test_p0_predictor_balances_real_kv256_width_and_ignores_dead_rows():
     assert max(loads) - min(loads) <= 4
 
 
+def test_split_scan_promotes_only_an_all_five_repeatable_winner():
+    samples = {1: [9.0] * 5, 2: [8.0] * 5,
+               3: [10.0] * 5, 4: [11.0] * 5}
+    decision = fast.split_scan_decision(samples)
+    assert decision["measured_best_split"] == 2
+    assert decision["recommended_split"] == 2
+    assert decision["decision"] == "promote_s2_after_graph_gate"
+    noisy = dict(samples)
+    noisy[2] = [8.0, 8.0, 8.0, 8.0, 10.1]
+    decision = fast.split_scan_decision(noisy)
+    assert decision["measured_best_split"] == 2
+    assert decision["recommended_split"] == 3
+    assert decision["decision"] == "retain_s3"
+    with pytest.raises(fast.FastUnpackProbeError, match="missing"):
+        fast.split_scan_decision({1: [1.0] * 5})
+
+
 def test_fast_symbols_preserve_old_abi_and_c4_stats_position():
     calls = []
     def op(label):

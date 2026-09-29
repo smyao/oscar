@@ -41,3 +41,16 @@ candidate 配置须同时开启 history reuse、fast unpack、weighted q4，否�
 ```bash
 git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 ```
+
+## P1.5：q4 split 扫描
+
+同一 `32*q4/Hq6/Hkv1/D256/N128` 输入现在额外扫描 S1、S2、S3、S4。
+四侧均调用 weighted 算子，逐项检查状态和冻结 oracle，记录实际任务表推导的
+20 核 KV256 权重；计时按 2 次预热、5 次正式测量并在正序/逆序间交替，避免
+固定调用位置偏置。报告位于 `fast-unpack-report.json.q4_split_scan`，终端摘要为
+`PERF_Q4_SPLIT_SCAN`。
+
+扫描不会直接改变生产路由。只有某个非 S3 候选中位数最低且五次均严格快于
+对应的 S3 样本，才报告 `promote_sN_after_graph_gate`；否则报告 `retain_s3`。
+即使出现稳定候选，也必须先为胜出 split 补同地址 changed-input 图门，才允许
+修改正式服务的 split 策略。

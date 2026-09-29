@@ -393,7 +393,7 @@ def _fast_unpack_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     manifest = validate_build_artifacts(ROOT / "build/ascendc/build_manifest.json")
     expected = {key: "passed" for key in ("status", "precision", "graph_capture",
                                             "graph_replay", "performance",
-                                            "p0_performance")}
+                                            "p0_performance", "q4_split_scan_gate")}
     expected.update(artifact_signature=manifest.get("signature"), artifact_sha256=manifest.get("sha256"))
     mismatches = [key for key, value in expected.items() if report.get(key) != value]
     if mismatches:

@@ -94,6 +94,35 @@ def test_native_cpu_qstarts_are_assembled_once_for_all_full_builders(monkeypatch
     assert first.query_start_loc_cpu.tolist() == [0, 1, 7]
 
 
+def test_batched_history_uses_only_cached_cpu_lengths_and_long_request_context():
+    common = SimpleNamespace(
+        causal=True, query_start_loc=torch.tensor([0, 4, 4100], dtype=torch.int32),
+        query_start_loc_cpu=torch.tensor([0, 4, 4100], dtype=torch.int32),
+        seq_lens=torch.tensor([20004, 4096], dtype=torch.int32),
+        _seq_lens_cpu=torch.tensor([20004, 4096], dtype=torch.int32),
+        slot_mapping=torch.arange(4100, dtype=torch.int64),
+        block_table_tensor=torch.zeros((2, 256), dtype=torch.int32),
+        num_reqs=2, num_actual_tokens=4100, num_input_tokens=4100,
+        max_query_len=4096, max_seq_len=20004,
+        attn_state=AscendAttentionState.ChunkedPrefill,
+    )
+    # A long old-context decode beside a cold long prefill is insufficient.
+    assert not from_common(common).batched_history_ready
+    del common._oscar_batched_history_ready
+    common._seq_lens_cpu[1] = 4099  # optimistic draft drift of three tokens
+    assert not from_common(common).batched_history_ready
+    del common._oscar_batched_history_ready
+    common._seq_lens_cpu[1] = 23096  # same long query, real old context
+    assert from_common(common).batched_history_ready
+    assert common._oscar_batched_history_ready is True
+    # The second FULL builder reuses the per-step CPU decision.
+    assert from_common(common).batched_history_ready
+    del common._oscar_batched_history_ready
+    common._seq_lens_cpu = None  # missing mirror preserves the prior route
+    assert not from_common(common).batched_history_ready
+    assert not from_common(common, is_draft=True).batched_history_ready
+
+
 def test_source2_empty_range_preserves_noncurrent_and_bad_tasks():
     tasks = torch.zeros((3 * 1 * 3 * 2, 16), dtype=torch.int64)
     view = tasks.view(3, 1, 3, 2, 16)

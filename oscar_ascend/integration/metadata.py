@@ -33,6 +33,7 @@ class OscarMetadata:
     attn_state: Any = None
     is_draft: bool = False
     current_cumulative: tuple[int, ...] | None = None
+    batched_history_ready: bool = False
     dummy_origin: bool = False
 
     @property
@@ -99,6 +100,32 @@ def from_common(common: Any, *, capacity: MetadataCapacity | None = None,
     # Only this eager main-model stage needs CPU qstarts. Existing graph/draft
     # and decode callers never touch the CPU property (#34/#36/#140).
     cpu_starts = getattr(common, "query_start_loc_cpu", None) if main_prefill else None
+    batched_history_ready = False
+    if main_prefill:
+        cached = getattr(common, "_oscar_batched_history_ready", None)
+        if type(cached) is bool:
+            batched_history_ready = cached
+        else:
+            # The pinned runner always provides _seq_lens_cpu from its CPU
+            # optimistic lengths. Do not inspect seq_lens_cpu: in async spec
+            # decode that property can be absent or entail a device readback.
+            # Up to three optimistic MTP tokens are possible; >3 establishes
+            # a real old context for a long continuation. Unknown CPU mirrors
+            # simply preserve the previously validated C4/C16 route.
+            import torch
+            cpu_lengths = getattr(common, "_seq_lens_cpu", None)
+            if (isinstance(cpu_starts, torch.Tensor) and
+                    isinstance(cpu_lengths, torch.Tensor) and
+                    cpu_starts.device.type == cpu_lengths.device.type == "cpu" and
+                    cpu_starts.dtype in (torch.int32, torch.int64) and
+                    cpu_lengths.dtype in (torch.int32, torch.int64) and
+                    cpu_starts.ndim == cpu_lengths.ndim == 1 and
+                    cpu_starts.numel() >= rows + 1 and cpu_lengths.numel() >= rows):
+                qlens = cpu_starts[1:rows + 1] - cpu_starts[:rows]
+                old_context = cpu_lengths[:rows] - qlens
+                batched_history_ready = bool(((qlens >= 84) &
+                                              (old_context > 3)).any().item())
+            common._oscar_batched_history_ready = batched_history_ready
     metadata = OscarMetadata(
         query_start_loc=query_start_loc, seq_lens=common.seq_lens,
         block_tables=common.block_table_tensor, slot_mapping=common.slot_mapping,
@@ -107,6 +134,7 @@ def from_common(common: Any, *, capacity: MetadataCapacity | None = None,
         positions=getattr(common, "positions", None), capture_origin=capture_origin,
         num_input_tokens=getattr(common, "num_input_tokens", common.slot_mapping.shape[0]),
         query_start_loc_cpu=cpu_starts[:rows + 1] if cpu_starts is not None else None,
+        batched_history_ready=batched_history_ready,
         attn_state=state, is_draft=is_draft, dummy_origin=dummy_origin)
     if main_prefill:
         # The native model runner constructs a new CommonAttentionMetadata per

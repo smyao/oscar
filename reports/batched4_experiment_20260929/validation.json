@@ -1,0 +1,47 @@
+{
+  "scope": "isolated batched4 CANN compile and official AscendC CPU-debug",
+  "status": "local_validation_passed",
+  "production_route": "not_connected",
+  "pushed": false,
+  "soc": "ascend910b4",
+  "source_sha256": "48418ff0dd805cfddf920a0307cb00f801d1a68052200a64c308e7b4ee0a2f08",
+  "final_owner_tile4": "source0/C1 task ownership changes from mathematical queryTile to scheduleTile=4; mathematical qcount, KV ranges and C4 bucket=4*queryTile remain unchanged",
+  "full_binding_build": {
+    "status": "passed",
+    "returncode": 0,
+    "log": "build-binder-final.log",
+    "extension_sha256": "6aad722c5b0bc66c4f8cfbd6431ab60fa0bf50e0fef500c25da43b8a80a45373"
+  },
+  "device_build": {
+    "status": "passed",
+    "returncode": 0,
+    "log": "build-device-final.log",
+    "artifact_sha256": "f3e902cced3b4cba79d75ee5e8ee5acd48413c3cef2aa6722b3a7f2c42d3bf37"
+  },
+  "official_cpu_build": {
+    "status": "passed",
+    "returncode": 0,
+    "log": "build-cpu-owner4.log",
+    "artifact_sha256": "bef2ed3589b566d37c21cc05c5b940e719c44e8575014632475dca450d93428e"
+  },
+  "official_cpu_cases": [
+    {"case": "D64 q168 context641 active C4", "mode": "normal", "clusters": 1, "status": "passed", "source_stage": "final_owner_tile4", "elapsed_seconds": 42.3976, "log": "cpu-owner4-d64-normal.log"},
+    {"case": "D64 unaligned q3+q336 two requests", "mode": "old_only", "clusters": 4, "status": "passed", "source_stage": "final_owner_tile4", "elapsed_seconds": 107.564, "log": "cpu-owner4-d64-unaligned.log"},
+    {"case": "D64 active C4 NaN-poisoned workspace", "mode": "poison", "clusters": 1, "status": "passed", "source_stage": "pre_owner_tile4_arithmetic", "elapsed_seconds": 41.3797, "log": "cpu-d64-poison.log"},
+    {"case": "D256 full q336 active C4", "mode": "old_only", "status": "passed", "source_stage": "pre_owner_tile4_arithmetic", "reference_seconds": 52.591172, "candidate_seconds": 53.702878, "report": "batched4-d256.json"},
+    {"case": "D256 q4 C1 fallback", "mode": "c1", "clusters": 0, "status": "passed", "source_stage": "pre_owner_tile4_arithmetic", "elapsed_seconds": 5.89289, "log": "cpu-d256-c1.log"},
+    {"case": "D64 active C4 invalid live metadata", "mode": "bad_meta", "clusters": 1, "status": "passed", "source_stage": "pre_owner_tile4_arithmetic", "elapsed_seconds": 39.9915, "log": "cpu-d64-badmeta.log"},
+    {"case": "D64 active C4 one-group QR NaN", "mode": "nan_query", "clusters": 1, "status": "passed", "source_stage": "pre_owner_tile4_arithmetic", "elapsed_seconds": 38.8917, "log": "cpu-d64-nanquery.log"}
+  ],
+  "checks": "same-input old fast C4 versus batched4 bitwise partial/LSE/status/cluster stats; independent merged output/LSE oracle for valid cases; exact status and invalid-output classification for error cases",
+  "initial_local_failures_preserved": [
+    {"cause": "unaligned Duplicate on two inactive alpha rows", "returncode": 124, "log": "cpu-d64-normal.log", "fixed_and_same_case_passed": true},
+    {"cause": "isolated CMake omitted required CMAKE_BUILD_TYPE for CANN merge helper", "log": "build-device-clean.log", "fixed_by": "fresh Release build"}
+  ],
+  "target_npu_numerics": "not_run",
+  "graph_capture_replay": "not_run",
+  "model_quality": "not_run",
+  "device_performance": "not_run",
+  "longbench_8min": "not_run",
+  "64k_7_3min": "not_run"
+}

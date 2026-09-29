@@ -131,7 +131,10 @@ class OscarAttentionImpl(AttentionImpl):
         cv_name = select_cv_op(cluster_size, h, hk, n, attn_metadata.max_query_len,
                               q1_draft=attn_metadata.is_draft and attn_metadata.draft_index > 0,
                               fast_unpack=self.provider.config.get("experimental_fast_unpack", False),
-                              mixed_cv=self.provider.config.get("experimental_mixed_cv", False))
+                              mixed_cv=self.provider.config.get("experimental_mixed_cv", False),
+                              batched_history=self.provider.config.get("experimental_batched_history", False),
+                              batched_history_ready=native_current and
+                              getattr(attn_metadata, "batched_history_ready", False))
         with phase("fia", layer=layer.layer_name, tokens=n, splits=source_splits,
                    cube_cores=g.cube_cores, tasks=task_count, requests=attn_metadata.num_reqs,
                    cv_operator=cv_name, **timing_fields):

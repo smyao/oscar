@@ -9,6 +9,7 @@ FEATURE_FLAGS = {
     "later_mtp_q1": "experimental_history_reuse",
     "fast_unpack": "experimental_fast_unpack",
     "mixed_cv": "experimental_mixed_cv",
+    "batched_history": "experimental_batched_history",
 }
 
 
@@ -29,6 +30,11 @@ def variant_config(config: dict, variant: str | None) -> dict:
             selected.get("experimental_history_reuse", False) and
             selected.get("experimental_fast_unpack", False)):
         raise ValueError("mixed CV requires explicit fast/history candidate configuration")
+    if selected.get("experimental_batched_history", False) and not (
+            selected.get("experimental_history_reuse", False) and
+            selected.get("experimental_fast_unpack", False) and
+            selected.get("experimental_mixed_cv", False)):
+        raise ValueError("batched history requires explicit mixed/fast/history candidate configuration")
     return selected
 
 

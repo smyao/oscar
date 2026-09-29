@@ -139,6 +139,45 @@ def test_mixed_cv_selector_uses_known_host_query_bound_without_padded_false_elig
         select_cv_op(16, 6, 1, 16384, 16260, fast_unpack=True)
 
 
+def test_batched_history_requires_proven_main_continuation_and_existing_c16_budget():
+    from oscar_ascend.ops.cv_dispatch import (BATCHED4_CV_OP,
+                                               FAST_CLUSTER16_CV_OP, select_cv_op)
+    flags = dict(fast_unpack=True, mixed_cv=True, batched_history=True)
+    assert select_cv_op(16, 6, 1, 16384, 16260,
+                        batched_history_ready=False, **flags) == FAST_CLUSTER16_CV_OP
+    assert select_cv_op(16, 6, 1, 16384, 16260,
+                        batched_history_ready=True, **flags) == BATCHED4_CV_OP
+    assert select_cv_op(16, 6, 1, 16384, 1, q1_draft=True,
+                        batched_history_ready=True, **flags) != BATCHED4_CV_OP
+    with pytest.raises(ValueError, match="batched history requires"):
+        select_cv_op(4, 6, 1, 16384, 16260,
+                     batched_history=True, batched_history_ready=True)
+    c16 = WorkspaceGeometry(16384, 6, 1, 256, cube_cores=20, history_cluster_size=16)
+    assert c16.cv_bytes // c16.cube_cores >= 2_627_584
+
+
+def test_batched_history_readiness_requires_new_signed_op(monkeypatch):
+    from oscar_ascend.ops import loader
+    from oscar_ascend.ops.cv_dispatch import BATCHED4_CV_OP
+    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "0,1,2,3")
+    monkeypatch.setattr(loader, "require_production_ops", lambda: None)
+    seen = []
+    def require(required, *_args):
+        seen.append(set(required))
+        if set(required) == {BATCHED4_CV_OP}:
+            raise RuntimeError("signed batched history symbol missing")
+    monkeypatch.setattr(loader, "require_capabilities", require)
+    provider = AscendRuntimeProvider({"devices": [0, 1, 2, 3],
+                                     "experimental_history_reuse": True,
+                                     "experimental_fast_unpack": True,
+                                     "experimental_mixed_cv": True,
+                                     "experimental_batched_history": True})
+    with pytest.raises(RuntimeError, match="symbol missing"):
+        provider.assert_ready()
+    assert {BATCHED4_CV_OP} in seen
+    assert provider._ready is False
+
+
 def test_mixed_cv_readiness_requires_both_new_signed_ops(monkeypatch):
     from oscar_ascend.ops import loader
     from oscar_ascend.ops.cv_dispatch import MIXED_CV_OPS

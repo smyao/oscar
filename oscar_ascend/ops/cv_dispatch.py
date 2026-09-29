@@ -14,16 +14,21 @@ FAST_Q1_CV_OP = "attention_cv_fast_q1_out"
 FAST_CLUSTER4_CV_OP = "attention_cv_fast_cluster4_out"
 FAST_BALANCED_CV_OP = "attention_cv_fast_balanced_out"
 FAST_CLUSTER16_CV_OP = "attention_cv_fast_cluster16_out"
+BATCHED4_CV_OP = "attention_cv_batched4_out"
 CLUSTER_CV_OPS = frozenset({CLUSTER4_CV_OP, FAST_CLUSTER4_CV_OP,
-                            FAST_CLUSTER16_CV_OP})
+                            FAST_CLUSTER16_CV_OP, BATCHED4_CV_OP})
 FAST_CV_OPS = frozenset({FAST_CV_OP, FAST_Q1_CV_OP, FAST_CLUSTER4_CV_OP})
 MIXED_CV_OPS = frozenset({FAST_BALANCED_CV_OP, FAST_CLUSTER16_CV_OP})
 
 
 def select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len, *, q1_draft=False,
-                 fast_unpack=False, mixed_cv=False):
-    if type(fast_unpack) is not bool or type(mixed_cv) is not bool:
+                 fast_unpack=False, mixed_cv=False, batched_history=False,
+                 batched_history_ready=False):
+    if any(type(flag) is not bool for flag in
+           (fast_unpack, mixed_cv, batched_history, batched_history_ready)):
         raise ValueError("CV experiment flags must be explicit booleans")
+    if batched_history and (not mixed_cv or not fast_unpack or cluster_size != 16):
+        raise ValueError("batched history requires mixed/fast C16 candidate geometry")
     if mixed_cv and (not fast_unpack or cluster_size != 16):
         raise ValueError("mixed CV requires fast unpack and C16 workspace")
     if cluster_size == 16 and not mixed_cv:
@@ -45,6 +50,11 @@ def select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len, *, q1_dra
         return FAST_Q1_CV_OP if fast_unpack else Q1_CV_OP
     minimum = 4 * (ATTENTION_QUERY_ROWS // ratio)
     if mixed_cv:
+        # CPU metadata proves one long continuation has >3 real old tokens.
+        # Never infer it from max_seq_len/max_query_len across different reqs.
+        if batched_history and batched_history_ready and (
+                type(max_query_len) is int and max_query_len >= minimum):
+            return BATCHED4_CV_OP
         # An exact same-domain C16 cluster needs at least sixteen full query
         # groups. The high threshold is a conservative host-only route: small
         # prefill has too few clusters to keep the measured Cubes busy.

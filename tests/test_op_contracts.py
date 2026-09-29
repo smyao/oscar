@@ -1,13 +1,15 @@
 # Archive #34/#36/#87/#108: executable byte-boundary and incomplete-capability checks.
+# #153: native capability list, CMake manifest and meta registry must stay identical.
 import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import tempfile
 import unittest
 
 from oscar_ascend.ops.contracts import (
-    PackedStorage, OperatorContractError, SOURCE_CAPABILITIES,
+    PackedStorage, OperatorContractError, PRODUCTION_CAPABILITIES, SOURCE_CAPABILITIES,
     missing_capabilities, merge_shapes,
 )
 from oscar_ascend.ops.loader import OperatorUnavailable, require_production_ops, validate_build_artifacts
@@ -112,6 +114,26 @@ class OperatorContractTests(unittest.TestCase):
             path.write_text(json.dumps(manifest))
             with self.assertRaisesRegex(OperatorUnavailable,"signature differs"):
                 validate_build_artifacts(path)
+
+    def test_native_capability_lists_match_host_contract(self):
+        root = Path(__file__).resolve().parents[1]
+        bindings = (root/"csrc"/"torch_bindings.cpp").read_text(encoding="utf-8")
+        block = re.search(r"std::vector<std::string>\{(.*?)\};\}\);", bindings, re.S)
+        self.assertIsNotNone(block)
+        exported = set(re.findall(r'"([a-z0-9_]+)"', block.group(1)))
+        self.assertEqual(exported, set(SOURCE_CAPABILITIES))
+        cmake = (root/"csrc"/"CMakeLists.txt").read_text(encoding="utf-8")
+        segment = re.search(r'\\"source_capabilities\\": \[(.*?)\]', cmake, re.S)
+        self.assertIsNotNone(segment)
+        manifest = set(re.findall(r'\\"([a-z0-9_]+)\\"', segment.group(1)))
+        self.assertEqual(manifest, set(SOURCE_CAPABILITIES))
+
+    def test_meta_registration_covers_every_optional_capability(self):
+        meta = (Path(__file__).resolve().parents[1]/"oscar_ascend"/"ops"/"meta.py").read_text(encoding="utf-8")
+        block = re.search(r"for optional in \((.*?)\):", meta, re.S)
+        self.assertIsNotNone(block)
+        optional = set(re.findall(r'"([a-z0-9_]+)"', block.group(1)))
+        self.assertEqual(optional, set(SOURCE_CAPABILITIES)-set(PRODUCTION_CAPABILITIES))
 
 
 if __name__ == "__main__":

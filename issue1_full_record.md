@@ -28575,3 +28575,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **源码核对与本轮候选**：querytile21按token桶分配使N16384/S1的31q4历史leader集中6核；独立balanced核用4token遍历仍逐task唯一、数学querytile不改。长prefill C4仍为每四个同域query组重新展开相同KV，新增独立C16保留原FP32数学顺序/错误域，max_query_len≥8192才选择；每卡额外有界scratch约63MB，在KV预算前共享分配。新kernel与独立真实NPU AB门均接candidate，旧fe0/fast/C4/q1文件保持原样。CANN、CPU-debug和主机测试另记，不冒充本条真机验收；新NPU精度/图/性能仍待该短门裁决。方案与反证条件见`docs/mixed_cv_optimization.md`。
 
 **本地验证后续（非新增真机验收）**：CANN编译通过；135项主机关键回归通过。CPU-debug原大D256/非对齐combined例各120s超时已定位并修复为有完整参考字节绑定的分段对拍；原例、数值和单次120s限时均未改变，最终9例完整通过。D256两段57.280/77.735s、非对齐62.565/78.836s，原超时记录仍保留。全部证据`reports/mixed_cv_local_validation.json`；真NPU与端到端速度待新短门，不能标通过。
+
+## [153] 真机条目（2026-09-29）· mixed CV合入后扩展能力清单漏登记，真实算子门在加载校验处关闭
+
+**原文**：用户在node93执行同一键命令 `git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate --probe-only --diagnose-mixed`（da8b804），run=`observe-20260929T060012.923339Z`，FAILED phase=operator-cv-npu rc=1；`tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_oracle[64-1-17]` 报 `oscar_ascend.ops.loader.OperatorUnavailable: Extension capabilities differ from build manifest`，该门1 failed 3 passed，preflight按设计停止，未加载模型、未进入服务。
+
+**源码可复现根因**：da8b804把 `attention_cv_fast_balanced_out`/`attention_cv_fast_cluster16_out` 写进 `csrc/CMakeLists.txt` 清单模板与 `contracts.SOURCE_CAPABILITIES`，而 `tools/build_ops.py` 的构建期校验只比对这两处，故编译显示通过。但 `csrc/torch_bindings.cpp` 的pybind `capabilities()` 列表与 `oscar_ascend/ops/meta.py` 可选算子注册表均未同步（0677bcb当时四处一起修改）。`loader.load_extension` 在哈希、签名、源码指纹全部一致后，比对模块自报能力集与清单能力集，13对15不一致，按设计拒绝加载。失败发生在任何核执行之前，不是算子数值、图或设备错误；此前已验收的fe0/fast/C4/q1结论不受影响。既有主机测试全部mock了模块能力表，因此本地未提前暴露。
+
+**修法**：向 `torch_bindings.cpp` 能力表与 `meta.py` 可选表补登两个算子名；新增主机源码对拍回归，要求C++能力表、CMake清单模板与 `SOURCE_CAPABILITIES` 集合恒等，meta可选表恒等于 SOURCE−PRODUCTION，今后任何一处漏登在推送前即失败。未修改任何CANN算子数学/ABI/布局，不适用D.4四问；绑定编译单元变更后真机必须重新编译，加载器源码指纹本来也会拒绝旧产物。
+
+**本地验证边界**：676项主机测试通过（含两项新对拍回归），140项按设计跳过（真NPU门opt-in）。本机CPU结果不冒充真机证据；真机仍需用户以同一一键命令复验 operator-cv-npu 及后续mixed短门，通过前新balanced/C16算子的精度、图与性能保持未验收。

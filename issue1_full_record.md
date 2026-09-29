@@ -28562,3 +28562,16 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 0677bcb、`observe-20260928T064725.021030Z`全部fast precision/graph/performance门passed，failed_cases为空，正常短probe结束；原文`reports/target_fast_unpack_pass_20260928.txt`。q4 N128/S3 15.297940→11.281520ms；q1 N128/S3 13.854560→9.842060ms；q1 N16384/S1 20.468300→15.765760ms；C4 mature20K 55.009899→48.772461ms；mixed q1/q4/long 19.301439→15.852880ms。五例逐位通过，q4/q1指定独立图passed，其余行graph not_run。记录实测，不另立错误编号，也不外推完整模型总时长。
 
 用户明确要求每轮均同步到`git pull --ff-only && bash scripts/install_serve.sh --variant candidate`。当前该路径已启用C4/q1/fast；本轮统一候选预设供直启与probe共同调用，补计划/子进程/实际路由回归并写入AGENTS。默认配置与后四卡模式保持各自既有行为；直启不因该约定变成自动跑测试或AISBench。
+
+
+## [152] 真机条目（2026-09-29）· 64K容量优势未转成吞吐，mixed算子对照确认大padding与长历史开销
+
+**原文**：`reports/target_64k_mixed_20260929.txt`，用户声明基于6f11ad1最新candidate；两次AISBench均120条、65100输入、512输出、并发32、成功120失败0。OSCAR Benchmark Duration=3331.5501112s，native=1371.9691525s（2.4283倍）；不得再重跑该完整负载。用户观察原生驻留约12、OSCAR约31，这一容量观察没有随附服务端轨迹，不能据它声称吞吐理应提高固定倍数。
+
+**已测预算**：平均TTFT OSCAR174.163s/native235.052s，前者快60.889s；平均TPOT1382.8/212.1ms、E2E880.776/343.458s。固定512输出下，首token之后的平均时长差约598.2s，包含其他prefill、队列和设备等待，不能叫单个decode kernel差6.52倍。详细计算和历史证据范围见`reports/performance_budget_20260929.json`。
+
+**同输入短NPU事实**：`observe-20260929T020143.804953Z`算子/图门正常完成。31q4 N128/S3 CV11.328500ms、总11.395780ms；同cohort N16384/S1 CV34.971642ms、总36.737999ms；cold mixed CV35.655781ms、current6.973760ms、总46.415298ms；13740旧历史+16260新token mixed CV125.104156ms、current7.015120ms、总137.670563ms，oracle全部passed。N/S同时变化，不能将3.087倍全部归给某一变量；短形状不是55分钟各相位占比。原fast/C4/q1门继续通过。
+
+**源码核对与本轮候选**：querytile21按token桶分配使N16384/S1的31q4历史leader集中6核；独立balanced核用4token遍历仍逐task唯一、数学querytile不改。长prefill C4仍为每四个同域query组重新展开相同KV，新增独立C16保留原FP32数学顺序/错误域，max_query_len≥8192才选择；每卡额外有界scratch约63MB，在KV预算前共享分配。新kernel与独立真实NPU AB门均接candidate，旧fe0/fast/C4/q1文件保持原样。CANN、CPU-debug和主机测试另记，不冒充本条真机验收；新NPU精度/图/性能仍待该短门裁决。方案与反证条件见`docs/mixed_cv_optimization.md`。
+
+**本地验证后续（非新增真机验收）**：CANN编译通过；135项主机关键回归通过。CPU-debug原大D256/非对齐combined例各120s超时已定位并修复为有完整参考字节绑定的分段对拍；原例、数值和单次120s限时均未改变，最终9例完整通过。D256两段57.280/77.735s、非对齐62.565/78.836s，原超时记录仍保留。全部证据`reports/mixed_cv_local_validation.json`；真NPU与端到端速度待新短门，不能标通过。

@@ -14,7 +14,8 @@ def test_install_and_probe_plans_select_the_same_bundle(variant, enabled, capsys
     assert observe_serve.main(["--variant", variant, "--plan"]) == 0
     probe = json.loads(capsys.readouterr().out)
     assert install["optimizations"] == probe["optimizations"] == {
-        "history_cluster4": enabled, "later_mtp_q1": enabled, "fast_unpack": enabled}
+        "history_cluster4": enabled, "later_mtp_q1": enabled,
+        "fast_unpack": enabled, "mixed_cv": enabled}
     assert install["probes"] == "none"
 
 
@@ -29,3 +30,8 @@ def test_default_retains_config_and_candidate_does_not_mutate_input():
         variant_config({"experimental_fast_unpack": "true"}, "candidate")
     with pytest.raises(ValueError, match="requires"):
         variant_config({"experimental_fast_unpack": True}, None)
+    with pytest.raises(ValueError, match="explicit boolean"):
+        variant_config({"experimental_mixed_cv": "true"}, "candidate")
+    with pytest.raises(ValueError, match="requires"):
+        variant_config({"experimental_mixed_cv": True,
+                        "experimental_history_reuse": True}, None)

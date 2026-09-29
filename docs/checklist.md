@@ -49,6 +49,8 @@
 
 ## 当前必须正面解决的事项
 
+2026-09-29（#152）：64K/120×512同任务，OSCAR3331.55s vs native1371.97s，E06失败；不重跑AISBench。新mixed四组设备oracle通过并确认N16384/S1 q4与带历史prefill CV开销。候选增加独立balanced/C16，保留fe0与已测fast/C4/q1算子；固定`install_serve.sh --variant candidate`自动启用新路由，新真实NPU AB/图/错误传播门接`--probe-only --diagnose-mixed`。本地证据与新NPU待验状态见`docs/mixed_cv_optimization.md`，不因源码/编译/CPU成功标E06通过。
+
 2026-09-28最新用户报告约16min，原生约8min；E06仍未通过。新片段中相同Running25/Waiting7时OSCAR生成17.2 tok/s、原生125.3 tok/s，而OSCAR prompt吞吐归零的三个窗口生成均值296.6 tok/s。线索集中于混合长prefill期间的推进速度，不能把峰值当作整程收益或把共用eager规则当作唯一根因。源码和计数口径见`docs/mixed_prefill_analysis.md`。新增可选`--probe-only --diagnose-mixed`只测实际candidate CV/current FIA/merge组合；NPU数据待回传，不新增算子精度或性能通过结论，直启candidate继续使用已交付优化。
 
 0677bcb fast unpack真机门已通过：五个热形状耗时降低11.34%–28.96%，精度/指定独立图/性能门passed，详见`reports/target_fast_unpack_pass_20260928.txt`。E06完整服务8分钟目标仍未验收。固定交付入口为`install_serve.sh --variant candidate`，已与probe共用候选预设并通过68项相关主机回归；每轮须同步实际路由，不能仅更新probe。默认与后四卡行为不改。

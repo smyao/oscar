@@ -12,7 +12,8 @@ ABI_VERSION = 1
 SOURCE_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "rotate_out",
     "rotate_clip_store_out", "prepare_attention_tasks_out", "attention_cv_out",
     "attention_cv_cluster4_out", "attention_cv_q1_out", "attention_cv_profile_out",
-    "attention_cv_fast_out", "attention_cv_fast_q1_out", "attention_cv_fast_cluster4_out", "status_guard"})
+    "attention_cv_fast_out", "attention_cv_fast_q1_out", "attention_cv_fast_cluster4_out",
+    "attention_cv_fast_balanced_out", "attention_cv_fast_cluster16_out", "status_guard"})
 # Exact callable symbols, not names of abstract components. Compilation,
 # CPU simulation, NPU execution and service acceptance remain separate gates.
 PRODUCTION_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "rotate_out",

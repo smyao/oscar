@@ -56,10 +56,13 @@ def _source_identity(variant: str, config: dict) -> dict:
               for name in FE0_KERNEL_SHA256}
     flag = config.get("experimental_history_reuse", False)
     fast = config.get("experimental_fast_unpack", False)
+    mixed = config.get("experimental_mixed_cv", False)
     if type(flag) is not bool:
         raise ValueError("experimental_history_reuse must be an explicit boolean")
     if type(fast) is not bool or (fast and not flag):
         raise ValueError("experimental_fast_unpack requires explicit candidate history configuration")
+    if type(mixed) is not bool or (mixed and not fast):
+        raise ValueError("experimental_mixed_cv requires explicit fast candidate configuration")
     if variant in {"baseline", "candidate"} and actual != FE0_KERNEL_SHA256:
         raise RuntimeError("OSCAR observation requires byte-identical fe0 production kernels")
     if variant == "baseline" and flag:
@@ -75,11 +78,15 @@ def _source_identity(variant: str, config: dict) -> dict:
         for name in ("attention_cv_fast.cpp", "attention_cv_fast_q1.cpp",
                      "attention_cv_fast_cluster4.cpp", "attention_fast_unpack.h"):
             fast_sources[name] = hashlib.sha256((ROOT / "csrc/kernels" / name).read_bytes()).hexdigest()
+    if mixed:
+        for name in ("attention_cv_fast_balanced.cpp", "attention_cv_fast_cluster16.cpp"):
+            fast_sources[name] = hashlib.sha256((ROOT / "csrc/kernels" / name).read_bytes()).hexdigest()
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
                               capture_output=True, check=True).stdout.strip()
     return {"variant": variant, "fe0_production_kernels_match": actual == FE0_KERNEL_SHA256,
             "kernel_sha256": actual, "experimental_history_reuse": flag,
-            "experimental_fast_unpack": fast, "fast_source_sha256": fast_sources,
+            "experimental_fast_unpack": fast, "experimental_mixed_cv": mixed,
+            "fast_source_sha256": fast_sources,
             "candidate_kernel_sha256": hashlib.sha256(cluster.read_bytes()).hexdigest()
                 if variant == "candidate" else None,
             "candidate_q1_kernel_sha256": hashlib.sha256(q1.read_bytes()).hexdigest()
@@ -400,6 +407,51 @@ def _fast_unpack_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     atomic_json(log_dir / "status.json", status)
 
 
+def _mixed_optimization_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
+                      status: dict) -> None:
+    """#151 and 2026-09-29: balanced ownership/C16 require exact new NPU evidence."""
+    from oscar_ascend.ops.loader import validate_build_artifacts
+    output = log_dir / "mixed-optimization-report.json"
+    output.unlink(missing_ok=True)
+    before = read_npu_resources(config, log_dir=log_dir / "mixed-optimization-resources-before", timeout=30)
+    phase_error, release = None, None
+    try:
+        _phase("mixed-optimization", [sys.executable, "-m", "tools.probe_mixed_optimization",
+            "--config", str(config_path), "--acceptance", str(ROOT / "configs/acceptance.json"),
+            "--output", str(output)], config=config, env=env, log_dir=log_dir, status=status)
+    except BaseException as error:
+        phase_error = error
+        raise
+    finally:
+        try:
+            release = wait_for_release(config, before, log_dir=log_dir / "mixed-optimization-resources-after",
+                timeout=float(config.get("resource_release_timeout_seconds", 30)),
+                tolerance_bytes=config.get("resource_release_tolerance_bytes", DEFAULT_RELEASE_TOLERANCE))
+        except BaseException as error:
+            release = {"status": "failed", "reason": f"{type(error).__name__}: {error}"}
+            if phase_error is None:
+                raise
+        finally:
+            if release is not None:
+                status["mixed_optimization_resource_release"] = release
+                atomic_json(log_dir / "status.json", status)
+    if release.get("status") != "passed":
+        raise RuntimeError("mixed CV NPU resources did not release")
+    report = json.loads(output.read_text())
+    manifest = validate_build_artifacts(ROOT / "build/ascendc/build_manifest.json")
+    expected = {key: "passed" for key in ("status", "precision", "graph_capture", "graph_replay", "performance")}
+    expected.update(artifact_signature=manifest.get("signature"), artifact_sha256=manifest.get("sha256"))
+    mismatches = [key for key, value in expected.items() if report.get(key) != value]
+    if mismatches:
+        error = RuntimeError(f"mixed CV gate lacks matching evidence: {','.join(mismatches)} report={output}")
+        error.phase = "mixed-optimization-evidence"
+        raise error
+    status["mixed_optimization_gate"] = {"status": "passed", "report": str(output),
+                                   "artifact_signature": manifest["signature"],
+                                   "full_service_performance": "not_established"}
+    atomic_json(log_dir / "status.json", status)
+
+
 def _mixed_diagnostic(config_path: Path, config: dict, env: dict, log_dir: Path,
                       status: dict) -> None:
     """Measure the actual CV + current-FIA composition without loading a model."""
@@ -494,9 +546,11 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                     if variant == "candidate":
                         _candidate_gate(effective_path, config, env, log_dir, status)
                         _fast_unpack_gate(effective_path, config, env, log_dir, status)
+                        if config.get("experimental_mixed_cv", False):
+                            _mixed_optimization_gate(effective_path, config, env, log_dir, status)
                         if diagnose_q4:
                             _q4_diagnostic(effective_path, config, env, log_dir, status)
-                        if diagnose_mixed:
+                        if diagnose_mixed and not config.get("experimental_mixed_cv", False):
                             _mixed_diagnostic(effective_path, config, env, log_dir, status)
             if probe_only:
                 status.update(status="operator_probes_passed", service_started=False,
@@ -624,7 +678,7 @@ def main(argv=None) -> int:
     parser.add_argument("--diagnose-q4", action="store_true",
                         help="also rerun the established native q4/profile diagnostic; normally reuse prior evidence")
     parser.add_argument("--diagnose-mixed", action="store_true",
-                        help="measure 31 decode requests with/without a long prefill in the current candidate attention path")
+                        help="mixed shapes are included in the candidate optimization gate; retains the legacy diagnostic for older presets")
     args = parser.parse_args(argv)
     log_dir = (args.log_dir or ROOT / "logs" / ("observe-" + datetime.now(timezone.utc).strftime(
         "%Y%m%dT%H%M%S.%fZ"))).resolve()
@@ -633,9 +687,11 @@ def main(argv=None) -> int:
         phases = ["install", "signed_operator_gate" if args.variant != "native" else "native_start"]
         if args.variant == "candidate":
             phases += ["candidate_operator_graph_latency_gates", "fast_unpack_gate"]
+            if config.get("experimental_mixed_cv", False):
+                phases.append("mixed_optimization_gate")
             if args.diagnose_q4:
                 phases.append("q4_native_comparison_and_profile")
-            if args.diagnose_mixed:
+            if args.diagnose_mixed and not config.get("experimental_mixed_cv", False):
                 phases.append("mixed_cv_current_fia_merge_diagnostic")
         if not args.probe_only:
             phases += ["managed_service_health", "external_metrics_and_bounded_async_events"]

@@ -8,6 +8,7 @@ FEATURE_FLAGS = {
     "history_cluster4": "experimental_history_reuse",
     "later_mtp_q1": "experimental_history_reuse",
     "fast_unpack": "experimental_fast_unpack",
+    "mixed_cv": "experimental_mixed_cv",
 }
 
 
@@ -24,6 +25,10 @@ def variant_config(config: dict, variant: str | None) -> dict:
             selected[flag] = variant == "candidate"
     if selected.get("experimental_fast_unpack", False) and not selected.get("experimental_history_reuse", False):
         raise ValueError("fast unpack requires explicit candidate history configuration")
+    if selected.get("experimental_mixed_cv", False) and not (
+            selected.get("experimental_history_reuse", False) and
+            selected.get("experimental_fast_unpack", False)):
+        raise ValueError("mixed CV requires explicit fast/history candidate configuration")
     return selected
 
 

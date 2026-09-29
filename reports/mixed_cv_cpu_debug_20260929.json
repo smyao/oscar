@@ -1,0 +1,466 @@
+{
+  "reports/mixed_cv_cpu_debug.json": {
+    "backend": "official_ascendc_cpu_debug",
+    "status": "failed",
+    "cases": [
+      {
+        "op": "mixed_balanced",
+        "path": "artifacts/mixed_cv_cpu_cases/balanced_q4_n128_s1",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/000-mixed_balanced.log"
+      },
+      {
+        "op": "mixed_balanced",
+        "path": "artifacts/mixed_cv_cpu_cases/balanced_q4_n128_s3",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/001-mixed_balanced.log"
+      },
+      {
+        "op": "mixed_cluster16",
+        "path": "artifacts/mixed_cv_cpu_cases/c16_d64_q336_c65",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/002-mixed_cluster16.log"
+      },
+      {
+        "op": "mixed_cluster16_poison",
+        "path": "artifacts/mixed_cv_cpu_cases/c16_d64_q336_c65",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/003-mixed_cluster16_poison.log"
+      },
+      {
+        "op": "mixed_cluster16",
+        "path": "artifacts/mixed_cv_cpu_cases/c16_d256_q336_c65",
+        "status": "failed",
+        "returncode": 124,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/004-mixed_cluster16.log"
+      }
+    ],
+    "npu_acceptance": "not_run"
+  },
+  "reports/mixed_cv_cpu_remaining.json": {
+    "backend": "official_ascendc_cpu_debug",
+    "status": "failed",
+    "cases": [
+      {
+        "op": "mixed_cluster16",
+        "path": "artifacts/mixed_cv_cpu_cases/c16_d256_q4_c65",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-remaining/000-mixed_cluster16.log"
+      },
+      {
+        "op": "mixed_cluster16",
+        "path": "artifacts/mixed_cv_cpu_cases/c16_d64_q335_c65",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-remaining/001-mixed_cluster16.log"
+      },
+      {
+        "op": "mixed_cluster16",
+        "path": "artifacts/mixed_cv_cpu_cases/c16_d64_unaligned_q3q336",
+        "status": "failed",
+        "returncode": 124,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-remaining/002-mixed_cluster16.log"
+      }
+    ],
+    "npu_acceptance": "not_run"
+  },
+  "reports/mixed_cv_cpu_error.json": {
+    "backend": "official_ascendc_cpu_debug",
+    "status": "passed",
+    "cases": [
+      {
+        "op": "mixed_cluster16_error",
+        "path": "artifacts/mixed_cv_cpu_cases/c16_d64_q336_bad_meta",
+        "status": "passed",
+        "returncode": 0,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-error/000-mixed_cluster16_error.log"
+      }
+    ],
+    "npu_acceptance": "not_run"
+  },
+  "reports/mixed_cv_cpu_resolved.json": {
+    "backend": "official_ascendc_cpu_debug",
+    "status": "passed",
+    "timeout_seconds_per_phase": 120,
+    "npu_acceptance": "not_run",
+    "cases": [
+      {
+        "case": "c16_d256_q336_c65",
+        "op": "mixed_cluster16",
+        "golden_sha256": "f1c73c96dae36e03daf983391dc1d31619b40514c1fac630410ebe46f94defc0",
+        "execution": "separate_complete_kernels",
+        "reference_dir": "/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_reference/004-c16_d256_q336_c65-c3998409d0b044dfa7df3a450097ff41",
+        "phases": [
+          {
+            "phase": "mixed_C16_reference",
+            "status": "passed",
+            "returncode": 0,
+            "timed_out": false,
+            "elapsed_seconds": 57.28037,
+            "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-resolved/004-c16_d256_q336_c65-mixed_C16_reference.log",
+            "stages": [
+              "CPU_STAGE mode=mixed_C16_reference stage=PREPARE_START elapsed_s=0.188285",
+              "CPU_STAGE mode=mixed_C16_reference stage=PREPARE_DONE elapsed_s=0.332657",
+              "CPU_STAGE mode=mixed_C16_reference stage=FE0_START elapsed_s=0.332678",
+              "CPU_STAGE mode=mixed_C16_reference stage=FE0_DONE elapsed_s=50.3397",
+              "CPU_STAGE mode=mixed_C16_reference stage=ORACLE_DONE elapsed_s=57.2589",
+              "CPU_STAGE mode=mixed_C16_reference stage=REFERENCE_SAVED elapsed_s=57.2608"
+            ],
+            "reference_sizes": {
+              "partial.bin": 6193152,
+              "lse.bin": 24192,
+              "status.bin": 8064
+            }
+          },
+          {
+            "phase": "mixed_C16_candidate",
+            "status": "passed",
+            "returncode": 0,
+            "timed_out": false,
+            "elapsed_seconds": 77.735349,
+            "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-resolved/004-c16_d256_q336_c65-mixed_C16_candidate.log",
+            "stages": [
+              "CPU_STAGE mode=mixed_C16_candidate stage=PREPARE_START elapsed_s=0.195904",
+              "CPU_STAGE mode=mixed_C16_candidate stage=PREPARE_DONE elapsed_s=0.343766",
+              "CPU_STAGE mode=mixed_C16_candidate stage=REFERENCE_LOADED elapsed_s=0.34602",
+              "CPU_STAGE mode=mixed_C16_candidate stage=C16_START elapsed_s=0.351587",
+              "CPU_STAGE mode=mixed_C16_candidate stage=C16_DONE elapsed_s=70.9272",
+              "CPU_STAGE mode=mixed_C16_candidate stage=ORACLE_DONE elapsed_s=77.6731"
+            ]
+          }
+        ],
+        "status": "passed",
+        "reference_sha256": "fbecea77990f28b77122c39f00615a5f69890abf0a5c86a3fb6a172a7a1c7520"
+      },
+      {
+        "case": "c16_d64_unaligned_q3q336",
+        "op": "mixed_cluster16",
+        "golden_sha256": "bcbc209a94d03eaba0af6c9fa7014c105ae5de3c01b7573ef4de55b04b19aabf",
+        "execution": "separate_complete_kernels",
+        "reference_dir": "/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_reference/007-c16_d64_unaligned_q3q336-f9563f744cf64b598f38bbdc3463a0f1",
+        "phases": [
+          {
+            "phase": "mixed_C16_reference",
+            "status": "passed",
+            "returncode": 0,
+            "timed_out": false,
+            "elapsed_seconds": 62.565354,
+            "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-resolved/007-c16_d64_unaligned_q3q336-mixed_C16_reference.log",
+            "stages": [
+              "CPU_STAGE mode=mixed_C16_reference stage=PREPARE_START elapsed_s=0.194568",
+              "CPU_STAGE mode=mixed_C16_reference stage=PREPARE_DONE elapsed_s=0.340968",
+              "CPU_STAGE mode=mixed_C16_reference stage=FE0_START elapsed_s=0.341505",
+              "CPU_STAGE mode=mixed_C16_reference stage=FE0_DONE elapsed_s=56.6858",
+              "CPU_STAGE mode=mixed_C16_reference stage=ORACLE_DONE elapsed_s=62.5307",
+              "CPU_STAGE mode=mixed_C16_reference stage=REFERENCE_SAVED elapsed_s=62.5312"
+            ],
+            "reference_sizes": {
+              "partial.bin": 1562112,
+              "lse.bin": 24408,
+              "status.bin": 8136
+            }
+          },
+          {
+            "phase": "mixed_C16_candidate",
+            "status": "passed",
+            "returncode": 0,
+            "timed_out": false,
+            "elapsed_seconds": 78.83626,
+            "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-resolved/007-c16_d64_unaligned_q3q336-mixed_C16_candidate.log",
+            "stages": [
+              "CPU_STAGE mode=mixed_C16_candidate stage=PREPARE_START elapsed_s=0.185168",
+              "CPU_STAGE mode=mixed_C16_candidate stage=PREPARE_DONE elapsed_s=0.329747",
+              "CPU_STAGE mode=mixed_C16_candidate stage=REFERENCE_LOADED elapsed_s=0.330842",
+              "CPU_STAGE mode=mixed_C16_candidate stage=C16_START elapsed_s=0.334171",
+              "CPU_STAGE mode=mixed_C16_candidate stage=C16_DONE elapsed_s=72.8451",
+              "CPU_STAGE mode=mixed_C16_candidate stage=ORACLE_DONE elapsed_s=78.8223"
+            ]
+          }
+        ],
+        "status": "passed",
+        "reference_sha256": "c55d86353b2e0e9e2c28645fc970e0c0b0b21ff40288de668d13c72b83b696b4"
+      }
+    ]
+  },
+  "logs/vm-mixed-device/compile-1.json": {
+    "phase": "compile-1",
+    "command": [
+      "cmake",
+      "--build",
+      "/home/sunao2000.linux/gpt_new_oscar/build/ascendc",
+      "--parallel",
+      "8"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 28.223514,
+    "timed_out": false,
+    "interrupted": false,
+    "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-device/compile-1.log",
+    "cleanup_complete": true
+  },
+  "build/ascendc/oscar_build_signature.json": {
+    "signature": "1fc19b2f14f185ee28b057d4f3818668d867ab8409bf45234439700d002bf36f",
+    "configuration": {
+      "source": {
+        "CMakeLists.txt": "0fd15e75e25f365fbfd0ed7197532e8cc66c2e5444ae67d336fe075674f6cb49",
+        "attention_bindings.cpp": "428afac0f0cb5f362815f3305c027179caedd999d7d42625d50155e162b06a86",
+        "rotation_bindings.cpp": "48af05b40ad563e2d3b1fe36737e8a54b78906cd9141f2451cc3358126787a5d",
+        "status_bindings.cpp": "2912ac6aa6be89eb0e6b8507b16c10a3ac8c996182bc52ed0afc87c45d3b2c40",
+        "torch_bindings.cpp": "f09f9d5c1fa63537937923d555e436695e5fd7450dc7fb50d2d1e99b3edd4e0f",
+        "cpu/CMakeLists.txt": "bd0921678ddecb5ddc7573058662d981ef23ed091b04cae47e25303f710ce3b5",
+        "cpu/cv_probe.cpp": "98386debeb35de7593b047155099db2060e5a41662b00132b15c42b57a5876ae",
+        "cpu/fast_unpack_probe.cpp": "f337bdd92194fa118d9232cdf5da30c881a61eba62f843104e4968a096e60de6",
+        "cpu/primitive_probe.cpp": "f1cd3c8fca22d4b03d175762025e8446d6bc937324ccc9441b543a281005a453",
+        "cpu/rotation_probe.cpp": "02245026bd7561568e12f58c54225f083f1f8e0d91bc9393c0e661e83ad91c2a",
+        "include/oscar_attention_launch.h": "2a56b26bbdcaa86d9938aa5826f2b744dd7c927989dc275d7dd7d42c6d07f484",
+        "include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+        "include/oscar_launch.h": "c8b51d610755a8053455757ce9a921aa401e756edc6234318edcf2b7d422bbe9",
+        "include/oscar_rotation_launch.h": "f231519ac7fd73b1e2316947e75d3c3351c00e095ccf16aa67df944d42ffe180",
+        "kernels/attention_cv.cpp": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+        "kernels/attention_cv_cluster.cpp": "c2412de931041f92a6fd340ad690accb32c12b1012f069342d296b3aa335ec82",
+        "kernels/attention_cv_fast.cpp": "39dd2270072590f967b510fef86d22cb9b59f8914715a7039b212dd37ed9b81e",
+        "kernels/attention_cv_fast_balanced.cpp": "c741dae2232f03b276298286f7d12fbd35d5052998b4c1433a310761c42f60eb",
+        "kernels/attention_cv_fast_cluster16.cpp": "d4919415c986dde5cd1ba76d19e7ded7b833d88dfa025d66a287335143c35b05",
+        "kernels/attention_cv_fast_cluster4.cpp": "bae1fd791b26365a6f6ae3d1e6b9ad3936185d0906c5c5029dfb6f54b49dc9e2",
+        "kernels/attention_cv_fast_q1.cpp": "3e2eda0e28bf1e577e06a0c05edd7269467a9c4d721901ef9703a6f52c6cc4f1",
+        "kernels/attention_cv_profile.cpp": "15d9b0800f61b51e85416c53061b3893e33efee69016a03b3454afcfd99b0188",
+        "kernels/attention_cv_q1.cpp": "498644c51c4857828e19ec7e8ef5064653b524d1e7bd2344aaec1b82481152d7",
+        "kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+        "kernels/attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+        "kernels/merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+        "kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+        "kernels/rotate_clip_store.cpp": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+        "kernels/status_guard.cpp": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+        "kernels/store_int2.cpp": "5a6fa9619e399bb80bc0455c4426396d98510326bb899900b4b96c65d2b58506"
+      },
+      "cann": "/usr/local/Ascend/cann-9.1.0",
+      "cann_versions": {
+        "/usr/local/Ascend/cann-9.1.0/compiler/version.info": "f20359296d5a7127f841aa35f4a788137f444dc36d72641e948cb9e39e47e4f4"
+      },
+      "soc": "ascend910b4",
+      "package_versions": {
+        "torch": "2.12.0+cpu",
+        "torch_npu": "2.12.0",
+        "pybind11": "3.1.0"
+      },
+      "python": "/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python",
+      "torch_npu": "/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu",
+      "flags": {
+        "CXX": null,
+        "CC": null,
+        "CXXFLAGS": null
+      }
+    },
+    "extension": "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so",
+    "kernel_library": "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/lib/liboscar_ascend_kernels_1fc19b2f14f185ee.so",
+    "sha256": {
+      "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so": "d711bb5324cd323418c78760bf187a40b275528011d50e76a32e33356dc000b9",
+      "/home/sunao2000.linux/gpt_new_oscar/build/ascendc/lib/liboscar_ascend_kernels_1fc19b2f14f185ee.so": "ca0b7814b273937149e568f80d26a248109858a10a0ac16ae359e1d09494a778"
+    },
+    "build": "passed",
+    "device_completion": "not_run",
+    "reused": false
+  },
+  "logs": {
+    "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/000-mixed_balanced.log": {
+      "sha256": "2100473601f967b98a09ad52878c3d48db5f5684fd8a04b6889ce8e47c0a9c74",
+      "phase": {
+        "phase": "000-mixed_balanced",
+        "command": [
+          "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu",
+          "mixed_balanced",
+          "/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/balanced_q4_n128_s1"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 23.872998,
+        "timed_out": false,
+        "interrupted": false,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/000-mixed_balanced.log",
+        "cleanup_complete": true
+      },
+      "evidence_lines": [
+        "max_abs=7.15256e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/balanced_q4_n128_s1/expected_output.bin",
+        "max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/balanced_q4_n128_s1/expected_lse.bin",
+        "{\"backend\":\"ascendc_cpu_debug\",\"op\":\"mixed_balanced\",\"status\":\"passed\"}"
+      ]
+    },
+    "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/001-mixed_balanced.log": {
+      "sha256": "dae24b7bfe82209d26d429b09909d94c68a53662313f5522bb2e80b2ce86a961",
+      "phase": {
+        "phase": "001-mixed_balanced",
+        "command": [
+          "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu",
+          "mixed_balanced",
+          "/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/balanced_q4_n128_s3"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 66.563939,
+        "timed_out": false,
+        "interrupted": false,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/001-mixed_balanced.log",
+        "cleanup_complete": true
+      },
+      "evidence_lines": [
+        "max_abs=1.3113e-06 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/balanced_q4_n128_s3/expected_output.bin",
+        "max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/balanced_q4_n128_s3/expected_lse.bin",
+        "{\"backend\":\"ascendc_cpu_debug\",\"op\":\"mixed_balanced\",\"status\":\"passed\"}"
+      ]
+    },
+    "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/002-mixed_cluster16.log": {
+      "sha256": "652bae24b689c3d785c5f81db5ecceccf3848355226e48edf4399e233502440a",
+      "phase": {
+        "phase": "002-mixed_cluster16",
+        "command": [
+          "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu",
+          "mixed_cluster16",
+          "/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d64_q336_c65"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 95.645113,
+        "timed_out": false,
+        "interrupted": false,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/002-mixed_cluster16.log",
+        "cleanup_complete": true
+      },
+      "evidence_lines": [
+        "c16_clusters=1 grouped=16 solo=0 shared_kv_tiles=1",
+        "max_abs=5.96046e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d64_q336_c65/expected_output.bin",
+        "max_abs=9.53674e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d64_q336_c65/expected_lse.bin",
+        "{\"backend\":\"ascendc_cpu_debug\",\"op\":\"mixed_cluster16\",\"status\":\"passed\"}"
+      ]
+    },
+    "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/003-mixed_cluster16_poison.log": {
+      "sha256": "78878f84a39baa3297bf9c41c2fbcd8b4de03e5adde9354671f9fe00f1f447f5",
+      "phase": {
+        "phase": "003-mixed_cluster16_poison",
+        "command": [
+          "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu",
+          "mixed_cluster16_poison",
+          "/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d64_q336_c65"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 89.228752,
+        "timed_out": false,
+        "interrupted": false,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/003-mixed_cluster16_poison.log",
+        "cleanup_complete": true
+      },
+      "evidence_lines": [
+        "c16_clusters=1 grouped=16 solo=0 shared_kv_tiles=1",
+        "max_abs=5.96046e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d64_q336_c65/expected_output.bin",
+        "max_abs=9.53674e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d64_q336_c65/expected_lse.bin",
+        "{\"backend\":\"ascendc_cpu_debug\",\"op\":\"mixed_cluster16_poison\",\"status\":\"passed\"}"
+      ]
+    },
+    "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/004-mixed_cluster16.log": {
+      "sha256": "4b8606858067ebee4b705bc976562993c3534cad52e15d8de7e1ba150bd3509d",
+      "phase": {
+        "phase": "004-mixed_cluster16",
+        "command": [
+          "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu",
+          "mixed_cluster16",
+          "/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d256_q336_c65"
+        ],
+        "returncode": 124,
+        "elapsed_seconds": 120.058054,
+        "timed_out": true,
+        "interrupted": false,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu/004-mixed_cluster16.log",
+        "cleanup_complete": true
+      },
+      "evidence_lines": [
+        "TIMEOUT phase=004-mixed_cluster16 limit=120s"
+      ]
+    },
+    "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-remaining/000-mixed_cluster16.log": {
+      "sha256": "f19ac95b4060fdc9f1963267aa363dc9460a640204e530207309eb489c126a5d",
+      "phase": {
+        "phase": "000-mixed_cluster16",
+        "command": [
+          "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu",
+          "mixed_cluster16",
+          "/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d256_q4_c65"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 3.22675,
+        "timed_out": false,
+        "interrupted": false,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-remaining/000-mixed_cluster16.log",
+        "cleanup_complete": true
+      },
+      "evidence_lines": [
+        "c16_clusters=0 grouped=0 solo=1 shared_kv_tiles=0",
+        "max_abs=3.57628e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d256_q4_c65/expected_output.bin",
+        "max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d256_q4_c65/expected_lse.bin",
+        "{\"backend\":\"ascendc_cpu_debug\",\"op\":\"mixed_cluster16\",\"status\":\"passed\"}"
+      ]
+    },
+    "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-remaining/001-mixed_cluster16.log": {
+      "sha256": "10f3600203c7e7afcea4100795df371fa66ac4d2b36d1259ce8364539eb3f7ef",
+      "phase": {
+        "phase": "001-mixed_cluster16",
+        "command": [
+          "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu",
+          "mixed_cluster16",
+          "/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d64_q335_c65"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 73.73877,
+        "timed_out": false,
+        "interrupted": false,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-remaining/001-mixed_cluster16.log",
+        "cleanup_complete": true
+      },
+      "evidence_lines": [
+        "c16_clusters=0 grouped=0 solo=16 shared_kv_tiles=0",
+        "max_abs=4.76837e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d64_q335_c65/expected_output.bin",
+        "max_abs=9.53674e-07 file=/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d64_q335_c65/expected_lse.bin",
+        "{\"backend\":\"ascendc_cpu_debug\",\"op\":\"mixed_cluster16\",\"status\":\"passed\"}"
+      ]
+    },
+    "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-remaining/002-mixed_cluster16.log": {
+      "sha256": "cfbc50e29a45d0dbfae9bc8b81967678e414cf0211fa7a519a10ad23481d8909",
+      "phase": {
+        "phase": "002-mixed_cluster16",
+        "command": [
+          "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu",
+          "mixed_cluster16",
+          "/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d64_unaligned_q3q336"
+        ],
+        "returncode": 124,
+        "elapsed_seconds": 120.057241,
+        "timed_out": true,
+        "interrupted": false,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-remaining/002-mixed_cluster16.log",
+        "cleanup_complete": true
+      },
+      "evidence_lines": []
+    },
+    "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-error/000-mixed_cluster16_error.log": {
+      "sha256": "2f85fc43e1cde15b89280b04d61c693d3c31f5c4ae3676dc75ed371c13a7798e",
+      "phase": {
+        "phase": "000-mixed_cluster16_error",
+        "command": [
+          "/home/sunao2000.linux/gpt_new_oscar/build/cpu/oscar_cv_cpu",
+          "mixed_cluster16_error",
+          "/home/sunao2000.linux/gpt_new_oscar/artifacts/mixed_cv_cpu_cases/c16_d64_q336_bad_meta"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 84.35162,
+        "timed_out": false,
+        "interrupted": false,
+        "log": "/home/sunao2000.linux/gpt_new_oscar/logs/vm-mixed-cpu-error/000-mixed_cluster16_error.log",
+        "cleanup_complete": true
+      },
+      "evidence_lines": [
+        "c16_clusters=1 grouped=16 solo=0 shared_kv_tiles=1",
+        "{\"backend\":\"ascendc_cpu_debug\",\"op\":\"mixed_cluster16_error\",\"status\":\"passed\"}"
+      ]
+    }
+  }
+}

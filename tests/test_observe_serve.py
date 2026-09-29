@@ -110,6 +110,7 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     monkeypatch.setattr(observe_serve, "_preflight", lambda *args: seen.append("preflight"))
     monkeypatch.setattr(observe_serve, "_candidate_gate", lambda *args: seen.append("candidate-gates"))
     monkeypatch.setattr(observe_serve, "_fast_unpack_gate", lambda *args: seen.append("fast-unpack-gate"))
+    monkeypatch.setattr(observe_serve, "_mixed_optimization_gate", lambda *args: seen.append("mixed-optimization-gate"))
     monkeypatch.setattr(observe_serve, "_q4_diagnostic", lambda *args: seen.append("q4-diagnostic"))
     monkeypatch.setattr(observe_serve, "_mixed_diagnostic", lambda *args: seen.append("mixed-diagnostic"))
     monkeypatch.setattr(observe_serve, "managed_server", lambda *args, **kwargs:
@@ -117,8 +118,7 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     logs = tmp_path / "probe"
     assert observe_serve.run(config, logs, "candidate", probe_only=True, diagnose_mixed=diagnose_mixed) == 0
-    assert seen == ["preflight", "candidate-gates", "fast-unpack-gate"] + (
-        ["mixed-diagnostic"] if diagnose_mixed else [])
+    assert seen == ["preflight", "candidate-gates", "fast-unpack-gate", "mixed-optimization-gate"]
     status = json.loads((logs / "status.json").read_text())
     assert status["service_started"] is False
     assert status["performance_acceptance"] == "operator_only_not_end_to_end"
@@ -171,6 +171,32 @@ def test_fast_unpack_gate_requires_exact_new_npu_evidence(monkeypatch, tmp_path)
         report[key] = "failed"
         with pytest.raises(RuntimeError, match=key):
             observe_serve._fast_unpack_gate(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, {})
+        report[key] = saved
+
+
+def test_mixed_optimization_gate_requires_exact_new_npu_evidence(monkeypatch, tmp_path):
+    from oscar_ascend.ops import loader
+    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    manifest = {"signature": "mixed-signature", "sha256": {"extension": "mixed-binary"}}
+    monkeypatch.setattr(loader, "validate_build_artifacts", lambda *args: manifest)
+    monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
+    monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
+    report = {key: "passed" for key in ("status", "precision", "graph_capture", "graph_replay", "performance")}
+    report.update(artifact_signature=manifest["signature"], artifact_sha256=manifest["sha256"])
+    def phase(name, command, **kwargs):
+        assert name == "mixed-optimization" and "tools.probe_mixed_optimization" in command
+        output = Path(command[command.index("--output") + 1])
+        assert output.name != name + ".json"
+        output.write_text(json.dumps(report))
+    monkeypatch.setattr(observe_serve, "_phase", phase)
+    status = {}
+    observe_serve._mixed_optimization_gate(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, status)
+    assert status["mixed_optimization_gate"]["full_service_performance"] == "not_established"
+    for key in ("precision", "graph_capture", "graph_replay", "performance", "artifact_signature"):
+        saved = report[key]
+        report[key] = "failed"
+        with pytest.raises(RuntimeError, match=key):
+            observe_serve._mixed_optimization_gate(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, {})
         report[key] = saved
 
 

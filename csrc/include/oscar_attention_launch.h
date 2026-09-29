@@ -32,6 +32,14 @@ constexpr int64_t attention_cluster4_workspace_per_core(int64_t dim) {
           + kAttentionQueryRows * kAttentionKvRows
           + 4 * 2 * kAttentionQueryRows) * 4;
 }
+// Archive #148-151/D.4: same bounded KV256, sixteen independent query states.
+// The 2026-09-29 mixed CV measurement motivates reuse; no history-sized allocation.
+constexpr int64_t attention_cluster16_workspace_per_core(int64_t dim) {
+  return ((16 * kAttentionQueryRows + 2 * kAttentionKvRows
+           + kAttentionQueryRows + 16 * kAttentionQueryRows) * dim
+          + kAttentionQueryRows * kAttentionKvRows
+          + 16 * 2 * kAttentionQueryRows) * 4;
+}
 void prepare_attention_tasks_launch(void* stream, void* qstarts, void* lengths,
     void* slots, void* tasks, void* positions, int64_t requests, int64_t tokens,
     int64_t query_heads, int64_t kv_heads, int64_t sink, int64_t recent,
@@ -65,6 +73,27 @@ void attention_cv_fast_q1_launch(void* stream, void* query, void* query_rot,
     void* tasks, void* partial, void* lse, void* status, void* workspace,
     int64_t tokens, int64_t query_heads, int64_t kv_heads, int64_t dim,
     int64_t requests, int64_t table_columns, int64_t task_count,
+    int64_t block_tokens, int64_t physical_blocks, int64_t ssm_offset,
+    int64_t page_stride, int64_t window_stride, int64_t tag_stride,
+    int64_t sink, int64_t recent, int64_t speculative, int64_t splits,
+    float scale, uint32_t cores);
+// Archive #151/D.4 mixed history and q4 ownership candidates, separate exact ABIs.
+void attention_cv_fast_balanced_launch(void* stream, void* query, void* query_rot,
+    void* current_key, void* current_value, void* rotation_v, void* raw,
+    void* block_table, void* window_key, void* window_value, void* window_tags,
+    void* tasks, void* partial, void* lse, void* status, void* workspace,
+    int64_t tokens, int64_t query_heads, int64_t kv_heads, int64_t dim,
+    int64_t requests, int64_t table_columns, int64_t task_count,
+    int64_t block_tokens, int64_t physical_blocks, int64_t ssm_offset,
+    int64_t page_stride, int64_t window_stride, int64_t tag_stride,
+    int64_t sink, int64_t recent, int64_t speculative, int64_t splits,
+    float scale, uint32_t cores);
+void attention_cv_fast_cluster16_launch(void* stream, void* query, void* query_rot,
+    void* current_key, void* current_value, void* rotation_v, void* raw,
+    void* block_table, void* window_key, void* window_value, void* window_tags,
+    void* tasks, void* partial, void* lse, void* status, void* workspace,
+    void* cluster_stats, int64_t tokens, int64_t query_heads, int64_t kv_heads,
+    int64_t dim, int64_t requests, int64_t table_columns, int64_t task_count,
     int64_t block_tokens, int64_t physical_blocks, int64_t ssm_offset,
     int64_t page_stride, int64_t window_stride, int64_t tag_stride,
     int64_t sink, int64_t recent, int64_t speculative, int64_t splits,

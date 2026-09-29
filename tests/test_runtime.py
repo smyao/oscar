@@ -71,11 +71,15 @@ def test_workspace_byte_account_includes_all_live_buffers():
 def test_cluster4_state_is_explicit_bounded_and_includes_counter_buffer():
     baseline = WorkspaceGeometry(16384, 6, 1, 256, cube_cores=20)
     candidate = replace(baseline, history_cluster_size=4)
+    mixed = replace(baseline, history_cluster_size=16)
     assert baseline.history_cluster_size == 1
     assert baseline.cv_bytes == 20 * 917504
     assert candidate.cv_bytes == 20 * 1839104
+    assert mixed.cv_bytes == 20 * 4997120
     assert candidate.total_bytes - baseline.total_bytes == 20 * (1839104 - 917504 + 64)
+    assert mixed.total_bytes - baseline.total_bytes == 20 * (4997120 - 917504 + 64)
     assert replace(candidate, tokens=128).cv_bytes == candidate.cv_bytes
+    assert replace(mixed, tokens=128).cv_bytes == mixed.cv_bytes
     with pytest.raises(ValueError, match="cluster size"):
         replace(baseline, history_cluster_size=2)
 
@@ -85,6 +89,77 @@ def test_candidate_route_requires_explicit_boolean(value):
     with pytest.raises(runtime_api.OscarReadinessError, match="explicit boolean"):
         AscendRuntimeProvider({"experimental_history_reuse": value})
     assert AscendRuntimeProvider({}).config.get("experimental_history_reuse", False) is False
+
+
+def test_mixed_cv_requires_explicit_fast_history_and_reserves_c16(monkeypatch):
+    from oscar_ascend import runtime
+    for bad in (1, "true", None):
+        with pytest.raises(runtime_api.OscarReadinessError, match="explicit boolean"):
+            AscendRuntimeProvider({"experimental_mixed_cv": bad})
+    with pytest.raises(runtime_api.OscarReadinessError, match="requires explicit"):
+        AscendRuntimeProvider({"experimental_mixed_cv": True,
+                               "experimental_history_reuse": True})
+    provider = AscendRuntimeProvider({"experimental_mixed_cv": True,
+                                     "experimental_fast_unpack": True,
+                                     "experimental_history_reuse": True,
+                                     "max_num_batched_tokens": 16384,
+                                     "compilation_config": {"cudagraph_capture_sizes": [128]}})
+    monkeypatch.setattr(provider, "_device_cube_cores", lambda _device: 20)
+    monkeypatch.setattr(provider, "_prepare_rotations", lambda *_: None)
+    class FakeWorkspace:
+        def __init__(self, geometry, device):
+            self.geometry, self.device = geometry, device
+    monkeypatch.setattr(runtime, "GraphWorkspace", FakeWorkspace)
+    workspace = provider.ensure_workspace(6, 1, 256, "npu:0")
+    assert workspace.geometry.history_cluster_size == 16
+    assert workspace.geometry.cv_bytes == 20 * 4997120
+    assert provider.ensure_workspace(6, 1, 256, "npu:0") is workspace
+
+
+def test_mixed_cv_selector_uses_known_host_query_bound_without_padded_false_eligibility():
+    from oscar_ascend.ops.cv_dispatch import (
+        FAST_BALANCED_CV_OP, FAST_CLUSTER16_CV_OP, FAST_CLUSTER4_CV_OP, FAST_CV_OP,
+        FAST_Q1_CV_OP, select_cv_op)
+    def choose(tokens, max_query_len, *, draft=False):
+        return select_cv_op(16, 6, 1, tokens, max_query_len,
+                            q1_draft=draft, fast_unpack=True, mixed_cv=True)
+    assert choose(16384, 1, draft=True) == FAST_Q1_CV_OP
+    assert choose(16384, 1) == FAST_BALANCED_CV_OP
+    assert choose(128, 4) == FAST_CV_OP
+    assert choose(8, 4) == FAST_CV_OP
+    assert choose(16384, 4) == FAST_BALANCED_CV_OP
+    assert choose(390, 385) == FAST_CLUSTER4_CV_OP
+    assert choose(8191, 8191) == FAST_CLUSTER4_CV_OP
+    assert choose(16384, None) == FAST_CLUSTER4_CV_OP
+    assert choose(8192, 8192) == FAST_CLUSTER16_CV_OP
+    assert choose(16384, 16260) == FAST_CLUSTER16_CV_OP
+    with pytest.raises(ValueError, match="mixed CV requires"):
+        select_cv_op(4, 6, 1, 16384, 16260, fast_unpack=True, mixed_cv=True)
+    with pytest.raises(ValueError, match="C16 workspace requires"):
+        select_cv_op(16, 6, 1, 16384, 16260, fast_unpack=True)
+
+
+def test_mixed_cv_readiness_requires_both_new_signed_ops(monkeypatch):
+    from oscar_ascend.ops import loader
+    from oscar_ascend.ops.cv_dispatch import MIXED_CV_OPS
+    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "0,1,2,3")
+    monkeypatch.setattr(loader, "require_production_ops", lambda: None)
+    seen = []
+    def require(required, *_args):
+        seen.append(set(required))
+        if set(required) == set(MIXED_CV_OPS):
+            raise RuntimeError("signed balanced/C16 symbols missing")
+    monkeypatch.setattr(loader, "require_capabilities", require)
+    monkeypatch.setattr(torch, "npu", SimpleNamespace(is_available=lambda: True),
+                        raising=False)
+    provider = AscendRuntimeProvider({"devices": [0, 1, 2, 3],
+                                     "experimental_history_reuse": True,
+                                     "experimental_fast_unpack": True,
+                                     "experimental_mixed_cv": True})
+    with pytest.raises(RuntimeError, match="symbols missing"):
+        provider.assert_ready()
+    assert set(MIXED_CV_OPS) in seen
+    assert provider._ready is False
 
 
 @pytest.mark.parametrize("tokens,expected", [(1, 20), (4, 20), (8, 20), (16, 20),
@@ -186,11 +261,18 @@ def test_online_forward_contains_no_host_request_loop_or_tensor_readback():
             assert node.func.attr not in {"item", "tolist", "numpy", "cpu", "synchronize"}
 
 
-@pytest.mark.parametrize("capacity,cube_cores,expected_splits,n", [(8, 1, 1, 8), (64, 20, 8, 8), (256, 20, 1, 256)])
-@pytest.mark.parametrize("cluster_size,fast_unpack", [(1, False), (4, False), (4, True)])
+@pytest.mark.parametrize("capacity,cube_cores,expected_splits,n", [(8, 1, 1, 8), (64, 20, 8, 8), (256, 20, 1, 256), (8192, 20, 1, 8192)])
+@pytest.mark.parametrize("cluster_size,fast_unpack,mixed_cv", [(1, False, False), (4, False, False), (4, True, False), (16, True, True)])
 @pytest.mark.parametrize("later_draft", [False, True])
-def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack):
+def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv):
     """Host ABI exercise only: fake ops establish ordering, never accuracy."""
+    if n == 8192 and (cluster_size != 16 or later_draft):
+        pytest.skip("large FULL host route is needed once for C16")
+    # patch.dict restores sys.modules after the fake impl import. Preload the
+    # real current_attention module first so the package attribute and the
+    # restored absolute-import entry remain the same object for later tests.
+    canonical_current = importlib.import_module("oscar_ascend.integration.current_attention")
+    importlib.import_module("oscar_ascend.integration").current_attention = canonical_current
     backend = types.ModuleType("vllm.v1.attention.backend")
     backend.AttentionImpl = type("AttentionImpl", (), {})
     path = Path(__file__).resolve().parents[1] / "oscar_ascend/integration/impl.py"
@@ -202,7 +284,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     w = object.__new__(GraphWorkspace)
     w.geometry = WorkspaceGeometry(capacity, h, hk, d, cube_cores=cube_cores,
                                    history_cluster_size=cluster_size)
-    w.cluster_stats = torch.empty((cube_cores, 8), dtype=torch.int64) if cluster_size == 4 else None
+    w.cluster_stats = torch.empty((cube_cores, 8), dtype=torch.int64) if cluster_size in (4, 16) else None
     w.query_input = torch.empty(capacity, h, d, dtype=torch.bfloat16)
     w.key_input = torch.empty(capacity, hk, d, dtype=torch.bfloat16)
     w.value_input = torch.empty_like(w.key_input)
@@ -248,13 +330,13 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             args[13].zero_()
 
         def attention_cv_cluster4_out(self, *args):
-            assert cluster_size == 4
+            assert cluster_size in (4, 16)
             assert args[15] is w.cluster_stats
             self.attention_cv_out(*(args[:15] + args[16:]))
             calls[-1] = "cluster4"
 
         def attention_cv_q1_out(self, *args):
-            assert cluster_size == 4 and later_draft
+            assert cluster_size in (4, 16) and later_draft
             self.attention_cv_out(*args)  # Identical fe0 ABI; no stats argument.
             calls[-1] = "q1"
 
@@ -272,6 +354,17 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             assert fast_unpack
             self.attention_cv_cluster4_out(*args)
             calls[-1] = "fast_cluster4"
+
+        def attention_cv_fast_balanced_out(self, *args):
+            assert fast_unpack and mixed_cv and cluster_size == 16
+            self.attention_cv_out(*args)
+            calls[-1] = "fast_balanced"
+
+        def attention_cv_fast_cluster16_out(self, *args):
+            assert fast_unpack and mixed_cv and cluster_size == 16
+            assert args[15] is w.cluster_stats
+            self.attention_cv_cluster4_out(*args)
+            calls[-1] = "fast_cluster16"
 
         def merge_lse_out(self, partial, lse, output, output_lse, status):
             calls.append("merge")
@@ -301,7 +394,8 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     impl = object.__new__(module.OscarAttentionImpl)
     impl.num_heads, impl.num_kv_heads, impl.head_size, impl.scale = h, hk, d, d**-0.5
     impl.provider = SimpleNamespace(layer_state=lambda _name: state, ops=Ops(),
-                                    config={"experimental_fast_unpack": fast_unpack})
+                                    config={"experimental_fast_unpack": fast_unpack,
+                                            "experimental_mixed_cv": mixed_cv})
     q = torch.randn(n, h * d, dtype=torch.bfloat16)
     k = torch.randn(n, hk * d, dtype=torch.bfloat16)
     value = torch.randn(n, hk * d * 3, dtype=torch.bfloat16)[:, d:2*d]
@@ -310,6 +404,14 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     common.query_start_loc = torch.tensor([0, n // 2, n], dtype=torch.int32)
     common.num_actual_tokens = common.num_input_tokens = n
     common.max_query_len = n // 2
+    if n == 8192:
+        common.query_start_loc = torch.tensor([0, n], dtype=torch.int32)
+        common.num_reqs = 1
+        common.max_query_len = n
+    elif mixed_cv and n == 256 and not later_draft:
+        common.query_start_loc = torch.tensor([0, 4, 8], dtype=torch.int32)
+        common.num_actual_tokens = 8
+        common.max_query_len = 4
     if later_draft:
         common.max_query_len = 1
         common.num_actual_tokens = 2
@@ -322,8 +424,13 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     assert result is output and bool(torch.all(result == 7))
     # #150: short per-request query lengths keep the original OSCAR op even
     # with candidate workspace; long requests keep the C4 ABI/extra buffer.
-    expected_op = ("q1" if cluster_size == 4 and later_draft else
-                   "cluster4" if cluster_size == 4 and n == 256 else "cv")
-    if fast_unpack:
-        expected_op = "fast_" + expected_op
+    if mixed_cv:
+        expected_op = ("fast_q1" if later_draft else
+                       "fast_cluster16" if n == 8192 else
+                       "fast_balanced" if n == 256 else "fast_cv")
+    else:
+        expected_op = ("q1" if cluster_size == 4 and later_draft else
+                       "cluster4" if cluster_size == 4 and n == 256 else "cv")
+        if fast_unpack:
+            expected_op = "fast_" + expected_op
     assert calls == ["prepare", "rotate", expected_op, "merge", "store", "guard"]

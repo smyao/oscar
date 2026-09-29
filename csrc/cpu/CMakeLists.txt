@@ -13,6 +13,7 @@ add_executable(oscar_cv_cpu cv_probe.cpp fast_unpack_probe.cpp ../kernels/attent
   ../kernels/attention_cv_q1.cpp ../kernels/attention_cv_profile.cpp
   ../kernels/attention_cv_cluster.cpp ../kernels/attention_cv_fast.cpp
   ../kernels/attention_cv_fast_q1.cpp ../kernels/attention_cv_fast_cluster4.cpp
+  ../kernels/attention_cv_fast_balanced.cpp ../kernels/attention_cv_fast_cluster16.cpp
   ../kernels/merge_lse.cpp)
 target_link_libraries(oscar_cv_cpu PRIVATE tikicpulib::Ascend910B4)
 set(_oscar_softmax_v2_header "${ASCEND_HOME_PATH}/aarch64-linux/asc/include/adv_api/activation/softmaxflashv2.h")

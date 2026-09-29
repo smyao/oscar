@@ -55,8 +55,8 @@ class WorkspaceGeometry:
             raise ValueError("CV query grouping requires integral GQA ratio <= 16")
         if self.head_dim not in (64, 128, 256) or self.splits > 32 or self.cube_cores > 32:
             raise ValueError("unsupported CV workspace geometry")
-        if self.history_cluster_size not in (1, 4):
-            raise ValueError("history cluster size must be 1 or 4")
+        if self.history_cluster_size not in (1, 4, 16):
+            raise ValueError("history cluster size must be 1, 4 or 16")
 
     @property
     def task_count(self):
@@ -79,6 +79,13 @@ class WorkspaceGeometry:
 
     @property
     def cv_bytes(self):
+        if self.history_cluster_size == 16:
+            # Same bounded GM layout as the independent C16 kernel: sixteen
+            # Q/FP32 state groups share one KV tile. This arena is allocated
+            # once per device, then sequentially reused by all FULL layers.
+            m, b, d = ATTENTION_QUERY_ROWS, ATTENTION_KV_ROWS, self.head_dim
+            return self.cube_cores * (((16 * m + 2 * b + m + 16 * m) * d
+                                       + m * b + 16 * 2 * m) * 4)
         if self.history_cluster_size == 4:
             # Original Q buffer holds group0; extra3 Q +4 FP32 accumulators
             # and4 independent max/sum arrays. Independent of history length.
@@ -94,7 +101,7 @@ class WorkspaceGeometry:
                 + n * h * p * d * 4 + n * h * p * 4
                 + n * h * 8 + self.task_count * (128 + 8)
                 + n * self.kv_heads * 4 + n * h * 4 + n * 16 + self.cv_bytes
-                + (self.cube_cores * 8 * 8 if self.history_cluster_size == 4 else 0))
+                + (self.cube_cores * 8 * 8 if self.history_cluster_size in (4, 16) else 0))
 
 
 class GraphWorkspace:
@@ -125,7 +132,7 @@ class GraphWorkspace:
         self.slots = torch.empty((n,), dtype=torch.int64, device=device)
         self.cv = torch.empty((geometry.cv_bytes,), dtype=torch.uint8, device=device)
         self.cluster_stats = (torch.empty((geometry.cube_cores, 8), dtype=torch.int64, device=device)
-                              if geometry.history_cluster_size == 4 else None)
+                              if geometry.history_cluster_size in (4, 16) else None)
 
     def validate(self, tokens, heads, kv_heads, dim):
         g = self.geometry
@@ -182,8 +189,14 @@ class AscendRuntimeProvider:
             raise OscarReadinessError("experimental_history_reuse must be an explicit boolean")
         if type(self.config.get("experimental_fast_unpack", False)) is not bool:
             raise OscarReadinessError("experimental_fast_unpack must be an explicit boolean")
+        if type(self.config.get("experimental_mixed_cv", False)) is not bool:
+            raise OscarReadinessError("experimental_mixed_cv must be an explicit boolean")
         if self.config.get("experimental_fast_unpack", False) and not self.config.get("experimental_history_reuse", False):
             raise OscarReadinessError("fast unpack requires explicit candidate history configuration")
+        if self.config.get("experimental_mixed_cv", False) and not (
+                self.config.get("experimental_fast_unpack", False) and
+                self.config.get("experimental_history_reuse", False)):
+            raise OscarReadinessError("mixed CV requires explicit fast/history candidate configuration")
         self._ready = False
         self.layers: dict[str, LayerState] = {}
         self.workspaces: dict[tuple, GraphWorkspace] = {}
@@ -208,6 +221,9 @@ class AscendRuntimeProvider:
         if self.config.get("experimental_fast_unpack", False):
             from .ops.cv_dispatch import FAST_CV_OPS
             require_capabilities(FAST_CV_OPS)
+        if self.config.get("experimental_mixed_cv", False):
+            from .ops.cv_dispatch import MIXED_CV_OPS
+            require_capabilities(MIXED_CV_OPS)
         import torch
         if not torch.npu.is_available():
             raise OscarReadinessError("OSCAR production requires an available NPU")
@@ -225,6 +241,7 @@ class AscendRuntimeProvider:
         geometry = WorkspaceGeometry(capacity, heads, kv_heads, dim,
                                      int(self.config.get("attention_splits", 1)),
                                      self._device_cube_cores(device),
+                                     16 if self.config.get("experimental_mixed_cv", False) else
                                      4 if self.config.get("experimental_history_reuse", False) else 1)
         key = (str(device), geometry)
         if key not in self.workspaces:

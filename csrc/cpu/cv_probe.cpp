@@ -10,8 +10,11 @@
 // Archive #126/#129/#140-150 and D.4: cluster4/q1 modes execute both the fe0
 // kernel and the separate experimental C4 kernel on identical bytes, compares
 // partial/LSE/status exactly, then checks the independent frozen dense oracle.
+// Archive #151/D.4: mixed balanced/C16 cases retain fe0 inputs and bounded
+// INT2 history; CPU-debug establishes arithmetic parity, not NPU speed.
 #include "tikicpulib.h"
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -54,6 +57,14 @@ extern "C" void oscar_attention_cv_fast_cluster4_kernel(uint8_t*,uint8_t*,uint8_
     uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     uint8_t*,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
+extern "C" void oscar_attention_cv_fast_balanced_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
+extern "C" void oscar_attention_cv_fast_cluster16_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    uint8_t*,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
 extern "C" void oscar_merge_lse_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     int64_t,int64_t,int64_t);
 namespace {
@@ -62,6 +73,11 @@ std::vector<uint8_t> Read(const std::string& path,size_t n) {
   if(!f.read(reinterpret_cast<char*>(data.data()),n)||f.peek()!=EOF)
     throw std::runtime_error("incorrect golden byte count: "+path);
   return data;
+}
+void Write(const std::string& path,const uint8_t* data,size_t n) {
+  std::ofstream f(path,std::ios::binary|std::ios::trunc);
+  if(!f.write(reinterpret_cast<const char*>(data),n) || !f.flush())
+    throw std::runtime_error("failed to write CPU reference bytes: "+path);
 }
 struct Gm {
   uint8_t* ptr;size_t size;
@@ -208,8 +224,21 @@ void Close(const Gm& output,const std::string& path) {
 }
 int main(int argc,char** argv) {
  try {
-  if(argc!=3)throw std::runtime_error("usage: oscar_cv_cpu mode case_directory");
+  if(argc<3 || argc>4)throw std::runtime_error("usage: oscar_cv_cpu mode case_directory [fresh_reference_directory]");
   const std::string mode=argv[1];
+  const bool splitReference=mode=="mixed_C16_reference";
+  const bool splitCandidate=mode=="mixed_C16_candidate";
+  if((splitReference || splitCandidate)!=(argc==4))
+    throw std::runtime_error("split C16 mode requires a reference directory; other modes forbid it");
+  const std::string referenceDirectory=argc==4?argv[3]:"";
+  const auto began=std::chrono::steady_clock::now();
+  const auto mark=[&](const char* stage) {
+    if(mode.rfind("mixed_",0)!=0)return;
+    const double seconds=std::chrono::duration<double>(
+        std::chrono::steady_clock::now()-began).count();
+    std::cout<<"CPU_STAGE mode="<<mode<<" stage="<<stage
+             <<" elapsed_s="<<seconds<<std::endl;
+  };
   if(mode=="fast_words") {
     // #17-20/#151: execute the real AscendC unpack helper on all 65536
     // possible uint16 words and compare all 8 LSB-first 2-bit lanes exactly.
@@ -243,6 +272,10 @@ int main(int argc,char** argv) {
   const bool profileMode=mode=="profile_fe0";
   const bool fastFe0=mode=="fast_fe0" || mode=="fast_fe0_dead" ||
       mode=="fast_fe0_error";
+  const bool mixedBalanced=mode=="mixed_balanced";
+  const bool mixedCluster16=mode=="mixed_cluster16" ||
+      mode=="mixed_cluster16_poison" || mode=="mixed_cluster16_error" ||
+      splitReference || splitCandidate;
   if(mode=="tasks_causal") {CheckLargeCausalTasks();return 0;}
   CheckPaddedMetadata();
   CheckSlotContext();
@@ -274,8 +307,10 @@ int main(int argc,char** argv) {
       std::memcpy(workspace.ptr+offset,&poison,sizeof(poison));
   }
   AscendC::SetKernelMode(KernelMode::AIV_MODE);
+  mark("PREPARE_START");
   ICPU_RUN_KF(oscar_prepare_attention_tasks_kernel,4,starts.ptr,lens.ptr,slots.ptr,
       tasks.ptr,positions.ptr,requests,n,hq,hk,sink,recent,splits,true,static_cast<uint8_t*>(nullptr),int64_t{0},false);
+  mark("PREPARE_DONE");
   for(int64_t t=0;t<n;++t) {
     int64_t pos;std::memcpy(&pos,positions.ptr+t*8,8);
     int64_t expected=context+t;
@@ -330,12 +365,36 @@ int main(int argc,char** argv) {
       throw std::runtime_error("invalid q1 bad_meta_offset.txt");
     std::memset(raw.ptr+offset,0,2);
   }
+  if(mixedCluster16) {
+    // Main eager prefill sends current source2 to native FIA. Empty it for
+    // both CV operators while retaining source0/window and error metadata.
+    for(int64_t taskId=0;taskId<tasksCount;++taskId) {
+      auto* row=reinterpret_cast<int64_t*>(tasks.ptr)+taskId*16;
+      if(row[7]==2 && row[10]==0 && row[4]>=row[3])row[4]=row[3];
+    }
+  }
+  if(mode=="mixed_cluster16_poison") {
+    const uint32_t poison=0x7fc00000U;
+    for(size_t offset=0;offset<workspace.size;offset+=4)
+      std::memcpy(workspace.ptr+offset,&poison,4);
+  }
+  if(splitCandidate) {
+    const auto storedPartial=Read(referenceDirectory+"/partial.bin",partial.size);
+    const auto storedLse=Read(referenceDirectory+"/lse.bin",partLse.size);
+    const auto storedStatus=Read(referenceDirectory+"/status.bin",status.size);
+    std::memcpy(partial.ptr,storedPartial.data(),partial.size);
+    std::memcpy(partLse.ptr,storedLse.data(),partLse.size);
+    std::memcpy(status.ptr,storedStatus.data(),status.size);
+    mark("REFERENCE_LOADED");
+  }
   AscendC::SetKernelMode(KernelMode::MIX_MODE);
-  if(!fastCluster) {
+  if(!fastCluster && !splitCandidate) {
+    mark("FE0_START");
     ICPU_RUN_KF(oscar_attention_cv_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,raw.ptr,
         table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,partial.ptr,partLse.ptr,status.ptr,
         workspace.ptr,n,hq,hk,d,requests,int64_t{8},tasksCount,b,nb,prefix,stride,
         windowRows*hk*d,windowRows,sink,recent,spec,splits,1.0F/std::sqrt(float(d)));
+    mark("FE0_DONE");
   }
   if(fastFe0) {
     Gm fastPartial(partial.size),fastLse(partLse.size),
@@ -375,6 +434,84 @@ int main(int argc,char** argv) {
       if(pair->size!=baseline.size || std::memcmp(pair->ptr,baseline.ptr,pair->size)!=0)
         throw std::runtime_error("fast fe0 valid partial/LSE differs bytewise");
     }
+  }
+  if(mixedBalanced) {
+    Gm candidatePartial(partial.size),candidateLse(partLse.size),
+       candidateStatus(status.size),candidateWorkspace(workspace.size);
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
+    ICPU_RUN_KF(oscar_attention_cv_fast_balanced_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,
+        rv.ptr,raw.ptr,table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,
+        candidatePartial.ptr,candidateLse.ptr,candidateStatus.ptr,candidateWorkspace.ptr,
+        n,hq,hk,d,requests,int64_t{8},tasksCount,b,nb,prefix,stride,
+        windowRows*hk*d,windowRows,sink,recent,spec,splits,
+        1.0F/std::sqrt(float(d)));
+    for(const auto* pair:{&candidatePartial,&candidateLse,&candidateStatus}) {
+      const Gm& baseline=pair==&candidatePartial?partial:
+          (pair==&candidateLse?partLse:status);
+      if(std::memcmp(pair->ptr,baseline.ptr,pair->size)!=0)
+        throw std::runtime_error("mixed balanced differs from fe0 bytewise");
+    }
+  }
+  if(mixedCluster16 && !splitReference) {
+    Gm candidatePartial(partial.size),candidateLse(partLse.size),
+       candidateStatus(status.size),candidateWorkspace(
+           cores*oscar_ascend::attention_cluster16_workspace_per_core(d)),
+       stats(cores*8*sizeof(int64_t));
+    if(mode=="mixed_cluster16_poison") {
+      const uint32_t poison=0x7fc00000U;
+      for(size_t offset=0;offset<candidateWorkspace.size;offset+=4)
+        std::memcpy(candidateWorkspace.ptr+offset,&poison,4);
+    }
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
+    mark("C16_START");
+    ICPU_RUN_KF(oscar_attention_cv_fast_cluster16_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,
+        rv.ptr,raw.ptr,table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,
+        candidatePartial.ptr,candidateLse.ptr,candidateStatus.ptr,
+        candidateWorkspace.ptr,stats.ptr,n,hq,hk,d,requests,int64_t{8},
+        tasksCount,b,nb,prefix,stride,windowRows*hk*d,windowRows,sink,recent,
+        spec,splits,1.0F/std::sqrt(float(d)));
+    mark("C16_DONE");
+    if(std::memcmp(candidateStatus.ptr,status.ptr,status.size)!=0)
+      throw std::runtime_error("mixed C16 status differs from fe0 bytewise");
+    int64_t totals[8]={};
+    for(int64_t core=0;core<cores;++core) {
+      int64_t perCore[8];
+      std::memcpy(perCore,stats.ptr+core*8*8,sizeof(perCore));
+      for(int32_t field=0;field<8;++field) {
+        if(perCore[field]<0)throw std::runtime_error("negative C16 diagnostic counter");
+        totals[field]+=perCore[field];
+      }
+      if(perCore[1]!=16*perCore[0] || perCore[4]!=15*perCore[3] ||
+          perCore[7]!=perCore[0])
+        throw std::runtime_error("C16 per-core grouping/reuse counter mismatch");
+    }
+    int64_t source0Leaders=0;
+    for(int64_t taskId=0;taskId<tasksCount;++taskId) {
+      const auto* row=reinterpret_cast<const int64_t*>(tasks.ptr)+taskId*16;
+      if(row[1]>0 && row[7]==0)++source0Leaders;
+    }
+    if(totals[6]!=totals[1] || totals[1]+totals[2]!=source0Leaders)
+      throw std::runtime_error("C16 missed, repeated or miscounted a history leader");
+    const bool expectCluster=mode=="mixed_cluster16_error" ||
+        mode=="mixed_cluster16_poison" || n==336 || requests>1;
+    if(expectCluster!=(totals[0]>0) ||
+        (expectCluster && (totals[3]<=0 || totals[4]<=0)))
+      throw std::runtime_error("C16 fixture missed its expected grouping boundary");
+    std::cout<<"c16_clusters="<<totals[0]<<" grouped="<<totals[1]
+             <<" solo="<<totals[2]<<" shared_kv_tiles="<<totals[3]<<std::endl;
+    if(mode=="mixed_cluster16_error") {
+      bool sawError=false;
+      for(int64_t id=0;id<tasksCount*2;++id) {
+        int32_t code;std::memcpy(&code,status.ptr+id*4,4);
+        if(code)sawError=true;
+      }
+      if(!sawError)throw std::runtime_error("C16 live metadata error was ignored");
+      std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\"mixed_cluster16_error\",\"status\":\"passed\"}"<<std::endl;
+      return 0;
+    }
+    if(std::memcmp(candidatePartial.ptr,partial.ptr,partial.size)!=0 ||
+        std::memcmp(candidateLse.ptr,partLse.ptr,partLse.size)!=0)
+      throw std::runtime_error("mixed C16 partial/LSE differs from fe0 bytewise");
   }
   if(profileMode) {
     constexpr int64_t engines=oscar_ascend::kAttentionProfileEngines;
@@ -681,8 +818,16 @@ int main(int argc,char** argv) {
   ICPU_RUN_KF(oscar_merge_lse_kernel,4,partial.ptr,partLse.ptr,output.ptr,lse.ptr,
       mergeStatus.ptr,n*hq,segments,d);
   StatusZero(mergeStatus);Close(output,dir+"/expected_output.bin");Close(lse,dir+"/expected_lse.bin");
+  mark("ORACLE_DONE");
+  if(splitReference) {
+    // Only a fully checked fe0 result may become the cross-process reference.
+    Write(referenceDirectory+"/partial.bin",partial.ptr,partial.size);
+    Write(referenceDirectory+"/lse.bin",partLse.ptr,partLse.size);
+    Write(referenceDirectory+"/status.bin",status.ptr,status.size);
+    mark("REFERENCE_SAVED");
+  }
   std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\""
-           <<((fastFe0 || fastCluster)?mode:
+           <<((fastFe0 || fastCluster || mixedBalanced || mixedCluster16)?mode:
               (mode=="poison_workspace"?"poison_workspace":
                (profileMode?"profile_fe0":"attention_cv")))
            <<"\",\"status\":\"passed\"}"<<std::endl;

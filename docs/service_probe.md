@@ -1,5 +1,9 @@
 # 全服务探针与资源回收
 
+2026-09-29当前candidate包含balanced/C16，详情见[`mixed_cv_optimization.md`](mixed_cv_optimization.md)。同一命令
+`git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate --probe-only --diagnose-mixed`
+现在自动对比旧fast基线与新算子，覆盖原四形状、65K历史的三形状和第一轮MTP draft全current CV；只打印8条`PERF_MIXED_OPT`及`PERF_MIXED_OPT_RESULT`，报告为`mixed-optimization-report.json`。不同算子逐位精度、冻结oracle、指定独立图和CV/attention包络速度门全部通过才继续；不加载模型、不跑AISBench。此前只有观测的mixed诊断保留供旧配置使用，当前candidate不重复跑它。
+
 2026-09-28新增的混合长prefill诊断见[`mixed_prefill_analysis.md`](mixed_prefill_analysis.md)：
 `git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate --probe-only --diagnose-mixed`。
 完成安装/算子门后只测31条q4 decode的两种padding/split及加入一条长prefill的冷/热历史组合，按CV/current FIA/merge计时并核对冻结oracle；不加载模型、不跑AISBench。终端重点为四条`PERF_MIXED_ATTENTION`与一条`PERF_MIXED_RESULT`。独立报告`mixed-attention-report.json`与阶段状态JSON分开，精度、签名或资源释放失败即停止。

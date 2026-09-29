@@ -445,7 +445,8 @@ def _mixed_diagnostic(config_path: Path, config: dict, env: dict, log_dir: Path,
 
 
 def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = False,
-        diagnose_q4: bool = False, diagnose_mixed: bool = False) -> int:
+        diagnose_q4: bool = False, diagnose_mixed: bool = False,
+        rear_cards: bool = False) -> int:
     config_path, log_dir = config_path.resolve(), log_dir.resolve()
     status = {"status": "preparing", "variant": variant,
               "measurement": "operator_microprobe" if probe_only else "passive_external_only",
@@ -461,7 +462,11 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
             raise ValueError("--diagnose-mixed requires --variant candidate")
         original = config_path.read_bytes()
         config = variant_config(json.loads(original), variant)
+        if rear_cards:
+            config.update(devices=[4, 5, 6, 7], port=7878,
+                          device_policy="Explicit observe_serve --rear-cards: physical NPU 4-7, port 7878")
         status["optimizations"] = variant_features(config)
+        status["placement"] = "rear" if rear_cards else "configured"
         effective_path = log_dir / "effective-target.json"
         atomic_json(effective_path, config)
         status["target_config"] = {"original": str(config_path),
@@ -621,6 +626,8 @@ def main(argv=None) -> int:
     parser.add_argument("--plan", action="store_true")
     parser.add_argument("--probe-only", action="store_true",
                         help="finish after candidate operator/graph/latency gates; do not start a model")
+    parser.add_argument("--rear-cards", action="store_true",
+                        help="restrict every phase to physical Ascend devices 4,5,6,7 and port 7878")
     parser.add_argument("--diagnose-q4", action="store_true",
                         help="also rerun the established native q4/profile diagnostic; normally reuse prior evidence")
     parser.add_argument("--diagnose-mixed", action="store_true",
@@ -630,6 +637,8 @@ def main(argv=None) -> int:
         "%Y%m%dT%H%M%S.%fZ"))).resolve()
     if args.plan:
         config = variant_config(json.loads(args.config.read_text()), args.variant)
+        if args.rear_cards:
+            config.update(devices=[4, 5, 6, 7], port=7878)
         phases = ["install", "signed_operator_gate" if args.variant != "native" else "native_start"]
         if args.variant == "candidate":
             phases += ["candidate_operator_graph_latency_gates", "fast_unpack_gate"]
@@ -640,6 +649,7 @@ def main(argv=None) -> int:
         if not args.probe_only:
             phases += ["managed_service_health", "external_metrics_and_bounded_async_events"]
         print(json.dumps({"variant": args.variant, "devices": config["devices"],
+            "port": config["port"], "placement": "rear" if args.rear_cards else "configured",
             "optimizations": variant_features(config),
             "inference_requests_generated": 0,
             "measurement": "operator_microprobe" if args.probe_only else "passive_external_only",
@@ -647,7 +657,8 @@ def main(argv=None) -> int:
             "phases": phases}, indent=2))
         return 0
     return run(args.config, log_dir, args.variant, probe_only=args.probe_only,
-               diagnose_q4=args.diagnose_q4, diagnose_mixed=args.diagnose_mixed)
+               diagnose_q4=args.diagnose_q4, diagnose_mixed=args.diagnose_mixed,
+               rear_cards=args.rear_cards)
 
 
 if __name__ == "__main__":

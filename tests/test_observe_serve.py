@@ -67,6 +67,14 @@ def test_plan_makes_no_requests(capsys):
     assert "managed_service_health" in plan["phases"]
 
 
+def test_rear_card_plan_is_limited_to_devices_four_through_seven(capsys):
+    assert observe_serve.main(["--plan", "--variant", "candidate", "--rear-cards",
+                               "--probe-only", "--diagnose-mixed"]) == 0
+    plan = json.loads(capsys.readouterr().out)
+    assert plan["devices"] == [4, 5, 6, 7]
+    assert plan["port"] == 7878 and plan["placement"] == "rear"
+
+
 def test_candidate_gate_requires_signed_artifact_graph_and_precision(monkeypatch, tmp_path):
     from oscar_ascend.ops import loader
     config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
@@ -116,13 +124,16 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
                         pytest.fail("probe-only must not launch a model or AISBench"))
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     logs = tmp_path / "probe"
-    assert observe_serve.run(config, logs, "candidate", probe_only=True, diagnose_mixed=diagnose_mixed) == 0
+    assert observe_serve.run(config, logs, "candidate", probe_only=True,
+                             diagnose_mixed=diagnose_mixed, rear_cards=True) == 0
     assert seen == ["preflight", "candidate-gates", "fast-unpack-gate"] + (
         ["mixed-diagnostic"] if diagnose_mixed else [])
     status = json.loads((logs / "status.json").read_text())
     assert status["service_started"] is False
     assert status["performance_acceptance"] == "operator_only_not_end_to_end"
-    assert json.loads((logs / "effective-target.json").read_text())["experimental_fast_unpack"] is True
+    effective = json.loads((logs / "effective-target.json").read_text())
+    assert effective["experimental_fast_unpack"] is True
+    assert effective["devices"] == [4, 5, 6, 7] and effective["port"] == 7878
 
 
 def test_q4_diagnostic_records_gap_without_claiming_performance_pass(monkeypatch, tmp_path):

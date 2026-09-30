@@ -1,0 +1,125 @@
+{
+  "date": "2026-09-30",
+  "active_goal": "Substantial performance improvement; user explicitly accepts 1.5x optimization on 2026-09-30; native 8min objective remains unverified",
+  "production": {
+    "local_head": "3615f04",
+    "local_action": "reverted 12af4f7 in full",
+    "remote_update": "rollback-only 3615f04 was pushed first; explicit striped candidate is the subsequent reviewed delivery",
+    "normal_candidate": "striped_v1 D256 plus SIMD/M32 q4/q1 and same-format generic/balanced/C4/C16; explicit candidate preset in both entries",
+    "gdn": "unchanged native implementation"
+  },
+  "evidence": {
+    "latest_b4": "target_batched_history_failure_20260930.txt",
+    "b4_oracle_failed": {
+      "mismatched": 876,
+      "elements": 32256,
+      "max_abs": 0.0895615,
+      "frozen_atol": 0.005
+    },
+    "longbenchv2": {
+      "native_seconds_user_approx": 480,
+      "oscar_seconds_user_approx": 960,
+      "complete_token_counts": "not_provided"
+    },
+    "fixed64k": {
+      "requests": 120,
+      "input_tokens": 7812000,
+      "output_tokens": 61440,
+      "native_seconds": 1371.9691525,
+      "oscar_seconds": 3331.5501112
+    }
+  },
+  "candidates": [
+    {
+      "name": "striped_lossless_INT2_and_M32",
+      "decision": "candidate_delivery_after_user_1.5x_relaxation",
+      "completed": "exact layout mapping/store14CPU; fullM32 CANN+CPU; SIMD all65536 scale/zero patterns; fullCV4K/8K CAModel partial/LSE/status bitwise and frozen oracle; final full-package CANN+PyTorch link and q1 historical/S3 frontier/balanced/active C4/C16 official CPU bitwise gates passed; large C4 S3 CPU reference timeout retained",
+      "work_removed": "two large Gather, plane buffers and index arrays; potential 8 to 2 packed KV subtiles",
+      "limits": "Same-input full CV 4K/8K cycle evidence; physical NPU, graph and whole-run speed remain unverified"
+    },
+    {
+      "name": "affine_hi_lo_FP16",
+      "decision": "rejected_frozen_accuracy",
+      "evidence": "affine_cube_counterexample_20260930.json",
+      "reason": "FP32 reassociation causes 254/256 errors >0.005 for store-reachable metadata; 2/3/4 components all fail"
+    },
+    {
+      "name": "bounded_PR_prefill_native_FIA",
+      "decision": "strong_prefill_candidate_whole_run_budget_unproven",
+      "evidence": "prefill_tile_reference_20260930.json",
+      "cpu_cases_passed": 4,
+      "scope": "sampled rows, CPU only",
+      "work_change": "common history unpack once, BF16 attention consistent with PR prefill; bounded 4K/8K tile",
+      "limits": "vendor rectangular FIA and per-tile rotation/merge/launch cost not measured; does not cover steady decode"
+    },
+    {
+      "name": "raise_prefill_budget_only",
+      "decision": "rejected_as_standalone",
+      "reason": "native greedy WAITING admission fragments next prompt; first MTP still FP32 current CV; memory/latency costs not closed"
+    },
+    {
+      "name": "GDN_or_window_capacity",
+      "decision": "excluded",
+      "reason": "GDN remains native; exact page window fits already reserved padding; user forbids modifying GDN"
+    },
+    {
+      "name": "direct_AIV_UB_to_AIC_L1",
+      "decision": "rejected_for_A2",
+      "reason": "actual CANN dav_c220 DataCopyUB2L1 uses GM workspace and message, not direct on-chip transfer"
+    },
+    {
+      "name": "persistent_AIC_L1_KV_for_prefill",
+      "decision": "source_supported_unmeasured",
+      "reason": "current GM Matmul End destroys B cache; TSCM/B1 path may retain one 256KiB tile; needs phased all-QK then all-PV, accurate alpha ordering"
+    }
+  ],
+  "c16_state_traffic": {
+    "shape": "warm65K q16260 ctx48840 GQA6 D256",
+    "mature_clusters": 47,
+    "kv256_tiles": 191,
+    "fp32_state_logical_GM_bytes_per_layer": 38145097728,
+    "packed_logical_read_bytes_per_layer": 312543232,
+    "c4_state_logical_GM_bytes_per_layer": 38550896640,
+    "not_a_hbm_lower_bound": true,
+    "L2_hit_rate": "unknown"
+  },
+  "B4_source_hazard": {
+    "candidate_root_cause": "ApplyDeferredAlpha reuses tmp with next MTE2 copy after only PIPE_V barrier; missing V_MTE2 ownership fence",
+    "same_family": "archive #145",
+    "unique_target_failure_cause": "not_established"
+  },
+  "simulator": {
+    "host": "local Lima oscar, vz, 127.0.0.1",
+    "B4_camodel_library": "present, acl Init/Set/Reset/Finalize rc0",
+    "kernel_cycles": "q4 ctx8191 oldfast3195883 / stripedSIMD1525119 ticks=2.0955x; same-input bytes/oracle passed; physical NPU time not measured",
+    "cannsim_cli": "950-only wrapper rejects B4; direct installed B4 CAModel runtime works, actual task profile cycles used; Event elapsed_time=0 unusable",
+    "trace_control": "own process .dump file descriptors redirected to /dev/null, reference helper retained exactly24846ticks",
+    "resource_cleanup": "only owned simulator detail dumps removed after compact evidence saved; VM recovered16GiB"
+  },
+  "promotion_allowed": "explicit_candidate_evaluation_only; real NPU acceptance pending",
+  "logs_index": "user_log_index_20260930.json",
+  "platform_readonly_evidence": {
+    "path": "CANN9.1 aarch64-linux/data/platform_config/Ascend910B4.ini",
+    "cube_core_cnt": 20,
+    "vector_core_cnt": 40,
+    "l2_size_bytes": 100663296,
+    "l1_size_bytes": 524288,
+    "ub_size_bytes": 196608,
+    "c16_scratch_bytes": 99942400,
+    "caution": "platform config, not new target device measurement; L2 hit behavior unknown"
+  },
+  "permission": "User explicitly authorized this project source synchronization, CANN compilation and cycle simulation in local Lima oscar on2026-09-30; no node93 access.",
+  "whole_run_budget": {
+    "cv_simulated_speedup_8k": 2.0954974660993666,
+    "fraction_required_for_1_5x": 0.6376091017841738,
+    "fraction_required_for_2x": 0.9564136526762607,
+    "current_fraction": "not_known_from_partial_logs",
+    "full_run_speedup": "not_established"
+  },
+  "final_delivery_validation": "striped_delivery_vm_20260930.json",
+  "host_validation": {
+    "passed": 118,
+    "skipped": 8,
+    "subtests_passed": 4
+  }
+}

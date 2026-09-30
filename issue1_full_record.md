@@ -28585,3 +28585,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修法**：向 `torch_bindings.cpp` 能力表与 `meta.py` 可选表补登两个算子名；新增主机源码对拍回归，要求C++能力表、CMake清单模板与 `SOURCE_CAPABILITIES` 集合恒等，meta可选表恒等于 SOURCE−PRODUCTION，今后任何一处漏登在推送前即失败。未修改任何CANN算子数学/ABI/布局，不适用D.4四问；绑定编译单元变更后真机必须重新编译，加载器源码指纹本来也会拒绝旧产物。
 
 **本地验证边界**：676项主机测试通过（含两项新对拍回归），140项按设计跳过（真NPU门opt-in）。本机CPU结果不冒充真机证据；真机仍需用户以同一一键命令复验 operator-cv-npu 及后续mixed短门，通过前新balanced/C16算子的精度、图与性能保持未验收。
+
+
+## [154] 真机条目（2026-09-30）· batched4 通过 CPU 模拟但真 NPU 独立 oracle 失败，端到端仍约16分钟
+
+**原文**：`reports/target_batched_history_failure_20260930.txt`；`observe-20260930T002546.268708Z`，用户运行最新candidate。旧history/q1/fast/mixed各门继续通过，batched-history首例在 `_run_case` → `mixed._oracle` 失败：876/32256（2.7%）元素超冻结0.005门，最大绝对误差0.0895615；子进程rc2，正式服务未启动。用户另用直启测得LongBenchv2仍约16分钟。直启没有精度门，该耗时不能作为B4精度合格的证据。
+
+**已确认与未确认**：12af4f7已把B4开关接入两个入口；B4只覆盖主模型满足条件的历史prefill，稳态decode和MTP均不走它。真实设备数值失败已否定该版本的交付资格；CPU逐位与CANN编译不构成NPU通过。现有日志不足以把最大误差唯一归因为某条硬件同步或Matmul指令，不能伪写根因已定位。
+
+**处置**：完整撤销12af4f7，恢复9bd3345的已回传算子路径与候选预设，不放宽冻结精度门。后续优化须覆盖实际长历史prefill与q4/q1，并单列数学/布局证明、CPU、CANN、设备与模型性能证据。
+
+**本轮源码进一步审查（候选根因，非真机复验）**：12af4f7 的 `ApplyDeferredAlpha` 在 MTE2 读入共享 `tmp` 后执行 Brcb/Mul，结尾只有 `PipeBarrier<PIPE_V>`；下一 rowBase 又由 MTE2 覆写同一 `tmp`，缺少 V→MTE2 的跨管道所有权屏障。SDK 语义与 #145 同族，CPU 顺序模拟不能覆盖这一竞态。它是可定位的同步缺口，但尚无设备首错时序证明这是本条全部失配的唯一原因；B4保持撤销，不把补一个屏障写成性能达标。

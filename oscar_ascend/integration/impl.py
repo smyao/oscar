@@ -70,6 +70,10 @@ class OscarAttentionImpl(AttentionImpl):
         if query.dtype != torch.bfloat16 or key.dtype != torch.bfloat16 or value.dtype != torch.bfloat16:
             raise OscarReadinessError("target CV production ABI requires BF16 Q/K/V")
         state = self.provider.layer_state(layer.layer_name)
+        striped_cache = self.provider.config.get("experimental_striped_cache", False)
+        expected_format = "striped_v1" if striped_cache else "canonical_v1"
+        if getattr(state, "cache_format", "canonical_v1") != expected_format:
+            raise OscarReadinessError("FULL layer cache format does not match its selected reader/writer bundle")
         if kv_cache.data_ptr() != state.packed.data_ptr() or kv_cache.stride() != state.packed.stride():
             raise OscarReadinessError("native FULL cache no longer matches its OSCAR physical allocation")
         n, h, hk, d = query.shape[0], self.num_heads, self.num_kv_heads, self.head_size
@@ -126,12 +130,13 @@ class OscarAttentionImpl(AttentionImpl):
                    requests=attn_metadata.num_reqs, **timing_fields):
             ops.rotate_out(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
         cluster_size = getattr(g, "history_cluster_size", 1)
-        # #150: later q1 MTP uses balanced ownership; q4 stays fe0 INT2.
+        # #150/#154: choose the preset's q4/q1 reader and its cache format.
         # Host shape selection also fixes the op recorded during capture.
         cv_name = select_cv_op(cluster_size, h, hk, n, attn_metadata.max_query_len,
                               q1_draft=attn_metadata.is_draft and attn_metadata.draft_index > 0,
                               fast_unpack=self.provider.config.get("experimental_fast_unpack", False),
-                              mixed_cv=self.provider.config.get("experimental_mixed_cv", False))
+                              mixed_cv=self.provider.config.get("experimental_mixed_cv", False),
+                              striped_cache=striped_cache)
         with phase("fia", layer=layer.layer_name, tokens=n, splits=source_splits,
                    cube_cores=g.cube_cores, tasks=task_count, requests=attn_metadata.num_reqs,
                    cv_operator=cv_name, **timing_fields):
@@ -174,7 +179,9 @@ class OscarAttentionImpl(AttentionImpl):
         # Current K/V was read directly; only now publish the new physical data.
         with phase("phase1_stores", layer=layer.layer_name, tokens=n, hadamard=state.hadamard,
                    requests=attn_metadata.num_reqs, **timing_fields):
-            ops.rotate_clip_store_out(
+            store_name = ("rotate_clip_store_striped_out" if striped_cache
+                          else "rotate_clip_store_out")
+            getattr(ops, store_name)(
                 k, v, state.rotation_k_transpose, state.rotation_v_transpose,
                 slots, positions, state.raw,
                 state.window_key, state.window_value, state.window_tags,
@@ -192,6 +199,7 @@ class OscarAttentionImpl(AttentionImpl):
                   max_query_len=attn_metadata.max_query_len,
                   max_seq_len=attn_metadata.max_seq_len,
                   source_splits=source_splits,
+                  cv_operator=cv_name, cache_format=expected_format,
                   current_source="native_fia" if native_current else "ascendc_cv",
                   capture_origin=attn_metadata.capture_origin,
                   route="ascendc_int2_cv", device_completion="not_observed_here")
@@ -199,6 +207,7 @@ class OscarAttentionImpl(AttentionImpl):
                        layer=layer.layer_name, tokens=n, requests=attn_metadata.num_reqs,
                        max_query_len=attn_metadata.max_query_len,
                        max_seq_len=attn_metadata.max_seq_len,
+                       cv_operator=cv_name, cache_format=expected_format,
                        current_source="native_fia" if native_current else "ascendc_cv",
                        route="ascendc_int2_cv", device_completion="not_observed_here")
         return output

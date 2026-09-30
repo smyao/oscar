@@ -1,0 +1,22 @@
+{
+  "scope": "isolated D256 striped INT2 reader helper; not a production route",
+  "status": "prior_helper_source_local_validation_passed_current_source_unverified",
+  "soc": "ascend910b4",
+  "validated_helper_sha256": "ab3c1271d3b11c2341a5846c934263860927f35f85652bd61deee7a149ca235e",
+  "current_worktree_helper_sha256": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+  "current_worktree_cann_cpu_revalidated": false,
+  "revalidation_limit": "Automatic approval review rejected further VM scratch source copying; the unverified natural-row-pad experiment was reverted locally, but the current header bytes differ from the previously validated build.",
+  "layout": "[Kcode64,Vcode64,Kscale2,Kzero2,Vscale2,Vzero2]; word_i=sum_b(code[b*32+i]<<(2*b))",
+  "cann_device_compile": {"status": "passed", "returncode": 0, "log": "build-striped-device-final.log"},
+  "official_cpu_debug": [
+    {"mode": "exhaustive", "status": "passed", "returncode": 0, "distinct_uint16_words": 65536, "checks": "K/V natural dimension order and FP32 q*scale+zero exact", "log": "striped-exhaustive-fullvector.log"},
+    {"mode": "bad_live", "status": "passed", "returncode": 0, "expected_status": 3, "log": "striped-bad_live.log"},
+    {"mode": "bad_dead", "status": "passed", "returncode": 0, "expected_status": 0, "log": "striped-bad_dead.log"}
+  ],
+  "source_work_count": "HalfKv64: 16 ShiftRight and 16 And calls per K/V, each 8 repeats of 128 16-bit elements; 2 large Gather and 8 plane buffers removed relative to old helper; vector arithmetic repeats unchanged relative to four old HalfKv16 subtiles",
+  "full_cv_accuracy": "not_run",
+  "target_npu_accuracy": "not_run",
+  "graph_capture_replay": "not_run",
+  "device_performance": "not_run",
+  "end_to_end_performance": "not_run"
+}

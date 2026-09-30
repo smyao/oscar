@@ -162,7 +162,7 @@ class GraphWorkspace:
         return partial, lse
 
 
-@dataclass
+@dataclass(frozen=True)
 class LayerState:
     raw: Any
     packed: Any
@@ -178,6 +178,7 @@ class LayerState:
     hadamard: bool
     num_blocks: int
     workspace: GraphWorkspace
+    cache_format: str = "canonical_v1"
 
 
 class AscendRuntimeProvider:
@@ -191,12 +192,21 @@ class AscendRuntimeProvider:
             raise OscarReadinessError("experimental_fast_unpack must be an explicit boolean")
         if type(self.config.get("experimental_mixed_cv", False)) is not bool:
             raise OscarReadinessError("experimental_mixed_cv must be an explicit boolean")
+        if type(self.config.get("experimental_striped_cache", False)) is not bool:
+            raise OscarReadinessError("experimental_striped_cache must be an explicit boolean")
         if self.config.get("experimental_fast_unpack", False) and not self.config.get("experimental_history_reuse", False):
             raise OscarReadinessError("fast unpack requires explicit candidate history configuration")
         if self.config.get("experimental_mixed_cv", False) and not (
                 self.config.get("experimental_fast_unpack", False) and
                 self.config.get("experimental_history_reuse", False)):
             raise OscarReadinessError("mixed CV requires explicit fast/history candidate configuration")
+        if self.config.get("experimental_striped_cache", False) and not (
+                self.config.get("experimental_mixed_cv", False) and
+                self.config.get("experimental_fast_unpack", False) and
+                self.config.get("experimental_history_reuse", False)):
+            raise OscarReadinessError("striped cache requires explicit mixed/fast/history candidate configuration")
+        self._cache_format = ("striped_v1" if self.config.get("experimental_striped_cache", False)
+                              else "canonical_v1")
         self._ready = False
         self.layers: dict[str, LayerState] = {}
         self.workspaces: dict[tuple, GraphWorkspace] = {}
@@ -205,6 +215,8 @@ class AscendRuntimeProvider:
         self.ops = None
 
     def assert_ready(self):
+        if self.config.get("experimental_striped_cache", False) != (self._cache_format == "striped_v1"):
+            raise OscarReadinessError("cache format changed after runtime construction")
         if self._ready:
             return
         from .ops.loader import require_production_ops
@@ -224,6 +236,9 @@ class AscendRuntimeProvider:
         if self.config.get("experimental_mixed_cv", False):
             from .ops.cv_dispatch import MIXED_CV_OPS
             require_capabilities(MIXED_CV_OPS)
+        if self._cache_format == "striped_v1":
+            from .ops.cv_dispatch import STRIPED_CV_OPS
+            require_capabilities(STRIPED_CV_OPS | {"rotate_clip_store_striped_out"})
         import torch
         if not torch.npu.is_available():
             raise OscarReadinessError("OSCAR production requires an available NPU")
@@ -236,6 +251,8 @@ class AscendRuntimeProvider:
 
     def ensure_workspace(self, heads, kv_heads, dim, device):
         """Reserve scratch during model loading, before native KV profiling."""
+        if self._cache_format == "striped_v1" and dim != 256:
+            raise OscarReadinessError("striped INT2 cache is valid only for D256")
         captures = self.config.get("compilation_config", {}).get("cudagraph_capture_sizes", [])
         capacity = max(int(self.config["max_num_batched_tokens"]), max(captures, default=0))
         geometry = WorkspaceGeometry(capacity, heads, kv_heads, dim,
@@ -410,11 +427,12 @@ class AscendRuntimeProvider:
             rv = rotation.inverse_value_transposed
             self.layers[name] = LayerState(byte_raw, packed, spec, snapshots, wk, wv, tags,
                                           rk, rv, rotation.key_transposed, rotation.value_transposed,
-                                          rotation.hadamard, blocks, workspace)
+                                          rotation.hadamard, blocks, workspace, self._cache_format)
             views[name] = packed
             from .telemetry import emit_once
             emit_once("cache_layout", key=name, layer=name, physical_blocks=blocks,
                       physical_block_tokens=spec.block_size, page_bytes=spec.page_size_bytes,
+                      cache_format=self._cache_format,
                       snapshot_bytes_per_page=snapshots.required_bytes,
                       scratch_bytes=workspace.geometry.total_bytes,
                       raw_storage_ptr=byte_raw.data_ptr(), gdn_reshape="native")
@@ -422,9 +440,12 @@ class AscendRuntimeProvider:
 
     def layer_state(self, name):
         try:
-            return self.layers[name]
+            state = self.layers[name]
         except KeyError as error:
             raise OscarReadinessError(f"FULL layer cache was not initialized: {name}") from error
+        if state.cache_format != self._cache_format:
+            raise OscarReadinessError("FULL layer cache format differs from the runtime's immutable format")
+        return state
 
 
 def create_runtime():

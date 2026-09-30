@@ -1,0 +1,91 @@
+{
+  "date": "2026-09-30",
+  "full_model_quality": "not_established",
+  "full_package_build": {
+    "cann": "9.1.0",
+    "diagnostic_cmake_signature": "bbfa9bfec46a25c2d64ccd3300fd6b81fea27267f1c78470534dbe01b268e730",
+    "exit_code": 0,
+    "first_attempt": {
+      "exit_code": 2,
+      "reason": "VM llvm-objdump missing from PATH at CANN hoststub phase; AIC/AIV source compile had passed"
+    },
+    "fresh_rebuild_fix": "PATH prepended installed CANN tools/bisheng_compiler/bin before configure/build",
+    "production_loader_signature_verified": false,
+    "soc": "ascend910b4",
+    "status": "passed",
+    "vm_extension": "/home/sunao2000.linux/striped-prefill-validation-20260930/fullbuild-fixed/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so",
+    "vm_library": "/home/sunao2000.linux/striped-prefill-validation-20260930/fullbuild-fixed/lib/liboscar_ascend_kernels_bbfa9bfec46a25c2.so"
+  },
+  "full_service_performance": "not_established",
+  "official_cpu_debug": {
+    "balanced_d256_q4_n128_s3": {
+      "old_new": "partial_lse_status_bitwise",
+      "oracle": "sampled_independent_frozen_0.005_passed",
+      "status": "passed"
+    },
+    "base_d256_q3q33_s3_frontier": {
+      "old_new": "partial_lse_status_bitwise",
+      "oracle": "sampled_independent_frozen_0.005_passed",
+      "status": "passed"
+    },
+    "cluster16_d256_q336_c65_active": {
+      "old_new": "partial_lse_status_cluster_stats_bitwise",
+      "oracle": "sampled_independent_frozen_0.005_passed",
+      "shared_history_clusters": "nonzero",
+      "status": "passed"
+    },
+    "cluster4_d256_q168_c65_active": {
+      "old_new": "partial_lse_status_cluster_stats_bitwise",
+      "oracle": "sampled_independent_frozen_0.005_passed",
+      "shared_history_clusters": "nonzero",
+      "status": "passed"
+    },
+    "cluster4_d256_unaligned_q3q385_s3": {
+      "candidate": "not_run",
+      "oracle": "not_established",
+      "reference_exit_code": 124,
+      "status": "not_completed",
+      "timeout_seconds": 120
+    },
+    "q1_d256_c511_r256": {
+      "live_int2_history": true,
+      "old_new": "partial_lse_status_bitwise",
+      "oracle": "frozen_0.005_passed",
+      "status": "passed"
+    }
+  },
+  "pending_target_gate": "tools/probe_striped_cache.py on real NPU including c4_unaligned and c16_active",
+  "production_abi_symbols": {
+    "attention_cv_striped_balanced_out": "aclrtlaunch_oscar_attention_cv_striped_balanced_kernel",
+    "attention_cv_striped_cluster16_out": "aclrtlaunch_oscar_attention_cv_striped_cluster16_kernel",
+    "attention_cv_striped_cluster4_out": "aclrtlaunch_oscar_attention_cv_striped_cluster4_kernel",
+    "attention_cv_striped_decode_out": "aclrtlaunch_oscar_attention_cv_striped_decode_simd_kernel",
+    "attention_cv_striped_out": "aclrtlaunch_oscar_attention_cv_striped_kernel",
+    "attention_cv_striped_q1_out": "aclrtlaunch_oscar_attention_cv_striped_q1_simd_kernel",
+    "rotate_clip_store_striped_out": "aclrtlaunch_oscar_rotate_clip_store_striped_kernel"
+  },
+  "production_service": "not_run_in_vm",
+  "scope": "local_lima_cann_9.1_ascend910b4_compile_and_official_cpu_debug_only",
+  "source_bundle_sha256": "fdaea093e3514dea2e583488a930a545c07a470bf570e2bb066f47962a284290",
+  "source_sha256": {
+    "csrc/CMakeLists.txt": "bbfa9bfec46a25c2d64ccd3300fd6b81fea27267f1c78470534dbe01b268e730",
+    "csrc/include/oscar_attention_launch.h": "5c0770cf80c2281dee8ae05590daa0a3f09169470eb0d2104ab98979142a2875",
+    "csrc/kernels/attention_cv_fast.cpp": "de351cc7706d1e632b9d7660a1836c4e8e6e30343da36dc4045fecc507c19e7a",
+    "csrc/kernels/attention_cv_fast_balanced.cpp": "b202a837794ea6dad7f1fd73ae2f8090df4fb3c5307b2f7672e69f8f2ca8dd7a",
+    "csrc/kernels/attention_cv_fast_cluster16.cpp": "f27da9b270f29effa7427996fa59c2f8c76b642fee8ed2e402d43fd2b5acc8cb",
+    "csrc/kernels/attention_cv_fast_cluster4.cpp": "42b67219b4e646ddb80b24ef4bd2736786bb01aef3ddb06651eff8b7c4dfeb03",
+    "csrc/kernels/attention_cv_striped.cpp": "b03f82a22ebbedc63f06b4d98c04fd86a468697c0fa5b6e66d120194496a0af7",
+    "csrc/kernels/attention_cv_striped_balanced.cpp": "fa2034a47ad8f50bf91a9e1124cbdce1afa962dc2eb2a9277f0dea5c964e9250",
+    "csrc/kernels/attention_cv_striped_cluster16.cpp": "b851d25cfc24c94668347be91bc31863f50df4e5bd307becff887031cf3f9e06",
+    "csrc/kernels/attention_cv_striped_cluster4.cpp": "c7e090747a8d89ddfc6f1f116ae48fac5c3e90adff6ad23dadcc4c3762448ea1",
+    "csrc/kernels/attention_cv_striped_decode.cpp": "ef37d8a108e13fc549e33d2358697587a3ce6a20e0dd9f4ea4e727209b220e90",
+    "csrc/kernels/attention_cv_striped_decode_simd.cpp": "c67219ce15c98e932acaa8b1c5515a3f31c99dd6e4963823623528ba2b3a3930",
+    "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+    "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+    "csrc/kernels/attention_striped_unpack_simd.h": "8baeac1d37395bd445f87b1f913b85e6d61bd1c681f5df0cfa21d04e0c6396ad",
+    "csrc/kernels/rotate_clip_store_striped.cpp": "0515fd2a527812dc6e7c09e46ebae50fd19be62e7645705c8caffbb132a31d29",
+    "csrc/striped_attention_bindings.cpp": "057a2f2e79e625150f1b3a7a2d473d5416911ba690df6b261dea9bbefaabffff",
+    "csrc/torch_bindings.cpp": "a1bfb680985107a598a2b9a481bc8a5731f70b22b10a8c1cd5ae9cfb932d1a7a"
+  },
+  "synthetic_golden_dir": "reports/vm-striped-prefill/goldens"
+}

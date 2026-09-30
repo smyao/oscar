@@ -27,7 +27,7 @@ def main(argv=None) -> int:
     parser.add_argument("--plan", action="store_true", help="print commands without installing or touching an NPU")
     parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--variant", choices=("baseline", "candidate"),
-                        help="candidate enables C4, later-MTP q1, fast unpack and mixed balanced/C16; baseline selects fe0; omitted respects config")
+                        help="candidate enables C4, later-MTP q1, fast unpack mixed balanced/C16 and striped INT2/SIMD; baseline selects fe0; omitted respects config")
     parser.add_argument("--rear-cards", action="store_true",
                         help="use physical Ascend devices 4,5,6,7 and port 7878 for this launch only")
     args = parser.parse_args(argv)
@@ -92,6 +92,7 @@ def main(argv=None) -> int:
     env["PYTHONUNBUFFERED"] = "1"
     print(f"[oscar] SERVE_MODE variant={variant} C4={'on' if enabled else 'off'} "
           f"Q1={'on' if enabled else 'off'} FAST_UNPACK={'on' if config.get('experimental_fast_unpack', False) else 'off'} "
+          f"STRIPED={'on' if config.get('experimental_striped_cache', False) else 'off'} "
           f"placement={status['placement']} config={effective_path}", flush=True)
     print(f"[oscar] devices={env.get('ASCEND_RT_VISIBLE_DEVICES', 'diagnostic')} port={config['port']}", flush=True)
     rc = 0

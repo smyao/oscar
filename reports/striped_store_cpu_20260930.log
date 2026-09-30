@@ -1,0 +1,252 @@
+CASE oscar-striped-store-goldens-20260930/rotate_store_128_0_0.00
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297762] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297763] exit success!
+[SUCCESS][CORE_2][pid 297764] exit success!
+[SUCCESS][CORE_3][pid 297765] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297767] exit success!
+[SUCCESS][CORE_1][pid 297768] exit success!
+[SUCCESS][CORE_2][pid 297769] exit success!
+[SUCCESS][CORE_3][pid 297770] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_clip_store_striped","dim":128}
+CASE oscar-striped-store-goldens-20260930/rotate_store_128_0_0.95
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297774] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297775] exit success!
+[SUCCESS][CORE_2][pid 297776] exit success!
+[SUCCESS][CORE_3][pid 297777] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297779] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297780] exit success!
+[SUCCESS][CORE_2][pid 297781] exit success!
+[SUCCESS][CORE_3][pid 297782] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_clip_store_striped","dim":128}
+CASE oscar-striped-store-goldens-20260930/rotate_store_128_1_0.00
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297785] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297786] exit success!
+[SUCCESS][CORE_2][pid 297787] exit success!
+[SUCCESS][CORE_3][pid 297788] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297789] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297790] exit success!
+[SUCCESS][CORE_2][pid 297791] exit success!
+[SUCCESS][CORE_3][pid 297792] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_clip_store_striped","dim":128}
+CASE oscar-striped-store-goldens-20260930/rotate_store_128_1_0.95
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297796] exit success!
+[SUCCESS][CORE_1][pid 297797] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 297798] exit success!
+[SUCCESS][CORE_3][pid 297799] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297800] exit success!
+[SUCCESS][CORE_1][pid 297801] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 297802] exit success!
+[SUCCESS][CORE_3][pid 297803] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_clip_store_striped","dim":128}
+CASE oscar-striped-store-goldens-20260930/rotate_store_256_0_0.00
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297806] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297807] exit success!
+[SUCCESS][CORE_2][pid 297808] exit success!
+[SUCCESS][CORE_3][pid 297809] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297812] exit success!
+[SUCCESS][CORE_1][pid 297813] exit success!
+[SUCCESS][CORE_2][pid 297814] exit success!
+[SUCCESS][CORE_3][pid 297815] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_clip_store_striped","dim":256}
+CASE oscar-striped-store-goldens-20260930/rotate_store_256_0_0.95
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297820] exit success!
+[SUCCESS][CORE_1][pid 297821] exit success!
+[SUCCESS][CORE_2][pid 297822] exit success!
+[SUCCESS][CORE_3][pid 297823] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297826] exit success!
+[SUCCESS][CORE_1][pid 297827] exit success!
+[SUCCESS][CORE_2][pid 297828] exit success!
+[SUCCESS][CORE_3][pid 297829] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_clip_store_striped","dim":256}
+CASE oscar-striped-store-goldens-20260930/rotate_store_256_1_0.00
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297833] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297834] exit success!
+[SUCCESS][CORE_2][pid 297835] exit success!
+[SUCCESS][CORE_3][pid 297836] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297838] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297839] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 297840] exit success!
+[SUCCESS][CORE_3][pid 297841] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_clip_store_striped","dim":256}
+CASE oscar-striped-store-goldens-20260930/rotate_store_256_1_0.95
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297844] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297845] exit success!
+[SUCCESS][CORE_2][pid 297846] exit success!
+[SUCCESS][CORE_3][pid 297847] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297848] exit success!
+[SUCCESS][CORE_1][pid 297849] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 297850] exit success!
+[SUCCESS][CORE_3][pid 297851] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_clip_store_striped","dim":256}
+CASE oscar-striped-store-goldens-20260930/rotate_store_64_0_0.00
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297854] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297855] exit success!
+[SUCCESS][CORE_2][pid 297856] exit success!
+[SUCCESS][CORE_3][pid 297857] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297859] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297860] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 297861] exit success!
+[SUCCESS][CORE_3][pid 297862] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_clip_store_striped","dim":64}
+CASE oscar-striped-store-goldens-20260930/rotate_store_64_0_0.95
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297865] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297866] exit success!
+[SUCCESS][CORE_2][pid 297867] exit success!
+[SUCCESS][CORE_3][pid 297868] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297869] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297870] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 297871] exit success!
+[SUCCESS][CORE_3][pid 297872] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_clip_store_striped","dim":64}
+CASE oscar-striped-store-goldens-20260930/rotate_store_64_1_0.00
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297875] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297876] exit success!
+[SUCCESS][CORE_2][pid 297877] exit success!
+[SUCCESS][CORE_3][pid 297878] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297880] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297881] exit success!
+[SUCCESS][CORE_2][pid 297882] exit success!
+[SUCCESS][CORE_3][pid 297883] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_clip_store_striped","dim":64}
+CASE oscar-striped-store-goldens-20260930/rotate_store_64_1_0.95
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297886] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297887] exit success!
+[SUCCESS][CORE_2][pid 297888] exit success!
+[SUCCESS][CORE_3][pid 297889] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297890] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 297891] exit success!
+[SUCCESS][CORE_2][pid 297892] exit success!
+[SUCCESS][CORE_3][pid 297893] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_clip_store_striped","dim":64}
+CASE oscar-striped-store-goldens-20260930/rotate_store_errors
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297896] exit success!
+[SUCCESS][CORE_1][pid 297897] exit success!
+[SUCCESS][CORE_2][pid 297898] exit success!
+[SUCCESS][CORE_3][pid 297899] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297900] exit success!
+[SUCCESS][CORE_1][pid 297901] exit success!
+[SUCCESS][CORE_2][pid 297902] exit success!
+[SUCCESS][CORE_3][pid 297903] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_clip_store_striped","dim":64}
+CASE oscar-striped-store-goldens-20260930/rotate_store_sink_only
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297906] exit success!
+[SUCCESS][CORE_1][pid 297907] exit success!
+[SUCCESS][CORE_2][pid 297908] exit success!
+[SUCCESS][CORE_3][pid 297909] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 297910] exit success!
+[SUCCESS][CORE_1][pid 297911] exit success!
+[SUCCESS][CORE_2][pid 297912] exit success!
+[SUCCESS][CORE_3][pid 297913] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","op":"rotate_clip_store_striped","dim":64}

@@ -1,0 +1,59 @@
+{
+  "scope": "synthetic_operator_fixture_not_user_dataset",
+  "shape": "synthetic_q4_ctx4095",
+  "context": 4095,
+  "q": 4,
+  "dim": 256,
+  "input_sha256": "a3a2d7371fba78efd9a1973101e60d5dda2808104b132e497123bee1d5244b66",
+  "files_sha256": {
+    "q": "c1d6ee1ad5e84c76967b6d6a1d0894d5e26c7c29d6cb719ca650f2c166819c23",
+    "qr": "4eb71cd00888b98f753a16cc518336959dfb942935b654968645dffebe93a74b",
+    "ck": "da292f02df2c31d2f5c910b3c4d569d96f8b26f283db7576627ddc087afe3624",
+    "cv": "c2a62b8675d058746fb55c0dfc5bc23b3e7a081b83ba2eef40be3de4691ca562",
+    "rv": "01945d071added92e622bb102b644ae414ce0b550a0d080f051fc0d2a25c8c52",
+    "raw": "7c489ee0f4e1a66a02525f3c16f79dc93e3d7e55af10153ebd245b5c17e89fde",
+    "table": "8bff5658400715cb46dffb8d6673c07080e09915934bc2cd8a93c7c519c107af",
+    "wk": "2169c7907f2493058395bf4d50d72595943ceb5c48378a0c3f03aa5f0bdf7f7b",
+    "wv": "5e0fff245f66fca1c4b4a7d4bd34b0b4babfed11036f058f402b5ec15edd71eb",
+    "tags": "57faa655994501a1af08d18a08a0b81bd18d818085fa4f05b45b46a3f7334de5",
+    "starts": "1b03ab083d0fb41e44d480f48d5bba181c623c0594bda1aa8ea71a3b67dbf3b1",
+    "lens": "7082f6b238865c3492d500ea10859445e51471a19bb91680211acc6600c6da46",
+    "slots": "300f1123c46a21dbe2409b3d6f00c7b37e1b1e311621682c8717204d57e3245b",
+    "raw_striped": "a37636d9e5a54e79813bae95ecef6dc9687c8746a62f71faa4013b4b8e819caa",
+    "expected_output": "f25f4e1b5e20c595beca6fff3f8546a281ed5df4f61cc5d2be05bf518a95ad2d",
+    "expected_lse": "d22e0afb0f5f3508dd2c80b3207376eff71415961a229d599aca8dd2807b3132"
+  },
+  "attrs": [
+    4,
+    6,
+    1,
+    256,
+    1,
+    33,
+    12,
+    512,
+    9,
+    64,
+    69632,
+    82688,
+    323,
+    64,
+    256,
+    3,
+    1
+  ],
+  "scale": 0.0625,
+  "page_assignments": [
+    [
+      2,
+      5,
+      1,
+      6,
+      3,
+      8,
+      0,
+      7,
+      4
+    ]
+  ]
+}

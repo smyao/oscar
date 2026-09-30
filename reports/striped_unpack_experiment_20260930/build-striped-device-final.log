@@ -1,0 +1,169 @@
+[  2%] Creating directories for 'oscar_striped_unpack_experimental_precompile'
+[  4%] No download step for 'oscar_striped_unpack_experimental_precompile'
+[  7%] No update step for 'oscar_striped_unpack_experimental_precompile'
+[  9%] No patch step for 'oscar_striped_unpack_experimental_precompile'
+[ 11%] Performing configure step for 'oscar_striped_unpack_experimental_precompile'
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    DYNAMIC_MODE
+    INCLUDE_DIR
+
+
+-- Build files have been written to: /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_precompile-prefix/src/oscar_striped_unpack_experimental_precompile-build
+[ 14%] Performing build step for 'oscar_striped_unpack_experimental_precompile'
+[100%] Building CXX object CMakeFiles/precompile_obj.dir/home/sunao2000.linux/batched4-experiment-20260929/csrc/experiments/striped_unpack/kernel.cpp.o
+[100%] Built target precompile_obj
+[100%] Built target check_src_template
+[ 16%] No install step for 'oscar_striped_unpack_experimental_precompile'
+[ 19%] Completed 'oscar_striped_unpack_experimental_precompile'
+[ 19%] Built target oscar_striped_unpack_experimental_precompile
+[ 21%] Creating directories for 'oscar_striped_unpack_experimental_preprocess'
+[ 23%] No download step for 'oscar_striped_unpack_experimental_preprocess'
+[ 26%] No update step for 'oscar_striped_unpack_experimental_preprocess'
+[ 28%] No patch step for 'oscar_striped_unpack_experimental_preprocess'
+[ 30%] Performing configure step for 'oscar_striped_unpack_experimental_preprocess'
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_preprocess-prefix/src/oscar_striped_unpack_experimental_preprocess-build
+[ 33%] Performing build step for 'oscar_striped_unpack_experimental_preprocess'
+[ 33%] Building CXX object CMakeFiles/preprocess_obj.dir/home/sunao2000.linux/batched4-experiment-20260929/csrc/experiments/striped_unpack/kernel.cpp.o
+[ 33%] Built target preprocess_obj
+[ 66%] Building CXX object CMakeFiles/aiv_obj.dir/home/sunao2000.linux/batched4-experiment-20260929/csrc/experiments/striped_unpack/kernel.cpp.o
+[ 66%] Built target aiv_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_preprocess-prefix/src/oscar_striped_unpack_experimental_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/batched4-experiment-20260929/csrc/experiments/striped_unpack/kernel.cpp.o -o /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_preprocess-prefix/src/oscar_striped_unpack_experimental_preprocess-build/CMakeFiles/aiv_obj.dir/home/sunao2000.linux/batched4-experiment-20260929/csrc/experiments/striped_unpack/kernel.cpp.o[ 66%] Built target merge_aiv_obj_text
+[100%] Building CXX object CMakeFiles/aic_obj.dir/home/sunao2000.linux/batched4-experiment-20260929/csrc/experiments/striped_unpack/kernel.cpp.o
+[100%] Built target aic_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_preprocess-prefix/src/oscar_striped_unpack_experimental_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/batched4-experiment-20260929/csrc/experiments/striped_unpack/kernel.cpp.o -o /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_preprocess-prefix/src/oscar_striped_unpack_experimental_preprocess-build/CMakeFiles/aic_obj.dir/home/sunao2000.linux/batched4-experiment-20260929/csrc/experiments/striped_unpack/kernel.cpp.o[100%] Built target merge_aic_obj_text
+[100%] Built target _host_cpp
+[ 35%] No install step for 'oscar_striped_unpack_experimental_preprocess'
+[ 38%] Completed 'oscar_striped_unpack_experimental_preprocess'
+[ 38%] Built target oscar_striped_unpack_experimental_preprocess
+[ 40%] Creating directories for 'oscar_striped_unpack_experimental_aic_device'
+[ 42%] No download step for 'oscar_striped_unpack_experimental_aic_device'
+[ 45%] No update step for 'oscar_striped_unpack_experimental_aic_device'
+[ 47%] No patch step for 'oscar_striped_unpack_experimental_aic_device'
+[ 50%] Performing configure step for 'oscar_striped_unpack_experimental_aic_device'
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    BUILD_MODE
+
+
+-- Build files have been written to: /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_aic_device-prefix/src/oscar_striped_unpack_experimental_aic_device-build
+[ 52%] Performing build step for 'oscar_striped_unpack_experimental_aic_device'
+[ 54%] No install step for 'oscar_striped_unpack_experimental_aic_device'
+[ 57%] Completed 'oscar_striped_unpack_experimental_aic_device'
+[ 57%] Built target oscar_striped_unpack_experimental_aic_device
+[ 59%] Creating directories for 'oscar_striped_unpack_experimental_aiv_device'
+[ 61%] No download step for 'oscar_striped_unpack_experimental_aiv_device'
+[ 64%] No update step for 'oscar_striped_unpack_experimental_aiv_device'
+[ 66%] No patch step for 'oscar_striped_unpack_experimental_aiv_device'
+[ 69%] Performing configure step for 'oscar_striped_unpack_experimental_aiv_device'
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_aiv_device-prefix/src/oscar_striped_unpack_experimental_aiv_device-build
+[ 71%] Performing build step for 'oscar_striped_unpack_experimental_aiv_device'
+[100%] Building CXX object CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/auto_gen/oscar_striped_unpack_experimental/auto_gen_kernel.cpp.o
+[100%] Built target device_aiv_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_aiv_device-prefix/src/oscar_striped_unpack_experimental_aiv_device-build/CMakeFiles/device_aiv_obj.dir/home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/auto_gen/oscar_striped_unpack_experimental/auto_gen_kernel.cpp.o -static -o /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_aiv_device_dir/device_aiv.o
+[100%] Built target merge_aiv_device_obj
+[ 73%] No install step for 'oscar_striped_unpack_experimental_aiv_device'
+[ 76%] Completed 'oscar_striped_unpack_experimental_aiv_device'
+[ 76%] Built target oscar_striped_unpack_experimental_aiv_device
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -x -m aicorelinux   -Ttext=0 /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_aiv_device_dir/device_aiv.o -static -o /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_merge_obj_dir/device_aiv.o
+[ 76%] Built target oscar_striped_unpack_experimental_merge_obj
+[ 78%] Creating directories for 'oscar_striped_unpack_experimental_host'
+[ 80%] No download step for 'oscar_striped_unpack_experimental_host'
+[ 83%] No update step for 'oscar_striped_unpack_experimental_host'
+[ 85%] No patch step for 'oscar_striped_unpack_experimental_host'
+[ 88%] Performing configure step for 'oscar_striped_unpack_experimental_host'
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    ASCEND_PYTHON_EXECUTABLE
+
+
+-- Build files have been written to: /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_host-prefix/src/oscar_striped_unpack_experimental_host-build
+[ 90%] Performing build step for 'oscar_striped_unpack_experimental_host'
+[100%] Building CXX object CMakeFiles/host_bisheng_obj.dir/home/sunao2000.linux/batched4-experiment-20260929/csrc/experiments/striped_unpack/kernel.cpp.o
+[100%] Built target host_bisheng_obj
+[ 92%] Performing install step for 'oscar_striped_unpack_experimental_host'
+[100%] Built target host_bisheng_obj
+Install the project...
+-- Install configuration: "Release"
+-- Installing: /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_host_dir/./objects-Release/host_bisheng_obj/home/sunao2000.linux/batched4-experiment-20260929/csrc/experiments/striped_unpack/kernel.cpp.o
+[ 95%] Completed 'oscar_striped_unpack_experimental_host'
+[ 95%] Built target oscar_striped_unpack_experimental_host
+[ 97%] Building CXX object CMakeFiles/oscar_striped_unpack_experimental_host_stub_obj.dir/auto_gen/oscar_striped_unpack_experimental/host_stub.cpp.o
+[ 97%] Built target oscar_striped_unpack_experimental_host_stub_obj
+[100%] Linking CXX shared library lib/liboscar_striped_unpack_experimental.so
+/usr/local/Ascend/cann-9.1.0/bin/ascendc_pack_kernel /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/CMakeFiles/oscar_striped_unpack_experimental_host_stub_obj.dir/auto_gen/oscar_striped_unpack_experimental/host_stub.cpp.o /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_merge_obj_dir/device_aiv.o 1 /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/CMakeFiles/oscar_striped_unpack_experimental_host_stub_obj.dir/auto_gen/oscar_striped_unpack_experimental/host_stub.cpp.o
+recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -s -shared -Wl,-soname,liboscar_striped_unpack_experimental.so -o lib/liboscar_striped_unpack_experimental.so CMakeFiles/oscar_striped_unpack_experimental_host_stub_obj.dir/auto_gen/oscar_striped_unpack_experimental/host_stub.cpp.o /home/sunao2000.linux/batched4-experiment-20260929/build-striped-device-final/oscar_striped_unpack_experimental_host_dir/objects-Release/host_bisheng_obj/home/sunao2000.linux/batched4-experiment-20260929/csrc/experiments/striped_unpack/kernel.cpp.o    -L/usr/local/Ascend/cann-9.1.0/lib64  -L/usr/local/Ascend/cann-9.1.0/tools/simulator/ascend910b4/lib  /usr/local/Ascend/cann-9.1.0/lib64/libascendc_runtime.a -lascend_dump -lc_sec
+[100%] Built target oscar_striped_unpack_experimental

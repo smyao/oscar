@@ -130,3 +130,6 @@ q4诊断接入同一`--probe-only`：原生paged BF16 FIA与OSCAR CV+merge的未
 #145本机复验：CANN ascend910b4编译通过，官方CPU-debug38/38；证据`reports/cv_score_handoff_validation.json`。该模拟也能通过修复前的同形Q6，故真机数值与完整K4速度结论仍由下一轮一键日志确认。
 
 #148：用户确认fe0精度正确（自有LongBenchv2为53.54%、22:22）；后续34639ab为48.03%、20:15，已按用户要求回到fe0，不保留这些后续数学改动。新C4算子只复用四组完全同域历史的解包，fe0原生产kernel逐字节不变、默认仍fe0。CANN ascend910b4编译和官方CPU-debug51/51通过；相关主机95 passed、28 NPU skipped、4 subtests passed。证据`reports/history_reuse_cpu_validation.json`及`reports/target_longbench_regression.txt`。两个过重CPU模拟器配置超时记录保留，不写成NPU错误。新入口`install_observe_serve.sh --variant candidate`先过同输入逐位/冻结oracle/图/速度门再启动候选；被动观察用户负载，不自动重跑127题。C04/C05/E01的新候选NPU/图仍待测，E06追平原生仍未通过；用户已认可的fe0精度不因本候选未测而撤销。42个稳定checkpoint编号不变。设计、计时口径与一键命令见`docs/history_reuse_experiment.md`。
+
+
+2026-09-30 striped 候选：B4 数值失败已完整回退（#154）；新 D256 无损 INT2 排列、短 q4/q1 M32/KV64 与 SIMD metadata guard 接入共享 candidate，直启及 observe 均启用，GDN 保持原生。官方 CPU 字节/oracle 与 CANN/CAModel 分列，8K 同源 q4 task 周期 3,195,883→1,525,119（2.096 倍模拟算子收益）。新增真实 writer/readers/图/速度门，冻结阈值不变。C04/C05/E01 新候选设备完成及图仍待认证，E06 整轮追平未通过；不以周期模拟宣称 8 分钟已达成。范围与复现实证见 `docs/striped_cache_candidate.md`。42 个 checkpoint 编号不变。

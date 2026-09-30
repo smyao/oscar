@@ -1,0 +1,173 @@
+{
+  "archive_refs": [
+    "#126",
+    "#148",
+    "#151",
+    "#154",
+    "startup D.4"
+  ],
+  "calibration": {
+    "interpretation": "same acceleration direction; simulator ratio is optimistic and shapes differ, so no ms or whole-service forecast",
+    "measured_target_npu_different_shape": "q4 N128/S3 20-30K archive #151 and reports/target_fast_unpack_pass_20260928.txt",
+    "simulator_context4095_fast_over_fe0": 0.6794483828413898,
+    "target_fast_ms": 11.28152,
+    "target_fast_over_fe0": 0.7374535394961674,
+    "target_fe0_ms": 15.29794
+  },
+  "environment": {
+    "acl_event_elapsed_ms": "always_zero_in_CAModel; ignored",
+    "cann": "9.1.0",
+    "duration_source": "per-kernel profile_task_log0.toml task.duration ticks, not TotalTick or host wall",
+    "launch_grid_aic": 20,
+    "model_aic_count": 24,
+    "simulator": "Ascend910B4 -> dav_2201 CAModel",
+    "target_npu": "not_run",
+    "vm": "local Lima oscar, aarch64, 127.0.0.1"
+  },
+  "fixture": {
+    "context4095": {
+      "input_sha256": "a3a2d7371fba78efd9a1973101e60d5dda2808104b132e497123bee1d5244b66",
+      "manifest": "reports/simulator_b4_evidence_20260930/fixtures/synthetic_q4_ctx4095.json",
+      "source0_kv256_tiles": 15,
+      "tasks_sha256": "32f65223a4916744ad80de940e863f2e4ad588708ca69d14b67368e4b3c9db78"
+    },
+    "context8191": {
+      "input_sha256": "624acd1ec92ba3262c4dbf420853d417dde033d3e104bfe0072ce1bb946f27b5",
+      "manifest": "reports/simulator_b4_evidence_20260930/fixtures/synthetic_q4_ctx8191.json",
+      "source0_kv256_tiles": 31,
+      "tasks_sha256": "5ec58da56ed398a24a098bdeb6cc1e745433d507d449efd82ccba9b9d898067d"
+    },
+    "generator": "tools.probe_history_reuse.make_fixture, seed 46817; Shape qlens=(4,), contexts=(4095 or 8191,), D256,Hkv1,S1,sink64,recent256",
+    "kind": "deterministic synthetic operator inputs, not user benchmark dataset",
+    "striped_conversion": "tools.striped_fixture.raw_to_striped, all 4608/8704 physical slots invert bitwise"
+  },
+  "frozen_acceptance": {
+    "all_4k_8k_oracle_failed_elements": 0,
+    "attention_atol": 0.005,
+    "attention_rtol": 0.005
+  },
+  "helper_instruction_evidence": {
+    "batches_1_8_32_task_ticks": [
+      24846,
+      164930,
+      660803
+    ],
+    "detailed_dump_redirect": "Only this VM scratch log_ca .dump FDs dup2 to /dev/null; helper task remained exactly 24846 ticks with and without redirect; small TOML retained",
+    "numeric": "65536 striped 16-bit words bitwise expected D256 K/V, status zero",
+    "per_core_instruction_trace_observed": true
+  },
+  "libraries": {
+    "fe0_sha256": "b4ec9297a300a4e5ccd3123204042c990f4522f5053737bd2231e86be3590c85",
+    "fe0_vm_path": "/home/sunao2000.linux/batched4-experiment-20260929/build-binder-final/lib/liboscar_ascend_kernels_b634658ee1e3def6.so",
+    "old_basic_sha256": "713653eb67071e25004118202db187ce3ef37d1cc3790e92fb2d3052b53f34d2",
+    "old_basic_vm_path": "/home/sunao2000.linux/batched4-experiment-20260929/build-striped-decode-device/lib/liboscar_striped_decode_experimental.so",
+    "old_fast_baseline_boundary": "Current attention_cv_fast.cpp differs from VM snapshot only by a local #ifdef OSCAR_STRIPED_D256_ONLY entry guard; ordinary directly compiled fast kernel follows the unchanged #else body. D256 mathematics is unchanged, while wrapper guard/dispatch awaits target validation.",
+    "simd_sha256": "efc6d14604251e716f263afc0ba735b8a160b1060c29f74a5efc1cf0a602d2a5",
+    "simd_vm_path": "/home/sunao2000.linux/batched4-experiment-20260929/build-striped-decode-simd-device/lib/liboscar_striped_decode_experimental.so",
+    "source_boundary": "The four new striped decode kernel/helper files in source_equivalence.json are byte-identical or differ only in comments; their commentless C++ token streams match exactly between VM snapshot and current checkout. The integrated wrapper/build was not simulated and still needs target gates.",
+    "source_equivalence": "reports/simulator_b4_evidence_20260930/source_equivalence.json",
+    "vm_source_snapshot_sha256": {
+      "attention_cv_fast.cpp": "39dd2270072590f967b510fef86d22cb9b59f8914715a7039b212dd37ed9b81e",
+      "attention_cv_striped_decode.cpp": "4fc69376caf23e047249927fd99a0642fbcd06c5f220fc801d9944404bbfab9e",
+      "attention_cv_striped_decode_simd.cpp": "b580b13f3973b09fe7a57e372d9d10b5c2d45b6b1849944a7c7f494b1cf1b1e9",
+      "attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+      "attention_striped_unpack_simd.h": "8baeac1d37395bd445f87b1f913b85e6d61bd1c681f5df0cfa21d04e0c6396ad"
+    }
+  },
+  "limitations": [
+    "CAModel is a functional/cycle model, not physical Ascend910B4 throughput or model quality.",
+    "One q4 request and source split S1; production longbench/64K has mixed batches, 20-30K or 65K history, MTP, GDN and graph effects not simulated.",
+    "Target native baseline and OSCAR entire model are not simulated; operator ratio cannot be extrapolated to 8min/440s.",
+    "The simulator exposes 24 AIC but tested kernels launch grid20; relative ticks use the same grid and fixture.",
+    "SDK cannsim CLI itself supports only Ascend950/950DT; low-level CAModel used scratch aliases and public ACL hoststub.",
+    "Four new kernel/helper translation units match the VM snapshot after stripping comments and whitespace, but the final integrated wrapper/build and service route were not simulated; target NPU gates remain required."
+  ],
+  "logs": {
+    "ctx4095_ab": {
+      "path": "reports/simulator_b4_ctx4095_ab_20260930.log",
+      "sha256": "a39df2976648344a2b5e4033722f294eed9f34189a06ed4780f32a339d74e6fd"
+    },
+    "ctx4095_fe0": {
+      "path": "reports/simulator_b4_ctx4095_fe0_calibration_20260930.log",
+      "sha256": "67ea2dd9661d88a983cb9fe999dd7f7487b85f0e18d1fecdce394d83c9092c8a"
+    },
+    "ctx4095_simd": {
+      "path": "reports/simulator_b4_ctx4095_simd_20260930.log",
+      "sha256": "98326bc6d913198f1a498cd5a18cb923639987316e4ce3e3fd5055692c81fa2d"
+    },
+    "ctx8191_triplet": {
+      "path": "reports/simulator_b4_ctx8191_triplet_20260930.log",
+      "sha256": "7a8b60d053ab883390266189ea512d19fde1c311039f9791e2138912ad09011c"
+    },
+    "helper_batches": {
+      "path": "reports/simulator_b4_helper_batches_20260930.log",
+      "sha256": "d191ef53dc3ae28ebf6fa536fe370a41d6d98ec9e6e86f66e497d1e55e625123"
+    }
+  },
+  "runner": "reports/simulator_b4_evidence_20260930/replay_ctx8191_triplet.py",
+  "runner_sha256": "39f5abfa0efb86edcc53bc1f50c0b88a38e275c7c76b0c74f016f0d3e2db9274",
+  "runner_validation": "Reproducer now fails rc2 after cleanup if old/basic or old/SIMD partial/LSE/status differs, any arm status is nonzero, or frozen oracle fails; historical observed run was not repeated.",
+  "runs": {
+    "context4095": {
+      "grid": 20,
+      "history_source0_aiv_core0_ticks": {
+        "basic": 1059516,
+        "old": 1674913,
+        "simd": 803341
+      },
+      "oracle": {
+        "failed_lse_elements": 0,
+        "failed_output_elements": 0,
+        "max_lse_abs": 1.1866798566018133e-06,
+        "max_output_abs": 2.789198698671669e-07
+      },
+      "partial_lse_status_bitwise_all_four": true,
+      "profile_roots": [
+        "ctx4095_ab",
+        "ctx4095_simd",
+        "ctx4095_fe0"
+      ],
+      "speedup_fe0_over_fast": 1.4717821474798325,
+      "speedup_old_fast_over_basic": 1.5807982664682216,
+      "speedup_old_fast_over_simd": 1.9828583063817293,
+      "status_all_zero": true,
+      "task_ticks": {
+        "fe0": 2465188,
+        "old_fast": 1674968,
+        "striped_basic": 1059571,
+        "striped_simd": 844724
+      }
+    },
+    "context8191": {
+      "grid": 20,
+      "history_source0_aiv_core0_ticks": {
+        "basic": 2021053,
+        "old": 3195827,
+        "simd": 1525064
+      },
+      "oracle": {
+        "failed_lse_elements": 0,
+        "failed_output_elements": 0,
+        "max_lse_abs": 1.1492257563361363e-06,
+        "max_output_abs": 2.1241070492783454e-07
+      },
+      "partial_lse_status_bitwise_all_three": true,
+      "profile_root": "ctx8191_triplet",
+      "speedup_old_fast_over_basic": 1.5812529562992181,
+      "speedup_old_fast_over_simd": 2.0954974660993666,
+      "status_all_zero": true,
+      "task_ticks": {
+        "old_fast": 3195883,
+        "striped_basic": 2021108,
+        "striped_simd": 1525119
+      }
+    }
+  },
+  "source0_incremental_speedup_old_over_simd": 2.1073375796531355,
+  "source0_incremental_ticks_per_kv256_tile": {
+    "basic": 60096.0625,
+    "old": 95057.125,
+    "simd": 45107.6875
+  },
+  "status": "observed_simulator_only"
+}

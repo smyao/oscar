@@ -152,8 +152,68 @@ void RotateStore(const at::Tensor& key,const at::Tensor& value,const at::Tensor&
       rawKey.stride(0),rawValue.stride(0),tags.stride(0),sink,recent,
       static_cast<float>(kClip),static_cast<float>(vClip),hadamard,Cores(Product(n,h,"rows")));
 }
+// Archive #154: format-specific writer, original arithmetic and checks retained.
+void RotateStoreStriped(const at::Tensor& key,const at::Tensor& value,const at::Tensor& rk,
+    const at::Tensor& rv,const at::Tensor& slots,const at::Tensor& positions,
+    at::Tensor packed,at::Tensor rawKey,at::Tensor rawValue,at::Tensor tags,
+    at::Tensor status,int64_t blockTokens,int64_t blocks,int64_t offset,
+    int64_t pageStride,int64_t sink,int64_t recent,double kClip,double vClip,bool hadamard) {
+  const int32_t dtype=Input(key);Tensor(value,key,key.scalar_type(),"value");
+  TORCH_CHECK(value.sizes()==key.sizes(),"K/V must share [N,H,D]");
+  Matrix(rk,key);Matrix(rv,key);
+  Tensor(slots,key,at::kLong,"slot_mapping");Tensor(positions,key,at::kLong,"positions");
+  Tensor(packed,key,at::kByte,"packed");Tensor(status,key,at::kInt,"status");
+  const int64_t n=key.size(0),h=key.size(1),d=key.size(2);
+  TORCH_CHECK(d==256,"striped-v1 store requires D256");
+  TORCH_CHECK(slots.dim()==1 && slots.size(0)==n && positions.sizes()==slots.sizes(),
+              "slots/positions must be int64[N]");
+  TORCH_CHECK(status.dim()==2 && status.size(0)==n && status.size(1)==h,"status must be int32[N,H]");
+  TORCH_CHECK(blockTokens>0 && blockTokens%128==0 && blocks>0 && offset>=0 && pageStride>0,
+              "invalid packed page geometry");
+  Product(blocks,blockTokens,"slot capacity");
+  const int64_t payload=Product(Product(blockTokens,h,"page rows"),d/2+8,"packed payload");
+  TORCH_CHECK(pageStride>=payload && packed.dim()==1 && offset<=packed.numel()
+      && blocks<=(packed.numel()-offset)/pageStride,"packed allocation does not cover page geometry");
+  TORCH_CHECK(sink>=0 && recent>=0 && sink<=blockTokens && recent<=blockTokens
+      && sink<=kLimit-recent && sink+recent>0,"invalid exact window geometry");
+  TORCH_CHECK(std::isfinite(kClip) && std::isfinite(vClip) && kClip>=0 && kClip<=1
+      && vClip>=0 && vClip<=1,"clip ratios must be finite in [0,1]");
+  const int64_t window=sink+recent;
+  RawView(rawKey,key,blocks,window,h,d,"raw_key");
+  RawView(rawValue,key,blocks,window,h,d,"raw_value");
+  Tensor(tags,key,at::kLong,"raw_tags",false);
+  TORCH_CHECK(tags.dim()==2 && tags.size(0)==blocks && tags.size(1)==window
+      && tags.stride(1)==1 && tags.stride(0)>=window,"raw_tags must be strided int64[blocks,S+R]");
+  const uint64_t rawBytes=Product(Product(Product(window,h,"window rows"),d,"window dims"),2,"window bytes");
+  const uint64_t tagBytes=Product(window,8,"tag bytes");
+  const Region packedActive{reinterpret_cast<uintptr_t>(packed.data_ptr())+static_cast<uint64_t>(offset),
+      static_cast<uint64_t>(Product(blocks-1,pageStride,"packed span")+payload)};
+  // Raw page padding may alias the backing uint8 allocation, but never the
+  // active compressed region. K/V/tags can interleave in the same page stride.
+  for (const auto& raw:{rawKey,rawValue,tags}) {NoOverlap(Bytes(raw),packedActive);NoOverlap(raw,status);}
+  NoOverlapPages(rawKey,rawValue,rawBytes,rawBytes);
+  NoOverlapPages(rawKey,tags,rawBytes,tagBytes);NoOverlapPages(rawValue,tags,rawBytes,tagBytes);
+  NoOverlap(Bytes(status),packedActive);
+  for (const auto& source:{key,value,rk,rv,slots,positions}) {
+    NoOverlap(Bytes(source),packedActive);NoOverlap(source,status);
+    NoOverlap(source,rawKey);NoOverlap(source,rawValue);NoOverlap(source,tags);
+  }
+  if (n==0) return;
+  const c10_npu::OptionalNPUGuard guard(key.device());
+  oscar_ascend::rotate_clip_store_striped_launch(c10_npu::getCurrentNPUStream().stream(),
+      key.data_ptr(),value.data_ptr(),rk.data_ptr(),rv.data_ptr(),slots.data_ptr(),
+      positions.data_ptr(),packed.data_ptr(),rawKey.data_ptr(),rawValue.data_ptr(),
+      tags.data_ptr(),status.data_ptr(),n,h,d,dtype,blockTokens,blocks,offset,pageStride,
+      rawKey.stride(0),rawValue.stride(0),tags.stride(0),sink,recent,
+      static_cast<float>(kClip),static_cast<float>(vClip),hadamard,Cores(Product(n,h,"rows")));
+}
 }
 TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
+  m.def("rotate_clip_store_striped_out(Tensor key, Tensor value, Tensor rk_transposed, "
+        "Tensor rv_transposed, Tensor slots, Tensor positions, Tensor(a!) packed, "
+        "Tensor(b!) raw_key, Tensor(c!) raw_value, Tensor(d!) raw_tags, Tensor(e!) status, "
+        "int block_tokens, int blocks, int ssm_offset, int page_stride, int sink_tokens, "
+        "int recent_capacity, float k_clip, float v_clip, bool hadamard=False) -> ()");
   m.def("rotate_out(Tensor input, Tensor rotation_transposed, Tensor(a!) output, "
         "Tensor(b!) status, bool hadamard=False, Tensor? slots=None) -> ()");
   m.def("rotate_clip_store_out(Tensor key, Tensor value, Tensor rk_transposed, "
@@ -163,5 +223,6 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
         "int recent_capacity, float k_clip, float v_clip, bool hadamard=False) -> ()");
 }
 TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
+  m.impl("rotate_clip_store_striped_out",&RotateStoreStriped);
   m.impl("rotate_out",&Rotate);m.impl("rotate_clip_store_out",&RotateStore);
 }

@@ -1,0 +1,58 @@
+[INFO] Config file is found, path is /usr/local/Ascend/cann-9.1.0/aarch64-linux/simulator/dav_2201/lib/config_stars.json.
+[FuncCache]: size:0x20000, line_size:128, way_num:16, line_num:1024, idx_num:64
+             idx_lsb:7, idx_mask:0x3f, tag_lsb:13, tag_mask:0xffffffffffffffff, ofst_mask:0x7f
+
+[TmSim]: Run in serial mode.
+[INFO] AicWrapper attach AIC 0, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 1, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 2, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 3, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 4, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 5, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 6, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 7, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 8, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 9, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 10, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 11, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 12, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 13, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 14, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 15, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 16, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 17, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 18, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 19, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 20, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 21, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 22, num_vec_core=2, num_subcore=3
+[INFO] AicWrapper attach AIC 23, num_vec_core=2, num_subcore=3
+[INFO] Chip 0 AIC / Scheduler / Soc periods: 200.0000 / 200.0000 / 105.0000
+[INFO] chip 0 die 0 device created
+================================================================================
+>>>>                                                                        
+>>>>                             " PEM MODEL "                                
+>>>>             Total no. of 1 chip(s) Model Init Success!                
+>>>>                                                                        
+================================================================================
+[INFO] Model Start Time: 2026-09-30 13:13:57
+[DRVSTUB_LOG] driver_api.c:521 sendSwapBuf:swapbuf_base_addr:10000000
+[DRVSTUB_LOG] driver_api.c:522 sendSwapBuf:sq:0 swapbuf_addr:10000000
+[DRVSTUB_LOG] driver_api.c:521 sendSwapBuf:swapbuf_base_addr:10000000
+[DRVSTUB_LOG] driver_api.c:522 sendSwapBuf:sq:1 swapbuf_addr:10000040
+[DRVSTUB_LOG] driver_api.c:521 sendSwapBuf:swapbuf_base_addr:10000000
+[DRVSTUB_LOG] driver_api.c:522 sendSwapBuf:sq:2 swapbuf_addr:10000080
+LAUNCH new grid 20 status=complete
+BITWISE_CHECK partial True first None
+BITWISE partial passed sha256 421b40a0cf243239a5571e10a05b072d9c82b95c158c4a2f1bd7c85d79879f05
+BITWISE_CHECK lse True first None
+BITWISE lse passed sha256 d5f95f97c9693b3cf4f0dd7fec41a1cb64fd1fee2abd5eb8315085c3361c99bb
+BITWISE_CHECK status True first None
+BITWISE status passed sha256 2ea9ab9198d1638007400cd2c3bef1cc745b864b76011a0e1bc52180ac6452d4
+ORACLE max_output_abs 2.789198698671669e-07 bad_output 0 max_lse_abs 1.1866798566018133e-06 bad_lse 0
+ORACLE_CHECK True
+[INFO] Model Stop Time: 2026-09-30 13:19:42
+Model RUN TIME: 345598 ms
+FD_QUIET_REDIRECTED 360
+[INFO] Total tick: 2465919
+[INFO] Model stopped successfully.

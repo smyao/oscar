@@ -1,0 +1,4 @@
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 298039] exit success!
+striped_mode=exhaustive words=65536 status=passed
+{"backend":"ascendc_cpu_debug","op":"striped_unpack","status":"passed"}

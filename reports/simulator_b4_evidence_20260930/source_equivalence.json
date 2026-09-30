@@ -1,0 +1,50 @@
+{
+  "files": {
+    "attention_cv_striped_decode.cpp": {
+      "commentless_tokens_equal": true,
+      "current_commentless_token_sha256": "4d03564719edcbf805f32ddfe95885c9e8484d7c34acfe70b1db5b5fa02b0759",
+      "current_sha256": "ef37d8a108e13fc549e33d2358697587a3ce6a20e0dd9f4ea4e727209b220e90",
+      "current_token_count": 7007,
+      "difference": "comments_only",
+      "raw_equal": false,
+      "vm_commentless_token_sha256": "4d03564719edcbf805f32ddfe95885c9e8484d7c34acfe70b1db5b5fa02b0759",
+      "vm_sha256": "4fc69376caf23e047249927fd99a0642fbcd06c5f220fc801d9944404bbfab9e",
+      "vm_token_count": 7007
+    },
+    "attention_cv_striped_decode_simd.cpp": {
+      "commentless_tokens_equal": true,
+      "current_commentless_token_sha256": "a25e8e0e0988d3e0be214e8c4a502df692ca6a9b917b2c52ce4cfae34582113f",
+      "current_sha256": "c67219ce15c98e932acaa8b1c5515a3f31c99dd6e4963823623528ba2b3a3930",
+      "current_token_count": 7007,
+      "difference": "comments_only",
+      "raw_equal": false,
+      "vm_commentless_token_sha256": "a25e8e0e0988d3e0be214e8c4a502df692ca6a9b917b2c52ce4cfae34582113f",
+      "vm_sha256": "b580b13f3973b09fe7a57e372d9d10b5c2d45b6b1849944a7c7f494b1cf1b1e9",
+      "vm_token_count": 7007
+    },
+    "attention_striped_unpack.h": {
+      "commentless_tokens_equal": true,
+      "current_commentless_token_sha256": "1b863d0e7282e7448cffdce7553d897cb4e988be47b552186e6a745b572db674",
+      "current_sha256": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+      "current_token_count": 1225,
+      "difference": "byte_identical",
+      "raw_equal": true,
+      "vm_commentless_token_sha256": "1b863d0e7282e7448cffdce7553d897cb4e988be47b552186e6a745b572db674",
+      "vm_sha256": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+      "vm_token_count": 1225
+    },
+    "attention_striped_unpack_simd.h": {
+      "commentless_tokens_equal": true,
+      "current_commentless_token_sha256": "f5b0ccadc41c8ba929acd40e5fc196abad8433e95ef4f7c734d0262ef5a40c90",
+      "current_sha256": "8baeac1d37395bd445f87b1f913b85e6d61bd1c681f5df0cfa21d04e0c6396ad",
+      "current_token_count": 1712,
+      "difference": "byte_identical",
+      "raw_equal": true,
+      "vm_commentless_token_sha256": "f5b0ccadc41c8ba929acd40e5fc196abad8433e95ef4f7c734d0262ef5a40c90",
+      "vm_sha256": "8baeac1d37395bd445f87b1f913b85e6d61bd1c681f5df0cfa21d04e0c6396ad",
+      "vm_token_count": 1712
+    }
+  },
+  "scope": "read_only_VM_snapshot_vs_current_repo_comment_and_whitespace_agnostic_token_equivalence",
+  "status": "passed"
+}

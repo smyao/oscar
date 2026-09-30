@@ -1,0 +1,16 @@
+{
+  "cann_simd_compiled": false,
+  "cases": 65536,
+  "categories": {
+    "negative_nan": 1023,
+    "negative_zero": 1,
+    "positive_infinity": 1,
+    "positive_subnormal": 1023
+  },
+  "device_verified": false,
+  "example_mismatches": [],
+  "experiment": "striped_metadata_signed_bits",
+  "mismatch_count": 0,
+  "scope": "host_ieee_fp16_math_only",
+  "status": "passed"
+}

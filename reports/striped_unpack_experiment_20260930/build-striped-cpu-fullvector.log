@@ -1,0 +1,3 @@
+[ 33%] Building CXX object CMakeFiles/oscar_striped_unpack_cpu.dir/kernel.cpp.o
+[ 66%] Linking CXX executable oscar_striped_unpack_cpu
+[100%] Built target oscar_striped_unpack_cpu

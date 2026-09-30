@@ -9,6 +9,7 @@ FEATURE_FLAGS = {
     "later_mtp_q1": "experimental_history_reuse",
     "fast_unpack": "experimental_fast_unpack",
     "mixed_cv": "experimental_mixed_cv",
+    "striped_cache": "experimental_striped_cache",
 }
 
 
@@ -22,6 +23,8 @@ def variant_config(config: dict, variant: str | None) -> dict:
         if type(selected.get(flag, False)) is not bool:
             raise ValueError(f"{flag} must be an explicit boolean")
         if variant is not None:
+            # The same complete candidate bundle is used by direct serving
+            # and observation. Baseline/native clear every experimental flag.
             selected[flag] = variant == "candidate"
     if selected.get("experimental_fast_unpack", False) and not selected.get("experimental_history_reuse", False):
         raise ValueError("fast unpack requires explicit candidate history configuration")
@@ -29,6 +32,11 @@ def variant_config(config: dict, variant: str | None) -> dict:
             selected.get("experimental_history_reuse", False) and
             selected.get("experimental_fast_unpack", False)):
         raise ValueError("mixed CV requires explicit fast/history candidate configuration")
+    if selected.get("experimental_striped_cache", False) and not (
+            selected.get("experimental_history_reuse", False) and
+            selected.get("experimental_fast_unpack", False) and
+            selected.get("experimental_mixed_cv", False)):
+        raise ValueError("striped cache requires explicit mixed/fast/history candidate configuration")
     return selected
 
 

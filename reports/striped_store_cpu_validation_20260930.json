@@ -1,0 +1,32 @@
+{
+  "status": "passed",
+  "scope": "official_CANN9_1_CPU_debug_store_layout_only",
+  "device_npu": "not_run",
+  "cases_total": 14,
+  "cases_passed": 14,
+  "cases": [
+    "rotate_store_128_0_0.00",
+    "rotate_store_128_0_0.95",
+    "rotate_store_128_1_0.00",
+    "rotate_store_128_1_0.95",
+    "rotate_store_256_0_0.00",
+    "rotate_store_256_0_0.95",
+    "rotate_store_256_1_0.00",
+    "rotate_store_256_1_0.95",
+    "rotate_store_64_0_0.00",
+    "rotate_store_64_0_0.95",
+    "rotate_store_64_1_0.00",
+    "rotate_store_64_1_0.95",
+    "rotate_store_errors",
+    "rotate_store_sink_only"
+  ],
+  "comparison": "old accepted store exact independent PR golden; new raw K/V, tags, status exact same golden; new packed inverse-permutation exact entire old golden including page guard",
+  "golden_generator": "tools/generate_rotation_cpu_cases.py seed 33846774",
+  "source_sha256": "0515fd2a527812dc6e7c09e46ebae50fd19be62e7645705c8caffbb132a31d29",
+  "harness_sha256": "2a72572f550cacb3971eae319cc0c0200a868f71f9884ef9fa0d89edfb63e6f6",
+  "log_path": "reports/striped_store_cpu_20260930.log",
+  "log_sha256": "1db34d6b430e1e4a2b6de37b365a34632887e813b8e31a116a5b9fd2257bf2f2",
+  "host_mapping_tests": "6 passed (D64/D128/D256 65536 word exhaustive + metadata/slot layout)",
+  "vm_scratch": "/home/sunao2000.linux/oscar-striped-store-check",
+  "cann": "9.1.0"
+}

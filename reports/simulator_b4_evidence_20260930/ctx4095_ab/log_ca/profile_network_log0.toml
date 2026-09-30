@@ -1,0 +1,10 @@
+chip_version = "cloud_v220"
+version = "1.0"
+title = "network0"
+date = 2026-09-30T12:32:09
+[network]
+	network_id = 0
+	num_streams = 1
+	stream_id_list = [2]
+	total_cycles = 2734548
+

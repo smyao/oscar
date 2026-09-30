@@ -139,6 +139,67 @@ def test_mixed_cv_selector_uses_known_host_query_bound_without_padded_false_elig
         select_cv_op(16, 6, 1, 16384, 16260, fast_unpack=True)
 
 
+def test_striped_dispatch_keeps_every_history_reader_in_one_format():
+    from oscar_ascend.ops.cv_dispatch import (STRIPED_CV_OPS, STRIPED_CV_OP,
+        STRIPED_Q1_CV_OP, STRIPED_CLUSTER4_CV_OP, STRIPED_BALANCED_CV_OP,
+        STRIPED_CLUSTER16_CV_OP, STRIPED_DECODE_CV_OP, select_cv_op)
+    flags = dict(fast_unpack=True, mixed_cv=True, striped_cache=True)
+    cases = [
+        (128, 4, False, STRIPED_DECODE_CV_OP),
+        (16384, 1, True, STRIPED_Q1_CV_OP),
+        (16384, 4, False, STRIPED_DECODE_CV_OP),
+        (128, 5, False, STRIPED_CV_OP),
+        (16384, 5, False, STRIPED_BALANCED_CV_OP),
+        (512, 385, False, STRIPED_CLUSTER4_CV_OP),
+        (16384, 16260, False, STRIPED_CLUSTER16_CV_OP),
+        (16384, None, False, STRIPED_CLUSTER4_CV_OP),
+    ]
+    for tokens, max_q, draft, expected in cases:
+        chosen = select_cv_op(16, 6, 1, tokens, max_q, q1_draft=draft, **flags)
+        assert chosen == expected and chosen in STRIPED_CV_OPS
+    # GQA16 cannot use the M32 decode kernel. It still uses a striped reader.
+    assert select_cv_op(16, 16, 1, 128, 4, **flags) == STRIPED_CV_OP
+    assert select_cv_op(16, 16, 1, 16384, 1, q1_draft=True,
+                        **flags) == STRIPED_BALANCED_CV_OP
+    assert select_cv_op(16, 16, 1, 128, 1, q1_draft=True,
+                        **flags) == STRIPED_CV_OP
+    with pytest.raises(ValueError, match="striped cache requires"):
+        select_cv_op(4, 6, 1, 128, 4, striped_cache=True)
+
+
+def test_striped_runtime_requires_d256_and_all_signed_reader_writer_symbols(monkeypatch):
+    from oscar_ascend.ops import loader
+    from oscar_ascend.ops.cv_dispatch import STRIPED_CV_OPS
+    config = {"devices": [0, 1, 2, 3], "experimental_history_reuse": True,
+              "experimental_fast_unpack": True, "experimental_mixed_cv": True,
+              "experimental_striped_cache": True,
+              "max_num_batched_tokens": 16384,
+              "compilation_config": {"cudagraph_capture_sizes": [128]}}
+    for bad in (None, "true", 1):
+        with pytest.raises(runtime_api.OscarReadinessError, match="explicit boolean"):
+            AscendRuntimeProvider({**config, "experimental_striped_cache": bad})
+    with pytest.raises(runtime_api.OscarReadinessError, match="striped cache requires"):
+        AscendRuntimeProvider({**config, "experimental_mixed_cv": False})
+    provider = AscendRuntimeProvider(config)
+    with pytest.raises(runtime_api.OscarReadinessError, match="D256"):
+        provider.ensure_workspace(6, 1, 64, "npu:0")
+    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "0,1,2,3")
+    monkeypatch.setattr(loader, "require_production_ops", lambda: None)
+    seen = []
+    def require(required, *_args):
+        seen.append(set(required))
+        if set(required) == set(STRIPED_CV_OPS) | {"rotate_clip_store_striped_out"}:
+            raise RuntimeError("striped reader/writer symbols missing")
+    monkeypatch.setattr(loader, "require_capabilities", require)
+    with pytest.raises(RuntimeError, match="symbols missing"):
+        provider.assert_ready()
+    assert set(STRIPED_CV_OPS) | {"rotate_clip_store_striped_out"} in seen
+    assert provider._ready is False
+    provider.config["experimental_striped_cache"] = False
+    with pytest.raises(runtime_api.OscarReadinessError, match="format changed"):
+        provider.assert_ready()
+
+
 def test_mixed_cv_readiness_requires_both_new_signed_ops(monkeypatch):
     from oscar_ascend.ops import loader
     from oscar_ascend.ops.cv_dispatch import MIXED_CV_OPS
@@ -262,9 +323,12 @@ def test_online_forward_contains_no_host_request_loop_or_tensor_readback():
 
 
 @pytest.mark.parametrize("capacity,cube_cores,expected_splits,n", [(8, 1, 1, 8), (64, 20, 8, 8), (256, 20, 1, 256), (8192, 20, 1, 8192)])
-@pytest.mark.parametrize("cluster_size,fast_unpack,mixed_cv", [(1, False, False), (4, False, False), (4, True, False), (16, True, True)])
+@pytest.mark.parametrize("cluster_size,fast_unpack,mixed_cv,striped_cache", [
+    (1, False, False, False), (4, False, False, False),
+    (4, True, False, False), (16, True, True, False),
+    (16, True, True, True)])
 @pytest.mark.parametrize("later_draft", [False, True])
-def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv):
+def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv, striped_cache):
     """Host ABI exercise only: fake ops establish ordering, never accuracy."""
     if n == 8192 and (cluster_size != 16 or later_draft):
         pytest.skip("large FULL host route is needed once for C16")
@@ -280,7 +344,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         spec = importlib.util.spec_from_file_location("oscar_ascend.integration._dispatch_test", path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-    h, hk, d, parts = 4, 1, 64, 3
+    h, hk, d, parts = 6 if striped_cache else 4, 1, 256 if striped_cache else 64, 3
     w = object.__new__(GraphWorkspace)
     w.geometry = WorkspaceGeometry(capacity, h, hk, d, cube_cores=cube_cores,
                                    history_cluster_size=cluster_size)
@@ -366,6 +430,36 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             self.attention_cv_cluster4_out(*args)
             calls[-1] = "fast_cluster16"
 
+        def attention_cv_striped_out(self, *args):
+            assert striped_cache
+            self.attention_cv_out(*args)
+            calls[-1] = "striped_base"
+
+        def attention_cv_striped_q1_out(self, *args):
+            assert striped_cache and later_draft
+            self.attention_cv_out(*args)
+            calls[-1] = "striped_q1"
+
+        def attention_cv_striped_decode_out(self, *args):
+            assert striped_cache and not later_draft
+            self.attention_cv_out(*args)
+            calls[-1] = "striped_decode"
+
+        def attention_cv_striped_cluster4_out(self, *args):
+            assert striped_cache and args[15] is w.cluster_stats
+            self.attention_cv_cluster4_out(*args)
+            calls[-1] = "striped_cluster4"
+
+        def attention_cv_striped_cluster16_out(self, *args):
+            assert striped_cache and args[15] is w.cluster_stats
+            self.attention_cv_cluster4_out(*args)
+            calls[-1] = "striped_cluster16"
+
+        def attention_cv_striped_balanced_out(self, *args):
+            assert striped_cache
+            self.attention_cv_out(*args)
+            calls[-1] = "striped_balanced"
+
         def merge_lse_out(self, partial, lse, output, output_lse, status):
             calls.append("merge")
             assert partial.shape == (n * h, 3 * expected_splits, d)
@@ -379,6 +473,11 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             assert args[0].is_contiguous() and args[1].is_contiguous()
             args[10].zero_()
 
+        def rotate_clip_store_striped_out(self, *args):
+            assert striped_cache
+            self.rotate_clip_store_out(*args)
+            calls[-1] = "striped_store"
+
         def status_guard(self, *statuses):
             calls.append("guard")
             assert all(bool(torch.all(status == 0)) for status in statuses)
@@ -389,13 +488,15 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         rotation_k_transpose=torch.eye(d), rotation_v_transpose=torch.eye(d),
         rotation_v=torch.eye(d), hadamard=False, num_blocks=1,
         window_key=torch.empty(1), window_value=torch.empty(1), window_tags=torch.empty(1),
+        cache_format="striped_v1" if striped_cache else "canonical_v1",
         spec=SimpleNamespace(block_size=2304, conv_bytes=15360, ssm_bytes=393216),
         snapshots=SimpleNamespace(sink_tokens=64, recent_tokens=256, ring_tokens=259, speculative_tokens=3))
     impl = object.__new__(module.OscarAttentionImpl)
     impl.num_heads, impl.num_kv_heads, impl.head_size, impl.scale = h, hk, d, d**-0.5
     impl.provider = SimpleNamespace(layer_state=lambda _name: state, ops=Ops(),
                                     config={"experimental_fast_unpack": fast_unpack,
-                                            "experimental_mixed_cv": mixed_cv})
+                                            "experimental_mixed_cv": mixed_cv,
+                                            "experimental_striped_cache": striped_cache})
     q = torch.randn(n, h * d, dtype=torch.bfloat16)
     k = torch.randn(n, hk * d, dtype=torch.bfloat16)
     value = torch.randn(n, hk * d * 3, dtype=torch.bfloat16)[:, d:2*d]
@@ -409,9 +510,15 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         common.num_reqs = 1
         common.max_query_len = n
     elif mixed_cv and n == 256 and not later_draft:
-        common.query_start_loc = torch.tensor([0, 4, 8], dtype=torch.int32)
-        common.num_actual_tokens = 8
-        common.max_query_len = 4
+        if striped_cache:
+            common.query_start_loc = torch.tensor([0, 128, 256], dtype=torch.int32)
+            common.seq_lens = torch.tensor([32768, 128], dtype=torch.int32)
+            common.num_actual_tokens = 256
+            common.max_query_len = 128
+        else:
+            common.query_start_loc = torch.tensor([0, 4, 8], dtype=torch.int32)
+            common.num_actual_tokens = 8
+            common.max_query_len = 4
     if later_draft:
         common.max_query_len = 1
         common.num_actual_tokens = 2
@@ -424,7 +531,11 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     assert result is output and bool(torch.all(result == 7))
     # #150: short per-request query lengths keep the original OSCAR op even
     # with candidate workspace; long requests keep the C4 ABI/extra buffer.
-    if mixed_cv:
+    if striped_cache:
+        expected_op = ("striped_q1" if later_draft else
+                       "striped_cluster16" if n == 8192 else
+                       "striped_cluster4" if n == 256 else "striped_decode")
+    elif mixed_cv:
         expected_op = ("fast_q1" if later_draft else
                        "fast_cluster16" if n == 8192 else
                        "fast_balanced" if n == 256 else "fast_cv")
@@ -433,4 +544,5 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
                        "cluster4" if cluster_size == 4 and n == 256 else "cv")
         if fast_unpack:
             expected_op = "fast_" + expected_op
-    assert calls == ["prepare", "rotate", expected_op, "merge", "store", "guard"]
+    assert calls == ["prepare", "rotate", expected_op, "merge",
+                     "striped_store" if striped_cache else "store", "guard"]

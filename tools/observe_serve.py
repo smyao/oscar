@@ -57,12 +57,15 @@ def _source_identity(variant: str, config: dict) -> dict:
     flag = config.get("experimental_history_reuse", False)
     fast = config.get("experimental_fast_unpack", False)
     mixed = config.get("experimental_mixed_cv", False)
+    striped = config.get("experimental_striped_cache", False)
     if type(flag) is not bool:
         raise ValueError("experimental_history_reuse must be an explicit boolean")
     if type(fast) is not bool or (fast and not flag):
         raise ValueError("experimental_fast_unpack requires explicit candidate history configuration")
     if type(mixed) is not bool or (mixed and not fast):
         raise ValueError("experimental_mixed_cv requires explicit fast candidate configuration")
+    if type(striped) is not bool or (striped and not mixed):
+        raise ValueError("experimental_striped_cache requires explicit mixed candidate configuration")
     if variant in {"baseline", "candidate"} and actual != FE0_KERNEL_SHA256:
         raise RuntimeError("OSCAR observation requires byte-identical fe0 production kernels")
     if variant == "baseline" and flag:
@@ -81,11 +84,22 @@ def _source_identity(variant: str, config: dict) -> dict:
     if mixed:
         for name in ("attention_cv_fast_balanced.cpp", "attention_cv_fast_cluster16.cpp"):
             fast_sources[name] = hashlib.sha256((ROOT / "csrc/kernels" / name).read_bytes()).hexdigest()
+    striped_sources = {}
+    if striped:
+        for name in ("attention_striped_unpack.h", "attention_striped_unpack_simd.h",
+                     "attention_cv_striped_decode.cpp", "attention_cv_striped_decode_simd.cpp",
+                     "attention_cv_striped.cpp", "attention_cv_striped_balanced.cpp",
+                     "attention_cv_striped_cluster4.cpp", "attention_cv_striped_cluster16.cpp",
+                     "rotate_clip_store_striped.cpp"):
+            striped_sources[name] = hashlib.sha256((ROOT / "csrc/kernels" / name).read_bytes()).hexdigest()
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
                               capture_output=True, check=True).stdout.strip()
     return {"variant": variant, "fe0_production_kernels_match": actual == FE0_KERNEL_SHA256,
             "kernel_sha256": actual, "experimental_history_reuse": flag,
             "experimental_fast_unpack": fast, "experimental_mixed_cv": mixed,
+            "experimental_striped_cache": striped,
+            "cache_format": "striped_v1" if striped else "canonical_v1",
+            "striped_source_sha256": striped_sources,
             "fast_source_sha256": fast_sources,
             "candidate_kernel_sha256": hashlib.sha256(cluster.read_bytes()).hexdigest()
                 if variant == "candidate" else None,
@@ -452,6 +466,55 @@ def _mixed_optimization_gate(config_path: Path, config: dict, env: dict, log_dir
     atomic_json(log_dir / "status.json", status)
 
 
+def _striped_cache_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
+                      status: dict) -> None:
+    """#151/#153/#154: signed paired cache writer/readers, graph and latency."""
+    from oscar_ascend.ops.loader import validate_build_artifacts
+    output = log_dir / "striped-cache-report.json"
+    output.unlink(missing_ok=True)
+    before = read_npu_resources(config, log_dir=log_dir / "striped-cache-resources-before", timeout=30)
+    phase_error, release = None, None
+    try:
+        _phase("striped-cache", [sys.executable, "-m", "tools.probe_striped_cache",
+            "--config", str(config_path), "--acceptance", str(ROOT / "configs/acceptance.json"),
+            "--output", str(output)], config=config, env=env, log_dir=log_dir, status=status)
+    except BaseException as error:
+        phase_error = error
+        raise
+    finally:
+        try:
+            release = wait_for_release(config, before, log_dir=log_dir / "striped-cache-resources-after",
+                timeout=float(config.get("resource_release_timeout_seconds", 30)),
+                tolerance_bytes=config.get("resource_release_tolerance_bytes", DEFAULT_RELEASE_TOLERANCE))
+        except BaseException as error:
+            release = {"status": "failed", "reason": f"{type(error).__name__}: {error}"}
+            if phase_error is None:
+                raise
+        finally:
+            if release is not None:
+                status["striped_cache_resource_release"] = release
+                atomic_json(log_dir / "status.json", status)
+    if release.get("status") != "passed":
+        raise RuntimeError("striped cache NPU resources did not release")
+    report = json.loads(output.read_text())
+    manifest = validate_build_artifacts(ROOT / "build/ascendc/build_manifest.json")
+    expected = {key: "passed" for key in ("status", "precision", "graph_capture", "graph_replay", "performance")}
+    from .striped_fixture import FORMAT
+    expected["format"] = FORMAT
+    expected.update(artifact_signature=manifest.get("signature"), artifact_sha256=manifest.get("sha256"))
+    mismatches = [key for key, value in expected.items() if report.get(key) != value]
+    if report.get("writer", {}).get("status") != "passed":
+        mismatches.append("writer")
+    if mismatches:
+        error = RuntimeError(f"striped cache gate lacks matching evidence: {','.join(mismatches)} report={output}")
+        error.phase = "striped-cache-evidence"
+        raise error
+    status["striped_cache_gate"] = {"status": "passed", "report": str(output),
+                                   "artifact_signature": manifest["signature"],
+                                   "full_service_performance": "not_established"}
+    atomic_json(log_dir / "status.json", status)
+
+
 def _mixed_diagnostic(config_path: Path, config: dict, env: dict, log_dir: Path,
                       status: dict) -> None:
     """Measure the actual CV + current-FIA composition without loading a model."""
@@ -548,6 +611,8 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                         _fast_unpack_gate(effective_path, config, env, log_dir, status)
                         if config.get("experimental_mixed_cv", False):
                             _mixed_optimization_gate(effective_path, config, env, log_dir, status)
+                        if config.get("experimental_striped_cache", False):
+                            _striped_cache_gate(effective_path, config, env, log_dir, status)
                         if diagnose_q4:
                             _q4_diagnostic(effective_path, config, env, log_dir, status)
                         if diagnose_mixed and not config.get("experimental_mixed_cv", False):
@@ -689,6 +754,8 @@ def main(argv=None) -> int:
             phases += ["candidate_operator_graph_latency_gates", "fast_unpack_gate"]
             if config.get("experimental_mixed_cv", False):
                 phases.append("mixed_optimization_gate")
+            if config.get("experimental_striped_cache", False):
+                phases.append("striped_cache_gate")
             if args.diagnose_q4:
                 phases.append("q4_native_comparison_and_profile")
             if args.diagnose_mixed and not config.get("experimental_mixed_cv", False):

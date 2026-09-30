@@ -1,0 +1,16 @@
+[network.stream2.task0]
+	stream_id = 2
+	task_id = 0
+	start_cycle = 273
+	end_cycle = 1675241
+	duration = 1674968
+	num_thread_subtasks = 1
+	wait_cycle = 1059631
+[network.stream2.task1]
+	stream_id = 2
+	task_id = 1
+	start_cycle = 1675250
+	end_cycle = 2734821
+	duration = 1059571
+	num_thread_subtasks = 1
+	wait_cycle = 51

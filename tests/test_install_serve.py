@@ -54,6 +54,8 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
         selected = json.loads(open(env["OSCAR_TARGET_CONFIG"]).read())
         assert selected["experimental_history_reuse"] is enabled
         assert selected.get("experimental_fast_unpack", False) is (variant == "candidate")
+        assert selected.get("experimental_mixed_cv", False) is (variant == "candidate")
+        assert selected.get("experimental_striped_cache", False) is (variant == "candidate")
         assert env["OSCAR_ENABLED"] == "1"
         assert env["ASCEND_RT_VISIBLE_DEVICES"] == ",".join(map(str, devices))
         assert selected["devices"] == devices and selected["port"] == port
@@ -68,6 +70,7 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
         assert command[-1] == env["OSCAR_TARGET_CONFIG"]
         selected = json.loads(open(command[-1]).read())
         assert selected["experimental_history_reuse"] is enabled
+        assert selected.get("experimental_striped_cache", False) is (variant == "candidate")
         assert selected["devices"] == devices
         service_args = serve_argv(selected)
         assert service_args[service_args.index("--port") + 1] == str(port)

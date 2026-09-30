@@ -968,9 +968,14 @@ extern "C" __global__ __aicore__ void oscar_attention_cv_fast_cluster16_kernel(O
   KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
   const Geometry g{tokens,hq,hk,requests,columns,taskCount,blockTokens,blocks,ssmOffset,
       pageStride,windowStride,tagStride,sink,recent,speculative,splits,scale};
+#ifdef OSCAR_STRIPED_D256_ONLY
+  if(dim!=256) {trap();return;}
+  AttentionCv<256> op;OSCAR_CV_INIT;
+#else
   if(dim==64) {AttentionCv<64> op;OSCAR_CV_INIT;}
   else if(dim==128) {AttentionCv<128> op;OSCAR_CV_INIT;}
   else {AttentionCv<256> op;OSCAR_CV_INIT;}
+#endif
 }
 #ifndef ASCENDC_CPU_DEBUG
 namespace oscar_ascend {

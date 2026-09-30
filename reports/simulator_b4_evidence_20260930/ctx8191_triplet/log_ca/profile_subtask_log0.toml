@@ -1,0 +1,39 @@
+[network.stream2.task0.subtask0.thread0]
+	stream_id = 2
+	task_id = 0
+	subtask_id = 0
+	thread_id = 0
+	thread_dim = 1
+    type = "MIXAIC"
+    block_dim = 20
+    core_list = [9, 5, 12, 3, 4, 10, 16, 6, 15, 7, 11, 8, 13, 18, 14, 19, 17, 2, 1, 0]
+	start_cycle = 300
+	end_cycle = 3196133
+	duration = 3195833
+	first_blk_start_cycle = 316
+[network.stream2.task1.subtask0.thread0]
+	stream_id = 2
+	task_id = 1
+	subtask_id = 0
+	thread_id = 0
+	thread_dim = 1
+    type = "MIXAIC"
+    block_dim = 20
+    core_list = [11, 9, 15, 4, 5, 8, 3, 14, 12, 18, 6, 10, 7, 13, 19, 17, 16, 2, 1, 0]
+	start_cycle = 3196200
+	end_cycle = 5217259
+	duration = 2021059
+	first_blk_start_cycle = 3196211
+[network.stream2.task2.subtask0.thread0]
+	stream_id = 2
+	task_id = 2
+	subtask_id = 0
+	thread_id = 0
+	thread_dim = 1
+    type = "MIXAIC"
+    block_dim = 20
+    core_list = [4, 5, 9, 3, 11, 6, 17, 8, 7, 12, 10, 16, 13, 14, 15, 18, 19, 2, 1, 0]
+	start_cycle = 5217317
+	end_cycle = 6742387
+	duration = 1525070
+	first_blk_start_cycle = 5217327

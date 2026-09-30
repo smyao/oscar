@@ -723,9 +723,17 @@ extern "C" __global__ __aicore__ void oscar_attention_cv_fast_kernel(OSCAR_CV_AR
   KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
   const Geometry g{tokens,hq,hk,requests,columns,taskCount,blockTokens,blocks,ssmOffset,
       pageStride,windowStride,tagStride,sink,recent,speculative,splits,scale};
+#ifdef OSCAR_STRIPED_D256_ONLY
+  // The independent striped-v1 physical slot exists only for D256. This
+  // compile guard prevents unsupported helper instantiations; direct raw
+  // entrypoint misuse fails visibly instead of running a wrong cache layout.
+  if(dim!=256) {trap();return;}
+  AttentionCv<256> op;OSCAR_CV_INIT;
+#else
   if(dim==64) {AttentionCv<64> op;OSCAR_CV_INIT;}
   else if(dim==128) {AttentionCv<128> op;OSCAR_CV_INIT;}
   else {AttentionCv<256> op;OSCAR_CV_INIT;}
+#endif
 }
 #ifndef ASCENDC_CPU_DEBUG
 namespace oscar_ascend {

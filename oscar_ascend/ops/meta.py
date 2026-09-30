@@ -19,7 +19,11 @@ def register_meta(namespace="oscar_ascend_ops"):
     # #148: this optional experimental schema is never a numerical fallback.
     for optional in ("attention_cv_cluster4_out", "attention_cv_q1_out", "attention_cv_profile_out",
                      "attention_cv_fast_out", "attention_cv_fast_q1_out", "attention_cv_fast_cluster4_out",
-                     "attention_cv_fast_balanced_out", "attention_cv_fast_cluster16_out"):
+                     "attention_cv_fast_balanced_out", "attention_cv_fast_cluster16_out",
+                     "attention_cv_striped_out", "attention_cv_striped_q1_out",
+                     "attention_cv_striped_cluster4_out", "attention_cv_striped_balanced_out",
+                     "attention_cv_striped_cluster16_out", "attention_cv_striped_decode_out",
+                     "rotate_clip_store_striped_out"):
         if hasattr(getattr(torch.ops, namespace), optional):
             names.add(optional)
     for name in sorted(names):

@@ -149,11 +149,13 @@ def test_rotation_kernel_keeps_cpu_simulator_and_production_launch_separate():
 
 
 def test_v2_store_publishes_words_through_a_uint16_mte_view():
-    # #153: a real A2 run rejected 2-byte V2 scatter stores issued through a
-    # uint8 GlobalTensor. Keep both ends uint16; the byte layout is unchanged.
+    # #153: A2 requires every UB-side MTE block start to be 32-byte aligned.
+    # Stage words into aligned lanes while retaining the compact GM layout.
     source = (Path(__file__).parents[1] / "csrc/kernels/rotate_clip_store_v2.cpp").read_text()
     assert "GlobalTensor<uint16_t> packedWords_" in source
     assert "auto sourceWords=bytes.ReinterpretCast<uint16_t>()" in source
+    assert "scatterWords.SetValue(word*16" in source
+    assert "sourceWords[source/2],payloadCopy" not in source
     assert "DataCopyPad(packed_[headBase+side*sideBytes+groupRow*2]" not in source
     assert source.count("DataCopyPad(packedWords_") == 3
 

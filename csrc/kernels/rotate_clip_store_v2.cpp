@@ -314,7 +314,8 @@ class RotateStore {
     tags_.SetGlobalBuffer(reinterpret_cast<__gm__ int64_t*>(tags));
     status_.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(status));
     engine_.Init(&pipe_,dim,hadamard); quant_.Init(&pipe_,dim);
-    pipe_.InitBuffer(packBuf_,kRowTile*160); pipe_.InitBuffer(statusBuf_,32);
+    pipe_.InitBuffer(packBuf_,kRowTile*160); pipe_.InitBuffer(scatterBuf_,kMaxDim*4);
+    pipe_.InitBuffer(statusBuf_,32);
     pipe_.InitBuffer(metaBuf_,32); pipe_.InitBuffer(rawBuf_,kMaxDim*2);
     const int64_t total=tokens*heads; const int32_t headBytes=dim/2+8;
     for (int64_t base=GetBlockIdx()*kRowTile;base<total;base+=GetBlockNum()*kRowTile) {
@@ -350,16 +351,30 @@ class RotateStore {
           const int64_t headBase=offset+page*pageStride+group*groupStride+head*16*headBytes;
           const int64_t sideBytes=16*(dim/4+4),payloadBytes=16*dim/4;
           auto sourceWords=bytes.ReinterpretCast<uint16_t>();
+          auto scatterWords=scatterBuf_.Get<uint16_t>();
           for(int32_t side=0;side<2;++side) {
             const int64_t source=row*160+side*(dim/4+4);
+            // UB-side MTE block starts must be 32-byte aligned on A2. Expand
+            // the contiguous packed words into 32-byte lanes, then retain the
+            // single 2-D copy into the destination's 32-byte word columns.
+            for(int32_t word=0;word<dim/8;++word)
+              scatterWords.SetValue(word*16,sourceWords.GetValue(source/2+word));
+            Fence<HardEvent::S_MTE3>();
             DataCopyExtParams payloadCopy{static_cast<uint16_t>(dim/8),2,0,30,0};
             DataCopyPad(packedWords_[(headBase+side*sideBytes)/2+groupRow],
-                        sourceWords[source/2],payloadCopy);
+                        scatterWords,payloadCopy);
             DataCopyExtParams metaCopy{1,2,0,0,0};
+            Fence<HardEvent::MTE3_S>();
+            scatterWords.SetValue(0,sourceWords.GetValue((source+dim/4)/2));
+            Fence<HardEvent::S_MTE3>();
             DataCopyPad(packedWords_[(headBase+side*sideBytes+payloadBytes)/2+groupRow],
-                        sourceWords[(source+dim/4)/2],metaCopy);
+                        scatterWords,metaCopy);
+            Fence<HardEvent::MTE3_S>();
+            scatterWords.SetValue(0,sourceWords.GetValue((source+dim/4+2)/2));
+            Fence<HardEvent::S_MTE3>();
             DataCopyPad(packedWords_[(headBase+side*sideBytes+payloadBytes+32)/2+groupRow],
-                        sourceWords[(source+dim/4+2)/2],metaCopy);
+                        scatterWords,metaCopy);
+            Fence<HardEvent::MTE3_S>();
           }
         } else {
           const int64_t destination=offset+page*pageStride+inPage*heads*headBytes+head*headBytes;
@@ -428,7 +443,7 @@ class RotateStore {
     }
   }
   TPipe pipe_; RotationEngine<T> engine_; ClipQuantize quant_;
-  TBuf<TPosition::VECCALC> packBuf_,statusBuf_,metaBuf_,rawBuf_;
+  TBuf<TPosition::VECCALC> packBuf_,scatterBuf_,statusBuf_,metaBuf_,rawBuf_;
   GlobalTensor<T> k_,v_; GlobalTensor<float> rk_,rv_;
   GlobalTensor<int64_t> slots_,positions_,tags_;
   GlobalTensor<uint8_t> packed_; GlobalTensor<uint16_t> packedWords_;

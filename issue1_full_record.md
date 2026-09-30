@@ -28578,3 +28578,5 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修法与D.4四问**：①故障属于`phase1_stores`的新K/V量化槽位发布；②D.4记录旧路径该相位208.6–216.0ms/16K，本修订只修发布合法性，不能宣称性能收益；③V2 producer新增显式`GlobalTensor<uint16_t>` GM视图，UB packed buffer也reinterpret为`uint16_t`，三个2-byte搬运从源到目的均按真实word类型发出；blockCount/stride、consumer-major地址、量化位序、FP16 scale/zero、raw window和status完全不变，不回退V1；④复杂度、workspace和搬运字节数不变。静态回归禁止再次从`uint8_t`视图发出该word scatter，已有真实NPU V2逐位probe负责最终裁决。
 
 **验证边界**：本地只能运行源码契约与Python回归，没有CANN/NPU，不能把修订写成已通过真机。目标机须重新编译并先跑独立V2 store逐位/NPU门；随后candidate服务越过首个16K `phase1_stores`，才能确认507035收口。完整图、127条质量和端到端性能仍沿用原门，不因本错误修复而通过。
+
+**首修真机反证与修订**：用户应用`uint16_t` GM/UB视图后复验，仍在同一store报507035，但PC由`…f8c80/f8db4`移到`…f8b00/f8b28`，MTE信息由`e300000011`变成`e2000000b4`。这证明新产物已加载，也反证“只需把GM元素类型改成uint16”的归因不完整。2-D UB→GM copy的每个源block start同样受32-byte MTE对齐约束；旧代码让连续payload word以2-byte间距充当block start。最终修订新增最多1024B/core的固定UB staging，把每个uint16 payload放入32-byte lane首部，再用一次2-D MTE写入原GM列；scale/zero复用同一对齐lane。拒绝`GlobalTensor::SetValue`逐word发布，因为多核写同一GM cacheline会引入DCache所有权风险。复杂度仍O(new tokens×heads×D)，每行增加D/8次UB scalar搬移，真机性能必须单独复验。

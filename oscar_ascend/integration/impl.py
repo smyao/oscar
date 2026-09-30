@@ -192,18 +192,32 @@ class OscarAttentionImpl(AttentionImpl):
                    requests=attn_metadata.num_reqs, **timing_fields):
             ops.status_guard(statuses, workspace.rotate_status[:n],
                              workspace.merge_status[:n], workspace.store_status[:n])
-        emit_once("attention_dispatched", key=(layer.layer_name, n, attn_metadata.max_query_len),
+        data_path = {
+            "cv_operator": cv_name,
+            "weighted_schedule": cv_name == "attention_cv_fast_weighted_out",
+            "weighted_q4_split2": (cv_name == "attention_cv_fast_weighted_out" and
+                                    source_splits == 2),
+            "history_cluster_size": cluster_size,
+            "slot_layout": "natural_lsb_v1",
+            "cube_handoff": "fp32_gm",
+            "accumulator": "fp32",
+        }
+        emit_once("attention_dispatched", key=(layer.layer_name, n,
+                                                attn_metadata.max_query_len,
+                                                cv_name, source_splits),
                   layer=layer.layer_name, tokens=n, requests=attn_metadata.num_reqs,
                   max_query_len=attn_metadata.max_query_len,
                   max_seq_len=attn_metadata.max_seq_len,
                   source_splits=source_splits,
                   current_source="native_fia" if native_current else "ascendc_cv",
                   capture_origin=attn_metadata.capture_origin,
-                  route="ascendc_int2_cv", device_completion="not_observed_here")
+                  route="ascendc_int2_cv", device_completion="not_observed_here",
+                  **data_path)
         emit_throttled("attention_progress", key=layer.layer_name,
                        layer=layer.layer_name, tokens=n, requests=attn_metadata.num_reqs,
                        max_query_len=attn_metadata.max_query_len,
                        max_seq_len=attn_metadata.max_seq_len,
                        current_source="native_fia" if native_current else "ascendc_cv",
-                       route="ascendc_int2_cv", device_completion="not_observed_here")
+                       route="ascendc_int2_cv", device_completion="not_observed_here",
+                       **data_path)
         return output

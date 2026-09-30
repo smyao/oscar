@@ -52,6 +52,20 @@ def test_candidate_plan_is_read_only_and_has_no_probes(tmp_path, capsys, rear_ca
     assert plan["port"] == (7878 if rear_cards else 8989)
 
 
+def test_formal_startup_reports_the_real_data_path(monkeypatch, tmp_path, capsys):
+    path = config_file(tmp_path)
+    logs = tmp_path / "run"
+    monkeypatch.setattr(install_serve, "run_phase", lambda name, command, **kwargs:
+                        PhaseResult(name, command, 1, 0.0, False, False,
+                                    str(logs / name), True))
+    assert install_serve.main(["--config", str(path), "--log-dir", str(logs),
+                               "--variant", "candidate"]) == 1
+    output = capsys.readouterr().out
+    assert "DATA_PATH slot_layout=natural_lsb_v1" in output
+    assert "cube_handoff=fp32_gm accumulator=fp32" in output
+    assert "acceptance=127x32k_batch32_pd_fused" in output
+
+
 @pytest.mark.parametrize("variant,original,enabled", [
     ("candidate", False, True), ("baseline", True, False), (None, True, True), (None, False, False),
 ])

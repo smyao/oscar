@@ -8,6 +8,7 @@
   "prefill_window": {"relative_l2_lt": 0.02},
   "staging_eviction_reference_only": {"atol": 0.0001, "rtol": 0.0001, "note": "PR staging eviction test exercises an INT2 substitution; not permission to lose exact production windows"},
   "performance": {"max_latency_ratio": 1.0, "min_throughput_ratio": 1.0, "repeats": 5, "warmup": 2, "statistic": "median", "per_case_required": true, "noise_allowance": 0.0},
+  "production_workload": {"dataset_requests": 127, "mean_input_tokens": 32768, "batch_size": 32, "deployment_mode": "pd_fused", "comparison": "same_native_parameters", "required_oscar_route_hit_ratio": 1.0},
   "required_input_lengths": [16384, 32768, 50000, 100000, 262144],
   "required_concurrency": [1, 4, 16, 128],
   "required_q_lens": [1, 2, 3, 4],

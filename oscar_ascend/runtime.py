@@ -191,19 +191,12 @@ class AscendRuntimeProvider:
             raise OscarReadinessError("experimental_fast_unpack must be an explicit boolean")
         if type(self.config.get("experimental_mixed_cv", False)) is not bool:
             raise OscarReadinessError("experimental_mixed_cv must be an explicit boolean")
-        if type(self.config.get("experimental_batched_history", False)) is not bool:
-            raise OscarReadinessError("experimental_batched_history must be an explicit boolean")
         if self.config.get("experimental_fast_unpack", False) and not self.config.get("experimental_history_reuse", False):
             raise OscarReadinessError("fast unpack requires explicit candidate history configuration")
         if self.config.get("experimental_mixed_cv", False) and not (
                 self.config.get("experimental_fast_unpack", False) and
                 self.config.get("experimental_history_reuse", False)):
             raise OscarReadinessError("mixed CV requires explicit fast/history candidate configuration")
-        if self.config.get("experimental_batched_history", False) and not (
-                self.config.get("experimental_mixed_cv", False) and
-                self.config.get("experimental_fast_unpack", False) and
-                self.config.get("experimental_history_reuse", False)):
-            raise OscarReadinessError("batched history requires mixed/fast/history candidate configuration")
         self._ready = False
         self.layers: dict[str, LayerState] = {}
         self.workspaces: dict[tuple, GraphWorkspace] = {}
@@ -231,9 +224,6 @@ class AscendRuntimeProvider:
         if self.config.get("experimental_mixed_cv", False):
             from .ops.cv_dispatch import MIXED_CV_OPS
             require_capabilities(MIXED_CV_OPS)
-        if self.config.get("experimental_batched_history", False):
-            from .ops.cv_dispatch import BATCHED4_CV_OP
-            require_capabilities({BATCHED4_CV_OP})
         import torch
         if not torch.npu.is_available():
             raise OscarReadinessError("OSCAR production requires an available NPU")

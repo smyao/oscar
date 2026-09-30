@@ -109,7 +109,6 @@ PYBIND11_MODULE(_oscar_ascend_ops,m) {
       "rotate_out","rotate_clip_store_out","prepare_attention_tasks_out","attention_cv_out",
       "attention_cv_cluster4_out","attention_cv_q1_out","attention_cv_profile_out",
       "attention_cv_fast_out","attention_cv_fast_q1_out","attention_cv_fast_cluster4_out",
-      "attention_cv_batched4_out",
       "attention_cv_fast_balanced_out","attention_cv_fast_cluster16_out",
       "status_guard"};});
 }

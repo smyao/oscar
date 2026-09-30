@@ -32,14 +32,6 @@ constexpr int64_t attention_cluster4_workspace_per_core(int64_t dim) {
           + kAttentionQueryRows * kAttentionKvRows
           + 4 * 2 * kAttentionQueryRows) * 4;
 }
-// Archive #126/#145/#148-153/D.4: bounded M512 C4 experiment. Shared
-// score/P and PV each span four query tiles; FP32 acc/max/sum/alpha remain
-// per member. The footprint is fixed per Cube, never per history length.
-constexpr int64_t attention_batched4_workspace_per_core(int64_t dim) {
-  return ((3 * 4 * kAttentionQueryRows + 2 * kAttentionKvRows) * dim
-          + 4 * kAttentionQueryRows * kAttentionKvRows
-          + 3 * 4 * kAttentionQueryRows) * 4;
-}
 // Archive #148-151/D.4: same bounded KV256, sixteen independent query states.
 // The 2026-09-29 mixed CV measurement motivates reuse; no history-sized allocation.
 constexpr int64_t attention_cluster16_workspace_per_core(int64_t dim) {
@@ -107,16 +99,6 @@ void attention_cv_fast_cluster16_launch(void* stream, void* query, void* query_r
     int64_t sink, int64_t recent, int64_t speculative, int64_t splits,
     float scale, uint32_t cores);
 void attention_cv_fast_cluster4_launch(void* stream, void* query, void* query_rot,
-    void* current_key, void* current_value, void* rotation_v, void* raw,
-    void* block_table, void* window_key, void* window_value, void* window_tags,
-    void* tasks, void* partial, void* lse, void* status, void* workspace,
-    void* cluster_stats, int64_t tokens, int64_t query_heads, int64_t kv_heads,
-    int64_t dim, int64_t requests, int64_t table_columns, int64_t task_count,
-    int64_t block_tokens, int64_t physical_blocks, int64_t ssm_offset,
-    int64_t page_stride, int64_t window_stride, int64_t tag_stride,
-    int64_t sink, int64_t recent, int64_t speculative, int64_t splits,
-    float scale, uint32_t cores);
-void attention_cv_batched4_launch(void* stream, void* query, void* query_rot,
     void* current_key, void* current_value, void* rotation_v, void* raw,
     void* block_table, void* window_key, void* window_value, void* window_tags,
     void* tasks, void* partial, void* lse, void* status, void* workspace,

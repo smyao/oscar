@@ -1,6 +1,6 @@
 """CPU semantic tests for rotation constants; CANN/device evidence is separate.
 
-Archive G27/#13-22/#37-49/#111 and PR oscar_attn.py:235-243: exact raw
+Archive G27/#13-22/#37-49/#111/#153 and PR oscar_attn.py:235-243: exact raw
 window rows, FP32 rotated vectors, true absolute percentile interpolation.
 These tests compare the butterfly and order-statistic design to the independent
 torch oracle. They do not pretend to execute or validate an AscendC binary.
@@ -146,6 +146,16 @@ def test_rotation_kernel_keeps_cpu_simulator_and_production_launch_separate():
     guard = source.index("#ifndef ASCENDC_CPU_DEBUG")
     assert source.index("void oscar_rotate_clip_store_kernel") < guard
     assert source.index("<<<cores,nullptr,stream>>>") > guard
+
+
+def test_v2_store_publishes_words_through_a_uint16_mte_view():
+    # #153: a real A2 run rejected 2-byte V2 scatter stores issued through a
+    # uint8 GlobalTensor. Keep both ends uint16; the byte layout is unchanged.
+    source = (Path(__file__).parents[1] / "csrc/kernels/rotate_clip_store_v2.cpp").read_text()
+    assert "GlobalTensor<uint16_t> packedWords_" in source
+    assert "auto sourceWords=bytes.ReinterpretCast<uint16_t>()" in source
+    assert "DataCopyPad(packed_[headBase+side*sideBytes+groupRow*2]" not in source
+    assert source.count("DataCopyPad(packedWords_") == 3
 
 
 def test_masked_nan_and_sink_only_goldens_preserve_exact_contract(tmp_path):

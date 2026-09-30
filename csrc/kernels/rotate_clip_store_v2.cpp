@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Archive G27, #13-22/#37-49/#70-71/#81-83/#91-92/#111:
+// Archive G27, #13-22/#37-49/#70-71/#81-83/#91-92/#111/#153:
 // raw window stays unrotated; scales/zero round to FP16 before quantization;
 // exact percentile order statistics; each live row and status has one writer.
 // D.4 four questions, reread against its COMPLETE original timing JSON:
@@ -303,6 +303,12 @@ class RotateStore {
     slots_.SetGlobalBuffer(reinterpret_cast<__gm__ int64_t*>(slots));
     positions_.SetGlobalBuffer(reinterpret_cast<__gm__ int64_t*>(positions));
     packed_.SetGlobalBuffer(reinterpret_cast<__gm__ uint8_t*>(packed));
+    if constexpr (V2) {
+      // Archive #153: V2 publishes 16-bit payload/meta words.  A uint8 GM
+      // view turns each word into an unsupported 2-byte byte-copy shape on
+      // A2; use the real element type so MTE sees the required alignment.
+      packedWords_.SetGlobalBuffer(reinterpret_cast<__gm__ uint16_t*>(packed));
+    }
     rawK_.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(rawKey));
     rawV_.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(rawValue));
     tags_.SetGlobalBuffer(reinterpret_cast<__gm__ int64_t*>(tags));
@@ -343,15 +349,17 @@ class RotateStore {
           const int64_t groupStride=16*heads*headBytes;
           const int64_t headBase=offset+page*pageStride+group*groupStride+head*16*headBytes;
           const int64_t sideBytes=16*(dim/4+4),payloadBytes=16*dim/4;
+          auto sourceWords=bytes.ReinterpretCast<uint16_t>();
           for(int32_t side=0;side<2;++side) {
             const int64_t source=row*160+side*(dim/4+4);
             DataCopyExtParams payloadCopy{static_cast<uint16_t>(dim/8),2,0,30,0};
-            DataCopyPad(packed_[headBase+side*sideBytes+groupRow*2],bytes[source],payloadCopy);
+            DataCopyPad(packedWords_[(headBase+side*sideBytes)/2+groupRow],
+                        sourceWords[source/2],payloadCopy);
             DataCopyExtParams metaCopy{1,2,0,0,0};
-            DataCopyPad(packed_[headBase+side*sideBytes+payloadBytes+groupRow*2],
-                        bytes[source+dim/4],metaCopy);
-            DataCopyPad(packed_[headBase+side*sideBytes+payloadBytes+32+groupRow*2],
-                        bytes[source+dim/4+2],metaCopy);
+            DataCopyPad(packedWords_[(headBase+side*sideBytes+payloadBytes)/2+groupRow],
+                        sourceWords[(source+dim/4)/2],metaCopy);
+            DataCopyPad(packedWords_[(headBase+side*sideBytes+payloadBytes+32)/2+groupRow],
+                        sourceWords[(source+dim/4+2)/2],metaCopy);
           }
         } else {
           const int64_t destination=offset+page*pageStride+inPage*heads*headBytes+head*headBytes;
@@ -423,7 +431,8 @@ class RotateStore {
   TBuf<TPosition::VECCALC> packBuf_,statusBuf_,metaBuf_,rawBuf_;
   GlobalTensor<T> k_,v_; GlobalTensor<float> rk_,rv_;
   GlobalTensor<int64_t> slots_,positions_,tags_;
-  GlobalTensor<uint8_t> packed_; GlobalTensor<bfloat16_t> rawK_,rawV_;
+  GlobalTensor<uint8_t> packed_; GlobalTensor<uint16_t> packedWords_;
+  GlobalTensor<bfloat16_t> rawK_,rawV_;
   GlobalTensor<int32_t> status_;
 };
 }

@@ -28568,3 +28568,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **真实结果**：用户在node93执行`git pull && bash scripts/install_observe_serve.sh --variant candidate --probe-only --diagnose-mixed`（1a0fa5f，`observe-20260929T024045.941988Z`）。入口明确打印`devices=4,5,6,7 port=7878`，current FIA与operator gate通过，资源清理通过；`history-reuse-npu`报`HistoryReuseProbeError: explicit target devices 0,1,2,3 and ascend910b4 are required`并以rc=1关闭候选门。服务及mixed诊断均未启动，不能把此前通过项写成此次完整probe通过；该失败也不是8卡进程清理。
 
 **根因与修法**：`tools/probe_history_reuse.py:_active_device`把设备列表和值同时写死为`[0,1,2,3]`/`"0,1,2,3"`，与observe显式后四卡有效配置冲突。修订后仍要求恰好4个互异、非负、严格整数的显式物理设备以及`ascend910b4`，但掩码由本次target设备顺序生成；若继承的`ASCEND_RT_VISIBLE_DEVICES`与target不逐字一致仍失败。新增后四卡接受、非法设备/SOC及继承掩码冲突回归。本修订只改宿主侧设备选择契约，不改AscendC算子、精度阈值、图或性能门；目标NPU重跑结果仍待同一命令验证。
+
+## [153] 真机条目（2026-09-30 用户回传）· V2 store 的短 uint8 scatter 触发 MTE 地址对齐异常
+
+**原始证据**：用户在node93以后四卡candidate启动，并设置`OSCAR_DEBUG_SYNC=1`、`OSCAR_DEBUG_MIN_TOKENS=16000`。TP1堆栈在`integration/impl.py`的`phase1_stores`退出同步处报507035；设备逐核报告`mte error info: 0xe300000011`及`The access address of the MTE instruction is not aligned with the data type bit width`。此前FIA和merge同步点已越过，因此本次不是异步错误误归因到status guard，而是新`rotate_clip_store_v2_out` producer内的真实故障。
+
+**源码根因**：consumer-major V2槽位以16-bit word为发布单位，但producer仍把packed GM与UB源声明为`uint8_t`，用`blockLen=2`分别散写payload、scale和zero。目标偏移`groupRow*2`及V侧UB偏移`D/4+4`只保证2-byte word对齐；在A2上该短`uint8` MTE形态不接受这些地址。原V1一次发布完整136B且源行按160B对齐，不命中此形态；V2多个AIV同时报错也与各核进入相同三处短scatter一致。
+
+**修法与D.4四问**：①故障属于`phase1_stores`的新K/V量化槽位发布；②D.4记录旧路径该相位208.6–216.0ms/16K，本修订只修发布合法性，不能宣称性能收益；③V2 producer新增显式`GlobalTensor<uint16_t>` GM视图，UB packed buffer也reinterpret为`uint16_t`，三个2-byte搬运从源到目的均按真实word类型发出；blockCount/stride、consumer-major地址、量化位序、FP16 scale/zero、raw window和status完全不变，不回退V1；④复杂度、workspace和搬运字节数不变。静态回归禁止再次从`uint8_t`视图发出该word scatter，已有真实NPU V2逐位probe负责最终裁决。
+
+**验证边界**：本地只能运行源码契约与Python回归，没有CANN/NPU，不能把修订写成已通过真机。目标机须重新编译并先跑独立V2 store逐位/NPU门；随后candidate服务越过首个16K `phase1_stores`，才能确认507035收口。完整图、127条质量和端到端性能仍沿用原门，不因本错误修复而通过。

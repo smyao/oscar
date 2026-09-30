@@ -130,3 +130,5 @@ q4诊断接入同一`--probe-only`：原生paged BF16 FIA与OSCAR CV+merge的未
 #148：用户确认fe0精度正确（自有LongBenchv2为53.54%、22:22）；后续34639ab为48.03%、20:15，已按用户要求回到fe0，不保留这些后续数学改动。新C4算子只复用四组完全同域历史的解包，fe0原生产kernel逐字节不变、默认仍fe0。CANN ascend910b4编译和官方CPU-debug51/51通过；相关主机95 passed、28 NPU skipped、4 subtests passed。证据`reports/history_reuse_cpu_validation.json`及`reports/target_longbench_regression.txt`。两个过重CPU模拟器配置超时记录保留，不写成NPU错误。新入口`install_observe_serve.sh --variant candidate`先过同输入逐位/冻结oracle/图/速度门再启动候选；被动观察用户负载，不自动重跑127题。C04/C05/E01的新候选NPU/图仍待测，E06追平原生仍未通过；用户已认可的fe0精度不因本候选未测而撤销。42个稳定checkpoint编号不变。设计、计时口径与一键命令见`docs/history_reuse_experiment.md`。
 
 2026-09-30 数据面V2源码已准备：独立consumer-major producer/四类consumer、FP16 Cube handoff、FP32 softmax/LSE/累加、q1/q4/C4双bank和BF16 fused merge由candidate原子启用；生产日志记录slot/handoff/merge及实际算子。当前开发机无CANN/NPU，C04/C05/E01/E06均保持待真机，禁止把compileall、参考布局测试或源码检查记为完成。
+
+#153：node93以`OSCAR_DEBUG_SYNC=1`将507035定位到`phase1_stores`；设备明确报告MTE访问地址不满足数据类型位宽对齐。V2 producer原先通过`GlobalTensor<uint8_t>`发布2-byte payload/meta word，现从UB到GM统一使用`uint16_t`视图，槽位字节布局和consumer地址不变；静态回归禁止恢复短uint8 scatter。修订后的CANN编译、真实V2 store逐位、完整candidate服务仍待目标机验证，C04/C05/E01/E06不因此解锁。

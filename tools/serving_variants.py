@@ -9,6 +9,7 @@ FEATURE_FLAGS = {
     "later_mtp_q1": "experimental_history_reuse",
     "fast_unpack": "experimental_fast_unpack",
     "weighted_q4": "experimental_weighted_q4",
+    "weighted_q4_split2": "experimental_weighted_q4_split2",
 }
 
 
@@ -27,6 +28,8 @@ def variant_config(config: dict, variant: str | None) -> dict:
         raise ValueError("fast unpack requires explicit candidate history configuration")
     if selected.get("experimental_weighted_q4", False) and not selected.get("experimental_fast_unpack", False):
         raise ValueError("weighted q4 requires the proven fast candidate")
+    if selected.get("experimental_weighted_q4_split2", False) and not selected.get("experimental_weighted_q4", False):
+        raise ValueError("weighted q4 S2 requires the proven weighted candidate")
     return selected
 
 

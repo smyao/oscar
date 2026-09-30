@@ -17,7 +17,8 @@ from .current_attention import (guard_current_slots, native_current_partial,
 from .runtime_api import OscarReadinessError, require_runtime
 from ..telemetry import emit_once, emit_throttled
 from ..timing import phase
-from ..ops.cv_dispatch import CLUSTER_CV_OPS, select_cv_op
+from ..ops.cv_dispatch import (CLUSTER_CV_OPS, select_cv_op,
+                               select_source_splits)
 
 
 class OscarAttentionImpl(AttentionImpl):
@@ -89,7 +90,18 @@ class OscarAttentionImpl(AttentionImpl):
         workspace = state.workspace
         workspace.validate(n, h, hk, d)
         g = workspace.geometry
-        source_splits = g.splits_for_tokens(n)
+        cluster_size = getattr(g, "history_cluster_size", 1)
+        # #150/P0/P1.5: select the signed operator before sizing task/partial
+        # views so the proven q4 route uses S2 consistently end to end.
+        cv_name = select_cv_op(cluster_size, h, hk, n, attn_metadata.max_query_len,
+                              q1_draft=attn_metadata.is_draft and attn_metadata.draft_index > 0,
+                              fast_unpack=self.provider.config.get("experimental_fast_unpack", False),
+                              weighted_q4=self.provider.config.get("experimental_weighted_q4", False),
+                              head_dim=d)
+        source_splits = select_source_splits(
+            g.splits_for_tokens(n), cv_name, tokens=n,
+            weighted_q4_split2=self.provider.config.get(
+                "experimental_weighted_q4_split2", False))
         splits = 3 * source_splits
         task_count = n * hk * splits
         tasks = workspace.tasks[:task_count]
@@ -125,14 +137,6 @@ class OscarAttentionImpl(AttentionImpl):
         with phase("rotate", layer=layer.layer_name, tokens=n, hadamard=state.hadamard,
                    requests=attn_metadata.num_reqs, **timing_fields):
             ops.rotate_out(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
-        cluster_size = getattr(g, "history_cluster_size", 1)
-        # #150/P0: later q1 and the target-proven q4 shape use balanced ownership.
-        # Host shape selection also fixes the op recorded during capture.
-        cv_name = select_cv_op(cluster_size, h, hk, n, attn_metadata.max_query_len,
-                              q1_draft=attn_metadata.is_draft and attn_metadata.draft_index > 0,
-                              fast_unpack=self.provider.config.get("experimental_fast_unpack", False),
-                              weighted_q4=self.provider.config.get("experimental_weighted_q4", False),
-                              head_dim=d)
         with phase("fia", layer=layer.layer_name, tokens=n, splits=source_splits,
                    cube_cores=g.cube_cores, tasks=task_count, requests=attn_metadata.num_reqs,
                    cv_operator=cv_name, **timing_fields):

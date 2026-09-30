@@ -87,6 +87,11 @@ def test_candidate_route_requires_explicit_boolean(value):
     assert AscendRuntimeProvider({}).config.get("experimental_history_reuse", False) is False
 
 
+def test_weighted_split2_requires_weighted_candidate():
+    with pytest.raises(runtime_api.OscarReadinessError, match="S2 requires"):
+        AscendRuntimeProvider({"experimental_weighted_q4_split2": True})
+
+
 @pytest.mark.parametrize("tokens,expected", [(1, 20), (4, 20), (8, 20), (16, 20),
                                             (64, 5), (128, 3), (512, 1), (16384, 1)])
 def test_shape_splits_use_measured_cube_parallelism_without_more_workspace(tokens, expected):
@@ -310,7 +315,8 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     impl.num_heads, impl.num_kv_heads, impl.head_size, impl.scale = h, hk, d, d**-0.5
     impl.provider = SimpleNamespace(layer_state=lambda _name: state, ops=Ops(),
                                     config={"experimental_fast_unpack": fast_unpack,
-                                            "experimental_weighted_q4": fast_unpack})
+                                            "experimental_weighted_q4": fast_unpack,
+                                            "experimental_weighted_q4_split2": fast_unpack})
     q = torch.randn(n, h * d, dtype=torch.bfloat16)
     k = torch.randn(n, hk * d, dtype=torch.bfloat16)
     value = torch.randn(n, hk * d * 3, dtype=torch.bfloat16)[:, d:2*d]

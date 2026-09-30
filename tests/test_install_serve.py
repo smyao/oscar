@@ -71,6 +71,7 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
         assert selected["experimental_history_reuse"] is enabled
         assert selected.get("experimental_fast_unpack", False) is (variant == "candidate")
         assert selected.get("experimental_weighted_q4", False) is (variant == "candidate")
+        assert selected.get("experimental_weighted_q4_split2", False) is (variant == "candidate")
         assert env["OSCAR_ENABLED"] == "1"
         assert env["ASCEND_RT_VISIBLE_DEVICES"] == ",".join(map(str, devices))
         assert selected["devices"] == devices and selected["port"] == port

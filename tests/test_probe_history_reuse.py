@@ -10,7 +10,8 @@ from types import SimpleNamespace
 import pytest
 
 from tools import probe_history_reuse as reuse
-from oscar_ascend.ops.cv_dispatch import FAST_CV_OP, FAST_WEIGHTED_CV_OP
+from oscar_ascend.ops.cv_dispatch import (FAST_CV_OP, FAST_WEIGHTED_CV_OP,
+                                          select_source_splits)
 
 
 def test_active_device_accepts_any_explicit_four_card_target(monkeypatch):
@@ -232,6 +233,14 @@ def test_target_proven_q4_routes_weighted_only_in_candidate_geometry():
     assert reuse.select_cv_op(4, 12, 2, 128, 4, **common) == FAST_CV_OP
     assert reuse.select_cv_op(4, 6, 1, 128, 4, fast_unpack=True,
                               weighted_q4=False, head_dim=256) == FAST_CV_OP
+    assert select_source_splits(3, FAST_WEIGHTED_CV_OP,
+                                tokens=128, weighted_q4_split2=True) == 2
+    assert select_source_splits(3, FAST_CV_OP,
+                                tokens=128, weighted_q4_split2=True) == 3
+    assert select_source_splits(3, FAST_WEIGHTED_CV_OP,
+                                tokens=128, weighted_q4_split2=False) == 3
+    assert select_source_splits(20, FAST_WEIGHTED_CV_OP,
+                                tokens=4, weighted_q4_split2=True) == 20
 
 
 def test_cluster_counters_require_real_sharing_and_exact_owner_algebra():

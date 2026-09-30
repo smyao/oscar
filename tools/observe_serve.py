@@ -57,12 +57,15 @@ def _source_identity(variant: str, config: dict) -> dict:
     flag = config.get("experimental_history_reuse", False)
     fast = config.get("experimental_fast_unpack", False)
     weighted = config.get("experimental_weighted_q4", False)
+    split2 = config.get("experimental_weighted_q4_split2", False)
     if type(flag) is not bool:
         raise ValueError("experimental_history_reuse must be an explicit boolean")
     if type(fast) is not bool or (fast and not flag):
         raise ValueError("experimental_fast_unpack requires explicit candidate history configuration")
     if type(weighted) is not bool or (weighted and not fast):
         raise ValueError("experimental_weighted_q4 requires explicit fast candidate configuration")
+    if type(split2) is not bool or (split2 and not weighted):
+        raise ValueError("experimental_weighted_q4_split2 requires weighted q4")
     if variant in {"baseline", "candidate"} and actual != FE0_KERNEL_SHA256:
         raise RuntimeError("OSCAR observation requires byte-identical fe0 production kernels")
     if variant == "baseline" and flag:
@@ -83,6 +86,7 @@ def _source_identity(variant: str, config: dict) -> dict:
     return {"variant": variant, "fe0_production_kernels_match": actual == FE0_KERNEL_SHA256,
             "kernel_sha256": actual, "experimental_history_reuse": flag,
             "experimental_fast_unpack": fast, "experimental_weighted_q4": weighted,
+            "experimental_weighted_q4_split2": split2,
             "fast_source_sha256": fast_sources,
             "candidate_kernel_sha256": hashlib.sha256(cluster.read_bytes()).hexdigest()
                 if variant == "candidate" else None,
@@ -396,6 +400,20 @@ def _fast_unpack_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
                                             "p0_performance", "q4_split_scan_gate")}
     expected.update(artifact_signature=manifest.get("signature"), artifact_sha256=manifest.get("sha256"))
     mismatches = [key for key, value in expected.items() if report.get(key) != value]
+    scan = report.get("q4_split_scan")
+    if not isinstance(scan, dict):
+        mismatches.append("q4_split_scan")
+    else:
+        graph = scan.get("recommended_split_graph")
+        if scan.get("recommended_split") != 2:
+            mismatches.append("q4_split_scan.recommended_split")
+        if scan.get("promotion_gate") != "passed" or scan.get("production_promotion_allowed") is not True:
+            mismatches.append("q4_split_scan.promotion_gate")
+        if scan.get("production_route_changed") is not True or scan.get("production_route") != "weighted_s2":
+            mismatches.append("q4_split_scan.production_route")
+        if not isinstance(graph, dict) or graph.get("split") != 2 or \
+                graph.get("capture") != "passed" or graph.get("replay") != "passed":
+            mismatches.append("q4_split_scan.recommended_split_graph")
     if mismatches:
         error = RuntimeError(f"fast unpack gate lacks matching evidence: {','.join(mismatches)} report={output}")
         error.phase = "fast-unpack-evidence"

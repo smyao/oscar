@@ -18,6 +18,20 @@ FAST_CV_OPS = frozenset({FAST_CV_OP, FAST_WEIGHTED_CV_OP,
                          FAST_Q1_CV_OP, FAST_CLUSTER4_CV_OP})
 
 
+def select_source_splits(default_splits, cv_op, *, tokens,
+                         weighted_q4_split2=False):
+    """Apply only the S2 promotion proven for the exact weighted-q4 route."""
+    if type(default_splits) is not int or not 1 <= default_splits <= 32:
+        raise ValueError("invalid default CV split count")
+    if type(tokens) is not int or tokens <= 0:
+        raise ValueError("invalid active token count")
+    if type(weighted_q4_split2) is not bool:
+        raise ValueError("weighted q4 S2 flag must be an explicit boolean")
+    if weighted_q4_split2 and cv_op == FAST_WEIGHTED_CV_OP and tokens == 128:
+        return 2
+    return default_splits
+
+
 def select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len, *, q1_draft=False,
                  fast_unpack=False, weighted_q4=False, head_dim=None):
     if type(fast_unpack) is not bool or (fast_unpack and cluster_size != 4):

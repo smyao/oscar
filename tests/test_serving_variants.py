@@ -15,7 +15,8 @@ def test_install_and_probe_plans_select_the_same_bundle(variant, enabled, capsys
     probe = json.loads(capsys.readouterr().out)
     assert install["optimizations"] == probe["optimizations"] == {
         "history_cluster4": enabled, "later_mtp_q1": enabled,
-        "fast_unpack": enabled, "weighted_q4": enabled}
+        "fast_unpack": enabled, "weighted_q4": enabled,
+        "weighted_q4_split2": enabled}
     assert install["probes"] == "none"
 
 
@@ -32,3 +33,5 @@ def test_default_retains_config_and_candidate_does_not_mutate_input():
         variant_config({"experimental_fast_unpack": True}, None)
     with pytest.raises(ValueError, match="requires"):
         variant_config({"experimental_weighted_q4": True}, None)
+    with pytest.raises(ValueError, match="requires"):
+        variant_config({"experimental_weighted_q4_split2": True}, None)

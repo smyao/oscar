@@ -134,6 +134,7 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     effective = json.loads((logs / "effective-target.json").read_text())
     assert effective["experimental_fast_unpack"] is True
     assert effective["experimental_weighted_q4"] is True
+    assert effective["experimental_weighted_q4_split2"] is True
     assert effective["devices"] == [4, 5, 6, 7] and effective["port"] == 7878
 
 
@@ -170,6 +171,10 @@ def test_fast_unpack_gate_requires_exact_new_npu_evidence(monkeypatch, tmp_path)
     report = {key: "passed" for key in ("status", "precision", "graph_capture",
                                           "graph_replay", "performance",
                                           "p0_performance", "q4_split_scan_gate")}
+    report["q4_split_scan"] = {"recommended_split": 2, "promotion_gate": "passed",
+        "production_promotion_allowed": True,
+        "production_route_changed": True, "production_route": "weighted_s2",
+        "recommended_split_graph": {"split": 2, "capture": "passed", "replay": "passed"}}
     report.update(artifact_signature=manifest["signature"], artifact_sha256=manifest["sha256"])
     def phase(name, command, **kwargs):
         assert name == "fast-unpack" and "tools.probe_fast_unpack" in command

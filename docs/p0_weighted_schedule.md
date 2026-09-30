@@ -50,7 +50,8 @@ git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 固定调用位置偏置。报告位于 `fast-unpack-report.json.q4_split_scan`，终端摘要为
 `PERF_Q4_SPLIT_SCAN`。
 
-扫描不会直接改变生产路由。只有某个非 S3 候选中位数最低且五次均严格快于
-对应的 S3 样本，才报告 `promote_sN_after_graph_gate`；否则报告 `retain_s3`。
-即使出现稳定候选，也必须先为胜出 split 补同地址 changed-input 图门，才允许
-修改正式服务的 split 策略。
+node93 `observe-20260930T011910.434995Z` 的结果为 S2 五次均严格快于 S3，
+中位数 `10.51198ms` 对 `10.77874ms`，比值 `0.975251`；128 个 query 的冻结
+oracle 全通过。因此 candidate 正式路由只在既有 weighted q4 精确形状上把 S3
+改为 S2。新探针同时要求胜出 S2 的同地址 changed-input 图 capture/replay 通过；
+任一门缺失时 observe 流程失败，不启动服务。其他算子和形状保留原 split 策略。

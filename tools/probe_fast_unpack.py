@@ -272,9 +272,61 @@ def split_scan_decision(samples: dict[int, list[float]]) -> dict:
             "best_over_s3": medians[best] / medians[3]}
 
 
+def _weighted_split_graph(torch, ops, tensors: dict, fixture: dict,
+                          buffers: dict, cores: int) -> dict:
+    """Capture S2 at fixed addresses and prove changed Q/task replay."""
+    reuse._poison(torch, buffers)
+    _launch_weighted(ops, tensors, fixture, buffers, cores)
+    torch.npu.synchronize()
+    _check_one(torch, fixture, buffers, invalid=False)
+    original = reuse._snapshot(buffers)
+    graph = torch.npu.NPUGraph()
+    reuse._poison(torch, buffers)
+    with torch.npu.graph(graph, capture_error_mode="thread_local",
+                         auto_dispatch_capture=True):
+        _launch_weighted(ops, tensors, fixture, buffers, cores)
+    torch.npu.synchronize()
+    reuse._poison(torch, buffers)
+    graph.replay(); torch.npu.synchronize()
+    _check_one(torch, fixture, buffers, invalid=False)
+    _same_bits(torch, original, buffers, "weighted split initial graph replay")
+
+    tensors["q"].copy_(-tensors["q"])
+    tensors["qr"].copy_(-tensors["qr"])
+    changed_tasks = buffers["tasks"].cpu()
+    chosen = next((row for row in changed_tasks
+                   if int(row[7]) == 0 and int(row[1]) > 0 and
+                   int(row[4] - row[3]) >= 32), None)
+    if chosen is None:
+        raise FastUnpackProbeError("S2 graph fixture has no live source0 range")
+    chosen[4] -= 16
+    buffers["tasks"].copy_(changed_tasks)
+    reuse._poison(torch, buffers)
+    graph.replay(); torch.npu.synchronize()
+    _check_one(torch, fixture, buffers, invalid=False)
+    changed = reuse._snapshot(buffers)
+    if all(reuse._bitwise_identical(torch, original[name], changed[name])
+           for name in ("partial", "lse")):
+        raise FastUnpackProbeError("S2 graph replay ignored changed input")
+    changed_merge = reuse._merge_only(torch, ops, fixture, buffers)
+    reuse._poison(torch, buffers)
+    _launch_weighted(ops, tensors, fixture, buffers, cores)
+    torch.npu.synchronize()
+    _check_one(torch, fixture, buffers, invalid=False)
+    _same_bits(torch, changed, buffers, "weighted S2 eager versus graph")
+    _same_merge(torch, changed_merge, reuse._merge_only(torch, ops, fixture, buffers),
+                "weighted S2 changed-input graph")
+    return {"capture": "passed", "replay": "passed",
+            "changed_query_and_task_same_addresses": True,
+            "split": fixture["spec"].splits, "operator": P0_WEIGHTED}
+
+
 def _q4_split_scan(torch, ops, target: dict, device, cores: int,
                    acceptance: dict) -> dict:
-    """P1.5: compare S1-S4 on one exact q4 input without changing routing."""
+    """P1.5: compare S1-S4 on one exact q4 input and attest candidate routing."""
+    route_enabled = target.get("experimental_weighted_q4_split2", False)
+    if type(route_enabled) is not bool:
+        raise FastUnpackProbeError("weighted q4 S2 route flag must be explicit boolean")
     base = reuse.measurement_shape(next(shape for shape in reuse.CASES
                                         if shape.name == "decode32"), target, cores)
     base = replace(base, name="q4_split_scan", splits=3)
@@ -330,6 +382,10 @@ def _q4_split_scan(torch, ops, target: dict, device, cores: int,
                 torch, ops, split_fixture, buffers, acceptance["fused_attention"])
 
     decision = split_scan_decision(samples)
+    winner = decision["recommended_split"]
+    graph = _weighted_split_graph(
+        torch, ops, tensors, variants[winner]["fixture"],
+        variants[winner]["buffers"], cores)
     rows = []
     for split in _Q4_SPLIT_SCAN:
         item = variants[split]
@@ -348,8 +404,11 @@ def _q4_split_scan(torch, ops, target: dict, device, cores: int,
             "order": "alternating_forward_reverse",
             "same_input_all_splits": len({row["input_sha256"] for row in rows}) == 1,
             **decision,
-            "production_route_changed": False,
-            "promotion_gate": "winner_requires_changed_input_graph_before_routing"}
+            "recommended_split_graph": graph,
+            "production_promotion_allowed": graph["capture"] == graph["replay"] == "passed",
+            "production_route_changed": route_enabled,
+            "production_route": "weighted_s2" if route_enabled else "unchanged",
+            "promotion_gate": "passed"}
 
 
 def _check_one(torch, fixture: dict, buffers: dict, *, invalid: bool,
@@ -963,7 +1022,10 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
         "median_ms": split_scan["median_ms"],
         "stable_all_five_faster_than_s3":
             split_scan["stable_all_five_faster_than_s3"],
-        "production_route_changed": False}, sort_keys=True), flush=True)
+        "graph": split_scan["recommended_split_graph"],
+        "promotion_gate": split_scan["promotion_gate"],
+        "production_route_changed": split_scan["production_route_changed"],
+        "production_route": split_scan["production_route"]}, sort_keys=True), flush=True)
     gates = verdict(rows)
     return {**gates, "q4_split_scan_gate": split_scan["status"],
             "q4_split_scan": split_scan,

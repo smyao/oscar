@@ -93,6 +93,7 @@ def main(argv=None) -> int:
     print(f"[oscar] SERVE_MODE variant={variant} C4={'on' if enabled else 'off'} "
           f"Q1={'on' if enabled else 'off'} FAST_UNPACK={'on' if config.get('experimental_fast_unpack', False) else 'off'} "
           f"WEIGHTED_Q4={'on' if config.get('experimental_weighted_q4', False) else 'off'} "
+          f"Q4_S2={'on' if config.get('experimental_weighted_q4_split2', False) else 'off'} "
           f"placement={status['placement']} config={effective_path}", flush=True)
     print(f"[oscar] devices={env.get('ASCEND_RT_VISIBLE_DEVICES', 'diagnostic')} port={config['port']}", flush=True)
     rc = 0

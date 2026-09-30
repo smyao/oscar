@@ -34,6 +34,12 @@ def enabled() -> bool:
     return _enabled("OSCAR_TIMING") or _enabled("OSCAR_PROFILER") or _enabled("OSCAR_DEBUG_SYNC")
 
 
+def debug_sync_requested(tokens: int) -> bool:
+    """Whether an eager phase will receive a device completion checkpoint."""
+    return (_enabled("OSCAR_DEBUG_SYNC") and type(tokens) is int and
+            tokens >= _debug_min_tokens())
+
+
 def _write(record):
     # Only explicit timing uses host IO. No tensor values are inspected.
     line = json.dumps(record, sort_keys=True, allow_nan=False)

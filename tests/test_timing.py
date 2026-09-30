@@ -46,3 +46,14 @@ def test_timing_disabled_writes_nothing(tmp_path, monkeypatch, capsys):
         pass
     assert list(tmp_path.glob("timing-*.jsonl")) == []
     assert capsys.readouterr().err == ""
+
+
+def test_debug_sync_requested_obeys_threshold_and_strict_flag(monkeypatch):
+    monkeypatch.setenv("OSCAR_DEBUG_SYNC", "1")
+    monkeypatch.setenv("OSCAR_DEBUG_MIN_TOKENS", "16000")
+    assert not timing.debug_sync_requested(15999)
+    assert timing.debug_sync_requested(16000)
+    assert not timing.debug_sync_requested(True)
+    monkeypatch.setenv("OSCAR_DEBUG_SYNC", "maybe")
+    with pytest.raises(ValueError, match="OSCAR_DEBUG_SYNC"):
+        timing.debug_sync_requested(16000)

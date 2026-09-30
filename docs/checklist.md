@@ -132,3 +132,5 @@ q4诊断接入同一`--probe-only`：原生paged BF16 FIA与OSCAR CV+merge的未
 2026-09-30 数据面V2源码已准备：独立consumer-major producer/四类consumer、FP16 Cube handoff、FP32 softmax/LSE/累加、q1/q4/C4双bank和BF16 fused merge由candidate原子启用；生产日志记录slot/handoff/merge及实际算子。当前开发机无CANN/NPU，C04/C05/E01/E06均保持待真机，禁止把compileall、参考布局测试或源码检查记为完成。
 
 #153：node93以`OSCAR_DEBUG_SYNC=1`将507035定位到`phase1_stores`；首修切换`uint16_t`后PC及MTE子码变化但仍报对齐，证明2-D copy的连续2-byte UB block start本身非法。正式修订把payload word展开到UB的32-byte对齐lane，再以一次2-D MTE写入紧凑GM列；metadata复用同一对齐lane。槽位布局和consumer地址不变，也不采用有跨核cacheline风险的GM scalar store。修订后的CANN编译、真实V2 store逐位、完整candidate服务仍待目标机验证，C04/C05/E01/E06不因此解锁。
+
+#154：对齐lane修订后真机已越过`phase1_stores`，新的首个同步失败为`status_guard`主动Trap（subErrType=2），证明某个上游status非零但合并guard无法区分四个producer。仅在既有`OSCAR_DEBUG_SYNC`且达到token阈值时，将guard拆成attention/rotate/merge/store四个同核顺序检查并记录`status_segment`；普通服务和图路径仍为单launch，不D2H、不忽略错误。待下一日志定位具体producer后再修其根因，C04/C05/E01/E06保持未通过。

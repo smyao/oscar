@@ -28580,3 +28580,11 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **验证边界**：本地只能运行源码契约与Python回归，没有CANN/NPU，不能把修订写成已通过真机。目标机须重新编译并先跑独立V2 store逐位/NPU门；随后candidate服务越过首个16K `phase1_stores`，才能确认507035收口。完整图、127条质量和端到端性能仍沿用原门，不因本错误修复而通过。
 
 **首修真机反证与修订**：用户应用`uint16_t` GM/UB视图后复验，仍在同一store报507035，但PC由`…f8c80/f8db4`移到`…f8b00/f8b28`，MTE信息由`e300000011`变成`e2000000b4`。这证明新产物已加载，也反证“只需把GM元素类型改成uint16”的归因不完整。2-D UB→GM copy的每个源block start同样受32-byte MTE对齐约束；旧代码让连续payload word以2-byte间距充当block start。最终修订新增最多1024B/core的固定UB staging，把每个uint16 payload放入32-byte lane首部，再用一次2-D MTE写入原GM列；scale/zero复用同一对齐lane。拒绝`GlobalTensor::SetValue`逐word发布，因为多核写同一GM cacheline会引入DCache所有权风险。复杂度仍O(new tokens×heads×D)，每行增加D/8次UB scalar搬移，真机性能必须单独复验。
+
+## [154] 真机条目（2026-09-30 用户回传）· V2 store对齐故障越过后，合并status guard主动Trap
+
+**原始证据**：应用32-byte UB lane修订后，用户再次以`OSCAR_DEBUG_SYNC=1`运行。堆栈已越过`phase1_stores`，首个同步失败位于`integration/impl.py:201`的`status_guard`。故障kernel入口变为`…21fb8c4`、当前PC `…21fbb20`，相对偏移0x25c，与档案#142识别的status guard Trap位置同族；`subErrType`为2且`errorStr: timeout or trap error`，不再是前两轮subErrType=4的alignment fault。寄存器仍带`e2000000b4`不能覆盖明确的Trap分类。
+
+**结论边界**：这证明V2 store的MTE launch已完成并进入后续guard，但不能证明写入数值正确；guard把attention、rotate、merge、store四个status合并检查，当前附件无法指出哪个producer写了非零值。直接删除Trap、清零status或假定store错误都违反fail-closed与冻结精度门。
+
+**诊断修订**：普通生产仍保持一次`status_guard` launch。仅在用户已经显式启用`OSCAR_DEBUG_SYNC`且token数达到`OSCAR_DEBUG_MIN_TOKENS`时，按attention/rotate/merge/store顺序调用同一个guard，并让既有phase completion checkpoint逐段同步；每段日志增加`status_segment`。这不回读设备状态、不改变任何status生成逻辑、不放宽错误，也不进入捕图/普通性能路径。下一轮首个`device_error`记录中的`status_segment`才是可据以修改上游算子的证据。

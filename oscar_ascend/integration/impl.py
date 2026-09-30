@@ -16,7 +16,7 @@ from .current_attention import (guard_current_slots, native_current_partial,
                                 write_current_partial)
 from .runtime_api import OscarReadinessError, require_runtime
 from ..telemetry import emit_once, emit_throttled
-from ..timing import phase
+from ..timing import debug_sync_requested, phase
 from ..ops.cv_dispatch import (CLUSTER_CV_OPS, select_cv_op,
                                select_source_splits)
 
@@ -198,10 +198,29 @@ class OscarAttentionImpl(AttentionImpl):
                 state.snapshots.sink_tokens, state.snapshots.ring_tokens,
                 float(self.provider.config.get("k_clip_ratio", 0.0)),
                 float(self.provider.config.get("v_clip_ratio", 0.0)), state.hadamard)
-        with phase("status_guard", layer=layer.layer_name, tokens=n,
-                   requests=attn_metadata.num_reqs, **timing_fields):
-            ops.status_guard(statuses, workspace.rotate_status[:n],
-                             workspace.merge_status[:n], workspace.store_status[:n])
+        guard_segments = (
+            ("attention", statuses),
+            ("rotate", workspace.rotate_status[:n]),
+            ("merge", workspace.merge_status[:n]),
+            ("store", workspace.store_status[:n]),
+        )
+        if debug_sync_requested(n):
+            # Archive #154: a combined device Trap proves that some status is
+            # nonzero but cannot identify its producer. Debug mode preserves
+            # the same guard kernel and fail-closed semantics while placing a
+            # completion checkpoint after each segment. Production remains a
+            # single launch and graph behavior is unchanged.
+            empty = workspace.store_status[:0].view(-1)
+            for segment, values in guard_segments:
+                with phase("status_guard", layer=layer.layer_name, tokens=n,
+                           requests=attn_metadata.num_reqs,
+                           status_segment=segment, **timing_fields):
+                    ops.status_guard(values.view(-1), empty, empty, empty)
+        else:
+            with phase("status_guard", layer=layer.layer_name, tokens=n,
+                       requests=attn_metadata.num_reqs,
+                       status_segment="combined", **timing_fields):
+                ops.status_guard(*(values for _, values in guard_segments))
         data_path = {
             "cv_operator": cv_name,
             "weighted_schedule": cv_name in {"attention_cv_fast_weighted_out",

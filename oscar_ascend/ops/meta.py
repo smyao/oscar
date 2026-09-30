@@ -17,8 +17,9 @@ def register_meta(namespace="oscar_ascend_ops"):
 
     names = set(PRODUCTION_CAPABILITIES)
     # #148: this optional experimental schema is never a numerical fallback.
-    for optional in ("attention_cv_cluster4_out", "attention_cv_q1_out", "attention_cv_profile_out",
-                     "attention_cv_fast_out", "attention_cv_fast_weighted_out", "attention_cv_fast_q1_out", "attention_cv_fast_cluster4_out"):
+    for optional in ("merge_lse_bf16_out", "rotate_clip_store_v2_out", "attention_cv_cluster4_out", "attention_cv_q1_out", "attention_cv_profile_out",
+                     "attention_cv_fast_out", "attention_cv_fast_weighted_out", "attention_cv_fast_q1_out", "attention_cv_fast_cluster4_out",
+                     "attention_cv_fast_v2_out", "attention_cv_fast_weighted_v2_out", "attention_cv_fast_q1_v2_out", "attention_cv_fast_cluster4_v2_out"):
         if hasattr(getattr(torch.ops, namespace), optional):
             names.add(optional)
     for name in sorted(names):

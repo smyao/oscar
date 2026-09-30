@@ -18,7 +18,7 @@ def probe() -> dict:
     import torch_npu
     from oscar_ascend.ops.loader import require_capabilities
     from oscar_ascend.ops.reference import encode_kv
-    require_capabilities({"store_int2_out", "merge_lse_out"})
+    require_capabilities({"store_int2_out", "merge_lse_out", "merge_lse_bf16_out"})
     torch.npu.set_device(0)
     device = torch.device("npu:0")
     cases = []
@@ -154,6 +154,19 @@ def probe() -> dict:
             torch.testing.assert_close(output[0].cpu(), torch.zeros(dim), rtol=0, atol=0)
             assert torch.isneginf(lse[0].cpu()), "empty-row LSE must be negative infinity"
             cases.append({"op": "merge", "dim": dim, "splits": splits, "device_completion": "passed"})
+            output_bf16 = torch.full((rows, dim), torch.nan, dtype=torch.bfloat16, device=device)
+            lse_bf16 = torch.full((rows,), torch.nan, device=device)
+            status_bf16 = torch.full((rows,), -123, dtype=torch.int32, device=device)
+            torch.ops.oscar_ascend_ops.merge_lse_bf16_out(
+                partial.to(device), lse_cpu.to(device), output_bf16, lse_bf16, status_bf16)
+            torch.npu.synchronize()
+            torch.testing.assert_close(status_bf16.cpu(), torch.zeros(rows, dtype=torch.int32), rtol=0, atol=0)
+            torch.testing.assert_close(output_bf16[1:].cpu().float(), expected_out, rtol=0.01, atol=0.01)
+            torch.testing.assert_close(lse_bf16[1:].cpu(), expected_lse, rtol=0.005, atol=0.005)
+            torch.testing.assert_close(output_bf16[0].cpu(), torch.zeros(dim, dtype=torch.bfloat16), rtol=0, atol=0)
+            assert torch.isneginf(lse_bf16[0].cpu()), "empty-row fused LSE must be negative infinity"
+            cases.append({"op": "merge_bf16_fused", "dim": dim, "splits": splits,
+                          "device_completion": "passed"})
         for fault in ("nan_lse", "inf_lse", "nan_output"):
             partial = torch.ones((1, 3, dim), device=device)
             partial_lse = torch.zeros((1, 3), device=device)

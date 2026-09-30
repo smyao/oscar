@@ -97,7 +97,8 @@ class OscarAttentionImpl(AttentionImpl):
                               q1_draft=attn_metadata.is_draft and attn_metadata.draft_index > 0,
                               fast_unpack=self.provider.config.get("experimental_fast_unpack", False),
                               weighted_q4=self.provider.config.get("experimental_weighted_q4", False),
-                              head_dim=d)
+                              head_dim=d,
+                              slot_v2=self.provider.config.get("experimental_slot_v2", False))
         source_splits = select_source_splits(
             g.splits_for_tokens(n), cv_name, tokens=n,
             weighted_q4_split2=self.provider.config.get(
@@ -169,17 +170,26 @@ class OscarAttentionImpl(AttentionImpl):
                                       active, source_splits)
         with phase("merge", layer=layer.layer_name, tokens=n, splits=splits,
                    requests=attn_metadata.num_reqs, **timing_fields):
-            ops.merge_lse_out(
-                partial.view(n * h, splits, d), partial_lse.view(n * h, splits),
-                workspace.output[:n].view(n * h, d), workspace.lse[:n].view(n * h),
-                workspace.merge_status[:n].view(n * h))
-            output.view(n, h, d).copy_(workspace.output[:n])
+            if self.provider.config.get("experimental_slot_v2", False):
+                ops.merge_lse_bf16_out(
+                    partial.view(n * h, splits, d), partial_lse.view(n * h, splits),
+                    output.view(n * h, d), workspace.lse[:n].view(n * h),
+                    workspace.merge_status[:n].view(n * h))
+            else:
+                ops.merge_lse_out(
+                    partial.view(n * h, splits, d), partial_lse.view(n * h, splits),
+                    workspace.output[:n].view(n * h, d), workspace.lse[:n].view(n * h),
+                    workspace.merge_status[:n].view(n * h))
+                output.view(n, h, d).copy_(workspace.output[:n])
         # Read before write is essential for a chunk longer than the ring:
         # every query sees the previous exact window until attention completes.
         # Current K/V was read directly; only now publish the new physical data.
         with phase("phase1_stores", layer=layer.layer_name, tokens=n, hadamard=state.hadamard,
                    requests=attn_metadata.num_reqs, **timing_fields):
-            ops.rotate_clip_store_out(
+            store_op = (ops.rotate_clip_store_v2_out if
+                        self.provider.config.get("experimental_slot_v2", False)
+                        else ops.rotate_clip_store_out)
+            store_op(
                 k, v, state.rotation_k_transpose, state.rotation_v_transpose,
                 slots, positions, state.raw,
                 state.window_key, state.window_value, state.window_tags,
@@ -194,13 +204,22 @@ class OscarAttentionImpl(AttentionImpl):
                              workspace.merge_status[:n], workspace.store_status[:n])
         data_path = {
             "cv_operator": cv_name,
-            "weighted_schedule": cv_name == "attention_cv_fast_weighted_out",
-            "weighted_q4_split2": (cv_name == "attention_cv_fast_weighted_out" and
+            "weighted_schedule": cv_name in {"attention_cv_fast_weighted_out",
+                                               "attention_cv_fast_weighted_v2_out"},
+            "weighted_q4_split2": (cv_name in {"attention_cv_fast_weighted_out",
+                                                 "attention_cv_fast_weighted_v2_out"} and
                                     source_splits == 2),
             "history_cluster_size": cluster_size,
-            "slot_layout": "natural_lsb_v1",
-            "cube_handoff": "fp32_gm",
+            "slot_layout": ("consumer_major_v2" if
+                            self.provider.config.get("experimental_slot_v2", False)
+                            else "natural_lsb_v1"),
+            "cube_handoff": ("fp16_gm" if
+                             self.provider.config.get("experimental_slot_v2", False)
+                             else "fp32_gm"),
             "accumulator": "fp32",
+            "merge": ("bf16_fused" if
+                      self.provider.config.get("experimental_slot_v2", False)
+                      else "fp32_then_copy"),
         }
         emit_once("attention_dispatched", key=(layer.layer_name, n,
                                                 attn_metadata.max_query_len,

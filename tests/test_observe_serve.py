@@ -135,6 +135,7 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     assert effective["experimental_fast_unpack"] is True
     assert effective["experimental_weighted_q4"] is True
     assert effective["experimental_weighted_q4_split2"] is True
+    assert effective["experimental_slot_v2"] is True
     assert effective["devices"] == [4, 5, 6, 7] and effective["port"] == 7878
 
 

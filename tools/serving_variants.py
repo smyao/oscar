@@ -10,6 +10,7 @@ FEATURE_FLAGS = {
     "fast_unpack": "experimental_fast_unpack",
     "weighted_q4": "experimental_weighted_q4",
     "weighted_q4_split2": "experimental_weighted_q4_split2",
+    "slot_v2": "experimental_slot_v2",
 }
 
 
@@ -30,6 +31,8 @@ def variant_config(config: dict, variant: str | None) -> dict:
         raise ValueError("weighted q4 requires the proven fast candidate")
     if selected.get("experimental_weighted_q4_split2", False) and not selected.get("experimental_weighted_q4", False):
         raise ValueError("weighted q4 S2 requires the proven weighted candidate")
+    if selected.get("experimental_slot_v2", False) != selected.get("experimental_fast_unpack", False):
+        raise ValueError("slot V2 and all fast consumers must switch atomically")
     return selected
 
 

@@ -61,8 +61,9 @@ def test_formal_startup_reports_the_real_data_path(monkeypatch, tmp_path, capsys
     assert install_serve.main(["--config", str(path), "--log-dir", str(logs),
                                "--variant", "candidate"]) == 1
     output = capsys.readouterr().out
-    assert "DATA_PATH slot_layout=natural_lsb_v1" in output
-    assert "cube_handoff=fp32_gm accumulator=fp32" in output
+    assert "DATA_PATH slot_layout=consumer_major_v2" in output
+    assert "cube_handoff=fp16_gm accumulator=fp32" in output
+    assert "merge=bf16_fused" in output
     assert "acceptance=127x32k_batch32_pd_fused" in output
 
 
@@ -86,6 +87,7 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
         assert selected.get("experimental_fast_unpack", False) is (variant == "candidate")
         assert selected.get("experimental_weighted_q4", False) is (variant == "candidate")
         assert selected.get("experimental_weighted_q4_split2", False) is (variant == "candidate")
+        assert selected.get("experimental_slot_v2", False) is (variant == "candidate")
         assert env["OSCAR_ENABLED"] == "1"
         assert env["ASCEND_RT_VISIBLE_DEVICES"] == ",".join(map(str, devices))
         assert selected["devices"] == devices and selected["port"] == port

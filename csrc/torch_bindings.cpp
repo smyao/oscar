@@ -92,6 +92,31 @@ void Merge(const at::Tensor& partial,const at::Tensor& partialLse,
       partial.data_ptr(),partialLse.data_ptr(),output.data_ptr(),lse.data_ptr(),
       status.data_ptr(),r,s,d,Cores(r));
 }
+void MergeBf16(const at::Tensor& partial,const at::Tensor& partialLse,
+           at::Tensor output,at::Tensor lse,at::Tensor status) {
+  Check(partial,partial,at::kFloat,"partial_out");
+  Check(partialLse,partial,at::kFloat,"partial_lse");
+  Check(output,partial,at::kBFloat16,"output"); Check(lse,partial,at::kFloat,"lse");
+  Check(status,partial,at::kInt,"status");
+  TORCH_CHECK(partial.dim()==3,"partial_out must be [R,S,D]");
+  const int64_t r=partial.size(0),s=partial.size(1),d=partial.size(2); CheckDim(d);
+  TORCH_CHECK(s>0 && s<=128,"split count must be in [1,128]");
+  TORCH_CHECK(partialLse.dim()==2 && partialLse.size(0)==r && partialLse.size(1)==s,
+              "partial_lse must be [R,S]");
+  TORCH_CHECK(output.dim()==2 && output.size(0)==r && output.size(1)==d,
+              "output must be BF16 [R,D]");
+  TORCH_CHECK(lse.dim()==1 && lse.size(0)==r && status.dim()==1 && status.size(0)==r,
+              "lse/status must be [R]");
+  for (const auto& written : {output,lse,status}) {
+    NoOverlap(written,partial); NoOverlap(written,partialLse);
+  }
+  NoOverlap(output,lse); NoOverlap(output,status); NoOverlap(lse,status);
+  if (r==0) return;
+  const c10_npu::OptionalNPUGuard guard(partial.device());
+  oscar_ascend::merge_lse_bf16_launch(c10_npu::getCurrentNPUStream().stream(),
+      partial.data_ptr(),partialLse.data_ptr(),output.data_ptr(),lse.data_ptr(),
+      status.data_ptr(),r,s,d,Cores(r));
+}
 }
 TORCH_LIBRARY(oscar_ascend_ops,m) {
   m.def("store_int2_out(Tensor key_rot, Tensor value_rot, Tensor slot_mapping, "
@@ -99,15 +124,19 @@ TORCH_LIBRARY(oscar_ascend_ops,m) {
         "int physical_num_blocks, int raw_ssm_offset, int physical_page_stride) -> ()");
   m.def("merge_lse_out(Tensor partial_out, Tensor partial_lse, Tensor(a!) output, "
         "Tensor(b!) lse, Tensor(c!) status) -> ()");
+  m.def("merge_lse_bf16_out(Tensor partial_out, Tensor partial_lse, Tensor(a!) output, "
+        "Tensor(b!) lse, Tensor(c!) status) -> ()");
 }
 TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
   m.impl("store_int2_out",&Store); m.impl("merge_lse_out",&Merge);
+  m.impl("merge_lse_bf16_out",&MergeBf16);
 }
 PYBIND11_MODULE(_oscar_ascend_ops,m) {
   m.def("abi_version",[]{return 1;});
-  m.def("capabilities",[]{return std::vector<std::string>{"store_int2_out","merge_lse_out",
-      "rotate_out","rotate_clip_store_out","prepare_attention_tasks_out","attention_cv_out",
+  m.def("capabilities",[]{return std::vector<std::string>{"store_int2_out","merge_lse_out","merge_lse_bf16_out",
+      "rotate_out","rotate_clip_store_out","rotate_clip_store_v2_out","prepare_attention_tasks_out","attention_cv_out",
       "attention_cv_cluster4_out","attention_cv_q1_out","attention_cv_profile_out",
       "attention_cv_fast_out","attention_cv_fast_weighted_out","attention_cv_fast_q1_out","attention_cv_fast_cluster4_out",
+      "attention_cv_fast_v2_out","attention_cv_fast_weighted_v2_out","attention_cv_fast_q1_v2_out","attention_cv_fast_cluster4_v2_out",
       "status_guard"};});
 }

@@ -191,6 +191,8 @@ __aicore__ inline int64_t Min64(int64_t a,int64_t b){return a<b?a:b;}
 __aicore__ inline int64_t Max64(int64_t a,int64_t b){return a>b?a:b;}
 using Matrix=MatmulType<TPosition::GM,CubeFormat::ND,float,false>;
 using TransposedMatrix=MatmulType<TPosition::GM,CubeFormat::ND,float,true>;
+using HalfMatrix=MatmulType<TPosition::GM,CubeFormat::ND,half,false>;
+using HalfTransposedMatrix=MatmulType<TPosition::GM,CubeFormat::ND,half,true>;
 __aicore__ constexpr MatmulConfig CvConfig() {
   auto cfg=GetNormalConfig();
   cfg.basicM=64;cfg.basicN=64;cfg.basicK=128;
@@ -200,6 +202,8 @@ __aicore__ constexpr MatmulConfig CvConfig() {
 }
 constexpr auto kCubeConfig=GetMatmulApiTiling<Matrix,TransposedMatrix,Matrix,Matrix>(CvConfig());
 using CubeMatmul=matmul::MatmulImpl<Matrix,TransposedMatrix,Matrix,Matrix,kCubeConfig>;
+constexpr auto kHalfCubeConfig=GetMatmulApiTiling<HalfMatrix,HalfTransposedMatrix,Matrix,Matrix>(CvConfig());
+using HalfCubeMatmul=matmul::MatmulImpl<HalfMatrix,HalfTransposedMatrix,Matrix,Matrix,kHalfCubeConfig>;
 
 struct Geometry {
   int64_t tokens,hq,hk,requests,columns,taskCount,blockTokens,blocks,ssmOffset;
@@ -212,7 +216,7 @@ struct TaskState {
   int32_t taskError;
 };
 
-template<int32_t D> class AttentionCv {
+template<int32_t D,bool LayoutV2=false> class AttentionCv {
   static constexpr int32_t kSlotBytes=D/2+8;
   static constexpr int32_t kPackedStride=(kSlotBytes+31)/32*32;
   static constexpr int32_t kElements=kHalfKv*D;
@@ -243,20 +247,29 @@ template<int32_t D> class AttentionCv {
     int64_t core=GetBlockIdx();
     if ASCEND_IS_AIV {lane=core%2;core/=2;}
     coreIndex=core;
-    const int64_t floatsPerCore=oscar_ascend::attention_cluster4_workspace_per_core(D)/4;
-    work.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(workspace)+core*floatsPerCore);
-    // Four Q tiles, bounded K/V, score/P, PV/rotation and four online states.
-    // The C1 branch uses Q0 and retains its fe0 accumulator in UB.
-    qOffset=0;kOffset=4*kQueryRows*D;vOffset=kOffset+kKvRows*D;
-    scoreOffset=vOffset+kKvRows*D;
-    pOffset=scoreOffset;pvOffset=pOffset+kQueryRows*kKvRows;rotOffset=pvOffset;
-    accStateOffset=pvOffset+kQueryRows*D;
-    statStateOffset=accStateOffset+4*kQueryRows*D;
+    if constexpr(LayoutV2) {
+      const int64_t bytesPerCore=oscar_ascend::attention_cluster4_v2_workspace_per_core(D);
+      auto coreBase=reinterpret_cast<__gm__ uint8_t*>(workspace)+core*bytesPerCore;
+      const int64_t halfElements=(4*kQueryRows+4*kKvRows)*D+kQueryRows*kKvRows;
+      halfWork.SetGlobalBuffer(reinterpret_cast<__gm__ half*>(coreBase));
+      work.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(coreBase+halfElements*2));
+      qOffset=0;kOffset=4*kQueryRows*D;vOffset=kOffset+kKvRows*D;
+      pOffset=vOffset+3*kKvRows*D;scoreOffset=0;rotOffset=0;pvOffset=kQueryRows*kKvRows;
+      accStateOffset=pvOffset+kQueryRows*D;
+      statStateOffset=accStateOffset+4*kQueryRows*D;
+    } else {
+      const int64_t floatsPerCore=oscar_ascend::attention_cluster4_workspace_per_core(D)/4;
+      work.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(workspace)+core*floatsPerCore);
+      qOffset=0;kOffset=4*kQueryRows*D;vOffset=kOffset+kKvRows*D;
+      scoreOffset=vOffset+kKvRows*D;
+      pOffset=scoreOffset;pvOffset=pOffset+kQueryRows*kKvRows;rotOffset=pvOffset;
+      accStateOffset=pvOffset+kQueryRows*D;
+      statStateOffset=accStateOffset+4*kQueryRows*D;
+    }
     for(int32_t i=0;i<8;++i)counters[i]=0;
     if ASCEND_IS_AIC {
-      // Static tiling is compiler-derived by the real SDK. SetOrg/SingleShape
-      // below specify each QK/PV/rotation matrix, never hand-written tiling POD.
       mm.Init(static_cast<const TCubeTiling*>(nullptr),&pipe);
+      if constexpr(LayoutV2) halfMm.Init(static_cast<const TCubeTiling*>(nullptr),&pipe);
       SetHF32Mode(false);
     } else {
       pipe.InitBuffer(taskBuf,128);pipe.InitBuffer(packedBuf,kHalfKv*kPackedStride);
@@ -414,12 +427,25 @@ template<int32_t D> class AttentionCv {
         (kind!=2 || (kvbegin>=context && requestBegin+kvend-context<=g.tokens));
   }
   __aicore__ void InitIndices() {
+    if constexpr(LayoutV2) {
+    oscar_ascend_fast::InitIndicesV2<D>(laneIndexBuf,maskBuf);
+
+    } else {
     oscar_ascend_fast::InitIndices<D>(wordIndexBuf,laneIndexBuf,
         metadataIndexBuf,maskBuf);
+
+    }
   }
   __aicore__ void Matmul(int64_t a,int64_t b,int64_t c,int32_t m,int32_t n,int32_t k,
       bool rotation=false,bool transposeB=true) {
     SetHF32Mode(false); // no implicit HF32/TF32 relaxation of the frozen oracle.
+    if constexpr(LayoutV2) {
+      if(!rotation) {
+        halfMm.SetOrgShape(m,n,k);halfMm.SetSingleShape(m,n,k);
+        halfMm.SetTensorA(halfWork[a],false);halfMm.SetTensorB(halfWork[b],transposeB);
+        halfMm.template IterateAll<true>(work[c]);halfMm.End();return;
+      }
+    }
     mm.SetOrgShape(m,n,k);mm.SetSingleShape(m,n,k);
     mm.SetTensorA(work[a],false);
     if(rotation) mm.SetTensorB(rv,true);else mm.SetTensorB(work[b],transposeB);
@@ -429,19 +455,22 @@ template<int32_t D> class AttentionCv {
   }
   __aicore__ void CubeTask() {
     const int32_t rows=static_cast<int32_t>(qcount*(g.hq/g.hk));
-    for(int64_t start=kvbegin;start<kvend;start+=kKvRows) {
+    int32_t tile=0;
+    for(int64_t start=kvbegin;start<kvend;start+=kKvRows,++tile) {
+      const int64_t bankOffset=(LayoutV2 ? (tile&1)*2*kKvRows*D : 0);
       CrossCoreWaitFlag(kVectorReady);
-      Matmul(qOffset,kOffset,scoreOffset,rows,kKvRows,D);
+      Matmul(qOffset,kOffset+bankOffset,scoreOffset,rows,kKvRows,D);
       CrossCoreSetFlag<2,PIPE_FIX>(kCubeReady);
       CrossCoreWaitFlag(kVectorReady);
-      Matmul(pOffset,vOffset,pvOffset,rows,D,kKvRows,false,false);
+      Matmul(pOffset,vOffset+bankOffset,pvOffset,rows,D,kKvRows,false,false);
       CrossCoreSetFlag<2,PIPE_FIX>(kCubeReady);
       // Vector consumes PV before the next tile may overwrite shared buffers.
       CrossCoreWaitFlag(kVectorReady);
     }
     if(kind==0 && kvbegin<kvend) {
       CrossCoreWaitFlag(kVectorReady);
-      Matmul(qOffset,0,rotOffset,rows,D,D,true);
+      if constexpr(LayoutV2) Matmul(pvOffset,0,rotOffset,rows,D,D,true);
+      else Matmul(qOffset,0,rotOffset,rows,D,D,true);
       CrossCoreSetFlag<2,PIPE_FIX>(kCubeReady);
       CrossCoreWaitFlag(kVectorReady);
     }
@@ -450,15 +479,17 @@ template<int32_t D> class AttentionCv {
     const int64_t first=members[0].kvbegin;
     const int64_t last=members[0].kvend;
     const int32_t rows=static_cast<int32_t>(members[0].qcount*(g.hq/g.hk));
-    for(int64_t start=first;start<last;start+=kKvRows) {
+    int32_t tile=0;
+    for(int64_t start=first;start<last;start+=kKvRows,++tile) {
+      const int64_t bankOffset=(LayoutV2 ? (tile&1)*2*kKvRows*D : 0);
       // One AIV KV publish serves four independent fe0 QK/softmax/PV chains.
       CrossCoreWaitFlag(kVectorReady);
       for(int32_t member=0;member<4;++member) {
         qOffset=member*kQueryRows*D;
-        Matmul(qOffset,kOffset,scoreOffset,rows,kKvRows,D);
+        Matmul(qOffset,kOffset+bankOffset,scoreOffset,rows,kKvRows,D);
         CrossCoreSetFlag<2,PIPE_FIX>(kCubeReady);
         CrossCoreWaitFlag(kVectorReady);
-        Matmul(pOffset,vOffset,pvOffset,rows,D,kKvRows,false,false);
+        Matmul(pOffset,vOffset+bankOffset,pvOffset,rows,D,kKvRows,false,false);
         CrossCoreSetFlag<2,PIPE_FIX>(kCubeReady);
         CrossCoreWaitFlag(kVectorReady);
       }
@@ -466,7 +497,8 @@ template<int32_t D> class AttentionCv {
     for(int32_t member=0;member<4;++member) {
       CrossCoreWaitFlag(kVectorReady);
       qOffset=member*kQueryRows*D;
-      Matmul(qOffset,0,rotOffset,rows,D,D,true);
+      if constexpr(LayoutV2) Matmul(pvOffset,0,rotOffset,rows,D,D,true);
+      else Matmul(qOffset,0,rotOffset,rows,D,D,true);
       CrossCoreSetFlag<2,PIPE_FIX>(kCubeReady);
       CrossCoreWaitFlag(kVectorReady);
     }
@@ -486,7 +518,11 @@ template<int32_t D> class AttentionCv {
       ReduceSum(check,dst,check[16],D);Fence<HardEvent::V_S>();
       if(!Finite(check.GetValue(0)))error=2;
       Fence<HardEvent::V_MTE3>();
-      DataCopy(work[qOffset+row*D],dst,D);Fence<HardEvent::MTE3_MTE2>();
+      if constexpr(LayoutV2) {auto halfDst=qBf16Buf.Get<half>();
+        Cast(halfDst,dst,RoundMode::CAST_RINT,D);Fence<HardEvent::V_MTE3>();
+        DataCopy(halfWork[qOffset+row*D],halfDst,D);
+      } else DataCopy(work[qOffset+row*D],dst,D);
+      Fence<HardEvent::MTE3_MTE2>();
     }
     // Pad the inactive query rows in bounded contiguous pieces. This keeps
     // the full initialized Q tile required by the Cube contract without
@@ -497,7 +533,11 @@ template<int32_t D> class AttentionCv {
     for(int32_t row=validEnd;row<laneEnd;row+=kHalfKv) {
       const int32_t count=static_cast<int32_t>(Min64(kHalfKv,laneEnd-row));
       Duplicate(zeros,0.0F,count*D);Fence<HardEvent::V_MTE3>();
-      DataCopy(work[qOffset+row*D],zeros,count*D);Fence<HardEvent::MTE3_V>();
+      if constexpr(LayoutV2) {auto halfZeros=zeros.ReinterpretCast<half>();
+        Duplicate(halfZeros,static_cast<half>(0),count*D);Fence<HardEvent::V_MTE3>();
+        DataCopy(halfWork[qOffset+row*D],halfZeros,count*D);
+      } else DataCopy(work[qOffset+row*D],zeros,count*D);
+      Fence<HardEvent::MTE3_V>();
     }
   }
   __aicore__ int64_t LogicalPosition(int64_t candidate) {
@@ -520,6 +560,36 @@ template<int32_t D> class AttentionCv {
     return true;
   }
   __aicore__ void LoadPacked(int64_t start) {
+    if constexpr(LayoutV2) {
+    loadedStart=start;
+    liveKvRows=static_cast<int32_t>(Max64(0,Min64(kHalfKv,kvend-start-lane*kHalfKv)));
+    auto words=wordBuf.Get<uint16_t>();auto metadata=metadataHalfBuf.Get<half>();
+    auto wordBytes=wordBuf.Get<uint8_t>();auto metadataBytes=metadataHalfBuf.Get<uint8_t>();
+    Duplicate(words,static_cast<uint16_t>(0),kWords);
+    Duplicate(metadata,static_cast<half>(0),2*kHalfKv);Fence<HardEvent::V_MTE2>();
+    if(liveKvRows>0) {
+      const int64_t candidate=start+lane*kHalfKv;
+      int64_t block=0,inpage=0;
+      if(Physical(candidate,block,inpage)) {
+        const int64_t group=inpage/16,groupStride=16*g.hk*kSlotBytes;
+        const int64_t headBase=g.ssmOffset+block*g.pageStride+group*groupStride+
+            kvhead*16*kSlotBytes;
+        DataCopyExtParams payloadCopy{static_cast<uint16_t>(D/8),
+            static_cast<uint32_t>(liveKvRows*2),
+            static_cast<uint32_t>((16-liveKvRows)*2),
+            static_cast<uint32_t>((16-liveKvRows)*2),0};
+        DataCopyPadExtParams<uint8_t> pad{false,0,0,0};
+        DataCopyPad(wordBytes,bytes[headBase],payloadCopy,pad);
+        const int64_t payloadBytes=16*D/4;
+        DataCopyExtParams metaCopy{2,static_cast<uint32_t>(liveKvRows*2),
+            static_cast<uint32_t>((16-liveKvRows)*2),
+            static_cast<uint32_t>((16-liveKvRows)*2),0};
+        DataCopyPad(metadataBytes,bytes[headBase+payloadBytes],metaCopy,pad);
+      }
+    }
+    Fence<HardEvent::MTE2_V>();
+
+    } else {
     liveKvRows=static_cast<int32_t>(Max64(0,Min64(kHalfKv,kvend-start-lane*kHalfKv)));
     auto packed=packedBuf.Get<uint8_t>();
     Duplicate(packed.ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),
@@ -540,11 +610,41 @@ template<int32_t D> class AttentionCv {
       j+=rows;
     }
     Fence<HardEvent::MTE2_V>();
+
+    }
   }
   __aicore__ void Unpack(bool value) {
+    if constexpr(LayoutV2) {
+    if(value) {
+      const int64_t sideBytes=16*(D/4+4);
+      auto words=wordBuf.Get<uint16_t>();auto metadata=metadataHalfBuf.Get<half>();
+      auto wordBytes=wordBuf.Get<uint8_t>();auto metadataBytes=metadataHalfBuf.Get<uint8_t>();
+      // Reload V side; K was loaded by LoadPacked immediately before Unpack(false).
+      Duplicate(words,static_cast<uint16_t>(0),kWords);
+      Duplicate(metadata,static_cast<half>(0),2*kHalfKv);
+      Fence<HardEvent::V_MTE2>();
+      const int64_t candidate=loadedStart+lane*kHalfKv;
+      int64_t block=0,inpage=0;
+      if(liveKvRows>0 && Physical(candidate,block,inpage)) {
+        const int64_t headBase=g.ssmOffset+block*g.pageStride+(inpage/16)*16*g.hk*kSlotBytes+
+            kvhead*16*kSlotBytes+sideBytes;
+        DataCopyExtParams pc{static_cast<uint16_t>(D/8),static_cast<uint32_t>(liveKvRows*2),
+            static_cast<uint32_t>((16-liveKvRows)*2),static_cast<uint32_t>((16-liveKvRows)*2),0};
+        DataCopyPadExtParams<uint8_t> pad{false,0,0,0};DataCopyPad(wordBytes,bytes[headBase],pc,pad);
+        DataCopyExtParams mc{2,static_cast<uint32_t>(liveKvRows*2),
+            static_cast<uint32_t>((16-liveKvRows)*2),static_cast<uint32_t>((16-liveKvRows)*2),0};
+        DataCopyPad(metadataBytes,bytes[headBase+16*D/4],mc,pad);Fence<HardEvent::MTE2_V>();
+      }
+    }
+    oscar_ascend_fast::UnpackV2<D>(liveKvRows,error,wordBuf,planeBuf,naturalBuf,
+        maskBuf,laneIndexBuf,metadataHalfBuf,dequantBuf,scratchBuf);
+
+    } else {
     oscar_ascend_fast::Unpack<D>(value,liveKvRows,error,packedBuf,wordBuf,
         planeBuf,naturalBuf,maskBuf,wordIndexBuf,laneIndexBuf,
         metadataIndexBuf,metadataHalfBuf,dequantBuf,scratchBuf);
+
+    }
   }
   __aicore__ void LoadPrecise(int64_t start,bool value) {
     auto dst=dequantBuf.Get<float>();auto src=qBf16Buf.Get<bfloat16_t>();
@@ -596,14 +696,29 @@ template<int32_t D> class AttentionCv {
       Fence<HardEvent::V_MTE2>();
     }
   }
-  __aicore__ void PublishKv(bool value,int32_t subtile) {
+  __aicore__ void PublishKv(bool value,int32_t subtile,int32_t bank=0) {
     auto src=dequantBuf.Get<float>();
     const int64_t slot=subtile*(2*kHalfKv)+lane*kHalfKv;
     // Both K and V are natural [KV,D] FP32. QK requests B transpose=true;
     // PV requests false, as permitted by the same static B matmul type.
-    Fence<HardEvent::V_MTE3>();
-    DataCopy(work[(value?vOffset:kOffset)+slot*D],src,kElements);
+    if constexpr(LayoutV2) {
+      auto halfValues=naturalBuf.Get<half>();
+      Cast(halfValues,src,RoundMode::CAST_RINT,kElements);Fence<HardEvent::V_MTE3>();
+      const int64_t bankOffset=bank*2*kKvRows*D;
+      DataCopy(halfWork[(value?vOffset:kOffset)+bankOffset+slot*D],halfValues,kElements);
+    } else {
+      Fence<HardEvent::V_MTE3>();DataCopy(work[(value?vOffset:kOffset)+slot*D],src,kElements);
+    }
     Fence<HardEvent::MTE3_V>();
+  }
+  __aicore__ void PrepareKvTile(int64_t start,int32_t bank) {
+    for(int32_t subtile=0;subtile<kKvSubtiles;++subtile) {
+      const int64_t subStart=start+subtile*(2*kHalfKv);
+      if(kind==0) {LoadPacked(subStart);Unpack(false);} else LoadPrecise(subStart,false);
+      PublishKv(false,subtile,bank);
+      if(kind==0)Unpack(true);else LoadPrecise(subStart,true);
+      PublishKv(true,subtile,bank);
+    }
   }
   __aicore__ void AddVisibleRange(int64_t begin,int64_t end,int64_t start,
       int32_t& lo0,int32_t& hi0,int32_t& lo1,int32_t& hi1) {
@@ -727,7 +842,11 @@ template<int32_t D> class AttentionCv {
     Fence<HardEvent::V_MTE3>();
     // V2 may use padded UB rows to satisfy its 8-row shape, but Cube PV has
     // M=qcount*group and consumes only the real P rows from this block.
-    DataCopy(work[pOffset+rowBase*kKvRows],scores,activeRows*kKvRows);
+    if constexpr(LayoutV2) {
+      auto halfP=dequantBuf.Get<half>();
+      Cast(halfP,scores,RoundMode::CAST_RINT,activeRows*kKvRows);Fence<HardEvent::V_MTE3>();
+      DataCopy(halfWork[pOffset+rowBase*kKvRows],halfP,activeRows*kKvRows);
+    } else DataCopy(work[pOffset+rowBase*kKvRows],scores,activeRows*kKvRows);
     // The next Softmax block refills scoreBuf on MTE2, not Vector. MTE3_V
     // cannot prevent that DMA from overwriting P while MTE3 still reads it.
     // The next copy-in is followed by MTE2_V before any Vector score writes.
@@ -741,19 +860,16 @@ template<int32_t D> class AttentionCv {
     Duplicate(stats[kLaneRows],0.0F,kLaneRows);
     Fence<HardEvent::V_S>();
     LoadQueries();
-    for(int64_t start=kvbegin;start<kvend;start+=kKvRows) {
-      // Four bounded 32-token subtiles fill one 128-token K/V work unit.
-      // Packed history is read once per subtile and reused for K and V;
-      // all incomplete tail slots are published as zero before Cube QK.
-      for(int32_t subtile=0;subtile<kKvSubtiles;++subtile) {
-        const int64_t subStart=start+subtile*(2*kHalfKv);
-        if(kind==0) {LoadPacked(subStart);Unpack(false);}
-        else LoadPrecise(subStart,false);
-        PublishKv(false,subtile);
-        if(kind==0)Unpack(true);else LoadPrecise(subStart,true);
-        PublishKv(true,subtile);
-      }
+    if constexpr(LayoutV2) {if(kvbegin<kvend)PrepareKvTile(kvbegin,0);}
+    int32_t tile=0;
+    for(int64_t start=kvbegin;start<kvend;start+=kKvRows,++tile) {
+      if constexpr(!LayoutV2) PrepareKvTile(start,0);
       CrossCoreSetFlag<2,PIPE_MTE3>(kVectorReady);
+      if constexpr(LayoutV2) {
+        Fence<HardEvent::MTE3_V>();
+        const int64_t next=start+kKvRows;
+        if(next<kvend)PrepareKvTile(next,(tile+1)&1);
+      }
       CrossCoreWaitFlag(kCubeReady);
       for(int32_t block=0;block<kRowBlocks;++block)
         Softmax(start,lane*kLaneRows+block*kHalfRows);
@@ -783,7 +899,9 @@ template<int32_t D> class AttentionCv {
       PipeBarrier<PIPE_V>();
     }
     if(kind==0 && kvbegin<kvend) {
-      Fence<HardEvent::V_MTE3>();DataCopy(work[qOffset+lane*kLaneRows*D],acc,kLaneRows*D);
+      Fence<HardEvent::V_MTE3>();
+      if constexpr(LayoutV2) DataCopy(work[pvOffset+lane*kLaneRows*D],acc,kLaneRows*D);
+      else DataCopy(work[qOffset+lane*kLaneRows*D],acc,kLaneRows*D);
       CrossCoreSetFlag<2,PIPE_MTE3>(kVectorReady);
       CrossCoreWaitFlag(kCubeReady);
       DataCopy(acc,work[rotOffset+lane*kLaneRows*D],kLaneRows*D);
@@ -826,16 +944,23 @@ template<int32_t D> class AttentionCv {
       SpillState(member);
     }
     const int64_t first=members[0].kvbegin,last=members[0].kvend;
-    for(int64_t start=first;start<last;start+=kKvRows) {
+    int32_t currentKvError=0;
+    if constexpr(LayoutV2) {
+      if(first<last) {
+        UseTask(members[0]);error=0;PrepareKvTile(first,0);currentKvError=error;
+      }
+    }
+    int32_t tile=0;
+    for(int64_t start=first;start<last;start+=kKvRows,++tile) {
       UseTask(members[0]);error=0;
       // The four groups have identical page and pre-mask finite-check domain.
       // Keep fe0's K-then-V subtile order and all metadata/status checks.
-      for(int32_t subtile=0;subtile<kKvSubtiles;++subtile) {
-        const int64_t subStart=start+subtile*(2*kHalfKv);
-        LoadPacked(subStart);Unpack(false);PublishKv(false,subtile);
-        Unpack(true);PublishKv(true,subtile);
+      if constexpr(!LayoutV2) {
+        PrepareKvTile(start,0);
+        currentKvError=error;
       }
-      const int32_t kvError=error;
+      const int32_t kvError=currentKvError;
+      int32_t nextKvError=0;
       CrossCoreSetFlag<2,PIPE_MTE3>(kVectorReady);
       for(int32_t member=0;member<4;++member) {
         UseTask(members[member]);qOffset=member*kQueryRows*D;
@@ -846,6 +971,16 @@ template<int32_t D> class AttentionCv {
         for(int32_t block=0;block<kRowBlocks;++block)
           Softmax(start,lane*kLaneRows+block*kHalfRows);
         CrossCoreSetFlag<2,PIPE_MTE3>(kVectorReady);
+        if constexpr(LayoutV2) {
+          const int64_t next=start+kKvRows;
+          if(member==3 && next<last) {
+            const int32_t savedError=error;
+            Fence<HardEvent::MTE3_V>();
+            UseTask(members[0]);error=0;PrepareKvTile(next,(tile+1)&1);
+            nextKvError=error;
+            UseTask(members[member]);qOffset=member*kQueryRows*D;error=savedError;
+          }
+        }
         CrossCoreWaitFlag(kCubeReady);
         auto result=dequantBuf.Get<float>();
         const int32_t activeRows=static_cast<int32_t>(qcount*(g.hq/g.hk));
@@ -862,6 +997,7 @@ template<int32_t D> class AttentionCv {
         SpillState(member);
         CrossCoreSetFlag<2,PIPE_MTE2>(kVectorReady);
       }
+      if constexpr(LayoutV2) currentKvError=nextKvError;
     }
     for(int32_t member=0;member<4;++member) {
       UseTask(members[member]);qOffset=member*kQueryRows*D;
@@ -874,7 +1010,8 @@ template<int32_t D> class AttentionCv {
         PipeBarrier<PIPE_V>();
       }
       Fence<HardEvent::V_MTE3>();
-      DataCopy(work[qOffset+lane*kLaneRows*D],acc,kLaneRows*D);
+      if constexpr(LayoutV2) DataCopy(work[pvOffset+lane*kLaneRows*D],acc,kLaneRows*D);
+      else DataCopy(work[qOffset+lane*kLaneRows*D],acc,kLaneRows*D);
       CrossCoreSetFlag<2,PIPE_MTE3>(kVectorReady);
       CrossCoreWaitFlag(kCubeReady);
       DataCopy(acc,work[rotOffset+lane*kLaneRows*D],kLaneRows*D);
@@ -921,17 +1058,18 @@ template<int32_t D> class AttentionCv {
     Fence<HardEvent::S_MTE3>();DataCopyExtParams copy{1,4,0,0,0};
     DataCopyPad(outStatus[id*2+lane],word,copy);Fence<HardEvent::MTE3_S>();
   }
-  TPipe pipe;CubeMatmul mm;
+  TPipe pipe;CubeMatmul mm;HalfCubeMatmul halfMm;
   Geometry g;
   GlobalTensor<bfloat16_t> q,ck,cv,wk,wv;
   GlobalTensor<float> qr,rv,out,outLse,work;
+  GlobalTensor<half> halfWork;
   GlobalTensor<uint8_t> bytes;GlobalTensor<int32_t> bt,outStatus;
   GlobalTensor<int64_t> wt,taskGm,clusterStats;
   TBuf<TPosition::VECCALC> taskBuf,packedBuf,planeBuf,naturalBuf,wordBuf,maskBuf,
       wordIndexBuf,laneIndexBuf,metadataIndexBuf,metadataHalfBuf,dequantBuf,
       scoreBuf,accBuf,qFloatBuf,qBf16Buf,statsBuf,scratchBuf,addressBuf;
   int64_t coreIndex,qbegin,qcount,kvhead,kvbegin,kvend,request,split,kind,context,requestBegin;
-  int64_t qOffset,kOffset,vOffset,scoreOffset,pOffset,pvOffset,rotOffset;
+  int64_t qOffset,kOffset,vOffset,scoreOffset,pOffset,pvOffset,rotOffset,loadedStart;
   int64_t accStateOffset,statStateOffset,counters[8];
   int32_t lane=0,error=0,taskError=0,liveKvRows=0;
 };
@@ -954,6 +1092,14 @@ extern "C" __global__ __aicore__ void oscar_attention_cv_fast_cluster4_kernel(OS
   else if(dim==128) {AttentionCv<128> op;OSCAR_CV_INIT;}
   else {AttentionCv<256> op;OSCAR_CV_INIT;}
 }
+extern "C" __global__ __aicore__ void oscar_attention_cv_fast_cluster4_v2_kernel(OSCAR_CV_ARGUMENTS) {
+  KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
+  const Geometry g{tokens,hq,hk,requests,columns,taskCount,blockTokens,blocks,ssmOffset,
+      pageStride,windowStride,tagStride,sink,recent,speculative,splits,scale};
+  if(dim==64) {AttentionCv<64,true> op;OSCAR_CV_INIT;}
+  else if(dim==128) {AttentionCv<128,true> op;OSCAR_CV_INIT;}
+  else {AttentionCv<256,true> op;OSCAR_CV_INIT;}
+}
 #ifndef ASCENDC_CPU_DEBUG
 namespace oscar_ascend {
 void attention_cv_fast_cluster4_launch(void* stream,void* query,void* queryRot,void* key,void* value,
@@ -965,6 +1111,25 @@ void attention_cv_fast_cluster4_launch(void* stream,void* query,void* queryRot,v
     int64_t windowStride,int64_t tagStride,int64_t sink,int64_t recent,
     int64_t speculative,int64_t splits,float scale,uint32_t cores) {
   oscar_attention_cv_fast_cluster4_kernel<<<cores,nullptr,stream>>>(
+      static_cast<uint8_t*>(query),static_cast<uint8_t*>(queryRot),
+      static_cast<uint8_t*>(key),static_cast<uint8_t*>(value),
+      static_cast<uint8_t*>(rotation),static_cast<uint8_t*>(raw),
+      static_cast<uint8_t*>(table),static_cast<uint8_t*>(wk),static_cast<uint8_t*>(wv),
+      static_cast<uint8_t*>(tags),static_cast<uint8_t*>(tasks),static_cast<uint8_t*>(output),
+      static_cast<uint8_t*>(lse),static_cast<uint8_t*>(status),static_cast<uint8_t*>(workspace),
+      static_cast<uint8_t*>(clusterStats),
+      tokens,hq,hk,dim,requests,columns,taskCount,blockTokens,blocks,ssmOffset,
+      pageStride,windowStride,tagStride,sink,recent,speculative,splits,scale);
+}
+void attention_cv_fast_cluster4_v2_launch(void* stream,void* query,void* queryRot,void* key,void* value,
+    void* rotation,void* raw,void* table,void* wk,void* wv,void* tags,void* tasks,
+    void* output,void* lse,void* status,void* workspace,void* clusterStats,
+    int64_t tokens,int64_t hq,
+    int64_t hk,int64_t dim,int64_t requests,int64_t columns,int64_t taskCount,
+    int64_t blockTokens,int64_t blocks,int64_t ssmOffset,int64_t pageStride,
+    int64_t windowStride,int64_t tagStride,int64_t sink,int64_t recent,
+    int64_t speculative,int64_t splits,float scale,uint32_t cores) {
+  oscar_attention_cv_fast_cluster4_v2_kernel<<<cores,nullptr,stream>>>(
       static_cast<uint8_t*>(query),static_cast<uint8_t*>(queryRot),
       static_cast<uint8_t*>(key),static_cast<uint8_t*>(value),
       static_cast<uint8_t*>(rotation),static_cast<uint8_t*>(raw),

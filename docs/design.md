@@ -183,3 +183,9 @@ D.4四问：本轮修改的是fused dequant+FIA内部；历史全量恢复6.5s�
 GM每Cube为Q128D+K256D+V256D+score/P32768+PV128D个FP32，D256合917504B；20Cube固定17.5MiB，比前版多9.375MiB，与历史长度无关。每AIV的64行acc常驻UB，32行score块复用；删除V转置索引、V转置缓冲和独立PV缓冲，D256显式UB157184B。未采用M256的GM累积状态spill，避免以更多读写抵消复用收益。短query仅发布实际M行的P，NaN poison测试验证不依赖未初始化pad行。
 
 这套修改减少的是重复历史读取、解包、细碎V搬运与握手；QK/PV总算术量近似不变。布局变更也可能改变Cube搬运效率、softmax分块的舍入和decode的split数量，故通过新旧同输入算子A/B及冻结输出/LSE门检验净收益，再由无诊断同步的native/OSCAR K4判断端到端目标；静态操作数不能代替这两个结果。只用独立合成输入，禁止重跑用户自有127请求数据集。
+
+### 9.4 32K/BS32/PD 融合数据面 V2
+
+D.4 四问：本轮同时对应 phase1 store、fused dequant+FIA 和 merge；历史失败量级仍是 store 约209–215ms、全历史恢复6.5s、FIA约18.7ms。V2不新增历史物化：producer将每16 token的LSB-first INT2码发布成consumer-major `[D/8,16,uint16]`，scale/zero各自连续，q1/q4-weighted/C4 consumer直接加载；Q/K/V/P只在有界GM handoff中使用FP16 Cube输入，softmax、LSE、在线累加及输出旋转保持FP32。两组K/V bank按tile奇偶交替，Vector在当前Cube工作期间准备下一tile；merge直接把FP32稳定合并结果舍入写入调用方BF16输出，删除独立copy/cast launch。
+
+缓存ABI通过独立 `rotate_clip_store_v2_out` 与四个 `*_v2_out` consumer原子切换，禁止V1/V2混读；运行时同时要求V2 store、consumer和BF16 fused merge能力。空间仍为每16 token `16*(D/2+8)` 字节，不增加cache容量；workspace只依赖M128/KV256和核数，双bank后仍与历史长度无关。目标量级必须由真机2预热+5次交替Event裁决：q4/q1/C4分别验证冻结oracle、changed-input graph和V2相对旧算子不退化，完整服务仍以冻结的127条、均长约32K、batch32、PD融合配对门为准。本地只能确认源码/ABI/参考布局，不能声明CANN编译、NPU精度或性能通过。

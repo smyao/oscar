@@ -47,6 +47,7 @@ class WorkspaceGeometry:
     splits: int = 1
     cube_cores: int = 1
     history_cluster_size: int = 1
+    data_path_version: int = 1
 
     def __post_init__(self):
         if any(type(x) is not int or x <= 0 for x in self.__dict__.values()):
@@ -57,6 +58,8 @@ class WorkspaceGeometry:
             raise ValueError("unsupported CV workspace geometry")
         if self.history_cluster_size not in (1, 4):
             raise ValueError("history cluster size must be 1 or 4")
+        if self.data_path_version not in (1, 2):
+            raise ValueError("data path version must be 1 or 2")
 
     @property
     def task_count(self):
@@ -79,6 +82,13 @@ class WorkspaceGeometry:
 
     @property
     def cv_bytes(self):
+        if self.data_path_version == 2:
+            m, b, d = ATTENTION_QUERY_ROWS, ATTENTION_KV_ROWS, self.head_dim
+            if self.history_cluster_size == 4:
+                return self.cube_cores * (((4 * m + 4 * b) * d + m * b) * 2
+                    + (m * b + 5 * m * d + 8 * m) * 4)
+            return self.cube_cores * (((m + 4 * b) * d + m * b) * 2
+                + (m * b + m * d) * 4)
         if self.history_cluster_size == 4:
             # Original Q buffer holds group0; extra3 Q +4 FP32 accumulators
             # and4 independent max/sum arrays. Independent of history length.
@@ -186,12 +196,16 @@ class AscendRuntimeProvider:
             raise OscarReadinessError("experimental_weighted_q4 must be an explicit boolean")
         if type(self.config.get("experimental_weighted_q4_split2", False)) is not bool:
             raise OscarReadinessError("experimental_weighted_q4_split2 must be an explicit boolean")
+        if type(self.config.get("experimental_slot_v2", False)) is not bool:
+            raise OscarReadinessError("experimental_slot_v2 must be an explicit boolean")
         if self.config.get("experimental_fast_unpack", False) and not self.config.get("experimental_history_reuse", False):
             raise OscarReadinessError("fast unpack requires explicit candidate history configuration")
         if self.config.get("experimental_weighted_q4", False) and not self.config.get("experimental_fast_unpack", False):
             raise OscarReadinessError("weighted q4 requires the proven fast candidate")
         if self.config.get("experimental_weighted_q4_split2", False) and not self.config.get("experimental_weighted_q4", False):
             raise OscarReadinessError("weighted q4 S2 requires the proven weighted candidate")
+        if self.config.get("experimental_slot_v2", False) != self.config.get("experimental_fast_unpack", False):
+            raise OscarReadinessError("slot V2 and all fast consumers must switch atomically")
         self._ready = False
         self.layers: dict[str, LayerState] = {}
         self.workspaces: dict[tuple, GraphWorkspace] = {}
@@ -216,6 +230,8 @@ class AscendRuntimeProvider:
         if self.config.get("experimental_fast_unpack", False):
             from .ops.cv_dispatch import FAST_CV_OPS
             require_capabilities(FAST_CV_OPS)
+        if self.config.get("experimental_slot_v2", False):
+            require_capabilities({"rotate_clip_store_v2_out", "merge_lse_bf16_out"})
         import torch
         if not torch.npu.is_available():
             raise OscarReadinessError("OSCAR production requires an available NPU")
@@ -233,7 +249,8 @@ class AscendRuntimeProvider:
         geometry = WorkspaceGeometry(capacity, heads, kv_heads, dim,
                                      int(self.config.get("attention_splits", 1)),
                                      self._device_cube_cores(device),
-                                     4 if self.config.get("experimental_history_reuse", False) else 1)
+                                     4 if self.config.get("experimental_history_reuse", False) else 1,
+                                     2 if self.config.get("experimental_slot_v2", False) else 1)
         key = (str(device), geometry)
         if key not in self.workspaces:
             self.workspaces[key] = GraphWorkspace(geometry, device)

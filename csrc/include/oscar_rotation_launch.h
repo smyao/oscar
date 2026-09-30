@@ -22,4 +22,13 @@ void rotate_clip_store_launch(void* stream, void* key, void* value,
     int64_t raw_value_page_stride, int64_t tag_page_stride,
     int64_t sink_tokens, int64_t recent_capacity, float k_clip,
     float v_clip, bool hadamard, uint32_t cores);
+void rotate_clip_store_v2_launch(void* stream, void* key, void* value,
+    void* rk_transposed, void* rv_transposed, void* slots, void* positions,
+    void* packed, void* raw_key, void* raw_value, void* raw_tags, void* status,
+    int64_t tokens, int64_t heads, int64_t dim, int32_t dtype,
+    int64_t block_tokens, int64_t blocks, int64_t ssm_offset,
+    int64_t page_stride, int64_t raw_key_page_stride,
+    int64_t raw_value_page_stride, int64_t tag_page_stride,
+    int64_t sink_tokens, int64_t recent_capacity, float k_clip,
+    float v_clip, bool hadamard, uint32_t cores);
 }

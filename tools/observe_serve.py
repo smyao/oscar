@@ -58,6 +58,7 @@ def _source_identity(variant: str, config: dict) -> dict:
     fast = config.get("experimental_fast_unpack", False)
     weighted = config.get("experimental_weighted_q4", False)
     split2 = config.get("experimental_weighted_q4_split2", False)
+    slot_v2 = config.get("experimental_slot_v2", False)
     if type(flag) is not bool:
         raise ValueError("experimental_history_reuse must be an explicit boolean")
     if type(fast) is not bool or (fast and not flag):
@@ -66,6 +67,8 @@ def _source_identity(variant: str, config: dict) -> dict:
         raise ValueError("experimental_weighted_q4 requires explicit fast candidate configuration")
     if type(split2) is not bool or (split2 and not weighted):
         raise ValueError("experimental_weighted_q4_split2 requires weighted q4")
+    if type(slot_v2) is not bool or slot_v2 != fast:
+        raise ValueError("experimental_slot_v2 and fast consumers must switch atomically")
     if variant in {"baseline", "candidate"} and actual != FE0_KERNEL_SHA256:
         raise RuntimeError("OSCAR observation requires byte-identical fe0 production kernels")
     if variant == "baseline" and flag:
@@ -79,7 +82,8 @@ def _source_identity(variant: str, config: dict) -> dict:
     fast_sources = {}
     if fast:
         for name in ("attention_cv_fast.cpp", "attention_cv_fast_q1.cpp",
-                     "attention_cv_fast_cluster4.cpp", "attention_fast_unpack.h"):
+                     "attention_cv_fast_cluster4.cpp", "attention_fast_unpack.h",
+                     "rotate_clip_store_v2.cpp", "merge_lse.cpp"):
             fast_sources[name] = hashlib.sha256((ROOT / "csrc/kernels" / name).read_bytes()).hexdigest()
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
                               capture_output=True, check=True).stdout.strip()
@@ -87,6 +91,7 @@ def _source_identity(variant: str, config: dict) -> dict:
             "kernel_sha256": actual, "experimental_history_reuse": flag,
             "experimental_fast_unpack": fast, "experimental_weighted_q4": weighted,
             "experimental_weighted_q4_split2": split2,
+            "experimental_slot_v2": slot_v2,
             "fast_source_sha256": fast_sources,
             "candidate_kernel_sha256": hashlib.sha256(cluster.read_bytes()).hexdigest()
                 if variant == "candidate" else None,

@@ -12,10 +12,12 @@
 // DCache lost updates (G30/#12) and stale metadata when graph inputs change.
 #include "oscar_common.h"
 #include "../include/oscar_launch.h"
+#include <type_traits>
 
 using namespace oscar_ascend_device;
 constexpr float kNegInf=-__builtin_inff();
 
+template<typename OutputT>
 class OscarMerge {
  public:
   __aicore__ inline void Init(GM_ADDR partial, GM_ADDR partialLse,
@@ -23,7 +25,7 @@ class OscarMerge {
       int64_t splits, int64_t dim) {
     partial_.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(partial));
     partialLse_.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(partialLse));
-    output_.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(output));
+    output_.SetGlobalBuffer(reinterpret_cast<__gm__ OutputT*>(output));
     lse_.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(lse));
     status_.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(status));
     rows_=rows; splits_=splits; dim_=dim;
@@ -57,7 +59,7 @@ class OscarMerge {
       Duplicate(acc,0.0F,dim_);
       if (invalid || maximum==kNegInf) {
         Fence<HardEvent::V_MTE3>();
-        DataCopy(output_[row*dim_],acc,dim_);
+        PublishOutput(row,acc);
         Publish(row,kNegInf,invalid ? 2 : 0);
         Fence<HardEvent::MTE3_V>();
         continue;
@@ -69,7 +71,7 @@ class OscarMerge {
       for (int32_t s=0; s<splits_; ++s) sum+=weights.GetValue(s);
       if (!(sum>0.0F) || !Finite(sum)) {
         Fence<HardEvent::V_MTE3>();
-        DataCopy(output_[row*dim_],acc,dim_);
+        PublishOutput(row,acc);
         Publish(row,kNegInf,3);
         Fence<HardEvent::MTE3_V>();
         continue;
@@ -86,7 +88,7 @@ class OscarMerge {
       ReduceSum(scalar,acc,reduce,dim_); Fence<HardEvent::V_S>();
       if (!Finite(scalar.GetValue(0))) rowStatus=2;
       Fence<HardEvent::V_MTE3>();
-      DataCopy(output_[row*dim_],acc,dim_);
+      PublishOutput(row,acc);
       // #91: scalar Exp/Log return overload is not supported on A2.
       scalar.SetValue(0,sum); Fence<HardEvent::S_V>();
       // Official CPU debugger validates Log's non-aliasing contract (#91).
@@ -96,6 +98,16 @@ class OscarMerge {
     }
   }
  private:
+  __aicore__ inline void PublishOutput(int64_t row,LocalTensor<float> acc) {
+    if constexpr(std::is_same_v<OutputT,float>) {
+      DataCopy(output_[row*dim_],acc,dim_);
+    } else {
+      auto converted=valuesBuf_.Get<OutputT>();
+      Cast(converted,acc,RoundMode::CAST_RINT,dim_);
+      Fence<HardEvent::V_MTE3>();
+      DataCopy(output_[row*dim_],converted,dim_);
+    }
+  }
   __aicore__ inline void Publish(int64_t row,float lseValue,int32_t statusValue) {
     auto lseLocal=publishBuf_.Get<float>();
     auto statusLocal=publishBuf_.Get<int32_t>()[8];
@@ -108,14 +120,21 @@ class OscarMerge {
   }
   TPipe pipe_;
   TBuf<TPosition::VECCALC> weightsBuf_,valuesBuf_,accBuf_,scalarBuf_,logBuf_,reduceBuf_,publishBuf_;
-  GlobalTensor<float> partial_,partialLse_,output_,lse_;
+  GlobalTensor<float> partial_,partialLse_,lse_;
+  GlobalTensor<OutputT> output_;
   GlobalTensor<int32_t> status_;
   int64_t rows_,splits_,dim_;
 };
 extern "C" __global__ __aicore__ void oscar_merge_lse_kernel(GM_ADDR partial,
     GM_ADDR partialLse,GM_ADDR output,GM_ADDR lse,GM_ADDR status,
     int64_t rows,int64_t splits,int64_t dim) {
-  OscarMerge op;op.Init(partial,partialLse,output,lse,status,rows,splits,dim);
+  OscarMerge<float> op;op.Init(partial,partialLse,output,lse,status,rows,splits,dim);
+  op.Process();
+}
+extern "C" __global__ __aicore__ void oscar_merge_lse_bf16_kernel(GM_ADDR partial,
+    GM_ADDR partialLse,GM_ADDR output,GM_ADDR lse,GM_ADDR status,
+    int64_t rows,int64_t splits,int64_t dim) {
+  OscarMerge<bfloat16_t> op;op.Init(partial,partialLse,output,lse,status,rows,splits,dim);
   op.Process();
 }
 #ifndef ASCENDC_CPU_DEBUG
@@ -123,6 +142,12 @@ namespace oscar_ascend {
 void merge_lse_launch(void* stream,void* partial,void* partialLse,void* output,
     void* lse,void* status,int64_t rows,int64_t splits,int64_t dim,uint32_t cores) {
   oscar_merge_lse_kernel<<<cores,nullptr,stream>>>(static_cast<uint8_t*>(partial),
+      static_cast<uint8_t*>(partialLse),static_cast<uint8_t*>(output),
+      static_cast<uint8_t*>(lse),static_cast<uint8_t*>(status),rows,splits,dim);
+}
+void merge_lse_bf16_launch(void* stream,void* partial,void* partialLse,void* output,
+    void* lse,void* status,int64_t rows,int64_t splits,int64_t dim,uint32_t cores) {
+  oscar_merge_lse_bf16_kernel<<<cores,nullptr,stream>>>(static_cast<uint8_t*>(partial),
       static_cast<uint8_t*>(partialLse),static_cast<uint8_t*>(output),
       static_cast<uint8_t*>(lse),static_cast<uint8_t*>(status),rows,splits,dim);
 }

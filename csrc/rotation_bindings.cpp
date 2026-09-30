@@ -99,11 +99,12 @@ void RawView(const at::Tensor& raw,const at::Tensor& owner,int64_t blocks,int64_
       && raw.stride(0)>=Product(rows,row,"raw page elements"),name," invalid page strides");
   TORCH_CHECK(raw.stride(0)%16==0,"raw BF16 page stride must be 32-byte aligned");
 }
-void RotateStore(const at::Tensor& key,const at::Tensor& value,const at::Tensor& rk,
+void RotateStoreImpl(const at::Tensor& key,const at::Tensor& value,const at::Tensor& rk,
     const at::Tensor& rv,const at::Tensor& slots,const at::Tensor& positions,
     at::Tensor packed,at::Tensor rawKey,at::Tensor rawValue,at::Tensor tags,
     at::Tensor status,int64_t blockTokens,int64_t blocks,int64_t offset,
-    int64_t pageStride,int64_t sink,int64_t recent,double kClip,double vClip,bool hadamard) {
+    int64_t pageStride,int64_t sink,int64_t recent,double kClip,double vClip,bool hadamard,
+    bool layoutV2) {
   const int32_t dtype=Input(key);Tensor(value,key,key.scalar_type(),"value");
   TORCH_CHECK(value.sizes()==key.sizes(),"K/V must share [N,H,D]");
   Matrix(rk,key);Matrix(rv,key);
@@ -145,12 +146,30 @@ void RotateStore(const at::Tensor& key,const at::Tensor& value,const at::Tensor&
   }
   if (n==0) return;
   const c10_npu::OptionalNPUGuard guard(key.device());
-  oscar_ascend::rotate_clip_store_launch(c10_npu::getCurrentNPUStream().stream(),
+  auto launch=layoutV2 ? oscar_ascend::rotate_clip_store_v2_launch :
+      oscar_ascend::rotate_clip_store_launch;
+  launch(c10_npu::getCurrentNPUStream().stream(),
       key.data_ptr(),value.data_ptr(),rk.data_ptr(),rv.data_ptr(),slots.data_ptr(),
       positions.data_ptr(),packed.data_ptr(),rawKey.data_ptr(),rawValue.data_ptr(),
       tags.data_ptr(),status.data_ptr(),n,h,d,dtype,blockTokens,blocks,offset,pageStride,
       rawKey.stride(0),rawValue.stride(0),tags.stride(0),sink,recent,
       static_cast<float>(kClip),static_cast<float>(vClip),hadamard,Cores(Product(n,h,"rows")));
+}
+void RotateStore(const at::Tensor& key,const at::Tensor& value,const at::Tensor& rk,
+    const at::Tensor& rv,const at::Tensor& slots,const at::Tensor& positions,
+    at::Tensor packed,at::Tensor rawKey,at::Tensor rawValue,at::Tensor tags,
+    at::Tensor status,int64_t blockTokens,int64_t blocks,int64_t offset,
+    int64_t pageStride,int64_t sink,int64_t recent,double kClip,double vClip,bool hadamard) {
+  RotateStoreImpl(key,value,rk,rv,slots,positions,packed,rawKey,rawValue,tags,status,
+      blockTokens,blocks,offset,pageStride,sink,recent,kClip,vClip,hadamard,false);
+}
+void RotateStoreV2(const at::Tensor& key,const at::Tensor& value,const at::Tensor& rk,
+    const at::Tensor& rv,const at::Tensor& slots,const at::Tensor& positions,
+    at::Tensor packed,at::Tensor rawKey,at::Tensor rawValue,at::Tensor tags,
+    at::Tensor status,int64_t blockTokens,int64_t blocks,int64_t offset,
+    int64_t pageStride,int64_t sink,int64_t recent,double kClip,double vClip,bool hadamard) {
+  RotateStoreImpl(key,value,rk,rv,slots,positions,packed,rawKey,rawValue,tags,status,
+      blockTokens,blocks,offset,pageStride,sink,recent,kClip,vClip,hadamard,true);
 }
 }
 TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
@@ -161,7 +180,13 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
         "Tensor(b!) raw_key, Tensor(c!) raw_value, Tensor(d!) raw_tags, Tensor(e!) status, "
         "int block_tokens, int blocks, int ssm_offset, int page_stride, int sink_tokens, "
         "int recent_capacity, float k_clip, float v_clip, bool hadamard=False) -> ()");
+  m.def("rotate_clip_store_v2_out(Tensor key, Tensor value, Tensor rk_transposed, "
+        "Tensor rv_transposed, Tensor slots, Tensor positions, Tensor(a!) packed, "
+        "Tensor(b!) raw_key, Tensor(c!) raw_value, Tensor(d!) raw_tags, Tensor(e!) status, "
+        "int block_tokens, int blocks, int ssm_offset, int page_stride, int sink_tokens, "
+        "int recent_capacity, float k_clip, float v_clip, bool hadamard=False) -> ()");
 }
 TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
   m.impl("rotate_out",&Rotate);m.impl("rotate_clip_store_out",&RotateStore);
+  m.impl("rotate_clip_store_v2_out",&RotateStoreV2);
 }

@@ -376,7 +376,7 @@ void AttentionFastImpl(const at::Tensor& query,const at::Tensor& queryRot,
     at::Tensor lse,at::Tensor status,at::Tensor workspace,int64_t blockTokens,
     int64_t blocks,int64_t ssmOffset,int64_t pageStride,int64_t sink,
     int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores,
-    bool weighted) {
+    bool weighted,bool layoutV2) {
   Check(query,query,at::kBFloat16,"query");Check(queryRot,query,at::kFloat,"query_rot");
   Check(currentKey,query,at::kBFloat16,"current_key");
   Check(currentValue,query,at::kBFloat16,"current_value");
@@ -424,8 +424,10 @@ void AttentionFastImpl(const at::Tensor& query,const at::Tensor& queryRot,
       lse.size(2)==3*splits,"LSE must be [N,Hq,3*splits]");
   TORCH_CHECK(status.dim()==2 && status.size(0)==tasks.size(0) && status.size(1)==2,
       "status must be [T,2], one word for each AIV");
-  TORCH_CHECK(workspace.dim()==1 && workspace.numel()>=cores*
-      oscar_ascend::attention_workspace_per_core(d),"bounded tile workspace too small");
+  const int64_t workspacePerCore=layoutV2 ? oscar_ascend::attention_v2_workspace_per_core(d) :
+      oscar_ascend::attention_workspace_per_core(d);
+  TORCH_CHECK(workspace.dim()==1 && workspace.numel()>=cores*workspacePerCore,
+      "bounded tile workspace too small");
   for(const auto& written:{partial,lse,status,workspace})
     for(const auto& input:{query,queryRot,currentKey,currentValue,rotation,raw,table,
                           windowKey,windowValue,windowTags,tasks}) Disjoint(written,input);
@@ -433,8 +435,10 @@ void AttentionFastImpl(const at::Tensor& query,const at::Tensor& queryRot,
   Disjoint(lse,status);Disjoint(lse,workspace);Disjoint(status,workspace);
   if(!n) return;
   const c10_npu::OptionalNPUGuard guard(query.device());
-  auto launch=weighted?oscar_ascend::attention_cv_fast_weighted_launch:
-      oscar_ascend::attention_cv_fast_launch;
+  auto launch=layoutV2 ? (weighted?oscar_ascend::attention_cv_fast_weighted_v2_launch:
+      oscar_ascend::attention_cv_fast_v2_launch) :
+      (weighted?oscar_ascend::attention_cv_fast_weighted_launch:
+      oscar_ascend::attention_cv_fast_launch);
   launch(c10_npu::getCurrentNPUStream().stream(),
       query.data_ptr(),queryRot.data_ptr(),currentKey.data_ptr(),currentValue.data_ptr(),
       rotation.data_ptr(),raw.data_ptr(),table.data_ptr(),windowKey.data_ptr(),
@@ -455,7 +459,7 @@ void AttentionFast(const at::Tensor& query,const at::Tensor& queryRot,
   AttentionFastImpl(query,queryRot,currentKey,currentValue,rotation,raw,table,
       windowKey,windowValue,windowTags,tasks,partial,lse,status,workspace,
       blockTokens,blocks,ssmOffset,pageStride,sink,recent,speculative,splits,
-      scale,cores,false);
+      scale,cores,false,false);
 }
 void AttentionFastWeighted(const at::Tensor& query,const at::Tensor& queryRot,
     const at::Tensor& currentKey,const at::Tensor& currentValue,
@@ -468,9 +472,9 @@ void AttentionFastWeighted(const at::Tensor& query,const at::Tensor& queryRot,
   AttentionFastImpl(query,queryRot,currentKey,currentValue,rotation,raw,table,
       windowKey,windowValue,windowTags,tasks,partial,lse,status,workspace,
       blockTokens,blocks,ssmOffset,pageStride,sink,recent,speculative,splits,
-      scale,cores,true);
+      scale,cores,true,false);
 }
-void AttentionFastQ1(const at::Tensor& query,const at::Tensor& queryRot,
+void AttentionFastV2(const at::Tensor& query,const at::Tensor& queryRot,
     const at::Tensor& currentKey,const at::Tensor& currentValue,
     const at::Tensor& rotation,const at::Tensor& raw,const at::Tensor& table,
     const at::Tensor& windowKey,const at::Tensor& windowValue,
@@ -478,6 +482,33 @@ void AttentionFastQ1(const at::Tensor& query,const at::Tensor& queryRot,
     at::Tensor lse,at::Tensor status,at::Tensor workspace,int64_t blockTokens,
     int64_t blocks,int64_t ssmOffset,int64_t pageStride,int64_t sink,
     int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores) {
+  AttentionFastImpl(query,queryRot,currentKey,currentValue,rotation,raw,table,
+      windowKey,windowValue,windowTags,tasks,partial,lse,status,workspace,
+      blockTokens,blocks,ssmOffset,pageStride,sink,recent,speculative,splits,
+      scale,cores,false,true);
+}
+void AttentionFastWeightedV2(const at::Tensor& query,const at::Tensor& queryRot,
+    const at::Tensor& currentKey,const at::Tensor& currentValue,
+    const at::Tensor& rotation,const at::Tensor& raw,const at::Tensor& table,
+    const at::Tensor& windowKey,const at::Tensor& windowValue,
+    const at::Tensor& windowTags,const at::Tensor& tasks,at::Tensor partial,
+    at::Tensor lse,at::Tensor status,at::Tensor workspace,int64_t blockTokens,
+    int64_t blocks,int64_t ssmOffset,int64_t pageStride,int64_t sink,
+    int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores) {
+  AttentionFastImpl(query,queryRot,currentKey,currentValue,rotation,raw,table,
+      windowKey,windowValue,windowTags,tasks,partial,lse,status,workspace,
+      blockTokens,blocks,ssmOffset,pageStride,sink,recent,speculative,splits,
+      scale,cores,true,true);
+}
+void AttentionFastQ1Impl(const at::Tensor& query,const at::Tensor& queryRot,
+    const at::Tensor& currentKey,const at::Tensor& currentValue,
+    const at::Tensor& rotation,const at::Tensor& raw,const at::Tensor& table,
+    const at::Tensor& windowKey,const at::Tensor& windowValue,
+    const at::Tensor& windowTags,const at::Tensor& tasks,at::Tensor partial,
+    at::Tensor lse,at::Tensor status,at::Tensor workspace,int64_t blockTokens,
+    int64_t blocks,int64_t ssmOffset,int64_t pageStride,int64_t sink,
+    int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores,
+    bool layoutV2) {
   Check(query,query,at::kBFloat16,"query");Check(queryRot,query,at::kFloat,"query_rot");
   Check(currentKey,query,at::kBFloat16,"current_key");
   Check(currentValue,query,at::kBFloat16,"current_value");
@@ -523,8 +554,10 @@ void AttentionFastQ1(const at::Tensor& query,const at::Tensor& queryRot,
       lse.size(2)==3*splits,"LSE must be [N,Hq,3*splits]");
   TORCH_CHECK(status.dim()==2 && status.size(0)==tasks.size(0) && status.size(1)==2,
       "status must be [T,2], one word for each AIV");
-  TORCH_CHECK(workspace.dim()==1 && workspace.numel()>=cores*
-      oscar_ascend::attention_workspace_per_core(d),"bounded tile workspace too small");
+  const int64_t workspacePerCore=layoutV2 ? oscar_ascend::attention_v2_workspace_per_core(d) :
+      oscar_ascend::attention_workspace_per_core(d);
+  TORCH_CHECK(workspace.dim()==1 && workspace.numel()>=cores*workspacePerCore,
+      "bounded tile workspace too small");
   for(const auto& written:{partial,lse,status,workspace})
     for(const auto& input:{query,queryRot,currentKey,currentValue,rotation,raw,table,
                           windowKey,windowValue,windowTags,tasks}) Disjoint(written,input);
@@ -532,7 +565,9 @@ void AttentionFastQ1(const at::Tensor& query,const at::Tensor& queryRot,
   Disjoint(lse,status);Disjoint(lse,workspace);Disjoint(status,workspace);
   if(!n) return;
   const c10_npu::OptionalNPUGuard guard(query.device());
-  oscar_ascend::attention_cv_fast_q1_launch(c10_npu::getCurrentNPUStream().stream(),
+  auto launch=layoutV2 ? oscar_ascend::attention_cv_fast_q1_v2_launch :
+      oscar_ascend::attention_cv_fast_q1_launch;
+  launch(c10_npu::getCurrentNPUStream().stream(),
       query.data_ptr(),queryRot.data_ptr(),currentKey.data_ptr(),currentValue.data_ptr(),
       rotation.data_ptr(),raw.data_ptr(),table.data_ptr(),windowKey.data_ptr(),
       windowValue.data_ptr(),windowTags.data_ptr(),tasks.data_ptr(),partial.data_ptr(),
@@ -541,14 +576,37 @@ void AttentionFastQ1(const at::Tensor& query,const at::Tensor& queryRot,
       windowKey.stride(0),windowTags.stride(0),sink,recent,speculative,splits,
       static_cast<float>(scale),static_cast<uint32_t>(cores));
 }
-void AttentionFastCluster(const at::Tensor& query,const at::Tensor& queryRot,
+void AttentionFastQ1(const at::Tensor& query,const at::Tensor& queryRot,
+    const at::Tensor& currentKey,const at::Tensor& currentValue,const at::Tensor& rotation,
+    const at::Tensor& raw,const at::Tensor& table,const at::Tensor& windowKey,
+    const at::Tensor& windowValue,const at::Tensor& windowTags,const at::Tensor& tasks,
+    at::Tensor partial,at::Tensor lse,at::Tensor status,at::Tensor workspace,
+    int64_t blockTokens,int64_t blocks,int64_t ssmOffset,int64_t pageStride,int64_t sink,
+    int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores) {
+  AttentionFastQ1Impl(query,queryRot,currentKey,currentValue,rotation,raw,table,windowKey,
+      windowValue,windowTags,tasks,partial,lse,status,workspace,blockTokens,blocks,ssmOffset,
+      pageStride,sink,recent,speculative,splits,scale,cores,false);
+}
+void AttentionFastQ1V2(const at::Tensor& query,const at::Tensor& queryRot,
+    const at::Tensor& currentKey,const at::Tensor& currentValue,const at::Tensor& rotation,
+    const at::Tensor& raw,const at::Tensor& table,const at::Tensor& windowKey,
+    const at::Tensor& windowValue,const at::Tensor& windowTags,const at::Tensor& tasks,
+    at::Tensor partial,at::Tensor lse,at::Tensor status,at::Tensor workspace,
+    int64_t blockTokens,int64_t blocks,int64_t ssmOffset,int64_t pageStride,int64_t sink,
+    int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores) {
+  AttentionFastQ1Impl(query,queryRot,currentKey,currentValue,rotation,raw,table,windowKey,
+      windowValue,windowTags,tasks,partial,lse,status,workspace,blockTokens,blocks,ssmOffset,
+      pageStride,sink,recent,speculative,splits,scale,cores,true);
+}
+void AttentionFastClusterImpl(const at::Tensor& query,const at::Tensor& queryRot,
     const at::Tensor& currentKey,const at::Tensor& currentValue,
     const at::Tensor& rotation,const at::Tensor& raw,const at::Tensor& table,
     const at::Tensor& windowKey,const at::Tensor& windowValue,
     const at::Tensor& windowTags,const at::Tensor& tasks,at::Tensor partial,
     at::Tensor lse,at::Tensor status,at::Tensor workspace,at::Tensor clusterStats,int64_t blockTokens,
     int64_t blocks,int64_t ssmOffset,int64_t pageStride,int64_t sink,
-    int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores) {
+    int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores,
+    bool layoutV2) {
   Check(query,query,at::kBFloat16,"query");Check(queryRot,query,at::kFloat,"query_rot");
   Check(currentKey,query,at::kBFloat16,"current_key");
   Check(currentValue,query,at::kBFloat16,"current_value");
@@ -595,8 +653,11 @@ void AttentionFastCluster(const at::Tensor& query,const at::Tensor& queryRot,
       lse.size(2)==3*splits,"LSE must be [N,Hq,3*splits]");
   TORCH_CHECK(status.dim()==2 && status.size(0)==tasks.size(0) && status.size(1)==2,
       "status must be [T,2], one word for each AIV");
-  TORCH_CHECK(workspace.dim()==1 && workspace.numel()>=cores*
-      oscar_ascend::attention_cluster4_workspace_per_core(d),"bounded tile workspace too small");
+  const int64_t workspacePerCore=layoutV2 ?
+      oscar_ascend::attention_cluster4_v2_workspace_per_core(d) :
+      oscar_ascend::attention_cluster4_workspace_per_core(d);
+  TORCH_CHECK(workspace.dim()==1 && workspace.numel()>=cores*workspacePerCore,
+      "bounded tile workspace too small");
   TORCH_CHECK(clusterStats.dim()==2 && clusterStats.size(0)==cores &&
       clusterStats.size(1)==8 &&
       reinterpret_cast<uintptr_t>(clusterStats.data_ptr())%64==0,
@@ -610,7 +671,9 @@ void AttentionFastCluster(const at::Tensor& query,const at::Tensor& queryRot,
   Disjoint(clusterStats,status);Disjoint(clusterStats,workspace);
   if(!n) {clusterStats.zero_();return;}
   const c10_npu::OptionalNPUGuard guard(query.device());
-  oscar_ascend::attention_cv_fast_cluster4_launch(c10_npu::getCurrentNPUStream().stream(),
+  auto launch=layoutV2 ? oscar_ascend::attention_cv_fast_cluster4_v2_launch :
+      oscar_ascend::attention_cv_fast_cluster4_launch;
+  launch(c10_npu::getCurrentNPUStream().stream(),
       query.data_ptr(),queryRot.data_ptr(),currentKey.data_ptr(),currentValue.data_ptr(),
       rotation.data_ptr(),raw.data_ptr(),table.data_ptr(),windowKey.data_ptr(),
       windowValue.data_ptr(),windowTags.data_ptr(),tasks.data_ptr(),partial.data_ptr(),
@@ -618,6 +681,30 @@ void AttentionFastCluster(const at::Tensor& query,const at::Tensor& queryRot,
       table.size(1),tasks.size(0),blockTokens,blocks,ssmOffset,pageStride,
       windowKey.stride(0),windowTags.stride(0),sink,recent,speculative,splits,
       static_cast<float>(scale),static_cast<uint32_t>(cores));
+}
+void AttentionFastCluster(const at::Tensor& query,const at::Tensor& queryRot,
+    const at::Tensor& currentKey,const at::Tensor& currentValue,const at::Tensor& rotation,
+    const at::Tensor& raw,const at::Tensor& table,const at::Tensor& windowKey,
+    const at::Tensor& windowValue,const at::Tensor& windowTags,const at::Tensor& tasks,
+    at::Tensor partial,at::Tensor lse,at::Tensor status,at::Tensor workspace,
+    at::Tensor clusterStats,int64_t blockTokens,int64_t blocks,int64_t ssmOffset,
+    int64_t pageStride,int64_t sink,int64_t recent,int64_t speculative,int64_t splits,
+    double scale,int64_t cores) {
+  AttentionFastClusterImpl(query,queryRot,currentKey,currentValue,rotation,raw,table,
+      windowKey,windowValue,windowTags,tasks,partial,lse,status,workspace,clusterStats,
+      blockTokens,blocks,ssmOffset,pageStride,sink,recent,speculative,splits,scale,cores,false);
+}
+void AttentionFastClusterV2(const at::Tensor& query,const at::Tensor& queryRot,
+    const at::Tensor& currentKey,const at::Tensor& currentValue,const at::Tensor& rotation,
+    const at::Tensor& raw,const at::Tensor& table,const at::Tensor& windowKey,
+    const at::Tensor& windowValue,const at::Tensor& windowTags,const at::Tensor& tasks,
+    at::Tensor partial,at::Tensor lse,at::Tensor status,at::Tensor workspace,
+    at::Tensor clusterStats,int64_t blockTokens,int64_t blocks,int64_t ssmOffset,
+    int64_t pageStride,int64_t sink,int64_t recent,int64_t speculative,int64_t splits,
+    double scale,int64_t cores) {
+  AttentionFastClusterImpl(query,queryRot,currentKey,currentValue,rotation,raw,table,
+      windowKey,windowValue,windowTags,tasks,partial,lse,status,workspace,clusterStats,
+      blockTokens,blocks,ssmOffset,pageStride,sink,recent,speculative,splits,scale,cores,true);
 }
 }
 TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
@@ -635,7 +722,19 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
       "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
       "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
       "int splits, float scale, int cube_cores) -> ()");
+  m.def("attention_cv_fast_v2_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+      "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
+      "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
+      "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
+      "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
+      "int splits, float scale, int cube_cores) -> ()");
   m.def("attention_cv_fast_weighted_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+      "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
+      "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
+      "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
+      "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
+      "int splits, float scale, int cube_cores) -> ()");
+  m.def("attention_cv_fast_weighted_v2_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
       "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
       "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
       "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
@@ -647,7 +746,19 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
       "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
       "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
       "int splits, float scale, int cube_cores) -> ()");
+  m.def("attention_cv_fast_q1_v2_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+      "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
+      "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
+      "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
+      "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
+      "int splits, float scale, int cube_cores) -> ()");
   m.def("attention_cv_fast_cluster4_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+      "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
+      "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
+      "Tensor(d!) workspace, Tensor(e!) cluster_stats, int block_tokens, int physical_blocks, int raw_ssm_offset, "
+      "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
+      "int splits, float scale, int cube_cores) -> ()");
+  m.def("attention_cv_fast_cluster4_v2_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
       "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
       "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
       "Tensor(d!) workspace, Tensor(e!) cluster_stats, int block_tokens, int physical_blocks, int raw_ssm_offset, "
@@ -678,6 +789,11 @@ TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
   m.impl("attention_cv_fast_weighted_out",&AttentionFastWeighted);
   m.impl("attention_cv_fast_q1_out",&AttentionFastQ1);
   m.impl("attention_cv_fast_cluster4_out",&AttentionFastCluster);
+
+  m.impl("attention_cv_fast_v2_out",&AttentionFastV2);
+  m.impl("attention_cv_fast_weighted_v2_out",&AttentionFastWeightedV2);
+  m.impl("attention_cv_fast_q1_v2_out",&AttentionFastQ1V2);
+  m.impl("attention_cv_fast_cluster4_v2_out",&AttentionFastClusterV2);
   m.impl("attention_cv_profile_out",&AttentionProfile);
   m.impl("attention_cv_q1_out",&AttentionQ1);
   m.impl("attention_cv_cluster4_out",&AttentionCluster);

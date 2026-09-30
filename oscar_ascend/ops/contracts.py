@@ -9,10 +9,11 @@ cannot use these components until the complete capability/acceptance gate passes
 from dataclasses import dataclass
 
 ABI_VERSION = 1
-SOURCE_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "rotate_out",
-    "rotate_clip_store_out", "prepare_attention_tasks_out", "attention_cv_out",
+SOURCE_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "merge_lse_bf16_out", "rotate_out",
+    "rotate_clip_store_out", "rotate_clip_store_v2_out", "prepare_attention_tasks_out", "attention_cv_out",
     "attention_cv_cluster4_out", "attention_cv_q1_out", "attention_cv_profile_out",
-    "attention_cv_fast_out", "attention_cv_fast_weighted_out", "attention_cv_fast_q1_out", "attention_cv_fast_cluster4_out", "status_guard"})
+    "attention_cv_fast_out", "attention_cv_fast_weighted_out", "attention_cv_fast_q1_out", "attention_cv_fast_cluster4_out",
+    "attention_cv_fast_v2_out", "attention_cv_fast_weighted_v2_out", "attention_cv_fast_q1_v2_out", "attention_cv_fast_cluster4_v2_out", "status_guard"})
 # Exact callable symbols, not names of abstract components. Compilation,
 # CPU simulation, NPU execution and service acceptance remain separate gates.
 PRODUCTION_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "rotate_out",

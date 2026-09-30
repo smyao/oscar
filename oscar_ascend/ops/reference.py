@@ -77,6 +77,78 @@ def unpack_int2(packed: torch.Tensor, head_dim: int) -> torch.Tensor:
     return values.reshape(*packed.shape[:-1], -1)[..., :head_dim].to(torch.uint8)
 
 
+def pack_int2_bitplanes(indices: torch.Tensor) -> torch.Tensor:
+    """V2 consumer layout: low-bit plane followed by high-bit plane.
+
+    Each plane byte describes eight adjacent dimensions, LSB-first.  The
+    payload remains exactly two bits per value and metadata remains separate.
+    """
+    if indices.ndim < 1 or indices.shape[-1] % 8:
+        raise ValueError("bitplane INT2 requires a positive head_dim divisible by 8")
+    if indices.dtype not in (torch.uint8, torch.int8, torch.int16,
+                             torch.int32, torch.int64):
+        raise ValueError("INT2 indices must have an integer dtype")
+    if bool(((indices < 0) | (indices > 3)).any()):
+        raise ValueError("INT2 indices must be in [0, 3]")
+    codes = indices.to(torch.int32).reshape(*indices.shape[:-1], -1, 8)
+    shifts = torch.arange(8, dtype=torch.int32, device=indices.device)
+    low = ((codes & 1) << shifts).sum(-1)
+    high = (((codes >> 1) & 1) << shifts).sum(-1)
+    return torch.cat((low, high), dim=-1).to(torch.uint8)
+
+
+def unpack_int2_bitplanes(packed: torch.Tensor, head_dim: int) -> torch.Tensor:
+    if head_dim <= 0 or head_dim % 8 or packed.dtype != torch.uint8:
+        raise ValueError("invalid bitplane INT2 geometry")
+    width = head_dim // 8
+    if packed.shape[-1] != 2 * width:
+        raise ValueError("bitplane payload byte count does not match head_dim")
+    shifts = torch.arange(8, dtype=torch.int32, device=packed.device)
+    low = (packed[..., :width].to(torch.int32).unsqueeze(-1) >> shifts) & 1
+    high = (packed[..., width:].to(torch.int32).unsqueeze(-1) >> shifts) & 1
+    return (low | (high << 1)).reshape(*packed.shape[:-1], head_dim).to(torch.uint8)
+
+
+def encode_kv_v2_group(key: torch.Tensor, value: torch.Tensor) -> torch.Tensor:
+    """Encode one 16-token group in the production consumer-major V2 layout.
+
+    Shape is ``[16, D]``.  For each K/V side the natural LSB-first payload is
+    viewed as uint16 words and transposed to ``[D/8, 16]``; FP16 scale and zero
+    follow as two contiguous 16-element vectors.  Byte capacity is unchanged.
+    """
+    if key.shape != value.shape or key.ndim != 2 or key.shape[0] != 16:
+        raise ValueError("V2 group requires matching K/V shaped [16,D]")
+    if key.shape[1] % 8:
+        raise ValueError("V2 head_dim must be divisible by 8")
+    encoded = []
+    for tensor in (key, value):
+        quantized = quantize_int2(tensor)
+        payload = quantized.packed.reshape(16, key.shape[1] // 8, 2)
+        payload = payload.permute(1, 0, 2).contiguous().reshape(-1)
+        encoded.extend((payload, _half_to_le_bytes(quantized.scale).reshape(-1),
+                        _half_to_le_bytes(quantized.zero).reshape(-1)))
+    return torch.cat(encoded)
+
+
+def decode_kv_v2_group(group: torch.Tensor, head_dim: int) -> tuple[torch.Tensor, torch.Tensor]:
+    if group.dtype != torch.uint8 or group.ndim != 1 or head_dim % 8:
+        raise ValueError("invalid V2 group")
+    side_bytes = 16 * (head_dim // 4 + 4)
+    if group.numel() != 2 * side_bytes:
+        raise ValueError("V2 group byte geometry mismatch")
+    outputs = []
+    payload_bytes = 16 * head_dim // 4
+    for side in range(2):
+        region = group[side * side_bytes:(side + 1) * side_bytes]
+        payload = region[:payload_bytes].reshape(head_dim // 8, 16, 2)
+        payload = payload.permute(1, 0, 2).contiguous().reshape(16, head_dim // 4)
+        scale_at = payload_bytes
+        scale = _le_bytes_to_half(region[scale_at:scale_at + 32].reshape(16, 2))
+        zero = _le_bytes_to_half(region[scale_at + 32:scale_at + 64].reshape(16, 2))
+        outputs.append(dequantize_int2(QuantizedVector(payload, scale, zero, head_dim)))
+    return outputs[0], outputs[1]
+
+
 def quantize_int2(x: torch.Tensor) -> QuantizedVector:
     """Match PR arithmetic; reject its undefined zero-scale metadata domain.
 

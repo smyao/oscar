@@ -16,7 +16,7 @@ def test_install_and_probe_plans_select_the_same_bundle(variant, enabled, capsys
     assert install["optimizations"] == probe["optimizations"] == {
         "history_cluster4": enabled, "later_mtp_q1": enabled,
         "fast_unpack": enabled, "weighted_q4": enabled,
-        "weighted_q4_split2": enabled}
+        "weighted_q4_split2": enabled, "slot_v2": enabled}
     assert install["probes"] == "none"
 
 

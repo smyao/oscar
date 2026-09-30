@@ -12,4 +12,7 @@ void store_int2_launch(void* stream, void* key, void* value, void* slots,
 void merge_lse_launch(void* stream, void* partial, void* partial_lse,
     void* output, void* lse, void* status, int64_t rows, int64_t splits,
     int64_t dim, uint32_t cores);
+void merge_lse_bf16_launch(void* stream, void* partial, void* partial_lse,
+    void* output, void* lse, void* status, int64_t rows, int64_t splits,
+    int64_t dim, uint32_t cores);
 }  // namespace oscar_ascend

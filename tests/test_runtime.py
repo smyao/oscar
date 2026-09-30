@@ -293,11 +293,21 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             output_lse.zero_()
             status.zero_()
 
+        def merge_lse_bf16_out(self, partial, lse, output, output_lse, status):
+            calls.append("merge_bf16")
+            assert partial.shape == (n * h, 3 * expected_splits, d)
+            output.copy_(partial[:, 0])
+            output_lse.zero_()
+            status.zero_()
+
         def rotate_clip_store_out(self, *args):
             calls.append("store")
             assert torch.equal(args[5], torch.arange(4, n + 4))
             assert args[0].is_contiguous() and args[1].is_contiguous()
             args[10].zero_()
+
+        def rotate_clip_store_v2_out(self, *args):
+            return self.rotate_clip_store_out(*args)
 
         def status_guard(self, *statuses):
             calls.append("guard")
@@ -316,7 +326,8 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     impl.provider = SimpleNamespace(layer_state=lambda _name: state, ops=Ops(),
                                     config={"experimental_fast_unpack": fast_unpack,
                                             "experimental_weighted_q4": fast_unpack,
-                                            "experimental_weighted_q4_split2": fast_unpack})
+                                            "experimental_weighted_q4_split2": fast_unpack,
+                                            "experimental_slot_v2": fast_unpack})
     q = torch.randn(n, h * d, dtype=torch.bfloat16)
     k = torch.randn(n, hk * d, dtype=torch.bfloat16)
     value = torch.randn(n, hk * d * 3, dtype=torch.bfloat16)[:, d:2*d]
@@ -341,7 +352,8 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
                    "cluster4" if cluster_size == 4 and n == 256 else "cv")
     if fast_unpack:
         expected_op = "fast_" + expected_op
-    assert calls == ["prepare", "rotate", expected_op, "merge", "store", "guard"]
+    expected_merge = "merge_bf16" if fast_unpack else "merge"
+    assert calls == ["prepare", "rotate", expected_op, expected_merge, "store", "guard"]
     assert len(selected) == 1
     assert selected[0][1]["weighted_q4"] is fast_unpack
     assert selected[0][1]["head_dim"] == d

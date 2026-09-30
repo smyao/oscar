@@ -55,7 +55,7 @@ def rotation_npu_context(tmp_path_factory):
     if not torch.npu.is_available() or torch.npu.device_count() != 4:
         pytest.fail("all four explicitly selected NPU devices must be available")
     from oscar_ascend.ops.loader import require_capabilities
-    require_capabilities({"rotate_out", "rotate_clip_store_out"})
+    require_capabilities({"rotate_out", "rotate_clip_store_out", "rotate_clip_store_v2_out"})
     from tools.generate_rotation_cpu_cases import generate
     cases = generate(tmp_path_factory.mktemp("rotation-npu-goldens"))
     indexed = {Path(case["path"]).name: case for case in cases}
@@ -139,6 +139,63 @@ def _rotate_store_case(torch, directory, device):
         (raw_key_storage, "expected_raw_key"), (raw_value_storage, "expected_raw_value"),
         (tag_storage, "expected_tags"),
     ):
+        _exact(torch, actual, directory, name)
+
+    # Run the independent V2 producer on fresh storage. Build its expected
+    # bytes from the frozen V1 golden by applying only the documented
+    # consumer-major address permutation; quantization bits and FP16 metadata
+    # remain exact. Unwritten slots/guard bytes retain the poison sentinel.
+    expected_v1 = _cpu_tensor(torch, directory / "expected_packed.bin", torch.uint8,
+                              (offset + blocks * stride,))
+    expected_status = _cpu_tensor(torch, directory / "expected_status.bin", torch.int32,
+                                  (n, heads))
+    expected_v2 = torch.full_like(expected_v1, 173)
+    slot_bytes, side_width = dim // 2 + 8, dim // 4 + 4
+    for token, slot in enumerate(slots.cpu().tolist()):
+        if slot < 0:
+            continue
+        page, inpage = divmod(slot, block)
+        group, row = divmod(inpage, 16)
+        for head in range(heads):
+            if int(expected_status[token, head]) != 0:
+                continue
+            source = offset + page * stride + (inpage * heads + head) * slot_bytes
+            target = (offset + page * stride + group * 16 * heads * slot_bytes
+                      + head * 16 * slot_bytes)
+            for side in range(2):
+                source_side = source + side * side_width
+                target_side = target + side * 16 * side_width
+                for word in range(dim // 8):
+                    expected_v2[target_side + (word * 16 + row) * 2:
+                                target_side + (word * 16 + row + 1) * 2] = \
+                        expected_v1[source_side + word * 2:source_side + word * 2 + 2]
+                payload = 16 * dim // 4
+                expected_v2[target_side + payload + row * 2:
+                            target_side + payload + row * 2 + 2] = \
+                    expected_v1[source_side + dim // 4:source_side + dim // 4 + 2]
+                expected_v2[target_side + payload + 32 + row * 2:
+                            target_side + payload + 32 + row * 2 + 2] = \
+                    expected_v1[source_side + dim // 4 + 2:source_side + dim // 4 + 4]
+    packed_v2 = torch.full_like(packed, 173)
+    raw_key_v2_storage = torch.full_like(raw_key_storage, 173)
+    raw_value_v2_storage = torch.full_like(raw_value_storage, 173)
+    raw_key_v2 = raw_key_v2_storage.view(torch.bfloat16).as_strided(
+        (blocks, window, heads, dim), (ks, heads * dim, dim, 1))
+    raw_value_v2 = raw_value_v2_storage.view(torch.bfloat16).as_strided(
+        (blocks, window, heads, dim), (vs, heads * dim, dim, 1))
+    tags_v2_storage = torch.full_like(tag_storage, 173)
+    tags_v2 = tags_v2_storage.view(torch.int64).as_strided((blocks, window), (ts, 1))
+    status_v2 = torch.full_like(status, -123)
+    torch.ops.oscar_ascend_ops.rotate_clip_store_v2_out(
+        key, value, rk, rv, slots, positions, packed_v2, raw_key_v2, raw_value_v2,
+        tags_v2, status_v2, block, blocks, offset, stride, sink, recent,
+        k_clip, v_clip, hadamard)
+    torch.npu.synchronize()
+    torch.testing.assert_close(packed_v2.cpu(), expected_v2, atol=0, rtol=0)
+    for actual, name in ((status_v2, "expected_status"),
+                         (raw_key_v2_storage, "expected_raw_key"),
+                         (raw_value_v2_storage, "expected_raw_value"),
+                         (tags_v2_storage, "expected_tags")):
         _exact(torch, actual, directory, name)
 
 

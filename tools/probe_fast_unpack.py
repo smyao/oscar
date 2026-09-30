@@ -22,14 +22,20 @@ FAST_BASE = "attention_cv_fast_out"
 P0_WEIGHTED = "attention_cv_fast_weighted_out"
 FAST_Q1 = "attention_cv_fast_q1_out"
 FAST_C4 = "attention_cv_fast_cluster4_out"
+V2_BASE = "attention_cv_fast_v2_out"
+V2_WEIGHTED = "attention_cv_fast_weighted_v2_out"
+V2_Q1 = "attention_cv_fast_q1_v2_out"
+V2_C4 = "attention_cv_fast_cluster4_v2_out"
 _MODES = {
     "base": (reuse.FE0_CV_OP, FAST_BASE),
     "q1": (reuse.Q1_CV_OP, FAST_Q1),
     "c4": (reuse.CANDIDATE_OP, FAST_C4),
 }
+_V2_MODES = {"base": V2_BASE, "q1": V2_Q1, "c4": V2_C4}
 _TIMED = frozenset({"q4_decode32_n128_s3", "q1_decode32_n128_s3",
                     "q1_mixed32_n16384_s1", "mature_20k", "mixed_q1_q4_long"})
-_GRAPHS = frozenset({"q4_decode32_n128_s3", "q1_decode32_n128_s3"})
+_GRAPHS = frozenset({"q4_decode32_n128_s3", "q1_decode32_n128_s3",
+                     "mixed_q1_q4_long"})
 _EXTRA_NUMERIC = frozenset({"base_frontier_d64", "base_mixed_hkv2_d128"})
 _META_CASES = frozenset({"meta_half_base_d256", "meta_half_q1_d256",
                          "meta_half_c4_d256"})
@@ -97,6 +103,30 @@ def _raw_pages(fixture: dict, raw):
     slot_bytes = spec.dim // 2 + 8
     return raw[reuse.PREFIX:].view(fixture["blocks"], reuse.BLOCK_TOKENS,
                                    spec.kv_heads, slot_bytes)
+
+
+def _v1_to_v2(torch, fixture: dict, raw):
+    """Byte-only oracle conversion; production uses rotate_clip_store_v2."""
+    spec: reuse.Shape = fixture["spec"]
+    source = _raw_pages(fixture, raw)
+    result = raw.clone()
+    pages = result[reuse.PREFIX:].view(fixture["blocks"], -1)
+    slot_bytes, side_width = spec.dim // 2 + 8, spec.dim // 4 + 4
+    for block in range(fixture["blocks"]):
+        for group in range(reuse.BLOCK_TOKENS // 16):
+            for head in range(spec.kv_heads):
+                rows = source[block, group * 16:(group + 1) * 16, head].clone()
+                base = group * 16 * spec.kv_heads * slot_bytes + head * 16 * slot_bytes
+                for side in range(2):
+                    region = rows[:, side * side_width:(side + 1) * side_width]
+                    payload = region[:, :spec.dim // 4].reshape(16, spec.dim // 8, 2)
+                    payload = payload.permute(1, 0, 2).contiguous().reshape(-1)
+                    scale = region[:, spec.dim // 4:spec.dim // 4 + 2].reshape(-1)
+                    zero = region[:, spec.dim // 4 + 2:spec.dim // 4 + 4].reshape(-1)
+                    encoded = torch.cat((payload, scale, zero))
+                    begin = base + side * 16 * side_width
+                    pages[block, begin:begin + encoded.numel()] = encoded
+    return result
 
 
 def _metadata_bytes(fixture: dict, raw, position: int, kind: str,
@@ -192,12 +222,12 @@ def _buffers(torch, fixture: dict, device, cores: int, mode: str) -> dict:
 
 
 def _launch(ops, tensors: dict, fixture: dict, buffers: dict,
-            cores: int, mode: str, *, fast: bool) -> str:
+            cores: int, mode: str, *, fast: bool, layout_v2: bool = False) -> str:
     """The three fast ABI layouts are identical to their respective old op."""
     if mode not in _MODES:
         raise FastUnpackProbeError(f"unknown fast-unpack mode {mode}")
     old_name, fast_name = _MODES[mode]
-    name = fast_name if fast else old_name
+    name = _V2_MODES[mode] if layout_v2 else (fast_name if fast else old_name)
     spec: reuse.Shape = fixture["spec"]
     args = (tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"],
             tensors["rv"], tensors["raw"], tensors["table"], tensors["wk"],
@@ -219,8 +249,8 @@ def _launch(ops, tensors: dict, fixture: dict, buffers: dict,
 
 
 def _launch_weighted(ops, tensors: dict, fixture: dict, buffers: dict,
-                     cores: int) -> str:
-    """#150/P0: independent q4 symbol; never selected by production dispatch."""
+                     cores: int, *, layout_v2: bool = False) -> str:
+    """#150/P0: weighted q4 symbol, including the atomic V2 production ABI."""
     spec: reuse.Shape = fixture["spec"]
     args = (tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"],
             tensors["rv"], tensors["raw"], tensors["table"], tensors["wk"],
@@ -230,8 +260,9 @@ def _launch_weighted(ops, tensors: dict, fixture: dict, buffers: dict,
     attrs = (reuse.BLOCK_TOKENS, fixture["blocks"], reuse.PREFIX,
              fixture["stride"], reuse.SINK, spec.recent_tokens,
              reuse.SPECULATIVE, spec.splits, fixture["scale"], cores)
-    getattr(ops, P0_WEIGHTED)(*args, *attrs)
-    return P0_WEIGHTED
+    name = V2_WEIGHTED if layout_v2 else P0_WEIGHTED
+    getattr(ops, name)(*args, *attrs)
+    return name
 
 
 def predicted_kv256_weights(tasks, cores: int) -> list[int]:
@@ -276,7 +307,7 @@ def _weighted_split_graph(torch, ops, tensors: dict, fixture: dict,
                           buffers: dict, cores: int) -> dict:
     """Capture S2 at fixed addresses and prove changed Q/task replay."""
     reuse._poison(torch, buffers)
-    _launch_weighted(ops, tensors, fixture, buffers, cores)
+    _launch_weighted(ops, tensors, fixture, buffers, cores, layout_v2=True)
     torch.npu.synchronize()
     _check_one(torch, fixture, buffers, invalid=False)
     original = reuse._snapshot(buffers)
@@ -284,7 +315,7 @@ def _weighted_split_graph(torch, ops, tensors: dict, fixture: dict,
     reuse._poison(torch, buffers)
     with torch.npu.graph(graph, capture_error_mode="thread_local",
                          auto_dispatch_capture=True):
-        _launch_weighted(ops, tensors, fixture, buffers, cores)
+        _launch_weighted(ops, tensors, fixture, buffers, cores, layout_v2=True)
     torch.npu.synchronize()
     reuse._poison(torch, buffers)
     graph.replay(); torch.npu.synchronize()
@@ -310,7 +341,7 @@ def _weighted_split_graph(torch, ops, tensors: dict, fixture: dict,
         raise FastUnpackProbeError("S2 graph replay ignored changed input")
     changed_merge = reuse._merge_only(torch, ops, fixture, buffers)
     reuse._poison(torch, buffers)
-    _launch_weighted(ops, tensors, fixture, buffers, cores)
+    _launch_weighted(ops, tensors, fixture, buffers, cores, layout_v2=True)
     torch.npu.synchronize()
     _check_one(torch, fixture, buffers, invalid=False)
     _same_bits(torch, changed, buffers, "weighted S2 eager versus graph")
@@ -318,7 +349,7 @@ def _weighted_split_graph(torch, ops, tensors: dict, fixture: dict,
                 "weighted S2 changed-input graph")
     return {"capture": "passed", "replay": "passed",
             "changed_query_and_task_same_addresses": True,
-            "split": fixture["spec"].splits, "operator": P0_WEIGHTED}
+            "split": fixture["spec"].splits, "operator": V2_WEIGHTED}
 
 
 def _q4_split_scan(torch, ops, target: dict, device, cores: int,
@@ -332,6 +363,9 @@ def _q4_split_scan(torch, ops, target: dict, device, cores: int,
     base = replace(base, name="q4_split_scan", splits=3)
     fixture = reuse.make_fixture(torch, base)
     tensors = {name: tensor.to(device) for name, tensor in fixture["cpu"].items()}
+    v2_cpu = dict(fixture["cpu"])
+    v2_cpu["raw"] = _v1_to_v2(torch, fixture, fixture["cpu"]["raw"])
+    tensors_v2 = {name: tensor.to(device) for name, tensor in v2_cpu.items()}
     variants = {}
     input_hash = fixture["input_sha256"]
     for split in _Q4_SPLIT_SCAN:
@@ -340,7 +374,7 @@ def _q4_split_scan(torch, ops, target: dict, device, cores: int,
         buffers = _buffers(torch, split_fixture, device, cores, "base")
         preparation = reuse._prepare(torch, ops, tensors, split_fixture, buffers)
         reuse._poison(torch, buffers)
-        _launch_weighted(ops, tensors, split_fixture, buffers, cores)
+        _launch_weighted(ops, tensors_v2, split_fixture, buffers, cores, layout_v2=True)
         torch.npu.synchronize()
         _check_one(torch, split_fixture, buffers, invalid=False)
         oracle = reuse._merge_and_oracle(
@@ -368,7 +402,7 @@ def _q4_split_scan(torch, ops, target: dict, device, cores: int,
                 begin, end = (torch.npu.Event(enable_timing=True),
                               torch.npu.Event(enable_timing=True))
                 begin.record(stream)
-            _launch_weighted(ops, tensors, split_fixture, buffers, cores)
+            _launch_weighted(ops, tensors_v2, split_fixture, buffers, cores, layout_v2=True)
             if index >= policy["warmup"]:
                 end.record(stream); end.synchronize()
                 elapsed = float(begin.elapsed_time(end))
@@ -384,13 +418,13 @@ def _q4_split_scan(torch, ops, target: dict, device, cores: int,
     decision = split_scan_decision(samples)
     winner = decision["recommended_split"]
     graph = _weighted_split_graph(
-        torch, ops, tensors, variants[winner]["fixture"],
+        torch, ops, tensors_v2, variants[winner]["fixture"],
         variants[winner]["buffers"], cores)
     rows = []
     for split in _Q4_SPLIT_SCAN:
         item = variants[split]
         mean = sum(item["weights"]) / cores
-        rows.append({"split": split, "operator": P0_WEIGHTED,
+        rows.append({"split": split, "operator": V2_WEIGHTED,
                      "input_sha256": input_hash,
                      "task_sha256": item["task_sha256"],
                      "predicted_kv256_per_core": item["weights"],
@@ -407,7 +441,7 @@ def _q4_split_scan(torch, ops, target: dict, device, cores: int,
             "recommended_split_graph": graph,
             "production_promotion_allowed": graph["capture"] == graph["replay"] == "passed",
             "production_route_changed": route_enabled,
-            "production_route": "weighted_s2" if route_enabled else "unchanged",
+            "production_route": "weighted_v2_s2" if route_enabled else "unchanged",
             "promotion_gate": "passed"}
 
 
@@ -565,26 +599,26 @@ def _terminal_counterfactual(torch, ops, tensors: dict, fixture: dict,
         baseline["tasks"].copy_(original)
 
 
-def _timed_pair(torch, ops, tensors: dict, fixture: dict, old: dict,
-                fast: dict, cores: int, mode: str, reference_bits: dict,
+def _timed_pair(torch, ops, tensors: dict, tensors_v2: dict, fixture: dict, old: dict,
+                fast: dict, v2: dict, cores: int, mode: str, reference_bits: dict,
                 acceptance: dict) -> dict:
     policy = acceptance["performance"]
     if (policy["warmup"], policy["repeats"], policy["max_latency_ratio"]) != (2, 5, 1.0):
         raise FastUnpackProbeError("fast performance must retain frozen 2+5 and ratio<=1.0")
-    samples: dict[str, list[float]] = {"old": [], "fast": []}
+    samples: dict[str, list[float]] = {"old": [], "fast": [], "v2": []}
     stream = torch.npu.current_stream()
     for index in range(policy["warmup"] + policy["repeats"]):
-        order = (False, True) if index < policy["warmup"] or \
-            (index - policy["warmup"]) % 2 == 0 else (True, False)
-        for use_fast in order:
-            buffers = fast if use_fast else old
-            label = "fast" if use_fast else "old"
+        order = (("old", "fast", "v2") if index < policy["warmup"] or
+                 (index - policy["warmup"]) % 2 == 0 else ("v2", "fast", "old"))
+        for label in order:
+            buffers = {"old": old, "fast": fast, "v2": v2}[label]
             reuse._poison(torch, buffers)
             if index >= policy["warmup"]:
                 begin = torch.npu.Event(enable_timing=True)
                 end = torch.npu.Event(enable_timing=True)
                 begin.record(stream)
-            _launch(ops, tensors, fixture, buffers, cores, mode, fast=use_fast)
+            _launch(ops, tensors_v2 if label == "v2" else tensors, fixture,
+                    buffers, cores, mode, fast=label != "old", layout_v2=label == "v2")
             if index >= policy["warmup"]:
                 end.record(stream)
                 end.synchronize()
@@ -595,17 +629,23 @@ def _timed_pair(torch, ops, tensors: dict, fixture: dict, old: dict,
             else:
                 torch.npu.synchronize()
             _check_one(torch, fixture, buffers, invalid=False)
-            _same_bits(torch, reference_bits, buffers,
-                       f"{fixture['spec'].name} {label} timed repeat")
-    old_median, fast_median = (statistics.median(samples[name])
-                               for name in ("old", "fast"))
+            if label == "v2":
+                _merge(torch, ops, fixture, buffers, acceptance)
+            else:
+                _same_bits(torch, reference_bits, buffers,
+                           f"{fixture['spec'].name} {label} timed repeat")
+    old_median, fast_median, v2_median = (statistics.median(samples[name])
+                                          for name in ("old", "fast", "v2"))
     ratio = fast_median / old_median
+    v2_ratio = v2_median / old_median
     return {"old": {"device_event_ms": samples["old"], "median_ms": old_median},
             "fast": {"device_event_ms": samples["fast"], "median_ms": fast_median},
+            "v2": {"device_event_ms": samples["v2"], "median_ms": v2_median},
             "fast_over_old": ratio,
-            "gate": "passed" if ratio <= policy["max_latency_ratio"] else "failed",
-            "warmup": 2, "repeats": 5, "order": "alternating_AB_BA",
-            "scope": "distinct_old_vs_fast_operator_real_NPU_Event_no_profiler"}
+            "v2_over_old": v2_ratio,
+            "gate": "passed" if max(ratio, v2_ratio) <= policy["max_latency_ratio"] else "failed",
+            "warmup": 2, "repeats": 5, "order": "alternating_ABC_CBA",
+            "scope": "distinct_old_fast_v2_operator_real_NPU_Event_no_profiler"}
 
 
 def _timed_p0(torch, ops, tensors: dict, fixture: dict, fast: dict,
@@ -649,21 +689,25 @@ def _timed_p0(torch, ops, tensors: dict, fixture: dict, fast: dict,
             "scope": "independent_q4_fast_vs_weighted_real_NPU_Event"}
 
 
-def _changed_input_graph(torch, ops, tensors: dict, fixture: dict,
-                         old: dict, fast: dict, cores: int, mode: str,
+def _changed_input_graph(torch, ops, tensors: dict, tensors_v2: dict, fixture: dict,
+                         old: dict, fast: dict, v2: dict, cores: int, mode: str,
                          original_bits: dict, weighted: dict | None = None) -> dict:
     """#129/#151: old and fast standalone graphs replay changed Q/tasks in place."""
-    if mode not in {"base", "q1"} or fixture["tokens"] != 128:
-        raise FastUnpackProbeError("fast graph gate requires q4/q1 N128")
-    graph_old, graph_fast = torch.npu.NPUGraph(), torch.npu.NPUGraph()
+    if mode not in {"base", "q1", "c4"}:
+        raise FastUnpackProbeError("fast graph gate requires base/q1/c4 mode")
+    graph_old, graph_fast, graph_v2 = (torch.npu.NPUGraph(), torch.npu.NPUGraph(),
+                                       torch.npu.NPUGraph())
     graph_weighted = torch.npu.NPUGraph() if weighted is not None else None
     reuse._poison(torch, old)
     reuse._poison(torch, fast)
+    reuse._poison(torch, v2)
     torch.npu.synchronize()
     with torch.npu.graph(graph_old, capture_error_mode="thread_local", auto_dispatch_capture=True):
         _launch(ops, tensors, fixture, old, cores, mode, fast=False)
     with torch.npu.graph(graph_fast, capture_error_mode="thread_local", auto_dispatch_capture=True):
         _launch(ops, tensors, fixture, fast, cores, mode, fast=True)
+    with torch.npu.graph(graph_v2, capture_error_mode="thread_local", auto_dispatch_capture=True):
+        _launch(ops, tensors_v2, fixture, v2, cores, mode, fast=True, layout_v2=True)
     if weighted is not None:
         reuse._poison(torch, weighted)
         with torch.npu.graph(graph_weighted, capture_error_mode="thread_local", auto_dispatch_capture=True):
@@ -671,19 +715,26 @@ def _changed_input_graph(torch, ops, tensors: dict, fixture: dict,
     torch.npu.synchronize()
     reuse._poison(torch, old)
     reuse._poison(torch, fast)
+    reuse._poison(torch, v2)
     graph_old.replay()
     graph_fast.replay()
+    graph_v2.replay()
     if graph_weighted is not None:graph_weighted.replay()
     torch.npu.synchronize()
     _check_one(torch, fixture, old, invalid=False)
     _check_one(torch, fixture, fast, invalid=False)
+    _check_one(torch, fixture, v2, invalid=False)
     _same_bits(torch, original_bits, old, "old initial graph replay")
     _same_bits(torch, original_bits, fast, "fast initial graph replay")
     if weighted is not None:
         _check_one(torch, fixture, weighted, invalid=False)
         _same_bits(torch, original_bits, weighted, "weighted initial graph replay")
+    _same_merge(torch, reuse._merge_only(torch, ops, fixture, old),
+                reuse._merge_only(torch, ops, fixture, v2), "V2 initial graph replay")
     tensors["q"].copy_(-tensors["q"])
     tensors["qr"].copy_(-tensors["qr"])
+    tensors_v2["q"].copy_(-tensors_v2["q"])
+    tensors_v2["qr"].copy_(-tensors_v2["qr"])
     changed_tasks = old["tasks"].cpu()
     chosen = next((row for row in changed_tasks
                    if int(row[7]) == 0 and int(row[1]) > 0 and
@@ -694,13 +745,16 @@ def _changed_input_graph(torch, ops, tensors: dict, fixture: dict,
     old["tasks"].copy_(changed_tasks)
     reuse._poison(torch, old)
     reuse._poison(torch, fast)
+    reuse._poison(torch, v2)
     if weighted is not None:reuse._poison(torch, weighted)
     graph_old.replay()
     graph_fast.replay()
+    graph_v2.replay()
     if graph_weighted is not None:graph_weighted.replay()
     torch.npu.synchronize()
     _check_one(torch, fixture, old, invalid=False)
     _check_one(torch, fixture, fast, invalid=False)
+    _check_one(torch, fixture, v2, invalid=False)
     changed_bits = reuse._snapshot(old)
     _same_bits(torch, changed_bits, fast, "fast changed-input graph replay")
     if weighted is not None:
@@ -712,6 +766,8 @@ def _changed_input_graph(torch, ops, tensors: dict, fixture: dict,
     changed_merge = reuse._merge_only(torch, ops, fixture, old)
     _same_merge(torch, changed_merge, reuse._merge_only(torch, ops, fixture, fast),
                 "fast changed-input graph")
+    _same_merge(torch, changed_merge, reuse._merge_only(torch, ops, fixture, v2),
+                "V2 changed-input graph")
     for label, buffers, fast_flag in (("old", old, False), ("fast", fast, True)):
         reuse._poison(torch, buffers)
         _launch(ops, tensors, fixture, buffers, cores, mode, fast=fast_flag)
@@ -722,10 +778,16 @@ def _changed_input_graph(torch, ops, tensors: dict, fixture: dict,
         _same_merge(torch, changed_merge,
                     reuse._merge_only(torch, ops, fixture, buffers),
                     f"{label} changed-input eager versus graph")
-    return {"capture": "passed", "replay": "passed",
+    reuse._poison(torch, v2)
+    _launch(ops, tensors_v2, fixture, v2, cores, mode, fast=True, layout_v2=True)
+    torch.npu.synchronize();_check_one(torch, fixture, v2, invalid=False)
+    _same_merge(torch, changed_merge, reuse._merge_only(torch, ops, fixture, v2),
+                "V2 changed-input eager versus graph")
+    return {"capture": "passed", "replay": "passed", "v2_capture": "passed",
+            "v2_replay": "passed",
             "changed_query_and_task_same_addresses": True,
             "weighted_operator": P0_WEIGHTED if weighted is not None else "not_run",
-            "scope": "standalone_N128_operator_graph_not_full_service"}
+            "scope": "standalone_changed_input_operator_graph_not_full_service"}
 
 
 def run_case(torch, ops, spec: reuse.Shape, mode: str, timed: bool,
@@ -735,13 +797,17 @@ def run_case(torch, ops, spec: reuse.Shape, mode: str, timed: bool,
     valid_half_bits = (_inject_valid_metadata(torch, fixture)
                        if spec.name in _META_CASES else None)
     tensors = {name: tensor.to(device) for name, tensor in fixture["cpu"].items()}
+    v2_cpu = dict(fixture["cpu"])
+    v2_cpu["raw"] = _v1_to_v2(torch, fixture, fixture["cpu"]["raw"])
+    tensors_v2 = {name: tensor.to(device) for name, tensor in v2_cpu.items()}
     baseline = reuse._allocate(torch, fixture, device, cores, candidate=False)
     old = _buffers(torch, fixture, device, cores, mode)
     fast = _buffers(torch, fixture, device, cores, mode)
+    v2 = _buffers(torch, fixture, device, cores, mode)
     weighted = (_buffers(torch, fixture, device, cores, "base")
                 if spec.name == "q4_decode32_n128_s3" else None)
     preparation = reuse._prepare(torch, ops, tensors, fixture, baseline)
-    for buffers in (old, fast):
+    for buffers in (old, fast, v2):
         buffers["tasks"] = baseline["tasks"]
         buffers["positions"] = baseline["positions"]
     if weighted is not None:
@@ -784,6 +850,12 @@ def run_case(torch, ops, spec: reuse.Shape, mode: str, timed: bool,
         _same_merge(torch, candidate_results["old"]["merge"],
                     candidate_results["fast"]["merge"],
                     f"{spec.name} fast versus old")
+    reuse._poison(torch, v2)
+    _launch(ops, tensors_v2, fixture, v2, cores, mode, fast=True, layout_v2=True)
+    torch.npu.synchronize()
+    v2_stats = _check_one(torch, fixture, v2, invalid=invalid,
+                          expected_stats=preparation)
+    v2_merge = None if invalid else _merge(torch, ops, fixture, v2, acceptance)
     p0 = None
     if weighted is not None:
         reuse._poison(torch, weighted)
@@ -808,9 +880,9 @@ def run_case(torch, ops, spec: reuse.Shape, mode: str, timed: bool,
     invalid_metadata = (_invalid_metadata_matrix(
         torch, ops, tensors, fixture, baseline, old, fast, cores, mode,
         reference_bits) if spec.name in _META_CASES else None)
-    timing = (_timed_pair(torch, ops, tensors, fixture, old, fast, cores,
+    timing = (_timed_pair(torch, ops, tensors, tensors_v2, fixture, old, fast, v2, cores,
                           mode, reference_bits, acceptance) if timed else None)
-    graph = (_changed_input_graph(torch, ops, tensors, fixture, old, fast,
+    graph = (_changed_input_graph(torch, ops, tensors, tensors_v2, fixture, old, fast, v2,
                                   cores, mode, reference_bits, weighted)
              if spec.name in _GRAPHS else None)
     row = {"case": spec.name, "status": "passed" if timing is None or
@@ -835,13 +907,18 @@ def run_case(torch, ops, spec: reuse.Shape, mode: str, timed: bool,
            "sampled_queries": len(fixture["expected"]) if not invalid else 0,
            "old_cluster_stats": candidate_results["old"]["stats"],
            "fast_cluster_stats": candidate_results["fast"]["stats"],
+           "v2_operator": _V2_MODES[mode], "v2_cluster_stats": v2_stats,
+           "v2_precision": ("invalid_input_status_passed" if invalid else
+                            "frozen_fused_attention_tolerance_passed"),
            "terminal_split_counterfactual": counterfactual,
            "fp16_metadata_valid_bits": valid_half_bits,
            "fp16_metadata_invalid_and_dead_tail": invalid_metadata,
            "graph_capture": graph["capture"] if graph else "not_run",
            "graph_replay": graph["replay"] if graph else "not_run",
+           "v2_graph_capture": graph["v2_capture"] if graph else "not_run",
+           "v2_graph_replay": graph["v2_replay"] if graph else "not_run",
            "graph": graph, "performance": timing, "p0_weighted": p0}
-    del fixture, tensors, baseline, old, fast, weighted
+    del fixture, tensors, tensors_v2, baseline, old, fast, v2, weighted
     gc.collect()
     torch.npu.empty_cache()
     return row
@@ -867,6 +944,9 @@ def verdict(rows: list[dict]) -> dict:
                 row.get("merged") == (
                     "invalid_input_not_applicable" if invalid else "bitwise_passed") and
                 (row.get("old_operator"), row.get("fast_operator")) == _MODES[mode] and
+                row.get("v2_operator") == _V2_MODES[mode] and
+                row.get("v2_precision") == ("invalid_input_status_passed" if invalid else
+                    "frozen_fused_attention_tolerance_passed") and
                 (row.get("case") != "mixed_unaligned_mature_s3" or
                  (isinstance(row.get("terminal_split_counterfactual"), dict) and
                   row["terminal_split_counterfactual"].get(
@@ -886,29 +966,36 @@ def verdict(rows: list[dict]) -> dict:
     precision = "passed" if all(
         precision_ok(row) for row in rows) else "failed"
     by_name = {row["case"]: row for row in rows}
-    graph_capture = "passed" if all(by_name[name].get("graph_capture") == "passed"
+    graph_capture = "passed" if all(by_name[name].get("graph_capture") == "passed" and
+                                     by_name[name].get("v2_graph_capture") == "passed"
                                      for name in _GRAPHS) else "failed"
-    graph_replay = "passed" if all(by_name[name].get("graph_replay") == "passed"
+    graph_replay = "passed" if all(by_name[name].get("graph_replay") == "passed" and
+                                    by_name[name].get("v2_graph_replay") == "passed"
                                     for name in _GRAPHS) else "failed"
     def speed_ok(row: dict) -> bool:
         result = row.get("performance")
         if not isinstance(result, dict) or result.get("gate") != "passed" or \
                 result.get("warmup") != 2 or result.get("repeats") != 5 or \
-                result.get("order") != "alternating_AB_BA":
+                result.get("order") != "alternating_ABC_CBA":
             return False
         try:
             old = result["old"]["device_event_ms"]
             new = result["fast"]["device_event_ms"]
-            if (len(old) != 5 or len(new) != 5 or
+            v2 = result["v2"]["device_event_ms"]
+            if (len(old) != 5 or len(new) != 5 or len(v2) != 5 or
                     any(type(value) not in (int, float) or not math.isfinite(value) or
-                        value <= 0 for value in old + new)):
+                        value <= 0 for value in old + new + v2)):
                 return False
             old_median, new_median = statistics.median(old), statistics.median(new)
+            v2_median = statistics.median(v2)
             ratio = new_median / old_median
-            return (ratio <= 1.0 and
+            v2_ratio = v2_median / old_median
+            return (max(ratio, v2_ratio) <= 1.0 and
                     math.isclose(result["old"]["median_ms"], old_median, rel_tol=1e-12) and
                     math.isclose(result["fast"]["median_ms"], new_median, rel_tol=1e-12) and
-                    math.isclose(result["fast_over_old"], ratio, rel_tol=1e-12))
+                    math.isclose(result["v2"]["median_ms"], v2_median, rel_tol=1e-12) and
+                    math.isclose(result["fast_over_old"], ratio, rel_tol=1e-12) and
+                    math.isclose(result["v2_over_old"], v2_ratio, rel_tol=1e-12))
         except (KeyError, TypeError, ValueError, ZeroDivisionError):
             return False
     performance = "passed" if all(speed_ok(by_name[name]) for name in _TIMED) else "failed"
@@ -971,9 +1058,11 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
     from oscar_ascend.ops.loader import require_capabilities, validate_build_artifacts
     manifest_path = ROOT / "build/ascendc/build_manifest.json"
     manifest = validate_build_artifacts(manifest_path)
-    require_capabilities({"prepare_attention_tasks_out", "merge_lse_out",
+    require_capabilities({"prepare_attention_tasks_out", "merge_lse_out", "merge_lse_bf16_out",
                           reuse.FE0_CV_OP, reuse.Q1_CV_OP, reuse.CANDIDATE_OP,
-                          FAST_BASE, P0_WEIGHTED, FAST_Q1, FAST_C4}, manifest_path)
+                          FAST_BASE, P0_WEIGHTED, FAST_Q1, FAST_C4,
+                          V2_BASE, V2_WEIGHTED, V2_Q1, V2_C4,
+                          "rotate_clip_store_v2_out"}, manifest_path)
     from .probe_native_current_fia import _target_geometry
     if _target_geometry(target) != (6, 1, 256):
         raise FastUnpackProbeError("target TP head geometry differs from Hq6/Hkv1/D256")
@@ -996,6 +1085,9 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
                 "old_ms": result["old"]["median_ms"],
                 "fast_ms": result["fast"]["median_ms"],
                 "ratio": result["fast_over_old"],
+                "v2_operator": row["v2_operator"],
+                "v2_ms": result["v2"]["median_ms"],
+                "v2_over_old": result["v2_over_old"],
                 "precision": row["precision"],
                 "graph": row["graph_replay"],
                 "status": row["status"]}, sort_keys=True), flush=True)

@@ -60,6 +60,76 @@ __aicore__ inline void InitIndices(
 }
 
 template<int32_t D>
+__aicore__ inline void InitIndicesV2(
+    TBuf<TPosition::VECCALC>& laneIndexBuf,
+    TBuf<TPosition::VECCALC>& maskBuf) {
+  constexpr int32_t words=Geometry<D>::words;
+  constexpr int32_t elements=Geometry<D>::elements;
+  constexpr int32_t planeStride=Geometry<D>::planeStride;
+  auto li=laneIndexBuf.Get<uint32_t>();
+  for(int32_t i=0;i<elements;++i) {
+    const int32_t row=i/D,column=i%D;
+    li.SetValue(i,static_cast<uint32_t>(
+        ((column%8)*planeStride+(column/8)*Geometry<D>::halfKv+row)*2));
+  }
+  Fence<HardEvent::S_V>();
+  Duplicate(maskBuf.Get<uint16_t>(),static_cast<uint16_t>(3),words);
+  PipeBarrier<PIPE_V>();
+}
+
+template<int32_t D>
+__aicore__ inline void UnpackV2(int32_t liveKvRows,int32_t& error,
+    TBuf<TPosition::VECCALC>& wordBuf,
+    TBuf<TPosition::VECCALC>& planeBuf,
+    TBuf<TPosition::VECCALC>& naturalBuf,
+    TBuf<TPosition::VECCALC>& maskBuf,
+    TBuf<TPosition::VECCALC>& laneIndexBuf,
+    TBuf<TPosition::VECCALC>& metadataHalfBuf,
+    TBuf<TPosition::VECCALC>& dequantBuf,
+    TBuf<TPosition::VECCALC>& scratchBuf) {
+  constexpr int32_t words=Geometry<D>::words;
+  constexpr int32_t elements=Geometry<D>::elements;
+  constexpr int32_t planeStride=Geometry<D>::planeStride;
+  constexpr int32_t halfKv=Geometry<D>::halfKv;
+  auto codeWords=wordBuf.Get<uint16_t>();
+  auto planes=planeBuf.Get<uint16_t>();
+  auto natural=naturalBuf.Get<int16_t>();
+  auto mask=maskBuf.Get<uint16_t>();
+  auto values=dequantBuf.Get<float>();
+  for(int32_t bit=0;bit<8;++bit)
+    ShiftRight(planes[bit*planeStride],codeWords,static_cast<uint16_t>(bit*2),words);
+  PipeBarrier<PIPE_V>();
+  for(int32_t bit=0;bit<8;++bit)
+    And(planes[bit*planeStride],planes[bit*planeStride],mask,words);
+  PipeBarrier<PIPE_V>();
+  Gather(natural,planes.ReinterpretCast<int16_t>(),laneIndexBuf.Get<uint32_t>(),0,elements);
+  PipeBarrier<PIPE_V>();
+  Cast(values,natural,RoundMode::CAST_NONE,elements);
+  PipeBarrier<PIPE_V>();
+  auto metadata=naturalBuf.Get<float>();
+  Cast(metadata,metadataHalfBuf.Get<half>(),RoundMode::CAST_NONE,2*halfKv);
+  Fence<HardEvent::V_S>();
+  for(int32_t row=0;row<halfKv;++row) {
+    const float scale=metadata.GetValue(row),zero=metadata.GetValue(halfKv+row);
+    if(row<liveKvRows && (!Finite(scale)||!Finite(zero)||scale<=0.0F))error=3;
+  }
+  auto rowBlocks=scratchBuf.Get<float>();
+  const BinaryRepeatParams rowParams{1,1,0,static_cast<uint8_t>(D/8),
+      static_cast<uint8_t>(D/8),1};
+  Fence<HardEvent::S_V>();
+  Brcb(rowBlocks,metadata,2,{1,8});PipeBarrier<PIPE_V>();
+  for(int32_t chunk=0;chunk<D/64;++chunk)
+    Mul(values[chunk*64],values[chunk*64],rowBlocks,static_cast<uint64_t>(64),
+        static_cast<uint8_t>(halfKv),rowParams);
+  PipeBarrier<PIPE_V>();
+  Brcb(rowBlocks,metadata[halfKv],2,{1,8});PipeBarrier<PIPE_V>();
+  for(int32_t chunk=0;chunk<D/64;++chunk)
+    Add(values[chunk*64],values[chunk*64],rowBlocks,static_cast<uint64_t>(64),
+        static_cast<uint8_t>(halfKv),rowParams);
+  PipeBarrier<PIPE_V>();
+}
+
+template<int32_t D>
 __aicore__ inline void Unpack(bool value,int32_t liveKvRows,int32_t& error,
     TBuf<TPosition::VECCALC>& packedBuf,
     TBuf<TPosition::VECCALC>& wordBuf,

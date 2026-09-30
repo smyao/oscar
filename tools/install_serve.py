@@ -94,9 +94,11 @@ def main(argv=None) -> int:
           f"Q1={'on' if enabled else 'off'} FAST_UNPACK={'on' if config.get('experimental_fast_unpack', False) else 'off'} "
           f"WEIGHTED_Q4={'on' if config.get('experimental_weighted_q4', False) else 'off'} "
           f"Q4_S2={'on' if config.get('experimental_weighted_q4_split2', False) else 'off'} "
+          f"SLOT_V2={'on' if config.get('experimental_slot_v2', False) else 'off'} "
           f"placement={status['placement']} config={effective_path}", flush=True)
-    print("[oscar] DATA_PATH slot_layout=natural_lsb_v1 cube_handoff=fp32_gm "
-          "accumulator=fp32 evidence=worker-trace/attention_dispatched "
+    print(f"[oscar] DATA_PATH slot_layout={'consumer_major_v2' if config.get('experimental_slot_v2', False) else 'natural_lsb_v1'} cube_handoff={'fp16_gm' if config.get('experimental_slot_v2', False) else 'fp32_gm'} "
+          f"accumulator=fp32 merge={'bf16_fused' if config.get('experimental_slot_v2', False) else 'fp32_then_copy'} "
+          "evidence=worker-trace/attention_dispatched "
           "acceptance=127x32k_batch32_pd_fused", flush=True)
     print(f"[oscar] devices={env.get('ASCEND_RT_VISIBLE_DEVICES', 'diagnostic')} port={config['port']}", flush=True)
     rc = 0

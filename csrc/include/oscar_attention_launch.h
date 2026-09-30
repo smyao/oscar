@@ -21,6 +21,14 @@ constexpr int64_t attention_workspace_per_core(int64_t dim) {
   return ((2 * kAttentionQueryRows + 2 * kAttentionKvRows) * dim
           + kAttentionQueryRows * kAttentionKvRows) * 4;
 }
+constexpr int64_t attention_v2_workspace_per_core(int64_t dim) {
+  // FP16 Q/K/V/P; FP32 score plus PV/rotation scratch. No history tensor.
+  const int64_t half_elements=(kAttentionQueryRows+4*kAttentionKvRows)*dim+
+      kAttentionQueryRows*kAttentionKvRows;
+  const int64_t float_elements=kAttentionQueryRows*kAttentionKvRows+
+      kAttentionQueryRows*dim;
+  return half_elements*2+float_elements*4;
+}
 // Archive #126/#129/#140-145 and startup D.4: experimental source0 C4 uses
 // four bounded Q/FP32 online states around one KV256 tile. The production
 // workspace function above and its fe0 attention_cv_out ABI stay unchanged.
@@ -31,6 +39,13 @@ constexpr int64_t attention_cluster4_workspace_per_core(int64_t dim) {
            + kAttentionQueryRows + 4 * kAttentionQueryRows) * dim
           + kAttentionQueryRows * kAttentionKvRows
           + 4 * 2 * kAttentionQueryRows) * 4;
+}
+constexpr int64_t attention_cluster4_v2_workspace_per_core(int64_t dim) {
+  const int64_t half_elements=(4*kAttentionQueryRows+4*kAttentionKvRows)*dim+
+      kAttentionQueryRows*kAttentionKvRows;
+  const int64_t float_elements=kAttentionQueryRows*kAttentionKvRows+
+      5*kAttentionQueryRows*dim+8*kAttentionQueryRows;
+  return half_elements*2+float_elements*4;
 }
 void prepare_attention_tasks_launch(void* stream, void* qstarts, void* lengths,
     void* slots, void* tasks, void* positions, int64_t requests, int64_t tokens,
@@ -59,8 +74,28 @@ void attention_cv_fast_launch(void* stream, void* query, void* query_rot,
     int64_t page_stride, int64_t window_stride, int64_t tag_stride,
     int64_t sink, int64_t recent, int64_t speculative, int64_t splits,
     float scale, uint32_t cores);
+void attention_cv_fast_v2_launch(void* stream, void* query, void* query_rot,
+    void* current_key, void* current_value, void* rotation_v, void* raw,
+    void* block_table, void* window_key, void* window_value, void* window_tags,
+    void* tasks, void* partial, void* lse, void* status, void* workspace,
+    int64_t tokens, int64_t query_heads, int64_t kv_heads, int64_t dim,
+    int64_t requests, int64_t table_columns, int64_t task_count,
+    int64_t block_tokens, int64_t physical_blocks, int64_t ssm_offset,
+    int64_t page_stride, int64_t window_stride, int64_t tag_stride,
+    int64_t sink, int64_t recent, int64_t speculative, int64_t splits,
+    float scale, uint32_t cores);
 // Archive #150/P0: diagnostic q4 KV256-weighted ownership, same tensor ABI.
 void attention_cv_fast_weighted_launch(void* stream, void* query, void* query_rot,
+    void* current_key, void* current_value, void* rotation_v, void* raw,
+    void* block_table, void* window_key, void* window_value, void* window_tags,
+    void* tasks, void* partial, void* lse, void* status, void* workspace,
+    int64_t tokens, int64_t query_heads, int64_t kv_heads, int64_t dim,
+    int64_t requests, int64_t table_columns, int64_t task_count,
+    int64_t block_tokens, int64_t physical_blocks, int64_t ssm_offset,
+    int64_t page_stride, int64_t window_stride, int64_t tag_stride,
+    int64_t sink, int64_t recent, int64_t speculative, int64_t splits,
+    float scale, uint32_t cores);
+void attention_cv_fast_weighted_v2_launch(void* stream, void* query, void* query_rot,
     void* current_key, void* current_value, void* rotation_v, void* raw,
     void* block_table, void* window_key, void* window_value, void* window_tags,
     void* tasks, void* partial, void* lse, void* status, void* workspace,
@@ -80,7 +115,27 @@ void attention_cv_fast_q1_launch(void* stream, void* query, void* query_rot,
     int64_t page_stride, int64_t window_stride, int64_t tag_stride,
     int64_t sink, int64_t recent, int64_t speculative, int64_t splits,
     float scale, uint32_t cores);
+void attention_cv_fast_q1_v2_launch(void* stream, void* query, void* query_rot,
+    void* current_key, void* current_value, void* rotation_v, void* raw,
+    void* block_table, void* window_key, void* window_value, void* window_tags,
+    void* tasks, void* partial, void* lse, void* status, void* workspace,
+    int64_t tokens, int64_t query_heads, int64_t kv_heads, int64_t dim,
+    int64_t requests, int64_t table_columns, int64_t task_count,
+    int64_t block_tokens, int64_t physical_blocks, int64_t ssm_offset,
+    int64_t page_stride, int64_t window_stride, int64_t tag_stride,
+    int64_t sink, int64_t recent, int64_t speculative, int64_t splits,
+    float scale, uint32_t cores);
 void attention_cv_fast_cluster4_launch(void* stream, void* query, void* query_rot,
+    void* current_key, void* current_value, void* rotation_v, void* raw,
+    void* block_table, void* window_key, void* window_value, void* window_tags,
+    void* tasks, void* partial, void* lse, void* status, void* workspace,
+    void* cluster_stats, int64_t tokens, int64_t query_heads, int64_t kv_heads,
+    int64_t dim, int64_t requests, int64_t table_columns, int64_t task_count,
+    int64_t block_tokens, int64_t physical_blocks, int64_t ssm_offset,
+    int64_t page_stride, int64_t window_stride, int64_t tag_stride,
+    int64_t sink, int64_t recent, int64_t speculative, int64_t splits,
+    float scale, uint32_t cores);
+void attention_cv_fast_cluster4_v2_launch(void* stream, void* query, void* query_rot,
     void* current_key, void* current_value, void* rotation_v, void* raw,
     void* block_table, void* window_key, void* window_value, void* window_tags,
     void* tasks, void* partial, void* lse, void* status, void* workspace,

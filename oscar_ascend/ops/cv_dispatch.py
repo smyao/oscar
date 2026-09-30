@@ -13,9 +13,15 @@ FAST_CV_OP = "attention_cv_fast_out"
 FAST_WEIGHTED_CV_OP = "attention_cv_fast_weighted_out"
 FAST_Q1_CV_OP = "attention_cv_fast_q1_out"
 FAST_CLUSTER4_CV_OP = "attention_cv_fast_cluster4_out"
-CLUSTER_CV_OPS = frozenset({CLUSTER4_CV_OP, FAST_CLUSTER4_CV_OP})
+FAST_V2_CV_OP = "attention_cv_fast_v2_out"
+FAST_WEIGHTED_V2_CV_OP = "attention_cv_fast_weighted_v2_out"
+FAST_Q1_V2_CV_OP = "attention_cv_fast_q1_v2_out"
+FAST_CLUSTER4_V2_CV_OP = "attention_cv_fast_cluster4_v2_out"
+CLUSTER_CV_OPS = frozenset({CLUSTER4_CV_OP, FAST_CLUSTER4_CV_OP, FAST_CLUSTER4_V2_CV_OP})
 FAST_CV_OPS = frozenset({FAST_CV_OP, FAST_WEIGHTED_CV_OP,
-                         FAST_Q1_CV_OP, FAST_CLUSTER4_CV_OP})
+                         FAST_Q1_CV_OP, FAST_CLUSTER4_CV_OP, FAST_V2_CV_OP,
+                         FAST_WEIGHTED_V2_CV_OP, FAST_Q1_V2_CV_OP,
+                         FAST_CLUSTER4_V2_CV_OP})
 
 
 def select_source_splits(default_splits, cv_op, *, tokens,
@@ -27,17 +33,24 @@ def select_source_splits(default_splits, cv_op, *, tokens,
         raise ValueError("invalid active token count")
     if type(weighted_q4_split2) is not bool:
         raise ValueError("weighted q4 S2 flag must be an explicit boolean")
-    if weighted_q4_split2 and cv_op == FAST_WEIGHTED_CV_OP and tokens == 128:
+    if weighted_q4_split2 and cv_op in {FAST_WEIGHTED_CV_OP, FAST_WEIGHTED_V2_CV_OP} and tokens == 128:
         return 2
     return default_splits
 
 
 def select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len, *, q1_draft=False,
-                 fast_unpack=False, weighted_q4=False, head_dim=None):
+                 fast_unpack=False, weighted_q4=False, head_dim=None, slot_v2=False):
     if type(fast_unpack) is not bool or (fast_unpack and cluster_size != 4):
         raise ValueError("fast unpack requires explicit candidate geometry")
     if type(weighted_q4) is not bool or (weighted_q4 and not fast_unpack):
         raise ValueError("weighted q4 requires the proven fast candidate")
+    if type(slot_v2) is not bool or (slot_v2 and not fast_unpack):
+        raise ValueError("slot V2 requires fast consumers")
+    fast, weighted, q1, cluster = ((FAST_V2_CV_OP, FAST_WEIGHTED_V2_CV_OP,
+                                    FAST_Q1_V2_CV_OP, FAST_CLUSTER4_V2_CV_OP)
+                                   if slot_v2 else
+                                   (FAST_CV_OP, FAST_WEIGHTED_CV_OP,
+                                    FAST_Q1_CV_OP, FAST_CLUSTER4_CV_OP))
     if cluster_size == 1:
         return FE0_CV_OP
     if cluster_size != 4 or heads <= 0 or kv_heads <= 0 or heads % kv_heads:
@@ -50,7 +63,7 @@ def select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len, *, q1_dra
     # than serializing 21 requests on a single Cube. Target capture routing
     # is deliberately excluded by the caller's explicit later-draft marker.
     if q1_draft and type(max_query_len) is int and max_query_len == 1:
-        return FAST_Q1_CV_OP if fast_unpack else Q1_CV_OP
+        return q1 if fast_unpack else Q1_CV_OP
     minimum = 4 * (ATTENTION_QUERY_ROWS // ratio)
     # Total padded tokens alone do not establish per-request eligibility:
     # 32 independent q4 requests still cannot share any history with each other.
@@ -60,6 +73,6 @@ def select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len, *, q1_dra
         # pairs (10.7628ms vs 11.2804ms median). Do not broaden that proof.
         if (weighted_q4 and heads == 6 and kv_heads == 1 and head_dim == 256 and
                 tokens <= 128 and max_query_len == 4):
-            return FAST_WEIGHTED_CV_OP
-        return FAST_CV_OP if fast_unpack else FE0_CV_OP
-    return FAST_CLUSTER4_CV_OP if fast_unpack else CLUSTER4_CV_OP
+            return weighted
+        return fast if fast_unpack else FE0_CV_OP
+    return cluster if fast_unpack else CLUSTER4_CV_OP

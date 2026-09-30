@@ -57,3 +57,11 @@ def test_debug_sync_requested_obeys_threshold_and_strict_flag(monkeypatch):
     monkeypatch.setenv("OSCAR_DEBUG_SYNC", "maybe")
     with pytest.raises(ValueError, match="OSCAR_DEBUG_SYNC"):
         timing.debug_sync_requested(16000)
+
+
+def test_debug_error_is_mirrored_even_with_trace_directory(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("OSCAR_TRACE_DIR", str(tmp_path))
+    record = {"t": "oscar-debug", "state": "device_error", "status_segment": "attention"}
+    timing._write(record, mirror_stderr=True)
+    assert '"status_segment": "attention"' in capsys.readouterr().err
+    assert len(list(tmp_path.glob("timing-*.jsonl"))) == 1

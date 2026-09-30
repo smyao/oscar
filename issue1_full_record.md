@@ -28588,3 +28588,11 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **结论边界**：这证明V2 store的MTE launch已完成并进入后续guard，但不能证明写入数值正确；guard把attention、rotate、merge、store四个status合并检查，当前附件无法指出哪个producer写了非零值。直接删除Trap、清零status或假定store错误都违反fail-closed与冻结精度门。
 
 **诊断修订**：普通生产仍保持一次`status_guard` launch。仅在用户已经显式启用`OSCAR_DEBUG_SYNC`且token数达到`OSCAR_DEBUG_MIN_TOKENS`时，按attention/rotate/merge/store顺序调用同一个guard，并让既有phase completion checkpoint逐段同步；每段日志增加`status_segment`。这不回读设备状态、不改变任何status生成逻辑、不放宽错误，也不进入捕图/普通性能路径。下一轮首个`device_error`记录中的`status_segment`才是可据以修改上游算子的证据。
+
+## [155] 真机条目（2026-09-30 用户回传）· guard分段复验先出现VEC UB越界，但终端缺失相位JSON
+
+**真实首错**：rank0/2先报507015、`The address for the VEC instruction to read/write UB is out of bounds`，kernel入口`…23292b8`、当前PC`…2352df0`；rank1随后仍在status guard的`…21fb8c4 + 0x25c`主动Trap。不同错误码、PC和发生顺序证明guard Trap只是另一rank检测到非零status或已提交工作的后果，不能覆盖507015根因。
+
+**证据缺口**：用户附件只有服务stderr。既有`timing._write`在设置`OSCAR_TRACE_DIR`时把`phase_begin/device_completed/device_error`全部写入`timing-<pid>.jsonl`后直接返回，因此附件中只有`impl.py:215`的循环源码行，没有循环迭代对应的`status_segment`，也没有rank0/2在507015前的最后完成相位。源码静态核对表明新增store staging的D256最大uint16索引496、buffer合法末索引511，不能仅凭“最近修改”把507015再归到store。
+
+**诊断收口**：debug记录保持原trace文件，同时仅将`prior_work_error/device_error/host_error`镜像stderr；成功相位仍只落文件，避免终端洪水。镜像包含原有phase、layer、tokens、rank以及`status_segment`字段，不新增同步、不读tensor、不改变production路径。下一轮终端首个`oscar-debug state=device_error`将给出可修改的具体相位；此前禁止删除guard、扩大所有UB或回退V1来试错。

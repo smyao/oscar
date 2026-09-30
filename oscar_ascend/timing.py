@@ -40,7 +40,7 @@ def debug_sync_requested(tokens: int) -> bool:
             tokens >= _debug_min_tokens())
 
 
-def _write(record):
+def _write(record, *, mirror_stderr=False):
     # Only explicit timing uses host IO. No tensor values are inspected.
     line = json.dumps(record, sort_keys=True, allow_nan=False)
     directory = os.environ.get("OSCAR_TRACE_DIR")
@@ -49,7 +49,8 @@ def _write(record):
         path = Path(directory); path.mkdir(parents=True, exist_ok=True)
         with (path / f"timing-{os.getpid()}.jsonl").open("a") as output:
             output.write(line + "\n")
-        return
+        if not mirror_stderr:
+            return
     print(line, file=sys.stderr, flush=True)
 
 
@@ -69,7 +70,7 @@ class _Phase:
         record = {"t": "oscar-debug", "phase": self.name, "state": state,
                   "pid": os.getpid(), "rank": rank, "wall_time": time.time(),
                   **self.fields, **extra}
-        _write(record)
+        _write(record, mirror_stderr=state in {"prior_work_error", "device_error", "host_error"})
         directory = os.environ.get("OSCAR_TRACE_DIR")
         if directory:
             root = Path(directory); root.mkdir(parents=True, exist_ok=True)

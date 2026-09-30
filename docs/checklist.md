@@ -134,3 +134,5 @@ q4诊断接入同一`--probe-only`：原生paged BF16 FIA与OSCAR CV+merge的未
 #153：node93以`OSCAR_DEBUG_SYNC=1`将507035定位到`phase1_stores`；首修切换`uint16_t`后PC及MTE子码变化但仍报对齐，证明2-D copy的连续2-byte UB block start本身非法。正式修订把payload word展开到UB的32-byte对齐lane，再以一次2-D MTE写入紧凑GM列；metadata复用同一对齐lane。槽位布局和consumer地址不变，也不采用有跨核cacheline风险的GM scalar store。修订后的CANN编译、真实V2 store逐位、完整candidate服务仍待目标机验证，C04/C05/E01/E06不因此解锁。
 
 #154：对齐lane修订后真机已越过`phase1_stores`，新的首个同步失败为`status_guard`主动Trap（subErrType=2），证明某个上游status非零但合并guard无法区分四个producer。仅在既有`OSCAR_DEBUG_SYNC`且达到token阈值时，将guard拆成attention/rotate/merge/store四个同核顺序检查并记录`status_segment`；普通服务和图路径仍为单launch，不D2H、不忽略错误。待下一日志定位具体producer后再修其根因，C04/C05/E01/E06保持未通过。
+
+#155：逐段guard复验中rank0/2先报507015 `VEC ... UB is out of bounds`，rank1随后在guard Trap；后者不是根因。由于`OSCAR_TRACE_DIR`把debug JSON仅写文件，用户终端附件缺失首错phase/segment。调试错误记录现同时写trace文件和stderr，普通成功记录仍不刷屏；下一次首错将直接显示phase/layer/tokens/segment。未取得该相位前不凭PC猜测修改数学或缓冲，C04/C05/E01/E06不变。

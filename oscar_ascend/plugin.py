@@ -198,9 +198,11 @@ def _patch_passive_runner(module: ModuleType) -> None:
 
 
 def _patch_mtp_forward(module: ModuleType) -> None:
-    """Measure the actual Qwen3.5 draft model call within draft proposal."""
-    if not os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL"):
-        return
+    """Observe MTP and optionally compact explicitly enabled later eager calls.
+
+    #140/#142/#148/#155: __call__ must wrap the compile decorator so its
+    documented skip_compiled branch is reached before any compiled graph.
+    """
     cls = getattr(module, "Qwen3_5MTP", None)
     if cls is None:
         return
@@ -210,7 +212,21 @@ def _patch_mtp_forward(module: ModuleType) -> None:
             with passive_timing.phase("draft_forward"):
                 return original(model, *args, **kwargs)
         return wrapped
-    _patch(cls, "forward", draft_model)
+    if os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL"):
+        _patch(cls, "forward", draft_model)
+    if not _passive_only:
+        def compact(original):
+            def wrapped(model, *args, **kwargs):
+                provider = require_runtime()
+                enabled = getattr(provider, "config", {}).get("experimental_compact_later_mtp", False)
+                if type(enabled) is not bool:
+                    raise OscarHookConflictError("experimental_compact_later_mtp must be an explicit boolean")
+                if not enabled:
+                    return original(model, *args, **kwargs)
+                from .integration.compact_later_mtp import compact_later_mtp_call
+                return compact_later_mtp_call(original, model, args, kwargs, provider)
+            return wrapped
+        _patch(cls, "__call__", compact)
 
 
 def _patch_native_attention(module: ModuleType) -> None:

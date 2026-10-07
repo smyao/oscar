@@ -1,0 +1,175 @@
+{
+  "status": "passed",
+  "baseline": "current_production_striped",
+  "cases": [
+    {
+      "name": "base_d256_q3q33",
+      "mode": "base",
+      "input_tree_sha256": "6ab527d0929307d4365db1ed8deef0220af7688d7cf0617531735085cfe248af",
+      "arms": [
+        {
+          "arm": "reference",
+          "status": "passed",
+          "returncode": 0,
+          "timed_out": false,
+          "evidence": [
+            {
+              "backend": "ascendc_cpu_debug",
+              "mode": "base",
+              "phase": "reference",
+              "status": "passed",
+              "oracle_scope": "sampled_independent",
+              "bitwise": null
+            }
+          ],
+          "log": "/tmp/oscar-decode-history-pipeline-20261006/prefill-window-cpu-logs/base-reference.log"
+        },
+        {
+          "arm": "candidate",
+          "status": "passed",
+          "returncode": 0,
+          "timed_out": false,
+          "evidence": [
+            {
+              "backend": "ascendc_cpu_debug",
+              "mode": "base",
+              "phase": "candidate",
+              "status": "passed",
+              "oracle_scope": "sampled_independent",
+              "bitwise": true
+            }
+          ],
+          "log": "/tmp/oscar-decode-history-pipeline-20261006/prefill-window-cpu-logs/base-candidate.log"
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "balanced_d256_q4_n128_s3",
+      "mode": "balanced",
+      "input_tree_sha256": "e4d9615c44da1b2abcbef5173530105b6e635afe8a6ab909671062554aff37a2",
+      "arms": [
+        {
+          "arm": "reference",
+          "status": "passed",
+          "returncode": 0,
+          "timed_out": false,
+          "evidence": [
+            {
+              "backend": "ascendc_cpu_debug",
+              "mode": "balanced",
+              "phase": "reference",
+              "status": "passed",
+              "oracle_scope": "sampled_independent",
+              "bitwise": null
+            }
+          ],
+          "log": "/tmp/oscar-decode-history-pipeline-20261006/prefill-window-cpu-logs/balanced-reference.log"
+        },
+        {
+          "arm": "candidate",
+          "status": "passed",
+          "returncode": 0,
+          "timed_out": false,
+          "evidence": [
+            {
+              "backend": "ascendc_cpu_debug",
+              "mode": "balanced",
+              "phase": "candidate",
+              "status": "passed",
+              "oracle_scope": "sampled_independent",
+              "bitwise": true
+            }
+          ],
+          "log": "/tmp/oscar-decode-history-pipeline-20261006/prefill-window-cpu-logs/balanced-candidate.log"
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "c4_d256_q168_c65_active",
+      "mode": "cluster4",
+      "input_tree_sha256": "d05363f3be14c7744c26cad8ea2f60c1d6642b6b1f7a4a0f72a735a4782a3ba8",
+      "arms": [
+        {
+          "arm": "reference",
+          "status": "passed",
+          "returncode": 0,
+          "timed_out": false,
+          "evidence": [
+            {
+              "backend": "ascendc_cpu_debug",
+              "mode": "cluster4",
+              "phase": "reference",
+              "status": "passed",
+              "oracle_scope": "sampled_independent",
+              "bitwise": null
+            }
+          ],
+          "log": "/tmp/oscar-decode-history-pipeline-20261006/prefill-window-cpu-logs/cluster4-reference.log"
+        },
+        {
+          "arm": "candidate",
+          "status": "passed",
+          "returncode": 0,
+          "timed_out": false,
+          "evidence": [
+            {
+              "backend": "ascendc_cpu_debug",
+              "mode": "cluster4",
+              "phase": "candidate",
+              "status": "passed",
+              "oracle_scope": "sampled_independent",
+              "bitwise": true
+            }
+          ],
+          "log": "/tmp/oscar-decode-history-pipeline-20261006/prefill-window-cpu-logs/cluster4-candidate.log"
+        }
+      ],
+      "status": "passed"
+    },
+    {
+      "name": "c16_d256_q336_c65_active",
+      "mode": "cluster16",
+      "input_tree_sha256": "b26fa1ccc511e35e46b27d4a0db1b4b39e62696758880780265cff2bbb89fe01",
+      "arms": [
+        {
+          "arm": "reference",
+          "status": "passed",
+          "returncode": 0,
+          "timed_out": false,
+          "evidence": [
+            {
+              "backend": "ascendc_cpu_debug",
+              "mode": "cluster16",
+              "phase": "reference",
+              "status": "passed",
+              "oracle_scope": "sampled_independent",
+              "bitwise": null
+            }
+          ],
+          "log": "/tmp/oscar-decode-history-pipeline-20261006/prefill-window-cpu-logs/cluster16-reference.log"
+        },
+        {
+          "arm": "candidate",
+          "status": "passed",
+          "returncode": 0,
+          "timed_out": false,
+          "evidence": [
+            {
+              "backend": "ascendc_cpu_debug",
+              "mode": "cluster16",
+              "phase": "candidate",
+              "status": "passed",
+              "oracle_scope": "sampled_independent",
+              "bitwise": true
+            }
+          ],
+          "log": "/tmp/oscar-decode-history-pipeline-20261006/prefill-window-cpu-logs/cluster16-candidate.log"
+        }
+      ],
+      "status": "passed"
+    }
+  ],
+  "npu": "not_run"
+}

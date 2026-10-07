@@ -111,5 +111,5 @@ PYBIND11_MODULE(_oscar_ascend_ops,m) {
       "attention_cv_fast_out","attention_cv_fast_q1_out","attention_cv_fast_cluster4_out",
       "attention_cv_fast_balanced_out","attention_cv_fast_cluster16_out",
       "attention_cv_striped_out","attention_cv_striped_q1_out","attention_cv_striped_decode_out","attention_cv_striped_balanced_out","attention_cv_striped_cluster4_out","attention_cv_striped_cluster16_out","rotate_clip_store_striped_out",
-      "status_guard"};});
+      "attention_cv_bundle_decode_out", "attention_cv_bundle_q1_out", "attention_cv_window_range_out", "attention_cv_window_range_balanced_out", "attention_cv_window_range_cluster4_out", "attention_cv_window_range_cluster16_out", "copy_validate_current_out","status_guard"};});
 }

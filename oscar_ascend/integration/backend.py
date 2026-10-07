@@ -1,15 +1,15 @@
 """Native backend and metadata construction seams.
 
-Archive #27/#28/#34/#36/#37–49/#140: no placeholder attention, host length
+Archive #27/#28/#34/#36/#37–49/#140/#142/#148/#155: no placeholder attention, host length
 readback, or capture-only suppression masquerading as graph replay.
 Only an installed, ready runtime can provide the real AttentionImpl.
 """
 
 import torch
-from dataclasses import replace
 from vllm.v1.attention.backend import AttentionBackend, AttentionCGSupport, AttentionMetadataBuilder
 
 from ..layout import SlotLayout
+from .first_draft_current_only import supports_first_draft_current_only
 from .metadata import GraphMetadataBindings, from_common
 from .runtime_api import require_runtime
 
@@ -56,6 +56,23 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
         super().__init__(kv_cache_spec, layer_names, vllm_config, device)
         self.capacity = None
         self.bindings = GraphMetadataBindings()
+        runtime_config = require_runtime().config
+        self.current_only = runtime_config.get("experimental_current_only", False)
+        self.first_draft_current_only = (
+            self.current_only and supports_first_draft_current_only(vllm_config))
+        first_current = runtime_config.get("experimental_first_mtp_current_fia", False)
+        if type(first_current) is not bool:
+            raise ValueError("experimental_first_mtp_current_fia must be an explicit boolean")
+        self.first_draft_current_fia = first_current and supports_first_draft_current_only(vllm_config)
+        mixed_split = runtime_config.get("experimental_mixed_decode_split", False)
+        if type(mixed_split) is not bool:
+            raise ValueError("experimental_mixed_decode_split must be an explicit boolean")
+        cache = getattr(vllm_config, "cache_config", None)
+        parallel = getattr(vllm_config, "parallel_config", None)
+        self.mixed_decode_split = (
+            mixed_split and getattr(cache, "enable_prefix_caching", None) is False
+            and getattr(parallel, "prefill_context_parallel_size", None) == 1
+            and getattr(parallel, "decode_context_parallel_size", None) == 1)
 
     def reorder_batch(self, input_batch, scheduler_output):
         return False
@@ -63,11 +80,15 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
     def build(self, common_prefix_len, common_attn_metadata, fast_build=False):
         # Native llm_base_proposer.py:913 calls first draft with its model as
         # positional argument 3; later drafts call build_for_drafting. Mark
-        # both, including draft_index=0, so eager prefill FIA cannot consume
-        # an MTP draft under a misleading ChunkedPrefill host state.
+        # both, including draft_index=0. The separate experimental suffix
+        # qualification never enables native-current for the MTP prefix.
         first_draft = type(fast_build) is not bool
         metadata = from_common(common_attn_metadata, capacity=self.capacity,
-                               is_draft=first_draft)
+                               is_draft=first_draft, current_only=self.current_only,
+                               first_draft_current_only=(
+                                   first_draft and self.first_draft_current_only),
+                               first_draft_current_fia=(first_draft and self.first_draft_current_fia),
+                               mixed_decode_split=self.mixed_decode_split)
         return self.bindings.bind(metadata)
 
     def build_for_graph_capture(self, common_attn_metadata, attn_state=None):
@@ -89,5 +110,5 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
         if type(draft_index) is not int or draft_index < 0:
             raise ValueError("draft_index must be a nonnegative integer")
         metadata = from_common(common_attn_metadata, capacity=self.capacity,
-                               is_draft=True)
-        return replace(self.bindings.bind(metadata), draft_index=draft_index)
+                               is_draft=True, draft_index=draft_index)
+        return self.bindings.bind(metadata)

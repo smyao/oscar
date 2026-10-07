@@ -28596,3 +28596,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **处置**：完整撤销12af4f7，恢复9bd3345的已回传算子路径与候选预设，不放宽冻结精度门。后续优化须覆盖实际长历史prefill与q4/q1，并单列数学/布局证明、CPU、CANN、设备与模型性能证据。
 
 **本轮源码进一步审查（候选根因，非真机复验）**：12af4f7 的 `ApplyDeferredAlpha` 在 MTE2 读入共享 `tmp` 后执行 Brcb/Mul，结尾只有 `PipeBarrier<PIPE_V>`；下一 rowBase 又由 MTE2 覆写同一 `tmp`，缺少 V→MTE2 的跨管道所有权屏障。SDK 语义与 #145 同族，CPU 顺序模拟不能覆盖这一竞态。它是可定位的同步缺口，但尚无设备首错时序证明这是本条全部失配的唯一原因；B4保持撤销，不把补一个屏障写成性能达标。
+
+
+## [155] 真机条目（2026-09-30）· striped writer 窗口比较误判 NaN，整轮约14分钟仍未追平8分钟
+
+**原文**：`reports/target_striped_probe_and_longbench_20260930.txt`，observe=`observe-20260930T061557.065145Z`。已有 history/q1/fast/mixed NPU 门通过；新 striped 首个 writer 门报 `striped store changed wk`、rc2，未进入 striped reader 计时/图门。用户另以直启完成 LongBenchv2，报告127条、平均20K、并发32，旧版约16分钟→本版约14分钟，原生约8分钟；用户明确保留当前有效修改，并要求整轮仿真同时锚定840/480秒、无充分8分钟证据不得推送。
+
+**当前代码可复现根因**：`tools.probe_history_reuse._bitwise_identical` 仅对FP32改用int32视图；新probe把BF16窗口传入该函数，实际变成 `torch.equal` 数值比较。fixture 为3个物理页，每页323个精确窗口槽，大量从未写过的BF16 NaN保留；同一tensor的精确clone也会被判不等。本机同dtype/相同fixture复现，不需要假定NPU产生数值失配。相同NaN的存储位可完全一致，浮点equal仍为False。
+
+**修法**：store窗口与store图/eager专用比较对BF16/FP16按int16、FP32按int32视图比较，整数按整数比较；NaN payload、正负零及所有有效字节都保持严格，不使用equal_nan或放宽容差。新增NaN payload不同必须失败、signed-zero不同必须失败与原fixture精确clone通过回归。旧/新store的window写入控制流相同，首错本身不能证明device race；修正后新真NPU writer/reader/图/性能仍待验。AscendC和GDN均未因此修改。
+
+**性能解释修正**：上一轮4K/8K、单请求S1 CV模拟1.98/2.10倍只能证明该算子路径的周期收益；实测16→14为1.143倍。新probe在writer比较处提前失败，所以本条没有striped真NPU算子比值。必须从全程日志建立prefill混合/纯decode/爬坡及排空分布，校准原生480秒与候选840秒，并固定校准参数后评价源码变更；不能把混合区间时长称为attention占比或用两个锚点唯一推定各相位时间。

@@ -1,4 +1,4 @@
-# Archive #55-#69/#126/#129-#142: native causal current-chunk FIA must return
+# Archive #55-#69/#126/#129-#142/#148/#155: native causal current-chunk FIA must return
 # exact BF16 output and a complete LSE while CV keeps INT2 history/window.
 # D.4 four questions: (1) this replaces only the current part of `fia`;
 # (2) the failed route spent 6.5s dequantizing historical INT2; its separate
@@ -24,17 +24,22 @@ _MASKS: dict[torch.device, torch.Tensor] = {}
 
 
 def use_native_current(metadata) -> bool:
-    """Use native current only in eager main-model prefill or mixed batches.
+    """Use native source2 for main prefill or explicitly qualified first MTP.
 
     The native runner's host AttentionState describes the scheduling stage.
-    First and subsequent MTP draft metadata are explicitly marked is_draft;
-    graph capture/replay records and reuses the existing complete CV route.
+    The separate first-MTP experiment replaces only source2 partial output;
+    its builder qualification originates from build(..., model), never from
+    draft_index=0 alone. History/window, later drafts and graphs retain CV.
     No decision depends on request length, NPU tensor values, or a failed op.
     """
     # #142: native MTP warmup is labelled ChunkedPrefill but all its slots
     # are -1. The runner scope marks both warmup and capture explicitly;
     # preserve CV's full padding path without disabling the real-slot guard.
-    if metadata.capture_origin or metadata.is_draft or metadata.dummy_origin:
+    if metadata.capture_origin or metadata.dummy_origin:
+        return False
+    first_partial = (metadata.is_draft and getattr(metadata, "draft_index", None) == 0
+                     and getattr(metadata, "first_draft_current_fia", False))
+    if metadata.is_draft and not first_partial:
         return False
     state = metadata.attn_state
     if type(state).__name__ != "AscendAttentionState" or not isinstance(getattr(state, "name", None), str):
@@ -42,7 +47,7 @@ def use_native_current(metadata) -> bool:
     if state.name in _PREFILL_STATES:
         return True
     if state.name in _DECODE_STATES:
-        return False
+        return first_partial
     raise CurrentAttentionError(f"unrecognized native Ascend attention state {state.name!r}")
 
 

@@ -85,6 +85,48 @@ def test_invalid_live_error_compares_task_and_value_class_without_nan_bits():
         striped._check_invalid(torch, old, new)
 
 
+def test_store_snapshot_compares_bf16_nan_payload_bits_not_float_equality():
+    source = torch.tensor([float("nan"), 1.0], dtype=torch.bfloat16)
+    duplicate = source.clone()
+    assert not torch.equal(source, duplicate)  # original probe's false failure
+    assert striped._store_bits_equal(torch, source, duplicate)
+    duplicate.view(torch.int16)[0] += 1  # another NaN payload is a real bit mismatch
+    assert torch.isnan(duplicate[0])
+    assert not striped._store_bits_equal(torch, source, duplicate)
+    duplicate = source.clone()
+    duplicate[1] = 2.0
+    assert not striped._store_bits_equal(torch, source, duplicate)
+    assert not striped._store_bits_equal(torch, torch.tensor([0.0],dtype=torch.bfloat16),
+                                        torch.tensor([-0.0],dtype=torch.bfloat16))
+
+
+def test_real_store_fixture_has_untouched_nan_window_rows():
+    shape = reuse.Shape("striped_store", (385,), (641,), 256, 1, 1, True)
+    fixture = reuse.make_fixture(torch, shape)
+    window = fixture["cpu"]["wk"]
+    assert fixture["blocks"] > 1
+    assert bool(torch.isnan(window).any())
+    assert not torch.equal(window, window.clone())
+    assert striped._store_bits_equal(torch, window, window.clone())
+    # The 385 writes wrap the 259-row precise ring. Mirror the writer's
+    # same-page lookahead rule and prove every final (page,ring-row) owner is
+    # unique; a finite-window mismatch remains a real failed byte gate.
+    slots = fixture["cpu"]["slots"][:385].tolist()
+    ring = shape.recent_tokens + reuse.SPECULATIVE
+    owners = set()
+    for token, slot in enumerate(slots):
+        page, inpage = divmod(slot, reuse.BLOCK_TOKENS)
+        keep = token + ring >= len(slots)
+        if not keep:
+            later = slots[token + ring]
+            keep = not (later >= 0 and later // reuse.BLOCK_TOKENS == page
+                        and later == slot + ring)
+        if keep:
+            identity = (page, reuse.SINK + inpage % ring)
+            assert identity not in owners
+            owners.add(identity)
+
+
 def test_writer_reader_retargets_unique_existing_source0_owner():
     shape = reuse.Shape("striped_store", (385,), (641,), 256, 1, 1, True)
     fixture = {"spec": shape, "tokens": 385, "actual_tokens": 385}

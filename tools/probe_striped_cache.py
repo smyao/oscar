@@ -101,6 +101,19 @@ def _paired_status(torch, old, new, invalid=False):
         raise RuntimeError('striped reader changed task-level invalid-input detection')
 
 
+def _store_bits_equal(torch, left, right):
+    """Compare exact BF16 payload bits, including untouched NaN snapshots."""
+    if left.shape != right.shape or left.dtype != right.dtype:
+        return False
+    if left.dtype in (torch.bfloat16, torch.float16):
+        return bool(torch.equal(left.contiguous().view(torch.int16),
+                                right.contiguous().view(torch.int16)))
+    if left.dtype == torch.float32:
+        return bool(torch.equal(left.contiguous().view(torch.int32),
+                                right.contiguous().view(torch.int32)))
+    return bool(torch.equal(left,right))
+
+
 def _check_valid(torch, ops, fixture, old, new, acceptance):
     _paired_status(torch, old, new)
     reference = reuse._snapshot(old)
@@ -245,8 +258,8 @@ def store_gate(torch,ops,device,cores,acceptance):
         state={k:v.cpu() for k,v in state.items()};state['status']=status.cpu();results.append(state)
     legacy,striped=results
     for k in ('wk','wv','tags','status'):
-        if not reuse._bitwise_identical(torch,legacy[k],striped[k]):
-            raise RuntimeError('striped store changed '+k)
+        if not _store_bits_equal(torch,legacy[k],striped[k]):
+            raise RuntimeError('striped store changed '+k+' bits')
     # Decode every slot, including untouched slots; preserve all raw prefix and padding.
     restored=striped['raw'].clone()
     payload=reuse.BLOCK_TOKENS*136
@@ -364,7 +377,7 @@ def _store_changed_input_graph(torch,ops,device,fixture,tensors,buffers,rk,rv):
         raise RuntimeError('striped store graph ignored changed K/V inputs')
     reset();launch();torch.npu.synchronize()
     for key in state:
-        if not reuse._bitwise_identical(torch,changed[key],state[key]):
+        if not _store_bits_equal(torch,changed[key],state[key]):
             raise RuntimeError(f'striped store changed-input graph/eager {key} differs')
     if not torch.equal(changed_status,status):
         raise RuntimeError('striped store changed-input graph/eager status differs')

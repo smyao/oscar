@@ -1,4 +1,4 @@
-"""Archive #27/#28/#34/#36/#37-49/#78/#142: execute pinned native contracts.
+"""Archive #27/#28/#34/#36/#37-49/#78/#142/#155: execute pinned native contracts.
 
 Native class/method AST nodes are compiled unchanged from the read-only
 reference tree. Dependencies outside each tested contract are supplied by
@@ -152,6 +152,7 @@ def test_real_native_mtp_initialization_creates_metadata_without_resizing_pool(
         {"ABC": ABC, "abstractmethod": abstractmethod, "Enum": Enum, "Generic": Generic,
          "ClassVar": ClassVar, "M": TypeVar("M"), "torch": torch}, monkeypatch)
     backend = load_our_module("oscar_ascend.integration.backend", monkeypatch)
+    monkeypatch.setattr(backend, "require_runtime", lambda: SimpleNamespace(config={}))
     utility = definitions("references/vllm/vllm/v1/worker/utils.py", "native_attention_group_contract",
                           {"AttentionGroup"}, {"dataclass": dataclass, "field": field}, monkeypatch)
     draft_name = groups[0].layer_names[-1]
@@ -514,6 +515,7 @@ def test_real_native_metadata_base_builds_capture_then_replay(monkeypatch):
         {"ABC": ABC, "abstractmethod": abstractmethod, "Enum": Enum, "Generic": Generic,
          "ClassVar": ClassVar, "M": TypeVar("M"), "torch": torch}, monkeypatch)
     backend = load_our_module("oscar_ascend.integration.backend", monkeypatch)
+    monkeypatch.setattr(backend, "require_runtime", lambda: SimpleNamespace(config={}))
     builder = backend.OscarMetadataBuilder(object(), ["layer"], object(), torch.device("cpu"))
     common = SimpleNamespace(
         query_start_loc=torch.tensor([0, 4, 8], dtype=torch.int32),

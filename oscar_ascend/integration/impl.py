@@ -4,6 +4,8 @@ Archive #27/#34/#36/#37-49/#55-69/#111/#140: complete forward dispatch, fixed bu
 device metadata, exact physical-page snapshots, and no BF16 history restore.
 #148: only an explicit experimental workspace selects cluster4; default
 #keeps the accepted fe0 operator and original FP32 arithmetic.
+#142/#155: first-draft current-only requires a separate builder qualification;
+#the original native-current predicate still rejects every MTP draft.
 PR oscar_attn.py:486-577: current-chunk K/V are exact; cached history is INT2.
 Native acl_graph.py:270 and attention_v1.py:454: graph-update interface.
 Native attention_cp.py:1017-1032: exact current TND FIA yields output plus LSE.
@@ -84,6 +86,20 @@ class OscarAttentionImpl(AttentionImpl):
         if attn_metadata.slot_mapping.dtype not in (torch.int32, torch.int64):
             raise OscarReadinessError("native slot mapping must be int32 or int64")
         native_current = use_native_current(attn_metadata)
+        first_draft_suffix = (attn_metadata.is_draft and attn_metadata.draft_index == 0
+                              and attn_metadata.first_draft_current_only)
+        if (self.provider.config.get("experimental_current_only", False)
+                and (native_current or first_draft_suffix)
+                and attn_metadata.current_only_plan is not None):
+            from .current_only_dispatch import dispatch_current_suffix
+            return dispatch_current_suffix(self, layer, query, key, value, kv_cache,
+                                           attn_metadata, output, attn_metadata.current_only_plan)
+        if self.provider.config.get("experimental_mixed_decode_split", False):
+            from .mixed_decode_split import plan_mixed_decode, dispatch_mixed_decode
+            mixed_plan = plan_mixed_decode(attn_metadata, n,query_heads=h,kv_heads=hk)
+            if mixed_plan is not None:
+                return dispatch_mixed_decode(self, layer, query, key, value, kv_cache,
+                                             attn_metadata, output, mixed_plan)
         timing_fields = {"stage": "draft" if attn_metadata.is_draft else
                          ("prefill" if native_current else "decode"),
                          "is_draft": attn_metadata.is_draft,
@@ -91,9 +107,21 @@ class OscarAttentionImpl(AttentionImpl):
                          "max_seq_len": attn_metadata.max_seq_len,
                          "max_query_len": attn_metadata.max_query_len}
         workspace = state.workspace
+        if getattr(attn_metadata, "mixed_split_segment", None) is not None:
+            timing_fields["mixed_segment"] = attn_metadata.mixed_split_segment
         workspace.validate(n, h, hk, d)
         g = workspace.geometry
-        source_splits = g.splits_for_tokens(n)
+        split_tokens = attn_metadata.cv_shape_tokens
+        if split_tokens is None:
+            split_tokens = n
+        elif (type(split_tokens) is not int or split_tokens < n or
+              not ((attn_metadata.is_draft and attn_metadata.draft_index > 0) or
+                   (self.provider.config.get("experimental_mixed_decode_split", False) and
+                    getattr(attn_metadata, "mixed_split_segment", None) in {"short_prefix", "long_suffix"}))):
+            raise OscarReadinessError("CV split shape requires a qualified partition and original padded capacity")
+        else:
+            timing_fields["cv_shape_tokens"] = split_tokens
+        source_splits = g.splits_for_tokens(split_tokens)
         splits = 3 * source_splits
         task_count = n * hk * splits
         tasks = workspace.tasks[:task_count]
@@ -136,7 +164,8 @@ class OscarAttentionImpl(AttentionImpl):
                               q1_draft=attn_metadata.is_draft and attn_metadata.draft_index > 0,
                               fast_unpack=self.provider.config.get("experimental_fast_unpack", False),
                               mixed_cv=self.provider.config.get("experimental_mixed_cv", False),
-                              striped_cache=striped_cache)
+                              striped_cache=striped_cache,
+                              decode_bundle=self.provider.config.get("experimental_decode_bundle", False))
         with phase("fia", layer=layer.layer_name, tokens=n, splits=source_splits,
                    cube_cores=g.cube_cores, tasks=task_count, requests=attn_metadata.num_reqs,
                    cv_operator=cv_name, **timing_fields):

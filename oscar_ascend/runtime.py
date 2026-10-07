@@ -194,6 +194,12 @@ class AscendRuntimeProvider:
             raise OscarReadinessError("experimental_mixed_cv must be an explicit boolean")
         if type(self.config.get("experimental_striped_cache", False)) is not bool:
             raise OscarReadinessError("experimental_striped_cache must be an explicit boolean")
+        if type(self.config.get("experimental_current_only", False)) is not bool:
+            raise OscarReadinessError("experimental_current_only must be an explicit boolean")
+        for flag in ("experimental_first_mtp_current_fia", "experimental_compact_later_mtp",
+                     "experimental_mixed_decode_split", "experimental_decode_bundle"):
+            if type(self.config.get(flag, False)) is not bool:
+                raise OscarReadinessError(f"{flag} must be an explicit boolean")
         if self.config.get("experimental_fast_unpack", False) and not self.config.get("experimental_history_reuse", False):
             raise OscarReadinessError("fast unpack requires explicit candidate history configuration")
         if self.config.get("experimental_mixed_cv", False) and not (
@@ -207,6 +213,12 @@ class AscendRuntimeProvider:
             raise OscarReadinessError("striped cache requires explicit mixed/fast/history candidate configuration")
         self._cache_format = ("striped_v1" if self.config.get("experimental_striped_cache", False)
                               else "canonical_v1")
+        if self.config.get("experimental_decode_bundle", False) and self._cache_format != "striped_v1":
+            raise OscarReadinessError("decode bundle requires the explicit striped cache bundle")
+        if self.config.get("experimental_mixed_decode_split", False) and not self.config.get("experimental_decode_bundle", False):
+            raise OscarReadinessError("mixed decode partition requires the optimized decoder bundle")
+        if self.config.get("experimental_mixed_decode_split", False) and not self.config.get("experimental_first_mtp_current_fia", False):
+            raise OscarReadinessError("mixed decode partition requires the qualified first-MTP current path")
         self._ready = False
         self.layers: dict[str, LayerState] = {}
         self.workspaces: dict[tuple, GraphWorkspace] = {}
@@ -239,6 +251,12 @@ class AscendRuntimeProvider:
         if self._cache_format == "striped_v1":
             from .ops.cv_dispatch import STRIPED_CV_OPS
             require_capabilities(STRIPED_CV_OPS | {"rotate_clip_store_striped_out"})
+        if self.config.get("experimental_current_only", False):
+            from .ops.loader import require_capabilities
+            require_capabilities({"copy_validate_current_out"})
+        if self.config.get("experimental_decode_bundle", False):
+            from .ops.cv_dispatch import DECODE_BUNDLE_OPS
+            require_capabilities(DECODE_BUNDLE_OPS)
         import torch
         if not torch.npu.is_available():
             raise OscarReadinessError("OSCAR production requires an available NPU")

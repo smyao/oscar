@@ -1,0 +1,80 @@
+{
+  "status": "completed_matched_comparison",
+  "case": "q4_r32_n128_20to30k_s3",
+  "cores": 20,
+  "baseline": "oscar_attention_cv_striped_decode_simd_kernel",
+  "candidate": "oscar_attention_cv_decode_bundle_kernel",
+  "all_sources_and_tasks": true,
+  "baseline_directory": "/Users/sunao2000/gpt_new_oscar_kimi/reports/decode_integrated_batch32_camodel_20261007",
+  "candidate_directory": "/Users/sunao2000/gpt_new_oscar_kimi/reports/decode_integrated_batch32_retry_after_oom_20261007",
+  "task_ticks": {
+    "baseline": 16290667,
+    "candidate": 9589788
+  },
+  "baseline_over_candidate": 1.6987515261025583,
+  "candidate_tick_reduction": 0.41133239050310216,
+  "candidate_faster": true,
+  "partial_lse_status_bitwise": true,
+  "independent_oracle": "passed_both_arms",
+  "cpu_reference": "not_available",
+  "input_sha256": {
+    "q": "190146d70d425ea90177489b255c19c412b250796a4203c2e3b8d19687db61e8",
+    "qr": "836d7e0c0eb9dd7fbb6d14ef917f82e4ef58fab1883a8fe1ceea8679cceaa5b6",
+    "ck": "e5f24da711c8a8216ee1e8667e6d3cccfd2e5d5efb560ea38638f81ac35a0143",
+    "cv": "f913db1a0d51ed035876e0afa36affbce8269459b12fcd2a9f99cab767b1943b",
+    "rv": "011617962d8c473c7a320031759a0f3d3723029c3477e762ee65dbfb0e0aa93c",
+    "raw": "fd823aaa48db3e0fd0899d5de222598e2ee503d90da5f438d8b8fe76d65df227",
+    "table": "3cd14fe8a3bd56a005dc594317f01bdb2c2118af3a194f674bd74ec9c579ce66",
+    "wk": "4e7648d4ded3d974c416bce949cef89f5da85df063813473efb9c61f027710e0",
+    "wv": "8a948b55b7f5a60516675f7148d755fdbf3035a1131c76eb7677e6e8d83b8b89",
+    "tags": "abba27f990c6bb49761b6b3bb5a5c7886e5fee82c9c57656ca9178c8b5744e23",
+    "tasks": "1a070409762a07df56b87aefee65c27b174fd0b8524b7530c9006838a72d3ab5"
+  },
+  "library_sha256": "11ae2f408e3c34cd444fe9567702fad4819a343c1a41b1317e2079ce305bde23",
+  "simulator_configuration": {
+    "directory": "/tmp/oscar-decode-history-pipeline-20261006/simulator-parallel-6",
+    "config": {
+      "stars": {
+        "ffts_mode": 1
+      },
+      "model_top": {
+        "sim_type": 0,
+        "num_aic": 24,
+        "num_aiv": 48
+      },
+      "pem": {
+        "parsim": 1,
+        "parsim_thd_limit": 6
+      }
+    },
+    "sha256": "072e786d534689a8c02f547bb8cc577bd4739a0cf396c4b38367d041802cb5c6",
+    "detail": {
+      "LOG": {
+        "rotating_file_size": 134217728,
+        "rotating_file_number": 2,
+        "flush_level": 3,
+        "core_enable_mask": [
+          "0x0"
+        ]
+      },
+      "L2CACHE": {
+        "cache_enable": 0,
+        "cache_set_size": 24,
+        "cache_way_size": 16384,
+        "cache_line_size": 512,
+        "cache_read_latency": 241,
+        "cache_write_latency": 96
+      }
+    },
+    "detail_sha256": "a40e5d810b94c539c4b62d14ad758dfacfd88b36b8ad0a3fe5249050723a1044"
+  },
+  "host_seconds": {
+    "baseline": 5655.19299599994,
+    "candidate": 4392.9761801249115
+  },
+  "scope": "complete operator on this exact synthetic fixture; no other-shape or whole-model extrapolation",
+  "npu": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_run",
+  "whole_service": "not_run"
+}

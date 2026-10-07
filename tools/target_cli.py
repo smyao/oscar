@@ -20,6 +20,12 @@ def serve_argv(config: dict) -> list[str]:
         args += [flag, json.dumps(config[key], separators=(",", ":"))]
     args += ["--trust-remote-code", "--async-scheduling", "--allowed-local-media-path", "/",
              "--mm-processor-cache-gb", "0", "--mamba-cache-dtype", "bfloat16", "--mamba-ssm-cache-dtype", "bfloat16"]
+    if "scheduler_cls" in config:
+        scheduler = config["scheduler_cls"]
+        if (not isinstance(scheduler, str) or "." not in scheduler
+                or not all(part.isidentifier() for part in scheduler.split("."))):
+            raise ValueError("scheduler_cls must be an explicit Python class path")
+        args += ["--scheduler-cls", scheduler]
     if config.get("profiler_config") is not None:
         args += ["--profiler-config",json.dumps(config["profiler_config"],separators=(",",":"))]
     return args

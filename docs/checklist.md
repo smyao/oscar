@@ -133,3 +133,15 @@ q4诊断接入同一`--probe-only`：原生paged BF16 FIA与OSCAR CV+merge的未
 
 
 2026-09-30 striped 候选：B4 数值失败已完整回退（#154）；新 D256 无损 INT2 排列、短 q4/q1 M32/KV64 与 SIMD metadata guard 接入共享 candidate，直启及 observe 均启用，GDN 保持原生。官方 CPU 字节/oracle 与 CANN/CAModel 分列，8K 同源 q4 task 周期 3,195,883→1,525,119（2.096 倍模拟算子收益）。新增真实 writer/readers/图/速度门，冻结阈值不变。C04/C05/E01 新候选设备完成及图仍待认证，E06 整轮追平未通过；不以周期模拟宣称 8 分钟已达成。范围与复现实证见 `docs/striped_cache_candidate.md`。42 个 checkpoint 编号不变。
+
+2026-09-30 #155回传：用户确认127请求/K32/均长20K整轮16→14分钟，原生8分钟；保留729baa5有效组合。新striped writer比较把未写BF16 NaN的相同位模式判为不同，本地改为严格按位比较（不同NaN payload、正负零仍失败），设备复验待定。两份完整采样与840/480秒粗模型见`reports/whole_run_findings_20260930.md`；统计时间边界不一致、prompt首输出延迟记账、MTP工作量不同，不能从两个总耗时唯一拟合算子占比。共享历史原型同核数仅约1.096倍，拒绝把原先核心数混杂的3.595倍纳入整轮预算。整条准入/current-only/FP32大分块仅本地实验，生产candidate开关未变；E06仍未通过，未推送未证实的8分钟方案。CPU、编译、CAModel均不代替C04/C05/E01真NPU/图验收。
+
+2026-10-06断点续作：独立wide FP32 B512/B1024原型官方CPU 8/8、CANN编译通过，修复QR/输出缓冲的跨管道复用并显式拒绝不支持的grid；证据`reports/wide_fp32_validation_20261006.md`。仅受控SDK/数学可行性，不以逐row原型与批量生产Softmax做速度比较；新NPU/图/模型/性能均未验收。首次MTP零历史suffix的因果集合已按原生proposer核实，后续实验与主模型分流各自记录；两固定入口仍未启用这些本地优化，GDN保持原生。整轮收益预算已禁止重复使用605.2秒残差或删除仍需执行的store成本。
+
+2026-10-06本轮收口：首次MTP/current-only代码与真实NPU短门已准备，统一登记为research开关，candidate默认off、native/baseline清除，直启仍无probe；最后93项相关主机回归通过，未假写NPU门通过。wide批量V2受控CPU12项与CANN通过后，同M126/D256/B512/grid1 CAModel真实A/B为KV256 188,961→wide228,229 ticks（慢20.78%），已停止该方向推广，未换shape追漂亮比值；见`reports/wide_fp32_simd_ab_result_20261006.md`。E06八分钟目标依旧未验收，无commit/push，42个checkpoint编号不变。
+
+2026-10-07持续迭代（非新增真机条目）：当前SIMD decode的显式指令标记确认部分KV块存在明显mask开销；同一q4历史任务三个Softmax区间为7178/5537/85416周期。CAModel的SYS_CNT恒零已识别，不用于相位归因；完整标记及嵌套时间核算见`reports/decode_marker_v2_camodel_20261007/`。组合保持FP32/KV256历史顺序，包含历史流水重叠、临时INT16行布局、窗口批量读取、精确区间mask和precise源补零工作裁剪。20项CPU整算子用例逐位/冻结oracle通过；另有当前striped base/balanced/C4/C16四条路径的完整CPU A/B通过。完整单请求20K周期2464632→1488538，完整四请求20/23/27/30K、N128/S3/20核周期3327234→2065063（1.6112倍），均保留全部source/task且输出逐位一致。它们不是32请求、NPU或整轮模型速度结论。
+
+实际部署CANN库与Torch扩展已通过完整编译链接，六个新设备入口已用符号表核实；来源签名和日志见`reports/decode_integrated_build_20261007/`。新增q4/q1图门、first-MTP current门和混合请求分流整forward门，检查真实设备完成、冻结精度、缓存字节、后续q1、完整case及产物签名，失败阻断服务。两条一键入口已共同提供有效特性/预算摘要，显式全组合配置的计划接线已验证；自动candidate推广仍待整体收益论证。原生GDN与参考树未修改，精度门未放宽，42个checkpoint编号不变；E06仍未通过。32请求完整模拟正在继续，状态与下一步见`reports/decode_progress_20261007.json`。
+
+2026-10-07用户要求本轮收口推送：完整K32 q4的部署库CAModel对照已通过，16,290,667→9,589,788周期（1.69875×），partial/LSE/status逐位、冻结oracle通过。用户随后明确停止扩大测速，采用当前方案进入真机认证。两个candidate一键入口现共同默认启用decode bundle、current-only、first-MTP current、later-MTP compact、mixed decode partition和whole-prefill；未验收的weighted-owner试验不纳入。216项关键本地主机回归通过；C04/C05/E01新真NPU/图与E06整轮8分钟仍待认证，不因用户授权推送而改为通过。交付说明见`docs/decode_candidate_20261007.md`。

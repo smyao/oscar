@@ -1,0 +1,1265 @@
+{
+  "status": "passed",
+  "backend": "official_ascendc_cpu_debug",
+  "cases": [
+    {
+      "name": "q4_hkv2_c641",
+      "status": "passed",
+      "returncode": 0,
+      "timed_out": false,
+      "log": "/tmp/oscar-decode-history-pipeline-20261006/bundle-cpu-window-logs/00-q4_hkv2_c641.log",
+      "golden_sha256": "8355e160764e24e29297ebca2e03105c79162f3a4f7d9052a38b104afb74ac37",
+      "evidence": {
+        "backend": "ascendc_cpu_debug",
+        "op": "decode_bundle_q4",
+        "status": "passed",
+        "baseline": "current_production_simd",
+        "bitwise": true,
+        "oracle": true,
+        "fault_order": false,
+        "cores": 2,
+        "input_immutable": true,
+        "gm_guards": true,
+        "baseline_workspace_bytes_per_core": 917504,
+        "candidate_workspace_bytes_per_core": 1146880
+      },
+      "sdk_trace_summary": {
+        "files": [
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_0_0_cub.cce",
+            "bytes": 326116,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/000.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_0_0_vec.cce",
+            "bytes": 2869693,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/001.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_0_1_vec.cce",
+            "bytes": 1977044,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/002.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_1_0_cub.cce",
+            "bytes": 2644,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/003.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_1_0_vec.cce",
+            "bytes": 170791,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/004.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_1_1_vec.cce",
+            "bytes": 52135,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/005.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_0_0_cub.cce",
+            "bytes": 262660,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/006.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_0_0_vec.cce",
+            "bytes": 1807679,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/007.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_0_1_vec.cce",
+            "bytes": 1244134,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/008.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_1_0_cub.cce",
+            "bytes": 2628,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/009.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_1_0_vec.cce",
+            "bytes": 170775,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/010.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_1_1_vec.cce",
+            "bytes": 52119,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/011.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_merge_lse_kernel_0_0_vec.cce",
+            "bytes": 119785,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/012.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_merge_lse_kernel_1_0_vec.cce",
+            "bytes": 119790,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/013.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_merge_lse_kernel_2_0_vec.cce",
+            "bytes": 119787,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/014.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_merge_lse_kernel_3_0_vec.cce",
+            "bytes": 119787,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/015.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_0_0_vec.cce",
+            "bytes": 8779,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/016.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_1_0_vec.cce",
+            "bytes": 8845,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/017.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_2_0_vec.cce",
+            "bytes": 8869,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/018.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_3_0_vec.cce",
+            "bytes": 8870,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/019.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_0_0_cub_npuchk.log",
+            "bytes": 5128923,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/020.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_0_0_vec_npuchk.log",
+            "bytes": 102880453,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/021.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_0_1_vec_npuchk.log",
+            "bytes": 76142592,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/022.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_1_0_cub_npuchk.log",
+            "bytes": 7534,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/023.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_1_0_vec_npuchk.log",
+            "bytes": 3425384,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/024.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_1_1_vec_npuchk.log",
+            "bytes": 1083089,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/025.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_0_0_cub_npuchk.log",
+            "bytes": 3869116,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/026.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_0_0_vec_npuchk.log",
+            "bytes": 100359897,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/027.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_0_1_vec_npuchk.log",
+            "bytes": 72092102,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/028.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_1_0_cub_npuchk.log",
+            "bytes": 7534,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/029.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_1_0_vec_npuchk.log",
+            "bytes": 3425764,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/030.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_1_1_vec_npuchk.log",
+            "bytes": 1083469,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/031.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_merge_lse_kernel_0_0_vec_npuchk.log",
+            "bytes": 2259925,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/032.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_merge_lse_kernel_1_0_vec_npuchk.log",
+            "bytes": 2259930,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/033.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_merge_lse_kernel_2_0_vec_npuchk.log",
+            "bytes": 2259927,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/034.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_merge_lse_kernel_3_0_vec_npuchk.log",
+            "bytes": 2259927,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/035.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_0_0_vec_npuchk.log",
+            "bytes": 115664,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/036.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_1_0_vec_npuchk.log",
+            "bytes": 115247,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/037.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_2_0_vec_npuchk.log",
+            "bytes": 115247,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/038.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_3_0_vec_npuchk.log",
+            "bytes": 115247,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/039.preview.txt"
+          },
+          {
+            "path": "stub_reg.log",
+            "bytes": 1105023,
+            "preview": "bundle-cpu-window-logs/00-q4_hkv2_c641-trace/040.preview.txt"
+          }
+        ],
+        "file_count": 41,
+        "total_bytes": 389564924,
+        "entries_truncated": false,
+        "complete_stdout": "separate run_phase log",
+        "sdk_workdir_cleaned_after_summary": true
+      }
+    },
+    {
+      "name": "q1_hkv2_c511",
+      "status": "passed",
+      "returncode": 0,
+      "timed_out": false,
+      "log": "/tmp/oscar-decode-history-pipeline-20261006/bundle-cpu-window-logs/01-q1_hkv2_c511.log",
+      "golden_sha256": "36f32a500050630c40597e6395539980a5a877b71d16158d659e72300a63196c",
+      "evidence": {
+        "backend": "ascendc_cpu_debug",
+        "op": "decode_bundle_q1",
+        "status": "passed",
+        "baseline": "current_production_simd",
+        "bitwise": true,
+        "oracle": true,
+        "fault_order": false,
+        "cores": 2,
+        "input_immutable": true,
+        "gm_guards": true,
+        "baseline_workspace_bytes_per_core": 917504,
+        "candidate_workspace_bytes_per_core": 1146880
+      },
+      "sdk_trace_summary": {
+        "files": [
+          {
+            "path": "cceprint/oscar_attention_cv_striped_q1_simd_kernel_0_0_cub.cce",
+            "bytes": 266874,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/000.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_q1_simd_kernel_0_0_vec.cce",
+            "bytes": 2467670,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/001.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_q1_simd_kernel_0_1_vec.cce",
+            "bytes": 1490160,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/002.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_q1_simd_kernel_1_0_cub.cce",
+            "bytes": 2640,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/003.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_q1_simd_kernel_1_0_vec.cce",
+            "bytes": 170781,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/004.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_q1_simd_kernel_1_1_vec.cce",
+            "bytes": 52125,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/005.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q1_kernel_0_0_cub.cce",
+            "bytes": 203530,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/006.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q1_kernel_0_0_vec.cce",
+            "bytes": 1372066,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/007.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q1_kernel_0_1_vec.cce",
+            "bytes": 750152,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/008.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q1_kernel_1_0_cub.cce",
+            "bytes": 2628,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/009.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q1_kernel_1_0_vec.cce",
+            "bytes": 170769,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/010.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q1_kernel_1_1_vec.cce",
+            "bytes": 52113,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/011.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_merge_lse_kernel_0_0_vec.cce",
+            "bytes": 65593,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/012.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_merge_lse_kernel_1_0_vec.cce",
+            "bytes": 65591,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/013.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_merge_lse_kernel_2_0_vec.cce",
+            "bytes": 65591,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/014.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_merge_lse_kernel_3_0_vec.cce",
+            "bytes": 65594,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/015.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_0_0_vec.cce",
+            "bytes": 9100,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/016.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_1_0_vec.cce",
+            "bytes": 8525,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/017.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_2_0_vec.cce",
+            "bytes": 8529,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/018.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_3_0_vec.cce",
+            "bytes": 8529,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/019.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_q1_simd_kernel_0_0_cub_npuchk.log",
+            "bytes": 3417486,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/020.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_q1_simd_kernel_0_0_vec_npuchk.log",
+            "bytes": 81616954,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/021.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_q1_simd_kernel_0_1_vec_npuchk.log",
+            "bytes": 52646927,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/022.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_q1_simd_kernel_1_0_cub_npuchk.log",
+            "bytes": 7534,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/023.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_q1_simd_kernel_1_0_vec_npuchk.log",
+            "bytes": 3425384,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/024.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_q1_simd_kernel_1_1_vec_npuchk.log",
+            "bytes": 1083089,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/025.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q1_kernel_0_0_cub_npuchk.log",
+            "bytes": 2398997,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/026.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q1_kernel_0_0_vec_npuchk.log",
+            "bytes": 69361306,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/027.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q1_kernel_0_1_vec_npuchk.log",
+            "bytes": 42320509,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/028.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q1_kernel_1_0_cub_npuchk.log",
+            "bytes": 7534,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/029.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q1_kernel_1_0_vec_npuchk.log",
+            "bytes": 3425764,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/030.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q1_kernel_1_1_vec_npuchk.log",
+            "bytes": 1083469,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/031.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_merge_lse_kernel_0_0_vec_npuchk.log",
+            "bytes": 1320877,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/032.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_merge_lse_kernel_1_0_vec_npuchk.log",
+            "bytes": 1320875,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/033.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_merge_lse_kernel_2_0_vec_npuchk.log",
+            "bytes": 1320875,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/034.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_merge_lse_kernel_3_0_vec_npuchk.log",
+            "bytes": 1320878,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/035.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_0_0_vec_npuchk.log",
+            "bytes": 118513,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/036.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_1_0_vec_npuchk.log",
+            "bytes": 111236,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/037.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_2_0_vec_npuchk.log",
+            "bytes": 111236,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/038.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_3_0_vec_npuchk.log",
+            "bytes": 111236,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/039.preview.txt"
+          },
+          {
+            "path": "stub_reg.log",
+            "bytes": 1105023,
+            "preview": "bundle-cpu-window-logs/01-q1_hkv2_c511-trace/040.preview.txt"
+          }
+        ],
+        "file_count": 41,
+        "total_bytes": 274934262,
+        "entries_truncated": false,
+        "complete_stdout": "separate run_phase log",
+        "sdk_workdir_cleaned_after_summary": true
+      }
+    },
+    {
+      "name": "q4_bad_tag",
+      "status": "passed",
+      "returncode": 0,
+      "timed_out": false,
+      "log": "/tmp/oscar-decode-history-pipeline-20261006/bundle-cpu-window-logs/02-q4_bad_tag.log",
+      "golden_sha256": "bdbed0f667ddc02106b03d330e467b693d024a9a3c2c3c9bec2fb983252ed7b6",
+      "evidence": {
+        "backend": "ascendc_cpu_debug",
+        "op": "decode_bundle_q4",
+        "status": "passed",
+        "baseline": "current_production_simd",
+        "bitwise": true,
+        "oracle": false,
+        "fault_order": true,
+        "cores": 2,
+        "input_immutable": true,
+        "gm_guards": true,
+        "baseline_workspace_bytes_per_core": 917504,
+        "candidate_workspace_bytes_per_core": 1146880
+      },
+      "sdk_trace_summary": {
+        "files": [
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_0_0_cub.cce",
+            "bytes": 134894,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/000.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_0_0_vec.cce",
+            "bytes": 1340692,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/001.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_0_1_vec.cce",
+            "bytes": 902093,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/002.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_1_0_cub.cce",
+            "bytes": 2644,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/003.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_1_0_vec.cce",
+            "bytes": 86343,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/004.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_1_1_vec.cce",
+            "bytes": 27015,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/005.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_0_0_cub.cce",
+            "bytes": 103184,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/006.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_0_0_vec.cce",
+            "bytes": 799210,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/007.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_0_1_vec.cce",
+            "bytes": 537739,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/008.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_1_0_cub.cce",
+            "bytes": 2628,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/009.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_1_0_vec.cce",
+            "bytes": 86327,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/010.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_1_1_vec.cce",
+            "bytes": 26999,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/011.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_0_0_vec.cce",
+            "bytes": 6013,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/012.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_1_0_vec.cce",
+            "bytes": 6075,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/013.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_2_0_vec.cce",
+            "bytes": 6097,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/014.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_3_0_vec.cce",
+            "bytes": 6098,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/015.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_0_0_cub_npuchk.log",
+            "bytes": 2110058,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/016.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_0_0_vec_npuchk.log",
+            "bytes": 43250437,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/017.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_0_1_vec_npuchk.log",
+            "bytes": 30427765,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/018.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_1_0_cub_npuchk.log",
+            "bytes": 7534,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/019.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_1_0_vec_npuchk.log",
+            "bytes": 1472522,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/020.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_1_1_vec_npuchk.log",
+            "bytes": 546624,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/021.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_0_0_cub_npuchk.log",
+            "bytes": 1480333,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/022.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_0_0_vec_npuchk.log",
+            "bytes": 40237909,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/023.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_0_1_vec_npuchk.log",
+            "bytes": 27372493,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/024.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_1_0_cub_npuchk.log",
+            "bytes": 7534,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/025.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_1_0_vec_npuchk.log",
+            "bytes": 1472902,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/026.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_1_1_vec_npuchk.log",
+            "bytes": 547004,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/027.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_0_0_vec_npuchk.log",
+            "bytes": 75200,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/028.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_1_0_vec_npuchk.log",
+            "bytes": 74783,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/029.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_2_0_vec_npuchk.log",
+            "bytes": 74783,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/030.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_3_0_vec_npuchk.log",
+            "bytes": 74783,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/031.preview.txt"
+          },
+          {
+            "path": "stub_reg.log",
+            "bytes": 1105023,
+            "preview": "bundle-cpu-window-logs/02-q4_bad_tag-trace/032.preview.txt"
+          }
+        ],
+        "file_count": 33,
+        "total_bytes": 154411738,
+        "entries_truncated": false,
+        "complete_stdout": "separate run_phase log",
+        "sdk_workdir_cleaned_after_summary": true
+      }
+    },
+    {
+      "name": "q4_vnan_then_tag",
+      "status": "passed",
+      "returncode": 0,
+      "timed_out": false,
+      "log": "/tmp/oscar-decode-history-pipeline-20261006/bundle-cpu-window-logs/03-q4_vnan_then_tag.log",
+      "golden_sha256": "45155e85b759de4683b4f792b4291c4c0e8350d0f8c455b3e91fd39d88a38a3d",
+      "evidence": {
+        "backend": "ascendc_cpu_debug",
+        "op": "decode_bundle_q4",
+        "status": "passed",
+        "baseline": "current_production_simd",
+        "bitwise": true,
+        "oracle": false,
+        "fault_order": true,
+        "cores": 2,
+        "input_immutable": true,
+        "gm_guards": true,
+        "baseline_workspace_bytes_per_core": 917504,
+        "candidate_workspace_bytes_per_core": 1146880
+      },
+      "sdk_trace_summary": {
+        "files": [
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_0_0_cub.cce",
+            "bytes": 134894,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/000.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_0_0_vec.cce",
+            "bytes": 1340676,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/001.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_0_1_vec.cce",
+            "bytes": 902085,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/002.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_1_0_cub.cce",
+            "bytes": 2644,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/003.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_1_0_vec.cce",
+            "bytes": 86343,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/004.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_1_1_vec.cce",
+            "bytes": 27015,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/005.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_0_0_cub.cce",
+            "bytes": 103184,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/006.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_0_0_vec.cce",
+            "bytes": 799194,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/007.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_0_1_vec.cce",
+            "bytes": 537731,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/008.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_1_0_cub.cce",
+            "bytes": 2628,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/009.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_1_0_vec.cce",
+            "bytes": 86327,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/010.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_1_1_vec.cce",
+            "bytes": 26999,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/011.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_0_0_vec.cce",
+            "bytes": 6013,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/012.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_1_0_vec.cce",
+            "bytes": 6075,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/013.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_2_0_vec.cce",
+            "bytes": 6097,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/014.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_3_0_vec.cce",
+            "bytes": 6098,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/015.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_0_0_cub_npuchk.log",
+            "bytes": 2110058,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/016.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_0_0_vec_npuchk.log",
+            "bytes": 43250437,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/017.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_0_1_vec_npuchk.log",
+            "bytes": 30427765,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/018.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_1_0_cub_npuchk.log",
+            "bytes": 7534,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/019.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_1_0_vec_npuchk.log",
+            "bytes": 1472522,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/020.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_1_1_vec_npuchk.log",
+            "bytes": 546624,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/021.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_0_0_cub_npuchk.log",
+            "bytes": 1480333,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/022.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_0_0_vec_npuchk.log",
+            "bytes": 40237909,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/023.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_0_1_vec_npuchk.log",
+            "bytes": 27372493,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/024.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_1_0_cub_npuchk.log",
+            "bytes": 7534,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/025.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_1_0_vec_npuchk.log",
+            "bytes": 1472902,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/026.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_1_1_vec_npuchk.log",
+            "bytes": 547004,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/027.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_0_0_vec_npuchk.log",
+            "bytes": 75200,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/028.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_1_0_vec_npuchk.log",
+            "bytes": 74783,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/029.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_2_0_vec_npuchk.log",
+            "bytes": 74783,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/030.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_3_0_vec_npuchk.log",
+            "bytes": 74783,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/031.preview.txt"
+          },
+          {
+            "path": "stub_reg.log",
+            "bytes": 1105023,
+            "preview": "bundle-cpu-window-logs/03-q4_vnan_then_tag-trace/032.preview.txt"
+          }
+        ],
+        "file_count": 33,
+        "total_bytes": 154411690,
+        "entries_truncated": false,
+        "complete_stdout": "separate run_phase log",
+        "sdk_workdir_cleaned_after_summary": true
+      }
+    },
+    {
+      "name": "q4_tag_then_vnan",
+      "status": "passed",
+      "returncode": 0,
+      "timed_out": false,
+      "log": "/tmp/oscar-decode-history-pipeline-20261006/bundle-cpu-window-logs/04-q4_tag_then_vnan.log",
+      "golden_sha256": "e4cfb88048548ebd03189565ed0ecbe27f3d0ae39391735e42c353383f5b16e1",
+      "evidence": {
+        "backend": "ascendc_cpu_debug",
+        "op": "decode_bundle_q4",
+        "status": "passed",
+        "baseline": "current_production_simd",
+        "bitwise": true,
+        "oracle": false,
+        "fault_order": true,
+        "cores": 2,
+        "input_immutable": true,
+        "gm_guards": true,
+        "baseline_workspace_bytes_per_core": 917504,
+        "candidate_workspace_bytes_per_core": 1146880
+      },
+      "sdk_trace_summary": {
+        "files": [
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_0_0_cub.cce",
+            "bytes": 134894,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/000.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_0_0_vec.cce",
+            "bytes": 1340676,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/001.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_0_1_vec.cce",
+            "bytes": 902085,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/002.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_1_0_cub.cce",
+            "bytes": 2644,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/003.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_1_0_vec.cce",
+            "bytes": 86343,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/004.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_decode_simd_kernel_1_1_vec.cce",
+            "bytes": 27015,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/005.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_0_0_cub.cce",
+            "bytes": 103184,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/006.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_0_0_vec.cce",
+            "bytes": 799196,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/007.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_0_1_vec.cce",
+            "bytes": 537731,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/008.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_1_0_cub.cce",
+            "bytes": 2628,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/009.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_1_0_vec.cce",
+            "bytes": 86327,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/010.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q4_kernel_1_1_vec.cce",
+            "bytes": 26999,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/011.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_0_0_vec.cce",
+            "bytes": 6013,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/012.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_1_0_vec.cce",
+            "bytes": 6075,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/013.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_2_0_vec.cce",
+            "bytes": 6097,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/014.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_3_0_vec.cce",
+            "bytes": 6098,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/015.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_0_0_cub_npuchk.log",
+            "bytes": 2110058,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/016.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_0_0_vec_npuchk.log",
+            "bytes": 43250437,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/017.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_0_1_vec_npuchk.log",
+            "bytes": 30427765,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/018.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_1_0_cub_npuchk.log",
+            "bytes": 7534,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/019.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_1_0_vec_npuchk.log",
+            "bytes": 1472522,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/020.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_decode_simd_kernel_1_1_vec_npuchk.log",
+            "bytes": 546624,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/021.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_0_0_cub_npuchk.log",
+            "bytes": 1480333,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/022.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_0_0_vec_npuchk.log",
+            "bytes": 40237911,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/023.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_0_1_vec_npuchk.log",
+            "bytes": 27372493,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/024.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_1_0_cub_npuchk.log",
+            "bytes": 7534,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/025.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_1_0_vec_npuchk.log",
+            "bytes": 1472902,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/026.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q4_kernel_1_1_vec_npuchk.log",
+            "bytes": 547004,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/027.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_0_0_vec_npuchk.log",
+            "bytes": 75200,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/028.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_1_0_vec_npuchk.log",
+            "bytes": 74783,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/029.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_2_0_vec_npuchk.log",
+            "bytes": 74783,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/030.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_3_0_vec_npuchk.log",
+            "bytes": 74783,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/031.preview.txt"
+          },
+          {
+            "path": "stub_reg.log",
+            "bytes": 1105023,
+            "preview": "bundle-cpu-window-logs/04-q4_tag_then_vnan-trace/032.preview.txt"
+          }
+        ],
+        "file_count": 33,
+        "total_bytes": 154411694,
+        "entries_truncated": false,
+        "complete_stdout": "separate run_phase log",
+        "sdk_workdir_cleaned_after_summary": true
+      }
+    },
+    {
+      "name": "q1_bad_page",
+      "status": "passed",
+      "returncode": 0,
+      "timed_out": false,
+      "log": "/tmp/oscar-decode-history-pipeline-20261006/bundle-cpu-window-logs/05-q1_bad_page.log",
+      "golden_sha256": "b30ce159e2ff499d833f716cc69ae686952cddca9470e3182c5d71d6bf24fe42",
+      "evidence": {
+        "backend": "ascendc_cpu_debug",
+        "op": "decode_bundle_q1",
+        "status": "passed",
+        "baseline": "current_production_simd",
+        "bitwise": true,
+        "oracle": false,
+        "fault_order": true,
+        "cores": 2,
+        "input_immutable": true,
+        "gm_guards": true,
+        "baseline_workspace_bytes_per_core": 917504,
+        "candidate_workspace_bytes_per_core": 1146880
+      },
+      "sdk_trace_summary": {
+        "files": [
+          {
+            "path": "cceprint/oscar_attention_cv_striped_q1_simd_kernel_0_0_cub.cce",
+            "bytes": 134764,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/000.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_q1_simd_kernel_0_0_vec.cce",
+            "bytes": 969124,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/001.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_q1_simd_kernel_0_1_vec.cce",
+            "bytes": 478753,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/002.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_q1_simd_kernel_1_0_cub.cce",
+            "bytes": 2640,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/003.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_q1_simd_kernel_1_0_vec.cce",
+            "bytes": 86339,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/004.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_attention_cv_striped_q1_simd_kernel_1_1_vec.cce",
+            "bytes": 27011,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/005.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q1_kernel_0_0_cub.cce",
+            "bytes": 103086,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/006.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q1_kernel_0_0_vec.cce",
+            "bytes": 565218,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/007.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q1_kernel_0_1_vec.cce",
+            "bytes": 247789,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/008.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q1_kernel_1_0_cub.cce",
+            "bytes": 2628,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/009.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q1_kernel_1_0_vec.cce",
+            "bytes": 86327,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/010.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_decode_bundle_q1_kernel_1_1_vec.cce",
+            "bytes": 26999,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/011.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_0_0_vec.cce",
+            "bytes": 6334,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/012.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_1_0_vec.cce",
+            "bytes": 5755,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/013.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_2_0_vec.cce",
+            "bytes": 5757,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/014.preview.txt"
+          },
+          {
+            "path": "cceprint/oscar_prepare_attention_tasks_kernel_3_0_vec.cce",
+            "bytes": 5757,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/015.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_q1_simd_kernel_0_0_cub_npuchk.log",
+            "bytes": 1725753,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/016.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_q1_simd_kernel_0_0_vec_npuchk.log",
+            "bytes": 32068617,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/017.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_q1_simd_kernel_0_1_vec_npuchk.log",
+            "bytes": 18050036,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/018.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_q1_simd_kernel_1_0_cub_npuchk.log",
+            "bytes": 7534,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/019.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_q1_simd_kernel_1_0_vec_npuchk.log",
+            "bytes": 1472522,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/020.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_attention_cv_striped_q1_simd_kernel_1_1_vec_npuchk.log",
+            "bytes": 546624,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/021.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q1_kernel_0_0_cub_npuchk.log",
+            "bytes": 1216560,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/022.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q1_kernel_0_0_vec_npuchk.log",
+            "bytes": 28321676,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/023.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q1_kernel_0_1_vec_npuchk.log",
+            "bytes": 15306065,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/024.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q1_kernel_1_0_cub_npuchk.log",
+            "bytes": 7534,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/025.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q1_kernel_1_0_vec_npuchk.log",
+            "bytes": 1472902,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/026.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_decode_bundle_q1_kernel_1_1_vec_npuchk.log",
+            "bytes": 547004,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/027.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_0_0_vec_npuchk.log",
+            "bytes": 78049,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/028.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_1_0_vec_npuchk.log",
+            "bytes": 70772,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/029.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_2_0_vec_npuchk.log",
+            "bytes": 70772,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/030.preview.txt"
+          },
+          {
+            "path": "npuchk/oscar_prepare_attention_tasks_kernel_3_0_vec_npuchk.log",
+            "bytes": 70772,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/031.preview.txt"
+          },
+          {
+            "path": "stub_reg.log",
+            "bytes": 1105023,
+            "preview": "bundle-cpu-window-logs/05-q1_bad_page-trace/032.preview.txt"
+          }
+        ],
+        "file_count": 33,
+        "total_bytes": 104892496,
+        "entries_truncated": false,
+        "complete_stdout": "separate run_phase log",
+        "sdk_workdir_cleaned_after_summary": true
+      }
+    }
+  ],
+  "baseline": "current_production_simd",
+  "npu": "not_run",
+  "device_speed": "not_established"
+}

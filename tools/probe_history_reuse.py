@@ -178,7 +178,7 @@ def _fingerprint(named: dict) -> str:
     return _tensor_hash(named)
 
 
-def make_fixture(torch, shape: Shape, *, on_request=None) -> dict:
+def make_fixture(torch, shape: Shape, *, on_request=None, rotation_mode="nontrivial") -> dict:
     """Independent CPU oracle input; production never imports this module."""
     from oscar_ascend.ops.reference import attention, decode_kv, encode_kv
     shape.validate()
@@ -189,8 +189,10 @@ def make_fixture(torch, shape: Shape, *, on_request=None) -> dict:
     q = torch.randn((total, hq, dim), generator=generator).to(torch.bfloat16)
     ck = torch.randn((total, hk, dim), generator=generator).to(torch.bfloat16)
     cv = torch.randn((total, hk, dim), generator=generator).to(torch.bfloat16)
-    rk = _hadamard(torch, dim)
-    rv = rk.flip(1).contiguous()
+    if rotation_mode not in {"nontrivial", "hadamard", "identity"}:
+        raise ValueError("unsupported diagnostic rotation mode")
+    rk = torch.eye(dim, dtype=torch.float32) if rotation_mode == "identity" else _hadamard(torch, dim)
+    rv = rk.flip(1).contiguous() if rotation_mode == "nontrivial" else rk.clone()
     qr = (q.float() @ rk).contiguous()
     budgets = [math.ceil((context + length) / BLOCK_TOKENS)
                for context, length in zip(contexts, qlens)]
@@ -308,7 +310,7 @@ def make_fixture(torch, shape: Shape, *, on_request=None) -> dict:
             "input_sha256": _fingerprint(tensors), "blocks": blocks,
             "stride": stride, "tokens": total, "actual_tokens": actual,
             "page_assignments": assignments,
-            "scale": scale}
+            "scale": scale, "rotation_mode": rotation_mode}
 
 
 def _active_device(target: dict):

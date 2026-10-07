@@ -1,4 +1,4 @@
-"""Native metadata validation; archive #34/#36/#37–49/#55–69/#77/#78/#140/#142.
+"""Native metadata validation; archive #34/#36/#37–49/#55–69/#77/#78/#140/#142/#148/#155.
 
 The native runner already maintains query_start_loc_cpu. Carry that CPU mirror
 for causal current-chunk FIA without an NPU readback; device metadata and
@@ -34,6 +34,14 @@ class OscarMetadata:
     is_draft: bool = False
     current_cumulative: tuple[int, ...] | None = None
     dummy_origin: bool = False
+    current_only_plan: Any = None
+    first_draft_current_only: bool = False
+    first_draft_current_fia: bool = False
+    # Unenabled compact later-MTP experiment: preserve the original padded
+    # shape's CV split choice while all actual tensor work uses compact B.
+    cv_shape_tokens: int | None = None
+    mixed_decode_split: bool = False
+    mixed_split_segment: str | None = None
 
     @property
     def block_table(self):
@@ -67,7 +75,13 @@ class MetadataCapacity:
 
 
 def from_common(common: Any, *, capacity: MetadataCapacity | None = None,
-                capture_origin: bool = False, is_draft: bool = False) -> OscarMetadata:
+                capture_origin: bool = False, is_draft: bool = False,
+                current_only: bool = False, draft_index: int = 0,
+                first_draft_current_only: bool = False,
+                first_draft_current_fia: bool = False,
+                mixed_decode_split: bool = False) -> OscarMetadata:
+    if type(draft_index) is not int or draft_index < 0:
+        raise OscarMetadataError("draft_index must be a nonnegative integer")
     if not common.causal:
         raise OscarMetadataError("OSCAR FULL attention requires causal decoder metadata")
     tensors = (common.query_start_loc, common.seq_lens, common.slot_mapping, common.block_table_tensor)
@@ -93,12 +107,22 @@ def from_common(common: Any, *, capacity: MetadataCapacity | None = None,
             raise OscarMetadataError("native query-start buffer exceeds fixed graph capacity")
     state = getattr(common, "attn_state", None)
     dummy_origin = is_native_dummy_run()
-    main_prefill = (not capture_origin and not dummy_origin and not is_draft and
-                    type(state).__name__ == "AscendAttentionState" and
-                    state.name in {"PrefillNoCache", "ChunkedPrefill", "PrefillCacheHit"})
-    # Only this eager main-model stage needs CPU qstarts. Existing graph/draft
-    # and decode callers never touch the CPU property (#34/#36/#140).
-    cpu_starts = getattr(common, "query_start_loc_cpu", None) if main_prefill else None
+    eager_prefill = (not capture_origin and not dummy_origin and
+                     type(state).__name__ == "AscendAttentionState" and
+                     state.name in {"PrefillNoCache", "ChunkedPrefill", "PrefillCacheHit"})
+    main_prefill = eager_prefill and not is_draft
+    first_draft_suffix = (eager_prefill and current_only and is_draft and
+                          draft_index == 0 and first_draft_current_only)
+    # Separate current-PARTIAL experiment. Unlike current-only, this retains
+    # all compressed history/exact-window CV even for a positive context.
+    first_draft_partial = (not capture_origin and not dummy_origin and is_draft
+        and draft_index == 0 and first_draft_current_fia
+        and type(state).__name__ == "AscendAttentionState"
+        and state.name in {"PrefillNoCache", "ChunkedPrefill", "PrefillCacheHit", "DecodeOnly", "SpecDecoding"})
+    # Only main eager prefill or an explicitly qualified FIRST MTP pass reads
+    # existing CPU mirrors. Later draft/q1, dummy and capture never read them.
+    read_current_cpu = main_prefill or first_draft_suffix or first_draft_partial
+    cpu_starts = getattr(common, "query_start_loc_cpu", None) if read_current_cpu else None
     metadata = OscarMetadata(
         query_start_loc=query_start_loc, seq_lens=common.seq_lens,
         block_tables=common.block_table_tensor, slot_mapping=common.slot_mapping,
@@ -107,8 +131,11 @@ def from_common(common: Any, *, capacity: MetadataCapacity | None = None,
         positions=getattr(common, "positions", None), capture_origin=capture_origin,
         num_input_tokens=getattr(common, "num_input_tokens", common.slot_mapping.shape[0]),
         query_start_loc_cpu=cpu_starts[:rows + 1] if cpu_starts is not None else None,
-        attn_state=state, is_draft=is_draft, dummy_origin=dummy_origin)
-    if main_prefill:
+        attn_state=state, is_draft=is_draft, draft_index=draft_index,
+        dummy_origin=dummy_origin, first_draft_current_only=first_draft_suffix,
+        first_draft_current_fia=first_draft_partial,
+        mixed_decode_split=(mixed_decode_split and (main_prefill or first_draft_partial)))
+    if read_current_cpu:
         # The native model runner constructs a new CommonAttentionMetadata per
         # step (model_runner_v1.py:3161). Every FULL builder sees that same
         # immutable step object; derive the short CPU list once, then share it
@@ -122,6 +149,16 @@ def from_common(common: Any, *, capacity: MetadataCapacity | None = None,
                 cumulative[-1] != common.num_actual_tokens):
             raise OscarMetadataError("cached current sequence lengths do not match this native step")
         metadata = replace(metadata, current_cumulative=cumulative)
+        if current_only and (main_prefill or first_draft_suffix):
+            from .current_only_plan import plan_current_suffix
+            upper = getattr(common, "seq_lens_cpu_upper_bound", None)
+            if (upper is None or upper.device.type != "cpu" or upper.ndim != 1
+                    or upper.numel() < rows):
+                raise OscarMetadataError("current-only experiment requires native CPU sequence upper bounds")
+            plan = plan_current_suffix(cpu_starts[:rows + 1].tolist(), upper[:rows].tolist(),
+                                       actual_tokens=common.num_actual_tokens,
+                                       padded_tokens=metadata.num_input_tokens)
+            metadata = replace(metadata, current_only_plan=plan)
     return metadata
 
 

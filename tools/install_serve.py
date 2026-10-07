@@ -12,7 +12,7 @@ import sys
 from .deploy import plan as deploy_plan
 from .phase import atomic_json, run_phase, terminal_line
 from .target_cli import target_env
-from .serving_variants import variant_config, variant_features
+from .serving_variants import variant_config, variant_features, runtime_feature_summary
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -76,6 +76,7 @@ def main(argv=None) -> int:
     if args.plan:
         print(json.dumps({"stages": stages, "serve": serve_command, "probes": "none",
                           "variant": variant, "optimizations": status["optimizations"],
+                          "runtime_selection": runtime_feature_summary(config, variant),
                           "target_devices": config["devices"], "port": config["port"],
                           "placement": status["placement"]}, indent=2))
         return 0
@@ -95,6 +96,8 @@ def main(argv=None) -> int:
           f"STRIPED={'on' if config.get('experimental_striped_cache', False) else 'off'} "
           f"placement={status['placement']} config={effective_path}", flush=True)
     print(f"[oscar] devices={env.get('ASCEND_RT_VISIBLE_DEVICES', 'diagnostic')} port={config['port']}", flush=True)
+    print("[oscar] PERF_RUNTIME_CONFIG "+json.dumps(runtime_feature_summary(config,variant),
+          sort_keys=True,separators=(",",":")),flush=True)
     rc = 0
     try:
         for name, command in stages:

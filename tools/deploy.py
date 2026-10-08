@@ -15,10 +15,10 @@ from .target_cli import target_env
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def plan(config_path: Path, log_dir: Path) -> list[tuple[str, list[str]]]:
+def plan(config_path: Path, log_dir: Path, config: dict | None = None) -> list[tuple[str, list[str]]]:
     python = sys.executable
     cfg = str(config_path.resolve())
-    config = json.loads(config_path.read_text())
+    config = json.loads(config_path.read_text()) if config is None else config
     return [
         ("build-dependencies", [python,"-m","pip","install","setuptools>=69","wheel","pybind11>=3","cmake>=3.26","ninja","pytest"]),
         ("install-plugin", [python, "-m", "pip", "install", "--no-deps", "--no-build-isolation", "-e", str(ROOT)]),
@@ -108,6 +108,8 @@ def main() -> int:
     parser.add_argument("--plan", action="store_true", help="print commands without installing or touching an NPU")
     parser.add_argument("--only", choices=["environment", "build-ops", "probe-ops", "probe-cv", "native-synthetic", "service-probe", "prepare-rotations", "runtime-readiness"])
     parser.add_argument("--log-dir", type=Path)
+    parser.add_argument("--rear-cards", action="store_true",
+                        help="use physical Ascend devices 4,5,6,7 and port 7878 for this run")
     args = parser.parse_args()
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     log_dir = (args.log_dir or ROOT / "logs" / stamp).resolve()
@@ -119,13 +121,24 @@ def main() -> int:
         print(f"[oscar] install → build → probes → serve; logs={log_dir}", flush=True)
     try:
         config = json.loads(args.config.read_text())
+        config_path = args.config.resolve()
+        if args.rear_cards:
+            # Validate the checked-in target before applying the explicitly
+            # authorized alternative placement for this invocation only.
+            target_env(config, base={})
+            config = dict(config)
+            config.update(devices=[4, 5, 6, 7], port=7878,
+                          device_policy="Explicit deploy --rear-cards: physical NPU 4-7, port 7878")
+            config_path = log_dir / "effective-target.json"
+            if not args.plan:
+                atomic_json(config_path, config)
     except (OSError, ValueError) as exc:
         if not args.plan:
             (log_dir / "config.log").write_text(f"FAILED phase=config: {exc}\n")
             status.update(status="failed", failed_phase="config", error=str(exc))
             atomic_json(log_dir / "status.json", status)
         raise
-    stages = plan(args.config, log_dir)
+    stages = plan(config_path, log_dir, config)
     if args.only:
         stages = [x for x in stages + diagnostic_plan(log_dir) if x[0] == args.only]
         if len(stages) != 1:
@@ -134,7 +147,7 @@ def main() -> int:
                 raise RuntimeError(error)
             return _gate_failed(status, log_dir, args.only, error)
     if args.plan:
-        print(json.dumps({"stages": stages, "serve": [sys.executable, "-m", "tools.target_cli", "--config", str(args.config.resolve())],
+        print(json.dumps({"stages": stages, "serve": [sys.executable, "-m", "tools.target_cli", "--config", str(config_path)],
                           "target_devices": config["devices"], "production_status": "requires_target_probes_and_resource_release"}, indent=2))
         return 0
     # Observation can run without hardware ownership; actual NPU phases require it.
@@ -146,7 +159,7 @@ def main() -> int:
         atomic_json(log_dir / "status.json", status)
         raise
     rc = 0
-    env["OSCAR_TARGET_CONFIG"]=str(args.config.resolve())
+    env["OSCAR_TARGET_CONFIG"]=str(config_path)
     env["OSCAR_RUN_NPU_TESTS"]="1"
     if not args.only:
         env["OSCAR_TERMINAL_LOG_MODE"] = "compact"
@@ -256,7 +269,7 @@ def main() -> int:
         # The managed server preserves ownership and validates a real request
         # before staying in the foreground. It never starts after failed probes.
         from .service_probe import main as service_main
-        serve_argv = ["service_probe","--config",str(args.config.resolve()),"--serve",
+        serve_argv = ["service_probe","--config",str(config_path),"--serve",
                       "--log-dir",str(log_dir/"serve"),"--output",str(log_dir/"serve.json")]
         try:
             with _temporary_process_context(env, serve_argv):

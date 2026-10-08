@@ -59,6 +59,21 @@ def test_checked_in_target_has_current_task_devices_and_build_soc():
     assert env["ASCEND_RT_VISIBLE_DEVICES"] == "0,1,2,3"
 
 
+def test_rear_cards_plan_uses_one_effective_config_for_every_phase(monkeypatch, tmp_path, capsys):
+    _, config_path, logs = _configure(monkeypatch, tmp_path)
+    monkeypatch.setattr(sys, "argv", ["deploy", "--config", str(config_path),
+                                      "--log-dir", str(logs), "--rear-cards", "--plan"])
+    assert deploy.main() == 0
+    result = json.loads(capsys.readouterr().out)
+    effective = str(logs / "effective-target.json")
+    assert result["target_devices"] == [4, 5, 6, 7]
+    assert result["serve"][-1] == effective
+    for _name, command in result["stages"]:
+        if "--config" in command:
+            assert command[command.index("--config") + 1] == effective
+    assert not (logs / "effective-target.json").exists()
+
+
 def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypatch, tmp_path):
     config, config_path, logs = _configure(monkeypatch, tmp_path, devices=[8, 9, 10, 11])
     monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "4,5,6,7")

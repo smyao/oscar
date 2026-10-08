@@ -14,6 +14,9 @@ D.4: no full-history allocation in production; only this test oracle may
 materialize history. Tests do not turn CPU results into NPU/performance evidence.
 #148: fe0 remains the trusted numerical baseline; separate C4 CPU cases
 compare all partial/LSE/status bits and require positive cluster engagement.
+#156: single-request q1/N16384/D256 hit the V2 maximum padding tile; the
+redundant half clear is forbidden because the preceding FP32 +0 fill already
+covers every byte copied as half.
 """
 import json
 import math
@@ -60,6 +63,18 @@ def test_cv_metadata_and_outputs_have_distinct_schema_aliases():
     assert "Tensor(d!) workspace" in source
     assert 'status.size(1)==2' in source
     assert 'tasks.size(1)==16' in source
+
+
+def test_v2_query_padding_reuses_the_bounded_fp32_zero_fill():
+    """Archive #156: do not reintroduce the target VEC UB-overrun shape."""
+    paths = tuple(ROOT / "csrc/kernels" / name for name in (
+        "attention_cv_fast.cpp", "attention_cv_fast_q1.cpp",
+        "attention_cv_fast_cluster4.cpp"))
+    for path in paths:
+        source = path.read_text()
+        assert "Duplicate(zeros,0.0F,count*D)" in source
+        assert "Duplicate(halfZeros,static_cast<half>(0),count*D)" not in source
+        assert "DataCopy(halfWork[qOffset+row*D],halfZeros,count*D)" in source
 
 
 def _npu_ops():

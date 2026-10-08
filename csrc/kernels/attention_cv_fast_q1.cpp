@@ -409,8 +409,12 @@ template<int32_t D,bool LayoutV2=false> class AttentionCv {
       const int32_t count=static_cast<int32_t>(Min64(kHalfKv,laneEnd-row));
       Duplicate(zeros,0.0F,count*D);Fence<HardEvent::V_MTE3>();
       if constexpr(LayoutV2) {
-        auto halfZeros=zeros.ReinterpretCast<half>();Duplicate(halfZeros,static_cast<half>(0),count*D);
-        Fence<HardEvent::V_MTE3>();DataCopy(halfWork[qOffset+row*D],halfZeros,count*D);
+        // Archive #156/D.4: the target q1/N16384/D256 route trapped at the
+        // redundant maximum-length half Duplicate.  FP32 +0 has all-zero
+        // bytes and the fill above covers twice the half-copy byte range.
+        // Reuse it directly without changing live rows or OSCAR arithmetic.
+        auto halfZeros=zeros.ReinterpretCast<half>();
+        DataCopy(halfWork[qOffset+row*D],halfZeros,count*D);
       } else DataCopy(work[qOffset+row*D],zeros,count*D);
       Fence<HardEvent::MTE3_V>();
     }

@@ -429,8 +429,13 @@ template<int32_t D,bool Weighted=false,bool LayoutV2=false> class AttentionCv {
       const int32_t count=static_cast<int32_t>(Min64(kHalfKv,laneEnd-row));
       Duplicate(zeros,0.0F,count*D);Fence<HardEvent::V_MTE3>();
       if constexpr(LayoutV2) {
-        auto halfZeros=zeros.ReinterpretCast<half>();Duplicate(halfZeros,static_cast<half>(0),count*D);
-        Fence<HardEvent::V_MTE3>();DataCopy(halfWork[qOffset+row*D],halfZeros,count*D);
+        // Archive #156/D.4: q1/N16384 reached this maximum 16-row padding
+        // shape and trapped in a redundant half Duplicate with a VEC UB OOB.
+        // The preceding FP32 zero fills twice the byte range consumed here,
+        // so its first count*D half elements are already exact +0.  Reuse
+        // those bytes directly; no history read, math or workspace changes.
+        auto halfZeros=zeros.ReinterpretCast<half>();
+        DataCopy(halfWork[qOffset+row*D],halfZeros,count*D);
       } else DataCopy(work[qOffset+row*D],zeros,count*D);
       Fence<HardEvent::MTE3_V>();
     }

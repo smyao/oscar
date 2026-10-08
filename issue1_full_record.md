@@ -28596,3 +28596,11 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **证据缺口**：用户附件只有服务stderr。既有`timing._write`在设置`OSCAR_TRACE_DIR`时把`phase_begin/device_completed/device_error`全部写入`timing-<pid>.jsonl`后直接返回，因此附件中只有`impl.py:215`的循环源码行，没有循环迭代对应的`status_segment`，也没有rank0/2在507015前的最后完成相位。源码静态核对表明新增store staging的D256最大uint16索引496、buffer合法末索引511，不能仅凭“最近修改”把507015再归到store。
 
 **诊断收口**：debug记录保持原trace文件，同时仅将`prior_work_error/device_error/host_error`镜像stderr；成功相位仍只落文件，避免终端洪水。镜像包含原有phase、layer、tokens、rank以及`status_segment`字段，不新增同步、不读tensor、不改变production路径。下一轮终端首个`oscar-debug state=device_error`将给出可修改的具体相位；此前禁止删除guard、扩大所有UB或回退V1来试错。
+
+## [156] 真机条目（2026-10-08 用户回传）· q1 V2 单请求N16384的冗余half清零触发VEC UB越界
+
+**真实首错**：显式trace显示主模型16K prefill、C4 V2、native current FIA、merge、V2 store及四段guard均完成；MTP draft0的C4 V2、merge、store及guard也完成。首个`device_error`严格落在`draft_index=1`、`max_query_len=1`、`tokens=16384`、S1、20 Cube的`attention_cv_fast_q1_v2_out`。rank0设备报507015，kernel入口`…23292b8`、当前PC`…2352df0`（相对0x29b38），`errorStr`为VEC读写UB越界。此前#155的相同PC因此不再归因store或guard。
+
+**源码根因与边界**：q1单请求只有6个GQA live row，两个AIV的其余122行按16行块补零，反复命中D256最大padding块。V2分支先对`count*D`个FP32元素执行`Duplicate(+0)`，已清零`4*count*D`字节；随后又把同一缓冲reinterpret为half并对`count*D`个half重复`Duplicate(+0)`。第二次写没有数值作用，且是V1没有、C4长prefill小尾块未覆盖的最大长度VEC操作，与真实故障形状及PC族一致。删除该冗余half写；FP32正零的全零位型保证随后复制的前`2*count*D`字节仍逐位为FP16正零。三份fast模板同步修订，避免相同形状从其他路由复现。
+
+**D.4四问**：①属于融合CV的query padding准备；②不恢复历史，旧6.5秒全历史dequant路径仍禁止；③只复用同一有界UB内已经清零的字节，GM workspace、INT2读取、QK/PV、softmax、LSE、旋转、状态和外部布局均不变；④减少一次冗余Vector写，不宣称性能收益。主机静态回归只证明源码契约，真实NPU q1 V2逐位、图和服务越过仍须短probe/同一16K请求裁决；不得据本修订宣称完整服务或性能验收。

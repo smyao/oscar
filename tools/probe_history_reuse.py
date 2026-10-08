@@ -29,7 +29,7 @@ from oscar_ascend.ops.cv_dispatch import CLUSTER4_CV_OP, FE0_CV_OP, Q1_CV_OP, se
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE_COMMIT = "fe0e925e7ef78bfb64217a300031502fc4a7b7bc"
-CANDIDATE_OP = "attention_cv_cluster4_out"
+CANDIDATE_OP = "attention_cv_unified_out"
 BLOCK_TOKENS, SINK, RECENT, SPECULATIVE, PREFIX = 512, 64, 256, 3, 64
 SEED = 46817
 STATS_FIELDS = ("eligible_clusters", "grouped_leaders", "independent_leaders",

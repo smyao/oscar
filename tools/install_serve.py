@@ -26,8 +26,8 @@ def main(argv=None) -> int:
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
     parser.add_argument("--plan", action="store_true", help="print commands without installing or touching an NPU")
     parser.add_argument("--log-dir", type=Path)
-    parser.add_argument("--variant", choices=("baseline", "candidate"),
-                        help="candidate enables C4, later-MTP q1, fast unpack and weighted q4; baseline selects fe0; omitted respects config")
+    parser.add_argument("--variant", choices=("candidate",),
+                        help="compatibility spelling for the sole unified production path")
     parser.add_argument("--rear-cards", action="store_true",
                         help="use physical Ascend devices 4,5,6,7 and port 7878 for this launch only")
     args = parser.parse_args(argv)
@@ -51,8 +51,7 @@ def main(argv=None) -> int:
             status.update(status="failed", failed_phase="config", error=str(exc))
             atomic_json(log_dir / "status.json", status)
         raise
-    enabled = config.get("experimental_history_reuse", False)
-    variant = "candidate" if enabled else "baseline"
+    variant = "unified"
     write_effective = args.variant is not None or args.rear_cards
     effective_path = (log_dir / "effective-target.json" if write_effective
                       else args.config.resolve())
@@ -90,10 +89,7 @@ def main(argv=None) -> int:
         atomic_json(effective_path, config)
     env["OSCAR_TARGET_CONFIG"] = str(effective_path)
     env["PYTHONUNBUFFERED"] = "1"
-    print(f"[oscar] SERVE_MODE variant={variant} C4={'on' if enabled else 'off'} "
-          f"Q1={'on' if enabled else 'off'} FAST_UNPACK={'on' if config.get('experimental_fast_unpack', False) else 'off'} "
-          f"WEIGHTED_Q4={'on' if config.get('experimental_weighted_q4', False) else 'off'} "
-          f"Q4_S2={'on' if config.get('experimental_weighted_q4_split2', False) else 'off'} "
+    print(f"[oscar] SERVE_MODE variant={variant} UNIFIED_INT2_CV=on "
           f"placement={status['placement']} config={effective_path}", flush=True)
     print(f"[oscar] devices={env.get('ASCEND_RT_VISIBLE_DEVICES', 'diagnostic')} port={config['port']}", flush=True)
     rc = 0

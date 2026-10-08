@@ -48,7 +48,7 @@ def test_mtp_target_rows_share_one_tile_and_workspace_is_bounded():
     assert 4 * 6 <= ATTENTION_QUERY_ROWS  # Qwen3.5 TP4: all verify queries share a tile.
     header = (ROOT / "csrc/include/oscar_attention_launch.h").read_text()
     assert "kAttentionQueryRows = 128" in header and "kAttentionKvRows = 256" in header
-    assert WorkspaceGeometry(16384, 6, 1, 256).cv_bytes == 917504
+    assert WorkspaceGeometry(16384, 6, 1, 256).cv_bytes == 1839104
     # Full-history length is deliberately absent from this exact allocation.
     assert "attention_workspace_per_core(int64_t dim)" in header
 
@@ -153,6 +153,7 @@ def _device_case(data):
         status=torch.empty((qlen * hk * 3 * splits, 2), dtype=torch.int32, device="npu"),
         workspace=torch.empty(WorkspaceGeometry(qlen, hq, hk, dim,
             cube_cores=data["cores"]).cv_bytes, dtype=torch.uint8, device="npu"),
+        cluster_stats=torch.zeros((data["cores"], 8), dtype=torch.int64, device="npu"),
     )
     # #144: actual-M P publication may leave inactive scratch rows unwritten.
     # Poison proves live outputs never depend on those rows, including replay.
@@ -161,8 +162,9 @@ def _device_case(data):
 
 
 def _execute_cv(ops, data, tensors, buffers):
-    tasks, positions, partial, lse, status, workspace = (
-        buffers[key] for key in ("tasks", "positions", "partial", "lse", "status", "workspace"))
+    tasks, positions, partial, lse, status, workspace, cluster_stats = (
+        buffers[key] for key in ("tasks", "positions", "partial", "lse", "status", "workspace",
+                                 "cluster_stats"))
     partial.fill_(float("nan"))
     lse.fill_(float("nan"))
     status.fill_(-99)
@@ -170,9 +172,10 @@ def _execute_cv(ops, data, tensors, buffers):
     ops.prepare_attention_tasks_out(tensors["starts"], tensors["lens"], tensors["slots"],
                                    tasks, positions, data["hq"], data["hk"], data["sink"],
                                    data["recent"], data["splits"])
-    ops.attention_cv_out(tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"],
+    ops.attention_cv_unified_out(tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"],
         tensors["rv"], tensors["raw"], tensors["table"], tensors["wk"], tensors["wv"],
-        tensors["tags"], tasks, partial, lse, status, workspace, data["block_tokens"], data["blocks"],
+        tensors["tags"], tasks, partial, lse, status, workspace, cluster_stats,
+        data["block_tokens"], data["blocks"],
         data["prefix"], data["stride"], data["sink"], data["recent"], data["speculative"],
         data["splits"], data["dim"] ** -0.5, data["cores"])
     torch.npu.synchronize()

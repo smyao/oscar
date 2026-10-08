@@ -326,7 +326,7 @@ def ensure_native_current_attention(config_path: Path, config: dict,
         merged = checked["mixed_history_window_current_merge"]
         task_contract = checked["production_task_contract"]
         if (checked.get("status") != "current_partial_probe_passed" or merged.get("oracle") != "passed"
-                or merged.get("history_window") != "production_NPU_attention_cv_out"
+                or merged.get("history_window") != "diagnostic_NPU_attention_cv_out"
                 or merged.get("prepare") != "production_NPU_prepare_attention_tasks_out"
                 or merged.get("source2") != "production_NPU_suppress_current_source_tasks"
                 or checked.get("long_case", {}).get("sampled_oracle") != "passed"

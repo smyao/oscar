@@ -1,6 +1,6 @@
 # Archive #70-73/#85/#125/#126/#143 and startup D.4: this is a diagnostic
 # comparison of one bounded CV operator, not a whole-service speed certificate.
-# D.4 four questions: (1) measure only attention_cv_out for a long mixed
+# D.4 four questions: (1) measure the deployed CV operator for a long mixed
 # prefill shape; (2) the old failed route spent ~6.5 s restoring full history,
 # while its FIA phase was ~19 ms; (3) production CV still reads packed INT2
 # pages and exact BF16 windows, and only this offline oracle decodes history;
@@ -38,7 +38,9 @@ from .phase import atomic_json
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE_REVISION = "5288b2e85d1cb920d8c852b2884c1feac8a0120a"
-REQUIRED_OPS = frozenset({"prepare_attention_tasks_out", "attention_cv_out", "merge_lse_out"})
+BASELINE_REQUIRED_OPS = frozenset({"prepare_attention_tasks_out", "attention_cv_out", "merge_lse_out"})
+CANDIDATE_REQUIRED_OPS = frozenset({"prepare_attention_tasks_out", "attention_cv_unified_out",
+                                    "merge_lse_out"})
 QLENS = (4, 4, 4, 11492)
 CONTEXTS = (20032, 23032, 27032, 18508)
 DECODE_QLENS = (4,) * 32
@@ -131,7 +133,8 @@ def _verify_artifact(variant: str, manifest_path: Path, target: dict) -> tuple[d
     if manifest.get("soc") != target["soc_version"] or configuration.get("soc") != target["soc_version"]:
         exception = BaselineUnavailable if variant == "baseline" else HotShapeError
         raise exception("artifact SOC differs from explicit target SOC")
-    if not REQUIRED_OPS.issubset(set(manifest.get("source_capabilities", ()))):
+    required = BASELINE_REQUIRED_OPS if variant == "baseline" else CANDIDATE_REQUIRED_OPS
+    if not required.issubset(set(manifest.get("source_capabilities", ()))):
         exception = BaselineUnavailable if variant == "baseline" else HotShapeError
         raise exception("artifact lacks required CV/prepare/merge capabilities")
     source_digest = _source_check(configuration, variant)
@@ -216,7 +219,7 @@ def _load_ops(variant: str, manifest: dict, manifest_path: Path):
         handle, module = _load_baseline_extension(manifest)
         return handle, module
     from oscar_ascend.ops.loader import require_capabilities
-    module = require_capabilities(REQUIRED_OPS, manifest_path)
+    module = require_capabilities(CANDIDATE_REQUIRED_OPS, manifest_path)
     return None, module
 
 
@@ -480,7 +483,7 @@ def _actual_cores(torch, target: dict) -> int:
 
 
 def _device_buffers(torch, fixture: dict, device, *, splits: int, cores: int,
-                    current_rows: int, current_kv_rows: int):
+                    current_rows: int, current_kv_rows: int, unified: bool):
     tensors = {name: tensor.to(device) for name, tensor in fixture["cpu"].items()}
     tokens = fixture["tokens"]
     count = tokens * KV_HEADS * 3 * splits
@@ -490,9 +493,14 @@ def _device_buffers(torch, fixture: dict, device, *, splits: int, cores: int,
         "partial": torch.empty((tokens, HEADS, 3 * splits, DIM), dtype=torch.float32, device=device),
         "lse": torch.empty((tokens, HEADS, 3 * splits), dtype=torch.float32, device=device),
         "status": torch.empty((count, 2), dtype=torch.int32, device=device),
-        "workspace": torch.empty(cores * workspace_per_core_bytes(DIM, current_rows, current_kv_rows),
+        "workspace": torch.empty(cores * ((1664 * DIM + 33792) * 4 if unified else
+                                           workspace_per_core_bytes(DIM, current_rows, current_kv_rows)),
                                  dtype=torch.uint8, device=device),
     }
+    if unified:
+        buffers["cluster_stats"] = torch.zeros((cores, 8), dtype=torch.int64, device=device)
+        if buffers["cluster_stats"].data_ptr() % 64:
+            raise HotShapeError("cluster_stats must be 64-byte aligned")
     return tensors, buffers
 
 
@@ -510,11 +518,16 @@ def _prepare_ops(torch, ops, tensors: dict, buffers: dict, fixture: dict, *, spl
     return _tensor_hash({"tasks": buffers["tasks"].cpu()})
 
 
-def _run_cv(ops, tensors: dict, buffers: dict, fixture: dict, *, splits: int, cores: int, scale: float):
-    ops.attention_cv_out(tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"],
+def _run_cv(ops, tensors: dict, buffers: dict, fixture: dict, *, splits: int, cores: int,
+            scale: float, unified: bool):
+    op = ops.attention_cv_unified_out if unified else ops.attention_cv_out
+    args = (tensors["q"], tensors["qr"], tensors["ck"], tensors["cv"],
         tensors["rv"], tensors["raw"], tensors["table"], tensors["wk"], tensors["wv"],
         tensors["tags"], buffers["tasks"], buffers["partial"], buffers["lse"],
-        buffers["status"], buffers["workspace"], BLOCK_TOKENS, fixture["blocks"],
+        buffers["status"], buffers["workspace"])
+    if unified:
+        args += (buffers["cluster_stats"],)
+    op(*args, BLOCK_TOKENS, fixture["blocks"],
         PREFIX_BYTES, fixture["stride"], SINK, RECENT, SPECULATIVE, splits, scale, cores)
 
 
@@ -593,7 +606,8 @@ def run_probe(variant: str, manifest_path: Path, target_path: Path,
         splits = splits_for_shape(fixture["tokens"], cores, query_rows=query_rows, capacity=capacity)
         tensors, buffers = _device_buffers(torch, fixture, device, splits=splits, cores=cores,
                                            current_rows=ATTENTION_QUERY_ROWS,
-                                           current_kv_rows=ATTENTION_KV_ROWS)
+                                           current_kv_rows=ATTENTION_KV_ROWS,
+                                           unified=variant == "candidate")
         task_hash = _prepare_ops(torch, ops, tensors, buffers, fixture, splits=splits)
         durations = []
         for repetition in range(WARMUP + REPEATS):
@@ -603,7 +617,8 @@ def run_probe(variant: str, manifest_path: Path, target_path: Path,
             if repetition >= WARMUP:
                 begin, end = torch.npu.Event(enable_timing=True), torch.npu.Event(enable_timing=True)
                 begin.record(stream)
-            _run_cv(ops, tensors, buffers, fixture, splits=splits, cores=cores, scale=scale)
+            _run_cv(ops, tensors, buffers, fixture, splits=splits, cores=cores, scale=scale,
+                    unified=variant == "candidate")
             if repetition >= WARMUP:
                 end.record(stream)
                 end.synchronize()
@@ -622,15 +637,15 @@ def run_probe(variant: str, manifest_path: Path, target_path: Path,
             "physical_pages": fixture["blocks"], "page_policy": fixture["page_policy"],
             "source2_suppressed": fixture["source2_suppressed"],
             "source_splits": splits, "cube_cores": cores,
-            "workspace_bytes_per_core": workspace_per_core_bytes(DIM, ATTENTION_QUERY_ROWS, ATTENTION_KV_ROWS),
+            "workspace_bytes_per_core": buffers["workspace"].numel() // cores,
             "warmup": WARMUP, "repeats": REPEATS, "device_event_ms": durations,
             "median_ms": statistics.median(durations), "sample_oracle": oracle,
-            "device_completion": "passed", "timing_evidence": "NPU_Event_attention_cv_out_only"}
+            "device_completion": "passed", "timing_evidence": "NPU_Event_deployed_cv_only"}
         del fixture, tensors, buffers
         gc.collect()
         torch.npu.empty_cache()
     return {"status": "passed", "variant": variant,
-            "scope": "operator_only_attention_cv_out; synthetic_main_and_decode32; no_user_dataset",
+            "scope": "operator_only_deployed_cv; synthetic_main_and_decode32; no_user_dataset",
             "device": str(device), "physical_devices": target["devices"],
             "device_name": torch.npu.get_device_name(0), "device_completion": "passed",
             "source": {"revision": BASELINE_REVISION if variant == "baseline" else "current_checkout",

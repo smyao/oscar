@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// EXPERIMENT ONLY: exact INT2 unpack for the C4 KV-major schedule. Archive
+// UNIFIED PRODUCTION CV: exact INT2 unpack with bounded KV-major reuse. Archive
 // G26-G34/#13-20/#126/#129/#140-151; startup D.4 four questions:
 // (1) fused source0 dequant+FIA; (2) failed full-history restore cost
 // 6499.8-6655.1ms vs native FIA 18.5-18.9ms; (3) one bounded KV256 work
@@ -7,9 +7,9 @@
 // only integer-plane UB stride and exact FP16 metadata conversion change;
 // (4) unpack work was measured hot but bank relief/net speed is a target-NPU
 // hypothesis. Frozen bitwise/math/graph/quality gates precede any speed claim.
-// EXPERIMENT ONLY: source0 four-query-group KV-major reuse. This file starts
-// from this project's fe0e925 attention_cv.cpp; production fe0 stays byte-for-
-// byte unchanged. Archive #126/#129/#140-145 and startup D.4 four questions:
+// Source0 two-to-four-query-group KV-major reuse. This file starts from this
+// project's fe0e925 attention_cv.cpp; the frozen baseline remains available
+// only for offline comparison. Archive #126/#129/#140-145 and startup D.4:
 // (1) phase is fused INT2 history dequant + FIA. (2) D.4's failed full-history
 // restore cost 6499.8-6655.1ms while native FIA cost 18.5-18.9ms, with host
 // prepare ~725ms and stores ~209ms. (3) Four exact-domain query groups reuse
@@ -282,39 +282,33 @@ template<int32_t D> class AttentionCv {
     }
     const int64_t queryTile=kQueryRows/(g.hq/g.hk);
     const int64_t perToken=g.hk*3*g.splits;
-    const oscar_ascend_schedule::CvTaskSchedule schedule{g.tokens,queryTile,perToken};
-    // Pass one keeps fe0 ownership for every follower, invalid leader and
-    // noneligible leader. Exact C4 members alone are deferred to pass two.
-    // The predicate is read-only and identical on AIC/AIV; no global barrier.
+    // One-token ownership distributes independent request leaders over all
+    // cores for every q_len without a q1/q4 branch. Followers remain cheap
+    // status rows. Unlike rebuilding a greedy map on every core, total task
+    // metadata traffic remains O(taskCount), including 16K mixed steps.
+    const oscar_ascend_schedule::CvTaskSchedule schedule{g.tokens,1,perToken};
     for(int64_t workId=coreIndex;workId<schedule.WorkItems();workId+=GetBlockNum()) {
-      const int64_t tokenBegin=schedule.TokenBegin(workId);
-      for(int64_t token=tokenBegin;token<Min64(tokenBegin+queryTile,g.tokens);++token) {
-        const int64_t id=schedule.TaskId(workId,token);
-        LoadTask(id);
-        if(qcount==0) {if ASCEND_IS_AIV {PublishStatus(id,0);} continue;}
-        if(qcount<0 || taskError || !TaskValid()) {
-          if ASCEND_IS_AIV {PublishEmpty(id,taskError?taskError:(!TaskValid()?1:0));}
-          continue;
-        }
-        if(IsClusterMember(id,nullptr)) {
-          if ASCEND_IS_AIC {++counters[6];}
-          continue;
-        }
-        qOffset=0;
-        if ASCEND_IS_AIC {
-          if(kind==0) {
-            ++counters[2];
-            counters[5]+=(kvend-kvbegin+kKvRows-1)/kKvRows;
-          }
-          CubeTask();
-        } else {VectorTask(id);}
+      const int64_t id=schedule.TaskId(workId,schedule.TokenBegin(workId));
+      LoadTask(id);
+      if(ClusterSize(id,nullptr)>1) {
+        if ASCEND_IS_AIC {++counters[6];}
+        continue;
       }
+      if(qcount==0) {if ASCEND_IS_AIV {PublishStatus(id,0);}continue;}
+      if(qcount<0 || taskError || !TaskValid()) {
+        if ASCEND_IS_AIV {PublishEmpty(id,taskError?taskError:(!TaskValid()?1:0));}
+        continue;
+      }
+      qOffset=0;
+      if ASCEND_IS_AIC {
+        if(kind==0) {++counters[2];counters[5]+=
+            (kvend-kvbegin+kKvRows-1)/kKvRows;}
+        CubeTask();
+      } else {VectorTask(id);}
     }
-    // Pass two maps contiguous 84-token buckets across ALL Cubes, avoiding
-    // the original #129 stride/common-divisor alias of anchor%4. Each anchor
-    // belongs to exactly one global bucket; its four request-relative members
-    // have already been excluded in pass one by the same predicate.
-    if(g.tokens>=4*queryTile) {
+    // Pass two maps bounded query buckets across all Cubes. Each anchor owns
+    // two to four equivalent members; all were excluded by the same predicate.
+    if(g.tokens>=2*queryTile) {
       const int64_t bucketWidth=4*queryTile;
       const int64_t buckets=(g.tokens+bucketWidth-1)/bucketWidth;
       const int64_t segments=g.hk*g.splits;
@@ -333,13 +327,14 @@ template<int32_t D> class AttentionCv {
               qbegin<requestBegin ||
               (qbegin-requestBegin)%bucketWidth!=0)continue;
           TaskState members[4];
-          if(!IsClusterMember(id,members))continue;
+          const int32_t memberCount=ClusterSize(id,members);
+          if(memberCount<2)continue;
           if ASCEND_IS_AIC {
-            ++counters[0];counters[1]+=4;++counters[7];
+            ++counters[0];counters[1]+=memberCount;++counters[7];
             const int64_t tiles=(members[0].kvend-members[0].kvbegin+kKvRows-1)/kKvRows;
-            counters[3]+=tiles;counters[4]+=3*tiles;
-            CubeCluster(members);
-          } else {VectorCluster(members);}
+            counters[3]+=tiles;counters[4]+=(memberCount-1)*tiles;
+            CubeCluster(members,memberCount);
+          } else {VectorCluster(members,memberCount);}
         }
       }
     }
@@ -374,22 +369,23 @@ template<int32_t D> class AttentionCv {
     kvend=t.kvend;request=t.request;split=t.split;kind=t.kind;
     context=t.context;requestBegin=t.requestBegin;taskError=t.taskError;
   }
-  __aicore__ bool IsClusterMember(int64_t id,TaskState* members) {
+  __aicore__ int32_t ClusterSize(int64_t id,TaskState* members) {
     const int64_t queryTile=kQueryRows/(g.hq/g.hk);
     const int64_t width=4*queryTile;
-    if(g.tokens<width || kind!=0 || qcount!=queryTile || taskError!=0 ||
+    if(kind!=0 || qcount!=queryTile || taskError!=0 ||
         kvbegin>=kvend || kvend!=context || qbegin<requestBegin ||
-        (qbegin-requestBegin)%queryTile!=0 || !TaskValid())return false;
+        (qbegin-requestBegin)%queryTile!=0 || !TaskValid())return 0;
     const TaskState original=CurrentTask(id);
     const int64_t anchor=requestBegin+
         ((qbegin-requestBegin)/width)*width;
-    if(anchor<0 || anchor+width>g.tokens) return false;
+    if(anchor<0 || anchor>=g.tokens) return 0;
     const int64_t perToken=g.hk*3*g.splits;
     const int64_t segment=(kvhead*3)*g.splits+split;
-    bool valid=true;
+    int32_t count=0;
     TaskState found[4];
     for(int32_t j=0;j<4;++j) {
       const int64_t candidate=anchor+j*queryTile;
+      if(candidate>=g.tokens)break;
       const int64_t candidateId=candidate*perToken+segment;
       LoadTask(candidateId);
       found[j]=CurrentTask(candidateId);
@@ -398,11 +394,13 @@ template<int32_t D> class AttentionCv {
           split!=original.split || context!=original.context ||
           requestBegin!=original.requestBegin ||
           kvbegin!=original.kvbegin || kvend!=original.kvend ||
-          kvend!=context || !TaskValid())valid=false;
+          kvend!=context || !TaskValid())break;
+      ++count;
     }
     UseTask(original);
-    if(valid && members!=nullptr)for(int32_t j=0;j<4;++j)members[j]=found[j];
-    return valid;
+    if(count<2 || qbegin>=anchor+count*queryTile)return 0;
+    if(members!=nullptr)for(int32_t j=0;j<count;++j)members[j]=found[j];
+    return count;
   }
   __aicore__ bool TaskValid() {
     return qbegin>=0 && qbegin<g.tokens && qcount<=kQueryRows/(g.hq/g.hk) &&
@@ -446,14 +444,14 @@ template<int32_t D> class AttentionCv {
       CrossCoreWaitFlag(kVectorReady);
     }
   }
-  __aicore__ void CubeCluster(const TaskState* members) {
+  __aicore__ void CubeCluster(const TaskState* members,int32_t memberCount) {
     const int64_t first=members[0].kvbegin;
     const int64_t last=members[0].kvend;
     const int32_t rows=static_cast<int32_t>(members[0].qcount*(g.hq/g.hk));
     for(int64_t start=first;start<last;start+=kKvRows) {
-      // One AIV KV publish serves four independent fe0 QK/softmax/PV chains.
+      // One AIV KV publish serves every equivalent query group in this bucket.
       CrossCoreWaitFlag(kVectorReady);
-      for(int32_t member=0;member<4;++member) {
+      for(int32_t member=0;member<memberCount;++member) {
         qOffset=member*kQueryRows*D;
         Matmul(qOffset,kOffset,scoreOffset,rows,kKvRows,D);
         CrossCoreSetFlag<2,PIPE_FIX>(kCubeReady);
@@ -463,7 +461,7 @@ template<int32_t D> class AttentionCv {
         CrossCoreWaitFlag(kVectorReady);
       }
     }
-    for(int32_t member=0;member<4;++member) {
+    for(int32_t member=0;member<memberCount;++member) {
       CrossCoreWaitFlag(kVectorReady);
       qOffset=member*kQueryRows*D;
       Matmul(qOffset,0,rotOffset,rows,D,D,true);
@@ -812,10 +810,10 @@ template<int32_t D> class AttentionCv {
     DataCopy(stats[kLaneRows],work[statBase+kQueryRows],kLaneRows);
     Fence<HardEvent::MTE2_V>();
   }
-  __aicore__ void VectorCluster(const TaskState* members) {
+  __aicore__ void VectorCluster(const TaskState* members,int32_t memberCount) {
     auto acc=accBuf.Get<float>();auto stats=statsBuf.Get<float>();
     int32_t memberErrors[4];
-    for(int32_t member=0;member<4;++member) {
+    for(int32_t member=0;member<memberCount;++member) {
       UseTask(members[member]);qOffset=member*kQueryRows*D;error=0;
       Duplicate(acc,0.0F,kLaneRows*D);Fence<HardEvent::V_S>();
       Duplicate(stats,kEmptyMax,kLaneRows);
@@ -828,7 +826,7 @@ template<int32_t D> class AttentionCv {
     const int64_t first=members[0].kvbegin,last=members[0].kvend;
     for(int64_t start=first;start<last;start+=kKvRows) {
       UseTask(members[0]);error=0;
-      // The four groups have identical page and pre-mask finite-check domain.
+      // All members have identical page and pre-mask finite-check domain.
       // Keep fe0's K-then-V subtile order and all metadata/status checks.
       for(int32_t subtile=0;subtile<kKvSubtiles;++subtile) {
         const int64_t subStart=start+subtile*(2*kHalfKv);
@@ -837,7 +835,7 @@ template<int32_t D> class AttentionCv {
       }
       const int32_t kvError=error;
       CrossCoreSetFlag<2,PIPE_MTE3>(kVectorReady);
-      for(int32_t member=0;member<4;++member) {
+      for(int32_t member=0;member<memberCount;++member) {
         UseTask(members[member]);qOffset=member*kQueryRows*D;
         error=memberErrors[member];
         if(kvError)error=kvError;
@@ -863,7 +861,7 @@ template<int32_t D> class AttentionCv {
         CrossCoreSetFlag<2,PIPE_MTE2>(kVectorReady);
       }
     }
-    for(int32_t member=0;member<4;++member) {
+    for(int32_t member=0;member<memberCount;++member) {
       UseTask(members[member]);qOffset=member*kQueryRows*D;
       error=memberErrors[member];RestoreState(member);
       Fence<HardEvent::V_S>();
@@ -946,7 +944,7 @@ template<int32_t D> class AttentionCv {
     int64_t sink, int64_t recent, int64_t speculative, int64_t splits, float scale
 #define OSCAR_CV_INIT op.Init(query,queryRot,key,value,rotation,raw,table,wk,wv,tags, \
     tasks,output,lse,status,workspace,clusterStats,g);op.Process()
-extern "C" __global__ __aicore__ void oscar_attention_cv_fast_cluster4_kernel(OSCAR_CV_ARGUMENTS) {
+extern "C" __global__ __aicore__ void oscar_attention_cv_unified_kernel(OSCAR_CV_ARGUMENTS) {
   KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
   const Geometry g{tokens,hq,hk,requests,columns,taskCount,blockTokens,blocks,ssmOffset,
       pageStride,windowStride,tagStride,sink,recent,speculative,splits,scale};
@@ -956,7 +954,7 @@ extern "C" __global__ __aicore__ void oscar_attention_cv_fast_cluster4_kernel(OS
 }
 #ifndef ASCENDC_CPU_DEBUG
 namespace oscar_ascend {
-void attention_cv_fast_cluster4_launch(void* stream,void* query,void* queryRot,void* key,void* value,
+void attention_cv_unified_launch(void* stream,void* query,void* queryRot,void* key,void* value,
     void* rotation,void* raw,void* table,void* wk,void* wv,void* tags,void* tasks,
     void* output,void* lse,void* status,void* workspace,void* clusterStats,
     int64_t tokens,int64_t hq,
@@ -964,7 +962,7 @@ void attention_cv_fast_cluster4_launch(void* stream,void* query,void* queryRot,v
     int64_t blockTokens,int64_t blocks,int64_t ssmOffset,int64_t pageStride,
     int64_t windowStride,int64_t tagStride,int64_t sink,int64_t recent,
     int64_t speculative,int64_t splits,float scale,uint32_t cores) {
-  oscar_attention_cv_fast_cluster4_kernel<<<cores,nullptr,stream>>>(
+  oscar_attention_cv_unified_kernel<<<cores,nullptr,stream>>>(
       static_cast<uint8_t*>(query),static_cast<uint8_t*>(queryRot),
       static_cast<uint8_t*>(key),static_cast<uint8_t*>(value),
       static_cast<uint8_t*>(rotation),static_cast<uint8_t*>(raw),

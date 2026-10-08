@@ -2,8 +2,8 @@
 
 Archive #27/#34/#36/#37-49/#55-69/#111/#140: complete forward dispatch, fixed buffers,
 device metadata, exact physical-page snapshots, and no BF16 history restore.
-#148: only an explicit experimental workspace selects cluster4; default
-#keeps the accepted fe0 operator and original FP32 arithmetic.
+#148-152: the unified exact-INT2 operator is the sole production CV route;
+# query reuse remains internal and preserves the original FP32 arithmetic.
 PR oscar_attn.py:486-577: current-chunk K/V are exact; cached history is INT2.
 Native acl_graph.py:270 and attention_v1.py:454: graph-update interface.
 Native attention_cp.py:1017-1032: exact current TND FIA yields output plus LSE.
@@ -17,8 +17,7 @@ from .current_attention import (guard_current_slots, native_current_partial,
 from .runtime_api import OscarReadinessError, require_runtime
 from ..telemetry import emit_once, emit_throttled
 from ..timing import phase
-from ..ops.cv_dispatch import (CLUSTER_CV_OPS, select_cv_op,
-                               select_source_splits)
+from ..ops.cv_dispatch import UNIFIED_CV_OP, select_source_splits
 
 
 class OscarAttentionImpl(AttentionImpl):
@@ -90,18 +89,8 @@ class OscarAttentionImpl(AttentionImpl):
         workspace = state.workspace
         workspace.validate(n, h, hk, d)
         g = workspace.geometry
-        cluster_size = getattr(g, "history_cluster_size", 1)
-        # #150/P0/P1.5: select the signed operator before sizing task/partial
-        # views so the proven q4 route uses S2 consistently end to end.
-        cv_name = select_cv_op(cluster_size, h, hk, n, attn_metadata.max_query_len,
-                              q1_draft=attn_metadata.is_draft and attn_metadata.draft_index > 0,
-                              fast_unpack=self.provider.config.get("experimental_fast_unpack", False),
-                              weighted_q4=self.provider.config.get("experimental_weighted_q4", False),
-                              head_dim=d)
-        source_splits = select_source_splits(
-            g.splits_for_tokens(n), cv_name, tokens=n,
-            weighted_q4_split2=self.provider.config.get(
-                "experimental_weighted_q4_split2", False))
+        cv_name = UNIFIED_CV_OP
+        source_splits = select_source_splits(g.splits_for_tokens(n))
         splits = 3 * source_splits
         task_count = n * hk * splits
         tasks = workspace.tasks[:task_count]
@@ -141,11 +130,10 @@ class OscarAttentionImpl(AttentionImpl):
                    cube_cores=g.cube_cores, tasks=task_count, requests=attn_metadata.num_reqs,
                    cv_operator=cv_name, **timing_fields):
             cv_op = getattr(ops, cv_name)
-            cv_extra = (workspace.cluster_stats,) if cv_name in CLUSTER_CV_OPS else ()
             cv_op(
                 q, qr, k, v, state.rotation_v, state.raw, attn_metadata.block_tables,
                 state.window_key, state.window_value, state.window_tags, tasks,
-                partial, partial_lse, statuses, workspace.cv, *cv_extra,
+                partial, partial_lse, statuses, workspace.cv, workspace.cluster_stats,
                 state.spec.block_size, state.num_blocks,
                 state.num_blocks * state.spec.conv_bytes, state.spec.ssm_bytes,
                 state.snapshots.sink_tokens, state.snapshots.recent_tokens,

@@ -10,12 +10,10 @@ from tools import observe_serve
 from tools.phase import PhaseResult
 
 
-def test_fe0_kernel_pin_and_candidate_flag():
-    baseline = observe_serve._source_identity("baseline", {"experimental_history_reuse": False})
-    assert baseline["fe0_production_kernels_match"] is True
-    with pytest.raises(RuntimeError, match="requires experimental_history_reuse"):
-        observe_serve._source_identity("candidate", {"experimental_history_reuse": False})
-    assert observe_serve._source_identity("candidate", {"experimental_history_reuse": True})["variant"] == "candidate"
+def test_unified_source_identity_has_no_shape_switches():
+    identity = observe_serve._source_identity("candidate", {})
+    assert identity["variant"] == "unified"
+    assert identity["shape_specific_switches"] is False
 
 
 def test_step_summary_keeps_rank_buckets_and_missing_graph_separate(tmp_path):
@@ -62,7 +60,7 @@ def test_graph_only_step_keeps_whole_graph_time_but_no_attention_residual(tmp_pa
 def test_plan_makes_no_requests(capsys):
     assert observe_serve.main(["--plan"]) == 0
     plan = json.loads(capsys.readouterr().out)
-    assert plan["variant"] == "baseline"
+    assert plan["variant"] == "candidate"
     assert plan["inference_requests_generated"] == 0
     assert "managed_service_health" in plan["phases"]
 
@@ -116,8 +114,6 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     config = observe_serve.ROOT / "configs/target.json"
     seen = []
     monkeypatch.setattr(observe_serve, "_preflight", lambda *args: seen.append("preflight"))
-    monkeypatch.setattr(observe_serve, "_candidate_gate", lambda *args: seen.append("candidate-gates"))
-    monkeypatch.setattr(observe_serve, "_fast_unpack_gate", lambda *args: seen.append("fast-unpack-gate"))
     monkeypatch.setattr(observe_serve, "_q4_diagnostic", lambda *args: seen.append("q4-diagnostic"))
     monkeypatch.setattr(observe_serve, "_mixed_diagnostic", lambda *args: seen.append("mixed-diagnostic"))
     monkeypatch.setattr(observe_serve, "managed_server", lambda *args, **kwargs:
@@ -126,15 +122,13 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     logs = tmp_path / "probe"
     assert observe_serve.run(config, logs, "candidate", probe_only=True,
                              diagnose_mixed=diagnose_mixed, rear_cards=True) == 0
-    assert seen == ["preflight", "candidate-gates", "fast-unpack-gate"] + (
+    assert seen == ["preflight"] + (
         ["mixed-diagnostic"] if diagnose_mixed else [])
     status = json.loads((logs / "status.json").read_text())
     assert status["service_started"] is False
     assert status["performance_acceptance"] == "operator_only_not_end_to_end"
     effective = json.loads((logs / "effective-target.json").read_text())
-    assert effective["experimental_fast_unpack"] is True
-    assert effective["experimental_weighted_q4"] is True
-    assert effective["experimental_weighted_q4_split2"] is True
+    assert not any(key.startswith("experimental_") for key in effective)
     assert effective["devices"] == [4, 5, 6, 7] and effective["port"] == 7878
 
 
@@ -286,54 +280,50 @@ def test_mixed_child_failure_survives_resource_observation_error(monkeypatch, tm
     assert status["mixed_resource_release"]["status"] == "failed"
 
 
-def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeypatch, tmp_path):
+def test_unified_effective_config_and_preflight_failure_block_service(monkeypatch, tmp_path):
     source = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
-    source["experimental_history_reuse"] = False
     config_path = tmp_path / "target.json"
     config_path.write_text(json.dumps(source))
     logs = tmp_path / "logs"
     observed = []
-    monkeypatch.setattr(observe_serve, "_preflight", lambda path, *_args: observed.append(path))
-    def gate(path, *_args):
+    def preflight(path, *_args):
         observed.append(path)
-        raise RuntimeError("candidate graph gate rejected")
-    monkeypatch.setattr(observe_serve, "_candidate_gate", gate)
+        raise RuntimeError("unified operator gate rejected")
+    monkeypatch.setattr(observe_serve, "_preflight", preflight)
     monkeypatch.setattr(observe_serve, "managed_server", lambda *_args, **kwargs:
-                        pytest.fail("candidate service must not start after gate failure"))
+                        pytest.fail("service must not start after preflight failure"))
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     assert observe_serve.run(config_path, logs, "candidate") == 1
-    assert len(observed) == 2 and observed[0] == observed[1] == logs / "effective-target.json"
-    assert json.loads((logs / "effective-target.json").read_text())["experimental_history_reuse"] is True
-    assert json.loads(config_path.read_text())["experimental_history_reuse"] is False
+    assert observed == [logs / "effective-target.json"]
+    assert json.loads((logs / "effective-target.json").read_text()) == source
     status = json.loads((logs / "status.json").read_text())
     assert status["status"] == "failed"
     assert status["target_config"]["original_sha256"] != status["target_config"]["effective_sha256"]
 
 
-def test_candidate_child_rc2_reaches_outer_status_without_serving(monkeypatch, tmp_path):
+def test_unified_preflight_rc2_reaches_outer_status_without_serving(monkeypatch, tmp_path):
     config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
     config_path = tmp_path / "target.json"
     config_path.write_text(json.dumps(config))
     logs = tmp_path / "logs"
-    monkeypatch.setattr(observe_serve, "_preflight", lambda *_args: None)
-    monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
-    monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
-    monkeypatch.setattr(observe_serve, "run_phase", lambda name, command, *, log_dir, **kwargs:
-        PhaseResult(name, command, 2, 1.0, False, False, str(log_dir / "gate.log"), True))
+    def fail(*_args):
+        error = RuntimeError("operator child rc2")
+        error.returncode = 2
+        error.phase = "operator-cv-npu"
+        raise error
+    monkeypatch.setattr(observe_serve, "_preflight", fail)
     monkeypatch.setattr(observe_serve, "managed_server", lambda *_args, **kwargs:
                         pytest.fail("candidate service must not start after rc2"))
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     assert observe_serve.run(config_path, logs, "candidate") == 2
     state = json.loads((logs / "status.json").read_text())
-    assert state["failed_phase"] == "history-reuse-npu"
+    assert state["failed_phase"] == "operator-cv-npu"
     assert state["returncode"] == 2
-    assert state["candidate_resource_release"]["status"] == "passed"
 
 
 def test_managed_service_only_observes_external_load(monkeypatch, tmp_path):
     from benchmarks import passive
     config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
-    config["experimental_history_reuse"] = False
     config_path = tmp_path / "target.json"
     config_path.write_text(json.dumps(config))
     logs = tmp_path / "logs"
@@ -372,7 +362,7 @@ def test_managed_service_only_observes_external_load(monkeypatch, tmp_path):
     monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     monkeypatch.setattr(passive, "observe", passive_only)
-    assert observe_serve.run(config_path, logs, "baseline") == 0
+    assert observe_serve.run(config_path, logs, "candidate") == 0
     assert ("managed", False) in calls and ("passive", "oscar") in calls
     assert json.loads((logs / "status.json").read_text())["status"] == "stopped"
     assert json.loads((logs / "summary.json").read_text())["status"] == "observed"
@@ -415,7 +405,7 @@ def test_cleanup_resource_error_preserves_server_rc_and_late_summary(monkeypatch
                         (_ for _ in ()).throw(OSError("resource observer unavailable")))
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     monkeypatch.setattr(passive, "observe", observe)
-    assert observe_serve.run(config_path, logs, "baseline") == 7
+    assert observe_serve.run(config_path, logs, "candidate") == 7
     state = json.loads((logs / "status.json").read_text())
     assert state["failed_phase"] == "serve" and state["returncode"] == 7
     assert state["resource_release"]["status"] == "failed"

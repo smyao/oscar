@@ -123,7 +123,7 @@ def test_incomplete_or_corrupted_cache_is_cleanly_rebuilt(compiler, damage):
         manifest_path.write_text("{truncated")
     else:
         manifest = json.loads(manifest_path.read_text())
-        manifest["source_capabilities"].remove("attention_cv_out")
+        manifest["source_capabilities"].remove("attention_cv_unified_out")
         manifest_path.write_text(json.dumps(manifest))
     compiler.commands.clear()
     rebuilt = compiler.build()

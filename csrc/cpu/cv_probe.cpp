@@ -50,7 +50,7 @@ extern "C" void oscar_attention_cv_cluster4_kernel(uint8_t*,uint8_t*,uint8_t*,ui
     uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     uint8_t*,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
-extern "C" void oscar_attention_cv_fast_cluster4_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+extern "C" void oscar_attention_cv_unified_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     uint8_t*,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
@@ -603,7 +603,7 @@ int main(int argc,char** argv) {
           std::memcpy(fastWorkspace.ptr+offset,&poison,4);
       }
       AscendC::SetKernelMode(KernelMode::MIX_MODE);
-      ICPU_RUN_KF(oscar_attention_cv_fast_cluster4_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,
+      ICPU_RUN_KF(oscar_attention_cv_unified_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,
           rv.ptr,raw.ptr,table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,fastPartial.ptr,
           fastLse.ptr,fastStatus.ptr,fastWorkspace.ptr,fastStats.ptr,n,hq,hk,d,
           requests,int64_t{8},tasksCount,b,nb,prefix,stride,windowRows*hk*d,

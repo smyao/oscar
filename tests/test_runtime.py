@@ -61,35 +61,24 @@ def test_workspace_byte_account_includes_all_live_buffers():
         (n * h * s * d, 4), (n * h * s, 4), (n * h * d, 4),
         (n * h, 4), (n * h, 4), (n * h, 4), (n * k, 4),
         (n * k * s * 16, 8), (n * k * s * 2, 4), (n, 8), (n, 8),
-        (24 * (768 * d + 32768) * 4, 1)]
+        (24 * (1664 * d + 33792) * 4, 1), (24 * 64, 1)]
     assert geometry.total_bytes == sum(count * size for count, size in elements)
     # History capacity 262144 is absent from the scratch shape. Only current
     # query rows and fixed split count contribute to the partial-output arena.
     assert geometry.total_bytes < 600 * 1024**2
 
 
-def test_cluster4_state_is_explicit_bounded_and_includes_counter_buffer():
-    baseline = WorkspaceGeometry(16384, 6, 1, 256, cube_cores=20)
-    candidate = replace(baseline, history_cluster_size=4)
-    assert baseline.history_cluster_size == 1
-    assert baseline.cv_bytes == 20 * 917504
-    assert candidate.cv_bytes == 20 * 1839104
-    assert candidate.total_bytes - baseline.total_bytes == 20 * (1839104 - 917504 + 64)
-    assert replace(candidate, tokens=128).cv_bytes == candidate.cv_bytes
-    with pytest.raises(ValueError, match="cluster size"):
-        replace(baseline, history_cluster_size=2)
+def test_unified_state_is_bounded_and_includes_counter_buffer():
+    geometry = WorkspaceGeometry(16384, 6, 1, 256, cube_cores=20)
+    assert geometry.cv_bytes == 20 * 1839104
+    assert replace(geometry, tokens=128).cv_bytes == geometry.cv_bytes
 
 
-@pytest.mark.parametrize("value", [1, "true", None])
-def test_candidate_route_requires_explicit_boolean(value):
-    with pytest.raises(runtime_api.OscarReadinessError, match="explicit boolean"):
-        AscendRuntimeProvider({"experimental_history_reuse": value})
-    assert AscendRuntimeProvider({}).config.get("experimental_history_reuse", False) is False
-
-
-def test_weighted_split2_requires_weighted_candidate():
-    with pytest.raises(runtime_api.OscarReadinessError, match="S2 requires"):
-        AscendRuntimeProvider({"experimental_weighted_q4_split2": True})
+@pytest.mark.parametrize("name", ["experimental_history_reuse", "experimental_fast_unpack",
+                                  "experimental_weighted_q4", "experimental_weighted_q4_split2"])
+def test_shape_specific_production_switches_are_rejected(name):
+    with pytest.raises(runtime_api.OscarReadinessError, match="switches were removed"):
+        AscendRuntimeProvider({name: True})
 
 
 @pytest.mark.parametrize("tokens,expected", [(1, 20), (4, 20), (8, 20), (16, 20),
@@ -192,9 +181,8 @@ def test_online_forward_contains_no_host_request_loop_or_tensor_readback():
 
 
 @pytest.mark.parametrize("capacity,cube_cores,expected_splits,n", [(8, 1, 1, 8), (64, 20, 8, 8), (256, 20, 1, 256)])
-@pytest.mark.parametrize("cluster_size,fast_unpack", [(1, False), (4, False), (4, True)])
 @pytest.mark.parametrize("later_draft", [False, True])
-def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack):
+def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, later_draft):
     """Host ABI exercise only: fake ops establish ordering, never accuracy."""
     backend = types.ModuleType("vllm.v1.attention.backend")
     backend.AttentionImpl = type("AttentionImpl", (), {})
@@ -203,19 +191,10 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         spec = importlib.util.spec_from_file_location("oscar_ascend.integration._dispatch_test", path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-    selected = []
-    real_select_cv_op = module.select_cv_op
-
-    def recording_select_cv_op(*args, **kwargs):
-        selected.append((args, kwargs))
-        return real_select_cv_op(*args, **kwargs)
-
-    module.select_cv_op = recording_select_cv_op
     h, hk, d, parts = 4, 1, 64, 3
     w = object.__new__(GraphWorkspace)
-    w.geometry = WorkspaceGeometry(capacity, h, hk, d, cube_cores=cube_cores,
-                                   history_cluster_size=cluster_size)
-    w.cluster_stats = torch.empty((cube_cores, 8), dtype=torch.int64) if cluster_size == 4 else None
+    w.geometry = WorkspaceGeometry(capacity, h, hk, d, cube_cores=cube_cores)
+    w.cluster_stats = torch.empty((cube_cores, 8), dtype=torch.int64)
     w.query_input = torch.empty(capacity, h, d, dtype=torch.bfloat16)
     w.key_input = torch.empty(capacity, hk, d, dtype=torch.bfloat16)
     w.value_input = torch.empty_like(w.key_input)
@@ -251,40 +230,15 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             out.copy_(q)
             status.zero_()
 
-        def attention_cv_out(self, *args):
-            calls.append("cv")
+        def attention_cv_unified_out(self, *args):
+            calls.append("unified")
             assert args[3].is_contiguous()
             assert args[11].shape == (n, h, 3 * expected_splits, d)
-            assert args[22] == expected_splits
+            assert args[15] is w.cluster_stats
+            assert args[23] == expected_splits
             args[11].fill_(7)
             args[12].zero_()
             args[13].zero_()
-
-        def attention_cv_cluster4_out(self, *args):
-            assert cluster_size == 4
-            assert args[15] is w.cluster_stats
-            self.attention_cv_out(*(args[:15] + args[16:]))
-            calls[-1] = "cluster4"
-
-        def attention_cv_q1_out(self, *args):
-            assert cluster_size == 4 and later_draft
-            self.attention_cv_out(*args)  # Identical fe0 ABI; no stats argument.
-            calls[-1] = "q1"
-
-        def attention_cv_fast_out(self, *args):
-            assert fast_unpack
-            self.attention_cv_out(*args)
-            calls[-1] = "fast_cv"
-
-        def attention_cv_fast_q1_out(self, *args):
-            assert fast_unpack
-            self.attention_cv_q1_out(*args)
-            calls[-1] = "fast_q1"
-
-        def attention_cv_fast_cluster4_out(self, *args):
-            assert fast_unpack
-            self.attention_cv_cluster4_out(*args)
-            calls[-1] = "fast_cluster4"
 
         def merge_lse_out(self, partial, lse, output, output_lse, status):
             calls.append("merge")
@@ -313,10 +267,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         snapshots=SimpleNamespace(sink_tokens=64, recent_tokens=256, ring_tokens=259, speculative_tokens=3))
     impl = object.__new__(module.OscarAttentionImpl)
     impl.num_heads, impl.num_kv_heads, impl.head_size, impl.scale = h, hk, d, d**-0.5
-    impl.provider = SimpleNamespace(layer_state=lambda _name: state, ops=Ops(),
-                                    config={"experimental_fast_unpack": fast_unpack,
-                                            "experimental_weighted_q4": fast_unpack,
-                                            "experimental_weighted_q4_split2": fast_unpack})
+    impl.provider = SimpleNamespace(layer_state=lambda _name: state, ops=Ops(), config={})
     q = torch.randn(n, h * d, dtype=torch.bfloat16)
     k = torch.randn(n, hk * d, dtype=torch.bfloat16)
     value = torch.randn(n, hk * d * 3, dtype=torch.bfloat16)[:, d:2*d]
@@ -335,13 +286,4 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
                           q, k, value, packed, replace(from_common(common), is_draft=True,
                           draft_index=1 if later_draft else 0), output)
     assert result is output and bool(torch.all(result == 7))
-    # #150: short per-request query lengths keep the original OSCAR op even
-    # with candidate workspace; long requests keep the C4 ABI/extra buffer.
-    expected_op = ("q1" if cluster_size == 4 and later_draft else
-                   "cluster4" if cluster_size == 4 and n == 256 else "cv")
-    if fast_unpack:
-        expected_op = "fast_" + expected_op
-    assert calls == ["prepare", "rotate", expected_op, "merge", "store", "guard"]
-    assert len(selected) == 1
-    assert selected[0][1]["weighted_q4"] is fast_unpack
-    assert selected[0][1]["head_dim"] == d
+    assert calls == ["prepare", "rotate", "unified", "merge", "store", "guard"]

@@ -610,7 +610,7 @@ void AttentionFastCluster(const at::Tensor& query,const at::Tensor& queryRot,
   Disjoint(clusterStats,status);Disjoint(clusterStats,workspace);
   if(!n) {clusterStats.zero_();return;}
   const c10_npu::OptionalNPUGuard guard(query.device());
-  oscar_ascend::attention_cv_fast_cluster4_launch(c10_npu::getCurrentNPUStream().stream(),
+  oscar_ascend::attention_cv_unified_launch(c10_npu::getCurrentNPUStream().stream(),
       query.data_ptr(),queryRot.data_ptr(),currentKey.data_ptr(),currentValue.data_ptr(),
       rotation.data_ptr(),raw.data_ptr(),table.data_ptr(),windowKey.data_ptr(),
       windowValue.data_ptr(),windowTags.data_ptr(),tasks.data_ptr(),partial.data_ptr(),
@@ -647,7 +647,7 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
       "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
       "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
       "int splits, float scale, int cube_cores) -> ()");
-  m.def("attention_cv_fast_cluster4_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+  m.def("attention_cv_unified_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
       "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
       "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
       "Tensor(d!) workspace, Tensor(e!) cluster_stats, int block_tokens, int physical_blocks, int raw_ssm_offset, "
@@ -677,7 +677,7 @@ TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
   m.impl("attention_cv_fast_out",&AttentionFast);
   m.impl("attention_cv_fast_weighted_out",&AttentionFastWeighted);
   m.impl("attention_cv_fast_q1_out",&AttentionFastQ1);
-  m.impl("attention_cv_fast_cluster4_out",&AttentionFastCluster);
+  m.impl("attention_cv_unified_out",&AttentionFastCluster);
   m.impl("attention_cv_profile_out",&AttentionProfile);
   m.impl("attention_cv_q1_out",&AttentionQ1);
   m.impl("attention_cv_cluster4_out",&AttentionCluster);

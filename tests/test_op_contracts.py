@@ -50,14 +50,14 @@ class OperatorContractTests(unittest.TestCase):
 
     def test_two_components_cannot_claim_complete_production(self):
         primitive_only={"store_int2_out","merge_lse_out"}
-        self.assertIn("attention_cv_out",missing_capabilities(primitive_only))
+        self.assertIn("attention_cv_unified_out",missing_capabilities(primitive_only))
         with tempfile.TemporaryDirectory() as directory:
             manifest = Path(directory)/"manifest.json"
             manifest.write_text(json.dumps({"abi_version":1,
                 "execution_interface":"direct_launch",
                 "source_capabilities":sorted(primitive_only)}))
             # Fails before importing torch_npu or attempting nonexistent .so.
-            with self.assertRaisesRegex(OperatorUnavailable,"not implemented.*attention_cv_out"):
+            with self.assertRaisesRegex(OperatorUnavailable,"not implemented.*attention_cv_unified_out"):
                 require_production_ops(manifest)
 
     def fixture_build(self, directory):

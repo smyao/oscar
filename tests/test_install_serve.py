@@ -26,9 +26,8 @@ def test_install_shell_hides_front_cards_before_rear_card_python_entry():
     assert "pkill" not in script and "killall" not in script and "npu-smi" not in script
 
 
-def config_file(tmp_path, enabled=False):
+def config_file(tmp_path):
     config = json.loads((install_serve.ROOT / "configs/target.json").read_text())
-    config["experimental_history_reuse"] = enabled
     path = tmp_path / "target.json"
     path.write_text(json.dumps(config))
     return path
@@ -42,7 +41,7 @@ def test_candidate_plan_is_read_only_and_has_no_probes(tmp_path, capsys, rear_ca
                                "--variant", "candidate", "--plan"] +
                               (["--rear-cards"] if rear_cards else [])) == 0
     plan = json.loads(capsys.readouterr().out)
-    assert plan["variant"] == "candidate"
+    assert plan["variant"] == "unified"
     assert all(plan["optimizations"].values())
     assert [name for name, _ in plan["stages"]] == list(install_serve.BUILD_PHASES)
     assert plan["probes"] == "none" and not logs.exists()
@@ -52,13 +51,10 @@ def test_candidate_plan_is_read_only_and_has_no_probes(tmp_path, capsys, rear_ca
     assert plan["port"] == (7878 if rear_cards else 8989)
 
 
-@pytest.mark.parametrize("variant,original,enabled", [
-    ("candidate", False, True), ("baseline", True, False), (None, True, True), (None, False, False),
-])
 @pytest.mark.parametrize("rear_cards", [False, True])
 def test_all_phases_and_exec_share_selected_config_without_mutating_original(
-        monkeypatch, tmp_path, variant, original, enabled, rear_cards):
-    path = config_file(tmp_path, original)
+        monkeypatch, tmp_path, rear_cards):
+    path = config_file(tmp_path)
     before = path.read_bytes()
     logs = tmp_path / "run"
     devices = [4, 5, 6, 7] if rear_cards else [0, 1, 2, 3]
@@ -68,10 +64,7 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
     def run_phase(name, command, *, env, **kwargs):
         seen.append(name)
         selected = json.loads(open(env["OSCAR_TARGET_CONFIG"]).read())
-        assert selected["experimental_history_reuse"] is enabled
-        assert selected.get("experimental_fast_unpack", False) is (variant == "candidate")
-        assert selected.get("experimental_weighted_q4", False) is (variant == "candidate")
-        assert selected.get("experimental_weighted_q4_split2", False) is (variant == "candidate")
+        assert not any(key.startswith("experimental_") for key in selected)
         assert env["OSCAR_ENABLED"] == "1"
         assert env["ASCEND_RT_VISIBLE_DEVICES"] == ",".join(map(str, devices))
         assert selected["devices"] == devices and selected["port"] == port
@@ -85,7 +78,7 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
         assert seen == list(install_serve.BUILD_PHASES)
         assert command[-1] == env["OSCAR_TARGET_CONFIG"]
         selected = json.loads(open(command[-1]).read())
-        assert selected["experimental_history_reuse"] is enabled
+        assert not any(key.startswith("experimental_") for key in selected)
         assert selected["devices"] == devices
         service_args = serve_argv(selected)
         assert service_args[service_args.index("--port") + 1] == str(port)
@@ -93,15 +86,14 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
     monkeypatch.setattr(install_serve, "run_phase", run_phase)
     monkeypatch.setattr(install_serve.os, "execvpe", launch)
     args = ["--config", str(path), "--log-dir", str(logs)]
-    if variant:
-        args += ["--variant", variant]
+    args += ["--variant", "candidate"]
     if rear_cards:
         args += ["--rear-cards"]
     with pytest.raises(Served):
         install_serve.main(args)
     assert path.read_bytes() == before
     status = json.loads((logs / "status.json").read_text())
-    assert status["variant"] == ("candidate" if enabled else "baseline")
+    assert status["variant"] == "unified"
     assert status["probes"] == "none"
 
 

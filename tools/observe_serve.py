@@ -52,48 +52,16 @@ def _terminal(line: str, *, error: bool = False) -> None:
 
 
 def _source_identity(variant: str, config: dict) -> dict:
+    if variant != "candidate":
+        raise ValueError("only the unified production path can be observed")
+    names = ("attention_cv_fast_cluster4.cpp", "attention_tasks.cpp",
+             "rotate_clip_store.cpp", "merge_lse.cpp", "attention_fast_unpack.h")
     actual = {name: hashlib.sha256((ROOT / "csrc/kernels" / name).read_bytes()).hexdigest()
-              for name in FE0_KERNEL_SHA256}
-    flag = config.get("experimental_history_reuse", False)
-    fast = config.get("experimental_fast_unpack", False)
-    weighted = config.get("experimental_weighted_q4", False)
-    split2 = config.get("experimental_weighted_q4_split2", False)
-    if type(flag) is not bool:
-        raise ValueError("experimental_history_reuse must be an explicit boolean")
-    if type(fast) is not bool or (fast and not flag):
-        raise ValueError("experimental_fast_unpack requires explicit candidate history configuration")
-    if type(weighted) is not bool or (weighted and not fast):
-        raise ValueError("experimental_weighted_q4 requires explicit fast candidate configuration")
-    if type(split2) is not bool or (split2 and not weighted):
-        raise ValueError("experimental_weighted_q4_split2 requires weighted q4")
-    if variant in {"baseline", "candidate"} and actual != FE0_KERNEL_SHA256:
-        raise RuntimeError("OSCAR observation requires byte-identical fe0 production kernels")
-    if variant == "baseline" and flag:
-        raise RuntimeError("baseline requires experimental_history_reuse=false")
-    elif variant == "candidate" and not flag:
-        raise RuntimeError("candidate requires experimental_history_reuse=true")
-    cluster = ROOT / "csrc/kernels/attention_cv_cluster.cpp"
-    q1 = ROOT / "csrc/kernels/attention_cv_q1.cpp"
-    if variant == "candidate" and (not cluster.is_file() or not q1.is_file()):
-        raise RuntimeError("candidate AscendC source is missing")
-    fast_sources = {}
-    if fast:
-        for name in ("attention_cv_fast.cpp", "attention_cv_fast_q1.cpp",
-                     "attention_cv_fast_cluster4.cpp", "attention_fast_unpack.h"):
-            fast_sources[name] = hashlib.sha256((ROOT / "csrc/kernels" / name).read_bytes()).hexdigest()
+              for name in names}
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
                               capture_output=True, check=True).stdout.strip()
-    return {"variant": variant, "fe0_production_kernels_match": actual == FE0_KERNEL_SHA256,
-            "kernel_sha256": actual, "experimental_history_reuse": flag,
-            "experimental_fast_unpack": fast, "experimental_weighted_q4": weighted,
-            "experimental_weighted_q4_split2": split2,
-            "fast_source_sha256": fast_sources,
-            "candidate_kernel_sha256": hashlib.sha256(cluster.read_bytes()).hexdigest()
-                if variant == "candidate" else None,
-            "candidate_q1_kernel_sha256": hashlib.sha256(q1.read_bytes()).hexdigest()
-                if variant == "candidate" else None,
-            "checkout_revision": revision,
-            "reference_commit": "fe0e925e7ef78bfb64217a300031502fc4a7b7bc"}
+    return {"variant": "unified", "kernel_sha256": actual,
+            "shape_specific_switches": False, "checkout_revision": revision}
 
 
 def _step_summary(trace_dir: Path, output: Path, variant: str) -> dict:
@@ -520,13 +488,10 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
             with live_log(log_dir / "preflight-console.log", mode="compact") as preflight:
                 with redirect_stdout(preflight), redirect_stderr(preflight):
                     _preflight(effective_path, config, env, log_dir, status, variant)
-                    if variant == "candidate":
-                        _candidate_gate(effective_path, config, env, log_dir, status)
-                        _fast_unpack_gate(effective_path, config, env, log_dir, status)
-                        if diagnose_q4:
-                            _q4_diagnostic(effective_path, config, env, log_dir, status)
-                        if diagnose_mixed:
-                            _mixed_diagnostic(effective_path, config, env, log_dir, status)
+                    if diagnose_q4:
+                        _q4_diagnostic(effective_path, config, env, log_dir, status)
+                    if diagnose_mixed:
+                        _mixed_diagnostic(effective_path, config, env, log_dir, status)
             if probe_only:
                 status.update(status="operator_probes_passed", service_started=False,
                               performance_acceptance="operator_only_not_end_to_end")
@@ -645,7 +610,7 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
-    parser.add_argument("--variant", choices=("baseline", "candidate", "native"), default="baseline")
+    parser.add_argument("--variant", choices=("candidate",), default="candidate")
     parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--plan", action="store_true")
     parser.add_argument("--probe-only", action="store_true",
@@ -663,13 +628,11 @@ def main(argv=None) -> int:
         config = variant_config(json.loads(args.config.read_text()), args.variant)
         if args.rear_cards:
             config.update(devices=[4, 5, 6, 7], port=7878)
-        phases = ["install", "signed_operator_gate" if args.variant != "native" else "native_start"]
-        if args.variant == "candidate":
-            phases += ["candidate_operator_graph_latency_gates", "fast_unpack_gate"]
-            if args.diagnose_q4:
-                phases.append("q4_native_comparison_and_profile")
-            if args.diagnose_mixed:
-                phases.append("mixed_cv_current_fia_merge_diagnostic")
+        phases = ["install", "signed_unified_operator_gate"]
+        if args.diagnose_q4:
+            phases.append("q4_native_comparison_and_profile")
+        if args.diagnose_mixed:
+            phases.append("mixed_cv_current_fia_merge_diagnostic")
         if not args.probe_only:
             phases += ["managed_service_health", "external_metrics_and_bounded_async_events"]
         print(json.dumps({"variant": args.variant, "devices": config["devices"],

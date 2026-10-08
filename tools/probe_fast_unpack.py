@@ -324,7 +324,7 @@ def _weighted_split_graph(torch, ops, tensors: dict, fixture: dict,
 def _q4_split_scan(torch, ops, target: dict, device, cores: int,
                    acceptance: dict) -> dict:
     """P1.5: compare S1-S4 on one exact q4 input and attest candidate routing."""
-    route_enabled = target.get("experimental_weighted_q4_split2", False)
+    route_enabled = True
     if type(route_enabled) is not bool:
         raise FastUnpackProbeError("weighted q4 S2 route flag must be explicit boolean")
     base = reuse.measurement_shape(next(shape for shape in reuse.CASES

@@ -43,7 +43,7 @@ D.4 四问：本次改变融合 FIA 的有界历史解包；避免历史失败�
 git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 ```
 
-直启安装、编译、启动，保持无测试/probe；启动行打印 `STRIPED=on`。默认设备 0,1,2,3、8989；显式 `--rear-cards` 仍为 4,5,6,7、7878。
+直启安装、编译、启动，保持无测试/probe；启动行打印 `STRIPED=on`。本轮默认设备为 4,5,6,7、端口7878；兼容参数 `--rear-cards` 选择相同设备。
 
 ```bash
 git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate

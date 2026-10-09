@@ -105,8 +105,8 @@ def _source_check(configuration: dict, variant: str, *, root: Path = ROOT) -> st
 
 def _select_device(target: dict) -> str:
     devices = target.get("devices")
-    if devices != [0, 1, 2, 3] or any(type(device) is not int for device in devices):
-        raise HotShapeError("hot-shape target must select explicit physical devices 0,1,2,3")
+    if devices != [4, 5, 6, 7] or any(type(device) is not int for device in devices):
+        raise HotShapeError("hot-shape target must select explicit physical devices 4,5,6,7")
     selected = ",".join(map(str, devices))
     inherited = os.environ.get("ASCEND_RT_VISIBLE_DEVICES")
     if inherited is not None and inherited != selected:
@@ -180,10 +180,10 @@ def baseline_availability(manifest_path: Path = ROOT / "build/ascendc/build_mani
     """Read-only artifact gate for the parent; does not import torch or touch NPU."""
     try:
         target = json.loads(target_path.read_text())
-        if (target.get("devices") != [0, 1, 2, 3]
+        if (target.get("devices") != [4, 5, 6, 7]
                 or any(type(device) is not int for device in target["devices"])
                 or target.get("soc_version") != "ascend910b4"):
-            raise BaselineUnavailable("target devices/SOC are not the signed 0-3/A2 configuration")
+            raise BaselineUnavailable("target devices/SOC are not the signed 4-7/A2 configuration")
         manifest, _, source_digest = _verify_artifact("baseline", manifest_path, target)
     except (OSError, ValueError, KeyError, TypeError, AttributeError,
             RuntimeError, subprocess.SubprocessError) as exc:

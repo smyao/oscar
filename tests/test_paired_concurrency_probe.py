@@ -84,7 +84,7 @@ def test_native_current_gate_requires_three_source_oracle_and_release(tmp_path, 
     monkeypatch.setattr(paired, "run_phase", phase)
     monkeypatch.setattr(paired, "_observe_resources",
                         lambda *_args, before=None: released if before is not None else {"snapshot": True})
-    config = {"devices": [0, 1, 2, 3]}
+    config = {"devices": [4, 5, 6, 7]}
     args = (tmp_path / "target.json", config, tmp_path / "acceptance.json", tmp_path)
     assert paired.ensure_native_current_attention(*args)["status"] == "passed"
     report["mixed_history_window_current_merge"]["oracle"] = "not_run"
@@ -132,7 +132,7 @@ def test_native_failure_stops_before_oscar_and_preserves_child_exit(tmp_path, mo
     monkeypatch.setattr(paired, "ensure_native_current_attention", lambda *_args: {"status": "passed"})
     config_path = tmp_path / "target.json"
     acceptance_path = tmp_path / "acceptance.json"
-    config_path.write_text(json.dumps({"devices": [0, 1, 2, 3]}))
+    config_path.write_text(json.dumps({"devices": [4, 5, 6, 7]}))
     acceptance_path.write_text(json.dumps(_acceptance()))
     variants = []
 
@@ -148,7 +148,7 @@ def test_native_failure_stops_before_oscar_and_preserves_child_exit(tmp_path, mo
                                         "accuracy": "reused_prior_evidence"})
     monkeypatch.setattr(paired, "_observe_resources",
                         lambda *_args, before=None: ({"status": "passed"} if before else
-                                                     {"devices": [0, 1, 2, 3], "memory": []}))
+                                                     {"devices": [4, 5, 6, 7], "memory": []}))
     report = paired.run_paired(config_path, output=tmp_path / "paired.json",
                                log_dir=tmp_path / "logs", acceptance_path=acceptance_path)
     assert variants == ["native"]
@@ -162,7 +162,7 @@ def test_native_only_requires_release_before_reporting_success(tmp_path, monkeyp
     monkeypatch.setattr(paired, "ensure_native_current_attention", lambda *_args: {"status": "passed"})
     config_path = tmp_path / "target.json"
     acceptance_path = tmp_path / "acceptance.json"
-    config_path.write_text(json.dumps({"devices": [0, 1, 2, 3]}))
+    config_path.write_text(json.dumps({"devices": [4, 5, 6, 7]}))
     acceptance_path.write_text(json.dumps(_acceptance()))
     monkeypatch.setattr(paired, "_run_variant", lambda name, *_args: {
         "status": "passed", "returncode": 0, "probe_error": None,
@@ -173,7 +173,7 @@ def test_native_only_requires_release_before_reporting_success(tmp_path, monkeyp
                                         "accuracy": "reused_prior_evidence"})
     monkeypatch.setattr(paired, "_observe_resources",
                         lambda *_args, before=None: ({"status": "failed", "reason": "memory held"}
-                                                     if before else {"devices": [0, 1, 2, 3], "memory": []}))
+                                                     if before else {"devices": [4, 5, 6, 7], "memory": []}))
     report = paired.run_paired(config_path, output=tmp_path / "paired.json",
                                log_dir=tmp_path / "logs", acceptance_path=acceptance_path,
                                native_only=True)
@@ -194,7 +194,7 @@ def test_one_call_runs_native_then_oscar_and_writes_paired_ratios(tmp_path, monk
                         lambda *_args: steps.append("current-oracle") or {"status": "passed"})
     config_path = tmp_path / "target.json"
     acceptance_path = tmp_path / "acceptance.json"
-    config_path.write_text(json.dumps({"devices": [0, 1, 2, 3]}))
+    config_path.write_text(json.dumps({"devices": [4, 5, 6, 7]}))
     acceptance_path.write_text(json.dumps(_acceptance()))
     order = []
 
@@ -216,7 +216,7 @@ def test_one_call_runs_native_then_oscar_and_writes_paired_ratios(tmp_path, monk
                                         "accuracy": "reused_prior_evidence"})
     monkeypatch.setattr(paired, "_observe_resources",
                         lambda *_args, before=None: ({"status": "passed"} if before else
-                                                     {"devices": [0, 1, 2, 3], "memory": []}))
+                                                     {"devices": [4, 5, 6, 7], "memory": []}))
     report = paired.run_paired(config_path, output=tmp_path / "paired.json",
                                log_dir=tmp_path / "logs", acceptance_path=acceptance_path)
     assert order == ["native", "oscar"]
@@ -240,7 +240,7 @@ def _write_real_npu_junit(path, *, skip_cv=False):
             case = ET.SubElement(suite, "testcase",
                                  name=f"test_rotation_ascendc_real_npu[{logical}-{index}]")
             props = ET.SubElement(case, "properties")
-            ET.SubElement(props, "property", name="physical_device", value=str(logical))
+            ET.SubElement(props, "property", name="physical_device", value=str(4 + logical))
     path.parent.mkdir(parents=True, exist_ok=True)
     ET.ElementTree(suite).write(path)
 
@@ -261,7 +261,7 @@ def test_fast_probe_rebuilds_drift_runs_npu_gate_and_reuses_exact_prior_evidence
         path.write_text("initial")
     config_path = tmp_path / "configs/target.json"
     config_path.parent.mkdir()
-    config = {"devices": [0, 1, 2, 3], "soc_version": "ascend910b4",
+    config = {"devices": [4, 5, 6, 7], "soc_version": "ascend910b4",
               "phase_timeout_seconds": 30, "shutdown_timeout_seconds": 1}
     config_path.write_text(json.dumps(config))
     acceptance = _acceptance()
@@ -270,7 +270,7 @@ def test_fast_probe_rebuilds_drift_runs_npu_gate_and_reuses_exact_prior_evidence
 
     def phase(name, command, *, log_dir, env, **_kwargs):
         phases.append(name)
-        assert env["ASCEND_RT_VISIBLE_DEVICES"] == "0,1,2,3"
+        assert env["ASCEND_RT_VISIBLE_DEVICES"] == "4,5,6,7"
         assert env["OSCAR_RUN_NPU_TESTS"] == "1"
         assert env["OSCAR_TARGET_CONFIG"] == str(config_path.resolve())
         if name == "operator-build":
@@ -295,7 +295,7 @@ def test_fast_probe_rebuilds_drift_runs_npu_gate_and_reuses_exact_prior_evidence
 
     def observe(_config, _directory, *, before=None):
         resource_calls.append("release" if before else "before")
-        return {"status": "passed"} if before else {"devices": [0, 1, 2, 3], "memory": []}
+        return {"status": "passed"} if before else {"devices": [4, 5, 6, 7], "memory": []}
 
     monkeypatch.setattr(paired, "run_phase", phase)
     monkeypatch.setattr(paired, "_observe_resources", observe)
@@ -330,10 +330,10 @@ def test_real_npu_junit_rejects_skips_and_missing_cards(tmp_path):
     path = tmp_path / "cv.xml"
     _write_real_npu_junit(path, skip_cv=True)
     with pytest.raises(RuntimeError, match="skipped"):
-        paired._real_npu_junit(path, [0, 1, 2, 3])
+        paired._real_npu_junit(path, [4, 5, 6, 7])
     _write_real_npu_junit(path)
     with pytest.raises(RuntimeError, match="all selected physical cards"):
-        paired._real_npu_junit(path, [4, 5, 6, 7])
+        paired._real_npu_junit(path, [0, 1, 2, 3])
 
 
 def test_cli_threads_fresh_npu_gate_to_default_native_baseline(tmp_path, monkeypatch):
@@ -356,7 +356,7 @@ def test_operator_gate_failure_blocks_both_variants_and_keeps_phase_rc(tmp_path,
     _mock_hotshape(monkeypatch)
     config_path = tmp_path / "target.json"
     acceptance_path = tmp_path / "acceptance.json"
-    config_path.write_text(json.dumps({"devices": [0, 1, 2, 3]}))
+    config_path.write_text(json.dumps({"devices": [4, 5, 6, 7]}))
     acceptance_path.write_text(json.dumps(_acceptance()))
     monkeypatch.setattr(paired, "ensure_current_operators", lambda *_args, **_kwargs: (_ for _ in ()).throw(
         paired.OperatorGateError("operator-cv-npu", "NPU oracle mismatch; log=cv.log",
@@ -390,7 +390,7 @@ def test_new_device_gate_preserves_probe_rc_and_requires_npu_release(
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("source")
     config_path = tmp_path / "target.json"
-    config = {"devices": [0, 1, 2, 3], "soc_version": "ascend910b4"}
+    config = {"devices": [4, 5, 6, 7], "soc_version": "ascend910b4"}
     config_path.write_text(json.dumps(config))
     monkeypatch.setattr(build_ops, "reusable_build", lambda _path, _signature:
                         json.loads((tmp_path / "reports/build.json").read_text()))
@@ -412,7 +412,7 @@ def test_new_device_gate_preserves_probe_rc_and_requires_npu_release(
     monkeypatch.setattr(paired, "run_phase", phase)
     monkeypatch.setattr(paired, "_observe_resources",
                         lambda _config, _directory, *, before=None:
-                        {"status": release_status} if before else {"devices": [0, 1, 2, 3], "memory": []})
+                        {"status": release_status} if before else {"devices": [4, 5, 6, 7], "memory": []})
     with pytest.raises(paired.OperatorGateError) as caught:
         paired.ensure_current_operators(config_path, config, _acceptance(), tmp_path / "run")
     assert caught.value.phase == failed_phase and caught.value.returncode == expected_rc

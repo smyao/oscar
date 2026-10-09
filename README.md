@@ -1,6 +1,6 @@
 # OSCAR Ascend 外部适配工程
 
-固定优化交付入口：`git pull --ff-only && bash scripts/install_serve.sh --variant candidate`。每轮实现均须同步编译、候选配置和实际算子路由；直启与probe共用`tools/serving_variants.py`候选预设。该直启命令仍不运行测试/probe/AISBench，后四卡只需追加`--rear-cards`。
+固定优化交付入口：`git pull --ff-only && bash scripts/install_serve.sh --variant candidate`。每轮实现均须同步编译、候选配置和实际算子路由；直启与probe共用`tools/serving_variants.py`候选预设。该直启命令仍不运行测试/probe/AISBench；本轮默认已固定后四卡 `4,5,6,7` 和端口 `7878`。
 
 已实现 FULL 层 INT2 缓存、真正的 Cube/Vector attention、融合旋转/裁剪/写入、精确窗口、MTP 位置修正、固定图缓冲、外部插件及一键安装/探针/服务流程。GDN 使用原生状态和 reshape。新增代码不覆盖原生 vLLM/Ascend 源文件。
 
@@ -32,7 +32,7 @@ git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate
 git pull --ff-only && bash scripts/install_observe_serve.sh --variant baseline
 ```
 
-也可用`--variant native`启动不含OSCAR计算逻辑的原生对照。三种模式均从`configs/target.json`生成本次有效配置，不改原文件；同卡同端口的上一服务须先停止。看到`OBSERVE_READY`后，用自己的AISBench请求端口8989、模型名`qwen3.5`。脚本不发送测试推理请求，不生成用户数据集。
+也可用`--variant native`启动不含OSCAR计算逻辑的原生对照。三种模式均从`configs/target.json`生成本次有效配置，不改原文件；同卡同端口的上一服务须先停止。看到`OBSERVE_READY`后，用自己的AISBench请求端口7878、模型名`qwen3.5`。脚本不发送测试推理请求，不生成用户数据集。
 
 仅打印关键`PERF_HISTORY_REUSE_*`和`OBSERVE_*`行，完整数据保存在本次`logs/observe-*`。采证使用有界异步NPU Event，区分同rank、同step、同stream的attention并集与其余时间；原生扣原生attention，OSCAR扣接管的FULL路径。图回放保留整图时间，图内细项标缺失。事件采样仍有扰动，不能用稀疏样本直接反推整轮墙钟。详见[端到端方案与实验边界](docs/history_reuse_experiment.md)。
 
@@ -46,7 +46,7 @@ git pull --ff-only && bash scripts/install_observe_serve.sh --variant baseline
 git pull --ff-only && bash scripts/install_probe_serve.sh
 ```
 
-默认读取 `configs/target.json`：物理 NPU **0,1,2,3**、`ascend910b4`、TP=4、端口 **8989**，模型为 `/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp`。这些值来自本次启动文档附录 A/F；全部子进程使用同一配置，不继承其他任务卡号。脚本使用当前 `python3`，也可通过 `OSCAR_PYTHON` 指定已有解释器；node93 无需创建 `.venv`、安装 Lima 或运行 `validate_vm.sh`。
+默认读取 `configs/target.json`：物理 NPU **4,5,6,7**、`ascend910b4`、TP=4、端口 **7878**，模型为 `/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp`。这是本轮用户明确指定的后四卡覆盖；全部子进程使用同一配置，不继承其他任务卡号。脚本使用当前 `python3`，也可通过 `OSCAR_PYTHON` 指定已有解释器；node93 无需创建 `.venv`、安装 Lima 或运行 `validate_vm.sh`。
 
 默认流程：安装构建依赖/插件 → 编译算子 → 真 NPU 算子对拍及 CV/旋转探针 → 自动准备旋转文件 → TP4/MTP/长输入/图服务探针 → 回收本任务进程及 NPU 资源 → 正式服务并验证真实请求。**探针保留且失败即停止**；启动流程不执行环境清单、原生源码扫描或 readiness 前置审计。安装、编译、数值、服务或资源清理失败都会保留日志和退出码，不改走原生 FULL 或 CPU。每个阶段的输出、服务启动日志及 traceback 都实时显示在当前终端，同时写入 `logs/<本次运行>/`；失败时打印阶段名、退出码和日志路径，无需打开文件才能看到错误。该流程尚未在目标 NPU 全程执行。此次启动修订对应档案 #74–76/#94–98/#107/#117/#123–125；最新真机CV数值失败记录见 #126。
 
@@ -60,13 +60,13 @@ git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 
 `--variant candidate`生成本轮有效配置并启用C4历史复用、后续MTP q1调度和新fast unpack；新版本应先通过上面的真实NPU短probe。终端打印`SERVE_MODE variant=candidate C4=on Q1=on FAST_UNPACK=on`。它不启用独立q4 profile算子。`--variant baseline`使用fe0；省略该参数时遵循原配置，当前`configs/target.json`默认未启用这些实验路径。原配置文件不会被修改。
 
-使用后四张物理卡 **4,5,6,7**、端口 **7878**，增加`--rear-cards`：
+兼容旧调用方时，也可显式保留`--rear-cards`（结果与当前默认相同）：
 
 ```bash
 git pull --ff-only && bash scripts/install_serve.sh --variant candidate --rear-cards
 ```
 
-设备与端口写入本轮有效配置，安装/编译/旋转准备和服务统一使用该配置。省略`--rear-cards`时，默认仍为0,1,2,3和8989；不修改`configs/target.json`。
+设备与端口写入本轮有效配置，安装/编译/旋转准备和服务统一使用该配置。当前默认和兼容参数`--rear-cards`都选择4,5,6,7和7878。
 
 不启动设备即可查看计划：
 

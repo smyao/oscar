@@ -23,12 +23,12 @@ def test_install_and_probe_plans_select_the_same_bundle(variant, enabled, capsys
 
 
 def test_default_retains_config_and_candidate_does_not_mutate_input():
-    original = {"devices": [0, 1, 2, 3], "port": 8989,"max_num_batched_tokens":16384}
+    original = {"devices": [4, 5, 6, 7], "port": 7878,"max_num_batched_tokens":16384}
     assert variant_config(original, None) == original
     selected = variant_config(original, "candidate")
     features = variant_features(selected)
     assert all(features.values())
-    assert original == {"devices": [0, 1, 2, 3], "port": 8989,"max_num_batched_tokens":16384}
+    assert original == {"devices": [4, 5, 6, 7], "port": 7878,"max_num_batched_tokens":16384}
     assert not any(variant_features(variant_config(selected, "native")).values())
     with pytest.raises(ValueError, match="explicit boolean"):
         variant_config({"experimental_fast_unpack": "true"}, "candidate")
@@ -77,7 +77,7 @@ def test_both_one_key_entries_enable_the_complete_candidate_without_manual_flags
     assert all(selected['optimizations'].values())
     assert selected['max_num_batched_tokens']==32768
     assert selected['scheduler_cls']==WHOLE_PREFILL_SCHEDULER
-    assert selected['devices']==[0,1,2,3] and selected['port']==8989
+    assert selected['devices']==[4,5,6,7] and selected['port']==7878
     assert direct['probes']=='none'
     assert {'decode_bundle_gate','current_only_gate','first_mtp_current_gate','mixed_decode_split_gate'}<=set(observed['phases'])
     assert observed['inference_requests_generated']==0

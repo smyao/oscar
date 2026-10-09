@@ -112,6 +112,10 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     monkeypatch.setattr(observe_serve, "_fast_unpack_gate", lambda *args: seen.append("fast-unpack-gate"))
     monkeypatch.setattr(observe_serve, "_mixed_optimization_gate", lambda *args: seen.append("mixed-optimization-gate"))
     monkeypatch.setattr(observe_serve, "_striped_cache_gate", lambda *args: seen.append("striped-cache-gate"))
+    monkeypatch.setattr(observe_serve, "_decode_bundle_gate", lambda *args: seen.append("decode-bundle-gate"))
+    monkeypatch.setattr(observe_serve, "_current_only_gate", lambda *args: seen.append("current-only-gate"))
+    monkeypatch.setattr(observe_serve, "_first_mtp_current_gate", lambda *args: seen.append("first-mtp-current-gate"))
+    monkeypatch.setattr(observe_serve, "_mixed_decode_split_gate", lambda *args: seen.append("mixed-decode-split-gate"))
     monkeypatch.setattr(observe_serve, "_q4_diagnostic", lambda *args: seen.append("q4-diagnostic"))
     monkeypatch.setattr(observe_serve, "_mixed_diagnostic", lambda *args: seen.append("mixed-diagnostic"))
     monkeypatch.setattr(observe_serve, "managed_server", lambda *args, **kwargs:
@@ -119,7 +123,9 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     logs = tmp_path / "probe"
     assert observe_serve.run(config, logs, "candidate", probe_only=True, diagnose_mixed=diagnose_mixed) == 0
-    assert seen == ["preflight", "candidate-gates", "fast-unpack-gate", "mixed-optimization-gate", "striped-cache-gate"]
+    assert seen == ["preflight", "candidate-gates", "fast-unpack-gate", "mixed-optimization-gate",
+                    "striped-cache-gate", "decode-bundle-gate", "current-only-gate",
+                    "first-mtp-current-gate", "mixed-decode-split-gate"]
     status = json.loads((logs / "status.json").read_text())
     assert status["service_started"] is False
     assert status["performance_acceptance"] == "operator_only_not_end_to_end"
@@ -375,7 +381,7 @@ def test_managed_service_only_observes_external_load(monkeypatch, tmp_path):
     calls = []
 
     class Server:
-        base_url = "http://127.0.0.1:8989"
+        base_url = "http://127.0.0.1:7878"
         trace_dir = tmp_path / "trace"
         def check_alive(self):
             raise KeyboardInterrupt("test stop after READY")
@@ -424,7 +430,7 @@ def test_cleanup_resource_error_preserves_server_rc_and_late_summary(monkeypatch
         returncode = 7
         phase = "serve"
     class Server:
-        base_url = "http://127.0.0.1:8989"
+        base_url = "http://127.0.0.1:7878"
         trace_dir = trace
         def check_alive(self):
             raise KeyboardInterrupt("test stop")

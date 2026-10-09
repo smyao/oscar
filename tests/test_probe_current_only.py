@@ -15,7 +15,7 @@ from tools import observe_serve, probe_current_only as probe
 def target():
     return {"experimental_current_only": True, "experimental_history_reuse": True,
         "experimental_fast_unpack": True,"experimental_mixed_cv": True,"experimental_striped_cache": True,
-        "devices": [0,1,2,3], "soc_version": "ascend910b4"}
+        "devices": [4,5,6,7], "soc_version": "ascend910b4"}
 
 
 def complete_report():
@@ -101,7 +101,7 @@ def test_probe_real_npu_missing_fails_without_cpu_substitution(tmp_path, monkeyp
     monkeypatch.setitem(sys.modules,"torch_npu",SimpleNamespace())
     monkeypatch.setattr(torch,"npu",SimpleNamespace(is_available=lambda:False),raising=False)
     monkeypatch.setattr(probe,"run_case",lambda *args:pytest.fail("NPU absent must never execute a case"))
-    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES","0,1,2,3")
+    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES","4,5,6,7")
     with pytest.raises(RuntimeError,match="requires a real NPU"):
         probe.probe(config,acceptance)
 

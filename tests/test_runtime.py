@@ -170,7 +170,7 @@ def test_striped_dispatch_keeps_every_history_reader_in_one_format():
 def test_striped_runtime_requires_d256_and_all_signed_reader_writer_symbols(monkeypatch):
     from oscar_ascend.ops import loader
     from oscar_ascend.ops.cv_dispatch import STRIPED_CV_OPS
-    config = {"devices": [0, 1, 2, 3], "experimental_history_reuse": True,
+    config = {"devices": [4, 5, 6, 7], "experimental_history_reuse": True,
               "experimental_fast_unpack": True, "experimental_mixed_cv": True,
               "experimental_striped_cache": True,
               "max_num_batched_tokens": 16384,
@@ -183,7 +183,7 @@ def test_striped_runtime_requires_d256_and_all_signed_reader_writer_symbols(monk
     provider = AscendRuntimeProvider(config)
     with pytest.raises(runtime_api.OscarReadinessError, match="D256"):
         provider.ensure_workspace(6, 1, 64, "npu:0")
-    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "0,1,2,3")
+    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "4,5,6,7")
     monkeypatch.setattr(loader, "require_production_ops", lambda: None)
     seen = []
     def require(required, *_args):
@@ -203,7 +203,7 @@ def test_striped_runtime_requires_d256_and_all_signed_reader_writer_symbols(monk
 def test_mixed_cv_readiness_requires_both_new_signed_ops(monkeypatch):
     from oscar_ascend.ops import loader
     from oscar_ascend.ops.cv_dispatch import MIXED_CV_OPS
-    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "0,1,2,3")
+    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "4,5,6,7")
     monkeypatch.setattr(loader, "require_production_ops", lambda: None)
     seen = []
     def require(required, *_args):
@@ -213,7 +213,7 @@ def test_mixed_cv_readiness_requires_both_new_signed_ops(monkeypatch):
     monkeypatch.setattr(loader, "require_capabilities", require)
     monkeypatch.setattr(torch, "npu", SimpleNamespace(is_available=lambda: True),
                         raising=False)
-    provider = AscendRuntimeProvider({"devices": [0, 1, 2, 3],
+    provider = AscendRuntimeProvider({"devices": [4, 5, 6, 7],
                                      "experimental_history_reuse": True,
                                      "experimental_fast_unpack": True,
                                      "experimental_mixed_cv": True})

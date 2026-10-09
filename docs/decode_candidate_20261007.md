@@ -16,7 +16,7 @@ git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate
 git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 ```
 
-两条命令共用 `tools/serving_variants.py`，实际启用相同组合。直启仍不运行 probe，不能把直启成功视作精度验收。默认物理设备 `0,1,2,3`、端口 `8989`；直启叠加 `--rear-cards` 使用 `4,5,6,7` / `7878`。启动时一行 `PERF_RUNTIME_CONFIG` 显示实际开关、token 预算和 scheduler。
+两条命令共用 `tools/serving_variants.py`，实际启用相同组合。直启仍不运行 probe，不能把直启成功视作精度验收。本轮默认物理设备 `4,5,6,7`、端口 `7878`；兼容参数 `--rear-cards` 选择相同设备。启动时一行 `PERF_RUNTIME_CONFIG` 显示实际开关、token 预算和 scheduler。
 
 ## 本轮启用
 

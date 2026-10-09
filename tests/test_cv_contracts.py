@@ -249,7 +249,7 @@ def test_npu_cv_query_tail_survives_padding_and_reused_workspace(dim, qlen):
     # GQA6 produces 6/12/24/30/36/60 live Q rows: tails before and after the
     # AIV lane boundary at row32. Context17 keeps this test entirely precise,
     # isolating Q publication from quantization and inverse-rotation behavior.
-    # D.4: keep the 64-row reuse tile; no serial fallback or extra kernel route.
+    # D.4: keep the bounded unified tile; no serial fallback or extra route.
     ops = _npu_ops()
     data, expected, expected_lse = _case(dim, qlen, 17)
     tensors, buffers = _device_case(data)
@@ -261,17 +261,29 @@ def test_npu_cv_query_tail_survives_padding_and_reused_workspace(dim, qlen):
             data = changed
             tensors["q"].copy_(data["q"])
             tensors["qr"].copy_(data["qr"])
+        # A follower-only Cube intentionally performs no Q publication. Re-poison
+        # scratch so a changed-input replay cannot be mistaken for current data.
+        buffers["workspace"].view(torch.float32).fill_(float("nan"))
         _execute_cv(ops, data, tensors, buffers)
         assert {key: value.data_ptr() for key, value in {**tensors, **buffers}.items()} == addresses
-        # The final live tasks on both Cube cores are precise-window/current
-        # tasks. Their documented workspace starts with Q[64,D], so inspect
-        # the actual device-published Q as a bounded diagnostic before merge.
+        # Unified one-token ownership may leave a Cube with follower tasks only,
+        # and its final live source may publish either Q or rotated Q. Every
+        # participating Cube must contain one exact current input; inactive
+        # Cubes must leave the poison untouched. Output/LSE below remains the
+        # end-to-end numerical assertion.
         staged = buffers["workspace"].cpu().view(torch.float32).reshape(data["cores"], -1)
         staged = staged[:, :ATTENTION_QUERY_ROWS * dim].reshape(data["cores"], ATTENTION_QUERY_ROWS, dim)
         target = torch.zeros(ATTENTION_QUERY_ROWS, dim, dtype=torch.float32)
         target[:qlen * data["hq"]] = data["q"].float().reshape(-1, dim)
-        torch.testing.assert_close(staged, target.expand_as(staged), atol=0, rtol=0,
-            msg=f"Q DMA staging corrupted before padding, iteration={iteration}, D={dim}, qlen={qlen}")
+        rotated = torch.zeros_like(target)
+        rotated[:qlen * data["hq"]] = data["qr"].reshape(-1, dim)
+        current_match = (staged == target).all(dim=(1, 2))
+        history_match = (staged == rotated).all(dim=(1, 2))
+        untouched = torch.isnan(staged).all(dim=(1, 2))
+        assert bool((current_match | history_match).any()), (
+            f"no Cube published Q, iteration={iteration}, D={dim}, qlen={qlen}")
+        assert bool((current_match | history_match | untouched).all()), (
+            f"Q DMA staging corrupted before padding, iteration={iteration}, D={dim}, qlen={qlen}")
         _assert_cv_result(data, buffers, expected, expected_lse)
 
 

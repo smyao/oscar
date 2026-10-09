@@ -315,8 +315,10 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
     cores = _core_count(torch, target)
     if cores != 20:
         raise DecodeHotpathError(f"signed q4 diagnostic expects 20 Cube cores, got {cores}")
-    capacity = max(int(target["max_num_batched_tokens"]),
-                   max(target.get("compilation_config", {}).get("cudagraph_capture_sizes", ()), default=0))
+    capacity = target.get("max_num_batched_tokens")
+    if capacity is None:
+        capacity = max(target.get("compilation_config", {}).get("cudagraph_capture_sizes", ()), default=1)
+    capacity = int(capacity)
     geometry = WorkspaceGeometry(capacity, 6, 1, 256,
                                  int(target.get("attention_splits", 1)), cores)
     if geometry.splits_for_tokens(128) != 3:

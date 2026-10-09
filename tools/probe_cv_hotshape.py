@@ -583,7 +583,10 @@ def run_probe(variant: str, manifest_path: Path, target_path: Path,
     cores = _actual_cores(torch, target)
     from oscar_ascend.runtime import ATTENTION_QUERY_ROWS, ATTENTION_KV_ROWS
     query_rows = OLD_QUERY_ROWS if variant == "baseline" else ATTENTION_QUERY_ROWS
-    capacity = int(target["max_num_batched_tokens"])
+    capacity = target.get("max_num_batched_tokens")
+    if capacity is None:
+        capacity = max(target.get("compilation_config", {}).get("cudagraph_capture_sizes", ()), default=1)
+    capacity = int(capacity)
     scale = DIM ** -0.5
     tolerance = acceptance["fused_attention"]
     cases = {}

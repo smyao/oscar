@@ -126,7 +126,10 @@ def measurement_shape(spec: Shape, target: dict, cores: int) -> Shape:
         return spec
     from oscar_ascend.runtime import WorkspaceGeometry
     captures = target.get("compilation_config", {}).get("cudagraph_capture_sizes", ())
-    capacity = max(int(target["max_num_batched_tokens"]), max(captures, default=0))
+    capacity = target.get("max_num_batched_tokens")
+    if capacity is None:
+        capacity = max(captures, default=1)
+    capacity = int(capacity)
     geometry = WorkspaceGeometry(capacity, spec.heads, spec.kv_heads, spec.dim,
                                  int(target.get("attention_splits", 1)), cores)
     return replace(spec, splits=geometry.splits_for_tokens(sum(spec.qlens)))

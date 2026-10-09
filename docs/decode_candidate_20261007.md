@@ -28,7 +28,7 @@ git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 | 首轮 MTP | 经原生调用链限定的 current 部分使用 FIA；历史保持 INT2，身份旋转不改 |
 | 后续 MTP 大 padding | 仅已审计的 eager dense MTP 路径收缩到真实请求行；保留原 source split 与位置/slot 语义 |
 | 混合批次 | FULL attention 内按请求边界分开短 decode 前缀与长后缀，保留原 split，不改 GDN |
-| 20–30K 首次准入 | 外部 scheduler 将 token 预算设为至少 32768，合格长 prompt 尽量整段准入；继续沿用原生异步/GDN执行 |
+| 20–30K 首次准入 | candidate 不再注入外部 scheduler 或 `max_num_batched_tokens`；由当前 vLLM 按其原生默认逻辑解析调度预算，继续沿用原生异步/GDN执行 |
 
 冻结 `configs/acceptance.json` 未修改。独立 oracle 不进入生产路由，不恢复 BF16 全历史，不改原生源码。尚未完成数值验收的 `decode_weighted` 试验未加入生产源码、算子选择或 candidate 开关。
 

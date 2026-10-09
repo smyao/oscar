@@ -82,7 +82,6 @@ def test_preparation_preserves_source0_leader_evidence_and_uses_hadamard(monkeyp
 def test_mixed_pipeline_stage_order_and_pure_decode_omits_current(monkeypatch):
     torch = pytest.importorskip("torch")
     from oscar_ascend.integration import current_attention as current
-    from tools import probe_fast_unpack as fast
     stages = []
     class Event:
         clock = 0
@@ -99,8 +98,8 @@ def test_mixed_pipeline_stage_order_and_pure_decode_omits_current(monkeypatch):
     monkeypatch.setattr(torch, "npu", SimpleNamespace(
         current_stream=lambda: stream, Event=Event), raising=False)
     monkeypatch.setattr(mixed.reuse, "_poison", lambda *_: None)
-    monkeypatch.setattr(fast, "_launch", lambda _ops, _t, _f, _b, _c, mode, *, fast:
-                        stages.append("cv:" + mode))
+    monkeypatch.setattr(mixed.reuse, "_launch",
+                        lambda *_args, **_kwargs: stages.append("cv:unified"))
     monkeypatch.setattr(current, "suppress_current_source_tasks",
                         lambda *_: stages.append("suppress"))
     monkeypatch.setattr(current, "guard_current_slots",
@@ -129,11 +128,11 @@ def test_mixed_pipeline_stage_order_and_pure_decode_omits_current(monkeypatch):
     row = mixed._run_once(torch, ops, fixture, tensors, buffers, 20,
                           mixed=True, pristine_tasks=cv["tasks"].clone(),
                           cumulative=(1,))
-    assert stages == ["suppress", "cv:c4", "guard", "current", "write", "merge"]
+    assert stages == ["suppress", "cv:unified", "guard", "current", "write", "merge"]
     assert row["total_ms"] > row["cv_ms"] > 0
     stages.clear()
     row = mixed._run_once(torch, ops, fixture, tensors, buffers, 20, mixed=False)
-    assert stages == ["cv:base", "merge"]
+    assert stages == ["cv:unified", "merge"]
     assert row["current_ms"] == 0.0
 
 

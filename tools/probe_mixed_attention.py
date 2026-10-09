@@ -112,7 +112,9 @@ def derive_decode_fixture(torch, mixed: dict, *, requests: int = DECODE_REQUESTS
 def _allocate(torch, fixture: dict, device, cores: int, *, mixed: bool) -> dict:
     spec: reuse.Shape = fixture["spec"]
     n, h, d = fixture["tokens"], spec.heads, spec.dim
-    cv = reuse._allocate(torch, fixture, device, cores, candidate=mixed)
+    # Production has one ABI and one maximum bounded workspace for both the
+    # mixed and decode controls. Never measure a retired diagnostic symbol.
+    cv = reuse._allocate(torch, fixture, device, cores, candidate=True)
     return {"cv": cv,
             "output": torch.empty((n * h, d), dtype=torch.float32, device=device),
             "output_lse": torch.empty((n * h,), dtype=torch.float32, device=device),
@@ -199,8 +201,8 @@ def _verify_suppressed_cv(torch, ops, fixture: dict, tensors: dict,
     cv["tasks"].copy_(pristine_tasks)
     reuse._poison(torch, cv)
     suppress_current_source_tasks(cv["tasks"], n, spec.kv_heads, splits)
-    from .probe_fast_unpack import _launch as launch_fast
-    launch_fast(ops, tensors, fixture, cv, cores, "c4", fast=True)
+    reuse._launch(ops, tensors, fixture, cv, cores, candidate=True,
+                  production_route=True)
     torch.npu.synchronize()
     reuse._check_status(torch, cv, invalid=False)
     source2 = cv["partial"][:, :, 2 * splits:3 * splits]
@@ -247,12 +249,12 @@ def _run_once(torch, ops, fixture: dict, tensors: dict, buffers: dict,
     if mixed:
         suppress_current_source_tasks(cv["tasks"], n, spec.kv_heads, splits)
         after_suppress = stamp()
-        from .probe_fast_unpack import _launch as launch_fast
-        launch_fast(ops, tensors, fixture, cv, cores, "c4", fast=True)
+        reuse._launch(ops, tensors, fixture, cv, cores, candidate=True,
+                      production_route=True)
     else:
         after_suppress = start
-        from .probe_fast_unpack import _launch as launch_fast
-        launch_fast(ops, tensors, fixture, cv, cores, "base", fast=True)
+        reuse._launch(ops, tensors, fixture, cv, cores, candidate=True,
+                      production_route=True)
     after_cv = stamp()
     current_output = current_lse = None
     if mixed:
@@ -295,14 +297,12 @@ def _run_once(torch, ops, fixture: dict, tensors: dict, buffers: dict,
 def measure_case(torch, ops, fixture: dict, device, cores: int,
                  acceptance: dict, *, mixed: bool) -> dict:
     """2 warmups and 5 normal Event repeats; per-phase markers never sync."""
-    from oscar_ascend.ops.cv_dispatch import (
-        FAST_CLUSTER4_CV_OP, FAST_CV_OP, select_cv_op)
+    from oscar_ascend.ops.cv_dispatch import UNIFIED_CV_OP, select_cv_op
     spec: reuse.Shape = fixture["spec"]
     selected = select_cv_op(4, spec.heads, spec.kv_heads, fixture["tokens"],
                             max(spec.qlens), q1_draft=False, fast_unpack=True)
-    expected_op = FAST_CLUSTER4_CV_OP if mixed else FAST_CV_OP
-    if selected != expected_op:
-        raise MixedAttentionProbeError("production candidate route differs from measured fast symbol")
+    if selected != UNIFIED_CV_OP:
+        raise MixedAttentionProbeError("production route differs from measured unified symbol")
     tensors = {name: tensor.to(device) for name, tensor in fixture["cpu"].items()}
     buffers = _allocate(torch, fixture, device, cores, mixed=mixed)
     prepared = _prepare_rotation(torch, ops, fixture, tensors, buffers, cores)
@@ -388,7 +388,7 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
     manifest_path = ROOT / "build/ascendc/build_manifest.json"
     manifest = validate_build_artifacts(manifest_path)
     require_capabilities({"prepare_attention_tasks_out", "rotate_out",
-                          "attention_cv_fast_out", "attention_cv_fast_cluster4_out",
+                          "attention_cv_unified_out",
                           "merge_lse_out", "status_guard"}, manifest_path)
     ops = torch.ops.oscar_ascend_ops
     cores = reuse._core_count(torch, target)

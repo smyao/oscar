@@ -1,4 +1,5 @@
 # 档案 #28/#29/#30/#84：建引擎前初始化父进程线程池；保留附录 A 参数及 MTP eager 作用域。
+# #34/#36：原生预算模式不传预算参数；worker按原生有效容量预分配。
 from __future__ import annotations
 import argparse
 import json
@@ -10,9 +11,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def serve_argv(config: dict) -> list[str]:
+    native_budget = config.get("use_native_token_budget", False)
+    if type(native_budget) is not bool:
+        raise ValueError("use_native_token_budget must be an explicit boolean")
+    if native_budget and ("max_num_batched_tokens" in config or
+                          config.get("scheduler_cls") is not None or
+                          config.get("experimental_whole_prefill", False)):
+        raise ValueError("native token budget requires an omitted budget and native scheduler")
     args = ["serve", config["model"]]
     for key in ("served_model_name", "host", "port", "data_parallel_size", "tensor_parallel_size",
                 "max_model_len", "max_num_batched_tokens", "max_num_seqs", "gpu_memory_utilization", "quantization"):
+        if key == "max_num_batched_tokens" and native_budget:
+            continue
         args += ["--" + key.replace("_", "-"), str(config[key])]
     for key in ("compilation_config", "speculative_config", "additional_config", "hf_overrides"):
         # Keep the user-provided spelling for speculative_config.

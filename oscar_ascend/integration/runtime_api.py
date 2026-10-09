@@ -51,7 +51,16 @@ def _create_default_runtime():
     # Archive #28/#77/#78: this import occurs when the native engine requests
     # an implementation, never while the general-plugin entrypoint registers.
     from ..runtime import create_runtime
-    return create_runtime()
+    provider = create_runtime()
+    native_budget = provider.config.get("use_native_token_budget", False)
+    if type(native_budget) is not bool:
+        raise OscarReadinessError("use_native_token_budget must be an explicit boolean")
+    if native_budget:
+        # #34/#36: the base constructor only reads configuration; no workspace
+        # or device allocation has happened. Select this adapter in every worker.
+        from .native_token_budget import NativeTokenBudgetRuntime
+        return NativeTokenBudgetRuntime(provider.config)
+    return provider
 
 
 def ensure_default_runtime_factory() -> None:

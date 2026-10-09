@@ -2,6 +2,7 @@
 
 Every delivered optimization flag belongs here so installation and observation
 cannot silently select different numerical paths. Physical placement is separate.
+#34/#36: native-budget launches must not retain the whole32K override.
 """
 
 FEATURE_FLAGS = {
@@ -49,6 +50,9 @@ def variant_config(config: dict, variant: str | None) -> dict:
         raise ValueError(f"unknown serving variant: {variant}")
     selected = dict(config)
     _restore_owned_scheduler(selected)
+    native_budget = selected.get("use_native_token_budget", False)
+    if type(native_budget) is not bool:
+        raise ValueError("use_native_token_budget must be an explicit boolean")
     for flag in dict.fromkeys(FEATURE_FLAGS.values()):
         if type(selected.get(flag, False)) is not bool:
             raise ValueError(f"{flag} must be an explicit boolean")
@@ -56,6 +60,18 @@ def variant_config(config: dict, variant: str | None) -> dict:
             # The same complete candidate bundle is used by direct serving
             # and observation. Baseline/native clear every experimental flag.
             selected[flag] = variant == "candidate"
+    if native_budget:
+        # Keep the numerical candidate bundle; let native async scheduling
+        # choose its budget and chunking policy. Never substitute 2048 here.
+        if selected.get("scheduler_cls") not in (None, WHOLE_PREFILL_SCHEDULER):
+            raise ValueError("native token budget conflicts with an explicit other scheduler")
+        if "max_num_batched_tokens" in selected and (
+                type(selected["max_num_batched_tokens"]) is not int or
+                selected["max_num_batched_tokens"] <= 0):
+            raise ValueError("configured max_num_batched_tokens must be a positive integer")
+        selected.pop("max_num_batched_tokens", None)
+        selected.pop("scheduler_cls", None)
+        selected["experimental_whole_prefill"] = False
     for flag in RESEARCH_FEATURE_FLAGS.values():
         if type(selected.get(flag, False)) is not bool:
             raise ValueError(f"{flag} must be an explicit boolean")
@@ -102,6 +118,7 @@ def variant_features(config: dict) -> dict:
 def runtime_feature_summary(config: dict, variant: str | None) -> dict:
     """One compact startup line shows the actual effective feature selection."""
     return {"variant":variant,"optimizations":variant_features(config),
+            "token_budget_source":"native" if config.get("use_native_token_budget", False) else "explicit",
             "max_num_batched_tokens":config.get("max_num_batched_tokens"),
             "scheduler_cls":config.get("scheduler_cls"),
             "devices":config.get("devices"),"port":config.get("port")}

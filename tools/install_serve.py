@@ -11,7 +11,7 @@ from pathlib import Path
 import sys
 from .deploy import plan as deploy_plan
 from .phase import atomic_json, run_phase, terminal_line
-from .target_cli import target_env
+from .target_cli import target_env, serve_argv
 from .serving_variants import variant_config, variant_features, runtime_feature_summary
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,6 +30,8 @@ def main(argv=None) -> int:
                         help="candidate enables C4, later-MTP q1, fast unpack mixed balanced/C16 and striped INT2/SIMD; baseline selects fe0; omitted respects config")
     parser.add_argument("--rear-cards", action="store_true",
                         help="use physical Ascend devices 4,5,6,7 and port 7878 for this launch only")
+    parser.add_argument("--native-token-budget", action="store_true",
+                        help="omit the vLLM token-budget argument and use native chunked scheduling")
     args = parser.parse_args(argv)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     log_dir = (args.log_dir or ROOT / "logs" / stamp).resolve()
@@ -38,7 +40,10 @@ def main(argv=None) -> int:
         atomic_json(log_dir / "status.json", status)
         print(f"[oscar] install → build → rotations → serve (no tests, no probes); logs={log_dir}", flush=True)
     try:
-        config = variant_config(json.loads(args.config.read_text()), args.variant)
+        config = json.loads(args.config.read_text())
+        if args.native_token_budget:
+            config["use_native_token_budget"] = True
+        config = variant_config(config, args.variant)
         if args.rear_cards:
             # Explicit user-selected placement, never inherited from a prior
             # task's environment. Validate the supplied device config first.
@@ -53,7 +58,7 @@ def main(argv=None) -> int:
         raise
     enabled = config.get("experimental_history_reuse", False)
     variant = "candidate" if enabled else "baseline"
-    write_effective = args.variant is not None or args.rear_cards
+    write_effective = args.variant is not None or args.rear_cards or args.native_token_budget
     effective_path = (log_dir / "effective-target.json" if write_effective
                       else args.config.resolve())
     stages = []
@@ -75,6 +80,7 @@ def main(argv=None) -> int:
                   optimizations=variant_features(config))
     if args.plan:
         print(json.dumps({"stages": stages, "serve": serve_command, "probes": "none",
+                          "vllm_argv": serve_argv(config),
                           "variant": variant, "optimizations": status["optimizations"],
                           "runtime_selection": runtime_feature_summary(config, variant),
                           "target_devices": config["devices"], "port": config["port"],

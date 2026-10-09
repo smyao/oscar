@@ -12,10 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 def serve_argv(config: dict) -> list[str]:
     args = ["serve", config["model"]]
     for key in ("served_model_name", "host", "port", "data_parallel_size", "tensor_parallel_size",
-                "max_model_len", "max_num_seqs", "gpu_memory_utilization", "quantization"):
+                "max_model_len", "max_num_batched_tokens", "max_num_seqs", "gpu_memory_utilization", "quantization"):
         args += ["--" + key.replace("_", "-"), str(config[key])]
-    if "max_num_batched_tokens" in config:
-        args += ["--max-num-batched-tokens", str(config["max_num_batched_tokens"])]
     for key in ("compilation_config", "speculative_config", "additional_config", "hf_overrides"):
         # Keep the user-provided spelling for speculative_config.
         flag = "--speculative_config" if key == "speculative_config" else "--" + key.replace("_", "-")

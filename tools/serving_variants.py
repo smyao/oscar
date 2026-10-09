@@ -18,11 +18,29 @@ FEATURE_FLAGS = {
     "compact_later_mtp": "experimental_compact_later_mtp",
     "mixed_decode_split": "experimental_mixed_decode_split",
     "decode_bundle": "experimental_decode_bundle",
+    "whole_prefill": "experimental_whole_prefill",
 }
 
 # Unfinished weighted-owner trials are not in the deploy source list or
 # selector. Future research flags must not leak into native/baseline A/B.
 RESEARCH_FEATURE_FLAGS = {}
+
+WHOLE_PREFILL_SCHEDULER = "oscar_ascend.integration.whole_prefill_scheduler.WholePromptAsyncScheduler"
+_WHOLE_SOURCE = "_oscar_whole_prefill_base"
+
+
+def _restore_owned_scheduler(selected):
+    """A reused generated candidate config must not contaminate native A/B."""
+    saved=selected.pop(_WHOLE_SOURCE,None)
+    if saved is None:return
+    if (not isinstance(saved,dict) or set(saved)!={"max_num_batched_tokens","scheduler_cls"}
+            or type(saved["max_num_batched_tokens"]) is not int or saved["max_num_batched_tokens"]<=0
+            or selected.get("scheduler_cls")!=WHOLE_PREFILL_SCHEDULER):
+        raise ValueError("invalid generated whole-prefill configuration provenance")
+    selected["max_num_batched_tokens"]=saved["max_num_batched_tokens"]
+    if saved["scheduler_cls"] is None:selected.pop("scheduler_cls",None)
+    else:selected["scheduler_cls"]=saved["scheduler_cls"]
+
 
 def variant_config(config: dict, variant: str | None) -> dict:
     if not isinstance(config, dict):
@@ -30,6 +48,7 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if variant not in {None, "baseline", "candidate", "native"}:
         raise ValueError(f"unknown serving variant: {variant}")
     selected = dict(config)
+    _restore_owned_scheduler(selected)
     for flag in dict.fromkeys(FEATURE_FLAGS.values()):
         if type(selected.get(flag, False)) is not bool:
             raise ValueError(f"{flag} must be an explicit boolean")
@@ -59,6 +78,19 @@ def variant_config(config: dict, variant: str | None) -> dict:
         raise ValueError("mixed decode partition requires the optimized decoder bundle")
     if selected.get("experimental_mixed_decode_split", False) and not selected.get("experimental_first_mtp_current_fia", False):
         raise ValueError("mixed decode partition requires the qualified first-MTP current path")
+    if selected.get("experimental_whole_prefill", False):
+        if not (selected.get("experimental_current_only",False) and
+                selected.get("experimental_first_mtp_current_fia",False)):
+            raise ValueError("whole-prefill requires current-only and first-MTP current FIA")
+        budget=selected.get("max_num_batched_tokens")
+        if type(budget) is not int or budget<=0:
+            raise ValueError("whole-prefill requires an explicit positive token budget")
+        scheduler=selected.get("scheduler_cls")
+        if scheduler is not None and scheduler!=WHOLE_PREFILL_SCHEDULER:
+            raise ValueError("whole-prefill conflicts with an explicit other scheduler")
+        selected[_WHOLE_SOURCE]={"max_num_batched_tokens":budget,"scheduler_cls":None}
+        selected["max_num_batched_tokens"]=max(32768,budget)
+        selected["scheduler_cls"]=WHOLE_PREFILL_SCHEDULER
     return selected
 
 

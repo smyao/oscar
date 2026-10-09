@@ -224,7 +224,6 @@ class AscendRuntimeProvider:
         self.workspaces: dict[tuple, GraphWorkspace] = {}
         self.rotations: dict[tuple, dict] = {}
         self.device_cores: dict[str, int] = {}
-        self._scheduler_token_capacity: int | None = None
         self.ops = None
 
     def assert_ready(self):
@@ -273,15 +272,7 @@ class AscendRuntimeProvider:
         if self._cache_format == "striped_v1" and dim != 256:
             raise OscarReadinessError("striped INT2 cache is valid only for D256")
         captures = self.config.get("compilation_config", {}).get("cudagraph_capture_sizes", [])
-        configured = self.config.get("max_num_batched_tokens")
-        if configured is None:
-            configured = self._scheduler_token_capacity
-        if configured is None:
-            self._prepare_rotations(dim, device)
-            return None
-        if type(configured) is not int or configured <= 0:
-            raise OscarReadinessError("resolved vLLM max_num_batched_tokens must be a positive integer")
-        capacity = max(configured, max(captures, default=0))
+        capacity = max(int(self.config["max_num_batched_tokens"]), max(captures, default=0))
         geometry = WorkspaceGeometry(capacity, heads, kv_heads, dim,
                                      int(self.config.get("attention_splits", 1)),
                                      self._device_cube_cores(device),
@@ -431,13 +422,6 @@ class AscendRuntimeProvider:
             runner.runner_only_attn_layers = previous
         rotations = self._rotations(full, runner.device)
         scheduler = runner.vllm_config.scheduler_config
-        resolved_capacity = scheduler.max_num_batched_tokens
-        if type(resolved_capacity) is not int or resolved_capacity <= 0:
-            raise OscarReadinessError("vLLM did not resolve a positive max_num_batched_tokens")
-        if (self._scheduler_token_capacity is not None
-                and self._scheduler_token_capacity != resolved_capacity):
-            raise OscarReadinessError("vLLM scheduler token capacity changed after model initialization")
-        self._scheduler_token_capacity = resolved_capacity
         capture_sizes = runner.vllm_config.compilation_config.cudagraph_capture_sizes or []
         token_capacity = max(scheduler.max_num_batched_tokens, max(capture_sizes, default=0))
         heads = runner.model_config.get_num_attention_heads(runner.parallel_config)

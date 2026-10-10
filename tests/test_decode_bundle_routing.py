@@ -27,6 +27,19 @@ def test_bundle_cannot_read_a_canonical_cache():
         select_cv_op(16,6,1,128,4,fast_unpack=True,mixed_cv=True,decode_bundle=True)
 
 
+def test_bundle_exact_window_dma_is_validated_per_physical_row():
+    """Archive #156: prefix B=2304 must not reuse an unproved batched address run."""
+    source = Path('csrc/kernels/attention_cv_decode_bundle.cpp').read_text()
+    begin = source.index("__aicore__ void LoadWindowRuns")
+    end = source.index("__aicore__ void LoadPrecise", begin)
+    body = source[begin:end]
+    assert "for(int32_t j=0;j<live;++j)" in body
+    assert "if(!Physical(position,block,inpage))continue" in body
+    assert "if(tag.GetValue(0)!=inpage)" in body
+    assert "DataCopyExtParams copy{1,static_cast<uint32_t>(D*2)" in body
+    assert "rows*8" not in body
+
+
 def test_capability_schema_and_registration_are_complete():
     assert DECODE_BUNDLE_OPS<=SOURCE_CAPABILITIES
     binding=Path('csrc/striped_attention_bindings.cpp').read_text()

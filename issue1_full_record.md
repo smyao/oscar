@@ -28607,3 +28607,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修法**：store窗口与store图/eager专用比较对BF16/FP16按int16、FP32按int32视图比较，整数按整数比较；NaN payload、正负零及所有有效字节都保持严格，不使用equal_nan或放宽容差。新增NaN payload不同必须失败、signed-zero不同必须失败与原fixture精确clone通过回归。旧/新store的window写入控制流相同，首错本身不能证明device race；修正后新真NPU writer/reader/图/性能仍待验。AscendC和GDN均未因此修改。
 
 **性能解释修正**：上一轮4K/8K、单请求S1 CV模拟1.98/2.10倍只能证明该算子路径的周期收益；实测16→14为1.143倍。新probe在writer比较处提前失败，所以本条没有striped真NPU算子比值。必须从全程日志建立prefill混合/纯decode/爬坡及排空分布，校准原生480秒与候选840秒，并固定校准参数后评价源码变更；不能把混合区间时长称为attention占比或用两个锚点唯一推定各相位时间。
+
+## [156] 真机条目（2026-10-10）· 开启 prefix cache 后 decode 图回放触发四卡一致 507035/MTE 异常
+
+**原文**：用户回传 `/Users/loki.yao/.codex/attachments/4d513765-0212-4f3a-85e8-098260a37ac3/pasted-text.txt`。服务配置明确为 `enable_prefix_caching=True`；同一 cached request 已计算 24624 tokens、输出 9 tokens，本步调度 4 个 speculative tokens，`num_common_prefix_blocks=[11,0,0,0]`。ACL graph replay 时 TP0–TP3 同时在 Vector core 报 507035，设备扩展信息含 MTE error，EngineCore 随后退出并返回 HTTP 500。该日志证明 prefix 模式不可交付；不能关闭 prefix、关闭图或退回原生 BF16 来掩盖。
+
+**源码定位（当前候选根因，待设备首错复验）**：prefix align 模式把 FULL 物理页从 2816 tokens 改为 2304 tokens；原生 virtual128 block table 与 slot mapping 的线性映射仍满足 `slot=physical_page*B+in_page`，因此不能再做一次 slot 转换。candidate 的 q4/q1 decode 进入 `attention_cv_decode_bundle.cpp`，其精确窗口读取先批量搬运 tags，再把连续有效 tag 合并为 K/V DMA run。这种 tag run 不是完整地址证明：物理页、virtual128、sink 与 ring 边界均会随 B 改变；危险 DMA 发出后，后置 status guard 无法把设备 MTE fault 转成普通错误码。现有日志没有符号化设备 PC，故不得把该源码缺口伪写成已由真机唯一证明的根因。
+
+**修法与 D.4 四问**：只修改融合 decode bundle 的 bounded exact-window reader，主 q4 与同文件 q1 入口共同生效。每行严格执行 logical position → virtual128 table → physical page/in-page 范围校验 → exact tag 校验 → 单行 K/V DMA；任一检查失败只写既有 status，绝不发对应 K/V DMA。①仍是完整 source0 INT2 history、source1 exact window、source2 current 的 CV；②不创建 D.4 已否定的全历史 BF16 恢复；③改动上界仅为 sink+recent+speculative 的有界窗口，INT2 history KV256 pipeline、FP32运算顺序、输出合并和存储格式不变；④以少量窗口 DMA 合并收益换取地址安全，目标 NPU 性能必须由短 probe 测量，不能从本机断言。新增源码契约回归，要求每行在 DMA 前完成 physical/tag 校验并禁止恢复 `rows*8` 批量 tag run。
+
+**验证边界**：本地仅能完成源码、Python 回归及可用环境中的 CANN/CPU-debug；四卡 ACL graph replay 与真实 prefix 命中仍必须由短服务 probe 复验。复验通过前不得写成 NPU 已通过，但固定直启命令继续真实开启 prefix cache，不增加关闭缓存的分支。

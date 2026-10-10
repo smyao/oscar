@@ -20,6 +20,11 @@ def serve_argv(config: dict) -> list[str]:
         args += [flag, json.dumps(config[key], separators=(",", ":"))]
     args += ["--trust-remote-code", "--async-scheduling", "--allowed-local-media-path", "/",
              "--mm-processor-cache-gb", "0", "--mamba-cache-dtype", "bfloat16", "--mamba-ssm-cache-dtype", "bfloat16"]
+    prefix_caching = config.get("enable_prefix_caching", False)
+    if type(prefix_caching) is not bool:
+        raise ValueError("enable_prefix_caching must be an explicit boolean")
+    if prefix_caching:
+        args += ["--enable-prefix-caching"]
     if "scheduler_cls" in config:
         scheduler = config["scheduler_cls"]
         if (not isinstance(scheduler, str) or "." not in scheduler

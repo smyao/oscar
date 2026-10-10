@@ -10,6 +10,7 @@
   "data_parallel_size": 1,
   "max_model_len": 262144,
   "max_num_batched_tokens": 16384,
+  "enable_prefix_caching": true,
   "max_num_seqs": 128,
   "gpu_memory_utilization": 0.9,
   "compilation_config": {"cudagraph_capture_sizes":[1,4,8,12,16,24,32,48,56,64,72,84,96,108,112,128,160,172,196,200,212,232,272,288,312,328,344,360,384,400,416,432,448,480,512],"cudagraph_mode":"FULL_DECODE_ONLY"},

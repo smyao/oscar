@@ -163,8 +163,15 @@ def test_target_command_preserves_graph_mtp_and_dtype():
     assert json.loads(argv[argv.index("--speculative_config")+1])["num_speculative_tokens"] == 3
     assert argv[argv.index("--tensor-parallel-size")+1] == "4"
     assert argv[argv.index("--max-model-len")+1] == "262144"
+    assert "--enable-prefix-caching" in argv
     assert "--enforce-eager" not in argv
     assert argv[argv.index("--mamba-ssm-cache-dtype")+1] == "bfloat16"
+
+
+def test_prefix_cache_flag_requires_an_explicit_boolean():
+    config = json.loads((ROOT / "configs/target.json").read_text())
+    with pytest.raises(ValueError, match="explicit boolean"):
+        serve_argv({**config, "enable_prefix_caching": "true"})
 
 
 def test_device_selection_does_not_inherit_somebody_elses_devices():

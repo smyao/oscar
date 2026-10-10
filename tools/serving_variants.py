@@ -100,8 +100,9 @@ def variant_features(config: dict) -> dict:
 
 
 def runtime_feature_summary(config: dict, variant: str | None) -> dict:
-    """One compact startup line shows the actual effective feature selection."""
+    """Pre-runtime request; worker telemetry reports the effective selection."""
     return {"variant":variant,"optimizations":variant_features(config),
+            "selection_stage":"pre_runtime_requested",
             "max_num_batched_tokens":config.get("max_num_batched_tokens"),
             "enable_prefix_caching":config.get("enable_prefix_caching", False),
             "scheduler_cls":config.get("scheduler_cls"),

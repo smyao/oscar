@@ -96,7 +96,7 @@ def test_device_boundaries_checked_before_any_subforward(which):
 
 
 @pytest.mark.parametrize('prefix_cache',[False,True,None])
-def test_native_builder_requires_explicit_nonsharing_policy(monkeypatch,prefix_cache):
+def test_native_builder_keeps_requested_split_with_prefix_cache(monkeypatch,prefix_cache):
     from test_first_draft_current_only import builder,config,common
     builder(monkeypatch,enabled=False)
     backend=sys.modules['oscar_ascend.integration.backend']
@@ -104,5 +104,5 @@ def test_native_builder_requires_explicit_nonsharing_policy(monkeypatch,prefix_c
     cfg=config();cfg.cache_config=SimpleNamespace(enable_prefix_caching=prefix_cache)
     b=backend.OscarMetadataBuilder(object(),['x'],cfg,'cpu')
     m=b.build(0,common())
-    assert m.mixed_decode_split is (prefix_cache is False)
+    assert m.mixed_decode_split is True
     assert b.build_for_drafting(common(),1).mixed_decode_split is False

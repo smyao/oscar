@@ -59,9 +59,16 @@ def configured(tmp_path):
 def telemetry_records():
     records = []
     for rank in range(4):
+        records.append({"event": "attention_features", "rank": rank,
+                        "mixed_decode_split_requested": True,
+                        "mixed_decode_split_effective": True})
+        records.append({"event": "prefix_metadata", "rank": rank,
+                        "common_prefix_len": 16384, "prefix_caching": True})
         for layer in ("language_model.model.layers.3.self_attn.attn", "mtp.layers.0.self_attn.attn"):
             records.append({"event": "cache_layout", "rank": rank, "layer": layer,
                 "gdn_reshape": "native", "physical_blocks": 8, "physical_block_tokens": 2816,
+                "physical_full_block_size": 2816, "scheduler_lcm_block_size": 2883584,
+                "prefix_caching": True, "mamba_mode": "align", "hash_block_size": 2883584,
                 "snapshot_bytes_per_page": 333336, "page_bytes": 801792})
             records.append({"event": "attention_dispatched", "rank": rank, "layer": layer,
                             "route": "ascendc_int2_cv", "capture_origin": False})

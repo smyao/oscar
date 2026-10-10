@@ -28617,3 +28617,9 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修法与 D.4 四问**：只修改融合 decode bundle 的 bounded exact-window reader，主 q4 与同文件 q1 入口共同生效。每行严格执行 logical position → virtual128 table → physical page/in-page 范围校验 → exact tag 校验 → 单行 K/V DMA；任一检查失败只写既有 status，绝不发对应 K/V DMA。①仍是完整 source0 INT2 history、source1 exact window、source2 current 的 CV；②不创建 D.4 已否定的全历史 BF16 恢复；③改动上界仅为 sink+recent+speculative 的有界窗口，INT2 history KV256 pipeline、FP32运算顺序、输出合并和存储格式不变；④以少量窗口 DMA 合并收益换取地址安全，目标 NPU 性能必须由短 probe 测量，不能从本机断言。新增源码契约回归，要求每行在 DMA 前完成 physical/tag 校验并禁止恢复 `rows*8` 批量 tag run。
 
 **验证边界**：本地仅能完成源码、Python 回归及可用环境中的 CANN/CPU-debug；四卡 ACL graph replay 与真实 prefix 命中仍必须由短服务 probe 复验。复验通过前不得写成 NPU 已通过，但固定直启命令继续真实开启 prefix cache，不增加关闭缓存的分支。
+
+**#156 源码复核后的完整修订**：首次修订只覆盖 `attention_cv_decode_bundle.cpp`，不足以代表 candidate 的全部 prefix 路由；同一批量 tag-run 仍存在于 window-range base/balanced/C4/C16 四个会被 prefill/续写选择的算子。现已把五个生产候选统一为逐行 physical→tag→K/V DMA，回归扫描五文件并禁止 attention CV 全树恢复 `rows*8` tag run。该改动消除一族未证地址合并，不把它冒充 507035 的唯一根因。
+
+同时补齐三项结构约束：①生产 prepare 对每个有效 token 在设备侧校验 `block_table[request,logical_position/128] == slot_mapping/128`，不一致时 attention task 与 store position 同时失效，已缓存共享页的原生 COW/页所有权不再只是注释假设；② prefix 开启时 runtime 强制原生 `mamba_cache_mode=align` 且 Mamba/FULL native block 相等，并把 prefix/mode/native block/OSCAR physical B/scheduler LCM/hash block 写入每层 `cache_layout`；③ mixed-decode 不再因 prefix 静默关闭，只有 PCP/DCP 非1时显式失败；whole-prefill 按 `num_tokens-num_computed_tokens` 判断剩余 suffix，避免把命中前缀重复计入预算。真实 NPU 编译、两种 prefix-hit 路由和符号化首错仍待短门，证据边界不变。
+
+服务短门不再仅凭启动参数推断命中：metadata builder 将原生 `common_prefix_len>0` 逐 TP rank 记录为 `prefix_metadata`，正式 probe 在 effective cache layout 开启 prefix 时要求每个 rank 都出现正值，否则即使 HTTP 请求成功也失败。已有串行 exact-token 请求天然形成长前缀续写，后续更长请求同时覆盖续写 prefill 与 q4 decode/图回放；目标机仍须实际执行后才能把 C04/C05/E01/D09 标为通过。

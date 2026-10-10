@@ -74,6 +74,7 @@ def test_both_one_key_entries_enable_the_complete_candidate_without_manual_flags
     observed=json.loads(capsys.readouterr().out)
     assert direct['runtime_selection']==observed['runtime_selection']
     selected=direct['runtime_selection']
+    assert selected['selection_stage']=='pre_runtime_requested'
     assert all(selected['optimizations'].values())
     assert selected['max_num_batched_tokens']==32768
     assert selected['scheduler_cls']==WHOLE_PREFILL_SCHEDULER

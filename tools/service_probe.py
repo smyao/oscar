@@ -423,6 +423,14 @@ def evaluate_telemetry(records, *, tensor_parallel_size, expected_layers, requir
     for rank in sorted(expected_ranks):
         local = [record for record in records if type(record.get("rank")) is int and record["rank"] == rank]
         layouts = {r.get("layer"): r for r in local if r.get("event") == "cache_layout" and isinstance(r.get("layer"), str)}
+        feature_rows = [r for r in local if r.get("event") == "attention_features"]
+        if not feature_rows:
+            errors.append(f"rank {rank} has no effective attention feature telemetry")
+        elif any(r.get("mixed_decode_split_requested") != r.get("mixed_decode_split_effective")
+                 for r in feature_rows):
+            errors.append(f"rank {rank} silently changed mixed-decode feature selection")
+        prefix_rows = [r for r in local if r.get("event") == "prefix_metadata"
+                       and type(r.get("common_prefix_len")) is int and r["common_prefix_len"] > 0]
         routed = {r.get("layer") for r in local if r.get("event") == "attention_dispatched" and r.get("route") == "ascendc_int2_cv"}
         target = {f"model.layers.{match.group(1)}.self_attn.attn" for name in layouts
                   if "mtp" not in name and (match := canonical.search(name))}
@@ -440,6 +448,16 @@ def evaluate_telemetry(records, *, tensor_parallel_size, expected_layers, requir
                     or type(layout.get("page_bytes")) is not int
                     or not 0 < layout["snapshot_bytes_per_page"] <= layout["page_bytes"]):
                 errors.append(f"rank {rank} has invalid native cache layout: {name}")
+            if (type(layout.get("prefix_caching")) is not bool
+                    or layout.get("mamba_mode") not in {"none", "align", "all"}
+                    or type(layout.get("physical_full_block_size")) is not int
+                    or layout.get("physical_full_block_size") != layout.get("physical_block_tokens")
+                    or type(layout.get("scheduler_lcm_block_size")) is not int):
+                errors.append(f"rank {rank} lacks effective prefix geometry: {name}")
+            if layout.get("prefix_caching") and layout.get("mamba_mode") != "align":
+                errors.append(f"rank {rank} prefix cache is not using native align mode: {name}")
+        if any(layout.get("prefix_caching") for layout in layouts.values()) and not prefix_rows:
+            errors.append(f"rank {rank} observed no positive native common_prefix_len")
         capture = [r for r in local if r.get("event") == "graph_capture_return"
                    and "FULL" in str(r.get("mode")) and r.get("descriptor")]
         replay = [r for r in local if r.get("event") == "graph_replay_launch_return"
@@ -452,6 +470,8 @@ def evaluate_telemetry(records, *, tensor_parallel_size, expected_layers, requir
             errors.append(f"rank {rank} graph replay has no matching captured descriptor")
         coverage[rank] = set(layouts)
         details[str(rank)] = {"cache_layers": sorted(layouts), "routed_layers": sorted(routed),
+                             "effective_features": feature_rows,
+                             "prefix_metadata": prefix_rows,
                              "capture_records": capture, "replay_records": replay}
     if coverage and any(layers != coverage[0] for layers in coverage.values()):
         errors.append("TP ranks disagree on FULL layer identities")

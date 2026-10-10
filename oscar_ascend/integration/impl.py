@@ -145,7 +145,7 @@ class OscarAttentionImpl(AttentionImpl):
                 attn_metadata.seq_lens[:attn_metadata.num_reqs],
                 slots, tasks, positions, h, hk,
                 state.snapshots.sink_tokens, state.snapshots.recent_tokens, source_splits,
-                attn_metadata.block_tables[:attn_metadata.num_reqs] if attn_metadata.draft_index > 0 else None,
+                attn_metadata.block_tables[:attn_metadata.num_reqs],
                 attn_metadata.draft_index > 0)
         if native_current:
             # Preserve CV task errors and padding. Only the healthy current

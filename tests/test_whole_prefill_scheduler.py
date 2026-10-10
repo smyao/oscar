@@ -65,6 +65,17 @@ def test_decode_reservation_prevents_32768_edge_starvation():
         request=SimpleNamespace(num_tokens=length,has_encoder_inputs=False)
         policy.select(request)
         assert native_waiting_clip(policy,request,32256)==16384
+
+
+def test_prefix_hit_classifies_only_the_remaining_prompt_suffix():
+    View=load_policy(object)['AdmissionView']
+    original=SimpleNamespace(enable_chunked_prefill=True,long_prefill_token_threshold=0)
+    policy=View(original,budget=32768,max_sequences=128,speculative_tokens=3)
+    request=SimpleNamespace(num_tokens=50000,num_computed_tokens=24624,has_encoder_inputs=False)
+    policy.select(request)
+    assert policy.is_whole
+    request.num_computed_tokens=0
+    assert not policy.is_whole
     with pytest.raises(ValueError):
         View(original,budget=16384,max_sequences=128,speculative_tokens=3)
 

@@ -2,6 +2,7 @@
 
 Archive #27/#28/#34/#36/#37–49/#140/#142/#148/#155: no placeholder attention, host length
 readback, or capture-only suppression masquerading as graph replay.
+#156: prefix caching does not silently alter the requested feature set.
 Only an installed, ready runtime can provide the real AttentionImpl.
 """
 
@@ -54,6 +55,7 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
 
     def __init__(self, kv_cache_spec, layer_names, vllm_config, device):
         super().__init__(kv_cache_spec, layer_names, vllm_config, device)
+        self.layer_names = tuple(layer_names)
         self.capacity = None
         self.bindings = GraphMetadataBindings()
         runtime_config = require_runtime().config
@@ -67,12 +69,23 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
         mixed_split = runtime_config.get("experimental_mixed_decode_split", False)
         if type(mixed_split) is not bool:
             raise ValueError("experimental_mixed_decode_split must be an explicit boolean")
-        cache = getattr(vllm_config, "cache_config", None)
         parallel = getattr(vllm_config, "parallel_config", None)
-        self.mixed_decode_split = (
-            mixed_split and getattr(cache, "enable_prefix_caching", None) is False
-            and getattr(parallel, "prefill_context_parallel_size", None) == 1
-            and getattr(parallel, "decode_context_parallel_size", None) == 1)
+        prefill_cp = getattr(parallel, "prefill_context_parallel_size", 1)
+        decode_cp = getattr(parallel, "decode_context_parallel_size", 1)
+        if mixed_split and (prefill_cp != 1 or decode_cp != 1):
+            raise ValueError("mixed decode split requires effective PCP=DCP=1")
+        self.mixed_decode_split = mixed_split
+        from ..telemetry import emit_once
+        emit_once("attention_features", key=tuple(layer_names), layers=list(layer_names),
+                  prefix_caching=getattr(getattr(vllm_config, "cache_config", None),
+                                         "enable_prefix_caching", None),
+                  mixed_decode_split_requested=mixed_split,
+                  mixed_decode_split_effective=self.mixed_decode_split,
+                  current_only_effective=self.current_only,
+                  first_draft_current_only_effective=self.first_draft_current_only,
+                  first_draft_current_fia_effective=self.first_draft_current_fia,
+                  prefill_context_parallel_size=prefill_cp,
+                  decode_context_parallel_size=decode_cp)
 
     def reorder_batch(self, input_batch, scheduler_output):
         return False
@@ -82,6 +95,13 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
         # positional argument 3; later drafts call build_for_drafting. Mark
         # both, including draft_index=0. The separate experimental suffix
         # qualification never enables native-current for the MTP prefix.
+        if type(common_prefix_len) is not int or common_prefix_len < 0:
+            raise ValueError("native common_prefix_len must be a nonnegative integer")
+        if common_prefix_len:
+            from ..telemetry import emit_once
+            emit_once("prefix_metadata", key=(self.layer_names, common_prefix_len),
+                      layers=list(self.layer_names), common_prefix_len=common_prefix_len,
+                      prefix_caching=True)
         first_draft = type(fast_build) is not bool
         metadata = from_common(common_attn_metadata, capacity=self.capacity,
                                is_draft=first_draft, current_only=self.current_only,

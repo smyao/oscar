@@ -6,6 +6,8 @@ and fixed workspaces. #28/#77/#78: imported only after native initialization.
 #69/#111: NPU-only production; exact BF16 projection and FP32 rotation.
 #148: fe0 is the accepted precision baseline. Cluster4 is an explicit
 # experimental operator with separate bounded state, never the default route.
+#156: prefix-cache layout is validated against the effective native config and
+#reported with every physical cache layout; requested flags are not evidence.
 """
 from __future__ import annotations
 
@@ -224,6 +226,7 @@ class AscendRuntimeProvider:
         self.workspaces: dict[tuple, GraphWorkspace] = {}
         self.rotations: dict[tuple, dict] = {}
         self.device_cores: dict[str, int] = {}
+        self._prefix_layout: dict[str, Any] | None = None
         self.ops = None
 
     def assert_ready(self):
@@ -321,9 +324,37 @@ class AscendRuntimeProvider:
         # Validate precise snapshot geometry before the scheduler budgets its
         # pool. A page advertised as compressed must also preserve its window.
         from .integration.specs import OscarFullAttentionSpec
+        full_specs = []
         for spec in converted.values():
             if isinstance(spec, OscarFullAttentionSpec):
                 self._snapshot_layout(spec)
+                full_specs.append(spec)
+        cache = getattr(getattr(runner, "vllm_config", None), "cache_config", None)
+        enabled = getattr(cache, "enable_prefix_caching", None)
+        if type(enabled) is not bool:
+            raise OscarReadinessError("native cache config must expose explicit enable_prefix_caching")
+        mode = getattr(cache, "mamba_cache_mode", None)
+        mamba_block = getattr(cache, "mamba_block_size", None)
+        native_full_block = getattr(cache, "block_size", None)
+        if enabled and (mode != "align" or type(mamba_block) is not int
+                        or mamba_block <= 0 or mamba_block != native_full_block):
+            raise OscarReadinessError(
+                "prefix caching requires native align mode and equal positive Mamba/FULL block sizes")
+        if enabled and any(spec.native_mamba_cache_mode != "align"
+                           or spec.native_mamba_block_size != mamba_block for spec in full_specs):
+            raise OscarReadinessError("converted OSCAR FULL pages disagree with native prefix geometry")
+        physical = {spec.storage_block_size for spec in full_specs}
+        scheduler = {spec.layout.scheduler_block_size for spec in full_specs}
+        if len(physical) != 1 or len(scheduler) != 1:
+            raise OscarReadinessError("OSCAR FULL layers do not share one effective cache geometry")
+        self._prefix_layout = {
+            "prefix_caching": enabled, "mamba_mode": mode,
+            "native_full_block_size": native_full_block,
+            "mamba_block_size": mamba_block,
+            "physical_full_block_size": next(iter(physical)),
+            "scheduler_lcm_block_size": next(iter(scheduler)),
+            "hash_block_size": getattr(cache, "hash_block_size", None),
+        }
         return converted
 
     def _snapshot_layout(self, spec):
@@ -449,8 +480,9 @@ class AscendRuntimeProvider:
             views[name] = packed
             from .telemetry import emit_once
             emit_once("cache_layout", key=name, layer=name, physical_blocks=blocks,
-                      physical_block_tokens=spec.block_size, page_bytes=spec.page_size_bytes,
+                      physical_block_tokens=spec.storage_block_size, page_bytes=spec.page_size_bytes,
                       cache_format=self._cache_format,
+                      **(self._prefix_layout or {}),
                       snapshot_bytes_per_page=snapshots.required_bytes,
                       scratch_bytes=workspace.geometry.total_bytes,
                       raw_storage_ptr=byte_raw.data_ptr(), gdn_reshape="native")

@@ -1,6 +1,6 @@
 """Experimental whole-prompt admission, not enabled by any serving preset.
 
-Archive #127/#129/#137/#148/#155: preserve native request ownership, async
+Archive #127/#129/#137/#148/#155/#156: preserve native request ownership, async
 placeholders, Mamba alignment and long-request chunking. References:
 vllm/v1/core/sched/scheduler.py:403-410,566-700 and config/scheduler.py:168.
 Only the scheduler's private configuration view changes during schedule();
@@ -39,10 +39,14 @@ class AdmissionView:
         request = self.waiting_request
         if request is None or getattr(request, 'has_encoder_inputs', False):
             return False
-        count = request.num_tokens
-        if type(count) is not int or count <= 0:
-            raise ValueError('native request must expose a positive integer num_tokens')
-        return count <= self.whole_limit
+        total = request.num_tokens
+        computed = getattr(request, 'num_computed_tokens', 0)
+        if (type(total) is not int or total <= 0 or type(computed) is not int
+                or computed < 0 or computed > total):
+            raise ValueError('native request must expose valid total/computed token counts')
+        # Prefix hits consume no prompt budget. Admission must classify the
+        # remaining suffix, not the original request length.
+        return total - computed <= self.whole_limit
 
     @property
     def enable_chunked_prefill(self):

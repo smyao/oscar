@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Archive #34/#36/#37-49/#67/#92: fixed capture capacities, physical ownership,
+// Archive #34/#36/#37-49/#67/#92/#156: fixed capture capacities, physical ownership,
 // explicit causal positions, exact metadata bounds and every padding row reset.
 // D.4 four questions: prepare (725ms historical host stall); the failed route
 // rebuilt per-request metadata on host. This single device launch reads native
@@ -28,7 +28,7 @@ template<class Slot> class AttentionTasks {
     GlobalTensor<Slot> slotsGm;
     GlobalTensor<int64_t> tasksGm, positionsGm;
     startsGm.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(qstarts));
-    if(slotContext)tableGm.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(blockTable));
+    if(tableColumns>0)tableGm.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(blockTable));
     lengthsGm.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(lengths));
     slotsGm.SetGlobalBuffer(reinterpret_cast<__gm__ Slot*>(slots));
     tasksGm.SetGlobalBuffer(reinterpret_cast<__gm__ int64_t*>(tasks));
@@ -119,8 +119,23 @@ template<class Slot> class AttentionTasks {
           while(count<capacity && groupSlots.GetValue(count)>=0)++count;
         }
       }
+      const int64_t logicalPosition=context+token-begin;
+      if(!padding && !invalid && tableColumns>0) {
+        const int64_t column=logicalPosition/128;
+        if(logicalPosition<0 || column>=tableColumns) {
+          invalid=true;metadataError=1;
+        } else {
+          auto tableLocal=tableBuf.Get<int32_t>();
+          DataCopyExtParams tableCopy{1,4,0,0,0};
+          DataCopyPad(tableLocal,tableGm[r*tableColumns+column],tableCopy,pad);
+          Fence<HardEvent::MTE2_S>();
+          if(static_cast<int64_t>(tableLocal.GetValue(0))!=physicalSlot/128) {
+            invalid=true;metadataError=1;
+          }
+        }
+      }
       if(invalid) count=-1;
-      row.SetValue(0,padding || invalid ? -1 : context+token-begin);
+      row.SetValue(0,padding || invalid ? -1 : logicalPosition);
       Fence<HardEvent::S_MTE3>();
       DataCopyExtParams posCopy{1,8,0,0,0};
       DataCopyPad(positionsGm[token],row,posCopy);

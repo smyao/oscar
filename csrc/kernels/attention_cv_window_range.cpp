@@ -1,6 +1,6 @@
-// Isolated actual striped candidate clone. Archive #126/#129/#140/#145/#148/#151/#154/#155.
+// Isolated actual striped candidate clone. Archive #126/#129/#140/#145/#148/#151/#154/#155/#156.
 // D.4: full restore cost6499.8-6655.1ms is not repeated. This changes bounded
-// window reads and score-mask writes only, with original FP32 history math,
+// window reads (per-row address/tag validation before DMA) and score-mask writes only, with original FP32 history math,
 // source/group boundaries and statuses. No current q4 gain is assumed here.
 #include "attention_fast_unpack.h"
 #include "attention_striped_unpack.h"
@@ -425,66 +425,35 @@ template<int32_t D> class AttentionCv {
   }
   __aicore__ void LoadWindowRuns(int64_t start,bool value) {
     auto dst=dequantBuf.Get<float>();
-    auto batch=naturalBuf.Get<bfloat16_t>();
-    // These buffers are dead after source0 unpack. Permanent unpack indices
-    // (metadataIndexBuf/maskBuf/etc.) remain untouched for the next task.
-    auto tags=packedBuf.Get<int64_t>();
+    auto rowData=qBf16Buf.Get<bfloat16_t>();
     const int64_t first=start+lane*kHalfKv;
     const int32_t live=static_cast<int32_t>(Max64(0,Min64(kHalfKv,kvend-first)));
-    const int64_t sinkCount=Min64(g.sink,context);
-    const int64_t ring=g.recent+g.speculative;
-    for(int32_t j=0;j<live;) {
+    for(int32_t j=0;j<live;++j) {
       const int64_t candidate=first+j;
       const int64_t position=LogicalPosition(candidate);
-      int32_t rows=static_cast<int32_t>(Min64(live-j,128-position%128));
-      if(candidate<sinkCount)rows=static_cast<int32_t>(Min64(rows,sinkCount-candidate));
       int64_t block=0,inpage=0;
-      if(!Physical(position,block,inpage)) {j+=rows;continue;}
-      rows=static_cast<int32_t>(Min64(rows,g.blockTokens-inpage));
-      int64_t windowRow;
-      if(position<g.sink) {
-        rows=static_cast<int32_t>(Min64(rows,g.sink-position));
-        windowRow=position;
-      } else {
-        rows=static_cast<int32_t>(Min64(rows,ring-inpage%ring));
-        windowRow=g.sink+inpage%ring;
-      }
-      // #126/#145: protect every old Vector/scalar owner before MTE2
-      // overwrites the reused packed (tag) UB.
-      Fence<HardEvent::V_MTE2>();Fence<HardEvent::S_MTE2>();
-      DataCopyExtParams tagCopy{1,static_cast<uint32_t>(rows*8),0,0,0};
+      if(!Physical(position,block,inpage))continue;
+      const int64_t ring=g.recent+g.speculative;
+      const int64_t windowRow=position<g.sink?position:g.sink+inpage%ring;
+      auto tag=addressBuf.Get<int64_t>()[4];
+      DataCopyExtParams tagCopy{1,8,0,0,0};
       DataCopyPadExtParams<int64_t> tagPad{false,0,0,0};
-      DataCopyPad(tags,wt[block*g.tagStride+windowRow],tagCopy,tagPad);
-      Fence<HardEvent::MTE2_S>();
-      // Invalid tags never cause a K/V read. All invalid and unused output
-      // rows retain the exact initial +0, including poisoned ring slots.
-      Duplicate(batch.ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),rows*D);
-      Fence<HardEvent::V_MTE2>();
-      for(int32_t begin=0;begin<rows;) {
-        if(tags.GetValue(begin)!=inpage+begin) {++begin;continue;}
-        int32_t end=begin+1;
-        while(end<rows && tags.GetValue(end)==inpage+end)++end;
-        const int64_t off=block*g.windowStride+((windowRow+begin)*g.hk+kvhead)*D;
-        DataCopyExtParams copy{static_cast<uint16_t>(end-begin),D*2,
-            static_cast<uint32_t>((g.hk-1)*D*2),0,0};
-        DataCopyPadExtParams<bfloat16_t> pad{false,0,0,0};
-        if(value)DataCopyPad(batch[begin*D],wv[off],copy,pad);
-        else DataCopyPad(batch[begin*D],wk[off],copy,pad);
-        begin=end;
-      }
-      Fence<HardEvent::MTE2_V>();
-      Cast(dst[j*D],batch,RoundMode::CAST_NONE,rows*D);PipeBarrier<PIPE_V>();
-      // Do NOT publish errors during the tag/DMA prepass. Original order is
-      // physical->tag->finite for each row, K side first then V side. A later
-      // bad tag must overwrite an earlier finite error, and vice versa.
-      auto check=scratchBuf.Get<float>();
-      for(int32_t row=0;row<rows;++row) {
-        if(tags.GetValue(row)!=inpage+row) {error=4;continue;}
-        ReduceSum(check,dst[(j+row)*D],check[16],D);Fence<HardEvent::V_S>();
-        if(!Finite(check.GetValue(0)))error=2;
-      }
       Fence<HardEvent::V_MTE2>();Fence<HardEvent::S_MTE2>();
-      j+=rows;
+      DataCopyPad(tag,wt[block*g.tagStride+windowRow],tagCopy,tagPad);
+      Fence<HardEvent::MTE2_S>();
+      if(tag.GetValue(0)!=inpage) {error=4;continue;}
+      const int64_t off=block*g.windowStride+(windowRow*g.hk+kvhead)*D;
+      DataCopyExtParams copy{1,static_cast<uint32_t>(D*2),0,0,0};
+      DataCopyPadExtParams<bfloat16_t> pad{false,0,0,0};
+      Fence<HardEvent::S_MTE2>();
+      if(value)DataCopyPad(rowData,wv[off],copy,pad);
+      else DataCopyPad(rowData,wk[off],copy,pad);
+      Fence<HardEvent::MTE2_V>();
+      Cast(dst[j*D],rowData,RoundMode::CAST_NONE,D);PipeBarrier<PIPE_V>();
+      auto check=scratchBuf.Get<float>();
+      ReduceSum(check,dst[j*D],check[16],D);Fence<HardEvent::V_S>();
+      if(!Finite(check.GetValue(0)))error=2;
+      Fence<HardEvent::V_MTE2>();Fence<HardEvent::S_MTE2>();
     }
     Fence<HardEvent::S_V>();
   }

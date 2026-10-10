@@ -53,9 +53,11 @@ void Prepare(const at::Tensor& starts,const at::Tensor& lens,const at::Tensor& s
       tasks.size(1)==16,"tasks must be int64 [N*Hkv*3*splits,16]");
   if(slotContext) {
     TORCH_CHECK(blockTable.has_value(),"slot-derived MTP context requires block_table");
+  }
+  if(blockTable.has_value()) {
     Check(*blockTable,starts,at::kInt,"block_table");
     TORCH_CHECK(blockTable->dim()==2 && blockTable->size(0)>=lens.numel() &&
-        blockTable->size(1)>0,"MTP block_table must cover every request");
+        blockTable->size(1)>0,"block_table must cover every request");
     Disjoint(tasks,*blockTable);Disjoint(positions,*blockTable);
   }
   Disjoint(tasks,starts);Disjoint(tasks,lens);Disjoint(tasks,slots);
@@ -65,7 +67,7 @@ void Prepare(const at::Tensor& starts,const at::Tensor& lens,const at::Tensor& s
   oscar_ascend::prepare_attention_tasks_launch(c10_npu::getCurrentNPUStream().stream(),
       starts.data_ptr(),lens.data_ptr(),slots.data_ptr(),tasks.data_ptr(),positions.data_ptr(),lens.numel(),
       slots.numel(),hq,hk,sink,recent,splits,slots.scalar_type()==at::kLong,
-      slotContext?blockTable->data_ptr():nullptr,slotContext?blockTable->size(1):0,slotContext,32);
+      blockTable?blockTable->data_ptr():nullptr,blockTable?blockTable->size(1):0,slotContext,32);
 }
 void Attention(const at::Tensor& query,const at::Tensor& queryRot,
     const at::Tensor& currentKey,const at::Tensor& currentValue,

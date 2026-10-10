@@ -1,4 +1,4 @@
-"""Only validate evidence rejection. Mock reports are not NPU results."""
+"""Archive #155: validate evidence rejection. Mock reports are not NPU results."""
 from copy import deepcopy
 import json
 from pathlib import Path

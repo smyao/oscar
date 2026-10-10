@@ -7,6 +7,7 @@ precision, graph replay or speed; those remain separate gates.
 
 from collections import Counter
 from pathlib import Path
+import re
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -117,4 +118,6 @@ def test_balanced_clone_changes_only_owner_schedule_and_exported_names():
                                 "oscar_attention_cv_fast_kernel")
     balanced = balanced.replace("attention_cv_fast_balanced_launch",
                                 "attention_cv_fast_launch")
-    assert balanced == base
+    # Compare executable tokens, not unrelated explanatory comment drift.
+    normalize = lambda source: re.sub(r"\s+", "", re.sub(r"//[^\n]*", "", source))
+    assert normalize(balanced) == normalize(base)

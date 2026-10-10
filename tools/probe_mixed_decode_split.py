@@ -1,4 +1,4 @@
-"""Real-NPU request partition gate; no native model/GDN edits or user dataset.
+"""Archive #155/#156: real-NPU request partition gate; no native model/GDN edits or user dataset.
 
 Compare the actual FULL implementation with partition disabled/enabled. CPU
 mirrors define request boundaries; device guards and real CV/FIA/store calls

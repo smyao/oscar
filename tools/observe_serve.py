@@ -96,6 +96,8 @@ def _source_identity(variant: str, config: dict) -> dict:
                               capture_output=True, check=True).stdout.strip()
     return {"variant": variant, "fe0_production_kernels_match": actual == FE0_KERNEL_SHA256,
             "kernel_sha256": actual, "experimental_history_reuse": flag,
+            "checked_prepare_sha256": hashlib.sha256(
+                (ROOT / "csrc/kernels/attention_tasks_checked.cpp").read_bytes()).hexdigest(),
             "experimental_fast_unpack": fast, "experimental_mixed_cv": mixed,
             "experimental_striped_cache": striped,
             "cache_format": "striped_v1" if striped else "canonical_v1",

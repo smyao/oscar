@@ -51,6 +51,14 @@ def use_native_current(metadata) -> bool:
     raise CurrentAttentionError(f"unrecognized native Ascend attention state {state.name!r}")
 
 
+def cpu_metadata_values(starts: torch.Tensor) -> list[int]:
+    """#156: the sole CPU-mirror conversion; never transfer a device tensor."""
+    if (not isinstance(starts, torch.Tensor) or starts.device.type != "cpu"
+            or starts.ndim != 1 or starts.dtype not in (torch.int32, torch.int64)):
+        raise CurrentAttentionError("metadata conversion requires an existing CPU integer mirror")
+    return starts[:].tolist()
+
+
 def current_cumulative_lengths(metadata, active_tokens: int) -> list[int]:
     """Read only the runner's already-CPU qstart mirror; drop dummy padding."""
     starts = metadata.query_start_loc_cpu
@@ -60,7 +68,7 @@ def current_cumulative_lengths(metadata, active_tokens: int) -> list[int]:
         raise CurrentAttentionError("native CPU query-start mirror is missing or invalid")
     if type(active_tokens) is not int or active_tokens <= 0:
         raise CurrentAttentionError("current FIA requires a positive exact active-token count")
-    values = starts[:metadata.num_reqs + 1].tolist()
+    values = cpu_metadata_values(starts[:metadata.num_reqs + 1])
     if values[0] != 0 or any(after < before for before, after in zip(values, values[1:])):
         raise CurrentAttentionError("native CPU query starts are malformed")
     if values[-1] < active_tokens or active_tokens not in values:

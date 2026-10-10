@@ -34,7 +34,7 @@ def test_online_hooks_do_not_copy_device_data_to_host():
         cpu_mirror = None
         if path.name == "current_attention.py":
             cpu_mirror = next((node for node in tree.body if isinstance(node, ast.FunctionDef)
-                               and node.name == "current_cumulative_lengths"), None)
+                               and node.name == "cpu_metadata_values"), None)
             assert cpu_mirror is not None
             # Verify the explicit `starts.device.type != "cpu"` rejection
             # remains in the same helper as the one allowed CPU conversion.

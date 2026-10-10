@@ -1,4 +1,4 @@
-"""Evidence validation only; all fabricated rows below are explicit mocks."""
+"""Archive #155: evidence validation; all fabricated rows below are explicit mocks."""
 from copy import deepcopy
 import json
 from pathlib import Path

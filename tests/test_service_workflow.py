@@ -62,13 +62,12 @@ def telemetry_records():
         records.append({"event": "attention_features", "rank": rank,
                         "mixed_decode_split_requested": True,
                         "mixed_decode_split_effective": True})
-        records.append({"event": "prefix_metadata", "rank": rank,
-                        "common_prefix_len": 16384, "prefix_caching": True})
         for layer in ("language_model.model.layers.3.self_attn.attn", "mtp.layers.0.self_attn.attn"):
             records.append({"event": "cache_layout", "rank": rank, "layer": layer,
-                "gdn_reshape": "native", "physical_blocks": 8, "physical_block_tokens": 2816,
-                "physical_full_block_size": 2816, "scheduler_lcm_block_size": 2883584,
-                "prefix_caching": True, "mamba_mode": "align", "hash_block_size": 2883584,
+                "gdn_reshape": "native", "physical_blocks": 8, "physical_block_tokens": 2304,
+                "physical_full_block_size": 2304, "scheduler_lcm_block_size": 2304,
+                "native_full_block_size": 768, "mamba_block_size": 768,
+                "prefix_caching": True, "mamba_mode": "align", "hash_block_size": 768,
                 "snapshot_bytes_per_page": 333336, "page_bytes": 801792})
             records.append({"event": "attention_dispatched", "rank": rank, "layer": layer,
                             "route": "ascendc_int2_cv", "capture_origin": False})
@@ -86,6 +85,7 @@ count = 0
 prompt_total = 0
 generation_total = 0
 running = 0
+prefix_salts = set()
 lock = threading.Lock()
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -121,6 +121,11 @@ class Handler(BaseHTTPRequestHandler):
                 (trace/'worker-1.jsonl').write_text(''.join(json.dumps(x)+'\n' for x in records).replace('\\n', '\n'))
         response = {'choices':[{'text':'Generated tokens from the test fixture.', 'finish_reason':'length'}],
                     'usage': {'prompt_tokens':len(data['prompt'])+(1 if mode=='wrong_usage' else 0), 'completion_tokens':tokens}}
+        if data.get('cache_salt', '').startswith('oscar-prefix-probe-'):
+            salt = data['cache_salt']
+            response['usage']['prompt_tokens_details'] = {
+                'cached_tokens': 2304 if salt in prefix_salts and mode != 'no_prefix_hit' else 0}
+            prefix_salts.add(salt)
         if data.get('stream'):
             with lock:
                 running += 1
@@ -159,13 +164,14 @@ def fake_command(tmp_path, config, mode="good"):
     return [sys.executable, str(program), str(config["port"]), mode, str(records)]
 
 
-def invoke(tmp_path, config_path, command, *, serve=False, resources=None):
+def invoke(tmp_path, config_path, command, *, serve=False, prefix_only=False, resources=None):
     observations = []
     def memory(config, **kwargs):
         observations.append(config["devices"])
         return snapshot(config["devices"]) if resources is None else resources(len(observations))
     report = run_service(config_path, output=tmp_path / "report.json", log_dir=tmp_path / "logs",
-        command=command, serve=serve, tokenizer_factory=lambda model: Tokenizer(), resource_reader=memory)
+        command=command, serve=serve, prefix_only=prefix_only,
+        tokenizer_factory=lambda model: Tokenizer(), resource_reader=memory)
     assert json.loads((tmp_path / "report.json").read_text()) == report
     assert report["status"] != "running"
     return report, observations
@@ -259,6 +265,53 @@ def test_parse_gauges_sums_named_series_and_rejects_bad_values():
     assert values == {"vllm:prompt_tokens_total": 150.0, "vllm:num_requests_running": 3.0}
     with pytest.raises(ServiceProbeError):
         service_probe.parse_gauges("vllm:prompt_tokens_total nan\n", {"vllm:prompt_tokens_total"})
+
+
+@pytest.mark.parametrize("mode,success", [("good", True), ("no_prefix_hit", False)])
+def test_bounded_prefix_probe_requires_real_per_request_hit_not_http_success(tmp_path, mode, success):
+    config, path = configured(tmp_path)
+    report, reads = invoke(tmp_path, path, fake_command(tmp_path, config, mode), prefix_only=True)
+    assert report["mode"] == "prefix-probe"
+    assert report["performance"] == "not_run"
+    assert report["server"]["cleanup_complete"] and len(reads) == 2
+    assert [row["prompt_tokens"] for row in report["requests"]] == [128]
+    if success:
+        assert report["status"] == "passed"
+        prefix = report["prefix_cache"]
+        assert prefix["status"] == "passed"
+        assert [r["cached_tokens"] for r in prefix["requests"]] == [0,2304,2304]
+        assert [r["prompt_tokens"] for r in prefix["requests"]] == [4736,4736,4864]
+    else:
+        assert report["status"] == "failed" and "positive native cached_tokens" in report["error"]
+
+
+@pytest.mark.parametrize("change", [
+    {"hash_block_size": None}, {"hash_block_size": 512},
+    {"scheduler_lcm_block_size": 2883584},
+    {"physical_full_block_size": 2816}, {"mamba_mode": "none"},
+])
+def test_impossible_prefix_geometry_never_passes_telemetry(change):
+    rows=telemetry_records()
+    for row in rows:
+        if row["event"]=="cache_layout":row.update(change)
+    result=evaluate_telemetry(rows,tensor_parallel_size=4,
+        expected_layers=["model.layers.3.self_attn.attn"],expected_prefix_caching=True)
+    assert result["status"]=="failed"
+
+
+def test_prefix_cli_uses_same_candidate_preset_as_direct_serving(tmp_path, monkeypatch):
+    from tools.serving_variants import variant_config
+    config,path=configured(tmp_path)
+    calls=[]
+    def run(selected, **kwargs):
+        calls.append((json.loads(Path(selected).read_text()),kwargs))
+        return {"status":"passed"}
+    monkeypatch.setattr(service_probe,"run_service",run)
+    monkeypatch.setattr(sys,"argv",["service_probe","--config",str(path),"--variant","candidate",
+                                    "--prefix-only","--log-dir",str(tmp_path/"logs")])
+    assert service_probe.main()==0
+    assert calls[0][0]==variant_config(config,"candidate")
+    assert calls[0][1]["prefix_only"] is True and calls[0][1]["serve"] is False
 
 
 def test_synthetic_mixed_timeout_blocks_formal_service(tmp_path, monkeypatch):

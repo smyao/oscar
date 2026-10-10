@@ -369,7 +369,8 @@ def request_with_deadline(server, payload, *, label, timeout, quiet=False):
         atomic_json(state_path, state)
 
 
-def completion(server, config, tokenizer, length, *, label, timeout, prompt_ids=None, quiet=False):
+def completion(server, config, tokenizer, length, *, label, timeout, prompt_ids=None, quiet=False,
+               cache_salt=None):
     server.check_alive()
     ids = exact_prompt(tokenizer, length) if prompt_ids is None else prompt_ids
     if len(ids) != length or any(type(x) is not int or x < 0 for x in ids):
@@ -378,6 +379,8 @@ def completion(server, config, tokenizer, length, *, label, timeout, prompt_ids=
                "max_tokens": MIN_OUTPUT_TOKENS, "min_tokens": MIN_OUTPUT_TOKENS,
                "ignore_eos": True, "temperature": 0, "seed": 46774,
                "stream": False, "add_special_tokens": False}
+    if cache_salt is not None:
+        payload["cache_salt"] = cache_salt
     started = time.monotonic()
     response = request_with_deadline(server, payload, label=label, timeout=timeout, quiet=quiet)
     if not isinstance(response, dict) or response.get("error"):
@@ -415,7 +418,55 @@ def read_telemetry(directory):
     return records
 
 
-def evaluate_telemetry(records, *, tensor_parallel_size, expected_layers, require_mtp=True):
+def run_prefix_cache_probe(server, config, tokenizer, *, deadline, request_limit):
+    """#156: isolated cold/replay/continuation requests, actual native hit counts.
+
+    common_prefix_len is a cascade optimization input and cannot certify APC.
+    OpenAI usage.prompt_tokens_details.cached_tokens comes from RequestOutput's
+    native num_cached_tokens. A unique salt isolates this probe from warmups.
+    """
+    from oscar_ascend.integration.prefix_geometry import validate_prefix_geometry
+    layouts = [r for r in read_telemetry(server.trace_dir) if r.get("event") == "cache_layout"]
+    if not layouts or {r.get("rank") for r in layouts} != set(range(config["tensor_parallel_size"])):
+        raise ServiceProbeError("mandatory prefix probe needs effective layout from every TP rank")
+    for layout in layouts:
+        validate_prefix_geometry(layout)
+        if layout["prefix_caching"] is not True:
+            raise ServiceProbeError("prefix probe received a disabled effective cache")
+    sizes = {r["scheduler_lcm_block_size"] for r in layouts}
+    if len(sizes) != 1:
+        raise ServiceProbeError("TP ranks disagree on prefix-hit alignment")
+    alignment = sizes.pop()
+    warm_length = 2 * alignment + 128
+    continuation_length = warm_length + 128
+    if continuation_length > 16384 or continuation_length + MIN_OUTPUT_TOKENS > config["max_model_len"]:
+        raise ServiceProbeError("effective prefix geometry exceeds bounded short probe")
+    ids = exact_prompt(tokenizer, continuation_length)
+    salt = "oscar-prefix-probe-" + uuid.uuid4().hex
+    records = []
+    for label, length in (("prefix-cold", warm_length), ("prefix-replay", warm_length),
+                          ("prefix-continuation", continuation_length)):
+        row = completion(server, config, tokenizer, length, label=label,
+                         timeout=_remaining(deadline, request_limit),
+                         prompt_ids=ids[:length], cache_salt=salt)
+        details = row["response"]["usage"].get("prompt_tokens_details") or {}
+        hits = details.get("cached_tokens", 0)
+        if type(hits) is not int or hits < 0 or hits >= length or hits % alignment:
+            raise ServiceProbeError(f"{label}: invalid native cached_tokens={hits!r}")
+        if (label == "prefix-cold" and hits != 0) or (label != "prefix-cold" and hits == 0):
+            raise ServiceProbeError(f"{label}: expected {'zero' if label == 'prefix-cold' else 'positive'} "
+                                    f"native cached_tokens, got {hits}")
+        row["cached_tokens"] = hits
+        records.append(row)
+        _terminal(f"[oscar] PREFIX_REQUEST {label} prompt={length} cached={hits} "
+                  f"generated={row['completion_tokens']}")
+    return {"status": "passed", "alignment_tokens": alignment, "requests": records,
+            "hit_evidence": "native_per_request_usage_cached_tokens",
+            "quality": "not_a_full_model_quality_acceptance"}
+
+
+def evaluate_telemetry(records, *, tensor_parallel_size, expected_layers, require_mtp=True,
+                       expected_prefix_caching=None):
     expected_ranks = set(range(tensor_parallel_size))
     errors, details = [], {}
     coverage = {}
@@ -429,8 +480,6 @@ def evaluate_telemetry(records, *, tensor_parallel_size, expected_layers, requir
         elif any(r.get("mixed_decode_split_requested") != r.get("mixed_decode_split_effective")
                  for r in feature_rows):
             errors.append(f"rank {rank} silently changed mixed-decode feature selection")
-        prefix_rows = [r for r in local if r.get("event") == "prefix_metadata"
-                       and type(r.get("common_prefix_len")) is int and r["common_prefix_len"] > 0]
         routed = {r.get("layer") for r in local if r.get("event") == "attention_dispatched" and r.get("route") == "ascendc_int2_cv"}
         target = {f"model.layers.{match.group(1)}.self_attn.attn" for name in layouts
                   if "mtp" not in name and (match := canonical.search(name))}
@@ -448,16 +497,17 @@ def evaluate_telemetry(records, *, tensor_parallel_size, expected_layers, requir
                     or type(layout.get("page_bytes")) is not int
                     or not 0 < layout["snapshot_bytes_per_page"] <= layout["page_bytes"]):
                 errors.append(f"rank {rank} has invalid native cache layout: {name}")
-            if (type(layout.get("prefix_caching")) is not bool
-                    or layout.get("mamba_mode") not in {"none", "align", "all"}
-                    or type(layout.get("physical_full_block_size")) is not int
-                    or layout.get("physical_full_block_size") != layout.get("physical_block_tokens")
-                    or type(layout.get("scheduler_lcm_block_size")) is not int):
-                errors.append(f"rank {rank} lacks effective prefix geometry: {name}")
-            if layout.get("prefix_caching") and layout.get("mamba_mode") != "align":
-                errors.append(f"rank {rank} prefix cache is not using native align mode: {name}")
-        if any(layout.get("prefix_caching") for layout in layouts.values()) and not prefix_rows:
-            errors.append(f"rank {rank} observed no positive native common_prefix_len")
+            from oscar_ascend.integration.prefix_geometry import validate_prefix_geometry
+            from oscar_ascend.integration.runtime_api import OscarReadinessError
+            try:
+                validate_prefix_geometry(layout)
+                if layout["physical_full_block_size"] != layout["physical_block_tokens"]:
+                    raise OscarReadinessError("physical block telemetry disagrees")
+                if (expected_prefix_caching is not None
+                        and layout["prefix_caching"] is not expected_prefix_caching):
+                    raise OscarReadinessError("requested/effective prefix caching differs")
+            except OscarReadinessError as error:
+                errors.append(f"rank {rank} invalid effective prefix geometry {name}: {error}")
         capture = [r for r in local if r.get("event") == "graph_capture_return"
                    and "FULL" in str(r.get("mode")) and r.get("descriptor")]
         replay = [r for r in local if r.get("event") == "graph_replay_launch_return"
@@ -471,7 +521,6 @@ def evaluate_telemetry(records, *, tensor_parallel_size, expected_layers, requir
         coverage[rank] = set(layouts)
         details[str(rank)] = {"cache_layers": sorted(layouts), "routed_layers": sorted(routed),
                              "effective_features": feature_rows,
-                             "prefix_metadata": prefix_rows,
                              "capture_records": capture, "replay_records": replay}
     if coverage and any(layers != coverage[0] for layers in coverage.values()):
         errors.append("TP ranks disagree on FULL layer identities")
@@ -758,14 +807,14 @@ def run_device_event_diagnostic(server, config, tokenizer, *, primary: dict,
     return result
 
 
-def run_service(config_path, *, output, log_dir, serve=False, command=None,
+def run_service(config_path, *, output, log_dir, serve=False, prefix_only=False, command=None,
                 tokenizer_factory=None, resource_reader=None):
     """Run real service requests; injectable boundaries are only for fault tests."""
     config_path, output, log_dir = Path(config_path).resolve(), Path(output).resolve(), Path(log_dir).resolve()
     log_dir.mkdir(parents=True, exist_ok=True)
     started = time.monotonic()
     started_wall = time.time()
-    report = {"status": "running", "mode": "serve" if serve else "probe", "config": str(config_path),
+    report = {"status": "running", "mode": "serve" if serve else "prefix-probe" if prefix_only else "probe", "config": str(config_path),
               "requests": [], "server": {}, "device_completion": "not_run", "quality": "not_run", "performance": "not_run",
               "resource_release": "not_run", "resource_evidence": {}}
     atomic_json(output, report)
@@ -797,7 +846,9 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
             raise ServiceProbeError("target MTP must retain three speculative tokens")
         duration = _positive_time(config, "phase_timeout_seconds", 1800)
         deadline = started + duration
-        lengths = (PROBE_LENGTHS[0],) if serve else PROBE_LENGTHS
+        lengths = (PROBE_LENGTHS[0],) if serve or prefix_only else PROBE_LENGTHS
+        if prefix_only and config.get("enable_prefix_caching") is not True:
+            raise ServiceProbeError("prefix-only probe requires enable_prefix_caching=true")
         if max(lengths) + MIN_OUTPUT_TOKENS > config["max_model_len"]:
             raise ServiceProbeError("configured model length cannot cover mandatory service requests")
         for sig in (signal.SIGTERM, signal.SIGINT):
@@ -823,7 +874,11 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
                 report["requests"].append(record)
                 atomic_json(output, report)
                 _terminal(f"[oscar] service request complete prompt={length} generated={record['completion_tokens']}")
-            if not serve:
+            if config.get("enable_prefix_caching") is True:
+                report["prefix_cache"] = run_prefix_cache_probe(
+                    server, config, tokenizer, deadline=deadline, request_limit=request_limit)
+                atomic_json(output, report)
+            if not serve and not prefix_only:
                 pool = ThreadPoolExecutor(max_workers=4)
                 futures = []
                 try:
@@ -849,12 +904,13 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
                 server.check_alive()
                 time.sleep(0.2)
             records = read_telemetry(server.trace_dir)
-            report["telemetry"] = evaluate_telemetry(records, tensor_parallel_size=4, expected_layers=expected_layers)
+            report["telemetry"] = evaluate_telemetry(records, tensor_parallel_size=4, expected_layers=expected_layers,
+                                                    expected_prefix_caching=config.get("enable_prefix_caching", False))
             atomic_json(log_dir / "telemetry_records.json", records)
             if report["mtp"]["status"] != "passed" or report["telemetry"]["status"] != "passed":
                 raise ServiceProbeError("HTTP completed, but mandatory TP4/FULL/graph/MTP evidence did not pass")
             report["device_completion"] = "real_service_requests_completed"
-            if not serve:
+            if not serve and not prefix_only:
                 try:
                     report["performance"] = run_synthetic_mixed(server, config, tokenizer,
                                                                 log_dir=log_dir, deadline=deadline)
@@ -1071,6 +1127,10 @@ def main():
     parser.add_argument("--output", type=Path, default=ROOT / "reports/service_probe.json")
     parser.add_argument("--log-dir", type=Path, default=ROOT / "logs/service-probe")
     parser.add_argument("--serve", action="store_true", help="keep the validated owned service running until interrupted")
+    parser.add_argument("--prefix-only", action="store_true",
+                        help="bounded prefix cold/replay/continuation plus TP4/MTP/graph gates")
+    parser.add_argument("--variant", choices=("baseline", "candidate"),
+                        help="apply the same serving preset as install_serve")
     parser.add_argument("--synthetic", action="store_true",
                         help="run only four synthetic 20/23/27/30K concurrent streaming requests")
     parser.add_argument("--native", action="store_true",
@@ -1080,6 +1140,15 @@ def main():
     parser.add_argument("--acceptance", type=Path, default=ROOT / "configs/acceptance.json",
                         help="frozen policy used by the paired runner's diagnostic trigger")
     args = parser.parse_args()
+    if args.prefix_only and (args.synthetic or args.serve or args.native):
+        parser.error("--prefix-only is a standalone OSCAR service gate")
+    if args.variant is not None:
+        from .serving_variants import variant_config
+        selected = variant_config(json.loads(args.config.read_text()), args.variant)
+        args.log_dir.mkdir(parents=True, exist_ok=True)
+        effective = args.log_dir / "effective-target.json"
+        atomic_json(effective, selected)
+        args.config = effective
     if args.synthetic:
         report = run_synthetic_only(args.config, output=args.output, log_dir=args.log_dir,
                                     native=args.native, native_report_path=args.native_report,
@@ -1089,7 +1158,8 @@ def main():
         parser.error("--native requires --synthetic")
     if args.native_report is not None:
         parser.error("--native-report requires --synthetic")
-    report = run_service(args.config, output=args.output, log_dir=args.log_dir, serve=args.serve)
+    report = run_service(args.config, output=args.output, log_dir=args.log_dir,
+                         serve=args.serve, prefix_only=args.prefix_only)
     return 0 if report["status"] in {"passed", "stopped"} else 130 if report["status"] == "interrupted" else 1
 
 

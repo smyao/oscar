@@ -20,7 +20,7 @@ def load_policy(parent):
     return namespace
 
 
-def native_waiting_clip(config, request, budget):
+def native_waiting_clip(config, request, budget, computed=0):
     # Execute the pinned native WAITING clipping lines, not a second copy of
     # our implementation. Break is represented by a surrounding one-item loop.
     tree=ast.parse((ROOT/'references/vllm/vllm/v1/core/sched/scheduler.py').read_text())
@@ -34,7 +34,7 @@ def native_waiting_clip(config, request, budget):
     fragment=textwrap.dedent('\n'.join(lines[start-1:end+1]))
     code='result = None\nfor once in [True]:\n'+textwrap.indent(fragment,'    ')+'\n    result = num_new_tokens\n'
     ns={'self':SimpleNamespace(scheduler_config=config),'request':request,
-        'num_computed_tokens':0,'token_budget':budget}
+        'num_computed_tokens':computed,'token_budget':budget}
     exec(compile(code,'<pinned native waiting admission>','exec'),ns)
     return ns['result']
 
@@ -101,6 +101,20 @@ def test_async_parent_still_owns_queue_and_config_restores_on_error():
     with pytest.raises(RuntimeError,match='native allocation failure'):
         scheduler.schedule()
     assert scheduler.scheduler_config is original
+
+
+def test_first_prefix_hit_is_known_before_native_request_counter_is_committed():
+    View=load_policy(object)['AdmissionView']
+    policy=View(SimpleNamespace(enable_chunked_prefill=True,long_prefill_token_threshold=0),
+                budget=32768,max_sequences=128,speculative_tokens=3)
+    request=SimpleNamespace(num_tokens=50000,num_computed_tokens=0,num_preemptions=0,
+                            prefill_stats=SimpleNamespace(num_cached_tokens=23040))
+    policy.select(request)
+    assert native_waiting_clip(policy,request,32768,computed=23040)==26960
+    assert native_waiting_clip(policy,request,20000,computed=23040) is None
+    # A preempted request must not reuse stale first-prefill statistics.
+    request.num_preemptions=1
+    assert native_waiting_clip(policy,request,32768)==16384
 
 
 def test_explicit_scheduler_class_reaches_real_server_cli_without_changing_defaults():

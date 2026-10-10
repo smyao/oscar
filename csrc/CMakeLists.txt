@@ -54,7 +54,8 @@ ascendc_library(oscar_ascend_kernels SHARED kernels/store_int2.cpp kernels/merge
   kernels/attention_cv_window_range.cpp kernels/attention_cv_window_range_balanced.cpp
   kernels/attention_cv_window_range_cluster4.cpp kernels/attention_cv_window_range_cluster16.cpp
   kernels/rotate_clip_store_striped.cpp
-  kernels/attention_tasks.cpp kernels/status_guard.cpp kernels/current_only.cpp)
+  kernels/attention_tasks.cpp kernels/attention_tasks_checked.cpp
+  kernels/status_guard.cpp kernels/current_only.cpp)
 # Archive G18/#85/#98: a versioned ELF SONAME cannot bind to an older OSCAR
 # library with the same generic filename through inherited LD_LIBRARY_PATH.
 if(NOT OSCAR_BUILD_SIGNATURE MATCHES "^[0-9a-f]+$")

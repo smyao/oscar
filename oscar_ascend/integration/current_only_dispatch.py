@@ -10,7 +10,7 @@ from dataclasses import replace
 
 import torch
 
-from .current_attention import guard_current_slots, native_current_partial
+from .current_attention import guard_current_slots, native_current_partial, cpu_metadata_values
 from .runtime_api import OscarReadinessError
 from ..timing import phase
 
@@ -43,7 +43,7 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
                        slot_mapping=metadata.slot_mapping[:cut],
                        num_reqs=r,num_actual_tokens=cut,num_input_tokens=cut,
                        max_query_len=int(lengths.max()),
-                       current_cumulative=tuple(int(v) for v in cpu_starts[1:].tolist() if v>0),
+                       current_cumulative=tuple(v for v in cpu_metadata_values(cpu_starts[1:]) if v>0),
                        current_only_plan=None, first_draft_current_only=False)
         impl.forward(layer,query[:cut],key[:cut],value[:cut],kv_cache,prefix,
                      output=output[:cut])
@@ -65,7 +65,8 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
         positions=workspace.positions[:fresh]
         ops.prepare_attention_tasks_out(starts,metadata.seq_lens[r:r+plan.fresh_requests],
             slots,tasks,positions,h,hk,state.snapshots.sink_tokens,
-            state.snapshots.recent_tokens,1,None,False)
+            state.snapshots.recent_tokens,1,
+            metadata.block_tables[r:r+plan.fresh_requests],False)
         # Preserve all metadata failures. No host tensor reads or ignored
         # historical rows: a wrong zero-context proof is a same-stream trap.
         bad=(tasks[:,10]!=0)|((tasks[:,1]>=0)&(tasks[:,8]!=0))

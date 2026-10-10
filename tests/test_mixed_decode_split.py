@@ -1,4 +1,4 @@
-"""CPU request-domain/control contracts; never NPU performance evidence."""
+"""Archive #155/#156: CPU request-domain contracts; never NPU performance evidence."""
 from dataclasses import replace
 from types import SimpleNamespace
 import sys
@@ -59,6 +59,60 @@ def test_partition_preserves_every_request_current_and_history_domain(draft):
     assert torch.equal(out,baseline)
     assert old_cache.keys()==new_cache.keys()
     assert all(torch.equal(a,b) for slot in old_cache for a,b in zip(old_cache[slot],new_cache[slot]))
+
+
+@pytest.mark.parametrize('draft',[False,True])
+@pytest.mark.parametrize('block',[2304,2816])
+def test_shared_prefix_and_private_tail_match_unsplit_attention(block,draft):
+    lengths=(1,1,128) if draft else (4,4,128)
+    m=metadata(lengths=lengths,padding=8,draft=draft)
+    contexts=(block+127,block+130,block+125)
+    # Three requests read the same complete physical prefix, but have
+    # different tail pages. Both virtual128 and physical boundaries matter.
+    pages=(0,2,1);virtual=block//128
+    table=torch.tensor([list(range(3*virtual,4*virtual))+list(range(p*virtual,(p+1)*virtual))
+                        for p in pages],dtype=torch.int32)
+    slots=torch.full((m.num_input_tokens,),-1,dtype=torch.int64)
+    starts=m.query_start_loc.tolist()
+    for r,(a,b) in enumerate(zip(starts,starts[1:])):
+        logical=torch.arange(contexts[r],contexts[r]+b-a)
+        slots[a:b]=table[r,logical//128].long()*128+logical%128
+    m=replace(m,seq_lens=torch.tensor([c+l for c,l in zip(contexts,lengths)],dtype=torch.int32),
+              block_tables=table,slot_mapping=slots,max_seq_len=max(contexts)+max(lengths))
+    g=torch.Generator().manual_seed(156)
+    q=torch.randn(m.num_input_tokens,6,16,generator=g)
+    k=torch.randn(m.num_input_tokens,1,16,generator=g);v=torch.randn(k.shape,generator=g)
+    initial=(torch.randn(4*block,1,16,generator=g),torch.randn(4*block,1,16,generator=g))
+    expected_cache=tuple(x.clone() for x in initial);actual_cache=tuple(x.clone() for x in initial)
+    def compute(q,k,v,cache,meta,out):
+        values=meta.query_start_loc.tolist()
+        for r,(a,b) in enumerate(zip(values,values[1:])):
+            context=int(meta.seq_lens[r])-(b-a);p=torch.arange(context)
+            history=meta.block_tables[r,p//128].long()*128+p%128
+            out[a:b]=attention(q[a:b],torch.cat((cache[0][history],k[a:b])),
+                              torch.cat((cache[1][history],v[a:b]))).output
+            for storage,current in zip(cache,(k,v)):
+                storage[meta.slot_mapping[a:b]]=current[a:b]
+    expected=torch.zeros_like(q);compute(q,k,v,expected_cache,m,expected)
+    def guard(*statuses):
+        assert not any(bool((s!=0).any()) for s in statuses)
+    ws=SimpleNamespace(validate=lambda *a:None,store_status=torch.empty(0,dtype=torch.int32))
+    seen=[]
+    def forward(layer,cq,ck,cv,cache,meta,output):
+        seen.append(meta.mixed_split_segment)
+        assert torch.equal(meta.block_tables[:,:virtual],table[:meta.num_reqs,:virtual])
+        compute(cq,ck,cv,cache,meta,output)
+    impl=SimpleNamespace(num_heads=6,num_kv_heads=1,head_size=16,forward=forward,
+        provider=SimpleNamespace(layer_state=lambda name:SimpleNamespace(workspace=ws),
+                                 ops=SimpleNamespace(status_guard=guard)))
+    plan=plan_mixed_decode(m,q.shape[0]);assert plan is not None
+    out=torch.full_like(q,float('nan'))
+    dispatch_mixed_decode(impl,SimpleNamespace(layer_name='full'),q,k,v,actual_cache,m,out,plan)
+    assert seen==['short_prefix','long_suffix'] and torch.equal(out,expected)
+    assert len(set(slots[slots>=0].tolist()))==m.num_actual_tokens
+    for actual,expected,before in zip(actual_cache,expected_cache,initial):
+        assert torch.equal(actual,expected)
+        assert torch.equal(actual[3*block:4*block],before[3*block:4*block])
 
 
 @pytest.mark.parametrize('change',[

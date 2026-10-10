@@ -112,6 +112,34 @@ def test_real_native_spec_conversion_and_registry_preserve_gdn(native_specs):
     assert ours.OscarFullAttentionSpec.merge([spec, cloned]) == spec
 
 
+@pytest.mark.parametrize("prefix", [True, False])
+def test_runtime_resolves_effective_prefix_geometry_and_keeps_gdn(native_specs, prefix):
+    interface, _, _ = native_specs
+    cache = SimpleNamespace(enable_prefix_caching=prefix, block_size=768,
+        mamba_block_size=768 if prefix else 262144,
+        mamba_cache_mode="align" if prefix else "none", hash_block_size=None)
+    runner = SimpleNamespace(vllm_config=SimpleNamespace(cache_config=cache))
+    full = interface.FullAttentionSpec(block_size=768, num_kv_heads=1, head_size=256,
+                                       dtype=torch.bfloat16, page_size_padded=801792)
+    gdn = interface.MambaSpec(block_size=cache.mamba_block_size,
+        shapes=((3, 2560), (12, 128, 128)), dtypes=(torch.bfloat16, torch.bfloat16),
+        page_size_padded=801792, num_speculative_blocks=3, mamba_cache_mode=cache.mamba_cache_mode)
+    provider = AscendRuntimeProvider(dict(sink_tokens=64, recent_tokens=256,
+                                        speculative_config={"num_speculative_tokens": 3}))
+    converted = provider.transform_kv_cache_specs(runner, {"full": full, "gdn": gdn})
+    assert converted["gdn"] is gdn
+    assert provider._prefix_layout["physical_full_block_size"] == (2304 if prefix else 2816)
+    assert provider._prefix_layout["hash_block_size"] == (768 if prefix else 2883584)
+    if prefix:
+        cache.mamba_cache_mode = "none"
+        with pytest.raises(OscarReadinessError, match="align"):
+            provider.transform_kv_cache_specs(runner, {"full": full, "gdn": gdn})
+        cache.mamba_cache_mode = "align"
+        cache.mamba_block_size = 1536
+        with pytest.raises(OscarReadinessError, match="equal positive"):
+            provider.transform_kv_cache_specs(runner, {"full": full, "gdn": gdn})
+
+
 @pytest.mark.parametrize("native_groups", [True, False], indirect=True)
 def test_native_kernel_spec_copy_preserves_physical_storage_and_rejects_resizing(native_groups):
     _, ours, _, _, _, groups = native_groups
@@ -208,11 +236,13 @@ def native_groups(native_specs, monkeypatch, request):
         "group_and_unify_kv_cache_specs", "get_uniform_page_size", "is_kv_cache_page_size_uniform",
         "unify_kv_cache_spec_page_size", "_get_kv_cache_groups_uniform_page_size", "create_kv_cache_group_specs",
         "_pool_bytes_per_block", "get_num_blocks", "get_kv_cache_config_from_groups", "may_override_num_blocks",
-        "KVCacheBlock", "FreeKVCacheBlockQueue", "BlockHashListWithBlockSize"}
+        "KVCacheBlock", "FreeKVCacheBlockQueue", "BlockHashListWithBlockSize",
+        "make_block_hash_with_group_id"}
     utils = definitions(
         "references/vllm/vllm/v1/core/kv_cache_utils.py", "native_grouping_contract", functions,
         {**interface.__dict__, "__name__": "native_grouping_contract", "math": math,
          "defaultdict": defaultdict, "Sequence": Sequence, "BlockHash": bytes, "overload": overload,
+         "BlockHashWithGroupId": bytes,
          "cdiv": lambda x, y: (x + y - 1) // y, "logger": logging.getLogger("native-group-test")}, monkeypatch)
     config = SimpleNamespace(
         scheduler_config=SimpleNamespace(disable_hybrid_kv_cache_manager=False),
@@ -311,7 +341,9 @@ def _native_coordinator(native_groups, monkeypatch):
     pool_types = definitions(
         "references/vllm/vllm/v1/core/block_pool.py", "native_block_pool_contract",
         {"BlockHashToBlockMap", "BlockPool"},
-        {"KVCacheBlock": utils.KVCacheBlock, "FreeKVCacheBlockQueue": utils.FreeKVCacheBlockQueue}, monkeypatch)
+        {"KVCacheBlock": utils.KVCacheBlock, "FreeKVCacheBlockQueue": utils.FreeKVCacheBlockQueue,
+         "BlockHashListWithBlockSize": utils.BlockHashListWithBlockSize,
+         "make_block_hash_with_group_id": utils.make_block_hash_with_group_id}, monkeypatch)
     ascend_interface = ModuleType("vllm_ascend.core.kv_cache_interface")
     ascend_interface.AscendMLAAttentionSpec = interface.MLAAttentionSpec
     monkeypatch.setitem(sys.modules, ascend_interface.__name__, ascend_interface)
@@ -335,6 +367,55 @@ def _native_coordinator(native_groups, monkeypatch):
         enable_kv_cache_events=False, dcp_world_size=1, pcp_world_size=1,
         hash_block_size=hash_block_size, max_num_batched_tokens=16384, scheduler_block_size=scheduler_block_size)
     return instance
+
+
+def test_native_prefix_hits_share_only_complete_blocks_and_keep_writable_tails_private(native_groups, monkeypatch):
+    _, _, _, utils, _, _ = native_groups
+    coordinator = _native_coordinator(native_groups, monkeypatch)
+    pool = coordinator.block_pool
+    free_before = pool.get_num_free_blocks()
+    hashes = [i.to_bytes(32, "big") for i in range(12)]
+    warm = SimpleNamespace(request_id="warm", num_prompt_tokens=7040, block_hashes=hashes)
+    managers = coordinator.single_type_managers
+    # Save two real GDN checkpoints in separate native scheduler steps.
+    for boundary in (2304, 4608):
+        for manager in managers:
+            manager.allocate_new_blocks("warm", boundary + 3, boundary)
+            manager.cache_blocks(warm, boundary)
+            manager.new_step_starts()
+    for manager in managers:
+        local_hashes = hashes if manager.block_size == 768 else utils.BlockHashListWithBlockSize(
+            hashes, 768, manager.block_size)
+        (hit,) = manager.find_longest_cache_hit(local_hashes, 4608,
+            [manager.kv_cache_group_id], pool, manager.kv_cache_spec,
+            drop_eagle_block=True, alignment_tokens=2304)
+        # FULL drops the last MTP block; recompute GDN at the common boundary.
+        if manager.block_size == 768:
+            (hit,) = manager.find_longest_cache_hit(local_hashes, 2304,
+                [manager.kv_cache_group_id], pool, manager.kv_cache_spec,
+                drop_eagle_block=True, alignment_tokens=2304)
+        assert len(hit) * manager.block_size == 2304
+        assert all(b.is_null or b.block_hash is not None for b in hit)
+        for request in ("replay", "continuation"):
+            manager.allocate_new_computed_blocks(request, hit, 2304, 0)
+            manager.allocate_new_blocks(request, 2440, 2437)
+        live_shared = {b.block_id for b in hit if not b.is_null}
+        assert live_shared and all(b.ref_cnt == 3 for b in hit if not b.is_null)
+        tails = []
+        for request in ("replay", "continuation"):
+            tail = manager.req_to_blocks[request][2304 // manager.block_size:]
+            assert all(not b.is_null and b.ref_cnt == 1 and b.block_hash is None for b in tail)
+            tails.append({b.block_id for b in tail})
+        assert tails[0].isdisjoint(tails[1] | live_shared)
+        assert tails[1].isdisjoint(live_shared)
+        for request in ("warm", "replay", "continuation"):
+            manager.free(request)
+    assert pool.get_num_free_blocks() == free_before
+    # Reuse the entire free list: no leaked ownership and no live shared page.
+    reused = pool.get_new_blocks(free_before)
+    assert all(b.ref_cnt == 1 and b.block_hash is None for b in reused)
+    pool.free_blocks(reused)
+    assert pool.get_num_free_blocks() == free_before
 
 
 def test_actual_ascend_coordinator_initializes_native_managers_for_different_block_sizes(native_groups, monkeypatch):

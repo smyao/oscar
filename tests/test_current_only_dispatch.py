@@ -49,6 +49,8 @@ def test_current_suffix_keeps_prefix_and_checks_gpu_context_before_fia(monkeypat
     class Ops:
         def prepare_attention_tasks_out(self,starts,lengths,slots,tasks,positions,*attrs):
             order.append('prepare_fresh')
+            assert attrs[-2].data_ptr() == metadata.block_tables[1:].data_ptr()
+            assert attrs[-1] is False
             assert starts.tolist()==[0,10] and lengths.tolist()==[10]
             expected=list(range(cut,active))
             if bad_slot:expected[0]=-1

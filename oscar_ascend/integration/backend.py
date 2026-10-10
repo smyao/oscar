@@ -55,7 +55,6 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
 
     def __init__(self, kv_cache_spec, layer_names, vllm_config, device):
         super().__init__(kv_cache_spec, layer_names, vllm_config, device)
-        self.layer_names = tuple(layer_names)
         self.capacity = None
         self.bindings = GraphMetadataBindings()
         runtime_config = require_runtime().config
@@ -70,8 +69,8 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
         if type(mixed_split) is not bool:
             raise ValueError("experimental_mixed_decode_split must be an explicit boolean")
         parallel = getattr(vllm_config, "parallel_config", None)
-        prefill_cp = getattr(parallel, "prefill_context_parallel_size", 1)
-        decode_cp = getattr(parallel, "decode_context_parallel_size", 1)
+        prefill_cp = getattr(parallel, "prefill_context_parallel_size", None)
+        decode_cp = getattr(parallel, "decode_context_parallel_size", None)
         if mixed_split and (prefill_cp != 1 or decode_cp != 1):
             raise ValueError("mixed decode split requires effective PCP=DCP=1")
         self.mixed_decode_split = mixed_split
@@ -81,9 +80,15 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
                                          "enable_prefix_caching", None),
                   mixed_decode_split_requested=mixed_split,
                   mixed_decode_split_effective=self.mixed_decode_split,
+                  current_only_requested=self.current_only,
                   current_only_effective=self.current_only,
+                  first_draft_current_only_requested=self.current_only,
                   first_draft_current_only_effective=self.first_draft_current_only,
+                  first_draft_current_fia_requested=first_current,
                   first_draft_current_fia_effective=self.first_draft_current_fia,
+                  first_draft_qualification_reason=(
+                      "supported_eager_mtp" if supports_first_draft_current_only(vllm_config)
+                      else "requires_eager_qwen3_5_mtp_padded_nonparallel_drafts_and_pcp_dcp_one"),
                   prefill_context_parallel_size=prefill_cp,
                   decode_context_parallel_size=decode_cp)
 
@@ -97,11 +102,8 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
         # qualification never enables native-current for the MTP prefix.
         if type(common_prefix_len) is not int or common_prefix_len < 0:
             raise ValueError("native common_prefix_len must be a nonnegative integer")
-        if common_prefix_len:
-            from ..telemetry import emit_once
-            emit_once("prefix_metadata", key=(self.layer_names, common_prefix_len),
-                      layers=list(self.layer_names), common_prefix_len=common_prefix_len,
-                      prefix_caching=True)
+        # This is a cascade-attention input, NOT a cache-hit counter. Native
+        # passes zero for this backend (use_cascade_attention returns False).
         first_draft = type(fast_build) is not bool
         metadata = from_common(common_attn_metadata, capacity=self.capacity,
                                is_draft=first_draft, current_only=self.current_only,

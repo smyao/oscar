@@ -2,14 +2,16 @@
 
 Global N/max_query_len currently selects C16 and S1 for short decode requests
 that share a batch with long prefill. Partition only at request boundaries.
-This experiment keeps the original S choice, preserves the native model/GDN
-call, and changes only FULL attention's internal launches. Eligibility requires
-native prefix caching to be explicitly disabled: kv_cache_manager.py:212 then
-returns no shared computed blocks; request-owned allocation remains native.
+This keeps the original S choice and native model/GDN call. Shared prefix
+blocks stay read-only under native full-block admission: slices retain each
+request's complete table row and only its newly scheduled slots. The short
+prefix and long suffix refer to request ordering, not to cached token prefixes.
+Archive #156: exercise shared tables and distinct writable tails in tests.
 """
 from dataclasses import dataclass,replace
 import torch
 from ..ops.cv_dispatch import ATTENTION_QUERY_ROWS
+from .current_attention import cpu_metadata_values
 
 
 @dataclass(frozen=True)
@@ -30,7 +32,7 @@ def plan_mixed_decode(metadata,tokens,*,query_heads=6,kv_heads=1):
             starts.ndim!=1 or starts.dtype not in (torch.int32,torch.int64) or
             starts.numel()<metadata.num_reqs+1):
         return None
-    values=starts[:metadata.num_reqs+1].tolist()
+    values=cpu_metadata_values(starts[:metadata.num_reqs+1])
     if (not values or values[0]!=0 or values[-1]!=metadata.num_actual_tokens or
             any(b<=a for a,b in zip(values,values[1:])) or
             type(tokens) is not int or not 0<values[-1]<=tokens):
@@ -53,7 +55,7 @@ def plan_mixed_decode(metadata,tokens,*,query_heads=6,kv_heads=1):
 
 def _slice_metadata(metadata,request_begin,request_end,token_begin,token_end,original,segment):
     cpu=metadata.query_start_loc_cpu[request_begin:request_end+1]-token_begin
-    ends=tuple(cpu[1:].tolist())
+    ends=tuple(cpu_metadata_values(cpu[1:]))
     lengths=cpu[1:]-cpu[:-1]
     return replace(metadata,
         query_start_loc=metadata.query_start_loc[request_begin:request_end+1]-token_begin,

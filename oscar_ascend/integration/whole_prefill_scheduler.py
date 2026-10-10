@@ -41,6 +41,12 @@ class AdmissionView:
             return False
         total = request.num_tokens
         computed = getattr(request, 'num_computed_tokens', 0)
+        # Native WAITING admission records a fresh cache hit in PrefillStats
+        # BEFORE reading this policy, but commits num_computed_tokens only
+        # AFTER allocating slots. A just-arrived request still has computed=0.
+        if computed == 0 and getattr(request, 'num_preemptions', 0) == 0:
+            stats = getattr(request, 'prefill_stats', None)
+            computed = getattr(stats, 'num_cached_tokens', 0)
         if (type(total) is not int or total <= 0 or type(computed) is not int
                 or computed < 0 or computed > total):
             raise ValueError('native request must expose valid total/computed token counts')

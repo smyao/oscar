@@ -155,7 +155,8 @@ def from_common(common: Any, *, capacity: MetadataCapacity | None = None,
             if (upper is None or upper.device.type != "cpu" or upper.ndim != 1
                     or upper.numel() < rows):
                 raise OscarMetadataError("current-only experiment requires native CPU sequence upper bounds")
-            plan = plan_current_suffix(cpu_starts[:rows + 1].tolist(), upper[:rows].tolist(),
+            from .current_attention import cpu_metadata_values
+            plan = plan_current_suffix(cpu_metadata_values(cpu_starts[:rows + 1]), cpu_metadata_values(upper[:rows]),
                                        actual_tokens=common.num_actual_tokens,
                                        padded_tokens=metadata.num_input_tokens)
             metadata = replace(metadata, current_only_plan=plan)

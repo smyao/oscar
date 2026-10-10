@@ -347,14 +347,10 @@ class AscendRuntimeProvider:
         scheduler = {spec.layout.scheduler_block_size for spec in full_specs}
         if len(physical) != 1 or len(scheduler) != 1:
             raise OscarReadinessError("OSCAR FULL layers do not share one effective cache geometry")
-        self._prefix_layout = {
-            "prefix_caching": enabled, "mamba_mode": mode,
-            "native_full_block_size": native_full_block,
-            "mamba_block_size": mamba_block,
-            "physical_full_block_size": next(iter(physical)),
-            "scheduler_lcm_block_size": next(iter(scheduler)),
-            "hash_block_size": getattr(cache, "hash_block_size", None),
-        }
+        from .integration.prefix_geometry import resolve_prefix_geometry
+        self._prefix_layout = resolve_prefix_geometry(cache, next(iter(physical)))
+        if self._prefix_layout["scheduler_lcm_block_size"] != next(iter(scheduler)):
+            raise OscarReadinessError("native and OSCAR scheduler block resolutions disagree")
         return converted
 
     def _snapshot_layout(self, spec):

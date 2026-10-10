@@ -64,7 +64,11 @@ void Prepare(const at::Tensor& starts,const at::Tensor& lens,const at::Tensor& s
   Disjoint(tasks,positions);Disjoint(positions,starts);Disjoint(positions,lens);Disjoint(positions,slots);
   if(!slots.numel()) return;
   const c10_npu::OptionalNPUGuard guard(starts.device());
-  oscar_ascend::prepare_attention_tasks_launch(c10_npu::getCurrentNPUStream().stream(),
+  // #156: a supplied native table selects the checked implementation;
+  // the no-table primitive oracle retains the byte-frozen fe0 preparer.
+  auto launch=blockTable.has_value()?oscar_ascend::prepare_attention_tasks_checked_launch:
+                                    oscar_ascend::prepare_attention_tasks_launch;
+  launch(c10_npu::getCurrentNPUStream().stream(),
       starts.data_ptr(),lens.data_ptr(),slots.data_ptr(),tasks.data_ptr(),positions.data_ptr(),lens.numel(),
       slots.numel(),hq,hk,sink,recent,splits,slots.scalar_type()==at::kLong,
       blockTable?blockTable->data_ptr():nullptr,blockTable?blockTable->size(1):0,slotContext,32);

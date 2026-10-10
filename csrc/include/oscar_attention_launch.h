@@ -49,6 +49,12 @@ void prepare_attention_tasks_launch(void* stream, void* qstarts, void* lengths,
     int64_t query_heads, int64_t kv_heads, int64_t sink, int64_t recent,
     int64_t splits, bool slots_i64, void* block_table, int64_t table_columns,
     bool use_slot_context, uint32_t cores);
+// #156: separate checked implementation preserves the frozen fe0 baseline.
+void prepare_attention_tasks_checked_launch(void* stream, void* qstarts, void* lengths,
+    void* slots, void* tasks, void* positions, int64_t requests, int64_t tokens,
+    int64_t query_heads, int64_t kv_heads, int64_t sink, int64_t recent,
+    int64_t splits, bool slots_i64, void* block_table, int64_t table_columns,
+    bool use_slot_context, uint32_t cores);
 void attention_cv_launch(void* stream, void* query, void* query_rot,
     void* current_key, void* current_value, void* rotation_v, void* raw,
     void* block_table, void* window_key, void* window_value, void* window_tags,

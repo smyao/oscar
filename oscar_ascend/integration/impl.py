@@ -97,6 +97,12 @@ class OscarAttentionImpl(AttentionImpl):
         if self.provider.config.get("experimental_mixed_decode_split", False):
             from .mixed_decode_split import plan_mixed_decode, dispatch_mixed_decode
             mixed_plan = plan_mixed_decode(attn_metadata, n,query_heads=h,kv_heads=hk)
+            if attn_metadata.mixed_decode_split and not attn_metadata.capture_origin:
+                emit_once("mixed_decode_partition",
+                          key=(layer.layer_name, mixed_plan is not None),
+                          layer=layer.layer_name, engaged=mixed_plan is not None,
+                          tokens=n, max_query_len=attn_metadata.max_query_len,
+                          short_requests=0 if mixed_plan is None else mixed_plan.prefix_requests)
             if mixed_plan is not None:
                 return dispatch_mixed_decode(self, layer, query, key, value, kv_cache,
                                              attn_metadata, output, mixed_plan)

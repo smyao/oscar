@@ -1,4 +1,4 @@
-"""Whole-prompt policy is explicit and cannot leak into a native comparison."""
+"""Archive #155: whole-prompt policy cannot leak into a native comparison."""
 from copy import deepcopy
 import pytest
 from tools.serving_variants import variant_config,WHOLE_PREFILL_SCHEDULER

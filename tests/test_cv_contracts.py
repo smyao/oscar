@@ -78,6 +78,64 @@ def _npu_ops():
     return torch.ops.oscar_ascend_ops
 
 
+@pytest.mark.parametrize("block", [2304, 2816])
+@pytest.mark.parametrize("dtype", [torch.int32, torch.int64])
+def test_checked_prepare_shared_prefix_boundaries_padding_and_graph(block, dtype):
+    ops = _npu_ops()
+    virtual = block // 128
+    table = torch.tensor([list(range(4*virtual, 5*virtual)) + list(range(virtual)) +
+                          list(range(2*virtual, 3*virtual)),
+                          list(range(4*virtual, 5*virtual)) + list(range(virtual, 2*virtual)) +
+                          list(range(3*virtual, 4*virtual))], dtype=torch.int32)
+    contexts = (block+126, 2*block-2)
+    expected = torch.tensor([p for c in contexts for p in range(c, c+4)] + [-1]*3)
+    slots = torch.full((11,), -1, dtype=dtype)
+    for r,c in enumerate(contexts):
+        p = torch.arange(c,c+4)
+        slots[r*4:r*4+4] = (table[r,p//128].long()*128+p%128).to(dtype)
+    assert not ((slots >= 4*block) & (slots < 5*block)).any()
+    starts = torch.tensor([0,4,8],dtype=torch.int32,device="npu")
+    lens = torch.tensor([c+4 for c in contexts],dtype=torch.int32,device="npu")
+    device_slots,device_table = slots.npu(),table.npu()
+    tasks = torch.empty((11*3,16),dtype=torch.int64,device="npu")
+    positions = torch.empty(11,dtype=torch.int64,device="npu")
+    def launch():
+        ops.prepare_attention_tasks_out(starts,lens,device_slots,tasks,positions,
+                                        6,1,64,256,1,device_table,False)
+    launch();torch.npu.synchronize()
+    torch.testing.assert_close(positions.cpu(),expected)
+    assert not tasks[:,10].cpu().any()
+    graph = torch.npu.NPUGraph()
+    with torch.npu.graph(graph,capture_error_mode="thread_local",auto_dispatch_capture=True):
+        launch()
+    for offset in (0,1,128,0):
+        updated=slots.clone();updated[1]+=offset
+        device_slots.copy_(updated)
+        graph.replay();torch.npu.synchronize()
+        want=expected.clone()
+        if offset:want[1]=-1
+        torch.testing.assert_close(positions.cpu(),want)
+        errors=tasks[:,10].cpu().reshape(11,3)
+        assert torch.equal(errors.ne(0).any(1),torch.arange(11).eq(1) & bool(offset))
+
+
+@pytest.mark.parametrize("block", [2304,2816])
+def test_checked_prepare_later_mtp_uses_slot_position_not_rejected_seq_length(block):
+    ops=_npu_ops();virtual=block//128
+    table=torch.tensor([list(range(2*virtual,3*virtual))+list(range(virtual))],
+                       dtype=torch.int32,device="npu")
+    starts=torch.tensor([0,1],dtype=torch.int32,device="npu")
+    lens=torch.tensor([block+132],dtype=torch.int32,device="npu")
+    slots=torch.tensor([129,-1,-1,-1],dtype=torch.int64,device="npu")
+    tasks=torch.empty((12,16),dtype=torch.int64,device="npu")
+    positions=torch.empty(4,dtype=torch.int64,device="npu")
+    ops.prepare_attention_tasks_out(starts,lens,slots,tasks,positions,
+                                    6,1,64,256,1,table,True)
+    torch.npu.synchronize()
+    torch.testing.assert_close(positions.cpu(),torch.tensor([block+129,-1,-1,-1]))
+    assert not tasks[:,10].cpu().any()
+
+
 def _case(dim, qlen, context, hk=1, *, query_seed=None):
     from oscar_ascend.ops.reference import attention, encode_kv, decode_kv
     generator = torch.Generator().manual_seed(47 + dim + context)

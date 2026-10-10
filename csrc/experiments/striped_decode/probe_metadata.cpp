@@ -1,6 +1,6 @@
 // Exhaust all 65536 FP16 metadata patterns separately as live scale and zero.
 // Official CPU-debug tests packed mask lane order and live/dead row handling;
-// it does not certify target NPU or whole-model performance. D.4/#126/#154.
+// it does not certify target NPU or whole-model performance. Archive D.4/#126/#154.
 #include "tikicpulib.h"
 #include <cmath>
 #include <cstdint>

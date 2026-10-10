@@ -52,6 +52,15 @@ def test_missing_native_stage_fails_instead_of_silent_route_change():
         use_native_current(metadata)
 
 
+def test_cpu_metadata_conversion_rejects_non_cpu_before_reading_values():
+    from oscar_ascend.integration.current_attention import cpu_metadata_values, CurrentAttentionError
+    assert cpu_metadata_values(torch.tensor([0,4,132],dtype=torch.int32)) == [0,4,132]
+    for value in (None, torch.empty(3,device="meta",dtype=torch.int32),
+                  torch.zeros(3), torch.zeros(2,2,dtype=torch.int64)):
+        with pytest.raises(CurrentAttentionError,match="existing CPU integer mirror"):
+            cpu_metadata_values(value)
+
+
 def test_mixed_cpu_query_starts_strip_only_synthetic_padding():
     metadata = SimpleNamespace(query_start_loc_cpu=torch.tensor([0, 1, 7, 8], dtype=torch.int32),
                                num_reqs=3)

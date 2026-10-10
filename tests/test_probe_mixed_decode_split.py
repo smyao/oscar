@@ -1,4 +1,4 @@
-"""Mock-report rejection tests; no NPU acceptance is generated here."""
+"""Archive #155: mock-report rejection tests; no NPU acceptance is generated here."""
 from copy import deepcopy
 import json
 from pathlib import Path

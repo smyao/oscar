@@ -130,3 +130,12 @@ D.4 对照：取消6.5s全历史dequant和逆旋转phase；prepare为设备批�
 ## 6. 验收状态
 
 本机测试能验证地址、形状、metadata持久性、padding隔离、MTP窗口保留和Python派发约束。`tests/test_runtime_native.py` 还直接执行只读参考文件中未改写的KV spec/registry/metadata基类和原生GDN reshape方法，检查外部spec转换后原生GDN视图的实际dtype、shape、地址与内容不变；外部依赖以测试夹具提供，因此这是host接缝证据，不是完整vLLM实例。CANN编译/CPUdebug属于另一层证据。目标NPU设备完成、graph capture返回、真实请求graph replay、TP4/MTP/prefix服务、冻结精度及配对性能均独立记在 `docs/checklist.md`；本文件不把任何前一层通过等同于后一层。
+
+## GDN checkpoint 与 token 预算修订（2026-10-10，#127/#128/#156）
+
+1. **目的**：`align` 的原生 GDN manager 只为每个 chunk 末尾保存运行状态，中间的768-token索引是null占位。FULL块2304、GDN块768时，checkpoint必须能被共同2304边界命中；只有spec/hash布局正确还不够。
+2. **接缝**：外部插件包装原生 `Scheduler.__init__` 和 `_mamba_block_aligned_split`，新增 `integration/prefix_scheduler.py`。baseline和candidate的AsyncScheduler继承相同接缝；native-only、prefix关闭及被动观察不应用该策略。不修改参考/安装树文件。
+3. **数据与所有权**：初始化从实际coordinator/spec解析LCM、hash与预算；只缓存不可变策略。GDN的768块长、卷积/SSM尺寸、原生状态复制和管理器均不变，不能把共享CacheConfig.block_size改成2304。KVCacheManager及BlockPool继续管理缓存共享、私有尾页、MTP与释放。
+4. **生命周期**：只调整prefill/抢占恢复的chunk切点，普通decode沿用原生条件直接通过。每次返回token数不超过剩余预算；新位置按共同边界对齐。最后可重用checkpoint按 `floor((num_tokens-1)/A)*A` 计算，MTP/EAGLE再扣一个A，其中A为共同块长。减1来自原生缓存查找保留logits token，避免整页prompt保存的最后状态超出实际命中上限。
+5. **成本与预算**：热路径是常数次整数运算，不读取设备tensor，不新增NPU算子。16384、32768或32769均无整倍数要求；长prefill在16384预算内可切出16128。candidate预设仍将预算提升到至少32768，这是整段准入的性能选择，不是GDN正确性要求。AdmissionView接受较小有效预算，按剩余容量决定整段/原生分块，不再强制预算>=32768。
+6. **错误与证据**：实际布局不一致、总调度预算小于A，或非零long_prefill_token_threshold小于A时显式启动失败，避免长请求每轮切成0。小的单轮剩余预算仍由原生调度跳过该请求，不把临时不足误判配置失败。hook可精确恢复；不关闭prefix/MTP/图作为降级。原生AST分配→缓存发布→coordinator查找→共享/私有尾页→释放的CPU测试覆盖预算2304/4096/16384/32768/32769/65536及MTP开关；这不是设备SSM数值或完整模型验收。

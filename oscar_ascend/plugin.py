@@ -243,11 +243,37 @@ def _patch_native_attention(module: ModuleType) -> None:
     _patch(module.AscendC8AttentionBackendImpl, "forward", observe)
 
 
+def _patch_scheduler(module: ModuleType) -> None:
+    # #127/#128/#156: FULL physical pages can be larger than native GDN pages.
+    # Patch the shared base so baseline and WholePromptAsyncScheduler agree.
+    def initialize(original):
+        def wrapped(scheduler, *args, **kwargs):
+            original(scheduler, *args, **kwargs)
+            from .integration.prefix_scheduler import configure_prefix_scheduler
+            scheduler._oscar_prefix_checkpoint_policy = configure_prefix_scheduler(scheduler)
+        return wrapped
+
+    def split(original):
+        def wrapped(scheduler, request, num_new_tokens,
+                    num_new_local_computed_tokens=0, num_external_computed_tokens=0):
+            policy = scheduler._oscar_prefix_checkpoint_policy
+            if policy is None:
+                return original(scheduler, request, num_new_tokens,
+                                num_new_local_computed_tokens, num_external_computed_tokens)
+            return policy.split(request, num_new_tokens, num_new_local_computed_tokens,
+                                num_external_computed_tokens)
+        return wrapped
+
+    _patch(module.Scheduler, "__init__", initialize)
+    _patch(module.Scheduler, "_mamba_block_aligned_split", split)
+
+
 _callbacks = {
     "vllm_ascend.platform": _patch_platform,
     "vllm_ascend.worker.model_runner_v1": _patch_runner,
     "vllm_ascend.attention.attention_v1": _patch_native_attention,
     "vllm.model_executor.models.qwen3_5_mtp": _patch_mtp_forward,
+    "vllm.v1.core.sched.scheduler": _patch_scheduler,
 }
 
 

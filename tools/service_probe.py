@@ -426,7 +426,8 @@ def run_prefix_cache_probe(server, config, tokenizer, *, deadline, request_limit
     native num_cached_tokens. A unique salt isolates this probe from warmups.
     """
     from oscar_ascend.integration.prefix_geometry import validate_prefix_geometry
-    layouts = [r for r in read_telemetry(server.trace_dir) if r.get("event") == "cache_layout"]
+    telemetry = read_telemetry(server.trace_dir)
+    layouts = [r for r in telemetry if r.get("event") == "cache_layout"]
     if not layouts or {r.get("rank") for r in layouts} != set(range(config["tensor_parallel_size"])):
         raise ServiceProbeError("mandatory prefix probe needs effective layout from every TP rank")
     for layout in layouts:
@@ -437,24 +438,39 @@ def run_prefix_cache_probe(server, config, tokenizer, *, deadline, request_limit
     if len(sizes) != 1:
         raise ServiceProbeError("TP ranks disagree on prefix-hit alignment")
     alignment = sizes.pop()
+    policies = [r for r in telemetry if r.get("event") == "prefix_checkpoint_policy"]
+    if not policies or any(
+            r.get("alignment_tokens") != alignment
+            or r.get("native_mamba_block_size") != layouts[0]["mamba_block_size"]
+            or type(r.get("max_num_scheduled_tokens")) is not int
+            or not alignment <= r["max_num_scheduled_tokens"] <= config["max_num_batched_tokens"]
+            for r in policies):
+        raise ServiceProbeError("missing or inconsistent effective prefix checkpoint scheduler policy")
     warm_length = 2 * alignment + 128
     continuation_length = warm_length + 128
-    if continuation_length > 16384 or continuation_length + MIN_OUTPUT_TOKENS > config["max_model_len"]:
+    boundary_length = 3 * alignment
+    largest = max(continuation_length, boundary_length)
+    if largest > 16384 or largest + MIN_OUTPUT_TOKENS > config["max_model_len"]:
         raise ServiceProbeError("effective prefix geometry exceeds bounded short probe")
-    ids = exact_prompt(tokenizer, continuation_length)
+    ids = exact_prompt(tokenizer, largest)
     salt = "oscar-prefix-probe-" + uuid.uuid4().hex
     records = []
     for label, length in (("prefix-cold", warm_length), ("prefix-replay", warm_length),
-                          ("prefix-continuation", continuation_length)):
+                          ("prefix-continuation", continuation_length),
+                          ("prefix-boundary-cold", boundary_length),
+                          ("prefix-boundary-replay", boundary_length)):
+        # Separate cold namespace: earlier requests cannot seed this boundary.
+        request_salt = salt + ("-boundary" if "boundary" in label else "")
         row = completion(server, config, tokenizer, length, label=label,
                          timeout=_remaining(deadline, request_limit),
-                         prompt_ids=ids[:length], cache_salt=salt)
+                         prompt_ids=ids[:length], cache_salt=request_salt)
         details = row["response"]["usage"].get("prompt_tokens_details") or {}
         hits = details.get("cached_tokens", 0)
         if type(hits) is not int or hits < 0 or hits >= length or hits % alignment:
             raise ServiceProbeError(f"{label}: invalid native cached_tokens={hits!r}")
-        if (label == "prefix-cold" and hits != 0) or (label != "prefix-cold" and hits == 0):
-            raise ServiceProbeError(f"{label}: expected {'zero' if label == 'prefix-cold' else 'positive'} "
+        cold = label.endswith("-cold")
+        if (cold and hits != 0) or (not cold and hits == 0):
+            raise ServiceProbeError(f"{label}: expected {'zero' if cold else 'positive'} "
                                     f"native cached_tokens, got {hits}")
         row["cached_tokens"] = hits
         records.append(row)

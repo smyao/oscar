@@ -41,3 +41,17 @@ git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 - 观察入口保留真实 NPU 数值、错误域、同地址变更输入图回放、缓存字节与后续 q1 检查，任何门失败阻断正式服务。无需再次提供数据集或运行 AISBench。
 
 精简证据索引：`reports/decode_candidate_delivery_20261007.json`。
+
+## 2026-10-10 prefix/GDN checkpoint 兼容修订
+
+固定直启命令不变，安装的插件自动启用共同页边界checkpoint修复，不能只更新探针。`candidate`目前仍为至少32768的token预算，目标配置本值16384未改；它不是必须设成某个2304整倍数的参数。实际GDN页保持768，prefill切点采用FULL/GDN共同边界2304，并兼顾最后logits token和MTP丢弃页。原生decode、状态复制、q4/q1/C4与其他候选开关保持不变。
+
+已安装最新代码后，必要的有界短服务验证命令为：
+
+```bash
+python3 -m tools.service_probe --variant candidate --prefix-only
+```
+
+该命令自行起停服务，需先停止同端口正式服务。除128-token起始请求外，执行隔离的4736冷请求/重放、4864续写，以及独立6912整页冷请求/重放；必须有实际调度策略、原生cached_tokens、TP4/FULL/MTP/图和资源释放证据。不会运行AISBench，不替代完整模型质量或吞吐验收。
+
+本机完整回归1046 passed、147 skipped、6 subtests passed；没有本轮NPU/CANN执行证据。源码复现旧切分下4736/6912/20000 prompt的联合命中为0，修订后有可复用checkpoint；是否带来实际吞吐提升仍取决于工作负载命中率与设备时间，不能从这些CPU结果宣称。

@@ -57,7 +57,9 @@ def configured(tmp_path):
 
 
 def telemetry_records():
-    records = []
+    records = [{"event": "prefix_checkpoint_policy", "rank": None,
+                "alignment_tokens": 2304, "native_mamba_block_size": 768,
+                "max_num_scheduled_tokens": 16384, "use_eagle": True}]
     for rank in range(4):
         records.append({"event": "attention_features", "rank": rank,
                         "mixed_decode_split_requested": True,
@@ -150,8 +152,20 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(bytes([byte]));self.wfile.flush();time.sleep(.05)
         else:
             self.wfile.write(body)
-        if mode == 'stop':
-            threading.Timer(.5, lambda:os.kill(os.getppid(),signal.SIGINT)).start()
+        if mode == 'stop' and count == 1:
+            def stop_when_serving():
+                # Wait for the actual supervision state, not a timer that
+                # races the number/duration of mandatory prefix requests.
+                report_path = pathlib.Path(sys.argv[3]).parent / 'report.json'
+                deadline = time.monotonic() + 3
+                while time.monotonic() < deadline:
+                    if report_path.exists():
+                        report = json.loads(report_path.read_text())
+                        if report.get('external_observation', {}).get('status') == 'recording':
+                            break
+                    time.sleep(.01)
+                os.kill(os.getppid(),signal.SIGINT)
+            threading.Thread(target=stop_when_serving, daemon=True).start()
 ThreadingHTTPServer(('127.0.0.1',port),Handler).serve_forever()
 '''
 
@@ -279,10 +293,24 @@ def test_bounded_prefix_probe_requires_real_per_request_hit_not_http_success(tmp
         assert report["status"] == "passed"
         prefix = report["prefix_cache"]
         assert prefix["status"] == "passed"
-        assert [r["cached_tokens"] for r in prefix["requests"]] == [0,2304,2304]
-        assert [r["prompt_tokens"] for r in prefix["requests"]] == [4736,4736,4864]
+        assert [r["cached_tokens"] for r in prefix["requests"]] == [0,2304,2304,0,2304]
+        assert [r["prompt_tokens"] for r in prefix["requests"]] == [4736,4736,4864,6912,6912]
     else:
         assert report["status"] == "failed" and "positive native cached_tokens" in report["error"]
+
+
+@pytest.mark.parametrize("change", [None, {"alignment_tokens": 768}, {"max_num_scheduled_tokens": 768}])
+def test_prefix_probe_cannot_pass_without_effective_scheduler_policy(monkeypatch, change):
+    rows = telemetry_records()
+    if change is None:
+        rows = [row for row in rows if row["event"] != "prefix_checkpoint_policy"]
+    else:
+        rows[0].update(change)
+    monkeypatch.setattr(service_probe, "read_telemetry", lambda _: rows)
+    with pytest.raises(ServiceProbeError, match="checkpoint scheduler policy"):
+        service_probe.run_prefix_cache_probe(SimpleNamespace(trace_dir="unused"),
+            {"tensor_parallel_size": 4, "max_num_batched_tokens": 32768}, Tokenizer(),
+            deadline=time.monotonic() + 1, request_limit=1)
 
 
 @pytest.mark.parametrize("change", [
@@ -464,6 +492,8 @@ def test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigin
     assert report["status"] == "stopped" and len(report["requests"]) == 1
     assert report["server"]["cleanup_complete"] and len(reads) == 2
     assert report["telemetry"]["status"] == "passed"
+    assert report["prefix_cache"]["status"] == "passed"
+    assert len(report["prefix_cache"]["requests"]) == 5
 
 
 def test_missing_device_selection_fails_before_any_resource_or_server_launch(tmp_path):

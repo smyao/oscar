@@ -1,4 +1,4 @@
-"""Experimental whole-prompt admission, not enabled by any serving preset.
+"""Candidate whole-prompt admission with native GDN checkpoint splitting.
 
 Archive #127/#129/#137/#148/#155/#156: preserve native request ownership, async
 placeholders, Mamba alignment and long-request chunking. References:
@@ -18,14 +18,14 @@ class AdmissionView:
                  speculative_tokens: int, legacy_chunk: int = 16384):
         if (type(budget) is not int or type(max_sequences) is not int or
                 type(speculative_tokens) is not int or type(legacy_chunk) is not int
-                or budget < 32768 or max_sequences <= 0 or speculative_tokens < 0
-                or not 0 < legacy_chunk <= budget):
-            raise ValueError('whole-prefill experiment requires a >=32768 token budget')
+                or budget <= 0 or max_sequences <= 0 or speculative_tokens < 0
+                or legacy_chunk <= 0):
+            raise ValueError('whole-prefill requires positive token/sequence budgets')
         self.original = original
-        self.legacy_chunk = legacy_chunk
-        self.whole_limit = budget - max_sequences * (speculative_tokens + 1)
-        if self.whole_limit <= legacy_chunk:
-            raise ValueError('no whole-prompt capacity remains after decode reservation')
+        self.legacy_chunk = min(legacy_chunk, budget)
+        # A smaller scheduling budget is valid: retain native chunked progress
+        # instead of rejecting it or changing the compiled token capacity.
+        self.whole_limit = max(0, budget - max_sequences * (speculative_tokens + 1))
         self.waiting_request = None
 
     def __getattr__(self, name):

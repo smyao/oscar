@@ -246,7 +246,8 @@ def native_groups(native_specs, monkeypatch, request):
          "cdiv": lambda x, y: (x + y - 1) // y, "logger": logging.getLogger("native-group-test")}, monkeypatch)
     config = SimpleNamespace(
         scheduler_config=SimpleNamespace(disable_hybrid_kv_cache_manager=False),
-        cache_config=SimpleNamespace(block_size=768, enable_prefix_caching=prefix, hash_block_size=None,
+        cache_config=SimpleNamespace(block_size=768, mamba_block_size=768 if prefix else 262144,
+                                     enable_prefix_caching=prefix, hash_block_size=None,
                                      num_gpu_blocks_override=None, mamba_cache_mode=mode),
         parallel_config=SimpleNamespace(decode_context_parallel_size=1, prefill_context_parallel_size=1),
         kv_transfer_config=None)
@@ -335,7 +336,7 @@ def test_real_qwen_shape_and_ascend_config_account_for_speculative_conv_width(na
     assert spec.layout.native_padding_bytes == 393216
 
 
-def _native_coordinator(native_groups, monkeypatch):
+def _native_coordinator(native_groups, monkeypatch, *, use_eagle=True, budget=16384):
     interface, ours, registry, utils, config, groups = native_groups
     managers = sys.modules["vllm.v1.core.single_type_kv_cache_manager"]
     pool_types = definitions(
@@ -356,6 +357,7 @@ def _native_coordinator(native_groups, monkeypatch):
         {"AscendHybridKVCacheCoordinator"},
         {**interface.__dict__, "__name__": "native_coordinator_contract", "lcm": math.lcm,
          "HybridKVCacheCoordinator": object, "BlockPool": pool_types.BlockPool,
+         "BlockHashListWithBlockSize": utils.BlockHashListWithBlockSize,
          "get_manager_for_kv_cache_spec": factory.get_manager_for_kv_cache_spec,
          "SlidingWindowManager": managers.SlidingWindowManager, "envs_vllm": SimpleNamespace(),
          "vllm_kv_cache_coordinator": SimpleNamespace()}, monkeypatch)
@@ -363,10 +365,185 @@ def _native_coordinator(native_groups, monkeypatch):
     pool_config = utils.get_kv_cache_config_from_groups(config, groups, 17 * page_size * 400)
     scheduler_block_size, hash_block_size = utils.resolve_kv_cache_block_sizes(pool_config, config)
     instance = coordinator.AscendHybridKVCacheCoordinator(
-        pool_config, max_model_len=262144, use_eagle=True, enable_caching=config.cache_config.enable_prefix_caching,
+        pool_config, max_model_len=262144, use_eagle=use_eagle, enable_caching=config.cache_config.enable_prefix_caching,
         enable_kv_cache_events=False, dcp_world_size=1, pcp_world_size=1,
-        hash_block_size=hash_block_size, max_num_batched_tokens=16384, scheduler_block_size=scheduler_block_size)
+        hash_block_size=hash_block_size, max_num_batched_tokens=budget, scheduler_block_size=scheduler_block_size)
     return instance
+
+
+def _prefix_scheduler(native_groups, coordinator, *, budget, use_eagle):
+    return SimpleNamespace(cache_config=native_groups[4].cache_config,
+        kv_cache_manager=SimpleNamespace(coordinator=coordinator),
+        block_size=coordinator.scheduler_block_size, use_eagle=use_eagle,
+        need_mamba_block_aligned_split=True, max_num_scheduled_tokens=budget,
+        scheduler_config=SimpleNamespace(long_prefill_token_threshold=0))
+
+
+@pytest.mark.parametrize("use_eagle", [True, False])
+@pytest.mark.parametrize("budget", [2304, 4096, 16384, 32768, 32769, 65536])
+@pytest.mark.parametrize("length", [128, 2304, 4608, 4609, 4736, 6912, 20000, 50000])
+def test_scheduled_gdn_checkpoints_are_real_native_hybrid_hits(
+        native_groups, monkeypatch, budget, length, use_eagle):
+    from oscar_ascend.integration.prefix_scheduler import configure_prefix_scheduler
+    coordinator = _native_coordinator(native_groups, monkeypatch, use_eagle=use_eagle, budget=budget)
+    scheduler = _prefix_scheduler(native_groups, coordinator, budget=budget, use_eagle=use_eagle)
+    policy = configure_prefix_scheduler(scheduler)
+    request = SimpleNamespace(request_id="cold", num_tokens=length, num_prompt_tokens=length,
+                              num_computed_tokens=0,
+                              block_hashes=[i.to_bytes(32, "big") for i in range(length // 768)])
+    managers = coordinator.single_type_managers
+    free_before = coordinator.block_pool.get_num_free_blocks()
+    boundaries = []
+    while request.num_computed_tokens < length:
+        tokens = policy.split(request, min(budget, length - request.num_computed_tokens))
+        assert 0 < tokens <= budget
+        after = request.num_computed_tokens + tokens
+        # Execute real native allocation/cache publication. Only the LAST
+        # GDN state of each chunk is allocated, not every intermediate hash.
+        for manager in managers:
+            manager.new_step_starts()
+            manager.remove_skipped_blocks(request.request_id, request.num_computed_tokens)
+            manager.allocate_new_blocks(request.request_id, after + (3 if use_eagle else 0), after)
+            manager.cache_blocks(request, after)
+        request.num_computed_tokens = after
+        boundaries.append(after)
+    for manager in managers:
+        manager.free(request.request_id)
+        manager.new_step_starts()
+    hits, length_hit = coordinator.find_longest_cache_hit(request.block_hashes, length - 1)
+    expected = max(0, (length - 1) // 2304 - int(use_eagle)) * 2304
+    assert length_hit == expected
+    assert scheduler.cache_config.block_size == scheduler.cache_config.mamba_block_size == 768
+    if length_hit == 0:
+        assert coordinator.block_pool.get_num_free_blocks() == free_before
+        return  # Short prompts have no complete reusable FULL+MTP page.
+    assert length_hit in boundaries
+    assert all(len(hit) * manager.block_size == length_hit for hit, manager in zip(hits, managers))
+    # Warm replay and continuation retain the cached checkpoint and allocate
+    # independent writable states; native refcounts/freeing must remain sound.
+    for name in ("replay", "continuation"):
+        for manager, hit in zip(managers, hits):
+            manager.allocate_new_computed_blocks(name, hit, length_hit, 0)
+            manager.allocate_new_blocks(name, length_hit + 131, length_hit + 128)
+    for manager, hit in zip(managers, hits):
+        cached = {b.block_id for b in hit if not b.is_null}
+        assert cached and all(b.ref_cnt == 2 for b in hit if not b.is_null)
+        tails = [{b.block_id for b in manager.req_to_blocks[name][len(hit):] if not b.is_null}
+                 for name in ("replay", "continuation")]
+        assert tails[0] and tails[1] and tails[0].isdisjoint(tails[1] | cached)
+        assert tails[1].isdisjoint(cached)
+        manager.free("replay")
+        manager.free("continuation")
+    assert coordinator.block_pool.get_num_free_blocks() == free_before
+
+
+@pytest.mark.parametrize("length", [4736, 6912, 20000])
+def test_unpatched_native_split_reproduces_gdn_checkpoint_misses(native_groups, monkeypatch, length):
+    native = definitions("references/vllm/vllm/v1/core/sched/scheduler.py", "native_split_contract",
+                         set(), {}, monkeypatch, methods=[("Scheduler", "_mamba_block_aligned_split")])
+    coordinator = _native_coordinator(native_groups, monkeypatch)
+    scheduler = _prefix_scheduler(native_groups, coordinator, budget=32768, use_eagle=True)
+    request = SimpleNamespace(request_id="old", num_tokens=length, num_prompt_tokens=length,
+                              num_computed_tokens=0,
+                              block_hashes=[i.to_bytes(32, "big") for i in range(length // 768)])
+    while request.num_computed_tokens < length:
+        tokens = native._mamba_block_aligned_split(scheduler, request, length - request.num_computed_tokens)
+        assert tokens > 0
+        after = request.num_computed_tokens + tokens
+        for manager in coordinator.single_type_managers:
+            manager.new_step_starts()
+            manager.allocate_new_blocks(request.request_id, after + 3, after)
+            manager.cache_blocks(request, after)
+        request.num_computed_tokens = after
+    assert coordinator.find_longest_cache_hit(request.block_hashes, length - 1)[1] == 0
+
+
+def test_prefix_scheduler_validates_actual_geometry_and_progress_budget(native_groups, monkeypatch):
+    from oscar_ascend.integration.prefix_scheduler import configure_prefix_scheduler
+    coordinator = _native_coordinator(native_groups, monkeypatch)
+    scheduler = _prefix_scheduler(native_groups, coordinator, budget=16384, use_eagle=True)
+    assert configure_prefix_scheduler(scheduler).alignment == 2304
+    for budget in (1, 768, 2303):
+        scheduler.max_num_scheduled_tokens = budget
+        with pytest.raises(OscarReadinessError, match="max_num_batched_tokens"):
+            configure_prefix_scheduler(scheduler)
+    scheduler.max_num_scheduled_tokens = 16384
+    scheduler.scheduler_config.long_prefill_token_threshold = 2048
+    with pytest.raises(OscarReadinessError, match="long_prefill_token_threshold"):
+        configure_prefix_scheduler(scheduler)
+    scheduler.scheduler_config.long_prefill_token_threshold = 0
+    coordinator.hash_block_size = 2304
+    with pytest.raises(OscarReadinessError, match="geometry disagrees"):
+        configure_prefix_scheduler(scheduler)
+
+
+@pytest.mark.parametrize("native_groups", [False], indirect=True)
+def test_prefix_disabled_leaves_scheduler_and_native_split_untouched(native_groups, monkeypatch):
+    from oscar_ascend.integration.prefix_scheduler import configure_prefix_scheduler
+    coordinator = _native_coordinator(native_groups, monkeypatch)
+    scheduler = _prefix_scheduler(native_groups, coordinator, budget=16384, use_eagle=True)
+    assert configure_prefix_scheduler(scheduler) is None
+
+
+def test_reversible_scheduler_hook_covers_base_and_candidate_inheritance(native_groups, monkeypatch):
+    from oscar_ascend import plugin
+    native = definitions("references/vllm/vllm/v1/core/sched/scheduler.py", "native_split_hook_contract",
+                         set(), {}, monkeypatch, methods=[("Scheduler", "_mamba_block_aligned_split")])
+    coordinator = _native_coordinator(native_groups, monkeypatch)
+    settings = _prefix_scheduler(native_groups, coordinator, budget=32768, use_eagle=True)
+    class Scheduler:
+        def __init__(self):
+            self.__dict__.update(vars(settings))
+        _mamba_block_aligned_split = native._mamba_block_aligned_split
+    class AsyncScheduler(Scheduler):
+        pass
+    candidate = definitions("oscar_ascend/integration/whole_prefill_scheduler.py", "candidate_hook_contract",
+        {"WholePromptAsyncScheduler", "AdmissionView"}, {"AsyncScheduler": AsyncScheduler}, monkeypatch)
+    original_init = Scheduler.__init__
+    original_split = Scheduler._mamba_block_aligned_split
+    request = SimpleNamespace(num_tokens=4736, num_prompt_tokens=4736, num_computed_tokens=0)
+    assert Scheduler()._mamba_block_aligned_split(request, 4736) == 3840
+    plugin.unregister()
+    try:
+        plugin._patch_scheduler(SimpleNamespace(Scheduler=Scheduler))
+        plugin._patch_scheduler(SimpleNamespace(Scheduler=Scheduler))  # idempotent
+        for cls in (Scheduler, candidate.WholePromptAsyncScheduler):
+            scheduler = cls()
+            assert scheduler._mamba_block_aligned_split(request, 4736) == 2304
+            assert scheduler.cache_config is settings.cache_config
+            assert scheduler.cache_config.block_size == 768
+        settings.cache_config.enable_prefix_caching = False
+        assert Scheduler()._mamba_block_aligned_split(request, 4736) == 3840
+    finally:
+        plugin.unregister()
+    assert Scheduler.__init__ is original_init
+    assert Scheduler._mamba_block_aligned_split is original_split
+
+
+def test_checkpoint_split_preserves_native_decode_and_accounts_for_cache_offsets(monkeypatch):
+    from oscar_ascend.integration.prefix_scheduler import PrefixCheckpointPolicy
+    native = definitions("references/vllm/vllm/v1/core/sched/scheduler.py", "native_decode_split_contract",
+                         set(), {}, monkeypatch, methods=[("Scheduler", "_mamba_block_aligned_split")])
+    for eagle in (False, True):
+        policy = PrefixCheckpointPolicy(2304, eagle)
+        scheduler = SimpleNamespace(cache_config=SimpleNamespace(block_size=768), use_eagle=eagle)
+        for prompt in (128, 4736, 50000):
+            for generated in (0, 1, 3, 16):
+                computed = prompt + generated
+                request = SimpleNamespace(num_prompt_tokens=prompt, num_tokens=computed + 1,
+                                          num_computed_tokens=computed)
+                for scheduled in (1, 4, 8):
+                    assert policy.split(request, scheduled) == native._mamba_block_aligned_split(
+                        scheduler, request, scheduled) == scheduled
+    request = SimpleNamespace(num_prompt_tokens=50000, num_tokens=50000, num_computed_tokens=0)
+    policy = PrefixCheckpointPolicy(2304, True)
+    # Initial native WAITING cache counters have not yet been committed.
+    assert policy.split(request, 16384, 2304, 4608) == 16128
+    assert request.num_computed_tokens == 0
+    # Small remaining batch budget defers just this request, never overruns it.
+    assert policy.split(request, 2303) == 0
+    # Nonaligned external/resume offsets align the resulting checkpoint.
+    assert policy.split(request, 4096, 0, 128) == 2176
 
 
 def test_native_prefix_hits_share_only_complete_blocks_and_keep_writable_tails_private(native_groups, monkeypatch):

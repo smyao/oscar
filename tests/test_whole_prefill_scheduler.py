@@ -76,8 +76,36 @@ def test_prefix_hit_classifies_only_the_remaining_prompt_suffix():
     assert policy.is_whole
     request.num_computed_tokens=0
     assert not policy.is_whole
-    with pytest.raises(ValueError):
-        View(original,budget=16384,max_sequences=128,speculative_tokens=3)
+
+
+@pytest.mark.parametrize('budget', [2304, 4096, 16384, 32768, 32769, 65536])
+def test_smaller_and_unaligned_budgets_keep_native_admission_progress(budget):
+    from oscar_ascend.integration.prefix_scheduler import PrefixCheckpointPolicy
+    View=load_policy(object)['AdmissionView']
+    original=SimpleNamespace(enable_chunked_prefill=True,long_prefill_token_threshold=0)
+    view=View(original,budget=budget,max_sequences=128,speculative_tokens=3)
+    alignment=PrefixCheckpointPolicy(2304, True)
+    request=SimpleNamespace(num_tokens=50000,num_prompt_tokens=50000,num_computed_tokens=0)
+    view.select(request)
+    for step in range(100):
+        if request.num_computed_tokens == request.num_tokens:
+            break
+        tokens=native_waiting_clip(view,request,budget,computed=request.num_computed_tokens)
+        assert tokens is not None
+        tokens=alignment.split(request,tokens)
+        assert 0 < tokens <= budget
+        request.num_computed_tokens += tokens
+    assert request.num_computed_tokens == 50000
+    assert original.long_prefill_token_threshold == 0
+
+
+def test_decode_reservation_can_exhaust_whole_capacity_without_rejecting_chunking():
+    View=load_policy(object)['AdmissionView']
+    original=SimpleNamespace(enable_chunked_prefill=True,long_prefill_token_threshold=0)
+    view=View(original,budget=2304,max_sequences=1024,speculative_tokens=3)
+    view.select(SimpleNamespace(num_tokens=4736))
+    assert view.whole_limit == 0 and not view.is_whole
+    assert view.enable_chunked_prefill and view.long_prefill_token_threshold == 2304
 
 
 def test_async_parent_still_owns_queue_and_config_restores_on_error():

@@ -139,3 +139,12 @@ D.4 对照：取消6.5s全历史dequant和逆旋转phase；prepare为设备批�
 4. **生命周期**：只调整prefill/抢占恢复的chunk切点，普通decode沿用原生条件直接通过。每次返回token数不超过剩余预算；新位置按共同边界对齐。最后可重用checkpoint按 `floor((num_tokens-1)/A)*A` 计算，MTP/EAGLE再扣一个A，其中A为共同块长。减1来自原生缓存查找保留logits token，避免整页prompt保存的最后状态超出实际命中上限。
 5. **成本与预算**：热路径是常数次整数运算，不读取设备tensor，不新增NPU算子。16384、32768或32769均无整倍数要求；长prefill在16384预算内可切出16128。candidate预设仍将预算提升到至少32768，这是整段准入的性能选择，不是GDN正确性要求。AdmissionView接受较小有效预算，按剩余容量决定整段/原生分块，不再强制预算>=32768。
 6. **错误与证据**：实际布局不一致、总调度预算小于A，或非零long_prefill_token_threshold小于A时显式启动失败，避免长请求每轮切成0。小的单轮剩余预算仍由原生调度跳过该请求，不把临时不足误判配置失败。hook可精确恢复；不关闭prefix/MTP/图作为降级。原生AST分配→缓存发布→coordinator查找→共享/私有尾页→释放的CPU测试覆盖预算2304/4096/16384/32768/32769/65536及MTP开关；这不是设备SSM数值或完整模型验收。
+
+### 2026-10-12 review 核实（#74–78/#127/#128/#156）
+
+- 当前 prefix 几何要求 `physical % mamba == 0`，因此 `LCM(physical,mamba) == physical`；EAGLE 扣一个共同边界就是扣一个 FULL 页。`physical < LCM` 的布局已被现有校验拒绝，未为不可达条件修改生产公式。新增多组合法几何及不整除负例。
+- 原生旧切分并非所有输入都无法命中：50K prompt、16384 budget、EAGLE=true 的真实原生 AST 生命周期回归得到32256 tokens命中。4736/6912/20000整段准入的零命中反例仍成立；不能把局部反例推广为永不命中。
+- `whole_limit=0` 不等于 prefix 配置非法。例如 budget=2304、max_sequences=1024、speculative_tokens=3 时，prefix 几何/预算合法但整段准入容量为0，仍按原生分块前进。保留该行为，不增加无依据限制。
+- `OSCAR_TRACE_DIR` 开启时，engine-core 增加 `whole_prefill_policy`（requested、whole_limit、模式、原因）及 `whole_prefill_admission`。后者以原生 scheduler 返回的实际 token 分配区别整段、eligible-but-partial、分块和本轮未调度；GDN 再切分不得标作整段执行。每类组合仅记录首次样本，不是累计吞吐统计；未开启trace时不分配请求观测字典、不增加观测遍历或设备读回。原配置在成功/异常路径均恢复。
+- checkpoint/whole-prefill策略是 engine-core scheduler 证据，不要求每个 TP worker 各发一份。TP4 worker 的实际路由、布局、图与数值证据仍单独要求，不能由scheduler单条日志替代。
+- `tests/native_contract_manifest.json` + `test_native_source_contracts.py` 将实际只读参考的commit/tree/关键文件及原生方法绑定；只属于开发回归，不进入默认部署/readiness。`test_prepare_source_equivalence.py` 逐字比较去掉明确已审守卫差量的checked/fe0完整preparer，并用7类突变验证检测；不修改任何CANN内核/冻结哈希。

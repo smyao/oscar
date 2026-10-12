@@ -3,6 +3,9 @@
 External scheduler seam only. Native GDN specs, state copies, cache ownership
 and decode scheduling stay unchanged. Mirrors the pinned scheduler prefill
 split, using the native coordinator's common alignment and cache-hit ceiling.
+Native source contracts: tests/native_contract_manifest.json (local test-only
+fingerprints). Intentional deltas are FULL/GDN common alignment, logits-token
+ceiling, and alignment of the resulting position for resumed/external offsets.
 """
 from dataclasses import dataclass
 
@@ -62,6 +65,9 @@ def configure_prefix_scheduler(scheduler):
             or coordinator.lcm_block_size != alignment
             or coordinator.hash_block_size != layout["hash_block_size"]):
         raise OscarReadinessError("OSCAR prefix scheduler/native GDN geometry disagrees")
+    # resolve_prefix_geometry requires physical % mamba == 0, hence LCM is
+    # exactly one FULL page. The EAGLE subtraction is not a generalized rule
+    # for a future layout with physical < LCM; that layout is rejected above.
     budget = scheduler.max_num_scheduled_tokens
     threshold = scheduler.scheduler_config.long_prefill_token_threshold
     if (type(budget) is not int or budget < alignment

@@ -1,0 +1,81 @@
+{
+  "recorded_date": "2026-10-12",
+  "scope": "local source/CPU contracts only; not target runtime or NPU acceptance",
+  "archive": [
+    "74-78",
+    "127",
+    "128",
+    "156"
+  ],
+  "historical_ascend_composed_pin": "19e436985102f4ed3aad36c137a6481653688a6c",
+  "historical_ascend_composed_pin_status": "not restored or verified; observed base revision is not equivalent evidence",
+  "unavailable_references": [
+    "references/PROVENANCE.md",
+    "references/PROVENANCE.json",
+    "references/oscar-vllm-pr46774",
+    "references/oscar-paper"
+  ],
+  "references": [
+    {
+      "path": "references/vllm",
+      "observed_commit": "0fc695fc6d1d82e9a5ac6835ac8e4e1c83703665",
+      "git_tree": "e18d76eec620cdfc6559d7152f9911b7e91f84f8",
+      "files": {
+        "vllm/v1/core/sched/scheduler.py": {
+          "sha256": "9ae1491f57a6294e32416b93ef2ea68107fa0d65c3a4d7f745f1261012f735e9",
+          "methods": {
+            "Scheduler.__init__": "fdd78218c4ce6b86b010bf99d19f7cca18338d81cd91ce15e4e9f5f2ee0a4aa0",
+            "Scheduler._mamba_block_aligned_split": "da99d9c36c39328d25af4199b0a791252e773ae67a61aa1ff2d2d6b3e7784d5a",
+            "Scheduler.schedule": "68c89ad129a05124cbede7fc87cfcd7d714974cfbedce9744eee3f455d773418"
+          }
+        },
+        "vllm/v1/core/kv_cache_manager.py": {
+          "sha256": "a69aa08062714b40b149648bbec031a42d22e422fbf9543cd10fbd12d2496edb",
+          "methods": {
+            "KVCacheManager.get_computed_blocks": "a8a68647370c5b2dfbabf2a4da953d3291d34d202f05ef0cd74796ca9e486125"
+          }
+        },
+        "vllm/v1/core/single_type_kv_cache_manager.py": {
+          "sha256": "dc425e1e87b6157f3e5c46be2bfee54076ccb020b86c5a8aaa3d9901c75e46ef",
+          "methods": {
+            "FullAttentionManager.find_longest_cache_hit": "e0c46eae271de4cb392e594edc2f3d8102ea8cc58d61aea9bb6ca8541aabdf3c",
+            "MambaManager.allocate_new_blocks": "2db1d8bf5491839d3a0fa0bca63691f749b8f26576ad56e613fa8623fa0d6b77"
+          }
+        },
+        "vllm/v1/core/kv_cache_utils.py": {
+          "sha256": "b89f9afa7f95fcc30412ae2031d5370a23e95f35d068fa14e5824dce1c900ee5",
+          "methods": {
+            "resolve_kv_cache_block_sizes": "585f34ab5d9588afea33e1fa9d00492587f828a580fc28c4467f0ff5b95dbee8"
+          }
+        }
+      }
+    },
+    {
+      "path": "references/vllm-ascend",
+      "observed_commit": "5cb98caaadeff42b5b62b996e34bb2aaa29d20fd",
+      "git_tree": "a5a4538c53a9df2aaf4e13b6837a2d4fecb6b6e4",
+      "files": {
+        "vllm_ascend/patch/platform/patch_mamba_manager.py": {
+          "sha256": "f39b28a75509ff5b8617104a00c73e6bd21b8b7acd43f81b50c57ea7c474815e",
+          "methods": {
+            "AscendMambaManager.find_longest_cache_hit": "5d1c98805f0d1a6dd21332a383b1a44fcaf74a96db5d5587e69e86c6572e1a62"
+          }
+        },
+        "vllm_ascend/patch/platform/patch_kv_cache_coordinator.py": {
+          "sha256": "35a62e6bb3960f88192ff609751d631eeafbbc29f087560afd60906b3a504999",
+          "methods": {
+            "AscendHybridKVCacheCoordinator.find_longest_cache_hit": "8eaa44f18216837a46d614ed9449a59252f853a2e794982ba1f8a7a60996dd33"
+          }
+        },
+        "vllm_ascend/patch/platform/patch_mamba_config.py": {
+          "sha256": "ee38c68c27357a7d18f7e368e03a352bb312f79c3576431a64f688ce953716ac",
+          "methods": {}
+        },
+        "vllm_ascend/ops/gdn.py": {
+          "sha256": "d6ec29919268178f5bf6e70e689c1d273d04b1cb1d84dc94efa7bbbc35490816",
+          "methods": {}
+        }
+      }
+    }
+  ]
+}

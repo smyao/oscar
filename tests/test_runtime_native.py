@@ -437,17 +437,20 @@ def test_scheduled_gdn_checkpoints_are_real_native_hybrid_hits(
     assert coordinator.block_pool.get_num_free_blocks() == free_before
 
 
-@pytest.mark.parametrize("length", [4736, 6912, 20000])
-def test_unpatched_native_split_reproduces_gdn_checkpoint_misses(native_groups, monkeypatch, length):
+@pytest.mark.parametrize("length,budget,expected_hit", [
+    (4736,32768,0), (6912,32768,0), (20000,32768,0), (50000,16384,32256)])
+def test_unpatched_native_split_reproduces_gdn_checkpoint_misses(
+        native_groups, monkeypatch, length, budget, expected_hit):
     native = definitions("references/vllm/vllm/v1/core/sched/scheduler.py", "native_split_contract",
                          set(), {}, monkeypatch, methods=[("Scheduler", "_mamba_block_aligned_split")])
     coordinator = _native_coordinator(native_groups, monkeypatch)
-    scheduler = _prefix_scheduler(native_groups, coordinator, budget=32768, use_eagle=True)
+    scheduler = _prefix_scheduler(native_groups, coordinator, budget=budget, use_eagle=True)
     request = SimpleNamespace(request_id="old", num_tokens=length, num_prompt_tokens=length,
                               num_computed_tokens=0,
                               block_hashes=[i.to_bytes(32, "big") for i in range(length // 768)])
     while request.num_computed_tokens < length:
-        tokens = native._mamba_block_aligned_split(scheduler, request, length - request.num_computed_tokens)
+        tokens = native._mamba_block_aligned_split(scheduler, request,
+            min(budget, length - request.num_computed_tokens))
         assert tokens > 0
         after = request.num_computed_tokens + tokens
         for manager in coordinator.single_type_managers:
@@ -455,7 +458,9 @@ def test_unpatched_native_split_reproduces_gdn_checkpoint_misses(native_groups, 
             manager.allocate_new_blocks(request.request_id, after + 3, after)
             manager.cache_blocks(request, after)
         request.num_computed_tokens = after
-    assert coordinator.find_longest_cache_hit(request.block_hashes, length - 1)[1] == 0
+    # Zero hit is shape/chunk dependent, not "prefix can never hit". In the
+    # 16K chunk case some old 768-grid checkpoints also land on 2304.
+    assert coordinator.find_longest_cache_hit(request.block_hashes, length - 1)[1] == expected_hit
 
 
 def test_prefix_scheduler_validates_actual_geometry_and_progress_budget(native_groups, monkeypatch):
@@ -463,6 +468,12 @@ def test_prefix_scheduler_validates_actual_geometry_and_progress_budget(native_g
     coordinator = _native_coordinator(native_groups, monkeypatch)
     scheduler = _prefix_scheduler(native_groups, coordinator, budget=16384, use_eagle=True)
     assert configure_prefix_scheduler(scheduler).alignment == 2304
+    scheduler.max_num_scheduled_tokens = 2304
+    assert configure_prefix_scheduler(scheduler).alignment == 2304
+    view = definitions("oscar_ascend/integration/whole_prefill_scheduler.py", "small_budget_admission_contract",
+                       {"AdmissionView"}, {}, monkeypatch).AdmissionView(
+                           scheduler.scheduler_config, budget=2304, max_sequences=1024, speculative_tokens=3)
+    assert view.whole_limit == 0  # Legal with prefix ON too; R5 was too broad.
     for budget in (1, 768, 2303):
         scheduler.max_num_scheduled_tokens = budget
         with pytest.raises(OscarReadinessError, match="max_num_batched_tokens"):

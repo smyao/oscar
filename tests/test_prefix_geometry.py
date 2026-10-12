@@ -45,3 +45,16 @@ def test_rejects_contradictory_runtime_evidence(changes):
     layout = resolve_prefix_geometry(config(), 2304) | changes
     with pytest.raises(OscarReadinessError):
         validate_prefix_geometry(layout)
+
+
+@pytest.mark.parametrize("mamba,physical", [(768,2304), (768,3072), (256,2304), (1536,3072)])
+def test_prefix_eagle_alignment_is_exactly_one_full_page(mamba, physical):
+    layout = resolve_prefix_geometry(config(block_size=mamba, mamba_block_size=mamba), physical)
+    assert layout["scheduler_lcm_block_size"] == layout["physical_full_block_size"]
+
+
+def test_physical_less_than_lcm_is_rejected_before_checkpoint_policy():
+    # Review R4's proposed 2304/1536 -> LCM4608 is already inadmissible:
+    # prefix mode requires the FULL physical size to be a Mamba multiple.
+    with pytest.raises(OscarReadinessError, match="aligned native Mamba/FULL geometry"):
+        resolve_prefix_geometry(config(block_size=1536, mamba_block_size=1536), 2304)

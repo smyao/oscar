@@ -8,6 +8,8 @@ the shared VllmConfig and native source tree are never mutated.
 """
 from __future__ import annotations
 
+import os
+
 from vllm.v1.core.sched.async_scheduler import AsyncScheduler
 
 
@@ -15,7 +17,7 @@ class AdmissionView:
     """Read-only, per-call view of the native scheduling policy."""
 
     def __init__(self, original, *, budget: int, max_sequences: int,
-                 speculative_tokens: int, legacy_chunk: int = 16384):
+                 speculative_tokens: int, legacy_chunk: int = 16384, observe: bool = False):
         if (type(budget) is not int or type(max_sequences) is not int or
                 type(speculative_tokens) is not int or type(legacy_chunk) is not int
                 or budget <= 0 or max_sequences <= 0 or speculative_tokens < 0
@@ -27,6 +29,9 @@ class AdmissionView:
         # instead of rejecting it or changing the compiled token capacity.
         self.whole_limit = max(0, budget - max_sequences * (speculative_tokens + 1))
         self.waiting_request = None
+        # Probe-only host metadata; no per-request evidence allocation or
+        # device readback in unobserved production runs.
+        self.observations = {} if observe else None
 
     def __getattr__(self, name):
         return getattr(self.original, name)
@@ -52,7 +57,10 @@ class AdmissionView:
             raise ValueError('native request must expose valid total/computed token counts')
         # Prefix hits consume no prompt budget. Admission must classify the
         # remaining suffix, not the original request length.
-        return total - computed <= self.whole_limit
+        eligible = total - computed <= self.whole_limit
+        if self.observations is not None:
+            self.observations.setdefault(request.request_id, (total - computed, eligible))
+        return eligible
 
     @property
     def enable_chunked_prefill(self):
@@ -77,12 +85,39 @@ class WholePromptAsyncScheduler(AsyncScheduler):
             raise RuntimeError('reentrant whole-prefill scheduling is unsupported')
         policy = AdmissionView(original, budget=self.max_num_scheduled_tokens,
                                max_sequences=self.max_num_running_reqs,
-                               speculative_tokens=self.num_spec_tokens)
+                               speculative_tokens=self.num_spec_tokens,
+                               observe=bool(os.environ.get('OSCAR_TRACE_DIR')))
+        if policy.observations is not None:
+            from oscar_ascend.telemetry import emit_once
+            emit_once('whole_prefill_policy',
+                      key=(self.max_num_scheduled_tokens, policy.whole_limit, policy.legacy_chunk),
+                      scope='engine_core', requested=True,
+                      max_num_scheduled_tokens=self.max_num_scheduled_tokens,
+                      whole_limit=policy.whole_limit, legacy_chunk=policy.legacy_chunk,
+                      admission_mode='whole_eligible' if policy.whole_limit > 0 else 'chunked_only',
+                      reason='decode_reservation_exhausted' if policy.whole_limit == 0 else 'capacity_available')
         self.scheduler_config = policy
         try:
-            return super().schedule()
+            output = super().schedule()
         finally:
             self.scheduler_config = original
+        if policy.observations:
+            # The native scheduler may defer admission or split at a GDN
+            # checkpoint after classifying a request as whole-eligible.
+            # Report the returned allocation, never eligibility as execution.
+            counts = dict(whole_scheduled=0, eligible_partial=0, chunked_scheduled=0, deferred=0)
+            for request_id, (remaining, eligible) in policy.observations.items():
+                scheduled = output.num_scheduled_tokens.get(request_id, 0)
+                kind = ('deferred' if scheduled == 0 else
+                        'whole_scheduled' if eligible and scheduled == remaining else
+                        'eligible_partial' if eligible else 'chunked_scheduled')
+                counts[kind] += 1
+            emit_once('whole_prefill_admission',
+                      key=(self.max_num_scheduled_tokens, policy.whole_limit,
+                           *(value > 0 for value in counts.values())),
+                      scope='engine_core', evidence='native_scheduler_output_sample',
+                      whole_limit=policy.whole_limit, **counts)
+        return output
 
     def _select_waiting_queue_for_scheduling(self):
         queue = super()._select_waiting_queue_for_scheduling()

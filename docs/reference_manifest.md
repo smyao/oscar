@@ -2,25 +2,30 @@
 
 本任务只读 `references/` 和当前工作区的指令/故障档案；未访问其他失败项目源码。原生树不作任何修改。
 
-| 参考 | 固定版本 | 本轮核实 |
+## 2026-10-12 实际可读参考与历史 pin（#74–78/#156）
+
+下表区分**本轮真实测试所读版本**与**尚未恢复的历史版本**。不能把基础tag的CPU契约结果记到旧组合pin或目标部署版本名下。
+
+| 参考 | 本轮实际版本/历史版本 | 本轮核实 |
 |---|---|---|
 | vLLM | `0fc695fc6d1d82e9a5ac6835ac8e4e1c83703665` | 本地 git HEAD 一致、status 空 |
-| vLLM Ascend | `19e436985102f4ed3aad36c137a6481653688a6c` | 本地 git HEAD 一致、status 空；v0.23.0 + PR12607 |
-| OSCAR vLLM PR46774 | `57286d5d2cb08c3dcd8c17bb59e132d6985e6796` | 本地11文件快照，无独立git元数据；pin来自PROVENANCE，文件逐个hash记录 |
-| OSCAR paper | `41ebcdba3db5f0ce1339c3727caea80df575d437` | 本地快照无独立git元数据；pin来自PROVENANCE |
+| vLLM Ascend 实际参考 | `5cb98caaadeff42b5b62b996e34bb2aaa29d20fd` | 本地 git HEAD 一致、status 空；当前CPU契约测试读取这个版本 |
+| vLLM Ascend 历史组合 pin | `19e436985102f4ed3aad36c137a6481653688a6c` | 未恢复/未验证；不能声称等同于当前5cb98caa，亦未更改目标版本要求 |
+| OSCAR vLLM PR46774 历史快照 | `57286d5d2cb08c3dcd8c17bb59e132d6985e6796` | 本轮快照目录不存在，不能续用“本地11文件已核实”的旧声明 |
+| OSCAR paper 历史快照 | `41ebcdba3db5f0ce1339c3727caea80df575d437` | 本轮快照目录不存在，历史pin待恢复后重新核实 |
 
-原始溯源：`references/PROVENANCE.md` / `PROVENANCE.json`。文件指纹在本地 `reports/reference_fingerprints.json`（不入Git）；新的验收必须重新检查实际代码，而不是仅对版本字符串作相等判断（档案 #74–76）。
+历史 `references/PROVENANCE.md` / `PROVENANCE.json` 本轮亦不存在。遵守参考树只读要求，本轮没有checkout、补写PROVENANCE或把历史pin改成“已恢复”。新增入Git的 `tests/native_contract_manifest.json` 记录本轮两棵实际树的完整commit、Git tree、8个关键文件SHA256及9个原生方法AST指纹。`tests/test_native_source_contracts.py` 检查真实源码与记录一致，变更需重新review；它仅属于本地开发回归，不加入直启/readiness，不扫描目标机器原生安装树。
 
-本地开发环境是 macOS arm64、Python3.12.6。独立 `.venv` 使用 torch2.14.0 做CPU oracle测试，**不代表目标torch2.10.0**。macOS本体没有CANN/NPU；本轮已发现并使用Lima oscar内的CANN9.1、bisheng15、aarch64 Linux与官方CPU调试库。VM独立环境为Torch2.12.0+cpu/torch_npu2.12.0/pybind11 3.1.0，与目标Torch2.10版本不同，不能代替目标运行。详见 reports/vm/validation.json 及 `reports/environment.json`、`local_environment.json`。
+2026-10-12实读本地 `.venv`：macOS arm64、Python3.14.6、torch2.14.1、pytest9.1.1，**不代表目标torch2.10.0**。项目 `pyproject.toml` 的test依赖要求torch>=2.10；review所用torch2.1不在这一测试依赖范围，不能通过放宽断言或改原生参考源码让它适配。macOS本体没有CANN/NPU；以下VM记录是历史独立证据，本轮没有重跑：Lima/CANN9.1、bisheng15、aarch64 Linux、官方CPU调试库，VM Torch2.12.0+cpu/torch_npu2.12.0/pybind11 3.1.0，见历史 reports/vm/validation.json 等。
 
-目标模型位置、TP4、图、MTP等保留于 `configs/target.json`。真机连接方式未提供；模型config与权重不在本机，FULL层数/head_dim/GDN实际dtype形状必须由目标环境核实。设备与编译目标按本次启动文档附录 F 固定为物理卡0–3和ascend910b4，端口按附录 A 保留8989；其他项目记忆不构成本任务配置来源。用户回传的 node93 默认设备空值错误见档案 #123；最新复跑已通过 `probe-ops` 的75项 store/merge 原语 NPU 探针，越过 #125 的依赖库加载错误；随后首个 CV 数值用例失败，见 #126；更新后的日志进入TP4/MTP模型加载，因prefix关闭时将GDN请求跨度误作FULL页对齐而失败，见 #127。新日志未附前序CV/旋转探针完整结果，不能补造通过项。再下一轮已完成torch.compile/初次profiling并获得KV预算，#127不再出现；MTP调用原生copy_with_new_block_size(128)时被外部物理页检查拒绝，见#128。编译完成不等于捕图/回放通过。
+目标模型位置、TP4、图、MTP等以 `configs/target.json` 为准。本轮实读设备4–7、端口7878、SOC ascend910b4，未修改配置；旧附录中的0–3/8989不是当前配置的描述。真机连接方式未提供，模型config与权重不在本机。历史node93 #123–#128日志见档案；2026-10-10 #156的prefix图回放故障及其修订仍缺新设备复验。编译/本地CPU通过不等于NPU捕图、回放、精度或吞吐通过。
 
-## 权威语义入口
+## 语义入口索引（缺失快照为历史路径，不是本轮实读证据）
 
 - `references/oscar-vllm-pr46774/vllm/v1/attention/ops/triton_oscar_store.py:41`：FP32量化、先FP16 metadata、LSB-first编码。
 - 同快照 `vllm/v1/attention/backends/oscar_attn.py:219`：旋转、裁剪；`:259`起窗口；`:745`起输出合并。PR工程限制见 `docs/semantics.md`。
 - `references/oscar-paper/rotation/compute_kv_rotation.py`：真实数据二阶矩与data-free Hadamard两种明确方法。
-- `docs/native_integration.md`：本轮核实的后端/spec/allocator/metadata/MTP/graph完整接缝。
+- `docs/native_integration.md`：后端/spec/allocator/metadata/MTP/graph接缝记录；本轮实际参考版本与复核范围以上表和测试指纹为准。
 - `docs/ascendc_design.md`：AscendC接口先例、D.4四问、官方A2数据通路与已实现CV的验证边界。
 
 ## 已纠正的历史假设
@@ -29,7 +34,7 @@
 2. 原生GDN是SoA；FULL按AoS页首寻址可能覆盖其他GDN页。
 3. `136 B` 是D256/head的PR实际slot大小；`160 B`并非必需语义。
 4. `vllm-ascend-v023-seam-map.md` 的强制eager结论过时；当前native代码保留FULL_DECODE_ONLY。
-5. 档案实际为G1–G34及#1–#130，合计164条。标题里的120条以及部分旧索引行号已过时，按标题定位。
+5. 当前档案已经追加至#156；标题条数与旧索引行号有漂移，按条目标题定位。
 6. #122修正#113/#118/#119的OPP路径推断：自定义路径每项应是vendor目录。本工程采用原生已有的direct-launch单路径，不覆盖ASCEND_OPP_PATH。
 
 ## 仍缺少的输入/证据

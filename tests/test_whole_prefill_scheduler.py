@@ -157,3 +157,65 @@ def test_explicit_scheduler_class_reaches_real_server_cli_without_changing_defau
     assert args[args.index('--max-num-batched-tokens')+1]=='32768'
     with pytest.raises(ValueError,match='class path'):
         serve_argv({**target,'scheduler_cls':None})
+
+
+@pytest.mark.parametrize('prefix', [True, False])
+@pytest.mark.parametrize('budget,sequences,scheduled,expected,mode', [
+    (32768,128,20000,'whole_scheduled','whole_eligible'),
+    (32768,128,16128,'eligible_partial','whole_eligible'),
+    (32768,128,0,'deferred','whole_eligible'),
+    (2304,1024,2304,'chunked_scheduled','chunked_only'),
+])
+def test_observation_distinguishes_request_eligibility_from_native_output(
+        monkeypatch, prefix, budget, sequences, scheduled, expected, mode):
+    from oscar_ascend import telemetry
+    events=[]
+    monkeypatch.setenv('OSCAR_TRACE_DIR','test-observation-no-files')
+    monkeypatch.setattr(telemetry,'emit_once',lambda event,**fields:events.append((event,fields)))
+    request=SimpleNamespace(request_id='request',num_tokens=20000,num_computed_tokens=0)
+    output=SimpleNamespace(num_scheduled_tokens={'request':scheduled} if scheduled else {})
+    original=SimpleNamespace(enable_chunked_prefill=True,long_prefill_token_threshold=0)
+    queue=SimpleNamespace(peek_request=lambda:request)
+    class Parent:
+        def _select_waiting_queue_for_scheduling(self):return queue
+        def schedule(self):
+            self._select_waiting_queue_for_scheduling()
+            assert self.scheduler_config.is_whole == (mode=='whole_eligible')
+            # Native schedule updates request counters before returning its
+            # output. Observation must retain the pre-schedule suffix length.
+            request.num_computed_tokens += scheduled
+            return output
+    Scheduler=load_policy(Parent)['WholePromptAsyncScheduler']
+    scheduler=Scheduler()
+    scheduler.scheduler_config=original
+    scheduler.cache_config=SimpleNamespace(enable_prefix_caching=prefix)
+    scheduler.max_num_scheduled_tokens=budget
+    scheduler.max_num_running_reqs=sequences
+    scheduler.num_spec_tokens=3
+    assert scheduler.schedule() is output and scheduler.scheduler_config is original
+    policy,actual=events
+    assert policy[0]=='whole_prefill_policy' and policy[1]['admission_mode']==mode
+    assert actual[0]=='whole_prefill_admission' and actual[1][expected]==1
+    assert actual[1]['scope']=='engine_core'
+    assert actual[1]['evidence']=='native_scheduler_output_sample'
+    assert sum(actual[1][k] for k in ('whole_scheduled','eligible_partial','chunked_scheduled','deferred'))==1
+
+
+def test_unobserved_scheduler_allocates_no_per_request_evidence(monkeypatch):
+    from oscar_ascend import telemetry
+    monkeypatch.delenv('OSCAR_TRACE_DIR',raising=False)
+    def forbidden(*args,**kwargs):raise AssertionError('unexpected hot-path telemetry')
+    monkeypatch.setattr(telemetry,'emit_once',forbidden)
+    original=SimpleNamespace(enable_chunked_prefill=True,long_prefill_token_threshold=0)
+    output=object()
+    class Parent:
+        def schedule(self):
+            assert self.scheduler_config.observations is None
+            return output
+    Scheduler=load_policy(Parent)['WholePromptAsyncScheduler']
+    scheduler=Scheduler()
+    scheduler.scheduler_config=original
+    scheduler.max_num_scheduled_tokens=32768
+    scheduler.max_num_running_reqs=128
+    scheduler.num_spec_tokens=3
+    assert scheduler.schedule() is output and scheduler.scheduler_config is original

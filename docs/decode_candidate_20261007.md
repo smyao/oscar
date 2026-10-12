@@ -55,3 +55,5 @@ python3 -m tools.service_probe --variant candidate --prefix-only
 该命令自行起停服务，需先停止同端口正式服务。除128-token起始请求外，执行隔离的4736冷请求/重放、4864续写，以及独立6912整页冷请求/重放；必须有实际调度策略、原生cached_tokens、TP4/FULL/MTP/图和资源释放证据。不会运行AISBench，不替代完整模型质量或吞吐验收。
 
 本机完整回归1046 passed、147 skipped、6 subtests passed；没有本轮NPU/CANN执行证据。源码复现旧切分下4736/6912/20000 prompt的联合命中为0，修订后有可复用checkpoint；是否带来实际吞吐提升仍取决于工作负载命中率与设备时间，不能从这些CPU结果宣称。
+
+2026-10-12 review跟进：完整本地回归 **1071 passed、147 skipped、6 subtests passed**。新增preparer完整等价/突变测试、实际原生版本指纹、合法几何证明、旧切分50K正命中反例，以及整段准入requested/实际执行观测。固定直启仍安装相同插件并启用candidate全部既有优化；新增观测随 `OSCAR_TRACE_DIR` 生效，不需新的候选开关。调度算法、token预算预设、CANN内核、量化与冻结精度不变。CPU契约实际参考Ascend `5cb98caa`，不冒充历史组合pin `19e43698`；溯源及未恢复参考见 `docs/reference_manifest.md`。NPU/图/精度/性能边界不变。

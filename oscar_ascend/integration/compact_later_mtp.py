@@ -93,7 +93,9 @@ def _tail_slot_guard(provider, slots, begin, end):
         _fail("tail-slot guard requires the real NPU slot buffer")
     bad = _tail_slot_errors(slots, begin, end)
     empty = bad[:0]
-    provider.ops.status_guard(bad, empty, empty, empty)
+    from .guard_diag import run_status_guard
+    run_status_guard(provider.ops, "compact_later_mtp.tail",
+                     [("tail_slots", bad), ("rotate", empty), ("merge", empty), ("store", empty)])
 
 
 def _tail_slot_errors(slots, begin, end):

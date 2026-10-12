@@ -16,6 +16,7 @@ from vllm.v1.attention.backend import AttentionImpl
 from .current_attention import (guard_current_slots, native_current_partial,
                                 suppress_current_source_tasks, use_native_current,
                                 write_current_partial)
+from .guard_diag import run_status_guard
 from .runtime_api import OscarReadinessError, require_runtime
 from ..telemetry import emit_once, emit_throttled
 from ..timing import phase
@@ -232,8 +233,10 @@ class OscarAttentionImpl(AttentionImpl):
                           window_map, self.provider.config)
         with phase("status_guard", layer=layer.layer_name, tokens=n,
                    requests=attn_metadata.num_reqs, **timing_fields):
-            ops.status_guard(statuses, workspace.rotate_status[:n],
-                             workspace.merge_status[:n], workspace.store_status[:n])
+            run_status_guard(ops, f"forward:{layer.layer_name}",
+                             [("attention", statuses), ("rotate", workspace.rotate_status[:n]),
+                              ("merge", workspace.merge_status[:n]), ("store", workspace.store_status[:n])],
+                             capture=attn_metadata.capture_origin or attn_metadata.dummy_origin)
         emit_once("attention_dispatched", key=(layer.layer_name, n, attn_metadata.max_query_len),
                   layer=layer.layer_name, tokens=n, requests=attn_metadata.num_reqs,
                   max_query_len=attn_metadata.max_query_len,

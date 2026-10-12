@@ -14,6 +14,7 @@ from dataclasses import replace
 import torch
 
 from .current_attention import guard_current_slots, native_current_partial
+from .guard_diag import run_status_guard
 from .metadata import slice_window_map
 from .runtime_api import OscarReadinessError
 from ..timing import phase
@@ -80,11 +81,13 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
         status=workspace.attention_status[:task_count]
         status.copy_(bad.to(torch.int32)[:,None])
         empty=workspace.store_status[:0].view(-1)
-        ops.status_guard(status.view(-1),empty,empty,empty)
+        run_status_guard(ops,'current_only.prepare',
+                         [("metadata",status.view(-1)),("rotate",empty),("merge",empty),("store",empty)])
         guard_current_slots(ops,workspace.merge_status,slots,fresh)
         if actual<n:
             bad_padding=(metadata.slot_mapping[actual:n]>=0).to(torch.int32)
-            ops.status_guard(bad_padding,empty,empty,empty)
+            run_status_guard(ops,'current_only.padding',
+                             [("padding",bad_padding),("rotate",empty),("merge",empty),("store",empty)])
     with phase('current_native_fia',**fields):
         current,lse=native_current_partial(q,k,v,plan.cumulative,
                                            heads=h,kv_heads=hk,scale=impl.scale)
@@ -109,6 +112,8 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
         from .cache_storage_ops import store_current
         store_current(ops,state,k,v,slots,positions,starts,window_map,impl.provider.config)
     with phase('status_guard',**fields):
-        ops.status_guard(status.view(-1),empty,workspace.merge_status[:fresh].view(-1),
-                         workspace.store_status[:fresh].view(-1))
+        run_status_guard(ops,'current_only.final',
+                         [("metadata",status.view(-1)),("rotate",empty),
+                          ("merge",workspace.merge_status[:fresh].view(-1)),
+                          ("store",workspace.store_status[:fresh].view(-1))])
     return output

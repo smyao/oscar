@@ -79,10 +79,13 @@ def dispatch_mixed_decode(impl,layer,query,key,value,kv_cache,metadata,output,pl
     starts=metadata.query_start_loc
     boundaries=torch.stack((starts[0],starts[plan.prefix_requests]-plan.prefix_tokens,
                             starts[metadata.num_reqs]-plan.actual_tokens))
-    ops.status_guard((boundaries!=0).to(torch.int32),empty,empty,empty)
+    from .guard_diag import run_status_guard
+    run_status_guard(ops,'mixed_decode.boundaries',[("boundaries",(boundaries!=0).to(torch.int32)),
+                                                    ("rotate",empty),("merge",empty),("store",empty)])
     if plan.actual_tokens<query.shape[0]:
         bad=(metadata.slot_mapping[plan.actual_tokens:query.shape[0]]>=0).to(torch.int32)
-        ops.status_guard(bad,empty,empty,empty)
+        run_status_guard(ops,'mixed_decode.padding',[("padding",bad),("rotate",empty),
+                                                     ("merge",empty),("store",empty)])
     for rb,re,tb,te,segment in (
         (0,plan.prefix_requests,0,plan.prefix_tokens,'short_prefix'),
         (plan.prefix_requests,metadata.num_reqs,plan.prefix_tokens,plan.actual_tokens,'long_suffix')):

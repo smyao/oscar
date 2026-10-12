@@ -131,7 +131,9 @@ def guard_current_slots(ops, status: torch.Tensor, slots: torch.Tensor,
         raise CurrentAttentionError("current-slot guard requires fixed NPU status/slot buffers")
     temporary = _populate_slot_error_status(status, slots, active_tokens)
     empty = status[:0].view(-1)
-    ops.status_guard(temporary.view(-1), empty, empty, empty)
+    from .guard_diag import run_status_guard
+    run_status_guard(ops, "current_slots", [("slots", temporary.view(-1)), ("rotate", empty),
+                                            ("merge", empty), ("store", empty)])
 
 
 def _populate_slot_error_status(status: torch.Tensor, slots: torch.Tensor,

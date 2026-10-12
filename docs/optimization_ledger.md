@@ -111,6 +111,8 @@ Kt/Vt共同连续NZ发布的新实验：`experiments/c4_kvt_nz/`将K也改为物
 
 - **默认APC align容量重新核算**：当前条件参考几何、65615 tokens、无共享时FULL2.96552×，计原生5页GDN峰值预留后全部KV2.29545×。工具已支持新默认并执行7项主机规则测试；未测HBM，6–7×仍待实现兼容APC的新布局，不能沿用none投影。[报告](../reports/memory_64k_prefix_align_20261012.json)。
 
+> 2026-10-12 #157 更新：MDL 与 rotate_vector_init 两算子按用户指示保持默认 candidate 开启；077548fa 真机首崩为冻结 status_guard Trap（详见档案 #157），归因此前不可读，现已加 `OSCAR_GUARD_HOST_SYNC=1` 按族归因开关（默认关闭、不改变默认路径）。两算子的 observe NPU/图门仍欠账，未把默认开启写成设备验收通过。
+
 - **AIC官方MDL大块装载研究**：根据完整多KV交付链提出，保持现d817 AIV publisher、FP32/K128计算及错误域，仅切官方Normal/MDL模板；CANN编译与L1/L0资源静态断言已通过。官方CPU编译首次因独立暂存漏传oscar_launch.h失败，补公共头后编译与完整数值通过，原失败保留；这不是算子数值或真机错误。完整配对1079788→931042，1.159762932倍，全部输出/LSE/status逐位与oracle/3actor/六份完整日志通过，已达到新1.15倍单项门。实际B装载232→34条，history QK/PV由8×32KiB变1×256KiB，稳态PV周期约1.322倍；未少算GM字节，也不是整轮倍率。已打包独立MDL q4算子并接两固定candidate入口，q1/C4不变，observe新增NPU/graph/1.15倍完整CV+merge门；完整40项CANN/Torch编译通过，NPU/整轮未验收。[源与协议](../csrc/experiments/decode_mdl_load/README.md)。
 
 - **MDL部署证据**：[完整配对及装载机制](../reports/decode_mdl_load_20261012/summary.json)、[真实装载对比](../reports/decode_mdl_load_20261012/load-analysis.json)、[生产包装与host接缝](../reports/mdl_decode_packaging_20261012.json)、[40项完整构建](../reports/mdl_decode_fullbuild_20261012/summary.json)、[真实NPU门实现](mdl_decode_gate.md)。C4的相同MDL机制已作独立H16基底研究准备，尚未执行，不外推q4收益或默认启用。

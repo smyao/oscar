@@ -64,7 +64,10 @@ def store_current(ops, state, key, value, slots, positions, starts, window_map, 
             *prefix, starts, window_map, *storage, state.window_status, *geometry,
             state.snapshots.max_num_seqs, state.snapshots.position_bits)
         empty = state.workspace.store_status[:0]
-        ops.status_guard(state.window_status, empty, empty, empty)
+        from .guard_diag import run_status_guard
+        run_status_guard(ops, "request_window.store",
+                         [("window", state.window_status), ("rotate", empty),
+                          ("merge", empty), ("store", empty)])
     elif state.cache_format in ("striped_v1", "canonical_v1"):
         name = ("rotate_clip_store_striped_out" if state.cache_format == "striped_v1"
                 else "rotate_clip_store_out")

@@ -595,6 +595,7 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 | 原生 `rejection_sample` fallback warning | 记录其在基线中的状态；保持 MTP 语义，并区分原生警告与 OSCAR 新增的错误路由。 |
 | 原生 int32/int64 `ArgSort` 转 AiCPU warning | profiler 区分原生已有路径与插件新增操作；插件热路径不得引入同类数据处理回退，也不能未经数值范围验证就把索引强转 float32。 |
 | #140 配对20–30K/K4性能门失败；HCCL INFO、启动等待与TBE关停EOF同轮出现 | 原生/OSCAR同输入先核实各自4/4完成、清理和NPU释放，再按逐请求TTFT/TPOT/E2E及固定token的batch墙钟比较；性能比不达冻结阈值即失败。INFO与成功关停噪声不冒充启动首错，完整日志保留、终端仅精确折叠已证实的良性形态；设备归因仍要单独逐相位/逐source验证，不能从SSE墙钟反推CV内核时间或提高300秒死线掩盖。 |
+| #157 默认APC首轮candidate服务四rank同步507035 vector trap | trap即冻结status_guard发现某族status非零（与#142同一Trap偏移0x264，内核未变）；当日志含"Prefix cache hit rate 0.0%"时不得再查共享页内容路径。归因用 `OSCAR_GUARD_HOST_SYNC=1` 复现，worker异常链直接给 site/family；不动fe0冻结集（`FE0_KERNEL_SHA256`）来为归因让路；guard语义与融合启动默认不变。 |
 
 旋转检查点若需生成，必须复用正确的权重量化与 TP 配置，明确其与模型/层/rank/维度/PR 版本的对应关系，避免重复校准和错误复用。校准中的旋转、量化及大规模数据计算同样遵守 NPU 约束，不能因处于离线阶段就转移到 CPU 处理。
 

@@ -28617,3 +28617,17 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **源码确认与工作方向，非真机修复结果**：当前被审计版本4defe20的whole上限32256，不覆盖65100；FULL物理页817152B中382976B用于INT2、333336B重复保存精确页快照；原生GDN状态与共享页分组仍占实际预算。正开发双段INT2＋稳定请求窗口及大current/有界history工作区、64K准入。字节/调度主机推演、CPU-debug/CAModel、新NPU数值/图和完整服务性能分别记录在`docs/64k_120_optimization.md`；本条不声明改后吞吐、显存或4–5倍目标已经通过。
 
 **证据限制**：logger prompt信用在首输出时记账，prompt=0不证明pure decode；HTTP200不等于请求完成。暖机KV3.7%/8.4%仅能在明确几何和占用条件下反推预算区间，不是实际pool测量。不得将并发倍数推成等比例速度，不使用两个总时长强行拟合未知设备相位。
+
+## [157] 真机条目（2026-10-12 用户回传）· 默认 APC 首轮 candidate 服务中 status_guard Trap，四 rank 同步 vector core exception
+
+**症状原文**（用户粘贴的服务端日志片段）：`git pull --ff-only && bash scripts/install_serve.sh --variant candidate`（077548fa）后服务完成 32 条短请求，06:56:43 四个 worker 首次 JIT 编译原生 `batch_memcpy_kernel`（mamba align 状态拷贝），06:56:51 统计为 prompt 3281.3 tok/s、generation 0.1 tok/s、Running 2 / Waiting 30、**Prefix cache hit rate 0.0%**；06:56:57 四 rank 同时报 aivec error（chip0..3 的 pc 分别为 0x124{0,2,4,6}022f56cc→…5930，设备内偏移完全一致，current−start=0x264，aic error mask 0x6500020bd00028c，"timeout or trap error"），随后 `gdn_attn_builder.py:211` 的 H2D（srclen=192）与异步输出拷贝的 event 同步以 507035 失败，worker 全灭。SpecDecoding 累计 19 accepted/21 drafted 均来自先前短请求。
+
+**归因确认（与 #142 同一 Trap）**：`status_guard.cpp` 自 f8735233（2026-09-22）起未变，#142 已把同一 0x264 偏移映射到该内核的 Trap()；本工程只有该内核含 Trap()。所以本次是 fail-closed guard 检测到某族 status 非零，按设计中止；生产 Trap 不带段信息，日志本身无法指出是哪一族。
+
+**已排除（源码+日志证据）**：①命中率先 0.0% ⇒ 无任何跨请求共享页读取，APC 共享内容路径（错误3/4）不在场；②崩溃窗口 generation≈0 ⇒ 纯 chunked prefill，MDL 未在长历史形状上运行（其单次 matmul 形状与历史长度无关，且短请求 decode 已多次执行）；③`rotate_vector_init` 与已 64K 真机验证的 `rotate_out` 全 diff 仅向量化 Hadamard Init 一处，该 builder 已被 striped writer 的 64K 真机负载共享证明；④生产内核与插件无 2816 旧几何残留，align 几何（页2304/虚拟128×18）全部参数化；⑤原生 slot/padding（-1 填充、qstart 镜像）不变量核实成立。四 rank 同步同址 trap ⇒ 秩对称条件：主机元数据或经 TP 集合通信扩散的数据。
+
+**修法（保持两个新算子默认开启，不动 fe0 冻结集）**：`status_guard.cpp` 属 fe0 字节冻结集合（`tools/observe_serve.py::FE0_KERNEL_SHA256`，自 #148 起无更新先例），不改。新增 `oscar_ascend/integration/guard_diag.py`：默认路径仍是原来的单次融合 trap 启动、零改动；`OSCAR_GUARD_HOST_SYNC=1` 时把同一冻结内核按族（attention/rotate/merge/store 及各调用点族名单）逐个启动并逐族 `torch.npu.synchronize()`，trap 即从具体族的调用行抛出，异常链含 `site=`/`family=`。图捕获路径保持融合启动（capture 期间禁止 host 同步），dummy/capture 语义不变。全部 7 个 `status_guard` 调用点（impl 主站、current_only×3、current_slots、mixed_decode×2、compact_later_mtp、request_window store）改经 `run_status_guard`。
+
+**本地验证**：Lima VM（oscar）CANN 9.1.0 CPU-debug 全量 primitive 套件通过（含 guard_error 用例：`OSCAR_GUARD segment=3 index=1024 status=3` 打印并 trap），主机 pytest 1297 passed/11 failed——11 项失败与 077548fa 基线逐项相同（HEAD 既有：whole_prefill 退役残留、observe_serve 计划类、no_fallback_static 既有违规），本改动零新增失败。NPU 未验。
+
+**证据与复验边界**：本条不伪写根因——具体哪族 status 非零需真机一次复现：同一固定命令加 `OSCAR_GUARD_HOST_SYNC=1` 环境变量，trap 时 worker 异常链将直接给出族名；若不再复现，则按 #154 流程继续。observe 入口的 MDL（20–30K q4）与 vector-init NPU 门仍欠账，与新默认 candidate 的推广裁决独立。登记第 8.2 节回归检查表。

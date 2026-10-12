@@ -21,14 +21,15 @@ FIELDS = {"status", "error", "failed_phase", "returncode", "exit_code",
 
 
 def compact(run: Path, limit: int = 6000) -> str:
-    metadata, first, signals, tails = [], [], [], []
+    metadata, first, signals, tails, layout = [], [], [], [], []
     seen = set()
 
     def add(bucket, source, line, width=700):
         line = line.strip()
-        if not line or line in seen:
+        identity = (source, line) if bucket is metadata else line
+        if not line or identity in seen:
             return
-        seen.add(line)
+        seen.add(identity)
         bucket.append(f"{source}: {line[:width]}" + (" [line truncated]" if len(line) > width else ""))
 
     def walk(value, source, depth=0):
@@ -42,7 +43,9 @@ def compact(run: Path, limit: int = 6000) -> str:
                 elif key == "excerpts" and isinstance(item, list):
                     for entry in item[:12]:
                         if isinstance(entry, dict):
-                            add(signals, str(entry.get("path", label)), str(entry.get("text", "")))
+                            text = str(entry.get("text", ""))
+                            if not re.search(r"\[INFO\]|\[DEBUG\]", text):
+                                add(signals, str(entry.get("path", label)), text)
                 elif key not in {"response", "payload", "prompt", "requests", "command", "env"}:
                     walk(item, label, depth + 1)
         elif isinstance(value, list):
@@ -64,6 +67,34 @@ def compact(run: Path, limit: int = 6000) -> str:
         except (OSError, ValueError) as error:
             metadata.append(f"{name}: cannot read: {error}")
 
+    trace_files = sorted((run / "service").glob("trace-*/worker-*.jsonl"))
+    layout.append(f"worker trace files: {len(trace_files)}")
+    for path in trace_files[:12]:
+        events = {}
+        rows = []
+        try:
+            with path.open(errors="replace") as stream:
+                for number, line in enumerate(stream, 1):
+                    try:
+                        record = json.loads(line)
+                    except ValueError:
+                        rows.append(f"invalid JSON at line {number}")
+                        continue
+                    if not isinstance(record, dict):
+                        continue
+                    event = str(record.get("event"))
+                    events[event] = events.get(event, 0) + 1
+                    if event == "cache_layout":
+                        row = {k: record.get(k) for k in (
+                            "rank", "pid", "prefix_caching", "scheduler_lcm_block_size",
+                            "mamba_block_size", "physical_block_tokens")}
+                        value = json.dumps(row, ensure_ascii=False)
+                        if value not in rows:
+                            rows.append(value)
+            layout.append(f"{path.name}: events={json.dumps(events, sort_keys=True)[:300]} "
+                          f"layouts={'; '.join(rows[:4]) or 'NONE'}")
+        except OSError as error:
+            layout.append(f"{path.name}: {error}")
     paths = [run / "service/server.log", run / "terminal.log"]
     paths += sorted((run / "build").rglob("*.log"))
     # Synthetic diagnostic children intentionally Trap: label separately.
@@ -78,6 +109,8 @@ def compact(run: Path, limit: int = 6000) -> str:
             with path.open(errors="replace") as stream:
                 for number, line in enumerate(stream, 1):
                     # Stream from the beginning to retain the first fault.
+                    if '"synthetic"' in line and "OSCAR_FIRST_ERROR" in line:
+                        continue
                     tail.append((number, line))
                     if "OSCAR_FIRST_ERROR" in line and len(first) < 12:
                         add(first, f"{source}:{number}", line, 1100)
@@ -90,8 +123,9 @@ def compact(run: Path, limit: int = 6000) -> str:
             metadata.append(f"{source}: cannot read: {error}")
 
     sections = [
-        ("RESULT", metadata, 1800), ("FIRST DEVICE STATUS", first, 2500),
-        ("ERROR EXCERPTS", signals, 2200), ("TAIL", tails, 600),
+        ("RESULT", metadata, 1800), ("FIRST DEVICE STATUS", first, 1800),
+        ("WORKER LAYOUT", layout, 1800),
+        ("ERROR EXCERPTS", signals, 1800), ("TAIL", tails, 400),
     ]
     output = (f"OSCAR compact diagnostic\nrun={run.resolve()}\n"
               "Excerpt only; absence of an error is NOT a pass.\n"

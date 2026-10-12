@@ -1,0 +1,4 @@
+START phase=replay-1 cwd=/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2 command=["/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python", "-m", "pytest", "-q", "--tb=short", "--junitxml=/private/tmp/oscar-local-simulation-final-20261012/replay-1-junit.xml", "tests/test_mtp_context_limits.py", "tests/test_local_stateful_replay.py"]
+..................................................................       [100%]
+66 passed in 4.78s
+RESULT {"phase": "replay-1", "command": ["/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python", "-m", "pytest", "-q", "--tb=short", "--junitxml=/private/tmp/oscar-local-simulation-final-20261012/replay-1-junit.xml", "tests/test_mtp_context_limits.py", "tests/test_local_stateful_replay.py"], "returncode": 0, "elapsed_seconds": 5.498125, "timed_out": false, "interrupted": false, "log": "/private/tmp/oscar-local-simulation-final-20261012/replay-1.log", "cleanup_complete": true}

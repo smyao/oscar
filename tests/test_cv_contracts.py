@@ -14,6 +14,8 @@ D.4: no full-history allocation in production; only this test oracle may
 materialize history. Tests do not turn CPU results into NPU/performance evidence.
 #148: fe0 remains the trusted numerical baseline; separate C4 CPU cases
 compare all partial/LSE/status bits and require positive cluster engagement.
+#128/#157: near-limit MTP sentinel repair must reach the real checked preparer;
+#157's 24K device first error remains unattributed until status capture.
 """
 import json
 import math
@@ -134,6 +136,37 @@ def test_checked_prepare_later_mtp_uses_slot_position_not_rejected_seq_length(bl
     torch.npu.synchronize()
     torch.testing.assert_close(positions.cpu(),torch.tensor([block+129,-1,-1,-1]))
     assert not tasks[:,10].cpu().any()
+
+
+@pytest.mark.parametrize("block", [2304, 2816])
+@pytest.mark.parametrize("dtype", [torch.int32, torch.int64])
+def test_mtp_limit_repair_with_real_checked_prepare(block, dtype):
+    from types import SimpleNamespace
+    from oscar_ascend.integration.metadata import prepare_context_lengths
+    ops = _npu_ops()
+    limit, count = 262144, 4
+    ratio = block // 128
+    pages = (limit + block - 1) // block
+    row = [page * ratio + offset for page in range(pages, 0, -1) for offset in range(ratio)]
+    table = torch.tensor([row], dtype=torch.int32, device="npu")
+    starts = torch.tensor([0, 1], dtype=torch.int32, device="npu")
+    tasks = torch.empty((count * 3, 16), dtype=torch.int64, device="npu")
+    positions = torch.empty(count, dtype=torch.int64, device="npu")
+    for step in (1, 2):
+        for accepted in range(4):
+            position = limit - 4 + accepted + step
+            slot = row[position // 128] * 128 + position % 128 if position < limit else -1
+            slots = torch.tensor([slot, -1, -1, -1], dtype=dtype, device="npu")
+            lengths = torch.tensor([step], dtype=torch.int32, device="npu")
+            metadata = SimpleNamespace(seq_lens=lengths, num_reqs=1, is_draft=True,
+                                       draft_index=step, max_query_len=1)
+            ops.prepare_attention_tasks_out(starts, prepare_context_lengths(metadata, limit),
+                slots, tasks, positions, 6, 1, 64, 256, 1, table, True)
+            torch.npu.synchronize()
+            torch.testing.assert_close(positions.cpu(),
+                torch.tensor([position if slot >= 0 else -1, -1, -1, -1]), rtol=0, atol=0)
+            assert not tasks[:, 10].cpu().any()
+            assert lengths.cpu().tolist() == [step]
 
 
 def _case(dim, qlen, context, hk=1, *, query_seed=None):

@@ -17,6 +17,7 @@ from .current_attention import (guard_current_slots, native_current_partial,
                                 suppress_current_source_tasks, use_native_current,
                                 write_current_partial)
 from .runtime_api import OscarReadinessError, require_runtime
+from .metadata import prepare_context_lengths
 from ..telemetry import emit_once, emit_throttled
 from ..timing import phase
 from ..status_diagnostics import status_guard, enabled as diagnostics_enabled
@@ -149,7 +150,7 @@ class OscarAttentionImpl(AttentionImpl):
                 slots = workspace.slots[:n]
             ops.prepare_attention_tasks_out(
                 attn_metadata.query_start_loc[:attn_metadata.num_reqs + 1],
-                attn_metadata.seq_lens[:attn_metadata.num_reqs],
+                prepare_context_lengths(attn_metadata, self.provider.config.get("max_model_len")),
                 slots, tasks, positions, h, hk,
                 state.snapshots.sink_tokens, state.snapshots.recent_tokens, source_splits,
                 attn_metadata.block_tables[:attn_metadata.num_reqs],

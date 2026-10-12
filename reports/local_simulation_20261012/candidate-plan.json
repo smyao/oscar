@@ -1,0 +1,111 @@
+{
+  "stages": [
+    [
+      "build-dependencies",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "pip",
+        "install",
+        "setuptools>=69",
+        "wheel",
+        "pybind11>=3",
+        "cmake>=3.26",
+        "ninja",
+        "pytest"
+      ]
+    ],
+    [
+      "install-plugin",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "pip",
+        "install",
+        "--no-deps",
+        "--no-build-isolation",
+        "-e",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2"
+      ]
+    ],
+    [
+      "build-ops",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "tools.build_ops",
+        "--soc",
+        "ascend910b4",
+        "--log-dir",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/20261012T102711.387163Z/build"
+      ]
+    ],
+    [
+      "prepare-rotations",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "tools.prepare_rotations",
+        "--config",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/20261012T102711.387163Z/effective-target.json"
+      ]
+    ]
+  ],
+  "serve": [
+    "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+    "-m",
+    "tools.target_cli",
+    "--config",
+    "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/20261012T102711.387163Z/effective-target.json"
+  ],
+  "probes": "none",
+  "variant": "candidate",
+  "optimizations": {
+    "history_cluster4": true,
+    "later_mtp_q1": true,
+    "fast_unpack": true,
+    "mixed_cv": true,
+    "striped_cache": true,
+    "current_only": true,
+    "first_mtp_current_fia": true,
+    "compact_later_mtp": true,
+    "mixed_decode_split": true,
+    "decode_bundle": true,
+    "whole_prefill": true
+  },
+  "runtime_selection": {
+    "variant": "candidate",
+    "optimizations": {
+      "history_cluster4": true,
+      "later_mtp_q1": true,
+      "fast_unpack": true,
+      "mixed_cv": true,
+      "striped_cache": true,
+      "current_only": true,
+      "first_mtp_current_fia": true,
+      "compact_later_mtp": true,
+      "mixed_decode_split": true,
+      "decode_bundle": true,
+      "whole_prefill": true
+    },
+    "selection_stage": "pre_runtime_requested",
+    "max_num_batched_tokens": 32768,
+    "enable_prefix_caching": true,
+    "scheduler_cls": "oscar_ascend.integration.whole_prefill_scheduler.WholePromptAsyncScheduler",
+    "devices": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "port": 7878
+  },
+  "target_devices": [
+    4,
+    5,
+    6,
+    7
+  ],
+  "port": 7878,
+  "placement": "configured"
+}

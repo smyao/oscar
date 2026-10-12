@@ -49,6 +49,8 @@
 
 ## 当前必须正面解决的事项
 
+2026-10-12本地连续模拟：原生MTP方法回放复现最大长度附近的正长度哨兵与有效slot冲突（16例中12失败），正式forward现恢复后续draft的查表上界，保留真实slot/table检查。完整主机回归1201 passed / 160 skipped / 6 subtests passed，三轮状态回放各66 passed，覆盖prefix分叉/精确窗口/MTP拒绝/页释放复用；不等同完整调度抢占、GDN算术或设备执行。FULL页容量768→2304，candidate固定workspace1.173 GiB/卡必须计入，小请求不能保证净节省。修复与q4/q1/C4候选均进入固定直启，原配置未改。证据见`docs/local_simulation_20261012.md`、`reports/local_simulation_20261012/report.json`。#157约24K真机首错尚未归因，本轮CANN/NPU/图/模型质量/实测显存/性能均未新增通过；42个checkpoint不增删，D04/D09/C04/C05/E01/E06保持未验收。
+
 2026-10-12（#157）：新plog四rank均定位到 `oscar_status_guard_kernel_8+0x258`，非零状态组/值仍未知。新增显式同流首错诊断，原Trap和全部计算内核保留；正常直启/candidate与prefix短门共用，终端与文件同步保留错误。CPU完整回归1130 passed、156 skipped、6 subtests passed；无可用本机C++工具链/NPU/CANN，新增host绑定编译、设备诊断、图捕获、图回放、prefix模型质量与性能均未新增通过证据。先运行独立状态注入负例门，再运行短prefix服务门；详见 `docs/status_guard_diagnostics.md`。42个稳定checkpoint不增删，E06未通过。
 
 2026-09-29（#152）：64K/120×512同任务，OSCAR3331.55s vs native1371.97s，E06失败；不重跑AISBench。新mixed四组设备oracle通过并确认N16384/S1 q4与带历史prefill CV开销。候选增加独立balanced/C16，保留fe0与已测fast/C4/q1算子；固定`install_serve.sh --variant candidate`自动启用新路由，新真实NPU AB/图/错误传播门接`--probe-only --diagnose-mixed`。本地证据与新NPU待验状态见`docs/mixed_cv_optimization.md`，不因源码/编译/CPU成功标E06通过。

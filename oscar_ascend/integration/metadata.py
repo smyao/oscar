@@ -15,6 +15,36 @@ class OscarMetadataError(ValueError):
     pass
 
 
+def prepare_context_lengths(metadata, max_model_len):
+    """Archive #37-49/#128/#156/#157: preserve valid near-limit MTP slots.
+
+    Native Ascend attn_update_stack_num_spec_norm increments the optimistic
+    verification length, then resets it to 1 on overflow. Accepted-position
+    slots are masked independently and can still be valid after rejection.
+    At later draft step d an unclamped length is at least 1+d. Values 1..d
+    therefore denote that reset (including the next increment), not a short
+    real context. Supply the model limit ONLY as a lookup bound for these
+    rows; checked prepare still recovers context from the unique physical
+    slot/table match. Negative slots remain padding and native metadata is
+    never mutated. No mRoPE coordinate is used as a token position.
+
+    This adds small pointwise device ops to eager later-MTP, no readback
+    or KV allocation. Main-model graph and first draft return native views.
+    It is a correctness repair, not evidence of a measured latency gain.
+    """
+    lengths = metadata.seq_lens[:metadata.num_reqs]
+    if not metadata.is_draft or metadata.draft_index == 0:
+        return lengths
+    if (type(max_model_len) is not int or max_model_len <= metadata.draft_index
+            or metadata.max_query_len != 1):
+        raise OscarMetadataError("later MTP requires a positive model limit and one query per request")
+    import torch
+    # Do not repair zero/negative lengths: they remain malformed metadata for
+    # the device guard. The native sentinel is strictly positive.
+    reset = (lengths > 0) & (lengths <= metadata.draft_index)
+    return torch.where(reset, max_model_len, lengths)
+
+
 @dataclass(frozen=True)
 class OscarMetadata:
     query_start_loc: Any

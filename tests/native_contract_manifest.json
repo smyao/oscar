@@ -74,6 +74,12 @@
         "vllm_ascend/ops/gdn.py": {
           "sha256": "d6ec29919268178f5bf6e70e689c1d273d04b1cb1d84dc94efa7bbbc35490816",
           "methods": {}
+        },
+        "vllm_ascend/spec_decode/llm_base_proposer.py": {
+          "sha256": "4a90532c5c3667d9eb4fec666bf03c65a2f1c92cd402f731b644ef8fa2ed82ab",
+          "methods": {
+            "AscendSpecDecodeBaseProposer.attn_update_stack_num_spec_norm": "45bc322d3098cb383d5a4cbbbec77c32df602d3cb367e0b25f00d4e260748ddd"
+          }
         }
       }
     }

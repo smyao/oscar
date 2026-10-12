@@ -4,9 +4,19 @@
 
 已实现 FULL 层 INT2 缓存、真正的 Cube/Vector attention、融合旋转/裁剪/写入、精确窗口、MTP 位置修正、固定图缓冲、外部插件及一键安装/探针/服务流程。GDN 使用原生状态和 reshape。新增代码不覆盖原生 vLLM/Ascend 源文件。
 
+## 本地连续模拟与当前修复（2026-10-12）
+
+已复现并修复接近 `max_model_len` 时，MTP 部分接受/拒绝后有效 slot 被原生长度哨兵值误判的缺陷。修复直接进入正式 attention 路径，固定 candidate 直启同时生效。完整本地回归 **1201 passed、160 skipped、6 subtests passed**；三轮缓存生命周期回放各 **66 passed**。本地入口实时输出、保存逐轮日志/退出码/JSON，失败即停止：
+
+```bash
+.venv/bin/python -m tools.local_simulation --rounds 3
+```
+
+该入口仅供开发机；没有加载真实模型或执行 NPU。档案 #157 约24K的设备首错仍未归因，不能以这次最大长度修复宣称已解决。FULL 页容量768→2304，但 candidate 工作区约1.17 GiB/卡，短请求可能没有净显存收益；完整模型质量、实测显存和原生速度目标继续待验。[复现、内存账及验证边界](docs/local_simulation_20261012.md)。不要求重跑 AISBench。
+
 ## fe0 精度基准与历史复用实验
 
-用户最新candidate完整耗时约19分钟，8分钟目标尚未达到。本轮已实现q4/q1/C4共用的精确fast unpack候选（位平面布局和FP16 metadata批量转换），CANN编译与官方CPU-debug22/22通过；目标NPU精度/图/净收益仍须短probe。完整方案与边界见[fast unpack](docs/fast_unpack.md)。
+历史反馈candidate完整耗时约19分钟，8分钟目标尚未达到。本轮已实现q4/q1/C4共用的精确fast unpack候选（位平面布局和FP16 metadata批量转换），CANN编译与官方CPU-debug22/22通过；目标NPU精度/图/净收益仍须短probe。完整方案与边界见[fast unpack](docs/fast_unpack.md)。
 
 2026-09-28：已从用户实际负载中定位到MTP后两轮q1的历史任务偏载，新增独立调度实验。后续不再要求重跑AISBench；下一轮仅用短probe：
 
@@ -18,13 +28,13 @@ git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate 
 
 当前以用户确认精度正确的`fe0e925`为基准。原`attention_cv.cpp`及store/rotate/merge等计算内核保持该版本字节一致；默认仍运行原算子。`codex/aisbench-stable`保持精确的fe0提交。新C4算子仅在显式候选模式中使用，冻结容差没有放宽，也未重新加入已回退的AR/位图或元数据向量化。
 
-### 一键验证候选并启动，用户自行运行 AISBench
+### 一键验证候选并启动
 
 ```bash
 git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate
 ```
 
-它安装/编译，先执行fe0数值门，再对新旧算子做相同输入逐位对拍、图回放及交替A/B测速；任何失败立即停止，绝不自动换成另一个服务。通过后才启动候选测试服务。模型质量与8分钟目标仍待用户完整评测，算子通过不代表这些目标完成。
+它安装/编译，先执行fe0数值门，再对新旧算子做相同输入逐位对拍、图回放及交替A/B测速；任何失败立即停止，绝不自动换成另一个服务。通过后才启动候选测试服务。后续分析已提供的AISBench日志，必要验证限短probe；算子通过不代表完整模型质量或8分钟目标完成。
 
 ### 一键观察 fe0 的实际 AISBench 负载
 
@@ -32,7 +42,7 @@ git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate
 git pull --ff-only && bash scripts/install_observe_serve.sh --variant baseline
 ```
 
-也可用`--variant native`启动不含OSCAR计算逻辑的原生对照。三种模式均从`configs/target.json`生成本次有效配置，不改原文件；同卡同端口的上一服务须先停止。看到`OBSERVE_READY`后，用自己的AISBench请求端口7878、模型名`qwen3.5`。脚本不发送测试推理请求，不生成用户数据集。
+也可用`--variant native`启动不含OSCAR计算逻辑的原生对照。三种模式均从`configs/target.json`生成本次有效配置，不改原文件；同卡同端口的上一服务须先停止。此处记录原有采证用法，不要求再次运行AISBench。脚本不发送测试推理请求，不生成用户数据集。
 
 仅打印关键`PERF_HISTORY_REUSE_*`和`OBSERVE_*`行，完整数据保存在本次`logs/observe-*`。采证使用有界异步NPU Event，区分同rank、同step、同stream的attention并集与其余时间；原生扣原生attention，OSCAR扣接管的FULL路径。图回放保留整图时间，图内细项标缺失。事件采样仍有扰动，不能用稀疏样本直接反推整轮墙钟。详见[端到端方案与实验边界](docs/history_reuse_experiment.md)。
 

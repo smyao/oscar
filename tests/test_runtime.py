@@ -372,6 +372,11 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     class Ops:
         def prepare_attention_tasks_out(self, starts, lengths, slots, tasks, positions, *geometry):
             calls.append("prepare")
+            if later_draft:
+                assert lengths.tolist() == [262144, 106]
+                assert geometry[-1] is True
+            else:
+                assert torch.equal(lengths, common.seq_lens[:common.num_reqs])
             assert slots.dtype == torch.int64 and slots.numel() == n
             assert geometry[4] == expected_splits
             assert tasks.shape == (n * hk * 3 * expected_splits, 16)
@@ -502,7 +507,8 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     impl = object.__new__(module.OscarAttentionImpl)
     impl.num_heads, impl.num_kv_heads, impl.head_size, impl.scale = h, hk, d, d**-0.5
     impl.provider = SimpleNamespace(layer_state=lambda _name: state, ops=Ops(),
-                                    config={"experimental_fast_unpack": fast_unpack,
+                                    config={"max_model_len": 262144,
+                                            "experimental_fast_unpack": fast_unpack,
                                             "experimental_mixed_cv": mixed_cv,
                                             "experimental_striped_cache": striped_cache})
     q = torch.randn(n, h * d, dtype=torch.bfloat16)
@@ -531,6 +537,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         common.max_query_len = 1
         common.num_actual_tokens = 2
         common.query_start_loc = torch.tensor([0, 1, 2], dtype=torch.int32)
+        common.seq_lens = torch.tensor([1, 106], dtype=torch.int32)
     common.slot_mapping = torch.arange(n + 4, dtype=torch.int32)
     output = torch.empty_like(q)
     result = impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),

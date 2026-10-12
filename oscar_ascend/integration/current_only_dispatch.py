@@ -13,6 +13,7 @@ import torch
 from .current_attention import guard_current_slots, native_current_partial, cpu_metadata_values
 from .runtime_api import OscarReadinessError
 from ..timing import phase
+from ..status_diagnostics import status_guard, enabled as diagnostics_enabled
 
 
 def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
@@ -73,11 +74,20 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
         status=workspace.attention_status[:task_count]
         status.copy_(bad.to(torch.int32)[:,None])
         empty=workspace.store_status[:0].view(-1)
-        ops.status_guard(status.view(-1),empty,empty,empty)
-        guard_current_slots(ops,workspace.merge_status,slots,fresh)
+        diagnostic_geometry = {}
+        if diagnostics_enabled():
+            diagnostic_geometry = dict(heads=h, kv_heads=hk, tasks=tasks, slots=slots,
+                positions=positions, starts=starts, seq_lens=metadata.seq_lens[r:r+plan.fresh_requests],
+                block_tables=metadata.block_tables[r:r+plan.fresh_requests],
+                block_size=state.spec.block_size, attention_layout=True)
+        status_guard(ops,status.view(-1),empty,empty,empty,
+            context={"layer":layer.layer_name,"phase":"current_only_prepare"}, **diagnostic_geometry)
+        guard_current_slots(ops,workspace.merge_status,slots,fresh,layer_name=layer.layer_name)
         if actual<n:
             bad_padding=(metadata.slot_mapping[actual:n]>=0).to(torch.int32)
-            ops.status_guard(bad_padding,empty,empty,empty)
+            status_guard(ops,bad_padding,empty,empty,empty,
+                context={"layer":layer.layer_name,"phase":"current_only_padding","token_offset":actual},
+                slots=metadata.slot_mapping[actual:n])
     with phase('current_native_fia',**fields):
         current,lse=native_current_partial(q,k,v,plan.cumulative,
                                            heads=h,kv_heads=hk,scale=impl.scale)
@@ -109,6 +119,7 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
             float(impl.provider.config.get('k_clip_ratio',0.)),
             float(impl.provider.config.get('v_clip_ratio',0.)),state.hadamard)
     with phase('status_guard',**fields):
-        ops.status_guard(status.view(-1),empty,workspace.merge_status[:fresh].view(-1),
-                         workspace.store_status[:fresh].view(-1))
+        status_guard(ops,status.view(-1),empty,workspace.merge_status[:fresh].view(-1),
+                     workspace.store_status[:fresh].view(-1),
+                     context={"layer":layer.layer_name,"phase":"current_only_final"}, **diagnostic_geometry)
     return output

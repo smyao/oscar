@@ -91,6 +91,8 @@ def _compact_should_mirror(line: str, state: dict[str, int]) -> bool:
     traceback is mirrored through its terminal exception line in real time.
     Normal INFO/build chatter is saved to disk without flooding the terminal.
     """
+    if "OSCAR_FIRST_ERROR " in line or "OSCAR_STATUS_DIAGNOSTICS_ACTIVE " in line:
+        return True
     if _HCCL_TIMEOUT_INFO.fullmatch(line):
         return False
     if (_STARTUP_CONNECTION_REFUSED.fullmatch(line)

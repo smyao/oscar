@@ -48,8 +48,10 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
     devices = [4, 5, 6, 7]
     port = 7878
     monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "8,9,10,11")
+    monkeypatch.setenv("OSCAR_STATUS_DIAGNOSTICS", "1")
     seen = []
     def run_phase(name, command, *, env, **kwargs):
+        assert env["OSCAR_STATUS_DIAGNOSTICS"] == "1"
         seen.append(name)
         selected = json.loads(open(env["OSCAR_TARGET_CONFIG"]).read())
         assert selected["experimental_history_reuse"] is enabled
@@ -65,6 +67,7 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
     class Served(Exception):
         pass
     def launch(executable, command, env):
+        assert env["OSCAR_STATUS_DIAGNOSTICS"] == "1"
         from tools.target_cli import serve_argv
         assert seen == list(install_serve.BUILD_PHASES)
         assert command[-1] == env["OSCAR_TARGET_CONFIG"]

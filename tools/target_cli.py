@@ -38,6 +38,8 @@ def serve_argv(config: dict) -> list[str]:
 
 def target_env(config: dict, base: dict[str, str] | None = None) -> dict[str, str]:
     env = dict(os.environ if base is None else base)
+    if env.get("OSCAR_STATUS_DIAGNOSTICS", "0") not in ("0", "1"):
+        raise ValueError("OSCAR_STATUS_DIAGNOSTICS must be 0 or 1")
     devices = config.get("devices")
     if not isinstance(devices, list) or len(devices) != 4 or len(set(devices)) != 4 or any(type(x) is not int or x < 0 for x in devices):
         raise ValueError("configs/target.json devices must contain the four physical NPU IDs selected for this task")

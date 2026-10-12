@@ -28633,3 +28633,15 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **2026-10-12 两提交review复核（仅源码/CPU，不新增真机条目）**：R1确有参考溯源不符，当前只读Ascend树为5cb98caa而非历史组合19e43698；已分列实际与未恢复历史pin，并新增本地测试清单绑定两棵实际树commit/tree、8文件SHA256、9方法AST指纹，未修改任何参考树或在直启中恢复原生扫描。R2补checked/fe0完整源码等价门，仅允许精确守卫/表初始化/命名/fence差量，7类突变负例证明能拦截额外漂移。R3将scheduler、manager、coordinator、块长解析及GDN源码纳入版本契约，不把策略重实现冒充与原生公式完全相同。R4的physical<LCM在现有prefix校验下不可达（physical为mamba整数倍⇒LCM=physical），新增几何测试而不改EAGLE公式。R5观测缺口成立，新增engine-core整段准入策略与原生实际分配采样；小预算whole_limit=0在prefix开/关均可合法，不增加虚假的失败条件。trace关闭时无观测字典/请求循环/设备同步。
 
 review中“旧切分永不命中”过强：真实原生AST测试新增50K prompt、16384 budget、EAGLE=true，得到32256 tokens命中；旧4736/6912/20000零命中用例继续保留。checkpoint策略日志属于engine-core，不能要求每TP rank生成；worker布局/算子/图证据仍独立要求。R6仍为真实证据缺口，未取得checked preparer与prefix短服务的新NPU验收。R7的torch2.1低于项目test依赖torch>=2.10；不通过改精度或原生代码适配旧测试环境，也不只凭失败数量宣称全部无逻辑问题。本机现有Python3.14.6/torch2.14.1完整执行 `.venv/bin/python -m pytest -q -s`：1071 passed、147 skipped、6 subtests passed（50.93s，较上轮新增25项）。本轮未改CANN内核、调度切分算法、目标配置与验收阈值；固定candidate直启继承同一外部插件，未把修订仅留在probe。该结果不代表目标torch2.10、NPU图回放或完整模型性能通过。
+
+## [157] 真机条目（2026-10-12）· 四卡 507035 的符号定位到 status_guard，补充图内首错状态诊断
+
+**真实输入证据**：用户本轮提供的服务日志与随后按进程/时间收集的 plog。02:30:03 四 rank 首错均为 `oscar_status_guard_kernel_8`，符号 `oscar_status_guard_kernel_8+0x258`，stream=47；TP1–TP3 task=16331，TP0 task=16386。guard 参数中四组长度为 `0x1e0/0x18/0x18/0x4`（480/24/24/4）。MTE 扩展错误码为0，后续 HCCL 报错晚于首错。原生 `acl_graph.py:256` 是 replay 前的 synchronize，不能仅凭该主机栈把首错归到即将执行的图。
+
+**能够/不能够下的结论**：故障符号已缩小到本工程原 guard；其设备实现会在任一组非零时 Trap，故非零状态是需要首先验证的候选。没有实际非零 group/index/code，也没有 +0x258 的实机反汇编，不能宣称已证明哪组状态、哪个 attention task 或唯一内存根因。480 是状态元素数而非480个 task；正常两列 attention status 对应240行，结合 Qwen TP4 的 Hq=6/Hkv=1，n=4/S=20 是形状推断，不是“4个真实请求”的证据。
+
+**本轮代码处置（不是新的真机通过记录）**：新增显式 `OSCAR_STATUS_DIAGNOSTICS=1`，默认仍调用原 guard。设备侧覆盖完整四组状态归约首个非零元素及数量，生成4×32 int64固定包；插件独立 host binding 按原生 device_print 接口执行同流 pinned D2H→host callback打印并flush→原guard。mutable schema将三者放在同一个调度 op 内；未修改、绕过或吞掉原 Trap，所有 AscendC 计算内核字节不变。覆盖正常 CV、current-only、current-slot、mixed边界与padding守卫。记录层、阶段、组、索引、错误码、原task行、slot、逻辑位置、原生query/seq/table；后续MTP必须优先用prepare修正位置，不得把带 rejected tokens 的原生长度误诊成位置错。只记录整数元数据，不打印prompt/QKV内容。
+
+**图生命周期/性能边界**：回调不得释放首次执行的payload；每次记录调用独占快照，避免不同图共享host缓冲，每worker限65536份1 KiB快照（64 MiB，不含上下文/分配器开销），超限明确失败。未关闭prefix、MTP、图模式或候选优化；开诊断的额外归约/D2H/回调不得用于吞吐比较。更早的fault可能阻止callback执行，无日志不能判健康。D.4四问：仍保留完整CV/历史/窗口/当前路径；不复活全历史BF16反量化；只采状态/metadata而非历史张量；这是显式有开销的诊断而非性能优化。
+
+**测试及交付边界**：本机源码、CPU/FakeTensor/完整FX追踪、guard关闭路径、candidate直启传环境、全部路由开启/关闭诊断对照通过；完整回归1130 passed、156 skipped、6 subtests passed（54.35s）。新增skip为macOS C++工具链不可用，原NPU/ELF跳过原因不变，额外8个skip来自原有大形状测试对诊断开关的展开。本机无NPU/CANN，新增绑定编译、真实ACL callback捕图/回放和真实根因仍未验收。新增独立 `tools.probe_status_diagnostics` 用健康图两次回放后在第1300项注入非零，四组各隔离进程；只有首错日志匹配且原Trap仍失败才接受负例。随后执行既有 `tools.service_probe --variant candidate --prefix-only`，任何门失败不得继续，不重跑AISBench。固定直启可叠加同一诊断环境变量，操作见 `docs/status_guard_diagnostics.md`。参考树、checkpoint策略、目标卡号/端口/预算和冻结精度全部未改。

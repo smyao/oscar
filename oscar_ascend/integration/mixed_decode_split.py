@@ -12,6 +12,7 @@ from dataclasses import dataclass,replace
 import torch
 from ..ops.cv_dispatch import ATTENTION_QUERY_ROWS
 from .current_attention import cpu_metadata_values
+from ..status_diagnostics import status_guard
 
 
 @dataclass(frozen=True)
@@ -77,10 +78,13 @@ def dispatch_mixed_decode(impl,layer,query,key,value,kv_cache,metadata,output,pl
     starts=metadata.query_start_loc
     boundaries=torch.stack((starts[0],starts[plan.prefix_requests]-plan.prefix_tokens,
                             starts[metadata.num_reqs]-plan.actual_tokens))
-    ops.status_guard((boundaries!=0).to(torch.int32),empty,empty,empty)
+    status_guard(ops,(boundaries!=0).to(torch.int32),empty,empty,empty,
+                 context={"layer":layer.layer_name,"phase":"mixed_boundaries"})
     if plan.actual_tokens<query.shape[0]:
         bad=(metadata.slot_mapping[plan.actual_tokens:query.shape[0]]>=0).to(torch.int32)
-        ops.status_guard(bad,empty,empty,empty)
+        status_guard(ops,bad,empty,empty,empty,
+                     context={"layer":layer.layer_name,"phase":"mixed_padding","token_offset":plan.actual_tokens},
+                     slots=metadata.slot_mapping[plan.actual_tokens:query.shape[0]])
     for rb,re,tb,te,segment in (
         (0,plan.prefix_requests,0,plan.prefix_tokens,'short_prefix'),
         (plan.prefix_requests,metadata.num_reqs,plan.prefix_tokens,plan.actual_tokens,'long_suffix')):

@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-12",
+  "archive": 157,
+  "base_commit": "267b330",
+  "scope": "optional status diagnostic logging, no numerical kernel or configuration changes",
+  "cpu_tests": {
+    "command": ".venv/bin/python -m pytest -q -s --tb=short",
+    "passed": 1130,
+    "skipped": 156,
+    "subtests_passed": 6,
+    "seconds": 54.35,
+    "skip_breakdown": {
+      "real_npu_cv": 34,
+      "linux_elf": 1,
+      "real_npu_rotation": 104,
+      "redundant_large_host_route_diagnostic_on_off": 16,
+      "host_cpp_toolchain_unavailable": 1
+    }
+  },
+  "reference_trees_modified": false,
+  "ascendc_computation_kernels_modified": false,
+  "target_config_modified": false,
+  "acceptance_thresholds_modified": false,
+  "new_host_binding_compilation": "not_run_no_usable_target_toolchain",
+  "host_cpp_formatter_execution": "not_run_macOS_developer_toolchain_missing",
+  "no_npu_negative_orchestration": "confirmed_nonzero_exit_and_failed_gate_when_torch_npu_is_unavailable",
+  "npu_diagnostic_capture": "not_run",
+  "npu_diagnostic_replay": "not_run",
+  "npu_original_trap_after_diagnostic": "not_run",
+  "model_prefix_service": "not_run",
+  "model_quality": "not_run",
+  "performance": "not_run_diagnostic_mode_is_not_for_benchmarking",
+  "instructions": "docs/status_guard_diagnostics.md"
+}

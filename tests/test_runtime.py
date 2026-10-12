@@ -328,10 +328,12 @@ def test_online_forward_contains_no_host_request_loop_or_tensor_readback():
     (4, True, False, False), (16, True, True, False),
     (16, True, True, True)])
 @pytest.mark.parametrize("later_draft", [False, True])
-def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv, striped_cache):
+@pytest.mark.parametrize("diagnostic", [False, True])
+def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv, striped_cache, diagnostic, monkeypatch):
     """Host ABI exercise only: fake ops establish ordering, never accuracy."""
     if n == 8192 and (cluster_size != 16 or later_draft):
         pytest.skip("large FULL host route is needed once for C16")
+    monkeypatch.setenv("OSCAR_STATUS_DIAGNOSTICS", "1" if diagnostic else "0")
     # patch.dict restores sys.modules after the fake impl import. Preload the
     # real current_attention module first so the package attribute and the
     # restored absolute-import entry remain the same object for later tests.
@@ -481,6 +483,12 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         def status_guard(self, *statuses):
             calls.append("guard")
             assert all(bool(torch.all(status == 0)) for status in statuses)
+
+        def status_guard_diagnostic(self, a, b, c, d, packet, context):
+            assert diagnostic and packet.shape == (4, 32)
+            assert packet[:, 2].tolist() == [0, 0, 0, 0]
+            assert '"phase":"final"' in context
+            self.status_guard(a, b, c, d)
 
     packed = torch.empty(128, dtype=torch.uint8)
     state = SimpleNamespace(

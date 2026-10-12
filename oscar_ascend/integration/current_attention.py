@@ -12,6 +12,7 @@ from __future__ import annotations
 import math
 
 import torch
+from ..status_diagnostics import status_guard
 
 
 class CurrentAttentionError(RuntimeError):
@@ -123,7 +124,7 @@ def _causal_mask(device: torch.device) -> torch.Tensor:
 
 
 def guard_current_slots(ops, status: torch.Tensor, slots: torch.Tensor,
-                        active_tokens: int) -> None:
+                        active_tokens: int, *, layer_name="unknown") -> None:
     """Trap on any internal invalid slot before native FIA executes on stream.
 
     The pre-existing status_guard is a same-stream AscendC trap, with no host
@@ -139,7 +140,11 @@ def guard_current_slots(ops, status: torch.Tensor, slots: torch.Tensor,
         raise CurrentAttentionError("current-slot guard requires fixed NPU status/slot buffers")
     temporary = _populate_slot_error_status(status, slots, active_tokens)
     empty = status[:0].view(-1)
-    ops.status_guard(temporary.view(-1), empty, empty, empty)
+    # The original guard still checks the complete replicated head buffer.
+    status_guard(ops, temporary.view(-1), empty, empty, empty,
+                 context={"layer": layer_name, "phase": "current_slots",
+                          "status_heads": status.shape[1]}, slots=slots,
+                 flat_heads=status.shape[1])
 
 
 def _populate_slot_error_status(status: torch.Tensor, slots: torch.Tensor,

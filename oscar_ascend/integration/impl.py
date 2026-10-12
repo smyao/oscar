@@ -19,6 +19,7 @@ from .current_attention import (guard_current_slots, native_current_partial,
 from .runtime_api import OscarReadinessError, require_runtime
 from ..telemetry import emit_once, emit_throttled
 from ..timing import phase
+from ..status_diagnostics import status_guard, enabled as diagnostics_enabled
 from ..ops.cv_dispatch import CLUSTER_CV_OPS, select_cv_op
 
 
@@ -194,7 +195,8 @@ class OscarAttentionImpl(AttentionImpl):
                 raise OscarReadinessError("native CPU current lengths were not prepared for this step")
             with phase("current_slot_guard", layer=layer.layer_name, tokens=active,
                        requests=attn_metadata.num_reqs, **timing_fields):
-                guard_current_slots(ops, workspace.merge_status, slots, active)
+                guard_current_slots(ops, workspace.merge_status, slots, active,
+                                    layer_name=layer.layer_name)
             with phase("current_native_fia", layer=layer.layer_name, tokens=active,
                        requests=attn_metadata.num_reqs, source_splits=source_splits, **timing_fields):
                 current_out, current_lse = native_current_partial(
@@ -227,8 +229,21 @@ class OscarAttentionImpl(AttentionImpl):
                 float(self.provider.config.get("v_clip_ratio", 0.0)), state.hadamard)
         with phase("status_guard", layer=layer.layer_name, tokens=n,
                    requests=attn_metadata.num_reqs, **timing_fields):
-            ops.status_guard(statuses, workspace.rotate_status[:n],
-                             workspace.merge_status[:n], workspace.store_status[:n])
+            if diagnostics_enabled():
+                status_guard(ops, statuses, workspace.rotate_status[:n],
+                             workspace.merge_status[:n], workspace.store_status[:n],
+                             context={"layer": layer.layer_name, "phase": "final",
+                                      "cv_operator": cv_name, "token_capacity": n,
+                                      "source_splits": source_splits, "is_draft": attn_metadata.is_draft,
+                                      "query_heads": h, "kv_heads": hk, "cache_format": expected_format,
+                                      "physical_block_tokens": state.spec.block_size, "physical_blocks": state.num_blocks},
+                             heads=h, kv_heads=hk, source_splits=source_splits, attention_layout=True,
+                             tasks=tasks, slots=slots, positions=positions,
+                             starts=attn_metadata.query_start_loc, seq_lens=attn_metadata.seq_lens,
+                             block_tables=attn_metadata.block_tables, block_size=state.spec.block_size)
+            else:
+                ops.status_guard(statuses, workspace.rotate_status[:n],
+                                 workspace.merge_status[:n], workspace.store_status[:n])
         emit_once("attention_dispatched", key=(layer.layer_name, n, attn_metadata.max_query_len),
                   layer=layer.layer_name, tokens=n, requests=attn_metadata.num_reqs,
                   max_query_len=attn_metadata.max_query_len,

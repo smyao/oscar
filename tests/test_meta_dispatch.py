@@ -24,3 +24,7 @@ def test_cpp_schemas_accept_out_only_abstract_dispatch():
     status=torch.empty((4,6),device="meta",dtype=torch.int32)
     assert torch.ops.oscar_meta_contract.rotate_out(q,rot,out,status,False) is None
     assert torch.ops.oscar_meta_contract.status_guard(status,status,status,status) is None
+    report=torch.empty((4,32),device="meta",dtype=torch.int64)
+    assert torch.ops.oscar_meta_contract.status_guard_diagnostic(status,status,status,status,report,"{}") is None
+    schema=torch.ops.oscar_meta_contract.status_guard_diagnostic.default._schema
+    assert schema.arguments[0].alias_info.is_write

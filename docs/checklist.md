@@ -49,6 +49,8 @@
 
 ## 当前必须正面解决的事项
 
+2026-10-12（#157）：新plog四rank均定位到 `oscar_status_guard_kernel_8+0x258`，非零状态组/值仍未知。新增显式同流首错诊断，原Trap和全部计算内核保留；正常直启/candidate与prefix短门共用，终端与文件同步保留错误。CPU完整回归1130 passed、156 skipped、6 subtests passed；无可用本机C++工具链/NPU/CANN，新增host绑定编译、设备诊断、图捕获、图回放、prefix模型质量与性能均未新增通过证据。先运行独立状态注入负例门，再运行短prefix服务门；详见 `docs/status_guard_diagnostics.md`。42个稳定checkpoint不增删，E06未通过。
+
 2026-09-29（#152）：64K/120×512同任务，OSCAR3331.55s vs native1371.97s，E06失败；不重跑AISBench。新mixed四组设备oracle通过并确认N16384/S1 q4与带历史prefill CV开销。候选增加独立balanced/C16，保留fe0与已测fast/C4/q1算子；固定`install_serve.sh --variant candidate`自动启用新路由，新真实NPU AB/图/错误传播门接`--probe-only --diagnose-mixed`。本地证据与新NPU待验状态见`docs/mixed_cv_optimization.md`，不因源码/编译/CPU成功标E06通过。
 
 2026-09-28最新用户报告约16min，原生约8min；E06仍未通过。新片段中相同Running25/Waiting7时OSCAR生成17.2 tok/s、原生125.3 tok/s，而OSCAR prompt吞吐归零的三个窗口生成均值296.6 tok/s。线索集中于混合长prefill期间的推进速度，不能把峰值当作整程收益或把共用eager规则当作唯一根因。源码和计数口径见`docs/mixed_prefill_analysis.md`。新增可选`--probe-only --diagnose-mixed`只测实际candidate CV/current FIA/merge组合；NPU数据待回传，不新增算子精度或性能通过结论，直启candidate继续使用已交付优化。

@@ -84,7 +84,8 @@ def test_current_suffix_keeps_prefix_and_checks_gpu_context_before_fia(monkeypat
             assert not meta.first_draft_current_only
             if draft:assert not use_native_current(meta)
             output.fill_(7)
-    def slot_guard(ops,status,slots,active):
+    def slot_guard(ops,status,slots,active,*,layer_name):
+        assert layer_name
         checked=_populate_slot_error_status(status,slots,active)
         ops.status_guard(checked)
     monkeypatch.setattr(module,'guard_current_slots',slot_guard)

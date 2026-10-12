@@ -149,4 +149,10 @@ def require_capabilities(required, manifest_path=None):
 
 
 def require_production_ops(manifest_path=None):
-    return require_capabilities(PRODUCTION_CAPABILITIES, manifest_path)
+    required = PRODUCTION_CAPABILITIES
+    diagnostic = os.environ.get("OSCAR_STATUS_DIAGNOSTICS", "0")
+    if diagnostic not in ("0", "1"):
+        raise OperatorUnavailable("OSCAR_STATUS_DIAGNOSTICS must be 0 or 1")
+    if diagnostic == "1":
+        required = required | {"status_guard_diagnostic"}
+    return require_capabilities(required, manifest_path)

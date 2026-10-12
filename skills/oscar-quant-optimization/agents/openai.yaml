@@ -1,0 +1,4 @@
+interface:
+  display_name: "OSCAR 量化优化闭环"
+  short_description: "针对当前工程的 OSCAR 量化与反量化优化、证据闭环和一键交付"
+  default_prompt: "使用 $oscar-quant-optimization，先核对本工程优化台账和当前代码，再推进有证据的量化与反量化组合优化。"

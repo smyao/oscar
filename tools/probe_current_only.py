@@ -1,4 +1,4 @@
-"""Archive #94/#95/#125/#140/#142/#148/#155: real NPU current-only gate.
+"""Archive #34/#36/#94/#95/#125/#140/#142/#148/#155: real NPU current-only gate.
 
 D.4: this measures current FIA/copy/store, never historical dequant restore.
 The old 6.5s dequant and ~215ms store are failure context, not our timings.
@@ -125,13 +125,23 @@ class CountedOps:
         return invoke
 
 
-def _configuration(target, enabled):
+def _configuration(target, enabled, *, probe_tokens=None):
     # The short gate is specifically for the current production striped bundle.
     for key in ("experimental_history_reuse", "experimental_fast_unpack",
                 "experimental_mixed_cv", "experimental_striped_cache"):
         if target.get(key) is not True:
             raise RuntimeError(f"current-only gate requires explicit {key}=true")
-    return {**target, "experimental_current_only": enabled}
+    config = {**target, "experimental_current_only": enabled}
+    if probe_tokens is not None:
+        if type(probe_tokens) is not int or probe_tokens <= 0:
+            raise ValueError("independent probe token capacity must be a positive integer")
+        # This private model-free provider already receives a fixture-sized
+        # GraphWorkspace. Do not inherit/guess the service scheduler or graph
+        # capacity, and never write these diagnostic values to target config.
+        config.update(max_num_batched_tokens=probe_tokens, use_native_token_budget=False)
+        config["compilation_config"] = {
+            **config.get("compilation_config", {}), "cudagraph_capture_sizes": []}
+    return config
 
 
 def _runtime(torch, fixture, tensors, device, cores, target, enabled, *, hadamard=False):
@@ -153,7 +163,7 @@ def _runtime(torch, fixture, tensors, device, cores, target, enabled, *, hadamar
             speculative_tokens=reuse.SPECULATIVE, ring_tokens=spec.recent_tokens+reuse.SPECULATIVE),
         tensors["wk"].clone(), tensors["wv"].clone(), tensors["tags"].clone(),
         rk, rv, rk.T.contiguous(), rv.T.contiguous(), hadamard, fixture["blocks"], workspace, "striped_v1")
-    provider = AscendRuntimeProvider(_configuration(target, enabled))
+    provider = AscendRuntimeProvider(_configuration(target, enabled, probe_tokens=fixture["tokens"]))
     provider.layers["probe.full"] = state
     provider.ops = CountedOps(torch.ops.oscar_ascend_ops)
     # Instantiate the real forward without model/distributed initialization.
@@ -299,6 +309,8 @@ def run_case(torch, target, acceptance, device, cores, case):
     expected_lse=torch.stack([fixture["expected"][i][1] for i in sample])
     torch.testing.assert_close(observed_lse,expected_lse,**tolerance)
     row={"case":name,"status":"passed","first_draft":draft,"slot_dtype":slot_type,
+         "workspace_token_capacity":fixture["tokens"],
+         "capacity_source":"independent_fixture_not_service_scheduler",
          "rotation":_rotation_label(rotation_mode),
          "independent_oracle":"passed","copy_lse_oracle":"passed",**errors}
     if paired:

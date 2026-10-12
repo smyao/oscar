@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Archive G6/#17/#22/#34/#53/#69/#87/#108/#111: checked out-only ABI,
 // retained FP32 transform arithmetic, no allocation/sync or CPU numerical path.
+// #153/#154: optional VectorInit has the same checks and a distinct launch;
+// the original rotate_out continues to call the frozen canonical kernel.
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -10,6 +12,7 @@
 #include <torch_npu/csrc/core/npu/NPUStream.h>
 #include <torch_npu/csrc/core/npu/NPUGuard.h>
 #include "include/oscar_rotation_launch.h"
+#include "include/oscar_rotation_vector_init_launch.h"
 
 namespace {
 constexpr int64_t kLimit=std::numeric_limits<int64_t>::max();
@@ -68,8 +71,9 @@ void NoOverlapPages(const at::Tensor& a,const at::Tensor& b,int64_t aRowBytes,in
 uint32_t Cores(int64_t rows) {
   return static_cast<uint32_t>(std::min<int64_t>(32,rows>0 ? (rows-1)/8+1 : 1));
 }
-void Rotate(const at::Tensor& input,const at::Tensor& rotation,at::Tensor output,
-            at::Tensor status,bool hadamard,const std::optional<at::Tensor>& slots) {
+template <bool VectorInit>
+void CheckedRotate(const at::Tensor& input,const at::Tensor& rotation,at::Tensor output,
+                   at::Tensor status,bool hadamard,const std::optional<at::Tensor>& slots) {
   const int32_t dtype=Input(input); Matrix(rotation,input);
   Tensor(output,input,at::kFloat,"output"); Tensor(status,input,at::kInt,"status");
   TORCH_CHECK(output.sizes()==input.sizes(),"rotation output must match input [N,H,D]");
@@ -85,9 +89,23 @@ void Rotate(const at::Tensor& input,const at::Tensor& rotation,at::Tensor output
   if (input.size(0)==0) return;
   const c10_npu::OptionalNPUGuard guard(input.device());
   const int64_t rows=Product(input.size(0),input.size(1),"rows");
-  oscar_ascend::rotate_launch(c10_npu::getCurrentNPUStream().stream(),input.data_ptr(),
-      rotation.data_ptr(),output.data_ptr(),status.data_ptr(),rows,input.size(2),dtype,
-      hadamard,slots.has_value() ? slots->data_ptr() : nullptr,input.size(1),Cores(rows));
+  if constexpr (VectorInit) {
+    oscar_ascend::rotate_vector_init_launch(c10_npu::getCurrentNPUStream().stream(),input.data_ptr(),
+        rotation.data_ptr(),output.data_ptr(),status.data_ptr(),rows,input.size(2),dtype,
+        hadamard,slots.has_value() ? slots->data_ptr() : nullptr,input.size(1),Cores(rows));
+  } else {
+    oscar_ascend::rotate_launch(c10_npu::getCurrentNPUStream().stream(),input.data_ptr(),
+        rotation.data_ptr(),output.data_ptr(),status.data_ptr(),rows,input.size(2),dtype,
+        hadamard,slots.has_value() ? slots->data_ptr() : nullptr,input.size(1),Cores(rows));
+  }
+}
+void Rotate(const at::Tensor& input,const at::Tensor& rotation,at::Tensor output,
+            at::Tensor status,bool hadamard,const std::optional<at::Tensor>& slots) {
+  CheckedRotate<false>(input,rotation,output,status,hadamard,slots);
+}
+void RotateVectorInit(const at::Tensor& input,const at::Tensor& rotation,at::Tensor output,
+                 at::Tensor status,bool hadamard,const std::optional<at::Tensor>& slots) {
+  CheckedRotate<true>(input,rotation,output,status,hadamard,slots);
 }
 void RawView(const at::Tensor& raw,const at::Tensor& owner,int64_t blocks,int64_t rows,
              int64_t heads,int64_t dim,const char* name) {
@@ -216,6 +234,8 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
         "int recent_capacity, float k_clip, float v_clip, bool hadamard=False) -> ()");
   m.def("rotate_out(Tensor input, Tensor rotation_transposed, Tensor(a!) output, "
         "Tensor(b!) status, bool hadamard=False, Tensor? slots=None) -> ()");
+  m.def("rotate_vector_init_out(Tensor input, Tensor rotation_transposed, Tensor(a!) output, "
+        "Tensor(b!) status, bool hadamard=False, Tensor? slots=None) -> ()");
   m.def("rotate_clip_store_out(Tensor key, Tensor value, Tensor rk_transposed, "
         "Tensor rv_transposed, Tensor slots, Tensor positions, Tensor(a!) packed, "
         "Tensor(b!) raw_key, Tensor(c!) raw_value, Tensor(d!) raw_tags, Tensor(e!) status, "
@@ -224,5 +244,6 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
 }
 TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
   m.impl("rotate_clip_store_striped_out",&RotateStoreStriped);
+  m.impl("rotate_vector_init_out",&RotateVectorInit);
   m.impl("rotate_out",&Rotate);m.impl("rotate_clip_store_out",&RotateStore);
 }

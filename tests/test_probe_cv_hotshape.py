@@ -1,4 +1,4 @@
-"""Archive #70-73/#85/#125/#126/#143: paired CV diagnostic host contracts.
+"""Archive #34/#36/#70-73/#85/#125/#126/#143: paired CV diagnostic host contracts.
 
 They do not stand in for the target NPU numerical or Event measurements.
 """
@@ -64,6 +64,15 @@ def test_shape_splits_capture_old_and_candidate_query_tile_difference():
     assert hot.splits_for_shape(128, 32, query_rows=64, capacity=16384) == 3
     assert hot.splits_for_shape(128, 32, query_rows=128, capacity=16384) == 5
     assert hot.workspace_per_core_bytes(256, 128, 256) == 917504
+
+
+def test_independent_hotshape_uses_own_actual_geometry_without_service_budget():
+    assert hot.splits_for_shape(11504, 20, query_rows=128) == 1
+    assert hot.splits_for_shape(128, 20, query_rows=128) == 3
+    assert hot.splits_for_shape(128, 32, query_rows=64) == 3
+    assert hot.splits_for_shape(128, 32, query_rows=128) == 5
+    with pytest.raises(hot.HotShapeError, match="split geometry"):
+        hot.splits_for_shape(128, 0, query_rows=128)
 
 
 def test_small_synthetic_fixture_is_bitwise_replayable_and_page_disjoint(monkeypatch):

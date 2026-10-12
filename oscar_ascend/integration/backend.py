@@ -5,6 +5,8 @@ readback, or capture-only suppression masquerading as graph replay.
 Only an installed, ready runtime can provide the real AttentionImpl.
 """
 
+from dataclasses import replace
+
 import torch
 from vllm.v1.attention.backend import AttentionBackend, AttentionCGSupport, AttentionMetadataBuilder
 
@@ -56,7 +58,9 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
         super().__init__(kv_cache_spec, layer_names, vllm_config, device)
         self.capacity = None
         self.bindings = GraphMetadataBindings()
-        runtime_config = require_runtime().config
+        provider = require_runtime()
+        self._request_window_provider = provider if getattr(provider, "request_windows_enabled", False) else None
+        runtime_config = provider.config
         self.current_only = runtime_config.get("experimental_current_only", False)
         self.first_draft_current_only = (
             self.current_only and supports_first_draft_current_only(vllm_config))
@@ -69,13 +73,22 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
             raise ValueError("experimental_mixed_decode_split must be an explicit boolean")
         cache = getattr(vllm_config, "cache_config", None)
         parallel = getattr(vllm_config, "parallel_config", None)
+        # Native APC shares only complete immutable FULL pages; each request's
+        # writable suffix is newly allocated. Splitting at request boundaries
+        # therefore remains valid with shared prefixes (#26/#37-49), and must
+        # not bind short decode rows back to the global prefill CV shape.
         self.mixed_decode_split = (
-            mixed_split and getattr(cache, "enable_prefix_caching", None) is False
+            mixed_split and type(getattr(cache, "enable_prefix_caching", None)) is bool
             and getattr(parallel, "prefill_context_parallel_size", None) == 1
             and getattr(parallel, "decode_context_parallel_size", None) == 1)
 
     def reorder_batch(self, input_batch, scheduler_output):
         return False
+
+    def _bind(self, metadata):
+        if self._request_window_provider is not None:
+            metadata = replace(metadata, window_map=self._request_window_provider.request_window_map(metadata.num_reqs))
+        return self.bindings.bind(metadata)
 
     def build(self, common_prefix_len, common_attn_metadata, fast_build=False):
         # Native llm_base_proposer.py:913 calls first draft with its model as
@@ -89,7 +102,7 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
                                    first_draft and self.first_draft_current_only),
                                first_draft_current_fia=(first_draft and self.first_draft_current_fia),
                                mixed_decode_split=self.mixed_decode_split)
-        return self.bindings.bind(metadata)
+        return self._bind(metadata)
 
     def build_for_graph_capture(self, common_attn_metadata, attn_state=None):
         # Native _dummy_run does not necessarily initialize slot values when
@@ -97,7 +110,7 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
         # inputs explicitly. The complete kernels are still captured; replay
         # reads the same native buffer after _prepare_inputs fills real slots.
         common_attn_metadata.slot_mapping.fill_(-1)
-        return self.bindings.bind(from_common(common_attn_metadata, capacity=self.capacity, capture_origin=True))
+        return self._bind(from_common(common_attn_metadata, capacity=self.capacity, capture_origin=True))
 
     def build_for_cudagraph_capture(self, common_attn_metadata):
         return self.build_for_graph_capture(common_attn_metadata)
@@ -111,4 +124,4 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
             raise ValueError("draft_index must be a nonnegative integer")
         metadata = from_common(common_attn_metadata, capacity=self.capacity,
                                is_draft=True, draft_index=draft_index)
-        return self.bindings.bind(metadata)
+        return self._bind(metadata)

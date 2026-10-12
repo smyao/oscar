@@ -234,6 +234,15 @@ def run_case(torch, ops, case, device, cores, acceptance):
 
 
 def store_gate(torch,ops,device,cores,acceptance):
+    # Keep the existing dense rotation gate and add exactly one true Hadamard
+    # eager/graph pair. A Hadamard matrix with hadamard=False never executes
+    # the new vector index/sign initializer (#145/#154/#155).
+    dense=_store_gate(torch,ops,device,cores,acceptance,hadamard=False)
+    hadamard=_store_gate(torch,ops,device,cores,acceptance,hadamard=True)
+    return {**dense,'hadamard_true':hadamard}
+
+
+def _store_gate(torch,ops,device,cores,acceptance,*,hadamard):
     # Current rows cross virtual128/page boundaries and exact-window wrap;
     # the actual new writer is read by old and striped readers after commit.
     spec=reuse.Shape('striped_store', (385,), (641,),256,1,1,True)
@@ -252,7 +261,7 @@ def store_gate(torch,ops,device,cores,acceptance):
         getattr(ops,name)(tensors['ck'],tensors['cv'],rk,rv,tensors['slots'],buffers['positions'],
             state['raw'],state['wk'],state['wv'],state['tags'],status,
             reuse.BLOCK_TOKENS,fixture['blocks'],reuse.PREFIX,fixture['stride'],
-            reuse.SINK,spec.recent_tokens+reuse.SPECULATIVE,0.,0.,False)
+            reuse.SINK,spec.recent_tokens+reuse.SPECULATIVE,0.,0.,hadamard)
         torch.npu.synchronize()
         if not bool((status.cpu()==0).all()):raise RuntimeError('striped store status failure')
         state={k:v.cpu() for k,v in state.items()};state['status']=status.cpu();results.append(state)
@@ -273,10 +282,11 @@ def store_gate(torch,ops,device,cores,acceptance):
     if torch.equal(legacy['raw'],fixture['cpu']['raw']):
         raise RuntimeError('store gate did not change any compressed cache byte')
     reader=_reader_after_writer(torch,ops,device,cores,fixture,tensors,legacy,striped)
-    graph=_store_changed_input_graph(torch,ops,device,fixture,tensors,buffers,rk,rv)
+    graph=_store_changed_input_graph(torch,ops,device,fixture,tensors,buffers,rk,rv,
+                                     hadamard=hadamard)
     return {'status':'passed','raw_inverse_bitwise':'passed',
             'precise_windows_bitwise':'passed','reader_after_writer':reader,
-            'graph_changed_key_value':graph}
+            'graph_changed_key_value':graph,'hadamard':hadamard}
 
 
 def _reader_after_writer(torch,ops,device,cores,fixture,tensors,legacy,striped):
@@ -336,7 +346,7 @@ def _retarget_reader_task(tasks,fixture):
     return owner*3,begin,end,owner,count
 
 
-def _store_changed_input_graph(torch,ops,device,fixture,tensors,buffers,rk,rv):
+def _store_changed_input_graph(torch,ops,device,fixture,tensors,buffers,rk,rv,*,hadamard=False):
     """Capture the actual striped writer, then mutate K/V at fixed addresses."""
     graph_k=tensors['ck'].clone()
     graph_v=tensors['cv'].clone()
@@ -349,7 +359,7 @@ def _store_changed_input_graph(torch,ops,device,fixture,tensors,buffers,rk,rv):
             graph_k,graph_v,rk,rv,tensors['slots'],buffers['positions'],
             state['raw'],state['wk'],state['wv'],state['tags'],status,
             reuse.BLOCK_TOKENS,fixture['blocks'],reuse.PREFIX,fixture['stride'],
-            reuse.SINK,fixture['spec'].recent_tokens+reuse.SPECULATIVE,0.,0.,False)
+            reuse.SINK,fixture['spec'].recent_tokens+reuse.SPECULATIVE,0.,0.,hadamard)
     graph=torch.npu.NPUGraph()
     with torch.npu.graph(graph,capture_error_mode='thread_local',auto_dispatch_capture=True):
         launch()
@@ -382,7 +392,7 @@ def _store_changed_input_graph(torch,ops,device,fixture,tensors,buffers,rk,rv):
     if not torch.equal(changed_status,status):
         raise RuntimeError('striped store changed-input graph/eager status differs')
     return {'capture':'passed','replay':'passed','same_address_changed_key_value':True,
-            'eager_parity':'bitwise_passed'}
+            'eager_parity':'bitwise_passed','hadamard':hadamard}
 
 
 def probe(config_path,acceptance_path):
@@ -400,8 +410,16 @@ def probe(config_path,acceptance_path):
     if _target_geometry(target)!=(6,1,256):raise RuntimeError('striped target requires Hq6/Hkv1/D256')
     manifest=validate_build_artifacts(ROOT/'build/ascendc/build_manifest.json')
     cases=case_plan()
-    require_capabilities({c.new for c in cases}|{'rotate_clip_store_striped_out'},ROOT/'build/ascendc/build_manifest.json')
+    capabilities={c.new for c in cases}|{'rotate_clip_store_striped_out'}
+    if target.get('experimental_quantization_bundle',False):
+        capabilities|={'rotate_vector_init_out','rotate_out'}
+    require_capabilities(capabilities,ROOT/'build/ascendc/build_manifest.json')
     ops=torch.ops.oscar_ascend_ops;device=torch.device('npu:0');cores=reuse._core_count(torch,target)
+    rotation=None
+    if target.get('experimental_quantization_bundle',False):
+        from .probe_vector_init_rotation import gate
+        rotation=gate(torch,ops,device,acceptance)
+        print('[oscar] PERF_VECTOR_INIT status=passed eager=passed independent_oracle=passed graph=passed error_contract=passed',flush=True)
     writer=store_gate(torch,ops,device,cores,acceptance)
     rows=[]
     for case in cases:
@@ -412,6 +430,7 @@ def probe(config_path,acceptance_path):
             'graph_capture':'passed','graph_replay':'passed',
             'performance':'passed' if passed else 'failed','format':FORMAT,'writer':writer,'cases':rows,
             'artifact_signature':manifest['signature'],'artifact_sha256':manifest['sha256'],
+            'vector_init_rotation':rotation,
             'full_model_performance':'not_established'}
 
 
@@ -426,7 +445,7 @@ def main(argv=None):
         traceback.print_exc();report={'status':'failed','first_error':str(exc)}
     atomic_json(args.output,report)
     print('[oscar] PERF_STRIPED_RESULT '+json.dumps({k:v for k,v in report.items()
-          if k not in ('cases','artifact_sha256')}|{'report':str(args.output)}),flush=True)
+          if k not in ('cases','artifact_sha256','vector_init_rotation')}|{'report':str(args.output)}),flush=True)
     return 0 if report['status']=='passed' else 2
 
 

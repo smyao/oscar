@@ -3,6 +3,7 @@
 # exist only in these tests and never constitute NPU acceptance evidence;
 # synthetic mixed-length performance does not replace 16-token function gates.
 # #133/#143: a second synchronized device-event repeat is separately labelled.
+# #34/#36/#132: absent actual native scheduler capacity leaves step floor unknown.
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -238,6 +239,8 @@ def test_healthy_run_records_streaming_synthetic_mixed_probe(tmp_path):
     assert performance["sample"]["completed_requests"] == 4
     assert performance["valid_running_waiting_samples"] >= 1
     assert performance["native_counter_check"]["status"] == "passed"
+    assert performance["theoretical_min_prefill_steps"] is None
+    assert performance["step_floor_scope"] == "unknown_native_scheduler_token_budget_not_observed"
     assert all(0 < request["ttft_ms"] < request["e2e_ms"]
                for request in performance["sample"]["requests"])
     assert sorted(x["prompt_tokens"] for x in report["requests"]) == [128,128,16384,16384,32768,32768,50000,50000]
@@ -285,6 +288,7 @@ def test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up(tmp_path
     assert report["synthetic_mixed"]["sample"]["completed_requests"] == 4
     assert report["synthetic_mixed"]["prompt_lengths"] == [20000,23000,27000,30000]
     assert report["synthetic_mixed"]["pair_identity"]["output_tokens"] == 64
+    assert report["synthetic_mixed"]["theoretical_min_prefill_steps"] is None
     assert all(row["usage"]["completion_tokens"] == 64
                for row in report["synthetic_mixed"]["sample"]["requests"])
     assert len(report["synthetic_mixed"]["window"]) == 3

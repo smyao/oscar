@@ -5,12 +5,16 @@ exact current BF16 attention. Existing-prefix requests retain the complete
 OSCAR path; every current K/V still enters the INT2 writer after attention.
 No stored history is materialized or treated as BF16. Device checks reject
 an incorrect host zero-context proof before executing current attention.
+#34/#36/#127-129/#140: full-input buffers may exceed the historical-CV row
+# budget. Validate the historical prefix separately before any prefix writes;
+# the existing #142 dummy/capture and device context checks remain mandatory.
 """
 from dataclasses import replace
 
 import torch
 
 from .current_attention import guard_current_slots, native_current_partial
+from .metadata import slice_window_map
 from .runtime_api import OscarReadinessError
 from ..timing import phase
 
@@ -31,7 +35,9 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
         raise OscarReadinessError('current-only plan does not match active/padded tokens')
     state=impl.provider.layer_state(layer.layer_name)
     workspace=state.workspace
-    workspace.validate(n,h,hk,d)
+    workspace.validate_current_only(n,h,hk,d)
+    if cut:
+        workspace.validate(cut,h,hk,d)
     ops=impl.provider.ops
     if cut:
         r=plan.prefix_requests
@@ -44,10 +50,12 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
                        num_reqs=r,num_actual_tokens=cut,num_input_tokens=cut,
                        max_query_len=int(lengths.max()),
                        current_cumulative=tuple(int(v) for v in cpu_starts[1:].tolist() if v>0),
-                       current_only_plan=None, first_draft_current_only=False)
+                       current_only_plan=None, first_draft_current_only=False,
+                       window_map=slice_window_map(metadata, 0, r))
         impl.forward(layer,query[:cut],key[:cut],value[:cut],kv_cache,prefix,
                      output=output[:cut])
     r=plan.prefix_requests
+    window_map = slice_window_map(metadata, r, r + plan.fresh_requests)
     fields={'layer':layer.layer_name,'tokens':fresh,'requests':plan.fresh_requests,
             'current_only':True,'stage':'draft' if first_draft else 'prefill',
             'is_draft':metadata.is_draft,'draft_index':metadata.draft_index}
@@ -98,15 +106,8 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
         if actual<n:
             output[actual:n].zero_()
     with phase('phase1_stores',**fields):
-        name=('rotate_clip_store_striped_out' if state.cache_format=='striped_v1'
-              else 'rotate_clip_store_out')
-        getattr(ops,name)(k,v,state.rotation_k_transpose,state.rotation_v_transpose,
-            slots,positions,state.raw,state.window_key,state.window_value,state.window_tags,
-            workspace.store_status[:fresh],state.spec.block_size,state.num_blocks,
-            state.num_blocks*state.spec.conv_bytes,state.spec.ssm_bytes,
-            state.snapshots.sink_tokens,state.snapshots.ring_tokens,
-            float(impl.provider.config.get('k_clip_ratio',0.)),
-            float(impl.provider.config.get('v_clip_ratio',0.)),state.hadamard)
+        from .cache_storage_ops import store_current
+        store_current(ops,state,k,v,slots,positions,starts,window_map,impl.provider.config)
     with phase('status_guard',**fields):
         ops.status_guard(status.view(-1),empty,workspace.merge_status[:fresh].view(-1),
                          workspace.store_status[:fresh].view(-1))

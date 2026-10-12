@@ -42,6 +42,9 @@ class OscarMetadata:
     cv_shape_tokens: int | None = None
     mixed_decode_split: bool = False
     mixed_split_segment: str | None = None
+    # Shared fixed [request-capacity,2] int64 storage (slot,epoch), sliced by
+    # request rows, never query-token rows. None preserves the legacy format.
+    window_map: Any = None
 
     @property
     def block_table(self):
@@ -162,14 +165,31 @@ def from_common(common: Any, *, capacity: MetadataCapacity | None = None,
     return metadata
 
 
+def slice_window_map(metadata: OscarMetadata, begin: int, end: int):
+    mapping = getattr(metadata, "window_map", None)
+    if mapping is None:
+        return None
+    import torch
+    if (not torch.is_tensor(mapping) or mapping.dtype != torch.int64 or
+            mapping.ndim != 2 or mapping.shape[1] != 2 or mapping.stride() != (2, 1) or
+            mapping.device != metadata.seq_lens.device or
+            type(begin) is not int or type(end) is not int or
+            not 0 <= begin <= end <= metadata.num_reqs or end > mapping.shape[0]):
+        raise OscarMetadataError("request-window map must match native request rows and device")
+    return mapping[begin:end]
+
+
 def buffer_signature(metadata: OscarMetadata):
     """Address evidence only; no metadata tensor values are read by Python."""
     rows = metadata.num_reqs
     tokens = metadata.num_input_tokens
     slots = metadata.slot_mapping if tokens is None else metadata.slot_mapping[:tokens]
+    tensors = (metadata.query_start_loc[:rows + 1], metadata.seq_lens[:rows],
+               metadata.block_tables[:rows], slots)
+    if metadata.window_map is not None:
+        tensors += (slice_window_map(metadata, 0, rows),)
     return tuple((tensor.data_ptr(), tuple(tensor.shape), tuple(tensor.stride()), str(tensor.dtype))
-                 for tensor in (metadata.query_start_loc[:rows + 1], metadata.seq_lens[:rows],
-                                metadata.block_tables[:rows], slots))
+                 for tensor in tensors)
 
 
 class GraphMetadataBindings:

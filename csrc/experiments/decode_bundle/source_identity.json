@@ -1,0 +1,14 @@
+{
+  "inputs": {
+    "csrc/experiments/decode_history_pipeline/attention_pipeline.cpp": "f9cb6862783dc2289944405766d3cbc56101e24bf538b6da913fe082e0ccb372",
+    "csrc/experiments/window_batch_decode/window_batch_decode.cpp": "4e782a8ce963e0e4637027b80eaa48b815bd7b517643a0c27c8e025bdc18e807",
+    "csrc/experiments/decode_tail_range/attention_tail_range.cpp": "10f2958f662fd19f9b50b4b5a68fd700b96c37ef764f0e831dbb2b21118fac74",
+    "csrc/experiments/decode_natural_padding/padded_unpack.h": "93de4ce78d7b12b2463b6e85e2827643874ea88111dc7ad917b1ea2d69c1b6fd",
+    "csrc/experiments/range_mask/range_mask.h": "6e194937c98e2611c31afe879b544373ff133134eb6dc131356079ce48c185e2"
+  },
+  "output_sha256": "ee79e3dc55b0547f9e407caed429c3a475eff48d87f752d8b4bc73355eb3ef4e",
+  "history_score_clearing": "unchanged_no_tail_shortening_in_pipeline",
+  "workspace_per_core": 1146880,
+  "UB_per_AIV": 158656,
+  "production_enabled": false
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "source": "csrc/kernels/attention_cv_decode_bundle.cpp",
+    "source_sha256": "d8171f0403cf176087e1c76c64e454e6fb1e74fd79252aab3b59e848cca19401",
+    "candidate": "decode_bundle.cpp",
+    "candidate_sha256": "fea301dfc9f66874d4b937f4daa5d134c666850dda7aea06af3a0f1a6069426f"
+  },
+  {
+    "source": "csrc/kernels/attention_cv_window_range.cpp",
+    "source_sha256": "d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4",
+    "candidate": "window_range.cpp",
+    "candidate_sha256": "a5432dae1b46e4f739161d21edcaa393afcd51ba61a86f399246bd63486e98f1"
+  },
+  {
+    "source": "csrc/kernels/attention_cv_window_range_balanced.cpp",
+    "source_sha256": "1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013",
+    "candidate": "window_range_balanced.cpp",
+    "candidate_sha256": "3d64838c25432c76121042890295ab62772e0a4d1005a4ff3c501de405d93dd1"
+  },
+  {
+    "source": "csrc/kernels/attention_cv_window_range_cluster4.cpp",
+    "source_sha256": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65",
+    "candidate": "window_range_cluster4.cpp",
+    "candidate_sha256": "e26a59e5133ba2f5eb90f35f45c42e94477d46e1352df4e84bcaed9435410447"
+  },
+  {
+    "source": "csrc/kernels/attention_cv_window_range_cluster16.cpp",
+    "source_sha256": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+    "candidate": "window_range_cluster16.cpp",
+    "candidate_sha256": "1e88e6de8feac6da8e14c59430f8d5ad66fdf35d9a798fde6ee279359abd30db"
+  },
+  {
+    "source": "csrc/kernels/attention_cv_member_pipeline_cluster4.cpp",
+    "source_sha256": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+    "candidate": "member_pipeline_cluster4.cpp",
+    "candidate_sha256": "c4901c3910bc67ab821141bb10f90e407b2048e5aacc7b1625edf69b2a16e319"
+  }
+]

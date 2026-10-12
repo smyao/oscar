@@ -20,6 +20,8 @@ STRIPED_CLUSTER4_CV_OP = "attention_cv_striped_cluster4_out"
 STRIPED_BALANCED_CV_OP = "attention_cv_striped_balanced_out"
 STRIPED_CLUSTER16_CV_OP = "attention_cv_striped_cluster16_out"
 STRIPED_DECODE_CV_OP = "attention_cv_striped_decode_out"
+MDL_DECODE_CV_OP = "attention_cv_mdl_decode_out"
+MEMBER_PIPELINE_CV_OP = "attention_cv_member_pipeline_cluster4_out"
 OPTIMIZED_STRIPED_OPS = {
     STRIPED_CV_OP: "attention_cv_window_range_out",
     STRIPED_BALANCED_CV_OP: "attention_cv_window_range_balanced_out",
@@ -33,7 +35,8 @@ CLUSTER_CV_OPS = frozenset({CLUSTER4_CV_OP, FAST_CLUSTER4_CV_OP,
                             FAST_CLUSTER16_CV_OP, STRIPED_CLUSTER4_CV_OP,
                             STRIPED_CLUSTER16_CV_OP,
                             "attention_cv_window_range_cluster4_out",
-                            "attention_cv_window_range_cluster16_out"})
+                            "attention_cv_window_range_cluster16_out",
+                            MEMBER_PIPELINE_CV_OP})
 FAST_CV_OPS = frozenset({FAST_CV_OP, FAST_Q1_CV_OP, FAST_CLUSTER4_CV_OP})
 MIXED_CV_OPS = frozenset({FAST_BALANCED_CV_OP, FAST_CLUSTER16_CV_OP})
 STRIPED_CV_OPS = frozenset({STRIPED_CV_OP, STRIPED_Q1_CV_OP,
@@ -42,9 +45,31 @@ STRIPED_CV_OPS = frozenset({STRIPED_CV_OP, STRIPED_Q1_CV_OP,
 
 
 def select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len, *, q1_draft=False,
-                 fast_unpack=False, mixed_cv=False, striped_cache=False, decode_bundle=False):
-    if any(type(flag) is not bool for flag in (fast_unpack, mixed_cv, striped_cache, decode_bundle)):
+                 fast_unpack=False, mixed_cv=False, striped_cache=False, decode_bundle=False,
+                 c4_member_pipeline=False, mdl_decode=False):
+    if any(type(flag) is not bool for flag in (fast_unpack, mixed_cv, striped_cache, decode_bundle,
+                                              c4_member_pipeline, mdl_decode)):
         raise ValueError("CV experiment flags must be explicit booleans")
+    if mdl_decode:
+        if not decode_bundle:
+            raise ValueError("MDL decode requires the explicit decode bundle")
+        # #126/#145/#154: only replace the qualified q4 layout/ABI. Later q1,
+        # C4/C16 and all eligibility/error checks retain their original route.
+        old = select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len,
+            q1_draft=q1_draft, fast_unpack=fast_unpack, mixed_cv=mixed_cv,
+            striped_cache=striped_cache, decode_bundle=decode_bundle,
+            c4_member_pipeline=c4_member_pipeline)
+        return MDL_DECODE_CV_OP if old == "attention_cv_bundle_decode_out" else old
+    if c4_member_pipeline:
+        if not decode_bundle:
+            raise ValueError("C4 member pipeline requires the explicit decode bundle")
+        # #150: retain every host eligibility decision, including q1/q4/C16.
+        # Only the existing optimized striped C4 route selects the new ABI.
+        old = select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len,
+            q1_draft=q1_draft, fast_unpack=fast_unpack, mixed_cv=mixed_cv,
+            striped_cache=striped_cache, decode_bundle=decode_bundle)
+        return (MEMBER_PIPELINE_CV_OP if old == OPTIMIZED_STRIPED_OPS[STRIPED_CLUSTER4_CV_OP]
+                else old)
     if decode_bundle:
         if not striped_cache:
             raise ValueError("decode bundle requires the explicit striped cache bundle")

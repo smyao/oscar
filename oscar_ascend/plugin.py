@@ -4,11 +4,16 @@ Archive #28/#77/#78: register must not initialize torch/NPU/native modules.
 Archive #27/#31–33: enabled routing requires an external ready runtime;
 never attach undeclared fields to VllmConfig or silently keep native FULL.
 Archive #34/#36: native dummy warmup must not masquerade as eager prefill.
+Archive #37-49/#127-129/#142/#155: request-window lease notifications wrap
+native lifecycle methods without changing scheduler selection or token budget.
 """
 
 import functools
 import importlib.abc
+import json
+from contextlib import contextmanager
 import os
+from pathlib import Path
 import sys
 from dataclasses import dataclass
 from types import ModuleType
@@ -142,7 +147,107 @@ def _patch_runner(module: ModuleType) -> None:
     _patch(cls, "_allocate_kv_cache_tensors", allocate)
     _patch(cls, "_reshape_kv_cache_tensors", reshape)
     _patch(cls, "_dummy_run", dummy_run)
+
+    # Optional for old host fixture providers, mandatory when the explicit
+    # request-window feature seals a real runner. Registration remains light.
+    def loaded(original):
+        def wrapped(runner, *args, **kwargs):
+            result = original(runner, *args, **kwargs)
+            provider = require_runtime()
+            if getattr(provider, "request_windows_enabled", False):
+                provider.seal_request_windows(runner)
+            return result
+        return wrapped
+
+    def prepared(original):
+        @contextmanager
+        def wrapped(runner, *args, **kwargs):
+            provider = require_runtime()
+            enabled = getattr(provider, "request_windows_enabled", False)
+            with original(runner, *args, **kwargs):
+                if enabled:
+                    provider.begin_request_window_input_prep(runner)
+                try:
+                    yield
+                finally:
+                    if enabled:
+                        provider.end_request_window_input_prep(runner)
+        return wrapped
+
+    def updated(original):
+        def wrapped(runner, scheduler_output):
+            result = original(runner, scheduler_output)
+            provider = require_runtime()
+            if getattr(provider, "request_windows_enabled", False):
+                provider.publish_request_window_map(runner, scheduler_output)
+            return result  # native deferred MTP corrections must survive
+        return wrapped
+
+    for name, wrapper in (("load_model", loaded), ("synchronize_input_prep", prepared),
+                          ("_update_states", updated)):
+        if hasattr(cls, name):
+            _patch(cls, name, wrapper)
     _patch_passive_runner(module)
+
+
+def request_window_runner_hooks_present(runner):
+    names = {patch.name for patch in _patches if patch.owner in type(runner).__mro__}
+    return {"load_model", "synchronize_input_prep", "_update_states"} <= names
+
+
+def _request_windows_configured():
+    # EngineCore has no NPU runtime provider. Read only the explicit target
+    # flag; do not initialize torch or require_runtime in scheduler hooks.
+    path = Path(os.environ.get("OSCAR_TARGET_CONFIG",
+                Path(__file__).resolve().parents[1] / "configs/target.json"))
+    enabled = json.loads(path.read_text()).get("experimental_request_windows", False)
+    if type(enabled) is not bool:
+        raise OscarHookConflictError("experimental_request_windows must be an explicit boolean")
+    return enabled
+
+
+def _patch_request_window_scheduler(module):
+    """Keep native schedule/preempt bodies; add missing forced-reset notices."""
+    if not _request_windows_configured():
+        return
+
+    def preempt(original):
+        def wrapped(scheduler, request, timestamp):
+            result = original(scheduler, request, timestamp)
+            from .request_windows import note_preemption
+            note_preemption(scheduler, request.request_id)
+            return result
+        return wrapped
+
+    def schedule(original):
+        def wrapped(scheduler, *args, **kwargs):
+            result = original(scheduler, *args, **kwargs)
+            from .request_windows import publish_preemptions
+            return publish_preemptions(scheduler, result)
+        return wrapped
+
+    _patch(module.Scheduler, "_preempt_request", preempt)
+    _patch(module.Scheduler, "schedule", schedule)
+
+
+def request_window_scheduler_hooks_present(scheduler_cls):
+    names = {patch.name for patch in _patches
+             if patch.owner in scheduler_cls.__mro__ and
+             getattr(scheduler_cls, patch.name) is patch.replacement}
+    return {"_preempt_request", "schedule"} <= names
+
+
+def _patch_attention_registration(module: ModuleType) -> None:
+    """Allocate sidecars while native load_model still measures persistent bytes."""
+    def registered(original):
+        def wrapped(layer, *args, **kwargs):
+            result = original(layer, *args, **kwargs)
+            provider = getattr(getattr(layer, "impl", None), "provider", None)
+            if provider is not None and getattr(provider, "request_windows_enabled", False):
+                provider.register_request_window_layer(layer)
+            return result
+        return wrapped
+    _patch(module.Attention, "__init__", registered)
 
 
 def _patch_passive_runner(module: ModuleType) -> None:
@@ -248,6 +353,8 @@ _callbacks = {
     "vllm_ascend.worker.model_runner_v1": _patch_runner,
     "vllm_ascend.attention.attention_v1": _patch_native_attention,
     "vllm.model_executor.models.qwen3_5_mtp": _patch_mtp_forward,
+    "vllm.model_executor.layers.attention.attention": _patch_attention_registration,
+    "vllm.v1.core.sched.scheduler": _patch_request_window_scheduler,
 }
 
 

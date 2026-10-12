@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-12",
+  "status": "q4_small_complete_operator_gain_passed_local",
+  "case": "q4_r2_n8_c1341_s1",
+  "CANN": {
+    "status": "completed",
+    "rc": 0,
+    "cleanup_complete": true
+  },
+  "CPU": {
+    "backend": "ascendc_cpu_debug",
+    "op": "mdl_load_q4",
+    "status": "passed",
+    "baseline": "current_production_decode_bundle",
+    "bitwise": true,
+    "oracle": true,
+    "fault_order": false,
+    "cores": 1,
+    "input_immutable": true,
+    "gm_guards": true,
+    "baseline_workspace_bytes_per_core": 1146880,
+    "candidate_workspace_bytes_per_core": 1146880,
+    "rc": 0,
+    "seconds": 24.05387847707607,
+    "cleanup_complete": true
+  },
+  "original_cpu_build_failure": "staging omitted oscar_launch.h; preserved in cpu-complete.tar.gz, header supplied and rebuild passed",
+  "CAModel": {
+    "status": "completed_same_library_pair",
+    "source_sha256": "d8171f0403cf176087e1c76c64e454e6fb1e74fd79252aab3b59e848cca19401",
+    "task_ticks": {
+      "baseline": 1079788,
+      "candidate": 931042
+    },
+    "ratio": 1.1597629322844727,
+    "all_partial_lse_status_bitwise": true,
+    "independent_oracle": "passed_both",
+    "all_sources_and_tasks": true,
+    "source_abi_publisher_and_geometry": "unchanged",
+    "full_trace_files_per_arm": 6,
+    "load_geometry_verdict": "inspect_complete_instructions_before_claiming_full_B_DMA",
+    "CPU": "available_checked",
+    "CANN": "loaded_same_compiled_library",
+    "NPU": "not_run",
+    "graph": "not_run",
+    "whole_service": "not_established"
+  },
+  "NPU": "not_run",
+  "graph": "not_run",
+  "production_selected": false,
+  "entry_threshold": {
+    "baseline_over_candidate_minimum": 1.15,
+    "scope": "complete paired operator including extra work"
+  },
+  "whole_service_native_goal": "2-4x, not established",
+  "paired_baseline_task_ticks": 1079788,
+  "candidate_max_ticks_for_1_15x": 938946.0869565218,
+  "local_entry_gate_passed": true
+}

@@ -6,6 +6,9 @@ and fixed workspaces. #28/#77/#78: imported only after native initialization.
 #69/#111: NPU-only production; exact BF16 projection and FP32 rotation.
 #148: fe0 is the accepted precision baseline. Cluster4 is an explicit
 # experimental operator with separate bounded state, never the default route.
+#34/#36/#127-129/#140/#142/#145/#155: optional history-query capacity is
+# independent of current-only input capacity; ordinary CV, dummy and capture
+# retain strict capacity checks. Every buffer is reserved before KV profiling.
 """
 from __future__ import annotations
 
@@ -20,10 +23,20 @@ from typing import Any
 
 from .integration.runtime_api import OscarReadinessError
 from .lifecycle import SnapshotLayout
+from .request_window_storage import RequestWindowLayout, FixedWindowMap, INVALID_TAG
 
 # Archive #144: mirrored by oscar_attention_launch.h and checked in contracts.
 from .ops.cv_dispatch import ATTENTION_QUERY_ROWS
 ATTENTION_KV_ROWS = 256
+
+# Explicit experimental bundle only. Capability presence is not device/graph
+# acceptance; the serving presets do not enable this unqualified layout.
+REQUEST_WINDOW_CAPABILITIES = frozenset({
+    "rotate_clip_store_request_window_out", "attention_request_window_decode_out",
+    "attention_request_window_decode_q1_out", "attention_request_window_out",
+    "attention_request_window_balanced_out", "attention_request_window_cluster4_out",
+    "attention_request_window_cluster16_out",
+})
 
 
 def canonical_rotation_name(name: str) -> str | None:
@@ -47,34 +60,57 @@ class WorkspaceGeometry:
     splits: int = 1
     cube_cores: int = 1
     history_cluster_size: int = 1
+    # None preserves every existing allocation. This limits current query rows
+    # processed by historical CV, never the number of cached historical tokens.
+    history_token_capacity: int | None = None
+    # #148/#154: independent bounded pipeline arena, never the old C4 size.
+    c4_member_pipeline: bool = False
 
     def __post_init__(self):
-        if any(type(x) is not int or x <= 0 for x in self.__dict__.values()):
+        dimensions = (self.tokens, self.query_heads, self.kv_heads, self.head_dim,
+                      self.splits, self.cube_cores, self.history_cluster_size)
+        if any(type(x) is not int or x <= 0 for x in dimensions):
             raise ValueError("workspace dimensions must be positive integers")
+        if self.history_token_capacity is not None and (
+                type(self.history_token_capacity) is not int or
+                not 1 <= self.history_token_capacity <= self.tokens):
+            raise ValueError("history token capacity must be an integer in [1,input capacity]")
         if self.query_heads % self.kv_heads or self.query_heads // self.kv_heads > 16:
             raise ValueError("CV query grouping requires integral GQA ratio <= 16")
         if self.head_dim not in (64, 128, 256) or self.splits > 32 or self.cube_cores > 32:
             raise ValueError("unsupported CV workspace geometry")
         if self.history_cluster_size not in (1, 4, 16):
             raise ValueError("history cluster size must be 1, 4 or 16")
+        if type(self.c4_member_pipeline) is not bool:
+            raise ValueError("C4 member pipeline must be an explicit boolean")
+        if self.c4_member_pipeline and self.history_cluster_size not in (4, 16):
+            raise ValueError("C4 member pipeline requires a cluster workspace")
+
+    @property
+    def history_tokens(self):
+        return self.tokens if self.history_token_capacity is None else self.history_token_capacity
 
     @property
     def task_count(self):
-        return self.tokens * self.kv_heads * 3 * self.splits
+        # Current-only still prepares/guards three S1 sources for every input
+        # row. CV can reinterpret the same arena using its bounded split count.
+        return max(self.tokens, self.history_tokens * self.splits) * self.kv_heads * 3
 
     def splits_for_tokens(self, tokens: int) -> int:
         """Choose parallelism from captured shape and measured Cube count.
 
         Archive #34/#36/#70-73: no seq_len readback, length-based route switch
         or new decode-only allocation. The same shape always chooses the same
-        S, and tokens*S never exceeds the preallocated arena capacity.
+        S. A partition's cv_shape_tokens can retain the original larger input
+        shape even though its live CV rows are smaller. partial_views validates
+        those live rows against the bounded history arena before any CV call.
         """
         if type(tokens) is not int or not 1 <= tokens <= self.tokens:
             raise ValueError(f"active tokens must be in [1,{self.tokens}]")
         query_tile = ATTENTION_QUERY_ROWS // (self.query_heads // self.kv_heads)
         groups = ((tokens + query_tile - 1) // query_tile) * self.kv_heads
         cube_parallelism = (self.cube_cores + groups - 1) // groups
-        arena_limit = self.tokens * self.splits // tokens
+        arena_limit = self.history_tokens * self.splits // tokens
         return max(1, min(32, cube_parallelism, arena_limit))
 
     @property
@@ -89,19 +125,44 @@ class WorkspaceGeometry:
         if self.history_cluster_size == 4:
             # Original Q buffer holds group0; extra3 Q +4 FP32 accumulators
             # and4 independent max/sum arrays. Independent of history length.
-            return self.cube_cores * (1664 * self.head_dim + 33792) * 4
+            base = (1664 * self.head_dim + 33792) * 4
+            if self.c4_member_pipeline:
+                # Second KV256 pair and second Q128 x KV256 score/P slot.
+                base += (2 * ATTENTION_KV_ROWS * self.head_dim
+                         + ATTENTION_QUERY_ROWS * ATTENTION_KV_ROWS) * 4
+            return self.cube_cores * base
         # Archive #71/#144, D.4: bounded Q128/KV256; acc stays in Vector UB.
         m, b = ATTENTION_QUERY_ROWS, ATTENTION_KV_ROWS
         return self.cube_cores * ((2 * m + 2 * b) * self.head_dim + m * b) * 4
 
     @property
+    def buffer_bytes(self):
+        """Exact allocation ledger; shared current-only buffers keep input size."""
+        n, c = self.tokens, self.history_tokens
+        h, k, d, p = self.query_heads, self.kv_heads, self.head_dim, 3 * self.splits
+        return {
+            "query_rot": c * h * d * 4,
+            "query_input": n * h * d * 2,
+            "key_input": n * k * d * 2,
+            "value_input": n * k * d * 2,
+            "partial": c * h * p * d * 4,
+            "partial_lse": c * h * p * 4,
+            "output": c * h * d * 4,
+            "lse": n * h * 4,
+            "merge_status": n * h * 4,
+            "rotate_status": n * h * 4,
+            "store_status": n * k * 4,
+            "tasks": self.task_count * 16 * 8,
+            "attention_status": self.task_count * 2 * 4,
+            "positions": n * 8,
+            "slots": n * 8,
+            "cv": self.cv_bytes,
+            "cluster_stats": self.cube_cores * 8 * 8 if self.history_cluster_size in (4, 16) else 0,
+        }
+
+    @property
     def total_bytes(self):
-        n, h, d, p = self.tokens, self.query_heads, self.head_dim, 3 * self.splits
-        return (n * h * d * 4 * 2 + n * (h + 2 * self.kv_heads) * d * 2
-                + n * h * p * d * 4 + n * h * p * 4
-                + n * h * 8 + self.task_count * (128 + 8)
-                + n * self.kv_heads * 4 + n * h * 4 + n * 16 + self.cv_bytes
-                + (self.cube_cores * 8 * 8 if self.history_cluster_size in (4, 16) else 0))
+        return sum(self.buffer_bytes.values())
 
 
 class GraphWorkspace:
@@ -112,16 +173,19 @@ class GraphWorkspace:
             raise OscarReadinessError("production graph workspace requires NPU")
         self.geometry = geometry
         n, h, d, p = geometry.tokens, geometry.query_heads, geometry.head_dim, 3 * geometry.splits
-        self.query_rot = torch.empty((n, h, d), dtype=torch.float32, device=device)
+        c = geometry.history_tokens
+        self.query_rot = torch.empty((c, h, d), dtype=torch.float32, device=device)
         # qkv.split leaves a strided value projection in the native model.
         # These bounded current-step copies are reused; no historical KV is
         # ever copied here. Contiguous projections use their original storage.
         self.query_input = torch.empty((n, h, d), dtype=torch.bfloat16, device=device)
         self.key_input = torch.empty((n, geometry.kv_heads, d), dtype=torch.bfloat16, device=device)
         self.value_input = torch.empty_like(self.key_input)
-        self.partial = torch.empty((n, h, p, d), dtype=torch.float32, device=device)
-        self.partial_lse = torch.empty((n, h, p), dtype=torch.float32, device=device)
-        self.output = torch.empty((n, h, d), dtype=torch.float32, device=device)
+        self.partial = torch.empty((c, h, p, d), dtype=torch.float32, device=device)
+        self.partial_lse = torch.empty((c, h, p), dtype=torch.float32, device=device)
+        self.output = torch.empty((c, h, d), dtype=torch.float32, device=device)
+        # Current-only writes validated LSE and reuses rotate_status for its
+        # widened native LSE; these status/LSE tensors require all input rows.
         self.lse = torch.empty((n, h), dtype=torch.float32, device=device)
         self.merge_status = torch.empty((n, h), dtype=torch.int32, device=device)
         self.rotate_status = torch.empty((n, h), dtype=torch.int32, device=device)
@@ -135,10 +199,24 @@ class GraphWorkspace:
                               if geometry.history_cluster_size in (4, 16) else None)
 
     def validate(self, tokens, heads, kv_heads, dim):
+        """Validate live ordinary CV rows, including dummy/capture rows."""
+        self._validate_capacity(tokens, heads, kv_heads, dim, self.geometry.history_tokens)
+
+    def validate_current_only(self, tokens, heads, kv_heads, dim):
+        """Capacity check for a caller that separately proves zero history.
+
+        This does not establish routing eligibility. The dispatcher retains
+        eager/origin, metadata-context, slot and padding guards, and validates
+        any historical prefix using validate() before executing that prefix.
+        """
+        self._validate_capacity(tokens, heads, kv_heads, dim, self.geometry.tokens)
+
+    def _validate_capacity(self, tokens, heads, kv_heads, dim, capacity):
         g = self.geometry
-        if tokens > g.tokens or (heads, kv_heads, dim) != (g.query_heads, g.kv_heads, g.head_dim):
+        if (type(tokens) is not int or not 1 <= tokens <= capacity or
+                (heads, kv_heads, dim) != (g.query_heads, g.kv_heads, g.head_dim)):
             raise OscarReadinessError(
-                f"OSCAR fixed workspace mismatch: tokens={tokens}/{g.tokens}, "
+                f"OSCAR fixed workspace mismatch: tokens={tokens}/{capacity}, "
                 f"Hq/Hkv/D={(heads, kv_heads, dim)}/{(g.query_heads, g.kv_heads, g.head_dim)}")
 
     def projection(self, tensor, destination, tokens, heads, dim):
@@ -152,8 +230,8 @@ class GraphWorkspace:
         """Reinterpret fixed flat arenas for this graph's static split count."""
         g = self.geometry
         if (type(tokens) is not int or type(splits) is not int or
-                not 1 <= tokens <= g.tokens or not 1 <= splits <= 32 or
-                tokens * splits > g.tokens * g.splits):
+                not 1 <= tokens <= g.history_tokens or not 1 <= splits <= 32 or
+                tokens * splits > g.history_tokens * g.splits):
             raise OscarReadinessError("attention splits exceed the preallocated workspace")
         rows = tokens * g.query_heads * 3 * splits
         partial = self.partial.view(-1)[:rows * g.head_dim].view(
@@ -167,7 +245,7 @@ class LayerState:
     raw: Any
     packed: Any
     spec: Any
-    snapshots: SnapshotLayout
+    snapshots: SnapshotLayout | RequestWindowLayout
     window_key: Any
     window_value: Any
     window_tags: Any
@@ -179,6 +257,18 @@ class LayerState:
     num_blocks: int
     workspace: GraphWorkspace
     cache_format: str = "canonical_v1"
+    window_map: Any = None
+    window_status: Any = None
+
+
+@dataclass(frozen=True)
+class RequestWindowSidecar:
+    layout: RequestWindowLayout
+    raw: Any
+    key: Any
+    value: Any
+    tags: Any
+    status: Any
 
 
 class AscendRuntimeProvider:
@@ -186,6 +276,13 @@ class AscendRuntimeProvider:
     def __init__(self, config=None):
         path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
         self.config = dict(config) if config is not None else json.loads(path.read_text())
+        self._request_windows = self.config.get("experimental_request_windows", False)
+        if type(self._request_windows) is not bool:
+            raise OscarReadinessError("experimental_request_windows must be an explicit boolean")
+        self._history_token_capacity = self.config.get("history_token_capacity")
+        if self._history_token_capacity is not None and (
+                type(self._history_token_capacity) is not int or self._history_token_capacity <= 0):
+            raise OscarReadinessError("history token capacity must be an explicit positive integer or None")
         if type(self.config.get("experimental_history_reuse", False)) is not bool:
             raise OscarReadinessError("experimental_history_reuse must be an explicit boolean")
         if type(self.config.get("experimental_fast_unpack", False)) is not bool:
@@ -197,7 +294,9 @@ class AscendRuntimeProvider:
         if type(self.config.get("experimental_current_only", False)) is not bool:
             raise OscarReadinessError("experimental_current_only must be an explicit boolean")
         for flag in ("experimental_first_mtp_current_fia", "experimental_compact_later_mtp",
-                     "experimental_mixed_decode_split", "experimental_decode_bundle"):
+                     "experimental_mixed_decode_split", "experimental_decode_bundle",
+                     "experimental_quantization_bundle", "experimental_c4_member_pipeline",
+                     "experimental_mdl_decode"):
             if type(self.config.get(flag, False)) is not bool:
                 raise OscarReadinessError(f"{flag} must be an explicit boolean")
         if self.config.get("experimental_fast_unpack", False) and not self.config.get("experimental_history_reuse", False):
@@ -215,10 +314,43 @@ class AscendRuntimeProvider:
                               else "canonical_v1")
         if self.config.get("experimental_decode_bundle", False) and self._cache_format != "striped_v1":
             raise OscarReadinessError("decode bundle requires the explicit striped cache bundle")
+        if self.config.get("experimental_mdl_decode", False) and not self.config.get("experimental_decode_bundle", False):
+            raise OscarReadinessError("MDL decode requires the explicit decode bundle")
+        if self.config.get("experimental_mdl_decode", False) and self._request_windows:
+            raise OscarReadinessError("MDL decode requires physical-page snapshots; request-window MDL reader is not qualified")
+        if self.config.get("experimental_c4_member_pipeline", False) and not self.config.get("experimental_decode_bundle", False):
+            raise OscarReadinessError("C4 member pipeline requires the explicit decode bundle")
         if self.config.get("experimental_mixed_decode_split", False) and not self.config.get("experimental_decode_bundle", False):
             raise OscarReadinessError("mixed decode partition requires the optimized decoder bundle")
         if self.config.get("experimental_mixed_decode_split", False) and not self.config.get("experimental_first_mtp_current_fia", False):
             raise OscarReadinessError("mixed decode partition requires the qualified first-MTP current path")
+        if self._request_windows:
+            if self._cache_format != "striped_v1":
+                raise OscarReadinessError("request windows require the explicit striped candidate bundle")
+            if self.config.get("experimental_decode_bundle") is not True:
+                raise OscarReadinessError("request windows require the complete decode reader bundle")
+            if self.config.get("scheduler_cls") is not None:
+                raise OscarReadinessError("request windows retain the native scheduler without a custom scheduler_cls")
+            if self._history_token_capacity is not None:
+                raise OscarReadinessError("request windows use actual native token capacity, without a history override")
+            if (self.config.get("experimental_bounded_whole_prefill", False) or
+                    self.config.get("experimental_whole_prefill", False)):
+                raise OscarReadinessError("request windows cannot enable a whole-prefill budget policy")
+            request_capacity = self.config.get("max_num_seqs")
+            if type(request_capacity) is not int or not 1 <= request_capacity <= 128:
+                raise OscarReadinessError("request-window owner kernel requires max_num_seqs in [1,128]")
+            if (type(self.config.get("max_model_len")) is not int or
+                    not 1 <= self.config["max_model_len"] <= 1 << 31):
+                raise OscarReadinessError("request-window tag writer supports up to 31 logical position bits")
+            self._cache_format = "striped_request_window_v1"
+        self._request_window_config = self._window_config_signature() if self._request_windows else None
+        self._request_window_layers: dict[str, RequestWindowSidecar] = {}
+        self._request_window_binding = None
+        self._request_window_leases = None
+        self._request_window_stream = None
+        self._request_window_runner = None
+        self._request_window_prep_runner = None
+        self._request_windows_sealed = False
         self._ready = False
         self.layers: dict[str, LayerState] = {}
         self.workspaces: dict[tuple, GraphWorkspace] = {}
@@ -227,8 +359,13 @@ class AscendRuntimeProvider:
         self.ops = None
 
     def assert_ready(self):
-        if self.config.get("experimental_striped_cache", False) != (self._cache_format == "striped_v1"):
+        if (type(self.config.get("experimental_request_windows", False)) is not bool or
+                self.config.get("experimental_request_windows", False) != self._request_windows):
+            raise OscarReadinessError("request-window storage changed after runtime construction")
+        if self.config.get("experimental_striped_cache", False) != self._cache_format.startswith("striped_"):
             raise OscarReadinessError("cache format changed after runtime construction")
+        if self._request_windows and self._window_config_signature() != self._request_window_config:
+            raise OscarReadinessError("request-window geometry changed after runtime construction")
         if self._ready:
             return
         from .ops.loader import require_production_ops
@@ -239,6 +376,9 @@ class AscendRuntimeProvider:
         if os.environ.get("ASCEND_RT_VISIBLE_DEVICES") != expected:
             raise OscarReadinessError("visible NPU selection does not match the current target configuration")
         require_production_ops()
+        if self.config.get("experimental_quantization_bundle", False):
+            from .ops.loader import require_capabilities
+            require_capabilities({"rotate_vector_init_out"})
         if self.config.get("experimental_history_reuse", False):
             from .ops.loader import require_capabilities
             require_capabilities({"attention_cv_cluster4_out", "attention_cv_q1_out"})
@@ -248,7 +388,7 @@ class AscendRuntimeProvider:
         if self.config.get("experimental_mixed_cv", False):
             from .ops.cv_dispatch import MIXED_CV_OPS
             require_capabilities(MIXED_CV_OPS)
-        if self._cache_format == "striped_v1":
+        if self._cache_format.startswith("striped_"):
             from .ops.cv_dispatch import STRIPED_CV_OPS
             require_capabilities(STRIPED_CV_OPS | {"rotate_clip_store_striped_out"})
         if self.config.get("experimental_current_only", False):
@@ -257,6 +397,18 @@ class AscendRuntimeProvider:
         if self.config.get("experimental_decode_bundle", False):
             from .ops.cv_dispatch import DECODE_BUNDLE_OPS
             require_capabilities(DECODE_BUNDLE_OPS)
+        if self.config.get("experimental_mdl_decode", False):
+            from .ops.cv_dispatch import MDL_DECODE_CV_OP
+            require_capabilities({MDL_DECODE_CV_OP})
+        if self.config.get("experimental_c4_member_pipeline", False):
+            from .ops.cv_dispatch import MEMBER_PIPELINE_CV_OP
+            require_capabilities({MEMBER_PIPELINE_CV_OP})
+            if self._request_windows:
+                from .integration.cache_storage_ops import REQUEST_MEMBER_PIPELINE_CV_OP
+                require_capabilities({REQUEST_MEMBER_PIPELINE_CV_OP})
+        if self._request_windows:
+            from .ops.loader import require_capabilities
+            require_capabilities(REQUEST_WINDOW_CAPABILITIES)
         import torch
         if not torch.npu.is_available():
             raise OscarReadinessError("OSCAR production requires an available NPU")
@@ -267,9 +419,149 @@ class AscendRuntimeProvider:
         from .integration.impl import OscarAttentionImpl
         return OscarAttentionImpl
 
+    @property
+    def request_windows_enabled(self):
+        return self._request_windows
+
+    def _window_config_signature(self):
+        return tuple(self.config[name] for name in
+                     ("max_num_seqs", "sink_tokens", "recent_tokens", "max_model_len")) + (
+            self.config["speculative_config"]["num_speculative_tokens"],)
+
+    def _allocate_request_window_sidecar(self, layout):
+        """Called inside native Attention construction and model memory profiler."""
+        import torch
+        device = torch.device("npu", torch.npu.current_device())
+        raw = torch.empty(layout.required_bytes, dtype=torch.uint8, device=device)
+        key, value, tags = layout.views(raw)
+        tags.fill_(INVALID_TAG)
+        status = torch.zeros(layout.max_num_seqs, dtype=torch.int32, device=device)
+        return RequestWindowSidecar(layout, raw, key, value, tags, status)
+
+    def _allocate_request_window_map(self, layout):
+        import torch
+        device = torch.device("npu", torch.npu.current_device())
+        host = torch.empty(layout.map_shape, dtype=torch.int64, device="cpu", pin_memory=True)
+        target = torch.empty(layout.map_shape, dtype=torch.int64, device=device)
+        host[:, 0].fill_(-1); host[:, 1].zero_()
+        target.copy_(host, non_blocking=False)  # initialization only
+        self._request_window_stream = torch.npu.current_stream()
+        return FixedWindowMap(layout, host, target)
+
+    def register_request_window_layer(self, layer):
+        """The native Attention has already registered its exact layer identity."""
+        if not self._request_windows:
+            return
+        if self._request_windows_sealed:
+            raise OscarReadinessError("FULL layer registered after request-window budget was sealed")
+        name = layer.layer_name
+        canonical_rotation_name(name)
+        if name in self._request_window_layers:
+            raise OscarReadinessError(f"request-window layer registered twice: {name}")
+        impl = layer.impl
+        if getattr(impl, "provider", None) is not self or impl.head_size != 256:
+            raise OscarReadinessError("request windows require the actual OSCAR D256 FULL layer")
+        layout = RequestWindowLayout.from_config(self.config, num_kv_heads=impl.num_kv_heads,
+                                                head_dim=impl.head_size)
+        sidecar = self._allocate_request_window_sidecar(layout)
+        if self._request_window_binding is None:
+            self._request_window_binding = self._allocate_request_window_map(layout)
+            self._request_window_leases = layout.make_leases()
+        elif (self._request_window_binding.layout.map_shape != layout.map_shape or
+              self._request_window_binding.layout.position_bits != layout.position_bits):
+            raise OscarReadinessError("FULL request-window identity geometry differs across layers")
+        self._request_window_layers[name] = sidecar
+
+    def seal_request_windows(self, runner):
+        """After target + draft load: verify coverage, never allocate missing layers."""
+        if not self._request_windows:
+            return
+        from .plugin import (request_window_runner_hooks_present,
+                             request_window_scheduler_hooks_present)
+        if not request_window_runner_hooks_present(runner):
+            raise OscarReadinessError("request-window runner lifecycle hooks are incomplete")
+        cache, parallel = runner.vllm_config.cache_config, runner.vllm_config.parallel_config
+        scheduler_config = runner.vllm_config.scheduler_config
+        scheduler = scheduler_config.get_scheduler_cls()
+        selected_scheduler = f"{scheduler.__module__}.{scheduler.__qualname__}"
+        if (scheduler_config.scheduler_cls is not None or
+                self.config.get("scheduler_cls") is not None or
+                selected_scheduler not in {
+                    "vllm.v1.core.sched.scheduler.Scheduler",
+                    "vllm.v1.core.sched.async_scheduler.AsyncScheduler"} or
+                not request_window_scheduler_hooks_present(scheduler)):
+            raise OscarReadinessError("request windows require the native scheduler and complete preemption notification hooks")
+        if (runner.vllm_config.scheduler_config.max_num_seqs != self.config["max_num_seqs"] or
+                runner.model_config.max_model_len != self.config["max_model_len"]):
+            raise OscarReadinessError("native request or logical position capacity differs from sidecar reservation")
+        if cache.enable_prefix_caching is not False or cache.mamba_cache_mode != "none":
+            raise OscarReadinessError("request windows require prefix caching disabled and Mamba mode none")
+        if (runner.vllm_config.kv_transfer_config is not None or
+                getattr(runner.vllm_config, "ec_transfer_config", None) is not None) or any(
+                getattr(parallel, name, 1) != 1 for name in
+                ("pipeline_parallel_size", "data_parallel_size", "prefill_context_parallel_size", "decode_context_parallel_size")):
+            raise OscarReadinessError("request-window publication requires local TP with PP/DP/CP=1")
+        if getattr(parallel, "enable_dbo", False):
+            raise OscarReadinessError("request-window publication has no DBO stream contract")
+        if runner.use_async_scheduling and runner.prepare_inputs_event is None:
+            raise OscarReadinessError("async request-window publication lacks native input-prep event")
+        context = runner.compilation_config.static_forward_context
+        expected = {name for name, layer in context.items()
+                    if getattr(getattr(layer, "impl", None), "provider", None) is self}
+        if not expected or expected != set(self._request_window_layers):
+            raise OscarReadinessError("registered FULL layer sidecars do not cover native target/draft layers")
+        if (runner.vllm_config.speculative_config is not None and
+                not any(canonical_rotation_name(name) is None for name in expected)):
+            raise OscarReadinessError("native MTP FULL layer has no pre-profile request-window sidecar")
+        self._request_window_runner = runner
+        self._request_windows_sealed = True
+
+    def begin_request_window_input_prep(self, runner):
+        if not self._request_windows:
+            return
+        if (not self._request_windows_sealed or runner is not self._request_window_runner or
+                self._request_window_prep_runner is not None):
+            raise OscarReadinessError("request-window input-prep scope is missing or reentrant")
+        self._request_window_prep_runner = runner
+
+    def end_request_window_input_prep(self, runner):
+        if self._request_windows:
+            if self._request_window_prep_runner is not runner:
+                raise OscarReadinessError("request-window input-prep ownership changed")
+            self._request_window_prep_runner = None
+
+    def publish_request_window_map(self, runner, scheduler_output):
+        """After native condense/reorder, inside its protected input-prep scope."""
+        if not self._request_windows:
+            return
+        if self._request_window_prep_runner is not runner:
+            raise OscarReadinessError("request-window map publication requires native input-prep scope")
+        import torch
+        if torch.npu.current_stream() != self._request_window_stream:
+            raise OscarReadinessError("request-window map changed compute stream without an event contract")
+        batch = self._request_window_leases.update(
+            scheduler_output, runner.input_batch.req_ids, padded_rows=self.config["max_num_seqs"])
+        self._request_window_binding.write_host(batch)
+        # Native synchronize_input_prep records its event after this H2D. It
+        # protects pinned host reuse; same-stream order protects old KV writes.
+        self._request_window_binding.device_map.copy_(self._request_window_binding.host_map,
+                                                     non_blocking=runner.use_async_scheduling)
+
+    def request_window_map(self, rows):
+        if not self._request_windows:
+            return None
+        if (not self._request_windows_sealed or type(rows) is not int or
+                not 0 <= rows <= self.config["max_num_seqs"]):
+            raise OscarReadinessError("request-window metadata rows exceed sealed capacity")
+        return self._request_window_binding.device_map[:rows]
+
     def ensure_workspace(self, heads, kv_heads, dim, device):
         """Reserve scratch during model loading, before native KV profiling."""
-        if self._cache_format == "striped_v1" and dim != 256:
+        configured_history = self.config.get("history_token_capacity")
+        if (type(configured_history) is not type(self._history_token_capacity) or
+                configured_history != self._history_token_capacity):
+            raise OscarReadinessError("history token capacity changed after runtime construction")
+        if self._cache_format.startswith("striped_") and dim != 256:
             raise OscarReadinessError("striped INT2 cache is valid only for D256")
         captures = self.config.get("compilation_config", {}).get("cudagraph_capture_sizes", [])
         capacity = max(int(self.config["max_num_batched_tokens"]), max(captures, default=0))
@@ -277,7 +569,9 @@ class AscendRuntimeProvider:
                                      int(self.config.get("attention_splits", 1)),
                                      self._device_cube_cores(device),
                                      16 if self.config.get("experimental_mixed_cv", False) else
-                                     4 if self.config.get("experimental_history_reuse", False) else 1)
+                                     4 if self.config.get("experimental_history_reuse", False) else 1,
+                                     history_token_capacity=self._history_token_capacity,
+                                     c4_member_pipeline=self.config.get("experimental_c4_member_pipeline", False))
         key = (str(device), geometry)
         if key not in self.workspaces:
             self.workspaces[key] = GraphWorkspace(geometry, device)
@@ -317,13 +611,29 @@ class AscendRuntimeProvider:
 
     def transform_kv_cache_specs(self, runner, native_specs):
         from .integration.specs import transform_native_specs
-        converted = transform_native_specs(native_specs)
+        if self._request_windows:
+            if not self._request_windows_sealed or runner is not self._request_window_runner:
+                raise OscarReadinessError("request-window sidecars must be registered during model load before KV planning")
+            converted = transform_native_specs(native_specs, request_windows=True)
+        else:
+            converted = transform_native_specs(native_specs)
         # Validate precise snapshot geometry before the scheduler budgets its
         # pool. A page advertised as compressed must also preserve its window.
         from .integration.specs import OscarFullAttentionSpec
-        for spec in converted.values():
+        full_names = set()
+        for name, spec in converted.items():
             if isinstance(spec, OscarFullAttentionSpec):
-                self._snapshot_layout(spec)
+                full_names.add(name)
+                if self._request_windows:
+                    sidecar = self._request_window_layers.get(name)
+                    if (sidecar is None or spec.head_size != spec.head_size_v or
+                            sidecar.layout.num_kv_heads != spec.num_kv_heads or
+                            sidecar.layout.head_dim != spec.head_size):
+                        raise OscarReadinessError("native FULL spec differs from its pre-profile sidecar geometry")
+                else:
+                    self._snapshot_layout(spec)
+        if self._request_windows and full_names != set(self._request_window_layers):
+            raise OscarReadinessError("native FULL specs omit or add registered request-window layers")
         return converted
 
     def _snapshot_layout(self, spec):
@@ -433,10 +743,25 @@ class AscendRuntimeProvider:
             if blocks < config.num_blocks:
                 raise OscarReadinessError("worker physical blocks are fewer than scheduler blocks")
             byte_raw = allocation.view(torch.uint8)
-            packed = packed_view(byte_raw, blocks, spec.layout)
-            snapshots = self._snapshot_layout(spec)
-            wk, wv, tags = snapshots.views(byte_raw, blocks)
-            tags.fill_(-1)
+            if bool(getattr(spec, "request_window_storage", False)) != self._request_windows:
+                raise OscarReadinessError("FULL spec and runtime disagree on request-window storage")
+            if self._request_windows:
+                if not self._request_windows_sealed:
+                    raise OscarReadinessError("request-window storage was not budgeted during model load")
+                sidecar = self._request_window_layers.get(name)
+                if sidecar is None:
+                    raise OscarReadinessError(f"FULL layer lacks pre-profile request-window allocation: {name}")
+                packed = byte_raw  # genuine opaque storage owner; never a fake strided dual view
+                snapshots = sidecar.layout
+                wk, wv, tags = sidecar.key, sidecar.value, sidecar.tags
+                window_map = self._request_window_binding.device_map
+                window_status = sidecar.status
+            else:
+                packed = packed_view(byte_raw, blocks, spec.layout)
+                snapshots = self._snapshot_layout(spec)
+                wk, wv, tags = snapshots.views(byte_raw, blocks)
+                tags.fill_(-1)
+                window_map = window_status = None
             workspace = self.ensure_workspace(heads, spec.num_kv_heads, spec.head_size, runner.device)
             if workspace.geometry.tokens < token_capacity:
                 raise OscarReadinessError("native token capacity exceeds the profiled OSCAR workspace")
@@ -445,13 +770,15 @@ class AscendRuntimeProvider:
             rv = rotation.inverse_value_transposed
             self.layers[name] = LayerState(byte_raw, packed, spec, snapshots, wk, wv, tags,
                                           rk, rv, rotation.key_transposed, rotation.value_transposed,
-                                          rotation.hadamard, blocks, workspace, self._cache_format)
+                                          rotation.hadamard, blocks, workspace, self._cache_format,
+                                          window_map, window_status)
             views[name] = packed
             from .telemetry import emit_once
             emit_once("cache_layout", key=name, layer=name, physical_blocks=blocks,
                       physical_block_tokens=spec.block_size, page_bytes=spec.page_size_bytes,
                       cache_format=self._cache_format,
-                      snapshot_bytes_per_page=snapshots.required_bytes,
+                      snapshot_bytes_per_page=0 if self._request_windows else snapshots.required_bytes,
+                      request_window_sidecar_bytes=snapshots.required_bytes if self._request_windows else 0,
                       scratch_bytes=workspace.geometry.total_bytes,
                       raw_storage_ptr=byte_raw.data_ptr(), gdn_reshape="native")
         return views

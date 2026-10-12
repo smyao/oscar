@@ -1,3 +1,5 @@
+// Candidate writer: qualified SIMD pack + exact Init; NPU/graph pending.
+// Independent C arm: SIMD packing plus exact Hadamard Init; Transform unchanged.
 // SPDX-License-Identifier: Apache-2.0
 // Archive G26-G34/#13-22/#37-49/#126/#154; startup D.4 four questions:
 // 1. This is the phase1_stores fused write, not history materialization.
@@ -31,6 +33,8 @@
 // API evidence: native moe_gating_top_k_generalized.h (ReduceSum, Sort32,
 // MrgSort, Gather); dequant_swiglu_quant.h (Mins/Maxs); bgmv_expand.cpp (DMA).
 #include "oscar_common.h"
+#include "striped_store_pack.h"
+#include "hadamard_indices.h"
 #include "../include/oscar_rotation_launch.h"
 
 using namespace oscar_ascend_device;
@@ -55,14 +59,9 @@ class RotationEngine {
     if (hadamard_) {
       auto indices=gatherBuf_.template Get<uint32_t>();
       auto signs=signBuf_.template Get<float>();
-      int32_t stage=0;
-      for (int32_t distance=1;distance<dim_;distance*=2,++stage) {
-        for (int32_t i=0;i<dim_;++i) {
-          indices.SetValue(stage*dim_+i,static_cast<uint32_t>((i^distance)*4));
-          signs.SetValue(stage*dim_+i,(i&distance) ? -1.0F : 1.0F);
-        }
-      }
-      Fence<HardEvent::S_V>();
+      oscar_hadamard_indices_trial::Build(indices,signs,
+          inputBuf_.template Get<int32_t>(),workBuf_.template Get<int32_t>(),
+          redBuf_.template Get<int32_t>(),dim_);
     }
   }
   __aicore__ inline void Load(const GlobalTensor<T>& source,int64_t offset,
@@ -203,16 +202,8 @@ class ClipQuantize {
     Maxs(work,work,0.0F,dim_); PipeBarrier<PIPE_V>();
     Mins(work,work,3.0F,dim_); PipeBarrier<PIPE_V>();
     Cast(codes,work,RoundMode::CAST_TRUNC,dim_); Fence<HardEvent::V_S>();
-    // Eight lanes at the same column form one 16-bit word. The store bytes
-    // remain little-endian and the 2-bit code order is exactly invertible.
-    const int32_t width=dim_/8;
-    for (int32_t i=0;i<width;++i) {
-      uint32_t word=0;
-      for (int32_t b=0;b<8;++b)
-        word|=static_cast<uint32_t>(codes.GetValue(b*width+i)&3)<<(2*b);
-      packed.SetValue(packedOffset+2*i,static_cast<uint8_t>(word&255));
-      packed.SetValue(packedOffset+2*i+1,static_cast<uint8_t>(word>>8));
-    }
+    oscar_striped_store_simd_pack::PackCodes(
+        codes,work,packed,dim_,packedOffset);
     auto words=meta.ReinterpretCast<uint16_t>();
     const uint16_t sc=words.GetValue(0),zr=words.GetValue(1);
     packed.SetValue(metadataOffset,static_cast<uint8_t>(sc&255));

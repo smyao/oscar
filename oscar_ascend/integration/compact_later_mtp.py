@@ -13,7 +13,7 @@ from dataclasses import replace
 
 from .dummy_context import is_native_dummy_run
 from .first_draft_current_only import supports_first_draft_current_only
-from .metadata import OscarMetadata
+from .metadata import OscarMetadata, slice_window_map
 from .runtime_api import OscarReadinessError
 
 _NATIVE_FALSE_FLAGS = (
@@ -144,7 +144,8 @@ def _compact_call(original, model, args, kwargs, provider, context, flags, group
         _tail_slot_guard(provider, row.slot_mapping, b, n)
         small[name] = replace(row, num_input_tokens=b, slot_mapping=row.slot_mapping[:b],
             seq_lens=row.seq_lens[:b], block_tables=row.block_tables[:b], cv_shape_tokens=n,
-            current_only_plan=None, first_draft_current_only=False)
+            current_only_plan=None, first_draft_current_only=False,
+            window_map=slice_window_map(row, 0, b))
     call = {**kwargs, "input_ids": ids[:b], "hidden_states": hidden[:b], "positions": positions[..., :b]}
     embeds = kwargs.get("inputs_embeds")
     if embeds is not None:

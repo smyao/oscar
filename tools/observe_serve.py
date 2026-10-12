@@ -505,6 +505,10 @@ def _striped_cache_gate(config_path: Path, config: dict, env: dict, log_dir: Pat
     mismatches = [key for key, value in expected.items() if report.get(key) != value]
     if report.get("writer", {}).get("status") != "passed":
         mismatches.append("writer")
+    if config.get("experimental_quantization_bundle", False):
+        from .probe_vector_init_rotation import validate_evidence
+        mismatches.extend("vector_init_rotation."+key for key in
+                          validate_evidence(report.get("vector_init_rotation")))
     if mismatches:
         error = RuntimeError(f"striped cache gate lacks matching evidence: {','.join(mismatches)} report={output}")
         error.phase = "striped-cache-evidence"
@@ -513,6 +517,98 @@ def _striped_cache_gate(config_path: Path, config: dict, env: dict, log_dir: Pat
                                    "artifact_signature": manifest["signature"],
                                    "full_service_performance": "not_established"}
     atomic_json(log_dir / "status.json", status)
+
+
+
+def _c4_member_pipeline_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
+                             status: dict) -> None:
+    """#148/#150/#153/#154: mature C4 pipeline must qualify before serving."""
+    from oscar_ascend.ops.loader import validate_build_artifacts
+    from .probe_c4_member_pipeline import validate_evidence
+    output=log_dir/"c4-member-pipeline-report.json"
+    output.unlink(missing_ok=True)
+    before=read_npu_resources(config,log_dir=log_dir/"c4-pipeline-resources-before",timeout=30)
+    phase_error=None;release=None
+    try:
+        _phase("c4-member-pipeline",[sys.executable,"-m","tools.probe_c4_member_pipeline",
+            "--config",str(config_path),"--acceptance",str(ROOT/"configs/acceptance.json"),
+            "--output",str(output)],config=config,env=env,log_dir=log_dir,status=status)
+    except BaseException as error:
+        phase_error=error
+        raise
+    finally:
+        try:
+            release=wait_for_release(config,before,log_dir=log_dir/"c4-pipeline-resources-after",
+                timeout=float(config.get("resource_release_timeout_seconds",30)),
+                tolerance_bytes=config.get("resource_release_tolerance_bytes",DEFAULT_RELEASE_TOLERANCE))
+        except BaseException as error:
+            release={"status":"failed","reason":f"{type(error).__name__}: {error}"}
+            if phase_error is None:raise
+        finally:
+            if release is not None:
+                status["c4_member_pipeline_resource_release"]=release
+                atomic_json(log_dir/"status.json",status)
+    if release.get("status")!="passed":raise RuntimeError("C4 pipeline NPU resources did not release")
+    report=json.loads(output.read_text())
+    manifest=validate_build_artifacts(ROOT/"build/ascendc/build_manifest.json")
+    mismatches=validate_evidence(report)
+    mismatches += [key for key,expected in (("artifact_signature",manifest.get("signature")),
+                   ("artifact_sha256",manifest.get("sha256"))) if report.get(key)!=expected]
+    if mismatches:
+        error=RuntimeError(f"C4 pipeline gate lacks matching evidence: {','.join(mismatches)} report={output}")
+        error.phase="c4-member-pipeline-evidence"
+        raise error
+    status["c4_member_pipeline_gate"]={"status":"passed","report":str(output),
+        "artifact_signature":manifest["signature"],"full_service_performance":"not_established"}
+    atomic_json(log_dir/"status.json",status)
+
+
+def _mdl_decode_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
+                     status: dict) -> None:
+    """#126/#145/#150/#154-156: complete q4 MDL device/graph and 1.15x gate."""
+    from oscar_ascend.ops.loader import validate_build_artifacts
+    from .probe_mdl_decode import validate_evidence, source_binding
+    output = log_dir / "mdl-decode-report.json"
+    output.unlink(missing_ok=True)
+    before = read_npu_resources(config, log_dir=log_dir/"mdl-resources-before", timeout=30)
+    phase_error = None
+    release = None
+    try:
+        _phase("mdl-decode-npu", [sys.executable, "-m", "tools.probe_mdl_decode",
+               "--config", str(config_path), "--acceptance", str(ROOT/"configs/acceptance.json"),
+               "--output", str(output)], config=config, env=env, log_dir=log_dir, status=status)
+    except BaseException as error:
+        phase_error = error
+        raise
+    finally:
+        try:
+            release = wait_for_release(config, before, log_dir=log_dir/"mdl-resources-after",
+                timeout=float(config.get("resource_release_timeout_seconds", 30)),
+                tolerance_bytes=config.get("resource_release_tolerance_bytes", DEFAULT_RELEASE_TOLERANCE))
+        except BaseException as error:
+            release = {"status": "failed", "reason": f"{type(error).__name__}: {error}"}
+            if phase_error is None:
+                raise
+        finally:
+            if release is not None:
+                status["mdl_decode_resource_release"] = release
+                atomic_json(log_dir/"status.json", status)
+    if release.get("status") != "passed":
+        raise RuntimeError("MDL NPU resources did not release")
+    report = json.loads(output.read_text())
+    manifest = validate_build_artifacts(ROOT/"build/ascendc/build_manifest.json")
+    mismatches = validate_evidence(report)
+    expected = {"artifact_signature": manifest.get("signature"),
+                "artifact_sha256": manifest.get("sha256"), "source_binding": source_binding()}
+    mismatches += [key for key, value in expected.items() if report.get(key) != value]
+    if mismatches:
+        error = RuntimeError(f"MDL gate lacks matching evidence: {','.join(mismatches)} report={output}")
+        error.phase = "mdl-decode-evidence"
+        raise error
+    status["mdl_decode_gate"] = {"status": "passed", "report": str(output),
+        "artifact_signature": manifest["signature"], "minimum_speedup": 1.15,
+        "full_service_performance": "not_established"}
+    atomic_json(log_dir/"status.json", status)
 
 
 def _current_only_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
@@ -683,6 +779,63 @@ def _decode_bundle_gate(config_path: Path, config: dict, env: dict, log_dir: Pat
     atomic_json(log_dir / "status.json", status)
 
 
+def _request_window_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
+                         status: dict) -> None:
+    """Archive #125/#128/#145/#151/#153/#155: new storage must prove its own gates."""
+    if type(config.get("experimental_request_windows",False)) is not bool:
+        raise ValueError("experimental_request_windows must be an explicit boolean")
+    if not config.get("experimental_request_windows",False):return
+    from oscar_ascend.ops.loader import validate_build_artifacts
+    from .probe_request_windows import final_status
+    from .request_window_reader_gate import validate_evidence
+    output=log_dir/"request-window-report.json"
+    output.unlink(missing_ok=True)
+    before=read_npu_resources(config,log_dir=log_dir/"request-window-resources-before",timeout=30)
+    phase_error=release=None
+    try:
+        _phase("request-window-npu",[sys.executable,"-m","tools.probe_request_windows",
+            "--config",str(config_path),"--acceptance",str(ROOT/"configs/acceptance.json"),
+            "--output",str(output)],config=config,env=env,log_dir=log_dir,status=status)
+    except BaseException as error:
+        phase_error=error
+        raise
+    finally:
+        try:
+            release=wait_for_release(config,before,log_dir=log_dir/"request-window-resources-after",
+                timeout=float(config.get("resource_release_timeout_seconds",30)),
+                tolerance_bytes=config.get("resource_release_tolerance_bytes",DEFAULT_RELEASE_TOLERANCE))
+        except BaseException as error:
+            release={"status":"failed","reason":f"{type(error).__name__}: {error}"}
+            if phase_error is None:raise
+        finally:
+            if release is not None:
+                status["request_window_resource_release"]=release
+                atomic_json(log_dir/"status.json",status)
+    if release.get("status")!="passed":
+        raise RuntimeError("request-window NPU resources did not release")
+    report=json.loads(output.read_text())
+    manifest=validate_build_artifacts(ROOT/"build/ascendc/build_manifest.json")
+    device=report.get("device",{})
+    reader_cores=device.get("cube_cores")
+    acceptance_sha=hashlib.sha256((ROOT/"configs/acceptance.json").read_bytes()).hexdigest()
+    if (report.get("status")!="passed" or final_status(report)!="passed" or
+            report.get("artifact_signature")!=manifest.get("signature") or
+            report.get("artifact_sha256")!=manifest.get("sha256") or
+            report.get("acceptance_sha256")!=acceptance_sha or
+            device.get("physical_selection")!=config.get("devices") or
+            type(reader_cores) is not int or not 1<=reader_cores<=32 or
+            (config.get("cube_cores") is not None and reader_cores!=config["cube_cores"])):
+        raise RuntimeError(f"request-window gate lacks complete matching evidence: {output}")
+    validate_evidence({"accuracy":report["accuracy"]["reader"],"graph":report["graph"]["reader"]},
+                      expected_cores=reader_cores,
+                      c4_member_pipeline=config.get("experimental_c4_member_pipeline",False))
+    status["request_window_gate"]={"status":"passed","report":str(output),
+        "artifact_signature":manifest["signature"],"device_accuracy":"passed",
+        "graph_acceptance":"changed_identity_and_inputs_passed",
+        "model_quality":"not_established","full_service_performance":"not_established"}
+    atomic_json(log_dir/"status.json",status)
+
+
 def _mixed_decode_split_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
                        status: dict) -> None:
     """Real eager mixed request partition gate; no whole-model acceptance."""
@@ -784,7 +937,8 @@ def _mixed_diagnostic(config_path: Path, config: dict, env: dict, log_dir: Path,
 
 
 def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = False,
-        diagnose_q4: bool = False, diagnose_mixed: bool = False) -> int:
+        diagnose_q4: bool = False, diagnose_mixed: bool = False,
+        enable_prefix_caching: bool | None = None) -> int:
     config_path, log_dir = config_path.resolve(), log_dir.resolve()
     status = {"status": "preparing", "variant": variant,
               "measurement": "operator_microprobe" if probe_only else "passive_external_only",
@@ -799,7 +953,10 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
         if diagnose_mixed and variant != "candidate":
             raise ValueError("--diagnose-mixed requires --variant candidate")
         original = config_path.read_bytes()
-        config = variant_config(json.loads(original), variant)
+        selected = json.loads(original)
+        if enable_prefix_caching is not None:
+            selected["enable_prefix_caching"] = enable_prefix_caching
+        config = variant_config(selected, variant)
         if type(config.get("experimental_current_only", False)) is not bool:
             raise ValueError("experimental_current_only must be an explicit boolean")
         status["optimizations"] = variant_features(config)
@@ -845,14 +1002,20 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                             _q4_diagnostic(effective_path, config, env, log_dir, status)
                         if diagnose_mixed and not config.get("experimental_mixed_cv", False):
                             _mixed_diagnostic(effective_path, config, env, log_dir, status)
+                    if config.get("experimental_c4_member_pipeline", False):
+                        _c4_member_pipeline_gate(effective_path, config, env, log_dir, status)
                     if config.get("experimental_decode_bundle", False):
                         _decode_bundle_gate(effective_path, config, env, log_dir, status)
+                    if config.get("experimental_mdl_decode", False):
+                        _mdl_decode_gate(effective_path, config, env, log_dir, status)
                     if config.get("experimental_current_only", False):
                         _current_only_gate(effective_path, config, env, log_dir, status)
                     if config.get("experimental_first_mtp_current_fia", False):
                         _first_mtp_current_gate(effective_path, config, env, log_dir, status)
                     if config.get("experimental_mixed_decode_split", False):
                         _mixed_decode_split_gate(effective_path, config, env, log_dir, status)
+                    if config.get("experimental_request_windows", False):
+                        _request_window_gate(effective_path, config, env, log_dir, status)
             if probe_only:
                 status.update(status="operator_probes_passed", service_started=False,
                               performance_acceptance="operator_only_not_end_to_end")
@@ -974,6 +1137,8 @@ def main(argv=None) -> int:
     parser.add_argument("--variant", choices=("baseline", "candidate", "native"), default="baseline")
     parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--plan", action="store_true")
+    parser.add_argument("--enable-prefix-caching", action=argparse.BooleanOptionalAction, default=None,
+                        help="pass the native prefix-cache switch; enabled by default, explicit false is diagnostic")
     parser.add_argument("--probe-only", action="store_true",
                         help="finish after candidate operator/graph/latency gates; do not start a model")
     parser.add_argument("--diagnose-q4", action="store_true",
@@ -984,7 +1149,10 @@ def main(argv=None) -> int:
     log_dir = (args.log_dir or ROOT / "logs" / ("observe-" + datetime.now(timezone.utc).strftime(
         "%Y%m%dT%H%M%S.%fZ"))).resolve()
     if args.plan:
-        config = variant_config(json.loads(args.config.read_text()), args.variant)
+        selected = json.loads(args.config.read_text())
+        if args.enable_prefix_caching is not None:
+            selected["enable_prefix_caching"] = args.enable_prefix_caching
+        config = variant_config(selected, args.variant)
         phases = ["install", "signed_operator_gate" if args.variant != "native" else "native_start"]
         if args.variant == "candidate":
             phases += ["candidate_operator_graph_latency_gates", "fast_unpack_gate"]
@@ -997,10 +1165,13 @@ def main(argv=None) -> int:
             if args.diagnose_mixed and not config.get("experimental_mixed_cv", False):
                 phases.append("mixed_cv_current_fia_merge_diagnostic")
         for flag,phase_name in (
+            ("experimental_c4_member_pipeline","c4_member_pipeline_gate"),
             ("experimental_decode_bundle","decode_bundle_gate"),
+            ("experimental_mdl_decode","mdl_decode_gate"),
             ("experimental_current_only","current_only_gate"),
             ("experimental_first_mtp_current_fia","first_mtp_current_gate"),
-            ("experimental_mixed_decode_split","mixed_decode_split_gate")):
+            ("experimental_mixed_decode_split","mixed_decode_split_gate"),
+            ("experimental_request_windows","request_window_gate")):
             if config.get(flag,False):phases.append(phase_name)
         if not args.probe_only:
             phases += ["managed_service_health", "external_metrics_and_bounded_async_events"]
@@ -1013,7 +1184,8 @@ def main(argv=None) -> int:
             "phases": phases}, indent=2))
         return 0
     return run(args.config, log_dir, args.variant, probe_only=args.probe_only,
-               diagnose_q4=args.diagnose_q4, diagnose_mixed=args.diagnose_mixed)
+               diagnose_q4=args.diagnose_q4, diagnose_mixed=args.diagnose_mixed,
+               enable_prefix_caching=args.enable_prefix_caching)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,20 @@
+{
+  "status": "completed_same_library_pair",
+  "source_sha256": "d8171f0403cf176087e1c76c64e454e6fb1e74fd79252aab3b59e848cca19401",
+  "task_ticks": {
+    "baseline": 1079788,
+    "candidate": 931042
+  },
+  "ratio": 1.1597629322844727,
+  "all_partial_lse_status_bitwise": true,
+  "independent_oracle": "passed_both",
+  "all_sources_and_tasks": true,
+  "source_abi_publisher_and_geometry": "unchanged",
+  "full_trace_files_per_arm": 6,
+  "load_geometry_verdict": "inspect_complete_instructions_before_claiming_full_B_DMA",
+  "CPU": "available_checked",
+  "CANN": "loaded_same_compiled_library",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "whole_service": "not_established"
+}

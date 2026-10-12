@@ -78,6 +78,21 @@ def test_same_completed_build_skips_cmake_and_preserves_evidence(compiler, monke
     validate_build_artifacts(compiler.build_dir / "build_manifest.json")
 
 
+def test_explicit_job_limit_reaches_compiler_without_changing_target_flags(compiler):
+    built=build_ops.build(compiler.root/'logs',30,'ascend910b4',jobs=2)
+    compile_command=next(command for name,command in compiler.commands if name=='compile-1')
+    assert compile_command[-2:]==['--parallel','2']
+    assert built['configuration']['soc']=='ascend910b4'
+    assert built['device_completion']=='not_run'
+
+
+@pytest.mark.parametrize('jobs',[0,-1,True,1.5])
+def test_invalid_job_limit_fails_before_touching_build_state(compiler,jobs):
+    with pytest.raises(ValueError,match='positive integer'):
+        build_ops.build(compiler.root/'logs',30,'ascend910b4',jobs=jobs)
+    assert compiler.commands==[]
+
+
 @pytest.mark.parametrize("change", ["source", "cann-version", "package-version", "compiler-flags"])
 def test_changed_build_configuration_cleans_before_rebuild(compiler, monkeypatch, change):
     built = compiler.build()

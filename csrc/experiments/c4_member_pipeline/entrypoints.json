@@ -1,0 +1,20 @@
+{
+  "cv_probe.cpp": {
+    "qualified_template": "csrc/experiments/c4_unpack32/cv_probe.cpp",
+    "template_sha256": "c1d41828af8ae4d27cd747d6126746292cd4c81295fc2ccb50062403e755e77d",
+    "generated_sha256": "e79ff6d3219fbc73dc0dc4b63c7cc06129ede6f1bec4959b4325a61c0268d823",
+    "source_restore": true
+  },
+  "cv_replay.py": {
+    "qualified_template": "csrc/experiments/c4_unpack32/cv_replay.py",
+    "template_sha256": "3bf995295d5ff716c9fe026a36e01310c3e2940e254eb5cbaf75556981f65958",
+    "generated_sha256": "71c38e9dd2fb545de1cb4514ddf256984587c62fb3397560cbe73e7a44eb8091",
+    "source_restore": true
+  },
+  "cv_compare.py": {
+    "qualified_template": "csrc/experiments/c4_unpack32/cv_compare.py",
+    "template_sha256": "721b7158e1135c5a4ad7685fc0dd8ba03a4f6bf540529ccac9d3d39bf3bcd973",
+    "generated_sha256": "9fb3b466e5e0a8e5ba4c2986abaed7af6443cd4d674495a7a2670816083e3dc1",
+    "source_restore": true
+  }
+}

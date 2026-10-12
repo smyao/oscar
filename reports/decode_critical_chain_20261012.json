@@ -1,0 +1,363 @@
+{
+  "status": "complete_ready_chain_closed",
+  "source_sha256": "d8171f0403cf176087e1c76c64e454e6fb1e74fd79252aab3b59e848cca19401",
+  "input_analysis_sha256": "d5b9d6188b2e23cf2c36d31012a3e191943ef2dece496404cceb27ef47d16dbe",
+  "pair": {
+    "status": "passed",
+    "case": "q4_r2_n8_c1341_s1",
+    "normal_ticks": 1072361,
+    "profile_ticks": 1093991,
+    "instrumentation_perturbation": 0.020170446332904657,
+    "predeclared_absolute_limit": 0.05,
+    "all_partial_lse_status_bitwise": true,
+    "independent_oracle": "passed_both",
+    "all_sources_and_tasks": true,
+    "actor_count": 3,
+    "complete_trace_files_per_arm": 6,
+    "scope": "small complete steady-pipeline diagnostic, not R32/HBM/whole-service throughput",
+    "SYS_CNT": "not_used",
+    "npu": "not_run",
+    "graph": "not_run",
+    "whole_service": "not_established"
+  },
+  "rows": [
+    {
+      "task_ordinal": 0,
+      "kv_round": 0,
+      "class": "first",
+      "KVReady_complete": 39401,
+      "KV_producer_not_ready_at_wait": 30602,
+      "ScoreReady_complete": 59463,
+      "PReady_complete": 68723,
+      "PvReady_complete": 89696,
+      "ScoreReady_to_PReady": 9260,
+      "PReady_to_PvReady": 20973,
+      "softmax_completed_scopes": [
+        {
+          "lane": 0,
+          "start_complete": 59556,
+          "end_complete": 68259,
+          "span": 8703
+        },
+        {
+          "lane": 1,
+          "start_complete": 59556,
+          "end_complete": 67037,
+          "span": 7481
+        }
+      ],
+      "qk_delivery_span_overlaps_prior_PV": 19353,
+      "pv_delivery_span": 20856
+    },
+    {
+      "task_ordinal": 0,
+      "kv_round": 1,
+      "class": "steady_full",
+      "KVReady_complete": 74353,
+      "KV_producer_not_ready_at_wait": 0,
+      "ScoreReady_complete": 106760,
+      "PReady_complete": 112679,
+      "PvReady_complete": 133649,
+      "ScoreReady_to_PReady": 5919,
+      "PReady_to_PvReady": 20970,
+      "softmax_completed_scopes": [
+        {
+          "lane": 0,
+          "start_complete": 106853,
+          "end_complete": 112215,
+          "span": 5362
+        },
+        {
+          "lane": 1,
+          "start_complete": 106853,
+          "end_complete": 110457,
+          "span": 3604
+        }
+      ],
+      "qk_delivery_span_overlaps_prior_PV": 26434,
+      "pv_delivery_span": 20853,
+      "previous_PvReady_to_ScoreReady": 17064,
+      "PvReady_period": 43953,
+      "combined_QK_PV_delivery_fraction": 0.8653334243396356
+    },
+    {
+      "task_ordinal": 0,
+      "kv_round": 2,
+      "class": "steady_full",
+      "KVReady_complete": 118310,
+      "KV_producer_not_ready_at_wait": 0,
+      "ScoreReady_complete": 150719,
+      "PReady_complete": 156707,
+      "PvReady_complete": 177682,
+      "ScoreReady_to_PReady": 5988,
+      "PReady_to_PvReady": 20975,
+      "softmax_completed_scopes": [
+        {
+          "lane": 0,
+          "start_complete": 150812,
+          "end_complete": 156243,
+          "span": 5431
+        },
+        {
+          "lane": 1,
+          "start_complete": 150812,
+          "end_complete": 154413,
+          "span": 3601
+        }
+      ],
+      "qk_delivery_span_overlaps_prior_PV": 26441,
+      "pv_delivery_span": 20858,
+      "previous_PvReady_to_ScoreReady": 17070,
+      "PvReady_period": 44033,
+      "combined_QK_PV_delivery_fraction": 0.8640110825971431
+    },
+    {
+      "task_ordinal": 0,
+      "kv_round": 3,
+      "class": "full_before_tail",
+      "KVReady_complete": 162337,
+      "KV_producer_not_ready_at_wait": 0,
+      "ScoreReady_complete": 191772,
+      "PReady_complete": 199197,
+      "PvReady_complete": 220171,
+      "ScoreReady_to_PReady": 7425,
+      "PReady_to_PvReady": 20974,
+      "softmax_completed_scopes": [
+        {
+          "lane": 0,
+          "start_complete": 191865,
+          "end_complete": 198733,
+          "span": 6868
+        },
+        {
+          "lane": 1,
+          "start_complete": 191865,
+          "end_complete": 195464,
+          "span": 3599
+        }
+      ],
+      "qk_delivery_span_overlaps_prior_PV": 23464,
+      "pv_delivery_span": 20857,
+      "previous_PvReady_to_ScoreReady": 14090,
+      "PvReady_period": 42489,
+      "combined_QK_PV_delivery_fraction": 0.8252488879474688
+    },
+    {
+      "task_ordinal": 0,
+      "kv_round": 4,
+      "class": "tail",
+      "KVReady_complete": 205188,
+      "KV_producer_not_ready_at_wait": 0,
+      "ScoreReady_complete": 234264,
+      "PReady_complete": 239472,
+      "PvReady_complete": 260446,
+      "ScoreReady_to_PReady": 5208,
+      "PReady_to_PvReady": 20974,
+      "softmax_completed_scopes": [
+        {
+          "lane": 0,
+          "start_complete": 234355,
+          "end_complete": 238049,
+          "span": 3694
+        },
+        {
+          "lane": 1,
+          "start_complete": 234355,
+          "end_complete": 239130,
+          "span": 4775
+        }
+      ],
+      "qk_delivery_span_overlaps_prior_PV": 23468,
+      "pv_delivery_span": 20857,
+      "previous_PvReady_to_ScoreReady": 14093,
+      "PvReady_period": 40275,
+      "combined_QK_PV_delivery_fraction": 0.8706890130353817
+    },
+    {
+      "task_ordinal": 1,
+      "kv_round": 0,
+      "class": "first",
+      "KVReady_complete": 325193,
+      "KV_producer_not_ready_at_wait": 34580,
+      "ScoreReady_complete": 341744,
+      "PReady_complete": 351374,
+      "PvReady_complete": 372344,
+      "ScoreReady_to_PReady": 9630,
+      "PReady_to_PvReady": 20970,
+      "softmax_completed_scopes": [
+        {
+          "lane": 0,
+          "start_complete": 341837,
+          "end_complete": 350909,
+          "span": 9072
+        },
+        {
+          "lane": 1,
+          "start_complete": 341837,
+          "end_complete": 348784,
+          "span": 6947
+        }
+      ],
+      "qk_delivery_span_overlaps_prior_PV": 16451,
+      "pv_delivery_span": 20853
+    },
+    {
+      "task_ordinal": 1,
+      "kv_round": 1,
+      "class": "steady_full",
+      "KVReady_complete": 357000,
+      "KV_producer_not_ready_at_wait": 0,
+      "ScoreReady_complete": 389419,
+      "PReady_complete": 395332,
+      "PvReady_complete": 416306,
+      "ScoreReady_to_PReady": 5913,
+      "PReady_to_PvReady": 20974,
+      "softmax_completed_scopes": [
+        {
+          "lane": 0,
+          "start_complete": 389512,
+          "end_complete": 394867,
+          "span": 5355
+        },
+        {
+          "lane": 1,
+          "start_complete": 389512,
+          "end_complete": 393172,
+          "span": 3660
+        }
+      ],
+      "qk_delivery_span_overlaps_prior_PV": 26450,
+      "pv_delivery_span": 20857,
+      "previous_PvReady_to_ScoreReady": 17075,
+      "PvReady_period": 43962,
+      "combined_QK_PV_delivery_fraction": 0.865497475092125
+    },
+    {
+      "task_ordinal": 1,
+      "kv_round": 2,
+      "class": "steady_full",
+      "KVReady_complete": 400958,
+      "KV_producer_not_ready_at_wait": 0,
+      "ScoreReady_complete": 433389,
+      "PReady_complete": 439299,
+      "PvReady_complete": 460268,
+      "ScoreReady_to_PReady": 5910,
+      "PReady_to_PvReady": 20969,
+      "softmax_completed_scopes": [
+        {
+          "lane": 0,
+          "start_complete": 433482,
+          "end_complete": 438834,
+          "span": 5352
+        },
+        {
+          "lane": 1,
+          "start_complete": 433482,
+          "end_complete": 437142,
+          "span": 3660
+        }
+      ],
+      "qk_delivery_span_overlaps_prior_PV": 26458,
+      "pv_delivery_span": 20852,
+      "previous_PvReady_to_ScoreReady": 17083,
+      "PvReady_period": 43962,
+      "combined_QK_PV_delivery_fraction": 0.8655657158455029
+    },
+    {
+      "task_ordinal": 1,
+      "kv_round": 3,
+      "class": "full_before_tail",
+      "KVReady_complete": 444923,
+      "KV_producer_not_ready_at_wait": 0,
+      "ScoreReady_complete": 474356,
+      "PReady_complete": 481772,
+      "PvReady_complete": 502744,
+      "ScoreReady_to_PReady": 7416,
+      "PReady_to_PvReady": 20972,
+      "softmax_completed_scopes": [
+        {
+          "lane": 0,
+          "start_complete": 474449,
+          "end_complete": 481309,
+          "span": 6860
+        },
+        {
+          "lane": 1,
+          "start_complete": 474449,
+          "end_complete": 478101,
+          "span": 3652
+        }
+      ],
+      "qk_delivery_span_overlaps_prior_PV": 23462,
+      "pv_delivery_span": 20855,
+      "previous_PvReady_to_ScoreReady": 14088,
+      "PvReady_period": 42476,
+      "combined_QK_PV_delivery_fraction": 0.8254072888219229
+    },
+    {
+      "task_ordinal": 1,
+      "kv_round": 4,
+      "class": "tail",
+      "KVReady_complete": 487814,
+      "KV_producer_not_ready_at_wait": 0,
+      "ScoreReady_complete": 516838,
+      "PReady_complete": 522000,
+      "PvReady_complete": 542970,
+      "ScoreReady_to_PReady": 5162,
+      "PReady_to_PvReady": 20970,
+      "softmax_completed_scopes": [
+        {
+          "lane": 0,
+          "start_complete": 516929,
+          "end_complete": 520418,
+          "span": 3489
+        },
+        {
+          "lane": 1,
+          "start_complete": 516929,
+          "end_complete": 521658,
+          "span": 4729
+        }
+      ],
+      "qk_delivery_span_overlaps_prior_PV": 23466,
+      "pv_delivery_span": 20853,
+      "previous_PvReady_to_ScoreReady": 14094,
+      "PvReady_period": 40226,
+      "combined_QK_PV_delivery_fraction": 0.8716750360463382
+    }
+  ],
+  "steady_full_summary": {
+    "previous_PvReady_to_ScoreReady": {
+      "min": 17064,
+      "median": 17072.5,
+      "max": 17083
+    },
+    "ScoreReady_to_PReady": {
+      "min": 5910,
+      "median": 5916.0,
+      "max": 5988
+    },
+    "PReady_to_PvReady": {
+      "min": 20969,
+      "median": 20972.0,
+      "max": 20975
+    },
+    "PvReady_period": {
+      "min": 43953,
+      "median": 43962.0,
+      "max": 44033
+    },
+    "combined_QK_PV_delivery_fraction": {
+      "min": 0.8640110825971431,
+      "median": 0.8654154497158804,
+      "max": 0.8655657158455029
+    }
+  },
+  "not_inferences": [
+    "QK_PV_delivery_fraction_is_not_Cube_busy",
+    "not_64K_K32_HBM_roofline",
+    "first_KV_wait_includes_query_and_initialization_not_only_dequant",
+    "softmax_method_includes_existing_memory_sync",
+    "no_cross_actor_duration_sum"
+  ]
+}

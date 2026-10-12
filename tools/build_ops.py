@@ -74,7 +74,13 @@ def reusable_build(build_dir: Path, signature: str) -> dict | None:
         return None
 
 
-def build(log_dir: Path, timeout: float, soc: str | None = None) -> dict:
+def build(log_dir: Path, timeout: float, soc: str | None = None, *, jobs: int | None = None) -> dict:
+    # Local compiler VMs can have many logical CPUs but insufficient memory
+    # for eight simultaneous Torch C++ translation units. This only limits
+    # build concurrency; target code, numerics and runtime flags stay intact.
+    if jobs is not None and (type(jobs) is not int or jobs <= 0):
+        raise ValueError("build jobs must be a positive integer")
+    compile_jobs = min(os.cpu_count() or 1, 8) if jobs is None else jobs
     env = os.environ.copy()
     cann = cann_root(env)
     npu_spec = importlib.util.find_spec("torch_npu")
@@ -137,7 +143,7 @@ def build(log_dir: Path, timeout: float, soc: str | None = None) -> dict:
         configured = run_phase(f"configure-{attempt}", command, cwd=ROOT, log_dir=log_dir, env=env, timeout=timeout)
         result = configured
         if configured.returncode == 0:
-            result = run_phase(f"compile-{attempt}", ["cmake", "--build", str(build_dir), "--parallel", str(min(os.cpu_count() or 1, 8))],
+            result = run_phase(f"compile-{attempt}", ["cmake", "--build", str(build_dir), "--parallel", str(compile_jobs)],
                                cwd=ROOT, log_dir=log_dir, env=env, timeout=timeout)
         if result.returncode == 0:
             break
@@ -169,9 +175,10 @@ def main() -> int:
     parser.add_argument("--log-dir", type=Path, default=ROOT / "logs/build")
     parser.add_argument("--timeout", type=float, default=1800)
     parser.add_argument("--soc")
+    parser.add_argument("--jobs",type=int,help="optional compiler parallelism limit for memory-limited build hosts")
     args = parser.parse_args()
     try:
-        print(json.dumps(build(args.log_dir, args.timeout, args.soc), indent=2))
+        print(json.dumps(build(args.log_dir, args.timeout, args.soc, jobs=args.jobs), indent=2))
         return 0
     except (RuntimeError, ValueError, OSError, subprocess.TimeoutExpired) as exc:
         atomic_json(ROOT / "reports/build.json", {"build": "failed", "device_completion": "not_run", "error": str(exc)})

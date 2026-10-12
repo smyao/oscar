@@ -1,0 +1,12 @@
+{
+  "sources": {
+    "csrc/kernels/attention_cv_fast.cpp": "de351cc7706d1e632b9d7660a1836c4e8e6e30343da36dc4045fecc507c19e7a",
+    "csrc/kernels/attention_cv_fast_balanced.cpp": "b202a837794ea6dad7f1fd73ae2f8090df4fb3c5307b2f7672e69f8f2ca8dd7a",
+    "csrc/kernels/attention_cv_fast_cluster4.cpp": "42b67219b4e646ddb80b24ef4bd2736786bb01aef3ddb06651eff8b7c4dfeb03",
+    "csrc/kernels/attention_cv_fast_cluster16.cpp": "f27da9b270f29effa7427996fa59c2f8c76b642fee8ed2e402d43fd2b5acc8cb"
+  },
+  "window_source_sha256": "4e782a8ce963e0e4637027b80eaa48b815bd7b517643a0c27c8e025bdc18e807",
+  "production_edited": false,
+  "npu": "not_run",
+  "performance": "not_established"
+}

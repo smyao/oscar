@@ -1,4 +1,4 @@
-"""Archive #94/#95/#125/#140/#142/#148/#155: host gate contracts only.
+"""Archive #34/#36/#94/#95/#125/#140/#142/#148/#155: host gate contracts only.
 
 No CPU substitutes for NPU operators; these checks exercise disabled routing,
 bounded case selection, exact call delegation and failure/cleanup propagation.
@@ -91,6 +91,21 @@ def test_probe_disabled_rejects_before_torch_or_fixture(tmp_path):
         probe.probe(config,acceptance)
     with pytest.raises(RuntimeError,match="experimental_striped_cache=true"):
         probe._configuration({**target(),"experimental_striped_cache":False},True)
+
+
+@pytest.mark.parametrize("tokens", [21, 389, 20000, 30000])
+def test_independent_runtime_capacity_is_fixture_sized_and_does_not_mutate_target(tokens):
+    source = {**target(), "use_native_token_budget": True,
+              "compilation_config": {"cudagraph_capture_sizes": [128, 512], "cudagraph_mode": "FULL_DECODE_ONLY"}}
+    source.pop("max_num_batched_tokens", None)
+    before = json.dumps(source, sort_keys=True)
+    config = probe._configuration(source, True, probe_tokens=tokens)
+    assert config["max_num_batched_tokens"] == tokens
+    assert config["use_native_token_budget"] is False
+    assert config["compilation_config"]["cudagraph_capture_sizes"] == []
+    assert json.dumps(source, sort_keys=True) == before
+    with pytest.raises(ValueError, match="positive integer"):
+        probe._configuration(source, True, probe_tokens=0)
 
 
 def test_probe_real_npu_missing_fails_without_cpu_substitution(tmp_path, monkeypatch):

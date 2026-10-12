@@ -1,0 +1,22 @@
+{
+  "source": "csrc/kernels/rotate_clip_store_striped.cpp",
+  "source_sha256": "72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430",
+  "writer_optimizations": [
+    "simd_pack",
+    "exact_hadamard_init"
+  ],
+  "rotation_and_clip_helpers_sha256": "59a12fd21322b2cf9e0b80f8fd8857cf08935dd4e488b0297c5b3eb339dbda69",
+  "shared_helpers_sha256": {
+    "striped_store_pack.h": "95c2936c4e2f31bd444bb9126928e7cd270f3eaf38978b0a7801c107a5eb7f3e",
+    "hadamard_indices.h": "5c9b3905e89ebfd73bd6947d2f6d15f225e0d55ac19d0eba547dd2f4c132520f"
+  },
+  "generated_sha256": "c3a69d4ad0ae4e2bf0edc2aa38299795ed40c7248db88cbe27073fc92c9bf225",
+  "changes": [
+    "one destination address",
+    "remove per-page exact window publication",
+    "distinct experiment symbol"
+  ],
+  "CANN": "not_run",
+  "CPU_debug": "not_run",
+  "NPU": "not_run"
+}

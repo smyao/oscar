@@ -112,6 +112,12 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     monkeypatch.setattr(observe_serve, "_fast_unpack_gate", lambda *args: seen.append("fast-unpack-gate"))
     monkeypatch.setattr(observe_serve, "_mixed_optimization_gate", lambda *args: seen.append("mixed-optimization-gate"))
     monkeypatch.setattr(observe_serve, "_striped_cache_gate", lambda *args: seen.append("striped-cache-gate"))
+    monkeypatch.setattr(observe_serve, "_c4_member_pipeline_gate", lambda *args: seen.append("c4-member-pipeline-gate"))
+    monkeypatch.setattr(observe_serve, "_decode_bundle_gate", lambda *args: seen.append("decode-bundle-gate"))
+    monkeypatch.setattr(observe_serve, "_mdl_decode_gate", lambda *args: seen.append("mdl-decode-gate"))
+    monkeypatch.setattr(observe_serve, "_current_only_gate", lambda *args: seen.append("current-only-gate"))
+    monkeypatch.setattr(observe_serve, "_first_mtp_current_gate", lambda *args: seen.append("first-mtp-current-gate"))
+    monkeypatch.setattr(observe_serve, "_mixed_decode_split_gate", lambda *args: seen.append("mixed-decode-split-gate"))
     monkeypatch.setattr(observe_serve, "_q4_diagnostic", lambda *args: seen.append("q4-diagnostic"))
     monkeypatch.setattr(observe_serve, "_mixed_diagnostic", lambda *args: seen.append("mixed-diagnostic"))
     monkeypatch.setattr(observe_serve, "managed_server", lambda *args, **kwargs:
@@ -119,7 +125,9 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     logs = tmp_path / "probe"
     assert observe_serve.run(config, logs, "candidate", probe_only=True, diagnose_mixed=diagnose_mixed) == 0
-    assert seen == ["preflight", "candidate-gates", "fast-unpack-gate", "mixed-optimization-gate", "striped-cache-gate"]
+    assert seen == ["preflight", "candidate-gates", "fast-unpack-gate", "mixed-optimization-gate", "striped-cache-gate",
+                    "decode-bundle-gate", "mdl-decode-gate", "current-only-gate",
+                    "first-mtp-current-gate", "mixed-decode-split-gate"]
     status = json.loads((logs / "status.json").read_text())
     assert status["service_started"] is False
     assert status["performance_acceptance"] == "operator_only_not_end_to_end"
@@ -227,6 +235,25 @@ def test_striped_cache_gate_requires_exact_new_npu_evidence(monkeypatch, tmp_pat
         with pytest.raises(RuntimeError, match=key):
             observe_serve._striped_cache_gate(observe_serve.ROOT / "configs/target.json", config, {}, tmp_path, {})
         report[key] = saved
+    # A valid old striped report cannot release the newly selected operator.
+    config["experimental_quantization_bundle"]=True
+    with pytest.raises(RuntimeError,match="vector_init_rotation"):
+        observe_serve._striped_cache_gate(observe_serve.ROOT/"configs/target.json",config,{},tmp_path,{})
+    from tools.probe_vector_init_rotation import CASE_SPECS
+    rotation={"status":"passed","operator":"rotate_vector_init_out","device_completion":"passed",
+              "precision":"bitwise_and_independent_oracle_passed","error_contract":"passed",
+              "graph_capture":"passed","graph_replay":"passed","device_type":"npu",
+              "same_address_changed_query_and_slots":True,"graph_eager_bitwise":"passed",
+              "oracle_tolerance":{"atol":0.002,"rtol":0.002},
+              "cases":[{"dim":d,"dtype":"torch."+t,"hadamard":h,"precision":"passed"} for d,t,h in CASE_SPECS]}
+    report["vector_init_rotation"]=rotation
+    observe_serve._striped_cache_gate(observe_serve.ROOT/"configs/target.json",config,{},tmp_path,{})
+    for field in ("operator","device_completion","precision","error_contract","graph_capture","graph_replay",
+                  "same_address_changed_query_and_slots","graph_eager_bitwise","oracle_tolerance","cases","device_type"):
+        old=rotation.pop(field)
+        with pytest.raises(RuntimeError,match="vector_init_rotation"):
+            observe_serve._striped_cache_gate(observe_serve.ROOT/"configs/target.json",config,{},tmp_path,{})
+        rotation[field]=old
 
 
 def test_real_phase_status_cannot_overwrite_q4_measurement(monkeypatch, tmp_path):
@@ -338,7 +365,12 @@ def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeyp
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     assert observe_serve.run(config_path, logs, "candidate") == 1
     assert len(observed) == 2 and observed[0] == observed[1] == logs / "effective-target.json"
-    assert json.loads((logs / "effective-target.json").read_text())["experimental_history_reuse"] is True
+    effective = json.loads((logs / "effective-target.json").read_text())
+    assert effective["experimental_history_reuse"] is True
+    assert effective["use_native_token_budget"] is True
+    assert "max_num_batched_tokens" not in effective and "scheduler_cls" not in effective
+    assert not effective.get("experimental_whole_prefill", False)
+    assert not effective.get("experimental_bounded_whole_prefill", False)
     assert json.loads(config_path.read_text())["experimental_history_reuse"] is False
     status = json.loads((logs / "status.json").read_text())
     assert status["status"] == "failed"

@@ -1,4 +1,4 @@
-"""CPU request-domain/control contracts; never NPU performance evidence."""
+"""Archive #26/#37-49/#148: request-domain contracts, never NPU performance evidence."""
 from dataclasses import replace
 from types import SimpleNamespace
 import sys
@@ -22,11 +22,17 @@ def metadata(lengths=(4,4,1024),padding=24,*,draft=False):
 
 
 @pytest.mark.parametrize('draft',[False,True])
-def test_partition_preserves_every_request_current_and_history_domain(draft):
+@pytest.mark.parametrize('shared_prefix',[False,True])
+def test_partition_preserves_every_request_current_and_history_domain(draft,shared_prefix):
     torch.set_num_threads(min(4,torch.get_num_threads()))
     meta=metadata(draft=draft);n=meta.num_input_tokens;g=torch.Generator().manual_seed(47071)
     q=torch.randn(n,2,16,generator=g);k=torch.randn(n,1,16,generator=g);v=torch.randn(n,1,16,generator=g)
     histories={r:(torch.randn(c,1,16,generator=g),torch.randn(c,1,16,generator=g)) for r,c in enumerate((9,13,17))}
+    if shared_prefix:
+        # APC fork: two decode requests and one long continuation all read
+        # the same computed prefix. Their current suffixes remain separate.
+        meta=replace(meta,block_tables=torch.zeros_like(meta.block_tables),
+            seq_lens=torch.tensor([9+4,9+4,9+1024],dtype=torch.int32))
     def compute(q,k,v,m,out,cache):
         starts=m.query_start_loc.tolist()
         for r,(a,b) in enumerate(zip(starts,starts[1:])):
@@ -59,6 +65,8 @@ def test_partition_preserves_every_request_current_and_history_domain(draft):
     assert torch.equal(out,baseline)
     assert old_cache.keys()==new_cache.keys()
     assert all(torch.equal(a,b) for slot in old_cache for a,b in zip(old_cache[slot],new_cache[slot]))
+    assert meta.mixed_decode_split and meta.mixed_split_segment is None
+    assert meta.is_draft is draft and meta.first_draft_current_fia is draft
 
 
 @pytest.mark.parametrize('change',[
@@ -96,7 +104,7 @@ def test_device_boundaries_checked_before_any_subforward(which):
 
 
 @pytest.mark.parametrize('prefix_cache',[False,True,None])
-def test_native_builder_requires_explicit_nonsharing_policy(monkeypatch,prefix_cache):
+def test_native_builder_keeps_request_partition_for_shared_immutable_prefix(monkeypatch,prefix_cache):
     from test_first_draft_current_only import builder,config,common
     builder(monkeypatch,enabled=False)
     backend=sys.modules['oscar_ascend.integration.backend']
@@ -104,5 +112,50 @@ def test_native_builder_requires_explicit_nonsharing_policy(monkeypatch,prefix_c
     cfg=config();cfg.cache_config=SimpleNamespace(enable_prefix_caching=prefix_cache)
     b=backend.OscarMetadataBuilder(object(),['x'],cfg,'cpu')
     m=b.build(0,common())
-    assert m.mixed_decode_split is (prefix_cache is False)
+    assert m.mixed_decode_split is (type(prefix_cache) is bool)
     assert b.build_for_drafting(common(),1).mixed_decode_split is False
+
+
+@pytest.mark.parametrize('draft',[False,True])
+def test_real_prefix_hit_keeps_positive_context_and_private_suffix_metadata(monkeypatch,draft):
+    from enum import Enum
+    from test_first_draft_current_only import builder,config
+    from oscar_ascend.integration.mixed_decode_split import _slice_metadata
+    class AscendAttentionState(Enum):
+        PrefillCacheHit=1
+    builder(monkeypatch,enabled=True)
+    backend=sys.modules['oscar_ascend.integration.backend']
+    flags={'experimental_current_only':True,'experimental_mixed_decode_split':True,
+           'experimental_first_mtp_current_fia':True}
+    monkeypatch.setattr(backend,'require_runtime',lambda:SimpleNamespace(config=flags))
+    cfg=config();cfg.cache_config=SimpleNamespace(enable_prefix_caching=True,mamba_cache_mode='align')
+    b=backend.OscarMetadataBuilder(object(),['x'],cfg,'cpu')
+    # Native FULL physical prefix page 1 becomes virtual IDs 18..35. The two
+    # suffixes are distinct physical pages 2 and 3; 512 future/current tokens
+    # do not become a fresh zero-context request simply because APC hit.
+    starts=torch.tensor([0,4,516],dtype=torch.int32)
+    prefix=torch.arange(18,36,dtype=torch.int32)
+    tables=torch.stack((torch.cat((prefix,torch.arange(36,54,dtype=torch.int32))),
+                        torch.cat((prefix,torch.arange(54,72,dtype=torch.int32)))))
+    slots=torch.cat((torch.arange(4608,4612),torch.arange(6912,7424))).to(torch.int64)
+    common=SimpleNamespace(causal=True,query_start_loc=starts,query_start_loc_cpu=starts.clone(),
+        seq_lens=torch.tensor([2308,2816],dtype=torch.int32),
+        seq_lens_cpu_upper_bound=torch.tensor([2308,2816],dtype=torch.int32),
+        block_table_tensor=tables,slot_mapping=slots,num_reqs=2,num_actual_tokens=516,
+        num_input_tokens=516,max_query_len=512,max_seq_len=2816,attn_state=AscendAttentionState.PrefillCacheHit)
+    m=b.build(2304,common,fast_build=object() if draft else False)
+    assert m.current_only_plan is None
+    assert m.mixed_decode_split and m.is_draft is draft
+    plan=plan_mixed_decode(m,516)
+    assert plan.prefix_tokens==4
+    for rb,re,tb,te,segment in [(0,1,0,4,'short_prefix'),(1,2,4,516,'long_suffix')]:
+        child=_slice_metadata(m,rb,re,tb,te,516,segment)
+        assert child.block_tables.data_ptr()==m.block_tables[rb:].data_ptr()
+        assert child.slot_mapping.data_ptr()==slots[tb:].data_ptr()
+        assert torch.equal(child.slot_mapping,slots[tb:te])
+        assert int(child.seq_lens[0])-int(child.query_start_loc[-1])==2304
+        # These are the main/first-MTP positions prepared from context+row;
+        # later-MTP's accepted slot-derived prepare is intentionally unsplit.
+        assert list(range(int(child.seq_lens[0])-(te-tb),int(child.seq_lens[0])))==list(range(2304,2304+te-tb))
+        assert child.is_draft is draft and child.draft_index==0
+    assert torch.equal(m.query_start_loc,starts) and m.block_tables is tables

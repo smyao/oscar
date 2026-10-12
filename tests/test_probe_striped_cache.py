@@ -152,7 +152,25 @@ def test_no_npu_is_explicit_failure(monkeypatch, tmp_path):
                       Path(striped.ROOT / "configs/acceptance.json"))
 
 
-def test_store_graph_gate_mutates_fixed_kv_and_replays_eager_equivalently(monkeypatch):
+def test_writer_gate_requires_both_dense_and_true_hadamard(monkeypatch):
+    calls = []
+    def arm(*_args, hadamard):
+        calls.append(hadamard)
+        return {"status": "passed", "hadamard": hadamard}
+    monkeypatch.setattr(striped, "_store_gate", arm)
+    result = striped.store_gate(None,None,None,None,None)
+    assert calls == [False,True]
+    assert result["hadamard"] is False and result["hadamard_true"]["hadamard"] is True
+    def fail(*_args, hadamard):
+        if hadamard: raise RuntimeError("real Hadamard arm failed")
+        return {"status":"passed"}
+    monkeypatch.setattr(striped, "_store_gate", fail)
+    with pytest.raises(RuntimeError,match="real Hadamard arm failed"):
+        striped.store_gate(None,None,None,None,None)
+
+
+@pytest.mark.parametrize("hadamard", [False, True])
+def test_store_graph_gate_mutates_fixed_kv_and_replays_eager_equivalently(monkeypatch,hadamard):
     active = {"graph": None}
 
     class Graph:
@@ -183,6 +201,7 @@ def test_store_graph_gate_mutates_fixed_kv_and_replays_eager_equivalently(monkey
         def rotate_clip_store_striped_out(self, k, v, _rk, _rv, _slots,
                                            _positions, raw, wk, wv, tags, status,
                                            *_attrs):
+            assert _attrs[-1] is hadamard
             def write():
                 raw[0] = int((k + v).item()) & 255
                 wk[0], wv[0], tags[0] = k[0], v[0], 1
@@ -194,7 +213,13 @@ def test_store_graph_gate_mutates_fixed_kv_and_replays_eager_equivalently(monkey
 
     evidence = striped._store_changed_input_graph(
         torch, Ops(), torch.device("cpu"), fixture, tensors, buffers,
-        torch.eye(1), torch.eye(1))
+        torch.eye(1), torch.eye(1),hadamard=hadamard)
     assert evidence == {"capture": "passed", "replay": "passed",
                         "same_address_changed_key_value": True,
-                        "eager_parity": "bitwise_passed"}
+                        "eager_parity": "bitwise_passed", "hadamard":hadamard}
+
+
+def test_vector_init_gate_cannot_use_cpu_as_device():
+    from tools.probe_vector_init_rotation import gate
+    with pytest.raises(RuntimeError,match="real target NPU"):
+        gate(torch,None,torch.device("cpu"),{})

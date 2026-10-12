@@ -27,7 +27,13 @@ def test_candidate_plan_is_read_only_and_has_no_probes(tmp_path, capsys, rear_ca
                               (["--rear-cards"] if rear_cards else [])) == 0
     plan = json.loads(capsys.readouterr().out)
     assert plan["variant"] == "candidate"
-    assert all(plan["optimizations"].values())
+    assert plan["optimizations"]["whole_prefill"] is False
+    assert all(plan["optimizations"][name] for name in (
+        "history_cluster4", "later_mtp_q1", "fast_unpack", "mixed_cv", "striped_cache",
+        "current_only", "first_mtp_current_fia", "compact_later_mtp", "mixed_decode_split", "decode_bundle"))
+    assert plan["runtime_selection"]["token_budget_source"] == "native"
+    assert plan["runtime_selection"]["max_num_batched_tokens"] is None
+    assert plan["runtime_selection"]["scheduler_cls"] is None
     assert [name for name, _ in plan["stages"]] == list(install_serve.BUILD_PHASES)
     assert plan["probes"] == "none" and not logs.exists()
     assert plan["serve"][-1] == str(logs / "effective-target.json")
@@ -56,6 +62,10 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
         assert selected.get("experimental_fast_unpack", False) is (variant == "candidate")
         assert selected.get("experimental_mixed_cv", False) is (variant == "candidate")
         assert selected.get("experimental_striped_cache", False) is (variant == "candidate")
+        assert selected["use_native_token_budget"] is True
+        assert "max_num_batched_tokens" not in selected and "scheduler_cls" not in selected
+        assert not selected.get("experimental_whole_prefill", False)
+        assert not selected.get("experimental_bounded_whole_prefill", False)
         assert env["OSCAR_ENABLED"] == "1"
         assert env["ASCEND_RT_VISIBLE_DEVICES"] == ",".join(map(str, devices))
         assert selected["devices"] == devices and selected["port"] == port
@@ -73,6 +83,8 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
         assert selected.get("experimental_striped_cache", False) is (variant == "candidate")
         assert selected["devices"] == devices
         service_args = serve_argv(selected)
+        assert "--max-num-batched-tokens" not in service_args
+        assert "--scheduler-cls" not in service_args
         assert service_args[service_args.index("--port") + 1] == str(port)
         raise Served
     monkeypatch.setattr(install_serve, "run_phase", run_phase)

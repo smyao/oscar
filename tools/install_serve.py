@@ -31,7 +31,9 @@ def main(argv=None) -> int:
     parser.add_argument("--rear-cards", action="store_true",
                         help="use physical Ascend devices 4,5,6,7 and port 7878 for this launch only")
     parser.add_argument("--native-token-budget", action="store_true",
-                        help="omit the vLLM token-budget argument and use native chunked scheduling")
+                        help="compatibility alias; every launch already uses the native token budget")
+    parser.add_argument("--enable-prefix-caching", action=argparse.BooleanOptionalAction, default=None,
+                        help="pass the native prefix-cache switch; enabled by default, explicit false is diagnostic")
     args = parser.parse_args(argv)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     log_dir = (args.log_dir or ROOT / "logs" / stamp).resolve()
@@ -41,6 +43,9 @@ def main(argv=None) -> int:
         print(f"[oscar] install → build → rotations → serve (no tests, no probes); logs={log_dir}", flush=True)
     try:
         config = json.loads(args.config.read_text())
+        original_config = dict(config)
+        if args.enable_prefix_caching is not None:
+            config["enable_prefix_caching"] = args.enable_prefix_caching
         if args.native_token_budget:
             config["use_native_token_budget"] = True
         config = variant_config(config, args.variant)
@@ -58,7 +63,10 @@ def main(argv=None) -> int:
         raise
     enabled = config.get("experimental_history_reuse", False)
     variant = "candidate" if enabled else "baseline"
-    write_effective = args.variant is not None or args.rear_cards or args.native_token_budget
+    # #128/#151/#155: explicit config flags can normalize scheduler/capacity
+    # even without --variant. The command must read the same config we report.
+    write_effective = (args.variant is not None or args.rear_cards or
+                       args.native_token_budget or config != original_config)
     effective_path = (log_dir / "effective-target.json" if write_effective
                       else args.config.resolve())
     stages = []

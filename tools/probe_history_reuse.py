@@ -1,4 +1,5 @@
-# Archive #126/#129/#140-145/#148-150 and startup D.4: fe0 is the numerical baseline.
+# Archive #34/#36/#94/#125/#126/#129/#140-145/#148-150 and startup D.4:
+# independent probe arenas come from fixtures, never guessed service budgets.
 # D.4 four questions: (1) this checks fused history dequant+FIA only;
 # (2) the failed implementation restored full 32K history for 6.5s/device;
 # (3) the experimental C4 op shares one bounded INT2 tile only among four
@@ -116,20 +117,30 @@ Q1_CASES = (
 
 
 def measurement_shape(spec: Shape, target: dict, cores: int) -> Shape:
-    """#150 follow-up: decode timing uses the service's actual split policy.
+    """#150: retain the shape/core split policy in an independent probe arena.
 
     The original S1 probe is an operator contract, not the service's S3 at
     N128/GQA6/20Cube. Never multiply its old 40ms by the model layer count.
-    Keep all other numerical fixtures unchanged.
+    Service scheduler capacity is resolved only inside the model process.
+    This probe reserves its own N*S partials and reports that distinct scope.
+    Keep all other numerical fixtures unchanged; target is not modified/read
+    for token or graph capacity.
     """
     if spec.name != "decode32":
         return spec
+    return replace(spec, splits=diagnostic_splits(spec, cores))
+
+
+def diagnostic_splits(spec: Shape, cores: int) -> int:
+    """Choose complete fixture parallelism; no native scheduler assumption."""
     from oscar_ascend.runtime import WorkspaceGeometry
-    captures = target.get("compilation_config", {}).get("cudagraph_capture_sizes", ())
-    capacity = max(int(target["max_num_batched_tokens"]), max(captures, default=0))
-    geometry = WorkspaceGeometry(capacity, spec.heads, spec.kv_heads, spec.dim,
-                                 int(target.get("attention_splits", 1)), cores)
-    return replace(spec, splits=geometry.splits_for_tokens(sum(spec.qlens)))
+    spec.validate()
+    tokens = spec.padded_tokens or sum(spec.qlens)
+    # At most one split per physical Cube can add parallel work. This is a
+    # diagnostic arena ceiling, not an allocation or service token budget.
+    geometry = WorkspaceGeometry(tokens, spec.heads, spec.kv_heads, spec.dim,
+                                 splits=cores, cube_cores=cores)
+    return geometry.splits_for_tokens(tokens)
 
 
 def candidate_workspace_per_core(dim: int) -> int:
@@ -1040,7 +1051,8 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
     for shape in CASES:
         shape = measurement_shape(shape, target, cores)
         row = run_case(torch, torch.ops.oscar_ascend_ops, shape, device, cores, acceptance)
-        row["split_source"] = "production_geometry" if shape.name == "decode32" else "fixed_fixture"
+        row["split_source"] = ("fixture_shape_and_device_cores_not_service_budget"
+                               if shape.name == "decode32" else "fixed_fixture")
         cases.append(row)
         if row["case"] in ("mature_20k", "decode32"):
             print("[oscar] PERF_HISTORY_REUSE_A_B " + json.dumps({"case": row["case"],

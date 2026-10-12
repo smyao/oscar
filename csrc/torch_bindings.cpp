@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
-// Archive G6/G18/#53/#98-110: strict schema, explicit linking, one load path.
+// Archive G6/G18/#53/#98-110/#153: strict schema, explicit linking, one load
+// path and complete optional request-window/VectorInit capability declaration.
 // Native references/vllm-ascend/csrc/torch_binding.cpp:19-27,302-305 (headers/guard/stream).
 #include <algorithm>
 #include <limits>
@@ -106,10 +107,14 @@ TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
 PYBIND11_MODULE(_oscar_ascend_ops,m) {
   m.def("abi_version",[]{return 1;});
   m.def("capabilities",[]{return std::vector<std::string>{"store_int2_out","merge_lse_out",
-      "rotate_out","rotate_clip_store_out","prepare_attention_tasks_out","attention_cv_out",
+      "rotate_out","rotate_vector_init_out","rotate_clip_store_out","prepare_attention_tasks_out","attention_cv_out",
       "attention_cv_cluster4_out","attention_cv_q1_out","attention_cv_profile_out",
       "attention_cv_fast_out","attention_cv_fast_q1_out","attention_cv_fast_cluster4_out",
       "attention_cv_fast_balanced_out","attention_cv_fast_cluster16_out",
+      "rotate_clip_store_request_window_out","attention_request_window_decode_out",
+      "attention_request_window_decode_q1_out","attention_request_window_out",
+      "attention_request_window_balanced_out","attention_request_window_cluster4_out","attention_request_window_member_pipeline_cluster4_out",
+      "attention_request_window_cluster16_out",
       "attention_cv_striped_out","attention_cv_striped_q1_out","attention_cv_striped_decode_out","attention_cv_striped_balanced_out","attention_cv_striped_cluster4_out","attention_cv_striped_cluster16_out","rotate_clip_store_striped_out",
-      "attention_cv_bundle_decode_out", "attention_cv_bundle_q1_out", "attention_cv_window_range_out", "attention_cv_window_range_balanced_out", "attention_cv_window_range_cluster4_out", "attention_cv_window_range_cluster16_out", "copy_validate_current_out","status_guard"};});
+      "attention_cv_bundle_decode_out", "attention_cv_mdl_decode_out", "attention_cv_bundle_q1_out", "attention_cv_window_range_out", "attention_cv_window_range_balanced_out", "attention_cv_window_range_cluster4_out", "attention_cv_member_pipeline_cluster4_out", "attention_cv_window_range_cluster16_out", "copy_validate_current_out","status_guard"};});
 }

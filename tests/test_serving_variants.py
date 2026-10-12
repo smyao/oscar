@@ -16,17 +16,20 @@ def test_install_and_probe_plans_select_the_same_bundle(variant, enabled, capsys
     assert install["optimizations"] == probe["optimizations"] == {
         "history_cluster4": enabled, "later_mtp_q1": enabled,
         "fast_unpack": enabled, "mixed_cv": enabled,
-        "striped_cache": enabled, "current_only": enabled,
+        "striped_cache": enabled, "quantization_bundle": enabled, "current_only": enabled,
         "first_mtp_current_fia": enabled, "compact_later_mtp": enabled,
-        "mixed_decode_split": enabled, "decode_bundle": enabled, "whole_prefill": enabled}
+        "mixed_decode_split": enabled, "decode_bundle": enabled, "mdl_decode": enabled,
+        "c4_member_pipeline": False, "whole_prefill": False}
     assert install["probes"] == "none"
 
 
 def test_default_retains_config_and_candidate_does_not_mutate_input():
     original = {"devices": [0, 1, 2, 3], "port": 8989,"max_num_batched_tokens":16384}
-    assert variant_config(original, None) == original
+    assert "max_num_batched_tokens" not in variant_config(original, None)
     selected = variant_config(original, "candidate")
     features = variant_features(selected)
+    assert features.pop("whole_prefill") is False
+    assert features.pop("c4_member_pipeline") is False
     assert all(features.values())
     assert original == {"devices": [0, 1, 2, 3], "port": 8989,"max_num_batched_tokens":16384}
     assert not any(variant_features(variant_config(selected, "native")).values())
@@ -49,7 +52,7 @@ def test_default_retains_config_and_candidate_does_not_mutate_input():
 
 @pytest.mark.parametrize("flag", ["experimental_current_only", "experimental_first_mtp_current_fia",
                                   "experimental_compact_later_mtp", "experimental_mixed_decode_split",
-                                  "experimental_decode_bundle"])
+                                  "experimental_decode_bundle", "experimental_c4_member_pipeline"])
 def test_candidate_features_cannot_leak_to_native(flag):
     original = {flag: True,"max_num_batched_tokens":16384}
     if flag == "experimental_mixed_decode_split":
@@ -65,7 +68,6 @@ def test_candidate_features_cannot_leak_to_native(flag):
 
 
 def test_both_one_key_entries_enable_the_complete_candidate_without_manual_flags(tmp_path,capsys):
-    from tools.serving_variants import WHOLE_PREFILL_SCHEDULER
     target=json.loads((install_serve.ROOT/'configs/target.json').read_text())
     path=tmp_path/'candidate.json';path.write_text(json.dumps(target))
     assert install_serve.main(['--config',str(path),'--variant','candidate','--plan'])==0
@@ -74,9 +76,14 @@ def test_both_one_key_entries_enable_the_complete_candidate_without_manual_flags
     observed=json.loads(capsys.readouterr().out)
     assert direct['runtime_selection']==observed['runtime_selection']
     selected=direct['runtime_selection']
-    assert all(selected['optimizations'].values())
-    assert selected['max_num_batched_tokens']==32768
-    assert selected['scheduler_cls']==WHOLE_PREFILL_SCHEDULER
+    assert selected['optimizations']['whole_prefill'] is False
+    assert selected['optimizations']['c4_member_pipeline'] is False
+    assert all(value for key,value in selected['optimizations'].items() if key not in {'whole_prefill','c4_member_pipeline'})
+    assert 'c4_member_pipeline_gate' not in observed['phases']
+    assert selected['max_num_batched_tokens'] is None
+    assert selected['token_budget_source']=='native'
+    assert '--max-num-batched-tokens' not in direct['vllm_argv']
+    assert selected['scheduler_cls'] is None
     assert selected['devices']==[0,1,2,3] and selected['port']==8989
     assert direct['probes']=='none'
     assert {'decode_bundle_gate','current_only_gate','first_mtp_current_gate','mixed_decode_split_gate'}<=set(observed['phases'])

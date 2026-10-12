@@ -1,0 +1,18 @@
+{
+  "status": "host_contracts_passed",
+  "tests": "tests/test_probe_mdl_decode.py tests/test_observe_serve.py tests/test_probe_c4_member_pipeline.py",
+  "passed": 42,
+  "source_binding": {
+    "csrc/kernels/attention_cv_mdl_decode.cpp": "8dc0c0814f3f6fa7e0525b97b048426768efbbc49e46ffad19239e9655f852a5",
+    "csrc/kernels/attention_cv_decode_bundle.cpp": "d8171f0403cf176087e1c76c64e454e6fb1e74fd79252aab3b59e848cca19401",
+    "csrc/kernels/attention_striped_unpack_padded.h": "1551af143666d7465352426dbbe7024af8a86d81ee12d7ccfd9840c328e4ceee",
+    "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+    "csrc/kernels/attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+    "csrc/kernels/merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723"
+  },
+  "NPU": "not_run",
+  "graph": "not_run",
+  "device_performance": "not_run",
+  "whole_service_performance": "not_established",
+  "scope": "host report validation, fixture relocation, candidate command propagation and fail-closed orchestration"
+}

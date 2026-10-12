@@ -1,4 +1,4 @@
-"""Archive #126/#129/#140-145/#148-150: fe0-versus-C4/q1 host contracts.
+"""Archive #34/#36/#126/#129/#140-145/#148-150: fe0-versus-C4/q1 host contracts.
 
 These tests validate probe inputs and fail-closed evidence, never claim NPU
 accuracy, graph capture or a production performance improvement.
@@ -25,19 +25,35 @@ def test_small_fixture_is_deterministic_and_uses_disjoint_physical_pages():
     assert bool((first["cpu"]["slots"] >= 0).all())
 
 
-def test_decode_measurement_uses_production_splits_not_old_s1():
+@pytest.mark.parametrize("target", [
+    {}, {"use_native_token_budget": True},
+    {"max_num_batched_tokens": 16384},
+    {"max_num_batched_tokens": 1,
+     "compilation_config": {"cudagraph_capture_sizes": [66048]}},
+])
+def test_decode_measurement_uses_fixture_core_splits_without_service_budget(target):
     # #150 follow-up: N128 has seven global query tiles and needs S3 for
     # twenty Cubes in the current runtime. Other oracle shapes stay fixed.
-    target = {"max_num_batched_tokens": 16384}
+    snapshot = json.dumps(target, sort_keys=True)
     shape = next(case for case in reuse.CASES if case.name == "decode32")
     assert shape.splits == 1
     measured = reuse.measurement_shape(shape, target, 20)
     assert measured.splits == 3 and measured.qlens == shape.qlens
     assert measured.contexts == shape.contexts
     assert reuse.measurement_shape(shape, target, 1).splits == 1
+    assert json.dumps(target, sort_keys=True) == snapshot
     for case in reuse.CASES:
         if case.name != "decode32":
             assert reuse.measurement_shape(case, target, 20) is case
+
+
+def test_diagnostic_splits_keep_real_padding_geometry_and_validate_cores():
+    small, large = reuse.Q1_CASES
+    assert reuse.diagnostic_splits(small, 20) == 3
+    assert reuse.diagnostic_splits(large, 20) == 1
+    for cores in (0, -1, 33, True):
+        with pytest.raises(ValueError):
+            reuse.diagnostic_splits(small, cores)
 
 
 def test_q1_shapes_keep_real_32_request_lengths_and_both_native_padding_sizes():

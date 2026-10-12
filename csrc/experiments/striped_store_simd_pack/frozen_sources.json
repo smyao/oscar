@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "scope": "frozen_research_writer_source_not_new_production_baseline",
+  "original_source": "csrc/kernels/rotate_clip_store_striped.cpp",
+  "original_sha256": "0515fd2a527812dc6e7c09e46ebae50fd19be62e7645705c8caffbb132a31d29",
+  "frozen_source": "writer_baseline.cpp",
+  "frozen_sha256": "674b6115f93b1c8387bdc8ba8440218c7b1e78e3563cb4f76e37624e0eae62eb",
+  "include_relocations": [
+    {
+      "original": "#include \"oscar_common.h\"",
+      "frozen": "#include \"../../kernels/oscar_common.h\""
+    },
+    {
+      "original": "#include \"../include/oscar_rotation_launch.h\"",
+      "frozen": "#include \"../../include/oscar_rotation_launch.h\""
+    }
+  ],
+  "measured_research_sources": {
+    "writer_pack.cpp": "c01eb6dce3a725567ed8b92032e1d0baaf9d674e02d7ebc0fe51599a5b458fab",
+    "writer_pack_init.cpp": "7cbb1b1205c380afcaa3893f23d9ef1337f468c13f7c437c2af8ef91bf123a17",
+    "pack.h": "019fd5330ae0c7a850fbf015dee18df4c262f6440a6da387085c362d3b445ac3",
+    "store_cpu.cpp": "f6403ae0f868c24e3d24e7424073342b779b9a4d4b43aa0799b9746d2582c005",
+    "pack_kernel.cpp": "911ca6742538d25e77c48ce50f1d0c009bfd9051863461fdfc7eb36417335e0e"
+  },
+  "dependencies": {
+    "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+    "csrc/include/oscar_rotation_launch.h": "a92c685f318b680d5d7f07ec15bec954bba5eb5c6b19b298739bd4780932a99b",
+    "csrc/experiments/hadamard_indices/vector_indices.h": "8f92beaefbb46791709c2102bbda34a47321309bc4e320999765653e9f25c970"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "kind": "host_fixture_contracts_only",
+  "host_tests_passed": 18,
+  "case_count": 19,
+  "fixture_manifest": "/private/tmp/oscar-request-windows-store-fixtures-20261009/cases.json",
+  "fixture_manifest_sha256": "66f72e50c3391d7308effb1479f7433541e1f5f6cc32fe01d9eb13a7c0450dfe",
+  "source_sha256": {
+    "fixture.py": "4a559e5f231fe0fb2a6a4199d1dd0e630f4c8c37922064d303bd9977d6ea6a30",
+    "test_fixture.py": "3699d9c56da58b1599768eb822ef6b6419738b0ba3e9dd10daaaa2d5556caa5c",
+    "generate.py": "0400c19a42f3a23f1c99d3e95cb945cda48bf6badef84b64ab76f528c1fada59",
+    "packed_store.cpp": "41c2c2741a2ee6c9a0f6d66d07e59d7603cdbd64cb01423af4a9d0a5cfe15a2c",
+    "store_cpu.cpp": "cad1c784b168e0f0c84f011e9521100832473097005c880a2b2527b381a57d9c",
+    "request_window_launch.h": "b9d60325765afe6b7f9b47d3351c761df983636d6606c5fb6148d91db0637998",
+    "window_store.cpp": "9f87c6850b4b528ac5f48b0f6efbc06c2e6d352330b42ebf7690650d344d809b",
+    "run_cpu.py": "af9e3884d593f6a4c916bbfabfdedc3b508fb1bcc5a9d10fd87d38c11aef33e2"
+  },
+  "execution_evidence": "reports/request_windows_store_20261009/validation.json"
+}

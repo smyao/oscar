@@ -1,0 +1,402 @@
+{
+  "schema_version": 1,
+  "diagnostic_only": true,
+  "source": "csrc/kernels/attention_cv_window_range_cluster4.cpp",
+  "dependency_sha256": {
+    "csrc/kernels/attention_cv_window_range_cluster4.cpp": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65",
+    "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+    "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+    "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+    "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+    "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+    "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+    "csrc/experiments/decode_phase_profile/generate.py": "49298a943ce3c3c3a54abf9fdd69d07044b5d31cb5ec264ad622b319d23bdc44",
+    "csrc/kernels/attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952"
+  },
+  "cache_format": "production striped_v1 per-page window, not request-window layout",
+  "abi": {
+    "profile_schema": 3,
+    "profile_shape": [
+      "cube_cores",
+      3,
+      4,
+      32
+    ],
+    "profile_pointer_position_0based": 16,
+    "int64_attributes": 17,
+    "float_attributes": 1,
+    "profile_bytes_per_core": 3072,
+    "cluster_stats_bytes_per_core": 64,
+    "workspace_bytes_per_core": 1839104,
+    "fields": {
+      "0": "tasks",
+      "1": "kv_units",
+      "2": "kv_rows_observed",
+      "3": "task_span",
+      "4": "query_stage",
+      "5": "packed_dma",
+      "6": "unpack",
+      "7": "precise_load",
+      "8": "kv_publish",
+      "9": "aiv_qk_wait",
+      "10": "softmax_p",
+      "11": "aiv_pv_wait",
+      "12": "pv_acc",
+      "13": "aic_kv_wait",
+      "14": "aic_qk",
+      "15": "aic_p_wait",
+      "16": "aic_pv",
+      "17": "aic_acc_wait",
+      "18": "aic_rotation",
+      "19": "aiv_finalize",
+      "20": "task_metadata",
+      "21": "final_writeback",
+      "22": "rotation_wait",
+      "23": "compute_span",
+      "24": "state_spill",
+      "25": "state_restore",
+      "26": "clusters",
+      "27": "member_kv_units",
+      "28": "state_bytes",
+      "29": "c1_tasks",
+      "30": "cluster_members",
+      "31": "finite_reduce"
+    }
+  },
+  "arms": {
+    "normal": {
+      "arm": "normal",
+      "symbol": "oscar_c4_normal_kernel",
+      "inverse_source_bytes_identical": true,
+      "new_completion_fences": 0,
+      "pointer_count": 16,
+      "edits": [
+        {
+          "label": "isolated launch macro",
+          "count": 1,
+          "before_sha256": "0a7fd7b1c301770c6449ab795d0801cdff4dc02de685ca8ce24ecce3816f0583",
+          "after_sha256": "af994653c8170c3d6651def74adece414a8c191045e4fd9f879f77a5692f9c4b"
+        },
+        {
+          "label": "isolated kernel macro",
+          "count": 1,
+          "before_sha256": "d91b277359e5cc2a64fc388503c3c68c1463499ab792323926a2cd829e6d1b31",
+          "after_sha256": "f792c89009df4a6528a5cf97be041d55aceae98b0026a77d3d4d41585c261388"
+        },
+        {
+          "label": "relative header",
+          "count": 2,
+          "before_sha256": "ceb281b4315bf75e49346e070f8e678d486db814cfb1991a5fbdffed634e661b",
+          "after_sha256": "55e87b609aa817ae4c8fdb379ffebfb1e9dbb36ea17e7578e6546a2ee97784a3"
+        },
+        {
+          "label": "relative header",
+          "count": 1,
+          "before_sha256": "49a8e9342f6ba12c57b6900af1627fa85c28550f277ad087d2a534cbcca7177c",
+          "after_sha256": "983f4d1aeb1e7f929880015a8afaefe9ee6a26813fec6df329490edf8532f994"
+        },
+        {
+          "label": "relative header",
+          "count": 1,
+          "before_sha256": "355aceefb7d4370fcb3cdffedda97053a08144a20de422463ff590caef3fa506",
+          "after_sha256": "60260b1dc405b8741ffcb3f0aca050e88b3e80e7cc92e820f748fc1cf8a92ee2"
+        },
+        {
+          "label": "relative header",
+          "count": 1,
+          "before_sha256": "0aee384861e47b067425aee7cfe3c7f444b341b22cd83a7e8c5dccc423e58fc4",
+          "after_sha256": "d64915b71955fa802f242a63f9bcaf8687e132d5cec0eb91098f0276263803cc"
+        },
+        {
+          "label": "relative common includes",
+          "count": 2,
+          "before_sha256": "3b884f7af2c172995fb77d2ae445a3b3d00d665c5f2072293d128aadeab49b78",
+          "after_sha256": "9fa2491ee38b2397e1e8c2fd8d874ea2ec1b63c0c521d9dbd4a0f213c76854e6"
+        }
+      ],
+      "sha256": "1da2a46c053035e11ca4a256033631f9c0b0ad611fb111ecf12352dccf307ac2"
+    },
+    "profile": {
+      "arm": "profile",
+      "symbol": "oscar_c4_profile_kernel",
+      "inverse_source_bytes_identical": true,
+      "new_completion_fences": 0,
+      "pointer_count": 17,
+      "edits": [
+        {
+          "label": "enum",
+          "count": 1,
+          "before_sha256": "03fb9f8ab17f8989a49579b3aa1b61e5f31e08d11d8c69d00ab2d2e4218f0c0f",
+          "after_sha256": "32cb5bfe1f05e38b5e62bec3414f8e698c2e630deb1a9728e374d673fbb91bd0"
+        },
+        {
+          "label": "Init ABI",
+          "count": 1,
+          "before_sha256": "3d3426e95727e2c9dbb9d3b60c6ed3a035911bc44061729b5ee6de51458cca33",
+          "after_sha256": "16c3b5d5f57dba15bbda00c6cdde2d8eb1d2a1b96173adabf0c21241a416dd75"
+        },
+        {
+          "label": "actor begin",
+          "count": 1,
+          "before_sha256": "19667a87dc919c20dde79de027a01fbbadb66a2e677855e1a3d07052abf2671d",
+          "after_sha256": "04de4d2a4fcd00ec4d0905f2052cebe68a72aa4672647dec8d859dc2df2e1114"
+        },
+        {
+          "label": "profile init",
+          "count": 1,
+          "before_sha256": "6456879cc81c7472cac441884059de8ffac026680f8b88629099ab9ac0f01873",
+          "after_sha256": "242cdd9eb193f67edbdddd031d8c15b83bd0f05cae789dd86105afbdd08d3a2f"
+        },
+        {
+          "label": "profile helpers",
+          "count": 1,
+          "before_sha256": "95b50ab1d3025da98f7667f1fc67fce1811290c5977c5c7a93230dba74812b28",
+          "after_sha256": "439837e2b0ff7a31bb9cdada0b4fbc27b67fb1b4758375dd0e661b6e016cc6d2"
+        },
+        {
+          "label": "actor end",
+          "count": 1,
+          "before_sha256": "89aff7b853f5319af4dafbb381adef51a418416ccee7cd94f0914e907a9b8da9",
+          "after_sha256": "cf35ab5c633b0bd90b218cc0224d1a572c1f75cb092119e2a1dd33e7db605b28"
+        },
+        {
+          "label": "profile storage",
+          "count": 1,
+          "before_sha256": "29201b10746767c4243fc656baf81a273f3e506585c1694e4013423e6fc5afa2",
+          "after_sha256": "401945ba67fbe4ef97361c1fedb45db97b9990399d5056314f30f0cc10303c3a"
+        },
+        {
+          "label": "method LoadTask",
+          "count": 1,
+          "before_sha256": "307b1d2416444b166019cbdfdcd739607b59241b7c224321f08fdea6efaea30e",
+          "after_sha256": "8c538b982e7311598f594123c2900859e9b50e01b8eb6fbbfc6f875287e81eb6"
+        },
+        {
+          "label": "method LoadQueries",
+          "count": 1,
+          "before_sha256": "040dceec2b8ec684c59cbd1798d710935ece16f0293b9bb6ee2284ef104e96af",
+          "after_sha256": "a6841f3f488a7fcead45edc7eefdbd4f343072dd5e75f8789f77246945c38bc6"
+        },
+        {
+          "label": "method LoadPacked",
+          "count": 1,
+          "before_sha256": "2c5bcaf49d78d3261ccf1d39a376247c738043a16477d706e1c3a297a7e64862",
+          "after_sha256": "10a097bb3e4b70ddbc48cc4ee8f68a4da0f8198dce9a521645c1a7fd8fc949bb"
+        },
+        {
+          "label": "method Unpack",
+          "count": 1,
+          "before_sha256": "17c1fe1b23f2002016d8dc820063aa54a7cd7abbe9d984c76833474fb52b4614",
+          "after_sha256": "d616791028afa601fe88689b77126d7593d11710072380fe1c44a1ec0a6a1b0b"
+        },
+        {
+          "label": "method LoadPrecise",
+          "count": 1,
+          "before_sha256": "d488e060eaa34e168bb77629accd41dc1323a40088053a7536acb4212667c40f",
+          "after_sha256": "5a988a3354c4bd228d26a460b4b9d8fbc35d2b7d262278c37980dcd58f30efa6"
+        },
+        {
+          "label": "method PublishKv",
+          "count": 1,
+          "before_sha256": "36d6d5a1afa891c9bb50278d4b61b6c90c34eda48aa454077b6c639d5a3f445a",
+          "after_sha256": "206cbf69c682a441ea332b7c55a864edcce1b671bc28cc7137aac8c08a9a5925"
+        },
+        {
+          "label": "method Softmax",
+          "count": 1,
+          "before_sha256": "150dc08d4bdfd16645be5042c2e91a6268cf896a5ffd287ab928ed89b592e8c9",
+          "after_sha256": "ac30d742a67841caeab354c17c5714ae0aa7f76bc1cac589990cc4b33cd9d8d1"
+        },
+        {
+          "label": "method PublishRows",
+          "count": 1,
+          "before_sha256": "1c1af6eb41f50737ab4452018c4d4f940e1e204938d2ce03ebee408b70d35a41",
+          "after_sha256": "3ee2a2123a40cf324dc0965b464455d47df8415cfc2c34be13cda36511c918a7"
+        },
+        {
+          "label": "method Softmax",
+          "count": 1,
+          "before_sha256": "ac30d742a67841caeab354c17c5714ae0aa7f76bc1cac589990cc4b33cd9d8d1",
+          "after_sha256": "864bcc928cabfed5a39930a4faaf04c010d0027ca556c7d5c054e7b19b733de0"
+        },
+        {
+          "label": "method SpillState",
+          "count": 1,
+          "before_sha256": "6a2498d564214106d8d9b29e5c813b9648d9266e9b5c17db015618e21cf159de",
+          "after_sha256": "df1ab50cba14280e4b8f8b756672fce50b166b4d2cc77daa78507d090ab7d0a4"
+        },
+        {
+          "label": "method RestoreState",
+          "count": 1,
+          "before_sha256": "b107c458c9ad128345b906fefb56ce5d0876dc0d7ea2e16e09f96c27f197c54a",
+          "after_sha256": "fdd684da6f85724a2578e1e2b9a91745427205087fd3ca652336264abfd01be4"
+        },
+        {
+          "label": "method Matmul",
+          "count": 1,
+          "before_sha256": "4eb0f86e3859c6723b3a89e093dd4111ec9a33c8b5f95c76173b293d6d6fb966",
+          "after_sha256": "87bd909c3df0986edce1459f1efec6a47faf13736408ef3f30a8aeda16d4e0f0"
+        },
+        {
+          "label": "method CubeTask",
+          "count": 1,
+          "before_sha256": "e15898938f5900cb908ee75b68f76f72cd865668771aced0e1511eb31a5af19b",
+          "after_sha256": "f7d14e28920d4a1b25a09fa12a91cf03288fc650024b50d82e3b6b3a263027bc"
+        },
+        {
+          "label": "method VectorTask",
+          "count": 1,
+          "before_sha256": "83283722a6d3ac4bbf3fa84f61eb4b86f3ba616d5060aad983c9ff72c8fa542a",
+          "after_sha256": "cdc2ec34cbfbd050c307f9472c60008d3ada48c4701c00b4ca56368b94ec0b46"
+        },
+        {
+          "label": "method CubeCluster",
+          "count": 1,
+          "before_sha256": "896d84e616b8b1986d97e46a2b011967719d7a4dffdcfd70791b1db96a2f9c47",
+          "after_sha256": "a42df4462fe66fc501e9915bc88fd3252d2367f37af254e5fefc81aea1779485"
+        },
+        {
+          "label": "method VectorCluster",
+          "count": 1,
+          "before_sha256": "97f05521a3143c9fa9eca791c67ae0d90adcc5f5388fa92eef249baa9a80f203",
+          "after_sha256": "f8117101e81c6393ce1192b70bfa8ac9cec12c6a10b76be8f026a696d8f909f4"
+        },
+        {
+          "label": "method CubeTask",
+          "count": 1,
+          "before_sha256": "f7d14e28920d4a1b25a09fa12a91cf03288fc650024b50d82e3b6b3a263027bc",
+          "after_sha256": "9796e42d866e0f418c443939ab249e9630ed0395d093e96c81d85193244392c0"
+        },
+        {
+          "label": "method VectorTask",
+          "count": 1,
+          "before_sha256": "cdc2ec34cbfbd050c307f9472c60008d3ada48c4701c00b4ca56368b94ec0b46",
+          "after_sha256": "1406e1abc3265b2b1705e2d75ff6cf1527e1fd620d1a55b02b46f2904f21274c"
+        },
+        {
+          "label": "method CubeCluster",
+          "count": 1,
+          "before_sha256": "a42df4462fe66fc501e9915bc88fd3252d2367f37af254e5fefc81aea1779485",
+          "after_sha256": "9bf7f06fa5a49e96cb190142e669b58ef0c94e56ca25fff0a7ec9a44470382a2"
+        },
+        {
+          "label": "method VectorCluster",
+          "count": 1,
+          "before_sha256": "f8117101e81c6393ce1192b70bfa8ac9cec12c6a10b76be8f026a696d8f909f4",
+          "after_sha256": "2e867f0237de414a5e0430c403e018dcb80fde62b8ff5b10e7a607bc1a04c06c"
+        },
+        {
+          "label": "tile work counters",
+          "count": 2,
+          "before_sha256": "5deae2c14ff73f2f1228a2912793540519ee76264dbcd8fb9202fa316293fa28",
+          "after_sha256": "ad7e338daaa3a6bc41bc89786ab248bbb9a9f6c3b75a79b46ac28ca9262771e0"
+        },
+        {
+          "label": "tile work counters",
+          "count": 2,
+          "before_sha256": "7e170cffdeca349c6c815dc0ee07f00c0415e6c527979788e8a9394c260d0b10",
+          "after_sha256": "aa4cdf11a783ae7fc2d8e40ec8b4133aed0df631062a87eaeaae714f14c34097"
+        },
+        {
+          "label": "method VectorTask",
+          "count": 1,
+          "before_sha256": "ab598fc911797631f76a5f8a67237f81d88fa0e63244677a7a688cfbeb9b5ead",
+          "after_sha256": "6f4b7db26e4a77a03152eed456fd2448694aa508a06e72ff4693482f36b54913"
+        },
+        {
+          "label": "method VectorCluster",
+          "count": 1,
+          "before_sha256": "82256b4621b2af8eb7d9c2ba3597eebc3d127cdd2337fce112038841938b962f",
+          "after_sha256": "6e5d4e4491d241d3c0ac973a922442e66e7225d2dea4754b6a1ecff1d96d867f"
+        },
+        {
+          "label": "method VectorTask",
+          "count": 1,
+          "before_sha256": "6f4b7db26e4a77a03152eed456fd2448694aa508a06e72ff4693482f36b54913",
+          "after_sha256": "83bb36b310d63c5c9307451aad4cfc422ba5cf10113d8a3a128dcf92e9ab6061"
+        },
+        {
+          "label": "method VectorCluster",
+          "count": 1,
+          "before_sha256": "6e5d4e4491d241d3c0ac973a922442e66e7225d2dea4754b6a1ecff1d96d867f",
+          "after_sha256": "b1b04d28228c1dbafc46f44a2ce9e727d56fc389151add4990a62ee729834144"
+        },
+        {
+          "label": "kernel ABI",
+          "count": 1,
+          "before_sha256": "5115bc339377f0f3084b194a0df15573d96304b4b267afb5e92dc3a553f5be71",
+          "after_sha256": "acef708c4214b6b587ec3ca40e1c75dcee2792c28b6e0b0566d5c637506ba9bb"
+        },
+        {
+          "label": "Init call",
+          "count": 1,
+          "before_sha256": "f948621e1f4e0a275330df3cbb071c7b0a3ea17cee80fed2c18d4fd13b29a631",
+          "after_sha256": "d97ccf12ca88aae99b8bd9bd90d3134d2978764ec67917964b3482999dfb696c"
+        },
+        {
+          "label": "launch ABI",
+          "count": 1,
+          "before_sha256": "a2e49955dd3b15acf1853e2c1287805f52196b84ffeafaa0a4ff20251bf0e9a3",
+          "after_sha256": "a64bff796967a8bb81cee79e8f7d63bb25dcd041173ba2d7e3c375ec366b9eb0"
+        },
+        {
+          "label": "launch arg",
+          "count": 1,
+          "before_sha256": "e3cf278a37f193f6e255979e265b39d1669f723f3a66471e3ee5f7d931bbf9de",
+          "after_sha256": "13f0bce5c89c5bc53d9828a250ea481659c1275f592aca9cc9627ace811d95a0"
+        },
+        {
+          "label": "isolated launch macro",
+          "count": 1,
+          "before_sha256": "0a7fd7b1c301770c6449ab795d0801cdff4dc02de685ca8ce24ecce3816f0583",
+          "after_sha256": "c1e48a8639b6c069837434761a173d6b018f6814eca26e6a03e7f552e1cd5833"
+        },
+        {
+          "label": "isolated kernel macro",
+          "count": 1,
+          "before_sha256": "d91b277359e5cc2a64fc388503c3c68c1463499ab792323926a2cd829e6d1b31",
+          "after_sha256": "db5b6d97d3aae05ab9b8d66a3a4f0df29cffc9e127dab61fb0b3edf0ddc49aa9"
+        },
+        {
+          "label": "relative header",
+          "count": 2,
+          "before_sha256": "ceb281b4315bf75e49346e070f8e678d486db814cfb1991a5fbdffed634e661b",
+          "after_sha256": "55e87b609aa817ae4c8fdb379ffebfb1e9dbb36ea17e7578e6546a2ee97784a3"
+        },
+        {
+          "label": "relative header",
+          "count": 1,
+          "before_sha256": "49a8e9342f6ba12c57b6900af1627fa85c28550f277ad087d2a534cbcca7177c",
+          "after_sha256": "983f4d1aeb1e7f929880015a8afaefe9ee6a26813fec6df329490edf8532f994"
+        },
+        {
+          "label": "relative header",
+          "count": 1,
+          "before_sha256": "355aceefb7d4370fcb3cdffedda97053a08144a20de422463ff590caef3fa506",
+          "after_sha256": "60260b1dc405b8741ffcb3f0aca050e88b3e80e7cc92e820f748fc1cf8a92ee2"
+        },
+        {
+          "label": "relative header",
+          "count": 1,
+          "before_sha256": "0aee384861e47b067425aee7cfe3c7f444b341b22cd83a7e8c5dccc423e58fc4",
+          "after_sha256": "d64915b71955fa802f242a63f9bcaf8687e132d5cec0eb91098f0276263803cc"
+        },
+        {
+          "label": "relative common includes",
+          "count": 2,
+          "before_sha256": "3b884f7af2c172995fb77d2ae445a3b3d00d665c5f2072293d128aadeab49b78",
+          "after_sha256": "9fa2491ee38b2397e1e8c2fd8d874ea2ec1b63c0c521d9dbd4a0f213c76854e6"
+        }
+      ],
+      "sha256": "83ecf27c998b5cb0e2c4dcec29977210190d47ec329ef58da8e3fa69efea943a"
+    }
+  },
+  "validation": {
+    "cann_compile": "not_run",
+    "cpu_debug": "not_run",
+    "camodel": "not_run",
+    "npu": "not_run",
+    "graph": "not_run",
+    "whole_service": "not_run"
+  }
+}

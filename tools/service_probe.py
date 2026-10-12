@@ -2,6 +2,7 @@
 # lifecycle, bounded real requests, per-rank route/graph evidence, always-final
 # logs and release accounting. #118/#122: only current owned-PID CANN plog evidence.
 # #129: per-request wall deadlines, active progress and visible cleanup stages.
+# #34/#36/#132: an unobserved native scheduler budget has no inferred step floor.
 # #137-#139: synthetic 20-30K concurrency diagnostics preserve workload
 # identity and distinguish client timing from NPU device time; the retired
 # 16K concurrency ladder is not a performance acceptance result.
@@ -607,8 +608,10 @@ def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline):
               "pair_sha256": canonical_sha256(pair_identity), "pair_identity": pair_identity,
               "prompt_manifest": manifest,
               "total_prompt_tokens": sum(lengths),
-              "theoretical_min_prefill_steps": math.ceil(sum(lengths) / config["max_num_batched_tokens"]),
-              "step_floor_scope": "token-capacity lower bound only; not measured device steps",
+              # #34/#36/#132: the omitted CLI budget is resolved by native
+              # scheduler code in the engine, unavailable in this HTTP client.
+              "theoretical_min_prefill_steps": None,
+              "step_floor_scope": "unknown_native_scheduler_token_budget_not_observed",
               "window": [window_start, window_end, "synthetic-mixed-K4"],
               "sample": sample, "metrics_before": before, "metrics_after": after,
               "native_counter_check": counter_check,

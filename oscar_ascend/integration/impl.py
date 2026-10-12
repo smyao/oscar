@@ -74,6 +74,10 @@ class OscarAttentionImpl(AttentionImpl):
         state = self.provider.layer_state(layer.layer_name)
         striped_cache = self.provider.config.get("experimental_striped_cache", False)
         expected_format = "striped_v1" if striped_cache else "canonical_v1"
+        from oscar_ascend.integration.cache_storage_ops import (
+            REQUEST_FORMAT, REQUEST_CLUSTER_READERS, storage_reader, request_map, store_current)
+        if self.provider.config.get("experimental_request_windows", False):
+            expected_format = REQUEST_FORMAT
         if getattr(state, "cache_format", "canonical_v1") != expected_format:
             raise OscarReadinessError("FULL layer cache format does not match its selected reader/writer bundle")
         if kv_cache.data_ptr() != state.packed.data_ptr() or kv_cache.stride() != state.packed.stride():
@@ -156,7 +160,11 @@ class OscarAttentionImpl(AttentionImpl):
                 suppress_current_source_tasks(tasks, n, hk, source_splits)
         with phase("rotate", layer=layer.layer_name, tokens=n, hadamard=state.hadamard,
                    requests=attn_metadata.num_reqs, **timing_fields):
-            ops.rotate_out(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
+            # Frozen rotate_out remains the baseline; the shared candidate
+            # preset explicitly selects the separately registered vector-Init path.
+            rotate_name = ("rotate_vector_init_out" if self.provider.config.get(
+                "experimental_quantization_bundle", False) else "rotate_out")
+            getattr(ops, rotate_name)(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
         cluster_size = getattr(g, "history_cluster_size", 1)
         # #150/#154: choose the preset's q4/q1 reader and its cache format.
         # Host shape selection also fixes the op recorded during capture.
@@ -165,20 +173,31 @@ class OscarAttentionImpl(AttentionImpl):
                               fast_unpack=self.provider.config.get("experimental_fast_unpack", False),
                               mixed_cv=self.provider.config.get("experimental_mixed_cv", False),
                               striped_cache=striped_cache,
-                              decode_bundle=self.provider.config.get("experimental_decode_bundle", False))
+                              decode_bundle=self.provider.config.get("experimental_decode_bundle", False),
+                              c4_member_pipeline=self.provider.config.get("experimental_c4_member_pipeline", False),
+                              mdl_decode=self.provider.config.get("experimental_mdl_decode", False))
+        cv_name = storage_reader(state, cv_name)
+        window_map = request_map(state, attn_metadata)
+        request_args = (window_map,) if expected_format == REQUEST_FORMAT else ()
+        request_attrs = ((state.snapshots.max_num_seqs, state.snapshots.position_bits)
+                         if expected_format == REQUEST_FORMAT else ())
         with phase("fia", layer=layer.layer_name, tokens=n, splits=source_splits,
                    cube_cores=g.cube_cores, tasks=task_count, requests=attn_metadata.num_reqs,
                    cv_operator=cv_name, **timing_fields):
             cv_op = getattr(ops, cv_name)
-            cv_extra = (workspace.cluster_stats,) if cv_name in CLUSTER_CV_OPS else ()
+            cv_extra = ((workspace.cluster_stats,)
+                        if cv_name in CLUSTER_CV_OPS | REQUEST_CLUSTER_READERS else ())
             cv_op(
-                q, qr, k, v, state.rotation_v, state.raw, attn_metadata.block_tables,
-                state.window_key, state.window_value, state.window_tags, tasks,
+                q, qr, k, v, state.rotation_v, state.raw,
+                (attn_metadata.block_tables[:attn_metadata.num_reqs] if request_args
+                 else attn_metadata.block_tables),
+                state.window_key, state.window_value, state.window_tags, *request_args, tasks,
                 partial, partial_lse, statuses, workspace.cv, *cv_extra,
                 state.spec.block_size, state.num_blocks,
                 state.num_blocks * state.spec.conv_bytes, state.spec.ssm_bytes,
                 state.snapshots.sink_tokens, state.snapshots.recent_tokens,
-                state.snapshots.speculative_tokens, source_splits, self.scale, g.cube_cores)
+                state.snapshots.speculative_tokens, source_splits, self.scale, g.cube_cores,
+                *request_attrs)
         if native_current:
             active = attn_metadata.num_actual_tokens
             if type(active) is not int or not 0 < active <= n:
@@ -208,17 +227,9 @@ class OscarAttentionImpl(AttentionImpl):
         # Current K/V was read directly; only now publish the new physical data.
         with phase("phase1_stores", layer=layer.layer_name, tokens=n, hadamard=state.hadamard,
                    requests=attn_metadata.num_reqs, **timing_fields):
-            store_name = ("rotate_clip_store_striped_out" if striped_cache
-                          else "rotate_clip_store_out")
-            getattr(ops, store_name)(
-                k, v, state.rotation_k_transpose, state.rotation_v_transpose,
-                slots, positions, state.raw,
-                state.window_key, state.window_value, state.window_tags,
-                workspace.store_status[:n], state.spec.block_size, state.num_blocks,
-                state.num_blocks * state.spec.conv_bytes, state.spec.ssm_bytes,
-                state.snapshots.sink_tokens, state.snapshots.ring_tokens,
-                float(self.provider.config.get("k_clip_ratio", 0.0)),
-                float(self.provider.config.get("v_clip_ratio", 0.0)), state.hadamard)
+            store_current(ops, state, k, v, slots, positions,
+                          attn_metadata.query_start_loc[:attn_metadata.num_reqs + 1],
+                          window_map, self.provider.config)
         with phase("status_guard", layer=layer.layer_name, tokens=n,
                    requests=attn_metadata.num_reqs, **timing_fields):
             ops.status_guard(statuses, workspace.rotate_status[:n],

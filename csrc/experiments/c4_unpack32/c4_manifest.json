@@ -1,0 +1,56 @@
+{
+  "baseline": {
+    "arm": "baseline",
+    "symbol": "oscar_c4_unpack32_baseline_kernel",
+    "source_sha256": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65",
+    "unchanged_math_methods": [
+      "Matmul",
+      "LoadQueries",
+      "LoadWindowRuns",
+      "LoadPrecise",
+      "SpillState",
+      "RestoreState",
+      "CubeTask",
+      "CubeCluster",
+      "PublishRows",
+      "PublishStatus",
+      "TaskValid"
+    ],
+    "original_bytes_restored": true,
+    "GM_workspace_unchanged": true,
+    "source1_current_PV_rows": 16,
+    "history_half_rows": 16,
+    "AIV_explicit_UB_bytes": 157632,
+    "softmax_temp_bytes": 16384,
+    "status_lane_mapping": "old alternating16-row ownership preserved",
+    "execution": "not_run",
+    "sha256": "4ceddce6df7ded7ee5a54800c74b189d03cc70f65c2b12fe62558c8334a1072e"
+  },
+  "candidate": {
+    "arm": "candidate",
+    "symbol": "oscar_c4_unpack32_candidate_kernel",
+    "source_sha256": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65",
+    "unchanged_math_methods": [
+      "Matmul",
+      "LoadQueries",
+      "LoadWindowRuns",
+      "LoadPrecise",
+      "SpillState",
+      "RestoreState",
+      "CubeTask",
+      "CubeCluster",
+      "PublishRows",
+      "PublishStatus",
+      "TaskValid"
+    ],
+    "original_bytes_restored": true,
+    "GM_workspace_unchanged": true,
+    "source1_current_PV_rows": 16,
+    "history_half_rows": 32,
+    "AIV_explicit_UB_bytes": 157760,
+    "softmax_temp_bytes": 16384,
+    "status_lane_mapping": "old alternating16-row ownership preserved",
+    "execution": "not_run",
+    "sha256": "55632524933f1417053529e34a32f7f7fb9ac859ec7b2a0c4e7a84d815e84e11"
+  }
+}

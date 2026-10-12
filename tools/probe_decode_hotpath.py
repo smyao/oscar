@@ -1,4 +1,4 @@
-# Archive #126/#129/#143/#148-150 and startup D.4: isolate full-history
+# Archive #34/#36/#94/#125/#126/#129/#143/#148-150 and startup D.4: isolate full-history
 # attention without restoring compressed KV in production or mistaking a
 # standalone operator result for native whole-model graph performance.
 """Model-free target-NPU q4 decode: native BF16 FIA versus OSCAR INT2 CV."""
@@ -304,7 +304,6 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
     from .probe_native_current_fia import _target_geometry
     if _target_geometry(target) != (6, 1, 256):
         raise DecodeHotpathError("target model TP4 head geometry differs from Hq6/Hkv1/D256")
-    from oscar_ascend.runtime import WorkspaceGeometry
     from oscar_ascend.ops.loader import require_capabilities, validate_build_artifacts
     manifest_path = ROOT / "build/ascendc/build_manifest.json"
     manifest = validate_build_artifacts(manifest_path)
@@ -315,14 +314,11 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
     cores = _core_count(torch, target)
     if cores != 20:
         raise DecodeHotpathError(f"signed q4 diagnostic expects 20 Cube cores, got {cores}")
-    capacity = max(int(target["max_num_batched_tokens"]),
-                   max(target.get("compilation_config", {}).get("cudagraph_capture_sizes", ()), default=0))
-    geometry = WorkspaceGeometry(capacity, 6, 1, 256,
-                                 int(target.get("attention_splits", 1)), cores)
-    if geometry.splits_for_tokens(128) != 3:
-        raise DecodeHotpathError("production q4 N128 source split count differs from S3")
     spec = Shape("native_decode_q4_32", QUERY_LENGTHS, CONTEXTS, 256, 1, 3,
                  False, speed_gate=False)
+    from .probe_history_reuse import diagnostic_splits
+    if diagnostic_splits(spec, cores) != spec.splits:
+        raise DecodeHotpathError("independent q4 N128/core source split count differs from S3")
     fixture, native_cpu = build_paired_fixture(torch, spec)
     tensors = {name: tensor.to(device) for name, tensor in fixture["cpu"].items()}
     buffers = _allocate(torch, fixture, device, cores, candidate=False)
@@ -395,6 +391,8 @@ def probe(config_path: Path, acceptance_path: Path) -> dict:
             "shape": {"requests": 32, "query_lengths": QUERY_LENGTHS,
                       "contexts": CONTEXTS, "tokens": 128, "query_heads": 6,
                       "kv_heads": 1, "head_dim": 256, "oscar_source_splits": 3,
+                      "split_source": "fixture_shape_and_device_cores_not_service_budget",
+                      "partial_token_capacity": 128 * 3,
                       "native_block_size": 128,
                       "native_table_columns": native_cpu["block_table"].shape[1],
                       "native_table_scope": native_cpu["table_scope"],

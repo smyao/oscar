@@ -1,0 +1,25 @@
+{
+  "parent": {
+    "parent": {
+      "parent_sha256": "a81d7d7120f7500082244b088460ac2cc0a6b678fd5c3769af1f94af6a473674",
+      "generated_sha256": "455b8bbe0e8bb4a3227da19521cabfe30c92ad493f060b648a19d84bb8f05e00",
+      "full_parent_restore": true,
+      "full_candidate_CPU": "timeout_not_relabelled_as_passed",
+      "unchanged": "full CAModel inputs, outputs, independent oracle, task/status/guard/profile gates"
+    },
+    "parent_sha256": "455b8bbe0e8bb4a3227da19521cabfe30c92ad493f060b648a19d84bb8f05e00",
+    "generated_sha256": "408991770be4eb5461b47fa6ed1ddf987f551b7af9581edadf3c856118cbf10f",
+    "full_parent_restore": true,
+    "numerical_and_completion_gates": "unchanged"
+  },
+  "parent_sha256": "408991770be4eb5461b47fa6ed1ddf987f551b7af9581edadf3c856118cbf10f",
+  "generated_sha256": "4cdc6a30ef4b77ef96888265300f07d608a0cd087110720636e53cc7e53b9d74",
+  "full_parent_restore": true,
+  "numerical_and_completion_gates": "unchanged; all1008tasks,60actors,oracle,outputs,status,guards",
+  "full_KtVt_CPU": "not_run",
+  "old_B_only_CPU": "120s_timeout_preserved",
+  "baseline_CPU": "reuse_only_real_completed_same_C337_prepare_and_numerical_evidence",
+  "CAModel_deadline_seconds_per_arm": 600,
+  "publisher_CPU_deadline_seconds": 60,
+  "symbol_binding": "generate.generate(variant).symbol checked against exact source and configured build binding"
+}

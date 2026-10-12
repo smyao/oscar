@@ -1,0 +1,588 @@
+{
+  "schema_version": 2,
+  "diagnostic_only": true,
+  "abi": {
+    "pointer_count": 16,
+    "profile_pointer_position_0based": 15,
+    "int64_attributes": 17,
+    "float_attributes": 1,
+    "dtype": "int64",
+    "shape": [
+      "cube_cores",
+      3,
+      4,
+      24
+    ],
+    "bytes_per_actor": 768,
+    "bytes_per_cube": 2304,
+    "engines": [
+      "AIC",
+      "AIV0",
+      "AIV1"
+    ],
+    "sources": [
+      "history",
+      "window",
+      "current",
+      "total"
+    ],
+    "fields": {
+      "0": "tasks",
+      "1": "kv_units",
+      "2": "kv_rows_observed",
+      "3": "task_span",
+      "4": "query_stage",
+      "5": "packed_dma",
+      "6": "unpack",
+      "7": "precise_load",
+      "8": "kv_publish",
+      "9": "aiv_qk_wait",
+      "10": "softmax_p",
+      "11": "aiv_pv_wait",
+      "12": "pv_acc",
+      "13": "aic_kv_wait",
+      "14": "aic_qk",
+      "15": "aic_p_wait",
+      "16": "aic_pv",
+      "17": "aic_acc_wait",
+      "18": "aic_rotation",
+      "19": "aiv_finalize",
+      "20": "task_metadata",
+      "21": "final_writeback",
+      "22": "rotation_wait",
+      "23": "compute_span"
+    },
+    "field_20_21_not_legacy_unpack_subitems": true,
+    "all_slots_written": true
+  },
+  "variants": {
+    "simd": {
+      "source": "csrc/kernels/attention_cv_striped_decode_simd.cpp",
+      "source_sha256": "c67219ce15c98e932acaa8b1c5515a3f31c99dd6e4963823623528ba2b3a3930",
+      "all_original_bytes_restored": true,
+      "new_completion_fences": 0,
+      "math_method_body_sha256": {
+        "Matmul": "4eb0f86e3859c6723b3a89e093dd4111ec9a33c8b5f95c76173b293d6d6fb966",
+        "LoadQueries": "040dceec2b8ec684c59cbd1798d710935ece16f0293b9bb6ee2284ef104e96af",
+        "LoadPrecise": "923f73ce38f9b10089ab18f08736cc0144e899ad84b38a11cb3dcc107d754e2d",
+        "Unpack": "ab7f468966212ea30ae53ee791271fc8095b5630aaa552a174139239519f8f30",
+        "PublishKv": "36d6d5a1afa891c9bb50278d4b61b6c90c34eda48aa454077b6c639d5a3f445a",
+        "Softmax": "5f1232af01a0abd2dda9871dc92637b60f17d29234e6e4f108481d42786e5aee",
+        "PublishRows": "1c1af6eb41f50737ab4452018c4d4f940e1e204938d2ce03ebee408b70d35a41",
+        "PublishEmpty": "6044cb30fdc3169755a1a00488329dab670b34f2c39c30cba3c552f7dd8ead73",
+        "PublishStatus": "8cf3e72f4e3310b936ca1b598640e88975c9de5b1c7f338f537c93a8b041df0e"
+      },
+      "edits": [
+        {
+          "label": "enum",
+          "count": 1,
+          "before_sha256": "b2de3d4c643d99733431369eebf6052120306c3937f397aa7de4c7bae83e9242",
+          "after_sha256": "52ff177b411936d97ff54816374490a45697b33cc5b24dcf4badf6e29b0f9a9e"
+        },
+        {
+          "label": "Init profile argument",
+          "count": 1,
+          "before_sha256": "5d97d2188b0483561e71ff22be83cb621430f82c3f2d451ac8bff0bc4ec24751",
+          "after_sha256": "8d046852d15f9d0ce2fc870b62393b1391623e41e27e1515cf28825a00528cd4"
+        },
+        {
+          "label": "actor start",
+          "count": 1,
+          "before_sha256": "19667a87dc919c20dde79de027a01fbbadb66a2e677855e1a3d07052abf2671d",
+          "after_sha256": "04de4d2a4fcd00ec4d0905f2052cebe68a72aa4672647dec8d859dc2df2e1114"
+        },
+        {
+          "label": "profile pointer",
+          "count": 1,
+          "before_sha256": "d258def0096f76d9da4fbe7bb8f8df1386db0295ac17017bbab29bd4776e34d2",
+          "after_sha256": "84d3519dade5d5938b719bddea8b6c0efa2ee7ac8c15715df7cf25f787e74491"
+        },
+        {
+          "label": "counter init",
+          "count": 1,
+          "before_sha256": "6456879cc81c7472cac441884059de8ffac026680f8b88629099ab9ac0f01873",
+          "after_sha256": "a95110af723c26049904bad8da6d80ab85bcf260e255cf569c1733276cfbddf0"
+        },
+        {
+          "label": "helpers",
+          "count": 1,
+          "before_sha256": "95b50ab1d3025da98f7667f1fc67fce1811290c5977c5c7a93230dba74812b28",
+          "after_sha256": "0476fb2d4ee96679ff3fb5101c1d88ad334b1d23c861cf0cd01d7c88e284086d"
+        },
+        {
+          "label": "actor end+flush",
+          "count": 1,
+          "before_sha256": "5fff843ecda284adc7ea80f7aa8d01b6fa42cb497a781420d902d6178aa8d892",
+          "after_sha256": "d488db24e7546d05fe8bd7cd17725b8d77717e8259ac871632fecff7bc34b692"
+        },
+        {
+          "label": "counter storage",
+          "count": 1,
+          "before_sha256": "29201b10746767c4243fc656baf81a273f3e506585c1694e4013423e6fc5afa2",
+          "after_sha256": "76d35b7e0c58a46f7d6723c73a1905f5c2ea6d8ee2eaa750fed17cf39a0d35c8"
+        },
+        {
+          "label": "method LoadTask",
+          "count": 1,
+          "before_sha256": "307b1d2416444b166019cbdfdcd739607b59241b7c224321f08fdea6efaea30e",
+          "after_sha256": "8c538b982e7311598f594123c2900859e9b50e01b8eb6fbbfc6f875287e81eb6"
+        },
+        {
+          "label": "method LoadQueries",
+          "count": 1,
+          "before_sha256": "040dceec2b8ec684c59cbd1798d710935ece16f0293b9bb6ee2284ef104e96af",
+          "after_sha256": "a6841f3f488a7fcead45edc7eefdbd4f343072dd5e75f8789f77246945c38bc6"
+        },
+        {
+          "label": "method Unpack",
+          "count": 1,
+          "before_sha256": "ab7f468966212ea30ae53ee791271fc8095b5630aaa552a174139239519f8f30",
+          "after_sha256": "2df9558be08696d84c4280c97965c299b9db9f17f8ae3489feee4d093eac4277"
+        },
+        {
+          "label": "method LoadPrecise",
+          "count": 1,
+          "before_sha256": "923f73ce38f9b10089ab18f08736cc0144e899ad84b38a11cb3dcc107d754e2d",
+          "after_sha256": "c2172d1bb4c4c592c3555b2616bb959742c12de6f4621892f4365b375d5b9199"
+        },
+        {
+          "label": "method PublishKv",
+          "count": 1,
+          "before_sha256": "36d6d5a1afa891c9bb50278d4b61b6c90c34eda48aa454077b6c639d5a3f445a",
+          "after_sha256": "206cbf69c682a441ea332b7c55a864edcce1b671bc28cc7137aac8c08a9a5925"
+        },
+        {
+          "label": "method Softmax",
+          "count": 1,
+          "before_sha256": "5f1232af01a0abd2dda9871dc92637b60f17d29234e6e4f108481d42786e5aee",
+          "after_sha256": "11076ff823d3d32985656c31b3226bb5d988634de26e8d101d0dd12782f7e77a"
+        },
+        {
+          "label": "method PublishRows",
+          "count": 1,
+          "before_sha256": "1c1af6eb41f50737ab4452018c4d4f940e1e204938d2ce03ebee408b70d35a41",
+          "after_sha256": "3ee2a2123a40cf324dc0965b464455d47df8415cfc2c34be13cda36511c918a7"
+        },
+        {
+          "label": "method LoadPacked",
+          "count": 1,
+          "before_sha256": "2c5bcaf49d78d3261ccf1d39a376247c738043a16477d706e1c3a297a7e64862",
+          "after_sha256": "10a097bb3e4b70ddbc48cc4ee8f68a4da0f8198dce9a521645c1a7fd8fc949bb"
+        },
+        {
+          "label": "method Matmul",
+          "count": 1,
+          "before_sha256": "4eb0f86e3859c6723b3a89e093dd4111ec9a33c8b5f95c76173b293d6d6fb966",
+          "after_sha256": "87bd909c3df0986edce1459f1efec6a47faf13736408ef3f30a8aeda16d4e0f0"
+        },
+        {
+          "label": "method CubeTask",
+          "count": 1,
+          "before_sha256": "e15898938f5900cb908ee75b68f76f72cd865668771aced0e1511eb31a5af19b",
+          "after_sha256": "63c8048476d78b6c1a76d7e8e2d9b4fb95c731b216a69921aafdb17f859a69d1"
+        },
+        {
+          "label": "method VectorTask",
+          "count": 1,
+          "before_sha256": "714f34ca07d05cc094d91cbb7a9bac519285237be5f962b8711c77afbd2e9681",
+          "after_sha256": "54909d794159e9cdd1cae62bac7902001c698bfdba5141101eef7a89156d35bd"
+        },
+        {
+          "label": "method CubeTask",
+          "count": 1,
+          "before_sha256": "63c8048476d78b6c1a76d7e8e2d9b4fb95c731b216a69921aafdb17f859a69d1",
+          "after_sha256": "690f7107e66e993167dab0ea475bdb3768e8d5cfd9bec3227f32ca80910379f0"
+        },
+        {
+          "label": "method VectorTask",
+          "count": 1,
+          "before_sha256": "54909d794159e9cdd1cae62bac7902001c698bfdba5141101eef7a89156d35bd",
+          "after_sha256": "93140c61162fb04d3d812c6aa202eb24b42493131a1f6fc275baf5cc7eb91f01"
+        },
+        {
+          "label": "KV counts",
+          "count": 2,
+          "before_sha256": "5deae2c14ff73f2f1228a2912793540519ee76264dbcd8fb9202fa316293fa28",
+          "after_sha256": "9b07389321cbdfce6e2a80c36876f9cd226b77af4a5f84c518c928d4229248b8"
+        },
+        {
+          "label": "method VectorTask",
+          "count": 1,
+          "before_sha256": "10e046aaeddedb204e584b324adc54bc7f82f48737a979f90005e3b43999b514",
+          "after_sha256": "1cb4bc14ab9d72cfed3935c329ca578c1de772067d7cd062bd97a6e277668367"
+        },
+        {
+          "label": "method VectorTask",
+          "count": 1,
+          "before_sha256": "1cb4bc14ab9d72cfed3935c329ca578c1de772067d7cd062bd97a6e277668367",
+          "after_sha256": "6223bdecd1909a241ea5b106a71281231a1ecdbb85fd2fd1e87fa407f999e2f3"
+        },
+        {
+          "label": "kernel ABI",
+          "count": 1,
+          "before_sha256": "1ad833d2e302901c4b081518e38b6dc6f4ce38153a86e0a11114af442da0cd80",
+          "after_sha256": "a885bc9bfbeb7c485360f9df45d4d2f80ff54c7ac7cfaac12e3752359eef9ec0"
+        },
+        {
+          "label": "Init call",
+          "count": 1,
+          "before_sha256": "16c8d49c79e6cde2258d074e1dd97c183726d911a1122ac336d7078acbf14be0",
+          "after_sha256": "a0197e40b76208d250e47bc2a52e6cf9aaf3e03929e2789e9ccab136a255d482"
+        },
+        {
+          "label": "launcher ABI",
+          "count": 1,
+          "before_sha256": "b203c50d12087aab55dc35089e9eaaee9c50e0479c67c3a7a7e030293aeb993c",
+          "after_sha256": "0d3830fc58fb7a71e22c7341cd8a0e35ffe77606795e8f6253b47e611cfd6294"
+        },
+        {
+          "label": "launcher argument",
+          "count": 1,
+          "before_sha256": "d53e03542a7809f858d2d8099cffd72252d7f4b713c6ae14a83a994d64967428",
+          "after_sha256": "e7cfbad09bef723a6016d1db7a020df1be6a70366a92b4ff45ffac1b6aac656f"
+        },
+        {
+          "label": "symbol oscar_attention_cv_striped_decode_simd_kernel",
+          "count": 2,
+          "before_sha256": "c34dd2f2d98192acf0308a8c045b9b4ed82ed67bee14c86ca71623296d2655a9",
+          "after_sha256": "34de4766fe603d5ef657a374e3434485a12167f0a0584529dbee436ca07bc319"
+        },
+        {
+          "label": "symbol oscar_attention_cv_striped_q1_simd_kernel",
+          "count": 2,
+          "before_sha256": "b66238a60545d47b7768bb958ab0d3b13f09bc01353bac0650f2a9deef59cf1f",
+          "after_sha256": "d72680714e54a1129cce5673752dce0c93687fe5c7b1ad8c1898f6e20720df6d"
+        },
+        {
+          "label": "symbol attention_cv_striped_decode_simd_launch",
+          "count": 1,
+          "before_sha256": "9ff27204a4b104bcdf5cc5ef4a7f4718240573b74546edcee9e6cad33e95fa40",
+          "after_sha256": "7753d37ba3bd60a543d7f1b2b987de880d629d6ff1bbee78caee02fb1b843394"
+        },
+        {
+          "label": "symbol attention_cv_striped_q1_simd_launch",
+          "count": 1,
+          "before_sha256": "2401875d4ae987f4f01cf9c91cee488e486fed44e8bc3b5843537c2e7464070b",
+          "after_sha256": "c693a3d92095c0f77e436295e1924f4eeb1212c92f1b53b3ba9f77f4083d1b58"
+        },
+        {
+          "label": "include",
+          "count": 1,
+          "before_sha256": "0aee384861e47b067425aee7cfe3c7f444b341b22cd83a7e8c5dccc423e58fc4",
+          "after_sha256": "d64915b71955fa802f242a63f9bcaf8687e132d5cec0eb91098f0276263803cc"
+        },
+        {
+          "label": "include",
+          "count": 1,
+          "before_sha256": "bcfddc15ce85fd04451b84702fa551060b58f512d524e9f2a3013c566aa10430",
+          "after_sha256": "444d2f4ccc18d815ec0f286465af163812a824e96ac7a9590d8b016910f1dfd7"
+        },
+        {
+          "label": "includes",
+          "count": 2,
+          "before_sha256": "3b884f7af2c172995fb77d2ae445a3b3d00d665c5f2072293d128aadeab49b78",
+          "after_sha256": "9fa2491ee38b2397e1e8c2fd8d874ea2ec1b63c0c521d9dbd4a0f213c76854e6"
+        }
+      ],
+      "output": "csrc/experiments/decode_phase_profile/simd_profile.cpp",
+      "output_sha256": "105efb93e9d8ba55a58890db7394d7fc93ff39ab9d5f0ecdf022e70766ebbfa0"
+    },
+    "pipeline": {
+      "source": "csrc/experiments/decode_history_pipeline/attention_pipeline.cpp",
+      "source_sha256": "f9cb6862783dc2289944405766d3cbc56101e24bf538b6da913fe082e0ccb372",
+      "all_original_bytes_restored": true,
+      "new_completion_fences": 0,
+      "math_method_body_sha256": {
+        "Matmul": "4eb0f86e3859c6723b3a89e093dd4111ec9a33c8b5f95c76173b293d6d6fb966",
+        "LoadQueries": "040dceec2b8ec684c59cbd1798d710935ece16f0293b9bb6ee2284ef104e96af",
+        "LoadPrecise": "923f73ce38f9b10089ab18f08736cc0144e899ad84b38a11cb3dcc107d754e2d",
+        "Unpack": "ab7f468966212ea30ae53ee791271fc8095b5630aaa552a174139239519f8f30",
+        "PublishKv": "36d6d5a1afa891c9bb50278d4b61b6c90c34eda48aa454077b6c639d5a3f445a",
+        "Softmax": "5f1232af01a0abd2dda9871dc92637b60f17d29234e6e4f108481d42786e5aee",
+        "PublishRows": "1c1af6eb41f50737ab4452018c4d4f940e1e204938d2ce03ebee408b70d35a41",
+        "PublishEmpty": "6044cb30fdc3169755a1a00488329dab670b34f2c39c30cba3c552f7dd8ead73",
+        "PublishStatus": "8cf3e72f4e3310b936ca1b598640e88975c9de5b1c7f338f537c93a8b041df0e"
+      },
+      "edits": [
+        {
+          "label": "enum",
+          "count": 1,
+          "before_sha256": "b2de3d4c643d99733431369eebf6052120306c3937f397aa7de4c7bae83e9242",
+          "after_sha256": "52ff177b411936d97ff54816374490a45697b33cc5b24dcf4badf6e29b0f9a9e"
+        },
+        {
+          "label": "Init profile argument",
+          "count": 1,
+          "before_sha256": "5d97d2188b0483561e71ff22be83cb621430f82c3f2d451ac8bff0bc4ec24751",
+          "after_sha256": "8d046852d15f9d0ce2fc870b62393b1391623e41e27e1515cf28825a00528cd4"
+        },
+        {
+          "label": "actor start",
+          "count": 1,
+          "before_sha256": "19667a87dc919c20dde79de027a01fbbadb66a2e677855e1a3d07052abf2671d",
+          "after_sha256": "04de4d2a4fcd00ec4d0905f2052cebe68a72aa4672647dec8d859dc2df2e1114"
+        },
+        {
+          "label": "profile pointer",
+          "count": 1,
+          "before_sha256": "d258def0096f76d9da4fbe7bb8f8df1386db0295ac17017bbab29bd4776e34d2",
+          "after_sha256": "84d3519dade5d5938b719bddea8b6c0efa2ee7ac8c15715df7cf25f787e74491"
+        },
+        {
+          "label": "counter init",
+          "count": 1,
+          "before_sha256": "6456879cc81c7472cac441884059de8ffac026680f8b88629099ab9ac0f01873",
+          "after_sha256": "a95110af723c26049904bad8da6d80ab85bcf260e255cf569c1733276cfbddf0"
+        },
+        {
+          "label": "helpers",
+          "count": 1,
+          "before_sha256": "95b50ab1d3025da98f7667f1fc67fce1811290c5977c5c7a93230dba74812b28",
+          "after_sha256": "0476fb2d4ee96679ff3fb5101c1d88ad334b1d23c861cf0cd01d7c88e284086d"
+        },
+        {
+          "label": "actor end+flush",
+          "count": 1,
+          "before_sha256": "5fff843ecda284adc7ea80f7aa8d01b6fa42cb497a781420d902d6178aa8d892",
+          "after_sha256": "d488db24e7546d05fe8bd7cd17725b8d77717e8259ac871632fecff7bc34b692"
+        },
+        {
+          "label": "counter storage",
+          "count": 1,
+          "before_sha256": "29201b10746767c4243fc656baf81a273f3e506585c1694e4013423e6fc5afa2",
+          "after_sha256": "76d35b7e0c58a46f7d6723c73a1905f5c2ea6d8ee2eaa750fed17cf39a0d35c8"
+        },
+        {
+          "label": "method LoadTask",
+          "count": 1,
+          "before_sha256": "307b1d2416444b166019cbdfdcd739607b59241b7c224321f08fdea6efaea30e",
+          "after_sha256": "8c538b982e7311598f594123c2900859e9b50e01b8eb6fbbfc6f875287e81eb6"
+        },
+        {
+          "label": "method LoadQueries",
+          "count": 1,
+          "before_sha256": "040dceec2b8ec684c59cbd1798d710935ece16f0293b9bb6ee2284ef104e96af",
+          "after_sha256": "a6841f3f488a7fcead45edc7eefdbd4f343072dd5e75f8789f77246945c38bc6"
+        },
+        {
+          "label": "method Unpack",
+          "count": 1,
+          "before_sha256": "ab7f468966212ea30ae53ee791271fc8095b5630aaa552a174139239519f8f30",
+          "after_sha256": "2df9558be08696d84c4280c97965c299b9db9f17f8ae3489feee4d093eac4277"
+        },
+        {
+          "label": "method LoadPrecise",
+          "count": 1,
+          "before_sha256": "923f73ce38f9b10089ab18f08736cc0144e899ad84b38a11cb3dcc107d754e2d",
+          "after_sha256": "c2172d1bb4c4c592c3555b2616bb959742c12de6f4621892f4365b375d5b9199"
+        },
+        {
+          "label": "method PublishKv",
+          "count": 1,
+          "before_sha256": "36d6d5a1afa891c9bb50278d4b61b6c90c34eda48aa454077b6c639d5a3f445a",
+          "after_sha256": "206cbf69c682a441ea332b7c55a864edcce1b671bc28cc7137aac8c08a9a5925"
+        },
+        {
+          "label": "method Softmax",
+          "count": 1,
+          "before_sha256": "5f1232af01a0abd2dda9871dc92637b60f17d29234e6e4f108481d42786e5aee",
+          "after_sha256": "11076ff823d3d32985656c31b3226bb5d988634de26e8d101d0dd12782f7e77a"
+        },
+        {
+          "label": "method PublishRows",
+          "count": 1,
+          "before_sha256": "1c1af6eb41f50737ab4452018c4d4f940e1e204938d2ce03ebee408b70d35a41",
+          "after_sha256": "3ee2a2123a40cf324dc0965b464455d47df8415cfc2c34be13cda36511c918a7"
+        },
+        {
+          "label": "method LoadPackedInto",
+          "count": 1,
+          "before_sha256": "1b21453cca6236f5ac52b7898a6b02ee02ec31d758a07dae4afa8fe1a97200da",
+          "after_sha256": "a94fc18ac75782781ad9a1aa48adc1ccaf914c07a2168ed68013620b7d095571"
+        },
+        {
+          "label": "method Matmul",
+          "count": 1,
+          "before_sha256": "4eb0f86e3859c6723b3a89e093dd4111ec9a33c8b5f95c76173b293d6d6fb966",
+          "after_sha256": "87bd909c3df0986edce1459f1efec6a47faf13736408ef3f30a8aeda16d4e0f0"
+        },
+        {
+          "label": "method CubeTask",
+          "count": 1,
+          "before_sha256": "e15898938f5900cb908ee75b68f76f72cd865668771aced0e1511eb31a5af19b",
+          "after_sha256": "63c8048476d78b6c1a76d7e8e2d9b4fb95c731b216a69921aafdb17f859a69d1"
+        },
+        {
+          "label": "method VectorTask",
+          "count": 1,
+          "before_sha256": "714f34ca07d05cc094d91cbb7a9bac519285237be5f962b8711c77afbd2e9681",
+          "after_sha256": "54909d794159e9cdd1cae62bac7902001c698bfdba5141101eef7a89156d35bd"
+        },
+        {
+          "label": "method HistoryCubeTask",
+          "count": 1,
+          "before_sha256": "b13b7260bef2e81b4025d02cf50953db23eaf3f476ab071d0b8ee7126b1d0a88",
+          "after_sha256": "33c86428802ef19c93704288a0ef8f648331506d74b4421685d398ed0e689846"
+        },
+        {
+          "label": "method HistoryVectorTask",
+          "count": 1,
+          "before_sha256": "7892a7373710ee0526cc71b592f269944cbd8361dbba76acac6079f0abc22593",
+          "after_sha256": "36804b141b3a34305308e78c8e2fd6154419774bc99857f89a938293e1121b86"
+        },
+        {
+          "label": "method PipelineUnpack",
+          "count": 1,
+          "before_sha256": "f410a42a65d9c647b9fea2067ce17a4f33c56364ed674d0bd4aa0f726e744b02",
+          "after_sha256": "d87171a471217cbffb47ef199e6c4ccdb7fbd1d35bf9cc18d699f3657c0fa905"
+        },
+        {
+          "label": "method PipelinePublishKv",
+          "count": 1,
+          "before_sha256": "7dc701940ffd54fc92f891f84edfb8d1c0feafd3740f9f5f0aa53dbe27ec6571",
+          "after_sha256": "8b0fc5e2643ddd717d5e9b97b77eebef3da60b3994aad83bf7fe0fd45a31fc8d"
+        },
+        {
+          "label": "method PipelineConsumePv",
+          "count": 1,
+          "before_sha256": "409ecddab488a02d0043a1bab80c1fa3070965d7365cd8c5ad8d6dc8f3f7286a",
+          "after_sha256": "062517f098dfa9553f08447f734ff9cb5139f2b5d95a62e4e8c23b5a1978de28"
+        },
+        {
+          "label": "method CubeTask",
+          "count": 1,
+          "before_sha256": "63c8048476d78b6c1a76d7e8e2d9b4fb95c731b216a69921aafdb17f859a69d1",
+          "after_sha256": "690f7107e66e993167dab0ea475bdb3768e8d5cfd9bec3227f32ca80910379f0"
+        },
+        {
+          "label": "method VectorTask",
+          "count": 1,
+          "before_sha256": "54909d794159e9cdd1cae62bac7902001c698bfdba5141101eef7a89156d35bd",
+          "after_sha256": "93140c61162fb04d3d812c6aa202eb24b42493131a1f6fc275baf5cc7eb91f01"
+        },
+        {
+          "label": "method HistoryCubeTask",
+          "count": 1,
+          "before_sha256": "33c86428802ef19c93704288a0ef8f648331506d74b4421685d398ed0e689846",
+          "after_sha256": "3493ce0467b2ac14630e97edd23be8c8161e9a1c3b14a33394cc3b5b1eec943d"
+        },
+        {
+          "label": "method HistoryCubeTask",
+          "count": 1,
+          "before_sha256": "3493ce0467b2ac14630e97edd23be8c8161e9a1c3b14a33394cc3b5b1eec943d",
+          "after_sha256": "849169b82e6642283f692ac4cd9221abf8e110f1445afb963cbf8f1614f62c29"
+        },
+        {
+          "label": "method HistoryCubeTask",
+          "count": 1,
+          "before_sha256": "849169b82e6642283f692ac4cd9221abf8e110f1445afb963cbf8f1614f62c29",
+          "after_sha256": "54ddb9668134a0240a7abc0d92533187e02831b2d1b8406e4d4c10f47d35475f"
+        },
+        {
+          "label": "method HistoryCubeTask",
+          "count": 1,
+          "before_sha256": "54ddb9668134a0240a7abc0d92533187e02831b2d1b8406e4d4c10f47d35475f",
+          "after_sha256": "806dbdbb3c046558070f9871fd87768439c5ea6a50cdc86c9e69b6f0cddb2185"
+        },
+        {
+          "label": "method HistoryVectorTask",
+          "count": 1,
+          "before_sha256": "36804b141b3a34305308e78c8e2fd6154419774bc99857f89a938293e1121b86",
+          "after_sha256": "f1bcb3f707becc2a43281b8909005a30aca6f3834f13a0c029ffd975b7b711d4"
+        },
+        {
+          "label": "method HistoryVectorTask",
+          "count": 1,
+          "before_sha256": "f1bcb3f707becc2a43281b8909005a30aca6f3834f13a0c029ffd975b7b711d4",
+          "after_sha256": "cd28dda32c041bb8b9161f718ffcbbe8726d23ae2dfcfa24954c99c1b64c4d4b"
+        },
+        {
+          "label": "method HistoryVectorTask",
+          "count": 1,
+          "before_sha256": "cd28dda32c041bb8b9161f718ffcbbe8726d23ae2dfcfa24954c99c1b64c4d4b",
+          "after_sha256": "0dc696e17bf8cad774578122b401012b98594a6a83d04f60035533d0e4b33a0d"
+        },
+        {
+          "label": "KV counts",
+          "count": 2,
+          "before_sha256": "5deae2c14ff73f2f1228a2912793540519ee76264dbcd8fb9202fa316293fa28",
+          "after_sha256": "9b07389321cbdfce6e2a80c36876f9cd226b77af4a5f84c518c928d4229248b8"
+        },
+        {
+          "label": "KV counts",
+          "count": 2,
+          "before_sha256": "6e80f9f99bc6d6f07140fe1400ef6a07bcf336ee7e2cfb68aafaeecc99fe4d63",
+          "after_sha256": "1287e0f477ea22c9285a8b253d1cf7103c38d6f3128122bb287dec5c03408d44"
+        },
+        {
+          "label": "method VectorTask",
+          "count": 1,
+          "before_sha256": "10e046aaeddedb204e584b324adc54bc7f82f48737a979f90005e3b43999b514",
+          "after_sha256": "1cb4bc14ab9d72cfed3935c329ca578c1de772067d7cd062bd97a6e277668367"
+        },
+        {
+          "label": "method VectorTask",
+          "count": 1,
+          "before_sha256": "1cb4bc14ab9d72cfed3935c329ca578c1de772067d7cd062bd97a6e277668367",
+          "after_sha256": "6223bdecd1909a241ea5b106a71281231a1ecdbb85fd2fd1e87fa407f999e2f3"
+        },
+        {
+          "label": "method HistoryVectorTask",
+          "count": 1,
+          "before_sha256": "5ea22e53884c465f3dd5a81ac0e297c7dd87a4054c06cff31696ec016811c97d",
+          "after_sha256": "5d5dbaf72fbcfc19ad1a901d2f74a8f03c02750259563a56f32153b113093523"
+        },
+        {
+          "label": "kernel ABI",
+          "count": 1,
+          "before_sha256": "1ad833d2e302901c4b081518e38b6dc6f4ce38153a86e0a11114af442da0cd80",
+          "after_sha256": "a885bc9bfbeb7c485360f9df45d4d2f80ff54c7ac7cfaac12e3752359eef9ec0"
+        },
+        {
+          "label": "Init call",
+          "count": 1,
+          "before_sha256": "16c8d49c79e6cde2258d074e1dd97c183726d911a1122ac336d7078acbf14be0",
+          "after_sha256": "a0197e40b76208d250e47bc2a52e6cf9aaf3e03929e2789e9ccab136a255d482"
+        },
+        {
+          "label": "launcher ABI",
+          "count": 1,
+          "before_sha256": "b203c50d12087aab55dc35089e9eaaee9c50e0479c67c3a7a7e030293aeb993c",
+          "after_sha256": "0d3830fc58fb7a71e22c7341cd8a0e35ffe77606795e8f6253b47e611cfd6294"
+        },
+        {
+          "label": "launcher argument",
+          "count": 1,
+          "before_sha256": "d53e03542a7809f858d2d8099cffd72252d7f4b713c6ae14a83a994d64967428",
+          "after_sha256": "e7cfbad09bef723a6016d1db7a020df1be6a70366a92b4ff45ffac1b6aac656f"
+        },
+        {
+          "label": "symbol oscar_attention_history_pipeline_q4_kernel",
+          "count": 2,
+          "before_sha256": "09bffd1397b7022cd8bdcc8c5ccee3ee51aab882d1f68ae4fec27dadfb5cdc5a",
+          "after_sha256": "862e99e09a3d4560ff8faca2731532b04075376fff01007ed0fae6661e802e88"
+        },
+        {
+          "label": "symbol oscar_attention_history_pipeline_q1_kernel",
+          "count": 2,
+          "before_sha256": "d2e8056cb05904a12930fed9761571fd979af0897e41cb351b9bba2bdbb1303e",
+          "after_sha256": "1a128eb2aebcedbdddb0adcb7d81eee8022762e3e26a2d1794e2d780fb1793b2"
+        },
+        {
+          "label": "symbol attention_history_pipeline_q4_launch",
+          "count": 1,
+          "before_sha256": "a0fa5ce5338ba848ccc30dfab7cef8334a2f3dc2fc999bf7e6538bf36fce9d72",
+          "after_sha256": "5e5be0af283dcc0af4e2c999c7926a48d6ecdad822b2cf5d33a9641ede1ad87f"
+        },
+        {
+          "label": "symbol attention_history_pipeline_q1_launch",
+          "count": 1,
+          "before_sha256": "e8b7dac8a715652d0672a1c17113bc45bae36b5474acb31b3772aaf36e06730d",
+          "after_sha256": "f40bfa6214a1512ffccc32debb50d5af85d985a248f253aab8e73b5d647b45b3"
+        }
+      ],
+      "output": "csrc/experiments/decode_phase_profile/pipeline_profile.cpp",
+      "output_sha256": "852b1d0b766a82820161d3fc723d7c34d97ceca9129a905a1f436c07f03ea65d"
+    }
+  }
+}

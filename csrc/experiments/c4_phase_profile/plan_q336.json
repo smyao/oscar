@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "case": "c4_q336_r1_c769_s1",
+  "tokens": 336,
+  "requests": 1,
+  "hq": 6,
+  "hkv": 1,
+  "dim": 256,
+  "cores": 20,
+  "splits": 1,
+  "context": 769,
+  "sink": 64,
+  "recent": 256,
+  "task_slots": 1008,
+  "all_prepared_tasks_retained": true,
+  "source2": "healthy end=begin, identical to production eager-prefill current-source suppression",
+  "oracle_scope": "all 336 queries; merged source0/history and source1/exact-window only",
+  "measurement_scope": "bounded low-occupancy phase diagnosis; not K32 or Q2048 saturation",
+  "prior_q1344_failure": {
+    "timed_out": true,
+    "deadline_seconds": 900,
+    "cleanup_complete": true,
+    "child_returncode_during_term_cleanup": -11,
+    "completion_and_numeric_outputs": "absent",
+    "ticks_usable": false,
+    "kernel_math_error_established": false,
+    "repeat_allowed": false
+  },
+  "not_measured": [
+    "native current FIA",
+    "whole attention wrapper",
+    "K32 whole step",
+    "end-to-end"
+  ],
+  "mature_history_range": [
+    64,
+    769
+  ],
+  "mature_history_kv256_units": 3,
+  "work_ledger": "must be read from real prepare kernel output; no synthetic task tensor accepted",
+  "predeclared_arm_deadline_seconds": 900,
+  "deadline_extension_allowed": false,
+  "prepare_cpu_deadline_seconds": 120,
+  "max_absolute_instrumentation_perturbation": 0.05,
+  "paired_requirements": [
+    "same input bytes",
+    "same library",
+    "same simulator config",
+    "20 actual cores",
+    "frozen oracle all rows",
+    "partial/lse/status/cluster stats bitwise",
+    "same 900s deadline"
+  ],
+  "explicit_aiv_ub_bytes": 157632,
+  "workspace_bytes_per_core": 1839104,
+  "workspace_total_bytes": 36782080,
+  "profile_bytes_per_core": 3072,
+  "cluster_stats_bytes_per_core": 64,
+  "profile_schema": 3,
+  "finite_reduce_field": 31,
+  "finite_reduce_scope": "only original Softmax ReduceSum(scores row,256), V_S wait and Finite check; original preceding PIPE_V excluded",
+  "validation": {
+    "fixture_export": "not_run",
+    "prepare_cpu": "not_run",
+    "cann_compile": "not_run",
+    "normal_camodel": "not_run",
+    "profile_camodel": "not_run",
+    "marker_completeness": "not_run",
+    "npu": "not_run",
+    "graph": "not_run",
+    "whole_service": "not_run"
+  }
+}

@@ -11,18 +11,17 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def serve_argv(config: dict) -> list[str]:
-    native_budget = config.get("use_native_token_budget", False)
+    native_budget = config.get("use_native_token_budget", True)
     if type(native_budget) is not bool:
         raise ValueError("use_native_token_budget must be an explicit boolean")
-    if native_budget and ("max_num_batched_tokens" in config or
+    if not native_budget or ("max_num_batched_tokens" in config or
                           config.get("scheduler_cls") is not None or
-                          config.get("experimental_whole_prefill", False)):
+                          config.get("experimental_whole_prefill", False) or
+                          config.get("experimental_bounded_whole_prefill", False)):
         raise ValueError("native token budget requires an omitted budget and native scheduler")
     args = ["serve", config["model"]]
     for key in ("served_model_name", "host", "port", "data_parallel_size", "tensor_parallel_size",
-                "max_model_len", "max_num_batched_tokens", "max_num_seqs", "gpu_memory_utilization", "quantization"):
-        if key == "max_num_batched_tokens" and native_budget:
-            continue
+                "max_model_len", "max_num_seqs", "gpu_memory_utilization", "quantization"):
         args += ["--" + key.replace("_", "-"), str(config[key])]
     for key in ("compilation_config", "speculative_config", "additional_config", "hf_overrides"):
         # Keep the user-provided spelling for speculative_config.
@@ -30,6 +29,14 @@ def serve_argv(config: dict) -> list[str]:
         args += [flag, json.dumps(config[key], separators=(",", ":"))]
     args += ["--trust-remote-code", "--async-scheduling", "--allowed-local-media-path", "/",
              "--mm-processor-cache-gb", "0", "--mamba-cache-dtype", "bfloat16", "--mamba-ssm-cache-dtype", "bfloat16"]
+    # Archive #26/#37-49/#127: prefix sharing changes native GDN geometry.
+    # User 2026-10-12: every serving entrypoint enables APC by default, even
+    # callers that do not normalize through variant_config. An explicit false
+    # remains an intentional diagnostic choice, never an automatic fallback.
+    enabled = config.get("enable_prefix_caching", True)
+    if type(enabled) is not bool:
+        raise ValueError("enable_prefix_caching must be an explicit boolean")
+    args.append("--enable-prefix-caching" if enabled else "--no-enable-prefix-caching")
     if "scheduler_cls" in config:
         scheduler = config["scheduler_cls"]
         if (not isinstance(scheduler, str) or "." not in scheduler

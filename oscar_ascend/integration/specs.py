@@ -6,6 +6,8 @@ across spec merging. GDN shapes/dtypes/spec instances remain unchanged.
 Archive #27: merge follows native grouping's AssertionError protocol.
 Archive #127: preserve GDN's none/align mode when deriving FULL page capacity.
 Archive #128: native metadata copies use virtual128, not a new allocation.
+Archive #37-49/#127-129/#155: explicit request-window storage reuses two
+native-owned SoA segments, never an overlapping page snapshot or fake view.
 """
 
 from dataclasses import dataclass, replace
@@ -17,6 +19,7 @@ from vllm.v1.kv_cache_interface import FullAttentionSpec, MambaSpec
 from vllm.v1.kv_cache_spec_registry import KVCacheSpecRegistry
 
 from ..layout import HybridPageLayout, SlotLayout
+from ..dual_region_layout import DualRegionPageLayout
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -28,9 +31,12 @@ class OscarFullAttentionSpec(FullAttentionSpec):
     native_page_size_bytes: int | None = None
     native_mamba_cache_mode: str = "align"
     metadata_block_view: bool = False
+    request_window_storage: bool = False
 
     def __post_init__(self):
         super().__post_init__()
+        if type(self.request_window_storage) is not bool:
+            raise ValueError("request_window_storage must be boolean")
         if self.sliding_window is not None or self.attention_chunk_size is not None:
             raise ValueError("OscarFullAttentionSpec represents full causal attention")
         if int(self.kv_quant_mode) != 0:
@@ -45,11 +51,12 @@ class OscarFullAttentionSpec(FullAttentionSpec):
             raise ValueError("OSCAR page size must exactly match the native GDN allocation")
 
     @property
-    def layout(self) -> HybridPageLayout:
-        return HybridPageLayout(
+    def layout(self) -> HybridPageLayout | DualRegionPageLayout:
+        native = HybridPageLayout(
             SlotLayout(self.head_size, self.head_size_v, self.num_kv_heads),
             self.conv_bytes, self.ssm_bytes, self.native_mamba_block_size, self.kernel_block_size,
             self.native_page_size_bytes, self.native_mamba_cache_mode)
+        return DualRegionPageLayout(native) if self.request_window_storage else native
 
     @property
     def real_page_size_bytes(self) -> int:
@@ -95,13 +102,15 @@ def register_oscar_spec() -> None:
         uniform_type_base_spec=OscarFullAttentionSpec)
 
 
-def transform_native_specs(native_specs: dict) -> dict:
+def transform_native_specs(native_specs: dict, *, request_windows: bool = False) -> dict:
     """Initialization-only conversion; no online tensor data is touched.
 
     Exact type matching leaves MLA/sliding-window/hidden-state cache specs
     intact. This target integration requires a native hybrid GDN page; a
     pure dense model needs its own explicit physical-allocation contract.
     """
+    if type(request_windows) is not bool:
+        raise ValueError("request_windows must be boolean")
     mamba_specs = [spec for spec in native_specs.values() if isinstance(spec, MambaSpec)]
     if not mamba_specs:
         raise ValueError("OSCAR hybrid layout requires native GDN/Mamba state specs")
@@ -125,24 +134,32 @@ def transform_native_specs(native_specs: dict) -> dict:
         layout = HybridPageLayout(SlotLayout(spec.head_size, spec.head_size_v, spec.num_kv_heads),
                                   conv, ssm, mamba_block, native_page_size_bytes=native_page,
                                   native_mamba_cache_mode=mamba_mode)
+        if request_windows:
+            layout = DualRegionPageLayout(layout)
         converted[name] = OscarFullAttentionSpec(
             block_size=layout.block_size, num_kv_heads=spec.num_kv_heads,
             head_size=spec.head_size, head_size_v=spec.head_size_v, dtype=spec.dtype,
             kv_quant_mode=spec.kv_quant_mode, page_size_padded=layout.page_size_bytes,
             sliding_window=spec.sliding_window, attention_chunk_size=spec.attention_chunk_size,
             conv_bytes=conv, ssm_bytes=ssm, native_mamba_block_size=mamba_block,
-            native_page_size_bytes=native_page, native_mamba_cache_mode=mamba_mode)
+            native_page_size_bytes=native_page, native_mamba_cache_mode=mamba_mode,
+            request_window_storage=request_windows)
     if not any(isinstance(spec, OscarFullAttentionSpec) for spec in converted.values()):
         raise ValueError("no native FULL attention layer was converted to OSCAR")
     return converted
 
 
-def packed_view(raw, num_blocks: int, layout: HybridPageLayout):
+def packed_view(raw, num_blocks: int, layout: HybridPageLayout | DualRegionPageLayout):
     """Create a byte view without allocation, copying, or changing GDN views."""
     if raw.element_size() != 1 or raw.ndim != 1 or raw.stride() != (1,):
         raise ValueError("OSCAR raw shared tensor must be a contiguous rank-one byte tensor")
     if raw.numel() != num_blocks * layout.page_size_bytes:
         raise ValueError("OSCAR raw tensor size does not match the shared page budget")
+    if isinstance(layout, DualRegionPageLayout):
+        # Native attention binding transports this tensor opaquely. The two
+        # separated SoA segments cannot be represented by a single strided
+        # [page,token,head,byte] view. New kernels receive the actual owner.
+        return raw
     slot = layout.slot_layout
     return raw.as_strided(
         size=(num_blocks, layout.block_size, slot.num_kv_heads, slot.slot_bytes),

@@ -1,0 +1,24 @@
+{
+  "scope": "isolated helper only",
+  "dependency_sha256": {
+    "csrc/kernels/attention_striped_unpack_padded.h": "1551af143666d7465352426dbbe7024af8a86d81ee12d7ccfd9840c328e4ceee",
+    "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+    "csrc/kernels/attention_cv_window_range_cluster4.cpp": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65"
+  },
+  "helper_sha256": "ea73ea49efaad4cfb43f9cdb91c8f1493fa95579e7e1750d33cac6c51c002bfc",
+  "inverse_source_bytes_identical_after_edits": true,
+  "half_rows": 32,
+  "compare_rows": 64,
+  "metadata_zero_mask_bits": [
+    32,
+    63
+  ],
+  "scratch_bytes": 1024,
+  "proposed_C4_explicit_UB_bytes": 157760,
+  "softmax_temporary_view_must_stay_bytes": 16384,
+  "cann_compile": "not_run",
+  "CPU_debug": "not_run",
+  "CAModel": "not_run",
+  "NPU": "not_run",
+  "production_enabled": false
+}

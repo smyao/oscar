@@ -3,13 +3,16 @@
 Global N/max_query_len currently selects C16 and S1 for short decode requests
 that share a batch with long prefill. Partition only at request boundaries.
 This experiment keeps the original S choice, preserves the native model/GDN
-call, and changes only FULL attention's internal launches. Eligibility requires
-native prefix caching to be explicitly disabled: kv_cache_manager.py:212 then
-returns no shared computed blocks; request-owned allocation remains native.
+call, and changes only FULL attention's internal launches. Archive #26/#37-49:
+native FullAttentionManager shares only complete immutable prefix blocks;
+allocate_new_blocks gives each request its own writable suffix. Both launches
+may read shared prefix pages, but neither writes them. Native MTP's last-block
+drop is retained. No block-table, allocation, hash or GDN semantics are changed.
 """
 from dataclasses import dataclass,replace
 import torch
 from ..ops.cv_dispatch import ATTENTION_QUERY_ROWS
+from .metadata import slice_window_map
 
 
 @dataclass(frozen=True)
@@ -63,7 +66,8 @@ def _slice_metadata(metadata,request_begin,request_end,token_begin,token_end,ori
         num_reqs=request_end-request_begin,num_actual_tokens=token_end-token_begin,
         num_input_tokens=token_end-token_begin,max_query_len=int(lengths.max()),
         current_cumulative=ends,current_only_plan=None,first_draft_current_only=False,
-        mixed_decode_split=False,mixed_split_segment=segment,cv_shape_tokens=original)
+        mixed_decode_split=False,mixed_split_segment=segment,cv_shape_tokens=original,
+        window_map=slice_window_map(metadata, request_begin, request_end))
 
 
 def dispatch_mixed_decode(impl,layer,query,key,value,kv_cache,metadata,output,plan):

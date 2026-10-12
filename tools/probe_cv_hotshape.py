@@ -1,4 +1,4 @@
-# Archive #70-73/#85/#125/#126/#143 and startup D.4: this is a diagnostic
+# Archive #34/#36/#70-73/#85/#94/#125/#126/#143 and startup D.4: this is a diagnostic
 # comparison of one bounded CV operator, not a whole-service speed certificate.
 # D.4 four questions: (1) measure only attention_cv_out for a long mixed
 # prefill shape; (2) the old failed route spent ~6.5 s restoring full history,
@@ -220,13 +220,16 @@ def _load_ops(variant: str, manifest: dict, manifest_path: Path):
     return None, module
 
 
-def splits_for_shape(tokens: int, cores: int, *, query_rows: int, capacity: int) -> int:
-    if tokens <= 0 or cores <= 0 or query_rows < HEADS // KV_HEADS or capacity < tokens:
+def splits_for_shape(tokens: int, cores: int, *, query_rows: int, capacity: int | None = None) -> int:
+    if (tokens <= 0 or not 1 <= cores <= 32 or query_rows < HEADS // KV_HEADS or
+            (capacity is not None and capacity < tokens)):
         raise HotShapeError("invalid CV split geometry")
     query_tile = query_rows // (HEADS // KV_HEADS)
     groups = (tokens + query_tile - 1) // query_tile * KV_HEADS
     cube_parallelism = (cores + groups - 1) // groups
-    return max(1, min(32, cube_parallelism, capacity // tokens))
+    # Independent operator buffers below allocate exactly N*S. An omitted
+    # capacity means the actual fixture/core geometry, never a native default.
+    return max(1, min(32, cube_parallelism, capacity // tokens if capacity is not None else cores))
 
 
 def workspace_per_core_bytes(dim: int, current_rows: int, current_kv_rows: int) -> int:
@@ -583,14 +586,13 @@ def run_probe(variant: str, manifest_path: Path, target_path: Path,
     cores = _actual_cores(torch, target)
     from oscar_ascend.runtime import ATTENTION_QUERY_ROWS, ATTENTION_KV_ROWS
     query_rows = OLD_QUERY_ROWS if variant == "baseline" else ATTENTION_QUERY_ROWS
-    capacity = int(target["max_num_batched_tokens"])
     scale = DIM ** -0.5
     tolerance = acceptance["fused_attention"]
     cases = {}
     stream = torch.npu.current_stream()
     for name, make_fixture in (("main", build_fixture), ("decode32", build_decode_fixture)):
         fixture = make_fixture(torch, scale=scale)
-        splits = splits_for_shape(fixture["tokens"], cores, query_rows=query_rows, capacity=capacity)
+        splits = splits_for_shape(fixture["tokens"], cores, query_rows=query_rows)
         tensors, buffers = _device_buffers(torch, fixture, device, splits=splits, cores=cores,
                                            current_rows=ATTENTION_QUERY_ROWS,
                                            current_kv_rows=ATTENTION_KV_ROWS)
@@ -622,6 +624,8 @@ def run_probe(variant: str, manifest_path: Path, target_path: Path,
             "physical_pages": fixture["blocks"], "page_policy": fixture["page_policy"],
             "source2_suppressed": fixture["source2_suppressed"],
             "source_splits": splits, "cube_cores": cores,
+            "split_source": "fixture_shape_and_device_cores_not_service_budget",
+            "partial_token_capacity": fixture["tokens"] * splits,
             "workspace_bytes_per_core": workspace_per_core_bytes(DIM, ATTENTION_QUERY_ROWS, ATTENTION_KV_ROWS),
             "warmup": WARMUP, "repeats": REPEATS, "device_event_ms": durations,
             "median_ms": statistics.median(durations), "sample_oracle": oracle,

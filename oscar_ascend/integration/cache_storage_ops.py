@@ -1,0 +1,73 @@
+"""Explicit storage-format routing; archive #17-22/#37-49/#69/#127-129/#155.
+
+No reader/writer may silently interpret a different layout. New request
+windows are published after attention, then their device status is guarded
+before any subsequent layer/step can consume the updated storage.
+"""
+from .runtime_api import OscarReadinessError
+from ..ops.cv_dispatch import MEMBER_PIPELINE_CV_OP
+
+REQUEST_FORMAT = "striped_request_window_v1"
+REQUEST_MEMBER_PIPELINE_CV_OP = "attention_request_window_member_pipeline_cluster4_out"
+REQUEST_READERS = {
+    "attention_cv_bundle_decode_out": "attention_request_window_decode_out",
+    "attention_cv_bundle_q1_out": "attention_request_window_decode_q1_out",
+    "attention_cv_window_range_out": "attention_request_window_out",
+    "attention_cv_window_range_balanced_out": "attention_request_window_balanced_out",
+    "attention_cv_window_range_cluster4_out": "attention_request_window_cluster4_out",
+    "attention_cv_window_range_cluster16_out": "attention_request_window_cluster16_out",
+    MEMBER_PIPELINE_CV_OP: REQUEST_MEMBER_PIPELINE_CV_OP,
+}
+REQUEST_CLUSTER_READERS = frozenset({
+    "attention_request_window_cluster4_out", "attention_request_window_cluster16_out",
+    REQUEST_MEMBER_PIPELINE_CV_OP})
+
+
+def storage_reader(state, original):
+    if state.cache_format == REQUEST_FORMAT:
+        try:
+            return REQUEST_READERS[original]
+        except KeyError as error:
+            raise OscarReadinessError("request-window format requires its complete reader bundle") from error
+    if state.cache_format not in ("striped_v1", "canonical_v1"):
+        raise OscarReadinessError("unknown OSCAR storage format")
+    return original
+
+
+def request_map(state, metadata, first=0, count=None):
+    if state.cache_format != REQUEST_FORMAT:
+        return None
+    value = getattr(metadata, "window_map", None)
+    count = metadata.num_reqs - first if count is None else count
+    if (type(first) is not int or type(count) is not int or min(first, count) < 0 or
+            value is None or value.ndim != 2 or value.shape[1] != 2 or
+            first + count > metadata.num_reqs or value.shape[0] < metadata.num_reqs):
+        raise OscarReadinessError("request-window metadata lacks its stable slot/epoch mapping")
+    return value[first:first + count]
+
+
+def store_current(ops, state, key, value, slots, positions, starts, window_map, config):
+    n = key.shape[0]
+    prefix = (key, value, state.rotation_k_transpose, state.rotation_v_transpose,
+              slots, positions)
+    storage = (state.raw, state.window_key, state.window_value, state.window_tags,
+               state.workspace.store_status[:n])
+    geometry = (state.spec.block_size, state.num_blocks,
+                state.num_blocks * state.spec.conv_bytes, state.spec.ssm_bytes,
+                state.snapshots.sink_tokens, state.snapshots.ring_tokens,
+                float(config.get("k_clip_ratio", 0.0)), float(config.get("v_clip_ratio", 0.0)),
+                state.hadamard)
+    if state.cache_format == REQUEST_FORMAT:
+        if window_map is None or starts is None:
+            raise OscarReadinessError("request-window writer needs qstarts and stable slot/epoch mapping")
+        ops.rotate_clip_store_request_window_out(
+            *prefix, starts, window_map, *storage, state.window_status, *geometry,
+            state.snapshots.max_num_seqs, state.snapshots.position_bits)
+        empty = state.workspace.store_status[:0]
+        ops.status_guard(state.window_status, empty, empty, empty)
+    elif state.cache_format in ("striped_v1", "canonical_v1"):
+        name = ("rotate_clip_store_striped_out" if state.cache_format == "striped_v1"
+                else "rotate_clip_store_out")
+        getattr(ops, name)(*prefix, *storage, *geometry)
+    else:
+        raise OscarReadinessError("unknown OSCAR storage format")

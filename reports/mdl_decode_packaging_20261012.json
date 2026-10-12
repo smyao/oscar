@@ -1,0 +1,29 @@
+{
+  "status": "source_packaged_not_device_acceptance",
+  "source": "csrc/experiments/decode_mdl_load/attention_candidate.cpp",
+  "source_sha256": "f2047dde10aa464202c23c8a8d39a9806c712ac8eb090ff752d7346d1b723151",
+  "baseline": "csrc/kernels/attention_cv_decode_bundle.cpp",
+  "baseline_sha256": "d8171f0403cf176087e1c76c64e454e6fb1e74fd79252aab3b59e848cca19401",
+  "target": "csrc/kernels/attention_cv_mdl_decode.cpp",
+  "target_sha256": "8dc0c0814f3f6fa7e0525b97b048426768efbbc49e46ffad19239e9655f852a5",
+  "inverse_full_source_bytes": true,
+  "operator": "attention_cv_mdl_decode_out",
+  "q1_production": "unchanged",
+  "workspace_bytes_per_core_D256": 1146880,
+  "explicit_UB_bytes_per_AIV_D256": 158656,
+  "L1_bytes": 395264,
+  "CANN_fresh": "passed_full_40_capabilities",
+  "NPU": "pending",
+  "graph": "pending",
+  "service_performance": "pending",
+  "pushed": false,
+  "host_seams": {
+    "status": "passed",
+    "passed": 142,
+    "skipped": 8,
+    "subtests": 4,
+    "scope": "source ABI capability registration shared config target and first-draft q4 later-draft q1 routes; host only",
+    "command": ".venv/bin/python -m pytest -q tests/test_mdl_decode_dispatch.py tests/test_serving_variants.py tests/test_op_contracts.py tests/test_meta_dispatch.py tests/test_decode_bundle_routing.py tests/test_c4_member_pipeline_dispatch.py tests/test_request_window_serving_config.py tests/test_runtime.py tests/test_request_window_registration.py"
+  },
+  "CANN_report": "reports/mdl_decode_fullbuild_20261012/summary.json"
+}

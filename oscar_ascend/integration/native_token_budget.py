@@ -14,7 +14,9 @@ class NativeTokenBudgetRuntime(AscendRuntimeProvider):
         if (self.config.get("use_native_token_budget") is not True or
                 "max_num_batched_tokens" in self.config or
                 self.config.get("scheduler_cls") is not None or
-                self.config.get("experimental_whole_prefill", False)):
+                self.config.get("experimental_whole_prefill", False) or
+                self.config.get("experimental_bounded_whole_prefill", False) or
+                self.config.get("history_token_capacity") is not None):
             raise OscarReadinessError("native token budget requires an omitted budget and native scheduler")
         self._native_token_budget = None
         self._native_token_capacity = None

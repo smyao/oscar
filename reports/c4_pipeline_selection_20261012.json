@@ -1,0 +1,21 @@
+{
+  "scope": "host_candidate_selection_and_evidence_gate",
+  "status": "passed",
+  "candidate_default_enabled": false,
+  "explicit_research_available": true,
+  "baseline_and_native_force_disabled": true,
+  "prefix_caching_default": true,
+  "previous_measured_speedup": 1.148704,
+  "previous_denominator": "H32 without member pipeline; not same-shape shipped H16",
+  "required_complete_path_speedup": 1.15,
+  "gate_baseline": "attention_cv_window_range_cluster4_out",
+  "gate_candidate": "attention_cv_member_pipeline_cluster4_out",
+  "gate_measurement": "same-shape complete H16 versus H32 pipeline device events; 2 warmups and 5 alternating median samples",
+  "new_npu_evidence": "not_run",
+  "same_shape_H16_complete_combination_speedup": "not_established",
+  "command": ".venv/bin/python -m pytest -q tests/test_serving_variants.py tests/test_install_serve.py tests/test_observe_serve.py tests/test_probe_c4_member_pipeline.py tests/test_c4_member_pipeline_dispatch.py",
+  "host_tests_passed": 69,
+  "kernel_or_native_source_changed": false,
+  "global_frozen_acceptance_changed": false,
+  "git_commit_or_push": false
+}

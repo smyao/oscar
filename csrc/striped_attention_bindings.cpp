@@ -10,6 +10,8 @@
 #include <torch_npu/csrc/core/npu/NPUStream.h>
 #include <torch_npu/csrc/core/npu/NPUGuard.h>
 #include "include/oscar_attention_launch.h"
+#include "include/oscar_mdl_decode_launch.h"
+#include "include/oscar_member_pipeline_launch.h"
 namespace {
 void Check(const at::Tensor& x,const at::Tensor& owner,at::ScalarType type,
            const char* name,bool contiguous=true) {
@@ -102,7 +104,7 @@ void AttentionStriped(const at::Tensor& query,const at::Tensor& queryRot,
       windowKey.stride(0),windowTags.stride(0),sink,recent,speculative,splits,
       static_cast<float>(scale),static_cast<uint32_t>(cores));
 }
-template<auto Launch, int ClusterSize>
+template<auto Launch, int ClusterSize, int64_t WorkspaceBytes = 0>
 void AttentionStripedCluster(const at::Tensor& query,const at::Tensor& queryRot,
     const at::Tensor& currentKey,const at::Tensor& currentValue,
     const at::Tensor& rotation,const at::Tensor& raw,const at::Tensor& table,
@@ -158,7 +160,7 @@ void AttentionStripedCluster(const at::Tensor& query,const at::Tensor& queryRot,
   TORCH_CHECK(status.dim()==2 && status.size(0)==tasks.size(0) && status.size(1)==2,
       "status must be [T,2], one word for each AIV");
   TORCH_CHECK(workspace.dim()==1 && workspace.numel()>=cores*
-      (ClusterSize==16 ? oscar_ascend::attention_cluster16_workspace_per_core(d) : oscar_ascend::attention_cluster4_workspace_per_core(d)),"bounded tile workspace too small");
+      (WorkspaceBytes ? WorkspaceBytes : (ClusterSize==16 ? oscar_ascend::attention_cluster16_workspace_per_core(d) : oscar_ascend::attention_cluster4_workspace_per_core(d))),"bounded tile workspace too small");
   TORCH_CHECK(clusterStats.dim()==2 && clusterStats.size(0)==cores &&
       clusterStats.size(1)==8 &&
       reinterpret_cast<uintptr_t>(clusterStats.data_ptr())%64==0,
@@ -219,6 +221,12 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
       "Tensor(d!) workspace, Tensor(e!) cluster_stats, int block_tokens, int physical_blocks, int raw_ssm_offset, "
       "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
       "int splits, float scale, int cube_cores) -> ()");
+  m.def("attention_cv_mdl_decode_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+      "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
+      "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
+      "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
+      "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
+      "int splits, float scale, int cube_cores) -> ()");
   m.def("attention_cv_bundle_decode_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
       "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
       "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
@@ -249,6 +257,12 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
       "Tensor(d!) workspace, Tensor(e!) cluster_stats, int block_tokens, int physical_blocks, int raw_ssm_offset, "
       "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
       "int splits, float scale, int cube_cores) -> ()");
+  m.def("attention_cv_member_pipeline_cluster4_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+      "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
+      "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
+      "Tensor(d!) workspace, Tensor(e!) cluster_stats, int block_tokens, int physical_blocks, int raw_ssm_offset, "
+      "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
+      "int splits, float scale, int cube_cores) -> ()");
   m.def("attention_cv_window_range_cluster16_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
       "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
       "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
@@ -257,6 +271,7 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
       "int splits, float scale, int cube_cores) -> ()");
 }
 TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
+  m.impl("attention_cv_member_pipeline_cluster4_out", &AttentionStripedCluster<oscar_ascend::attention_cv_member_pipeline_cluster4_launch,4,oscar_ascend::attention_member_pipeline_workspace_per_core(256)>);
   m.impl("attention_cv_striped_out", &AttentionStriped<oscar_ascend::attention_cv_striped_launch>);
   m.impl("attention_cv_striped_q1_out", &AttentionStriped<oscar_ascend::attention_cv_striped_q1_simd_launch,true>);
   m.impl("attention_cv_striped_decode_out", &AttentionStriped<oscar_ascend::attention_cv_striped_decode_simd_launch,true>);
@@ -264,6 +279,7 @@ TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
   m.impl("attention_cv_striped_cluster4_out", &AttentionStripedCluster<oscar_ascend::attention_cv_striped_cluster4_launch,4>);
   m.impl("attention_cv_striped_cluster16_out", &AttentionStripedCluster<oscar_ascend::attention_cv_striped_cluster16_launch,16>);
   m.impl("attention_cv_bundle_decode_out", &AttentionStriped<oscar_ascend::attention_cv_decode_bundle_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256)>);
+  m.impl("attention_cv_mdl_decode_out", &AttentionStriped<oscar_ascend::attention_cv_mdl_decode_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256)>);
   m.impl("attention_cv_bundle_q1_out", &AttentionStriped<oscar_ascend::attention_cv_decode_bundle_q1_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256)>);
   m.impl("attention_cv_window_range_out", &AttentionStriped<oscar_ascend::attention_cv_window_range_launch>);
   m.impl("attention_cv_window_range_balanced_out", &AttentionStriped<oscar_ascend::attention_cv_window_range_balanced_launch>);

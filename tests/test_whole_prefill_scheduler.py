@@ -4,6 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from tools.native_contract_sources import native_sources
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -23,12 +24,13 @@ def load_policy(parent):
 def native_waiting_clip(config, request, budget, computed=0):
     # Execute the pinned native WAITING clipping lines, not a second copy of
     # our implementation. Break is represented by a surrounding one-item loop.
-    tree=ast.parse((ROOT/'references/vllm/vllm/v1/core/sched/scheduler.py').read_text())
+    source=native_sources().read_text('references/vllm/vllm/v1/core/sched/scheduler.py')
+    tree=ast.parse(source)
     nodes=[n for n in ast.walk(tree) if isinstance(n,ast.Assign) and any(
         isinstance(t,ast.Name) and t.id=='num_new_tokens' for t in n.targets)]
     start=next(n.lineno for n in nodes if isinstance(n.value,ast.BinOp) and
                ast.unparse(n.value)=='request.num_tokens - num_computed_tokens')
-    lines=(ROOT/'references/vllm/vllm/v1/core/sched/scheduler.py').read_text().splitlines()
+    lines=source.splitlines()
     end=next(i for i in range(start,len(lines)) if lines[i].strip()=='assert num_new_tokens > 0')
     import textwrap
     fragment=textwrap.dedent('\n'.join(lines[start-1:end+1]))

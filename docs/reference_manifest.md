@@ -14,7 +14,7 @@
 | OSCAR vLLM PR46774 历史快照 | `57286d5d2cb08c3dcd8c17bb59e132d6985e6796` | 本轮快照目录不存在，不能续用“本地11文件已核实”的旧声明 |
 | OSCAR paper 历史快照 | `41ebcdba3db5f0ce1339c3727caea80df575d437` | 本轮快照目录不存在，历史pin待恢复后重新核实 |
 
-历史 `references/PROVENANCE.md` / `PROVENANCE.json` 本轮亦不存在。遵守参考树只读要求，本轮没有checkout、补写PROVENANCE或把历史pin改成“已恢复”。新增入Git的 `tests/native_contract_manifest.json` 记录本轮两棵实际树的完整commit、Git tree、9个关键文件SHA256及10个原生方法AST指纹（含后续MTP长度/slot更新）。`tests/test_native_source_contracts.py` 检查真实源码与记录一致，变更需重新review；它仅属于本地开发回归，不加入直启/readiness，不扫描目标机器原生安装树。
+历史 `references/PROVENANCE.md` / `PROVENANCE.json` 本轮亦不存在。遵守参考树只读要求，本轮没有checkout、补写PROVENANCE或把历史pin改成“已恢复”。新增入Git的 `tests/native_contract_manifest.json` 记录本轮两棵实际树的完整commit、Git tree、27个文件SHA256（25个完整原生源码及2份许可证）及10个原生方法AST指纹（含后续MTP长度/slot更新）。`tests/test_native_source_contracts.py` 检查真实源码与记录一致，变更需重新review；它仅属于本地开发回归，不加入直启/readiness，不扫描目标机器原生安装树。
 
 2026-10-12实读本地 `.venv`：macOS arm64、Python3.14.6、torch2.14.1、pytest9.1.1，**不代表目标torch2.10.0**。项目 `pyproject.toml` 的test依赖要求torch>=2.10；review所用torch2.1不在这一测试依赖范围，不能通过放宽断言或改原生参考源码让它适配。macOS本体没有CANN/NPU；以下VM记录是历史独立证据，本轮没有重跑：Lima/CANN9.1、bisheng15、aarch64 Linux、官方CPU调试库，VM Torch2.12.0+cpu/torch_npu2.12.0/pybind11 3.1.0，见历史 reports/vm/validation.json 等。
 
@@ -40,3 +40,5 @@
 ## 仍缺少的输入/证据
 
 真机连接及完整执行日志（用户已回传配置失败、开发命令误用、加载失败及其后75项原语通过/首个CV数值失败片段）；同环境原生基线；实际模型config与权重指纹；质量评估数据和预先冻结的logits/任务指标/MTP容差；完整目标设备/图/profiler结果；H18复杂度冲突的需求结论。VM CANN交叉编译结果已经存在，不属于缺失项。
+
+2026-10-12用户回传CPU入口缺少reference文件后，新增Git跟踪的 `references/native_cpu_contracts.zip`，逐字节来自上表实际本地commit。`tools.native_contract_sources` 在没有原生checkout的干净克隆里读取验证后的快照并明确报告 bundled_snapshot；存在checkout时仍验证原有commit/tree/status。压缩包不是完整Git仓库、安装的runtime或历史19e43698组合pin；不联网、不解压、不修改已有参考树、不加入部署审计。27个文件及整个包的SHA256均入manifest，两个上游Apache-2.0 LICENSE保持原文。

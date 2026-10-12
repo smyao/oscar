@@ -17,6 +17,7 @@ import xml.etree.ElementTree as ET
 
 from .phase import atomic_json, run_phase
 from .serving_variants import runtime_feature_summary, variant_config
+from .native_contract_sources import NativeSources, NativeSourceError
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACTS = ["tests/test_native_source_contracts.py", "tests/test_runtime_native.py",
@@ -81,7 +82,7 @@ def run(output: Path, rounds: int):
     output.mkdir(parents=True, exist_ok=True)
     config = variant_config(json.loads((ROOT / "configs/target.json").read_text()), "candidate")
     sources = ["oscar_ascend/integration/metadata.py", "oscar_ascend/integration/impl.py",
-               "tools/local_simulation.py", "tools/serving_variants.py",
+               "tools/local_simulation.py", "tools/serving_variants.py", "tools/native_contract_sources.py",
                "tests/native_contract_manifest.json", *CONTRACTS, *REPLAYS]
     report = {"scope": "local_native_AST_and_CPU_only", "status": "running",
         "created_at": datetime.now(timezone.utc).isoformat(), "rounds_requested": rounds,
@@ -92,6 +93,18 @@ def run(output: Path, rounds: int):
                          "full_model_quality", "measured_HBM_savings", "latency_vs_native",
                          "archive_157_device_first_error"]}
     summary = output / "report.json"
+    atomic_json(summary, report)
+    try:
+        report["native_sources"] = NativeSources(ROOT).verify()
+    except (NativeSourceError, OSError, ValueError) as error:
+        report.update(status="failed", exit_code=2, failure_stage="native_source_inputs",
+                      error=str(error))
+        atomic_json(summary, report)
+        print(f"LOCAL_SIMULATION failed rc=2 {error} report={summary}", flush=True)
+        return 2
+    for source in report["native_sources"]:
+        print(f'LOCAL_NATIVE_SOURCE mode={source["mode"]} path={source["path"]} '
+              f'commit={source["recorded_commit"]} files={source["files_sha256_verified"]}', flush=True)
     atomic_json(summary, report)
     environment = dict(os.environ, OSCAR_TERMINAL_LOG_MODE="full")
     # Local simulation can never silently opt in to device tests inherited

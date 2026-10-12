@@ -26,12 +26,15 @@ import torch
 
 from oscar_ascend.runtime import AscendRuntimeProvider
 from oscar_ascend.integration.runtime_api import OscarReadinessError
+from tools.native_contract_sources import native_sources
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def definitions(path, name, names, namespace, monkeypatch, *, methods=None):
-    tree = ast.parse((ROOT / path).read_text())
+    source = (native_sources().read_text(path) if path.startswith("references/")
+              else (ROOT / path).read_text())
+    tree = ast.parse(source)
     chosen = [node for node in tree.body
               if isinstance(node, (ast.ClassDef, ast.FunctionDef)) and node.name in names]
     for cls, method in methods or ():

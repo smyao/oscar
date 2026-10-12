@@ -2,6 +2,18 @@
 
 本轮只使用当前工程和只读 `references/` 原生实现。相关档案为 #34、#37–49、#127、#128、#156、#157；已阅读 D.4 完整原始打点。没有修改 AscendC 数学、参考树、精度阈值、设备配置、GDN 状态算法或生产路由开关。没有新增真机错误档案。
 
+## 用户回传后的分发修复
+
+用户在Linux/Python3.12.13运行同一命令，contracts为31 failed / 122 errors / 114 passed / 16 skipped。回传栈明确为 `references/vllm-ascend/.../llm_base_proposer.py` 不存在；原先整棵 `references/` 被Git忽略，本机有文件，新clone没有。这是CPU测试依赖交付遗漏，不是这条日志证明NPU算子故障，也不是通过跳过测试能解决的问题。
+
+现将CPU契约用到的25个完整原生文件及两份原始Apache-2.0许可证打包为 `references/native_cpu_contracts.zip`（314749字节），作为Git跟踪文件交付。每个文件先与记录commit的原始Git blob逐字节核对，manifest记录全部27个文件SHA256、压缩包SHA256及原有10个方法AST指纹。没有摘录或改写原生方法，没有写入/修改原来的两棵参考树。
+
+`tools.native_contract_sources` 仅用于本地测试：存在reference checkout时仍验证实际commit/tree/status和内容；不存在时读取包内相同文件，明确记录 `bundled_snapshot`，不伪称存在Git checkout。压缩包不解压、不联网、不从机器安装的任意vLLM版本取代码。残缺checkout、错误版本、包损坏、逐文件哈希不符均报错。新入口在输入缺失时只打印明确错误并保存`failure_stage=native_source_inputs`/rc2，阻止后续重复报错；部署/直启没有增加前置审计。
+
+验证使用完整的临时Git克隆，确认 `references/vllm` 和 `references/vllm-ascend` 均不存在，再加入本轮交付改动。contracts 267 passed / 16 skipped，三轮回放各66 passed。本机及无参考树的完整Git克隆全量回归均1206 passed / 160 skipped / 6 subtests passed；执行环境仍为本机macOS/Python3.14，未冒充已在用户Linux/Python3.12重跑。新增负例验证缺包、容器损坏、文件被改写及残缺checkout。首次开发回归暴露公共AST加载器还读取本工程文件，已分流修复；没有将它们塞入冻结原生快照。纯文件导出缺少Git历史导致的已有冻结基线测试失败，用完整克隆复验，不放宽对应生产检查。结果见 `reports/local_simulation_portability_20261012/report.json`。
+
+此分发修复不改变模型数学或性能结论；下文原MTP复现和内存账仍保持原范围。用户回传的是CPU模拟入口，未写为新NPU档案。
+
 ## 确定复现与修复
 
 执行实际 Ascend `AscendSpecDecodeBaseProposer.attn_update_stack_num_spec_norm` 方法的 AST，保留它的长度更新、slot 计算和 padding 行为。最大长度4096/262144、物理页2304/2816、接受数0–3，共16个边界用例：修复前12失败、4通过。失败来自本地 checked prepare 的标量查表模型，**不是执行了 AscendC/NPU**。

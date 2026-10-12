@@ -6,11 +6,13 @@
 
 ## 本地连续模拟与当前修复（2026-10-12）
 
-已复现并修复接近 `max_model_len` 时，MTP 部分接受/拒绝后有效 slot 被原生长度哨兵值误判的缺陷。修复直接进入正式 attention 路径，固定 candidate 直启同时生效。完整本地回归 **1201 passed、160 skipped、6 subtests passed**；三轮缓存生命周期回放各 **66 passed**。本地入口实时输出、保存逐轮日志/退出码/JSON，失败即停止：
+已复现并修复接近 `max_model_len` 时，MTP 部分接受/拒绝后有效 slot 被原生长度哨兵值误判的缺陷。修复直接进入正式 attention 路径，固定 candidate 直启同时生效。完整本地回归 **1206 passed、160 skipped、6 subtests passed**；不含本机参考树的干净Git克隆中，三轮缓存生命周期回放各 **66 passed**。本地入口实时输出、保存逐轮日志/退出码/JSON，失败即停止：
 
 ```bash
 .venv/bin/python -m tools.local_simulation --rounds 3
 ```
+
+原生CPU测试依赖现随Git提供在 `references/native_cpu_contracts.zip`，无需另行下载vLLM或复制本机参考树。缺少本地参考checkout时，终端打印 `LOCAL_NATIVE_SOURCE mode=bundled_snapshot`，按固定commit对应的逐文件SHA256验证后读取原始源码；不是跳过相关测试。已存在但不完整/版本不符的参考checkout仍明确报错。此前交付遗漏这些被 `.gitignore` 忽略的依赖，导致新机器出现大量 `FileNotFoundError`，现已修复。
 
 该入口仅供开发机；没有加载真实模型或执行 NPU。档案 #157 约24K的设备首错仍未归因，不能以这次最大长度修复宣称已解决。FULL 页容量768→2304，但 candidate 工作区约1.17 GiB/卡，短请求可能没有净显存收益；完整模型质量、实测显存和原生速度目标继续待验。[复现、内存账及验证边界](docs/local_simulation_20261012.md)。不要求重跑 AISBench。
 

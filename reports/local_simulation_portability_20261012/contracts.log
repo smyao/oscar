@@ -1,0 +1,9 @@
+START phase=contracts cwd=/private/tmp/oscar-portable-git-checkout-20261012 command=["/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python", "-m", "pytest", "-q", "--tb=short", "--junitxml=/private/tmp/oscar-portable-replay-final-20261012/contracts-junit.xml", "tests/test_native_source_contracts.py", "tests/test_runtime_native.py", "tests/test_runtime.py", "tests/test_decode_bundle_routing.py", "tests/test_serving_variants.py"]
+........................................................................ [ 25%]
+........................................................................ [ 50%]
+........................................s...s...s...........s...s...s... [ 76%]
+s...s...s...s...s...........s...s...s...s...s......................      [100%]
+=========================== short test summary info ============================
+SKIPPED [16] tests/test_runtime.py:335: large FULL host route is needed once for C16
+267 passed, 16 skipped in 9.11s
+RESULT {"phase": "contracts", "command": ["/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python", "-m", "pytest", "-q", "--tb=short", "--junitxml=/private/tmp/oscar-portable-replay-final-20261012/contracts-junit.xml", "tests/test_native_source_contracts.py", "tests/test_runtime_native.py", "tests/test_runtime.py", "tests/test_decode_bundle_routing.py", "tests/test_serving_variants.py"], "returncode": 0, "elapsed_seconds": 9.794321, "timed_out": false, "interrupted": false, "log": "/private/tmp/oscar-portable-replay-final-20261012/contracts.log", "cleanup_complete": true}

@@ -47,6 +47,54 @@
           "methods": {
             "resolve_kv_cache_block_sizes": "585f34ab5d9588afea33e1fa9d00492587f828a580fc28c4467f0ff5b95dbee8"
           }
+        },
+        "LICENSE": {
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "methods": {}
+        },
+        "vllm/compilation/decorators.py": {
+          "sha256": "dd7167637a478aeaea3f2410a727ddefc702bda1d9bf632831c2a8b4811ebb1e",
+          "methods": {}
+        },
+        "vllm/model_executor/layers/mamba/mamba_utils.py": {
+          "sha256": "aa9b7dc46725a012fc61b83a7181baaddad7ab4b0eb8e4144350799697ad6a42",
+          "methods": {}
+        },
+        "vllm/model_executor/models/config.py": {
+          "sha256": "05c011a4a4f913ae2ed5676346222453e5b431e0997bab6fb234ae06d44a0ea8",
+          "methods": {}
+        },
+        "vllm/model_executor/models/qwen3_5.py": {
+          "sha256": "04f3de5372973770d71c5c05f2e8a5e221ec52b62cca7a1e302d9201b61b8adc",
+          "methods": {}
+        },
+        "vllm/v1/attention/backend.py": {
+          "sha256": "01e2068470081d2dcf3b676d454ed73d4728798fced35e76ebfa8f0fe4e5dad7",
+          "methods": {}
+        },
+        "vllm/v1/core/block_pool.py": {
+          "sha256": "84755b84c36ed6460ceefe2690c9484a9c31488c5da6daa6c918f497d8837dee",
+          "methods": {}
+        },
+        "vllm/v1/kv_cache_interface.py": {
+          "sha256": "8d6be98bbf75b3d55007b64ccf5afef047ca01790a432522f70a196412c103d9",
+          "methods": {}
+        },
+        "vllm/v1/kv_cache_spec_registry.py": {
+          "sha256": "16b3f6458538910f72cdac48554c20432c7ac0e5122e91c8a6219a1ec25f44fe",
+          "methods": {}
+        },
+        "vllm/v1/spec_decode/llm_base_proposer.py": {
+          "sha256": "34921aef0e9008de808c2fb86ea5f8dd52ea3cf0bff2714b31b2a95038c4227c",
+          "methods": {}
+        },
+        "vllm/v1/worker/gpu_model_runner.py": {
+          "sha256": "6250ca0670c4593aa2f7c4567c9c71d6cb3d8182624a985d4d4e33d5bf054666",
+          "methods": {}
+        },
+        "vllm/v1/worker/utils.py": {
+          "sha256": "36cae980896d5607ce238606ec6c053eff17b7597a0c9185549f94583c1b9de6",
+          "methods": {}
         }
       }
     },
@@ -80,8 +128,37 @@
           "methods": {
             "AscendSpecDecodeBaseProposer.attn_update_stack_num_spec_norm": "45bc322d3098cb383d5a4cbbbec77c32df602d3cb367e0b25f00d4e260748ddd"
           }
+        },
+        "LICENSE": {
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "methods": {}
+        },
+        "vllm_ascend/attention/utils.py": {
+          "sha256": "6a8c083d632cb745fb57b4bda522c44a2b967f44170be22aa0bc478145ba6dee",
+          "methods": {}
+        },
+        "vllm_ascend/core/single_type_kv_cache_manager.py": {
+          "sha256": "5292cf9c33c90f83abe7097de1a8b07e1381f3601f38c57bd65119388263e408",
+          "methods": {}
+        },
+        "vllm_ascend/ops/triton/triton_utils.py": {
+          "sha256": "f94d81f163f0076e8243990dd687f7ec8d42ce1ed30d67eea3155bf1c3a073a4",
+          "methods": {}
+        },
+        "vllm_ascend/patch/worker/patch_qwen3_5.py": {
+          "sha256": "21fc9a2064f9b490ffcf3d61bacc8ddb67806a4c7490895a33128e65438838d3",
+          "methods": {}
+        },
+        "vllm_ascend/worker/model_runner_v1.py": {
+          "sha256": "94d75dbeb5d23ab5b383cdc69114167392b967994bb21342cf748b733ba9a968",
+          "methods": {}
         }
       }
     }
-  ]
+  ],
+  "source_bundle": {
+    "path": "references/native_cpu_contracts.zip",
+    "sha256": "518227432fd08c9ff6445b1ded3d1efd5851a5574f4324348012c6b61b236d04",
+    "scope": "byte-identical native source subset for local CPU AST tests; includes original Apache-2.0 licenses; not an installed runtime or historical composed pin"
+  }
 }

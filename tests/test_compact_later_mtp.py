@@ -16,6 +16,7 @@ from oscar_ascend.integration.metadata import OscarMetadata
 from oscar_ascend.integration.runtime_api import OscarReadinessError
 from oscar_ascend.runtime import WorkspaceGeometry
 from test_runtime_native import definitions
+from tools.native_contract_sources import native_sources
 
 ROOT=Path(__file__).resolve().parents[1]
 FLAGS={name:False for name in ("enable_sp","enable_sp_by_pass","flashcomm2_enable","shared_expert_dp_enabled",
@@ -23,7 +24,7 @@ FLAGS={name:False for name in ("enable_sp","enable_sp_by_pass","flashcomm2_enabl
 
 
 def _function(path, name, namespace):
-    tree=ast.parse((ROOT/path).read_text())
+    tree=ast.parse(native_sources().read_text(path))
     function=next(node for node in ast.walk(tree) if isinstance(node,ast.FunctionDef) and node.name==name)
     function.decorator_list=[]
     module=ast.Module(body=[ast.ImportFrom(module="__future__",names=[ast.alias(name="annotations")],level=0),function],type_ignores=[])

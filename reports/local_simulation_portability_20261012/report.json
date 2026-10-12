@@ -1,0 +1,325 @@
+{
+  "scope": "local_native_AST_and_CPU_only",
+  "status": "passed_local_only",
+  "created_at": "2026-10-12T11:23:36.927855+00:00",
+  "rounds_requested": 3,
+  "python": "3.14.6 (v3.14.6:c63aec69bd5, Jun 10 2026, 08:07:54) [Clang 21.0.0 (clang-2100.1.1.101)]",
+  "effective_candidate": {
+    "variant": "candidate",
+    "optimizations": {
+      "history_cluster4": true,
+      "later_mtp_q1": true,
+      "fast_unpack": true,
+      "mixed_cv": true,
+      "striped_cache": true,
+      "current_only": true,
+      "first_mtp_current_fia": true,
+      "compact_later_mtp": true,
+      "mixed_decode_split": true,
+      "decode_bundle": true,
+      "whole_prefill": true
+    },
+    "selection_stage": "pre_runtime_requested",
+    "max_num_batched_tokens": 32768,
+    "enable_prefix_caching": true,
+    "scheduler_cls": "oscar_ascend.integration.whole_prefill_scheduler.WholePromptAsyncScheduler",
+    "devices": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "port": 7878
+  },
+  "source_sha256": {
+    "oscar_ascend/integration/metadata.py": "eed2e01de840705228109b7b7cee2269f7e3f2c9efa6a8fc5b8c42dce52ed990",
+    "oscar_ascend/integration/impl.py": "24277018443d969732ab0f59f043feebab3b3399a1dd5f45ffcaf53a2d15f2a6",
+    "tools/local_simulation.py": "0b6835f31e5e5a1d8f550f7eaa12f9b4f275eb1e3756eda4cfb09c30af0e85f0",
+    "tools/serving_variants.py": "8c3d9855ff86c5ca954ef002ea4d1011cf94683413414ec3ffb24e29455c51b5",
+    "tools/native_contract_sources.py": "560b222b7269da436e5a67e02b7bbe1d8908abbdf7ea8bddf17770f84ad99987",
+    "tests/native_contract_manifest.json": "cbd3e29f25835993dc56760010c3b4bf49b73acef0ec328848a997920842f8ed",
+    "tests/test_native_source_contracts.py": "cb43acf1a230fbb22d1b174e887a67cf1f40a62ebeda14134626b542e8b8667e",
+    "tests/test_runtime_native.py": "c5382d901ab23dce2665094a4219065b2a0b5ffcbae90fde8ec6e36384612626",
+    "tests/test_runtime.py": "4efb24150e89c0727d4730cd424c71f4f48b293ad7995488d566b457ec1acc18",
+    "tests/test_decode_bundle_routing.py": "e0e26d8e8657c2cde68259e5d3a6eb4a8ec2192d00f748a87893f74d336f2e56",
+    "tests/test_serving_variants.py": "967d4e4f5722895832d265fb9c1770ae50d584c70cc16bafc91e12149844f6b7",
+    "tests/test_mtp_context_limits.py": "00e2ccb98cdd6155425839366395adcbe00c0bc3af5e258fd99fc0c49820ffb4",
+    "tests/test_local_stateful_replay.py": "b0429294a730db6d7a6f4cf687954dbc9e893760782e63089209fd023fe17bae"
+  },
+  "memory": {
+    "scope": "analytic_live_block_demand_not_HBM_measurement",
+    "assumptions": {
+      "model": "Qwen3.5-27B",
+      "tp": 4,
+      "mtp_tokens": 3,
+      "prefix_mode": "align",
+      "shared_tensors": 17,
+      "gdn_groups": 3,
+      "no_prefix_sharing_in_scenarios": true,
+      "native_workspace_not_subtracted": true,
+      "cached_checkpoints_transients_graphs_weights_activations_not_counted": true
+    },
+    "full_token_bytes": {
+      "native_bf16": 1024,
+      "oscar_int2": 136
+    },
+    "tokens_per_full_page": {
+      "native": 768,
+      "oscar": 2304
+    },
+    "native_page_bytes": 817152,
+    "snapshot_bytes_inside_page_padding": 333336,
+    "page_padding_bytes": 393216,
+    "oscar_workspace_bytes_per_rank": 1259537664,
+    "scenarios": [
+      {
+        "requests": 1,
+        "context_tokens": 20000,
+        "native_live_pool_blocks": 40,
+        "oscar_live_pool_blocks": 22,
+        "native_live_pool_bytes": 555663360,
+        "oscar_live_pool_bytes": 305614848,
+        "pool_demand_saved_bytes": 250048512,
+        "pool_saved_minus_oscar_workspace_bytes": -1009489152
+      },
+      {
+        "requests": 1,
+        "context_tokens": 32768,
+        "native_live_pool_blocks": 56,
+        "oscar_live_pool_blocks": 28,
+        "native_live_pool_bytes": 777928704,
+        "oscar_live_pool_bytes": 388964352,
+        "pool_demand_saved_bytes": 388964352,
+        "pool_saved_minus_oscar_workspace_bytes": -870573312
+      },
+      {
+        "requests": 4,
+        "context_tokens": 20000,
+        "native_live_pool_blocks": 157,
+        "oscar_live_pool_blocks": 85,
+        "native_live_pool_bytes": 2180978688,
+        "oscar_live_pool_bytes": 1180784640,
+        "pool_demand_saved_bytes": 1000194048,
+        "pool_saved_minus_oscar_workspace_bytes": -259343616
+      },
+      {
+        "requests": 32,
+        "context_tokens": 20000,
+        "native_live_pool_blocks": 1249,
+        "oscar_live_pool_blocks": 673,
+        "native_live_pool_bytes": 17350588416,
+        "oscar_live_pool_bytes": 9349036032,
+        "pool_demand_saved_bytes": 8001552384,
+        "pool_saved_minus_oscar_workspace_bytes": 6742014720
+      },
+      {
+        "requests": 32,
+        "context_tokens": 50000,
+        "native_live_pool_blocks": 2497,
+        "oscar_live_pool_blocks": 1089,
+        "native_live_pool_bytes": 34687285248,
+        "oscar_live_pool_bytes": 15127934976,
+        "pool_demand_saved_bytes": 19559350272,
+        "pool_saved_minus_oscar_workspace_bytes": 18299812608
+      }
+    ],
+    "caveat": "Fixed-budget pools can allocate similar HBM; capacity gain is not allocation reduction. Workspace can outweigh pool demand savings for short/low-concurrency workloads."
+  },
+  "phases": [
+    {
+      "phase": "contracts",
+      "command": [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "--junitxml=/private/tmp/oscar-portable-replay-final-20261012/contracts-junit.xml",
+        "tests/test_native_source_contracts.py",
+        "tests/test_runtime_native.py",
+        "tests/test_runtime.py",
+        "tests/test_decode_bundle_routing.py",
+        "tests/test_serving_variants.py"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 9.794321,
+      "timed_out": false,
+      "interrupted": false,
+      "log": "/private/tmp/oscar-portable-replay-final-20261012/contracts.log",
+      "cleanup_complete": true,
+      "junit": {
+        "tests": 283,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 16
+      },
+      "saved_log": "reports/local_simulation_portability_20261012/contracts.log",
+      "saved_junit": "reports/local_simulation_portability_20261012/contracts-junit.xml.gz"
+    },
+    {
+      "phase": "replay-1",
+      "command": [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "--junitxml=/private/tmp/oscar-portable-replay-final-20261012/replay-1-junit.xml",
+        "tests/test_mtp_context_limits.py",
+        "tests/test_local_stateful_replay.py"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.511196,
+      "timed_out": false,
+      "interrupted": false,
+      "log": "/private/tmp/oscar-portable-replay-final-20261012/replay-1.log",
+      "cleanup_complete": true,
+      "junit": {
+        "tests": 66,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "saved_log": "reports/local_simulation_portability_20261012/replay-1.log",
+      "saved_junit": "reports/local_simulation_portability_20261012/replay-1-junit.xml.gz"
+    },
+    {
+      "phase": "replay-2",
+      "command": [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "--junitxml=/private/tmp/oscar-portable-replay-final-20261012/replay-2-junit.xml",
+        "tests/test_mtp_context_limits.py",
+        "tests/test_local_stateful_replay.py"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.201279,
+      "timed_out": false,
+      "interrupted": false,
+      "log": "/private/tmp/oscar-portable-replay-final-20261012/replay-2.log",
+      "cleanup_complete": true,
+      "junit": {
+        "tests": 66,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "saved_log": "reports/local_simulation_portability_20261012/replay-2.log",
+      "saved_junit": "reports/local_simulation_portability_20261012/replay-2-junit.xml.gz"
+    },
+    {
+      "phase": "replay-3",
+      "command": [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "--junitxml=/private/tmp/oscar-portable-replay-final-20261012/replay-3-junit.xml",
+        "tests/test_mtp_context_limits.py",
+        "tests/test_local_stateful_replay.py"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.185193,
+      "timed_out": false,
+      "interrupted": false,
+      "log": "/private/tmp/oscar-portable-replay-final-20261012/replay-3.log",
+      "cleanup_complete": true,
+      "junit": {
+        "tests": 66,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "saved_log": "reports/local_simulation_portability_20261012/replay-3.log",
+      "saved_junit": "reports/local_simulation_portability_20261012/replay-3-junit.xml.gz"
+    }
+  ],
+  "not_verified": [
+    "CANN_build",
+    "NPU_completion",
+    "ACL_graph_capture",
+    "ACL_graph_replay",
+    "full_model_quality",
+    "measured_HBM_savings",
+    "latency_vs_native",
+    "archive_157_device_first_error"
+  ],
+  "native_sources": [
+    {
+      "path": "references/vllm",
+      "mode": "bundled_snapshot",
+      "recorded_commit": "0fc695fc6d1d82e9a5ac6835ac8e4e1c83703665",
+      "recorded_git_tree": "e18d76eec620cdfc6559d7152f9911b7e91f84f8",
+      "git_checkout_verified": false,
+      "files_sha256_verified": 16
+    },
+    {
+      "path": "references/vllm-ascend",
+      "mode": "bundled_snapshot",
+      "recorded_commit": "5cb98caaadeff42b5b62b996e34bb2aaa29d20fd",
+      "recorded_git_tree": "a5a4538c53a9df2aaf4e13b6837a2d4fecb6b6e4",
+      "git_checkout_verified": false,
+      "files_sha256_verified": 11
+    }
+  ],
+  "exit_code": 0,
+  "validation_context": {
+    "clean_git_clone": "/private/tmp/oscar-portable-git-checkout-20261012",
+    "native_checkout_directories_absent": true,
+    "os": "macOS arm64",
+    "user_linux_python312_execution": "not executed by this host",
+    "original_native_trees": "read-only and unchanged",
+    "production_code_or_candidate_flags_changed": false
+  },
+  "source_bundle": {
+    "path": "references/native_cpu_contracts.zip",
+    "sha256": "518227432fd08c9ff6445b1ded3d1efd5851a5574f4324348012c6b61b236d04",
+    "scope": "byte-identical native source subset for local CPU AST tests; includes original Apache-2.0 licenses; not an installed runtime or historical composed pin"
+  },
+  "full_regressions": {
+    "local_final": {
+      "junit": {
+        "tests": 1372,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 160
+      },
+      "passed_tests": 1206,
+      "passed_subtests": 6,
+      "saved_junit": "reports/local_simulation_portability_20261012/local_final-junit.xml.gz",
+      "sha256": "8093a47580b3fd52416cbc29b7a38121a7efd93334888465de38009caeabb70e"
+    },
+    "clean_clone_final": {
+      "junit": {
+        "tests": 1372,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 160
+      },
+      "passed_tests": 1206,
+      "passed_subtests": 6,
+      "saved_junit": "reports/local_simulation_portability_20261012/clean_clone_final-junit.xml.gz",
+      "sha256": "eb7997c40ca17367c6a4d23a913d55a73cad9cacbf132c63d7866ba124879891"
+    }
+  },
+  "development_intermediate_failures": {
+    "AST_loader": {
+      "failed": 4,
+      "reason": "helper also loads project implementation files; fixed to classify reference paths explicitly"
+    },
+    "file_export_without_git": {
+      "failed": 13,
+      "reason": "4 loader failures plus 9 tests requiring frozen main-project Git history; verified unchanged with real Git clone"
+    }
+  },
+  "reported_failure": {
+    "origin": "user_supplied_Linux_CPU_simulation",
+    "report": "reports/local_simulation_portability_20261012/user_failure_report.json",
+    "trace": "reports/local_simulation_portability_20261012/user_failure_trace.txt.gz",
+    "root_cause": "native source dependencies ignored by Git and absent in the new checkout"
+  }
+}

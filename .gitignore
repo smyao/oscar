@@ -12,7 +12,8 @@ logs/
 !reports/vm/guest/logs/
 !reports/vm/guest/logs/**
 artifacts/
-references/
+references/*
+!references/native_cpu_contracts.zip
 reports/reference_fingerprints.json
 reports/vm-shortq/
 reports/vm-kv128/

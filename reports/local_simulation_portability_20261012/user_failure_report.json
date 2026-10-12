@@ -1,0 +1,168 @@
+{
+  "scope": "local_native_AST_and_CPU_only",
+  "status": "failed",
+  "created_at": "2026-10-12T11:03:18.873636+00:00",
+  "rounds_requested": 3,
+  "python": "3.12.13 (main, Aug  3 2026, 03:44:26) [GCC 11.4.0]",
+  "effective_candidate": {
+    "variant": "candidate",
+    "optimizations": {
+      "history_cluster4": true,
+      "later_mtp_q1": true,
+      "fast_unpack": true,
+      "mixed_cv": true,
+      "striped_cache": true,
+      "current_only": true,
+      "first_mtp_current_fia": true,
+      "compact_later_mtp": true,
+      "mixed_decode_split": true,
+      "decode_bundle": true,
+      "whole_prefill": true
+    },
+    "selection_stage": "pre_runtime_requested",
+    "max_num_batched_tokens": 32768,
+    "enable_prefix_caching": true,
+    "scheduler_cls": "oscar_ascend.integration.whole_prefill_scheduler.WholePromptAsyncScheduler",
+    "devices": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "port": 7878
+  },
+  "source_sha256": {
+    "oscar_ascend/integration/metadata.py": "eed2e01de840705228109b7b7cee2269f7e3f2c9efa6a8fc5b8c42dce52ed990",
+    "oscar_ascend/integration/impl.py": "24277018443d969732ab0f59f043feebab3b3399a1dd5f45ffcaf53a2d15f2a6",
+    "tools/local_simulation.py": "51809b07d042c03a885193291467d7cd99cf514c3aeab918f6bc8c9d267e4548",
+    "tools/serving_variants.py": "8c3d9855ff86c5ca954ef002ea4d1011cf94683413414ec3ffb24e29455c51b5",
+    "tests/native_contract_manifest.json": "c96817cc60d694edabd9b77adbf639106eda1627654de0f06b0ede31df517c88",
+    "tests/test_native_source_contracts.py": "6bf34dbc02d139a33aa1652d37210f0981c9fe06238d5e766087e1c6c130217a",
+    "tests/test_runtime_native.py": "1c1cb2064edc82ca57f2f4374e331adf03dbe67010fc0a9c0ec3267679ad1851",
+    "tests/test_runtime.py": "4efb24150e89c0727d4730cd424c71f4f48b293ad7995488d566b457ec1acc18",
+    "tests/test_decode_bundle_routing.py": "e0e26d8e8657c2cde68259e5d3a6eb4a8ec2192d00f748a87893f74d336f2e56",
+    "tests/test_serving_variants.py": "967d4e4f5722895832d265fb9c1770ae50d584c70cc16bafc91e12149844f6b7",
+    "tests/test_mtp_context_limits.py": "00e2ccb98cdd6155425839366395adcbe00c0bc3af5e258fd99fc0c49820ffb4",
+    "tests/test_local_stateful_replay.py": "b0429294a730db6d7a6f4cf687954dbc9e893760782e63089209fd023fe17bae"
+  },
+  "memory": {
+    "scope": "analytic_live_block_demand_not_HBM_measurement",
+    "assumptions": {
+      "model": "Qwen3.5-27B",
+      "tp": 4,
+      "mtp_tokens": 3,
+      "prefix_mode": "align",
+      "shared_tensors": 17,
+      "gdn_groups": 3,
+      "no_prefix_sharing_in_scenarios": true,
+      "native_workspace_not_subtracted": true,
+      "cached_checkpoints_transients_graphs_weights_activations_not_counted": true
+    },
+    "full_token_bytes": {
+      "native_bf16": 1024,
+      "oscar_int2": 136
+    },
+    "tokens_per_full_page": {
+      "native": 768,
+      "oscar": 2304
+    },
+    "native_page_bytes": 817152,
+    "snapshot_bytes_inside_page_padding": 333336,
+    "page_padding_bytes": 393216,
+    "oscar_workspace_bytes_per_rank": 1259537664,
+    "scenarios": [
+      {
+        "requests": 1,
+        "context_tokens": 20000,
+        "native_live_pool_blocks": 40,
+        "oscar_live_pool_blocks": 22,
+        "native_live_pool_bytes": 555663360,
+        "oscar_live_pool_bytes": 305614848,
+        "pool_demand_saved_bytes": 250048512,
+        "pool_saved_minus_oscar_workspace_bytes": -1009489152
+      },
+      {
+        "requests": 1,
+        "context_tokens": 32768,
+        "native_live_pool_blocks": 56,
+        "oscar_live_pool_blocks": 28,
+        "native_live_pool_bytes": 777928704,
+        "oscar_live_pool_bytes": 388964352,
+        "pool_demand_saved_bytes": 388964352,
+        "pool_saved_minus_oscar_workspace_bytes": -870573312
+      },
+      {
+        "requests": 4,
+        "context_tokens": 20000,
+        "native_live_pool_blocks": 157,
+        "oscar_live_pool_blocks": 85,
+        "native_live_pool_bytes": 2180978688,
+        "oscar_live_pool_bytes": 1180784640,
+        "pool_demand_saved_bytes": 1000194048,
+        "pool_saved_minus_oscar_workspace_bytes": -259343616
+      },
+      {
+        "requests": 32,
+        "context_tokens": 20000,
+        "native_live_pool_blocks": 1249,
+        "oscar_live_pool_blocks": 673,
+        "native_live_pool_bytes": 17350588416,
+        "oscar_live_pool_bytes": 9349036032,
+        "pool_demand_saved_bytes": 8001552384,
+        "pool_saved_minus_oscar_workspace_bytes": 6742014720
+      },
+      {
+        "requests": 32,
+        "context_tokens": 50000,
+        "native_live_pool_blocks": 2497,
+        "oscar_live_pool_blocks": 1089,
+        "native_live_pool_bytes": 34687285248,
+        "oscar_live_pool_bytes": 15127934976,
+        "pool_demand_saved_bytes": 19559350272,
+        "pool_saved_minus_oscar_workspace_bytes": 18299812608
+      }
+    ],
+    "caveat": "Fixed-budget pools can allocate similar HBM; capacity gain is not allocation reduction. Workspace can outweigh pool demand savings for short/low-concurrency workloads."
+  },
+  "phases": [
+    {
+      "phase": "contracts",
+      "command": [
+        "/usr/local/python3.12.13/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "--junitxml=/workspace/oscar/oscar-new/logs/local-simulation-20261012T110318.871515Z/contracts-junit.xml",
+        "tests/test_native_source_contracts.py",
+        "tests/test_runtime_native.py",
+        "tests/test_runtime.py",
+        "tests/test_decode_bundle_routing.py",
+        "tests/test_serving_variants.py"
+      ],
+      "returncode": 1,
+      "elapsed_seconds": 33.023357,
+      "timed_out": false,
+      "interrupted": false,
+      "log": "/workspace/oscar/oscar-new/logs/local-simulation-20261012T110318.871515Z/contracts.log",
+      "cleanup_complete": true,
+      "junit": {
+        "tests": 283,
+        "failures": 31,
+        "errors": 122,
+        "skipped": 16
+      }
+    }
+  ],
+  "not_verified": [
+    "CANN_build",
+    "NPU_completion",
+    "ACL_graph_capture",
+    "ACL_graph_replay",
+    "full_model_quality",
+    "measured_HBM_savings",
+    "latency_vs_native",
+    "archive_157_device_first_error"
+  ],
+  "exit_code": 1
+}

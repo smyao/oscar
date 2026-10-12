@@ -1,5 +1,22 @@
 # status_guard 首错诊断（档案 #157）
 
+## 手工复制的小日志
+
+对于 `logs/npu-check-时间/` 目录（含 `service-report.json`、
+`diagnostic-report.json`、`service/server.log` 和 `build/`），执行：
+
+```bash
+python3 tools/compact_failure_log.py logs/npu-check-时间
+cat logs/npu-check-时间/key-errors.txt
+```
+
+省略目录时读取 `logs/latest-npu-check.txt`。默认最多 6000 字符，优先保留
+阶段结果、首个设备状态、错误摘录和少量日志末尾；保留来源及行号。
+合成诊断的预期 Trap 会单独提示，缺失/不完整报告不视为成功。
+该脚本只依赖 Python 标准库，可以单独传到真机执行，不改变服务、配置、
+算子或原始日志，不读取请求响应文件。已存在输出文件不会覆盖，重新提炼时
+指定 `--output` 新文件名。摘录可能截断，不能替代完整日志或验收证据。
+
 本轮只增加诊断，不宣称已经修复 507035。2026-10-12 的四 rank plog 把故障符号定位到 `oscar_status_guard_kernel_8+0x258`，但尚无四组状态的实际非零值；也没有该地址的实机反汇编，不能仅凭通用 MTE 文案断言是哪一处访存。
 
 ## 启用与测试

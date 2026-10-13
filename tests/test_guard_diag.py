@@ -61,17 +61,20 @@ def test_capture_path_stays_fused_even_when_enabled(monkeypatch):
     assert len(ops.calls) == 1 and npu.syncs == 0
 
 
-def test_diag_path_launches_per_family_and_names_the_trapped_family(monkeypatch):
+def test_diag_path_reports_the_exact_status_code(monkeypatch):
     monkeypatch.setenv("OSCAR_GUARD_HOST_SYNC", "1")
     npu = _Npu()
     monkeypatch.setattr(torch, "npu", npu, raising=False)
     segments = _segments()
-    segments[2] = ("merge", torch.ones(3, 2, dtype=torch.int32))
-    ops = Ops(fail_on=segments[2][1])
-    with pytest.raises(OscarReadinessError, match="site=forward:layer family=merge"):
+    merged = torch.zeros(3, 2, dtype=torch.int32)
+    merged[1, 0] = 5
+    segments[2] = ("merge", merged)
+    ops = Ops()
+    with pytest.raises(OscarReadinessError, match=r"site=forward:layer family=merge count=1"):
         run_status_guard(ops, "forward:layer", segments)
-    # The trapped family's own synchronize never runs; the raise is the sync point.
-    assert len(ops.calls) == 3 and npu.syncs == 2
+    # Clean families ahead of the failure were still trap-guarded; the readback
+    # raised before the failing family's launch.
+    assert len(ops.calls) == 2 and npu.syncs == 2
 
 
 def test_diag_path_skips_empty_families(monkeypatch):

@@ -28631,3 +28631,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **本地验证**：Lima VM（oscar）CANN 9.1.0 CPU-debug 全量 primitive 套件通过（含 guard_error 用例：`OSCAR_GUARD segment=3 index=1024 status=3` 打印并 trap），主机 pytest 1297 passed/11 failed——11 项失败与 077548fa 基线逐项相同（HEAD 既有：whole_prefill 退役残留、observe_serve 计划类、no_fallback_static 既有违规），本改动零新增失败。NPU 未验。
 
 **证据与复验边界**：本条不伪写根因——具体哪族 status 非零需真机一次复现：同一固定命令加 `OSCAR_GUARD_HOST_SYNC=1` 环境变量，trap 时 worker 异常链将直接给出族名；若不再复现，则按 #154 流程继续。observe 入口的 MDL（20–30K q4）与 vector-init NPU 门仍欠账，与新默认 candidate 的推广裁决独立。登记第 8.2 节回归检查表。
+
+### #157 后续（2026-10-12 第二轮回传，已带归因开关）：trap 定位于 MTP draft 层 attention 族
+
+用户以 `OSCAR_GUARD_HOST_SYNC=1` 复跑（07a27358），服务多运行约 3 分钟（诊断逐族同步改变时序，不代表根因时机改变），Running 增至 6、decode 持续进行、命中率仍 0.0%，随后抛出 `OscarReadinessError: OSCAR status guard trapped at site=forward:mtp.layers.0.self_attn.attn family=attention`（调用链 `propose_draft_token_ids → _run_merged_draft → qwen3_5_mtp.forward → impl.forward`）。这是 later-draft 路径在 MTP draft 层的 attention status 非零：候选错误码 1（任务描述符）/2（非有限）/3（INT2 scale）/4（窗口 tag）/5（later-draft slot 解析失败）。
+
+**原生契约核查结论（references/vllm-ascend、references/vllm，只读）**：later-draft 逐步元数据在 `_propose` 起始一次性构建；slot 由 `clamped_positions//kernel_block_size(128)` 经 draft 组块表 gather 得到，逐步 `seq_lens` 克隆并 +1（`llm_base_proposer.py:1578-1669`），按构造满足"唯一匹配且 position<seq_lens"。唯一会打破该不变量的原生计算是 `valid_sampled_tokens_count==0` 且 `num_draft>0` 时 `token_indices_to_sample=qsl[r+1]-1-num_rejected` 逃逸出本请求范围（r=0 读到持久 positions 缓冲的陈旧尾元素，r>0 读到上一请求的末位置），后续 slot 解析失配——这正是 prepare 内核 metadataError=5 的来源（`attention_tasks.cpp:77-101`）；原生对该行按 discard/clamp 处理、不校验（`utils.py:70-71` 上游是 clamp 不是断言），插件的严格设备检查是唯一会 trap 的地方。该签名是主机元数据驱动、TP 秩对称，与四 rank 同址 trap 一致。可达性（本配置下 valid_count==0 是否真发生）仅凭源码不能证明。
+
+**诊断升级（本轮）**：诊断模式现在先按族读回 status 并直接报出非零项的索引与错误码（`count=`、`first=[(index,code),...]`），再决定抛出；全零步仍走原融合 trap 作为活网。读回辅助放在 `oscar_ascend/guard_readback.py`（诊断专用、默认关闭、不进在线热路径）。主机回归 1297 passed，失败集与 077548fa 基线逐项相同（11 项既有），零新增。
+
+**复验边界**：下一轮同一命令加 `OSCAR_GUARD_HOST_SYNC=1`，错误链将含确切错误码；码值 5 指向上述 anchor 逃逸/死行，3/4 指向 draft 层内容生命周期，1 指向描述符，2 指向数值。据此再定点修复，不猜修。MDL 与 vector-init 的 observe NPU/图门仍欠账，与本条独立。

@@ -83,3 +83,35 @@
 新增32组真实native方法用例覆盖before-wrap的M−1/M/M+1、reject0/1/2/3、mRoPE、async-spec、discard及已越模型边界的负slot；5组额外反例确保窄门和坏活行错误不被吞。与原生/firstdraft/mixed/guard回归共 **187 passed（2.92s）**。这是已经本地复现、已有具体修法的独立兼容bug，不是#158已修复、真实NPU图已通过或性能达到目标的声明。
 
 为避免远离边界时增加多个小TensorOp，后续加入有原生来源的快速条件：直接执行reference `_build_attention_metadata` 的max字段发布分支及异步GPU长度修正函数，确认其正数 `max_seq_len` 是第一draft设备length的上界；若 `max_seq_len+draft_index<=M`，仅保留固定destination copy，跳过设备谓词。0/未知或接近上限时继续完整5条件，不切换指针。包含此条件与全部真实wrap反例的两文件focused验证 **70 passed（1.82s）**。这仍是兼容修复的必要开销，不能把另一路算子18.8%收益视为已扣除此开销后的端到端收益。
+
+**覆盖限制补充**：原生 `prepare_inputs_padded` 在重建metadata时把 `max_seq_len` 置0，所以以上正上界快路不能被当作默认padded decode已经省去全部额外谓词的证据。0仍走完整条件保证正确；未为了削减此开销增加CPU镜像读取或改原生流程。
+
+## 新回传#159：桥接到达后的剩余问题
+
+10:59:19的新四rank冻结guard Trap已原样归档于#159；四rank `MTP_DISCARD_BRIDGE` 行证明真实hook已执行，原故障仍未闭合。该打印仅证明B1/draft1绑定入队；没有任何status内容或后续batch实际完成信息，不能推成错误码5已被排除，更不能把错误重新归咎GDN异步H2D。
+
+### discard的异步生命周期：有反例控制的局部证明
+
+原生 `synchronize_input_prep` 在新输入准备前同步上一轮event，其scope包住 `_prepare_inputs` 中mask H2D及metadata构造，并在退出时record。实际 `CpuGpuBuffer.copy_to_gpu` 虽然从可变pinned CPU缓冲nonblocking复制，但event先于下次CPU改写完成旧copy；后续bridge读mask、下轮更新mask在同一current stream保持FIFO。`tests/test_native_discard_async_order.py` 执行这两个原生方法与实际OSCAR bridge，用延迟FIFO与event边界模型覆盖B1→B2→B1，原协议通过；刻意去掉event会污染B2，负对照失败签名可见。**1 passed（0.45s）**。这是上述队列契约下的host复现，不是实际NPU stream、torch-npu任务队列或图完成证明；现有证据不支持仅因没有snapshot就新增生产复制修法。
+
+### 不能把所有zero-valid行当作discard
+
+`prepare_next_token_ids_padded` 的数学行为允许mask=false而count=0（例如sampler整行全-1），故二者不是无条件等价。当前原生合法链中，finished/cancel在 `_update_states` 已移出input_batch；EOS为词表内token，不被此函数转成-1；greedy每行至少target/replacement或bonus，num_draft=0也写bonus；random/entropy/block-verify也写replacement或bonus。随机恢复token内核在异常概率/全无效随机数条件下可能保留-1，这属于采样输入/数值失败，不能当作正常请求丢弃授权。
+
+新增测试直接执行原生greedy writer与padded next-token消费者，draft数0/1/2/3、全接受/首拒绝、EOS共2组通过（0.80s）；对同一结果分别施加显式discard和非法全-1行，两者都会产生count0，证明不能据count0静默清空后者。本地测试不声称Triton已执行或所有随机数值路径已通过。现有bridge继续只按原生显式discard屏蔽，非法活行仍应fail-closed。
+
+默认CP1首draft活跃slot也没有合法负孔的源码证据：block-table内核只在实际token尾外填padding，原生first-pass移位token/hidden并不改slot，FIA补query尾不改变最后实际qstart；因此不去屏蔽整个首draft discard行（该行的chunked prefill仍要执行并写cache）。当前尚未查实解释#159的生产缺陷，不能把以上排除项写成完整修复。
+
+### 下一条最短合成设备复现的设计（未执行，不要求重跑AISBench）
+
+现有诊断覆盖主模型eager、first-MTP及later-MTP的 `forward:<layer>`；current-only的prepare/padding/final、current_slots、mixed boundaries/padding和compact tail也经同一helper。capture/dummy不逐族同步。目标FULL图已经捕获的融合guard无法在后续Python按族拆开；此时`prior_work`是正确的证据边界，不是已知attention错误码。
+
+短复现应复用已装载的单candidate服务，保留APC、默认token budget、TP4、MTP、默认几何与候选算子。先只提交两条不同开头的合成token输入4097/6145、各64输出、同时释放，以最少输入覆盖多个2304物理页、非128/768对齐末尾、一个请求decode与另一个继续prefill、首次/后续MTP和batch1→2。它不保证复现原64K故障；若通过，只加一对65100/65229、各64输出来恢复原历史长度，不扩到32/120条，不比较AISBench速度。
+
+显式诊断开启`OSCAR_GUARD_HOST_SYNC=1`后沿用生产图模式先定位；只有报告`prior_work`时，另起同一合成负载、仅诊断服务临时`enforce_eager`以让主图内每个guard可逐族报code。该第二阶段改变了图调度，不能声称第一阶段原图问题已经消失；两阶段都只作错误定位，不把同步或eager耗时纳入任何速度gate。每阶段只需输出startup签名、实际候选选择、请求起止、第一异常site/family/code与退出码，完整日志保存。此设计尚未形成或执行新的真机结果。
+
+### 已实现的可选启动模式（仅诊断，不是修复）
+
+两个既有入口现在可显式附加 `--diagnose-trap`：`bash scripts/install_serve.sh --variant candidate --diagnose-trap` 或 `bash scripts/install_observe_serve.sh --variant candidate --diagnose-trap`。共享 `target_cli` 从严格boolean字段`diagnose_guard`同时生成`OSCAR_GUARD_HOST_SYNC=1`及该次服务的`--enforce-eager`，默认命令完全不启用。启动只打印一条`PERF_DIAGNOSTIC`，明确`requires_user_load=true performance_valid=false bug_fixed=not_established`；直启仍没有任何测试/probe，两入口均不自动生成推理负载。APC、原生token budget、原有候选开关和卡号/端口不变。
+
+诊断状态标为`guard_diagnostic/invalid_diagnostic`；性能probe同时拒绝继承的guard同步环境变量与保存的`diagnose_guard=true`配置，防止同步/eager耗时混入对比。旧`run_service`的DEBUG_SYNC/TIMING/PROFILER诊断仍允许进入服务准备，只有真正synthetic测量拒绝这些旧计时模式。12项关键host测试覆盖两入口的实际argv/env/effective-config传播、默认不变、严格类型、旧debug兼容与性能门拒绝；没有实际启动NPU服务，也不把此模式实现或启动成功称为#159已修复。

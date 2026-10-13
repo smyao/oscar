@@ -397,7 +397,8 @@ def test_candidate_child_rc2_reaches_outer_status_without_serving(monkeypatch, t
     assert state["candidate_resource_release"]["status"] == "passed"
 
 
-def test_managed_service_only_observes_external_load(monkeypatch, tmp_path):
+@pytest.mark.parametrize("diagnose_trap", [False, True])
+def test_managed_service_only_observes_external_load(monkeypatch, tmp_path, diagnose_trap):
     from benchmarks import passive
     config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
     config["experimental_history_reuse"] = False
@@ -414,6 +415,12 @@ def test_managed_service_only_observes_external_load(monkeypatch, tmp_path):
 
     @contextmanager
     def managed(_config, _path, *, log_dir, lifecycle, native):
+        from tools.target_cli import serve_argv
+        import os
+        assert ("--enforce-eager" in serve_argv(_config)) is diagnose_trap
+        if diagnose_trap:
+            assert os.environ["OSCAR_GUARD_HOST_SYNC"] == "1"
+            assert json.loads(_path.read_text())["diagnose_guard"] is True
         calls.append(("managed", native))
         Server.trace_dir.mkdir()
         lifecycle["trace_dir"] = str(Server.trace_dir)
@@ -439,11 +446,13 @@ def test_managed_service_only_observes_external_load(monkeypatch, tmp_path):
     monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     monkeypatch.setattr(passive, "observe", passive_only)
-    assert observe_serve.run(config_path, logs, "baseline") == 0
+    assert observe_serve.run(config_path, logs, "baseline", diagnose_trap=diagnose_trap) == 0
     assert ("managed", False) in calls and ("passive", "oscar") in calls
     assert json.loads((logs / "status.json").read_text())["status"] == "stopped"
     assert json.loads((logs / "summary.json").read_text())["status"] == "observed"
     assert json.loads((logs / "status.json").read_text())["step_evidence"]["samples"][0]["step_id"] == "late"
+    if diagnose_trap:
+        assert json.loads((logs / "status.json").read_text())["performance_acceptance"] == "invalid_diagnostic"
 
 
 def test_cleanup_resource_error_preserves_server_rc_and_late_summary(monkeypatch, tmp_path):

@@ -130,6 +130,42 @@ def _native(monkeypatch):
     return native, states, modes
 
 
+@pytest.mark.parametrize("reject", [False, True])
+def test_native_greedy_sampler_eos_and_zero_draft_have_valid_tokens(monkeypatch, reject):
+    """EOS is a real token; a non-discard row is not legally all placeholders.
+
+    Execute the pinned native greedy writer and padded next-token consumer.
+    This is host evidence for these methods, not a Triton execution claim.
+    """
+    sampler = definitions(
+        "references/vllm-ascend/vllm_ascend/sample/rejection_sampler.py", "discard_native_greedy",
+        {"rejection_greedy_sample_pytorch"}, {"torch": torch}, monkeypatch)
+    native, _, _ = _native(monkeypatch)
+    draft_counts = [0, 1, 2, 3]
+    drafts = torch.tensor([11, 12, 13, 14, 15, 16], dtype=torch.int32)
+    # Token 7 stands for a legal EOS token. The sampler has no special -1
+    # conversion for it: stopping is handled after sampling by the scheduler.
+    targets = torch.full_like(drafts, 7) if reject else drafts.clone()
+    sampled = torch.full((4, 4), -1, dtype=torch.int32)
+    sampler.rejection_greedy_sample_pytorch(sampled, torch.tensor([0, 1, 3, 6]),
+        drafts, targets, torch.full((4, 1), 7, dtype=torch.int32), draft_counts, 3)
+    batch = SimpleNamespace(num_reqs=4, req_ids=list("abcd"),
+                            num_tokens_no_spec=torch.tensor([100] * 4), vocab_size=1000)
+    requests = {name: SimpleNamespace(get_token_id=lambda pos: 500) for name in batch.req_ids}
+    proposer = SimpleNamespace(backup_next_token_ids=_Buffer(torch.zeros(4, dtype=torch.int64)))
+    next_ids, counts = native.prepare_next_token_ids_padded(proposer, sampled, requests,
+        batch, torch.empty(0, dtype=torch.int64), 0)
+    assert counts.tolist() == ([1] * 4 if reject else [1, 2, 3, 4])
+    assert next_ids.tolist() == [7] * 4
+
+    # Explicit discard produces zero; arbitrary sampler corruption ALSO does.
+    # Thus count==0 is not sufficient authority to silently suppress a live row.
+    sampled[1].fill_(-1)
+    _, counts = native.prepare_next_token_ids_padded(proposer, sampled, requests,
+        batch, torch.tensor([2], dtype=torch.int64), 1)
+    assert counts[1] == 0 and counts[2] == 0 and counts[0] == 1 and counts[3] >= 1
+
+
 @pytest.mark.parametrize("async_spec", [False, True])
 @pytest.mark.parametrize("mrope", [False, True])
 @pytest.mark.parametrize("discard_index", [0, 1, 2])

@@ -22,7 +22,7 @@ from .deploy import _temporary_process_context
 from .npu_resources import DEFAULT_RELEASE_TOLERANCE, read_npu_resources, wait_for_release
 from .phase import atomic_json, live_log, run_phase, terminal_line
 from .service_probe import managed_server
-from .target_cli import target_env
+from .target_cli import target_env, serve_argv, diagnose_guard_enabled
 from .serving_variants import variant_config, variant_features, runtime_feature_summary
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -986,7 +986,7 @@ def _mixed_diagnostic(config_path: Path, config: dict, env: dict, log_dir: Path,
 
 def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = False,
         diagnose_q4: bool = False, diagnose_mixed: bool = False,
-        enable_prefix_caching: bool | None = None) -> int:
+        enable_prefix_caching: bool | None = None, diagnose_trap: bool = False) -> int:
     config_path, log_dir = config_path.resolve(), log_dir.resolve()
     status = {"status": "preparing", "variant": variant,
               "measurement": "operator_microprobe" if probe_only else "passive_external_only",
@@ -1004,7 +1004,13 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
         selected = json.loads(original)
         if enable_prefix_caching is not None:
             selected["enable_prefix_caching"] = enable_prefix_caching
+        if diagnose_trap:
+            selected["diagnose_guard"] = True
         config = variant_config(selected, variant)
+        if diagnose_guard_enabled(config):
+            if variant == "native" or probe_only:
+                raise ValueError("--diagnose-trap requires an OSCAR service, not native or probe-only")
+            status.update(measurement="guard_diagnostic", performance_acceptance="invalid_diagnostic")
         if type(config.get("experimental_current_only", False)) is not bool:
             raise ValueError("experimental_current_only must be an explicit boolean")
         status["optimizations"] = variant_features(config)
@@ -1196,6 +1202,8 @@ def main(argv=None) -> int:
                         help="also rerun the established native q4/profile diagnostic; normally reuse prior evidence")
     parser.add_argument("--diagnose-mixed", action="store_true",
                         help="mixed shapes are included in the candidate optimization gate; retains the legacy diagnostic for older presets")
+    parser.add_argument("--diagnose-trap", action="store_true",
+                        help="attribute guard site/family/code with host sync and eager service; timings are invalid for performance")
     args = parser.parse_args(argv)
     log_dir = (args.log_dir or ROOT / "logs" / ("observe-" + datetime.now(timezone.utc).strftime(
         "%Y%m%dT%H%M%S.%fZ"))).resolve()
@@ -1203,7 +1211,12 @@ def main(argv=None) -> int:
         selected = json.loads(args.config.read_text())
         if args.enable_prefix_caching is not None:
             selected["enable_prefix_caching"] = args.enable_prefix_caching
+        if args.diagnose_trap:
+            selected["diagnose_guard"] = True
         config = variant_config(selected, args.variant)
+        diagnostic = diagnose_guard_enabled(config)
+        if diagnostic and (args.variant == "native" or args.probe_only):
+            parser.error("--diagnose-trap requires an OSCAR service, not native or probe-only")
         phases = ["install", "signed_operator_gate" if args.variant != "native" else "native_start"]
         if args.variant == "candidate":
             phases += ["candidate_operator_graph_latency_gates", "fast_unpack_gate"]
@@ -1231,14 +1244,16 @@ def main(argv=None) -> int:
         print(json.dumps({"variant": args.variant, "devices": config["devices"],
             "optimizations": variant_features(config),
             "runtime_selection": runtime_feature_summary(config,args.variant),
+            "diagnose_trap": diagnostic, "vllm_argv": serve_argv(config),
             "inference_requests_generated": 0,
-            "measurement": "operator_microprobe" if args.probe_only else "passive_external_only",
+            "measurement": "guard_diagnostic" if diagnostic else (
+                "operator_microprobe" if args.probe_only else "passive_external_only"),
             "probe_only": args.probe_only, "model_will_start": not args.probe_only,
             "phases": phases}, indent=2))
         return 0
     return run(args.config, log_dir, args.variant, probe_only=args.probe_only,
                diagnose_q4=args.diagnose_q4, diagnose_mixed=args.diagnose_mixed,
-               enable_prefix_caching=args.enable_prefix_caching)
+               enable_prefix_caching=args.enable_prefix_caching, diagnose_trap=args.diagnose_trap)
 
 
 if __name__ == "__main__":

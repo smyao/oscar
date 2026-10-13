@@ -37,7 +37,7 @@ from .npu_resources import DEFAULT_RELEASE_TOLERANCE, read_npu_resources, wait_f
 from .phase import atomic_json, cleanup_group, live_log, terminal_line
 from .plog import OwnedProcessGroup, attach_plog
 from .prepare_rotations import model_geometry
-from .target_cli import ROOT, serve_argv, target_env
+from .target_cli import ROOT, serve_argv, target_env, diagnose_guard_enabled
 
 PROMPT_SENTENCE = (
     "A small research team records river levels each morning. "
@@ -557,6 +557,7 @@ def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline):
     from benchmarks.mixed import run_batch
     from benchmarks.measure import metrics_delta, metrics_snapshot
 
+    _require_uninstrumented_synthetic(config)
     lengths = SYNTHETIC_MIXED_LENGTHS
     if max(lengths) + SYNTHETIC_MIXED_OUTPUT_TOKENS > config["max_model_len"]:
         raise ServiceProbeError("synthetic mixed prompts exceed target max_model_len")
@@ -627,8 +628,18 @@ def run_synthetic_mixed(server, config, tokenizer, *, log_dir, deadline):
     return report
 
 
-def _require_uninstrumented_synthetic() -> None:
+def _require_no_guard_diagnostic(config=None) -> None:
+    """The new eager guard diagnostic cannot produce service performance."""
+    if config is not None and diagnose_guard_enabled(config):
+        raise ServiceProbeError("service performance rejects diagnose_guard; diagnostic runs separately")
+    value = os.environ.get("OSCAR_GUARD_HOST_SYNC", "0").lower()
+    if value not in {"0", "false"}:
+        raise ServiceProbeError("service performance requires OSCAR_GUARD_HOST_SYNC=0; diagnostic runs separately")
+
+
+def _require_uninstrumented_synthetic(config=None) -> None:
     """Reject inherited timing modes before they contaminate paired K4 wall."""
+    _require_no_guard_diagnostic(config)
     for name in ("OSCAR_DEBUG_SYNC", "OSCAR_TIMING", "OSCAR_PROFILER"):
         value = os.environ.get(name, "0").lower()
         if value not in {"0", "false", "1", "true"}:
@@ -767,6 +778,7 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
 
     try:
         config = json.loads(config_path.read_text())
+        _require_no_guard_diagnostic(config)
         target_env(config)  # Fail before any NPU touch when selection is absent.
         report["devices"] = config["devices"]
         report["target_config_sha256"] = hashlib.sha256(config_path.read_bytes()).hexdigest()
@@ -1000,6 +1012,7 @@ def run_synthetic_only(config_path, *, output, log_dir, command=None, tokenizer_
         if native_report_path is not None:
             native_report_path = Path(native_report_path).resolve()
         config = json.loads(config_path.read_text())
+        _require_uninstrumented_synthetic(config)
         target_env(config)  # Fail before any NPU touch when selection is absent.
         report["devices"] = config["devices"]
         duration = _positive_time(config, "synthetic_timeout_seconds", 1800)

@@ -1,0 +1,34 @@
+{
+  "status": "host_identity_model_passed",
+  "scope": "native pinned allocator, hash/refcount and Python translation of actual writer/reader index rules; not AscendC execution or NPU acceptance",
+  "physical_block_tokens": 2304,
+  "sink": 64,
+  "recent": 256,
+  "speculative": 3,
+  "ring": 259,
+  "cold_request_pairs": 24,
+  "q4_mtp_cycles": 960,
+  "exact_rows_checked": 2748892,
+  "writer_rows": 344152,
+  "physical_id_reassignments": 261,
+  "native_prefix_hit_tokens": 6912,
+  "shared_snapshot_immutable": true,
+  "root_cause": "not_identified",
+  "limitations": [
+    "Does not exclude device synchronization, DMA, numerical or metadata construction faults.",
+    "Not all scheduler sequences or tensor data were exhaustively tested.",
+    "No changes to GDN, native code, or physical-page protocol are justified by this result."
+  ],
+  "native_cold_state_findings": {
+    "ssm": "gdn.py gather then clear_ssm_states uses explicit zero stores for context=0; no multiply-by-zero",
+    "conv": "hasInit=false branch initializes zero rather than reading old conv; optional prefetch skips no-init rows",
+    "zeroer": "worker initializes only eagle3 with >1 speculative tokens; current qwen method mtp does not enter"
+  },
+  "source_sha256": {
+    "csrc/kernels/rotate_clip_store_striped.cpp": "72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430",
+    "csrc/kernels/attention_cv_decode_bundle.cpp": "d8171f0403cf176087e1c76c64e454e6fb1e74fd79252aab3b59e848cca19401",
+    "references/vllm-ascend/vllm_ascend/ops/gdn.py": "74341a517aab1eadafb4fdbfc90697637eb12f9910f488f851712ba9c8541338",
+    "references/vllm-ascend/vllm_ascend/ops/triton/fla/utils.py": "4dfc30c479f8a740a965174a4f56706c4c3a95362dd77d2e708cdbaf1c9873d4",
+    "references/vllm-ascend/csrc/moe/causal_conv1d/op_kernel/causal_conv1d_fn_tasks.h": "8210f616f9fc03b27c4ddc28ecffb8588115dd03e62a18be76aeb304f9f54e98"
+  }
+}

@@ -10,6 +10,14 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def diagnose_guard_enabled(config: dict) -> bool:
+    """Explicit #157-159 fault attribution; never a performance setting."""
+    enabled = config.get("diagnose_guard", False)
+    if type(enabled) is not bool:
+        raise ValueError("diagnose_guard must be an explicit boolean")
+    return enabled
+
+
 def serve_argv(config: dict) -> list[str]:
     native_budget = config.get("use_native_token_budget", True)
     if type(native_budget) is not bool:
@@ -45,11 +53,17 @@ def serve_argv(config: dict) -> list[str]:
         args += ["--scheduler-cls", scheduler]
     if config.get("profiler_config") is not None:
         args += ["--profiler-config",json.dumps(config["profiler_config"],separators=(",",":"))]
+    if diagnose_guard_enabled(config):
+        # Main-model graph guards are otherwise fused at capture and can
+        # only surface as prior_work in a later eager diagnostic guard.
+        args.append("--enforce-eager")
     return args
 
 
 def target_env(config: dict, base: dict[str, str] | None = None) -> dict[str, str]:
     env = dict(os.environ if base is None else base)
+    if diagnose_guard_enabled(config):
+        env["OSCAR_GUARD_HOST_SYNC"] = "1"
     devices = config.get("devices")
     if not isinstance(devices, list) or len(devices) != 4 or len(set(devices)) != 4 or any(type(x) is not int or x < 0 for x in devices):
         raise ValueError("configs/target.json devices must contain the four physical NPU IDs selected for this task")
@@ -79,6 +93,10 @@ def main() -> int:
         return 0
     os.environ.update(target_env(config))
     os.environ["OSCAR_TARGET_CONFIG"]=str(args.config.resolve())
+    if diagnose_guard_enabled(config):
+        print("[oscar] PERF_DIAGNOSTIC mode=trap target_eager=true "
+              "guard_host_sync=1 requires_user_load=true performance_valid=false "
+              "bug_fixed=not_established", flush=True)
     if args.native:
         os.environ["OSCAR_ENABLED"]="0"
         if os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL"):

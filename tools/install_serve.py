@@ -11,7 +11,7 @@ from pathlib import Path
 import sys
 from .deploy import plan as deploy_plan
 from .phase import atomic_json, run_phase, terminal_line
-from .target_cli import target_env, serve_argv
+from .target_cli import target_env, serve_argv, diagnose_guard_enabled
 from .serving_variants import variant_config, variant_features, runtime_feature_summary
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,6 +34,8 @@ def main(argv=None) -> int:
                         help="compatibility alias; every launch already uses the native token budget")
     parser.add_argument("--enable-prefix-caching", action=argparse.BooleanOptionalAction, default=None,
                         help="pass the native prefix-cache switch; enabled by default, explicit false is diagnostic")
+    parser.add_argument("--diagnose-trap", action="store_true",
+                        help="attribute guard site/family/code with host sync and eager service; timings are invalid for performance")
     args = parser.parse_args(argv)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     log_dir = (args.log_dir or ROOT / "logs" / stamp).resolve()
@@ -48,6 +50,8 @@ def main(argv=None) -> int:
             config["enable_prefix_caching"] = args.enable_prefix_caching
         if args.native_token_budget:
             config["use_native_token_budget"] = True
+        if args.diagnose_trap:
+            config["diagnose_guard"] = True
         config = variant_config(config, args.variant)
         if args.rear_cards:
             # Explicit user-selected placement, never inherited from a prior
@@ -86,12 +90,15 @@ def main(argv=None) -> int:
                   placement="rear" if args.rear_cards else "configured",
                   target_devices=config["devices"], port=config["port"],
                   optimizations=variant_features(config))
+    if diagnose_guard_enabled(config):
+        status.update(measurement="guard_diagnostic", performance_acceptance="invalid_diagnostic")
     if args.plan:
         print(json.dumps({"stages": stages, "serve": serve_command, "probes": "none",
                           "vllm_argv": serve_argv(config),
                           "variant": variant, "optimizations": status["optimizations"],
                           "runtime_selection": runtime_feature_summary(config, variant),
                           "target_devices": config["devices"], "port": config["port"],
+                          "diagnose_trap": diagnose_guard_enabled(config),
                           "placement": status["placement"]}, indent=2))
         return 0
     try:

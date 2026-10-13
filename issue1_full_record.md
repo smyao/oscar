@@ -28663,3 +28663,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **当前能确认**：默认服务仍有非零状态触发冻结guard，原故障未被前一轮discard兼容修复排尽。本轮没有 `site=`/`family=`或具体status码；不能把#157另一轮的attention族直接当本轮已取得的归因，更不能从prefix0、prompt/generation信用窗口判定没有MTP或排除align自身窗口。官方CPU和28项主机测试证明的是所构造的discard/slotctx路径，不能替代本轮真机结论。
 
 **处理边界**：保持APC默认开启、原生token budget、GDN和冻结status_guard不变；继续核真实proposer钩子、首draft/mixed分区、KV写入与reader的当前可达错误域。源码新发现、修复及本地复现另记复审文档，不在取得对应证据前将本条写成已定位根因或已修复。
+
+## [159] 真机条目（2026-10-13 用户回传）· 四rank discard桥接已到达，双请求爬坡仍触发冻结guard
+
+**原始证据**：用户附件 `c84ef86e-1f6c-4fe7-8827-a933265b674d/已粘贴的文本.txt`，原字节保存在 `reports/target_guard_bridge_recurrence_20261013.txt`，65535字节，SHA256 `f58c913ea6f344c26fa21d4f63dd2fdfc201ff13fb40afb1e75a680a74111771`。片段没有启动SHA、实际候选算子签名或逐族状态码，不补写未给出的版本信息。
+
+**新增事实**：服务10:53:17 ready；四个worker实际打印 `MTP_DISCARD_BRIDGE proposer=AscendEagleProposer method=mtp requests=1 mask_capacity=128 draft_index=1 source=native.discard_request_mask binding=queued`。这证明真实AscendEagle的proposer作用域及later-draft桥接已被调用，不能再将“钩子完全没执行”作为本轮解释；该打印不读取mask内容，也不等于所有后续batch都已在设备完成。
+
+**故障窗口**：10:59:15四rank出现ArgSort AiCPU提示；10:59:18日志为prompt3281.4、generation2.5 tokens/s、Running2、Waiting30、KV4.1%、prefix0%，接受长度4.00、accepted18/drafted18。10:59:19四rank再次在 `pc start=0x124{0,2,4,6}022f56cc`→`current=...5930`（偏移0x264）触发vector exception，与冻结status_guard Trap一致；随后GDN builder第211行的192B H2D及异步输出event同步暴露507035。不能将该异步报错点视为GDN根因，HTTP200头也不能当作请求完成。
+
+**尚未解决的边界**：原始077故障仍未完整修复；本轮没有能够区分target图内guard与后续MTP guard的site/family/code。已有discard-anchor与模型长度上限的独立源码修复、CPU-debug通过，均不能据此冒充此64K服务错误已修复。继续核真实采样有效行语义、batch变化时元数据生命周期及主图/草稿交接；保持APC、冻结guard和原生GDN不变。

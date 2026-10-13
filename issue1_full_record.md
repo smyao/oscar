@@ -28641,3 +28641,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **诊断升级（本轮）**：诊断模式现在先按族读回 status 并直接报出非零项的索引与错误码（`count=`、`first=[(index,code),...]`），再决定抛出；全零步仍走原融合 trap 作为活网。读回辅助放在 `oscar_ascend/guard_readback.py`（诊断专用、默认关闭、不进在线热路径）。主机回归 1297 passed，失败集与 077548fa 基线逐项相同（11 项既有），零新增。
 
 **复验边界**：下一轮同一命令加 `OSCAR_GUARD_HOST_SYNC=1`，错误链将含确切错误码；码值 5 指向上述 anchor 逃逸/死行，3/4 指向 draft 层内容生命周期，1 指向描述符，2 指向数值。据此再定点修复，不猜修。MDL 与 vector-init 的 observe NPU/图门仍欠账，与本条独立。
+
+### #157 定点修复（2026-10-12）：later-draft 死行 slot 净化，不动 fe0 冻结集与 pin 生成链
+
+**根因收口**：三轮真机+一轮归因运行（`OSCAR_GUARD_HOST_SYNC=1`）把 trap 锁定在 `forward:mtp.layers.0.self_attn.attn` 的 attention 族（later-draft 路径）。原生契约核查（`llm_base_proposer.py:1941` / `model_runner_v1.py:1138`）：被 discard 的请求行（`valid_sampled_tokens_count==0`，本步仍带 spec tokens）其 anchor `token_indices_to_sample=qsl[r+1]-1-num_rejected` 逃逸出本请求范围，draft slot 由此指向不属于该行的块；prepare 内核 slotContext 解析报 `metadataError=5`（`attention_tasks.cpp:77-101`），guard 按 fail-closed 设计 trap。原生对这样的行是 clamp+discard、输出不用——我们的严格设备检查把原生容忍的死行变成了致命 trap，这是与原生 discard 语义的兼容性缺口，不是数值/布局错误。
+
+**修法（主机侧、零内核改动、零 pin/生成链搅动）**：`oscar_ascend/integration/impl.py` 在 later-draft（`is_draft and draft_index>0`、非 capture/dummy）的 prepare 之前，用插件自有 slot 副本按 prepare 内核 slotContext 的逐位镜像做向量化设备净化——凡"块表有效列内非唯一匹配或 position 越界"的 slot 一律置为 -1（padding）。prepare 将其标为 padding（无 error 5）、CV 发空源、store 因 slot<0 跳过、guard 不再 trap。活行照常解析、字节不变；净化不改写原生 proposer 的 slot 缓冲。由此死行的 draft 输出为空、被原生丢弃，与原生语义对齐——这是语义对齐而非回退：OSCAR 压缩路径、INT2 历史、两算子默认开启均未变。
+
+**验证**：新增 `tests/test_later_draft_slots.py`，用纯 Python 逐位镜像 prepare 的 slotContext 对拍净化掩码（活行/死行/padding/重复块/越界/空输入），3/3 通过；全量主机回归 1300 passed，失败集与 077548fa 基线逐项相同（11 项既有，与本次无关），零新增。AST/静态闸无新增违规。主机侧改动不经 CANN 内核编译链；NPU 复验以同一固定命令为准。
+
+**边界**：若实际触发码并非 5（而是 3/4/1/2），本修复对其惰性无害，已推送的诊断会在带 `OSCAR_GUARD_HOST_SYNC=1` 的运行中直接报出确切码值，届时再按码定点处理。MDL/vector-init 的 observe NPU/图门欠账不变。

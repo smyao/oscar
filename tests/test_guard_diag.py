@@ -61,20 +61,19 @@ def test_capture_path_stays_fused_even_when_enabled(monkeypatch):
     assert len(ops.calls) == 1 and npu.syncs == 0
 
 
-def test_diag_path_reports_the_exact_status_code(monkeypatch):
+def test_diag_path_attributes_the_frozen_trap_without_readback(monkeypatch):
     monkeypatch.setenv("OSCAR_GUARD_HOST_SYNC", "1")
     npu = _Npu()
     monkeypatch.setattr(torch, "npu", npu, raising=False)
     segments = _segments()
-    merged = torch.zeros(3, 2, dtype=torch.int32)
-    merged[1, 0] = 5
-    segments[2] = ("merge", merged)
-    ops = Ops()
-    with pytest.raises(OscarReadinessError, match=r"site=forward:layer family=merge count=1"):
+    ops = Ops(fail_on=segments[2][1])
+    def forbidden(*args, **kwargs):
+        raise AssertionError("production guard must not read device contents on host")
+    for name in ("item", "cpu", "tolist", "numpy"):
+        monkeypatch.setattr(torch.Tensor, name, forbidden)
+    with pytest.raises(OscarReadinessError, match=r"site=forward:layer family=merge"):
         run_status_guard(ops, "forward:layer", segments)
-    # Clean families ahead of the failure were still trap-guarded; the readback
-    # raised before the failing family's launch.
-    assert len(ops.calls) == 2 and npu.syncs == 2
+    assert len(ops.calls) == 3 and npu.syncs == 2
 
 
 def test_diag_path_skips_empty_families(monkeypatch):

@@ -23,39 +23,6 @@ from ..timing import phase
 from ..ops.cv_dispatch import CLUSTER_CV_OPS, select_cv_op
 
 
-def _unresolvable_later_draft_slots(slots: torch.Tensor, seq_lens: torch.Tensor,
-                                    block_tables: torch.Tensor, num_reqs: int) -> torch.Tensor | None:
-    """Vectorized device mirror of the prepare kernel's slotContext resolution.
-
-    Archive #157: a native later-draft row that the proposer discards
-    (zero valid sampled tokens) gets its anchor computed outside its own
-    query range (llm_base_proposer.py:1941), so its slot cannot resolve
-    against its own block table. prepare reports metadataError 5 and the
-    guard traps, although native discards that row's draft output. Masking
-    the slot as padding yields the same empty result without trapping. Live
-    rows resolve and are unchanged; this never alters stored KV bytes.
-    """
-    n = slots.numel()
-    if n == 0 or num_reqs == 0:
-        return None
-    cols = block_tables.shape[1]
-    # Later-draft steps carry exactly one query token per request, so token t
-    # belongs to request t; trailing padding rows keep a negative slot and are
-    # never marked dead by this mask.
-    requests = torch.arange(n, device=slots.device).clamp_(max=num_reqs - 1)
-    lens = seq_lens[requests].to(torch.int64)
-    valid_columns = torch.div(lens + 127, 128).clamp_(max=cols)
-    vblock = torch.div(slots, 128, rounding_mode="floor")
-    table = block_tables[requests].to(torch.int64)
-    match = (table == vblock[:, None]) & (
-        torch.arange(cols, device=slots.device)[None, :] < valid_columns[:, None])
-    matches = match.sum(dim=1)
-    column = match.to(torch.int64).argmax(dim=1)
-    position = column * 128 + torch.remainder(slots, 128)
-    resolvable = (slots >= 0) & (matches == 1) & (position >= 0) & (position < lens)
-    return (slots >= 0) & ~resolvable
-
-
 class OscarAttentionImpl(AttentionImpl):
     def __init__(self, num_heads, head_size, scale, num_kv_heads=None,
                  alibi_slopes=None, sliding_window=None, kv_cache_dtype="auto",
@@ -174,18 +141,10 @@ class OscarAttentionImpl(AttentionImpl):
             k = workspace.projection(key, workspace.key_input, n, hk, d)
             v = workspace.projection(value, workspace.value_input, n, hk, d)
             slots = attn_metadata.slot_mapping[:n]
-            if (attn_metadata.is_draft and attn_metadata.draft_index > 0
-                    and not attn_metadata.capture_origin and not attn_metadata.dummy_origin):
-                # #157: sanitize on the plugin-owned slot copy; never mutate the
-                # native proposer's slot buffer.
-                workspace.slots[:n].copy_(slots)
-                slots = workspace.slots[:n]
-                dead = _unresolvable_later_draft_slots(
-                    slots, attn_metadata.seq_lens[:attn_metadata.num_reqs],
-                    attn_metadata.block_tables[:attn_metadata.num_reqs], attn_metadata.num_reqs)
-                if dead is not None:
-                    slots.masked_fill_(dead, -1)
-            elif slots.dtype == torch.int32:
+            # #157: the metadata builder isolates only explicitly discarded
+            # native rows, once per draft step. Invalid live slots must reach
+            # the frozen device guard; never infer discard from table failure.
+            if slots.dtype == torch.int32:
                 # Native llm_base_proposer.py:1662 uses int32 draft slot groups.
                 workspace.slots[:n].copy_(slots)
                 slots = workspace.slots[:n]

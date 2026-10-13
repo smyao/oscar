@@ -28620,6 +28620,8 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 
 ## [157] 真机条目（2026-10-12 用户回传）· 默认 APC 首轮 candidate 服务中 status_guard Trap，四 rank 同步 vector core exception
 
+> **2026-10-13 源码复审修正（不是新增真机结果）**：本条以下保留原回传与当时判断，但“纯 chunked prefill”“已排除 MDL/窗口路径”“根因收口为错误码5”均未由现有日志充分证明。prompt/generation 的日志窗口不能确定每一个内部 MTP step；prefix hit=0 也不能排除 APC 开启后 align 布局或请求自身的窗口错误。已确认的是冻结 guard Trap，以及第二轮归因到 MTP attention 族；没有确切非零码回传，discard-anchor 仍是可达的源码假设。c5b2ad40 的净化另有已复现缺陷：没有原生 discard 证据便清空非法 slot，且浮点除法扩大有效块表列，可误清活行。当前按原生显式 discard 掩码修复，不把修复推断写成真机根因；参见 `docs/kimi_commit_review_20261013.md`。
+
 **症状原文**（用户粘贴的服务端日志片段）：`git pull --ff-only && bash scripts/install_serve.sh --variant candidate`（077548fa）后服务完成 32 条短请求，06:56:43 四个 worker 首次 JIT 编译原生 `batch_memcpy_kernel`（mamba align 状态拷贝），06:56:51 统计为 prompt 3281.3 tok/s、generation 0.1 tok/s、Running 2 / Waiting 30、**Prefix cache hit rate 0.0%**；06:56:57 四 rank 同时报 aivec error（chip0..3 的 pc 分别为 0x124{0,2,4,6}022f56cc→…5930，设备内偏移完全一致，current−start=0x264，aic error mask 0x6500020bd00028c，"timeout or trap error"），随后 `gdn_attn_builder.py:211` 的 H2D（srclen=192）与异步输出拷贝的 event 同步以 507035 失败，worker 全灭。SpecDecoding 累计 19 accepted/21 drafted 均来自先前短请求。
 
 **归因确认（与 #142 同一 Trap）**：`status_guard.cpp` 自 f8735233（2026-09-22）起未变，#142 已把同一 0x264 偏移映射到该内核的 Trap()；本工程只有该内核含 Trap()。所以本次是 fail-closed guard 检测到某族 status 非零，按设计中止；生产 Trap 不带段信息，日志本身无法指出是哪一族。

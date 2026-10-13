@@ -334,6 +334,29 @@ def _patch_mtp_forward(module: ModuleType) -> None:
         _patch(cls, "__call__", compact)
 
 
+def _patch_mtp_proposer(module: ModuleType) -> None:
+    """Archive #157: bind explicit native discard rows without altering GDN.
+
+    Both construction paths run before the native model/graph call. The
+    context is reset on exceptions and never persists a prior batch's mask.
+    """
+    cls = module.AscendSpecDecodeBaseProposer
+
+    def scoped(dummy):
+        def decorate(original):
+            def wrapped(proposer, *args, **kwargs):
+                if proposer.method != "mtp":
+                    return original(proposer, *args, **kwargs)
+                from .integration.draft_discard import native_draft_scope
+                with native_draft_scope(proposer, dummy=dummy):
+                    return original(proposer, *args, **kwargs)
+            return wrapped
+        return decorate
+
+    _patch(cls, "_propose", scoped(False))
+    _patch(cls, "dummy_run", scoped(True))
+
+
 def _patch_native_attention(module: ModuleType) -> None:
     """Record native attention, including CP inheritance and C8 override."""
     if not os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL"):
@@ -353,6 +376,7 @@ _callbacks = {
     "vllm_ascend.worker.model_runner_v1": _patch_runner,
     "vllm_ascend.attention.attention_v1": _patch_native_attention,
     "vllm.model_executor.models.qwen3_5_mtp": _patch_mtp_forward,
+    "vllm_ascend.spec_decode.llm_base_proposer": _patch_mtp_proposer,
     "vllm.model_executor.layers.attention.attention": _patch_attention_registration,
     "vllm.v1.core.sched.scheduler": _patch_request_window_scheduler,
 }

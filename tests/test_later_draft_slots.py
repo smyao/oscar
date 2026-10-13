@@ -1,86 +1,162 @@
-# 档案 #157：later-draft 死行 slot 净化必须与 prepare 内核 slotContext 解析逐位一致。
-import importlib.util
-import sys
-import types
-from pathlib import Path
-from unittest.mock import patch
+"""Archive #27/#34/#36/#37-49/#157: explicit discard, never inferred corruption.
+
+The independent slot resolver follows attention_tasks.cpp integer bounds.
+These are host contract tests, not NPU/graph or whole-service acceptance.
+"""
+from types import SimpleNamespace
 
 import pytest
 import torch
 
-
-@pytest.fixture(scope="module")
-def mask_fn():
-    backend = types.ModuleType("vllm.v1.attention.backend")
-    backend.AttentionImpl = type("AttentionImpl", (), {})
-    path = Path(__file__).resolve().parents[1] / "oscar_ascend/integration/impl.py"
-    with patch.dict(sys.modules, {backend.__name__: backend}):
-        spec = importlib.util.spec_from_file_location("oscar_ascend.integration._draft_mask_test", path)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-    return module._unresolvable_later_draft_slots
+from oscar_ascend.integration.draft_discard import later_draft_slot_copy, native_draft_scope
+from oscar_ascend.integration.runtime_api import OscarReadinessError
 
 
-
-def _reference_dead(slots, seq_lens, block_tables, num_reqs):
-    """Pure-Python mirror of attention_tasks.cpp slotContext: matches==1 and 0<=position<lens."""
-    dead = []
-    cols = block_tables.shape[1]
-    for token in range(slots.numel()):
-        slot = int(slots[token])
-        if slot < 0:
-            dead.append(False)
-            continue
-        r = min(token, num_reqs - 1)
-        lens = int(seq_lens[r])
-        valid = min(cols, (lens + 127) // 128)
-        vblock = slot // 128
-        matches = [c for c in range(valid) if int(block_tables[r][c]) == vblock]
-        position = (matches[0] if matches else 0) * 128 + slot % 128
-        dead.append(not (len(matches) == 1 and 0 <= position < lens))
-    return torch.tensor(dead, dtype=torch.bool)
+def _case(slots=(1285, 99999, -1, -1), discard=(False, True), *, index=1):
+    groups = [torch.full((len(slots),), -1, dtype=torch.int32) for _ in range(3)]
+    groups[index].copy_(torch.tensor(slots, dtype=torch.int32))
+    runner = SimpleNamespace(input_batch=SimpleNamespace(num_reqs=len(discard)),
+                             discard_request_mask=SimpleNamespace(gpu=torch.tensor(discard)))
+    proposer = SimpleNamespace(runner=runner, slot_mapping_group=groups, pcp_size=1, dcp_size=1)
+    common = SimpleNamespace(slot_mapping=groups[index], num_reqs=len(discard),
+                             num_actual_tokens=len(discard), max_query_len=1)
+    return proposer, common
 
 
-def _check(mask_fn, slots, seq_lens, block_tables, num_reqs):
-    mask = mask_fn(slots, seq_lens, block_tables, num_reqs)
-    expected = _reference_dead(slots, seq_lens, block_tables, num_reqs)
-    assert mask is not None and torch.equal(mask.cpu(), expected)
+def _prepare_status(slot, length, table):
+    if slot < 0:
+        return 0
+    matches = [j for j in range(min(len(table), (length + 127) // 128)) if table[j] == slot // 128]
+    return 0 if len(matches) == 1 and 0 <= matches[0] * 128 + slot % 128 < length else 5
 
 
-def test_live_rows_resolve_and_dead_rows_mask(mask_fn):
-    # Two requests; request 0 has two virtual128 pages, request 1 has one.
-    block_tables = torch.tensor([[10, 11, 0, 0], [22, 0, 0, 0]], dtype=torch.int32)
-    seq_lens = torch.tensor([200, 90], dtype=torch.int32)
-    # live: token0 slot in request0 page10 first column; token1 dead: slot points
-    # at request1's absent second page region (no matching column).
-    slots = torch.tensor([10 * 128 + 5, 23 * 128 + 7], dtype=torch.int64)
-    _check(mask_fn, slots, seq_lens, block_tables, 2)
-    dead = mask_fn(slots, seq_lens, block_tables, 2)
-    assert dead.tolist() == [False, True]
+def test_only_explicit_discard_is_padded_and_native_slots_are_untouched():
+    proposer, common = _case()
+    original = common.slot_mapping.clone()
+    with native_draft_scope(proposer):
+        slots = later_draft_slot_copy(common, draft_index=1)
+    assert slots.tolist() == [1285, -1, -1, -1]
+    assert torch.equal(common.slot_mapping, original)
+    assert slots.data_ptr() != common.slot_mapping.data_ptr()
 
 
-def test_padding_negative_slots_never_masked_and_empty_inputs(mask_fn):
-    block_tables = torch.tensor([[10, 11]], dtype=torch.int32)
-    seq_lens = torch.tensor([200], dtype=torch.int32)
-    slots = torch.tensor([-1, 10 * 128 + 3], dtype=torch.int64)
-    _check(mask_fn, slots, seq_lens, block_tables, 1)
-    dead = mask_fn(slots, seq_lens, block_tables, 1)
-    assert dead.tolist() == [False, False]
-    assert mask_fn(torch.empty(0, dtype=torch.int64),
-                                           seq_lens, block_tables, 1) is None
-    assert mask_fn(slots, seq_lens, block_tables, 0) is None
+@pytest.mark.parametrize("length,table,slot,expected", [
+    (128, [10, 10], 1285, 0),
+    (200, [10, 10], 1285, 5),
+    (128, [10, 0], 1413, 5),
+    (130, [10, 11], 1413, 5),
+])
+def test_live_valid_and_corrupt_slots_are_preserved(length, table, slot, expected):
+    proposer, common = _case(slots=(slot,), discard=(False,))
+    with native_draft_scope(proposer):
+        actual = later_draft_slot_copy(common, draft_index=1)
+    assert actual.tolist() == [slot]
+    assert _prepare_status(int(actual[0]), length, table) == expected
 
 
-def test_duplicate_block_and_position_beyond_lens_mask(mask_fn):
-    # Same virtual block twice in the valid prefix is not a unique match.
-    block_tables = torch.tensor([[10, 10]], dtype=torch.int32)
-    seq_lens = torch.tensor([200], dtype=torch.int32)
-    slots = torch.tensor([10 * 128 + 1], dtype=torch.int64)
-    _check(mask_fn, slots, seq_lens, block_tables, 1)
-    assert mask_fn(slots, seq_lens, block_tables, 1).tolist() == [True]
-    # Position beyond the retained sequence length fails the bound.
-    block_tables = torch.tensor([[10, 11]], dtype=torch.int32)
-    seq_lens = torch.tensor([130], dtype=torch.int32)  # valid columns = 2
-    slots = torch.tensor([11 * 128 + 5], dtype=torch.int64)  # position 133 > 130
-    _check(mask_fn, slots, seq_lens, block_tables, 1)
-    assert mask_fn(slots, seq_lens, block_tables, 1).tolist() == [True]
+def test_nonnegative_padding_tail_is_not_hidden():
+    proposer, common = _case(slots=(1285, 99999, 77777), discard=(False, True))
+    with native_draft_scope(proposer):
+        slots = later_draft_slot_copy(common, draft_index=1)
+    assert slots.tolist() == [1285, -1, 77777]
+
+
+def test_dummy_capture_and_changed_real_batches_share_address_without_stale_mask():
+    proposer, common = _case()
+    with native_draft_scope(proposer, dummy=True):
+        captured = later_draft_slot_copy(common, capture=True)
+        address = captured.data_ptr()
+        assert torch.equal(captured, common.slot_mapping)
+    with native_draft_scope(proposer):
+        first = later_draft_slot_copy(common, draft_index=1)
+        assert first.data_ptr() == address
+        assert first.tolist() == [1285, -1, -1, -1]
+    common.slot_mapping[:2].copy_(torch.tensor([99999, 1285], dtype=torch.int32))
+    proposer.runner.discard_request_mask.gpu.copy_(torch.tensor([True, False]))
+    with native_draft_scope(proposer):
+        second = later_draft_slot_copy(common, draft_index=1)
+        assert second.data_ptr() == address
+        assert second.tolist() == [-1, 1285, -1, -1]
+    assert later_draft_slot_copy(common, draft_index=1) is common.slot_mapping
+
+
+def test_scope_resets_after_exception_and_nested_proposals():
+    first, first_common = _case()
+    second, second_common = _case(discard=(True, False))
+    with native_draft_scope(first):
+        with pytest.raises(RuntimeError, match="abort"):
+            with native_draft_scope(second):
+                assert later_draft_slot_copy(second_common, draft_index=1)[0] == -1
+                raise RuntimeError("abort")
+        assert later_draft_slot_copy(first_common, draft_index=1)[0] == 1285
+    assert later_draft_slot_copy(first_common, draft_index=1) is first_common.slot_mapping
+
+
+def test_first_draft_is_unchanged_and_steps_do_not_alias():
+    proposer, common = _case(index=0)
+    with native_draft_scope(proposer):
+        assert later_draft_slot_copy(common, draft_index=0) is common.slot_mapping
+        assert later_draft_slot_copy(common, capture=True) is common.slot_mapping
+        common.slot_mapping = proposer.slot_mapping_group[1]
+        one = later_draft_slot_copy(common, draft_index=1)
+        common.slot_mapping = proposer.slot_mapping_group[2]
+        two = later_draft_slot_copy(common, draft_index=2)
+    assert one.data_ptr() != two.data_ptr()
+
+
+def test_missing_native_mask_or_wrong_row_contract_fails_closed():
+    proposer, common = _case()
+    proposer.runner.discard_request_mask = None
+    with pytest.raises(OscarReadinessError, match="discard mask"):
+        with native_draft_scope(proposer):
+            pass
+    proposer, common = _case()
+    common.num_actual_tokens = 1
+    with native_draft_scope(proposer), pytest.raises(OscarReadinessError, match="request order"):
+        later_draft_slot_copy(common, draft_index=1)
+
+
+def test_no_host_readback_or_block_table_dependency(monkeypatch):
+    proposer, common = _case()
+    def forbidden(*args, **kwargs):
+        raise AssertionError("device readback is forbidden")
+    with monkeypatch.context() as patch:
+        for name in ("cpu", "item", "tolist", "numpy"):
+            patch.setattr(torch.Tensor, name, forbidden)
+        with native_draft_scope(proposer):
+            slots = later_draft_slot_copy(common, draft_index=1)
+    assert slots.tolist() == [1285, -1, -1, -1]
+
+
+def test_plugin_proposal_scope_reaches_real_metadata_builder(monkeypatch):
+    from oscar_ascend import plugin
+    from test_first_draft_current_only import builder as make_builder
+    builder = make_builder(monkeypatch)
+    proposer, common = _case()
+    common.causal = True
+    common.query_start_loc = torch.tensor([0, 1, 2], dtype=torch.int32)
+    common.seq_lens = torch.tensor([128, 128], dtype=torch.int32)
+    common.block_table_tensor = torch.tensor([[10, 10], [22, 0]], dtype=torch.int32)
+    common.max_seq_len = 128
+    common.num_input_tokens = 4
+
+    class NativeProposer:
+        method = "mtp"
+        def _propose(self, metadata):
+            return builder.build_for_drafting(metadata, 1)
+        def dummy_run(self, metadata):
+            return builder.build_for_graph_capture(metadata)
+
+    instance = NativeProposer()
+    instance.__dict__.update(vars(proposer))
+    original = NativeProposer._propose
+    try:
+        plugin._patch_mtp_proposer(SimpleNamespace(AscendSpecDecodeBaseProposer=NativeProposer))
+        metadata = instance._propose(common)
+        assert metadata.slot_mapping.tolist() == [1285, -1, -1, -1]
+        assert metadata.is_draft and metadata.draft_index == 1
+        assert common.slot_mapping.tolist() == [1285, 99999, -1, -1]
+        assert later_draft_slot_copy(common, draft_index=1) is common.slot_mapping
+    finally:
+        plugin.unregister()
+    assert NativeProposer._propose is original

@@ -21,28 +21,20 @@ def guard_diag_enabled() -> bool:
 
 
 def run_status_guard(ops, site: str, segments, *, capture: bool = False) -> None:
-    """Launch the frozen status trap, or attribute failures in diagnostic mode.
+    """Launch the frozen status trap, optionally with per-family attribution.
 
     segments: exactly four (name, tensor) pairs in the native a,b,c,d launch
     order. Default (or graph capture) path: one fused launch, identical to the
-    historical behavior. Diagnostic path (OSCAR_GUARD_HOST_SYNC=1): read back
-    each non-empty family after a host sync and raise with the exact error
-    code, so the trapped family and its status value are named in the
-    exception; a fully clean step still launches the fused trap as the live net.
+    historical behavior. Diagnostic path launches that same frozen kernel for
+    each family and synchronizes to attribute the trap. It never reads status
+    contents back to the host, including through an imported helper.
     """
     if not guard_diag_enabled() or capture:
         ops.status_guard(*[tensor for _, tensor in segments])
         return
-    from ..guard_readback import find_nonzero
     for name, tensor in segments:
         if tensor.numel() == 0:
             continue
-        report = find_nonzero(tensor)
-        if report is not None:
-            count, indices, values = report
-            raise OscarReadinessError(
-                f"OSCAR status guard content at site={site} family={name} "
-                f"count={count} first={list(zip(indices, values))[:4]}")
         flat = tensor.reshape(-1)
         empty = flat[:0]
         try:

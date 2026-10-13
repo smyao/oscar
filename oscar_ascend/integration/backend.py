@@ -110,7 +110,10 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
         # inputs explicitly. The complete kernels are still captured; replay
         # reads the same native buffer after _prepare_inputs fills real slots.
         common_attn_metadata.slot_mapping.fill_(-1)
-        return self._bind(from_common(common_attn_metadata, capacity=self.capacity, capture_origin=True))
+        from .draft_discard import later_draft_slot_copy
+        slots = later_draft_slot_copy(common_attn_metadata, capture=True)
+        metadata = from_common(common_attn_metadata, capacity=self.capacity, capture_origin=True)
+        return self._bind(replace(metadata, slot_mapping=slots))
 
     def build_for_cudagraph_capture(self, common_attn_metadata):
         return self.build_for_graph_capture(common_attn_metadata)
@@ -124,4 +127,6 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
             raise ValueError("draft_index must be a nonnegative integer")
         metadata = from_common(common_attn_metadata, capacity=self.capacity,
                                is_draft=True, draft_index=draft_index)
-        return self._bind(metadata)
+        from .draft_discard import later_draft_slot_copy
+        return self._bind(replace(metadata, slot_mapping=later_draft_slot_copy(
+            common_attn_metadata, draft_index=draft_index)))

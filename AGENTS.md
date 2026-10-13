@@ -19,3 +19,7 @@
 - 用户已在835fc22完整运行过AISBench；后续不得再要求重跑AISBench。分析已有复制日志和片段，必要验证只用短时合成算子/图/服务probe；片段缺失时不得伪造全程占比，也不能把短probe当成完整模型质量或8分钟性能验收。
 
 真机部署只需 `git pull --ff-only && bash scripts/install_probe_serve.sh`，使用当前 Python 环境。`.venv/bin/python -m pytest -q` 仅用于已配置虚拟环境的本地开发机；`bash scripts/validate_vm.sh` 仅用于带 Lima 的 Mac 宿主机，均不是真机前置步骤。单独 NPU probe 是 `python3 -m tools.deploy --only probe-ops`，无 NPU 时必须失败，不能用 CPU 替代。已在真机跑通过完整探针后，可用 `bash scripts/install_serve.sh` 仅编译安装并直接启动正式服务（无任何测试/probe）；它不提供验收证据。
+
+## aisbench-stable 分支启动策略（用户 2026-10-13 最新指令）
+
+本分支同步 codex/oscar-ascend 当前逻辑，但默认关闭 prefix caching，显式传入 `--max-num-batched-tokens 16384`，使用原生调度器。此要求优先于历史文档中的默认开启 APC/省略预算约束，仅适用于本分支；不表示真机 Trap 已修复或性能已验收。

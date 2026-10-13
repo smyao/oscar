@@ -22,12 +22,20 @@ def serve_argv(config: dict) -> list[str]:
     native_budget = config.get("use_native_token_budget", True)
     if type(native_budget) is not bool:
         raise ValueError("use_native_token_budget must be an explicit boolean")
-    if not native_budget or ("max_num_batched_tokens" in config or
-                          config.get("scheduler_cls") is not None or
-                          config.get("experimental_whole_prefill", False) or
-                          config.get("experimental_bounded_whole_prefill", False)):
-        raise ValueError("native token budget requires an omitted budget and native scheduler")
+    # User 2026-10-13 stable branch: explicit budget is intentional; no
+    # scheduler substitution or prefix-cache override is inferred from it.
+    if (config.get("scheduler_cls") is not None or
+            config.get("experimental_whole_prefill", False) or
+            config.get("experimental_bounded_whole_prefill", False)):
+        raise ValueError("token budget requires the native scheduler")
+    budget = config.get("max_num_batched_tokens")
+    if native_budget and "max_num_batched_tokens" in config:
+        raise ValueError("native token budget requires an omitted budget")
+    if not native_budget and (type(budget) is not int or budget <= 0):
+        raise ValueError("explicit token budget must be a positive integer")
     args = ["serve", config["model"]]
+    if not native_budget:
+        args += ["--max-num-batched-tokens", str(budget)]
     for key in ("served_model_name", "host", "port", "data_parallel_size", "tensor_parallel_size",
                 "max_model_len", "max_num_seqs", "gpu_memory_utilization", "quantization"):
         args += ["--" + key.replace("_", "-"), str(config[key])]
@@ -38,10 +46,9 @@ def serve_argv(config: dict) -> list[str]:
     args += ["--trust-remote-code", "--async-scheduling", "--allowed-local-media-path", "/",
              "--mm-processor-cache-gb", "0", "--mamba-cache-dtype", "bfloat16", "--mamba-ssm-cache-dtype", "bfloat16"]
     # Archive #26/#37-49/#127: prefix sharing changes native GDN geometry.
-    # User 2026-10-12: every serving entrypoint enables APC by default, even
-    # callers that do not normalize through variant_config. An explicit false
-    # remains an intentional diagnostic choice, never an automatic fallback.
-    enabled = config.get("enable_prefix_caching", True)
+    # User 2026-10-13 stable branch policy: disable APC by default. This is
+    # an explicit launch policy, never an automatic response to a failure.
+    enabled = config.get("enable_prefix_caching", False)
     if type(enabled) is not bool:
         raise ValueError("enable_prefix_caching must be an explicit boolean")
     args.append("--enable-prefix-caching" if enabled else "--no-enable-prefix-caching")

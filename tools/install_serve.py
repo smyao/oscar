@@ -31,9 +31,9 @@ def main(argv=None) -> int:
     parser.add_argument("--rear-cards", action="store_true",
                         help="use physical Ascend devices 4,5,6,7 and port 7878 for this launch only")
     parser.add_argument("--native-token-budget", action="store_true",
-                        help="compatibility alias; every launch already uses the native token budget")
+                        help="omit the stable branch explicit budget for this launch only")
     parser.add_argument("--enable-prefix-caching", action=argparse.BooleanOptionalAction, default=None,
-                        help="pass the native prefix-cache switch; enabled by default, explicit false is diagnostic")
+                        help="pass the native prefix-cache switch; disabled by default on aisbench-stable")
     parser.add_argument("--diagnose-trap", action="store_true",
                         help="attribute guard site/family/code with host sync and eager service; timings are invalid for performance")
     args = parser.parse_args(argv)

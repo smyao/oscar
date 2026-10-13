@@ -2,7 +2,7 @@
 
 Every delivered optimization flag belongs here so installation and observation
 cannot silently select different numerical paths. Physical placement is separate.
-#34/#36: all serving now uses native token budgets (user 2026-10-09).
+#34/#36: aisbench-stable defaults to explicit 16384 (user 2026-10-13).
 Historical generated whole32K/64K files are normalized without retaining an
 OSCAR scheduling override. No native default is guessed here.
 """
@@ -68,8 +68,8 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if variant not in {None, "baseline", "candidate", "native"}:
         raise ValueError(f"unknown serving variant: {variant}")
     selected = dict(config)
-    # User 2026-10-12: native/baseline/candidate share the explicit APC default.
-    selected.setdefault("enable_prefix_caching", True)
+    # User 2026-10-13: this stable branch defaults to APC disabled.
+    selected.setdefault("enable_prefix_caching", False)
     selected.setdefault("experimental_c4_member_pipeline", False)
     if "enable_prefix_caching" in selected and type(selected["enable_prefix_caching"]) is not bool:
         raise ValueError("enable_prefix_caching must be an explicit boolean")
@@ -89,8 +89,8 @@ def variant_config(config: dict, variant: str | None) -> dict:
             raise ValueError(f"{flag} must be an explicit boolean")
         if variant in {"baseline", "native"} and flag in selected:
             selected[flag] = False
-    # User 2026-10-09: omission is the serving policy, not an extra launch
-    # option. Retire both owned scheduler variants, including reused configs.
+    # Retire owned scheduler variants; stable keeps an explicit token budget
+    # while an explicit native-budget request still omits that argument.
     # The worker only observes the resulting native capacity for allocation.
     if selected.get("scheduler_cls") not in (None, WHOLE_PREFILL_SCHEDULER, BOUNDED_PREFILL_SCHEDULER):
         raise ValueError("native token budget conflicts with an explicit other scheduler")
@@ -98,8 +98,13 @@ def variant_config(config: dict, variant: str | None) -> dict:
             type(selected["max_num_batched_tokens"]) is not int or
             selected["max_num_batched_tokens"] <= 0):
         raise ValueError("configured max_num_batched_tokens must be a positive integer")
-    selected["use_native_token_budget"] = True
-    selected.pop("max_num_batched_tokens", None)
+    # User 2026-10-13: aisbench-stable explicitly retains its 16384 budget.
+    # Native-budget launches still omit the flag; scheduler remains native.
+    selected["use_native_token_budget"] = native_budget
+    if native_budget:
+        selected.pop("max_num_batched_tokens", None)
+    elif "max_num_batched_tokens" not in selected:
+        raise ValueError("explicit token budget requires max_num_batched_tokens")
     selected.pop("scheduler_cls", None)
     selected.pop("history_token_capacity", None)
     selected["experimental_whole_prefill"] = False
@@ -146,7 +151,7 @@ def variant_features(config: dict) -> dict:
 def runtime_feature_summary(config: dict, variant: str | None) -> dict:
     """One compact startup line shows the actual effective feature selection."""
     return {"variant":variant,"optimizations":variant_features(config),
-            "prefix_caching":config.get("enable_prefix_caching", True),
+            "prefix_caching":config.get("enable_prefix_caching", False),
             "token_budget_source":"native" if config.get("use_native_token_budget", False) else "explicit",
             "max_num_batched_tokens":config.get("max_num_batched_tokens"),
             **({"history_token_capacity":config["history_token_capacity"]}

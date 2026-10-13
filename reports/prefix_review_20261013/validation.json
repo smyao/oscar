@@ -1,0 +1,175 @@
+{
+  "base_commit": "965a6a8803ce76b3e81a47d297bef786df5a0909",
+  "scope": "Review verification and probe/test fixes; no runtime/kernel/scheduler change",
+  "source_sha256": {
+    "tests/test_mixed_decode_split.py": "8665c4d7b445d00ce20d27fc27ef54b4459f34ba605496609c38dc8156f14f04",
+    "tests/test_partial_prefix_probe.py": "aaa09270735c1f314bbf8278318966223ea9f8e954761f9fa533881388099fdf",
+    "tests/test_prefix_analysis_matrix.py": "a60a61142f34676ba77804717d05da8d973ab7b9af68fdda131e6c7574854213",
+    "tests/test_prefix_caching.py": "9ca7d893722212e19c2f56c0e6aa982160bd0418bca3dc305efa6fea3eb96b0b",
+    "tests/test_prefix_guard.py": "d909c9e09cbe68ddf6a0c0be788a8e59d992d41c6d5c65249b0b971c8dac7760",
+    "tests/test_prefix_report_tools.py": "f4f28940fa6c30da2cfd38e26cf0d942e59dccfbe9af06c16ea841c9e715bd89",
+    "tests/test_prefix_review_32k.py": "759847e1067c08ed617d4c309dcb0021e129a7b9863ba364c35200959b246515",
+    "tools/partial_prefix_probe.py": "46bf4d5a814b113c70667e8c6b5ae075f39ba565f337e791feb6afad45d1aada",
+    "tools/prefix_cache_probe.py": "64d9c5ef8cbeaa708a185082a9e2e40b7a51a5b2b810b125468c0ed1c7e144ab"
+  },
+  "native_reproduction": "reproduction.json",
+  "targeted": {
+    "summary": "226 passed in 6.95s",
+    "junit": "targeted.xml"
+  },
+  "host_without_http": {
+    "summary": "22 failed, 1358 passed, 141 skipped, 8 errors, 29 subtests passed in 55.53s",
+    "junit": "host_no_http.xml",
+    "failures": {
+      "tests.test_analyze_64k_evidence::test_all_supplied_engine_rows_are_parsed_without_pid_or_clock_mixing": {
+        "type": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      "tests.test_analyze_64k_evidence::test_truncated_records_preserve_known_fields_and_do_not_invent_counts": {
+        "type": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      "tests.test_analyze_64k_evidence::test_client_tables_and_warmup_have_separate_time_denominators": {
+        "type": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      "tests.test_analyze_64k_evidence::test_client_latency_decomposition_respects_fixed_512_output_tokens": {
+        "type": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      "tests.test_analyze_64k_evidence::test_spec_totals_use_counts_rather_than_unweighted_percentage_means": {
+        "type": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      "tests.test_analyze_64k_evidence::test_observed_capacity_and_zero_counters_do_not_invent_memory_or_phases": {
+        "type": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      "tests.test_analyze_64k_evidence::test_server_counter_integration_does_not_use_client_duration": {
+        "type": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      "tests.test_analyze_64k_evidence::test_conditional_warmup_pool_bounds_include_the_reference_null_block": {
+        "type": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      "tests.test_analyze_decode_completion::test_real_popped_completion_ids_keep_observed_latency_not_busy": {
+        "type": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      "tests.test_analyze_decode_completion::test_real_decode_markers_close_but_do_not_mean_math_completed": {
+        "type": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz'"
+      },
+      "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[duplicate_id]": {
+        "type": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[missing_completion]": {
+        "type": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[wrong_pc]": {
+        "type": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[flag_count]": {
+        "type": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      "tests.test_analyze_decode_completion::test_truncated_real_line_and_unclosed_real_markers_fail": {
+        "type": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz'"
+      },
+      "tests.test_balanced_schedule::test_balanced_clone_changes_only_owner_schedule_and_exported_names": {
+        "type": "failure",
+        "message": "AssertionError: assert '\\n// G26-G34...\\n}\\n#endif\\n' == '\\n// G26-G34...\\n}\\n#endif\\n'\n  \n  Skipping 40851 identical leading characters in diff, use -v to show\n    56_ONLY\n  -   // The independent striped-v1 physical slot exists only for D256. This\n  -   // compile guard prevents unsupported helper instantiations; direct raw\n  -   // entrypoint misuse fails visibly instead of running a wrong cache layout.\n      if(dim!=256) {trap();return;}...\n  \n  ...Full output truncated (28 lines hidden), use '-vv' to show"
+      },
+      "tests.test_integration_contracts.TargetContracts::test_h14_command_matches_supplied_appendix_a": {
+        "type": "failure",
+        "message": "AssertionError: {'pos[233 chars]-num-seqs': 128, '--gpu-memory-utilization': 0[954 chars]True} != {'pos[233 chars]-num-batched-tokens': 16384, '--max-num-seqs':[916 chars]4}}}}\nDiff is 3835 characters long. Set self.maxDiff to None to see it."
+      },
+      "tests.test_no_fallback_static::test_no_silent_exception_swallowing": {
+        "type": "failure",
+        "message": "AssertionError: PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/experiments/replay_shared_fp32.py')\nassert not True\n +  where True = all(<generator object test_no_silent_exception_swallowing.<locals>.<genexpr> at 0x1219d3ae0>)"
+      },
+      "tests.test_no_fallback_static::test_online_hooks_do_not_copy_device_data_to_host": {
+        "type": "failure",
+        "message": "AssertionError: PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/oscar_ascend/integration/metadata.py')\nassert (None is not None)"
+      },
+      "tests.test_no_fallback_static::test_source_headers_trace_archive": {
+        "type": "failure",
+        "message": "AssertionError: missing historical fault trace: /Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/probe_mixed_decode_split.py\nassert False\n +  where False = any(<generator object test_source_headers_trace_archive.<locals>.<genexpr> at 0x1219d1c40>)"
+      },
+      "tests.test_request_window_attention_fixture::test_cpu_probe_host_cpp_syntax_and_declared_kernel_arity[cpu_probe.cpp]": {
+        "type": "failure",
+        "message": "AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-fsyntax-only', '-I', '/private/var/folders/7j/33nttyqs7ss78...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\\n').returncode"
+      },
+      "tests.test_request_window_attention_fixture::test_cpu_probe_host_cpp_syntax_and_declared_kernel_arity[c16_cpu_probe.cpp]": {
+        "type": "failure",
+        "message": "AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-fsyntax-only', '-I', '/private/var/folders/7j/33nttyqs7ss78...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\\n').returncode"
+      },
+      "tests.test_request_window_reader_resume::test_actual_cpp_task_snapshot_guard_rejects_different_or_short_saved_tasks": {
+        "type": "failure",
+        "message": "subprocess.CalledProcessError: Command '['/usr/bin/clang++', '-std=c++17', '/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-140/test_actual_cpp_task_snapshot_0/task_guard.cpp', '-o', '/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-140/test_actual_cpp_task_snapshot_0/task_guard']' returned non-zero exit status 1."
+      },
+      "tests.test_request_window_registration::test_source_packaging_identity_and_local_headers_are_complete": {
+        "type": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_member_pipeline_packaging_20261011.json'"
+      },
+      "tests.test_service_log_model::test_real_log_mtp_accounting_and_unequal_windows": {
+        "type": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_native_longbench_20260930.txt'"
+      },
+      "tests.test_service_log_model::test_two_anchors_do_not_identify_speedup_share": {
+        "type": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/service_trace_candidate_20260930.json'"
+      },
+      "tests.test_whole_prefill_scheduler::test_explicit_scheduler_class_reaches_real_server_cli_without_changing_defaults": {
+        "type": "failure",
+        "message": "ValueError: native token budget requires an omitted budget and native scheduler"
+      },
+      "tests.test_whole_prefill_variant::test_generated_policy_is_idempotent_and_restores_native_budget": {
+        "type": "failure",
+        "message": "KeyError: 'max_num_batched_tokens'"
+      },
+      "tests.test_whole_prefill_variant::test_no_quadratic_first_mtp_regression_from_budget_only[experimental_current_only]": {
+        "type": "failure",
+        "message": "Failed: DID NOT RAISE ValueError"
+      },
+      "tests.test_whole_prefill_variant::test_no_quadratic_first_mtp_regression_from_budget_only[experimental_first_mtp_current_fia]": {
+        "type": "failure",
+        "message": "Failed: DID NOT RAISE ValueError"
+      }
+    }
+  },
+  "baseline": "reports/prefix_optimization_20261013/release_host.xml",
+  "new_failure_ids": [],
+  "omitted_http_modules": [
+    "test_benchmark_measure",
+    "test_benchmark_mixed_passive",
+    "test_live_output",
+    "test_plog",
+    "test_service_workflow"
+  ],
+  "full_http_rerun": "not_run; automatic permission approval review timed out twice before command execution; not a test failure",
+  "runtime_selection_unchanged": true,
+  "vllm_argv_unchanged": true,
+  "runtime_diff": [],
+  "device": {
+    "NPU": "not_run",
+    "FIA_2304_plus": "not_run",
+    "graph": "not_run",
+    "model_quality": "not_run",
+    "performance": "not_run",
+    "AISBench": "not_requested"
+  },
+  "conclusions": {
+    "coordinator_min_break_bug": "not_reproduced; maximal joint hit equals actual GDN checkpoint intersection",
+    "null_hash_index_shift": "not_reproduced; native enumerate indices are preserved",
+    "hash_width_divisibility": "irrelevant to element-wise aggregation; 4/16/32 byte keys matched",
+    "sparse_checkpoint_loss": "reproduced; unchanged runtime policy",
+    "probe_oracle_coupling": "fixed independently with boundary examples and mutation tests",
+    "mixed_128_limit": "query-token count; independent of history length"
+  }
+}

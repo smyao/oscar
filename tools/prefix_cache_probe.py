@@ -121,21 +121,38 @@ def cases(lengths):
             for n in lengths]
 
 
+def reference_hit_bound(prompt_tokens, full_tokens=2304, hash_tokens=768):
+    """Independent probe oracle: enumerate complete pages and their dependency.
+
+    Do not import the runtime's prefix_hit_bound. Each reusable page must leave
+    a token for logits and have its entire next hash block within the prompt.
+    This is an upper bound; sparse GDN checkpoints can reduce partial hits.
+    """
+    if (type(prompt_tokens) is not int or prompt_tokens < 0 or
+            type(full_tokens) is not int or type(hash_tokens) is not int or
+            min(full_tokens, hash_tokens) <= 0 or full_tokens % hash_tokens):
+        raise ValueError("invalid prefix probe geometry")
+    result = 0
+    for end in range(full_tokens, prompt_tokens, full_tokens):
+        if (end // hash_tokens + 1) * hash_tokens > prompt_tokens:
+            break
+        result = end
+    return result
+
+
 def validate_hits(record, full_tokens=2304, hash_tokens=768):
     """Strict positive-hit contract for this pinned OSCAR MTP geometry.
 
     Zero-hit usage is omitted by native completion serving. Missing positive
     evidence remains unknown and fails; HTTP success alone never passes APC.
     """
-    from oscar_ascend.integration.prefix_cache import prefix_hit_bound
     n = record["input_tokens"]
-    expected = prefix_hit_bound(n, full_tokens, hash_tokens, guarded=True, mtp=True)
+    expected = reference_hit_bound(n, full_tokens, hash_tokens)
     warm = record["requests"]["warm_repeat"].get("cached_tokens")
     if expected and (type(warm) is not int or warm != expected):
         raise ValueError(f"APC warm hit mismatch: prompt={n} expected={expected}, actual={warm}")
     for label, response in record["requests"].items():
-        bound = prefix_hit_bound(n + int(label.startswith("fork")), full_tokens, hash_tokens,
-                                 guarded=True, mtp=True)
+        bound = reference_hit_bound(n + int(label.startswith("fork")), full_tokens, hash_tokens)
         hit = response.get("cached_tokens")
         if hit is not None and (type(hit) is not int or hit < 0 or hit % full_tokens or hit > bound):
             raise ValueError(f"APC unsafe/non-page hit: prompt={n} arm={label} hit={hit} bound={bound}")

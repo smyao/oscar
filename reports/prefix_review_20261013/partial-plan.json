@@ -1,0 +1,17 @@
+{
+  "status": "plan_only",
+  "requests": 4,
+  "seed_tokens": 32768,
+  "shared_tokens": 13824,
+  "partial_upper_bound": 11520,
+  "anchor_tokens": 12288,
+  "expected_controlled_hit": 11520,
+  "sequence": [
+    "long_seed",
+    "partial_after_long_seed",
+    "checkpoint_anchor",
+    "partial_after_anchor"
+  ],
+  "prompt_token_total": 110592,
+  "interpretation": "uncontrolled zero/unknown does not establish a coordinator bug; controlled hit is required"
+}

@@ -85,6 +85,15 @@ def test_uses_actual_c4_dispatch_boundary(long_query,allowed):
     assert (plan_mixed_decode(m,m.num_input_tokens) is not None) is allowed
 
 
+@pytest.mark.parametrize('context',[128,32768,65536])
+def test_short_query_limit_is_independent_of_history_length(context):
+    m=metadata(lengths=(4,4,2304))
+    m=replace(m,seq_lens=torch.tensor([context+4,context+4,context+2304],dtype=torch.int32),
+              max_seq_len=context+2304)
+    plan=plan_mixed_decode(m,m.num_input_tokens)
+    assert plan is not None and plan.prefix_tokens==8 and plan.prefix_requests==2
+
+
 @pytest.mark.parametrize('which',['cut','trailing_padding'])
 def test_device_boundaries_checked_before_any_subforward(which):
     m=metadata();plan=plan_mixed_decode(m,m.num_input_tokens)

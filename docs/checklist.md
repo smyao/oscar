@@ -152,3 +152,6 @@ q4诊断接入同一`--probe-only`：原生paged BF16 FIA与OSCAR CV+merge的未
 
 
 2026-10-13 P0/P1源码候选：外部FULL manager用原生池guarded hash保留MTP next-token依赖；未完成chunk的padded MTP备用ID对齐原生CPU路径；在原生预算内保存可复用FULL/GDN边界。candidate接入prepare epoch/arena失效与独立q1 MDL路由，默认启动/真实warm-hit短probe/逐位及图门同步。源/主机/HTTP模拟证据见 `reports/prefix_optimization_20261013/validation.json`。42项checkpoint不新增、不凭主机检查勾选D09/E06：本机CANN（新绑定）/NPU/图capture/图replay/模型质量/单项与整轮性能全部未验收，#157触发族仍待设备证据。详见 `docs/prefix_caching_compatibility.md`。
+
+
+2026-10-13 32K review复核（不新增或重编号42个checkpoint）：运行时、CANN和冻结精度均未改；226项专项及1358项非HTTP主机检查通过，22失败/8错误与965a6a8基线一致。新增独立部分前缀受控探针，尚无目标NPU执行。完整HTTP回归因自动审批超时未执行；不能据此更新设备、图、质量或性能checkpoint为通过。证据：`reports/prefix_review_20261013/validation.json`。

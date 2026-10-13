@@ -4,6 +4,7 @@ Execute the pinned native managers/coordinator through existing AST fixtures.
 This is host protocol evidence, never device or model-quality acceptance.
 """
 from types import SimpleNamespace
+import hashlib
 
 import pytest
 
@@ -11,12 +12,13 @@ from test_prefix_caching import _coordinator_with_hashing
 from test_runtime_native import native_groups, native_specs  # noqa: F401
 
 
-def seed_at_checkpoints(instance, checkpoints):
+def seed_at_checkpoints(instance, checkpoints, *, block_hashes=None):
     total = checkpoints[-1]
     request = SimpleNamespace(
         request_id="analysis-seed", num_prompt_tokens=total,
-        block_hashes=[i.to_bytes(4, "big")
-                      for i in range(total // instance.hash_block_size)])
+        block_hashes=block_hashes if block_hashes is not None else [
+            hashlib.sha256(str(i).encode()).digest()
+            for i in range(total // instance.hash_block_size)])
     previous = 0
     for count in checkpoints:
         for manager in instance.single_type_managers:

@@ -1,5 +1,61 @@
 # OSCAR prefix caching 兼容闭环
 
+## 2026-10-13：32K 部分前缀 review 复核
+
+本轮基线为 `965a6a8`。以下判定来自当前 Python 执行体及只读原生参考实现的 AST 执行，不把 README、注释或上节历史结论作为正确性证据。没有改动运行时调度、FULL/GDN manager、原生源码、CANN 算子或启动参数。本轮修复的是探针期望同源及回归覆盖不足。
+
+**结论：部分命中机会受稀疏 GDN checkpoint 限制属实；“协调器 min/break 错误归零”的归因不成立。不能让 FULL 单独裁决 hybrid 命中。** 尚无真 NPU 执行证据，不能据主机测试宣称32K融合场景不存在任何崩溃或数值错误。
+
+### 1. 直接复现的命中结果
+
+每次先按实际 `aligned_chunk_tokens` 端点播种32768-token请求，再构造同长度请求，只修改位置13824的一个token。使用原生 `hash_block_tokens`、原生 `sha256`/pickle链、原生 `BlockPool`/null block/free queue、实际 Ascend FULL/GDN manager 和协调器执行体。没有用假的 pool 或压紧 null 列表。生产配置默认sha256，32768输入产生 **42个完整768-token hash块**，另512-token尾部尚不生成hash，并非43个完整块。
+
+| budget | OSCAR计算端点 | 保存的合法GDN检查点 | FULL可复用上界 | 最终部分命中 |
+|---:|---|---|---:|---:|
+| 2304 | 2304,4608,…,32256,32768 | 2304,4608,…,32256 | 11520 | **11520** |
+| 8192 | 6912,13824,20736,27648,29952,32768 | 除最后32768外的上述端点 | 11520 | **6912** |
+| 16384 | 16128,29952,32768 | 16128,29952 | 11520 | **0** |
+| 66048 | 29952,32768 | 29952 | 11520 | **0** |
+
+四组全前缀重复命中均为29952。源码绑定及逐项矩阵见 `reports/prefix_review_20261013/reproduction.json`；可重跑的回归为 `tests/test_prefix_review_32k.py`。新增回归还使用817152 B页、6×2560 conv的目标MTP几何；原先801792 B夹具的逻辑2304/768边界结论一致。
+
+### 2. 为什么0不是协调器误删
+
+- `MambaManager.allocate_new_blocks` 在align路径把未计算的中间位置填成null，只为实际步端点保留状态页。`num_cached_block=42` 是已处理的逻辑位置游标，**不是池中有42份GDN状态**。大chunk只有1～2个已缓存checkpoint完全可能。
+- `BlockPool.cache_full_blocks` 对原始切片 `enumerate(new_full_blocks)`，null处直接continue，仍以同一个下标i取 `new_block_hashes[i]`。跳过null不会把后续hash向前挪；回归检查了每个端点对应的原生hash与pool key。
+- `AscendMambaManager.find_longest_cache_hit` 从上界向左逐项扫描，并要求端点满足2304联合对齐；返回0说明当前池里没有任何更短的共同合法状态。16384预算下最早状态是16128，自然无法服务FULL上界11520。
+- FULL具有向下裁剪性质，GDN扫描已经得到其上界以内的最大合法点，所以simple-hybrid一次求交足够。若结果是0，再迭代时上界也是0，不可能“收敛回来”。驱逐11520的一个GDN组后，实际返回9216；再驱逐所有更早状态后才返回0，FULL仍保持11520可读。这覆盖了真正需要回退到更早checkpoint的情况。
+- `vllm_ascend/ops/gdn.py` 的prefill直接以命中state index读取 `ssm_state` 作为 `initial_state`。放行只有FULL命中、没有对应GDN状态的请求会破坏递归状态，不能作为修复。
+
+因此单独看到真机 `cached_tokens=0` **也不足以判定P1协调器bug**；还需同轮checkpoint存在、未驱逐、全组可用、未受同一步发布保护等证据。稀疏checkpoint造成的实际收益损失保留为结构性取舍；强制每2304 tokens切步会增加调度/launch成本，本轮没有在无净收益证据时改变此合理逻辑。
+
+### 3. review中的其他更正
+
+1. **hash宽度**：FULL聚合按hash列表元素数量分组，不按每个digest的字节数除3。发布端包装一次；查找端先解出原始hash列表，再构造相同的guard/聚合视图。4、16、32字节 × 43、300个hash的6组测试均逐项匹配pool key与lookup；“32 % 3”不影响正确性。4字节旧夹具覆盖不足属实，但不天然制造错位。
+2. **guard损失**：不是每个FULL页永久损失768。末尾必须容纳一个完整前瞻hash，再按2304取整；此前页在后续输入到达后可复用。32768−29952=2816，是本例总尾部重算量；相对无MTP前瞻的32256上界少2304。原生MTP整页drop在这个32K点的上界同样是29952。复用比例不会随上下文增长固定在约91%。
+3. **原生端点**：`Scheduler._mamba_block_aligned_split` 读的是 `cache_config.block_size=768`。实际原生16384预算端点为16128/31488/32768，66048预算为31488/32768；2304预算最后两个端点为31488/32768。不能把OSCAR物理2304代入原生cache_config后称作原生对照。上述四预算都收敛且不超预算，不外推成整个混合调度系统的无饥饿证明。
+4. **mixed split的128**：`plan_mixed_decode` 读取query_start_loc差分；`values[short]` 是本步短请求query token总数。上下文32768/65536不因此禁用split。新增测试保持两个4-token短请求及2304-token续跑，三个历史长度下都正确选择split。
+5. **FIA**：当前 `_causal_mask` 的2048方阵搭配sparse_mode=3，与原生对应构造/调用一致；仅凭2048不能推出最大query长度也是2048。本轮没有NPU证明2304+ chunk的mask执行与数值结果，保持未验证，不为此改写算子。
+
+### 4. 已修复的验证缺口
+
+- 常规prefix夹具升级为32-byte digest；新增32K矩阵使用真正的原生SHA256 token链和当前调度端点，覆盖部分分叉、无checkpoint、较早checkpoint、单组驱逐及不同hash宽度。
+- `tools.prefix_cache_probe` 不再import生产 `prefix_hit_bound`，改用独立枚举页末/前瞻依赖的probe oracle，并有固定边界值和故意破坏生产公式的回归。原probe已有真实usage检查，原本就不会仅凭HTTP200通过；键空间若全miss，正命中断言本来也能发现。修的是公式同源盲区，不把旧探针全部判成无效。
+- `tools.partial_prefix_probe` 新增四请求对照：独立salt A下32K seed→共享13824的32K fork；独立salt B下12288-token checkpoint anchor→32K fork。后者主动建立11520的合法联合checkpoint，实际必须命中11520；前者允许0/未知，但明确不据此宣称协调器bug。两个salt防止对照互相污染，不重置全局cache，不改变服务预算。
+
+对已运行、采用当前默认2304/768几何的服务执行（默认只打印计划，加`--run`才发请求）：
+
+```bash
+python3 -m tools.partial_prefix_probe --run \
+  --base-url http://127.0.0.1:8989 --model qwen3.5 \
+  --seed-tokens 32768 --shared-tokens 13824 --output-tokens 8 \
+  --timeout 120 --total-timeout 600 --output logs/partial-prefix-32k
+```
+
+输出目录须未存在；后四卡服务端口改7878。4次完成请求、合计110592输入token、每次8个输出token，整体期限600秒。保留request JSON、完整SSE、response JSON和summary。`summary.status=completed`及`assessment.controlled_hit=passed`才表示受控命中成立；失败仍可能来自配置、统计缺失、驱逐或模型执行，不能自动归罪协调器。此探针不强制加入默认部署，不产生隐式服务流量，也不替代模型质量或吞吐验收。
+
+专项回归226 passed，原始日志/XML和审批限制见 `reports/prefix_review_20261013/validation.json`。本轮未执行真NPU、FIA数值、图回放或AISBench；启动命令、默认参数和所有运行时优化选择保持基线不变。
+
 档案依据：#26（前缀窗口必须精确）、#37–49（窗口生命周期及 MTP 接受边界）、#127（none/align 原生几何）、#128（128 虚拟块与物理页分离）、#129（host 通过不等于设备完成）。本页从属于 `skills/oscar-quant-optimization/SKILL.md`；不取代性能主目标。
 
 

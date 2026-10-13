@@ -132,3 +132,8 @@ candidate接入metadata epoch+arena所有权的prepare复用与MDL q1独立符�
 本机主机/HTTP回归、基线失败对照、源哈希及计划：`reports/prefix_optimization_20261013/validation.json`。无torch_npu/limactl，CANN、NPU、图、模型质量、整轮性能保持pending；#157具体触发族未定位。固定直启candidate及默认标准target同步，默认prefix=true，prompt details=true；probe新增实际命中断言。重开条件：本轮签名的设备门/服务门回传后按每项完整路径1.15及整轮2–4倍目标重新裁决，禁止要求重跑AISBench。
 
 FULL本步新发布页采用原生Mamba同类admission延期，防止旧GDN checkpoint绕过写后读依赖；最终主机1380 passed/22 failed/8 errors，后30项均在e6178e3基线复现。详见上述兼容报告及validation.json。
+
+
+### 2026-10-13：32K review复核与验证盲区修复
+
+基线965a6a8。真实原生hash/pool/manager/coordinator执行体证明：共享13824 tokens时，预算2304/8192/16384/66048的共同命中分别为11520/6912/0/0，正好等于已保存GDN checkpoint交集，未发现min/break或null索引错位。不能绕过GDN裁决。运行时/算子/默认启动参数不变；升级32字节夹具、真实32K端点矩阵、独立HTTP oracle和四请求部分前缀对照。专项226通过；非HTTP主机1358通过、22失败/8错误均为基线原有。完整HTTP回归自动审批两次超时，未执行；NPU/图/质量/性能未验收。详见[prefix复核](prefix_caching_compatibility.md)及`reports/prefix_review_20261013/validation.json`。

@@ -3,6 +3,7 @@
 Archive #37-49/#127/#128/#142/#157: host protocol evidence only.
 """
 from dataclasses import replace
+import hashlib
 import sys
 from types import SimpleNamespace
 
@@ -93,7 +94,7 @@ def test_full_page_not_published_before_committed_lookahead(native_groups, monke
     instance = guarded_coordinator(native_groups, monkeypatch)
     full = instance.single_type_managers[0]
     req = SimpleNamespace(request_id="r", num_prompt_tokens=4608,
-                          block_hashes=[bytes([i]) for i in range(6)])
+                          block_hashes=[hashlib.sha256(str(i).encode()).digest() for i in range(6)])
     full.allocate_new_blocks("r", 3075, 3072)
     full.cache_blocks(req, 2304)
     assert full.num_cached_block.get("r", 0) == 0
@@ -108,7 +109,7 @@ def test_full_page_not_published_before_committed_lookahead(native_groups, monke
 def test_same_step_full_publication_cannot_bypass_older_gdn_checkpoint(native_groups, monkeypatch):
     instance = guarded_coordinator(native_groups, monkeypatch)
     req = SimpleNamespace(request_id="seed", num_prompt_tokens=5376,
-                          block_hashes=[bytes([i]) for i in range(7)])
+                          block_hashes=[hashlib.sha256(str(i).encode()).digest() for i in range(7)])
     for count in (2304, 3072):
         for manager in instance.single_type_managers:
             manager.new_step_starts()
@@ -135,7 +136,7 @@ def test_full_admission_guard_only_affects_new_prefix_consumers(native_groups, m
     instance = (guarded_coordinator if guard else _coordinator_with_hashing)(native_groups, monkeypatch)
     full = instance.single_type_managers[0]
     req = SimpleNamespace(request_id="seed", num_prompt_tokens=9216,
-                          block_hashes=[bytes([i]) for i in range(12)])
+                          block_hashes=[hashlib.sha256(str(i).encode()).digest() for i in range(12)])
     full.allocate_new_blocks(req.request_id, 9219, 9216)
     full.cache_blocks(req, 9216)
     page = full.req_to_blocks[req.request_id][0]

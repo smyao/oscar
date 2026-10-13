@@ -59,6 +59,21 @@ def test_strict_apc_gate_accepts_real_hit_without_inventing_cold_zero():
     assert record["requests"]["cold_seed"]["cached_tokens"] is None
 
 
+@pytest.mark.parametrize("tokens,expected", [(2304, 0), (2305, 0), (3071, 0), (3072, 2304),
+    (4608, 2304), (5376, 4608), (13824, 11520), (32768, 29952), (33024, 32256)])
+def test_independent_probe_bound_has_fixed_boundary_examples(tokens, expected):
+    assert prefix_cache_probe.reference_hit_bound(tokens) == expected
+
+
+@pytest.mark.parametrize("wrong", [0, 4608])
+def test_runtime_formula_does_not_control_probe_expectation(monkeypatch, wrong):
+    import oscar_ascend.integration.prefix_cache as production
+    monkeypatch.setattr(production, "prefix_hit_bound", lambda *args, **kwargs: wrong)
+    with pytest.raises(ValueError, match="warm hit mismatch"):
+        prefix_cache_probe.validate_hits({"input_tokens": 3072,
+            "requests": {"warm_repeat": {"cached_tokens": wrong}}})
+
+
 def test_adjacent_json_and_separate_rank_units(tmp_path):
     line = '(Worker) {"t":"oscar-timing","pid":1,"host_s":0.02,"phase_end":"fia"}'
     line += '{"t":"oscar-device-event","pid":2,"rank":1,"device_ms":3,"phase":"fia","device_evidence":"npu_event"}'

@@ -1,0 +1,323 @@
+{
+  "base": "965a6a8",
+  "scope": "native AST code, real BlockPool, SHA256 token chains, host only",
+  "sources": {
+    "references/vllm/vllm/v1/core/block_pool.py": "84755b84c36ed6460ceefe2690c9484a9c31488c5da6daa6c918f497d8837dee",
+    "references/vllm/vllm/v1/core/single_type_kv_cache_manager.py": "dc425e1e87b6157f3e5c46be2bfee54076ccb020b86c5a8aaa3d9901c75e46ef",
+    "references/vllm-ascend/vllm_ascend/patch/platform/patch_mamba_manager.py": "f39b28a75509ff5b8617104a00c73e6bd21b8b7acd43f81b50c57ea7c474815e",
+    "references/vllm-ascend/vllm_ascend/patch/platform/patch_kv_cache_coordinator.py": "35a62e6bb3960f88192ff609751d631eeafbbc29f087560afd60906b3a504999",
+    "oscar_ascend/integration/specs.py": "3a9cb70043feffd9550ccfb8e278b76e6495bb48c248195405f80678f1d3c431",
+    "oscar_ascend/integration/prefix_cache.py": "56d6cce83e621b1603d19be0d1a8c7eebe0228da49219a26232875fafe7a149d"
+  },
+  "matrix": [
+    {
+      "budget": 2304,
+      "endpoints": [
+        2304,
+        4608,
+        6912,
+        9216,
+        11520,
+        13824,
+        16128,
+        18432,
+        20736,
+        23040,
+        25344,
+        27648,
+        29952,
+        32256,
+        32768
+      ],
+      "raw_hash_count": 42,
+      "hash_bytes": 32,
+      "num_cached_block_cursors": [
+        13,
+        42,
+        42,
+        42
+      ],
+      "saved_gdn_checkpoints": [
+        2304,
+        4608,
+        6912,
+        9216,
+        11520,
+        13824,
+        16128,
+        18432,
+        20736,
+        23040,
+        25344,
+        27648,
+        29952,
+        32256
+      ],
+      "cases": [
+        {
+          "shared_tokens": 2304,
+          "full_dependency_bound": 0,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 3072,
+          "full_dependency_bound": 2304,
+          "checkpoint_intersection": 2304,
+          "actual_hit": 2304
+        },
+        {
+          "shared_tokens": 4608,
+          "full_dependency_bound": 2304,
+          "checkpoint_intersection": 2304,
+          "actual_hit": 2304
+        },
+        {
+          "shared_tokens": 6912,
+          "full_dependency_bound": 4608,
+          "checkpoint_intersection": 4608,
+          "actual_hit": 4608
+        },
+        {
+          "shared_tokens": 13824,
+          "full_dependency_bound": 11520,
+          "checkpoint_intersection": 11520,
+          "actual_hit": 11520
+        },
+        {
+          "shared_tokens": 16896,
+          "full_dependency_bound": 16128,
+          "checkpoint_intersection": 16128,
+          "actual_hit": 16128
+        },
+        {
+          "shared_tokens": 30720,
+          "full_dependency_bound": 29952,
+          "checkpoint_intersection": 29952,
+          "actual_hit": 29952
+        },
+        {
+          "shared_tokens": 32768,
+          "full_dependency_bound": 29952,
+          "checkpoint_intersection": 29952,
+          "actual_hit": 29952
+        }
+      ]
+    },
+    {
+      "budget": 8192,
+      "endpoints": [
+        6912,
+        13824,
+        20736,
+        27648,
+        29952,
+        32768
+      ],
+      "raw_hash_count": 42,
+      "hash_bytes": 32,
+      "num_cached_block_cursors": [
+        13,
+        42,
+        42,
+        42
+      ],
+      "saved_gdn_checkpoints": [
+        6912,
+        13824,
+        20736,
+        27648,
+        29952
+      ],
+      "cases": [
+        {
+          "shared_tokens": 2304,
+          "full_dependency_bound": 0,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 3072,
+          "full_dependency_bound": 2304,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 4608,
+          "full_dependency_bound": 2304,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 6912,
+          "full_dependency_bound": 4608,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 13824,
+          "full_dependency_bound": 11520,
+          "checkpoint_intersection": 6912,
+          "actual_hit": 6912
+        },
+        {
+          "shared_tokens": 16896,
+          "full_dependency_bound": 16128,
+          "checkpoint_intersection": 13824,
+          "actual_hit": 13824
+        },
+        {
+          "shared_tokens": 30720,
+          "full_dependency_bound": 29952,
+          "checkpoint_intersection": 29952,
+          "actual_hit": 29952
+        },
+        {
+          "shared_tokens": 32768,
+          "full_dependency_bound": 29952,
+          "checkpoint_intersection": 29952,
+          "actual_hit": 29952
+        }
+      ]
+    },
+    {
+      "budget": 16384,
+      "endpoints": [
+        16128,
+        29952,
+        32768
+      ],
+      "raw_hash_count": 42,
+      "hash_bytes": 32,
+      "num_cached_block_cursors": [
+        13,
+        42,
+        42,
+        42
+      ],
+      "saved_gdn_checkpoints": [
+        16128,
+        29952
+      ],
+      "cases": [
+        {
+          "shared_tokens": 2304,
+          "full_dependency_bound": 0,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 3072,
+          "full_dependency_bound": 2304,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 4608,
+          "full_dependency_bound": 2304,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 6912,
+          "full_dependency_bound": 4608,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 13824,
+          "full_dependency_bound": 11520,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 16896,
+          "full_dependency_bound": 16128,
+          "checkpoint_intersection": 16128,
+          "actual_hit": 16128
+        },
+        {
+          "shared_tokens": 30720,
+          "full_dependency_bound": 29952,
+          "checkpoint_intersection": 29952,
+          "actual_hit": 29952
+        },
+        {
+          "shared_tokens": 32768,
+          "full_dependency_bound": 29952,
+          "checkpoint_intersection": 29952,
+          "actual_hit": 29952
+        }
+      ]
+    },
+    {
+      "budget": 66048,
+      "endpoints": [
+        29952,
+        32768
+      ],
+      "raw_hash_count": 42,
+      "hash_bytes": 32,
+      "num_cached_block_cursors": [
+        13,
+        42,
+        42,
+        42
+      ],
+      "saved_gdn_checkpoints": [
+        29952
+      ],
+      "cases": [
+        {
+          "shared_tokens": 2304,
+          "full_dependency_bound": 0,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 3072,
+          "full_dependency_bound": 2304,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 4608,
+          "full_dependency_bound": 2304,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 6912,
+          "full_dependency_bound": 4608,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 13824,
+          "full_dependency_bound": 11520,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 16896,
+          "full_dependency_bound": 16128,
+          "checkpoint_intersection": 0,
+          "actual_hit": 0
+        },
+        {
+          "shared_tokens": 30720,
+          "full_dependency_bound": 29952,
+          "checkpoint_intersection": 29952,
+          "actual_hit": 29952
+        },
+        {
+          "shared_tokens": 32768,
+          "full_dependency_bound": 29952,
+          "checkpoint_intersection": 29952,
+          "actual_hit": 29952
+        }
+      ]
+    }
+  ],
+  "device_completion": "not_run"
+}

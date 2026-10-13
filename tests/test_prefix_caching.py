@@ -5,6 +5,7 @@ lookahead drop, native hash aggregation, refcounts, eviction and reset. This
 is host evidence; the byte checks do not stand in for an NPU attention run.
 """
 import json
+import hashlib
 import logging
 from types import SimpleNamespace
 
@@ -92,7 +93,8 @@ def _coordinator_with_hashing(native_groups, monkeypatch):
 def _cache_seed(instance, *, request_id="seed"):
     full = instance.single_type_managers[0]
     total = 4 * full.block_size
-    hashes = [i.to_bytes(4, "big") for i in range(total // instance.hash_block_size)]
+    hashes = [hashlib.sha256(str(i).encode()).digest()
+              for i in range(total // instance.hash_block_size)]
     req = SimpleNamespace(request_id=request_id, block_hashes=hashes, num_prompt_tokens=total)
     # Native align checkpoints remain 768 tokens even though FULL pages are
     # 2304. Do not change GDN or inflate the native per-step token budget.

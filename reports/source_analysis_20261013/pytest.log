@@ -1,0 +1,91 @@
+........................................................................ [ 21%]
+...................................................................... [ 41%]
+........................................................................ [ 62%]
+........................................................................ [ 83%]
+.....................F.................................                  [100%]
+=================================== FAILURES ===================================
+____ test_observe_candidate_gates_and_service_share_native_effective_config ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10f7ba430>
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-117/test_observe_candidate_gates_a0')
+
+    def test_observe_candidate_gates_and_service_share_native_effective_config(monkeypatch, tmp_path):
+        source = tmp_path / "target.json"; source.write_text(json.dumps(target()))
+        before = source.read_bytes(); logs = tmp_path / "observe"
+        seen = []
+    
+        def check(path, config, env=None):
+            assert path == logs / "effective-target.json"
+            assert json.loads(path.read_text()) == config
+            if env is not None:
+                assert env["OSCAR_TARGET_CONFIG"] == str(path)
+            assert config["use_native_token_budget"] is True
+            assert not {"max_num_batched_tokens", "scheduler_cls", "history_token_capacity"} & config.keys()
+            assert not config.get("experimental_whole_prefill", False)
+            assert not config.get("experimental_bounded_whole_prefill", False)
+            assert config["experimental_decode_bundle"] is True
+            assert config["devices"] == [0, 1, 2, 3] and config["port"] == 8989
+            assert "--max-num-batched-tokens" not in serve_argv(config)
+            assert "--scheduler-cls" not in serve_argv(config)
+    
+        gates = ("_preflight", "_candidate_gate", "_fast_unpack_gate", "_mixed_optimization_gate",
+                 "_striped_cache_gate", "_decode_bundle_gate", "_current_only_gate",
+                 "_first_mtp_current_gate", "_mixed_decode_split_gate")
+        for name in gates:
+            def gate(path, config, env, *_args, name=name):
+                check(path, config, env); seen.append(name)
+            monkeypatch.setattr(observe_serve, name, gate)
+    
+        class ReachedService(RuntimeError):
+            returncode = 91
+            phase = "test_native_effective_config"
+    
+        @contextmanager
+        def managed(config, path, **kwargs):
+            check(path, config)
+            assert kwargs["native"] is False
+            assert seen == list(gates)
+            seen.append("managed_server")
+            raise ReachedService("host test stops before actual device service")
+            yield  # pragma: no cover - contextmanager protocol, deliberately no service.
+    
+        monkeypatch.setattr(observe_serve, "managed_server", managed)
+        monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
+        monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
+        monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
+>       assert observe_serve.main(["--config", str(source), "--log-dir", str(logs),
+                                   "--variant", "candidate"]) == 91
+E       AssertionError: assert 2 == 91
+E        +  where 2 = <function main at 0x10f5b75e0>(['--config', '/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-117/test_observe_cand...78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-117/test_observe_candidate_gates_a0/observe', '--variant', 'candidate'])
+E        +    where <function main at 0x10f5b75e0> = observe_serve.main
+
+tests/test_native_token_budget.py:217: AssertionError
+----------------------------- Captured stdout call -----------------------------
+    import torch_npu  # noqa: F401
+ModuleNotFoundError: No module named 'torch_npu'
+[oscar] FAILED phase=mdl-decode-npu rc=2 log=/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-117/test_observe_candidate_gates_a0/observe/mdl-decode-npu.log
+[oscar] PERF_MDL_RESULT {"status": "failed", "report": "/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-117/test_observe_candidate_gates_a0/observe/mdl-decode-report.json"}
+Traceback (most recent call last):
+    ^^^^^^^^^^^^^^^^
+  File "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/probe_mdl_decode.py", line 388, in main
+    try:report=probe(args.config,args.acceptance)
+               ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/probe_mdl_decode.py", line 352, in probe
+----------------------------- Captured stderr call -----------------------------
+Traceback (most recent call last):
+  File "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/observe_serve.py", line 1010, in run
+    _mdl_decode_gate(effective_path, config, env, log_dir, status)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/observe_serve.py", line 577, in _mdl_decode_gate
+    _phase("mdl-decode-npu", [sys.executable, "-m", "tools.probe_mdl_decode",
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           "--config", str(config_path), "--acceptance", str(ROOT/"configs/acceptance.json"),
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           "--output", str(output)], config=config, env=env, log_dir=log_dir, status=status)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/observe_serve.py", line 227, in _phase
+    raise error
+RuntimeError: mdl-decode-npu failed rc=2 log=/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-117/test_observe_candidate_gates_a0/observe/mdl-decode-npu.log
+=========================== short test summary info ============================
+FAILED tests/test_native_token_budget.py::test_observe_candidate_gates_and_service_share_native_effective_config
+1 failed, 340 passed, 2 subtests passed in 6.29s

@@ -1,0 +1,31 @@
+{
+  "branch": "oscar-new-2",
+  "head": "07a27358d6d8340556fd1452812101d238a4c2aa",
+  "scope": "source analysis; no production mutation or device execution",
+  "sha256": {
+    "oscar_ascend/runtime.py": "22cdde03576a0e3e0d196936eb3b711f26fd0d97793eaf1e244bfb3ec822feac",
+    "oscar_ascend/layout.py": "87bbee7a38f55545563823d798172e807f774c0bad8f72a07ec668ec562e3fc0",
+    "oscar_ascend/lifecycle.py": "8791998aabe84dd076e9366b87d0d158722135e5370e2ede09f443c6f67a314d",
+    "oscar_ascend/integration/impl.py": "33f63a320c72f7ec6bfa777d4f668ae675224847bcd71989731a9b379fa98377",
+    "oscar_ascend/integration/metadata.py": "96d6dbd2c1b3015a8536d701bb145294ef26af6dbfb9a6150eb9e2a9ccdbf3d4",
+    "oscar_ascend/ops/cv_dispatch.py": "e982db9a015198b2d5053b626a6053bfc8e29525bdd7475f2b60c839ba1aca67",
+    "tools/serving_variants.py": "1f587ce90a6853418973989331744c6f91918df6196ea43c2c4b699bd0df99bb",
+    "csrc/kernels/attention_cv_mdl_decode.cpp": "8dc0c0814f3f6fa7e0525b97b048426768efbbc49e46ffad19239e9655f852a5",
+    "csrc/kernels/attention_cv_decode_bundle.cpp": "d8171f0403cf176087e1c76c64e454e6fb1e74fd79252aab3b59e848cca19401",
+    "csrc/kernels/attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+    "csrc/kernels/rotate_clip_store_striped.cpp": "72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430",
+    "csrc/kernels/status_guard.cpp": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+    "configs/target.json": "a441ab67d2f2a24c70d688e994bc6b3e6801e8c14cda34cd1bfca935d432bd25",
+    "configs/acceptance.json": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+    "references/vllm/vllm/v1/core/kv_cache_manager.py": "a69aa08062714b40b149648bbec031a42d22e422fbf9543cd10fbd12d2496edb",
+    "references/vllm/vllm/v1/core/single_type_kv_cache_manager.py": "dc425e1e87b6157f3e5c46be2bfee54076ccb020b86c5a8aaa3d9901c75e46ef",
+    "references/vllm/vllm/v1/core/sched/scheduler.py": "9ae1491f57a6294e32416b93ef2ea68107fa0d65c3a4d7f745f1261012f735e9",
+    "references/vllm-ascend/vllm_ascend/patch/platform/patch_kv_cache_coordinator.py": "35a62e6bb3960f88192ff609751d631eeafbbc29f087560afd60906b3a504999",
+    "references/vllm-ascend/vllm_ascend/patch/platform/patch_mamba_manager.py": "f39b28a75509ff5b8617104a00c73e6bd21b8b7acd43f81b50c57ea7c474815e"
+  },
+  "conditional_workspace": {
+    "2048": 172418304,
+    "8192": 389842176,
+    "16384": 679740672
+  }
+}

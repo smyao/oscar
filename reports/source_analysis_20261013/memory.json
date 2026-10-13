@@ -1,0 +1,340 @@
+{
+  "evidence_kind": "offline_source_derived_byte_accounting_not_device_measurement",
+  "unit": "bytes per TP rank (MiB = bytes / 1048576)",
+  "per_request_scope": "Allocated FULL page demand plus native maximum live GDN reservation; not measured whole HBM, not a sum of all cached prefix checkpoints.",
+  "workload": {
+    "prompt_tokens": 65100,
+    "output_tokens": 512,
+    "requests": 120,
+    "client_concurrency": 32,
+    "note": "120 is the total cohort; it does not mean 120 simultaneously allocated requests."
+  },
+  "model_geometry": {
+    "target_full_layers": 16,
+    "gdn_layers": 48,
+    "draft_full_layers": 1,
+    "local_query_heads": 6,
+    "local_kv_heads": 1,
+    "head_dim": 256,
+    "linear_key_heads": 16,
+    "linear_value_heads": 48,
+    "linear_key_dim": 128,
+    "linear_value_dim": 128,
+    "conv_kernel": 4
+  },
+  "target_tp": 4,
+  "assumptions": [
+    "Uniform FULL geometry and native BF16 K/V; GDN BF16 is explicit in tools/target_cli.py.",
+    "Prefix caching=True, native mamba_cache_mode=align; zero shared-prefix reuse assumed, not prefix caching disabled.",
+    "GDN align reservation is 2+MTP pages/layer, none is 1+MTP; evictable cached checkpoints are reported separately from non-evictable live demand.",
+    "MTP draft FULL layers use the same geometry and the native uniform-page grouping heuristic.",
+    "The prompt length is a client label unless server token usage independently confirms it."
+  ],
+  "layout": {
+    "production_storage": "physical_page_owned_exact_snapshots",
+    "prefix_caching": true,
+    "native_mamba_cache_mode": "align",
+    "native_mamba_block_tokens": 768,
+    "native_mamba_mode_request": "none",
+    "dtype": {
+      "full_current_and_window": "bfloat16",
+      "history_codes": "int2",
+      "history_scale_zero": "float16",
+      "gdn_conv": "bfloat16",
+      "gdn_ssm": "bfloat16"
+    },
+    "conv_bytes": 30720,
+    "ssm_bytes": 393216,
+    "native_padded_page_bytes": 817152,
+    "native_full_block_tokens": 768,
+    "oscar_full_block_tokens": 2304,
+    "int2_token_bytes": 136,
+    "bf16_token_bytes": 1024,
+    "encoding_only_ratio": 7.529411764705882,
+    "int2_payload_per_page_bytes": 313344,
+    "snapshot_rows_per_physical_page": 323,
+    "snapshot_bytes_per_physical_page": 333336,
+    "snapshot_tag_bytes_per_page": 2584,
+    "shared_pool_width": 17,
+    "full_groups": 1,
+    "gdn_groups": 3,
+    "pool_block_bytes": 13891584,
+    "gdn_states_per_layer_per_request": 5,
+    "gdn_conv_ssm_payload_per_request_bytes": 101744640,
+    "gdn_group_padding_slots": 3,
+    "one_null_block_bytes": 13891584
+  },
+  "prefix_sharing_and_retention": {
+    "shared_prefix_tokens_assumed": 0,
+    "sharing_savings_bytes_claimed": 0,
+    "actual_unique_prefix_blocks": null,
+    "actual_gdn_cached_checkpoint_blocks": null,
+    "cached_blocks_accounting": "Native BlockPool retains completed hashes in the same fixed allocated pool. Zero-refcount cached blocks are evictable and count as free for admission, not as an additional tensor allocation or guaranteed shared-prefix saving.",
+    "scope": "No input/token-hash evidence was supplied; zero sharing is the comparison baseline. Cache residency/hit ratios and shared GDN checkpoint lifetimes require actual native pool metadata."
+  },
+  "source_contracts": {
+    "native_modes": "references/vllm/vllm/model_executor/models/config.py::MambaModelConfig.verify_and_update_config",
+    "native_gdn_reservation": "references/vllm/vllm/v1/kv_cache_interface.py::MambaSpec.max_memory_usage_bytes",
+    "native_page_geometry": "references/vllm-ascend/vllm_ascend/patch/platform/patch_mamba_config.py::verify_and_update_config",
+    "native_pool": "references/vllm/vllm/v1/core/block_pool.py::BlockPool",
+    "oscar_page_geometry": "oscar_ascend/layout.py::HybridPageLayout",
+    "exact_snapshots": "oscar_ascend/lifecycle.py::SnapshotLayout",
+    "research_none_layout": "oscar_ascend/dual_region_layout.py::DualRegionPageLayout"
+  },
+  "per_request": [
+    {
+      "stage": "prompt",
+      "tokens": 65100,
+      "native_full_pages_per_group": 85,
+      "oscar_full_pages_per_group": 29,
+      "gdn_pages_all_groups": 15,
+      "native_pool_blocks_per_request": 100,
+      "oscar_pool_blocks_per_request": 44,
+      "native_full_bytes": 1180784640,
+      "oscar_full_bytes": 402855936,
+      "gdn_physical_pool_bytes": 208373760,
+      "native_total_kv_bytes": 1389158400,
+      "oscar_total_kv_bytes": 611229696,
+      "native_over_oscar_full_physical_ratio": 2.9310344827586206,
+      "native_over_oscar_all_kv_physical_ratio": 2.272727272727273,
+      "full_target_gap": {
+        "minimum_ratio": 6,
+        "stretch_ratio": 7,
+        "current_ratio": 2.9310344827586206,
+        "target_met_by_current_layout": false,
+        "additional_full_bytes_reduction_factor_to_6x": 2.0470588235294116,
+        "additional_full_bytes_reduction_factor_to_7x": 2.388235294117647
+      },
+      "oscar_full_page_components_bytes": {
+        "packed_capacity": 154478592,
+        "precise_snapshot_capacity": 164334648,
+        "unused_conv_region": 15144960,
+        "unused_ssm_tail": 39376896,
+        "unused_snapshot_padding": 29520840
+      },
+      "proposed_unimplemented": {
+        "prefix_caching_compatible": false,
+        "serving_available": false,
+        "packed_128_page_bytes": 150631424,
+        "one_exact_window_per_request_bytes": 5666712,
+        "full_bytes": 156298136,
+        "full_bf16_logical_over_proposed_ratio": 7.250635413847801,
+        "native_full_physical_over_proposed_ratio": 7.554694318299484,
+        "total_with_unchanged_native_gdn_pool_bytes": 364671896,
+        "native_all_kv_over_proposed_with_native_gdn_ratio": 3.80933769571319,
+        "tight_gdn_bytes_preserving_all_native_states": 101744640,
+        "total_with_tight_gdn_arena_bytes": 258042776,
+        "native_all_kv_over_proposed_tight_gdn_ratio": 5.383442317331139,
+        "native_logical_payload_over_proposed_tight_gdn_ratio": 4.786049271148749,
+        "caveat": "Counterfactual standalone INT2/one-request-window bytes only. No exact cross-request prefix recovery, allocator/lifecycle implementation or NPU verification; excludes new checkpoint storage, indirection, alignment, graph arenas and fragmentation. Not an APC-compatible candidate."
+      },
+      "research_request_windows_none_only": {
+        "serving_available_under_current_default": false,
+        "required_prefix_caching": false,
+        "required_mamba_cache_mode": "none",
+        "physical_tokens_per_page": 5632,
+        "full_pages_per_request": 12,
+        "cohort_active_requests": 32,
+        "sidecar_reserved_requests": 128,
+        "fixed_sidecars_bytes_per_rank": 725339136,
+        "fixed_window_status_bytes_per_rank": 8704,
+        "shared_device_lease_map_bytes_per_rank": 2048,
+        "pinned_host_lease_map_bytes_not_hbm": 2048,
+        "cohort_full_bytes_including_all_reserved_sidecars": 6059718144,
+        "native_over_research_full_ratio": 6.235456432476606,
+        "native_over_research_all_kv_ratio": 3.7843733338725603,
+        "checkpoint_bytes_for_apc": null,
+        "caveat": "Historical none-only geometry; APC requires a new checkpoint/layout protocol and a new ledger. These ratios are not current-candidate acceptance."
+      }
+    },
+    {
+      "stage": "output_end",
+      "tokens": 65612,
+      "native_full_pages_per_group": 86,
+      "oscar_full_pages_per_group": 29,
+      "gdn_pages_all_groups": 15,
+      "native_pool_blocks_per_request": 101,
+      "oscar_pool_blocks_per_request": 44,
+      "native_full_bytes": 1194676224,
+      "oscar_full_bytes": 402855936,
+      "gdn_physical_pool_bytes": 208373760,
+      "native_total_kv_bytes": 1403049984,
+      "oscar_total_kv_bytes": 611229696,
+      "native_over_oscar_full_physical_ratio": 2.9655172413793105,
+      "native_over_oscar_all_kv_physical_ratio": 2.2954545454545454,
+      "full_target_gap": {
+        "minimum_ratio": 6,
+        "stretch_ratio": 7,
+        "current_ratio": 2.9655172413793105,
+        "target_met_by_current_layout": false,
+        "additional_full_bytes_reduction_factor_to_6x": 2.0232558139534884,
+        "additional_full_bytes_reduction_factor_to_7x": 2.36046511627907
+      },
+      "oscar_full_page_components_bytes": {
+        "packed_capacity": 154478592,
+        "precise_snapshot_capacity": 164334648,
+        "unused_conv_region": 15144960,
+        "unused_ssm_tail": 39376896,
+        "unused_snapshot_padding": 29520840
+      },
+      "proposed_unimplemented": {
+        "prefix_caching_compatible": false,
+        "serving_available": false,
+        "packed_128_page_bytes": 151815168,
+        "one_exact_window_per_request_bytes": 5666712,
+        "full_bytes": 157481880,
+        "full_bf16_logical_over_proposed_ratio": 7.252730891960396,
+        "native_full_physical_over_proposed_ratio": 7.58611863155304,
+        "total_with_unchanged_native_gdn_pool_bytes": 365855640,
+        "native_all_kv_over_proposed_with_native_gdn_ratio": 3.8349825193346754,
+        "tight_gdn_bytes_preserving_all_native_states": 101744640,
+        "total_with_tight_gdn_arena_bytes": 259226520,
+        "native_all_kv_over_proposed_tight_gdn_ratio": 5.412447707896553,
+        "native_logical_payload_over_proposed_tight_gdn_ratio": 4.798576688835695,
+        "caveat": "Counterfactual standalone INT2/one-request-window bytes only. No exact cross-request prefix recovery, allocator/lifecycle implementation or NPU verification; excludes new checkpoint storage, indirection, alignment, graph arenas and fragmentation. Not an APC-compatible candidate."
+      },
+      "research_request_windows_none_only": {
+        "serving_available_under_current_default": false,
+        "required_prefix_caching": false,
+        "required_mamba_cache_mode": "none",
+        "physical_tokens_per_page": 5632,
+        "full_pages_per_request": 12,
+        "cohort_active_requests": 32,
+        "sidecar_reserved_requests": 128,
+        "fixed_sidecars_bytes_per_rank": 725339136,
+        "fixed_window_status_bytes_per_rank": 8704,
+        "shared_device_lease_map_bytes_per_rank": 2048,
+        "pinned_host_lease_map_bytes_not_hbm": 2048,
+        "cohort_full_bytes_including_all_reserved_sidecars": 6059718144,
+        "native_over_research_full_ratio": 6.308814743446919,
+        "native_over_research_all_kv_ratio": 3.8233874919537207,
+        "checkpoint_bytes_for_apc": null,
+        "caveat": "Historical none-only geometry; APC requires a new checkpoint/layout protocol and a new ledger. These ratios are not current-candidate acceptance."
+      }
+    },
+    {
+      "stage": "output_end_plus_mtp_reserve",
+      "tokens": 65615,
+      "native_full_pages_per_group": 86,
+      "oscar_full_pages_per_group": 29,
+      "gdn_pages_all_groups": 15,
+      "native_pool_blocks_per_request": 101,
+      "oscar_pool_blocks_per_request": 44,
+      "native_full_bytes": 1194676224,
+      "oscar_full_bytes": 402855936,
+      "gdn_physical_pool_bytes": 208373760,
+      "native_total_kv_bytes": 1403049984,
+      "oscar_total_kv_bytes": 611229696,
+      "native_over_oscar_full_physical_ratio": 2.9655172413793105,
+      "native_over_oscar_all_kv_physical_ratio": 2.2954545454545454,
+      "full_target_gap": {
+        "minimum_ratio": 6,
+        "stretch_ratio": 7,
+        "current_ratio": 2.9655172413793105,
+        "target_met_by_current_layout": false,
+        "additional_full_bytes_reduction_factor_to_6x": 2.0232558139534884,
+        "additional_full_bytes_reduction_factor_to_7x": 2.36046511627907
+      },
+      "oscar_full_page_components_bytes": {
+        "packed_capacity": 154478592,
+        "precise_snapshot_capacity": 164334648,
+        "unused_conv_region": 15144960,
+        "unused_ssm_tail": 39376896,
+        "unused_snapshot_padding": 29520840
+      },
+      "proposed_unimplemented": {
+        "prefix_caching_compatible": false,
+        "serving_available": false,
+        "packed_128_page_bytes": 151815168,
+        "one_exact_window_per_request_bytes": 5666712,
+        "full_bytes": 157481880,
+        "full_bf16_logical_over_proposed_ratio": 7.253062511064765,
+        "native_full_physical_over_proposed_ratio": 7.58611863155304,
+        "total_with_unchanged_native_gdn_pool_bytes": 365855640,
+        "native_all_kv_over_proposed_with_native_gdn_ratio": 3.8349825193346754,
+        "tight_gdn_bytes_preserving_all_native_states": 101744640,
+        "total_with_tight_gdn_arena_bytes": 259226520,
+        "native_all_kv_over_proposed_tight_gdn_ratio": 5.412447707896553,
+        "native_logical_payload_over_proposed_tight_gdn_ratio": 4.798778149704745,
+        "caveat": "Counterfactual standalone INT2/one-request-window bytes only. No exact cross-request prefix recovery, allocator/lifecycle implementation or NPU verification; excludes new checkpoint storage, indirection, alignment, graph arenas and fragmentation. Not an APC-compatible candidate."
+      },
+      "research_request_windows_none_only": {
+        "serving_available_under_current_default": false,
+        "required_prefix_caching": false,
+        "required_mamba_cache_mode": "none",
+        "physical_tokens_per_page": 5632,
+        "full_pages_per_request": 12,
+        "cohort_active_requests": 32,
+        "sidecar_reserved_requests": 128,
+        "fixed_sidecars_bytes_per_rank": 725339136,
+        "fixed_window_status_bytes_per_rank": 8704,
+        "shared_device_lease_map_bytes_per_rank": 2048,
+        "pinned_host_lease_map_bytes_not_hbm": 2048,
+        "cohort_full_bytes_including_all_reserved_sidecars": 6059718144,
+        "native_over_research_full_ratio": 6.308814743446919,
+        "native_over_research_all_kv_ratio": 3.8233874919537207,
+        "checkpoint_bytes_for_apc": null,
+        "caveat": "Historical none-only geometry; APC requires a new checkpoint/layout protocol and a new ledger. These ratios are not current-candidate acceptance."
+      }
+    }
+  ],
+  "fixed_external_allocations": {
+    "variants": {
+      "baseline": {
+        "token_capacity": null,
+        "history_cluster_size": 1,
+        "token_capacity_source": "native_unresolved",
+        "cube_cores": null,
+        "workspace_per_rank": null,
+        "scope": "One arena per unique device/geometry, shared across sequential FULL layers; already charged before native KV profiling.",
+        "whole_prefill_limit_tokens": null
+      },
+      "candidate": {
+        "token_capacity": null,
+        "history_cluster_size": 16,
+        "token_capacity_source": "native_unresolved",
+        "cube_cores": null,
+        "workspace_per_rank": null,
+        "scope": "One arena per unique device/geometry, shared across sequential FULL layers; already charged before native KV profiling.",
+        "whole_prefill_limit_tokens": null
+      }
+    },
+    "persistent_rotation_bytes_per_rank": 12845056,
+    "rotation_basis": "Three FP32 matrices per target FULL layer, one shared identity matrix for draft layers (runtime.py/rotations.py).",
+    "native_model_weights_graph_buffers_allocator_reserve_bytes": null,
+    "native_and_operator_temporary_peak_bytes": null,
+    "whole_hbm_compression_ratio": null
+  },
+  "capacity_from_supplied_profiled_budgets": {
+    "native": null,
+    "oscar": null
+  },
+  "cohort_kv_upper_all_at_full_length": {
+    "12": {
+      "native_bytes_per_rank": 16850491392,
+      "oscar_bytes_per_rank": 7348647936
+    },
+    "26": {
+      "native_bytes_per_rank": 36493191168,
+      "oscar_bytes_per_rank": 15905863680
+    },
+    "32": {
+      "native_bytes_per_rank": 44911491072,
+      "oscar_bytes_per_rank": 19573241856
+    }
+  },
+  "unknowns": [
+    "Current target model config and KVCacheSpec/allocator snapshot unless provided separately.",
+    "Actual native and OSCAR post-profile KV budgets unless supplied via CLI.",
+    "Current captured-graph allocations, native FIA temporaries, allocator fragmentation and physical HBM peaks.",
+    "Whether observed Running requests all hold their complete 64K histories at the same instant."
+  ],
+  "input_provenance": {
+    "target_config": "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/configs/target.json",
+    "target_config_sha256": "a441ab67d2f2a24c70d688e994bc6b3e6801e8c14cda34cd1bfca935d432bd25",
+    "model_geometry_status": "conditional_reference_geometry_not_live_verified",
+    "model_config": null,
+    "model_config_sha256": null,
+    "cube_cores_status": "unknown"
+  }
+}

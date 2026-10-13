@@ -12,6 +12,9 @@
 // partial/LSE/status exactly, then checks the independent frozen dense oracle.
 // Archive #151/D.4: mixed balanced/C16 cases retain fe0 inputs and bounded
 // INT2 history; CPU-debug establishes arithmetic parity, not NPU speed.
+// Archive #157: tasks_discard executes int32/int64 slot-context prepare and
+// frozen CV error propagation. Only native-discarded rows arrive as -1;
+// corrupt live slots still publish code 5. No production guard is changed.
 #include "tikicpulib.h"
 #include <algorithm>
 #include <chrono>
@@ -33,6 +36,10 @@ extern "C" void oscar_attention_cv_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,ui
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
 extern "C" void oscar_attention_cv_q1_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
+    int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
+extern "C" void oscar_attention_cv_decode_bundle_q1_kernel(uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,uint8_t*,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,
     int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,int64_t,float);
@@ -209,6 +216,106 @@ void CheckSlotContext() {
   }
   std::cout<<"MTP slot-derived context, duplicate and missing page cases passed"<<std::endl;
 }
+void CheckDiscardSlotContextAndCv() {
+  // CPU-only #157 bridge contract: row0 has a stale duplicate OUTSIDE the
+  // integer valid-column bound; row1 is explicitly discarded; row2 has a
+  // duplicate INSIDE the bound; row3 has an out-of-range logical position;
+  // row4 and token5 are native request and token padding, respectively.
+  // D.4: bounded prepare/fia, no restored history and no timing claim. This
+  // verifies published attention status, not the unknown #157 device code.
+  constexpr int64_t n=6,requests=5,hq=6,hk=1,d=256,segments=3,cores=2;
+  constexpr int64_t taskCount=n*segments,blockTokens=128,blocks=1;
+  constexpr int64_t sink=4,recent=32,spec=3,windowRows=sink+recent+spec;
+  constexpr int64_t pageStride=blockTokens*(d/2+8);
+  const int32_t startValues[requests+1]={0,1,2,3,4,5};
+  const int32_t lengthValues[requests]={128,200,200,6,0};
+  const int64_t slotValues[n]={0,-1,5,103,-1,-1};
+  const int32_t tableValues[requests*2]={0,0,0,0,0,0,0,0,0,0};
+  Gm starts(sizeof(startValues)),lens(sizeof(lengthValues)),table(sizeof(tableValues));
+  std::memcpy(starts.ptr,startValues,sizeof(startValues));
+  std::memcpy(lens.ptr,lengthValues,sizeof(lengthValues));
+  std::memcpy(table.ptr,tableValues,sizeof(tableValues));
+  Gm q(n*hq*d*2,0),qr(n*hq*d*4,0),k(n*hk*d*2,0),v(n*hk*d*2,0),rv(d*d*4,0);
+  for(int64_t i=0;i<d;++i)reinterpret_cast<float*>(rv.ptr)[i*d+i]=1.0F;
+  // Poison cache deliberately: the one valid row has context0 and must read
+  // only current K/V; discard and metadata errors must never dereference it.
+  Gm raw(pageStride),wk(windowRows*hk*d*2),wv(windowRows*hk*d*2),tags(windowRows*8);
+  std::vector<uint8_t> expectedTasks,expectedStatuses;
+  for(bool slots64:{false,true}) {
+    Gm slots(n*(slots64?8:4)),tasks(taskCount*16*8),positions(n*8);
+    if(slots64)std::memcpy(slots.ptr,slotValues,sizeof(slotValues));
+    else for(int64_t i=0;i<n;++i)reinterpret_cast<int32_t*>(slots.ptr)[i]=static_cast<int32_t>(slotValues[i]);
+    const std::vector<uint8_t> originalSlots(slots.ptr,slots.ptr+slots.size);
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    ICPU_RUN_KF(oscar_prepare_attention_tasks_kernel,4,starts.ptr,lens.ptr,slots.ptr,
+        tasks.ptr,positions.ptr,requests,n,hq,hk,sink,recent,int64_t{1},slots64,
+        table.ptr,int64_t{2},true);
+    for(int64_t token=0;token<n;++token) {
+      const int64_t error=(token==2 || token==3)?5:0;
+      if(reinterpret_cast<int64_t*>(positions.ptr)[token]!=(token==0?0:-1))
+        throw std::runtime_error("discard bridge changed a live/padded task position");
+      for(int64_t kind=0;kind<segments;++kind) {
+        const auto* task=reinterpret_cast<const int64_t*>(tasks.ptr)+(token*segments+kind)*16;
+        if(task[10]!=error || task[1]!=(token==0?1:-1))
+          throw std::runtime_error("discard bridge swallowed a live error or rejected padding");
+      }
+    }
+    for(bool bundleQ1:{false,true}) {
+    Gm partial(n*hq*segments*d*4),lse(n*hq*segments*4),status(taskCount*2*4);
+    Gm workspace(cores*(bundleQ1?oscar_ascend::attention_decode_bundle_workspace_per_core(d):
+                                oscar_ascend::attention_workspace_per_core(d)));
+    AscendC::SetKernelMode(KernelMode::MIX_MODE);
+    if(bundleQ1) {
+    ICPU_RUN_KF(oscar_attention_cv_decode_bundle_q1_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,raw.ptr,
+        table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,partial.ptr,lse.ptr,status.ptr,
+        workspace.ptr,n,hq,hk,d,requests,int64_t{2},taskCount,blockTokens,blocks,
+        int64_t{0},pageStride,windowRows*hk*d,windowRows,sink,recent,spec,
+        int64_t{1},1.0F/std::sqrt(float(d)));
+    }else {
+    ICPU_RUN_KF(oscar_attention_cv_kernel,cores,q.ptr,qr.ptr,k.ptr,v.ptr,rv.ptr,raw.ptr,
+        table.ptr,wk.ptr,wv.ptr,tags.ptr,tasks.ptr,partial.ptr,lse.ptr,status.ptr,
+        workspace.ptr,n,hq,hk,d,requests,int64_t{2},taskCount,blockTokens,blocks,
+        int64_t{0},pageStride,windowRows*hk*d,windowRows,sink,recent,spec,
+        int64_t{1},1.0F/std::sqrt(float(d)));
+    }
+    for(int64_t token=0;token<n;++token) {
+      const int32_t error=(token==2 || token==3)?5:0;
+      for(int64_t kind=0;kind<segments;++kind) {
+        for(int64_t lane=0;lane<2;++lane)
+          if(reinterpret_cast<const int32_t*>(status.ptr)[(token*segments+kind)*2+lane]!=error)
+            throw std::runtime_error("CV did not preserve prepare's exact error domain");
+        if(error)continue;
+        for(int64_t head=0;head<hq;++head) {
+          const int64_t row=(token*hq+head)*segments+kind;
+          const float logSum=reinterpret_cast<const float*>(lse.ptr)[row];
+          if(token==0 && kind==2) {
+            if(logSum!=0.0F)throw std::runtime_error("live current singleton LSE changed");
+          }else if(!(std::isinf(logSum) && logSum<0)) {
+            throw std::runtime_error("discard/empty source did not publish negative-infinity LSE");
+          }
+          for(int64_t j=0;j<d;++j)
+            if(reinterpret_cast<const float*>(partial.ptr)[row*d+j]!=0.0F)
+              throw std::runtime_error("discard/zero-current source did not publish zero output");
+        }
+      }
+    }
+    if(std::memcmp(slots.ptr,originalSlots.data(),slots.size)!=0 ||
+        std::memcmp(table.ptr,tableValues,table.size)!=0)
+      throw std::runtime_error("CPU prepare/CV changed immutable native metadata");
+    if(expectedTasks.empty()) {
+      expectedTasks.assign(tasks.ptr,tasks.ptr+tasks.size);
+      expectedStatuses.assign(status.ptr,status.ptr+status.size);
+    }else if(std::memcmp(tasks.ptr,expectedTasks.data(),tasks.size)!=0 ||
+             std::memcmp(status.ptr,expectedStatuses.data(),status.size)!=0) {
+      throw std::runtime_error("int32/int64 slot-context error propagation differs");
+    }
+    }
+  }
+  std::cout<<"{\"backend\":\"ascendc_cpu_debug\",\"op\":\"tasks_discard\","
+      "\"slot_dtypes\":[\"int32\",\"int64\"],\"live_error_code\":5,"
+      "\"readers\":[\"fe0\",\"bundle_q1\"],"
+      "\"cv_status_propagation\":\"passed\",\"status\":\"passed\"}"<<std::endl;
+}
 void Close(const Gm& output,const std::string& path) {
   auto expected=Read(path,output.size);float maxError=0;
   for(size_t i=0;i<output.size/4;++i) {
@@ -277,6 +384,7 @@ int main(int argc,char** argv) {
       mode=="mixed_cluster16_poison" || mode=="mixed_cluster16_error" ||
       splitReference || splitCandidate;
   if(mode=="tasks_causal") {CheckLargeCausalTasks();return 0;}
+  if(mode=="tasks_discard") {CheckDiscardSlotContextAndCv();return 0;}
   CheckPaddedMetadata();
   CheckSlotContext();
   const std::string dir=argv[2];

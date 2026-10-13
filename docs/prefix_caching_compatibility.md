@@ -88,3 +88,24 @@ git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate
 ```
 
 两条命令均显式传 `--enable-prefix-caching`，不添加 `--max-num-batched-tokens`。`service_direct` / `install_probe_serve` 等通过 `serve_argv` 的其他入口也使用同一默认。direct 仍无 probe；observe 仍保留真实 NPU 门。不得把 direct 可启动或 host 测试通过写成设备/模型验收。
+
+## 2026-10-13 独立审计与真实存储闭环门
+
+对默认 physical-page snapshot 路径重新核查后，**没有发现应当改写共享页协议的确证缺陷**。这一结论不是“APC 已无 bug”或真实服务验收。#157 的 MTP 元数据/死行归因及其修复独立审查，不能从命中率0推出所有APC使能接缝都已正确，也不能把诊断推测写成确证错误码。
+
+本轮确认的具体不变量：
+
+- `SnapshotLayout.views` 仅在 native padding 中创建零拷贝视图；FULL INT2 在独立 SSM 区，原生 GDN 的 conv/SSM 保持原物理ID和字节位置。默认没有请求 sidecar 恢复动作。
+- `rotate_clip_store_striped.cpp` 在 attention 后写 current；同一物理页只保留本次最后 `R+M=259` 个 recent row，sink只写首逻辑页。原生只缓存完整 FULL 页，两个分叉写不同尾页，旧页末尾的精确窗口留在对应共享物理页，无需额外按请求ID恢复。
+- 值得单独保留的**同一步发布屏障**：原生 `MambaManager.get_num_blocks_to_allocate` 拒绝本步 `cached_blocks_this_step` 中的新 GDN checkpoint 命中，返回不可分配数量；`new_step_starts` 才清除此集合。即使 FULL manager 先登记本步将计算的块，hybrid admission 不允许另一个请求在同一步读取尚未计算的前缀。不能删掉这一原生规则，也不能把“FULL完整页”误当成单独足够的设备就绪证明。
+- partial hit、MTP最后一页drop、FULL/GDN共同对齐、touch/refcount/free/eviction/reset继续使用原生实现。物理页重用后，reader只读由当前请求先前真实store覆盖过的可见context，tag不是独立的跨代所有权凭证。
+- `experimental_request_windows` 仍为默认关闭的研究格式，与prefix同时开启仍应明确拒绝；它不能替代当前默认实现，更不能为启用它而关闭APC。
+
+既有 `tests/test_prefix_caching.py` 的共享页内容测试由Python写入BF16/tag，确实留下了**真实writer→共享页→reader**的设备验证缺口。本轮新增 `tools/probe_prefix_cache.py`，只检验缓存算子接缝，不加载模型、不请求AISBench、不重复旧16-token性能测法：
+
+1. 通过真实 `rotate_clip_store_striped_out` 写入两个完整共享FULL页，采用公开声明的2304/768/128几何与 `SnapshotLayout.views`；两条4-query分叉选择当前candidate实际q4 reader，保留history/window/current三个source及原merge/BF16输出。
+2. 八条query逐条对独立原空间oracle（冻结5e-3）；检查真实共享INT2+snapshot字节不可变、两个私有suffix精确BF16位一致。
+3. 同地址graph输入从完整命中变为部分命中，换Q/K/V、seq、slot及虚拟页表；校验oracle与eager逐位一致，并确保被脱离的私有尾页没被写坏。
+4. 在前一轮设备完成后模拟私有页释放再利用，用真实writer写入不同owner内容，再在同一graph中改metadata读回；此步骤检验存储复用，原生allocator/refcount规则仍由独立host合约验证。
+
+该门使用identity旋转隔离存储生命周期，实际Hadamard及其数值/性能由现有MDL/旋转门负责；不能把它说成全模型APC或原生GDN/MTP端到端运行。报告绑定算子源码/产物，设备完成、graph与精度分别标记，缺真实NPU必须失败。新增8项focused host测试通过；**新增NPU门尚未运行，模型级APC/质量/整轮2–4倍收益仍未验收**。这是正确性门，不领取性能倍率。

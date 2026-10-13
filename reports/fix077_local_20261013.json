@@ -1,0 +1,52 @@
+{
+  "scope": "native_discard_to_actual_prepare_and_default_q1_local_contract",
+  "status": "local_contract_passed",
+  "archive": ["34", "36", "37-49", "127", "128", "142", "148", "154-157"],
+  "production_fix_commit": "713c611d",
+  "production_fix_pushed": true,
+  "host": {
+    "command": ".venv/bin/python -m pytest -q tests/test_native_discard_pipeline.py tests/test_later_draft_slots.py",
+    "passed": 28,
+    "seconds": 0.89,
+    "native_methods_executed": [
+      "NPUModelRunner._prepare_inputs discard publication AST slice",
+      "AscendSpecDecodeBaseProposer.prepare_next_token_ids_padded",
+      "AscendSpecDecodeBaseProposer.prepare_inputs_padded",
+      "AscendSpecDecodeBaseProposer.attn_update_stack_num_spec_norm"
+    ],
+    "coverage": ["first/middle/last discard", "mRoPE", "async_spec CPU mirror", "request reorder", "shrink and regrow", "discard to active", "fixed per-draft buffer addresses", "invalid live slot preserved"],
+    "transport_limitation": "CPU NumPy buffer transport substituted by torch; not Triton or NPU execution"
+  },
+  "official_cpu_debug": {
+    "build_returncode": 0,
+    "command": "oscar_cv_cpu tasks_discard metadata",
+    "control_path_vm": "/tmp/oscar-fix077-cpu-20261013/control.json",
+    "logs_path_vm": "/tmp/oscar-fix077-cpu-20261013/logs",
+    "status": "completed",
+    "child_returncode": 0,
+    "supervisor_returncode": 0,
+    "cleanup_complete": true,
+    "elapsed_seconds": 2.231387,
+    "finished_utc": "2026-10-13T08:04:40.472933Z",
+    "tokens": 6,
+    "requests": 5,
+    "head_size": 256,
+    "query_heads": 6,
+    "kv_heads": 1,
+    "cube_cores": 2,
+    "slot_dtypes": ["int32", "int64"],
+    "readers": ["fe0", "bundle_q1"],
+    "coverage": ["stale duplicate outside valid columns remains live", "explicit discard padded", "duplicate inside valid columns retains code 5", "invalid live position retains code 5", "request and token padding", "all AIV attention statuses", "healthy and padding output/LSE initialized", "native slot/table immutable"],
+    "cv_status_propagation": "passed",
+    "live_error_code_in_synthetic_cases": 5
+  },
+  "source_review": {
+    "default_mtp_eager_scope": "no_additional_defect_identified",
+    "native_budget_uses_native_mamba_chunk_alignment": true,
+    "default_prefix_page_owned_snapshots": "no_additional_ownership_defect_identified",
+    "keepRecent_writable_page_owner": "one contiguous request interval per writable physical page; later q1 has one slot per request",
+    "production_kernels_changed": false,
+    "native_or_gdn_changed": false
+  },
+  "not_established": ["exact original #157 device error code", "real NPU completion", "Triton execution", "device async stream ordering", "actual graph replay", "full model APC and quality", "whole service 2-4x performance"]
+}

@@ -1,4 +1,6 @@
 # Archive G25-G34/#4-22/#79-83/#126/#140: execute identical AscendC bodies with official CPU debugger and CANN V2 headers.
+# Archive #157: also link the unchanged production bundle q1 for the bounded
+# prepare/discard error-propagation gate; this adds no production route.
 cmake_minimum_required(VERSION 3.18)
 project(oscar_ascendc_cpu_debug LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
@@ -14,6 +16,7 @@ add_executable(oscar_cv_cpu cv_probe.cpp fast_unpack_probe.cpp ../kernels/attent
   ../kernels/attention_cv_cluster.cpp ../kernels/attention_cv_fast.cpp
   ../kernels/attention_cv_fast_q1.cpp ../kernels/attention_cv_fast_cluster4.cpp
   ../kernels/attention_cv_fast_balanced.cpp ../kernels/attention_cv_fast_cluster16.cpp
+  ../kernels/attention_cv_decode_bundle.cpp
   ../kernels/merge_lse.cpp)
 target_link_libraries(oscar_cv_cpu PRIVATE tikicpulib::Ascend910B4)
 set(_oscar_softmax_v2_header "${ASCEND_HOME_PATH}/aarch64-linux/asc/include/adv_api/activation/softmaxflashv2.h")

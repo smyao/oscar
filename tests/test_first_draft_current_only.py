@@ -138,7 +138,14 @@ def test_builder_only_explicit_first_pass_reads_cpu_and_plans(monkeypatch):
     assert not main.is_draft and not main.first_draft_current_only and use_native_current(main)
     assert main.current_only_plan.fresh_tokens == 7
     for index in (0, 1, 2):
-        later = build.build_for_drafting(NoCPUReads(**vars(common())), index)
+        from oscar_ascend.integration.draft_discard import native_draft_scope
+        cm = NoCPUReads(**vars(common()))
+        groups = [torch.empty_like(cm.slot_mapping) for _ in range(3)]
+        groups[index] = cm.slot_mapping
+        # Only route/CPU-mirror eligibility is tested here. The standalone
+        # synthetic metadata is not a real one-token/request proposal.
+        with native_draft_scope(SimpleNamespace(runner=None, slot_mapping_group=groups), dummy=True):
+            later = build.build_for_drafting(cm, index)
         assert later.is_draft and later.draft_index == index
         assert later.current_only_plan is None and later.current_cumulative is None
         assert not later.first_draft_current_only

@@ -28620,7 +28620,7 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 
 ## [157] 真机条目（2026-10-12 用户回传）· 默认 APC 首轮 candidate 服务中 status_guard Trap，四 rank 同步 vector core exception
 
-> **2026-10-13 源码复审修正（不是新增真机结果）**：本条以下保留原回传与当时判断，但“纯 chunked prefill”“已排除 MDL/窗口路径”“根因收口为错误码5”均未由现有日志充分证明。prompt/generation 的日志窗口不能确定每一个内部 MTP step；prefix hit=0 也不能排除 APC 开启后 align 布局或请求自身的窗口错误。已确认的是冻结 guard Trap，以及第二轮归因到 MTP attention 族；没有确切非零码回传，discard-anchor 仍是可达的源码假设。c5b2ad40 的净化另有已复现缺陷：没有原生 discard 证据便清空非法 slot，且浮点除法扩大有效块表列，可误清活行。当前按原生显式 discard 掩码修复，不把修复推断写成真机根因；参见 `docs/kimi_commit_review_20261013.md`。
+> **2026-10-13 源码复审修正（不是新增真机结果）**：本条以下保留原回传与当时判断，但“纯 chunked prefill”“已排除 MDL/窗口路径”“根因收口为错误码5”均未由现有日志充分证明。prompt/generation 的日志窗口不能确定每一个内部 MTP step；prefix hit=0 也不能排除 APC 开启后 align 布局或请求自身的窗口错误。已确认的是冻结 guard Trap，以及第二轮在MTP attention逐族同步处观察到错误；旧诊断没有在新guard之前排空设备队列，target图内融合guard仍可能把之前的异步错误带到该观测点，故不能唯一确证MTP attention是来源。没有确切非零码回传，discard-anchor仍是可达的源码假设。c5b2ad40 的净化另有已复现缺陷：没有原生 discard 证据便清空非法 slot，且浮点除法扩大有效块表列，可误清活行。当前按原生显式 discard 掩码修复，不把修复推断写成真机根因；参见 `docs/kimi_commit_review_20261013.md`。
 
 **症状原文**（用户粘贴的服务端日志片段）：`git pull --ff-only && bash scripts/install_serve.sh --variant candidate`（077548fa）后服务完成 32 条短请求，06:56:43 四个 worker 首次 JIT 编译原生 `batch_memcpy_kernel`（mamba align 状态拷贝），06:56:51 统计为 prompt 3281.3 tok/s、generation 0.1 tok/s、Running 2 / Waiting 30、**Prefix cache hit rate 0.0%**；06:56:57 四 rank 同时报 aivec error（chip0..3 的 pc 分别为 0x124{0,2,4,6}022f56cc→…5930，设备内偏移完全一致，current−start=0x264，aic error mask 0x6500020bd00028c，"timeout or trap error"），随后 `gdn_attn_builder.py:211` 的 H2D（srclen=192）与异步输出拷贝的 event 同步以 507035 失败，worker 全灭。SpecDecoding 累计 19 accepted/21 drafted 均来自先前短请求。
 
@@ -28653,3 +28653,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **验证**：新增 `tests/test_later_draft_slots.py`，用纯 Python 逐位镜像 prepare 的 slotContext 对拍净化掩码（活行/死行/padding/重复块/越界/空输入），3/3 通过；全量主机回归 1300 passed，失败集与 077548fa 基线逐项相同（11 项既有，与本次无关），零新增。AST/静态闸无新增违规。主机侧改动不经 CANN 内核编译链；NPU 复验以同一固定命令为准。
 
 **边界**：若实际触发码并非 5（而是 3/4/1/2），本修复对其惰性无害，已推送的诊断会在带 `OSCAR_GUARD_HOST_SYNC=1` 的运行中直接报出确切码值，届时再按码定点处理。MDL/vector-init 的 observe NPU/图门欠账不变。
+
+## [158] 真机条目（2026-10-13 用户回传）· discard修复交付后再次冻结guard Trap
+
+**原始证据**：用户粘贴文件 `43ad1ab2-f593-4291-af5e-bd0abba64a02/已粘贴的文本.txt`，完整保存在 [`reports/target_guard_recurrence_20261013.txt`](reports/target_guard_recurrence_20261013.txt)。用户称执行刚推送的candidate直启；片段本身未携带启动SHA、runtime_selection或分族诊断输出，不能从本片段独立确认实际源码/产物签名。此前本工程已推送09984f34（包含713c611d discard修复与本地CPU接缝证据）。
+
+**症状**：08:29:38 四rank出现相同原生ArgSort AiCPU告警；08:29:41 四rank出现vector core exception。芯片0–3均为 `pc start=0x124{0,2,4,6}022f56cc`、`current=...5930`，差值 **0x264**，与#142/#157冻结status_guard的Trap一致。随后 `gdn_attn_builder.py:211` 的192B异步H2D及 `WorkerAsyncOutputCopy` 的event同步报告507035；这是较早设备错误的异步暴露位置，不证明GDN计算有错误。08:29:46采样为Running2、Waiting30、KV4.1%、prefix0%，平均接受长度3.33、accepted14/drafted18。
+
+**当前能确认**：默认服务仍有非零状态触发冻结guard，原故障未被前一轮discard兼容修复排尽。本轮没有 `site=`/`family=`或具体status码；不能把#157另一轮的attention族直接当本轮已取得的归因，更不能从prefix0、prompt/generation信用窗口判定没有MTP或排除align自身窗口。官方CPU和28项主机测试证明的是所构造的discard/slotctx路径，不能替代本轮真机结论。
+
+**处理边界**：保持APC默认开启、原生token budget、GDN和冻结status_guard不变；继续核真实proposer钩子、首draft/mixed分区、KV写入与reader的当前可达错误域。源码新发现、修复及本地复现另记复审文档，不在取得对应证据前将本条写成已定位根因或已修复。

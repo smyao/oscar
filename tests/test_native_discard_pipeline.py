@@ -74,6 +74,45 @@ def _native_discard_publisher():
     return ns["publish"]
 
 
+def _native_max_seq_len_publisher():
+    path = Path(__file__).resolve().parents[1] / "references/vllm-ascend/vllm_ascend/worker/model_runner_v1.py"
+    tree = ast.parse(path.read_text())
+    cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "NPUModelRunner")
+    fn = next(n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name == "_build_attention_metadata")
+    branch = next(n for n in fn.body if isinstance(n, ast.If)
+                  and isinstance(n.test, ast.Name) and n.test.id == "for_cudagraph_capture")
+    wrapper = ast.parse("def publish(self, num_reqs, for_cudagraph_capture=False):\n    pass\n").body[0]
+    wrapper.body = [branch, ast.Return(value=ast.Name(id="max_seq_len", ctx=ast.Load()))]
+    ns = {}
+    exec(compile(ast.fix_missing_locations(ast.Module(body=[wrapper], type_ignores=[])), str(path), "exec"), ns)
+    return ns["publish"]
+
+
+def test_native_published_max_sequence_length_bounds_async_corrected_device_lengths(monkeypatch):
+    native = definitions("references/vllm-ascend/vllm_ascend/spec_decode/utils.py", "native_maxlen_bound",
+        {"update_num_computed_tokens_for_batch_change"}, {"torch": torch}, monkeypatch)
+    publish = _native_max_seq_len_publisher()
+    limit = 262144
+    previous = torch.tensor([limit - 9, 90], dtype=torch.int32)
+    for valid in range(5):
+        device_computed = previous.clone()
+        optimistic_computed = previous + 4
+        native.update_num_computed_tokens_for_batch_change(device_computed,
+            torch.ones(2, dtype=torch.int32), torch.tensor([0, 1]), torch.tensor([valid, 4]),
+            torch.tensor([3, 3]), optimistic_computed)
+        actual_lengths = device_computed + 4
+        # Native async CPU mirror is either optimistic or already corrected.
+        # Both feed the exact native max-sequence-length publication above.
+        for cpu_lengths in (optimistic_computed + 4, actual_lengths):
+            runner = SimpleNamespace(optimistic_seq_lens_cpu=_ArrayView(cpu_lengths), max_model_len=limit)
+            upper = publish(runner, 2)
+            assert type(upper) is int and upper >= int(actual_lengths.max())
+            for index in (1, 2):
+                if upper + index <= limit:
+                    assert torch.all(actual_lengths + index <= limit)
+            assert publish(runner, 2, for_cudagraph_capture=True) == limit
+
+
 def _native(monkeypatch):
     device = definitions(
         "references/vllm-ascend/vllm_ascend/device/device_op.py", "discard_native_device", set(),
@@ -254,4 +293,90 @@ def test_native_reordered_shrunk_and_regrown_batches_refresh_fixed_draft_slots(m
                 if index in addresses:
                     assert metadata.slot_mapping.data_ptr() == addresses[index]
                 addresses[index] = metadata.slot_mapping.data_ptr()
+    assert addresses[1] != addresses[2]
+
+
+@pytest.mark.parametrize("async_spec", [False, True])
+@pytest.mark.parametrize("mrope", [False, True])
+@pytest.mark.parametrize("valid_count", [1, 2, 3, 4])
+@pytest.mark.parametrize("discard", [False, True])
+def test_native_max_length_wrap_preserves_accepted_live_slots(monkeypatch, async_spec, mrope, valid_count, discard):
+    """Native scheduler permits target length M-1; rejected drafts stay in lens.
+
+    The native slot overflow predicate uses accepted positions, while its lens
+    overflow predicate includes rejected rows. Run both real native methods
+    and keep native length/slot buffers untouched by the OSCAR correction.
+    """
+    native, states, modes = _native(monkeypatch)
+    builder = make_builder(monkeypatch)
+    limit = 262144
+    table = (torch.arange(limit // 128, dtype=torch.int32) + 7).view(1, -1)
+    batch = SimpleNamespace(num_reqs=1, req_ids=["last"], vocab_size=1000,
+                            num_tokens_no_spec=torch.tensor([limit], dtype=torch.int32))
+    runner = SimpleNamespace(input_batch=batch, pcp_size=1, pcp_manager=None,
+        discard_request_mask=_Buffer(torch.tensor([discard])),
+        discard_request_indices=_Buffer(torch.tensor([0], dtype=torch.int64)),
+        num_discarded_requests=int(discard), actual_seq_lengths_q=[4],
+        attn_state=states.SpecDecoding, decode_token_per_req=4)
+    proposer = SimpleNamespace(runner=runner, pcp_size=1, dcp_size=1, method="mtp",
+        arange=torch.arange(16, dtype=torch.int32), token_arange_np=torch.arange(16, dtype=torch.int32),
+        backup_next_token_ids=_Buffer(torch.zeros(1, dtype=torch.int64)), uses_mrope=mrope,
+        has_gdn=True, kernel_block_size=128, max_model_len=limit, use_compress=False,
+        slot_mapping_group=[torch.full((16,), -1, dtype=torch.int32) for _ in range(3)],
+        seq_lens_group=[torch.zeros(1, dtype=torch.int32) for _ in range(3)],
+        query_start_loc_group=[torch.zeros(2, dtype=torch.int32) for _ in range(3)])
+    proposer.shallow_copy_metadata = MethodType(native.shallow_copy_metadata, proposer)
+    group = SimpleNamespace(get_metadata_builder=lambda: builder)
+    requests = {"last": SimpleNamespace(get_token_id=lambda pos: 700)}
+    addresses = {}
+    for target_length in (limit - 2, limit - 1):
+        starts = torch.tensor([0, 4], dtype=torch.int32)
+        lengths = torch.tensor([target_length], dtype=torch.int32)
+        # This is the same first-pass fixed-group publication done by native
+        # _propose before it constructs either later draft's metadata.
+        proposer.seq_lens_group[0].copy_(lengths)
+        common = Common(query_start_loc=starts, query_start_loc_cpu=starts.clone(),
+            seq_lens=proposer.seq_lens_group[0], seq_lens_cpu=None if async_spec else lengths.clone(),
+            _seq_lens_cpu=lengths.clone(), seq_lens_cpu_upper_bound=lengths.clone(),
+            num_reqs=1, num_actual_tokens=4, num_input_tokens=4, max_query_len=4,
+            num_computed_tokens_cpu=None, _num_computed_tokens_cpu=None,
+            block_table_tensor=table, slot_mapping=proposer.slot_mapping_group[0],
+            positions=torch.zeros(16, dtype=torch.int64), positions_cpu=None,
+            attn_state=states.SpecDecoding, decode_token_per_req=4,
+            is_prefilling=torch.tensor([discard]), max_seq_len=target_length)
+        sampled = torch.tensor([[11 if i < valid_count else -1 for i in range(4)]])
+        _, counts = native.prepare_next_token_ids_padded(proposer, sampled, requests, batch,
+            runner.discard_request_indices.gpu, runner.num_discarded_requests)
+        previous, _, anchors, _ = native.prepare_inputs_padded(proposer, common,
+            SimpleNamespace(cu_num_draft_tokens=torch.tensor([3], dtype=torch.int32)), counts)
+        positions = torch.full((16,), target_length - 1, dtype=torch.int64)
+        positions[:4] = torch.arange(target_length - 4, target_length)
+        used = positions[anchors]
+        if mrope:
+            used = torch.stack((used, used, used))
+        with native_draft_scope(proposer):
+            for index in (1, 2):
+                previous, metadata = native.attn_update_stack_num_spec_norm(
+                    proposer, index, None, previous, 1, 4, used, modes.NONE, attn_group=group)
+                native_length = int(previous.seq_lens[0])
+                native_slot = int(proposer.slot_mapping_group[index][0])
+                expected_wrapped = target_length + index > limit
+                assert native_length == (1 if expected_wrapped else target_length + index)
+                if not discard and native_slot >= 0 and expected_wrapped:
+                    assert _prepare_status(native_slot, native_length, table[0].tolist()) == 5
+                    assert int(metadata.seq_lens[0]) == limit
+                else:
+                    assert int(metadata.seq_lens[0]) == native_length
+                if discard or native_slot < 0:
+                    assert metadata.slot_mapping[0] == -1
+                else:
+                    assert metadata.slot_mapping[0] == native_slot
+                assert _prepare_status(int(metadata.slot_mapping[0]), int(metadata.seq_lens[0]),
+                                       table[0].tolist()) == 0
+                assert metadata.seq_lens.data_ptr() != previous.seq_lens.data_ptr()
+                if index in addresses:
+                    assert metadata.seq_lens.data_ptr() == addresses[index]
+                addresses[index] = metadata.seq_lens.data_ptr()
+                assert int(previous.seq_lens[0]) == native_length
+        assert int(proposer.seq_lens_group[0][0]) == target_length
     assert addresses[1] != addresses[2]

@@ -38,7 +38,12 @@ def test_only_explicit_first_build_qualifies_positive_history_current_partial(mo
     assert use_native_current(first) and first.current_cumulative==(4,11)
     assert first.current_only_plan is None and not first.first_draft_current_only
     for index in (0,1,2):
-        later=build.build_for_drafting(NoCPUReads(**vars(cm)),index)
+        from oscar_ascend.integration.draft_discard import native_draft_scope
+        later_cm=NoCPUReads(**vars(cm))
+        groups=[torch.empty_like(later_cm.slot_mapping) for _ in range(3)]
+        groups[index]=later_cm.slot_mapping
+        with native_draft_scope(SimpleNamespace(runner=None,slot_mapping_group=groups),dummy=True):
+            later=build.build_for_drafting(later_cm,index)
         assert not later.first_draft_current_fia and not use_native_current(later)
     with native_dummy_run():
         dummy=build.build(0,NoCPUReads(**vars(cm)),object())

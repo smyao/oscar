@@ -1,0 +1,388 @@
+(APIServer pid=26765) INFO:     135.82.26.93:43324 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43340 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43348 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43352 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43368 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43380 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43394 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43408 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43422 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43430 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43434 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43444 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43454 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43464 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43466 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43476 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43490 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43496 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=26765) INFO:     135.82.26.93:43510 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+[rank0]:[W1013 08:29:38.703753080 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank3]:[W1013 08:29:38.704240820 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank1]:[W1013 08:29:38.704354150 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank2]:[W1013 08:29:38.704461360 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+(Worker_TP0 pid=30678) Exception in thread WorkerAsyncOutputCopy:
+(Worker_TP0 pid=30678) Traceback (most recent call last):
+(Worker_TP0 pid=30678)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+(Worker_TP0 pid=30678)     self.run()
+(Worker_TP0 pid=30678)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012, in run
+(Worker_TP0 pid=30678)     self._target(*self._args, **self._kwargs)(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 345, in execute_model
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return self.worker.execute_model(scheduler_output)
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 647, in execute_model
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = self.model_runner.execute_model(scheduler_output, intermediate_tensors)
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2229, in execute_model
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     (attn_metadata, spec_decode_common_attn_metadata) = self._build_attention_metadata(
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3315, in _build_attention_metadata
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     _build_attn_group_metadata(
+(Worker_TP0 pid=30678) (Worker_TP2 pid=30739) 
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] WorkerProc hit an exception.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3242, in _build_attn_group_metadata
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     attn_metadata_i = builder.build(
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                       ^^^^^^^^^^^^^^
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 742, in build
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     non_spec_chunked_prefill_metadata = _build_non_spec_chunked_prefill_metadata(
+(Worker_TP0 pid=30678) (Worker_TP2 pid=30739)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 967, in async_output_busy_loop
+(Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 211, in _build_non_spec_chunked_prefill_metadata
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     chunk_indices_chunk64=chunk_indices_chunk64.to(device=device, non_blocking=True),
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] RuntimeError: The Inner error is reported as above. The process exits for this inner error, and the current copy params are srclen=192, dstlen=192, kind=1.
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] Since the operator is called asynchronously, the stacktrace may be inaccurate. If you want to get the accurate stacktrace, please set the environment variable ASCEND_LAUNCH_BLOCKING=1.
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] Note: ASCEND_LAUNCH_BLOCKING=1 will force ops to run in synchronous mode, resulting in performance degradation. Please unset ASCEND_LAUNCH_BLOCKING in time after debugging.
+(Worker_TP0 pid=30678) (Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] [ERROR] 2026-10-13-08:29:41 (PID:30739, Device:2, RankID:-1) ERR00100 PTA call acl api failed.
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] [PID: 30739] 2026-10-13-08:24:50.177.410 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] TraceBack (most recent call last):
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]         The error from device(chipId:2, dieId:0), serial number is 72, there is an exception of aivec error, core id is 1, error code = 0, dump info: pc start: 0x1244022f56cc, current: 0x1244022f5930, vec error info: 0xe10513a236, mte error info: 0xfc03040080, ifu error info: 0x212d03f582f40, ccu error info: 0xc045c0076f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c1406b0c00, aic cond: 0.
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3040080, fixp_error1 info: 0xfc, fsmId:1, tslot:1, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]         An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]         rtMemcpyAsync execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] 
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=30739) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 345, in execute_model
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return self.worker.execute_model(scheduler_output)
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 647, in execute_model
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = self.model_runner.execute_model(scheduler_output, intermediate_tensors)
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2229, in execute_model
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     (attn_metadata, spec_decode_common_attn_metadata) = self._build_attention_metadata(
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=30739) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3315, in _build_attention_metadata
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     _build_attn_group_metadata(
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3242, in _build_attn_group_metadata
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     attn_metadata_i = builder.build(
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]                       ^^^^^^^^^^^^^^
+(Worker_TP0 pid=30678) (Worker_TP2 pid=30739) (Worker_TP0 pid=30678)     ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 742, in build
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 345, in execute_model
+self.enqueue_output(output)(Worker_TP2 pid=30739) (Worker_TP0 pid=30678) 
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     non_spec_chunked_prefill_metadata = _build_non_spec_chunked_prefill_metadata(
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return self.worker.execute_model(scheduler_output)
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 211, in _build_non_spec_chunked_prefill_metadata
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     chunk_indices_chunk64=chunk_indices_chunk64.to(device=device, non_blocking=True),
+(Worker_TP2 pid=30739) (Worker_TP0 pid=30678) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 932, in enqueue_output
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] RuntimeError: The Inner error is reported as above. The process exits for this inner error, and the current copy params are srclen=192, dstlen=192, kind=1.
+(Worker_TP0 pid=30678) (Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 647, in execute_model
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] Since the operator is called asynchronously, the stacktrace may be inaccurate. If you want to get the accurate stacktrace, please set the environment variable ASCEND_LAUNCH_BLOCKING=1.
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] Note: ASCEND_LAUNCH_BLOCKING=1 will force ops to run in synchronous mode, resulting in performance degradation. Please unset ASCEND_LAUNCH_BLOCKING in time after debugging.
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] [ERROR] 2026-10-13-08:29:41 (PID:30739, Device:2, RankID:-1) ERR00100 PTA call acl api failed.
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] [PID: 30739] 2026-10-13-08:24:50.177.410 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+(Worker_TP0 pid=30678) (Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] TraceBack (most recent call last):
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]         The error from device(chipId:2, dieId:0), serial number is 72, there is an exception of aivec error, core id is 1, error code = 0, dump info: pc start: 0x1244022f56cc, current: 0x1244022f5930, vec error info: 0xe10513a236, mte error info: 0xfc03040080, ifu error info: 0x212d03f582f40, ccu error info: 0xc045c0076f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c1406b0c00, aic cond: 0.
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3040080, fixp_error1 info: 0xfc, fsmId:1, tslot:1, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]         An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987]         rtMemcpyAsync execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] 
+(Worker_TP2 pid=30739) ERROR 10-13 08:29:41 [multiproc_executor.py:987] 
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = self.model_runner.execute_model(scheduler_output, intermediate_tensors)
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 345, in execute_model
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return self.worker.execute_model(scheduler_output)
+(Worker_TP1 pid=30698) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 647, in execute_model
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = self.model_runner.execute_model(scheduler_output, intermediate_tensors)
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP0 pid=30678) (Worker_TP0 pid=30678) (Worker_TP1 pid=30698)     ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return func(*args, **kwargs)
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+output = output.get_output()(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) 
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2229, in execute_model
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     (attn_metadata, spec_decode_common_attn_metadata) = self._build_attention_metadata(
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3315, in _build_attention_metadata
+(Worker_TP0 pid=30678) (Worker_TP0 pid=30678) (Worker_TP1 pid=30698)  ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2229, in execute_model
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     _build_attn_group_metadata(
+ (Worker_TP0 pid=30678) (Worker_TP1 pid=30698)  ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3242, in _build_attn_group_metadata
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     (attn_metadata, spec_decode_common_attn_metadata) = self._build_attention_metadata(
+ (Worker_TP1 pid=30698) (Worker_TP0 pid=30678)  ERROR 10-13 08:29:41 [multiproc_executor.py:987]     attn_metadata_i = builder.build(
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ (Worker_TP1 pid=30698) (Worker_TP0 pid=30678)  ERROR 10-13 08:29:41 [multiproc_executor.py:987]                       ^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3315, in _build_attention_metadata
+ (Worker_TP0 pid=30678) (Worker_TP1 pid=30698)  ERROR 10-13 08:29:41 [multiproc_executor.py:987]     _build_attn_group_metadata(
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 742, in build
+ (Worker_TP0 pid=30678)  ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3242, in _build_attn_group_metadata
+(Worker_TP1 pid=30698)  (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     non_spec_chunked_prefill_metadata = _build_non_spec_chunked_prefill_metadata(
+ ERROR 10-13 08:29:41 [multiproc_executor.py:987]     attn_metadata_i = builder.build(
+(Worker_TP1 pid=30698) ^(Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^ERROR 10-13 08:29:41 [multiproc_executor.py:987] WorkerProc hit an exception.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]                       ^^^^^^^^^^^^^^
+(Worker_TP1 pid=30698) ^(Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 211, in _build_non_spec_chunked_prefill_metadata
+^ERROR 10-13 08:29:41 [multiproc_executor.py:987] Traceback (most recent call last):
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 742, in build
+(Worker_TP1 pid=30698) ^(Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     chunk_indices_chunk64=chunk_indices_chunk64.to(device=device, non_blocking=True),
+^ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     non_spec_chunked_prefill_metadata = _build_non_spec_chunked_prefill_metadata(
+(Worker_TP1 pid=30698) ^(Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=30698) ^(Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987] RuntimeError: The Inner error is reported as above. The process exits for this inner error, and the current copy params are srclen=192, dstlen=192, kind=1.
+^ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 211, in _build_non_spec_chunked_prefill_metadata
+(Worker_TP1 pid=30698) ^(Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987] Since the operator is called asynchronously, the stacktrace may be inaccurate. If you want to get the accurate stacktrace, please set the environment variable ASCEND_LAUNCH_BLOCKING=1.
+^ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 345, in execute_model
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     chunk_indices_chunk64=chunk_indices_chunk64.to(device=device, non_blocking=True),
+(Worker_TP1 pid=30698) ^(Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987] Note: ASCEND_LAUNCH_BLOCKING=1 will force ops to run in synchronous mode, resulting in performance degradation. Please unset ASCEND_LAUNCH_BLOCKING in time after debugging.
+^ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return self.worker.execute_model(scheduler_output)
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=30698) ^(Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987] [ERROR] 2026-10-13-08:29:41 (PID:30698, Device:1, RankID:-1) ERR00100 PTA call acl api failed.
+^ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] RuntimeError: The Inner error is reported as above. The process exits for this inner error, and the current copy params are srclen=192, dstlen=192, kind=1.
+(Worker_TP1 pid=30698) ^(Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987] [PID: 30698] 2026-10-13-08:24:50.274.211 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+^ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 647, in execute_model
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] Since the operator is called asynchronously, the stacktrace may be inaccurate. If you want to get the accurate stacktrace, please set the environment variable ASCEND_LAUNCH_BLOCKING=1.
+(Worker_TP1 pid=30698) ^(Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987] TraceBack (most recent call last):
+
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = self.model_runner.execute_model(scheduler_output, intermediate_tensors)
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] Note: ASCEND_LAUNCH_BLOCKING=1 will force ops to run in synchronous mode, resulting in performance degradation. Please unset ASCEND_LAUNCH_BLOCKING in time after debugging.
+(Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]         The error from device(chipId:1, dieId:0), serial number is 74, there is an exception of aivec error, core id is 43, error code = 0, dump info: pc start: 0x1242022f56cc, current: 0x1242022f5930, vec error info: 0xb000000049, mte error info: 0xfc0304c080, ifu error info: 0x212d03f582080, ccu error info: 0x108b99146f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c1406b0c00, aic cond: 0.
+  File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 288, in get_output
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] [ERROR] 2026-10-13-08:29:41 (PID:30678, Device:0, RankID:-1) ERR00100 PTA call acl api failed.
+(Worker_TP1 pid=30698) (Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x304c080, fixp_error1 info: 0xfc, fsmId:0, tslot:6, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return func(*args, **kwargs)
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] [PID: 30678] 2026-10-13-08:24:49.712.179 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+(Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]         An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]         rtMemcpyAsync execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2229, in execute_model
+(Worker_TP1 pid=30698) (Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987] 
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     (attn_metadata, spec_decode_common_attn_metadata) = self._build_attention_metadata(
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987] TraceBack (most recent call last):
+(Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    (Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987]         rtMemcpyAsync execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP3 pid=30782) self.async_copy_ready_event.synchronize()ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3315, in _build_attention_metadata
+
+(Worker_TP1 pid=30698) ERROR 10-13 08:29:41 [multiproc_executor.py:987] 
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     _build_attn_group_metadata(
+(Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/streams.py", line 192, in synchronize
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3242, in _build_attn_group_metadata
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP1 pid=30698) (Worker_TP3 pid=30782) (Worker_TP0 pid=30678) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 345, in execute_model
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     attn_metadata_i = builder.build(
+(Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return self.worker.execute_model(scheduler_output)
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]                       ^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 742, in build
+(Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 647, in execute_model
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     non_spec_chunked_prefill_metadata = _build_non_spec_chunked_prefill_metadata(
+(Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = self.model_runner.execute_model(scheduler_output, intermediate_tensors)
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+    ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=30698) (Worker_TP0 pid=30678) super(Event, self).synchronize()(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 211, in _build_non_spec_chunked_prefill_metadata
+(Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     chunk_indices_chunk64=chunk_indices_chunk64.to(device=device, non_blocking=True),
+(Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 345, in execute_model
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return func(*args, **kwargs)
+RuntimeErrorERROR 10-13 08:29:41 [multiproc_executor.py:987]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) : (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return self.worker.execute_model(scheduler_output)
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+synchronize:../torch_npu/csrc/core/npu/NPUEvent.cpp:215 NPU function error: aclrtSynchronizeEvent(event_), error code is 507035
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] RuntimeError: The Inner error is reported as above. The process exits for this inner error, and the current copy params are srclen=192, dstlen=192, kind=1.
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2229, in execute_model
+[ERROR] 2026-10-13-08:29:41 (PID:30678, Device:0, RankID:-1) ERR00100 PTA call acl api failed
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] Since the operator is called asynchronously, the stacktrace may be inaccurate. If you want to get the accurate stacktrace, please set the environment variable ASCEND_LAUNCH_BLOCKING=1.
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 647, in execute_model
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     (attn_metadata, spec_decode_common_attn_metadata) = self._build_attention_metadata(
+[Error]: The vector core execution is abnormal. 
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] Note: ASCEND_LAUNCH_BLOCKING=1 will force ops to run in synchronous mode, resulting in performance degradation. Please unset ASCEND_LAUNCH_BLOCKING in time after debugging.
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = self.model_runner.execute_model(scheduler_output, intermediate_tensors)
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        Rectify the fault based on the error information in the ascend log.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] [ERROR] 2026-10-13-08:29:41 (PID:30782, Device:3, RankID:-1) ERR00100 PTA call acl api failed.
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3315, in _build_attention_metadata
+EZ9999: Inner Error!
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] [PID: 30782] 2026-10-13-08:24:50.442.171 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     _build_attn_group_metadata(
+EZ9999[PID: 30678] 2026-10-13-08:29:41.372.994 (EZ9999):  The error from device(chipId:0, dieId:0), serial number is 90, there is an exception of aivec error, core id is 6, error code = 0, dump info: pc start: 0x1240022f56cc, current: 0x1240022f5930, vec error info: 0x2a000000f0, mte error info: 0xfc030510ac, ifu error info: 0x212d03f583200, ccu error info: 0xf3ce0bd6f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c1406be800, aic cond: 0.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] TraceBack (most recent call last):
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return func(*args, **kwargs)
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3242, in _build_attn_group_metadata
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x30510ac, fixp_error1 info: 0xfc, fsmId:1, tslot:1, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]         The error from device(chipId:3, dieId:0), serial number is 73, there is an exception of aivec error, core id is 7, error code = 0, dump info: pc start: 0x1246022f56cc, current: 0x1246022f5930, vec error info: 0x2814255810, mte error info: 0xfc03041080, ifu error info: 0x212d03f582a00, ccu error info: 0xeff8b1356f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c1406b0c00, aic cond: 0.
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     attn_metadata_i = builder.build(
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3041080, fixp_error1 info: 0xfc, fsmId:0, tslot:7, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2229, in execute_model
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]                       ^^^^^^^^^^^^^^
+TraceBack (most recent call last):
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     (attn_metadata, spec_decode_common_attn_metadata) = self._build_attention_metadata(
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 742, in build
+       An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]         An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     non_spec_chunked_prefill_metadata = _build_non_spec_chunked_prefill_metadata(
+       rtEventSynchronize execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]         rtMemcpyAsync execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3315, in _build_attention_metadata
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] 
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 211, in _build_non_spec_chunked_prefill_metadata
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     _build_attn_group_metadata(
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     chunk_indices_chunk64=chunk_indices_chunk64.to(device=device, non_blocking=True),
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3242, in _build_attn_group_metadata
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     attn_metadata_i = builder.build(
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] RuntimeError: The Inner error is reported as above. The process exits for this inner error, and the current copy params are srclen=192, dstlen=192, kind=1.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                       ^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] Since the operator is called asynchronously, the stacktrace may be inaccurate. If you want to get the accurate stacktrace, please set the environment variable ASCEND_LAUNCH_BLOCKING=1.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 345, in execute_model
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 742, in build
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] Note: ASCEND_LAUNCH_BLOCKING=1 will force ops to run in synchronous mode, resulting in performance degradation. Please unset ASCEND_LAUNCH_BLOCKING in time after debugging.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return self.worker.execute_model(scheduler_output)
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     non_spec_chunked_prefill_metadata = _build_non_spec_chunked_prefill_metadata(
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] [ERROR] 2026-10-13-08:29:41 (PID:30698, Device:1, RankID:-1) ERR00100 PTA call acl api failed.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] [PID: 30698] 2026-10-13-08:24:50.274.211 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 647, in execute_model
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 211, in _build_non_spec_chunked_prefill_metadata
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] TraceBack (most recent call last):
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     output = self.model_runner.execute_model(scheduler_output, intermediate_tensors)
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     chunk_indices_chunk64=chunk_indices_chunk64.to(device=device, non_blocking=True),
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]         The error from device(chipId:1, dieId:0), serial number is 74, there is an exception of aivec error, core id is 43, error code = 0, dump info: pc start: 0x1242022f56cc, current: 0x1242022f5930, vec error info: 0xb000000049, mte error info: 0xfc0304c080, ifu error info: 0x212d03f582080, ccu error info: 0x108b99146f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c1406b0c00, aic cond: 0.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x304c080, fixp_error1 info: 0xfc, fsmId:0, tslot:6, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] RuntimeError: The Inner error is reported as above. The process exits for this inner error, and the current copy params are srclen=192, dstlen=192, kind=1.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] Since the operator is called asynchronously, the stacktrace may be inaccurate. If you want to get the accurate stacktrace, please set the environment variable ASCEND_LAUNCH_BLOCKING=1.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]         An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] Note: ASCEND_LAUNCH_BLOCKING=1 will force ops to run in synchronous mode, resulting in performance degradation. Please unset ASCEND_LAUNCH_BLOCKING in time after debugging.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]         rtMemcpyAsync execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2229, in execute_model
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] [ERROR] 2026-10-13-08:29:41 (PID:30678, Device:0, RankID:-1) ERR00100 PTA call acl api failed.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] 
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     (attn_metadata, spec_decode_common_attn_metadata) = self._build_attention_metadata(
+(Worker_TP0 pid=30678) (Worker_TP1 pid=30698) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] [PID: 30678] 2026-10-13-08:24:49.712.179 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+ERROR 10-13 08:29:41 [multiproc_executor.py:987] 
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] TraceBack (most recent call last):
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3315, in _build_attention_metadata
+(Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]         rtMemcpyAsync execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     _build_attn_group_metadata(
+(Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] 
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3242, in _build_attn_group_metadata
+(Worker_TP0 pid=30678) (Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] 
+ERROR 10-13 08:29:41 [multiproc_executor.py:987]     attn_metadata_i = builder.build(
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                       ^^^^^^^^^^^^^^
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 742, in build
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     non_spec_chunked_prefill_metadata = _build_non_spec_chunked_prefill_metadata(
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py", line 211, in _build_non_spec_chunked_prefill_metadata
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]     chunk_indices_chunk64=chunk_indices_chunk64.to(device=device, non_blocking=True),
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] RuntimeError: The Inner error is reported as above. The process exits for this inner error, and the current copy params are srclen=192, dstlen=192, kind=1.
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] Since the operator is called asynchronously, the stacktrace may be inaccurate. If you want to get the accurate stacktrace, please set the environment variable ASCEND_LAUNCH_BLOCKING=1.
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] Note: ASCEND_LAUNCH_BLOCKING=1 will force ops to run in synchronous mode, resulting in performance degradation. Please unset ASCEND_LAUNCH_BLOCKING in time after debugging.
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] [ERROR] 2026-10-13-08:29:41 (PID:30782, Device:3, RankID:-1) ERR00100 PTA call acl api failed.
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] [PID: 30782] 2026-10-13-08:24:50.442.171 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] TraceBack (most recent call last):
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]         The error from device(chipId:3, dieId:0), serial number is 73, there is an exception of aivec error, core id is 7, error code = 0, dump info: pc start: 0x1246022f56cc, current: 0x1246022f5930, vec error info: 0x2814255810, mte error info: 0xfc03041080, ifu error info: 0x212d03f582a00, ccu error info: 0xeff8b1356f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c1406b0c00, aic cond: 0.
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3041080, fixp_error1 info: 0xfc, fsmId:0, tslot:7, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]         An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987]         rtMemcpyAsync execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] 
+(Worker_TP3 pid=30782) ERROR 10-13 08:29:41 [multiproc_executor.py:987] 
+[rank2]:[W1013 08:29:41.463620600 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[rank2]:[E1013 08:29:41.463728670 ProcessGroupHCCL.cpp:2011] [Rank 2] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-13-08:29:41 (PID:30739, Device:2, RankID:-1) ERR02005 DIST internal error
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 2] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-13-08:29:41 (PID:30739, Device:2, RankID:-1) ERR02005 DIST internal error
+[rank1]:[W1013 08:29:41.466719420 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[rank1]:[E1013 08:29:41.466817830 ProcessGroupHCCL.cpp:2011] [Rank 1] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-13-08:29:41 (PID:30698, Device:1, RankID:-1) ERR02005 DIST internal error
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 1] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-13-08:29:41 (PID:30698, Device:1, RankID:-1) ERR02005 DIST internal error
+[rank0]:[W1013 08:29:41.469827140 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[rank0]:[E1013 08:29:41.469915490 ProcessGroupHCCL.cpp:2011] [Rank 0] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-13-08:29:41 (PID:30678, Device:0, RankID:-1) ERR02005 DIST internal error
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 0] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-13-08:29:41 (PID:30678, Device:0, RankID:-1) ERR02005 DIST internal error
+[rank3]:[W1013 08:29:41.470477480 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[rank3]:[E1013 08:29:41.470599310 ProcessGroupHCCL.cpp:2011] [Rank 3] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-13-08:29:41 (PID:30782, Device:3, RankID:-1) ERR02005 DIST internal error
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 3] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-13-08:29:41 (PID:30782, Device:3, RankID:-1) ERR02005 DIST internal error
+(APIServer pid=26765) INFO 10-13 08:29:46 [loggers.py:271] Engine 000: Avg prompt throughput: 3281.3 tokens/s, Avg generation throughput: 2.1 tokens/s, Running: 2 reqs, Waiting: 30 reqs, GPU KV cache usage: 4.1%, Prefix cache hit rate: 0.0%
+(APIServer pid=26765) INFO 10-13 08:29:46 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.33, Accepted throughput: 0.11 tokens/s, Drafted throughput: 0.14 tokens/s, Accepted: 14 tokens, Drafted: 18 tokens, Per-position acceptance rate: 0.833, 0.833, 0.667, Avg Draft acceptance rate: 77.8%

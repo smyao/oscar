@@ -1,4 +1,4 @@
-"""Archive #27/#34/#36/#37-49/#157: preserve native request discard semantics.
+"""Archive #27/#34/#36/#37-49/#157/#158: preserve native request discard semantics.
 
 Native model_runner_v1.py:1125-1147 publishes discard_request_mask in current
 input_batch order before proposing; llm_base_proposer.py:1535-1666 retains that
@@ -54,7 +54,7 @@ def native_draft_scope(proposer, *, dummy=False):
         _scope.reset(token)
 
 
-def later_draft_slot_copy(common, *, draft_index=None, capture=False):
+def later_draft_slot_copy(common, *, draft_index=None, capture=False, require_scope=False):
     """Return a fixed OSCAR slot copy with only native-discarded rows padded.
 
     Capture builders do not receive a draft_index. Identify their source by
@@ -65,6 +65,10 @@ def later_draft_slot_copy(common, *, draft_index=None, capture=False):
     """
     scope = _scope.get()
     source = common.slot_mapping
+    if require_scope and scope is None and draft_index != 0 and not capture:
+        raise OscarReadinessError(
+            "OSCAR native MTP discard bridge missing: later-draft metadata was built "
+            "outside the hooked proposer scope")
     if scope is None or draft_index == 0:
         return source
     groups = scope.proposer.slot_mapping_group
@@ -101,4 +105,70 @@ def later_draft_slot_copy(common, *, draft_index=None, capture=False):
     result.copy_(source)
     if not scope.dummy and not capture:
         result[:scope.requests].masked_fill_(scope.mask[:scope.requests], -1)
+        if not getattr(scope.proposer, "_oscar_discard_bridge_logged", False):
+            # Host-only execution evidence; the native mask stays on device.
+            # Enqueue is not a claim that device execution has completed.
+            print("[oscar] MTP_DISCARD_BRIDGE "
+                  f"proposer={type(scope.proposer).__name__} method=mtp "
+                  f"requests={scope.requests} mask_capacity={scope.mask.numel()} "
+                  f"draft_index={index} source=native.discard_request_mask "
+                  "binding=queued", flush=True)
+            scope.proposer._oscar_discard_bridge_logged = True
+    return result
+
+
+def later_draft_lengths_copy(common, slots, *, draft_index):
+    """Keep valid accepted positions visible when native MTP wraps lens to 1.
+
+    Native llm_base_proposer.py:1608 wraps its optimistic (rejected rows kept)
+    length when it exceeds max_model_len, while padding the slot only when
+    the accepted position itself exceeds the limit. Those conditions differ.
+    The original first-pass device length plus draft_index identifies this
+    explicit wrap. Restore only its scanning upper bound, never infer discard
+    or accepted position from a bad slot or an mRoPE coordinate. Each proposal
+    refreshes the fixed destination before executing its later draft model.
+    """
+    scope = _scope.get()
+    source = common.seq_lens
+    if scope is None or scope.dummy or draft_index == 0:
+        return source
+    proposer = scope.proposer
+    limit = getattr(proposer, "max_model_len", None)
+    groups = getattr(proposer, "seq_lens_group", None)
+    if (type(limit) is not int or limit <= 0 or groups is None
+            or draft_index >= len(groups)):
+        raise OscarReadinessError("native MTP model limit or fixed length groups are missing")
+    base, native = groups[0], groups[draft_index]
+    if (source.data_ptr() != native.data_ptr() or source.ndim != 1 or source.dtype != torch.int32
+            or source.device != slots.device or source.numel() < scope.requests
+            or base.dtype != source.dtype or base.device != source.device
+            or base.numel() < scope.requests):
+        raise OscarReadinessError("native MTP length groups do not match this proposal")
+    copies = getattr(proposer, "_oscar_later_length_copies", None)
+    if copies is None:
+        copies = {}
+        proposer._oscar_later_length_copies = copies
+    entry = copies.get(draft_index)
+    if entry is None:
+        entry = (native, torch.empty_like(native))
+        copies[draft_index] = entry
+    original, destination = entry
+    if (original.data_ptr() != native.data_ptr() or original.shape != native.shape
+            or original.dtype != native.dtype or original.device != native.device):
+        raise OscarReadinessError("native MTP length allocation changed after OSCAR binding")
+    result = destination[:source.numel()]
+    result.copy_(source)
+    # Native NPUModelRunner._build_attention_metadata publishes the maximum
+    # CPU optimistic sequence length (or the full model limit for capture).
+    # It bounds the corrected first-pass device lengths. Its scalar survives
+    # native shallow-copy later metadata unchanged. Preserve the destination
+    # address but avoid extra device predicates when this bound proves no wrap.
+    upper = getattr(common, "max_seq_len", 0)
+    if type(upper) is int and 0 < upper and upper + draft_index <= limit:
+        return result
+    size = scope.requests
+    before_wrap = base[:size] + draft_index
+    wrapped_live = ((source[:size] == 1) & (before_wrap > limit)
+                    & (slots[:size] >= 0) & ~scope.mask[:size])
+    result[:size].copy_(torch.where(wrapped_live, before_wrap.clamp(max=limit), source[:size]))
     return result

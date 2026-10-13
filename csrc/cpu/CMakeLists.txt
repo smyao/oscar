@@ -27,3 +27,8 @@ endif()
 # declaration/implementation absent from that include tree, never a CPU stub.
 target_include_directories(oscar_cv_cpu SYSTEM AFTER PRIVATE "${ASCEND_HOME_PATH}/aarch64-linux/asc/include")
 target_compile_options(oscar_cv_cpu PRIVATE -O0 -g)
+add_executable(oscar_prefix_q1_cpu prefix_q1_probe.cpp ../kernels/attention_tasks.cpp
+  ../kernels/attention_cv_decode_bundle.cpp ../kernels/rotate_clip_store_striped.cpp ../kernels/merge_lse.cpp)
+target_link_libraries(oscar_prefix_q1_cpu PRIVATE tikicpulib::Ascend910B4)
+target_include_directories(oscar_prefix_q1_cpu SYSTEM AFTER PRIVATE "${ASCEND_HOME_PATH}/aarch64-linux/asc/include")
+target_compile_options(oscar_prefix_q1_cpu PRIVATE -O0 -g)

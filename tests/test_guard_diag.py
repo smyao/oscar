@@ -1,4 +1,4 @@
-# 档案 #142/#157：归因开关的默认路径必须逐字节等价于融合启动；诊断路径按族归因。
+# 档案 #142/#157/#158：默认路径逐字节等价于融合启动；诊断按族/设备谓词归因。
 import pytest
 import torch
 
@@ -66,14 +66,24 @@ def test_diag_path_attributes_the_frozen_trap_without_readback(monkeypatch):
     npu = _Npu()
     monkeypatch.setattr(torch, "npu", npu, raising=False)
     segments = _segments()
-    ops = Ops(fail_on=segments[2][1])
+    segments[2][1][1, 0] = 4
+    before = [tensor.clone() for _, tensor in segments]
+    class PredicateOps(Ops):
+        def status_guard(self, a, b, c, d):
+            super().status_guard(a, b, c, d)
+            # This is a CPU implementation of the frozen guard's test only,
+            # never production code or an NPU readback fallback.
+            if bool(torch.any(a != 0)):
+                raise RuntimeError("507035 vector core exception")
+    ops = PredicateOps()
     def forbidden(*args, **kwargs):
         raise AssertionError("production guard must not read device contents on host")
     for name in ("item", "cpu", "tolist", "numpy"):
         monkeypatch.setattr(torch.Tensor, name, forbidden)
-    with pytest.raises(OscarReadinessError, match=r"site=forward:layer family=merge"):
+    with pytest.raises(OscarReadinessError, match=r"site=forward:layer family=merge code=4"):
         run_status_guard(ops, "forward:layer", segments)
-    assert len(ops.calls) == 3 and npu.syncs == 2
+    assert len(ops.calls) == 16 and npu.syncs == 16
+    assert all(torch.equal(tensor, saved) for (_, tensor), saved in zip(segments, before))
 
 
 def test_diag_path_skips_empty_families(monkeypatch):
@@ -86,6 +96,38 @@ def test_diag_path_skips_empty_families(monkeypatch):
                       ("rotate", torch.zeros(0, dtype=torch.int32)),
                       ("merge", torch.zeros(0, dtype=torch.int32)),
                       ("store", torch.zeros(0, dtype=torch.int32))])
-    assert len(ops.calls) == 1 and npu.syncs == 1
+    assert len(ops.calls) == 6 and npu.syncs == 7
     a, b, c, d = ops.calls[0]
     assert a.numel() == 4 and b.numel() == c.numel() == d.numel() == 0
+
+
+@pytest.mark.parametrize("code", [1, 2, 3, 4, 5, -1, 6, 2147483647, -2147483648])
+def test_device_predicates_cover_all_status_domains_without_losing_errors(monkeypatch, code):
+    monkeypatch.setenv("OSCAR_GUARD_HOST_SYNC", "1")
+    monkeypatch.setattr(torch, "npu", _Npu(), raising=False)
+    seen = []
+    class PredicateOps:
+        def status_guard(self, a, b, c, d):
+            seen.append(a.clone())
+            if bool(torch.any(a != 0)):
+                raise RuntimeError("frozen guard trap")
+    status = torch.tensor([0, 0, code, 0], dtype=torch.int32)
+    empty = status[:0]
+    expected = str(code) if 1 <= code <= 5 else "unknown"
+    with pytest.raises(OscarReadinessError, match="family=attention code=" + expected):
+        run_status_guard(PredicateOps(), "forward:mtp", [("attention", status),
+            ("rotate", empty), ("merge", empty), ("store", empty)])
+    assert torch.equal(status, torch.tensor([0, 0, code, 0], dtype=torch.int32))
+    assert torch.equal(seen[-1], torch.tensor([0, 0, 1, 0], dtype=torch.int32))
+
+
+def test_prior_async_failure_is_not_misattributed_to_current_family_or_code(monkeypatch):
+    monkeypatch.setenv("OSCAR_GUARD_HOST_SYNC", "1")
+    class PriorFailure:
+        def synchronize(self):
+            raise RuntimeError("previous target graph guard Trap")
+    monkeypatch.setattr(torch, "npu", PriorFailure(), raising=False)
+    ops = Ops()
+    with pytest.raises(OscarReadinessError, match="family=prior_work code=unavailable"):
+        run_status_guard(ops, "forward:mtp", _segments())
+    assert ops.calls == []

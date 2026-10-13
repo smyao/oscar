@@ -26,7 +26,7 @@
 
 ## 真机归因边界
 
-当前复制日志只确认 MTP attention 状态族触发冻结 guard，未确认具体错误码。低 generation、prompt 信用、prefix hit=0 都不能直接排除内部 MTP、align 布局或自身窗口读取。档案 #157 顶部已注明对旧推断的修正，原回传保留。
+当前复制日志确认冻结guard Trap及MTP attention诊断同步观测点，未确认具体错误码；旧诊断未预先排空target图等先前设备工作，故观测family不保证就是故障来源。低 generation、prompt 信用、prefix hit=0 都不能直接排除内部 MTP、align 布局或自身窗口读取。档案 #157 顶部已注明对旧推断的修正，原回传保留。
 
 ## 大优化的主线
 
@@ -53,3 +53,33 @@
 官方CPU构建及此门均已完成，独占runner `child_returncode=0`、`supervisor_returncode=0`、`cleanup_complete=true`，耗时 **2.231387秒**，完成时间 `2026-10-13T08:04:40.472933Z`。VM控制记录为 `/tmp/oscar-fix077-cpu-20261013/control.json`，完整日志在同目录 `logs/`；紧凑报告为 [`reports/fix077_local_20261013.json`](../reports/fix077_local_20261013.json)。末行确认 `readers=[fe0,bundle_q1]`、`cv_status_propagation=passed`。本地已把“原生显式discard引出的非法anchor→metadata padding→真实prepare→默认q1 status”这一可达兼容缺口闭合，713c611d生产修复已推送；不额外修改冻结算子。
 
 **边界仍保持**：#157原真机确切错误码未知，此次合成病例中的code5不等于取得了原故障的设备码。真实NPU、Triton分支、设备异步stream/实际图、全模型APC/质量和整轮性能均不能由该CPU门代替。未发现新的默认生产接缝缺陷，不据此宣称所有可能的077故障已获得真机100%排除。
+
+## 新回传#158：原故障仍存在，收紧真实修复链的生效条件
+
+用户随后回传新的四rank `status_guard` Trap（08:29:41；完整日志见#158），证明此前本地discard接缝闭环并未排尽服务故障。片段缺启动SHA和分族诊断，不能断言此次仍为attention族或code5。本次重新检查实际原生工厂及MRO：Qwen3.5 method规范化为`mtp`；工厂创建`AscendEagleProposer(EagleProposer, AscendSpecDecodeBaseProposer)`，Eagle不覆盖`_propose`，C3顺序落到被插件包裹的Ascend方法；参考A2树没有后续覆盖该方法。注册器在未来模块exec后安装，已导入模块也安装。**尚无证据认定真实回传的钩子确实漏装**。
+
+发现并修补的确定防护缺口：`later_draft_slot_copy` 原先在scope缺失时直接返回原slot，即真实运行若被第三方覆盖钩子，会静默绕过discard兼容修复。现在method=mtp的真实later builder必须处于原生proposer作用域；缺失即明确host异常 `outside the hooked proposer scope`，不拖到融合device Trap。首次实际绑定打印一条 `MTP_DISCARD_BRIDGE ... source=native.discard_request_mask binding=queued`，只用主机已有的类型/shape/draft_index，没有读取mask、status或KV内容；每proposer仅一条，不把入队称为设备完成。
+
+执行真实Eagle/AscendEagle类声明验证MRO，覆盖已导入模块callback与延迟loader callback两种安装，确认继承实例执行被包裹的`_propose`、固定副本及只打印一次；相关原生/firstdraft/mixed/slot回归 **136 passed（3.17s）**。这项收紧不能领取性能倍率，也不是#158已定位根因的声明；其余当前可达数值/窗口/流水原因继续排查，不能以本地通过宣布077完全修复。
+
+同一诊断开关 `OSCAR_GUARD_HOST_SYNC=1` 增加设备侧code谓词：按family对原status在设备上计算 `status==1..5` 和非零补集，每次将0/1谓词交同一冻结guard再同步；异常链增加 `code=1..5/unknown`。原status不改写，无`.cpu()`/`.item()`/host张量bool和内容回读；默认及capture仍仅原来的一次融合guard，开关仍默认关闭。未知/负值及int32两端均被补集捕捉，不隐藏错误；多个code并存时报告先检查到的code，不能当作最早元素或时序根因。guard/slot/native三文件回归 **44 passed（1.32s）**。该诊断缩小下次明确启用时的未知范围，本身不解决当前未定位的Trap。
+
+继续发现旧归因的队列边界缺口：原生ACLGraph在replay之前同步，replay之后直接返回；capture时OSCAR仍记录融合guard。因而先前target图内的Trap可能在后续MTP第一族guard同步时暴露。现在诊断模式在提交任何新guard之前先同步；若已经失败，异常标记 `family=prior_work code=unavailable`，不把它误归新family/code。该改动只对显式诊断生效；新增先前图错误病例及完整guard回归 **14 passed（0.70s）**。#157顶部已更正“观测点”与“故障来源”的区别。
+
+### 实际align几何的CPU接缝补充（进行中）
+
+新增 `oscar_prefix_q1_cpu` 使用FULL2304、virtual128、真实SoA raw偏移（conv30720、SSM393216、page817152）验证stripe writer→默认bundle_q1→merge。首次driver编译因常量`H`与官方SDK符号冲突失败（本机driver问题，非新真机错误）；全部几何符号改为`kProbe*`后构建通过。完整初始writer323行模式在120秒到限，child=-15/supervisor=124/cleanup=true/elapsed120.112s，原记录 `/tmp/oscar-prefix-q1-cpu-20261013/control.json` 保留，**不能声称完整初始writer通过**。
+
+另外提供明确标记的 `--incremental` 模式：独立oracle种合法旧INT2/snapshot，将共享页末4行设为不同旧值，再由真实writer改回预期INT2整行及原始BF16字节；之后真实prepare/q1/merge在2304→2305→2304跨页/rollback中校验全部状态、完整原空间均值/LSE oracle及共享页不可变，并由真实writer更新私有页。K/V向量range均为3，避免常量scale下溢导致错误fixture。该模式已实际完成，**3病例通过、child=0/supervisor=0/cleanup=true，23.935674秒**；报告显式 `initial_seed=independent_oracle`、`real_writer_rows_before_queries=4`。完整323行seed仍未完成，此次增量通过不能替代它，也未复现/修复#158整服务Trap。紧凑证据见 [`reports/fix077_followup_20261013.json`](../reports/fix077_followup_20261013.json)。
+
+原生GDN地址审查没有发现覆盖FULL的依据：`collect_mamba_copy_meta`只遍历mamba_group_ids及其原生layer_names，conv拷贝slice与SSM单页拷贝都限制在该state页内；dest是其当前GDN拥有的物理块。原生reshape按conv全池→SSM全池映射，OSCAR snapshot在其后的padding；FULL INT2复用SSM区但FULL/GDN活动物理ID由同一block_pool互斥分配（原生manager执行测试已有证据）。不能把gdn_attn_builder处的异步H2D报错当作其覆盖FULL的证明。
+
+## 独立查实并修复的模型长度边界（非#158的64K根因）
+
+只读独立复审通过真实原生方法发现：`max_model_len=M=262144`、target `seq_lens=M−1`、q4、valid_count=3/reject1、discard=false时，draft1为position262142/lens262144；draft2的accepted position262143仍合法，slot非负，但原生保留rejected行的 `seq_lens` 溢出后被置1。原生分别按length和accepted position判越界，二者确实不同；OSCAR据lens1只扫描第一列，从而对合法slot报code5。此条件在原生scheduler允许的M−1 target边界可达，但当前64K回传不能由它解释。
+
+修复仅在metadata builder：同proposal的原生 `seq_lens_group[0]+draft_index` 确实超过M、当前native lens==1、slot非负且非discard时，在OSCAR专用固定地址length副本上恢复 `min(base+index,M)` 扫描上界。原生buffer和GDN不变；accepted位置仍由冻结prepare对完整块表唯一匹配得出，不读mRoPE，不从解析失败反推discard。负slot、discard、普通lens1或任何不满足窄门的行保留原native值；非法活行仍报5。每次proposal都按当次固定group0刷新副本，不缓存上一次batch的值。
+
+新增32组真实native方法用例覆盖before-wrap的M−1/M/M+1、reject0/1/2/3、mRoPE、async-spec、discard及已越模型边界的负slot；5组额外反例确保窄门和坏活行错误不被吞。与原生/firstdraft/mixed/guard回归共 **187 passed（2.92s）**。这是已经本地复现、已有具体修法的独立兼容bug，不是#158已修复、真实NPU图已通过或性能达到目标的声明。
+
+为避免远离边界时增加多个小TensorOp，后续加入有原生来源的快速条件：直接执行reference `_build_attention_metadata` 的max字段发布分支及异步GPU长度修正函数，确认其正数 `max_seq_len` 是第一draft设备length的上界；若 `max_seq_len+draft_index<=M`，仅保留固定destination copy，跳过设备谓词。0/未知或接近上限时继续完整5条件，不切换指针。包含此条件与全部真实wrap反例的两文件focused验证 **70 passed（1.82s）**。这仍是兼容修复的必要开销，不能把另一路算子18.8%收益视为已扣除此开销后的端到端收益。

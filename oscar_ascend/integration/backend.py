@@ -1,6 +1,6 @@
 """Native backend and metadata construction seams.
 
-Archive #27/#28/#34/#36/#37–49/#140/#142/#148/#155: no placeholder attention, host length
+Archive #27/#28/#34/#36/#37–49/#140/#142/#148/#155/#157/#158: no placeholder attention, host length
 readback, or capture-only suppression masquerading as graph replay.
 Only an installed, ready runtime can provide the real AttentionImpl.
 """
@@ -61,6 +61,10 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
         provider = require_runtime()
         self._request_window_provider = provider if getattr(provider, "request_windows_enabled", False) else None
         runtime_config = provider.config
+        # #158: a missing native proposer hook must not silently bypass the
+        # #157 discard bridge and surface only later as a fused device Trap.
+        self._requires_native_mtp_discard = (
+            getattr(getattr(vllm_config, "speculative_config", None), "method", None) == "mtp")
         self.current_only = runtime_config.get("experimental_current_only", False)
         self.first_draft_current_only = (
             self.current_only and supports_first_draft_current_only(vllm_config))
@@ -127,6 +131,9 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
             raise ValueError("draft_index must be a nonnegative integer")
         metadata = from_common(common_attn_metadata, capacity=self.capacity,
                                is_draft=True, draft_index=draft_index)
-        from .draft_discard import later_draft_slot_copy
-        return self._bind(replace(metadata, slot_mapping=later_draft_slot_copy(
-            common_attn_metadata, draft_index=draft_index)))
+        from .draft_discard import later_draft_slot_copy, later_draft_lengths_copy
+        slots = later_draft_slot_copy(
+            common_attn_metadata, draft_index=draft_index,
+            require_scope=self._requires_native_mtp_discard and not metadata.dummy_origin)
+        lengths = later_draft_lengths_copy(common_attn_metadata, slots, draft_index=draft_index)
+        return self._bind(replace(metadata, slot_mapping=slots, seq_lens=lengths))

@@ -113,7 +113,11 @@ def test_native_builder_keeps_request_partition_for_shared_immutable_prefix(monk
     b=backend.OscarMetadataBuilder(object(),['x'],cfg,'cpu')
     m=b.build(0,common())
     assert m.mixed_decode_split is (type(prefix_cache) is bool)
-    assert b.build_for_drafting(common(),1).mixed_decode_split is False
+    from oscar_ascend.integration.draft_discard import native_draft_scope
+    cm=common()
+    with native_draft_scope(SimpleNamespace(runner=None,slot_mapping_group=[
+            torch.empty_like(cm.slot_mapping),cm.slot_mapping]),dummy=True):
+        assert b.build_for_drafting(cm,1).mixed_decode_split is False
 
 
 @pytest.mark.parametrize('draft',[False,True])

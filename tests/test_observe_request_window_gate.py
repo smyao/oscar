@@ -84,11 +84,11 @@ def test_parent_requires_pipeline_reader_evidence_for_the_enabled_combination(mo
     from tests.test_request_window_reader_gate import complete_schema
     calls=hooks(monkeypatch);status={'phases':[]}
     config={'experimental_request_windows':True,'experimental_c4_member_pipeline':True,
-            'devices':[0,1,2,3]}
+            'devices':[4,5,6,7]}
     old_readers=complete_schema()
     report={'status':'passed','artifact_signature':'fixture','artifact_sha256':{},
         'acceptance_sha256':hashlib.sha256((observe.ROOT/'configs/acceptance.json').read_bytes()).hexdigest(),
-        'device':{'physical_selection':[0,1,2,3],'cube_cores':20},
+        'device':{'physical_selection':[4,5,6,7],'cube_cores':20},
         'accuracy':{'reader':old_readers['accuracy']},'graph':{'reader':old_readers['graph']}}
     # Isolate a rejection by the real parent reader validator. These are
     # synthetic contract dictionaries, not a fabricated successful NPU run.

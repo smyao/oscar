@@ -82,7 +82,7 @@ def test_no_npu_cannot_enter_operator_or_graph_gate(monkeypatch):
     monkeypatch.setitem(sys.modules,"torch_npu",ModuleType("torch_npu"))
     monkeypatch.setattr(torch,"npu",SimpleNamespace(is_available=lambda:False),raising=False)
     with pytest.raises(gate.RequestWindowGateError,match="real target NPU"):
-        gate._require_npu({"devices":[0,1,2,3],"soc_version":"ascend910b4"})
+        gate._require_npu({"devices":[4,5,6,7],"soc_version":"ascend910b4"})
     with pytest.raises(gate.RequestWindowGateError,match="real NPU device"):
         gate.run_store_case(torch,None,None,torch.device("cpu"))
     with pytest.raises(gate.RequestWindowGateError,match="real NPU graph"):

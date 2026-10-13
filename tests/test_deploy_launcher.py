@@ -1,5 +1,5 @@
 # 档案 #70–73/#94–95/#125–126/#131–140：一键先原生后OSCAR，真实CV门只执行一次且失败阻断服务。
-# 本次用户指令：保留探针，取消真机环境检查；附录 F 指定本任务设备与 SOC。
+# 本次用户指令：保留探针，取消真机环境检查；2026-10-13统一后四卡/7878，SOC不变。
 """Exercise deployment orchestration without installing or opening an NPU."""
 import json
 import os
@@ -57,13 +57,14 @@ def _native_evidence(log_dir):
 
 
 def test_checked_in_target_has_current_task_devices_and_build_soc():
-    # Appendix F declares 0–3 / 910B4 for this checkout; another checkout's
+    # User selection is 4–7 / 7878 / 910B4 for this checkout; another checkout's
     # remembered allocation or a parent shell's mask must not take precedence.
     config = json.loads((ROOT / "configs/target.json").read_text())
-    assert config["devices"] == [0, 1, 2, 3]
+    assert config["devices"] == [4, 5, 6, 7]
+    assert config["port"] == 7878
     assert config["soc_version"] == "ascend910b4"
-    env = target_env(config, {"ASCEND_RT_VISIBLE_DEVICES": "4,5,6,7"})
-    assert env["ASCEND_RT_VISIBLE_DEVICES"] == "0,1,2,3"
+    env = target_env(config, {"ASCEND_RT_VISIBLE_DEVICES": "0,1,2,3"})
+    assert env["ASCEND_RT_VISIBLE_DEVICES"] == "4,5,6,7"
 
 
 def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypatch, tmp_path):

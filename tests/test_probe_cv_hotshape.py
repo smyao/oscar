@@ -13,6 +13,21 @@ from tools import probe_cv_hotshape as hot
 from tools.environment import file_fingerprint
 
 
+@pytest.mark.parametrize("probe_name", ["hotshape", "history"])
+def test_checked_in_rear_target_passes_probe_selection_and_rejects_stale_mask(monkeypatch, probe_name):
+    # Archive #123: deployment and standalone probes must accept the same target.
+    from tools import probe_history_reuse as history
+    select = hot._select_device if probe_name == "hotshape" else history._active_device
+    target = json.loads((hot.ROOT / "configs/target.json").read_text())
+    monkeypatch.delenv("ASCEND_RT_VISIBLE_DEVICES", raising=False)
+    select(target)
+    import os
+    assert os.environ["ASCEND_RT_VISIBLE_DEVICES"] == "4,5,6,7"
+    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "0,1,2,3")
+    with pytest.raises(RuntimeError, match="differs from target"):
+        select(target)
+
+
 def test_pinned_git_tree_fingerprint_ignores_dirty_checkout(tmp_path):
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     subprocess.run(["git", "config", "user.email", "probe@example.invalid"], cwd=tmp_path, check=True)
@@ -41,7 +56,7 @@ def test_source_check_fails_closed_for_wrong_baseline(monkeypatch, tmp_path):
 
 def test_baseline_availability_reports_missing_evidence_without_torch(monkeypatch, tmp_path):
     target = tmp_path / "target.json"
-    target.write_text('{"devices":[0,1,2,3],"soc_version":"ascend910b4"}')
+    target.write_text('{"devices":[4,5,6,7],"soc_version":"ascend910b4"}')
     monkeypatch.setattr(hot, "_verify_artifact",
                         lambda *args: (_ for _ in ()).throw(hot.BaselineUnavailable("missing old SO")))
     assert hot.baseline_availability(tmp_path / "missing.json", target) == {

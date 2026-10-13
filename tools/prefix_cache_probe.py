@@ -256,7 +256,7 @@ def main(argv=None):
     if argv and argv[0] == "_request":
         return child(Path(argv[1]), Path(argv[2]))
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--base-url", default="http://127.0.0.1:8989")
+    parser.add_argument("--base-url", default="http://127.0.0.1:7878")
     parser.add_argument("--model", default="qwen3.5")
     parser.add_argument("--lengths", type=int, nargs="+", default=[2304, 3072, 4608, 5376, 8192])
     parser.add_argument("--output-tokens", type=int, default=8)

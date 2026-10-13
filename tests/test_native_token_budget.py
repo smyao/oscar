@@ -118,8 +118,8 @@ def test_every_install_phase_and_service_receive_budgetless_config(monkeypatch, 
         assert config["experimental_whole_prefill"] is False
         assert not config.get("experimental_bounded_whole_prefill", False)
         assert "scheduler_cls" not in config and "history_token_capacity" not in config
-        assert config["devices"] == ([4, 5, 6, 7] if rear else [0, 1, 2, 3])
-        assert config["port"] == (7878 if rear else 8989)
+        assert config["devices"] == [4, 5, 6, 7]
+        assert config["port"] == 7878
         return config
 
     def phase(name, command, *, env, **kwargs):
@@ -165,8 +165,8 @@ def test_fixed_shell_entrypoints_need_no_native_budget_option(tmp_path, script, 
     assert runtime["optimizations"]["whole_prefill"] is False
     assert not runtime["optimizations"].get("bounded_whole_prefill", False)
     assert runtime["optimizations"]["decode_bundle"] is True
-    assert runtime["devices"] == ([4, 5, 6, 7] if placement else [0, 1, 2, 3])
-    assert runtime["port"] == (7878 if placement else 8989)
+    assert runtime["devices"] == [4, 5, 6, 7]
+    assert runtime["port"] == 7878
     assert not (tmp_path / "unused").exists()
 
 
@@ -185,7 +185,7 @@ def test_observe_candidate_gates_and_service_share_native_effective_config(monke
         assert not config.get("experimental_whole_prefill", False)
         assert not config.get("experimental_bounded_whole_prefill", False)
         assert config["experimental_decode_bundle"] is True
-        assert config["devices"] == [0, 1, 2, 3] and config["port"] == 8989
+        assert config["devices"] == [4, 5, 6, 7] and config["port"] == 7878
         assert "--max-num-batched-tokens" not in serve_argv(config)
         assert "--scheduler-cls" not in serve_argv(config)
 

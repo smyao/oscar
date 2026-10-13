@@ -407,7 +407,7 @@ def test_managed_service_only_observes_external_load(monkeypatch, tmp_path):
     calls = []
 
     class Server:
-        base_url = "http://127.0.0.1:8989"
+        base_url = "http://127.0.0.1:7878"
         trace_dir = tmp_path / "trace"
         def check_alive(self):
             raise KeyboardInterrupt("test stop after READY")
@@ -456,7 +456,7 @@ def test_cleanup_resource_error_preserves_server_rc_and_late_summary(monkeypatch
         returncode = 7
         phase = "serve"
     class Server:
-        base_url = "http://127.0.0.1:8989"
+        base_url = "http://127.0.0.1:7878"
         trace_dir = trace
         def check_alive(self):
             raise KeyboardInterrupt("test stop")

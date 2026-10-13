@@ -47,7 +47,7 @@ def test_four_bounded_requests_have_two_isolated_salts_and_exact_fork(tmp_path, 
         return {"status": "completed", "cached_tokens": 11520 if name == "partial_after_anchor" else None}
     monkeypatch.setattr(probe, "isolated_http", http)
     args = SimpleNamespace(seed_tokens=32768, shared_tokens=13824, output=tmp_path/"evidence",
-        base_url="http://127.0.0.1:8989", model="qwen3.5", output_tokens=8, timeout=120, total_timeout=600)
+        base_url="http://127.0.0.1:7878", model="qwen3.5", output_tokens=8, timeout=120, total_timeout=600)
     assert probe.run(args) == 0
     names, tasks = zip(*calls)
     payloads = [t["payload"] for t in tasks]
@@ -79,7 +79,7 @@ def test_failed_http_is_recorded_and_stops_later_requests(tmp_path, monkeypatch)
         raise RuntimeError("HTTP child rc=1")
     monkeypatch.setattr(probe, "isolated_http", http)
     args = SimpleNamespace(seed_tokens=32768, shared_tokens=13824, output=tmp_path/"evidence",
-        base_url="http://127.0.0.1:8989", model="qwen3.5", output_tokens=8, timeout=120, total_timeout=600)
+        base_url="http://127.0.0.1:7878", model="qwen3.5", output_tokens=8, timeout=120, total_timeout=600)
     assert probe.run(args) == 1 and calls == ["tokenize", "long_seed"]
     report = json.loads((args.output/"summary.json").read_text())
     assert report["status"] == "failed" and "HTTP child rc=1" in report["error"]

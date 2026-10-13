@@ -11,6 +11,8 @@ import subprocess
 import sys
 import time
 
+import pytest
+
 from tools import plog, probe_ops, service_probe
 
 
@@ -105,17 +107,25 @@ def test_diagnostic_error_never_overwrites_the_original_failure(monkeypatch):
     assert report["cann_plog"]["status"] == "diagnostic_failed"
 
 
-def test_operator_probe_failure_attaches_current_pid_fixture_without_npu(tmp_path, monkeypatch):
+@pytest.mark.parametrize("explicit_config", [False, True])
+def test_operator_probe_failure_attaches_current_pid_fixture_without_npu(tmp_path, monkeypatch, explicit_config):
     root, output = tmp_path / "cann", tmp_path / "probe.json"
+    monkeypatch.setattr(os, "environ", dict(os.environ))
     monkeypatch.setenv("ASCEND_PROCESS_LOG_PATH", str(root))
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "0,1,2,3")
+    devices = [8, 9, 10, 11] if explicit_config else [4, 5, 6, 7]
+    config = tmp_path / "target.json"
+    config.write_text(json.dumps({"devices": devices}))
 
     def fail_probe():
+        assert os.environ["ASCEND_RT_VISIBLE_DEVICES"] == ",".join(map(str, devices))
         log(root / f"plog-{os.getpid()}_fixture.log", "oscar fixture operator failure\n", time.time())
         raise RuntimeError("primary operator fixture failure")
 
     monkeypatch.setattr(probe_ops, "probe", fail_probe)
-    monkeypatch.setattr(sys, "argv", ["probe_ops", "--output", str(output)])
+    monkeypatch.setattr(sys, "argv", ["probe_ops", "--output", str(output)] +
+                        (["--config", str(config)] if explicit_config else []))
     assert probe_ops.main() == 1
     report = json.loads(output.read_text())
     assert report["error"] == "primary operator fixture failure"

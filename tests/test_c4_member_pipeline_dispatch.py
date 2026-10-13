@@ -106,7 +106,7 @@ def test_missing_new_capability_fails_before_any_device_work(monkeypatch, reques
 
 def test_runtime_workspace_records_the_effective_pipeline_flag(monkeypatch):
     from oscar_ascend import runtime
-    config = variant_config({"devices": [0, 1, 2, 3], "port": 8989,
+    config = variant_config({"devices": [4, 5, 6, 7], "port": 7878,
                              "experimental_c4_member_pipeline": True}, "candidate")
     # Runtime receives the native engine's resolved capacity after CLI omission.
     config["max_num_batched_tokens"] = 2048

@@ -112,7 +112,7 @@ def run(args):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--base-url", default="http://127.0.0.1:8989")
+    parser.add_argument("--base-url", default="http://127.0.0.1:7878")
     parser.add_argument("--model", default="qwen3.5")
     parser.add_argument("--seed-tokens", type=int, default=32768)
     parser.add_argument("--shared-tokens", type=int, default=13824)

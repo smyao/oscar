@@ -47,12 +47,12 @@
 
 ```bash
 python3 -m tools.partial_prefix_probe --run \
-  --base-url http://127.0.0.1:8989 --model qwen3.5 \
+  --base-url http://127.0.0.1:7878 --model qwen3.5 \
   --seed-tokens 32768 --shared-tokens 13824 --output-tokens 8 \
   --timeout 120 --total-timeout 600 --output logs/partial-prefix-32k
 ```
 
-输出目录须未存在；后四卡服务端口改7878。4次完成请求、合计110592输入token、每次8个输出token，整体期限600秒。保留request JSON、完整SSE、response JSON和summary。`summary.status=completed`及`assessment.controlled_hit=passed`才表示受控命中成立；失败仍可能来自配置、统计缺失、驱逐或模型执行，不能自动归罪协调器。此探针不强制加入默认部署，不产生隐式服务流量，也不替代模型质量或吞吐验收。
+输出目录须未存在；所有入口默认后四卡、服务端口7878。4次完成请求、合计110592输入token、每次8个输出token，整体期限600秒。保留request JSON、完整SSE、response JSON和summary。`summary.status=completed`及`assessment.controlled_hit=passed`才表示受控命中成立；失败仍可能来自配置、统计缺失、驱逐或模型执行，不能自动归罪协调器。此探针不强制加入默认部署，不产生隐式服务流量，也不替代模型质量或吞吐验收。
 
 专项回归226 passed，原始日志/XML和审批限制见 `reports/prefix_review_20261013/validation.json`。本轮未执行真NPU、FIA数值、图回放或AISBench；启动命令、默认参数和所有运行时优化选择保持基线不变。
 
@@ -108,7 +108,7 @@ git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 
 | 项目 | 默认值 |
 |---|---|
-| 设备 / SOC / 服务地址 | 0,1,2,3 / ascend910b4 / 0.0.0.0:8989 |
+| 设备 / SOC / 服务地址 | 4,5,6,7 / ascend910b4 / 0.0.0.0:7878 |
 | 模型 / served name | target.json 指定的 Qwen3.5-27B-w8a8-mtp / qwen3.5 |
 | TP / DP / max sequences | 4 / 1 / 128 |
 | max model length / memory utilization | 262144 / 0.9 |
@@ -141,10 +141,10 @@ observe 正式模式仍只观察外部流量，不偷偷生成推理请求；APC
 ### 已运行服务的短 APC 测试与日志
 
 ```bash
-python3 -m tools.prefix_cache_probe --run --require-hit   --base-url http://127.0.0.1:8989 --model qwen3.5   --lengths 3072 5376 --output-tokens 8 --timeout 120 --total-timeout 600   --output logs/prefix-smoke-20261013
+python3 -m tools.prefix_cache_probe --run --require-hit   --base-url http://127.0.0.1:7878 --model qwen3.5   --lengths 3072 5376 --output-tokens 8 --timeout 120 --total-timeout 600   --output logs/prefix-smoke-20261013
 ```
 
-后四卡服务只改base URL端口为7878。输出目录必须是新目录，避免把旧结果当新证据。每组含cold seed、warm repeat、两个并发fork及两个独立salt的cold fork。`summary.json` 必须同时为 `status=completed`、`cache_gate=passed`；warm repeat应分别实际报告2304、4608 cached tokens。每次必须有正确usage、finish_reason、`[DONE]`，保留原始 `*.response.sse.txt` 和请求JSON。缺失命中统计仍是null，不改写成0；需要正命中的warm样本缺失即失败。cold/warm输出ID比较只报告敏感性，不用这12个请求代替冻结模型质量门。
+所有入口的base URL默认端口均为7878。输出目录必须是新目录，避免把旧结果当新证据。每组含cold seed、warm repeat、两个并发fork及两个独立salt的cold fork。`summary.json` 必须同时为 `status=completed`、`cache_gate=passed`；warm repeat应分别实际报告2304、4608 cached tokens。每次必须有正确usage、finish_reason、`[DONE]`，保留原始 `*.response.sse.txt` 和请求JSON。缺失命中统计仍是null，不改写成0；需要正命中的warm样本缺失即失败。cold/warm输出ID比较只报告敏感性，不用这12个请求代替冻结模型质量门。
 
 日志阅读顺序：
 

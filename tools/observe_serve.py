@@ -254,7 +254,7 @@ def _preflight(config_path: Path, config: dict, env: dict, log_dir: Path,
         raise RuntimeError("native-current partial/LSE gate incomplete")
     status["current_gate"] = current
     for name, command in (
-        ("probe-ops", [python, "-m", "tools.probe_ops", "--output", str(log_dir / "operators.json")]),
+        ("probe-ops", [python, "-m", "tools.probe_ops", "--config", str(config_path), "--output", str(log_dir / "operators.json")]),
         ("prepare-rotations", [python, "-m", "tools.prepare_rotations", "--config", str(config_path)]),
     ):
         if name == "probe-ops":

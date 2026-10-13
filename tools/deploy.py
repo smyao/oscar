@@ -28,7 +28,7 @@ def plan(config_path: Path, log_dir: Path, *, config=None) -> list[tuple[str, li
         ("install-plugin", [python, "-m", "pip", "install", "--no-deps", "--no-build-isolation", "-e", str(ROOT)]),
         ("build-ops", [python, "-m", "tools.build_ops", "--soc", config.get("soc_version", "ascend910b4"),
                        "--log-dir", str(log_dir / "build")]),
-        ("probe-ops", [python, "-m", "tools.probe_ops", "--output", str(log_dir / "operators.json")]),
+        ("probe-ops", [python, "-m", "tools.probe_ops", "--config", cfg, "--output", str(log_dir / "operators.json")]),
         ("prepare-rotations", [python, "-m", "tools.prepare_rotations", "--config", cfg]),
         # The paired preflight verifies this signed build and runs the real
         # CV/rotation NPU gate once, with resource release, before native (#126/#140).

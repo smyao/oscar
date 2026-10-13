@@ -29,7 +29,7 @@ def main(argv=None) -> int:
     parser.add_argument("--variant", choices=("baseline", "candidate"),
                         help="default target selects candidate; explicit feature configs are respected; baseline selects fe0")
     parser.add_argument("--rear-cards", action="store_true",
-                        help="use physical Ascend devices 4,5,6,7 and port 7878 for this launch only")
+                        help="explicitly select physical Ascend devices 4,5,6,7 and port 7878 (already the default target)")
     parser.add_argument("--native-token-budget", action="store_true",
                         help="compatibility alias; every launch already uses the native token budget")
     parser.add_argument("--enable-prefix-caching", action=argparse.BooleanOptionalAction, default=None,

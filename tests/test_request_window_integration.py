@@ -230,7 +230,7 @@ def test_explicit_flag_keeps_native_scheduler_and_requires_full_capability_bundl
         AscendRuntimeProvider(cfg | {"history_token_capacity": 16896})
     with pytest.raises(OscarReadinessError, match="whole-prefill budget"):
         AscendRuntimeProvider(cfg | {"experimental_bounded_whole_prefill": True})
-    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "0,1,2,3")
+    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "4,5,6,7")
     monkeypatch.setattr(loader, "require_production_ops", lambda: None)
     seen = []
     def require(capabilities):

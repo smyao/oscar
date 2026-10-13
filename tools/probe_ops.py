@@ -1,4 +1,4 @@
-# 档案 G25–G34/#13–22/#53/#69/#98/#111/#118/#122：真设备完成和限定本任务PID的CANN诊断。
+# 档案 G25–G34/#13–22/#53/#69/#98/#111/#118/#122/#123：显式任务卡号、真设备完成和限定本任务PID的CANN诊断。
 """Real-NPU primitive probe. No CPU execution route for operators under test."""
 from __future__ import annotations
 import argparse
@@ -9,6 +9,7 @@ import sys
 import time
 from .phase import atomic_json
 from .plog import attach_plog
+from .target_cli import ROOT, target_env
 
 
 def probe() -> dict:
@@ -197,9 +198,13 @@ def probe() -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
     args = parser.parse_args()
     started = time.time()
     try:
+        config = json.loads(args.config.read_text())
+        os.environ.update(target_env(config))
+        os.environ["OSCAR_TARGET_CONFIG"] = str(args.config.resolve())
         report = probe()
         code = 0
     except Exception as exc:

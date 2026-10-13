@@ -15,8 +15,10 @@ def synthetic_report():
     """Deliberately synthetic report to exercise fail-closed validation."""
     rows=[]
     for case in probe.case_plan():
+        baseline,candidate=probe.operators(case)
         spec=case.shape;invalid=spec.corrupt_metadata or spec.corrupt_qr
         row={'case':spec.name,'status':'passed','contexts':list(spec.contexts),'qlens':list(spec.qlens),
+            'baseline_operator':baseline,'candidate_operator':candidate,
             'all_tasks':spec.padded_tokens*3*spec.splits,'active_queries':sum(spec.qlens),
             'padded_queries':spec.padded_tokens-sum(spec.qlens),'queries':0 if invalid else sum(spec.qlens),
             'special_values':case.special_values,'source_leaders':{'0':2,'1':2,'2':2},
@@ -26,7 +28,7 @@ def synthetic_report():
         if case.timed:
             a,b=12.,10.
             row['timing']={'baseline_ms':a,'candidate_ms':b,'ratio':b/a,'speedup':a/b,'minimum_speedup':1.15,
-                'samples_ms':{probe.BASELINE:[a]*5,probe.CANDIDATE:[b]*5},'warmup':2,'repeats':5,
+                'samples_ms':{baseline:[a]*5,candidate:[b]*5},'warmup':2,'repeats':5,
                 'scope':probe.SCOPE,'gate':'passed'}
         if case.graph:
             states=[dict(row,state=name,task_sha256=task,raw_sha256=raw,table_sha256=table)
@@ -36,6 +38,7 @@ def synthetic_report():
                 'cache_table_tasks_changed':True,'eager_bitwise':'passed','independent_oracle':'passed','states':states}
         rows.append(row)
     return {'status':'passed','baseline_operator':probe.BASELINE,'candidate_operator':probe.CANDIDATE,
+        'operator_families':probe.OPERATOR_FAMILIES,
         'precision':'passed','error_domain':'passed','graph_capture':'passed','graph_replay':'passed',
         'performance':'passed','device_completion':'passed','scope':probe.SCOPE,
         'workspace_bytes_per_core':probe.WORKSPACE,'cases':rows}
@@ -54,14 +57,16 @@ def test_report_contract_requires_real_complete_shapes_and_sources():
         assert probe.validate_evidence(broken),name
 
 
+@pytest.mark.parametrize('index', [4,9])
 @pytest.mark.parametrize('base,new,allowed',[(11.5,10.,True),(11.49,10.,False),(10.,10.,False)])
-def test_full_cv_merge_threshold_is_15_percent_without_rounding(base,new,allowed):
-    report=synthetic_report();timing=report['cases'][-1]['timing']
+def test_full_cv_merge_threshold_is_15_percent_without_rounding(base,new,allowed,index):
+    baseline,candidate=probe.operators(probe.case_plan()[index])
+    report=synthetic_report();timing=report['cases'][index]['timing']
     timing.update(baseline_ms=base,candidate_ms=new,ratio=new/base,speedup=base/new,
-                  samples_ms={probe.BASELINE:[base]*5,probe.CANDIDATE:[new]*5})
+                  samples_ms={baseline:[base]*5,candidate:[new]*5})
     errors=probe.validate_evidence(report)
     assert (not any('device_latency' in e for e in errors)) is allowed
-    timing['samples_ms'][probe.BASELINE].pop()
+    timing['samples_ms'][baseline].pop()
     assert any('device_latency' in e for e in probe.validate_evidence(report))
 
 
@@ -75,11 +80,12 @@ def test_changed_input_graph_needs_cache_table_tasks_and_oracle():
     assert any('graph_oracle' in e for e in probe.validate_evidence(report))
 
 
-def test_short_boundary_fixture_and_graph_relocation_keep_logical_payload():
-    case=probe.case_plan()[0];first=probe.make_fixture(torch,case)
+@pytest.mark.parametrize('index,actual', [(0,8),(5,2)])
+def test_short_boundary_fixture_and_graph_relocation_keep_logical_payload(index,actual):
+    case=probe.case_plan()[index];first=probe.make_fixture(torch,case)
     second=probe.make_fixture(torch,probe.replace(case,shape=probe.replace(case.shape,
         contexts=tuple(c+16 for c in case.shape.contexts))))
-    assert len(first['expected'])==len(second['expected'])==8
+    assert len(first['expected'])==len(second['expected'])==actual
     assert {k:(v.shape,v.dtype) for k,v in first['cpu'].items()}=={k:(v.shape,v.dtype) for k,v in second['cpu'].items()}
     raw=second['cpu']['raw'][probe.reuse.PREFIX:].view(second['blocks'],second['stride']).clone()
     assignments=copy.deepcopy(second['page_assignments'])
@@ -91,7 +97,7 @@ def test_short_boundary_fixture_and_graph_relocation_keep_logical_payload():
         for old,new in zip(previous,current):
             assert torch.equal(raw[old],after[new])
             assert probe.shared._store_bits_equal(torch,windows[old],second['cpu']['wk'][new])
-    assert bool((second['cpu']['slots'][8:]==-1).all())
+    assert bool((second['cpu']['slots'][actual:]==-1).all())
     assert torch.signbit(first['cpu']['q'][0,0,0])
 
 

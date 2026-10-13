@@ -21,6 +21,8 @@ STRIPED_BALANCED_CV_OP = "attention_cv_striped_balanced_out"
 STRIPED_CLUSTER16_CV_OP = "attention_cv_striped_cluster16_out"
 STRIPED_DECODE_CV_OP = "attention_cv_striped_decode_out"
 MDL_DECODE_CV_OP = "attention_cv_mdl_decode_out"
+MDL_DECODE_Q1_CV_OP = "attention_cv_mdl_decode_q1_out"
+MDL_DECODE_CV_OPS = frozenset({MDL_DECODE_CV_OP, MDL_DECODE_Q1_CV_OP})
 MEMBER_PIPELINE_CV_OP = "attention_cv_member_pipeline_cluster4_out"
 OPTIMIZED_STRIPED_OPS = {
     STRIPED_CV_OP: "attention_cv_window_range_out",
@@ -53,13 +55,14 @@ def select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len, *, q1_dra
     if mdl_decode:
         if not decode_bundle:
             raise ValueError("MDL decode requires the explicit decode bundle")
-        # #126/#145/#154: only replace the qualified q4 layout/ABI. Later q1,
+        # #126/#145/#154: replace the separately qualified q4/q1 layouts.
         # C4/C16 and all eligibility/error checks retain their original route.
         old = select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len,
             q1_draft=q1_draft, fast_unpack=fast_unpack, mixed_cv=mixed_cv,
             striped_cache=striped_cache, decode_bundle=decode_bundle,
             c4_member_pipeline=c4_member_pipeline)
-        return MDL_DECODE_CV_OP if old == "attention_cv_bundle_decode_out" else old
+        return {"attention_cv_bundle_decode_out": MDL_DECODE_CV_OP,
+                "attention_cv_bundle_q1_out": MDL_DECODE_Q1_CV_OP}.get(old, old)
     if c4_member_pipeline:
         if not decode_bundle:
             raise ValueError("C4 member pipeline requires the explicit decode bundle")

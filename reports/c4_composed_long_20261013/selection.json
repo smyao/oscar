@@ -1,0 +1,62 @@
+{
+  "status": "local_complete_CV_qualified_and_candidate_enabled",
+  "scope": "current_H16_to_H32_member_pipeline_Q336_C1341_R1_S1_all1008tasks_source0_and1_legal_source2_suppression",
+  "pair_sources": {
+    "baseline": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65",
+    "candidate": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc"
+  },
+  "measurement": {
+    "baseline_ticks": 3540306,
+    "candidate_ticks": 2671072,
+    "speedup": 1.3254251476560721,
+    "latency_reduction_fraction": 0.24552510432714003,
+    "minimum_speedup": 1.15,
+    "gate": "passed",
+    "provenance": "completed/comparison.json and per-arm completion/control/profile receipts; original VM artifacts"
+  },
+  "precision": {
+    "CPU337": "historical_complete_bitwise_revalidated",
+    "CPU1341": "numeric_timeout_preserved_metadata_only_complete",
+    "CAModel1341": "same_library_partial_lse_status_clusterStats_bitwise_all336query_oracle_all1008tasks_60actors",
+    "NPU": "not_run",
+    "graph": "not_run",
+    "model_quality": "not_established"
+  },
+  "selection": {
+    "candidate_enabled": true,
+    "native_disabled": true,
+    "baseline_disabled": true,
+    "shared_one_key_entries": true
+  },
+  "memory": {
+    "C4_baseline_required_per_core": 1839104,
+    "C4_candidate_required_per_core": 2494464,
+    "default_C16_arena_before": 99942400,
+    "default_C16_arena_after": 99942400,
+    "additional_default_reserved_bytes": 0,
+    "scope": "workspace_reservation_only_not_HBM_measurement"
+  },
+  "target_gate": {
+    "base_context": 1341,
+    "graph_context": 1373,
+    "kv_rounds": [
+      5,
+      6
+    ],
+    "minimum_complete_speedup": 1.15,
+    "median_samples": 5,
+    "warmup": 2,
+    "precision_tolerance": {
+      "atol": 0.005,
+      "rtol": 0.005
+    },
+    "failure_blocks_observe_service": true
+  },
+  "host_validation": {
+    "passed": 39,
+    "command": ".venv/bin/python -m pytest -q tests/test_serving_variants.py tests/test_c4_member_pipeline_dispatch.py tests/test_probe_c4_member_pipeline.py"
+  },
+  "whole_service_2_to_4x": "not_established",
+  "production_kernel_changed": false,
+  "old_research_selection_report": "reports/c4_pipeline_selection_20261012.json_unchanged_historical"
+}

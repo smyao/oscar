@@ -1,0 +1,70 @@
+{
+  "status": "passed",
+  "files": [
+    {
+      "source": "core0.cubecore0.instr_log.dump",
+      "path": "full_instructions/core0.cubecore0.instr_log.dump.gz",
+      "raw_bytes": 12908939,
+      "raw_sha256": "94d628286c3d07a5207f18f3678ebd06c51b19e7f02f065d4b1a8defeb0a8b86",
+      "gzip_sha256": "3ffa634adb56dfc7e14bdb2c8500022a35bb88ef30631716d3851e38fd38b998",
+      "complete": true,
+      "marker_events": 0,
+      "marker_closure": "not_instrumented"
+    },
+    {
+      "source": "core0.cubecore0.instr_popped_log.dump",
+      "path": "full_instructions/core0.cubecore0.instr_popped_log.dump.gz",
+      "raw_bytes": 12834593,
+      "raw_sha256": "c895c26aecb05ecd7a32a8cd0b821b19ec590dda8014ee9abd853f00ec7d41db",
+      "gzip_sha256": "db377513af5c823dc7b3f4b184ab1867dc11a2a1fe2d11f16e37e7371ee73e84",
+      "complete": true,
+      "marker_events": 0,
+      "marker_closure": "not_instrumented"
+    },
+    {
+      "source": "core0.veccore0.instr_log.dump",
+      "path": "full_instructions/core0.veccore0.instr_log.dump.gz",
+      "raw_bytes": 19885226,
+      "raw_sha256": "7b7a3204c5991a6f3bb9668e5120d5fa1943a2d9a6c3334f3db39a0a4cfda2ec",
+      "gzip_sha256": "f8cb6681b744125632738e45ca4daf6fc6075f995c74a282bb87efc6a58c266b",
+      "complete": true,
+      "marker_events": 0,
+      "marker_closure": "not_instrumented"
+    },
+    {
+      "source": "core0.veccore0.instr_popped_log.dump",
+      "path": "full_instructions/core0.veccore0.instr_popped_log.dump.gz",
+      "raw_bytes": 19737160,
+      "raw_sha256": "3d6f0c03d294b7a967f4c7303184216c71bdd558b82cb56c0ad5298c8613a486",
+      "gzip_sha256": "15d3f95ddf8a1734a08a38891610ad7b8271f7a06e97a0fb0387086bc3a9e0ea",
+      "complete": true,
+      "marker_events": 0,
+      "marker_closure": "not_instrumented"
+    },
+    {
+      "source": "core0.veccore1.instr_log.dump",
+      "path": "full_instructions/core0.veccore1.instr_log.dump.gz",
+      "raw_bytes": 11460499,
+      "raw_sha256": "25c4416b3e10c58751633960413e0a0fda43889228aeadf7034f2f3e5a7b307f",
+      "gzip_sha256": "46e82b994cda1dbc31d225d187a3eeb80153655d4aba23dee28f835de181624f",
+      "complete": true,
+      "marker_events": 0,
+      "marker_closure": "not_instrumented"
+    },
+    {
+      "source": "core0.veccore1.instr_popped_log.dump",
+      "path": "full_instructions/core0.veccore1.instr_popped_log.dump.gz",
+      "raw_bytes": 11371082,
+      "raw_sha256": "2aed70d55a8ed089f5b1ca0ce4b9dfb15fff3c269f764579ea1450925827dbcc",
+      "gzip_sha256": "a72a1b720548789c81d1f73e0d24214fa7cce9ed221f56b8c3672a4eaea624b2",
+      "complete": true,
+      "marker_events": 0,
+      "marker_closure": "not_instrumented"
+    }
+  ],
+  "per_file_cap_bytes": 67108864,
+  "total_raw_bytes": 88197499,
+  "actor_count": 3,
+  "method": "regular_files_after_SDK_finalization_all_bytes_gzip_verified",
+  "interpretation": "markers locate submission scopes; correlate popped/completion instructions before attribution"
+}

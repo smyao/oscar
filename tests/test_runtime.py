@@ -465,10 +465,10 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             self.attention_cv_out(*args)
             raise MdlDispatchReached("attention_cv_mdl_decode_out")
 
-        def attention_cv_bundle_q1_out(self, *args):
+        def attention_cv_mdl_decode_q1_out(self, *args):
             assert _mdl_variant == "candidate" and later_draft
             self.attention_cv_out(*args)
-            raise MdlDispatchReached("attention_cv_bundle_q1_out")
+            raise MdlDispatchReached("attention_cv_mdl_decode_q1_out")
 
         def attention_cv_striped_cluster4_out(self, *args):
             assert striped_cache and args[15] is w.cluster_stats
@@ -587,7 +587,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         from enum import Enum
         common.attn_state = Enum("AscendAttentionState", ["DecodeOnly"]).DecodeOnly
         common.max_query_len = 1 if later_draft else 4
-        name = "attention_cv_bundle_q1_out" if later_draft else "attention_cv_mdl_decode_out"
+        name = "attention_cv_mdl_decode_q1_out" if later_draft else "attention_cv_mdl_decode_out"
         with pytest.raises(MdlDispatchReached, match="^"+name+"$"):
             impl.forward(SimpleNamespace(layer_name="model.layers.0.self_attn.attn" if _mdl_target else "mtp.layers.0.self_attn.attn"),
                          q, k, value, packed, replace(from_common(common), is_draft=not _mdl_target,

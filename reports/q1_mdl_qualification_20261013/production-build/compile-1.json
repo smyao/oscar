@@ -1,0 +1,16 @@
+{
+  "phase": "compile-1",
+  "command": [
+    "cmake",
+    "--build",
+    "/dev/shm/oscar-mdl-fullbuild-20261012/build/ascendc",
+    "--parallel",
+    "2"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 148.60169,
+  "timed_out": false,
+  "interrupted": false,
+  "log": "/tmp/oscar-q1-fullbuild-20261013/compile-1.log",
+  "cleanup_complete": true
+}

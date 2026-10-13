@@ -1,0 +1,6 @@
+{
+  "pid": 598865,
+  "pgid": 598865,
+  "output": "/tmp/oscar-q1-mdl-20261013-v2/baseline",
+  "script": "/dev/shm/oscar-decode-completion-20261012/csrc/experiments/window_batch_decode/replay_camodel.py"
+}

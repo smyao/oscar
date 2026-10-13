@@ -1,0 +1,66 @@
+{
+  "status": "prepared_not_executed",
+  "sources_and_harness": "inverse_identity_checked",
+  "python_syntax": "passed",
+  "host_oracle_queries": 336,
+  "fixture_path": "/private/tmp/oscar-c4-composed-c1341-20261013",
+  "fixture_input_sha256": {
+    "q": "04c02cfc361cfffb7e602bfaa2ee441ca9484849fe557671101236c7008c6fef",
+    "qr": "b8156bb57f3108967e633b4c6f9560e7203f202bbbe08719f4fd243e4e18de26",
+    "ck": "c1064c2a22b415be3ad9ddbf0fd55a200d899d0671f120a168f85e569de0c7d1",
+    "cv": "ec59548dcf677fc496528f1cb152f41466df5824c0b7a27c6134aab54267aaa7",
+    "rv": "01945d071added92e622bb102b644ae414ce0b550a0d080f051fc0d2a25c8c52",
+    "raw": "8ce49fb59cc05ec0641aa1f1351fceb70ca98e6d19400d373c74cdeee08c76fd",
+    "table": "f92a73577a3668e0d1000b4a2b3cebc9c32396dd31fba78eb8aa229df97e2514",
+    "wk": "76d7405e4075cd7062a6aa753087cf512f231c9c8077646e01608baf3094e2d8",
+    "wv": "c37ea07b68720fda0b27615c3be7352ea3288a69cf46c3c8624d647cfb7820f6",
+    "tags": "db7236317da0c0c899d2aa932d4c8a9cf949ccd142345aba415f109865c83230",
+    "starts": "79c44af0452295da1463d76d6aecdc598bd05f088fa01ca9c7f1185d10b13792",
+    "lens": "55809d3be0b5750546285dde138342219bf22c007399801e7f3d7d544f990da5",
+    "slots": "61ccbb08c9e2f335df7cb06c4bee7dbf514b3fb87fc3a33cd9591f320b1bf073",
+    "expected_output": "b8ff2ff9a71acf5336ccae71eee4a8f25f7f5658de7b92a15c820c5904faf468",
+    "expected_lse": "013d4873f30dd7a0f8b107ed9ac30e0e5d8096b1aa6857ff03e7739ebeea9744",
+    "expected_positions": "3346991324cf0841fc63bb357c8bef4e1551909832fac558b90baaa3401a9af3",
+    "expected_tasks": "bbab4cbb02a3d66cecd0336be1232bd2dec8efef6d04b7bd19a8f766a3f9537a"
+  },
+  "build_binding": {
+    "schema": 1,
+    "pair_sources": {
+      "baseline": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65",
+      "candidate": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc"
+    },
+    "source_dependencies": {
+      "csrc/kernels/attention_cv_member_pipeline_cluster4.cpp": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+      "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+      "csrc/include/oscar_member_pipeline_launch.h": "fb87c667495249b94fecc3d626fa703f9332e7fd638eb533bc5c8d2fd4bc9a48",
+      "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+      "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+      "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+      "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+      "csrc/kernels/attention_striped_unpack32.h": "c0aeab7e8fb9e078d37147ca411013f1c42e1547bd0a1d066ed3aece0c5514ca",
+      "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+      "csrc/kernels/attention_cv_window_range_cluster4.cpp": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65"
+    },
+    "sources": {
+      "c4_baseline.cpp": "824d01eb4b7668aa33ecf821f862cc112bc1033cabe010868d1eaca5f7ba306a",
+      "c4_candidate.cpp": "f0199c2cdeb37e6c6276ecc709733748a8abbe7407e30657f181c0ba74aab193"
+    },
+    "harness": {
+      "cv_probe.cpp": "5b80ff91dfa87a134bac52295a377e1b25e6ede11a537a8b7fb4347136997812",
+      "cv_replay.py": "43374dbb48c415d5642955850fcce325f1331afe5963e3c40293c9a29b9a906d",
+      "cv_compare.py": "75ed75ea88b2fd4daf7bab54a808ac6e9b2bf088c086b82f7055b3c67910a708"
+    },
+    "generator_sha256": "b61681f079e705665fa941507aba6256a2dc6b75102b5d6c953a787bf71a5b3b"
+  },
+  "device_validation": {
+    "CPU": "not_run",
+    "CANN": "not_run",
+    "CAModel": "not_run",
+    "NPU": "not_run",
+    "graph": "not_run",
+    "whole_service": "not_run"
+  },
+  "source_production_changed": false,
+  "Lima_execution": "not_attempted_in_this_preparation_task",
+  "threshold": "at_least_1.15_complete_CV_current_H16_denominator"
+}

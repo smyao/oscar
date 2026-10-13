@@ -1,0 +1,24 @@
+{
+  "status": "postprocess_corrected_original_exit1_preserved",
+  "original_sha256": {
+    "control": "ee5e5eedd29a9063a1524b169fdd79b5f139b03903349c4cf4adb50e01c6a5fe",
+    "report.json": "70048d29d3aec60050ae46c9bc5694a1eddb93d17bc82e17cff686e7fba991b8",
+    "completion.json": "5b33021519170ee3dfdd5f60edcaae8d67b798b6b174eafa3bb3f5fcb55e9b68",
+    "mdl_failure.json": "f2ed570f356dc185372ab0e1610d164f6bbc1da8472b68b9ba5b61830470e945",
+    "plan": "69ad5e2292712e6f30ed1816408937b61ce98054f3ff85c9d9ac9638efa15f89"
+  },
+  "original_child_returncode": 1,
+  "reason": "prepare padding is count=-1/error=0, not nonleader count=0",
+  "qualified_sha256": "ac093f00074e928a69ea3d63d5dd206d6e3e2b3d28ad34b4500b079da94bb96c",
+  "recovery_source_sha256": "61149d16326e9a2ed549c5883b160d2b8354c28dd76a0337be85ad47dfaeb9c8",
+  "runner_source_sha256": "b3093e1d73be217fb1f2c24795c3436f79c802c7edfb593e03b4640e2a6850b6",
+  "mdl_complete_trace": {
+    "status": "passed",
+    "plan_sha256": "69ad5e2292712e6f30ed1816408937b61ce98054f3ff85c9d9ac9638efa15f89",
+    "trace_report": "full_instructions.json",
+    "total_raw_bytes": 90088890
+  },
+  "kernel_rerun": false,
+  "NPU": "not_run",
+  "whole_service": "not_established"
+}

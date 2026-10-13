@@ -1,0 +1,119 @@
+{
+  "status": "passed",
+  "cases": [
+    {
+      "case": "q1_r2_n8_c1344_1376_s1",
+      "control": "/tmp/oscar-q1-mdl-20261013-v2/cpu-0-control.json",
+      "result": {
+        "backend": "ascendc_cpu_debug",
+        "op": "mdl_load_q1",
+        "status": "passed",
+        "baseline": "current_production_decode_bundle",
+        "bitwise": true,
+        "oracle": true,
+        "fault_order": false,
+        "cores": 1,
+        "input_immutable": true,
+        "gm_guards": true,
+        "baseline_workspace_bytes_per_core": 1146880,
+        "candidate_workspace_bytes_per_core": 1146880
+      },
+      "elapsed_seconds": 21.917629319010302
+    },
+    {
+      "case": "q1_mdl_bad_page",
+      "control": "/tmp/oscar-q1-mdl-20261013-v2/cpu-1-control.json",
+      "result": {
+        "backend": "ascendc_cpu_debug",
+        "op": "mdl_load_q1",
+        "status": "passed",
+        "baseline": "current_production_decode_bundle",
+        "bitwise": true,
+        "oracle": false,
+        "fault_order": true,
+        "cores": 1,
+        "input_immutable": true,
+        "gm_guards": true,
+        "baseline_workspace_bytes_per_core": 1146880,
+        "candidate_workspace_bytes_per_core": 1146880
+      },
+      "elapsed_seconds": 4.665708774002269
+    },
+    {
+      "case": "q1_mdl_bad_tag",
+      "control": "/tmp/oscar-q1-mdl-20261013-v2/cpu-2-control.json",
+      "result": {
+        "backend": "ascendc_cpu_debug",
+        "op": "mdl_load_q1",
+        "status": "passed",
+        "baseline": "current_production_decode_bundle",
+        "bitwise": true,
+        "oracle": false,
+        "fault_order": true,
+        "cores": 1,
+        "input_immutable": true,
+        "gm_guards": true,
+        "baseline_workspace_bytes_per_core": 1146880,
+        "candidate_workspace_bytes_per_core": 1146880
+      },
+      "elapsed_seconds": 4.971568258013576
+    },
+    {
+      "case": "q1_mdl_vnan_then_tag",
+      "control": "/tmp/oscar-q1-mdl-20261013-v2/cpu-3-control.json",
+      "result": {
+        "backend": "ascendc_cpu_debug",
+        "op": "mdl_load_q1",
+        "status": "passed",
+        "baseline": "current_production_decode_bundle",
+        "bitwise": true,
+        "oracle": false,
+        "fault_order": true,
+        "cores": 1,
+        "input_immutable": true,
+        "gm_guards": true,
+        "baseline_workspace_bytes_per_core": 1146880,
+        "candidate_workspace_bytes_per_core": 1146880
+      },
+      "elapsed_seconds": 5.0688315849984065
+    },
+    {
+      "case": "q1_mdl_tag_then_vnan",
+      "control": "/tmp/oscar-q1-mdl-20261013-v2/cpu-4-control.json",
+      "result": {
+        "backend": "ascendc_cpu_debug",
+        "op": "mdl_load_q1",
+        "status": "passed",
+        "baseline": "current_production_decode_bundle",
+        "bitwise": true,
+        "oracle": false,
+        "fault_order": true,
+        "cores": 1,
+        "input_immutable": true,
+        "gm_guards": true,
+        "baseline_workspace_bytes_per_core": 1146880,
+        "candidate_workspace_bytes_per_core": 1146880
+      },
+      "elapsed_seconds": 5.031790737994015
+    },
+    {
+      "case": "q1_mdl_future_scale_query_nan",
+      "control": "/tmp/oscar-q1-mdl-20261013-v2/cpu-5-control.json",
+      "result": {
+        "backend": "ascendc_cpu_debug",
+        "op": "mdl_load_q1",
+        "status": "passed",
+        "baseline": "current_production_decode_bundle",
+        "bitwise": true,
+        "oracle": false,
+        "fault_order": true,
+        "cores": 1,
+        "input_immutable": true,
+        "gm_guards": true,
+        "baseline_workspace_bytes_per_core": 1146880,
+        "candidate_workspace_bytes_per_core": 1146880
+      },
+      "elapsed_seconds": 12.713845286983997
+    }
+  ]
+}

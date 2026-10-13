@@ -1,0 +1,162 @@
+{
+  "status": "revalidated_historical_complete_CPU337",
+  "context": 337,
+  "tokens": 336,
+  "task_rows": 1008,
+  "cores": 20,
+  "oracle": "numeric_all_queries_frozen_0p005",
+  "pair_sources": {
+    "baseline": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65",
+    "candidate": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc"
+  },
+  "equal_full_outputs_sha256": {
+    "partial.bin": "929ea0b7e7e311c563b4070ed4363f10fe49bc88e4f364f6c45e53a535269bb3",
+    "lse.bin": "f1a99ddeefbab5cadc11fcdd132e4e2e99bffcb799cd69505addef08afde3105",
+    "status.bin": "05bf9d87a6313c41625d93de63e30bc39be25e54b472f17e99d78cf12fccb3da",
+    "cluster_stats.bin": "30ed6fe8f58da914a8acb878f5c573833a3f66374b2807fef5e5da81500be08b",
+    "tasks.bin": "2fef4bdda036ef978582db542dd50a8195bd7350844f8f529f693607a4b0622d",
+    "prepared/positions.bin": "54db6fd2f64dab7b1ca71076c56f0fcdfe037d55e584189d602a059999525e74"
+  },
+  "H16_source_binding": {
+    "production_H16_sha256": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65",
+    "kernel_sha256": "627cf0af9caba609b708d2a34f6fde8a0a8d8e6407d1a4a9ec535afe4ea8a4f4",
+    "arm": "baseline"
+  },
+  "pipeline_packaging": {
+    "status": "source_packaged_not_device_acceptance",
+    "source": "csrc/experiments/c4_member_pipeline/c4_candidate.cpp",
+    "source_sha256": "da59a923a44cdb7ac0916596cd89f802a24fc1ffef4426952402d90b5d2e7b31",
+    "target": "csrc/kernels/attention_cv_member_pipeline_cluster4.cpp",
+    "target_sha256": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+    "helper": "csrc/experiments/c4_unpack32/unpack32.h",
+    "helper_sha256": "ea73ea49efaad4cfb43f9cdb91c8f1493fa95579e7e1750d33cac6c51c002bfc",
+    "helper_target": "csrc/kernels/attention_striped_unpack32.h",
+    "helper_target_sha256": "c0aeab7e8fb9e078d37147ca411013f1c42e1547bd0a1d066ed3aece0c5514ca",
+    "inverse_full_source_bytes": true,
+    "math_flags_task_error_order": "unchanged",
+    "changes": [
+      "include relocation",
+      "distinct symbols",
+      "candidate banner",
+      "authoritative ABI header"
+    ],
+    "operator": "attention_cv_member_pipeline_cluster4_out",
+    "request_operator": "attention_request_window_member_pipeline_cluster4_out",
+    "D256_workspace_bytes_per_core": 2494464,
+    "AIV_UB_bytes": 157760,
+    "evidence": "reports/c4_member_pipeline_20261010/reports/c4-pipeline-camodel337/comparison.json",
+    "CPU_experiment": "qualified finite/fault cases, not new production build",
+    "CANN_fresh": "pending",
+    "NPU": "pending",
+    "graph": "pending",
+    "service_performance": "pending",
+    "pushed": false
+  },
+  "controls": {
+    "baseline": {
+      "schema_version": 1,
+      "status": "completed",
+      "supervisor_pid": 547908,
+      "child_pid": 547946,
+      "child_pgid": 547946,
+      "command": [
+        "/dev/shm/oscar-decode-completion-20261012/build/c4-mdl-cpu/oscar_c4_mdl_cpu",
+        "/dev/shm/oscar-c4-b-nz-20261011/artifacts/c4_b_nz_20261011/c337",
+        "/dev/shm/oscar-decode-completion-20261012/reports/c4-mdl-cpu/baseline",
+        "baseline"
+      ],
+      "cwd": "/dev/shm/oscar-decode-completion-20261012",
+      "timeout_seconds": 120.0,
+      "started_utc": "2026-10-12T04:35:52.989539+00:00",
+      "stdout_path": "/dev/shm/oscar-decode-completion-20261012/reports/c4-mdl-cpu/baseline-logs/stdout.log",
+      "stderr_path": "/dev/shm/oscar-decode-completion-20261012/reports/c4-mdl-cpu/baseline-logs/stderr.log",
+      "lock_path": "/tmp/oscar-cann-validation.lock",
+      "lock_acquired": true,
+      "timed_out": false,
+      "interrupt_signal": null,
+      "child_returncode": 0,
+      "cleanup_complete": true,
+      "cleanup_grace_seconds": 12.0,
+      "cleanup_signals": [],
+      "supervisor_returncode": 0,
+      "child_env_override_keys": [],
+      "child_started_utc": "2026-10-12T04:35:52.990188+00:00",
+      "child_elapsed_seconds": 28.274951357976533,
+      "elapsed_seconds": 28.27774558099918,
+      "finished_utc": "2026-10-12T04:36:21.267617+00:00"
+    },
+    "candidate": {
+      "schema_version": 1,
+      "status": "completed",
+      "supervisor_pid": 484937,
+      "child_pid": 484941,
+      "child_pgid": 484941,
+      "command": [
+        "bash",
+        "-lc",
+        "set -e; source /usr/local/Ascend/cann-9.1.0/set_env.sh; unset LD_PRELOAD; exec build/c4-member-cpu/oscar_c4_member_pipeline_cpu fixtures/oscar-c4-member-pipeline-c337-valid-20261010 reports/c4-pipeline-cpu337/candidate candidate"
+      ],
+      "cwd": "/dev/shm/oscar-quant-hotpath-20261009",
+      "timeout_seconds": 120.0,
+      "started_utc": "2026-10-09T18:52:21.506768+00:00",
+      "stdout_path": "/dev/shm/oscar-quant-hotpath-20261009/reports/c4-pipeline-cpu337/candidate-logs/stdout.log",
+      "stderr_path": "/dev/shm/oscar-quant-hotpath-20261009/reports/c4-pipeline-cpu337/candidate-logs/stderr.log",
+      "lock_path": "/tmp/oscar-cann-validation.lock",
+      "lock_acquired": true,
+      "timed_out": false,
+      "interrupt_signal": null,
+      "child_returncode": 0,
+      "cleanup_complete": true,
+      "cleanup_grace_seconds": 12.0,
+      "cleanup_signals": [],
+      "supervisor_returncode": 0,
+      "child_env_override_keys": [],
+      "child_started_utc": "2026-10-09T18:52:21.507464+00:00",
+      "child_elapsed_seconds": 22.87838695803657,
+      "elapsed_seconds": 22.879537754924968,
+      "finished_utc": "2026-10-09T18:52:44.386317+00:00"
+    }
+  },
+  "reports": {
+    "baseline": {
+      "status": "passed",
+      "arm": "baseline",
+      "context": 337,
+      "bad_position": -1,
+      "clusters": 1,
+      "fault_statuses": 0,
+      "guards": true,
+      "input_immutable": true,
+      "all_status_lanes": true,
+      "oracle": "numeric",
+      "NPU": "not_run"
+    },
+    "candidate": {
+      "status": "passed",
+      "arm": "candidate",
+      "context": 337,
+      "bad_position": -1,
+      "clusters": 1,
+      "fault_statuses": 0,
+      "guards": true,
+      "input_immutable": true,
+      "all_status_lanes": true,
+      "oracle": "numeric",
+      "NPU": "not_run"
+    }
+  },
+  "receipt_sha256": {
+    "baseline_control": "079ded5baa7cff71e24d9b6baa140cf7dd693043a43a59fbf665e8873f401890",
+    "baseline_report": "5c1446a13d3da054c25a9af0535893177511312640845ec0ff562d5b99569ef9",
+    "baseline_source_binding": "13c648bd56555cbed1fc523d65d497750291e954a67b091d1d7a48b271b8a60d",
+    "candidate_control": "a5980cc0828f723a4f838a2377e92439bd5c64092f7394278b1b83a99048ee34",
+    "candidate_report": "fff449d88851a511a5c779635a46721c75d5bcd4c196850fd7a234f32c0397a9"
+  },
+  "baseline_archive": "reports/c4_mdl_load_20261012/cpu-baseline-complete.tar.gz",
+  "baseline_archive_sha256": "c3e51d93ee576b5179a236a954140830b2df049edae6230070ee739782467ad1",
+  "candidate_evidence": "reports/c4_member_pipeline_20261010/reports/c4-pipeline-cpu337",
+  "CPU1341": "timed_out_not_numerically_qualified",
+  "CAModel1341": "pending_full_oracle_all_actors",
+  "NPU": "not_run",
+  "whole_service": "not_established"
+}

@@ -1,0 +1,39 @@
+{
+  "status": "passed",
+  "CPU337": "revalidated_historical_complete_CPU337",
+  "CPU1341": "timed_out_not_numerically_qualified",
+  "CAModel1341": {
+    "status": "completed_full_C4_bitwise_pair",
+    "context": 1341,
+    "bad_position": -1,
+    "output_sha256": {
+      "partial": "d923988e47c71ebab3af8d453e830f5b53177197f3931d3efe5598b0b63a9a20",
+      "lse": "644bb9de963c3f2f30741e485178067a2c1eb75fbbe3cec194a49f4ec517a983",
+      "status": "05bf9d87a6313c41625d93de63e30bc39be25e54b472f17e99d78cf12fccb3da",
+      "cluster_stats": "5c126c57c4e8bad9dcd758daba65959f1552adbc6cd6b8aa918b60dc17a4e144"
+    },
+    "scope": "Q336/R1/C1341/S1/20core source0+1, all1008tasks; not production/NPU/graph",
+    "old_ticks": 3540306,
+    "new_ticks": 2671072,
+    "old_over_new": 1.3254251476560721,
+    "minimum_complete_CV_speedup": 1.15,
+    "combination_gate": "passed",
+    "denominator": "current_production_H16",
+    "candidate": "existing_H32_plus_member_pipeline",
+    "qualification": {
+      "contract": "explicit_CPU337_complete_and_CPU1341_metadata_then_full_CAModel1341",
+      "CPU337": "revalidated_historical_complete_CPU337",
+      "CPU337_evidence_sha256": "315deb43c59a59b420e8f39aa0fcca4adf53ff933e2ab709c235daaec1bd2336",
+      "CPU1341": "timed_out_not_numerically_qualified",
+      "CPU1341_control_sha256": "5e64b0a0bdc4859171e80089b37c98162db5a9b492a346ad7f1ce27b3f4cec36",
+      "prepared_tasks_sha256": "bbab4cbb02a3d66cecd0336be1232bd2dec8efef6d04b7bd19a8f766a3f9537a",
+      "prepared_positions_sha256": "3346991324cf0841fc63bb357c8bef4e1551909832fac558b90baaa3401a9af3",
+      "CAModel1341_required": "full_same_library_all1008_tasks_336_query_oracle_and60actors",
+      "same_shape_CPU_attention_output_used": false
+    }
+  },
+  "NPU": "not_run",
+  "graph": "not_run",
+  "production_enabled": false,
+  "whole_service": "not_established"
+}

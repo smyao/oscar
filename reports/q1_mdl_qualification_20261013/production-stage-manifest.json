@@ -1,0 +1,18 @@
+{
+  "archive": "reports/q1_mdl_qualification_20261013/production-stage.tar.gz",
+  "archive_sha256": "d1a7bc9093274de082b0fbbf0a08904849bfb1ebe1949641f95160b2188b8572",
+  "archive_bytes": 43097,
+  "entries": {
+    "tools/package_mdl_decode.py": "d271518e83bd53ef58a7264dc08388ba3c5c22c0e0bdf89c08b2fa2deca77101",
+    "tools/probe_mdl_decode.py": "3d29fab2d6268758b5adc673c37649ad530401bf02b4ee2d5c913f4304b48c83",
+    "csrc/kernels/attention_cv_mdl_decode.cpp": "1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f",
+    "csrc/include/oscar_mdl_decode_launch.h": "ee41be8a18c8db8dd6c42a16320482717735aef3c70e4aa7d4f9e0e9821a127f",
+    "csrc/striped_attention_bindings.cpp": "57b165aeebd9ab54df9b8efa7c45c76b5daa5a87ef5f032cff647cb3390fc173",
+    "csrc/torch_bindings.cpp": "f78a52c64f08fdbd3f7cd7693fd802cf58f1a54c9fe8fbccf764a072861d1820",
+    "csrc/CMakeLists.txt": "29afa755690a0c791772fe38f84609f9b28d196c6cacada8487b0c0e095abbe7",
+    "oscar_ascend/ops/contracts.py": "6a83b8df330143d5dcc8ea8b3ee0d56c36415e7b3c4a113f469ecbbc1f277454",
+    "oscar_ascend/ops/meta.py": "eab115f88ac0c58dc5b16de8046d43c41cb01032121fabed9c10354e893f9be8",
+    "oscar_ascend/ops/cv_dispatch.py": "52bec1b31a68851d10f3d8d7d71e9412f82f040836a994b7b34ed313b9e4d5e9",
+    "oscar_ascend/runtime.py": "27d3680baed80ce403f90ebef486ef36df387bc3956e8f3f6367c4454ce0c14d"
+  }
+}

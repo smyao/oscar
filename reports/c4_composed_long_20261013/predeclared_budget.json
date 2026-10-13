@@ -1,0 +1,702 @@
+{
+  "status": "host_source_preparation_and_conditional_budget_only",
+  "shape": {
+    "Q": 336,
+    "context": 1341,
+    "requests": 1,
+    "splits": 1,
+    "Cube_cores": 20,
+    "tasks": 1008
+  },
+  "pair_sources": {
+    "baseline": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65",
+    "candidate": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc"
+  },
+  "denominator": "current_production_H16",
+  "candidate": "existing_H32_plus_member_pipeline",
+  "minimum_complete_CV_speedup": 1.15,
+  "source_work": {
+    "tokens": 336,
+    "context": 1341,
+    "query_groups": 16,
+    "full_query_groups": 16,
+    "last_query_rows": 0,
+    "all_task_slots": 1008,
+    "followers": 960,
+    "groups": {
+      "C1_frontier": 12,
+      "C4_mature": 1
+    },
+    "owners": [
+      {
+        "core": 0,
+        "history": [
+          {
+            "family": "C1_frontier",
+            "qbegins": [
+              0
+            ],
+            "qcounts": [
+              21
+            ],
+            "full_kv_units": 4,
+            "tail_kv_rows": 18,
+            "history_range": [
+              64,
+              1106
+            ]
+          }
+        ],
+        "window_groups": 1,
+        "window_kv_units": 1,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 1,
+        "history": [
+          {
+            "family": "C1_frontier",
+            "qbegins": [
+              21
+            ],
+            "qcounts": [
+              21
+            ],
+            "full_kv_units": 4,
+            "tail_kv_rows": 39,
+            "history_range": [
+              64,
+              1127
+            ]
+          }
+        ],
+        "window_groups": 1,
+        "window_kv_units": 1,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 2,
+        "history": [
+          {
+            "family": "C1_frontier",
+            "qbegins": [
+              42
+            ],
+            "qcounts": [
+              21
+            ],
+            "full_kv_units": 4,
+            "tail_kv_rows": 60,
+            "history_range": [
+              64,
+              1148
+            ]
+          }
+        ],
+        "window_groups": 1,
+        "window_kv_units": 1,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 3,
+        "history": [
+          {
+            "family": "C1_frontier",
+            "qbegins": [
+              63
+            ],
+            "qcounts": [
+              21
+            ],
+            "full_kv_units": 4,
+            "tail_kv_rows": 81,
+            "history_range": [
+              64,
+              1169
+            ]
+          },
+          {
+            "family": "C4_mature",
+            "qbegins": [
+              252,
+              273,
+              294,
+              315
+            ],
+            "qcounts": [
+              21,
+              21,
+              21,
+              21
+            ],
+            "full_kv_units": 4,
+            "tail_kv_rows": 253,
+            "history_range": [
+              64,
+              1341
+            ]
+          }
+        ],
+        "window_groups": 1,
+        "window_kv_units": 1,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 4,
+        "history": [
+          {
+            "family": "C1_frontier",
+            "qbegins": [
+              84
+            ],
+            "qcounts": [
+              21
+            ],
+            "full_kv_units": 4,
+            "tail_kv_rows": 102,
+            "history_range": [
+              64,
+              1190
+            ]
+          }
+        ],
+        "window_groups": 1,
+        "window_kv_units": 1,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 5,
+        "history": [
+          {
+            "family": "C1_frontier",
+            "qbegins": [
+              105
+            ],
+            "qcounts": [
+              21
+            ],
+            "full_kv_units": 4,
+            "tail_kv_rows": 123,
+            "history_range": [
+              64,
+              1211
+            ]
+          }
+        ],
+        "window_groups": 1,
+        "window_kv_units": 1,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 6,
+        "history": [
+          {
+            "family": "C1_frontier",
+            "qbegins": [
+              126
+            ],
+            "qcounts": [
+              21
+            ],
+            "full_kv_units": 4,
+            "tail_kv_rows": 144,
+            "history_range": [
+              64,
+              1232
+            ]
+          }
+        ],
+        "window_groups": 1,
+        "window_kv_units": 1,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 7,
+        "history": [
+          {
+            "family": "C1_frontier",
+            "qbegins": [
+              147
+            ],
+            "qcounts": [
+              21
+            ],
+            "full_kv_units": 4,
+            "tail_kv_rows": 165,
+            "history_range": [
+              64,
+              1253
+            ]
+          }
+        ],
+        "window_groups": 1,
+        "window_kv_units": 1,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 8,
+        "history": [
+          {
+            "family": "C1_frontier",
+            "qbegins": [
+              168
+            ],
+            "qcounts": [
+              21
+            ],
+            "full_kv_units": 4,
+            "tail_kv_rows": 186,
+            "history_range": [
+              64,
+              1274
+            ]
+          }
+        ],
+        "window_groups": 1,
+        "window_kv_units": 1,
+        "empty_current_groups": 0
+      },
+      {
+        "core": 9,
+        "history": [
+          {
+            "family": "C1_frontier",
+            "qbegins": [
+              189
+            ],
+            "qcounts": [
+              21
+            ],
+            "full_kv_units": 4,
+            "tail_kv_rows": 207,
+            "history_range": [
+              64,
+              1295
+            ]
+          }
+        ],
+        "window_groups": 1,
+        "window_kv_units": 1,
+        "empty_current_groups": 0
+      },
+      {
+        "core": 10,
+        "history": [
+          {
+            "family": "C1_frontier",
+            "qbegins": [
+              210
+            ],
+            "qcounts": [
+              21
+            ],
+            "full_kv_units": 4,
+            "tail_kv_rows": 228,
+            "history_range": [
+              64,
+              1316
+            ]
+          }
+        ],
+        "window_groups": 1,
+        "window_kv_units": 1,
+        "empty_current_groups": 0
+      },
+      {
+        "core": 11,
+        "history": [
+          {
+            "family": "C1_frontier",
+            "qbegins": [
+              231
+            ],
+            "qcounts": [
+              21
+            ],
+            "full_kv_units": 4,
+            "tail_kv_rows": 249,
+            "history_range": [
+              64,
+              1337
+            ]
+          }
+        ],
+        "window_groups": 1,
+        "window_kv_units": 1,
+        "empty_current_groups": 0
+      },
+      {
+        "core": 12,
+        "history": [],
+        "window_groups": 0,
+        "window_kv_units": 0,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 13,
+        "history": [],
+        "window_groups": 0,
+        "window_kv_units": 0,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 14,
+        "history": [],
+        "window_groups": 0,
+        "window_kv_units": 0,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 15,
+        "history": [],
+        "window_groups": 0,
+        "window_kv_units": 0,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 16,
+        "history": [],
+        "window_groups": 1,
+        "window_kv_units": 2,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 17,
+        "history": [],
+        "window_groups": 1,
+        "window_kv_units": 2,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 18,
+        "history": [],
+        "window_groups": 1,
+        "window_kv_units": 2,
+        "empty_current_groups": 1
+      },
+      {
+        "core": 19,
+        "history": [],
+        "window_groups": 1,
+        "window_kv_units": 1,
+        "empty_current_groups": 1
+      }
+    ],
+    "healthy_task_id_coverage": {
+      "planned_history_leaders": 16,
+      "original_pass_retained_slots": 992,
+      "union_slots": 1008,
+      "overlap": 0,
+      "proof_scope": "host ID disposition only; not GPU execution or malformed-task validation"
+    },
+    "source": "current task-preparation and CvTaskSchedule/C4 bucket formulas, not a new device run"
+  },
+  "owners_budget": [
+    {
+      "core": 0,
+      "C1_full256": 4,
+      "C4_full256": 0,
+      "old_full_history_proxy": 525888,
+      "proposed_full_history_proxy": 525888,
+      "unknown_tails": [
+        {
+          "family": "C1_frontier",
+          "rows": 18
+        }
+      ],
+      "window_groups": 1,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 1,
+      "C1_full256": 4,
+      "C4_full256": 0,
+      "old_full_history_proxy": 525888,
+      "proposed_full_history_proxy": 525888,
+      "unknown_tails": [
+        {
+          "family": "C1_frontier",
+          "rows": 39
+        }
+      ],
+      "window_groups": 1,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 2,
+      "C1_full256": 4,
+      "C4_full256": 0,
+      "old_full_history_proxy": 525888,
+      "proposed_full_history_proxy": 525888,
+      "unknown_tails": [
+        {
+          "family": "C1_frontier",
+          "rows": 60
+        }
+      ],
+      "window_groups": 1,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 3,
+      "C1_full256": 4,
+      "C4_full256": 4,
+      "old_full_history_proxy": 2088664,
+      "proposed_full_history_proxy": 1392076,
+      "unknown_tails": [
+        {
+          "family": "C1_frontier",
+          "rows": 81
+        },
+        {
+          "family": "C4_mature",
+          "rows": 253
+        }
+      ],
+      "window_groups": 1,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 4,
+      "C1_full256": 4,
+      "C4_full256": 0,
+      "old_full_history_proxy": 525888,
+      "proposed_full_history_proxy": 525888,
+      "unknown_tails": [
+        {
+          "family": "C1_frontier",
+          "rows": 102
+        }
+      ],
+      "window_groups": 1,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 5,
+      "C1_full256": 4,
+      "C4_full256": 0,
+      "old_full_history_proxy": 525888,
+      "proposed_full_history_proxy": 525888,
+      "unknown_tails": [
+        {
+          "family": "C1_frontier",
+          "rows": 123
+        }
+      ],
+      "window_groups": 1,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 6,
+      "C1_full256": 4,
+      "C4_full256": 0,
+      "old_full_history_proxy": 525888,
+      "proposed_full_history_proxy": 525888,
+      "unknown_tails": [
+        {
+          "family": "C1_frontier",
+          "rows": 144
+        }
+      ],
+      "window_groups": 1,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 7,
+      "C1_full256": 4,
+      "C4_full256": 0,
+      "old_full_history_proxy": 525888,
+      "proposed_full_history_proxy": 525888,
+      "unknown_tails": [
+        {
+          "family": "C1_frontier",
+          "rows": 165
+        }
+      ],
+      "window_groups": 1,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 8,
+      "C1_full256": 4,
+      "C4_full256": 0,
+      "old_full_history_proxy": 525888,
+      "proposed_full_history_proxy": 525888,
+      "unknown_tails": [
+        {
+          "family": "C1_frontier",
+          "rows": 186
+        }
+      ],
+      "window_groups": 1,
+      "empty_current_groups": 0
+    },
+    {
+      "core": 9,
+      "C1_full256": 4,
+      "C4_full256": 0,
+      "old_full_history_proxy": 525888,
+      "proposed_full_history_proxy": 525888,
+      "unknown_tails": [
+        {
+          "family": "C1_frontier",
+          "rows": 207
+        }
+      ],
+      "window_groups": 1,
+      "empty_current_groups": 0
+    },
+    {
+      "core": 10,
+      "C1_full256": 4,
+      "C4_full256": 0,
+      "old_full_history_proxy": 525888,
+      "proposed_full_history_proxy": 525888,
+      "unknown_tails": [
+        {
+          "family": "C1_frontier",
+          "rows": 228
+        }
+      ],
+      "window_groups": 1,
+      "empty_current_groups": 0
+    },
+    {
+      "core": 11,
+      "C1_full256": 4,
+      "C4_full256": 0,
+      "old_full_history_proxy": 525888,
+      "proposed_full_history_proxy": 525888,
+      "unknown_tails": [
+        {
+          "family": "C1_frontier",
+          "rows": 249
+        }
+      ],
+      "window_groups": 1,
+      "empty_current_groups": 0
+    },
+    {
+      "core": 12,
+      "C1_full256": 0,
+      "C4_full256": 0,
+      "old_full_history_proxy": 0,
+      "proposed_full_history_proxy": 0,
+      "unknown_tails": [],
+      "window_groups": 0,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 13,
+      "C1_full256": 0,
+      "C4_full256": 0,
+      "old_full_history_proxy": 0,
+      "proposed_full_history_proxy": 0,
+      "unknown_tails": [],
+      "window_groups": 0,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 14,
+      "C1_full256": 0,
+      "C4_full256": 0,
+      "old_full_history_proxy": 0,
+      "proposed_full_history_proxy": 0,
+      "unknown_tails": [],
+      "window_groups": 0,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 15,
+      "C1_full256": 0,
+      "C4_full256": 0,
+      "old_full_history_proxy": 0,
+      "proposed_full_history_proxy": 0,
+      "unknown_tails": [],
+      "window_groups": 0,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 16,
+      "C1_full256": 0,
+      "C4_full256": 0,
+      "old_full_history_proxy": 0,
+      "proposed_full_history_proxy": 0,
+      "unknown_tails": [],
+      "window_groups": 1,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 17,
+      "C1_full256": 0,
+      "C4_full256": 0,
+      "old_full_history_proxy": 0,
+      "proposed_full_history_proxy": 0,
+      "unknown_tails": [],
+      "window_groups": 1,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 18,
+      "C1_full256": 0,
+      "C4_full256": 0,
+      "old_full_history_proxy": 0,
+      "proposed_full_history_proxy": 0,
+      "unknown_tails": [],
+      "window_groups": 1,
+      "empty_current_groups": 1
+    },
+    {
+      "core": 19,
+      "C1_full256": 0,
+      "C4_full256": 0,
+      "old_full_history_proxy": 0,
+      "proposed_full_history_proxy": 0,
+      "unknown_tails": [],
+      "window_groups": 1,
+      "empty_current_groups": 1
+    }
+  ],
+  "coefficient_source": "reports/c4_phase_profile_q336_20261009/full_partition_conditional_budget.json",
+  "coefficient_source_sha256": "8356c0914e5141c2f989cf74abf5b764d61a271f144962b4dda29e6c87812bf5",
+  "coefficients": {
+    "measured_C1_full_period": 131472,
+    "measured_H16_C4_full_period": 390694,
+    "conditional_member_pipeline_period_NOT_measured": 216547
+  },
+  "full_history_only_proxy": {
+    "old": 2088664,
+    "candidate": 1392076,
+    "ratio": 1.500395093371339,
+    "old_critical_cores": [
+      3
+    ],
+    "candidate_critical_cores": [
+      3
+    ]
+  },
+  "common_cost_condition": {
+    "formula": "(A+F)/(B+F+P)>=1.15 requires F+(1.15/0.15)*P <= (A-1.15*B)/0.15",
+    "ceiling_cycles_F_plus_7p6667P": 3251844.0000000023,
+    "assumptions": "same critical owner, common F, transferred stationary full256 periods; all unmeasured",
+    "F": "all partial KV rounds, task scan/followers, query loads, exact windows, current empties, normalize/Rv/output, startup/drain",
+    "P": "candidate-only costs not already included in proposed period; atomic/state/two-buffer costs are not free"
+  },
+  "real_wall_formula": "max_i(old_full_i+F_old_i+tail_old_i) / max_i(new_full_i+F_new_i+tail_new_i)",
+  "why_reopen": "C337 old 1.148704 compared H32 against H32+pipeline and had one full mature round; C1341 retains four full mature rounds, directly measured against shipped H16.",
+  "not_a_prediction": "No measured complete C1341 kernel or gain yet; passed host source/oracle preparation never passes the device speed gate.",
+  "not_included": [
+    "native current FIA",
+    "prepare/rotate/store wrapper kernels",
+    "GDN/model/MTP",
+    "whole service"
+  ],
+  "validation": {
+    "CPU": "not_run",
+    "CANN": "not_run",
+    "CAModel": "not_run",
+    "NPU": "not_run",
+    "graph": "not_run",
+    "whole_service": "not_run"
+  }
+}

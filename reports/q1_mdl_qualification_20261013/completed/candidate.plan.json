@@ -1,0 +1,12 @@
+{
+  "case": "q1_r2_n8_c1344_1376_s1",
+  "arm": "candidate",
+  "source_sha256": "d8171f0403cf176087e1c76c64e454e6fb1e74fd79252aab3b59e848cca19401",
+  "manifest_sha256": "f021f30f32003e5e16fdcf0f8b861d86fe28f7d22100cca5d5fa4fb5e179d8ae",
+  "runner_sha256": "b3093e1d73be217fb1f2c24795c3436f79c802c7edfb593e03b4640e2a6850b6",
+  "library_sha256": "ae6d4844f6eac0253f67eb38d5148f0cdfd5c76a46585eac07ad22b26ad533fb",
+  "hard_limit_seconds": 600,
+  "per_file_trace_cap": 67108864,
+  "cpu_reference_policy": "required",
+  "config_difference": "only doNorm/doMultiDataLoad; public API generated tiling"
+}

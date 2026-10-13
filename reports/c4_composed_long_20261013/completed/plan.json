@@ -1,0 +1,47 @@
+{
+  "source_binding": {
+    "schema": 1,
+    "pair_sources": {
+      "baseline": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65",
+      "candidate": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc"
+    },
+    "source_dependencies": {
+      "csrc/kernels/attention_cv_member_pipeline_cluster4.cpp": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+      "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+      "csrc/include/oscar_member_pipeline_launch.h": "fb87c667495249b94fecc3d626fa703f9332e7fd638eb533bc5c8d2fd4bc9a48",
+      "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+      "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+      "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+      "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+      "csrc/kernels/attention_striped_unpack32.h": "c0aeab7e8fb9e078d37147ca411013f1c42e1547bd0a1d066ed3aece0c5514ca",
+      "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+      "csrc/kernels/attention_cv_window_range_cluster4.cpp": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65"
+    },
+    "sources": {
+      "c4_baseline.cpp": "824d01eb4b7668aa33ecf821f862cc112bc1033cabe010868d1eaca5f7ba306a",
+      "c4_candidate.cpp": "f0199c2cdeb37e6c6276ecc709733748a8abbe7407e30657f181c0ba74aab193"
+    },
+    "harness": {
+      "cv_probe.cpp": "5b80ff91dfa87a134bac52295a377e1b25e6ede11a537a8b7fb4347136997812",
+      "cv_replay.py": "43374dbb48c415d5642955850fcce325f1331afe5963e3c40293c9a29b9a906d",
+      "cv_compare.py": "75ed75ea88b2fd4daf7bab54a808ac6e9b2bf088c086b82f7055b3c67910a708"
+    },
+    "generator_sha256": "b61681f079e705665fa941507aba6256a2dc6b75102b5d6c953a787bf71a5b3b"
+  },
+  "qualification": {
+    "contract": "explicit_CPU337_complete_and_CPU1341_metadata_then_full_CAModel1341",
+    "CPU337": "revalidated_historical_complete_CPU337",
+    "CPU337_evidence_sha256": "315deb43c59a59b420e8f39aa0fcca4adf53ff933e2ab709c235daaec1bd2336",
+    "CPU1341": "timed_out_not_numerically_qualified",
+    "CPU1341_control_sha256": "5e64b0a0bdc4859171e80089b37c98162db5a9b492a346ad7f1ce27b3f4cec36",
+    "prepared_tasks_sha256": "bbab4cbb02a3d66cecd0336be1232bd2dec8efef6d04b7bd19a8f766a3f9537a",
+    "prepared_positions_sha256": "3346991324cf0841fc63bb357c8bef4e1551909832fac558b90baaa3401a9af3",
+    "CAModel1341_required": "full_same_library_all1008_tasks_336_query_oracle_and60actors",
+    "same_shape_CPU_attention_output_used": false
+  },
+  "CAModel_deadline_seconds_per_arm": 900,
+  "minimum_complete_CV_speedup": 1.15,
+  "CPU1341_rerun": false,
+  "library_sha256": "6d150e9c2c82ce7c335d88be2046bb1dbffb49b04611b7a6604cfd4c84c8689a",
+  "runner_sha256": "9262d541cffe52a445cf15692b1a305c4b6c4fda6ed7920227c76c19a8073fe6"
+}

@@ -1,7 +1,7 @@
 """Archive #148/#150/#153/#154 and full startup D.4: signed C4 NPU gate.
 
-Compare shipped H16 C4 with H32/member pipeline on the same short synthetic
-work. Preserve all tasks and old lane16 errors; source2 follows production
+Compare shipped H16 C4 with H32/member pipeline on Q336/C1341, matching the
+complete local composition. Preserve all tasks and old lane16 errors; source2 follows production
 prefill suppression. A graph with no mature multi-KV C4 work cannot qualify.
 CPU is only the independent oracle, never a device fallback or timing source.
 """
@@ -27,10 +27,12 @@ CASE_NAMES=('mature_multikv','bad80','bad96','bad336')
 # before joining the combination. This extra gate is stricter than the
 # unchanged global non-regression acceptance; never round 1.148704 upward.
 MIN_SPEEDUP=1.15
+CONTEXT=1341
+GRAPH_CONTEXT=1373
 
 
 def case_plan():
-    return tuple(reuse.Shape(name,(336,),(769,),256,1,1,True,
+    return tuple(reuse.Shape(name,(336,),(CONTEXT,),256,1,1,True,
                  speed_gate=bad<0,corrupt_metadata=bad>=0,corrupt_position=max(0,bad),
                  padded_tokens=336,required_clusters=1)
                  for name,bad in zip(CASE_NAMES,(-1,80,96,336)))
@@ -102,7 +104,8 @@ def _check(torch,ops,tensors,fixture,old,new,receipt,acceptance):
             measured=reuse._merge_and_oracle(torch,ops,fixture,b,acceptance['fused_attention'])
             if measured['sampled_queries']!=336:raise RuntimeError('independent oracle missed query rows')
         oracle='all_336_queries_passed'
-    return {'eligible_clusters':stats['eligible_clusters'],'shared_history_kv_tiles':stats['shared_history_kv_tiles'],
+    return {'context':fixture['spec'].contexts[0],
+            'eligible_clusters':stats['eligible_clusters'],'shared_history_kv_tiles':stats['shared_history_kv_tiles'],
             'rounds_per_cluster':rounds,'oracle':oracle,'task_sha256':receipt['task_sha256']}
 
 
@@ -134,7 +137,7 @@ def _graph(torch,ops,fixture,tensors,old,new,receipt,cores,acceptance):
     tensors['q'].copy_(fixture['cpu']['q']);tensors['qr'].copy_(fixture['cpu']['qr']);_oracle(torch,fixture)
     changed=replay_check('changed_q_qr')
     if reuse._bitwise_identical(torch,initial['partial'],changed['partial']):raise RuntimeError('graph ignored changed Q/QR')
-    replacement=make_fixture(torch,replace(fixture['spec'],contexts=(801,)))
+    replacement=make_fixture(torch,replace(fixture['spec'],contexts=(GRAPH_CONTEXT,)))
     old_task_hash=receipt['task_sha256'];old_raw=fixture['cpu']['raw']
     if _store_bits_equal(torch,old_raw,replacement['cpu']['raw']):raise RuntimeError('graph fixture did not change packed/meta')
     for key,tensor in tensors.items():
@@ -197,7 +200,8 @@ def validate_evidence(report):
     for row in rows:
         detail=row.get('detail',{})
         if row.get('status')!='passed' or row.get('precision')!='partial_lse_status_clusterStats_bitwise':bad.append(row['case']+'.precision')
-        if (detail.get('eligible_clusters')!=1 or detail.get('rounds_per_cluster',0)<2 or
+        if (detail.get('context')!=CONTEXT or detail.get('eligible_clusters')!=1 or
+                detail.get('rounds_per_cluster')!=math.ceil((CONTEXT-reuse.SINK)/256) or
                 detail.get('shared_history_kv_tiles')!=detail.get('rounds_per_cluster')):bad.append(row['case']+'.mature_multikv')
         if detail.get('oracle')!=('all_336_queries_passed' if row['case']==CASE_NAMES[0] else 'expected_invalid_metadata_status'):
             bad.append(row['case']+'.oracle')
@@ -219,7 +223,10 @@ def validate_evidence(report):
     if any(graph.get(k)!=v for k,v in expected.items()):bad.append('changed_input_graph')
     states=graph.get('states',[])
     if len(states)!=3 or any(s.get('eligible_clusters')!=1 or s.get('rounds_per_cluster',0)<2 or s.get('oracle')!='all_336_queries_passed' for s in states):bad.append('graph_mature_states')
-    if len(states)==3 and tuple(s.get('context') for s in states)!=(769,769,801):bad.append('graph_contexts')
+    if len(states)==3 and tuple(s.get('context') for s in states)!=(CONTEXT,CONTEXT,GRAPH_CONTEXT):bad.append('graph_contexts')
+    if len(states)==3 and any(s.get('rounds_per_cluster')!=math.ceil((c-reuse.SINK)/256) or
+            s.get('shared_history_kv_tiles')!=s.get('rounds_per_cluster')
+            for s,c in zip(states,(CONTEXT,CONTEXT,GRAPH_CONTEXT))):bad.append('graph_full_kv_rounds')
     if len(states)==3 and (states[0].get('task_sha256')==states[2].get('task_sha256') or states[0].get('packed_sha256')==states[2].get('packed_sha256')):bad.append('metadata_not_changed')
     return bad
 

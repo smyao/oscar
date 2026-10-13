@@ -23,15 +23,16 @@ FEATURE_FLAGS = {
     "mixed_decode_split": "experimental_mixed_decode_split",
     "decode_bundle": "experimental_decode_bundle",
     "mdl_decode": "experimental_mdl_decode",
+    # 2026-10-13: current H16 -> complete H32/member pipeline, Q336/C1341,
+    # 3540306 -> 2671072 CAModel ticks (1.325425x), all1008 tasks/60 actors
+    # and frozen full oracle. Target NPU/graph gates remain required.
+    "c4_member_pipeline": "experimental_c4_member_pipeline",
     "whole_prefill": "experimental_whole_prefill",
 }
 
 # Unfinished weighted-owner trials are not in the deploy source list or
 # selector. Future research flags must not leak into native/baseline A/B.
 RESEARCH_FEATURE_FLAGS = {
-    # #148/#150/#153/#154: H32 -> pipeline measured 1.148704x, below the
-    # user's complete-path 1.15x gate; no same-shape H16 combination evidence.
-    "c4_member_pipeline": "experimental_c4_member_pipeline",
     # Explicit research only until local numerical/CANN qualification and
     # the new NPU gate are integrated. Both one-key entrypoints share this.
     "request_windows": "experimental_request_windows",

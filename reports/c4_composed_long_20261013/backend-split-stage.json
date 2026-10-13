@@ -1,0 +1,12 @@
+{
+  "archive_sha256": "3a2692d0a7b25cf61a1e484b50a56e288258b5ca47af145efacb4a7c1f7ef9c9",
+  "files": {
+    "csrc/experiments/c4_composed_long/backend_split_contract.py": "f20b08f1d9053f97c51406c5790d879b5d6d9a3ac9cd2d0207a7a894aaea1b21",
+    "csrc/experiments/c4_composed_long/generate_backend_split.py": "f9b1d8a8365346d75012ee92af5f694066b1a7eba7661b6b89b075144614af8d",
+    "csrc/experiments/c4_composed_long/cv_replay_backend_split.py": "bb1555300b7841779dc8af75c239cacbf884d055d9a8e79b2d4651c655b9b790",
+    "csrc/experiments/c4_composed_long/qualify_backend_split.py": "9262d541cffe52a445cf15692b1a305c4b6c4fda6ed7920227c76c19a8073fe6",
+    "reports/c4_composed_long_20261013/small_cpu_evidence.json": "315deb43c59a59b420e8f39aa0fcca4adf53ff933e2ab709c235daaec1bd2336"
+  },
+  "production_changed": false,
+  "no_CANN_rebuild_required": true
+}

@@ -1,0 +1,83 @@
+{
+  "status": "locally_qualified_production_registered_NPU_pending",
+  "pair": {
+    "status": "completed_same_library_pair",
+    "source_sha256": "d8171f0403cf176087e1c76c64e454e6fb1e74fd79252aab3b59e848cca19401",
+    "case": "q1_r2_n8_c1344_1376_s1",
+    "mode": "q1",
+    "task_ticks": {
+      "baseline": 948223,
+      "candidate": 797943
+    },
+    "ratio": 1.188334254451759,
+    "all_partial_lse_status_bitwise": true,
+    "minimum_local_speedup": 1.15,
+    "local_speed_gate": "passed",
+    "independent_oracle": "passed_both",
+    "all_sources_and_tasks": true,
+    "source_abi_publisher_and_geometry": "unchanged",
+    "full_trace_files_per_arm": 6,
+    "load_geometry_verdict": "inspect_complete_instructions_before_claiming_full_B_DMA",
+    "CPU": "available_checked",
+    "CANN": "loaded_same_compiled_library",
+    "NPU": "not_run",
+    "graph": "not_run",
+    "whole_service": "not_established"
+  },
+  "CPU": "six_complete_cases_bitwise_oracle_or_exact_error_order",
+  "mechanism": {
+    "B_copy_count": {
+      "baseline": 232,
+      "candidate": 34
+    },
+    "history_QK_PV_B_partition": "8x32768B_to_1x262144B_same_logical_bytes",
+    "steady_full_history_period_ticks": {
+      "baseline": 39508.5,
+      "candidate": 28352.5
+    },
+    "FP32_MMAD_parameter_sequence": "identical"
+  },
+  "host_tests": {
+    "production_dispatch_runtime_probe": {
+      "passed": 97,
+      "skipped": 8
+    },
+    "capabilities_build_shared_variants_prefix_c4": {
+      "passed": 67,
+      "subtests": 4
+    },
+    "q1_qualification_recovery": {
+      "passed": 18
+    },
+    "combined_q1_q4_C4_preset": {
+      "passed": 1,
+      "seconds": 0.03
+    }
+  },
+  "production": {
+    "candidate_flag": "experimental_mdl_decode",
+    "q1_operator": "attention_cv_mdl_decode_q1_out",
+    "q4_operator": "attention_cv_mdl_decode_out",
+    "source": "csrc/kernels/attention_cv_mdl_decode.cpp",
+    "source_sha256": "1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f",
+    "inverse_source_identity": true,
+    "math_protocol_workspace_changed": false
+  },
+  "CANN_production_build": "passed",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "whole_service": "not_established",
+  "failure_preserved": {
+    "CPU_exit127": "toolkit_environment_missing_no_numeric_execution",
+    "baseline_exit1": "exact_postprocess_padding_assertion_after_numeric_completion",
+    "baseline_kernel_rerun": false,
+    "correction": "completed/baseline/postprocess-correction.json"
+  },
+  "CANN_production_build_receipt": {
+    "signature": "fba477c3780c8e9eb73eeea7fd8404c6289af7b3e8d7485365f1a46b6e76476c",
+    "source_capabilities": 41,
+    "returncode": 0,
+    "scope": "complete kernel library and Torch extension",
+    "provenance": "production-build/build_manifest.json and compile-1.json; original VM artifacts, not device completion"
+  }
+}

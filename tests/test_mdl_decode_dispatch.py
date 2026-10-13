@@ -1,4 +1,4 @@
-"""Archive #126/#129/#145/#148/#150/#153/#154: MDL q4 production seams.
+"""Archive #126/#129/#145/#148/#150/#153/#154: MDL q4/q1 production seams.
 
 Host ABI/shape/source checks are not numeric or target NPU acceptance.
 """
@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 import pytest
-from oscar_ascend.ops.cv_dispatch import select_cv_op, MDL_DECODE_CV_OP
+from oscar_ascend.ops.cv_dispatch import select_cv_op, MDL_DECODE_CV_OP, MDL_DECODE_Q1_CV_OP
 from oscar_ascend.runtime import AscendRuntimeProvider, WorkspaceGeometry
 from oscar_ascend.integration.runtime_api import OscarReadinessError
 from oscar_ascend.integration.cache_storage_ops import storage_reader
@@ -17,17 +17,17 @@ FLAGS = dict(fast_unpack=True, mixed_cv=True, striped_cache=True, decode_bundle=
 
 @pytest.mark.parametrize('tokens,query,later_q1,expected', [
     (8,4,False,MDL_DECODE_CV_OP), (128,4,False,MDL_DECODE_CV_OP),
-    (2048,4,False,MDL_DECODE_CV_OP), (128,1,True,'attention_cv_bundle_q1_out'),
-    (2048,1,True,'attention_cv_bundle_q1_out'),
+    (2048,4,False,MDL_DECODE_CV_OP), (128,1,True,MDL_DECODE_Q1_CV_OP),
+    (2048,1,True,MDL_DECODE_Q1_CV_OP),
     (256,128,False,'attention_cv_window_range_cluster4_out'),
     (8192,8192,False,'attention_cv_window_range_cluster16_out'),
     (512,33,False,'attention_cv_window_range_balanced_out'),
 ])
-def test_mdl_replaces_only_existing_q4_route(tokens,query,later_q1,expected):
+def test_mdl_replaces_only_qualified_q4_q1_routes(tokens,query,later_q1,expected):
     chosen=select_cv_op(16,6,1,tokens,query,q1_draft=later_q1,mdl_decode=True,**FLAGS)
     old=select_cv_op(16,6,1,tokens,query,q1_draft=later_q1,**FLAGS)
     assert chosen==expected
-    assert (chosen!=old)==(old=='attention_cv_bundle_decode_out')
+    assert (chosen!=old)==(old in {'attention_cv_bundle_decode_out','attention_cv_bundle_q1_out'})
     assert storage_reader(SimpleNamespace(cache_format='striped_v1'),chosen)==chosen
 
 @pytest.mark.parametrize('bad',[None,1,'true'])
@@ -56,15 +56,18 @@ def test_packaged_source_is_reversible_and_old_source_frozen():
     assert WorkspaceGeometry(128,6,1,256,history_cluster_size=16).cv_bytes>=1146880
     binding=Path('csrc/striped_attention_bindings.cpp').read_text()
     assert 'AttentionStriped<oscar_ascend::attention_cv_mdl_decode_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256)>' in binding
+    assert 'AttentionStriped<oscar_ascend::attention_cv_mdl_decode_q1_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256)>' in binding
+    assert report['q1_operator']==MDL_DECODE_Q1_CV_OP
 
-def test_missing_mdl_capability_fails_before_npu(monkeypatch):
+@pytest.mark.parametrize('missing', [MDL_DECODE_CV_OP, MDL_DECODE_Q1_CV_OP])
+def test_missing_mdl_capability_fails_before_npu(monkeypatch, missing):
     from oscar_ascend.ops import loader
     config=variant_config(json.loads(Path('configs/target.json').read_text()),'candidate')
     provider=AscendRuntimeProvider(config)
     monkeypatch.setenv('ASCEND_RT_VISIBLE_DEVICES',','.join(map(str,config['devices'])))
     monkeypatch.setattr(loader,'require_production_ops',lambda:None)
     def require(names):
-        if MDL_DECODE_CV_OP in names:
+        if missing in names:
             raise RuntimeError('MDL extension missing')
     monkeypatch.setattr(loader,'require_capabilities',require)
     with pytest.raises(RuntimeError,match='MDL extension missing'):
@@ -85,3 +88,17 @@ def test_unqualified_request_window_mdl_combination_is_explicit():
     with pytest.raises(OscarReadinessError,match="request-window MDL reader is not qualified"):
         AscendRuntimeProvider(config)
     assert variant_config({},'candidate')['enable_prefix_caching'] is True
+
+
+def test_qualified_mdl_q1_q4_and_c4_pipeline_compose_in_shared_preset():
+    """Archive #150/#153: combined flags must reach all three real readers."""
+    config=variant_config({},'candidate')
+    flags={name:config['experimental_'+name] for name in
+           ('fast_unpack','mixed_cv','striped_cache','decode_bundle','c4_member_pipeline','mdl_decode')}
+    assert config['enable_prefix_caching'] is True
+    assert 'max_num_batched_tokens' not in config and 'scheduler_cls' not in config
+    cases=((128,4,False,MDL_DECODE_CV_OP),(128,1,True,MDL_DECODE_Q1_CV_OP),
+           (2048,2048,False,'attention_cv_member_pipeline_cluster4_out'),
+           (8192,8192,False,'attention_cv_window_range_cluster16_out'))
+    for tokens,length,later,expected in cases:
+        assert select_cv_op(16,6,1,tokens,length,q1_draft=later,**flags)==expected

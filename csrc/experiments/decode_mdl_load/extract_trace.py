@@ -21,7 +21,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-from csrc.experiments.decode_mdl_load.run import checked
+from csrc.experiments.decode_mdl_load.run import Q1_CASE, checked, geometry
 from tools.experiments.analyze_decode_completion import (TraceError, cross_dependencies,
                                                        pair_instructions, read_trace)
 
@@ -47,22 +47,25 @@ def task_plan(report, tasks):
     n, hq, hk, dim, requests = report["attrs"][:5]
     splits = report["attrs"][-1]
     if (n, hq, hk, dim, requests, splits, report["cores"]) != (8, 6, 1, 256, 2, 1, 1):
-        raise TraceError("only the declared C1341 R2 q4 single-core experiment is supported")
+        raise TraceError("only the declared R2/q1-or-q4 single-core experiments are supported")
     if len(tasks) != report["attrs"][6] * 128:
         raise TraceError("task byte extent mismatch")
     rows = list(struct.iter_unpack("<16q", tasks))
+    geometry(report, tasks)
     result = []
-    query_tiles, per_token = (n + 3)//4, hk*3*splits
+    qlen = 1 if report['case'] == Q1_CASE else 4
+    query_tiles, per_token = (n + qlen - 1)//qlen, hk*3*splits
     # Exact d817 CvTaskSchedule workId/TokenBegin/TaskId ordering.
     for work in range(query_tiles * per_token):
-        begin, segment = (work % query_tiles)*4, work//query_tiles
-        for token in range(begin, min(begin+4, n)):
+        begin, segment = (work % query_tiles)*qlen, work//query_tiles
+        for token in range(begin, min(begin+qlen, n)):
             task_id = token*per_token + segment
             row = rows[task_id]
-            if row[1] == 0:
+            if row[1] <= 0:
                 continue
             qbegin, qcount, _head, kvbegin, kvend, request, split, kind, context, _request_begin, error = row[:11]
-            if qcount != 4 or error or kind not in (0,1,2) or kvend < kvbegin or context != 1341:
+            expected_context = (1344, 1376)[request] if qlen == 1 else 1341
+            if qcount != qlen or error or kind not in (0,1,2) or kvend < kvbegin or context != expected_context:
                 raise TraceError("unexpected live task; no inferred replacement")
             base = {"task_id": task_id, "request": request, "source": kind,
                     "qbegin": qbegin, "M": qcount*(hq//hk), "split": split}

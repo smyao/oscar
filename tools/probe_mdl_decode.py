@@ -26,6 +26,10 @@ from .striped_fixture import raw_to_striped
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'attention_cv_bundle_decode_out'
 CANDIDATE = 'attention_cv_mdl_decode_out'
+Q1_BASELINE = 'attention_cv_bundle_q1_out'
+Q1_CANDIDATE = 'attention_cv_mdl_decode_q1_out'
+OPERATOR_FAMILIES = {'q4': {'baseline': BASELINE, 'candidate': CANDIDATE},
+                     'q1': {'baseline': Q1_BASELINE, 'candidate': Q1_CANDIDATE}}
 WORKSPACE = 1146880
 MIN_SPEEDUP = 1.15
 CONTEXTS = (20000, 23000, 27000, 30000)
@@ -51,6 +55,8 @@ class Case:
 def case_plan():
     short = reuse.Shape('short_q4_tail_padding', (4, 4), (1341, 1373),
                         256, 1, 1, False, padded_tokens=12)
+    q1 = reuse.Shape('short_q1_tail_padding', (1, 1), (1344, 1376),
+                     256, 1, 1, False, padded_tokens=8, slot_context=True)
     return (
         Case(short, special_values=True, graph=True),
         Case(replace(short, name='invalid_live_metadata', corrupt_metadata=True,
@@ -59,7 +65,19 @@ def case_plan():
         Case(replace(short, name='invalid_dead_tail', corrupt_dead_tail=True)),
         Case(reuse.Shape('q4_R4_20k30k', (4,) * 4, CONTEXTS, 256, 1, 3,
                          False, padded_tokens=32), timed=True),
+        Case(q1, special_values=True, graph=True),
+        Case(replace(q1, name='q1_invalid_live_metadata', corrupt_metadata=True,
+                     corrupt_position=80)),
+        Case(replace(q1, name='q1_invalid_live_qr', corrupt_qr=True, corrupt_qr_token=1)),
+        Case(replace(q1, name='q1_invalid_dead_tail', corrupt_dead_tail=True)),
+        Case(reuse.Shape('q1_R4_20k30k', (1,) * 4, CONTEXTS, 256, 1, 3,
+                         False, padded_tokens=32, slot_context=True), timed=True),
     )
+
+
+def operators(case):
+    """Use the same explicit later-draft marker as the production selector."""
+    return (Q1_BASELINE, Q1_CANDIDATE) if case.shape.slot_context else (BASELINE, CANDIDATE)
 
 
 def source_binding(root=ROOT):
@@ -199,7 +217,7 @@ def graph_gate(torch, ops, case, fixture, tensors, pair, cores, tolerance):
     addresses.update({str(i)+key: value.data_ptr() for i,b in enumerate(pair)
                       for key,value in b.items() if value is not None})
     def execute(i):
-        launch(ops, (BASELINE,CANDIDATE)[i], tensors, fixture, pair[i], cores)
+        launch(ops, operators(case)[i], tensors, fixture, pair[i], cores)
     graphs = [torch.npu.NPUGraph(), torch.npu.NPUGraph()]
     for i, graph in enumerate(graphs):
         with torch.npu.graph(graph, capture_error_mode='thread_local', auto_dispatch_capture=True):
@@ -260,18 +278,19 @@ def graph_gate(torch, ops, case, fixture, tensors, pair, cores, tolerance):
 
 
 def run_case(torch,ops,case,device,cores,tolerance):
+    baseline,candidate=operators(case)
     fixture=make_fixture(torch,case);tensors={k:v.to(device) for k,v in fixture['cpu'].items()}
     pair=[allocate(torch,fixture,device,cores) for _ in range(2)]
     receipt=reuse._prepare(torch,ops,tensors,fixture,pair[0])
     pair[1]['tasks'],pair[1]['positions']=pair[0]['tasks'],pair[0]['positions']
     task=task_evidence(torch,fixture,pair[0])
     invalid=case.shape.corrupt_metadata or case.shape.corrupt_qr
-    def execute(i):launch(ops,(BASELINE,CANDIDATE)[i],tensors,fixture,pair[i],cores,merge=not invalid)
+    def execute(i):launch(ops,(baseline,candidate)[i],tensors,fixture,pair[i],cores,merge=not invalid)
     for i,b in enumerate(pair):poison(torch,b);execute(i)
     torch.npu.synchronize();detail=check(torch,fixture,*pair,receipt['task_sha256'],tolerance)
     timing=None
     if case.timed:
-        reference=snapshot(pair[0]);samples={BASELINE:[],CANDIDATE:[]}
+        reference=snapshot(pair[0]);samples={baseline:[],candidate:[]}
         for iteration in range(7):
             order=(0,1) if iteration<2 or (iteration-2)%2==0 else (1,0)
             for i in order:
@@ -281,13 +300,14 @@ def run_case(torch,ops,case,device,cores,tolerance):
                 elapsed=float(begin.elapsed_time(end))
                 if not math.isfinite(elapsed) or elapsed<=0:raise RuntimeError('MDL invalid device event time')
                 same_bits(torch,reference,pair[i])
-                if iteration>=2:samples[(BASELINE,CANDIDATE)[i]].append(elapsed)
-        a,b=(statistics.median(samples[name]) for name in (BASELINE,CANDIDATE))
+                if iteration>=2:samples[(baseline,candidate)[i]].append(elapsed)
+        a,b=(statistics.median(samples[name]) for name in (baseline,candidate))
         timing={'baseline_ms':a,'candidate_ms':b,'speedup':a/b,'minimum_speedup':MIN_SPEEDUP,
                 'ratio':b/a,'samples_ms':samples,'warmup':2,'repeats':5,'scope':SCOPE,
                 'gate':'passed' if a/b>=MIN_SPEEDUP else 'failed'}
     graph=graph_gate(torch,ops,case,fixture,tensors,pair,cores,tolerance) if case.graph else None
     return {'case':case.shape.name,'status':'passed' if timing is None or timing['gate']=='passed' else 'failed',
+            'baseline_operator':baseline,'candidate_operator':candidate,
             'contexts':list(case.shape.contexts),'qlens':list(case.shape.qlens),
             'input_sha256':fixture['input_sha256'],'special_values':case.special_values,
             **task,**detail,'timing':timing,'graph':graph}
@@ -295,6 +315,7 @@ def run_case(torch,ops,case,device,cores,tolerance):
 
 def validate_evidence(report):
     expected={'status':'passed','baseline_operator':BASELINE,'candidate_operator':CANDIDATE,
+              'operator_families':OPERATOR_FAMILIES,
               'precision':'passed','error_domain':'passed','graph_capture':'passed',
               'graph_replay':'passed','performance':'passed','device_completion':'passed',
               'scope':SCOPE,'workspace_bytes_per_core':WORKSPACE}
@@ -304,8 +325,10 @@ def validate_evidence(report):
     if not isinstance(rows,list) or len(rows)!=len(plan) or any(not isinstance(row,dict) for row in rows):
         return bad+['cases']
     for case,row in zip(plan,rows):
+        baseline,candidate=operators(case)
         shape=case.shape;invalid=shape.corrupt_metadata or shape.corrupt_qr
         expected_case={'case':shape.name,'status':'passed','contexts':list(shape.contexts),'qlens':list(shape.qlens),
+            'baseline_operator':baseline,'candidate_operator':candidate,
             'all_tasks':(shape.padded_tokens or sum(shape.qlens))*3*shape.splits,
             'active_queries':sum(shape.qlens),'padded_queries':(shape.padded_tokens or sum(shape.qlens))-sum(shape.qlens),
             'queries':0 if invalid else sum(shape.qlens),'special_values':case.special_values,
@@ -317,10 +340,10 @@ def validate_evidence(report):
             bad.append(shape.name+'.sources')
         if case.timed:
             timing=row.get('timing') or {};samples=timing.get('samples_ms',{})
-            valid=set(samples)=={BASELINE,CANDIDATE} and all(isinstance(samples[n],list) and len(samples[n])==5 and
+            valid=set(samples)=={baseline,candidate} and all(isinstance(samples[n],list) and len(samples[n])==5 and
                 all(type(v) in (int,float) and math.isfinite(v) and v>0 for v in samples[n]) for n in samples)
             if valid:
-                a,b=(statistics.median(samples[n]) for n in (BASELINE,CANDIDATE))
+                a,b=(statistics.median(samples[n]) for n in (baseline,candidate))
                 valid=(a/b>=MIN_SPEEDUP and all(timing.get(k)==v for k,v in
                     {'baseline_ms':a,'candidate_ms':b,'ratio':b/a,'speedup':a/b,'minimum_speedup':MIN_SPEEDUP,
                      'warmup':2,'repeats':5,'gate':'passed','scope':SCOPE}.items()))
@@ -358,17 +381,20 @@ def probe(config_path,acceptance_path):
     if normalize_soc(torch.npu.get_device_name(0))!=config['soc_version']:raise RuntimeError('MDL target SoC differs')
     from oscar_ascend.ops.loader import validate_build_artifacts,require_capabilities
     manifest=validate_build_artifacts(ROOT/'build/ascendc/build_manifest.json')
-    require_capabilities({BASELINE,CANDIDATE,'prepare_attention_tasks_out','merge_lse_out'})
+    require_capabilities({BASELINE,CANDIDATE,Q1_BASELINE,Q1_CANDIDATE,
+                          'prepare_attention_tasks_out','merge_lse_out'})
     bindings=source_binding();rows=[];cores=reuse._core_count(torch,config)
     for case in case_plan():
         row=run_case(torch,torch.ops.oscar_ascend_ops,case,torch.device('npu:0'),cores,acceptance['fused_attention'])
         rows.append(row)
         print('[oscar] PERF_MDL_DECODE '+json.dumps({'case':row['case'],'status':row['status'],
+              'operator':row['candidate_operator'],
               'precision':row['precision'],'speedup':row['timing']['speedup'] if row['timing'] else None,
               'minimum_speedup':MIN_SPEEDUP,'graph':row['graph']['replay'] if row['graph'] else 'not_run'}),flush=True)
         gc.collect();torch.npu.empty_cache()
     passed=all(row['status']=='passed' for row in rows)
     report={'status':'passed' if passed else 'failed','baseline_operator':BASELINE,'candidate_operator':CANDIDATE,
+        'operator_families':OPERATOR_FAMILIES,
         'precision':'passed','error_domain':'passed','graph_capture':'passed','graph_replay':'passed',
         'performance':'passed' if passed else 'failed','device_completion':'passed','scope':SCOPE,
         'workspace_bytes_per_core':WORKSPACE,'source_binding':bindings,'cases':rows,

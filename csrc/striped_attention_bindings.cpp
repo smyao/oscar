@@ -227,6 +227,12 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
       "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
       "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
       "int splits, float scale, int cube_cores) -> ()");
+  m.def("attention_cv_mdl_decode_q1_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+      "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
+      "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
+      "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
+      "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
+      "int splits, float scale, int cube_cores) -> ()");
   m.def("attention_cv_bundle_decode_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
       "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
       "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
@@ -280,6 +286,7 @@ TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
   m.impl("attention_cv_striped_cluster16_out", &AttentionStripedCluster<oscar_ascend::attention_cv_striped_cluster16_launch,16>);
   m.impl("attention_cv_bundle_decode_out", &AttentionStriped<oscar_ascend::attention_cv_decode_bundle_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256)>);
   m.impl("attention_cv_mdl_decode_out", &AttentionStriped<oscar_ascend::attention_cv_mdl_decode_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256)>);
+  m.impl("attention_cv_mdl_decode_q1_out", &AttentionStriped<oscar_ascend::attention_cv_mdl_decode_q1_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256)>);
   m.impl("attention_cv_bundle_q1_out", &AttentionStriped<oscar_ascend::attention_cv_decode_bundle_q1_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256)>);
   m.impl("attention_cv_window_range_out", &AttentionStriped<oscar_ascend::attention_cv_window_range_launch>);
   m.impl("attention_cv_window_range_balanced_out", &AttentionStriped<oscar_ascend::attention_cv_window_range_balanced_launch>);

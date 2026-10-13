@@ -55,6 +55,7 @@ def test_pipeline_workspace_contains_both_kv_pairs_and_score_slots():
     assert pipeline.cv_bytes - old.cv_bytes == 20 * 655360
     assert replace(pipeline, tokens=128).cv_bytes == pipeline.cv_bytes
     assert replace(pipeline, history_cluster_size=16).cv_bytes == 20 * 4997120
+    assert replace(old, history_cluster_size=16).cv_bytes == replace(pipeline, history_cluster_size=16).cv_bytes
     with pytest.raises(ValueError, match="cluster workspace"):
         replace(pipeline, history_cluster_size=1)
 

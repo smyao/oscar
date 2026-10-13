@@ -1,0 +1,14 @@
+{
+  "backend": "ascendc_cpu_debug",
+  "op": "mdl_load_q1",
+  "status": "passed",
+  "baseline": "current_production_decode_bundle",
+  "bitwise": true,
+  "oracle": false,
+  "fault_order": true,
+  "cores": 1,
+  "input_immutable": true,
+  "gm_guards": true,
+  "baseline_workspace_bytes_per_core": 1146880,
+  "candidate_workspace_bytes_per_core": 1146880
+}

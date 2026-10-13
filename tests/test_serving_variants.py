@@ -19,7 +19,7 @@ def test_install_and_probe_plans_select_the_same_bundle(variant, enabled, capsys
         "striped_cache": enabled, "quantization_bundle": enabled, "current_only": enabled,
         "first_mtp_current_fia": enabled, "compact_later_mtp": enabled,
         "mixed_decode_split": enabled, "decode_bundle": enabled, "mdl_decode": enabled,
-        "c4_member_pipeline": False, "whole_prefill": False}
+        "c4_member_pipeline": enabled, "whole_prefill": False}
     assert install["probes"] == "none"
 
 
@@ -29,7 +29,7 @@ def test_default_retains_config_and_candidate_does_not_mutate_input():
     selected = variant_config(original, "candidate")
     features = variant_features(selected)
     assert features.pop("whole_prefill") is False
-    assert features.pop("c4_member_pipeline") is False
+    assert features.pop("c4_member_pipeline") is True
     assert all(features.values())
     assert original == {"devices": [0, 1, 2, 3], "port": 8989,"max_num_batched_tokens":16384}
     assert not any(variant_features(variant_config(selected, "native")).values())
@@ -77,9 +77,9 @@ def test_both_one_key_entries_enable_the_complete_candidate_without_manual_flags
     assert direct['runtime_selection']==observed['runtime_selection']
     selected=direct['runtime_selection']
     assert selected['optimizations']['whole_prefill'] is False
-    assert selected['optimizations']['c4_member_pipeline'] is False
-    assert all(value for key,value in selected['optimizations'].items() if key not in {'whole_prefill','c4_member_pipeline'})
-    assert 'c4_member_pipeline_gate' not in observed['phases']
+    assert selected['optimizations']['c4_member_pipeline'] is True
+    assert all(value for key,value in selected['optimizations'].items() if key!='whole_prefill')
+    assert 'c4_member_pipeline_gate' in observed['phases']
     assert selected['max_num_batched_tokens'] is None
     assert selected['token_budget_source']=='native'
     assert '--max-num-batched-tokens' not in direct['vllm_argv']

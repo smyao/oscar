@@ -1,5 +1,16 @@
 # OSCAR 优化与失败证据索引
 
+## 2026-10-13 当前并行裁决（后续于下方历史记录）
+
+| 路线 | 当前完整证据 | 本轮选择 |
+| --- | --- | --- |
+| 077 discard/APC 兼容 | 270b46b4已推送原生discard桥、maxlen-wrap合法行修复和prior_work/精确code诊断；28项原生方法、CPU D256链和增量APC writer→q1跨页/rollback通过；#158的64K Trap根因仍未确认 | 保留严格活行检查、只隔离原生明确discard；不领性能倍率，不称真机100%验收 |
+| direct-NZ 对当前MDL q4 | 同库完整934323→1143373 ticks，0.81716倍；两侧完整输出/LSE/status逐位、独立oracle、全task/source和六份完整trace通过 | **退出组合**；真实publisher已计费，正在按trace定位回退，不重复helper或旧实验。[结果](../reports/decode_direct_nz_attention_20261013/completed/comparison.json) |
+| MDL q1 对当前Normal q1 | 6个CPU病例通过；同库完整948223→797943 ticks，**1.18833倍**；逐位/oracle/全task/source通过。基线后置padding检查错把-1要求为0，已验证完整数值/trace后单独追加校正链，原rc1保留、未重跑内核 | 达单项1.15门，两个candidate入口启用；完整41项CANN/Torch构建通过，NPU/graph仍待验；属于MTP later-q1局部，不能外推16个target FULL层或整轮。[结果](../reports/q1_mdl_qualification_20261013/completed/comparison.json) |
+| C4 当前H16→H32成员流水 | Q336/C1341完整配对 **3540306→2671072 ticks，1.32543倍**；全1008任务、336query独立oracle、60actor通过；大形CPU超时保留，小形CPU及大形prepare完整 | 达单项1.15门，两个candidate入口启用现有独立pipeline；默认C16共享arena已覆盖，未增加保留空间。NPU/graph仍待验。[结果](../reports/c4_composed_long_20261013/completed/comparison.json) |
+
+三个性能候选分别有负责人，主代理统筹真实VM独占队列、兼容修复和两个一键入口；状态以完成回执为准。总目标仍为native2–4倍，当前尚未建立整轮达标证据。
+
 > 2026-10-12组合门更新：单项完整路径 `t_base/t_new>=1.15`、精度/协议合格即可入组合；组合相对原生2–4倍。C4 H32→member pipeline已测1.148704倍，严格尚未达到新15%门，不向上取整；保留研究证据与必要依赖身份，待完整合并基底证据再裁决。兼容/正确性修复不要求独立速度倍率。
 
 更新：2026-10-11。按当前工作区源码和已保存报告核查；**不代表所有改动已经推送，也不代表真 NPU、graph 或整轮性能通过**。档案依据：`issue1_full_record.md` #126/#140/#145/#148/#154–156、启动文档 §0.7 与 D.4 完整日志。

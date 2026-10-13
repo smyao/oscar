@@ -1,0 +1,128 @@
+{
+  "status": "device_complete_outputs_saved",
+  "variant": "baseline",
+  "case": "q1_r2_n8_c1344_1376_s1",
+  "mode": "q1",
+  "cores": 1,
+  "attrs": [
+    8,
+    6,
+    1,
+    256,
+    2,
+    11,
+    24,
+    512,
+    6,
+    64,
+    69632,
+    82688,
+    323,
+    64,
+    256,
+    3,
+    1
+  ],
+  "scale": 0.0625,
+  "all_sources_and_tasks": true,
+  "task_filtering": false,
+  "library_sha256": "ae6d4844f6eac0253f67eb38d5148f0cdfd5c76a46585eac07ad22b26ad533fb",
+  "kernel": "oscar_mdl_baseline_q1_kernel",
+  "workspace_bytes_per_core": 1146880,
+  "profile_counters": false,
+  "phase_profile_schema": null,
+  "trace_policy": {
+    "research_completion_only": false,
+    "per_file_budget_bytes": 67108864
+  },
+  "cpu_reference": "available_checked",
+  "cpu_reference_policy": "required",
+  "simulator_configuration": {
+    "directory": "/dev/shm/oscar-rwdp-c2049-logging-20261009",
+    "config": {
+      "stars": {
+        "ffts_mode": 1
+      },
+      "model_top": {
+        "sim_type": 0,
+        "num_aic": 24,
+        "num_aiv": 48
+      },
+      "pem": {
+        "parsim": 1,
+        "parsim_thd_limit": 6
+      }
+    },
+    "sha256": "072e786d534689a8c02f547bb8cc577bd4739a0cf396c4b38367d041802cb5c6",
+    "detail": {
+      "LOG": {
+        "rotating_file_size": 134217728,
+        "rotating_file_number": 2,
+        "flush_level": 3,
+        "core_enable_mask": [
+          "0xffffffff"
+        ]
+      },
+      "L2CACHE": {
+        "cache_enable": 0,
+        "cache_set_size": 24,
+        "cache_way_size": 16384,
+        "cache_line_size": 512,
+        "cache_read_latency": 241,
+        "cache_write_latency": 96
+      }
+    },
+    "detail_sha256": "a4f61fff0ee991b5dfbdc3647fdd5597b6da3ce624cac8e0e5a62dfdf86880e9"
+  },
+  "input_sha256": {
+    "q": "33c484c5f85992e206021d9ea6a543d917bdf89ee02ab55761bc539b4847f2d5",
+    "qr": "16b791b0302c7cb5eaa5c05171c1878eadd083d314feaf5a0acd696e7ef37e5b",
+    "ck": "ce757a662db5f4efd8a161c339b7cc6a22a43487b0760a55f006cb1ed6410d47",
+    "cv": "e2e4ba7abc699563031ec5ecfa64556fc9c935a39d48fa7c9425a4878975d453",
+    "rv": "01945d071added92e622bb102b644ae414ce0b550a0d080f051fc0d2a25c8c52",
+    "raw": "e5b9784e912627412ed6016f00cab080d5965318788e55b24d3b48ea821e12a6",
+    "table": "da3116f76c042827df7f63f4ff24447eb270bf273f29fa5dae4cd2e5e2379a7c",
+    "wk": "dfa2f04a307f4d4ceecadf6344815e313f35f85464c3e59b47fbc5e64029e184",
+    "wv": "482f3c27c07fbc865eb24125edd51b349abc8927d1af6cd13744c6a2c76c7078",
+    "tags": "fd958607ecdcf7cc9f0c088f4f7c9ebe5264c18c3f69cdb024462537e08a02fe",
+    "tasks": "c5707ed5b0e1ee61fb0206da9baf57ff31ec00cc82ddca6aac132d7ef699939a"
+  },
+  "oracle_sha256": {
+    "output": "2517caabf9e081114a627d85748df6262eaa8ed450ac619dc7180213272f79aa",
+    "lse": "1a498a5da40dd4d9af7bd7dfb18d460f1acef996cd761a1b533d4864b0ca80d8"
+  },
+  "cpu_baseline_sha256": {
+    "partial": "af7a69c558184fd3e97f4f89d1cb8c929f6be9642d1fe4674c9e16a21fe8329f",
+    "lse": "2cf828ece7183e36af9c2c8acdede379b23522d136f47948c3324c37cecbe600",
+    "status": "5d89f056865052bcb89c910d2d62872e029fb273c3db03f8968a52a41593c1b5"
+  },
+  "backend": "local_CANN9.1_dav2201_CAModel",
+  "profile_scope": "complete operator; actor durations include waits",
+  "npu": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_run",
+  "whole_service": "not_run",
+  "outputs": {
+    "partial": {
+      "bytes": 147456,
+      "sha256": "af7a69c558184fd3e97f4f89d1cb8c929f6be9642d1fe4674c9e16a21fe8329f",
+      "path": "partial.bin"
+    },
+    "lse": {
+      "bytes": 576,
+      "sha256": "2cf828ece7183e36af9c2c8acdede379b23522d136f47948c3324c37cecbe600",
+      "path": "lse.bin"
+    },
+    "status": {
+      "bytes": 192,
+      "sha256": "5d89f056865052bcb89c910d2d62872e029fb273c3db03f8968a52a41593c1b5",
+      "path": "status.bin"
+    },
+    "workspace": {
+      "bytes": 1146880,
+      "sha256": "56c037b048174c73755664f39ae2d8c9c866d460b14f5a8bbd86e7b98f4bee82",
+      "path": "workspace.bin"
+    }
+  },
+  "failures": []
+}

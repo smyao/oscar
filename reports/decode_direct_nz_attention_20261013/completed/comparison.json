@@ -1,0 +1,25 @@
+{
+  "status": "completed_same_library_pair",
+  "source_sha256": "f2047dde10aa464202c23c8a8d39a9806c712ac8eb090ff752d7346d1b723151",
+  "task_ticks": {
+    "baseline": 934323,
+    "candidate": 1143373
+  },
+  "ratio": 0.8171637776998407,
+  "all_partial_lse_status_bitwise": true,
+  "independent_oracle": "passed_both",
+  "all_sources_and_tasks": true,
+  "source_abi_and_geometry": "unchanged; research Rv pointer carries its lossless NZ format",
+  "real_history_and_precise_publishers": "included in complete operator",
+  "Rv_NZ_extra_bytes": 262144,
+  "minimum_local_speedup": 1.15,
+  "local_speed_gate": "failed",
+  "denominator": "f2047 measured MDL source; no multiplication with prior Normal ratio",
+  "full_trace_files_per_arm": 6,
+  "load_geometry_verdict": "inspect complete ND2NZ/NZ DMA and publisher instructions; no pure-busy inference",
+  "CPU": "available_checked",
+  "CANN": "loaded_same_compiled_library",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "whole_service": "not_established"
+}

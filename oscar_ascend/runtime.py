@@ -398,8 +398,8 @@ class AscendRuntimeProvider:
             from .ops.cv_dispatch import DECODE_BUNDLE_OPS
             require_capabilities(DECODE_BUNDLE_OPS)
         if self.config.get("experimental_mdl_decode", False):
-            from .ops.cv_dispatch import MDL_DECODE_CV_OP
-            require_capabilities({MDL_DECODE_CV_OP})
+            from .ops.cv_dispatch import MDL_DECODE_CV_OPS
+            require_capabilities(MDL_DECODE_CV_OPS)
         if self.config.get("experimental_c4_member_pipeline", False):
             from .ops.cv_dispatch import MEMBER_PIPELINE_CV_OP
             require_capabilities({MEMBER_PIPELINE_CV_OP})

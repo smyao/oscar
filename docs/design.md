@@ -213,3 +213,16 @@ CANN ascend910b4编译通过，生产AscendC/ABI源码指纹与已编译版本�
 原combined harness将fe0、C16、merge/oracle放入同一个120s预算，D256q336与非对齐q3+q336各出现过rc124。没有删除原例、缩小输入、放宽误差或调高120s。新`tools.run_mixed_cv_cpu_debug`先真实运行fe0并过oracle，写新建目录中的原始参考bytes，再独立运行C16逐位比/同oracle；每次执行仍限120s，核对golden及参考bytes SHA/尺寸且失败立即停止。相位计时证明D256 fe0 kernel约50.007s、C16约70.576s，两者相加已超过120s；含各自校验的两进程分别57.280/77.735s全部通过。非对齐完整例分别62.565/78.836s通过。旧超时日志与最终通过记录同时保存，不将模拟器耗时当NPU速度。该工具仅用于维护者本地CANN VM，不是真机部署前置命令。
 
 新balanced/C16的真NPU精度、独立图、速度仍未在本机验证；新增目标短门须过关。已有旧fast/C4/q1真NPU通过不会代替新核证据，更不代表已经追平8分钟或本次1371.969秒。
+
+## 2026-10-13：MDL q1 与 q4 组合，保持全部浮点数学
+
+在当前`d8171f…` decode bundle母源上，仅以官方Normal/MDL模板改变GM/ND→L1的B装载。q4已有完整1.15976倍资格；本轮q1独立同库948223→797943 ticks、1.188334254倍，全部24任务/三源/尾部/padding、partial/LSE/status逐位、原空间oracle和6组CPU错误域通过。两条路径复用生产文件内同一数学模板；仅把已有私有q1符号公开为`attention_cv_mdl_decode_q1_out`，统一`experimental_mdl_decode`开关在later-draft q1真实路由生效。GDN、target q4资格、C4、缓存格式和原生预算保持原有语义。
+
+### D.4四问
+
+1. **相位**：融合history反量化与FIA中的QK/PV数据交付；没有新增离线dequant相位。
+2. **失败教训**：D.4全历史恢复6499.8–6655.1ms、写路径209–215ms不能重演；这些数值不是当前q1占比。
+3. **结构性规避**：保留KV256固定双缓冲、FP32/HF32-off、原K128序列、AIV解包发布、有限性错误域和所有跨核flags；不增加历史大小的缓存或CPU数据回传。完整指令证据确认每次history QK/PV由8×32KiB B装载合为1×256KiB，GM逻辑字节未减少，不能叫HBM带宽压缩。
+4. **成本界与验收**：workspace仍1146880B/core、UB158656B/AIV；完整q1算子局部18.833%提速，中间history周期39508.5→28352.5ticks不外推成整轮倍率。later-q1仅是MTP工作的一部分，不能与q4倍率相乘。两固定candidate入口均选择新注册算子；observe要求q4/q1各自数值、固定地址换输入graph及完整CV+merge+BF16copy的1.15门；NPU、graph、模型质量和整轮2–4倍均未由本机模拟证明。
+
+证据：[q1资格](../reports/q1_mdl_qualification_20261013/summary.json)、[装载完成链](../reports/q1_mdl_qualification_20261013/load-analysis.json)、[设备门](mdl_decode_gate.md)。首次环境exit127和基线后处理padding误判exit1均保留，完整数值后的后处理修正另附SHA绑定链，不修改原返回码。

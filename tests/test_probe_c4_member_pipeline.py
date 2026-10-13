@@ -10,11 +10,12 @@ from tools import probe_c4_member_pipeline as probe
 
 
 def evidence():
-    detail={'eligible_clusters':1,'shared_history_kv_tiles':3,'rounds_per_cluster':3,
+    detail={'context':1341,'eligible_clusters':1,'shared_history_kv_tiles':5,'rounds_per_cluster':5,
             'oracle':'all_336_queries_passed','task_sha256':'initial-tasks'}
-    states=[dict(detail,state=name,context=context,task_sha256=task,packed_sha256=raw)
-            for name,context,task,raw in [('captured_inputs',769,'initial-tasks','initial-raw'),
-              ('changed_q_qr',769,'initial-tasks','initial-raw'),('changed_context_tasks_packed_meta',801,'new-tasks','new-raw')]]
+    states=[dict(detail,state=name,context=context,task_sha256=task,packed_sha256=raw,
+                 rounds_per_cluster=rounds,shared_history_kv_tiles=rounds)
+            for name,context,task,raw,rounds in [('captured_inputs',1341,'initial-tasks','initial-raw',5),
+              ('changed_q_qr',1341,'initial-tasks','initial-raw',5),('changed_context_tasks_packed_meta',1373,'new-tasks','new-raw',6)]]
     graph={'capture':'passed','replay':'passed','same_addresses':True,'q_qr_changed':True,
            'task_metadata_changed':True,'packed_meta_changed':True,'independent_oracle':'passed',
            'graph_eager_bitwise':'passed','mature_multikv_in_every_state':True,'states':states}
@@ -33,7 +34,7 @@ def evidence():
 
 def test_missing_or_c1_only_graph_cannot_qualify_pipeline():
     complete=evidence();assert probe.validate_evidence(complete)==[]
-    for mutation in ('missing','c1','one_round','no_task_change','no_raw_change','missing_oracle','timing_sample'):
+    for mutation in ('missing','c1','one_round','no_task_change','no_raw_change','missing_oracle','timing_sample','old_short_shape','missing_extra_round'):
         report=copy.deepcopy(complete);row=report['cases'][0];graph=row['graph']
         if mutation=='missing':row['graph']=None
         elif mutation=='c1':graph['states'][0]['eligible_clusters']=0
@@ -41,6 +42,8 @@ def test_missing_or_c1_only_graph_cannot_qualify_pipeline():
         elif mutation=='no_task_change':graph['states'][2]['task_sha256']=graph['states'][0]['task_sha256']
         elif mutation=='no_raw_change':graph['states'][2]['packed_sha256']=graph['states'][0]['packed_sha256']
         elif mutation=='missing_oracle':report['cases'][2]['detail'].pop('oracle')
+        elif mutation=='old_short_shape':row['detail']['context']=769
+        elif mutation=='missing_extra_round':graph['states'][2]['rounds_per_cluster']=5
         else:row['timing']['samples_ms'][probe.BASELINE].pop()
         assert probe.validate_evidence(report),mutation
 
@@ -57,7 +60,7 @@ def test_all_task_status_oracle_preserves_old_16_row_lanes(position,lane):
 
 def test_graph_replacement_is_same_geometry_and_changes_real_packed_metadata():
     first=probe.make_fixture(torch,probe.case_plan()[0])
-    second=probe.make_fixture(torch,probe.replace(probe.case_plan()[0],contexts=(801,)))
+    second=probe.make_fixture(torch,probe.replace(probe.case_plan()[0],contexts=(1373,)))
     assert len(first['expected'])==len(second['expected'])==336
     assert first['blocks']==second['blocks']
     assert {k:(v.shape,v.dtype) for k,v in first['cpu'].items()}=={k:(v.shape,v.dtype) for k,v in second['cpu'].items()}
@@ -98,12 +101,11 @@ def test_observe_requires_complete_signed_pipeline_evidence(monkeypatch,tmp_path
         observe._c4_member_pipeline_gate(tmp_path/'config.json',{}, {},tmp_path,{})
 
 
-def test_explicit_research_plan_and_failed_pipeline_gate_block_model(monkeypatch,tmp_path,capsys):
+def test_default_candidate_and_failed_pipeline_gate_block_model(monkeypatch,tmp_path,capsys):
     from tools import observe_serve as observe
     from tools import install_serve
     target=json.loads((observe.ROOT/'configs/target.json').read_text())
-    target['experimental_c4_member_pipeline']=True
-    config_path=tmp_path/'explicit-research.json';config_path.write_text(json.dumps(target))
+    config_path=tmp_path/'candidate.json';config_path.write_text(json.dumps(target))
     assert observe.main(['--config',str(config_path),'--variant','candidate','--plan','--probe-only'])==0
     plan=json.loads(capsys.readouterr().out)
     assert 'c4_member_pipeline_gate' in plan['phases']

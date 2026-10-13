@@ -1,0 +1,6 @@
+{
+  "pid": 599881,
+  "pgid": 599881,
+  "output": "/tmp/oscar-q1-mdl-20261013-v2/candidate",
+  "script": "/dev/shm/oscar-decode-completion-20261012/csrc/experiments/window_batch_decode/replay_camodel.py"
+}

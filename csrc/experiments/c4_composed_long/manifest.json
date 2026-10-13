@@ -1,0 +1,112 @@
+{
+  "scope": "Q336_C1341_all1008_tasks_source0_source1_legal_current_suppression",
+  "arms": {
+    "baseline": {
+      "arm": "baseline",
+      "symbol": "oscar_c4_composed_baseline_kernel",
+      "source": "csrc/kernels/attention_cv_window_range_cluster4.cpp",
+      "actual_source_sha256": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65",
+      "source_sha256": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65",
+      "sha256": "824d01eb4b7668aa33ecf821f862cc112bc1033cabe010868d1eaca5f7ba306a",
+      "production_bytes_restored": true,
+      "method_hashes": {
+        "Process": "a495e13626644740aeaeb4f9591425581333a5e5de635afd190074878bfa698e",
+        "IsClusterMember": "9dc64ead1bebcf515bc7cd148e4ea227096875e28a0a1e7d2c79435c1619d5ed",
+        "Matmul": "4eb0f86e3859c6723b3a89e093dd4111ec9a33c8b5f95c76173b293d6d6fb966",
+        "CubeTask": "e15898938f5900cb908ee75b68f76f72cd865668771aced0e1511eb31a5af19b",
+        "CubeCluster": "896d84e616b8b1986d97e46a2b011967719d7a4dffdcfd70791b1db96a2f9c47",
+        "VectorTask": "83283722a6d3ac4bbf3fa84f61eb4b86f3ba616d5060aad983c9ff72c8fa542a",
+        "VectorCluster": "97f05521a3143c9fa9eca791c67ae0d90adcc5f5388fa92eef249baa9a80f203",
+        "LoadQueries": "040dceec2b8ec684c59cbd1798d710935ece16f0293b9bb6ee2284ef104e96af",
+        "LoadPacked": "2c5bcaf49d78d3261ccf1d39a376247c738043a16477d706e1c3a297a7e64862",
+        "Unpack": "17c1fe1b23f2002016d8dc820063aa54a7cd7abbe9d984c76833474fb52b4614",
+        "LoadWindowRuns": "f34d1619a3ec8c333b75aaaa0779bbefc7c522c7240df541e4f3b12fc5ec206b",
+        "LoadPrecise": "d488e060eaa34e168bb77629accd41dc1323a40088053a7536acb4212667c40f",
+        "Softmax": "150dc08d4bdfd16645be5042c2e91a6268cf896a5ffd287ab928ed89b592e8c9",
+        "RestoreState": "b107c458c9ad128345b906fefb56ce5d0876dc0d7ea2e16e09f96c27f197c54a",
+        "SpillState": "6a2498d564214106d8d9b29e5c813b9648d9266e9b5c17db015618e21cf159de",
+        "PublishRows": "1c1af6eb41f50737ab4452018c4d4f940e1e204938d2ce03ebee408b70d35a41",
+        "PublishStatus": "8cf3e72f4e3310b936ca1b598640e88975c9de5b1c7f338f537c93a8b041df0e",
+        "TaskValid": "7481c444f2920371efab70d03ca0468706f19f5f3187eb62ce5580f838eaa320"
+      },
+      "workspace_per_core": 1839104,
+      "explicit_UB_per_AIV": 157632
+    },
+    "candidate": {
+      "arm": "candidate",
+      "symbol": "oscar_c4_composed_candidate_kernel",
+      "source": "csrc/kernels/attention_cv_member_pipeline_cluster4.cpp",
+      "actual_source_sha256": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+      "source_sha256": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65",
+      "sha256": "f0199c2cdeb37e6c6276ecc709733748a8abbe7407e30657f181c0ba74aab193",
+      "production_bytes_restored": true,
+      "method_hashes": {
+        "Process": "a495e13626644740aeaeb4f9591425581333a5e5de635afd190074878bfa698e",
+        "IsClusterMember": "9dc64ead1bebcf515bc7cd148e4ea227096875e28a0a1e7d2c79435c1619d5ed",
+        "Matmul": "4eb0f86e3859c6723b3a89e093dd4111ec9a33c8b5f95c76173b293d6d6fb966",
+        "CubeTask": "e15898938f5900cb908ee75b68f76f72cd865668771aced0e1511eb31a5af19b",
+        "CubeCluster": "78c421017abe21ec2a82c8d18b512c67423d9737870ff012824a5938c2e7b668",
+        "VectorTask": "b96d98befe7c5edea7b994a757f1450052f7da474a5d962da055b3030cbc7cce",
+        "VectorCluster": "5e30cf6ec47afb884e1db879cbebd142d99cfefea0f1decdb75151877223b380",
+        "LoadQueries": "83e895d1a36e1664454a0dfbd57a332b28684aef5759f45c71858ad257a633bb",
+        "LoadPacked": "507378eac8a630f5f1bb77941713f7cdc6e2ea7f5fa9aed20fcf77d80dcbfed7",
+        "Unpack": "3b1fc4a5438b64d822d03d35680b00bab2ff3103189fc512cafcb0d67abee543",
+        "LoadWindowRuns": "f989d4375cbb2c527196a0bdb69b7d9896bc39c15e6f620e301a1d80d0e60c4a",
+        "LoadPrecise": "c9f1b950bac149f0bd51b1640935dd366eba20f716bfe23cf6540db547706195",
+        "Softmax": "744a23b22c002fcecd52a721e3f296ef86400589f4718b3e3491620acb205c18",
+        "RestoreState": "b107c458c9ad128345b906fefb56ce5d0876dc0d7ea2e16e09f96c27f197c54a",
+        "SpillState": "6a2498d564214106d8d9b29e5c813b9648d9266e9b5c17db015618e21cf159de",
+        "PublishRows": "594d0ec4a107f8e5518898edf44716bbb71c69d2838fcd048cedc5c3379b5ba3",
+        "PublishStatus": "8cf3e72f4e3310b936ca1b598640e88975c9de5b1c7f338f537c93a8b041df0e",
+        "TaskValid": "7481c444f2920371efab70d03ca0468706f19f5f3187eb62ce5580f838eaa320"
+      },
+      "workspace_per_core": 2494464,
+      "explicit_UB_per_AIV": 157760
+    }
+  },
+  "harness": {
+    "cv_probe.cpp": {
+      "template": "csrc/experiments/c4_member_pipeline/cv_probe.cpp",
+      "template_sha256": "e79ff6d3219fbc73dc0dc4b63c7cc06129ede6f1bec4959b4325a61c0268d823",
+      "sha256": "5b80ff91dfa87a134bac52295a377e1b25e6ede11a537a8b7fb4347136997812",
+      "template_bytes_restored": true
+    },
+    "cv_replay.py": {
+      "template": "csrc/experiments/c4_member_pipeline/cv_replay.py",
+      "template_sha256": "71c38e9dd2fb545de1cb4514ddf256984587c62fb3397560cbe73e7a44eb8091",
+      "sha256": "43374dbb48c415d5642955850fcce325f1331afe5963e3c40293c9a29b9a906d",
+      "template_bytes_restored": true
+    },
+    "cv_compare.py": {
+      "template": "csrc/experiments/c4_member_pipeline/cv_compare.py",
+      "template_sha256": "9fb3b466e5e0a8e5ba4c2986abaed7af6443cd4d674495a7a2670816083e3dc1",
+      "sha256": "75ed75ea88b2fd4daf7bab54a808ac6e9b2bf088c086b82f7055b3c67910a708",
+      "template_bytes_restored": true
+    }
+  },
+  "minimum_complete_CV_speedup": 1.15,
+  "source_sha256": {
+    "baseline": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65",
+    "candidate": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc"
+  },
+  "source_dependencies": {
+    "csrc/kernels/attention_cv_member_pipeline_cluster4.cpp": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+    "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+    "csrc/include/oscar_member_pipeline_launch.h": "fb87c667495249b94fecc3d626fa703f9332e7fd638eb533bc5c8d2fd4bc9a48",
+    "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+    "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+    "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+    "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+    "csrc/kernels/attention_striped_unpack32.h": "c0aeab7e8fb9e078d37147ca411013f1c42e1547bd0a1d066ed3aece0c5514ca",
+    "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+    "csrc/kernels/attention_cv_window_range_cluster4.cpp": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65"
+  },
+  "validation": {
+    "CPU": "not_run",
+    "CANN": "not_run",
+    "CAModel": "not_run",
+    "NPU": "not_run",
+    "graph": "not_run",
+    "whole_service": "not_run"
+  }
+}

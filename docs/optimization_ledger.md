@@ -121,3 +121,14 @@ Kt/Vt共同连续NZ发布的新实验：`experiments/c4_kvt_nz/`将K也改为物
 
 - **C4 MDL资格仍未建立**：真H16基底CPU20全1008任务28.28秒通过；候选CPU20在120秒未完成。独立CPU4保留所有任务且按源码重建owner后，baseline仍120秒超时，已停止换拓扑或加时。原始日志、44份失败PID专属GM临时数据均已归档校验，资源已回收；未证实OOM/SDK死锁，不判数学错误，更不判通过。C4生产未启用MDL。[状态](../reports/c4_mdl_load_20261012/summary.json)、[超时审查](../reports/c4_mdl_cpu4_timeout_review_20261012.md)。
 - **压缩码字直接NZ研究**：在UINT16码字上新增4352B Gather，再按原Shift/And和FP32 Mul/Add形成NZ；history免去后置64KiB FP32重排。显式UB171680B，Cast/Mul/Add各4→8、source1/2精确域转换及Rv常量均须计费；host全码型/地址筛选通过，真实CPU/CANN helper已通过：K/V各65536码型与17个旧新FP32bits/status/非法值/尾部/guards用例，12.374秒；完整消费者和速度未验收。[设计](../csrc/experiments/decode_direct_nz/README.md)。
+
+
+### 2026-10-13 P0/P1：MTP guarded APC、checkpoint、prepare复用和q1 MDL
+
+基线e6178e3，当前源码实际启用情况、几何与证据详见 [prefix兼容记录](prefix_caching_compatibility.md)。guard key及padded MTP chunk边界输入属于正确性依赖；原生hash/pool/refcount/evict/reset、GDN数学、冻结oracle/acceptance/status_guard保留。物理FULL2304不变；hash前瞻768替代额外丢整FULL页，3072 warm边界主机协议可命中2304；没有宣称128-token APC或新allocator已完成。
+
+candidate接入metadata epoch+arena所有权的prepare复用与MDL q1独立符号；q4/q1/C4路由均有真实forward接缝回归。MDL打包保持数学母源可逆，独立q1/q4完整CV+merge+BF16、oracle、错误域、换输入图与≥1.15门进入observe和deploy。MDL不等于消除FP32 GM流量，prepare32→2仅为16层×2遍历的调用计数。两者设备净收益与组合资格尚待真实门，不拼乘倍率；若任何门失败则停止，不以关闭APC绕过。
+
+本机主机/HTTP回归、基线失败对照、源哈希及计划：`reports/prefix_optimization_20261013/validation.json`。无torch_npu/limactl，CANN、NPU、图、模型质量、整轮性能保持pending；#157具体触发族未定位。固定直启candidate及默认标准target同步，默认prefix=true，prompt details=true；probe新增实际命中断言。重开条件：本轮签名的设备门/服务门回传后按每项完整路径1.15及整轮2–4倍目标重新裁决，禁止要求重跑AISBench。
+
+FULL本步新发布页采用原生Mamba同类admission延期，防止旧GDN checkpoint绕过写后读依赖；最终主机1380 passed/22 failed/8 errors，后30项均在e6178e3基线复现。详见上述兼容报告及validation.json。

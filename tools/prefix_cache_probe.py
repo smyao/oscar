@@ -121,6 +121,29 @@ def cases(lengths):
             for n in lengths]
 
 
+def validate_hits(record, full_tokens=2304, hash_tokens=768):
+    """Strict positive-hit contract for this pinned OSCAR MTP geometry.
+
+    Zero-hit usage is omitted by native completion serving. Missing positive
+    evidence remains unknown and fails; HTTP success alone never passes APC.
+    """
+    from oscar_ascend.integration.prefix_cache import prefix_hit_bound
+    n = record["input_tokens"]
+    expected = prefix_hit_bound(n, full_tokens, hash_tokens, guarded=True, mtp=True)
+    warm = record["requests"]["warm_repeat"].get("cached_tokens")
+    if expected and (type(warm) is not int or warm != expected):
+        raise ValueError(f"APC warm hit mismatch: prompt={n} expected={expected}, actual={warm}")
+    for label, response in record["requests"].items():
+        bound = prefix_hit_bound(n + int(label.startswith("fork")), full_tokens, hash_tokens,
+                                 guarded=True, mtp=True)
+        hit = response.get("cached_tokens")
+        if hit is not None and (type(hit) is not int or hit < 0 or hit % full_tokens or hit > bound):
+            raise ValueError(f"APC unsafe/non-page hit: prompt={n} arm={label} hit={hit} bound={bound}")
+    return {"status": "passed" if expected else "no_reusable_page",
+            "expected_warm_tokens": expected, "actual_warm_tokens": warm,
+            "full_page_tokens": full_tokens, "hash_tokens": hash_tokens}
+
+
 def run(args):
     directory = args.output.resolve()
     directory.mkdir(parents=True, exist_ok=False)
@@ -131,6 +154,12 @@ def run(args):
               "config_assumption": "caller verifies effective APC/MTP/native-budget configuration"}
     save(directory / "summary.json", report)
     base = args.base_url.rstrip("/")
+    deadline = time.monotonic() + getattr(args, "total_timeout", 600)
+    def timeout():
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("prefix probe total deadline exceeded")
+        return min(args.timeout, remaining)
     try:
         encoded = isolated_http(directory, "tokenize", {"url": base + "/tokenize",
             "timeout": min(args.timeout, 15), "payload": {"model": args.model,
@@ -150,7 +179,7 @@ def run(args):
 
             def call(label, ids, cache_salt=salt):
                 result = isolated_http(directory, f"{case_index:02d}-{label}", {
-                    "url": base + "/v1/completions", "timeout": args.timeout, "stream": True,
+                    "url": base + "/v1/completions", "timeout": timeout(), "stream": True,
                     "payload": {"model": args.model, "prompt": ids, "max_tokens": args.output_tokens,
                                 "temperature": 0, "seed": 7, "ignore_eos": True,
                                 "stream": True, "stream_options": {"include_usage": True},
@@ -187,7 +216,13 @@ def run(args):
                 cold["token_ids"] == warm["token_ids"] if cold["token_ids"] is not None and warm["token_ids"] is not None
                 else cold["text_sha256"] == warm["text_sha256"])
             record["output_comparison_scope"] = "sensitivity_signal_not_frozen_quality_gate"
+            if getattr(args, "require_hit", False):
+                record["cache_gate"] = validate_hits(record)
             save(directory / "summary.json", report)
+        if getattr(args, "require_hit", False):
+            if not any(r["cache_gate"]["status"] == "passed" for r in report["cases"]):
+                raise ValueError("APC gate requires at least one positive page hit")
+            report["cache_gate"] = "passed"
         report["status"] = "completed"
         report["request_count"] = len(report["cases"]) * 6
         save(directory / "summary.json", report)
@@ -206,13 +241,15 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", default="http://127.0.0.1:8989")
     parser.add_argument("--model", default="qwen3.5")
-    parser.add_argument("--lengths", type=int, nargs="+", default=[2304, 4608, 4609, 8192])
+    parser.add_argument("--lengths", type=int, nargs="+", default=[2304, 3072, 4608, 5376, 8192])
     parser.add_argument("--output-tokens", type=int, default=8)
     parser.add_argument("--timeout", type=float, default=120)
+    parser.add_argument("--total-timeout", type=float, default=600)
+    parser.add_argument("--require-hit", action="store_true", help="require measured warm hits for OSCAR TP4/MTP geometry 2304/768")
     parser.add_argument("--output", type=Path, default=Path("reports/prefix-service-probe"))
     parser.add_argument("--run", action="store_true", help="send the planned requests to an already running service")
     args = parser.parse_args(argv)
-    if not 1 <= args.output_tokens <= 128 or not 0 < args.timeout <= 300:
+    if not 1 <= args.output_tokens <= 128 or not 0 < args.timeout <= 300 or not 0 < args.total_timeout <= 1800:
         parser.error("output-tokens must be 1..128 and timeout must be 0..300 seconds")
     plan = cases(args.lengths)
     if not args.run:

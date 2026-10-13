@@ -62,7 +62,7 @@ def test_graph_only_step_keeps_whole_graph_time_but_no_attention_residual(tmp_pa
 def test_plan_makes_no_requests(capsys):
     assert observe_serve.main(["--plan"]) == 0
     plan = json.loads(capsys.readouterr().out)
-    assert plan["variant"] == "baseline"
+    assert plan["variant"] == "candidate"
     assert plan["inference_requests_generated"] == 0
     assert "managed_service_health" in plan["phases"]
 

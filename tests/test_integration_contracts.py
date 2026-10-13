@@ -108,7 +108,7 @@ class TargetContracts(unittest.TestCase):
             config_path.write_text(json.dumps(config))
             logs = root / "logs"
 
-            def plan(_config, log_dir):
+            def plan(_config, log_dir, **_kwargs):
                 marker = "from pathlib import Path; Path(" + repr(str(log_dir / "must-not-start")) + ").write_text('started')"
                 return [
                     ("probe-failed", [sys.executable, "-c", "raise SystemExit(7)"]),
@@ -131,7 +131,7 @@ class TargetContracts(unittest.TestCase):
             root = Path(directory)
             config_path = root / "target.json"
             config_path.write_text(json.dumps(config))
-            with patch.object(deploy, "plan", lambda *_args: []), patch.object(sys, "argv", ["deploy", "--config", str(config_path), "--log-dir", str(root / "logs")]):
+            with patch.object(deploy, "plan", lambda *_args, **_kwargs: []), patch.object(sys, "argv", ["deploy", "--config", str(config_path), "--log-dir", str(root / "logs")]):
                 code = deploy.main()
             self.assertEqual(code, 1)
             state = json.loads((root / "logs/status.json").read_text())

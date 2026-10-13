@@ -296,7 +296,7 @@ class AscendRuntimeProvider:
         for flag in ("experimental_first_mtp_current_fia", "experimental_compact_later_mtp",
                      "experimental_mixed_decode_split", "experimental_decode_bundle",
                      "experimental_quantization_bundle", "experimental_c4_member_pipeline",
-                     "experimental_mdl_decode"):
+                     "experimental_mdl_decode", "experimental_prepare_reuse"):
             if type(self.config.get(flag, False)) is not bool:
                 raise OscarReadinessError(f"{flag} must be an explicit boolean")
         if self.config.get("experimental_fast_unpack", False) and not self.config.get("experimental_history_reuse", False):
@@ -398,8 +398,8 @@ class AscendRuntimeProvider:
             from .ops.cv_dispatch import DECODE_BUNDLE_OPS
             require_capabilities(DECODE_BUNDLE_OPS)
         if self.config.get("experimental_mdl_decode", False):
-            from .ops.cv_dispatch import MDL_DECODE_CV_OP
-            require_capabilities({MDL_DECODE_CV_OP})
+            from .ops.cv_dispatch import MDL_DECODE_CV_OP, MDL_Q1_CV_OP
+            require_capabilities({MDL_DECODE_CV_OP, MDL_Q1_CV_OP})
         if self.config.get("experimental_c4_member_pipeline", False):
             from .ops.cv_dispatch import MEMBER_PIPELINE_CV_OP
             require_capabilities({MEMBER_PIPELINE_CV_OP})
@@ -611,12 +611,20 @@ class AscendRuntimeProvider:
 
     def transform_kv_cache_specs(self, runner, native_specs):
         from .integration.specs import transform_native_specs
+        # #37-49/#127/#128: first-pass MTP inputs are shifted by one token.
+        # Bind that dependency to native cache keys; retain native ownership.
+        cache_config = runner.vllm_config.cache_config
+        speculative = getattr(runner.vllm_config, "speculative_config", None)
+        mtp_guard = bool(cache_config.enable_prefix_caching and speculative is not None
+                         and getattr(speculative, "num_speculative_tokens", 0) > 0)
+        if mtp_guard and getattr(speculative, "method", None) not in {"mtp", "qwen3_5_mtp"}:
+            raise OscarReadinessError("OSCAR prefix lookahead contract requires the Qwen MTP proposer")
         if self._request_windows:
             if not self._request_windows_sealed or runner is not self._request_window_runner:
                 raise OscarReadinessError("request-window sidecars must be registered during model load before KV planning")
             converted = transform_native_specs(native_specs, request_windows=True)
         else:
-            converted = transform_native_specs(native_specs)
+            converted = transform_native_specs(native_specs, mtp_prefix_guard=mtp_guard)
         # Validate precise snapshot geometry before the scheduler budgets its
         # pool. A page advertised as compressed must also preserve its window.
         from .integration.specs import OscarFullAttentionSpec
@@ -776,6 +784,7 @@ class AscendRuntimeProvider:
             from .telemetry import emit_once
             emit_once("cache_layout", key=name, layer=name, physical_blocks=blocks,
                       physical_block_tokens=spec.block_size, page_bytes=spec.page_size_bytes,
+                      mtp_prefix_guard=spec.mtp_prefix_guard,
                       cache_format=self._cache_format,
                       snapshot_bytes_per_page=0 if self._request_windows else snapshots.required_bytes,
                       request_window_sidecar_bytes=snapshots.required_bytes if self._request_windows else 0,

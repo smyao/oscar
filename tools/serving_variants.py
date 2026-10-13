@@ -23,6 +23,7 @@ FEATURE_FLAGS = {
     "mixed_decode_split": "experimental_mixed_decode_split",
     "decode_bundle": "experimental_decode_bundle",
     "mdl_decode": "experimental_mdl_decode",
+    "prepare_reuse": "experimental_prepare_reuse",
     "whole_prefill": "experimental_whole_prefill",
 }
 
@@ -41,6 +42,14 @@ RESEARCH_FEATURE_FLAGS = {
 WHOLE_PREFILL_SCHEDULER = "oscar_ascend.integration.whole_prefill_scheduler.WholePromptAsyncScheduler"
 BOUNDED_PREFILL_SCHEDULER = "oscar_ascend.integration.bounded_whole_prefill.BoundedWholePromptAsyncScheduler"
 _WHOLE_SOURCE = "_oscar_whole_prefill_base"
+
+
+def default_variant(config, requested):
+    """Default target uses candidate; explicit feature configs keep their intent."""
+    if requested is not None:
+        return requested
+    owned = set(FEATURE_FLAGS.values()) | set(RESEARCH_FEATURE_FLAGS.values())
+    return None if owned.intersection(config) else "candidate"
 
 
 def _restore_owned_scheduler(selected):
@@ -146,6 +155,9 @@ def runtime_feature_summary(config: dict, variant: str | None) -> dict:
     """One compact startup line shows the actual effective feature selection."""
     return {"variant":variant,"optimizations":variant_features(config),
             "prefix_caching":config.get("enable_prefix_caching", True),
+            "prefix_cache_policy":("native" if variant == "native" else
+                                   "native_pool_mtp_lookahead_hash_v1"),
+            "prompt_tokens_details":config.get("enable_prompt_tokens_details", True),
             "token_budget_source":"native" if config.get("use_native_token_budget", False) else "explicit",
             "max_num_batched_tokens":config.get("max_num_batched_tokens"),
             **({"history_token_capacity":config["history_token_capacity"]}

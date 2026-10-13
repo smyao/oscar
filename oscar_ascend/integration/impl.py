@@ -135,30 +135,40 @@ class OscarAttentionImpl(AttentionImpl):
         partial, partial_lse = workspace.partial_views(n, source_splits)
         positions = workspace.positions[:n]
         ops = self.provider.ops
+        from .prepare_cache import prepare_key, reuse_prepare, commit_prepare
+        key_for_prepare = (prepare_key(attn_metadata, tokens=n, heads=h, kv_heads=hk,
+            sink=state.snapshots.sink_tokens, recent=state.snapshots.recent_tokens,
+            splits=source_splits, native_current=native_current)
+            if self.provider.config.get("experimental_prepare_reuse", False) else None)
+        prepared = reuse_prepare(workspace, key_for_prepare, layer.layer_name)
         with phase("prepare", layer=layer.layer_name, tokens=n, requests=attn_metadata.num_reqs,
-                   source_splits=source_splits, **timing_fields):
+                   source_splits=source_splits, metadata_reused=prepared, **timing_fields):
             q = workspace.projection(query, workspace.query_input, n, h, d)
             k = workspace.projection(key, workspace.key_input, n, hk, d)
             v = workspace.projection(value, workspace.value_input, n, hk, d)
             slots = attn_metadata.slot_mapping[:n]
             if slots.dtype == torch.int32:
                 # Native llm_base_proposer.py:1662 uses int32 draft slot groups.
-                workspace.slots[:n].copy_(slots)
+                if not prepared:
+                    workspace.slots[:n].copy_(slots)
                 slots = workspace.slots[:n]
-            ops.prepare_attention_tasks_out(
-                attn_metadata.query_start_loc[:attn_metadata.num_reqs + 1],
-                attn_metadata.seq_lens[:attn_metadata.num_reqs],
-                slots, tasks, positions, h, hk,
-                state.snapshots.sink_tokens, state.snapshots.recent_tokens, source_splits,
-                attn_metadata.block_tables[:attn_metadata.num_reqs] if attn_metadata.draft_index > 0 else None,
-                attn_metadata.draft_index > 0)
-        if native_current:
+            if not prepared:
+                ops.prepare_attention_tasks_out(
+                    attn_metadata.query_start_loc[:attn_metadata.num_reqs + 1],
+                    attn_metadata.seq_lens[:attn_metadata.num_reqs],
+                    slots, tasks, positions, h, hk,
+                    state.snapshots.sink_tokens, state.snapshots.recent_tokens, source_splits,
+                    attn_metadata.block_tables[:attn_metadata.num_reqs] if attn_metadata.draft_index > 0 else None,
+                    attn_metadata.draft_index > 0)
+        if native_current and not prepared:
             # Preserve CV task errors and padding. Only the healthy current
             # source has an empty KV interval; history/window still execute in
             # the same fused INT2 CV kernel. No path restores BF16 history.
             with phase("current_source_suppress", layer=layer.layer_name, tokens=n,
                        requests=attn_metadata.num_reqs, **timing_fields):
                 suppress_current_source_tasks(tasks, n, hk, source_splits)
+        if not prepared:
+            commit_prepare(workspace, key_for_prepare, layer.layer_name)
         with phase("rotate", layer=layer.layer_name, tokens=n, hadamard=state.hadamard,
                    requests=attn_metadata.num_reqs, **timing_fields):
             # Frozen rotate_out remains the baseline; the shared candidate

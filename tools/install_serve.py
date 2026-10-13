@@ -12,7 +12,7 @@ import sys
 from .deploy import plan as deploy_plan
 from .phase import atomic_json, run_phase, terminal_line
 from .target_cli import target_env, serve_argv
-from .serving_variants import variant_config, variant_features, runtime_feature_summary
+from .serving_variants import variant_config, variant_features, runtime_feature_summary, default_variant
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -27,7 +27,7 @@ def main(argv=None) -> int:
     parser.add_argument("--plan", action="store_true", help="print commands without installing or touching an NPU")
     parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--variant", choices=("baseline", "candidate"),
-                        help="candidate enables C4, later-MTP q1, fast unpack mixed balanced/C16 and striped INT2/SIMD; baseline selects fe0; omitted respects config")
+                        help="default target selects candidate; explicit feature configs are respected; baseline selects fe0")
     parser.add_argument("--rear-cards", action="store_true",
                         help="use physical Ascend devices 4,5,6,7 and port 7878 for this launch only")
     parser.add_argument("--native-token-budget", action="store_true",
@@ -48,7 +48,7 @@ def main(argv=None) -> int:
             config["enable_prefix_caching"] = args.enable_prefix_caching
         if args.native_token_budget:
             config["use_native_token_budget"] = True
-        config = variant_config(config, args.variant)
+        config = variant_config(config, default_variant(config, args.variant))
         if args.rear_cards:
             # Explicit user-selected placement, never inherited from a prior
             # task's environment. Validate the supplied device config first.
@@ -70,7 +70,7 @@ def main(argv=None) -> int:
     effective_path = (log_dir / "effective-target.json" if write_effective
                       else args.config.resolve())
     stages = []
-    for name, command in deploy_plan(args.config, log_dir):
+    for name, command in deploy_plan(args.config, log_dir, config=config):
         if name not in BUILD_PHASES:
             continue
         # Plan mode remains read-only: derive commands from the original
@@ -104,12 +104,14 @@ def main(argv=None) -> int:
     if write_effective:
         atomic_json(effective_path, config)
     env["OSCAR_TARGET_CONFIG"] = str(effective_path)
+    env.setdefault("OSCAR_TRACE_DIR", str(log_dir / "trace"))
     env["PYTHONUNBUFFERED"] = "1"
     print(f"[oscar] SERVE_MODE variant={variant} C4={'on' if enabled else 'off'} "
           f"Q1={'on' if enabled else 'off'} FAST_UNPACK={'on' if config.get('experimental_fast_unpack', False) else 'off'} "
           f"STRIPED={'on' if config.get('experimental_striped_cache', False) else 'off'} "
           f"placement={status['placement']} config={effective_path}", flush=True)
     print(f"[oscar] devices={env.get('ASCEND_RT_VISIBLE_DEVICES', 'diagnostic')} port={config['port']}", flush=True)
+    print(f"[oscar] source/route checkpoints trace={env['OSCAR_TRACE_DIR']} (host evidence, no timing synchronization)", flush=True)
     print("[oscar] PERF_RUNTIME_CONFIG "+json.dumps(runtime_feature_summary(config,variant),
           sort_keys=True,separators=(",",":")),flush=True)
     rc = 0

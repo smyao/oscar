@@ -20,6 +20,13 @@ PROBES = ("probe-ops", "native-synthetic", "service-probe")
 AUDITS = {"environment", "runtime-readiness", "binary-readiness", "native-integrity"}
 
 
+@pytest.fixture(autouse=True)
+def isolate_mdl_numerics_from_launcher_tests(monkeypatch):
+    # These tests mock every phase. Detailed fail-closed MDL evidence and
+    # per-q1/q4 thresholds are exercised in test_probe_mdl_decode.
+    monkeypatch.setattr(deploy, "_validate_mdl_report", lambda path: None)
+
+
 def _configure(monkeypatch, tmp_path, *, devices=None):
     config = json.loads((ROOT / "configs/target.json").read_text())
     if devices is not None:
@@ -71,7 +78,10 @@ def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypa
         calls.append((name, command))
         assert cwd == ROOT
         assert env["ASCEND_RT_VISIBLE_DEVICES"] == "8,9,10,11"
-        assert env["OSCAR_TARGET_CONFIG"] == str(config_path)
+        assert env["OSCAR_TARGET_CONFIG"] == str(logs / "effective-target.json")
+        selected = json.loads((logs / "effective-target.json").read_text())
+        assert selected["experimental_prepare_reuse"] is True
+        assert selected["enable_prefix_caching"] is True
         assert env["OSCAR_RUN_NPU_TESTS"] == "1"
         assert env["OSCAR_TERMINAL_LOG_MODE"] == "compact"
         assert kwargs["heartbeat"] == 60
@@ -88,9 +98,9 @@ def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypa
     def serve():
         served.append(list(sys.argv))
         assert os.environ["ASCEND_RT_VISIBLE_DEVICES"] == "8,9,10,11"
-        assert os.environ["OSCAR_TARGET_CONFIG"] == str(config_path)
+        assert os.environ["OSCAR_TARGET_CONFIG"] == str(logs / "effective-target.json")
         assert "--serve" in sys.argv
-        assert sys.argv[sys.argv.index("--config") + 1] == str(config_path)
+        assert sys.argv[sys.argv.index("--config") + 1] == str(logs / "effective-target.json")
         return 0
 
     monkeypatch.setattr(deploy, "run_phase", phase)
@@ -118,7 +128,7 @@ def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypa
     native = commands["native-synthetic"]
     assert "--native-only" in native
     assert "--require-fresh-npu" in native
-    assert native[native.index("--config") + 1] == str(config_path)
+    assert native[native.index("--config") + 1] == str(logs / "effective-target.json")
     assert (logs / "paired-performance-report.json").is_file()
     assert len(served) == 1
     final_status = json.loads((logs / "status.json").read_text())
@@ -154,7 +164,7 @@ def test_only_phase_missing_from_plan_fails_instead_of_silent_pass(monkeypatch, 
     _, config_path, logs = _configure(monkeypatch, tmp_path)
     monkeypatch.setattr(sys, "argv", ["deploy", "--config", str(config_path),
                                       "--log-dir", str(logs), "--only", "build-ops"])
-    monkeypatch.setattr(deploy, "plan", lambda *_args: [])
+    monkeypatch.setattr(deploy, "plan", lambda *_args, **_kwargs: [])
     assert deploy.main() == 1
     state = json.loads((logs / "status.json").read_text())
     assert state["status"] == "failed" and state["failed_phase"] == "build-ops"
@@ -226,7 +236,7 @@ def test_native_report_missing_blocks_oscar_and_formal_service(monkeypatch, tmp_
 
 def test_empty_stage_plan_cannot_start_formal_service(monkeypatch, tmp_path):
     _, _, logs = _configure(monkeypatch, tmp_path)
-    monkeypatch.setattr(deploy, "plan", lambda *_args: [])
+    monkeypatch.setattr(deploy, "plan", lambda *_args, **_kwargs: [])
     monkeypatch.setattr(service_probe, "main", lambda: pytest.fail("formal serve must not start"))
     assert deploy.main() == 1
     status = json.loads((logs / "status.json").read_text())

@@ -19,6 +19,7 @@ def test_install_and_probe_plans_select_the_same_bundle(variant, enabled, capsys
         "striped_cache": enabled, "quantization_bundle": enabled, "current_only": enabled,
         "first_mtp_current_fia": enabled, "compact_later_mtp": enabled,
         "mixed_decode_split": enabled, "decode_bundle": enabled, "mdl_decode": enabled,
+        "prepare_reuse": enabled,
         "c4_member_pipeline": False, "whole_prefill": False}
     assert install["probes"] == "none"
 

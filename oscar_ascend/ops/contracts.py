@@ -23,7 +23,7 @@ SOURCE_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "rotate_out"
     "attention_request_window_balanced_out", "attention_request_window_cluster4_out",
     "attention_request_window_cluster16_out",
     "attention_cv_member_pipeline_cluster4_out", "attention_request_window_member_pipeline_cluster4_out",
-    "attention_cv_bundle_decode_out", "attention_cv_mdl_decode_out", "attention_cv_bundle_q1_out", "attention_cv_window_range_out", "attention_cv_window_range_balanced_out", "attention_cv_window_range_cluster4_out", "attention_cv_window_range_cluster16_out", "rotate_clip_store_striped_out", "copy_validate_current_out", "status_guard"})
+    "attention_cv_bundle_decode_out", "attention_cv_mdl_decode_out", "attention_cv_mdl_q1_out", "attention_cv_bundle_q1_out", "attention_cv_window_range_out", "attention_cv_window_range_balanced_out", "attention_cv_window_range_cluster4_out", "attention_cv_window_range_cluster16_out", "rotate_clip_store_striped_out", "copy_validate_current_out", "status_guard"})
 # Exact callable symbols, not names of abstract components. Compilation,
 # CPU simulation, NPU execution and service acceptance remain separate gates.
 PRODUCTION_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "rotate_out",

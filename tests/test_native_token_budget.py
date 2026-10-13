@@ -190,7 +190,7 @@ def test_observe_candidate_gates_and_service_share_native_effective_config(monke
         assert "--scheduler-cls" not in serve_argv(config)
 
     gates = ("_preflight", "_candidate_gate", "_fast_unpack_gate", "_mixed_optimization_gate",
-             "_striped_cache_gate", "_decode_bundle_gate", "_current_only_gate",
+             "_striped_cache_gate", "_decode_bundle_gate", "_mdl_decode_gate", "_current_only_gate",
              "_first_mtp_current_gate", "_mixed_decode_split_gate")
     for name in gates:
         def gate(path, config, env, *_args, name=name):

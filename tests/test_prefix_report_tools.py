@@ -45,6 +45,20 @@ def test_explicit_zero_and_nonzero_hits_are_preserved():
         assert result["cached_tokens"] == hit
 
 
+@pytest.mark.parametrize("hit", [None, 0, 128, 2305, 4608, True])
+def test_strict_apc_gate_rejects_unknown_zero_or_wrong_page_hit(hit):
+    record = {"input_tokens": 3072, "requests": {"warm_repeat": {"cached_tokens": hit}}}
+    with pytest.raises(ValueError, match="APC"):
+        prefix_cache_probe.validate_hits(record)
+
+
+def test_strict_apc_gate_accepts_real_hit_without_inventing_cold_zero():
+    record = {"input_tokens": 3072, "requests": {"warm_repeat": {"cached_tokens": 2304},
+                                                "cold_seed": {"cached_tokens": None}}}
+    assert prefix_cache_probe.validate_hits(record)["status"] == "passed"
+    assert record["requests"]["cold_seed"]["cached_tokens"] is None
+
+
 def test_adjacent_json_and_separate_rank_units(tmp_path):
     line = '(Worker) {"t":"oscar-timing","pid":1,"host_s":0.02,"phase_end":"fia"}'
     line += '{"t":"oscar-device-event","pid":2,"rank":1,"device_ms":3,"phase":"fia","device_evidence":"npu_event"}'

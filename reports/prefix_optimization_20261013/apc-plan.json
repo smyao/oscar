@@ -1,0 +1,30 @@
+{
+  "status": "plan_only",
+  "requests": 12,
+  "cases": [
+    {
+      "length": 3072,
+      "sequence": [
+        "cold_seed",
+        "warm_repeat",
+        "fork_left",
+        "fork_right",
+        "fork_left_cold",
+        "fork_right_cold"
+      ]
+    },
+    {
+      "length": 5376,
+      "sequence": [
+        "cold_seed",
+        "warm_repeat",
+        "fork_left",
+        "fork_right",
+        "fork_left_cold",
+        "fork_right_cold"
+      ]
+    }
+  ],
+  "output_tokens": 8,
+  "scope": "completion_and_APC_probe_not_performance_acceptance"
+}

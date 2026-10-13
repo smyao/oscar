@@ -104,7 +104,8 @@ def test_real_native_spec_conversion_and_registry_preserve_gdn(native_specs):
     assert isinstance(spec, interface.FullAttentionSpec)
     assert (spec.block_size, spec.page_size_bytes, spec.real_page_size_bytes) == (2304, 801792, 313344)
     assert registry.KVCacheSpecRegistry.get_uniform_type_base_spec(spec) is ours.OscarFullAttentionSpec
-    assert registry.KVCacheSpecRegistry.get_manager_class(spec).__name__ == "FullAttentionManager"
+    assert registry.KVCacheSpecRegistry.get_manager_class(spec) is ours.OscarFullAttentionManager
+    assert issubclass(ours.OscarFullAttentionManager, ours.FullAttentionManager)
     # Native dataclass operations used by grouping/config transfer retain all
     # external layout fields; no local reimplementation of FullAttentionSpec.
     cloned = copy.deepcopy(spec)
@@ -343,7 +344,8 @@ def test_actual_ascend_coordinator_initializes_native_managers_for_different_blo
     assert instance.lcm_block_size == 2304 and instance.hash_block_size == 768
     assert [manager.block_size for manager in instance.single_type_managers] == [2304, 768, 768, 768]
     full_manager, *gdn_managers = instance.single_type_managers
-    assert type(full_manager) is managers.FullAttentionManager
+    assert isinstance(full_manager, managers.FullAttentionManager)
+    assert type(full_manager).__name__ == "OscarFullAttentionManager"
     assert all(type(manager).__name__ == "AscendMambaManager" for manager in gdn_managers)
     assert all(manager.scheduler_block_size == 2304 for manager in instance.single_type_managers)
     assert all(manager.block_pool is instance.block_pool for manager in instance.single_type_managers)

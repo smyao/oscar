@@ -1,0 +1,91 @@
+........................................................................ [ 18%]
+...................................................................s [ 35%]
+...s...s...........s...s...s...s...s.................................... [ 53%]
+........................................................................ [ 71%]
+....................................................F................... [ 89%]
+............................................                             [100%]
+=================================== FAILURES ===================================
+_____ test_install_build_probes_and_formal_serve_share_configured_devices ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11ad83700>
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-124/test_install_build_probes_and_0')
+
+    def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypatch, tmp_path):
+        config, config_path, logs = _configure(monkeypatch, tmp_path, devices=[8, 9, 10, 11])
+        monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "4,5,6,7")
+        monkeypatch.setenv("OSCAR_TARGET_CONFIG", "/some/other/task.json")
+        monkeypatch.setenv("VLLM_PLUGINS", "another_plugin")
+        calls = []
+        served = []
+    
+        def phase(name, command, *, cwd, log_dir, env, **kwargs):
+            calls.append((name, command))
+            assert cwd == ROOT
+            assert env["ASCEND_RT_VISIBLE_DEVICES"] == "8,9,10,11"
+            assert env["OSCAR_TARGET_CONFIG"] == str(logs / "effective-target.json")
+            selected = json.loads((logs / "effective-target.json").read_text())
+            assert selected["experimental_prepare_reuse"] is True
+            assert selected["enable_prefix_caching"] is True
+            assert env["OSCAR_RUN_NPU_TESTS"] == "1"
+            assert env["OSCAR_TERMINAL_LOG_MODE"] == "compact"
+            assert kwargs["heartbeat"] == 60
+            assert {"ascend", "oscar_ascend", "another_plugin"} <= set(env["VLLM_PLUGINS"].split(","))
+            if name == "native-synthetic":
+                _native_evidence(log_dir)
+            if name == "service-probe":
+                (log_dir / "service-probe-report.json").write_text(json.dumps({"status": "passed", "resource_release": "passed", "performance": {"status": "measured"}}))
+                # The phase ledger writes <name>.json after the phase exits; it must
+                # not clobber the probe report the full-service gate reads (#136).
+                (log_dir / "service-probe.json").write_text(json.dumps(asdict(_phase_result(name, command, log_dir))))
+            return _phase_result(name, command, log_dir)
+    
+        def serve():
+            served.append(list(sys.argv))
+            assert os.environ["ASCEND_RT_VISIBLE_DEVICES"] == "8,9,10,11"
+            assert os.environ["OSCAR_TARGET_CONFIG"] == str(logs / "effective-target.json")
+            assert "--serve" in sys.argv
+            assert sys.argv[sys.argv.index("--config") + 1] == str(logs / "effective-target.json")
+            return 0
+    
+        monkeypatch.setattr(deploy, "run_phase", phase)
+        monkeypatch.setattr(deploy, "_compare_performance", lambda native, oscar: {"status": "passed", "performance_acceptance": "not_run"})
+        monkeypatch.setattr(deploy, "_performance_lines", lambda *args, **kwargs: ["PERF_VERDICT client_ratio_gate=met acceptance=not_established"])
+        monkeypatch.setattr(service_probe, "main", serve)
+        with patch.dict(os.environ):
+            original_env = os.environ.copy()
+            original_argv = sys.argv
+            assert deploy.main() == 0
+            assert os.environ == original_env
+            assert sys.argv == original_argv
+        names = [name for name, _ in calls]
+        assert set(names).isdisjoint(AUDITS)
+        assert [name for name in names if name in PROBES] == list(PROBES)
+        assert "probe-cv" not in names  # native preflight owns the sole CV/rotation gate.
+        assert names.index("install-plugin") < names.index("build-ops") < names.index("probe-ops")
+        assert names.index("prepare-rotations") < names.index("native-synthetic") < names.index("service-probe")
+        commands = dict(calls)
+        build = commands["build-ops"]
+        assert build[build.index("--soc") + 1] == config["soc_version"]
+        install = commands["install-plugin"]
+        assert Path(install[install.index("-e") + 1]) == ROOT
+        assert "--no-deps" in install
+        native = commands["native-synthetic"]
+        assert "--native-only" in native
+        assert "--require-fresh-npu" in native
+>       assert native[native.index("--config") + 1] == str(config_path)
+E       AssertionError: assert '/private/var...e-target.json' == '/private/var...0/target.json'
+E         
+E         Skipping 109 identical leading characters in diff, use -v to show
+E         - bes_and_0/target.json
+E         + bes_and_0/logs/effective-target.json
+
+tests/test_deploy_launcher.py:124: AssertionError
+----------------------------- Captured stdout call -----------------------------
+[oscar] install → build → probes → serve; logs=/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-124/test_install_build_probes_and_0/logs
+[oscar] PERF_RUNTIME_CONFIG {"devices": [8, 9, 10, 11], "max_num_batched_tokens": null, "optimizations": {"c4_member_pipeline": false, "compact_later_mtp": true, "current_only": true, "decode_bundle": true, "fast_unpack": true, "first_mtp_current_fia": true, "history_cluster4": true, "later_mtp_q1": true, "mdl_decode": true, "mixed_cv": true, "mixed_decode_split": true, "prepare_reuse": true, "quantization_bundle": true, "striped_cache": true, "whole_prefill": false}, "port": 8989, "prefix_cache_policy": "native_pool_mtp_lookahead_hash_v1", "prefix_caching": true, "prompt_tokens_details": true, "scheduler_cls": null, "token_budget_source": "native", "variant": "candidate"}
+[oscar] devices=8,9,10,11 port=8989
+PERF_VERDICT client_ratio_gate=met acceptance=not_established
+=========================== short test summary info ============================
+SKIPPED [8] tests/test_runtime.py:334: large FULL host route is needed once for C16
+FAILED tests/test_deploy_launcher.py::test_install_build_probes_and_formal_serve_share_configured_devices
+1 failed, 391 passed, 8 skipped, 4 subtests passed in 8.16s

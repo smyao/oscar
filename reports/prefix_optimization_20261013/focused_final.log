@@ -1,0 +1,105 @@
+........................................................................ [ 18%]
+...................................................................s [ 35%]
+...s...s...........s...s...s...s...s.................................... [ 53%]
+........................................................................ [ 71%]
+.......................................................F.....F.......... [ 89%]
+............................................                             [100%]
+=================================== FAILURES ===================================
+________ test_only_phase_missing_from_plan_fails_instead_of_silent_pass ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b2f5e80>
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-125/test_only_phase_missing_from_p0')
+
+    def test_only_phase_missing_from_plan_fails_instead_of_silent_pass(monkeypatch, tmp_path):
+        _, config_path, logs = _configure(monkeypatch, tmp_path)
+        monkeypatch.setattr(sys, "argv", ["deploy", "--config", str(config_path),
+                                          "--log-dir", str(logs), "--only", "build-ops"])
+        monkeypatch.setattr(deploy, "plan", lambda *_args: [])
+>       assert deploy.main() == 1
+               ^^^^^^^^^^^^^
+
+tests/test_deploy_launcher.py:168: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def main() -> int:
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
+        parser.add_argument("--plan", action="store_true", help="print commands without installing or touching an NPU")
+        parser.add_argument("--only", choices=["environment", "build-ops", "probe-ops", "probe-cv", "mdl-decode-npu", "native-synthetic", "service-probe", "prepare-rotations", "runtime-readiness"])
+        parser.add_argument("--log-dir", type=Path)
+        parser.add_argument("--variant", choices=("baseline", "candidate"), default="candidate")
+        args = parser.parse_args()
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
+        log_dir = (args.log_dir or ROOT / "logs" / stamp).resolve()
+        status = {"status": "running", "npu_acceptance": "not_run", "phases": []}
+        if not args.plan:
+            atomic_json(log_dir / "status.json", status)
+            if not args.only:
+                (log_dir / "paired-performance-report.json").unlink(missing_ok=True)
+            print(f"[oscar] install → build → probes → serve; logs={log_dir}", flush=True)
+        try:
+            config = variant_config(json.loads(args.config.read_text()), args.variant)
+        except (OSError, ValueError) as exc:
+            if not args.plan:
+                (log_dir / "config.log").write_text(f"FAILED phase=config: {exc}\n")
+                status.update(status="failed", failed_phase="config", error=str(exc))
+                atomic_json(log_dir / "status.json", status)
+            raise
+>       stages = plan(args.config, log_dir, config=config)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: test_only_phase_missing_from_plan_fails_instead_of_silent_pass.<locals>.<lambda>() got an unexpected keyword argument 'config'
+
+tools/deploy.py:147: TypeError
+----------------------------- Captured stdout call -----------------------------
+[oscar] install → build → probes → serve; logs=/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-125/test_only_phase_missing_from_p0/logs
+______________ test_empty_stage_plan_cannot_start_formal_service _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x13fc1b540>
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-125/test_empty_stage_plan_cannot_s0')
+
+    def test_empty_stage_plan_cannot_start_formal_service(monkeypatch, tmp_path):
+        _, _, logs = _configure(monkeypatch, tmp_path)
+        monkeypatch.setattr(deploy, "plan", lambda *_args: [])
+        monkeypatch.setattr(service_probe, "main", lambda: pytest.fail("formal serve must not start"))
+>       assert deploy.main() == 1
+               ^^^^^^^^^^^^^
+
+tests/test_deploy_launcher.py:241: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def main() -> int:
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
+        parser.add_argument("--plan", action="store_true", help="print commands without installing or touching an NPU")
+        parser.add_argument("--only", choices=["environment", "build-ops", "probe-ops", "probe-cv", "mdl-decode-npu", "native-synthetic", "service-probe", "prepare-rotations", "runtime-readiness"])
+        parser.add_argument("--log-dir", type=Path)
+        parser.add_argument("--variant", choices=("baseline", "candidate"), default="candidate")
+        args = parser.parse_args()
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
+        log_dir = (args.log_dir or ROOT / "logs" / stamp).resolve()
+        status = {"status": "running", "npu_acceptance": "not_run", "phases": []}
+        if not args.plan:
+            atomic_json(log_dir / "status.json", status)
+            if not args.only:
+                (log_dir / "paired-performance-report.json").unlink(missing_ok=True)
+            print(f"[oscar] install → build → probes → serve; logs={log_dir}", flush=True)
+        try:
+            config = variant_config(json.loads(args.config.read_text()), args.variant)
+        except (OSError, ValueError) as exc:
+            if not args.plan:
+                (log_dir / "config.log").write_text(f"FAILED phase=config: {exc}\n")
+                status.update(status="failed", failed_phase="config", error=str(exc))
+                atomic_json(log_dir / "status.json", status)
+            raise
+>       stages = plan(args.config, log_dir, config=config)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: test_empty_stage_plan_cannot_start_formal_service.<locals>.<lambda>() got an unexpected keyword argument 'config'
+
+tools/deploy.py:147: TypeError
+----------------------------- Captured stdout call -----------------------------
+[oscar] install → build → probes → serve; logs=/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-125/test_empty_stage_plan_cannot_s0/logs
+=========================== short test summary info ============================
+SKIPPED [8] tests/test_runtime.py:334: large FULL host route is needed once for C16
+FAILED tests/test_deploy_launcher.py::test_only_phase_missing_from_plan_fails_instead_of_silent_pass
+FAILED tests/test_deploy_launcher.py::test_empty_stage_plan_cannot_start_formal_service
+2 failed, 390 passed, 8 skipped, 4 subtests passed in 8.19s

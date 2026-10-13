@@ -17,8 +17,8 @@ FLAGS = dict(fast_unpack=True, mixed_cv=True, striped_cache=True, decode_bundle=
 
 @pytest.mark.parametrize('tokens,query,later_q1,expected', [
     (8,4,False,MDL_DECODE_CV_OP), (128,4,False,MDL_DECODE_CV_OP),
-    (2048,4,False,MDL_DECODE_CV_OP), (128,1,True,'attention_cv_bundle_q1_out'),
-    (2048,1,True,'attention_cv_bundle_q1_out'),
+    (2048,4,False,MDL_DECODE_CV_OP), (128,1,True,'attention_cv_mdl_q1_out'),
+    (2048,1,True,'attention_cv_mdl_q1_out'),
     (256,128,False,'attention_cv_window_range_cluster4_out'),
     (8192,8192,False,'attention_cv_window_range_cluster16_out'),
     (512,33,False,'attention_cv_window_range_balanced_out'),
@@ -27,7 +27,7 @@ def test_mdl_replaces_only_existing_q4_route(tokens,query,later_q1,expected):
     chosen=select_cv_op(16,6,1,tokens,query,q1_draft=later_q1,mdl_decode=True,**FLAGS)
     old=select_cv_op(16,6,1,tokens,query,q1_draft=later_q1,**FLAGS)
     assert chosen==expected
-    assert (chosen!=old)==(old=='attention_cv_bundle_decode_out')
+    assert (chosen!=old)==(old in {'attention_cv_bundle_decode_out', 'attention_cv_bundle_q1_out'})
     assert storage_reader(SimpleNamespace(cache_format='striped_v1'),chosen)==chosen
 
 @pytest.mark.parametrize('bad',[None,1,'true'])

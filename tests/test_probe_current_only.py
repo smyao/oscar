@@ -182,7 +182,7 @@ def test_observer_wires_enabled_gate_before_service_and_failure_blocks_it(tmp_pa
     source["experimental_current_only"]=True
     config=tmp_path/"config.json";config.write_text(json.dumps(source))
     for name in ("_preflight","_candidate_gate","_fast_unpack_gate","_mixed_optimization_gate",
-                 "_striped_cache_gate","_decode_bundle_gate"):
+                 "_striped_cache_gate","_decode_bundle_gate","_mdl_decode_gate"):
         monkeypatch.setattr(observe_serve,name,lambda *a,**k:None)
     entered=[]
     def gate(*args):

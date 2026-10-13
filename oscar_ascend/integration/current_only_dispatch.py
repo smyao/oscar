@@ -61,6 +61,8 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
             'current_only':True,'stage':'draft' if first_draft else 'prefill',
             'is_draft':metadata.is_draft,'draft_index':metadata.draft_index}
     with phase('prepare',**fields):
+        from .prepare_cache import invalidate_prepare
+        invalidate_prepare(workspace)
         q=workspace.projection(query[cut:actual],workspace.query_input,fresh,h,d)
         k=workspace.projection(key[cut:actual],workspace.key_input,fresh,hk,d)
         v=workspace.projection(value[cut:actual],workspace.value_input,fresh,hk,d)

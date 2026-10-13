@@ -1,4 +1,4 @@
-// Qualified MDL q4 candidate; NPU/graph gate pending. Archive G3-G13/#21/#81-85/#126/#129/#140/#145/#148/#154-156.
+// MDL q4/q1 candidate; separate NPU/graph/speed gates pending. Archive G3-G13/#21/#81-85/#126/#129/#140/#145/#148/#154-156.
 // Startup D.4 complete original log reread; four questions:
 // 1. Fused FIA QK/PV ND-to-L1 delivery, not a new dequant or service path.
 // 2. D.4 whole-history recovery6499.8-6655.1ms is forbidden; fixed KV256 only.
@@ -843,7 +843,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
   op.Process()
 extern "C" __global__ __aicore__ void oscar_attention_cv_mdl_decode_kernel(
     OSCAR_CV_ARGUMENTS) { OSCAR_CV_RUN(4); }
-extern "C" __global__ __aicore__ void oscar_mdl_unregistered_q1_kernel(
+extern "C" __global__ __aicore__ void oscar_attention_cv_mdl_q1_kernel(
     OSCAR_CV_ARGUMENTS) { OSCAR_CV_RUN(1); }
 #undef OSCAR_CV_RUN
 
@@ -869,8 +869,8 @@ void name(void* stream,void* query,void* queryRot,void* key,void* value, \
 }
 OSCAR_STRIPED_LAUNCH(attention_cv_mdl_decode_launch,
     oscar_attention_cv_mdl_decode_kernel)
-OSCAR_STRIPED_LAUNCH(mdl_unregistered_q1_launch,
-    oscar_mdl_unregistered_q1_kernel)
+OSCAR_STRIPED_LAUNCH(attention_cv_mdl_q1_launch,
+    oscar_attention_cv_mdl_q1_kernel)
 #undef OSCAR_STRIPED_LAUNCH
 }
 #endif

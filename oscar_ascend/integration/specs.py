@@ -20,6 +20,7 @@ from vllm.v1.kv_cache_spec_registry import KVCacheSpecRegistry
 
 from ..layout import HybridPageLayout, SlotLayout
 from ..dual_region_layout import DualRegionPageLayout
+from .prefix_cache import GuardedHashes, GuardedRequest, cacheable_tokens
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -32,11 +33,16 @@ class OscarFullAttentionSpec(FullAttentionSpec):
     native_mamba_cache_mode: str = "align"
     metadata_block_view: bool = False
     request_window_storage: bool = False
+    mtp_prefix_guard: bool = False
 
     def __post_init__(self):
         super().__post_init__()
         if type(self.request_window_storage) is not bool:
             raise ValueError("request_window_storage must be boolean")
+        if type(self.mtp_prefix_guard) is not bool:
+            raise ValueError("mtp_prefix_guard must be boolean")
+        if self.mtp_prefix_guard and (self.request_window_storage or self.native_mamba_cache_mode != "align"):
+            raise ValueError("MTP prefix guards require native align physical snapshots")
         if self.sliding_window is not None or self.attention_chunk_size is not None:
             raise ValueError("OscarFullAttentionSpec represents full causal attention")
         if int(self.kv_quant_mode) != 0:
@@ -95,14 +101,81 @@ class OscarFullAttentionSpec(FullAttentionSpec):
         return specs[0]
 
 
+class OscarFullAttentionManager(FullAttentionManager):
+    """Native ownership with a hash-bound MTP next-token dependency.
+
+    Archive #37-49/#127/#128: caching only immutable complete FULL pages.
+    The guard is part of the *native pool key*, so forks with a different
+    next hash cannot reuse a shifted draft KV page. No auxiliary page-ID map
+    can survive eviction/reset or accidentally attach to a recycled page.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cached_blocks_this_step = set()
+
+    def new_step_starts(self):
+        super().new_step_starts()
+        self.cached_blocks_this_step.clear()
+
+    def get_num_blocks_to_allocate(self, request_id, num_tokens, new_computed_blocks,
+                                   total_computed_tokens, num_tokens_main_model,
+                                   apply_admission_cap=False):
+        # Native allocate_slots publishes hashes before the model runs. OSCAR
+        # writes FULL KV after attention, so a newly published page cannot be
+        # consumed by another request in the same forward. GDN's identical
+        # admission rule alone is insufficient: its checkpoint may predate the
+        # newly computed FULL page. Keep native scheduling/ownership intact.
+        if any(block.block_hash in self.cached_blocks_this_step
+               for block in new_computed_blocks if not block.is_null):
+            return self.block_pool.num_gpu_blocks + 1
+        return super().get_num_blocks_to_allocate(request_id, num_tokens,
+            new_computed_blocks, total_computed_tokens, num_tokens_main_model,
+            apply_admission_cap)
+
+    def cache_blocks(self, request, num_tokens, retention_interval=None):
+        before = self.num_cached_block.get(request.request_id, 0)
+        if self.kv_cache_spec.mtp_prefix_guard:
+            step = self.block_pool.hash_block_size
+            if self.block_size % step:
+                raise ValueError("OSCAR FULL block is not divisible by native hash block")
+            request = GuardedRequest(request, self.block_size // step)
+            num_tokens = min(cacheable_tokens(num_tokens, step), len(request.block_hashes) * step)
+        super().cache_blocks(request, num_tokens, retention_interval)
+        after = self.num_cached_block.get(request.request_id, 0)
+        self.cached_blocks_this_step.update(
+            block.block_hash for block in self.req_to_blocks[request.request_id][before:after]
+            if not block.is_null and block.block_hash is not None)
+
+    @classmethod
+    def find_longest_cache_hit(cls, block_hashes, max_length, kv_cache_group_ids,
+                              block_pool, kv_cache_spec, drop_eagle_block,
+                              alignment_tokens, dcp_world_size=1, pcp_world_size=1):
+        if kv_cache_spec.mtp_prefix_guard:
+            if dcp_world_size != 1 or pcp_world_size != 1:
+                raise ValueError("OSCAR prefix guard requires local TP cache ownership")
+            from vllm.v1.core.kv_cache_utils import BlockHashListWithBlockSize
+            raw = getattr(block_hashes, "block_hashes", block_hashes)
+            step = block_pool.hash_block_size
+            guarded = GuardedHashes(raw, kv_cache_spec.storage_block_size // step)
+            block_hashes = BlockHashListWithBlockSize(guarded, step, kv_cache_spec.storage_block_size)
+            max_length = min(max_length, len(guarded) * step)
+            # The next-token dependency is checked in each immutable key.
+            # This replaces the whole-FULL-page lookahead with one hash block.
+            drop_eagle_block = False
+        return super().find_longest_cache_hit(block_hashes, max_length, kv_cache_group_ids,
+            block_pool, kv_cache_spec, drop_eagle_block, alignment_tokens,
+            dcp_world_size, pcp_world_size)
+
+
 def register_oscar_spec() -> None:
     KVCacheSpecRegistry.register(
         kvcache_spec_cls=OscarFullAttentionSpec,
-        manager_class=FullAttentionManager,
+        manager_class=OscarFullAttentionManager,
         uniform_type_base_spec=OscarFullAttentionSpec)
 
 
-def transform_native_specs(native_specs: dict, *, request_windows: bool = False) -> dict:
+def transform_native_specs(native_specs: dict, *, request_windows: bool = False,
+                           mtp_prefix_guard: bool = False) -> dict:
     """Initialization-only conversion; no online tensor data is touched.
 
     Exact type matching leaves MLA/sliding-window/hidden-state cache specs
@@ -111,6 +184,8 @@ def transform_native_specs(native_specs: dict, *, request_windows: bool = False)
     """
     if type(request_windows) is not bool:
         raise ValueError("request_windows must be boolean")
+    if type(mtp_prefix_guard) is not bool:
+        raise ValueError("mtp_prefix_guard must be boolean")
     mamba_specs = [spec for spec in native_specs.values() if isinstance(spec, MambaSpec)]
     if not mamba_specs:
         raise ValueError("OSCAR hybrid layout requires native GDN/Mamba state specs")
@@ -143,7 +218,7 @@ def transform_native_specs(native_specs: dict, *, request_windows: bool = False)
             sliding_window=spec.sliding_window, attention_chunk_size=spec.attention_chunk_size,
             conv_bytes=conv, ssm_bytes=ssm, native_mamba_block_size=mamba_block,
             native_page_size_bytes=native_page, native_mamba_cache_mode=mamba_mode,
-            request_window_storage=request_windows)
+            request_window_storage=request_windows, mtp_prefix_guard=mtp_prefix_guard)
     if not any(isinstance(spec, OscarFullAttentionSpec) for spec in converted.values()):
         raise ValueError("no native FULL attention layer was converted to OSCAR")
     return converted

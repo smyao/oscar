@@ -1,0 +1,23 @@
+.....................................................F.................. [ 61%]
+..............................................                           [100%]
+=================================== FAILURES ===================================
+______ test_same_step_full_publication_cannot_bypass_older_gdn_checkpoint ______
+
+native_groups = (<module 'vllm.v1.kv_cache_interface'>, <module 'oscar_ascend.integration.specs' from '/Users/loki.yao/Documents/workg...e_size_padded=801792, mamba_type='mamba2', mamba_cache_mode='align', num_speculative_blocks=3), is_eagle_group=False)])
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1283c94e0>
+
+    def test_same_step_full_publication_cannot_bypass_older_gdn_checkpoint(native_groups, monkeypatch):
+        instance = guarded_coordinator(native_groups, monkeypatch)
+        req = SimpleNamespace(request_id="seed", num_prompt_tokens=5376,
+                              block_hashes=[bytes([i]) for i in range(7)])
+        for count in (2304, 3072):
+>           instance.new_step_starts()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'AscendHybridKVCacheCoordinator' object has no attribute 'new_step_starts'
+
+tests/test_prefix_guard.py:113: AttributeError
+------------------------------ Captured log setup ------------------------------
+WARNING  native-group-test:kv_cache_utils.py:1174 Add 3 padding layers, may waste at most 6.25% KV cache memory
+=========================== short test summary info ============================
+FAILED tests/test_prefix_guard.py::test_same_step_full_publication_cannot_bypass_older_gdn_checkpoint
+1 failed, 117 passed in 4.81s

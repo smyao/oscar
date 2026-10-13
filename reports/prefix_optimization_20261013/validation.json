@@ -1,0 +1,494 @@
+{
+  "scope": "2026-10-13 OSCAR prefix-cache and P0/P1 source candidate; host evidence only",
+  "base_commit": "e6178e3124728c8cd4e948d018aa839abb620777",
+  "branch": "oscar-new-2",
+  "source_sha256": {
+    "configs/target.json": "831637adbf56683e4e25cee607031c35c40516acf6694d827d57785cefc2123c",
+    "csrc/CMakeLists.txt": "d072008e31eecd4a1b44dbe37c91d4a66d8ee22b412b1b24835160d7819307c9",
+    "csrc/include/oscar_mdl_decode_launch.h": "b17e7b8279db859fc369b7ecc206bdb34f315d95c29272d3243f016ec9dcc304",
+    "csrc/kernels/attention_cv_mdl_decode.cpp": "e45cf7e35344849b8584e57ff716acd668727daac8ab0e38bed04957c52e7426",
+    "csrc/striped_attention_bindings.cpp": "88ece3ae3d8846d02d1e1e265c2b73ad5459f34cdc92f5e591eddc4861b8b440",
+    "csrc/torch_bindings.cpp": "bf232121649ed1e1ec85bdba6e1d504ceed98d76e7786440861711c6c5ff4e3b",
+    "oscar_ascend/integration/current_only_dispatch.py": "750590a6f9a27e4a0b2d26792ca3a8910478dc21efd83d3f60ad07f0b6a675d2",
+    "oscar_ascend/integration/impl.py": "52312586864aef40a51bf44616173e301b314fa57f92737c7877b12177fa375b",
+    "oscar_ascend/integration/metadata.py": "2819329acd95332c25d21708a16e8c02180aecfde712d0084653c6d2ca900ee1",
+    "oscar_ascend/integration/prefix_cache.py": "56d6cce83e621b1603d19be0d1a8c7eebe0228da49219a26232875fafe7a149d",
+    "oscar_ascend/integration/prepare_cache.py": "e7fe270121e28df6a0b9780640db4162c60224ec915825671f86a00d3396cd58",
+    "oscar_ascend/integration/specs.py": "3a9cb70043feffd9550ccfb8e278b76e6495bb48c248195405f80678f1d3c431",
+    "oscar_ascend/ops/contracts.py": "9093350713782bcddcc697bbb213c1c0830f9f45714ad5a46cc417045164fcd2",
+    "oscar_ascend/ops/cv_dispatch.py": "16298ebb185176ad966cd0a4712331876f1576b3c60ba64083a5e11a14949908",
+    "oscar_ascend/ops/meta.py": "6f713904a3cbd119d6feba756e72532e47a62f097d7f0f73ab3d0aa7738a56d5",
+    "oscar_ascend/passive_timing.py": "3998f6a0f9b3ba4415fb8ef2745a1a7b764a99b3e8073147ae5e524f0fe16d67",
+    "oscar_ascend/plugin.py": "8101ebd3a5ddf5c11d3a59634399a09581872cc52cbdec0fb9af72031aa6e393",
+    "oscar_ascend/runtime.py": "a5bb463737475c8a1253306e985732626de31374ccafea7460480ccf128f9598",
+    "tools/deploy.py": "988ff2bb78322781f1111082af5756ba732187d8748383fd83abc9556495ee6f",
+    "tools/install_serve.py": "ab2100f822ef32f0b9359a5a1126ced783c5f3c74c99aed01365b48e031048cf",
+    "tools/observe_serve.py": "84439fa53eb248726e838bb06e1802487e7b3f5375d65592bfe57ab4f4436b54",
+    "tools/package_mdl_decode.py": "6348e1b108d5a00dac64c412bb85d9ad43f57563c4cf8984ae318cac3bcf0329",
+    "tools/prefix_cache_probe.py": "ff17b6ae1c83f7a2ee280710fb3f723d387edc50587973554b9c1621868feaad",
+    "tools/probe_mdl_decode.py": "1613c282c487ad9e65a5979fcfe18551e104c3d30f176703061e3a9735afa172",
+    "tools/service_probe.py": "f0ba6360f4be520c6236dd72a47f55cbb224407719ebe6045bd3689a49f8a9fd",
+    "tools/serving_variants.py": "e0c7f8208d0978eab7a1a3e48ad6d788d6c02ab2491e06fca67d4111646d2f56",
+    "tools/target_cli.py": "0c549e2c3e1e2d0b2d04f7421d5d48a93f0ba64e79bbbeeb0d8e72f258bfea6d"
+  },
+  "frozen": {
+    "configs/acceptance.json": {
+      "sha256": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+      "unchanged_from_base": true
+    },
+    "oscar_ascend/ops/reference.py": {
+      "sha256": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
+      "unchanged_from_base": true
+    },
+    "csrc/kernels/status_guard.cpp": {
+      "sha256": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+      "unchanged_from_base": true
+    }
+  },
+  "references_modified": false,
+  "final_full_host": {
+    "log": "release_host.log",
+    "junit": "release_host.xml",
+    "pytest_summary": "22 failed, 1380 passed, 141 skipped, 8 errors, 29 subtests passed in 82.67s (0:01:22)",
+    "junit_counts": [
+      {
+        "tests": "1580",
+        "failures": "22",
+        "errors": "8",
+        "skipped": "141",
+        "time": "82.234"
+      }
+    ],
+    "failures": [
+      {
+        "id": "tests.test_analyze_64k_evidence::test_all_supplied_engine_rows_are_parsed_without_pid_or_clock_mixing",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_truncated_records_preserve_known_fields_and_do_not_invent_counts",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_client_tables_and_warmup_have_separate_time_denominators",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_client_latency_decomposition_respects_fixed_512_output_tokens",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_spec_totals_use_counts_rather_than_unweighted_percentage_means",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_observed_capacity_and_zero_counters_do_not_invent_memory_or_phases",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_server_counter_integration_does_not_use_client_duration",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_conditional_warmup_pool_bounds_include_the_reference_null_block",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_decode_completion::test_real_popped_completion_ids_keep_observed_latency_not_busy",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "id": "tests.test_analyze_decode_completion::test_real_decode_markers_close_but_do_not_mean_math_completed",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz'"
+      },
+      {
+        "id": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[duplicate_id]",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "id": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[missing_completion]",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "id": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[wrong_pc]",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "id": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[flag_count]",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "id": "tests.test_analyze_decode_completion::test_truncated_real_line_and_unclosed_real_markers_fail",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz'"
+      },
+      {
+        "id": "tests.test_balanced_schedule::test_balanced_clone_changes_only_owner_schedule_and_exported_names",
+        "outcome": "failure",
+        "message": "AssertionError: assert '\\n// G26-G34...\\n}\\n#endif\\n' == '\\n// G26-G34...\\n}\\n#endif\\n'\n  \n  Skipping 40851 identical leading characters in diff, use -v to show\n    56_ONLY\n  -   // The independent striped-v1 physical slot exists only for D256. This\n  -   // compile guard prevents unsupported helper instantiations; direct raw\n  -   // entrypoint misuse fails visibly instead of running a wrong cache layout.\n      if(dim!=256) {trap();return;}...\n  \n  ...Full output truncated (28 lines hidden), use '-vv' to show"
+      },
+      {
+        "id": "tests.test_integration_contracts.TargetContracts::test_h14_command_matches_supplied_appendix_a",
+        "outcome": "failure",
+        "message": "AssertionError: {'pos[233 chars]-num-seqs': 128, '--gpu-memory-utilization': 0[954 chars]True} != {'pos[233 chars]-num-batched-tokens': 16384, '--max-num-seqs':[916 chars]4}}}}\nDiff is 3835 characters long. Set self.maxDiff to None to see it."
+      },
+      {
+        "id": "tests.test_no_fallback_static::test_no_silent_exception_swallowing",
+        "outcome": "failure",
+        "message": "AssertionError: PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/experiments/replay_shared_fp32.py')\nassert not True\n +  where True = all(<generator object test_no_silent_exception_swallowing.<locals>.<genexpr> at 0x10d0b4740>)"
+      },
+      {
+        "id": "tests.test_no_fallback_static::test_online_hooks_do_not_copy_device_data_to_host",
+        "outcome": "failure",
+        "message": "AssertionError: PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/oscar_ascend/integration/metadata.py')\nassert (None is not None)"
+      },
+      {
+        "id": "tests.test_no_fallback_static::test_source_headers_trace_archive",
+        "outcome": "failure",
+        "message": "AssertionError: missing historical fault trace: /Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/probe_mixed_decode_split.py\nassert False\n +  where False = any(<generator object test_source_headers_trace_archive.<locals>.<genexpr> at 0x10d793760>)"
+      },
+      {
+        "id": "tests.test_request_window_attention_fixture::test_cpu_probe_host_cpp_syntax_and_declared_kernel_arity[cpu_probe.cpp]",
+        "outcome": "failure",
+        "message": "AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-fsyntax-only', '-I', '/private/var/folders/7j/33nttyqs7ss78...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\\n').returncode"
+      },
+      {
+        "id": "tests.test_request_window_attention_fixture::test_cpu_probe_host_cpp_syntax_and_declared_kernel_arity[c16_cpu_probe.cpp]",
+        "outcome": "failure",
+        "message": "AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-fsyntax-only', '-I', '/private/var/folders/7j/33nttyqs7ss78...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\\n').returncode"
+      },
+      {
+        "id": "tests.test_request_window_reader_resume::test_actual_cpp_task_snapshot_guard_rejects_different_or_short_saved_tasks",
+        "outcome": "failure",
+        "message": "subprocess.CalledProcessError: Command '['/usr/bin/clang++', '-std=c++17', '/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-134/test_actual_cpp_task_snapshot_0/task_guard.cpp', '-o', '/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-134/test_actual_cpp_task_snapshot_0/task_guard']' returned non-zero exit status 1."
+      },
+      {
+        "id": "tests.test_request_window_registration::test_source_packaging_identity_and_local_headers_are_complete",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_member_pipeline_packaging_20261011.json'"
+      },
+      {
+        "id": "tests.test_service_log_model::test_real_log_mtp_accounting_and_unequal_windows",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_native_longbench_20260930.txt'"
+      },
+      {
+        "id": "tests.test_service_log_model::test_two_anchors_do_not_identify_speedup_share",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/service_trace_candidate_20260930.json'"
+      },
+      {
+        "id": "tests.test_whole_prefill_scheduler::test_explicit_scheduler_class_reaches_real_server_cli_without_changing_defaults",
+        "outcome": "failure",
+        "message": "ValueError: native token budget requires an omitted budget and native scheduler"
+      },
+      {
+        "id": "tests.test_whole_prefill_variant::test_generated_policy_is_idempotent_and_restores_native_budget",
+        "outcome": "failure",
+        "message": "KeyError: 'max_num_batched_tokens'"
+      },
+      {
+        "id": "tests.test_whole_prefill_variant::test_no_quadratic_first_mtp_regression_from_budget_only[experimental_current_only]",
+        "outcome": "failure",
+        "message": "Failed: DID NOT RAISE ValueError"
+      },
+      {
+        "id": "tests.test_whole_prefill_variant::test_no_quadratic_first_mtp_regression_from_budget_only[experimental_first_mtp_current_fia]",
+        "outcome": "failure",
+        "message": "Failed: DID NOT RAISE ValueError"
+      }
+    ]
+  },
+  "modified_before_final_full": [
+    "FULL same-step admission guard",
+    "MTP chunk lookup exact index",
+    "direct trace default"
+  ],
+  "baseline_reproduction": {
+    "log": "baseline.log",
+    "junit": "baseline.xml",
+    "pytest_summary": "22 failed, 42 passed, 8 errors in 3.38s",
+    "junit_counts": [
+      {
+        "tests": "72",
+        "failures": "22",
+        "errors": "8",
+        "skipped": "0",
+        "time": "3.310"
+      }
+    ],
+    "failures": [
+      {
+        "id": "tests.test_balanced_schedule::test_balanced_clone_changes_only_owner_schedule_and_exported_names",
+        "outcome": "failure",
+        "message": "AssertionError: assert '\\n// G26-G34...\\n}\\n#endif\\n' == '\\n// G26-G34...\\n}\\n#endif\\n'\n  \n  Skipping 40851 identical leading characters in diff, use -v to show\n    56_ONLY\n  -   // The independent striped-v1 physical slot exists only for D256. This\n  -   // compile guard prevents unsupported helper instantiations; direct raw\n  -   // entrypoint misuse fails visibly instead of running a wrong cache layout.\n      if(dim!=256) {trap();return;}...\n  \n  ...Full output truncated (28 lines hidden), use '-vv' to show"
+      },
+      {
+        "id": "tests.test_integration_contracts.TargetContracts::test_h14_command_matches_supplied_appendix_a",
+        "outcome": "failure",
+        "message": "AssertionError: {'pos[233 chars]-num-seqs': 128, '--gpu-memory-utilization': 0[914 chars]True} != {'pos[233 chars]-num-batched-tokens': 16384, '--max-num-seqs':[916 chars]4}}}}\nDiff is 3792 characters long. Set self.maxDiff to None to see it."
+      },
+      {
+        "id": "tests.test_no_fallback_static::test_no_silent_exception_swallowing",
+        "outcome": "failure",
+        "message": "AssertionError: PosixPath('/private/tmp/oscar-prefix-baseline-ivl7oulf/tools/experiments/replay_shared_fp32.py')\nassert not True\n +  where True = all(<generator object test_no_silent_exception_swallowing.<locals>.<genexpr> at 0x104cdac00>)"
+      },
+      {
+        "id": "tests.test_no_fallback_static::test_online_hooks_do_not_copy_device_data_to_host",
+        "outcome": "failure",
+        "message": "AssertionError: PosixPath('/private/tmp/oscar-prefix-baseline-ivl7oulf/oscar_ascend/integration/metadata.py')\nassert (None is not None)"
+      },
+      {
+        "id": "tests.test_no_fallback_static::test_source_headers_trace_archive",
+        "outcome": "failure",
+        "message": "AssertionError: missing historical fault trace: /private/tmp/oscar-prefix-baseline-ivl7oulf/tools/probe_mixed_decode_split.py\nassert False\n +  where False = any(<generator object test_source_headers_trace_archive.<locals>.<genexpr> at 0x104736a40>)"
+      },
+      {
+        "id": "tests.test_whole_prefill_scheduler::test_explicit_scheduler_class_reaches_real_server_cli_without_changing_defaults",
+        "outcome": "failure",
+        "message": "ValueError: native token budget requires an omitted budget and native scheduler"
+      },
+      {
+        "id": "tests.test_whole_prefill_variant::test_generated_policy_is_idempotent_and_restores_native_budget",
+        "outcome": "failure",
+        "message": "KeyError: 'max_num_batched_tokens'"
+      },
+      {
+        "id": "tests.test_whole_prefill_variant::test_no_quadratic_first_mtp_regression_from_budget_only[experimental_current_only]",
+        "outcome": "failure",
+        "message": "Failed: DID NOT RAISE ValueError"
+      },
+      {
+        "id": "tests.test_whole_prefill_variant::test_no_quadratic_first_mtp_regression_from_budget_only[experimental_first_mtp_current_fia]",
+        "outcome": "failure",
+        "message": "Failed: DID NOT RAISE ValueError"
+      },
+      {
+        "id": "tests.test_request_window_attention_fixture::test_cpu_probe_host_cpp_syntax_and_declared_kernel_arity[cpu_probe.cpp]",
+        "outcome": "failure",
+        "message": "AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-fsyntax-only', '-I', '/private/var/folders/7j/33nttyqs7ss78...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\\n').returncode"
+      },
+      {
+        "id": "tests.test_request_window_attention_fixture::test_cpu_probe_host_cpp_syntax_and_declared_kernel_arity[c16_cpu_probe.cpp]",
+        "outcome": "failure",
+        "message": "AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-fsyntax-only', '-I', '/private/var/folders/7j/33nttyqs7ss78...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\\n').returncode"
+      },
+      {
+        "id": "tests.test_request_window_reader_resume::test_actual_cpp_task_snapshot_guard_rejects_different_or_short_saved_tasks",
+        "outcome": "failure",
+        "message": "subprocess.CalledProcessError: Command '['/usr/bin/clang++', '-std=c++17', '/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-128/test_actual_cpp_task_snapshot_0/task_guard.cpp', '-o', '/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-128/test_actual_cpp_task_snapshot_0/task_guard']' returned non-zero exit status 1."
+      },
+      {
+        "id": "tests.test_request_window_registration::test_source_packaging_identity_and_local_headers_are_complete",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/request_window_member_pipeline_packaging_20261011.json'"
+      },
+      {
+        "id": "tests.test_service_log_model::test_real_log_mtp_accounting_and_unequal_windows",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/target_native_longbench_20260930.txt'"
+      },
+      {
+        "id": "tests.test_service_log_model::test_two_anchors_do_not_identify_speedup_share",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/service_trace_candidate_20260930.json'"
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_all_supplied_engine_rows_are_parsed_without_pid_or_clock_mixing",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_truncated_records_preserve_known_fields_and_do_not_invent_counts",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_client_tables_and_warmup_have_separate_time_denominators",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_client_latency_decomposition_respects_fixed_512_output_tokens",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_spec_totals_use_counts_rather_than_unweighted_percentage_means",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_observed_capacity_and_zero_counters_do_not_invent_memory_or_phases",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_server_counter_integration_does_not_use_client_duration",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_64k_evidence::test_conditional_warmup_pool_bounds_include_the_reference_null_block",
+        "outcome": "error",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "id": "tests.test_analyze_decode_completion::test_real_popped_completion_ids_keep_observed_latency_not_busy",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "id": "tests.test_analyze_decode_completion::test_real_decode_markers_close_but_do_not_mean_math_completed",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz'"
+      },
+      {
+        "id": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[duplicate_id]",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "id": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[missing_completion]",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "id": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[wrong_pc]",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "id": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[flag_count]",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "id": "tests.test_analyze_decode_completion::test_truncated_real_line_and_unclosed_real_markers_fail",
+        "outcome": "failure",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/oscar-prefix-baseline-ivl7oulf/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz'"
+      }
+    ]
+  },
+  "baseline_scope": "Export of this repository at base_commit; only failing test modules run; identical read-only references and existing reports; no failed OSCAR project accessed",
+  "new_failure_ids": [],
+  "baseline_failures_absent_in_final": [],
+  "targeted": {
+    "focused_verified": {
+      "log": "focused_verified.log",
+      "junit": "focused_verified.xml",
+      "pytest_summary": "404 passed, 8 skipped, 4 subtests passed in 10.32s",
+      "junit_counts": [
+        {
+          "tests": "416",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "8",
+          "time": "9.898"
+        }
+      ],
+      "failures": []
+    },
+    "http": {
+      "log": "http.log",
+      "junit": "http.xml",
+      "pytest_summary": "70 passed in 27.01s",
+      "junit_counts": [
+        {
+          "tests": "70",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0",
+          "time": "26.995"
+        }
+      ],
+      "failures": []
+    },
+    "latest_protocol_verified": {
+      "log": "latest_protocol_verified.log",
+      "junit": "latest_protocol_verified.xml",
+      "pytest_summary": "118 passed in 4.40s",
+      "junit_counts": [
+        {
+          "tests": "118",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0",
+          "time": "4.385"
+        }
+      ],
+      "failures": []
+    }
+  },
+  "local_environment_limits": [
+    "No torch_npu",
+    "No limactl runtime",
+    "clang++ reports invalid CommandLineTools path"
+  ],
+  "npu_compile": "not_run",
+  "npu_completion": "not_run",
+  "graph_capture_replay": "not_run",
+  "model_quality": "not_run",
+  "performance": {
+    "mdl_q1_speedup": null,
+    "mdl_q4_fresh_speedup": null,
+    "prepare_full_path_speedup": null,
+    "combined_end_to_end_speedup": null,
+    "gate_min_full_path_speedup": 1.15,
+    "AISBench_rerun_requested": false
+  },
+  "package_identity": {
+    "status": "source_packaged_not_device_acceptance",
+    "source": "csrc/experiments/decode_mdl_load/attention_candidate.cpp",
+    "source_sha256": "f2047dde10aa464202c23c8a8d39a9806c712ac8eb090ff752d7346d1b723151",
+    "baseline": "csrc/kernels/attention_cv_decode_bundle.cpp",
+    "baseline_sha256": "d8171f0403cf176087e1c76c64e454e6fb1e74fd79252aab3b59e848cca19401",
+    "target": "csrc/kernels/attention_cv_mdl_decode.cpp",
+    "target_sha256": "e45cf7e35344849b8584e57ff716acd668727daac8ab0e38bed04957c52e7426",
+    "inverse_full_source_bytes": true,
+    "operator": "attention_cv_mdl_decode_out",
+    "q1_production": "candidate_pending_independent_gate",
+    "workspace_bytes_per_core_D256": 1146880,
+    "explicit_UB_bytes_per_AIV_D256": 158656,
+    "L1_bytes": 395264,
+    "CANN_fresh": "pending",
+    "NPU": "pending",
+    "graph": "pending",
+    "service_performance": "pending",
+    "pushed": false
+  },
+  "prefix_contract": {
+    "physical_full_tokens": 2304,
+    "native_hash_tokens": 768,
+    "native_gdn_tokens": 768,
+    "virtual_metadata_tokens": 128,
+    "mtp_dependency": "next native hash in native BlockPool FULL key",
+    "same_step_new_full_reuse": "deferred by native admission contract",
+    "warm_expected": {
+      "3072": 2304,
+      "5376": 4608
+    },
+    "scheduler_budget": "native; never increased",
+    "GDN_math": "unchanged"
+  },
+  "remaining_structural_work": [
+    "FULL allocator/checkpoint decoupling and smaller physical reuse grain not implemented",
+    "Per-page exact snapshots remain",
+    "FP32 expanded GM write/read traffic remains",
+    "All new device/graph/model/performance acceptance pending"
+  ],
+  "logs_note": "Earlier failing iterations retained. release_host is final full run; latest_protocol_verified is final targeted protocol run. HTTP fixtures are not NPU evidence."
+}

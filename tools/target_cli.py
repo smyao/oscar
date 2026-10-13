@@ -37,6 +37,11 @@ def serve_argv(config: dict) -> list[str]:
     if type(enabled) is not bool:
         raise ValueError("enable_prefix_caching must be an explicit boolean")
     args.append("--enable-prefix-caching" if enabled else "--no-enable-prefix-caching")
+    details = config.get("enable_prompt_tokens_details", True)
+    if type(details) is not bool:
+        raise ValueError("enable_prompt_tokens_details must be an explicit boolean")
+    if details:
+        args.append("--enable-prompt-tokens-details")
     if "scheduler_cls" in config:
         scheduler = config["scheduler_cls"]
         if (not isinstance(scheduler, str) or "." not in scheduler

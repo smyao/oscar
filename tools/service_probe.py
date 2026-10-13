@@ -34,7 +34,7 @@ import urllib.request
 import uuid
 
 from .npu_resources import DEFAULT_RELEASE_TOLERANCE, read_npu_resources, wait_for_release
-from .phase import atomic_json, cleanup_group, live_log, terminal_line
+from .phase import atomic_json, cleanup_group, live_log, terminal_line, run_phase
 from .plog import OwnedProcessGroup, attach_plog
 from .prepare_rotations import model_geometry
 from .target_cli import ROOT, serve_argv, target_env
@@ -45,6 +45,25 @@ PROMPT_SENTENCE = (
 )
 PROBE_LENGTHS = (128, 16384, 32768, 50000)
 MIN_OUTPUT_TOKENS = 16
+
+
+def prefix_cache_gate(server, config, log_dir, timeout):
+    """Short real-HTTP APC gate inside the already-owned service lifetime."""
+    evidence = log_dir / ("prefix-cache-" + uuid.uuid4().hex)
+    command = [sys.executable, "-u", "-m", "tools.prefix_cache_probe", "--run", "--require-hit",
+        "--base-url", server.base_url, "--model", config["served_model_name"],
+        "--lengths", "3072", "5376", "--output-tokens", "8", "--timeout", str(min(120, timeout)),
+        "--total-timeout", str(timeout), "--output", str(evidence)]
+    result = run_phase("prefix-cache", command, cwd=ROOT, log_dir=log_dir,
+        timeout=timeout, env=os.environ.copy(), grace=config.get("shutdown_timeout_seconds", 30), heartbeat=30)
+    if result.returncode:
+        raise ServiceProbeError(f"APC gate failed rc={result.returncode}; log={result.log}")
+    report = json.loads((evidence / "summary.json").read_text())
+    if report.get("status") != "completed" or report.get("cache_gate") != "passed":
+        raise ServiceProbeError(f"APC positive-hit evidence missing: {evidence}")
+    server.check_alive()
+    print(f"[oscar] PREFIX_CACHE_GATE passed report={evidence / 'summary.json'}", flush=True)
+    return {"status": "passed", "report": str(evidence / "summary.json"), "returncode": result.returncode}
 MAX_RESPONSE_BYTES = 4 * 1024 * 1024
 REQUEST_HEARTBEAT_SECONDS = 15.0
 
@@ -838,6 +857,9 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
                 raise ServiceProbeError("HTTP completed, but mandatory TP4/FULL/graph/MTP evidence did not pass")
             report["device_completion"] = "real_service_requests_completed"
             if not serve:
+                if config.get("enable_prefix_caching", True):
+                    report["prefix_cache"] = prefix_cache_gate(server, config, log_dir,
+                                                               _remaining(deadline, 600))
                 try:
                     report["performance"] = run_synthetic_mixed(server, config, tokenizer,
                                                                 log_dir=log_dir, deadline=deadline)

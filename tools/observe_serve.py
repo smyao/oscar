@@ -1134,7 +1134,7 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
-    parser.add_argument("--variant", choices=("baseline", "candidate", "native"), default="baseline")
+    parser.add_argument("--variant", choices=("baseline", "candidate", "native"), default="candidate")
     parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--plan", action="store_true")
     parser.add_argument("--enable-prefix-caching", action=argparse.BooleanOptionalAction, default=None,

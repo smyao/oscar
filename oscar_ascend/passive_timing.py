@@ -22,7 +22,7 @@ _MAX_PENDING = 16
 _MAX_PHASES = 256
 _QUOTAS = {"prefill": 4, "decode": 8, "mixed": 4, "unknown": 2}
 _OSCAR_PHASES = frozenset({"prepare", "current_source_suppress", "rotate", "fia",
-    "current_slot_guard", "current_native_fia", "merge", "phase1_stores", "status_guard"})
+    "current_slot_guard", "current_native_fia", "current_only_copy", "merge", "phase1_stores", "status_guard"})
 _NATIVE_PHASES = frozenset({"native_attention"})
 _tls = threading.local()
 _pending: list[dict] = []

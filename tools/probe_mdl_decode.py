@@ -26,6 +26,8 @@ from .striped_fixture import raw_to_striped
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'attention_cv_bundle_decode_out'
 CANDIDATE = 'attention_cv_mdl_decode_out'
+Q1_BASELINE = 'attention_cv_bundle_q1_out'
+Q1_CANDIDATE = 'attention_cv_mdl_q1_out'
 WORKSPACE = 1146880
 MIN_SPEEDUP = 1.15
 CONTEXTS = (20000, 23000, 27000, 30000)
@@ -47,11 +49,23 @@ class Case:
     timed: bool = False
     graph: bool = False
 
+    @property
+    def operators(self):
+        return (Q1_BASELINE, Q1_CANDIDATE) if self.shape.slot_context else (BASELINE, CANDIDATE)
+
 
 def case_plan():
     short = reuse.Shape('short_q4_tail_padding', (4, 4), (1341, 1373),
                         256, 1, 1, False, padded_tokens=12)
+    q1 = reuse.Shape('q1_slot_context_tail_padding', (1, 1), (1341, 1373),
+                     256, 1, 1, False, padded_tokens=12, slot_context=True)
     return (
+        Case(q1, special_values=True, graph=True),
+        Case(replace(q1, name='q1_invalid_live_metadata', corrupt_metadata=True, corrupt_position=80)),
+        Case(replace(q1, name='q1_invalid_live_qr', corrupt_qr=True, corrupt_qr_token=1)),
+        Case(replace(q1, name='q1_invalid_dead_tail', corrupt_dead_tail=True)),
+        Case(reuse.Shape('q1_R4_20k30k', (1,) * 4, CONTEXTS, 256, 1, 3,
+                        False, padded_tokens=32, slot_context=True), timed=True),
         Case(short, special_values=True, graph=True),
         Case(replace(short, name='invalid_live_metadata', corrupt_metadata=True,
                      corrupt_position=80)),
@@ -199,7 +213,7 @@ def graph_gate(torch, ops, case, fixture, tensors, pair, cores, tolerance):
     addresses.update({str(i)+key: value.data_ptr() for i,b in enumerate(pair)
                       for key,value in b.items() if value is not None})
     def execute(i):
-        launch(ops, (BASELINE,CANDIDATE)[i], tensors, fixture, pair[i], cores)
+        launch(ops, case.operators[i], tensors, fixture, pair[i], cores)
     graphs = [torch.npu.NPUGraph(), torch.npu.NPUGraph()]
     for i, graph in enumerate(graphs):
         with torch.npu.graph(graph, capture_error_mode='thread_local', auto_dispatch_capture=True):
@@ -266,12 +280,12 @@ def run_case(torch,ops,case,device,cores,tolerance):
     pair[1]['tasks'],pair[1]['positions']=pair[0]['tasks'],pair[0]['positions']
     task=task_evidence(torch,fixture,pair[0])
     invalid=case.shape.corrupt_metadata or case.shape.corrupt_qr
-    def execute(i):launch(ops,(BASELINE,CANDIDATE)[i],tensors,fixture,pair[i],cores,merge=not invalid)
+    def execute(i):launch(ops,case.operators[i],tensors,fixture,pair[i],cores,merge=not invalid)
     for i,b in enumerate(pair):poison(torch,b);execute(i)
     torch.npu.synchronize();detail=check(torch,fixture,*pair,receipt['task_sha256'],tolerance)
     timing=None
     if case.timed:
-        reference=snapshot(pair[0]);samples={BASELINE:[],CANDIDATE:[]}
+        reference=snapshot(pair[0]);samples={name:[] for name in case.operators}
         for iteration in range(7):
             order=(0,1) if iteration<2 or (iteration-2)%2==0 else (1,0)
             for i in order:
@@ -281,13 +295,14 @@ def run_case(torch,ops,case,device,cores,tolerance):
                 elapsed=float(begin.elapsed_time(end))
                 if not math.isfinite(elapsed) or elapsed<=0:raise RuntimeError('MDL invalid device event time')
                 same_bits(torch,reference,pair[i])
-                if iteration>=2:samples[(BASELINE,CANDIDATE)[i]].append(elapsed)
-        a,b=(statistics.median(samples[name]) for name in (BASELINE,CANDIDATE))
+                if iteration>=2:samples[case.operators[i]].append(elapsed)
+        a,b=(statistics.median(samples[name]) for name in case.operators)
         timing={'baseline_ms':a,'candidate_ms':b,'speedup':a/b,'minimum_speedup':MIN_SPEEDUP,
                 'ratio':b/a,'samples_ms':samples,'warmup':2,'repeats':5,'scope':SCOPE,
                 'gate':'passed' if a/b>=MIN_SPEEDUP else 'failed'}
     graph=graph_gate(torch,ops,case,fixture,tensors,pair,cores,tolerance) if case.graph else None
     return {'case':case.shape.name,'status':'passed' if timing is None or timing['gate']=='passed' else 'failed',
+            'operators':list(case.operators),
             'contexts':list(case.shape.contexts),'qlens':list(case.shape.qlens),
             'input_sha256':fixture['input_sha256'],'special_values':case.special_values,
             **task,**detail,'timing':timing,'graph':graph}
@@ -306,6 +321,7 @@ def validate_evidence(report):
     for case,row in zip(plan,rows):
         shape=case.shape;invalid=shape.corrupt_metadata or shape.corrupt_qr
         expected_case={'case':shape.name,'status':'passed','contexts':list(shape.contexts),'qlens':list(shape.qlens),
+            'operators':list(case.operators),
             'all_tasks':(shape.padded_tokens or sum(shape.qlens))*3*shape.splits,
             'active_queries':sum(shape.qlens),'padded_queries':(shape.padded_tokens or sum(shape.qlens))-sum(shape.qlens),
             'queries':0 if invalid else sum(shape.qlens),'special_values':case.special_values,
@@ -317,10 +333,10 @@ def validate_evidence(report):
             bad.append(shape.name+'.sources')
         if case.timed:
             timing=row.get('timing') or {};samples=timing.get('samples_ms',{})
-            valid=set(samples)=={BASELINE,CANDIDATE} and all(isinstance(samples[n],list) and len(samples[n])==5 and
+            valid=set(samples)==set(case.operators) and all(isinstance(samples[n],list) and len(samples[n])==5 and
                 all(type(v) in (int,float) and math.isfinite(v) and v>0 for v in samples[n]) for n in samples)
             if valid:
-                a,b=(statistics.median(samples[n]) for n in (BASELINE,CANDIDATE))
+                a,b=(statistics.median(samples[n]) for n in case.operators)
                 valid=(a/b>=MIN_SPEEDUP and all(timing.get(k)==v for k,v in
                     {'baseline_ms':a,'candidate_ms':b,'ratio':b/a,'speedup':a/b,'minimum_speedup':MIN_SPEEDUP,
                      'warmup':2,'repeats':5,'gate':'passed','scope':SCOPE}.items()))
@@ -358,7 +374,7 @@ def probe(config_path,acceptance_path):
     if normalize_soc(torch.npu.get_device_name(0))!=config['soc_version']:raise RuntimeError('MDL target SoC differs')
     from oscar_ascend.ops.loader import validate_build_artifacts,require_capabilities
     manifest=validate_build_artifacts(ROOT/'build/ascendc/build_manifest.json')
-    require_capabilities({BASELINE,CANDIDATE,'prepare_attention_tasks_out','merge_lse_out'})
+    require_capabilities({BASELINE,CANDIDATE,Q1_BASELINE,Q1_CANDIDATE,'prepare_attention_tasks_out','merge_lse_out'})
     bindings=source_binding();rows=[];cores=reuse._core_count(torch,config)
     for case in case_plan():
         row=run_case(torch,torch.ops.oscar_ascend_ops,case,torch.device('npu:0'),cores,acceptance['fused_attention'])

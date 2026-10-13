@@ -1,0 +1,163 @@
+{
+  "stages": [
+    [
+      "build-dependencies",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "pip",
+        "install",
+        "setuptools>=69",
+        "wheel",
+        "pybind11>=3",
+        "cmake>=3.26",
+        "ninja",
+        "pytest"
+      ]
+    ],
+    [
+      "install-plugin",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "pip",
+        "install",
+        "--no-deps",
+        "--no-build-isolation",
+        "-e",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2"
+      ]
+    ],
+    [
+      "build-ops",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "tools.build_ops",
+        "--soc",
+        "ascend910b4",
+        "--log-dir",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-rear/build"
+      ]
+    ],
+    [
+      "prepare-rotations",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "tools.prepare_rotations",
+        "--config",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-rear/effective-target.json"
+      ]
+    ]
+  ],
+  "serve": [
+    "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+    "-m",
+    "tools.target_cli",
+    "--config",
+    "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-rear/effective-target.json"
+  ],
+  "probes": "none",
+  "vllm_argv": [
+    "serve",
+    "/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp",
+    "--served-model-name",
+    "qwen3.5",
+    "--host",
+    "0.0.0.0",
+    "--port",
+    "7878",
+    "--data-parallel-size",
+    "1",
+    "--tensor-parallel-size",
+    "4",
+    "--max-model-len",
+    "262144",
+    "--max-num-seqs",
+    "128",
+    "--gpu-memory-utilization",
+    "0.9",
+    "--quantization",
+    "ascend",
+    "--compilation-config",
+    "{\"cudagraph_capture_sizes\":[1,4,8,12,16,24,32,48,56,64,72,84,96,108,112,128,160,172,196,200,212,232,272,288,312,328,344,360,384,400,416,432,448,480,512],\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+    "--speculative_config",
+    "{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":3,\"enforce_eager\":true}",
+    "--additional-config",
+    "{\"enable_cpu_binding\":true}",
+    "--hf-overrides",
+    "{\"text_config\":{\"rope_parameters\":{\"mrope_interleaved\":true,\"mrope_section\":[11,11,10],\"rope_type\":\"yarn\",\"rope_theta\":10000000,\"partial_rotary_factor\":0.25,\"factor\":4.0,\"original_max_position_embeddings\":262144}}}",
+    "--trust-remote-code",
+    "--async-scheduling",
+    "--allowed-local-media-path",
+    "/",
+    "--mm-processor-cache-gb",
+    "0",
+    "--mamba-cache-dtype",
+    "bfloat16",
+    "--mamba-ssm-cache-dtype",
+    "bfloat16",
+    "--enable-prefix-caching",
+    "--enable-prompt-tokens-details"
+  ],
+  "variant": "candidate",
+  "optimizations": {
+    "history_cluster4": true,
+    "later_mtp_q1": true,
+    "fast_unpack": true,
+    "mixed_cv": true,
+    "striped_cache": true,
+    "quantization_bundle": true,
+    "current_only": true,
+    "first_mtp_current_fia": true,
+    "compact_later_mtp": true,
+    "mixed_decode_split": true,
+    "decode_bundle": true,
+    "mdl_decode": true,
+    "prepare_reuse": true,
+    "whole_prefill": false,
+    "c4_member_pipeline": false
+  },
+  "runtime_selection": {
+    "variant": "candidate",
+    "optimizations": {
+      "history_cluster4": true,
+      "later_mtp_q1": true,
+      "fast_unpack": true,
+      "mixed_cv": true,
+      "striped_cache": true,
+      "quantization_bundle": true,
+      "current_only": true,
+      "first_mtp_current_fia": true,
+      "compact_later_mtp": true,
+      "mixed_decode_split": true,
+      "decode_bundle": true,
+      "mdl_decode": true,
+      "prepare_reuse": true,
+      "whole_prefill": false,
+      "c4_member_pipeline": false
+    },
+    "prefix_caching": true,
+    "prefix_cache_policy": "native_pool_mtp_lookahead_hash_v1",
+    "prompt_tokens_details": true,
+    "token_budget_source": "native",
+    "max_num_batched_tokens": null,
+    "scheduler_cls": null,
+    "devices": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "port": 7878
+  },
+  "target_devices": [
+    4,
+    5,
+    6,
+    7
+  ],
+  "port": 7878,
+  "placement": "rear"
+}

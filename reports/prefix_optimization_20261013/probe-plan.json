@@ -1,0 +1,155 @@
+{
+  "stages": [
+    [
+      "build-dependencies",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "pip",
+        "install",
+        "setuptools>=69",
+        "wheel",
+        "pybind11>=3",
+        "cmake>=3.26",
+        "ninja",
+        "pytest"
+      ]
+    ],
+    [
+      "install-plugin",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "pip",
+        "install",
+        "--no-deps",
+        "--no-build-isolation",
+        "-e",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2"
+      ]
+    ],
+    [
+      "build-ops",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "tools.build_ops",
+        "--soc",
+        "ascend910b4",
+        "--log-dir",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-probe/build"
+      ]
+    ],
+    [
+      "probe-ops",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "tools.probe_ops",
+        "--output",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-probe/operators.json"
+      ]
+    ],
+    [
+      "prepare-rotations",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "tools.prepare_rotations",
+        "--config",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-probe/effective-target.json"
+      ]
+    ],
+    [
+      "mdl-decode-npu",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "tools.probe_mdl_decode",
+        "--config",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-probe/effective-target.json",
+        "--output",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-probe/mdl-decode-report.json"
+      ]
+    ],
+    [
+      "native-synthetic",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "tools.paired_concurrency_probe",
+        "--native-only",
+        "--require-fresh-npu",
+        "--config",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-probe/effective-target.json",
+        "--acceptance",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/configs/acceptance.json",
+        "--log-dir",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-probe/native-synthetic",
+        "--output",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-probe/native-synthetic-report.json"
+      ]
+    ],
+    [
+      "service-probe",
+      [
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+        "-m",
+        "tools.service_probe",
+        "--config",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-probe/effective-target.json",
+        "--log-dir",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-probe/service-probe",
+        "--output",
+        "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-probe/service-probe-report.json"
+      ]
+    ]
+  ],
+  "serve": [
+    "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+    "-m",
+    "tools.target_cli",
+    "--config",
+    "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/logs/prefix-review-probe/effective-target.json"
+  ],
+  "runtime_selection": {
+    "variant": "candidate",
+    "optimizations": {
+      "history_cluster4": true,
+      "later_mtp_q1": true,
+      "fast_unpack": true,
+      "mixed_cv": true,
+      "striped_cache": true,
+      "quantization_bundle": true,
+      "current_only": true,
+      "first_mtp_current_fia": true,
+      "compact_later_mtp": true,
+      "mixed_decode_split": true,
+      "decode_bundle": true,
+      "mdl_decode": true,
+      "prepare_reuse": true,
+      "whole_prefill": false,
+      "c4_member_pipeline": false
+    },
+    "prefix_caching": true,
+    "prefix_cache_policy": "native_pool_mtp_lookahead_hash_v1",
+    "prompt_tokens_details": true,
+    "token_budget_source": "native",
+    "max_num_batched_tokens": null,
+    "scheduler_cls": null,
+    "devices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "port": 8989
+  },
+  "target_devices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "production_status": "requires_target_probes_and_resource_release"
+}

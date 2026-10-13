@@ -80,6 +80,7 @@ count = 0
 prompt_total = 0
 generation_total = 0
 running = 0
+cache_salts = set()
 lock = threading.Lock()
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -101,9 +102,13 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         global count, prompt_total, generation_total, running
         data = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
+        if self.path == '/tokenize':
+            body = json.dumps({'tokens':[11,12,13]}).encode()
+            self.send_response(200);self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
+            return
         assert self.path == '/v1/completions'
-        tokens = data['min_tokens']
-        assert tokens == data['max_tokens'] and tokens in (16, 64) and data['ignore_eos']
+        tokens = data.get('min_tokens',data['max_tokens'])
+        assert tokens == data['max_tokens'] and tokens in (8, 16, 64) and data['ignore_eos']
         if mode == 'hang_long' and len(data['prompt']) > 128:
             time.sleep(30)
         with lock:
@@ -115,6 +120,13 @@ class Handler(BaseHTTPRequestHandler):
                 (trace/'worker-1.jsonl').write_text(''.join(json.dumps(x)+'\n' for x in records).replace('\\n', '\n'))
         response = {'choices':[{'text':'Generated tokens from the test fixture.', 'finish_reason':'length'}],
                     'usage': {'prompt_tokens':len(data['prompt'])+(1 if mode=='wrong_usage' else 0), 'completion_tokens':tokens}}
+        salt = data.get('cache_salt')
+        if salt:
+            with lock:
+                if salt in cache_salts:
+                    hit = max(0,(len(data['prompt'])//768-1)*768)//2304*2304
+                    response['usage']['prompt_tokens_details'] = {'cached_tokens':hit}
+                cache_salts.add(salt)
         if data.get('stream'):
             with lock:
                 running += 1

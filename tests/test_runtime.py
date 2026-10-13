@@ -328,7 +328,7 @@ def test_online_forward_contains_no_host_request_loop_or_tensor_readback():
     (4, True, False, False), (16, True, True, False),
     (16, True, True, True)])
 @pytest.mark.parametrize("later_draft", [False, True])
-def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv, striped_cache, _rotation_variant=None, _member_pipeline=False, _mdl_variant=None, _mdl_target=False):
+def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv, striped_cache, _rotation_variant=None, _member_pipeline=False, _mdl_variant=None, _mdl_target=False, _reuse_layers=False):
     """Host ABI exercise only: fake ops establish ordering, never accuracy."""
     if n == 8192 and (cluster_size != 16 or later_draft):
         pytest.skip("large FULL host route is needed once for C16")
@@ -465,10 +465,10 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             self.attention_cv_out(*args)
             raise MdlDispatchReached("attention_cv_mdl_decode_out")
 
-        def attention_cv_bundle_q1_out(self, *args):
+        def attention_cv_mdl_q1_out(self, *args):
             assert _mdl_variant == "candidate" and later_draft
             self.attention_cv_out(*args)
-            raise MdlDispatchReached("attention_cv_bundle_q1_out")
+            raise MdlDispatchReached("attention_cv_mdl_q1_out")
 
         def attention_cv_striped_cluster4_out(self, *args):
             assert striped_cache and args[15] is w.cluster_stats
@@ -587,7 +587,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         from enum import Enum
         common.attn_state = Enum("AscendAttentionState", ["DecodeOnly"]).DecodeOnly
         common.max_query_len = 1 if later_draft else 4
-        name = "attention_cv_bundle_q1_out" if later_draft else "attention_cv_mdl_decode_out"
+        name = "attention_cv_mdl_q1_out" if later_draft else "attention_cv_mdl_decode_out"
         with pytest.raises(MdlDispatchReached, match="^"+name+"$"):
             impl.forward(SimpleNamespace(layer_name="model.layers.0.self_attn.attn" if _mdl_target else "mtp.layers.0.self_attn.attn"),
                          q, k, value, packed, replace(from_common(common), is_draft=not _mdl_target,
@@ -616,6 +616,18 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             expected_op = "fast_" + expected_op
     assert calls == ["prepare", "rotate", expected_op, "merge",
                      "striped_store" if striped_cache else "store", "guard"]
+    if _reuse_layers:
+        impl.provider.config["experimental_prepare_reuse"] = True
+        calls.clear()
+        for _ in range(2):  # repeated native common object in warmup/capture
+            for layer_index in range(16):
+                result = impl.forward(SimpleNamespace(layer_name=f"layer.{layer_index}"),
+                    q, k, value, packed, replace(from_common(common), is_draft=True,
+                    draft_index=1 if later_draft else 0), output)
+                assert result is output and bool(torch.all(result == 7))
+        assert calls.count("prepare") == 2
+        for name in ("rotate", expected_op, "merge", "striped_store" if striped_cache else "store", "guard"):
+            assert calls.count(name) == 32
 
 
 @pytest.mark.parametrize("variant", ["candidate", "baseline", "native"])

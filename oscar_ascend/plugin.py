@@ -206,6 +206,24 @@ def _request_windows_configured():
     return enabled
 
 
+def _patch_prefix_scheduler(module):
+    # #37-49/#127/#128: use the native scheduler's existing Mamba split seam.
+    # Admission/order/budget and state kernels stay native. Only OSCAR groups
+    # place checkpoints at boundaries that their FULL pages can actually hit.
+    def prefix_split(original):
+        def wrapped(scheduler, request, num_new_tokens,
+                    num_new_local_computed_tokens=0, num_external_computed_tokens=0):
+            from .integration.prefix_cache import scheduler_prefix_split
+            result = scheduler_prefix_split(scheduler, request, num_new_tokens,
+                num_new_local_computed_tokens, num_external_computed_tokens)
+            if result is not None:
+                return result
+            return original(scheduler, request, num_new_tokens,
+                num_new_local_computed_tokens, num_external_computed_tokens)
+        return wrapped
+    _patch(module.Scheduler, "_mamba_block_aligned_split", prefix_split)
+
+
 def _patch_request_window_scheduler(module):
     """Keep native schedule/preempt bodies; add missing forced-reset notices."""
     if not _request_windows_configured():
@@ -228,6 +246,26 @@ def _patch_request_window_scheduler(module):
 
     _patch(module.Scheduler, "_preempt_request", preempt)
     _patch(module.Scheduler, "schedule", schedule)
+
+
+def _patch_scheduler(module):
+    _patch_prefix_scheduler(module)
+    _patch_request_window_scheduler(module)
+
+
+def _patch_mtp_prefix_inputs(module):
+    # Native CPU next-token preparation already indexes the chunk end. Its
+    # padded counterpart uses the prompt tail. Correct just that host lookup
+    # before the native copy/mask; sampled IDs and rejection handling stay native.
+    def next_ids(original):
+        def wrapped(proposer, sampled_token_ids, requests, gpu_input_batch,
+                    discard_request_indices, num_discarded_requests):
+            from .integration.prefix_cache import chunk_boundary_requests
+            requests = chunk_boundary_requests(proposer.runner, requests, gpu_input_batch)
+            return original(proposer, sampled_token_ids, requests, gpu_input_batch,
+                            discard_request_indices, num_discarded_requests)
+        return wrapped
+    _patch(module.AscendSpecDecodeBaseProposer, "prepare_next_token_ids_padded", next_ids)
 
 
 def request_window_scheduler_hooks_present(scheduler_cls):
@@ -354,7 +392,8 @@ _callbacks = {
     "vllm_ascend.attention.attention_v1": _patch_native_attention,
     "vllm.model_executor.models.qwen3_5_mtp": _patch_mtp_forward,
     "vllm.model_executor.layers.attention.attention": _patch_attention_registration,
-    "vllm.v1.core.sched.scheduler": _patch_request_window_scheduler,
+    "vllm.v1.core.sched.scheduler": _patch_scheduler,
+    "vllm_ascend.spec_decode.llm_base_proposer": _patch_mtp_prefix_inputs,
 }
 
 

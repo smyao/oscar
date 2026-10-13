@@ -17,6 +17,7 @@ def synthetic_report():
     for case in probe.case_plan():
         spec=case.shape;invalid=spec.corrupt_metadata or spec.corrupt_qr
         row={'case':spec.name,'status':'passed','contexts':list(spec.contexts),'qlens':list(spec.qlens),
+            'operators':list(case.operators),
             'all_tasks':spec.padded_tokens*3*spec.splits,'active_queries':sum(spec.qlens),
             'padded_queries':spec.padded_tokens-sum(spec.qlens),'queries':0 if invalid else sum(spec.qlens),
             'special_values':case.special_values,'source_leaders':{'0':2,'1':2,'2':2},
@@ -26,7 +27,7 @@ def synthetic_report():
         if case.timed:
             a,b=12.,10.
             row['timing']={'baseline_ms':a,'candidate_ms':b,'ratio':b/a,'speedup':a/b,'minimum_speedup':1.15,
-                'samples_ms':{probe.BASELINE:[a]*5,probe.CANDIDATE:[b]*5},'warmup':2,'repeats':5,
+                'samples_ms':{case.operators[0]:[a]*5,case.operators[1]:[b]*5},'warmup':2,'repeats':5,
                 'scope':probe.SCOPE,'gate':'passed'}
         if case.graph:
             states=[dict(row,state=name,task_sha256=task,raw_sha256=raw,table_sha256=table)
@@ -65,6 +66,16 @@ def test_full_cv_merge_threshold_is_15_percent_without_rounding(base,new,allowed
     assert any('device_latency' in e for e in probe.validate_evidence(report))
 
 
+def test_q4_success_cannot_qualify_q1_operator_or_speed():
+    report = synthetic_report()
+    q1 = next(row for row in report['cases'] if row['case'] == 'q1_R4_20k30k')
+    q1['operators'] = [probe.BASELINE, probe.CANDIDATE]
+    assert 'q1_R4_20k30k.contract' in probe.validate_evidence(report)
+    q1['operators'] = [probe.Q1_BASELINE, probe.Q1_CANDIDATE]
+    q1['timing']['samples_ms'][probe.Q1_CANDIDATE] = [11] * 5
+    assert 'q1_R4_20k30k.device_latency' in probe.validate_evidence(report)
+
+
 def test_changed_input_graph_needs_cache_table_tasks_and_oracle():
     report=synthetic_report()
     for key in ('task_sha256','raw_sha256','table_sha256'):
@@ -79,7 +90,7 @@ def test_short_boundary_fixture_and_graph_relocation_keep_logical_payload():
     case=probe.case_plan()[0];first=probe.make_fixture(torch,case)
     second=probe.make_fixture(torch,probe.replace(case,shape=probe.replace(case.shape,
         contexts=tuple(c+16 for c in case.shape.contexts))))
-    assert len(first['expected'])==len(second['expected'])==8
+    assert len(first['expected'])==len(second['expected'])==sum(case.shape.qlens)
     assert {k:(v.shape,v.dtype) for k,v in first['cpu'].items()}=={k:(v.shape,v.dtype) for k,v in second['cpu'].items()}
     raw=second['cpu']['raw'][probe.reuse.PREFIX:].view(second['blocks'],second['stride']).clone()
     assignments=copy.deepcopy(second['page_assignments'])

@@ -26,7 +26,7 @@ def package(root=ROOT, *, check=False):
         if hashlib.sha256((root/path).read_bytes()).hexdigest() != expected:
             raise ValueError('qualified MDL source drift: '+path)
     changes = [
-        ('// GENERATED RESEARCH ONLY.', '// Qualified MDL q4 candidate; NPU/graph gate pending.', 1),
+        ('// GENERATED RESEARCH ONLY.', '// MDL q4/q1 candidate; separate NPU/graph/speed gates pending.', 1),
         *[(f'#include "../../kernels/{h}"', f'#include "{h}"', 1)
           for h in ('oscar_common.h', 'attention_striped_unpack_padded.h', 'attention_range_mask.h')],
         *[(f'#include "../../include/{h}"', f'#include "../include/{h}"', 1)
@@ -35,10 +35,10 @@ def package(root=ROOT, *, check=False):
          '#include "../include/oscar_mdl_decode_launch.h"', 1),
         ('oscar_mdl_candidate_q4_kernel', 'oscar_attention_cv_mdl_decode_kernel', 2),
         ('mdl_candidate_q4_launch', 'attention_cv_mdl_decode_launch', 1),
-        # Preserve the q1 body as a private unused symbol, never a registered
-        # operator or production route: no unmeasured q1 promotion.
-        ('oscar_mdl_candidate_q1_kernel', 'oscar_mdl_unregistered_q1_kernel', 2),
-        ('mdl_candidate_q1_launch', 'mdl_unregistered_q1_launch', 1),
+        # Register the identical q1 body with its OWN oracle/graph/speed gate;
+        # q4 evidence never qualifies q1.
+        ('oscar_mdl_candidate_q1_kernel', 'oscar_attention_cv_mdl_q1_kernel', 2),
+        ('mdl_candidate_q1_launch', 'attention_cv_mdl_q1_launch', 1),
     ]
     result = relocate(source, changes)
     if check:
@@ -49,7 +49,7 @@ def package(root=ROOT, *, check=False):
     return dict(status='source_packaged_not_device_acceptance', source=SOURCE,
                 source_sha256=SOURCE_SHA, baseline=BASELINE, baseline_sha256=BASELINE_SHA,
                 target=TARGET, target_sha256=hashlib.sha256(result.encode()).hexdigest(),
-                inverse_full_source_bytes=True, operator=OPERATOR, q1_production='unchanged',
+                inverse_full_source_bytes=True, operator=OPERATOR, q1_production='candidate_pending_independent_gate',
                 workspace_bytes_per_core_D256=1146880, explicit_UB_bytes_per_AIV_D256=158656,
                 L1_bytes=395264, CANN_fresh='pending', NPU='pending', graph='pending',
                 service_performance='pending', pushed=False)

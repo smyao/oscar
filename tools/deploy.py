@@ -11,15 +11,19 @@ from pathlib import Path
 import sys
 from .phase import atomic_json, run_phase, terminal_line
 from .target_cli import target_env
+from .serving_variants import variant_config, runtime_feature_summary
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def plan(config_path: Path, log_dir: Path) -> list[tuple[str, list[str]]]:
+def plan(config_path: Path, log_dir: Path, *, config=None) -> list[tuple[str, list[str]]]:
     python = sys.executable
     cfg = str(config_path.resolve())
-    config = json.loads(config_path.read_text())
-    return [
+    if config is None:
+        config = json.loads(config_path.read_text())
+        from .serving_variants import default_variant
+        config = variant_config(config, default_variant(config, None))
+    stages = [
         ("build-dependencies", [python,"-m","pip","install","setuptools>=69","wheel","pybind11>=3","cmake>=3.26","ninja","pytest"]),
         ("install-plugin", [python, "-m", "pip", "install", "--no-deps", "--no-build-isolation", "-e", str(ROOT)]),
         ("build-ops", [python, "-m", "tools.build_ops", "--soc", config.get("soc_version", "ascend910b4"),
@@ -35,6 +39,10 @@ def plan(config_path: Path, log_dir: Path) -> list[tuple[str, list[str]]]:
         ("service-probe", [python,"-m","tools.service_probe","--config",cfg,
                            "--log-dir",str(log_dir/"service-probe"),"--output",str(log_dir/"service-probe-report.json")]),
     ]
+    if config.get("experimental_mdl_decode", False):
+        stages.insert(5, ("mdl-decode-npu", [python, "-m", "tools.probe_mdl_decode",
+            "--config", cfg, "--output", str(log_dir / "mdl-decode-report.json")]))
+    return stages
 
 
 def diagnostic_plan(log_dir: Path) -> list[tuple[str, list[str]]]:
@@ -58,6 +66,16 @@ def _report(path: Path) -> dict:
     if not isinstance(value, dict):
         raise RuntimeError(f"probe evidence must be a JSON object: {path}")
     return value
+
+
+def _validate_mdl_report(path):
+    from .probe_mdl_decode import validate_evidence, source_binding
+    report = _report(path)
+    errors = validate_evidence(report)
+    if report.get("source_binding") != source_binding():
+        errors.append("source_binding")
+    if errors:
+        raise RuntimeError(f"MDL q4/q1 evidence incomplete: {errors}; report={path}")
 
 
 def _compare_performance(native: dict, oscar: dict) -> dict:
@@ -106,8 +124,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
     parser.add_argument("--plan", action="store_true", help="print commands without installing or touching an NPU")
-    parser.add_argument("--only", choices=["environment", "build-ops", "probe-ops", "probe-cv", "native-synthetic", "service-probe", "prepare-rotations", "runtime-readiness"])
+    parser.add_argument("--only", choices=["environment", "build-ops", "probe-ops", "probe-cv", "mdl-decode-npu", "native-synthetic", "service-probe", "prepare-rotations", "runtime-readiness"])
     parser.add_argument("--log-dir", type=Path)
+    parser.add_argument("--variant", choices=("baseline", "candidate"), default="candidate")
     args = parser.parse_args()
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     log_dir = (args.log_dir or ROOT / "logs" / stamp).resolve()
@@ -118,14 +137,18 @@ def main() -> int:
             (log_dir / "paired-performance-report.json").unlink(missing_ok=True)
         print(f"[oscar] install → build → probes → serve; logs={log_dir}", flush=True)
     try:
-        config = json.loads(args.config.read_text())
+        config = variant_config(json.loads(args.config.read_text()), args.variant)
     except (OSError, ValueError) as exc:
         if not args.plan:
             (log_dir / "config.log").write_text(f"FAILED phase=config: {exc}\n")
             status.update(status="failed", failed_phase="config", error=str(exc))
             atomic_json(log_dir / "status.json", status)
         raise
-    stages = plan(args.config, log_dir)
+    stages = plan(args.config, log_dir, config=config)
+    effective = log_dir / "effective-target.json"
+    for _, command in stages:
+        if "--config" in command:
+            command[command.index("--config") + 1] = str(effective)
     if args.only:
         stages = [x for x in stages + diagnostic_plan(log_dir) if x[0] == args.only]
         if len(stages) != 1:
@@ -134,7 +157,8 @@ def main() -> int:
                 raise RuntimeError(error)
             return _gate_failed(status, log_dir, args.only, error)
     if args.plan:
-        print(json.dumps({"stages": stages, "serve": [sys.executable, "-m", "tools.target_cli", "--config", str(args.config.resolve())],
+        print(json.dumps({"stages": stages, "serve": [sys.executable, "-m", "tools.target_cli", "--config", str(effective)],
+                          "runtime_selection": runtime_feature_summary(config, args.variant),
                           "target_devices": config["devices"], "production_status": "requires_target_probes_and_resource_release"}, indent=2))
         return 0
     # Observation can run without hardware ownership; actual NPU phases require it.
@@ -146,7 +170,9 @@ def main() -> int:
         atomic_json(log_dir / "status.json", status)
         raise
     rc = 0
-    env["OSCAR_TARGET_CONFIG"]=str(args.config.resolve())
+    atomic_json(effective, config)
+    env["OSCAR_TARGET_CONFIG"]=str(effective)
+    print("[oscar] PERF_RUNTIME_CONFIG " + json.dumps(runtime_feature_summary(config, args.variant), sort_keys=True), flush=True)
     env["OSCAR_RUN_NPU_TESTS"]="1"
     if not args.only:
         env["OSCAR_TERMINAL_LOG_MODE"] = "compact"
@@ -154,6 +180,8 @@ def main() -> int:
     validated = set()
     try:
         for name, command in stages:
+            if name == "mdl-decode-npu":
+                (log_dir / "mdl-decode-report.json").unlink(missing_ok=True)
             # A repeated --log-dir must not let stale success reports satisfy
             # a new phase if its child forgets to write evidence (#136).
             if not args.only and name in {"native-synthetic", "service-probe"}:
@@ -169,6 +197,12 @@ def main() -> int:
                 status.update(status="failed", failed_phase=name)
                 rc = result.returncode
                 break
+            if name == "mdl-decode-npu":
+                try:
+                    _validate_mdl_report(log_dir / "mdl-decode-report.json")
+                except RuntimeError as error:
+                    rc = _gate_failed(status, log_dir, name, str(error))
+                    break
             if args.only:
                 continue
             if name == "native-synthetic":
@@ -256,7 +290,7 @@ def main() -> int:
         # The managed server preserves ownership and validates a real request
         # before staying in the foreground. It never starts after failed probes.
         from .service_probe import main as service_main
-        serve_argv = ["service_probe","--config",str(args.config.resolve()),"--serve",
+        serve_argv = ["service_probe","--config",str(effective),"--serve",
                       "--log-dir",str(log_dir/"serve"),"--output",str(log_dir/"serve.json")]
         try:
             with _temporary_process_context(env, serve_argv):

@@ -34,7 +34,8 @@ def test_dual_spec_preserves_native_storage_and_metadata_copy(native_specs):
     assert spec.block_size == 5632 == 2 * normal["full"].block_size
     assert spec.page_size_bytes == normal["full"].page_size_bytes == 817152
     assert spec.real_page_size_bytes == 765952
-    assert registry.KVCacheSpecRegistry.get_manager_class(spec).__name__ == "FullAttentionManager"
+    assert registry.KVCacheSpecRegistry.get_manager_class(spec) is ours.OscarFullAttentionManager
+    assert issubclass(ours.OscarFullAttentionManager, ours.FullAttentionManager)
     view = spec.copy_with_new_block_size(128)
     assert view.request_window_storage and view.metadata_block_view
     assert view.storage_block_size == 5632 and view.page_size_bytes == 817152

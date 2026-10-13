@@ -45,6 +45,7 @@ class OscarMetadata:
     # Shared fixed [request-capacity,2] int64 storage (slot,epoch), sliced by
     # request rows, never query-token rows. None preserves the legacy format.
     window_map: Any = None
+    prepare_epoch: Any = None
 
     @property
     def block_table(self):
@@ -162,6 +163,11 @@ def from_common(common: Any, *, capacity: MetadataCapacity | None = None,
                                        actual_tokens=common.num_actual_tokens,
                                        padded_tokens=metadata.num_input_tokens)
             metadata = replace(metadata, current_only_plan=plan)
+    epoch = getattr(common, "_oscar_prepare_epoch", None)
+    if epoch is None:
+        epoch = object()
+        common._oscar_prepare_epoch = epoch
+    metadata = replace(metadata, prepare_epoch=epoch)
     return metadata
 
 

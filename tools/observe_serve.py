@@ -1195,7 +1195,7 @@ def main(argv=None) -> int:
     parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--plan", action="store_true")
     parser.add_argument("--enable-prefix-caching", action=argparse.BooleanOptionalAction, default=None,
-                        help="pass the native prefix-cache switch; enabled by default, explicit false is diagnostic")
+                        help="pass the native prefix-cache switch; disabled by default on aisbench-stable")
     parser.add_argument("--probe-only", action="store_true",
                         help="finish after candidate operator/graph/latency gates; do not start a model")
     parser.add_argument("--diagnose-q4", action="store_true",

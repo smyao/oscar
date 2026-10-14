@@ -123,6 +123,9 @@ def test_every_install_phase_and_service_receive_budgetless_config(monkeypatch, 
         return config
 
     def phase(name, command, *, env, **kwargs):
+        if name == "server":
+            assert kwargs["timeout"] is None
+            return launch(command[0], command, env)
         check(env)
         if "--config" in command:
             assert command[command.index("--config") + 1] == env["OSCAR_TARGET_CONFIG"]
@@ -140,7 +143,6 @@ def test_every_install_phase_and_service_receive_budgetless_config(monkeypatch, 
         raise Started
 
     monkeypatch.setattr(install_serve, "run_phase", phase)
-    monkeypatch.setattr(install_serve.os, "execvpe", launch)
     with pytest.raises(Started):
         install_serve.main(["--config", str(path), "--log-dir", str(logs),
                             "--variant", "candidate"] +

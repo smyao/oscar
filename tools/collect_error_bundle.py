@@ -19,12 +19,14 @@ import stat
 import sys
 
 ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+DEVICE_FAULT = re.compile(r"aive[cf] error|timeout or trap|OSCAR.*(?:Trap|trapped)|"
+                          r"\b(?:error\s*code|errcode|error)\b[\"']?\s*[:=]?\s*(?:is\s+)?5070\d{2}\b|"
+                          r"\b\w*(?:Error|Exception):[^\n]*?(?<![\w.])5070\d{2}(?![\w.])", re.I)
 FAULT = re.compile(r"\b(?:ERROR|FATAL|FAILED|Traceback|Segfault)\b|"
-                   r"\b\w*(?:Error|Exception):|5070\d+|aive[cf] error|"
+                   r"\b\w*(?:Error|Exception):|aive[cf] error|"
                    r"timeout or trap|site=.*family=|\"status\"\s*:\s*\"failed\"", re.I)
-DETAIL = re.compile(r"\b\w*(?:Error|Exception):|5070\d+|aive[cf] error|"
-                    r"timeout or trap|site=.*family=|error code|errcode|fault kernel|"
-                    r'"(?:error|failed_phase|exit_code|returncode)"\s*:', re.I)
+DETAIL = re.compile(r"\b\w*(?:Error|Exception):|aive[cf] error|"
+                    r"timeout or trap|site=.*family=|fault kernel", re.I)
 INFO = re.compile(r"PERF_RUNTIME_CONFIG|SERVE_MODE|devices=.*port=|"
                   r"max_num_batched_tokens|Avg prompt throughput|SpecDecoding metrics|"
                   r"OSCAR_GUARD_HOST_SYNC|OSCAR_DEBUG_SYNC|"
@@ -36,6 +38,55 @@ PREFIX = re.compile(r"^\([^)]*\)\s+(?:ERROR|WARNING|INFO|DEBUG)\s+"
 ROLES = ("worker_or_device", "engine", "other", "api")
 SUFFIXES = {".log", ".txt", ".jsonl", ".json", ".out", ".err"}
 MAX_LINE = 64 * 1024
+
+
+def error_flags(line):
+    """Inspect JSON error fields, never arbitrary timestamp/PID/hash digits.
+
+    Also handle pretty-printed JSON fields and run_phase's RESULT records.
+    The returned flags select excerpts; the original text is always retained.
+    """
+    text = line.strip()
+    for prefix in ("RESULT ", "SERVICE_RESULT "):
+        if text.startswith(prefix):
+            text = text[len(prefix):]
+            break
+    if text.startswith('"'):
+        text = "{" + text.rstrip(",") + "}"
+    try:
+        record = json.loads(text) if text.startswith("{") else None
+    except (ValueError, RecursionError):
+        record = None
+    if not isinstance(record, dict):
+        device = bool(DEVICE_FAULT.search(line))
+        return bool(FAULT.search(line)) or device, bool(DETAIL.search(line)) or device
+    fault = detail = False
+    pending = [record]
+    while pending:
+        item = pending.pop()
+        if isinstance(item, list):
+            pending.extend(item)
+        elif isinstance(item, dict):
+            for key, value in item.items():
+                key = key.lower()
+                if key in {"error", "error_type", "exception", "traceback", "failed_phase"} and value:
+                    fault = detail = True
+                elif key in {"returncode", "exit_code", "error_code", "errcode"}:
+                    try:
+                        failed = int(value) != 0 if value is not None else False
+                    except (ValueError, TypeError, OverflowError):
+                        failed = False
+                    fault |= failed
+                    detail |= failed
+                elif key in {"status", "level", "severity"} and str(value).lower() in {"failed", "error", "fatal"}:
+                    fault = detail = True
+                elif key in {"message", "msg"} and isinstance(value, str):
+                    device = bool(DEVICE_FAULT.search(value))
+                    fault |= bool(FAULT.search(value)) or device
+                    detail |= bool(DETAIL.search(value)) or device
+                if isinstance(value, (dict, list)):
+                    pending.append(value)
+    return fault, detail
 
 
 def clip(text, size):
@@ -62,7 +113,7 @@ def role(line):
         return "engine"
     if "EngineDeadError" in line:
         return "api"
-    if re.search(r"aive[cf] error|\b5070\d+\b|OSCAR.*(?:Trap|trapped)", line, re.I):
+    if DEVICE_FAULT.search(line):
         return "worker_or_device"
     return "other"
 
@@ -118,7 +169,8 @@ def scan(stream, *, size=None):
             last_stamp = match[0]
         row = (lines, clip(line, 1800))
         kind = role(line)
-        if FAULT.search(line):
+        fault, detail = error_flags(line)
+        if fault:
             counts[kind] += 1
             if kind not in windows:
                 windows[kind] = {"first_error_line": lines, "rows": list(before), "left": 120}
@@ -126,7 +178,7 @@ def scan(stream, *, size=None):
             if window["left"]:
                 window["rows"].append(row)
                 window["left"] -= 1
-        if DETAIL.search(line):
+        if detail:
             detail_matches += 1
             key = signature(line)
             if key not in detail_keys and len(details) < 24:
@@ -203,7 +255,7 @@ def make_report(reports, *, root, omitted, notices, max_bytes):
             blocks.append((8, index, "CONFIG / LAST SAMPLED PROGRESS " + source, dedup(report["info"]), 1600))
         if report["tail"]:
             blocks.append((9, index, "TAIL " + source, dedup(report["tail"]), 600))
-    header = ("OSCAR ERROR BUNDLE v1\nUTC=" + datetime.now(timezone.utc).isoformat()
+    header = ("OSCAR ERROR BUNDLE v2\nUTC=" + datetime.now(timezone.utc).isoformat()
               + f"\nlogs_root={root}\nselected_sources={len(reports)} omitted_older_files={omitted}\n"
               + "Read-only excerpts; no NPU/test/restart. Missing errors do NOT mean success.\n"
               + "Different paths/timestamps may be different runs. File mtime is not the error time.\n"
@@ -279,11 +331,19 @@ def main(argv=None):
             reports.append((name, report))
         except (OSError, ValueError) as error:
             reports.append((name, {"read_error": str(error)}))
+            print(f"READ_ERROR: {name}: {error}", file=sys.stderr, flush=True)
+            if path in explicit:
+                notices.append(f"terminal file NOT collected: {name}; use --terminal - to paste existing scrollback")
             failures += 1
     content = make_report(reports, root=root, omitted=omitted, notices=notices, max_bytes=args.max_kb * 1024)
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("x", encoding="utf-8") as stream:
         stream.write(content)
+    primary = any(report.get("error_line_counts", {}).get(kind, 0)
+                  for _, report in reports for kind in ("worker_or_device", "engine"))
+    if not primary:
+        print("未找到 Worker/device 或 EngineCore 首错；运行轨迹和 API 连带报错不足以定位根因。"
+              "\n若服务输出尚未保存，请用 --terminal - 粘贴当前服务终端的异常栈。", file=sys.stderr, flush=True)
     print(f"汇总文件：{output}\n大小：{len(content.encode())} 字节（上限 {args.max_kb} KiB）"
           f"\n来源：{len(reports)} 个；未选入的旧文件：{omitted}；读取失败：{failures}"
           "\n只需发送这个汇总文件；截断/遗漏均在文件内标注。", flush=True)

@@ -341,9 +341,12 @@ def cleanup_group(proc: subprocess.Popen, grace: float) -> bool:
 
 
 def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
-              timeout: float, env: dict[str, str] | None = None,
-              grace: float = 5, heartbeat: float = 15) -> PhaseResult:
-    if not command or timeout <= 0 or grace < 0:
+              timeout: float | None, env: dict[str, str] | None = None,
+              grace: float = 5, heartbeat: float = 15,
+              terminal_mode: str | None = None) -> PhaseResult:
+    # Only a persistent formal service uses None; build/probe deadlines stay
+    # finite. The owned group's shutdown is still bounded by grace.
+    if not command or (timeout is not None and timeout <= 0) or grace < 0:
         raise ValueError("phase requires a command, positive timeout and nonnegative grace")
     log_dir.mkdir(parents=True, exist_ok=True)
     logfile = log_dir / f"{name}.log"
@@ -353,16 +356,19 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
     cleaned = True
     rc = 127
     old_signals = {}
+    interrupt_signal = signal.SIGINT
 
     def on_signal(signum, _frame):
+        nonlocal interrupt_signal
+        interrupt_signal = signum
         raise KeyboardInterrupt(f"signal {signum}")
 
     environment = dict(os.environ if env is None else env)
     environment["PYTHONUNBUFFERED"] = "1"
-    with live_log(logfile, mode=environment.get("OSCAR_TERMINAL_LOG_MODE")) as stream:
+    with live_log(logfile, mode=terminal_mode or environment.get("OSCAR_TERMINAL_LOG_MODE")) as stream:
         stream.write(f"START phase={name} cwd={cwd.resolve()} command={json.dumps(command)}\n")
         try:
-            for sig in (signal.SIGTERM, signal.SIGINT):
+            for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
                 old_signals[sig] = signal.signal(sig, on_signal)
             proc = subprocess.Popen(command, cwd=cwd, env=environment, stdin=subprocess.DEVNULL,
                                     stdout=stream, stderr=subprocess.STDOUT,
@@ -370,7 +376,7 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
             next_heartbeat = started + heartbeat
             while proc.poll() is None:
                 now = time.monotonic()
-                if now - started >= timeout:
+                if timeout is not None and now - started >= timeout:
                     expired = True
                     rc = 124
                     stream.write(f"TIMEOUT phase={name} limit={timeout}s\n")
@@ -378,12 +384,12 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
                 if now >= next_heartbeat:
                     terminal_line(f"[oscar] phase={name} running seconds={now-started:.1f} log={logfile}")
                     next_heartbeat = now + heartbeat
-                time.sleep(min(0.1, max(timeout-(now-started), 0.001)))
+                time.sleep(0.1 if timeout is None else min(0.1, max(timeout-(now-started), 0.001)))
             if not expired:
                 rc = int(proc.returncode)
         except KeyboardInterrupt as exc:
             interrupted = True
-            rc = 130
+            rc = 128 + interrupt_signal
             stream.write(f"INTERRUPTED phase={name}: {exc}\n")
         except OSError as exc:
             stream.write(f"EXEC_ERROR phase={name}: {exc}\n")

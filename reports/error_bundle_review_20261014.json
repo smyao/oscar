@@ -1,0 +1,130 @@
+{
+  "scope": "User-supplied bounded excerpts only; no access to complete server logs or NPU",
+  "source_sha256": "9f91c1c82cc10caaa938ce3a6642876ee0dcd2dca9fa6894cc1dfdd723fb336c",
+  "source_bytes": 37896,
+  "run": "20261014T032237.235116Z",
+  "missing_input": "/workspace/oscar/oscar-new/server-terminal.log",
+  "findings": [
+    "v1 regex matched fractional wall_time digits in normal JSON dispatch events as 5070xx errors.",
+    "v1 detail regex mislabeled successful returncode=0 build records as exceptions.",
+    "Direct install_serve previously exec-replaced itself without preserving service stdout/stderr.",
+    "No actual Worker/EngineCore exception stack present in the supplied bundle; model-crash root cause remains unresolved.",
+    "attention_dispatched is emitted after asynchronous launches with device_completion=not_observed_here, not a synchronization/completion result."
+  ],
+  "false_positive_rows": [
+    {
+      "source_line": 527,
+      "pid": 175860,
+      "rank": 2,
+      "event": "attention_dispatched",
+      "wall_time": 1791948488.5070946,
+      "corrected_error_flags": [
+        false,
+        false
+      ]
+    },
+    {
+      "source_line": 747,
+      "pid": 175820,
+      "rank": 1,
+      "event": "attention_dispatched",
+      "wall_time": 1791948660.507023,
+      "corrected_error_flags": [
+        false,
+        false
+      ]
+    }
+  ],
+  "complete_json_trace_excerpt_rows": 49,
+  "corrected_fault_count_in_complete_trace_excerpt_rows": 0,
+  "last_visible_trace_per_rank": {
+    "2": {
+      "source_line": 769,
+      "cache_format": "striped_v1",
+      "current_source": "native_fia",
+      "cv_operator": "attention_cv_mdl_decode_out",
+      "device_completion": "not_observed_here",
+      "event": "attention_progress",
+      "layer": "mtp.layers.0.self_attn.attn",
+      "max_query_len": 4,
+      "max_seq_len": 0,
+      "pid": 175860,
+      "rank": 2,
+      "requests": 1,
+      "route": "ascendc_int2_cv",
+      "tokens": 4,
+      "wall_time": 1791948662.99682
+    },
+    "1": {
+      "source_line": 770,
+      "cache_format": "striped_v1",
+      "capture_origin": false,
+      "current_source": "ascendc_cv",
+      "cv_operator": "attention_cv_mdl_q1_out",
+      "device_completion": "not_observed_here",
+      "event": "attention_dispatched",
+      "layer": "mtp.layers.0.self_attn.attn",
+      "max_query_len": 1,
+      "max_seq_len": 0,
+      "pid": 175820,
+      "rank": 1,
+      "requests": 2,
+      "route": "ascendc_int2_cv",
+      "source_splits": 1,
+      "tokens": 772,
+      "wall_time": 1791948662.9479785
+    },
+    "3": {
+      "source_line": 769,
+      "cache_format": "striped_v1",
+      "current_source": "native_fia",
+      "cv_operator": "attention_cv_mdl_decode_out",
+      "device_completion": "not_observed_here",
+      "event": "attention_progress",
+      "layer": "mtp.layers.0.self_attn.attn",
+      "max_query_len": 4,
+      "max_seq_len": 0,
+      "pid": 175934,
+      "rank": 3,
+      "requests": 1,
+      "route": "ascendc_int2_cv",
+      "tokens": 4,
+      "wall_time": 1791948662.9890392
+    },
+    "0": {
+      "source_line": 769,
+      "cache_format": "striped_v1",
+      "current_source": "native_fia",
+      "cv_operator": "attention_cv_mdl_decode_out",
+      "device_completion": "not_observed_here",
+      "event": "attention_progress",
+      "layer": "mtp.layers.0.self_attn.attn",
+      "max_query_len": 4,
+      "max_seq_len": 0,
+      "pid": 175800,
+      "rank": 0,
+      "requests": 1,
+      "route": "ascendc_int2_cv",
+      "tokens": 4,
+      "wall_time": 1791948662.9398801
+    }
+  },
+  "changes": {
+    "collector_version": 2,
+    "output_cap_bytes": 49152,
+    "formal_service_log": "logs/<run>/server.log",
+    "formal_service_status": "logs/<run>/status.json and server.json",
+    "formal_service_deadline": null,
+    "build_probe_deadlines": "unchanged",
+    "runtime_math_scheduler_prefix_cache": "unchanged"
+  },
+  "validation": {
+    "host_orchestration_and_collector": 118,
+    "local_http_log_forwarding": 1,
+    "candidate_routing": 30,
+    "npu": "not_run",
+    "graph": "not_run",
+    "AISBench": "not_rerun",
+    "crash_fixed": "not_established"
+  }
+}

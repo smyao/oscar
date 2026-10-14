@@ -3,10 +3,12 @@
 Host orchestration tests only; no model, NPU, installation or probes run here.
 """
 import json
+import sys
 
 import pytest
 
 from tools import install_serve
+from tools import phase as real_phase
 from tools.phase import PhaseResult
 
 
@@ -46,7 +48,7 @@ def test_candidate_plan_is_read_only_and_has_no_probes(tmp_path, capsys, rear_ca
     ("candidate", False, True), ("baseline", True, False), (None, True, True), (None, False, False),
 ])
 @pytest.mark.parametrize("rear_cards", [False, True])
-def test_all_phases_and_exec_share_selected_config_without_mutating_original(
+def test_all_phases_and_service_share_selected_config_without_mutating_original(
         monkeypatch, tmp_path, variant, original, enabled, rear_cards):
     path = config_file(tmp_path, original)
     before = path.read_bytes()
@@ -56,6 +58,9 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
     monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "8,9,10,11")
     seen = []
     def run_phase(name, command, *, env, **kwargs):
+        if name == "server":
+            assert kwargs["timeout"] is None and kwargs["terminal_mode"] == "full"
+            return launch(command[0], command, env)
         seen.append(name)
         selected = json.loads(open(env["OSCAR_TARGET_CONFIG"]).read())
         assert selected["experimental_history_reuse"] is enabled
@@ -88,7 +93,6 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
         assert service_args[service_args.index("--port") + 1] == str(port)
         raise Served
     monkeypatch.setattr(install_serve, "run_phase", run_phase)
-    monkeypatch.setattr(install_serve.os, "execvpe", launch)
     args = ["--config", str(path), "--log-dir", str(logs)]
     if variant:
         args += ["--variant", variant]
@@ -102,13 +106,51 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
     assert status["probes"] == "none"
 
 
-def test_build_failure_preserves_rc_and_prevents_exec(monkeypatch, tmp_path):
+def test_build_failure_preserves_rc_and_prevents_service(monkeypatch, tmp_path):
     path = config_file(tmp_path)
-    monkeypatch.setattr(install_serve, "run_phase", lambda name, command, **kwargs:
-        PhaseResult(name, command, 7, 0.0, False, False, "failure.log", True))
-    monkeypatch.setattr(install_serve.os, "execvpe", lambda *args:
-                        pytest.fail("must not start service after failed installation"))
+    def failing_build(name, command, **kwargs):
+        assert name == "build-dependencies"
+        return PhaseResult(name, command, 7, 0.0, False, False, "failure.log", True)
+    monkeypatch.setattr(install_serve, "run_phase", failing_build)
     logs = tmp_path / "failed"
     assert install_serve.main(["--config", str(path), "--log-dir", str(logs),
                                "--variant", "candidate"]) == 7
     assert json.loads((logs / "status.json").read_text())["status"] == "failed"
+
+
+@pytest.mark.parametrize("child_code,shell_code,expected_status", [
+    (0, 0, "stopped"), (7, 7, "failed"), (-9, 137, "failed"),
+])
+def test_formal_service_logs_real_stdout_stderr_exit_and_has_no_build_deadline(
+        monkeypatch, tmp_path, capsys, child_code, shell_code, expected_status):
+    path = config_file(tmp_path)
+    config = json.loads(path.read_text())
+    config.update(phase_timeout_seconds=0.01, shutdown_timeout_seconds=0.2)
+    path.write_text(json.dumps(config))
+    logs = tmp_path / "run"
+    seen = []
+    def runner(name, command, **kwargs):
+        seen.append(name)
+        if name != "server":
+            return PhaseResult(name, command, 0, 0., False, False, str(logs / name), True)
+        assert kwargs["timeout"] is None
+        child = ("import os,sys,time; print('SERVICE-ready'); time.sleep(.1); "
+                 "print('SERVICE-stderr',file=sys.stderr); "
+                 + ("os.kill(os.getpid(),9)" if child_code == -9 else f"sys.exit({child_code})"))
+        return real_phase.run_phase(name, [sys.executable, "-c", child], **kwargs)
+    monkeypatch.setattr(install_serve, "run_phase", runner)
+    # Direct serve used to print all output regardless of compact build mode.
+    monkeypatch.setenv("OSCAR_TERMINAL_LOG_MODE", "compact")
+    assert install_serve.main(["--config", str(path), "--variant", "candidate",
+                               "--log-dir", str(logs)]) == shell_code
+    assert seen == [*install_serve.BUILD_PHASES, "server"]
+    disk = (logs / "server.log").read_text()
+    terminal = capsys.readouterr().out
+    assert "SERVICE-ready" in disk and "SERVICE-ready" in terminal
+    assert "SERVICE-stderr" in disk and "SERVICE-stderr" in terminal
+    assert str(logs / "server.log") in terminal
+    status = json.loads((logs / "status.json").read_text())
+    assert status["status"] == expected_status
+    assert status["returncode"] == child_code
+    assert status["server"]["cleanup_complete"] and not status["server"]["timed_out"]
+    assert json.loads((logs / "server.json").read_text())["returncode"] == child_code

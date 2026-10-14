@@ -1,13 +1,13 @@
 # 档案 #75/#94/#95/#116/#117/#120/#125：相位输出实时到终端、完整日志落盘、保留真实退出码；本入口按用户要求只编译安装并直接启动，不含任何测试或probe。
 # #148/#150：安装最新产物不等于启用优化；显式candidate将同一有效配置传给所有相位和服务。
-"""Install, compile and prepare rotations, then exec the formal service; no tests, no probes."""
+"""Install, compile and prepare rotations, then log the foreground service; no probes."""
 from __future__ import annotations
 import argparse
 from dataclasses import asdict
 from datetime import datetime, timezone
 import json
-import os
 from pathlib import Path
+import shlex
 import sys
 from .deploy import plan as deploy_plan
 from .phase import atomic_json, run_phase, terminal_line
@@ -85,14 +85,14 @@ def main(argv=None) -> int:
                   effective_config=str(effective_path),
                   placement="rear" if args.rear_cards else "configured",
                   target_devices=config["devices"], port=config["port"],
-                  optimizations=variant_features(config))
+                  optimizations=variant_features(config), server_log=str(log_dir / "server.log"))
     if args.plan:
         print(json.dumps({"stages": stages, "serve": serve_command, "probes": "none",
                           "vllm_argv": serve_argv(config),
                           "variant": variant, "optimizations": status["optimizations"],
                           "runtime_selection": runtime_feature_summary(config, variant),
                           "target_devices": config["devices"], "port": config["port"],
-                          "placement": status["placement"]}, indent=2))
+                          "placement": status["placement"], "server_log": status["server_log"]}, indent=2))
         return 0
     try:
         env = target_env(config)
@@ -136,8 +136,28 @@ def main(argv=None) -> int:
     status["status"] = "serving"
     atomic_json(log_dir / "status.json", status)
     terminal_line("[oscar] build complete; starting formal service in the foreground (no probes)")
-    os.execvpe(sys.executable, serve_command, env)
-    return 127  # unreachable: execvpe replaces this process
+    terminal_line(f"[oscar] service stdout + stderr: terminal AND {status['server_log']}")
+    terminal_line(f"[oscar] view service log: tail -F {shlex.quote(status['server_log'])}")
+    terminal_line(f"[oscar] error bundle: python3 -m tools.collect_error_bundle --logs-dir {shlex.quote(str(log_dir))}")
+    try:
+        # A long-lived server must not inherit the installation phase timeout.
+        # File-backed forwarding cannot fill a pipe and stall model workers.
+        result = run_phase("server", serve_command, cwd=ROOT, log_dir=log_dir,
+                           timeout=None, env=env, grace=config["shutdown_timeout_seconds"],
+                           heartbeat=60, terminal_mode="full")
+    except BaseException as exc:
+        status.update(status="failed", failed_phase="server", error=f"{type(exc).__name__}: {exc}")
+        atomic_json(log_dir / "status.json", status)
+        raise
+    status.update(status="interrupted" if result.interrupted else
+                  ("stopped" if result.returncode == 0 else "failed"),
+                  server=asdict(result), returncode=result.returncode)
+    if result.returncode:
+        status["failed_phase"] = "server"
+    atomic_json(log_dir / "status.json", status)
+    # Keep the raw child result in JSON, and the conventional signal exit code
+    # for the shell (e.g. SIGKILL=-9 -> 137, not Python's sys.exit(-9)=247).
+    return result.returncode if result.returncode >= 0 else 128 - result.returncode
 
 
 if __name__ == "__main__":

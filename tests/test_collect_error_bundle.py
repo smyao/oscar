@@ -1,6 +1,7 @@
 """Archive #94/#95/#118/#125/#157: retain primary errors in bounded excerpts."""
 import hashlib
 import io
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -54,6 +55,55 @@ def test_normal_hccl_timeout_info_is_not_a_fault():
                   "The timeout interval of the HCCL operator is 1836s. "
                   "Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000\n")
     assert result["error_line_counts"] == {}
+
+
+@pytest.mark.parametrize("stamp", [1791948488.5070946, 1791948660.507023])
+def test_actual_dispatch_timestamps_do_not_fabricate_device_faults(stamp):
+    # User's 20261014T032237 run: both rows were falsely labeled exceptions.
+    result = scan(json.dumps({"event": "attention_dispatched", "wall_time": stamp,
+        "pid": 507035, "rank": 2, "cv_operator": "attention_cv_mdl_decode_out",
+        "device_completion": "not_observed_here"}) + "\n")
+    assert result["error_line_counts"] == {} and result["detail_matches"] == 0
+    report = bundle.make_report([("worker.jsonl", result)], root="logs", omitted=0,
+                                notices=[], max_bytes=49152)
+    assert "No Worker/device or EngineCore error found" in report
+    assert "EXCEPTION DETAILS" not in report
+
+
+@pytest.mark.parametrize("record", [
+    {"returncode": 0, "exit_code": None, "error": None, "failed_phase": None},
+    {"status": "passed", "returncode": "0", "elapsed_seconds": 1.507035},
+    {"phases": [{"returncode": 0}, {"exit_code": 0}]},
+])
+def test_successful_json_results_are_not_exceptions(record):
+    for text in (json.dumps(record), json.dumps(record, indent=2), "RESULT " + json.dumps(record)):
+        result = scan(text + "\n")
+        assert result["error_line_counts"] == {} and result["detail_matches"] == 0
+
+
+@pytest.mark.parametrize("record", [
+    {"returncode": -9}, {"exit_code": "2"}, {"status": "failed"},
+    {"level": "ERROR", "message": "worker exited"},
+    {"error": "device stopped"}, {"server": {"returncode": 7}},
+])
+def test_real_structured_failures_still_keep_context_and_details(record):
+    for text in (json.dumps(record), json.dumps(record, indent=2), "RESULT " + json.dumps(record)):
+        result = scan(text + "\n")
+        assert result["error_line_counts"] and result["detail_matches"]
+
+
+@pytest.mark.parametrize("text", ["ACL error code is 507035", "error code: 507035",
+                                    "ErrCode=507035", "aivec error", "timeout or trap error",
+                                    "RuntimeError: synchronize failed with 507035"])
+def test_plain_device_faults_remain_primary_evidence(text):
+    result = scan(text + "\n")
+    assert result["error_line_counts"] == {"worker_or_device": 1}
+    assert result["detail_matches"] == 1
+
+
+def test_plain_fractional_timestamps_are_not_device_faults():
+    result = scan("elapsed=1.507035 timestamp=1791948660.507023 pid=507035\n")
+    assert result["error_line_counts"] == {} and not result["detail_matches"]
 
 
 def test_stream_snapshot_and_oversized_line_hash():
@@ -111,11 +161,15 @@ def test_standalone_cli_pasted_terminal_plus_directory(tmp_path):
     assert str(output) in result.stdout and output.stat().st_size <= 49152
 
 
-def test_read_failures_overwrite_and_fifo_are_explicit(tmp_path):
+def test_read_failures_overwrite_and_fifo_are_explicit(tmp_path, capsys):
     missing = tmp_path / "missing.log"
     output = tmp_path / "key.txt"
     assert bundle.main(["--logs-dir", str(tmp_path), "--terminal", str(missing), "--output", str(output)]) == 1
     assert "READ_ERROR" in output.read_text()
+    messages = capsys.readouterr()
+    assert str(missing) in messages.err and "READ_ERROR" in messages.err
+    assert "--terminal -" in messages.err
+    assert "terminal file NOT collected" in output.read_text()
     with pytest.raises(SystemExit):
         bundle.main(["--output", str(output)])
     pipe = tmp_path / "pipe"

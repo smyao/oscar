@@ -43,6 +43,30 @@ def test_exec_failure_recorded(tmp_path):
     assert result.returncode == 127 and "EXEC_ERROR" in Path(result.log).read_text()
 
 
+@pytest.mark.parametrize("stop_signal", [signal.SIGINT, signal.SIGTERM, signal.SIGHUP])
+def test_persistent_service_interrupt_drains_log_and_cleans_owned_group(tmp_path, stop_signal):
+    # Isolate signal handling from pytest. The child signals its own supervisor
+    # only after installing its shutdown handler, then waits for group cleanup.
+    child = tmp_path / "child.py"
+    child.write_text("import os,signal\n"
+                     "def stop(*args):\n"
+                     "    os.write(2,b'CHILD-shutdown-final')\n"
+                     "    raise SystemExit(0)\n"
+                     "signal.signal(signal.SIGTERM,stop)\n"
+                     f"os.kill(os.getppid(),{int(stop_signal)})\n"
+                     "signal.pause()\n")
+    supervisor = ("from pathlib import Path; import sys; from tools.phase import run_phase; "
+                  "r=run_phase('server',[sys.executable,sys.argv[1]],cwd=Path.cwd(),"
+                  "log_dir=Path(sys.argv[2]),timeout=None,grace=.5); sys.exit(r.returncode)")
+    outcome = subprocess.run([sys.executable, "-c", supervisor, str(child), str(tmp_path)],
+                             cwd=ROOT, text=True, capture_output=True, timeout=8)
+    assert outcome.returncode == 128 + stop_signal, outcome.stderr
+    assert "CHILD-shutdown-final" in outcome.stdout
+    result = json.loads((tmp_path / "server.json").read_text())
+    assert result["interrupted"] and result["cleanup_complete"] and not result["timed_out"]
+    assert result["returncode"] == 128 + stop_signal
+
+
 class ExitingChild:
     """A deterministic owned child in Darwin's exit-before-waitpid window."""
     pid = 42900

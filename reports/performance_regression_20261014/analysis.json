@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-14",
+  "source_commit": "df2cada",
+  "archive_basis": ["#34", "#36", "#94", "#95", "#130", "#132", "#133", "#134", "#156", "#157"],
+  "user_observation": {"before_minutes": 10, "after_minutes": 30, "same_length_and_benchmark": true},
+  "conclusion": "已确认源码存在额外调度与同步成本机制，但没有本轮实际服务日志，不能把某一机制认定为3倍回退的唯一根因。",
+  "unknowns": ["10分钟运行的源码SHA和有效启动参数", "本轮原生解析后的token预算", "两次是否都计入预热", "实际decode批次与MTP有效接受量", "prefix命中/抢占/重算计数", "运行时调试变量及物理卡占用"],
+  "findings": [
+    {
+      "name": "继承的诊断同步",
+      "source_fact": "target_env复制启动环境；install_serve未清除诊断开关。OSCAR_GUARD_HOST_SYNC=1将每个非空status族单独发核并synchronize；普通FULL forward为4族。OSCAR_DEBUG_SYNC对符合token阈值的eager相位在前后同步。",
+      "scope": "默认关闭；guard的dummy/capture主路径保持融合。是否在本轮启用未知，不能假定图回放逐族同步。",
+      "verification": "读取正在服务的worker /proc/<pid>/environ白名单，不能只看当前终端env。",
+      "source": ["tools/target_cli.py:target_env", "tools/install_serve.py:main", "oscar_ascend/integration/guard_diag.py:run_status_guard", "oscar_ascend/timing.py:_Phase"]
+    },
+    {
+      "name": "原生小预算与联合检查点切分",
+      "source_fact": "FULL2304/GDN768/hash768、budget2048时OSCAR常交替1536/768；32K为28步、原生Mamba22步；65100为56步、原生43步。",
+      "evidence": "schedule_counts.json，reproduce_schedule.py调用当前OSCAR函数和只读reference原生方法AST。",
+      "scope": "单个冷请求每步可用全部预算的主机推演；27.27%/30.23%是步数增长，不是NPU时间增长或全模型3倍解释。混批剩余预算另有变化。",
+      "tradeoff": "保留共同checkpoint有实际部分命中价值；不能删除GDN裁决或取消APC获取速度。",
+      "source": ["oscar_ascend/integration/prefix_cache.py:aligned_chunk_tokens", "references/vllm/vllm/v1/core/sched/scheduler.py:Scheduler._mamba_block_aligned_split"]
+    },
+    {
+      "name": "两次服务配置可能不等价",
+      "source_fact": "当前默认省略max_num_batched_tokens、关闭whole-prefill；历史56a2bf1配置仍有16384，candidate可提高whole-prefill预算。当前按用户要求使用原生预算。",
+      "scope": "历史代码不是用户10分钟运行的证据。若旧运行确为较大预算，模型调用频度和C16/C4路由都可能变化。编译范围2048不能独立证明最终调度预算。",
+      "verification": "旧/新PERF_RUNTIME_CONFIG、effective-target.json和Chunked prefill is enabled with max_num_batched_tokens日志；不为定位抬高原生预算。",
+      "source": ["tools/serving_variants.py:variant_config", "oscar_ascend/ops/cv_dispatch.py:select_cv_op"]
+    },
+    {
+      "name": "长历史CV与MTP的放大成本",
+      "source_fact": "当前eager路径仍包含prepare/rotate/INT2历史与精确窗口CV/current FIA/merge/store/guard。MDL仅替换合格q4/q1；max_query_len>=8192才走C16，普通小prefill走C4。MTP仍为3个draft token且drafter eager。",
+      "scope": "更多小块会增加固定调用和后续draft机会，但不能将步数直接乘成完整attention工作量或wall。相同benchmark也不保证MTP接受量、prefix热度、驻留/实际decode批次相同。",
+      "verification": "联合看TTFT、TPOT、Running/Waiting、SpecDecoding接受量、prefix hit/preemption，以及trace中的cv_operator、graph replay；Running不是当步decode batch。"
+    },
+    {
+      "name": "先前review的混批128阈值解释不成立",
+      "source_fact": "plan_mixed_decode的values来自query_start_loc_cpu，values[short]<=128限制短请求本步query token总数，不是历史seq_len。32K/64K历史不会单独使此条件失败。",
+      "evidence": "tests/test_mixed_decode_split.py:test_short_query_limit_is_independent_of_history_length",
+      "source": ["oscar_ascend/integration/mixed_decode_split.py:plan_mixed_decode"]
+    },
+    {
+      "name": "最近两次提交与观测缺口",
+      "source_fact": "4aa4d80主要变更测试/探针；df2cada改后四卡与端口，未改推理算子。当前直启仅安装编译相位落盘，正式服务exec继承stdout；默认trace为logs/<run>/trace/worker-*.jsonl，但OSCAR_TRACE_DIR可覆盖。",
+      "scope": "换卡仍可能改变资源竞争/CPU亲和性；原生cpu_binding读取ASCEND_RT_VISIBLE_DEVICES，不能无证据断言硬编码绑错0–3。没有tee/重定向且终端内容丢失时，不能从worker trace重建完整Engine/Spec统计。"
+    }
+  ],
+  "changes_this_turn": ["新增只读、有界性能取证脚本", "启动取证脚本补诊断env和stdout/stderr目标", "增加2048预算32K真实原生pool/coordinator部分命中主机回归"],
+  "validation": {"host_tests_passed": 55, "npu_run": false, "benchmark_rerun": false, "performance_fix_claimed": false, "production_numerical_or_scheduling_changes": false},
+  "test_boundary": "新增2048用例曾暴露旧测试的假设：原生尾块发布可能多出32256 key，不能把所有pool key等同于已验证设备checkpoint。既有大预算断言保持；新增用例独立验证29952及以下FULL可达命中，未据未执行设备数据声称尾状态正确。",
+  "historical_evidence_boundary": "本地缺少档案#156引用的reports/target_64k_120_20261009.txt原文件；不把档案旧统计当成本轮10→30min日志。提取器另外在现存20260929/20260930原始日志验证匹配，仅验证工具。"
+}

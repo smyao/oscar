@@ -28631,3 +28631,28 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **本地验证**：Lima VM（oscar）CANN 9.1.0 CPU-debug 全量 primitive 套件通过（含 guard_error 用例：`OSCAR_GUARD segment=3 index=1024 status=3` 打印并 trap），主机 pytest 1297 passed/11 failed——11 项失败与 077548fa 基线逐项相同（HEAD 既有：whole_prefill 退役残留、observe_serve 计划类、no_fallback_static 既有违规），本改动零新增失败。NPU 未验。
 
 **证据与复验边界**：本条不伪写根因——具体哪族 status 非零需真机一次复现：同一固定命令加 `OSCAR_GUARD_HOST_SYNC=1` 环境变量，trap 时 worker 异常链将直接给出族名；若不再复现，则按 #154 流程继续。observe 入口的 MDL（20–30K q4）与 vector-init NPU 门仍欠账，与新默认 candidate 的推广裁决独立。登记第 8.2 节回归检查表。
+
+
+---
+
+## [158] 真机条目（2026-10-13 用户回传）· init_device 启动显存不足，模型加载前 worker 失败
+
+**证据来源**：用户粘贴的11:58:28–11:59:52服务日志，237个逻辑行、28572字节，SHA256 `2a49ce05d4c1dcc455df56cd27e5d330ee5700c3500bb896ca85d30267109e3d`。这是目标机失败证据；本机源码HEAD `df2cada` 不代表目标机运行版本。
+
+**同族约束**：#94/#95/#125（首因、终端输出和真实退出码）、#118/#122（通用异常外壳不等于根因）、#123（实际物理设备选择须由配置/进程证实）。
+
+**关键原文**：
+
+```text
+(Worker pid=112676) ERROR 10-13 11:58:55 [multiproc_executor.py:888] ValueError: Free memory on device (0.64/29.49 GiB) on startup is less than desired GPU memory utilization (0.9, 26.54 GiB). Decrease GPU memory utilization or reduce GPU memory used by other processes.
+(Worker pid=112752) ERROR 10-13 11:59:13 [multiproc_executor.py:888] ValueError: Free memory on device (0.64/29.49 GiB) on startup is less than desired GPU memory utilization (0.9, 26.54 GiB). Decrease GPU memory utilization or reduce GPU memory used by other processes.
+(Worker pid=112796) ERROR 10-13 11:59:32 [multiproc_executor.py:888] ValueError: Free memory on device (0.63/29.49 GiB) on startup is less than desired GPU memory utilization (0.9, 26.54 GiB). Decrease GPU memory utilization or reduce GPU memory used by other processes.
+```
+
+**已确认**：本项目只读原生 `references/vllm-ascend/vllm_ascend/worker/worker.py::_init_device` 在 `set_device`、`gc.collect`、`empty_cache` 后采集MemorySnapshot，以 `free_memory < total_memory * gpu_memory_utilization` 拒绝启动。`references/vllm/vllm/v1/executor/multiproc_executor.py::WorkerProc.__init__` 先调用init_device，再load_model。本次三个worker在前者失败；后续EngineCore、APIServer异常为连带失败，非本次模型加载、KV分配、chunked-prefill、MTP或OSCAR guard执行时崩溃。片段明确APC和chunked-prefill已启用，但不能用于验收其正确性。
+
+**未确认**：片段无物理卡号、有效配置路径及npu-smi占用者快照。不能把worker PID直接对应物理卡4/5/6，也不能把三条错误外推成四卡全部相同。旧服务/其他进程占用是待核实方向；容器映射、PID命名空间及运行版本也待核。API进程最后的Device:-1不是物理卡映射证据。
+
+**处置与日志工具**：不改原生内存闸、不降低0.9、不关闭prefix cache、不改冻结算子。新增独立 `tools.collect_startup_evidence`，显式日志流式提取首错上下文、关键异常、各PID内存闸、头尾、行号和SHA256；可选只读npu-smi/ps及/proc白名单快照，区分当前状态与历史状态，不杀进程/重置设备、不导入torch、不加入默认部署审计。单文件输出最多256KiB，截断有标记。直启install_serve在构建后exec正式服务，status.json可能一直为serving；服务终端须用tee保存并立即读取PIPESTATUS[0]，不能把构建日志或旧status当最终服务结果。
+
+**本机验证与边界**：7项日志工具测试通过；真实附件提取到3个内存闸及其原始行39/70/101，紧凑证据22638字节。未在目标机执行资源查询、释放或重启；占用来源未定，故障尚未真机复验解决，不新增NPU/图/质量/性能通过结论。

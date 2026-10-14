@@ -137,3 +137,7 @@ FULL本步新发布页采用原生Mamba同类admission延期，防止旧GDN chec
 ### 2026-10-13：32K review复核与验证盲区修复
 
 基线965a6a8。真实原生hash/pool/manager/coordinator执行体证明：共享13824 tokens时，预算2304/8192/16384/66048的共同命中分别为11520/6912/0/0，正好等于已保存GDN checkpoint交集，未发现min/break或null索引错位。不能绕过GDN裁决。运行时/算子/默认启动参数不变；升级32字节夹具、真实32K端点矩阵、独立HTTP oracle和四请求部分前缀对照。专项226通过；非HTTP主机1358通过、22失败/8错误均为基线原有。完整HTTP回归自动审批两次超时，未执行；NPU/图/质量/性能未验收。详见[prefix复核](prefix_caching_compatibility.md)及`reports/prefix_review_20261013/validation.json`。
+
+### 2026-10-14：同负载10→30分钟回退定位
+
+当前df2cada，用户确认同长度、同benchmark；缺两轮有效服务配置和本轮统计。预算2048下，联合FULL/GDN边界令32K冷请求22→28步、65100输入43→56步；计数不等于耗时倍率，不能据此解释全部3倍。逐族guard同步及phase debug同步由直启继承环境决定，优先读取真实worker环境；不凭当前shell猜测。小prefill仍走C4、MTP q4/q1仍有完整历史成本，MDL没有消除这些工作。`mixed_decode_split`的128是query总数而非历史长度。保留APC与原生预算，不删除检查点或改冻结核。新增只读紧凑取证及2048/32K部分命中验证，55项主机检查通过；运行时/算子未改，无NPU或性能通过声明。完整条件、复现脚本与计数见 `reports/performance_regression_20261014/`；重开条件为已有服务日志/trace及worker环境回传，无需重跑AISBench。

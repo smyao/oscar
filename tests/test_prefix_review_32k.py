@@ -56,6 +56,27 @@ MATRIX = [
 SHARED_TOKENS = (2304, 3072, 4608, 6912, 13824, 16896, 30720, 32768)
 
 
+def test_32k_small_budget_preserves_reachable_partial_prefixes(
+        native_groups, monkeypatch, native_hash_chain):
+    # #34/#36/#157: 2048 alternates 1536/768 to preserve joint checkpoints.
+    # The non-aligned tail can publish extra native speculative block keys;
+    # do not treat all pool keys as independently verified GDN device states.
+    # Assert only FULL-admissible shared prefixes through the real coordinator.
+    instance = target_coordinator(native_groups, monkeypatch)
+    ids = [(17 + 37 * i) % 32000 for i in range(32768)]
+    ends = checkpoints(32768, 2048)
+    assert len(ends) == 28
+    assert ends[:6] == [1536, 2304, 3840, 4608, 6144, 6912]
+    assert ends[-4:] == [29184, 29952, 32000, 32768]
+    seed_at_checkpoints(instance, ends, block_hashes=native_hash_chain(ids))
+    for shared, expected in zip(SHARED_TOKENS, [0, 2304, 2304, 4608, 11520, 16128, 29952, 29952]):
+        fork = ids.copy()
+        if shared < len(fork):
+            fork[shared] = (fork[shared] + 1) % 32000
+        _, hit = instance.find_longest_cache_hit(native_hash_chain(fork), 32767)
+        assert hit == expected
+
+
 @pytest.mark.parametrize("budget,endpoints,expected", MATRIX)
 def test_32k_partial_hit_is_exact_checkpoint_intersection(
         native_groups, monkeypatch, native_hash_chain, budget, endpoints, expected):

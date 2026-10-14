@@ -28673,3 +28673,20 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **故障窗口**：10:59:15四rank出现ArgSort AiCPU提示；10:59:18日志为prompt3281.4、generation2.5 tokens/s、Running2、Waiting30、KV4.1%、prefix0%，接受长度4.00、accepted18/drafted18。10:59:19四rank再次在 `pc start=0x124{0,2,4,6}022f56cc`→`current=...5930`（偏移0x264）触发vector exception，与冻结status_guard Trap一致；随后GDN builder第211行的192B H2D及异步输出event同步暴露507035。不能将该异步报错点视为GDN根因，HTTP200头也不能当作请求完成。
 
 **尚未解决的边界**：原始077故障仍未完整修复；本轮没有能够区分target图内guard与后续MTP guard的site/family/code。已有discard-anchor与模型长度上限的独立源码修复、CPU-debug通过，均不能据此冒充此64K服务错误已修复。继续核真实采样有效行语义、batch变化时元数据生命周期及主图/草稿交接；保持APC、冻结guard和原生GDN不变。
+
+
+## [160] 真机条目（2026-10-14 用户回传）· MTP attention 精确 code5 与关闭 APC 后的后期 Trap
+
+原文：[`reports/target_stable_two_failures_20261014.txt`](reports/target_stable_two_failures_20261014.txt)。用户要求优先 stable、两故障一并处理，不再追加真机验证请求。
+
+第一段：APC开启、32K/300请求，12:20–12:24已生成并有请求完成；12:24:25逐码诊断明确为 `site=forward:mtp.layers.0.self_attn.attn family=attention code=5`，栈进入后续MTP和compact。冻结prepare只有slot反查路径可产生5（非单query、匹配不唯一、位置超出seq_lens）。不再沿用旧日志的“未知族”判断，也不把此处归因给GDN。
+
+第二段：用户说明为关闭APC的stable默认配置，约280个请求完成后异常；片段最后指标仍Running32，并未记录实际B12。00:40:01事件同步507011及H2D异步错误，PC偏移0x25c。它没有逐族/逐码信息，不能从事件同步栈断言GDN或认定与第一段唯一同因。
+
+本轮审查：冻结prepare的32K长表/缩批实际CPU测试合法行通过，负控稳定报5。原生方法构造的+17位置偏移可触发旧反查5，但对应中间KV未证明物化；改成显式position+1只让metadata通过，可能随后读取未写KV。因此此方案已否决，生产修改已撤回，不作为本次真实故障根因或修复。原始尝试与CPU日志保存在reports/tasks_slot_context_cpu_20261014，不能冒充服务验收。继续定位真实请求中不成立的slot/length/table关系。
+
+### #160 后续：采样边界修复（本地源码与执行模型证据）
+
+原生 `ops/triton/reject_sample.py` generic greedy 在非greedy/尾部lane执行未指定other的masked累计数load，内层token循环及写入缺少行级保护；另ordinary greedy/random首行表达式包含cu[-1]读取。对合法mixed输入draft=[3,1]、greedy=[1,0]的原函数AST地址执行模型，未定义值若为start0/end3，可污染随机行，随机writer只覆写首拒绝位置后剩余旧值令valid_count=[4,3]。真实native padded输入与later metadata函数将第二行anchor推到本请求范围外，重现code5。安全greedy实现保留随机行与正确-1尾后counts=[4,1]，同链得到合法slot/code0。此为有条件源码反例，**没有测得目标Ascend编译器实际取了哪个未定义值，也不能从第二段日志唯一确认同因**。
+
+修复以外部插件导入钩子安装：greedy使用固定B×(max_spec_len+1)设备张量运算，只写greedy行；外层给cu提供32字节前导零存储，逻辑值/形状/步幅与原随机采样算法不变。无host数值回读，不放宽guard，不清空坏活行，不改原生文件/GDN/冻结核。无Triton与native/passive模式不安装这些Triton专用适配。两个一键入口自动生效。详见reports/sampling_boundary_fix_20261014/summary.json。

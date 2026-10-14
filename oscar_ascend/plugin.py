@@ -6,6 +6,8 @@ never attach undeclared fields to VllmConfig or silently keep native FULL.
 Archive #34/#36: native dummy warmup must not masquerade as eager prefill.
 Archive #37-49/#127-129/#142/#155: request-window lease notifications wrap
 native lifecycle methods without changing scheduler selection or token budget.
+Archive #157-160: greedy sampling hooks keep masked rows outside the writer
+without changing random probabilities or the frozen device kernels.
 """
 
 import functools
@@ -28,7 +30,7 @@ class OscarHookConflictError(RuntimeError):
 
 @dataclass
 class _Patch:
-    owner: type
+    owner: type | ModuleType
     name: str
     original: Any
     replacement: Any
@@ -371,6 +373,58 @@ def _patch_native_attention(module: ModuleType) -> None:
     _patch(module.AscendC8AttentionBackendImpl, "forward", observe)
 
 
+def _patch_module_sampling_function(module: ModuleType, name: str, builder) -> None:
+    """Track a module function in the same reversible registry as class seams."""
+    for existing in _patches:
+        if existing.owner is module and existing.name == name:
+            if module.__dict__.get(name) is not existing.replacement:
+                raise OscarHookConflictError(f"{module.__name__}.{name} changed after OSCAR installation")
+            return
+    current = module.__dict__.get(name)
+    if not callable(current):
+        raise OscarHookConflictError(f"required native seam missing: {module.__name__}.{name}")
+    # A deferred sampler import may already have imported our defining-module
+    # wrapper. Restore the true native function in both modules on unregister.
+    original = getattr(current, "_oscar_native_sampling_original", current)
+    replacement = functools.wraps(original)(builder(original))
+    replacement._oscar_native_sampling_original = original
+    setattr(module, name, replacement)
+    _patches.append(_Patch(module, name, original, replacement, True))
+
+
+def _patch_native_greedy_sampling(module: ModuleType) -> None:
+    """Patch both greedy aliases and guard native first-row cumulative reads."""
+    if _passive_only or os.environ.get("OSCAR_ENABLED") != "1":
+        return
+    if module.__name__ == "vllm_ascend.sample.rejection_sampler" and getattr(module, "HAS_TRITON", None) is False:
+        # The native PyTorch writer does not execute either unsafe Triton load.
+        # Respect that native capability choice; no numerical failure fallback.
+        return
+
+    def greedy_writer(original):
+        def replacement(*args, **kwargs):
+            from .integration.greedy_sampling import rejection_greedy_sample_with_triton
+            return rejection_greedy_sample_with_triton(*args, **kwargs)
+        return replacement
+
+    _patch_module_sampling_function(module, "rejection_greedy_sample_with_triton", greedy_writer)
+    if module.__name__ == "vllm_ascend.sample.rejection_sampler":
+        already_installed = any(p.owner is module and p.name == "rejection_sample" for p in _patches)
+        def guarded_sampling(original):
+            def replacement(draft_token_ids, num_draft_tokens, max_spec_len, cu_num_draft_tokens,
+                            draft_probs, target_logits_or_tuple, bonus_token_ids, sampling_metadata,
+                            synthetic_mode=False, synthetic_conditional_rates=None, ori_target_logits=None):
+                from .integration.greedy_sampling import rejection_sample_with_guarded_cu
+                return rejection_sample_with_guarded_cu(
+                    original, draft_token_ids, num_draft_tokens, max_spec_len, cu_num_draft_tokens,
+                    draft_probs, target_logits_or_tuple, bonus_token_ids, sampling_metadata,
+                    synthetic_mode, synthetic_conditional_rates, ori_target_logits)
+            return replacement
+        _patch_module_sampling_function(module, "rejection_sample", guarded_sampling)
+        if not already_installed:
+            print("[oscar] PERF_SAMPLER_FIX greedy_rows=isolated cumulative_prefix_bytes=32", flush=True)
+
+
 _callbacks = {
     "vllm_ascend.platform": _patch_platform,
     "vllm_ascend.worker.model_runner_v1": _patch_runner,
@@ -379,6 +433,8 @@ _callbacks = {
     "vllm_ascend.spec_decode.llm_base_proposer": _patch_mtp_proposer,
     "vllm.model_executor.layers.attention.attention": _patch_attention_registration,
     "vllm.v1.core.sched.scheduler": _patch_request_window_scheduler,
+    "vllm_ascend.ops.triton.reject_sample": _patch_native_greedy_sampling,
+    "vllm_ascend.sample.rejection_sampler": _patch_native_greedy_sampling,
 }
 
 

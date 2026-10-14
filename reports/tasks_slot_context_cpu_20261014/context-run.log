@@ -1,0 +1,2468 @@
+CASE slots=32 B=32 N=32 draft=1 fault=0 row0_slot=16471932 row0_lens=33663 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614508] exit success!
+[SUCCESS][CORE_1][pid 614509] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 614510] exit success!
+[SUCCESS][CORE_3][pid 614511] exit success!
+[SUCCESS][CORE_4][pid 614512] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_5][pid 614513] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_6][pid 614514] exit success!
+[SUCCESS][CORE_7][pid 614515] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_8][pid 614516] exit success!
+[SUCCESS][CORE_9][pid 614517] exit success!
+[SUCCESS][CORE_10][pid 614518] exit success!
+[SUCCESS][CORE_11][pid 614519] exit success!
+[SUCCESS][CORE_12][pid 614520] exit success!
+[SUCCESS][CORE_13][pid 614521] exit success!
+[SUCCESS][CORE_14][pid 614522] exit success!
+[SUCCESS][CORE_15][pid 614523] exit success!
+[SUCCESS][CORE_16][pid 614524] exit success!
+[SUCCESS][CORE_17][pid 614525] exit success!
+[SUCCESS][CORE_18][pid 614526] exit success!
+[SUCCESS][CORE_19][pid 614527] exit success!
+[SUCCESS][CORE_20][pid 614528] exit success!
+[SUCCESS][CORE_21][pid 614529] exit success!
+[SUCCESS][CORE_22][pid 614530] exit success!
+[SUCCESS][CORE_23][pid 614531] exit success!
+[SUCCESS][CORE_24][pid 614532] exit success!
+[SUCCESS][CORE_25][pid 614533] exit success!
+[SUCCESS][CORE_26][pid 614534] exit success!
+[SUCCESS][CORE_27][pid 614535] exit success!
+[SUCCESS][CORE_28][pid 614536] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_29][pid 614537] exit success!
+[SUCCESS][CORE_30][pid 614538] exit success!
+[SUCCESS][CORE_31][pid 614539] exit success!
+CASE slots=32 B=32 N=32 draft=1 fault=0 row0_slot=16471932 row0_lens=33663 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614540] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 614541] exit success!
+[SUCCESS][CORE_2][pid 614542] exit success!
+[SUCCESS][CORE_3][pid 614543] exit success!
+[SUCCESS][CORE_4][pid 614544] exit success!
+[SUCCESS][CORE_5][pid 614545] exit success!
+[SUCCESS][CORE_6][pid 614546] exit success!
+[SUCCESS][CORE_7][pid 614547] exit success!
+[SUCCESS][CORE_8][pid 614548] exit success!
+[SUCCESS][CORE_9][pid 614549] exit success!
+[SUCCESS][CORE_10][pid 614550] exit success!
+[SUCCESS][CORE_11][pid 614551] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_12][pid 614552] exit success!
+[SUCCESS][CORE_13][pid 614553] exit success!
+[SUCCESS][CORE_14][pid 614554] exit success!
+[SUCCESS][CORE_15][pid 614555] exit success!
+[SUCCESS][CORE_16][pid 614556] exit success!
+[SUCCESS][CORE_17][pid 614557] exit success!
+[SUCCESS][CORE_18][pid 614558] exit success!
+[SUCCESS][CORE_19][pid 614559] exit success!
+[SUCCESS][CORE_20][pid 614560] exit success!
+[SUCCESS][CORE_21][pid 614561] exit success!
+[SUCCESS][CORE_22][pid 614562] exit success!
+[SUCCESS][CORE_23][pid 614563] exit success!
+[SUCCESS][CORE_24][pid 614564] exit success!
+[SUCCESS][CORE_25][pid 614565] exit success!
+[SUCCESS][CORE_26][pid 614566] exit success!
+[SUCCESS][CORE_27][pid 614567] exit success!
+[SUCCESS][CORE_28][pid 614568] exit success!
+[SUCCESS][CORE_29][pid 614569] exit success!
+[SUCCESS][CORE_30][pid 614570] exit success!
+[SUCCESS][CORE_31][pid 614571] exit success!
+CASE slots=32 B=32 N=32 draft=2 fault=0 row0_slot=16471932 row0_lens=33664 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614572] exit success!
+[SUCCESS][CORE_1][pid 614573] exit success!
+[SUCCESS][CORE_2][pid 614574] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_3][pid 614575] exit success!
+[SUCCESS][CORE_4][pid 614576] exit success!
+[SUCCESS][CORE_5][pid 614577] exit success!
+[SUCCESS][CORE_6][pid 614578] exit success!
+[SUCCESS][CORE_7][pid 614579] exit success!
+[SUCCESS][CORE_8][pid 614580] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_9][pid 614581] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_10][pid 614582] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_11][pid 614583] exit success!
+[SUCCESS][CORE_12][pid 614584] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_13][pid 614585] exit success!
+[SUCCESS][CORE_14][pid 614586] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_15][pid 614587] exit success!
+[SUCCESS][CORE_16][pid 614588] exit success!
+[SUCCESS][CORE_17][pid 614589] exit success!
+[SUCCESS][CORE_18][pid 614590] exit success!
+[SUCCESS][CORE_19][pid 614591] exit success!
+[SUCCESS][CORE_20][pid 614592] exit success!
+[SUCCESS][CORE_21][pid 614593] exit success!
+[SUCCESS][CORE_22][pid 614594] exit success!
+[SUCCESS][CORE_23][pid 614595] exit success!
+[SUCCESS][CORE_24][pid 614596] exit success!
+[SUCCESS][CORE_25][pid 614597] exit success!
+[SUCCESS][CORE_26][pid 614598] exit success!
+[SUCCESS][CORE_27][pid 614599] exit success!
+[SUCCESS][CORE_28][pid 614600] exit success!
+[SUCCESS][CORE_29][pid 614601] exit success!
+[SUCCESS][CORE_30][pid 614602] exit success!
+[SUCCESS][CORE_31][pid 614603] exit success!
+CASE slots=32 B=32 N=32 draft=2 fault=0 row0_slot=16471932 row0_lens=33664 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614604] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 614605] exit success!
+[SUCCESS][CORE_2][pid 614606] exit success!
+[SUCCESS][CORE_3][pid 614607] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_4][pid 614608] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_5][pid 614609] exit success!
+[SUCCESS][CORE_6][pid 614610] exit success!
+[SUCCESS][CORE_7][pid 614611] exit success!
+[SUCCESS][CORE_8][pid 614612] exit success!
+[SUCCESS][CORE_9][pid 614613] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_10][pid 614614] exit success!
+[SUCCESS][CORE_11][pid 614615] exit success!
+[SUCCESS][CORE_12][pid 614616] exit success!
+[SUCCESS][CORE_13][pid 614617] exit success!
+[SUCCESS][CORE_14][pid 614618] exit success!
+[SUCCESS][CORE_15][pid 614619] exit success!
+[SUCCESS][CORE_16][pid 614620] exit success!
+[SUCCESS][CORE_17][pid 614621] exit success!
+[SUCCESS][CORE_18][pid 614622] exit success!
+[SUCCESS][CORE_19][pid 614623] exit success!
+[SUCCESS][CORE_20][pid 614624] exit success!
+[SUCCESS][CORE_21][pid 614625] exit success!
+[SUCCESS][CORE_22][pid 614626] exit success!
+[SUCCESS][CORE_23][pid 614627] exit success!
+[SUCCESS][CORE_24][pid 614628] exit success!
+[SUCCESS][CORE_25][pid 614629] exit success!
+[SUCCESS][CORE_26][pid 614630] exit success!
+[SUCCESS][CORE_27][pid 614631] exit success!
+[SUCCESS][CORE_28][pid 614632] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_29][pid 614633] exit success!
+[SUCCESS][CORE_30][pid 614634] exit success!
+[SUCCESS][CORE_31][pid 614635] exit success!
+CASE slots=32 B=31 N=31 draft=1 fault=0 row0_slot=14374652 row0_lens=33151 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614636] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 614637] exit success!
+[SUCCESS][CORE_2][pid 614638] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_3][pid 614639] exit success!
+[SUCCESS][CORE_4][pid 614640] exit success!
+[SUCCESS][CORE_5][pid 614641] exit success!
+[SUCCESS][CORE_6][pid 614642] exit success!
+[SUCCESS][CORE_7][pid 614643] exit success!
+[SUCCESS][CORE_8][pid 614644] exit success!
+[SUCCESS][CORE_9][pid 614645] exit success!
+[SUCCESS][CORE_10][pid 614646] exit success!
+[SUCCESS][CORE_11][pid 614647] exit success!
+[SUCCESS][CORE_12][pid 614648] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_13][pid 614649] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_14][pid 614650] exit success!
+[SUCCESS][CORE_15][pid 614651] exit success!
+[SUCCESS][CORE_16][pid 614652] exit success!
+[SUCCESS][CORE_17][pid 614653] exit success!
+[SUCCESS][CORE_18][pid 614654] exit success!
+[SUCCESS][CORE_19][pid 614655] exit success!
+[SUCCESS][CORE_20][pid 614656] exit success!
+[SUCCESS][CORE_21][pid 614657] exit success!
+[SUCCESS][CORE_22][pid 614658] exit success!
+[SUCCESS][CORE_23][pid 614659] exit success!
+[SUCCESS][CORE_24][pid 614660] exit success!
+[SUCCESS][CORE_25][pid 614661] exit success!
+[SUCCESS][CORE_26][pid 614662] exit success!
+[SUCCESS][CORE_27][pid 614663] exit success!
+[SUCCESS][CORE_28][pid 614664] exit success!
+[SUCCESS][CORE_29][pid 614665] exit success!
+[SUCCESS][CORE_30][pid 614666] exit success!
+[SUCCESS][CORE_31][pid 614667] exit success!
+CASE slots=32 B=31 N=32 draft=1 fault=0 row0_slot=14374652 row0_lens=33151 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614668] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 614669] exit success!
+[SUCCESS][CORE_2][pid 614670] exit success!
+[SUCCESS][CORE_3][pid 614671] exit success!
+[SUCCESS][CORE_4][pid 614672] exit success!
+[SUCCESS][CORE_5][pid 614673] exit success!
+[SUCCESS][CORE_6][pid 614674] exit success!
+[SUCCESS][CORE_7][pid 614675] exit success!
+[SUCCESS][CORE_8][pid 614676] exit success!
+[SUCCESS][CORE_9][pid 614677] exit success!
+[SUCCESS][CORE_10][pid 614678] exit success!
+[SUCCESS][CORE_11][pid 614679] exit success!
+[SUCCESS][CORE_12][pid 614680] exit success!
+[SUCCESS][CORE_13][pid 614681] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_14][pid 614682] exit success!
+[SUCCESS][CORE_15][pid 614683] exit success!
+[SUCCESS][CORE_16][pid 614684] exit success!
+[SUCCESS][CORE_17][pid 614685] exit success!
+[SUCCESS][CORE_18][pid 614686] exit success!
+[SUCCESS][CORE_19][pid 614687] exit success!
+[SUCCESS][CORE_20][pid 614688] exit success!
+[SUCCESS][CORE_21][pid 614689] exit success!
+[SUCCESS][CORE_22][pid 614690] exit success!
+[SUCCESS][CORE_23][pid 614691] exit success!
+[SUCCESS][CORE_24][pid 614692] exit success!
+[SUCCESS][CORE_25][pid 614693] exit success!
+[SUCCESS][CORE_26][pid 614694] exit success!
+[SUCCESS][CORE_27][pid 614695] exit success!
+[SUCCESS][CORE_28][pid 614696] exit success!
+[SUCCESS][CORE_29][pid 614697] exit success!
+[SUCCESS][CORE_30][pid 614698] exit success!
+[SUCCESS][CORE_31][pid 614699] exit success!
+CASE slots=32 B=31 N=31 draft=2 fault=0 row0_slot=14374652 row0_lens=33152 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614700] exit success!
+[SUCCESS][CORE_1][pid 614701] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 614702] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_3][pid 614703] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_4][pid 614704] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_5][pid 614705] exit success!
+[SUCCESS][CORE_6][pid 614706] exit success!
+[SUCCESS][CORE_7][pid 614707] exit success!
+[SUCCESS][CORE_8][pid 614708] exit success!
+[SUCCESS][CORE_9][pid 614709] exit success!
+[SUCCESS][CORE_10][pid 614710] exit success!
+[SUCCESS][CORE_11][pid 614711] exit success!
+[SUCCESS][CORE_12][pid 614712] exit success!
+[SUCCESS][CORE_13][pid 614713] exit success!
+[SUCCESS][CORE_14][pid 614714] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_15][pid 614715] exit success!
+[SUCCESS][CORE_16][pid 614716] exit success!
+[SUCCESS][CORE_17][pid 614717] exit success!
+[SUCCESS][CORE_18][pid 614718] exit success!
+[SUCCESS][CORE_19][pid 614719] exit success!
+[SUCCESS][CORE_20][pid 614720] exit success!
+[SUCCESS][CORE_21][pid 614721] exit success!
+[SUCCESS][CORE_22][pid 614722] exit success!
+[SUCCESS][CORE_23][pid 614723] exit success!
+[SUCCESS][CORE_24][pid 614724] exit success!
+[SUCCESS][CORE_25][pid 614725] exit success!
+[SUCCESS][CORE_26][pid 614726] exit success!
+[SUCCESS][CORE_27][pid 614727] exit success!
+[SUCCESS][CORE_28][pid 614728] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_29][pid 614729] exit success!
+[SUCCESS][CORE_30][pid 614730] exit success!
+[SUCCESS][CORE_31][pid 614731] exit success!
+CASE slots=32 B=31 N=32 draft=2 fault=0 row0_slot=14374652 row0_lens=33152 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614732] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 614733] exit success!
+[SUCCESS][CORE_2][pid 614734] exit success!
+[SUCCESS][CORE_3][pid 614735] exit success!
+[SUCCESS][CORE_4][pid 614736] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_5][pid 614737] exit success!
+[SUCCESS][CORE_6][pid 614738] exit success!
+[SUCCESS][CORE_7][pid 614739] exit success!
+[SUCCESS][CORE_8][pid 614740] exit success!
+[SUCCESS][CORE_9][pid 614741] exit success!
+[SUCCESS][CORE_10][pid 614742] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_11][pid 614743] exit success!
+[SUCCESS][CORE_12][pid 614744] exit success!
+[SUCCESS][CORE_13][pid 614745] exit success!
+[SUCCESS][CORE_14][pid 614746] exit success!
+[SUCCESS][CORE_15][pid 614747] exit success!
+[SUCCESS][CORE_16][pid 614748] exit success!
+[SUCCESS][CORE_17][pid 614749] exit success!
+[SUCCESS][CORE_18][pid 614750] exit success!
+[SUCCESS][CORE_19][pid 614751] exit success!
+[SUCCESS][CORE_20][pid 614752] exit success!
+[SUCCESS][CORE_21][pid 614753] exit success!
+[SUCCESS][CORE_22][pid 614754] exit success!
+[SUCCESS][CORE_23][pid 614755] exit success!
+[SUCCESS][CORE_24][pid 614756] exit success!
+[SUCCESS][CORE_25][pid 614757] exit success!
+[SUCCESS][CORE_26][pid 614758] exit success!
+[SUCCESS][CORE_27][pid 614759] exit success!
+[SUCCESS][CORE_28][pid 614760] exit success!
+[SUCCESS][CORE_29][pid 614761] exit success!
+[SUCCESS][CORE_30][pid 614762] exit success!
+[SUCCESS][CORE_31][pid 614763] exit success!
+CASE slots=32 B=12 N=12 draft=1 fault=0 row0_slot=14473341 row0_lens=32895 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614765] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 614766] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 614767] exit success!
+[SUCCESS][CORE_3][pid 614768] exit success!
+[SUCCESS][CORE_4][pid 614769] exit success!
+[SUCCESS][CORE_5][pid 614770] exit success!
+[SUCCESS][CORE_6][pid 614771] exit success!
+[SUCCESS][CORE_7][pid 614772] exit success!
+[SUCCESS][CORE_8][pid 614773] exit success!
+[SUCCESS][CORE_9][pid 614774] exit success!
+[SUCCESS][CORE_10][pid 614775] exit success!
+[SUCCESS][CORE_11][pid 614776] exit success!
+[SUCCESS][CORE_12][pid 614777] exit success!
+[SUCCESS][CORE_13][pid 614778] exit success!
+[SUCCESS][CORE_14][pid 614779] exit success!
+[SUCCESS][CORE_15][pid 614780] exit success!
+[SUCCESS][CORE_16][pid 614781] exit success!
+[SUCCESS][CORE_17][pid 614782] exit success!
+[SUCCESS][CORE_18][pid 614783] exit success!
+[SUCCESS][CORE_19][pid 614784] exit success!
+[SUCCESS][CORE_20][pid 614785] exit success!
+[SUCCESS][CORE_21][pid 614786] exit success!
+[SUCCESS][CORE_22][pid 614787] exit success!
+[SUCCESS][CORE_23][pid 614788] exit success!
+[SUCCESS][CORE_24][pid 614789] exit success!
+[SUCCESS][CORE_25][pid 614790] exit success!
+[SUCCESS][CORE_26][pid 614791] exit success!
+[SUCCESS][CORE_27][pid 614792] exit success!
+[SUCCESS][CORE_28][pid 614793] exit success!
+[SUCCESS][CORE_29][pid 614794] exit success!
+[SUCCESS][CORE_30][pid 614795] exit success!
+[SUCCESS][CORE_31][pid 614796] exit success!
+CASE slots=32 B=12 N=32 draft=1 fault=0 row0_slot=14473341 row0_lens=32895 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614797] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 614798] exit success!
+[SUCCESS][CORE_2][pid 614799] exit success!
+[SUCCESS][CORE_3][pid 614800] exit success!
+[SUCCESS][CORE_4][pid 614801] exit success!
+[SUCCESS][CORE_5][pid 614802] exit success!
+[SUCCESS][CORE_6][pid 614803] exit success!
+[SUCCESS][CORE_7][pid 614804] exit success!
+[SUCCESS][CORE_8][pid 614805] exit success!
+[SUCCESS][CORE_9][pid 614806] exit success!
+[SUCCESS][CORE_10][pid 614807] exit success!
+[SUCCESS][CORE_11][pid 614808] exit success!
+[SUCCESS][CORE_12][pid 614809] exit success!
+[SUCCESS][CORE_13][pid 614810] exit success!
+[SUCCESS][CORE_14][pid 614811] exit success!
+[SUCCESS][CORE_15][pid 614812] exit success!
+[SUCCESS][CORE_16][pid 614813] exit success!
+[SUCCESS][CORE_17][pid 614814] exit success!
+[SUCCESS][CORE_18][pid 614815] exit success!
+[SUCCESS][CORE_19][pid 614816] exit success!
+[SUCCESS][CORE_20][pid 614817] exit success!
+[SUCCESS][CORE_21][pid 614818] exit success!
+[SUCCESS][CORE_22][pid 614819] exit success!
+[SUCCESS][CORE_23][pid 614820] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_24][pid 614821] exit success!
+[SUCCESS][CORE_25][pid 614822] exit success!
+[SUCCESS][CORE_26][pid 614823] exit success!
+[SUCCESS][CORE_27][pid 614824] exit success!
+[SUCCESS][CORE_28][pid 614825] exit success!
+[SUCCESS][CORE_29][pid 614826] exit success!
+[SUCCESS][CORE_30][pid 614827] exit success!
+[SUCCESS][CORE_31][pid 614828] exit success!
+CASE slots=32 B=12 N=12 draft=2 fault=0 row0_slot=14473341 row0_lens=32896 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614829] exit success!
+[SUCCESS][CORE_1][pid 614830] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 614831] exit success!
+[SUCCESS][CORE_3][pid 614832] exit success!
+[SUCCESS][CORE_4][pid 614833] exit success!
+[SUCCESS][CORE_5][pid 614834] exit success!
+[SUCCESS][CORE_6][pid 614835] exit success!
+[SUCCESS][CORE_7][pid 614836] exit success!
+[SUCCESS][CORE_8][pid 614837] exit success!
+[SUCCESS][CORE_9][pid 614838] exit success!
+[SUCCESS][CORE_10][pid 614839] exit success!
+[SUCCESS][CORE_11][pid 614840] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_12][pid 614841] exit success!
+[SUCCESS][CORE_13][pid 614842] exit success!
+[SUCCESS][CORE_14][pid 614843] exit success!
+[SUCCESS][CORE_15][pid 614844] exit success!
+[SUCCESS][CORE_16][pid 614845] exit success!
+[SUCCESS][CORE_17][pid 614846] exit success!
+[SUCCESS][CORE_18][pid 614847] exit success!
+[SUCCESS][CORE_19][pid 614848] exit success!
+[SUCCESS][CORE_20][pid 614849] exit success!
+[SUCCESS][CORE_21][pid 614850] exit success!
+[SUCCESS][CORE_22][pid 614851] exit success!
+[SUCCESS][CORE_23][pid 614852] exit success!
+[SUCCESS][CORE_24][pid 614853] exit success!
+[SUCCESS][CORE_25][pid 614854] exit success!
+[SUCCESS][CORE_26][pid 614855] exit success!
+[SUCCESS][CORE_27][pid 614856] exit success!
+[SUCCESS][CORE_28][pid 614857] exit success!
+[SUCCESS][CORE_29][pid 614858] exit success!
+[SUCCESS][CORE_30][pid 614859] exit success!
+[SUCCESS][CORE_31][pid 614860] exit success!
+CASE slots=32 B=12 N=12 draft=2 fault=1 row0_slot=14473341 row0_lens=32896 row0_qend=2
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614861] exit success!
+[SUCCESS][CORE_1][pid 614862] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 614863] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_3][pid 614864] exit success!
+[SUCCESS][CORE_4][pid 614865] exit success!
+[SUCCESS][CORE_5][pid 614866] exit success!
+[SUCCESS][CORE_6][pid 614867] exit success!
+[SUCCESS][CORE_7][pid 614868] exit success!
+[SUCCESS][CORE_8][pid 614869] exit success!
+[SUCCESS][CORE_9][pid 614870] exit success!
+[SUCCESS][CORE_10][pid 614871] exit success!
+[SUCCESS][CORE_11][pid 614872] exit success!
+[SUCCESS][CORE_12][pid 614873] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_13][pid 614874] exit success!
+[SUCCESS][CORE_14][pid 614875] exit success!
+[SUCCESS][CORE_15][pid 614876] exit success!
+[SUCCESS][CORE_16][pid 614877] exit success!
+[SUCCESS][CORE_17][pid 614878] exit success!
+[SUCCESS][CORE_18][pid 614879] exit success!
+[SUCCESS][CORE_19][pid 614880] exit success!
+[SUCCESS][CORE_20][pid 614881] exit success!
+[SUCCESS][CORE_21][pid 614882] exit success!
+[SUCCESS][CORE_22][pid 614883] exit success!
+[SUCCESS][CORE_23][pid 614884] exit success!
+[SUCCESS][CORE_24][pid 614885] exit success!
+[SUCCESS][CORE_25][pid 614886] exit success!
+[SUCCESS][CORE_26][pid 614887] exit success!
+[SUCCESS][CORE_27][pid 614888] exit success!
+[SUCCESS][CORE_28][pid 614889] exit success!
+[SUCCESS][CORE_29][pid 614890] exit success!
+[SUCCESS][CORE_30][pid 614891] exit success!
+[SUCCESS][CORE_31][pid 614892] exit success!
+CASE slots=32 B=12 N=12 draft=2 fault=2 row0_slot=14473341 row0_lens=32896 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614893] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 614894] exit success!
+[SUCCESS][CORE_2][pid 614895] exit success!
+[SUCCESS][CORE_3][pid 614896] exit success!
+[SUCCESS][CORE_4][pid 614897] exit success!
+[SUCCESS][CORE_5][pid 614898] exit success!
+[SUCCESS][CORE_6][pid 614899] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_7][pid 614900] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_8][pid 614901] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_9][pid 614902] exit success!
+[SUCCESS][CORE_10][pid 614903] exit success!
+[SUCCESS][CORE_11][pid 614904] exit success!
+[SUCCESS][CORE_12][pid 614905] exit success!
+[SUCCESS][CORE_13][pid 614906] exit success!
+[SUCCESS][CORE_14][pid 614907] exit success!
+[SUCCESS][CORE_15][pid 614908] exit success!
+[SUCCESS][CORE_16][pid 614909] exit success!
+[SUCCESS][CORE_17][pid 614910] exit success!
+[SUCCESS][CORE_18][pid 614911] exit success!
+[SUCCESS][CORE_19][pid 614912] exit success!
+[SUCCESS][CORE_20][pid 614913] exit success!
+[SUCCESS][CORE_21][pid 614914] exit success!
+[SUCCESS][CORE_22][pid 614915] exit success!
+[SUCCESS][CORE_23][pid 614916] exit success!
+[SUCCESS][CORE_24][pid 614917] exit success!
+[SUCCESS][CORE_25][pid 614918] exit success!
+[SUCCESS][CORE_26][pid 614919] exit success!
+[SUCCESS][CORE_27][pid 614920] exit success!
+[SUCCESS][CORE_28][pid 614921] exit success!
+[SUCCESS][CORE_29][pid 614922] exit success!
+[SUCCESS][CORE_30][pid 614923] exit success!
+[SUCCESS][CORE_31][pid 614924] exit success!
+CASE slots=32 B=12 N=12 draft=2 fault=3 row0_slot=99999999 row0_lens=32896 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614925] exit success!
+[SUCCESS][CORE_1][pid 614926] exit success!
+[SUCCESS][CORE_2][pid 614927] exit success!
+[SUCCESS][CORE_3][pid 614928] exit success!
+[SUCCESS][CORE_4][pid 614929] exit success!
+[SUCCESS][CORE_5][pid 614930] exit success!
+[SUCCESS][CORE_6][pid 614931] exit success!
+[SUCCESS][CORE_7][pid 614932] exit success!
+[SUCCESS][CORE_8][pid 614933] exit success!
+[SUCCESS][CORE_9][pid 614934] exit success!
+[SUCCESS][CORE_10][pid 614935] exit success!
+[SUCCESS][CORE_11][pid 614936] exit success!
+[SUCCESS][CORE_12][pid 614937] exit success!
+[SUCCESS][CORE_13][pid 614938] exit success!
+[SUCCESS][CORE_14][pid 614939] exit success!
+[SUCCESS][CORE_15][pid 614940] exit success!
+[SUCCESS][CORE_16][pid 614941] exit success!
+[SUCCESS][CORE_17][pid 614942] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_18][pid 614943] exit success!
+[SUCCESS][CORE_19][pid 614944] exit success!
+[SUCCESS][CORE_20][pid 614945] exit success!
+[SUCCESS][CORE_21][pid 614946] exit success!
+[SUCCESS][CORE_22][pid 614947] exit success!
+[SUCCESS][CORE_23][pid 614948] exit success!
+[SUCCESS][CORE_24][pid 614949] exit success!
+[SUCCESS][CORE_25][pid 614950] exit success!
+[SUCCESS][CORE_26][pid 614951] exit success!
+[SUCCESS][CORE_27][pid 614952] exit success!
+[SUCCESS][CORE_28][pid 614953] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_29][pid 614954] exit success!
+[SUCCESS][CORE_30][pid 614955] exit success!
+[SUCCESS][CORE_31][pid 614956] exit success!
+CASE slots=32 B=12 N=12 draft=2 fault=4 row0_slot=14473341 row0_lens=32893 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614957] exit success!
+[SUCCESS][CORE_1][pid 614958] exit success!
+[SUCCESS][CORE_2][pid 614959] exit success!
+[SUCCESS][CORE_3][pid 614960] exit success!
+[SUCCESS][CORE_4][pid 614961] exit success!
+[SUCCESS][CORE_5][pid 614962] exit success!
+[SUCCESS][CORE_6][pid 614963] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_7][pid 614964] exit success!
+[SUCCESS][CORE_8][pid 614965] exit success!
+[SUCCESS][CORE_9][pid 614966] exit success!
+[SUCCESS][CORE_10][pid 614967] exit success!
+[SUCCESS][CORE_11][pid 614968] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_12][pid 614969] exit success!
+[SUCCESS][CORE_13][pid 614970] exit success!
+[SUCCESS][CORE_14][pid 614971] exit success!
+[SUCCESS][CORE_15][pid 614972] exit success!
+[SUCCESS][CORE_16][pid 614973] exit success!
+[SUCCESS][CORE_17][pid 614974] exit success!
+[SUCCESS][CORE_18][pid 614975] exit success!
+[SUCCESS][CORE_19][pid 614976] exit success!
+[SUCCESS][CORE_20][pid 614977] exit success!
+[SUCCESS][CORE_21][pid 614978] exit success!
+[SUCCESS][CORE_22][pid 614979] exit success!
+[SUCCESS][CORE_23][pid 614980] exit success!
+[SUCCESS][CORE_24][pid 614981] exit success!
+[SUCCESS][CORE_25][pid 614982] exit success!
+[SUCCESS][CORE_26][pid 614983] exit success!
+[SUCCESS][CORE_27][pid 614984] exit success!
+[SUCCESS][CORE_28][pid 614985] exit success!
+[SUCCESS][CORE_29][pid 614986] exit success!
+[SUCCESS][CORE_30][pid 614987] exit success!
+[SUCCESS][CORE_31][pid 614988] exit success!
+CASE slots=32 B=12 N=32 draft=2 fault=0 row0_slot=14473341 row0_lens=32896 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 614989] exit success!
+[SUCCESS][CORE_1][pid 614990] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 614991] exit success!
+[SUCCESS][CORE_3][pid 614992] exit success!
+[SUCCESS][CORE_4][pid 614993] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_5][pid 614994] exit success!
+[SUCCESS][CORE_6][pid 614995] exit success!
+[SUCCESS][CORE_7][pid 614996] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_8][pid 614997] exit success!
+[SUCCESS][CORE_9][pid 614998] exit success!
+[SUCCESS][CORE_10][pid 614999] exit success!
+[SUCCESS][CORE_11][pid 615000] exit success!
+[SUCCESS][CORE_12][pid 615001] exit success!
+[SUCCESS][CORE_13][pid 615002] exit success!
+[SUCCESS][CORE_14][pid 615003] exit success!
+[SUCCESS][CORE_15][pid 615004] exit success!
+[SUCCESS][CORE_16][pid 615005] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_17][pid 615006] exit success!
+[SUCCESS][CORE_18][pid 615007] exit success!
+[SUCCESS][CORE_19][pid 615008] exit success!
+[SUCCESS][CORE_20][pid 615009] exit success!
+[SUCCESS][CORE_21][pid 615010] exit success!
+[SUCCESS][CORE_22][pid 615011] exit success!
+[SUCCESS][CORE_23][pid 615012] exit success!
+[SUCCESS][CORE_24][pid 615013] exit success!
+[SUCCESS][CORE_25][pid 615014] exit success!
+[SUCCESS][CORE_26][pid 615015] exit success!
+[SUCCESS][CORE_27][pid 615016] exit success!
+[SUCCESS][CORE_28][pid 615017] exit success!
+[SUCCESS][CORE_29][pid 615018] exit success!
+[SUCCESS][CORE_30][pid 615019] exit success!
+[SUCCESS][CORE_31][pid 615020] exit success!
+{"slot_bits":32,"valid_launches":12,"negative_controls":4,"status":"passed"}
+CASE slots=64 B=32 N=32 draft=1 fault=0 row0_slot=16471932 row0_lens=33663 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615021] exit success!
+[SUCCESS][CORE_1][pid 615022] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 615023] exit success!
+[SUCCESS][CORE_3][pid 615024] exit success!
+[SUCCESS][CORE_4][pid 615025] exit success!
+[SUCCESS][CORE_5][pid 615026] exit success!
+[SUCCESS][CORE_6][pid 615027] exit success!
+[SUCCESS][CORE_7][pid 615028] exit success!
+[SUCCESS][CORE_8][pid 615029] exit success!
+[SUCCESS][CORE_9][pid 615030] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_10][pid 615031] exit success!
+[SUCCESS][CORE_11][pid 615032] exit success!
+[SUCCESS][CORE_12][pid 615033] exit success!
+[SUCCESS][CORE_13][pid 615034] exit success!
+[SUCCESS][CORE_14][pid 615035] exit success!
+[SUCCESS][CORE_15][pid 615036] exit success!
+[SUCCESS][CORE_16][pid 615037] exit success!
+[SUCCESS][CORE_17][pid 615038] exit success!
+[SUCCESS][CORE_18][pid 615039] exit success!
+[SUCCESS][CORE_19][pid 615040] exit success!
+[SUCCESS][CORE_20][pid 615041] exit success!
+[SUCCESS][CORE_21][pid 615042] exit success!
+[SUCCESS][CORE_22][pid 615043] exit success!
+[SUCCESS][CORE_23][pid 615044] exit success!
+[SUCCESS][CORE_24][pid 615045] exit success!
+[SUCCESS][CORE_25][pid 615046] exit success!
+[SUCCESS][CORE_26][pid 615047] exit success!
+[SUCCESS][CORE_27][pid 615048] exit success!
+[SUCCESS][CORE_28][pid 615049] exit success!
+[SUCCESS][CORE_29][pid 615050] exit success!
+[SUCCESS][CORE_30][pid 615051] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_31][pid 615052] exit success!
+CASE slots=64 B=32 N=32 draft=1 fault=0 row0_slot=16471932 row0_lens=33663 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615053] exit success!
+[SUCCESS][CORE_1][pid 615054] exit success!
+[SUCCESS][CORE_2][pid 615055] exit success!
+[SUCCESS][CORE_3][pid 615056] exit success!
+[SUCCESS][CORE_4][pid 615057] exit success!
+[SUCCESS][CORE_5][pid 615058] exit success!
+[SUCCESS][CORE_6][pid 615059] exit success!
+[SUCCESS][CORE_7][pid 615060] exit success!
+[SUCCESS][CORE_8][pid 615061] exit success!
+[SUCCESS][CORE_9][pid 615062] exit success!
+[SUCCESS][CORE_10][pid 615063] exit success!
+[SUCCESS][CORE_11][pid 615064] exit success!
+[SUCCESS][CORE_12][pid 615065] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_13][pid 615066] exit success!
+[SUCCESS][CORE_14][pid 615067] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_15][pid 615068] exit success!
+[SUCCESS][CORE_16][pid 615069] exit success!
+[SUCCESS][CORE_17][pid 615070] exit success!
+[SUCCESS][CORE_18][pid 615071] exit success!
+[SUCCESS][CORE_19][pid 615072] exit success!
+[SUCCESS][CORE_20][pid 615073] exit success!
+[SUCCESS][CORE_21][pid 615074] exit success!
+[SUCCESS][CORE_22][pid 615075] exit success!
+[SUCCESS][CORE_23][pid 615076] exit success!
+[SUCCESS][CORE_24][pid 615077] exit success!
+[SUCCESS][CORE_25][pid 615078] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_26][pid 615079] exit success!
+[SUCCESS][CORE_27][pid 615080] exit success!
+[SUCCESS][CORE_28][pid 615081] exit success!
+[SUCCESS][CORE_29][pid 615082] exit success!
+[SUCCESS][CORE_30][pid 615083] exit success!
+[SUCCESS][CORE_31][pid 615084] exit success!
+CASE slots=64 B=32 N=32 draft=2 fault=0 row0_slot=16471932 row0_lens=33664 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615085] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 615086] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 615087] exit success!
+[SUCCESS][CORE_3][pid 615088] exit success!
+[SUCCESS][CORE_4][pid 615089] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_5][pid 615090] exit success!
+[SUCCESS][CORE_6][pid 615091] exit success!
+[SUCCESS][CORE_7][pid 615092] exit success!
+[SUCCESS][CORE_8][pid 615093] exit success!
+[SUCCESS][CORE_9][pid 615094] exit success!
+[SUCCESS][CORE_10][pid 615095] exit success!
+[SUCCESS][CORE_11][pid 615096] exit success!
+[SUCCESS][CORE_12][pid 615097] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_13][pid 615098] exit success!
+[SUCCESS][CORE_14][pid 615099] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_15][pid 615100] exit success!
+[SUCCESS][CORE_16][pid 615101] exit success!
+[SUCCESS][CORE_17][pid 615102] exit success!
+[SUCCESS][CORE_18][pid 615103] exit success!
+[SUCCESS][CORE_19][pid 615104] exit success!
+[SUCCESS][CORE_20][pid 615105] exit success!
+[SUCCESS][CORE_21][pid 615106] exit success!
+[SUCCESS][CORE_22][pid 615107] exit success!
+[SUCCESS][CORE_23][pid 615108] exit success!
+[SUCCESS][CORE_24][pid 615109] exit success!
+[SUCCESS][CORE_25][pid 615110] exit success!
+[SUCCESS][CORE_26][pid 615111] exit success!
+[SUCCESS][CORE_27][pid 615112] exit success!
+[SUCCESS][CORE_28][pid 615113] exit success!
+[SUCCESS][CORE_29][pid 615114] exit success!
+[SUCCESS][CORE_30][pid 615115] exit success!
+[SUCCESS][CORE_31][pid 615116] exit success!
+CASE slots=64 B=32 N=32 draft=2 fault=0 row0_slot=16471932 row0_lens=33664 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615117] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 615118] exit success!
+[SUCCESS][CORE_2][pid 615119] exit success!
+[SUCCESS][CORE_3][pid 615120] exit success!
+[SUCCESS][CORE_4][pid 615121] exit success!
+[SUCCESS][CORE_5][pid 615122] exit success!
+[SUCCESS][CORE_6][pid 615123] exit success!
+[SUCCESS][CORE_7][pid 615124] exit success!
+[SUCCESS][CORE_8][pid 615125] exit success!
+[SUCCESS][CORE_9][pid 615126] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_10][pid 615127] exit success!
+[SUCCESS][CORE_11][pid 615128] exit success!
+[SUCCESS][CORE_12][pid 615129] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_13][pid 615130] exit success!
+[SUCCESS][CORE_14][pid 615131] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_15][pid 615132] exit success!
+[SUCCESS][CORE_16][pid 615133] exit success!
+[SUCCESS][CORE_17][pid 615134] exit success!
+[SUCCESS][CORE_18][pid 615135] exit success!
+[SUCCESS][CORE_19][pid 615136] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_20][pid 615137] exit success!
+[SUCCESS][CORE_21][pid 615138] exit success!
+[SUCCESS][CORE_22][pid 615139] exit success!
+[SUCCESS][CORE_23][pid 615140] exit success!
+[SUCCESS][CORE_24][pid 615141] exit success!
+[SUCCESS][CORE_25][pid 615142] exit success!
+[SUCCESS][CORE_26][pid 615143] exit success!
+[SUCCESS][CORE_27][pid 615144] exit success!
+[SUCCESS][CORE_28][pid 615145] exit success!
+[SUCCESS][CORE_29][pid 615146] exit success!
+[SUCCESS][CORE_30][pid 615147] exit success!
+[SUCCESS][CORE_31][pid 615148] exit success!
+CASE slots=64 B=31 N=31 draft=1 fault=0 row0_slot=14374652 row0_lens=33151 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615149] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 615150] exit success!
+[SUCCESS][CORE_2][pid 615151] exit success!
+[SUCCESS][CORE_3][pid 615152] exit success!
+[SUCCESS][CORE_4][pid 615153] exit success!
+[SUCCESS][CORE_5][pid 615154] exit success!
+[SUCCESS][CORE_6][pid 615155] exit success!
+[SUCCESS][CORE_7][pid 615156] exit success!
+[SUCCESS][CORE_8][pid 615157] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_9][pid 615158] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_10][pid 615159] exit success!
+[SUCCESS][CORE_11][pid 615160] exit success!
+[SUCCESS][CORE_12][pid 615161] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_13][pid 615162] exit success!
+[SUCCESS][CORE_14][pid 615163] exit success!
+[SUCCESS][CORE_15][pid 615164] exit success!
+[SUCCESS][CORE_16][pid 615165] exit success!
+[SUCCESS][CORE_17][pid 615166] exit success!
+[SUCCESS][CORE_18][pid 615167] exit success!
+[SUCCESS][CORE_19][pid 615168] exit success!
+[SUCCESS][CORE_20][pid 615169] exit success!
+[SUCCESS][CORE_21][pid 615170] exit success!
+[SUCCESS][CORE_22][pid 615171] exit success!
+[SUCCESS][CORE_23][pid 615172] exit success!
+[SUCCESS][CORE_24][pid 615173] exit success!
+[SUCCESS][CORE_25][pid 615174] exit success!
+[SUCCESS][CORE_26][pid 615175] exit success!
+[SUCCESS][CORE_27][pid 615176] exit success!
+[SUCCESS][CORE_28][pid 615177] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_29][pid 615178] exit success!
+[SUCCESS][CORE_30][pid 615179] exit success!
+[SUCCESS][CORE_31][pid 615180] exit success!
+CASE slots=64 B=31 N=32 draft=1 fault=0 row0_slot=14374652 row0_lens=33151 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615181] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 615182] exit success!
+[SUCCESS][CORE_2][pid 615183] exit success!
+[SUCCESS][CORE_3][pid 615184] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_4][pid 615185] exit success!
+[SUCCESS][CORE_5][pid 615186] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_6][pid 615187] exit success!
+[SUCCESS][CORE_7][pid 615188] exit success!
+[SUCCESS][CORE_8][pid 615189] exit success!
+[SUCCESS][CORE_9][pid 615190] exit success!
+[SUCCESS][CORE_10][pid 615191] exit success!
+[SUCCESS][CORE_11][pid 615192] exit success!
+[SUCCESS][CORE_12][pid 615193] exit success!
+[SUCCESS][CORE_13][pid 615194] exit success!
+[SUCCESS][CORE_14][pid 615195] exit success!
+[SUCCESS][CORE_15][pid 615196] exit success!
+[SUCCESS][CORE_16][pid 615197] exit success!
+[SUCCESS][CORE_17][pid 615198] exit success!
+[SUCCESS][CORE_18][pid 615199] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_19][pid 615200] exit success!
+[SUCCESS][CORE_20][pid 615201] exit success!
+[SUCCESS][CORE_21][pid 615202] exit success!
+[SUCCESS][CORE_22][pid 615203] exit success!
+[SUCCESS][CORE_23][pid 615204] exit success!
+[SUCCESS][CORE_24][pid 615205] exit success!
+[SUCCESS][CORE_25][pid 615206] exit success!
+[SUCCESS][CORE_26][pid 615207] exit success!
+[SUCCESS][CORE_27][pid 615208] exit success!
+[SUCCESS][CORE_28][pid 615209] exit success!
+[SUCCESS][CORE_29][pid 615210] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_30][pid 615211] exit success!
+[SUCCESS][CORE_31][pid 615212] exit success!
+CASE slots=64 B=31 N=31 draft=2 fault=0 row0_slot=14374652 row0_lens=33152 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615213] exit success!
+[SUCCESS][CORE_1][pid 615214] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 615215] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_3][pid 615216] exit success!
+[SUCCESS][CORE_4][pid 615217] exit success!
+[SUCCESS][CORE_5][pid 615218] exit success!
+[SUCCESS][CORE_6][pid 615219] exit success!
+[SUCCESS][CORE_7][pid 615220] exit success!
+[SUCCESS][CORE_8][pid 615221] exit success!
+[SUCCESS][CORE_9][pid 615222] exit success!
+[SUCCESS][CORE_10][pid 615223] exit success!
+[SUCCESS][CORE_11][pid 615224] exit success!
+[SUCCESS][CORE_12][pid 615225] exit success!
+[SUCCESS][CORE_13][pid 615226] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_14][pid 615227] exit success!
+[SUCCESS][CORE_15][pid 615228] exit success!
+[SUCCESS][CORE_16][pid 615229] exit success!
+[SUCCESS][CORE_17][pid 615230] exit success!
+[SUCCESS][CORE_18][pid 615231] exit success!
+[SUCCESS][CORE_19][pid 615232] exit success!
+[SUCCESS][CORE_20][pid 615233] exit success!
+[SUCCESS][CORE_21][pid 615234] exit success!
+[SUCCESS][CORE_22][pid 615235] exit success!
+[SUCCESS][CORE_23][pid 615236] exit success!
+[SUCCESS][CORE_24][pid 615237] exit success!
+[SUCCESS][CORE_25][pid 615238] exit success!
+[SUCCESS][CORE_26][pid 615239] exit success!
+[SUCCESS][CORE_27][pid 615240] exit success!
+[SUCCESS][CORE_28][pid 615241] exit success!
+[SUCCESS][CORE_29][pid 615242] exit success!
+[SUCCESS][CORE_30][pid 615243] exit success!
+[SUCCESS][CORE_31][pid 615244] exit success!
+CASE slots=64 B=31 N=32 draft=2 fault=0 row0_slot=14374652 row0_lens=33152 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615245] exit success!
+[SUCCESS][CORE_1][pid 615246] exit success!
+[SUCCESS][CORE_2][pid 615247] exit success!
+[SUCCESS][CORE_3][pid 615248] exit success!
+[SUCCESS][CORE_4][pid 615249] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_5][pid 615250] exit success!
+[SUCCESS][CORE_6][pid 615251] exit success!
+[SUCCESS][CORE_7][pid 615252] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_8][pid 615253] exit success!
+[SUCCESS][CORE_9][pid 615254] exit success!
+[SUCCESS][CORE_10][pid 615255] exit success!
+[SUCCESS][CORE_11][pid 615256] exit success!
+[SUCCESS][CORE_12][pid 615257] exit success!
+[SUCCESS][CORE_13][pid 615258] exit success!
+[SUCCESS][CORE_14][pid 615259] exit success!
+[SUCCESS][CORE_15][pid 615260] exit success!
+[SUCCESS][CORE_16][pid 615261] exit success!
+[SUCCESS][CORE_17][pid 615262] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_18][pid 615263] exit success!
+[SUCCESS][CORE_19][pid 615264] exit success!
+[SUCCESS][CORE_20][pid 615265] exit success!
+[SUCCESS][CORE_21][pid 615266] exit success!
+[SUCCESS][CORE_22][pid 615267] exit success!
+[SUCCESS][CORE_23][pid 615268] exit success!
+[SUCCESS][CORE_24][pid 615269] exit success!
+[SUCCESS][CORE_25][pid 615270] exit success!
+[SUCCESS][CORE_26][pid 615271] exit success!
+[SUCCESS][CORE_27][pid 615272] exit success!
+[SUCCESS][CORE_28][pid 615273] exit success!
+[SUCCESS][CORE_29][pid 615274] exit success!
+[SUCCESS][CORE_30][pid 615275] exit success!
+[SUCCESS][CORE_31][pid 615276] exit success!
+CASE slots=64 B=12 N=12 draft=1 fault=0 row0_slot=14473341 row0_lens=32895 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615277] exit success!
+[SUCCESS][CORE_1][pid 615278] exit success!
+[SUCCESS][CORE_2][pid 615279] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_3][pid 615280] exit success!
+[SUCCESS][CORE_4][pid 615281] exit success!
+[SUCCESS][CORE_5][pid 615282] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_6][pid 615283] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_7][pid 615284] exit success!
+[SUCCESS][CORE_8][pid 615285] exit success!
+[SUCCESS][CORE_9][pid 615286] exit success!
+[SUCCESS][CORE_10][pid 615287] exit success!
+[SUCCESS][CORE_11][pid 615288] exit success!
+[SUCCESS][CORE_12][pid 615289] exit success!
+[SUCCESS][CORE_13][pid 615290] exit success!
+[SUCCESS][CORE_14][pid 615291] exit success!
+[SUCCESS][CORE_15][pid 615292] exit success!
+[SUCCESS][CORE_16][pid 615293] exit success!
+[SUCCESS][CORE_17][pid 615294] exit success!
+[SUCCESS][CORE_18][pid 615295] exit success!
+[SUCCESS][CORE_19][pid 615296] exit success!
+[SUCCESS][CORE_20][pid 615297] exit success!
+[SUCCESS][CORE_21][pid 615298] exit success!
+[SUCCESS][CORE_22][pid 615299] exit success!
+[SUCCESS][CORE_23][pid 615300] exit success!
+[SUCCESS][CORE_24][pid 615301] exit success!
+[SUCCESS][CORE_25][pid 615302] exit success!
+[SUCCESS][CORE_26][pid 615303] exit success!
+[SUCCESS][CORE_27][pid 615304] exit success!
+[SUCCESS][CORE_28][pid 615305] exit success!
+[SUCCESS][CORE_29][pid 615306] exit success!
+[SUCCESS][CORE_30][pid 615307] exit success!
+[SUCCESS][CORE_31][pid 615308] exit success!
+CASE slots=64 B=12 N=32 draft=1 fault=0 row0_slot=14473341 row0_lens=32895 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615309] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 615310] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 615311] exit success!
+[SUCCESS][CORE_3][pid 615312] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_4][pid 615313] exit success!
+[SUCCESS][CORE_5][pid 615314] exit success!
+[SUCCESS][CORE_6][pid 615315] exit success!
+[SUCCESS][CORE_7][pid 615316] exit success!
+[SUCCESS][CORE_8][pid 615317] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_9][pid 615318] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_10][pid 615319] exit success!
+[SUCCESS][CORE_11][pid 615320] exit success!
+[SUCCESS][CORE_12][pid 615321] exit success!
+[SUCCESS][CORE_13][pid 615322] exit success!
+[SUCCESS][CORE_14][pid 615323] exit success!
+[SUCCESS][CORE_15][pid 615324] exit success!
+[SUCCESS][CORE_16][pid 615325] exit success!
+[SUCCESS][CORE_17][pid 615326] exit success!
+[SUCCESS][CORE_18][pid 615327] exit success!
+[SUCCESS][CORE_19][pid 615328] exit success!
+[SUCCESS][CORE_20][pid 615329] exit success!
+[SUCCESS][CORE_21][pid 615330] exit success!
+[SUCCESS][CORE_22][pid 615331] exit success!
+[SUCCESS][CORE_23][pid 615332] exit success!
+[SUCCESS][CORE_24][pid 615333] exit success!
+[SUCCESS][CORE_25][pid 615334] exit success!
+[SUCCESS][CORE_26][pid 615335] exit success!
+[SUCCESS][CORE_27][pid 615336] exit success!
+[SUCCESS][CORE_28][pid 615337] exit success!
+[SUCCESS][CORE_29][pid 615338] exit success!
+[SUCCESS][CORE_30][pid 615339] exit success!
+[SUCCESS][CORE_31][pid 615340] exit success!
+CASE slots=64 B=12 N=12 draft=2 fault=0 row0_slot=14473341 row0_lens=32896 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615341] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 615342] exit success!
+[SUCCESS][CORE_2][pid 615343] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_3][pid 615344] exit success!
+[SUCCESS][CORE_4][pid 615345] exit success!
+[SUCCESS][CORE_5][pid 615346] exit success!
+[SUCCESS][CORE_6][pid 615347] exit success!
+[SUCCESS][CORE_7][pid 615348] exit success!
+[SUCCESS][CORE_8][pid 615349] exit success!
+[SUCCESS][CORE_9][pid 615350] exit success!
+[SUCCESS][CORE_10][pid 615351] exit success!
+[SUCCESS][CORE_11][pid 615352] exit success!
+[SUCCESS][CORE_12][pid 615353] exit success!
+[SUCCESS][CORE_13][pid 615354] exit success!
+[SUCCESS][CORE_14][pid 615355] exit success!
+[SUCCESS][CORE_15][pid 615356] exit success!
+[SUCCESS][CORE_16][pid 615357] exit success!
+[SUCCESS][CORE_17][pid 615358] exit success!
+[SUCCESS][CORE_18][pid 615359] exit success!
+[SUCCESS][CORE_19][pid 615360] exit success!
+[SUCCESS][CORE_20][pid 615361] exit success!
+[SUCCESS][CORE_21][pid 615362] exit success!
+[SUCCESS][CORE_22][pid 615363] exit success!
+[SUCCESS][CORE_23][pid 615364] exit success!
+[SUCCESS][CORE_24][pid 615365] exit success!
+[SUCCESS][CORE_25][pid 615366] exit success!
+[SUCCESS][CORE_26][pid 615367] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_27][pid 615368] exit success!
+[SUCCESS][CORE_28][pid 615369] exit success!
+[SUCCESS][CORE_29][pid 615370] exit success!
+[SUCCESS][CORE_30][pid 615371] exit success!
+[SUCCESS][CORE_31][pid 615372] exit success!
+CASE slots=64 B=12 N=12 draft=2 fault=1 row0_slot=14473341 row0_lens=32896 row0_qend=2
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615373] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 615374] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 615375] exit success!
+[SUCCESS][CORE_3][pid 615376] exit success!
+[SUCCESS][CORE_4][pid 615377] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_5][pid 615378] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_6][pid 615379] exit success!
+[SUCCESS][CORE_7][pid 615380] exit success!
+[SUCCESS][CORE_8][pid 615381] exit success!
+[SUCCESS][CORE_9][pid 615382] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_10][pid 615383] exit success!
+[SUCCESS][CORE_11][pid 615384] exit success!
+[SUCCESS][CORE_12][pid 615385] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_13][pid 615386] exit success!
+[SUCCESS][CORE_14][pid 615387] exit success!
+[SUCCESS][CORE_15][pid 615388] exit success!
+[SUCCESS][CORE_16][pid 615389] exit success!
+[SUCCESS][CORE_17][pid 615390] exit success!
+[SUCCESS][CORE_18][pid 615391] exit success!
+[SUCCESS][CORE_19][pid 615392] exit success!
+[SUCCESS][CORE_20][pid 615393] exit success!
+[SUCCESS][CORE_21][pid 615394] exit success!
+[SUCCESS][CORE_22][pid 615395] exit success!
+[SUCCESS][CORE_23][pid 615396] exit success!
+[SUCCESS][CORE_24][pid 615397] exit success!
+[SUCCESS][CORE_25][pid 615398] exit success!
+[SUCCESS][CORE_26][pid 615399] exit success!
+[SUCCESS][CORE_27][pid 615400] exit success!
+[SUCCESS][CORE_28][pid 615401] exit success!
+[SUCCESS][CORE_29][pid 615402] exit success!
+[SUCCESS][CORE_30][pid 615403] exit success!
+[SUCCESS][CORE_31][pid 615404] exit success!
+CASE slots=64 B=12 N=12 draft=2 fault=2 row0_slot=14473341 row0_lens=32896 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615405] exit success!
+[SUCCESS][CORE_1][pid 615406] exit success!
+[SUCCESS][CORE_2][pid 615407] exit success!
+[SUCCESS][CORE_3][pid 615408] exit success!
+[SUCCESS][CORE_4][pid 615409] exit success!
+[SUCCESS][CORE_5][pid 615410] exit success!
+[SUCCESS][CORE_6][pid 615411] exit success!
+[SUCCESS][CORE_7][pid 615412] exit success!
+[SUCCESS][CORE_8][pid 615413] exit success!
+[SUCCESS][CORE_9][pid 615414] exit success!
+[SUCCESS][CORE_10][pid 615415] exit success!
+[SUCCESS][CORE_11][pid 615416] exit success!
+[SUCCESS][CORE_12][pid 615417] exit success!
+[SUCCESS][CORE_13][pid 615418] exit success!
+[SUCCESS][CORE_14][pid 615419] exit success!
+[SUCCESS][CORE_15][pid 615420] exit success!
+[SUCCESS][CORE_16][pid 615421] exit success!
+[SUCCESS][CORE_17][pid 615422] exit success!
+[SUCCESS][CORE_18][pid 615423] exit success!
+[SUCCESS][CORE_19][pid 615424] exit success!
+[SUCCESS][CORE_20][pid 615425] exit success!
+[SUCCESS][CORE_21][pid 615426] exit success!
+[SUCCESS][CORE_22][pid 615427] exit success!
+[SUCCESS][CORE_23][pid 615428] exit success!
+[SUCCESS][CORE_24][pid 615429] exit success!
+[SUCCESS][CORE_25][pid 615430] exit success!
+[SUCCESS][CORE_26][pid 615431] exit success!
+[SUCCESS][CORE_27][pid 615432] exit success!
+[SUCCESS][CORE_28][pid 615433] exit success!
+[SUCCESS][CORE_29][pid 615434] exit success!
+[SUCCESS][CORE_30][pid 615435] exit success!
+[SUCCESS][CORE_31][pid 615436] exit success!
+CASE slots=64 B=12 N=12 draft=2 fault=3 row0_slot=99999999 row0_lens=32896 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615437] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 615438] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 615439] exit success!
+[SUCCESS][CORE_3][pid 615440] exit success!
+[SUCCESS][CORE_4][pid 615441] exit success!
+[SUCCESS][CORE_5][pid 615442] exit success!
+[SUCCESS][CORE_6][pid 615443] exit success!
+[SUCCESS][CORE_7][pid 615444] exit success!
+[SUCCESS][CORE_8][pid 615445] exit success!
+[SUCCESS][CORE_9][pid 615446] exit success!
+[SUCCESS][CORE_10][pid 615447] exit success!
+[SUCCESS][CORE_11][pid 615448] exit success!
+[SUCCESS][CORE_12][pid 615449] exit success!
+[SUCCESS][CORE_13][pid 615450] exit success!
+[SUCCESS][CORE_14][pid 615451] exit success!
+[SUCCESS][CORE_15][pid 615452] exit success!
+[SUCCESS][CORE_16][pid 615453] exit success!
+[SUCCESS][CORE_17][pid 615454] exit success!
+[SUCCESS][CORE_18][pid 615455] exit success!
+[SUCCESS][CORE_19][pid 615456] exit success!
+[SUCCESS][CORE_20][pid 615457] exit success!
+[SUCCESS][CORE_21][pid 615458] exit success!
+[SUCCESS][CORE_22][pid 615459] exit success!
+[SUCCESS][CORE_23][pid 615460] exit success!
+[SUCCESS][CORE_24][pid 615461] exit success!
+[SUCCESS][CORE_25][pid 615462] exit success!
+[SUCCESS][CORE_26][pid 615463] exit success!
+[SUCCESS][CORE_27][pid 615464] exit success!
+[SUCCESS][CORE_28][pid 615465] exit success!
+[SUCCESS][CORE_29][pid 615466] exit success!
+[SUCCESS][CORE_30][pid 615467] exit success!
+[SUCCESS][CORE_31][pid 615468] exit success!
+CASE slots=64 B=12 N=12 draft=2 fault=4 row0_slot=14473341 row0_lens=32893 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615469] exit success!
+[SUCCESS][CORE_1][pid 615470] exit success!
+[SUCCESS][CORE_2][pid 615471] exit success!
+[SUCCESS][CORE_3][pid 615472] exit success!
+[SUCCESS][CORE_4][pid 615473] exit success!
+[SUCCESS][CORE_5][pid 615474] exit success!
+[SUCCESS][CORE_6][pid 615475] exit success!
+[SUCCESS][CORE_7][pid 615476] exit success!
+[SUCCESS][CORE_8][pid 615477] exit success!
+[SUCCESS][CORE_9][pid 615478] exit success!
+[SUCCESS][CORE_10][pid 615479] exit success!
+[SUCCESS][CORE_11][pid 615480] exit success!
+[SUCCESS][CORE_12][pid 615481] exit success!
+[SUCCESS][CORE_13][pid 615482] exit success!
+[SUCCESS][CORE_14][pid 615483] exit success!
+[SUCCESS][CORE_15][pid 615484] exit success!
+[SUCCESS][CORE_16][pid 615485] exit success!
+[SUCCESS][CORE_17][pid 615486] exit success!
+[SUCCESS][CORE_18][pid 615487] exit success!
+[SUCCESS][CORE_19][pid 615488] exit success!
+[SUCCESS][CORE_20][pid 615489] exit success!
+[SUCCESS][CORE_21][pid 615490] exit success!
+[SUCCESS][CORE_22][pid 615491] exit success!
+[SUCCESS][CORE_23][pid 615492] exit success!
+[SUCCESS][CORE_24][pid 615493] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_25][pid 615494] exit success!
+[SUCCESS][CORE_26][pid 615495] exit success!
+[SUCCESS][CORE_27][pid 615496] exit success!
+[SUCCESS][CORE_28][pid 615497] exit success!
+[SUCCESS][CORE_29][pid 615498] exit success!
+[SUCCESS][CORE_30][pid 615499] exit success!
+[SUCCESS][CORE_31][pid 615500] exit success!
+CASE slots=64 B=12 N=32 draft=2 fault=0 row0_slot=14473341 row0_lens=32896 row0_qend=1
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615501] exit success!
+[SUCCESS][CORE_1][pid 615502] exit success!
+[SUCCESS][CORE_2][pid 615503] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_3][pid 615504] exit success!
+[SUCCESS][CORE_4][pid 615505] exit success!
+[SUCCESS][CORE_5][pid 615506] exit success!
+[SUCCESS][CORE_6][pid 615507] exit success!
+[SUCCESS][CORE_7][pid 615508] exit success!
+[SUCCESS][CORE_8][pid 615509] exit success!
+[SUCCESS][CORE_9][pid 615510] exit success!
+[SUCCESS][CORE_10][pid 615511] exit success!
+[SUCCESS][CORE_11][pid 615512] exit success!
+[SUCCESS][CORE_12][pid 615513] exit success!
+[SUCCESS][CORE_13][pid 615514] exit success!
+[SUCCESS][CORE_14][pid 615515] exit success!
+[SUCCESS][CORE_15][pid 615516] exit success!
+[SUCCESS][CORE_16][pid 615517] exit success!
+[SUCCESS][CORE_17][pid 615518] exit success!
+[SUCCESS][CORE_18][pid 615519] exit success!
+[SUCCESS][CORE_19][pid 615520] exit success!
+[SUCCESS][CORE_20][pid 615521] exit success!
+[SUCCESS][CORE_21][pid 615522] exit success!
+[SUCCESS][CORE_22][pid 615523] exit success!
+[SUCCESS][CORE_23][pid 615524] exit success!
+[SUCCESS][CORE_24][pid 615525] exit success!
+[SUCCESS][CORE_25][pid 615526] exit success!
+[SUCCESS][CORE_26][pid 615527] exit success!
+[SUCCESS][CORE_27][pid 615528] exit success!
+[SUCCESS][CORE_28][pid 615529] exit success!
+[SUCCESS][CORE_29][pid 615530] exit success!
+[SUCCESS][CORE_30][pid 615531] exit success!
+[SUCCESS][CORE_31][pid 615532] exit success!
+{"slot_bits":64,"valid_launches":12,"negative_controls":4,"status":"passed"}
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615533] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 615534] exit success!
+[SUCCESS][CORE_2][pid 615535] exit success!
+[SUCCESS][CORE_3][pid 615536] exit success!
+[SUCCESS][CORE_4][pid 615537] exit success!
+[SUCCESS][CORE_5][pid 615538] exit success!
+[SUCCESS][CORE_6][pid 615539] exit success!
+[SUCCESS][CORE_7][pid 615540] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_8][pid 615541] exit success!
+[SUCCESS][CORE_9][pid 615542] exit success!
+[SUCCESS][CORE_10][pid 615543] exit success!
+[SUCCESS][CORE_11][pid 615544] exit success!
+[SUCCESS][CORE_12][pid 615545] exit success!
+[SUCCESS][CORE_13][pid 615546] exit success!
+[SUCCESS][CORE_14][pid 615547] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_15][pid 615548] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_16][pid 615549] exit success!
+[SUCCESS][CORE_17][pid 615550] exit success!
+[SUCCESS][CORE_18][pid 615551] exit success!
+[SUCCESS][CORE_19][pid 615552] exit success!
+[SUCCESS][CORE_20][pid 615553] exit success!
+[SUCCESS][CORE_21][pid 615554] exit success!
+[SUCCESS][CORE_22][pid 615555] exit success!
+[SUCCESS][CORE_23][pid 615556] exit success!
+[SUCCESS][CORE_24][pid 615557] exit success!
+[SUCCESS][CORE_25][pid 615558] exit success!
+[SUCCESS][CORE_26][pid 615559] exit success!
+[SUCCESS][CORE_27][pid 615560] exit success!
+[SUCCESS][CORE_28][pid 615561] exit success!
+[SUCCESS][CORE_29][pid 615562] exit success!
+[SUCCESS][CORE_30][pid 615563] exit success!
+[SUCCESS][CORE_31][pid 615564] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615565] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 615566] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 615567] exit success!
+[SUCCESS][CORE_3][pid 615568] exit success!
+[SUCCESS][CORE_4][pid 615569] exit success!
+[SUCCESS][CORE_5][pid 615570] exit success!
+[SUCCESS][CORE_6][pid 615571] exit success!
+[SUCCESS][CORE_7][pid 615572] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_8][pid 615573] exit success!
+[SUCCESS][CORE_9][pid 615574] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_10][pid 615575] exit success!
+[SUCCESS][CORE_11][pid 615576] exit success!
+[SUCCESS][CORE_12][pid 615577] exit success!
+[SUCCESS][CORE_13][pid 615578] exit success!
+[SUCCESS][CORE_14][pid 615579] exit success!
+[SUCCESS][CORE_15][pid 615580] exit success!
+[SUCCESS][CORE_16][pid 615581] exit success!
+[SUCCESS][CORE_17][pid 615582] exit success!
+[SUCCESS][CORE_18][pid 615583] exit success!
+[SUCCESS][CORE_19][pid 615584] exit success!
+[SUCCESS][CORE_20][pid 615585] exit success!
+[SUCCESS][CORE_21][pid 615586] exit success!
+[SUCCESS][CORE_22][pid 615587] exit success!
+[SUCCESS][CORE_23][pid 615588] exit success!
+[SUCCESS][CORE_24][pid 615589] exit success!
+[SUCCESS][CORE_25][pid 615590] exit success!
+[SUCCESS][CORE_26][pid 615591] exit success!
+[SUCCESS][CORE_27][pid 615592] exit success!
+[SUCCESS][CORE_28][pid 615593] exit success!
+[SUCCESS][CORE_29][pid 615594] exit success!
+[SUCCESS][CORE_30][pid 615595] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_31][pid 615596] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615597] exit success!
+[SUCCESS][CORE_1][pid 615598] exit success!
+[SUCCESS][CORE_2][pid 615599] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_3][pid 615600] exit success!
+[SUCCESS][CORE_4][pid 615601] exit success!
+[SUCCESS][CORE_5][pid 615602] exit success!
+[SUCCESS][CORE_6][pid 615603] exit success!
+[SUCCESS][CORE_7][pid 615604] exit success!
+[SUCCESS][CORE_8][pid 615605] exit success!
+[SUCCESS][CORE_9][pid 615606] exit success!
+[SUCCESS][CORE_10][pid 615607] exit success!
+[SUCCESS][CORE_11][pid 615608] exit success!
+[SUCCESS][CORE_12][pid 615609] exit success!
+[SUCCESS][CORE_13][pid 615610] exit success!
+[SUCCESS][CORE_14][pid 615611] exit success!
+[SUCCESS][CORE_15][pid 615612] exit success!
+[SUCCESS][CORE_16][pid 615613] exit success!
+[SUCCESS][CORE_17][pid 615614] exit success!
+[SUCCESS][CORE_18][pid 615615] exit success!
+[SUCCESS][CORE_19][pid 615616] exit success!
+[SUCCESS][CORE_20][pid 615617] exit success!
+[SUCCESS][CORE_21][pid 615618] exit success!
+[SUCCESS][CORE_22][pid 615619] exit success!
+[SUCCESS][CORE_23][pid 615620] exit success!
+[SUCCESS][CORE_24][pid 615621] exit success!
+[SUCCESS][CORE_25][pid 615622] exit success!
+[SUCCESS][CORE_26][pid 615623] exit success!
+[SUCCESS][CORE_27][pid 615624] exit success!
+[SUCCESS][CORE_28][pid 615625] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_29][pid 615626] exit success!
+[SUCCESS][CORE_30][pid 615627] exit success!
+[SUCCESS][CORE_31][pid 615628] exit success!
+PUBLISHED_POSITION slots=32 inverse_error=5 explicit_error=0 invalid_live_error=1 invalid_store_position=-1 passed
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615629] exit success!
+[SUCCESS][CORE_1][pid 615630] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 615631] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_3][pid 615632] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_4][pid 615633] exit success!
+[SUCCESS][CORE_5][pid 615634] exit success!
+[SUCCESS][CORE_6][pid 615635] exit success!
+[SUCCESS][CORE_7][pid 615636] exit success!
+[SUCCESS][CORE_8][pid 615637] exit success!
+[SUCCESS][CORE_9][pid 615638] exit success!
+[SUCCESS][CORE_10][pid 615639] exit success!
+[SUCCESS][CORE_11][pid 615640] exit success!
+[SUCCESS][CORE_12][pid 615641] exit success!
+[SUCCESS][CORE_13][pid 615642] exit success!
+[SUCCESS][CORE_14][pid 615643] exit success!
+[SUCCESS][CORE_15][pid 615644] exit success!
+[SUCCESS][CORE_16][pid 615645] exit success!
+[SUCCESS][CORE_17][pid 615646] exit success!
+[SUCCESS][CORE_18][pid 615647] exit success!
+[SUCCESS][CORE_19][pid 615648] exit success!
+[SUCCESS][CORE_20][pid 615649] exit success!
+[SUCCESS][CORE_21][pid 615650] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_22][pid 615651] exit success!
+[SUCCESS][CORE_23][pid 615652] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_24][pid 615653] exit success!
+[SUCCESS][CORE_25][pid 615654] exit success!
+[SUCCESS][CORE_26][pid 615655] exit success!
+[SUCCESS][CORE_27][pid 615656] exit success!
+[SUCCESS][CORE_28][pid 615657] exit success!
+[SUCCESS][CORE_29][pid 615658] exit success!
+[SUCCESS][CORE_30][pid 615659] exit success!
+[SUCCESS][CORE_31][pid 615660] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615661] exit success!
+[SUCCESS][CORE_1][pid 615662] exit success!
+[SUCCESS][CORE_2][pid 615663] exit success!
+[SUCCESS][CORE_3][pid 615664] exit success!
+[SUCCESS][CORE_4][pid 615665] exit success!
+[SUCCESS][CORE_5][pid 615666] exit success!
+[SUCCESS][CORE_6][pid 615667] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_7][pid 615668] exit success!
+[SUCCESS][CORE_8][pid 615669] exit success!
+[SUCCESS][CORE_9][pid 615670] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_10][pid 615671] exit success!
+[SUCCESS][CORE_11][pid 615672] exit success!
+[SUCCESS][CORE_12][pid 615673] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_13][pid 615674] exit success!
+[SUCCESS][CORE_14][pid 615675] exit success!
+[SUCCESS][CORE_15][pid 615676] exit success!
+[SUCCESS][CORE_16][pid 615677] exit success!
+[SUCCESS][CORE_17][pid 615678] exit success!
+[SUCCESS][CORE_18][pid 615679] exit success!
+[SUCCESS][CORE_19][pid 615680] exit success!
+[SUCCESS][CORE_20][pid 615681] exit success!
+[SUCCESS][CORE_21][pid 615682] exit success!
+[SUCCESS][CORE_22][pid 615683] exit success!
+[SUCCESS][CORE_23][pid 615684] exit success!
+[SUCCESS][CORE_24][pid 615685] exit success!
+[SUCCESS][CORE_25][pid 615686] exit success!
+[SUCCESS][CORE_26][pid 615687] exit success!
+[SUCCESS][CORE_27][pid 615688] exit success!
+[SUCCESS][CORE_28][pid 615689] exit success!
+[SUCCESS][CORE_29][pid 615690] exit success!
+[SUCCESS][CORE_30][pid 615691] exit success!
+[SUCCESS][CORE_31][pid 615692] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 615693] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_1][pid 615694] exit success!
+[SUCCESS][CORE_2][pid 615695] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_3][pid 615696] exit success!
+[SUCCESS][CORE_4][pid 615697] exit success!
+[SUCCESS][CORE_5][pid 615698] exit success!
+[SUCCESS][CORE_6][pid 615699] exit success!
+[SUCCESS][CORE_7][pid 615700] exit success!
+[SUCCESS][CORE_8][pid 615701] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_9][pid 615702] exit success!
+[SUCCESS][CORE_10][pid 615703] exit success!
+[SUCCESS][CORE_11][pid 615704] exit success!
+[SUCCESS][CORE_12][pid 615705] exit success!
+[SUCCESS][CORE_13][pid 615706] exit success!
+[SUCCESS][CORE_14][pid 615707] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_15][pid 615708] exit success!
+[SUCCESS][CORE_16][pid 615709] exit success!
+[SUCCESS][CORE_17][pid 615710] exit success!
+[SUCCESS][CORE_18][pid 615711] exit success!
+[SUCCESS][CORE_19][pid 615712] exit success!
+[SUCCESS][CORE_20][pid 615713] exit success!
+[SUCCESS][CORE_21][pid 615714] exit success!
+[SUCCESS][CORE_22][pid 615715] exit success!
+[SUCCESS][CORE_23][pid 615716] exit success!
+[SUCCESS][CORE_24][pid 615717] exit success!
+[SUCCESS][CORE_25][pid 615718] exit success!
+[SUCCESS][CORE_26][pid 615719] exit success!
+[SUCCESS][CORE_27][pid 615720] exit success!
+[SUCCESS][CORE_28][pid 615721] exit success!
+[SUCCESS][CORE_29][pid 615722] exit success!
+[SUCCESS][CORE_30][pid 615723] exit success!
+[SUCCESS][CORE_31][pid 615724] exit success!
+PUBLISHED_POSITION slots=64 inverse_error=5 explicit_error=0 invalid_live_error=1 invalid_store_position=-1 passed

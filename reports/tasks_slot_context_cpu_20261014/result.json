@@ -1,0 +1,57 @@
+{
+  "status": "passed",
+  "backend": "official AscendC tikicpulib CPU-debug Ascend910B4",
+  "exit_code": 0,
+  "production_kernel_modified": false,
+  "source_revision": "c77867f12a499be95baa4be74ccbe7e3dfa34afc",
+  "kernel_sha256": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+  "driver_sha256": "08afd1d6f2f982bd0919d5597532661402b3aa8410466c3569ccacdae871ab29",
+  "slot_dtypes": [
+    "int32",
+    "int64"
+  ],
+  "request_sequence": [
+    32,
+    31,
+    12
+  ],
+  "draft_indices": [
+    1,
+    2
+  ],
+  "tokens": [
+    "B",
+    "32"
+  ],
+  "table_columns": 2048,
+  "length_range": [
+    32767,
+    33792
+  ],
+  "physical_page_ids": "deterministic shuffled unique values with seed 157159; stale duplicate immediately beyond valid column prefix",
+  "aiv_cores": 32,
+  "valid_launches": 24,
+  "valid_task_records_checked": 6156,
+  "negative_control_launches": 8,
+  "negative_controls": [
+    "query length != 1",
+    "duplicate match inside valid prefix",
+    "missing physical page",
+    "position == seq_len"
+  ],
+  "negative_control_expected_code": 5,
+  "finding": "No code5 for constructed valid long-table/churn inputs; all deliberate malformed inputs preserve code5. Does not establish live service metadata correctness or target fault resolution.",
+  "npu": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_run",
+  "performance": "not_measured",
+  "deadline_seconds": 600,
+  "vm_workspace": "/tmp/oscar-tasks-slot-context-20261014",
+  "vm_lock": "/tmp/oscar-cann-validation.lock",
+  "logs": [
+    "configure.log",
+    "build.log",
+    "run.log",
+    "source.sha256"
+  ]
+}

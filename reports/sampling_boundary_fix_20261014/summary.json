@@ -1,0 +1,64 @@
+{
+  "status": "host_correctness_passed_target_pending",
+  "source_defects": [
+    "generic native greedy token loop does not guard masked rows; unspecified draft lengths can contaminate random rows or padding",
+    "native ordinary first-row cumulative-count load can address cu[-1] before choosing start zero"
+  ],
+  "reproduction": {
+    "kind": "original native function AST source-address model, chosen unspecified masked values; not an Ascend compiler execution",
+    "drafts": [
+      3,
+      1
+    ],
+    "greedy_mask": [
+      true,
+      false
+    ],
+    "old_valid_counts": [
+      4,
+      3
+    ],
+    "new_valid_counts": [
+      4,
+      1
+    ],
+    "old_native_later_prepare_status": [
+      0,
+      5
+    ],
+    "new_native_later_prepare_status": [
+      0,
+      0
+    ]
+  },
+  "fix": [
+    "fixed shape greedy writes with exact prefix/rejection/bonus semantics; random rows preserved",
+    "32-byte zero prefix backing for native cumulative-count view; probabilities and random writer unchanged"
+  ],
+  "activation": "external OSCAR plugin imports; direct and observe share it automatically",
+  "stable_policy": {
+    "prefix_caching": false,
+    "max_num_batched_tokens": 16384,
+    "explicit_apc_enable_supported": true
+  },
+  "unchanged": [
+    "native source files",
+    "GDN",
+    "AscendC production kernels",
+    "status guard",
+    "acceptance thresholds",
+    "native sampler probabilities and RNG"
+  ],
+  "npu": "not_run",
+  "actual_target_undefined_value": "not_observed",
+  "two_reported_target_failures_eliminated": "not_established_on_device",
+  "host_tests": {
+    "passed": 125,
+    "command": "python -m pytest -q tests/test_greedy_sampling.py tests/test_plugin.py tests/test_native_discard_pipeline.py tests/test_later_draft_slots.py tests/test_native_batch_drain.py tests/test_aisbench_stable_policy.py",
+    "elapsed_seconds": 2.26
+  },
+  "file_sha256": {
+    "oscar_ascend/integration/greedy_sampling.py": "fa7865bd39df52ad2f9b2c8934eca40f8ff6fdc699dcb40d26e67760c96cf863",
+    "oscar_ascend/plugin.py": "ad019ddeaa92a431d733fd69d0070e44a1aadda5f54cd335f7f021a985f3a12c"
+  }
+}

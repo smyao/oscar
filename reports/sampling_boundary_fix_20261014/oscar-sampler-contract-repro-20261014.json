@@ -1,0 +1,880 @@
+{
+  "evidence": "CPU NumPy source address model; unspecified choices injected; not actual Triton execution",
+  "mixed_control": {
+    "drafts": [
+      3,
+      1
+    ],
+    "greedy": [
+      1,
+      0
+    ],
+    "vectorcores_model": 32,
+    "grid": 2,
+    "block": 1,
+    "poison": false,
+    "rows": [
+      [
+        10,
+        11,
+        12,
+        20
+      ],
+      [
+        30,
+        -1,
+        -1,
+        -1
+      ]
+    ],
+    "valid_counts": [
+      4,
+      1
+    ],
+    "rejected_counts": [
+      0,
+      1
+    ],
+    "anchors": [
+      3,
+      4
+    ],
+    "qsl": [
+      0,
+      4,
+      6
+    ],
+    "events": [
+      {
+        "kind": "read_oob",
+        "pid": 0,
+        "tensor": "cu",
+        "offset": -1
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 0,
+        "value": 10
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 1,
+        "value": 11
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 2,
+        "value": 12
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 3,
+        "value": 20
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 1,
+        "tensor": "cu",
+        "offset": 0,
+        "chosen": 0
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 1,
+        "tensor": "cu",
+        "offset": 1,
+        "chosen": 0
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 0,
+        "tensor": "cu",
+        "offset": -1,
+        "chosen": 0
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 0,
+        "tensor": "cu",
+        "offset": 0,
+        "chosen": 0
+      },
+      {
+        "kind": "write",
+        "pid": 1,
+        "tensor": "output",
+        "offset": 4,
+        "value": 30
+      }
+    ]
+  },
+  "mixed_poison": {
+    "drafts": [
+      3,
+      1
+    ],
+    "greedy": [
+      1,
+      0
+    ],
+    "vectorcores_model": 32,
+    "grid": 2,
+    "block": 1,
+    "poison": true,
+    "rows": [
+      [
+        10,
+        11,
+        12,
+        20
+      ],
+      [
+        30,
+        11,
+        12,
+        -1
+      ]
+    ],
+    "valid_counts": [
+      4,
+      3
+    ],
+    "rejected_counts": [
+      0,
+      -1
+    ],
+    "anchors": [
+      3,
+      6
+    ],
+    "qsl": [
+      0,
+      4,
+      6
+    ],
+    "events": [
+      {
+        "kind": "read_oob",
+        "pid": 0,
+        "tensor": "cu",
+        "offset": -1
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 0,
+        "value": 10
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 1,
+        "value": 11
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 2,
+        "value": 12
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 3,
+        "value": 20
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 1,
+        "tensor": "cu",
+        "offset": 0,
+        "chosen": 0
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 1,
+        "tensor": "cu",
+        "offset": 1,
+        "chosen": 3
+      },
+      {
+        "kind": "write",
+        "pid": 1,
+        "tensor": "output",
+        "offset": 4,
+        "value": 10
+      },
+      {
+        "kind": "write",
+        "pid": 1,
+        "tensor": "output",
+        "offset": 5,
+        "value": 11
+      },
+      {
+        "kind": "write",
+        "pid": 1,
+        "tensor": "output",
+        "offset": 6,
+        "value": 12
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 0,
+        "tensor": "cu",
+        "offset": -1,
+        "chosen": 0
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 0,
+        "tensor": "cu",
+        "offset": 0,
+        "chosen": 3
+      },
+      {
+        "kind": "write",
+        "pid": 1,
+        "tensor": "output",
+        "offset": 4,
+        "value": 30
+      }
+    ]
+  },
+  "B9_V8_padded": {
+    "drafts": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "greedy": null,
+    "vectorcores_model": 8,
+    "grid": 8,
+    "block": 2,
+    "poison": true,
+    "rows": [
+      [
+        10,
+        11,
+        12,
+        20
+      ],
+      [
+        13,
+        14,
+        15,
+        21
+      ],
+      [
+        16,
+        17,
+        18,
+        22
+      ],
+      [
+        19,
+        20,
+        21,
+        23
+      ],
+      [
+        22,
+        23,
+        24,
+        24
+      ],
+      [
+        25,
+        26,
+        27,
+        25
+      ],
+      [
+        28,
+        29,
+        30,
+        26
+      ],
+      [
+        31,
+        32,
+        33,
+        27
+      ],
+      [
+        34,
+        35,
+        36,
+        28
+      ]
+    ],
+    "valid_counts": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "rejected_counts": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "anchors": [
+      3,
+      7,
+      11,
+      15,
+      19,
+      23,
+      27,
+      31,
+      35
+    ],
+    "qsl": [
+      0,
+      4,
+      8,
+      12,
+      16,
+      20,
+      24,
+      28,
+      32,
+      36
+    ],
+    "events": [
+      {
+        "kind": "read_oob",
+        "pid": 0,
+        "tensor": "cu",
+        "offset": -1
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 0,
+        "value": 10
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 1,
+        "value": 11
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 2,
+        "value": 12
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 3,
+        "value": 20
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 4,
+        "value": 13
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 5,
+        "value": 14
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 6,
+        "value": 15
+      },
+      {
+        "kind": "write",
+        "pid": 0,
+        "tensor": "output",
+        "offset": 7,
+        "value": 21
+      },
+      {
+        "kind": "write",
+        "pid": 1,
+        "tensor": "output",
+        "offset": 8,
+        "value": 16
+      },
+      {
+        "kind": "write",
+        "pid": 1,
+        "tensor": "output",
+        "offset": 9,
+        "value": 17
+      },
+      {
+        "kind": "write",
+        "pid": 1,
+        "tensor": "output",
+        "offset": 10,
+        "value": 18
+      },
+      {
+        "kind": "write",
+        "pid": 1,
+        "tensor": "output",
+        "offset": 11,
+        "value": 22
+      },
+      {
+        "kind": "write",
+        "pid": 1,
+        "tensor": "output",
+        "offset": 12,
+        "value": 19
+      },
+      {
+        "kind": "write",
+        "pid": 1,
+        "tensor": "output",
+        "offset": 13,
+        "value": 20
+      },
+      {
+        "kind": "write",
+        "pid": 1,
+        "tensor": "output",
+        "offset": 14,
+        "value": 21
+      },
+      {
+        "kind": "write",
+        "pid": 1,
+        "tensor": "output",
+        "offset": 15,
+        "value": 23
+      },
+      {
+        "kind": "write",
+        "pid": 2,
+        "tensor": "output",
+        "offset": 16,
+        "value": 22
+      },
+      {
+        "kind": "write",
+        "pid": 2,
+        "tensor": "output",
+        "offset": 17,
+        "value": 23
+      },
+      {
+        "kind": "write",
+        "pid": 2,
+        "tensor": "output",
+        "offset": 18,
+        "value": 24
+      },
+      {
+        "kind": "write",
+        "pid": 2,
+        "tensor": "output",
+        "offset": 19,
+        "value": 24
+      },
+      {
+        "kind": "write",
+        "pid": 2,
+        "tensor": "output",
+        "offset": 20,
+        "value": 25
+      },
+      {
+        "kind": "write",
+        "pid": 2,
+        "tensor": "output",
+        "offset": 21,
+        "value": 26
+      },
+      {
+        "kind": "write",
+        "pid": 2,
+        "tensor": "output",
+        "offset": 22,
+        "value": 27
+      },
+      {
+        "kind": "write",
+        "pid": 2,
+        "tensor": "output",
+        "offset": 23,
+        "value": 25
+      },
+      {
+        "kind": "write",
+        "pid": 3,
+        "tensor": "output",
+        "offset": 24,
+        "value": 28
+      },
+      {
+        "kind": "write",
+        "pid": 3,
+        "tensor": "output",
+        "offset": 25,
+        "value": 29
+      },
+      {
+        "kind": "write",
+        "pid": 3,
+        "tensor": "output",
+        "offset": 26,
+        "value": 30
+      },
+      {
+        "kind": "write",
+        "pid": 3,
+        "tensor": "output",
+        "offset": 27,
+        "value": 26
+      },
+      {
+        "kind": "write",
+        "pid": 3,
+        "tensor": "output",
+        "offset": 28,
+        "value": 31
+      },
+      {
+        "kind": "write",
+        "pid": 3,
+        "tensor": "output",
+        "offset": 29,
+        "value": 32
+      },
+      {
+        "kind": "write",
+        "pid": 3,
+        "tensor": "output",
+        "offset": 30,
+        "value": 33
+      },
+      {
+        "kind": "write",
+        "pid": 3,
+        "tensor": "output",
+        "offset": 31,
+        "value": 27
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 4,
+        "tensor": "cu",
+        "offset": 8,
+        "chosen": 0
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 4,
+        "tensor": "cu",
+        "offset": 9,
+        "chosen": 3
+      },
+      {
+        "kind": "write",
+        "pid": 4,
+        "tensor": "output",
+        "offset": 32,
+        "value": 34
+      },
+      {
+        "kind": "write",
+        "pid": 4,
+        "tensor": "output",
+        "offset": 33,
+        "value": 35
+      },
+      {
+        "kind": "write",
+        "pid": 4,
+        "tensor": "output",
+        "offset": 34,
+        "value": 36
+      },
+      {
+        "kind": "write",
+        "pid": 4,
+        "tensor": "output",
+        "offset": 35,
+        "value": 28
+      },
+      {
+        "kind": "write_oob",
+        "pid": 4,
+        "tensor": "output",
+        "offset": 36,
+        "value": 10
+      },
+      {
+        "kind": "write_oob",
+        "pid": 4,
+        "tensor": "output",
+        "offset": 37,
+        "value": 11
+      },
+      {
+        "kind": "write_oob",
+        "pid": 4,
+        "tensor": "output",
+        "offset": 38,
+        "value": 12
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 5,
+        "tensor": "cu",
+        "offset": 9,
+        "chosen": 0
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 5,
+        "tensor": "cu",
+        "offset": 10,
+        "chosen": 0
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 5,
+        "tensor": "cu",
+        "offset": 10,
+        "chosen": 3
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 5,
+        "tensor": "cu",
+        "offset": 11,
+        "chosen": 3
+      },
+      {
+        "kind": "write_oob",
+        "pid": 5,
+        "tensor": "output",
+        "offset": 40,
+        "value": 10
+      },
+      {
+        "kind": "write_oob",
+        "pid": 5,
+        "tensor": "output",
+        "offset": 41,
+        "value": 11
+      },
+      {
+        "kind": "write_oob",
+        "pid": 5,
+        "tensor": "output",
+        "offset": 42,
+        "value": 12
+      },
+      {
+        "kind": "write_oob",
+        "pid": 5,
+        "tensor": "output",
+        "offset": 44,
+        "value": 10
+      },
+      {
+        "kind": "write_oob",
+        "pid": 5,
+        "tensor": "output",
+        "offset": 45,
+        "value": 11
+      },
+      {
+        "kind": "write_oob",
+        "pid": 5,
+        "tensor": "output",
+        "offset": 46,
+        "value": 12
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 6,
+        "tensor": "cu",
+        "offset": 11,
+        "chosen": 0
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 6,
+        "tensor": "cu",
+        "offset": 12,
+        "chosen": 0
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 6,
+        "tensor": "cu",
+        "offset": 12,
+        "chosen": 3
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 6,
+        "tensor": "cu",
+        "offset": 13,
+        "chosen": 3
+      },
+      {
+        "kind": "write_oob",
+        "pid": 6,
+        "tensor": "output",
+        "offset": 48,
+        "value": 10
+      },
+      {
+        "kind": "write_oob",
+        "pid": 6,
+        "tensor": "output",
+        "offset": 49,
+        "value": 11
+      },
+      {
+        "kind": "write_oob",
+        "pid": 6,
+        "tensor": "output",
+        "offset": 50,
+        "value": 12
+      },
+      {
+        "kind": "write_oob",
+        "pid": 6,
+        "tensor": "output",
+        "offset": 52,
+        "value": 10
+      },
+      {
+        "kind": "write_oob",
+        "pid": 6,
+        "tensor": "output",
+        "offset": 53,
+        "value": 11
+      },
+      {
+        "kind": "write_oob",
+        "pid": 6,
+        "tensor": "output",
+        "offset": 54,
+        "value": 12
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 7,
+        "tensor": "cu",
+        "offset": 13,
+        "chosen": 0
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 7,
+        "tensor": "cu",
+        "offset": 14,
+        "chosen": 0
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 7,
+        "tensor": "cu",
+        "offset": 14,
+        "chosen": 3
+      },
+      {
+        "kind": "masked_unspecified",
+        "pid": 7,
+        "tensor": "cu",
+        "offset": 15,
+        "chosen": 3
+      },
+      {
+        "kind": "write_oob",
+        "pid": 7,
+        "tensor": "output",
+        "offset": 56,
+        "value": 10
+      },
+      {
+        "kind": "write_oob",
+        "pid": 7,
+        "tensor": "output",
+        "offset": 57,
+        "value": 11
+      },
+      {
+        "kind": "write_oob",
+        "pid": 7,
+        "tensor": "output",
+        "offset": 58,
+        "value": 12
+      },
+      {
+        "kind": "write_oob",
+        "pid": 7,
+        "tensor": "output",
+        "offset": 60,
+        "value": 10
+      },
+      {
+        "kind": "write_oob",
+        "pid": 7,
+        "tensor": "output",
+        "offset": 61,
+        "value": 11
+      },
+      {
+        "kind": "write_oob",
+        "pid": 7,
+        "tensor": "output",
+        "offset": 62,
+        "value": 12
+      }
+    ]
+  }
+}

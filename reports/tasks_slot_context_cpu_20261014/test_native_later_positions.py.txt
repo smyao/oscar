@@ -1,0 +1,247 @@
+"""Archive #157-159: native later position/slot ownership contract.
+
+Execute pinned mRoPE position and later metadata methods unchanged. Positive
+mRoPE delta is a synthetic interface input, not evidence that Qwen3.5 plain
+text emits it or that it caused the reported target Trap. Qwen3.5 inherits
+Qwen3VL's non-pruned grid positions, which normally yield delta <= 0.
+"""
+from types import MethodType,SimpleNamespace
+import pytest
+import torch
+from oscar_ascend.integration.draft_discard import native_draft_scope
+from test_native_discard_pipeline import _native, _Buffer
+from test_first_draft_current_only import builder as make_builder
+from test_first_draft_padded_native import Common
+from test_later_draft_slots import _prepare_status
+from test_runtime_native import definitions
+
+@pytest.mark.parametrize('delta,old_status', [(-17,0),(0,0),(17,5)])
+def test_native_forward_cache_position_can_differ_from_seq_lens(monkeypatch,delta,old_status):
+    native,states,modes=_native(monkeypatch)
+    rope=definitions('references/vllm/vllm/model_executor/layers/rotary_embedding/mrope.py',
+        'native_rope_position_contract',set(),{},monkeypatch,
+        methods=[('MRotaryEmbedding','get_next_input_positions')])
+    # Snapshot immediately at native builder seam without changing common.
+    builder=SimpleNamespace(build_for_drafting=lambda common,index:common)
+    runner=SimpleNamespace(pcp_manager=None)
+    proposer=SimpleNamespace(runner=runner,method='mtp',uses_mrope=True,has_gdn=True,
+        kernel_block_size=128,max_model_len=262144,use_compress=False,
+        arange=torch.arange(8,dtype=torch.int32),token_arange_np=torch.arange(8,dtype=torch.int32),
+        slot_mapping_group=[torch.full((8,),-1,dtype=torch.int32) for _ in range(3)],
+        seq_lens_group=[torch.zeros(1,dtype=torch.int32) for _ in range(3)],
+        query_start_loc_group=[torch.zeros(2,dtype=torch.int32) for _ in range(3)])
+    proposer.shallow_copy_metadata=MethodType(native.shallow_copy_metadata,proposer)
+    starts=torch.tensor([0,4],dtype=torch.int32)
+    previous=Common(query_start_loc=starts,query_start_loc_cpu=starts.clone(),
+        seq_lens=torch.tensor([128],dtype=torch.int32),seq_lens_cpu=None,_seq_lens_cpu=None,
+        num_computed_tokens_cpu=None,positions=torch.zeros(8,dtype=torch.int64),
+        block_table_tensor=torch.tensor([[37,61]],dtype=torch.int32),num_reqs=1,
+        num_actual_tokens=4,max_query_len=4,num_input_tokens=4,max_seq_len=128)
+    target=torch.tensor(rope.get_next_input_positions(delta,124,128),dtype=torch.int64)
+    used=target[:,torch.tensor([1])] # two valid outputs, rejected count=2
+    for index in (1,2):
+        previous,actual=native.attn_update_stack_num_spec_norm(proposer,index,None,previous,
+            1,4,used,modes.NONE,attn_group=SimpleNamespace(get_metadata_builder=lambda:builder))
+        pos=int(actual.positions[0]);slot=int(actual.slot_mapping[0])
+        assert pos==125+delta+index
+        assert slot==int(actual.block_table_tensor[0,pos//128])*128+pos%128
+        assert _prepare_status(slot,int(actual.seq_lens[0]),actual.block_table_tensor[0].tolist())==old_status
+        assert _prepare_status(slot,pos+1,actual.block_table_tensor[0].tolist())==0
+
+
+def _published_case(monkeypatch, *, delta=17, apc=False, eager=True):
+    from test_first_draft_current_only import builder as make_builder, config
+    native, states, modes = _native(monkeypatch)
+    cfg = config()
+    cfg.cache_config = SimpleNamespace(enable_prefix_caching=apc)
+    cfg.speculative_config.enforce_eager = eager
+    builder = make_builder(monkeypatch, cfg=cfg)
+    runner = SimpleNamespace(pcp_manager=None, input_batch=SimpleNamespace(num_reqs=1),
+        discard_request_mask=SimpleNamespace(gpu=torch.tensor([False])))
+    proposer = SimpleNamespace(runner=runner, method='mtp', pcp_size=1, dcp_size=1,
+        uses_mrope=True, has_gdn=True, use_cuda_graph=not eager,
+        kernel_block_size=128, max_model_len=262144, use_compress=False,
+        arange=torch.arange(8,dtype=torch.int32), token_arange_np=torch.arange(8,dtype=torch.int32),
+        slot_mapping_group=[torch.full((8,),-1,dtype=torch.int32) for _ in range(3)],
+        seq_lens_group=[torch.zeros(1,dtype=torch.int32) for _ in range(3)],
+        query_start_loc_group=[torch.zeros(2,dtype=torch.int32) for _ in range(3)])
+    proposer.shallow_copy_metadata = MethodType(native.shallow_copy_metadata, proposer)
+    starts=torch.tensor([0,4],dtype=torch.int32)
+    common=Common(query_start_loc=starts,query_start_loc_cpu=starts.clone(),
+        seq_lens=torch.tensor([128],dtype=torch.int32),seq_lens_cpu=None,_seq_lens_cpu=None,
+        num_computed_tokens_cpu=None,positions=torch.zeros(8,dtype=torch.int64),
+        block_table_tensor=torch.tensor([[37,61]],dtype=torch.int32),num_reqs=1,
+        num_actual_tokens=4,max_query_len=4,num_input_tokens=4,max_seq_len=128)
+    # Exactly the native builder boundary, with native fixed groups filled.
+    passthrough=SimpleNamespace(build_for_drafting=lambda cm,index:cm)
+    common,_=native.attn_update_stack_num_spec_norm(proposer,1,None,common,1,4,
+        torch.tensor([[125+delta]]*3),modes.NONE,
+        attn_group=SimpleNamespace(get_metadata_builder=lambda:passthrough))
+    return proposer, common, builder
+
+
+@pytest.mark.parametrize('apc',[False,True])
+@pytest.mark.parametrize('delta',[-17,0,17])
+def test_native_published_context_replaces_inverse_lens_bound(monkeypatch,apc,delta):
+    from oscar_ascend.integration.draft_discard import native_draft_scope
+    proposer, common, builder = _published_case(monkeypatch,delta=delta,apc=apc)
+    original_lengths=common.seq_lens.clone()
+    original_slots=common.slot_mapping.clone()
+    with native_draft_scope(proposer):
+        metadata=builder.build_for_drafting(common,1)
+    assert metadata.explicit_draft_context
+    assert metadata.seq_lens.tolist()==[127+delta]
+    assert torch.equal(metadata.slot_mapping,original_slots)
+    assert torch.equal(common.seq_lens,original_lengths)
+    if delta>0:
+        assert _prepare_status(int(original_slots[0]),int(original_lengths[0]),
+                               common.block_table_tensor[0].tolist())==5
+
+
+@pytest.mark.parametrize('fault',[
+    'slot_page','slot_offset','negative_position','model_limit','table_limit',
+    'negative_block','query_length','zero_length'])
+def test_invalid_live_forward_mapping_is_never_padded(monkeypatch,fault):
+    from oscar_ascend.integration.draft_discard import native_draft_scope
+    proposer,common,builder=_published_case(monkeypatch)
+    if fault=='slot_page':common.slot_mapping[0]+=128
+    if fault=='slot_offset':common.slot_mapping[0]+=1
+    if fault=='negative_position':common.positions[0]=-1
+    if fault=='model_limit':common.positions[0]=proposer.max_model_len
+    if fault=='table_limit':common.positions[0]=256
+    if fault=='negative_block':common.block_table_tensor[0,1]=-1
+    if fault=='query_length':common.query_start_loc[1]=2
+    if fault=='zero_length':common.seq_lens[0]=0
+    original=common.slot_mapping.clone()
+    with native_draft_scope(proposer):
+        metadata=builder.build_for_drafting(common,1)
+    assert metadata.explicit_draft_context
+    assert metadata.seq_lens.tolist()==[0] # frozen prepare rejects context < 0
+    assert metadata.slot_mapping[0]>=0
+    assert torch.equal(metadata.slot_mapping,original)
+
+
+@pytest.mark.parametrize('native_padding',[False,True])
+def test_native_discard_and_negative_slots_remain_padding(monkeypatch,native_padding):
+    from oscar_ascend.integration.draft_discard import native_draft_scope
+    proposer,common,builder=_published_case(monkeypatch)
+    common.positions[0]=proposer.max_model_len+1
+    if native_padding:common.slot_mapping[0]=-1
+    else:proposer.runner.discard_request_mask.gpu[0]=True
+    original_lengths=common.seq_lens.clone()
+    with native_draft_scope(proposer):
+        metadata=builder.build_for_drafting(common,1)
+    assert metadata.slot_mapping[0]==-1
+    assert torch.equal(metadata.seq_lens,original_lengths)
+
+
+def test_duplicate_inverse_match_does_not_replace_forward_position(monkeypatch):
+    from oscar_ascend.integration.draft_discard import native_draft_scope
+    proposer,common,builder=_published_case(monkeypatch,delta=-17)
+    common.block_table_tensor[0,1]=37
+    common.seq_lens[0]=256
+    assert _prepare_status(int(common.slot_mapping[0]),256,[37,37])==5
+    with native_draft_scope(proposer):
+        metadata=builder.build_for_drafting(common,1)
+    # The native forward address is unambiguous. This does not establish that
+    # aliased KV contents satisfy model/cache ownership or quality contracts.
+    assert metadata.explicit_draft_context and metadata.seq_lens.tolist()==[110]
+    assert metadata.slot_mapping[0]==common.slot_mapping[0]
+
+
+def test_context_copy_has_no_device_readback_and_refreshes_same_address(monkeypatch):
+    from oscar_ascend.integration.draft_discard import native_draft_scope
+    proposer,common,builder=_published_case(monkeypatch)
+    def forbidden(*args,**kwargs):raise AssertionError('device readback forbidden')
+    with native_draft_scope(proposer):
+        with monkeypatch.context() as p:
+            for name in ('cpu','item','tolist','numpy'):p.setattr(torch.Tensor,name,forbidden)
+            first=builder.build_for_drafting(common,1)
+        address=first.seq_lens.data_ptr()
+        common.positions[0]-=1;common.slot_mapping[0]-=1
+        second=builder.build_for_drafting(common,1)
+    assert second.seq_lens.data_ptr()==address
+    assert second.seq_lens.tolist()==[143]
+
+
+def test_dummy_and_graph_do_not_select_explicit_context(monkeypatch):
+    from oscar_ascend.integration.draft_discard import native_draft_scope
+    proposer,common,builder=_published_case(monkeypatch)
+    with native_draft_scope(proposer,dummy=True):
+        assert not builder.build_for_drafting(common,1).explicit_draft_context
+    proposer,common,builder=_published_case(monkeypatch,eager=False)
+    with native_draft_scope(proposer):
+        assert not builder.build_for_drafting(common,1).explicit_draft_context
+
+
+@pytest.mark.parametrize("mrope", [False, True])
+def test_all_later_steps_prebuilt_before_any_consumer(monkeypatch, mrope):
+    native, states, modes = _native(monkeypatch)
+    correction = definitions("references/vllm-ascend/vllm_ascend/spec_decode/utils.py",
+        "native_prebuilt_correction", {"update_num_computed_tokens_for_batch_change"},
+        {"torch": torch}, monkeypatch)
+    builder = make_builder(monkeypatch)
+    runner = SimpleNamespace(pcp_manager=None, input_batch=SimpleNamespace(num_reqs=3),
+        discard_request_mask=_Buffer(torch.zeros(3, dtype=torch.bool)),
+        actual_seq_lengths_q=[4, 8, 12], attn_state=states.SpecDecoding, decode_token_per_req=4)
+    proposer = SimpleNamespace(runner=runner, pcp_size=1, dcp_size=1, method="mtp",
+        arange=torch.arange(32, dtype=torch.int32), token_arange_np=torch.arange(32, dtype=torch.int32),
+        uses_mrope=mrope, has_gdn=True, kernel_block_size=128, max_model_len=262144, use_compress=False,
+        slot_mapping_group=[torch.full((32,), -1, dtype=torch.int32) for _ in range(3)],
+        seq_lens_group=[torch.zeros(3, dtype=torch.int32) for _ in range(3)],
+        query_start_loc_group=[torch.zeros(4, dtype=torch.int32) for _ in range(3)])
+    proposer.shallow_copy_metadata = MethodType(native.shallow_copy_metadata, proposer)
+    group = SimpleNamespace(get_metadata_builder=lambda: builder)
+    # Reorder two survivors, then replace one with a fresh request. Distinct
+    # accepted counts shift corrected lengths across virtual128 boundaries.
+    computed = torch.tensor([32764, 508, 124], dtype=torch.int32)
+    rounds = [([0, 1, 2], [1, 3, 4], [4, 1, 2]),
+              ([2, 0, 1], [4, 1, 2], [1, 4, 3]),
+              ([1, -1, 0], [1, 4, 3], [2, 3, 1])]
+    pointers = {}
+    for mapping, previous_accepted, accepted in rounds:
+        optimistic = torch.tensor([int(computed[max(0, i)]) + 4 if i >= 0 else 125
+                                   for i in mapping], dtype=torch.int32)
+        correction.update_num_computed_tokens_for_batch_change(computed,
+            torch.ones(3, dtype=torch.int32), torch.tensor(mapping),
+            torch.tensor(previous_accepted), torch.full((3,), 3, dtype=torch.int32), optimistic)
+        lengths = computed + 4
+        proposer.seq_lens_group[0].copy_(lengths)
+        starts = torch.arange(4, dtype=torch.int32) * 4
+        table = torch.arange(3 * 300, dtype=torch.int32).reshape(3, 300) + 1
+        common = Common(query_start_loc=starts, query_start_loc_cpu=starts.clone(),
+            seq_lens=proposer.seq_lens_group[0], seq_lens_cpu=None,
+            _seq_lens_cpu=optimistic + 4, seq_lens_cpu_upper_bound=optimistic + 4,
+            num_reqs=3, num_actual_tokens=12, num_input_tokens=12, max_query_len=4,
+            num_computed_tokens_cpu=None, _num_computed_tokens_cpu=None,
+            block_table_tensor=table, slot_mapping=proposer.slot_mapping_group[0],
+            positions=torch.zeros(32, dtype=torch.int64), positions_cpu=None,
+            attn_state=states.SpecDecoding, decode_token_per_req=4,
+            is_prefilling=torch.zeros(3, dtype=torch.bool), max_seq_len=int((optimistic + 4).max()))
+        spec = SimpleNamespace(cu_num_draft_tokens=torch.tensor([3, 6, 9], dtype=torch.int32))
+        previous, _, anchors, _ = native.prepare_inputs_padded(proposer, common, spec, torch.tensor(accepted))
+        positions = torch.cat([torch.arange(int(c), int(c) + 4) for c in computed])
+        anchor_positions = positions[anchors]
+        used = torch.stack((anchor_positions, anchor_positions + 19, anchor_positions + 37)) if mrope else anchor_positions.clone()
+        built = []
+        with native_draft_scope(proposer):
+            for index in (1, 2):
+                previous, metadata = native.attn_update_stack_num_spec_norm(proposer,
+                    index, None, previous, 3, 12, used, modes.NONE, attn_group=group)
+                built.append(metadata)
+            # Native constructs every step before execution; shared position
+            # scratch is subsequently overwritten by _run_merged_draft.
+            used.fill_(777)
+            common.positions.fill_(888)
+            for index, metadata in enumerate(built, 1):
+                if index in pointers:
+                    assert pointers[index] == (metadata.slot_mapping.data_ptr(), metadata.seq_lens.data_ptr())
+                pointers[index] = (metadata.slot_mapping.data_ptr(), metadata.seq_lens.data_ptr())
+                assert metadata.explicit_draft_context
+                assert metadata.seq_lens.tolist() == (anchor_positions + index + 1).tolist()
+                for row in range(3):
+                    position = int(anchor_positions[row]) + index
+                    slot = int(metadata.slot_mapping[row])
+                    assert slot == int(table[row, position // 128]) * 128 + position % 128
+                    assert _prepare_status(slot, int(metadata.seq_lens[row]), table[row].tolist()) == 0
+            assert pointers[1][0] != pointers[2][0] and pointers[1][1] != pointers[2][1]

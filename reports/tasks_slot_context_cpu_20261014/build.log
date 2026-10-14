@@ -1,0 +1,4 @@
+[ 66%] Building CXX object CMakeFiles/oscar_tasks_slot_context_cpu.dir/tmp/oscar-tasks-slot-context-20261014/csrc/kernels/attention_tasks.cpp.o
+[ 66%] Building CXX object CMakeFiles/oscar_tasks_slot_context_cpu.dir/tasks_slot_context_probe.cpp.o
+[100%] Linking CXX executable oscar_tasks_slot_context_cpu
+[100%] Built target oscar_tasks_slot_context_cpu

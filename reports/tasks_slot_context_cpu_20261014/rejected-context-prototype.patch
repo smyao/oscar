@@ -1,0 +1,243 @@
+diff --git a/oscar_ascend/integration/backend.py b/oscar_ascend/integration/backend.py
+index fe875a57..11db8d50 100644
+--- a/oscar_ascend/integration/backend.py
++++ b/oscar_ascend/integration/backend.py
+@@ -65,6 +65,9 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
+         # #157 discard bridge and surface only later as a fused device Trap.
+         self._requires_native_mtp_discard = (
+             getattr(getattr(vllm_config, "speculative_config", None), "method", None) == "mtp")
++        # Exact native cache-position publication is audited for this eager
++        # Qwen3.5 MTP contract, independently of optimization switches/APC.
++        self.explicit_later_context = supports_first_draft_current_only(vllm_config)
+         self.current_only = runtime_config.get("experimental_current_only", False)
+         self.first_draft_current_only = (
+             self.current_only and supports_first_draft_current_only(vllm_config))
+@@ -123,17 +126,23 @@ class OscarMetadataBuilder(AttentionMetadataBuilder):
+         return self.build_for_graph_capture(common_attn_metadata)
+ 
+     def build_for_drafting(self, common_attn_metadata, draft_index):
+-        # Native padded first pass retains rejected verification rows. Later
+-        # draft slots follow the accepted position, while seq_lens is merely
+-        # incremented (llm_base_proposer.py:1608/1654/1953). Recover the logical
+-        # query position from slot + virtual block table on device, not mRoPE.
++        # Native publishes this step's cache coordinate in common.positions
++        # using the same clamped position as its forward slot gather. Validate
++        # that mapping before selecting the frozen explicit-context route.
+         if type(draft_index) is not int or draft_index < 0:
+             raise ValueError("draft_index must be a nonnegative integer")
+         metadata = from_common(common_attn_metadata, capacity=self.capacity,
+                                is_draft=True, draft_index=draft_index)
+-        from .draft_discard import later_draft_slot_copy, later_draft_lengths_copy
++        from .draft_discard import (
++            later_draft_slot_copy, later_draft_lengths_copy, later_draft_context_copy)
+         slots = later_draft_slot_copy(
+             common_attn_metadata, draft_index=draft_index,
+             require_scope=self._requires_native_mtp_discard and not metadata.dummy_origin)
+-        lengths = later_draft_lengths_copy(common_attn_metadata, slots, draft_index=draft_index)
+-        return self._bind(replace(metadata, slot_mapping=slots, seq_lens=lengths))
++        explicit = False
++        if self.explicit_later_context and not metadata.dummy_origin:
++            lengths, explicit = later_draft_context_copy(
++                common_attn_metadata, slots, draft_index=draft_index)
++        if not explicit:
++            lengths = later_draft_lengths_copy(common_attn_metadata, slots, draft_index=draft_index)
++        return self._bind(replace(metadata, slot_mapping=slots, seq_lens=lengths,
++                                  explicit_draft_context=explicit))
+diff --git a/oscar_ascend/integration/draft_discard.py b/oscar_ascend/integration/draft_discard.py
+index 1278f7e9..ccd9cb97 100644
+--- a/oscar_ascend/integration/draft_discard.py
++++ b/oscar_ascend/integration/draft_discard.py
+@@ -172,3 +172,76 @@ def later_draft_lengths_copy(common, slots, *, draft_index):
+                     & (slots[:size] >= 0) & ~scope.mask[:size])
+     result[:size].copy_(torch.where(wrapped_live, before_wrap.clamp(max=limit), source[:size]))
+     return result
++
++
++def later_draft_context_copy(common, slots, *, draft_index):
++    """Validate native's forward cache mapping and publish an exact context.
++
++    Archive #157-159: native attn_update_stack_num_spec_norm writes
++    common.positions[:B] from the SAME clamped position used for the slot
++    gather. That published cache coordinate is authoritative for this later
++    step; optimistic seq_lens is not its upper bound (e.g. an mRoPE delta).
++    The caller qualifies ordinary eager MTP. All checks remain on device.
++    A malformed live row gets length zero, so unchanged prepare reports error
++    1 before any history read. It is never converted to padding. Only native
++    negative slots and the explicit native discard mask retain padding.
++    """
++    scope = _scope.get()
++    source = common.seq_lens
++    if scope is None or scope.dummy or draft_index == 0:
++        return source, False
++    proposer = scope.proposer
++    if getattr(proposer, "use_cuda_graph", False):
++        return source, False
++    limit = getattr(proposer, "max_model_len", None)
++    groups = getattr(proposer, "seq_lens_group", None)
++    if (type(limit) is not int or limit <= 0 or limit > torch.iinfo(torch.int32).max
++            or getattr(proposer, "kernel_block_size", None) != 128
++            or groups is None or not 0 < draft_index < len(groups)):
++        raise OscarReadinessError("native later MTP cache-position contract is unavailable")
++    size = scope.requests
++    native = groups[draft_index]
++    position = getattr(common, "positions", None)
++    starts = common.query_start_loc
++    table = common.block_table_tensor
++    if (not torch.is_tensor(position) or position.ndim != 1
++            or position.dtype not in (torch.int32, torch.int64)
++            or position.stride() != (1,) or position.numel() < size
++            or starts.ndim != 1 or starts.dtype != torch.int32 or starts.stride() != (1,)
++            or starts.numel() < size + 1 or table.ndim != 2 or table.dtype != torch.int32
++            or table.shape[0] < size or table.shape[1] <= 0
++            or table.stride() != (table.shape[1], 1)
++            or source.ndim != 1 or source.dtype != torch.int32 or source.stride() != (1,)
++            or source.numel() < size or source.data_ptr() != native.data_ptr()
++            or slots.ndim != 1 or slots.stride() != (1,) or slots.numel() < size
++            or slots.dtype not in (torch.int32, torch.int64)
++            or any(t.device != source.device for t in (position, starts, table, slots))):
++        raise OscarReadinessError("native later MTP cache-position tensors do not match the proposal")
++    copies = getattr(proposer, "_oscar_later_context_copies", None)
++    if copies is None:
++        copies = {}
++        proposer._oscar_later_context_copies = copies
++    entry = copies.get(draft_index)
++    if entry is None:
++        entry = (native, torch.empty_like(native))
++        copies[draft_index] = entry
++    original, destination = entry
++    if (original.data_ptr() != native.data_ptr() or original.shape != native.shape
++            or original.dtype != native.dtype or original.device != native.device):
++        raise OscarReadinessError("native MTP context allocation changed after OSCAR binding")
++    result = destination[:source.numel()]
++    result.copy_(source)
++    pos = position[:size].to(torch.int64)
++    column = torch.div(pos, 128, rounding_mode="floor")
++    # Invalid coordinates still enter a bounded gather; the explicit bounds
++    # remain in valid. Clamping addresses never validates malformed inputs.
++    block = table[:size].gather(1, column.clamp(0, table.shape[1] - 1).unsqueeze(1)).squeeze(1)
++    expected_slot = block.to(torch.int64) * 128 + torch.remainder(pos, 128)
++    valid = ((starts[1:size + 1] - starts[:size] == 1)
++             & (source[:size] > 0) & (pos >= 0) & (pos < limit)
++             & (column < table.shape[1]) & (block >= 0)
++             & (common.slot_mapping[:size].to(torch.int64) == expected_slot))
++    live = slots[:size] >= 0
++    lengths = torch.where(valid, pos + 1, 0).to(source.dtype)
++    result[:size].copy_(torch.where(live, lengths, source[:size]))
++    return result, True
+diff --git a/oscar_ascend/integration/impl.py b/oscar_ascend/integration/impl.py
+index 21bd3500..19c1573c 100644
+--- a/oscar_ascend/integration/impl.py
++++ b/oscar_ascend/integration/impl.py
+@@ -148,13 +148,23 @@ class OscarAttentionImpl(AttentionImpl):
+                 # Native llm_base_proposer.py:1662 uses int32 draft slot groups.
+                 workspace.slots[:n].copy_(slots)
+                 slots = workspace.slots[:n]
++            # #160: native later MTP publishes the cache position it used
++            # to generate this slot. Its qualified private lengths encode
++            # that position directly; invalid live rows have length zero
++            # and still fail the unchanged prepare/CV/store guards.
++            explicit_context = getattr(attn_metadata, "explicit_draft_context", False)
++            if type(explicit_context) is not bool or (explicit_context and not (
++                    attn_metadata.is_draft and attn_metadata.draft_index > 0
++                    and not attn_metadata.capture_origin and not attn_metadata.dummy_origin)):
++                raise OscarReadinessError("explicit draft context requires qualified real later MTP")
++            slot_context = attn_metadata.draft_index > 0 and not explicit_context
+             ops.prepare_attention_tasks_out(
+                 attn_metadata.query_start_loc[:attn_metadata.num_reqs + 1],
+                 attn_metadata.seq_lens[:attn_metadata.num_reqs],
+                 slots, tasks, positions, h, hk,
+                 state.snapshots.sink_tokens, state.snapshots.recent_tokens, source_splits,
+-                attn_metadata.block_tables[:attn_metadata.num_reqs] if attn_metadata.draft_index > 0 else None,
+-                attn_metadata.draft_index > 0)
++                attn_metadata.block_tables[:attn_metadata.num_reqs] if slot_context else None,
++                slot_context)
+         if native_current:
+             # Preserve CV task errors and padding. Only the healthy current
+             # source has an empty KV interval; history/window still execute in
+diff --git a/oscar_ascend/integration/metadata.py b/oscar_ascend/integration/metadata.py
+index dd5c3d6a..27a20fc2 100644
+--- a/oscar_ascend/integration/metadata.py
++++ b/oscar_ascend/integration/metadata.py
+@@ -45,6 +45,9 @@ class OscarMetadata:
+     # Shared fixed [request-capacity,2] int64 storage (slot,epoch), sliced by
+     # request rows, never query-token rows. None preserves the legacy format.
+     window_map: Any = None
++    # Native later-MTP cache position, validated against its designated
++    # table column and slot before private one-query lengths are published.
++    explicit_draft_context: bool = False
+ 
+     @property
+     def block_table(self):
+diff --git a/tests/test_compact_later_mtp.py b/tests/test_compact_later_mtp.py
+index f9944307..90ac8f81 100644
+--- a/tests/test_compact_later_mtp.py
++++ b/tests/test_compact_later_mtp.py
+@@ -270,3 +270,24 @@ def test_small_decode_uses_original_call_without_guards_or_context_change(monkey
+     monkeypatch.setattr(compact,"_tail_slot_guard",lambda *a:pytest.fail("small decode must not run compact slot guard"))
+     assert compact._compact_call(lambda *a,**k:marker,model,(),values,None,ctx,{},()) is marker
+     assert vars(ctx)==before and not seen
++
++
++@pytest.mark.parametrize("bad_live", [False, True])
++def test_compaction_preserves_validated_context_and_live_error_row(monkeypatch, bad_live):
++    model, context, values, _, _ = _case(monkeypatch)
++    original = context.attn_metadata["mtp"]
++    lengths = original.seq_lens.clone()
++    if bad_live:
++        lengths[1] = 0  # Forward validator's fail-closed sentinel, never padding.
++    published = replace(original, seq_lens=lengths, explicit_draft_context=True)
++    context.attn_metadata = {"mtp": published}
++    def consume(model, **kwargs):
++        compacted = context.attn_metadata["mtp"]
++        assert compacted.explicit_draft_context
++        assert compacted.seq_lens.data_ptr() == published.seq_lens.data_ptr()
++        assert torch.equal(compacted.seq_lens, lengths)
++        assert compacted.slot_mapping[1] >= 0
++        assert compacted.num_actual_tokens == 2
++        return kwargs["hidden_states"]
++    compact._compact_call(consume, model, (), values, None, context, FLAGS, (1, 1, 4))
++    assert context.attn_metadata["mtp"] is published
+diff --git a/tests/test_later_draft_slots.py b/tests/test_later_draft_slots.py
+index 59f2186e..589c16e7 100644
+--- a/tests/test_later_draft_slots.py
++++ b/tests/test_later_draft_slots.py
+@@ -21,8 +21,8 @@ def _case(slots=(1285, 99999, -1, -1), discard=(False, True), *, index=1):
+     runner = SimpleNamespace(input_batch=SimpleNamespace(num_reqs=len(discard)),
+                              discard_request_mask=SimpleNamespace(gpu=torch.tensor(discard)))
+     proposer = SimpleNamespace(runner=runner, slot_mapping_group=groups, pcp_size=1, dcp_size=1,
+-        max_model_len=262144, seq_lens_group=[torch.full((len(slots),), 128, dtype=torch.int32) for _ in range(3)])
+-    common = SimpleNamespace(slot_mapping=groups[index], num_reqs=len(discard),
++        max_model_len=262144, kernel_block_size=128, seq_lens_group=[torch.full((len(slots),), 128, dtype=torch.int32) for _ in range(3)])
++    common = SimpleNamespace(slot_mapping=groups[index], positions=torch.full((len(slots),), 5, dtype=torch.int64), num_reqs=len(discard),
+                              num_actual_tokens=len(discard), max_query_len=1)
+     return proposer, common
+ 
+diff --git a/tests/test_native_discard_pipeline.py b/tests/test_native_discard_pipeline.py
+index 02fdf984..0c40cd18 100644
+--- a/tests/test_native_discard_pipeline.py
++++ b/tests/test_native_discard_pipeline.py
+@@ -318,6 +318,10 @@ def test_native_reordered_shrunk_and_regrown_batches_refresh_fixed_draft_slots(m
+                 previous, metadata = native.attn_update_stack_num_spec_norm(
+                     proposer, index, None, previous, size, size * 4, used, modes.NONE, attn_group=groups)
+                 native_slots = proposer.slot_mapping_group[index]
++                assert metadata.explicit_draft_context
++                for row, name in enumerate(names):
++                    if name not in discarded:
++                        assert metadata.seq_lens[row] == previous.positions[row] + 1
+                 expected = native_slots.clone()
+                 expected[:size].masked_fill_(runner.discard_request_mask.gpu[:size], -1)
+                 assert torch.equal(metadata.slot_mapping, expected)
+@@ -400,9 +404,11 @@ def test_native_max_length_wrap_preserves_accepted_live_slots(monkeypatch, async
+                 assert native_length == (1 if expected_wrapped else target_length + index)
+                 if not discard and native_slot >= 0 and expected_wrapped:
+                     assert _prepare_status(native_slot, native_length, table[0].tolist()) == 5
+-                    assert int(metadata.seq_lens[0]) == limit
+-                else:
++                if discard or native_slot < 0:
+                     assert int(metadata.seq_lens[0]) == native_length
++                else:
++                    assert int(metadata.seq_lens[0]) == int(previous.positions[0]) + 1
++                assert metadata.explicit_draft_context
+                 if discard or native_slot < 0:
+                     assert metadata.slot_mapping[0] == -1
+                 else:

@@ -1,0 +1,59 @@
+"""Archive #160: exercise the real forward until its frozen prepare launch."""
+import ast
+from contextlib import nullcontext
+from pathlib import Path
+from types import SimpleNamespace
+import pytest
+import torch
+from oscar_ascend.integration.metadata import OscarMetadata
+from oscar_ascend.integration.current_attention import use_native_current
+from oscar_ascend.integration.runtime_api import OscarReadinessError
+from oscar_ascend.runtime import GraphWorkspace, WorkspaceGeometry
+
+
+def invoke(explicit, **changes):
+    path = Path(__file__).resolve().parents[1] / 'oscar_ascend/integration/impl.py'
+    tree = ast.parse(path.read_text())
+    cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'OscarAttentionImpl')
+    fn = next(n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name == 'forward')
+    ns = dict(__name__='oscar_ascend.integration.impl', __package__='oscar_ascend.integration',
+              torch=torch, use_native_current=use_native_current,
+              OscarReadinessError=OscarReadinessError, phase=lambda *a, **kw: nullcontext())
+    exec(compile(ast.Module(body=[fn], type_ignores=[]), str(path), 'exec'), ns)
+    n,h,k,d=2,6,1,256
+    w=object.__new__(GraphWorkspace);w.geometry=WorkspaceGeometry(n,h,k,d)
+    for name,shape,dtype in [('tasks',(n*3,16),torch.int64),('attention_status',(n*3,2),torch.int32),
+        ('query_rot',(n,h,d),torch.float32),('partial',(n,h,3,d),torch.float32),
+        ('partial_lse',(n,h,3),torch.float32),('positions',(n,),torch.int64),('slots',(n,),torch.int64),
+        ('query_input',(n,h,d),torch.bfloat16),('key_input',(n,k,d),torch.bfloat16),
+        ('value_input',(n,k,d),torch.bfloat16)]:setattr(w,name,torch.empty(shape,dtype=dtype))
+    cache=torch.empty(1,dtype=torch.uint8)
+    state=SimpleNamespace(cache_format='canonical_v1',packed=cache,workspace=w,
+                          snapshots=SimpleNamespace(sink_tokens=64,recent_tokens=256))
+    captured=[]
+    class Stop(Exception):pass
+    def prepare(*args):captured.append(args);raise Stop()
+    provider=SimpleNamespace(config={},layer_state=lambda _:state,
+                             ops=SimpleNamespace(prepare_attention_tasks_out=prepare))
+    impl=SimpleNamespace(provider=provider,num_heads=h,num_kv_heads=k,head_size=d)
+    fields=dict(is_draft=True,draft_index=1,num_input_tokens=n,explicit_draft_context=explicit)
+    fields.update(changes)
+    metadata=OscarMetadata(torch.arange(n+1,dtype=torch.int32),torch.tensor([146,128],dtype=torch.int32),
+        torch.tensor([[100,101],[102,103]],dtype=torch.int32),torch.tensor([12945,13183],dtype=torch.int32),
+        n,n,1,128,**fields)
+    q=torch.zeros(n,h*d,dtype=torch.bfloat16);kv=torch.zeros(n,k*d,dtype=torch.bfloat16)
+    try:ns['forward'](impl,SimpleNamespace(layer_name='mtp'),q,kv,kv,cache,metadata,output=q.clone())
+    except Stop:return captured[0],metadata
+
+@pytest.mark.parametrize('explicit',[False,True])
+def test_actual_forward_selects_correct_frozen_prepare_mode(explicit):
+    args,metadata=invoke(explicit)
+    assert args[1].data_ptr()==metadata.seq_lens.data_ptr()
+    assert args[2].dtype==torch.int64
+    assert args[-1] is (not explicit)
+    assert (args[-2] is None) is explicit
+
+@pytest.mark.parametrize('changes',[{'draft_index':0},{'capture_origin':True},{'dummy_origin':True}])
+def test_explicit_context_cannot_enter_first_dummy_or_capture(changes):
+    with pytest.raises(OscarReadinessError,match='qualified real later MTP'):
+        invoke(True,**changes)

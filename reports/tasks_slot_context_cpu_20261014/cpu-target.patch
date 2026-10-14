@@ -1,0 +1,12 @@
+diff --git a/csrc/cpu/CMakeLists.txt b/csrc/cpu/CMakeLists.txt
+index 8d03f4a1..f388e346 100644
+--- a/csrc/cpu/CMakeLists.txt
++++ b/csrc/cpu/CMakeLists.txt
+@@ -32,3 +32,7 @@ add_executable(oscar_prefix_q1_cpu prefix_q1_probe.cpp ../kernels/attention_task
+ target_link_libraries(oscar_prefix_q1_cpu PRIVATE tikicpulib::Ascend910B4)
+ target_include_directories(oscar_prefix_q1_cpu SYSTEM AFTER PRIVATE "${ASCEND_HOME_PATH}/aarch64-linux/asc/include")
+ target_compile_options(oscar_prefix_q1_cpu PRIVATE -O0 -g)
++# Archive #157-159: prepare-only long-table churn, no attention matrix allocation.
++add_executable(oscar_tasks_slot_context_cpu tasks_slot_context_probe.cpp ../kernels/attention_tasks.cpp)
++target_link_libraries(oscar_tasks_slot_context_cpu PRIVATE tikicpulib::Ascend910B4)
++target_compile_options(oscar_tasks_slot_context_cpu PRIVATE -O0 -g)

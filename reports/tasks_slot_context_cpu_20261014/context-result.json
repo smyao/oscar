@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "backend": "official AscendC CPU-debug",
+  "exit_code": 0,
+  "driver_sha256": "84638388acfee13e1bdd5cf5866230407936caa5ba5396886a7d5cce3a2dd0f1",
+  "production_prepare_sha256": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+  "cases": [
+    "old inverse mapping rejects native published position with code5",
+    "published-position context passes unchanged prepare",
+    "invalid live context remains code1 and output position -1"
+  ],
+  "slot_types": [
+    "int32",
+    "int64"
+  ],
+  "log": "context-run.log",
+  "scope": "metadata contract and frozen prepare, not NPU/service acceptance",
+  "target_two_failures_resolved": "not_established_on_device"
+}

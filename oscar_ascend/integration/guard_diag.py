@@ -31,6 +31,14 @@ def run_status_guard(ops, site: str, segments, *, capture: bool = False) -> None
     if not guard_diag_enabled() or capture:
         ops.status_guard(*[tensor for _, tensor in segments])
         return
+    # #159: replay's pre-barrier can surface an earlier asynchronous failure.
+    # Drain producers before naming a guard family; otherwise the first
+    # family's synchronize would falsely attribute any upstream kernel error.
+    try:
+        torch.npu.synchronize()
+    except Exception as error:
+        raise OscarReadinessError(
+            f"OSCAR upstream device failure before status guard site={site} family=upstream") from error
     for name, tensor in segments:
         if tensor.numel() == 0:
             continue

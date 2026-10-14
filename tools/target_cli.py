@@ -84,6 +84,8 @@ def main() -> int:
         return 0
     os.environ.update(target_env(config))
     os.environ["OSCAR_TARGET_CONFIG"]=str(args.config.resolve())
+    print(f"[oscar] OSCAR_GUARD_HOST_SYNC={os.environ.get('OSCAR_GUARD_HOST_SYNC', '0')} "
+          "(diagnostic only; graph capture stays fused; synchronized runs are not performance evidence)", flush=True)
     if args.native:
         os.environ["OSCAR_ENABLED"]="0"
         if os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL"):

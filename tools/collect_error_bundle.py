@@ -22,7 +22,7 @@ ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 DEVICE_FAULT = re.compile(r"aive[cf] error|timeout or trap|OSCAR.*(?:Trap|trapped)|"
                           r"\b(?:error\s*code|errcode|error)\b[\"']?\s*[:=]?\s*(?:is\s+)?5070\d{2}\b|"
                           r"\b\w*(?:Error|Exception):[^\n]*?(?<![\w.])5070\d{2}(?![\w.])", re.I)
-FAULT = re.compile(r"\b(?:ERROR|FATAL|FAILED|Traceback|Segfault)\b|"
+FAULT = re.compile(r"\b(?:ERROR|FATAL|FAILED|Segfault)\b|\bTraceback\s+\(most recent call last\):|"
                    r"\b\w*(?:Error|Exception):|aive[cf] error|"
                    r"timeout or trap|site=.*family=|\"status\"\s*:\s*\"failed\"", re.I)
 DETAIL = re.compile(r"\b\w*(?:Error|Exception):|aive[cf] error|"
@@ -47,7 +47,7 @@ def error_flags(line):
     The returned flags select excerpts; the original text is always retained.
     """
     text = line.strip()
-    for prefix in ("RESULT ", "SERVICE_RESULT "):
+    for prefix in ("RESULT ", "SERVICE_RESULT ", "SERVICE_OUTCOME "):
         if text.startswith(prefix):
             text = text[len(prefix):]
             break

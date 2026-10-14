@@ -1,0 +1,145 @@
+{
+  "run": "20261014T060423.473936Z",
+  "source_parts": [
+    {
+      "part": 1,
+      "attachment_id": "ac3b90eb-388a-4fce-90e2-35909bf8be87",
+      "bytes": 58120,
+      "sha256": "f41d8c0ed35e128212cd633c72b9d7e46816fc939898bb4026d2b470502b9c74",
+      "fatal_line_count": 0,
+      "error_line_counts": {},
+      "boundary": "user-pasted fragment; not a complete log file"
+    },
+    {
+      "part": 2,
+      "attachment_id": "1ebe1d03-e02e-45e8-9f2c-727adbfca498",
+      "bytes": 65614,
+      "sha256": "681582192e4c3caaf2f74153e0832cb9722abad2af168e4767e7a0c6540f914c",
+      "fatal_line_count": 0,
+      "error_line_counts": {
+        "other": 1
+      },
+      "boundary": "user-pasted fragment; not a complete log file"
+    },
+    {
+      "part": 3,
+      "attachment_id": "a8e42f1f-a18b-4ba0-aab9-138f4d5277c9",
+      "bytes": 65930,
+      "sha256": "5d5fbf6afe14a8d7e819385e812705dfe7ab0ef2edcc09fab0d4a858dfb8d317",
+      "fatal_line_count": 5,
+      "error_line_counts": {
+        "worker_or_device": 137,
+        "other": 64
+      },
+      "boundary": "user-pasted fragment; not a complete log file"
+    },
+    {
+      "part": 4,
+      "attachment_id": "69f7cb94-66ef-4cd2-852a-bf09d1e079ac",
+      "bytes": 31538,
+      "sha256": "579794ec824c0c324120e868a43e8ee515388e7c06fa88c9381120bdeabf5725",
+      "fatal_line_count": 3,
+      "error_line_counts": {
+        "other": 81,
+        "worker_or_device": 40,
+        "engine": 39,
+        "api": 33
+      },
+      "boundary": "user-pasted fragment; not a complete log file"
+    }
+  ],
+  "observed": {
+    "devices": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "port": 7878,
+    "prefix_caching": true,
+    "candidate": true,
+    "fatal_log_time": "10-14 06:16:30",
+    "engine_death_log_time": "10-14 06:16:47",
+    "native_api_process_returncode": 0,
+    "worker_pc": {
+      "5": {
+        "start": "0x124a022f56cc",
+        "current": "0x124a022f5930",
+        "offset": "0x264"
+      },
+      "6": {
+        "start": "0x124c022f56cc",
+        "current": "0x124c022f5930",
+        "offset": "0x264"
+      },
+      "4": {
+        "start": "0x1248022f56cc",
+        "current": "0x1248022f5928",
+        "offset": "0x25c"
+      },
+      "7": {
+        "start": "0x124e022f56cc",
+        "current": "0x124e022f5928",
+        "offset": "0x25c"
+      }
+    },
+    "scheduler": {
+      "running": 1,
+      "waiting": 0,
+      "computed_tokens": [
+        24626
+      ],
+      "output_tokens_counter": [
+        11
+      ],
+      "scheduled_tokens": 4,
+      "speculative_placeholders": [
+        -1,
+        -1,
+        -1
+      ],
+      "kv_cache_usage": 0.019725557461406473,
+      "interpretation": "dumped queued step, not necessarily the step that first triggered the asynchronous fault"
+    }
+  },
+  "source_findings": [
+    "Native acl_graph.py synchronizes the stream before entry.aclgraph.replay(); this stack does not prove the current replay caused the fault.",
+    "PC offsets 0x25c/0x264 match the historical frozen status_guard trap vicinity. Exact family and originating inputs remain unestablished.",
+    "Native launcher.terminate_if_errored sets server.should_exit; serve_http can return normally. target_cli.main returns 0 after vllm_main returns.",
+    "Original traceback emitted by the recovered AOT compile warning must not replace the later fatal worker traceback in compact excerpts."
+  ],
+  "startup_durations_seconds": {
+    "target_compile_rank0": 94.13,
+    "draft_compile_rank0": 0.18,
+    "initial_profile_warmup_rank0": 0.69,
+    "draft_profile_warmup_rank0": 0.03,
+    "graph_capture_rank0": 28,
+    "engine_init_inclusive": 173.23,
+    "engine_compilation_inclusive": 94.49,
+    "multimodal_api_warmup": 16.297,
+    "interpretation": "nested and process-specific durations; do not sum them into an exclusive performance breakdown"
+  },
+  "fixes": [
+    "Formal service outcome detects explicit fatal lifecycle log records even when native child returncode is zero, keeping raw child code separately.",
+    "Terminal mirror drains data flushed after an earlier EOF observation (host-reproduced race).",
+    "OSCAR_GUARD_HOST_SYNC diagnostic-only producer synchronization distinguishes upstream device errors from guard family errors; default and graph capture remain fused.",
+    "One opt-in synthetic request with exact token input and absolute deadline; no retry, APC/MTP/graph disablement, or AISBench invocation."
+  ],
+  "remaining": "Need site/family from a diagnostic single-request run, or equivalent CANN kernel attribution; no model-trap correction is claimed.",
+  "acceptance": {
+    "NPU": "not_run",
+    "graph": "not_run",
+    "quality": "not_run",
+    "performance": "not_run"
+  },
+  "validation": {
+    "host_tests": 164,
+    "breakdown": {
+      "orchestration_collector_guard_routes": 163,
+      "localhost_HTTP_terminal_forwarding": 1
+    },
+    "no_NPU": true,
+    "frozen_status_guard_sha256": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab"
+  },
+  "diagnostic_limit": "Per-family synchronization applies to non-capture Python calls only. FULL graph replay bypasses those calls and retains the fused guard; a graph-only trap still requires CANN fault-kernel attribution."
+}

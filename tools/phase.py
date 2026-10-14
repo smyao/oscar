@@ -249,10 +249,14 @@ def live_log(path: Path, *, mode: str | None = None):
 
             try:
                 while True:
+                    # Snapshot before read: EOF observed before the writer's
+                    # final flush cannot justify exit after stopped becomes
+                    # set. One subsequent read must drain that final output.
+                    finished = stopped.is_set()
                     chunk = reader.read(65536)
                     if chunk:
                         forward(decoder.decode(chunk))
-                    elif stopped.is_set():
+                    elif finished:
                         forward(decoder.decode(b"", final=True), final=True)
                         return
                     else:
@@ -343,7 +347,7 @@ def cleanup_group(proc: subprocess.Popen, grace: float) -> bool:
 def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
               timeout: float | None, env: dict[str, str] | None = None,
               grace: float = 5, heartbeat: float = 15,
-              terminal_mode: str | None = None) -> PhaseResult:
+              terminal_mode: str | None = None, success_label: str = "PASSED") -> PhaseResult:
     # Only a persistent formal service uses None; build/probe deadlines stay
     # finite. The owned group's shutdown is still bounded by grace.
     if not command or (timeout is not None and timeout <= 0) or grace < 0:
@@ -409,7 +413,7 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
                                  expired, interrupted, str(logfile.resolve()), cleaned)
             stream.write("RESULT " + json.dumps(asdict(result)) + "\n")
             atomic_json(log_dir / f"{name}.json", asdict(result))
-    state = "PASSED" if rc == 0 else "FAILED"
+    state = success_label if rc == 0 else "FAILED"
     terminal_line(f"[oscar] {state} phase={name} rc={rc} log={logfile}")
     return result
 

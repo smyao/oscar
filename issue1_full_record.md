@@ -28656,3 +28656,31 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **处置与日志工具**：不改原生内存闸、不降低0.9、不关闭prefix cache、不改冻结算子。新增独立 `tools.collect_startup_evidence`，显式日志流式提取首错上下文、关键异常、各PID内存闸、头尾、行号和SHA256；可选只读npu-smi/ps及/proc白名单快照，区分当前状态与历史状态，不杀进程/重置设备、不导入torch、不加入默认部署审计。单文件输出最多256KiB，截断有标记。直启install_serve在构建后exec正式服务，status.json可能一直为serving；服务终端须用tee保存并立即读取PIPESTATUS[0]，不能把构建日志或旧status当最终服务结果。
 
 **本机验证与边界**：7项日志工具测试通过；真实附件提取到3个内存闸及其原始行39/70/101，紧凑证据22638字节。未在目标机执行资源查询、释放或重启；占用来源未定，故障尚未真机复验解决，不新增NPU/图/质量/性能通过结论。
+
+---
+
+## [159] 真机条目（2026-10-14 用户四段日志回传）· 正式请求异步 vector trap，API 正常退出码掩盖服务失败
+
+**证据来源**：`20261014T060423.473936Z`，物理卡4–7、端口7878、candidate/APC/MTP开启。四段原始附件的字节数、SHA256、关键行与分析分别保留于 `reports/service_trap_20261014/analysis.json`、`evidence.txt`；片段不是完整日志，不把本机HEAD当作目标版本证据。同族档案#94/#95/#118/#125/#142/#157。
+
+**原文要点**：
+
+```text
+(Worker_TP1 pid=186817) ERROR 10-14 06:16:30 [multiproc_executor.py:987] File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/acl_graph.py", line 256, in __call__
+(Worker_TP1 pid=186817) ERROR 10-14 06:16:30 [multiproc_executor.py:987]     torch.npu.current_stream().synchronize()
+RuntimeError: ... error code is 507035
+chipId:5 ... pc start: 0x124a022f56cc, current: 0x124a022f5930 ... timeout or trap error
+(EngineCore pid=186769) ERROR 10-14 06:16:47 [core.py:1197] EngineCore encountered a fatal error.
+RESULT {"phase": "server", ... "returncode": 0, "elapsed_seconds": 723.704761, "cleanup_complete": true}
+[oscar] PASSED phase=server rc=0
+```
+
+**确认的范围**：四卡PC相对偏移为0x25c/0x264，与#142/#157冻结status_guard的Trap附近一致，强烈支持同族状态检查失败，但没有 `site/family` 或状态值证据。只读原生 `acl_graph.py` 的此处同步位于 `entry.aclgraph.replay()` **之前**；它可能暴露前序异步任务错误，不能断言当前图回放或栈顶拷贝造成故障。调度转储为Running=1、Waiting=0、computed=24626、output计数11、scheduled=4及三个MTP占位符；这是排队step转储，不一定是首个设备故障step，output计数也不证明11个token已交付。没有证据将本次故障归于部分prefix命中、OOM或高并发，不能照搬#157旧轮的零命中排除结论。
+
+**启动耗时**：06:07:49原生AOT加载失败后重编译，06:09:23 target compile 94.13s，draft compile 0.18s，图捕获28s；engine init 173.23s（内含compilation 94.49s），API多模态预热16.297s，06:10:54已启动。以上有嵌套且来自不同进程，不得相加或把6分钟全算为图捕获。编译警告早于服务成功启动，不是06:16:30致命首错。
+
+**已核实并修复的外围问题**：原生 `launcher.terminate_if_errored` 在Engine死亡时设置 `server.should_exit`，HTTP server可正常返回，`tools.target_cli.main` 随后返回0；旧相位runner将此等同通过。现在直启正式阶段仅打印PROCESS_EXITED，结束后从本轮server.log识别明确Worker/Engine死亡消息，保留raw child code=0并使服务判定及wrapper退出码=1；普通请求ERROR、成功恢复的编译WARNING不判致命。结果写入status.json/server.json/server.log并实时打印。同轮主机测试还复现了镜像线程在先读EOF、后收到writer终态标记时漏掉末尾输出的竞争；按read前终态快照修复并加确定性回归，此项是主机发现，不冒称目标NPU根因。
+
+**下一步归因**：统一用已有 `OSCAR_GUARD_HOST_SYNC=1`，默认关闭且图捕获仍原融合内核。诊断时先同步上游，失败标 `family=upstream`；随后各族冻结guard分开同步，避免把前序算子错误误贴给第一族。新增opt-in `tools.single_request_probe`：一次24616-token合成输入、16输出，总死线180s，严格SSE终态，失败不重试；该长度只是转储形状的受控邻近复现，不能冒充原始输入。没有重跑AISBench或修改预算/APC/MTP/算子/冻结精度。
+
+**边界**：外围修复与归因工具已在主机回归验证；具体触发族、错误输入和模型trap修复仍待真实设备证据。按族诊断只覆盖实际经过Python调用的非capture路径；FULL图回放绕过这些调用，图内融合guard若触发，开关不保证给出具体族名，仍需同轮CANN故障核归因。这也收紧#157中“trap时将直接给出族名”的适用范围。无NPU、图、模型质量或性能通过结论。

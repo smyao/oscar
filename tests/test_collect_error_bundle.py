@@ -57,6 +57,14 @@ def test_normal_hccl_timeout_info_is_not_a_fault():
     assert result["error_line_counts"] == {}
 
 
+def test_recovered_compile_warning_does_not_displace_real_worker_fault():
+    result = scan("(Worker_TP0 pid=2) WARNING 10-14 06:07:49 [decorators.py:321] Original traceback:\n"
+                  "(Worker_TP0 pid=2) INFO 10-14 06:09:24 [monitor.py:53] torch.compile took 94.13 s in total\n"
+                  "(Worker_TP0 pid=2) ERROR 10-14 06:16:30 [multiproc_executor.py:987] WorkerProc hit an exception.\n")
+    assert result["error_line_counts"] == {"worker_or_device": 1}
+    assert result["windows"]["worker_or_device"]["first_error_line"] == 3
+
+
 @pytest.mark.parametrize("stamp", [1791948488.5070946, 1791948660.507023])
 def test_actual_dispatch_timestamps_do_not_fabricate_device_faults(stamp):
     # User's 20261014T032237 run: both rows were falsely labeled exceptions.

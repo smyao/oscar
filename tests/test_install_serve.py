@@ -151,6 +151,6 @@ def test_formal_service_logs_real_stdout_stderr_exit_and_has_no_build_deadline(
     assert str(logs / "server.log") in terminal
     status = json.loads((logs / "status.json").read_text())
     assert status["status"] == expected_status
-    assert status["returncode"] == child_code
+    assert status["returncode"] == shell_code and status["child_returncode"] == child_code
     assert status["server"]["cleanup_complete"] and not status["server"]["timed_out"]
     assert json.loads((logs / "server.json").read_text())["returncode"] == child_code

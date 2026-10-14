@@ -71,7 +71,7 @@ def test_diag_path_launches_per_family_and_names_the_trapped_family(monkeypatch)
     with pytest.raises(OscarReadinessError, match="site=forward:layer family=merge"):
         run_status_guard(ops, "forward:layer", segments)
     # The trapped family's own synchronize never runs; the raise is the sync point.
-    assert len(ops.calls) == 3 and npu.syncs == 2
+    assert len(ops.calls) == 3 and npu.syncs == 3  # producer drain + two healthy guards
 
 
 def test_diag_path_skips_empty_families(monkeypatch):
@@ -84,6 +84,19 @@ def test_diag_path_skips_empty_families(monkeypatch):
                       ("rotate", torch.zeros(0, dtype=torch.int32)),
                       ("merge", torch.zeros(0, dtype=torch.int32)),
                       ("store", torch.zeros(0, dtype=torch.int32))])
-    assert len(ops.calls) == 1 and npu.syncs == 1
+    assert len(ops.calls) == 1 and npu.syncs == 2
     a, b, c, d = ops.calls[0]
     assert a.numel() == 4 and b.numel() == c.numel() == d.numel() == 0
+
+
+def test_upstream_async_failure_is_not_misattributed_to_first_guard_family(monkeypatch):
+    monkeypatch.setenv("OSCAR_GUARD_HOST_SYNC", "1")
+    class FailedNpu:
+        def synchronize(self):
+            raise RuntimeError("earlier asynchronous kernel failed")
+    monkeypatch.setattr(torch, "npu", FailedNpu(), raising=False)
+    ops = Ops()
+    with pytest.raises(OscarReadinessError, match="site=forward:layer family=upstream") as caught:
+        run_status_guard(ops, "forward:layer", _segments())
+    assert not ops.calls
+    assert "earlier asynchronous" in str(caught.value.__cause__)

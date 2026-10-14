@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import socket
 import sys
+import threading
 
 import pytest
 
@@ -14,6 +15,42 @@ from tools import phase, service_probe
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_log_mirror_drains_flush_racing_with_an_earlier_eof(monkeypatch, tmp_path, capsys):
+    # Host regression: a reader may see EOF, then the writer flushes and sets
+    # stopped before the reader tests it. Final diagnostics must still drain.
+    path = tmp_path / "final-flush.log"
+    read_started, release_read = threading.Event(), threading.Event()
+    original_open, original_join = Path.open, threading.Thread.join
+    class DelayedReader:
+        def __init__(self, stream):
+            self.stream, self.first = stream, True
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            self.stream.close()
+        def read(self, size):
+            data = self.stream.read(size)
+            if self.first:
+                self.first = False
+                assert data == b""
+                read_started.set()
+                assert release_read.wait(3)
+            return data
+    def open_file(self, mode="r", *args, **kwargs):
+        stream = original_open(self, mode, *args, **kwargs)
+        return DelayedReader(stream) if self == path and mode == "rb" else stream
+    def join(worker, *args, **kwargs):
+        if worker.name == "oscar-log-final-flush":
+            release_read.set()  # live_log has now flushed and set stopped
+        return original_join(worker, *args, **kwargs)
+    monkeypatch.setattr(Path, "open", open_file)
+    monkeypatch.setattr(threading.Thread, "join", join)
+    with phase.live_log(path, mode="full") as stream:
+        assert read_started.wait(3)
+        stream.write("final exception must reach terminal\n")
+    assert "final exception must reach terminal" in capsys.readouterr().out
 
 
 class AcknowledgingTerminal(io.StringIO):

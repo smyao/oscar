@@ -1,4 +1,4 @@
-# 档案 #75/#94/#95/#116/#117/#120/#125：相位输出实时到终端、完整日志落盘、保留真实退出码；本入口按用户要求只编译安装并直接启动，不含任何测试或probe。
+# 档案 #75/#94/#95/#116/#117/#120/#125/#159：相位输出实时到终端、完整日志落盘、保留真实退出码；本入口按用户要求只编译安装并直接启动，不含任何测试或probe。
 # #148/#150：安装最新产物不等于启用优化；显式candidate将同一有效配置传给所有相位和服务。
 """Install, compile and prepare rotations, then log the foreground service; no probes."""
 from __future__ import annotations
@@ -11,6 +11,7 @@ import shlex
 import sys
 from .deploy import plan as deploy_plan
 from .phase import atomic_json, run_phase, terminal_line
+from .service_outcome import fatal_service_evidence
 from .target_cli import target_env, serve_argv
 from .serving_variants import variant_config, variant_features, runtime_feature_summary, default_variant
 
@@ -144,20 +145,34 @@ def main(argv=None) -> int:
         # File-backed forwarding cannot fill a pipe and stall model workers.
         result = run_phase("server", serve_command, cwd=ROOT, log_dir=log_dir,
                            timeout=None, env=env, grace=config["shutdown_timeout_seconds"],
-                           heartbeat=60, terminal_mode="full")
+                           heartbeat=60, terminal_mode="full", success_label="PROCESS_EXITED")
+        evidence = fatal_service_evidence(Path(result.log))
     except BaseException as exc:
         status.update(status="failed", failed_phase="server", error=f"{type(exc).__name__}: {exc}")
         atomic_json(log_dir / "status.json", status)
         raise
-    status.update(status="interrupted" if result.interrupted else
-                  ("stopped" if result.returncode == 0 else "failed"),
-                  server=asdict(result), returncode=result.returncode)
-    if result.returncode:
+    failed = bool(evidence["fatal_line_count"])
+    rc = result.returncode if result.returncode >= 0 else 128 - result.returncode
+    if failed and rc == 0:
+        rc = 1
+    outcome = {"status": "failed" if failed else ("interrupted" if result.interrupted else
+               ("stopped" if rc == 0 else "failed")), "child_returncode": result.returncode,
+               "returncode": rc, "fatal_log_evidence": evidence}
+    status.update(**outcome, server=asdict(result))
+    if rc:
         status["failed_phase"] = "server"
     atomic_json(log_dir / "status.json", status)
+    # server.json keeps run_phase's raw returncode; service_returncode is the
+    # wrapper verdict. A worker crash must not be presented as a healthy stop.
+    atomic_json(log_dir / "server.json", {**asdict(result), "status": outcome["status"],
+                "service_returncode": rc, "fatal_log_evidence": evidence})
+    with (log_dir / "server.log").open("a") as stream:
+        stream.write("SERVICE_OUTCOME " + json.dumps(outcome) + "\n")
+    terminal_line(f"[oscar] service status={outcome['status']} child_rc={result.returncode} "
+                  f"exit_code={rc} fatal_lines={evidence['fatal_line_count']} log={result.log}", stderr=failed)
     # Keep the raw child result in JSON, and the conventional signal exit code
     # for the shell (e.g. SIGKILL=-9 -> 137, not Python's sys.exit(-9)=247).
-    return result.returncode if result.returncode >= 0 else 128 - result.returncode
+    return rc
 
 
 if __name__ == "__main__":

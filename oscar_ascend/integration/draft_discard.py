@@ -161,9 +161,8 @@ def later_draft_slot_copy(common, *, draft_index=None, capture=False, require_sc
             print("[oscar] MTP_DISCARD_BRIDGE "
                   f"proposer={type(scope.proposer).__name__} method=mtp "
                   f"requests={scope.requests} mask_capacity={scope.mask.numel()} "
-                  f"draft_index={index} source=native.discard_request_mask "
-                  f"cache_position={'logical_rejection_boundary' if scope.accepted_end is not None else 'native_slot'} "
-                  "binding=queued", flush=True)
+                  f"draft_index={index} source=native.discard_request_mask binding=queued "
+                  f"cache_position={'logical_rejection_boundary' if scope.accepted_end is not None else 'native_slot'}", flush=True)
             scope.proposer._oscar_discard_bridge_logged = True
     return result
 

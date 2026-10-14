@@ -28698,3 +28698,20 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 本轮源码修复：首draft按照逻辑token位置写KV，native later slot却由RoPE坐标构造。合法mRoPE偏移会使later slot读写另一位置：已写KV[0..127]、delta=+17时旧slot145超出seq_len129触发5；delta=-17时旧slot111反而静默短读/回写历史。外部scope保存本轮逻辑长度与原生rejected计数，later缓存槽改为 `L - rejected + draft_index - 1` 经原表映射。保留模型RoPE、原生padding/discard与完整INT2路径，不扩大长度去容纳未写KV。非法live计数或索引保持live并提交不可能的length=0，由冻结prepare/guard拒绝。
 
 关键回归使用真实pinned native later更新与OSCAR builder，覆盖delta=-17/0/+17、拒绝0–3、两个later轮次与128分页；先物化完整历史再检查读取范围，text delta0槽逐位一致。额外覆盖坏计数/负表项、原生padding和discard。此修复自动经直启/observe插件加载，APC开关及16384预算不变。**本地反例证实该源码缺陷及修复；没有本次请求的实际RoPE偏移证据，不能声称最新Trap唯一根因已证实或真机故障已消失。**
+
+
+## [162] 真机条目（2026-10-14 用户回传）· APC 开启无错误，关闭后300请求后期仍发生设备异常
+
+用户报告当前stable开启prefix caching本轮无错误；关闭后300条请求最后几十条仍报错。原文保存于`reports/target_stable_apc_off_late_20261014.txt`（65534字节，原附件本身截断）。08:21:10–08:22:20仍有prefill和decode，Running31/32，最后Running32、Waiting0；不能据此断言已缩为十几请求。08:22:26设备PC偏移0x25c，DynamicQuantV2提交失败507011，其他rank在prepare_inputs_event和输出event同步处报错。没有site/family/code；不能直接归因DynamicQuant或GDN。
+
+栈中plugin.py:358对应2bdb503c的proposer wrapper；later-MTP走compact_later_mtp.py:185的小形状原模型路径，再进入AOT/npugraph_ex和attention prepare。此处是异步异常暴露位置，不证明prepare、AOT或被跳过的compact逻辑自身有错误。附件未包含启动SHA或完整产物签名。
+
+本轮只读核查：logical cache slot没有none/align分支；普通有效采样满足0<=rejected<qLen；native scheduler在max_tokens终点跳过额外异步轮、在max_model_len/预算裁剪时同步裁剪draft列表。尚无新反例证明应撤掉2bdb503c。关闭APC时的none布局与原生GDN状态路径需要继续定位；目前未确定根因、未完成修复、未推送新修复。开启APC本轮无错不能推广为所有请求/质量/性能验收。
+
+### #162 后续：关闭缓存的短批后续 MTP 统一执行路径
+
+源码与栈确认的路径差异：候选只在N>=1024且N>=8B时压缩后续MTP输入；普通N128/B32、N96/B24、N48/B12仍经原AOT路径执行N行，而原生later循环只更新/消费前B行。此次栈确实进入这条门槛外路径。关闭APC时去除这个性能阈值，对所有0<B<N统一使用已有的受检查compact实现：模型输入仅B行，走原生公开skip_compiled入口，原N继续决定CV splits；完整INT2 attention、严格tail/status guard、原生三个draft token、target图与GDN均保留。没有异常捕获后回退或绕过错误检查。
+
+用户随后要求保护当前已成功的APC-on版本：显式prefix=true继续使用旧N>=1024/N>=8B选择，包含小batch原路径，未改其快照、页布局、逻辑slot修复或缓存协议。变化仅针对prefix=false的短批后续MTP。两个一键入口共用实际runtime config，无需新开关。
+
+关键证据：150项host回归通过；真实pinned native三draft循环/public compile bypass覆盖B/N=32/128、31/128、24/96、12/48及1D/mRoPE位置，前B hidden与所有draft IDs逐位等价，NaN padding不进入紧凑模型，非法tail和异常仍拒绝且context还原。APC-on选择与旧谓词一致。四组入口计划确认prefix两态、MTP=3、16384预算、target graph不变。另独立AscendC CPU-debug执行2816→2817→2816的真实writer/prepare/MDL-q1/merge成功，故未改底层算子。**这是有范围的执行路径修复和本地验证；没有证明该门槛是本次设备Trap的唯一原因，未声称NPU故障已消失。**

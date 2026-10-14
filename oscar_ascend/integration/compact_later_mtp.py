@@ -1,4 +1,4 @@
-"""Archive #34/#36/#140/#142/#148/#155: unenabled later-MTP row experiment.
+"""Archive #34/#36/#140/#142/#148/#155/#162: later-MTP logical row execution.
 
 Native proposer 1249-1332 updates/consumes only B leading rows in later steps.
 The public compile decorator honors forward_context.skip_compiled (509-513).
@@ -22,10 +22,25 @@ _NATIVE_FALSE_FLAGS = (
     "olora_tp_enable", "matmul_allreduce_enable", "o_shard_enable")
 
 
-def should_compact_rows(tokens, requests):
-    """Unmeasured conservative policy: avoid changing the short decode path."""
-    return (type(tokens) is int and type(requests) is int and 0 < requests <= tokens
-            and tokens >= 1024 and tokens >= 8 * requests)
+def should_compact_rows(tokens, requests, *, prefix_caching=False):
+    """Every padded later step has exactly B meaningful model input rows.
+
+    #162: the old performance-only N>=1024 / N>=8B threshold sent ordinary
+    N128/B32 decode back through AOT with unused rows. The native later loop
+    consumes only arange(B), irrespective of the first-pass padded N. Keep
+    the same checked eager compact path at every padded size; MTP depth,
+    full attention, original CV splits and target graphs are unchanged.
+    APC-on retains its user-verified dispatch until separately qualified.
+    """
+    if type(prefix_caching) is not bool:
+        _fail("prefix caching policy must be an explicit boolean")
+    valid = type(tokens) is int and type(requests) is int and 0 < requests < tokens
+    return valid and (not prefix_caching or (tokens >= 1024 and tokens >= 8 * requests))
+
+
+def _prefix_caching(provider):
+    # Unknown fixture/legacy configurations preserve the established route.
+    return getattr(provider, "config", {}).get("enable_prefix_caching", True)
 
 
 def _fail(message):
@@ -115,7 +130,8 @@ def _compact_call(original, model, args, kwargs, provider, context, flags, group
     if any(row.dummy_origin or row.capture_origin or not row.is_draft or row.draft_index == 0 for row in rows):
         return original(model, *args, **kwargs)
     ids = kwargs.get("input_ids")
-    if ids is not None and not should_compact_rows(ids.shape[0], rows[0].num_actual_tokens):
+    if ids is not None and not should_compact_rows(ids.shape[0], rows[0].num_actual_tokens,
+                                                  prefix_caching=_prefix_caching(provider)):
         return original(model, *args, **kwargs)
     if (getattr(context, "is_draft_model", None) is not True or
             getattr(getattr(context, "cudagraph_runtime_mode", None), "name", None) != "NONE"):
@@ -181,7 +197,8 @@ def compact_later_mtp_call(original, model, args, kwargs, provider):
             and not row.dummy_origin and not row.capture_origin for row in metadata.values())):
         return original(model, *args, **kwargs)
     ids = kwargs.get("input_ids")
-    if ids is not None and not should_compact_rows(ids.shape[0], next(iter(metadata.values())).num_actual_tokens):
+    if ids is not None and not should_compact_rows(ids.shape[0], next(iter(metadata.values())).num_actual_tokens,
+                                                  prefix_caching=_prefix_caching(provider)):
         return original(model, *args, **kwargs)
     flags, groups = _native_facts()
     return _compact_call(original, model, args, kwargs, provider, context, flags, groups)

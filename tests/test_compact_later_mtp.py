@@ -253,20 +253,20 @@ def test_plugin_wraps_compile_call_before_forward_and_uninstalls(monkeypatch):
     assert type(model).__dict__["__call__"] is original
 
 
-@pytest.mark.parametrize("n,b,expected",[(128,32,False),(1023,1,False),(1024,129,False),(1024,128,True),(16384,32,True)])
-def test_conservative_large_padding_policy(n,b,expected):
+@pytest.mark.parametrize("n,b,expected",[(128,32,True),(96,24,True),(48,12,True),(1023,1,True),(1024,129,True),(1024,128,True),(16384,32,True),(32,32,False),(0,0,False),(12,13,False)])
+def test_every_padded_native_later_batch_uses_the_checked_compact_path(n,b,expected):
     assert compact.should_compact_rows(n,b) is expected
 
 
-def test_small_decode_uses_original_call_without_guards_or_context_change(monkeypatch):
+def test_unpadded_decode_uses_original_call_without_shape_or_context_change(monkeypatch):
     model,ctx,values,original,seen=_case(monkeypatch)
-    n,b=128,32
+    n,b=32,32
     ctx.num_tokens=n;ctx.num_accept_tokens=b
     ctx.attn_metadata={"mtp":replace(ctx.attn_metadata["mtp"],num_actual_tokens=b,num_reqs=b,num_input_tokens=n)}
     values={key:(value[..., :n] if key=="positions" else value[:n]) if value is not None else None
             for key,value in values.items()}
     marker=object();before=dict(vars(ctx))
-    monkeypatch.setattr(compact,"_validate_model",lambda *a:pytest.fail("small decode must not audit compact model"))
-    monkeypatch.setattr(compact,"_tail_slot_guard",lambda *a:pytest.fail("small decode must not run compact slot guard"))
+    monkeypatch.setattr(compact,"_validate_model",lambda *a:pytest.fail("unpadded decode needs no compaction"))
+    monkeypatch.setattr(compact,"_tail_slot_guard",lambda *a:pytest.fail("unpadded decode has no tail"))
     assert compact._compact_call(lambda *a,**k:marker,model,(),values,None,ctx,{},()) is marker
     assert vars(ctx)==before and not seen

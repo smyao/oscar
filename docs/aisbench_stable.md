@@ -33,3 +33,9 @@ git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate 
 ## MTP 逻辑缓存位置修复（2026-10-14）
 
 两个入口自动以本轮逻辑长度与原生拒绝数构造后续MTP缓存槽，模型RoPE坐标不变。修复已物化历史与偏移RoPE坐标不一致时的越界/错误回写；纯文本零偏移保持槽位一致。冻结guard、GDN及AscendC算子均未修改。主机反例通过不代表最新APC真机Trap已确认消失，归因边界见档案#161。
+
+## 关闭缓存的短批后续 MTP（2026-10-14）
+
+默认关闭prefix时，所有带padding的后续MTP轮次都按真实请求数执行现有compact路径，覆盖128/32、96/24、48/12等短批。MTP仍为3个speculative tokens，原N的attention splits、完整OSCAR INT2、guard和target图均保留。prefix开启时保留此前已交付的执行选择；两个入口读取同一prefix配置，无需额外参数。
+
+150项关键host回归和两入口prefix两态启动计划通过；尚未在真机验证本次关闭缓存的Trap消失。详见档案#162，不把host结果写成NPU验收。

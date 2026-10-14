@@ -1,4 +1,4 @@
-"""Archive #27/#34/#36/#37-49/#157/#158: preserve native request discard semantics.
+"""Archive #27/#34/#36/#37-49/#157/#158/#161: logical cache and discard semantics.
 
 Native model_runner_v1.py:1125-1147 publishes discard_request_mask in current
 input_batch order before proposing; llm_base_proposer.py:1535-1666 retains that
@@ -7,6 +7,11 @@ padding. A slot/table error is never evidence that a live request was discarded.
 Copies occur in metadata construction, before eager execution or graph replay;
 fixed per-draft destinations preserve captured addresses. No device readback,
 block-table scan, KV data operation, or per-layer tensor work is introduced.
+
+#161: later cache slots use seq_len - rejected + draft_index - 1, independently
+of model RoPE coordinates. The first pass already materializes logical KV.
+This fixes a reproducible offset-coordinate defect, not a claim that the
+latest asynchronously reported target Trap has been uniquely attributed.
 """
 
 from contextlib import contextmanager
@@ -24,13 +29,15 @@ class _DraftScope:
     mask: object
     requests: int
     dummy: bool
+    accepted_end: object = None
+    invalid_counts: object = None
 
 
 _scope = ContextVar("oscar_native_draft_discard", default=None)
 
 
 @contextmanager
-def native_draft_scope(proposer, *, dummy=False):
+def native_draft_scope(proposer, *, dummy=False, common=None, rejected_tokens=None):
     """Keep each native proposal's mask/order within its synchronous call.
 
     The mask is the native fixed device buffer, not a cached derived mask.
@@ -47,7 +54,24 @@ def native_draft_scope(proposer, *, dummy=False):
             raise OscarReadinessError("native MTP discard mask does not match the current input batch")
         if getattr(proposer, "pcp_size", 1) != 1 or getattr(proposer, "dcp_size", 1) != 1:
             raise OscarReadinessError("native MTP discard bridge requires request order without context parallelism")
-    token = _scope.set(_DraftScope(proposer, mask, requests, dummy))
+    accepted_end = invalid_counts = None
+    if not dummy and common is not None:
+        # #161: cache indices are logical token offsets, not mRoPE coordinates.
+        # The first pass writes [seq_len - qlen, seq_len); rejected rows stay
+        # materialized, but later queries resume at seq_len - rejected.
+        lens = common.seq_lens[:requests]
+        starts = common.query_start_loc[:requests + 1]
+        if (lens.shape != (requests,) or starts.shape != (requests + 1,)
+                or lens.device != mask.device or starts.device != mask.device):
+            raise OscarReadinessError("native MTP logical cache metadata does not match request rows")
+        rejected = torch.zeros_like(lens) if rejected_tokens is None else rejected_tokens
+        if (not torch.is_tensor(rejected) or rejected.shape != (requests,)
+                or rejected.device != lens.device or rejected.dtype not in (torch.int32, torch.int64)):
+            raise OscarReadinessError("native MTP rejected counts do not match request rows")
+        qlen = starts[1:] - starts[:-1]
+        invalid_counts = ((rejected < 0) | (rejected >= qlen) | (lens < qlen))
+        accepted_end = lens.to(torch.int64) - rejected.to(torch.int64)
+    token = _scope.set(_DraftScope(proposer, mask, requests, dummy, accepted_end, invalid_counts))
     try:
         yield
     finally:
@@ -104,6 +128,32 @@ def later_draft_slot_copy(common, *, draft_index=None, capture=False, require_sc
     result = destination[:source.numel()]
     result.copy_(source)
     if not scope.dummy and not capture:
+        if scope.accepted_end is not None:
+            # Native later slots use clamped_positions (RoPE) to index the
+            # virtual128 table. FULL KV is indexed by logical sequence order.
+            # Keep native padding/discard decisions and all model positions.
+            size = scope.requests
+            table = common.block_table_tensor[:size]
+            limit = scope.proposer.max_model_len
+            if table.ndim != 2 or table.shape[0] != size or table.shape[1] == 0:
+                raise OscarReadinessError("native MTP logical cache table is empty or malformed")
+            position = scope.accepted_end + index - 1
+            column = torch.div(position, 128, rounding_mode="floor")
+            bad = (scope.invalid_counts | (position < 0) | (position >= limit)
+                   | (column < 0) | (column >= table.shape[1]))
+            # Clamp only the speculative gather address, never accept a bad
+            # logical index: bad live rows get length=0 below and still trap.
+            block = table.gather(1, column.clamp(0, table.shape[1] - 1)[:, None]).reshape(-1)
+            logical_slot = block.to(torch.int64) * 128 + position.remainder(128)
+            bad = bad | (block < 0) | (logical_slot > torch.iinfo(source.dtype).max)
+            live = (source[:size] >= 0) & ~scope.mask[:size]
+            safe_slot = torch.where(bad, torch.zeros_like(logical_slot), logical_slot)
+            result[:size].copy_(torch.where(live, safe_slot.to(source.dtype), source[:size]))
+            errors = getattr(scope.proposer, "_oscar_logical_slot_errors", None)
+            if errors is None:
+                errors = {}
+                scope.proposer._oscar_logical_slot_errors = errors
+            errors[index] = live & bad
         result[:scope.requests].masked_fill_(scope.mask[:scope.requests], -1)
         if not getattr(scope.proposer, "_oscar_discard_bridge_logged", False):
             # Host-only execution evidence; the native mask stays on device.
@@ -112,6 +162,7 @@ def later_draft_slot_copy(common, *, draft_index=None, capture=False, require_sc
                   f"proposer={type(scope.proposer).__name__} method=mtp "
                   f"requests={scope.requests} mask_capacity={scope.mask.numel()} "
                   f"draft_index={index} source=native.discard_request_mask "
+                  f"cache_position={'logical_rejection_boundary' if scope.accepted_end is not None else 'native_slot'} "
                   "binding=queued", flush=True)
             scope.proposer._oscar_discard_bridge_logged = True
     return result
@@ -158,6 +209,13 @@ def later_draft_lengths_copy(common, slots, *, draft_index):
         raise OscarReadinessError("native MTP length allocation changed after OSCAR binding")
     result = destination[:source.numel()]
     result.copy_(source)
+    if scope.accepted_end is not None:
+        errors = getattr(proposer, "_oscar_logical_slot_errors", {}).get(draft_index)
+        if errors is None:
+            raise OscarReadinessError("logical MTP slots must be prepared before their lengths")
+        # A corrupt live row remains live with impossible metadata. Frozen
+        # prepare/guard reject it; it is never disguised as discarded padding.
+        result[:scope.requests].masked_fill_(errors, 0)
     # Native NPUModelRunner._build_attention_metadata publishes the maximum
     # CPU optimistic sequence length (or the full model limit for capture).
     # It bounds the corrected first-pass device lengths. Its scalar survives
@@ -170,5 +228,7 @@ def later_draft_lengths_copy(common, slots, *, draft_index):
     before_wrap = base[:size] + draft_index
     wrapped_live = ((source[:size] == 1) & (before_wrap > limit)
                     & (slots[:size] >= 0) & ~scope.mask[:size])
-    result[:size].copy_(torch.where(wrapped_live, before_wrap.clamp(max=limit), source[:size]))
+    result[:size].copy_(torch.where(wrapped_live, before_wrap.clamp(max=limit), result[:size]))
+    if scope.accepted_end is not None:
+        result[:size].masked_fill_(errors, 0)
     return result

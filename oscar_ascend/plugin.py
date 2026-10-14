@@ -350,7 +350,11 @@ def _patch_mtp_proposer(module: ModuleType) -> None:
                 if proposer.method != "mtp":
                     return original(proposer, *args, **kwargs)
                 from .integration.draft_discard import native_draft_scope
-                with native_draft_scope(proposer, dummy=dummy):
+                common = None if dummy else kwargs.get(
+                    "common_attn_metadata", args[5] if len(args) > 5 else None)
+                rejected = None if dummy else kwargs.get(
+                    "num_rejected_tokens_gpu", args[15] if len(args) > 15 else None)
+                with native_draft_scope(proposer, dummy=dummy, common=common, rejected_tokens=rejected):
                     return original(proposer, *args, **kwargs)
             return wrapped
         return decorate

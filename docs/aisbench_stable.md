@@ -29,3 +29,7 @@ git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate 
 两个一键入口自动加载外部采样边界修复：greedy输出按请求隔离，累计draft计数视图带32字节前导零区。启动仅打印一次/worker `PERF_SAMPLER_FIX`。正常命令无需 `--diagnose-trap`，默认仍关闭prefix caching、预算16384；显式开启prefix caching也加载同一适配。
 
 本地已对拍原生采样规则和后续MTP位置，保留随机算法、RNG与严格guard；源码执行模型复现code5并验证适配后通过。真实NPU与两次完整服务故障消失未在本地验证，不能用主机结果冒充真机验收。
+
+## MTP 逻辑缓存位置修复（2026-10-14）
+
+两个入口自动以本轮逻辑长度与原生拒绝数构造后续MTP缓存槽，模型RoPE坐标不变。修复已物化历史与偏移RoPE坐标不一致时的越界/错误回写；纯文本零偏移保持槽位一致。冻结guard、GDN及AscendC算子均未修改。主机反例通过不代表最新APC真机Trap已确认消失，归因边界见档案#161。

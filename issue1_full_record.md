@@ -28690,3 +28690,11 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 原生 `ops/triton/reject_sample.py` generic greedy 在非greedy/尾部lane执行未指定other的masked累计数load，内层token循环及写入缺少行级保护；另ordinary greedy/random首行表达式包含cu[-1]读取。对合法mixed输入draft=[3,1]、greedy=[1,0]的原函数AST地址执行模型，未定义值若为start0/end3，可污染随机行，随机writer只覆写首拒绝位置后剩余旧值令valid_count=[4,3]。真实native padded输入与later metadata函数将第二行anchor推到本请求范围外，重现code5。安全greedy实现保留随机行与正确-1尾后counts=[4,1]，同链得到合法slot/code0。此为有条件源码反例，**没有测得目标Ascend编译器实际取了哪个未定义值，也不能从第二段日志唯一确认同因**。
 
 修复以外部插件导入钩子安装：greedy使用固定B×(max_spec_len+1)设备张量运算，只写greedy行；外层给cu提供32字节前导零存储，逻辑值/形状/步幅与原随机采样算法不变。无host数值回读，不放宽guard，不清空坏活行，不改原生文件/GDN/冻结核。无Triton与native/passive模式不安装这些Triton专用适配。两个一键入口自动生效。详见reports/sampling_boundary_fix_20261014/summary.json。
+
+## [161] 真机条目（2026-10-14 用户回传）· stable 显式开启 APC 后再次 Trap
+
+原文：`reports/target_stable_prefix_recurrence_20261014.txt`，用户执行 `install_serve.sh --variant candidate --enable-prefix-caching`。片段未含启动SHA。02:32:36–56 Running 2→4→5、prefix hit 0%；02:32:58四rank设备异常，PC偏移0x264，与冻结guard Trap签名一致。GDN metadata的2016B H2D和异步输出event随后报错；没有site/family/code，不能认定GDN为根因，也不能把#160另一轮code5直接当本次码值。
+
+本轮源码修复：首draft按照逻辑token位置写KV，native later slot却由RoPE坐标构造。合法mRoPE偏移会使later slot读写另一位置：已写KV[0..127]、delta=+17时旧slot145超出seq_len129触发5；delta=-17时旧slot111反而静默短读/回写历史。外部scope保存本轮逻辑长度与原生rejected计数，later缓存槽改为 `L - rejected + draft_index - 1` 经原表映射。保留模型RoPE、原生padding/discard与完整INT2路径，不扩大长度去容纳未写KV。非法live计数或索引保持live并提交不可能的length=0，由冻结prepare/guard拒绝。
+
+关键回归使用真实pinned native later更新与OSCAR builder，覆盖delta=-17/0/+17、拒绝0–3、两个later轮次与128分页；先物化完整历史再检查读取范围，text delta0槽逐位一致。额外覆盖坏计数/负表项、原生padding和discard。此修复自动经直启/observe插件加载，APC开关及16384预算不变。**本地反例证实该源码缺陷及修复；没有本次请求的实际RoPE偏移证据，不能声称最新Trap唯一根因已证实或真机故障已消失。**

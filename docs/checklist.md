@@ -163,3 +163,5 @@ q4诊断接入同一`--probe-only`：原生paged BF16 FIA与OSCAR CV+merge的未
 2026-10-14预热耗时排查：用户补充“6min才跑完预热”，当前未提供该轮预热日志，不能按持续死锁定性，也未确认是引擎启动还是客户端预热。源码确认当前MTP uniform q4筛选34档FULL decode图，每档按原生流程预热一次再捕获，未改图模式/档位/APC/数值路径。修复独立日志提取器漏掉无ERROR的慢启动中间阶段证据的问题，分别保留原生compile、profile/warmup、capture、engine-init时长及客户端warmup标记；每PID原值保留、不跨rank求和或叠加嵌套时长。日志工具与prefix边界67项、原生dummy/warmup专项4项主机测试通过；6分钟根因和提速效果仍待本轮日志，未增加NPU/图/性能通过结论。
 
 2026-10-14同一benchmark/长度10→30分钟排查：budget2048、FULL2304/GDN768假设下，原生/OSCAR的32K冷请求调度22/28步、65100输入43/56步；只为主机计数，不是耗时倍率，实际预算与旧运行SHA仍未知。确认直启继承诊断同步变量及正式stdout未自动落盘的观测缺口；新增有界只读取证工具，不加入默认部署前置审计。55项主机测试通过，包含2048预算32K可达部分命中；未改生产调度/算子/精度，也未复跑AISBench或宣称提速。证据：`reports/performance_regression_20261014/analysis.json`。42个checkpoint与NPU/图/质量/性能状态不变。
+
+2026-10-14错误日志汇总：新增独立标准库脚本 `tools/collect_error_bundle.py`，合并保存/粘贴的terminal文本与logs内最近文件，保留每来源行号/时间/哈希，优先Worker/device与Engine首错，折叠重复API栈，默认输出≤48KiB。10项主机测试通过；用户65536字节API附件提炼为3402字节，仍明确没有Worker/Engine首因，不把提炼成功当错误定位完成。无NPU初始化、测试请求或生产路径修改，不增加真机验收结论，不改变42项checkpoint。

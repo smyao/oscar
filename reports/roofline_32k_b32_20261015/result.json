@@ -1,0 +1,133 @@
+{
+  "kind": "analytical_work_model_not_benchmark",
+  "source_sha256": {
+    "configs/target.json": "8e67ec9861d0ba75fe4a71ea4dac8a587a469f0129febabd3ff3da0905806ed4",
+    "tools/serving_variants.py": "e0c7f8208d0978eab7a1a3e48ad6d788d6c02ab2491e06fca67d4111646d2f56",
+    "oscar_ascend/ops/cv_dispatch.py": "16298ebb185176ad966cd0a4712331876f1576b3c60ba64083a5e11a14949908",
+    "oscar_ascend/integration/impl.py": "52312586864aef40a51bf44616173e301b314fa57f92737c7877b12177fa375b",
+    "oscar_ascend/layout.py": "87bbee7a38f55545563823d798172e807f774c0bad8f72a07ec668ec562e3fc0",
+    "csrc/kernels/attention_cv_mdl_decode.cpp": "e45cf7e35344849b8584e57ff716acd668727daac8ab0e38bed04957c52e7426",
+    "csrc/kernels/attention_striped_unpack_padded.h": "1551af143666d7465352426dbbe7024af8a86d81ee12d7ccfd9840c328e4ceee",
+    "references/vllm/vllm/model_executor/models/qwen3_5_mtp.py": "99c19c38107a3cade90aa5a0f86396f6a25b2defcf8a538fbed521f7567eb743",
+    "references/vllm/vllm/model_executor/layers/mamba/mamba_utils.py": "aa9b7dc46725a012fc61b83a7181baaddad7ab4b0eb8e4144350799697ad6a42"
+  },
+  "scope": {
+    "per_rank": true,
+    "tp": 4,
+    "actual_decode_batch": 32,
+    "context": 32768,
+    "query_heads_per_rank": 6,
+    "kv_heads_per_rank": 1,
+    "head_dim": 256,
+    "target_full_layers": 16,
+    "target_gdn_layers": 48,
+    "mtp_layer_calls": 3,
+    "mtp_queries": [
+      4,
+      1,
+      1
+    ],
+    "target_queries": 4,
+    "history_tokens": 32448,
+    "exact_tokens": 320,
+    "assumptions": "uniform active decode; all three MTP calls; independent request histories; no diagnostic host sync"
+  },
+  "hardware_reference_not_measured": {
+    "hbm_GB_s": 819.2,
+    "fp32_TFLOP_s": 70,
+    "source": "https://www.hiascend.com/s/ascendstatic/lst/files/pdf/Flying_Product_Catalogue.pdf",
+    "qualification": "A2 catalogue reference, not measured 910B4 kernel throughput; no INT8 peak inferred"
+  },
+  "single_full_layer_per_rank": {
+    "packed_history_MiB": 134.671875,
+    "exact_window_MiB": 10.0,
+    "temporary_KV_logical_GiB_lower_bound": 3.9609375,
+    "q4_useful_history_GFLOP": 25.518145536,
+    "q1_useful_history_GFLOP": 6.379536384,
+    "q4_FLOP_per_packed_byte": 180.7058823529412,
+    "q1_FLOP_per_packed_byte": 45.1764705882353,
+    "q4_FLOP_per_temporary_byte": 6.0,
+    "q1_FLOP_per_temporary_byte": 1.5,
+    "q4_ideal_fp32_ms": 0.3645449362285714,
+    "q1_ideal_fp32_ms": 0.09113623405714286,
+    "packed_history_ideal_HBM_ms": 0.17238
+  },
+  "target_plus_MTP_attention_per_rank": {
+    "history_scans": 19,
+    "query_weight_sum": 70,
+    "packed_history_GiB": 2.4987945556640625,
+    "exact_window_GiB": 0.185546875,
+    "temporary_KV_logical_GiB_lower_bound": 75.2578125,
+    "useful_history_TFLOP": 0.44656754688,
+    "attention_math_full_context_TFLOP": 0.45097156608
+  },
+  "temporary_HBM_fraction_sensitivity": [
+    {
+      "fraction": 0,
+      "selected_attention_HBM_proxy_GB": 2.882289664,
+      "HBM_service_lower_bound_ms": 3.51842,
+      "not_total_step_time": true
+    },
+    {
+      "fraction": 0.05,
+      "selected_attention_HBM_proxy_GB": 6.9226627072,
+      "HBM_service_lower_bound_ms": 8.450516,
+      "not_total_step_time": true
+    },
+    {
+      "fraction": 0.1,
+      "selected_attention_HBM_proxy_GB": 10.9630357504,
+      "HBM_service_lower_bound_ms": 13.382612,
+      "not_total_step_time": true
+    },
+    {
+      "fraction": 0.25,
+      "selected_attention_HBM_proxy_GB": 23.08415488,
+      "HBM_service_lower_bound_ms": 28.1789,
+      "not_total_step_time": true
+    },
+    {
+      "fraction": 1,
+      "selected_attention_HBM_proxy_GB": 83.689750528,
+      "HBM_service_lower_bound_ms": 102.16034,
+      "not_total_step_time": true
+    }
+  ],
+  "nominal_linear_weight_proxy": {
+    "parameter_proxy": 27000000000.0,
+    "weight_bytes_per_rank_if_all_W8": 6750000000.0,
+    "target_verify_INT8_TOP": 1.728,
+    "target_verify_OP_per_weight_byte": 256,
+    "no_MTP_decode_OP_per_weight_byte": 64,
+    "ideal_weight_read_ms": 8.23974609375,
+    "warning": "excludes separate MTP weights/heads, vision inactivity, BF16 exceptions, activations and communication; 9.76 GiB allocated weights in supplied log is NOT per-step bytes"
+  },
+  "prefill": {
+    "total_input_tokens": 1048576,
+    "nominal_total_linear_TOP_per_rank": 14155.776,
+    "causal_FULL_attention_TFLOP_per_rank": 1688.901399871488,
+    "linear_weight_only_intensity_by_scheduled_tokens": {
+      "128": 256,
+      "768": 1536,
+      "1536": 3072,
+      "2048": 4096
+    },
+    "qualification": "total-work proxy, not one engine step; APC reduces uncached work; current continuation CV and current FIA have different precision/traffic"
+  },
+  "GDN": {
+    "current_state_MiB": 576.0,
+    "one_logical_state_read_write_GiB": 1.125,
+    "qualification": "one current state per request/layer; not full APC allocation, q4 speculative checkpoint traffic or measured HBM; no linear context-length history scan"
+  },
+  "excluded_from_lower_bounds": [
+    "tile rounding and Cube padding",
+    "score/P/PV/Q/rotation traffic",
+    "Vector instructions and scalar issue",
+    "TP/HCCL",
+    "layer/pipe dependencies",
+    "GDN and MTP dense/LM-head costs",
+    "APC checkpoint store/restore",
+    "launch and scheduling overhead"
+  ],
+  "verdict": "Decode is not established as saturated HBM or saturated Cube. Weight reuse favors memory sensitivity; OSCAR adds substantial bounded FP32 publication/consumption and pipeline latency. Prefill dense GEMMs have much higher compute intensity."
+}

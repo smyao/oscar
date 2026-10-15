@@ -1,0 +1,93 @@
+OSCAR 反量化后 BF16 计算可行性评估，2026-10-15
+
+结论：硬件和数据流层面可实现 BF16 矩阵乘输入 + FP32 累加；不能把当前
+FP32 历史 attention 无条件换成单份 BF16 并保证现有冻结精度。本轮只做
+源码分析和 CPU 数值筛选，没有修改生产算子、启动配置、oracle 或容差。
+
+一、方案范围
+持久 INT2、FP16 scale/zero、FP32 反量化 Mul/Add、窗口和 prefix-cache
+所有权不变。每个有界 KV tile 在反量化之后转 BF16，供 QK/PV 使用。
+QK 的 Q 也需在 FP32 旋转后转 BF16；PV 的 P 在 FP32 softmax 后转 BF16。
+QK/PV 输出、online max/sum/alpha、跨 tile 累加、LSE、逆旋转和最终分片
+合并保留 FP32。最终模型输出仍 BF16。不能把所有 float 全局替换成 BF16。
+不做全历史 BF16 恢复，不把恢复后的全历史交给原生 FIA。
+
+二、当前源码依据
+csrc/kernels/attention_cv_mdl_decode.cpp:56-57 的矩阵输入/结果均 float；
+:653-657 发布反量化后的 float K/V，:707-723 使用相同 Matmul 做 QK、PV
+和逆旋转。:119-127 的 workspace 是 float 元素偏移，score/P 共址，
+PV/rotation 共址。:69-80 的 SDK 静态 tiling 资源断言也绑定现有类型。
+改动需明确区分 BF16 A/B 与 FP32 C，并分离仍为 FP32 的逆旋转路径。
+参考原生 arch22 sparse_flash_attention_service_cube_mla.h 的 Q/K/P/V
+类型和 float L0C；本项目 experiments/fp32_bf16_mmad_ratio/kernel.cpp
+已有 BF16 A/B + FP32 C 的独立微核。它们证明有实现先例，不证明新完整
+attention 的数值、性能或异步协议已经通过。
+
+三、本轮 CPU 数值证据
+命令（仓库根目录）：
+  .venv/bin/python reports/bf16_post_dequant_20261015/screen.py
+日志实时输出终端，详细数值保存同目录 result.json。
+该命令仅供已有 torch 的开发环境；不是真机部署前置，也不会调用服务。
+
+保持 configs/acceptance.json fused_attention atol=rtol=0.005。
+使用未修改 compressed_attention 的完整原空间 oracle；候选在旋转域按
+KV256 做 online softmax，FP32 累加/逆旋转，再合并精确窗口。
+BF16 值在 CPU 上转回 FP32 乘加，用于隔离舍入误差，不模拟 A2 指令细节。
+
+6 个合成病例的 FP32 控制组均通过。32K 病例使用 D256/Hq6/Hkv1/q1、
+64 sink + 256 recent；原始 Q/K/V 为 BF16，经过当前 rotate/encode/decode。
+两个 32K 病例使用同一随机种子，V 分别为标准随机值和其 128 倍压力值。
+它们是一个独立请求的数值检查，不是 TP4/B32 服务或实际模型激活样本。
+
+32K 标准随机病例：所有候选通过。QK/PV 都用 BF16 输入时，最大输出
+绝对误差 0.0001771，0/1536 个输出元素超差。
+32K V×128 压力病例（输入合法、不是实测模型分布）：
+  仅反量化 K/V 舍入 BF16：146/1536 超差，max_abs=0.0194582；
+  仅 QK 输入 BF16：142/1536 超差，max_abs=0.0214401；
+  仅 PV 输入 BF16：33/1536 超差，max_abs=0.0189125；
+  QK/PV 输入均 BF16：224/1536 超差，max_abs=0.0226634。
+后者某元素参考值 0.363909、候选 0.341246，允许误差仅 0.00681954。
+所有模式的 LSE 都通过；最后输出转回 BF16 也未消除输出超差。
+
+此证据否定“保留 FP32 累加即可保证任意合法输入仍满足旧精度”的推断，
+不证明 Qwen 实际任务质量必定下降，也不否定所有 BF16 补偿算法。
+原始 BF16 K/V 经 FP32 旋转、INT2 量化/FP16 元数据和 FP32 反量化后，
+不一定仍能由 BF16 精确表示；因此原生使用 BF16 不能证明这里的再次舍入
+无代价。PV 的低精度 P 也可能破坏正负值抵消。
+
+四、32K/B32 的条件收益
+沿用源码工作量假设：TP4，每 rank Hkv1，D256，history=32768-320=32448，
+每轮 target 16 FULL 层 + 3 次 MTP FULL 扫描。每历史值至少一次发布和
+一次消费；K/V 合计，原逻辑 GM 字节 = 32*32448*256*2*4*2。
+每 FULL 层/每 rank：3.9609375 GiB -> 1.98046875 GiB。
+19 次扫描：75.2578125 GiB -> 37.62890625 GiB。
+这只对从发布到消费均为 BF16 的 K/V 临时数据成立；先写 FP32 GM 再另起
+cast kernel 会抵消收益。这些是逻辑 GM 流量下界，不是实测 HBM 流量；
+L2 命中、padding/重读另计。持久 INT2 容量及读取字节数不变。
+softmax、合并、解包、同步、GDN、W8A8 线性层、HCCL 和 MTP 轮数不因此
+减半。q1/q4 的小 M、类型转换和固定调用成本仍存在。没有本轮目标机
+profiling，不能把 BF16 硬件峰值比换成 attention 或整轮倍率。
+若可加成本模型中受益部分占 f、该部分加速 s、额外成本为 e*T_old，
+则 S=1/((1-f)+f/s+e)；f=0.5,s=2,e=0 时整轮也只有 1.333 倍。
+该例是条件算式，不是本工程的时间占比预测。流水重叠需用实际关键路径。
+
+五、实施工作与验收边界
+1. 独立数值候选：固定 INT2 writer、cache 格式与 FP32 关键归约，先解决
+   当前超差反例。补偿/多分量可以研究，但应计入额外 Matmul、cast、同步，
+   两份 BF16 已等于一份 FP32 输入字节；不能预设仍有流量减半收益。
+2. 分别定义 BF16 operand、FP32 score/accumulator/rotation 的内存段，按
+   字节重算 GM/UB/L1/L0、对齐和尾行。不能沿用 float 单位偏移后只改类型。
+   检查生产 MDL q4/q1、C4/C16、fe0 对照、混批与 current-only 的实际路由。
+3. 完整 oracle + BF16 最终输出验证，包含尖峰、抵消、幅值范围、长上下文、
+   exact window、q1/q4、chunked prefill 和 MTP。原候选逐位对拍不能被偷偷
+   删除来“放行”；数值变更须建立独立资格，冻结精度要求不变。
+4. 新内核的 NPU 完成、图换输入回放、TP4、prefix 命中/分叉/复用、MTP
+   接缝及错误域分别验证；原冻结 status_guard 不变。不改变 prefix 命中
+   颗粒度或通过关闭功能规避兼容。缓存仍是原 INT2，不需要为 BF16 改哈希。
+5. 用短合成完整算子配对和短服务 probe 量净收益；保留真实 cast/发布成本。
+   不要求重跑 AISBench。完整模型质量和 MTP 接受率目前未验证，短 probe
+   不冒充完整质量或整轮性能验收。
+
+建议：可以继续研究 BF16 mixed-precision 内核，但当前“反量化后直接
+单次转 BF16”的统一替换不满足已冻结数值范围，暂不作为默认候选交付。
+本轮无 NPU/CANN 编译、图执行或服务修改，也未使用旧报告数字作新测量。

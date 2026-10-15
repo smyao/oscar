@@ -1,0 +1,115 @@
+Qwen3.5-27B-w8a8-mtp，32K / 实际 decode batch 32 的分层成本模型
+日期：2026-10-15；分析源码基点 bb0486b。档案依据 #139/#150/#151/#154/#159。
+
+判断
+稳态 decode 的权重部分倾向访存受限；当前 OSCAR FULL attention 更应归为
+FP32 数据搬运、Cube/Vector 交付和执行效率共同约束，而不能简单称为 HBM
+带宽跑满或纯大矩阵算力跑满。大块 prefill 的线性层明显更偏计算受限。
+这是有源码依据的模型判断；缺当前版本同形 NPU 性能计数器，不能给瓶颈占比。
+本轮只做分析，不改变服务、默认预算、prefix cache、MTP、精度或任何算子。
+
+口径
+用户确认模型就是工程的 Qwen3.5-27B-w8a8-mtp。TP4，每卡独立核算。
+沿用项目生产形状：64层中16 FULL、48 GDN；FULL每卡 Hq=6、Hkv=1、D=256。
+形状由现有生产探针与原生接缝夹具交叉约束，未读取远端checkpoint config.json。
+配置 sink64/recent256，计算时历史H=32768-320=32448。
+本步32个实际请求全部做q4验证，target tokens=128；首draft q4，再两次q1。
+不是把 max_num_seqs=128、Running=32 或客户端并发32当作实际decode batch证明。
+假定不同请求历史独立、正常性能模式，OSCAR_GUARD_HOST_SYNC关闭。
+
+源码关键事实
+tools/serving_variants.py -> oscar_ascend/integration/impl.py -> ops/cv_dispatch.py：
+当前candidate对目标q4选择attention_cv_mdl_decode_out，对后续draft q1选择
+attention_cv_mdl_q1_out；prefill依query长度走C4/C16等不同路径。
+csrc/kernels/attention_cv_mdl_decode.cpp：Matrix类型float，SetHF32Mode(false)；
+PipelinePublishKv把解包后的K/V写到GM工作区，Matmul从GM地址读取；
+HistoryCubeTask与HistoryVectorTask以KVReady/ScoreReady/PReady/PvReady串联。
+双缓冲/预取隐藏了一部分工作，但并没有删除FP32发布和消费。
+layout.py与attention_striped_unpack_padded.h：K/V INT2 payload为128B，加
+四个FP16 scale/zero共8B，合计136B/历史token/本地KV head。
+原生qwen3_5_mtp.py：MTP是重复调用一个FULL decoder层，不是再执行三次27B主模型。
+
+一个FULL层、一次历史扫描、每卡
+有效历史读取：32 * 32448 * 136 = 134.671875 MiB。
+精确窗口有效读取：32 * 320 * 1024 = 10 MiB。
+FP32 K/V展开：每token 2*256*4=2048B；发布+至少消费一次=4096B。
+临时K/V逻辑访问下限：32 * 32448 * 4096 = 3.9609375 GiB。
+q4有效QK+PV：4 * 32 * 32448 * 6 * 256 * 4 = 25.518145536 GFLOP。
+q1有效QK+PV：6.379536384 GFLOP。
+这里未计padding、Q/score/P/PV、旋转、metadata和重复Cube装载，故是下限。
+GM累计访问不等于HBM字节，3.96GiB也不是常驻显存；此decode工作区按20核
+仅约21.875MiB并循环复用，能否驻留L2、竞争/回写比例需要计数器。
+
+一次完整target + MTP，仍按每卡
+扫描次数：16+3=19；有效query权重：16*4+4+1+1=70。
+历史INT2读取2.498795GiB，窗口0.185547GiB，临时K/V逻辑下限75.257813GiB。
+历史QK+PV约0.446568 TFLOP，包含精确窗口的数学QK+PV约0.450972 TFLOP。
+这些FP32 FLOPs不能除以INT8或BF16峰值。
+不把三个draft当三遍全模型；其线性层、fc和LM head仍需另计。
+GDN当前状态为12*128*128个BF16值/请求/层，32请求48层合计576MiB；一次
+逻辑读写1.125GiB。这不是全部APC/MTP分配，也不是q4时实际状态流量。
+GDN不是读取32K长度的FULL KV历史；不能用64层FULL attention公式估整模型。
+
+临界条件比单个“bound”标签更有用
+单个q4历史算子相对压缩payload的强度180.706 FLOP/B，相对临时K/V仅6 FLOP/B；
+q1分别45.176和1.5 FLOP/B。加入其他字节和padding后实际强度另算。
+若只算压缩payload，会遗漏主数据通路。以官方A2目录819.2GB/s、FP32 70TFLOP/s
+作乐观参考，q4纯数学下限0.365ms、packed读取0.172ms；但只要上述临时访问
+约3.7%额外落到HBM，内存服务时间就超过该理想计算下限。参考峰值不是本机实测，
+小矩阵、实际核数与有效FP32算力下降会改变临界值，不据此宣告真实HBM饱和。
+对L2通路，q4在70TFLOP/s时需约11.67TB/s才能让仅K/V临时通路不慢于计算；
+q1需46.67TB/s。其意义是边界条件，不是已测L2带宽。
+
+19次attention扫描，临时字节落HBM比例f的敏感性（819.2GB/s）：
+f=0%：选定数据项HBM服务下限3.52ms；5%：8.45ms；10%：13.38ms；
+25%：28.18ms；100%：102.16ms。
+只计packed+window+f*临时K/V；不是完整step时延，不可忽略权重/GDN/通信/
+流水关键路径。f=0也不能删除片上GM/L2搬运与格式转换。
+
+权重与prefill
+用27B全部按W8且均分TP4的粗代理，目标权重6.75GB/卡，128-token验证约
+1.728TOP；仅权重算术强度256 OP/B，无MTP的32-token decode仅64 OP/B。
+在819.2GB/s参考下，此代理一次读权重8.24ms；INT8有效算力超过209.7TOP/s
+时这部分更偏带宽受限，低于该值可能转为计算/执行效率受限。未声称当前INT8
+有效算力已达到该值。实际有BF16例外、非活跃vision/embedding等，需逐矩阵核算。
+用户10-14日志明确weights分配9.76GiB/卡；这包含驻留对象，不能把它全部当
+每步读流量，也不能用27B/4字节当成已测真实权重流量。
+原生预算2048是近期日志的实际解析值，配置本身省略该参数。prefill每步不是
+32*32768 tokens；若本步1536/2048个新token，线性层仅权重强度3072/4096 OP/B，
+明显高于decode128的256。冷prefill大GEMM偏计算；续跑history CV仍有FP32
+搬运/重建/复用效率问题。混批整体必须按各类实际step加权，不能只按总长度定性。
+
+prefix cache与MTP
+APC命中减少新prefill计算，不自动消除后续每个不同query对已有KV的attention。
+共享物理页可能提高packed数据L2命中，但当前按请求的任务仍各自展开和计算；
+本模型的独立历史假设应随共享前缀情况调整。checkpoint写入恢复另计。
+每轮最终有效输出a未知，不能把4个验证位置都计入吞吐：throughput=32*a/Tstep。
+增大batch可摊薄主模型权重读取，但历史扫描、展开和计算仍约随batch线性增长。
+这就是容量收益不一定变成吞吐收益的结构原因，不能据此推导10->30分钟全部归因。
+
+现有证据的适用范围
+reports/target_observation_20260928/analysis.json：旧32-request整步428.10ms，
+target包络293.69ms、draft包络122.77ms。它们不是当前MDL的新测量；target
+与graph_replay嵌套，不可相加；不由旧耗时拟合当前绝对时延。
+reports/decode_critical_chain_20261012.json：R2/C1341的小形CAModel稳态交付链
+约86.5%在QK/PV交付，后续KV已ready。这支持查AIC装载/执行/交接，不证明
+86.5%是Cube纯计算，不外推32K/B32或HBM带宽。
+reports/decode_integrated_batch32_retry_after_oom_20261007/*comparison.json：
+20-30K/B32完整算子在cache-off CAModel通过；不是NPU HBM利用率证据。
+当前版本仍有#159正式推理trap未定位，不把失败运行作为稳定性能验收。
+
+可证伪标准（无需再跑AISBench）
+已有相同时间窗口的一个稳定decode step即可：实际B/q、CV operator、完整step
+设备时间、HBM读写与带宽、L2访问/命中、Cube/Vector有效工作、MTE/pipe等待、
+HCCL、MTP有效输出。高HBM带宽且时长随实际字节变化才支持HBM-bound；
+HBM不高而MTE/格式装载等待高支持片上搬运；Cube/Vector高忙且低等待支持
+对应精度计算bound；大量空隙/屏障支持latency/流水bound。npu-smi AICore
+利用率一个数字不能做上述分解。同步诊断运行不能用作正常性能分母。
+
+复算
+python3 reports/roofline_32k_b32_20261015/model.py
+可选 --batch / --context / --hbm-gbs / --fp32-tflops；只计算JSON，不加载模型。
+result.json保留源码SHA与各项计算。容量分配、GM流量、HBM流量分别记账。
+
+公开参考规格来源（非目标机实测）：
+https://www.hiascend.com/s/ascendstatic/lst/files/pdf/Flying_Product_Catalogue.pdf

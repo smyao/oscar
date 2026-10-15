@@ -1,0 +1,113 @@
+{
+  "status": "source_race_confirmed_by_local_counterexample_current_timeout_causality_unknown",
+  "scope": "read-only current-project source/evidence review plus temporary local OS FD experiment; no VM/NPU access",
+  "vulnerable_sources": [
+    "csrc/experiments/c16_l1_reuse_20261015/cv_replay_small.py:52",
+    "csrc/experiments/c16_member_pipeline/cv_replay_backend_split.py:50",
+    "csrc/experiments/fp32_dataflow_20261013/long_replay.py:329",
+    "csrc/experiments/fp32_dataflow_20261013/replay.py:328"
+  ],
+  "race": "Path lookup does not retain ownership of numeric FD. SDK may close dump and reopen profile/IPC on same number before quiet dup2. A pathname suffix predicate is stale after that interleaving.",
+  "local_reproduction": "reports/camodel_fd_race_audit_20261015/reproduction.json",
+  "safe_existing_options": {
+    "verified_zero_mask": {
+      "report": "reports/simulator_quiet_validation_20261007/q4_r1_n128_c20000_s3-baseline/report.json",
+      "sha256": "e87b876ffaaa1905ac4d357aee292bfec69c20344d5a01d9d53cfbe4e876f882",
+      "status": "passed",
+      "all_sources_and_tasks": true,
+      "dump_files_redirected": 0,
+      "profile_counts": {
+        "task": 1,
+        "aic": 20,
+        "aiv": 40
+      },
+      "all_profile_durations_positive": true,
+      "LOG": {
+        "rotating_file_size": 134217728,
+        "rotating_file_number": 2,
+        "flush_level": 3,
+        "core_enable_mask": [
+          "0x0"
+        ]
+      },
+      "original_pem": {
+        "parsim": 0,
+        "parsim_thd_limit": 0
+      },
+      "control_report": "reports/simulator_quiet_validation_20261007/q4_r1_n128_c20000_s3-baseline-host.json",
+      "process_rc": 0,
+      "timed_out": false,
+      "hard_limit_seconds": 600,
+      "host_monotonic_seconds": 505.7009979169816,
+      "guest_cleanup": null
+    },
+    "atomic_open_wrapper": "not found in searched current-project tools/csrc implementations; not proposed for this fix",
+    "deterministic_precreated_symlink": "no existing qualified SDK implementation found in searched current project",
+    "fifo_collector": {
+      "source": "tools/experiments/stream_camodel_markers.py",
+      "host_gate": "9 real-producer host tests passed; not SDK compatibility",
+      "actual_SDK_report": "reports/request_window_decode_markers_20261009/q4_r32_n128_c1025_s3-candidate/stream_marker_summary.json",
+      "status": "incomplete",
+      "raw_bytes": 0,
+      "actor_count": 60,
+      "risk": "OwnedFifoOS protects known FIFO identities but still delegates unowned FDs to non-atomic check/dup2; not a qualified replacement"
+    }
+  },
+  "old_qualified_q4_receipts": [
+    {
+      "report": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/baseline/report.json",
+      "status": "passed",
+      "dump_files_redirected": 354,
+      "task_ticks": 2658960,
+      "same_readlink_dup2_pattern": true
+    },
+    {
+      "report": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/candidate/report.json",
+      "status": "passed",
+      "dump_files_redirected": 354,
+      "task_ticks": 2214530,
+      "same_readlink_dup2_pattern": true
+    },
+    {
+      "report": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/baseline/report.json",
+      "status": "passed",
+      "dump_files_redirected": 354,
+      "task_ticks": 929310,
+      "same_readlink_dup2_pattern": true
+    },
+    {
+      "report": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/candidate/report.json",
+      "status": "passed",
+      "dump_files_redirected": 354,
+      "task_ticks": 837743,
+      "same_readlink_dup2_pattern": true
+    }
+  ],
+  "implementation_handoff": {
+    "owner": "decode_cost",
+    "only_configuration_change": {
+      "LOG.core_enable_mask": [
+        "0x0"
+      ]
+    },
+    "remove": "Do not create or run the quiet FD scanning thread; no readlink/dup2 poller, no wrapper",
+    "preserve": [
+      "all other LOG keys",
+      "L2CACHE settings",
+      "config_stars bytes and parallelism",
+      "FFTS/model topology",
+      "kernel library/input/task shapes",
+      "deadline and cleanup contract"
+    ],
+    "current_archived_C16_config_stars": "reports/c16_l1_reuse_20261015/completed/camodel-config/config_stars.json",
+    "current_archived_C16_pem": {
+      "parsim": 0,
+      "parsim_thd_limit": 0
+    },
+    "required_evidence": "New completed control and nonempty complete task/AIC/AIV profiles plus original numerical/coverage gates; no inference of speed or root cause from mask change alone"
+  },
+  "correction": "Earlier current-parsim1 wording conflated old hybrid q4 with C16. Archived C16 uses parsim0/thd0; keep actual current runner values unchanged.",
+  "NPU": "not_run",
+  "performance_gain": "not_claimed",
+  "current_C16_timeout_root_cause": "not_proven"
+}

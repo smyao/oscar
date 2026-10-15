@@ -23,16 +23,25 @@ FEATURE_FLAGS = {
     "mixed_decode_split": "experimental_mixed_decode_split",
     "decode_bundle": "experimental_decode_bundle",
     "mdl_decode": "experimental_mdl_decode",
+    "hybrid_l1_decode": "experimental_hybrid_l1_decode",
     # 2026-10-13: current H16 -> complete H32/member pipeline, Q336/C1341,
     # 3540306 -> 2671072 CAModel ticks (1.325425x), all1008 tasks/60 actors
     # and frozen full oracle. Target NPU/graph gates remain required.
     "c4_member_pipeline": "experimental_c4_member_pipeline",
+    # User 2026-10-15 accepts the complete stable -> B1 improvement as the
+    # next main-branch base, including its 4.1% increment beyond pipeline.
+    # C65 single-KV: 3888161 -> 3172246 ticks; not a native/model speed claim.
+    "c16_l1_reuse": "experimental_c16_l1_reuse",
     "whole_prefill": "experimental_whole_prefill",
 }
 
 # Unfinished weighted-owner trials are not in the deploy source list or
 # selector. Future research flags must not leak into native/baseline A/B.
 RESEARCH_FEATURE_FLAGS = {
+    # Retain the intermediate complete reader for independent comparisons.
+    "c16_member_pipeline": "experimental_c16_member_pipeline",
+    # Host equivalence only; no complete-path speed qualification yet.
+    "prepare_reuse": "experimental_prepare_reuse",
     # Explicit research only until local numerical/CANN qualification and
     # the new NPU gate are integrated. Both one-key entrypoints share this.
     "request_windows": "experimental_request_windows",
@@ -125,10 +134,24 @@ def variant_config(config: dict, variant: str | None) -> dict:
         raise ValueError("decode bundle requires the explicit striped cache bundle")
     if selected.get("experimental_mdl_decode", False) and not selected.get("experimental_decode_bundle", False):
         raise ValueError("MDL decode requires the explicit decode bundle")
+    if selected.get("experimental_hybrid_l1_decode", False) and not selected.get("experimental_mdl_decode", False):
+        raise ValueError("hybrid L1 decode requires the explicit MDL decode bundle")
+    if selected.get("experimental_c16_member_pipeline", False) and not (
+            selected.get("experimental_decode_bundle", False) and
+            selected.get("experimental_mixed_cv", False)):
+        raise ValueError("C16 member pipeline requires the mixed striped decode bundle")
+    if selected.get("experimental_c16_l1_reuse", False) and not (
+            selected.get("experimental_decode_bundle", False) and
+            selected.get("experimental_mixed_cv", False)):
+        raise ValueError("C16 L1 reuse requires the mixed striped decode bundle")
     # Only this unfinished research layout lacks a qualified MDL reader;
     # default prefix caching uses the established physical-page snapshots.
     if selected.get("experimental_mdl_decode", False) and selected.get("experimental_request_windows", False):
         raise ValueError("MDL decode requires physical-page snapshots; request-window MDL reader is not qualified")
+    if selected.get("experimental_c16_member_pipeline", False) and selected.get("experimental_request_windows", False):
+        raise ValueError("C16 member pipeline requires physical-page snapshots")
+    if selected.get("experimental_c16_l1_reuse", False) and selected.get("experimental_request_windows", False):
+        raise ValueError("C16 L1 reuse requires physical-page snapshots")
     if selected.get("experimental_c4_member_pipeline", False) and not selected.get("experimental_decode_bundle", False):
         raise ValueError("C4 member pipeline requires the explicit decode bundle")
     if selected.get("experimental_mixed_decode_split", False) and not selected.get("experimental_decode_bundle", False):

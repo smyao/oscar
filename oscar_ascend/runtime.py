@@ -65,6 +65,8 @@ class WorkspaceGeometry:
     history_token_capacity: int | None = None
     # #148/#154: independent bounded pipeline arena, never the old C4 size.
     c4_member_pipeline: bool = False
+    c16_member_pipeline: bool = False
+    c16_l1_reuse: bool = False
 
     def __post_init__(self):
         dimensions = (self.tokens, self.query_heads, self.kv_heads, self.head_dim,
@@ -85,6 +87,14 @@ class WorkspaceGeometry:
             raise ValueError("C4 member pipeline must be an explicit boolean")
         if self.c4_member_pipeline and self.history_cluster_size not in (4, 16):
             raise ValueError("C4 member pipeline requires a cluster workspace")
+        if type(self.c16_member_pipeline) is not bool:
+            raise ValueError("C16 member pipeline must be an explicit boolean")
+        if self.c16_member_pipeline and self.history_cluster_size != 16:
+            raise ValueError("C16 member pipeline requires a C16 workspace")
+        if type(self.c16_l1_reuse) is not bool:
+            raise ValueError("C16 L1 reuse must be an explicit boolean")
+        if self.c16_l1_reuse and self.history_cluster_size != 16:
+            raise ValueError("C16 L1 reuse requires a C16 workspace")
 
     @property
     def history_tokens(self):
@@ -120,8 +130,15 @@ class WorkspaceGeometry:
             # Q/FP32 state groups share one KV tile. This arena is allocated
             # once per device, then sequentially reused by all FULL layers.
             m, b, d = ATTENTION_QUERY_ROWS, ATTENTION_KV_ROWS, self.head_dim
-            return self.cube_cores * (((16 * m + 2 * b + m + 16 * m) * d
-                                       + m * b + 16 * 2 * m) * 4)
+            base = ((16 * m + 2 * b + m + 16 * m) * d
+                    + m * b + 16 * 2 * m) * 4
+            if self.c16_l1_reuse:
+                # Single B1 and sixteen score/P tiles; count the additional
+                # fixed arena during native KV profiling, never after it.
+                base += (2 * b * d + 15 * m * b) * 4
+            elif self.c16_member_pipeline:
+                base += (2 * b * d + m * b) * 4
+            return self.cube_cores * base
         if self.history_cluster_size == 4:
             # Original Q buffer holds group0; extra3 Q +4 FP32 accumulators
             # and4 independent max/sum arrays. Independent of history length.
@@ -259,6 +276,7 @@ class LayerState:
     cache_format: str = "canonical_v1"
     window_map: Any = None
     window_status: Any = None
+    rotation_v_nz: Any = None
 
 
 @dataclass(frozen=True)
@@ -296,7 +314,9 @@ class AscendRuntimeProvider:
         for flag in ("experimental_first_mtp_current_fia", "experimental_compact_later_mtp",
                      "experimental_mixed_decode_split", "experimental_decode_bundle",
                      "experimental_quantization_bundle", "experimental_c4_member_pipeline",
-                     "experimental_mdl_decode"):
+                     "experimental_mdl_decode", "experimental_hybrid_l1_decode",
+                     "experimental_c16_member_pipeline", "experimental_c16_l1_reuse",
+                     "experimental_prepare_reuse"):
             if type(self.config.get(flag, False)) is not bool:
                 raise OscarReadinessError(f"{flag} must be an explicit boolean")
         if self.config.get("experimental_fast_unpack", False) and not self.config.get("experimental_history_reuse", False):
@@ -316,8 +336,22 @@ class AscendRuntimeProvider:
             raise OscarReadinessError("decode bundle requires the explicit striped cache bundle")
         if self.config.get("experimental_mdl_decode", False) and not self.config.get("experimental_decode_bundle", False):
             raise OscarReadinessError("MDL decode requires the explicit decode bundle")
+        if self.config.get("experimental_hybrid_l1_decode", False) and not self.config.get("experimental_mdl_decode", False):
+            raise OscarReadinessError("hybrid L1 decode requires the explicit MDL decode bundle")
+        if self.config.get("experimental_c16_member_pipeline", False) and not (
+                self.config.get("experimental_decode_bundle", False) and
+                self.config.get("experimental_mixed_cv", False)):
+            raise OscarReadinessError("C16 member pipeline requires the mixed striped decode bundle")
+        if self.config.get("experimental_c16_l1_reuse", False) and not (
+                self.config.get("experimental_decode_bundle", False) and
+                self.config.get("experimental_mixed_cv", False)):
+            raise OscarReadinessError("C16 L1 reuse requires the mixed striped decode bundle")
         if self.config.get("experimental_mdl_decode", False) and self._request_windows:
             raise OscarReadinessError("MDL decode requires physical-page snapshots; request-window MDL reader is not qualified")
+        if self.config.get("experimental_c16_member_pipeline", False) and self._request_windows:
+            raise OscarReadinessError("C16 member pipeline requires physical-page snapshots")
+        if self.config.get("experimental_c16_l1_reuse", False) and self._request_windows:
+            raise OscarReadinessError("C16 L1 reuse requires physical-page snapshots")
         if self.config.get("experimental_c4_member_pipeline", False) and not self.config.get("experimental_decode_bundle", False):
             raise OscarReadinessError("C4 member pipeline requires the explicit decode bundle")
         if self.config.get("experimental_mixed_decode_split", False) and not self.config.get("experimental_decode_bundle", False):
@@ -355,6 +389,7 @@ class AscendRuntimeProvider:
         self.layers: dict[str, LayerState] = {}
         self.workspaces: dict[tuple, GraphWorkspace] = {}
         self.rotations: dict[tuple, dict] = {}
+        self.hybrid_rotations: dict[tuple, dict] = {}
         self.device_cores: dict[str, int] = {}
         self.ops = None
 
@@ -400,6 +435,15 @@ class AscendRuntimeProvider:
         if self.config.get("experimental_mdl_decode", False):
             from .ops.cv_dispatch import MDL_DECODE_CV_OPS
             require_capabilities(MDL_DECODE_CV_OPS)
+        if self.config.get("experimental_hybrid_l1_decode", False):
+            from .ops.cv_dispatch import HYBRID_L1_DECODE_CV_OP
+            require_capabilities({HYBRID_L1_DECODE_CV_OP})
+        if self.config.get("experimental_c16_member_pipeline", False):
+            from .ops.cv_dispatch import C16_MEMBER_PIPELINE_CV_OP
+            require_capabilities({C16_MEMBER_PIPELINE_CV_OP})
+        if self.config.get("experimental_c16_l1_reuse", False):
+            from .ops.cv_dispatch import C16_L1_REUSE_CV_OP
+            require_capabilities({C16_L1_REUSE_CV_OP})
         if self.config.get("experimental_c4_member_pipeline", False):
             from .ops.cv_dispatch import MEMBER_PIPELINE_CV_OP
             require_capabilities({MEMBER_PIPELINE_CV_OP})
@@ -571,7 +615,9 @@ class AscendRuntimeProvider:
                                      16 if self.config.get("experimental_mixed_cv", False) else
                                      4 if self.config.get("experimental_history_reuse", False) else 1,
                                      history_token_capacity=self._history_token_capacity,
-                                     c4_member_pipeline=self.config.get("experimental_c4_member_pipeline", False))
+                                     c4_member_pipeline=self.config.get("experimental_c4_member_pipeline", False),
+                                     c16_member_pipeline=self.config.get("experimental_c16_member_pipeline", False),
+                                     c16_l1_reuse=self.config.get("experimental_c16_l1_reuse", False))
         key = (str(device), geometry)
         if key not in self.workspaces:
             self.workspaces[key] = GraphWorkspace(geometry, device)
@@ -699,6 +745,13 @@ class AscendRuntimeProvider:
         prepared = prepare_device_rotations(artifact, device=device)
         identity = torch.eye(dim, device=device, dtype=torch.float32)
         prepared[None] = DeviceRotation(identity, identity, identity, False)
+        if self.config.get("experimental_hybrid_l1_decode", False):
+            # #34/#36/#148: reserve immutable constants before native KV
+            # profiling. NZ changes addresses only, not the FP32 Rv values.
+            from .ops.hybrid_layout import pack_rotation_nz
+            self.hybrid_rotations[cache_key] = {
+                name: pack_rotation_nz(rotation.inverse_value_transposed)
+                for name, rotation in prepared.items()}
         self.rotations[cache_key] = prepared
         return prepared
 
@@ -771,7 +824,9 @@ class AscendRuntimeProvider:
             self.layers[name] = LayerState(byte_raw, packed, spec, snapshots, wk, wv, tags,
                                           rk, rv, rotation.key_transposed, rotation.value_transposed,
                                           rotation.hadamard, blocks, workspace, self._cache_format,
-                                          window_map, window_status)
+                                          window_map, window_status,
+                                          self.hybrid_rotations[(str(runner.device), spec.head_size)][canonical_rotation_name(name)]
+                                          if self.config.get("experimental_hybrid_l1_decode", False) else None)
             views[name] = packed
             from .telemetry import emit_once
             emit_once("cache_layout", key=name, layer=name, physical_blocks=blocks,

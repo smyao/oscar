@@ -1,0 +1,50 @@
+{
+  "status": "host_fixture_and_validator_passed",
+  "command": ".venv/bin/python -m pytest -q tests/test_probe_c16_l1_reuse.py",
+  "passed": 24,
+  "elapsed_seconds": 5.23,
+  "new_npu_cases": [
+    "last_member_qr"
+  ],
+  "target": {
+    "query_tokens": 672,
+    "context": 337,
+    "recent_tokens": 256,
+    "sink_tokens": 64,
+    "poison_qr_query": 651,
+    "poison_head": 0,
+    "poison_dim": 0,
+    "poison_bits": "0x7fc10001"
+  },
+  "independent_domain": {
+    "cluster_anchor": 336,
+    "member": 15,
+    "leader": 651,
+    "lane": 0,
+    "status_code": 2,
+    "affected_history_rows": 64,
+    "flatten_rows": [
+      3906,
+      3969
+    ],
+    "unaffected_merged_oracle_rows": 3968
+  },
+  "checks": [
+    "exact one source0 task/lane error2",
+    "affected history partial/LSE NaN",
+    "all other partials including fault-row window/current equal clean stable baseline bits",
+    "frozen merged bad rows output0 LSE-inf status2 and BF16copy0",
+    "3968 unaffected merged rows against independent dense oracle",
+    "stable/B1 full outputs/status/counters pair still required"
+  ],
+  "existing_valid_performance_gate_changed": false,
+  "existing_valid_graph_gate_changed": false,
+  "source_sha256": {
+    "tools/probe_c16_l1_reuse.py": "8f57eded5c0a9c0cc3750aaaa471f721422493ac2d69272c644347640c0a7bee",
+    "tests/test_probe_c16_l1_reuse.py": "d7876e619139c8aac875c3bdea75b203268b0b7cd95de2629cc222b679f0a41d"
+  },
+  "NPU": "not_run",
+  "graph": "not_run",
+  "performance": "not_measured",
+  "mechanism_Q315_reused_as_target": false
+}

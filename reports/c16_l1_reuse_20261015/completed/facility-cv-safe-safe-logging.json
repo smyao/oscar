@@ -1,0 +1,41 @@
+{
+  "status": "logging_only_adapter",
+  "runner": "/dev/shm/oscar-decode-overlap-20261011/csrc/experiments/window_batch_decode/replay_camodel.py",
+  "original_sha256": "2b435e186ad6aa8112d620fa83299cacc7c9b7a60d02f77b59a1b43e9447883c",
+  "adapted_sha256": "845e6dba428f293c378ee8da8371fb8957672bb531e6679b738ad1c84af36e3d",
+  "inverse_runner_bytes": true,
+  "polling_thread_created": false,
+  "descriptor_mutation": false,
+  "LOG": {
+    "rotating_file_size": 134217728,
+    "rotating_file_number": 2,
+    "flush_level": 3,
+    "core_enable_mask": [
+      "0x0"
+    ]
+  },
+  "L2CACHE": {
+    "cache_enable": 0,
+    "cache_set_size": 24,
+    "cache_way_size": 16384,
+    "cache_line_size": 512,
+    "cache_read_latency": 241,
+    "cache_write_latency": 96
+  },
+  "config_stars": {
+    "stars": {
+      "ffts_mode": 1
+    },
+    "model_top": {
+      "sim_type": 0,
+      "num_aic": 24,
+      "num_aiv": 48
+    },
+    "pem": {
+      "parsim": 0,
+      "parsim_thd_limit": 0
+    }
+  },
+  "numeric_and_profile_gates": "original runner unchanged",
+  "performance_claim": false
+}

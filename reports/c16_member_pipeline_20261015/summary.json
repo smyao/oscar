@@ -1,0 +1,204 @@
+{
+  "status": "CANN_CPU_and_single_KV_CAModel_passed_full_target_shape_incomplete",
+  "source_manifest": {
+    "baseline": {
+      "arm": "baseline",
+      "symbol": "oscar_c16_member_pipeline_baseline_kernel",
+      "source_sha256": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+      "H32_source_sha256": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+      "generated_sha256": "595cf959a3db8a8a9c44643771ba44e7092fb5a4d32c933d2fcff86b0739aa51",
+      "mother_bytes_restored": true,
+      "unchanged_qualified_methods": {},
+      "workspace_per_core": 4997120,
+      "explicit_UB_per_AIV": 157632,
+      "production": false,
+      "validation": "not_executed"
+    },
+    "candidate": {
+      "arm": "candidate",
+      "symbol": "oscar_c16_member_pipeline_candidate_kernel",
+      "source_sha256": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+      "H32_source_sha256": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+      "generated_sha256": "f70e90fe6c9a6b63a9a676e9d0761f85b62d68ba0eb02b625d8ea3a7b3eb456e",
+      "mother_bytes_restored": true,
+      "unchanged_qualified_methods": {
+        "Matmul": "4eb0f86e3859c6723b3a89e093dd4111ec9a33c8b5f95c76173b293d6d6fb966",
+        "MatmulAtomic": "fe0222c25749cb923f24a3760203b0558e40f416e7e49ac069713d0c60897dbb",
+        "LoadQueries": "83e895d1a36e1664454a0dfbd57a332b28684aef5759f45c71858ad257a633bb",
+        "LoadPacked": "507378eac8a630f5f1bb77941713f7cdc6e2ea7f5fa9aed20fcf77d80dcbfed7",
+        "Unpack": "3b1fc4a5438b64d822d03d35680b00bab2ff3103189fc512cafcb0d67abee543",
+        "PublishHistoryKv": "6897620c020991d44e95387d8731e8171d240e63fcb3807a44c3b10b123743f7",
+        "LoadWindowRuns": "f989d4375cbb2c527196a0bdb69b7d9896bc39c15e6f620e301a1d80d0e60c4a",
+        "LoadPrecise": "c9f1b950bac149f0bd51b1640935dd366eba20f716bfe23cf6540db547706195",
+        "PublishKv": "36d6d5a1afa891c9bb50278d4b61b6c90c34eda48aa454077b6c639d5a3f445a",
+        "Softmax": "744a23b22c002fcecd52a721e3f296ef86400589f4718b3e3491620acb205c18",
+        "VectorTask": "b96d98befe7c5edea7b994a757f1450052f7da474a5d962da055b3030cbc7cce",
+        "SpillState": "6a2498d564214106d8d9b29e5c813b9648d9266e9b5c17db015618e21cf159de",
+        "RestoreState": "b107c458c9ad128345b906fefb56ce5d0876dc0d7ea2e16e09f96c27f197c54a",
+        "LoadClusterKv": "c7468f940d0f7df183e4c16c13e32608541c5c19e6afba654ea5e8777d51909f",
+        "PublishRows": "594d0ec4a107f8e5518898edf44716bbb71c69d2838fcd048cedc5c3379b5ba3",
+        "PublishEmpty": "e390823bf3ef3b344d209377bb35d85fd2b05528d4791bd616296b7947317d39",
+        "PublishStatus": "8cf3e72f4e3310b936ca1b598640e88975c9de5b1c7f338f537c93a8b041df0e",
+        "TaskValid": "7481c444f2920371efab70d03ca0468706f19f5f3187eb62ce5580f838eaa320"
+      },
+      "workspace_per_core": 5652480,
+      "explicit_UB_per_AIV": 157760,
+      "production": false,
+      "validation": "not_executed"
+    }
+  },
+  "CANN": "compiled_ascend910b4_rc0",
+  "small_CPU": {
+    "scope": "Q336/recent1/C65_and_C337_all1008tasks_16_mature_members",
+    "full_bitwise_and_original_space_oracle": true,
+    "cases": {
+      "small65": {
+        "baseline": {
+          "status": "passed",
+          "clusters": 1,
+          "context": 65,
+          "oracle": "numeric"
+        },
+        "candidate": {
+          "status": "passed",
+          "clusters": 1,
+          "context": 65,
+          "oracle": "numeric"
+        }
+      },
+      "small337": {
+        "baseline": {
+          "status": "passed",
+          "clusters": 1,
+          "context": 337,
+          "oracle": "numeric"
+        },
+        "candidate": {
+          "status": "passed",
+          "clusters": 1,
+          "context": 337,
+          "oracle": "numeric"
+        }
+      }
+    }
+  },
+  "full_shape": {
+    "scope": "Q672/recent256/C337_all2016tasks",
+    "CPU_baseline": {
+      "schema_version": 1,
+      "status": "failed",
+      "supervisor_pid": 656978,
+      "child_pid": 657017,
+      "child_pgid": 657017,
+      "command": [
+        "/tmp/oscar-c16-20261015/build-cpu/oscar_c16_member_pipeline_cpu",
+        "/tmp/oscar-c16-20261015/fixtures/valid337",
+        "/tmp/oscar-c16-20261015/cpu-valid337-baseline",
+        "baseline"
+      ],
+      "cwd": "/tmp/oscar-c16-20261015",
+      "timeout_seconds": 120.0,
+      "started_utc": "2026-10-15T08:58:07.895928+00:00",
+      "stdout_path": "/tmp/oscar-c16-20261015/cpu-valid337-baseline-logs/stdout.log",
+      "stderr_path": "/tmp/oscar-c16-20261015/cpu-valid337-baseline-logs/stderr.log",
+      "lock_path": "/tmp/oscar-cann-validation.lock",
+      "lock_acquired": true,
+      "timed_out": true,
+      "interrupt_signal": null,
+      "child_returncode": -15,
+      "cleanup_complete": true,
+      "cleanup_grace_seconds": 12.0,
+      "cleanup_signals": [
+        "SIGTERM"
+      ],
+      "supervisor_returncode": 124,
+      "child_env_override_keys": [],
+      "child_started_utc": "2026-10-15T08:58:07.898421+00:00",
+      "child_elapsed_seconds": 120.00181843002792,
+      "elapsed_seconds": 120.05123293201905,
+      "finished_utc": "2026-10-15T09:00:07.947583+00:00"
+    },
+    "CAModel_baseline": {
+      "schema_version": 1,
+      "status": "failed",
+      "supervisor_pid": 658993,
+      "child_pid": 658994,
+      "child_pgid": 658994,
+      "command": [
+        "/usr/bin/python3",
+        "/tmp/oscar-c16-20261015/csrc/experiments/c16_member_pipeline/cv_replay_backend_split.py",
+        "--variant",
+        "baseline",
+        "--fixture",
+        "/tmp/oscar-c16-20261015/fixtures/valid337",
+        "--prepared",
+        "/tmp/oscar-c16-20261015/cpu-valid337-baseline/prepared",
+        "--small-cpu",
+        "/tmp/oscar-c16-20261015/small-cpu/comparison.json",
+        "--full-cpu-control",
+        "/tmp/oscar-c16-20261015/cpu-valid337-baseline-control.json",
+        "--library",
+        "/tmp/oscar-c16-20261015/build-device/lib/liboscar_c16_member_pipeline.so",
+        "--output",
+        "/tmp/oscar-c16-20261015/camodel337/baseline"
+      ],
+      "cwd": "/tmp/oscar-c16-20261015/camodel337/baseline-work",
+      "timeout_seconds": 900.0,
+      "started_utc": "2026-10-15T09:16:36.643332+00:00",
+      "stdout_path": "/tmp/oscar-c16-20261015/camodel337/baseline-logs/stdout.log",
+      "stderr_path": "/tmp/oscar-c16-20261015/camodel337/baseline-logs/stderr.log",
+      "lock_path": "/tmp/oscar-cann-validation.lock",
+      "lock_acquired": true,
+      "timed_out": true,
+      "interrupt_signal": null,
+      "child_returncode": -11,
+      "cleanup_complete": true,
+      "cleanup_grace_seconds": 12.0,
+      "cleanup_signals": [
+        "SIGTERM"
+      ],
+      "supervisor_returncode": 124,
+      "child_env_override_keys": [
+        "CAMODEL_CONFIG_PATH",
+        "LD_LIBRARY_PATH",
+        "LD_PRELOAD"
+      ],
+      "child_started_utc": "2026-10-15T09:16:36.645034+00:00",
+      "child_elapsed_seconds": 900.0015664690873,
+      "elapsed_seconds": 901.2291628749808,
+      "finished_utc": "2026-10-15T09:31:37.872517+00:00"
+    },
+    "CPU_candidate": "not_run_after_baseline_timeout",
+    "CAModel_candidate": "not_run_after_baseline_timeout",
+    "speedup": null,
+    "full_numerical_completion": false
+  },
+  "workspace_per_core": {
+    "stable": 4997120,
+    "pipeline": 5652480,
+    "increment": 655360
+  },
+  "decision": "single_KV_CV_local_speed_gate_passed; recommend candidate pipeline over B1 due lower workspace and only4.1pct additional B1 benefit; target NPU graph/full-chain/long gates remain separate",
+  "NPU": "not_run_user_prohibits",
+  "graph": "not_run",
+  "model_quality": "not_established",
+  "32K_64K_native_gt30pct": "not_established",
+  "new_device_archive_entry": false,
+  "raw_evidence_directory": "reports/c16_member_pipeline_20261015/completed",
+  "raw_evidence_bytes_are_not_required_for_runtime": true,
+  "single_KV_CAModel": {
+    "evidence": "reports/c16_l1_reuse_20261015/completed/b1-camodel-single-kv-safe/comparison.json",
+    "scope": "Q336/recent1/C65 all1008CV tasks,20AIC40AIV,one16-member cluster,onehistoryKV; source2 legally empty",
+    "stable_task_ticks": 3888161,
+    "pipeline_task_ticks": 3302518,
+    "stable_over_pipeline": 1.1773322658650158,
+    "all_partials_lse_status_counters_bitwise": true,
+    "independent_oracle": "passed",
+    "full_CV_merge_copy_cost": "not_measured",
+    "logging": "officialLOGzero-mask,noFDpolling,sameparsim0",
+    "wall_seconds": {
+      "stable": 587.7634041670244,
+      "pipeline": 512.877726172097
+    }
+  }
+}

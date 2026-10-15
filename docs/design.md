@@ -226,3 +226,10 @@ CANN ascend910b4编译通过，生产AscendC/ABI源码指纹与已编译版本�
 4. **成本界与验收**：workspace仍1146880B/core、UB158656B/AIV；完整q1算子局部18.833%提速，中间history周期39508.5→28352.5ticks不外推成整轮倍率。later-q1仅是MTP工作的一部分，不能与q4倍率相乘。两固定candidate入口均选择新注册算子；observe要求q4/q1各自数值、固定地址换输入graph及完整CV+merge+BF16copy的1.15门；NPU、graph、模型质量和整轮2–4倍均未由本机模拟证明。
 
 证据：[q1资格](../reports/q1_mdl_qualification_20261013/summary.json)、[装载完成链](../reports/q1_mdl_qualification_20261013/load-analysis.json)、[设备门](mdl_decode_gate.md)。首次环境exit127和基线后处理padding误判exit1均保留，完整数值后的后处理修正另附SHA绑定链，不修改原返回码。
+
+
+## 2026-10-15 stable 固定启动下的 L1 数据复用
+
+依据档案 #34/#36/#126/#129/#145/#148/#151/#154–160 与 D.4，设计及资源明细见 [本轮设计](stable_optimization_20261015.md)。新增q4 hybrid仅按地址重排不可变Rv；C16 B1只在原16成员同请求/同历史域内复用一个固定256KiB B1，保持FP32/K128次序、错误域和INT2/精确窗口边界。元数据、GDN及原生源码不改。C16增加47.5MiB/rank（20核），Rv约4.25MiB/rank，均在原生KV profiling前分配。
+
+D.4四问：①对应融合history dequant/FIA内部的浮点数据装载和同步；②规避旧全历史恢复约6.5秒、非融合store约215ms及异常host prepare约725ms，旧数值不作本轮分母；③固定KV256、单B1及16个固定score槽，没有历史长度大小的恢复张量，没有BF16精度替代或静默原生回退；④新增GM/L1、固定任务扫描、所有源及merge/copy均计入相应完整门，源码省字节不能宣称省时。CPU-debug、CANN编译、CAModel、真实NPU、图、模型质量和两场景整轮性能各自记录，不相互替代。

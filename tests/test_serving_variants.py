@@ -19,7 +19,8 @@ def test_install_and_probe_plans_select_the_same_bundle(variant, enabled, capsys
         "striped_cache": enabled, "quantization_bundle": enabled, "current_only": enabled,
         "first_mtp_current_fia": enabled, "compact_later_mtp": enabled,
         "mixed_decode_split": enabled, "decode_bundle": enabled, "mdl_decode": enabled,
-        "c4_member_pipeline": enabled, "whole_prefill": False}
+        "c4_member_pipeline": enabled, "c16_l1_reuse": enabled,
+        "hybrid_l1_decode": enabled, "whole_prefill": False}
     assert install["probes"] == "none"
 
 
@@ -80,9 +81,9 @@ def test_both_one_key_entries_enable_the_complete_candidate_without_manual_flags
     assert selected['optimizations']['c4_member_pipeline'] is True
     assert all(value for key,value in selected['optimizations'].items() if key!='whole_prefill')
     assert 'c4_member_pipeline_gate' in observed['phases']
-    assert selected['max_num_batched_tokens'] is None
-    assert selected['token_budget_source']=='native'
-    assert '--max-num-batched-tokens' not in direct['vllm_argv']
+    assert selected['max_num_batched_tokens'] == 16384
+    assert selected['token_budget_source']=='explicit'
+    assert direct['vllm_argv'][direct['vllm_argv'].index('--max-num-batched-tokens')+1]=='16384'
     assert selected['scheduler_cls'] is None
     assert selected['devices']==[0,1,2,3] and selected['port']==8989
     assert direct['probes']=='none'

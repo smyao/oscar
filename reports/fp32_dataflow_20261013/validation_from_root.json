@@ -1,0 +1,39 @@
+{
+  "status": "CPU_and_CANN_passed_complete_per_root_VM_receipt",
+  "evidence_origin": "root executed bounded VM commands and supplied completion results; full receipts retained in VM directory",
+  "VM_directory": "/tmp/oscar-hybrid-l1-validation-20261013",
+  "candidate_source_sha256": "78a21cd466b1eff15991c1b6a1095402dfab2ed4c919b6a58536cad6ed2c56b1",
+  "candidate_symbols": [
+    "oscar_hybrid_l1_candidate_q4_kernel",
+    "oscar_hybrid_l1_candidate_q1_kernel"
+  ],
+  "qualification_scope": "q4 only; q1 symbol retained, unqualified",
+  "CPU": [
+    {
+      "case": "q4_r2_n8_c1341_s1",
+      "wall_s": 22.5544,
+      "rc": 0,
+      "cleanup_complete": true
+    },
+    {
+      "case": "q4_r2_n8_c1341_s1_rv_asymmetric",
+      "wall_s": 21.0107,
+      "rc": 0,
+      "cleanup_complete": true
+    }
+  ],
+  "gates": {
+    "partial_lse_status_bitwise": true,
+    "independent_original_space_oracle": true,
+    "rv_inverse": true,
+    "input_immutable": true,
+    "gm_guards": true
+  },
+  "log_prefix": "DIRECT_NZ_CPU inherited from harness; actual source-binding belongs to hybrid_l1",
+  "CANN": "compiled successfully",
+  "CAModel": "queued; not yet accepted",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_run",
+  "whole_service_performance": "not_established"
+}

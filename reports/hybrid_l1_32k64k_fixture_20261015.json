@@ -1,0 +1,19 @@
+{
+  "status": "host_fixture_and_independent_oracle_constructed",
+  "case": "q4_R2_32k64k",
+  "contexts": [
+    32768,
+    65536
+  ],
+  "tokens": 16,
+  "actual_tokens": 8,
+  "query_oracle_count": 8,
+  "input_sha256": "74c1bb5bf5f19c617dc890b076d49182bf675fa0bed2ec3577f0f37c1027d9be",
+  "seconds": 1.7246735419612378,
+  "process_peak_RSS_bytes_macos": 1886126080,
+  "fixture_tensor_bytes": 78868236,
+  "NPU": "not_run",
+  "candidate_numerics": "not_run",
+  "graph": "not_run",
+  "performance": "not_established"
+}

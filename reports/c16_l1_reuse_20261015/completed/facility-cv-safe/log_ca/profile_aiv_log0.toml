@@ -1,0 +1,22 @@
+[network.stream2.task0.subtask0.thread0.block0]
+	stream_id = 2
+	task_id = 0
+	subtask_id = 0
+	thread_id = 0
+	block_id = 0
+	core_id = 0
+	start_cycle = 357
+	early_end_cycle = 0
+	end_cycle = 776741
+	duration = 776384
+[network.stream2.task0.subtask0.thread0.block1]
+	stream_id = 2
+	task_id = 0
+	subtask_id = 0
+	thread_id = 0
+	block_id = 1
+	core_id = 1
+	start_cycle = 358
+	early_end_cycle = 0
+	end_cycle = 772182
+	duration = 771824

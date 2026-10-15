@@ -1,0 +1,45 @@
+{
+  "scope": "local host contracts only; no target NPU or model performance",
+  "stable_base": "f96820f154f62686c319edba5ac31e52a20bad4e",
+  "stable_synced_to": "origin/codex/oscar-ascend",
+  "checks": [
+    {
+      "suite": "launch/dispatch/probe/build-contract orchestration",
+      "result": "148 passed, 4 subtests passed",
+      "log": "reports/stable_32k_64k_20261015/oscar-stable-suite-2.log"
+    },
+    {
+      "suite": "runtime/rotation/prepare lifetime",
+      "result": "125 passed, 8 skipped (duplicate large-route combinations)",
+      "log": "reports/stable_32k_64k_20261015/oscar-stable-runtime-tests.log"
+    }
+  ],
+  "launch_parameters": "4 complete stable argv snapshots unchanged; explicit16384, default APC false, native scheduler",
+  "frozen_FE0": "7 source hashes unchanged",
+  "NPU": "not_run_by_user_instruction",
+  "graph": "not_run",
+  "end_to_end_32k_64k_target": "not_established",
+  "pending_operator_evidence": {
+    "C16_pipeline_Q672_C337_CPU": "timeout120s; not passed",
+    "C16_pipeline_Q672_C337_CAModel_baseline": "timeout900s; no completion, candidate not run, no speed ratio",
+    "C16_pipeline_small_CPU": "four complete valid arms at Q336/recent1/C65 and C337; scope differs from targetrecent256",
+    "C16_B1": "C65 same-library three-arm all tasks/actors/oracle complete; user accepts as main base; NPU/graphs/model E2E untested"
+  },
+  "final_combined_host_suite": {
+    "passed": 367,
+    "skipped": 8,
+    "subtests_passed": 4,
+    "seconds": 10.86,
+    "skip_scope": "duplicate large C16 parameter combinations, not device acceptance",
+    "log": "reports/stable_32k_64k_20261015/final-host-tests.log"
+  },
+  "CANN_fresh_44": "reports/stable_b1_fullbuild_20261015/summary.json",
+  "main_base_host_suite": {
+    "passed": 401,
+    "skipped": 8,
+    "subtests_passed": 4,
+    "seconds": 12.03,
+    "log": "reports/stable_32k_64k_20261015/b1-anchor-host-tests.log"
+  },
+  "per_point_rule_20261015": "user accepts incremental net gains; complete-path device non-regression 1.0, unchanged precision"
+}

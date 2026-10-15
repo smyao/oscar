@@ -563,6 +563,73 @@ def _c4_member_pipeline_gate(config_path: Path, config: dict, env: dict, log_dir
     atomic_json(log_dir/"status.json",status)
 
 
+def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
+                    status: dict, *, family: str) -> None:
+    """#125/#148/#151/#154: complete new kernels, unique reports, real rc.
+
+    The stable native launch is frozen. These are bounded synthetic operator
+    and changed-input graph gates, never a replacement for model acceptance.
+    """
+    import importlib
+    from oscar_ascend.ops.loader import validate_build_artifacts
+    if family not in {"c16_member_pipeline", "hybrid_l1_decode", "c16_l1_reuse"}:
+        raise ValueError("unknown stable CV gate")
+    probe = importlib.import_module(f"tools.probe_{family}")
+    phase_name = family.replace("_", "-")
+    output = log_dir / f"{phase_name}-report.json"
+    output.unlink(missing_ok=True)
+    before = read_npu_resources(config, log_dir=log_dir/f"{phase_name}-resources-before", timeout=30)
+    phase_error = None
+    release = None
+    try:
+        _phase(phase_name, [sys.executable, "-m", f"tools.probe_{family}",
+               "--config", str(config_path), "--acceptance", str(ROOT/"configs/acceptance.json"),
+               "--output", str(output)], config=config, env=env, log_dir=log_dir, status=status)
+    except BaseException as error:
+        phase_error = error
+        raise
+    finally:
+        try:
+            release = wait_for_release(config, before, log_dir=log_dir/f"{phase_name}-resources-after",
+                timeout=float(config.get("resource_release_timeout_seconds", 30)),
+                tolerance_bytes=config.get("resource_release_tolerance_bytes", DEFAULT_RELEASE_TOLERANCE))
+        except BaseException as error:
+            release = {"status": "failed", "reason": f"{type(error).__name__}: {error}"}
+            if phase_error is None:
+                raise
+        finally:
+            if release is not None:
+                status[f"{family}_resource_release"] = release
+                atomic_json(log_dir/"status.json", status)
+    if release.get("status") != "passed":
+        raise RuntimeError(f"{family} NPU resources did not release")
+    report = json.loads(output.read_text())
+    manifest = validate_build_artifacts(ROOT/"build/ascendc/build_manifest.json")
+    mismatches = probe.validate_evidence(report)
+    expected = {"artifact_signature": manifest.get("signature"),
+                "artifact_sha256": manifest.get("sha256"), "source_binding": probe.source_binding()}
+    mismatches += [key for key, value in expected.items() if report.get(key) != value]
+    if mismatches:
+        error = RuntimeError(f"{family} gate lacks matching evidence: {','.join(mismatches)} report={output}")
+        error.phase = f"{phase_name}-evidence"
+        raise error
+    status[f"{family}_gate"] = {"status": "passed", "report": str(output),
+        "artifact_signature": manifest["signature"], "full_service_performance": "not_established"}
+    atomic_json(log_dir/"status.json", status)
+
+
+def _c16_member_pipeline_gate(config_path, config, env, log_dir, status):
+    return _stable_cv_gate(config_path, config, env, log_dir, status, family="c16_member_pipeline")
+
+
+def _hybrid_l1_decode_gate(config_path, config, env, log_dir, status):
+    return _stable_cv_gate(config_path, config, env, log_dir, status, family="hybrid_l1_decode")
+
+
+def _c16_l1_reuse_gate(config_path, config, env, log_dir, status):
+    return _stable_cv_gate(config_path, config, env, log_dir, status, family="c16_l1_reuse")
+
+
 def _mdl_decode_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
                      status: dict) -> None:
     """#126/#145/#150/#154-156: complete q4 MDL device/graph and 1.15x gate."""
@@ -1058,10 +1125,16 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                             _mixed_diagnostic(effective_path, config, env, log_dir, status)
                     if config.get("experimental_c4_member_pipeline", False):
                         _c4_member_pipeline_gate(effective_path, config, env, log_dir, status)
+                    if config.get("experimental_c16_member_pipeline", False):
+                        _c16_member_pipeline_gate(effective_path, config, env, log_dir, status)
+                    if config.get("experimental_c16_l1_reuse", False):
+                        _c16_l1_reuse_gate(effective_path, config, env, log_dir, status)
                     if config.get("experimental_decode_bundle", False):
                         _decode_bundle_gate(effective_path, config, env, log_dir, status)
                     if config.get("experimental_mdl_decode", False):
                         _mdl_decode_gate(effective_path, config, env, log_dir, status)
+                    if config.get("experimental_hybrid_l1_decode", False):
+                        _hybrid_l1_decode_gate(effective_path, config, env, log_dir, status)
                     if (config.get("enable_prefix_caching", True)
                             and config.get("experimental_striped_cache", False)):
                         _prefix_cache_gate(effective_path, config, env, log_dir, status)
@@ -1230,8 +1303,11 @@ def main(argv=None) -> int:
                 phases.append("mixed_cv_current_fia_merge_diagnostic")
         for flag,phase_name in (
             ("experimental_c4_member_pipeline","c4_member_pipeline_gate"),
+            ("experimental_c16_member_pipeline","c16_member_pipeline_gate"),
+            ("experimental_c16_l1_reuse","c16_l1_reuse_gate"),
             ("experimental_decode_bundle","decode_bundle_gate"),
             ("experimental_mdl_decode","mdl_decode_gate"),
+            ("experimental_hybrid_l1_decode","hybrid_l1_decode_gate"),
             ("experimental_current_only","current_only_gate"),
             ("experimental_first_mtp_current_fia","first_mtp_current_gate"),
             ("experimental_mixed_decode_split","mixed_decode_split_gate"),

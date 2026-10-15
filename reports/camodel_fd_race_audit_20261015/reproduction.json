@@ -1,0 +1,26 @@
+{
+  "status": "deterministic_local_FD_reuse_counterexample",
+  "platform": "darwin",
+  "control": {
+    "redirect": false,
+    "same_numeric_fd_reused": true,
+    "observed_suffix": ".dump",
+    "destination_before_dup2": "profile_task_log0.toml",
+    "write_returned_bytes": 22,
+    "actual_profile_bytes": 22,
+    "profile_contents_preserved": true
+  },
+  "raced": {
+    "redirect": true,
+    "same_numeric_fd_reused": true,
+    "observed_suffix": ".dump",
+    "destination_before_dup2": "profile_task_log0.toml",
+    "write_returned_bytes": 22,
+    "actual_profile_bytes": 0,
+    "profile_contents_preserved": false
+  },
+  "C16_timeout_causality": "not_proven",
+  "SDK_execution": false,
+  "VM_accessed": false,
+  "NPU_accessed": false
+}

@@ -1,0 +1,53 @@
+{
+  "status": "source_review_and_host_contracts_passed",
+  "scope": "independent review, not NPU execution",
+  "reviewed_source_sha256": {
+    "tools/probe_hybrid_l1_decode.py": "e3a6f05b62e246ea89f627b3689cd57cedde00402b8ec841bb31028ae14ff453",
+    "tools/probe_mdl_decode.py": "3d29fab2d6268758b5adc673c37649ad530401bf02b4ee2d5c913f4304b48c83",
+    "tools/probe_history_reuse.py": "8b20dc30e86aff6bb067407df3a12ad585037dbcdc0f5efb8d276968bb58ac7b",
+    "tools/probe_striped_cache.py": "47d384e9e46fa6db7cbe18c8e73e9d895eed52e284e963a1e7e2db1ef41f0499",
+    "oscar_ascend/ops/hybrid_layout.py": "800a018907de75c5ae277bd356a36e3cd1cbd4e277c0fb5d07e26b1d154bc54c",
+    "oscar_ascend/runtime.py": "4fbeb7c06a60a1e2dada48ca58e14122048049b7bff891cd768928a44bcd405a",
+    "oscar_ascend/integration/impl.py": "46856a97e26d01f970393287e723bc5e7b7f146db1de537415b25447a29f8c53",
+    "oscar_ascend/ops/cv_dispatch.py": "85fe33edee6878ba2f350bda4c05dab86077a46450b0c34e3c12a93c7948acc1",
+    "csrc/striped_attention_bindings.cpp": "6ff47751078873a80d5dcfef17be3f9812b9863bc0398d24ee389f1a788d0818",
+    "csrc/torch_bindings.cpp": "029614eaf142c310b8146dc39767d3527f809f3a06945e9c28c30c159e5f010d",
+    "csrc/CMakeLists.txt": "5a9e8f5cbd9c617cbe91ad623b646eeaa16ec6f82c196608a0f36e4d7e2a1858",
+    "oscar_ascend/ops/contracts.py": "401e527f16d891959fe979e66cf066698273b9c45226575db4593283743c9761",
+    "oscar_ascend/ops/meta.py": "f915624621b53bc0400423a5e2f76202161efbfe1ac3ac0d08522b0575f45916",
+    "tools/serving_variants.py": "1ecf5da9b563d977774458b7bc519ad67818ea4995911a3ade58c21ddecde025",
+    "configs/target.json": "ac366f316d1b0bb25a287a8ecab768aaacc1586beddf262e2cfcc9e9f63e21a2"
+  },
+  "findings": [],
+  "checks": {
+    "hybrid_probe_helpers": "_prepare/_launch/allocate/check signatures and merged outputs match; extra rv_nz is only substituted for candidate",
+    "rotation_format": "index=(column//8)*2048+row*8+column%8; natural pointer remains for q1/C4/C16",
+    "rotation_lifetime": "AttentionImpl.__init__ -> ensure_workspace -> _prepare_rotations packs persistent NZ before native profile_run; LayerState only references it",
+    "operator_binding": "hybrid uses Small=true and decode workspace1146880; C16 uses cluster16 and workspace5652480",
+    "capability_registration": "43 unique source capabilities agree across CMake/extension/contracts/meta",
+    "stable_launch": "direct/observe full argv matches separately captured stable fixture for APC false and true",
+    "frozen_kernels": "FE0 SHA256 unchanged",
+    "C16_protocol": "source-only review finds correct two-score-slot reuse after PV, next-KV alternate-buffer ownership and RoundDone before RestoreState; no precision certification",
+    "hybrid_context_coverage": "Added one short synthetic R2 q4 paired case at32768/65536,S3,all sources+merge; host validator18passed; NPU not run"
+  },
+  "test_command": ".venv/bin/python -m pytest -q tests/test_op_contracts.py tests/test_meta_dispatch.py tests/test_stable_launch_frozen.py tests/test_stable_optimized_dispatch.py",
+  "tests": {
+    "passed": 26,
+    "subtests_passed": 4,
+    "seconds": 1.43
+  },
+  "build_plan": {
+    "VM": "oscar",
+    "stage": "/tmp/oscar-stable-combined-fullbuild-20261015",
+    "source_bytes_approx": 2067230,
+    "source_files": 119,
+    "status": "completed_43_capability_build_and_VM_released"
+  },
+  "target_accessed": false,
+  "NPU": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_established",
+  "end_to_end_performance": "not_established",
+  "build_evidence": "reports/stable_combined_fullbuild_20261015/summary.json",
+  "ordinary_C16_pipeline_qualification": "Not established: baseline full CAModel timed out, candidate not run; not approved for default enabling"
+}

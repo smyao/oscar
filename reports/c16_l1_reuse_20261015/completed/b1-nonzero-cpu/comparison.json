@@ -1,0 +1,62 @@
+{
+  "status": "complete_three_arm_nonzero_owner_CPU_pair",
+  "hashes": {
+    "partial": "5a0a18726f27967076cf8bd53ffb99144ef065b469c827357bd5a3a2b7146855",
+    "lse": "ed2edf608127826a8da94def3a0e681bb1bd19fac582aaab16f0a68e92f4563e",
+    "status": "dbd7e2a1e3209b7914264834f82f4463e09ad552c19280705c64a1fb97c86292",
+    "cluster_stats": "1cc8e019f37d2e5717c117cc10f5148edd20eeadf2e7c8c014766300a3656930",
+    "tasks": "4c3ccb5f48ff10b73aa2b3c9d6d2bf59dea3d094d1ea64ef9866c9d1ccbfd9cb"
+  },
+  "controls": {
+    "stable": "/tmp/oscar-c16-20261015/b1-nonzero-cpu/stable-control.json",
+    "baseline": "/tmp/oscar-c16-20261015/b1-nonzero-cpu/baseline-control.json",
+    "candidate": "/tmp/oscar-c16-20261015/b1-nonzero-cpu/candidate-control.json"
+  },
+  "reports": {
+    "stable": {
+      "status": "passed",
+      "arm": "stable",
+      "context": 337,
+      "bad_position": -1,
+      "clusters": 1,
+      "fault_statuses": 0,
+      "guards": true,
+      "input_immutable": true,
+      "all_status_lanes": true,
+      "oracle": "numeric",
+      "NPU": "not_run"
+    },
+    "baseline": {
+      "status": "passed",
+      "arm": "baseline",
+      "context": 337,
+      "bad_position": -1,
+      "clusters": 1,
+      "fault_statuses": 0,
+      "guards": true,
+      "input_immutable": true,
+      "all_status_lanes": true,
+      "oracle": "numeric",
+      "NPU": "not_run"
+    },
+    "candidate": {
+      "status": "passed",
+      "arm": "candidate",
+      "context": 337,
+      "bad_position": -1,
+      "clusters": 1,
+      "fault_statuses": 0,
+      "guards": true,
+      "input_immutable": true,
+      "all_status_lanes": true,
+      "oracle": "numeric",
+      "NPU": "not_run"
+    }
+  },
+  "scope": "R2 Q336 each contexts0/337 recent1, all2016 tasks; actual cluster owner1 and qbegin336",
+  "C16_shared_KV_rounds": 2,
+  "frozen_second_request_oracle": "passed_all336queries",
+  "first_request_all_CV_sources_empty": "passed",
+  "NPU": "not_run",
+  "performance": "not_measured"
+}

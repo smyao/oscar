@@ -1,0 +1,72 @@
+[
+  {
+    "case": "full_q672",
+    "status": "failed",
+    "timeout_seconds": 900.0,
+    "child_returncode": -11,
+    "cleanup_complete": true,
+    "completion_exists": false,
+    "actors": {
+      "aic": {
+        "complete_count": 19,
+        "missing_owners": [
+          1
+        ]
+      },
+      "aiv": {
+        "complete_count": 35,
+        "missing_owners": [
+          2,
+          3,
+          37,
+          38,
+          39
+        ]
+      }
+    }
+  },
+  {
+    "case": "two_kv_q336",
+    "status": "failed",
+    "timeout_seconds": 600.0,
+    "child_returncode": -11,
+    "cleanup_complete": true,
+    "completion_exists": false,
+    "actors": {
+      "aic": {
+        "missing_owners": null,
+        "profile_bytes": 0,
+        "observed_complete_records": 0,
+        "interpretation": "actor completion unavailable because profile file is zero-byte"
+      },
+      "aiv": {
+        "missing_owners": null,
+        "profile_bytes": 0,
+        "observed_complete_records": 0,
+        "interpretation": "actor completion unavailable because profile file is zero-byte"
+      }
+    }
+  },
+  {
+    "case": "one_kv_q336",
+    "status": "failed",
+    "timeout_seconds": 600.0,
+    "child_returncode": -11,
+    "cleanup_complete": true,
+    "completion_exists": false,
+    "actors": {
+      "aic": {
+        "missing_owners": null,
+        "profile_bytes": 0,
+        "observed_complete_records": 0,
+        "interpretation": "actor completion unavailable because profile file is zero-byte"
+      },
+      "aiv": {
+        "missing_owners": null,
+        "profile_bytes": 0,
+        "observed_complete_records": 0,
+        "interpretation": "actor completion unavailable because profile file is zero-byte"
+      }
+    }
+  }
+]

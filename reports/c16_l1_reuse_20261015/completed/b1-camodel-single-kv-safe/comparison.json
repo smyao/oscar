@@ -1,0 +1,21 @@
+{
+  "status": "complete_same_library_three_arm_pair",
+  "task_ticks": {
+    "stable": 3888161,
+    "baseline": 3302518,
+    "candidate": 3172246
+  },
+  "stable_over_B1": 1.225680795247279,
+  "pipeline_over_B1": 1.041066172043404,
+  "stable_over_pipeline": 1.1773322658650158,
+  "scope": "Q336/recent1/C65 full1008 tasks and allsources,20Cube; not Q672/recent256",
+  "history_KV_rounds": 1,
+  "all_partial_lse_status_counters_bitwise": true,
+  "independent_oracle": "passed_three_arms",
+  "selection_gate": "passed",
+  "Q672_CPU": "timed_out",
+  "Q672_CAModel": "timed_out",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "whole_service": "not_established"
+}

@@ -1,0 +1,15 @@
+{
+  "status": "host_protocol_enumerated",
+  "source": "csrc/experiments/c16_l1_reuse_20261015/c16_candidate.cpp",
+  "source_sha256": "1deb6ab15a34ed263000c9a99530d0f9ee1a7e682a84ba7657b2c968d2ae6ec0",
+  "protocol": "16 members, 4 score/ack pairs, 1 Cube, 2 independent AIV actors",
+  "states": 1809,
+  "terminal_states": 1,
+  "findings": [],
+  "limitations": [
+    "host token model only",
+    "no DMA or Matmul simulation",
+    "no NPU execution",
+    "no numerical or performance acceptance"
+  ]
+}

@@ -1,0 +1,1307 @@
+{
+  "status": "production_repackage_passed_without_SDK_snapshots",
+  "required_delivery_scope": "Production repackage and auditable original qualification receipts. Full original research regeneration is an optional local workflow with matching official SDK snapshots.",
+  "groups": {
+    "production_and_host_checks": [
+      "csrc/include/oscar_hybrid_l1_decode_launch.h",
+      "csrc/kernels/attention_cv_hybrid_l1_decode.cpp",
+      "csrc/kernels/attention_hybrid_l1_unpack.h",
+      "oscar_ascend/ops/hybrid_layout.py",
+      "tests/test_probe_hybrid_l1_decode.py",
+      "tools/package_hybrid_l1_decode.py",
+      "tools/probe_hybrid_l1_decode.py"
+    ],
+    "packager_exact_inputs_and_imports": [
+      "csrc/experiments/decode_direct_nz/direct_nz_unpack.h",
+      "csrc/experiments/decode_mdl_load/attention_candidate.cpp",
+      "csrc/experiments/fp32_dataflow_20261013/attention_candidate.cpp",
+      "tools/__init__.py",
+      "tools/package_c4_member_pipeline.py"
+    ],
+    "original_qualified_receipts": [
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/baseline-control.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/baseline/completion.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/baseline/full_instructions.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/baseline/report.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/candidate-control.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/candidate/completion.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/candidate/full_instructions.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/candidate/report.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/comparison.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/baseline-control.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/baseline/completion.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/baseline/full_instructions.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/baseline/report.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/candidate-control.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/candidate/completion.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/candidate/full_instructions.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/candidate/report.json",
+      "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/comparison.json",
+      "reports/fp32_dataflow_20261013/validation_from_root.json"
+    ],
+    "current_local_receipts": [
+      "reports/hybrid_l1_32k64k_fixture_20261015.json",
+      "reports/hybrid_l1_decode_local_20261015.json",
+      "reports/hybrid_l1_decode_packaging_20261015.json",
+      "reports/stable_combined_fullbuild_20261015/summary.json"
+    ],
+    "original_research_context": [
+      "csrc/experiments/fp32_dataflow_20261013/manifest.json",
+      "csrc/experiments/fp32_dataflow_20261013/README.md"
+    ]
+  },
+  "paths": [
+    {
+      "path": "csrc/experiments/decode_direct_nz/direct_nz_unpack.h",
+      "sha256": "46a5d8086f767e608cde3517826c0bfadadecceb1f6971cadc2d2dfda45a9508",
+      "bytes": 11364,
+      "already_tracked": false
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/attention_candidate.cpp",
+      "sha256": "f2047dde10aa464202c23c8a8d39a9806c712ac8eb090ff752d7346d1b723151",
+      "bytes": 45038,
+      "already_tracked": true
+    },
+    {
+      "path": "csrc/experiments/fp32_dataflow_20261013/README.md",
+      "sha256": "2e7bb95dc9801a61a934ccc52012fbd1e2b1b826327795c58149158a94452370",
+      "bytes": 7744,
+      "already_tracked": false
+    },
+    {
+      "path": "csrc/experiments/fp32_dataflow_20261013/attention_candidate.cpp",
+      "sha256": "78a21cd466b1eff15991c1b6a1095402dfab2ed4c919b6a58536cad6ed2c56b1",
+      "bytes": 47143,
+      "already_tracked": false
+    },
+    {
+      "path": "csrc/experiments/fp32_dataflow_20261013/manifest.json",
+      "sha256": "2dd169911c1d5ad85f31042c1772b2f0e58de7e89d5df38f288467b0c45af3b6",
+      "bytes": 5370,
+      "already_tracked": false
+    },
+    {
+      "path": "csrc/include/oscar_hybrid_l1_decode_launch.h",
+      "sha256": "17279aacec0938a32a6771e8000df4e2ccb5bd23a861a8b85f435452d0aa6c45",
+      "bytes": 1200,
+      "already_tracked": false
+    },
+    {
+      "path": "csrc/kernels/attention_cv_hybrid_l1_decode.cpp",
+      "sha256": "03df3835144e26ad399e9be8cd41f684b2705ed280c77029bf78c4e74bc9bad0",
+      "bytes": 47072,
+      "already_tracked": false
+    },
+    {
+      "path": "csrc/kernels/attention_hybrid_l1_unpack.h",
+      "sha256": "c6ea519cb28b8ee7fb35c13ac333941b6ba28c7ceabb49bcd8041b22a084cd94",
+      "bytes": 11351,
+      "already_tracked": false
+    },
+    {
+      "path": "oscar_ascend/ops/hybrid_layout.py",
+      "sha256": "800a018907de75c5ae277bd356a36e3cd1cbd4e277c0fb5d07e26b1d154bc54c",
+      "bytes": 585,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/baseline-control.json",
+      "sha256": "d1e37508398d01304e03deb1ab14af8edd2e098ff1b924cca961808a5c3ac426",
+      "bytes": 1800,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/baseline/completion.json",
+      "sha256": "a69486cab6c0ffee4e927323aaaf004dbab9192ef422ac81f07fab384acb9e17",
+      "bytes": 38478,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/baseline/full_instructions.json",
+      "sha256": "07e7732426e77bdafdb56d8ec7564e9a6e6553e47eb7307475cc334b9d5958e5",
+      "bytes": 2942,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/baseline/report.json",
+      "sha256": "84bf9ad847662c898c6fe4176635966910c81f07c9795146a3213372740b95db",
+      "bytes": 41817,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/candidate-control.json",
+      "sha256": "48815b503cfc2445a09c011575e7e644dfca68d067b3e2246c395bcd5fff8402",
+      "bytes": 1804,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/candidate/completion.json",
+      "sha256": "cd5cb086ad3b6c2259ac2a797b69aa8ff94134144b16ff3814c67131e5044df5",
+      "bytes": 38485,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/candidate/full_instructions.json",
+      "sha256": "d21a782c4e6fc7982565d3f97e6b0549a54c289ac9167f9ddaedb61a533755f0",
+      "bytes": 2942,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/candidate/report.json",
+      "sha256": "4e39799919e6afb094baae258d7fa09b23df3100d05c46bf72f9be86d43ee34d",
+      "bytes": 41824,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/comparison.json",
+      "sha256": "4f60bfe8ddff2ec338314a10662a9e48e411177686dd64135d377a01558f23de",
+      "bytes": 1090,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/baseline-control.json",
+      "sha256": "6eacf195ebfb806b4489a6f5aecd71120fb419ece90be8bcf589e964531050a7",
+      "bytes": 1682,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/baseline/completion.json",
+      "sha256": "ddab9812a9c2f781b2af52168cc36bff092e9a904ca1860f1ae4167fa528c817",
+      "bytes": 38466,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/baseline/full_instructions.json",
+      "sha256": "cdfb97c71a586e4b6c71097f4b71200a33bc1ea04332d898c92717ae56398c65",
+      "bytes": 2941,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/baseline/report.json",
+      "sha256": "e4c00a4909f535e2ab058974c51a3ebabed5f1e6ffc97d2963e76dc90523c424",
+      "bytes": 41794,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/candidate-control.json",
+      "sha256": "621328d10041b23f4d5f194e8a8681f3a20e9c695595948462d3b41c638fd58a",
+      "bytes": 1688,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/candidate/completion.json",
+      "sha256": "7ffa37d8f2e6a2b52696ea48bda3fc5f15194370ba58b0b2ee71435385b8bd63",
+      "bytes": 38473,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/candidate/full_instructions.json",
+      "sha256": "84b3868394e3a7a1a5af643b2fdc6e5eeafae7abc66fe5615960c040ed2beb2c",
+      "bytes": 2941,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/candidate/report.json",
+      "sha256": "a48a69e50c273945aa3026f8cd9e19e0fd67eea0914edbfec83eb5cbd4718bf8",
+      "bytes": 41801,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/comparison.json",
+      "sha256": "0bdf66440f5bb4806dd9fc07d282ec27f1090e9a0a1620149b6520284e255c14",
+      "bytes": 998,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/fp32_dataflow_20261013/validation_from_root.json",
+      "sha256": "e860eb4f61526647ea7bf0049cf21e6f5b2c64a9a8e1521d50d8c6c60e87d2af",
+      "bytes": 1285,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/hybrid_l1_32k64k_fixture_20261015.json",
+      "sha256": "2eda3779ffd0bf279c02144316a52cc4d83765099fb40f4d3aa2d5f2a2f1454d",
+      "bytes": 513,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/hybrid_l1_decode_local_20261015.json",
+      "sha256": "cee0767bcf8957dce84d712e2584c7e94be9af50ddbcaa1e612a69a03756c17d",
+      "bytes": 2102,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/hybrid_l1_decode_packaging_20261015.json",
+      "sha256": "bf56406549ac80e8000e49e0173cc3a74063e8c4537d4fcb0d1462ff63503bfb",
+      "bytes": 1718,
+      "already_tracked": false
+    },
+    {
+      "path": "reports/stable_combined_fullbuild_20261015/summary.json",
+      "sha256": "967f6e3741bc566bb08611e71b5d09b685f87abaa3b9e4ab654c8754757a7088",
+      "bytes": 2259,
+      "already_tracked": false
+    },
+    {
+      "path": "tests/test_probe_hybrid_l1_decode.py",
+      "sha256": "fde82cac5306b9d1678c014b62d655829b7c0c41844491d383c71c360f7fa4c9",
+      "bytes": 11127,
+      "already_tracked": false
+    },
+    {
+      "path": "tools/__init__.py",
+      "sha256": "638eebca9af17b3926d058f9115ba13a882951b3787192212a37c4a2afd73c26",
+      "bytes": 148,
+      "already_tracked": true
+    },
+    {
+      "path": "tools/package_c4_member_pipeline.py",
+      "sha256": "4b64f1bde65678ca3a349d6fbf8cbc0818407bb85bdbe60f038b3de0670f49d2",
+      "bytes": 4953,
+      "already_tracked": true
+    },
+    {
+      "path": "tools/package_hybrid_l1_decode.py",
+      "sha256": "8408fb1c26c0f6006768bd167bb35032a44f62daebdbc162d3068c2646a51bba",
+      "bytes": 5162,
+      "already_tracked": false
+    },
+    {
+      "path": "tools/probe_hybrid_l1_decode.py",
+      "sha256": "e3a6f05b62e246ea89f627b3689cd57cedde00402b8ec841bb31028ae14ff453",
+      "bytes": 19739,
+      "already_tracked": false
+    }
+  ],
+  "total_files": 37,
+  "total_bytes": 567839,
+  "new_untracked_files": [
+    "csrc/experiments/decode_direct_nz/direct_nz_unpack.h",
+    "csrc/experiments/fp32_dataflow_20261013/README.md",
+    "csrc/experiments/fp32_dataflow_20261013/attention_candidate.cpp",
+    "csrc/experiments/fp32_dataflow_20261013/manifest.json",
+    "csrc/include/oscar_hybrid_l1_decode_launch.h",
+    "csrc/kernels/attention_cv_hybrid_l1_decode.cpp",
+    "csrc/kernels/attention_hybrid_l1_unpack.h",
+    "oscar_ascend/ops/hybrid_layout.py",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/baseline-control.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/baseline/completion.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/baseline/full_instructions.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/baseline/report.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/candidate-control.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/candidate/completion.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/candidate/full_instructions.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/candidate/report.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/comparison.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/baseline-control.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/baseline/completion.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/baseline/full_instructions.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/baseline/report.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/candidate-control.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/candidate/completion.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/candidate/full_instructions.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/candidate/report.json",
+    "reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-sequence-20261013/short/comparison.json",
+    "reports/fp32_dataflow_20261013/validation_from_root.json",
+    "reports/hybrid_l1_32k64k_fixture_20261015.json",
+    "reports/hybrid_l1_decode_local_20261015.json",
+    "reports/hybrid_l1_decode_packaging_20261015.json",
+    "reports/stable_combined_fullbuild_20261015/summary.json",
+    "tests/test_probe_hybrid_l1_decode.py",
+    "tools/package_hybrid_l1_decode.py",
+    "tools/probe_hybrid_l1_decode.py"
+  ],
+  "clean_temp_reproduction": {
+    "command": [
+      "python",
+      "-m",
+      "tools.package_hybrid_l1_decode",
+      "--check"
+    ],
+    "returncode": 0,
+    "stdout": "{\"status\": \"source_packaged_not_device_acceptance\", \"check\": true, \"target\": \"csrc/kernels/attention_cv_hybrid_l1_decode.cpp\"}",
+    "stderr": "",
+    "SDK_snapshot_files_present": false
+  },
+  "official_SDK_environment_prerequisites": {
+    "required_for_production_packager_check": false,
+    "required_for_original_research_generator_checks": true,
+    "matching_snapshot_provenance_and_hashes": [
+      {
+        "local_provenance_path": "artifacts/cann_sdk_matmul_tiling_20261012/provenance.json",
+        "provenance_sha256": "0e6ecee1e15023c69f21d598a38e59a8ce750dec0461a6fca87790a4f073fa5e",
+        "provenance": {
+          "source": "local authorized Lima oscar official CANN 9.1.0 SDK read-only snapshot",
+          "files": [
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/adv_api/matmul/constant_tiling.h",
+              "relative": "include/adv_api/matmul/constant_tiling.h",
+              "sha256": "6e821f8a8ef532559010b3fa394d851f099b0e2b0d28843bac87cb8d6abe3944",
+              "bytes": 7986
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/adv_api/matmul/matmul_config.h",
+              "relative": "include/adv_api/matmul/matmul_config.h",
+              "sha256": "7e737f754a8f04c5dde926805f90c4c3e510c9c7e0bc392c0ef465110adebb35",
+              "bytes": 14196
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/adv_api/matmul/matmul_tiling_base.h",
+              "relative": "include/adv_api/matmul/matmul_tiling_base.h",
+              "sha256": "44dea3b20ddeea8987471f8f226cfeadbdc65140f746ee1f3bab33b8b8e3350b",
+              "bytes": 27024
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/tiling/matmul/matmul_constant_tiling_impl.h",
+              "relative": "impl/adv_api/tiling/matmul/matmul_constant_tiling_impl.h",
+              "sha256": "5967a27083584cd29ee7387ebeea06fbe5ae0b46d77435633a2d8b2f442f36d1",
+              "bytes": 26428
+            }
+          ]
+        }
+      },
+      {
+        "local_provenance_path": "artifacts/cann_sdk_matmul_tiling_20261012/mdl-provenance.json",
+        "provenance_sha256": "2c3560485f64d509ae1eb0df54b9bcec365e56cacd507f7a4b1995e3fb85101d",
+        "provenance": {
+          "source": "authorized local official CANN9.1.0 read-only snapshot",
+          "files": [
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/tiling/matmul/matmul_constant_tiling_utils.h",
+              "relative": "impl/adv_api/tiling/matmul/matmul_constant_tiling_utils.h",
+              "sha256": "d99fc480822a995fb0f914068e93d1d969d6ad79245e9be60af5dddb6ed0170d",
+              "bytes": 21598
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/adv_api/matmul/tiling.h",
+              "relative": "include/adv_api/matmul/tiling.h",
+              "sha256": "a9a55c80deb72b6b2b8bc1561ca17b13889dd91fa40950a0f70a02b37659da1f",
+              "bytes": 22191
+            }
+          ]
+        }
+      },
+      {
+        "local_provenance_path": "artifacts/cann_sdk_matmul_tiling_20261012/mdl-implementation-provenance.json",
+        "provenance_sha256": "71aa6cb38d39a6c23a59685f470a7ceeecf566d79207949e64257601604ebbb7",
+        "provenance": {
+          "source": "authorized local official CANN9.1.0 read-only snapshot",
+          "files": [
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_cube_in.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_cube_in.h",
+              "sha256": "01ad1efe906b1d252f27486c9ab4e24c433200d74627e4e2ee73cdd290c49fa3",
+              "bytes": 2433
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_using_ub_nd.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_using_ub_nd.h",
+              "sha256": "5db910cb7c4279b9921aabb6f65b36054f91cb4fef81192ca5b3520fac09bbc7",
+              "bytes": 25612
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_intf.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_intf.h",
+              "sha256": "5078b81238ff9d8aad4e83fedcfe8fc7db4e0ca111b9c30449d2f652dc1de0e3",
+              "bytes": 4991
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper.h",
+              "sha256": "beef18263ea2156bbe6c3bdcbb52dac802556cd735dff4fbc2b38c6bf2308558",
+              "bytes": 2078
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/copy_tile_to_cube_common.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/copy_tile_to_cube_common.h",
+              "sha256": "2cf9bb4fc0c5581584900d5dc9f00d8b128a1d6f4df53d3778e5ec1490550307",
+              "bytes": 29219
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_nz.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_nz.h",
+              "sha256": "dcaf0276d57bae56265094217732fdd30f9217a302be83dbccac9c48843e101c",
+              "bytes": 6961
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_vec.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_vec.h",
+              "sha256": "945ebbac32de3716139a4595d4fcebd75e307adcc134ddb8ee25c72d31faa551",
+              "bytes": 4057
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/copy_tile_to_cube_mx.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/copy_tile_to_cube_mx.h",
+              "sha256": "189e458cb0e03fec25948c53b4eb30e0de5d65d6e522b489219c9d8518e6c895",
+              "bytes": 6910
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_mx.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_mx.h",
+              "sha256": "14121ed468f1ab29d0cf6fc3ac994dc27217985ad93c13b6dc0c531ee822e6b3",
+              "bytes": 7793
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/copy_tile_to_cube.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/copy_tile_to_cube.h",
+              "sha256": "5143e4f7d54d8fd8315aafa4e1db3ab71107498b88f844ab699a833117f41b83",
+              "bytes": 2121
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_nd.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_nd.h",
+              "sha256": "a4e2c23d3a3e6e2ed63b8078f092f3947f60c7d7bc043a3c549c4e402a132d62",
+              "bytes": 16752
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/copy_tile_to_cube_intf.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/copy_tile_to_cube_intf.h",
+              "sha256": "00c383177507f1493c84a0e3dea14b3cf51aab58be487d9e6facb5ce42ef6051",
+              "bytes": 2581
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/copy_lut_to_ub.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/copy_lut_to_ub.h",
+              "sha256": "2db89b6933307da4d510c8cd995b41380bd0ec50641aba1ffae35e7152998c5c",
+              "bytes": 3794
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_dn.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_dn.h",
+              "sha256": "ebcbca2acdba36d1c15b4b02f80c85e38a0953429d509a20416dd59d223d75ee",
+              "bytes": 4738
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_utils.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/data_copy_wrapper_utils.h",
+              "sha256": "4b625a8757c4691e1032bfa9c6f0291cc0d6a65a1c502d89f291f9566e29e3e6",
+              "bytes": 25708
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/copy_tile_to_cube_using_ub.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/copy_tile_to_cube/copy_tile_to_cube_using_ub.h",
+              "sha256": "14854f0ce5a5fe390ddb339fdee796f56d5596b6afea923cd147f8a30832a2e8",
+              "bytes": 11686
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/antiquant/antiquant_processor_using_ub.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/antiquant/antiquant_processor_using_ub.h",
+              "sha256": "6ea6404d08dc988f4476a2535e5f80d52680ec3b38d24849a63cb3d35ca1caf0",
+              "bytes": 8842
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/antiquant/antiquant_processor.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/antiquant/antiquant_processor.h",
+              "sha256": "5361b4104174c2c12045dffd6220f9e7e79c341cb65b550042b4e8eeb5427755",
+              "bytes": 1811
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/antiquant/antiquant_processor_intf.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/antiquant/antiquant_processor_intf.h",
+              "sha256": "e8b4ab637e1dd28a081b467da3d4bb1edd2b4ad6a1babfde7a2f62a74f5d8214",
+              "bytes": 3787
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_from_l1.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_from_l1.h",
+              "sha256": "d4fb25e2b7a39a6303c024695db58462154b1c8873ff2130f984b3e3414f86d4",
+              "bytes": 3988
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_intf.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_intf.h",
+              "sha256": "863c72b9e05bd985acedc0140854a15289a54dfa26e57b6af6b62afb42f39cc8",
+              "bytes": 4828
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_using_ub.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_using_ub.h",
+              "sha256": "a0b40bba0f243171261bf7b9b0d5eacf76046f58e9d004d9e7d489b427d8a99d",
+              "bytes": 10176
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_atop.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_atop.h",
+              "sha256": "e460a5223966c7e9cb07b1dbb0f5682695371c0af16af562e6a69977f4f6bd84",
+              "bytes": 6622
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_mdl_base.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_mdl_base.h",
+              "sha256": "dea240e43c8c62b48bb1f777e28103dd2c758dc04629010d30a8a6efb97cdeb2",
+              "bytes": 5491
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_utils.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_utils.h",
+              "sha256": "2111a696f7f244fc4a7daa6facce41615df91bcdd9f3c7b92b41fa68cf20a314",
+              "bytes": 4327
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_mdl_mx.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_mdl_mx.h",
+              "sha256": "3955db678457cb3f72037771b1bb3c9dc25b9d2774f513dd7553d56bd3cc54d8",
+              "bytes": 6262
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_base.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_base.h",
+              "sha256": "40526e2976984b88028ba8f6c1a1f95c455fbd72c5b2c0f94e7198f2781c458d",
+              "bytes": 3735
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_norm.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_norm.h",
+              "sha256": "842be1cc02288ddf346412bc14e0bc37c986e80c9f1ae104a9d4efb1981c62e8",
+              "bytes": 14299
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_params.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_params.h",
+              "sha256": "2d22b9cf9c0f474e754f8e7a10d9da8f1d50977e092034a09e1872f71d52964e",
+              "bytes": 4645
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_params_mx.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_params_mx.h",
+              "sha256": "8958c2806f25de074bb59ded70840b6fd88e6bc26754451468b7e680f07f8c2e",
+              "bytes": 13760
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_mdl_sparse.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_mdl_sparse.h",
+              "sha256": "8cf60009018459730276878bee2eebd82172dac7334222797ec0b7abbd6a667b",
+              "bytes": 5154
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_mdl.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_mdl.h",
+              "sha256": "1bf11f5b7e61cba85cc1d9173eb227da561a61a637ab49e0b9b9a8553fc5034a",
+              "bytes": 2692
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_ubtol1_singleshape.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_ubtol1_singleshape.h",
+              "sha256": "e3ee2bbba1288968b0edbd37bb398540d8a8b31bc81b6b68a2a16d1c964534d6",
+              "bytes": 6624
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_mdl_fullload.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_mdl_fullload.h",
+              "sha256": "a2d0b49bedf154776414bf0289149bbbbe9de53a94cdfbb579a2ee75e8dd002e",
+              "bytes": 4280
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_norm_mx.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_norm_mx.h",
+              "sha256": "a91fb06fa9597d31987b61be0eb738e5c9be652094754287c3a0ee937438a2da",
+              "bytes": 7227
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_params_base.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_params_base.h",
+              "sha256": "5e9de52f2500c904e26863590d9abf077d41d0054cfd198ac208b8c513ccc6fa",
+              "bytes": 21468
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/batch/batch_copy_cube_in_params.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/batch/batch_copy_cube_in_params.h",
+              "sha256": "694978c6029eb26f0eceb08a24ba31cb4907e8d42905788fb5685783a7f5b589",
+              "bytes": 7254
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/batch/batch_copy_cube_in_from_l1.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/batch/batch_copy_cube_in_from_l1.h",
+              "sha256": "251992fb9d49810d7926f561dab4bd3acc928d82a3b4b19e252bd2b746450809",
+              "bytes": 6276
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/batch/batch_copy_cube_in_using_ub.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/batch/batch_copy_cube_in_using_ub.h",
+              "sha256": "956a83361ae0ea91ce1c27ead07e19f7b879576aa0326167b0836321a743bd78",
+              "bytes": 19591
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/batch/batch_copy_cube_in_intf.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/batch/batch_copy_cube_in_intf.h",
+              "sha256": "d9f961aafd06904bfa4f6f199f34449d226e30b0b03416296a10c0af3ae5629b",
+              "bytes": 4517
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/batch/batch_copy_cube_in_base.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/batch/batch_copy_cube_in_base.h",
+              "sha256": "ccd4fbc8be5dae34c30c0ee35685d5b83c20920469dde5c3b46f5e8d80a291c4",
+              "bytes": 3632
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/batch/batch_copy_cube_in.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/batch/batch_copy_cube_in.h",
+              "sha256": "40064e7fa8e88b24dad25c1d35f75b5aa78a1e42bb99f15ee7d0b7f15a577e5a",
+              "bytes": 22936
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/bias/copy_bias_in_batch.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/bias/copy_bias_in_batch.h",
+              "sha256": "a88b85e9e967527b2af5d748883edff792928a1e7fa5375dd19a36a0e4263210",
+              "bytes": 5116
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/bias/copy_bias_in_intf.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/bias/copy_bias_in_intf.h",
+              "sha256": "8a31ddb3a507c2e4219054427e2de0e2ba4e87c55d933d70d2d2847226aa2f4d",
+              "bytes": 3122
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/bias/load_bias_to_c2.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/bias/load_bias_to_c2.h",
+              "sha256": "d883bcb620a4af2e7e325b5eb673cc9c958b1c453d2b47b5394ceda7e132b3a8",
+              "bytes": 4828
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/bias/copy_bias_in_v220.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/bias/copy_bias_in_v220.h",
+              "sha256": "4e325480932df50507eb0a1272b4f38cc79ca19118463d5d54f8be0adaf305ef",
+              "bytes": 5673
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/bias/copy_bias_in.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/bias/copy_bias_in.h",
+              "sha256": "8e3f3b6ef7cb329c55c98b4a7960a5571f45ee287ce24f01aed4b098462dca1e",
+              "bytes": 1853
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/bias/copy_bias_in_v200.h",
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/bias/copy_bias_in_v200.h",
+              "sha256": "09c7d59f1d4639587ad47092f4bfda6e3e76104aab7e5c5d73067b5fa4acdc60",
+              "bytes": 6339
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/scheduler.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/scheduler.h",
+              "sha256": "db4d7c500d6b8843ac528f75951fe06ec800dce9529db93baa05d3b1011ca826",
+              "bytes": 2143
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_fullload.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_fullload.h",
+              "sha256": "7c1a4d86181fc870899d89bc07035006409db1ea7d31fc519b443fe69472aaba",
+              "bytes": 4067
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_common.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_common.h",
+              "sha256": "8ad3934405c94c2e54f64131f382052d3a3fc0de0c388750a9b0620536d1c04c",
+              "bytes": 21047
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_special_mdl.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_special_mdl.h",
+              "sha256": "f5ab62eeb220b4f604f7a55da9f38e7ea60071127217559dd7a3263cab1373bb",
+              "bytes": 9916
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_base.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_base.h",
+              "sha256": "cc84f1e5cbb27cea518c766aa69ed85572cfff0371c23d4d09db07fd7d4d36e9",
+              "bytes": 32984
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_intrablock.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_intrablock.h",
+              "sha256": "cbf860386e131784acfac38cd09a8c9c38e062124db8aa7e2d2d2f3fd6d2bd59",
+              "bytes": 13976
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_n_buffer.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_n_buffer.h",
+              "sha256": "d85d27b14851a4310b4c0c766026706cb116a26389feb6d8086ccc5c1a60d57c",
+              "bytes": 3845
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_norm_outer_product.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_norm_outer_product.h",
+              "sha256": "5f33103c4b6185f157c1094861125292ed58961094cb566f83a72cb6d2295334",
+              "bytes": 21287
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_intf.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_intf.h",
+              "sha256": "68038273eb2b64cf53eef12e44c1627239ddf59fe5b165fa8fc51603358d1ccc",
+              "bytes": 4685
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_base.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_base.h",
+              "sha256": "94bf4c0b874b952298d0e32bd0e21bcb4563ad3d2f72e54d96ab66617c7eaef0",
+              "bytes": 24087
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_norm.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_norm.h",
+              "sha256": "97a5de546731a015d54540c827be118239348ecfe56620e19bdfa7d594e0fbf6",
+              "bytes": 14564
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_norm_mx.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_norm_mx.h",
+              "sha256": "5cabfc110fe390f4d6d345156cf68b49c304f24f7db66f4e516e81ddbf53d9c8",
+              "bytes": 28267
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl.h",
+              "sha256": "6fbb599cfbd39c2b8ed821ac2ec007e286167427dc7a65ceaeb19e3003e5117e",
+              "bytes": 3235
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_mx_base.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_mx_base.h",
+              "sha256": "055f5f775fcaabca5722d23286a32acefe7667ff09067d3b79100755bd509332",
+              "bytes": 22714
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_norm_base.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_norm_base.h",
+              "sha256": "2db9191c832c85fc9a23955721de6f5ca79a23b7123e34fbafcbef4d135731a5",
+              "bytes": 18526
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_mx.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_mx.h",
+              "sha256": "045c8640942e064ddb722db8547137e3fd8f39a86908d3c319aa2e6c09e7a5e9",
+              "bytes": 32803
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_partial_output.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_partial_output.h",
+              "sha256": "f332312f251d7541490a94d7cdc3185bbd8e6ad196c623530f0bf0c52dca6d10",
+              "bytes": 8167
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/batch/batch_scheduler_base.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/batch/batch_scheduler_base.h",
+              "sha256": "4d3b9bfdd7c633be1c518769a6c6a15fea2f8dc6aab070cc958de902294e4c12",
+              "bytes": 30364
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/batch/batch_scheduler_v200.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/batch/batch_scheduler_v200.h",
+              "sha256": "cde0d1b5f0d6bc73676ec64fcc7548bd54d6e4ad9a523e69602e8c0e8c13c5d1",
+              "bytes": 12275
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/batch/batch_scheduler.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/batch/batch_scheduler.h",
+              "sha256": "42ab124846746758befeba36ba62b616ba510311c56ce893bc2ac0ccc0639517",
+              "bytes": 28124
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/batch/batch_scheduler_single.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/batch/batch_scheduler_single.h",
+              "sha256": "988a57980d58c4ac88109bb2e6a6c12c7dc8e7d3ffe0094c2caccfb119a69c9b",
+              "bytes": 11485
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/batch/batch_scheduler_intf.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/batch/batch_scheduler_intf.h",
+              "sha256": "b0b6037e03b719807d96de0953dfb63a1692b902dfc9381f96e2256977b94f5c",
+              "bytes": 3359
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/bias/bias_scheduler_batch.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/bias/bias_scheduler_batch.h",
+              "sha256": "35342172b6396e8c0524919731f2939e2982b14d7f3b27d06b23b8ac3205d521",
+              "bytes": 5796
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/bias/bias_scheduler_intf.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/bias/bias_scheduler_intf.h",
+              "sha256": "b3f6340e4a0ed5b165e2b2d79a47b695539f060e4d975dea886d34641b1da8d5",
+              "bytes": 5109
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/bias/bias_scheduler_v220.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/bias/bias_scheduler_v220.h",
+              "sha256": "1434b4c9a13dbebb55813e12313e357c99a079890d84078cb0b8b664bdbb5bc9",
+              "bytes": 7091
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/bias/bias_scheduler.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/bias/bias_scheduler.h",
+              "sha256": "02821ecfaf4c50c6d64b951c14059ffb06c81349b85539ed15f77b0a3223b566",
+              "bytes": 1792
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/bias/bias_scheduler_base.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/bias/bias_scheduler_base.h",
+              "sha256": "76609e0004513d556b3395858b4ae65fede6fd9b665e2f6f72aa281590c379d4",
+              "bytes": 3468
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/bias/bias_scheduler_v200.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/bias/bias_scheduler_v200.h",
+              "sha256": "e371bef60e56ea28b19aa535f8697554cf551a08a62118f6d646026c0dd0d90f",
+              "bytes": 3831
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_batch_db.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_batch_db.h",
+              "sha256": "60395c7d298a04446a78f7e6cb9757a453a73a3ef71391b2b4a618a7929d4539",
+              "bytes": 5182
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_mdl.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_mdl.h",
+              "sha256": "ad08b44998722560b8d973475d0f047912080c17e2cf1625893fa453e2426b4c",
+              "bytes": 2610
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_mdl_mx.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_mdl_mx.h",
+              "sha256": "81079b89d99673567257c6474407f5a2d3c818fa6278799d161db46e70518a20",
+              "bytes": 4951
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_intrablock.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_intrablock.h",
+              "sha256": "02d66d5eaf1ae0971e24783d0e25c7119d20218d6dbb71ada4d22aaa02f72f7c",
+              "bytes": 8183
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_basic.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_basic.h",
+              "sha256": "ddd3fed368d459e3ce0fc88482325a6f81b20d4a9e367fb15c1219981e9b14a1",
+              "bytes": 4656
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_norm_base.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_norm_base.h",
+              "sha256": "9914f86308363533de4cc5d58110ea3cb81b11990007b7caf8c8ec51823966b7",
+              "bytes": 6920
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_norm_outer_product.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_norm_outer_product.h",
+              "sha256": "883251bdec2d742b0177a9adbfbaaf40b28bad96beca994b808b3d9fe29e77cd",
+              "bytes": 4255
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_norm.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_norm.h",
+              "sha256": "680b5b756990fdb933924912549119b15fd362fc86eba8d52085551b260325ce",
+              "bytes": 2604
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_intf.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_intf.h",
+              "sha256": "fd8d2c19b9a48de51c8a039b889a4f7141286edd795182f643afd900286e5aca",
+              "bytes": 6164
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_batch.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_batch.h",
+              "sha256": "c80cf9a406b72ec669e21b4f52e0d6a4f4cd253e8305c955d21a3ee6e0d5e28c",
+              "bytes": 5542
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop.h",
+              "sha256": "1bc841b97f1489eb5039d3e3ddbc1df9e9c00e408c6182b4bdcacbef49efcc02",
+              "bytes": 1963
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_mdl_base.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_mdl_base.h",
+              "sha256": "3b444c46f4acabbf040daf67ed2652ab975f462235fc96b03c3b9ce19e1e3d40",
+              "bytes": 13672
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_mdl_outer_product.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/m_loop/m_loop_mdl_outer_product.h",
+              "sha256": "f19c035237c1e23fd5aab6de3cbacf62c635e902744e2ac6629384a7d151836f",
+              "bytes": 4625
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_batch_db.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_batch_db.h",
+              "sha256": "deb5cc81ca7783103305cf5af5503505fd530329577182963b6c3d62661ba7de",
+              "bytes": 5169
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_basic.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_basic.h",
+              "sha256": "25c91c4e9d987af6c01a14fdffae0de6c629be25a7391ccd98e6f9c0ee169b6b",
+              "bytes": 4656
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_norm_outer_product.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_norm_outer_product.h",
+              "sha256": "eb52726ce2f61bd55f6501b7010fa5a1b402036ad44531992c72898c9d4caedf",
+              "bytes": 4253
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_mdl.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_mdl.h",
+              "sha256": "304de63d8e123acd537c63aab5c2e16f336333a95b95ef7cc34e1d83a28d204b",
+              "bytes": 2609
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_mdl_base.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_mdl_base.h",
+              "sha256": "71875384e551302ff7a7163d20bad0ad8500b651e7e0396da964a7cbfc841543",
+              "bytes": 8457
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_intrablock.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_intrablock.h",
+              "sha256": "4b320d816aef66975b3e739d20e07b188473e5f8d04df014f342156aad873c11",
+              "bytes": 8543
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_norm.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_norm.h",
+              "sha256": "1c62d13caffc7aca323bdaee89c14da299393d163791f0ffd3805ef94ba57be6",
+              "bytes": 2604
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_intf.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_intf.h",
+              "sha256": "f09a8c8558d68f1602b483d4af7a08470e7855142330681ba7fce7844b52231b",
+              "bytes": 6163
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_batch.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_batch.h",
+              "sha256": "47558f9d30c439e0103ff1a8b9d819dad31aa7460982e19af28b4cc816616108",
+              "bytes": 5585
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_mdl_mx.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_mdl_mx.h",
+              "sha256": "8ee37e3ae2f06d7234b9c6382c825e401a0c95cde2469910557face46927fb39",
+              "bytes": 5209
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_mdl_outer_product.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_mdl_outer_product.h",
+              "sha256": "f69d41650787a2b5398ec85450b324b854e22dc36086d4f910c93cf0a1f3efa2",
+              "bytes": 4625
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop.h",
+              "sha256": "44225a676d6d904f46d504f37032adb2aa8cefdfe965e3f8ffd33be41b19d2db",
+              "bytes": 1963
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_norm_base.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/n_loop/n_loop_norm_base.h",
+              "sha256": "6d6bebbec897fa29458e854721a479fb26411707e7e7d1f5e5a1b59e12f139fa",
+              "bytes": 6920
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_mdl_reorder.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_mdl_reorder.h",
+              "sha256": "1d1137c4a41b049695927e53bf6cd0a58726e9067f899ff0b301856e4cdba472",
+              "bytes": 5267
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_mdl_partial_output.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_mdl_partial_output.h",
+              "sha256": "e3e70170cf2faf4bffd5ff753f337995dfaebca498dcd382ae046de3aee1f2e0",
+              "bytes": 3748
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_intf.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_intf.h",
+              "sha256": "9ec2e00f565333801db1842ec4f5068ae62031aecca3f2410434ba2413e27668",
+              "bytes": 6876
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop.h",
+              "sha256": "78826af6b92113e99565501375cbdf01dfb6b19bfe44df6bccbf987ad29ff6e1",
+              "bytes": 1840
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_mdl_mx.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_mdl_mx.h",
+              "sha256": "167346d3c2004432987a021255f1121171335f6e1f3afc4774f384a6e4048b78",
+              "bytes": 10209
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_norm.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_norm.h",
+              "sha256": "10b4ab327a4c0a13581e3fb0d3452b1bfe997f9dbfa8dbb54f166aa84244bc3d",
+              "bytes": 7231
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_intrablock.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_intrablock.h",
+              "sha256": "69fa35a4d830f5e76a8356087277d29567beb34be3b8942c43fb6037d24da651",
+              "bytes": 9243
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_mdl_base.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_mdl_base.h",
+              "sha256": "b1ec341ecb846e8f026f814c9becdcd28ee73ebbc83868e07bd47233d584eec6",
+              "bytes": 17050
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_mdl.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/k_loop/k_loop_mdl.h",
+              "sha256": "e23616d2ce3d73498c128b83257285876ed58458349a831b335d039c96b180f0",
+              "bytes": 2685
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/batch_loop/batch_loop_batch_less.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/batch_loop/batch_loop_batch_less.h",
+              "sha256": "96a14aa668e079e0037250583b71f68b9dcb47cc4d2a4ca977850cf5f3d126b4",
+              "bytes": 2813
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/batch_loop/batch_loop.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/batch_loop/batch_loop.h",
+              "sha256": "30bfd97281e22b223cb89e7055a742712a9146af81daf58fc7385d62dea32af4",
+              "bytes": 1763
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/batch_loop/batch_loop_intf.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/batch_loop/batch_loop_intf.h",
+              "sha256": "efed85e6d76401c8cbb9d41b2c1ef17dc57d8ab7ac7d1ddcf29241a5c09418b6",
+              "bytes": 3520
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/batch_loop/batch_loop_batch_large.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/batch_loop/batch_loop_batch_large.h",
+              "sha256": "6224c64d15283cf4c9bbddfcff522174a31c5fc0ecf7a9ee9f24738672fb98ce",
+              "bytes": 11654
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/batch_loop/batch_loop_single.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/batch_loop/batch_loop_single.h",
+              "sha256": "eab4430d3e6f9a7bc6e62b39354c7ff9a4d7cf5eae4db374ab25846defa689c3",
+              "bytes": 3747
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/iterator/batch_loop/batch_loop_batch_base.h",
+              "relative": "impl/adv_api/detail/matmul/scheduler/iterator/batch_loop/batch_loop_batch_base.h",
+              "sha256": "f0a38068791430faa6970a430235d1b273b6a08fe351e5523ca2a1f89084b3f6",
+              "bytes": 11805
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/utils/matmul_config_utils.h",
+              "relative": "impl/adv_api/detail/matmul/utils/matmul_config_utils.h",
+              "sha256": "282de06d4a8e6464a8afb6619c05141dd47515b1dd324088e652da4958b3088a",
+              "bytes": 14187
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/utils/matmul_utils.h",
+              "relative": "impl/adv_api/detail/matmul/utils/matmul_utils.h",
+              "sha256": "b63d73bd7cf79752793e8bdca0d1f4858ca02e63640c1cd32c929ac3cd1e2042",
+              "bytes": 18401
+            },
+            {
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/param/matmul_shape_tiling.h",
+              "relative": "impl/adv_api/detail/matmul/param/matmul_shape_tiling.h",
+              "sha256": "6ca99460148d3e36cae3255b73b36dff922448885fe7b33118b26d9f8a326f9a",
+              "bytes": 28631
+            }
+          ]
+        }
+      },
+      {
+        "local_provenance_path": "artifacts/cann_sdk_l1_interface_20261013/provenance.json",
+        "provenance_sha256": "017e24951ebc870266b93de969d71d34ca1372338235af342d9cb9805666902a",
+        "provenance": {
+          "source": "local official CANN9.1 SDK",
+          "files": [
+            {
+              "relative": "impl/adv_api/detail/matmul/batch_matmul_impl.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/batch_matmul_impl.h",
+              "sha256": "c6347a118877fe5852fc7fedf169302cfaee1e56e5be666c5277890501f61430"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/kfc/matmul_client_impl_aicore.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/kfc/matmul_client_impl_aicore.h",
+              "sha256": "f2d814832c04da1c1758bd1ad9f6527b8f1684aabc22f734f9886e970799406d"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/kfc/matmul_server_aux.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/kfc/matmul_server_aux.h",
+              "sha256": "8224745a3df5af8032bcc995cc171037f6146b2016754fd1138bbc9c719d7ec8"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/kfc/matmul_server_impl.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/kfc/matmul_server_impl.h",
+              "sha256": "c82d0c336d12be80e0eccbfacd51308ce06385c556dcdc90c2624909d966caf3"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/kfc/matmul_server_impl_c220.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/kfc/matmul_server_impl_c220.h",
+              "sha256": "095e545c61778082077b51986bf9ddae2347b38a8c5e9e78eef7789594c05976"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/kfc/matmul_server_utils.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/kfc/matmul_server_utils.h",
+              "sha256": "5a56b3a7f8567b3b4178662000e43425c8d5e925f30059d1a5b886839ee817bd"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/matmul_impl_base.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/matmul_impl_base.h",
+              "sha256": "3756e3309f4d1f1818820ccd6d2c7b58b2913941c14fa2bee840438a7031724d"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/mx_matmul_impl.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/mx_matmul_impl.h",
+              "sha256": "3284ead916b78df441d8f2c28a733bc6c88a10194aabc3c402854a81437e5120"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/param/matmul_cross_core_sync.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/param/matmul_cross_core_sync.h",
+              "sha256": "4fb3c54df6d49ddeaf34c4eca63f1d574326312f696203008ceeb22963370c43"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/param/matmul_shape_tiling.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/param/matmul_shape_tiling.h",
+              "sha256": "6ca99460148d3e36cae3255b73b36dff922448885fe7b33118b26d9f8a326f9a"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/resource/cube_in_buffer/cube_in_buffer_utils.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/resource/cube_in_buffer/cube_in_buffer_utils.h",
+              "sha256": "7c09f68303d91b4732e0658de1cd2c9a56639ee917b251f2f936602a56cee03b"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_base.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_base.h",
+              "sha256": "cc84f1e5cbb27cea518c766aa69ed85572cfff0371c23d4d09db07fd7d4d36e9"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_common.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_common.h",
+              "sha256": "8ad3934405c94c2e54f64131f382052d3a3fc0de0c388750a9b0620536d1c04c"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_mx.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_mx.h",
+              "sha256": "045c8640942e064ddb722db8547137e3fd8f39a86908d3c319aa2e6c09e7a5e9"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_mx_base.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_mdl_mx_base.h",
+              "sha256": "055f5f775fcaabca5722d23286a32acefe7667ff09067d3b79100755bd509332"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_norm_base.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_norm_base.h",
+              "sha256": "2db9191c832c85fc9a23955721de6f5ca79a23b7123e34fbafcbef4d135731a5"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/scheduler/base/scheduler_norm_mx.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/base/scheduler_norm_mx.h",
+              "sha256": "5cabfc110fe390f4d6d345156cf68b49c304f24f7db66f4e516e81ddbf53d9c8"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/scheduler/bias/bias_scheduler_v220.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/scheduler/bias/bias_scheduler_v220.h",
+              "sha256": "1434b4c9a13dbebb55813e12313e357c99a079890d84078cb0b8b664bdbb5bc9"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_atop.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_atop.h",
+              "sha256": "e460a5223966c7e9cb07b1dbb0f5682695371c0af16af562e6a69977f4f6bd84"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_mdl_base.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_mdl_base.h",
+              "sha256": "dea240e43c8c62b48bb1f777e28103dd2c758dc04629010d30a8a6efb97cdeb2"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_mdl_mx.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_mdl_mx.h",
+              "sha256": "3955db678457cb3f72037771b1bb3c9dc25b9d2774f513dd7553d56bd3cc54d8"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_utils.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/copy_cube_in/base/copy_cube_in_utils.h",
+              "sha256": "2111a696f7f244fc4a7daa6facce41615df91bcdd9f3c7b92b41fa68cf20a314"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/stage/split/load_to_l0a/load_to_l0a_load2d.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/split/load_to_l0a/load_to_l0a_load2d.h",
+              "sha256": "be94eee9f7cdf3a43bc7ad6362c13de37ea4069a790bec50a81528881dce3c9b"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/stage/split/load_to_l0b/load_to_l0b_basic.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/split/load_to_l0b/load_to_l0b_basic.h",
+              "sha256": "75fe3091e308c07690270ef6a674da6aa62001db4398621d4c5b04ec5dd8bdae"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/stage/split/load_to_l0b/load_to_l0b_intf.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/split/load_to_l0b/load_to_l0b_intf.h",
+              "sha256": "eec7e255466e71d2a79d9ddea985b796442d4cca4b76f232a7fd484e385e44b3"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/stage/split/load_to_l0b/load_to_l0b_load2d.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/split/load_to_l0b/load_to_l0b_load2d.h",
+              "sha256": "c697b9cec296c910fdb3e372b55c69d53bf6bba18eff1ac6ac6b181351788369"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/stage/split/load_to_l0b/load_to_l0b_load2dV2.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/split/load_to_l0b/load_to_l0b_load2dV2.h",
+              "sha256": "13a4bf56971df5921052236b5c66256dbbf6980f220ba4fa4891c683bbcb0121"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/stage/split/load_to_l0b/load_to_l0b_loadInstr.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/stage/split/load_to_l0b/load_to_l0b_loadInstr.h",
+              "sha256": "6289a7f70d0a73063f6becd200258cbdd5cade5b823019ef1ed808c1abc64eed"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/utils/matmul_utils.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/utils/matmul_utils.h",
+              "sha256": "b63d73bd7cf79752793e8bdca0d1f4858ca02e63640c1cd32c929ac3cd1e2042"
+            },
+            {
+              "relative": "impl/adv_api/detail/matmul/utils/mx_matmul_utils.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/utils/mx_matmul_utils.h",
+              "sha256": "0a197444976e793a378e4b5d448f474270814d2e71650630a9579c3cb7b36de5"
+            },
+            {
+              "relative": "include/adv_api/matmul/constant_tiling.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/adv_api/matmul/constant_tiling.h",
+              "sha256": "6e821f8a8ef532559010b3fa394d851f099b0e2b0d28843bac87cb8d6abe3944"
+            },
+            {
+              "relative": "include/adv_api/matmul/matmul.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/adv_api/matmul/matmul.h",
+              "sha256": "ea0e8f3a7f5761708b9f04c9428daa38bfd2164571df23721d469e0c0c2673ee"
+            },
+            {
+              "relative": "include/adv_api/matmul/matmul_client.h",
+              "source": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/include/adv_api/matmul/matmul_client.h",
+              "sha256": "e7b2bddcee068d7d1a624bcf2618a38857f39957ae42ccdc3e3ef614926387da"
+            }
+          ]
+        }
+      }
+    ],
+    "snapshot_header_files_in_delivery_list": false
+  },
+  "optional_full_research_regeneration_manifest": "reports/hybrid_l1_delivery_manifest_20261015.json",
+  "shared_integration_owner": "root stages CMake/binding/capability/selector/runtime/entrypoint edits separately; ordinary existing project dependencies remain tracked",
+  "manifest_itself_should_be_staged": "reports/hybrid_l1_production_delivery_manifest_20261015.json",
+  "evidence_boundaries": [
+    "Short comparison retains local_speed_gate=failed for uniform1.15 threshold; original predeclared short gate requires net benefit and long >=1.15. Do not rewrite the original.",
+    "Original completion/report/full_instructions metadata retain hashes and complete actor counts; large raw traces remain local and are intentionally excluded from Git. This list is not a self-contained reanalysis of raw traces.",
+    "CPU validation_from_root receipt predates completed CAModel and its queued field is historical; subsequent original comparison reports supersede only that status.",
+    "No NPU, graph, model-quality or whole-service acceptance is claimed."
+  ],
+  "excluded": [
+    "official SDK snapshot header files",
+    "research generator import closure used only for optional research regeneration",
+    "prefetch v2 sources and receipts",
+    "raw trace gz/dump, binary inputs/outputs/libraries",
+    "unrelated untracked files"
+  ]
+}

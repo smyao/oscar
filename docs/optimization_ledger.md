@@ -1,5 +1,12 @@
 # OSCAR 优化与失败证据索引
 
+## 2026-10-15 stable 同步与 B1 迭代基底
+
+- 用户确认stable的APC开/关均可工作；`f96820f1`已快进同步主分支。固定stable全部vLLM参数、显式16384、原生调度器，默认APC关闭。新目标为32K/64K各自相对同参数原生端到端提速超过30%，覆盖下方历史2–4倍目标。禁止连接真机，不再请求AISBench。
+- 用户明确接受B1作为主分支新基底并取消单项必须1.15倍的限制。按完整相关路径净收益逐项叠加，精度/协议不放宽；新设备门为不回退，最终30%不是局部倍率相加。仅用户验证后自行更新stable。
+- 同库C65完整三臂：stable3888161、pipeline3302518、B1 3172246 ticks；B1/stable 1.22568倍，B1/pipeline 1.04107倍。1008任务/60actor/逐位及oracle通过。默认C16选择B1，q4选择已完整配对的hybrid L1，q1保留MDL、C4保留已有pipeline。B1增加47.5 MiB/rank固定workspace；此结果不含设备merge/copy，也不代表32K/64K整轮。
+- 全库44能力CANN编译通过；CPU、CAModel、主机接缝分别记录。先前超时/ENOSPC/旧门裁决保留为历史；没有新增真机档案。详见[本轮范围与入口](stable_optimization_20261015.md)、[B1证据](../reports/c16_l1_reuse_20261015/summary.json)。
+
 ## 2026-10-14 stable 故障修复
 
 - 目标为用户回传的APC开启时MTP code5、关闭时后期异步Trap。原文与证据边界见档案#160。

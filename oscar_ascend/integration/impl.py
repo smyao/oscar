@@ -6,6 +6,8 @@ device metadata, exact physical-page snapshots, and no BF16 history restore.
 #keeps the accepted fe0 operator and original FP32 arithmetic.
 #142/#155: first-draft current-only requires a separate builder qualification;
 #the original native-current predicate still rejects every MTP draft.
+#34/#36/#129/#157: eager prepare reuse retains the original tasks/positions,
+#each layer's statuses and every alternate-writer invalidation boundary.
 PR oscar_attn.py:486-577: current-chunk K/V are exact; cached history is INT2.
 Native acl_graph.py:270 and attention_v1.py:454: graph-update interface.
 Native attention_cp.py:1017-1032: exact current TND FIA yields output plus LSE.
@@ -17,6 +19,8 @@ from .current_attention import (guard_current_slots, native_current_partial,
                                 suppress_current_source_tasks, use_native_current,
                                 write_current_partial)
 from .guard_diag import run_status_guard
+from .prepare_reuse import (can_reuse_prepare, invalidate_prepare_reuse,
+                            remember_prepared, reused_slots)
 from .runtime_api import OscarReadinessError, require_runtime
 from ..telemetry import emit_once, emit_throttled
 from ..timing import phase
@@ -97,14 +101,24 @@ class OscarAttentionImpl(AttentionImpl):
                 and (native_current or first_draft_suffix)
                 and attn_metadata.current_only_plan is not None):
             from .current_only_dispatch import dispatch_current_suffix
-            return dispatch_current_suffix(self, layer, query, key, value, kv_cache,
-                                           attn_metadata, output, attn_metadata.current_only_plan)
+            # The suffix prepares into the same arena after its optional
+            # historical prefix. No prepared prefix may survive that writer.
+            invalidate_prepare_reuse(state.workspace)
+            try:
+                return dispatch_current_suffix(self, layer, query, key, value, kv_cache,
+                                               attn_metadata, output, attn_metadata.current_only_plan)
+            finally:
+                invalidate_prepare_reuse(state.workspace)
         if self.provider.config.get("experimental_mixed_decode_split", False):
             from .mixed_decode_split import plan_mixed_decode, dispatch_mixed_decode
             mixed_plan = plan_mixed_decode(attn_metadata, n,query_heads=h,kv_heads=hk)
             if mixed_plan is not None:
-                return dispatch_mixed_decode(self, layer, query, key, value, kv_cache,
-                                             attn_metadata, output, mixed_plan)
+                invalidate_prepare_reuse(state.workspace)
+                try:
+                    return dispatch_mixed_decode(self, layer, query, key, value, kv_cache,
+                                                 attn_metadata, output, mixed_plan)
+                finally:
+                    invalidate_prepare_reuse(state.workspace)
         timing_fields = {"stage": "draft" if attn_metadata.is_draft else
                          ("prefill" if native_current else "decode"),
                          "is_draft": attn_metadata.is_draft,
@@ -135,33 +149,53 @@ class OscarAttentionImpl(AttentionImpl):
         partial, partial_lse = workspace.partial_views(n, source_splits)
         positions = workspace.positions[:n]
         ops = self.provider.ops
+        prepare_geometry = (n, h, hk, state.snapshots.sink_tokens,
+                            state.snapshots.recent_tokens, source_splits)
+        reuse_prepare = can_reuse_prepare(
+            attn_metadata, enabled=self.provider.config.get("experimental_prepare_reuse", False),
+            native_current=native_current)
+        prepare_stream = torch.npu.current_stream() if reuse_prepare else None
+        if reuse_prepare:
+            # Native creates a new ForwardContext even when tensor buffers or
+            # metadata objects are deliberately reused by a later invocation.
+            from vllm.forward_context import get_forward_context
+            prepare_context = get_forward_context()
+            cached_slots = reused_slots(workspace, attn_metadata, layer.layer_name,
+                                        prepare_geometry, prepare_stream, prepare_context)
+        else:
+            invalidate_prepare_reuse(workspace)
+            cached_slots = None
         with phase("prepare", layer=layer.layer_name, tokens=n, requests=attn_metadata.num_reqs,
                    source_splits=source_splits, **timing_fields):
             q = workspace.projection(query, workspace.query_input, n, h, d)
             k = workspace.projection(key, workspace.key_input, n, hk, d)
             v = workspace.projection(value, workspace.value_input, n, hk, d)
-            slots = attn_metadata.slot_mapping[:n]
+            slots = attn_metadata.slot_mapping[:n] if cached_slots is None else cached_slots
             # #157: the metadata builder isolates only explicitly discarded
             # native rows, once per draft step. Invalid live slots must reach
             # the frozen device guard; never infer discard from table failure.
-            if slots.dtype == torch.int32:
+            if cached_slots is None and slots.dtype == torch.int32:
                 # Native llm_base_proposer.py:1662 uses int32 draft slot groups.
                 workspace.slots[:n].copy_(slots)
                 slots = workspace.slots[:n]
-            ops.prepare_attention_tasks_out(
-                attn_metadata.query_start_loc[:attn_metadata.num_reqs + 1],
-                attn_metadata.seq_lens[:attn_metadata.num_reqs],
-                slots, tasks, positions, h, hk,
-                state.snapshots.sink_tokens, state.snapshots.recent_tokens, source_splits,
-                attn_metadata.block_tables[:attn_metadata.num_reqs] if attn_metadata.draft_index > 0 else None,
-                attn_metadata.draft_index > 0)
-        if native_current:
+            if cached_slots is None:
+                ops.prepare_attention_tasks_out(
+                    attn_metadata.query_start_loc[:attn_metadata.num_reqs + 1],
+                    attn_metadata.seq_lens[:attn_metadata.num_reqs],
+                    slots, tasks, positions, h, hk,
+                    state.snapshots.sink_tokens, state.snapshots.recent_tokens, source_splits,
+                    attn_metadata.block_tables[:attn_metadata.num_reqs] if attn_metadata.draft_index > 0 else None,
+                    attn_metadata.draft_index > 0)
+        if native_current and cached_slots is None:
             # Preserve CV task errors and padding. Only the healthy current
             # source has an empty KV interval; history/window still execute in
             # the same fused INT2 CV kernel. No path restores BF16 history.
             with phase("current_source_suppress", layer=layer.layer_name, tokens=n,
                        requests=attn_metadata.num_reqs, **timing_fields):
                 suppress_current_source_tasks(tasks, n, hk, source_splits)
+        if reuse_prepare and cached_slots is None:
+            remember_prepared(workspace, attn_metadata, layer.layer_name,
+                              prepare_geometry, prepare_stream, slots, prepare_context)
         with phase("rotate", layer=layer.layer_name, tokens=n, hadamard=state.hadamard,
                    requests=attn_metadata.num_reqs, **timing_fields):
             # Frozen rotate_out remains the baseline; the shared candidate
@@ -179,8 +213,17 @@ class OscarAttentionImpl(AttentionImpl):
                               striped_cache=striped_cache,
                               decode_bundle=self.provider.config.get("experimental_decode_bundle", False),
                               c4_member_pipeline=self.provider.config.get("experimental_c4_member_pipeline", False),
-                              mdl_decode=self.provider.config.get("experimental_mdl_decode", False))
+                              mdl_decode=self.provider.config.get("experimental_mdl_decode", False),
+                              c16_member_pipeline=self.provider.config.get("experimental_c16_member_pipeline", False),
+                              c16_l1_reuse=self.provider.config.get("experimental_c16_l1_reuse", False),
+                              hybrid_l1_decode=self.provider.config.get("experimental_hybrid_l1_decode", False))
         cv_name = storage_reader(state, cv_name)
+        from ..ops.cv_dispatch import HYBRID_L1_DECODE_CV_OP
+        rotation_v = state.rotation_v
+        if cv_name == HYBRID_L1_DECODE_CV_OP:
+            rotation_v = getattr(state, "rotation_v_nz", None)
+            if rotation_v is None:
+                raise OscarReadinessError("hybrid L1 decode requires its preallocated NZ V rotation")
         window_map = request_map(state, attn_metadata)
         request_args = (window_map,) if expected_format == REQUEST_FORMAT else ()
         request_attrs = ((state.snapshots.max_num_seqs, state.snapshots.position_bits)
@@ -192,7 +235,7 @@ class OscarAttentionImpl(AttentionImpl):
             cv_extra = ((workspace.cluster_stats,)
                         if cv_name in CLUSTER_CV_OPS | REQUEST_CLUSTER_READERS else ())
             cv_op(
-                q, qr, k, v, state.rotation_v, state.raw,
+                q, qr, k, v, rotation_v, state.raw,
                 (attn_metadata.block_tables[:attn_metadata.num_reqs] if request_args
                  else attn_metadata.block_tables),
                 state.window_key, state.window_value, state.window_tags, *request_args, tasks,

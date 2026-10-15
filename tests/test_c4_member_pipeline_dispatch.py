@@ -87,7 +87,10 @@ def test_missing_new_capability_fails_before_any_device_work(monkeypatch, reques
     config = variant_config(config, "candidate")
     config["experimental_request_windows"] = request_windows
     if request_windows:
-        config["experimental_mdl_decode"] = False  # Separate unqualified MDL reader combination.
+        config["experimental_mdl_decode"] = False  # Isolate the qualified request-window C4 reader.
+        config["experimental_hybrid_l1_decode"] = False
+        config["experimental_c16_member_pipeline"] = False
+        config["experimental_c16_l1_reuse"] = False
     provider = AscendRuntimeProvider(config)
     monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", ",".join(map(str, config["devices"])))
     monkeypatch.setattr(loader, "require_production_ops", lambda: None)

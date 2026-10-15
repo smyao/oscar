@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "status": "completed",
+  "supervisor_pid": 666552,
+  "child_pid": 666553,
+  "child_pgid": 666553,
+  "command": [
+    "/tmp/oscar-c16-20261015/b1-cpu/oscar_c16_l1_reuse_qr_cpu",
+    "/tmp/oscar-c16-20261015/qr-fixture",
+    "/tmp/oscar-c16-20261015/b1-qr-cpu/baseline",
+    "baseline"
+  ],
+  "cwd": "/tmp/oscar-c16-20261015/b1-qr-cpu/baseline-work",
+  "timeout_seconds": 120.0,
+  "started_utc": "2026-10-15T10:23:31.054564+00:00",
+  "stdout_path": "/tmp/oscar-c16-20261015/b1-qr-cpu/baseline-logs/stdout.log",
+  "stderr_path": "/tmp/oscar-c16-20261015/b1-qr-cpu/baseline-logs/stderr.log",
+  "lock_path": "/tmp/oscar-cann-validation.lock",
+  "lock_acquired": true,
+  "timed_out": false,
+  "interrupt_signal": null,
+  "child_returncode": 0,
+  "cleanup_complete": true,
+  "cleanup_grace_seconds": 12.0,
+  "cleanup_signals": [],
+  "supervisor_returncode": 0,
+  "child_env_override_keys": [],
+  "child_started_utc": "2026-10-15T10:23:31.055804+00:00",
+  "child_elapsed_seconds": 41.86023348197341,
+  "elapsed_seconds": 41.861536037991755,
+  "finished_utc": "2026-10-15T10:24:12.916087+00:00"
+}

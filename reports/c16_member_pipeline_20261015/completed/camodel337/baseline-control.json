@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "status": "failed",
+  "supervisor_pid": 658993,
+  "child_pid": 658994,
+  "child_pgid": 658994,
+  "command": [
+    "/usr/bin/python3",
+    "/tmp/oscar-c16-20261015/csrc/experiments/c16_member_pipeline/cv_replay_backend_split.py",
+    "--variant",
+    "baseline",
+    "--fixture",
+    "/tmp/oscar-c16-20261015/fixtures/valid337",
+    "--prepared",
+    "/tmp/oscar-c16-20261015/cpu-valid337-baseline/prepared",
+    "--small-cpu",
+    "/tmp/oscar-c16-20261015/small-cpu/comparison.json",
+    "--full-cpu-control",
+    "/tmp/oscar-c16-20261015/cpu-valid337-baseline-control.json",
+    "--library",
+    "/tmp/oscar-c16-20261015/build-device/lib/liboscar_c16_member_pipeline.so",
+    "--output",
+    "/tmp/oscar-c16-20261015/camodel337/baseline"
+  ],
+  "cwd": "/tmp/oscar-c16-20261015/camodel337/baseline-work",
+  "timeout_seconds": 900.0,
+  "started_utc": "2026-10-15T09:16:36.643332+00:00",
+  "stdout_path": "/tmp/oscar-c16-20261015/camodel337/baseline-logs/stdout.log",
+  "stderr_path": "/tmp/oscar-c16-20261015/camodel337/baseline-logs/stderr.log",
+  "lock_path": "/tmp/oscar-cann-validation.lock",
+  "lock_acquired": true,
+  "timed_out": true,
+  "interrupt_signal": null,
+  "child_returncode": -11,
+  "cleanup_complete": true,
+  "cleanup_grace_seconds": 12.0,
+  "cleanup_signals": [
+    "SIGTERM"
+  ],
+  "supervisor_returncode": 124,
+  "child_env_override_keys": [
+    "CAMODEL_CONFIG_PATH",
+    "LD_LIBRARY_PATH",
+    "LD_PRELOAD"
+  ],
+  "child_started_utc": "2026-10-15T09:16:36.645034+00:00",
+  "child_elapsed_seconds": 900.0015664690873,
+  "elapsed_seconds": 901.2291628749808,
+  "finished_utc": "2026-10-15T09:31:37.872517+00:00"
+}

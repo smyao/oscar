@@ -1,0 +1,82 @@
+{
+  "baseline": {
+    "arm": "baseline",
+    "sha256": "d3fb1352522258d1cd430e3fdd6d3d1d082e6897715b6d41f9263716ffa9903a",
+    "source_sha256": "f2047dde10aa464202c23c8a8d39a9806c712ac8eb090ff752d7346d1b723151",
+    "mother_bytes_restored": true,
+    "symbols": {
+      "q4": "oscar_hybrid_l1_baseline_q4_kernel",
+      "q1": "oscar_hybrid_l1_baseline_q1_kernel"
+    },
+    "workspace_bytes_per_core": 1146880,
+    "explicit_UB_bytes": 158656,
+    "L1_total_bytes": 395264,
+    "external_B1_bytes": 0,
+    "precise_publisher": "original natural FP32 ND, unchanged",
+    "unchanged_methods": {
+      "Process": "e6cf3801edb7090ffb06c4e66388d1f0f064467a73eaae900e62d4f2cfbddd27",
+      "LoadTask": "307b1d2416444b166019cbdfdcd739607b59241b7c224321f08fdea6efaea30e",
+      "TaskValid": "0d5e33b2379315e11aab7eb1b1c2f1a8b070e0e4ef44c1cde2372d2366b473b6",
+      "TailColumns": "b6c36871ed23433ddbb9d8425c7fae90add19716df5abd24f2c9a3c20d1a63af",
+      "ClearPaddedScores": "e6aab21ef4c7d4d06453e506847b79844d04de4fb581115eaa5734de1a068840",
+      "CubeTask": "e94f93ffd82416ab30b4c0bb939617b1bb3e0a3ab8ad4008fea03c666d6cdfc8",
+      "LoadQueries": "040dceec2b8ec684c59cbd1798d710935ece16f0293b9bb6ee2284ef104e96af",
+      "LoadPackedInto": "1b21453cca6236f5ac52b7898a6b02ee02ec31d758a07dae4afa8fe1a97200da",
+      "LoadWindowRuns": "f34d1619a3ec8c333b75aaaa0779bbefc7c522c7240df541e4f3b12fc5ec206b",
+      "LoadPrecise": "d488e060eaa34e168bb77629accd41dc1323a40088053a7536acb4212667c40f",
+      "Softmax": "996db61a153eb44495380d60048bfeb713198842cd8390e7cb26c6a324e9cbad",
+      "VectorTask": "6de3bf245fc3d1894dc19891e4ae780e6a762bdb08f0e8f3e50d07eb2be2b541",
+      "PublishKv": "36d6d5a1afa891c9bb50278d4b61b6c90c34eda48aa454077b6c639d5a3f445a",
+      "PipelinePublishKv": "7dc701940ffd54fc92f891f84edfb8d1c0feafd3740f9f5f0aa53dbe27ec6571",
+      "PrefetchKeys": "a73c1433caf4fc22b3b323a42aba568a9ce9ea3258ba52c842ca161e5271c084",
+      "PrefetchValues": "5fb44381c6c1284ac6b8aefb2c818d51fbc24536a9d2cd07457c41ff0fa6ba34",
+      "CommitPrefetchErrors": "8b9bdbd80482d2fa4f56a87efbd8d9f9f40340445fc4c087547376550ae6b53b",
+      "HistoryCubeTask": "b13b7260bef2e81b4025d02cf50953db23eaf3f476ab071d0b8ee7126b1d0a88",
+      "HistoryVectorTask": "7892a7373710ee0526cc71b592f269944cbd8361dbba76acac6079f0abc22593",
+      "PipelineConsumePv": "409ecddab488a02d0043a1bab80c1fa3070965d7365cd8c5ad8d6dc8f3f7286a",
+      "PublishRows": "1c1af6eb41f50737ab4452018c4d4f940e1e204938d2ce03ebee408b70d35a41",
+      "PublishEmpty": "6044cb30fdc3169755a1a00488329dab670b34f2c39c30cba3c552f7dd8ead73",
+      "PublishStatus": "8cf3e72f4e3310b936ca1b598640e88975c9de5b1c7f338f537c93a8b041df0e"
+    }
+  },
+  "candidate": {
+    "arm": "candidate",
+    "sha256": "78a21cd466b1eff15991c1b6a1095402dfab2ed4c919b6a58536cad6ed2c56b1",
+    "source_sha256": "f2047dde10aa464202c23c8a8d39a9806c712ac8eb090ff752d7346d1b723151",
+    "mother_bytes_restored": true,
+    "symbols": {
+      "q4": "oscar_hybrid_l1_candidate_q4_kernel",
+      "q1": "oscar_hybrid_l1_candidate_q1_kernel"
+    },
+    "workspace_bytes_per_core": 1146880,
+    "explicit_UB_bytes": 171680,
+    "L1_total_bytes": 395264,
+    "external_B1_bytes": 262144,
+    "precise_publisher": "original natural FP32 ND, unchanged",
+    "unchanged_methods": {
+      "Process": "e6cf3801edb7090ffb06c4e66388d1f0f064467a73eaae900e62d4f2cfbddd27",
+      "LoadTask": "307b1d2416444b166019cbdfdcd739607b59241b7c224321f08fdea6efaea30e",
+      "TaskValid": "0d5e33b2379315e11aab7eb1b1c2f1a8b070e0e4ef44c1cde2372d2366b473b6",
+      "TailColumns": "b6c36871ed23433ddbb9d8425c7fae90add19716df5abd24f2c9a3c20d1a63af",
+      "ClearPaddedScores": "e6aab21ef4c7d4d06453e506847b79844d04de4fb581115eaa5734de1a068840",
+      "CubeTask": "e94f93ffd82416ab30b4c0bb939617b1bb3e0a3ab8ad4008fea03c666d6cdfc8",
+      "LoadQueries": "040dceec2b8ec684c59cbd1798d710935ece16f0293b9bb6ee2284ef104e96af",
+      "LoadPackedInto": "1b21453cca6236f5ac52b7898a6b02ee02ec31d758a07dae4afa8fe1a97200da",
+      "LoadWindowRuns": "f34d1619a3ec8c333b75aaaa0779bbefc7c522c7240df541e4f3b12fc5ec206b",
+      "LoadPrecise": "d488e060eaa34e168bb77629accd41dc1323a40088053a7536acb4212667c40f",
+      "Softmax": "996db61a153eb44495380d60048bfeb713198842cd8390e7cb26c6a324e9cbad",
+      "VectorTask": "6de3bf245fc3d1894dc19891e4ae780e6a762bdb08f0e8f3e50d07eb2be2b541",
+      "PublishKv": "36d6d5a1afa891c9bb50278d4b61b6c90c34eda48aa454077b6c639d5a3f445a",
+      "PipelinePublishKv": "7dc701940ffd54fc92f891f84edfb8d1c0feafd3740f9f5f0aa53dbe27ec6571",
+      "PrefetchKeys": "a73c1433caf4fc22b3b323a42aba568a9ce9ea3258ba52c842ca161e5271c084",
+      "PrefetchValues": "5fb44381c6c1284ac6b8aefb2c818d51fbc24536a9d2cd07457c41ff0fa6ba34",
+      "CommitPrefetchErrors": "8b9bdbd80482d2fa4f56a87efbd8d9f9f40340445fc4c087547376550ae6b53b",
+      "HistoryCubeTask": "b13b7260bef2e81b4025d02cf50953db23eaf3f476ab071d0b8ee7126b1d0a88",
+      "HistoryVectorTask": "7892a7373710ee0526cc71b592f269944cbd8361dbba76acac6079f0abc22593",
+      "PipelineConsumePv": "409ecddab488a02d0043a1bab80c1fa3070965d7365cd8c5ad8d6dc8f3f7286a",
+      "PublishRows": "1c1af6eb41f50737ab4452018c4d4f940e1e204938d2ce03ebee408b70d35a41",
+      "PublishEmpty": "6044cb30fdc3169755a1a00488329dab670b34f2c39c30cba3c552f7dd8ead73",
+      "PublishStatus": "8cf3e72f4e3310b936ca1b598640e88975c9de5b1c7f338f537c93a8b041df0e"
+    }
+  }
+}

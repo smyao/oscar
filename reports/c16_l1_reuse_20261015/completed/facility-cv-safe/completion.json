@@ -1,0 +1,128 @@
+{
+  "status": "device_complete_outputs_saved",
+  "variant": "candidate",
+  "case": "q4_pair_c641_701",
+  "mode": "q4",
+  "cores": 1,
+  "attrs": [
+    8,
+    6,
+    1,
+    256,
+    2,
+    6,
+    24,
+    512,
+    4,
+    64,
+    69632,
+    82688,
+    323,
+    64,
+    256,
+    3,
+    1
+  ],
+  "scale": 0.0625,
+  "all_sources_and_tasks": true,
+  "task_filtering": false,
+  "library_sha256": "4301089babf7ee7c2aeb8abd403fe555753b11097db641b56747d44e3fdbb073",
+  "kernel": "oscar_task_overlap_candidate_q4_kernel",
+  "workspace_bytes_per_core": 2293760,
+  "profile_counters": false,
+  "phase_profile_schema": null,
+  "trace_policy": {
+    "research_completion_only": false,
+    "per_file_budget_bytes": 0
+  },
+  "cpu_reference": "available_checked",
+  "cpu_reference_policy": "required",
+  "simulator_configuration": {
+    "directory": "/tmp/oscar-c16-20261015/camodel-safe-config",
+    "config": {
+      "stars": {
+        "ffts_mode": 1
+      },
+      "model_top": {
+        "sim_type": 0,
+        "num_aic": 24,
+        "num_aiv": 48
+      },
+      "pem": {
+        "parsim": 0,
+        "parsim_thd_limit": 0
+      }
+    },
+    "sha256": "a5750f0294864fb79e4a266dd9c381d7d9e2f6b2f7440d1c3fb7cbabf8a77901",
+    "detail": {
+      "LOG": {
+        "rotating_file_size": 134217728,
+        "rotating_file_number": 2,
+        "flush_level": 3,
+        "core_enable_mask": [
+          "0x0"
+        ]
+      },
+      "L2CACHE": {
+        "cache_enable": 0,
+        "cache_set_size": 24,
+        "cache_way_size": 16384,
+        "cache_line_size": 512,
+        "cache_read_latency": 241,
+        "cache_write_latency": 96
+      }
+    },
+    "detail_sha256": "a40e5d810b94c539c4b62d14ad758dfacfd88b36b8ad0a3fe5249050723a1044"
+  },
+  "input_sha256": {
+    "q": "33c484c5f85992e206021d9ea6a543d917bdf89ee02ab55761bc539b4847f2d5",
+    "qr": "16b791b0302c7cb5eaa5c05171c1878eadd083d314feaf5a0acd696e7ef37e5b",
+    "ck": "ce757a662db5f4efd8a161c339b7cc6a22a43487b0760a55f006cb1ed6410d47",
+    "cv": "e2e4ba7abc699563031ec5ecfa64556fc9c935a39d48fa7c9425a4878975d453",
+    "rv": "011617962d8c473c7a320031759a0f3d3723029c3477e762ee65dbfb0e0aa93c",
+    "raw": "40c15505440e70cb38b88c741260d02bb5396bafd67861b07bbc5936d842db02",
+    "table": "24e0858c9c2ac4c329fb64a24382ba011a6cb89b56abd78a8196401e03df1af5",
+    "wk": "d16f5c6e7f2623daf32d066016bf55bebb483d923bf2b8d3e8c4d92bc00d372d",
+    "wv": "448c56ab040c4223c149b8b6d20728ac2b4b4dbb7b2664e655d5216585e75840",
+    "tags": "ce033874632b260e913c7b785d3a435492a4f057c7c1873cac523ef0aae33c62",
+    "tasks": "3a7cc923b7947a11c03ec4174703daf1badc44432eb1a169665f6154a6129f72"
+  },
+  "oracle_sha256": {
+    "output": "d7d67c8651a811284a3dc5426bfbd42c311387a1c0829291ce64fb4eca34779a",
+    "lse": "63f7ed4532111180d4149d8f348e845a4b1b94c444593b9ce982ce15fd984a38"
+  },
+  "cpu_baseline_sha256": {
+    "partial": "55abc72d257f8b89c010a3fa254c5da329aac0c3c42407191e980afd900e65b8",
+    "lse": "4965693e0e7dcb179fe90d4f671612761760611f52eb70e1cf4a968c43b15407",
+    "status": "5d89f056865052bcb89c910d2d62872e029fb273c3db03f8968a52a41593c1b5"
+  },
+  "backend": "local_CANN9.1_dav2201_CAModel",
+  "profile_scope": "complete operator; actor durations include waits",
+  "npu": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_run",
+  "whole_service": "not_run",
+  "outputs": {
+    "partial": {
+      "bytes": 147456,
+      "sha256": "55abc72d257f8b89c010a3fa254c5da329aac0c3c42407191e980afd900e65b8",
+      "path": "partial.bin"
+    },
+    "lse": {
+      "bytes": 576,
+      "sha256": "4965693e0e7dcb179fe90d4f671612761760611f52eb70e1cf4a968c43b15407",
+      "path": "lse.bin"
+    },
+    "status": {
+      "bytes": 192,
+      "sha256": "5d89f056865052bcb89c910d2d62872e029fb273c3db03f8968a52a41593c1b5",
+      "path": "status.bin"
+    },
+    "workspace": {
+      "bytes": 2293760,
+      "sha256": "9f036e779a362af96175b8ae25cdcad991249e1dea248c49b1e957e1dd7d3e95",
+      "path": "workspace.bin"
+    }
+  },
+  "failures": []
+}

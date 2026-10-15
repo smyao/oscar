@@ -1,0 +1,93 @@
+{
+  "status": "complete_small_CPU_pair",
+  "tokens": 336,
+  "recent": 1,
+  "cases": {
+    "small65": {
+      "controls": {
+        "baseline": "/tmp/oscar-c16-20261015/small-cpu/small65-baseline-control.json",
+        "candidate": "/tmp/oscar-c16-20261015/small-cpu/small65-candidate-control.json"
+      },
+      "reports": {
+        "baseline": {
+          "status": "passed",
+          "arm": "baseline",
+          "context": 65,
+          "bad_position": -1,
+          "clusters": 1,
+          "fault_statuses": 0,
+          "guards": true,
+          "input_immutable": true,
+          "all_status_lanes": true,
+          "oracle": "numeric",
+          "NPU": "not_run"
+        },
+        "candidate": {
+          "status": "passed",
+          "arm": "candidate",
+          "context": 65,
+          "bad_position": -1,
+          "clusters": 1,
+          "fault_statuses": 0,
+          "guards": true,
+          "input_immutable": true,
+          "all_status_lanes": true,
+          "oracle": "numeric",
+          "NPU": "not_run"
+        }
+      },
+      "equal_hashes": {
+        "partial": "84b48805f7608b841c1214424d51920a2856862dbf8bef8732f76c1806382bcb",
+        "lse": "4456275453a10362ca799ccbca32d62a0a4ede0eaa75a2499b38c05a63b51d28",
+        "status": "05bf9d87a6313c41625d93de63e30bc39be25e54b472f17e99d78cf12fccb3da",
+        "cluster_stats": "9f283b0c3771cac7cb50df9a885703f7eb104e0c931379aecd808294909e9eb7",
+        "tasks": "e2a2f874a1238793c4595559d7a465d7f37ae4f7894c63f6b184ea0496153fea"
+      }
+    },
+    "small337": {
+      "controls": {
+        "baseline": "/tmp/oscar-c16-20261015/small-cpu/small337-baseline-control.json",
+        "candidate": "/tmp/oscar-c16-20261015/small-cpu/small337-candidate-control.json"
+      },
+      "reports": {
+        "baseline": {
+          "status": "passed",
+          "arm": "baseline",
+          "context": 337,
+          "bad_position": -1,
+          "clusters": 1,
+          "fault_statuses": 0,
+          "guards": true,
+          "input_immutable": true,
+          "all_status_lanes": true,
+          "oracle": "numeric",
+          "NPU": "not_run"
+        },
+        "candidate": {
+          "status": "passed",
+          "arm": "candidate",
+          "context": 337,
+          "bad_position": -1,
+          "clusters": 1,
+          "fault_statuses": 0,
+          "guards": true,
+          "input_immutable": true,
+          "all_status_lanes": true,
+          "oracle": "numeric",
+          "NPU": "not_run"
+        }
+      },
+      "equal_hashes": {
+        "partial": "e886336ae96bfa7780ca5467bc7fe7a3e439845ad2f5ba8311785d657ec632b8",
+        "lse": "c41bc34577ca0d707b10b94dfd5d7ebdaa475cc8fd9576face3ed862e270e2d1",
+        "status": "05bf9d87a6313c41625d93de63e30bc39be25e54b472f17e99d78cf12fccb3da",
+        "cluster_stats": "8dd6389b21def13aee174733ea77b589cf80e56f95dd8644022a4ab4b768d4df",
+        "tasks": "b3a3c76a48177fceefdd2d383d37433899cfcd5ec4ec2be1bd2c5ce664eb02d1"
+      }
+    }
+  },
+  "manifest_sha256": "b86e57cbd775b9f71a38198804e9bb47040b25b173dbbe46a0d2f012d91a498c",
+  "Q672_CPU": "not_established",
+  "NPU": "not_run",
+  "graph": "not_run"
+}

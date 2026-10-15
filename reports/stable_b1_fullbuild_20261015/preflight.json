@@ -1,0 +1,63 @@
+{
+  "status": "host_preflight_passed_VM_build_waiting_for_owner_release",
+  "planned_VM_stage": "/tmp/oscar-stable-b1-fullbuild-20261015",
+  "host_driver": "/tmp/oscar_stable_b1_fullbuild_20261015.py",
+  "planned_source_files": 121,
+  "planned_source_bytes": 2136360,
+  "expected_source_capabilities": 44,
+  "new_operator": "attention_cv_l1_reuse_cluster16_out",
+  "new_workspace_bytes_per_core_D256": 7487488,
+  "launch_ABI": {
+    "device_pointers": 16,
+    "stream_pointer": 1,
+    "int64_attributes": 17,
+    "scale": "float",
+    "cores": "uint32"
+  },
+  "package_check": {
+    "status": "source_packaged_not_device_acceptance",
+    "source": "csrc/experiments/c16_l1_reuse_20261015/c16_candidate.cpp",
+    "source_sha256": "1deb6ab15a34ed263000c9a99530d0f9ee1a7e682a84ba7657b2c968d2ae6ec0",
+    "mother": "csrc/kernels/attention_cv_member_pipeline_cluster16.cpp",
+    "mother_sha256": "e2be8877e0a2b877bb8a9532c3940a5c6f2aa6d134cd834922a50e56477580af",
+    "stable": "csrc/kernels/attention_cv_window_range_cluster16.cpp",
+    "stable_sha256": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+    "target": "csrc/kernels/attention_cv_l1_reuse_cluster16.cpp",
+    "target_sha256": "1f9ce4c48fa97680df7116e03fcd1ee73566568280896b50e95dbede86602660",
+    "header": "csrc/include/oscar_c16_l1_reuse_launch.h",
+    "header_sha256": "e551af6ad5e2d2574339458fd0e886696230256659cfd2caf22ae25b04c35b28",
+    "inverse_full_source_bytes": true,
+    "operator": "attention_cv_l1_reuse_cluster16_out",
+    "D256_workspace_per_core": 7487488,
+    "D256_extra_vs_stable_per_core": 2490368,
+    "AIV_UB_bytes": 157760,
+    "AIC_external_B1_bytes": 262144,
+    "math_flags_task_error_order": "research bytes preserved",
+    "NPU": "not_run",
+    "graph": "not_run",
+    "whole_service": "not_established"
+  },
+  "source_sha256": {
+    "csrc/CMakeLists.txt": "9830662400cf72cc64aae3c5db17c20d9dcf3337fd4965778d2cff9021e9111d",
+    "csrc/striped_attention_bindings.cpp": "b276e5749afb944380cc749f6b250c0d2c94f98ee7e0c3a50f28093a863184b7",
+    "csrc/torch_bindings.cpp": "9f6139902fa9a81d46b11588cc7825efd234f81fa7a4ed48f0dee849115ea40c",
+    "csrc/include/oscar_c16_l1_reuse_launch.h": "e551af6ad5e2d2574339458fd0e886696230256659cfd2caf22ae25b04c35b28",
+    "csrc/kernels/attention_cv_l1_reuse_cluster16.cpp": "1f9ce4c48fa97680df7116e03fcd1ee73566568280896b50e95dbede86602660",
+    "oscar_ascend/ops/contracts.py": "680d5c1efc047a026e22246dfec252ff39447568ba5c654ac2cb75e85d204760",
+    "oscar_ascend/ops/meta.py": "38d1bf7432f6dac07c65b980720c017c55ff37c7f76f10d68fe9f8f2ddb94c45",
+    "oscar_ascend/ops/cv_dispatch.py": "bb1d097a95ebd8ee0f6aff9327635104c50d1c93170037ced37eec06825b970d",
+    "oscar_ascend/runtime.py": "94fd937008cbbca617754a12eacac5e0a71df79094a0c9c275738b625d69c3fb"
+  },
+  "tests": {
+    "command": ".venv/bin/python -m pytest -q tests/test_op_contracts.py tests/test_meta_dispatch.py tests/test_stable_launch_frozen.py tests/test_stable_optimized_dispatch.py tests/test_probe_c16_l1_reuse.py",
+    "passed": 40,
+    "subtests_passed": 4,
+    "seconds": 3.11
+  },
+  "CANN_44_capabilities": "not_run",
+  "prior_43_capability_evidence": "reports/stable_combined_fullbuild_20261015/summary.json does not qualify the added operator",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "full_service_performance": "not_established",
+  "target_accessed": false
+}

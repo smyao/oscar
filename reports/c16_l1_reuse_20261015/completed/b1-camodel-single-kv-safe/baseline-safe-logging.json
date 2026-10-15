@@ -1,0 +1,41 @@
+{
+  "status": "logging_only_adapter",
+  "runner": "/tmp/oscar-c16-20261015/csrc/experiments/c16_l1_reuse_20261015/cv_replay_small.py",
+  "original_sha256": "92ce08069aecce7bac1b6df0382fa657194295c1b314ece84dba5aab4116d6db",
+  "adapted_sha256": "818804048d120b8b959d3857f7c6ff59dd87f90ff5cb5b5464662f829432f1e9",
+  "inverse_runner_bytes": true,
+  "polling_thread_created": false,
+  "descriptor_mutation": false,
+  "LOG": {
+    "rotating_file_size": 134217728,
+    "rotating_file_number": 2,
+    "flush_level": 3,
+    "core_enable_mask": [
+      "0x0"
+    ]
+  },
+  "L2CACHE": {
+    "cache_enable": 0,
+    "cache_set_size": 24,
+    "cache_way_size": 16384,
+    "cache_line_size": 512,
+    "cache_read_latency": 241,
+    "cache_write_latency": 96
+  },
+  "config_stars": {
+    "stars": {
+      "ffts_mode": 1
+    },
+    "model_top": {
+      "sim_type": 0,
+      "num_aic": 24,
+      "num_aiv": 48
+    },
+    "pem": {
+      "parsim": 0,
+      "parsim_thd_limit": 0
+    }
+  },
+  "numeric_and_profile_gates": "original runner unchanged",
+  "performance_claim": false
+}

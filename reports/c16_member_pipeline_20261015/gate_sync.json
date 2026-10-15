@@ -1,0 +1,93 @@
+{
+  "status": "default_pipeline_gate_synchronized_host_only",
+  "host_tests": 65,
+  "host_seconds": 10.96,
+  "command": ".venv/bin/python -m pytest -q tests/test_probe_c16_member_pipeline.py tests/test_probe_c16_l1_reuse.py",
+  "pipeline": {
+    "baseline": "attention_cv_window_range_cluster16_out",
+    "candidate": "attention_cv_member_pipeline_cluster16_out",
+    "workspace_bytes_per_core": {
+      "attention_cv_window_range_cluster16_out": 4997120,
+      "attention_cv_member_pipeline_cluster16_out": 5652480
+    },
+    "source_binding": {
+      "csrc/kernels/attention_cv_member_pipeline_cluster16.cpp": "e2be8877e0a2b877bb8a9532c3940a5c6f2aa6d134cd834922a50e56477580af",
+      "csrc/kernels/attention_cv_window_range_cluster16.cpp": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+      "csrc/include/oscar_c16_member_pipeline_launch.h": "cb1bf7491486c970bfaa9966980f5674ab1ca125df3a57b13e2478c1840a4fae",
+      "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+      "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+      "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+      "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+      "csrc/kernels/attention_striped_unpack32.h": "c0aeab7e8fb9e078d37147ca411013f1c42e1547bd0a1d066ed3aece0c5514ca",
+      "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+      "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+      "csrc/kernels/attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+      "csrc/kernels/merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+      "csrc/striped_attention_bindings.cpp": "b276e5749afb944380cc749f6b250c0d2c94f98ee7e0c3a50f28093a863184b7",
+      "oscar_ascend/ops/reference.py": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
+      "tools/probe_history_reuse.py": "8b20dc30e86aff6bb067407df3a12ad585037dbcdc0f5efb8d276968bb58ac7b",
+      "tools/striped_fixture.py": "c7b208b3a66be17d6046e003e405fb1e04cc5da87af2a5380cdcb6d60984b4dd",
+      "tools/probe_c16_member_pipeline.py": "f3805dc019a36c339f8e6a6039832e6cfd284d0c9c3ded8419938303e792bd5f",
+      "tools/c16_probe_oracle.py": "29dd331602f65c0684ca02ea161c39dd764a351faaf08180391816ffce5c0a10"
+    }
+  },
+  "b1_research": {
+    "baseline": "attention_cv_window_range_cluster16_out",
+    "candidate": "attention_cv_l1_reuse_cluster16_out",
+    "workspace_bytes_per_core": {
+      "attention_cv_window_range_cluster16_out": 4997120,
+      "attention_cv_l1_reuse_cluster16_out": 7487488
+    },
+    "source_binding": {
+      "csrc/kernels/attention_cv_l1_reuse_cluster16.cpp": "1f9ce4c48fa97680df7116e03fcd1ee73566568280896b50e95dbede86602660",
+      "csrc/kernels/attention_cv_window_range_cluster16.cpp": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+      "csrc/include/oscar_c16_l1_reuse_launch.h": "e551af6ad5e2d2574339458fd0e886696230256659cfd2caf22ae25b04c35b28",
+      "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+      "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+      "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+      "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+      "csrc/kernels/attention_striped_unpack32.h": "c0aeab7e8fb9e078d37147ca411013f1c42e1547bd0a1d066ed3aece0c5514ca",
+      "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+      "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+      "csrc/kernels/attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+      "csrc/kernels/merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+      "csrc/striped_attention_bindings.cpp": "b276e5749afb944380cc749f6b250c0d2c94f98ee7e0c3a50f28093a863184b7",
+      "oscar_ascend/ops/reference.py": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
+      "tools/probe_history_reuse.py": "8b20dc30e86aff6bb067407df3a12ad585037dbcdc0f5efb8d276968bb58ac7b",
+      "tools/striped_fixture.py": "c7b208b3a66be17d6046e003e405fb1e04cc5da87af2a5380cdcb6d60984b4dd",
+      "tools/probe_c16_l1_reuse.py": "f44693c97d861d0eee0ecaac69217b36eb3eaeaf4a235ca73aeb8cf72456c392",
+      "tools/c16_probe_oracle.py": "29dd331602f65c0684ca02ea161c39dd764a351faaf08180391816ffce5c0a10"
+    }
+  },
+  "cases": [
+    "mature_multikv",
+    "bad80",
+    "bad96",
+    "bad336",
+    "last_member_qr",
+    "long_context_32k",
+    "long_context_64k"
+  ],
+  "minimum_speedup_per_valid_case": 1.15,
+  "shared_oracle_function_bodies": "unchanged; reports/c16_l1_reuse_20261015/oracle_shared_relocation.json",
+  "cross_family_receipts": "rejected by each validator",
+  "features": [
+    "Q672 context337/32768/65536 all-query independent oracle",
+    "last-member query651 QR error isolation",
+    "20 original generic-reference anchors per long case",
+    "zero-stride GQA and incremental cut only in long CPU oracle",
+    "original337 changed-input same-address graph with337->593->337 restore",
+    "CV+merge+BF16copy included in each timed case"
+  ],
+  "large_fixture_rerun": false,
+  "VM_rerun": false,
+  "source_sha256": {
+    "tools/probe_c16_member_pipeline.py": "f3805dc019a36c339f8e6a6039832e6cfd284d0c9c3ded8419938303e792bd5f",
+    "tools/probe_c16_l1_reuse.py": "f44693c97d861d0eee0ecaac69217b36eb3eaeaf4a235ca73aeb8cf72456c392",
+    "tools/c16_probe_oracle.py": "29dd331602f65c0684ca02ea161c39dd764a351faaf08180391816ffce5c0a10",
+    "tests/test_probe_c16_member_pipeline.py": "82a0a811fb8077e22c663b57ac770c426a3e1841cfdaa1254765b667c73b3bec"
+  },
+  "default_flags_changed_by_this_subtask": false,
+  "NPU": "not_run",
+  "model_performance": "not_established"
+}

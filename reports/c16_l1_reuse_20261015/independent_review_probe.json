@@ -1,0 +1,42 @@
+{
+  "status": "future_npu_entrypoint_prepared",
+  "host_tests": 12,
+  "host_tests_log": "independent_review_probe-tests.log",
+  "baseline_operator": "attention_cv_window_range_cluster16_out",
+  "candidate_operator": "attention_cv_l1_reuse_cluster16_out",
+  "workspace_bytes_per_core": {
+    "attention_cv_window_range_cluster16_out": 4997120,
+    "attention_cv_l1_reuse_cluster16_out": 7487488
+  },
+  "target_shape": {
+    "query_tokens": 672,
+    "context": 337,
+    "recent_tokens": 256,
+    "sink_tokens": 64,
+    "tasks": 2016
+  },
+  "graph_contexts": [
+    337,
+    337,
+    593,
+    337
+  ],
+  "minimum_complete_path_speedup": 1.15,
+  "scope": "stable C16 reader vs B1 reader plus merge and BF16 copy; unchanged current FIA excluded",
+  "source_sha256": {
+    "tools/probe_c16_l1_reuse.py": "023fc63d361811a6aa58e14055ea4283419d225efc01444ffbd7da87e9f5e2c1",
+    "tests/test_probe_c16_l1_reuse.py": "66960735a08f14e0890acbb4b73b95f6d50bb05ef3204db6b7a1da22eefb3594"
+  },
+  "production_source_files_missing": [
+    "csrc/kernels/attention_cv_l1_reuse_cluster16.cpp",
+    "csrc/include/oscar_c16_l1_reuse_launch.h"
+  ],
+  "sharedflags_changed_by_this_subtask": false,
+  "registration_changed_by_this_subtask": false,
+  "NPU": "not_run",
+  "graph": "not_run",
+  "performance_gate": "not_measured",
+  "end_to_end": "not_established",
+  "mechanism_recent1_qualifies_target": false,
+  "baseline_timeout_qualifies_speedup": false
+}

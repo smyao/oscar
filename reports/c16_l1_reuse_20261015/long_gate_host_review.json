@@ -1,0 +1,115 @@
+{
+  "status": "host_contracts_and_one32k_cost_measurement_passed",
+  "host_tests": 32,
+  "host_seconds": 6.87,
+  "command": ".venv/bin/python -m pytest -q tests/test_probe_c16_l1_reuse.py",
+  "cases": [
+    "mature_multikv",
+    "bad80",
+    "bad96",
+    "bad336",
+    "last_member_qr",
+    "long_context_32k",
+    "long_context_64k"
+  ],
+  "new_contexts": {
+    "long_context_32k": 32768,
+    "long_context_64k": 65536
+  },
+  "minimum_speedup_per_timed_case": 1.15,
+  "timing_scope": "stable C16 to B1 CV+merge+BF16copy; not model performance",
+  "graph_scope": "only original337 case, context337->593->337",
+  "all_queries": 672,
+  "old_reference_anchor_queries": [
+    0,
+    1,
+    20,
+    21,
+    22,
+    41,
+    42,
+    62,
+    63,
+    83,
+    84,
+    125,
+    126,
+    255,
+    256,
+    257,
+    336,
+    511,
+    512,
+    671
+  ],
+  "anchor_domain": "history_window_current matched explicitly; main oracle remains history_window",
+  "anchor_gate": "all original samples must match FP32 bits, no tolerance relaxation",
+  "short_oracle_equivalence": "all672 Q672/C337 output and LSE bitwise, nonfinite and wrong-anchor negative controls passed",
+  "long_capacity": {
+    "32768": {
+      "blocks": 66,
+      "virtual_columns": 262
+    },
+    "65536": {
+      "blocks": 130,
+      "virtual_columns": 518
+    }
+  },
+  "static_64k_memory": {
+    "retained_logical_history_bytes": 201326592,
+    "selected_KV_bytes": 134217728,
+    "removed_expanded_GQA_temporary_bytes": 805306368,
+    "eliminated_repeated_selected_KV_clone_bytes": 90194313216,
+    "label": "source-derived array sizes, not measured peak RSS or allocator overhead"
+  },
+  "cost_measurement": {
+    "state": "passed",
+    "one_context": 32768,
+    "limit_seconds": 60,
+    "limit_rss_bytes": 2147483648,
+    "script": "reports/c16_l1_reuse_20261015/long_oracle_cost.py",
+    "result": "reports/c16_l1_reuse_20261015/long_oracle_32k_guarded_once/result.json",
+    "fixture_seconds": 3.5858858751598746,
+    "peak_rss_bytes": 1513930752,
+    "reference_anchors": {
+      "status": "bitwise_passed",
+      "domain": "history_window_current",
+      "queries": [
+        0,
+        1,
+        20,
+        21,
+        22,
+        41,
+        42,
+        62,
+        63,
+        83,
+        84,
+        125,
+        126,
+        255,
+        256,
+        257,
+        336,
+        511,
+        512,
+        671
+      ],
+      "expected_count": 20,
+      "checked_count": 20,
+      "bit_differences": []
+    },
+    "cleanup_complete": true,
+    "bootstrap_failure_preserved": "reports/c16_l1_reuse_20261015/long_oracle_32k_once/result.json"
+  },
+  "source_sha256": {
+    "tools/probe_c16_l1_reuse.py": "c3bca500ba7978ced0a1aae63c4112bf6051f6da11fb7c9bddbe8241df2ccd60",
+    "tests/test_probe_c16_l1_reuse.py": "44f0bc8562c9c45c3de47bc365c2b383a7dffb82b54e764b509890f5d75c96a0",
+    "oscar_ascend/ops/reference.py": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c"
+  },
+  "NPU": "not_run",
+  "graph": "not_run",
+  "end_to_end_30_percent": "not_established",
+  "unmeasured_64k_boundary": "No64K fixture was constructed. Generic fixture initialization still uses the original expanded-GQA reference for20 anchors; peak RSS may exceed2GiB at64K. The32K result is not a measured64K bound."
+}

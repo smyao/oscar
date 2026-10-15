@@ -1,0 +1,53 @@
+{
+  "status": "local_packaging_and_host_contracts_passed",
+  "archive": [
+    "#126",
+    "#129",
+    "#145",
+    "#148",
+    "#153",
+    "#154",
+    "#157"
+  ],
+  "D4_complete_original_log_read": true,
+  "source_sha256": {
+    "tools/package_hybrid_l1_decode.py": "8408fb1c26c0f6006768bd167bb35032a44f62daebdbc162d3068c2646a51bba",
+    "tools/probe_hybrid_l1_decode.py": "e3a6f05b62e246ea89f627b3689cd57cedde00402b8ec841bb31028ae14ff453",
+    "tests/test_probe_hybrid_l1_decode.py": "fde82cac5306b9d1678c014b62d655829b7c0c41844491d383c71c360f7fa4c9",
+    "csrc/kernels/attention_cv_hybrid_l1_decode.cpp": "03df3835144e26ad399e9be8cd41f684b2705ed280c77029bf78c4e74bc9bad0",
+    "csrc/kernels/attention_hybrid_l1_unpack.h": "c6ea519cb28b8ee7fb35c13ac333941b6ba28c7ceabb49bcd8041b22a084cd94",
+    "csrc/include/oscar_hybrid_l1_decode_launch.h": "17279aacec0938a32a6771e8000df4e2ccb5bd23a861a8b85f435452d0aa6c45"
+  },
+  "commands": [
+    {
+      "command": "python3 -m tools.package_hybrid_l1_decode --check",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 csrc/experiments/fp32_dataflow_20261013/generate.py --check",
+      "exit_code": 0
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_probe_hybrid_l1_decode.py",
+      "exit_code": 0,
+      "passed": 14,
+      "seconds": 0.93,
+      "warning": "NumPy unavailable in host Torch; tests did not use NumPy"
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_probe_hybrid_l1_decode.py",
+      "exit_code": 0,
+      "passed": 18,
+      "seconds": 0.69,
+      "change": "Added bounded synthetic R2 q4 contexts32768/65536 S3 gate; no target run"
+    }
+  ],
+  "qualified_research_scope": "existing same-library complete q4 pair, source78a21c, C1341 and C8193/8225; long CPU not run",
+  "production_fresh_CANN": "passed_43_capability_full_build",
+  "target_NPU": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_established",
+  "end_to_end_30_percent_gate": "not_established",
+  "target_accessed": false,
+  "production_CANN_evidence": "reports/stable_combined_fullbuild_20261015/summary.json"
+}

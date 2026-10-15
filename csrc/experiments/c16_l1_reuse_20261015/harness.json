@@ -1,0 +1,65 @@
+{
+  "cv_probe.cpp": {
+    "template": "cv_probe.cpp",
+    "template_sha256": "87b4f22122bf420449fc608736d2fab69b106979e9eb764d1e32965a90073aa4",
+    "generated_sha256": "2bcc59edbcb429f4a0d870a91f0c3f410636f5339f2828e57fe874b2f8cd4982",
+    "symbols_workspace_imports_only": true
+  },
+  "cv_probe_small.cpp": {
+    "template": "cv_probe_small.cpp",
+    "template_sha256": "1cb8c275c1b326b0153df1dcbf113f7c1944764f3b51cbe2b9e6eec523cd8225",
+    "generated_sha256": "210227ba894de81a1a8f7db11a1bbc121a2fdb21eca042fccd4ebbc0060118ce",
+    "symbols_workspace_imports_only": true
+  },
+  "cv_replay.py": {
+    "template": "cv_replay.py",
+    "template_sha256": "ac7e34f64f5e950a7ac862cb126205f3cd45b94619ac4380eaaec39245fa4619",
+    "generated_sha256": "8190509389abe79693f42d89b31d50e7ccc48a1b64ebc3d8a805e2174f4bca90",
+    "symbols_workspace_imports_only": true
+  },
+  "cv_replay_backend_split.py": {
+    "template": "cv_replay_backend_split.py",
+    "template_sha256": "475a70570449a49e3b1619c01a406f70fe7efb6f6dfe5b697ba582e425395ac0",
+    "generated_sha256": "7f6306ade08cd1a42a531911a0055969e9981921d744f2edddb0bb6d734ce0b9",
+    "symbols_workspace_imports_only": true
+  },
+  "cv_compare.py": {
+    "template": "cv_compare.py",
+    "template_sha256": "207ca993cdff5efeaabc5745865dc96bc46449510d599c8f98771f5c8967b67a",
+    "generated_sha256": "207ca993cdff5efeaabc5745865dc96bc46449510d599c8f98771f5c8967b67a",
+    "symbols_workspace_imports_only": true
+  },
+  "backend_split.py": {
+    "template": "backend_split.py",
+    "template_sha256": "0a59c9e6d7b92b0c6cc180d108867ffbf5c94191e17905ec34cad2910fa750f3",
+    "generated_sha256": "a247e82116093b76947dcce4bb77d38cf52bf4ea186c1881e9fabfab88d80f52",
+    "symbols_workspace_imports_only": true
+  },
+  "run.py": {
+    "template": "run.py",
+    "template_sha256": "b7a452b90b3f349211b3f96ef2699516c71f814aabb9f308f2c6c06bbbab533e",
+    "generated_sha256": "a113a04cc68242176ce1bf338eabf92ab570a566850accbe77014a3056cd6dc1",
+    "symbols_workspace_imports_only": true
+  },
+  "CMakeLists.txt": {
+    "template": "CMakeLists.txt",
+    "template_sha256": "3288236ad5d0f5303656290e768923b6b2b0cd39f04ef8666f0ca1ab9cb9780c",
+    "generated_sha256": "4a00b688bfb19aefdfdacfd885dbe610157fd261875d3260f3c1fdc5509fff3b",
+    "symbols_workspace_imports_only": true
+  },
+  "cv_replay_small.py": {
+    "template": "generated cv_replay.py",
+    "generated_sha256": "92ce08069aecce7bac1b6df0382fa657194295c1b314ece84dba5aab4116d6db",
+    "scope": "Q336/recent1 C65/C337 complete, not Q672/recent256"
+  },
+  "cv_probe_nonzero.cpp": {
+    "template": "generated cv_probe_small.cpp",
+    "generated_sha256": "75dd7281817d921a10613d20a7adeac8f2f3f569436207f855d735dd1b189701",
+    "scope": "R2 contexts0/337 Q336 each, recent1, cluster owner1"
+  },
+  "cv_probe_qr.cpp": {
+    "template": "generated cv_probe_small.cpp",
+    "generated_sha256": "46c9c60f78bb4b1498869728e07504132206f3052353fea5fdbdf9981c671606",
+    "scope": "late member15 QR NaN; 64 history rows fail closed; remaining rows dense oracle"
+  }
+}

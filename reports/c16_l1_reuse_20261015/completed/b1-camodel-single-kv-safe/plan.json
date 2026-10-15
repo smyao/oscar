@@ -1,0 +1,14 @@
+{
+  "arms": [
+    "stable",
+    "baseline",
+    "candidate"
+  ],
+  "deadline_each_arm_s": 600,
+  "source_manifest_sha256": "0d2819fd6249498877c11fd10d4a1da6c9f71893d615c68d144c2dec642ac6b0",
+  "library_sha256": "08b10c8e3b2ea4d2405a95de3242080927c48f2a584a5e90f4714e03358e9f53",
+  "scope": "Q336/recent1/C65,1008 tasks,20Cube; complete mechanism fixture, not Q672",
+  "history_KV_rounds": 1,
+  "minimum_composed_speedup": 1.15,
+  "prior_Q672_CAModel": "900s_timeout_preserved_not_retried"
+}

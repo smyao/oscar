@@ -113,6 +113,9 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     monkeypatch.setattr(observe_serve, "_mixed_optimization_gate", lambda *args: seen.append("mixed-optimization-gate"))
     monkeypatch.setattr(observe_serve, "_striped_cache_gate", lambda *args: seen.append("striped-cache-gate"))
     monkeypatch.setattr(observe_serve, "_c4_member_pipeline_gate", lambda *args: seen.append("c4-member-pipeline-gate"))
+    monkeypatch.setattr(observe_serve, "_c16_member_pipeline_gate", lambda *args: seen.append("c16-member-pipeline-gate"))
+    monkeypatch.setattr(observe_serve, "_c16_l1_reuse_gate", lambda *args: seen.append("c16-l1-reuse-gate"))
+    monkeypatch.setattr(observe_serve, "_hybrid_l1_decode_gate", lambda *args: seen.append("hybrid-l1-decode-gate"))
     monkeypatch.setattr(observe_serve, "_decode_bundle_gate", lambda *args: seen.append("decode-bundle-gate"))
     monkeypatch.setattr(observe_serve, "_mdl_decode_gate", lambda *args: seen.append("mdl-decode-gate"))
     monkeypatch.setattr(observe_serve, "_current_only_gate", lambda *args: seen.append("current-only-gate"))
@@ -126,7 +129,8 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     logs = tmp_path / "probe"
     assert observe_serve.run(config, logs, "candidate", probe_only=True, diagnose_mixed=diagnose_mixed) == 0
     assert seen == ["preflight", "candidate-gates", "fast-unpack-gate", "mixed-optimization-gate", "striped-cache-gate",
-                    "decode-bundle-gate", "mdl-decode-gate", "current-only-gate",
+                    "c4-member-pipeline-gate", "c16-l1-reuse-gate",
+                    "decode-bundle-gate", "mdl-decode-gate", "hybrid-l1-decode-gate", "current-only-gate",
                     "first-mtp-current-gate", "mixed-decode-split-gate"]
     status = json.loads((logs / "status.json").read_text())
     assert status["service_started"] is False
@@ -367,8 +371,8 @@ def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeyp
     assert len(observed) == 2 and observed[0] == observed[1] == logs / "effective-target.json"
     effective = json.loads((logs / "effective-target.json").read_text())
     assert effective["experimental_history_reuse"] is True
-    assert effective["use_native_token_budget"] is True
-    assert "max_num_batched_tokens" not in effective and "scheduler_cls" not in effective
+    assert effective["use_native_token_budget"] is False
+    assert effective["max_num_batched_tokens"] == 16384 and "scheduler_cls" not in effective
     assert not effective.get("experimental_whole_prefill", False)
     assert not effective.get("experimental_bounded_whole_prefill", False)
     assert json.loads(config_path.read_text())["experimental_history_reuse"] is False

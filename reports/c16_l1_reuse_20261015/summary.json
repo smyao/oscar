@@ -1,0 +1,159 @@
+{
+  "status": "CANN_CPU_and_single_KV_CAModel_three_arm_pair_passed_long_performance_unestablished",
+  "research_source_sha256": "1deb6ab15a34ed263000c9a99530d0f9ee1a7e682a84ba7657b2c968d2ae6ec0",
+  "stable_source_sha256": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+  "CANN": {
+    "research_three_arm_library": "compiled_rc0",
+    "production_full_library": "44_capabilities_rc0_by_parent_fullbuild",
+    "details": "reports/stable_b1_fullbuild_20261015"
+  },
+  "CPU": {
+    "successful_arm_count": 12,
+    "owner0_two_contexts": "complete_small_CPU_pair",
+    "owner1_three_arms": "complete_three_arm_nonzero_owner_CPU_pair",
+    "metadata_80_96_336": "B1_all_three_metadata_fault_domains_bitwise_qualified",
+    "last_member_QR_NaN": "complete_late_member_QR_fault_bitwise_pair",
+    "scope": "frozen oracle, full output/task/status bitwise, guards, inputs immutable; CPU is not target NPU"
+  },
+  "CAModel": {
+    "original_logging_failures_preserved": {
+      "Q336_C337_recent1": {
+        "stable_control": "completed/b1-camodel-small/stable-control.json",
+        "timeout_seconds": 600,
+        "supervisor_rc": 124,
+        "child_rc": -11,
+        "cleanup_complete": true,
+        "complete_outputs": false
+      },
+      "Q336_C65_recent1": {
+        "stable_control": "completed/b1-camodel-single-kv/stable-control.json",
+        "timeout_seconds": 600,
+        "supervisor_rc": 124,
+        "child_rc": -11,
+        "cleanup_complete": true,
+        "complete_outputs": false
+      },
+      "pipeline_and_B1_arms": "not_run_after_stable_baseline_deadlines",
+      "speedup": null,
+      "partial_ticks_used": false
+    },
+    "official_LOG_zero_mask_same_library_retry": {
+      "comparison": "completed/b1-camodel-single-kv-safe/comparison.json",
+      "scope": "Q336/recent1/C65, all1008 CV tasks, source0+1 plus legal empty source2, one mature16-member cluster, one history KV round",
+      "arms": {
+        "stable": {
+          "task_ticks": 3888161,
+          "elapsed_seconds": 587.7634041670244,
+          "child_returncode": 0,
+          "supervisor_returncode": 0,
+          "cleanup_complete": true,
+          "profile_counts": {
+            "task": 1,
+            "aic": 20,
+            "aiv": 40
+          },
+          "oracle": {
+            "bad_output": 0,
+            "bad_lse": 0,
+            "max_output_abs": 1.133724317758933e-06,
+            "max_lse_abs": 7.57374689186463e-07,
+            "atol": 0.005,
+            "rtol": 0.005,
+            "method": "offline stable LSE merge of actual CAModel partials versus independent PR golden"
+          },
+          "control": "completed/b1-camodel-single-kv-safe/stable-control.json",
+          "report": "completed/b1-camodel-single-kv-safe/stable/report.json"
+        },
+        "pipeline": {
+          "task_ticks": 3302518,
+          "elapsed_seconds": 512.877726172097,
+          "child_returncode": 0,
+          "supervisor_returncode": 0,
+          "cleanup_complete": true,
+          "profile_counts": {
+            "task": 1,
+            "aic": 20,
+            "aiv": 40
+          },
+          "oracle": {
+            "bad_output": 0,
+            "bad_lse": 0,
+            "max_output_abs": 1.133724317758933e-06,
+            "max_lse_abs": 7.57374689186463e-07,
+            "atol": 0.005,
+            "rtol": 0.005,
+            "method": "offline stable LSE merge of actual CAModel partials versus independent PR golden"
+          },
+          "control": "completed/b1-camodel-single-kv-safe/baseline-control.json",
+          "report": "completed/b1-camodel-single-kv-safe/baseline/report.json"
+        },
+        "B1": {
+          "task_ticks": 3172246,
+          "elapsed_seconds": 487.0945534359198,
+          "child_returncode": 0,
+          "supervisor_returncode": 0,
+          "cleanup_complete": true,
+          "profile_counts": {
+            "task": 1,
+            "aic": 20,
+            "aiv": 40
+          },
+          "oracle": {
+            "bad_output": 0,
+            "bad_lse": 0,
+            "max_output_abs": 1.133724317758933e-06,
+            "max_lse_abs": 7.57374689186463e-07,
+            "atol": 0.005,
+            "rtol": 0.005,
+            "method": "offline stable LSE merge of actual CAModel partials versus independent PR golden"
+          },
+          "control": "completed/b1-camodel-single-kv-safe/candidate-control.json",
+          "report": "completed/b1-camodel-single-kv-safe/candidate/report.json"
+        }
+      },
+      "stable_over_pipeline": 1.1773322658650158,
+      "stable_over_B1": 1.225680795247279,
+      "pipeline_over_B1": 1.041066172043404,
+      "all_partial_lse_status_counters_bitwise": true,
+      "measured_cost": "CV kernel task_ticks only; merged correctness is offline LSE combination, not device merge/BF16-copy timing",
+      "no_deadline_extension": true,
+      "timeout_each_arm_seconds": 600,
+      "all_three_arms_same_library_and_inputs_and_simulator_config": true
+    }
+  },
+  "diagnostic_boundary": {
+    "two_small_runs": "Model Init/Start/Stop recorded; actor profile files exist but are zero-byte, so actor completion counts are unavailable",
+    "live_snapshot": "host main/simulation worker runnable; this cannot distinguish simulation computation from protocol spin",
+    "prior_Q672": "different two-arm library at900s also incomplete, partial actor records are not full completion",
+    "CPU_nonzero_owner": "stable/pipeline/B1 all completed legal owner1 qbegin336 two-round case; nonzero owner alone is not a demonstrated defect",
+    "conclusion": "Official LOG zero mask with unsafe polling daemon fully removed completed known short CV control and new C65 three arms. The change is an actionable facility repair; it does not prove the former FD TOCTOU was the unique timeout root cause. Original Q672 and C337 remain incomplete.",
+    "facility_control": "completed/facility-cv-safe/report.json: complete 1 task/1 AIC/2 AIV, oracle passed, child rc0,94.664s; no performance comparison claimed",
+    "C337_retry_decision": "not_run: C65 stable elapsed587.763s is already near600s deadline; two-KV trial lacks safe runtime margin; no expanded deadline"
+  },
+  "decision": "retain B1 as independent research: incremental pipeline/B1 is1.041066 on one-KV fixture, insufficient to justify default extra35MiB/rank; recommend pipeline with separately qualified hybrid; no whole-service or32K/64K claim",
+  "workspace_per_core": {
+    "stable": 4997120,
+    "pipeline": 5652480,
+    "B1": 7487488,
+    "B1_extra_vs_stable": 2490368
+  },
+  "B1_extra_MiB_at_20_cores_per_rank": 47.5,
+  "NPU": "not_run_user_prohibits",
+  "graph": "not_run",
+  "whole_model_quality": "not_established",
+  "32K_64K_native_gt30pct": "not_established",
+  "environment_failure": "environment_failure.json; original ENOSPC control and unknown child rc preserved; one environment-repaired retry",
+  "archive": "no new real-device issue record added",
+  "B1_extra_vs_pipeline_MiB_at_20_cores_per_rank": 35,
+  "logging_repair": {
+    "original_polling_FD_mutation": "removed entirely by reversible runner-only adapter",
+    "LOG.core_enable_mask": [
+      "0x0"
+    ],
+    "parsim": 0,
+    "parsim_thd_limit": 0,
+    "L2_model_top_FFTS": "unchanged",
+    "evidence": "completed/*-safe-logging.json and completed/camodel-safe-config",
+    "numerics_and_profile_gate": "original runner unchanged"
+  }
+}

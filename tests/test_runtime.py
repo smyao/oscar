@@ -328,7 +328,7 @@ def test_online_forward_contains_no_host_request_loop_or_tensor_readback():
     (4, True, False, False), (16, True, True, False),
     (16, True, True, True)])
 @pytest.mark.parametrize("later_draft", [False, True])
-def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv, striped_cache, _rotation_variant=None, _member_pipeline=False, _mdl_variant=None, _mdl_target=False):
+def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv, striped_cache, _rotation_variant=None, _member_pipeline=False, _mdl_variant=None, _mdl_target=False, _c16_l1=False):
     """Host ABI exercise only: fake ops establish ordering, never accuracy."""
     if n == 8192 and (cluster_size != 16 or later_draft):
         pytest.skip("large FULL host route is needed once for C16")
@@ -348,7 +348,8 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     w = object.__new__(GraphWorkspace)
     w.geometry = WorkspaceGeometry(capacity, h, hk, d, cube_cores=cube_cores,
                                    history_cluster_size=cluster_size,
-                                   c4_member_pipeline=_member_pipeline)
+                                   c4_member_pipeline=_member_pipeline,
+                                   c16_l1_reuse=_c16_l1)
     w.cluster_stats = torch.empty((cube_cores, 8), dtype=torch.int64) if cluster_size in (4, 16) else None
     w.query_input = torch.empty(capacity, h, d, dtype=torch.bfloat16)
     w.key_input = torch.empty(capacity, hk, d, dtype=torch.bfloat16)
@@ -465,8 +466,15 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             self.attention_cv_out(*args)
             raise MdlDispatchReached("attention_cv_mdl_decode_out")
 
+        def attention_cv_hybrid_l1_decode_out(self, *args):
+            assert _mdl_variant == "candidate" and not later_draft
+            assert args[4] is state.rotation_v_nz
+            self.attention_cv_out(*args)
+            raise MdlDispatchReached("attention_cv_hybrid_l1_decode_out")
+
         def attention_cv_mdl_decode_q1_out(self, *args):
             assert _mdl_variant == "candidate" and later_draft
+            assert args[4] is state.rotation_v
             self.attention_cv_out(*args)
             raise MdlDispatchReached("attention_cv_mdl_decode_q1_out")
 
@@ -484,6 +492,12 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             assert striped_cache and args[15] is w.cluster_stats
             self.attention_cv_cluster4_out(*args)
             calls[-1] = "striped_cluster16"
+
+        def attention_cv_l1_reuse_cluster16_out(self, *args):
+            assert _c16_l1 and args[15] is w.cluster_stats
+            assert args[4] is state.rotation_v
+            self.attention_cv_cluster4_out(*args)
+            calls[-1] = "c16_l1_reuse"
 
         def attention_cv_striped_balanced_out(self, *args):
             assert striped_cache
@@ -516,7 +530,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     state = SimpleNamespace(
         packed=packed, raw=packed, workspace=w,
         rotation_k_transpose=torch.eye(d), rotation_v_transpose=torch.eye(d),
-        rotation_v=torch.eye(d), hadamard=False, num_blocks=1,
+        rotation_v=torch.eye(d), rotation_v_nz=torch.empty(d, d), hadamard=False, num_blocks=1,
         window_key=torch.empty(1), window_value=torch.empty(1), window_tags=torch.empty(1),
         cache_format="striped_v1" if striped_cache else "canonical_v1",
         spec=SimpleNamespace(block_size=2304, conv_bytes=15360, ssm_bytes=393216),
@@ -527,7 +541,8 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
                                     config={"experimental_fast_unpack": fast_unpack,
                                             "experimental_mixed_cv": mixed_cv,
                                             "experimental_striped_cache": striped_cache,
-                                            "experimental_decode_bundle": _member_pipeline,
+                                            "experimental_decode_bundle": _member_pipeline or _c16_l1,
+                                            "experimental_c16_l1_reuse": _c16_l1,
                                             "experimental_c4_member_pipeline": _member_pipeline})
     if _rotation_variant is not None:
         # Exercise actual shared config -> RuntimeProvider -> forward selection.
@@ -560,6 +575,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         common.query_start_loc = torch.tensor([0, n], dtype=torch.int32)
         common.num_reqs = 1
         common.max_query_len = n
+        common.seq_lens = torch.tensor([32768+n], dtype=torch.int32)
     elif mixed_cv and n == 256 and not later_draft:
         if striped_cache:
             common.query_start_loc = torch.tensor([0, 128, 256], dtype=torch.int32)
@@ -587,7 +603,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         from enum import Enum
         common.attn_state = Enum("AscendAttentionState", ["DecodeOnly"]).DecodeOnly
         common.max_query_len = 1 if later_draft else 4
-        name = "attention_cv_mdl_decode_q1_out" if later_draft else "attention_cv_mdl_decode_out"
+        name = "attention_cv_mdl_decode_q1_out" if later_draft else "attention_cv_hybrid_l1_decode_out"
         with pytest.raises(MdlDispatchReached, match="^"+name+"$"):
             impl.forward(SimpleNamespace(layer_name="model.layers.0.self_attn.attn" if _mdl_target else "mtp.layers.0.self_attn.attn"),
                          q, k, value, packed, replace(from_common(common), is_draft=not _mdl_target,
@@ -602,7 +618,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     # with candidate workspace; long requests keep the C4 ABI/extra buffer.
     if striped_cache:
         expected_op = ("striped_q1" if later_draft else
-                       "striped_cluster16" if n == 8192 else
+                       ("c16_l1_reuse" if _c16_l1 else "striped_cluster16") if n == 8192 else
                        ("member_pipeline_cluster4" if _member_pipeline else "striped_cluster4")
                        if n == 256 else "striped_decode")
     elif mixed_cv:

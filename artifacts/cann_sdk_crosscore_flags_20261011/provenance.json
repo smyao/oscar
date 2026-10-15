@@ -1,0 +1,50 @@
+{
+  "origin": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc",
+  "host": "Lima oscar",
+  "target": "ascend910b4 / __NPU_ARCH__=2201 / dav_c220",
+  "purpose": "Read-only official SDK CrossCore flag encoding and Matmul/KFC namespace audit; no SDK edits, builds or simulator tasks.",
+  "files": [
+    {
+      "path": "impl/basic_api/kernel_operator_block_sync_intf_impl.h",
+      "source_path": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/basic_api/kernel_operator_block_sync_intf_impl.h",
+      "sha256": "e6e3ff91661cb00a5798a3e7262470265ec50815e5f2c6784a86c01637eb458c",
+      "bytes": 10719
+    },
+    {
+      "path": "impl/basic_api/dav_c220/kernel_operator_sync_impl.h",
+      "source_path": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/basic_api/dav_c220/kernel_operator_sync_impl.h",
+      "sha256": "8eec18a368ed2e94d931b254cfc2284932d57d490d882f35b9dc9608968d9986",
+      "bytes": 22257
+    },
+    {
+      "path": "impl/basic_api/dav_c220/kfc/kfc_comm.h",
+      "source_path": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/basic_api/dav_c220/kfc/kfc_comm.h",
+      "sha256": "1ed9af424e26e51112d337ede6e475847020f9df050d1d3d1b5893f60dc48eba",
+      "bytes": 18534
+    },
+    {
+      "path": "impl/basic_api/dav_c220/kfc/kfc_comm_client.h",
+      "source_path": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/basic_api/dav_c220/kfc/kfc_comm_client.h",
+      "sha256": "dfcf4316bc06890766addd93b3f053ffb735aeb81ea99c0db59dcbdb9f2158be",
+      "bytes": 10653
+    },
+    {
+      "path": "impl/adv_api/detail/matmul/param/matmul_cross_core_sync.h",
+      "source_path": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/param/matmul_cross_core_sync.h",
+      "sha256": "4fb3c54df6d49ddeaf34c4eca63f1d574326312f696203008ceeb22963370c43",
+      "bytes": 8836
+    },
+    {
+      "path": "impl/adv_api/detail/matmul/feature_trait/matmul_feature_trait.h",
+      "source_path": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/feature_trait/matmul_feature_trait.h",
+      "sha256": "c2a5f85fd06ec00a556c3b23b77a3609547e18799fd9ac80bb120c0206501bc0",
+      "bytes": 4705
+    },
+    {
+      "path": "impl/adv_api/detail/matmul/feature_trait/matmul_chip_cap.h",
+      "source_path": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/matmul/feature_trait/matmul_chip_cap.h",
+      "sha256": "ca4c327a2fb0dcb1723a1b3431f5e50140d45a2fad6b665ff01555d51e4d4437",
+      "bytes": 5260
+    }
+  ]
+}

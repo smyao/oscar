@@ -1,0 +1,30 @@
+{
+  "stage": "/tmp/oscar-stable-combined-fullbuild-20261015",
+  "active_stage_cwd_processes": [],
+  "owned_pid_exists": {
+    "659435": false,
+    "659473": false
+  },
+  "stage_du_kib": 537576,
+  "artifacts": {
+    "/tmp/oscar-stable-combined-fullbuild-20261015/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so": {
+      "sha256": "0471541f3f995b2a72e4a9cbd34581a2e79766f0803c0681df81a9b9bdfe0295",
+      "bytes": 531960,
+      "resolved_path": "/tmp/oscar-stable-combined-fullbuild-20261015/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so"
+    },
+    "/tmp/oscar-stable-combined-fullbuild-20261015/build/ascendc/lib/liboscar_ascend_kernels_c99db5d0175621b2.so": {
+      "sha256": "9c47d560f67ab5e4cde7b3c6d12ef7bbc78cd4733fe965b4e9af10184326d0d8",
+      "bytes": 3136632,
+      "resolved_path": "/tmp/oscar-stable-combined-fullbuild-20261015/build/ascendc/lib/liboscar_ascend_kernels_c99db5d0175621b2.so"
+    }
+  },
+  "control_rc": 0,
+  "cleanup_complete": true,
+  "host_receipts_and_hashes_verified": true,
+  "compiled_binaries_archived_on_host": false,
+  "cleanup_executed": false,
+  "safe_reclaim_without_removing_final_libraries": [
+    "/tmp/oscar-stable-combined-fullbuild-20261015/build/ascendc/CMakeFiles",
+    "/tmp/oscar-stable-combined-fullbuild-20261015/build/ascendc/auto_gen"
+  ]
+}

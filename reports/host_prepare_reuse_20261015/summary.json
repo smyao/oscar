@@ -1,0 +1,132 @@
+{
+  "status": "research_host_verified_device_unmeasured",
+  "date": "2026-10-15",
+  "scope": "host metadata audit, eager prepare reuse research, C16 short NPU gate implementation",
+  "host_tests": {
+    "passed": 71,
+    "command": ".venv/bin/python -m pytest -q tests/test_prepare_reuse.py tests/test_probe_c16_member_pipeline.py tests/test_current_attention.py tests/test_current_only_dispatch.py tests/test_mixed_decode_split.py",
+    "log": "host-tests.log",
+    "evidence": "CPU contract/ABI harness only"
+  },
+  "prepare_reuse": {
+    "decision": "research_default_off",
+    "device_allocation_delta_bytes": 0,
+    "contexts_tested": [
+      32768,
+      65536
+    ],
+    "slot_dtypes": [
+      "int32",
+      "int64"
+    ],
+    "layers_tested": 16,
+    "prepare_calls_before_after": [
+      16,
+      1
+    ],
+    "source2_suppress_before_after": [
+      16,
+      1
+    ],
+    "other_calls_unchanged_per_layer": [
+      "rotate",
+      "CV",
+      "current_FIA",
+      "merge",
+      "store",
+      "slot_guard",
+      "status_guard"
+    ],
+    "metadata_task_position_output_bytes": "equal_in_CPU_host_harness",
+    "eligibility": "real eager main prefill, same native ForwardContext/metadata/workspace/stream/geometry, no partition",
+    "invalidations": [
+      "new ForwardContext",
+      "new metadata identity",
+      "repeated layer",
+      "different stream",
+      "different geometry",
+      "current-only writer before and finally",
+      "mixed writer before and finally",
+      "capture",
+      "dummy",
+      "draft",
+      "partition"
+    ],
+    "minimum_complete_path_speedup_gate": "not_measured"
+  },
+  "structural_write_account": {
+    "condition": "N16384 Hkv1 S1, one metadata group with 16 FULL layers; source-derived bytes, not elapsed time",
+    "task_bytes_per_prepare": 6291456,
+    "before_task_bytes": 100663296,
+    "after_task_bytes": 6291456,
+    "avoided_task_bytes": 94371840,
+    "avoided_task_MiB": 90.0,
+    "avoided_position_bytes": 1966080,
+    "excluded": "slot conversion savings are not claimed for native int64 main slots; source2 temporary traffic is not fully accounted"
+  },
+  "c16_probe": {
+    "baseline": "attention_cv_window_range_cluster16_out",
+    "candidate": "attention_cv_member_pipeline_cluster16_out",
+    "Q": 672,
+    "context": 337,
+    "changed_graph_context": 593,
+    "tasks": 2016,
+    "members_per_cluster": 16,
+    "eligible_clusters": 1,
+    "expected_grouped_leaders": 16,
+    "expected_schedule_skips": 16,
+    "fixed_diagnostic_blocks": 3,
+    "fixed_virtual_columns": 10,
+    "oracle_queries": 672,
+    "errors": [
+      80,
+      96,
+      336
+    ],
+    "workspace_bytes_per_core": {
+      "attention_cv_window_range_cluster16_out": 4997120,
+      "attention_cv_member_pipeline_cluster16_out": 5652480
+    },
+    "timing_scope": "CV+merge+BF16copy; common current-source FIA excluded",
+    "source_binding": {
+      "csrc/kernels/attention_cv_member_pipeline_cluster16.cpp": "e2be8877e0a2b877bb8a9532c3940a5c6f2aa6d134cd834922a50e56477580af",
+      "csrc/kernels/attention_cv_window_range_cluster16.cpp": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+      "csrc/include/oscar_c16_member_pipeline_launch.h": "cb1bf7491486c970bfaa9966980f5674ab1ca125df3a57b13e2478c1840a4fae",
+      "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+      "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+      "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+      "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+      "csrc/kernels/attention_striped_unpack32.h": "c0aeab7e8fb9e078d37147ca411013f1c42e1547bd0a1d066ed3aece0c5514ca",
+      "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+      "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+      "csrc/kernels/attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+      "csrc/kernels/merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+      "csrc/striped_attention_bindings.cpp": "6ff47751078873a80d5dcfef17be3f9812b9863bc0398d24ee389f1a788d0818",
+      "tools/probe_c16_member_pipeline.py": "a63be85b0c4a9abd44c8062bd40a0d7e51314e96aa4ebd4cd4918152c5fd3c5d"
+    },
+    "execution": "not_run_on_NPU"
+  },
+  "frozen_kernel_sha256": {
+    "attention_cv.cpp": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+    "attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+    "store_int2.cpp": "5a6fa9619e399bb80bc0455c4426396d98510326bb899900b4b96c65d2b58506",
+    "rotate_clip_store.cpp": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+    "merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+    "status_guard.cpp": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+    "oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+  },
+  "frozen_kernels_match": true,
+  "source_sha256": {
+    "oscar_ascend/integration/impl.py": "46856a97e26d01f970393287e723bc5e7b7f146db1de537415b25447a29f8c53",
+    "oscar_ascend/integration/prepare_reuse.py": "c23fab5b7b5d19b9ad811ed8cedeb28563de58604db1ff99476a4fdb072f3474",
+    "tests/test_prepare_reuse.py": "542f18448b60c49f47f54651c9a59d108e5d85b1cffe515f1dfa25fdd5509f84",
+    "tools/probe_c16_member_pipeline.py": "a63be85b0c4a9abd44c8062bd40a0d7e51314e96aa4ebd4cd4918152c5fd3c5d",
+    "tests/test_probe_c16_member_pipeline.py": "f631625f46d88dfb098813a21918d6dc6445412d2a9dad1dc065137befbbd755"
+  },
+  "NPU": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "model_quality": "not_run",
+  "end_to_end_32K_64K_over_native": "not_established",
+  "remote_connections": false
+}

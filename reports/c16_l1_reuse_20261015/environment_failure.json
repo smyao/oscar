@@ -1,0 +1,34 @@
+{
+  "scope": "local Lima CPU-debug infrastructure, not NPU or mathematical failure",
+  "first_failed_arm": "/tmp/oscar-c16-20261015/b1-faults-cpu/bad80-candidate",
+  "first_observed_error": "OSError: [Errno 28] No space left on device in run_camodel_arm.py atomic_json stream.flush",
+  "outer_runner_exit_code": 1,
+  "child_returncode": null,
+  "child_returncode_reason": "supervisor final control write failed; last persisted state was running",
+  "last_persisted_supervisor_pid": 665791,
+  "last_persisted_child_pid": 665792,
+  "post_failure_owned_process_check": "both recorded processes absent; no live oscar_c16 or run_camodel_arm for this stage",
+  "numeric_completion": false,
+  "cause": "successful official CPU checker scratch accumulated in this task's work directories; root filesystem full",
+  "preserved_last_success": "nonzero owner candidate retained complete numeric outputs, oracle report and rc0 control; terminal checker log tail incomplete, not a complete trace claim",
+  "reclaimed": [
+    {
+      "paths": "/tmp/oscar-c16-20261015/small-cpu/*-work (four individually validated completed controls)",
+      "host_archive": "/tmp/oscar-c16-evidence-20261015.tar.gz",
+      "host_and_VM_archive_sha256": "0c0b69ccc3af4f3c3c4eb28fb84b0c88696c66f261f647c45fb217cbe3902834",
+      "preserved": "all original numeric output/control/stdout/stderr outside work; complete raw archive on host"
+    },
+    {
+      "paths": "/tmp/oscar-c16-20261015/small-faults-cpu/*-work (six individually validated completed controls)",
+      "host_archive": "/tmp/oscar-c16-faults-raw-20261015.tar.gz",
+      "host_archive_sha256": "1d13d1c23da33af1423d5f959e6805b3cb5b68e1bc0564c7b789d778b49b598b",
+      "transfer_validation": "streaming tar command exit0; gzip/tar full index read and numeric/control entries extracted successfully",
+      "preserved": "all original numeric output/control/stdout/stderr outside work; complete raw archive on host"
+    }
+  ],
+  "free_bytes_after_repair": 13285617664,
+  "retry_policy": "one environment-repaired retry with unchanged 120-second deadline, original failed control untouched",
+  "retry_report_id": "/tmp/oscar-c16-20261015/b1-faults-cpu-environment-retry1",
+  "retry_result": "bad80, bad96 and bad336 completed; exact statuses and all output/task bytes match qualified pipeline",
+  "NPU": "not_run"
+}

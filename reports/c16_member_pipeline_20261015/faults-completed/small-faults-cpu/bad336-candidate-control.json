@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "status": "completed",
+  "supervisor_pid": 663211,
+  "child_pid": 663212,
+  "child_pgid": 663212,
+  "command": [
+    "/tmp/oscar-c16-20261015/build-cpu/oscar_c16_member_pipeline_small_cpu",
+    "/tmp/oscar-c16-20261015/small-faults/bad336",
+    "/tmp/oscar-c16-20261015/small-faults-cpu/bad336-candidate",
+    "candidate"
+  ],
+  "cwd": "/tmp/oscar-c16-20261015/small-faults-cpu/bad336-candidate-work",
+  "timeout_seconds": 120.0,
+  "started_utc": "2026-10-15T09:42:39.257830+00:00",
+  "stdout_path": "/tmp/oscar-c16-20261015/small-faults-cpu/bad336-candidate-logs/stdout.log",
+  "stderr_path": "/tmp/oscar-c16-20261015/small-faults-cpu/bad336-candidate-logs/stderr.log",
+  "lock_path": "/tmp/oscar-cann-validation.lock",
+  "lock_acquired": true,
+  "timed_out": false,
+  "interrupt_signal": null,
+  "child_returncode": 0,
+  "cleanup_complete": true,
+  "cleanup_grace_seconds": 12.0,
+  "cleanup_signals": [],
+  "supervisor_returncode": 0,
+  "child_env_override_keys": [],
+  "child_started_utc": "2026-10-15T09:42:39.259004+00:00",
+  "child_elapsed_seconds": 42.461262660101056,
+  "elapsed_seconds": 42.46257709595375,
+  "finished_utc": "2026-10-15T09:43:21.720395+00:00"
+}

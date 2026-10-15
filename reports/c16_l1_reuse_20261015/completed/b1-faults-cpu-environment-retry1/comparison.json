@@ -1,0 +1,80 @@
+{
+  "status": "B1_all_three_metadata_fault_domains_bitwise_qualified",
+  "cases": {
+    "bad80": {
+      "report": {
+        "status": "passed",
+        "arm": "candidate",
+        "context": 337,
+        "bad_position": 80,
+        "clusters": 1,
+        "fault_statuses": 16,
+        "guards": true,
+        "input_immutable": true,
+        "all_status_lanes": true,
+        "oracle": "invalid_metadata_status",
+        "NPU": "not_run"
+      },
+      "hashes": {
+        "partial": "213a44b9a93d6fd0ef91031f8b90d95e8b8fd86937a5cd3dcea416878aa1b942",
+        "lse": "2878647cdf6b36420e0b3064ec956709c600dd1780a70252167d560abd0bc5b4",
+        "status": "51f05473f3af0f39307795283786106560e578658a9217acd2af02626456bad3",
+        "cluster_stats": "8dd6389b21def13aee174733ea77b589cf80e56f95dd8644022a4ab4b768d4df",
+        "tasks": "b3a3c76a48177fceefdd2d383d37433899cfcd5ec4ec2be1bd2c5ce664eb02d1"
+      },
+      "control": "/tmp/oscar-c16-20261015/b1-faults-cpu-environment-retry1/bad80-candidate-control.json",
+      "denominator_control": "/tmp/oscar-c16-20261015/small-faults-cpu/bad80-candidate-control.json"
+    },
+    "bad96": {
+      "report": {
+        "status": "passed",
+        "arm": "candidate",
+        "context": 337,
+        "bad_position": 96,
+        "clusters": 1,
+        "fault_statuses": 16,
+        "guards": true,
+        "input_immutable": true,
+        "all_status_lanes": true,
+        "oracle": "invalid_metadata_status",
+        "NPU": "not_run"
+      },
+      "hashes": {
+        "partial": "bb2e398699583359acee406cfd40d3e6b7c535a45f322acbc92bf74cd78e11cf",
+        "lse": "67cfebcd20de34327976beedff5d14813c9b7ecf27533f907914377b1164d609",
+        "status": "dd1d7b024177c35ffa5157b9bca863d7a04bf0debce358eea15bd1492dc9a0a7",
+        "cluster_stats": "8dd6389b21def13aee174733ea77b589cf80e56f95dd8644022a4ab4b768d4df",
+        "tasks": "b3a3c76a48177fceefdd2d383d37433899cfcd5ec4ec2be1bd2c5ce664eb02d1"
+      },
+      "control": "/tmp/oscar-c16-20261015/b1-faults-cpu-environment-retry1/bad96-candidate-control.json",
+      "denominator_control": "/tmp/oscar-c16-20261015/small-faults-cpu/bad96-candidate-control.json"
+    },
+    "bad336": {
+      "report": {
+        "status": "passed",
+        "arm": "candidate",
+        "context": 337,
+        "bad_position": 336,
+        "clusters": 1,
+        "fault_statuses": 16,
+        "guards": true,
+        "input_immutable": true,
+        "all_status_lanes": true,
+        "oracle": "invalid_metadata_status",
+        "NPU": "not_run"
+      },
+      "hashes": {
+        "partial": "44f92ab699d7bf9597ada6ad902abd0851c549583957da01e5e09ff050f4613f",
+        "lse": "f0b001d66c7ded2af45377b097270cd32df7d38b1e4745f13ac2ab3be752c4dc",
+        "status": "51f05473f3af0f39307795283786106560e578658a9217acd2af02626456bad3",
+        "cluster_stats": "8dd6389b21def13aee174733ea77b589cf80e56f95dd8644022a4ab4b768d4df",
+        "tasks": "b3a3c76a48177fceefdd2d383d37433899cfcd5ec4ec2be1bd2c5ce664eb02d1"
+      },
+      "control": "/tmp/oscar-c16-20261015/b1-faults-cpu-environment-retry1/bad336-candidate-control.json",
+      "denominator_control": "/tmp/oscar-c16-20261015/small-faults-cpu/bad336-candidate-control.json"
+    }
+  },
+  "source_sha256": "e2be8877e0a2b877bb8a9532c3940a5c6f2aa6d134cd834922a50e56477580af",
+  "NPU": "not_run",
+  "performance": "not_measured"
+}

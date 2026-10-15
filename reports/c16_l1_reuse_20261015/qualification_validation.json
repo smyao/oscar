@@ -1,0 +1,30 @@
+{
+  "status": "archived_complete_three_arm_evidence_verified",
+  "method": "read archived control/completion/report/profile plus strict original-runner and production-source byte checks; no new VM run",
+  "arms": [
+    "stable",
+    "pipeline",
+    "B1"
+  ],
+  "profiles_each": {
+    "task": 1,
+    "AIC": 20,
+    "AIV": 40
+  },
+  "all_profile_durations_positive_and_exact": true,
+  "all_exit_codes_zero_cleanup_complete": true,
+  "same_library_inputs_oracle_config": true,
+  "all_output_hashes_equal": {
+    "partial": "84b48805f7608b841c1214424d51920a2856862dbf8bef8732f76c1806382bcb",
+    "lse": "4456275453a10362ca799ccbca32d62a0a4ede0eaa75a2499b38c05a63b51d28",
+    "status": "05bf9d87a6313c41625d93de63e30bc39be25e54b472f17e99d78cf12fccb3da",
+    "cluster_stats": "9f283b0c3771cac7cb50df9a885703f7eb104e0c931379aecd808294909e9eb7"
+  },
+  "output_hash_source": "original runner checked saved actual numerical outputs before comparison; large binaries retained locally, excluded from submission",
+  "only_config_change": "LOG.core_enable_mask=['0x0']",
+  "config_stars_bytes_unchanged": true,
+  "original_runner_bound": true,
+  "polling_FD_mutation_absent": true,
+  "production_pipeline_matches_fixed_generator": true,
+  "scope": "single KV CV kernel only; no hardware/graph/fullchain/32K64K claim"
+}

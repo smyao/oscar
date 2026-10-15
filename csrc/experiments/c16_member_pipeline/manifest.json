@@ -1,0 +1,47 @@
+{
+  "baseline": {
+    "arm": "baseline",
+    "symbol": "oscar_c16_member_pipeline_baseline_kernel",
+    "source_sha256": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+    "H32_source_sha256": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+    "generated_sha256": "595cf959a3db8a8a9c44643771ba44e7092fb5a4d32c933d2fcff86b0739aa51",
+    "mother_bytes_restored": true,
+    "unchanged_qualified_methods": {},
+    "workspace_per_core": 4997120,
+    "explicit_UB_per_AIV": 157632,
+    "production": false,
+    "validation": "not_executed"
+  },
+  "candidate": {
+    "arm": "candidate",
+    "symbol": "oscar_c16_member_pipeline_candidate_kernel",
+    "source_sha256": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+    "H32_source_sha256": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+    "generated_sha256": "f70e90fe6c9a6b63a9a676e9d0761f85b62d68ba0eb02b625d8ea3a7b3eb456e",
+    "mother_bytes_restored": true,
+    "unchanged_qualified_methods": {
+      "Matmul": "4eb0f86e3859c6723b3a89e093dd4111ec9a33c8b5f95c76173b293d6d6fb966",
+      "MatmulAtomic": "fe0222c25749cb923f24a3760203b0558e40f416e7e49ac069713d0c60897dbb",
+      "LoadQueries": "83e895d1a36e1664454a0dfbd57a332b28684aef5759f45c71858ad257a633bb",
+      "LoadPacked": "507378eac8a630f5f1bb77941713f7cdc6e2ea7f5fa9aed20fcf77d80dcbfed7",
+      "Unpack": "3b1fc4a5438b64d822d03d35680b00bab2ff3103189fc512cafcb0d67abee543",
+      "PublishHistoryKv": "6897620c020991d44e95387d8731e8171d240e63fcb3807a44c3b10b123743f7",
+      "LoadWindowRuns": "f989d4375cbb2c527196a0bdb69b7d9896bc39c15e6f620e301a1d80d0e60c4a",
+      "LoadPrecise": "c9f1b950bac149f0bd51b1640935dd366eba20f716bfe23cf6540db547706195",
+      "PublishKv": "36d6d5a1afa891c9bb50278d4b61b6c90c34eda48aa454077b6c639d5a3f445a",
+      "Softmax": "744a23b22c002fcecd52a721e3f296ef86400589f4718b3e3491620acb205c18",
+      "VectorTask": "b96d98befe7c5edea7b994a757f1450052f7da474a5d962da055b3030cbc7cce",
+      "SpillState": "6a2498d564214106d8d9b29e5c813b9648d9266e9b5c17db015618e21cf159de",
+      "RestoreState": "b107c458c9ad128345b906fefb56ce5d0876dc0d7ea2e16e09f96c27f197c54a",
+      "LoadClusterKv": "c7468f940d0f7df183e4c16c13e32608541c5c19e6afba654ea5e8777d51909f",
+      "PublishRows": "594d0ec4a107f8e5518898edf44716bbb71c69d2838fcd048cedc5c3379b5ba3",
+      "PublishEmpty": "e390823bf3ef3b344d209377bb35d85fd2b05528d4791bd616296b7947317d39",
+      "PublishStatus": "8cf3e72f4e3310b936ca1b598640e88975c9de5b1c7f338f537c93a8b041df0e",
+      "TaskValid": "7481c444f2920371efab70d03ca0468706f19f5f3187eb62ce5580f838eaa320"
+    },
+    "workspace_per_core": 5652480,
+    "explicit_UB_per_AIV": 157760,
+    "production": false,
+    "validation": "not_executed"
+  }
+}

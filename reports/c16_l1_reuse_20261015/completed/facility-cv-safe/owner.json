@@ -1,0 +1,6 @@
+{
+  "pid": 671590,
+  "pgid": 671590,
+  "output": "/tmp/oscar-c16-20261015/facility-cv-safe",
+  "script": "/dev/shm/oscar-decode-overlap-20261011/csrc/experiments/window_batch_decode/replay_camodel.py"
+}

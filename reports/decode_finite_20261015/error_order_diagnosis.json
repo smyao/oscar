@@ -1,0 +1,52 @@
+{
+  "status": "original_baseline_error_chain_resolved",
+  "original_expected": 2,
+  "actual_baseline_status": 3,
+  "input_qr_first_float_bits": "0x7fc00000",
+  "ordered_observations": [
+    {
+      "method": "LoadQueries",
+      "sum": "NaN",
+      "error": 2
+    },
+    {
+      "method": "Softmax",
+      "start": 64,
+      "sum": 21.2385,
+      "error": 2
+    },
+    {
+      "method": "CommitPrefetchErrors",
+      "before": 2,
+      "pending_K": [
+        3,
+        0
+      ],
+      "pending_V": [
+        0,
+        0
+      ],
+      "after": 3
+    },
+    {
+      "method": "Softmax",
+      "start": 320,
+      "sum": 0.636029,
+      "error": 3
+    },
+    {
+      "method": "HistoryVectorTask normalization",
+      "sum": 24.8919,
+      "entering_error": 3
+    }
+  ],
+  "corrected_coverage": "query validation error2 then next metadata error3; not nonfinite-score full-path witness",
+  "correction_does_not_change_inputs_or_acceptance_tolerances": true,
+  "added_actual_method_cases": [
+    "score NaN overwrites incoming3 to2",
+    "same score NaN followed by exact Commit metadata3"
+  ],
+  "scope": "official CPU-debug observation; target NPU NaN behavior is not inferred",
+  "original_failed_receipts_preserved": true,
+  "performance": "not_measured"
+}

@@ -1,0 +1,10 @@
+{
+  "manifest_sha256": "0b1cde4ee3e2e0d2776c791f489a0977a1da971f68c5ba25085f42bcd76c7cfb",
+  "generator_sha256": "2ed49418c7a291b17d0abfd9450dda114b68cac4883e5b13b2f577ddfc2c4e05",
+  "sources": {
+    "q4_baseline.cpp": "531b60a02337e661a3b02fe7d2e71570495df5de12da963c2bbb9b14e554580d",
+    "q4_candidate.cpp": "dd732015252328efef1befc66895d27a99d9efd516935841dd775f17329eb5c1",
+    "q1_baseline.cpp": "097aa6ea720ce2496ba8a4bab0b7fc1f5be326ff293cd7cefe54e9dfff2bc269",
+    "q1_candidate.cpp": "621472072929fb00830152b04501833859c6823d3eab376b4cb6d6b5dd952d7a"
+  }
+}

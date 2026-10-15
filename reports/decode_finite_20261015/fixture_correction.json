@@ -1,0 +1,34 @@
+{
+  "q4": {
+    "all_original_inputs_bit_identical": true,
+    "only_changed_file": [
+      "required_status_checks.bin"
+    ],
+    "old_status": [
+      0,
+      0,
+      2
+    ],
+    "corrected_status": [
+      0,
+      0,
+      3
+    ]
+  },
+  "q1": {
+    "all_original_inputs_bit_identical": true,
+    "only_changed_file": [
+      "required_status_checks.bin"
+    ],
+    "old_status": [
+      0,
+      0,
+      2
+    ],
+    "corrected_status": [
+      0,
+      0,
+      3
+    ]
+  }
+}

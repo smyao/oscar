@@ -1,0 +1,66 @@
+{
+  "original_manifest_case_unmodified": {
+    "name": "q4_finite_double_fault",
+    "mode": "q4",
+    "path": "/private/tmp/oscar-decode-finite-fixtures-20261015/q4_finite_double_fault",
+    "cores": 1,
+    "run_default": true,
+    "expected_error": true,
+    "fault": "current_score_next_metadata",
+    "required_status_checks": [
+      [
+        0,
+        0,
+        2
+      ]
+    ],
+    "input_sha256": "beb5462d3b0432f9666687d9b32e3f5fc8e96407e4d2d2aa6a5d658cf5d39951",
+    "actual_tokens": 8,
+    "padded_tokens": 8,
+    "hkv": 1,
+    "ring_tokens": 259,
+    "source_work": {
+      "kv256_units": {
+        "history": 4,
+        "window": 4,
+        "current": 2
+      },
+      "nonempty_tasks": {
+        "history": 2,
+        "window": 2,
+        "current": 2
+      },
+      "task_slots": 24,
+      "scope": "exact_source_bounds_and_query_owners_not_device_time"
+    },
+    "input_bytes": {
+      "q": 24576,
+      "qr": 49152,
+      "ck": 4096,
+      "cv": 4096,
+      "rv": 262144,
+      "raw": 278592,
+      "table": 48,
+      "wk": 661504,
+      "wv": 661504,
+      "tags": 10336,
+      "starts": 12,
+      "lens": 8,
+      "slots": 64,
+      "raw_striped": 278592,
+      "rv_nz": 262144
+    },
+    "measurement_scope": "bounded_fixture"
+  },
+  "qr_first_float_bits_hex": "0000c07f",
+  "qr_sha256": "757b2483547f8c2a55fdbcfe1cab925f50edb937a091d49d27575bb6bcda5ad2",
+  "required_status_sha256": "845c35898d2cf4c1a70d3ed5cc85ccc2366c5acbfbdb1d91829efee5a4f30394",
+  "original_exact_status_check": [
+    0,
+    0,
+    2
+  ],
+  "this_expectation_failed_original_baseline": true,
+  "corrected_expectation_and_actual_error_chain": "../error_order_diagnosis.json",
+  "all_other_input_bytes_preserved_in_corrected_fixture": true
+}

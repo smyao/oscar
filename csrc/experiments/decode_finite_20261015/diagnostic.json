@@ -1,0 +1,25 @@
+{
+  "original_baseline_sha256": "531b60a02337e661a3b02fe7d2e71570495df5de12da963c2bbb9b14e554580d",
+  "diagnostic_sha256": "95b150372d2de92bf758597314ae408dd83b3f52de405f4a0905c2485dc3d074",
+  "checker_sha256": "5910be8219b3a3c09de0fb3760d131b81913da697176694177e59ef7bf82f2e3",
+  "changes": {
+    "LoadQueries": {
+      "original": "19715c07c7b8f0fb56523219597c3057adf147fac66d07a773de08fed5289731",
+      "diagnostic": "56bd997d28ea96b6aef47b0b6ff4e96ce0818380b1e364aaa0789ef5492dba87"
+    },
+    "Softmax": {
+      "original": "d3b684ef21c9427b2356f17eb32d962a85b6e2ce7dc0ec811e45d04bacdbf5ac",
+      "diagnostic": "3388157a43c39b48b5d7cde880a0e66ec5899d622073960b163d39bcd60e9727"
+    },
+    "CommitPrefetchErrors": {
+      "original": "e8c1c9b7b27e6a6c5b906c3f210da14f2eec345e44835edcefa79690f529e0f5",
+      "diagnostic": "b8ad6a24ccad95f097f28d177e92c967b2c7100c2156b417f7929114aad034e4"
+    },
+    "HistoryVectorTask": {
+      "original": "02270e177a13b5bb4d886b111d0abbb2466956658c3494ec857e2f0a478d2dfd",
+      "diagnostic": "02e5632a443c33324eb16780d71781fa702f23214eef37e9d19ea09c358d89a7"
+    }
+  },
+  "scope": "CPU-only scalar error-order diagnosis, never performance",
+  "new_math_or_barriers": false
+}

@@ -41,5 +41,15 @@
     "seconds": 12.03,
     "log": "reports/stable_32k_64k_20261015/b1-anchor-host-tests.log"
   },
-  "per_point_rule_20261015": "user accepts incremental net gains; complete-path device non-regression 1.0, unchanged precision"
+  "per_point_rule_20261015": "user accepts incremental net gains; complete-path device non-regression 1.0, unchanged precision",
+  "final_loop_host_suite": {
+    "passed": 440,
+    "skipped": 8,
+    "subtests_passed": 4,
+    "seconds": 13.53,
+    "scope": "host only; skips duplicate large-route parameter combinations",
+    "log": "reports/stable_32k_64k_20261015/final-loop-host-tests.log"
+  },
+  "final_loop_CANN": "reports/stable_loop_fullbuild_20261015/summary.json",
+  "final_state": "main_candidate_ready_for_user_validation; native_32K_64K_gt30pct_not_established"
 }

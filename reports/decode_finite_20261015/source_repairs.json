@@ -1,0 +1,50 @@
+{
+  "initial_stage_preserved": true,
+  "changes": {
+    "csrc/experiments/decode_finite_20261015/finite_probe/manifest.json": {
+      "staged_original": "74bf7cc04cec8cf33ad2697ab60fe5822382d8ab49aa2c54f77d19cec9c3f577",
+      "current": "d8bdc2c0a134cc2dc7860a64422907166176673ead2ae54d1a1f2102aad3a217"
+    },
+    "csrc/experiments/decode_finite_20261015/generate.py": {
+      "staged_original": "7beb48be1483889fc453fe6b109b817c22b499f6b17c5a7a241ef974da555d08",
+      "current": "2ed49418c7a291b17d0abfd9450dda114b68cac4883e5b13b2f577ddfc2c4e05"
+    },
+    "csrc/experiments/decode_finite_20261015/harness.json": {
+      "staged_original": "eadf37b7ccde5e1236d5c8114dea00b938eb39da0b3b37c0575945fe201417a3",
+      "current": "6e845b5374ee73ecfad8564e7aea76780cd23d424d8217a2d642b42665243e0e"
+    },
+    "csrc/experiments/decode_finite_20261015/harness.py": {
+      "staged_original": "f1aa6130f55fd18e66074d566a4f5b30889bab7c87f67d3e07e012d60dc7baef",
+      "current": "fc7dd8933629db843d9248808e716a63012f712822cb6c65be97149a7b7ece63"
+    },
+    "csrc/experiments/decode_finite_20261015/manifest.json": {
+      "staged_original": "1d67a26999838bf7f38a74b7449a7a56e959567a2e40ed7ab9e4dd86394fc9ca",
+      "current": "0b1cde4ee3e2e0d2776c791f489a0977a1da971f68c5ba25085f42bcd76c7cfb"
+    },
+    "csrc/experiments/decode_finite_20261015/probe.cpp": {
+      "staged_original": "bf3b9ca801b5e0a25efb2b2053cb0778c5d2ea7be5744378d28c8506c9dc03ef",
+      "current": "667ff4de1290657bca35633d3da0c081147123289b524f102e3bc8b25c2025ef"
+    },
+    "csrc/experiments/decode_finite_20261015/q1_baseline.cpp": {
+      "staged_original": "6cc5e620f283277398448ecb29100c0a38e293acb10cf348742227a1539337a7",
+      "current": "097aa6ea720ce2496ba8a4bab0b7fc1f5be326ff293cd7cefe54e9dfff2bc269"
+    },
+    "csrc/experiments/decode_finite_20261015/q1_candidate.cpp": {
+      "staged_original": "20ae62144aabd5b4a9cf58b1ec4423304b292edd0a2fb5f85b22819a6848e864",
+      "current": "621472072929fb00830152b04501833859c6823d3eab376b4cb6d6b5dd952d7a"
+    },
+    "csrc/experiments/decode_finite_20261015/q4_baseline.cpp": {
+      "staged_original": "cf67ccb2553ad16b5627bfefa140f885df4609d27b0f1973b9309be216931a9e",
+      "current": "531b60a02337e661a3b02fe7d2e71570495df5de12da963c2bbb9b14e554580d"
+    },
+    "csrc/experiments/decode_finite_20261015/q4_candidate.cpp": {
+      "staged_original": "42f58b1655e7f71a4f3fba1dd317d48c14677d302fa2f287a09559193ab7df6f",
+      "current": "dd732015252328efef1befc66895d27a99d9efd516935841dd775f17329eb5c1"
+    }
+  },
+  "reasons": [
+    "relocate project headers only; preserve SDK quote include paths (pre-execution compile failure)",
+    "checker diagnostic receipt saves actual baseline status before unchanged expected-code assertion"
+  ],
+  "production_kernel_sources_unchanged": true
+}

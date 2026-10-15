@@ -1,0 +1,6 @@
+{
+  "pid": 680145,
+  "pgid": 680145,
+  "output": "/tmp/oscar-decode-finite-20261015/reports/q4-camodel/baseline",
+  "script": "/tmp/oscar-decode-finite-20261015/csrc/experiments/decode_finite_20261015/run.py"
+}

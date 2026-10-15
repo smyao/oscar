@@ -1,0 +1,18 @@
+{
+  "status": "no_blocking_source_integration_findings",
+  "reviewer": "independent decode_cost agent",
+  "reviewed_commit": "b0f09e69f69d8d99ff17d9374975d0d8459b9744",
+  "checks": [
+    "real q4/q1/C4/C16 selection and capability requirements",
+    "preprofile NZ Rv allocation only for hybrid; natural Rv preserved elsewhere",
+    "shared workspace and C16 binding7487488B/core agree",
+    "native metadata/ForwardContext/stream/span ownership and alternate-writer invalidation",
+    "per-layer guards, CV, rotate, FIA, merge and store retained",
+    "Q Batch8 same ABI and existing full8/tail/error/changed-input graph gate",
+    "all7 FE0 and target/acceptance/complete stable argv unchanged"
+  ],
+  "scope": "source integration only; final q4 source has separate q4_production_review.json",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "model_performance": "not_established"
+}

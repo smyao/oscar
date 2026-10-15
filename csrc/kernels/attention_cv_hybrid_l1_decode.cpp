@@ -1,3 +1,14 @@
+// Qualified q4 finite-readback candidate; no new buffer. Archive #126/#134/#140/#145/#148/#154-157.
+// D.4 complete original logs read; four questions:
+// 1. Fused FIA per-row finite-check V->S synchronization only.
+// 2. Historical full recovery6499.8-6655.1ms/store209-215ms are forbidden
+//    failure bounds, never current phase shares; no history restoration.
+// 3. Fully-visible kind0 KV256 retains every original FP32 ReduceSum/order,
+//    tmp[16], PIPE_V and finite/error decisions. Dead natural UB stores one
+//    result/32B; read after one V_S and finish S_V before alpha reuse.
+//    Partial/precise/empty paths, future-error commit and all flags unchanged.
+// 4. Zero new GM/UB/L1; full independent q4/q1 multi-KV CPU/CAModel pairs
+//    and actual-method exceptional cases required. No NPU/graph/E2E claim.
 // Qualified hybrid L1 q4 candidate; NPU/graph gates pending. Archive #126/#129/#140/#145/#148/#154-157.
 // D.4 complete original logs reread; four questions:
 // 1. Fused history dequant+FIA and precise-source Cube input delivery.
@@ -539,6 +550,23 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     const int64_t sinkCount=Min64(g.sink,context);
     const int64_t firstPosition=context+qbegin-requestBegin;
     const int64_t tailBegin=Min64(context,Max64(g.sink,firstPosition+1-g.recent));
+    const int64_t earliestPosition=context+qbegin+rowBase/group-requestBegin;
+    const int64_t earliestCut=Max64(g.sink,earliestPosition+1-g.recent);
+    const bool fullyVisibleHistory=kind==0 && jEnd==kKvRows && start>=g.sink &&
+        tileEnd<=Min64(context,Min64(earliestCut,earliestPosition+1));
+    if(fullyVisibleHistory) {
+      // Next K publication completed before Softmax. Packed next V and
+      // pending errors live elsewhere; natural UB is dead until alpha Brcb.
+      auto finiteSums=naturalBuf.Get<float>(kHalfRows*8);
+      for(int32_t r=0;r<activeRows;++r) {
+        PipeBarrier<PIPE_V>();
+        ReduceSum(finiteSums[r*8],scores[r*kKvRows],tmp[16],kKvRows);
+      }
+      Fence<HardEvent::V_S>();
+      for(int32_t r=0;r<activeRows;++r)
+        if(!Finite(finiteSums.GetValue(r*8)))error=2;
+      Fence<HardEvent::S_V>();
+    } else {
     for(int32_t r=0;r<activeRows;++r) {
       const int64_t row=rowBase+r;
       const int64_t position=context+qbegin+row/group-requestBegin;
@@ -571,6 +599,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
         oscar_range_mask::MaskComplement(scores[r*kKvRows],lo0,hi0,lo1,hi1);
         Fence<HardEvent::V_S>();
       }
+    }
     }
     // The two 16-row max/sum arrays persist across KV work units. Shared
     // 16-row input arrays let CANN's FP32 WITHOUT_BRC V2 update one score

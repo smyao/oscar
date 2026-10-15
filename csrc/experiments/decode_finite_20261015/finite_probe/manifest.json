@@ -1,0 +1,40 @@
+{
+  "q4_baseline.cpp": {
+    "source_sha256": "531b60a02337e661a3b02fe7d2e71570495df5de12da963c2bbb9b14e554580d",
+    "Softmax_sha256": "d3b684ef21c9427b2356f17eb32d962a85b6e2ce7dc0ec811e45d04bacdbf5ac",
+    "AddVisibleRange_sha256": "ae76b74695c9020f4e2e4825d2b96abf09e8a2f95045e922254a453936c9031f",
+    "CommitPrefetchErrors_sha256": "ebea430925742d8e239a67f5ad914ddd7c3074870499a0e9b9e31010c1ffb074",
+    "extracted_methods_exact": true,
+    "probe_sha256": "57ac7c5f5a4aa6b21bc2f70f39b6b9118d76e73420b33917cadecb5c86d84876"
+  },
+  "q4_candidate.cpp": {
+    "source_sha256": "dd732015252328efef1befc66895d27a99d9efd516935841dd775f17329eb5c1",
+    "Softmax_sha256": "48732b5d14ee8e62a989059a8bc80644ceb8bf135b326a760af7a39d17894e6d",
+    "AddVisibleRange_sha256": "ae76b74695c9020f4e2e4825d2b96abf09e8a2f95045e922254a453936c9031f",
+    "CommitPrefetchErrors_sha256": "ebea430925742d8e239a67f5ad914ddd7c3074870499a0e9b9e31010c1ffb074",
+    "extracted_methods_exact": true,
+    "probe_sha256": "33b76a1e46ef833d03fcd94194abda51b465aa4d0b3dd7dae09230473510fde9"
+  },
+  "q1_baseline.cpp": {
+    "source_sha256": "097aa6ea720ce2496ba8a4bab0b7fc1f5be326ff293cd7cefe54e9dfff2bc269",
+    "Softmax_sha256": "d3b684ef21c9427b2356f17eb32d962a85b6e2ce7dc0ec811e45d04bacdbf5ac",
+    "AddVisibleRange_sha256": "ae76b74695c9020f4e2e4825d2b96abf09e8a2f95045e922254a453936c9031f",
+    "CommitPrefetchErrors_sha256": "ebea430925742d8e239a67f5ad914ddd7c3074870499a0e9b9e31010c1ffb074",
+    "extracted_methods_exact": true,
+    "probe_sha256": "963a5cf9df2476aa1ed40542e3e9f4ee8b2656e8868d0d69a24fda104c1c7c53"
+  },
+  "q1_candidate.cpp": {
+    "source_sha256": "621472072929fb00830152b04501833859c6823d3eab376b4cb6d6b5dd952d7a",
+    "Softmax_sha256": "48732b5d14ee8e62a989059a8bc80644ceb8bf135b326a760af7a39d17894e6d",
+    "AddVisibleRange_sha256": "ae76b74695c9020f4e2e4825d2b96abf09e8a2f95045e922254a453936c9031f",
+    "CommitPrefetchErrors_sha256": "ebea430925742d8e239a67f5ad914ddd7c3074870499a0e9b9e31010c1ffb074",
+    "extracted_methods_exact": true,
+    "probe_sha256": "8844fd66e3c4933693a62c5b327b012080e2e3a97aca1bac7436fc8406f1e183"
+  },
+  "main.cpp": {
+    "template_sha256": "59591a1908c42e51f6beddf63d36ecfbfce41ce3543b3f98768cc59ca4cdd900",
+    "generated_sha256": "b95c0bd58cf4a62db7523d7f11553e2fb4f3a2315530b354986ec1d54ef32440",
+    "cases_per_family": 15,
+    "scope": "actual Softmax exceptional values, active6/16/8/0 rows, original precise fallback, exact Commit error order"
+  }
+}

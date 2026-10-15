@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "check": "python3 -m csrc.experiments.decode_finite_20261015.generate --check",
+  "SDK_snapshots_present": false,
+  "immutable_old_production_denominators_present": true,
+  "new_production_q4_source_required": false,
+  "stdout": "{\"status\": \"checked\", \"production_changed\": false}",
+  "scope": "all four exact generated sources from minimal listed files, no SDK or original production .cpp needed"
+}

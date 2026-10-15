@@ -182,7 +182,7 @@ def test_packaging_restores_qualified_source_and_rejects_drift(tmp_path):
     from tools import package_hybrid_l1_decode as package
     report=package.package(check=True)
     assert report['inverse_full_source_bytes']
-    assert report['source_sha256']=='78a21cd466b1eff15991c1b6a1095402dfab2ed4c919b6a58536cad6ed2c56b1'
+    assert report['source_sha256']=='dd732015252328efef1befc66895d27a99d9efd516935841dd775f17329eb5c1'
     assert report['workspace_bytes_per_core_D256']==probe.WORKSPACE
     source=(package.ROOT/package.TARGET).read_text()
     assert 'OSCAR_CV_RUN(1)' not in source

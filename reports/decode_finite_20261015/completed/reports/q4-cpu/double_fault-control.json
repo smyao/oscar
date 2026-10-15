@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "status": "failed",
+  "supervisor_pid": 679279,
+  "child_pid": 679280,
+  "child_pgid": 679280,
+  "command": [
+    "/tmp/oscar-decode-finite-20261015/build/cpu/oscar_decode_finite_cpu",
+    "q4",
+    "/tmp/oscar-decode-finite-20261015/fixtures/q4_finite_double_fault",
+    "/tmp/oscar-decode-finite-20261015/exports/q4_finite_double_fault"
+  ],
+  "cwd": "/tmp/oscar-decode-finite-20261015/reports/q4-cpu/double_fault-work",
+  "timeout_seconds": 120.0,
+  "started_utc": "2026-10-15T13:50:58.814585+00:00",
+  "stdout_path": "/tmp/oscar-decode-finite-20261015/reports/q4-cpu/double_fault-logs/stdout.log",
+  "stderr_path": "/tmp/oscar-decode-finite-20261015/reports/q4-cpu/double_fault-logs/stderr.log",
+  "lock_path": "/tmp/oscar-cann-validation.lock",
+  "lock_acquired": true,
+  "timed_out": false,
+  "interrupt_signal": null,
+  "child_returncode": 1,
+  "cleanup_complete": true,
+  "cleanup_grace_seconds": 12.0,
+  "cleanup_signals": [],
+  "supervisor_returncode": 1,
+  "child_env_override_keys": [],
+  "child_started_utc": "2026-10-15T13:50:58.815833+00:00",
+  "child_elapsed_seconds": 6.5853722570464015,
+  "elapsed_seconds": 6.586697397986427,
+  "finished_utc": "2026-10-15T13:51:05.401270+00:00"
+}

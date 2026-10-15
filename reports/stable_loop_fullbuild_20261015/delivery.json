@@ -1,0 +1,82 @@
+{
+  "status": "fresh_build_passed",
+  "signature": "724c686765e8891406841744c3abd8f203abb90266347a542b202f635cce47d3",
+  "files": [
+    {
+      "path": "reports/stable_loop_fullbuild_20261015/summary.json",
+      "bytes": 2614,
+      "sha256": "74a01d642f5aaf232dacbf5964c2bebe4ed9bd47bdfd3ed5c297d61242d8cc7f"
+    },
+    {
+      "path": "reports/stable_loop_fullbuild_20261015/driver.py",
+      "bytes": 9448,
+      "sha256": "be68bd1d57c928a9e15c695f3a467f90a2beced4c653958d5a3a79166567b0a6"
+    },
+    {
+      "path": "reports/stable_loop_fullbuild_20261015/source_stage.json",
+      "bytes": 14375,
+      "sha256": "4f8f173a7429d99816756517aa32ef4c2b253bbc6ca031391a7367c7e2dddbc3"
+    },
+    {
+      "path": "reports/stable_loop_fullbuild_20261015/completed/source_verification.json",
+      "bytes": 13811,
+      "sha256": "594d6be595ae8c870221d6f0c4a07707b44933d16eba9f15bc0b1994fd377b6d"
+    },
+    {
+      "path": "reports/stable_loop_fullbuild_20261015/completed/collection_status.json",
+      "bytes": 319,
+      "sha256": "bcd6d25b007c12027a2b4a1d7dca12f6677ab1ba9e368cf9274a030bbec3e065"
+    },
+    {
+      "path": "reports/stable_loop_fullbuild_20261015/completed/reports/fullbuild-control.json",
+      "bytes": 1219,
+      "sha256": "1bd4b6e78fd08a68404519d8cd200fe4be16b429f6fcc65ef0b4e1882969f340"
+    },
+    {
+      "path": "reports/stable_loop_fullbuild_20261015/completed/reports/build.json",
+      "bytes": 9774,
+      "sha256": "6bd863111fd49ea5dc76ed8d3cf0e5ad0b2c8dd66844303754ec4c51d1c9460d"
+    },
+    {
+      "path": "reports/stable_loop_fullbuild_20261015/completed/reports/fullbuild-phases/configure-1.json",
+      "bytes": 970,
+      "sha256": "20c4be1332d20c9af4c27bb219189d9749ffe405b5a6dc98a9e33346497a33ca"
+    },
+    {
+      "path": "reports/stable_loop_fullbuild_20261015/completed/reports/fullbuild-phases/compile-1.json",
+      "bytes": 383,
+      "sha256": "a7c39585af3edadf6fc24ccbaebbfd8bfc0c3042cbb087265764196f4b5c787f"
+    },
+    {
+      "path": "reports/stable_loop_fullbuild_20261015/completed/build/ascendc/build_manifest.json",
+      "bytes": 2695,
+      "sha256": "274660807a9c62c3b06ecd467e01ca6e0e65d48018cf26e4e6ba1b6c15571478"
+    },
+    {
+      "path": "reports/stable_loop_fullbuild_20261015/completed/build/ascendc/oscar_build_signature.json",
+      "bytes": 9774,
+      "sha256": "6bd863111fd49ea5dc76ed8d3cf0e5ad0b2c8dd66844303754ec4c51d1c9460d"
+    },
+    {
+      "path": "reports/stable_loop_fullbuild_20261015/collection_transport.json",
+      "bytes": 57,
+      "sha256": "a15bfda24acd8f30429db27c9021763bc8ed37a9ddd21236bb597377ad7aaf3b"
+    },
+    {
+      "path": "reports/stable_loop_fullbuild_20261015/sandbox_stage_attempt.json",
+      "bytes": 521,
+      "sha256": "41f835d409c36fd682e784e7fb77c40af155196c7e4506dc43ef9163c178b45a"
+    }
+  ],
+  "total_delivery_bytes": 65960,
+  "full_logs_preserved": [
+    "completed/reports/fullbuild-supervisor-logs/stdout.log",
+    "completed/reports/fullbuild-supervisor-logs/stderr.log",
+    "completed/reports/fullbuild-phases/configure-1.log",
+    "completed/reports/fullbuild-phases/compile-1.log"
+  ],
+  "raw_archive_local_only": "collection.tar",
+  "binaries": "retained only in owned VM stage; not proposed for git delivery",
+  "driver_update": "preflight.json retains preview hash; final driver.py only adds failure-safe collection and actual_VM_source_hash verification, start/build/source list unchanged",
+  "NPU": "not_run"
+}

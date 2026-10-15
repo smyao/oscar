@@ -1,0 +1,10 @@
+{
+  "scope": "host sandbox execution before successful authorized Lima access",
+  "command": ".venv/bin/python /tmp/oscar_stable_loop_fullbuild_20261015.py stage",
+  "exit_code": 1,
+  "VM_stage_created": false,
+  "error": "RuntimeError: failed to read sysctl sysctl.proc_translated: operation not permitted; Bad port 0",
+  "subsequent_action": "same stage command granted require_escalated access and completed; no production source or build policy changed",
+  "CANN_compile_attempt": false,
+  "target_accessed": false
+}

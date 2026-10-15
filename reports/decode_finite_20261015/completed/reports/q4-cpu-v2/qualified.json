@@ -1,0 +1,161 @@
+{
+  "family": "q4",
+  "source_manifest_sha256": "0b1cde4ee3e2e0d2776c791f489a0977a1da971f68c5ba25085f42bcd76c7cfb",
+  "finite_probe_manifest_sha256": "791b3b60031dd3dcb0285d946ff37bcb42431fd29c5552526425b90c59d32f62",
+  "cases": [
+    {
+      "case": "q4_finite_cpu",
+      "result": {
+        "backend": "ascendc_cpu_debug",
+        "op": "finite_readback_q4",
+        "status": "passed",
+        "baseline": "current_production_hybrid_q4_or_MDL_q1",
+        "bitwise": true,
+        "oracle": true,
+        "fault_order": false,
+        "cores": 1,
+        "input_immutable": true,
+        "gm_guards": true,
+        "baseline_workspace_bytes_per_core": 1146880,
+        "candidate_workspace_bytes_per_core": 1146880
+      },
+      "control": "/tmp/oscar-decode-finite-20261015/reports/q4-cpu-v2/cpu-control.json",
+      "elapsed_seconds": 12.978818768053316
+    },
+    {
+      "case": "q4_finite_query_metadata",
+      "result": {
+        "backend": "ascendc_cpu_debug",
+        "op": "finite_readback_q4",
+        "status": "passed",
+        "baseline": "current_production_hybrid_q4_or_MDL_q1",
+        "bitwise": true,
+        "oracle": false,
+        "fault_order": true,
+        "cores": 1,
+        "input_immutable": true,
+        "gm_guards": true,
+        "baseline_workspace_bytes_per_core": 1146880,
+        "candidate_workspace_bytes_per_core": 1146880
+      },
+      "control": "/tmp/oscar-decode-finite-20261015/reports/q4-cpu-v2/query_metadata-control.json",
+      "elapsed_seconds": 13.188637807033956
+    },
+    {
+      "case": "q4_finite_long",
+      "result": {
+        "backend": "ascendc_cpu_debug",
+        "status": "prepared_only",
+        "attention_numerics": "not_run",
+        "positions": "passed",
+        "gm_guards": true,
+        "all_tasks_exported": true
+      },
+      "control": "/tmp/oscar-decode-finite-20261015/reports/q4-cpu-v2/long-control.json",
+      "elapsed_seconds": 0.11360086698550731
+    }
+  ],
+  "library_sha256": "adb66241324b1f27b8c5b01c0e7be1e01ba10a82c67e8f28733d7e6023e35623",
+  "CPU_debug_executable_sha256": "9ddee841a31cd3236f2178dfc8534a0f8010177242e85d2955a9887ff6f83d1d",
+  "actual_methods": {
+    "status": "passed",
+    "scope": "isolated actual Softmax CPU only",
+    "cases": [
+      {
+        "case": "normal_full",
+        "error": 0,
+        "bitwise": true,
+        "guards": true
+      },
+      {
+        "case": "second_lane_full_or_empty",
+        "error": 0,
+        "bitwise": true,
+        "guards": true
+      },
+      {
+        "case": "finite_sum_overflow",
+        "error": 2,
+        "bitwise": true,
+        "guards": true
+      },
+      {
+        "case": "finite_cancel",
+        "error": 0,
+        "bitwise": true,
+        "guards": true
+      },
+      {
+        "case": "cancel_intermediate_overflow",
+        "error": 2,
+        "bitwise": true,
+        "guards": true
+      },
+      {
+        "case": "visible_NaN",
+        "error": 2,
+        "bitwise": true,
+        "guards": true
+      },
+      {
+        "case": "visible_positive_Inf",
+        "error": 2,
+        "bitwise": true,
+        "guards": true
+      },
+      {
+        "case": "visible_negative_Inf",
+        "error": 2,
+        "bitwise": true,
+        "guards": true
+      },
+      {
+        "case": "masked_NaN_still_prechecked",
+        "error": 2,
+        "bitwise": true,
+        "guards": true
+      },
+      {
+        "case": "empty_row_NaN_not_checked",
+        "error": 0,
+        "bitwise": true,
+        "guards": true
+      },
+      {
+        "case": "precise_masked_NaN",
+        "error": 2,
+        "bitwise": true,
+        "guards": true
+      },
+      {
+        "case": "padding_NaN_not_checked",
+        "error": 0,
+        "bitwise": true,
+        "guards": true
+      },
+      {
+        "case": "existing_metadata_error_preserved",
+        "error": 3,
+        "bitwise": true,
+        "guards": true
+      },
+      {
+        "case": "score_NaN_overwrites_incoming_metadata",
+        "error": 2,
+        "bitwise": true,
+        "guards": true
+      },
+      {
+        "case": "score_NaN_then_pending_metadata_commit",
+        "error": 3,
+        "bitwise": true,
+        "guards": true
+      }
+    ],
+    "full_C320_CPU_CAModel": "separate mandatory gate",
+    "NPU": "not_run"
+  },
+  "status": "passed",
+  "long_reference": "actual prepare only, full CAModel bitwise and independent oracle required",
+  "NPU": "not_run"
+}

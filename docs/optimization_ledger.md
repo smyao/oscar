@@ -20,6 +20,12 @@
 - query Batch8已按用户新门重新纳入：当前Init68082→Batch864537，同库完整1.05493倍；每行FP32顺序不变，+7KiB/core Hadamard UB、GM0增量，writer Batch8仍不选。现有rotation NPU/graph门实际选择同一新源，未以本地证据标设备通过。[审查](../reports/query_batch8_reopen_20261015/independent_review.json)。
 - mixed prepare跨FULL层复用已接candidate，并以现有arena两段分区保留short/long两张表。180项窄主机检查通过，实际任务/错误字段与层操作等价；observe新增真实NPU metadata on/off非回退门。32→2调用和96→6MiB写量只计结构工作，不领CV或模型倍率。[边界](../reports/mixed_prepare_reuse_20261015/summary.json)。
 
+### 本轮最终 decode 选择与完整构建
+
+同库多KV q4有限值批读828355→820349 ticks（1.0097593倍）纳入；q1 794580→793232（1.0016994倍）保留研究、生产MDL不变。两族CPU/全task-source/逐位与oracle通过，原错误预期2失败和真实LoadQueries2→metadata3诊断完整保留；不推断NPU NaN行为。[报告](../reports/decode_finite_20261015/summary.json)。
+
+最终440主机检查通过，8重复大形状跳过；全新完整CANN/Torch44cap、153.02秒、rc0、无旧构建复用，121实际VM源码与冻结host一致。[构建](../reports/stable_loop_fullbuild_20261015/summary.json)。E06整轮目标及NPU/graph/模型质量不因这些本地结果变更为通过。
+
 ## 2026-10-14 stable 故障修复
 
 - 目标为用户回传的APC开启时MTP code5、关闭时后期异步Trap。原文与证据边界见档案#160。

@@ -1,0 +1,21 @@
+{
+  "status": "immutable_denominator_migration_verified",
+  "original_commit": "b0f09e6",
+  "old_manifest_sha256": "0b1cde4ee3e2e0d2776c791f489a0977a1da971f68c5ba25085f42bcd76c7cfb",
+  "new_manifest_sha256": "75c0f248c3079b6c2deff6432bbb8c6609b71e0bdf77e3a8e381259ada83a838",
+  "all_four_generated_kernel_bytes_unchanged": true,
+  "measured_bindings_unchanged": true,
+  "archived_measured_generator_and_manifest": "measurement_source/",
+  "postmigration_revalidated_all_output_bytes_controls_profiles": {
+    "q4": {
+      "baseline": 828355,
+      "candidate": 820349
+    },
+    "q1": {
+      "baseline": 794580,
+      "candidate": 793232
+    }
+  },
+  "host_tests": "4 passed",
+  "NPU": "not_run"
+}

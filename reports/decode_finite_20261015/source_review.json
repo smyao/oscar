@@ -1,0 +1,39 @@
+{
+  "status": "independent_source_review_plus_host_checks",
+  "host_tests": "4 passed",
+  "family_sources": {
+    "q4": {
+      "baseline": "531b60a02337e661a3b02fe7d2e71570495df5de12da963c2bbb9b14e554580d",
+      "candidate": "dd732015252328efef1befc66895d27a99d9efd516935841dd775f17329eb5c1"
+    },
+    "q1": {
+      "baseline": "097aa6ea720ce2496ba8a4bab0b7fc1f5be326ff293cd7cefe54e9dfff2bc269",
+      "candidate": "621472072929fb00830152b04501833859c6823d3eab376b4cb6d6b5dd952d7a"
+    }
+  },
+  "changed_method": "Softmax only; exact original FP32 ReduceSum256 per row and tmp16",
+  "fallback_loop_sha256": "059084595499e2819d529ad30ff137db945c335aa56fd955860a102b207ea1d7",
+  "full_old_Softmax_sha256": "d3b684ef21c9427b2356f17eb32d962a85b6e2ce7dc0ec811e45d04bacdbf5ac",
+  "live_interval": [
+    "PrefetchKeys completes PublishKv V_MTE3/MTE3_V before current Softmax",
+    "next V survives only in packedBuf/packedNextBuf plus pending arrays, not naturalBuf",
+    "finite slots occupy512B of natural34816B",
+    "one V_S before scalar reads and S_V before later alpha Brcb",
+    "PrefetchValues reconstructs natural from preserved packed data after Softmax",
+    "original post-PV CommitPrefetchErrors position remains exact"
+  ],
+  "actual_method_capacities": {
+    "dequant": 65536,
+    "natural": 34816,
+    "score": 16384,
+    "acc": 16384,
+    "stats": 256,
+    "scratch": 2048
+  },
+  "additional_GM_UB_L1_bytes": 0,
+  "caveats": [
+    "CPU NaN query propagation observation is not target NPU semantics",
+    "positive same-library complete operator gain must be established independently per family",
+    "no graph or 32K/64K model acceptance"
+  ]
+}

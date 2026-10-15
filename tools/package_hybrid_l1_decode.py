@@ -13,16 +13,16 @@ from pathlib import Path
 from tools.package_c4_member_pipeline import relocate
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = 'csrc/experiments/fp32_dataflow_20261013/attention_candidate.cpp'
-SOURCE_SHA = '78a21cd466b1eff15991c1b6a1095402dfab2ed4c919b6a58536cad6ed2c56b1'
+SOURCE = 'csrc/experiments/decode_finite_20261015/q4_candidate.cpp'
+SOURCE_SHA = 'dd732015252328efef1befc66895d27a99d9efd516935841dd775f17329eb5c1'
 HELPER = 'csrc/experiments/decode_direct_nz/direct_nz_unpack.h'
 HELPER_SHA = '46a5d8086f767e608cde3517826c0bfadadecceb1f6971cadc2d2dfda45a9508'
-BASELINE = 'csrc/experiments/decode_mdl_load/attention_candidate.cpp'
-BASELINE_SHA = 'f2047dde10aa464202c23c8a8d39a9806c712ac8eb090ff752d7346d1b723151'
+BASELINE = 'csrc/experiments/decode_finite_20261015/denominators/q4_b0f09e6.cpp'
+BASELINE_SHA = '03df3835144e26ad399e9be8cd41f684b2705ed280c77029bf78c4e74bc9bad0'
 TARGET = 'csrc/kernels/attention_cv_hybrid_l1_decode.cpp'
 HELPER_TARGET = 'csrc/kernels/attention_hybrid_l1_unpack.h'
 OPERATOR = 'attention_cv_hybrid_l1_decode_out'
-EVIDENCE = 'reports/fp32_dataflow_20261013/completed/oscar-hybrid-l1-long-resume-20261013/comparison.json'
+EVIDENCE = 'reports/decode_finite_20261015/completed/reports/q4-camodel/comparison.json'
 
 
 def package(root=ROOT, *, check=False):
@@ -31,24 +31,13 @@ def package(root=ROOT, *, check=False):
             raise ValueError('qualified hybrid L1 source drift: '+path)
     source = (root/SOURCE).read_text()
     result = relocate(source, [
-        ('// GENERATED ISOLATED HYBRID L1 B RESEARCH.',
-         '// Qualified hybrid L1 q4 candidate; NPU/graph gates pending.', 1),
+        ('// ISOLATED DECODE FINITE READBACK.', '// Qualified q4 finite-readback candidate; no new buffer.', 1),
         *[(f'#include "../../kernels/{h}"', f'#include "{h}"', 1)
-          for h in ('oscar_common.h', 'attention_range_mask.h')],
-        ('#include "../decode_direct_nz/direct_nz_unpack.h"',
-         '#include "attention_hybrid_l1_unpack.h"', 1),
-        ('#include "../../include/oscar_attention_launch.h"',
-         '#include "../include/oscar_hybrid_l1_decode_launch.h"', 1),
-        ('#include "../../include/oscar_cv_schedule.h"',
-         '#include "../include/oscar_cv_schedule.h"', 1),
-        ('oscar_hybrid_l1_candidate_q4_kernel', 'oscar_attention_cv_hybrid_l1_decode_kernel', 2),
-        ('hybrid_l1_candidate_q4_launch', 'attention_cv_hybrid_l1_decode_launch', 1),
-        ('extern "C" __global__ __aicore__ void oscar_hybrid_l1_candidate_q1_kernel(\n'
-         '    OSCAR_CV_ARGUMENTS) { OSCAR_CV_RUN(1); }',
-         '// q1 entrypoint omitted: production retains the separately qualified MDL q1.', 1),
-        ('OSCAR_STRIPED_LAUNCH(hybrid_l1_candidate_q1_launch,\n'
-         '    oscar_hybrid_l1_candidate_q1_kernel)',
-         '// q1 launch omitted: hybrid L1 qualification covers q4 only.', 1),
+          for h in ('oscar_common.h', 'attention_hybrid_l1_unpack.h', 'attention_range_mask.h')],
+        *[(f'#include "../../include/{h}"', f'#include "../include/{h}"', 1)
+          for h in ('oscar_hybrid_l1_decode_launch.h', 'oscar_cv_schedule.h')],
+        ('oscar_decode_finite_q4_candidate_kernel', 'oscar_attention_cv_hybrid_l1_decode_kernel', 2),
+        ('decode_finite_q4_candidate_launch', 'attention_cv_hybrid_l1_decode_launch', 1),
     ])
     helper = relocate((root/HELPER).read_text(), [
         ('// ISOLATED DIRECT-NZ SOURCE0 HELPER.', '// Qualified hybrid L1 history helper.', 1),
@@ -66,7 +55,7 @@ def package(root=ROOT, *, check=False):
         target=TARGET, target_sha256=hashlib.sha256(result.encode()).hexdigest(),
         helper_target=HELPER_TARGET, helper_target_sha256=hashlib.sha256(helper.encode()).hexdigest(),
         inverse_full_source_bytes=True, mathematical_methods_flags_tasks_errors='unchanged',
-        omitted_entrypoints='unqualified q1 kernel and launch; q4 template methods unchanged',
+        omitted_entrypoints='q4 source already excludes q1 kernel/launch; production MDL q1 unchanged',
         operator=OPERATOR, workspace_bytes_per_core_D256=1146880,
         explicit_UB_bytes_per_AIV_D256=171680, external_B1_bytes=262144,
         SDK_L1_bytes=133120, total_L1_bytes=395264,

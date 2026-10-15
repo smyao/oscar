@@ -38,6 +38,10 @@ Q Hadamard重新纳入已测Batch8：同库Init68082→64537 ticks（1.05493倍�
 
 mixed prepare通过真实ForwardContext、stream、父metadata和固定token span绑定两段任务表，重叠写/跨step/draft/capture/current-only均失效。在默认16K、16FULL层合成形下prepare调用32→2、descriptor写96→6MiB；这是工作量，不是速度倍率。candidate自动启用，observe新增真实NPU `mixed_prepare_reuse`门，完整比较所有task字段/positions、同址32K→64K及非法length刷新，双臂相同consumer复制计入速度。无NPU不能通过；CV/GDN/rotate/store/guard仍逐层执行。[实现与验证边界](../reports/mixed_prepare_reuse_20261015/summary.json)。
 
+## decode增量裁决
+
+相同多KV输入/同一新库内，hybrid q4为828355→820349 ticks（1.0097593倍），原MDL q1为794580→793232（1.0016994倍）。两族CPU完整路径/实际方法错误顺序、CAModel全task/source与oracle均通过。本轮纳入q4，q1保留研究且生产MDL全文不变：极小q1收益不值得拆分额外生产源或影响未测MDL q4分支；这不是新增统一百分比门。两次模拟wall略有反向波动，明确只领取该固定模型的task ticks净增，不当真实NPU速度。[裁决及原错误检查失败](../reports/decode_finite_20261015/summary.json)。
+
 ## 固定资源账
 
 - C16 stable为4997120 B/core；普通流水5652480 B/core；B1为7487488 B/core。20核时B1较stable增加47.5 MiB/rank，在原生KV profiling前分配，不能藏在KV容量收益里。
@@ -59,3 +63,9 @@ mixed prepare通过真实ForwardContext、stream、父metadata和固定token spa
 44项能力的完整CANN/Torch fresh build已通过（157.04秒，rc0，cleanup=true），见 [构建报告](../reports/stable_b1_fullbuild_20261015/summary.json)。C16完整同库三臂已完成：stable 3888161 ticks / 587.763秒，pipeline 3302518 / 512.878秒，B1 3172246 / 487.095秒。B1对stable为1.22568倍，对pipeline为1.04107倍。范围为Q336/recent1/C65单KV完整CV核：1008任务、20 AIC＋40 AIV、partial/LSE/status/counters逐位与冻结oracle均通过。此处wall是模拟器耗时；不含设备merge/copy，不是32K/64K模型端到端收益。见[完整报告](../reports/c16_l1_reuse_20261015/summary.json)。尚未取得真实NPU、图或两场景30%端到端达标证据。
 
 正式直启仍为 `git pull --ff-only && bash scripts/install_serve.sh --variant candidate`；它不提供测试证据。测试入口为 `git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate`：真实算子/图/完整reader配对任一失败即阻断服务，成功后按同一stable argv启动。无需新vLLM参数或AISBench重跑指令。
+
+## 本轮最终本地验证
+
+最终组合主机440 passed、8项重复大形状组合跳过、4 subtests；另有CANN官方CPU-debug与完整CAModel的逐项报告。全新完整CANN/Torch构建153.02秒、rc0、reused=false、44 capability齐全；VM实际121个源文件与本机/采集清单三方一致。[最终构建](../reports/stable_loop_fullbuild_20261015/summary.json)。
+
+没有连接目标NPU，未新增设备完成/图/模型质量或32K、64K相对native超过30%的验收结论。最终候选按用户要求只交主分支，stable由用户验证后更新；局部结果不相加、不跨库相乘来宣称目标已达。

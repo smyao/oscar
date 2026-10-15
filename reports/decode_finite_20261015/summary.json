@@ -1,0 +1,122 @@
+{
+  "status": "both_independent_complete_pairs_positive",
+  "families": {
+    "q4": {
+      "comparison": {
+        "status": "completed_same_library_pair",
+        "family": "q4",
+        "task_ticks": {
+          "baseline": 828355,
+          "candidate": 820349
+        },
+        "ratio": 1.0097592609974535,
+        "positive_net_gain": true,
+        "all_partial_lse_status_bitwise": true,
+        "independent_oracle": "passed_both",
+        "all_sources_and_tasks": true,
+        "library_sha256": "adb66241324b1f27b8c5b01c0e7be1e01ba10a82c67e8f28733d7e6023e35623",
+        "profiles": "complete 1 task + 1 AIC + 2 AIV each arm",
+        "instruction_trace": "not_requested_official_mask0",
+        "NPU": "not_run",
+        "graph": "not_run",
+        "E2E": "not_established"
+      },
+      "wall_seconds_per_arm": {
+        "baseline": 102.21806785697117,
+        "candidate": 102.54723635897972
+      },
+      "CPU_actual_method_cases": 15,
+      "CPU_complete_cases": [
+        "q4_finite_cpu",
+        "q4_finite_query_metadata"
+      ],
+      "long_actual_prepare": "passed",
+      "real_controls": {
+        "baseline": {
+          "status": "completed",
+          "timeout_seconds": 600.0,
+          "timed_out": false,
+          "child_returncode": 0,
+          "supervisor_returncode": 0,
+          "cleanup_complete": true
+        },
+        "candidate": {
+          "status": "completed",
+          "timeout_seconds": 600.0,
+          "timed_out": false,
+          "child_returncode": 0,
+          "supervisor_returncode": 0,
+          "cleanup_complete": true
+        }
+      }
+    },
+    "q1": {
+      "comparison": {
+        "status": "completed_same_library_pair",
+        "family": "q1",
+        "task_ticks": {
+          "baseline": 794580,
+          "candidate": 793232
+        },
+        "ratio": 1.0016993767271114,
+        "positive_net_gain": true,
+        "all_partial_lse_status_bitwise": true,
+        "independent_oracle": "passed_both",
+        "all_sources_and_tasks": true,
+        "library_sha256": "adb66241324b1f27b8c5b01c0e7be1e01ba10a82c67e8f28733d7e6023e35623",
+        "profiles": "complete 1 task + 1 AIC + 2 AIV each arm",
+        "instruction_trace": "not_requested_official_mask0",
+        "NPU": "not_run",
+        "graph": "not_run",
+        "E2E": "not_established"
+      },
+      "wall_seconds_per_arm": {
+        "baseline": 98.07706865097862,
+        "candidate": 98.3549087260617
+      },
+      "CPU_actual_method_cases": 15,
+      "CPU_complete_cases": [
+        "q1_finite_cpu",
+        "q1_finite_query_metadata"
+      ],
+      "long_actual_prepare": "passed",
+      "real_controls": {
+        "baseline": {
+          "status": "completed",
+          "timeout_seconds": 600.0,
+          "timed_out": false,
+          "child_returncode": 0,
+          "supervisor_returncode": 0,
+          "cleanup_complete": true
+        },
+        "candidate": {
+          "status": "completed",
+          "timeout_seconds": 600.0,
+          "timed_out": false,
+          "child_returncode": 0,
+          "supervisor_returncode": 0,
+          "cleanup_complete": true
+        }
+      }
+    }
+  },
+  "selection_scope": "optional small incremental gain; each family has one deterministic CAModel pair, not a target NPU measurement",
+  "zero_additional_GM_UB_L1": true,
+  "library_sha256": "adb66241324b1f27b8c5b01c0e7be1e01ba10a82c67e8f28733d7e6023e35623",
+  "original_wrong_expectation_failure_preserved": true,
+  "error_diagnosis": "query-validation2 -> finite actual scores -> futuremetadata3; target NPU NaN semantics not inferred",
+  "immutable_denominator_commit": "b0f09e6",
+  "all_four_measured_kernel_bytes_preserved": true,
+  "host_tests": "4 passed",
+  "VM_released": true,
+  "scratch_bytes_reclaimed": 1777458877,
+  "free_VM_bytes_after": 4310188032,
+  "NPU": "not_run",
+  "graph": "not_run",
+  "32K_64K_native_E2E_gt30pct": "not_established",
+  "production_selection": {
+    "q4": "selected by root: zero-resource 0.976% complete local incremental gain",
+    "q1": "research only: 0.170% local gain does not justify extra production split/dual-source maintenance; existing MDL q4/q1 unchanged",
+    "selection_is_not_new_percentage_threshold": true
+  }
+}

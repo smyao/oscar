@@ -1,0 +1,22 @@
+{
+  "family": "q1",
+  "arm": "baseline",
+  "source_binding": {
+    "manifest_sha256": "0b1cde4ee3e2e0d2776c791f489a0977a1da971f68c5ba25085f42bcd76c7cfb",
+    "generator_sha256": "2ed49418c7a291b17d0abfd9450dda114b68cac4883e5b13b2f577ddfc2c4e05",
+    "sources": {
+      "q4_baseline.cpp": "531b60a02337e661a3b02fe7d2e71570495df5de12da963c2bbb9b14e554580d",
+      "q4_candidate.cpp": "dd732015252328efef1befc66895d27a99d9efd516935841dd775f17329eb5c1",
+      "q1_baseline.cpp": "097aa6ea720ce2496ba8a4bab0b7fc1f5be326ff293cd7cefe54e9dfff2bc269",
+      "q1_candidate.cpp": "621472072929fb00830152b04501833859c6823d3eab376b4cb6d6b5dd952d7a"
+    }
+  },
+  "runner_sha256": "44d3bc1fa6af0fd3c7b77338ab11d4ce2b37a4f766d8d2a94979d926d1a8e155",
+  "library_sha256": "adb66241324b1f27b8c5b01c0e7be1e01ba10a82c67e8f28733d7e6023e35623",
+  "template_sha256": "2b435e186ad6aa8112d620fa83299cacc7c9b7a60d02f77b59a1b43e9447883c",
+  "adapted_sha256": "e6346bbdfd39776ef22ac0464eb5e44101cb7274bc33b5fe24b36de2b7118ae2",
+  "deadline_s": 600,
+  "descriptor_mutation": false,
+  "CPU_reference": "small complete cases required separately; long prepare-only by predeclared budget",
+  "numeric_oracle_guard_profile_gates": "unchanged complete qualified runner"
+}

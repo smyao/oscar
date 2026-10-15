@@ -1,0 +1,81 @@
+{
+  "status": "independent_full_source_inverse_ABI_resource_review_passed",
+  "measured_source_sha256": "dd732015252328efef1befc66895d27a99d9efd516935841dd775f17329eb5c1",
+  "production_sha256": "ffe5a3a5e919e03c631f91f3cdb8b93305e8fe50571f86ab417175b47531d81d",
+  "full_source_reverse_to_measured_bytes": true,
+  "reverse_edits_independently_applied": [
+    {
+      "production": "// Qualified q4 finite-readback candidate; no new buffer.",
+      "measured": "// ISOLATED DECODE FINITE READBACK.",
+      "count": 1
+    },
+    {
+      "production": "#include \"oscar_common.h\"",
+      "measured": "#include \"../../kernels/oscar_common.h\"",
+      "count": 1
+    },
+    {
+      "production": "#include \"attention_hybrid_l1_unpack.h\"",
+      "measured": "#include \"../../kernels/attention_hybrid_l1_unpack.h\"",
+      "count": 1
+    },
+    {
+      "production": "#include \"attention_range_mask.h\"",
+      "measured": "#include \"../../kernels/attention_range_mask.h\"",
+      "count": 1
+    },
+    {
+      "production": "#include \"../include/oscar_hybrid_l1_decode_launch.h\"",
+      "measured": "#include \"../../include/oscar_hybrid_l1_decode_launch.h\"",
+      "count": 1
+    },
+    {
+      "production": "#include \"../include/oscar_cv_schedule.h\"",
+      "measured": "#include \"../../include/oscar_cv_schedule.h\"",
+      "count": 1
+    },
+    {
+      "production": "oscar_attention_cv_hybrid_l1_decode_kernel",
+      "measured": "oscar_decode_finite_q4_candidate_kernel",
+      "count": 2
+    },
+    {
+      "production": "attention_cv_hybrid_l1_decode_launch",
+      "measured": "decode_finite_q4_candidate_launch",
+      "count": 1
+    }
+  ],
+  "ABI_macro_kernel_launch_tail_byte_identical_to_b0f09e6": true,
+  "Init_all_resource_offsets_and_buffers_byte_identical_to_b0f09e6": true,
+  "workspace_bytes_per_core": 1146880,
+  "explicit_UB_per_AIV": 171680,
+  "external_B1_bytes": 262144,
+  "SDK_L1_bytes": 133120,
+  "additional_GM_UB_L1_bytes": 0,
+  "unchanged_files_vs_b0f09e6": {
+    "csrc/kernels/attention_cv_mdl_decode.cpp": "1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f",
+    "csrc/kernels/attention_hybrid_l1_unpack.h": "c6ea519cb28b8ee7fb35c13ac333941b6ba28c7ceabb49bcd8041b22a084cd94",
+    "csrc/include/oscar_hybrid_l1_decode_launch.h": "17279aacec0938a32a6771e8000df4e2ccb5bd23a861a8b85f435452d0aa6c45",
+    "csrc/include/oscar_mdl_decode_launch.h": "ee41be8a18c8db8dd6c42a16320482717735aef3c70e4aa7d4f9e0e9821a127f"
+  },
+  "MDL_q4_q1_production_unchanged": true,
+  "minimal_no_SDK_package_check": {
+    "status": "passed",
+    "files": [
+      "tools/__init__.py",
+      "tools/package_hybrid_l1_decode.py",
+      "tools/package_c4_member_pipeline.py",
+      "csrc/experiments/decode_finite_20261015/q4_candidate.cpp",
+      "csrc/experiments/decode_finite_20261015/denominators/q4_b0f09e6.cpp",
+      "csrc/experiments/decode_direct_nz/direct_nz_unpack.h",
+      "csrc/kernels/attention_cv_hybrid_l1_decode.cpp",
+      "csrc/kernels/attention_hybrid_l1_unpack.h"
+    ],
+    "stdout": "{\"status\": \"source_packaged_not_device_acceptance\", \"check\": true, \"target\": \"csrc/kernels/attention_cv_hybrid_l1_decode.cpp\"}"
+  },
+  "production_fresh_CANN": "separate pending final fullbuild",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "native_32K_64K_E2E": "not_established",
+  "read_only_production_review": true
+}

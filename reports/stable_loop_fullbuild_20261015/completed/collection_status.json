@@ -1,0 +1,15 @@
+{
+  "requested": [
+    "reports",
+    "source_stage.json",
+    "build/ascendc/build_manifest.json",
+    "build/ascendc/oscar_build_signature.json"
+  ],
+  "collected": [
+    "reports",
+    "source_stage.json",
+    "build/ascendc/build_manifest.json",
+    "build/ascendc/oscar_build_signature.json"
+  ],
+  "missing": []
+}

@@ -1,0 +1,19 @@
+{
+  "status": "completed_same_library_pair",
+  "family": "q1",
+  "task_ticks": {
+    "baseline": 794580,
+    "candidate": 793232
+  },
+  "ratio": 1.0016993767271114,
+  "positive_net_gain": true,
+  "all_partial_lse_status_bitwise": true,
+  "independent_oracle": "passed_both",
+  "all_sources_and_tasks": true,
+  "library_sha256": "adb66241324b1f27b8c5b01c0e7be1e01ba10a82c67e8f28733d7e6023e35623",
+  "profiles": "complete 1 task + 1 AIC + 2 AIV each arm",
+  "instruction_trace": "not_requested_official_mask0",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "E2E": "not_established"
+}

@@ -1,0 +1,16 @@
+{
+  "phase": "compile-1",
+  "command": [
+    "cmake",
+    "--build",
+    "/tmp/oscar-stable-loop-fullbuild-20261015/build/ascendc",
+    "--parallel",
+    "2"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 151.721459,
+  "timed_out": false,
+  "interrupted": false,
+  "log": "/tmp/oscar-stable-loop-fullbuild-20261015/reports/fullbuild-phases/compile-1.log",
+  "cleanup_complete": true
+}

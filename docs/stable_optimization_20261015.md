@@ -22,6 +22,12 @@ C16 B1方案保留16成员的INT2解包共享与逐输出FP32/K128顺序，将�
 
 q4 hybrid L1复用已有完整同库配对：MDL 2658960→2214530 ticks（1.200688倍，约8K历史机制形），短形约1.109倍。它只替换q4；q1继续MDL，C4继续既有已资格成员流水。Rv按FP32 NZ地址排列在模型加载时一次性生成，原始数值不变；旧路径继续使用natural Rv，禁止在forward临时打包或缺失时回退。新NPU门另含32K/64K短合成算子病例。
 
+## B1 基底后的第一轮
+
+主分支本地基底提交为`b6f8666`。最终Rv改为在C16簇的既有B1中加载一次，16个成员继续执行原FP32/K128旋转和原跨核确认。新同库B1对B1+Rv为3168844→3045844 ticks，1.0403829倍，资源增加0。C337两KV及末成员QR错误隔离CPU完整通过；C65完整CAModel逐位、oracle、1008任务/60actor通过。这是相对B1的独立配对，不与前一库倍率相乘，也未证明32K/64K端到端30%。[配对记录](../reports/c16_rv_reuse_20261015/completed/rv-camodel-c65/comparison.json)。
+
+64K目标探针的完整672-query主机oracle也已构造通过，20个原参考样本逐位一致，7.41秒、峰值2.20GiB；只是探针准备验证，[记录](../reports/c16_l1_reuse_20261015/long_oracle_64k_guarded_once/result.json)。
+
 ## 固定资源账
 
 - C16 stable为4997120 B/core；普通流水5652480 B/core；B1为7487488 B/core。20核时B1较stable增加47.5 MiB/rank，在原生KV profiling前分配，不能藏在KV容量收益里。

@@ -7,6 +7,10 @@
 - 同库C65完整三臂：stable3888161、pipeline3302518、B1 3172246 ticks；B1/stable 1.22568倍，B1/pipeline 1.04107倍。1008任务/60actor/逐位及oracle通过。默认C16选择B1，q4选择已完整配对的hybrid L1，q1保留MDL、C4保留已有pipeline。B1增加47.5 MiB/rank固定workspace；此结果不含设备merge/copy，也不代表32K/64K整轮。
 - 全库44能力CANN编译通过；CPU、CAModel、主机接缝分别记录。先前超时/ENOSPC/旧门裁决保留为历史；没有新增真机档案。详见[本轮范围与入口](stable_optimization_20261015.md)、[B1证据](../reports/c16_l1_reuse_20261015/summary.json)。
 
+### B1 第一轮增量：最终 Rv 驻留
+
+新同库B1→Rv完整C65配对3168844→3045844 ticks，1.0403829倍，新增UB/L1/GM为0；C337多KV与末成员QR错误隔离CPU逐位通过。按用户最新规则纳入主分支candidate，同一B1算子/ABI/两入口自动启用。旧母源与此前测量保留，不拼乘为稳定版总倍率。源码已打包，新完整扩展构建、NPU/graph与整轮目标另行验证。[配对](../reports/c16_rv_reuse_20261015/completed/rv-camodel-c65/comparison.json)。
+
 ## 2026-10-14 stable 故障修复
 
 - 目标为用户回传的APC开启时MTP code5、关闭时后期异步Trap。原文与证据边界见档案#160。

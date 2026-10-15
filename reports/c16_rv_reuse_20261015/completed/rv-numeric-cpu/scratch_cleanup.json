@@ -1,0 +1,13 @@
+{
+  "host_archive": "/tmp/oscar-c16-rv-numeric-20261015.tar.gz",
+  "host_archive_sha256": "dade66fdf9bf3005a23b994635307dd9c78efd332cd7762840b1916527d0e9cb",
+  "host_tar_stream_verified": true,
+  "owned_PIDs_absent": true,
+  "active_cwd_absent": true,
+  "free_before": 2537848832,
+  "paths": [
+    "/tmp/oscar-c16-20261015/rv-numeric-cpu/baseline-work",
+    "/tmp/oscar-c16-20261015/rv-numeric-cpu/candidate-work"
+  ],
+  "free_after": 5251792896
+}

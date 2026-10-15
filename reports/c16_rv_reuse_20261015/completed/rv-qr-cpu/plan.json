@@ -1,0 +1,7 @@
+{
+  "case": "qr",
+  "deadline_each_arm_s": 120,
+  "source_manifest_sha256": "fb3bbe641bba61b681ca0193f5da906e4e612a49197e787fda6dfd0289c599ca",
+  "executable_sha256": "0a201889bb45dcd743be0fa78d3e9fae41340bda3600f3f9c020b80c2e974c83",
+  "production_changed": false
+}

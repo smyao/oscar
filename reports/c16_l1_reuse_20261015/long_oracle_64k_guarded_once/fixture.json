@@ -1,0 +1,47 @@
+{
+  "status": "constructed",
+  "context": 65536,
+  "queries": 672,
+  "fixture_seconds": 7.410643917042762,
+  "total_seconds": 8.178935291944072,
+  "peak_rss_bytes": 2358689792,
+  "blocks": 130,
+  "virtual_columns": 518,
+  "reference_anchor_check": {
+    "status": "bitwise_passed",
+    "domain": "history_window_current",
+    "queries": [
+      0,
+      1,
+      20,
+      21,
+      22,
+      41,
+      42,
+      62,
+      63,
+      83,
+      84,
+      125,
+      126,
+      255,
+      256,
+      257,
+      336,
+      511,
+      512,
+      671
+    ],
+    "expected_count": 20,
+    "checked_count": 20,
+    "bit_differences": []
+  },
+  "source_sha256": {
+    "tools/probe_c16_l1_reuse.py": "ef0c9339e644e533da57d01596a83676f2a1dd644c6f9a7620638973b4846d0a",
+    "tools/c16_probe_oracle.py": "29dd331602f65c0684ca02ea161c39dd764a351faaf08180391816ffce5c0a10",
+    "tools/probe_history_reuse.py": "8b20dc30e86aff6bb067407df3a12ad585037dbcdc0f5efb8d276968bb58ac7b",
+    "oscar_ascend/ops/reference.py": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c"
+  },
+  "NPU": "not_run",
+  "device_timing": "not_measured"
+}

@@ -1,0 +1,70 @@
+{
+  "status": "complete_same_library_B1_Rv_increment_qualified_locally",
+  "decision": "user/parent accepts4.038pct positive contribution withzero_resource_increment; package production sameABI separately",
+  "mother_sha256": "1deb6ab15a34ed263000c9a99530d0f9ee1a7e682a84ba7657b2c968d2ae6ec0",
+  "candidate_sha256": "9603817dddfba0e6357b42756a9956880137348ce8076c61aff58884acb6210b",
+  "CANN": "rc0_complete",
+  "CPU": {
+    "C337_two_KV": "two_arms_bitwise_oracle_passed",
+    "last_member_QR_NaN": "two_arms_exact_original_member_lane_domain_passed",
+    "arms": 4
+  },
+  "CAModel": {
+    "comparison": "completed/rv-camodel-c65/comparison.json",
+    "arms": {
+      "baseline": {
+        "elapsed_seconds": 486.9408669990953,
+        "child_returncode": 0,
+        "cleanup_complete": true,
+        "task_ticks": 3168844,
+        "oracle": {
+          "bad_output": 0,
+          "bad_lse": 0,
+          "max_output_abs": 1.133724317758933e-06,
+          "max_lse_abs": 7.57374689186463e-07,
+          "atol": 0.005,
+          "rtol": 0.005,
+          "method": "offline stable LSE merge of actual CAModel partials versus independent PR golden"
+        },
+        "profile_counts": {
+          "task": 1,
+          "aic": 20,
+          "aiv": 40
+        }
+      },
+      "candidate": {
+        "elapsed_seconds": 461.57979400793556,
+        "child_returncode": 0,
+        "cleanup_complete": true,
+        "task_ticks": 3045844,
+        "oracle": {
+          "bad_output": 0,
+          "bad_lse": 0,
+          "max_output_abs": 1.133724317758933e-06,
+          "max_lse_abs": 7.57374689186463e-07,
+          "atol": 0.005,
+          "rtol": 0.005,
+          "method": "offline stable LSE merge of actual CAModel partials versus independent PR golden"
+        },
+        "profile_counts": {
+          "task": 1,
+          "aic": 20,
+          "aiv": 40
+        }
+      }
+    },
+    "B1_over_Rv": 1.0403828955127052,
+    "full_outputs_bitwise": true,
+    "all_actors_complete": true,
+    "scope": "Q336/recent1/C65 singlehistoryKV CV kernel; offline merged oracle, device merge/copy not timed"
+  },
+  "workspace_per_core": 7487488,
+  "UB_per_AIV": 157760,
+  "external_B1_bytes": 262144,
+  "resource_increment_bytes": 0,
+  "ownership_review": "lastPV mm.End and original MTE1_MTE2 protect first Rv overwrite; MTE2_MTE1 publishes; every original final member AIV read ack retained before shared rotOffset overwrite",
+  "old_stable_ratio": "not_multiplied; different pair/library",
+  "NPU": "not_run_user_prohibits",
+  "graph": "not_run",
+  "32K_64K_native_gt30pct": "not_established"
+}

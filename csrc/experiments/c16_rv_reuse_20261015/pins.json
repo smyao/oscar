@@ -1,0 +1,9 @@
+{
+  "mother": "csrc/experiments/c16_l1_reuse_20261015/c16_candidate.cpp",
+  "mother_sha256": "1deb6ab15a34ed263000c9a99530d0f9ee1a7e682a84ba7657b2c968d2ae6ec0",
+  "harness": {
+    "cv_probe_small.cpp": "210227ba894de81a1a8f7db11a1bbc121a2fdb21eca042fccd4ebbc0060118ce",
+    "cv_probe_qr.cpp": "46c9c60f78bb4b1498869728e07504132206f3052353fea5fdbdf9981c671606",
+    "cv_replay_small.py": "92ce08069aecce7bac1b6df0382fa657194295c1b314ece84dba5aab4116d6db"
+  }
+}

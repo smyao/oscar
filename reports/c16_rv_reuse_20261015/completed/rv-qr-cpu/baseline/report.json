@@ -1,0 +1,1 @@
+{"status":"passed","arm":"baseline","context":337,"bad_position":-1,"clusters":1,"fault_statuses":1,"guards":true,"input_immutable":true,"all_status_lanes":true,"oracle":"numeric_except_expected_QR_fault_rows","NPU":"not_run"}

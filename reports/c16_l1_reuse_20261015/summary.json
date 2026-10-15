@@ -130,7 +130,7 @@
     "facility_control": "completed/facility-cv-safe/report.json: complete 1 task/1 AIC/2 AIV, oracle passed, child rc0,94.664s; no performance comparison claimed",
     "C337_retry_decision": "not_run: C65 stable elapsed587.763s is already near600s deadline; two-KV trial lacks safe runtime margin; no expanded deadline"
   },
-  "decision": "retain B1 as independent research: incremental pipeline/B1 is1.041066 on one-KV fixture, insufficient to justify default extra35MiB/rank; recommend pipeline with separately qualified hybrid; no whole-service or32K/64K claim",
+  "decision": "user_explicitly_accepts_complete_stable_to_B1_1.225680795247279_as_new_mainline_baseline; relative_pipeline_increment1.041066_does_not_disqualify; continue_loop_toward32K64K_same_native_parameters_E2E_gt30pct",
   "workspace_per_core": {
     "stable": 4997120,
     "pipeline": 5652480,
@@ -155,5 +155,12 @@
     "L2_model_top_FFTS": "unchanged",
     "evidence": "completed/*-safe-logging.json and completed/camodel-safe-config",
     "numerics_and_profile_gate": "original runner unchanged"
-  }
+  },
+  "selection_history": [
+    {
+      "stage": "before_user_accepted_B1_combination",
+      "decision": "retain B1 as independent research: incremental pipeline/B1 is1.041066 on one-KV fixture, insufficient to justify default extra35MiB/rank; recommend pipeline with separately qualified hybrid; no whole-service or32K/64K claim"
+    }
+  ],
+  "user_selection_boundary": "selection authorized; measured scope remains C65/recent1 single-KV CV, not whole-model/native30 acceptance"
 }

@@ -1,0 +1,9 @@
+{
+  "archive": "/tmp/oscar-c16-rv-numeric-20261015.tar.gz",
+  "sha256": "dade66fdf9bf3005a23b994635307dd9c78efd332cd7762840b1916527d0e9cb",
+  "bytes": 133955497,
+  "entries": 365,
+  "raw_bytes": 2726340078,
+  "full_stream_verified": true,
+  "extracted_non_scratch_files": 29
+}

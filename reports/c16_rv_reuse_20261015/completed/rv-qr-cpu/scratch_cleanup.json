@@ -1,0 +1,13 @@
+{
+  "host_archive": "/tmp/oscar-c16-rv-qr-20261015.tar.gz",
+  "host_archive_sha256": "9e197279a044e286d49d9dff1b4408704c7bc0b69e2aa77c7eaeff6caaed381c",
+  "host_tar_stream_verified": true,
+  "owned_PIDs_absent": true,
+  "active_cwd_absent": true,
+  "free_before": 2535161856,
+  "paths": [
+    "/tmp/oscar-c16-20261015/rv-qr-cpu/baseline-work",
+    "/tmp/oscar-c16-20261015/rv-qr-cpu/candidate-work"
+  ],
+  "free_after": 5238571008
+}

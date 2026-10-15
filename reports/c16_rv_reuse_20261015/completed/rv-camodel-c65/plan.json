@@ -1,0 +1,16 @@
+{
+  "arms": [
+    "baseline",
+    "candidate"
+  ],
+  "deadline_each_arm_s": 600,
+  "source_manifest_sha256": "fb3bbe641bba61b681ca0193f5da906e4e612a49197e787fda6dfd0289c599ca",
+  "library_sha256": "f92a1523d2836ef2be3181d3b10eb5332b084fb449a9be5bfa87f4b867318c4b",
+  "scope": "Q336/recent1/C65 all1008tasks,one16-member mature cluster,onehistoryKV,20AIC40AIV",
+  "CPU_prepared_reuse": "qualified unchanged B1 C65 real CPU prepare; new kernels qualified separately on C337 and QR cases",
+  "CPU_numeric": "/tmp/oscar-c16-20261015/rv-numeric-cpu/comparison.json",
+  "CPU_QR": "/tmp/oscar-c16-20261015/rv-qr-cpu/comparison.json",
+  "selection_rule": "report actual positive or negative complete incremental contribution; user waived15percent minimum",
+  "NPU": "not_run",
+  "whole_model": "not_established"
+}

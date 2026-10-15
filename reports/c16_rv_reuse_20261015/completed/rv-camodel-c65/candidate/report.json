@@ -1,0 +1,861 @@
+{
+  "status": "passed",
+  "variant": "candidate",
+  "context": 65,
+  "attrs": [
+    336,
+    6,
+    1,
+    256,
+    1,
+    4,
+    1008,
+    512,
+    1,
+    64,
+    69632,
+    17408,
+    68,
+    64,
+    1,
+    3,
+    1
+  ],
+  "bad_position": -1,
+  "cores": 20,
+  "scope": "Q336/C65/R1/Hq6/Hkv1/D256/S1/20core recent1, all1008 tasks, source0+1; source2 legally suppressed",
+  "kernel": "oscar_c16_rv_reuse_candidate_kernel",
+  "library_sha256": "f92a1523d2836ef2be3181d3b10eb5332b084fb449a9be5bfa87f4b867318c4b",
+  "source_sha256": "1deb6ab15a34ed263000c9a99530d0f9ee1a7e682a84ba7657b2c968d2ae6ec0",
+  "H32_source_sha256": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+  "generated_sha256": "9603817dddfba0e6357b42756a9956880137348ce8076c61aff58884acb6210b",
+  "input_sha256": {
+    "q": "04c02cfc361cfffb7e602bfaa2ee441ca9484849fe557671101236c7008c6fef",
+    "qr": "b8156bb57f3108967e633b4c6f9560e7203f202bbbe08719f4fd243e4e18de26",
+    "ck": "c1064c2a22b415be3ad9ddbf0fd55a200d899d0671f120a168f85e569de0c7d1",
+    "cv": "ec59548dcf677fc496528f1cb152f41466df5824c0b7a27c6134aab54267aaa7",
+    "rv": "01945d071added92e622bb102b644ae414ce0b550a0d080f051fc0d2a25c8c52",
+    "raw": "73b2a367e11c720fed8b7b46254d21f1a1203f8a62943d61589ff383b703c499",
+    "table": "baed642339816affb3fe8719792d0e4ce82f12db72b7373d244eaa65445800fe",
+    "wk": "7a87cc4d54504a4a794bddfeee766dded33b6ab300727d4a9912fed7434f6999",
+    "wv": "4dab6d98107470d46298ed0b00ea606b997f730c808469aabe4f376648412e5b",
+    "tags": "b91fc17b20a05ea9a633c64b637127f272e6b1df395ef83b3e1a22faa3257f38",
+    "tasks": "e2a2f874a1238793c4595559d7a465d7f37ae4f7894c63f6b184ea0496153fea"
+  },
+  "oracle_sha256": {
+    "output": "0a4c57479128918218310e8957b7b230be0ec71462bee81dc6a1019007e38fac",
+    "lse": "03a45f6b2467aa868bdd327e535e0d9aa698c6fa28c0d035637eb55f991a210b"
+  },
+  "simulator_config": {
+    "config.json": {
+      "LOG": {
+        "rotating_file_size": 134217728,
+        "rotating_file_number": 2,
+        "flush_level": 3,
+        "core_enable_mask": [
+          "0x0"
+        ]
+      },
+      "L2CACHE": {
+        "cache_enable": 0,
+        "cache_set_size": 24,
+        "cache_way_size": 16384,
+        "cache_line_size": 512,
+        "cache_read_latency": 241,
+        "cache_write_latency": 96
+      }
+    },
+    "config_stars.json": {
+      "stars": {
+        "ffts_mode": 1
+      },
+      "model_top": {
+        "sim_type": 0,
+        "num_aic": 24,
+        "num_aiv": 48
+      },
+      "pem": {
+        "parsim": 0,
+        "parsim_thd_limit": 0
+      }
+    }
+  },
+  "NPU": "not_run",
+  "graph": "not_run",
+  "full_model": "not_run",
+  "outputs": {
+    "partial": {
+      "bytes": 6193152,
+      "sha256": "84b48805f7608b841c1214424d51920a2856862dbf8bef8732f76c1806382bcb",
+      "path": "partial.bin"
+    },
+    "lse": {
+      "bytes": 24192,
+      "sha256": "4456275453a10362ca799ccbca32d62a0a4ede0eaa75a2499b38c05a63b51d28",
+      "path": "lse.bin"
+    },
+    "status": {
+      "bytes": 8064,
+      "sha256": "05bf9d87a6313c41625d93de63e30bc39be25e54b472f17e99d78cf12fccb3da",
+      "path": "status.bin"
+    },
+    "workspace": {
+      "bytes": 149749760,
+      "sha256": "9a477d1f4573eb227b3b773e4ee43d6cf1b5e9a3356397bc6f89c6271fc727dd",
+      "path": "workspace.bin"
+    },
+    "cluster_stats": {
+      "bytes": 1280,
+      "sha256": "9f283b0c3771cac7cb50df9a885703f7eb104e0c931379aecd808294909e9eb7",
+      "path": "cluster_stats.bin"
+    }
+  },
+  "oracle": {
+    "bad_output": 0,
+    "bad_lse": 0,
+    "max_output_abs": 1.133724317758933e-06,
+    "max_lse_abs": 7.57374689186463e-07,
+    "atol": 0.005,
+    "rtol": 0.005,
+    "method": "offline stable LSE merge of actual CAModel partials versus independent PR golden"
+  },
+  "failures": [],
+  "profiles": {
+    "task": [
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "start_cycle": 1831,
+        "end_cycle": 3047675,
+        "duration": 3045844,
+        "num_thread_subtasks": 1,
+        "wait_cycle": 5146
+      }
+    ],
+    "aic": [
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 0,
+        "core_id": 0,
+        "start_cycle": 1866,
+        "early_end_cycle": 0,
+        "end_cycle": 2973811,
+        "duration": 2971945
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 1,
+        "core_id": 1,
+        "start_cycle": 1867,
+        "early_end_cycle": 0,
+        "end_cycle": 209899,
+        "duration": 208032
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 2,
+        "core_id": 2,
+        "start_cycle": 1868,
+        "early_end_cycle": 0,
+        "end_cycle": 211517,
+        "duration": 209649
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 3,
+        "core_id": 3,
+        "start_cycle": 1869,
+        "early_end_cycle": 0,
+        "end_cycle": 44916,
+        "duration": 43047
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 4,
+        "core_id": 4,
+        "start_cycle": 1870,
+        "early_end_cycle": 0,
+        "end_cycle": 193297,
+        "duration": 191427
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 5,
+        "core_id": 5,
+        "start_cycle": 1871,
+        "early_end_cycle": 0,
+        "end_cycle": 205298,
+        "duration": 203427
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 6,
+        "core_id": 6,
+        "start_cycle": 1872,
+        "early_end_cycle": 0,
+        "end_cycle": 207251,
+        "duration": 205379
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 7,
+        "core_id": 7,
+        "start_cycle": 1873,
+        "early_end_cycle": 0,
+        "end_cycle": 208111,
+        "duration": 206238
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 8,
+        "core_id": 8,
+        "start_cycle": 1874,
+        "early_end_cycle": 0,
+        "end_cycle": 44944,
+        "duration": 43070
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 9,
+        "core_id": 9,
+        "start_cycle": 1875,
+        "early_end_cycle": 0,
+        "end_cycle": 193794,
+        "duration": 191919
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 10,
+        "core_id": 10,
+        "start_cycle": 1876,
+        "early_end_cycle": 0,
+        "end_cycle": 205803,
+        "duration": 203927
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 11,
+        "core_id": 11,
+        "start_cycle": 1877,
+        "early_end_cycle": 0,
+        "end_cycle": 207406,
+        "duration": 205529
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 12,
+        "core_id": 12,
+        "start_cycle": 1878,
+        "early_end_cycle": 0,
+        "end_cycle": 207051,
+        "duration": 205173
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 13,
+        "core_id": 13,
+        "start_cycle": 1879,
+        "early_end_cycle": 0,
+        "end_cycle": 43305,
+        "duration": 41426
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 14,
+        "core_id": 14,
+        "start_cycle": 1880,
+        "early_end_cycle": 0,
+        "end_cycle": 192790,
+        "duration": 190910
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 15,
+        "core_id": 15,
+        "start_cycle": 1881,
+        "early_end_cycle": 0,
+        "end_cycle": 204151,
+        "duration": 202270
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 16,
+        "core_id": 16,
+        "start_cycle": 1882,
+        "early_end_cycle": 0,
+        "end_cycle": 205880,
+        "duration": 203998
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 17,
+        "core_id": 17,
+        "start_cycle": 1883,
+        "early_end_cycle": 0,
+        "end_cycle": 207696,
+        "duration": 205813
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 18,
+        "core_id": 18,
+        "start_cycle": 1884,
+        "early_end_cycle": 0,
+        "end_cycle": 43327,
+        "duration": 41443
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 19,
+        "core_id": 19,
+        "start_cycle": 1885,
+        "early_end_cycle": 0,
+        "end_cycle": 192903,
+        "duration": 191018
+      }
+    ],
+    "aiv": [
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 0,
+        "core_id": 0,
+        "start_cycle": 1867,
+        "early_end_cycle": 0,
+        "end_cycle": 3047656,
+        "duration": 3045789
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 1,
+        "core_id": 1,
+        "start_cycle": 1868,
+        "early_end_cycle": 0,
+        "end_cycle": 3045594,
+        "duration": 3043726
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 2,
+        "core_id": 2,
+        "start_cycle": 1869,
+        "early_end_cycle": 0,
+        "end_cycle": 335312,
+        "duration": 333443
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 3,
+        "core_id": 3,
+        "start_cycle": 1870,
+        "early_end_cycle": 0,
+        "end_cycle": 332529,
+        "duration": 330659
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 4,
+        "core_id": 4,
+        "start_cycle": 1871,
+        "early_end_cycle": 0,
+        "end_cycle": 255199,
+        "duration": 253328
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 5,
+        "core_id": 5,
+        "start_cycle": 1872,
+        "early_end_cycle": 0,
+        "end_cycle": 254455,
+        "duration": 252583
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 6,
+        "core_id": 6,
+        "start_cycle": 1873,
+        "early_end_cycle": 0,
+        "end_cycle": 145148,
+        "duration": 143275
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 7,
+        "core_id": 7,
+        "start_cycle": 1874,
+        "early_end_cycle": 0,
+        "end_cycle": 142897,
+        "duration": 141023
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 8,
+        "core_id": 8,
+        "start_cycle": 1875,
+        "early_end_cycle": 0,
+        "end_cycle": 325264,
+        "duration": 323389
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 9,
+        "core_id": 9,
+        "start_cycle": 1876,
+        "early_end_cycle": 0,
+        "end_cycle": 322476,
+        "duration": 320600
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 10,
+        "core_id": 10,
+        "start_cycle": 1877,
+        "early_end_cycle": 0,
+        "end_cycle": 335824,
+        "duration": 333947
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 11,
+        "core_id": 11,
+        "start_cycle": 1878,
+        "early_end_cycle": 0,
+        "end_cycle": 332615,
+        "duration": 330737
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 12,
+        "core_id": 12,
+        "start_cycle": 1879,
+        "early_end_cycle": 0,
+        "end_cycle": 336094,
+        "duration": 334215
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 13,
+        "core_id": 13,
+        "start_cycle": 1880,
+        "early_end_cycle": 0,
+        "end_cycle": 332883,
+        "duration": 331003
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 14,
+        "core_id": 14,
+        "start_cycle": 1881,
+        "early_end_cycle": 0,
+        "end_cycle": 255253,
+        "duration": 253372
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 15,
+        "core_id": 15,
+        "start_cycle": 1882,
+        "early_end_cycle": 0,
+        "end_cycle": 254070,
+        "duration": 252188
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 16,
+        "core_id": 16,
+        "start_cycle": 1883,
+        "early_end_cycle": 0,
+        "end_cycle": 145215,
+        "duration": 143332
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 17,
+        "core_id": 17,
+        "start_cycle": 1884,
+        "early_end_cycle": 0,
+        "end_cycle": 142984,
+        "duration": 141100
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 18,
+        "core_id": 18,
+        "start_cycle": 1885,
+        "early_end_cycle": 0,
+        "end_cycle": 325351,
+        "duration": 323466
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 19,
+        "core_id": 19,
+        "start_cycle": 1886,
+        "early_end_cycle": 0,
+        "end_cycle": 322533,
+        "duration": 320647
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 20,
+        "core_id": 20,
+        "start_cycle": 1887,
+        "early_end_cycle": 0,
+        "end_cycle": 335666,
+        "duration": 333779
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 21,
+        "core_id": 21,
+        "start_cycle": 1888,
+        "early_end_cycle": 0,
+        "end_cycle": 332926,
+        "duration": 331038
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 22,
+        "core_id": 22,
+        "start_cycle": 1889,
+        "early_end_cycle": 0,
+        "end_cycle": 335631,
+        "duration": 333742
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 23,
+        "core_id": 23,
+        "start_cycle": 1890,
+        "early_end_cycle": 0,
+        "end_cycle": 332830,
+        "duration": 330940
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 24,
+        "core_id": 24,
+        "start_cycle": 1891,
+        "early_end_cycle": 0,
+        "end_cycle": 251892,
+        "duration": 250001
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 25,
+        "core_id": 25,
+        "start_cycle": 1892,
+        "early_end_cycle": 0,
+        "end_cycle": 251182,
+        "duration": 249290
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 26,
+        "core_id": 26,
+        "start_cycle": 1893,
+        "early_end_cycle": 0,
+        "end_cycle": 141952,
+        "duration": 140059
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 27,
+        "core_id": 27,
+        "start_cycle": 1894,
+        "early_end_cycle": 0,
+        "end_cycle": 139740,
+        "duration": 137846
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 28,
+        "core_id": 28,
+        "start_cycle": 1895,
+        "early_end_cycle": 0,
+        "end_cycle": 322264,
+        "duration": 320369
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 29,
+        "core_id": 29,
+        "start_cycle": 1896,
+        "early_end_cycle": 0,
+        "end_cycle": 319479,
+        "duration": 317583
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 30,
+        "core_id": 30,
+        "start_cycle": 1897,
+        "early_end_cycle": 0,
+        "end_cycle": 332014,
+        "duration": 330117
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 31,
+        "core_id": 31,
+        "start_cycle": 1898,
+        "early_end_cycle": 0,
+        "end_cycle": 329185,
+        "duration": 327287
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 32,
+        "core_id": 32,
+        "start_cycle": 1899,
+        "early_end_cycle": 0,
+        "end_cycle": 332293,
+        "duration": 330394
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 33,
+        "core_id": 33,
+        "start_cycle": 1900,
+        "early_end_cycle": 0,
+        "end_cycle": 329047,
+        "duration": 327147
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 34,
+        "core_id": 34,
+        "start_cycle": 1901,
+        "early_end_cycle": 0,
+        "end_cycle": 252337,
+        "duration": 250436
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 35,
+        "core_id": 35,
+        "start_cycle": 1902,
+        "early_end_cycle": 0,
+        "end_cycle": 251161,
+        "duration": 249259
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 36,
+        "core_id": 36,
+        "start_cycle": 1903,
+        "early_end_cycle": 0,
+        "end_cycle": 141922,
+        "duration": 140019
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 37,
+        "core_id": 37,
+        "start_cycle": 1904,
+        "early_end_cycle": 0,
+        "end_cycle": 139658,
+        "duration": 137754
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 38,
+        "core_id": 38,
+        "start_cycle": 1905,
+        "early_end_cycle": 0,
+        "end_cycle": 321827,
+        "duration": 319922
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 39,
+        "core_id": 39,
+        "start_cycle": 1906,
+        "early_end_cycle": 0,
+        "end_cycle": 318585,
+        "duration": 316679
+      }
+    ]
+  },
+  "task_ticks": 3045844
+}

@@ -1,3 +1,16 @@
+// GENERATED C16 FINAL RV RESIDENCY; archive #126/#145/#148/#154.
+// D.4 four questions, complete original timing logs reread:
+// 1. Fused history FIA final inverse rotation reloads one Rv for16 members.
+// 2. Old whole-history restore6499.8-6655.1ms and store209-215ms are
+//    historical forbidden structures, not current measured phase shares.
+// 3. After final PV, original MTE1->MTE2 and MTE2->MTE1 fence loads Rv
+//    once into the existing256KiB external B1. Sixteen original FP32/K128
+//    MatmulResidentB calls, per-member waits and outputs remain unchanged.
+//    No extra buffer, no flag change, no mathematical rotation relocation.
+// 4. Removes15 Rv loads/cluster (3.75MiB logical GM->B1), not measured
+//    HBM or a speed claim. GM7487488B/core, UB157760B/AIV unchanged.
+//    Complete same-library CPU/oracle/CAModel pairing required; no NPU,
+//    graph, long-context or model acceptance is implied.
 // GENERATED C16 SINGLE-B1 RESIDENCY. Archive #126/#129/#145/#148/#154-157.
 // D.4 four questions; complete original log reread:
 // 1. Fused history dequant/FIA repeated FP32 B GM->L1 loading.
@@ -574,10 +587,14 @@ template<int32_t D> class AttentionCv {
       CrossCoreSetFlag<2,PIPE_FIX>(kClusterRoundDone);
     }
     SelectClusterSlots(0,0);
+    // Final PV has finished issuing; the original ownership fence inside
+    // LoadResidentB orders its last MTE1 read before this one Rv load.
+    // MatmulImpl::End does not own or overwrite the external B1 buffer.
+    LoadResidentB(0,true);
     for(int32_t member=0;member<16;++member) {
       CrossCoreWaitFlag(kVectorReady);
       qOffset=member*kQueryRows*D;
-      Matmul(qOffset,0,rotOffset,rows,D,D,true);
+      MatmulResidentB(qOffset,rotOffset,rows,D,D,true);
       CrossCoreSetFlag<2,PIPE_FIX>(kCubeReady);
       CrossCoreWaitFlag(kVectorReady);
     }

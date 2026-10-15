@@ -1,0 +1,23 @@
+{
+  "status": "source_packaged_not_device_acceptance",
+  "source": "csrc/experiments/c16_rv_reuse_20261015/c16_candidate.cpp",
+  "source_sha256": "9603817dddfba0e6357b42756a9956880137348ce8076c61aff58884acb6210b",
+  "mother": "csrc/kernels/attention_cv_member_pipeline_cluster16.cpp",
+  "mother_sha256": "e2be8877e0a2b877bb8a9532c3940a5c6f2aa6d134cd834922a50e56477580af",
+  "stable": "csrc/kernels/attention_cv_window_range_cluster16.cpp",
+  "stable_sha256": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+  "target": "csrc/kernels/attention_cv_l1_reuse_cluster16.cpp",
+  "target_sha256": "f87b0fe3f80acf01862f273fad9a280432be0643aff86281e8f725747cf95ceb",
+  "header": "csrc/include/oscar_c16_l1_reuse_launch.h",
+  "header_sha256": "e551af6ad5e2d2574339458fd0e886696230256659cfd2caf22ae25b04c35b28",
+  "inverse_full_source_bytes": true,
+  "operator": "attention_cv_l1_reuse_cluster16_out",
+  "D256_workspace_per_core": 7487488,
+  "D256_extra_vs_stable_per_core": 2490368,
+  "AIV_UB_bytes": 157760,
+  "AIC_external_B1_bytes": 262144,
+  "math_flags_task_error_order": "research bytes preserved",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "whole_service": "not_established"
+}

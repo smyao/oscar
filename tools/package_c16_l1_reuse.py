@@ -1,6 +1,6 @@
 """Archive #126/#129/#145/#148/#154-157 and complete startup D.4.
 
-Relocate fixed C16 B1 research bytes without SDK snapshots or regeneration.
+Relocate qualified C16 B1 plus final-Rv residency bytes without SDK snapshots.
 The research generator separately requires its matched official SDK snapshot.
 This packaging step does not establish NPU, graph, or whole-model performance.
 """
@@ -12,8 +12,8 @@ from pathlib import Path
 from tools.package_c4_member_pipeline import relocate
 
 ROOT=Path(__file__).resolve().parents[1]
-SOURCE='csrc/experiments/c16_l1_reuse_20261015/c16_candidate.cpp'
-SOURCE_SHA='1deb6ab15a34ed263000c9a99530d0f9ee1a7e682a84ba7657b2c968d2ae6ec0'
+SOURCE='csrc/experiments/c16_rv_reuse_20261015/c16_candidate.cpp'
+SOURCE_SHA='9603817dddfba0e6357b42756a9956880137348ce8076c61aff58884acb6210b'
 MOTHER='csrc/kernels/attention_cv_member_pipeline_cluster16.cpp'
 MOTHER_SHA='e2be8877e0a2b877bb8a9532c3940a5c6f2aa6d134cd834922a50e56477580af'
 STABLE='csrc/kernels/attention_cv_window_range_cluster16.cpp'
@@ -56,8 +56,8 @@ def package(root=ROOT,*,check=False):
         ('"../../include/oscar_attention_launch.h"','"../include/oscar_attention_launch.h"',1),
         ('"../../include/oscar_cv_schedule.h"','"../include/oscar_cv_schedule.h"',1),
         ('"../../include/oscar_c16_member_pipeline_launch.h"','"../include/oscar_c16_l1_reuse_launch.h"',1),
-        ('c16_l1_reuse_candidate_launch','attention_cv_l1_reuse_cluster16_launch',1),
-        ('oscar_c16_l1_reuse_candidate_kernel','oscar_attention_cv_l1_reuse_cluster16_kernel',1),
+        ('c16_rv_reuse_candidate_launch','attention_cv_l1_reuse_cluster16_launch',1),
+        ('oscar_c16_rv_reuse_candidate_kernel','oscar_attention_cv_l1_reuse_cluster16_kernel',1),
     ])
     for path,content in ((TARGET,result),(HEADER_TARGET,HEADER)):
         if check:

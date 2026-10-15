@@ -1,0 +1,372 @@
+(APIServer pid=77928) INFO 10-15 01:25:12 [loggers.py:271] Engine 000: Avg prompt throughput: 3278.9 tokens/s, Avg generation throughput: 96.3 tokens/s, Running: 28 reqs, Waiting: 1 reqs, GPU KV cache usage: 60.2%, Prefix cache hit rate: 0.0%
+(APIServer pid=77928) INFO 10-15 01:25:12 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.85, Accepted throughput: 62.79 tokens/s, Drafted throughput: 101.69 tokens/s, Accepted: 628 tokens, Drafted: 1017 tokens, Per-position acceptance rate: 0.826, 0.596, 0.431, Avg Draft acceptance rate: 61.8%
+(APIServer pid=77928) INFO:     135.82.26.93:55244 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=77928) INFO:     135.82.26.93:55408 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=77928) INFO 10-15 01:25:22 [loggers.py:271] Engine 000: Avg prompt throughput: 3279.4 tokens/s, Avg generation throughput: 21.7 tokens/s, Running: 28 reqs, Waiting: 3 reqs, GPU KV cache usage: 59.7%, Prefix cache hit rate: 0.0%
+(APIServer pid=77928) INFO 10-15 01:25:22 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.75, Accepted throughput: 14.00 tokens/s, Drafted throughput: 24.00 tokens/s, Accepted: 140 tokens, Drafted: 240 tokens, Per-position acceptance rate: 0.812, 0.588, 0.350, Avg Draft acceptance rate: 58.3%
+(APIServer pid=77928) INFO 10-15 01:25:32 [loggers.py:271] Engine 000: Avg prompt throughput: 6509.3 tokens/s, Avg generation throughput: 23.7 tokens/s, Running: 29 reqs, Waiting: 3 reqs, GPU KV cache usage: 62.4%, Prefix cache hit rate: 0.0%
+(APIServer pid=77928) INFO 10-15 01:25:32 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.94, Accepted throughput: 15.50 tokens/s, Drafted throughput: 24.00 tokens/s, Accepted: 155 tokens, Drafted: 240 tokens, Per-position acceptance rate: 0.838, 0.637, 0.463, Avg Draft acceptance rate: 64.6%
+(APIServer pid=77928) INFO 10-15 01:25:42 [loggers.py:271] Engine 000: Avg prompt throughput: 3282.7 tokens/s, Avg generation throughput: 27.0 tokens/s, Running: 31 reqs, Waiting: 1 reqs, GPU KV cache usage: 66.1%, Prefix cache hit rate: 0.0%
+(APIServer pid=77928) INFO 10-15 01:25:42 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.16, Accepted throughput: 18.40 tokens/s, Drafted throughput: 25.50 tokens/s, Accepted: 184 tokens, Drafted: 255 tokens, Per-position acceptance rate: 0.835, 0.753, 0.576, Avg Draft acceptance rate: 72.2%
+(APIServer pid=77928) INFO 10-15 01:25:52 [loggers.py:271] Engine 000: Avg prompt throughput: 6536.7 tokens/s, Avg generation throughput: 30.0 tokens/s, Running: 32 reqs, Waiting: 0 reqs, GPU KV cache usage: 68.8%, Prefix cache hit rate: 0.0%
+(APIServer pid=77928) INFO 10-15 01:25:52 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.35, Accepted throughput: 20.90 tokens/s, Drafted throughput: 26.70 tokens/s, Accepted: 209 tokens, Drafted: 267 tokens, Per-position acceptance rate: 0.921, 0.787, 0.640, Avg Draft acceptance rate: 78.3%
+(APIServer pid=77928) INFO:     135.82.26.93:55272 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=77928) INFO:     135.82.26.93:55330 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=77928) INFO:     135.82.26.93:55372 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=77928) INFO 10-15 01:26:02 [loggers.py:271] Engine 000: Avg prompt throughput: 3277.8 tokens/s, Avg generation throughput: 136.2 tokens/s, Running: 30 reqs, Waiting: 2 reqs, GPU KV cache usage: 64.5%, Prefix cache hit rate: 0.0%
+(APIServer pid=77928) INFO 10-15 01:26:02 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.92, Accepted throughput: 89.80 tokens/s, Drafted throughput: 140.09 tokens/s, Accepted: 898 tokens, Drafted: 1401 tokens, Per-position acceptance rate: 0.839, 0.619, 0.465, Avg Draft acceptance rate: 64.1%
+(APIServer pid=77928) INFO:     135.82.26.93:55386 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=77928) INFO 10-15 01:26:12 [loggers.py:271] Engine 000: Avg prompt throughput: 3282.3 tokens/s, Avg generation throughput: 24.5 tokens/s, Running: 31 reqs, Waiting: 0 reqs, GPU KV cache usage: 66.1%, Prefix cache hit rate: 0.0%
+(APIServer pid=77928) INFO 10-15 01:26:12 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.82, Accepted throughput: 15.80 tokens/s, Drafted throughput: 26.10 tokens/s, Accepted: 158 tokens, Drafted: 261 tokens, Per-position acceptance rate: 0.793, 0.598, 0.425, Avg Draft acceptance rate: 60.5%
+(APIServer pid=77928) INFO:     135.82.26.93:55404 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=77928) INFO 10-15 01:26:22 [loggers.py:271] Engine 000: Avg prompt throughput: 6552.4 tokens/s, Avg generation throughput: 26.5 tokens/s, Running: 31 reqs, Waiting: 0 reqs, GPU KV cache usage: 66.7%, Prefix cache hit rate: 0.0%
+(APIServer pid=77928) INFO 10-15 01:26:22 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 3.02, Accepted throughput: 17.80 tokens/s, Drafted throughput: 26.40 tokens/s, Accepted: 178 tokens, Drafted: 264 tokens, Per-position acceptance rate: 0.864, 0.727, 0.432, Avg Draft acceptance rate: 67.4%
+(APIServer pid=77928) INFO:     135.82.26.93:55316 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=77928) INFO 10-15 01:26:32 [loggers.py:271] Engine 000: Avg prompt throughput: 6515.4 tokens/s, Avg generation throughput: 72.9 tokens/s, Running: 32 reqs, Waiting: 0 reqs, GPU KV cache usage: 68.3%, Prefix cache hit rate: 0.0%
+(APIServer pid=77928) INFO 10-15 01:26:32 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.94, Accepted throughput: 48.00 tokens/s, Drafted throughput: 74.40 tokens/s, Accepted: 480 tokens, Drafted: 744 tokens, Per-position acceptance rate: 0.843, 0.653, 0.440, Avg Draft acceptance rate: 64.5%
+(APIServer pid=77928) INFO:     135.82.26.93:55362 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=77928) INFO 10-15 01:26:42 [loggers.py:271] Engine 000: Avg prompt throughput: 3280.5 tokens/s, Avg generation throughput: 108.4 tokens/s, Running: 32 reqs, Waiting: 0 reqs, GPU KV cache usage: 68.8%, Prefix cache hit rate: 0.0%
+(APIServer pid=77928) INFO 10-15 01:26:42 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.88, Accepted throughput: 70.89 tokens/s, Drafted throughput: 113.08 tokens/s, Accepted: 709 tokens, Drafted: 1131 tokens, Per-position acceptance rate: 0.833, 0.607, 0.440, Avg Draft acceptance rate: 62.7%
+(APIServer pid=77928) INFO:     135.82.26.93:55398 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=77928) INFO 10-15 01:26:52 [loggers.py:271] Engine 000: Avg prompt throughput: 3280.6 tokens/s, Avg generation throughput: 140.5 tokens/s, Running: 32 reqs, Waiting: 0 reqs, GPU KV cache usage: 68.8%, Prefix cache hit rate: 0.0%
+(APIServer pid=77928) INFO 10-15 01:26:52 [metrics.py:101] SpecDecoding metrics: Mean acceptance length: 2.78, Accepted throughput: 89.90 tokens/s, Drafted throughput: 151.79 tokens/s, Accepted: 899 tokens, Drafted: 1518 tokens, Per-position acceptance rate: 0.802, 0.573, 0.401, Avg Draft acceptance rate: 59.2%
+[rank0]:[E1015 01:26:55.916998700 OpParamMaker.cpp:354] call aclnnAddRmsNormBias failed, detail:[PID: 78047] 2026-10-15-00:41:12.776.535 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+TraceBack (most recent call last):
+        The error from device(chipId:0, dieId:0), serial number is 99, there is an exception of aivec error, core id is 38, error code = 0, dump info: pc start: 0x1240022416cc, current: 0x124002241928, vec error info: 0x2a000000ea, mte error info: 0xfc030500ac, ifu error info: 0x212d03f582980, ccu error info: 0x13b408316f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c149a9c000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x30500ac, fixp_error1 info: 0xfc, fsmId:1, tslot:2, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        The error from device(chipId:0, dieId:0), serial number is 99, there is an exception of aivec error, core id is 40, error code = 0, dump info: pc start: 0x1240022416cc, current: 0x124002241928, vec error info: 0x2a000000ea, mte error info: 0xfc030520ac, ifu error info: 0x212d03f582a80, ccu error info: 0xba1910806f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c149a9c000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x30520ac, fixp_error1 info: 0xfc, fsmId:1, tslot:2, thread:0, ctxid:0, blk:2, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        Failed to submit kernel task, retCode=0x7150050.[FUNC:InternalLaunchKernelSubmit][FILE:aix_stars.cc][LINE:462]
+        kernel launch submit failed.[FUNC:StreamLaunchKernelV2][FILE:aix_stars.cc][LINE:609]
+        rtsLaunchKernelWithHostArgs execution failed, reason=the model stream execute failed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+        Check aclrtLaunchKernelWithHostArgs( funcHandle, numBlocks, stream, &cfg, executor->argsExt.args, executor->argsExt.argsSize, rtsHostPlaceHolder.data(), rtsHostPlaceHolder.size()) failed
+        Assert ((NnopbaseExecutorLaunchKernel(executor, stream, numBlocks)) == 0) failed
+        Check NnopbaseExecutorKernelLaunch(executor, stream) failed
+        Check NnopbaseRunWithWorkspace(executor, stream, workspace, workspaceSize) failed
+
+Exception raised from operator() at /vllm-workspace/vllm-ascend/csrc/moe/add_rms_norm_bias/add_rms_norm_bias_torch_adpt.h:49 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0xc8 (0xffff7ec45978 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0xc4 (0xffff7ebe9adc in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #2: <unknown function> + 0x578c8 (0xfffed66578c8 in /vllm-workspace/vllm-ascend/vllm_ascend/vllm_ascend_C.cpython-312-aarch64-linux-gnu.so)
+frame #3: <unknown function> + 0x4b1605c (0xffff5f0b605c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #4: <unknown function> + 0x1927070 (0xffff5bec7070 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #5: <unknown function> + 0x192810c (0xffff5bec810c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #6: <unknown function> + 0x1925b38 (0xffff5bec5b38 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #7: <unknown function> + 0xd29cc (0xffff8d0029cc in /lib/aarch64-linux-gnu/libstdc++.so.6)
+frame #8: <unknown function> + 0x803c8 (0xffff8d1e03c8 in /lib/aarch64-linux-gnu/libc.so.6)
+frame #9: <unknown function> + 0xe9edc (0xffff8d249edc in /lib/aarch64-linux-gnu/libc.so.6)
+
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 345, in execute_model
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return self.worker.execute_model(scheduler_output)
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 647, in execute_model
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     output = self.model_runner.execute_model(scheduler_output, intermediate_tensors)
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2026, in execute_model
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     with self.synchronize_input_prep():
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 137, in __enter__
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return next(self.gen)
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar_kimi/oscar_ascend/plugin.py", line 169, in wrapped
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     with original(runner, *args, **kwargs):
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 137, in __enter__
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return next(self.gen)
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 3712, in synchronize_input_prep
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     self.prepare_inputs_event.synchronize()
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/streams.py", line 192, in synchronize
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     super(Event, self).synchronize()
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] RuntimeError: synchronize:../torch_npu/csrc/core/npu/NPUEvent.cpp:215 NPU function error: aclrtSynchronizeEvent(event_), error code is 507011
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] [ERROR] 2026-10-15-01:26:55 (PID:78151, Device:3, RankID:-1) ERR00100 PTA call acl api failed
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] [Error]: Model execution failed. 
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]         Rectify the fault based on the error information in the ascend log.
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] EZ9999: Inner Error!
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] EZ9999[PID: 78151] 2026-10-15-01:26:55.351.853 (EZ9999):  The error from device(chipId:3, dieId:0), serial number is 83, there is an exception of aivec error, core id is 3, error code = 0, dump info: pc start: 0x1246022416cc, current: 0x124602241928, vec error info: 0xeb1fb26c21, mte error info: 0xfc03043080, ifu error info: 0x212d03f5827c0, ccu error info: 0x5d4061306f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c148dea000, aic cond: 0.
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3043080, fixp_error1 info: 0xfc, fsmId:0, tslot:2, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] TraceBack (most recent call last):
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]        The error from device(chipId:3, dieId:0), serial number is 83, there is an exception of aivec error, core id is 5, error code = 0, dump info: pc start: 0x1246022416cc, current: 0x124602241928, vec error info: 0xeb1bbdff45, mte error info: 0xfc03040080, ifu error info: 0x212d03f582900, ccu error info: 0x8c1db0c96f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c148dea000, aic cond: 0.
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3040080, fixp_error1 info: 0xfc, fsmId:1, tslot:2, thread:0, ctxid:0, blk:2, sublk:0, subErrType:2.
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]        rtEventSynchronize execution failed, reason=the model stream execute failed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] 
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 345, in execute_model
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return self.worker.execute_model(scheduler_output)
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 647, in execute_model
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     output = self.model_runner.execute_model(scheduler_output, intermediate_tensors)
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2026, in execute_model
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     with self.synchronize_input_prep():
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 137, in __enter__
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return next(self.gen)
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar_kimi/oscar_ascend/plugin.py", line 169, in wrapped
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     with original(runner, *args, **kwargs):
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 137, in __enter__
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return next(self.gen)
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 3712, in synchronize_input_prep
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     self.prepare_inputs_event.synchronize()
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/streams.py", line 192, in synchronize
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     super(Event, self).synchronize()
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] RuntimeError: synchronize:../torch_npu/csrc/core/npu/NPUEvent.cpp:215 NPU function error: aclrtSynchronizeEvent(event_), error code is 507011
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] [ERROR] 2026-10-15-01:26:55 (PID:78151, Device:3, RankID:-1) ERR00100 PTA call acl api failed
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] [Error]: Model execution failed. 
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]         Rectify the fault based on the error information in the ascend log.
+(Worker_TP3 pid=78151) [rank1]:[E1015 01:26:55.917793820 OpParamMaker.cpp:453] operator():../third_party/op-plugin/op_plugin/ops/opapi/QuantMatmulKernelNpuOpApi.cpp:294 NPU function error: call aclnnQuantMatmulWeightNz failed, error code is 507011
+[ERROR] 2026-10-15-01:26:55 (PID:78067, Device:1, RankID:-1) ERR00100 PTA call acl api failed
+[Error]: Model execution failed. 
+        Rectify the fault based on the error information in the ascend log.
+[PID: 78067] 2026-10-15-00:41:12.697.392 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+TraceBack (most recent call last):
+        The error from device(chipId:1, dieId:0), serial number is 83, there is an exception of aivec error, core id is 24, error code = 0, dump info: pc start: 0x1242022416cc, current: 0x124202241928, vec error info: 0x111303149, mte error info: 0xfc03043080, ifu error info: 0x212d03f582dc0, ccu error info: 0xa070083c6f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c14a72a000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3043080, fixp_error1 info: 0xfc, fsmId:0, tslot:4, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        The error from device(chipId:1, dieId:0), serial number is 83, there is an exception of aivec error, core id is 26, error code = 0, dump info: pc start: 0x1242022416cc, current: 0x124202241928, vec error info: 0x630ac16eab, mte error info: 0xfc03040080, ifu error info: 0x212d03f582ec0, ccu error info: 0xc069831c6f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c14a72a000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3040080, fixp_error1 info: 0xfc, fsmId:0, tslot:4, thread:0, ctxid:0, blk:2, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        Failed to submit kernel task, retCode=0x7150050.[FUNC:InternalLaunchKernelSubmit][FILE:aix_stars.cc][LINE:462]
+        kernel launch submit failed.[FUNC:StreamLaunchKernelV2][FILE:aix_stars.cc][LINE:609]
+        rtsLaunchKernelWithHostArgs execution failed, reason=the model stream execute failed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+        aclrtLaunchKernelWithHostArgs failed, return: 507011
+        Launch kernel failed.
+        KernelLaunch failed: /usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe//kernel/ascend910b/ops_nn/quant_batch_matmul_v3/QuantBatchMatmulV3_ND_NZ_int8_int8_bf16_high_performance.o
+        Kernel Run failed. opType: 48, QuantBatchMatmulV3
+        launch failed for QuantBatchMatmulV3, errno:361001.
+
+Exception raised from operator() at ../third_party/op-plugin/op_plugin/ops/opapi/QuantMatmulKernelNpuOpApi.cpp:294 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0xc8 (0xffff9ab65978 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0xc4 (0xffff9ab09adc in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #2: <unknown function> + 0x3533e20 (0xffff799f3e20 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #3: <unknown function> + 0x4b10768 (0xffff7afd0768 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #4: <unknown function> + 0x1927070 (0xffff77de7070 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #5: <unknown function> + 0x192810c (0xffff77de810c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #6: <unknown function> + 0x1925b38 (0xffff77de5b38 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #7: <unknown function> + 0xd29cc (0xffffa8f229cc in /lib/aarch64-linux-gnu/libstdc++.so.6)
+frame #8: <unknown function> + 0x803c8 (0xffffa91003c8 in /lib/aarch64-linux-gnu/libc.so.6)
+frame #9: <unknown function> + 0xe9edc (0xffffa9169edc in /lib/aarch64-linux-gnu/libc.so.6)
+
+ERROR 10-15 01:26:55 [multiproc_executor.py:987] EZ9999: Inner Error!
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] EZ9999[PID: 78151] 2026-10-15-01:26:55.351.853 (EZ9999):  The error from device(chipId:3, dieId:0), serial number is 83, there is an exception of aivec error, core id is 3, error code = 0, dump info: pc start: 0x1246022416cc, current: 0x124602241928, vec error info: 0xeb1fb26c21, mte error info: 0xfc03043080, ifu error info: 0x212d03f5827c0, ccu error info: 0x5d4061306f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c148dea000, aic cond: 0.
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3043080, fixp_error1 info: 0xfc, fsmId:0, tslot:2, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] TraceBack (most recent call last):
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]        The error from device(chipId:3, dieId:0), serial number is 83, there is an exception of aivec error, core id is 5, error code = 0, dump info: pc start: 0x1246022416cc, current: 0x124602241928, vec error info: 0xeb1bbdff45, mte error info: 0xfc03040080, ifu error info: 0x212d03f582900, ccu error info: 0x8c1db0c96f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c148dea000, aic cond: 0.
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3040080, fixp_error1 info: 0xfc, fsmId:1, tslot:2, thread:0, ctxid:0, blk:2, sublk:0, subErrType:2.
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987]        rtEventSynchronize execution failed, reason=the model stream execute failed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] 
+(Worker_TP3 pid=78151) ERROR 10-15 01:26:55 [multiproc_executor.py:987] 
+[rank2]:[E1015 01:26:55.920396240 OpParamMaker.cpp:453] operator():../third_party/op-plugin/op_plugin/ops/opapi/NeKernelNpuOpApi.cpp:93 NPU function error: call aclnnNeScalar failed, error code is 507011
+[ERROR] 2026-10-15-01:26:55 (PID:78108, Device:2, RankID:-1) ERR00100 PTA call acl api failed
+[Error]: Model execution failed. 
+        Rectify the fault based on the error information in the ascend log.
+[PID: 78108] 2026-10-15-00:41:12.803.570 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+TraceBack (most recent call last):
+        The error from device(chipId:2, dieId:0), serial number is 80, there is an exception of aivec error, core id is 40, error code = 0, dump info: pc start: 0x1244022416cc, current: 0x124402241928, vec error info: 0x7e01de8f2d, mte error info: 0xfc03040080, ifu error info: 0x212d03f582a80, ccu error info: 0x910112d6f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c148a7c000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3040080, fixp_error1 info: 0xfc, fsmId:0, tslot:0, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        The error from device(chipId:2, dieId:0), serial number is 80, there is an exception of aivec error, core id is 42, error code = 0, dump info: pc start: 0x1244022416cc, current: 0x124402241928, vec error info: 0x1b0eb16674, mte error info: 0xfc03041080, ifu error info: 0x212d03f582b80, ccu error info: 0x8c0480626f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c148a7c000, aic cond: 0.
+The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0x3041080, fixp_error1 info: 0xfc, fsmId:1, tslot:0, thread:0, ctxid:0, blk:2, sublk:0, subErrType:2.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        Failed to submit kernel task, retCode=0x7150050.[FUNC:InternalLaunchKernelSubmit][FILE:aix_stars.cc][LINE:462]
+        kernel launch submit failed.[FUNC:StreamLaunchKernelV2][FILE:aix_stars.cc][LINE:609]
+        rtsLaunchKernelWithHostArgs execution failed, reason=the model stream execute failed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+        aclrtLaunchKernelWithHostArgs failed, return: 507011
+        Launch kernel failed.
+        KernelLaunch failed: /usr/local/Ascend/cann-9.1.0/opp/built-in/op_impl/ai_core/tbe//kernel/ascend910b/ops_legacy/not_equal/NotEqual_db689a08d53f9c09c59c06b9caeb956b_high_performance.o
+        Kernel Run failed. opType: 66, NotEqual
+        launch failed for NotEqual, errno:361001.
+
+Exception raised from operator() at ../third_party/op-plugin/op_plugin/ops/opapi/NeKernelNpuOpApi.cpp:93 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0xc8 (0xffff77ec5978 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0xc4 (0xffff77e69adc in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #2: <unknown function> + 0x3364dd4 (0xffff56b84dd4 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #3: <unknown function> + 0x4b10768 (0xffff58330768 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #4: <unknown function> + 0x1927070 (0xffff55147070 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #5: <unknown function> + 0x192810c (0xffff5514810c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #6: <unknown function> + 0x1925b38 (0xffff55145b38 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #7: <unknown function> + 0xd29cc (0xffff862829cc in /lib/aarch64-linux-gnu/libstdc++.so.6)
+frame #8: <unknown function> + 0x803c8 (0xffff864603c8 in /lib/aarch64-linux-gnu/libc.so.6)
+frame #9: <unknown function> + 0xe9edc (0xffff864c9edc in /lib/aarch64-linux-gnu/libc.so.6)
+
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 679, in sample_tokens
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return self.model_runner.sample_tokens(grammar_output)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2600, in sample_tokens
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     async_output = AsyncGPUModelRunnerOutput(
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 266, in __init__
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     async_output_copy_stream.wait_stream(default_stream)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/streams.py", line 54, in wait_stream
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     self.wait_event(stream.record_event())
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]                     ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/streams.py", line 68, in record_event
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     event.record(self)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/streams.py", line 151, in record
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     super(Event, self).record(stream)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] RuntimeError: The Inner error is reported as above. The process exits for this inner error, and the current working operator name is aclnnAddRmsNormBias.
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] Since the operator is called asynchronously, the stacktrace may be inaccurate. If you want to get the accurate stacktrace, please set the environment variable ASCEND_LAUNCH_BLOCKING=1.
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] Note: ASCEND_LAUNCH_BLOCKING=1 will force ops to run in synchronous mode, resulting in performance degradation. Please unset ASCEND_LAUNCH_BLOCKING in time after debugging.
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] [ERROR] 2026-10-15-01:26:55 (PID:78047, Device:0, RankID:-1) ERR00100 PTA call acl api failed.
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] 
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 679, in sample_tokens
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return self.model_runner.sample_tokens(grammar_output)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2600, in sample_tokens
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     async_output = AsyncGPUModelRunnerOutput(
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 266, in __init__
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     async_output_copy_stream.wait_stream(default_stream)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/streams.py", line 54, in wait_stream
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     self.wait_event(stream.record_event())
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]                     ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/streams.py", line 68, in record_event
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     event.record(self)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/streams.py", line 151, in record
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     super(Event, self).record(stream)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] RuntimeError: The Inner error is reported as above. The process exits for this inner error, and the current working operator name is aclnnAddRmsNormBias.
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] Since the operator is called asynchronously, the stacktrace may be inaccurate. If you want to get the accurate stacktrace, please set the environment variable ASCEND_LAUNCH_BLOCKING=1.
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] Note: ASCEND_LAUNCH_BLOCKING=1 will force ops to run in synchronous mode, resulting in performance degradation. Please unset ASCEND_LAUNCH_BLOCKING in time after debugging.
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] [ERROR] 2026-10-15-01:26:55 (PID:78047, Device:0, RankID:-1) ERR00100 PTA call acl api failed.
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] 
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] 
+(EngineCore pid=78019) ERROR 10-15 01:26:55 [dump_input.py:72] Dumping input data for V1 LLM engine (v0.23.0) with config: model='/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', speculative_config=SpeculativeConfig(method='mtp', model='/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', num_spec_tokens=3), tokenizer='/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=262144, download_dir=None, load_format=auto, tensor_parallel_size=4, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=ascend, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=npu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=qwen3.5, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'vllm_ascend.compilation.compiler_interface.AscendCompiler', 'custom_ops': ['all'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [16384], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY: (2, 0)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 4, 8, 12, 16, 24, 32, 48, 56, 64, 72, 84, 96, 108, 112, 128, 160, 172, 196, 200, 212, 232, 272, 288, 312, 328, 344, 360, 384, 400, 416, 432, 448, 480, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native']), enable_flashinfer_autotune=True, moe_backend='auto', linear_backend='auto'), 
+(EngineCore pid=78019) ERROR 10-15 01:26:55 [dump_input.py:79] Dumping scheduler output for model execution: SchedulerOutput(scheduled_new_reqs=[], scheduled_cached_reqs=CachedRequestData(req_ids=['chatcmpl-92906ff26cf1c771-a8496134', 'chatcmpl-b064d50e2fe94442-a8fb4eb2', 'chatcmpl-867e1146d0c32031-b643de31', 'chatcmpl-b1ebcda8a7da192b-9b852a45', 'chatcmpl-8abcdf61c83433fc-b9806d97', 'chatcmpl-9f1bbfa804dd1e9d-bd0c45dd', 'chatcmpl-829c81bbc098adca-b03202c8', 'chatcmpl-a136019d3b242b92-b6c6f8eb', 'chatcmpl-9d6ad4bba8b5a54c-8ab8ac57', 'chatcmpl-93022d5fa6d3d9c5-bab9ac0a', 'chatcmpl-89df0c46ac4710e1-a0c62d67', 'chatcmpl-b00e39be8b1562a7-b80cbab1', 'chatcmpl-bc9d957d307bd3fa-90485279', 'chatcmpl-a6e5214365bd057c-874e3dbe', 'chatcmpl-ad495f2eb5cb2eb7-ae7de2ab', 'chatcmpl-a69f29b8c90ae98d-b092bdd6', 'chatcmpl-9c5afd4beecc331f-aebe0c59', 'chatcmpl-b637ebb806e484a1-b01b5fbb', 'chatcmpl-8b051d60af3a97ec-ab4aab73', 'chatcmpl-a63e0bae67e6f290-adb8fc91', 'chatcmpl-924e5c4096a1f704-8b32c74f', 'chatcmpl-8ea9088c78c55a40-b90b8fce', 'chatcmpl-b516d37144b06bc3-987bdbac', 'chatcmpl-a332119379c586ff-9ac5e1b0', 'chatcmpl-8ea068a08c85c3be-9d271ca4', 'chatcmpl-ac59658722366b82-82e8b8f7', 'chatcmpl-98a71cde96824a30-b0e6c834', 'chatcmpl-acf510616786e405-9241dee6', 'chatcmpl-9ed6d5a921fe9d85-8d6f229f', 'chatcmpl-a41aaca563579cee-8ccdfcc0', 'chatcmpl-ad77da82f4b876b1-83c2cb5f', 'chatcmpl-a8bf714a12286b22-9d898d79'],resumed_req_ids=set(),new_token_ids_lens=[],all_token_ids_lens={},new_block_ids=[None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None],num_computed_tokens=[33216, 33258, 32919, 33319, 33313, 33196, 33112, 33126, 33158, 32875, 33097, 33120, 33107, 33032, 32684, 33081, 33043, 33005, 32542, 32943, 33019, 33024, 32710, 32960, 32958, 32932, 32829, 32918, 32457, 32899, 32857, 32520],num_output_tokens=[416, 442, 421, 476, 451, 376, 347, 304, 330, 313, 271, 293, 275, 256, 247, 247, 250, 206, 197, 194, 189, 185, 176, 180, 132, 123, 111, 100, 119, 89, 50, 0]), num_scheduled_tokens={chatcmpl-829c81bbc098adca-b03202c8: 4, chatcmpl-b516d37144b06bc3-987bdbac: 4, chatcmpl-9c5afd4beecc331f-aebe0c59: 4, chatcmpl-92906ff26cf1c771-a8496134: 4, chatcmpl-924e5c4096a1f704-8b32c74f: 4, chatcmpl-a41aaca563579cee-8ccdfcc0: 4, chatcmpl-ac59658722366b82-82e8b8f7: 4, chatcmpl-8abcdf61c83433fc-b9806d97: 4, chatcmpl-867e1146d0c32031-b643de31: 4, chatcmpl-ad495f2eb5cb2eb7-ae7de2ab: 4, chatcmpl-a69f29b8c90ae98d-b092bdd6: 4, chatcmpl-ad77da82f4b876b1-83c2cb5f: 4, chatcmpl-bc9d957d307bd3fa-90485279: 4, chatcmpl-9f1bbfa804dd1e9d-bd0c45dd: 4, chatcmpl-9d6ad4bba8b5a54c-8ab8ac57: 4, chatcmpl-a8bf714a12286b22-9d898d79: 4, chatcmpl-a332119379c586ff-9ac5e1b0: 4, chatcmpl-a136019d3b242b92-b6c6f8eb: 4, chatcmpl-a6e5214365bd057c-874e3dbe: 4, chatcmpl-9ed6d5a921fe9d85-8d6f229f: 4, chatcmpl-a63e0bae67e6f290-adb8fc91: 4, chatcmpl-89df0c46ac4710e1-a0c62d67: 4, chatcmpl-b637ebb806e484a1-b01b5fbb: 4, chatcmpl-8ea9088c78c55a40-b90b8fce: 4, chatcmpl-8b051d60af3a97ec-ab4aab73: 4, chatcmpl-93022d5fa6d3d9c5-bab9ac0a: 4, chatcmpl-8ea068a08c85c3be-9d271ca4: 4, chatcmpl-b1ebcda8a7da192b-9b852a45: 4, chatcmpl-b00e39be8b1562a7-b80cbab1: 4, chatcmpl-98a71cde96824a30-b0e6c834: 4, chatcmpl-b064d50e2fe94442-a8fb4eb2: 4, chatcmpl-acf510616786e405-9241dee6: 4}, total_num_scheduled_tokens=128, scheduled_spec_decode_tokens={chatcmpl-a136019d3b242b92-b6c6f8eb: [-1, -1, -1], chatcmpl-9c5afd4beecc331f-aebe0c59: [-1, -1, -1], chatcmpl-9f1bbfa804dd1e9d-bd0c45dd: [-1, -1, -1], chatcmpl-9ed6d5a921fe9d85-8d6f229f: [-1, -1, -1], chatcmpl-829c81bbc098adca-b03202c8: [-1, -1, -1], chatcmpl-8abcdf61c83433fc-b9806d97: [-1, -1, -1], chatcmpl-b637ebb806e484a1-b01b5fbb: [-1, -1, -1], chatcmpl-9d6ad4bba8b5a54c-8ab8ac57: [-1, -1, -1], chatcmpl-bc9d957d307bd3fa-90485279: [-1, -1, -1], chatcmpl-ad495f2eb5cb2eb7-ae7de2ab: [-1, -1, -1], chatcmpl-924e5c4096a1f704-8b32c74f: [-1, -1, -1], chatcmpl-8ea068a08c85c3be-9d271ca4: [-1, -1, -1], chatcmpl-8b051d60af3a97ec-ab4aab73: [-1, -1, -1], chatcmpl-b064d50e2fe94442-a8fb4eb2: [-1, -1, -1], chatcmpl-b516d37144b06bc3-987bdbac: [-1, -1, -1], chatcmpl-b1ebcda8a7da192b-9b852a45: [-1, -1, -1], chatcmpl-a41aaca563579cee-8ccdfcc0: [-1, -1, -1], chatcmpl-a332119379c586ff-9ac5e1b0: [-1, -1, -1], chatcmpl-92906ff26cf1c771-a8496134: [-1, -1, -1], chatcmpl-867e1146d0c32031-b643de31: [-1, -1, -1], chatcmpl-b00e39be8b1562a7-b80cbab1: [-1, -1, -1], chatcmpl-ac59658722366b82-82e8b8f7: [-1, -1, -1], chatcmpl-98a71cde96824a30-b0e6c834: [-1, -1, -1], chatcmpl-acf510616786e405-9241dee6: [-1, -1, -1], chatcmpl-ad77da82f4b876b1-83c2cb5f: [-1, -1, -1], chatcmpl-a69f29b8c90ae98d-b092bdd6: [-1, -1, -1], chatcmpl-a6e5214365bd057c-874e3dbe: [-1, -1, -1], chatcmpl-89df0c46ac4710e1-a0c62d67: [-1, -1, -1], chatcmpl-8ea9088c78c55a40-b90b8fce: [-1, -1, -1], chatcmpl-a63e0bae67e6f290-adb8fc91: [-1, -1, -1], chatcmpl-93022d5fa6d3d9c5-bab9ac0a: [-1, -1, -1]}, scheduled_encoder_inputs={}, num_common_prefix_blocks=[0, 0, 0, 0], finished_req_ids=[], free_encoder_mm_hashes=[], preempted_req_ids=[], has_structured_output_requests=false, pending_structured_output_tokens=false, num_invalid_spec_tokens=null, kv_connector_metadata=null, ec_connector_metadata=null, new_block_ids_to_zero=null)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 345, in execute_model
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return self.worker.execute_model(scheduler_output)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 647, in execute_model
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     output = self.model_runner.execute_model(scheduler_output, intermediate_tensors)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2026, in execute_model
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     with self.synchronize_input_prep():
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 137, in __enter__
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return next(self.gen)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar_kimi/oscar_ascend/plugin.py", line 169, in wrapped
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     with original(runner, *args, **kwargs):
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 137, in __enter__
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return next(self.gen)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 3712, in synchronize_input_prep
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     self.prepare_inputs_event.synchronize()
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/streams.py", line 192, in synchronize
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     super(Event, self).synchronize()
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] RuntimeError: synchronize:../torch_npu/csrc/core/npu/NPUEvent.cpp:215 NPU function error: aclrtSynchronizeEvent(event_), error code is 507011
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] [ERROR] 2026-10-15-01:26:55 (PID:78047, Device:0, RankID:-1) ERR00100 PTA call acl api failed
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] [Error]: Model execution failed. 
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]         Rectify the fault based on the error information in the ascend log.
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] EE9999: Inner Error!
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] EE9999[PID: 78047] 2026-10-15-01:26:55.365.177 (EE9999):  rtEventSynchronize execution failed, reason=the model stream execute failed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] TraceBack (most recent call last):
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] 
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 345, in execute_model
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return self.worker.execute_model(scheduler_output)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 647, in execute_model
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     output = self.model_runner.execute_model(scheduler_output, intermediate_tensors)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2026, in execute_model
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     with self.synchronize_input_prep():
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 137, in __enter__
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return next(self.gen)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar_kimi/oscar_ascend/plugin.py", line 169, in wrapped
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     with original(runner, *args, **kwargs):
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 137, in __enter__
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return next(self.gen)
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 3712, in synchronize_input_prep
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     self.prepare_inputs_event.synchronize()
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/streams.py", line 192, in synchronize
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     super(Event, self).synchronize()
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] RuntimeError: synchronize:../torch_npu/csrc/core/npu/NPUEvent.cpp:215 NPU function error: aclrtSynchronizeEvent(event_), error code is 507011
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] [ERROR] 2026-10-15-01:26:55 (PID:78047, Device:0, RankID:-1) ERR00100 PTA call acl api failed
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] [Error]: Model execution failed. 
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987]         Rectify the fault based on the error information in the ascend log.
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] EE9999: Inner Error!
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] EE9999[PID: 78047] 2026-10-15-01:26:55.365.177 (EE9999):  rtEventSynchronize execution failed, reason=the model stream execute failed[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] TraceBack (most recent call last):
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] 
+(Worker_TP0 pid=78047) ERROR 10-15 01:26:55 [multiproc_executor.py:987] 
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 679, in sample_tokens
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return self.model_runner.sample_tokens(grammar_output)
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2517, in sample_tokens
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     propose_draft_token_ids(sampler_output.sampled_token_ids)
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2471, in propose_draft_token_ids
+(Worker_TP1 pid=78067) ERROR 10-15 01:26:55 [multiproc_executor.py:987]     self._draft_token_ids = self.propo

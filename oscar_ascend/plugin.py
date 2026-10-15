@@ -12,6 +12,7 @@ without changing random probabilities or the frozen device kernels.
 
 import functools
 import importlib.abc
+import inspect
 import json
 from contextlib import contextmanager
 import os
@@ -149,6 +150,28 @@ def _patch_runner(module: ModuleType) -> None:
     _patch(cls, "_allocate_kv_cache_tensors", allocate)
     _patch(cls, "_reshape_kv_cache_tensors", reshape)
     _patch(cls, "_dummy_run", dummy_run)
+
+    def classified_dispatch(original):
+        signature = inspect.signature(original)
+
+        def wrapped(runner, *args, **kwargs):
+            from .integration.prefill_state_contract import force_prefill_eager
+            bound = signature.bind(runner, *args, **kwargs)
+            bound.apply_defaults()
+            values = bound.arguments
+            if force_prefill_eager(
+                    runner, values["num_reqs"], values["num_scheduled_tokens_np"],
+                    values["max_num_scheduled_tokens"], values.get("force_uniform_decode")):
+                values["force_eager"] = True
+                if not getattr(runner, "_oscar_prefill_state_logged", False):
+                    print("[oscar] PREFILL_STATE_FIX cache_mode=none "
+                          "route=native_prefill mtp=enabled decode_graph=retained", flush=True)
+                    runner._oscar_prefill_state_logged = True
+            return original(*bound.args, **bound.kwargs)
+        return wrapped
+
+    if hasattr(cls, "_determine_batch_execution_and_padding"):
+        _patch(cls, "_determine_batch_execution_and_padding", classified_dispatch)
 
     # Optional for old host fixture providers, mandatory when the explicit
     # request-window feature seals a real runner. Registration remains light.
@@ -336,6 +359,18 @@ def _patch_mtp_forward(module: ModuleType) -> None:
         _patch(cls, "__call__", compact)
 
 
+def _patch_gdn_prefill_classification(module: ModuleType) -> None:
+    """#163: preserve none-mode prefill state; GDN kernels remain native."""
+    def retain_prefill(original):
+        def wrapped(builder, common_attn_metadata, spec_sequence_masks_cpu, num_accepted_tokens):
+            from .integration.prefill_state_contract import keep_prefill_state
+            return keep_prefill_state(builder, original, common_attn_metadata,
+                                      spec_sequence_masks_cpu, num_accepted_tokens)
+        return wrapped
+    _patch(module.AscendGDNAttentionMetadataBuilder,
+           "_fold_spec_sized_prefill_chunks_into_spec", retain_prefill)
+
+
 def _patch_mtp_proposer(module: ModuleType) -> None:
     """Archive #157: bind explicit native discard rows without altering GDN.
 
@@ -439,6 +474,7 @@ _callbacks = {
     "vllm.v1.core.sched.scheduler": _patch_request_window_scheduler,
     "vllm_ascend.ops.triton.reject_sample": _patch_native_greedy_sampling,
     "vllm_ascend.sample.rejection_sampler": _patch_native_greedy_sampling,
+    "vllm_ascend.ops.gdn_attn_builder": _patch_gdn_prefill_classification,
 }
 
 

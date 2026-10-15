@@ -36,6 +36,14 @@ git pull --ff-only && bash scripts/install_observe_serve.sh --variant candidate 
 
 ## 关闭缓存的短批后续 MTP（2026-10-14）
 
+**2026-10-15：该短批分流变更已撤回。** 40a5e854真机仍在相同位置失败，不能将其当作该故障修复；原测试保存为`reports/retired_small_mtp_route_20261015.py.txt`。当前恢复2bdb503c的MTP分流，保留其逻辑缓存位置修复，采用下节已复现的prefill状态协议修复。
+
 默认关闭prefix时，所有带padding的后续MTP轮次都按真实请求数执行现有compact路径，覆盖128/32、96/24、48/12等短批。MTP仍为3个speculative tokens，原N的attention splits、完整OSCAR INT2、guard和target图均保留。prefix开启时保留此前已交付的执行选择；两个入口读取同一prefix配置，无需额外参数。
 
 150项关键host回归和两入口prefix两态启动计划通过；尚未在真机验证本次关闭缓存的Trap消失。详见档案#162，不把host结果写成NPU验收。
+
+## 真实 prefill 尾段状态协议修复（2026-10-15）
+
+关闭prefix、Mamba none模式下，真实的4-token prompt续块保留原生prefill分类；仅该步使用原生eager执行选择，防止形状相同的decode图覆盖分类。原生prefill算子从已经提交的conv/SSM状态读取，并把完整尾段最终状态写回base槽，供下一轮decode读取。GDN数学、AscendC算子、guard和MTP三token流程不变；普通decode继续原图，prefix开启继续原选择。
+
+两个一键入口自动安装并启用外部插件的两处适配，不需要新参数。首次命中打印一次`PREFILL_STATE_FIX cache_mode=none route=native_prefill mtp=enabled decode_graph=retained`。133项关键host回归通过，包含原始失败反例、状态最终发布、下一轮decode和原生图分派；NPU整轮结果仍须与主机证据区分。详见档案#163。

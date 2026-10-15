@@ -28715,3 +28715,16 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 用户随后要求保护当前已成功的APC-on版本：显式prefix=true继续使用旧N>=1024/N>=8B选择，包含小batch原路径，未改其快照、页布局、逻辑slot修复或缓存协议。变化仅针对prefix=false的短批后续MTP。两个一键入口共用实际runtime config，无需新开关。
 
 关键证据：150项host回归通过；真实pinned native三draft循环/public compile bypass覆盖B/N=32/128、31/128、24/96、12/48及1D/mRoPE位置，前B hidden与所有draft IDs逐位等价，NaN padding不进入紧凑模型，非法tail和异常仍拒绝且context还原。APC-on选择与旧谓词一致。四组入口计划确认prefix两态、MTP=3、16384预算、target graph不变。另独立AscendC CPU-debug执行2816→2817→2816的真实writer/prepare/MDL-q1/merge成功，故未改底层算子。**这是有范围的执行路径修复和本地验证；没有证明该门槛是本次设备Trap的唯一原因，未声称NPU故障已消失。**
+
+
+## [163] 真机条目（2026-10-15 用户回传）· 关闭APC的32K/300请求在后期再次Trap；定位prefill4状态协议缺陷
+
+原文：`reports/target_stable_apc_off_recurrence_20261015.txt`，65535字节，附件截断；用户报告40a5e854后约280请求完成，同一位置失败。01:25–01:26仍有prompt吞吐，Running28–32；01:26:55各rank报PC偏移0x25c，随后AddRmsNormBias/输入及输出event异步报错。不能由这些栈把归因写成RMSNorm。此前短批分流未消除此故障，现已撤回该分流，保留原证据。
+
+**可复现缺陷链（当前只读native源码）**：none没有Mamba块对齐，32K prompt在16K预算下与q4 decode混排，可形成16384、16380、4的prefill分段。原生GDN builder的`_fold_spec_sized_prefill_chunks_into_spec`把有历史的qLen4 prompt续块改成spec，并把accepted设4。此前真实prefill只把SSM最终状态写到表第0列，conv前3项；spec路径却读SSM第3列及conv第3..5项。共享物理池的旧FULL INT2字节可能残留在尚未初始化的SSM槽：用有限输入经独立INT2 oracle实际产生ff7f，再经真实HybridPageLayout重解读为BF16 NaN，旧索引稳定读到NaN。初始零页可能只造成错误输出，回收页会暴露非有限值；这与后期异常吻合，但日志没有提供请求级内部状态，不伪称已回放用户数据。
+
+**不能只改accepted=1**：虽然可读对初态，spec计算的最后checkpoint仍落第3列/conv尾部，下步prefill采样后的accepted1会重读第0列的第一个token状态。已将初始读取、最终状态发布、下一轮decode三段纳入反例。
+
+**修复**：外部插件在none+MTP时保留真实prefill的原mask/count，不执行该fold；在原生runner分派边界用现有CPU镜像识别warm qLen4 prompt，将该步的原生force_eager置真。原生`is_all_decode`只检查computed>0会错误匹配q4图，因此必须同时修分类与图选择。GDN conv/chunk算术、原生文件、冻结guard、INT2存储不改，MTP仍为3个speculative tokens。正常decode/dummy/capture与APC开启路径保持原选择，无异常捕获回退。
+
+**验证**：`test_gdn_folded_initial_state.py`复现旧错误并验证新状态提交；`test_prefill_state_contract_hooks.py`执行真实native dispatcher/fold AST，旧FULL→修复NONE、下一轮decode恢复FULL、APC路径不变、位置/关键字参数、轻量可逆插件注册均通过；相关关键套件合计133 passed。两固定一键入口均经同一插件安装。以上是主机/native源码契约证据，不冒充NPU整轮已完成。

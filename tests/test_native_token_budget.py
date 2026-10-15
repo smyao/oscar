@@ -231,11 +231,11 @@ def test_observe_candidate_gates_and_service_share_stable_effective_config(monke
         assert config["experimental_decode_bundle"] is True
         assert config["devices"] == [0, 1, 2, 3] and config["port"] == 8989
         assert all(config["experimental_" + name] is True for name in
-                   ("hybrid_l1_decode", "c16_l1_reuse", "c4_member_pipeline"))
+                   ("hybrid_l1_decode", "c16_l1_reuse", "c4_member_pipeline", "prepare_reuse"))
         assert "--scheduler-cls" not in serve_argv(config)
 
     gates = ("_preflight", "_candidate_gate", "_fast_unpack_gate", "_mixed_optimization_gate",
-             "_striped_cache_gate", "_c4_member_pipeline_gate", "_c16_l1_reuse_gate",
+             "_striped_cache_gate", "_mixed_prepare_reuse_gate", "_c4_member_pipeline_gate", "_c16_l1_reuse_gate",
              "_decode_bundle_gate", "_mdl_decode_gate", "_hybrid_l1_decode_gate", "_current_only_gate",
              "_first_mtp_current_gate", "_mixed_decode_split_gate")
     for name in gates:

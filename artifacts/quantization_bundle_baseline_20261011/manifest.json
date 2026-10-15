@@ -1,0 +1,49 @@
+{
+  "scope": "original source bytes for replay in the frozen historical source tree",
+  "files": [
+    {
+      "source_at_measurement": "csrc/kernels/rotate_clip_store.cpp",
+      "snapshot": "rotate_clip_store.cpp",
+      "sha256": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748"
+    },
+    {
+      "source_at_measurement": "csrc/kernels/rotate_clip_store_striped.cpp",
+      "snapshot": "rotate_clip_store_striped.cpp",
+      "sha256": "72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430"
+    }
+  ],
+  "measured_binding": {
+    "scope": "complete writer old/current/compact and canonical rotate old/Init/compact",
+    "frozen_writer_binding": {
+      "scope": "frozen_research_writer_source_not_new_production_baseline",
+      "manifest_sha256": "427c3bd856b41d57a3be253842f77f1bd55b060839f8a31248e35dc6bda2b872",
+      "original_sha256": "0515fd2a527812dc6e7c09e46ebae50fd19be62e7645705c8caffbb132a31d29",
+      "frozen_sha256": "674b6115f93b1c8387bdc8ba8440218c7b1e78e3563cb4f76e37624e0eae62eb",
+      "research_sources": {
+        "writer_pack.cpp": "c01eb6dce3a725567ed8b92032e1d0baaf9d674e02d7ebc0fe51599a5b458fab",
+        "writer_pack_init.cpp": "7cbb1b1205c380afcaa3893f23d9ef1337f468c13f7c437c2af8ef91bf123a17",
+        "pack.h": "019fd5330ae0c7a850fbf015dee18df4c262f6440a6da387085c362d3b445ac3",
+        "store_cpu.cpp": "f6403ae0f868c24e3d24e7424073342b779b9a4d4b43aa0799b9746d2582c005",
+        "pack_kernel.cpp": "911ca6742538d25e77c48ce50f1d0c009bfd9051863461fdfc7eb36417335e0e"
+      },
+      "dependencies": {
+        "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+        "csrc/include/oscar_rotation_launch.h": "a92c685f318b680d5d7f07ec15bec954bba5eb5c6b19b298739bd4780932a99b",
+        "csrc/experiments/hadamard_indices/vector_indices.h": "8f92beaefbb46791709c2102bbda34a47321309bc4e320999765653e9f25c970"
+      }
+    },
+    "sources": {
+      "csrc/experiments/striped_store_simd_pack/writer_baseline.cpp": "674b6115f93b1c8387bdc8ba8440218c7b1e78e3563cb4f76e37624e0eae62eb",
+      "csrc/experiments/striped_store_simd_pack/writer_pack_init.cpp": "7cbb1b1205c380afcaa3893f23d9ef1337f468c13f7c437c2af8ef91bf123a17",
+      "csrc/kernels/rotate_clip_store.cpp": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+      "csrc/experiments/hadamard_batch8/writer_batch.cpp": "52a58519fd1b0fc378fd2ea750f7340040071c072eb76f1cd3801b64082bbf2d",
+      "csrc/experiments/hadamard_batch8/rotate_init.cpp": "82774ea4c67dd1da9f94a3fbacbe85b67f1f3ac28a9e4e183e955db4e616c872",
+      "csrc/experiments/hadamard_batch8/rotate_batch.cpp": "8f34370289fe77e357e38ffe757b9076519b96c7167c30378df4f40b908c1302"
+    },
+    "dependencies": {
+      "csrc/experiments/striped_store_simd_pack/pack.h": "019fd5330ae0c7a850fbf015dee18df4c262f6440a6da387085c362d3b445ac3",
+      "csrc/experiments/hadamard_indices/vector_indices.h": "8f92beaefbb46791709c2102bbda34a47321309bc4e320999765653e9f25c970"
+    }
+  },
+  "replay_note": "Old hadamard_batch8 generate/check/CMake/fixtures require these originals at their original source-tree paths. Current production is a new bundle; old source-drift checks should fail here. Use a separate frozen research source tree, never overwrite live production for replay."
+}

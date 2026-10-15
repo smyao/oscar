@@ -24,19 +24,20 @@ from oscar_ascend.runtime import GraphWorkspace, WorkspaceGeometry
 from test_current_attention import AscendAttentionState
 
 
-def _fixture(monkeypatch, enabled, *, context=32768, slots_dtype=torch.int32, dim=64):
+def _fixture(monkeypatch, enabled, *, context=32768, slots_dtype=torch.int32, dim=64, tokens=32,
+             data_device='cpu'):
     backend = ModuleType("vllm.v1.attention.backend")
     backend.AttentionImpl = type("AttentionImpl", (), {})
     monkeypatch.setitem(sys.modules, backend.__name__, backend)
     forward_context = ModuleType("vllm.forward_context")
-    invocation = object()
+    invocation = SimpleNamespace(attn_metadata={})
     forward_context.get_forward_context = lambda: invocation
     monkeypatch.setitem(sys.modules, forward_context.__name__, forward_context)
     path = Path(__file__).resolve().parents[1] / "oscar_ascend/integration/impl.py"
     spec = importlib.util.spec_from_file_location("oscar_ascend.integration._reuse_test", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    n, h, hk, d = 32, 6, 1, dim
+    n, h, hk, d = tokens, 6, 1, dim
     w = object.__new__(GraphWorkspace)
     w.geometry = WorkspaceGeometry(n, h, hk, d, cube_cores=1)
     for name, shape, dtype in (
@@ -57,7 +58,8 @@ def _fixture(monkeypatch, enabled, *, context=32768, slots_dtype=torch.int32, di
         ("slots", (n,), torch.int64),
         ("cv", (1,), torch.uint8),
     ):
-        setattr(w, name, torch.empty(shape, dtype=dtype))
+        device = data_device if dtype in (torch.bfloat16, torch.float32) else 'cpu'
+        setattr(w, name, torch.empty(shape, dtype=dtype, device=device))
     w.cluster_stats = None
     counts = Counter()
     seen = []
@@ -66,6 +68,7 @@ def _fixture(monkeypatch, enabled, *, context=32768, slots_dtype=torch.int32, di
     class Ops:
         def prepare_attention_tasks_out(self, starts, lens, slots, tasks, positions, *attrs):
             counts["prepare"] += 1
+            n = positions.numel()
             # Distinct source ranges and one retained malformed task exercise
             # the existing source2 rewrite; the CV double records every byte.
             tasks.copy_(torch.arange(tasks.numel()).view_as(tasks))
@@ -109,7 +112,7 @@ def _fixture(monkeypatch, enabled, *, context=32768, slots_dtype=torch.int32, di
 
     def native(q, k, v, cumulative, **kwargs):
         counts["current_fia"] += 1
-        return q.clone(), torch.zeros(n, h, 1)
+        return q.clone(), torch.zeros(q.shape[0], h, 1)
 
     def write(partial, lse, current, current_lse, active, splits):
         partial[:active, :, 2 * splits].copy_(current)
@@ -148,10 +151,11 @@ def _fixture(monkeypatch, enabled, *, context=32768, slots_dtype=torch.int32, di
         current_cumulative=(n,), attn_state=AscendAttentionState.ChunkedPrefill)
 
     def run(meta=metadata, names=None):
+        invocation.attn_metadata={name:meta for name in states}
         outputs = []
         for i, name in enumerate(states if names is None else names):
-            q = torch.full((n, h * d), i + 1, dtype=torch.bfloat16)
-            kv = torch.zeros(n, hk * d, dtype=torch.bfloat16)
+            q = torch.full((n, h * d), i + 1, dtype=torch.bfloat16, device=data_device)
+            kv = torch.zeros(n, hk * d, dtype=torch.bfloat16, device=data_device)
             output = torch.empty_like(q)
             impl.forward(SimpleNamespace(layer_name=name), q, kv, kv,
                          states[name].packed, meta, output)
@@ -159,7 +163,8 @@ def _fixture(monkeypatch, enabled, *, context=32768, slots_dtype=torch.int32, di
         return outputs
 
     return SimpleNamespace(impl=impl, workspace=w, metadata=metadata, counts=counts,
-                           seen=seen, stored=stored, run=run, stream=stream, states=states)
+                           seen=seen, stored=stored, run=run, stream=stream, states=states,
+                           module=module, invocation=invocation)
 
 
 @pytest.mark.parametrize("context", [32768, 65536])
@@ -230,9 +235,9 @@ def test_geometry_stream_and_other_writers_expire_lease():
 def test_alternate_dispatch_invalidates_before_and_after_writer(monkeypatch, route):
     f = _fixture(monkeypatch, True)
     f.run(names=["full0"])
-    def dispatch(*args):
+    def dispatch(*args, **kwargs):
         assert f.workspace._oscar_prepared_tasks is None
-        remember_prepared(f.workspace, f.metadata, "inner", (), f.stream, object(), object())
+        remember_prepared(f.workspace, f.metadata, "inner", (32,6,1,64,256,1), f.stream, object(), object())
         return args[7]
     if route == "current_only":
         from oscar_ascend.integration import current_only_dispatch

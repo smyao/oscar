@@ -1,0 +1,20 @@
+{
+  "baseline": {
+    "arm": "baseline",
+    "full_CV_source_sha256": "6bcc9913868353837ae537011e1509bb093f275083b5119959e25071ee074981",
+    "Softmax_sha256": "9a5a43930345bd2c48118c1134e962716dcaf79743bc483811af2daadf3a901d",
+    "AddVisibleRange_sha256": "ae76b74695c9020f4e2e4825d2b96abf09e8a2f95045e922254a453936c9031f",
+    "probe_sha256": "2948f558544edc6074d6404fd0bc322365e1c2d179ce6dec18adffdcf861ed1f",
+    "exact_methods_extracted": true,
+    "scope": "actual isolated Softmax CPU numerical/error/scratch qualification only; full C320 pair remains mandatory"
+  },
+  "candidate": {
+    "arm": "candidate",
+    "full_CV_source_sha256": "1f8c424f5d4d88ccfd935eb05c21c4c0dcb1aabb5c865c4536b04ed5ad199438",
+    "Softmax_sha256": "854c8fb11d1ca596bfb508cfb9891c66a9106869947531758f0b1998c1b45f7b",
+    "AddVisibleRange_sha256": "ae76b74695c9020f4e2e4825d2b96abf09e8a2f95045e922254a453936c9031f",
+    "probe_sha256": "8a8036d9379a78d1a257587c0941118e8b8f99f4ed0f1e9be8e174048c45b988",
+    "exact_methods_extracted": true,
+    "scope": "actual isolated Softmax CPU numerical/error/scratch qualification only; full C320 pair remains mandatory"
+  }
+}

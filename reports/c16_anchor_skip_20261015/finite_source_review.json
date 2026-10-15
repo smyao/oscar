@@ -1,0 +1,36 @@
+{
+  "status": "source_review_no_identified_predicate_or_lifetime_defect",
+  "scope": "read-only independent review; not numerical/CANN/NPU qualification",
+  "sources": {
+    "csrc/experiments/c16_b1_followup_20261015/finite_transform.py": "faa0d0ed620722b116af32b768836944710c4bc8b2e53a107298f21340cc6aa6",
+    "csrc/experiments/c16_b1_followup_20261015/c16_candidate.cpp": "1f8c424f5d4d88ccfd935eb05c21c4c0dcb1aabb5c865c4536b04ed5ad199438",
+    "csrc/experiments/c16_anchor_skip_20261015/generate.py": "2e210a73fdc56a8cd4430d9a5d1aaa7cfc45ebbe304dfebeaadbf1997371cc48"
+  },
+  "finite_predicate": "kind0 and jEnd256 and start>=sink and tileEnd<=min(context,earliestCut,earliestPosition+1). For every later active row, integer floor(row/group),position and cut are monotone, so original range is exactly[0,256), any=true, no complement mask.",
+  "arithmetic": "Every original FP32 ReduceSum256 remains, same row order and original tmp[16] workspace. Only destination moves to disjoint aligned naturalBuf slots and scalar readback fence is batched.",
+  "error_priority": "Within the fully-visible loop the only error assignment is error=2. Both arms yield2 if any original row reduction is nonfinite, otherwise preserve incoming error. No later KV error commit interleaves with this loop. Partial/precise/empty code remains byte-identical.",
+  "lifetime": {
+    "naturalBuf_capacity_bytes_D256": 17408,
+    "result_slots_bytes": 1024,
+    "alignment_bytes": 32,
+    "result_index": "r*8 float32, r<activeRows<=32",
+    "shared_reduction_scratch": "Original tmp[16], each row guarded by PIPE_V before reuse",
+    "handoff": "All reductions -> V_S -> scalar finite reads -> S_V -> later alpha Brcb may reuse naturalBuf",
+    "prior_and_next_use": "Natural unpack consumed before KVReady/ScoreReady; next-KV unpack only after all member P/alpha publication. Previous Softmax alpha vector reads complete under existing V ordering.",
+    "tmp_after_guard": "SoftmaxFlashV2 expMax output overwrites the required tmp rows; numerical device checks must confirm real primitive behavior."
+  },
+  "required_tests_retained": [
+    "normal_full256",
+    "partial/masked/empty original route",
+    "sum_overflow",
+    "cancellation_overflow",
+    "NaN",
+    "positive/negative Inf",
+    "short activeRows and rowBase/group boundaries",
+    "all partial/LSE/status bits and frozen oracle",
+    "fixed-address changed context/cache/QR NPU gate"
+  ],
+  "combined_baseline": "Rv vs Rv+finite+skip, same-library C320 full path,600s each; no multiplication of old deltas",
+  "VM_accessed": false,
+  "NPU": "not_run"
+}

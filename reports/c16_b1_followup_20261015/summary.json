@@ -1,0 +1,166 @@
+{
+  "status": "complete_CANN_CPU_special_values_and_same_library_CAModel_pair_passed",
+  "composition": "fixed_Rv_then_original_per_row_finite_ReduceSum_batched_readback_then_successful_cluster_anchor_skip",
+  "controls": {
+    "build": {
+      "elapsed_seconds": 10.932993717025965,
+      "child_returncode": 0,
+      "cleanup_complete": true
+    },
+    "finite": {
+      "elapsed_seconds": 2.841590647934936,
+      "child_returncode": 0,
+      "cleanup_complete": true
+    },
+    "CPU_baseline": {
+      "elapsed_seconds": 34.20070651592687,
+      "child_returncode": 0,
+      "cleanup_complete": true
+    },
+    "CPU_candidate": {
+      "elapsed_seconds": 33.874655193067156,
+      "child_returncode": 0,
+      "cleanup_complete": true
+    }
+  },
+  "actual_Softmax_cases": [
+    {
+      "case": "normal_full",
+      "error": 0,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "finite_sum_overflow",
+      "error": 2,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "finite_cancel",
+      "error": 0,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "cancel_intermediate_overflow",
+      "error": 2,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "visible_NaN",
+      "error": 2,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "visible_positive_Inf",
+      "error": 2,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "visible_negative_Inf",
+      "error": 2,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "masked_NaN_still_prechecked",
+      "error": 2,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "empty_row_NaN_not_checked",
+      "error": 0,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "precise_masked_NaN",
+      "error": 2,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "padding_NaN_not_checked",
+      "error": 0,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "existing_metadata_error_preserved",
+      "error": 3,
+      "bitwise": true,
+      "guards": true
+    }
+  ],
+  "full_C320_CPU": "complete_numeric_CPU_pair",
+  "scope": "Q336/recent1/C320,all1008tasks,16members,onefull256historyKV; CPU pair oracle and outputs/status/stats/tasks bitwise",
+  "additional_workspace_UB_L1_bytes": 0,
+  "CAModel": {
+    "comparison": "completed/followup-camodel-c320/comparison.json",
+    "arms": {
+      "baseline": {
+        "elapsed_seconds": 455.50851595099084,
+        "child_returncode": 0,
+        "cleanup_complete": true,
+        "task_ticks": 2884171,
+        "oracle": {
+          "bad_output": 0,
+          "bad_lse": 0,
+          "max_output_abs": 1.110120846692375e-06,
+          "max_lse_abs": 7.424598544858441e-07,
+          "atol": 0.005,
+          "rtol": 0.005,
+          "method": "offline stable LSE merge of actual CAModel partials versus independent PR golden"
+        },
+        "profile_counts": {
+          "task": 1,
+          "aic": 20,
+          "aiv": 40
+        }
+      },
+      "candidate": {
+        "elapsed_seconds": 416.67900721298065,
+        "child_returncode": 0,
+        "cleanup_complete": true,
+        "task_ticks": 2640555,
+        "oracle": {
+          "bad_output": 0,
+          "bad_lse": 0,
+          "max_output_abs": 1.110120846692375e-06,
+          "max_lse_abs": 7.424598544858441e-07,
+          "atol": 0.005,
+          "rtol": 0.005,
+          "method": "offline stable LSE merge of actual CAModel partials versus independent PR golden"
+        },
+        "profile_counts": {
+          "task": 1,
+          "aic": 20,
+          "aiv": 40
+        }
+      }
+    },
+    "Rv_over_finite_skip": 1.0922593924383321,
+    "outputs_bitwise": true,
+    "all_actors_complete": true,
+    "scope": "Q336/recent1/C320 full256 singlehistoryKV CV kernel; offline merged oracle, device merge/copy not timed"
+  },
+  "NPU": "not_run",
+  "graph": "not_run",
+  "32K_64K_native_gt30pct": "not_established",
+  "decision": "parent_accepts9.2259pct_net_contribution_on_Rv_basis; production_sameABI_packaging_by_parent",
+  "candidate_sha256": "1f8c424f5d4d88ccfd935eb05c21c4c0dcb1aabb5c865c4536b04ed5ad199438",
+  "ABI": "unchanged16GM_pointers_17int64_float; sameproductionC16B1op",
+  "workspace_per_core": 7487488,
+  "UB_per_AIV": 157760,
+  "external_B1_bytes": 262144,
+  "prior_ratios": "not_multiplied_across_C65_C320_or_different_libraries",
+  "next": {
+    "tail8": "read_only_idea_not_implemented_not_measured; onlylast_waveC16_to_twoC8_sharedclusters may improveownerbalance but needs actualprepare/cost proof; no experiment launched"
+  },
+  "VM": "released_to_evidence_after_completed_controls"
+}

@@ -565,15 +565,15 @@ def _c4_member_pipeline_gate(config_path: Path, config: dict, env: dict, log_dir
 
 def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
                     status: dict, *, family: str) -> None:
-    """#125/#148/#151/#154: complete new kernels, unique reports, real rc.
+    """#125/#148/#151/#154: complete bounded gates, unique reports, real rc.
 
     The stable native launch is frozen. These are bounded synthetic operator
     and changed-input graph gates, never a replacement for model acceptance.
     """
     import importlib
     from oscar_ascend.ops.loader import validate_build_artifacts
-    if family not in {"c16_member_pipeline", "hybrid_l1_decode", "c16_l1_reuse"}:
-        raise ValueError("unknown stable CV gate")
+    if family not in {"c16_member_pipeline", "hybrid_l1_decode", "c16_l1_reuse", "mixed_prepare_reuse"}:
+        raise ValueError("unknown stable operator gate")
     probe = importlib.import_module(f"tools.probe_{family}")
     phase_name = family.replace("_", "-")
     output = log_dir / f"{phase_name}-report.json"
@@ -628,6 +628,10 @@ def _hybrid_l1_decode_gate(config_path, config, env, log_dir, status):
 
 def _c16_l1_reuse_gate(config_path, config, env, log_dir, status):
     return _stable_cv_gate(config_path, config, env, log_dir, status, family="c16_l1_reuse")
+
+
+def _mixed_prepare_reuse_gate(config_path, config, env, log_dir, status):
+    return _stable_cv_gate(config_path, config, env, log_dir, status, family="mixed_prepare_reuse")
 
 
 def _mdl_decode_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
@@ -1123,6 +1127,8 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                             _q4_diagnostic(effective_path, config, env, log_dir, status)
                         if diagnose_mixed and not config.get("experimental_mixed_cv", False):
                             _mixed_diagnostic(effective_path, config, env, log_dir, status)
+                    if config.get("experimental_prepare_reuse", False):
+                        _mixed_prepare_reuse_gate(effective_path, config, env, log_dir, status)
                     if config.get("experimental_c4_member_pipeline", False):
                         _c4_member_pipeline_gate(effective_path, config, env, log_dir, status)
                     if config.get("experimental_c16_member_pipeline", False):
@@ -1302,6 +1308,7 @@ def main(argv=None) -> int:
             if args.diagnose_mixed and not config.get("experimental_mixed_cv", False):
                 phases.append("mixed_cv_current_fia_merge_diagnostic")
         for flag,phase_name in (
+            ("experimental_prepare_reuse","mixed_prepare_reuse_gate"),
             ("experimental_c4_member_pipeline","c4_member_pipeline_gate"),
             ("experimental_c16_member_pipeline","c16_member_pipeline_gate"),
             ("experimental_c16_l1_reuse","c16_l1_reuse_gate"),

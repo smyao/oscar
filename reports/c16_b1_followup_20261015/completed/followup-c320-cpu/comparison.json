@@ -1,0 +1,46 @@
+{
+  "status": "complete_numeric_CPU_pair",
+  "reports": {
+    "baseline": {
+      "status": "passed",
+      "arm": "baseline",
+      "context": 320,
+      "bad_position": -1,
+      "clusters": 1,
+      "fault_statuses": 0,
+      "guards": true,
+      "input_immutable": true,
+      "all_status_lanes": true,
+      "oracle": "numeric",
+      "NPU": "not_run"
+    },
+    "candidate": {
+      "status": "passed",
+      "arm": "candidate",
+      "context": 320,
+      "bad_position": -1,
+      "clusters": 1,
+      "fault_statuses": 0,
+      "guards": true,
+      "input_immutable": true,
+      "all_status_lanes": true,
+      "oracle": "numeric",
+      "NPU": "not_run"
+    }
+  },
+  "equal_hashes": {
+    "partial": "8d04ed7c768bc26888a9e6d0e239794c67b487162daa668e087de6a429eeb033",
+    "lse": "d8f3968668cdcceea54a368747731fd91e5fdd517a8b4d66ad8fd23a91d9bc4a",
+    "status": "05bf9d87a6313c41625d93de63e30bc39be25e54b472f17e99d78cf12fccb3da",
+    "cluster_stats": "9f283b0c3771cac7cb50df9a885703f7eb104e0c931379aecd808294909e9eb7",
+    "tasks": "298fdbf446a3e011e0e48ff5261e5abba5f9dcfbd332b6f70e660b32bd2cb740"
+  },
+  "controls": {
+    "baseline": "/tmp/oscar-c16-20261015/followup-c320-cpu/baseline-control.json",
+    "candidate": "/tmp/oscar-c16-20261015/followup-c320-cpu/candidate-control.json"
+  },
+  "scope": "Q336/recent1/C320,all1008tasks,16member cluster,one full256 historyKV tile",
+  "source_manifest_sha256": "f5331e2b5787588638b99b9f239a2bf38dca0f4628bcfb4ca5b90103893eb2fd",
+  "NPU": "not_run",
+  "performance": "not_measured"
+}

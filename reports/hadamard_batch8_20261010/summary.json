@@ -1,0 +1,92 @@
+{
+  "status": "partial_research_not_production",
+  "writer_CPU": "2 cases current and batch8 complete bytes/oracle/guards passed",
+  "query_CPU_edges": [
+    {
+      "case": "r1_h1_d64_bf16_signed_zero",
+      "status": "passed",
+      "arms": 3,
+      "rows": 1
+    },
+    {
+      "case": "r7_h1_d256_bf16_nonfinite",
+      "status": "passed",
+      "arms": 3,
+      "rows": 7
+    },
+    {
+      "case": "r7_h1_d64_fp16",
+      "status": "passed",
+      "arms": 3,
+      "rows": 7
+    },
+    {
+      "case": "r8_h1_d128_bf16",
+      "status": "passed",
+      "arms": 3,
+      "rows": 8
+    },
+    {
+      "case": "r8_h1_d256_fp16_nonfinite",
+      "status": "passed",
+      "arms": 3,
+      "rows": 8
+    },
+    {
+      "case": "r9_h3_d128_fp16_partial",
+      "status": "passed",
+      "arms": 3,
+      "rows": 9
+    },
+    {
+      "case": "r9_h3_d64_bf16_allpadding",
+      "status": "passed",
+      "arms": 3,
+      "rows": 9
+    }
+  ],
+  "query_CPU_main": "failed ENOSPC; full archive retained; not repeated",
+  "writer_CAModel": {
+    "status": "complete_matched_writer_current_batch8",
+    "ticks": {
+      "current": 95930,
+      "batch8": 92403
+    },
+    "current_over_batch8": 1.0381697563931906,
+    "old_over_batch8": null,
+    "old_not_rerun": "old baseline evidence retained separately; no cross-library speed ratio",
+    "scope": "full writer simulated ticks only",
+    "NPU": "not_run",
+    "graph": "not_run",
+    "whole_service": "not_run",
+    "promotion_allowed": false
+  },
+  "query_CAModel": {
+    "status": "complete_matched_query_rotation",
+    "case": "n128_h6_d256_bf16",
+    "ticks": {
+      "old": 110343,
+      "init": 68082,
+      "batch8": 64537
+    },
+    "old_over_init": 1.6207367586146117,
+    "old_over_batch8": 1.7097633915428359,
+    "init_over_batch8": 1.0549297302322698,
+    "cross_arm_output_status_bits": "identical",
+    "scope": "isolated query rotation; not writer, attention or service performance",
+    "NPU": "not_run",
+    "graph": "not_run",
+    "whole_service": "not_run",
+    "promotion_allowed": false
+  },
+  "production_changed": false,
+  "NPU": "not_run",
+  "graph": "not_run",
+  "whole_target": "not_established",
+  "decision": {
+    "writer_batch8": "not_promoted; complete gain only1.038",
+    "query_init": "qualified local candidate 1.621x; not service speed",
+    "query_batch8": "only1.055 beyond Init; not promoted standalone",
+    "whole_native_2_to_3_target": "not_established"
+  }
+}

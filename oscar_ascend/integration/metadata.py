@@ -1,4 +1,4 @@
-"""Native metadata validation; archive #34/#36/#37–49/#55–69/#77/#78/#140/#142/#148/#155.
+"""Native metadata validation; archive #34/#36/#37–49/#55–69/#77/#78/#140/#142/#148/#155/#157.
 
 The native runner already maintains query_start_loc_cpu. Carry that CPU mirror
 for causal current-chunk FIA without an NPU readback; device metadata and
@@ -45,6 +45,9 @@ class OscarMetadata:
     # Shared fixed [request-capacity,2] int64 storage (slot,epoch), sliced by
     # request rows, never query-token rows. None preserves the legacy format.
     window_map: Any = None
+    # Eager mixed execution may partition existing scratch by parent token
+    # span. This is an external-plugin lease description, never native data.
+    prepare_region: Any = None
 
     @property
     def block_table(self):

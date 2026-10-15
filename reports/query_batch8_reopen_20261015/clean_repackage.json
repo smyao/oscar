@@ -1,0 +1,189 @@
+{
+  "status": "passed",
+  "returncode": 0,
+  "stdout": "{\"status\": \"local_source_bundle_integrated_not_fresh_device_acceptance\", \"check_only\": true, \"report\": \"/private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/oscar-query-batch8-clean-echn_pw8/reports/query_batch8_reopen_20261015/integration.json\", \"NPU\": \"pending\", \"graph\": \"pending\"}\n",
+  "stderr": "",
+  "scope": "clean temporary source tree production repack; no SDK, device or model execution",
+  "files": [
+    {
+      "path": "artifacts/quantization_bundle_baseline_20261011/manifest.json",
+      "sha256": "faad5b93299285c5c71d7d68d04c581b8150f3b375a035639b7b3450e54d2c54",
+      "bytes": 3304
+    },
+    {
+      "path": "artifacts/quantization_bundle_baseline_20261011/rotate_clip_store.cpp",
+      "sha256": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+      "bytes": 23105
+    },
+    {
+      "path": "artifacts/quantization_bundle_baseline_20261011/rotate_clip_store_striped.cpp",
+      "sha256": "72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430",
+      "bytes": 24030
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/rotate_batch.cpp",
+      "sha256": "8f34370289fe77e357e38ffe757b9076519b96c7167c30378df4f40b908c1302",
+      "bytes": 23807
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/rotate_init.cpp",
+      "sha256": "82774ea4c67dd1da9f94a3fbacbe85b67f1f3ac28a9e4e183e955db4e616c872",
+      "bytes": 23576
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/writer_batch.cpp",
+      "sha256": "52a58519fd1b0fc378fd2ea750f7340040071c072eb76f1cd3801b64082bbf2d",
+      "bytes": 24795
+    },
+    {
+      "path": "csrc/experiments/hadamard_indices/vector_indices.h",
+      "sha256": "8f92beaefbb46791709c2102bbda34a47321309bc4e320999765653e9f25c970",
+      "bytes": 2247
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/generate.py",
+      "sha256": "b7e0758ab762fbfb234c0d7061b5baadf86076ebdb78cd9c5518c568b4e7c282",
+      "bytes": 7718
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/packed_store.cpp",
+      "sha256": "c3a69d4ad0ae4e2bf0edc2aa38299795ed40c7248db88cbe27073fc92c9bf225",
+      "bytes": 15112
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/request_window_launch.h",
+      "sha256": "b9d60325765afe6b7f9b47d3351c761df983636d6606c5fb6148d91db0637998",
+      "bytes": 1150
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/source_identity.json",
+      "sha256": "7744f2d52fadcc0714515cc08a50286122a742e01c138db08a161c0ef7501c1d",
+      "bytes": 842
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/pack.h",
+      "sha256": "019fd5330ae0c7a850fbf015dee18df4c262f6440a6da387085c362d3b445ac3",
+      "bytes": 5921
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/writer_baseline.cpp",
+      "sha256": "674b6115f93b1c8387bdc8ba8440218c7b1e78e3563cb4f76e37624e0eae62eb",
+      "bytes": 24378
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/writer_pack_init.cpp",
+      "sha256": "7cbb1b1205c380afcaa3893f23d9ef1337f468c13f7c437c2af8ef91bf123a17",
+      "bytes": 24067
+    },
+    {
+      "path": "csrc/include/oscar_request_window_store_launch.h",
+      "sha256": "b9d60325765afe6b7f9b47d3351c761df983636d6606c5fb6148d91db0637998",
+      "bytes": 1150
+    },
+    {
+      "path": "csrc/include/oscar_rotation_launch.h",
+      "sha256": "a92c685f318b680d5d7f07ec15bec954bba5eb5c6b19b298739bd4780932a99b",
+      "bytes": 2002
+    },
+    {
+      "path": "csrc/kernels/hadamard_indices.h",
+      "sha256": "5c9b3905e89ebfd73bd6947d2f6d15f225e0d55ac19d0eba547dd2f4c132520f",
+      "bytes": 2283
+    },
+    {
+      "path": "csrc/kernels/oscar_common.h",
+      "sha256": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+      "bytes": 698
+    },
+    {
+      "path": "csrc/kernels/rotate_clip_store.cpp",
+      "sha256": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+      "bytes": 23105
+    },
+    {
+      "path": "csrc/kernels/rotate_clip_store_request_packed.cpp",
+      "sha256": "b78a267de4d4a7f0fc8868619cf223ae4d68707716353cdf1a78d820d37dd269",
+      "bytes": 15093
+    },
+    {
+      "path": "csrc/kernels/rotate_clip_store_striped.cpp",
+      "sha256": "72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430",
+      "bytes": 24030
+    },
+    {
+      "path": "csrc/kernels/rotate_vector_init.cpp",
+      "sha256": "3aed72cb5f8bb00596f95bbe6d3d1e5684157019996a9aef300b7672e4751c10",
+      "bytes": 23812
+    },
+    {
+      "path": "csrc/kernels/striped_store_pack.h",
+      "sha256": "95c2936c4e2f31bd444bb9126928e7cd270f3eaf38978b0a7801c107a5eb7f3e",
+      "bytes": 5957
+    },
+    {
+      "path": "reports/hadamard_batch8_20261010/reports/batch8-rotate-camodel128-v2/batch8-control.json",
+      "sha256": "b7e78639448332bd73ee46a8a1e85581e9782b4051fa2247548a99d28be29571",
+      "bytes": 1619
+    },
+    {
+      "path": "reports/hadamard_batch8_20261010/reports/batch8-rotate-camodel128-v2/batch8/report.json",
+      "sha256": "4675149b5bcfdce4e900c2cb0ccfec85e59b7231d095e4be22312a44b38b0f38",
+      "bytes": 15922
+    },
+    {
+      "path": "reports/hadamard_batch8_20261010/reports/batch8-rotate-camodel128-v2/comparison.json",
+      "sha256": "1e2f5577990a3a5f3a1bb2c2dad14d1e0fb3769558eae3fcc71268cf83e62a6c",
+      "bytes": 512
+    },
+    {
+      "path": "reports/hadamard_batch8_20261010/reports/batch8-rotate-camodel128-v2/init-control.json",
+      "sha256": "82947c7a9e42cb3341729bafc9af86355e76232b302596f98049d3567fe96d99",
+      "bytes": 1612
+    },
+    {
+      "path": "reports/hadamard_batch8_20261010/reports/batch8-rotate-camodel128-v2/init/report.json",
+      "sha256": "cc0fb13cd32ef31692b432c0c30a9c7567aeba67dba738f6eb1b4de63fe8e305",
+      "bytes": 15924
+    },
+    {
+      "path": "reports/hadamard_batch8_20261010/reports/batch8-writer-camodel128/current/report.json",
+      "sha256": "9510b7b5b08e96f2d91a1158247438f3b71261c1dbcd4c5063bdde78cfed0ecd",
+      "bytes": 13394
+    },
+    {
+      "path": "reports/hadamard_batch8_20261010/summary.json",
+      "sha256": "c37151f6520ff04a10d451ddb97aabfa8c9619de5b92b84f4561330769a57d6f",
+      "bytes": 2451
+    },
+    {
+      "path": "reports/quant_store_simd_pack_20261010/reports/store-camodel-n128/comparison.json",
+      "sha256": "65047850112fd8137d892f1c944df3766c9ed04df3c25203f323521024ea8e82",
+      "bytes": 512
+    },
+    {
+      "path": "reports/query_batch8_reopen_20261015/independent_review.json",
+      "sha256": "318eca995f247527225b88d81d55810af6f00cc8c266399720c4cc5a5f996f7d",
+      "bytes": 4494
+    },
+    {
+      "path": "reports/query_batch8_reopen_20261015/integration.json",
+      "sha256": "f3c97eca75650d97e4d20446b01984e8f841f5fd46c0788ea8b9231bf215c4c9",
+      "bytes": 8570
+    },
+    {
+      "path": "tools/__init__.py",
+      "sha256": "638eebca9af17b3926d058f9115ba13a882951b3787192212a37c4a2afd73c26",
+      "bytes": 148
+    },
+    {
+      "path": "tools/package_quantization_bundle.py",
+      "sha256": "f1649c56ad10b0b05e4e3879981cf3290f2484b28ce5d89b9547ea8edcdf2148",
+      "bytes": 13022
+    },
+    {
+      "path": "tools/package_request_window_kernels.py",
+      "sha256": "9be03b2e98ea3f71b753ec3d3254a97c59578d652a345d8c0aeed885249431d8",
+      "bytes": 9447
+    }
+  ]
+}

@@ -20,6 +20,7 @@ from .current_attention import (guard_current_slots, native_current_partial,
                                 write_current_partial)
 from .guard_diag import run_status_guard
 from .prepare_reuse import (can_reuse_prepare, invalidate_prepare_reuse,
+                            mixed_prepare_eligible, prepare_views, registered_prepare_owner,
                             remember_prepared, reused_slots)
 from .runtime_api import OscarReadinessError, require_runtime
 from ..telemetry import emit_once, emit_throttled
@@ -111,14 +112,24 @@ class OscarAttentionImpl(AttentionImpl):
                 invalidate_prepare_reuse(state.workspace)
         if self.provider.config.get("experimental_mixed_decode_split", False):
             from .mixed_decode_split import plan_mixed_decode, dispatch_mixed_decode
-            mixed_plan = plan_mixed_decode(attn_metadata, n,query_heads=h,kv_heads=hk)
+            reuse_mixed = mixed_prepare_eligible(
+                attn_metadata, layer.layer_name,
+                enabled=self.provider.config.get("experimental_prepare_reuse", False),
+                native_current=native_current)
+            mixed_plan = plan_mixed_decode(attn_metadata, n,query_heads=h,kv_heads=hk,
+                                           immutable_starts=reuse_mixed)
             if mixed_plan is not None:
-                invalidate_prepare_reuse(state.workspace)
+                if not reuse_mixed:
+                    invalidate_prepare_reuse(state.workspace)
                 try:
                     return dispatch_mixed_decode(self, layer, query, key, value, kv_cache,
-                                                 attn_metadata, output, mixed_plan)
-                finally:
+                                                 attn_metadata, output, mixed_plan,prepare_reuse=reuse_mixed)
+                except BaseException:
                     invalidate_prepare_reuse(state.workspace)
+                    raise
+                finally:
+                    if not reuse_mixed:
+                        invalidate_prepare_reuse(state.workspace)
         timing_fields = {"stage": "draft" if attn_metadata.is_draft else
                          ("prefill" if native_current else "decode"),
                          "is_draft": attn_metadata.is_draft,
@@ -143,11 +154,9 @@ class OscarAttentionImpl(AttentionImpl):
         source_splits = g.splits_for_tokens(split_tokens)
         splits = 3 * source_splits
         task_count = n * hk * splits
-        tasks = workspace.tasks[:task_count]
         statuses = workspace.attention_status[:task_count]
         qr = workspace.query_rot[:n]
         partial, partial_lse = workspace.partial_views(n, source_splits)
-        positions = workspace.positions[:n]
         ops = self.provider.ops
         prepare_geometry = (n, h, hk, state.snapshots.sink_tokens,
                             state.snapshots.recent_tokens, source_splits)
@@ -160,11 +169,18 @@ class OscarAttentionImpl(AttentionImpl):
             # metadata objects are deliberately reused by a later invocation.
             from vllm.forward_context import get_forward_context
             prepare_context = get_forward_context()
+            reuse_prepare = (attn_metadata.prepare_region is not None or
+                             registered_prepare_owner(attn_metadata, layer.layer_name, prepare_context))
+        if reuse_prepare:
+            tasks, positions, slot_output = prepare_views(
+                workspace, attn_metadata, n, hk, source_splits, layer.layer_name, prepare_context)
             cached_slots = reused_slots(workspace, attn_metadata, layer.layer_name,
                                         prepare_geometry, prepare_stream, prepare_context)
         else:
             invalidate_prepare_reuse(workspace)
             cached_slots = None
+            tasks, positions, slot_output = (workspace.tasks[:task_count],
+                                            workspace.positions[:n],workspace.slots[:n])
         with phase("prepare", layer=layer.layer_name, tokens=n, requests=attn_metadata.num_reqs,
                    source_splits=source_splits, **timing_fields):
             q = workspace.projection(query, workspace.query_input, n, h, d)
@@ -176,8 +192,8 @@ class OscarAttentionImpl(AttentionImpl):
             # the frozen device guard; never infer discard from table failure.
             if cached_slots is None and slots.dtype == torch.int32:
                 # Native llm_base_proposer.py:1662 uses int32 draft slot groups.
-                workspace.slots[:n].copy_(slots)
-                slots = workspace.slots[:n]
+                slot_output.copy_(slots)
+                slots = slot_output
             if cached_slots is None:
                 ops.prepare_attention_tasks_out(
                     attn_metadata.query_start_loc[:attn_metadata.num_reqs + 1],

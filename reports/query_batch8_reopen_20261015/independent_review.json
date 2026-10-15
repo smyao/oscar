@@ -1,0 +1,118 @@
+{
+  "status": "independent_read_only_review_passed_no_actionable_findings",
+  "source_binding": {
+    "csrc/experiments/hadamard_batch8/rotate_batch.cpp": "8f34370289fe77e357e38ffe757b9076519b96c7167c30378df4f40b908c1302",
+    "csrc/kernels/rotate_vector_init.cpp": "3aed72cb5f8bb00596f95bbe6d3d1e5684157019996a9aef300b7672e4751c10",
+    "tools/package_quantization_bundle.py": "f1649c56ad10b0b05e4e3879981cf3290f2484b28ce5d89b9547ea8edcdf2148",
+    "csrc/kernels/rotate_clip_store.cpp": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+    "csrc/kernels/rotate_clip_store_striped.cpp": "72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430",
+    "csrc/kernels/rotate_clip_store_request_packed.cpp": "b78a267de4d4a7f0fc8868619cf223ae4d68707716353cdf1a78d820d37dd269",
+    "csrc/include/oscar_rotation_vector_init_launch.h": "8664cf9b591f50c2bcd0faaca3e5a283c9a7eef9796889b3a01f6ada589e35b5",
+    "csrc/torch_bindings.cpp": "9f6139902fa9a81d46b11588cc7825efd234f81fa7a4ed48f0dee849115ea40c",
+    "oscar_ascend/ops/contracts.py": "680d5c1efc047a026e22246dfec252ff39447568ba5c654ac2cb75e85d204760",
+    "tools/probe_vector_init_rotation.py": "915797e52062021cc8fd3642dd04aca91590bcc69bfe850933f635108ca27e6f"
+  },
+  "reverse_mapping": [
+    {
+      "source": "csrc/experiments/hadamard_batch8/rotate_batch.cpp",
+      "target": "csrc/kernels/rotate_vector_init.cpp",
+      "reverse_full_bytes": true,
+      "mapped_production_equal": true,
+      "mapping_counts": [
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        1,
+        1
+      ]
+    },
+    {
+      "source": "csrc/experiments/striped_store_simd_pack/writer_pack_init.cpp",
+      "target": "csrc/kernels/rotate_clip_store_striped.cpp",
+      "reverse_full_bytes": true,
+      "mapped_production_equal": true,
+      "mapping_counts": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        3,
+        3
+      ]
+    }
+  ],
+  "change_base": "b6f8666",
+  "scoped_changed_files": [
+    "csrc/kernels/rotate_vector_init.cpp"
+  ],
+  "frozen_fe0": {
+    "attention_cv.cpp": true,
+    "attention_tasks.cpp": true,
+    "store_int2.cpp": true,
+    "rotate_clip_store.cpp": true,
+    "merge_lse.cpp": true,
+    "status_guard.cpp": true,
+    "oscar_common.h": true
+  },
+  "generic_transform_full_bytes_equal": true,
+  "ABI": {
+    "operator": "rotate_vector_init_out",
+    "candidate_flag": "experimental_quantization_bundle",
+    "launch": "rotate_vector_init_launch",
+    "changed": false,
+    "new_capabilities": [],
+    "writers_unchanged": true
+  },
+  "allocation_delta": {
+    "Hadamard_UB_bytes_per_core": 7168,
+    "derivation": "(8-1)*256*4",
+    "GM_bytes": 0,
+    "generic_UB_bytes": 0
+  },
+  "existing_NPU_gate": {
+    "tool": "tools/probe_vector_init_rotation.py",
+    "rows": "9tokens*3heads=27",
+    "assignment": "base=blockIdx*8; full8,8,8 and tail3; full/mixed padding retained",
+    "covers": [
+      "unchanged row FP32 order against frozen rotate_out and independent oracle",
+      "all-padding and mixed padding",
+      "live NaN/Inf/overflow status2",
+      "same-address changedquery and slots graph/eager equality"
+    ],
+    "performance": "not_measured_by_this_short_gate",
+    "new_graph_protocol": false
+  },
+  "historical_same_library": {
+    "init": {
+      "path": "reports/hadamard_batch8_20261010/reports/batch8-rotate-camodel128-v2/init/report.json",
+      "sha256": "cc0fb13cd32ef31692b432c0c30a9c7567aeba67dba738f6eb1b4de63fe8e305",
+      "status": "passed",
+      "failures": [],
+      "task_ticks": 68082,
+      "library_sha256": "c5f73e15bdb4314a142a0b1ac3feefc0662f76471434bc98061d7bf856de0634"
+    },
+    "batch8": {
+      "path": "reports/hadamard_batch8_20261010/reports/batch8-rotate-camodel128-v2/batch8/report.json",
+      "sha256": "4675149b5bcfdce4e900c2cb0ccfec85e59b7231d095e4be22312a44b38b0f38",
+      "status": "passed",
+      "failures": [],
+      "task_ticks": 64537,
+      "library_sha256": "c5f73e15bdb4314a142a0b1ac3feefc0662f76471434bc98061d7bf856de0634"
+    }
+  },
+  "historical_init_over_batch8": 1.0549297302322698,
+  "evidence_boundary": {
+    "fresh_combination_CANN_build": "pending_at_review",
+    "new_CPU_or_VM_runs": "none",
+    "NPU": "not_run",
+    "graph_capture_replay": "not_run_for_new_production_source",
+    "model_quality": "not_established",
+    "service_speed": "not_established",
+    "scope": "historical complete N128/H6/D256 query rotation; no multiplication into end-to-end speed"
+  },
+  "findings": []
+}

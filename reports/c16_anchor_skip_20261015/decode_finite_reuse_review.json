@@ -1,0 +1,108 @@
+{
+  "status": "source_level_reuse_feasible_for_both_families_not_numerical_qualification",
+  "sources": {
+    "hybrid_q4": {
+      "path": "csrc/kernels/attention_cv_hybrid_l1_decode.cpp",
+      "sha256": "03df3835144e26ad399e9be8cd41f684b2705ed280c77029bf78c4e74bc9bad0"
+    },
+    "MDL_q1": {
+      "path": "csrc/kernels/attention_cv_mdl_decode.cpp",
+      "sha256": "1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f"
+    },
+    "C16_Rv": {
+      "path": "csrc/experiments/c16_rv_reuse_20261015/c16_candidate.cpp",
+      "sha256": "9603817dddfba0e6357b42756a9956880137348ce8076c61aff58884acb6210b"
+    }
+  },
+  "same_mother_methods": {
+    "Softmax": {
+      "identical": true,
+      "sha256_hybrid": "d3b684ef21c9427b2356f17eb32d962a85b6e2ce7dc0ec811e45d04bacdbf5ac",
+      "sha256_MDL": "d3b684ef21c9427b2356f17eb32d962a85b6e2ce7dc0ec811e45d04bacdbf5ac"
+    },
+    "HistoryVectorTask": {
+      "identical": true,
+      "sha256_hybrid": "02270e177a13b5bb4d886b111d0abbb2466956658c3494ec857e2f0a478d2dfd",
+      "sha256_MDL": "02270e177a13b5bb4d886b111d0abbb2466956658c3494ec857e2f0a478d2dfd"
+    },
+    "PrefetchKeys": {
+      "identical": true,
+      "sha256_hybrid": "f361c96c7c9d3ad314fabef60db0e89f3616593093d6650f8bc85099b1980028",
+      "sha256_MDL": "f361c96c7c9d3ad314fabef60db0e89f3616593093d6650f8bc85099b1980028"
+    },
+    "PrefetchValues": {
+      "identical": true,
+      "sha256_hybrid": "077fd260ca9122c27830cb4a0be87aafa7b9645ee4161ffe2c67b6b8aa116056",
+      "sha256_MDL": "077fd260ca9122c27830cb4a0be87aafa7b9645ee4161ffe2c67b6b8aa116056"
+    },
+    "PipelinePublishKv": {
+      "identical": true,
+      "sha256_hybrid": "6942d5d49d0d9e5c1c4dd4995b72bc0961a3b3bb6676a613fc17fb74aaa4f746",
+      "sha256_MDL": "6942d5d49d0d9e5c1c4dd4995b72bc0961a3b3bb6676a613fc17fb74aaa4f746"
+    },
+    "CommitPrefetchErrors": {
+      "identical": true,
+      "sha256_hybrid": "ebea430925742d8e239a67f5ad914ddd7c3074870499a0e9b9e31010c1ffb074",
+      "sha256_MDL": "ebea430925742d8e239a67f5ad914ddd7c3074870499a0e9b9e31010c1ffb074"
+    },
+    "PipelineConsumePv": {
+      "identical": true,
+      "sha256_hybrid": "4e0b021f7ea49b993916141c74637a00dc6e01a79f132721baeaccf020c0edc7",
+      "sha256_MDL": "4e0b021f7ea49b993916141c74637a00dc6e01a79f132721baeaccf020c0edc7"
+    }
+  },
+  "original_finite_mask_loop_sha256": {
+    "hybrid_q4": "059084595499e2819d529ad30ff137db945c335aa56fd955860a102b207ea1d7",
+    "MDL_q1": "059084595499e2819d529ad30ff137db945c335aa56fd955860a102b207ea1d7",
+    "C16_Rv": "059084595499e2819d529ad30ff137db945c335aa56fd955860a102b207ea1d7"
+  },
+  "original_loop_identical_across_all_three": true,
+  "geometry": {
+    "both_decode_families": {
+      "kQueryRows": 32,
+      "kHalfRows": 16,
+      "kLaneRows": 16,
+      "kHalfKv": 64,
+      "naturalBuf_bytes_D256": 34816,
+      "scratchBuf_bytes": 2048,
+      "batched_result_bytes": 512,
+      "result_alignment_bytes": 32
+    },
+    "target_GQA6_q4_activeRows_by_AIV": [
+      16,
+      8
+    ],
+    "target_GQA6_q1_activeRows_by_AIV": [
+      6,
+      0
+    ],
+    "generic_activeRows_bound": "0..16; zero returns before predicate. GQA<=8 and q_len<=4 preserve this bound."
+  },
+  "lifetime_proof": [
+    "PrefetchKeys completes all next-K Unpack and PipelinePublishKv before entering current Softmax. Its V->MTE3 then MTE3->V fence makes the decoded natural scratch dead.",
+    "Only packedBuf/packedNextBuf and pendingLive/pendingKeyError arrays must survive Softmax for PrefetchValues; batched finite results must not alias these.",
+    "Hybrid permanent direct-NZ indexes live in wordIndexBuf; naturalBuf is only init scratch, unpack work and existing alpha Brcb work. No persistent indexes are stored in naturalBuf.",
+    "Current Softmax already overwrites naturalBuf for alpha after reduction. The proposed earlier512B finite result use is within the same dead lifetime.",
+    "PrefetchValues occurs after complete Softmax/PReady and rebuilds natural unpack data from the retained packed buffers. PipelineUnpack/Publish barriers protect prior alpha/finite use.",
+    "Pending future errors remain separately saved. CommitPrefetchErrors stays after current PV consumption; batching current finite reads must not move that boundary."
+  ],
+  "required_source_changes": [
+    "A new strict decode-family transform must bind the common decode Softmax SHA rather than use C16 full-method SHA.",
+    "Retain the identical full-visible-kind0 predicate and every original ReduceSum256/tmp[16]/PIPE_V row order.",
+    "Use kHalfRows*8 float slots (512B here), not a hardcoded32-row allocation; V_S after reductions and S_V after all scalar reads.",
+    "Preserve source1/source2/partial/empty original loop bytes, prefetch method bodies, arrays, flags and error-commit order.",
+    "No new buffer, ABI, workspace, B1 layout, persistent cache or launch parameter is needed."
+  ],
+  "necessary_qualification": [
+    "q4 lanes16/8 and q1 lanes6/0, plus partial active row counts",
+    "multi-KV history with hasNext true so next-K and next-V prefetch paths both execute",
+    "full/partial/empty tiles, bad current scores plus bad next metadata to preserve error precedence",
+    "NaN/Inf/overflow/cancellation and bitwise partial/LSE/status",
+    "independent full oracle, graph changed inputs and same-library q4/q1 complete-pipeline net timing"
+  ],
+  "not_claimed": [
+    "C320 acceptance is not automatically q4/q1 acceptance",
+    "No current q4/q1 code edit, VM run or speed gain in this review",
+    "No global32K/64K throughput prediction from the local transformation"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "archive": "/tmp/oscar-c16-followup-cpu-20261015.tar.gz",
+  "sha256": "9e50e5ec2c36683ecdd370ce2eb3cf1395520379e3b687e4a0c2e86b64588885",
+  "bytes": 125368655,
+  "entries": 382,
+  "raw_bytes": 2457402843,
+  "full_stream_verified": true,
+  "extracted_non_scratch_files": 35
+}

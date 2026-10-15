@@ -21,6 +21,10 @@ FEATURE_FLAGS = {
     "first_mtp_current_fia": "experimental_first_mtp_current_fia",
     "compact_later_mtp": "experimental_compact_later_mtp",
     "mixed_decode_split": "experimental_mixed_decode_split",
+    # Same-step native metadata only; no new HBM, scheduler or math change.
+    # Host lifetime/byte proofs are complete. Observe requires the real NPU
+    # on/off metadata-chain non-regression gate before starting the service.
+    "prepare_reuse": "experimental_prepare_reuse",
     "decode_bundle": "experimental_decode_bundle",
     "mdl_decode": "experimental_mdl_decode",
     "hybrid_l1_decode": "experimental_hybrid_l1_decode",
@@ -40,8 +44,6 @@ FEATURE_FLAGS = {
 RESEARCH_FEATURE_FLAGS = {
     # Retain the intermediate complete reader for independent comparisons.
     "c16_member_pipeline": "experimental_c16_member_pipeline",
-    # Host equivalence only; no complete-path speed qualification yet.
-    "prepare_reuse": "experimental_prepare_reuse",
     # Explicit research only until local numerical/CANN qualification and
     # the new NPU gate are integrated. Both one-key entrypoints share this.
     "request_windows": "experimental_request_windows",

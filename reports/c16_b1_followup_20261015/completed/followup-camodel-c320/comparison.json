@@ -1,0 +1,21 @@
+{
+  "status": "complete_same_library_Rv_finite_skip_pair",
+  "task_ticks": {
+    "baseline": 2884171,
+    "candidate": 2640555
+  },
+  "Rv_over_finite_skip": 1.0922593924383321,
+  "net_positive": true,
+  "all_partial_lse_status_counters_bitwise": true,
+  "independent_oracle": "passed_both_arms",
+  "profiles_each": {
+    "task": 1,
+    "AIC": 20,
+    "AIV": 40
+  },
+  "scope": "Q336/recent1/C320 full256 singlehistoryKV CV kernel; offline merged oracle, device merge/copy not timed",
+  "additional_workspace_UB_L1_bytes": 0,
+  "NPU": "not_run",
+  "graph": "not_run",
+  "32K_64K_native_gt30pct": "not_established"
+}

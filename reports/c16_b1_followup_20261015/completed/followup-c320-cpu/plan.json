@@ -1,0 +1,7 @@
+{
+  "case": "numeric",
+  "deadline_each_arm_s": 120,
+  "source_manifest_sha256": "f5331e2b5787588638b99b9f239a2bf38dca0f4628bcfb4ca5b90103893eb2fd",
+  "executable_sha256": "ed41678f1c261a076a6510cff912b15e081f1dba53014e6693bdfca8a2b45094",
+  "production_changed": false
+}

@@ -1,0 +1,16 @@
+{
+  "arms": [
+    "baseline",
+    "candidate"
+  ],
+  "deadline_each_arm_s": 600,
+  "source_manifest_sha256": "f5331e2b5787588638b99b9f239a2bf38dca0f4628bcfb4ca5b90103893eb2fd",
+  "library_sha256": "ec82d5b49d07e310183a5baf1c536a2385d5234a6c5d185581011b5cde9ec8e6",
+  "scope": "Q336/recent1/C320 all1008tasks,one16-member mature cluster,one full256 historyKV,20AIC40AIV",
+  "CPU_prepared_reuse": "new same-source C320 complete CPU pair; all tasks and positions saved",
+  "CPU_numeric": "/tmp/oscar-c16-20261015/followup-c320-cpu/comparison.json",
+  "CPU_finite": "/tmp/oscar-c16-20261015/finite-cpu-proof/qualified.json",
+  "selection_rule": "report actual positive or negative complete incremental contribution; user waived15percent minimum",
+  "NPU": "not_run",
+  "whole_model": "not_established"
+}

@@ -1,0 +1,27 @@
+{
+  "status": "independent_full_source_inverse_review_passed",
+  "method": "literal independent reverse relocation, not importing packaging implementation",
+  "qualified_source": "csrc/experiments/c16_b1_followup_20261015/c16_candidate.cpp",
+  "qualified_source_sha256": "1f8c424f5d4d88ccfd935eb05c21c4c0dcb1aabb5c865c4536b04ed5ad199438",
+  "production": "csrc/kernels/attention_cv_l1_reuse_cluster16.cpp",
+  "production_sha256": "d6b8ee9040678e57a21bc72215b7cdc1b9cf67b2b395c57a574d4377d27621b3",
+  "header_sha256": "e551af6ad5e2d2574339458fd0e886696230256659cfd2caf22ae25b04c35b28",
+  "exact_full_research_bytes_restored": true,
+  "relocation_only": "five helper include paths,three ABI/schedule include paths,two symbols",
+  "ABI_macro_identical": {
+    "GM_ADDR_pointers": 16,
+    "int64_scalars": 17,
+    "float_scale": 1
+  },
+  "header_unchanged_from_accepted_B1": true,
+  "operator": "attention_cv_l1_reuse_cluster16_out",
+  "workspace_per_core": 7487488,
+  "UB_per_AIV": 157760,
+  "external_B1_bytes": 262144,
+  "resource_increment_after_B1": 0,
+  "math_flags_error_and_task_code": "exact qualified research bytes after relocation",
+  "production_fresh_CANN_Torch_build": "pending separate owner",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "whole_model_native30": "not_established"
+}

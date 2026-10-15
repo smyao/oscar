@@ -28,6 +28,16 @@ q4 hybrid L1复用已有完整同库配对：MDL 2658960→2214530 ticks（1.200
 
 64K目标探针的完整672-query主机oracle也已构造通过，20个原参考样本逐位一致，7.41秒、峰值2.20GiB；只是探针准备验证，[记录](../reports/c16_l1_reuse_20261015/long_oracle_64k_guarded_once/result.json)。
 
+## B1 基底后的第二轮
+
+将完全可见history tile的逐行原ReduceSum结果批量读回，并跳过已完整验证簇内的第二遍非anchor行扫描。新同库C320上，Rv基底2884171→组合2640555 ticks，1.0922594倍，追加资源0；两臂455.509/416.679模拟秒、rc0、清理完成。完整CPU对照、实际Softmax12个特殊值/错误域病例、全1008任务/60actor/逐位与oracle均通过。原掩码/尾块/空行路径保留。skip证明限定生产prepare可达token-major任务表，伪造重叠表反例仍保留。此新配对只证明自身增量，不与C65相乘。[完整组合报告](../reports/c16_b1_followup_20261015/summary.json)。
+
+## 后续独立接缝
+
+Q Hadamard重新纳入已测Batch8：同库Init68082→64537 ticks（1.05493倍），固定Hadamard UB每核增加7168B，不增加GM；每行原FP32运算顺序保持。仍由既有`rotate_vector_init_out`与共享quantization开关选择，FE0及writer字节保持；原数值/同址图设备门保留。[源与证据复核](../reports/query_batch8_reopen_20261015/independent_review.json)。
+
+mixed prepare通过真实ForwardContext、stream、父metadata和固定token span绑定两段任务表，重叠写/跨step/draft/capture/current-only均失效。在默认16K、16FULL层合成形下prepare调用32→2、descriptor写96→6MiB；这是工作量，不是速度倍率。candidate自动启用，observe新增真实NPU `mixed_prepare_reuse`门，完整比较所有task字段/positions、同址32K→64K及非法length刷新，双臂相同consumer复制计入速度。无NPU不能通过；CV/GDN/rotate/store/guard仍逐层执行。[实现与验证边界](../reports/mixed_prepare_reuse_20261015/summary.json)。
+
 ## 固定资源账
 
 - C16 stable为4997120 B/core；普通流水5652480 B/core；B1为7487488 B/core。20核时B1较stable增加47.5 MiB/rank，在原生KV profiling前分配，不能藏在KV容量收益里。
@@ -40,7 +50,7 @@ q4 hybrid L1复用已有完整同库配对：MDL 2658960→2214530 ticks（1.200
 1. 新reader对应融合history dequant/FIA内部的浮点数据装载和成员等待；不是新增全历史dequant阶段。
 2. 历史失败边界是约6.5秒全历史恢复、约215ms写路径及725ms主机prepare；这些旧数字不作本轮分母。
 3. 本版仅有固定KV256、单个B1与固定score槽；FP32精度、错误域、真实物理页与metadata虚拟块边界保留，没有CPU oracle生产路由、全历史BF16恢复或静默原生回退。
-4. 成本收益必须由完整算子配对与目标设备门决定。C16普通流水Q672/recent256 CPU120秒和CAModel基线900秒超时，保留失败，无倍率；该大形失败不代表后续小形未完成；普通流水作为B1依赖与研究基线，默认选择B1。prepare复用只有host等价证据，也保留research默认关闭。
+4. 成本收益必须由完整算子配对与目标设备门决定。C16普通流水Q672/recent256 CPU120秒和CAModel基线900秒超时，保留失败，无倍率；该大形失败不代表后续小形未完成；普通流水作为B1依赖与研究基线，默认选择B1。prepare复用后续已扩大到安全的mixed两region并进入candidate；主机等价检查完成，observe新增真实prepare on/off完整metadata路径门，尚未取得设备速度证据。
 
 ## 验证边界与入口
 

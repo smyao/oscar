@@ -1,0 +1,44 @@
+{
+  "small65": {
+    "original_fixture": "reports/c16_member_pipeline_20261015/fixtures/small65",
+    "original_prepared": "reports/c16_l1_reuse_20261015/completed/b1-small-cpu/small65-baseline/prepared",
+    "task_sha256": "e2a2f874a1238793c4595559d7a465d7f37ae4f7894c63f6b184ea0496153fea",
+    "compressed_task_sha256": "a74a25ddd595559213d84de38ad6deb7c570ddec107323759bfffc200d2d779c",
+    "native_arrays_sha256": {
+      "starts.bin": "79c44af0452295da1463d76d6aecdc598bd05f088fa01ca9c7f1185d10b13792",
+      "lens.bin": "e1299afaae72d55c4415bd670d42b3be00b47439ae12479b5672d718e4ce8ed5",
+      "slots.bin": "ec2c6f3fd51688dd71561edad3c733b953b6e47e4eb97a45d8a6321f03460f3a"
+    },
+    "task_rows": 1008,
+    "source": "actual AscendC CPU prepare output, not host-generated task goldens",
+    "attention_numerics_claimed": false
+  },
+  "small337": {
+    "original_fixture": "reports/c16_member_pipeline_20261015/fixtures/small337",
+    "original_prepared": "reports/c16_l1_reuse_20261015/completed/b1-small-cpu/small337-baseline/prepared",
+    "task_sha256": "b3a3c76a48177fceefdd2d383d37433899cfcd5ec4ec2be1bd2c5ce664eb02d1",
+    "compressed_task_sha256": "620fa4e34f55e069169ebfd0ce80eec849f307c3b501b7f90de76596d5ab012a",
+    "native_arrays_sha256": {
+      "starts.bin": "79c44af0452295da1463d76d6aecdc598bd05f088fa01ca9c7f1185d10b13792",
+      "lens.bin": "3693595c2691f942ce890b1fe1eabe2ed9064227656641d457c84e3a2aa9fcdc",
+      "slots.bin": "8f7cc28f49500a9f730b43cf133fa6381079bf23869fb0dba92c7994c89c37d3"
+    },
+    "task_rows": 1008,
+    "source": "actual AscendC CPU prepare output, not host-generated task goldens",
+    "attention_numerics_claimed": false
+  },
+  "full337": {
+    "original_fixture": "reports/c16_member_pipeline_20261015/fixtures/valid337",
+    "original_prepared": "reports/c16_member_pipeline_20261015/completed/cpu-valid337-baseline/prepared",
+    "task_sha256": "dd56ddb459f06c6029be1dcc32ebb6f4c859fb9957bd22072ada553184b8c276",
+    "compressed_task_sha256": "6579463cd234370c2371255dbdf5bd1bd27b45e979fb5a0f977e1a434180f9ec",
+    "native_arrays_sha256": {
+      "starts.bin": "55c47ab0506849456ea45386e667887f8ec49562880d292fb4c1b57064f98ed5",
+      "lens.bin": "472d9649cbffb69e5ce26cb7124d8f586925e87780154af029a2d7468b325b15",
+      "slots.bin": "dff2998c0e37ce015ab52f74a60a4589de7271ac8e7becb83e596df90545ed2f"
+    },
+    "task_rows": 2016,
+    "source": "actual AscendC CPU prepare output, not host-generated task goldens",
+    "attention_numerics_claimed": false
+  }
+}

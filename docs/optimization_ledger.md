@@ -11,6 +11,15 @@
 
 新同库B1→Rv完整C65配对3168844→3045844 ticks，1.0403829倍，新增UB/L1/GM为0；C337多KV与末成员QR错误隔离CPU逐位通过。按用户最新规则纳入主分支candidate，同一B1算子/ABI/两入口自动启用。旧母源与此前测量保留，不拼乘为稳定版总倍率。源码已打包，新完整扩展构建、NPU/graph与整轮目标另行验证。[配对](../reports/c16_rv_reuse_20261015/completed/rv-camodel-c65/comparison.json)。
 
+### B1 第二轮增量：有限值结果批读＋成熟簇跳步
+
+新同库C320 Rv基底2884171→组合2640555 ticks，1.0922594倍、UB/L1/GM均0增量；完整CPU两臂、实际Softmax12特殊值病例、CAModel全1008任务/60actor/逐位与独立oracle通过。原FP32归约及掩码/尾块/空行分支保持；跳步只在全16成员已验证执行后，第一遍错误/status不变。主分支C16 B1同算子/ABI自动使用新源，设备与端到端仍待验。[报告](../reports/c16_b1_followup_20261015/summary.json)。
+
+### 小增量重开与metadata去重
+
+- query Batch8已按用户新门重新纳入：当前Init68082→Batch864537，同库完整1.05493倍；每行FP32顺序不变，+7KiB/core Hadamard UB、GM0增量，writer Batch8仍不选。现有rotation NPU/graph门实际选择同一新源，未以本地证据标设备通过。[审查](../reports/query_batch8_reopen_20261015/independent_review.json)。
+- mixed prepare跨FULL层复用已接candidate，并以现有arena两段分区保留short/long两张表。180项窄主机检查通过，实际任务/错误字段与层操作等价；observe新增真实NPU metadata on/off非回退门。32→2调用和96→6MiB写量只计结构工作，不领CV或模型倍率。[边界](../reports/mixed_prepare_reuse_20261015/summary.json)。
+
 ## 2026-10-14 stable 故障修复
 
 - 目标为用户回传的APC开启时MTP code5、关闭时后期异步Trap。原文与证据边界见档案#160。

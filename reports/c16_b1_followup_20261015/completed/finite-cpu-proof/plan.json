@@ -1,0 +1,21 @@
+{
+  "deadline_s": 120,
+  "expected_cases": {
+    "normal_full": 0,
+    "finite_sum_overflow": 2,
+    "finite_cancel": 0,
+    "cancel_intermediate_overflow": 2,
+    "visible_NaN": 2,
+    "visible_positive_Inf": 2,
+    "visible_negative_Inf": 2,
+    "masked_NaN_still_prechecked": 2,
+    "empty_row_NaN_not_checked": 0,
+    "precise_masked_NaN": 2,
+    "padding_NaN_not_checked": 0,
+    "existing_metadata_error_preserved": 3
+  },
+  "source_manifest_sha256": "f5331e2b5787588638b99b9f239a2bf38dca0f4628bcfb4ca5b90103893eb2fd",
+  "finite_probe_manifest_sha256": "f4ebd36a3364ce9eaae8ef42e529836b2dda43f0984520a57c8c4158b11fca5f",
+  "executable_sha256": "337f0a5e27cbf67b6ac53d2b5daf6d55048800390443a512115744ddd4133098",
+  "full_C320_pair": "separate mandatory gate"
+}

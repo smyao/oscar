@@ -112,6 +112,7 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     monkeypatch.setattr(observe_serve, "_fast_unpack_gate", lambda *args: seen.append("fast-unpack-gate"))
     monkeypatch.setattr(observe_serve, "_mixed_optimization_gate", lambda *args: seen.append("mixed-optimization-gate"))
     monkeypatch.setattr(observe_serve, "_striped_cache_gate", lambda *args: seen.append("striped-cache-gate"))
+    monkeypatch.setattr(observe_serve, "_mixed_prepare_reuse_gate", lambda *args: seen.append("mixed-prepare-reuse-gate"))
     monkeypatch.setattr(observe_serve, "_c4_member_pipeline_gate", lambda *args: seen.append("c4-member-pipeline-gate"))
     monkeypatch.setattr(observe_serve, "_c16_member_pipeline_gate", lambda *args: seen.append("c16-member-pipeline-gate"))
     monkeypatch.setattr(observe_serve, "_c16_l1_reuse_gate", lambda *args: seen.append("c16-l1-reuse-gate"))
@@ -129,7 +130,7 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     logs = tmp_path / "probe"
     assert observe_serve.run(config, logs, "candidate", probe_only=True, diagnose_mixed=diagnose_mixed) == 0
     assert seen == ["preflight", "candidate-gates", "fast-unpack-gate", "mixed-optimization-gate", "striped-cache-gate",
-                    "c4-member-pipeline-gate", "c16-l1-reuse-gate",
+                    "mixed-prepare-reuse-gate", "c4-member-pipeline-gate", "c16-l1-reuse-gate",
                     "decode-bundle-gate", "mdl-decode-gate", "hybrid-l1-decode-gate", "current-only-gate",
                     "first-mtp-current-gate", "mixed-decode-split-gate"]
     status = json.loads((logs / "status.json").read_text())

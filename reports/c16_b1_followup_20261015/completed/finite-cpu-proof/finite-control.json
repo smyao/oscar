@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "status": "completed",
+  "supervisor_pid": 676831,
+  "child_pid": 676832,
+  "child_pgid": 676832,
+  "command": [
+    "/tmp/oscar-c16-20261015/finite-cpu/oscar_c16_finite_probe",
+    "/tmp/oscar-c16-20261015/finite-cpu-proof/raw"
+  ],
+  "cwd": "/tmp/oscar-c16-20261015/finite-cpu-proof/finite-work",
+  "timeout_seconds": 120.0,
+  "started_utc": "2026-10-15T13:18:49.116086+00:00",
+  "stdout_path": "/tmp/oscar-c16-20261015/finite-cpu-proof/finite-logs/stdout.log",
+  "stderr_path": "/tmp/oscar-c16-20261015/finite-cpu-proof/finite-logs/stderr.log",
+  "lock_path": "/tmp/oscar-cann-validation.lock",
+  "lock_acquired": true,
+  "timed_out": false,
+  "interrupt_signal": null,
+  "child_returncode": 0,
+  "cleanup_complete": true,
+  "cleanup_grace_seconds": 12.0,
+  "cleanup_signals": [],
+  "supervisor_returncode": 0,
+  "child_env_override_keys": [],
+  "child_started_utc": "2026-10-15T13:18:49.117379+00:00",
+  "child_elapsed_seconds": 2.840223283972591,
+  "elapsed_seconds": 2.841590647934936,
+  "finished_utc": "2026-10-15T13:18:51.957665+00:00"
+}

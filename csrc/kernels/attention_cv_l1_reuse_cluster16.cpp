@@ -1,3 +1,17 @@
+// GENERATED C16 B1 FOLLOWUP: FINAL RV + FINITE READBACK + ANCHOR SKIP.
+// Archive #126/#134/#140/#145/#148/#154; complete D.4 reread.
+// 1. Fused history FIA finite-check synchronization and task metadata scan.
+// 2. Old6499.8-6655.1ms full-history restoration/209-215ms stores remain
+//    forbidden historical bounds, not current phase shares.
+// 3. Fully-visible history tiles alone retain every original FP32 ReduceSum
+//    in row order but batch V->S result readback using dead natural UB.
+//    Partial/precise/empty rows retain the exact original loop. Successful
+//    native-prepared C16 clusters skip covered non-anchor scan rows only;
+//    first-pass statuses, every math method and cross-core flag remain.
+// 4. No resource increase (GM7487488B/core,UB157760B/AIV,B1=256KiB).
+//    Full C320 same-library qualification plus overflow/cancel/nonfinite/
+//    masked-row CPU evidence required. Source counts are not speed/NPU,
+//    graph,32K/64K or whole-model acceptance.
 // GENERATED C16 FINAL RV RESIDENCY; archive #126/#145/#148/#154.
 // D.4 four questions, complete original timing logs reread:
 // 1. Fused history FIA final inverse rotation reloads one Rv for16 members.
@@ -417,6 +431,13 @@ template<int32_t D> class AttentionCv {
             counters[3]+=tiles;counters[4]+=15*tiles;
             CubeCluster(members);
           } else {VectorCluster(members);}
+          // The native prepare ABI gives sixteen adjacent full groups in
+          // one request. Their union covers [token, token+bucketWidth),
+          // so no additional request-relative cluster anchor is inside it.
+          // First-pass errors/statuses have already retained every row.
+          // VectorCluster mutates qbegin: use the unchanged loop token.
+          // Clamp to this global bucket and avoid token+width overflow.
+          token += Min64(bucketWidth,end-token)-1;
         }
       }
     }
@@ -860,6 +881,29 @@ template<int32_t D> class AttentionCv {
     const int64_t sinkCount=Min64(g.sink,context);
     const int64_t firstPosition=context+qbegin-requestBegin;
     const int64_t tailBegin=Min64(context,Max64(g.sink,firstPosition+1-g.recent));
+    // Complete history tile: the earliest live query must see every
+    // column. Later live rows have monotone query position/cut, so their
+    // original any=true and mask-complement branch is empty as well.
+    // jEnd==256 proves tileEnd is bounded by this task's kvend.
+    const int64_t earliestPosition=context+qbegin+rowBase/group-requestBegin;
+    const int64_t earliestCut=Max64(g.sink,earliestPosition+1-g.recent);
+    const bool fullyVisibleHistory=kind==0 && jEnd==kKvRows && start>=g.sink &&
+        tileEnd<=Min64(context,Min64(earliestCut,earliestPosition+1));
+    if(fullyVisibleHistory) {
+      // Natural unpack is dead until later alpha Brcb. Each scalar result
+      // has its own32B-aligned slot; the original tmp[16] reduction work
+      // area stays separate. PIPE_V keeps its reuse in original row order.
+      auto finiteSums=naturalBuf.Get<float>(kHalfRows*8);
+      for(int32_t r=0;r<activeRows;++r) {
+        PipeBarrier<PIPE_V>();
+        ReduceSum(finiteSums[r*8],scores[r*kKvRows],tmp[16],kKvRows);
+      }
+      Fence<HardEvent::V_S>();
+      for(int32_t r=0;r<activeRows;++r)
+        if(!Finite(finiteSums.GetValue(r*8)))error=2;
+      // Protect scalar reads before any later Vector reuse of naturalBuf.
+      Fence<HardEvent::S_V>();
+    } else {
     for(int32_t r=0;r<activeRows;++r) {
       const int64_t row=rowBase+r;
       const int64_t position=context+qbegin+row/group-requestBegin;
@@ -892,6 +936,7 @@ template<int32_t D> class AttentionCv {
         oscar_range_mask::MaskComplement(scores[r*kKvRows],lo0,hi0,lo1,hi1);
         Fence<HardEvent::V_S>();
       }
+    }
     }
     // The two 64-row max/sum arrays persist across KV work units. Two shared
     // 32-row input arrays let CANN's FP32 WITHOUT_BRC V2 update one score

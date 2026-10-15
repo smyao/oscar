@@ -1,0 +1,13 @@
+{
+  "status": "host_visible_interval_implication_passed",
+  "cases": 80000,
+  "fast_cases": 13603,
+  "proof": "earliest live row has minimal position/cut; both are nondecreasing across all live rows; jEnd256 and tileEnd<=context/cut/position+1 with start>=sink make every original source0 interval exactly[start,start+256)",
+  "C320_recent1_full_tile": "eligible",
+  "C65_one_column": "fallback",
+  "C337_final17_columns": "fallback",
+  "CPU_numerics": "not_run",
+  "CANN": "not_run",
+  "NPU": "not_run",
+  "performance": "not_established"
+}

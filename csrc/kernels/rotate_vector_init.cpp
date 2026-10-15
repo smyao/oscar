@@ -1,6 +1,8 @@
-// Production candidate: exact Hadamard Init only; archive #13-22/#126/#145/#154-156.
+// Production candidate: exact Hadamard Init + Batch8; archive #13-22/#126/#145/#154-156.
 // D.4: bounded rotate phase, never full-history recovery6499.8-6655.1ms.
-// Transform remains original row-major FP32; only integer index/sign Init changes.
+// Every row retains FP32 Gather/Mul/Add order; eight rows share vector fences.
+// User2026-10-15 accepts complete net gains: Init68082 -> Batch8 64537 ticks.
+// Fixed Hadamard UB increases7KiB/core; no GM/ABI change, writer unchanged.
 // Historical CPU/CAModel qualification is local; fresh full build/NPU/graph pending.
 // SPDX-License-Identifier: Apache-2.0
 // Archive G27, #13-22/#37-49/#70-71/#81-83/#91-92/#111:
@@ -41,7 +43,7 @@ class RotationEngine {
     pipe_->InitBuffer(sourceBuf_,kRowTile*kMaxDim*4);
     pipe_->InitBuffer(outputBuf_,kRowTile*kMaxDim*4);
     pipe_->InitBuffer(matrixBuf_,hadamard ? 32 : kColumnTile*kMaxDim*4);
-    pipe_->InitBuffer(workBuf_,kMaxDim*4);
+    pipe_->InitBuffer(workBuf_,hadamard ? kRowTile*kMaxDim*4 : kMaxDim*4);
     pipe_->InitBuffer(redBuf_,kMaxDim*4);
     pipe_->InitBuffer(scalarBuf_,64);
     pipe_->InitBuffer(gatherBuf_,hadamard ? 8*kMaxDim*4 : 32);
@@ -87,17 +89,20 @@ class RotationEngine {
       Fence<HardEvent::S_V>();
       auto indices=gatherBuf_.template Get<uint32_t>();
       auto signs=signBuf_.template Get<float>();
-      for (int32_t row=0;row<rows;++row) {
-        auto x=input[row*dim_];
-        int32_t stage=0;
-        for (int32_t distance=1;distance<dim_;distance*=2,++stage) {
-          Gather(work,x,indices[stage*dim_],static_cast<uint32_t>(0),dim_);
-          PipeBarrier<PIPE_V>();
-          Mul(x,x,signs[stage*dim_],dim_); PipeBarrier<PIPE_V>();
-          Add(x,x,work,dim_); PipeBarrier<PIPE_V>();
-        }
-        Muls(output[row*dim_],x,normalization,dim_); PipeBarrier<PIPE_V>();
+      int32_t stage=0;
+      for (int32_t distance=1;distance<dim_;distance*=2,++stage) {
+        // Every row's old input is gathered before any row is multiplied.
+        // Gather still uses the original D indices and one row-local source.
+        for (int32_t row=0;row<rows;++row)
+          Gather(work[row*dim_],input[row*dim_],indices[stage*dim_],
+              static_cast<uint32_t>(0),dim_);
+        PipeBarrier<PIPE_V>();
+        for (int32_t row=0;row<rows;++row)
+          Mul(input[row*dim_],input[row*dim_],signs[stage*dim_],dim_);
+        PipeBarrier<PIPE_V>();
+        Add(input,input,work,rows*dim_);PipeBarrier<PIPE_V>();
       }
+      Muls(output,input,normalization,rows*dim_);PipeBarrier<PIPE_V>();
       return;
     }
     for (int32_t column=0;column<dim_;column+=kColumnTile) {

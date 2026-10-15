@@ -1,0 +1,49 @@
+{
+  "status": "read_only_reopen_audit",
+  "current_source_checks": [
+    {
+      "command": "python3 csrc/experiments/hadamard_batch8/generate.py --check",
+      "returncode": 0
+    },
+    {
+      "command": "python3 csrc/experiments/hadamard_batch8/entrypoints.py --check",
+      "returncode": 0
+    }
+  ],
+  "existing_production_switch": false,
+  "actual_current_selection": "experimental_quantization_bundle selects Init-only Q plus current pack+Init writer. It does not enable Batch8 transforms.",
+  "necessary_integration": [
+    "separate non-FE0 source/registration/ABI/capability/meta mapping for Batch8 Q",
+    "writer and optional request-packed writer must share the same exact algorithm chain",
+    "shared serving/probe selector and source-qualified paired graph/NPU gate",
+    "new fresh CANN/Torch build and exact candidate routing test"
+  ],
+  "positive_evidence": [
+    {
+      "scope": "N128/H6/D256 Q; Init denominator",
+      "before": 68082,
+      "after": 64537,
+      "ratio": 1.0549297302322698
+    },
+    {
+      "scope": "N128/Hkv1/D256 complete writer; pack+Init denominator",
+      "before": 95930,
+      "after": 92403,
+      "ratio": 1.0381697563931906
+    }
+  ],
+  "resource_cost": {
+    "additional_UB_per_AIV": 7168,
+    "writer_explicit_UB_D256": 61440,
+    "Q_explicit_UB_D256": 51392,
+    "extra_history_or_GM_storage": 0
+  },
+  "risk_boundaries": [
+    "No cross-row reduction or changed per-row arithmetic order, but vector/pipe scheduling differs and must preserve NaN payload, signed zero, subnormal and padding/status handling.",
+    "Existing CPU small cases and completed CAModel qualification do not become fresh production NPU/graph evidence.",
+    "Current source checks passed; old report promotion_allowed:false is historical speed-gate policy, not a numerical failure.",
+    "B1 reader and rotate/store stages are distinct; use each current-stage denominator, do not re-add Init/pack or multiply ratios into whole-service performance.",
+    "Original N128 local measurements do not quantify16K mixed step or32K/64K end-to-end improvement."
+  ],
+  "decision": "Can reopen after current Rv+finite+skip loop; not enabled, no shared production edit, no VM use"
+}

@@ -1,0 +1,81 @@
+{
+  "status": "host_implementation_and_seams_passed_pending_NPU",
+  "baseline": "b6f8666",
+  "scope": "main eager same-native-ForwardContext prepare metadata only; no graph/draft/current-only lease",
+  "host_tests": {
+    "result": "180 passed",
+    "seconds": 3.2,
+    "log": "reports/mixed_prepare_reuse_20261015/host-tests.log"
+  },
+  "typical_mixed_step": {
+    "tokens": 16384,
+    "short_requests": 31,
+    "short_q": 4,
+    "long_query": 16260,
+    "full_layers": 16,
+    "Hq": 6,
+    "Hkv": 1,
+    "S": 1,
+    "prepare_launches_off": 32,
+    "prepare_launches_on": 2,
+    "task_descriptor_bytes_off": 100663296,
+    "task_descriptor_bytes_on": 6291456,
+    "extra_production_HBM_bytes": 0
+  },
+  "host_evidence": [
+    "pinned unchanged native ForwardContext class/get/override executed on host",
+    "full16K metadata path off/on descriptors and positions preserved under CPU operator double",
+    "sameaddresses32K-to64K-toinvalid-length freshcontext clears cache without repeatedlayer reliance",
+    "real Impl.forward/mixed dispatch512long output and perlayer work preserved",
+    "real default16K selector reaches hybrid short and B1 long with shape-only QKV; all32CV/FIA/merge/store retained",
+    "region order/layer order, owner/alias/capacity checks, units Hkv/S, immutable tuple and CPUmirror faults",
+    "shared direct/observe flag; native stable16384/APCfalse; failed/stale device receipt blocks service"
+  ],
+  "NPU_gate": {
+    "tool": "python3 -m tools.probe_mixed_prepare_reuse --config <effective-candidate-config> --output <report.json>",
+    "status": "not_run",
+    "requires_real_NPU": true,
+    "cases": [
+      "context32k",
+      "context64k_same_addresses",
+      "invalid_length_same_addresses"
+    ],
+    "timing": "complete metadata chain and identical consumers,32K valid case,2warmup5sample median alternatingarms",
+    "minimum_speedup": 1.0,
+    "precision": "all16taskfields/positions bitwise plus independent invalidlength error1 domain",
+    "model_or_CV_included": false
+  },
+  "activation": {
+    "candidate_prepare_reuse": true,
+    "observe": "bound realNPU gate mandatory before service",
+    "direct": "sameflag; no probes or validation claim"
+  },
+  "limitations": [
+    "CPU operator doubles are not device numerical evidence",
+    "16K routing with meta QKV is shape/seam evidence only",
+    "no VM or realNPU executed",
+    "no graph behavior change or new graph qualification",
+    "no model quality or32K/64K E2E>30% claim;32to2 is not a time ratio"
+  ],
+  "source_binding": {
+    "csrc/kernels/attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+    "csrc/kernels/status_guard.cpp": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+    "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+    "csrc/torch_bindings.cpp": "9f6139902fa9a81d46b11588cc7825efd234f81fa7a4ed48f0dee849115ea40c",
+    "oscar_ascend/integration/prepare_reuse.py": "3d1000086bcf58e8f8f9c823718efae89575cd81f29bd2711514cf37cfdaee8d",
+    "oscar_ascend/integration/metadata.py": "85336e8265d4dc01f4637f3fbf58faa6f26cba6b1af54c5300650fe7e9640dd7",
+    "oscar_ascend/integration/mixed_decode_split.py": "f7c49a7d92ddbf0aab5036a3b4828cfa0bd7c9989c2570d188370e26ad622181",
+    "oscar_ascend/integration/impl.py": "e2719d782e72d10f3dbc5982d5221609384cc7f817408d25c682c6bcb441c888",
+    "oscar_ascend/integration/current_attention.py": "79da9df9abecd6f02f386afac83b9c21e4d347fe02fcfe8376465f54192a823c",
+    "oscar_ascend/integration/guard_diag.py": "26176a951f67f33dde806af4e273e7b6e7d57fe6c50825f0fa4a82c297a33b65",
+    "oscar_ascend/runtime.py": "94fd937008cbbca617754a12eacac5e0a71df79094a0c9c275738b625d69c3fb",
+    "oscar_ascend/ops/cv_dispatch.py": "bb1d097a95ebd8ee0f6aff9327635104c50d1c93170037ced37eec06825b970d",
+    "tools/probe_mixed_prepare_reuse.py": "72c1b80636fbd9739efae680b5bc401b5dda2e8965e6537d63840333e3b50030"
+  },
+  "independent_review": {
+    "agent": "evidence",
+    "status": "no_production_reachable_blocking_issue_found",
+    "scope": "native owner/context/stream; region units and writer invalidation; same-address fresh-context device gate; matching two-arm consumer work; artifact/source/phase/resource wiring",
+    "NPU": "not_run"
+  }
+}

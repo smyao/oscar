@@ -1,0 +1,86 @@
+{
+  "status": "passed",
+  "scope": "isolated exact Softmax method, not full C320/Cube/NPU performance",
+  "cases": [
+    {
+      "case": "normal_full",
+      "error": 0,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "finite_sum_overflow",
+      "error": 2,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "finite_cancel",
+      "error": 0,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "cancel_intermediate_overflow",
+      "error": 2,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "visible_NaN",
+      "error": 2,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "visible_positive_Inf",
+      "error": 2,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "visible_negative_Inf",
+      "error": 2,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "masked_NaN_still_prechecked",
+      "error": 2,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "empty_row_NaN_not_checked",
+      "error": 0,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "precise_masked_NaN",
+      "error": 2,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "padding_NaN_not_checked",
+      "error": 0,
+      "bitwise": true,
+      "guards": true
+    },
+    {
+      "case": "existing_metadata_error_preserved",
+      "error": 3,
+      "bitwise": true,
+      "guards": true
+    }
+  ],
+  "full_C320_CPU_CAModel": "separate mandatory gate",
+  "NPU": "not_run",
+  "failures": [],
+  "control": "/tmp/oscar-c16-20261015/finite-cpu-proof/finite-control.json",
+  "backend": "official tikicpulib CPU-debug",
+  "source_manifest_sha256": "f5331e2b5787588638b99b9f239a2bf38dca0f4628bcfb4ca5b90103893eb2fd",
+  "finite_probe_manifest_sha256": "f4ebd36a3364ce9eaae8ef42e529836b2dda43f0984520a57c8c4158b11fca5f",
+  "executable_sha256": "337f0a5e27cbf67b6ac53d2b5daf6d55048800390443a512115744ddd4133098"
+}

@@ -1,0 +1,14 @@
+{
+  "host_archive": "/tmp/oscar-c16-followup-cpu-20261015.tar.gz",
+  "host_archive_sha256": "9e50e5ec2c36683ecdd370ce2eb3cf1395520379e3b687e4a0c2e86b64588885",
+  "host_tar_stream_verified": true,
+  "owned_PIDs_absent": true,
+  "active_cwd_absent": true,
+  "free_before": 2393886720,
+  "paths": [
+    "/tmp/oscar-c16-20261015/followup-c320-cpu/baseline-work",
+    "/tmp/oscar-c16-20261015/followup-c320-cpu/candidate-work",
+    "/tmp/oscar-c16-20261015/finite-cpu-proof/finite-work"
+  ],
+  "free_after": 4838813696
+}

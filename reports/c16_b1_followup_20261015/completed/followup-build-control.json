@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "status": "completed",
+  "supervisor_pid": 675645,
+  "child_pid": 675652,
+  "child_pgid": 675652,
+  "command": [
+    "bash",
+    "-lc",
+    "set -e; source /usr/local/Ascend/cann-9.1.0/set_env.sh; cmake -S csrc/experiments/c16_b1_followup_20261015/finite_probe -B finite-cpu -DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0 -DSOC_VERSION=ascend910b4; cmake --build finite-cpu --parallel 4; cmake -S csrc/experiments/c16_b1_followup_20261015 -B followup-cpu -DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0 -DSOC_VERSION=ascend910b4 -DOSCAR_C16_FOLLOWUP_CPU_DEBUG=ON; cmake --build followup-cpu --parallel 4; cmake -S csrc/experiments/c16_b1_followup_20261015 -B followup-device -DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0 -DSOC_VERSION=ascend910b4; cmake --build followup-device --parallel 4"
+  ],
+  "cwd": "/tmp/oscar-c16-20261015",
+  "timeout_seconds": 180.0,
+  "started_utc": "2026-10-15T13:15:48.940095+00:00",
+  "stdout_path": "/tmp/oscar-c16-20261015/followup-build-logs/stdout.log",
+  "stderr_path": "/tmp/oscar-c16-20261015/followup-build-logs/stderr.log",
+  "lock_path": "/tmp/oscar-cann-validation.lock",
+  "lock_acquired": true,
+  "timed_out": false,
+  "interrupt_signal": null,
+  "child_returncode": 0,
+  "cleanup_complete": true,
+  "cleanup_grace_seconds": 12.0,
+  "cleanup_signals": [],
+  "supervisor_returncode": 0,
+  "child_env_override_keys": [],
+  "child_started_utc": "2026-10-15T13:15:48.943597+00:00",
+  "child_elapsed_seconds": 10.929415980004705,
+  "elapsed_seconds": 10.932993717025965,
+  "finished_utc": "2026-10-15T13:15:59.873063+00:00"
+}

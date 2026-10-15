@@ -1,0 +1,169 @@
+{
+  "status": "local_source_bundle_integrated_not_fresh_device_acceptance",
+  "mapping": [
+    {
+      "experiment": "csrc/experiments/hadamard_batch8/rotate_batch.cpp",
+      "experiment_sha256": "8f34370289fe77e357e38ffe757b9076519b96c7167c30378df4f40b908c1302",
+      "production": "csrc/kernels/rotate_vector_init.cpp",
+      "production_sha256": "3aed72cb5f8bb00596f95bbe6d3d1e5684157019996a9aef300b7672e4751c10",
+      "changes": "only named include/symbol/banner mappings",
+      "mapping_counts": [
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        1,
+        1
+      ],
+      "reverse_mapping_full_bytes_identical": true,
+      "ABI": "measured Init+Batch8 signature retained; original rotate_out/legacy store preserved"
+    },
+    {
+      "experiment": "csrc/experiments/striped_store_simd_pack/writer_pack_init.cpp",
+      "experiment_sha256": "7cbb1b1205c380afcaa3893f23d9ef1337f468c13f7c437c2af8ef91bf123a17",
+      "production": "csrc/kernels/rotate_clip_store_striped.cpp",
+      "production_sha256": "72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430",
+      "changes": "only named include/symbol/banner mappings",
+      "mapping_counts": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        3,
+        3
+      ],
+      "reverse_mapping_full_bytes_identical": true,
+      "ABI": "existing writer symbols/signatures unchanged"
+    }
+  ],
+  "request_packed_generation": {
+    "source": "csrc/kernels/rotate_clip_store_striped.cpp",
+    "source_sha256": "72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430",
+    "writer_optimizations": [
+      "simd_pack",
+      "exact_hadamard_init"
+    ],
+    "rotation_and_clip_helpers_sha256": "59a12fd21322b2cf9e0b80f8fd8857cf08935dd4e488b0297c5b3eb339dbda69",
+    "shared_helpers_sha256": {
+      "striped_store_pack.h": "95c2936c4e2f31bd444bb9126928e7cd270f3eaf38978b0a7801c107a5eb7f3e",
+      "hadamard_indices.h": "5c9b3905e89ebfd73bd6947d2f6d15f225e0d55ac19d0eba547dd2f4c132520f"
+    },
+    "generated_sha256": "c3a69d4ad0ae4e2bf0edc2aa38299795ed40c7248db88cbe27073fc92c9bf225",
+    "changes": [
+      "one destination address",
+      "remove per-page exact window publication",
+      "distinct experiment symbol"
+    ],
+    "CANN": "not_run",
+    "CPU_debug": "not_run",
+    "NPU": "not_run"
+  },
+  "request_packed_mapping": {
+    "source": "csrc/experiments/request_windows_store/packed_store.cpp",
+    "target": "csrc/kernels/rotate_clip_store_request_packed.cpp",
+    "source_sha256": "c3a69d4ad0ae4e2bf0edc2aa38299795ed40c7248db88cbe27073fc92c9bf225",
+    "target_sha256": "b78a267de4d4a7f0fc8868619cf223ae4d68707716353cdf1a78d820d37dd269",
+    "non_include_body_sha256": "a1c376a05280dc16c8cc2756a4952d206c45dd9c6f6e5900c11f1f45e9a79400",
+    "non_include_body_identical": true,
+    "ABI": "unchanged",
+    "full_build": "pending",
+    "NPU": "pending",
+    "graph": "pending"
+  },
+  "measured_source_binding": {
+    "scope": "complete writer old/current/compact and canonical rotate old/Init/compact",
+    "frozen_writer_binding": {
+      "scope": "frozen_research_writer_source_not_new_production_baseline",
+      "manifest_sha256": "427c3bd856b41d57a3be253842f77f1bd55b060839f8a31248e35dc6bda2b872",
+      "original_sha256": "0515fd2a527812dc6e7c09e46ebae50fd19be62e7645705c8caffbb132a31d29",
+      "frozen_sha256": "674b6115f93b1c8387bdc8ba8440218c7b1e78e3563cb4f76e37624e0eae62eb",
+      "research_sources": {
+        "writer_pack.cpp": "c01eb6dce3a725567ed8b92032e1d0baaf9d674e02d7ebc0fe51599a5b458fab",
+        "writer_pack_init.cpp": "7cbb1b1205c380afcaa3893f23d9ef1337f468c13f7c437c2af8ef91bf123a17",
+        "pack.h": "019fd5330ae0c7a850fbf015dee18df4c262f6440a6da387085c362d3b445ac3",
+        "store_cpu.cpp": "f6403ae0f868c24e3d24e7424073342b779b9a4d4b43aa0799b9746d2582c005",
+        "pack_kernel.cpp": "911ca6742538d25e77c48ce50f1d0c009bfd9051863461fdfc7eb36417335e0e"
+      },
+      "dependencies": {
+        "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+        "csrc/include/oscar_rotation_launch.h": "a92c685f318b680d5d7f07ec15bec954bba5eb5c6b19b298739bd4780932a99b",
+        "csrc/experiments/hadamard_indices/vector_indices.h": "8f92beaefbb46791709c2102bbda34a47321309bc4e320999765653e9f25c970"
+      }
+    },
+    "sources": {
+      "csrc/experiments/striped_store_simd_pack/writer_baseline.cpp": "674b6115f93b1c8387bdc8ba8440218c7b1e78e3563cb4f76e37624e0eae62eb",
+      "csrc/experiments/striped_store_simd_pack/writer_pack_init.cpp": "7cbb1b1205c380afcaa3893f23d9ef1337f468c13f7c437c2af8ef91bf123a17",
+      "csrc/kernels/rotate_clip_store.cpp": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+      "csrc/experiments/hadamard_batch8/writer_batch.cpp": "52a58519fd1b0fc378fd2ea750f7340040071c072eb76f1cd3801b64082bbf2d",
+      "csrc/experiments/hadamard_batch8/rotate_init.cpp": "82774ea4c67dd1da9f94a3fbacbe85b67f1f3ac28a9e4e183e955db4e616c872",
+      "csrc/experiments/hadamard_batch8/rotate_batch.cpp": "8f34370289fe77e357e38ffe757b9076519b96c7167c30378df4f40b908c1302"
+    },
+    "dependencies": {
+      "csrc/experiments/striped_store_simd_pack/pack.h": "019fd5330ae0c7a850fbf015dee18df4c262f6440a6da387085c362d3b445ac3",
+      "csrc/experiments/hadamard_indices/vector_indices.h": "8f92beaefbb46791709c2102bbda34a47321309bc4e320999765653e9f25c970"
+    }
+  },
+  "historical_evidence": {
+    "query": {
+      "report": "reports/hadamard_batch8_20261010/reports/batch8-rotate-camodel128-v2/batch8/report.json",
+      "sha256": "4675149b5bcfdce4e900c2cb0ccfec85e59b7231d095e4be22312a44b38b0f38",
+      "same_library_ticks": {
+        "old": 110343,
+        "init": 68082,
+        "batch8": 64537
+      },
+      "init_over_batch8": 1.0549297302322698,
+      "scope": "complete N128/H6/D256 query rotation only; not a model percentage"
+    },
+    "writer": {
+      "report": "reports/hadamard_batch8_20261010/reports/batch8-writer-camodel128/current/report.json",
+      "sha256": "9510b7b5b08e96f2d91a1158247438f3b71261c1dbcd4c5063bdde78cfed0ecd",
+      "same_library_ticks": {
+        "old": 173419,
+        "pack_init": 96566
+      },
+      "old_over_pack_init": 1.795859826439948,
+      "full_writer_comparison": "reports/quant_store_simd_pack_20261010/reports/store-camodel-n128/comparison.json",
+      "comparison_sha256": "65047850112fd8137d892f1c944df3766c9ed04df3c25203f323521024ea8e82"
+    },
+    "scope": "historical CPU/CAModel evidence retained verbatim; primitive ratios are not combined into service speed"
+  },
+  "frozen_baseline": {
+    "directory": "artifacts/quantization_bundle_baseline_20261011",
+    "manifest_sha256": "faad5b93299285c5c71d7d68d04c581b8150f3b375a035639b7b3450e54d2c54",
+    "files": [
+      {
+        "source_at_measurement": "csrc/kernels/rotate_clip_store.cpp",
+        "snapshot": "rotate_clip_store.cpp",
+        "sha256": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748"
+      },
+      {
+        "source_at_measurement": "csrc/kernels/rotate_clip_store_striped.cpp",
+        "snapshot": "rotate_clip_store_striped.cpp",
+        "sha256": "72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430"
+      }
+    ],
+    "old_scripts_in_current_tree": "expected explicit source drift; replay requires frozen source tree"
+  },
+  "activation": "shared experimental_quantization_bundle internal candidate flag selects rotate_vector_init_out in both entrypoints; original rotate_out/legacy store remain baseline; striped/request-packed bundle retained; no new user option",
+  "canonical_fe0_sha256": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+  "correction": "initial local canonical replacement was rejected by frozen FE0 source gate; original bytes restored, optimization moved to independent optional operator",
+  "scope_note": "independent rotate_vector_init.cpp retains an unused auxiliary store symbol; no torch registration or route selects it; canonical fused store remains frozen",
+  "new_selection_20261015": {
+    "query_batch8_beyond_init": 1.0549297302322698,
+    "extra_Hadamard_UB_per_core_bytes": 7168,
+    "extra_GM_bytes": 0,
+    "decision": "user waived fixed per-point15percent; query Batch8 accepted; writer Batch8 remains excluded",
+    "historical_reports": "retained without rewriting their original decisions"
+  },
+  "fresh_full_build": "pending",
+  "fresh_CPU_integration": "pending",
+  "NPU": "pending",
+  "graph_capture": "pending",
+  "graph_replay": "pending",
+  "full_model_quality": "pending",
+  "service_performance": "pending"
+}

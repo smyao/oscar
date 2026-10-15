@@ -1,0 +1,19 @@
+{
+  "status": "complete_matched_writer_A_B_C",
+  "case": "n128_h1_d256_bf16_b128_suffix_padding",
+  "ticks": {
+    "old": 173419,
+    "vector_pack": 136213,
+    "vector_pack_and_init": 96566
+  },
+  "speedup_vs_old": {
+    "old": 1.0,
+    "vector_pack": 1.273145734988584,
+    "vector_pack_and_init": 1.795859826439948
+  },
+  "scope": "full writer only; simulated ticks are not NPU ms or whole-service proof",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "whole_service": "not_run",
+  "promotion_allowed": false
+}

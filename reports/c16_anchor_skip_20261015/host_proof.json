@@ -1,0 +1,120 @@
+{
+  "status": "passed_native_reachable_event_equivalence_only",
+  "scope": "ordinary host control-flow equivalence; no floating-point kernel execution",
+  "basis": {
+    "source": "csrc/experiments/c16_rv_reuse_20261015/c16_candidate.cpp",
+    "sha256": "9603817dddfba0e6357b42756a9956880137348ce8076c61aff58884acb6210b",
+    "qualification": "Rv separately qualified before combination; do not multiply old speedups"
+  },
+  "source_sha256": {
+    "csrc/experiments/c16_anchor_skip_20261015/generate.py": "2e210a73fdc56a8cd4430d9a5d1aaa7cfc45ebbe304dfebeaadbf1997371cc48",
+    "csrc/experiments/c16_anchor_skip_20261015/host_template.cpp": "7a8a7682fdf64dd5453f0faeaf429eac831f30b3dc0a2ee949bb89358799f03e",
+    "csrc/experiments/c16_anchor_skip_20261015/host_replay.cpp": "6cfe85daa19de490ef9c0de10d9019d1332f1413ce3cca3fd5751f1ec6f8c002",
+    "csrc/kernels/attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952"
+  },
+  "archive": [
+    "#34",
+    "#36",
+    "#126",
+    "#129",
+    "#144",
+    "#145",
+    "#148",
+    "#152",
+    "#154",
+    "#157"
+  ],
+  "initial_host_harness_compile_failure": "TaskState member name and absent mm.End stub corrected before the recorded passing build; no CANN/VM run",
+  "actual_prepare_cases": {
+    "small65": {
+      "actual_prepare_words_equal": 16128,
+      "cases": 4,
+      "actors": 112,
+      "base_LoadTask": 12928,
+      "candidate_LoadTask": 10248,
+      "host_seconds": 0.003066791919991374,
+      "task_sha256": "e2a2f874a1238793c4595559d7a465d7f37ae4f7894c63f6b184ea0496153fea",
+      "original_prepare_receipt": {
+        "status": "metadata_only",
+        "backend": "real_ascendc_cpu_prepare",
+        "tokens": 336,
+        "context": 65,
+        "task_rows": 1008,
+        "source2_suppressed": true,
+        "positions_checked": true,
+        "guards": true,
+        "input_immutable": true,
+        "attention_execution": "not_established"
+      }
+    },
+    "small337": {
+      "actual_prepare_words_equal": 16128,
+      "cases": 4,
+      "actors": 112,
+      "base_LoadTask": 12928,
+      "candidate_LoadTask": 10248,
+      "host_seconds": 0.002527249976992607,
+      "task_sha256": "b3a3c76a48177fceefdd2d383d37433899cfcd5ec4ec2be1bd2c5ce664eb02d1",
+      "original_prepare_receipt": {
+        "status": "metadata_only",
+        "backend": "real_ascendc_cpu_prepare",
+        "tokens": 336,
+        "context": 337,
+        "task_rows": 1008,
+        "source2_suppressed": true,
+        "positions_checked": true,
+        "guards": true,
+        "input_immutable": true,
+        "attention_execution": "not_established"
+      }
+    },
+    "full337": {
+      "actual_prepare_words_equal": 32256,
+      "cases": 4,
+      "actors": 112,
+      "base_LoadTask": 24192,
+      "candidate_LoadTask": 21512,
+      "host_seconds": 0.002605375135317445,
+      "task_sha256": "dd56ddb459f06c6029be1dcc32ebb6f4c859fb9957bd22072ada553184b8c276",
+      "original_prepare_receipt": {
+        "status": "metadata_only",
+        "backend": "real_ascendc_cpu_prepare",
+        "tokens": 672,
+        "context": 337,
+        "task_rows": 2016,
+        "source2_suppressed": true,
+        "positions_checked": true,
+        "guards": true,
+        "input_immutable": true,
+        "attention_execution": "not_established"
+      }
+    }
+  },
+  "CANN": "not_run",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "performance": "not_established",
+  "host_compile": {
+    "returncode": 0,
+    "seconds": 0.5393739999271929,
+    "stderr": ""
+  },
+  "enumeration": {
+    "status": "native_reachable_traversal_events_equal",
+    "cases": 6153,
+    "actors": 150300,
+    "events": 11230869,
+    "base_LoadTask": 32492620,
+    "candidate_LoadTask": 30802816,
+    "arbitrary_overlapping_table_not_covered": true,
+    "floating_point_kernel_executed": false,
+    "host_seconds": 2.23232070915401,
+    "actor_model": "One AIC and one lane-independent AIV control-flow model per logical core. Process/eligibility do not reference lane; this is not actual device actor execution."
+  },
+  "source_transform_tests": {
+    "command": ".venv/bin/python -m pytest -q tests/test_c16_anchor_skip.py",
+    "passed": 4,
+    "seconds": 0.02
+  },
+  "native_producer_scope": "Only token-major prepare output plus the existing healthy-source2 range suppression; malformed native inputs remain in the unchanged first pass. Arbitrary forged overlapping task tables are explicitly outside this proof."
+}

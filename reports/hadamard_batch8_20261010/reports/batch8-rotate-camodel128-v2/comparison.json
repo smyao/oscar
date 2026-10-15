@@ -1,0 +1,18 @@
+{
+  "status": "complete_matched_query_rotation",
+  "case": "n128_h6_d256_bf16",
+  "ticks": {
+    "old": 110343,
+    "init": 68082,
+    "batch8": 64537
+  },
+  "old_over_init": 1.6207367586146117,
+  "old_over_batch8": 1.7097633915428359,
+  "init_over_batch8": 1.0549297302322698,
+  "cross_arm_output_status_bits": "identical",
+  "scope": "isolated query rotation; not writer, attention or service performance",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "whole_service": "not_run",
+  "promotion_allowed": false
+}

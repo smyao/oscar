@@ -1,0 +1,559 @@
+{
+  "status": "passed",
+  "arm": "batch8",
+  "phase": "complete",
+  "scope": "isolated query rotation; not writer, attention or service performance",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "whole_service": "not_run",
+  "promotion_allowed": false,
+  "case": "n128_h6_d256_bf16",
+  "geometry": {
+    "rows": 768,
+    "dim": 256,
+    "dtype": 2,
+    "heads": 6,
+    "hadamard": true
+  },
+  "grid": 32,
+  "kernel": "oscar_rotate_batch8_kernel",
+  "kernel_sha256": "8f34370289fe77e357e38ffe757b9076519b96c7167c30378df4f40b908c1302",
+  "kernel_source": "csrc/experiments/hadamard_batch8/rotate_batch.cpp",
+  "source_binding": {
+    "scope": "complete writer old/current/compact and canonical rotate old/Init/compact",
+    "frozen_writer_binding": {
+      "scope": "frozen_research_writer_source_not_new_production_baseline",
+      "manifest_sha256": "427c3bd856b41d57a3be253842f77f1bd55b060839f8a31248e35dc6bda2b872",
+      "original_sha256": "0515fd2a527812dc6e7c09e46ebae50fd19be62e7645705c8caffbb132a31d29",
+      "frozen_sha256": "674b6115f93b1c8387bdc8ba8440218c7b1e78e3563cb4f76e37624e0eae62eb",
+      "research_sources": {
+        "writer_pack.cpp": "c01eb6dce3a725567ed8b92032e1d0baaf9d674e02d7ebc0fe51599a5b458fab",
+        "writer_pack_init.cpp": "7cbb1b1205c380afcaa3893f23d9ef1337f468c13f7c437c2af8ef91bf123a17",
+        "pack.h": "019fd5330ae0c7a850fbf015dee18df4c262f6440a6da387085c362d3b445ac3",
+        "store_cpu.cpp": "f6403ae0f868c24e3d24e7424073342b779b9a4d4b43aa0799b9746d2582c005",
+        "pack_kernel.cpp": "911ca6742538d25e77c48ce50f1d0c009bfd9051863461fdfc7eb36417335e0e"
+      },
+      "dependencies": {
+        "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+        "csrc/include/oscar_rotation_launch.h": "a92c685f318b680d5d7f07ec15bec954bba5eb5c6b19b298739bd4780932a99b",
+        "csrc/experiments/hadamard_indices/vector_indices.h": "8f92beaefbb46791709c2102bbda34a47321309bc4e320999765653e9f25c970"
+      }
+    },
+    "sources": {
+      "csrc/experiments/striped_store_simd_pack/writer_baseline.cpp": "674b6115f93b1c8387bdc8ba8440218c7b1e78e3563cb4f76e37624e0eae62eb",
+      "csrc/experiments/striped_store_simd_pack/writer_pack_init.cpp": "7cbb1b1205c380afcaa3893f23d9ef1337f468c13f7c437c2af8ef91bf123a17",
+      "csrc/kernels/rotate_clip_store.cpp": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+      "csrc/experiments/hadamard_batch8/writer_batch.cpp": "52a58519fd1b0fc378fd2ea750f7340040071c072eb76f1cd3801b64082bbf2d",
+      "csrc/experiments/hadamard_batch8/rotate_init.cpp": "82774ea4c67dd1da9f94a3fbacbe85b67f1f3ac28a9e4e183e955db4e616c872",
+      "csrc/experiments/hadamard_batch8/rotate_batch.cpp": "8f34370289fe77e357e38ffe757b9076519b96c7167c30378df4f40b908c1302"
+    },
+    "dependencies": {
+      "csrc/experiments/striped_store_simd_pack/pack.h": "019fd5330ae0c7a850fbf015dee18df4c262f6440a6da387085c362d3b445ac3",
+      "csrc/experiments/hadamard_indices/vector_indices.h": "8f92beaefbb46791709c2102bbda34a47321309bc4e320999765653e9f25c970"
+    }
+  },
+  "build_manifest_sha256": "0bc7a5d51427cd0310ce6404556b9d93244e2b683a9eeb966bd6c4d8812f6db7",
+  "library_sha256": "c5f73e15bdb4314a142a0b1ac3feefc0662f76471434bc98061d7bf856de0634",
+  "fixture_sha256": "34494022e0f04a1303c4d9ccecfeeb9e14672e106a44736ecc1fb1ec7e593754",
+  "input_sha256": {
+    "source": "649b0c9d9b61f1ce07f590ab75a7c0b65b41e28041f0927782e0703462f0ca97",
+    "rotation": "011617962d8c473c7a320031759a0f3d3723029c3477e762ee65dbfb0e0aa93c",
+    "slots": "3e4f0a2fd9498da7c1440a355a22b6292161a5216c63aa0bc59b5a4742fd1e36"
+  },
+  "initial_sha256": {
+    "output": "77ffc0acc40759709748e63d9e961c75219a0e8d638e841a2f0e6ba808d643a7",
+    "status": "51b9f0ae4323fb70a30524450cdaeb940d5ab23b8e22e249976c8fe82c1f5795"
+  },
+  "oracle_sha256": {
+    "output": "d900d79dd78739c88b4a1c078aad515cd153df2fb0ff667c62e3346221f740b9",
+    "status": "e80232b4d18d0bb7e794be263ba937626f383f9917d4b8a737ba893a8f752293"
+  },
+  "oracle_tolerance": {
+    "atol": 0.002,
+    "rtol": 0.002
+  },
+  "fixture_sources": {
+    "csrc/kernels/rotate_clip_store.cpp": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+    "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+    "configs/acceptance.json": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+    "csrc/experiments/hadamard_batch8/rotate_fixture.py": "847dcd318283fac92f5a2c11072d4ad3047d14daf528cbea286d01273c6f8f2b"
+  },
+  "helpers": {
+    "csrc/experiments/striped_store_simd_pack/pack.h": "019fd5330ae0c7a850fbf015dee18df4c262f6440a6da387085c362d3b445ac3",
+    "csrc/experiments/hadamard_indices/vector_indices.h": "8f92beaefbb46791709c2102bbda34a47321309bc4e320999765653e9f25c970"
+  },
+  "simulator_configuration": {
+    "stars": {
+      "stars": {
+        "ffts_mode": 1
+      },
+      "model_top": {
+        "sim_type": 0,
+        "num_aic": 24,
+        "num_aiv": 48
+      },
+      "pem": {
+        "parsim": 1,
+        "parsim_thd_limit": 6
+      }
+    },
+    "detail": {
+      "LOG": {
+        "rotating_file_size": 134217728,
+        "rotating_file_number": 2,
+        "flush_level": 3,
+        "core_enable_mask": [
+          "0x0"
+        ]
+      },
+      "L2CACHE": {
+        "cache_enable": 0,
+        "cache_set_size": 24,
+        "cache_way_size": 16384,
+        "cache_line_size": 512,
+        "cache_read_latency": 241,
+        "cache_write_latency": 96
+      }
+    }
+  },
+  "outputs": {
+    "output": {
+      "bytes": 786432,
+      "sha256": "d900d79dd78739c88b4a1c078aad515cd153df2fb0ff667c62e3346221f740b9",
+      "guarded_sha256": "8b54f9f98a0039a2a55b729a6448b84c2b6e4de8ac8d26ee40a425376c2bdbea",
+      "path": "output.bin"
+    },
+    "status": {
+      "bytes": 3072,
+      "sha256": "e80232b4d18d0bb7e794be263ba937626f383f9917d4b8a737ba893a8f752293",
+      "guarded_sha256": "d28040e071cc298a484703c2aec112ff1ceb2707d77b67f619f8c34cf6e32eb5",
+      "path": "status.bin"
+    },
+    "source_after": {
+      "bytes": 393216,
+      "sha256": "649b0c9d9b61f1ce07f590ab75a7c0b65b41e28041f0927782e0703462f0ca97",
+      "guarded_sha256": "68e3ea92c8cca09a35c4a646bfc58e2a5f4b20a2be036b41fd26d2d1d9a3d10c",
+      "path": "source_after.bin"
+    },
+    "rotation_after": {
+      "bytes": 262144,
+      "sha256": "011617962d8c473c7a320031759a0f3d3723029c3477e762ee65dbfb0e0aa93c",
+      "guarded_sha256": "8112bb2557bda0e0a9e7695940b6e3645c02cba2fc0334b35823745e9dc2474c",
+      "path": "rotation_after.bin"
+    },
+    "slots_after": {
+      "bytes": 1024,
+      "sha256": "3e4f0a2fd9498da7c1440a355a22b6292161a5216c63aa0bc59b5a4742fd1e36",
+      "guarded_sha256": "97507db9ef252a4e9bf43308bc09eaf79291482a7c402668271f57bde87c9a15",
+      "path": "slots_after.bin"
+    }
+  },
+  "failures": [],
+  "oracle_result": {
+    "status": "passed",
+    "status_byte_differences": 0,
+    "finite_failures": 0,
+    "nonfinite_class_failures": 0,
+    "first_elements": []
+  },
+  "profiles": {
+    "task": [
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "start_cycle": 103,
+        "end_cycle": 64640,
+        "duration": 64537,
+        "num_thread_subtasks": 1,
+        "wait_cycle": 391
+      }
+    ],
+    "aiv": [
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 0,
+        "core_id": 0,
+        "start_cycle": 106,
+        "early_end_cycle": 0,
+        "end_cycle": 64363,
+        "duration": 64257
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 1,
+        "core_id": 1,
+        "start_cycle": 107,
+        "early_end_cycle": 0,
+        "end_cycle": 64367,
+        "duration": 64260
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 2,
+        "core_id": 2,
+        "start_cycle": 108,
+        "early_end_cycle": 0,
+        "end_cycle": 64346,
+        "duration": 64238
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 3,
+        "core_id": 3,
+        "start_cycle": 109,
+        "early_end_cycle": 0,
+        "end_cycle": 64639,
+        "duration": 64530
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 4,
+        "core_id": 4,
+        "start_cycle": 110,
+        "early_end_cycle": 0,
+        "end_cycle": 64331,
+        "duration": 64221
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 5,
+        "core_id": 5,
+        "start_cycle": 111,
+        "early_end_cycle": 0,
+        "end_cycle": 64355,
+        "duration": 64244
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 6,
+        "core_id": 6,
+        "start_cycle": 112,
+        "early_end_cycle": 0,
+        "end_cycle": 64350,
+        "duration": 64238
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 7,
+        "core_id": 7,
+        "start_cycle": 113,
+        "early_end_cycle": 0,
+        "end_cycle": 64355,
+        "duration": 64242
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 8,
+        "core_id": 8,
+        "start_cycle": 114,
+        "early_end_cycle": 0,
+        "end_cycle": 64365,
+        "duration": 64251
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 9,
+        "core_id": 9,
+        "start_cycle": 115,
+        "early_end_cycle": 0,
+        "end_cycle": 64368,
+        "duration": 64253
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 10,
+        "core_id": 10,
+        "start_cycle": 116,
+        "early_end_cycle": 0,
+        "end_cycle": 64349,
+        "duration": 64233
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 11,
+        "core_id": 11,
+        "start_cycle": 117,
+        "early_end_cycle": 0,
+        "end_cycle": 64370,
+        "duration": 64253
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 12,
+        "core_id": 12,
+        "start_cycle": 118,
+        "early_end_cycle": 0,
+        "end_cycle": 64357,
+        "duration": 64239
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 13,
+        "core_id": 13,
+        "start_cycle": 119,
+        "early_end_cycle": 0,
+        "end_cycle": 64363,
+        "duration": 64244
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 14,
+        "core_id": 14,
+        "start_cycle": 120,
+        "early_end_cycle": 0,
+        "end_cycle": 64636,
+        "duration": 64516
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 15,
+        "core_id": 15,
+        "start_cycle": 121,
+        "early_end_cycle": 0,
+        "end_cycle": 64360,
+        "duration": 64239
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 16,
+        "core_id": 16,
+        "start_cycle": 122,
+        "early_end_cycle": 0,
+        "end_cycle": 64357,
+        "duration": 64235
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 17,
+        "core_id": 17,
+        "start_cycle": 123,
+        "early_end_cycle": 0,
+        "end_cycle": 64364,
+        "duration": 64241
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 18,
+        "core_id": 18,
+        "start_cycle": 124,
+        "early_end_cycle": 0,
+        "end_cycle": 64369,
+        "duration": 64245
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 19,
+        "core_id": 19,
+        "start_cycle": 125,
+        "early_end_cycle": 0,
+        "end_cycle": 64366,
+        "duration": 64241
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 20,
+        "core_id": 20,
+        "start_cycle": 126,
+        "early_end_cycle": 0,
+        "end_cycle": 64382,
+        "duration": 64256
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 21,
+        "core_id": 21,
+        "start_cycle": 127,
+        "early_end_cycle": 0,
+        "end_cycle": 64381,
+        "duration": 64254
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 22,
+        "core_id": 22,
+        "start_cycle": 128,
+        "early_end_cycle": 0,
+        "end_cycle": 64379,
+        "duration": 64251
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 23,
+        "core_id": 23,
+        "start_cycle": 129,
+        "early_end_cycle": 0,
+        "end_cycle": 64371,
+        "duration": 64242
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 24,
+        "core_id": 24,
+        "start_cycle": 130,
+        "early_end_cycle": 0,
+        "end_cycle": 64367,
+        "duration": 64237
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 25,
+        "core_id": 25,
+        "start_cycle": 131,
+        "early_end_cycle": 0,
+        "end_cycle": 64373,
+        "duration": 64242
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 26,
+        "core_id": 26,
+        "start_cycle": 132,
+        "early_end_cycle": 0,
+        "end_cycle": 64387,
+        "duration": 64255
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 27,
+        "core_id": 27,
+        "start_cycle": 133,
+        "early_end_cycle": 0,
+        "end_cycle": 64392,
+        "duration": 64259
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 28,
+        "core_id": 28,
+        "start_cycle": 134,
+        "early_end_cycle": 0,
+        "end_cycle": 64371,
+        "duration": 64237
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 29,
+        "core_id": 29,
+        "start_cycle": 135,
+        "early_end_cycle": 0,
+        "end_cycle": 64381,
+        "duration": 64246
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 30,
+        "core_id": 30,
+        "start_cycle": 136,
+        "early_end_cycle": 0,
+        "end_cycle": 64396,
+        "duration": 64260
+      },
+      {
+        "stream_id": 2,
+        "task_id": 0,
+        "subtask_id": 0,
+        "thread_id": 0,
+        "block_id": 31,
+        "core_id": 31,
+        "start_cycle": 137,
+        "early_end_cycle": 0,
+        "end_cycle": 64376,
+        "duration": 64239
+      }
+    ]
+  },
+  "task_ticks": 64537
+}

@@ -1,0 +1,14 @@
+{
+  "cv_probe_small.cpp": {
+    "template": "csrc/experiments/c16_rv_reuse_20261015/cv_probe_small.cpp",
+    "template_sha256": "8f753b1d70c1c4c15a614cb4c9934be36d216df38605bdfde9b69834fd6ceace",
+    "generated_sha256": "d39ab8c5b0e0db5fcd2b21c748ac25eb04a2ad7d29eb666489e1bd183b4a4010",
+    "full_inverse": true
+  },
+  "cv_replay_small.py": {
+    "template": "csrc/experiments/c16_rv_reuse_20261015/cv_replay_small.py",
+    "template_sha256": "83454c566b41f76f8fc683a1c4c1727834e8eb88edb50b083d7b2a237b974e23",
+    "generated_sha256": "11d2be7c8597cf26bdcc5d01ec17a6606762794c4cc73b6dc73eee58724b86c2",
+    "full_inverse": true
+  }
+}

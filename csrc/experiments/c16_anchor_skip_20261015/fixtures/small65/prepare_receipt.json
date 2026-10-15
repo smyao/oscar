@@ -1,0 +1,12 @@
+{
+  "status": "metadata_only",
+  "backend": "real_ascendc_cpu_prepare",
+  "tokens": 336,
+  "context": 65,
+  "task_rows": 1008,
+  "source2_suppressed": true,
+  "positions_checked": true,
+  "guards": true,
+  "input_immutable": true,
+  "attention_execution": "not_established"
+}

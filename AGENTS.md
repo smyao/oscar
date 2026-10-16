@@ -4,8 +4,8 @@
 
 - 只允许参考本项目 `references/` 内指定PR和原生实现；禁止读任何失败OSCAR项目代码。所有参考树只读，不运行格式化或修改。
 - 适配代码为外部插件与独立AscendC工程，不能覆盖原生vLLM/Ascend源码，不使用 `cp` 部署。
-- 配置以本次 `configs/target.json` 为准：按本次启动文档附录 A/F 默认物理设备 `0,1,2,3`、SOC `ascend910b4`、端口 `8989`。不能从旧项目记忆或已有环境继承其他任务卡号；显式配置非法时仍报错。
-- 用户另明确授权直启入口`install_serve.sh --rear-cards`本次使用物理设备`4,5,6,7`和端口`7878`；这是显式可选模式，默认配置和其他入口不变。
+- 配置以本次 `configs/target.json` 为准：用户 2026-10-16 最新要求将本地默认启动改为物理设备 `4,5,6,7`、端口 `7878`，SOC 仍为 `ascend910b4`；该要求覆盖旧附录 A/F 的默认设备和端口。不能从旧项目记忆或已有环境继承其他任务卡号；显式配置非法时仍报错。
+- 直启入口保留 `install_serve.sh --rear-cards`，仍显式选择物理设备 `4,5,6,7` 和端口 `7878`；使用当前默认配置时无需追加此参数。显式 `--config` 仍读取所选配置。
 - 用户最新要求：保留真实 NPU 算子、CV/旋转和完整服务探针；移除默认部署中的环境清单、原生源码扫描、readiness 前置审计。正常流程为安装/编译/探针/自动旋转文件/服务探针/资源清理/正式服务，任何探针失败不得继续。该要求优先于启动文档旧的环境审计步骤。
 - 部署阶段及服务子进程的输出和错误必须实时打印到当前终端，同时保留相位日志、状态和真实退出码；不能只把 traceback 写入文件后让用户手工查找（档案 #94/#95/#125）。
 - `docs/checklist.md` 是42个稳定checkpoint；源码、CPU、CANN、设备完成、图捕获、图回放、质量、性能分别记录。
@@ -14,7 +14,7 @@
 - 凡修改CANN算子，先亲读档案同类条目与D.4完整原始打点，文件头加入档案引用及D.4四问。
 - 新真机错误才追加档案；本机CPU测试或理论判断不能伪写为真机记录。
 - 用户已授权完成后推送至 https://gitcode.com/jpl123/gpt_new_oscar_kimi.git；只推送本工程，保留真实验收边界。
-- 每轮交付必须同步到固定直启命令 `git pull --ff-only && bash scripts/install_serve.sh --variant candidate`：不仅编译最新产物，还要实际启用本轮候选优化；不得仅更新probe。候选开关统一由`tools/serving_variants.py`维护，直启与probe共用；回归须验证配置传到服务且q4/q1/C4选择了对应算子。后四卡模式仍叠加`--rear-cards`，默认设备与端口不变。
+- 每轮交付必须同步到固定直启命令 `git pull --ff-only && bash scripts/install_serve.sh --variant candidate`：不仅编译最新产物，还要实际启用本轮候选优化；不得仅更新probe。候选开关统一由`tools/serving_variants.py`维护，直启与probe共用；回归须验证配置传到服务且q4/q1/C4选择了对应算子。当前默认已使用后四卡和7878，`--rear-cards` 保留兼容。
 - #157：status_guard 属 fe0 字节冻结集（`FE0_KERNEL_SHA256`），不得改动；生产 trap 归因统一用 `OSCAR_GUARD_HOST_SYNC=1`（默认关闭、图捕获路径不受影响），异常链给出 site/family，不得为归因修改冻结算子或新增生产回读。2026-10-13复审：later-draft 只允许依据原生 `discard_request_mask` 将明确丢弃行置为 padding，由外部 proposer 作用域与 metadata builder 在 prepare 前完成；禁止从 slot 解析失败反推 discard，禁止每层全表扫描清空活行。该主机路径不经 pin/生成链，冻结算子不变。
 - 用户已在835fc22完整运行过AISBench；后续不得再要求重跑AISBench。分析已有复制日志和片段，必要验证只用短时合成算子/图/服务probe；片段缺失时不得伪造全程占比，也不能把短probe当成完整模型质量或8分钟性能验收。
 

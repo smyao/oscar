@@ -12,6 +12,10 @@ from tools.phase import PhaseResult
 
 def config_file(tmp_path, enabled=False):
     config = json.loads((install_serve.ROOT / "configs/target.json").read_text())
+    # Keep an explicit alternate config to exercise --rear-cards overrides;
+    # the checked-in default is covered by test_serving_variants/deploy_launcher.
+    config.update(devices=[0, 1, 2, 3], port=8989, use_native_token_budget=True)
+    config.pop("max_num_batched_tokens", None)
     config["experimental_history_reuse"] = enabled
     path = tmp_path / "target.json"
     path.write_text(json.dumps(config))

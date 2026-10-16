@@ -13,7 +13,7 @@
 
 本地开发环境是 macOS arm64、Python3.12.6。独立 `.venv` 使用 torch2.14.0 做CPU oracle测试，**不代表目标torch2.10.0**。macOS本体没有CANN/NPU；本轮已发现并使用Lima oscar内的CANN9.1、bisheng15、aarch64 Linux与官方CPU调试库。VM独立环境为Torch2.12.0+cpu/torch_npu2.12.0/pybind11 3.1.0，与目标Torch2.10版本不同，不能代替目标运行。详见 reports/vm/validation.json 及 `reports/environment.json`、`local_environment.json`。
 
-目标模型位置、TP4、图、MTP等保留于 `configs/target.json`。真机连接方式未提供；模型config与权重不在本机，FULL层数/head_dim/GDN实际dtype形状必须由目标环境核实。设备与编译目标按本次启动文档附录 F 固定为物理卡0–3和ascend910b4，端口按附录 A 保留8989；其他项目记忆不构成本任务配置来源。用户回传的 node93 默认设备空值错误见档案 #123；最新复跑已通过 `probe-ops` 的75项 store/merge 原语 NPU 探针，越过 #125 的依赖库加载错误；随后首个 CV 数值用例失败，见 #126；更新后的日志进入TP4/MTP模型加载，因prefix关闭时将GDN请求跨度误作FULL页对齐而失败，见 #127。新日志未附前序CV/旋转探针完整结果，不能补造通过项。再下一轮已完成torch.compile/初次profiling并获得KV预算，#127不再出现；MTP调用原生copy_with_new_block_size(128)时被外部物理页检查拒绝，见#128。编译完成不等于捕图/回放通过。
+目标模型位置、TP4、图、MTP等保留于 `configs/target.json`。真机连接方式未提供；模型config与权重不在本机，FULL层数/head_dim/GDN实际dtype形状必须由目标环境核实。设备与端口按用户2026-10-16最新要求设为物理卡4–7和7878，覆盖旧附录 A/F 的设备/端口；编译目标仍为ascend910b4；其他项目记忆不构成本任务配置来源。用户回传的 node93 默认设备空值错误见档案 #123；最新复跑已通过 `probe-ops` 的75项 store/merge 原语 NPU 探针，越过 #125 的依赖库加载错误；随后首个 CV 数值用例失败，见 #126；更新后的日志进入TP4/MTP模型加载，因prefix关闭时将GDN请求跨度误作FULL页对齐而失败，见 #127。新日志未附前序CV/旋转探针完整结果，不能补造通过项。再下一轮已完成torch.compile/初次profiling并获得KV预算，#127不再出现；MTP调用原生copy_with_new_block_size(128)时被外部物理页检查拒绝，见#128。编译完成不等于捕图/回放通过。
 
 ## 权威语义入口
 

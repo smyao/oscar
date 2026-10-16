@@ -1,5 +1,9 @@
 # OSCAR 优化与失败证据索引
 
+## 2026-10-16 #164：全源BF16解包头的编译语法修复
+
+用户回传node93的`install_serve.sh --variant candidate --rear-cards`在共享头213行缺少dependent-template关键字，首次与清建重试均rc2，父build-ops rc1且服务被阻断。只补`offsets.template ReinterpretCast<uint32_t>()`，没有新增运算、内存、同步或路由变化。主机Clang用真实头+声明桩复现旧诊断，修复后H16/32/64语言实例化通过；含生成、解包、缓存、路由、直启的120项主机回归通过。[证据](../reports/bf16_template_compile_fix_20261016.json)、[原始回传](../reports/target_bf16_template_compile_failure_20261016.txt)。目标CANN/NPU/图修复后仍待复验，原7/11数值失败与精度门不变，不申领性能收益。
+
 ## 2026-10-16 最新：全源 BF16 精度契约与默认路由
 
 用户已确认保留旋转/分源/合并，统一全部源的BF16矩阵输入；覆盖下文history-only研究路径默认禁用的旧决定。六路新核现在默认构建并用于生产选择，旧FP32核仅独立诊断。INT2以四级小表直接输出BF16，sink/recent/current原BF16位直传；softmax/累加/LSE/合并/逆旋转保持FP32。

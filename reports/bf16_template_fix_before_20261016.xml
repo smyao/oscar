@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="0.376" timestamp="2026-10-16T15:46:17.252369+08:00" hostname="lokiyaodeMacBook-Pro.local"><testcase classname="tests.test_bf16_unpack_cpp_syntax" name="test_real_unpack_templates_parse[fixed-source]" time="0.323"><failure message="AssertionError: &lt;stdin&gt;:255:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name&#10;          offsets.ReinterpretCast&lt;uint32_t&gt;(),0,G::indexElements);&#10;                  ^&#10;                  template &#10;  1 error generated.&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++....ReinterpretCast&lt;uint32_t&gt;(),0,G::indexElements);\n                ^\n                template \n1 error generated.\n&quot;).returncode">clangxx = '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'
+restore_missing_keyword = False
+
+    @pytest.mark.parametrize("restore_missing_keyword", [False, True],
+                             ids=["fixed-source", "old-error-negative-control"])
+    def test_real_unpack_templates_parse(clangxx, restore_missing_keyword):
+        source = HELPER.read_text()
+        if restore_missing_keyword:
+            source = source.replace("offsets.template ReinterpretCast&lt;uint32_t&gt;()",
+                                    "offsets.ReinterpretCast&lt;uint32_t&gt;()")
+        assert source.count('#include "oscar_common.h"') == 1
+        source = source.replace('#include "oscar_common.h"', DECLARATIONS)
+        source = source.replace("#pragma once", "")
+        # Taking each specialization's address instantiates its complete body.
+        for rows in (16, 32, 64):
+            for name in ("Unpack", "InitIndices"):
+                source += (f"\nauto instantiate_{name}_{rows} = "
+                           f"&amp;oscar_ascend_striped_bf16::{name}&lt;256,{rows}&gt;;\n")
+        result = subprocess.run(
+            [clangxx, "-std=c++17", "-fsyntax-only", "-x", "c++", "-"],
+            input=source, capture_output=True, text=True, timeout=30)
+        if restore_missing_keyword:
+            assert result.returncode != 0, "old target error was not reproduced"
+            assert "use 'template' keyword" in result.stderr, result.stderr
+            assert "'ReinterpretCast'" in result.stderr, result.stderr
+        else:
+&gt;           assert result.returncode == 0, result.stderr
+E           AssertionError: &lt;stdin&gt;:255:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+E                     offsets.ReinterpretCast&lt;uint32_t&gt;(),0,G::indexElements);
+E                             ^
+E                             template 
+E             1 error generated.
+E             
+E           assert 1 == 0
+E            +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++....ReinterpretCast&lt;uint32_t&gt;(),0,G::indexElements);\n                ^\n                template \n1 error generated.\n").returncode
+
+tests/test_bf16_unpack_cpp_syntax.py:100: AssertionError</failure></testcase><testcase classname="tests.test_bf16_unpack_cpp_syntax" name="test_real_unpack_templates_parse[old-error-negative-control]" time="0.022" /></testsuite></testsuites>

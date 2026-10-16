@@ -1,0 +1,534 @@
+root@node93:/workspace/oscar/oscar-new# bash scripts/install_serve.sh --variant candidate --rear-cards
+[oscar] install → build → rotations → serve (no tests, no probes); logs=/workspace/oscar/oscar-new/logs/20261016T072910.549948Z
+[oscar] SERVE_MODE variant=candidate C4=on Q1=on FAST_UNPACK=on STRIPED=on placement=rear config=/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/effective-target.json
+[oscar] devices=4,5,6,7 port=7878
+[oscar] PERF_RUNTIME_CONFIG {"attention_compute_dtype":"bfloat16","attention_sources":"history/sink/recent/current","devices":[4,5,6,7],"max_num_batched_tokens":16384,"optimizations":{"bf16_history":true,"c4_member_pipeline":true,"compact_later_mtp":true,"current_only":true,"decode_bundle":true,"fast_unpack":true,"first_mtp_current_fia":true,"history_cluster4":true,"later_mtp_q1":true,"mdl_decode":true,"mixed_cv":true,"mixed_decode_split":true,"quantization_bundle":true,"striped_cache":true,"whole_prefill":false},"port":7878,"prefix_caching":false,"scheduler_cls":null,"token_budget_source":"explicit","variant":"candidate"}
+START phase=build-dependencies cwd=/workspace/oscar/oscar-new command=["/usr/local/python3.12.13/bin/python3", "-m", "pip", "install", "setuptools>=69", "wheel", "pybind11>=3", "cmake>=3.26", "ninja", "pytest"]
+Looking in indexes: https://mirrors.tools.huawei.com/pypi/simple
+Requirement already satisfied: setuptools>=69 in /usr/local/python3.12.13/lib/python3.12/site-packages (80.10.2)
+Requirement already satisfied: wheel in /usr/local/python3.12.13/lib/python3.12/site-packages (0.48.0)
+Requirement already satisfied: pybind11>=3 in /usr/local/python3.12.13/lib/python3.12/site-packages (3.1.0)
+Requirement already satisfied: cmake>=3.26 in /usr/local/python3.12.13/lib/python3.12/site-packages (4.4.2)
+Requirement already satisfied: ninja in /usr/local/python3.12.13/lib/python3.12/site-packages (1.13.0)
+Requirement already satisfied: pytest in /usr/local/python3.12.13/lib/python3.12/site-packages (8.3.2)
+Requirement already satisfied: packaging>=24.0 in /usr/local/python3.12.13/lib/python3.12/site-packages (from wheel) (26.3)
+Requirement already satisfied: iniconfig in /usr/local/python3.12.13/lib/python3.12/site-packages (from pytest) (2.3.0)
+Requirement already satisfied: pluggy<2,>=1.5 in /usr/local/python3.12.13/lib/python3.12/site-packages (from pytest) (1.6.0)
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+RESULT {"phase": "build-dependencies", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "pip", "install", "setuptools>=69", "wheel", "pybind11>=3", "cmake>=3.26", "ninja", "pytest"], "returncode": 0, "elapsed_seconds": 1.503606, "timed_out": false, "interrupted": false, "log": "/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build-dependencies.log", "cleanup_complete": true}
+[oscar] PASSED phase=build-dependencies rc=0 log=/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build-dependencies.log
+START phase=install-plugin cwd=/workspace/oscar/oscar-new command=["/usr/local/python3.12.13/bin/python3", "-m", "pip", "install", "--no-deps", "--no-build-isolation", "-e", "/workspace/oscar/oscar-new"]
+Looking in indexes: https://mirrors.tools.huawei.com/pypi/simple
+Obtaining file:///workspace/oscar/oscar-new
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: oscar-ascend-external
+  Building editable for oscar-ascend-external (pyproject.toml): started
+  Building editable for oscar-ascend-external (pyproject.toml): finished with status 'done'
+  Created wheel for oscar-ascend-external: filename=oscar_ascend_external-0.1.0-0.editable-py3-none-any.whl size=3331 sha256=53b3dec3eaa0dbe04777f72125d28bb16fc82b61dbfb7069db7fa037b93d4063
+  Stored in directory: /tmp/pip-ephem-wheel-cache-8nyc6h7d/wheels/b9/f2/c8/7f71bf771224af750b7d388853033a4970cb89ddb0a634b057
+Successfully built oscar-ascend-external
+Installing collected packages: oscar-ascend-external
+  Attempting uninstall: oscar-ascend-external
+    Found existing installation: oscar-ascend-external 0.1.0
+    Uninstalling oscar-ascend-external-0.1.0:
+      Successfully uninstalled oscar-ascend-external-0.1.0
+Successfully installed oscar-ascend-external-0.1.0
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+RESULT {"phase": "install-plugin", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "pip", "install", "--no-deps", "--no-build-isolation", "-e", "/workspace/oscar/oscar-new"], "returncode": 0, "elapsed_seconds": 4.805219, "timed_out": false, "interrupted": false, "log": "/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/install-plugin.log", "cleanup_complete": true}
+[oscar] PASSED phase=install-plugin rc=0 log=/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/install-plugin.log
+START phase=build-ops cwd=/workspace/oscar/oscar-new command=["/usr/local/python3.12.13/bin/python3", "-m", "tools.build_ops", "--soc", "ascend910b4", "--log-dir", "/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build"]
+START phase=configure-1 cwd=/workspace/oscar/oscar-new command=["cmake", "-S", "/workspace/oscar/oscar-new/csrc", "-B", "/workspace/oscar/oscar-new/build/ascendc", "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0", "-DSOC_VERSION=ascend910b4", "-DASCEND_COMPUTE_UNIT=ascend910b4", "-DTORCH_NPU_PATH=/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu", "-DOSCAR_BUILD_SIGNATURE=c454e48b702f3f6972b87cc77954ba92ad3ea058921d8dac72948e9bf3a943f7", "-DOSCAR_BUILD_BF16_HISTORY=ON", "-DPython3_EXECUTABLE=/usr/local/python3.12.13/bin/python3", "-DCMAKE_BUILD_TYPE=Release"]
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Python3: /usr/local/python3.12.13/bin/python3 (found version "3.12.13") found components: Interpreter Development.Module
+-- Performing Test HAS_FLTO_AUTO
+-- Performing Test HAS_FLTO_AUTO - Success
+-- Found pybind11: /usr/local/python3.12.13/lib/python3.12/site-packages/pybind11/include (found version "3.1.0")
+CMake Warning at /usr/local/python3.12.13/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:22 (message):
+  static library kineto_LIBRARY-NOTFOUND not found.
+Call Stack (most recent call first):
+  /usr/local/python3.12.13/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:125 (append_torchlib_if_found)
+  CMakeLists.txt:20 (find_package)
+
+
+-- Found Torch: /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch.so
+-- Configuring done (4.1s)
+-- Generating done (0.0s)
+CMake Warning (unused-cli):
+  Manually-specified variables were not used by the project:
+
+    ASCEND_TOOLKIT_HOME
+
+
+-- Build files have been written to: /workspace/oscar/oscar-new/build/ascendc
+RESULT {"phase": "configure-1", "command": ["cmake", "-S", "/workspace/oscar/oscar-new/csrc", "-B", "/workspace/oscar/oscar-new/build/ascendc", "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0", "-DSOC_VERSION=ascend910b4", "-DASCEND_COMPUTE_UNIT=ascend910b4", "-DTORCH_NPU_PATH=/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu", "-DOSCAR_BUILD_SIGNATURE=c454e48b702f3f6972b87cc77954ba92ad3ea058921d8dac72948e9bf3a943f7", "-DOSCAR_BUILD_BF16_HISTORY=ON", "-DPython3_EXECUTABLE=/usr/local/python3.12.13/bin/python3", "-DCMAKE_BUILD_TYPE=Release"], "returncode": 0, "elapsed_seconds": 4.506494, "timed_out": false, "interrupted": false, "log": "/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build/configure-1.log", "cleanup_complete": true}
+[oscar] PASSED phase=configure-1 rc=0 log=/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build/configure-1.log
+START phase=compile-1 cwd=/workspace/oscar/oscar-new command=["cmake", "--build", "/workspace/oscar/oscar-new/build/ascendc", "--parallel", "8"]
+[  1%] Creating directories for 'oscar_ascend_kernels_precompile'
+[  3%] No download step for 'oscar_ascend_kernels_precompile'
+[  5%] No update step for 'oscar_ascend_kernels_precompile'
+[  7%] No patch step for 'oscar_ascend_kernels_precompile'
+[  9%] Performing configure step for 'oscar_ascend_kernels_precompile'
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.6s)
+-- Generating done (0.0s)
+CMake Warning (unused-cli):
+  Manually-specified variables were not used by the project:
+
+    DYNAMIC_MODE
+    INCLUDE_DIR
+
+
+-- Build files have been written to: /workspace/oscar/oscar-new/build/ascendc/oscar_ascend_kernels_precompile-prefix/src/oscar_ascend_kernels_precompile-build
+[ 11%] Performing build step for 'oscar_ascend_kernels_precompile'
+[  4%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp.o
+[  4%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp.o
+[  6%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_cluster16.cpp.o
+[ 11%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/merge_lse.cpp.o
+[ 11%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range.cpp.o
+[ 18%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/store_int2.cpp.o
+[ 18%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_balanced.cpp.o
+[ 18%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store.cpp.o
+[ 20%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_vector_init.cpp.o
+[ 23%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv.cpp.o
+[ 25%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_q1.cpp.o
+[ 27%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_profile.cpp.o
+[ 30%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_cluster.cpp.o
+[ 32%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast.cpp.o
+[ 34%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_q1.cpp.o
+[ 37%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_cluster4.cpp.o
+[ 39%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_balanced.cpp.o
+[ 41%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_cluster16.cpp.o
+[ 44%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped.cpp.o
+[ 48%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_cluster4.cpp.o
+[ 48%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_balanced.cpp.o
+[ 51%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_cluster16.cpp.o
+[ 53%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_decode.cpp.o
+[ 55%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_decode_simd.cpp.o
+[ 58%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_decode_bundle.cpp.o
+[ 60%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_mdl_decode.cpp.o
+[ 62%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range.cpp.o
+[ 65%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range_balanced.cpp.o
+[ 69%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range_cluster4.cpp.o
+[ 69%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range_cluster16.cpp.o
+[ 72%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_member_pipeline_cluster4.cpp.o
+[ 74%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store_striped.cpp.o
+[ 76%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_decode.cpp.o
+[ 79%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window.cpp.o
+[ 81%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_balanced.cpp.o
+[ 83%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_cluster4.cpp.o
+[ 86%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_cluster16.cpp.o
+[ 90%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_member_pipeline_cluster4.cpp.o
+[ 90%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store_request_packed.cpp.o
+[ 93%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store_request_window.cpp.o
+[ 95%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_tasks.cpp.o
+[100%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/status_guard.cpp.o
+[100%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/current_only.cpp.o
+[100%] Built target precompile_obj
+[100%] Built target check_src_template
+[ 13%] No install step for 'oscar_ascend_kernels_precompile'
+[ 15%] Completed 'oscar_ascend_kernels_precompile'
+[ 15%] Built target oscar_ascend_kernels_precompile
+[ 17%] Creating directories for 'oscar_ascend_kernels_preprocess'
+[ 19%] No download step for 'oscar_ascend_kernels_preprocess'
+[ 21%] No update step for 'oscar_ascend_kernels_preprocess'
+[ 23%] No patch step for 'oscar_ascend_kernels_preprocess'
+[ 25%] Performing configure step for 'oscar_ascend_kernels_preprocess'
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.6s)
+-- Generating done (0.1s)
+-- Build files have been written to: /workspace/oscar/oscar-new/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build
+[ 26%] Performing build step for 'oscar_ascend_kernels_preprocess'
+[  1%] Building CXX object CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp.o
+[  4%] Building CXX object CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp.o
+[  3%] Building CXX object CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp.o
+[  4%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp.o
+[  4%] Building CXX object CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp.o
+[  4%] Building CXX object CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_cluster16.cpp.o
+[  5%] Building CXX object CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_cluster16.cpp.o
+[  6%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp.o
+[  7%] Building CXX object CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range.cpp.o
+[  7%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_cluster16.cpp.o
+[  8%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range.cpp.o
+[  9%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_balanced.cpp.o
+[ 10%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/store_int2.cpp.o
+[ 11%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/merge_lse.cpp.o
+[ 11%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store.cpp.o
+[ 12%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_vector_init.cpp.o
+In file included from /workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp:48:
+/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h:213:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+In file included from /workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp:207:
+/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h:213:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+In file included from In file included from /workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_cluster16.cpp::48214:
+:
+/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h::213213::1717::  error: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template nameuse 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+[ 13%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv.cpp.o
+In file included from /workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_cluster16.cpp:214:
+/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h:213:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+In file included from /workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp:207:
+/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h:213:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+[ 14%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_q1.cpp.o
+1 error generated.
+11 error error generated generated.
+.
+gmake[5]: *** [CMakeFiles/aiv_obj.dir/build.make:79: CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp.o] Error 1
+gmake[5]: *** Waiting for unfinished jobs....
+gmake[5]: *** [CMakeFiles/aiv_obj.dir/build.make:93: CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp.o] Error 1
+gmake[5]: *** [CMakeFiles/aiv_obj.dir/build.make:107: CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_cluster16.cpp.o] Error 1
+gmake[4]: *** [CMakeFiles/Makefile2:134: CMakeFiles/aiv_obj.dir/all] Error 2
+gmake[4]: *** Waiting for unfinished jobs....
+[ 14%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_profile.cpp.o
+[ 14%] Building CXX object CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_balanced.cpp.o
+[ 15%] Building CXX object CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/store_int2.cpp.o
+1 error generated.
+gmake[5]: *** [CMakeFiles/aic_obj.dir/build.make:79: CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp.o] Error 1
+gmake[5]: *** Waiting for unfinished jobs....
+[ 16%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_cluster.cpp.o
+In file included from /workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range.cpp:185:
+/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h:213:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+[ 17%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast.cpp.o
+[ 18%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_q1.cpp.o
+1 error generated.
+gmake[5]: *** [CMakeFiles/aic_obj.dir/build.make:107: CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_cluster16.cpp.o] Error 1
+[ 19%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_cluster4.cpp.o
+1 error generated.
+gmake[5]: *** [CMakeFiles/aic_obj.dir/build.make:93: CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp.o] Error 1
+[ 19%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_balanced.cpp.o
+[ 20%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_cluster16.cpp.o
+[ 21%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped.cpp.o
+[ 22%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_balanced.cpp.o
+1 error generated.
+[ 22%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_cluster4.cpp.o
+gmake[5]: *** [CMakeFiles/aic_obj.dir/build.make:121: CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range.cpp.o] Error 1
+[ 23%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_cluster16.cpp.o
+[ 24%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_decode.cpp.o
+[ 25%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_decode_simd.cpp.o
+[ 26%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_decode_bundle.cpp.o
+[ 26%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_mdl_decode.cpp.o
+[ 27%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range.cpp.o
+[ 28%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range_balanced.cpp.o
+[ 29%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range_cluster4.cpp.o
+[ 29%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range_cluster16.cpp.o
+[ 30%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_member_pipeline_cluster4.cpp.o
+[ 31%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store_striped.cpp.o
+[ 32%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_decode.cpp.o
+[ 33%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window.cpp.o
+[ 33%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_balanced.cpp.o
+[ 34%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_cluster4.cpp.o
+[ 35%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_cluster16.cpp.o
+[ 36%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_member_pipeline_cluster4.cpp.o
+[ 36%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store_request_packed.cpp.o
+[ 37%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store_request_window.cpp.o
+[ 38%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_tasks.cpp.o
+[ 39%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/status_guard.cpp.o
+[ 40%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/current_only.cpp.o
+[ 40%] Built target preprocess_obj
+In file included from /workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_balanced.cpp:202:
+/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h:213:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+1 error generated.
+gmake[5]: *** [CMakeFiles/aic_obj.dir/build.make:135: CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_balanced.cpp.o] Error 1
+gmake[4]: *** [CMakeFiles/Makefile2:198: CMakeFiles/aic_obj.dir/all] Error 2
+gmake[3]: *** [Makefile:91: all] Error 2
+gmake[2]: *** [CMakeFiles/oscar_ascend_kernels_preprocess.dir/build.make:86: oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-stamp/oscar_ascend_kernels_preprocess-build] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:176: CMakeFiles/oscar_ascend_kernels_preprocess.dir/all] Error 2
+gmake: *** [Makefile:136: all] Error 2
+RESULT {"phase": "compile-1", "command": ["cmake", "--build", "/workspace/oscar/oscar-new/build/ascendc", "--parallel", "8"], "returncode": 2, "elapsed_seconds": 13.312195, "timed_out": false, "interrupted": false, "log": "/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build/compile-1.log", "cleanup_complete": true}
+[oscar] FAILED phase=compile-1 rc=2 log=/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build/compile-1.log
+clean build retry once: archive G7/G8/#85; original failure retained
+START phase=configure-2 cwd=/workspace/oscar/oscar-new command=["cmake", "-S", "/workspace/oscar/oscar-new/csrc", "-B", "/workspace/oscar/oscar-new/build/ascendc", "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0", "-DSOC_VERSION=ascend910b4", "-DASCEND_COMPUTE_UNIT=ascend910b4", "-DTORCH_NPU_PATH=/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu", "-DOSCAR_BUILD_SIGNATURE=c454e48b702f3f6972b87cc77954ba92ad3ea058921d8dac72948e9bf3a943f7", "-DOSCAR_BUILD_BF16_HISTORY=ON", "-DPython3_EXECUTABLE=/usr/local/python3.12.13/bin/python3", "-DCMAKE_BUILD_TYPE=Release"]
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Python3: /usr/local/python3.12.13/bin/python3 (found version "3.12.13") found components: Interpreter Development.Module
+-- Performing Test HAS_FLTO_AUTO
+-- Performing Test HAS_FLTO_AUTO - Success
+-- Found pybind11: /usr/local/python3.12.13/lib/python3.12/site-packages/pybind11/include (found version "3.1.0")
+CMake Warning at /usr/local/python3.12.13/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:22 (message):
+  static library kineto_LIBRARY-NOTFOUND not found.
+Call Stack (most recent call first):
+  /usr/local/python3.12.13/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:125 (append_torchlib_if_found)
+  CMakeLists.txt:20 (find_package)
+
+
+-- Found Torch: /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch.so
+-- Configuring done (4.1s)
+-- Generating done (0.0s)
+CMake Warning (unused-cli):
+  Manually-specified variables were not used by the project:
+
+    ASCEND_TOOLKIT_HOME
+
+
+-- Build files have been written to: /workspace/oscar/oscar-new/build/ascendc
+RESULT {"phase": "configure-2", "command": ["cmake", "-S", "/workspace/oscar/oscar-new/csrc", "-B", "/workspace/oscar/oscar-new/build/ascendc", "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0", "-DSOC_VERSION=ascend910b4", "-DASCEND_COMPUTE_UNIT=ascend910b4", "-DTORCH_NPU_PATH=/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu", "-DOSCAR_BUILD_SIGNATURE=c454e48b702f3f6972b87cc77954ba92ad3ea058921d8dac72948e9bf3a943f7", "-DOSCAR_BUILD_BF16_HISTORY=ON", "-DPython3_EXECUTABLE=/usr/local/python3.12.13/bin/python3", "-DCMAKE_BUILD_TYPE=Release"], "returncode": 0, "elapsed_seconds": 4.505852, "timed_out": false, "interrupted": false, "log": "/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build/configure-2.log", "cleanup_complete": true}
+[oscar] PASSED phase=configure-2 rc=0 log=/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build/configure-2.log
+START phase=compile-2 cwd=/workspace/oscar/oscar-new command=["cmake", "--build", "/workspace/oscar/oscar-new/build/ascendc", "--parallel", "8"]
+[  1%] Creating directories for 'oscar_ascend_kernels_precompile'
+[  3%] No download step for 'oscar_ascend_kernels_precompile'
+[  5%] No update step for 'oscar_ascend_kernels_precompile'
+[  7%] No patch step for 'oscar_ascend_kernels_precompile'
+[  9%] Performing configure step for 'oscar_ascend_kernels_precompile'
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.6s)
+-- Generating done (0.0s)
+CMake Warning (unused-cli):
+  Manually-specified variables were not used by the project:
+
+    DYNAMIC_MODE
+    INCLUDE_DIR
+
+
+-- Build files have been written to: /workspace/oscar/oscar-new/build/ascendc/oscar_ascend_kernels_precompile-prefix/src/oscar_ascend_kernels_precompile-build
+[ 11%] Performing build step for 'oscar_ascend_kernels_precompile'
+[  2%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp.o
+[  4%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp.o
+[  9%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/merge_lse.cpp.o
+[ 11%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_cluster16.cpp.o
+[ 13%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_balanced.cpp.o
+[ 13%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store.cpp.o
+[ 16%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range.cpp.o
+[ 18%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/store_int2.cpp.o
+[ 20%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_vector_init.cpp.o
+[ 23%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv.cpp.o
+[ 25%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_q1.cpp.o
+[ 27%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_profile.cpp.o
+[ 30%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_cluster.cpp.o
+[ 32%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast.cpp.o
+[ 34%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_q1.cpp.o
+[ 37%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_cluster4.cpp.o
+[ 39%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_balanced.cpp.o
+[ 41%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_cluster16.cpp.o
+[ 44%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped.cpp.o
+[ 46%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_balanced.cpp.o
+[ 48%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_cluster4.cpp.o
+[ 51%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_cluster16.cpp.o
+[ 53%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_decode.cpp.o
+[ 55%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_decode_simd.cpp.o
+[ 58%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_decode_bundle.cpp.o
+[ 60%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_mdl_decode.cpp.o
+[ 62%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range.cpp.o
+[ 65%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range_balanced.cpp.o
+[ 67%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range_cluster4.cpp.o
+[ 69%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range_cluster16.cpp.o
+[ 72%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_member_pipeline_cluster4.cpp.o
+[ 74%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store_striped.cpp.o
+[ 76%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_decode.cpp.o
+[ 79%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window.cpp.o
+[ 81%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_balanced.cpp.o
+[ 83%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_cluster4.cpp.o
+[ 86%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_cluster16.cpp.o
+[ 88%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_member_pipeline_cluster4.cpp.o
+[ 90%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store_request_packed.cpp.o
+[ 93%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store_request_window.cpp.o
+[ 95%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_tasks.cpp.o
+[ 97%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/status_guard.cpp.o
+[100%] Building CXX object CMakeFiles/precompile_obj.dir/workspace/oscar/oscar-new/csrc/kernels/current_only.cpp.o
+[100%] Built target precompile_obj
+[100%] Built target check_src_template
+[ 13%] No install step for 'oscar_ascend_kernels_precompile'
+[ 15%] Completed 'oscar_ascend_kernels_precompile'
+[ 15%] Built target oscar_ascend_kernels_precompile
+[ 17%] Creating directories for 'oscar_ascend_kernels_preprocess'
+[ 19%] No download step for 'oscar_ascend_kernels_preprocess'
+[ 21%] No update step for 'oscar_ascend_kernels_preprocess'
+[ 23%] No patch step for 'oscar_ascend_kernels_preprocess'
+[ 25%] Performing configure step for 'oscar_ascend_kernels_preprocess'
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.6s)
+-- Generating done (0.1s)
+-- Build files have been written to: /workspace/oscar/oscar-new/build/ascendc/oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-build
+[ 26%] Performing build step for 'oscar_ascend_kernels_preprocess'
+[  2%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp.o
+[  2%] Building CXX object CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp.o
+[  2%] Building CXX object CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp.o
+[  2%] Building CXX object CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp.o
+[  4%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp.o
+[  4%] Building CXX object CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp.o
+[  5%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_cluster16.cpp.o
+[  5%] Building CXX object CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_cluster16.cpp.o
+[  6%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range.cpp.o
+[  7%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_balanced.cpp.o
+[  8%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/store_int2.cpp.o
+[  9%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/merge_lse.cpp.o
+[ 10%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store.cpp.o
+[ 10%] Building CXX object CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range.cpp.o
+[ 11%] Building CXX object CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_balanced.cpp.o
+[ 12%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_vector_init.cpp.o
+[ 13%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv.cpp.o
+[ 14%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_q1.cpp.o
+[ 14%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_profile.cpp.o
+[ 15%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_cluster.cpp.o
+In file included from /workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp:48:
+/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h:213:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+In file included from /workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_cluster16.cpp:214:
+/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h:213:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+[ 16%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast.cpp.o
+In file included from /workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp:48:
+/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h:213:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+In file included from /workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp:207:
+/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h:213:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+In file included from /workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp:207:
+/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h:213:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+[ 17%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_q1.cpp.o
+1 error generated.
+gmake[5]: *** [CMakeFiles/aiv_obj.dir/build.make:79: CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp.o] Error 1
+gmake[5]: *** Waiting for unfinished jobs....
+[ 18%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_cluster4.cpp.o
+1 error generated.
+gmake[5]: *** [CMakeFiles/aiv_obj.dir/build.make:107: CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_cluster16.cpp.o] Error 1
+[ 18%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_balanced.cpp.o
+1 error generated.
+gmake[5]: *** [CMakeFiles/aiv_obj.dir/build.make:93: CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp.o] Error 1
+[ 19%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_fast_cluster16.cpp.o
+1 error generated.
+gmake[5]: *** [CMakeFiles/aic_obj.dir/build.make:93: CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp.o] Error 1
+gmake[5]: *** Waiting for unfinished jobs....
+[ 20%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped.cpp.o
+1 error generated.
+gmake[5]: *** [CMakeFiles/aic_obj.dir/build.make:79: CMakeFiles/aic_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_mdl.cpp.o] Error 1
+gmake[4]: *** [CMakeFiles/Makefile2:198: CMakeFiles/aic_obj.dir/all] Error 2
+gmake[4]: *** Waiting for unfinished jobs....
+[ 21%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_balanced.cpp.o
+In file included from /workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range.cpp:185:
+/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h:213:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+In file included from /workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_balanced.cpp:202:
+/workspace/oscar/oscar-new/csrc/kernels/attention_striped_unpack_bf16.h:213:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name
+        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+                ^
+                template 
+[ 21%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_cluster4.cpp.o
+[ 22%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_cluster16.cpp.o
+[ 23%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_decode.cpp.o
+[ 24%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_striped_decode_simd.cpp.o
+[ 25%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_decode_bundle.cpp.o
+[ 25%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_mdl_decode.cpp.o
+1 error generated.
+gmake[5]: *** [CMakeFiles/aiv_obj.dir/build.make:135: CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range_balanced.cpp.o] Error 1
+1 error generated.
+[ 26%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range.cpp.o
+gmake[5]: *** [CMakeFiles/aiv_obj.dir/build.make:121: CMakeFiles/aiv_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_bf16_history_window_range.cpp.o] Error 1
+gmake[4]: *** [CMakeFiles/Makefile2:134: CMakeFiles/aiv_obj.dir/all] Error 2
+[ 27%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range_balanced.cpp.o
+[ 28%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range_cluster4.cpp.o
+[ 28%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_window_range_cluster16.cpp.o
+[ 29%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_cv_member_pipeline_cluster4.cpp.o
+[ 30%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store_striped.cpp.o
+[ 31%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_decode.cpp.o
+[ 32%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window.cpp.o
+[ 32%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_balanced.cpp.o
+[ 33%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_cluster4.cpp.o
+[ 34%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_cluster16.cpp.o
+[ 35%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_request_window_member_pipeline_cluster4.cpp.o
+[ 35%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store_request_packed.cpp.o
+[ 36%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/rotate_clip_store_request_window.cpp.o
+[ 37%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/attention_tasks.cpp.o
+[ 38%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/status_guard.cpp.o
+[ 39%] Building CXX object CMakeFiles/preprocess_obj.dir/workspace/oscar/oscar-new/csrc/kernels/current_only.cpp.o
+[ 39%] Built target preprocess_obj
+gmake[3]: *** [Makefile:91: all] Error 2
+gmake[2]: *** [CMakeFiles/oscar_ascend_kernels_preprocess.dir/build.make:86: oscar_ascend_kernels_preprocess-prefix/src/oscar_ascend_kernels_preprocess-stamp/oscar_ascend_kernels_preprocess-build] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:176: CMakeFiles/oscar_ascend_kernels_preprocess.dir/all] Error 2
+gmake: *** [Makefile:136: all] Error 2
+RESULT {"phase": "compile-2", "command": ["cmake", "--build", "/workspace/oscar/oscar-new/build/ascendc", "--parallel", "8"], "returncode": 2, "elapsed_seconds": 12.11252, "timed_out": false, "interrupted": false, "log": "/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build/compile-2.log", "cleanup_complete": true}
+[oscar] FAILED phase=compile-2 rc=2 log=/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build/compile-2.log
+FAILED phase=build-ops: build failed: compile-2, rc=2, log=/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build/compile-2.log
+RESULT {"phase": "build-ops", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "tools.build_ops", "--soc", "ascend910b4", "--log-dir", "/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build"], "returncode": 1, "elapsed_seconds": 35.129021, "timed_out": false, "interrupted": false, "log": "/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build-ops.log", "cleanup_complete": true}
+[oscar] FAILED phase=build-ops rc=1 log=/workspace/oscar/oscar-new/logs/20261016T072910.549948Z/build-ops.log
+[oscar] build phase failed rc=1; formal serve prohibited; logs=/workspace/oscar/oscar-new/logs/20261016T072910.549948Z

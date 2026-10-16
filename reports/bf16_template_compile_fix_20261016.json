@@ -1,0 +1,139 @@
+{
+  "schema": "oscar.bf16.template-compile-fix.v1",
+  "date": "2026-10-16",
+  "base_commit": "655ebe6a857ef6ac458437ab5d760df6f9e35f91",
+  "archive_entry": 164,
+  "target_failure": {
+    "raw_log": "reports/target_bf16_template_compile_failure_20261016.txt",
+    "bytes": 53980,
+    "sha256": "cb58e0a0477bb4d08f68cca8ee3e34cbd414a5e74d4debe982841ffd962c77fb",
+    "verbatim_bytes": true,
+    "log_dir": "/workspace/oscar/oscar-new/logs/20261016T072910.549948Z",
+    "target_commit": "not_in_log",
+    "soc": "ascend910b4",
+    "cann": "9.1.0",
+    "devices": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "port": 7878,
+    "compile_returncodes": [
+      2,
+      2
+    ],
+    "build_ops_returncode": 1,
+    "formal_serve_started": false
+  },
+  "fix": {
+    "path": "csrc/kernels/attention_striped_unpack_bf16.h",
+    "old_sha256": "115575a239ad9bfaa41025bd5a3d7d7014d6d892704a7f418df6b4d29269714a",
+    "new_sha256": "7058cd7d649e3c11668cbfc68366bb6cc987710706e26e90997891669985279b",
+    "only_noncomment_change": "offsets.ReinterpretCast<uint32_t>() -> offsets.template ReinterpretCast<uint32_t>()",
+    "code_equal_after_removing_disambiguator": true,
+    "header_in_build_source_fingerprint": true,
+    "production_configuration_changed": false,
+    "frozen_files": {
+      "csrc/kernels/attention_cv.cpp": {
+        "sha256": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+        "matches_prior_delivery": true
+      },
+      "csrc/kernels/attention_tasks.cpp": {
+        "sha256": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+        "matches_prior_delivery": true
+      },
+      "csrc/kernels/store_int2.cpp": {
+        "sha256": "5a6fa9619e399bb80bc0455c4426396d98510326bb899900b4b96c65d2b58506",
+        "matches_prior_delivery": true
+      },
+      "csrc/kernels/rotate_clip_store.cpp": {
+        "sha256": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+        "matches_prior_delivery": true
+      },
+      "csrc/kernels/merge_lse.cpp": {
+        "sha256": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+        "matches_prior_delivery": true
+      },
+      "csrc/kernels/status_guard.cpp": {
+        "sha256": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+        "matches_prior_delivery": true
+      },
+      "csrc/kernels/oscar_common.h": {
+        "sha256": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+        "matches_prior_delivery": true
+      },
+      "oscar_ascend/ops/reference.py": {
+        "sha256": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
+        "matches_prior_delivery": true
+      },
+      "configs/acceptance.json": {
+        "sha256": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+        "matches_prior_delivery": true
+      },
+      "configs/target.json": {
+        "sha256": "0d90d116cccd2ca9b99cef447f66afb8bee7bb635d794afc72f6e937112ebdc0",
+        "matches_prior_delivery": true
+      },
+      "csrc/kernels/rotate_clip_store_striped.cpp": {
+        "sha256": "72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430",
+        "matches_prior_delivery": true
+      }
+    },
+    "generated_sources_unchanged": {
+      "csrc/kernels/attention_bf16_history_mdl.cpp": true,
+      "csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp": true,
+      "csrc/kernels/attention_bf16_history_window_range_cluster16.cpp": true,
+      "csrc/kernels/attention_bf16_history_window_range.cpp": true,
+      "csrc/kernels/attention_bf16_history_window_range_balanced.cpp": true
+    }
+  },
+  "host_validation": {
+    "compiler": "Apple clang version 14.0.0 (clang-1400.0.29.202)",
+    "compiler_path": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++",
+    "scope": "C++17 language parsing/instantiation of the real helper with declaration-only stubs; not CANN API/backend/device evidence",
+    "instantiations": [
+      "InitIndices<256,16>",
+      "Unpack<256,16>",
+      "InitIndices<256,32>",
+      "Unpack<256,32>",
+      "InitIndices<256,64>",
+      "Unpack<256,64>"
+    ],
+    "before_fix_returncode": 1,
+    "after_fix_returncode": 0,
+    "negative_control": "removing template reproduces target diagnostic",
+    "pytest": {
+      "before": {
+        "path": "reports/bf16_template_fix_before_20261016.xml",
+        "tests": 2,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "host": {
+        "path": "reports/bf16_template_fix_host_20261016.xml",
+        "tests": 120,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "generator_check_returncode": 0
+  },
+  "acceptance": {
+    "cann_build_after_fix": "not_run",
+    "official_cpu_debug": "not_run",
+    "npu": "not_run",
+    "graph_capture": "not_run",
+    "graph_replay": "not_run",
+    "service": "not_run",
+    "model_quality": "not_established",
+    "performance": "not_established",
+    "existing_bf16_cpu_screen": "unchanged: 7 of 11 cases failed, including 2 final-output failures; frozen thresholds unchanged"
+  },
+  "target_commands": [
+    "python3 -m tools.deploy --only build-ops",
+    "bash scripts/install_serve.sh --variant candidate --rear-cards"
+  ]
+}

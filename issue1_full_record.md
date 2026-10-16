@@ -28728,3 +28728,15 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修复**：外部插件在none+MTP时保留真实prefill的原mask/count，不执行该fold；在原生runner分派边界用现有CPU镜像识别warm qLen4 prompt，将该步的原生force_eager置真。原生`is_all_decode`只检查computed>0会错误匹配q4图，因此必须同时修分类与图选择。GDN conv/chunk算术、原生文件、冻结guard、INT2存储不改，MTP仍为3个speculative tokens。正常decode/dummy/capture与APC开启路径保持原选择，无异常捕获回退。
 
 **验证**：`test_gdn_folded_initial_state.py`复现旧错误并验证新状态提交；`test_prefill_state_contract_hooks.py`执行真实native dispatcher/fold AST，旧FULL→修复NONE、下一轮decode恢复FULL、APC路径不变、位置/关键字参数、轻量可逆插件注册均通过；相关关键套件合计133 passed。两固定一键入口均经同一插件安装。以上是主机/native源码契约证据，不冒充NPU整轮已完成。
+
+## [164] 真机条目（2026-10-16 用户回传）· 全源BF16共享解包头缺少dependent-template关键字导致构建失败
+
+**原文**：`reports/target_bf16_template_compile_failure_20261016.txt`，完整按附件字节保留（含CRLF），SHA256及字节数见`reports/bf16_template_compile_fix_20261016.json`。node93执行`bash scripts/install_serve.sh --variant candidate --rear-cards`，物理设备4,5,6,7、端口7878；日志目录`/workspace/oscar/oscar-new/logs/20261016T072910.549948Z`。Python3.12.13、CANN9.1.0、SOC ascend910b4；目标日志未提供git提交，不伪称核实了目标HEAD。
+
+**真实失败**：配置与precompile成功，随后AIC/AIV编译报`attention_striped_unpack_bf16.h:213:17: error: use 'template' keyword to treat 'ReinterpretCast' as a dependent template name`。五份BF16派生源共用此头，错误重复出现；compile-1与清建后的compile-2都rc2，build-ops最终rc1并打印`formal serve prohibited`。模型服务与NPU执行尚未开始；这不是运行时数值或设备异常证据。
+
+**根因与修复**：`auto offsets=indexScratchBuf.Get<int32_t>()[G::indexElements]`的推导表达式依赖模板参数，调用其成员模板时需显式消歧。仅把`offsets.ReinterpretCast<uint32_t>()`改为`offsets.template ReinterpretCast<uint32_t>()`。该操作仍是int32字节索引到uint32视图的重解释，既不是反量化也不是BF16数值转换。四级表、Gather地址、BF16位、buffer/fence、guard、数学和生产选择均未改；构建源指纹覆盖此头，正常入口自动失效旧产物并重编译。
+
+**本地回归与边界**：母版本655ebe6；亲读G4/#81–83及D.4完整原始打点后修改。新增测试以真实整份头文件+仅供语言检查的声明桩运行Clang C++17，并实例化H16/32/64。先对未修源码复现同诊断，修复后通过；删掉关键字的负对照仍必须失败。相关生成/解包/缓存/路由/直启合计120项主机测试通过，五源生成反向恒等检查通过，冻结文件不变。此桩不验证AscendC重载、SDK后端、官方CPU-debug、异步执行或图；修复后CANN/NPU/图/服务待复验。既有BF16数值集7/11失败（含2例最终输出失败）、精度阈值与性能资格保持原状，不要求重跑AISBench。
+
+**复验命令**：同步修复后，`python3 -m tools.deploy --only build-ops`可只检查完整CANN构建；`bash scripts/install_serve.sh --variant candidate --rear-cards`仍按默认BF16候选编译并启动，不运行probe、不构成数值/质量/性能验收。任一构建失败仍停止，不允许复用未完成产物。

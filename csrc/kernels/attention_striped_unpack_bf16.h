@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Archive G4/#13-22/#126/#145/#148/#151/#154/#155/#157; startup section0
+// Archive G4/#13-22/#81-83/#126/#145/#148/#151/#154/#155/#157/#164; startup section0
 // and the complete D.4 original timing log were reread for this helper.
 // D.4 four questions: (1) bounded INT2 reconstruction inside fused history
 // attention; (2) prior whole-history restoration cost6499.8-6655.1ms/card;
@@ -210,7 +210,7 @@ __aicore__ inline void Unpack(bool value,int32_t liveKvRows,int32_t& error,
       Adds(offsets[row*D],offsets[row*D],static_cast<int32_t>(2*(begin+row)),D);
     PipeBarrier<PIPE_V>();
     Gather(values.ReinterpretCast<half>()[begin*D],tableBf16.ReinterpretCast<half>(),
-        offsets.ReinterpretCast<uint32_t>(),0,G::indexElements);
+        offsets.template ReinterpretCast<uint32_t>(),0,G::indexElements);
     // Gather must finish reading offsets/table before the next chunk, and
     // before the caller reuses indexScratch as the Q/P Cast publisher.
     PipeBarrier<PIPE_V>();

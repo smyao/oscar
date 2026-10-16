@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-10-16 #164 编译修复（母版本 `655ebe6`）：node93在BF16解包头的dependent-template语法处两次编译失败，正式服务未启动。本次仅补`template`关键字；真实头文件的主机Clang语言回归先复现旧错误，修复后通过H16/32/64实例化，连同生成/解包/缓存/路由/直启共120项主机测试通过。见[本次回执](../reports/bf16_template_compile_fix_20261016.json)。CANN修复后构建、NPU及图仍待目标复验；既有BF16数值7/11失败结论不变，未提升任何设备/质量/性能状态。
+
 本表保留启动文档稳定ID。`passed`仅限该项声明范围；本项目整体未完成。CPU测试、Python wheel、CANN编译、设备完成、图捕获、图回放、性能分别列出。历史记录来自 `codex/oscar-ascend`，2026-10-16 本轮母版本为 `07a70d8`、工作分支为 `oscar-new-3`；授权远端为用户指定GitCode仓库，推送状态以最终Git提交/远端校验为准。
 
 2026-10-16 全源 BF16 更新：按最新用户确认的精度契约，history/sink/recent/current 全部使用 BF16 QK/PV 输入；历史直接查表解包到 BF16，默认构建/服务启用，旧 FP32 生产路由退出。见[改造方案](bf16_attention_alignment_20261016.md)与[交付回执](../reports/bf16_alignment_delivery_20261016.json)。直接解码 CPU 检查通过，但完整数值集仍 7/11 失败（旧 FP32 全过），其中2例最终输出失败；冻结门不变、带probe入口失败仍停止。CANN/官方CPU-debug/NPU/图/服务/模型质量和性能仍未验收。42个稳定checkpoint及既有设备证据保留，未提升C04/E01/E06状态。
@@ -19,7 +21,7 @@
 | [x] B04 | passed | 完成算子清单、AscendC 融合划分、Decode Stage1 伪代码和逐阶段读写流程。 | 七个AscendC符号完整源码、ABI、Cube/Vector/同步/UB与GM预算；docs/operator_inventory.md、cv_implementation.md、rotation_pipeline.md。 |
 | [ ] B05 | blocked | 给出 decode 计算量、HBM 流量、MTP 跨 query 复用和 Host 调度预算。 | H18总历史读取亚线性与精确dense attention存在数学冲突，已提出澄清。 |
 | [ ] B06 | in_progress | 固定功能、精度、性能测试方法和验收门槛，设计一键脚本及错误清理流程。 | PR容差未改，部署/故障处理/测量与profiler工具已实现；模型级质量门槛仍待实测前定义。 |
-| [ ] C01 | in_progress | 独立插件/算子工程可安装、可编译、可加载，原生源码未修改，安装脚本不使用 `cp`。 | Python包及CANN9.1/910B4交叉编译/链接通过；独立direct-launch库采用源签名SONAME，非custom OPP vendor。node93后续构建及75项store/merge原语NPU执行通过，确认已越过#125加载故障；后续已完成TP4/MTP编译及KV预算，后续已通过短请求，长请求无进展（#129）。 |
+| [ ] C01 | in_progress | 独立插件/算子工程可安装、可编译、可加载，原生源码未修改，安装脚本不使用 `cp`。 | Python包及旧版CANN9.1/910B4交叉编译/链接通过；独立direct-launch库采用源签名SONAME，非custom OPP vendor。node93后续旧版构建及75项store/merge原语NPU执行通过，确认已越过#125加载故障；后续已完成TP4/MTP编译及KV预算并通过短请求（#129）。当前BF16版于#164编译失败，主机语法修复通过，目标CANN重编译/加载尚未复验。 |
 | [ ] C02 | in_progress | 版本能力 probe、延迟注册和幂等 Hook 通过 CLI、API server、各 worker 初始化验证。 | 轻量可撤销hook、factory、binding、真实native类/方法契约通过；实际TP4 worker已走到缓存分配后的MTP metadata初始化；#128修复显式虚拟块副本，后续启动待真机确认。 |
 | [ ] C03 | in_progress | 实现并验证 INT2 编码、旋转/裁剪/量化、KV store 与 Recent→History 增量迁移。 | AscendC rotate/clip/quant/pack/raw snapshot已实现，官方CPU-debug通过；node93的store原语及非法值/边界NPU用例通过，融合旋转/裁剪路径仍未验收。 |
 | [ ] C04 | in_progress | 实现真实 fused INT2 CV Decode Stage1（CV=Cube/Vector，见 H07 注），并完成必要的分块/分段输出合并。 | 真正Cube QK/PV/逆旋转与Vector SIMD解包/softmax已编译、CPU-debug通过；node93首个CV用例D64/Q1/context17输出超差（#126）。已定位并修订query有效行→padding的MTE3→V同步缺口，目标复验/性能未完成，H18冲突保留。 |

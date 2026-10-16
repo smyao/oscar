@@ -32,9 +32,9 @@ def test_real_impl_native_later_batches_reuse_poisoned_flat_workspace(monkeypatc
          "emit_once": lambda *a, **k: None, "emit_throttled": lambda *a, **k: None,
          "run_status_guard": lambda ops, site, parts, **k: ops.status_guard(*[x for _, x in parts])},
         monkeypatch, methods=[("OscarAttentionImpl", "forward")]).forward
-    cap, h, d = 512, 6, 64
+    cap, h, d = 512, 6, 256
     w = object.__new__(GraphWorkspace)
-    w.geometry = WorkspaceGeometry(cap, h, 1, d, cube_cores=20, history_cluster_size=16)
+    w.geometry = WorkspaceGeometry(cap, h, 1, d, cube_cores=20, history_cluster_size=16, c4_member_pipeline=True, bf16_history=True)
     for name, shape, dtype in (
         ("query_input", (cap,h,d), torch.bfloat16), ("key_input", (cap,1,d), torch.bfloat16),
         ("value_input", (cap,1,d), torch.bfloat16), ("query_rot", (cap,h,d), torch.float32),
@@ -64,7 +64,7 @@ def test_real_impl_native_later_batches_reuse_poisoned_flat_workspace(monkeypatc
         def rotate_out(self, q, rotation, out, status, hadamard, slots):
             out.zero_(); out[slots >= 0] = q[slots >= 0].float(); status.zero_()
 
-        def attention_cv_mdl_decode_q1_out(self, q, qr, k, v, rotation, raw, table,
+        def attention_bf16_history_mdl_q1_out(self, q, qr, k, v, rotation, raw, table,
                 wk, wv, tags, tasks, partial, lse, status, workspace, *attrs):
             partial.zero_(); lse.fill_(-torch.inf); status.zero_()
             for row in range(current["lens"].numel()):
@@ -104,6 +104,8 @@ def test_real_impl_native_later_batches_reuse_poisoned_flat_workspace(monkeypatc
         snapshots=SimpleNamespace(sink_tokens=64,recent_tokens=256,ring_tokens=259,speculative_tokens=3))
     config = dict(experimental_striped_cache=True,experimental_mixed_cv=True,
         experimental_fast_unpack=True,experimental_decode_bundle=True,experimental_mdl_decode=True)
+    from oscar_ascend.bf16_history_policy import production_attention_config
+    config = production_attention_config(config)
     impl = SimpleNamespace(provider=SimpleNamespace(config=config,ops=Ops(),layer_state=lambda _:state),
         num_heads=h,num_kv_heads=1,head_size=d,scale=d**-0.5)
     generator = torch.Generator().manual_seed(162)

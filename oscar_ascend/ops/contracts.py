@@ -10,7 +10,7 @@ cannot use these components until the complete capability/acceptance gate passes
 from dataclasses import dataclass
 
 ABI_VERSION = 1
-SOURCE_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "rotate_out", "rotate_vector_init_out",
+LEGACY_SOURCE_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "rotate_out", "rotate_vector_init_out",
     "rotate_clip_store_out", "prepare_attention_tasks_out", "attention_cv_out",
     "attention_cv_cluster4_out", "attention_cv_q1_out", "attention_cv_profile_out",
     "attention_cv_fast_out", "attention_cv_fast_q1_out", "attention_cv_fast_cluster4_out",
@@ -33,17 +33,22 @@ BF16_HISTORY_CAPABILITIES = frozenset({
 })
 
 
-def source_capabilities(*, bf16_history=False):
+SOURCE_CAPABILITIES = LEGACY_SOURCE_CAPABILITIES | BF16_HISTORY_CAPABILITIES
+
+
+def source_capabilities(*, bf16_history=True):
     """Expected compiled symbols, never a numerical-qualification receipt."""
     if type(bf16_history) is not bool:
         raise ValueError("bf16_history build option must be an explicit boolean")
-    return SOURCE_CAPABILITIES | (BF16_HISTORY_CAPABILITIES if bf16_history else frozenset())
+    if not bf16_history:
+        raise ValueError("BF16 attention is required; FP32-only production builds are retired")
+    return SOURCE_CAPABILITIES
 
 
 # Exact callable symbols, not names of abstract components. Compilation,
 # CPU simulation, NPU execution and service acceptance remain separate gates.
 PRODUCTION_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "rotate_out",
-    "rotate_clip_store_out", "prepare_attention_tasks_out", "attention_cv_out", "status_guard"})
+    "rotate_clip_store_out", "prepare_attention_tasks_out", "status_guard"}) | BF16_HISTORY_CAPABILITIES
 SUPPORTED_HEAD_DIMS = (64, 128, 256)
 MAX_SPLITS = 128
 DEVICE_STATUS = {

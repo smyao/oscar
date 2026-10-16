@@ -58,16 +58,18 @@ def test_all_capability_surfaces_match_and_old_modes_do_not_require_new_ops():
     assert _runtime_caps()==EXPECTED
     assert EXPECTED<=SOURCE_CAPABILITIES
     assert {"attention_cv_member_pipeline_cluster4_out",PIPELINE_REQUEST_OP}<=SOURCE_CAPABILITIES
-    assert PRODUCTION_CAPABILITIES==OLD_REQUIRED
+    from oscar_ascend.ops.contracts import BF16_HISTORY_CAPABILITIES
+    assert PRODUCTION_CAPABILITIES==(OLD_REQUIRED-{"attention_cv_out"})|BF16_HISTORY_CAPABILITIES
     assert not EXPECTED.intersection(PRODUCTION_CAPABILITIES)
     text=(ROOT/"csrc/torch_bindings.cpp").read_text()
     body=re.search(r'std::vector<std::string>\{(.*?)\};\}\);',text,re.S)[1]
-    body=re.sub(r"#ifdef OSCAR_BUILD_BF16_HISTORY.*?#endif", "", body, flags=re.S)
     cpp=re.findall(r'"([a-z0-9_]+)"',body)
     assert len(cpp)==len(set(cpp)) and set(cpp)==SOURCE_CAPABILITIES
     text=(ROOT/"csrc/CMakeLists.txt").read_text()
     body=re.search(r'\\"source_capabilities\\": \[(.*?)\]',text,re.S)[1]
     cmake=re.findall(r'\\"([a-z0-9_]+)\\"',body)
+    extra=re.search(r'set\(OSCAR_BF16_CAPABILITIES_JSON ", (.*?)\)',text,re.S)[1]
+    cmake+=re.findall(r'\\"([a-z0-9_]+)\\"',extra)
     assert len(cmake)==len(set(cmake)) and set(cmake)==SOURCE_CAPABILITIES
     text=(ROOT/"oscar_ascend/ops/meta.py").read_text()
     body=re.search(r'for optional in \((.*?)\):',text,re.S)[1]

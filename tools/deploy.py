@@ -1,5 +1,5 @@
 # 档案 #27/#51/#52/#70–73/#94–95/#125–126/#131–140：单入口、配对性能门、真实退出码和精简终端证据。
-# 档案 #148/#153：拒绝尚无合格生产实现的 BF16 history 配置，不能安装后静默走旧核。
+# 档案 #148/#153/#154：默认BF16生产路径严格校验；探针失败不得启动服务。
 """Install, build, probe and serve using the target's existing Python environment."""
 from __future__ import annotations
 import argparse
@@ -7,12 +7,14 @@ from contextlib import contextmanager
 from dataclasses import asdict
 from datetime import datetime, timezone
 import json
+import hashlib
 import os
 from pathlib import Path
 import sys
 from oscar_ascend.bf16_history_policy import require_bf16_history_production
 from .phase import atomic_json, run_phase, terminal_line
 from .target_cli import target_env
+from .serving_variants import variant_config
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -28,6 +30,8 @@ def plan(config_path: Path, log_dir: Path) -> list[tuple[str, list[str]]]:
                        "--log-dir", str(log_dir / "build")]),
         ("probe-ops", [python, "-m", "tools.probe_ops", "--output", str(log_dir / "operators.json")]),
         ("prepare-rotations", [python, "-m", "tools.prepare_rotations", "--config", cfg]),
+        ("bf16-attention-gate", [python, "-m", "tools.bf16_attention_gate",
+                                  "--config", cfg, "--log-dir", str(log_dir / "bf16-attention")]),
         # The paired preflight verifies this signed build and runs the real
         # CV/rotation NPU gate once, with resource release, before native (#126/#140).
         ("native-synthetic", [python, "-m", "tools.paired_concurrency_probe", "--native-only", "--require-fresh-npu",
@@ -108,7 +112,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
     parser.add_argument("--plan", action="store_true", help="print commands without installing or touching an NPU")
-    parser.add_argument("--only", choices=["environment", "build-ops", "probe-ops", "probe-cv", "native-synthetic", "service-probe", "prepare-rotations", "runtime-readiness"])
+    parser.add_argument("--only", choices=["bf16-attention-gate", "environment", "build-ops", "probe-ops", "probe-cv", "native-synthetic", "service-probe", "prepare-rotations", "runtime-readiness"])
     parser.add_argument("--log-dir", type=Path)
     args = parser.parse_args()
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
@@ -120,7 +124,7 @@ def main() -> int:
             (log_dir / "paired-performance-report.json").unlink(missing_ok=True)
         print(f"[oscar] install → build → probes → serve; logs={log_dir}", flush=True)
     try:
-        config = json.loads(args.config.read_text())
+        config = variant_config(json.loads(args.config.read_text()), "candidate")
         require_bf16_history_production(config)
     except (OSError, ValueError) as exc:
         if not args.plan:
@@ -128,7 +132,14 @@ def main() -> int:
             status.update(status="failed", failed_phase="config", error=str(exc))
             atomic_json(log_dir / "status.json", status)
         raise
+    effective_path = log_dir / "effective-target.json"
+    if not args.plan:
+        atomic_json(effective_path, config)
+    status["effective_config"] = str(effective_path)
     stages = plan(args.config, log_dir)
+    for _, command in stages:
+        if "--config" in command:
+            command[command.index("--config") + 1] = str(effective_path)
     if args.only:
         stages = [x for x in stages + diagnostic_plan(log_dir) if x[0] == args.only]
         if len(stages) != 1:
@@ -137,7 +148,7 @@ def main() -> int:
                 raise RuntimeError(error)
             return _gate_failed(status, log_dir, args.only, error)
     if args.plan:
-        print(json.dumps({"stages": stages, "serve": [sys.executable, "-m", "tools.target_cli", "--config", str(args.config.resolve())],
+        print(json.dumps({"stages": stages, "serve": [sys.executable, "-m", "tools.target_cli", "--config", str(effective_path)],
                           "target_devices": config["devices"], "production_status": "requires_target_probes_and_resource_release"}, indent=2))
         return 0
     # Observation can run without hardware ownership; actual NPU phases require it.
@@ -149,7 +160,7 @@ def main() -> int:
         atomic_json(log_dir / "status.json", status)
         raise
     rc = 0
-    env["OSCAR_TARGET_CONFIG"]=str(args.config.resolve())
+    env["OSCAR_TARGET_CONFIG"]=str(effective_path)
     env["OSCAR_RUN_NPU_TESTS"]="1"
     if not args.only:
         env["OSCAR_TERMINAL_LOG_MODE"] = "compact"
@@ -157,6 +168,8 @@ def main() -> int:
     validated = set()
     try:
         for name, command in stages:
+            if name == "bf16-attention-gate":
+                (log_dir / "bf16-attention" / "status.json").unlink(missing_ok=True)
             # A repeated --log-dir must not let stale success reports satisfy
             # a new phase if its child forgets to write evidence (#136).
             if not args.only and name in {"native-synthetic", "service-probe"}:
@@ -172,6 +185,20 @@ def main() -> int:
                 status.update(status="failed", failed_phase=name)
                 rc = result.returncode
                 break
+            if name == "bf16-attention-gate":
+                try:
+                    evidence = _report(log_dir / "bf16-attention" / "status.json")
+                    gate = evidence.get("bf16_history_gate")
+                    release = evidence.get("bf16_history_resource_release")
+                    if (evidence.get("status") != "passed"
+                            or not isinstance(gate, dict) or gate.get("status") != "passed"
+                            or not isinstance(release, dict) or release.get("status") != "passed"
+                            or evidence.get("effective_config_sha256") != hashlib.sha256(effective_path.read_bytes()).hexdigest()):
+                        raise RuntimeError("fresh BF16 attention evidence or resource release is missing")
+                    validated.add("bf16-attention-gate")
+                except RuntimeError as error:
+                    rc = _gate_failed(status, log_dir, name, str(error))
+                    break
             if args.only:
                 continue
             if name == "native-synthetic":
@@ -247,7 +274,7 @@ def main() -> int:
             if args.only:
                 status["status"] = "selected_phase_passed"
             else:
-                missing = {"native-synthetic", "service-probe", "paired-performance"} - validated
+                missing = {"bf16-attention-gate", "native-synthetic", "service-probe", "paired-performance"} - validated
                 if missing:
                     rc = _gate_failed(status, log_dir, "full-service-probe",
                                       f"fresh one-click evidence missing: {', '.join(sorted(missing))}; formal serve prohibited")
@@ -259,7 +286,7 @@ def main() -> int:
         # The managed server preserves ownership and validates a real request
         # before staying in the foreground. It never starts after failed probes.
         from .service_probe import main as service_main
-        serve_argv = ["service_probe","--config",str(args.config.resolve()),"--serve",
+        serve_argv = ["service_probe","--config",str(effective_path),"--serve",
                       "--log-dir",str(log_dir/"serve"),"--output",str(log_dir/"serve.json")]
         try:
             with _temporary_process_context(env, serve_argv):

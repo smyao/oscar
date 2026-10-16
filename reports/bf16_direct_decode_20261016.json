@@ -1,0 +1,21 @@
+{
+  "contract": "all_sources_bf16_qkvp_fp32_online_merge_direct_int2_v2",
+  "status": "cpu_direct_decode_passed",
+  "returncode": 0,
+  "packed_words": 65536,
+  "packed_code_positions_checked": 524288,
+  "valid_scale_patterns": 31743,
+  "finite_zero_patterns": 63488,
+  "metadata_pairs": 634872,
+  "levels_checked": 2539488,
+  "exact_halfway_values_checked": 142980,
+  "metadata_cartesian_product_exhaustive": false,
+  "oracle": "independent FP64 exact half-domain arithmetic, explicit FP32 then integer BF16 RNE",
+  "negative_zero_code0_bits": 0,
+  "device_completion": "not_run",
+  "production_qualified": false,
+  "source_sha256": {
+    "tools/experiments/bf16_direct_decode.py": "6f7f64281c18d70fdf864eb46bc010ea98336ae170edf32b4b50f72c0723e2d4",
+    "oscar_ascend/ops/reference.py": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c"
+  }
+}

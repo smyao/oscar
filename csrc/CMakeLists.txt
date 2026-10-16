@@ -42,9 +42,12 @@ if(NOT ASCENDC_CMAKE_DIR)
   message(FATAL_ERROR "No ascendc.cmake found under ASCEND_HOME_PATH; target CANN toolkit required")
 endif()
 include("${ASCENDC_CMAKE_DIR}/ascendc.cmake")
-# Archive #148/#153: research kernels are opt-in, independently of production.
-# The known failed numerical gate cannot change the default build or serving.
-option(OSCAR_BUILD_BF16_HISTORY "Build unqualified BF16 history research operators" OFF)
+# Archive #148/#153/#154: default all-source BF16 does not constitute acceptance.
+# User 2026-10-16 retires the FP32 production attention route.
+option(OSCAR_BUILD_BF16_HISTORY "Build required all-source BF16 attention operators" ON)
+if(NOT OSCAR_BUILD_BF16_HISTORY)
+  message(FATAL_ERROR "BF16 attention is required; FP32-only production builds are retired")
+endif()
 set(OSCAR_BF16_KERNELS)
 set(OSCAR_BF16_BINDINGS)
 set(OSCAR_BF16_CAPABILITIES_JSON "")

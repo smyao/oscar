@@ -1,0 +1,99 @@
+{
+  "scope": "All-source BF16 precision contract; OSCAR rotation/sources/merge retained. Default enabled per explicit user request, not numerical acceptance.",
+  "implementation": "complete_local_source",
+  "default_production_dtype": "bfloat16",
+  "production_fp32_attention_route": "removed",
+  "old_frozen_operators": "diagnostic_only",
+  "direct_int2_decode": "four FP32 Mul-Add levels per token, once RNE to BF16, integer-indexed 16-bit gather; no full FP32 KV tile",
+  "host_validation": {
+    "latest_per_unique_test": {
+      "passed": 668,
+      "skipped": 1
+    },
+    "runs": [
+      {
+        "xml": "reports/bf16_all_sources_host_routes_20261016.xml",
+        "counts": {
+          "passed": 508,
+          "skipped": 1,
+          "failed": 19
+        }
+      },
+      {
+        "xml": "reports/bf16_all_sources_service_host_repair_20261016.xml",
+        "counts": {
+          "passed": 52
+        }
+      },
+      {
+        "xml": "reports/bf16_all_sources_deploy_receipts_20261016.xml",
+        "counts": {
+          "passed": 24
+        }
+      },
+      {
+        "xml": "reports/bf16_all_sources_host_20261016_v2.xml",
+        "counts": {
+          "passed": 96
+        }
+      },
+      {
+        "xml": "reports/bf16_all_sources_receipt_host_20261016.xml",
+        "counts": {
+          "passed": 9
+        }
+      },
+      {
+        "xml": "reports/bf16_alignment_final_kernel_probe_host_20261016.xml",
+        "counts": {
+          "passed": 119
+        }
+      }
+    ],
+    "subtests_passed": 4,
+    "scope": "host/source/CPU simulation contracts, not device execution"
+  },
+  "numerical_validation": {
+    "report": "reports/bf16_all_sources_screen_20261016_v3.json",
+    "returncode": 2,
+    "baseline_passed": 11,
+    "candidate_passed": 4,
+    "candidate_failed": 7,
+    "final_bf16_output_failed": 2,
+    "failed_cases": [
+      "identity_exact_cancellation",
+      "frontier_q2_hkv2",
+      "kv_tail_q3",
+      "kv_tail_q4",
+      "hadamard_large_values",
+      "groups_q84",
+      "groups_q168"
+    ],
+    "oracle_and_acceptance_unchanged": true
+  },
+  "direct_decode_report": "reports/bf16_direct_decode_20261016.json",
+  "source_identity_report": "reports/bf16_alignment_source_identity_20261016.json",
+  "launch_report": "reports/bf16_alignment_launch_plans_20261016.json",
+  "toolchain_report": "reports/bf16_alignment_toolchain_20261016.json",
+  "npu_probe_attempt": {
+    "report": "reports/bf16_all_sources_no_npu_20261016.json",
+    "returncode": 2,
+    "reason": "torch_npu unavailable; no CPU substitution"
+  },
+  "cann_build": "not_run_missing_toolchain",
+  "official_cpu_debug": "not_run",
+  "device_completion": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "service": "not_run",
+  "model_quality": "not_established",
+  "performance": "not_established",
+  "probe_failure_blocks_serving": true,
+  "acceptance_qualified": false,
+  "remaining_risks": [
+    "Frozen full numerical gate fails; BF16 rounding loses information in cancellation/large-value fixtures.",
+    "CANN Matmul Reset/re-Init and half-bitcast Gather require actual toolchain/device validation.",
+    "Preallocated per-core CV workspace remains 1.5x the prior FP32 arena; net device speed unmeasured."
+  ],
+  "docs": "docs/bf16_attention_alignment_20261016.md"
+}

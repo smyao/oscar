@@ -1,0 +1,171 @@
+........................................................................ [ 13%]
+........................................................................ [ 27%]
+.................................................................... [ 40%]
+.....s.................................................................. [ 53%]
+........................................................................ [ 67%]
+.............................................FFF.FFFFFFFFFFFFFFF........ [ 81%]
+........................................................................ [ 94%]
+.......................F....                                             [100%]
+=================================== FAILURES ===================================
+__ test_long_request_has_wall_deadline_progress_and_reaped_client[hang_long] ___
+tests/test_service_workflow.py:210: in test_long_request_has_wall_deadline_progress_and_reaped_client
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+_ test_long_request_has_wall_deadline_progress_and_reaped_client[trickle_long] _
+tests/test_service_workflow.py:210: in test_long_request_has_wall_deadline_progress_and_reaped_client
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+___________ test_healthy_run_records_streaming_synthetic_mixed_probe ___________
+tests/test_service_workflow.py:233: in test_healthy_run_records_streaming_synthetic_mixed_probe
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+______________ test_synthetic_mixed_timeout_blocks_formal_service ______________
+tests/test_service_workflow.py:261: in test_synthetic_mixed_timeout_blocks_formal_service
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+_____ test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up ______
+tests/test_service_workflow.py:283: in test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+___ test_regressed_synthetic_runs_one_separate_same_server_device_diagnostic ___
+tests/test_service_workflow.py:309: in test_regressed_synthetic_runs_one_separate_same_server_device_diagnostic
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+_____________ test_nonregressed_synthetic_does_not_arm_diagnostic ______________
+tests/test_service_workflow.py:331: in test_nonregressed_synthetic_does_not_arm_diagnostic
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+_______ test_synthetic_refuses_inherited_debug_sync_before_service_start _______
+tests/test_service_workflow.py:344: in test_synthetic_refuses_inherited_debug_sync_before_service_start
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+__ test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch ___
+tests/test_service_workflow.py:354: in test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+_ test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_trace-mandatory] _
+tests/test_service_workflow.py:367: in test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+_ test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[wrong_usage-exactly 128] _
+tests/test_service_workflow.py:367: in test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+_ test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_mtp-mandatory] _
+tests/test_service_workflow.py:367: in test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+_____ test_startup_failure_records_exit_and_never_kills_an_unrelated_group _____
+tests/test_service_workflow.py:375: in test_startup_failure_records_exit_and_never_kills_an_unrelated_group
+    _, path = configured(tmp_path)
+              ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+_________ test_hung_startup_has_finite_deadline_and_nonempty_final_log _________
+tests/test_service_workflow.py:387: in test_hung_startup_has_finite_deadline_and_nonempty_final_log
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+____ test_interrupted_startup_still_releases_its_server_and_records_outcome ____
+tests/test_service_workflow.py:398: in test_interrupted_startup_still_releases_its_server_and_records_outcome
+    _, path = configured(tmp_path)
+              ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+_ test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint _
+tests/test_service_workflow.py:406: in test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+___ test_missing_device_selection_fails_before_any_resource_or_server_launch ___
+tests/test_service_workflow.py:414: in test_missing_device_selection_fails_before_any_resource_or_server_launch
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+_____ test_memory_not_released_turns_successful_requests_into_failed_probe _____
+tests/test_service_workflow.py:423: in test_memory_not_released_turns_successful_requests_into_failed_probe
+    config, path = configured(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^
+tests/test_service_workflow.py:48: in configured
+    sock.bind(("127.0.0.1", 0))
+E   PermissionError: [Errno 1] Operation not permitted
+_ test_forward_dispatches_qualified_first_draft_without_widening_native_current _
+oscar_ascend/integration/impl.py:90: in forward
+    bf16_history = validate_bf16_history(self.provider.config, head_dim=d,
+oscar_ascend/bf16_history_policy.py:52: in validate_bf16_history
+    raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+E   ValueError: experimental_bf16_history=false cannot select retired FP32 production attention
+
+The above exception was the direct cause of the following exception:
+tests/test_first_draft_current_only.py:197: in test_forward_dispatches_qualified_first_draft_without_widening_native_current
+    assert impl.forward(SimpleNamespace(layer_name="mtp"), q, kv, kv, cache, metadata, output) is output
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/integration/impl.py:93: in forward
+    raise OscarReadinessError(str(error)) from error
+E   oscar_ascend.integration.runtime_api.OscarReadinessError: experimental_bf16_history=false cannot select retired FP32 production attention
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_runtime.py:344: large FULL host route is needed once for C16
+FAILED tests/test_service_workflow.py::test_long_request_has_wall_deadline_progress_and_reaped_client[hang_long]
+FAILED tests/test_service_workflow.py::test_long_request_has_wall_deadline_progress_and_reaped_client[trickle_long]
+FAILED tests/test_service_workflow.py::test_healthy_run_records_streaming_synthetic_mixed_probe
+FAILED tests/test_service_workflow.py::test_synthetic_mixed_timeout_blocks_formal_service
+FAILED tests/test_service_workflow.py::test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up
+FAILED tests/test_service_workflow.py::test_regressed_synthetic_runs_one_separate_same_server_device_diagnostic
+FAILED tests/test_service_workflow.py::test_nonregressed_synthetic_does_not_arm_diagnostic
+FAILED tests/test_service_workflow.py::test_synthetic_refuses_inherited_debug_sync_before_service_start
+FAILED tests/test_service_workflow.py::test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch
+FAILED tests/test_service_workflow.py::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_trace-mandatory]
+FAILED tests/test_service_workflow.py::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[wrong_usage-exactly 128]
+FAILED tests/test_service_workflow.py::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_mtp-mandatory]
+FAILED tests/test_service_workflow.py::test_startup_failure_records_exit_and_never_kills_an_unrelated_group
+FAILED tests/test_service_workflow.py::test_hung_startup_has_finite_deadline_and_nonempty_final_log
+FAILED tests/test_service_workflow.py::test_interrupted_startup_still_releases_its_server_and_records_outcome
+FAILED tests/test_service_workflow.py::test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint
+FAILED tests/test_service_workflow.py::test_missing_device_selection_fails_before_any_resource_or_server_launch
+FAILED tests/test_service_workflow.py::test_memory_not_released_turns_successful_requests_into_failed_probe
+FAILED tests/test_first_draft_current_only.py::test_forward_dispatches_qualified_first_draft_without_widening_native_current
+19 failed, 508 passed, 1 skipped, 4 subtests passed in 5.83s

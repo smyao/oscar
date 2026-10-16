@@ -1,0 +1,88 @@
+{
+  "task_head": "07a70d8a7a23534130fc29a5b2d0f7bdd6183ca9",
+  "frozen_files": {
+    "csrc/kernels/attention_cv.cpp": {
+      "sha256": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+      "frozen_match": true
+    },
+    "csrc/kernels/attention_tasks.cpp": {
+      "sha256": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+      "unchanged_from_task_head": true
+    },
+    "csrc/kernels/store_int2.cpp": {
+      "sha256": "5a6fa9619e399bb80bc0455c4426396d98510326bb899900b4b96c65d2b58506",
+      "frozen_match": true
+    },
+    "csrc/kernels/rotate_clip_store.cpp": {
+      "sha256": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+      "frozen_match": true
+    },
+    "csrc/kernels/merge_lse.cpp": {
+      "sha256": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+      "frozen_match": true
+    },
+    "csrc/kernels/status_guard.cpp": {
+      "sha256": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+      "frozen_match": true
+    },
+    "csrc/kernels/oscar_common.h": {
+      "sha256": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+      "frozen_match": true
+    },
+    "oscar_ascend/ops/reference.py": {
+      "sha256": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
+      "unchanged_from_task_head": true
+    },
+    "configs/acceptance.json": {
+      "sha256": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+      "unchanged_from_task_head": true
+    },
+    "configs/target.json": {
+      "sha256": "0d90d116cccd2ca9b99cef447f66afb8bee7bb635d794afc72f6e937112ebdc0",
+      "unchanged_from_task_head": true
+    },
+    "csrc/kernels/rotate_clip_store_striped.cpp": {
+      "sha256": "72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430",
+      "unchanged_from_task_head": true
+    }
+  },
+  "generated": [
+    {
+      "path": "csrc/kernels/attention_bf16_history_mdl.cpp",
+      "sha256": "c2d12363a5309ca97f79e68cd507b522bd6abdb63a6dcdf02945f15d285cb3f0",
+      "inverse_identity": true,
+      "mother": "attention_cv_mdl_decode.cpp",
+      "mother_sha256": "1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f"
+    },
+    {
+      "path": "csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp",
+      "sha256": "ea4ac1bcf3fb2c9258151fe36677fcf89f3c2ee900cf58b4fd2bb7bcba9d334d",
+      "inverse_identity": true,
+      "mother": "attention_cv_member_pipeline_cluster4.cpp",
+      "mother_sha256": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc"
+    },
+    {
+      "path": "csrc/kernels/attention_bf16_history_window_range_cluster16.cpp",
+      "sha256": "08b84a0c1ee6f76b090815fc073192b8ac8a50307080680a6cdefc73e8271e5d",
+      "inverse_identity": true,
+      "mother": "attention_cv_window_range_cluster16.cpp",
+      "mother_sha256": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335"
+    },
+    {
+      "path": "csrc/kernels/attention_bf16_history_window_range.cpp",
+      "sha256": "523c6504f00a93ab4a864f352994334af041e91523a526f14f05742f7d05378e",
+      "inverse_identity": true,
+      "mother": "attention_cv_window_range.cpp",
+      "mother_sha256": "d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4"
+    },
+    {
+      "path": "csrc/kernels/attention_bf16_history_window_range_balanced.cpp",
+      "sha256": "67115c9651900008ed53caaab6a7a8b81aef88708d33298f0335fdefca2d54b1",
+      "inverse_identity": true,
+      "mother": "attention_cv_window_range_balanced.cpp",
+      "mother_sha256": "1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013"
+    }
+  ],
+  "new_helper_sha256": "115575a239ad9bfaa41025bd5a3d7d7014d6d892704a7f418df6b4d29269714a",
+  "generator_sha256": "66470f10fe1f57fb2c5c740fd8f632802b34f0ab092d19833d014a6c58cf0d4c"
+}

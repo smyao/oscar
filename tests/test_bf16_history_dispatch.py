@@ -1,7 +1,7 @@
 """Archive #126/#148/#150/#153/#157-163: research host seams, not NPU acceptance.
 
 All six selectors retain old eligibility. Public FP32 state, fixed workspace,
-source guards and production refusal remain separate from new operand math.
+source guards and explicit precision remain separate from new operand math.
 """
 from dataclasses import replace
 import hashlib
@@ -91,9 +91,13 @@ def test_research_config_reaches_actual_forward_abi(n,length,later,target):
         _bf16_history=True,_bf16_max_query=length,_mdl_target=target)
 
 
-def test_capability_inventory_separates_default_and_optional_research_builds():
+def test_default_build_and_production_require_every_bf16_reader():
     assert BF16_HISTORY_CAPABILITIES == frozenset(BF16_HISTORY_OP_MAP.values())
-    assert not BF16_HISTORY_CAPABILITIES.intersection(SOURCE_CAPABILITIES|PRODUCTION_CAPABILITIES)
+    assert BF16_HISTORY_CAPABILITIES <= SOURCE_CAPABILITIES
+    assert BF16_HISTORY_CAPABILITIES <= PRODUCTION_CAPABILITIES
+    assert "attention_cv_out" not in PRODUCTION_CAPABILITIES
+    with pytest.raises(ValueError, match="required"):
+        source_capabilities(bf16_history=False)
     assert source_capabilities() == SOURCE_CAPABILITIES
     assert source_capabilities(bf16_history=True) == SOURCE_CAPABILITIES|BF16_HISTORY_CAPABILITIES
     with pytest.raises(ValueError,match="explicit boolean"):

@@ -289,8 +289,10 @@ class AscendRuntimeProvider:
     """Production provider installed lazily by the external plugin factory."""
     def __init__(self, config=None):
         path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
-        self.config = dict(config) if config is not None else json.loads(path.read_text())
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
         try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
             require_bf16_history_production(self.config)
         except ValueError as error:
             raise OscarReadinessError(str(error)) from error
@@ -398,40 +400,14 @@ class AscendRuntimeProvider:
         if self.config.get("experimental_quantization_bundle", False):
             from .ops.loader import require_capabilities
             require_capabilities({"rotate_vector_init_out"})
-        if self.config.get("experimental_history_reuse", False):
-            from .ops.loader import require_capabilities
-            require_capabilities({"attention_cv_cluster4_out", "attention_cv_q1_out"})
-        if self.config.get("experimental_fast_unpack", False):
-            from .ops.cv_dispatch import FAST_CV_OPS
-            require_capabilities(FAST_CV_OPS)
-        if self.config.get("experimental_mixed_cv", False):
-            from .ops.cv_dispatch import MIXED_CV_OPS
-            require_capabilities(MIXED_CV_OPS)
-        if self._cache_format.startswith("striped_"):
-            from .ops.cv_dispatch import STRIPED_CV_OPS
-            require_capabilities(STRIPED_CV_OPS | {"rotate_clip_store_striped_out"})
+        # Only current production readers are mandatory. Retired FP32 readers
+        # remain compiled for independent diagnostics, never serving selection.
+        from .ops.loader import require_capabilities
+        from .ops.contracts import BF16_HISTORY_CAPABILITIES
+        required = set(BF16_HISTORY_CAPABILITIES) | {"rotate_clip_store_striped_out"}
         if self.config.get("experimental_current_only", False):
-            from .ops.loader import require_capabilities
-            require_capabilities({"copy_validate_current_out"})
-        if self.config.get("experimental_decode_bundle", False):
-            from .ops.cv_dispatch import DECODE_BUNDLE_OPS
-            require_capabilities(DECODE_BUNDLE_OPS)
-        if self.config.get("experimental_mdl_decode", False):
-            from .ops.cv_dispatch import MDL_DECODE_CV_OPS
-            require_capabilities(MDL_DECODE_CV_OPS)
-        if self.config.get("experimental_c4_member_pipeline", False):
-            from .ops.cv_dispatch import MEMBER_PIPELINE_CV_OP
-            require_capabilities({MEMBER_PIPELINE_CV_OP})
-            if self._request_windows:
-                from .integration.cache_storage_ops import REQUEST_MEMBER_PIPELINE_CV_OP
-                require_capabilities({REQUEST_MEMBER_PIPELINE_CV_OP})
-        if self._request_windows:
-            from .ops.loader import require_capabilities
-            require_capabilities(REQUEST_WINDOW_CAPABILITIES)
-        if self.config.get("experimental_bf16_history", False):
-            from .ops.contracts import BF16_HISTORY_CAPABILITIES
-            from .ops.loader import require_capabilities
-            require_capabilities(BF16_HISTORY_CAPABILITIES)
+            required.add("copy_validate_current_out")
+        require_capabilities(required)
         import torch
         if not torch.npu.is_available():
             raise OscarReadinessError("OSCAR production requires an available NPU")
@@ -440,7 +416,7 @@ class AscendRuntimeProvider:
 
     def _check_bf16_history_production(self):
         try:
-            require_bf16_history_production(self.config)
+            validate_bf16_history(self.config, production=True)
         except ValueError as error:
             raise OscarReadinessError(str(error)) from error
 

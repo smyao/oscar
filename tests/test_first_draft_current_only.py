@@ -175,23 +175,24 @@ def test_disabled_or_non_eager_first_draft_never_reads_cpu(monkeypatch):
 def test_forward_dispatches_qualified_first_draft_without_widening_native_current(monkeypatch):
     from oscar_ascend.integration import current_only_dispatch
     import sys
+    from oscar_ascend.bf16_history_policy import production_attention_config
 
     builder(monkeypatch)
     monkeypatch.setattr(sys.modules["vllm.v1.attention.backend"], "AttentionImpl", object, raising=False)
     module = load_our_module("oscar_ascend.integration.impl", monkeypatch)
     impl = object.__new__(module.OscarAttentionImpl)
-    impl.num_heads, impl.num_kv_heads, impl.head_size = 6, 1, 64
+    impl.num_heads, impl.num_kv_heads, impl.head_size = 6, 1, 256
     cache = torch.empty(1, dtype=torch.uint8)
-    state = SimpleNamespace(packed=cache, cache_format="canonical_v1")
-    impl.provider = SimpleNamespace(config={"experimental_current_only": True}, layer_state=lambda _: state)
+    state = SimpleNamespace(packed=cache, cache_format="striped_v1")
+    impl.provider = SimpleNamespace(config=production_attention_config({"experimental_current_only": True}), layer_state=lambda _: state)
     metadata = from_common(common(), is_draft=True, current_only=True, first_draft_current_only=True)
     calls = []
     def suffix(*args):
         calls.append(args[6])
         return args[7]
     monkeypatch.setattr(current_only_dispatch, "dispatch_current_suffix", suffix)
-    q = torch.zeros(11, 6 * 64, dtype=torch.bfloat16)
-    kv = torch.zeros(11, 64, dtype=torch.bfloat16)
+    q = torch.zeros(11, 6 * 256, dtype=torch.bfloat16)
+    kv = torch.zeros(11, 256, dtype=torch.bfloat16)
     output = torch.empty_like(q)
     assert not use_native_current(metadata)
     assert impl.forward(SimpleNamespace(layer_name="mtp"), q, kv, kv, cache, metadata, output) is output

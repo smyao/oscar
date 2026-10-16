@@ -10,7 +10,7 @@ from tools import install_serve, observe_serve
 from tools.serving_variants import variant_config, variant_features
 
 
-@pytest.mark.parametrize("variant,enabled", [("candidate", True), ("baseline", False)])
+@pytest.mark.parametrize("variant,enabled", [("candidate", True)])
 def test_install_and_probe_plans_select_the_same_bundle(variant, enabled, capsys):
     assert install_serve.main(["--variant", variant, "--plan"]) == 0
     install = json.loads(capsys.readouterr().out)
@@ -22,7 +22,7 @@ def test_install_and_probe_plans_select_the_same_bundle(variant, enabled, capsys
         "striped_cache": enabled, "quantization_bundle": enabled, "current_only": enabled,
         "first_mtp_current_fia": enabled, "compact_later_mtp": enabled,
         "mixed_decode_split": enabled, "decode_bundle": enabled, "mdl_decode": enabled,
-        "c4_member_pipeline": enabled, "whole_prefill": False}
+        "c4_member_pipeline": enabled, "whole_prefill": False, "bf16_history": enabled}
     assert install["probes"] == "none"
 
 
@@ -39,18 +39,18 @@ def test_default_retains_config_and_candidate_does_not_mutate_input():
     with pytest.raises(ValueError, match="explicit boolean"):
         variant_config({"experimental_fast_unpack": "true"}, "candidate")
     with pytest.raises(ValueError, match="requires"):
-        variant_config({"experimental_fast_unpack": True}, None)
+        variant_config({"experimental_fast_unpack": True, "experimental_history_reuse": False}, None)
     with pytest.raises(ValueError, match="explicit boolean"):
         variant_config({"experimental_mixed_cv": "true"}, "candidate")
     with pytest.raises(ValueError, match="requires"):
         variant_config({"experimental_mixed_cv": True,
-                        "experimental_history_reuse": True}, None)
+                        "experimental_history_reuse": True, "experimental_fast_unpack": False}, None)
     with pytest.raises(ValueError, match="explicit boolean"):
         variant_config({"experimental_striped_cache": "true"}, "candidate")
-    with pytest.raises(ValueError, match="striped cache requires"):
+    with pytest.raises(ValueError, match="requires"):
         variant_config({"experimental_striped_cache": True,
                         "experimental_fast_unpack": True,
-                        "experimental_history_reuse": True}, None)
+                        "experimental_history_reuse": True, "experimental_mixed_cv": False}, None)
 
 
 @pytest.mark.parametrize("flag", ["experimental_current_only", "experimental_first_mtp_current_fia",
@@ -62,10 +62,10 @@ def test_candidate_features_cannot_leak_to_native(flag):
         original["experimental_decode_bundle"] = True
         original["experimental_first_mtp_current_fia"] = True
     assert variant_config(original, "candidate")[flag] is True
-    for variant in ("baseline", "native"):
+    for variant in ("native",):
         assert variant_config(original, variant)[flag] is False
     assert original[flag] is True
-    for variant in (None, "candidate", "baseline", "native"):
+    for variant in (None, "candidate", "native"):
         with pytest.raises(ValueError, match="explicit boolean"):
             variant_config({flag: "true"}, variant)
 

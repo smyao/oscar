@@ -2,6 +2,7 @@
 # 本次用户指令：保留探针，取消真机环境检查；附录 F 指定本任务设备与 SOC。
 """Exercise deployment orchestration without installing or opening an NPU."""
 import json
+import hashlib
 import os
 from dataclasses import asdict
 from pathlib import Path
@@ -16,7 +17,7 @@ from tools.target_cli import target_env
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PROBES = ("probe-ops", "native-synthetic", "service-probe")
+PROBES = ("probe-ops", "bf16-attention-gate", "native-synthetic", "service-probe")
 AUDITS = {"environment", "runtime-readiness", "binary-readiness", "native-integrity"}
 
 
@@ -32,6 +33,14 @@ def _configure(monkeypatch, tmp_path, *, devices=None):
 
 
 def _phase_result(name, command, log_dir, code=0):
+    if name == "bf16-attention-gate" and code == 0:
+        folder = log_dir / "bf16-attention"
+        folder.mkdir(exist_ok=True)
+        effective = Path(command[command.index("--config") + 1])
+        (folder / "status.json").write_text(json.dumps({"status": "passed",
+            "effective_config_sha256": hashlib.sha256(effective.read_bytes()).hexdigest(),
+            "bf16_history_gate": {"status": "passed"},
+            "bf16_history_resource_release": {"status": "passed"}}))
     return PhaseResult(name, command, code, 0.01, False, False,
                        str(log_dir / f"{name}.log"), True)
 
@@ -72,7 +81,7 @@ def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypa
         calls.append((name, command))
         assert cwd == ROOT
         assert env["ASCEND_RT_VISIBLE_DEVICES"] == "8,9,10,11"
-        assert env["OSCAR_TARGET_CONFIG"] == str(config_path)
+        assert env["OSCAR_TARGET_CONFIG"] == str(logs / "effective-target.json")
         assert env["OSCAR_RUN_NPU_TESTS"] == "1"
         assert env["OSCAR_TERMINAL_LOG_MODE"] == "compact"
         assert kwargs["heartbeat"] == 60
@@ -89,9 +98,9 @@ def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypa
     def serve():
         served.append(list(sys.argv))
         assert os.environ["ASCEND_RT_VISIBLE_DEVICES"] == "8,9,10,11"
-        assert os.environ["OSCAR_TARGET_CONFIG"] == str(config_path)
+        assert os.environ["OSCAR_TARGET_CONFIG"] == str(logs / "effective-target.json")
         assert "--serve" in sys.argv
-        assert sys.argv[sys.argv.index("--config") + 1] == str(config_path)
+        assert sys.argv[sys.argv.index("--config") + 1] == str(logs / "effective-target.json")
         return 0
 
     monkeypatch.setattr(deploy, "run_phase", phase)
@@ -109,7 +118,10 @@ def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypa
     assert [name for name in names if name in PROBES] == list(PROBES)
     assert "probe-cv" not in names  # native preflight owns the sole CV/rotation gate.
     assert names.index("install-plugin") < names.index("build-ops") < names.index("probe-ops")
-    assert names.index("prepare-rotations") < names.index("native-synthetic") < names.index("service-probe")
+    assert names.index("prepare-rotations") < names.index("bf16-attention-gate") < names.index("native-synthetic") < names.index("service-probe")
+    effective = json.loads((logs / "effective-target.json").read_text())
+    assert effective["experimental_bf16_history"] is True
+    assert effective["attention_compute_dtype"] == "bfloat16"
     commands = dict(calls)
     build = commands["build-ops"]
     assert build[build.index("--soc") + 1] == config["soc_version"]
@@ -119,7 +131,7 @@ def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypa
     native = commands["native-synthetic"]
     assert "--native-only" in native
     assert "--require-fresh-npu" in native
-    assert native[native.index("--config") + 1] == str(config_path)
+    assert native[native.index("--config") + 1] == str(logs / "effective-target.json")
     assert (logs / "paired-performance-report.json").is_file()
     assert len(served) == 1
     final_status = json.loads((logs / "status.json").read_text())

@@ -47,7 +47,7 @@ def clear_owned_build(path: Path) -> None:
     path.mkdir(parents=True)
 
 
-def reusable_build(build_dir: Path, signature: str, *, bf16_history: bool = False) -> dict | None:
+def reusable_build(build_dir: Path, signature: str, *, bf16_history: bool = True) -> dict | None:
     """Reuse only completed, unchanged artifacts; this is not NPU evidence."""
     if build_dir.is_symlink() or build_dir.resolve() != ROOT / "build/ascendc":
         return None
@@ -75,7 +75,7 @@ def reusable_build(build_dir: Path, signature: str, *, bf16_history: bool = Fals
 
 
 def build(log_dir: Path, timeout: float, soc: str | None = None, *, jobs: int | None = None,
-          bf16_history: bool = False) -> dict:
+          bf16_history: bool = True) -> dict:
     # Local compiler VMs can have many logical CPUs but insufficient memory
     # for eight simultaneous Torch C++ translation units. This only limits
     # build concurrency; target code, numerics and runtime flags stay intact.
@@ -83,6 +83,8 @@ def build(log_dir: Path, timeout: float, soc: str | None = None, *, jobs: int | 
         raise ValueError("build jobs must be a positive integer")
     if type(bf16_history) is not bool:
         raise ValueError("bf16_history build option must be an explicit boolean")
+    if not bf16_history:
+        raise ValueError("BF16 attention is required by the production build; FP32-only builds are retired")
     compile_jobs = min(os.cpu_count() or 1, 8) if jobs is None else jobs
     env = os.environ.copy()
     cann = cann_root(env)
@@ -126,7 +128,8 @@ def build(log_dir: Path, timeout: float, soc: str | None = None, *, jobs: int | 
     signature_data = {"source": file_fingerprint(ROOT / "csrc"), "cann": str(cann), "cann_versions": versions, "soc": soc,
                       "package_versions": package_versions,
                       "python": sys.executable, "torch_npu": str(npu_path),
-                      "bf16_history": bf16_history,
+                      "bf16_history": bf16_history, "attention_compute_dtype": "bfloat16",
+                      "attention_sources": "history/sink/recent/current",
                       "flags": {k: env.get(k) for k in ("CXX", "CC", "CXXFLAGS")}}
     signature = hashlib.sha256(json.dumps(signature_data, sort_keys=True).encode()).hexdigest()
     state = build_dir / "oscar_build_signature.json"
@@ -171,7 +174,7 @@ def build(log_dir: Path, timeout: float, soc: str | None = None, *, jobs: int | 
         raise RuntimeError(f"CMake did not generate the runtime manifest: {generated_manifest}")
     runtime_manifest = json.loads(generated_manifest.read_text())
     if set(runtime_manifest.get("source_capabilities", ())) != source_capabilities(bf16_history=bf16_history):
-        raise RuntimeError("compiled capability manifest differs from the selected research build option")
+        raise RuntimeError("compiled capability manifest lacks the exact all-source BF16 production ABI")
     runtime_manifest.update({k: manifest[k] for k in ("signature", "sha256", "build", "device_completion")})
     atomic_json(generated_manifest, runtime_manifest)
     atomic_json(ROOT / "reports/build.json", manifest)
@@ -184,8 +187,8 @@ def main() -> int:
     parser.add_argument("--timeout", type=float, default=1800)
     parser.add_argument("--soc")
     parser.add_argument("--jobs",type=int,help="optional compiler parallelism limit for memory-limited build hosts")
-    parser.add_argument("--bf16-history", action="store_true",
-                        help="build unqualified BF16 history research ops for independent probes; does not authorize serving")
+    parser.add_argument("--bf16-history", action="store_true", default=True,
+                        help="compatibility option: all-source BF16 attention operators are always built")
     args = parser.parse_args()
     try:
         print(json.dumps(build(args.log_dir, args.timeout, args.soc, jobs=args.jobs,

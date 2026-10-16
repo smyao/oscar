@@ -68,13 +68,13 @@ def select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len, *, q1_dra
     if bf16_history:
         if cluster_size != 16 or not all((fast_unpack, mixed_cv, striped_cache,
                                          decode_bundle, c4_member_pipeline, mdl_decode)):
-            raise ValueError("BF16 history requires the complete C16 candidate bundle")
+            raise ValueError("BF16 attention requires the complete C16 candidate bundle")
         old = select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len,
             q1_draft=q1_draft, fast_unpack=fast_unpack, mixed_cv=mixed_cv,
             striped_cache=striped_cache, decode_bundle=decode_bundle,
             c4_member_pipeline=c4_member_pipeline, mdl_decode=mdl_decode)
         if old not in BF16_HISTORY_OP_MAP:
-            raise ValueError(f"BF16 history has no registered reader for {old}")
+            raise ValueError(f"BF16 attention has no registered reader for {old}")
         return BF16_HISTORY_OP_MAP[old]
     if mdl_decode:
         if not decode_bundle:

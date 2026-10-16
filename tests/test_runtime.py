@@ -88,7 +88,7 @@ def test_cluster4_state_is_explicit_bounded_and_includes_counter_buffer():
 def test_candidate_route_requires_explicit_boolean(value):
     with pytest.raises(runtime_api.OscarReadinessError, match="explicit boolean"):
         AscendRuntimeProvider({"experimental_history_reuse": value})
-    assert AscendRuntimeProvider({}).config.get("experimental_history_reuse", False) is False
+    assert AscendRuntimeProvider({}).config.get("experimental_history_reuse", False) is True
 
 
 def test_mixed_cv_requires_explicit_fast_history_and_reserves_c16(monkeypatch):
@@ -96,9 +96,9 @@ def test_mixed_cv_requires_explicit_fast_history_and_reserves_c16(monkeypatch):
     for bad in (1, "true", None):
         with pytest.raises(runtime_api.OscarReadinessError, match="explicit boolean"):
             AscendRuntimeProvider({"experimental_mixed_cv": bad})
-    with pytest.raises(runtime_api.OscarReadinessError, match="requires explicit"):
+    with pytest.raises(runtime_api.OscarReadinessError, match="requires"):
         AscendRuntimeProvider({"experimental_mixed_cv": True,
-                               "experimental_history_reuse": True})
+                               "experimental_history_reuse": True, "experimental_fast_unpack": False})
     provider = AscendRuntimeProvider({"experimental_mixed_cv": True,
                                      "experimental_fast_unpack": True,
                                      "experimental_history_reuse": True,
@@ -112,7 +112,7 @@ def test_mixed_cv_requires_explicit_fast_history_and_reserves_c16(monkeypatch):
     monkeypatch.setattr(runtime, "GraphWorkspace", FakeWorkspace)
     workspace = provider.ensure_workspace(6, 1, 256, "npu:0")
     assert workspace.geometry.history_cluster_size == 16
-    assert workspace.geometry.cv_bytes == 20 * 4997120
+    assert workspace.geometry.cv_bytes == 20 * 7495680
     assert provider.ensure_workspace(6, 1, 256, "npu:0") is workspace
 
 
@@ -163,13 +163,13 @@ def test_striped_dispatch_keeps_every_history_reader_in_one_format():
                         **flags) == STRIPED_BALANCED_CV_OP
     assert select_cv_op(16, 16, 1, 128, 1, q1_draft=True,
                         **flags) == STRIPED_CV_OP
-    with pytest.raises(ValueError, match="striped cache requires"):
+    with pytest.raises(ValueError, match="requires"):
         select_cv_op(4, 6, 1, 128, 4, striped_cache=True)
 
 
 def test_striped_runtime_requires_d256_and_all_signed_reader_writer_symbols(monkeypatch):
     from oscar_ascend.ops import loader
-    from oscar_ascend.ops.cv_dispatch import STRIPED_CV_OPS
+    from oscar_ascend.ops.contracts import BF16_HISTORY_CAPABILITIES
     config = {"devices": [0, 1, 2, 3], "experimental_history_reuse": True,
               "experimental_fast_unpack": True, "experimental_mixed_cv": True,
               "experimental_striped_cache": True,
@@ -178,37 +178,37 @@ def test_striped_runtime_requires_d256_and_all_signed_reader_writer_symbols(monk
     for bad in (None, "true", 1):
         with pytest.raises(runtime_api.OscarReadinessError, match="explicit boolean"):
             AscendRuntimeProvider({**config, "experimental_striped_cache": bad})
-    with pytest.raises(runtime_api.OscarReadinessError, match="striped cache requires"):
+    with pytest.raises(runtime_api.OscarReadinessError, match="requires"):
         AscendRuntimeProvider({**config, "experimental_mixed_cv": False})
     provider = AscendRuntimeProvider(config)
-    with pytest.raises(runtime_api.OscarReadinessError, match="D256"):
+    with pytest.raises(runtime_api.OscarReadinessError, match="head_dim=256"):
         provider.ensure_workspace(6, 1, 64, "npu:0")
     monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "0,1,2,3")
     monkeypatch.setattr(loader, "require_production_ops", lambda: None)
     seen = []
     def require(required, *_args):
         seen.append(set(required))
-        if set(required) == set(STRIPED_CV_OPS) | {"rotate_clip_store_striped_out"}:
+        if set(required) == set(BF16_HISTORY_CAPABILITIES) | {"rotate_clip_store_striped_out", "copy_validate_current_out"}:
             raise RuntimeError("striped reader/writer symbols missing")
     monkeypatch.setattr(loader, "require_capabilities", require)
     with pytest.raises(RuntimeError, match="symbols missing"):
         provider.assert_ready()
-    assert set(STRIPED_CV_OPS) | {"rotate_clip_store_striped_out"} in seen
+    assert set(BF16_HISTORY_CAPABILITIES) | {"rotate_clip_store_striped_out", "copy_validate_current_out"} in seen
     assert provider._ready is False
     provider.config["experimental_striped_cache"] = False
-    with pytest.raises(runtime_api.OscarReadinessError, match="format changed"):
+    with pytest.raises(runtime_api.OscarReadinessError, match="experimental_striped_cache"):
         provider.assert_ready()
 
 
 def test_mixed_cv_readiness_requires_both_new_signed_ops(monkeypatch):
     from oscar_ascend.ops import loader
-    from oscar_ascend.ops.cv_dispatch import MIXED_CV_OPS
+    from oscar_ascend.ops.contracts import BF16_HISTORY_CAPABILITIES
     monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "0,1,2,3")
     monkeypatch.setattr(loader, "require_production_ops", lambda: None)
     seen = []
     def require(required, *_args):
         seen.append(set(required))
-        if set(required) == set(MIXED_CV_OPS):
+        if BF16_HISTORY_CAPABILITIES <= set(required):
             raise RuntimeError("signed balanced/C16 symbols missing")
     monkeypatch.setattr(loader, "require_capabilities", require)
     monkeypatch.setattr(torch, "npu", SimpleNamespace(is_available=lambda: True),
@@ -219,7 +219,7 @@ def test_mixed_cv_readiness_requires_both_new_signed_ops(monkeypatch):
                                      "experimental_mixed_cv": True})
     with pytest.raises(RuntimeError, match="symbols missing"):
         provider.assert_ready()
-    assert set(MIXED_CV_OPS) in seen
+    assert any(BF16_HISTORY_CAPABILITIES <= item for item in seen)
     assert provider._ready is False
 
 
@@ -330,6 +330,16 @@ def test_online_forward_contains_no_host_request_loop_or_tensor_readback():
 @pytest.mark.parametrize("later_draft", [False, True])
 def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv, striped_cache, _rotation_variant=None, _member_pipeline=False, _mdl_variant=None, _mdl_target=False, _bf16_history=False, _bf16_max_query=None):
     """Host ABI exercise only: fake ops establish ordering, never accuracy."""
+    if cluster_size != 16 or not all((fast_unpack, mixed_cv, striped_cache)):
+        # User 2026-10-16 retires these production formats; independent selector
+        # tests above retain their diagnostic eligibility coverage.
+        with pytest.raises(runtime_api.OscarReadinessError, match="requires"):
+            AscendRuntimeProvider({"experimental_fast_unpack": fast_unpack,
+                "experimental_mixed_cv": mixed_cv, "experimental_striped_cache": striped_cache})
+        return
+    stop_at_bf16 = _bf16_history
+    _bf16_history = True
+    _member_pipeline = True
     if n == 8192 and (cluster_size != 16 or later_draft):
         pytest.skip("large FULL host route is needed once for C16")
     # patch.dict restores sys.modules after the fake impl import. Preload the
@@ -390,7 +400,8 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
                     assert args[15] is w.cluster_stats
                     args = args[:15] + args[16:]
                 self.attention_cv_out(*args)
-                raise MdlDispatchReached(name)
+                if stop_at_bf16 or _mdl_variant is not None:
+                    raise MdlDispatchReached(name)
 
             return bf16_call
 
@@ -568,11 +579,10 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         provider.ops = Ops()
         impl.provider = provider
     if _bf16_history:
-        # Independent host route exercise: production construction remains
-        # blocked by its frozen numerical gate. This fake provider executes
-        # only Python dispatch/ABI and cannot claim numerical acceptance.
-        from tools.serving_variants import research_variant_config
-        impl.provider.config = research_variant_config({"experimental_bf16_history": True}, "candidate")
+        # Use the exact production preset, with fake operators only for ABI
+        # sequencing. This cannot claim numerical/device/graph acceptance.
+        from tools.serving_variants import variant_config
+        impl.provider.config = variant_config({}, "candidate")
     q = torch.randn(n, h * d, dtype=torch.bfloat16)
     k = torch.randn(n, hk * d, dtype=torch.bfloat16)
     value = torch.randn(n, hk * d * 3, dtype=torch.bfloat16)[:, d:2*d]
@@ -601,7 +611,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         common.query_start_loc = torch.tensor([0, 1, 2], dtype=torch.int32)
     common.slot_mapping = torch.arange(n + 4, dtype=torch.int32)
     output = torch.empty_like(q)
-    if _bf16_history:
+    if stop_at_bf16:
         from oscar_ascend.ops.cv_dispatch import select_cv_op
         common.max_query_len = _bf16_max_query
         if _mdl_target:
@@ -628,7 +638,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         from enum import Enum
         common.attn_state = Enum("AscendAttentionState", ["DecodeOnly"]).DecodeOnly
         common.max_query_len = 1 if later_draft else 4
-        name = "attention_cv_mdl_decode_q1_out" if later_draft else "attention_cv_mdl_decode_out"
+        name = "attention_bf16_history_mdl_q1_out" if later_draft else "attention_bf16_history_mdl_out"
         with pytest.raises(MdlDispatchReached, match="^"+name+"$"):
             impl.forward(SimpleNamespace(layer_name="model.layers.0.self_attn.attn" if _mdl_target else "mtp.layers.0.self_attn.attn"),
                          q, k, value, packed, replace(from_common(common), is_draft=not _mdl_target,
@@ -639,29 +649,22 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
                           q, k, value, packed, replace(from_common(common), is_draft=True,
                           draft_index=1 if later_draft else 0), output)
     assert result is output and bool(torch.all(result == 7))
-    # #150: short per-request query lengths keep the original OSCAR op even
-    # with candidate workspace; long requests keep the C4 ABI/extra buffer.
-    if striped_cache:
-        expected_op = ("striped_q1" if later_draft else
-                       "striped_cluster16" if n == 8192 else
-                       ("member_pipeline_cluster4" if _member_pipeline else "striped_cluster4")
-                       if n == 256 else "striped_decode")
-    elif mixed_cv:
-        expected_op = ("fast_q1" if later_draft else
-                       "fast_cluster16" if n == 8192 else
-                       "fast_balanced" if n == 256 else "fast_cv")
-    else:
-        expected_op = ("q1" if cluster_size == 4 and later_draft else
-                       "cluster4" if cluster_size == 4 and n == 256 else "cv")
-        if fast_unpack:
-            expected_op = "fast_" + expected_op
-    assert calls == ["prepare", "rotate", expected_op, "merge",
-                     "striped_store" if striped_cache else "store", "guard"]
+    assert calls == ["prepare", "rotate_vector_init", "cv", "merge", "striped_store", "guard"]
 
 
 @pytest.mark.parametrize("variant", ["candidate", "baseline", "native"])
 def test_shared_variant_reaches_expected_rotation_operator(variant):
     """Native serving excludes OSCAR; its normalized config must not leak the candidate op."""
+    if variant == "baseline":
+        from tools.serving_variants import variant_config
+        with pytest.raises(ValueError, match="retired"):
+            variant_config({}, variant)
+        return
+    if variant == "native":
+        from tools.serving_variants import variant_config
+        with pytest.raises(runtime_api.OscarReadinessError, match="requires|retired"):
+            AscendRuntimeProvider(variant_config({}, variant))
+        return
     candidate=variant=="candidate"
     test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(
         8,1,1,8,16 if candidate else 1,False,candidate,candidate,candidate,

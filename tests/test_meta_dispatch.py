@@ -8,7 +8,7 @@ from oscar_ascend.ops.meta import register_meta
 from oscar_ascend.ops.contracts import source_capabilities, BF16_HISTORY_CAPABILITIES
 
 
-@pytest.mark.parametrize("bf16_history", [False, True])
+@pytest.mark.parametrize("bf16_history", [True])
 def test_cpp_schemas_accept_out_only_abstract_dispatch(bf16_history):
     root=Path(__file__).resolve().parents[1]
     namespace = "oscar_meta_contract_research" if bf16_history else "oscar_meta_contract"

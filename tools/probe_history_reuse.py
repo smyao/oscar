@@ -325,13 +325,13 @@ def make_fixture(torch, shape: Shape, *, on_request=None, rotation_mode="nontriv
 
 
 def _active_device(target: dict):
-    if target.get("devices") != [0, 1, 2, 3] or target.get("soc_version") != "ascend910b4":
-        raise HistoryReuseProbeError("explicit target devices 0,1,2,3 and ascend910b4 are required")
-    selection = "0,1,2,3"
-    inherited = os.environ.get("ASCEND_RT_VISIBLE_DEVICES")
-    if inherited is not None and inherited != selection:
-        raise HistoryReuseProbeError(f"physical device selection {inherited!r} differs from target")
-    os.environ["ASCEND_RT_VISIBLE_DEVICES"] = selection
+    # Archive #123: all probe families use the explicit current-task selection;
+    # user 2026-10-16 defaults to 4-7, while explicit other legal IDs remain valid.
+    from .probe_cv_hotshape import HotShapeError, _select_device
+    try:
+        _select_device(target)
+    except HotShapeError as error:
+        raise HistoryReuseProbeError(str(error)) from error
 
 
 def _core_count(torch, target: dict) -> int:

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
-// GENERATED RESEARCH KERNEL. CPU numerical gate FAILED; never production-qualified.
+// GENERATED UNIFIED BF16 KERNEL. Default routing is not numerical acceptance.
 // Mother: attention_cv_window_range_balanced.cpp at 6029f2a8c6277ab8136e5a5eeaa2c2c16313ca08; SHA256 1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013.
 // Generate/check: tools/experiments/generate_bf16_history_kernels.py --check.
 // Archive G4/#81-83/#126/#145/#148/#154/#157; full startup D.4 reread.
-// D.4 four questions: (1) source0 fused INT2 dequant + QK/PV;
+// D.4 four questions: (1) direct INT2-to-BF16 and all-source BF16 QK/PV;
 // (2) failed full-history restore cost6499.8-6655.1ms versus FIA18.5-18.9ms;
-// (3) only fixed KV256 BF16 operand mirrors; FP32 softmax/LSE/state/Rv,
-// exact source1/2, masks, errors, ownership and cross-core flags are retained;
-// (4) GM capacity=1.5x mother, extra UB16KiB; casts and Matmul dtype-switch
-// resets add cost, so no speed or target-numerical claim is made.
+// (3) fixed KV256 BF16 operands, exact BF16 window/current K/V; FP32
+// softmax/LSE/state/Rv, masks, error order and cross-core flags are retained;
+// (4) GM capacity=1.5x mother, extra UB16KiB (+512B on H16); Matmul switches,
+// resets and bounded unpack lookup add cost; no speed/acceptance claim.
 // One active Matmul resource set avoids simultaneous L1/L0 allocations.
 // Re-Init/Reset needs actual SDK and device verification; host has neither.
 // The mother's inherited historical comments below are not claims about
@@ -199,6 +199,7 @@
 // add_rms_norm_bias_multi_n.h Gather; PR triton_oscar_decode.py INT2 and LSE.
 #include "oscar_common.h"
 #include "attention_bf16_history_operands.h"
+#include "attention_striped_unpack_bf16.h"
 #include "../include/oscar_bf16_history_launch.h"
 #include "attention_range_mask.h"
 #include "attention_fast_unpack.h"
@@ -276,7 +277,8 @@ template<int32_t D> class AttentionCv {
       ((2*kLaneRows+2*kHalfRows)*4)+
       (512)+
       (128);
-  static_assert(kOriginalVectorBytes+oscar_bf16_history::kOperandScratchBytes<=184*1024,
+  static constexpr int32_t kNaturalPaddingBytes=512;
+  static_assert(kOriginalVectorBytes+kNaturalPaddingBytes+oscar_bf16_history::kOperandScratchBytes<=184*1024,
       "BF16 publisher exceeds A2 usable UB; do not relax this bound");
  public:
   __aicore__ void Init(GM_ADDR query,GM_ADDR queryRot,GM_ADDR key,GM_ADDR value,
@@ -323,7 +325,7 @@ template<int32_t D> class AttentionCv {
     } else {
       pipe.InitBuffer(taskBuf,128);pipe.InitBuffer(packedBuf,kHalfKv*kPackedStride);
       pipe.InitBuffer(planeBuf,oscar_ascend_fast::Geometry<D>::planeBytes);
-      pipe.InitBuffer(naturalBuf,kElements*2);
+      pipe.InitBuffer(naturalBuf,kHalfKv*(D+16)*2);
       pipe.InitBuffer(wordBuf,kWords*2);pipe.InitBuffer(maskBuf,kWords*2);
       pipe.InitBuffer(wordIndexBuf,kWords*4);pipe.InitBuffer(laneIndexBuf,kElements*4);
       pipe.InitBuffer(metadataIndexBuf,128);pipe.InitBuffer(metadataHalfBuf,64);
@@ -392,12 +394,12 @@ template<int32_t D> class AttentionCv {
         (kind!=2 || (kvbegin>=context && requestBegin+kvend-context<=g.tokens));
   }
   __aicore__ void InitIndices() {
-    oscar_ascend_fast::InitIndices<D>(wordIndexBuf,laneIndexBuf,
+    oscar_ascend_striped_bf16::InitIndices<D,kHalfKv>(wordIndexBuf,laneIndexBuf,
         metadataIndexBuf,maskBuf);
   }
   __aicore__ void Matmul(int64_t a,int64_t b,int64_t c,int32_t m,int32_t n,int32_t k,
       bool rotation=false,bool transposeB=true) {
-    const bool history=kind==0 && !rotation;
+    const bool history=!rotation;
     oscar_bf16_history::SelectMatmul(history,historyMatmulActive,pipe,mm,historyMm);
     if(history) {
       SetHF32Mode(false);
@@ -412,7 +414,7 @@ template<int32_t D> class AttentionCv {
     SetHF32Mode(false); // no implicit HF32/TF32 relaxation of the frozen oracle.
     mm.SetOrgShape(m,n,k);mm.SetSingleShape(m,n,k);
     mm.SetTensorA(work[a],false);
-    if(rotation) mm.SetTensorB(rv,true);else mm.SetTensorB(work[b],transposeB);
+    mm.SetTensorB(rv,true); // The only FP32 matmul is inverse rotation.
     mm.template IterateAll<true>(work[c]);
     // End closes the iteration state; buffers remain initialized for reuse.
     mm.End();
@@ -437,8 +439,20 @@ template<int32_t D> class AttentionCv {
     }
   }
   __aicore__ void PublishOperand(int64_t offset,LocalTensor<float> source,int32_t elements) {
-    if(kind==0)oscar_bf16_history::Publish(operandWork[offset],source,operandBuf,elements);
-    else DataCopy(work[offset],source,elements);
+    oscar_bf16_history::Publish(operandWork[offset],source,operandBuf,elements);
+  }
+  __aicore__ void PublishBf16Operand(int64_t offset,LocalTensor<bfloat16_t> source,
+      int32_t elements) {
+    DataCopy(operandWork[offset],source,elements);
+  }
+  __aicore__ void CheckBf16Row(LocalTensor<bfloat16_t> source) {
+    // Keep the original FP32 ReduceSum finite/error contract, one row only.
+    // Matrix operands retain the original BF16 bits, including signed zero.
+    auto row=qFloatBuf.Get<float>();auto check=scratchBuf.Get<float>();
+    Cast(row,source,RoundMode::CAST_NONE,D);PipeBarrier<PIPE_V>();
+    ReduceSum(check,row,check[16],D);Fence<HardEvent::V_S>();
+    if(!Finite(check.GetValue(0)))error=2;
+    Fence<HardEvent::S_V>();
   }
   __aicore__ void LoadQueries() {
     auto dst=qFloatBuf.Get<float>();auto src=qBf16Buf.Get<bfloat16_t>();
@@ -455,18 +469,19 @@ template<int32_t D> class AttentionCv {
       ReduceSum(check,dst,check[16],D);Fence<HardEvent::V_S>();
       if(!Finite(check.GetValue(0)))error=2;
       Fence<HardEvent::V_MTE3>();
-      PublishOperand(qOffset+row*D,dst,D);Fence<HardEvent::MTE3_MTE2>();
+      if(kind==0)PublishOperand(qOffset+row*D,dst,D);
+      else PublishBf16Operand(qOffset+row*D,src,D);Fence<HardEvent::MTE3_MTE2>();
     }
     // Pad the inactive query rows in bounded contiguous pieces. This keeps
     // the full initialized Q tile required by the Cube contract without
     // adding one scalar/GM copy per padded row to q_len=1/4 graph replay.
     // The previous live-row MTE3 must finish before Vector reuses the scratch.
-    auto zeros=dequantBuf.Get<float>();
+    auto zeros=dequantBuf.Get<bfloat16_t>();
     Fence<HardEvent::MTE3_V>();
     for(int32_t row=validEnd;row<laneEnd;row+=kHalfKv) {
       const int32_t count=static_cast<int32_t>(Min64(kHalfKv,laneEnd-row));
-      Duplicate(zeros,0.0F,count*D);Fence<HardEvent::V_MTE3>();
-      PublishOperand(qOffset+row*D,zeros,count*D);Fence<HardEvent::MTE3_V>();
+      Duplicate(zeros.ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),count*D);Fence<HardEvent::V_MTE3>();
+      PublishBf16Operand(qOffset+row*D,zeros,count*D);Fence<HardEvent::MTE3_V>();
     }
   }
   __aicore__ int64_t LogicalPosition(int64_t candidate) {
@@ -511,13 +526,12 @@ template<int32_t D> class AttentionCv {
     Fence<HardEvent::MTE2_V>();
   }
   __aicore__ void Unpack(bool value) {
-    oscar_ascend_fast::Unpack<D>(value,liveKvRows,error,packedBuf,wordBuf,
+    oscar_ascend_striped_bf16::Unpack<D,kHalfKv>(value,liveKvRows,error,packedBuf,wordBuf,
         planeBuf,naturalBuf,maskBuf,wordIndexBuf,laneIndexBuf,
-        metadataIndexBuf,metadataHalfBuf,dequantBuf,scratchBuf);
+        metadataIndexBuf,metadataHalfBuf,dequantBuf,scratchBuf,operandBuf);
   }
   __aicore__ void LoadWindowRuns(int64_t start,bool value) {
-    auto dst=dequantBuf.Get<float>();
-    auto batch=naturalBuf.Get<bfloat16_t>();
+    auto dst=dequantBuf.Get<bfloat16_t>();
     // These buffers are dead after source0 unpack. Permanent unpack indices
     // (metadataIndexBuf/maskBuf/etc.) remain untouched for the next task.
     auto tags=packedBuf.Get<int64_t>();
@@ -550,7 +564,7 @@ template<int32_t D> class AttentionCv {
       Fence<HardEvent::MTE2_S>();
       // Invalid tags never cause a K/V read. All invalid and unused output
       // rows retain the exact initial +0, including poisoned ring slots.
-      Duplicate(batch.ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),rows*D);
+      Duplicate(dst[j*D].ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),rows*D);
       Fence<HardEvent::V_MTE2>();
       for(int32_t begin=0;begin<rows;) {
         if(tags.GetValue(begin)!=inpage+begin) {++begin;continue;}
@@ -560,20 +574,17 @@ template<int32_t D> class AttentionCv {
         DataCopyExtParams copy{static_cast<uint16_t>(end-begin),D*2,
             static_cast<uint32_t>((g.hk-1)*D*2),0,0};
         DataCopyPadExtParams<bfloat16_t> pad{false,0,0,0};
-        if(value)DataCopyPad(batch[begin*D],wv[off],copy,pad);
-        else DataCopyPad(batch[begin*D],wk[off],copy,pad);
+        if(value)DataCopyPad(dst[(j+begin)*D],wv[off],copy,pad);
+        else DataCopyPad(dst[(j+begin)*D],wk[off],copy,pad);
         begin=end;
       }
       Fence<HardEvent::MTE2_V>();
-      Cast(dst[j*D],batch,RoundMode::CAST_NONE,rows*D);PipeBarrier<PIPE_V>();
       // Do NOT publish errors during the tag/DMA prepass. Original order is
       // physical->tag->finite for each row, K side first then V side. A later
       // bad tag must overwrite an earlier finite error, and vice versa.
-      auto check=scratchBuf.Get<float>();
       for(int32_t row=0;row<rows;++row) {
         if(tags.GetValue(row)!=inpage+row) {error=4;continue;}
-        ReduceSum(check,dst[(j+row)*D],check[16],D);Fence<HardEvent::V_S>();
-        if(!Finite(check.GetValue(0)))error=2;
+        CheckBf16Row(dst[(j+row)*D]);
       }
       Fence<HardEvent::V_MTE2>();Fence<HardEvent::S_MTE2>();
       j+=rows;
@@ -581,63 +592,36 @@ template<int32_t D> class AttentionCv {
     Fence<HardEvent::S_V>();
   }
   __aicore__ void LoadPrecise(int64_t start,bool value) {
-    auto dst=dequantBuf.Get<float>();auto src=qBf16Buf.Get<bfloat16_t>();
-    Duplicate(dst,0.0F,kElements);PipeBarrier<PIPE_V>();
+    auto dst=dequantBuf.Get<bfloat16_t>();
+    Duplicate(dst.ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),kElements);PipeBarrier<PIPE_V>();
     if(kind==2) {
       const int32_t rows=static_cast<int32_t>(Max64(0,Min64(kHalfKv,kvend-start-lane*kHalfKv)));
       if(rows==0)return;
       const int64_t token=requestBegin+start+lane*kHalfKv-context;
       if(token<0 || token+rows>g.tokens) {error=1;return;}
-      // The natural unpack buffer is not used by the precise source. Reuse
-      // it for contiguous BF16 rows; no extra UB or full-history buffer.
-      auto batch=naturalBuf.Get<bfloat16_t>();
-      Duplicate(batch.ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),kElements);
+      // Load exact BF16 directly into the bounded operand tile.
       Fence<HardEvent::V_MTE2>();
       DataCopyExtParams copy{static_cast<uint16_t>(rows),D*2,
           static_cast<uint32_t>((g.hk-1)*D*2),0,0};
       DataCopyPadExtParams<bfloat16_t> pad{false,0,0,0};
       const int64_t off=(token*g.hk+kvhead)*D;
-      if(value)DataCopyPad(batch,cv[off],copy,pad);else DataCopyPad(batch,ck[off],copy,pad);
-      Fence<HardEvent::MTE2_V>();Cast(dst,batch,RoundMode::CAST_NONE,kElements);
-      PipeBarrier<PIPE_V>();
-      auto check=scratchBuf.Get<float>();
+      if(value)DataCopyPad(dst,cv[off],copy,pad);else DataCopyPad(dst,ck[off],copy,pad);
+      Fence<HardEvent::MTE2_V>();
       for(int32_t row=0;row<rows;++row) {
-        ReduceSum(check,dst[row*D],check[16],D);Fence<HardEvent::V_S>();
-        if(!Finite(check.GetValue(0)))error=2;
+        CheckBf16Row(dst[row*D]);
       }
       return;
     }
     if(kind==1) {LoadWindowRuns(start,value);return;}
-    for(int32_t j=0;j<kHalfKv;++j) {
-      const int64_t candidate=start+lane*kHalfKv+j;
-      if(candidate>=kvend)continue;
-      const int64_t position=LogicalPosition(candidate);
-      {
-        int64_t block=0,inpage=0;
-        if(!Physical(position,block,inpage))continue;
-        const int64_t row=position<g.sink?position:g.sink+inpage%(g.recent+g.speculative);
-        auto tag=addressBuf.Get<int64_t>()[4];
-        DataCopyExtParams copy{1,8,0,0,0};DataCopyPadExtParams<int64_t> pad{false,0,0,0};
-        DataCopyPad(tag,wt[block*g.tagStride+row],copy,pad);
-        Fence<HardEvent::MTE2_S>();
-        if(tag.GetValue(0)!=inpage) {error=4;continue;}
-        const int64_t off=block*g.windowStride+(row*g.hk+kvhead)*D;
-        if(value)DataCopy(src,wv[off],D);else DataCopy(src,wk[off],D);
-      }
-      Fence<HardEvent::MTE2_V>();Cast(dst[j*D],src,RoundMode::CAST_NONE,D);
-      PipeBarrier<PIPE_V>();
-      auto check=scratchBuf.Get<float>();ReduceSum(check,dst[j*D],check[16],D);
-      Fence<HardEvent::V_S>();if(!Finite(check.GetValue(0)))error=2;
-      Fence<HardEvent::V_MTE2>();
-    }
+    error=1;
   }
   __aicore__ void PublishKv(bool value,int32_t subtile) {
-    auto src=dequantBuf.Get<float>();
+    auto src=dequantBuf.Get<bfloat16_t>();
     const int64_t slot=subtile*(2*kHalfKv)+lane*kHalfKv;
-    // Both K and V are natural [KV,D] FP32. QK requests B transpose=true;
+    // Both K and V are natural [KV,D] BF16. QK requests B transpose=true;
     // PV requests false, as permitted by the same static B matmul type.
     Fence<HardEvent::V_MTE3>();
-    PublishOperand((value?vOffset:kOffset)+slot*D,src,kElements);
+    PublishBf16Operand((value?vOffset:kOffset)+slot*D,src,kElements);
     Fence<HardEvent::MTE3_V>();
   }
   __aicore__ void AddVisibleRange(int64_t begin,int64_t end,int64_t start,

@@ -40,6 +40,7 @@ def test_source_check_fails_closed_for_wrong_baseline(monkeypatch, tmp_path):
 
 
 def test_baseline_availability_reports_missing_evidence_without_torch(monkeypatch, tmp_path):
+    monkeypatch.delenv("ASCEND_RT_VISIBLE_DEVICES", raising=False)
     target = tmp_path / "target.json"
     target.write_text('{"devices":[0,1,2,3],"soc_version":"ascend910b4"}')
     monkeypatch.setattr(hot, "_verify_artifact",

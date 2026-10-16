@@ -1,0 +1,10 @@
+{
+  "python": "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+  "limactl": null,
+  "cann_build": "not_run",
+  "official_cpu_debug": "not_run",
+  "npu": "not_run",
+  "graph": "not_run",
+  "toolchain_error": "RuntimeError: CANN with AscendC CMake support is missing; inspected ['/usr/local/Ascend/ascend-toolkit/latest', '/usr/local/Ascend/cann/latest', '/usr/local/Ascend/cann-9.1.0']",
+  "returncode": 1
+}

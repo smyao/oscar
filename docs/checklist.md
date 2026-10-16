@@ -1,8 +1,8 @@
 # 完成状态与证据
 
-本表保留启动文档稳定ID。`passed`仅限该项声明范围；本项目整体未完成。CPU测试、Python wheel、CANN编译、设备完成、图捕获、图回放、性能分别列出。历史记录来自 `codex/oscar-ascend`，2026-10-16 本轮母源为 `oscar-new-3`、交付分支为 `codex/bf16-history-implementation`；授权远端为用户指定GitCode仓库，推送状态以最终Git提交/远端校验为准。
+本表保留启动文档稳定ID。`passed`仅限该项声明范围；本项目整体未完成。CPU测试、Python wheel、CANN编译、设备完成、图捕获、图回放、性能分别列出。历史记录来自 `codex/oscar-ascend`，2026-10-16 本轮母版本为 `07a70d8`、工作分支为 `oscar-new-3`；授权远端为用户指定GitCode仓库，推送状态以最终Git提交/远端校验为准。
 
-2026-10-16 BF16 新路径：按最新要求一次补齐六路研究实现、工作区/绑定/构建/路由和独立设备/图门，详见[执行方案](bf16_history_execution_plan.md)与[本轮回执](../reports/bf16_history_all_code_20261016.json)。固定 CPU 数值集仍 7/11 失败（旧 FP32 全过），生产守卫继续拒绝，默认构建/配置不启用新核。CANN/Lima/torch_npu 本机缺失，新核 CANN、CPU-debug、设备完成、图捕获/回放、服务、模型质量和性能均未验收；源码与主机测试不提升 C04/E01/E06。42 个稳定 checkpoint 及既有设备证据保留，冻结集/oracle/acceptance 未改。
+2026-10-16 全源 BF16 更新：按最新用户确认的精度契约，history/sink/recent/current 全部使用 BF16 QK/PV 输入；历史直接查表解包到 BF16，默认构建/服务启用，旧 FP32 生产路由退出。见[改造方案](bf16_attention_alignment_20261016.md)与[交付回执](../reports/bf16_alignment_delivery_20261016.json)。直接解码 CPU 检查通过，但完整数值集仍 7/11 失败（旧 FP32 全过），其中2例最终输出失败；冻结门不变、带probe入口失败仍停止。CANN/官方CPU-debug/NPU/图/服务/模型质量和性能仍未验收。42个稳定checkpoint及既有设备证据保留，未提升C04/E01/E06状态。
 
 | ID | 状态 | 要求 | 本轮证据/缺口 |
 |---|---|---|---|

@@ -1,6 +1,6 @@
 # 档案 #28/#29/#30/#84：建引擎前初始化父进程线程池；保留附录 A 参数及 MTP eager 作用域。
 # #34/#36：原生预算模式不传预算参数；worker按原生有效容量预分配。
-# #148/#153：未通过冻结精度门的 BF16 history 请求必须在启动前明确拒绝。
+# #148/#153/#154：唯一生产BF16精度与布局必须明确；原生基线不安装OSCAR。
 from __future__ import annotations
 import argparse
 import json
@@ -22,8 +22,13 @@ def diagnose_guard_enabled(config: dict) -> bool:
     return enabled
 
 
-def serve_argv(config: dict) -> list[str]:
-    require_bf16_history_production(config)
+def serve_argv(config: dict, *, native=False) -> list[str]:
+    if type(native) is not bool:
+        raise ValueError("native must be an explicit boolean")
+    if native:
+        normalize_bf16_history(config, variant="native")
+    else:
+        require_bf16_history_production(config)
     native_budget = config.get("use_native_token_budget", True)
     if type(native_budget) is not bool:
         raise ValueError("use_native_token_budget must be an explicit boolean")
@@ -72,16 +77,21 @@ def serve_argv(config: dict) -> list[str]:
     return args
 
 
-def target_env(config: dict, base: dict[str, str] | None = None) -> dict[str, str]:
-    require_bf16_history_production(config)
+def target_env(config: dict, base: dict[str, str] | None = None, *, native=False) -> dict[str, str]:
+    if type(native) is not bool:
+        raise ValueError("native must be an explicit boolean")
+    if native:
+        normalize_bf16_history(config, variant="native")
+    else:
+        require_bf16_history_production(config)
     env = dict(os.environ if base is None else base)
     if diagnose_guard_enabled(config):
         env["OSCAR_GUARD_HOST_SYNC"] = "1"
     devices = config.get("devices")
-    if not isinstance(devices, list) or len(devices) != 4 or len(set(devices)) != 4 or any(type(x) is not int or x < 0 for x in devices):
+    if not isinstance(devices, list) or len(devices) != 4 or any(type(x) is not int or x < 0 for x in devices) or len(set(devices)) != 4:
         raise ValueError("configs/target.json devices must contain the four physical NPU IDs selected for this task")
     env["ASCEND_RT_VISIBLE_DEVICES"] = ",".join(map(str, devices))
-    env["OSCAR_ENABLED"] = "1"
+    env["OSCAR_ENABLED"] = "0" if native else "1"
     plugins = [p.strip() for p in env.get("VLLM_PLUGINS", "").split(",") if p.strip()]
     # With no allowlist vLLM loads every registered plugin. Do not accidentally exclude Ascend.
     if plugins:
@@ -99,15 +109,14 @@ def main() -> int:
     parser.add_argument("--native",action="store_true",help="explicit unmodified native baseline, never selected after an OSCAR failure")
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
-    bf16_history = normalize_bf16_history(config, variant="native" if args.native else None)
-    if BF16_HISTORY_FLAG in config:
-        config[BF16_HISTORY_FLAG] = bf16_history
-    command = serve_argv(config)
+    from .serving_variants import variant_config
+    config = variant_config(config, "native" if args.native else None)
+    command = serve_argv(config, native=args.native)
     if args.print_command:
         import shlex
         print("vllm " + shlex.join(command))
         return 0
-    os.environ.update(target_env(config))
+    os.environ.update(target_env(config, native=args.native))
     os.environ["OSCAR_TARGET_CONFIG"]=str(args.config.resolve())
     if diagnose_guard_enabled(config):
         print("[oscar] PERF_DIAGNOSTIC mode=trap target_eager=true "

@@ -15,6 +15,7 @@ import math
 import statistics
 
 from oscar_ascend.integration import current_attention as current
+from .experiments.bf16_direct_decode import CONTRACT
 from oscar_ascend.integration.guard_diag import guard_diag_enabled, run_status_guard
 
 SCOPE = 'complete_attention_eager_prepare_rotate_cv_native_current_merge_copy_store_guard_device_events'
@@ -43,7 +44,7 @@ def execution_contract(config,cores):
     settings={'rotate_operator':'rotate_vector_init_out' if config.get('experimental_quantization_bundle',False) else 'rotate_out',
               'hadamard':True,'k_clip_ratio':float(config.get('k_clip_ratio',0.0)),
               'v_clip_ratio':float(config.get('v_clip_ratio',0.0)),'guard_host_sync':False}
-    return {'effective_config_sha256':config_sha256(config),'cube_cores':cores,
+    return {'operand_contract':CONTRACT,'effective_config_sha256':config_sha256(config),'cube_cores':cores,
             'engine_budget':budget,'capture_sizes':captures,'workspace_geometry':asdict(geometry),
             'cv_arena_bytes':{'baseline':replace(geometry,bf16_history=False).cv_bytes,'candidate':geometry.cv_bytes},
             'settings':settings,'synthetic_physical_pages':True,'physical_block_tokens':512,
@@ -65,7 +66,7 @@ def validate_execution(contract):
         if (settings['guard_host_sync'] is not False or settings['hadamard'] is not True or
             settings['rotate_operator'] not in {'rotate_out','rotate_vector_init_out'} or
             any(type(settings[key]) not in (float,int) or not math.isfinite(settings[key]) or not 0<=settings[key]<1 for key in ('k_clip_ratio','v_clip_ratio'))):return False
-        return (isinstance(contract['effective_config_sha256'],str) and len(contract['effective_config_sha256'])==64 and
+        return (contract.get('operand_contract')==CONTRACT and isinstance(contract['effective_config_sha256'],str) and len(contract['effective_config_sha256'])==64 and
                 contract['synthetic_physical_pages'] is True and contract['physical_block_tokens']==512 and
                 contract['raw_ssm_offset_bytes']==64 and contract['window_stride_tokens']==323 and
                 contract['partial_buffers']=='production_active_view_shapes' and
@@ -255,6 +256,11 @@ def check_pair(torch,case,fixture,pair,policy,acceptance):
     if not torch.equal(old_tasks,new['tasks'].cpu()):raise RuntimeError('full attention changed task bytes between arms')
     detail=probe.compare_pair(torch,case,fixture,old,new,task_hash,acceptance,
                               oracle=full_oracle(torch,fixture,old_tasks,policy))
+    if policy['native_current']:
+        part=2*fixture['spec'].splits
+        for key in ('partial','lse'):
+            if not probe.shared._store_bits_equal(torch,old[key][:,:,part],new[key][:,:,part]):
+                raise RuntimeError('unchanged native current partial changed '+key+' bits')
     for key in (*STORAGE_KEYS,'qr'):
         if not probe.shared._store_bits_equal(torch,pair[0]['tensors'][key],pair[1]['tensors'][key]):
             raise RuntimeError('full attention changed writer/rotation '+key+' bytes')
@@ -268,7 +274,8 @@ def check_pair(torch,case,fixture,pair,policy,acceptance):
             raise RuntimeError('full attention did not publish current INT2 rows')
     return {'passed':detail['passed'],'precision':detail,'task_sha256':task_hash,
             'writer_bytes_equal':True,'rotation_bytes_equal':True,'immutable_inputs':True,
-            'all_status_zero':True,'same_arm_repeat_bitwise':True}
+            'all_status_zero':True,'same_arm_repeat_bitwise':True,
+            'native_current_bitwise':True if policy['native_current'] else None}
 
 
 def numerical_case(torch,ops,case,device,cores,config,acceptance,first_receipt):
@@ -352,9 +359,11 @@ def validate_receipt(case,row,*,timed,execution):
         bad.append(case.shape.name+'.full_attention.contract')
     for key in ('passed','writer_bytes_equal','rotation_bytes_equal','immutable_inputs','all_status_zero','same_arm_repeat_bitwise'):
         if numeric.get(key) is not True:bad.append(case.shape.name+'.full_attention.'+key)
+    if numeric.get('native_current_bitwise')!=(True if case_policy(case)['native_current'] else None):
+        bad.append(case.shape.name+'.full_attention.native_current_bits')
     precision=numeric.get('precision') or {}
     if any(precision.get(key)!=value for key,value in {'passed':True,'queries':sum(case.shape.qlens),
-        'oracle':'all_actual_queries_raw_space','status_lane_bits':True,'precise_sources_bitwise':True}.items()):
+        'oracle':'all_actual_queries_raw_space','status_lane_bits':True,'empty_partial_bits':True,'operand_contract':CONTRACT}.items()):
         bad.append(case.shape.name+'.full_attention.oracle')
     comparisons=precision.get('comparisons') or {}
     if set(comparisons)!={'baseline','candidate'}:bad.append(case.shape.name+'.full_attention.oracle_arms')

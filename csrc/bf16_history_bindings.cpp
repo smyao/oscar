@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Archive #108/#126/#148/#153/#154: independent research ABI registration.
+// Archive #108/#126/#148/#153/#154/#157: all-source BF16 production ABI.
 // The validation/launch templates are byte-identical to the striped parent;
 // only symbols and explicit typed-workspace capacities change below.
-// Numerical qualification is separate from building this optional extension.
+// Numerical/device/graph qualification is separate from building the extension.
+// D.4: CV covers fused dequant+FIA; 6499.8-6655.1ms full-history recovery
+// is forbidden. Bind only per-core tile arenas, never full-history BF16.
+// The 18.5-18.9ms FIA range is a historical reference, not a measured speedup.
 #include <algorithm>
 #include <cmath>
 #include <limits>

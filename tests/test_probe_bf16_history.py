@@ -87,15 +87,17 @@ def test_dropped_or_duplicate_task_owner_is_not_hidden_by_zero_filling():
     with pytest.raises(RuntimeError,match='missing or duplicate'):probe.partial_oracle(torch,fixture,torch.cat((tasks,tasks[:1])))
 
 
-def test_new_history_may_differ_but_precise_sources_must_match_bits():
+def test_all_bf16_sources_are_checked_against_oracle_without_old_partial_bitwise():
     case=probe.case_plan()[0];fixture=probe.make_fixture(torch,case);tasks=task_fixture(fixture)
     old=oracle_buffers(fixture,tasks);new={k:v.clone() if isinstance(v,torch.Tensor) else v for k,v in old.items()}
     task_hash=probe.reuse._fingerprint({'tasks':tasks})
-    new['partial'][:,:,0]+=0.1
+    new['partial'][:fixture['actual_tokens'],:,0]+=0.1
     result=probe.compare_pair(torch,case,fixture,old,new,task_hash,ACCEPTANCE)
     assert not result['passed'] and not result['comparisons']['candidate']['partial']['passed']
-    new['partial'][:,:,case.shape.splits]+=0.01
-    with pytest.raises(RuntimeError,match='precise source 1/2'):probe.compare_pair(torch,case,fixture,old,new,task_hash,ACCEPTANCE)
+    new['partial'][:fixture['actual_tokens'],:,case.shape.splits]+=0.01
+    changed=probe.compare_pair(torch,case,fixture,old,new,task_hash,ACCEPTANCE)
+    assert not changed['passed'] and changed['operand_contract']==probe.CONTRACT
+    assert changed['empty_partial_bits'] is True
 
 
 @pytest.mark.parametrize('cluster',[4,16])
@@ -114,7 +116,7 @@ def synthetic_evidence():
         names=probe.ROUTES[case.route][:2];invalid=probe._invalid(case)
         detail={'passed':True,'queries':0 if invalid else sum(case.shape.qlens),
                 'oracle':'expected_error_domain' if invalid else 'all_actual_queries_raw_space',
-                'status_lane_bits':True,'precise_sources_bitwise':True,
+                'status_lane_bits':True,'empty_partial_bits':True,'operand_contract':probe.CONTRACT,
                 'comparisons':{} if invalid else {arm:{key:{'passed':True} for key in ('partial','lse','output','output_lse','bf16','relative_l2')} for arm in ('baseline','candidate')}}
         row={'case':case.shape.name,'route':case.route,'baseline_operator':names[0],'candidate_operator':names[1],
              'status':'passed','device_completion':'passed','queries':sum(case.shape.qlens),
@@ -142,8 +144,9 @@ def synthetic_evidence():
                 'numerical':{key:True for key in ('passed','writer_bytes_equal','rotation_bytes_equal','immutable_inputs','all_status_zero','same_arm_repeat_bitwise')},
                 'timing':dict(row['timing'][probe.SCOPES[0]],scope=complete.SCOPE)}
             row['full_attention']['numerical']['precision']=full_detail
+            row['full_attention']['numerical']['native_current_bitwise']=True if complete.case_policy(full_case)['native_current'] else None
         rows.append(row)
-    return {'schema':probe.SCHEMA,'status':'passed','device_completion':'passed','precision':'passed','error_domain':'passed',
+    return {'schema':probe.SCHEMA,'operand_contract':probe.CONTRACT,'status':'passed','device_completion':'passed','precision':'passed','error_domain':'passed',
             'graph_capture':'passed','graph_replay':'passed','cv_performance':'passed',
             'full_attention_performance':'passed','model_quality':'not_established','production_qualified':False,'cases':rows,'cpu_screen':synthetic_cpu_pass(),
             'configuration':{'execution':copy.deepcopy(EXECUTION),'model_config_sha256':'0'*64,'target_geometry':[6,1,256],
@@ -162,7 +165,7 @@ def test_validator_rejects_incomplete_or_weak_operator_evidence(mutation):
     report=synthetic_evidence();row=report['cases'][0]
     if mutation=='missing_case':report['cases'].pop()
     elif mutation=='wrong_route':row['candidate_operator']='attention_cv_mdl_decode_out'
-    elif mutation=='source_bitwise':row['precision']['precise_sources_bitwise']=False
+    elif mutation=='source_bitwise':row['precision']['empty_partial_bits']=False
     elif mutation=='partial_oracle':row['precision']['comparisons']['candidate']['partial']['passed']=False
     elif mutation=='final_bf16':row['precision']['comparisons']['candidate'].pop('bf16')
     elif mutation=='graph_oracle':row['graph']['states'][0]['precision']['passed']=False
@@ -256,10 +259,15 @@ def test_all_padding_oracle_has_only_zero_output_and_negative_infinite_lse():
 def synthetic_cpu_pass():
     """Deliberately fabricated parser fixture, never saved as numerical evidence."""
     from dataclasses import asdict
-    from tools.experiments import bf16_history_screen as screen
+    from tools.experiments import bf16_all_sources_screen as screen
     import hashlib
     cases=[asdict(case) for case in screen.CASES]
-    return {'status':'cpu_screen_passed_not_qualified','returncode':0,'required_cases_complete':True,
+    direct={'contract':probe.CONTRACT,'status':'cpu_direct_decode_passed','returncode':0,'packed_words':65536,
+        'packed_code_positions_checked':524288,'valid_scale_patterns':31743,'finite_zero_patterns':63488,
+        'metadata_pairs':634872,'levels_checked':2539488,'exact_halfway_values_checked':142980,
+        'metadata_cartesian_product_exhaustive':False,'negative_zero_code0_bits':0,
+        'device_completion':'not_run','production_qualified':False}
+    return {'schema_version':2,'operand_contract':probe.CONTRACT,'direct_decode':direct,'status':'cpu_screen_passed_not_qualified','returncode':0,'required_cases_complete':True,
             'required_cases':cases,'frozen_attention_gate':ACCEPTANCE['fused_attention'],
             'frozen_prefill_window_gate':ACCEPTANCE['prefill_window'],'next_stage':'device_design_allowed',
             'source_sha256':{name:hashlib.sha256((probe.ROOT/name).read_bytes()).hexdigest() for name in probe.CPU_SOURCE_PATHS},
@@ -304,7 +312,7 @@ def test_performance_code_is_reachable_only_after_all_mandatory_receipts(monkeyp
 
 
 def test_cpu_performance_prerequisite_runs_the_fixed_complete_screen(monkeypatch,tmp_path):
-    from tools.experiments import bf16_history_screen as screen
+    from tools.experiments import bf16_all_sources_screen as screen
     called=[];sentinel=object()
     def run(*,cases,progress):
         called.append(cases)
@@ -324,10 +332,10 @@ def test_first_device_pass_contains_no_timing_call():
 
 
 def test_completed_source_bound_cpu_failure_is_reused_and_still_blocks_performance(monkeypatch,tmp_path):
-    from tools.experiments import bf16_history_screen as screen
+    from tools.experiments import bf16_all_sources_screen as screen
     cpu=synthetic_cpu_pass()
     cpu['cases'][0]['candidate_passed']=False
-    cpu.update(status='cpu_screen_failed',returncode=2,next_stage='stop_production_integration')
+    cpu.update(status='cpu_screen_failed',returncode=2,next_stage='numerical_gate_failed_no_performance_qualification')
     report=tmp_path/'cpu.json';report.write_text(json.dumps(cpu))
     monkeypatch.setattr(probe,'CPU_SCREEN_REPORT',report)
     monkeypatch.setattr(screen,'run',lambda **kw:pytest.fail('matching completed CPU screen must not rerun'))
@@ -337,7 +345,7 @@ def test_completed_source_bound_cpu_failure_is_reused_and_still_blocks_performan
 
 
 def test_stale_cpu_report_cannot_authorize_timing_and_requires_full_rerun(monkeypatch,tmp_path):
-    from tools.experiments import bf16_history_screen as screen
+    from tools.experiments import bf16_all_sources_screen as screen
     cpu=synthetic_cpu_pass();cpu['source_sha256']['configs/acceptance.json']='stale'
     path=tmp_path/'cpu.json';path.write_text(json.dumps(cpu))
     monkeypatch.setattr(probe,'CPU_SCREEN_REPORT',path)
@@ -346,3 +354,11 @@ def test_stale_cpu_report_cannot_authorize_timing_and_requires_full_rerun(monkey
     probe.run_cpu_screen()
     assert seen==[screen.CASES]
     assert probe.cpu_screen_errors(cpu)
+
+
+def test_empty_protocol_remains_bitwise_even_with_all_source_bf16_arithmetic():
+    case=probe.case_plan()[0];fixture=probe.make_fixture(torch,case);tasks=task_fixture(fixture)
+    old=oracle_buffers(fixture,tasks);new={k:v.clone() if isinstance(v,torch.Tensor) else v for k,v in old.items()}
+    new['partial'][-1,0,0,0]=0.001  # below frozen atol, but invalid empty protocol
+    with pytest.raises(RuntimeError,match='empty partial zero'):
+        probe.compare_pair(torch,case,fixture,old,new,probe.reuse._fingerprint({'tasks':tasks}),ACCEPTANCE)

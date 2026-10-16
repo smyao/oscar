@@ -27,7 +27,7 @@ def main(argv=None) -> int:
     parser.add_argument("--plan", action="store_true", help="print commands without installing or touching an NPU")
     parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--variant", choices=("baseline", "candidate"),
-                        help="candidate enables C4, later-MTP q1, fast unpack mixed balanced/C16 and striped INT2/SIMD; baseline selects fe0; omitted respects config")
+                        help="default/candidate uses BF16 matrix inputs for every OSCAR attention source; retired FP32 baseline is rejected")
     parser.add_argument("--rear-cards", action="store_true",
                         help="use physical Ascend devices 4,5,6,7 and port 7878 for this launch only")
     parser.add_argument("--native-token-budget", action="store_true",

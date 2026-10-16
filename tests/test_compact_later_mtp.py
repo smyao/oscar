@@ -203,7 +203,7 @@ def test_original_padded_shape_keeps_cv_split_choice():
 @pytest.mark.parametrize("compact_shape,expected_splits",[(None,20),(16384,1)])
 def test_real_forward_keeps_actual_b_buffers_with_original_n_split(monkeypatch,compact_shape,expected_splits):
     from oscar_ascend.integration.current_attention import use_native_current
-    from oscar_ascend.bf16_history_policy import validate_bf16_history
+    from oscar_ascend.bf16_history_policy import validate_bf16_history, production_attention_config
     native=definitions("oscar_ascend/integration/impl.py","compact_impl_shape_contract",set(),
         {"torch":torch,"use_native_current":use_native_current,"OscarReadinessError":OscarReadinessError,
          "validate_bf16_history":validate_bf16_history},
@@ -217,9 +217,9 @@ def test_real_forward_keeps_actual_b_buffers_with_original_n_split(monkeypatch,c
         tasks=torch.empty(49152,16,dtype=torch.int64),attention_status=torch.empty(49152,2,dtype=torch.int32),
         query_rot=torch.empty(1,6,256),partial_views=partial_views)
     raw=torch.empty(1,dtype=torch.uint8)
-    state=SimpleNamespace(packed=raw,cache_format="canonical_v1",workspace=workspace)
+    state=SimpleNamespace(packed=raw,cache_format="striped_v1",workspace=workspace)
     impl=SimpleNamespace(num_heads=6,num_kv_heads=1,head_size=256,
-        provider=SimpleNamespace(config={},layer_state=lambda _:state))
+        provider=SimpleNamespace(config=production_attention_config({}),layer_state=lambda _:state))
     metadata=OscarMetadata(torch.tensor([0,1]),torch.tensor([501]),torch.zeros(1,5,dtype=torch.int32),
         torch.tensor([500]),1,1,1,501,num_input_tokens=1,is_draft=True,draft_index=1,cv_shape_tokens=compact_shape)
     q=torch.empty(1,6,256,dtype=torch.bfloat16);kv=torch.empty(1,1,256,dtype=torch.bfloat16)

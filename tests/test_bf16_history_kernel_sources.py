@@ -48,9 +48,9 @@ def integer_expression(expression, names):
 EXPECTED = {
     "mdl": (1146880, 1720320, 158656, 175040),
     "member_pipeline_cluster4": (2494464, 3741696, 157760, 174144),
-    "window_range_cluster16": (4997120, 7495680, 157632, 174016),
-    "window_range": (917504, 1376256, 157632, 174016),
-    "window_range_balanced": (917504, 1376256, 157632, 174016),
+    "window_range_cluster16": (4997120, 7495680, 157632, 174528),
+    "window_range": (917504, 1376256, 157632, 174528),
+    "window_range_balanced": (917504, 1376256, 157632, 174528),
 }
 
 
@@ -67,14 +67,15 @@ def test_inverse_generation_preserves_exact_fixed_mother(name, mother, sha):
 
 
 @pytest.mark.parametrize("name,mother,sha", SPECS)
-def test_only_history_operands_round_and_fp32_result_rotation_are_retained(name, mother, sha):
+def test_all_source_operands_use_bf16_and_only_rotation_uses_fp32_matmul(name, mother, sha):
     source = (ROOT / "csrc/kernels" / f"attention_bf16_history_{name}.cpp").read_text()
     publisher = body(source, "void PublishOperand(")
-    assert "if(kind==0)oscar_bf16_history::Publish(operandWork[offset],source,operandBuf,elements);" in publisher
-    assert "else DataCopy(work[offset],source,elements);" in publisher
+    assert "oscar_bf16_history::Publish(operandWork[offset],source,operandBuf,elements);" in publisher
+    assert "kind" not in publisher and "DataCopy(work" not in publisher
     assert "PublishOperand(qOffset+row*D,dst,D)" in source
-    assert "PublishOperand(qOffset+row*D,zeros,count*D)" in source
-    assert "PublishOperand((value?vOffset:kOffset)+slot*D,src,kElements)" in source
+    assert "else PublishBf16Operand(qOffset+row*D,src,D)" in source
+    assert "PublishBf16Operand(qOffset+row*D,zeros,count*D)" in source
+    assert "PublishBf16Operand((value?vOffset:kOffset)+slot*D,src,kElements)" in source
     assert "PublishOperand(pOffset+rowBase*kKvRows,scores,activeRows*kKvRows)" in source
     assert "DataCopy(work[qOffset+lane*kLaneRows*D],acc,kLaneRows*D)" in source
     assert not re.search(r"Publish(?:History)?Operand\([^;]*\bacc\b", source)
@@ -83,24 +84,25 @@ def test_only_history_operands_round_and_fp32_result_rotation_are_retained(name,
     assert "GetMatmulApiTiling<HistoryA,HistoryB,Matrix,Matrix>" in source
     assert "using Matrix=MatmulType<TPosition::GM,CubeFormat::ND,float,false>" in source
     dot = body(source, "void Matmul(")
-    assert "const bool history=kind==0 && !rotation;" in dot
+    assert "const bool history=!rotation;" in dot
     assert dot.index("SelectMatmul(history,") < dot.index("if(history)")
     assert "historyMm.template IterateAll<true>(work[c]);" in dot
-    assert "if(rotation) mm.SetTensorB(rv,true);else mm.SetTensorB(work[b],transposeB);" in dot
+    assert "mm.SetTensorB(rv,true);" in dot
+    assert "mm.SetTensorB(work[b]" not in dot
     assert "mm.template IterateAll<true>(work[c]);" in dot
     if name == "member_pipeline_cluster4":
         atomic = body(source, "void MatmulAtomic(")
-        assert "SelectMatmul(kind==0," in atomic
+        assert "SelectMatmul(true," in atomic
         assert "historyMm.template IterateAll<true>(work[c],static_cast<uint8_t>(1));" in atomic
-        assert "mm.template IterateAll<true>(work[c],static_cast<uint8_t>(1));" in atomic
+        assert "mm.template IterateAll" not in atomic
 
 
 def test_cluster4_history_publisher_preserves_both_old_lane_domains():
     source = (ROOT / "csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp").read_text()
     publish = body(source, "void PublishHistoryOperand(")
-    assert "PublishOperand(offset,source,kElements);" in publish
-    assert "PublishOperand(offset+2*kElements,source[kElements],kElements);" in publish
-    assert "else DataCopy(work[offset],source,originalCopy);" in publish
+    assert "PublishBf16Operand(offset,source,kElements);" in publish
+    assert "PublishBf16Operand(offset+2*kElements,source[kElements],kElements);" in publish
+    assert "DataCopy(work" not in publish
     coverage = {}
     for subtile in range(4):
         for lane in range(2):
@@ -111,6 +113,51 @@ def test_cluster4_history_publisher_preserves_both_old_lane_domains():
                 assert destination not in coverage
                 coverage[destination] = (subtile, lane, row)
     assert sorted(coverage) == list(range(256))
+
+
+@pytest.mark.parametrize("name,mother,sha", SPECS)
+def test_precise_kv_never_expands_fp32_and_preserves_guard_order(name, mother, sha):
+    source = (ROOT / "csrc/kernels" / f"attention_bf16_history_{name}.cpp").read_text()
+    window = body(source, "void LoadWindowRuns(")
+    current = body(source, "void LoadPrecise(")
+    for loader in (window, current):
+        assert "auto dst=dequantBuf.Get<bfloat16_t>();" in loader
+        assert "Cast(dst" not in loader
+        assert "dequantBuf.Get<float>" not in loader
+        assert "CheckBf16Row(dst[" in loader
+    assert window.index("if(!Physical(position") < window.index("DataCopyPad(tags")
+    assert window.index("if(tags.GetValue(row)!=inpage+row)") < window.index("CheckBf16Row(")
+    assert "DataCopyPad(dst[(j+begin)*D],wv[off],copy,pad)" in window
+    assert "DataCopyPad(dst,cv[off],copy,pad)" in current
+    finite = body(source, "void CheckBf16Row(")
+    assert "Cast(row,source,RoundMode::CAST_NONE,D)" in finite
+    assert "ReduceSum(check,row,check[16],D)" in finite
+    assert finite.index("Fence<HardEvent::V_S>()") < finite.index("if(!Finite")
+    assert "Fence<HardEvent::S_V>()" in finite
+    # P rounding must not change the FP32 denominator or online accumulation.
+    softmax = body(source, "void Softmax(")
+    old_softmax = body((ROOT / "csrc/kernels" / mother).read_text(), "void Softmax(")
+    assert softmax.replace("PublishOperand(pOffset+rowBase*kKvRows,scores,activeRows*kKvRows)",
+                           "DataCopy(work[pOffset+rowBase*kKvRows],scores,activeRows*kKvRows)") == old_softmax
+
+
+@pytest.mark.parametrize("name,mother,sha", SPECS)
+def test_direct_unpack_allocations_cover_actual_strided_addresses(name, mother, sha):
+    source = (ROOT / "csrc/kernels" / f"attention_bf16_history_{name}.cpp").read_text()
+    h = 64 if name == "mdl" else 32 if name == "member_pipeline_cluster4" else 16
+    init = body(source, "void Init(")
+    expected = "kHistoryHalfKv" if h == 32 else "kHalfKv"
+    assert f"pipe.InitBuffer(naturalBuf,{expected}*(D+16)*2);" in init
+    assert f"oscar_ascend_striped_bf16::Unpack<D,{expected}>" in source
+    assert "dequantBuf,scratchBuf,operandBuf);" in source
+    # Independent highest used natural/index/table/output address, including
+    # H32 old-lane packing and H64 last eight-row index scratch reuse.
+    assert ((h - 1) * 272 + 255 + 1) * 2 <= h * 272 * 2
+    assert ((3 * h + h - 1) + 1) * 2 == 4 * h * 2
+    assert 8 * 256 * 4 * 2 == 16384
+    if name == "mdl":
+        pipeline = body(source, "void PipelinePublishKv(")
+        assert "PublishBf16Operand" in pipeline and "dequantBuf.Get<bfloat16_t>()" in pipeline
 
 
 @pytest.mark.parametrize("name,mother,sha", SPECS)
@@ -133,9 +180,10 @@ def test_actual_buffers_and_per_core_arenas_fit_the_declared_resource_limits(nam
         assert size % 32 == 0
         total += size
     old_bytes, candidate_bytes, old_ub, candidate_ub = EXPECTED[name]
-    assert total == candidate_ub == old_ub + 16384
+    natural_extra = 0 if name in ("mdl", "member_pipeline_cluster4") else 512
+    assert total == candidate_ub == old_ub + 16384 + natural_extra
     assert total <= 184 * 1024
-    assert "kOriginalVectorBytes+oscar_bf16_history::kOperandScratchBytes<=184*1024" in source
+    assert "kOriginalVectorBytes+kNaturalPaddingBytes+oscar_bf16_history::kOperandScratchBytes<=184*1024" in source
     assert "auto coreWorkspace=workspace+core*floatsPerCore*6;" in init
     assert "work.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(coreWorkspace));" in init
     assert "coreWorkspace+floatsPerCore*4" in init

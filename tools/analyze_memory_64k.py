@@ -19,7 +19,7 @@ from oscar_ascend.lifecycle import SnapshotLayout
 from oscar_ascend.dual_region_layout import DualRegionPageLayout
 from oscar_ascend.request_window_storage import RequestWindowLayout
 from oscar_ascend.runtime import WorkspaceGeometry
-from tools.serving_variants import variant_config
+from tools.serving_variants import variant_config, research_variant_config
 
 ROOT = Path(__file__).resolve().parents[1]
 MIB = 1 << 20
@@ -249,7 +249,8 @@ def analyze(target: dict, geometry: ModelGeometry, *, prompt_tokens: int = 65100
         rows.append(row)
     variants = {}
     for name in ("baseline", "candidate"):
-        effective = variant_config(target, name)
+        effective = (research_variant_config(target, name) if name == "baseline"
+                     else variant_config(target, name))
         # 2026-10-09: serving leaves the budget to the native engine. This
         # offline ledger cannot infer it from a configured capture list or
         # substitute 2048; historical reports retain their original numbers.

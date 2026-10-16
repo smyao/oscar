@@ -88,7 +88,7 @@ class OscarAttentionImpl(AttentionImpl):
         n, h, hk, d = query.shape[0], self.num_heads, self.num_kv_heads, self.head_size
         try:
             bf16_history = validate_bf16_history(self.provider.config, head_dim=d,
-                                                 cache_format=expected_format)
+                                                 cache_format=expected_format, production=True)
         except ValueError as error:
             raise OscarReadinessError(str(error)) from error
         if key.shape[0] != n or value.shape[0] != n:

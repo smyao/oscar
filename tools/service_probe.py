@@ -155,7 +155,7 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
     lifecycle = {} if lifecycle is None else lifecycle
     trace_dir = log_dir / f"trace-{uuid.uuid4().hex}"
     trace_dir.mkdir()
-    environment = target_env(config)
+    environment = target_env(config, native=native)
     environment["OSCAR_TRACE_DIR"] = str(trace_dir)
     environment["OSCAR_TARGET_CONFIG"] = str(Path(config_path).resolve())
     if not native and config.get("diagnostic_device_timing") is True:
@@ -178,7 +178,7 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
     process = None
     ownership = None
     lifecycle.update(status="starting", command=command, variant="native" if native else "oscar",
-                     target_argv=serve_argv(config),
+                     target_argv=serve_argv(config, native=native),
                      log=str(log), trace_dir=str(trace_dir), cleanup_complete=False,
                      debug_sync=environment.get("OSCAR_DEBUG_SYNC", "0").lower() in {"1", "true"})
     print(f"[oscar] worker checkpoints debug_sync={lifecycle['debug_sync']} trace={trace_dir}", flush=True)

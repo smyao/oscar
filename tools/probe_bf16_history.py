@@ -1,6 +1,6 @@
-"""Independent BF16-history NPU gate (archive #126/#145/#148/#154/#157).
+"""Unified BF16 attention NPU gate (archive #126/#145/#148/#154/#157).
 
-This diagnostic calls new symbols directly. It never relaxes the old MDL/C4
+This diagnostic calls all-source BF16 symbols directly. It never relaxes the old MDL/C4
 bitwise gates or the frozen oracle, and never enables a serving configuration.
 D.4 forbids serving-side full-history restoration: only this CPU oracle may
 materialize history. Device workspace remains bounded per Cube core. Device,
@@ -25,9 +25,10 @@ from .phase import atomic_json
 from .striped_fixture import raw_to_striped
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA = 'oscar.bf16_history.npu.v1'
+SCHEMA = 'oscar.bf16_history.npu.v2'
+from .experiments.bf16_direct_decode import CONTRACT
 MIN_SPEEDUP = 1.15
-CPU_SCREEN_REPORT = ROOT / 'reports/bf16_history_stage1_20261016.json'
+CPU_SCREEN_REPORT = ROOT / 'reports/bf16_all_sources_screen_20261016_v3.json'
 ROUTES = {
     'mdl': ('attention_cv_mdl_decode_out', 'attention_bf16_history_mdl_out', 1, 1146880),
     'mdl_q1': ('attention_cv_mdl_decode_q1_out', 'attention_bf16_history_mdl_q1_out', 1, 1146880),
@@ -50,6 +51,8 @@ SOURCE_PATHS = (
     'csrc/kernels/rotate_vector_init.cpp', 'csrc/kernels/rotate_clip_store_striped.cpp',
     'csrc/kernels/status_guard.cpp',
     'tools/probe_striped_cache.py', 'tools/experiments/bf16_history_screen.py',
+    'tools/experiments/bf16_all_sources_screen.py', 'tools/experiments/bf16_direct_decode.py',
+    'csrc/kernels/attention_striped_unpack_bf16.h', 'tools/experiments/generate_bf16_history_kernels.py',
     'oscar_ascend/ops/reference.py', 'configs/acceptance.json',
     'csrc/kernels/attention_bf16_history_mdl.cpp',
     'csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp',
@@ -300,11 +303,16 @@ def compare_pair(torch,case,fixture,old,new,task_hash,acceptance,oracle=None):
         check_cluster_stats(new['cluster_stats'].cpu(), ROUTES[case.route][2],
                             expected_leaders=int((old['tasks'][:,7].eq(0)&old['tasks'][:,1].gt(0)).sum()),
                             require_cluster=case.shape.expect_clusters and fixture['actual_tokens']>0)
-    splits=fixture['spec'].splits
-    for name in ('partial','lse'):
-        # Source 0 changes numerically. Source 1/2 retain exact old arithmetic.
-        if not shared._store_bits_equal(torch,old[name][:,:,splits:].contiguous(),new[name][:,:,splits:].contiguous()):
-            raise RuntimeError('BF16 changed precise source 1/2 '+name+' bits')
+    # Every source now has BF16 Cube operands. Exact input BF16 storage is
+    # unchanged, but rounded P changes source1/2 PV, so old partial bitwise
+    # parity is no longer the numerical contract. Keep empty protocol exact.
+    empty=torch.isneginf(old['lse'])
+    if not torch.equal(empty,torch.isneginf(new['lse'])):
+        raise RuntimeError('BF16 changed empty partial ownership')
+    for buffers in (old,new):
+        if bool((buffers['partial'][empty]!=0).any()):raise RuntimeError('BF16 changed empty partial zero')
+    if not shared._store_bits_equal(torch,old['partial'][empty],new['partial'][empty]):
+        raise RuntimeError('BF16 changed empty partial bits')
     if invalid:
         # Source 0 finite values may legitimately change; status and nonfinite
         # classification must match, never require new arithmetic to equal old.
@@ -313,7 +321,7 @@ def compare_pair(torch,case,fixture,old,new,task_hash,acceptance,oracle=None):
             for predicate in (torch.isnan,torch.isposinf,torch.isneginf):
                 if not torch.equal(predicate(a),predicate(b)):raise RuntimeError('BF16 changed invalid '+name+' classification')
         return {'passed':True,'oracle':'expected_error_domain','queries':0,'status_lane_bits':True,
-                'precise_sources_bitwise':True,'comparisons':{}}
+                'empty_partial_bits':True,'operand_contract':CONTRACT,'comparisons':{}}
     expected_ids=list(range(fixture['actual_tokens']))
     if sorted(fixture['expected'])!=expected_ids:raise RuntimeError('independent oracle omitted query rows')
     n,h=fixture['tokens'],fixture['spec'].heads
@@ -335,7 +343,7 @@ def compare_pair(torch,case,fixture,old,new,task_hash,acceptance,oracle=None):
         comparisons[arm]['relative_l2']=relative_l2(actual['output'],gold,acceptance['prefill_window']['relative_l2_lt'])
     return {'passed':all(v['passed'] for arm in comparisons.values() for v in arm.values()),
             'oracle':'all_actual_queries_raw_space','queries':len(expected_ids),'status_lane_bits':True,
-            'precise_sources_bitwise':True,'comparisons':comparisons}
+            'empty_partial_bits':True,'operand_contract':CONTRACT,'comparisons':comparisons}
 
 
 def _timing(torch,execute,pair,names):
@@ -468,7 +476,7 @@ def numerical_matrix_errors(rows):
         if any(row.get(k)!=v for k,v in expected.items()):bad.append(case.shape.name+'.contract')
         if any(detail.get(k)!=v for k,v in {'passed':True,'queries':0 if invalid else sum(case.shape.qlens),
                 'oracle':'expected_error_domain' if invalid else 'all_actual_queries_raw_space',
-                'status_lane_bits':True,'precise_sources_bitwise':True}.items()):bad.append(case.shape.name+'.precision')
+                'status_lane_bits':True,'empty_partial_bits':True,'operand_contract':CONTRACT}.items()):bad.append(case.shape.name+'.precision')
         if not invalid:
             comparisons=detail.get('comparisons') or {}
             if set(comparisons)!={'baseline','candidate'}:bad.append(case.shape.name+'.oracle_arms')
@@ -485,26 +493,33 @@ def numerical_matrix_errors(rows):
     return bad
 
 
-CPU_SOURCE_PATHS = (
-    'configs/acceptance.json', 'oscar_ascend/ops/reference.py',
-    'tools/experiments/bf16_history_screen.py', 'tools/probe_history_reuse.py',
-    'csrc/kernels/attention_tasks.cpp', 'csrc/kernels/attention_cv_mdl_decode.cpp',
-    'csrc/kernels/attention_cv_member_pipeline_cluster4.cpp',
-    'csrc/kernels/rotate_clip_store_striped.cpp',
-)
+from .experiments.bf16_all_sources_screen import SOURCE_PATHS as CPU_SOURCE_PATHS
+
+
+def direct_decode_errors(report):
+    if not isinstance(report,dict):return ['missing']
+    expected={'contract':CONTRACT,'status':'cpu_direct_decode_passed','returncode':0,'packed_words':65536,
+        'packed_code_positions_checked':524288,'valid_scale_patterns':31743,'finite_zero_patterns':63488,
+        'metadata_pairs':634872,'levels_checked':2539488,'metadata_cartesian_product_exhaustive':False,
+        'negative_zero_code0_bits':0,'device_completion':'not_run','production_qualified':False}
+    bad=[key for key,value in expected.items() if report.get(key)!=value]
+    if type(report.get('exact_halfway_values_checked')) is not int or report['exact_halfway_values_checked']<=0:
+        bad.append('RNE_halfway_coverage')
+    return bad
 
 
 def cpu_screen_identity_errors(report):
     """An existing failed screen is reusable only for exactly these sources."""
-    from .experiments import bf16_history_screen as screen
+    from .experiments import bf16_all_sources_screen as screen
     if not isinstance(report,dict):return ['missing']
     expected_cases=[asdict(case) for case in screen.CASES]
     acceptance=json.loads((ROOT/'configs/acceptance.json').read_text())
-    expected={'required_cases_complete':True,'required_cases':expected_cases,
+    expected={'schema_version':2,'operand_contract':CONTRACT,'required_cases_complete':True,'required_cases':expected_cases,
               'frozen_attention_gate':acceptance['fused_attention'],
               'frozen_prefill_window_gate':acceptance['prefill_window'],
               'source_sha256':{name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in CPU_SOURCE_PATHS}}
     bad=[key for key,value in expected.items() if report.get(key)!=value]
+    bad += ['direct_decode.'+key for key in direct_decode_errors(report.get('direct_decode'))]
     rows=report.get('cases')
     if not isinstance(rows,list) or len(rows)!=len(expected_cases):return bad+['cases']
     for expected_case,row in zip(expected_cases,rows):
@@ -515,7 +530,7 @@ def cpu_screen_identity_errors(report):
     passed=all(row['baseline_passed'] and row['candidate_passed'] and row['input_bytes_unchanged'] for row in rows)
     for key,value in {'status':'cpu_screen_passed_not_qualified' if passed else 'cpu_screen_failed',
                       'returncode':0 if passed else 2,
-                      'next_stage':'device_design_allowed' if passed else 'stop_production_integration'}.items():
+                      'next_stage':'device_design_allowed' if passed else 'numerical_gate_failed_no_performance_qualification'}.items():
         if report.get(key)!=value:bad.append(key)
     return bad
 
@@ -533,7 +548,7 @@ def cpu_screen_errors(report):
 
 
 def run_cpu_screen():
-    from .experiments import bf16_history_screen as screen
+    from .experiments import bf16_all_sources_screen as screen
     # Reuse the already completed full falsification only when every fixture,
     # frozen threshold and input source hash still matches. Failed evidence is
     # reusable as a failure; it never becomes a performance authorization.
@@ -608,7 +623,7 @@ def performance_phase(torch,ops,rows,cpu_report,device,cores,acceptance,config):
 def validate_evidence(report):
     """Validate operator evidence; numerical receipts precede performance."""
     if not isinstance(report,dict):return ['report']
-    wanted={'schema':SCHEMA,'status':'passed','device_completion':'passed',
+    wanted={'schema':SCHEMA,'operand_contract':CONTRACT,'status':'passed','device_completion':'passed',
             'precision':'passed','error_domain':'passed','graph_capture':'passed','graph_replay':'passed',
             'cv_performance':'passed','full_attention_performance':'passed',
             'model_quality':'not_established','production_qualified':False}
@@ -651,9 +666,9 @@ def configuration_binding(config,cores):
 
 
 def probe(config_path,acceptance_path,*,output_path=None):
-    from .serving_variants import research_variant_config
-    config=research_variant_config(json.loads(config_path.read_text()), 'candidate')
-    if config.get('experimental_bf16_history') is not True:raise RuntimeError('BF16 probe requires explicit research flag')
+    from .serving_variants import variant_config
+    config=variant_config(json.loads(config_path.read_text()), 'candidate')
+    if config.get('experimental_bf16_history') is not True:raise RuntimeError('BF16 probe requires the BF16 attention configuration')
     acceptance=json.loads(acceptance_path.read_text())
     if (acceptance.get('frozen_before_measurement') is not True or acceptance['fused_attention']!={'atol':0.005,'rtol':0.005}
             or acceptance['prefill_window']['relative_l2_lt']!=0.02 or acceptance['performance']!={'max_latency_ratio':1.0,'min_throughput_ratio':1.0,'repeats':5,'warmup':2,'statistic':'median','per_case_required':True,'noise_allowance':0.0}):
@@ -676,7 +691,7 @@ def probe(config_path,acceptance_path,*,output_path=None):
     manifest=validate_build_artifacts(ROOT/'build/ascendc/build_manifest.json')
     require_capabilities({name for values in ROUTES.values() for name in values[:2]}|{'prepare_attention_tasks_out','merge_lse_out','rotate_out','rotate_vector_init_out',
                          'rotate_clip_store_striped_out','status_guard'})
-    result={'schema':SCHEMA,'status':'running','device_completion':'not_run','cases':[],
+    result={'schema':SCHEMA,'operand_contract':CONTRACT,'status':'running','device_completion':'not_run','cases':[],
             'source_binding':source_binding(),'acceptance_sha256':hashlib.sha256(acceptance_path.read_bytes()).hexdigest(),
             'artifact_signature':manifest['signature'],'artifact_sha256':manifest['sha256'], 'configuration':configuration,
             'full_attention_performance':'not_established','model_quality':'not_established','production_qualified':False,
@@ -732,7 +747,7 @@ def main(argv=None):
     except Exception as error:
         traceback.print_exc()
         # Keep completed cases from this invocation; never revive a stale file.
-        report=getattr(error,'bf16_report',None) or {'schema':SCHEMA,'status':'failed','first_error':str(error),
+        report=getattr(error,'bf16_report',None) or {'schema':SCHEMA,'operand_contract':CONTRACT,'status':'failed','first_error':str(error),
             'device_completion':'not_established','graph_capture':'not_run','graph_replay':'not_run',
             'precision':'not_run','cv_performance':'not_run','full_attention_performance':'not_established',
             'model_quality':'not_established','production_qualified':False}

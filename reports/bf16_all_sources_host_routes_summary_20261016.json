@@ -1,0 +1,62 @@
+{
+  "scope": "Host configuration, dispatch ABI, memory geometry, MTP, native-current, status guards, device selection and deployment lifecycle only; no AscendC/device/graph numerical acceptance.",
+  "runs_in_order": [
+    {
+      "xml": "reports/bf16_all_sources_host_routes_20261016.xml",
+      "counts": {
+        "passed": 508,
+        "skipped": 1,
+        "failed": 19
+      }
+    },
+    {
+      "xml": "reports/bf16_all_sources_service_host_repair_20261016.xml",
+      "counts": {
+        "passed": 52
+      }
+    },
+    {
+      "xml": "reports/bf16_all_sources_deploy_receipts_20261016.xml",
+      "counts": {
+        "passed": 24
+      }
+    }
+  ],
+  "latest_result_per_unique_test": {
+    "passed": 530,
+    "skipped": 1
+  },
+  "test_files": [
+    "tests/test_bf16_deploy_gate.py",
+    "tests/test_bf16_history_bindings.py",
+    "tests/test_bf16_history_dispatch.py",
+    "tests/test_bf16_history_policy.py",
+    "tests/test_build_reuse.py",
+    "tests/test_c4_member_pipeline_dispatch.py",
+    "tests/test_compact_later_mtp.py",
+    "tests/test_current_only_dispatch.py",
+    "tests/test_deploy_launcher.py",
+    "tests/test_first_draft_current_only.py",
+    "tests/test_guard_diag.py",
+    "tests/test_install_serve.py",
+    "tests/test_mdl_decode_dispatch.py",
+    "tests/test_meta_dispatch.py",
+    "tests/test_mtp_small_shape_flow.py",
+    "tests/test_native_discard_async_order.py",
+    "tests/test_native_discard_pipeline.py",
+    "tests/test_op_contracts.py",
+    "tests/test_probe_cv_hotshape.py",
+    "tests/test_probe_history_reuse.py",
+    "tests/test_probe_physical_devices.py",
+    "tests/test_request_window_registration.py",
+    "tests/test_runtime.py",
+    "tests/test_service_workflow.py",
+    "tests/test_serving_variants.py"
+  ],
+  "initial_failures": {
+    "localhost_socket_sandbox_denials": 18,
+    "obsolete_first_draft_fixture": 1
+  },
+  "repairs": "The existing first-draft test now uses the production D256/striped/BF16 configuration and retains its native-current and ordering assertions. Only the local fake-service tests were rerun with localhost binding permission. Original failure receipts remain unchanged.",
+  "subtests_passed": 4
+}

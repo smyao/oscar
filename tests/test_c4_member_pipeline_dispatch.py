@@ -71,11 +71,11 @@ def test_pipeline_flag_is_boolean_at_every_host_boundary(bad):
 
 
 def test_pipeline_requires_its_existing_striped_decode_base():
-    with pytest.raises(ValueError, match="requires the explicit decode bundle"):
-        variant_config({"experimental_c4_member_pipeline": True}, None)
-    with pytest.raises(OscarReadinessError, match="requires the explicit decode bundle"):
-        AscendRuntimeProvider({"experimental_c4_member_pipeline": True})
-    with pytest.raises(ValueError, match="requires the explicit decode bundle"):
+    with pytest.raises(ValueError, match="requires"):
+        variant_config({"experimental_c4_member_pipeline": True, "experimental_decode_bundle": False}, None)
+    with pytest.raises(OscarReadinessError, match="requires"):
+        AscendRuntimeProvider({"experimental_c4_member_pipeline": True, "experimental_decode_bundle": False})
+    with pytest.raises(ValueError, match="requires"):
         select_cv_op(4, 6, 1, 512, 128, c4_member_pipeline=True)
 
 
@@ -87,11 +87,13 @@ def test_missing_new_capability_fails_before_any_device_work(monkeypatch, reques
     config = variant_config(config, "candidate")
     config["experimental_request_windows"] = request_windows
     if request_windows:
-        config["experimental_mdl_decode"] = False  # Separate unqualified MDL reader combination.
+        with pytest.raises(OscarReadinessError, match="physical-page snapshots"):
+            AscendRuntimeProvider(config)
+        return
     provider = AscendRuntimeProvider(config)
     monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", ",".join(map(str, config["devices"])))
     monkeypatch.setattr(loader, "require_production_ops", lambda: None)
-    missing = REQUEST_MEMBER_PIPELINE_CV_OP if request_windows else MEMBER_PIPELINE_CV_OP
+    missing = "attention_bf16_history_member_pipeline_cluster4_out"
     seen = []
 
     def require(names):
@@ -102,7 +104,7 @@ def test_missing_new_capability_fails_before_any_device_work(monkeypatch, reques
     monkeypatch.setattr(loader, "require_capabilities", require)
     with pytest.raises(RuntimeError, match="missing new member-pipeline capability"):
         provider.assert_ready()
-    assert {missing} in seen and provider._ready is False
+    assert any(missing in item for item in seen) and provider._ready is False
 
 
 def test_runtime_workspace_records_the_effective_pipeline_flag(monkeypatch):

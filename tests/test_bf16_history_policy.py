@@ -1,7 +1,7 @@
-"""Archive #148/#153/#77: unqualified BF16 config cannot masquerade as an op.
+"""Archive #148/#153/#154/#77: default precision is not acceptance.
 
-Host orchestration only. The frozen CPU numerical gate must pass before a
-new numerical implementation is allowed into service; no NPU result is faked.
+User 2026-10-16 requires all-source BF16; incompatible explicit requests must
+fail before installation. Host tests never claim NPU or numerical acceptance.
 """
 
 import json
@@ -21,7 +21,7 @@ from tools.serving_variants import research_variant_config, variant_config, vari
 
 
 ROOT = Path(__file__).resolve().parents[1]
-UNAVAILABLE = "has not passed the frozen CPU numerical gate"
+UNAVAILABLE = "retired FP32 production attention"
 
 
 def target():
@@ -38,16 +38,24 @@ def write_target(tmp_path, value):
     return path
 
 
-@pytest.mark.parametrize("variant", [None, "candidate", "baseline", "native"])
-def test_missing_and_false_keep_existing_configuration_and_features(variant):
+@pytest.mark.parametrize("variant", [None, "candidate"])
+def test_default_and_explicit_true_use_the_only_production_precision(variant):
     original = target()
     ordinary = variant_config(original, variant)
-    disabled = variant_config({**original, BF16_HISTORY_FLAG: False}, variant)
-    assert disabled.pop(BF16_HISTORY_FLAG) is False
-    assert disabled == ordinary
+    explicit = variant_config({**original, BF16_HISTORY_FLAG: True}, variant)
+    assert ordinary == explicit
+    assert ordinary[BF16_HISTORY_FLAG] is True
+    assert ordinary["attention_compute_dtype"] == "bfloat16"
+    assert all(ordinary[key] is True for key in BF16_HISTORY_DEPENDENCIES)
     assert BF16_HISTORY_FLAG not in original
-    assert BF16_HISTORY_FLAG not in ordinary
-    assert variant_features(disabled) == variant_features(ordinary)
+    with pytest.raises(ValueError, match=UNAVAILABLE):
+        variant_config({**original, BF16_HISTORY_FLAG: False}, variant)
+
+
+def test_retired_baseline_is_not_silently_reinterpreted_as_native():
+    with pytest.raises(ValueError, match="baseline FP32 OSCAR production attention is retired"):
+        variant_config(target(), "baseline")
+    assert research_variant_config(target(), "baseline")["experimental_striped_cache"] is False
 
 
 @pytest.mark.parametrize("variant", [None, "candidate", "baseline", "native"])
@@ -57,54 +65,46 @@ def test_type_errors_are_rejected_before_variant_normalization(variant, value):
         variant_config({**target(), BF16_HISTORY_FLAG: value}, variant)
 
 
-@pytest.mark.parametrize("variant", [None, "candidate"])
-def test_unqualified_true_cannot_be_silently_kept(variant):
-    with pytest.raises(ValueError, match=UNAVAILABLE):
-        variant_config(research_target(), variant)
-
-
-@pytest.mark.parametrize("variant", ["baseline", "native"])
-def test_explicit_old_variant_clears_boolean_request_without_mutating_input(variant):
+def test_native_clears_boolean_alias_without_mutating_input():
     original = {**target(), BF16_HISTORY_FLAG: True}
-    selected = variant_config(original, variant)
+    selected = variant_config(original, "native")
     assert selected[BF16_HISTORY_FLAG] is False
     assert original[BF16_HISTORY_FLAG] is True
+    assert target_cli.target_env(selected, base={}, native=True)["OSCAR_ENABLED"] == "0"
+    assert "--no-enable-prefix-caching" in target_cli.serve_argv(selected, native=True)
+    with pytest.raises(OscarReadinessError, match=UNAVAILABLE):
+        AscendRuntimeProvider(selected)
 
 
-@pytest.mark.parametrize("value", [True, "false", 1])
+@pytest.mark.parametrize("value", [False, "false", 1])
 def test_runtime_constructor_cannot_bypass_policy(value):
     with pytest.raises(OscarReadinessError, match=BF16_HISTORY_FLAG):
         AscendRuntimeProvider({**target(), BF16_HISTORY_FLAG: value})
 
 
-def test_runtime_missing_and_false_do_not_change_existing_configuration():
-    ordinary = AscendRuntimeProvider(target())
-    disabled = AscendRuntimeProvider({**target(), BF16_HISTORY_FLAG: False})
-    assert disabled.config.pop(BF16_HISTORY_FLAG) is False
-    assert disabled.config == ordinary.config
-    assert ordinary.ops is disabled.ops is None
+def test_runtime_uses_the_same_default_bundle_as_both_entrypoints():
+    provider = AscendRuntimeProvider(target())
+    assert provider.config == variant_config(target(), "candidate")
+    assert provider.ops is None  # Configuration is not device acceptance.
 
 
 def test_runtime_file_configuration_cannot_bypass_policy(tmp_path, monkeypatch):
-    path = write_target(tmp_path, True)
+    path = write_target(tmp_path, False)
     monkeypatch.setenv("OSCAR_TARGET_CONFIG", str(path))
     with pytest.raises(OscarReadinessError, match=UNAVAILABLE):
         AscendRuntimeProvider()
 
 
 @pytest.mark.parametrize("prepare", [target_cli.serve_argv, target_cli.target_env])
-def test_direct_command_and_environment_reject_before_device_loading(prepare):
+def test_direct_command_and_environment_reject_retired_route_before_device_loading(prepare):
     with pytest.raises(ValueError, match=UNAVAILABLE):
-        prepare(research_target())
+        prepare({**research_target(), BF16_HISTORY_FLAG: False})
 
 
-def test_pure_research_configuration_does_not_grant_serving_acceptance():
-    selected = research_target()
-    assert selected[BF16_HISTORY_FLAG] is True
-    assert variant_features(selected)["bf16_history"] is True
-    assert validate_bf16_history(selected, head_dim=256, cache_format="striped_v1") is True
-    with pytest.raises(OscarReadinessError, match=UNAVAILABLE):
-        AscendRuntimeProvider(selected)
+@pytest.mark.parametrize("dtype", ["float32", "fp32", "bf16", None, 1, True])
+def test_precision_is_an_explicit_supported_dtype(dtype):
+    with pytest.raises(ValueError, match="attention_compute_dtype"):
+        variant_config({**target(), "attention_compute_dtype": dtype}, "candidate")
 
 
 @pytest.mark.parametrize("flag", BF16_HISTORY_DEPENDENCIES)
@@ -130,9 +130,9 @@ def test_research_shape_and_storage_boundaries_are_explicit(updates, geometry, e
 
 
 @pytest.mark.parametrize("entry", ["assert_ready", "layer_state", "ensure_workspace"])
-def test_mutating_an_existing_provider_cannot_enable_research_math(entry):
+def test_mutating_an_existing_provider_cannot_restore_fp32_math(entry):
     provider = AscendRuntimeProvider(target())
-    provider.config.update(research_target())
+    provider.config[BF16_HISTORY_FLAG] = False
     with pytest.raises(OscarReadinessError, match=UNAVAILABLE):
         if entry == "layer_state":
             provider.layer_state("model.layers.0.self_attn.attn")
@@ -155,8 +155,8 @@ def test_target_cli_native_normalizes_true_but_still_rejects_wrong_type(tmp_path
 
 
 @pytest.mark.parametrize("entry", ["install", "observe", "deploy"])
-def test_unavailable_config_stops_before_any_installation_phase(entry, tmp_path, monkeypatch):
-    path = write_target(tmp_path, True)
+def test_retired_config_stops_before_any_installation_phase(entry, tmp_path, monkeypatch):
+    path = write_target(tmp_path, False)
     logs = tmp_path / "logs"
 
     def forbidden_phase(*args, **kwargs):

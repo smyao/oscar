@@ -1,8 +1,8 @@
 """Archive G4/#81-83/#126/#145/#148/#154/#157 and full startup D.4.
 
-Generate independent research kernels from the exact 6029f2a mothers. Each
+Generate unified BF16 kernels from the exact 6029f2a mothers. Each
 replacement is reversible; --check proves both final bytes and inverse identity.
-Only source0 operand publication/matmul and private workspace/resources change.
+All sources use BF16 operands; FP32 softmax, accumulators and Rv are retained.
 No reference tree or existing kernel is written. This is not a CANN validator.
 """
 from __future__ import annotations
@@ -24,16 +24,16 @@ SPECS = (
 )
 
 HEADER = """// SPDX-License-Identifier: Apache-2.0
-// GENERATED RESEARCH KERNEL. CPU numerical gate FAILED; never production-qualified.
+// GENERATED UNIFIED BF16 KERNEL. Default routing is not numerical acceptance.
 // Mother: {mother} at {commit}; SHA256 {sha}.
 // Generate/check: tools/experiments/generate_bf16_history_kernels.py --check.
 // Archive G4/#81-83/#126/#145/#148/#154/#157; full startup D.4 reread.
-// D.4 four questions: (1) source0 fused INT2 dequant + QK/PV;
+// D.4 four questions: (1) direct INT2-to-BF16 and all-source BF16 QK/PV;
 // (2) failed full-history restore cost6499.8-6655.1ms versus FIA18.5-18.9ms;
-// (3) only fixed KV256 BF16 operand mirrors; FP32 softmax/LSE/state/Rv,
-// exact source1/2, masks, errors, ownership and cross-core flags are retained;
-// (4) GM capacity=1.5x mother, extra UB16KiB; casts and Matmul dtype-switch
-// resets add cost, so no speed or target-numerical claim is made.
+// (3) fixed KV256 BF16 operands, exact BF16 window/current K/V; FP32
+// softmax/LSE/state/Rv, masks, error order and cross-core flags are retained;
+// (4) GM capacity=1.5x mother, extra UB16KiB (+512B on H16); Matmul switches,
+// resets and bounded unpack lookup add cost; no speed/acceptance claim.
 // One active Matmul resource set avoids simultaneous L1/L0 allocations.
 // Re-Init/Reset needs actual SDK and device verification; host has neither.
 // The mother's inherited historical comments below are not claims about
@@ -69,6 +69,7 @@ def derive(name: str, mother: str, expected_sha: str):
 
     replace('#include "oscar_common.h"', '#include "oscar_common.h"\n'
             '#include "attention_bf16_history_operands.h"\n'
+            '#include "attention_striped_unpack_bf16.h"\n'
             '#include "../include/oscar_bf16_history_launch.h"')
     cube_alias = "using CubeMatmul=matmul::MatmulImpl<Matrix,TransposedMatrix,Matrix,Matrix,kCubeConfig>;"
     replace(cube_alias, cube_alias + """
@@ -89,10 +90,14 @@ static_assert(64*128*2*kHistoryCubeConfig.dbL0A<=64*1024 &&
     if len(sizes) not in (18, 19):
         raise ValueError(f"unreviewed UB allocation count: {mother}: {len(sizes)}")
     plane = "  static constexpr int32_t kPlaneStride=kWords+16;"
+    natural_extra = 0 if name in ("mdl", "member_pipeline_cluster4") else 512
     replace(plane, plane + "\n  static constexpr int32_t kOriginalVectorBytes=\n      "
             + "+\n      ".join(f"({s})" for s in sizes) + ";\n"
-            "  static_assert(kOriginalVectorBytes+oscar_bf16_history::kOperandScratchBytes<=184*1024,\n"
+            f"  static constexpr int32_t kNaturalPaddingBytes={natural_extra};\n"
+            "  static_assert(kOriginalVectorBytes+kNaturalPaddingBytes+oscar_bf16_history::kOperandScratchBytes<=184*1024,\n"
             '      "BF16 publisher exceeds A2 usable UB; do not relax this bound");')
+    if natural_extra:
+        replace("pipe.InitBuffer(naturalBuf,kElements*2);", "pipe.InitBuffer(naturalBuf,kHalfKv*(D+16)*2);")
     replace("    work.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(workspace)+core*floatsPerCore);",
             """    // One private region per Cube: unchanged float arena followed by its
     // index-preserving BF16 mirror. Result/state/Rv never alias that mirror.
@@ -114,7 +119,7 @@ static_assert(64*128*2*kHistoryCubeConfig.dbL0A<=64*1024 &&
     sig = "  __aicore__ void Matmul(int64_t a,int64_t b,int64_t c,int32_t m,int32_t n,int32_t k,\n      bool rotation=false,bool transposeB=true) {"
     org = ("historyMm.SetOrgShape(m,transposeB?kKvRows:D,transposeB?D:kKvRows);"
            if name == "mdl" else "historyMm.SetOrgShape(m,n,k);")
-    replace(sig, sig + "\n" + """    const bool history=kind==0 && !rotation;
+    replace(sig, sig + "\n" + """    const bool history=!rotation;
     oscar_bf16_history::SelectMatmul(history,historyMatmulActive,pipe,mm,historyMm);
     if(history) {
       SetHF32Mode(false);
@@ -128,45 +133,127 @@ static_assert(64*128*2*kHistoryCubeConfig.dbL0A<=64*1024 &&
     }""")
     if name == "member_pipeline_cluster4":
         atomic_sig = "  __aicore__ void MatmulAtomic(int64_t a,int64_t b,int64_t c,\n      int32_t m,int32_t n,int32_t k) {"
-        replace(atomic_sig, atomic_sig + """
-    oscar_bf16_history::SelectMatmul(kind==0,historyMatmulActive,pipe,mm,historyMm);
-    if(kind==0) {
-      SetHF32Mode(false);
-      historyMm.SetOrgShape(m,n,k);historyMm.SetSingleShape(m,n,k);
-      historyMm.SetTensorA(operandWork[a],false);historyMm.SetTensorB(operandWork[b],false);
-      historyMm.template IterateAll<true>(work[c],static_cast<uint8_t>(1));
-      historyMm.End();return;
-    }""")
+        begin = text.index(atomic_sig)
+        end = text.index("  __aicore__ void CubeTask()", begin)
+        replace(text[begin:end], atomic_sig + """
+    oscar_bf16_history::SelectMatmul(true,historyMatmulActive,pipe,mm,historyMm);
+    SetHF32Mode(false);
+    historyMm.SetOrgShape(m,n,k);historyMm.SetSingleShape(m,n,k);
+    historyMm.SetTensorA(operandWork[a],false);historyMm.SetTensorB(operandWork[b],false);
+    // Atomic accumulation remains FP32; only A/B use BF16.
+    historyMm.template IterateAll<true>(work[c],static_cast<uint8_t>(1));
+    historyMm.End();
+  }
+""")
+    replace("if(rotation) mm.SetTensorB(rv,true);else mm.SetTensorB(work[b],transposeB);",
+            "mm.SetTensorB(rv,true); // The only FP32 matmul is inverse rotation.")
+    if name == "mdl":
+        replace("mm.SetOrgShape(m,rotation?D:(transposeB?kKvRows:D),\n"
+                "        rotation?D:(transposeB?D:kKvRows));", "mm.SetOrgShape(m,D,D);")
     # These are only input-Q/padding, unpacked K/V and P writes. Acc/state and
     # normalized Q-for-Rv writes deliberately remain the original float copies.
     for old, new in (
         ("DataCopy(work[qOffset+row*D],dst,D)", "PublishOperand(qOffset+row*D,dst,D)"),
         ("DataCopy(work[qOffset+row*D],zeros,count*D)", "PublishOperand(qOffset+row*D,zeros,count*D)"),
-        ("DataCopy(work[(value?vOffset:kOffset)+slot*D],src,kElements)", "PublishOperand((value?vOffset:kOffset)+slot*D,src,kElements)"),
+        ("DataCopy(work[(value?vOffset:kOffset)+slot*D],src,kElements)", "PublishBf16Operand((value?vOffset:kOffset)+slot*D,src,kElements)"),
         ("DataCopy(work[pOffset+rowBase*kKvRows],scores,activeRows*kKvRows)", "PublishOperand(pOffset+rowBase*kKvRows,scores,activeRows*kKvRows)"),
     ):
         replace(old, new)
     if name == "mdl":
         replace("DataCopy(work[(value?vOffset:kOffset)+buffer*(2*kKvRows*D)+slot*D],\n        dequantBuf.Get<float>(),kElements)",
-                "PublishOperand((value?vOffset:kOffset)+buffer*(2*kKvRows*D)+slot*D,\n        dequantBuf.Get<float>(),kElements)")
+                "PublishBf16Operand((value?vOffset:kOffset)+buffer*(2*kKvRows*D)+slot*D,\n        dequantBuf.Get<bfloat16_t>(),kElements)")
     helpers = """  __aicore__ void PublishOperand(int64_t offset,LocalTensor<float> source,int32_t elements) {
-    if(kind==0)oscar_bf16_history::Publish(operandWork[offset],source,operandBuf,elements);
-    else DataCopy(work[offset],source,elements);
+    oscar_bf16_history::Publish(operandWork[offset],source,operandBuf,elements);
+  }
+  __aicore__ void PublishBf16Operand(int64_t offset,LocalTensor<bfloat16_t> source,
+      int32_t elements) {
+    DataCopy(operandWork[offset],source,elements);
+  }
+  __aicore__ void CheckBf16Row(LocalTensor<bfloat16_t> source) {
+    // Keep the original FP32 ReduceSum finite/error contract, one row only.
+    // Matrix operands retain the original BF16 bits, including signed zero.
+    auto row=qFloatBuf.Get<float>();auto check=scratchBuf.Get<float>();
+    Cast(row,source,RoundMode::CAST_NONE,D);PipeBarrier<PIPE_V>();
+    ReduceSum(check,row,check[16],D);Fence<HardEvent::V_S>();
+    if(!Finite(check.GetValue(0)))error=2;
+    Fence<HardEvent::S_V>();
   }
 """
     if name == "member_pipeline_cluster4":
         replace("DataCopy(work[(value?vOffset:kOffset)+slot*D],src,copy)",
                 "PublishHistoryOperand((value?vOffset:kOffset)+slot*D,src,copy)")
-        helpers += """  __aicore__ void PublishHistoryOperand(int64_t offset,LocalTensor<float> source,
+        helpers += """  __aicore__ void PublishHistoryOperand(int64_t offset,LocalTensor<bfloat16_t> source,
       const DataCopyParams& originalCopy) {
-    if(kind==0) {
-      // Original two old-16-row lane domains, now measured in BF16 elements.
-      PublishOperand(offset,source,kElements);
-      PublishOperand(offset+2*kElements,source[kElements],kElements);
-    } else DataCopy(work[offset],source,originalCopy);
+    // Original two old-16-row lane domains, now measured in BF16 elements.
+    PublishBf16Operand(offset,source,kElements);
+    PublishBf16Operand(offset+2*kElements,source[kElements],kElements);
   }
 """
     replace("  __aicore__ void LoadQueries() {", helpers + "  __aicore__ void LoadQueries() {")
+
+    # Direct packed INT2 -> BF16. The only FP32 reconstruction is the four
+    # scalar levels per token, never an expanded FP32 [KV,D] tile.
+    half = "kHistoryHalfKv" if name == "member_pipeline_cluster4" else "kHalfKv"
+    old_ns = ("oscar_ascend_unpack32" if name == "member_pipeline_cluster4" else
+              "oscar_ascend_padded_natural" if name == "mdl" else "oscar_ascend_fast")
+    old_template = f"D,{half}" if name in ("mdl", "member_pipeline_cluster4") else "D"
+    for method in ("InitIndices", "Unpack"):
+        old = f"{old_ns}::{method}<{old_template}>"
+        replace(old, f"oscar_ascend_striped_bf16::{method}<D,{half}>", text.count(old))
+    for args in ("        metadataIndexBuf,metadataHalfBuf,dequantBuf,scratchBuf);",
+                 "        metadataHalfBuf,dequantBuf,scratchBuf);"):
+        if args in text:
+            replace(args, args[:-2] + ",operandBuf);", text.count(args))
+
+    # A small row conversion is retained for the existing finite check only.
+    # Do not round-trip exact Q/K/V through FP32 for operand publication.
+    replace("PublishOperand(qOffset+row*D,dst,D);",
+            "if(kind==0)PublishOperand(qOffset+row*D,dst,D);\n"
+            "      else PublishBf16Operand(qOffset+row*D,src,D);")
+    replace("auto zeros=dequantBuf.Get<float>();", "auto zeros=dequantBuf.Get<bfloat16_t>();")
+    replace("Duplicate(zeros,0.0F,count*D);", "Duplicate(zeros.ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),count*D);")
+    replace("PublishOperand(qOffset+row*D,zeros,count*D)", "PublishBf16Operand(qOffset+row*D,zeros,count*D)")
+
+    def function_body(method):
+        start = text.index(f"  __aicore__ void {method}(")
+        end = text.index("  __aicore__ ", start + 10)
+        return text[start:end]
+
+    old = function_body("LoadWindowRuns")
+    new = old.replace("auto dst=dequantBuf.Get<float>();\n    auto batch=naturalBuf.Get<bfloat16_t>();",
+                      "auto dst=dequantBuf.Get<bfloat16_t>();")
+    new = new.replace("Duplicate(batch.ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),rows*D);",
+                      "Duplicate(dst[j*D].ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),rows*D);")
+    new = new.replace("DataCopyPad(batch[begin*D]", "DataCopyPad(dst[(j+begin)*D]")
+    new = new.replace("      Cast(dst[j*D],batch,RoundMode::CAST_NONE,rows*D);PipeBarrier<PIPE_V>();\n", "")
+    new = re.sub(r"      auto check=scratchBuf.Get<float>\((?:128)?\);\n", "", new)
+    new = new.replace("        ReduceSum(check,dst[(j+row)*D],check[16],D);Fence<HardEvent::V_S>();\n"
+                      "        if(!Finite(check.GetValue(0)))error=2;", "        CheckBf16Row(dst[(j+row)*D]);")
+    replace(old, new)
+
+    old = function_body("LoadPrecise")
+    new = old.replace("auto dst=dequantBuf.Get<float>();auto src=qBf16Buf.Get<bfloat16_t>();",
+                      "auto dst=dequantBuf.Get<bfloat16_t>();")
+    new = new.replace("Duplicate(dst,0.0F,kElements);", "Duplicate(dst.ReinterpretCast<uint16_t>(),static_cast<uint16_t>(0),kElements);")
+    start = new.index("      // The natural unpack buffer")
+    end = new.index("      Fence<HardEvent::V_MTE2>();", start)
+    new = new[:start] + "      // Load exact BF16 directly into the bounded operand tile.\n" + new[end:]
+    new = new.replace("DataCopyPad(batch,", "DataCopyPad(dst,")
+    new = new.replace("Fence<HardEvent::MTE2_V>();Cast(dst,batch,RoundMode::CAST_NONE,kElements);\n      PipeBarrier<PIPE_V>();", "Fence<HardEvent::MTE2_V>();")
+    new = re.sub(r"      auto check=scratchBuf.Get<float>\((?:128)?\);\n", "", new)
+    new = new.replace("        ReduceSum(check,dst[row*D],check[16],D);Fence<HardEvent::V_S>();\n"
+                      "        if(!Finite(check.GetValue(0)))error=2;", "        CheckBf16Row(dst[row*D]);")
+    # Callers enter only for source1/2. Preserve address/tag/finite order in
+    # the reachable paths, and reject an accidental unsupported source.
+    end = new.index("    if(kind==1) {LoadWindowRuns(start,value);return;}")
+    new = new[:end] + "    if(kind==1) {LoadWindowRuns(start,value);return;}\n    error=1;\n  }\n"
+    replace(old, new)
+
+    for method in (("PublishKv", "PublishHistoryKv") if name == "member_pipeline_cluster4" else ("PublishKv",)):
+        old = function_body(method)
+        new = old.replace("dequantBuf.Get<float>()", "dequantBuf.Get<bfloat16_t>()")
+        new = new.replace("natural [KV,D] FP32", "natural [KV,D] BF16")
+        replace(old, new)
 
     # Reverse the transformations rather than trusting copied output alone.
     inverse = text

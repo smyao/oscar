@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 import pytest
-from oscar_ascend.ops.cv_dispatch import select_cv_op, MDL_DECODE_CV_OP, MDL_DECODE_Q1_CV_OP
+from oscar_ascend.ops.cv_dispatch import select_cv_op, MDL_DECODE_CV_OP, MDL_DECODE_Q1_CV_OP, BF16_HISTORY_OP_MAP
 from oscar_ascend.runtime import AscendRuntimeProvider, WorkspaceGeometry
 from oscar_ascend.integration.runtime_api import OscarReadinessError
 from oscar_ascend.integration.cache_storage_ops import storage_reader
@@ -41,11 +41,11 @@ def test_flag_is_strict_at_three_boundaries(bad):
         select_cv_op(16,6,1,128,4,mdl_decode=bad,**FLAGS)
 
 def test_mdl_requires_complete_base():
-    with pytest.raises(ValueError,match='MDL decode requires'):
-        variant_config({'experimental_mdl_decode':True},None)
-    with pytest.raises(OscarReadinessError,match='MDL decode requires'):
-        AscendRuntimeProvider({'experimental_mdl_decode':True})
-    with pytest.raises(ValueError,match='MDL decode requires'):
+    with pytest.raises(ValueError,match='requires'):
+        variant_config({'experimental_mdl_decode':True, 'experimental_decode_bundle':False},None)
+    with pytest.raises(OscarReadinessError,match='requires'):
+        AscendRuntimeProvider({'experimental_mdl_decode':True, 'experimental_decode_bundle':False})
+    with pytest.raises(ValueError,match='requires'):
         select_cv_op(16,6,1,128,4,mdl_decode=True)
 
 def test_packaged_source_is_reversible_and_old_source_frozen():
@@ -60,7 +60,7 @@ def test_packaged_source_is_reversible_and_old_source_frozen():
     assert 'AttentionStriped<oscar_ascend::attention_cv_mdl_decode_q1_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256)>' in binding
     assert report['q1_operator']==MDL_DECODE_Q1_CV_OP
 
-@pytest.mark.parametrize('missing', [MDL_DECODE_CV_OP, MDL_DECODE_Q1_CV_OP])
+@pytest.mark.parametrize('missing', ['attention_bf16_history_mdl_out', 'attention_bf16_history_mdl_q1_out'])
 def test_missing_mdl_capability_fails_before_npu(monkeypatch, missing):
     from oscar_ascend.ops import loader
     config=variant_config(json.loads(Path('configs/target.json').read_text()),'candidate')
@@ -82,11 +82,11 @@ def test_shared_candidate_reaches_actual_forward_target_first_and_later_draft(ta
 
 
 def test_unqualified_request_window_mdl_combination_is_explicit():
-    with pytest.raises(ValueError,match="request-window MDL reader is not qualified"):
+    with pytest.raises(ValueError,match="physical-page snapshots"):
         variant_config({'experimental_request_windows':True},'candidate')
     config=variant_config({},'candidate')
     config['experimental_request_windows']=True
-    with pytest.raises(OscarReadinessError,match="request-window MDL reader is not qualified"):
+    with pytest.raises(OscarReadinessError,match="physical-page snapshots"):
         AscendRuntimeProvider(config)
     assert variant_config({},'candidate')['enable_prefix_caching'] is False
 
@@ -95,11 +95,11 @@ def test_qualified_mdl_q1_q4_and_c4_pipeline_compose_in_shared_preset():
     """Archive #150/#153: combined flags must reach all three real readers."""
     config=variant_config({},'candidate')
     flags={name:config['experimental_'+name] for name in
-           ('fast_unpack','mixed_cv','striped_cache','decode_bundle','c4_member_pipeline','mdl_decode')}
+           ('fast_unpack','mixed_cv','striped_cache','decode_bundle','c4_member_pipeline','mdl_decode','bf16_history')}
     assert config['enable_prefix_caching'] is False
     assert 'max_num_batched_tokens' not in config and 'scheduler_cls' not in config
     cases=((128,4,False,MDL_DECODE_CV_OP),(128,1,True,MDL_DECODE_Q1_CV_OP),
            (2048,2048,False,'attention_cv_member_pipeline_cluster4_out'),
            (8192,8192,False,'attention_cv_window_range_cluster16_out'))
     for tokens,length,later,expected in cases:
-        assert select_cv_op(16,6,1,tokens,length,q1_draft=later,**flags)==expected
+        assert select_cv_op(16,6,1,tokens,length,q1_draft=later,**flags)==BF16_HISTORY_OP_MAP[expected]

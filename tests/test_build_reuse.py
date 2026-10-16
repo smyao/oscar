@@ -87,21 +87,18 @@ def test_explicit_job_limit_reaches_compiler_without_changing_target_flags(compi
     assert built['device_completion']=='not_run'
 
 
-def test_bf16_research_build_has_distinct_signature_and_exact_capabilities(compiler):
-    # Archive #85/#153: research/default binaries cannot masquerade as each other.
-    old = compiler.build()
-    research = build_ops.build(compiler.root/'logs', 30, 'ascend910b4', bf16_history=True)
-    assert research['signature'] != old['signature']
-    manifest = json.loads((compiler.build_dir/'build_manifest.json').read_text())
-    assert set(manifest['source_capabilities']) == source_capabilities(bf16_history=True)
-    compiler.commands.clear()
-    reused = build_ops.build(compiler.root/'logs', 30, 'ascend910b4', bf16_history=True)
-    assert reused['reused'] and compiler.commands == []
-    restored = compiler.build()
-    assert not restored['reused'] and restored['signature'] == old['signature']
+def test_default_bf16_build_and_compatibility_flag_share_one_signature(compiler):
+    # User 2026-10-16: all-source BF16 is always compiled; flags cannot turn it off.
+    built = compiler.build()
+    explicit = build_ops.build(compiler.root/'logs', 30, 'ascend910b4', bf16_history=True)
+    assert explicit['signature'] == built['signature'] and explicit['reused']
+    assert '-DOSCAR_BUILD_BF16_HISTORY=ON' in compiler.commands[0][1]
     manifest = json.loads((compiler.build_dir/'build_manifest.json').read_text())
     assert set(manifest['source_capabilities']) == SOURCE_CAPABILITIES
-    assert '-DOSCAR_BUILD_BF16_HISTORY=OFF' in compiler.commands[0][1]
+    compiler.commands.clear()
+    with pytest.raises(ValueError, match='required'):
+        build_ops.build(compiler.root/'logs', 30, 'ascend910b4', bf16_history=False)
+    assert compiler.commands == []
 
 
 @pytest.mark.parametrize('flag', [1, 0, 'true', None])
@@ -163,7 +160,7 @@ def test_incomplete_or_corrupted_cache_is_cleanly_rebuilt(compiler, damage):
         manifest_path.write_text("{truncated")
     else:
         manifest = json.loads(manifest_path.read_text())
-        manifest["source_capabilities"].remove("attention_cv_out")
+        manifest["source_capabilities"].remove("attention_bf16_history_mdl_out")
         manifest_path.write_text(json.dumps(manifest))
     compiler.commands.clear()
     rebuilt = compiler.build()

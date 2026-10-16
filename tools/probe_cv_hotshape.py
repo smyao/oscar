@@ -103,17 +103,25 @@ def _source_check(configuration: dict, variant: str, *, root: Path = ROOT) -> st
     return _fingerprint_digest(source)
 
 
-def _select_device(target: dict) -> str:
+def _configured_selection(target: dict) -> str:
+    """#123: validate only the explicit task selection, without NPU access."""
     devices = target.get("devices")
-    if devices != [0, 1, 2, 3] or any(type(device) is not int for device in devices):
-        raise HotShapeError("hot-shape target must select explicit physical devices 0,1,2,3")
+    if (not isinstance(devices, list) or len(devices) != 4
+            or any(type(device) is not int or device < 0 for device in devices)
+            or len(set(devices)) != 4):
+        raise HotShapeError("target devices must be four unique nonnegative integer physical NPU IDs")
+    if target.get("soc_version") != "ascend910b4":
+        raise HotShapeError("target SOC must be ascend910b4")
     selected = ",".join(map(str, devices))
     inherited = os.environ.get("ASCEND_RT_VISIBLE_DEVICES")
     if inherited is not None and inherited != selected:
         raise HotShapeError(f"inherited NPU selection {inherited!r} differs from target {selected!r}")
+    return selected
+
+
+def _select_device(target: dict) -> str:
+    selected = _configured_selection(target)
     os.environ["ASCEND_RT_VISIBLE_DEVICES"] = selected
-    if target.get("soc_version") != "ascend910b4":
-        raise HotShapeError("target SOC must be ascend910b4")
     return selected
 
 
@@ -180,10 +188,7 @@ def baseline_availability(manifest_path: Path = ROOT / "build/ascendc/build_mani
     """Read-only artifact gate for the parent; does not import torch or touch NPU."""
     try:
         target = json.loads(target_path.read_text())
-        if (target.get("devices") != [0, 1, 2, 3]
-                or any(type(device) is not int for device in target["devices"])
-                or target.get("soc_version") != "ascend910b4"):
-            raise BaselineUnavailable("target devices/SOC are not the signed 0-3/A2 configuration")
+        _configured_selection(target)
         manifest, _, source_digest = _verify_artifact("baseline", manifest_path, target)
     except (OSError, ValueError, KeyError, TypeError, AttributeError,
             RuntimeError, subprocess.SubprocessError) as exc:

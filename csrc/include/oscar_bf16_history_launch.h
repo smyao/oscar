@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Archive G4/#81-83/#126/#145/#148/#154/#157; full startup D.4 reviewed.
-// Research ABI only. Source0 BF16 operands have FAILED the frozen CPU gate.
+// Historical ABI names now cover BF16 matrix operands for every source.
+// User default selection is not numerical/device/graph acceptance.
 // D.4: fixed-tile FIA, no 6.5s whole-history restore, separate typed arenas;
 // bounded extra capacity and casts do not establish speed or NPU precision.
 #pragma once

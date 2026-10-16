@@ -1,5 +1,12 @@
 # OSCAR 优化与失败证据索引
 
+## 2026-10-16 最新：全源 BF16 精度契约与默认路由
+
+用户已确认保留旋转/分源/合并，统一全部源的BF16矩阵输入；覆盖下文history-only研究路径默认禁用的旧决定。六路新核现在默认构建并用于生产选择，旧FP32核仅独立诊断。INT2以四级小表直接输出BF16，sink/recent/current原BF16位直传；softmax/累加/LSE/合并/逆旋转保持FP32。
+
+[本次方案与源码边界](bf16_attention_alignment_20261016.md)、[交付回执](../reports/bf16_alignment_delivery_20261016.json)。直接解码CPU比较通过；完整全源数值11例旧FP32全过、BF16仍7失败，其中2最终输出失败，真实rc2；[报告](../reports/bf16_all_sources_screen_20261016_v3.json)。阈值/oracle/历史报告不变，带probe入口失败阻断，默认启用不构成数值/质量/性能合格。新算子CANN、官方CPU-debug、NPU与图仍未验收；没有速度倍率，不追加真机档案。
+
+
 ## 2026-10-16 一次补齐 BF16 历史 attention 研究实现
 
 用户最新指令要求一次完成各部件代码，因此本轮不再以阶段 1 失败为停止编写的理由。新增六路真实 AscendC 源、独立 typed arena/绑定、条件构建/能力、runtime/selector/统一配置和 30 例 NPU/图门；旧六路及 FE0 原字节保留。[执行与资源边界](bf16_history_execution_plan.md)、[源身份/资源](../reports/bf16_history_kernel_sources_20261016.json)、[本轮回执](../reports/bf16_history_all_code_20261016.json)。

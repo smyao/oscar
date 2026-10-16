@@ -9,7 +9,7 @@ OSCAR scheduling override. No native default is guessed here.
 
 from oscar_ascend.bf16_history_policy import (
     BF16_HISTORY_FLAG, normalize_bf16_history, validate_bf16_history,
-    require_bf16_history_production,
+    require_bf16_history_production, production_attention_config, ATTENTION_COMPUTE_DTYPE,
 )
 
 FEATURE_FLAGS = {
@@ -38,9 +38,8 @@ FEATURE_FLAGS = {
 # Unfinished weighted-owner trials are not in the deploy source list or
 # selector. Future research flags must not leak into native/baseline A/B.
 RESEARCH_FEATURE_FLAGS = {
+    # Historical name now covers all sources; production always enables it.
     "bf16_history": BF16_HISTORY_FLAG,
-    # Explicit research only until local numerical/CANN qualification and
-    # the new NPU gate are integrated. Both one-key entrypoints share this.
     "request_windows": "experimental_request_windows",
     "bounded_whole_prefill": "experimental_bounded_whole_prefill",
 }
@@ -154,8 +153,31 @@ def research_variant_config(config: dict, variant: str | None) -> dict:
     return selected
 
 
+def production_runtime_config(config: dict) -> dict:
+    """Use the same attention preset without rewriting resolved engine budgets."""
+    selected = production_attention_config(config)
+    for flag in dict.fromkeys(FEATURE_FLAGS.values()):
+        selected.setdefault(flag, flag != "experimental_whole_prefill")
+        if type(selected[flag]) is not bool:
+            raise ValueError(f"{flag} must be an explicit boolean")
+    selected.setdefault("enable_prefix_caching", False)
+    return selected
+
+
 def variant_config(config: dict, variant: str | None) -> dict:
-    selected = research_variant_config(config, variant)
+    """User 2026-10-16: all-source BF16 is the sole OSCAR serving preset."""
+    if not isinstance(config, dict):
+        raise ValueError("target config must be an object")
+    if variant == "baseline":
+        normalize_bf16_history(config)  # Reject malformed values before retirement.
+        raise ValueError("baseline FP32 OSCAR production attention is retired; use native for the no-OSCAR baseline")
+    if variant == "native":
+        return research_variant_config(config, variant)
+    if variant not in {None, "candidate"}:
+        raise ValueError(f"unknown serving variant: {variant}")
+    selected = production_runtime_config(config)
+    # Both omitted and explicit candidate requests select the same full bundle.
+    selected = research_variant_config(selected, "candidate")
     require_bf16_history_production(selected)
     return selected
 
@@ -169,6 +191,8 @@ def variant_features(config: dict) -> dict:
 def runtime_feature_summary(config: dict, variant: str | None) -> dict:
     """One compact startup line shows the actual effective feature selection."""
     return {"variant":variant,"optimizations":variant_features(config),
+            "attention_compute_dtype": config.get(ATTENTION_COMPUTE_DTYPE, "bfloat16"),
+            "attention_sources": "native" if variant == "native" else "history/sink/recent/current",
             "prefix_caching":config.get("enable_prefix_caching", False),
             "token_budget_source":"native" if config.get("use_native_token_budget", False) else "explicit",
             "max_num_batched_tokens":config.get("max_num_batched_tokens"),

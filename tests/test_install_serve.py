@@ -16,7 +16,8 @@ def config_file(tmp_path, enabled=False):
     # the checked-in default is covered by test_serving_variants/deploy_launcher.
     config.update(devices=[0, 1, 2, 3], port=8989, use_native_token_budget=True)
     config.pop("max_num_batched_tokens", None)
-    config["experimental_history_reuse"] = enabled
+    if enabled:
+        config["experimental_history_reuse"] = True
     path = tmp_path / "target.json"
     path.write_text(json.dumps(config))
     return path
@@ -47,7 +48,7 @@ def test_candidate_plan_is_read_only_and_has_no_probes(tmp_path, capsys, rear_ca
 
 
 @pytest.mark.parametrize("variant,original,enabled", [
-    ("candidate", False, True), ("baseline", True, False), (None, True, True), (None, False, False),
+    ("candidate", False, True), ("baseline", True, False), (None, True, True), (None, False, True),
 ])
 @pytest.mark.parametrize("rear_cards", [False, True])
 def test_all_phases_and_exec_share_selected_config_without_mutating_original(
@@ -63,9 +64,9 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
         seen.append(name)
         selected = json.loads(open(env["OSCAR_TARGET_CONFIG"]).read())
         assert selected["experimental_history_reuse"] is enabled
-        assert selected.get("experimental_fast_unpack", False) is (variant == "candidate")
-        assert selected.get("experimental_mixed_cv", False) is (variant == "candidate")
-        assert selected.get("experimental_striped_cache", False) is (variant == "candidate")
+        assert selected.get("experimental_fast_unpack", False) is True
+        assert selected.get("experimental_mixed_cv", False) is True
+        assert selected.get("experimental_striped_cache", False) is True
         assert selected["use_native_token_budget"] is True
         assert "max_num_batched_tokens" not in selected and "scheduler_cls" not in selected
         assert not selected.get("experimental_whole_prefill", False)
@@ -84,7 +85,7 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
         assert command[-1] == env["OSCAR_TARGET_CONFIG"]
         selected = json.loads(open(command[-1]).read())
         assert selected["experimental_history_reuse"] is enabled
-        assert selected.get("experimental_striped_cache", False) is (variant == "candidate")
+        assert selected.get("experimental_striped_cache", False) is True
         assert selected["devices"] == devices
         service_args = serve_argv(selected)
         assert "--max-num-batched-tokens" not in service_args
@@ -98,6 +99,11 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
         args += ["--variant", variant]
     if rear_cards:
         args += ["--rear-cards"]
+    if variant == "baseline":
+        with pytest.raises(ValueError, match="retired"):
+            install_serve.main(args)
+        assert not seen and path.read_bytes() == before
+        return
     with pytest.raises(Served):
         install_serve.main(args)
     assert path.read_bytes() == before

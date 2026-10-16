@@ -1075,7 +1075,7 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
             raise ValueError("passive observation requires unarmed debug/profiler configuration")
         identity = _source_identity(variant, config)
         status["source_identity"] = identity
-        env = target_env(config)
+        env = target_env(config, native=variant == "native")
         for key in _DEBUG_ENV:
             env.pop(key, None)
         env.update(OSCAR_TARGET_CONFIG=str(effective_path), OSCAR_TERMINAL_LOG_MODE="compact",
@@ -1244,7 +1244,7 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
-    parser.add_argument("--variant", choices=("baseline", "candidate", "native"), default="baseline")
+    parser.add_argument("--variant", choices=("baseline", "candidate", "native"), default="candidate")
     parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--plan", action="store_true")
     parser.add_argument("--enable-prefix-caching", action=argparse.BooleanOptionalAction, default=None,
@@ -1298,7 +1298,7 @@ def main(argv=None) -> int:
         print(json.dumps({"variant": args.variant, "devices": config["devices"],
             "optimizations": variant_features(config),
             "runtime_selection": runtime_feature_summary(config,args.variant),
-            "diagnose_trap": diagnostic, "vllm_argv": serve_argv(config),
+            "diagnose_trap": diagnostic, "vllm_argv": serve_argv(config, native=args.variant == "native"),
             "inference_requests_generated": 0,
             "measurement": "guard_diagnostic" if diagnostic else (
                 "operator_microprobe" if args.probe_only else "passive_external_only"),

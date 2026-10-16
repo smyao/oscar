@@ -1,7 +1,8 @@
 """Archive #27/#28/#34/#36/#74–78/#94/#95/#117: cross-module contracts.
 
-The target command is compared against the supplied Appendix A, not against
-a second copy of the implementation. Deployment failures are real subprocess
+The target command is compared against the supplied Appendix A plus the later
+AGENTS.md default-APC-off instruction, not a copy of the implementation.
+Deployment failures are real subprocess
 executions. Fake host classes exercise only Python hook/cache semantics.
 """
 
@@ -56,7 +57,10 @@ class TargetContracts(unittest.TestCase):
         command = appendix.split("```bash", 1)[1].split("```", 1)[0]
         expected = shlex.split(command.replace("\\\n", " "))[1:]
         config = json.loads((ROOT / "configs/target.json").read_text())
-        self.assertEqual(_options(target_cli.serve_argv(config)), _options(expected))
+        expected_options = _options(expected)
+        # User 2026-10-13: this branch explicitly disables APC by default.
+        expected_options["--no-enable-prefix-caching"] = True
+        self.assertEqual(_options(target_cli.serve_argv(config)), expected_options)
 
     def test_existing_plugin_allowlist_cannot_exclude_ascend(self):
         result = target_cli.target_env({"devices": [4, 5, 6, 7]}, {"VLLM_PLUGINS": "other_plugin"})

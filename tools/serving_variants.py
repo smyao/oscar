@@ -1,4 +1,4 @@
-"""Archive #148-151: one candidate preset for probes and direct serving.
+"""Archive #148-151/#153: one candidate preset for probes and direct serving.
 
 Every delivered optimization flag belongs here so installation and observation
 cannot silently select different numerical paths. Physical placement is separate.
@@ -6,6 +6,8 @@ cannot silently select different numerical paths. Physical placement is separate
 Historical generated whole32K/64K files are normalized without retaining an
 OSCAR scheduling override. No native default is guessed here.
 """
+
+from oscar_ascend.bf16_history_policy import BF16_HISTORY_FLAG, validate_bf16_history
 
 FEATURE_FLAGS = {
     "history_cluster4": "experimental_history_reuse",
@@ -68,6 +70,10 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if variant not in {None, "baseline", "candidate", "native"}:
         raise ValueError(f"unknown serving variant: {variant}")
     selected = dict(config)
+    # Archive #148/#153: a research key cannot silently select the old route.
+    bf16_history = validate_bf16_history(selected, variant=variant)
+    if BF16_HISTORY_FLAG in selected:
+        selected[BF16_HISTORY_FLAG] = bf16_history
     # User 2026-10-13: this stable branch defaults to APC disabled.
     selected.setdefault("enable_prefix_caching", False)
     selected.setdefault("experimental_c4_member_pipeline", False)

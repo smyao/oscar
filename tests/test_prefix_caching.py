@@ -3,6 +3,7 @@
 Execute pinned native coordinator/managers/pool unchanged, including MTP's
 lookahead drop, native hash aggregation, refcounts, eviction and reset. This
 is host evidence; the byte checks do not stand in for an NPU attention run.
+User 2026-10-13 / AGENTS.md: APC defaults off, explicit budget 16384 stays.
 """
 import json
 import logging
@@ -21,34 +22,34 @@ from test_runtime_native import (definitions, native_specs, native_groups,
 
 @pytest.mark.parametrize("variant", ["native", "baseline", "candidate"])
 @pytest.mark.parametrize("prefix", [None, False, True])
-def test_explicit_prefix_policy_reaches_native_argv_without_budget_override(variant, prefix):
+def test_explicit_prefix_policy_reaches_native_argv_with_stable_budget(variant, prefix):
     config = json.loads((install_serve.ROOT / "configs/target.json").read_text())
     config.pop("enable_prefix_caching", None)
     if prefix is not None:
         config["enable_prefix_caching"] = prefix
     selected = variant_config(config, variant)
     argv = serve_argv(selected)
-    assert ("--enable-prefix-caching" in argv) is (prefix is not False)
-    assert ("--no-enable-prefix-caching" in argv) is (prefix is False)
-    assert "--max-num-batched-tokens" not in argv
+    assert ("--enable-prefix-caching" in argv) is (prefix is True)
+    assert ("--no-enable-prefix-caching" in argv) is (prefix is not True)
+    assert argv[argv.index("--max-num-batched-tokens") + 1] == "16384"
     assert "--scheduler-cls" not in argv
     assert "--mamba-cache-mode" not in argv  # Native model config derives align.
 
 
-def test_raw_service_callers_enable_prefix_without_variant_normalization():
+def test_raw_service_callers_disable_prefix_without_variant_normalization():
     config = json.loads((install_serve.ROOT / "configs/target.json").read_text())
-    assert config["enable_prefix_caching"] is True
+    assert config["enable_prefix_caching"] is False
     config.pop("enable_prefix_caching")
-    assert "--enable-prefix-caching" in serve_argv(config)
-    assert runtime_feature_summary(config, None)["prefix_caching"] is True
+    assert "--no-enable-prefix-caching" in serve_argv(config)
+    assert runtime_feature_summary(config, None)["prefix_caching"] is False
 
 
 @pytest.mark.parametrize("entry", [install_serve, observe_serve])
-def test_both_entrypoints_default_to_explicit_prefix_true(entry, tmp_path, capsys):
+def test_both_entrypoints_default_to_explicit_prefix_false(entry, tmp_path, capsys):
     log_dir = tmp_path / "not_created"
     assert entry.main(["--variant", "candidate", "--plan", "--log-dir", str(log_dir)]) == 0
     report = json.loads(capsys.readouterr().out)
-    assert report["runtime_selection"]["prefix_caching"] is True
+    assert report["runtime_selection"]["prefix_caching"] is False
     assert not log_dir.exists()
 
 

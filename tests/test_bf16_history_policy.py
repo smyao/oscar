@@ -1,0 +1,142 @@
+"""Archive #148/#153/#77: unqualified BF16 config cannot masquerade as an op.
+
+Host orchestration only. The frozen CPU numerical gate must pass before a
+new numerical implementation is allowed into service; no NPU result is faked.
+"""
+
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+import pytest
+
+from oscar_ascend.bf16_history_policy import BF16_HISTORY_FLAG
+from oscar_ascend.integration.runtime_api import OscarReadinessError
+from oscar_ascend.runtime import AscendRuntimeProvider
+from tools import deploy, install_serve, observe_serve, target_cli
+from tools.serving_variants import variant_config, variant_features
+
+
+ROOT = Path(__file__).resolve().parents[1]
+UNAVAILABLE = "has not passed the frozen CPU numerical gate"
+
+
+def target():
+    return json.loads((ROOT / "configs/target.json").read_text())
+
+
+def write_target(tmp_path, value):
+    path = tmp_path / "target.json"
+    path.write_text(json.dumps({**target(), BF16_HISTORY_FLAG: value}))
+    return path
+
+
+@pytest.mark.parametrize("variant", [None, "candidate", "baseline", "native"])
+def test_missing_and_false_keep_existing_configuration_and_features(variant):
+    original = target()
+    ordinary = variant_config(original, variant)
+    disabled = variant_config({**original, BF16_HISTORY_FLAG: False}, variant)
+    assert disabled.pop(BF16_HISTORY_FLAG) is False
+    assert disabled == ordinary
+    assert BF16_HISTORY_FLAG not in original
+    assert BF16_HISTORY_FLAG not in ordinary
+    assert variant_features(disabled) == variant_features(ordinary)
+
+
+@pytest.mark.parametrize("variant", [None, "candidate", "baseline", "native"])
+@pytest.mark.parametrize("value", [None, 0, 1, "false", "true", [], {}])
+def test_type_errors_are_rejected_before_variant_normalization(variant, value):
+    with pytest.raises(ValueError, match="must be an explicit boolean"):
+        variant_config({**target(), BF16_HISTORY_FLAG: value}, variant)
+
+
+@pytest.mark.parametrize("variant", [None, "candidate"])
+def test_unimplemented_true_cannot_be_silently_kept(variant):
+    with pytest.raises(ValueError, match=UNAVAILABLE):
+        variant_config({**target(), BF16_HISTORY_FLAG: True}, variant)
+
+
+@pytest.mark.parametrize("variant", ["baseline", "native"])
+def test_explicit_old_variant_clears_boolean_request_without_mutating_input(variant):
+    original = {**target(), BF16_HISTORY_FLAG: True}
+    selected = variant_config(original, variant)
+    assert selected[BF16_HISTORY_FLAG] is False
+    assert original[BF16_HISTORY_FLAG] is True
+
+
+@pytest.mark.parametrize("value", [True, "false", 1])
+def test_runtime_constructor_cannot_bypass_policy(value):
+    with pytest.raises(OscarReadinessError, match=BF16_HISTORY_FLAG):
+        AscendRuntimeProvider({**target(), BF16_HISTORY_FLAG: value})
+
+
+def test_runtime_missing_and_false_do_not_change_existing_configuration():
+    ordinary = AscendRuntimeProvider(target())
+    disabled = AscendRuntimeProvider({**target(), BF16_HISTORY_FLAG: False})
+    assert disabled.config.pop(BF16_HISTORY_FLAG) is False
+    assert disabled.config == ordinary.config
+    assert ordinary.ops is disabled.ops is None
+
+
+def test_runtime_file_configuration_cannot_bypass_policy(tmp_path, monkeypatch):
+    path = write_target(tmp_path, True)
+    monkeypatch.setenv("OSCAR_TARGET_CONFIG", str(path))
+    with pytest.raises(OscarReadinessError, match=UNAVAILABLE):
+        AscendRuntimeProvider()
+
+
+@pytest.mark.parametrize("prepare", [target_cli.serve_argv, target_cli.target_env])
+def test_direct_command_and_environment_reject_before_device_loading(prepare):
+    with pytest.raises(ValueError, match=UNAVAILABLE):
+        prepare({**target(), BF16_HISTORY_FLAG: True})
+
+
+def test_target_cli_native_normalizes_true_but_still_rejects_wrong_type(tmp_path, monkeypatch, capsys):
+    path = write_target(tmp_path, True)
+    monkeypatch.setattr(sys, "argv", ["target_cli", "--config", str(path), "--native", "--print-command"])
+    assert target_cli.main() == 0
+    command = capsys.readouterr().out
+    assert command.startswith("vllm serve ")
+    assert json.loads(path.read_text())[BF16_HISTORY_FLAG] is True
+    path.write_text(json.dumps({**target(), BF16_HISTORY_FLAG: "false"}))
+    with pytest.raises(ValueError, match="must be an explicit boolean"):
+        target_cli.main()
+
+
+@pytest.mark.parametrize("entry", ["install", "observe", "deploy"])
+def test_unavailable_config_stops_before_any_installation_phase(entry, tmp_path, monkeypatch):
+    path = write_target(tmp_path, True)
+    logs = tmp_path / "logs"
+
+    def forbidden_phase(*args, **kwargs):
+        pytest.fail("an installation/probe phase ran before the config was rejected")
+
+    module = {"install": install_serve, "observe": observe_serve, "deploy": deploy}[entry]
+    monkeypatch.setattr(module, "run_phase", forbidden_phase)
+    args = ["--config", str(path), "--log-dir", str(logs)]
+    if entry == "observe":
+        assert observe_serve.main(args + ["--variant", "candidate"]) == 1
+    elif entry == "install":
+        with pytest.raises(ValueError, match=UNAVAILABLE):
+            install_serve.main(args + ["--variant", "candidate"])
+    else:
+        monkeypatch.setattr(sys, "argv", ["deploy", *args])
+        with pytest.raises(ValueError, match=UNAVAILABLE):
+            deploy.main()
+    status = json.loads((logs / "status.json").read_text())
+    assert status["status"] == "failed"
+    assert status["failed_phase"] == "config"
+    assert status["phases"] == []
+    assert UNAVAILABLE in status["error"]
+    assert not (logs / "effective-target.json").exists()
+
+
+def test_policy_import_is_lightweight_and_has_no_device_dependency():
+    result = subprocess.run([sys.executable, "-c", (
+        "import sys; before=set(sys.modules); "
+        "from oscar_ascend.bf16_history_policy import validate_bf16_history; "
+        "assert validate_bf16_history({}) is False; "
+        "assert not {'torch', 'torch_npu', 'vllm', 'vllm_ascend'} & (set(sys.modules)-before)"
+    )], cwd=ROOT, text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr

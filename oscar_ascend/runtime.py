@@ -9,6 +9,7 @@ and fixed workspaces. #28/#77/#78: imported only after native initialization.
 #34/#36/#127-129/#140/#142/#145/#155: optional history-query capacity is
 # independent of current-only input capacity; ordinary CV, dummy and capture
 # retain strict capacity checks. Every buffer is reserved before KV profiling.
+#148/#153: unsupported BF16 history requests fail before any device loading.
 """
 from __future__ import annotations
 
@@ -22,6 +23,7 @@ import warnings
 from typing import Any
 
 from .integration.runtime_api import OscarReadinessError
+from .bf16_history_policy import validate_bf16_history
 from .lifecycle import SnapshotLayout
 from .request_window_storage import RequestWindowLayout, FixedWindowMap, INVALID_TAG
 
@@ -276,6 +278,10 @@ class AscendRuntimeProvider:
     def __init__(self, config=None):
         path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
         self.config = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            validate_bf16_history(self.config)
+        except ValueError as error:
+            raise OscarReadinessError(str(error)) from error
         self._request_windows = self.config.get("experimental_request_windows", False)
         if type(self._request_windows) is not bool:
             raise OscarReadinessError("experimental_request_windows must be an explicit boolean")

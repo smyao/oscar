@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-16",
+  "status": "stage1_implemented_numeric_gate_failed_no_production_kernel",
+  "base_commit": "8cd23d2840e1b6a535fa315bccf27e42592b5b12",
+  "branch": "codex/bf16-history-stage1",
+  "planned_authorized_remote": "https://gitcode.com/jpl123/gpt_new_oscar_kimi.git",
+  "fe0_frozen_match": true,
+  "fe0_sha256": {
+    "attention_cv.cpp": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+    "attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+    "store_int2.cpp": "5a6fa9619e399bb80bc0455c4426396d98510326bb899900b4b96c65d2b58506",
+    "rotate_clip_store.cpp": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+    "merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+    "status_guard.cpp": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+    "oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+  },
+  "unchanged_source_sha256": {
+    "configs/acceptance.json": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+    "configs/target.json": "ac366f316d1b0bb25a287a8ecab768aaacc1586beddf262e2cfcc9e9f63e21a2",
+    "oscar_ascend/ops/reference.py": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
+    "oscar_ascend/ops/cv_dispatch.py": "52bec1b31a68851d10f3d8d7d71e9412f82f040836a994b7b34ed313b9e4d5e9",
+    "oscar_ascend/integration/impl.py": "1a2dd93df5534f4558f5ee7acd901a6fda27c5258a3d16da0f7fe71afe7ab149"
+  },
+  "implementation_and_test_sha256": {
+    "tools/experiments/bf16_history_screen.py": "52639a21041e99b5208d8b34c8900edde09d7cc92a52f1bd72f170f04937afc6",
+    "oscar_ascend/bf16_history_policy.py": "539719c3a109a75dc598417e2734351b1e01c017bab518c8840e4ca76dc9d2a6",
+    "tools/serving_variants.py": "e2e83665db3608737d3c74759d1e069c25fa334c9964094091f21f0cca092e1e",
+    "tools/deploy.py": "23c73b05a78eb7ffa47b430551f69f7d94d9e0283f88703593c80ea66075f318",
+    "tools/target_cli.py": "3f82a7e08500b98a2b6b3606481bc19d7c86c5c446c98132d359594d26240303",
+    "oscar_ascend/runtime.py": "7408baae8c6a6148abe7b69f81236f34ea75686dd88411a6cd5d97f842c28a59",
+    "tests/test_bf16_history_screen.py": "4039512811fa67080f686e0c42b6c674f2f53ccdad59e7ea85e8812e7dabe98e",
+    "tests/test_bf16_history_policy.py": "fb1b6dfa1c648eadb061db144f85988a6dbe9f3ed8b547947b0f3b977e689319",
+    "tests/test_mdl_decode_dispatch.py": "bd0b6dd3d0c404af39f9c594fb7da3ad17465fa426ad1bae53bd1d3ba2b4c473",
+    "tests/test_prefix_caching.py": "74322841a14dd097425fbb898cadb1951f42af63acce5c44f106d6388fd26323",
+    "tests/test_integration_contracts.py": "f0d6be77bca009735295bf3f274df2eeced9c21b339b4cc749a19eeeed928804",
+    "tests/test_serving_variants.py": "39404e148509c3f88cae75d2b102da39233c59fef6b7ee3e8f7f39b2bdd391f0"
+  },
+  "pytest": {
+    "bf16_history_host_20261016.xml": {
+      "tests": 157,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "c2c17590f58e99753eec2c268aa54ebb0e3bcadd8e185d8be8d6bb9c62587c0d"
+    },
+    "bf16_history_routes_20261016.xml": {
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "35ce1f0da69d75cafc7dd89fe90e591b8f90d2cb29aa18aac82cc7566ee7edcf"
+    }
+  },
+  "pytest_passed_total": 177,
+  "numeric_screen": {
+    "path": "reports/bf16_history_stage1_20261016.json",
+    "sha256": "fab6ee336ffe319b68d26baddb498db794b7d94a75fbdba079b13796bcc92692",
+    "returncode": 2,
+    "baseline_passed": 11,
+    "candidate_passed": 4,
+    "candidate_failed": 7,
+    "merged_output_failed_cases": 2,
+    "partial_only_failed_cases": 5
+  },
+  "initial_evidence_preserved": [
+    "reports/bf16_history_stage1_20261016_initial.json",
+    "reports/bf16_history_host_20261016_initial.xml"
+  ],
+  "test_expectation_corrections": "Existing APC-on/omitted-budget assertions updated to user AGENTS.md default APC-off/16384; no numerical or bitwise gate changed.",
+  "production_bf16_enabled": false,
+  "production_kernel_registered": false,
+  "not_run": [
+    "CANN",
+    "official_CPU_debug",
+    "NPU",
+    "graph_capture",
+    "graph_replay",
+    "full_service",
+    "model_quality",
+    "performance"
+  ],
+  "execution_plan_complete": false
+}

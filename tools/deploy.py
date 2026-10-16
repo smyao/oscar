@@ -1,4 +1,5 @@
 # 档案 #27/#51/#52/#70–73/#94–95/#125–126/#131–140：单入口、配对性能门、真实退出码和精简终端证据。
+# 档案 #148/#153：拒绝尚无合格生产实现的 BF16 history 配置，不能安装后静默走旧核。
 """Install, build, probe and serve using the target's existing Python environment."""
 from __future__ import annotations
 import argparse
@@ -9,6 +10,7 @@ import json
 import os
 from pathlib import Path
 import sys
+from oscar_ascend.bf16_history_policy import validate_bf16_history
 from .phase import atomic_json, run_phase, terminal_line
 from .target_cli import target_env
 
@@ -119,6 +121,7 @@ def main() -> int:
         print(f"[oscar] install → build → probes → serve; logs={log_dir}", flush=True)
     try:
         config = json.loads(args.config.read_text())
+        validate_bf16_history(config)
     except (OSError, ValueError) as exc:
         if not args.plan:
             (log_dir / "config.log").write_text(f"FAILED phase=config: {exc}\n")

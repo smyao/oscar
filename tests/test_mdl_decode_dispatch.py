@@ -1,6 +1,7 @@
 """Archive #126/#129/#145/#148/#150/#153/#154: MDL q4/q1 production seams.
 
 Host ABI/shape/source checks are not numeric or target NPU acceptance.
+User 2026-10-13 / AGENTS.md: this branch defaults to APC disabled.
 """
 import json
 from pathlib import Path
@@ -87,7 +88,7 @@ def test_unqualified_request_window_mdl_combination_is_explicit():
     config['experimental_request_windows']=True
     with pytest.raises(OscarReadinessError,match="request-window MDL reader is not qualified"):
         AscendRuntimeProvider(config)
-    assert variant_config({},'candidate')['enable_prefix_caching'] is True
+    assert variant_config({},'candidate')['enable_prefix_caching'] is False
 
 
 def test_qualified_mdl_q1_q4_and_c4_pipeline_compose_in_shared_preset():
@@ -95,7 +96,7 @@ def test_qualified_mdl_q1_q4_and_c4_pipeline_compose_in_shared_preset():
     config=variant_config({},'candidate')
     flags={name:config['experimental_'+name] for name in
            ('fast_unpack','mixed_cv','striped_cache','decode_bundle','c4_member_pipeline','mdl_decode')}
-    assert config['enable_prefix_caching'] is True
+    assert config['enable_prefix_caching'] is False
     assert 'max_num_batched_tokens' not in config and 'scheduler_cls' not in config
     cases=((128,4,False,MDL_DECODE_CV_OP),(128,1,True,MDL_DECODE_Q1_CV_OP),
            (2048,2048,False,'attention_cv_member_pipeline_cluster4_out'),

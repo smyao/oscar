@@ -1,5 +1,13 @@
 # OSCAR 优化与失败证据索引
 
+## 2026-10-16 单 BF16 历史 attention：阶段 1 数值门未通过
+
+- 母源 `8cd23d2840e1b6a535fa315bccf27e42592b5b12`，与执行方案原基准之间只有方案文档差异。新增 [CPU 数值代码](../tools/experiments/bf16_history_screen.py)，固定 11 例，全 query/head、三源/多 split、KV256 online softmax、原空间 oracle；分别评估 K/V、Q、P 舍入及完整组合，保留 FP32 分母、累加、逆旋转与 merge。
+- [最终报告](../reports/bf16_history_stage1_20261016.json)：11 例旧 FP32 对照通过；候选 7 例总门失败，其中 2 例最终合并输出也失败，真实 rc=2；其余 4 例通过不抵销失败。完整集合检查防止只跑空历史病例就放行下一阶段。解析反例与初次失败证据入口见 [执行方案状态](bf16_history_execution_plan.md)。
+- **本轮不进入组合/生产接入**：按方案阶段 1 明确停止。两固定入口及直接 runtime 对未实现的 `experimental_bf16_history=true` 明确拒绝，缺省/False 不改变现有 q4/q1/C4/C16 路由；baseline/native 清除合法请求，非法类型拒绝。没有新 BF16 capability、kernel、NPU 门或性能倍率。
+- 177 项相关主机/路由测试通过；修正了旧测试与现行 APC 默认关闭/预算 16384 约束不符的断言，未修改生产默认、旧逐位门或冻结容差。7 个 FE0 文件及 oracle/acceptance/target/selector/forward 原字节保持；[主机证据](../reports/bf16_history_host_20261016.xml)、[路由证据](../reports/bf16_history_routes_20261016.xml)。
+- CANN、官方 CPU-debug、真实设备、图、服务、模型质量和性能均未执行。本机反例不追加真机档案、不要求 AISBench。重开须提出能通过已保留失败病例和完整冻结门的具体数值改法；不能仅换 kernel dtype 后重新宣称精度成立。
+
 ## 2026-10-14 stable 故障修复
 
 - 目标为用户回传的APC开启时MTP code5、关闭时后期异步Trap。原文与证据边界见档案#160。

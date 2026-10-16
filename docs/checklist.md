@@ -1,8 +1,8 @@
 # 完成状态与证据
 
-本表保留启动文档稳定ID。`passed`仅限该项声明范围；本项目整体未完成。CPU测试、Python wheel、CANN编译、设备完成、图捕获、图回放、性能分别列出。历史记录来自 `codex/oscar-ascend`，2026-10-16 本轮母源为 `oscar-new-3`、交付分支为 `codex/bf16-history-stage1`；授权远端为用户指定GitCode仓库，推送状态以最终Git提交/远端校验为准。
+本表保留启动文档稳定ID。`passed`仅限该项声明范围；本项目整体未完成。CPU测试、Python wheel、CANN编译、设备完成、图捕获、图回放、性能分别列出。历史记录来自 `codex/oscar-ascend`，2026-10-16 本轮母源为 `oscar-new-3`、交付分支为 `codex/bf16-history-implementation`；授权远端为用户指定GitCode仓库，推送状态以最终Git提交/远端校验为准。
 
-2026-10-16 BF16 新路径：阶段 0/1 数值代码及未实现配置拒绝已实现；固定 11 例旧 FP32 全过，候选 7 例未通过冻结门，rc=2，按[执行方案](bf16_history_execution_plan.md)停止生产接入。177 项相关主机/路由测试通过不代表 BF16 精度通过；C04/E01 及新路径 CANN、设备完成、图捕获/回放、服务、模型质量、性能均未因此获得通过状态。42 个稳定 checkpoint 编号与既有设备证据保留，冻结集/oracle/acceptance 未改；报告见 [CPU 数值结果](../reports/bf16_history_stage1_20261016.json)。
+2026-10-16 BF16 新路径：按最新要求一次补齐六路研究实现、工作区/绑定/构建/路由和独立设备/图门，详见[执行方案](bf16_history_execution_plan.md)与[本轮回执](../reports/bf16_history_all_code_20261016.json)。固定 CPU 数值集仍 7/11 失败（旧 FP32 全过），生产守卫继续拒绝，默认构建/配置不启用新核。CANN/Lima/torch_npu 本机缺失，新核 CANN、CPU-debug、设备完成、图捕获/回放、服务、模型质量和性能均未验收；源码与主机测试不提升 C04/E01/E06。42 个稳定 checkpoint 及既有设备证据保留，冻结集/oracle/acceptance 未改。
 
 | ID | 状态 | 要求 | 本轮证据/缺口 |
 |---|---|---|---|

@@ -11,11 +11,13 @@ import sys
 
 import pytest
 
-from oscar_ascend.bf16_history_policy import BF16_HISTORY_FLAG
+from oscar_ascend.bf16_history_policy import (
+    BF16_HISTORY_FLAG, BF16_HISTORY_DEPENDENCIES, validate_bf16_history,
+)
 from oscar_ascend.integration.runtime_api import OscarReadinessError
 from oscar_ascend.runtime import AscendRuntimeProvider
 from tools import deploy, install_serve, observe_serve, target_cli
-from tools.serving_variants import variant_config, variant_features
+from tools.serving_variants import research_variant_config, variant_config, variant_features
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,9 +28,13 @@ def target():
     return json.loads((ROOT / "configs/target.json").read_text())
 
 
+def research_target():
+    return research_variant_config({**target(), BF16_HISTORY_FLAG: True}, "candidate")
+
+
 def write_target(tmp_path, value):
     path = tmp_path / "target.json"
-    path.write_text(json.dumps({**target(), BF16_HISTORY_FLAG: value}))
+    path.write_text(json.dumps({**research_target(), BF16_HISTORY_FLAG: value}))
     return path
 
 
@@ -52,9 +58,9 @@ def test_type_errors_are_rejected_before_variant_normalization(variant, value):
 
 
 @pytest.mark.parametrize("variant", [None, "candidate"])
-def test_unimplemented_true_cannot_be_silently_kept(variant):
+def test_unqualified_true_cannot_be_silently_kept(variant):
     with pytest.raises(ValueError, match=UNAVAILABLE):
-        variant_config({**target(), BF16_HISTORY_FLAG: True}, variant)
+        variant_config(research_target(), variant)
 
 
 @pytest.mark.parametrize("variant", ["baseline", "native"])
@@ -89,7 +95,51 @@ def test_runtime_file_configuration_cannot_bypass_policy(tmp_path, monkeypatch):
 @pytest.mark.parametrize("prepare", [target_cli.serve_argv, target_cli.target_env])
 def test_direct_command_and_environment_reject_before_device_loading(prepare):
     with pytest.raises(ValueError, match=UNAVAILABLE):
-        prepare({**target(), BF16_HISTORY_FLAG: True})
+        prepare(research_target())
+
+
+def test_pure_research_configuration_does_not_grant_serving_acceptance():
+    selected = research_target()
+    assert selected[BF16_HISTORY_FLAG] is True
+    assert variant_features(selected)["bf16_history"] is True
+    assert validate_bf16_history(selected, head_dim=256, cache_format="striped_v1") is True
+    with pytest.raises(OscarReadinessError, match=UNAVAILABLE):
+        AscendRuntimeProvider(selected)
+
+
+@pytest.mark.parametrize("flag", BF16_HISTORY_DEPENDENCIES)
+@pytest.mark.parametrize("value", [False, 1, "true"])
+def test_research_route_requires_each_strict_boolean_dependency(flag, value):
+    config = research_target()
+    config[flag] = value
+    with pytest.raises(ValueError, match=flag):
+        validate_bf16_history(config)
+
+
+@pytest.mark.parametrize("updates,geometry,expected", [
+    ({"experimental_request_windows": True}, {}, "physical-page snapshots"),
+    ({"experimental_request_windows": 0}, {}, "explicit boolean"),
+    ({}, {"head_dim": 128}, "head_dim=256"),
+    ({}, {"head_dim": 256.0}, "head_dim=256"),
+    ({}, {"cache_format": "striped_request_window_v1"}, "striped_v1"),
+    ({}, {"cache_format": "canonical_v1"}, "striped_v1"),
+])
+def test_research_shape_and_storage_boundaries_are_explicit(updates, geometry, expected):
+    with pytest.raises(ValueError, match=expected):
+        validate_bf16_history({**research_target(), **updates}, **geometry)
+
+
+@pytest.mark.parametrize("entry", ["assert_ready", "layer_state", "ensure_workspace"])
+def test_mutating_an_existing_provider_cannot_enable_research_math(entry):
+    provider = AscendRuntimeProvider(target())
+    provider.config.update(research_target())
+    with pytest.raises(OscarReadinessError, match=UNAVAILABLE):
+        if entry == "layer_state":
+            provider.layer_state("model.layers.0.self_attn.attn")
+        elif entry == "ensure_workspace":
+            provider.ensure_workspace(6, 1, 256, "npu:0")
+        else:
+            provider.assert_ready()
 
 
 def test_target_cli_native_normalizes_true_but_still_rejects_wrong_type(tmp_path, monkeypatch, capsys):

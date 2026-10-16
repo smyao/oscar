@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="0.117" timestamp="2026-10-16T10:13:44.761648+08:00" hostname="lokiyaodeMacBook-Pro.local"><testcase classname="" name="tests.test_bf16_history_bindings" time="0.000"><error message="collection failure">ImportError while importing test module '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tests/test_bf16_history_bindings.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_bf16_history_bindings.py:9: in &lt;module&gt;
+    from oscar_ascend.bf16_history_policy import BF16_HISTORY_OP_MAP
+E   ImportError: cannot import name 'BF16_HISTORY_OP_MAP' from 'oscar_ascend.bf16_history_policy' (/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/oscar_ascend/bf16_history_policy.py)</error></testcase></testsuite></testsuites>

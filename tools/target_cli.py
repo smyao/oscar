@@ -1,13 +1,15 @@
 # 档案 #28/#29/#30/#84：建引擎前初始化父进程线程池；保留附录 A 参数及 MTP eager 作用域。
 # #34/#36：原生预算模式不传预算参数；worker按原生有效容量预分配。
-# #148/#153：未实现的 BF16 history 请求必须在启动前明确拒绝。
+# #148/#153：未通过冻结精度门的 BF16 history 请求必须在启动前明确拒绝。
 from __future__ import annotations
 import argparse
 import json
 import os
 from pathlib import Path
 import sys
-from oscar_ascend.bf16_history_policy import BF16_HISTORY_FLAG, validate_bf16_history
+from oscar_ascend.bf16_history_policy import (
+    BF16_HISTORY_FLAG, normalize_bf16_history, require_bf16_history_production,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -21,7 +23,7 @@ def diagnose_guard_enabled(config: dict) -> bool:
 
 
 def serve_argv(config: dict) -> list[str]:
-    validate_bf16_history(config)
+    require_bf16_history_production(config)
     native_budget = config.get("use_native_token_budget", True)
     if type(native_budget) is not bool:
         raise ValueError("use_native_token_budget must be an explicit boolean")
@@ -71,7 +73,7 @@ def serve_argv(config: dict) -> list[str]:
 
 
 def target_env(config: dict, base: dict[str, str] | None = None) -> dict[str, str]:
-    validate_bf16_history(config)
+    require_bf16_history_production(config)
     env = dict(os.environ if base is None else base)
     if diagnose_guard_enabled(config):
         env["OSCAR_GUARD_HOST_SYNC"] = "1"
@@ -97,7 +99,7 @@ def main() -> int:
     parser.add_argument("--native",action="store_true",help="explicit unmodified native baseline, never selected after an OSCAR failure")
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
-    bf16_history = validate_bf16_history(config, variant="native" if args.native else None)
+    bf16_history = normalize_bf16_history(config, variant="native" if args.native else None)
     if BF16_HISTORY_FLAG in config:
         config[BF16_HISTORY_FLAG] = bf16_history
     command = serve_argv(config)

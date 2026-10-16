@@ -203,8 +203,10 @@ def test_original_padded_shape_keeps_cv_split_choice():
 @pytest.mark.parametrize("compact_shape,expected_splits",[(None,20),(16384,1)])
 def test_real_forward_keeps_actual_b_buffers_with_original_n_split(monkeypatch,compact_shape,expected_splits):
     from oscar_ascend.integration.current_attention import use_native_current
+    from oscar_ascend.bf16_history_policy import validate_bf16_history
     native=definitions("oscar_ascend/integration/impl.py","compact_impl_shape_contract",set(),
-        {"torch":torch,"use_native_current":use_native_current,"OscarReadinessError":OscarReadinessError},
+        {"torch":torch,"use_native_current":use_native_current,"OscarReadinessError":OscarReadinessError,
+         "validate_bf16_history":validate_bf16_history},
         monkeypatch,methods=[("OscarAttentionImpl","forward")])
     geometry=WorkspaceGeometry(16384,6,1,256,cube_cores=20)
     received=[]

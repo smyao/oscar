@@ -2,15 +2,41 @@
 
 初稿日期：2026年10月15日。方案基准：`oscar-new-3`，提交 `f96820f154f62686c319edba5ac31e52a20bad4e`。2026年10月16日开始执行，代码母源为 `8cd23d2840e1b6a535fa315bccf27e42592b5b12`；两者之间仅新增本方案，算子母源未变。
 
-**当前执行状态：阶段 0/1 的独立 CPU 数值代码已实现，阶段 1 数值门失败，未进入生产内核接入。** 实现见 [bf16_history_screen.py](../tools/experiments/bf16_history_screen.py)，完整证据见 [阶段 1 报告](../reports/bf16_history_stage1_20261016.json)。11 个固定用例的旧 FP32 对照全部通过；BF16 完整组合 7 例不合格、4 例通过。其中 5 例仅分段输出超差，2 例合并后也超差；程序返回 rc=2。原始首次报告另存 `_initial.json`，未覆盖失败记录。
+**2026-10-16 最新执行状态：按用户“一次改完、不分阶段”的指令，一次补齐六路研究算子、typed workspace、C++ 绑定、可选构建、Python 路由、统一开关、独立 NPU/图探针和 observe 接线。** 当前分支为 `codex/bf16-history-implementation`，本轮母源 `6029f2a8c6277ab8136e5a5eeaa2c2c16313ca08`。下文原阶段编号仅作为依赖/验收检查项，不再作为分批开发或交付边界。
 
-失败可用确定性输入解释：identity 诊断旋转、Q=0、context=1023、sink=64、recent=256，历史可见域 `[64,768)`。在第 0 维，352 对相反原始 BF16 V 经现有 INT2 codec 得到 `2048` 与 `-2048.0625`，历史 FP32 总和为 -22、均值 -0.03125；末次 BF16 Cast 将该两值变为正负 2048。精确窗口和 current 在该维相消，最终参考输出为 `-22/1024=-0.021484375`，候选为 0，超过约 0.00510742 的冻结容差。该解析仅指第 0 维，其他维度误差单列于报告；不是 NPU 或模型质量结论。
+**代码已提供不等于数值合格或生产放行。** 已保存的 [CPU 数值报告](../reports/bf16_history_stage1_20261016.json)仍是 11 个旧 FP32 对照通过、BF16 组合 7 例失败/4 例通过，其中 2 例合并输出也失败。没有修改 oracle、容差或失败样本。上一轮 `6029f2a` 仅有 CPU screen/拒绝配置的历史状态保存在 [原交付回执](../reports/bf16_history_implementation_20261016.json)，不能把该旧回执当成本轮文件清单。
 
-同时新增未实现开关保护：缺省/严格 False 保持旧行为；显式 True 在 candidate/无 variant 的安装与运行时入口明确报错；baseline/native 清除合法布尔请求，非法类型始终拒绝。没有注册 BF16 算子、能力或默认候选。两个固定服务入口继续选择原算子，不把本次研究代码说成已启用的优化。
+失败的解析反例仍成立：identity 旋转、Q=0、context=1023 时，第 0 维历史 INT2 重建的 352 对 `2048`、`-2048.0625` 总和为 -22；转 BF16 后正负相消，精确窗口/current 同样相消，最终参考为 `-22/1024=-0.021484375`、候选为 0，超过约 0.00510742 的冻结容差。FP32 累加无法恢复输入 Cast 丢失的信息。该结论不是 NPU 或模型质量实测。
 
-新增数值/配置测试及相关 MTP、GDN、APC、入口/路由回归共 **177 passed**，见 [主机回归](../reports/bf16_history_host_20261016.xml) 和 [路由回归](../reports/bf16_history_routes_20261016.xml)。回归同时修正了旧测试中 APC 默认开启/省略预算的过时期望，以本分支 AGENTS.md 的默认 APC 关闭、预算 16384 为准；未修改生产默认、旧逐位断言或数值容差。首次回归失败记录保存在 [initial XML](../reports/bf16_history_host_20261016_initial.xml)。冻结文件、acceptance、oracle、target、selector 和 forward 均保持原字节。
+新实现以独立符号提供；`tools.build_ops --bf16-history` 才编入六个新能力，默认 CMake 选项关闭。`research_variant_config` 校验研究依赖，生产 `variant_config`、CLI、deploy、runtime 仍拒绝已知未合格的 True，没有环境变量绕过，也不会静默调用旧核。两个固定服务入口保持原合格组合；本轮不能宣传成已启用的 BF16 优化。
 
-阶段 2–6 的新 BF16 工作区、CANN 内核、设备/图/服务与性能验证均未执行；不能将此版本标为完整计划完成或可上线的 BF16 实现。[交付验证清单](../reports/bf16_history_implementation_20261016.json)绑定源码/测试哈希、冻结集和真实证据边界；交付分支为 `codex/bf16-history-stage1`。以下方案和停止条件保持有效。
+当前主机没有 CANN、Lima 或 torch_npu。[工具链尝试](../reports/bf16_history_toolchain_20261016.json)实际 rc=1；[真实 probe 的本机尝试](../reports/bf16_history_no_npu_delivery_20261016.json)实际 rc=2，明确禁止 CPU 替代。新内核未经过设备编译、官方 CPU-debug、NPU、graph 或服务验证。尤其 Matmul `End → PIPE_ALL → TPipe.Reset → Init` 的重初始化契约仍需当前 SDK/设备验证，不能仅以原生存在 Reset API 作保证。
+
+相关主机回归按测试项去重并采用最近复验，结果为 **468 通过、8 跳过**；其中最终完整路径/独立 probe 的复验为 [76 项通过](../reports/bf16_history_full_pipeline_host_20261016_v2.xml)。原 AST 依赖注入错误和新增测试夹具共享可变状态的失败均保留原始 XML，修复未放宽任何数值断言。另执行全仓静态检查，结果为 2 通过/3 失败；三个首报触发文件均与本轮母源逐字节相同，详见[静态检查边界](../reports/bf16_history_static_baseline_20261016.json)。本轮新增源的档案头及无静默吞错检查已过；不能据此宣称全仓静态检查通过。
+
+本轮文件与验证入口：
+
+| 部件 | 本轮实现/证据 |
+|---|---|
+| 六条数学路径 | `attention_bf16_history_mdl.cpp` 提供 q4/q1；另有 C4 member、C16、range、balanced 四份独立源 |
+| 派生可审计性 | [生成器](../tools/experiments/generate_bf16_history_kernels.py)固定 5 个母源哈希；每个替换逆向还原母源；[资源及身份回执](../reports/bf16_history_kernel_sources_20261016.json) |
+| 工作区/绑定 | [launch header](../csrc/include/oscar_bf16_history_launch.h)、[绑定](../csrc/bf16_history_bindings.cpp)；旧 ABI/验证模板保留，全部容量显式放大 |
+| 构建/运行接线 | 可选编译清单、实际 capability、Meta、runtime、六项显式 selector 映射、clusterStats 参数同步 |
+| 新 probe | [probe_bf16_history.py](../tools/probe_bf16_history.py)：30 个固定算子诊断病例、完整原空间 partial/output/LSE/最终 BF16、source1/2 逐位、错误 lane、同址改输入图回放 |
+| 完整调用链门 | [bf16_history_pipeline.py](../tools/bf16_history_pipeline.py)：另设六个与真实 selector 一致的形状，按实际 Cube 核数/工作区推导 split；执行 prepare、适用的 source2 suppress、rotate、CV、current slot guard/native FIA/partial 写入、merge/copy、striped store、冻结 status guard |
+| 不扩大结论 | CV、CV+merge/copy、完整 eager 调用链分别计时。后者使用合成物理页、实际目标 head 几何和独立输入/任务绑定，不冒充模型真实物理布局、完整图路径、服务性能或模型质量 |
+| 回归/验收边界 | [本轮总回执](../reports/bf16_history_all_code_20261016.json)；保留首次回归失败和修复复验，42 个 checkpoint 不重排 |
+
+研究构建与设备诊断入口（仅在已有 CANN/torch_npu/NPU 的环境执行；不是真机默认服务的新前置步骤）：
+
+```bash
+python3 -m tools.build_ops --soc ascend910b4 --bf16-history
+python3 -m tools.probe_bf16_history --config /path/to/research-target.json --output /path/to/bf16-report.json
+```
+
+研究配置在当前 target 的副本中显式增加 `"experimental_bf16_history": true`；probe 用统一 candidate 依赖规范化，仍核对本任务设备和真实模型几何。`configs/target.json` 本身不改。该配置不能启动生产服务；实际执行/数值失败保留在报告，不放宽门或改默认以促成启动。
+
+计时有全局前置条件：完整 CPU 数值集、30 例算子数值/协议/图检查及六例完整调用链数值/状态/写后字节检查全部通过，才可运行任何局部或完整计时。完整调用链的 C16 使用真实路由阈值所需的 q8192，balanced 使用能实际选中该路由的 padding；不把小算子诊断的形状/split 冒充生产选择。完整路径两臂使用各自最大 C16 arena，原空间 oracle 按 query 分块覆盖全部实际行；每次在计时外同址恢复初始缓存，计时内保持先读后写。当前 CPU 门已失败，所以这些计时代码存在但不能产生通过证据。
 
 目标是保持 INT2 缓存及现有服务协议，研究将历史 attention 的矩阵操作数改为 BF16，累加、softmax、逆旋转和合并保留 FP32。先隔离数值影响，再实现独立算子，最后接入统一服务入口。BF16 会增加舍入，功能协议保持与数值误差合格必须分别证明；不能承诺任意输入逐位不变，也不能用短探针证明完整模型质量不下降。
 
@@ -113,7 +139,7 @@ output = 既有 FP32 LSE merge，再由既有出口转换模型 dtype
 
 | 范围 | 计划动作 |
 |---|---|
-| 新增 `csrc/experiments/bf16_history/` | 独立 CPU 数值分解、CANN 构建及最小真实 kernel 实验；不进入默认生产源清单 |
+| 新增独立研究构建/实验入口 | CPU screen、派生源生成器和 `tools.build_ops --bf16-history`；不进入默认生产源清单 |
 | 新增 `csrc/kernels/attention_bf16_history_mdl.cpp` | q4/q1 的新符号，保留原 source1/2；从当前母源建立可复核的语义差异 |
 | 新增 C4/C16/普通及 balanced 候选文件 | 分别覆盖当前生产可选路径；每个核独立核对实际母源，禁止只复制算法说明 |
 | 新增 `csrc/include/oscar_bf16_history_launch.h` | 明确新 ABI、各路径 typed 字节布局、容量计算和合法几何 |
@@ -128,7 +154,7 @@ output = 既有 FP32 LSE merge，再由既有出口转换模型 dtype
 
 外部 ABI 保持：Q/current/window BF16；query_rot/rotation/partial/LSE FP32；raw/workspace uint8；tasks/tags int64；status int32。[当前 binding][S19]
 
-## 6 按顺序实施
+## 6 一次性交付范围与验收依赖
 
 ### 阶段 0 固定母源与实验合同
 
@@ -136,7 +162,7 @@ output = 既有 FP32 LSE merge，再由既有出口转换模型 dtype
 
 定义精度、状态、图、性能门与代表输入，再运行实验。旧候选、BF16 候选、无 OSCAR 原生是三个不同分母：增量收益相对当前候选，原生差距单独记录。正常部署的既有设备、模型、端口和参数不被实验改写。
 
-完成条件：源与门可追溯，BF16 研究开关保持关闭。未满足则不开始生产接线。
+完成条件：源与门可追溯，BF16 研究开关保持关闭。用户最新要求允许一次补齐受隔离保护的接线；这不授予生产启用资格。
 
 ### 阶段 1 先做 CPU 数值分解
 
@@ -283,7 +309,7 @@ git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 
 报告至少包含：母源和候选提交/源码哈希、acceptance 哈希、模型与配置绑定、实际 op、完整形状/源区间/任务数、逐位保持项、独立 oracle output/LSE 误差、状态/lane 比较、图地址与变更输入哈希、workspace 字节、原始计时样本、失败码和资源清理结果。
 
-本方案的代码完成条件是：独立实现覆盖所声明的生产域；不变契约证据齐全；新数值路径通过冻结门；两入口能传递同一显式研究配置并选择实际新算子；冻结集、oracle、acceptance 与原生参考树均未被改写。模型质量与完整性能结论需要各自证据，不能由上述条件自动推出；candidate 默认启用另须满足阶段 6 的全部推广条件。
+本方案原定的全部验收完成条件是：独立实现覆盖所声明的生产域；不变契约证据齐全；新数值路径通过冻结门；获得生产资格后两入口能传递同一显式研究配置并选择实际新算子；冻结集、oracle、acceptance 与原生参考树均未被改写。用户最新要求下，以上各部件代码一次提供；已知数值失败和缺少设备工具链意味着全部验收条件尚未满足。模型质量与完整性能结论需要各自证据，不能由代码提供自动推出；candidate 默认启用另须满足阶段 6 的全部推广条件。
 
 [S1]: /Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/references/vllm/vllm/utils/torch_utils.py:375
 [S2]: /Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/references/vllm/vllm/model_executor/layers/mamba/mamba_utils.py:87

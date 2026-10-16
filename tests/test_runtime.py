@@ -328,7 +328,7 @@ def test_online_forward_contains_no_host_request_loop_or_tensor_readback():
     (4, True, False, False), (16, True, True, False),
     (16, True, True, True)])
 @pytest.mark.parametrize("later_draft", [False, True])
-def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv, striped_cache, _rotation_variant=None, _member_pipeline=False, _mdl_variant=None, _mdl_target=False):
+def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv, striped_cache, _rotation_variant=None, _member_pipeline=False, _mdl_variant=None, _mdl_target=False, _bf16_history=False, _bf16_max_query=None):
     """Host ABI exercise only: fake ops establish ordering, never accuracy."""
     if n == 8192 and (cluster_size != 16 or later_draft):
         pytest.skip("large FULL host route is needed once for C16")
@@ -348,7 +348,8 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     w = object.__new__(GraphWorkspace)
     w.geometry = WorkspaceGeometry(capacity, h, hk, d, cube_cores=cube_cores,
                                    history_cluster_size=cluster_size,
-                                   c4_member_pipeline=_member_pipeline)
+                                   c4_member_pipeline=_member_pipeline,
+                                   bf16_history=_bf16_history)
     w.cluster_stats = torch.empty((cube_cores, 8), dtype=torch.int64) if cluster_size in (4, 16) else None
     w.query_input = torch.empty(capacity, h, d, dtype=torch.bfloat16)
     w.key_input = torch.empty(capacity, hk, d, dtype=torch.bfloat16)
@@ -375,6 +376,24 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         pass
 
     class Ops:
+        def __getattr__(self, name):
+            from oscar_ascend.ops.cv_dispatch import BF16_HISTORY_CV_OPS, BF16_HISTORY_CLUSTER_OPS
+            if not _bf16_history or name not in BF16_HISTORY_CV_OPS:
+                raise AttributeError(name)
+
+            def bf16_call(*args):
+                assert args[0].dtype == args[2].dtype == args[3].dtype == torch.bfloat16
+                assert args[1].dtype == args[4].dtype == args[11].dtype == args[12].dtype == torch.float32
+                assert args[5].dtype == args[14].dtype == torch.uint8
+                assert args[13].dtype == torch.int32
+                if name in BF16_HISTORY_CLUSTER_OPS:
+                    assert args[15] is w.cluster_stats
+                    args = args[:15] + args[16:]
+                self.attention_cv_out(*args)
+                raise MdlDispatchReached(name)
+
+            return bf16_call
+
         def prepare_attention_tasks_out(self, starts, lengths, slots, tasks, positions, *geometry):
             calls.append("prepare")
             assert slots.dtype == torch.int64 and slots.numel() == n
@@ -548,6 +567,12 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         provider.layer_state = lambda _name: state
         provider.ops = Ops()
         impl.provider = provider
+    if _bf16_history:
+        # Independent host route exercise: production construction remains
+        # blocked by its frozen numerical gate. This fake provider executes
+        # only Python dispatch/ABI and cannot claim numerical acceptance.
+        from tools.serving_variants import research_variant_config
+        impl.provider.config = research_variant_config({"experimental_bf16_history": True}, "candidate")
     q = torch.randn(n, h * d, dtype=torch.bfloat16)
     k = torch.randn(n, hk * d, dtype=torch.bfloat16)
     value = torch.randn(n, hk * d * 3, dtype=torch.bfloat16)[:, d:2*d]
@@ -576,6 +601,22 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         common.query_start_loc = torch.tensor([0, 1, 2], dtype=torch.int32)
     common.slot_mapping = torch.arange(n + 4, dtype=torch.int32)
     output = torch.empty_like(q)
+    if _bf16_history:
+        from oscar_ascend.ops.cv_dispatch import select_cv_op
+        common.max_query_len = _bf16_max_query
+        if _mdl_target:
+            from enum import Enum
+            common.attn_state = Enum("AscendAttentionState", ["DecodeOnly"]).DecodeOnly
+        name = select_cv_op(16, h, hk, n, _bf16_max_query,
+                           q1_draft=later_draft, fast_unpack=True, mixed_cv=True,
+                           striped_cache=True, decode_bundle=True, c4_member_pipeline=True,
+                           mdl_decode=True, bf16_history=True)
+        with pytest.raises(MdlDispatchReached, match="^"+name+"$"):
+            impl.forward(SimpleNamespace(layer_name="model.layers.0.self_attn.attn" if _mdl_target else "mtp.layers.0.self_attn.attn"),
+                         q, k, value, packed, replace(from_common(common), is_draft=not _mdl_target,
+                         draft_index=1 if later_draft else 0), output)
+        assert calls == ["prepare", "rotate_vector_init", "cv"]
+        return
     if _rotation_variant is not None:
         expected_rotation="rotate_vector_init" if _rotation_variant=="candidate" else "rotate"
         with pytest.raises(RotationReached,match="^"+expected_rotation+"$"):

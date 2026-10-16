@@ -10,7 +10,7 @@ import json
 import os
 from pathlib import Path
 import sys
-from oscar_ascend.bf16_history_policy import validate_bf16_history
+from oscar_ascend.bf16_history_policy import require_bf16_history_production
 from .phase import atomic_json, run_phase, terminal_line
 from .target_cli import target_env
 
@@ -121,7 +121,7 @@ def main() -> int:
         print(f"[oscar] install → build → probes → serve; logs={log_dir}", flush=True)
     try:
         config = json.loads(args.config.read_text())
-        validate_bf16_history(config)
+        require_bf16_history_production(config)
     except (OSError, ValueError) as exc:
         if not args.plan:
             (log_dir / "config.log").write_text(f"FAILED phase=config: {exc}\n")

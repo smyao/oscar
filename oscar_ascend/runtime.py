@@ -9,7 +9,7 @@ and fixed workspaces. #28/#77/#78: imported only after native initialization.
 #34/#36/#127-129/#140/#142/#145/#155: optional history-query capacity is
 # independent of current-only input capacity; ordinary CV, dummy and capture
 # retain strict capacity checks. Every buffer is reserved before KV profiling.
-#148/#153: unsupported BF16 history requests fail before any device loading.
+#148/#153: unqualified BF16 history requests fail before any device loading.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ import warnings
 from typing import Any
 
 from .integration.runtime_api import OscarReadinessError
-from .bf16_history_policy import validate_bf16_history
+from .bf16_history_policy import validate_bf16_history, require_bf16_history_production
 from .lifecycle import SnapshotLayout
 from .request_window_storage import RequestWindowLayout, FixedWindowMap, INVALID_TAG
 
@@ -67,6 +67,7 @@ class WorkspaceGeometry:
     history_token_capacity: int | None = None
     # #148/#154: independent bounded pipeline arena, never the old C4 size.
     c4_member_pipeline: bool = False
+    bf16_history: bool = False
 
     def __post_init__(self):
         dimensions = (self.tokens, self.query_heads, self.kv_heads, self.head_dim,
@@ -87,6 +88,10 @@ class WorkspaceGeometry:
             raise ValueError("C4 member pipeline must be an explicit boolean")
         if self.c4_member_pipeline and self.history_cluster_size not in (4, 16):
             raise ValueError("C4 member pipeline requires a cluster workspace")
+        if type(self.bf16_history) is not bool:
+            raise ValueError("BF16 history must be an explicit boolean")
+        if self.bf16_history and self.head_dim != 256:
+            raise ValueError("BF16 history workspace requires D256")
 
     @property
     def history_tokens(self):
@@ -117,6 +122,13 @@ class WorkspaceGeometry:
 
     @property
     def cv_bytes(self):
+        # Each core retains its FP32 arena and adds a BF16 operand mirror.
+        # Source1/2 and all public/online FP32 state use the original arena.
+        base = self._fp32_cv_bytes
+        return base * 3 // 2 if self.bf16_history else base
+
+    @property
+    def _fp32_cv_bytes(self):
         if self.history_cluster_size == 16:
             # Same bounded GM layout as the independent C16 kernel: sixteen
             # Q/FP32 state groups share one KV tile. This arena is allocated
@@ -279,7 +291,7 @@ class AscendRuntimeProvider:
         path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
         self.config = dict(config) if config is not None else json.loads(path.read_text())
         try:
-            validate_bf16_history(self.config)
+            require_bf16_history_production(self.config)
         except ValueError as error:
             raise OscarReadinessError(str(error)) from error
         self._request_windows = self.config.get("experimental_request_windows", False)
@@ -365,6 +377,7 @@ class AscendRuntimeProvider:
         self.ops = None
 
     def assert_ready(self):
+        self._check_bf16_history_production()
         if (type(self.config.get("experimental_request_windows", False)) is not bool or
                 self.config.get("experimental_request_windows", False) != self._request_windows):
             raise OscarReadinessError("request-window storage changed after runtime construction")
@@ -415,11 +428,21 @@ class AscendRuntimeProvider:
         if self._request_windows:
             from .ops.loader import require_capabilities
             require_capabilities(REQUEST_WINDOW_CAPABILITIES)
+        if self.config.get("experimental_bf16_history", False):
+            from .ops.contracts import BF16_HISTORY_CAPABILITIES
+            from .ops.loader import require_capabilities
+            require_capabilities(BF16_HISTORY_CAPABILITIES)
         import torch
         if not torch.npu.is_available():
             raise OscarReadinessError("OSCAR production requires an available NPU")
         self.ops = torch.ops.oscar_ascend_ops
         self._ready = True
+
+    def _check_bf16_history_production(self):
+        try:
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+            raise OscarReadinessError(str(error)) from error
 
     def get_impl_cls(self):
         from .integration.impl import OscarAttentionImpl
@@ -563,6 +586,12 @@ class AscendRuntimeProvider:
 
     def ensure_workspace(self, heads, kv_heads, dim, device):
         """Reserve scratch during model loading, before native KV profiling."""
+        self._check_bf16_history_production()
+        try:
+            bf16_history = validate_bf16_history(self.config, head_dim=dim,
+                                                 cache_format=self._cache_format)
+        except ValueError as error:
+            raise OscarReadinessError(str(error)) from error
         configured_history = self.config.get("history_token_capacity")
         if (type(configured_history) is not type(self._history_token_capacity) or
                 configured_history != self._history_token_capacity):
@@ -577,7 +606,8 @@ class AscendRuntimeProvider:
                                      16 if self.config.get("experimental_mixed_cv", False) else
                                      4 if self.config.get("experimental_history_reuse", False) else 1,
                                      history_token_capacity=self._history_token_capacity,
-                                     c4_member_pipeline=self.config.get("experimental_c4_member_pipeline", False))
+                                     c4_member_pipeline=self.config.get("experimental_c4_member_pipeline", False),
+                                     bf16_history=bf16_history)
         key = (str(device), geometry)
         if key not in self.workspaces:
             self.workspaces[key] = GraphWorkspace(geometry, device)
@@ -790,6 +820,7 @@ class AscendRuntimeProvider:
         return views
 
     def layer_state(self, name):
+        self._check_bf16_history_production()
         try:
             state = self.layers[name]
         except KeyError as error:

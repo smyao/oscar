@@ -14,7 +14,7 @@ import subprocess
 import sys
 from .environment import file_fingerprint
 from .phase import atomic_json, run_phase
-from oscar_ascend.ops.contracts import SOURCE_CAPABILITIES
+from oscar_ascend.ops.contracts import source_capabilities
 from oscar_ascend.ops.loader import OperatorUnavailable, validate_build_artifacts
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,7 +47,7 @@ def clear_owned_build(path: Path) -> None:
     path.mkdir(parents=True)
 
 
-def reusable_build(build_dir: Path, signature: str) -> dict | None:
+def reusable_build(build_dir: Path, signature: str, *, bf16_history: bool = False) -> dict | None:
     """Reuse only completed, unchanged artifacts; this is not NPU evidence."""
     if build_dir.is_symlink() or build_dir.resolve() != ROOT / "build/ascendc":
         return None
@@ -56,7 +56,7 @@ def reusable_build(build_dir: Path, signature: str) -> dict | None:
         if previous.get("signature") != signature or previous.get("build") != "passed":
             return None
         manifest = validate_build_artifacts(build_dir / "build_manifest.json")
-        if set(manifest.get("source_capabilities", ())) != SOURCE_CAPABILITIES:
+        if set(manifest.get("source_capabilities", ())) != source_capabilities(bf16_history=bf16_history):
             return None
         if manifest.get("soc") != previous["configuration"].get("soc"):
             return None
@@ -74,12 +74,15 @@ def reusable_build(build_dir: Path, signature: str) -> dict | None:
         return None
 
 
-def build(log_dir: Path, timeout: float, soc: str | None = None, *, jobs: int | None = None) -> dict:
+def build(log_dir: Path, timeout: float, soc: str | None = None, *, jobs: int | None = None,
+          bf16_history: bool = False) -> dict:
     # Local compiler VMs can have many logical CPUs but insufficient memory
     # for eight simultaneous Torch C++ translation units. This only limits
     # build concurrency; target code, numerics and runtime flags stay intact.
     if jobs is not None and (type(jobs) is not int or jobs <= 0):
         raise ValueError("build jobs must be a positive integer")
+    if type(bf16_history) is not bool:
+        raise ValueError("bf16_history build option must be an explicit boolean")
     compile_jobs = min(os.cpu_count() or 1, 8) if jobs is None else jobs
     env = os.environ.copy()
     cann = cann_root(env)
@@ -122,10 +125,12 @@ def build(log_dir: Path, timeout: float, soc: str | None = None, *, jobs: int | 
     package_versions = {name: importlib.metadata.version(name) for name in ("torch", "torch_npu", "pybind11")}
     signature_data = {"source": file_fingerprint(ROOT / "csrc"), "cann": str(cann), "cann_versions": versions, "soc": soc,
                       "package_versions": package_versions,
-                      "python": sys.executable, "torch_npu": str(npu_path), "flags": {k: env.get(k) for k in ("CXX", "CC", "CXXFLAGS")}}
+                      "python": sys.executable, "torch_npu": str(npu_path),
+                      "bf16_history": bf16_history,
+                      "flags": {k: env.get(k) for k in ("CXX", "CC", "CXXFLAGS")}}
     signature = hashlib.sha256(json.dumps(signature_data, sort_keys=True).encode()).hexdigest()
     state = build_dir / "oscar_build_signature.json"
-    previous = reusable_build(build_dir, signature)
+    previous = reusable_build(build_dir, signature, bf16_history=bf16_history)
     if previous is not None:
         manifest = {**previous, "reused": True}
         atomic_json(ROOT / "reports/build.json", manifest)
@@ -138,6 +143,7 @@ def build(log_dir: Path, timeout: float, soc: str | None = None, *, jobs: int | 
                f"-DASCEND_HOME_PATH={cann}", f"-DASCEND_CANN_PACKAGE_PATH={cann}", f"-DASCEND_TOOLKIT_HOME={cann}",
                f"-DSOC_VERSION={soc}", f"-DASCEND_COMPUTE_UNIT={soc}", f"-DTORCH_NPU_PATH={npu_path}",
                f"-DOSCAR_BUILD_SIGNATURE={signature}",
+               f"-DOSCAR_BUILD_BF16_HISTORY={'ON' if bf16_history else 'OFF'}",
                f"-DPython3_EXECUTABLE={sys.executable}", "-DCMAKE_BUILD_TYPE=Release"]
     for attempt in (1, 2):
         configured = run_phase(f"configure-{attempt}", command, cwd=ROOT, log_dir=log_dir, env=env, timeout=timeout)
@@ -164,6 +170,8 @@ def build(log_dir: Path, timeout: float, soc: str | None = None, *, jobs: int | 
     if not generated_manifest.is_file():
         raise RuntimeError(f"CMake did not generate the runtime manifest: {generated_manifest}")
     runtime_manifest = json.loads(generated_manifest.read_text())
+    if set(runtime_manifest.get("source_capabilities", ())) != source_capabilities(bf16_history=bf16_history):
+        raise RuntimeError("compiled capability manifest differs from the selected research build option")
     runtime_manifest.update({k: manifest[k] for k in ("signature", "sha256", "build", "device_completion")})
     atomic_json(generated_manifest, runtime_manifest)
     atomic_json(ROOT / "reports/build.json", manifest)
@@ -176,9 +184,12 @@ def main() -> int:
     parser.add_argument("--timeout", type=float, default=1800)
     parser.add_argument("--soc")
     parser.add_argument("--jobs",type=int,help="optional compiler parallelism limit for memory-limited build hosts")
+    parser.add_argument("--bf16-history", action="store_true",
+                        help="build unqualified BF16 history research ops for independent probes; does not authorize serving")
     args = parser.parse_args()
     try:
-        print(json.dumps(build(args.log_dir, args.timeout, args.soc, jobs=args.jobs), indent=2))
+        print(json.dumps(build(args.log_dir, args.timeout, args.soc, jobs=args.jobs,
+                               bf16_history=args.bf16_history), indent=2))
         return 0
     except (RuntimeError, ValueError, OSError, subprocess.TimeoutExpired) as exc:
         atomic_json(ROOT / "reports/build.json", {"build": "failed", "device_completion": "not_run", "error": str(exc)})

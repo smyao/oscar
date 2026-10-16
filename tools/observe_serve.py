@@ -611,6 +611,57 @@ def _mdl_decode_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     atomic_json(log_dir/"status.json", status)
 
 
+def _bf16_history_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
+                     status: dict) -> None:
+    """#126/#145/#150/#154-156: independent BF16 operator gate; production policy is checked separately."""
+    from oscar_ascend.ops.loader import validate_build_artifacts
+    from .probe_bf16_history import validate_evidence, source_binding, configuration_binding
+    from .serving_variants import research_variant_config
+    output = log_dir / "bf16-history-report.json"
+    output.unlink(missing_ok=True)
+    before = read_npu_resources(config, log_dir=log_dir/"bf16-resources-before", timeout=30)
+    phase_error = None
+    release = None
+    try:
+        _phase("bf16-history-npu", [sys.executable, "-m", "tools.probe_bf16_history",
+               "--config", str(config_path), "--acceptance", str(ROOT/"configs/acceptance.json"),
+               "--output", str(output)], config=config, env=env, log_dir=log_dir, status=status)
+    except BaseException as error:
+        phase_error = error
+        raise
+    finally:
+        try:
+            release = wait_for_release(config, before, log_dir=log_dir/"bf16-resources-after",
+                timeout=float(config.get("resource_release_timeout_seconds", 30)),
+                tolerance_bytes=config.get("resource_release_tolerance_bytes", DEFAULT_RELEASE_TOLERANCE))
+        except BaseException as error:
+            release = {"status": "failed", "reason": f"{type(error).__name__}: {error}"}
+            if phase_error is None:
+                raise
+        finally:
+            if release is not None:
+                status["bf16_history_resource_release"] = release
+                atomic_json(log_dir/"status.json", status)
+    if release.get("status") != "passed":
+        raise RuntimeError("BF16 history NPU resources did not release")
+    report = json.loads(output.read_text())
+    manifest = validate_build_artifacts(ROOT/"build/ascendc/build_manifest.json")
+    mismatches = validate_evidence(report)
+    expected = {"artifact_signature": manifest.get("signature"),
+                "artifact_sha256": manifest.get("sha256"), "source_binding": source_binding(),
+                "configuration": configuration_binding(research_variant_config(config,"candidate"),
+                    (report.get("configuration") or {}).get("execution",{}).get("cube_cores"))}
+    mismatches += [key for key, value in expected.items() if report.get(key) != value]
+    if mismatches:
+        error = RuntimeError(f"BF16 history gate lacks matching evidence: {','.join(mismatches)} report={output}")
+        error.phase = "bf16-history-evidence"
+        raise error
+    status["bf16_history_gate"] = {"status": "passed", "report": str(output),
+        "artifact_signature": manifest["signature"], "minimum_speedup": 1.15,
+        "full_service_performance": "not_established"}
+    atomic_json(log_dir/"status.json", status)
+
+
 def _prefix_cache_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
                      status: dict) -> None:
     """#126/#145/#150/#154-156: APC physical shared pages, forks and changed-input graph gate."""
@@ -1062,6 +1113,8 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                         _decode_bundle_gate(effective_path, config, env, log_dir, status)
                     if config.get("experimental_mdl_decode", False):
                         _mdl_decode_gate(effective_path, config, env, log_dir, status)
+                    if config.get("experimental_bf16_history", False):
+                        _bf16_history_gate(effective_path, config, env, log_dir, status)
                     if (config.get("enable_prefix_caching", True)
                             and config.get("experimental_striped_cache", False)):
                         _prefix_cache_gate(effective_path, config, env, log_dir, status)
@@ -1232,6 +1285,7 @@ def main(argv=None) -> int:
             ("experimental_c4_member_pipeline","c4_member_pipeline_gate"),
             ("experimental_decode_bundle","decode_bundle_gate"),
             ("experimental_mdl_decode","mdl_decode_gate"),
+            ("experimental_bf16_history","bf16_history_gate"),
             ("experimental_current_only","current_only_gate"),
             ("experimental_first_mtp_current_fia","first_mtp_current_gate"),
             ("experimental_mixed_decode_split","mixed_decode_split_gate"),

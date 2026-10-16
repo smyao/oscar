@@ -226,3 +226,27 @@ CANN ascend910b4编译通过，生产AscendC/ABI源码指纹与已编译版本�
 4. **成本界与验收**：workspace仍1146880B/core、UB158656B/AIV；完整q1算子局部18.833%提速，中间history周期39508.5→28352.5ticks不外推成整轮倍率。later-q1仅是MTP工作的一部分，不能与q4倍率相乘。两固定candidate入口均选择新注册算子；observe要求q4/q1各自数值、固定地址换输入graph及完整CV+merge+BF16copy的1.15门；NPU、graph、模型质量和整轮2–4倍均未由本机模拟证明。
 
 证据：[q1资格](../reports/q1_mdl_qualification_20261013/summary.json)、[装载完成链](../reports/q1_mdl_qualification_20261013/load-analysis.json)、[设备门](mdl_decode_gate.md)。首次环境exit127和基线后处理padding误判exit1均保留，完整数值后的后处理修正另附SHA绑定链，不修改原返回码。
+
+
+## 2026-10-16 BF16 history 独立研究实现（未获生产资格）
+
+母源 `6029f2a`，按用户要求一次补齐六路实现。档案 G4/#81–83 约束 A2/BF16；#126 约束 Q padding 复用；#145/#154 约束 DMA/Vector 所有权；#148 保留数学失败和独立候选；#153 要求能力清单同步；#157 保持冻结 guard 字节。技术判断来自当前母源及指定 references 原生实现，历史注释不是数学正确性的证据。
+
+D.4 四问：①对应 fused INT2 dequant+FIA 内的 Q/K/V/P 发布和 QK/PV；②原失败全历史恢复为 6499.8–6655.1ms，不能重建同样结构；③新代码只在固定 KV256/每 Cube 私有区生成操作数，复用原 task/window/物理页/共享条件，不生成全历史 BF16 张量；④新增 Cast、16KiB UB、dtype 切换及更大固定 GM 均须计成本，不能从历史 FIA 18.5–18.9ms 推断本核速度，当前无设备倍率。
+
+| 路径 | 原 FP32 GM B/core | 新总 GM B/core | 新显式 UB B/AIV |
+|---|---:|---:|---:|
+| MDL q4/q1 | 1146880 | 1720320 | 175040 |
+| C4 member | 2494464 | 3741696 | 174144 |
+| C16 | 4997120 | 7495680 | 174016 |
+| range/balanced | 917504 | 1376256 | 174016 |
+
+每 core 原 float 区为 `[0, old_bytes)`，BF16 操作数区为 `[old_bytes, old_bytes*3/2)`；原元素索引 i 分别映射为 `4*i` 和 `old_bytes+2*i`。所有边界为 64B 对齐。只有 Q/K/V/P 使用镜像，score/输出/PV/归一化/Rv/acc/max/sum/LSE 保持原 float 区；镜像的其余槽故意不用，首版不冒险缩容。C4 两套 KV/score 槽仍独立；atomic 目标仍为 float acc。详细索引和长度见 `reports/bf16_history_kernel_sources_20261016.json`。统一 runtime 使用最大 C16 容量：20 个 Cube 时新增 49971200 B（约47.66MiB），只按固定 workspace 预分配，必须纳入 KV profiling；不是 KV 预算零成本。
+
+Q/K/V/P 的生产者为原 Vector 计算：重建仍 float Mul 后 Add；随后 `CAST_RINT` 生成 BF16（原生 arch22 `sparse_flash_attention_service_vector_mla.h` 的 BF16 OUT 分支有该实际调用）。publisher 每次最多8192个 BF16元素，MTE3→V 保护 scratch 重写、V→MTE3 保护读出；原调用方的 V→MTE2、MTE3→MTE2 及跨核 flag 原样保留。消费方 QK/PV 使用 BF16 A/B、FP32 C；source1/2及 Rv 始终选旧 float Matmul。图中不新增 host 回读或全历史分配。
+
+不能同时初始化两套 Matmul：原 MDL float 单套 L1 已为395264 B，L0也有双缓冲。研究实现仅保留一套活跃资源；已同步完成的 Matmul 边界执行 End、PIPE_ALL、TPipe.Reset，再 Init 所需类型。参考树只证明 Reset API 存在，**不能证明当前 SDK 的 MatmulImpl 支持该重初始化生命周期**。新核编译期有 UB/L1/L0 容量断言，仍须 CANN/官方 CPU-debug/NPU 验证；当前默认构建和生产守卫因此不开放此路径。
+
+全部六个新 schema 保持旧参数顺序、dtype、别名和原 binding 输入检查，只增加显式 workspace 下限。构建开关进入签名，默认与研究能力集分开且和扩展自报清单一致。已有 source0 数值失败保留，因此“源码接入”与“全部验收/生产放行”分别记录，未放宽 frozen acceptance、未重跑 AISBench。
+
+完整调用链研究门单独使用六个 selector 合法形状、目标 Hq6/Hkv1/D256 和实际 Cube 核数；由 `WorkspaceGeometry` 推导 source split，分配旧/新各自最大 C16 arena。它保持真实 prepare→适用 suppress→rotate→CV→适用 current slot guard/native FIA/写 partial→merge/copy→store→guard 顺序，使用合成物理页，明确限定为 eager 算子调用链。30 个较小的算子/图诊断保留，不能把其中 q672 的 C16 强制调用当作生产 C16 选择证据。完整路径 q8192 的原空间 oracle 分块验证全部 query/head；两臂逐次同址恢复缓存后计时，读前写后规则不变。CPU、算子/图和完整路径数值门全部通过后才允许计时，实际模型物理布局/全图/服务/质量结论仍需独立证据。

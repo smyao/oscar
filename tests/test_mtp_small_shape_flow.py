@@ -12,6 +12,7 @@ import torch
 from oscar_ascend.integration.current_attention import use_native_current
 from oscar_ascend.integration.draft_discard import native_draft_scope
 from oscar_ascend.integration.runtime_api import OscarReadinessError
+from oscar_ascend.bf16_history_policy import validate_bf16_history
 from oscar_ascend.ops.cv_dispatch import CLUSTER_CV_OPS, select_cv_op
 from oscar_ascend.runtime import GraphWorkspace, WorkspaceGeometry
 from test_first_draft_current_only import builder as make_builder
@@ -27,6 +28,7 @@ def test_real_impl_native_later_batches_reuse_poisoned_flat_workspace(monkeypatc
         {"torch": torch, "use_native_current": use_native_current,
          "OscarReadinessError": OscarReadinessError, "phase": lambda *a, **k: nullcontext(),
          "select_cv_op": select_cv_op, "CLUSTER_CV_OPS": CLUSTER_CV_OPS,
+         "validate_bf16_history": validate_bf16_history,
          "emit_once": lambda *a, **k: None, "emit_throttled": lambda *a, **k: None,
          "run_status_guard": lambda ops, site, parts, **k: ops.status_guard(*[x for _, x in parts])},
         monkeypatch, methods=[("OscarAttentionImpl", "forward")]).forward

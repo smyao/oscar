@@ -6,6 +6,7 @@ device metadata, exact physical-page snapshots, and no BF16 history restore.
 #keeps the accepted fe0 operator and original FP32 arithmetic.
 #142/#155: first-draft current-only requires a separate builder qualification;
 #the original native-current predicate still rejects every MTP draft.
+#148/#153: optional BF16-history readers retain the public FP32 state ABI.
 PR oscar_attn.py:486-577: current-chunk K/V are exact; cached history is INT2.
 Native acl_graph.py:270 and attention_v1.py:454: graph-update interface.
 Native attention_cp.py:1017-1032: exact current TND FIA yields output plus LSE.
@@ -21,6 +22,7 @@ from .runtime_api import OscarReadinessError, require_runtime
 from ..telemetry import emit_once, emit_throttled
 from ..timing import phase
 from ..ops.cv_dispatch import CLUSTER_CV_OPS, select_cv_op
+from ..bf16_history_policy import validate_bf16_history
 
 
 class OscarAttentionImpl(AttentionImpl):
@@ -84,6 +86,11 @@ class OscarAttentionImpl(AttentionImpl):
         if kv_cache.data_ptr() != state.packed.data_ptr() or kv_cache.stride() != state.packed.stride():
             raise OscarReadinessError("native FULL cache no longer matches its OSCAR physical allocation")
         n, h, hk, d = query.shape[0], self.num_heads, self.num_kv_heads, self.head_size
+        try:
+            bf16_history = validate_bf16_history(self.provider.config, head_dim=d,
+                                                 cache_format=expected_format)
+        except ValueError as error:
+            raise OscarReadinessError(str(error)) from error
         if key.shape[0] != n or value.shape[0] != n:
             raise OscarReadinessError("Q/K/V padded token counts disagree")
         if attn_metadata.slot_mapping.shape[0] < n:
@@ -179,7 +186,8 @@ class OscarAttentionImpl(AttentionImpl):
                               striped_cache=striped_cache,
                               decode_bundle=self.provider.config.get("experimental_decode_bundle", False),
                               c4_member_pipeline=self.provider.config.get("experimental_c4_member_pipeline", False),
-                              mdl_decode=self.provider.config.get("experimental_mdl_decode", False))
+                              mdl_decode=self.provider.config.get("experimental_mdl_decode", False),
+                              bf16_history=bf16_history)
         cv_name = storage_reader(state, cv_name)
         window_map = request_map(state, attn_metadata)
         request_args = (window_map,) if expected_format == REQUEST_FORMAT else ()

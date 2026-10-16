@@ -42,7 +42,23 @@ if(NOT ASCENDC_CMAKE_DIR)
   message(FATAL_ERROR "No ascendc.cmake found under ASCEND_HOME_PATH; target CANN toolkit required")
 endif()
 include("${ASCENDC_CMAKE_DIR}/ascendc.cmake")
-ascendc_library(oscar_ascend_kernels SHARED kernels/store_int2.cpp kernels/merge_lse.cpp
+# Archive #148/#153: research kernels are opt-in, independently of production.
+# The known failed numerical gate cannot change the default build or serving.
+option(OSCAR_BUILD_BF16_HISTORY "Build unqualified BF16 history research operators" OFF)
+set(OSCAR_BF16_KERNELS)
+set(OSCAR_BF16_BINDINGS)
+set(OSCAR_BF16_CAPABILITIES_JSON "")
+if(OSCAR_BUILD_BF16_HISTORY)
+  set(OSCAR_BF16_KERNELS
+    kernels/attention_bf16_history_mdl.cpp
+    kernels/attention_bf16_history_member_pipeline_cluster4.cpp
+    kernels/attention_bf16_history_window_range_cluster16.cpp
+    kernels/attention_bf16_history_window_range.cpp
+    kernels/attention_bf16_history_window_range_balanced.cpp)
+  set(OSCAR_BF16_BINDINGS bf16_history_bindings.cpp)
+  set(OSCAR_BF16_CAPABILITIES_JSON ", \"attention_bf16_history_mdl_out\", \"attention_bf16_history_mdl_q1_out\", \"attention_bf16_history_member_pipeline_cluster4_out\", \"attention_bf16_history_window_range_cluster16_out\", \"attention_bf16_history_window_range_out\", \"attention_bf16_history_window_range_balanced_out\"")
+endif()
+ascendc_library(oscar_ascend_kernels SHARED ${OSCAR_BF16_KERNELS} kernels/store_int2.cpp kernels/merge_lse.cpp
   kernels/rotate_clip_store.cpp kernels/rotate_vector_init.cpp kernels/attention_cv.cpp kernels/attention_cv_q1.cpp
   kernels/attention_cv_profile.cpp
   kernels/attention_cv_cluster.cpp kernels/attention_cv_fast.cpp
@@ -82,8 +98,11 @@ set_target_properties(oscar_ascend_kernels PROPERTIES
 # library must also carry its own DT_NEEDED entries for absolute-path dlopen.
 target_link_libraries(oscar_ascend_kernels PRIVATE ascendcl runtime profapi unified_dlog mmpa)
 target_link_options(oscar_ascend_kernels PRIVATE "LINKER:-z,defs")
-pybind11_add_module(_oscar_ascend_ops torch_bindings.cpp rotation_bindings.cpp attention_bindings.cpp striped_attention_bindings.cpp status_bindings.cpp current_only_bindings.cpp
+pybind11_add_module(_oscar_ascend_ops ${OSCAR_BF16_BINDINGS} torch_bindings.cpp rotation_bindings.cpp attention_bindings.cpp striped_attention_bindings.cpp status_bindings.cpp current_only_bindings.cpp
   request_window_attention_bindings.cpp request_window_store_bindings.cpp)
+if(OSCAR_BUILD_BF16_HISTORY)
+  target_compile_definitions(_oscar_ascend_ops PRIVATE OSCAR_BUILD_BF16_HISTORY=1)
+endif()
 target_include_directories(_oscar_ascend_ops PRIVATE ${TORCH_INCLUDE_DIRS}
   "${TORCH_NPU_PATH}/include" "${ASCEND_HOME_PATH}/include")
 target_link_directories(_oscar_ascend_ops PRIVATE "${TORCH_NPU_PATH}/lib"
@@ -96,5 +115,5 @@ set_target_properties(_oscar_ascend_ops PROPERTIES
   BUILD_WITH_INSTALL_RPATH TRUE
   INSTALL_RPATH "$ORIGIN;$ORIGIN/lib;$<TARGET_FILE_DIR:oscar_ascend_kernels>;${TORCH_NPU_PATH}/lib;${ASCEND_HOME_PATH}/lib64;${TORCH_INSTALL_PREFIX}/lib")
 file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/build_manifest.json" CONTENT
-"{\n  \"abi_version\": 1,\n  \"execution_interface\": \"direct_launch\",\n  \"soc\": \"${SOC_VERSION}\",\n  \"extension\": \"$<TARGET_FILE:_oscar_ascend_ops>\",\n  \"kernel_library\": \"$<TARGET_FILE:oscar_ascend_kernels>\",\n  \"source_capabilities\": [\"store_int2_out\", \"merge_lse_out\", \"rotate_out\", \"rotate_vector_init_out\", \"rotate_clip_store_out\", \"prepare_attention_tasks_out\", \"attention_cv_out\", \"attention_cv_q1_out\", \"attention_cv_profile_out\", \"attention_cv_cluster4_out\", \"attention_cv_fast_out\", \"attention_cv_fast_q1_out\", \"attention_cv_fast_cluster4_out\", \"attention_cv_fast_balanced_out\", \"attention_cv_fast_cluster16_out\", \"attention_cv_striped_out\", \"attention_cv_striped_q1_out\", \"attention_cv_striped_decode_out\", \"attention_cv_striped_balanced_out\", \"attention_cv_striped_cluster4_out\", \"attention_cv_striped_cluster16_out\", \"rotate_clip_store_striped_out\", \"attention_cv_bundle_decode_out\", \"attention_cv_mdl_decode_out\", \"attention_cv_mdl_decode_q1_out\", \"attention_cv_bundle_q1_out\", \"attention_cv_window_range_out\", \"attention_cv_window_range_balanced_out\", \"attention_cv_window_range_cluster4_out\", \"attention_cv_member_pipeline_cluster4_out\", \"attention_cv_window_range_cluster16_out\", \"copy_validate_current_out\", \"rotate_clip_store_request_window_out\", \"attention_request_window_decode_out\", \"attention_request_window_decode_q1_out\", \"attention_request_window_out\", \"attention_request_window_balanced_out\", \"attention_request_window_cluster4_out\", \"attention_request_window_member_pipeline_cluster4_out\", \"attention_request_window_cluster16_out\", \"status_guard\"],\n  \"missing_capabilities\": [],\n  \"target_numerics_verified\": false,\n  \"graph_capture_verified\": false,\n  \"graph_replay_verified\": false,\n  \"performance_verified\": false\n}\n")
+"{\n  \"abi_version\": 1,\n  \"execution_interface\": \"direct_launch\",\n  \"soc\": \"${SOC_VERSION}\",\n  \"extension\": \"$<TARGET_FILE:_oscar_ascend_ops>\",\n  \"kernel_library\": \"$<TARGET_FILE:oscar_ascend_kernels>\",\n  \"source_capabilities\": [\"store_int2_out\", \"merge_lse_out\", \"rotate_out\", \"rotate_vector_init_out\", \"rotate_clip_store_out\", \"prepare_attention_tasks_out\", \"attention_cv_out\", \"attention_cv_q1_out\", \"attention_cv_profile_out\", \"attention_cv_cluster4_out\", \"attention_cv_fast_out\", \"attention_cv_fast_q1_out\", \"attention_cv_fast_cluster4_out\", \"attention_cv_fast_balanced_out\", \"attention_cv_fast_cluster16_out\", \"attention_cv_striped_out\", \"attention_cv_striped_q1_out\", \"attention_cv_striped_decode_out\", \"attention_cv_striped_balanced_out\", \"attention_cv_striped_cluster4_out\", \"attention_cv_striped_cluster16_out\", \"rotate_clip_store_striped_out\", \"attention_cv_bundle_decode_out\", \"attention_cv_mdl_decode_out\", \"attention_cv_mdl_decode_q1_out\", \"attention_cv_bundle_q1_out\", \"attention_cv_window_range_out\", \"attention_cv_window_range_balanced_out\", \"attention_cv_window_range_cluster4_out\", \"attention_cv_member_pipeline_cluster4_out\", \"attention_cv_window_range_cluster16_out\", \"copy_validate_current_out\", \"rotate_clip_store_request_window_out\", \"attention_request_window_decode_out\", \"attention_request_window_decode_q1_out\", \"attention_request_window_out\", \"attention_request_window_balanced_out\", \"attention_request_window_cluster4_out\", \"attention_request_window_member_pipeline_cluster4_out\", \"attention_request_window_cluster16_out\", \"status_guard\"${OSCAR_BF16_CAPABILITIES_JSON}],\n  \"missing_capabilities\": [],\n  \"target_numerics_verified\": false,\n  \"graph_capture_verified\": false,\n  \"graph_replay_verified\": false,\n  \"performance_verified\": false\n}\n")
 install(TARGETS _oscar_ascend_ops oscar_ascend_kernels LIBRARY DESTINATION oscar_ascend)

@@ -1,5 +1,15 @@
 # OSCAR 优化与失败证据索引
 
+## 2026-10-16 一次补齐 BF16 历史 attention 研究实现
+
+用户最新指令要求一次完成各部件代码，因此本轮不再以阶段 1 失败为停止编写的理由。新增六路真实 AscendC 源、独立 typed arena/绑定、条件构建/能力、runtime/selector/统一配置和 30 例 NPU/图门；旧六路及 FE0 原字节保留。[执行与资源边界](bf16_history_execution_plan.md)、[源身份/资源](../reports/bf16_history_kernel_sources_20261016.json)、[本轮回执](../reports/bf16_history_all_code_20261016.json)。
+
+**仍不纳入性能组合或生产默认。** 既有 7/11 CPU 数值失败没有被修复或覆盖；单 BF16 输入舍入的解析反例仍成立。新构建显式 opt-in，生产无绕过资格守卫。CANN/Lima/torch_npu 在当前机器缺失，资源切换、编译、设备、图、短服务、完整模型质量和完整路径性能都未通过，不能借全部代码写入领取倍率。旧报告及下方阶段 1 历史记录保留；重开生产推广须真正解决数值且通过全部门。
+
+主机回归中修复了 AST 抽取 forward 测试对新增函数的依赖注入，未改原断言；另将缺失的旧 request-window 包装回执改为本次只读重新生成的 20261016 源身份回执，不补造 20261011 或真机记录。全仓静态检查另有 3 项失败，首报触发源与母源一致，保留[原始失败](../reports/bf16_history_no_fallback_host_20261016.xml)及[母源比对](../reports/bf16_history_static_baseline_20261016.json)，不将其记作通过。
+
+完整 eager 调用链的六路门也已提供，单独绑定实际 selector、预算/core 推导的 split、最大 C16 arena、模型与配置 SHA；合成物理页不冒充模型真实页布局。全 CPU/算子/图/完整路径数值门先于所有计时。最终相关主机回归 468 通过、8 跳过；最后 76 项复验覆盖独立 probe 与完整调用链编排，另保留测试夹具共享状态引起的 7 项失败及 deepcopy 修复后的独立回执。设备/图/模型结论未因此升级。
+
 ## 2026-10-16 单 BF16 历史 attention：阶段 1 数值门未通过
 
 - 母源 `8cd23d2840e1b6a535fa315bccf27e42592b5b12`，与执行方案原基准之间只有方案文档差异。新增 [CPU 数值代码](../tools/experiments/bf16_history_screen.py)，固定 11 例，全 query/head、三源/多 split、KV256 online softmax、原空间 oracle；分别评估 K/V、Q、P 舍入及完整组合，保留 FP32 分母、累加、逆旋转与 merge。

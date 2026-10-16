@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "status": "source_identity_checked_not_device_acceptance",
+  "archive_refs": [
+    87,
+    103,
+    108,
+    125,
+    128,
+    153
+  ],
+  "reader_kernel_count": 7,
+  "store_kernel_count": 2,
+  "torch_operator_count": 8,
+  "mapping": [
+    {
+      "experiment": "csrc/experiments/request_windows_attention/decode_bundle.cpp",
+      "packaged": "csrc/kernels/attention_request_window_decode.cpp",
+      "experiment_sha256": "fea301dfc9f66874d4b937f4daa5d134c666850dda7aea06af3a0f1a6069426f",
+      "packaged_sha256": "60fc6925dac38092b18de81ce53e668fa39bfbf41451f8da56e225259d8c3a87",
+      "non_include_body_sha256": "5ee11c521b88ce6d5376433602e09097989b62518359d260ce6a1e651e5b5247",
+      "non_include_body_identical": true,
+      "project_headers": [
+        "csrc/include/oscar_attention_launch.h",
+        "csrc/include/oscar_cv_schedule.h",
+        "csrc/include/oscar_request_window_launch.h",
+        "csrc/kernels/attention_range_mask.h",
+        "csrc/kernels/attention_striped_unpack_padded.h",
+        "csrc/kernels/oscar_common.h"
+      ],
+      "project_header_sha256": {
+        "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+        "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+        "csrc/include/oscar_request_window_launch.h": "7bce985a09880eb034f1aca514af4ca7f7326d375229583b1f93610b35235f71",
+        "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+        "csrc/kernels/attention_striped_unpack_padded.h": "1551af143666d7465352426dbbe7024af8a86d81ee12d7ccfd9840c328e4ceee",
+        "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+      }
+    },
+    {
+      "experiment": "csrc/experiments/request_windows_attention/window_range.cpp",
+      "packaged": "csrc/kernels/attention_request_window.cpp",
+      "experiment_sha256": "a5432dae1b46e4f739161d21edcaa393afcd51ba61a86f399246bd63486e98f1",
+      "packaged_sha256": "ad2fffccbfc9ced927887e84fa3021fda6a49580f3ae94e5f9ac8f7a8a4d0505",
+      "non_include_body_sha256": "6e5aad8421b4d0db7d4c1305aa467caef95c0986db3da606a1ba7e59cf23572f",
+      "non_include_body_identical": true,
+      "project_headers": [
+        "csrc/include/oscar_attention_launch.h",
+        "csrc/include/oscar_cv_schedule.h",
+        "csrc/include/oscar_request_window_launch.h",
+        "csrc/kernels/attention_fast_unpack.h",
+        "csrc/kernels/attention_range_mask.h",
+        "csrc/kernels/attention_striped_unpack.h",
+        "csrc/kernels/oscar_common.h"
+      ],
+      "project_header_sha256": {
+        "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+        "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+        "csrc/include/oscar_request_window_launch.h": "7bce985a09880eb034f1aca514af4ca7f7326d375229583b1f93610b35235f71",
+        "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+        "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+        "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+        "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+      }
+    },
+    {
+      "experiment": "csrc/experiments/request_windows_attention/window_range_balanced.cpp",
+      "packaged": "csrc/kernels/attention_request_window_balanced.cpp",
+      "experiment_sha256": "3d64838c25432c76121042890295ab62772e0a4d1005a4ff3c501de405d93dd1",
+      "packaged_sha256": "781966806cad6d5dc65fbcbbbc1ece92b282deacf37418d9f44f696cf732e0b3",
+      "non_include_body_sha256": "fce99ebc0f01cd62cb8804f16318e71d2dc571e6ebcc5ace0cca6e880167defe",
+      "non_include_body_identical": true,
+      "project_headers": [
+        "csrc/include/oscar_attention_launch.h",
+        "csrc/include/oscar_cv_schedule.h",
+        "csrc/include/oscar_request_window_launch.h",
+        "csrc/kernels/attention_fast_unpack.h",
+        "csrc/kernels/attention_range_mask.h",
+        "csrc/kernels/attention_striped_unpack.h",
+        "csrc/kernels/oscar_common.h"
+      ],
+      "project_header_sha256": {
+        "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+        "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+        "csrc/include/oscar_request_window_launch.h": "7bce985a09880eb034f1aca514af4ca7f7326d375229583b1f93610b35235f71",
+        "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+        "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+        "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+        "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+      }
+    },
+    {
+      "experiment": "csrc/experiments/request_windows_attention/window_range_cluster4.cpp",
+      "packaged": "csrc/kernels/attention_request_window_cluster4.cpp",
+      "experiment_sha256": "e26a59e5133ba2f5eb90f35f45c42e94477d46e1352df4e84bcaed9435410447",
+      "packaged_sha256": "aae9ed040757699d57259b6da6c71e4845af12ef3edf50cd207dd993abc9f1fc",
+      "non_include_body_sha256": "14651506dee56051aafa4e987b37ac805de1fba3b7e9ffc05312ad655360c265",
+      "non_include_body_identical": true,
+      "project_headers": [
+        "csrc/include/oscar_attention_launch.h",
+        "csrc/include/oscar_cv_schedule.h",
+        "csrc/include/oscar_request_window_launch.h",
+        "csrc/kernels/attention_fast_unpack.h",
+        "csrc/kernels/attention_range_mask.h",
+        "csrc/kernels/attention_striped_unpack.h",
+        "csrc/kernels/oscar_common.h"
+      ],
+      "project_header_sha256": {
+        "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+        "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+        "csrc/include/oscar_request_window_launch.h": "7bce985a09880eb034f1aca514af4ca7f7326d375229583b1f93610b35235f71",
+        "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+        "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+        "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+        "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+      }
+    },
+    {
+      "experiment": "csrc/experiments/request_windows_attention/window_range_cluster16.cpp",
+      "packaged": "csrc/kernels/attention_request_window_cluster16.cpp",
+      "experiment_sha256": "1e88e6de8feac6da8e14c59430f8d5ad66fdf35d9a798fde6ee279359abd30db",
+      "packaged_sha256": "36f93ef2bef848304e391fa0a85c78fa92be85d8c10b05d1e12bf65918f49cd5",
+      "non_include_body_sha256": "d43216229ff90904daff68acbce1908262e8367ecaceada23204b690fd368969",
+      "non_include_body_identical": true,
+      "project_headers": [
+        "csrc/include/oscar_attention_launch.h",
+        "csrc/include/oscar_cv_schedule.h",
+        "csrc/include/oscar_request_window_launch.h",
+        "csrc/kernels/attention_fast_unpack.h",
+        "csrc/kernels/attention_range_mask.h",
+        "csrc/kernels/attention_striped_unpack.h",
+        "csrc/kernels/oscar_common.h"
+      ],
+      "project_header_sha256": {
+        "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+        "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+        "csrc/include/oscar_request_window_launch.h": "7bce985a09880eb034f1aca514af4ca7f7326d375229583b1f93610b35235f71",
+        "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+        "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+        "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+        "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+      }
+    },
+    {
+      "experiment": "csrc/experiments/request_windows_store/packed_store.cpp",
+      "packaged": "csrc/kernels/rotate_clip_store_request_packed.cpp",
+      "experiment_sha256": "c3a69d4ad0ae4e2bf0edc2aa38299795ed40c7248db88cbe27073fc92c9bf225",
+      "packaged_sha256": "b78a267de4d4a7f0fc8868619cf223ae4d68707716353cdf1a78d820d37dd269",
+      "non_include_body_sha256": "a1c376a05280dc16c8cc2756a4952d206c45dd9c6f6e5900c11f1f45e9a79400",
+      "non_include_body_identical": true,
+      "project_headers": [
+        "csrc/include/oscar_request_window_store_launch.h",
+        "csrc/kernels/hadamard_indices.h",
+        "csrc/kernels/oscar_common.h",
+        "csrc/kernels/striped_store_pack.h"
+      ],
+      "project_header_sha256": {
+        "csrc/include/oscar_request_window_store_launch.h": "b9d60325765afe6b7f9b47d3351c761df983636d6606c5fb6148d91db0637998",
+        "csrc/kernels/hadamard_indices.h": "5c9b3905e89ebfd73bd6947d2f6d15f225e0d55ac19d0eba547dd2f4c132520f",
+        "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+        "csrc/kernels/striped_store_pack.h": "95c2936c4e2f31bd444bb9126928e7cd270f3eaf38978b0a7801c107a5eb7f3e"
+      }
+    },
+    {
+      "experiment": "csrc/experiments/request_windows_store/window_store.cpp",
+      "packaged": "csrc/kernels/rotate_clip_store_request_window.cpp",
+      "experiment_sha256": "9f87c6850b4b528ac5f48b0f6efbc06c2e6d352330b42ebf7690650d344d809b",
+      "packaged_sha256": "491d65a5d6ee1fe3d73602db3d2b6a9567b82c8990381dfd0a28bc5f769c1bb1",
+      "non_include_body_sha256": "effbd25c771951a683ed338479445e0b0aeb8c0697e623a8b2ef199068156c0a",
+      "non_include_body_identical": true,
+      "project_headers": [
+        "csrc/include/oscar_request_window_store_launch.h",
+        "csrc/kernels/oscar_common.h"
+      ],
+      "project_header_sha256": {
+        "csrc/include/oscar_request_window_store_launch.h": "b9d60325765afe6b7f9b47d3351c761df983636d6606c5fb6148d91db0637998",
+        "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+      }
+    },
+    {
+      "experiment": "csrc/experiments/request_windows_attention/member_pipeline_cluster4.cpp",
+      "packaged": "csrc/kernels/attention_request_window_member_pipeline_cluster4.cpp",
+      "experiment_sha256": "c4901c3910bc67ab821141bb10f90e407b2048e5aacc7b1625edf69b2a16e319",
+      "packaged_sha256": "9692e6edc13837cbcf88dd35a7010d95ba688880457eadb7994529d0b5c273f0",
+      "non_include_body_sha256": "0cb42ae5d492c8b25f7c206e94e11604adc10f1c7c650a0371c2cf41a29dbe9c",
+      "non_include_body_identical": true,
+      "project_headers": [
+        "csrc/include/oscar_attention_launch.h",
+        "csrc/include/oscar_cv_schedule.h",
+        "csrc/include/oscar_member_pipeline_launch.h",
+        "csrc/include/oscar_request_window_launch.h",
+        "csrc/kernels/attention_fast_unpack.h",
+        "csrc/kernels/attention_range_mask.h",
+        "csrc/kernels/attention_striped_unpack.h",
+        "csrc/kernels/attention_striped_unpack32.h",
+        "csrc/kernels/oscar_common.h"
+      ],
+      "project_header_sha256": {
+        "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+        "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+        "csrc/include/oscar_member_pipeline_launch.h": "fb87c667495249b94fecc3d626fa703f9332e7fd638eb533bc5c8d2fd4bc9a48",
+        "csrc/include/oscar_request_window_launch.h": "7bce985a09880eb034f1aca514af4ca7f7326d375229583b1f93610b35235f71",
+        "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+        "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+        "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+        "csrc/kernels/attention_striped_unpack32.h": "c0aeab7e8fb9e078d37147ca411013f1c42e1547bd0a1d066ed3aece0c5514ca",
+        "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+      }
+    }
+  ],
+  "shared_helpers": [
+    {
+      "experiment": "csrc/experiments/striped_store_simd_pack/pack.h",
+      "packaged": "csrc/kernels/striped_store_pack.h",
+      "experiment_sha256": "019fd5330ae0c7a850fbf015dee18df4c262f6440a6da387085c362d3b445ac3",
+      "packaged_sha256": "95c2936c4e2f31bd444bb9126928e7cd270f3eaf38978b0a7801c107a5eb7f3e",
+      "changes": [
+        "project include path",
+        "research origin comment"
+      ],
+      "reversible_source_identity": true
+    },
+    {
+      "experiment": "csrc/experiments/hadamard_indices/vector_indices.h",
+      "packaged": "csrc/kernels/hadamard_indices.h",
+      "experiment_sha256": "8f92beaefbb46791709c2102bbda34a47321309bc4e320999765653e9f25c970",
+      "packaged_sha256": "5c9b3905e89ebfd73bd6947d2f6d15f225e0d55ac19d0eba547dd2f4c132520f",
+      "changes": [
+        "project include path",
+        "research origin comment"
+      ],
+      "reversible_source_identity": true
+    }
+  ],
+  "store_header": {
+    "source": "csrc/experiments/request_windows_store/request_window_launch.h",
+    "target": "csrc/include/oscar_request_window_store_launch.h",
+    "sha256": "b9d60325765afe6b7f9b47d3351c761df983636d6606c5fb6148d91db0637998",
+    "verbatim": true
+  },
+  "reader_header": {
+    "path": "csrc/include/oscar_request_window_launch.h",
+    "sha256": "7bce985a09880eb034f1aca514af4ca7f7326d375229583b1f93610b35235f71"
+  },
+  "changes": [
+    "project include path relocation",
+    "add authoritative reader launch declaration include"
+  ],
+  "default_activation": "not_changed; experimental_request_windows remains false",
+  "full_build": "not_run_by_this_packaging_step",
+  "NPU": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "performance": "not_run"
+}

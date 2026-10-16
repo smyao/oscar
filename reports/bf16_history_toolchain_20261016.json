@@ -1,0 +1,16 @@
+{
+  "scope": "current_host_compilation_availability",
+  "backend": "Darwin arm64",
+  "bf16_history_build": true,
+  "cann_compile": "not_run",
+  "official_cpu_debug": "not_run",
+  "camodel": "not_run",
+  "npu_completion": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "performance": "not_run",
+  "lima_path": null,
+  "status": "blocked_missing_toolchain",
+  "returncode": 1,
+  "error": "RuntimeError: CANN with AscendC CMake support is missing; inspected ['/usr/local/Ascend/ascend-toolkit/latest', '/usr/local/Ascend/cann/latest', '/usr/local/Ascend/cann-9.1.0']"
+}

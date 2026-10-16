@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from oscar_ascend.ops.contracts import ABI_VERSION, SOURCE_CAPABILITIES
+from oscar_ascend.ops.contracts import ABI_VERSION, SOURCE_CAPABILITIES, source_capabilities
 from oscar_ascend.ops.loader import validate_build_artifacts
 from tools import build_ops
 
@@ -46,7 +46,8 @@ def compiler(tmp_path, monkeypatch):
                 "soc": kwargs["env"]["SOC_VERSION"],
                 "extension": str(build_dir / "_oscar_ascend_ops.so"),
                 "kernel_library": str(build_dir / f"liboscar_ascend_kernels_{signature[:16]}.so"),
-                "source_capabilities": sorted(SOURCE_CAPABILITIES),
+                "source_capabilities": sorted(source_capabilities(
+                    bf16_history="-DOSCAR_BUILD_BF16_HISTORY=ON" in command)),
             }))
         else:
             manifest = json.loads(manifest_path.read_text())
@@ -84,6 +85,30 @@ def test_explicit_job_limit_reaches_compiler_without_changing_target_flags(compi
     assert compile_command[-2:]==['--parallel','2']
     assert built['configuration']['soc']=='ascend910b4'
     assert built['device_completion']=='not_run'
+
+
+def test_bf16_research_build_has_distinct_signature_and_exact_capabilities(compiler):
+    # Archive #85/#153: research/default binaries cannot masquerade as each other.
+    old = compiler.build()
+    research = build_ops.build(compiler.root/'logs', 30, 'ascend910b4', bf16_history=True)
+    assert research['signature'] != old['signature']
+    manifest = json.loads((compiler.build_dir/'build_manifest.json').read_text())
+    assert set(manifest['source_capabilities']) == source_capabilities(bf16_history=True)
+    compiler.commands.clear()
+    reused = build_ops.build(compiler.root/'logs', 30, 'ascend910b4', bf16_history=True)
+    assert reused['reused'] and compiler.commands == []
+    restored = compiler.build()
+    assert not restored['reused'] and restored['signature'] == old['signature']
+    manifest = json.loads((compiler.build_dir/'build_manifest.json').read_text())
+    assert set(manifest['source_capabilities']) == SOURCE_CAPABILITIES
+    assert '-DOSCAR_BUILD_BF16_HISTORY=OFF' in compiler.commands[0][1]
+
+
+@pytest.mark.parametrize('flag', [1, 0, 'true', None])
+def test_invalid_research_build_option_fails_before_build(compiler, flag):
+    with pytest.raises(ValueError, match='explicit boolean'):
+        build_ops.build(compiler.root/'logs', 30, 'ascend910b4', bf16_history=flag)
+    assert compiler.commands == []
 
 
 @pytest.mark.parametrize('jobs',[0,-1,True,1.5])

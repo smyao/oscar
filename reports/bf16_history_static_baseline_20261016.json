@@ -1,0 +1,46 @@
+{
+  "schema": "oscar.bf16_history.static_baseline.v1",
+  "base_commit": "6029f2a8c6277ab8136e5a5eeaa2c2c16313ca08",
+  "full_repository_static_tests": {
+    "passed": 2,
+    "failed": 3,
+    "receipt": "reports/bf16_history_no_fallback_host_20261016.xml",
+    "qualification": "failed; first reported triggers exist unchanged in base; no claim that later assertions were reached"
+  },
+  "first_failure_trigger_files": {
+    "tools/experiments/replay_shared_fp32.py": {
+      "unchanged_from_base": true,
+      "sha256": "ce3ca0f3e31b75bd0da006fb826890b6a521e51ac2aadeee603b42a013f57f6f"
+    },
+    "oscar_ascend/integration/metadata.py": {
+      "unchanged_from_base": true,
+      "sha256": "96d6dbd2c1b3015a8536d701bb145294ef26af6dbfb9a6150eb9e2a9ccdbf3d4"
+    },
+    "tools/probe_mixed_decode_split.py": {
+      "unchanged_from_base": true,
+      "sha256": "affd0330d7dd2447498eedabddd88c37b331b1fece86a00ecda989738e6db354"
+    },
+    "tests/test_no_fallback_static.py": {
+      "unchanged_from_base": true,
+      "sha256": "6083918447aef829249f27ad58f513fac7afd6e7f514dd215db2a696c1f625f0"
+    }
+  },
+  "new_source_header_and_no_silent_except_checks": [
+    "csrc/bf16_history_bindings.cpp",
+    "csrc/include/oscar_bf16_history_launch.h",
+    "csrc/kernels/attention_bf16_history_mdl.cpp",
+    "csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp",
+    "csrc/kernels/attention_bf16_history_operands.h",
+    "csrc/kernels/attention_bf16_history_window_range.cpp",
+    "csrc/kernels/attention_bf16_history_window_range_balanced.cpp",
+    "csrc/kernels/attention_bf16_history_window_range_cluster16.cpp",
+    "tests/test_bf16_history_bindings.py",
+    "tests/test_bf16_history_dispatch.py",
+    "tests/test_bf16_history_kernel_sources.py",
+    "tests/test_bf16_history_pipeline.py",
+    "tests/test_probe_bf16_history.py",
+    "tools/bf16_history_pipeline.py",
+    "tools/experiments/generate_bf16_history_kernels.py",
+    "tools/probe_bf16_history.py"
+  ]
+}

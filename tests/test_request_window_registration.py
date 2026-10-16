@@ -62,6 +62,7 @@ def test_all_capability_surfaces_match_and_old_modes_do_not_require_new_ops():
     assert not EXPECTED.intersection(PRODUCTION_CAPABILITIES)
     text=(ROOT/"csrc/torch_bindings.cpp").read_text()
     body=re.search(r'std::vector<std::string>\{(.*?)\};\}\);',text,re.S)[1]
+    body=re.sub(r"#ifdef OSCAR_BUILD_BF16_HISTORY.*?#endif", "", body, flags=re.S)
     cpp=re.findall(r'"([a-z0-9_]+)"',body)
     assert len(cpp)==len(set(cpp)) and set(cpp)==SOURCE_CAPABILITIES
     text=(ROOT/"csrc/CMakeLists.txt").read_text()
@@ -79,8 +80,9 @@ def test_source_packaging_identity_and_local_headers_are_complete():
     store_generate.generate(check=True)
     actual=package.package(check=True)
     # The earlier six-reader report remains historical evidence. Compare the
-    # current source inventory with the new independent integration receipt.
-    recorded=json.loads((ROOT/"reports/request_window_member_pipeline_packaging_20261011.json").read_text())
+    # current source inventory with the regenerated 2026-10-16 source-only receipt.
+    # The previously referenced 2026-10-11 file was absent from HEAD; no NPU evidence is recreated.
+    recorded=json.loads((ROOT/"reports/request_window_member_pipeline_packaging_20261016.json").read_text())
     assert actual==recorded
     assert len(actual["mapping"])==8
     assert actual["reader_kernel_count"]==7 and actual["store_kernel_count"]==2

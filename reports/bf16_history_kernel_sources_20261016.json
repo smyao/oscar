@@ -1,0 +1,145 @@
+{
+  "mother_commit": "6029f2a8c6277ab8136e5a5eeaa2c2c16313ca08",
+  "check": true,
+  "kernels": [
+    {
+      "kernel": "csrc/kernels/attention_bf16_history_mdl.cpp",
+      "mother_sha256": "1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f",
+      "derived_sha256": "904fe00d7daa1814d5abbfad9128bd9394abf1e3f9472ed2de3a99b64095de4f",
+      "inverse_identity": true,
+      "transformations": 15
+    },
+    {
+      "kernel": "csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp",
+      "mother_sha256": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+      "derived_sha256": "79de282be07d5db9ced67107b0772b9b9ae04d417bd7851403222e01ae2b00e6",
+      "inverse_identity": true,
+      "transformations": 17
+    },
+    {
+      "kernel": "csrc/kernels/attention_bf16_history_window_range_cluster16.cpp",
+      "mother_sha256": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+      "derived_sha256": "dc18506d5c573e5a5df907d85f78350507fd75165530d19a677f2cf7842b00ae",
+      "inverse_identity": true,
+      "transformations": 15
+    },
+    {
+      "kernel": "csrc/kernels/attention_bf16_history_window_range.cpp",
+      "mother_sha256": "d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4",
+      "derived_sha256": "d436561a1f43d7cdd9de1f735a01d603931c892ee7d1be395f861dd927414a30",
+      "inverse_identity": true,
+      "transformations": 15
+    },
+    {
+      "kernel": "csrc/kernels/attention_bf16_history_window_range_balanced.cpp",
+      "mother_sha256": "1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013",
+      "derived_sha256": "f937c29f106b7ecece09dd14a640445861386f46a83ec7cc578d3432f51470a1",
+      "inverse_identity": true,
+      "transformations": 15
+    }
+  ],
+  "scope": "Generated source identity and host-only allocation contracts; not a CANN or NPU result",
+  "source_contract_tests": {
+    "tests": 18,
+    "passed": 18,
+    "command": ".venv/bin/python -m pytest -q tests/test_bf16_history_kernel_sources.py"
+  },
+  "resource_lifecycle": "One initialized Matmul dtype per AIC; End -> PIPE_ALL -> TPipe.Reset -> Init at dtype transitions. Re-Init internal contract requires unavailable CANN validation.",
+  "resource_layouts": {
+    "mdl": {
+      "float_bytes_per_core": 1146880,
+      "total_bytes_per_core": 1720320,
+      "original_vector_bytes": 158656,
+      "candidate_vector_bytes": 175040,
+      "element_offsets": {
+        "q": 0,
+        "k0": 8192,
+        "v0": 73728,
+        "k1": 139264,
+        "v1": 204800,
+        "score_p": 270336,
+        "pv_rotation": 278528,
+        "end": 286720
+      }
+    },
+    "member_pipeline_cluster4": {
+      "float_bytes_per_core": 2494464,
+      "total_bytes_per_core": 3741696,
+      "original_vector_bytes": 157760,
+      "candidate_vector_bytes": 174144,
+      "element_offsets": {
+        "q_begin": 0,
+        "q_group_stride": 32768,
+        "q_groups": 4,
+        "k0": 131072,
+        "v0": 196608,
+        "score_p0": 262144,
+        "pv_rotation": 294912,
+        "acc_begin": 327680,
+        "stats_begin": 458752,
+        "k1": 459776,
+        "v1": 525312,
+        "score_p1": 590848,
+        "end": 623616
+      }
+    },
+    "window_range_cluster16": {
+      "float_bytes_per_core": 4997120,
+      "total_bytes_per_core": 7495680,
+      "original_vector_bytes": 157632,
+      "candidate_vector_bytes": 174016,
+      "element_offsets": {
+        "q_begin": 0,
+        "q_group_stride": 32768,
+        "q_groups": 16,
+        "k": 524288,
+        "v": 589824,
+        "score_p": 655360,
+        "pv_rotation": 688128,
+        "acc_begin": 720896,
+        "stats_begin": 1245184,
+        "end": 1249280
+      }
+    },
+    "window_range": {
+      "float_bytes_per_core": 917504,
+      "total_bytes_per_core": 1376256,
+      "original_vector_bytes": 157632,
+      "candidate_vector_bytes": 174016,
+      "element_offsets": {
+        "q": 0,
+        "k": 32768,
+        "v": 98304,
+        "score_p": 163840,
+        "pv_rotation": 196608,
+        "end": 229376
+      }
+    },
+    "window_range_balanced": {
+      "float_bytes_per_core": 917504,
+      "total_bytes_per_core": 1376256,
+      "original_vector_bytes": 157632,
+      "candidate_vector_bytes": 174016,
+      "element_offsets": {
+        "q": 0,
+        "k": 32768,
+        "v": 98304,
+        "score_p": 163840,
+        "pv_rotation": 196608,
+        "end": 229376
+      }
+    }
+  },
+  "operand_address": "core*total_bytes_per_core + float_bytes_per_core + 2*original_float_index; Q/K/V/P only",
+  "precision": "Source0 Q/K/V/P BF16 RNE operands; QK/PV C, softmax, LSE, online state, atomic accumulation and final Rv FP32",
+  "production_qualified": false,
+  "not_run": [
+    "CANN_build",
+    "official_CPU_debug",
+    "NPU_completion",
+    "graph_capture",
+    "graph_replay",
+    "model_quality",
+    "performance"
+  ]
+}

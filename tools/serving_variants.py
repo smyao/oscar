@@ -7,7 +7,10 @@ Historical generated whole32K/64K files are normalized without retaining an
 OSCAR scheduling override. No native default is guessed here.
 """
 
-from oscar_ascend.bf16_history_policy import BF16_HISTORY_FLAG, validate_bf16_history
+from oscar_ascend.bf16_history_policy import (
+    BF16_HISTORY_FLAG, normalize_bf16_history, validate_bf16_history,
+    require_bf16_history_production,
+)
 
 FEATURE_FLAGS = {
     "history_cluster4": "experimental_history_reuse",
@@ -35,6 +38,7 @@ FEATURE_FLAGS = {
 # Unfinished weighted-owner trials are not in the deploy source list or
 # selector. Future research flags must not leak into native/baseline A/B.
 RESEARCH_FEATURE_FLAGS = {
+    "bf16_history": BF16_HISTORY_FLAG,
     # Explicit research only until local numerical/CANN qualification and
     # the new NPU gate are integrated. Both one-key entrypoints share this.
     "request_windows": "experimental_request_windows",
@@ -64,14 +68,15 @@ def _restore_owned_scheduler(selected):
         else:selected["history_token_capacity"]=saved["history_token_capacity"]
 
 
-def variant_config(config: dict, variant: str | None) -> dict:
+def research_variant_config(config: dict, variant: str | None) -> dict:
+    """Pure normalization for independent probes; does not authorize serving."""
     if not isinstance(config, dict):
         raise ValueError("target config must be an object")
     if variant not in {None, "baseline", "candidate", "native"}:
         raise ValueError(f"unknown serving variant: {variant}")
     selected = dict(config)
     # Archive #148/#153: a research key cannot silently select the old route.
-    bf16_history = validate_bf16_history(selected, variant=variant)
+    bf16_history = normalize_bf16_history(selected, variant=variant)
     if BF16_HISTORY_FLAG in selected:
         selected[BF16_HISTORY_FLAG] = bf16_history
     # User 2026-10-13: this stable branch defaults to APC disabled.
@@ -145,6 +150,13 @@ def variant_config(config: dict, variant: str | None) -> dict:
             selected.get("experimental_striped_cache",False) and
             selected.get("experimental_decode_bundle",False)):
         raise ValueError("request windows require the striped decode bundle")
+    validate_bf16_history(selected)
+    return selected
+
+
+def variant_config(config: dict, variant: str | None) -> dict:
+    selected = research_variant_config(config, variant)
+    require_bf16_history_production(selected)
     return selected
 
 

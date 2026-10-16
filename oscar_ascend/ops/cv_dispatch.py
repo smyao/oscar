@@ -1,4 +1,4 @@
-"""Archive #148/#150: select only between complete OSCAR INT2 kernels.
+"""Archive #148/#150/#153: explicit, complete OSCAR INT2 kernel selection.
 
 C4 requires four full query groups in ONE request. Native host metadata can
 prove that impossible without reading device tensors or adding graph nodes.
@@ -24,6 +24,19 @@ MDL_DECODE_CV_OP = "attention_cv_mdl_decode_out"
 MDL_DECODE_Q1_CV_OP = "attention_cv_mdl_decode_q1_out"
 MDL_DECODE_CV_OPS = frozenset({MDL_DECODE_CV_OP, MDL_DECODE_Q1_CV_OP})
 MEMBER_PIPELINE_CV_OP = "attention_cv_member_pipeline_cluster4_out"
+BF16_HISTORY_OP_MAP = {
+    MDL_DECODE_CV_OP: "attention_bf16_history_mdl_out",
+    MDL_DECODE_Q1_CV_OP: "attention_bf16_history_mdl_q1_out",
+    MEMBER_PIPELINE_CV_OP: "attention_bf16_history_member_pipeline_cluster4_out",
+    "attention_cv_window_range_cluster16_out": "attention_bf16_history_window_range_cluster16_out",
+    "attention_cv_window_range_out": "attention_bf16_history_window_range_out",
+    "attention_cv_window_range_balanced_out": "attention_bf16_history_window_range_balanced_out",
+}
+BF16_HISTORY_CV_OPS = frozenset(BF16_HISTORY_OP_MAP.values())
+BF16_HISTORY_CLUSTER_OPS = frozenset({
+    BF16_HISTORY_OP_MAP[MEMBER_PIPELINE_CV_OP],
+    BF16_HISTORY_OP_MAP["attention_cv_window_range_cluster16_out"],
+})
 OPTIMIZED_STRIPED_OPS = {
     STRIPED_CV_OP: "attention_cv_window_range_out",
     STRIPED_BALANCED_CV_OP: "attention_cv_window_range_balanced_out",
@@ -38,7 +51,7 @@ CLUSTER_CV_OPS = frozenset({CLUSTER4_CV_OP, FAST_CLUSTER4_CV_OP,
                             STRIPED_CLUSTER16_CV_OP,
                             "attention_cv_window_range_cluster4_out",
                             "attention_cv_window_range_cluster16_out",
-                            MEMBER_PIPELINE_CV_OP})
+                            MEMBER_PIPELINE_CV_OP}) | BF16_HISTORY_CLUSTER_OPS
 FAST_CV_OPS = frozenset({FAST_CV_OP, FAST_Q1_CV_OP, FAST_CLUSTER4_CV_OP})
 MIXED_CV_OPS = frozenset({FAST_BALANCED_CV_OP, FAST_CLUSTER16_CV_OP})
 STRIPED_CV_OPS = frozenset({STRIPED_CV_OP, STRIPED_Q1_CV_OP,
@@ -48,10 +61,21 @@ STRIPED_CV_OPS = frozenset({STRIPED_CV_OP, STRIPED_Q1_CV_OP,
 
 def select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len, *, q1_draft=False,
                  fast_unpack=False, mixed_cv=False, striped_cache=False, decode_bundle=False,
-                 c4_member_pipeline=False, mdl_decode=False):
+                 c4_member_pipeline=False, mdl_decode=False, bf16_history=False):
     if any(type(flag) is not bool for flag in (fast_unpack, mixed_cv, striped_cache, decode_bundle,
-                                              c4_member_pipeline, mdl_decode)):
+                                              c4_member_pipeline, mdl_decode, bf16_history)):
         raise ValueError("CV experiment flags must be explicit booleans")
+    if bf16_history:
+        if cluster_size != 16 or not all((fast_unpack, mixed_cv, striped_cache,
+                                         decode_bundle, c4_member_pipeline, mdl_decode)):
+            raise ValueError("BF16 history requires the complete C16 candidate bundle")
+        old = select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len,
+            q1_draft=q1_draft, fast_unpack=fast_unpack, mixed_cv=mixed_cv,
+            striped_cache=striped_cache, decode_bundle=decode_bundle,
+            c4_member_pipeline=c4_member_pipeline, mdl_decode=mdl_decode)
+        if old not in BF16_HISTORY_OP_MAP:
+            raise ValueError(f"BF16 history has no registered reader for {old}")
+        return BF16_HISTORY_OP_MAP[old]
     if mdl_decode:
         if not decode_bundle:
             raise ValueError("MDL decode requires the explicit decode bundle")

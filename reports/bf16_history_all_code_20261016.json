@@ -1,0 +1,274 @@
+{
+  "schema": "oscar.bf16_history.implementation.v2",
+  "date": "2026-10-16",
+  "mother_commit": "6029f2a8c6277ab8136e5a5eeaa2c2c16313ca08",
+  "branch": "codex/bf16-history-implementation",
+  "delivery": "all six research code paths and host/probe wiring in one change",
+  "plan_acceptance_complete": false,
+  "production_enabled": false,
+  "production_qualified": false,
+  "source_paths_implemented": {
+    "attention_cv_mdl_decode_out": "attention_bf16_history_mdl_out",
+    "attention_cv_mdl_decode_q1_out": "attention_bf16_history_mdl_q1_out",
+    "attention_cv_member_pipeline_cluster4_out": "attention_bf16_history_member_pipeline_cluster4_out",
+    "attention_cv_window_range_cluster16_out": "attention_bf16_history_window_range_cluster16_out",
+    "attention_cv_window_range_out": "attention_bf16_history_window_range_out",
+    "attention_cv_window_range_balanced_out": "attention_bf16_history_window_range_balanced_out"
+  },
+  "numerical_gate": {
+    "backend": "independent CPU simulation",
+    "old_fp32_passed": 11,
+    "bf16_failed": 7,
+    "bf16_passed": 4,
+    "merged_output_failed_cases": 2,
+    "returncode": 2,
+    "report": "reports/bf16_history_stage1_20261016.json"
+  },
+  "validation": {
+    "method": "latest targeted result per pytest classname/name; original full run retained",
+    "latest_unique_counts": {
+      "passed": 468,
+      "skipped": 8
+    },
+    "initial_failures": [
+      "tests.test_compact_later_mtp::test_real_forward_keeps_actual_b_buffers_with_original_n_split[None-20]",
+      "tests.test_compact_later_mtp::test_real_forward_keeps_actual_b_buffers_with_original_n_split[16384-1]",
+      "tests.test_mtp_small_shape_flow::test_real_impl_native_later_batches_reuse_poisoned_flat_workspace"
+    ],
+    "all_initial_failures_rechecked_passed": true,
+    "test_receipts": {
+      "reports/bf16_history_all_code_host_20261016.xml": "18713344b9a7b57eea5050b811606209b46640a00f0cf06934d20a2f090b70d3",
+      "reports/bf16_history_mtp_host_repair_20261016.xml": "e7deeb15108051d56c25fc7b389dd79b8792f6a626f3d165614c24d42355e296",
+      "reports/bf16_history_kernel_host_20261016.xml": "f342e3be80de971966f10e4d202473d72fc9e43f6a2843c9dd52d79aa1023519",
+      "reports/bf16_history_probe_barrier_host_20261016.xml": "c77c556af9af417d19a59063eb479cfadd51d8a966777e21982adbd2cd9ec449",
+      "reports/bf16_history_full_pipeline_host_20261016_fixture_alias_failure.xml": "771acde11e2fa1bc7163ed18f55f7f1472d3b07ae89f971deafa84ddc3f73ace",
+      "reports/bf16_history_full_pipeline_host_20261016_v2.xml": "24a1f38821bfc44f3d817d0c2eceda6f393c93dce71e1dfa16eae3d980958a7a"
+    },
+    "fixture_alias_failure": {
+      "receipt": "reports/bf16_history_full_pipeline_host_20261016_fixture_alias_failure.xml",
+      "failed": 7,
+      "cause": "new synthetic evidence fixture shared a mutable execution dict; repaired by deepcopy only in tests",
+      "rechecked_receipt": "reports/bf16_history_full_pipeline_host_20261016_v2.xml",
+      "rechecked_passed": 76
+    },
+    "retained_build_collection_failure": {
+      "receipt": "reports/bf16_history_build_host_20261016.xml",
+      "repair_receipt": "reports/bf16_history_build_bindings_host_20261016.xml",
+      "cause": "test imported route map from wrong module; corrected to cv_dispatch"
+    },
+    "repository_static_checks": {
+      "passed": 2,
+      "failed": 3,
+      "first_reported_trigger_files_unchanged_from_base": true,
+      "proof": "reports/bf16_history_static_baseline_20261016.json",
+      "receipt": "reports/bf16_history_no_fallback_host_20261016.xml"
+    }
+  },
+  "boundaries": {
+    "cann_compile": "not_run_missing_CANN",
+    "official_cpu_debug": "not_run_missing_CANN",
+    "camodel": "not_run_missing_CANN_and_Lima",
+    "npu_completion": "not_run_missing_torch_npu",
+    "graph_capture": "not_run",
+    "graph_replay": "not_run",
+    "service": "not_run_new_math_rejected",
+    "model_quality": "not_established",
+    "full_attention_performance": "not_established",
+    "native_performance_comparison": "not_run",
+    "matmul_reset_reinit_contract": "unverified_requires_current_SDK_and_device",
+    "synthetic_full_attention_performance": "not_run_numerical_gate_failed_and_no_NPU"
+  },
+  "optional_build": {
+    "flag": "--bf16-history",
+    "cmake": "OSCAR_BUILD_BF16_HISTORY",
+    "default": false,
+    "production_guard_bypass": false
+  },
+  "frozen_and_parent_files": {
+    "csrc/kernels/attention_cv.cpp": {
+      "sha256": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+      "unchanged": true
+    },
+    "csrc/kernels/attention_tasks.cpp": {
+      "sha256": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+      "unchanged": true
+    },
+    "csrc/kernels/store_int2.cpp": {
+      "sha256": "5a6fa9619e399bb80bc0455c4426396d98510326bb899900b4b96c65d2b58506",
+      "unchanged": true
+    },
+    "csrc/kernels/rotate_clip_store.cpp": {
+      "sha256": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+      "unchanged": true
+    },
+    "csrc/kernels/merge_lse.cpp": {
+      "sha256": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+      "unchanged": true
+    },
+    "csrc/kernels/status_guard.cpp": {
+      "sha256": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+      "unchanged": true
+    },
+    "csrc/kernels/oscar_common.h": {
+      "sha256": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+      "unchanged": true
+    },
+    "configs/acceptance.json": {
+      "sha256": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+      "unchanged": true
+    },
+    "configs/target.json": {
+      "sha256": "ac366f316d1b0bb25a287a8ecab768aaacc1586beddf262e2cfcc9e9f63e21a2",
+      "unchanged": true
+    },
+    "oscar_ascend/ops/reference.py": {
+      "sha256": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
+      "unchanged": true
+    },
+    "csrc/kernels/attention_cv_mdl_decode.cpp": {
+      "sha256": "1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f",
+      "unchanged": true
+    },
+    "csrc/kernels/attention_cv_member_pipeline_cluster4.cpp": {
+      "sha256": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+      "unchanged": true
+    },
+    "csrc/kernels/attention_cv_window_range_cluster16.cpp": {
+      "sha256": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+      "unchanged": true
+    },
+    "csrc/kernels/attention_cv_window_range.cpp": {
+      "sha256": "d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4",
+      "unchanged": true
+    },
+    "csrc/kernels/attention_cv_window_range_balanced.cpp": {
+      "sha256": "1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013",
+      "unchanged": true
+    }
+  },
+  "source_sha256": {
+    "csrc/CMakeLists.txt": "0f5ddbc05a537e93ad1d2fc2067c69f66a787f7d4dee9d6dcd0f424fe1238d55",
+    "csrc/bf16_history_bindings.cpp": "f4495b5bc6171c3affc96708d88bb52b2e0648a3115e7835d3509da3d4a76b9d",
+    "csrc/include/oscar_bf16_history_launch.h": "68cd79f1537fe4bb23afe88d9db8a2da862dcc229b5f7b689dd5854577fdbe2c",
+    "csrc/kernels/attention_bf16_history_mdl.cpp": "904fe00d7daa1814d5abbfad9128bd9394abf1e3f9472ed2de3a99b64095de4f",
+    "csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp": "79de282be07d5db9ced67107b0772b9b9ae04d417bd7851403222e01ae2b00e6",
+    "csrc/kernels/attention_bf16_history_operands.h": "7953fe4ead48404cf50997b66e63087ec496b837c2d23e490db45ecf0a4383d2",
+    "csrc/kernels/attention_bf16_history_window_range.cpp": "d436561a1f43d7cdd9de1f735a01d603931c892ee7d1be395f861dd927414a30",
+    "csrc/kernels/attention_bf16_history_window_range_balanced.cpp": "f937c29f106b7ecece09dd14a640445861386f46a83ec7cc578d3432f51470a1",
+    "csrc/kernels/attention_bf16_history_window_range_cluster16.cpp": "dc18506d5c573e5a5df907d85f78350507fd75165530d19a677f2cf7842b00ae",
+    "csrc/torch_bindings.cpp": "9882ea7612ee984deebc3c7984cbc386e910136edcf7a8b73c13c3157c749645",
+    "oscar_ascend/bf16_history_policy.py": "ffb8bb4215790044087f380e02e7dbc16ee88495c557d4f2d59d5462fb9f3343",
+    "oscar_ascend/integration/impl.py": "bb9139323c7992f0d44d1f41d53615e3937291ee4ea33bfdc2f5fa0a8adcba25",
+    "oscar_ascend/ops/contracts.py": "d2b34efc138bcc22769a7e0c40dd2e648a838b40b3c65727024bdadfbf4cd832",
+    "oscar_ascend/ops/cv_dispatch.py": "e8cc23068bf3bf80a29a78433ecfbad96124ca83fd552a15147e97391dcba770",
+    "oscar_ascend/ops/meta.py": "aa6a0403d5cd9efc6e3cda085b4b84ce79be3f1fec4a235b5746589669cc58e5",
+    "oscar_ascend/runtime.py": "3368cbc290b167b18c7d09b54900b4e17d2dd88519cfbca721fe02a49f9cb5b7",
+    "tests/test_bf16_history_bindings.py": "79099222063a572cada17e4124be1e87ee00e5c38d0f0d61d979656ac046ffb7",
+    "tests/test_bf16_history_dispatch.py": "25c070fd4beaca47813db5c562986e9ddf94b3f6f3901bd98e7049e96f0c5c69",
+    "tests/test_bf16_history_kernel_sources.py": "0940bd7309f2854ed17a99c95eaac7307d9f9a2f2fdeb5804f1cc49ef80b09c8",
+    "tests/test_bf16_history_pipeline.py": "59bcfdee134c1386c9b6295fed6ff80a3b1422ac955260d494b717991d712076",
+    "tests/test_bf16_history_policy.py": "3259904c41dc693ab098215ac29ac6453721cadd0c86013542bf031a70f4df84",
+    "tests/test_build_reuse.py": "d2a1956e4a5fe20cd4309109aa0d736b62173bf87c1911b9dd845763b32e9373",
+    "tests/test_compact_later_mtp.py": "396c6d5471d4faf2a84a03e8f3e6e8119303ca37d2df5420f98fbf448875f6fb",
+    "tests/test_meta_dispatch.py": "56c9d00af977cd5de39d2c4caeb89dae12d3e60679fc62e15c1b4b603e5efee8",
+    "tests/test_mtp_small_shape_flow.py": "b10d75ccdeaf8e6cc4066cc06f2c6078d8abd5bde42a1c8123fa4e970640b2a1",
+    "tests/test_op_contracts.py": "b4ab1628953842c810f9c3eede6247a59f8c9a287c607c49af22b238f1f26a3e",
+    "tests/test_probe_bf16_history.py": "1de123bbf591fbc7deae0327e9786a3fa8df31b09ccf61eb24119519e3acf0a9",
+    "tests/test_request_window_registration.py": "3ff9602b5def122e425baa588b8fb8957a077c4518553031c2ae371d6a4e30c9",
+    "tests/test_runtime.py": "65e7ed30ba5927265c991a236f690257c3272aefc6fd5cb8d2f829880a9b7896",
+    "tools/bf16_history_pipeline.py": "207c7440f430cda9342284af0355f8ed67cc48fe5fcbe2971c2029468a7b2824",
+    "tools/build_ops.py": "a4c51243d84bd3304140a6fc589b037ef91af0f45e95c4c3565d380937d530b2",
+    "tools/deploy.py": "0af99084faadf2c190455f3864e66acbeec3b2f75120bad4e63d5c3ddcf3c9f4",
+    "tools/experiments/generate_bf16_history_kernels.py": "8526156c1f9acf0c5578e01aa3c14e166fa148041134ecac34ae7c5530782855",
+    "tools/observe_serve.py": "95f56a042bba6c97c3f6bce1667d521615b4aad9463d3f0d0a12bf9264931f95",
+    "tools/probe_bf16_history.py": "6f73d24005b45fdc969c12b80549ec2b913e2cf1bc25ecfd1b7e8495fabbd0a7",
+    "tools/serving_variants.py": "cdd87dab9adb3541743c83aedf687dae19af0c768073c8c3d5addd28aa5d782f",
+    "tools/target_cli.py": "5c2528c3a76bded073885dc884bc84dab9a7526ae024827105162af5d59faf50"
+  },
+  "evidence_sha256": {
+    "reports/bf16_history_kernel_sources_20261016.json": "c394986fb22d6c3c28442c7b59ce09205be735c75f7c4ee3510c88a252754cae",
+    "reports/bf16_history_toolchain_20261016.json": "9b150e76446295961f8b7c546b61c7fa4e8d823cdf095eb81379e49114c41d83",
+    "reports/bf16_history_no_npu_delivery_20261016.json": "b7cafcf51fc2f8ca78db7b53b6ea89db53657bd22d43e722527a7366c67aefe3",
+    "reports/bf16_history_stage1_20261016.json": "fab6ee336ffe319b68d26baddb498db794b7d94a75fbdba079b13796bcc92692",
+    "reports/bf16_history_static_baseline_20261016.json": "55d2674edf7b86368eec7664a6ea21e9015846b4a7324f92c0a69e0bd264810c",
+    "reports/request_window_member_pipeline_packaging_20261016.json": "474043d09cd2f452327d36cb359cd54bbbde08c902b7d7a18d48e401badbe8a1"
+  },
+  "review": {
+    "bindings_build_default_isolation": "independent source review found no actionable issue",
+    "runtime_routes_guard": "independent source review found no actionable issue",
+    "complete_pipeline": "independent source review verified actual selector/splits and read-before-write; unverified on device",
+    "ascendc_operands": "final source review found no actionable defect; Reset-to-Init lifetime remains unverified"
+  },
+  "remote": "https://gitcode.com/jpl123/gpt_new_oscar_kimi.git",
+  "push": {
+    "status": "failed",
+    "remote": "https://gitcode.com/jpl123/gpt_new_oscar_kimi.git",
+    "branch": "codex/bf16-history-implementation",
+    "attempted_commit": "95bdb76e5435ee504b583ff276955417ee61e48c",
+    "returncode": 128,
+    "error": "fatal: could not read Username for 'https://gitcode.com': terminal prompts disabled",
+    "reason": "GitCode authentication unavailable; no other remote used"
+  },
+  "checklist_ids_unchanged": [
+    "A01",
+    "A02",
+    "A03",
+    "A04",
+    "A05",
+    "A06",
+    "A07",
+    "B01",
+    "B02",
+    "B03",
+    "B04",
+    "B05",
+    "B06",
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "C06",
+    "C07",
+    "D01",
+    "D02",
+    "D03",
+    "D04",
+    "D05",
+    "D06",
+    "D07",
+    "D08",
+    "D09",
+    "E01",
+    "E02",
+    "E03",
+    "E04",
+    "E05",
+    "E06",
+    "E07",
+    "E08",
+    "F01",
+    "F02",
+    "F03",
+    "F04",
+    "F05"
+  ],
+  "full_pipeline_implementation": {
+    "source": "tools/bf16_history_pipeline.py",
+    "operator_diagnostics": 30,
+    "full_pipeline_cases": 6,
+    "target_head_geometry": [
+      6,
+      1,
+      256
+    ],
+    "full_c16_query_rows": 8192,
+    "full_balanced_padded_tokens": 512,
+    "split_selection": "WorkspaceGeometry.splits_for_tokens using actual cores and explicit engine capacity",
+    "workspace": "baseline/candidate maximum C16 shared arenas",
+    "oracle": "all actual rows/heads; bounded query chunks",
+    "timing_barrier": "all fixed CPU + operator/device/graph + full-pipeline numeric/protocol cases must pass before any timing",
+    "scope": "synthetic legal physical pages; complete eager attention op pipeline; no full graph, native model physical layout, service or whole-model qualification",
+    "performed_on_NPU": false
+  }
+}

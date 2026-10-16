@@ -1,0 +1,282 @@
+{
+  "status": "completed_host_screen_not_device_qualification",
+  "scope": "only normalized-acc/Rv operand rounding changes; both matmuls accumulateFP32",
+  "cases": [
+    {
+      "case": "identity_cancellation_seed1753",
+      "source": "existing affine_bf16_residual_screen.cases; original INT2 store/decode",
+      "shape": [
+        4,
+        6,
+        256
+      ],
+      "rv_exact_BF16": true,
+      "rv_round_max_abs": 0.0,
+      "acc_round_max_abs": 0.015625,
+      "partial_max_abs_difference": 0.015625,
+      "partial_relative_l2": 1.159612005560257e-06,
+      "final_BF16_max_abs_difference": 0.0,
+      "final_BF16_relative_l2": 0.0,
+      "final_BF16_changed_elements": 0,
+      "diagnostic_old_FP32_tolerance_exceedances": 0,
+      "all_finite": true
+    },
+    {
+      "case": "hadamard_seed1753_kv257_v1",
+      "source": "existing affine_bf16_residual_screen.cases; original INT2 store/decode",
+      "shape": [
+        4,
+        6,
+        256
+      ],
+      "rv_exact_BF16": true,
+      "rv_round_max_abs": 0.0,
+      "acc_round_max_abs": 0.0019051432609558105,
+      "partial_max_abs_difference": 0.0007952600717544556,
+      "partial_relative_l2": 0.0016479263951550524,
+      "final_BF16_max_abs_difference": 0.001953125,
+      "final_BF16_relative_l2": 0.002563240668442149,
+      "final_BF16_changed_elements": 2633,
+      "diagnostic_old_FP32_tolerance_exceedances": 0,
+      "all_finite": true
+    },
+    {
+      "case": "hadamard_seed1931_kv257_v128",
+      "source": "existing affine_bf16_residual_screen.cases; original INT2 store/decode",
+      "shape": [
+        4,
+        6,
+        256
+      ],
+      "rv_exact_BF16": true,
+      "rv_round_max_abs": 0.0,
+      "acc_round_max_abs": 0.12479400634765625,
+      "partial_max_abs_difference": 0.11116409301757812,
+      "partial_relative_l2": 0.0016700091065353026,
+      "final_BF16_max_abs_difference": 0.25,
+      "final_BF16_relative_l2": 0.00259104110988514,
+      "final_BF16_changed_elements": 2652,
+      "diagnostic_old_FP32_tolerance_exceedances": 981,
+      "all_finite": true
+    },
+    {
+      "case": "hadamard_seed2923_kv1025_v1",
+      "source": "existing affine_bf16_residual_screen.cases; original INT2 store/decode",
+      "shape": [
+        4,
+        6,
+        256
+      ],
+      "rv_exact_BF16": true,
+      "rv_round_max_abs": 0.0,
+      "acc_round_max_abs": 0.0019093751907348633,
+      "partial_max_abs_difference": 0.001113254576921463,
+      "partial_relative_l2": 0.001673735318326264,
+      "final_BF16_max_abs_difference": 0.001953125,
+      "final_BF16_relative_l2": 0.0025302298004443156,
+      "final_BF16_changed_elements": 2678,
+      "diagnostic_old_FP32_tolerance_exceedances": 0,
+      "all_finite": true
+    },
+    {
+      "case": "old_prefill_signal_D64_identity",
+      "source": "existing prefill_tile_stress._signal; original store/decode",
+      "shape": [
+        1,
+        1,
+        64
+      ],
+      "rv_exact_BF16": true,
+      "rv_round_max_abs": 0.0,
+      "acc_round_max_abs": 0.0,
+      "partial_max_abs_difference": 0.0,
+      "partial_relative_l2": 0.0,
+      "final_BF16_max_abs_difference": 0.0,
+      "final_BF16_relative_l2": 0.0,
+      "final_BF16_changed_elements": 0,
+      "diagnostic_old_FP32_tolerance_exceedances": 0,
+      "all_finite": true
+    },
+    {
+      "case": "old_prefill_signal_D64_hadamard",
+      "source": "existing prefill_tile_stress._signal; original store/decode",
+      "shape": [
+        1,
+        1,
+        64
+      ],
+      "rv_exact_BF16": true,
+      "rv_round_max_abs": 0.0,
+      "acc_round_max_abs": 0.0019373297691345215,
+      "partial_max_abs_difference": 0.0004984736442565918,
+      "partial_relative_l2": 0.0008930193674492108,
+      "final_BF16_max_abs_difference": 0.00390625,
+      "final_BF16_relative_l2": 0.001828378534928602,
+      "final_BF16_changed_elements": 21,
+      "diagnostic_old_FP32_tolerance_exceedances": 0,
+      "all_finite": true
+    },
+    {
+      "case": "old_prefill_signal_D256_identity",
+      "source": "existing prefill_tile_stress._signal; original store/decode",
+      "shape": [
+        1,
+        1,
+        256
+      ],
+      "rv_exact_BF16": true,
+      "rv_round_max_abs": 0.0,
+      "acc_round_max_abs": 0.0,
+      "partial_max_abs_difference": 0.0,
+      "partial_relative_l2": 0.0,
+      "final_BF16_max_abs_difference": 0.0,
+      "final_BF16_relative_l2": 0.0,
+      "final_BF16_changed_elements": 0,
+      "diagnostic_old_FP32_tolerance_exceedances": 0,
+      "all_finite": true
+    },
+    {
+      "case": "old_prefill_signal_D256_hadamard",
+      "source": "existing prefill_tile_stress._signal; original store/decode",
+      "shape": [
+        1,
+        1,
+        256
+      ],
+      "rv_exact_BF16": true,
+      "rv_round_max_abs": 0.0,
+      "acc_round_max_abs": 0.003780961036682129,
+      "partial_max_abs_difference": 0.008410811424255371,
+      "partial_relative_l2": 0.0023042071818359443,
+      "final_BF16_max_abs_difference": 0.0078125,
+      "final_BF16_relative_l2": 0.0032143291665504012,
+      "final_BF16_changed_elements": 122,
+      "diagnostic_old_FP32_tolerance_exceedances": 0,
+      "all_finite": true
+    },
+    {
+      "case": "random_normal_identity",
+      "source": "synthetic normalized-partial stress, not asserted model distribution",
+      "shape": [
+        128,
+        6,
+        256
+      ],
+      "rv_exact_BF16": true,
+      "rv_round_max_abs": 0.0,
+      "acc_round_max_abs": 0.015377998352050781,
+      "partial_max_abs_difference": 0.015377998352050781,
+      "partial_relative_l2": 0.0016568433729044383,
+      "final_BF16_max_abs_difference": 0.0,
+      "final_BF16_relative_l2": 0.0,
+      "final_BF16_changed_elements": 0,
+      "diagnostic_old_FP32_tolerance_exceedances": 0,
+      "all_finite": true
+    },
+    {
+      "case": "random_heavy_tail_identity",
+      "source": "synthetic normalized-partial stress, not asserted model distribution",
+      "shape": [
+        128,
+        6,
+        256
+      ],
+      "rv_exact_BF16": true,
+      "rv_round_max_abs": 0.0,
+      "acc_round_max_abs": 7.979248046875,
+      "partial_max_abs_difference": 7.979248046875,
+      "partial_relative_l2": 0.0016529193209471728,
+      "final_BF16_max_abs_difference": 0.0,
+      "final_BF16_relative_l2": 0.0,
+      "final_BF16_changed_elements": 0,
+      "diagnostic_old_FP32_tolerance_exceedances": 0,
+      "all_finite": true
+    },
+    {
+      "case": "random_normal_hadamard",
+      "source": "synthetic normalized-partial stress, not asserted model distribution",
+      "shape": [
+        128,
+        6,
+        256
+      ],
+      "rv_exact_BF16": true,
+      "rv_round_max_abs": 0.0,
+      "acc_round_max_abs": 0.014583587646484375,
+      "partial_max_abs_difference": 0.007323145866394043,
+      "partial_relative_l2": 0.001657213310702477,
+      "final_BF16_max_abs_difference": 0.03125,
+      "final_BF16_relative_l2": 0.0025493974842097527,
+      "final_BF16_changed_elements": 83531,
+      "diagnostic_old_FP32_tolerance_exceedances": 50,
+      "all_finite": true
+    },
+    {
+      "case": "random_heavy_tail_hadamard",
+      "source": "synthetic normalized-partial stress, not asserted model distribution",
+      "shape": [
+        128,
+        6,
+        256
+      ],
+      "rv_exact_BF16": true,
+      "rv_round_max_abs": 0.0,
+      "acc_round_max_abs": 7.988525390625,
+      "partial_max_abs_difference": 2.4026947021484375,
+      "partial_relative_l2": 0.0016653741166546754,
+      "final_BF16_max_abs_difference": 8.0,
+      "final_BF16_relative_l2": 0.002581092674387921,
+      "final_BF16_changed_elements": 83292,
+      "diagnostic_old_FP32_tolerance_exceedances": 38415,
+      "all_finite": true
+    },
+    {
+      "case": "random_normal_general_orthogonal",
+      "source": "synthetic normalized-partial stress, not asserted model distribution",
+      "shape": [
+        128,
+        6,
+        256
+      ],
+      "rv_exact_BF16": false,
+      "rv_round_max_abs": 0.0007566511631011963,
+      "acc_round_max_abs": 0.01356649398803711,
+      "partial_max_abs_difference": 0.012020587921142578,
+      "partial_relative_l2": 0.002354088402052197,
+      "final_BF16_max_abs_difference": 0.015625,
+      "final_BF16_relative_l2": 0.0031801117286532534,
+      "final_BF16_changed_elements": 100083,
+      "diagnostic_old_FP32_tolerance_exceedances": 895,
+      "all_finite": true
+    },
+    {
+      "case": "random_heavy_tail_general_orthogonal",
+      "source": "synthetic normalized-partial stress, not asserted model distribution",
+      "shape": [
+        128,
+        6,
+        256
+      ],
+      "rv_exact_BF16": false,
+      "rv_round_max_abs": 0.0007566511631011963,
+      "acc_round_max_abs": 7.9931640625,
+      "partial_max_abs_difference": 3.8246841430664062,
+      "partial_relative_l2": 0.002346233913016109,
+      "final_BF16_max_abs_difference": 8.0,
+      "final_BF16_relative_l2": 0.0031884647460536063,
+      "final_BF16_changed_elements": 97772,
+      "diagnostic_old_FP32_tolerance_exceedances": 50805,
+      "all_finite": true
+    }
+  ],
+  "predeclared_comparison_role": "FP32-Rv delta diagnostics only, not a rejection under the new user-authorized BF16 contract",
+  "native_FIA_internal_arithmetic": "not_observed",
+  "model_quality": "not_established",
+  "NPU": "not_run",
+  "cost_hypothesis": "single BF16 Matmul template can avoid separate FP32 Rv launch/gather/scatter; not measured",
+  "source_sha256": {
+    "oscar_ascend/ops/bf16_reference.py": "491070436cb020d3765e12cd696552bdf8396a14f80d320fb0b88b7e585c3cfc",
+    "tools/experiments/affine_bf16_residual_screen.py": "ecb2ae4d8a88e77d3d8c95d0a6f016f6178d186c69caa1675059de05d3994d75",
+    "tools/experiments/prefill_tile_stress.py": "c260b13764486e36e153b591ed923088b5e52c2b411e851eba2f390e7d834df9"
+  }
+}

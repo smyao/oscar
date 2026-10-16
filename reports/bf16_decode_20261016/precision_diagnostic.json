@@ -1,0 +1,22 @@
+{
+  "cases": [
+    {
+      "family": "q4",
+      "actual_CPU_vs_BF16_task_oracle_max_abs": 4.32133674621582e-06,
+      "actual_CPU_vs_original_FP32_max_abs": 0.0036622434854507446,
+      "actual_CPU_vs_original_FP32_relL2": 0.004221868235617876,
+      "elements_exceeding_old_FP32_5e3_pairwise_threshold_diagnostic_only": 0,
+      "meaning": "rounding diagnostic on C641/701 only, not target model quality"
+    },
+    {
+      "family": "q1",
+      "actual_CPU_vs_BF16_task_oracle_max_abs": 2.905726432800293e-07,
+      "actual_CPU_vs_original_FP32_max_abs": 0.0036622434854507446,
+      "actual_CPU_vs_original_FP32_relL2": 0.004021149128675461,
+      "elements_exceeding_old_FP32_5e3_pairwise_threshold_diagnostic_only": 0,
+      "meaning": "rounding diagnostic on C641/701 only, not target model quality"
+    }
+  ],
+  "source_sha256": "8c73b6b6e0473edac416e607fc145ac15c72b3cbb41a5772da0c5befa06f92e1",
+  "NPU": "not_run"
+}

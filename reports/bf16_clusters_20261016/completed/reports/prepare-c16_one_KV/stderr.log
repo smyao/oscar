@@ -1,0 +1,3 @@
+/usr/local/Ascend/cann-9.1.0/set_env.sh: line 48: LD_LIBRARY_PATH: unbound variable
+/usr/local/Ascend/cann-9.1.0/set_env.sh: line 48: PYTHONPATH: unbound variable
+/usr/local/Ascend/cann-9.1.0/set_env.sh: line 31: CMAKE_PREFIX_PATH: unbound variable

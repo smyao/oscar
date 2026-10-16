@@ -1,0 +1,66 @@
+[Fri Oct 16 10:37:57 2026]  __handle_mm_fault+0x24c/0x400
+[Fri Oct 16 10:37:57 2026]  handle_mm_fault+0xac/0x2e0
+[Fri Oct 16 10:37:57 2026]  do_page_fault+0xfc/0x528
+[Fri Oct 16 10:37:57 2026]  do_translation_fault+0x74/0xc8
+[Fri Oct 16 10:37:57 2026]  do_mem_abort+0x50/0xd0
+[Fri Oct 16 10:37:57 2026]  el0_ia+0x70/0x1c0
+[Fri Oct 16 10:37:57 2026]  el0t_64_sync_handler+0xf4/0x158
+[Fri Oct 16 10:37:57 2026]  el0t_64_sync+0x1b0/0x1b8
+[Fri Oct 16 10:37:57 2026] Mem-Info:
+[Fri Oct 16 10:37:57 2026] active_anon:2174879 inactive_anon:737563 isolated_anon:0
+                            active_file:162 inactive_file:151 isolated_file:0
+                            unevictable:6526 dirty:0 writeback:0
+                            slab_reclaimable:60363 slab_unreclaimable:40089
+                            mapped:2028 shmem:1318910 pagetables:3794
+                            sec_pagetables:0 bounce:0
+                            kernel_misc_reclaimable:0
+                            free:21524 free_pcp:138 free_cma:2
+[Fri Oct 16 10:37:57 2026] Node 0 active_anon:8698620kB inactive_anon:2951148kB active_file:648kB inactive_file:604kB unevictable:26104kB isolated(anon):0kB isolated(file):0kB mapped:8112kB dirty:0kB writeback:0kB shmem:5275640kB shmem_thp:0kB shmem_pmdmapped:0kB anon_thp:0kB writeback_tmp:0kB kernel_stack:4256kB shadow_call_stack:1120kB pagetables:15176kB sec_pagetables:0kB all_unreclaimable? no
+[Fri Oct 16 10:37:57 2026] Node 0 DMA free:48316kB boost:0kB min:8484kB low:10776kB high:13068kB reserved_highatomic:0KB active_anon:1542968kB inactive_anon:682564kB active_file:12kB inactive_file:0kB unevictable:0kB writepending:0kB present:2359296kB managed:2293752kB mlocked:0kB bounce:0kB free_pcp:0kB local_pcp:0kB free_cma:8kB
+[Fri Oct 16 10:37:57 2026] lowmem_reserve[]: 0 0 9651 9651 9651
+[Fri Oct 16 10:37:57 2026] Node 0 Normal free:37780kB boost:0kB min:36568kB low:46448kB high:56328kB reserved_highatomic:0KB active_anon:7154704kB inactive_anon:2269532kB active_file:32kB inactive_file:676kB unevictable:26104kB writepending:0kB present:10223616kB managed:9924764kB mlocked:26104kB bounce:0kB free_pcp:552kB local_pcp:0kB free_cma:0kB
+[Fri Oct 16 10:37:57 2026] lowmem_reserve[]: 0 0 0 0 0
+[Fri Oct 16 10:37:57 2026] Node 0 DMA: 174*4kB (UMEC) 107*8kB (UME) 197*16kB (UME) 190*32kB (UME) 123*64kB (UME) 86*128kB (UME) 47*256kB (UME) 9*512kB (ME) 2*1024kB (M) 0*2048kB 0*4096kB 0*8192kB 0*16384kB 0*32768kB = 48352kB
+[Fri Oct 16 10:37:57 2026] Node 0 Normal: 1527*4kB (UME) 1121*8kB (UME) 551*16kB (UME) 182*32kB (UME) 48*64kB (UME) 5*128kB (UME) 1*256kB (M) 1*512kB (M) 1*1024kB (M) 1*2048kB (M) 0*4096kB 0*8192kB 0*16384kB 0*32768kB = 37268kB
+[Fri Oct 16 10:37:57 2026] Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=1048576kB
+[Fri Oct 16 10:37:57 2026] Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=32768kB
+[Fri Oct 16 10:37:57 2026] Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=2048kB
+[Fri Oct 16 10:37:57 2026] Node 0 hugepages_total=0 hugepages_free=0 hugepages_surp=0 hugepages_size=64kB
+[Fri Oct 16 10:37:57 2026] 1321189 total pagecache pages
+[Fri Oct 16 10:37:57 2026] 0 pages in swap cache
+[Fri Oct 16 10:37:57 2026] Free swap  = 0kB
+[Fri Oct 16 10:37:57 2026] Total swap = 0kB
+[Fri Oct 16 10:37:57 2026] 3145728 pages RAM
+[Fri Oct 16 10:37:57 2026] 0 pages HighMem/MovableOnly
+[Fri Oct 16 10:37:57 2026] 91099 pages reserved
+[Fri Oct 16 10:37:57 2026] 8192 pages cma reserved
+[Fri Oct 16 10:37:57 2026] 0 pages hwpoisoned
+[Fri Oct 16 10:37:57 2026] Tasks state (memory values in pages):
+[Fri Oct 16 10:37:57 2026] [  pid  ]   uid  tgid total_vm      rss rss_anon rss_file rss_shmem pgtables_bytes swapents oom_score_adj name
+[Fri Oct 16 10:37:57 2026] [    835]   101   835     2527      448      160      288         0    65536        0          -900 dbus-daemon
+[Fri Oct 16 10:37:57 2026] [    846]     0   846     4674      576      480       96         0    90112        0             0 systemd-logind
+[Fri Oct 16 10:37:57 2026] [    865]     0   865     1430       32       32        0         0    49152        0             0 agetty
+[Fri Oct 16 10:37:57 2026] [    880]     0   880     1419        0        0        0         0    53248        0             0 agetty
+[Fri Oct 16 10:37:57 2026] [    901]     0   901    27722     2496     2304      192         0   118784        0             0 unattended-upgr
+[Fri Oct 16 10:37:57 2026] [   1425]     0  1425   318431     2275     2147      128         0   196608        0          -500 lima-guestagent
+[Fri Oct 16 10:37:57 2026] [   1655]     0  1655     4057      448      352       96         0    77824        0             0 sshd
+[Fri Oct 16 10:37:57 2026] [   1746]   501  1746     6164     2527     2367      160         0    94208        0             0 sshd
+[Fri Oct 16 10:37:57 2026] [  60765]     0 60765     1787      512       32      480         0    53248        0             0 cron
+[Fri Oct 16 10:37:57 2026] [  60808]     0 60808    56152     6464     4640     1824         0   110592        0         -1000 multipathd
+[Fri Oct 16 10:37:57 2026] [ 130110]   102 130110    55703     1299      627      672         0    90112        0             0 rsyslogd
+[Fri Oct 16 10:37:57 2026] [ 213010]   501 213010     1895      448       64      384         0    57344        0             0 bash
+[Fri Oct 16 10:37:57 2026] [ 213019]   501 213019     1756      544      160      384         0    53248        0             0 grep
+[Fri Oct 16 10:37:57 2026] [ 213020]   501 213020     1424      320        0      320         0    53248        0             0 head
+[Fri Oct 16 10:37:57 2026] [ 265736]   989 265736    77267      896      192      704         0   106496        0             0 polkitd
+[Fri Oct 16 10:37:57 2026] [ 265749]     0 265749    99722     1152      480      672         0   151552        0             0 ModemManager
+[Fri Oct 16 10:37:57 2026] [ 345782]   998 345782     4693      896      256      640         0    86016        0             0 systemd-network
+[Fri Oct 16 10:37:57 2026] [ 345784]     0 345784     3028      736      256      480         0    69632        0         -1000 sshd
+[Fri Oct 16 10:37:57 2026] [ 345786]     0 345786    39428      918      474      444         0   335872        0          -250 systemd-journal
+[Fri Oct 16 10:37:57 2026] [ 345790]   991 345790     5354     1024      512      512         0    86016        0             0 systemd-resolve
+[Fri Oct 16 10:37:57 2026] [ 345800]   996 345800    22706      768      192      576         0    81920        0             0 systemd-timesyn
+[Fri Oct 16 10:37:57 2026] [ 345801]     0 345801     6377     1088      608      480         0    73728        0         -1000 systemd-udevd
+[Fri Oct 16 10:37:57 2026] [ 345808]     0 345808   118148     1248      480      768         0   155648        0             0 udisksd
+[Fri Oct 16 10:37:57 2026] [ 702956]   501 702956     5507     2400     1824      576         0    81920        0             0 python3
+[Fri Oct 16 10:37:57 2026] [ 702960]   501 702960  1966056  1578317  1577581      736         0 13017088        0             0 python
+[Fri Oct 16 10:37:57 2026] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=session-2.scope,mems_allowed=0,global_oom,task_memcg=/user.slice/user-501.slice/session-2.scope,task=python,pid=702960,uid=501
+[Fri Oct 16 10:37:57 2026] Out of memory: Killed process 702960 (python) total-vm:7864224kB, anon-rss:6310324kB, file-rss:2816kB, shmem-rss:0kB, UID:501 pgtables:12712kB oom_score_adj:0

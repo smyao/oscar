@@ -1,0 +1,33 @@
+{
+  "status": "host_and_local_CANN_CPU_qualification_passed",
+  "base_main": "7047ce36a19e001046a07a7d85de2a4092cd7941",
+  "branch": "codex/oscar-bf16-attention",
+  "host_suite": {
+    "passed": 577,
+    "skipped": 140,
+    "subtests_passed": 4,
+    "skip_scope": {
+      "real_NPU_not_enabled": 132,
+      "repeated_large_host_cases": 8
+    },
+    "log": "host_tests.log"
+  },
+  "subsequent_parent_mode_fix": {
+    "passed": 117,
+    "overlaps_main_suite": true,
+    "log": "final_gate_tests.log"
+  },
+  "CANN_and_Torch_build": "../bf16_fullbuild_20261016/summary.json",
+  "official_CPU_debug": {
+    "decode": "../bf16_decode_20261016/initial_validation.json",
+    "decode_errors": "../bf16_decode_20261016/fault_correctness/summary.json",
+    "clusters": "../bf16_clusters_20261016/validation_summary.json"
+  },
+  "NPU": "not_run",
+  "graph_on_NPU": "not_run",
+  "service": "not_run",
+  "model_quality": "not_established",
+  "performance": "not_run_user_requested",
+  "main_untouched": true,
+  "stable_untouched": true
+}

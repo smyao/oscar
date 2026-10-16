@@ -277,6 +277,7 @@ class LayerState:
     window_map: Any = None
     window_status: Any = None
     rotation_v_nz: Any = None
+    rotation_v_bf16: Any = None
 
 
 @dataclass(frozen=True)
@@ -316,7 +317,7 @@ class AscendRuntimeProvider:
                      "experimental_quantization_bundle", "experimental_c4_member_pipeline",
                      "experimental_mdl_decode", "experimental_hybrid_l1_decode",
                      "experimental_c16_member_pipeline", "experimental_c16_l1_reuse",
-                     "experimental_prepare_reuse"):
+                     "experimental_prepare_reuse", "experimental_bf16_attention"):
             if type(self.config.get(flag, False)) is not bool:
                 raise OscarReadinessError(f"{flag} must be an explicit boolean")
         if self.config.get("experimental_fast_unpack", False) and not self.config.get("experimental_history_reuse", False):
@@ -330,6 +331,11 @@ class AscendRuntimeProvider:
                 self.config.get("experimental_fast_unpack", False) and
                 self.config.get("experimental_history_reuse", False)):
             raise OscarReadinessError("striped cache requires explicit mixed/fast/history candidate configuration")
+        if self.config.get("experimental_bf16_attention", False) and not (
+                self.config.get("experimental_decode_bundle", False) and
+                self.config.get("experimental_c4_member_pipeline", False) and
+                self.config.get("experimental_c16_l1_reuse", False) and not self._request_windows):
+            raise OscarReadinessError("BF16 attention requires the complete physical-page candidate bundle")
         self._cache_format = ("striped_v1" if self.config.get("experimental_striped_cache", False)
                               else "canonical_v1")
         if self.config.get("experimental_decode_bundle", False) and self._cache_format != "striped_v1":
@@ -390,6 +396,7 @@ class AscendRuntimeProvider:
         self.workspaces: dict[tuple, GraphWorkspace] = {}
         self.rotations: dict[tuple, dict] = {}
         self.hybrid_rotations: dict[tuple, dict] = {}
+        self.bf16_rotations: dict[tuple, dict] = {}
         self.device_cores: dict[str, int] = {}
         self.ops = None
 
@@ -403,7 +410,7 @@ class AscendRuntimeProvider:
             raise OscarReadinessError("request-window geometry changed after runtime construction")
         if self._ready:
             return
-        from .ops.loader import require_production_ops
+        from .ops.loader import require_production_ops, require_capabilities
         devices = self.config.get("devices")
         if not isinstance(devices, list) or not devices:
             raise OscarReadinessError("configs/target.json must select current-task devices before NPU initialization")
@@ -411,6 +418,9 @@ class AscendRuntimeProvider:
         if os.environ.get("ASCEND_RT_VISIBLE_DEVICES") != expected:
             raise OscarReadinessError("visible NPU selection does not match the current target configuration")
         require_production_ops()
+        if self.config.get("experimental_bf16_attention", False):
+            from .ops.cv_dispatch import BF16_CV_OPS
+            require_capabilities(BF16_CV_OPS)
         if self.config.get("experimental_quantization_bundle", False):
             from .ops.loader import require_capabilities
             require_capabilities({"rotate_vector_init_out"})
@@ -713,6 +723,8 @@ class AscendRuntimeProvider:
 
     def _prepare_rotations(self, dim, device):
         import torch
+        if self.config.get("experimental_bf16_attention", False) and dim != 256:
+            raise OscarReadinessError("BF16 attention branch requires D256")
         from .rotations import load_artifact, prepare_device_rotations, DeviceRotation
         cache_key = (str(device), dim)
         if cache_key in self.rotations:
@@ -745,7 +757,13 @@ class AscendRuntimeProvider:
         prepared = prepare_device_rotations(artifact, device=device)
         identity = torch.eye(dim, device=device, dtype=torch.float32)
         prepared[None] = DeviceRotation(identity, identity, identity, False)
-        if self.config.get("experimental_hybrid_l1_decode", False):
+        if self.config.get("experimental_bf16_attention", False):
+            # Reserve natural BF16 Rv before native KV profiling. The writer
+            # keeps its original FP32 matrices and the INT2 codec unchanged.
+            self.bf16_rotations[cache_key] = {
+                name: rotation.inverse_value_transposed.to(dtype=torch.bfloat16).contiguous()
+                for name, rotation in prepared.items()}
+        elif self.config.get("experimental_hybrid_l1_decode", False):
             # #34/#36/#148: reserve immutable constants before native KV
             # profiling. NZ changes addresses only, not the FP32 Rv values.
             from .ops.hybrid_layout import pack_rotation_nz
@@ -826,7 +844,10 @@ class AscendRuntimeProvider:
                                           rotation.hadamard, blocks, workspace, self._cache_format,
                                           window_map, window_status,
                                           self.hybrid_rotations[(str(runner.device), spec.head_size)][canonical_rotation_name(name)]
-                                          if self.config.get("experimental_hybrid_l1_decode", False) else None)
+                                          if self.config.get("experimental_hybrid_l1_decode", False)
+                                          and not self.config.get("experimental_bf16_attention", False) else None,
+                                          self.bf16_rotations[(str(runner.device), spec.head_size)][canonical_rotation_name(name)]
+                                          if self.config.get("experimental_bf16_attention", False) else None)
             views[name] = packed
             from .telemetry import emit_once
             emit_once("cache_layout", key=name, layer=name, physical_blocks=blocks,

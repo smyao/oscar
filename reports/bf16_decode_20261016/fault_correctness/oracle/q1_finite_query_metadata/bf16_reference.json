@@ -1,0 +1,43 @@
+{
+  "contract": "oscar_bf16_attention_v2",
+  "acceptance_sha256": "de8a60e859e506f11925ee0e7efb9a0e4cc0d149ef0d15256f169279143f4b5f",
+  "oracle_sha256": "a8477418b03ad467421d9873425171dde5e766c379595b80ec2d33797b261e26",
+  "actual_tasks_sha256": "a7276af8102d08b121458ce0afc80ee59f4fe56c5d3d037822b24f66a6074310",
+  "all_task_slots": 24,
+  "fixture_inputs_sha256": {
+    "case_flags.txt": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "ck.bin": "ce757a662db5f4efd8a161c339b7cc6a22a43487b0760a55f006cb1ed6410d47",
+    "cv.bin": "e2e4ba7abc699563031ec5ecfa64556fc9c935a39d48fa7c9425a4878975d453",
+    "expected_lse.bin": "f6de7919fe1452365adb539ce7dd7350ae30642a317a6a0cac438efb30df510d",
+    "expected_output.bin": "b0d3e740dc40b4f801bc022428df8cff332c802581ac7ae04e4ad0f95cc53b61",
+    "expected_positions.bin": "d6c219c6fc03ac87d4f160a9018cae1712463b60b3fd51a70205060576d16f57",
+    "lens.bin": "c57527f520d6ec26fb51431a6bca407c7b3f408777bcc26d9041d2421dd6b512",
+    "q.bin": "33c484c5f85992e206021d9ea6a543d917bdf89ee02ab55761bc539b4847f2d5",
+    "qr.bin": "757b2483547f8c2a55fdbcfe1cab925f50edb937a091d49d27575bb6bcda5ad2",
+    "raw.bin": "56ec04ceaced8708ef8496bb751dfb3e33f4e87d1157832c117537a044bd1c8a",
+    "raw_striped.bin": "57f3f8e49b2fa0a0955d66ad6d67bd384e3e0b0b3006e4b16ecae50bcd2ae5c3",
+    "required_status_checks.bin": "4d5206539fdafc08bb30542affbb525baa62c1dd36641c4fb22ff9d09d189718",
+    "rv.bin": "01945d071added92e622bb102b644ae414ce0b550a0d080f051fc0d2a25c8c52",
+    "rv_nz.bin": "57d0d25184c2022d2c296348c74b4a1c7f1079b3be386e8b62749ef17c2d8d39",
+    "shape.txt": "587d141a6b5532f51dffaddf450f3e4e5720fd56b970aca6864cb5d72aec8e45",
+    "slots.bin": "5d6cbb391c0896407e09adc20a67cc2b59f29c6d145e87db53fe0d204b0bd7fd",
+    "starts.bin": "ad5dc1478de06a4c2728ea528bd9361a4b945e92a414bf4d180cedaaeaa5f4cc",
+    "table.bin": "24e0858c9c2ac4c329fb64a24382ba011a6cb89b56abd78a8196401e03df1af5",
+    "tags.bin": "ce033874632b260e913c7b785d3a435492a4f057c7c1873cac523ef0aae33c62",
+    "tolerance.txt": "088abab6dbaf0dc022293d927c52a06dfe55b7cc305b197f200649fb58e823a3",
+    "wk.bin": "d16f5c6e7f2623daf32d066016bf55bebb483d923bf2b8d3e8c4d92bc00d372d",
+    "wv.bin": "448c56ab040c4223c149b8b6d20728ac2b4b4dbb7b2664e655d5216585e75840"
+  },
+  "old_FP32_expected_files_unchanged": true,
+  "device_execution": "not_run",
+  "NPU": "not_run",
+  "public_rotation": {
+    "path": "rv_bf16.bin",
+    "dtype": "bfloat16",
+    "layout": "natural_ND",
+    "sha256": "af4155480d294a9f997607d6386cc8afd62fb235fd9e4bfb79140de1bb3b56b2",
+    "conversion": "initialization RNE, not candidate output"
+  },
+  "status": "expected_error_domain_no_numeric_golden",
+  "required_status_checks_sha256": "4d5206539fdafc08bb30542affbb525baa62c1dd36641c4fb22ff9d09d189718"
+}

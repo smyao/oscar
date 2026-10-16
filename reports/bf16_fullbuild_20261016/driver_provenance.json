@@ -1,0 +1,16 @@
+{
+  "mother": "reports/stable_loop_fullbuild_20261015/driver.py",
+  "mother_sha256": "be68bd1d57c928a9e15c695f3a467f90a2beced4c653958d5a3a79166567b0a6",
+  "candidate_sha256": "ffc7f0d81108bbdfc9ee2a98853a80f384377d07a239f3b02416bd2b4ca40dd9",
+  "changes": [
+    "fresh BF16-only stage/report paths",
+    "absolute limactl entry",
+    "exact48 capabilities"
+  ],
+  "total_timeout_seconds": 600,
+  "phase_timeout_seconds": 300,
+  "build_jobs": 2,
+  "NPU_access": false,
+  "performance_experiments": false,
+  "stage_started": false
+}

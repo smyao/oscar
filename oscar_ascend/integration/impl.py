@@ -232,11 +232,16 @@ class OscarAttentionImpl(AttentionImpl):
                               mdl_decode=self.provider.config.get("experimental_mdl_decode", False),
                               c16_member_pipeline=self.provider.config.get("experimental_c16_member_pipeline", False),
                               c16_l1_reuse=self.provider.config.get("experimental_c16_l1_reuse", False),
-                              hybrid_l1_decode=self.provider.config.get("experimental_hybrid_l1_decode", False))
+                              hybrid_l1_decode=self.provider.config.get("experimental_hybrid_l1_decode", False),
+                              bf16_attention=self.provider.config.get("experimental_bf16_attention", False))
         cv_name = storage_reader(state, cv_name)
-        from ..ops.cv_dispatch import HYBRID_L1_DECODE_CV_OP
+        from ..ops.cv_dispatch import HYBRID_L1_DECODE_CV_OP, BF16_CV_OPS
         rotation_v = state.rotation_v
-        if cv_name == HYBRID_L1_DECODE_CV_OP:
+        if cv_name in BF16_CV_OPS:
+            rotation_v = getattr(state, "rotation_v_bf16", None)
+            if rotation_v is None or rotation_v.dtype != torch.bfloat16:
+                raise OscarReadinessError("BF16 attention requires its preallocated natural BF16 V rotation")
+        elif cv_name == HYBRID_L1_DECODE_CV_OP:
             rotation_v = getattr(state, "rotation_v_nz", None)
             if rotation_v is None:
                 raise OscarReadinessError("hybrid L1 decode requires its preallocated NZ V rotation")

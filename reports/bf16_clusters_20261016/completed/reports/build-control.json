@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "status": "completed",
+  "supervisor_pid": 700641,
+  "child_pid": 700648,
+  "child_pgid": 700648,
+  "command": [
+    "bash",
+    "-lc",
+    "set -e; source /usr/local/Ascend/cann-9.1.0/set_env.sh; cmake -S csrc/experiments/bf16_clusters_20261016 -B build-device -DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0 -DSOC_VERSION=ascend910b4; cmake --build build-device --parallel 2"
+  ],
+  "cwd": "/tmp/oscar-bf16-clusters-20261016",
+  "timeout_seconds": 180.0,
+  "started_utc": "2026-10-16T02:22:52.385496+00:00",
+  "stdout_path": "/tmp/oscar-bf16-clusters-20261016/reports/build-logs/stdout.log",
+  "stderr_path": "/tmp/oscar-bf16-clusters-20261016/reports/build-logs/stderr.log",
+  "lock_path": "/tmp/oscar-cann-validation.lock",
+  "lock_acquired": true,
+  "timed_out": false,
+  "interrupt_signal": null,
+  "child_returncode": 0,
+  "cleanup_complete": true,
+  "cleanup_grace_seconds": 12.0,
+  "cleanup_signals": [],
+  "supervisor_returncode": 0,
+  "child_env_override_keys": [],
+  "child_started_utc": "2026-10-16T02:22:52.388890+00:00",
+  "child_elapsed_seconds": 8.401464984985068,
+  "elapsed_seconds": 8.404941396904178,
+  "finished_utc": "2026-10-16T02:23:00.790413+00:00"
+}

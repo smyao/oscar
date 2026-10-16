@@ -234,15 +234,17 @@ def test_observe_candidate_gates_and_service_share_stable_effective_config(monke
                    ("hybrid_l1_decode", "c16_l1_reuse", "c4_member_pipeline", "prepare_reuse"))
         assert "--scheduler-cls" not in serve_argv(config)
 
-    gates = ("_preflight", "_candidate_gate", "_fast_unpack_gate", "_mixed_optimization_gate",
-             "_striped_cache_gate", "_mixed_prepare_reuse_gate", "_c4_member_pipeline_gate", "_c16_l1_reuse_gate",
-             "_decode_bundle_gate", "_mdl_decode_gate", "_hybrid_l1_decode_gate", "_current_only_gate",
+    gates = ("_preflight", "_bf16_attention_gate", "_striped_cache_gate",
+             "_mixed_prepare_reuse_gate", "_current_only_gate",
              "_first_mtp_current_gate", "_mixed_decode_split_gate")
     for name in gates:
         def gate(path, config, env, *_args, name=name):
             check(path, config, env); seen.append(name)
         monkeypatch.setattr(observe_serve, name, gate)
-    for name in ("_prefix_cache_gate", "_c16_member_pipeline_gate", "_request_window_gate"):
+    for name in ("_prefix_cache_gate", "_c16_member_pipeline_gate", "_request_window_gate",
+                 "_candidate_gate", "_fast_unpack_gate", "_mixed_optimization_gate",
+                 "_c4_member_pipeline_gate", "_c16_l1_reuse_gate", "_decode_bundle_gate",
+                 "_mdl_decode_gate", "_hybrid_l1_decode_gate"):
         monkeypatch.setattr(observe_serve, name, lambda *args, **kwargs:
                             pytest.fail("stable defaults unexpectedly enabled an inactive gate"))
 

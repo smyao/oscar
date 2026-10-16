@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "actual_artifact_sha256": {
+    "/tmp/oscar-bf16-fullbuild-20261016/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so": "dd58836e740374763a8fd9ce70e45a5e2e0d7996b39ad1ca723d7191a57494b0",
+    "/tmp/oscar-bf16-fullbuild-20261016/build/ascendc/lib/liboscar_ascend_kernels_c70b0324a0c2c529.so": "19bfaa620b3fc8b402b685063e40ab9852b3f3e2ed68ba1f99798f000b20b878"
+  },
+  "artifact_sizes": {
+    "/tmp/oscar-bf16-fullbuild-20261016/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so": 597952,
+    "/tmp/oscar-bf16-fullbuild-20261016/build/ascendc/lib/liboscar_ascend_kernels_c70b0324a0c2c529.so": 3480840
+  },
+  "matches_runtime_manifest": true,
+  "owned_pids_absent": {
+    "705074": true,
+    "705112": true
+  },
+  "VM_released": true
+}

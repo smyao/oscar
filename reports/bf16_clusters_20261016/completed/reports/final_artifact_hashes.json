@@ -1,0 +1,16 @@
+{
+  "csrc/kernels/attention_cv_bf16_cluster4.cpp": "ba2cc68f65226e756c9fc78c64dec746dd19183f285ec33163259be287ce0430",
+  "csrc/kernels/attention_cv_bf16_cluster16.cpp": "f4674d28c25f12c4827c60ea13c6ba572122964bbb6dcc6f881ca72521a151df",
+  "csrc/kernels/attention_cv_member_pipeline_cluster4.cpp": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+  "csrc/kernels/attention_cv_l1_reuse_cluster16.cpp": "d6b8ee9040678e57a21bc72215b7cdc1b9cf67b2b395c57a574d4377d27621b3",
+  "csrc/kernels/attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+  "csrc/kernels/merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+  "csrc/include/oscar_bf16_cluster_launch.h": "784c178aa10a23083a4b107b9eb27b24a473f449c2ac9d9a51dbc0e6696c75a3",
+  "tools/generate_bf16_clusters.py": "bab66dee514bd1ff802ecd4b274bdbd520a6bd12faf3f2fb7e8d6941912bf435",
+  "csrc/experiments/bf16_clusters_20261016/probe.cpp": "68dfc72a0211a689b03ac955b78fa48f2d1fa36abc914593db979024d820bb0f",
+  "csrc/experiments/bf16_clusters_20261016/harness.py": "1b7621d1fe37384b3d703ba72d14a665855d0dbf8ae5527dac3cd0214e6c5bc9",
+  "csrc/experiments/bf16_clusters_20261016/CMakeLists.txt": "022caeb6aee3cad8ec842c1df41195a67465071d317e21fa15e10a56ca81ceea",
+  "run-phase.sh": "37c531e868cd7a4a6b3cb2fe85ec510bcdb7f28f6bb64b29980e45c86d5870fa",
+  "build-cpu/oscar_bf16_clusters_cpu": "fbbcf2eb7cb2d92cf67e0ca744da1bfeb5bce210c3b62a1d4d8696fc6772ef7e",
+  "build-device/lib/liboscar_bf16_clusters.so": "e03c69bcc31323b132b3184f01ef5dbfc74b5dda73985e1452ac93bfe05620c5"
+}

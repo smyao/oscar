@@ -1,0 +1,8 @@
+{
+  "archive": "/tmp/oscar-bf16-clusters-cpu-scratch01-20261016.tar.gz",
+  "sha256": "8abeb2051eac58d0cb1170db54223dc1a88711787614121b36e6b244b455ff2e",
+  "compressed_bytes": 72461790,
+  "uncompressed_bytes": 1581717319,
+  "members": 259,
+  "readback_complete": true
+}

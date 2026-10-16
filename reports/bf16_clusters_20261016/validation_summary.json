@@ -1,0 +1,384 @@
+{
+  "status": "passed_local_CANN_and_complete_official_CPU",
+  "branch_base": "7047ce36",
+  "contract": "oscar_bf16_attention_v2",
+  "validation_scope": "BF16 QK/PV/Rv inputs with FP32 accumulation, online softmax/LSE/merge; original INT2/FP16 metadata and error protocol",
+  "compile": [
+    {
+      "phase": "build",
+      "rc": 0,
+      "cleanup_complete": true,
+      "control": "reports/bf16_clusters_20261016/completed/reports/build-control.json",
+      "control_sha256": "685c0a10ebed55c7f2bb6c4e0f723014c2349e84fc2a1e4c9476e666502edc63"
+    },
+    {
+      "phase": "configure-cpu",
+      "rc": 0,
+      "cleanup_complete": true,
+      "control": "reports/bf16_clusters_20261016/completed/reports/configure-cpu-control.json",
+      "control_sha256": "d6fda5573e57dd82d742edf30e5f88ecdb879ee7cf090216913122051d03c899"
+    },
+    {
+      "phase": "compile-cpu",
+      "rc": 0,
+      "cleanup_complete": true,
+      "control": "reports/bf16_clusters_20261016/completed/reports/compile-cpu-control.json",
+      "control_sha256": "a5c07d017f7834bfeab4b333b862f9cd4e09fc8cd93ba63b76d2d38d4f3e49c9"
+    }
+  ],
+  "cases": [
+    {
+      "case": "c4_one_KV",
+      "family": "c4",
+      "query_count": 84,
+      "context": 320,
+      "splits": 1,
+      "task_count": 252,
+      "eligible_clusters": 1,
+      "members": 4,
+      "all_20_AIC_40_AIV_completed": true,
+      "partial_max_abs": 7.48634e-05,
+      "lse_max_abs": 4.76837e-07,
+      "output_max_abs": 6.13332e-05,
+      "numeric_oracle": true,
+      "status_nonzero": [],
+      "all_status_words_checked": 504,
+      "GM_guards": true,
+      "inputs_immutable": true,
+      "control": "reports/bf16_clusters_20261016/completed/reports/cpu-c4_one_KV-control.json",
+      "control_sha256": "187a0dc818f198a1644ee2c3846f5bf0914dee30b4a6fff80cc7d72099fcdff1",
+      "stdout_sha256": "e0af346dd5fdd8ed8a9658c1d94add532de12990c2eacb1f7c273f05d0e4fc09",
+      "tasks_sha256": "54d28a76413a2d60e5bed6b2f943108b474bf5ec256140f591fffe0857940121",
+      "output_hashes": {
+        "tasks.bin": "54d28a76413a2d60e5bed6b2f943108b474bf5ec256140f591fffe0857940121",
+        "rv_bf16.bin": "af4155480d294a9f997607d6386cc8afd62fb235fd9e4bfb79140de1bb3b56b2",
+        "partial.bin": "6486393a0e8d8ae3fdd665bd58c9e5b4f515527a723513c2d191d0585bdf257f",
+        "bf16_expected_lse.bin": "ae0e625032c71ba364d05487ca5048d39bbb5826f5a08653f07111a19840e74f",
+        "lse.bin": "0c22ae903376e20a62027b517cb8c8e5a97421ab62577d56b9ce14a3c0715936",
+        "bf16_expected_partial.bin": "40e4cc49eee8339ec842be7b30c69fae876e43dba0ba3946626d4f7cb7107813",
+        "bf16_expected_output.bin": "43580c84012eb61844c4a2e30d590456c4999b5c5c5f7c7a47420b2576e67a31",
+        "output_lse.bin": "6cf1cc1484743a12bde9a6a5b3045682c042359bc63ede71b180371a4277ba18",
+        "status.bin": "d263c7c60b6f980623510b23a02228fd669b558f1957db7883b706b247133c92",
+        "bf16_expected_output_lse.bin": "781c3f3f0c507f842206462a0e7c29ea92a3e02a3170f1e1081ec0de5413d038",
+        "output.bin": "623699be85e856b571cda1018cebe34d0abf47ac8faaed1a0aff96ae328cf7e4",
+        "cluster_stats.bin": "d7cfe88d21fc3be043d7fab438cc3db57191c7dee616c7c02661b648fbe2e3d8"
+      }
+    },
+    {
+      "case": "c16_one_KV",
+      "family": "c16",
+      "query_count": 336,
+      "context": 320,
+      "splits": 1,
+      "task_count": 1008,
+      "eligible_clusters": 1,
+      "members": 16,
+      "all_20_AIC_40_AIV_completed": true,
+      "partial_max_abs": 0.000907421,
+      "lse_max_abs": 4.76837e-07,
+      "output_max_abs": 0.000712842,
+      "numeric_oracle": true,
+      "status_nonzero": [],
+      "all_status_words_checked": 2016,
+      "GM_guards": true,
+      "inputs_immutable": true,
+      "control": "reports/bf16_clusters_20261016/completed/reports/cpu-c16_one_KV-control.json",
+      "control_sha256": "8a68bec351d179a3f17bc5ba413b1aafda356b2a8f3ed00d06c5be626e7be6d8",
+      "stdout_sha256": "f0f51249fbaa635451846d82fb17e2834bf6782acc0ea288af2daff7dbc2e4a0",
+      "tasks_sha256": "298fdbf446a3e011e0e48ff5261e5abba5f9dcfbd332b6f70e660b32bd2cb740",
+      "output_hashes": {
+        "tasks.bin": "298fdbf446a3e011e0e48ff5261e5abba5f9dcfbd332b6f70e660b32bd2cb740",
+        "rv_bf16.bin": "af4155480d294a9f997607d6386cc8afd62fb235fd9e4bfb79140de1bb3b56b2",
+        "partial.bin": "f521c47941a3b1a8cded4137c3b621e6693d1d3b01faab4e8bce6226694f720b",
+        "bf16_expected_lse.bin": "aaa1cb8aea9b2801eed84af5292035392978168579a7e17ba027041696e04144",
+        "lse.bin": "80021dc460278cedab6ad01cc426942720d4bc3815ed0a8c7d04285d69dd1b73",
+        "bf16_expected_partial.bin": "2131f33fc8e722e21f2d342f4ffd7e8eee40438cf543db51910ee514e15175db",
+        "bf16_expected_output.bin": "503df0605bcb31ec45e139591a3ec20e59499bdf5ab4b04484b38262da7779ee",
+        "output_lse.bin": "a64159b6bd423fcbc99b45a969817798db173bdf0dd6856a73e2667b4c07b6aa",
+        "status.bin": "05bf9d87a6313c41625d93de63e30bc39be25e54b472f17e99d78cf12fccb3da",
+        "bf16_expected_output_lse.bin": "ee0b768e71ac25b5208f0acdf2ac271fa4b85ea034ef4f01de8bf9117da6f1e7",
+        "output.bin": "f45083656ee9f45ed3322184e2465878f10f17068abefb9488c8b30d6605d351",
+        "cluster_stats.bin": "9f283b0c3771cac7cb50df9a885703f7eb104e0c931379aecd808294909e9eb7"
+      }
+    },
+    {
+      "case": "c16_two_KV",
+      "family": "c16",
+      "query_count": 336,
+      "context": 337,
+      "splits": 1,
+      "task_count": 1008,
+      "eligible_clusters": 1,
+      "members": 16,
+      "all_20_AIC_40_AIV_completed": true,
+      "partial_max_abs": 0.000971079,
+      "lse_max_abs": 4.76837e-07,
+      "output_max_abs": 0.000772543,
+      "numeric_oracle": true,
+      "status_nonzero": [],
+      "all_status_words_checked": 2016,
+      "GM_guards": true,
+      "inputs_immutable": true,
+      "control": "reports/bf16_clusters_20261016/completed/reports/cpu-c16_two_KV-control.json",
+      "control_sha256": "6da9d460a050634c34f1250dca15a1b0efa78b95afb2cef34b1014eaec2670e9",
+      "stdout_sha256": "76d705278e6b373cf781de7ffe6ad5edc4dcd36ff5b8304d21619c567cb06482",
+      "tasks_sha256": "b3a3c76a48177fceefdd2d383d37433899cfcd5ec4ec2be1bd2c5ce664eb02d1",
+      "output_hashes": {
+        "tasks.bin": "b3a3c76a48177fceefdd2d383d37433899cfcd5ec4ec2be1bd2c5ce664eb02d1",
+        "rv_bf16.bin": "af4155480d294a9f997607d6386cc8afd62fb235fd9e4bfb79140de1bb3b56b2",
+        "partial.bin": "f89be68e7efe83d08efa2b110baf5965bd0bf0ae58e5b61e5b114762619a3cf9",
+        "bf16_expected_lse.bin": "0bd42a0c862564f6b252a4584635f2173ae1213e54fd7fcada5109822193620b",
+        "lse.bin": "2e45232d44823093e461a4382809a3345070ed4f38659ff389a4c9eb2edd9474",
+        "bf16_expected_partial.bin": "6aa52de83c616a3a24484ca320d129962dbf463cc06f859dedd471dc0336b0d8",
+        "bf16_expected_output.bin": "54069eff5450dd256437a77d48d36b5b5ed83507aa1bea8a06af8bebf67d28c1",
+        "output_lse.bin": "e9e2aff9a2933eecb1f1670cb336037919d6e8f34a25d4db23eea81b7cca4a43",
+        "status.bin": "05bf9d87a6313c41625d93de63e30bc39be25e54b472f17e99d78cf12fccb3da",
+        "bf16_expected_output_lse.bin": "595f3c76dac20a4dd863ed2176b375042da15230c65b388eda5b42302cd7d2be",
+        "output.bin": "bc88ed500742dc8c8d5a1c4331d2d54c464c743ebefe0af8146a5fd821d82b0c",
+        "cluster_stats.bin": "8dd6389b21def13aee174733ea77b589cf80e56f95dd8644022a4ab4b768d4df"
+      }
+    },
+    {
+      "case": "c4_C1_hkv2_s3",
+      "family": "c4",
+      "query_count": 8,
+      "context": 337,
+      "splits": 3,
+      "task_count": 144,
+      "eligible_clusters": 0,
+      "members": 0,
+      "all_20_AIC_40_AIV_completed": true,
+      "partial_max_abs": 4.76837e-07,
+      "lse_max_abs": 7.15256e-07,
+      "output_max_abs": 2.98023e-07,
+      "numeric_oracle": true,
+      "status_nonzero": [],
+      "all_status_words_checked": 288,
+      "GM_guards": true,
+      "inputs_immutable": true,
+      "control": "reports/bf16_clusters_20261016/completed/reports/cpu-c4_C1_hkv2_s3-control.json",
+      "control_sha256": "137d61aa4437a8050fb33b1e48709cb6233887d095da5b686302ffe63898812b",
+      "stdout_sha256": "26328e3909ba7c466520eb8f3c6b6aa297fcb515eec1c4db949df48a3ba025bc",
+      "tasks_sha256": "05492ac999aa6e93f5f50d32b052fd724c4aa0d0f69fc28a478406e529df1220",
+      "output_hashes": {
+        "tasks.bin": "05492ac999aa6e93f5f50d32b052fd724c4aa0d0f69fc28a478406e529df1220",
+        "rv_bf16.bin": "af4155480d294a9f997607d6386cc8afd62fb235fd9e4bfb79140de1bb3b56b2",
+        "partial.bin": "46f86d4609ba220b96633ad82544991c869218f5e3ddec2f8bca2fbc3f8b0cc0",
+        "bf16_expected_lse.bin": "d78f93987a4c409819f235f5f0329d4e400ec53eccb48b741a3b3a53394418e6",
+        "lse.bin": "310e8940bb0ef227be9a800dccebc6c2d32b6b381fded73912a1d74dc1820c1b",
+        "bf16_expected_partial.bin": "f8fcdf47e80c441f1bd783a6a96a227160a7d1636ec45cc0ea2e0e2df389708f",
+        "bf16_expected_output.bin": "541a05e7dd82a167a1442d62d524569adee28fd0f3732231da5b943b64dc04d3",
+        "output_lse.bin": "b2c8d1dc5a5bf1bbf53b9509e048c09aed5c0deb012179b674833156df5ac9fd",
+        "status.bin": "4cf9816ed1062189ff0c8d427fba5e912cc68fc9af76cf7f08fd255977de3b33",
+        "bf16_expected_output_lse.bin": "f22680fdf221c0001ed9120d44ac3c5ede263e0d7495267cf83cb51091325f38",
+        "output.bin": "4d7ded473114af459bf5949e63bf5af35a938f0ea09575f2e02718617a3bd00d",
+        "cluster_stats.bin": "b7f090376940764df0c6763811d6158072f476accfe8e7a9e9cc056d05d86d23"
+      }
+    },
+    {
+      "case": "c16_bad80",
+      "family": "c16",
+      "query_count": 336,
+      "context": 337,
+      "splits": 1,
+      "task_count": 1008,
+      "eligible_clusters": 1,
+      "members": 16,
+      "all_20_AIC_40_AIV_completed": true,
+      "partial_max_abs": null,
+      "lse_max_abs": null,
+      "output_max_abs": null,
+      "numeric_oracle": false,
+      "status_nonzero": [
+        {
+          "task": 0,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 63,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 126,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 189,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 252,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 315,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 378,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 441,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 504,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 567,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 630,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 693,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 756,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 819,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 882,
+          "lane": 1,
+          "code": 3
+        },
+        {
+          "task": 945,
+          "lane": 1,
+          "code": 3
+        }
+      ],
+      "all_status_words_checked": 2016,
+      "GM_guards": true,
+      "inputs_immutable": true,
+      "control": "reports/bf16_clusters_20261016/completed/reports/cpu-c16_bad80-control.json",
+      "control_sha256": "d33f904ebc2a57096d1b8ae914dc58bc8a4b12912d3e80570a5fe499edd6c070",
+      "stdout_sha256": "d91b65c60273f6f3dc924419534d96ea13611df07a18922cf726deacd7d972ab",
+      "tasks_sha256": "b3a3c76a48177fceefdd2d383d37433899cfcd5ec4ec2be1bd2c5ce664eb02d1",
+      "output_hashes": {
+        "tasks.bin": "b3a3c76a48177fceefdd2d383d37433899cfcd5ec4ec2be1bd2c5ce664eb02d1",
+        "rv_bf16.bin": "af4155480d294a9f997607d6386cc8afd62fb235fd9e4bfb79140de1bb3b56b2",
+        "partial.bin": "beb9e04e38dea2827e377c2373c4dd3843cb5123e1efdb0466f6a00505c1f636",
+        "lse.bin": "f2199c72fdf337868f2277e07ac370a763c8053618bace562c109b5fe954569c",
+        "status.bin": "51f05473f3af0f39307795283786106560e578658a9217acd2af02626456bad3",
+        "cluster_stats.bin": "8dd6389b21def13aee174733ea77b589cf80e56f95dd8644022a4ab4b768d4df"
+      }
+    },
+    {
+      "case": "c16_last_QR",
+      "family": "c16",
+      "query_count": 336,
+      "context": 337,
+      "splits": 1,
+      "task_count": 1008,
+      "eligible_clusters": 1,
+      "members": 16,
+      "all_20_AIC_40_AIV_completed": true,
+      "partial_max_abs": null,
+      "lse_max_abs": null,
+      "output_max_abs": null,
+      "numeric_oracle": false,
+      "status_nonzero": [
+        {
+          "task": 945,
+          "lane": 0,
+          "code": 2
+        }
+      ],
+      "all_status_words_checked": 2016,
+      "GM_guards": true,
+      "inputs_immutable": true,
+      "control": "reports/bf16_clusters_20261016/completed/reports/cpu-c16_last_QR-control.json",
+      "control_sha256": "7edab397afa931c00ef1ebf7d6c5c85d435ef64bbcf6016631d8dea23b3737ae",
+      "stdout_sha256": "6b85601dd44cc7f6049906df4d018e1a0ca3900f5c521b29820f8769a73d4a58",
+      "tasks_sha256": "b3a3c76a48177fceefdd2d383d37433899cfcd5ec4ec2be1bd2c5ce664eb02d1",
+      "output_hashes": {
+        "tasks.bin": "b3a3c76a48177fceefdd2d383d37433899cfcd5ec4ec2be1bd2c5ce664eb02d1",
+        "rv_bf16.bin": "af4155480d294a9f997607d6386cc8afd62fb235fd9e4bfb79140de1bb3b56b2",
+        "partial.bin": "b121a86dfbd5f5420af7e47524892eac1ca89d77fbc65d88478207aaec3201d8",
+        "lse.bin": "63e90f4d83436636aed58ab90764deb641cf73d5ecbc2716d1fba2ea623cffe4",
+        "status.bin": "971e7dac5890ba5df8bc911b2ece85e2bece306c13cbd2d48322312696a43862",
+        "cluster_stats.bin": "8dd6389b21def13aee174733ea77b589cf80e56f95dd8644022a4ab4b768d4df"
+      }
+    }
+  ],
+  "fault_output_domains": [
+    {
+      "status": "passed",
+      "declared_metadata_position": 80,
+      "declared_QR_token": -1,
+      "exact_status_words": 2016,
+      "nonzero_status_words": 16,
+      "expected_NaN_partial_rows": 992,
+      "all_other_partial_rows_finite": true,
+      "all_other_LSE_rows_finite_or_empty": true,
+      "expected_domain_uses_actual_status": false
+    },
+    {
+      "status": "passed",
+      "declared_metadata_position": -1,
+      "declared_QR_token": 315,
+      "exact_status_words": 2016,
+      "nonzero_status_words": 1,
+      "expected_NaN_partial_rows": 64,
+      "all_other_partial_rows_finite": true,
+      "all_other_LSE_rows_finite_or_empty": true,
+      "expected_domain_uses_actual_status": false
+    }
+  ],
+  "resource_bounds": {
+    "C4_GM_bytes_per_core": 2494464,
+    "C16_GM_bytes_per_core": 7487488,
+    "AIV_UB_bytes": 157760,
+    "C16_external_B1_bytes": 131072,
+    "new_GM_allocation": 0,
+    "P_aliases_FP32_score": false,
+    "final_Rv_extra_launches": 0
+  },
+  "source_sha256": {
+    "csrc/kernels/attention_cv_bf16_cluster4.cpp": "ba2cc68f65226e756c9fc78c64dec746dd19183f285ec33163259be287ce0430",
+    "csrc/kernels/attention_cv_bf16_cluster16.cpp": "f4674d28c25f12c4827c60ea13c6ba572122964bbb6dcc6f881ca72521a151df",
+    "csrc/kernels/attention_cv_member_pipeline_cluster4.cpp": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+    "csrc/kernels/attention_cv_l1_reuse_cluster16.cpp": "d6b8ee9040678e57a21bc72215b7cdc1b9cf67b2b395c57a574d4377d27621b3",
+    "csrc/kernels/attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+    "csrc/kernels/merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+    "csrc/include/oscar_bf16_cluster_launch.h": "784c178aa10a23083a4b107b9eb27b24a473f449c2ac9d9a51dbc0e6696c75a3",
+    "tools/generate_bf16_clusters.py": "bab66dee514bd1ff802ecd4b274bdbd520a6bd12faf3f2fb7e8d6941912bf435",
+    "csrc/experiments/bf16_clusters_20261016/probe.cpp": "68dfc72a0211a689b03ac955b78fa48f2d1fa36abc914593db979024d820bb0f",
+    "csrc/experiments/bf16_clusters_20261016/harness.py": "1b7621d1fe37384b3d703ba72d14a665855d0dbf8ae5527dac3cd0214e6c5bc9",
+    "csrc/experiments/bf16_clusters_20261016/CMakeLists.txt": "022caeb6aee3cad8ec842c1df41195a67465071d317e21fa15e10a56ca81ceea"
+  },
+  "FP32_mothers_unchanged": true,
+  "frozen_prepare_merge_unchanged": true,
+  "NPU": "not_run",
+  "graph": "not_run",
+  "service": "not_run",
+  "model_quality": "not_run",
+  "performance": "not_run_user_cancelled_local_timing",
+  "speedup_claim": null,
+  "VM_released": true,
+  "raw_scratch_archives": "local /tmp archives only; intentionally excluded from Git delivery"
+}

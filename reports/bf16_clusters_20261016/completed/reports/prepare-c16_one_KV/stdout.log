@@ -1,0 +1,9 @@
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 703568] exit success!
+[SUCCESS][CORE_1][pid 703569] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_2][pid 703570] exit success!
+[SUCCESS][CORE_3][pid 703571] exit success!
+{"status":"prepared_only","attention_numerics":"not_run","tasks":1008}

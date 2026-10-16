@@ -328,7 +328,7 @@ def test_online_forward_contains_no_host_request_loop_or_tensor_readback():
     (4, True, False, False), (16, True, True, False),
     (16, True, True, True)])
 @pytest.mark.parametrize("later_draft", [False, True])
-def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv, striped_cache, _rotation_variant=None, _member_pipeline=False, _mdl_variant=None, _mdl_target=False, _c16_l1=False):
+def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv, striped_cache, _rotation_variant=None, _member_pipeline=False, _mdl_variant=None, _mdl_target=False, _c16_l1=False, _bf16_expected=None, _bf16_rv="valid"):
     """Host ABI exercise only: fake ops establish ordering, never accuracy."""
     if n == 8192 and (cluster_size != 16 or later_draft):
         pytest.skip("large FULL host route is needed once for C16")
@@ -504,6 +504,31 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             self.attention_cv_out(*args)
             calls[-1] = "striped_balanced"
 
+        def _bf16_attention(self, name, clustered, args):
+            assert name == _bf16_expected
+            assert args[4] is state.rotation_v_bf16
+            assert args[4].dtype == torch.bfloat16 and args[4].is_contiguous()
+            assert args[4] is not state.rotation_v and args[4] is not state.rotation_v_nz
+            assert torch.equal(args[4], state.rotation_v.to(torch.bfloat16))
+            if clustered:
+                assert args[15] is w.cluster_stats
+                self.attention_cv_out(*(args[:15] + args[16:]))
+            else:
+                self.attention_cv_out(*args)
+            calls[-1] = name
+
+        def attention_cv_bf16_decode_out(self, *args):
+            self._bf16_attention("attention_cv_bf16_decode_out", False, args)
+
+        def attention_cv_bf16_decode_q1_out(self, *args):
+            self._bf16_attention("attention_cv_bf16_decode_q1_out", False, args)
+
+        def attention_cv_bf16_cluster4_out(self, *args):
+            self._bf16_attention("attention_cv_bf16_cluster4_out", True, args)
+
+        def attention_cv_bf16_cluster16_out(self, *args):
+            self._bf16_attention("attention_cv_bf16_cluster16_out", True, args)
+
         def merge_lse_out(self, partial, lse, output, output_lse, status):
             calls.append("merge")
             assert partial.shape == (n * h, 3 * expected_splits, d)
@@ -513,6 +538,10 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
 
         def rotate_clip_store_out(self, *args):
             calls.append("store")
+            assert args[2] is state.rotation_k_transpose and args[2].dtype == torch.float32
+            assert args[3] is state.rotation_v_transpose and args[3].dtype == torch.float32
+            assert args[3] is not state.rotation_v_nz
+            assert args[3] is not getattr(state, "rotation_v_bf16", None)
             assert torch.equal(args[5], torch.arange(4, n + 4))
             assert args[0].is_contiguous() and args[1].is_contiguous()
             args[10].zero_()
@@ -558,11 +587,34 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     if _mdl_variant is not None:
         from tools.serving_variants import variant_config
         selected = variant_config({"devices": [0,1,2,3], "port":8989}, _mdl_variant)
+        # This helper branch preserves the historical FP32 MDL/hybrid seam.
+        # New BF16 candidate routing is qualified separately below.
+        selected["experimental_bf16_attention"] = False
         assert selected["experimental_mdl_decode"] is True
         provider = AscendRuntimeProvider(selected)
         provider.layer_state = lambda _name: state
         provider.ops = Ops()
         impl.provider = provider
+    if _bf16_expected is not None:
+        from tools.serving_variants import variant_config
+        from oscar_ascend.ops.hybrid_layout import pack_rotation_nz
+        selected = variant_config({"devices": [0,1,2,3], "port":8989}, "candidate")
+        assert selected["experimental_bf16_attention"] is True
+        provider = AscendRuntimeProvider(selected)
+        provider.layer_state = lambda _name: state
+        provider.ops = Ops()
+        impl.provider = provider
+        state.rotation_v = torch.arange(d*d, dtype=torch.float32).reshape(d,d)/4096 - 0.7
+        state.rotation_v_nz = pack_rotation_nz(state.rotation_v)
+        state.rotation_v_bf16 = state.rotation_v.to(torch.bfloat16)
+        if _bf16_rv == "missing":
+            state.rotation_v_bf16 = None
+        elif _bf16_rv == "float32":
+            state.rotation_v_bf16 = state.rotation_v
+        elif _bf16_rv == "float32_nz":
+            state.rotation_v_bf16 = state.rotation_v_nz
+        else:
+            assert _bf16_rv == "valid"
     q = torch.randn(n, h * d, dtype=torch.bfloat16)
     k = torch.randn(n, hk * d, dtype=torch.bfloat16)
     value = torch.randn(n, hk * d * 3, dtype=torch.bfloat16)[:, d:2*d]
@@ -610,10 +662,21 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
                          draft_index=1 if later_draft else 0), output)
         assert calls == ["prepare", "rotate_vector_init", "cv"]
         return
+    if _bf16_expected is not None and _bf16_rv != "valid":
+        with pytest.raises(runtime_api.OscarReadinessError, match="preallocated natural BF16 V rotation"):
+            impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),
+                         q,k,value,packed,replace(from_common(common),is_draft=True,
+                         draft_index=1 if later_draft else 0),output)
+        assert calls == ["prepare", "rotate_vector_init"]
+        return
     result = impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),
                           q, k, value, packed, replace(from_common(common), is_draft=True,
                           draft_index=1 if later_draft else 0), output)
     assert result is output and bool(torch.all(result == 7))
+    if _bf16_expected is not None:
+        assert calls == ["prepare", "rotate_vector_init", _bf16_expected,
+                         "merge", "striped_store", "guard"]
+        return
     # #150: short per-request query lengths keep the original OSCAR op even
     # with candidate workspace; long requests keep the C4 ABI/extra buffer.
     if striped_cache:

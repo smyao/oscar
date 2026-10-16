@@ -1,0 +1,14 @@
+{
+  "status": "all_five_outputs_byte_identical",
+  "outputs": {
+    "rv_bf16.bin": "af4155480d294a9f997607d6386cc8afd62fb235fd9e4bfb79140de1bb3b56b2",
+    "bf16_expected_partial.bin": "4a82570fda46ff08fe730f518e8c0423239f02757c456223cdb4da59dea3f0e2",
+    "bf16_expected_lse.bin": "e834cd2eb1eb2398d959d588654030d0f56b04425f39324c910fe56bae27e1ed",
+    "bf16_expected_output.bin": "305cf4551af12955a4173871e644aca5fda19d03f3f7512d43059474eb91d6b5",
+    "bf16_expected_output_lse.bin": "e9ee1d6ba80a7e71c9a2d9744a6523ebfa53816ad0a8ffce2c9918c6a784e016"
+  },
+  "old_oracle_sha256": "1b4a54450bc1ac36a9cb8df15bc491b78ee57cf6aa87e3cd6975ef414c2f2681",
+  "new_oracle_sha256": "a8477418b03ad467421d9873425171dde5e766c379595b80ec2d33797b261e26",
+  "actual_prepare_tasks": "original 24-task q4 C641/701 official CPU table",
+  "device_reexecution": false
+}

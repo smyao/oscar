@@ -1,0 +1,6 @@
+{
+  "pid": 702960,
+  "pgid": 702960,
+  "output": "/tmp/oscar-bf16-decode-20261016/reports/q4-candidate",
+  "script": "/tmp/oscar-bf16-decode-20261016/csrc/experiments/bf16_decode_20261016/replay.py"
+}

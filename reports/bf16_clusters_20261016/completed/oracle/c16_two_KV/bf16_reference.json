@@ -1,0 +1,83 @@
+{
+  "contract": "oscar_bf16_attention_v2",
+  "acceptance_sha256": "0e137f2233f5d76418e4291cb773f0a501b7a9e3f2d35c1c6d485a51551b9054",
+  "oracle_sha256": "7b9b71b1bfe6198f41e36962c10adcca1e6863b03b9a9ad391c1533aed0ec859",
+  "actual_tasks_sha256": "b3a3c76a48177fceefdd2d383d37433899cfcd5ec4ec2be1bd2c5ce664eb02d1",
+  "all_task_slots": 1008,
+  "fixture_inputs_sha256": {
+    "case_flags.txt": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "ck.bin": "c1064c2a22b415be3ad9ddbf0fd55a200d899d0671f120a168f85e569de0c7d1",
+    "cluster_flags.txt": "23508d17482155459d5a078963513b497e3bb19fa4abb77de1064eaff2ddc8b8",
+    "cv.bin": "ec59548dcf677fc496528f1cb152f41466df5824c0b7a27c6134aab54267aaa7",
+    "expected_positions.bin": "54db6fd2f64dab7b1ca71076c56f0fcdfe037d55e584189d602a059999525e74",
+    "lens.bin": "3693595c2691f942ce890b1fe1eabe2ed9064227656641d457c84e3a2aa9fcdc",
+    "q.bin": "04c02cfc361cfffb7e602bfaa2ee441ca9484849fe557671101236c7008c6fef",
+    "qr.bin": "b8156bb57f3108967e633b4c6f9560e7203f202bbbe08719f4fd243e4e18de26",
+    "raw.bin": "b5341f24273eb554ea3033471e0eb700a611bdf7d401270b9b9be86c33d06aac",
+    "raw_striped.bin": "f6e9605b91e54e119ab1770c62622851a3771648cc0bd4b5d6762494296c1e0d",
+    "required_status_checks.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "rv.bin": "01945d071added92e622bb102b644ae414ce0b550a0d080f051fc0d2a25c8c52",
+    "shape.txt": "e0cbbfea87ded4db8d114d49c251ac35dfdcf7989055c10d3e5c625955c11c57",
+    "slots.bin": "8f7cc28f49500a9f730b43cf133fa6381079bf23869fb0dba92c7994c89c37d3",
+    "starts.bin": "79c44af0452295da1463d76d6aecdc598bd05f088fa01ca9c7f1185d10b13792",
+    "table.bin": "6efbd8f8c0e86d04e9d064aba48dde44ba8a786f38cdae446160a4a9dad5d433",
+    "tags.bin": "9d0724f9979c613f0ad6c19b8bd6ab1a959a8fea6eb1ff91217b1c5e38475ba6",
+    "tolerance.txt": "088abab6dbaf0dc022293d927c52a06dfe55b7cc305b197f200649fb58e823a3",
+    "wk.bin": "1ebbd4e9a2a8fad3b286a1e7c4ed1749f3d39af378b9250d468b6abfa5488f06",
+    "wv.bin": "d420d2dc8e11fed98ed7ec03a6d723cfb9126809ef1e78d5d59cabdad2784559"
+  },
+  "old_FP32_expected_files_unchanged": true,
+  "device_execution": "not_run",
+  "NPU": "not_run",
+  "public_rotation": {
+    "path": "rv_bf16.bin",
+    "dtype": "bfloat16",
+    "layout": "natural_ND",
+    "sha256": "af4155480d294a9f997607d6386cc8afd62fb235fd9e4bfb79140de1bb3b56b2",
+    "conversion": "initialization RNE, not candidate output"
+  },
+  "status": "independent_BF16_golden_exported",
+  "outputs": {
+    "partial": {
+      "path": "bf16_expected_partial.bin",
+      "shape": [
+        336,
+        6,
+        3,
+        256
+      ],
+      "dtype": "float32",
+      "sha256": "6aa52de83c616a3a24484ca320d129962dbf463cc06f859dedd471dc0336b0d8"
+    },
+    "lse": {
+      "path": "bf16_expected_lse.bin",
+      "shape": [
+        336,
+        6,
+        3
+      ],
+      "dtype": "float32",
+      "sha256": "0bd42a0c862564f6b252a4584635f2173ae1213e54fd7fcada5109822193620b"
+    },
+    "output": {
+      "path": "bf16_expected_output.bin",
+      "shape": [
+        336,
+        6,
+        256
+      ],
+      "dtype": "float32",
+      "sha256": "54069eff5450dd256437a77d48d36b5b5ed83507aa1bea8a06af8bebf67d28c1"
+    },
+    "output_lse": {
+      "path": "bf16_expected_output_lse.bin",
+      "shape": [
+        336,
+        6
+      ],
+      "dtype": "float32",
+      "sha256": "595f3c76dac20a4dd863ed2176b375042da15230c65b388eda5b42302cd7d2be"
+    }
+  },
+  "original_FP32_comparison_role": "diagnostic, not BF16 acceptance"
+}

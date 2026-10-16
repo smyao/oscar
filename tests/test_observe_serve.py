@@ -104,10 +104,15 @@ def test_candidate_gate_requires_signed_artifact_graph_and_precision(monkeypatch
 
 
 @pytest.mark.parametrize("diagnose_mixed", [False, True])
-def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_path, diagnose_mixed):
+@pytest.mark.parametrize("bf16", [False, True])
+def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_path, diagnose_mixed, bf16):
     config = observe_serve.ROOT / "configs/target.json"
+    original_variant=observe_serve.variant_config
+    monkeypatch.setattr(observe_serve,"variant_config",lambda value,variant:
+        {**original_variant(value,variant),"experimental_bf16_attention":bf16})
     seen = []
     monkeypatch.setattr(observe_serve, "_preflight", lambda *args: seen.append("preflight"))
+    monkeypatch.setattr(observe_serve, "_bf16_attention_gate", lambda *args: seen.append("bf16-gate"))
     monkeypatch.setattr(observe_serve, "_candidate_gate", lambda *args: seen.append("candidate-gates"))
     monkeypatch.setattr(observe_serve, "_fast_unpack_gate", lambda *args: seen.append("fast-unpack-gate"))
     monkeypatch.setattr(observe_serve, "_mixed_optimization_gate", lambda *args: seen.append("mixed-optimization-gate"))
@@ -129,13 +134,16 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     logs = tmp_path / "probe"
     assert observe_serve.run(config, logs, "candidate", probe_only=True, diagnose_mixed=diagnose_mixed) == 0
-    assert seen == ["preflight", "candidate-gates", "fast-unpack-gate", "mixed-optimization-gate", "striped-cache-gate",
+    legacy = ["preflight", "candidate-gates", "fast-unpack-gate", "mixed-optimization-gate", "striped-cache-gate",
                     "mixed-prepare-reuse-gate", "c4-member-pipeline-gate", "c16-l1-reuse-gate",
                     "decode-bundle-gate", "mdl-decode-gate", "hybrid-l1-decode-gate", "current-only-gate",
                     "first-mtp-current-gate", "mixed-decode-split-gate"]
+    correctness=["preflight","bf16-gate","striped-cache-gate","mixed-prepare-reuse-gate",
+                 "current-only-gate","first-mtp-current-gate","mixed-decode-split-gate"]
+    assert seen == (correctness if bf16 else legacy)
     status = json.loads((logs / "status.json").read_text())
     assert status["service_started"] is False
-    assert status["performance_acceptance"] == "operator_only_not_end_to_end"
+    assert status["performance_acceptance"] == ("not_run_user_requested" if bf16 else "operator_only_not_end_to_end")
     assert json.loads((logs / "effective-target.json").read_text())["experimental_fast_unpack"] is True
 
 
@@ -364,7 +372,7 @@ def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeyp
     def gate(path, *_args):
         observed.append(path)
         raise RuntimeError("candidate graph gate rejected")
-    monkeypatch.setattr(observe_serve, "_candidate_gate", gate)
+    monkeypatch.setattr(observe_serve, "_bf16_attention_gate", gate)
     monkeypatch.setattr(observe_serve, "managed_server", lambda *_args, **kwargs:
                         pytest.fail("candidate service must not start after gate failure"))
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
@@ -372,6 +380,7 @@ def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeyp
     assert len(observed) == 2 and observed[0] == observed[1] == logs / "effective-target.json"
     effective = json.loads((logs / "effective-target.json").read_text())
     assert effective["experimental_history_reuse"] is True
+    assert effective["experimental_bf16_attention"] is True
     assert effective["use_native_token_budget"] is False
     assert effective["max_num_batched_tokens"] == 16384 and "scheduler_cls" not in effective
     assert not effective.get("experimental_whole_prefill", False)
@@ -397,9 +406,9 @@ def test_candidate_child_rc2_reaches_outer_status_without_serving(monkeypatch, t
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     assert observe_serve.run(config_path, logs, "candidate") == 2
     state = json.loads((logs / "status.json").read_text())
-    assert state["failed_phase"] == "history-reuse-npu"
+    assert state["failed_phase"] == "bf16-attention"
     assert state["returncode"] == 2
-    assert state["candidate_resource_release"]["status"] == "passed"
+    assert state["bf16_attention_resource_release"]["status"] == "passed"
 
 
 @pytest.mark.parametrize("diagnose_trap", [False, True])

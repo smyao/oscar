@@ -1,0 +1,25 @@
+{
+  "stage": "/tmp/oscar-bf16-decode-20261016",
+  "files": {
+    "csrc/experiments/bf16_decode_20261016/CMakeLists.txt": "7e838a56ed4b91acb0f7b618a2b5ce0a61311998a7cff91e0a3f9b95bc648f60",
+    "csrc/experiments/bf16_decode_20261016/probe.cpp": "b265fb67fb5465fb8e62635924cc7ceb1788afbe4237838264bda87f4493d060",
+    "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+    "csrc/include/oscar_bf16_decode_launch.h": "d9f259f1f6da1ddd9f775f568ccc4857cc74baddb93f44c08fc3c8f66363bd88",
+    "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+    "csrc/include/oscar_launch.h": "c8b51d610755a8053455757ce9a921aa401e756edc6234318edcf2b7d422bbe9",
+    "csrc/kernels/attention_cv_bf16_decode.cpp": "8c73b6b6e0473edac416e607fc145ac15c72b3cbb41a5772da0c5befa06f92e1",
+    "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+    "csrc/kernels/attention_striped_unpack_padded.h": "1551af143666d7465352426dbbe7024af8a86d81ee12d7ccfd9840c328e4ceee",
+    "csrc/kernels/attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+    "csrc/kernels/merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+    "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+    "tools/experiments/run_camodel_arm.py": "387e665d0311d9cae6c82a40f97a7bc11994b28cf4b16a22ba0416d51afc824a"
+  },
+  "source_bytes": 120224,
+  "NPU_access": false,
+  "CPU_case_deadline_s": 120,
+  "CAModel_arm_deadline_s": 600,
+  "build_phase_deadline_s": 180,
+  "parallel_jobs": 2,
+  "BF16_Rv": "same_kernel"
+}

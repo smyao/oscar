@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-16",
+  "status": "reviewed_no_blocking_source_findings",
+  "reviewer": "bf16_decode_independent_system_review",
+  "findings": [],
+  "scope": "Read-only source/ABI/integration/probe review. No performance work and no NPU access.",
+  "checks": [
+    "All 48 CMake manifest, C++ capabilities, Python SOURCE_CAPABILITIES and optional Meta schemas agree.",
+    "Four new out schemas bind the matching launch symbols; decode has 15 device pointers and cluster has 16 including stats; each has 17 int64 attributes plus scale.",
+    "Cluster source aliases expand to unique BF16 kernel/launch names, avoiding duplicate legacy symbols.",
+    "BF16 rotation binding requires natural contiguous bfloat16 D256xD256; runtime prepares that view before KV profiling and sends it instead of FP32 NZ8. Existing writer matrices remain FP32.",
+    "Candidate requires striped physical-page bundle, C4 and C16 workspace features; baseline/native clear the BF16 flag. Invalid request-window or D mismatch fails explicitly.",
+    "Candidate runtime allocates 7487488 bytes/core, sufficient for decode1146880 and C42494464 as well; cluster stats shape and alignment match the C++ binding.",
+    "Q/P use disjoint half-slots and distinct FP32 score/PV storage. All kernel families retain original metadata invalidation, error domains, bounded decode, softmax, final-Rv flags and integer task layout.",
+    "New probe uses separate BF16 RV tensor, actual prepared tasks, independent BF16 contract, S3/Hkv2 cases and same-address changed-query/context replay. No timing Events are requested.",
+    "Runtime/source lookups include all four BF16 operators; current native-FIA segments remain existing native BF16 paths rather than a historical-cache bypass."
+  ],
+  "dispatch_checks": [
+    {
+      "tokens": 128,
+      "max_query_len": 4,
+      "later_draft": false,
+      "operator": "attention_cv_bf16_decode_out"
+    },
+    {
+      "tokens": 16384,
+      "max_query_len": 1,
+      "later_draft": true,
+      "operator": "attention_cv_bf16_decode_q1_out"
+    },
+    {
+      "tokens": 8,
+      "max_query_len": 5,
+      "later_draft": false,
+      "operator": "attention_cv_bf16_cluster4_out"
+    },
+    {
+      "tokens": 512,
+      "max_query_len": 33,
+      "later_draft": false,
+      "operator": "attention_cv_bf16_cluster4_out"
+    },
+    {
+      "tokens": 336,
+      "max_query_len": 336,
+      "later_draft": false,
+      "operator": "attention_cv_bf16_cluster4_out"
+    },
+    {
+      "tokens": 16384,
+      "max_query_len": 8192,
+      "later_draft": false,
+      "operator": "attention_cv_bf16_cluster16_out"
+    },
+    {
+      "tokens": 16384,
+      "max_query_len": 16384,
+      "later_draft": false,
+      "operator": "attention_cv_bf16_cluster16_out"
+    }
+  ],
+  "probe_declared_case_count": 15,
+  "limitations": [
+    "Source and host routing checks do not certify real NPU completion, graph capture/replay or model quality.",
+    "Observe parent-gate adaptation is concurrently owned/reviewed by the evidence agent; fingerprints identify the exact text examined."
+  ],
+  "source_sha256": {
+    "csrc/kernels/attention_cv_bf16_decode.cpp": "8c73b6b6e0473edac416e607fc145ac15c72b3cbb41a5772da0c5befa06f92e1",
+    "csrc/kernels/attention_cv_bf16_cluster4.cpp": "ba2cc68f65226e756c9fc78c64dec746dd19183f285ec33163259be287ce0430",
+    "csrc/kernels/attention_cv_bf16_cluster16.cpp": "f4674d28c25f12c4827c60ea13c6ba572122964bbb6dcc6f881ca72521a151df",
+    "csrc/include/oscar_bf16_decode_launch.h": "d9f259f1f6da1ddd9f775f568ccc4857cc74baddb93f44c08fc3c8f66363bd88",
+    "csrc/include/oscar_bf16_cluster_launch.h": "784c178aa10a23083a4b107b9eb27b24a473f449c2ac9d9a51dbc0e6696c75a3",
+    "csrc/striped_attention_bindings.cpp": "02662b60f0ecdde204f9ace4c7a27df5b85b27915799a000f6d9732e650d67a7",
+    "csrc/CMakeLists.txt": "519984b7f1f2ce168bfadd6a2385971bafc623493abf418bc770615150e2d268",
+    "csrc/torch_bindings.cpp": "b0410548db84a610e9b00adfc440629f85cb877aebeb80c6ff143869f6b8840d",
+    "oscar_ascend/ops/meta.py": "76d24a28a641bd59ac4791fbcac63326f992487e2c429ee7c852319b8fd55008",
+    "oscar_ascend/ops/contracts.py": "4a549694b6b1739ad65e9e20005a37f41d287aeeaa246d17de3091da9fb7ee2e",
+    "oscar_ascend/ops/cv_dispatch.py": "12dfa016cd207300f0d2d4c0e406362631db516ce288eaf5938346c6576ca3bb",
+    "oscar_ascend/runtime.py": "7ca6babaf4686a4bdb8880dcd836a40c39ed84f1d728cfdfe8fc78cef9bb68b6",
+    "oscar_ascend/integration/impl.py": "a26db173b5c888625c7e5a6a10ddb272a5d3fc32e1366bf4a207d6e7b53571d4",
+    "oscar_ascend/integration/cache_storage_ops.py": "e3756f10ca1ae57ff7b98263d513a8d1ff4eef5779a4ef05ee6182b78af6d42b",
+    "oscar_ascend/rotations.py": "478cb0a20994e0ac6119e8a921ad2f4719cc35610dd90f80e9b089d9b0fb1481",
+    "tools/serving_variants.py": "d580fbd64e9ac5d9fd9ae9e1cde33be83c70808f0917c864fb98f83cc74ccee3",
+    "tools/probe_bf16_attention.py": "b627047ef98065bcc6d1f729f91f92cd3640f39720369e51e24739b3647a6191",
+    "tools/probe_striped_cache.py": "78448a254df73c542dcf388f9c0a7afcc5f1c9da727c851ae695eb82d641f622",
+    "tools/observe_serve.py": "241c929b7b4856d9cb61cd732278f0f47857a47cfba24801707b63e2bd143c31"
+  }
+}

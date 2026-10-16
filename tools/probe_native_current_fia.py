@@ -383,7 +383,7 @@ def _long_case(torch, reference_attention, device, mask, heads, kv_heads, dim, s
     _validate_result(torch, output, lse, tokens, heads, dim, device)
     return {"tokens": tokens, "output_shape": list(output.shape), "lse_shape": list(lse.shape),
             "sampled_query_rows": sample, "sampled_oracle": "passed", **errors,
-            "device_event_ms": milliseconds, "device_event_median_ms": statistics.median(milliseconds),
+            "device_event_ms": milliseconds, "device_event_median_ms": statistics.median(milliseconds) if milliseconds else None,
             "device_event_scope": "isolated native FIA current chunk only; no model, CV, or service"}
 
 
@@ -419,6 +419,9 @@ def probe(target_path: Path, acceptance_path: Path) -> dict:
     warmup, repeats = performance["warmup"], performance["repeats"]
     if type(warmup) is not int or warmup < 0 or type(repeats) is not int or repeats < 1:
         raise NativeCurrentFIAProbeError("frozen timing repetition counts are invalid")
+    if target.get("experimental_bf16_attention", False):
+        # User2026-10-16: this branch qualifies correctness only, no timing.
+        warmup, repeats = 0, 0
     long_case = _long_case(torch, reference_attention, device, mask, heads, kv_heads,
                            dim, scale, tolerance, warmup, repeats)
     merged_case = _mixed_merge_case(torch, reference_attention, device, mask, heads, kv_heads,
@@ -429,6 +432,7 @@ def probe(target_path: Path, acceptance_path: Path) -> dict:
             "target_devices": target["devices"], "head_geometry": {"query": heads, "kv": kv_heads, "dim": dim},
             "causal_mask": "native 2048x2048 int8 upper triangle", "softmax_lse_flag": True,
             "frozen_tolerance": tolerance, "small_cases": cases, "long_case": long_case,
+            "performance": "not_run_user_requested" if target.get("experimental_bf16_attention", False) else "isolated_timing_only",
             "mixed_history_window_current_merge": merged_case,
             "production_task_contract": task_case,
             "device_completion": "integrated_current_cv_merge_completed",

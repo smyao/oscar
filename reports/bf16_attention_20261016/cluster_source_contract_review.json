@@ -1,0 +1,18 @@
+{
+  "status": "read_only_source_review_no_blocking_finding",
+  "source_sha256": {
+    "csrc/kernels/attention_cv_bf16_cluster4.cpp": "ba2cc68f65226e756c9fc78c64dec746dd19183f285ec33163259be287ce0430",
+    "csrc/kernels/attention_cv_bf16_cluster16.cpp": "f4674d28c25f12c4827c60ea13c6ba572122964bbb6dcc6f881ca72521a151df",
+    "csrc/include/oscar_bf16_cluster_launch.h": "784c178aa10a23083a4b107b9eb27b24a473f449c2ac9d9a51dbc0e6696c75a3"
+  },
+  "checked": [
+    "mixed dtype addressing: float word offsets converted to operands[2*offset]; Q first65536B and P second65536B of each131072B old Q slot at D256/Q128",
+    "H32 publisher BF16 copy: two8192B blocks with8192B destination gap preserve original lane rows0..15/32..47 and16..31/48..63",
+    "normalized A publication is two32-row casts per lane, each16384B fits17408B natural UB, MTE3_V protects every reuse",
+    "C16 external B1 is131072B; BF16 type-driven ND2NZ C0=16,256x256 source geometry and both ownership fences preserved",
+    "cluster P naturalBuf read is closed by SpillState MTE3_V before next KV; independent C1 waits for PV before reusing the buffer"
+  ],
+  "additional_matmul_instance": false,
+  "numeric_CPU_CANN_NPU_qualification": "separate kernel-agent receipts; not established by this review",
+  "performance": "not_run_user_requested"
+}

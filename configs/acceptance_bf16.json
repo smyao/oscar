@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "contract": "oscar_bf16_attention_v2",
+  "frozen_before_measurement": true,
+  "authorization": "2026-10-16 user authorized a separate BF16 attention branch; old FP32-only attention parity is diagnostic, not the BF16 correctness gate",
+  "rounding": "round_to_nearest_ties_to_even",
+  "history_decode": "original INT2 codes and FP16 scale/zero, original FP32 multiply then add; round reconstructed K/V once to BF16",
+  "query_rotation": "original FP32 Q @ Rk; round result once to BF16 before QK",
+  "qk": "BF16 operands, FP32 accumulation and scaled scores",
+  "online_softmax": "KV256 tiles at each actual source/split start; FP32 max, sum, alpha and exp",
+  "probability": "round each tile's unnormalized exp(score-running_max) to BF16 only for PV; denominator uses unrounded FP32 exp",
+  "pv": "BF16 P and V operands; FP32 accumulation and online alpha rescaling",
+  "normalization": "FP32 division by the original FP32 running sum",
+  "inverse_value_rotation": "RNE normalized history partial and initialization Rv to BF16; BF16 operands with hardware FP32 accumulation; one logical CV kernel",
+  "merge": "FP32 partial output and natural-log LSE merge; existing final output conversion to BF16",
+  "fused_attention": {
+    "atol": 0.005,
+    "rtol": 0.005,
+    "per_element": true,
+    "reference": "independent declared BF16 online-tile oracle"
+  },
+  "lse": {
+    "atol": 0.005,
+    "rtol": 0.005,
+    "empty_is_negative_infinity": true
+  },
+  "storage": {
+    "INT2_pack_unpack_exact": true,
+    "FP16_metadata_unchanged": true,
+    "exact_windows_BF16_unchanged": true
+  },
+  "protocol": {
+    "status_and_metadata_exact": true,
+    "padding_output_exact_zero": true,
+    "padding_lse_exact_negative_infinity": true
+  },
+  "old_FP32_oracle": "retain unchanged and report full original-space differences; no rejection merely for intentional BF16 rounding",
+  "native_evidence_boundary": "native Q/K/V/output dtype is observable; closed FIA internal P rounding and reduction order are not claimed bitwise identical",
+  "NPU": "not_run",
+  "model_quality": "not_established",
+  "end_to_end_performance": "not_established",
+  "public_rotation_argument": "contiguous natural BF16 ND; all four BF16 attention ops, no FP32 NZ rotation cache",
+  "performance": {
+    "execution": "not_run_user_requested",
+    "hard_gate": false,
+    "scope": "user2026-10-16 requests system and precision qualification only; target user performs validation"
+  }
+}

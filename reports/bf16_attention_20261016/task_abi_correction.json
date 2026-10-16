@@ -1,0 +1,18 @@
+{
+  "status": "corrected_S3_field6_segment_field7_source",
+  "producer": "csrc/kernels/attention_tasks.cpp",
+  "producer_layout": "row6=kind*splits+split; row7=kind",
+  "previous_completed_S1_scope": "fields6and7 identical on every actual task, arithmetic unchanged",
+  "observed_tasks_sha256": "3a7cc923b7947a11c03ec4174703daf1badc44432eb1a169665f6154a6129f72",
+  "all_five_S1_golden_files_byte_identical": {
+    "rv_bf16.bin": "af4155480d294a9f997607d6386cc8afd62fb235fd9e4bfb79140de1bb3b56b2",
+    "bf16_expected_partial.bin": "4a82570fda46ff08fe730f518e8c0423239f02757c456223cdb4da59dea3f0e2",
+    "bf16_expected_lse.bin": "e834cd2eb1eb2398d959d588654030d0f56b04425f39324c910fe56bae27e1ed",
+    "bf16_expected_output.bin": "305cf4551af12955a4173871e644aca5fda19d03f3f7512d43059474eb91d6b5",
+    "bf16_expected_output_lse.bin": "e9ee1d6ba80a7e71c9a2d9744a6523ebfa53816ad0a8ffce2c9918c6a784e016"
+  },
+  "new_S3_test": "literal native field order bound to producer source",
+  "old_CPU_receipts_preserved": true,
+  "no_numeric_tolerance_changed": true,
+  "NPU": "not_run"
+}

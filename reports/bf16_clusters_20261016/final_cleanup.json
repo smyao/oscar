@@ -1,0 +1,14 @@
+{
+  "host_archive_verified": true,
+  "owned_exited_pids": [
+    704595,
+    704602
+  ],
+  "removed_stage_relative": [
+    "npuchk",
+    "cceprint",
+    "stub_reg.log"
+  ],
+  "VM_released": true,
+  "verified_by": "actual final cleanup tool output; no live owned CPU process"
+}

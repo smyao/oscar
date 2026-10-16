@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "declared_metadata_position": -1,
+  "declared_QR_token": 315,
+  "exact_status_words": 2016,
+  "nonzero_status_words": 1,
+  "expected_NaN_partial_rows": 64,
+  "all_other_partial_rows_finite": true,
+  "all_other_LSE_rows_finite_or_empty": true,
+  "expected_domain_uses_actual_status": false
+}

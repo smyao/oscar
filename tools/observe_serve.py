@@ -98,6 +98,7 @@ def _source_identity(variant: str, config: dict) -> dict:
             "kernel_sha256": actual, "experimental_history_reuse": flag,
             "experimental_fast_unpack": fast, "experimental_mixed_cv": mixed,
             "experimental_striped_cache": striped,
+            "attention_compute_contract":"oscar_bf16_attention_v2" if config.get("experimental_bf16_attention",False) else "legacy_fp32",
             "cache_format": "striped_v1" if striped else "canonical_v1",
             "striped_source_sha256": striped_sources,
             "fast_source_sha256": fast_sources,
@@ -475,9 +476,12 @@ def _striped_cache_gate(config_path: Path, config: dict, env: dict, log_dir: Pat
     before = read_npu_resources(config, log_dir=log_dir / "striped-cache-resources-before", timeout=30)
     phase_error, release = None, None
     try:
-        _phase("striped-cache", [sys.executable, "-m", "tools.probe_striped_cache",
+        command = [sys.executable, "-m", "tools.probe_striped_cache",
             "--config", str(config_path), "--acceptance", str(ROOT / "configs/acceptance.json"),
-            "--output", str(output)], config=config, env=env, log_dir=log_dir, status=status)
+            "--output", str(output)]
+        if config.get("experimental_bf16_attention", False):
+            command.append("--storage-only")
+        _phase("striped-cache", command, config=config, env=env, log_dir=log_dir, status=status)
     except BaseException as error:
         phase_error = error
         raise
@@ -502,6 +506,8 @@ def _striped_cache_gate(config_path: Path, config: dict, env: dict, log_dir: Pat
     from .striped_fixture import FORMAT
     expected["format"] = FORMAT
     expected.update(artifact_signature=manifest.get("signature"), artifact_sha256=manifest.get("sha256"))
+    if config.get("experimental_bf16_attention", False):
+        expected.update(performance="not_run_user_requested", scope="storage_rotation_only")
     mismatches = [key for key, value in expected.items() if report.get(key) != value]
     if report.get("writer", {}).get("status") != "passed":
         mismatches.append("writer")
@@ -572,7 +578,7 @@ def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     """
     import importlib
     from oscar_ascend.ops.loader import validate_build_artifacts
-    if family not in {"c16_member_pipeline", "hybrid_l1_decode", "c16_l1_reuse", "mixed_prepare_reuse"}:
+    if family not in {"c16_member_pipeline", "hybrid_l1_decode", "c16_l1_reuse", "mixed_prepare_reuse", "bf16_attention"}:
         raise ValueError("unknown stable operator gate")
     probe = importlib.import_module(f"tools.probe_{family}")
     phase_name = family.replace("_", "-")
@@ -582,9 +588,13 @@ def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     phase_error = None
     release = None
     try:
-        _phase(phase_name, [sys.executable, "-m", f"tools.probe_{family}",
-               "--config", str(config_path), "--acceptance", str(ROOT/"configs/acceptance.json"),
-               "--output", str(output)], config=config, env=env, log_dir=log_dir, status=status)
+        command = [sys.executable, "-m", f"tools.probe_{family}"]
+        if family == "bf16_attention":
+            command += ["npu", "--config", str(config_path), "--output", str(output)]
+        else:
+            command += ["--config", str(config_path), "--acceptance", str(ROOT/"configs/acceptance.json"),
+                        "--output", str(output)]
+        _phase(phase_name, command, config=config, env=env, log_dir=log_dir, status=status)
     except BaseException as error:
         phase_error = error
         raise
@@ -608,6 +618,15 @@ def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     mismatches = probe.validate_evidence(report)
     expected = {"artifact_signature": manifest.get("signature"),
                 "artifact_sha256": manifest.get("sha256"), "source_binding": probe.source_binding()}
+    if family == "bf16_attention":
+        expected.update(contract="oscar_bf16_attention_v2", performance="not_run_user_requested",
+            effective_config_sha256=hashlib.sha256(config_path.read_bytes()).hexdigest())
+    if family == "mixed_prepare_reuse":
+        if config.get("experimental_bf16_attention", False):
+            expected.update(validation_mode="correctness_only_user_requested", performance="not_run_user_requested")
+        else:
+            expected.update(validation_mode="metadata_latency", performance="passed")
+
     mismatches += [key for key, value in expected.items() if report.get(key) != value]
     if mismatches:
         error = RuntimeError(f"{family} gate lacks matching evidence: {','.join(mismatches)} report={output}")
@@ -615,6 +634,9 @@ def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
         raise error
     status[f"{family}_gate"] = {"status": "passed", "report": str(output),
         "artifact_signature": manifest["signature"], "full_service_performance": "not_established"}
+    if family == "bf16_attention" or (family == "mixed_prepare_reuse" and config.get("experimental_bf16_attention",False)):
+        status[f"{family}_gate"].update(validation_mode="correctness_only_user_requested",
+                                        performance="not_run_user_requested")
     atomic_json(log_dir/"status.json", status)
 
 
@@ -624,6 +646,10 @@ def _c16_member_pipeline_gate(config_path, config, env, log_dir, status):
 
 def _hybrid_l1_decode_gate(config_path, config, env, log_dir, status):
     return _stable_cv_gate(config_path, config, env, log_dir, status, family="hybrid_l1_decode")
+
+
+def _bf16_attention_gate(config_path, config, env, log_dir, status):
+    return _stable_cv_gate(config_path, config, env, log_dir, status, family="bf16_attention")
 
 
 def _c16_l1_reuse_gate(config_path, config, env, log_dir, status):
@@ -682,6 +708,26 @@ def _mdl_decode_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     atomic_json(log_dir/"status.json", status)
 
 
+def _lifecycle_precision_mismatches(report: dict, config: dict) -> list[str]:
+    """#148: bind the child math/measurement mode to the effective config.
+
+    A BF16 receipt cannot bypass the legacy FP32 case/performance validators,
+    nor can a legacy receipt certify the new BF16 reader. Correctness-only is
+    the user's explicit BF16 scope, never a fabricated speed pass.
+    """
+    enabled=config.get("experimental_bf16_attention",False)
+    if type(enabled) is not bool:raise ValueError("experimental_bf16_attention must be an explicit boolean")
+    reported=report.get("bf16_attention",False)
+    bad=[]
+    if type(reported) is not bool or reported!=enabled:bad.append("bf16_attention")
+    if enabled:
+        if report.get("math_contract")!="oscar_bf16_attention_v2":bad.append("math_contract")
+        if report.get("performance")!="not_run_user_requested":bad.append("performance")
+    elif report.get("performance")=="not_run_user_requested" or report.get("math_contract")=="oscar_bf16_attention_v2":
+        bad.append("legacy_fp32_scope")
+    return bad
+
+
 def _prefix_cache_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
                      status: dict) -> None:
     """#126/#145/#150/#154-156: APC physical shared pages, forks and changed-input graph gate."""
@@ -716,7 +762,7 @@ def _prefix_cache_gate(config_path: Path, config: dict, env: dict, log_dir: Path
         raise RuntimeError("Prefix cache NPU resources did not release")
     report = json.loads(output.read_text())
     manifest = validate_build_artifacts(ROOT/"build/ascendc/build_manifest.json")
-    mismatches = validate_evidence(report)
+    mismatches = validate_evidence(report) + _lifecycle_precision_mismatches(report, config)
     expected = {"artifact_signature": manifest.get("signature"),
                 "artifact_sha256": manifest.get("sha256"), "source_binding": source_binding(), "reader": selected_reader(config)}
     mismatches += [key for key, value in expected.items() if report.get(key) != value]
@@ -727,6 +773,8 @@ def _prefix_cache_gate(config_path: Path, config: dict, env: dict, log_dir: Path
     status["prefix_cache_gate"] = {"status": "passed", "report": str(output),
         "artifact_signature": manifest["signature"], "device_scope": "synthetic_page_owned_prefix",
         "full_service_performance": "not_established"}
+    if config.get("experimental_bf16_attention",False):
+        status["prefix_cache_gate"].update(math_contract="oscar_bf16_attention_v2",performance="not_run_user_requested")
     atomic_json(log_dir/"status.json", status)
 
 
@@ -770,6 +818,7 @@ def _current_only_gate(config_path: Path, config: dict, env: dict, log_dir: Path
         "status", "precision", "store_bitwise", "decode_after_store", "device_completion")}
     expected.update(artifact_signature=manifest.get("signature"), artifact_sha256=manifest.get("sha256"))
     mismatches = [key for key, value in expected.items() if report.get(key) != value]
+    mismatches += _lifecycle_precision_mismatches(report, config)
     if mismatches:
         error = RuntimeError(f"current-only gate lacks matching evidence: {','.join(mismatches)} report={output}")
         error.phase = "current-only-evidence"
@@ -783,6 +832,8 @@ def _current_only_gate(config_path: Path, config: dict, env: dict, log_dir: Path
     status["current_only_gate"] = {"status": "passed", "report": str(output),
         "artifact_signature": manifest["signature"], "graph_acceptance": "not_established_eager_gate",
         "model_quality": "not_established", "full_service_performance": "not_established"}
+    if config.get("experimental_bf16_attention",False):
+        status["current_only_gate"].update(math_contract="oscar_bf16_attention_v2",performance="not_run_user_requested")
     atomic_json(log_dir / "status.json", status)
 
 
@@ -826,6 +877,7 @@ def _first_mtp_current_gate(config_path: Path, config: dict, env: dict, log_dir:
         "status", "precision", "store_bitwise", "decode_after_store", "device_completion")}
     expected.update(artifact_signature=manifest.get("signature"), artifact_sha256=manifest.get("sha256"))
     mismatches = [key for key, value in expected.items() if report.get(key) != value]
+    mismatches += _lifecycle_precision_mismatches(report, config)
     if mismatches:
         error = RuntimeError(f"first-mtp-current gate lacks matching evidence: {','.join(mismatches)} report={output}")
         error.phase = "first-mtp-current-evidence"
@@ -839,6 +891,8 @@ def _first_mtp_current_gate(config_path: Path, config: dict, env: dict, log_dir:
     status["first_mtp_current_gate"] = {"status": "passed", "report": str(output),
         "artifact_signature": manifest["signature"], "graph_acceptance": "not_established_eager_gate",
         "model_quality": "not_established", "full_service_performance": "not_established"}
+    if config.get("experimental_bf16_attention",False):
+        status["first_mtp_current_gate"].update(math_contract="oscar_bf16_attention_v2",performance="not_run_user_requested")
     atomic_json(log_dir / "status.json", status)
 
 
@@ -993,8 +1047,10 @@ def _mixed_decode_split_gate(config_path: Path, config: dict, env: dict, log_dir
     manifest = validate_build_artifacts(ROOT / "build/ascendc/build_manifest.json")
     expected = {key: "passed" for key in (
         "status", "precision", "performance", "store_bitwise", "device_completion")}
+    if config.get("experimental_bf16_attention",False):expected["performance"]="not_run_user_requested"
     expected.update(artifact_signature=manifest.get("signature"), artifact_sha256=manifest.get("sha256"))
     mismatches = [key for key, value in expected.items() if report.get(key) != value]
+    mismatches += _lifecycle_precision_mismatches(report, config)
     if mismatches:
         error = RuntimeError(f"mixed-decode-split gate lacks matching evidence: {','.join(mismatches)} report={output}")
         error.phase = "mixed-decode-split-evidence"
@@ -1008,6 +1064,8 @@ def _mixed_decode_split_gate(config_path: Path, config: dict, env: dict, log_dir
     status["mixed_decode_split_gate"] = {"status": "passed", "report": str(output),
         "artifact_signature": manifest["signature"], "graph_acceptance": "not_established_eager_gate",
         "model_quality": "not_established", "full_service_performance": "not_established"}
+    if config.get("experimental_bf16_attention",False):
+        status["mixed_decode_split_gate"].update(math_contract="oscar_bf16_attention_v2",performance="not_run_user_requested")
     atomic_json(log_dir / "status.json", status)
 
 
@@ -1117,10 +1175,13 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                 with redirect_stdout(preflight), redirect_stderr(preflight):
                     _preflight(effective_path, config, env, log_dir, status, variant)
                     if variant == "candidate":
-                        _candidate_gate(effective_path, config, env, log_dir, status)
-                        _fast_unpack_gate(effective_path, config, env, log_dir, status)
-                        if config.get("experimental_mixed_cv", False):
-                            _mixed_optimization_gate(effective_path, config, env, log_dir, status)
+                        if config.get("experimental_bf16_attention", False):
+                            _bf16_attention_gate(effective_path, config, env, log_dir, status)
+                        else:
+                            _candidate_gate(effective_path, config, env, log_dir, status)
+                            _fast_unpack_gate(effective_path, config, env, log_dir, status)
+                            if config.get("experimental_mixed_cv", False):
+                                _mixed_optimization_gate(effective_path, config, env, log_dir, status)
                         if config.get("experimental_striped_cache", False):
                             _striped_cache_gate(effective_path, config, env, log_dir, status)
                         if diagnose_q4:
@@ -1129,18 +1190,19 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                             _mixed_diagnostic(effective_path, config, env, log_dir, status)
                     if config.get("experimental_prepare_reuse", False):
                         _mixed_prepare_reuse_gate(effective_path, config, env, log_dir, status)
-                    if config.get("experimental_c4_member_pipeline", False):
-                        _c4_member_pipeline_gate(effective_path, config, env, log_dir, status)
-                    if config.get("experimental_c16_member_pipeline", False):
-                        _c16_member_pipeline_gate(effective_path, config, env, log_dir, status)
-                    if config.get("experimental_c16_l1_reuse", False):
-                        _c16_l1_reuse_gate(effective_path, config, env, log_dir, status)
-                    if config.get("experimental_decode_bundle", False):
-                        _decode_bundle_gate(effective_path, config, env, log_dir, status)
-                    if config.get("experimental_mdl_decode", False):
-                        _mdl_decode_gate(effective_path, config, env, log_dir, status)
-                    if config.get("experimental_hybrid_l1_decode", False):
-                        _hybrid_l1_decode_gate(effective_path, config, env, log_dir, status)
+                    if not config.get("experimental_bf16_attention", False):
+                        if config.get("experimental_c4_member_pipeline", False):
+                            _c4_member_pipeline_gate(effective_path, config, env, log_dir, status)
+                        if config.get("experimental_c16_member_pipeline", False):
+                            _c16_member_pipeline_gate(effective_path, config, env, log_dir, status)
+                        if config.get("experimental_c16_l1_reuse", False):
+                            _c16_l1_reuse_gate(effective_path, config, env, log_dir, status)
+                        if config.get("experimental_decode_bundle", False):
+                            _decode_bundle_gate(effective_path, config, env, log_dir, status)
+                        if config.get("experimental_mdl_decode", False):
+                            _mdl_decode_gate(effective_path, config, env, log_dir, status)
+                        if config.get("experimental_hybrid_l1_decode", False):
+                            _hybrid_l1_decode_gate(effective_path, config, env, log_dir, status)
                     if (config.get("enable_prefix_caching", True)
                             and config.get("experimental_striped_cache", False)):
                         _prefix_cache_gate(effective_path, config, env, log_dir, status)
@@ -1154,7 +1216,7 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                         _request_window_gate(effective_path, config, env, log_dir, status)
             if probe_only:
                 status.update(status="operator_probes_passed", service_started=False,
-                              performance_acceptance="operator_only_not_end_to_end")
+                              performance_acceptance="not_run_user_requested" if config.get("experimental_bf16_attention",False) else "operator_only_not_end_to_end")
                 atomic_json(log_dir / "status.json", status)
                 _terminal(f"[oscar] OBSERVE_PROBE_DONE variant={variant} service_started=false "
                           f"report={log_dir / 'status.json'}")
@@ -1298,9 +1360,12 @@ def main(argv=None) -> int:
             parser.error("--diagnose-trap requires an OSCAR service, not native or probe-only")
         phases = ["install", "signed_operator_gate" if args.variant != "native" else "native_start"]
         if args.variant == "candidate":
-            phases += ["candidate_operator_graph_latency_gates", "fast_unpack_gate"]
-            if config.get("experimental_mixed_cv", False):
-                phases.append("mixed_optimization_gate")
+            if config.get("experimental_bf16_attention", False):
+                phases.append("bf16_attention_precision_error_graph_gate")
+            else:
+                phases += ["candidate_operator_graph_latency_gates", "fast_unpack_gate"]
+                if config.get("experimental_mixed_cv", False):
+                    phases.append("mixed_optimization_gate")
             if config.get("experimental_striped_cache", False):
                 phases.append("striped_cache_gate")
             if args.diagnose_q4:
@@ -1319,7 +1384,10 @@ def main(argv=None) -> int:
             ("experimental_first_mtp_current_fia","first_mtp_current_gate"),
             ("experimental_mixed_decode_split","mixed_decode_split_gate"),
             ("experimental_request_windows","request_window_gate")):
-            if config.get(flag,False):phases.append(phase_name)
+            old_math = flag in {"experimental_c4_member_pipeline", "experimental_c16_member_pipeline",
+                "experimental_c16_l1_reuse", "experimental_decode_bundle", "experimental_mdl_decode", "experimental_hybrid_l1_decode"}
+            if config.get(flag,False) and not (old_math and config.get("experimental_bf16_attention",False)):
+                phases.append(phase_name)
         if config.get("enable_prefix_caching", True) and config.get("experimental_striped_cache", False):
             phases.append("prefix_cache_gate")
         if not args.probe_only:
@@ -1330,7 +1398,7 @@ def main(argv=None) -> int:
             "diagnose_trap": diagnostic, "vllm_argv": serve_argv(config),
             "inference_requests_generated": 0,
             "measurement": "guard_diagnostic" if diagnostic else (
-                "operator_microprobe" if args.probe_only else "passive_external_only"),
+                ("operator_correctness_probe" if config.get("experimental_bf16_attention",False) else "operator_microprobe") if args.probe_only else "passive_external_only"),
             "probe_only": args.probe_only, "model_will_start": not args.probe_only,
             "phases": phases}, indent=2))
         return 0

@@ -1,0 +1,8 @@
+[INFO] Config file [config_stars.json] from environment variable [CAMODEL_CONFIG_PATH]. Path: /tmp/oscar-bf16-decode-20261016/simulator-bf16/config_stars.json
+[INFO] Config file is found, path is /tmp/oscar-bf16-decode-20261016/simulator-bf16/config_stars.json.
+[FuncCache]: size:0x20000, line_size:128, way_num:16, line_num:1024, idx_num:64
+             idx_lsb:7, idx_mask:0x3f, tag_lsb:13, tag_mask:0xffffffffffffffff, ofst_mask:0x7f
+
+[TmSim]: Run in serial mode.
+[INFO] Config file [config.json] from environment variable [CAMODEL_CONFIG_PATH]. Path: /tmp/oscar-bf16-decode-20261016/simulator-bf16/config.json
+WINDOW_CAMODEL_START candidate q4_finite_cpu cores 1

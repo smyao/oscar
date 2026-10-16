@@ -101,19 +101,19 @@ def test_observe_requires_complete_signed_pipeline_evidence(monkeypatch,tmp_path
         observe._c4_member_pipeline_gate(tmp_path/'config.json',{}, {},tmp_path,{})
 
 
-def test_default_candidate_and_failed_pipeline_gate_block_model(monkeypatch,tmp_path,capsys):
+def test_bf16_candidate_replaces_legacy_pipeline_gate_and_blocks_model_on_failure(monkeypatch,tmp_path,capsys):
     from tools import observe_serve as observe
     from tools import install_serve
     target=json.loads((observe.ROOT/'configs/target.json').read_text())
     config_path=tmp_path/'candidate.json';config_path.write_text(json.dumps(target))
     assert observe.main(['--config',str(config_path),'--variant','candidate','--plan','--probe-only'])==0
     plan=json.loads(capsys.readouterr().out)
-    assert 'c4_member_pipeline_gate' in plan['phases']
+    assert 'bf16_attention_precision_error_graph_gate' in plan['phases']
     assert plan['runtime_selection']['optimizations']['c4_member_pipeline'] is True
     assert install_serve.main(['--config',str(config_path),'--variant','candidate','--plan'])==0
     direct=json.loads(capsys.readouterr().out)
     assert direct['runtime_selection']==plan['runtime_selection']
-    assert direct['runtime_selection']['prefix_caching'] is True
+    assert direct['runtime_selection']['prefix_caching'] is False
     for name in ('_preflight','_candidate_gate','_fast_unpack_gate','_mixed_optimization_gate',
                  '_striped_cache_gate','_decode_bundle_gate','_current_only_gate',
                  '_first_mtp_current_gate','_mixed_decode_split_gate','_request_window_gate'):
@@ -123,15 +123,15 @@ def test_default_candidate_and_failed_pipeline_gate_block_model(monkeypatch,tmp_
         assert config['experimental_c4_member_pipeline'] is True
         assert json.loads(Path(config_path).read_text())['experimental_c4_member_pipeline'] is True
         seen.append('pipeline_gate')
-        error=RuntimeError('pipeline NPU graph rejected');error.phase='c4-member-pipeline-evidence';raise error
-    monkeypatch.setattr(observe,'_c4_member_pipeline_gate',fail)
-    monkeypatch.setattr(observe,'managed_server',lambda *a,**k:pytest.fail('failed C4 gate must block model startup'))
+        error=RuntimeError('BF16 NPU graph rejected');error.phase='bf16-attention-evidence';raise error
+    monkeypatch.setattr(observe,'_bf16_attention_gate',fail)
+    monkeypatch.setattr(observe,'managed_server',lambda *a,**k:pytest.fail('failed BF16 gate must block model startup'))
     monkeypatch.setattr(observe,'_terminal',lambda *a,**k:None)
     logs=tmp_path/'observe'
     assert observe.run(config_path,logs,'candidate')==1
     assert seen==['pipeline_gate']
     status=json.loads((logs/'status.json').read_text())
-    assert status['status']=='failed' and status['failed_phase']=='c4-member-pipeline-evidence'
+    assert status['status']=='failed' and status['failed_phase']=='bf16-attention-evidence'
 
 
 @pytest.mark.parametrize('baseline,candidate,passed',[(1.148704,1.0,False),(11.5,10.0,True),(10.0,10.0,False)])

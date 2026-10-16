@@ -28,6 +28,8 @@ SOURCE_PATHS = (
     "oscar_ascend/ops/cv_dispatch.py", "csrc/kernels/rotate_clip_store_striped.cpp",
     "csrc/kernels/rotate_vector_init.cpp", "csrc/kernels/attention_tasks.cpp",
     "csrc/kernels/attention_cv_mdl_decode.cpp", "csrc/kernels/merge_lse.cpp",
+    "csrc/kernels/attention_cv_bf16_decode.cpp", "csrc/include/oscar_bf16_decode_launch.h",
+    "tools/bf16_reference.py", "tools/bf16_runtime_oracle.py", "configs/acceptance_bf16.json",
 )
 
 
@@ -55,7 +57,8 @@ def selected_reader(config):
         mixed_cv=config.get("experimental_mixed_cv", False), striped_cache=True,
         decode_bundle=config.get("experimental_decode_bundle", False),
         c4_member_pipeline=config.get("experimental_c4_member_pipeline", False),
-        mdl_decode=config.get("experimental_mdl_decode", False))
+        mdl_decode=config.get("experimental_mdl_decode", False),
+        bf16_attention=config.get("experimental_bf16_attention", False))
 
 
 def make_inputs(torch, logical, pages, seed):
@@ -82,7 +85,7 @@ def make_inputs(torch, logical, pages, seed):
             "lens": torch.tensor([c + 4 for c in contexts], dtype=torch.int32)}
 
 
-def oracle(torch, logical, inputs):
+def oracle(torch, logical, inputs, *, bf16=False):
     from oscar_ascend.ops.reference import attention, encode_kv, decode_kv
     outputs, lses = [], []
     for r, (key, value) in enumerate(logical):
@@ -90,6 +93,13 @@ def oracle(torch, logical, inputs):
         # Identity rotation isolates physical caching from rotation accuracy;
         # the MDL gate separately exercises the production Hadamard rotation.
         restored_k, restored_v = decode_kv(encode_kv(key.float(), value.float()), DIM)
+        if bf16:
+            from .bf16_runtime_oracle import request_samples
+            query=inputs['q'][r*4:r*4+4]
+            result=request_samples(query,query.float(),inputs['key'][r*4:r*4+4],inputs['value'][r*4:r*4+4],
+                context,torch.eye(DIM),lambda p:(restored_k[p],restored_v[p]),
+                lambda p:(key[p],value[p]),range(4),native_current=False)
+            outputs.extend(result[i][0] for i in range(4));lses.extend(result[i][1] for i in range(4));continue
         for i in range(4):
             cut = min(context, max(64, context + i + 1 - 256))
             k, v = key.float().clone(), value.float().clone()
@@ -129,13 +139,15 @@ def seed_page_chain(torch, ops, state, logical, pages):
            slots.to(state["raw"].device), positions.to(state["raw"].device))
 
 
-def allocate(torch, device, cores):
+def allocate(torch, device, cores, *, bf16=False):
     layout = fixture_layout()
     raw = torch.full((BLOCKS * layout.page.page_size_bytes,), 0x55, dtype=torch.uint8, device=device)
     wk, wv, tags = layout.views(raw, BLOCKS); tags.fill_(-1)
     n, h, d = QUERIES, HEADS, DIM
     return {"layout": layout, "raw": raw, "wk": wk, "wv": wv, "tags": tags,
         "rotation": torch.eye(d, dtype=torch.float32, device=device),
+        "rotation_bf16": torch.eye(d, dtype=torch.bfloat16, device=device) if bf16 else None,
+        "bf16_attention":bf16,
         "tasks": torch.empty((n * 3, 16), dtype=torch.int64, device=device),
         "positions": torch.empty(n, dtype=torch.int64, device=device),
         "qr": torch.empty((n, h, d), dtype=torch.float32, device=device),
@@ -158,7 +170,7 @@ def execute(ops, state, inputs, reader, rotate, cores):
     getattr(ops, rotate)(inputs["q"], state["rotation"], state["qr"], state["rotate_status"],
                          False, inputs["slots"])
     getattr(ops, reader)(inputs["q"], state["qr"], inputs["key"], inputs["value"],
-        state["rotation"], state["raw"], inputs["table"], state["wk"], state["wv"], state["tags"],
+        state["rotation_bf16"] if state.get("bf16_attention",False) else state["rotation"], state["raw"], inputs["table"], state["wk"], state["wv"], state["tags"],
         state["tasks"], state["partial"], state["lse"], state["status"], state["workspace"],
         layout.page.block_size, BLOCKS, BLOCKS * layout.page.conv_bytes, layout.page.ssm_bytes,
         64, 256, 3, 1, DIM ** -0.5, cores)
@@ -177,7 +189,7 @@ def check_state(torch, state, inputs, logical, immutable, tolerance):
     for name in ("status", "rotate_status", "merge_status", "store_status"):
         if bool(state[name].cpu().ne(0).any()):
             raise RuntimeError("APC forward status failed: " + name)
-    expected, expected_lse = oracle(torch, logical, inputs)
+    expected, expected_lse = oracle(torch, logical, inputs,bf16=state.get('bf16_attention',False))
     torch.testing.assert_close(state["output"].view(QUERIES, HEADS, DIM).cpu(), expected, **tolerance)
     torch.testing.assert_close(state["bf16"].float().cpu(), expected, **tolerance)
     torch.testing.assert_close(state["output_lse"].view(QUERIES, HEADS).cpu(), expected_lse, **tolerance)
@@ -197,7 +209,9 @@ def run_device(torch, ops, config, cores, tolerance):
     device = torch.device("npu:0")
     reader = selected_reader(config)
     rotate = "rotate_vector_init_out" if config.get("experimental_quantization_bundle", False) else "rotate_out"
-    state = allocate(torch, device, cores)
+    bf16=config.get('experimental_bf16_attention',False)
+    if bf16 and reader!='attention_cv_bf16_decode_out':raise RuntimeError('APC BF16 config did not select BF16 decode')
+    state = allocate(torch, device, cores,bf16=bf16)
     generator = torch.Generator().manual_seed(137081)
     shared = tuple(torch.randn((4608, 1, DIM), generator=generator).to(torch.bfloat16) for _ in range(2))
     seed_page_chain(torch, ops, state, shared, (3, 1))
@@ -275,6 +289,9 @@ def validate_evidence(report):
 
 def probe(config_path, acceptance_path):
     config = json.loads(config_path.read_text()); selected_reader(config)
+    if config.get('experimental_bf16_attention',False):
+        from .bf16_reference import load_acceptance
+        load_acceptance()
     acceptance = json.loads(acceptance_path.read_text())
     if acceptance.get("frozen_before_measurement") is not True or acceptance["fused_attention"] != {"atol": .005, "rtol": .005}:
         raise RuntimeError("APC frozen precision contract changed")
@@ -299,6 +316,7 @@ def probe(config_path, acceptance_path):
         "source_binding": source_binding(), "artifact_signature": manifest["signature"],
         "artifact_sha256": manifest["sha256"],
         **run_device(torch, torch.ops.oscar_ascend_ops, config, reuse._core_count(torch, config), acceptance["fused_attention"])}
+    if config.get('experimental_bf16_attention',False):report.update(bf16_attention=True,math_contract='oscar_bf16_attention_v2',performance='not_run_user_requested')
     bad = validate_evidence(report)
     if bad: report.update(status="failed", evidence_mismatches=bad)
     return report

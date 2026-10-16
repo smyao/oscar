@@ -395,8 +395,9 @@ def _store_changed_input_graph(torch,ops,device,fixture,tensors,buffers,rk,rv,*,
             'eager_parity':'bitwise_passed','hadamard':hadamard}
 
 
-def probe(config_path,acceptance_path):
+def probe(config_path,acceptance_path,*,storage_only=False):
     target=json.loads(config_path.read_text());acceptance=json.loads(acceptance_path.read_text())
+    storage_only = storage_only or target.get('experimental_bf16_attention', False) is True
     reuse._active_device(target)
     policy=acceptance['performance']
     if (policy['warmup'],policy['repeats'],policy['max_latency_ratio'])!=(2,5,1.0):
@@ -409,7 +410,7 @@ def probe(config_path,acceptance_path):
     from .probe_native_current_fia import _target_geometry
     if _target_geometry(target)!=(6,1,256):raise RuntimeError('striped target requires Hq6/Hkv1/D256')
     manifest=validate_build_artifacts(ROOT/'build/ascendc/build_manifest.json')
-    cases=case_plan()
+    cases=() if storage_only else case_plan()
     capabilities={c.new for c in cases}|{'rotate_clip_store_striped_out'}
     if target.get('experimental_quantization_bundle',False):
         capabilities|={'rotate_vector_init_out','rotate_out'}
@@ -428,7 +429,8 @@ def probe(config_path,acceptance_path):
     passed=all(row['status']=='passed' for row in rows)
     return {'status':'passed' if passed else 'failed','precision':'passed',
             'graph_capture':'passed','graph_replay':'passed',
-            'performance':'passed' if passed else 'failed','format':FORMAT,'writer':writer,'cases':rows,
+            'performance':('not_run_user_requested' if storage_only else ('passed' if passed else 'failed')),
+            'scope':'storage_rotation_only' if storage_only else 'complete_striped_reader_bundle','format':FORMAT,'writer':writer,'cases':rows,
             'artifact_signature':manifest['signature'],'artifact_sha256':manifest['sha256'],
             'vector_init_rotation':rotation,
             'full_model_performance':'not_established'}
@@ -439,8 +441,9 @@ def main(argv=None):
     parser.add_argument('--config',type=Path,default=ROOT/'configs/target.json')
     parser.add_argument('--acceptance',type=Path,default=ROOT/'configs/acceptance.json')
     parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--storage-only',action='store_true',help='verify codec/rotation and graphs; attention is gated separately')
     args=parser.parse_args(argv)
-    try: report=probe(args.config,args.acceptance)
+    try: report=probe(args.config,args.acceptance,storage_only=args.storage_only)
     except Exception as exc:
         traceback.print_exc();report={'status':'failed','first_error':str(exc)}
     atomic_json(args.output,report)

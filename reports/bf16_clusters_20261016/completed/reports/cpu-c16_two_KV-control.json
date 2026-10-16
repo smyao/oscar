@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "status": "completed",
+  "supervisor_pid": 704073,
+  "child_pid": 704080,
+  "child_pgid": 704080,
+  "command": [
+    "bash",
+    "run-phase.sh",
+    "cpu",
+    "c16",
+    "c16_two_KV"
+  ],
+  "cwd": "/tmp/oscar-bf16-clusters-20261016",
+  "timeout_seconds": 120.0,
+  "started_utc": "2026-10-16T02:54:03.617090+00:00",
+  "stdout_path": "/tmp/oscar-bf16-clusters-20261016/reports/cpu-c16_two_KV/stdout.log",
+  "stderr_path": "/tmp/oscar-bf16-clusters-20261016/reports/cpu-c16_two_KV/stderr.log",
+  "lock_path": "/tmp/oscar-cann-validation.lock",
+  "lock_acquired": true,
+  "timed_out": false,
+  "interrupt_signal": null,
+  "child_returncode": 0,
+  "cleanup_complete": true,
+  "cleanup_grace_seconds": 12.0,
+  "cleanup_signals": [],
+  "supervisor_returncode": 0,
+  "child_env_override_keys": [],
+  "child_started_utc": "2026-10-16T02:54:03.619189+00:00",
+  "child_elapsed_seconds": 51.120777798001654,
+  "elapsed_seconds": 51.12326489796396,
+  "finished_utc": "2026-10-16T02:54:54.740401+00:00"
+}

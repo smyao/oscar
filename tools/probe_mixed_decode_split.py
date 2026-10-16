@@ -1,4 +1,4 @@
-"""Real-NPU request partition gate; no native model/GDN edits or user dataset.
+"""Archive #34/#126/#145/#148/#157: real-NPU request partition gate.
 
 Compare the actual FULL implementation with partition disabled/enabled. CPU
 mirrors define request boundaries; device guards and real CV/FIA/store calls
@@ -82,6 +82,8 @@ def run_case(torch,target,acceptance,device,cores,case):
     mode='identity' if case.draft else 'hadamard'
     fixture=reuse.make_fixture(torch,reuse.Shape(case.name,case.lengths,case.contexts,256,1,1,False),
                                rotation_mode=mode)
+    bf16=target.get('experimental_bf16_attention',False)
+    expected_oracle=shared._expected(fixture,target,native_current=True)
     pages=fixture['page_assignments']
     if sum(len(p) for p in pages)!=len({p for group in pages for p in group}):
         raise RuntimeError('partition fixture must have independent physical request pages')
@@ -96,20 +98,24 @@ def run_case(torch,target,acceptance,device,cores,case):
         snapshots[side]={key:getattr(state,key).clone() for key in ('raw','window_key','window_value','window_tags')}
         sides[side]=(impl,state,metadata)
         outputs[side],lses[side],witness[side]=_initial_forward(torch,impl,state,tensors,metadata,cut)
-        shared._assert_output(torch,outputs[side],fixture['expected'],tol)
+        shared._assert_output(torch,outputs[side],expected_oracle,tol)
+        if bf16:
+            indexes=sorted(expected_oracle)
+            torch.testing.assert_close(lses[side][indexes].cpu(),torch.stack([expected_oracle[i][1] for i in indexes]),**tol)
     expected=[{'segment':'short_prefix','tokens':cut,'reference_tokens':n},
               {'segment':'long_suffix','tokens':case.lengths[-1],'reference_tokens':n}]
     if witness['old'] or witness['new']!=expected:raise RuntimeError('real request partition route witness differs')
-    torch.testing.assert_close(outputs['new'].float(),outputs['old'].float(),**tol)
-    torch.testing.assert_close(lses['new'],lses['old'],**tol)
-    indexes=sorted(fixture['expected'])
+    if not bf16:
+        torch.testing.assert_close(outputs['new'].float(),outputs['old'].float(),**tol)
+        torch.testing.assert_close(lses['new'],lses['old'],**tol)
+    indexes=sorted(expected_oracle)
     torch.testing.assert_close(lses['new'][indexes].cpu(),
-                              torch.stack([fixture['expected'][i][1] for i in indexes]),**tol)
+                              torch.stack([expected_oracle[i][1] for i in indexes]),**tol)
     shared._assert_stores(torch,sides['old'][1],sides['new'][1])
     if shared._store_bits_equal(torch,snapshots['new']['raw'],sides['new'][1].raw):
         raise RuntimeError('partition writer did not publish compressed bytes')
     timing=None;follow=None
-    if case.timed:
+    if case.timed and not bf16:
         samples={'old':[],'new':[]};policy=acceptance['performance']
         for i in range(policy['warmup']+policy['repeats']):
             order=('old','new') if i<policy['warmup'] or (i-policy['warmup'])%2==0 else ('new','old')
@@ -127,14 +133,18 @@ def run_case(torch,target,acceptance,device,cores,case):
                 'gate':'passed' if new_ms/old_ms<=policy['max_latency_ratio'] else 'failed',
                 'scope':'complete_real_FULL_forward_with_cache_reset_outside_timing'}
         for output in outputs.values():shared._assert_output(torch,output,fixture['expected'],tol)
-    else:
+    elif not case.timed:
         oi,old,_=sides['old'];ni,new,_=sides['new']
         follow=shared._decode_after_store(torch,fixture,tensors,oi,old,ni,new,device,tol)
     row={'case':case.name,'status':'passed' if timing is None or timing['gate']=='passed' else 'failed',
-         'precision':'frozen_output_LSE_and_independent_oracle_passed','store_bitwise':'passed',
+         'precision':'BF16_independent_runtime_oracle_passed' if bf16 else 'frozen_output_LSE_and_independent_oracle_passed','store_bitwise':'passed',
          'first_mtp':case.draft,'slot_dtype':case.slot_dtype,'rotation':mode,
          'partition':witness['new'],'original_source_splits_preserved':True,
          'decode_after_store':follow,'timings':timing,'full_model_performance':'not_established'}
+    if bf16:row.update(bf16_attention=True,math_contract='oscar_bf16_attention_v2',performance='not_run_user_requested',
+                       bf16_cv_calls={side:{name:impl.provider.ops.calls[name] for name in shared.BF16_OPERATORS.values()
+                                           if impl.provider.ops.calls[name]} for side,(impl,_,_) in sides.items()},
+                       ab_max_abs_diagnostic=float((outputs['new'].float()-outputs['old'].float()).abs().max()))
     print('[oscar] PERF_MIXED_DECODE_SPLIT '+json.dumps({'case':case.name,'status':row['status'],
         'precision':row['precision'],'old_ms':timing['old_ms'] if timing else None,
         'new_ms':timing['new_ms'] if timing else None,'ratio':timing['ratio'] if timing else None}),flush=True)
@@ -143,20 +153,31 @@ def run_case(torch,target,acceptance,device,cores,case):
 
 def validate_case_evidence(report,acceptance):
     expected={c.name:c for c in case_plan()};rows=report.get('cases')
+    bf16=report.get('bf16_attention',False)
     if not isinstance(rows,list) or len(rows)!=len(expected) or any(not isinstance(r,dict) for r in rows):
         raise RuntimeError('mixed partition gate requires every declared case')
     names=[r.get('case') for r in rows]
     if any(not isinstance(n,str) for n in names) or set(names)!=set(expected):raise RuntimeError('partition cases differ')
     for row in rows:
         case=expected[row['case']];cut=sum(case.lengths[:-1]);n=sum(case.lengths)
-        if (row.get('status')!='passed' or row.get('precision')!='frozen_output_LSE_and_independent_oracle_passed'
+        label='BF16_independent_runtime_oracle_passed' if bf16 else 'frozen_output_LSE_and_independent_oracle_passed'
+        if (row.get('status')!='passed' or row.get('precision')!=label
                 or row.get('store_bitwise')!='passed' or row.get('first_mtp') is not case.draft
                 or row.get('slot_dtype')!=case.slot_dtype or row.get('rotation')!=('identity' if case.draft else 'hadamard')
                 or row.get('original_source_splits_preserved') is not True or row.get('partition')!=[
                     {'segment':'short_prefix','tokens':cut,'reference_tokens':n},
                     {'segment':'long_suffix','tokens':case.lengths[-1],'reference_tokens':n}]):
             raise RuntimeError('mixed partition route/numerical evidence differs')
+        if bf16:
+            calls=row.get('bf16_cv_calls',{})
+            if (calls.get('new',{}).get('attention_cv_bf16_decode_out',0)<1 or
+                calls.get('new',{}).get('attention_cv_bf16_cluster16_out',0)<1 or
+                calls.get('old',{}).get('attention_cv_bf16_cluster16_out',0)<1):
+                raise RuntimeError('partition did not execute actual BF16 short/long readers')
         if case.timed:
+            if bf16:
+                if row.get('performance')!='not_run_user_requested' or row.get('timings') is not None:raise RuntimeError('BF16 partition must not fabricate timing')
+                continue
             timing=row.get('timings',{});medians={}
             for side in ('old','new'):
                 samples=timing.get('samples_ms',{}).get(side)
@@ -183,7 +204,7 @@ def probe(config_path,acceptance_path):
         raise RuntimeError('partition gate requires explicit decoder, partition and first-MTP current flags')
     if acceptance.get('frozen_before_measurement') is not True:raise RuntimeError('frozen acceptance required')
     policy=acceptance['performance']
-    if (policy['warmup'],policy['repeats'],policy['max_latency_ratio'])!=(2,5,1.0):
+    if not target.get('experimental_bf16_attention',False) and (policy['warmup'],policy['repeats'],policy['max_latency_ratio'])!=(2,5,1.0):
         raise RuntimeError('frozen performance policy changed')
     reuse._active_device(target)
     import torch
@@ -200,14 +221,16 @@ def probe(config_path,acceptance_path):
     from oscar_ascend.ops.loader import validate_build_artifacts,require_capabilities
     from oscar_ascend.ops.cv_dispatch import DECODE_BUNDLE_OPS
     manifest=validate_build_artifacts(ROOT/'build/ascendc/build_manifest.json')
-    require_capabilities(DECODE_BUNDLE_OPS|{'rotate_out','rotate_clip_store_striped_out','prepare_attention_tasks_out','merge_lse_out','status_guard'})
+    require_capabilities(DECODE_BUNDLE_OPS|{'rotate_out','rotate_clip_store_striped_out','prepare_attention_tasks_out','merge_lse_out','status_guard'}|
+                         (set(shared.BF16_OPERATORS.values()) if target.get('experimental_bf16_attention',False) else set()))
     rows=[];device=torch.device('npu:0');cores=reuse._core_count(torch,target)
     for case in case_plan():
         rows.append(run_case(torch,target,acceptance,device,cores,case));gc.collect();torch.npu.empty_cache()
         if rows[-1]['status']!='passed':raise RuntimeError('partition regression: '+case.name)
-    report={'status':'passed','precision':'passed','performance':'passed','store_bitwise':'passed',
+    report={'status':'passed','precision':'passed','performance':'not_run_user_requested' if target.get('experimental_bf16_attention',False) else 'passed','store_bitwise':'passed',
             'device_completion':'passed','cases':rows,'artifact_signature':manifest['signature'],
             'artifact_sha256':manifest['sha256'],'graph':'not_run_eager_scope','full_model_performance':'not_established'}
+    if target.get('experimental_bf16_attention',False):report.update(bf16_attention=True,math_contract='oscar_bf16_attention_v2')
     validate_case_evidence(report,acceptance);return report
 
 

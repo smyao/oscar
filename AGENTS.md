@@ -1,5 +1,13 @@
 # 当前工程约束
 
+## 2026-10-16 BF16分支任务（优先于旧FP32-only门）
+
+- 用户报告当前main的32K约34分钟并同意保留；只在`codex/oscar-bf16-attention`开发和推送，基底为最新main `7047ce36`，main/stable不移动。默认vLLM argv、设备、端口、原生调度/GDN/prefix/MTP保持。
+- 用户明确撤销attention只能FP32计算的旧约束，要求以原生BF16计算方式提速并自行评估必要精度。QK/PV/最终Rv矩阵乘法统一BF16操作数、硬件FP32累加；online softmax/max/sum/alpha、LSE与merge保持FP32。INT2 codec、量化及Q旋转规则不变。
+- 新独立合同`configs/acceptance_bf16.json`与`tools/bf16_reference.py`在设备测量前定义；旧FP32 oracle保留差异诊断，不能用旧FP32逐位门否决已授权的BF16舍入。新oracle容差不事后放宽，metadata/status/错误域和图地址仍严格。
+- 用户随后明确本轮不用测速，只需把系统调通后由用户真机验证。停止CAModel/performance实验和新BF16入口速度门，只验证编译、正确性、错误域、图/启动接缝；performance标为用户要求未测，不能伪造passed。继续禁止连接真机，不能把BF16标签当作已转为访存受限或端到端>30%。
+
+
 ## 2026-10-15 当前交付约束（优先于下方历史分支策略）
 
 - 用户确认 `codex/aisbench-stable` 的 APC 开/关均可工作；以 `f96820f1` 整体同步主分支作为优化基底，保留所有已工作机制。默认启动参数冻结：APC 关闭、显式 token budget 16384、原生调度器，以及 `configs/target.json` 的其余设置。完整 argv 冻结证据在 `reports/stable_32k_64k_20261015/frozen_launch.json`，不能通过修改启动参数换性能。

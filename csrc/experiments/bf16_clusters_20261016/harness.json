@@ -1,0 +1,8 @@
+{
+  "template": "csrc/experiments/bf16_decode_20261016/probe.cpp",
+  "template_sha256": "b265fb67fb5465fb8e62635924cc7ceb1788afbe4237838264bda87f4493d060",
+  "generated_sha256": "68dfc72a0211a689b03ac955b78fa48f2d1fa36abc914593db979024d820bb0f",
+  "full_inverse": true,
+  "oracle": "predeclared BF16v2 from actual tasks",
+  "source2": "optional declared production prefill suppression, every task retained"
+}

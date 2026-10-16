@@ -1,0 +1,64 @@
+{
+  "compile-device-control": {
+    "returncode": 0,
+    "elapsed_seconds": 5.126691677025519,
+    "cleanup_complete": true
+  },
+  "cpu-q1-control": {
+    "returncode": 0,
+    "elapsed_seconds": 7.166040592943318,
+    "cleanup_complete": true
+  },
+  "configure-device-control": {
+    "returncode": 0,
+    "elapsed_seconds": 0.22377331205643713,
+    "cleanup_complete": true
+  },
+  "cpu-q4-control": {
+    "returncode": 0,
+    "elapsed_seconds": 8.211678108898923,
+    "cleanup_complete": true
+  },
+  "compile-cpu-control": {
+    "returncode": 0,
+    "elapsed_seconds": 4.202953050029464,
+    "cleanup_complete": true
+  },
+  "configure-cpu-control": {
+    "returncode": 0,
+    "elapsed_seconds": 0.10441724199336022,
+    "cleanup_complete": true
+  },
+  "q4": {
+    "backend": "ascendc_cpu_debug",
+    "status": "passed",
+    "mode": "q4",
+    "oracle": true,
+    "includes_bf16_rv": true,
+    "partial_max_abs": 7.62939e-06,
+    "lse_max_abs": 4.76837e-07,
+    "output_max_abs": 4.32134e-06,
+    "gm_guards": true,
+    "inputs_immutable": true,
+    "task_count": 24
+  },
+  "q1": {
+    "backend": "ascendc_cpu_debug",
+    "status": "passed",
+    "mode": "q1",
+    "oracle": true,
+    "includes_bf16_rv": true,
+    "partial_max_abs": 4.76837e-07,
+    "lse_max_abs": 4.76837e-07,
+    "output_max_abs": 2.90573e-07,
+    "gm_guards": true,
+    "inputs_immutable": true,
+    "task_count": 24
+  },
+  "status": "CANN_and_CPU_debug_passed",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_established",
+  "performance": "not_measured",
+  "scope": "R2 N8 GQA6 D256 C641/701 S1; q1 has padded rows; all24 tasks; finalRv BF16 in same kernel"
+}

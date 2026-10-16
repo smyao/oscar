@@ -154,6 +154,7 @@ def report_fixture():
             'task_error': 'invalid_long_length_code1_preserved' if index == 2 else 'all_zero',
             'complete_task_fields': True, 'complete_positions': True, **receipts})
     return {'status': 'passed', 'device_completion': 'passed',
+        'validation_mode': 'metadata_latency', 'performance': 'passed',
         'precision': 'all_task_fields_and_positions_bitwise', 'scope': 'mixed_prepare_only_no_CV_no_model',
         'same_addresses': True, 'source_inputs_unchanged': True, 'tokens': probe.TOKENS,
         'layers': 16, 'split_tokens': [124, 16260], 'cases': cases,
@@ -215,7 +216,7 @@ def test_real_forward_and_mixed_dispatch_reuse_without_skipping_layer_work(monke
     assert len(candidate.workspace._oscar_prepared_tasks) == 2
 
 
-def test_default_16k_mixed_forward_selects_b1_and_hybrid_with_prepare_reuse(monkeypatch):
+def test_default_16k_mixed_forward_selects_bf16_decode_and_c16_with_prepare_reuse(monkeypatch):
     """Real dispatcher and numeric metadata, shape-only QKV to avoid model math."""
     from test_prepare_reuse import _fixture, AscendAttentionState
     from tools.serving_variants import variant_config
@@ -232,14 +233,17 @@ def test_default_16k_mixed_forward_selects_b1_and_hybrid_with_prepare_reuse(monk
     ops.rotate_vector_init_out = ops.rotate_out
     ops.rotate_clip_store_striped_out = ops.rotate_clip_store_out
     selected = []
-    for name in ('attention_cv_hybrid_l1_decode_out', 'attention_cv_l1_reuse_cluster16_out'):
+    for name in ('attention_cv_bf16_decode_out', 'attention_cv_bf16_cluster16_out'):
         def cv(*args, name=name):
+            assert args[4].dtype == torch.bfloat16
             selected.append(name); ops.attention_cv_out(*args)
         setattr(ops, name, cv)
     for state in f.states.values():
-        state.cache_format = 'striped_v1'; state.rotation_v_nz = torch.empty(256, 256, device='meta')
+        state.cache_format = 'striped_v1'
+        state.rotation_v_bf16 = torch.empty(256, 256, dtype=torch.bfloat16, device='meta')
+        state.rotation_v_nz = None
     f.run(metadata)
-    assert selected == ['attention_cv_hybrid_l1_decode_out', 'attention_cv_l1_reuse_cluster16_out']*16
+    assert selected == ['attention_cv_bf16_decode_out', 'attention_cv_bf16_cluster16_out']*16
     assert f.counts['prepare'] == f.counts['suppress'] == 2
     assert f.counts['cv'] == f.counts['current_fia'] == f.counts['store'] == f.counts['merge'] == 32
     assert f.counts['guard'] == 48
@@ -269,7 +273,7 @@ def test_region_capacity_uses_descriptor_units_and_overlapping_writer_expires(mo
         assert reused_slots(workspace, long, 'full1', shape, stream, context) is None
 
 
-@pytest.mark.parametrize('fault', ['none', 'stale_source', 'stale_binary', 'incomplete', 'release'])
+@pytest.mark.parametrize('fault', ['none', 'stale_source', 'stale_binary', 'incomplete', 'release', 'wrong_mode'])
 def test_observe_gate_binds_sources_and_artifact_keeps_reports_separate(monkeypatch, tmp_path, fault):
     from tools import observe_serve
     from oscar_ascend.ops import loader
@@ -288,6 +292,8 @@ def test_observe_gate_binds_sources_and_artifact_keeps_reports_separate(monkeypa
         if fault == 'stale_source': report['source_binding'] = {}
         elif fault == 'stale_binary': report['artifact_sha256'] = {'extension': 'old'}
         elif fault == 'incomplete': report['cases'].pop()
+        elif fault == 'wrong_mode':
+            report.update(validation_mode='correctness_only_user_requested', timing=None, performance='not_run_user_requested')
         output.write_text(json.dumps(report))
         (tmp_path/(name+'.json')).write_text(json.dumps({'returncode': 0}))
     monkeypatch.setattr(observe_serve, '_phase', phase)
@@ -306,7 +312,7 @@ def test_observe_gate_binds_sources_and_artifact_keeps_reports_separate(monkeypa
 
 def test_prepare_gate_failure_blocks_managed_service_and_preserves_rc(monkeypatch, tmp_path):
     from tools import observe_serve
-    for name in ('_preflight', '_candidate_gate', '_fast_unpack_gate', '_mixed_optimization_gate', '_striped_cache_gate'):
+    for name in ('_preflight', '_bf16_attention_gate', '_striped_cache_gate'):
         monkeypatch.setattr(observe_serve, name, lambda *args: None)
     def failure(*args):
         error = RuntimeError('metadata gate rejected'); error.returncode = 2
@@ -320,3 +326,16 @@ def test_prepare_gate_failure_blocks_managed_service_and_preserves_rc(monkeypatc
     effective = json.loads((tmp_path/'effective-target.json').read_text())
     assert effective['experimental_prepare_reuse'] is True
     assert effective['max_num_batched_tokens'] == 16384 and effective['enable_prefix_caching'] is False
+
+
+@pytest.mark.parametrize('fault', ['none', 'wrong_mode', 'timing_present', 'missing_error', 'missing_consumer'])
+def test_bf16_metadata_correctness_gate_needs_no_timing_but_keeps_semantics(fault):
+    report = report_fixture()
+    report.update(validation_mode='correctness_only_user_requested', timing=None,
+                  performance='not_run_user_requested')
+    if fault == 'wrong_mode': report['validation_mode'] = 'metadata_latency'
+    elif fault == 'timing_present': report['timing'] = {'off_ms': 1.0}
+    elif fault == 'missing_error': report['cases'][2]['task_error'] = 'all_zero'
+    elif fault == 'missing_consumer': report['cases'][0]['on']['consumer_copies'] = 0
+    if fault == 'wrong_mode': report['timing'] = {}
+    assert bool(probe.validate_evidence(report)) is (fault != 'none')

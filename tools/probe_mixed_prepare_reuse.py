@@ -194,6 +194,10 @@ def validate_evidence(report):
         current=case.get('on',{}).get('native_context_id')
         if current is None or current==previous:bad.append(case['case']+'.new_context')
         previous=current
+    if isinstance(report,dict) and report.get('validation_mode')=='correctness_only_user_requested':
+        if report.get('timing') is not None or report.get('performance')!='not_run_user_requested':
+            bad.append('unexpected_performance_evidence')
+        return bad
     timing=report.get('timing',{}) if isinstance(report,dict) else {}
     samples=timing.get('samples_ms',{})
     valid=(set(samples)==set(MODES) and all(isinstance(samples[m],list) and len(samples[m])==5
@@ -210,6 +214,7 @@ def validate_evidence(report):
 
 def probe(config_path,acceptance_path):
     target=json.loads(config_path.read_text());acceptance=json.loads(acceptance_path.read_text())
+    correctness_only=target.get('experimental_bf16_attention',False) is True
     from .probe_history_reuse import _active_device
     _active_device(target)
     if target.get('experimental_prepare_reuse') is not True:
@@ -253,7 +258,7 @@ def probe(config_path,acceptance_path):
     values=input_values(torch,32768)
     for key,tensor in tensors.items():tensor.copy_(values[key])
     samples={mode:[] for mode in MODES}
-    for repeat in range(7):
+    for repeat in range(0 if correctness_only else 7):
         order=MODES if repeat<2 or (repeat-2)%2==0 else tuple(reversed(MODES))
         for mode in order:
             begin,end=torch.npu.Event(enable_timing=True),torch.npu.Event(enable_timing=True)
@@ -265,18 +270,20 @@ def probe(config_path,acceptance_path):
                     or any(not torch.equal(snapshot[key],goldens[CASE_NAMES[0]][key]) for key in snapshot)):
                 raise RuntimeError('timed full metadata chain changed fields/counts')
             if repeat>=2:samples[mode].append(elapsed)
-    old,new=(statistics.median(samples[mode]) for mode in MODES)
+    old,new=(None,None) if correctness_only else (statistics.median(samples[mode]) for mode in MODES)
     now={'input_'+name:t.data_ptr() for name,t in tensors.items()}
     now.update({'arena_'+name:getattr(workspace,name).data_ptr() for name in ('tasks','positions','slots')})
     if now!=addresses:raise RuntimeError('metadata input/output addresses moved')
-    timing={'off_ms':old,'on_ms':new,'ratio':new/old,'speedup':old/new,'samples_ms':samples,
+    timing=None if correctness_only else {'off_ms':old,'on_ms':new,'ratio':new/old,'speedup':old/new,'samples_ms':samples,
             'minimum_speedup':MIN_SPEEDUP,'scope':TIMING_SCOPE,'gate':'passed' if new<=old else 'failed'}
-    result={'status':'passed' if new<=old else 'failed','device_completion':'passed',
+    result={'status':'passed' if correctness_only or new<=old else 'failed','device_completion':'passed',
         'precision':'all_task_fields_and_positions_bitwise','scope':'mixed_prepare_only_no_CV_no_model',
         'same_addresses':True,'source_inputs_unchanged':True,'tokens':TOKENS,'layers':LAYERS,
         'split_tokens':[SHORT_TOKENS,LONG_TOKENS],'cases':list(rows.values()),'timing':timing,
         'artifact_signature':manifest['signature'],'artifact_sha256':manifest['sha256'],
-        'source_binding':source_binding(),'whole_service_performance':'not_established'}
+        'source_binding':source_binding(),'whole_service_performance':'not_established',
+        'validation_mode':'correctness_only_user_requested' if correctness_only else 'metadata_latency',
+        'performance':'not_run_user_requested' if correctness_only else ('passed' if new<=old else 'failed')}
     bad=validate_evidence(result)
     if bad:result.update(status='failed',evidence_mismatches=bad)
     return result

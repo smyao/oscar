@@ -1,4 +1,4 @@
-"""Mock-report rejection tests; no NPU acceptance is generated here."""
+"""Archive #126/#145/#148: mock-report rejection, no NPU acceptance here."""
 from copy import deepcopy
 import json
 from pathlib import Path
@@ -26,6 +26,17 @@ def evidence():
 
 def test_complete_mock_schema():
     report,acceptance=evidence();probe.validate_case_evidence(report,acceptance)
+
+
+def test_bf16_partition_requires_actual_readers_but_no_timing():
+    report,acceptance=evidence();report['bf16_attention']=True
+    for row in report['cases']:
+        row.update(precision='BF16_independent_runtime_oracle_passed',performance='not_run_user_requested',timings=None,
+          bf16_cv_calls={'old':{'attention_cv_bf16_cluster16_out':1},
+                         'new':{'attention_cv_bf16_cluster16_out':1,'attention_cv_bf16_decode_out':1}})
+    probe.validate_case_evidence(report,acceptance)
+    report['cases'][-1]['bf16_cv_calls']['new'].pop('attention_cv_bf16_decode_out')
+    with pytest.raises(RuntimeError,match='actual BF16'):probe.validate_case_evidence(report,acceptance)
 
 
 @pytest.mark.parametrize('mutate',[

@@ -1,0 +1,14 @@
+{
+  "host_archive_verified": true,
+  "owned_exited_pids": [
+    703744,
+    703756,
+    703874,
+    703883
+  ],
+  "removed_stage_relative": [
+    "npuchk",
+    "cceprint",
+    "stub_reg.log"
+  ]
+}

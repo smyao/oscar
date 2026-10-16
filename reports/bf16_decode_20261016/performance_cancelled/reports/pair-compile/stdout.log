@@ -1,0 +1,172 @@
+[  2%] Creating directories for 'oscar_bf16_decode_precompile'
+[  4%] No download step for 'oscar_bf16_decode_precompile'
+[  7%] No update step for 'oscar_bf16_decode_precompile'
+[  9%] No patch step for 'oscar_bf16_decode_precompile'
+[ 11%] Performing configure step for 'oscar_bf16_decode_precompile'
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_precompile-prefix/src/oscar_bf16_decode_precompile-build
+[ 14%] Performing build step for 'oscar_bf16_decode_precompile'
+[ 33%] Building CXX object CMakeFiles/precompile_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_bf16_decode.cpp.o
+[ 66%] Building CXX object CMakeFiles/precompile_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_hybrid_l1_decode.cpp.o
+[100%] Building CXX object CMakeFiles/precompile_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_mdl_decode.cpp.o
+[100%] Built target precompile_obj
+[100%] Built target check_src_template
+[ 16%] No install step for 'oscar_bf16_decode_precompile'
+[ 19%] Completed 'oscar_bf16_decode_precompile'
+[ 19%] Built target oscar_bf16_decode_precompile
+[ 21%] Creating directories for 'oscar_bf16_decode_preprocess'
+[ 23%] No download step for 'oscar_bf16_decode_preprocess'
+[ 26%] No update step for 'oscar_bf16_decode_preprocess'
+[ 28%] No patch step for 'oscar_bf16_decode_preprocess'
+[ 30%] Performing configure step for 'oscar_bf16_decode_preprocess'
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_preprocess-prefix/src/oscar_bf16_decode_preprocess-build
+[ 33%] Performing build step for 'oscar_bf16_decode_preprocess'
+[ 22%] Building CXX object CMakeFiles/aiv_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_bf16_decode.cpp.o
+[ 11%] Building CXX object CMakeFiles/preprocess_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_bf16_decode.cpp.o
+[ 33%] Building CXX object CMakeFiles/preprocess_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_hybrid_l1_decode.cpp.o
+[ 44%] Building CXX object CMakeFiles/preprocess_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_mdl_decode.cpp.o
+[ 44%] Built target preprocess_obj
+[ 55%] Building CXX object CMakeFiles/aic_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_bf16_decode.cpp.o
+[ 66%] Building CXX object CMakeFiles/aic_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_hybrid_l1_decode.cpp.o
+[ 77%] Building CXX object CMakeFiles/aiv_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_hybrid_l1_decode.cpp.o
+[ 88%] Building CXX object CMakeFiles/aic_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_mdl_decode.cpp.o
+[ 88%] Built target aic_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_preprocess-prefix/src/oscar_bf16_decode_preprocess-build/CMakeFiles/aic_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_bf16_decode.cpp.o -o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_preprocess-prefix/src/oscar_bf16_decode_preprocess-build/CMakeFiles/aic_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_bf16_decode.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_preprocess-prefix/src/oscar_bf16_decode_preprocess-build/CMakeFiles/aic_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_hybrid_l1_decode.cpp.o -o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_preprocess-prefix/src/oscar_bf16_decode_preprocess-build/CMakeFiles/aic_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_hybrid_l1_decode.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_preprocess-prefix/src/oscar_bf16_decode_preprocess-build/CMakeFiles/aic_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_mdl_decode.cpp.o -o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_preprocess-prefix/src/oscar_bf16_decode_preprocess-build/CMakeFiles/aic_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_mdl_decode.cpp.o[ 88%] Built target merge_aic_obj_text
+[100%] Building CXX object CMakeFiles/aiv_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_mdl_decode.cpp.o
+[100%] Built target aiv_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_preprocess-prefix/src/oscar_bf16_decode_preprocess-build/CMakeFiles/aiv_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_bf16_decode.cpp.o -o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_preprocess-prefix/src/oscar_bf16_decode_preprocess-build/CMakeFiles/aiv_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_bf16_decode.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_preprocess-prefix/src/oscar_bf16_decode_preprocess-build/CMakeFiles/aiv_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_hybrid_l1_decode.cpp.o -o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_preprocess-prefix/src/oscar_bf16_decode_preprocess-build/CMakeFiles/aiv_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_hybrid_l1_decode.cpp.o/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_preprocess-prefix/src/oscar_bf16_decode_preprocess-build/CMakeFiles/aiv_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_mdl_decode.cpp.o -o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_preprocess-prefix/src/oscar_bf16_decode_preprocess-build/CMakeFiles/aiv_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_mdl_decode.cpp.o[100%] Built target merge_aiv_obj_text
+[WARNING]: Multiple kernel functions are detected. It is recommended to define only one kernel function per file.
+[WARNING]: Multiple kernel functions are detected. It is recommended to define only one kernel function per file.
+[100%] Built target _host_cpp
+[ 35%] No install step for 'oscar_bf16_decode_preprocess'
+[ 38%] Completed 'oscar_bf16_decode_preprocess'
+[ 38%] Built target oscar_bf16_decode_preprocess
+[ 42%] Creating directories for 'oscar_bf16_decode_aiv_device'
+[ 42%] Creating directories for 'oscar_bf16_decode_aic_device'
+[ 45%] No download step for 'oscar_bf16_decode_aiv_device'
+[ 47%] No download step for 'oscar_bf16_decode_aic_device'
+[ 50%] No update step for 'oscar_bf16_decode_aiv_device'
+[ 52%] No update step for 'oscar_bf16_decode_aic_device'
+[ 57%] No patch step for 'oscar_bf16_decode_aic_device'
+[ 57%] No patch step for 'oscar_bf16_decode_aiv_device'
+[ 59%] Performing configure step for 'oscar_bf16_decode_aic_device'
+[ 61%] Performing configure step for 'oscar_bf16_decode_aiv_device'
+-- The C compiler identification is GNU 13.3.0
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_aic_device-prefix/src/oscar_bf16_decode_aic_device-build
+-- Build files have been written to: /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_aiv_device-prefix/src/oscar_bf16_decode_aiv_device-build
+[ 66%] Performing build step for 'oscar_bf16_decode_aic_device'
+[ 66%] Performing build step for 'oscar_bf16_decode_aiv_device'
+[ 33%] Building CXX object CMakeFiles/device_obj.dir/tmp/oscar-bf16-decode-20261016/build/pair/auto_gen/oscar_bf16_decode/auto_gen_attention_cv_bf16_decode.cpp.o
+[ 33%] Building CXX object CMakeFiles/device_obj.dir/tmp/oscar-bf16-decode-20261016/build/pair/auto_gen/oscar_bf16_decode/auto_gen_attention_cv_bf16_decode.cpp.o
+[ 66%] Building CXX object CMakeFiles/device_obj.dir/tmp/oscar-bf16-decode-20261016/build/pair/auto_gen/oscar_bf16_decode/auto_gen_attention_cv_hybrid_l1_decode.cpp.o
+[ 66%] Building CXX object CMakeFiles/device_obj.dir/tmp/oscar-bf16-decode-20261016/build/pair/auto_gen/oscar_bf16_decode/auto_gen_attention_cv_hybrid_l1_decode.cpp.o
+[100%] Building CXX object CMakeFiles/device_obj.dir/tmp/oscar-bf16-decode-20261016/build/pair/auto_gen/oscar_bf16_decode/auto_gen_attention_cv_mdl_decode.cpp.o
+[100%] Built target device_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_aic_device-prefix/src/oscar_bf16_decode_aic_device-build/CMakeFiles/device_obj.dir/tmp/oscar-bf16-decode-20261016/build/pair/auto_gen/oscar_bf16_decode/auto_gen_attention_cv_bf16_decode.cpp.o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_aic_device-prefix/src/oscar_bf16_decode_aic_device-build/CMakeFiles/device_obj.dir/tmp/oscar-bf16-decode-20261016/build/pair/auto_gen/oscar_bf16_decode/auto_gen_attention_cv_hybrid_l1_decode.cpp.o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_aic_device-prefix/src/oscar_bf16_decode_aic_device-build/CMakeFiles/device_obj.dir/tmp/oscar-bf16-decode-20261016/build/pair/auto_gen/oscar_bf16_decode/auto_gen_attention_cv_mdl_decode.cpp.o -static -o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_aic_device_dir/device.o
+[100%] Built target merge_device_obj
+[ 69%] No install step for 'oscar_bf16_decode_aic_device'
+[ 71%] Completed 'oscar_bf16_decode_aic_device'
+[ 71%] Built target oscar_bf16_decode_aic_device
+[ 73%] Creating directories for 'oscar_bf16_decode_host'
+[ 76%] No download step for 'oscar_bf16_decode_host'
+[ 78%] No update step for 'oscar_bf16_decode_host'
+[ 80%] No patch step for 'oscar_bf16_decode_host'
+[ 83%] Performing configure step for 'oscar_bf16_decode_host'
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_host-prefix/src/oscar_bf16_decode_host-build
+[ 85%] Performing build step for 'oscar_bf16_decode_host'
+[ 33%] Building CXX object CMakeFiles/host_bisheng_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_bf16_decode.cpp.o
+[100%] Building CXX object CMakeFiles/device_obj.dir/tmp/oscar-bf16-decode-20261016/build/pair/auto_gen/oscar_bf16_decode/auto_gen_attention_cv_mdl_decode.cpp.o
+[ 66%] Building CXX object CMakeFiles/host_bisheng_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_hybrid_l1_decode.cpp.o
+[100%] Building CXX object CMakeFiles/host_bisheng_obj.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_mdl_decode.cpp.o
+[100%] Built target host_bisheng_obj
+[ 88%] Performing install step for 'oscar_bf16_decode_host'
+[100%] Built target host_bisheng_obj
+Install the project...
+-- Install configuration: "Release"
+-- Installing: /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_host_dir/./objects-Release/host_bisheng_obj/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_bf16_decode.cpp.o
+-- Installing: /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_host_dir/./objects-Release/host_bisheng_obj/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_hybrid_l1_decode.cpp.o
+-- Installing: /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_host_dir/./objects-Release/host_bisheng_obj/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_mdl_decode.cpp.o
+[ 90%] Completed 'oscar_bf16_decode_host'
+[ 90%] Built target oscar_bf16_decode_host
+[100%] Built target device_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_aiv_device-prefix/src/oscar_bf16_decode_aiv_device-build/CMakeFiles/device_obj.dir/tmp/oscar-bf16-decode-20261016/build/pair/auto_gen/oscar_bf16_decode/auto_gen_attention_cv_bf16_decode.cpp.o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_aiv_device-prefix/src/oscar_bf16_decode_aiv_device-build/CMakeFiles/device_obj.dir/tmp/oscar-bf16-decode-20261016/build/pair/auto_gen/oscar_bf16_decode/auto_gen_attention_cv_hybrid_l1_decode.cpp.o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_aiv_device-prefix/src/oscar_bf16_decode_aiv_device-build/CMakeFiles/device_obj.dir/tmp/oscar-bf16-decode-20261016/build/pair/auto_gen/oscar_bf16_decode/auto_gen_attention_cv_mdl_decode.cpp.o -static -o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_aiv_device_dir/device.o
+[100%] Built target merge_device_obj
+[ 92%] No install step for 'oscar_bf16_decode_aiv_device'
+[ 95%] Completed 'oscar_bf16_decode_aiv_device'
+[ 95%] Built target oscar_bf16_decode_aiv_device
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -x -m aicorelinux   -Ttext=0 /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_aic_device_dir/device.o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_aiv_device_dir/device.o -static -o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_merge_obj_dir/device.o
+[ 95%] Built target oscar_bf16_decode_merge_obj
+[ 97%] Building CXX object CMakeFiles/oscar_bf16_decode_host_stub_obj.dir/auto_gen/oscar_bf16_decode/host_stub.cpp.o
+[ 97%] Built target oscar_bf16_decode_host_stub_obj
+[100%] Linking CXX shared library lib/liboscar_bf16_decode.so
+/usr/local/Ascend/cann-9.1.0/bin/ascendc_pack_kernel /tmp/oscar-bf16-decode-20261016/build/pair/CMakeFiles/oscar_bf16_decode_host_stub_obj.dir/auto_gen/oscar_bf16_decode/host_stub.cpp.o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_merge_obj_dir/device.o 0 /tmp/oscar-bf16-decode-20261016/build/pair/CMakeFiles/oscar_bf16_decode_host_stub_obj.dir/auto_gen/oscar_bf16_decode/host_stub.cpp.o
+recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -s -shared -Wl,-soname,liboscar_bf16_decode.so -o lib/liboscar_bf16_decode.so CMakeFiles/oscar_bf16_decode_host_stub_obj.dir/auto_gen/oscar_bf16_decode/host_stub.cpp.o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_host_dir/objects-Release/host_bisheng_obj/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_bf16_decode.cpp.o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_host_dir/objects-Release/host_bisheng_obj/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_hybrid_l1_decode.cpp.o /tmp/oscar-bf16-decode-20261016/build/pair/oscar_bf16_decode_host_dir/objects-Release/host_bisheng_obj/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_mdl_decode.cpp.o    -L/usr/local/Ascend/cann-9.1.0/lib64  -L/usr/local/Ascend/cann-9.1.0/tools/simulator/ascend910b4/lib  /usr/local/Ascend/cann-9.1.0/lib64/libascendc_runtime.a -lascend_dump -lc_sec
+[100%] Built target oscar_bf16_decode

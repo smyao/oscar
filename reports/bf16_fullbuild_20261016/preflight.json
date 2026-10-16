@@ -1,0 +1,21 @@
+{
+  "status": "host_preflight_passed_not_staged",
+  "expected_capabilities": 48,
+  "CMake_Torch_Python_capabilities_exact": true,
+  "new_kernel_headers_complete": [
+    "csrc/kernels/attention_cv_bf16_decode.cpp",
+    "csrc/kernels/attention_cv_bf16_cluster4.cpp",
+    "csrc/kernels/attention_cv_bf16_cluster16.cpp",
+    "csrc/include/oscar_bf16_decode_launch.h",
+    "csrc/include/oscar_bf16_cluster_launch.h"
+  ],
+  "frozen_FE0_exact": true,
+  "source_file_count": 126,
+  "source_bytes": 2346514,
+  "build_jobs": 2,
+  "total_timeout_seconds": 600,
+  "phase_timeout_seconds": 300,
+  "waiting_for_root_freeze": true,
+  "NPU_accessed": false,
+  "kernel_performance": "not_run"
+}

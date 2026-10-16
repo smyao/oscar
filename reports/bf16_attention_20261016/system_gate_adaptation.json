@@ -1,0 +1,40 @@
+{
+  "status": "host_system_gate_adaptation_passed",
+  "contract": "oscar_bf16_attention_v2",
+  "tests": {
+    "passed": 93,
+    "scope": "7 focused oracle/core/lifecycle suites; no NPU execution"
+  },
+  "changes": [
+    "manual LayerState initializes natural BF16 Rv and sufficient C4/C16 workspace",
+    "BF16 current-only validates new q4/q1 call witnesses",
+    "first-MTP and mixed compare BF16 CV/native-current arms to their independent predeclared math contracts",
+    "same-BF16 subsequent q1 still requires output/store bitwise equality and actual BF16 q1 invocation",
+    "APC reader follows BF16 selection, naturalBF16 Rv, original real writer, immutable pages, changed-context graph and reuse checks",
+    "BF16 branches do not create timing Events or require historical speed gates; performance=not_run_user_requested",
+    "legacy FP32 branches retain their original numerical/performance behavior"
+  ],
+  "sampled_oracle_evidence": "request-relative128/GQA groups and per-source/split KV256 origins; exact canonical cache/window inputs; sampled rows only for long lifecycle probes",
+  "native_current_evidence_boundary": "unchanged native BF16 FIA gets its original independent dense numerical reference; its closed internal rounding is not claimed exact",
+  "preserved": [
+    "old configs/acceptance.json",
+    "old ops/reference.py",
+    "quantization/storage metadata contracts",
+    "native references",
+    "FE0 status_guard",
+    "main and stable branch refs"
+  ],
+  "source_sha256": {
+    "tools/probe_current_only.py": "8f38ef929a9dfa5ab8002585c0c335dc8e5e7bb459a39c1efdd9422597bf1906",
+    "tools/probe_first_mtp_current.py": "d1a22a0a7c16f9232369f198b28072e18b1716ac5c62e7a04d8e28f6e5abb66d",
+    "tools/probe_mixed_decode_split.py": "184330f197a8eae912ed6661042db552df5c259e73c6e10bec4b0fda9883f251",
+    "tools/probe_prefix_cache.py": "59f7b62df57e9555131a8da7d3a3dfae3fc1130b5f7e8948012f0c66868f9a33",
+    "tools/bf16_runtime_oracle.py": "82e0b29b4fc045689a6b603886fa9a05af32f8449fe2c29841cc411f04b50801",
+    "tools/bf16_reference.py": "7b9b71b1bfe6198f41e36962c10adcca1e6863b03b9a9ad391c1533aed0ec859",
+    "tools/probe_bf16_attention.py": "b627047ef98065bcc6d1f729f91f92cd3640f39720369e51e24739b3647a6191",
+    "configs/acceptance_bf16.json": "0e137f2233f5d76418e4291cb773f0a501b7a9e3f2d35c1c6d485a51551b9054"
+  },
+  "NPU": "not_run",
+  "graph": "not_run",
+  "performance": "not_run_user_requested"
+}

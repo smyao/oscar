@@ -15,6 +15,8 @@
 #include "include/oscar_c16_member_pipeline_launch.h"
 #include "include/oscar_c16_l1_reuse_launch.h"
 #include "include/oscar_hybrid_l1_decode_launch.h"
+#include "include/oscar_bf16_decode_launch.h"
+#include "include/oscar_bf16_cluster_launch.h"
 namespace {
 void Check(const at::Tensor& x,const at::Tensor& owner,at::ScalarType type,
            const char* name,bool contiguous=true) {
@@ -34,7 +36,7 @@ void Disjoint(const at::Tensor& a,const at::Tensor& b) {
     bn+=static_cast<uint64_t>(b.size(axis)-1)*b.stride(axis)*b.element_size();
   TORCH_CHECK(ap<bp?bp-ap>=an:ap-bp>=bn,"attention output aliases an input/output");
 }
-template<auto Launch, bool Small = false, int64_t WorkspaceBytes = 0>
+template<auto Launch, bool Small = false, int64_t WorkspaceBytes = 0, bool Bf16Rotation = false>
 void AttentionStriped(const at::Tensor& query,const at::Tensor& queryRot,
     const at::Tensor& currentKey,const at::Tensor& currentValue,
     const at::Tensor& rotation,const at::Tensor& raw,const at::Tensor& table,
@@ -46,7 +48,7 @@ void AttentionStriped(const at::Tensor& query,const at::Tensor& queryRot,
   Check(query,query,at::kBFloat16,"query");Check(queryRot,query,at::kFloat,"query_rot");
   Check(currentKey,query,at::kBFloat16,"current_key");
   Check(currentValue,query,at::kBFloat16,"current_value");
-  Check(rotation,query,at::kFloat,"rotation_v");Check(raw,query,at::kByte,"raw");
+  Check(rotation,query,Bf16Rotation ? at::kBFloat16 : at::kFloat,"rotation_v");Check(raw,query,at::kByte,"raw");
   Check(table,query,at::kInt,"block_table");Check(tasks,query,at::kLong,"tasks");
   Check(windowKey,query,at::kBFloat16,"window_key",false);
   Check(windowValue,query,at::kBFloat16,"window_value",false);
@@ -62,7 +64,7 @@ void AttentionStriped(const at::Tensor& query,const at::Tensor& queryRot,
   TORCH_CHECK(hk>0 && hq>=hk && hq%hk==0 && hq/hk<=16,"invalid GQA");
   if constexpr (Small) TORCH_CHECK(hq/hk<=8,"striped M32 requires GQA <= 8");
   TORCH_CHECK(rotation.dim()==2 && rotation.size(0)==d && rotation.size(1)==d,
-      "rotation_v must be float32 [D,D]");
+      "rotation_v must be [D,D] in the selected compute dtype");
   TORCH_CHECK(blocks>0 && blockTokens>0 && blockTokens%128==0 && ssmOffset>=0 &&
       pageStride>=blockTokens*hk*(d/2+8),"invalid compressed physical geometry");
   TORCH_CHECK(raw.dim()==1 && ssmOffset<=raw.numel() &&
@@ -107,7 +109,7 @@ void AttentionStriped(const at::Tensor& query,const at::Tensor& queryRot,
       windowKey.stride(0),windowTags.stride(0),sink,recent,speculative,splits,
       static_cast<float>(scale),static_cast<uint32_t>(cores));
 }
-template<auto Launch, int ClusterSize, int64_t WorkspaceBytes = 0>
+template<auto Launch, int ClusterSize, int64_t WorkspaceBytes = 0, bool Bf16Rotation = false>
 void AttentionStripedCluster(const at::Tensor& query,const at::Tensor& queryRot,
     const at::Tensor& currentKey,const at::Tensor& currentValue,
     const at::Tensor& rotation,const at::Tensor& raw,const at::Tensor& table,
@@ -119,7 +121,7 @@ void AttentionStripedCluster(const at::Tensor& query,const at::Tensor& queryRot,
   Check(query,query,at::kBFloat16,"query");Check(queryRot,query,at::kFloat,"query_rot");
   Check(currentKey,query,at::kBFloat16,"current_key");
   Check(currentValue,query,at::kBFloat16,"current_value");
-  Check(rotation,query,at::kFloat,"rotation_v");Check(raw,query,at::kByte,"raw");
+  Check(rotation,query,Bf16Rotation ? at::kBFloat16 : at::kFloat,"rotation_v");Check(raw,query,at::kByte,"raw");
   Check(table,query,at::kInt,"block_table");Check(tasks,query,at::kLong,"tasks");
   Check(windowKey,query,at::kBFloat16,"window_key",false);
   Check(windowValue,query,at::kBFloat16,"window_value",false);
@@ -135,7 +137,7 @@ void AttentionStripedCluster(const at::Tensor& query,const at::Tensor& queryRot,
   const auto hk=currentKey.size(1);
   TORCH_CHECK(hk>0 && hq>=hk && hq%hk==0 && hq/hk<=16,"invalid GQA");
   TORCH_CHECK(rotation.dim()==2 && rotation.size(0)==d && rotation.size(1)==d,
-      "rotation_v must be float32 [D,D]");
+      "rotation_v must be [D,D] in the selected compute dtype");
   TORCH_CHECK(blocks>0 && blockTokens>0 && blockTokens%128==0 && ssmOffset>=0 &&
       pageStride>=blockTokens*hk*(d/2+8),"invalid compressed physical geometry");
   TORCH_CHECK(raw.dim()==1 && ssmOffset<=raw.numel() &&
@@ -188,6 +190,30 @@ void AttentionStripedCluster(const at::Tensor& query,const at::Tensor& queryRot,
 }
 }
 TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
+  m.def("attention_cv_bf16_decode_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+      "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
+      "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
+      "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
+      "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
+      "int splits, float scale, int cube_cores) -> ()");
+  m.def("attention_cv_bf16_decode_q1_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+      "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
+      "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
+      "Tensor(d!) workspace, int block_tokens, int physical_blocks, int raw_ssm_offset, "
+      "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
+      "int splits, float scale, int cube_cores) -> ()");
+  m.def("attention_cv_bf16_cluster4_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+      "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
+      "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
+      "Tensor(d!) workspace, Tensor(e!) cluster_stats, int block_tokens, int physical_blocks, int raw_ssm_offset, "
+      "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
+      "int splits, float scale, int cube_cores) -> ()");
+  m.def("attention_cv_bf16_cluster16_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+      "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
+      "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
+      "Tensor(d!) workspace, Tensor(e!) cluster_stats, int block_tokens, int physical_blocks, int raw_ssm_offset, "
+      "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
+      "int splits, float scale, int cube_cores) -> ()");
   m.def("attention_cv_striped_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
       "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
       "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
@@ -298,6 +324,11 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
       "int splits, float scale, int cube_cores) -> ()");
 }
 TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
+  m.impl("attention_cv_bf16_decode_out", &AttentionStriped<oscar_ascend::attention_cv_bf16_decode_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256),true>);
+  m.impl("attention_cv_bf16_decode_q1_out", &AttentionStriped<oscar_ascend::attention_cv_bf16_decode_q1_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256),true>);
+  m.impl("attention_cv_bf16_cluster4_out", &AttentionStripedCluster<oscar_ascend::attention_cv_bf16_cluster4_launch,4,oscar_ascend::attention_bf16_cluster4_workspace_per_core(256),true>);
+  m.impl("attention_cv_bf16_cluster16_out", &AttentionStripedCluster<oscar_ascend::attention_cv_bf16_cluster16_launch,16,oscar_ascend::attention_bf16_cluster16_workspace_per_core(256),true>);
+
   m.impl("attention_cv_l1_reuse_cluster16_out", &AttentionStripedCluster<oscar_ascend::attention_cv_l1_reuse_cluster16_launch,16,oscar_ascend::attention_c16_l1_reuse_workspace_per_core(256)>);
   m.impl("attention_cv_member_pipeline_cluster16_out", &AttentionStripedCluster<oscar_ascend::attention_cv_member_pipeline_cluster16_launch,16,oscar_ascend::attention_c16_member_pipeline_workspace_per_core(256)>);
   m.impl("attention_cv_hybrid_l1_decode_out", &AttentionStriped<oscar_ascend::attention_cv_hybrid_l1_decode_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256)>);

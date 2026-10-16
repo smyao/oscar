@@ -181,8 +181,10 @@ def test_observer_wires_enabled_gate_before_service_and_failure_blocks_it(tmp_pa
     source=json.loads((observe_serve.ROOT/"configs/target.json").read_text())
     source["experimental_current_only"]=True
     config=tmp_path/"config.json";config.write_text(json.dumps(source))
-    for name in ("_preflight","_candidate_gate","_fast_unpack_gate","_mixed_optimization_gate",
-                 "_striped_cache_gate","_decode_bundle_gate"):
+    # Isolate the one gate under test; unrelated newer NPU gates must not
+    # launch resource observers in this host-only wiring regression.
+    for name in ("_preflight",)+tuple(name for name in dir(observe_serve)
+                 if name.startswith('_') and name.endswith('_gate') and name!='_current_only_gate'):
         monkeypatch.setattr(observe_serve,name,lambda *a,**k:None)
     entered=[]
     def gate(*args):
@@ -196,3 +198,21 @@ def test_observer_wires_enabled_gate_before_service_and_failure_blocks_it(tmp_pa
     assert entered==[True]
     saved=json.loads((tmp_path/"logs/status.json").read_text())
     assert saved["failed_phase"]=="current-only-npu" and saved["returncode"]==19
+
+
+def test_bf16_current_only_requires_new_readers_without_timing():
+    report=complete_report();config={**target(),'experimental_bf16_attention':True}
+    for row in report['cases']:
+        row['performance']='not_run_user_requested'
+        calls=row['real_operator_calls']
+        if 'ab_output' in row:
+            row['ab_output']='separate_BF16_native_contracts_passed'
+            calls['attention_cv_bf16_decode_out']=calls.pop('attention_cv_striped_decode_out')
+            calls['attention_cv_bf16_decode_q1_out']=calls.pop('attention_cv_striped_q1_out')
+        else:
+            calls['copy_validate_current_out']=calls['rotate_clip_store_striped_out']=1
+            row.pop('device_event_ms');row.pop('device_event_median_ms')
+    policy={'performance':{'warmup':2,'repeats':5}}
+    probe.validate_case_evidence(report,config,policy)
+    report['cases'][0]['real_operator_calls'].pop('attention_cv_bf16_decode_q1_out')
+    with pytest.raises(RuntimeError):probe.validate_case_evidence(report,config,policy)

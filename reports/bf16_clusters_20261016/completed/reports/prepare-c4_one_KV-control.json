@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "status": "completed",
+  "supervisor_pid": 703496,
+  "child_pid": 703497,
+  "child_pgid": 703497,
+  "command": [
+    "bash",
+    "run-phase.sh",
+    "prepare",
+    "c4",
+    "c4_one_KV"
+  ],
+  "cwd": "/tmp/oscar-bf16-clusters-20261016",
+  "timeout_seconds": 120.0,
+  "started_utc": "2026-10-16T02:49:55.693388+00:00",
+  "stdout_path": "/tmp/oscar-bf16-clusters-20261016/reports/prepare-c4_one_KV/stdout.log",
+  "stderr_path": "/tmp/oscar-bf16-clusters-20261016/reports/prepare-c4_one_KV/stderr.log",
+  "lock_path": "/tmp/oscar-cann-validation.lock",
+  "lock_acquired": true,
+  "timed_out": false,
+  "interrupt_signal": null,
+  "child_returncode": 0,
+  "cleanup_complete": true,
+  "cleanup_grace_seconds": 12.0,
+  "cleanup_signals": [],
+  "supervisor_returncode": 0,
+  "child_env_override_keys": [],
+  "child_started_utc": "2026-10-16T02:49:55.697032+00:00",
+  "child_elapsed_seconds": 0.16103324003051966,
+  "elapsed_seconds": 0.16474189108703285,
+  "finished_utc": "2026-10-16T02:49:55.858114+00:00"
+}

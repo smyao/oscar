@@ -1,0 +1,95 @@
+{
+  "status": "ready",
+  "source_capabilities": 48,
+  "fresh_build": true,
+  "files": {
+    "reports/bf16_fullbuild_20261016/artifact_verification.json": {
+      "sha256": "b2b756832789ffc0e569550d800c0ed09de47f4d7630ef387d6b4f560c20f197",
+      "bytes": 788
+    },
+    "reports/bf16_fullbuild_20261016/collection_transport.json": {
+      "sha256": "1d0d34bfc88917b28802dc49795d8c24cb2efdabb9d13b3de28d0670c7264149",
+      "bytes": 57
+    },
+    "reports/bf16_fullbuild_20261016/completed/build/ascendc/build_manifest.json": {
+      "sha256": "1cabd1a4cdce33193aa3535e9588bed609ed89c7e296b210d1f8cfbe28c92eaa",
+      "bytes": 2819
+    },
+    "reports/bf16_fullbuild_20261016/completed/build/ascendc/oscar_build_signature.json": {
+      "sha256": "f7df66366e30e16e9e387bf71f45ed9167c3a6407ed14fa21f36e4c701fb1785",
+      "bytes": 10318
+    },
+    "reports/bf16_fullbuild_20261016/completed/collection_status.json": {
+      "sha256": "bcd6d25b007c12027a2b4a1d7dca12f6677ab1ba9e368cf9274a030bbec3e065",
+      "bytes": 319
+    },
+    "reports/bf16_fullbuild_20261016/completed/reports/build.json": {
+      "sha256": "f7df66366e30e16e9e387bf71f45ed9167c3a6407ed14fa21f36e4c701fb1785",
+      "bytes": 10318
+    },
+    "reports/bf16_fullbuild_20261016/completed/reports/fullbuild-control.json": {
+      "sha256": "da6718e0bc1f3726790f5e12166a890d7bc98e0bb0b3e57881ebbcc614c77e6a",
+      "bytes": 1196
+    },
+    "reports/bf16_fullbuild_20261016/completed/reports/fullbuild-phases/compile-1.json": {
+      "sha256": "283971d6acae3a642022248438818c303fb78fc49fec578b912f038c828a43ad",
+      "bytes": 369
+    },
+    "reports/bf16_fullbuild_20261016/completed/reports/fullbuild-phases/compile-1.log": {
+      "sha256": "9d4507a8e326704f1128804c6adef039b25002bafe51f85b991fc154ae424dcd",
+      "bytes": 158499
+    },
+    "reports/bf16_fullbuild_20261016/completed/reports/fullbuild-phases/configure-1.json": {
+      "sha256": "eea3ebc048c4e35f1c72b25aad6c1531291c29dfb1b6711465f6c85515f8cb27",
+      "bytes": 948
+    },
+    "reports/bf16_fullbuild_20261016/completed/reports/fullbuild-phases/configure-1.log": {
+      "sha256": "9e270cd57d93756efeb975b58b6644cadcae175ee5eb543ca172d09f3ca041f1",
+      "bytes": 2939
+    },
+    "reports/bf16_fullbuild_20261016/completed/reports/fullbuild-supervisor-logs/stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "reports/bf16_fullbuild_20261016/completed/reports/fullbuild-supervisor-logs/stdout.log": {
+      "sha256": "a54c30967897c8ae4b038d05e6ee4d7f28c4bc7ae2f1dac6a17726b3f307a166",
+      "bytes": 172891
+    },
+    "reports/bf16_fullbuild_20261016/completed/source_stage.json": {
+      "sha256": "d12766952e995fc22f97e1ed94c519eea5c22665a167e3bb5e9ef0a49dd8ecf9",
+      "bytes": 14954
+    },
+    "reports/bf16_fullbuild_20261016/completed/source_verification.json": {
+      "sha256": "2603d07aecbdbdc6ff92cdd48753b3832996a2d8c92b0342e27be7b2fd390a59",
+      "bytes": 14398
+    },
+    "reports/bf16_fullbuild_20261016/cross_component_review.json": {
+      "sha256": "3df2e8a9051c94dc39f6b3959a0fe214f24e0f7ff35e0281e8abca515249ac66",
+      "bytes": 2307
+    },
+    "reports/bf16_fullbuild_20261016/driver.py": {
+      "sha256": "ffc7f0d81108bbdfc9ee2a98853a80f384377d07a239f3b02416bd2b4ca40dd9",
+      "bytes": 9449
+    },
+    "reports/bf16_fullbuild_20261016/driver_provenance.json": {
+      "sha256": "acec70d7e4772fe3151a9e862015753339485cee7d69bab6c2366bb051aa7bf4",
+      "bytes": 531
+    },
+    "reports/bf16_fullbuild_20261016/preflight.json": {
+      "sha256": "eeb31d916a7c39fddbeb1de1ef760d0001d5601497992b0df5510dcf5f392694",
+      "bytes": 678
+    },
+    "reports/bf16_fullbuild_20261016/source_stage.json": {
+      "sha256": "6ab6dcc5e8734feeab61a0921ccf5c9081356e096a823a9a776db7a5c6c5584b",
+      "bytes": 14955
+    },
+    "reports/bf16_fullbuild_20261016/summary.json": {
+      "sha256": "c9f8f39cdcb395ad32a3c9983223381de3a1a946d3ebe9208bcfe6ffe27d56dc",
+      "bytes": 2757
+    }
+  },
+  "total_bytes": 421490,
+  "excluded": "collection.tar duplicate transport archive; build binaries remain in isolated VM stage; __pycache__ directories and .pyc/.pyo interpreter caches",
+  "NPU": "not_run",
+  "performance": "not_run_user_cancelled_local_timing"
+}

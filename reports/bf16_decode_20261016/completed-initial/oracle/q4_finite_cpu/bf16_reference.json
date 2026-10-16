@@ -1,0 +1,85 @@
+{
+  "contract": "oscar_bf16_attention_v2",
+  "acceptance_sha256": "de8a60e859e506f11925ee0e7efb9a0e4cc0d149ef0d15256f169279143f4b5f",
+  "oracle_sha256": "1b4a54450bc1ac36a9cb8df15bc491b78ee57cf6aa87e3cd6975ef414c2f2681",
+  "actual_tasks_sha256": "3a7cc923b7947a11c03ec4174703daf1badc44432eb1a169665f6154a6129f72",
+  "all_task_slots": 24,
+  "fixture_inputs_sha256": {
+    "case_flags.txt": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "ck.bin": "ce757a662db5f4efd8a161c339b7cc6a22a43487b0760a55f006cb1ed6410d47",
+    "cv.bin": "e2e4ba7abc699563031ec5ecfa64556fc9c935a39d48fa7c9425a4878975d453",
+    "expected_lse.bin": "b282afcbbcf15ab3cfa784e9dc59e19cb9ffa1935103efa079cfd4023efacfca",
+    "expected_output.bin": "122d8a25f5aae495f27ad79984d35d3fa3da20cf6880520253348bcbcef53951",
+    "expected_positions.bin": "1e846dd17eeabdec5c2239dfb805f930ab543344517b4e0d0422e53116bbb3ba",
+    "lens.bin": "04f3752cca56e0f9ac5391033674780617fe1636a594e050937ca4429df6efd3",
+    "q.bin": "33c484c5f85992e206021d9ea6a543d917bdf89ee02ab55761bc539b4847f2d5",
+    "qr.bin": "16b791b0302c7cb5eaa5c05171c1878eadd083d314feaf5a0acd696e7ef37e5b",
+    "raw.bin": "805f2bc229d9b6b4f6b46208db85c18de9e50b6f24c46b3c16c24c9f9027f11b",
+    "raw_striped.bin": "805843d12bd1f788b62f8a44e4a59fc88306e2a90cc1f98a2e94c8a92979d3cb",
+    "required_status_checks.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "rv.bin": "01945d071added92e622bb102b644ae414ce0b550a0d080f051fc0d2a25c8c52",
+    "rv_nz.bin": "57d0d25184c2022d2c296348c74b4a1c7f1079b3be386e8b62749ef17c2d8d39",
+    "shape.txt": "587d141a6b5532f51dffaddf450f3e4e5720fd56b970aca6864cb5d72aec8e45",
+    "slots.bin": "0cfcf30557cd03ccecce9c1f1ef947aeda81f62fb3d9437de0ab76e4aafa73dd",
+    "starts.bin": "a793829a02facc184584d96f9b5ab078907a0894a4588be70485afd1741001f1",
+    "table.bin": "24e0858c9c2ac4c329fb64a24382ba011a6cb89b56abd78a8196401e03df1af5",
+    "tags.bin": "ce033874632b260e913c7b785d3a435492a4f057c7c1873cac523ef0aae33c62",
+    "tolerance.txt": "088abab6dbaf0dc022293d927c52a06dfe55b7cc305b197f200649fb58e823a3",
+    "wk.bin": "d16f5c6e7f2623daf32d066016bf55bebb483d923bf2b8d3e8c4d92bc00d372d",
+    "wv.bin": "448c56ab040c4223c149b8b6d20728ac2b4b4dbb7b2664e655d5216585e75840"
+  },
+  "old_FP32_expected_files_unchanged": true,
+  "device_execution": "not_run",
+  "NPU": "not_run",
+  "public_rotation": {
+    "path": "rv_bf16.bin",
+    "dtype": "bfloat16",
+    "layout": "natural_ND",
+    "sha256": "af4155480d294a9f997607d6386cc8afd62fb235fd9e4bfb79140de1bb3b56b2",
+    "conversion": "initialization RNE, not candidate output"
+  },
+  "status": "independent_BF16_golden_exported",
+  "outputs": {
+    "partial": {
+      "path": "bf16_expected_partial.bin",
+      "shape": [
+        8,
+        6,
+        3,
+        256
+      ],
+      "dtype": "float32",
+      "sha256": "4a82570fda46ff08fe730f518e8c0423239f02757c456223cdb4da59dea3f0e2"
+    },
+    "lse": {
+      "path": "bf16_expected_lse.bin",
+      "shape": [
+        8,
+        6,
+        3
+      ],
+      "dtype": "float32",
+      "sha256": "e834cd2eb1eb2398d959d588654030d0f56b04425f39324c910fe56bae27e1ed"
+    },
+    "output": {
+      "path": "bf16_expected_output.bin",
+      "shape": [
+        8,
+        6,
+        256
+      ],
+      "dtype": "float32",
+      "sha256": "305cf4551af12955a4173871e644aca5fda19d03f3f7512d43059474eb91d6b5"
+    },
+    "output_lse": {
+      "path": "bf16_expected_output_lse.bin",
+      "shape": [
+        8,
+        6
+      ],
+      "dtype": "float32",
+      "sha256": "e9ee1d6ba80a7e71c9a2d9744a6523ebfa53816ad0a8ffce2c9918c6a784e016"
+    }
+  },
+  "original_FP32_comparison_role": "diagnostic, not BF16 acceptance"
+}

@@ -1,0 +1,329 @@
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 704113] exit success!
+[SUCCESS][CORE_1][pid 704114] exit success!
+[SUCCESS][CORE_2][pid 704115] exit success!
+[SUCCESS][CORE_3][pid 704116] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_7][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704140] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_7][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704140] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_7][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704139] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_7][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704139] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_17][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704169] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_17][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704169] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_17][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704170] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_17][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704170] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_12][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704155] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_12][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704155] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_12][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704154] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_12][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704154] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_2][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704125] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_2][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704125] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_2][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704124] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_2][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704124] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_15][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704164] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_15][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704164] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_1][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704122] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_1][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704122] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_14][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704160] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_14][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704160] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_14][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704161] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_14][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704161] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_19][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704175] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_19][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704175] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_19][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704176] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_19][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704176] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_5][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704133] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_5][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704133] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_4][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704131] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_4][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704131] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_15][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704163] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_15][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704163] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_9][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704145] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_9][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704145] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_11][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704152] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_11][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704152] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_10][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704148] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_10][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704148] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_9][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704146] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_9][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704146] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_10][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704149] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_10][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704149] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_6][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704136] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_6][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704136] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_16][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704167] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_16][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704167] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_4][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704130] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_4][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704130] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_1][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704121] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_1][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704121] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_11][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704151] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_11][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704151] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_5][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704134] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_5][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704134] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_6][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704137] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_6][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704137] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_16][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704166] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_16][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704166] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-li[TmSim]: Run in serial mode.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][Reunux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true,seSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/as may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/as[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 704117] exit success!
+c/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_1][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704119] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+c/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][704118] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[SUCCESS][AIV_0][pid 704118] exit success!
+[SUCCESS][AIV_1][pid 704119] exit success!
+[SUCCESS][AIC_1][pid 704120] exit success!
+[SUCCESS][AIV_2][pid 704121] exit success!
+[SUCCESS][AIV_3][pid 704122] exit success!
+[SUCCESS][AIC_2][pid 704123] exit success!
+[SUCCESS][AIV_4][pid 704124] exit success!
+[SUCCESS][AIV_5][pid 704125] exit success!
+[SUCCESS][AIC_3][pid 704126] exit success!
+[SUCCESS][AIV_6][pid 704127] exit success!
+[SUCCESS][AIV_7][pid 704128] exit success!
+[SUCCESS][AIC_4][pid 704129] exit success!
+[SUCCESS][AIV_8][pid 704130] exit success!
+[SUCCESS][AIV_9][pid 704131] exit success!
+[SUCCESS][AIC_5][pid 704132] exit success!
+[SUCCESS][AIV_10][pid 704133] exit success!
+[SUCCESS][AIV_11][pid 704134] exit success!
+[SUCCESS][AIC_6][pid 704135] exit success!
+[SUCCESS][AIV_12][pid 704136] exit success!
+[SUCCESS][AIV_13][pid 704137] exit success!
+[SUCCESS][AIC_7][pid 704138] exit success!
+[SUCCESS][AIV_14][pid 704139] exit success!
+[SUCCESS][AIV_15][pid 704140] exit success!
+[SUCCESS][AIC_8][pid 704141] exit success!
+[SUCCESS][AIV_16][pid 704142] exit success!
+[SUCCESS][AIV_17][pid 704143] exit success!
+[SUCCESS][AIC_9][pid 704144] exit success!
+[SUCCESS][AIV_18][pid 704145] exit success!
+[SUCCESS][AIV_19][pid 704146] exit success!
+[SUCCESS][AIC_10][pid 704147] exit success!
+[SUCCESS][AIV_20][pid 704148] exit success!
+[SUCCESS][AIV_21][pid 704149] exit success!
+[SUCCESS][AIC_11][pid 704150] exit success!
+[SUCCESS][AIV_22][pid 704151] exit success!
+[SUCCESS][AIV_23][pid 704152] exit success!
+[SUCCESS][AIC_12][pid 704153] exit success!
+[SUCCESS][AIV_24][pid 704154] exit success!
+[SUCCESS][AIV_25][pid 704155] exit success!
+[SUCCESS][AIC_13][pid 704156] exit success!
+[SUCCESS][AIV_26][pid 704157] exit success!
+[SUCCESS][AIV_27][pid 704158] exit success!
+[SUCCESS][AIC_14][pid 704159] exit success!
+[SUCCESS][AIV_28][pid 704160] exit success!
+[SUCCESS][AIV_29][pid 704161] exit success!
+[SUCCESS][AIC_15][pid 704162] exit success!
+[SUCCESS][AIV_30][pid 704163] exit success!
+[SUCCESS][AIV_31][pid 704164] exit success!
+[SUCCESS][AIC_16][pid 704165] exit success!
+[SUCCESS][AIV_32][pid 704166] exit success!
+[SUCCESS][AIV_33][pid 704167] exit success!
+[SUCCESS][AIC_17][pid 704168] exit success!
+[SUCCESS][AIV_34][pid 704169] exit success!
+[SUCCESS][AIV_35][pid 704170] exit success!
+[SUCCESS][AIC_18][pid 704171] exit success!
+[SUCCESS][AIV_36][pid 704172] exit success!
+[SUCCESS][AIV_37][pid 704173] exit success!
+[SUCCESS][AIC_19][pid 704174] exit success!
+[SUCCESS][AIV_38][pid 704175] exit success!
+[SUCCESS][AIV_39][pid 704176] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 704191] exit success!
+[SUCCESS][CORE_1][pid 704192] exit success!
+[SUCCESS][CORE_2][pid 704193] exit success!
+[SUCCESS][CORE_3][pid 704194] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","mode":"c16","oracle":true,"includes_bf16_rv":true,"partial_max_abs":0.000971079,"lse_max_abs":4.76837e-07,"output_max_abs":0.000772543,"eligible_clusters":1,"members":16,"gm_guards":true,"inputs_immutable":true,"task_count":1008}

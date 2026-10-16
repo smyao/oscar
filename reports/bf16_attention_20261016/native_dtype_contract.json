@@ -1,0 +1,84 @@
+{
+  "status": "code_and_prior_local_evidence_verified",
+  "current_new_contract": "oscar_bf16_attention_v2",
+  "evidence": [
+    {
+      "claim_scope": "Qwen3.5 FULL uses Qwen3NextAttention",
+      "path": "references/vllm/vllm/model_executor/models/qwen3_5.py",
+      "sha256": "04f3de5372973770d71c5c05f2e8a5e221ec52b62cca7a1e302d9201b61b8adc"
+    },
+    {
+      "claim_scope": "Qwen QKV/norm/RoPE/attention call",
+      "path": "references/vllm/vllm/model_executor/models/qwen3_next.py",
+      "sha256": "8d614ce262ab9340585f9a2ad4ab117228f076e3672fcb5f04930ff0a38223ae"
+    },
+    {
+      "claim_scope": "Ascend fused QKV+norm+mrope passes qkv dtype",
+      "path": "references/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py",
+      "sha256": "21fc9a2064f9b490ffcf3d61bacc8ddb67806a4c7490895a33128e65438838d3"
+    },
+    {
+      "claim_scope": "Native fused q/k/v output allocation",
+      "path": "references/vllm-ascend/vllm_ascend/ops/triton/linearnorm/split_qkv_rmsnorm_mrope.py",
+      "sha256": "ba3c7e740c3a2a9c8850733d3be77fefac79bc3ed02a45b4be076b58d6f7632d"
+    },
+    {
+      "claim_scope": "Native TND FIA direct Q/K/V calls",
+      "path": "references/vllm-ascend/vllm_ascend/attention/attention_v1.py",
+      "sha256": "80005aba42bcf61247cc0d91502a0f1338194a4b38dd82bc521f6d3c84958390"
+    },
+    {
+      "claim_scope": "Native A2 BF16 template entrypoint",
+      "path": "references/vllm-ascend/csrc/attention/sparse_flash_attention/op_kernel/sparse_flash_attention.cpp",
+      "sha256": "d78d073dfcc4bd2bf7eab378be62557209152bfdf325dbace8af3632bfc249e2"
+    },
+    {
+      "claim_scope": "Native A2 float L0C and Mmad",
+      "path": "references/vllm-ascend/csrc/attention/sparse_flash_attention/op_kernel/arch22/sparse_flash_attention_service_cube_mla.h",
+      "sha256": "800c3a0346dd8f323263d0a1ba47f0d4fd600149a195d40d26adeaffcd861814"
+    },
+    {
+      "claim_scope": "Native output BF16 RNE",
+      "path": "references/vllm-ascend/csrc/attention/sparse_flash_attention/op_kernel/arch22/sparse_flash_attention_service_vector_mla.h",
+      "sha256": "20851c57a145472c17f71e3cd7ff03158a12dcbac822392b601928b5875f35be"
+    },
+    {
+      "claim_scope": "Existing official SDK BF16 inputs/float output proof",
+      "path": "csrc/experiments/fp32_bf16_mmad_ratio/kernel.cpp",
+      "sha256": "fff777c808673c6bb1adc19c0d685f1e8c7ee8d5fbb545cc6e6c4812ba34ffdb"
+    },
+    {
+      "claim_scope": "Existing completed instruction dtype proof",
+      "path": "reports/fp32_bf16_mmad_ratio_20261010/decision.json",
+      "sha256": "980f73122c56b41dc5bdce1cceacac2c8ef5cd9faaf7e7942b419192532bf49f"
+    }
+  ],
+  "confirmed": [
+    "Native projection/norm/RoPE passes through the activation dtype to Q/K/V; native FIA Python does not explicitly promote those operands toFP32",
+    "The working OSCAR production entrypoint explicitly requires BF16 Q/K/V before either old or new CV route",
+    "Native A2 open sparse attention uses BF16 operand instantiations with float L0C/GM results",
+    "Existing same-SDK complete micro receipt confirms BF16F32 instruction dtype versus F32F32; BF16 operands plus FP32 accumulation are not the old FP32 operand multiply path",
+    "Native BF16 output cast uses CAST_RINT in the inspected open A2 implementation"
+  ],
+  "not_claimed": [
+    "Closed FIA internal P rounding/reduction tree is not visible from its Python interface",
+    "Open sparse-MLA evidence is hardware/API precedent, not proof that Qwen dense FIA uses identical internals",
+    "Current model config/weights are not present locally; no remote server accessed",
+    "Old1.2129/1.3259 Matmul micro ratios are not new full-operator or whole-model speed estimates"
+  ],
+  "numeric_choice": "QK,PV,Rv use BF16 operands with FP32 accumulators; FP32 online max/sum/alpha, normalization, LSE and merge; original storage/quant/query rotation and GDN unchanged",
+  "why_FP32_state_remains": "This is standard stable accumulation/state precision rather than FP32 multiplication operands; prevents underflow/overflow and preserves merge contracts. It does not select the old F32F32 Cube path.",
+  "old_FP32_reference_and_acceptance_unchanged_vs_base": {
+    "oscar_ascend/ops/reference.py": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
+    "configs/acceptance.json": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811"
+  },
+  "archive_basis": [
+    "#13 output errors cannot be excused by correct LSE",
+    "#126 valid-to-padding query ownership",
+    "#145 score/P async lifecycle and CPU evidence boundary",
+    "#148 model quality is separate from synthetic local accuracy",
+    "D.4 full original logs:6499.8-6655.1ms history restore and209-215ms writer are forbidden patterns"
+  ],
+  "NPU": "not_run",
+  "native_e2e_target": "not_established"
+}

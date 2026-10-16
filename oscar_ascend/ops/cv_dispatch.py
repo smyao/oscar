@@ -27,6 +27,12 @@ MEMBER_PIPELINE_CV_OP = "attention_cv_member_pipeline_cluster4_out"
 C16_MEMBER_PIPELINE_CV_OP = "attention_cv_member_pipeline_cluster16_out"
 C16_L1_REUSE_CV_OP = "attention_cv_l1_reuse_cluster16_out"
 HYBRID_L1_DECODE_CV_OP = "attention_cv_hybrid_l1_decode_out"
+BF16_DECODE_CV_OP = "attention_cv_bf16_decode_out"
+BF16_Q1_CV_OP = "attention_cv_bf16_decode_q1_out"
+BF16_C4_CV_OP = "attention_cv_bf16_cluster4_out"
+BF16_C16_CV_OP = "attention_cv_bf16_cluster16_out"
+BF16_CV_OPS = frozenset({BF16_DECODE_CV_OP, BF16_Q1_CV_OP, BF16_C4_CV_OP, BF16_C16_CV_OP})
+
 OPTIMIZED_STRIPED_OPS = {
     STRIPED_CV_OP: "attention_cv_window_range_out",
     STRIPED_BALANCED_CV_OP: "attention_cv_window_range_balanced_out",
@@ -42,7 +48,7 @@ CLUSTER_CV_OPS = frozenset({CLUSTER4_CV_OP, FAST_CLUSTER4_CV_OP,
                             "attention_cv_window_range_cluster4_out",
                             "attention_cv_window_range_cluster16_out",
                             MEMBER_PIPELINE_CV_OP, C16_MEMBER_PIPELINE_CV_OP,
-                            C16_L1_REUSE_CV_OP})
+                            C16_L1_REUSE_CV_OP, BF16_C4_CV_OP, BF16_C16_CV_OP})
 FAST_CV_OPS = frozenset({FAST_CV_OP, FAST_Q1_CV_OP, FAST_CLUSTER4_CV_OP})
 MIXED_CV_OPS = frozenset({FAST_BALANCED_CV_OP, FAST_CLUSTER16_CV_OP})
 STRIPED_CV_OPS = frozenset({STRIPED_CV_OP, STRIPED_Q1_CV_OP,
@@ -53,11 +59,32 @@ STRIPED_CV_OPS = frozenset({STRIPED_CV_OP, STRIPED_Q1_CV_OP,
 def select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len, *, q1_draft=False,
                  fast_unpack=False, mixed_cv=False, striped_cache=False, decode_bundle=False,
                  c4_member_pipeline=False, mdl_decode=False,
-                 c16_member_pipeline=False, hybrid_l1_decode=False, c16_l1_reuse=False):
+                 c16_member_pipeline=False, hybrid_l1_decode=False, c16_l1_reuse=False, bf16_attention=False):
     if any(type(flag) is not bool for flag in (fast_unpack, mixed_cv, striped_cache, decode_bundle,
                                               c4_member_pipeline, mdl_decode,
-                                              c16_member_pipeline, hybrid_l1_decode, c16_l1_reuse)):
+                                              c16_member_pipeline, hybrid_l1_decode, c16_l1_reuse, bf16_attention)):
         raise ValueError("CV experiment flags must be explicit booleans")
+    if bf16_attention:
+        if not (striped_cache and decode_bundle and mixed_cv):
+            raise ValueError("BF16 attention requires the physical-page striped bundle")
+        old = select_cv_op(cluster_size, heads, kv_heads, tokens, max_query_len,
+            q1_draft=q1_draft, fast_unpack=fast_unpack, mixed_cv=mixed_cv,
+            striped_cache=striped_cache, decode_bundle=decode_bundle,
+            c4_member_pipeline=c4_member_pipeline, mdl_decode=mdl_decode,
+            c16_member_pipeline=c16_member_pipeline, hybrid_l1_decode=hybrid_l1_decode,
+            c16_l1_reuse=c16_l1_reuse)
+        if old in {HYBRID_L1_DECODE_CV_OP, MDL_DECODE_CV_OP, "attention_cv_bundle_decode_out"}:
+            return BF16_DECODE_CV_OP
+        if old in {MDL_DECODE_Q1_CV_OP, "attention_cv_bundle_q1_out"}:
+            return BF16_Q1_CV_OP
+        if old in {C16_L1_REUSE_CV_OP, C16_MEMBER_PIPELINE_CV_OP, "attention_cv_window_range_cluster16_out"}:
+            return BF16_C16_CV_OP
+        if old in {MEMBER_PIPELINE_CV_OP, "attention_cv_window_range_cluster4_out",
+                   "attention_cv_window_range_out", "attention_cv_window_range_balanced_out"}:
+            # The C4 reader retains the complete BF16 C1 path when no request
+            # can form a cluster; no short-prefill/graph route leaks to FP32.
+            return BF16_C4_CV_OP
+        raise ValueError("BF16 attention has no qualified reader for " + old)
     if hybrid_l1_decode or c16_member_pipeline or c16_l1_reuse:
         # #148/#154: only replace the separately qualified complete reader.
         # Native launch budget, cluster eligibility and q1 remain unchanged.

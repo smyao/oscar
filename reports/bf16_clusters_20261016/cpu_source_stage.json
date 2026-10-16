@@ -1,0 +1,13 @@
+{
+  "base": "7047ce36",
+  "files": {
+    "csrc/experiments/bf16_clusters_20261016/fixture.py": "1494c6a4986b950df274a492ef4cf1ffbf4c07d821900476a96f5231eeb6d49c",
+    "csrc/experiments/bf16_clusters_20261016/harness.py": "1b7621d1fe37384b3d703ba72d14a665855d0dbf8ae5527dac3cd0214e6c5bc9",
+    "csrc/experiments/bf16_clusters_20261016/CMakeLists.txt": "022caeb6aee3cad8ec842c1df41195a67465071d317e21fa15e10a56ca81ceea",
+    "csrc/experiments/bf16_clusters_20261016/probe.cpp": "68dfc72a0211a689b03ac955b78fa48f2d1fa36abc914593db979024d820bb0f",
+    "csrc/experiments/bf16_clusters_20261016/harness.json": "8ee4eed700c614137daa6fe80c20e3c1dcbb8dca8a1ebcebc85d47c9e1f6e11c",
+    "csrc/experiments/bf16_clusters_20261016/README.md": "04a8272b23683ca4561aaa12b53ecaf5c1c86a334120e0b7b271a8d8f33e0858",
+    "csrc/experiments/bf16_decode_20261016/probe.cpp": "b265fb67fb5465fb8e62635924cc7ceb1788afbe4237838264bda87f4493d060"
+  },
+  "scope": "complete CPU correctness only; no local timing qualification"
+}

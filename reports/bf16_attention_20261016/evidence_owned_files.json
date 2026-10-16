@@ -1,0 +1,142 @@
+{
+  "status": "ready_for_parent_stage_only",
+  "files": [
+    {
+      "path": "configs/acceptance_bf16.json",
+      "sha256": "0e137f2233f5d76418e4291cb773f0a501b7a9e3f2d35c1c6d485a51551b9054",
+      "bytes": 2476
+    },
+    {
+      "path": "reports/bf16_attention_20261016/cluster_source_contract_review.json",
+      "sha256": "79d821a564d54361b185ac7ded44966827818fcde0fdf7ed557d850b553f67bc",
+      "bytes": 1315
+    },
+    {
+      "path": "reports/bf16_attention_20261016/cluster_source_manifest.json",
+      "sha256": "4999ad63fc4ded6fce4e869b69b2159f5a1c5fa1849fa639bcded1578e590f50",
+      "bytes": 4288
+    },
+    {
+      "path": "reports/bf16_attention_20261016/final_rv_host_screen.json",
+      "sha256": "51813d64685ec1fcfce457eb5c0b046db9107b74c147f053ccb007a8a8cf01ea",
+      "bytes": 9772
+    },
+    {
+      "path": "reports/bf16_attention_20261016/native_dtype_contract.json",
+      "sha256": "0266833d4f4fe2aa901c973187279b1ed7b31ea107e2ae4f171a3a29d896057c",
+      "bytes": 4804
+    },
+    {
+      "path": "reports/bf16_attention_20261016/oracle_host_validation.json",
+      "sha256": "aa4117b901722a348435d712bc2200fda50c35c930e7cdc48f4b2ab2b241febd",
+      "bytes": 5873
+    },
+    {
+      "path": "reports/bf16_attention_20261016/oracle_location_migration/old_ops_bf16_reference.py",
+      "sha256": "1b4a54450bc1ac36a9cb8df15bc491b78ee57cf6aa87e3cd6975ef414c2f2681",
+      "bytes": 12103
+    },
+    {
+      "path": "reports/bf16_attention_20261016/oracle_location_migration/proof.json",
+      "sha256": "98c6dd4c423fb82ce942674666f833f18b93c781baa18669f05dbc47dbe3795b",
+      "bytes": 894
+    },
+    {
+      "path": "reports/bf16_attention_20261016/oracle_location_migration/q4_golden_equivalence.json",
+      "sha256": "a6a844987fed136f6f9a908378f2286b121164a00ad45b0929f4e502cf95e9dd",
+      "bytes": 848
+    },
+    {
+      "path": "reports/bf16_attention_20261016/superseded_fp32_rv_draft.json",
+      "sha256": "23aa2ac2593b51bd9067519517304ce0e6a90409747c8e27d671555d17b01e68",
+      "bytes": 2398
+    },
+    {
+      "path": "reports/bf16_attention_20261016/system_gate_adaptation.json",
+      "sha256": "16955c44ff9d97cd7f11032c902d7f5af0cad8a0f64b37bd0316768cace46745",
+      "bytes": 2433
+    },
+    {
+      "path": "reports/bf16_attention_20261016/task_abi_correction.json",
+      "sha256": "dc897b1f48e1e932293e0dd493ec4d7034bd9e6097d5231ed18041933c2b2c3c",
+      "bytes": 1074
+    },
+    {
+      "path": "tests/test_bf16_reference.py",
+      "sha256": "3c2d21f6bd55f6c5014d789a346dfe8739e2ba2c1f65732131e401c27ffbd6dd",
+      "bytes": 5797
+    },
+    {
+      "path": "tests/test_bf16_runtime_oracle.py",
+      "sha256": "7505f6120e0fe1cde5d89f97ce3d6a01a22d5b6e7e91d1951600c19efe9cb010",
+      "bytes": 2019
+    },
+    {
+      "path": "tests/test_probe_bf16_attention.py",
+      "sha256": "74bb365ce4a4d1ae700fc731e4169b69b1256b8cd91978920be44a8e231cebe1",
+      "bytes": 4041
+    },
+    {
+      "path": "tests/test_probe_current_only.py",
+      "sha256": "5239f1695527e3e448a561a5297a1e50e7f7325ba029df8af7bf8834671bef0c",
+      "bytes": 11914
+    },
+    {
+      "path": "tests/test_probe_first_mtp_current.py",
+      "sha256": "c468658a19b2b4da9cbb40e8133b3de11a873f8191ed5986cf4732fddbfde6f5",
+      "bytes": 5336
+    },
+    {
+      "path": "tests/test_probe_mixed_decode_split.py",
+      "sha256": "61b1e2cb8409a9fe811a9766b2c306a7ec713ed6783bc936393933a4f92088e1",
+      "bytes": 6785
+    },
+    {
+      "path": "tests/test_probe_prefix_cache.py",
+      "sha256": "6bc774b0242c220a635b5561bec537973617c0161e908bdc4f2a88a32b4d0a98",
+      "bytes": 10293
+    },
+    {
+      "path": "tools/bf16_reference.py",
+      "sha256": "7b9b71b1bfe6198f41e36962c10adcca1e6863b03b9a9ad391c1533aed0ec859",
+      "bytes": 12251
+    },
+    {
+      "path": "tools/bf16_runtime_oracle.py",
+      "sha256": "82e0b29b4fc045689a6b603886fa9a05af32f8449fe2c29841cc411f04b50801",
+      "bytes": 5751
+    },
+    {
+      "path": "tools/experiments/bf16_final_rv_screen.py",
+      "sha256": "3bfa2945d429d96512de66fe166f2aaf4302cd49126e0dff7ae97672c7339ab1",
+      "bytes": 4113
+    },
+    {
+      "path": "tools/probe_bf16_attention.py",
+      "sha256": "b627047ef98065bcc6d1f729f91f92cd3640f39720369e51e24739b3647a6191",
+      "bytes": 22370
+    },
+    {
+      "path": "tools/probe_current_only.py",
+      "sha256": "8f38ef929a9dfa5ab8002585c0c335dc8e5e7bb459a39c1efdd9422597bf1906",
+      "bytes": 27251
+    },
+    {
+      "path": "tools/probe_first_mtp_current.py",
+      "sha256": "d1a22a0a7c16f9232369f198b28072e18b1716ac5c62e7a04d8e28f6e5abb66d",
+      "bytes": 13979
+    },
+    {
+      "path": "tools/probe_mixed_decode_split.py",
+      "sha256": "184330f197a8eae912ed6661042db552df5c259e73c6e10bec4b0fda9883f251",
+      "bytes": 15750
+    },
+    {
+      "path": "tools/probe_prefix_cache.py",
+      "sha256": "59f7b62df57e9555131a8da7d3a3dfae3fc1130b5f7e8948012f0c66868f9a33",
+      "bytes": 20535
+    }
+  ],
+  "no_sdk_or_binary_logs": true,
+  "no_git_mutation_performed": true
+}

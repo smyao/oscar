@@ -1,0 +1,21 @@
+{
+  "status": "full_inverse_bytes_verified",
+  "old_path": "oscar_ascend/ops/bf16_reference.py",
+  "old_sha256": "1b4a54450bc1ac36a9cb8df15bc491b78ee57cf6aa87e3cd6975ef414c2f2681",
+  "new_path": "tools/bf16_reference.py",
+  "new_sha256": "a8477418b03ad467421d9873425171dde5e766c379595b80ec2d33797b261e26",
+  "only_changes": [
+    [
+      "from oscar_ascend.ops.reference import AttentionResult, decode_kv, merge_attention",
+      "from .reference import AttentionResult, decode_kv, merge_attention"
+    ],
+    [
+      "Path(__file__).resolve().parents[1] / \"configs/acceptance_bf16.json\"",
+      "Path(__file__).resolve().parents[2] / \"configs/acceptance_bf16.json\""
+    ]
+  ],
+  "all_arithmetic_contract_and_methods_byte_identical": true,
+  "contract": "oscar_bf16_attention_v2",
+  "old_CPU_receipts_remain_bound_to_old_hash": true,
+  "no_device_rerun_required_by_location_change": true
+}

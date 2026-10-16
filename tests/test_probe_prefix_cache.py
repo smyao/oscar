@@ -13,7 +13,10 @@ from tools.serving_variants import variant_config
 
 
 def candidate():
-    return variant_config(json.loads((probe.ROOT / "configs/target.json").read_text()), "candidate")
+    config=variant_config(json.loads((probe.ROOT / "configs/target.json").read_text()), "candidate")
+    # APC is explicitly opt-in under the frozen stable launch. These legacy
+    # storage tests exercise that opt-in, independently of the BF16 branch.
+    return {**config,"enable_prefix_caching":True,"experimental_bf16_attention":False}
 
 
 def synthetic_report():
@@ -154,10 +157,23 @@ def test_observe_prefix_failure_releases_resources_and_direct_keeps_same_route(m
     with pytest.raises(RuntimeError, match="actual prefix writer failure"):
         observe._prefix_cache_gate(tmp_path / "config.json", candidate(), {}, tmp_path, {})
     assert calls == ["release"]
-    assert observe.main(["--variant", "candidate", "--plan", "--probe-only"]) == 0
+    config_path=tmp_path/'prefix-config.json';config_path.write_text(json.dumps(candidate()))
+    assert observe.main(["--config",str(config_path),"--variant", "candidate", "--plan", "--probe-only"]) == 0
     plan = json.loads(capsys.readouterr().out)
     assert "prefix_cache_gate" in plan["phases"]
-    assert install_serve.main(["--variant", "candidate", "--plan"]) == 0
+    assert install_serve.main(["--config",str(config_path),"--variant", "candidate", "--plan"]) == 0
     direct = json.loads(capsys.readouterr().out)
     assert direct["runtime_selection"] == plan["runtime_selection"]
     assert direct["runtime_selection"]["prefix_caching"] is True
+
+
+def test_bf16_prefix_reader_and_oracle_are_explicit():
+    config={**candidate(),'experimental_bf16_attention':True}
+    assert probe.selected_reader(config)=='attention_cv_bf16_decode_out'
+    generator=torch.Generator().manual_seed(17)
+    logical=tuple(tuple(torch.randn(512,1,256,generator=generator).bfloat16() for _ in range(2)) for _ in range(2))
+    inputs=probe.make_inputs(torch,logical,((3,),(2,)),19)
+    old,_=probe.oracle(torch,logical,inputs)
+    new,lse=probe.oracle(torch,logical,inputs,bf16=True)
+    assert torch.isfinite(new).all() and torch.isfinite(lse).all()
+    assert not torch.equal(old,new)

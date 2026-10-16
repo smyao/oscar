@@ -1,0 +1,21 @@
+{
+  "status": "performance_work_cancelled_by_user",
+  "candidate_speedup": "not_established",
+  "later_CAModel_attempts": 0,
+  "q1_performance": "not_run",
+  "last_candidate_outcome": {
+    "signal": 9,
+    "elapsed_seconds": 13.40506085997913,
+    "timed_out": false,
+    "cleanup_complete": true,
+    "reason": "Lima kernel confirmed global OOM killing owned pid702960; no completion or numeric/profile result"
+  },
+  "pre_cancellation_baseline": "completed and retained, not a candidate performance result",
+  "OOM_recovery": "audit stopped before copying on old FIFO; 0 source files moved or removed; empty attempted destinations removed; user cancellation honored",
+  "system_settings_changed": false,
+  "source_directories_untouched": [
+    "/dev/shm/oscar-request-window-fullbuild-20261009",
+    "/dev/shm/oscar-quant-hotpath-20261009"
+  ],
+  "NPU_access": false
+}

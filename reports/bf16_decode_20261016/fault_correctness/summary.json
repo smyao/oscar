@@ -1,0 +1,67 @@
+{
+  "status": "fault_protocol_correctness_passed",
+  "cases": [
+    {
+      "family": "q4",
+      "status": "passed",
+      "full_status_bytes_equal_main_FP32": true,
+      "nonzero_status": [
+        {
+          "task": 0,
+          "lane": 0,
+          "code": 3
+        }
+      ],
+      "healthy_window_current_vs_independent_BF16_oracle": "passed",
+      "padding_output_zero_and_lse_negative_inf": "exact",
+      "readonly_input_domains_verified": [
+        "q.bin",
+        "ck.bin",
+        "cv.bin",
+        "rv.bin",
+        "wk.bin",
+        "wv.bin",
+        "tags.bin",
+        "table.bin",
+        "starts.bin",
+        "lens.bin",
+        "slots.bin"
+      ],
+      "elapsed_seconds_not_performance": 7.49868187692482,
+      "cleanup_complete": true
+    },
+    {
+      "family": "q1",
+      "status": "passed",
+      "full_status_bytes_equal_main_FP32": true,
+      "nonzero_status": [
+        {
+          "task": 0,
+          "lane": 0,
+          "code": 3
+        }
+      ],
+      "healthy_window_current_vs_independent_BF16_oracle": "passed",
+      "padding_output_zero_and_lse_negative_inf": "exact",
+      "readonly_input_domains_verified": [
+        "q.bin",
+        "ck.bin",
+        "cv.bin",
+        "rv.bin",
+        "wk.bin",
+        "wv.bin",
+        "tags.bin",
+        "table.bin",
+        "starts.bin",
+        "lens.bin",
+        "slots.bin"
+      ],
+      "elapsed_seconds_not_performance": 6.775786716956645,
+      "cleanup_complete": true
+    }
+  ],
+  "source_sha256": "8c73b6b6e0473edac416e607fc145ac15c72b3cbb41a5772da0c5befa06f92e1",
+  "performance": "not_run_user_cancelled",
+  "NPU": "not_run",
+  "graph": "not_run"
+}

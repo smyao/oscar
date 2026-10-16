@@ -55,10 +55,12 @@ def validate_case_evidence(report, acceptance):
     if any(not isinstance(n,str) for n in names) or set(names)!=set(expected):
         raise RuntimeError('first-MTP current cases missing, duplicated, or unexpected')
     policy=acceptance['performance']
-    forwards=1+policy['warmup']+policy['repeats']
+    bf16=report.get('bf16_attention',False)
+    forwards=1 if bf16 else 1+policy['warmup']+policy['repeats']
     for row in rows:
         qlens,slot=expected[row['case']]
-        required={'status':'passed','ab_output':'frozen_tolerance_passed','ab_lse':'frozen_tolerance_passed',
+        label='separate_BF16_native_contracts_passed' if bf16 else 'frozen_tolerance_passed'
+        required={'status':'passed','ab_output':label,'ab_lse':label,
                   'independent_oracle':'passed','store_bitwise':'passed','rotation':'draft_identity',
                   'slot_dtype':slot,'cache_reset_before_each_forward':True}
         if any(row.get(k)!=v for k,v in required.items()) or row.get('qlens')!=list(qlens):
@@ -68,6 +70,9 @@ def validate_case_evidence(report, acceptance):
         if row.get('native_current_calls')!={'baseline':0,'candidate':forwards}:
             raise RuntimeError('first-MTP current lacks actual native FIA witnesses')
         for side in ('baseline','candidate'):
+            if bf16:
+                if row.get('performance')!='not_run_user_requested':raise RuntimeError('BF16 first-MTP must not fabricate performance')
+                continue
             values=row.get('device_event_ms',{}).get(side)
             median=row.get('device_event_median_ms',{}).get(side)
             if (not isinstance(values,list) or len(values)!=policy['repeats'] or
@@ -79,12 +84,21 @@ def validate_case_evidence(report, acceptance):
             'output_bitwise':'passed','independent_oracle':'passed','subsequent_store_bitwise':'passed',
             'sampled_queries':2}.items()):
             raise RuntimeError('first-MTP current lacks subsequent q1 cache-reader evidence')
+        if bf16:
+            calls=row.get('bf16_cv_calls',{})
+            if (any(not isinstance(calls.get(side),dict) or not sum(v for k,v in calls[side].items()
+                        if k!='attention_cv_bf16_decode_q1_out') for side in ('baseline','candidate')) or
+                follow.get('operator')!='attention_cv_bf16_decode_q1_out'):
+                raise RuntimeError('first-MTP did not exercise actual BF16 CV/q1')
 
 
 def run_case(torch,target,acceptance,device,cores,case):
     qlens,slot=case;name=case_name(case)
     shape=reuse.Shape(name,qlens,(511,769),256,1,1,False)
     fixture=reuse.make_fixture(torch,shape,rotation_mode='identity')
+    bf16=target.get('experimental_bf16_attention',False)
+    expected={side:shared._expected(fixture,target,native_current=enabled)
+              for side,enabled in (('baseline',False),('candidate',True))}
     tensors={key:value.to(device) for key,value in fixture['cpu'].items()}
     tensors['slots']=tensors['slots'].to(getattr(torch,slot))
     sides={};snapshots={};outputs={};lses={};events={k:[] for k in ('baseline','candidate')}
@@ -102,30 +116,37 @@ def run_case(torch,target,acceptance,device,cores,case):
         assert metadata.current_only_plan is None
         sides[side]=(impl,state,metadata)
         snapshots[side]={key:getattr(state,key).clone() for key in cache_names}
-    for iteration in range(1+policy['warmup']+policy['repeats']):
+    for iteration in range(1 if bf16 else 1+policy['warmup']+policy['repeats']):
         for side in ('baseline','candidate'):
             impl,state,metadata=sides[side]
             for key,value in snapshots[side].items():getattr(state,key).copy_(value)
             output=torch.empty_like(tensors['q'])
-            start,end=torch.npu.Event(enable_timing=True),torch.npu.Event(enable_timing=True)
+            if not bf16:start,end=torch.npu.Event(enable_timing=True),torch.npu.Event(enable_timing=True)
             with counted_native_current() as calls:
-                start.record()
+                if not bf16:start.record()
                 shared._forward(torch,impl,state,tensors,metadata,output)
-                end.record();torch.npu.synchronize()
+                if not bf16:end.record()
+                torch.npu.synchronize()
             expected_calls=0 if side=='baseline' else 1
             if len(calls)!=expected_calls or (calls and calls[0]!={'tokens':sum(qlens),'cumulative':(qlens[0],sum(qlens))}):
                 raise RuntimeError('first-MTP native-current call geometry mismatch')
             witnesses[side]+=len(calls)
-            ms=float(start.elapsed_time(end))
-            if not math.isfinite(ms) or ms<=0:raise RuntimeError('invalid first-MTP device duration')
-            if iteration>policy['warmup']:events[side].append(ms)
+            if not bf16:
+                ms=float(start.elapsed_time(end))
+                if not math.isfinite(ms) or ms<=0:raise RuntimeError('invalid first-MTP device duration')
+                if iteration>policy['warmup']:events[side].append(ms)
             outputs[side]=output;lses[side]=state.workspace.lse[:fixture['tokens']].clone()
         if iteration==0:
-            for output in outputs.values():shared._assert_output(torch,output,fixture['expected'],tol)
-            torch.testing.assert_close(outputs['candidate'].float(),outputs['baseline'].float(),**tol)
-            torch.testing.assert_close(lses['candidate'],lses['baseline'],**tol)
+            for side,output in outputs.items():
+                shared._assert_output(torch,output,expected[side],tol)
+                if bf16:
+                    indexes=sorted(expected[side]);reference_lse=torch.stack([expected[side][i][1] for i in indexes])
+                    torch.testing.assert_close(lses[side][indexes].cpu(),reference_lse,**tol)
+            if not bf16:
+                torch.testing.assert_close(outputs['candidate'].float(),outputs['baseline'].float(),**tol)
+                torch.testing.assert_close(lses['candidate'],lses['baseline'],**tol)
             indexes=sorted(fixture['expected'])
-            oracle_lse=torch.stack([fixture['expected'][i][1] for i in indexes])
+            oracle_lse=torch.stack([expected['candidate'][i][1] for i in indexes])
             torch.testing.assert_close(lses['candidate'][indexes].cpu(),oracle_lse,**tol)
         shared._assert_stores(torch,sides['baseline'][1],sides['candidate'][1])
     old_impl,old,_=sides['baseline'];new_impl,new,_=sides['candidate']
@@ -134,15 +155,20 @@ def run_case(torch,target,acceptance,device,cores,case):
     if later_calls:raise RuntimeError('later q1 incorrectly selected first-MTP current FIA')
     copy_calls=sum(impl.provider.ops.calls['copy_validate_current_out'] for impl,_,_ in sides.values())
     if copy_calls:raise RuntimeError('first-MTP partial gate selected whole current-only shortcut')
-    medians={k:statistics.median(v) for k,v in events.items()}
+    medians={k:statistics.median(v) if v else None for k,v in events.items()}
+    label='separate_BF16_native_contracts_passed' if bf16 else 'frozen_tolerance_passed'
     row={'case':name,'status':'passed','qlens':list(qlens),'contexts':[511,769],
-         'slot_dtype':slot,'rotation':'draft_identity','ab_output':'frozen_tolerance_passed',
-         'ab_lse':'frozen_tolerance_passed','independent_oracle':'passed','store_bitwise':'passed',
+         'slot_dtype':slot,'rotation':'draft_identity','ab_output':label,
+         'ab_lse':label,'independent_oracle':'passed','store_bitwise':'passed',
          'cache_reset_before_each_forward':True,'current_only_calls':copy_calls,
          'native_current_calls':witnesses,'decode_after_store':follow,'device_event_ms':events,
-         'device_event_median_ms':medians,'candidate_over_baseline':medians['candidate']/medians['baseline'],
+         'device_event_median_ms':medians,'candidate_over_baseline':None if bf16 else medians['candidate']/medians['baseline'],
          'timing_scope':'same_input_eager_first_MTP_full_attention_forward',
          'full_model_performance':'not_established'}
+    if bf16:row.update(bf16_attention=True,performance='not_run_user_requested',math_contract='oscar_bf16_attention_v2',
+                       bf16_cv_calls={side:{name:impl.provider.ops.calls[name] for name in shared.BF16_OPERATORS.values()
+                                           if impl.provider.ops.calls[name]} for side,(impl,_,_) in sides.items()},
+                       ab_max_abs_diagnostic=float((outputs['candidate'].float()-outputs['baseline'].float()).abs().max()))
     print('[oscar] PERF_FIRST_MTP_CURRENT '+json.dumps({
         'case':name,'precision':'passed','cache_and_q1':'bitwise_passed',
         'baseline_ms':medians['baseline'],'candidate_ms':medians['candidate'],
@@ -172,7 +198,8 @@ def probe(config_path,acceptance_path):
     from oscar_ascend.ops.cv_dispatch import STRIPED_CV_OPS
     path=ROOT/'build/ascendc/build_manifest.json';manifest=validate_build_artifacts(path)
     require_capabilities(STRIPED_CV_OPS|{'prepare_attention_tasks_out','rotate_out','merge_lse_out',
-        'status_guard','rotate_clip_store_striped_out'},path)
+        'status_guard','rotate_clip_store_striped_out'}|(set(shared.BF16_OPERATORS.values())
+          if target.get('experimental_bf16_attention',False) else set()),path)
     rows=[];device=torch.device('npu:0');cores=reuse._core_count(torch,target)
     for case in case_plan():
         rows.append(run_case(torch,target,acceptance,device,cores,case))
@@ -182,6 +209,7 @@ def probe(config_path,acceptance_path):
             'artifact_sha256':manifest['sha256'],'graph_capture':'not_run_eager_scope',
             'graph_replay':'not_run_eager_scope','model_quality':'not_established',
             'full_model_performance':'not_established'}
+    if target.get('experimental_bf16_attention',False):report.update(bf16_attention=True,performance='not_run_user_requested',math_contract='oscar_bf16_attention_v2')
     validate_case_evidence(report,acceptance)
     return report
 

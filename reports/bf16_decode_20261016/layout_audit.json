@@ -1,0 +1,51 @@
+{
+  "source_sha256": "8c73b6b6e0473edac416e607fc145ac15c72b3cbb41a5772da0c5befa06f92e1",
+  "scope": "host byte interval/ownership audit, no CANN or NPU execution",
+  "workspace_bytes_per_core": 1146880,
+  "actual_live_payload_bytes": 622592,
+  "regions_bytes": {
+    "Q": [
+      0,
+      16384
+    ],
+    "P": [
+      16384,
+      32768
+    ],
+    "score": [
+      1081344,
+      1114112
+    ],
+    "PV": [
+      1114112,
+      1146880
+    ],
+    "K0": [
+      32768,
+      163840
+    ],
+    "V0": [
+      294912,
+      425984
+    ],
+    "K1": [
+      557056,
+      688128
+    ],
+    "V1": [
+      819200,
+      950272
+    ]
+  },
+  "all_pairwise_disjoint": true,
+  "all_32B_aligned": true,
+  "explicit_UB_bytes_per_AIV": 158656,
+  "reserved_UB_limit": 188416,
+  "original_FP32_NZ8_reader": "not used",
+  "BF16_B1_NZ_C0": 16,
+  "final_Rv": "same-kernel BF16 normalized-history and natural BF16 Rv operands; FP32 accumulation; original flags",
+  "input_rounding": "CAST_RINT",
+  "accumulator_and_softmax": "FP32",
+  "full_history_materialization": false,
+  "contract": "oscar_bf16_attention_v2"
+}

@@ -1,0 +1,6 @@
+[ 20%] Building CXX object CMakeFiles/oscar_bf16_decode_cpu.dir/probe.cpp.o
+[ 40%] Building CXX object CMakeFiles/oscar_bf16_decode_cpu.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_cv_bf16_decode.cpp.o
+[ 60%] Building CXX object CMakeFiles/oscar_bf16_decode_cpu.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/attention_tasks.cpp.o
+[ 80%] Building CXX object CMakeFiles/oscar_bf16_decode_cpu.dir/tmp/oscar-bf16-decode-20261016/csrc/kernels/merge_lse.cpp.o
+[100%] Linking CXX executable oscar_bf16_decode_cpu
+[100%] Built target oscar_bf16_decode_cpu

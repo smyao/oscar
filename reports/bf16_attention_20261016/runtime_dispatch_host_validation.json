@@ -1,0 +1,30 @@
+{
+  "status": "passed_host_runtime_contracts",
+  "command": ".venv/bin/python -m pytest -q tests/test_runtime.py tests/test_stable_optimized_dispatch.py tests/test_bf16_runtime_dispatch.py tests/test_mdl_decode_dispatch.py::test_shared_candidate_reaches_actual_forward_target_first_and_later_draft",
+  "returncode": 0,
+  "passed": 95,
+  "skipped": 8,
+  "skip_reason": "existing runtime helper large FULL shape restricted to intended C16 case",
+  "warnings": 1,
+  "warning_reason": "host PyTorch NumPy unavailable; no failed check",
+  "pytest_seconds": 1.19,
+  "scope": [
+    "actual forward BF16 q4/q1/C4/C16/generic method calls",
+    "natural BF16 Rv pointer and values, distinct from FP32 and NZ",
+    "FP32 writer matrix pointers remain unchanged",
+    "missing/wrong dtype Rv fails before CV/merge/store",
+    "profile-time immutable Rv caching and original writer matrices",
+    "all4 missing capability cases fail before NPU initialization",
+    "historical FP32 MDL helper explicitly disables BF16"
+  ],
+  "test_source_sha256": {
+    "tests/test_runtime.py": "bab9f252c92fa32dd7e29287713f02e097677fdc30c3dec18d8285256109195f",
+    "tests/test_stable_optimized_dispatch.py": "94c959a6912d635b7389d2a9debccd8b511c342a12ee01edac90433249d1075b",
+    "tests/test_bf16_runtime_dispatch.py": "39b3534745edaaaae0382d65951e95bc59dcfb17eb92dcf89937df7e66e93210"
+  },
+  "production_sources_match_completed48cap_build": true,
+  "production_source_changes": [],
+  "NPU": "not_run",
+  "graph_execution": "not_run",
+  "performance": "not_run"
+}

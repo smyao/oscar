@@ -1,0 +1,35 @@
+{
+  "status": "source_review_no_blocking_issue_found",
+  "reviewer": "decode_cost",
+  "scope": [
+    "BF16 route wraps existing q4/q1/C4/C16 eligibility; generic and balanced use BF16 C4 C1 branch",
+    "cluster op set adds stats ABI; q4/q1 remain without stats",
+    "natural BF16 inverse V rotation is preallocated per device/D/layer before native memory profiling and used only by BF16 readers",
+    "FP32 writer rotations and existing INT2/FP16 metadata codec remain unchanged",
+    "BF16 mode avoids allocating hybrid float-NZ Rv; unsupported request-window combination fails explicitly",
+    "runtime C4/C16 profile-time workspace geometry matches unchanged BF16 GM upper bounds",
+    "binding checks BF16 Rv dtype, D256/GQA/shape/capacity/alignment/disjointness and calls unchanged stream launch ABI",
+    "CMake, Torch and Python capability sets exactly48; optional meta registration present",
+    "FE0 original seven source hashes unchanged"
+  ],
+  "findings": [],
+  "source_sha256": {
+    "oscar_ascend/runtime.py": "7ca6babaf4686a4bdb8880dcd836a40c39ed84f1d728cfdfe8fc78cef9bb68b6",
+    "oscar_ascend/ops/cv_dispatch.py": "12dfa016cd207300f0d2d4c0e406362631db516ce288eaf5938346c6576ca3bb",
+    "oscar_ascend/integration/impl.py": "a26db173b5c888625c7e5a6a10ddb272a5d3fc32e1366bf4a207d6e7b53571d4",
+    "oscar_ascend/integration/cache_storage_ops.py": "e3756f10ca1ae57ff7b98263d513a8d1ff4eef5779a4ef05ee6182b78af6d42b",
+    "oscar_ascend/ops/contracts.py": "4a549694b6b1739ad65e9e20005a37f41d287aeeaa246d17de3091da9fb7ee2e",
+    "oscar_ascend/ops/meta.py": "76d24a28a641bd59ac4791fbcac63326f992487e2c429ee7c852319b8fd55008",
+    "tools/serving_variants.py": "d580fbd64e9ac5d9fd9ae9e1cde33be83c70808f0917c864fb98f83cc74ccee3",
+    "csrc/striped_attention_bindings.cpp": "02662b60f0ecdde204f9ace4c7a27df5b85b27915799a000f6d9732e650d67a7",
+    "csrc/torch_bindings.cpp": "b0410548db84a610e9b00adfc440629f85cb877aebeb80c6ff143869f6b8840d",
+    "csrc/CMakeLists.txt": "519984b7f1f2ce168bfadd6a2385971bafc623493abf418bc770615150e2d268"
+  },
+  "limits": [
+    "source inspection only",
+    "full CANN/Torch build pending source freeze",
+    "no NPU/graph/service execution",
+    "lifecycle numerical probes are separate evidence owned by evidence agent"
+  ],
+  "shared_files_modified_by_review": false
+}

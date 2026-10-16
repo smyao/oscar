@@ -8,6 +8,7 @@ OSCAR scheduling override. No native default is guessed here.
 """
 
 FEATURE_FLAGS = {
+    "bf16_attention": "experimental_bf16_attention",
     "history_cluster4": "experimental_history_reuse",
     "later_mtp_q1": "experimental_history_reuse",
     "fast_unpack": "experimental_fast_unpack",
@@ -134,6 +135,14 @@ def variant_config(config: dict, variant: str | None) -> dict:
         raise ValueError("striped cache requires explicit mixed/fast/history candidate configuration")
     if selected.get("experimental_decode_bundle", False) and not selected.get("experimental_striped_cache", False):
         raise ValueError("decode bundle requires the explicit striped cache bundle")
+    if selected.get("experimental_bf16_attention", False) and not (
+            selected.get("experimental_striped_cache", False) and
+            selected.get("experimental_decode_bundle", False) and
+            selected.get("experimental_c4_member_pipeline", False) and
+            selected.get("experimental_c16_l1_reuse", False)):
+        raise ValueError("BF16 attention requires the complete physical-page candidate bundle")
+    if selected.get("experimental_bf16_attention", False) and selected.get("experimental_request_windows", False):
+        raise ValueError("BF16 attention requires physical-page storage")
     if selected.get("experimental_mdl_decode", False) and not selected.get("experimental_decode_bundle", False):
         raise ValueError("MDL decode requires the explicit decode bundle")
     if selected.get("experimental_hybrid_l1_decode", False) and not selected.get("experimental_mdl_decode", False):
@@ -176,6 +185,8 @@ def variant_features(config: dict) -> dict:
 def runtime_feature_summary(config: dict, variant: str | None) -> dict:
     """One compact startup line shows the actual effective feature selection."""
     return {"variant":variant,"optimizations":variant_features(config),
+            "attention_compute":{"operands":"bfloat16" if config.get("experimental_bf16_attention", False) else "float32",
+                                 "accumulator":"float32", "softmax_lse_merge":"float32"},
             "prefix_caching":config.get("enable_prefix_caching", False),
             "token_budget_source":"native" if config.get("use_native_token_budget", False) else "explicit",
             "max_num_batched_tokens":config.get("max_num_batched_tokens"),

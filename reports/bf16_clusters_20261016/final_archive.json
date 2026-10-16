@@ -1,0 +1,8 @@
+{
+  "archive": "/tmp/oscar-bf16-clusters-cpu-final-20261016.tar.gz",
+  "sha256": "7f6bc658c197d809ccd8e3d2741f1184a2d672de6efad1e27c7e3b16996f5791",
+  "compressed_bytes": 98437292,
+  "uncompressed_bytes": 1489298226,
+  "members": 278,
+  "readback_complete": true
+}

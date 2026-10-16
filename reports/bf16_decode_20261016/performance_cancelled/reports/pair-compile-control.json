@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "status": "completed",
+  "supervisor_pid": 701884,
+  "child_pid": 701888,
+  "child_pgid": 701888,
+  "command": [
+    "bash",
+    "pair-build.sh",
+    "compile"
+  ],
+  "cwd": "/tmp/oscar-bf16-decode-20261016",
+  "timeout_seconds": 180.0,
+  "started_utc": "2026-10-16T02:34:18.589863+00:00",
+  "stdout_path": "/tmp/oscar-bf16-decode-20261016/reports/pair-compile/stdout.log",
+  "stderr_path": "/tmp/oscar-bf16-decode-20261016/reports/pair-compile/stderr.log",
+  "lock_path": "/tmp/oscar-cann-validation.lock",
+  "lock_acquired": true,
+  "timed_out": false,
+  "interrupt_signal": null,
+  "child_returncode": 0,
+  "cleanup_complete": true,
+  "cleanup_grace_seconds": 12.0,
+  "cleanup_signals": [],
+  "supervisor_returncode": 0,
+  "child_env_override_keys": [],
+  "child_started_utc": "2026-10-16T02:34:18.597174+00:00",
+  "child_elapsed_seconds": 12.591065195971169,
+  "elapsed_seconds": 12.59845065092668,
+  "finished_utc": "2026-10-16T02:34:31.188287+00:00"
+}

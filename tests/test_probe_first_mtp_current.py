@@ -1,4 +1,4 @@
-"""Only validate evidence rejection. Mock reports are not NPU results."""
+"""Archive #126/#145/#148: evidence rejection; mock reports are not NPU results."""
 from copy import deepcopy
 import json
 from pathlib import Path
@@ -28,6 +28,19 @@ def evidence():
 
 def test_complete_mock_evidence_contract():
     report,policy=evidence();probe.validate_case_evidence(report,policy)
+
+
+def test_bf16_requires_separate_oracles_real_reader_and_no_speed_claim():
+    report,policy=evidence();report['bf16_attention']=True
+    for row in report['cases']:
+        row.update(ab_output='separate_BF16_native_contracts_passed',ab_lse='separate_BF16_native_contracts_passed',
+                   performance='not_run_user_requested',native_current_calls={'baseline':0,'candidate':1},
+                   bf16_cv_calls={side:{'attention_cv_bf16_cluster16_out':1} for side in ('baseline','candidate')})
+        row['decode_after_store']['operator']='attention_cv_bf16_decode_q1_out'
+        row['device_event_ms']={};row['device_event_median_ms']={}
+    probe.validate_case_evidence(report,policy)
+    report['cases'][0]['decode_after_store']['operator']='attention_cv_mdl_decode_q1_out'
+    with pytest.raises(RuntimeError,match='actual BF16'):probe.validate_case_evidence(report,policy)
 
 
 @pytest.mark.parametrize('mutation',[

@@ -1,5 +1,9 @@
 # OSCAR 优化与失败证据索引
 
+## 2026-10-16 独立BF16计算分支
+
+主分支7047ce36保持，新增 `codex/oscar-bf16-attention`。QK/PV/Rv均改BF16乘数和FP32累加，保留FP32 online softmax/LSE/merge；独立BF16v2 oracle容差预冻结，旧FP32 oracle不改。4种reader接入共享candidate，相关生命周期门支持不测速的正确性验证。48cap新鲜CANN/Torch构建、126源三方hash、q4/q1及C4/C16官方CPU-debug正常/故障通过。用户取消测速后不再执行模拟/真机性能验证；早先q4候选VM OOM中止原样保留。不得推导30%收益、访存bound或真实NPU通过。见[完整交付说明](bf16_attention_20261016.md)。
+
 ## 2026-10-15 stable 同步与 B1 迭代基底
 
 - 用户确认stable的APC开/关均可工作；`f96820f1`已快进同步主分支。固定stable全部vLLM参数、显式16384、原生调度器，默认APC关闭。新目标为32K/64K各自相对同参数原生端到端提速超过30%，覆盖下方历史2–4倍目标。禁止连接真机，不再请求AISBench。

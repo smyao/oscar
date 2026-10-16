@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "status": "failed",
+  "supervisor_pid": 710458,
+  "child_pid": 710462,
+  "child_pgid": 710462,
+  "command": [
+    "/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python",
+    "functional_onecore.py"
+  ],
+  "cwd": "/tmp/oscar-bf16-decode-20261016",
+  "timeout_seconds": 180.0,
+  "started_utc": "2026-10-16T05:25:01.736977+00:00",
+  "stdout_path": "/tmp/oscar-bf16-decode-20261016/reports/functional-onecore-logs/stdout.log",
+  "stderr_path": "/tmp/oscar-bf16-decode-20261016/reports/functional-onecore-logs/stderr.log",
+  "lock_path": "/tmp/oscar-cann-validation.lock",
+  "lock_acquired": true,
+  "timed_out": false,
+  "interrupt_signal": null,
+  "child_returncode": -9,
+  "cleanup_complete": true,
+  "cleanup_grace_seconds": 12.0,
+  "cleanup_signals": [],
+  "supervisor_returncode": 137,
+  "child_env_override_keys": [
+    "CAMODEL_CONFIG_PATH",
+    "LD_LIBRARY_PATH",
+    "LD_PRELOAD",
+    "TORCH_DEVICE_BACKEND_AUTOLOAD"
+  ],
+  "child_started_utc": "2026-10-16T05:25:01.740850+00:00",
+  "child_elapsed_seconds": 9.519934282056056,
+  "elapsed_seconds": 9.526202937006019,
+  "finished_utc": "2026-10-16T05:25:11.263446+00:00"
+}

@@ -1,0 +1,10 @@
+{
+  "files": {
+    "csrc/kernels/attention_bf16_cast.h": "a83070f6737096c864a6be9f603a45dfbc8cfeb06dd1a0bb3e306b238fc5740f",
+    "csrc/kernels/attention_cv_bf16_cluster4.cpp": "9b57d8bd6421ec3a594ddb3916465bcadaedfdd75bbcd1edc6ac4a9c9f2ec811",
+    "csrc/kernels/attention_cv_bf16_cluster16.cpp": "2bc977be4faf9cf49d9b9b88664291c5739e120bc6c2662da8799c6e85b4a5aa",
+    "tools/generate_bf16_clusters.py": "2ca2c89437edff7c0fa7b43e574d1f17e79c4ff300de8c2bcff84d8ed5f6a3d1",
+    "reports/bf16_attention_20261016/cluster_source_manifest.json": "10340c5346722b0919ecd5f3b568624bab4650f84a019c1351eba5fbadc1d121"
+  },
+  "scope": "count Cast replaced by same BF16 RNE normal-mask/repeat1; no ABI/unpack changes"
+}

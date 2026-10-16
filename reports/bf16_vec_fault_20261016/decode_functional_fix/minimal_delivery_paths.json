@@ -1,0 +1,14 @@
+[
+  "reports/bf16_vec_fault_20261016/decode_functional_fix/summary.json",
+  "reports/bf16_vec_fault_20261016/decode_functional_fix/old_failure_summary.json",
+  "reports/bf16_vec_fault_20261016/decode_functional_fix/old_trace_oom_control.json",
+  "reports/bf16_vec_fault_20261016/decode_functional_fix/old_trace_oom_excerpt.json",
+  "reports/bf16_vec_fault_20261016/decode_functional_fix/old_trace_bad_alloc_control.json",
+  "reports/bf16_vec_fault_20261016/decode_functional_fix/old_trace_bad_alloc_excerpt.json",
+  "reports/bf16_vec_fault_20261016/decode_functional_fix/fixed_source_binding.json",
+  "reports/bf16_vec_fault_20261016/decode_functional_fix/reports/cast-fix-build-v2-control.json",
+  "reports/bf16_vec_fault_20261016/decode_functional_fix/reports/functional-cast-fixed-control.json",
+  "reports/bf16_vec_fault_20261016/decode_functional_fix/reports/functional-cast-fixed-20261016/report.json",
+  "reports/bf16_vec_fault_20261016/decode_functional_fix/reports/functional-cast-fixed-20261016/completion.json",
+  "reports/bf16_vec_fault_20261016/decode_functional_fix/reports/functional-cast-fixed-20261016/inputs.json"
+]

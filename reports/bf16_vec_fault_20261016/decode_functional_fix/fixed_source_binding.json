@@ -1,0 +1,7 @@
+{
+  "library_sha256": "70e94ea7769a5f267b1fc0f80c191bb1a816a5e718da00fbc46e51f1d3c3fc24",
+  "sources": {
+    "csrc/kernels/attention_cv_bf16_decode.cpp": "bf0795568c145015d32da6b471419ae82da5e74db03c3c521a004dfd744830f8",
+    "csrc/kernels/attention_bf16_cast.h": "a83070f6737096c864a6be9f603a45dfbc8cfeb06dd1a0bb3e306b238fc5740f"
+  }
+}

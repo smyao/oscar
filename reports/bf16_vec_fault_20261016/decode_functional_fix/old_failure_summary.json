@@ -1,0 +1,36 @@
+{
+  "status": "original_count_Cast_functional_failure_retained",
+  "kernel_sha256": "8c73b6b6e0473edac416e607fc145ac15c72b3cbb41a5772da0c5befa06f92e1",
+  "library_sha256": "36ac467f8b30a858b59ad7806f2a0af9bc5963a54aa94f8be643073c36f01877",
+  "same_instruction_counts_and_stop_ids": true,
+  "observed": {
+    "AIV0": {
+      "instruction_lines": 4594,
+      "VEC": 276,
+      "last_id": 8351
+    },
+    "AIV1": {
+      "instruction_lines": 4868,
+      "VEC": 257,
+      "last_id": 8285
+    }
+  },
+  "early_casts": "retired RNE casts use masks0x100 and0x800, normal strides1/1/4/8; large KV Cast issued but not retired in excerpt",
+  "original_oom": {
+    "rc": -9,
+    "seconds": 9.526202937006019
+  },
+  "original_address_limit": {
+    "rc": -6,
+    "seconds": 100.07690221595112,
+    "first_error": "std::bad_alloc under8GiB address-space limit"
+  },
+  "without_address_limit": {
+    "rc": -9,
+    "seconds": 12.524813574971631,
+    "RSS_bytes": 8127086592,
+    "stop": "explicit RSS7.5GiB guard"
+  },
+  "target_PC_attribution": "not proved; async DynamicQuant/rotate stack is not origin evidence",
+  "performance": "not_measured"
+}

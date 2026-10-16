@@ -1,0 +1,19 @@
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+{"status": "checked", "FP32_sources_modified": false, "device_validation": "not_run"}
+{"status": "checked", "CPU": "not_run"}
+-- Configuring done (0.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/oscar-bf16-clusters-20261016/build-rne-cpu
+[ 33%] Building CXX object CMakeFiles/oscar_bf16_clusters_cpu.dir/probe.cpp.o
+[ 33%] Building CXX object CMakeFiles/oscar_bf16_clusters_cpu.dir/tmp/oscar-bf16-clusters-20261016/csrc/kernels/attention_cv_bf16_cluster4.cpp.o
+[ 50%] Building CXX object CMakeFiles/oscar_bf16_clusters_cpu.dir/tmp/oscar-bf16-clusters-20261016/csrc/kernels/attention_cv_bf16_cluster16.cpp.o
+[ 66%] Building CXX object CMakeFiles/oscar_bf16_clusters_cpu.dir/tmp/oscar-bf16-clusters-20261016/csrc/kernels/attention_tasks.cpp.o
+[ 83%] Building CXX object CMakeFiles/oscar_bf16_clusters_cpu.dir/tmp/oscar-bf16-clusters-20261016/csrc/kernels/merge_lse.cpp.o
+[100%] Linking CXX executable oscar_bf16_clusters_cpu
+[100%] Built target oscar_bf16_clusters_cpu

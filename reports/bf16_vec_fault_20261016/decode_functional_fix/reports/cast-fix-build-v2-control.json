@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "status": "completed",
+  "supervisor_pid": 711499,
+  "child_pid": 711503,
+  "child_pgid": 711503,
+  "command": [
+    "bash",
+    "compile-functional-fix.sh"
+  ],
+  "cwd": "/tmp/oscar-bf16-decode-20261016",
+  "timeout_seconds": 180.0,
+  "started_utc": "2026-10-16T05:49:33.786796+00:00",
+  "stdout_path": "/tmp/oscar-bf16-decode-20261016/reports/cast-fix-build-v2/stdout.log",
+  "stderr_path": "/tmp/oscar-bf16-decode-20261016/reports/cast-fix-build-v2/stderr.log",
+  "lock_path": "/tmp/oscar-cann-validation.lock",
+  "lock_acquired": true,
+  "timed_out": false,
+  "interrupt_signal": null,
+  "child_returncode": 0,
+  "cleanup_complete": true,
+  "cleanup_grace_seconds": 12.0,
+  "cleanup_signals": [],
+  "supervisor_returncode": 0,
+  "child_env_override_keys": [],
+  "child_started_utc": "2026-10-16T05:49:33.788519+00:00",
+  "child_elapsed_seconds": 5.103334315936081,
+  "elapsed_seconds": 5.105132750002667,
+  "finished_utc": "2026-10-16T05:49:38.891912+00:00"
+}

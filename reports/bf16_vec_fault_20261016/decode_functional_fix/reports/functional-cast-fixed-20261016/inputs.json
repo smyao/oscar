@@ -1,0 +1,105 @@
+{
+  "status": "initialized",
+  "variant": "candidate",
+  "case": "q4_finite_cpu",
+  "mode": "q4",
+  "cores": 1,
+  "attrs": [
+    8,
+    6,
+    1,
+    256,
+    2,
+    6,
+    24,
+    512,
+    4,
+    64,
+    69632,
+    82688,
+    323,
+    64,
+    256,
+    3,
+    1
+  ],
+  "scale": 0.0625,
+  "all_sources_and_tasks": true,
+  "task_filtering": false,
+  "library_sha256": "70e94ea7769a5f267b1fc0f80c191bb1a816a5e718da00fbc46e51f1d3c3fc24",
+  "kernel": "oscar_attention_cv_bf16_decode_kernel",
+  "workspace_bytes_per_core": 1146880,
+  "profile_counters": false,
+  "phase_profile_schema": null,
+  "trace_policy": {
+    "research_completion_only": false,
+    "per_file_budget_bytes": 0
+  },
+  "cpu_reference": "available_checked",
+  "cpu_reference_policy": "required",
+  "simulator_configuration": {
+    "directory": "/tmp/oscar-bf16-decode-20261016/functional-onecore-config",
+    "config": {
+      "stars": {
+        "ffts_mode": 1
+      },
+      "model_top": {
+        "sim_type": 0,
+        "num_aic": 1,
+        "num_aiv": 2
+      },
+      "pem": {
+        "parsim": 0,
+        "parsim_thd_limit": 0
+      }
+    },
+    "sha256": "05abea2597f7212a61f1b0061ddaf201e6694251206e8ac9a26928862f0f594c",
+    "detail": {
+      "LOG": {
+        "rotating_file_size": 4194304,
+        "rotating_file_number": 2,
+        "flush_level": 3,
+        "core_enable_mask": [
+          "0x0"
+        ]
+      },
+      "L2CACHE": {
+        "cache_enable": 0,
+        "cache_set_size": 24,
+        "cache_way_size": 16384,
+        "cache_line_size": 512,
+        "cache_read_latency": 241,
+        "cache_write_latency": 96
+      }
+    },
+    "detail_sha256": "25217be9d3a5469ffd5fc572c1c0ffc8cc802150fc65db1aea90093f990abf07"
+  },
+  "input_sha256": {
+    "q": "33c484c5f85992e206021d9ea6a543d917bdf89ee02ab55761bc539b4847f2d5",
+    "qr": "16b791b0302c7cb5eaa5c05171c1878eadd083d314feaf5a0acd696e7ef37e5b",
+    "ck": "ce757a662db5f4efd8a161c339b7cc6a22a43487b0760a55f006cb1ed6410d47",
+    "cv": "e2e4ba7abc699563031ec5ecfa64556fc9c935a39d48fa7c9425a4878975d453",
+    "rv": "af4155480d294a9f997607d6386cc8afd62fb235fd9e4bfb79140de1bb3b56b2",
+    "raw": "805843d12bd1f788b62f8a44e4a59fc88306e2a90cc1f98a2e94c8a92979d3cb",
+    "table": "24e0858c9c2ac4c329fb64a24382ba011a6cb89b56abd78a8196401e03df1af5",
+    "wk": "d16f5c6e7f2623daf32d066016bf55bebb483d923bf2b8d3e8c4d92bc00d372d",
+    "wv": "448c56ab040c4223c149b8b6d20728ac2b4b4dbb7b2664e655d5216585e75840",
+    "tags": "ce033874632b260e913c7b785d3a435492a4f057c7c1873cac523ef0aae33c62",
+    "tasks": "3a7cc923b7947a11c03ec4174703daf1badc44432eb1a169665f6154a6129f72"
+  },
+  "oracle_sha256": {
+    "output": "305cf4551af12955a4173871e644aca5fda19d03f3f7512d43059474eb91d6b5",
+    "lse": "e9ee1d6ba80a7e71c9a2d9744a6523ebfa53816ad0a8ffce2c9918c6a784e016"
+  },
+  "cpu_baseline_sha256": {
+    "partial": "7e69d55568355b04bd03383331cb85476a8abd6f2ee4d995d9d86d62db77cc2d",
+    "lse": "b7646798d145f2e8bab35be32e06e92766421ca03380629f1e2d9ceb3698fb01",
+    "status": "5d89f056865052bcb89c910d2d62872e029fb273c3db03f8968a52a41593c1b5"
+  },
+  "backend": "local_CANN9.1_dav2201_CAModel",
+  "profile_scope": "complete operator; actor durations include waits",
+  "npu": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_run",
+  "whole_service": "not_run"
+}

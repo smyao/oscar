@@ -1,0 +1,24 @@
+{
+  "status": "local_regression_fixed_and_validated",
+  "branch": "codex/oscar-bf16-attention",
+  "base": "b3c830699a81d43539dd350f4e835680bd920eac",
+  "user_prefix_caching": false,
+  "fix": "new FP32-to-BF16 RNE publishers use explicit normal-mask <=64-element repeats; no large counter-mode conversion",
+  "source_sha256": {
+    "csrc/kernels/attention_bf16_cast.h": "a83070f6737096c864a6be9f603a45dfbc8cfeb06dd1a0bb3e306b238fc5740f",
+    "csrc/kernels/attention_cv_bf16_decode.cpp": "bf0795568c145015d32da6b471419ae82da5e74db03c3c521a004dfd744830f8",
+    "csrc/kernels/attention_cv_bf16_cluster4.cpp": "9b57d8bd6421ec3a594ddb3916465bcadaedfdd75bbcd1edc6ac4a9c9f2ec811",
+    "csrc/kernels/attention_cv_bf16_cluster16.cpp": "2bc977be4faf9cf49d9b9b88664291c5739e120bc6c2662da8799c6e85b4a5aa"
+  },
+  "decode_instruction_execution": "../bf16_vec_fault_20261016/decode_functional_fix/summary.json",
+  "clusters_CANN_and_CPU": "../bf16_clusters_20261016/rne_fix/summary.json",
+  "host_tests": {
+    "passed": 38,
+    "log": "host_tests.log"
+  },
+  "BF16": true,
+  "MTP": "preserved",
+  "main_and_stable": "not_modified",
+  "NPU": "not_run",
+  "performance": "not_measured"
+}

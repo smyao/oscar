@@ -15,7 +15,7 @@ SOURCES={
     16:('attention_cv_l1_reuse_cluster16.cpp','d6b8ee9040678e57a21bc72215b7cdc1b9cf67b2b395c57a574d4377d27621b3'),
 }
 HEADER='''// SPDX-License-Identifier: Apache-2.0
-// GENERATED BF16 LONG READER from main7047ce36. Archive G4/#126/#145/#148/#154/#157.
+// GENERATED BF16 LONG READER from main7047ce36. Archive G4/#126/#145/#148/#154/#157/#164.
 // Complete startup D.4 reread; four questions:
 // 1. Bounded fused history/precise QK/PV and final value rotation operands.
 // 2. Old whole-history dequant6499.8-6655.1ms/store209-215ms are forbidden
@@ -28,6 +28,8 @@ HEADER='''// SPDX-License-Identifier: Apache-2.0
 //    P-BF16 second half; P NEVER aliases FP32 score across AIV lanes.
 //    BF16 ND/ND2NZ uses C0=16; no float-NZ8 reinterpretation. Cast reuses
 //    dead natural UB under original/local MTE3 ownership fences.
+//    #164: FP32->BF16 RNE uses explicit normal-mask single repeats, not
+//    large counter-mode VCONV; all original INT2 decode casts stay intact.
 // 4. GM upper bounds unchanged: C4=2494464,C16=7487488B/core; UB157760B.
 //    Source counts are not speed. New explicit BF16 oracle/CPU/CANN/device/
 //    graph/model gates replace only the old FP32-only arithmetic comparison.
@@ -144,6 +146,23 @@ def generate(cluster):
     edit(old_kernel,f'oscar_attention_cv_bf16_cluster{cluster}_kernel')
     old_header='oscar_c16_l1_reuse_launch.h' if cluster==16 else 'oscar_member_pipeline_launch.h'
     edit(f'"../include/{old_header}"','"../include/oscar_bf16_cluster_launch.h"')
+    edit('#include "oscar_common.h"', '#include "oscar_common.h"\n#include "attention_bf16_cast.h"')
+    # #164: only six newly introduced FP32 -> BF16 conversions. Preserve
+    # original BF16/half -> FP32 unpack and every existing ownership fence.
+    for old,new in (
+        ('Cast(rounded,acc[row*D],RoundMode::CAST_RINT,count*D);',
+         'oscar_bf16::CastRne(rounded,acc[row*D],count*D);'),
+        ('Cast(rounded,dst,RoundMode::CAST_RINT,D);',
+         'oscar_bf16::CastRne(rounded,dst,D);'),
+        ('Cast(rounded,zeros,RoundMode::CAST_RINT,count*D);',
+         'oscar_bf16::CastRne(rounded,zeros,count*D);'),
+        ('Cast(rounded,src,RoundMode::CAST_RINT,kHistoryElements);',
+         'oscar_bf16::CastRne(rounded,src,kHistoryElements);'),
+        ('Cast(rounded,src,RoundMode::CAST_RINT,kElements);',
+         'oscar_bf16::CastRne(rounded,src,kElements);'),
+        ('Cast(roundedP,scores,RoundMode::CAST_RINT,activeRows*kKvRows);',
+         'oscar_bf16::CastRne(roundedP,scores,activeRows*kKvRows);'),
+    ):edit(old,new)
     restored=text
     for old,new,count in reversed(edits):
         if restored.count(new)!=count:raise ValueError(('inverse ambiguity',new[:90],restored.count(new),count))
@@ -165,6 +184,8 @@ def generate(cluster):
         'softmax_online_LSE_merge':'FP32','workspace_upper_bound_per_core':7487488 if cluster==16 else 2494464,
         'UB_per_AIV':157760,'external_B1_bytes':131072 if cluster==16 else 0,
         'P_layout':'independent second half of each original Q float slot, never aliasFP32score',
+        'BF16_RNE_conversion':'normal-mask <=64 elements, repeat1; no large count VCONV',
+        'BF16_RNE_helper_sha256':sha((ROOT/'csrc/kernels/attention_bf16_cast.h').read_bytes()),
         'FP32_baseline_not_modified':True,'CANN':'not_run','CPU':'not_run','NPU':'not_run'}
 
 

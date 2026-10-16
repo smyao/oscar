@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// GENERATED BF16 LONG READER from main7047ce36. Archive G4/#126/#145/#148/#154/#157.
+// GENERATED BF16 LONG READER from main7047ce36. Archive G4/#126/#145/#148/#154/#157/#164.
 // Complete startup D.4 reread; four questions:
 // 1. Bounded fused history/precise QK/PV and final value rotation operands.
 // 2. Old whole-history dequant6499.8-6655.1ms/store209-215ms are forbidden
@@ -12,6 +12,8 @@
 //    P-BF16 second half; P NEVER aliases FP32 score across AIV lanes.
 //    BF16 ND/ND2NZ uses C0=16; no float-NZ8 reinterpretation. Cast reuses
 //    dead natural UB under original/local MTE3 ownership fences.
+//    #164: FP32->BF16 RNE uses explicit normal-mask single repeats, not
+//    large counter-mode VCONV; all original INT2 decode casts stay intact.
 // 4. GM upper bounds unchanged: C4=2494464,C16=7487488B/core; UB157760B.
 //    Source counts are not speed. New explicit BF16 oracle/CPU/CANN/device/
 //    graph/model gates replace only the old FP32-only arithmetic comparison.
@@ -206,6 +208,7 @@
 // hc_pre_cube_compute.h FP32 Mmad; moe_grouped_matmul.h MatmulImpl;
 // add_rms_norm_bias_multi_n.h Gather; PR triton_oscar_decode.py INT2 and LSE.
 #include "oscar_common.h"
+#include "attention_bf16_cast.h"
 #include "attention_range_mask.h"
 #include "attention_fast_unpack.h"
 #include "../include/oscar_attention_launch.h"
@@ -569,7 +572,7 @@ template<int32_t D> class AttentionCv {
     Fence<HardEvent::MTE3_V>();
     for(int32_t row=0;row<kLaneRows;row+=kHistoryHalfKv) {
       const int32_t count=static_cast<int32_t>(Min64(kHistoryHalfKv,kLaneRows-row));
-      Cast(rounded,acc[row*D],RoundMode::CAST_RINT,count*D);
+      oscar_bf16::CastRne(rounded,acc[row*D],count*D);
       Fence<HardEvent::V_MTE3>();
       DataCopy(operands[2*qOffset+(lane*kLaneRows+row)*D],rounded,count*D);
       Fence<HardEvent::MTE3_V>();
@@ -595,7 +598,7 @@ template<int32_t D> class AttentionCv {
       ReduceSum(check,dst,check[16],D);Fence<HardEvent::V_S>();
       if(!Finite(check.GetValue(0)))error=2;
       auto rounded=naturalBuf.Get<bfloat16_t>();
-      Cast(rounded,dst,RoundMode::CAST_RINT,D);Fence<HardEvent::V_MTE3>();
+      oscar_bf16::CastRne(rounded,dst,D);Fence<HardEvent::V_MTE3>();
       DataCopy(operands[2*qOffset+row*D],rounded,D);Fence<HardEvent::MTE3_MTE2>();
     }
     // Pad the inactive query rows in bounded contiguous pieces. This keeps
@@ -608,7 +611,7 @@ template<int32_t D> class AttentionCv {
       const int32_t count=static_cast<int32_t>(Min64(kHalfKv,laneEnd-row));
       Duplicate(zeros,0.0F,count*D);PipeBarrier<PIPE_V>();
       auto rounded=naturalBuf.Get<bfloat16_t>();
-      Cast(rounded,zeros,RoundMode::CAST_RINT,count*D);Fence<HardEvent::V_MTE3>();
+      oscar_bf16::CastRne(rounded,zeros,count*D);Fence<HardEvent::V_MTE3>();
       DataCopy(operands[2*qOffset+row*D],rounded,count*D);Fence<HardEvent::MTE3_V>();
     }
   }
@@ -784,7 +787,7 @@ template<int32_t D> class AttentionCv {
     const uint16_t blocks=static_cast<uint16_t>(kHalfKv*D/16);
     DataCopyParams copy{2,blocks,0,blocks};
     auto rounded=naturalBuf.Get<bfloat16_t>();
-    Cast(rounded,src,RoundMode::CAST_RINT,kHistoryElements);
+    oscar_bf16::CastRne(rounded,src,kHistoryElements);
     Fence<HardEvent::V_MTE3>();
     DataCopy(operands[2*(value?vOffset:kOffset)+slot*D],rounded,copy);
     Fence<HardEvent::MTE3_V>();
@@ -795,7 +798,7 @@ template<int32_t D> class AttentionCv {
     // Both K and V are natural [KV,D] FP32. QK requests B transpose=true;
     // PV requests false, as permitted by the same static B matmul type.
     auto rounded=naturalBuf.Get<bfloat16_t>();
-    Cast(rounded,src,RoundMode::CAST_RINT,kElements);
+    oscar_bf16::CastRne(rounded,src,kElements);
     Fence<HardEvent::V_MTE3>();
     DataCopy(operands[2*(value?vOffset:kOffset)+slot*D],rounded,kElements);
     Fence<HardEvent::MTE3_V>();
@@ -919,7 +922,7 @@ template<int32_t D> class AttentionCv {
     // V2 may use padded UB rows to satisfy its 8-row shape, but Cube PV has
     // M=qcount*group and consumes only the real P rows from this block.
     auto roundedP=naturalBuf.Get<bfloat16_t>();
-    Cast(roundedP,scores,RoundMode::CAST_RINT,activeRows*kKvRows);
+    oscar_bf16::CastRne(roundedP,scores,activeRows*kKvRows);
     Fence<HardEvent::V_MTE3>();
     DataCopy(operands[2*ProbabilityOffset(qOffset)+rowBase*kKvRows],roundedP,activeRows*kKvRows);
     // The next Softmax block refills scoreBuf on MTE2, not Vector. MTE3_V

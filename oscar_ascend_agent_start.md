@@ -1,5 +1,7 @@
 # Agent 启动指令（v2）：将 OSCAR KV Cache INT2 量化适配到 vLLM Ascend 0.23.0
 
+> 2026-10-16 BF16回归修复（档案#164）：关闭APC的VEC UB越界按新分支回归处理；新增FP32→BF16发布统一使用normal-mask有界repeat转换，禁止重引入大count转换。真实指令功能验证与真机验收分列，固定candidate入口/MTP/APC-off保持。
+
 > 2026-10-16：用户明确授权在最新main7047ce36上新建BF16计算分支，main/stable不动。attention的FP32-only限制及旧FP32逐位比较由`configs/acceptance_bf16.json`独立BF16舍入合同替代；原始FP32参考和旧失败记录保留诊断。所有存储/调度/错误/图/部署边界及禁止连接真机要求仍有效。
 
 

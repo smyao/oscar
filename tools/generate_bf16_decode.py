@@ -49,6 +49,8 @@ def generate() -> str:
     source = raw.decode()
     source = HEADER + source[source.index('#include "oscar_common.h"'):]
     source = source.replace('"attention_hybrid_l1_unpack.h"', '"attention_striped_unpack_padded.h"')
+    source = source.replace('#include "attention_striped_unpack_padded.h"',
+        '#include "attention_striped_unpack_padded.h"\n#include "attention_bf16_cast.h"')
     source = source.replace('"../include/oscar_hybrid_l1_decode_launch.h"', '"../include/oscar_bf16_decode_launch.h"')
     begin = source.index("using Matrix=MatmulType")
     end = source.index("\nstruct Geometry", begin)
@@ -147,6 +149,12 @@ using CubeMatmul=matmul::MatmulImpl<Matrix,TransposedMatrix,ResultMatrix,ResultM
     source = source.replace("GlobalTensor<bfloat16_t> q,ck,cv,wk,wv;", "GlobalTensor<bfloat16_t> q,ck,cv,wk,wv,rv,operands;")
     source = source.replace("GlobalTensor<float> qr,rv,out,outLse,work;", "GlobalTensor<float> qr,out,outLse,work;")
     source = source.replace("operandBuf.Get<bfloat16_t>()", "naturalBuf.Get<bfloat16_t>()")
+    # Archive #164: no count-overload FP32->BF16 conversion in any source.
+    import re
+    source, casts = re.subn(r"Cast\(rounded,([^;\n]+?),RoundMode::CAST_RINT,([^;\n]+?)\);",
+        r"oscar_bf16::CastRne(rounded,\1,\2);", source)
+    if casts != 7:
+        raise RuntimeError(f"expected7 new BF16 operand casts, found {casts}")
     source = source.replace("    // Q(128D), K(256D), natural V(256D), score/P(128*256),\n"
         "    // PV/rotation(128D). Query accumulator stays in UB across KV units.\n"
         "    // QK is complete before Vector overwrites score with P; PV is consumed\n"

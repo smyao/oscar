@@ -26,6 +26,7 @@ SOURCE_PATHS=(
  'csrc/kernels/attention_cv_bf16_cluster16.cpp','csrc/include/oscar_bf16_decode_launch.h',
  'csrc/include/oscar_bf16_cluster_launch.h','csrc/include/oscar_attention_launch.h',
  'csrc/include/oscar_cv_schedule.h','csrc/kernels/oscar_common.h',
+ 'csrc/kernels/attention_bf16_cast.h',
  'csrc/kernels/attention_striped_unpack_padded.h','csrc/kernels/attention_striped_unpack32.h',
  'csrc/kernels/attention_striped_unpack.h','csrc/kernels/attention_fast_unpack.h',
  'csrc/kernels/attention_range_mask.h','csrc/kernels/attention_tasks.cpp','csrc/kernels/merge_lse.cpp',

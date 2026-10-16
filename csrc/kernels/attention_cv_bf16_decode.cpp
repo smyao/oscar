@@ -17,6 +17,7 @@
 //    Complete BF16 oracle/device/graph/performance remain separate gates.
 #include "oscar_common.h"
 #include "attention_striped_unpack_padded.h"
+#include "attention_bf16_cast.h"
 #include "attention_range_mask.h"
 #include "../include/oscar_bf16_decode_launch.h"
 #define OSCAR_SCHEDULE_FN __aicore__ inline
@@ -266,7 +267,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
       if(!Finite(check.GetValue(0)))error=2;
       Fence<HardEvent::V_MTE3>();
       auto rounded=naturalBuf.Get<bfloat16_t>();
-      Cast(rounded,dst,RoundMode::CAST_RINT,D);Fence<HardEvent::V_MTE3>();
+      oscar_bf16::CastRne(rounded,dst,D);Fence<HardEvent::V_MTE3>();
       DataCopy(operands[2*qOffset+row*D],rounded,D);
       Fence<HardEvent::MTE3_MTE2>();Fence<HardEvent::MTE3_V>();
     }
@@ -280,7 +281,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
       const int32_t count=static_cast<int32_t>(Min64(kHalfKv,laneEnd-row));
       Duplicate(zeros,0.0F,count*D);Fence<HardEvent::V_MTE3>();
       auto rounded=naturalBuf.Get<bfloat16_t>();
-      Cast(rounded,zeros,RoundMode::CAST_RINT,count*D);Fence<HardEvent::V_MTE3>();
+      oscar_bf16::CastRne(rounded,zeros,count*D);Fence<HardEvent::V_MTE3>();
       DataCopy(operands[2*qOffset+row*D],rounded,count*D);Fence<HardEvent::MTE3_V>();
     }
   }
@@ -454,7 +455,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     // K/V remain natural [KV,D]; Cube handles the dtype-specific NZ16.
     Fence<HardEvent::V_MTE3>();
     auto rounded=naturalBuf.Get<bfloat16_t>();
-    Cast(rounded,src,RoundMode::CAST_RINT,kElements);Fence<HardEvent::V_MTE3>();
+    oscar_bf16::CastRne(rounded,src,kElements);Fence<HardEvent::V_MTE3>();
     DataCopy(operands[2*(value?vOffset:kOffset)+slot*D],rounded,kElements);
     Fence<HardEvent::MTE3_V>();
   }
@@ -595,7 +596,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     // V2 may use padded UB rows to satisfy its 8-row shape, but Cube PV has
     // M=qcount*group and consumes only the real P rows from this block.
     auto rounded=naturalBuf.Get<bfloat16_t>();
-    Cast(rounded,scores,RoundMode::CAST_RINT,activeRows*kKvRows);
+    oscar_bf16::CastRne(rounded,scores,activeRows*kKvRows);
     Fence<HardEvent::V_MTE3>();
     DataCopy(operands[2*pOffset+rowBase*kKvRows],rounded,activeRows*kKvRows);
     Fence<HardEvent::MTE3_V>();
@@ -660,7 +661,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     }
     if(kind==0 && kvbegin<kvend) {
       auto rounded=naturalBuf.Get<bfloat16_t>();
-      Cast(rounded,acc,RoundMode::CAST_RINT,kLaneRows*D);Fence<HardEvent::V_MTE3>();
+      oscar_bf16::CastRne(rounded,acc,kLaneRows*D);Fence<HardEvent::V_MTE3>();
       DataCopy(operands[2*qOffset+lane*kLaneRows*D],rounded,kLaneRows*D);
       Fence<HardEvent::MTE3_V>();
       CrossCoreSetFlag<2,PIPE_MTE3>(kVectorReady);
@@ -682,7 +683,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     const int64_t slot=subtile*(2*kHalfKv)+lane*kHalfKv;
     Fence<HardEvent::V_MTE3>();
     auto rounded=naturalBuf.Get<bfloat16_t>();
-    Cast(rounded,dequantBuf.Get<float>(),RoundMode::CAST_RINT,kElements);
+    oscar_bf16::CastRne(rounded,dequantBuf.Get<float>(),kElements);
     Fence<HardEvent::V_MTE3>();
     DataCopy(operands[2*((value?vOffset:kOffset)+buffer*(2*kKvRows*D))+slot*D],
         rounded,kElements);
@@ -793,7 +794,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
       PipeBarrier<PIPE_V>();
     }
     auto rounded=naturalBuf.Get<bfloat16_t>();
-      Cast(rounded,acc,RoundMode::CAST_RINT,kLaneRows*D);Fence<HardEvent::V_MTE3>();
+      oscar_bf16::CastRne(rounded,acc,kLaneRows*D);Fence<HardEvent::V_MTE3>();
       DataCopy(operands[2*qOffset+lane*kLaneRows*D],rounded,kLaneRows*D);
       Fence<HardEvent::MTE3_V>();
     CrossCoreSetFlag<2,PIPE_MTE3>(kNormReady);

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "status": "completed",
+  "supervisor_pid": 712341,
+  "child_pid": 712342,
+  "child_pgid": 712342,
+  "command": [
+    "bash",
+    "rne-phase.sh",
+    "device"
+  ],
+  "cwd": "/tmp/oscar-bf16-clusters-20261016",
+  "timeout_seconds": 180.0,
+  "started_utc": "2026-10-16T05:55:24.712592+00:00",
+  "stdout_path": "/tmp/oscar-bf16-clusters-20261016/reports/rne-device/stdout.log",
+  "stderr_path": "/tmp/oscar-bf16-clusters-20261016/reports/rne-device/stderr.log",
+  "lock_path": "/tmp/oscar-cann-validation.lock",
+  "lock_acquired": true,
+  "timed_out": false,
+  "interrupt_signal": null,
+  "child_returncode": 0,
+  "cleanup_complete": true,
+  "cleanup_grace_seconds": 12.0,
+  "cleanup_signals": [],
+  "supervisor_returncode": 0,
+  "child_env_override_keys": [],
+  "child_started_utc": "2026-10-16T05:55:24.714843+00:00",
+  "child_elapsed_seconds": 8.566475156927481,
+  "elapsed_seconds": 8.56880007404834,
+  "finished_utc": "2026-10-16T05:55:33.281372+00:00"
+}

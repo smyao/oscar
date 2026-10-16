@@ -1,0 +1,155 @@
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 713414] exit success!
+[SUCCESS][CORE_1][pid 713415] exit success!
+[SUCCESS][CORE_2][pid 713416] exit success!
+[SUCCESS][CORE_3][pid 713417] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_17][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713470] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_7][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713440] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_8][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713443] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_16][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713467] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_14][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713461] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_15][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713464] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_6][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713437] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_5][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713434] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_13][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713458] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_3][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713428] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_4][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713431] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_12][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713455] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_1][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713422] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_10][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713449] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_9][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713446] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 713418] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_2][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713425] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[TmSim]: Run in serial mode.
+[WARN][Block_0][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713419] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[SUCCESS][AIV_0][pid 713419] exit success!
+[SUCCESS][AIV_1][pid 713420] exit success!
+[SUCCESS][AIC_1][pid 713421] exit success!
+[SUCCESS][AIV_2][pid 713422] exit success!
+[SUCCESS][AIV_3][pid 713423] exit success!
+[SUCCESS][AIC_2][pid 713424] exit success!
+[SUCCESS][AIV_4][pid 713425] exit success!
+[SUCCESS][AIV_5][pid 713426] exit success!
+[SUCCESS][AIC_3][pid 713427] exit success!
+[SUCCESS][AIV_6][pid 713428] exit success!
+[SUCCESS][AIV_7][pid 713429] exit success!
+[SUCCESS][AIC_4][pid 713430] exit success!
+[SUCCESS][AIV_8][pid 713431] exit success!
+[SUCCESS][AIV_9][pid 713432] exit success!
+[SUCCESS][AIC_5][pid 713433] exit success!
+[SUCCESS][AIV_10][pid 713434] exit success!
+[SUCCESS][AIV_11][pid 713435] exit success!
+[SUCCESS][AIC_6][pid 713436] exit success!
+[SUCCESS][AIV_12][pid 713437] exit success!
+[SUCCESS][AIV_13][pid 713438] exit success!
+[SUCCESS][AIC_7][pid 713439] exit success!
+[SUCCESS][AIV_14][pid 713440] exit success!
+[SUCCESS][AIV_15][pid 713441] exit success!
+[SUCCESS][AIC_8][pid 713442] exit success!
+[SUCCESS][AIV_16][pid 713443] exit success!
+[SUCCESS][AIV_17][pid 713444] exit success!
+[SUCCESS][AIC_9][pid 713445] exit success!
+[SUCCESS][AIV_18][pid 713446] exit success!
+[SUCCESS][AIV_19][pid 713447] exit success!
+[SUCCESS][AIC_10][pid 713448] exit success!
+[SUCCESS][AIV_20][pid 713449] exit success!
+[SUCCESS][AIV_21][pid 713450] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_11][pid 713451] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[WARN][Block_11][AIV_0][/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/adv_api/detail/api_check/kernel_check/basic_check/reuse_source_check.h:50][ReuseSourceKernelCheckVerify][713452] [SoftmaxFlashV2] The parameter of isReuseSource is true, may not be effective.
+[SUCCESS][AIV_22][pid 713452] exit success!
+[SUCCESS][AIV_23][pid 713453] exit success!
+[SUCCESS][AIC_12][pid 713454] exit success!
+[SUCCESS][AIV_24][pid 713455] exit success!
+[SUCCESS][AIV_25][pid 713456] exit success!
+[SUCCESS][AIC_13][pid 713457] exit success!
+[SUCCESS][AIV_26][pid 713458] exit success!
+[SUCCESS][AIV_27][pid 713459] exit success!
+[SUCCESS][AIC_14][pid 713460] exit success!
+[SUCCESS][AIV_28][pid 713461] exit success!
+[SUCCESS][AIV_29][pid 713462] exit success!
+[SUCCESS][AIC_15][pid 713463] exit success!
+[SUCCESS][AIV_30][pid 713464] exit success!
+[SUCCESS][AIV_31][pid 713465] exit success!
+[SUCCESS][AIC_16][pid 713466] exit success!
+[SUCCESS][AIV_32][pid 713467] exit success!
+[SUCCESS][AIV_33][pid 713468] exit success!
+[SUCCESS][AIC_17][pid 713469] exit success!
+[SUCCESS][AIV_34][pid 713470] exit success!
+[SUCCESS][AIV_35][pid 713471] exit success!
+[SUCCESS][AIC_18][pid 713472] exit success!
+[SUCCESS][AIV_36][pid 713473] exit success!
+[SUCCESS][AIV_37][pid 713474] exit success!
+[SUCCESS][AIC_19][pid 713475] exit success!
+[SUCCESS][AIV_38][pid 713476] exit success!
+[SUCCESS][AIV_39][pid 713477] exit success!
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 713480] exit success!
+[SUCCESS][CORE_1][pid 713481] exit success!
+[SUCCESS][CORE_2][pid 713482] exit success!
+[SUCCESS][CORE_3][pid 713483] exit success!
+{"backend":"ascendc_cpu_debug","status":"passed","mode":"c4","oracle":true,"includes_bf16_rv":true,"partial_max_abs":4.76837e-07,"lse_max_abs":7.15256e-07,"output_max_abs":2.98023e-07,"eligible_clusters":0,"members":0,"gm_guards":true,"inputs_immutable":true,"task_count":144}

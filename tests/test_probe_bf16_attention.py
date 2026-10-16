@@ -62,7 +62,7 @@ def test_config_must_enable_same_serving_branch_before_any_device_access(tmp_pat
 def test_source_binding_covers_kernel_abi_oracle_and_actual_route():
     binding=probe.source_binding()
     required={'csrc/kernels/attention_cv_bf16_decode.cpp','csrc/kernels/attention_cv_bf16_cluster4.cpp',
-              'csrc/kernels/attention_cv_bf16_cluster16.cpp','tools/bf16_reference.py',
+              'csrc/kernels/attention_cv_bf16_cluster16.cpp','csrc/kernels/attention_bf16_cast.h','tools/bf16_reference.py',
               'configs/acceptance_bf16.json','oscar_ascend/runtime.py',
               'oscar_ascend/integration/impl.py','oscar_ascend/ops/cv_dispatch.py',
               'tools/probe_bf16_attention.py'}

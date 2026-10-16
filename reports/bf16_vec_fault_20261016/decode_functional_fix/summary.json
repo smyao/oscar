@@ -1,0 +1,29 @@
+{
+  "status": "functional_instruction_execution_passed",
+  "change": "only new FP32-to-BF16 operands use explicit normal-mask blocks<=64, repeat1, strides1/1/4/8; RNE unchanged",
+  "case": "existing q4 R2 N8 C641/701 S1 all24 tasks",
+  "model_topology": {
+    "AIC": 1,
+    "AIV": 2
+  },
+  "blockDim": 1,
+  "oracle": {
+    "bad_output": 0,
+    "bad_lse": 0,
+    "max_output_abs": 4.336011401817608e-06,
+    "max_lse_abs": 3.120828813152343e-07,
+    "atol": 0.005,
+    "rtol": 0.005,
+    "method": "Offline stable LSE merge of actual CAModel partials versus independent oscar_bf16_attention_v2 task golden; original raw runner method label is legacy text."
+  },
+  "candidate_partial_LSE_status_checks": "passed",
+  "input_and_GM_guards": "passed",
+  "peak_RSS_bytes": 155168768,
+  "cleanup_complete": true,
+  "original_source": "repeatable Count Cast trace stop and RSS growth before completion; no precise target PC mapping claimed",
+  "NPU": "not_run",
+  "performance": "not_measured",
+  "kernel_sha256": "bf0795568c145015d32da6b471419ae82da5e74db03c3c521a004dfd744830f8",
+  "helper_sha256": "a83070f6737096c864a6be9f603a45dfbc8cfeb06dd1a0bb3e306b238fc5740f",
+  "oracle_input_binding_verified": "report oracle hashes match bf16_expected_output.bin and bf16_expected_output_lse.bin, not old FP32 expected files"
+}

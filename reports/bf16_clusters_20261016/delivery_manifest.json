@@ -38,16 +38,16 @@
       "bytes": 1772
     },
     "csrc/kernels/attention_cv_bf16_cluster16.cpp": {
-      "sha256": "f4674d28c25f12c4827c60ea13c6ba572122964bbb6dcc6f881ca72521a151df",
-      "bytes": 72045
+      "sha256": "2bc977be4faf9cf49d9b9b88664291c5739e120bc6c2662da8799c6e85b4a5aa",
+      "bytes": 72196
     },
     "csrc/kernels/attention_cv_bf16_cluster4.cpp": {
-      "sha256": "ba2cc68f65226e756c9fc78c64dec746dd19183f285ec33163259be287ce0430",
-      "bytes": 64872
+      "sha256": "9b57d8bd6421ec3a594ddb3916465bcadaedfdd75bbcd1edc6ac4a9c9f2ec811",
+      "bytes": 65023
     },
     "reports/bf16_attention_20261016/cluster_source_manifest.json": {
-      "sha256": "4999ad63fc4ded6fce4e869b69b2159f5a1c5fa1849fa639bcded1578e590f50",
-      "bytes": 4288
+      "sha256": "10340c5346722b0919ecd5f3b568624bab4650f84a019c1351eba5fbadc1d121",
+      "bytes": 4658
     },
     "reports/bf16_clusters_20261016/QR_fault_output_domain.json": {
       "sha256": "76ed18637f890060bdca2534ecda00cbd3f9cbb30a0b7a850c6b385e390c3c90",
@@ -177,6 +177,10 @@
       "sha256": "dd9dd92006cb510d971fd1a0f58b71754a6512b75fdd22d73db68ff768d3e5c1",
       "bytes": 15434
     },
+    "reports/bf16_clusters_20261016/completed/reports/compile-cpu-control.json": {
+      "sha256": "a5c07d017f7834bfeab4b333b862f9cd4e09fc8cd93ba63b76d2d38d4f3e49c9",
+      "bytes": 992
+    },
     "reports/bf16_clusters_20261016/completed/reports/compile-cpu/stderr.log": {
       "sha256": "8a0161be2c7b307e0a2584b1532071e41dbbe6374a70ba1542eb12f6fb6979da",
       "bytes": 249
@@ -185,9 +189,9 @@
       "sha256": "3b68d01fd726db7b24dd4e275a725329031dd9a44a1954380a60692d68256c16",
       "bytes": 729
     },
-    "reports/bf16_clusters_20261016/completed/reports/compile-cpu-control.json": {
-      "sha256": "a5c07d017f7834bfeab4b333b862f9cd4e09fc8cd93ba63b76d2d38d4f3e49c9",
-      "bytes": 992
+    "reports/bf16_clusters_20261016/completed/reports/configure-cpu-control.json": {
+      "sha256": "d6fda5573e57dd82d742edf30e5f88ecdb879ee7cf090216913122051d03c899",
+      "bytes": 1000
     },
     "reports/bf16_clusters_20261016/completed/reports/configure-cpu/stderr.log": {
       "sha256": "8a0161be2c7b307e0a2584b1532071e41dbbe6374a70ba1542eb12f6fb6979da",
@@ -197,9 +201,9 @@
       "sha256": "30c958db7c98812a1f5c864011f6d9ab5a42c00524427e5a0f2e64ea0655c6a9",
       "bytes": 610
     },
-    "reports/bf16_clusters_20261016/completed/reports/configure-cpu-control.json": {
-      "sha256": "d6fda5573e57dd82d742edf30e5f88ecdb879ee7cf090216913122051d03c899",
-      "bytes": 1000
+    "reports/bf16_clusters_20261016/completed/reports/cpu-c16_bad80-control.json": {
+      "sha256": "d33f904ebc2a57096d1b8ae914dc58bc8a4b12912d3e80570a5fe499edd6c070",
+      "bytes": 1016
     },
     "reports/bf16_clusters_20261016/completed/reports/cpu-c16_bad80/stderr.log": {
       "sha256": "8a0161be2c7b307e0a2584b1532071e41dbbe6374a70ba1542eb12f6fb6979da",
@@ -209,9 +213,9 @@
       "sha256": "d91b65c60273f6f3dc924419534d96ea13611df07a18922cf726deacd7d972ab",
       "bytes": 56199
     },
-    "reports/bf16_clusters_20261016/completed/reports/cpu-c16_bad80-control.json": {
-      "sha256": "d33f904ebc2a57096d1b8ae914dc58bc8a4b12912d3e80570a5fe499edd6c070",
-      "bytes": 1016
+    "reports/bf16_clusters_20261016/completed/reports/cpu-c16_last_QR-control.json": {
+      "sha256": "7edab397afa931c00ef1ebf7d6c5c85d435ef64bbcf6016631d8dea23b3737ae",
+      "bytes": 1021
     },
     "reports/bf16_clusters_20261016/completed/reports/cpu-c16_last_QR/stderr.log": {
       "sha256": "8a0161be2c7b307e0a2584b1532071e41dbbe6374a70ba1542eb12f6fb6979da",
@@ -221,9 +225,9 @@
       "sha256": "6b85601dd44cc7f6049906df4d018e1a0ca3900f5c521b29820f8769a73d4a58",
       "bytes": 56199
     },
-    "reports/bf16_clusters_20261016/completed/reports/cpu-c16_last_QR-control.json": {
-      "sha256": "7edab397afa931c00ef1ebf7d6c5c85d435ef64bbcf6016631d8dea23b3737ae",
-      "bytes": 1021
+    "reports/bf16_clusters_20261016/completed/reports/cpu-c16_one_KV-control.json": {
+      "sha256": "8a68bec351d179a3f17bc5ba413b1aafda356b2a8f3ed00d06c5be626e7be6d8",
+      "bytes": 1018
     },
     "reports/bf16_clusters_20261016/completed/reports/cpu-c16_one_KV/stderr.log": {
       "sha256": "8a0161be2c7b307e0a2584b1532071e41dbbe6374a70ba1542eb12f6fb6979da",
@@ -233,9 +237,9 @@
       "sha256": "f0f51249fbaa635451846d82fb17e2834bf6782acc0ea288af2daff7dbc2e4a0",
       "bytes": 39432
     },
-    "reports/bf16_clusters_20261016/completed/reports/cpu-c16_one_KV-control.json": {
-      "sha256": "8a68bec351d179a3f17bc5ba413b1aafda356b2a8f3ed00d06c5be626e7be6d8",
-      "bytes": 1018
+    "reports/bf16_clusters_20261016/completed/reports/cpu-c16_two_KV-control.json": {
+      "sha256": "6da9d460a050634c34f1250dca15a1b0efa78b95afb2cef34b1014eaec2670e9",
+      "bytes": 1019
     },
     "reports/bf16_clusters_20261016/completed/reports/cpu-c16_two_KV/stderr.log": {
       "sha256": "8a0161be2c7b307e0a2584b1532071e41dbbe6374a70ba1542eb12f6fb6979da",
@@ -245,9 +249,9 @@
       "sha256": "76d705278e6b373cf781de7ffe6ad5edc4dcd36ff5b8304d21619c567cb06482",
       "bytes": 56520
     },
-    "reports/bf16_clusters_20261016/completed/reports/cpu-c16_two_KV-control.json": {
-      "sha256": "6da9d460a050634c34f1250dca15a1b0efa78b95afb2cef34b1014eaec2670e9",
-      "bytes": 1019
+    "reports/bf16_clusters_20261016/completed/reports/cpu-c4_C1_hkv2_s3-control.json": {
+      "sha256": "137d61aa4437a8050fb33b1e48709cb6233887d095da5b686302ffe63898812b",
+      "bytes": 1027
     },
     "reports/bf16_clusters_20261016/completed/reports/cpu-c4_C1_hkv2_s3/stderr.log": {
       "sha256": "8a0161be2c7b307e0a2584b1532071e41dbbe6374a70ba1542eb12f6fb6979da",
@@ -257,9 +261,9 @@
       "sha256": "26328e3909ba7c466520eb8f3c6b6aa297fcb515eec1c4db949df48a3ba025bc",
       "bytes": 10035
     },
-    "reports/bf16_clusters_20261016/completed/reports/cpu-c4_C1_hkv2_s3-control.json": {
-      "sha256": "137d61aa4437a8050fb33b1e48709cb6233887d095da5b686302ffe63898812b",
-      "bytes": 1027
+    "reports/bf16_clusters_20261016/completed/reports/cpu-c4_one_KV-control.json": {
+      "sha256": "187a0dc818f198a1644ee2c3846f5bf0914dee30b4a6fff80cc7d72099fcdff1",
+      "bytes": 1014
     },
     "reports/bf16_clusters_20261016/completed/reports/cpu-c4_one_KV/stderr.log": {
       "sha256": "8a0161be2c7b307e0a2584b1532071e41dbbe6374a70ba1542eb12f6fb6979da",
@@ -269,13 +273,13 @@
       "sha256": "e0af346dd5fdd8ed8a9658c1d94add532de12990c2eacb1f7c273f05d0e4fc09",
       "bytes": 13765
     },
-    "reports/bf16_clusters_20261016/completed/reports/cpu-c4_one_KV-control.json": {
-      "sha256": "187a0dc818f198a1644ee2c3846f5bf0914dee30b4a6fff80cc7d72099fcdff1",
-      "bytes": 1014
-    },
     "reports/bf16_clusters_20261016/completed/reports/final_artifact_hashes.json": {
       "sha256": "70374c5802391a09936c5d01fda24249beadba960a9fb96699dcaa30cb927016",
       "bytes": 1597
+    },
+    "reports/bf16_clusters_20261016/completed/reports/prepare-c16_bad80-control.json": {
+      "sha256": "17ce86ecf16b69cf04a4e75823ffa0ffd1600a5a977452bdcceeece50e2e84ac",
+      "bytes": 1031
     },
     "reports/bf16_clusters_20261016/completed/reports/prepare-c16_bad80/stderr.log": {
       "sha256": "8a0161be2c7b307e0a2584b1532071e41dbbe6374a70ba1542eb12f6fb6979da",
@@ -285,9 +289,9 @@
       "sha256": "c45423291f206cf9eb37ceb8158751f91346d0ef160d5ba4e497e249b44adccc",
       "bytes": 363
     },
-    "reports/bf16_clusters_20261016/completed/reports/prepare-c16_bad80-control.json": {
-      "sha256": "17ce86ecf16b69cf04a4e75823ffa0ffd1600a5a977452bdcceeece50e2e84ac",
-      "bytes": 1031
+    "reports/bf16_clusters_20261016/completed/reports/prepare-c16_last_QR-control.json": {
+      "sha256": "bd4ffd0cd2afbfb8e51fbb116574a61f318f0b0045581cf8869736105d150caf",
+      "bytes": 1037
     },
     "reports/bf16_clusters_20261016/completed/reports/prepare-c16_last_QR/stderr.log": {
       "sha256": "8a0161be2c7b307e0a2584b1532071e41dbbe6374a70ba1542eb12f6fb6979da",
@@ -297,9 +301,9 @@
       "sha256": "c47c99b89d799eec32c1615272464786214719dadbb9ecdf2cee9ad6745b0f39",
       "bytes": 363
     },
-    "reports/bf16_clusters_20261016/completed/reports/prepare-c16_last_QR-control.json": {
-      "sha256": "bd4ffd0cd2afbfb8e51fbb116574a61f318f0b0045581cf8869736105d150caf",
-      "bytes": 1037
+    "reports/bf16_clusters_20261016/completed/reports/prepare-c16_one_KV-control.json": {
+      "sha256": "5326b289525ca5b6b1980d261aa2764cc94fdcdd6aec6ec0056337af45443ea7",
+      "bytes": 1034
     },
     "reports/bf16_clusters_20261016/completed/reports/prepare-c16_one_KV/stderr.log": {
       "sha256": "8a0161be2c7b307e0a2584b1532071e41dbbe6374a70ba1542eb12f6fb6979da",
@@ -309,8 +313,8 @@
       "sha256": "c1d8aa9c01383f7500d987627638978ceb691c8236785c67a8668d3fa2a737d3",
       "bytes": 363
     },
-    "reports/bf16_clusters_20261016/completed/reports/prepare-c16_one_KV-control.json": {
-      "sha256": "5326b289525ca5b6b1980d261aa2764cc94fdcdd6aec6ec0056337af45443ea7",
+    "reports/bf16_clusters_20261016/completed/reports/prepare-c16_two_KV-control.json": {
+      "sha256": "7abb40b99b96569931594e4fe576b62d3eae2c1e63e31b8fb583eec1b049b253",
       "bytes": 1034
     },
     "reports/bf16_clusters_20261016/completed/reports/prepare-c16_two_KV/stderr.log": {
@@ -321,9 +325,9 @@
       "sha256": "eafdc8b6869264e8f36dd7c683b08a62ee5698dee18fe621943f9c02b53fefbf",
       "bytes": 363
     },
-    "reports/bf16_clusters_20261016/completed/reports/prepare-c16_two_KV-control.json": {
-      "sha256": "7abb40b99b96569931594e4fe576b62d3eae2c1e63e31b8fb583eec1b049b253",
-      "bytes": 1034
+    "reports/bf16_clusters_20261016/completed/reports/prepare-c4_C1_hkv2_s3-control.json": {
+      "sha256": "13ad5f3bd7848f08e7c9cbdfa0c573c4cfd11a6e5fc302f7a85c501909728398",
+      "bytes": 1042
     },
     "reports/bf16_clusters_20261016/completed/reports/prepare-c4_C1_hkv2_s3/stderr.log": {
       "sha256": "8a0161be2c7b307e0a2584b1532071e41dbbe6374a70ba1542eb12f6fb6979da",
@@ -333,9 +337,9 @@
       "sha256": "57f7a5eb7b68a91bec3b3c110c71d2b05781258155458e8cd10a425bffeca40d",
       "bytes": 362
     },
-    "reports/bf16_clusters_20261016/completed/reports/prepare-c4_C1_hkv2_s3-control.json": {
-      "sha256": "13ad5f3bd7848f08e7c9cbdfa0c573c4cfd11a6e5fc302f7a85c501909728398",
-      "bytes": 1042
+    "reports/bf16_clusters_20261016/completed/reports/prepare-c4_one_KV-control.json": {
+      "sha256": "9a319af87b5e6f7252e04c987893f88fba52a0318b107729c156efde2814421d",
+      "bytes": 1030
     },
     "reports/bf16_clusters_20261016/completed/reports/prepare-c4_one_KV/stderr.log": {
       "sha256": "8a0161be2c7b307e0a2584b1532071e41dbbe6374a70ba1542eb12f6fb6979da",
@@ -344,10 +348,6 @@
     "reports/bf16_clusters_20261016/completed/reports/prepare-c4_one_KV/stdout.log": {
       "sha256": "24d5875f1f24afacb00215f64ee3a96d7247d4bf749fb05f74411e2b3485be6b",
       "bytes": 362
-    },
-    "reports/bf16_clusters_20261016/completed/reports/prepare-c4_one_KV-control.json": {
-      "sha256": "9a319af87b5e6f7252e04c987893f88fba52a0318b107729c156efde2814421d",
-      "bytes": 1030
     },
     "reports/bf16_clusters_20261016/completed/reports/scratch01_cleanup.json": {
       "sha256": "32c3d338c155a15ba4ec81d076152c67d6d5a8b196b7cd95b6b93f3975b85420",
@@ -385,6 +385,58 @@
       "sha256": "3e52091e8e9ca3da239cec13bfd476a267d75543ff0c2b633e050e948c12d27d",
       "bytes": 3890
     },
+    "reports/bf16_clusters_20261016/rne_fix/reports/rne-cpu-C1-control.json": {
+      "sha256": "7524b937f6a0b51b4c71655f23b38e0282c3feaeb7b9402ef777bab0514e23d6",
+      "bytes": 980
+    },
+    "reports/bf16_clusters_20261016/rne_fix/reports/rne-cpu-C1/stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "reports/bf16_clusters_20261016/rne_fix/reports/rne-cpu-C1/stdout.log": {
+      "sha256": "8d012f782c576e38e5536931cfe1a2a4e2fe79bf569af45e7af9f44109635a4d",
+      "bytes": 10035
+    },
+    "reports/bf16_clusters_20261016/rne_fix/reports/rne-cpu-build-control.json": {
+      "sha256": "5c82a5339ea25c10d93180c403ca18b20064b66b69b2c636827adbc227098ecf",
+      "bytes": 993
+    },
+    "reports/bf16_clusters_20261016/rne_fix/reports/rne-cpu-build/stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "reports/bf16_clusters_20261016/rne_fix/reports/rne-cpu-build/stdout.log": {
+      "sha256": "a463b30782ceb309a4e6ce1917b7e0616fe2fd5cc3651b89abcf99248ca6c413",
+      "bytes": 1343
+    },
+    "reports/bf16_clusters_20261016/rne_fix/reports/rne-device-control.json": {
+      "sha256": "cd6d8cb1df3369f0d754f53409e1db742b9260bea6a68d7e49f2a15c297d2bb7",
+      "bytes": 983
+    },
+    "reports/bf16_clusters_20261016/rne_fix/reports/rne-device/stderr.log": {
+      "sha256": "de93bfe5bdf0bba9a913d0b97bc974e19f7426ae1812fe3b9e01e0af0b42d171",
+      "bytes": 220
+    },
+    "reports/bf16_clusters_20261016/rne_fix/reports/rne-device/stdout.log": {
+      "sha256": "866c0fc2deeb2c420ce841375d3904b24ba82957904564c6a8d54e832845eb35",
+      "bytes": 15586
+    },
+    "reports/bf16_clusters_20261016/rne_fix/rne-phase.sh": {
+      "sha256": "3491cca5ac1d220b5d69734fd004942c2a114d097a01635b7048b1e2433cc805",
+      "bytes": 652
+    },
+    "reports/bf16_clusters_20261016/rne_fix/rne-source.json": {
+      "sha256": "900628815f1358a6ffa20985290cdfeb352dc436c3bf60028135f2cabd9c7aec",
+      "bytes": 706
+    },
+    "reports/bf16_clusters_20261016/rne_fix/summary.json": {
+      "sha256": "99410432f2cf4252759ba22b7dcbca32a4ad4ecdfe7b1b3f9c7124cba5397715",
+      "bytes": 1452
+    },
+    "reports/bf16_clusters_20261016/rne_fix_source.json": {
+      "sha256": "900628815f1358a6ffa20985290cdfeb352dc436c3bf60028135f2cabd9c7aec",
+      "bytes": 706
+    },
     "reports/bf16_clusters_20261016/scratch01_archive.json": {
       "sha256": "dae7ad2ce416a18f25258454fe68bb020834569d252c4cc629f42fc47e3fdcd8",
       "bytes": 269
@@ -406,11 +458,11 @@
       "bytes": 16440
     },
     "tools/generate_bf16_clusters.py": {
-      "sha256": "bab66dee514bd1ff802ecd4b274bdbd520a6bd12faf3f2fb7e8d6941912bf435",
-      "bytes": 13080
+      "sha256": "2ca2c89437edff7c0fa7b43e574d1f17e79c4ff300de8c2bcff84d8ed5f6a3d1",
+      "bytes": 14459
     }
   },
-  "total_bytes": 1138695,
+  "total_bytes": 1174402,
   "external_shared_dependencies": [
     "csrc/experiments/bf16_decode_20261016/probe.cpp",
     "tools/bf16_reference.py",

@@ -1,0 +1,70 @@
+[
+  {
+    "engine": "veccore0",
+    "trace_sha256": "2a4cbcaa10e55c11b1175cadf15bb33bc44215f4b2ac4f5d85de87d9156920fd",
+    "instruction_line_count": 4594,
+    "VEC_count": 276,
+    "maximum_PC_repeat_count": [
+      [
+        "0x10d1af4c",
+        64
+      ]
+    ],
+    "last_instructions": [
+      "[info] [00034136] (PC: 0x10d1ff00) SCALAR   : (Binary: 0x081a0b28) ADD_IMM  dtype:S64, XD:X13=0x10f7e0, XN:X0=0x10ecb8, IMM:0xb28, ",
+      "[info] [00034136] (PC: 0x10d1ff04) SCALAR   : (Binary: 0x02c80202) SHL  dtype:B64, XD:X4=0x3c00, DATA_SRC:IMM, IMM:0x2, ",
+      "[info] [00034141] (PC: 0x10d1ff08) SCALAR   : (Binary: 0x03dad000) LD_XD_XN_IMM  dtype:B64, XD:X13=0x112d7840, XN:X13=0x10f7e0, IMM:0, ",
+      "[info] [00034143] (PC: 0x10d1ff0c) SCALAR   : (Binary: 0x0008d201) ADD  dtype:S64, XD:X4=0x112db440, XN:X13=0x112d7840, XM:X4=0x3c00, ",
+      "[info] [00034143] (PC:"
+    ],
+    "last_VEC": [
+      "[info] [00034080] (PC: 0x10d1fdf4) VEC      : (Binary: 0x804000d4) MOVEMASK  XN:X21=0xffffffffffffffff, Pos:1, Id:8333",
+      "[info] [00034080] (PC: 0x10d1fe00) VEC      : (Binary: 0x40a206b4) SET_FLAG  PIPE:VEC, TRIGGER PIPE:MTE3, FLAG ID:0, ",
+      "[info] [00034103] (PC: 0x10d1fe3c) VEC      : (Binary: 0x80400054) MOVEMASK  XN:X21=0xffffffffffffffff, Pos:0, Id:8351"
+    ],
+    "last_BF16_VCONV": [
+      "[info] [00033255] (PC: 0x10d1fdd0) VEC      : (Binary: 0x8c086c90) VCONV  XD:X4=0x50a0, XN:X6=0x25c40, XT:X25=0x100080400010001, Conv_type:F32_BF16R  , Id:8110",
+      "[info] [00034077] (PC: 0x10d1fdd0) VEC      : (Binary: 0x8c086c90) VCONV  XD:X4=0x50a0, XN:X6=0x25c40, XT:X25=0x100080400010001, Conv_type:F32_BF16R  , Id:8324"
+    ],
+    "last_masks": [
+      "[info] [00034068] (PC: 0x10d1fdc4) VEC      : (Binary: 0x804000c4) MOVEMASK  XN:X17=0, Pos:1, Id:8321",
+      "[info] [00034069] (PC: 0x10d1fdcc) VEC      : (Binary: 0x80400048) MOVEMASK  XN:X18=0x100, Pos:0, Id:8323",
+      "[info] [00034080] (PC: 0x10d1fdf4) VEC      : (Binary: 0x804000d4) MOVEMASK  XN:X21=0xffffffffffffffff, Pos:1, Id:8333",
+      "[info] [00034103] (PC: 0x10d1fe3c) VEC      : (Binary: 0x80400054) MOVEMASK  XN:X21=0xffffffffffffffff, Pos:0, Id:8351"
+    ]
+  },
+  {
+    "engine": "veccore1",
+    "trace_sha256": "0a7573c1c33c392db79fe727765d565bd66872b0417b81bcb8e64ab834ba034f",
+    "instruction_line_count": 4868,
+    "VEC_count": 257,
+    "maximum_PC_repeat_count": [
+      [
+        "0x10d1af4c",
+        64
+      ]
+    ],
+    "last_instructions": [
+      "[info] [00033026] (PC: 0x10d20460) SCALAR   : (Binary: 0x0214a980) SIGNEXT  dtype:S8, XD:X10=0, XN:X10=0, ",
+      "[info] [00033030] (PC: 0x10d20464) SCALAR   : (Binary: 0x0396b000) LD_XD_XN_IMM  dtype:B32, XD:X11=0x2800, XN:X11=0x117bc0, IMM:0, ",
+      "[info] [00033031] (PC: 0x10d20468) SCALAR   : (Binary: 0x03dce000) LD_XD_XN_IMM  dtype:B64, XD:X14=0x116d50, XN:X14=0x117bb8, IMM:0, ",
+      "[info] [00033057] (PC: 0x10d20454) SCALAR   : (Binary: 0x0496c008) ST_XD_XN_IMM  dtype:B32, XD:X11=0x100, XN:X12=0x116de0, IMM:0x8, ",
+      "[info] [00033078] (PC: 0x1"
+    ],
+    "last_VEC": [
+      "[info] [00032813] (PC: 0x10d2073c) VEC      : (Binary: 0x800011cc) VBRCB  XD:X0=0x26340, XN:X1=0x51a0, XT:X3=0x800000800000001, Dtype:B32, Id:8283",
+      "[info] [00032813] (PC: 0x10d20740) VEC      : (Binary: 0x40e00400) BAR  PIPE:VEC",
+      "[info] [00032955] (PC: 0x10d20744) VEC      : (Binary: 0x85c4201c) VADD  XD:X2=0xdc40, XN:X2=0xdc40, XM:X0=0x26340, XT:X7=0x4000012020000101, Dtype:F32, Id:8285"
+    ],
+    "last_BF16_VCONV": [
+      "[info] [00028099] (PC: 0x10d1fdd0) VEC      : (Binary: 0x8c086c90) VCONV  XD:X4=0x50a0, XN:X6=0x25c40, XT:X25=0x100080400010001, Conv_type:F32_BF16R  , Id:6838",
+      "[info] [00028457] (PC: 0x10d20124) VEC      : (Binary: 0x8c225510) VCONV  XD:X17=0x50a0, XN:X5=0xdc40, XT:X10=0x100080400010001, Conv_type:F32_BF16R  , Id:6983"
+    ],
+    "last_masks": [
+      "[info] [00032210] (PC: 0x10d20638) VEC      : (Binary: 0x8040001c) MOVEMASK  XN:X7=0xffffffffffffffff, Pos:0, Id:8185",
+      "[info] [00032236] (PC: 0x10d20688) VEC      : (Binary: 0x804000a0) MOVEMASK  XN:X8=0, Pos:1, Id:8238",
+      "[info] [00032238] (PC: 0x10d20698) VEC      : (Binary: 0x80400030) MOVEMASK  XN:X12=0x80, Pos:0, Id:8242",
+      "[info] [00032248] (PC: 0x10d206c4) VEC      : (Binary: 0x8040001c) MOVEMASK  XN:X7=0xffffffffffffffff, Pos:0, Id:8253"
+    ]
+  }
+]

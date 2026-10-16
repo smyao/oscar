@@ -1,0 +1,256 @@
+(APIServer pid=113454) INFO 10-16 04:53:15 [launcher.py:46] Route: /v1/completions/render, Methods: POST
+(APIServer pid=113454) INFO:     Started server process [113454]
+(APIServer pid=113454) INFO:     Waiting for application startup.
+(APIServer pid=113454) INFO:     Application startup complete.
+(APIServer pid=113454) INFO:     135.82.26.93:36714 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36718 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(Worker_TP3 pid=113676) [oscar] MTP_DISCARD_BRIDGE proposer=AscendEagleProposer method=mtp requests=1 mask_capacity=128 draft_index=1 source=native.discard_request_mask binding=queued cache_position=logical_rejection_boundary
+(Worker_TP2 pid=113633) [oscar] MTP_DISCARD_BRIDGE proposer=AscendEagleProposer method=mtp requests=1 mask_capacity=128 draft_index=1 source=native.discard_request_mask binding=queued cache_position=logical_rejection_boundary
+(Worker_TP1 pid=113593) [oscar] MTP_DISCARD_BRIDGE proposer=AscendEagleProposer method=mtp requests=1 mask_capacity=128 draft_index=1 source=native.discard_request_mask binding=queued cache_position=logical_rejection_boundary
+(Worker_TP0 pid=113573) [oscar] MTP_DISCARD_BRIDGE proposer=AscendEagleProposer method=mtp requests=1 mask_capacity=128 draft_index=1 source=native.discard_request_mask binding=queued cache_position=logical_rejection_boundary
+(APIServer pid=113454) INFO:     135.82.26.93:36720 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36734 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36736 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36752 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36758 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36772 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36788 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36798 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36804 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36812 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36822 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36828 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36842 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36858 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36864 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36874 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36886 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36888 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36894 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36898 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36902 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36918 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36934 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36944 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36948 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36952 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36966 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36978 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36980 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=113454) INFO:     135.82.26.93:36984 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+[rank3]:[E1016 04:54:23.098417260 OpParamMaker.cpp:453] operator():../third_party/op-plugin/op_plugin/utils/op_api_common.h:192 NPU function error: call failed, error code is 507015
+[ERROR] 2026-10-16-04:54:23 (PID:113676, Device:3, RankID:-1) ERR00100 PTA call acl api failed
+[Error]: The aicore execution is abnormal. 
+        Rectify the fault based on the error information in the ascend log.
+[PID: 113676] 2026-10-16-04:49:59.538.302 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+TraceBack (most recent call last):
+        The error from device(chipId:3, dieId:0), serial number is 85, there is an exception of fftsplus aivector error, core id is 0, error code = 0x4000000000000000, dump info: pc start: 0x1246025f73f8, current: 0x1246025fddb0, vec error info: 0xf700002c0e, mte error info: 0xfc03047080, ifu error info: 0x212d03f582640, ccu error info: 0x2226e0c46f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c1517cd080, aic cond: 0.
+The extend info: errcode:(0x4000000000000000, 0, 0) errorStr: The address for the VEC instruction to read/write UB is out of bounds. fixp_error0 info: 0x3047080, fixp_error1 info: 0xfc, fsmId:0, tslot:3, thread:0, ctxid:0, blk:8, sublk:0, subErrType:4.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        An error occurred in the kernel task, retCode=0x26, [aicore exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+        Failed to submit kernel task, retCode=0x7150026.[FUNC:InternalLaunchKernelSubmit][FILE:aix_stars.cc][LINE:462]
+        kernel launch submit failed.[FUNC:StreamLaunchKernelV2][FILE:aix_stars.cc][LINE:609]
+        rtsLaunchKernelWithHostArgs execution failed, reason=aicore exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+        aclrtLaunchKernelWithHostArgs failed: 507015
+        Kernel launch from cache failed.
+        OpExecCache run fail.
+        This is an error in DynamicQuant launch aicore
+
+Exception raised from operator() at ../third_party/op-plugin/op_plugin/utils/op_api_common.h:192 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0xc8 (0xffff7ee05978 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0xc4 (0xffff7eda9adc in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #2: <unknown function> + 0x22fd60c (0xffff5ca5d60c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #3: <unknown function> + 0x4b10768 (0xffff5f270768 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #4: <unknown function> + 0x1927070 (0xffff5c087070 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #5: <unknown function> + 0x192810c (0xffff5c08810c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #6: <unknown function> + 0x1925b38 (0xffff5c085b38 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #7: <unknown function> + 0xd29cc (0xffff8d1d29cc in /lib/aarch64-linux-gnu/libstdc++.so.6)
+frame #8: <unknown function> + 0x803c8 (0xffff8d3b03c8 in /lib/aarch64-linux-gnu/libc.so.6)
+frame #9: <unknown function> + 0xe9edc (0xffff8d419edc in /lib/aarch64-linux-gnu/libc.so.6)
+
+[rank2]:[E1016 04:54:23.102143410 OpParamMaker.cpp:453] operator():../third_party/op-plugin/op_plugin/utils/op_api_common.h:192 NPU function error: call failed, error code is 507015
+[ERROR] 2026-10-16-04:54:23 (PID:113633, Device:2, RankID:-1) ERR00100 PTA call acl api failed
+[Error]: The aicore execution is abnormal. 
+        Rectify the fault based on the error information in the ascend log.
+[PID: 113633] 2026-10-16-04:50:00.805.799 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+TraceBack (most recent call last):
+        The error from device(chipId:2, dieId:0), serial number is 82, there is an exception of fftsplus aivector error, core id is 0, error code = 0x4000000000000000, dump info: pc start: 0x1244025f73f8, current: 0x1244025fddb0, vec error info: 0xf700002c0e, mte error info: 0xfc03044080, ifu error info: 0x212d03f582ec0, ccu error info: 0xdf6f61506f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c15140d080, aic cond: 0.
+The extend info: errcode:(0x4000000000000000, 0, 0) errorStr: The address for the VEC instruction to read/write UB is out of bounds. fixp_error0 info: 0x3044080, fixp_error1 info: 0xfc, fsmId:0, tslot:4, thread:0, ctxid:0, blk:13, sublk:1, subErrType:4.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        An error occurred in the kernel task, retCode=0x26, [aicore exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+        Failed to submit kernel task, retCode=0x7150026.[FUNC:InternalLaunchKernelSubmit][FILE:aix_stars.cc][LINE:462]
+        kernel launch submit failed.[FUNC:StreamLaunchKernelV2][FILE:aix_stars.cc][LINE:609]
+        rtsLaunchKernelWithHostArgs execution failed, reason=aicore exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+        aclrtLaunchKernelWithHostArgs failed: 507015
+        Kernel launch from cache failed.
+        OpExecCache run fail.
+        This is an error in DynamicQuant launch aicore
+
+Exception raised from operator() at ../third_party/op-plugin/op_plugin/utils/op_api_common.h:192 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0xc8 (0xffff722c5978 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0xc4 (0xffff72269adc in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #2: <unknown function> + 0x22fd60c (0xffff4ff1d60c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #3: <unknown function> + 0x4b10768 (0xffff52730768 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #4: <unknown function> + 0x1927070 (0xffff4f547070 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #5: <unknown function> + 0x192810c (0xffff4f54810c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #6: <unknown function> + 0x1925b38 (0xffff4f545b38 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #7: <unknown function> + 0xd29cc (0xffff806929cc in /lib/aarch64-linux-gnu/libstdc++.so.6)
+frame #8: <unknown function> + 0x803c8 (0xffff808703c8 in /lib/aarch64-linux-gnu/libc.so.6)
+frame #9: <unknown function> + 0xe9edc (0xffff808d9edc in /lib/aarch64-linux-gnu/libc.so.6)
+
+[rank0]:[E1016 04:54:23.102608230 OpParamMaker.cpp:453] operator():../third_party/op-plugin/op_plugin/utils/op_api_common.h:192 NPU function error: call failed, error code is 507015
+[ERROR] 2026-10-16-04:54:23 (PID:113573, Device:0, RankID:-1) ERR00100 PTA call acl api failed
+[Error]: The aicore execution is abnormal. 
+        Rectify the fault based on the error information in the ascend log.
+[PID: 113573] 2026-10-16-04:50:00.059.930 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+TraceBack (most recent call last):
+        The error from device(chipId:0, dieId:0), serial number is 101, there is an exception of fftsplus aivector error, core id is 0, error code = 0x4000000000000000, dump info: pc start: 0x1240025f73f8, current: 0x1240025fddb0, vec error info: 0xf700002c0e, mte error info: 0xfc030550ac, ifu error info: 0x212d03f582fc0, ccu error info: 0x12c480106f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c15144c080, aic cond: 0.
+The extend info: errcode:(0x4000000000000000, 0, 0) errorStr: The address for the VEC instruction to read/write UB is out of bounds. fixp_error0 info: 0x30550ac, fixp_error1 info: 0xfc, fsmId:0, tslot:6, thread:0, ctxid:0, blk:13, sublk:1, subErrType:4.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        An error occurred in the kernel task, retCode=0x26, [aicore exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+        Failed to submit kernel task, retCode=0x7150026.[FUNC:InternalLaunchKernelSubmit][FILE:aix_stars.cc][LINE:462]
+        kernel launch submit failed.[FUNC:StreamLaunchKernelV2][FILE:aix_stars.cc][LINE:609]
+        rtsLaunchKernelWithHostArgs execution failed, reason=aicore exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+        aclrtLaunchKernelWithHostArgs failed: 507015
+        Kernel launch from cache failed.
+        OpExecCache run fail.
+        This is an error in DynamicQuant launch aicore
+
+Exception raised from operator() at ../third_party/op-plugin/op_plugin/utils/op_api_common.h:192 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0xc8 (0xffffa86e5978 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0xc4 (0xffffa8689adc in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #2: <unknown function> + 0x22fd60c (0xffff8633d60c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #3: <unknown function> + 0x4b10768 (0xffff88b50768 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #4: <unknown function> + 0x1927070 (0xffff85967070 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #5: <unknown function> + 0x192810c (0xffff8596810c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #6: <unknown function> + 0x1925b38 (0xffff85965b38 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #7: <unknown function> + 0xd29cc (0xffffb6aa29cc in /lib/aarch64-linux-gnu/libstdc++.so.6)
+frame #8: <unknown function> + 0x803c8 (0xffffb6c803c8 in /lib/aarch64-linux-gnu/libc.so.6)
+frame #9: <unknown function> + 0xe9edc (0xffffb6ce9edc in /lib/aarch64-linux-gnu/libc.so.6)
+
+[rank1]:[E1016 04:54:23.103885990 OpParamMaker.cpp:453] operator():../third_party/op-plugin/op_plugin/utils/op_api_common.h:192 NPU function error: call failed, error code is 507015
+[ERROR] 2026-10-16-04:54:23 (PID:113593, Device:1, RankID:-1) ERR00100 PTA call acl api failed
+[Error]: The aicore execution is abnormal. 
+        Rectify the fault based on the error information in the ascend log.
+[PID: 113593] 2026-10-16-04:50:00.547.652 Invalid_Argument(EH0012): aclrtAllocatorGetByStream failed. Parameter stream is invalid. Reason: The stream is not registered with any allocator.
+TraceBack (most recent call last):
+        The error from device(chipId:1, dieId:0), serial number is 85, there is an exception of fftsplus aivector error, core id is 0, error code = 0x4000000000000000, dump info: pc start: 0x1242025f73f8, current: 0x1242025fddb0, vec error info: 0xf700002c0e, mte error info: 0xfc03044080, ifu error info: 0x212d03f582300, ccu error info: 0x68ca00056f0000b1, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c15168d080, aic cond: 0.
+The extend info: errcode:(0x4000000000000000, 0, 0) errorStr: The address for the VEC instruction to read/write UB is out of bounds. fixp_error0 info: 0x3044080, fixp_error1 info: 0xfc, fsmId:0, tslot:2, thread:0, ctxid:0, blk:11, sublk:1, subErrType:4.
+For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+        An error occurred in the kernel task, retCode=0x26, [aicore exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+        Failed to submit kernel task, retCode=0x7150026.[FUNC:InternalLaunchKernelSubmit][FILE:aix_stars.cc][LINE:462]
+        kernel launch submit failed.[FUNC:StreamLaunchKernelV2][FILE:aix_stars.cc][LINE:609]
+        rtsLaunchKernelWithHostArgs execution failed, reason=aicore exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+        aclrtLaunchKernelWithHostArgs failed: 507015
+        Kernel launch from cache failed.
+        OpExecCache run fail.
+        This is an error in DynamicQuant launch aicore
+
+Exception raised from operator() at ../third_party/op-plugin/op_plugin/utils/op_api_common.h:192 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0xc8 (0xffff78245978 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0xc4 (0xffff781e9adc in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #2: <unknown function> + 0x22fd60c (0xffff55e9d60c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #3: <unknown function> + 0x4b10768 (0xffff586b0768 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #4: <unknown function> + 0x1927070 (0xffff554c7070 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #5: <unknown function> + 0x192810c (0xffff554c810c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #6: <unknown function> + 0x1925b38 (0xffff554c5b38 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/lib/libtorch_npu.so)
+frame #7: <unknown function> + 0xd29cc (0xffff866129cc in /lib/aarch64-linux-gnu/libstdc++.so.6)
+frame #8: <unknown function> + 0x803c8 (0xffff867f03c8 in /lib/aarch64-linux-gnu/libc.so.6)
+frame #9: <unknown function> + 0xe9edc (0xffff86859edc in /lib/aarch64-linux-gnu/libc.so.6)
+
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 345, in execute_model
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return self.worker.execute_model(scheduler_output)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 647, in execute_model
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     output = self.model_runner.execute_model(scheduler_output, intermediate_tensors)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2320, in execute_model
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     hidden_states = self._model_forward(
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]                     ^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2867, in _model_forward
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     hidden_states = run_model()
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]                     ^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/acl_graph.py", line 150, in __call__
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return self.runnable(*args, **kwargs)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return self._call_impl(*args, **kwargs)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return forward_call(*args, **kwargs)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py", line 661, in forward
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     hidden_states = self.language_model.model(
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 520, in __call__
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return self.aot_compiled_fn(self, *args, **kwargs)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_dynamo/aot_compile.py", line 124, in __call__
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return self.fn(*args, **kwargs)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py", line 505, in forward
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     def forward(
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/caching.py", line 217, in __call__
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return self.optimized_call(*args, **kwargs)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "<string>", line 5, in execution_fn
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/piecewise_backend.py", line 380, in __call__
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return range_entry.runnable(*args)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_inductor/compile_fx.py", line 2865, in wrapper
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return pytree.tree_unflatten(compiled_fn(*args, **kwargs), spec)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/aot_autograd.py", line 1148, in forward
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return compiled_fn(full_args)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 357, in runtime_wrapper
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     all_outs = call_func_at_runtime_with_args(
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py", line 134, in call_func_at_runtime_with_args
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     out = normalize_as_list(f(args))
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]                             ^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 531, in wrapper
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return compiled_fn(runtime_args)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 729, in inner_fn
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     outs = compiled_fn(args)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py", line 108, in g
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return f(*args)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/dynamo/npugraph_ex/npu_fx_compiler.py", line 511, in __call__
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     gm_result = self.run_kernel(*args, **kwargs)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "<string>", line 4033, in kernel
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/dynamo/npugraph_ex/_acl_concrete_graph/acl_graph.py", line 826, in __call__
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return self.fx_run_eagerly(*args, **kwargs)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/dynamo/npugraph_ex/_acl_concrete_graph/acl_graph.py", line 897, in fx_run_eagerly
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return self.fx_forward(*args, **kwargs)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "<string>", line 2661, in forward
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_ops.py", line 819, in __call__
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return self._op(*args, **kwargs)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/layers/attention/kv_transfer_utils.py", line 40, in wrapper
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/layers/attention/attention.py", line 751, in unified_attention_with_output
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     self.impl.forward(
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar_kimi/oscar_ascend/integration/impl.py", line 221, in forward
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     getattr(ops, rotate_name)(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_ops.py", line 1209, in __call__
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]     return self._op(*args, **kwargs)
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987] RuntimeError: The Inner error is reported as above. The process exits for this inner error, and the current working operator name is aclnnDynamicQuantV2.
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987] Since the operator is called asynchronously, the stacktrace may be inaccurate. If you want to get the accurate stacktrace, please set the environment variable ASCEND_LAUNCH_BLOCKING=1.
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987] Note: ASCEND_LAUNCH_BLOCKING=1 will force ops to run in synchronous mode, resulting in performance degradation. Please unset ASCEND_LAUNCH_BLOCKING in time after debugging.
+(Worker_TP3 pid=113676) ERROR 10-16 04:54:23 [multiproc_executor.py:987] [ERROR] 2026-10-16-04:54:23 (PID:113676, Device:3, RankID:-1) ERR00100 PTA call acl api failed.

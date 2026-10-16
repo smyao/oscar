@@ -28728,3 +28728,16 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修复**：外部插件在none+MTP时保留真实prefill的原mask/count，不执行该fold；在原生runner分派边界用现有CPU镜像识别warm qLen4 prompt，将该步的原生force_eager置真。原生`is_all_decode`只检查computed>0会错误匹配q4图，因此必须同时修分类与图选择。GDN conv/chunk算术、原生文件、冻结guard、INT2存储不改，MTP仍为3个speculative tokens。正常decode/dummy/capture与APC开启路径保持原选择，无异常捕获回退。
 
 **验证**：`test_gdn_folded_initial_state.py`复现旧错误并验证新状态提交；`test_prefill_state_contract_hooks.py`执行真实native dispatcher/fold AST，旧FULL→修复NONE、下一轮decode恢复FULL、APC路径不变、位置/关键字参数、轻量可逆插件注册均通过；相关关键套件合计133 passed。两固定一键入口均经同一插件安装。以上是主机/native源码契约证据，不冒充NPU整轮已完成。
+
+
+## [164] 真机条目（2026-10-16 用户回传）· 新BF16分支关闭APC时报VEC UB越界
+
+**用户原始证据**：`reports/bf16_ub_fix_20261016/target_apc_off_failure.txt`。用户明确prefix cache关闭。服务启动并完成多条HTTP请求后，04:54:23四rank报507015，VEC UB read/write out-of-bounds；四卡current−start均0x69b8。栈在DynamicQuantV2/OSCAR query rotation提交处暴露，异步栈不用于把责任推给原生算子。本次按新BF16分支引入的回归修复，APC-off、MTP和INT2路径保留。
+
+**本地可复现缺陷**：新增FP32→BF16使用count-overload大块VCONV。独立单核实际指令模拟两次均在相同指令序列停住：已退休query/padding转换count=256/2048；大型KV转换issue后不退休，随后固定发生内存膨胀/分配失败。两份trace的AIV0均4594条、末Id8351；AIV1均4868条、末Id8285。单纯放宽模拟器内存限制不能消除。早期OOM/虚拟地址限制的原始失败保留，不伪写为数值完成或真机报错。
+
+**修复**：`attention_bf16_cast.h`将新增FP32→BF16转换统一拆为normal-mask、每次最多64个FP32元素、repeat=1、stride={1,1,4,8}；每次读不超过256B、写不超过128B。q4/q1和C4/C16的Q、K/V、P及归一化结果发布使用同一helper，保留RNE舍入、BF16 Cube操作数及FP32累加/softmax/LSE；原INT2解包、物理缓存、调度、guard冻结集和精度容差不改。生成器和探针源绑定同步覆盖helper，固定candidate命令实际启用。
+
+**对照验证**：仅改变七处转换指令形式后，同输入q4完整实际指令模拟rc0、cleanup=true，全部24task、partial/LSE、status、外部guards和独立BF16v2 oracle通过；bad_output=0、bad_lse=0、最大输出绝对误差4.336e-6，模拟进程峰值RSS155168768B，原版则在相同转换处膨胀超过8GB。此处内存数据用于证明局部故障消失，未做吞吐/延迟比较。C4/C16窄CANN编译通过，C4 C1双KV头/S3完整CPU数值144tasks通过，38项宿主回归通过；聚合凭证见 `reports/bf16_ub_fix_20261016/summary.json`。
+
+**D.4四问与边界**：修复fused FIA内部固定tile转换指令，不恢复整段BF16历史；此前6.5秒整历史恢复结构仍禁止；不新增GM/UB容量、不改变数学，只限制每次VCONV的寻址范围；本地指令模拟的红绿证据成立，但没有目标产物的PC→symbol映射，不声称已直接回放用户真机或完成模型验收。

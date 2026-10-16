@@ -42,6 +42,10 @@ BF16 Rv在KV profiling之前分配并缓存，forward直接传入，不添加每
 
 probe入口已适配：BF16核心精度/错误/图门替代旧FP32 reader性能门，生命周期门继续检查自身数学oracle、状态和物理页一致性；跨数学路径差异单独诊断，同一BF16路径的逐位约束保留。metadata/striped/native-current及四个生命周期门在BF16配置下不计时，记录 `not_run_user_requested`。若用户运行probe，无NPU或任一正确性/清理失败仍必须停止。
 
+## 2026-10-16 APC-off故障修复
+
+用户回传VEC UB越界后，已定位并消除新增大count FP32→BF16转换在实际指令模拟中的确定性失败，改为统一normal-mask、每次最多64元素的RNE转换。BF16计算、精度合同、MTP、APC-off和启动参数不变。相同q4完整功能case由异常终止变为全部数值/状态/guards通过；详见档案#164及 `reports/bf16_ub_fix_20261016/`。未测速，不将本地功能模拟描述为真机完成。
+
 ## 用户启动
 
 首次切换到独立分支：

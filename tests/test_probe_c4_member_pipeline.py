@@ -113,10 +113,11 @@ def test_default_candidate_and_failed_pipeline_gate_block_model(monkeypatch,tmp_
     assert install_serve.main(['--config',str(config_path),'--variant','candidate','--plan'])==0
     direct=json.loads(capsys.readouterr().out)
     assert direct['runtime_selection']==plan['runtime_selection']
-    assert direct['runtime_selection']['prefix_caching'] is True
+    assert direct['runtime_selection']['prefix_caching'] is False
     for name in ('_preflight','_candidate_gate','_fast_unpack_gate','_mixed_optimization_gate',
                  '_striped_cache_gate','_decode_bundle_gate','_current_only_gate',
-                 '_first_mtp_current_gate','_mixed_decode_split_gate','_request_window_gate'):
+                 '_first_mtp_current_gate','_mixed_decode_split_gate','_request_window_gate',
+                 '_mdl_decode_gate','_bf16_history_gate','_prefix_cache_gate'):
         monkeypatch.setattr(observe,name,lambda *a,**k:None)
     seen=[]
     def fail(config_path,config,*args):

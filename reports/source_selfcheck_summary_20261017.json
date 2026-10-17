@@ -1,0 +1,354 @@
+{
+  "baseline": "21efbb7e955ce3cb705f8b1abe07a80935a5f9c0",
+  "scope": "source self-audit; host-only; not NPU acceptance or a claim of bug freedom",
+  "fixes": [
+    "validate CPU integer metadata mirrors on cache-hit and partition paths before reading values",
+    "APC probe uses production BF16 reader, normalization and 1720320 bytes/core D256 MDL arena",
+    "offline memory ledger includes BF16 and C4 pipeline options"
+  ],
+  "full_suite": {
+    "returncode": 1,
+    "passed": 1819,
+    "failed": 18,
+    "errors": 14,
+    "skipped": 134,
+    "subtests_passed": 29,
+    "xml": "reports/source_selfcheck_final_20261017.xml",
+    "log": "reports/source_selfcheck_final_20261017.log",
+    "argv": [
+      ".venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--junitxml=reports/source_selfcheck_final_20261017.xml"
+    ],
+    "env": {
+      "OSCAR_TEST_CLANGXX": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++",
+      "DEVELOPER_DIR": "/Applications/Xcode.app/Contents/Developer",
+      "SDKROOT": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+      "PATH": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/usr/local/bin/python3.8:/Library/Frameworks/Python.framework/Versions/3.14/bin:/Library/Frameworks/Python.framework/Versions/3.14/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin:/Users/loki.yao/.codex/tmp/arg0/codex-arg0DGkIDj:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/loki.yao/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/loki.yao/anaconda3/bin:/Users/loki.yao/anaconda3/condabin:/usr/local/bin/python3.8:/Library/Frameworks/Python.framework/Versions/3.14/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/loki.yao/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS"
+    },
+    "failure_categories": {
+      "missing_historical_artifacts": 17,
+      "historical_experiment_static_debt": 2,
+      "unsupported_research_layout": 13
+    },
+    "unresolved_nodes": [
+      {
+        "node": "tests.test_analyze_64k_evidence::test_all_supplied_engine_rows_are_parsed_without_pid_or_clock_mixing",
+        "kind": "error",
+        "category": "missing_historical_artifacts",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "node": "tests.test_analyze_64k_evidence::test_truncated_records_preserve_known_fields_and_do_not_invent_counts",
+        "kind": "error",
+        "category": "missing_historical_artifacts",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "node": "tests.test_analyze_64k_evidence::test_client_tables_and_warmup_have_separate_time_denominators",
+        "kind": "error",
+        "category": "missing_historical_artifacts",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "node": "tests.test_analyze_64k_evidence::test_client_latency_decomposition_respects_fixed_512_output_tokens",
+        "kind": "error",
+        "category": "missing_historical_artifacts",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "node": "tests.test_analyze_64k_evidence::test_spec_totals_use_counts_rather_than_unweighted_percentage_means",
+        "kind": "error",
+        "category": "missing_historical_artifacts",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "node": "tests.test_analyze_64k_evidence::test_observed_capacity_and_zero_counters_do_not_invent_memory_or_phases",
+        "kind": "error",
+        "category": "missing_historical_artifacts",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "node": "tests.test_analyze_64k_evidence::test_server_counter_integration_does_not_use_client_duration",
+        "kind": "error",
+        "category": "missing_historical_artifacts",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "node": "tests.test_analyze_64k_evidence::test_conditional_warmup_pool_bounds_include_the_reference_null_block",
+        "kind": "error",
+        "category": "missing_historical_artifacts",
+        "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+      },
+      {
+        "node": "tests.test_analyze_decode_completion::test_real_popped_completion_ids_keep_observed_latency_not_busy",
+        "kind": "failure",
+        "category": "missing_historical_artifacts",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "node": "tests.test_analyze_decode_completion::test_real_decode_markers_close_but_do_not_mean_math_completed",
+        "kind": "failure",
+        "category": "missing_historical_artifacts",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz'"
+      },
+      {
+        "node": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[duplicate_id]",
+        "kind": "failure",
+        "category": "missing_historical_artifacts",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "node": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[missing_completion]",
+        "kind": "failure",
+        "category": "missing_historical_artifacts",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "node": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[wrong_pc]",
+        "kind": "failure",
+        "category": "missing_historical_artifacts",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "node": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[flag_count]",
+        "kind": "failure",
+        "category": "missing_historical_artifacts",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+      },
+      {
+        "node": "tests.test_analyze_decode_completion::test_truncated_real_line_and_unclosed_real_markers_fail",
+        "kind": "failure",
+        "category": "missing_historical_artifacts",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz'"
+      },
+      {
+        "node": "tests.test_no_fallback_static::test_no_silent_exception_swallowing",
+        "kind": "failure",
+        "category": "historical_experiment_static_debt",
+        "message": "AssertionError: PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/experiments/replay_shared_fp32.py')\nassert not True\n +  where True = all(<generator object test_no_silent_exception_swallowing.<locals>.<genexpr> at 0x12f864040>)"
+      },
+      {
+        "node": "tests.test_no_fallback_static::test_source_headers_trace_archive",
+        "kind": "failure",
+        "category": "historical_experiment_static_debt",
+        "message": "AssertionError: missing historical fault trace: /Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/experiments/export_shared_fp32.py\nassert False\n +  where False = any(<generator object test_source_headers_trace_archive.<locals>.<genexpr> at 0x12f867220>)"
+      },
+      {
+        "node": "tests.test_request_window_integration::test_all_registered_target_and_draft_sidecars_are_allocated_before_load_returns",
+        "kind": "error",
+        "category": "unsupported_research_layout",
+        "message": "failed on setup with \"oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported\""
+      },
+      {
+        "node": "tests.test_request_window_integration::test_one_native_update_preserves_rewind_deferred_return_and_publishes_after_reorder",
+        "kind": "error",
+        "category": "unsupported_research_layout",
+        "message": "failed on setup with \"oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported\""
+      },
+      {
+        "node": "tests.test_request_window_integration::test_scope_cleans_up_and_other_stream_cannot_reuse_leases",
+        "kind": "error",
+        "category": "unsupported_research_layout",
+        "message": "failed on setup with \"oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported\""
+      },
+      {
+        "node": "tests.test_request_window_integration::test_unsupported_native_mode_fails_at_seal[enable_prefix_caching-True]",
+        "kind": "error",
+        "category": "unsupported_research_layout",
+        "message": "failed on setup with \"oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported\""
+      },
+      {
+        "node": "tests.test_request_window_integration::test_unsupported_native_mode_fails_at_seal[mamba_cache_mode-align]",
+        "kind": "error",
+        "category": "unsupported_research_layout",
+        "message": "failed on setup with \"oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported\""
+      },
+      {
+        "node": "tests.test_request_window_integration::test_explicit_flag_keeps_native_scheduler_and_requires_full_capability_bundle",
+        "kind": "failure",
+        "category": "unsupported_research_layout",
+        "message": "AssertionError: Regex pattern did not match.\n  Expected regex: 'native scheduler'\n  Actual message: 'BF16 attention requires physical-page snapshots; request windows are unsupported'"
+      },
+      {
+        "node": "tests.test_request_window_integration::test_dual_reshape_reuses_sidecars_and_shared_map_while_native_gdn_views_stay_original",
+        "kind": "error",
+        "category": "unsupported_research_layout",
+        "message": "failed on setup with \"oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported\""
+      },
+      {
+        "node": "tests.test_request_window_native_scheduler::test_request_window_workspace_follows_actual_native_capacity[2048-captures0-4096]",
+        "kind": "failure",
+        "category": "unsupported_research_layout",
+        "message": "oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported"
+      },
+      {
+        "node": "tests.test_request_window_native_scheduler::test_request_window_workspace_follows_actual_native_capacity[8192-captures1-8192]",
+        "kind": "failure",
+        "category": "unsupported_research_layout",
+        "message": "oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported"
+      },
+      {
+        "node": "tests.test_request_window_serving_config::test_unqualified_research_mdl_combination_is_rejected_by_both_entries",
+        "kind": "failure",
+        "category": "unsupported_research_layout",
+        "message": "AssertionError: Regex pattern did not match.\n  Expected regex: 'request-window MDL reader is not qualified'\n  Actual message: 'BF16 attention requires experimental_mdl_decode=true'"
+      },
+      {
+        "node": "tests.test_request_window_serving_config::test_research_roundtrip_clears_every_owned_change_for_native_and_baseline",
+        "kind": "failure",
+        "category": "unsupported_research_layout",
+        "message": "AssertionError: Regex pattern did not match.\n  Expected regex: 'request-window MDL reader is not qualified'\n  Actual message: 'BF16 attention requires experimental_mdl_decode=true'"
+      },
+      {
+        "node": "tests.test_request_window_serving_config::test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase",
+        "kind": "failure",
+        "category": "unsupported_research_layout",
+        "message": "ValueError: BF16 attention requires experimental_mdl_decode=true"
+      },
+      {
+        "node": "tests.test_request_window_serving_config::test_legacy_whole_capacity_cannot_reenter_through_research_flags",
+        "kind": "failure",
+        "category": "unsupported_research_layout",
+        "message": "ValueError: BF16 attention requires experimental_mdl_decode=true"
+      },
+      {
+        "node": "tests.test_service_log_model::test_real_log_mtp_accounting_and_unequal_windows",
+        "kind": "failure",
+        "category": "missing_historical_artifacts",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_native_longbench_20260930.txt'"
+      },
+      {
+        "node": "tests.test_service_log_model::test_two_anchors_do_not_identify_speedup_share",
+        "kind": "failure",
+        "category": "missing_historical_artifacts",
+        "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/service_trace_candidate_20260930.json'"
+      }
+    ]
+  },
+  "scoped_suite": {
+    "returncode": 0,
+    "passed": 883,
+    "skipped": 1,
+    "failed": 0,
+    "errors": 0,
+    "command": "reports/source_selfcheck_scoped_command_20261017.json",
+    "xml": "reports/source_selfcheck_scoped_20261017.xml",
+    "not_additive_to_full_suite": true
+  },
+  "kernel_protocol": {
+    "passed": 12,
+    "c4_seeded_interleavings": 80,
+    "source_families": 6,
+    "generated_cpp_files": 5,
+    "boundary": "real-source addresses/control flow; arithmetic, DMA and completion are stubs; mode2 dual-Vector token contract assumed, not verified against SDK"
+  },
+  "invariants": {
+    "fe0_match": true,
+    "fe0_sha256": {
+      "attention_cv.cpp": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+      "attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+      "store_int2.cpp": "5a6fa9619e399bb80bc0455c4426396d98510326bb899900b4b96c65d2b58506",
+      "rotate_clip_store.cpp": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+      "merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+      "status_guard.cpp": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+      "oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+    },
+    "unchanged_tracked_trees": [
+      "csrc",
+      "configs",
+      "references",
+      "ops",
+      "oscar_ascend/ops"
+    ],
+    "acceptance_sha256": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+    "generator": "reports/source_selfcheck_generator_20261017.json",
+    "checkpoint_ids": [
+      "A01",
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A06",
+      "A07",
+      "B01",
+      "B02",
+      "B03",
+      "B04",
+      "B05",
+      "B06",
+      "C01",
+      "C02",
+      "C03",
+      "C04",
+      "C05",
+      "C06",
+      "C07",
+      "D01",
+      "D02",
+      "D03",
+      "D04",
+      "D05",
+      "D06",
+      "D07",
+      "D08",
+      "D09",
+      "E01",
+      "E02",
+      "E03",
+      "E04",
+      "E05",
+      "E06",
+      "E07",
+      "E08",
+      "F01",
+      "F02",
+      "F03",
+      "F04",
+      "F05"
+    ]
+  },
+  "candidate_runtime_selection": {
+    "variant": "candidate",
+    "optimizations": {
+      "history_cluster4": true,
+      "later_mtp_q1": true,
+      "fast_unpack": true,
+      "mixed_cv": true,
+      "striped_cache": true,
+      "quantization_bundle": true,
+      "current_only": true,
+      "first_mtp_current_fia": true,
+      "compact_later_mtp": true,
+      "mixed_decode_split": true,
+      "decode_bundle": true,
+      "mdl_decode": true,
+      "c4_member_pipeline": true,
+      "whole_prefill": false,
+      "bf16_history": true
+    },
+    "attention_compute_dtype": "bfloat16",
+    "attention_sources": "history/sink/recent/current",
+    "prefix_caching": false,
+    "token_budget_source": "explicit",
+    "max_num_batched_tokens": 16384,
+    "scheduler_cls": null,
+    "devices": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "port": 7878
+  },
+  "remaining_device_or_quality_issues": [
+    "BF16 frozen numerical screen remains 7/11 failed, including 2 final-output failures",
+    "32K Trap #165 lacks current site/family/code; no confirmed root cause or device fix",
+    "Matmul End/Reset/re-Init SDK lifecycle not verified locally",
+    "no CANN, official CPU-debug, NPU, graph, service, model-quality or performance acceptance in this turn"
+  ],
+  "new_device_archive_entry": false,
+  "aisbench_rerun": false
+}

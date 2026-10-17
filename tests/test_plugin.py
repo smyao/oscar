@@ -172,6 +172,10 @@ unregister()
         module = platform_module()
         with patch.dict(sys.modules, {module.__name__: module}), patch.dict(os.environ, {"OSCAR_ENABLED": "1"}):
             plugin.register()
+            # Isolate the absent-provider contract from host CANN installation.
+            # Registration now supplies a deferred default factory; removing
+            # only runtime state must still fail, never select native dense.
+            clear_runtime()
             with self.assertRaises(OscarReadinessError):
                 module.NPUPlatform.get_attn_backend_cls(None, types.SimpleNamespace(use_mla=False))
             self.assertIn("AscendMLABackend", module.NPUPlatform.get_attn_backend_cls(None, types.SimpleNamespace(use_mla=True)))
@@ -194,6 +198,7 @@ unregister()
         module.NPUPlatform.get_attn_backend_cls = fa3
         with patch.dict(sys.modules, {module.__name__: module}), patch.dict(os.environ, {"OSCAR_ENABLED": "1"}):
             plugin.register()
+            clear_runtime()
             with self.assertRaises(OscarReadinessError):
                 module.NPUPlatform.get_attn_backend_cls(None, types.SimpleNamespace(use_mla=False))
 

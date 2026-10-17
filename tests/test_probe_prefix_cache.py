@@ -13,7 +13,9 @@ from tools.serving_variants import variant_config
 
 
 def candidate():
-    return variant_config(json.loads((probe.ROOT / "configs/target.json").read_text()), "candidate")
+    config = json.loads((probe.ROOT / "configs/target.json").read_text())
+    # APC is an explicit supported option; this branch's serving default is off.
+    return variant_config({**config, "enable_prefix_caching": True}, "candidate")
 
 
 def synthetic_report():
@@ -70,9 +72,10 @@ def test_oracle_is_finite_and_changes_for_new_page_owner():
 
 def test_prefix_gate_uses_candidate_q4_and_rejects_research_layout():
     config = candidate()
-    assert probe.selected_reader(config) == "attention_cv_mdl_decode_out"
+    assert probe.selected_reader(config) == "attention_bf16_history_mdl_out"
     config["experimental_mdl_decode"] = False
-    assert probe.selected_reader(config) == "attention_cv_bundle_decode_out"
+    with pytest.raises(ValueError, match="experimental_mdl_decode"):
+        probe.selected_reader(config)
     for key, value in (("enable_prefix_caching", False), ("experimental_request_windows", True)):
         invalid = candidate(); invalid[key] = value
         with pytest.raises(ValueError): probe.selected_reader(invalid)
@@ -154,10 +157,12 @@ def test_observe_prefix_failure_releases_resources_and_direct_keeps_same_route(m
     with pytest.raises(RuntimeError, match="actual prefix writer failure"):
         observe._prefix_cache_gate(tmp_path / "config.json", candidate(), {}, tmp_path, {})
     assert calls == ["release"]
-    assert observe.main(["--variant", "candidate", "--plan", "--probe-only"]) == 0
+    config = tmp_path / "prefix.json"
+    config.write_text(json.dumps(candidate()))
+    assert observe.main(["--config", str(config), "--variant", "candidate", "--plan", "--probe-only"]) == 0
     plan = json.loads(capsys.readouterr().out)
     assert "prefix_cache_gate" in plan["phases"]
-    assert install_serve.main(["--variant", "candidate", "--plan"]) == 0
+    assert install_serve.main(["--config", str(config), "--variant", "candidate", "--plan"]) == 0
     direct = json.loads(capsys.readouterr().out)
     assert direct["runtime_selection"] == plan["runtime_selection"]
     assert direct["runtime_selection"]["prefix_caching"] is True

@@ -261,7 +261,9 @@ def analyze(target: dict, geometry: ModelGeometry, *, prompt_tokens: int = 65100
         known_workspace = None
         if cube_cores is not None and capacity is not None:
             workspace = WorkspaceGeometry(capacity, geometry.local_query_heads, geometry.local_kv_heads,
-                geometry.head_dim, effective.get("attention_splits", 1), cube_cores, cluster)
+                geometry.head_dim, effective.get("attention_splits", 1), cube_cores, cluster,
+                c4_member_pipeline=effective.get("experimental_c4_member_pipeline", False),
+                bf16_history=effective.get("experimental_bf16_history", False))
             known_workspace = {"cv_bytes": workspace.cv_bytes, "total_bytes": workspace.total_bytes}
         variants[name] = {
             "token_capacity": capacity, "history_cluster_size": cluster,

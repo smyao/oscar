@@ -14,6 +14,7 @@ from dataclasses import replace
 import torch
 
 from .current_attention import guard_current_slots, native_current_partial
+from .cpu_metadata import cpu_int_mirror_values
 from .guard_diag import run_status_guard
 from .metadata import slice_window_map
 from .runtime_api import OscarReadinessError
@@ -42,15 +43,17 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
     ops=impl.provider.ops
     if cut:
         r=plan.prefix_requests
+        start_values=cpu_int_mirror_values(metadata.query_start_loc_cpu,r+1,
+                                          label='current-only native CPU query-start mirror')
         cpu_starts=metadata.query_start_loc_cpu[:r+1]
-        lengths=cpu_starts[1:]-cpu_starts[:-1]
+        lengths=tuple(after-before for before,after in zip(start_values,start_values[1:]))
         prefix=replace(metadata,query_start_loc=metadata.query_start_loc[:r+1],
                        query_start_loc_cpu=cpu_starts,seq_lens=metadata.seq_lens[:r],
                        block_tables=metadata.block_tables[:r],
                        slot_mapping=metadata.slot_mapping[:cut],
                        num_reqs=r,num_actual_tokens=cut,num_input_tokens=cut,
-                       max_query_len=int(lengths.max()),
-                       current_cumulative=tuple(int(v) for v in cpu_starts[1:].tolist() if v>0),
+                       max_query_len=max(lengths),
+                       current_cumulative=tuple(v for v in start_values[1:] if v>0),
                        current_only_plan=None, first_draft_current_only=False,
                        window_map=slice_window_map(metadata, 0, r))
         impl.forward(layer,query[:cut],key[:cut],value[:cut],kv_cache,prefix,

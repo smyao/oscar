@@ -1,0 +1,47 @@
+{
+  "baseline": "21efbb7",
+  "archive_references": [
+    "#34",
+    "#36",
+    "#69",
+    "#140",
+    "#142",
+    "#157-165"
+  ],
+  "finding": "cached cumulative metadata could bypass CPU mirror validation; partition paths had multiple direct tensor-to-list conversions",
+  "reachability": "malformed host metadata boundary; pinned native producer normally supplies CPU mirrors; not asserted as a live NPU failure cause",
+  "device_readback_added": false,
+  "production_kernel_changed": false,
+  "cases": [
+    {
+      "version": "before",
+      "current_only": false,
+      "tolist_devices": [],
+      "outcome": "accepted_non_cpu_mirror"
+    },
+    {
+      "version": "before",
+      "current_only": true,
+      "tolist_devices": [
+        "meta"
+      ],
+      "outcome": "NotImplementedError: Cannot copy out of meta tensor; no data!"
+    },
+    {
+      "version": "after",
+      "current_only": false,
+      "tolist_devices": [],
+      "outcome": "OscarMetadataError: native CPU query-start mirror is missing or invalid"
+    },
+    {
+      "version": "after",
+      "current_only": true,
+      "tolist_devices": [],
+      "outcome": "OscarMetadataError: native CPU query-start mirror is missing or invalid"
+    }
+  ],
+  "tests": {
+    "result": "93 passed",
+    "junit": "reports/cpu_metadata_mirror_selfcheck_20261017.xml"
+  }
+}

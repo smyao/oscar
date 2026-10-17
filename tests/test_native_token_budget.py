@@ -1,4 +1,4 @@
-"""Archive #34/#36/#94/#125/#148: omitted CLI budget, native-sized arena, same bundle.
+"""Archive #34/#36/#94/#125/#148/#163: explicit stable budget and native opt-in.
 
 Host contracts only. Native initialize_model provides get_current_vllm_config;
 these tests verify the value reaches allocation before serving, not NPU speed.
@@ -29,12 +29,19 @@ def selected():
     return variant_config(target(), "candidate")
 
 
-def test_standard_target_omits_argument_preserves_bundle_and_is_idempotent():
+def native_budget_selected():
+    config = target()
+    config["use_native_token_budget"] = True
+    config.pop("max_num_batched_tokens")
+    return variant_config(config, "candidate")
+
+
+def test_standard_target_preserves_explicit_budget_bundle_and_is_idempotent():
     original = target()
-    assert original["use_native_token_budget"] is True
-    assert "max_num_batched_tokens" not in original
+    assert original["use_native_token_budget"] is False
+    assert original["max_num_batched_tokens"] == 16384
     config = variant_config(original, "candidate")
-    assert "max_num_batched_tokens" not in config
+    assert config["max_num_batched_tokens"] == 16384
     assert "scheduler_cls" not in config and "_oscar_whole_prefill_base" not in config
     assert "history_token_capacity" not in config
     assert variant_config(config, "candidate") == config
@@ -44,7 +51,7 @@ def test_standard_target_omits_argument_preserves_bundle_and_is_idempotent():
         "history_cluster4", "later_mtp_q1", "fast_unpack", "mixed_cv", "striped_cache",
         "current_only", "first_mtp_current_fia", "compact_later_mtp", "mixed_decode_split", "decode_bundle"))
     args = serve_argv(config)
-    assert "--max-num-batched-tokens" not in args
+    assert args[args.index("--max-num-batched-tokens") + 1] == "16384"
     assert "--scheduler-cls" not in args
     for flag in ("--async-scheduling", "--speculative_config", "--compilation-config"):
         assert flag in args
@@ -64,38 +71,50 @@ def test_old_generated_whole_configs_normalize_without_hidden_budget(variant, bo
         legacy["history_token_capacity"] = 16896
         legacy["_oscar_whole_prefill_base"]["history_token_capacity"] = None
     snapshot = json.dumps(legacy, sort_keys=True)
+    if variant == "baseline":
+        with pytest.raises(ValueError, match="baseline FP32 OSCAR production attention is retired"):
+            variant_config(legacy, variant)
+        assert json.dumps(legacy, sort_keys=True) == snapshot
+        return
     config = variant_config(legacy, variant)
-    assert config["use_native_token_budget"] is True
+    assert config["use_native_token_budget"] is False
+    assert config["max_num_batched_tokens"] == 16384
     assert config["experimental_whole_prefill"] is False
     assert config["experimental_bounded_whole_prefill"] is False
-    assert not {"max_num_batched_tokens", "scheduler_cls", "history_token_capacity",
+    assert not {"scheduler_cls", "history_token_capacity",
                 "_oscar_whole_prefill_base"} & config.keys()
-    assert "--max-num-batched-tokens" not in serve_argv(config)
-    assert "--scheduler-cls" not in serve_argv(config)
+    args = serve_argv(config, native=variant == "native")
+    assert args[args.index("--max-num-batched-tokens") + 1] == "16384"
+    assert "--scheduler-cls" not in args
     assert json.dumps(legacy, sort_keys=True) == snapshot
 
 
 @pytest.mark.parametrize("variant", [None, "candidate", "baseline", "native"])
-def test_standard_variants_cannot_opt_back_into_explicit_budget(variant):
+def test_standard_variants_keep_user_explicit_budget(variant):
+    if variant == "baseline":
+        with pytest.raises(ValueError, match="baseline FP32 OSCAR production attention is retired"):
+            variant_config(target(), variant)
+        return
     config = variant_config({**target(), "use_native_token_budget": False,
                              "max_num_batched_tokens": 16384}, variant)
-    assert config["use_native_token_budget"] is True
-    assert "max_num_batched_tokens" not in config
-    assert "--max-num-batched-tokens" not in serve_argv(config)
+    assert config["use_native_token_budget"] is False
+    assert config["max_num_batched_tokens"] == 16384
+    args = serve_argv(config, native=variant == "native")
+    assert args[args.index("--max-num-batched-tokens") + 1] == "16384"
 
 
 @pytest.mark.parametrize("override", [
-    {"max_num_batched_tokens": 2048}, {"scheduler_cls": "user.Scheduler"},
+    {"max_num_batched_tokens": 0}, {"scheduler_cls": "user.Scheduler"},
     {"experimental_whole_prefill": True}, {"experimental_bounded_whole_prefill": True},
-    {"use_native_token_budget": "true"}, {"use_native_token_budget": False},
+    {"use_native_token_budget": "true"}, {"use_native_token_budget": True},
 ])
 def test_conflicting_cli_config_fails_instead_of_hiding_an_override(override):
-    with pytest.raises(ValueError, match="native token budget|explicit boolean"):
+    with pytest.raises(ValueError, match="token budget|native scheduler|explicit boolean"):
         serve_argv({**selected(), **override})
 
 
 def test_missing_policy_key_still_never_emits_budget_and_foreign_scheduler_is_rejected():
-    config = target(); config.pop("use_native_token_budget")
+    config = target(); config.pop("use_native_token_budget"); config.pop("max_num_batched_tokens")
     assert "--max-num-batched-tokens" not in serve_argv(config)
     assert variant_config(config, "candidate")["use_native_token_budget"] is True
     with pytest.raises(ValueError, match="scheduler"):
@@ -103,7 +122,7 @@ def test_missing_policy_key_still_never_emits_budget_and_foreign_scheduler_is_re
 
 
 @pytest.mark.parametrize("rear", [False, True])
-def test_every_install_phase_and_service_receive_budgetless_config(monkeypatch, tmp_path, rear):
+def test_every_install_phase_and_service_receive_explicit_budget_config(monkeypatch, tmp_path, rear):
     path = tmp_path / "target.json"
     path.write_text(json.dumps(target()))
     before = path.read_bytes()
@@ -112,14 +131,14 @@ def test_every_install_phase_and_service_receive_budgetless_config(monkeypatch, 
 
     def check(env):
         config = json.loads(open(env["OSCAR_TARGET_CONFIG"]).read())
-        assert "max_num_batched_tokens" not in config
-        assert config["use_native_token_budget"] is True
+        assert config["max_num_batched_tokens"] == 16384
+        assert config["use_native_token_budget"] is False
         assert config["experimental_decode_bundle"] is True
         assert config["experimental_whole_prefill"] is False
         assert not config.get("experimental_bounded_whole_prefill", False)
         assert "scheduler_cls" not in config and "history_token_capacity" not in config
-        assert config["devices"] == ([4, 5, 6, 7] if rear else [0, 1, 2, 3])
-        assert config["port"] == (7878 if rear else 8989)
+        assert config["devices"] == [4, 5, 6, 7]
+        assert config["port"] == 7878
         return config
 
     def phase(name, command, *, env, **kwargs):
@@ -136,7 +155,8 @@ def test_every_install_phase_and_service_receive_budgetless_config(monkeypatch, 
         config = check(env)
         assert seen == list(install_serve.BUILD_PHASES)
         assert command[-1] == env["OSCAR_TARGET_CONFIG"]
-        assert "--max-num-batched-tokens" not in serve_argv(config)
+        args = serve_argv(config)
+        assert args[args.index("--max-num-batched-tokens") + 1] == "16384"
         raise Started
 
     monkeypatch.setattr(install_serve, "run_phase", phase)
@@ -160,13 +180,13 @@ def test_fixed_shell_entrypoints_need_no_native_budget_option(tmp_path, script, 
         capture_output=True, text=True, check=True, timeout=20)
     plan = json.loads(result.stdout)
     runtime = plan["runtime_selection"]
-    assert runtime["token_budget_source"] == "native"
-    assert runtime["max_num_batched_tokens"] is None and runtime["scheduler_cls"] is None
+    assert runtime["token_budget_source"] == "explicit"
+    assert runtime["max_num_batched_tokens"] == 16384 and runtime["scheduler_cls"] is None
     assert runtime["optimizations"]["whole_prefill"] is False
     assert not runtime["optimizations"].get("bounded_whole_prefill", False)
     assert runtime["optimizations"]["decode_bundle"] is True
-    assert runtime["devices"] == ([4, 5, 6, 7] if placement else [0, 1, 2, 3])
-    assert runtime["port"] == (7878 if placement else 8989)
+    assert runtime["devices"] == [4, 5, 6, 7]
+    assert runtime["port"] == 7878
     assert not (tmp_path / "unused").exists()
 
 
@@ -180,17 +200,20 @@ def test_observe_candidate_gates_and_service_share_native_effective_config(monke
         assert json.loads(path.read_text()) == config
         if env is not None:
             assert env["OSCAR_TARGET_CONFIG"] == str(path)
-        assert config["use_native_token_budget"] is True
-        assert not {"max_num_batched_tokens", "scheduler_cls", "history_token_capacity"} & config.keys()
+        assert config["use_native_token_budget"] is False
+        assert config["max_num_batched_tokens"] == 16384
+        assert not {"scheduler_cls", "history_token_capacity"} & config.keys()
         assert not config.get("experimental_whole_prefill", False)
         assert not config.get("experimental_bounded_whole_prefill", False)
         assert config["experimental_decode_bundle"] is True
-        assert config["devices"] == [0, 1, 2, 3] and config["port"] == 8989
-        assert "--max-num-batched-tokens" not in serve_argv(config)
+        assert config["devices"] == [4, 5, 6, 7] and config["port"] == 7878
+        args = serve_argv(config)
+        assert args[args.index("--max-num-batched-tokens") + 1] == "16384"
         assert "--scheduler-cls" not in serve_argv(config)
 
     gates = ("_preflight", "_candidate_gate", "_fast_unpack_gate", "_mixed_optimization_gate",
-             "_striped_cache_gate", "_decode_bundle_gate", "_current_only_gate",
+             "_striped_cache_gate", "_c4_member_pipeline_gate", "_decode_bundle_gate",
+             "_mdl_decode_gate", "_bf16_history_gate", "_current_only_gate",
              "_first_mtp_current_gate", "_mixed_decode_split_gate")
     for name in gates:
         def gate(path, config, env, *_args, name=name):
@@ -231,7 +254,7 @@ def native_config(budget, captures):
 def test_native_budget_reaches_pre_profile_workspace_without_hardcoding(
         monkeypatch, budget, captures, expected):
     import oscar_ascend.runtime as runtime
-    config = selected()
+    config = native_budget_selected()
     snapshot = json.dumps(config, sort_keys=True)
     native = native_config(budget, captures)
     module = ModuleType("vllm.config")
@@ -260,14 +283,16 @@ def test_native_budget_reaches_pre_profile_workspace_without_hardcoding(
 @pytest.mark.parametrize("budget", [None, 0, -1, "2048", True])
 def test_invalid_native_budget_is_not_replaced_with_a_guessed_default(budget):
     with pytest.raises(runtime_api.OscarReadinessError, match="positive integers"):
-        NativeTokenBudgetRuntime(selected())._bind_native_capacity(native_config(budget, []))
+        NativeTokenBudgetRuntime(native_budget_selected())._bind_native_capacity(native_config(budget, []))
 
 
-def test_standard_worker_factory_always_resolves_actual_native_capacity(monkeypatch, tmp_path):
+def test_worker_factory_distinguishes_explicit_and_native_budget(monkeypatch, tmp_path):
+    from oscar_ascend.runtime import AscendRuntimeProvider
     path = tmp_path / "target.json"
     monkeypatch.setenv("OSCAR_TARGET_CONFIG", str(path))
-    for config in (target(), selected(), variant_config(target(), "baseline")):
-        expected = NativeTokenBudgetRuntime
+    for config, expected in ((target(), AscendRuntimeProvider),
+                             (selected(), AscendRuntimeProvider),
+                             (native_budget_selected(), NativeTokenBudgetRuntime)):
         path.write_text(json.dumps(config))
         provider = runtime_api._create_default_runtime()
         assert type(provider) is expected
@@ -287,7 +312,10 @@ def test_candidate_q4_q1_and_small_prefill_keep_the_same_operators():
                             fast_unpack=config["experimental_fast_unpack"],
                             mixed_cv=config["experimental_mixed_cv"],
                             striped_cache=config["experimental_striped_cache"],
-                            decode_bundle=config["experimental_decode_bundle"])
-    assert choose(128, 4) == "attention_cv_bundle_decode_out"
-    assert choose(128, 1, True) == "attention_cv_bundle_q1_out"
-    assert choose(2048, 2048) == "attention_cv_window_range_cluster4_out"
+                            decode_bundle=config["experimental_decode_bundle"],
+                            c4_member_pipeline=config["experimental_c4_member_pipeline"],
+                            mdl_decode=config["experimental_mdl_decode"],
+                            bf16_history=config["experimental_bf16_history"])
+    assert choose(128, 4) == "attention_bf16_history_mdl_out"
+    assert choose(128, 1, True) == "attention_bf16_history_mdl_q1_out"
+    assert choose(2048, 2048) == "attention_bf16_history_member_pipeline_cluster4_out"

@@ -13,6 +13,7 @@ from dataclasses import dataclass,replace
 import torch
 from ..ops.cv_dispatch import ATTENTION_QUERY_ROWS
 from .metadata import slice_window_map
+from .cpu_metadata import cpu_int_mirror_values
 
 
 @dataclass(frozen=True)
@@ -33,7 +34,8 @@ def plan_mixed_decode(metadata,tokens,*,query_heads=6,kv_heads=1):
             starts.ndim!=1 or starts.dtype not in (torch.int32,torch.int64) or
             starts.numel()<metadata.num_reqs+1):
         return None
-    values=starts[:metadata.num_reqs+1].tolist()
+    values=cpu_int_mirror_values(starts,metadata.num_reqs+1,
+                                 label='mixed native CPU query-start mirror')
     if (not values or values[0]!=0 or values[-1]!=metadata.num_actual_tokens or
             any(b<=a for a,b in zip(values,values[1:])) or
             type(tokens) is not int or not 0<values[-1]<=tokens):
@@ -55,16 +57,18 @@ def plan_mixed_decode(metadata,tokens,*,query_heads=6,kv_heads=1):
 
 
 def _slice_metadata(metadata,request_begin,request_end,token_begin,token_end,original,segment):
+    values=cpu_int_mirror_values(metadata.query_start_loc_cpu,request_end+1,
+                                 label='mixed native CPU query-start mirror')[request_begin:]
     cpu=metadata.query_start_loc_cpu[request_begin:request_end+1]-token_begin
-    ends=tuple(cpu[1:].tolist())
-    lengths=cpu[1:]-cpu[:-1]
+    ends=tuple(value-token_begin for value in values[1:])
+    lengths=tuple(after-before for before,after in zip(values,values[1:]))
     return replace(metadata,
         query_start_loc=metadata.query_start_loc[request_begin:request_end+1]-token_begin,
         query_start_loc_cpu=cpu,seq_lens=metadata.seq_lens[request_begin:request_end],
         block_tables=metadata.block_tables[request_begin:request_end],
         slot_mapping=metadata.slot_mapping[token_begin:token_end],
         num_reqs=request_end-request_begin,num_actual_tokens=token_end-token_begin,
-        num_input_tokens=token_end-token_begin,max_query_len=int(lengths.max()),
+        num_input_tokens=token_end-token_begin,max_query_len=max(lengths),
         current_cumulative=ends,current_only_plan=None,first_draft_current_only=False,
         mixed_decode_split=False,mixed_split_segment=segment,cv_shape_tokens=original,
         window_map=slice_window_map(metadata, request_begin, request_end))

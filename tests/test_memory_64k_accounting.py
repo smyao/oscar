@@ -32,9 +32,9 @@ def native_functions(path, names, namespace):
 class MemoryLedgerTests(unittest.TestCase):
     def setUp(self):
         self.target = json.loads((ROOT / "configs/target.json").read_text())
-        # Retain the historical none-mode arithmetic as a separately selected
-        # diagnostic case; new default APC/align is tested explicitly below.
-        self.target["enable_prefix_caching"] = False
+        # User 2026-10-13: stable defaults to none; APC/align remains an
+        # explicitly selected compatibility case below.
+        self.assertFalse(self.target["enable_prefix_caching"])
 
     def test_native_single_k_alignment_is_not_combined_state_roundup(self):
         shapes = native_functions(
@@ -111,9 +111,16 @@ class MemoryLedgerTests(unittest.TestCase):
         self.assertIsNone(fixed["variants"]["candidate"]["workspace_per_rank"])
         measured_cores_only = analyze(self.target, reference_geometry(), cube_cores=20)
         candidate = measured_cores_only["fixed_external_allocations"]["variants"]["candidate"]
-        self.assertIsNone(candidate["token_capacity"])
-        self.assertIsNone(candidate["workspace_per_rank"])
-        self.assertEqual(candidate["token_capacity_source"], "native_unresolved")
+        self.assertEqual(candidate["token_capacity"], 16384)
+        self.assertIsNotNone(candidate["workspace_per_rank"])
+        self.assertEqual(candidate["token_capacity_source"], "explicit")
+        native_budget = dict(self.target, use_native_token_budget=True)
+        native_budget.pop("max_num_batched_tokens")
+        unresolved = analyze(native_budget, reference_geometry(), cube_cores=20)
+        unresolved_candidate = unresolved["fixed_external_allocations"]["variants"]["candidate"]
+        self.assertIsNone(unresolved_candidate["token_capacity"])
+        self.assertIsNone(unresolved_candidate["workspace_per_rank"])
+        self.assertEqual(unresolved_candidate["token_capacity_source"], "native_unresolved")
         self.assertIsNone(fixed["whole_hbm_compression_ratio"])
         self.assertIsNone(result["capacity_from_supplied_profiled_budgets"]["native"])
         proposal = result["per_request"][1]["proposed_unimplemented"]
@@ -121,8 +128,31 @@ class MemoryLedgerTests(unittest.TestCase):
         self.assertLess(proposal["native_all_kv_over_proposed_tight_gdn_ratio"], 6)
         self.assertGreater(proposal["full_bf16_logical_over_proposed_ratio"], 7)
 
-    def test_current_default_prefix_align_counts_native_previous_state_and_snapshots(self):
+    def test_explicit_candidate_workspace_accounts_for_bf16_c16_and_member_pipeline(self):
+        # #34/#36/#148/#164: the offline arena must cover the selected reader,
+        # not the retired FP32 scratch formula. This is byte arithmetic only.
+        from oscar_ascend.runtime import WorkspaceGeometry
+        result = analyze(self.target, reference_geometry(), cube_cores=20)
+        candidate = result["fixed_external_allocations"]["variants"]["candidate"]
+        current = WorkspaceGeometry(16384, 6, 1, 256, 1, 20, 16,
+                                    c4_member_pipeline=True, bf16_history=True)
+        retired_same_cluster = WorkspaceGeometry(16384, 6, 1, 256, 1, 20, 16)
+        self.assertEqual(current.cv_bytes, 149913600)
+        self.assertEqual(retired_same_cluster.cv_bytes, 99942400)
+        self.assertEqual(candidate["workspace_per_rank"],
+                         {"cv_bytes": current.cv_bytes, "total_bytes": current.total_bytes})
+        self.assertNotEqual(candidate["workspace_per_rank"]["cv_bytes"],
+                            retired_same_cluster.cv_bytes)
+        # The historical baseline remains diagnostic-only, never a serving
+        # variant, and still uses its own C1 geometry rather than C16.
+        diagnostic = result["fixed_external_allocations"]["variants"]["baseline"]
+        self.assertEqual(diagnostic["history_cluster_size"], 1)
+        self.assertEqual(diagnostic["workspace_per_rank"]["cv_bytes"],
+                         WorkspaceGeometry(16384, 6, 1, 256, 1, 20, 1).cv_bytes)
+
+    def test_explicit_prefix_align_counts_native_previous_state_and_snapshots(self):
         target = json.loads((ROOT / "configs/target.json").read_text())
+        target["enable_prefix_caching"] = True
         result = analyze(target, reference_geometry())
         layout = result["layout"]
         self.assertTrue(layout["prefix_caching"])

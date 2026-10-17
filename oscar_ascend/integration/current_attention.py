@@ -13,6 +13,8 @@ import math
 
 import torch
 
+from .cpu_metadata import cpu_int_mirror_values
+
 
 class CurrentAttentionError(RuntimeError):
     pass
@@ -53,14 +55,13 @@ def use_native_current(metadata) -> bool:
 
 def current_cumulative_lengths(metadata, active_tokens: int) -> list[int]:
     """Read only the runner's already-CPU qstart mirror; drop dummy padding."""
-    starts = metadata.query_start_loc_cpu
-    if (starts is None or not isinstance(starts, torch.Tensor)
-            or starts.device.type != "cpu" or starts.dtype not in (torch.int32, torch.int64)
-            or starts.ndim != 1 or starts.numel() < metadata.num_reqs + 1):
-        raise CurrentAttentionError("native CPU query-start mirror is missing or invalid")
+    try:
+        values = cpu_int_mirror_values(metadata.query_start_loc_cpu, metadata.num_reqs + 1,
+                                       label="native CPU query-start mirror")
+    except ValueError as error:
+        raise CurrentAttentionError(str(error)) from error
     if type(active_tokens) is not int or active_tokens <= 0:
         raise CurrentAttentionError("current FIA requires a positive exact active-token count")
-    values = starts[:metadata.num_reqs + 1].tolist()
     if values[0] != 0 or any(after < before for before, after in zip(values, values[1:])):
         raise CurrentAttentionError("native CPU query starts are malformed")
     if values[-1] < active_tokens or active_tokens not in values:

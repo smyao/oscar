@@ -18,16 +18,23 @@ from oscar_ascend.lifecycle import SnapshotLayout
 from oscar_ascend.ops.cv_dispatch import select_cv_op
 from .phase import atomic_json
 from . import probe_history_reuse as reuse
+from .serving_variants import production_runtime_config
 
 ROOT = Path(__file__).resolve().parents[1]
 SCOPE = "synthetic_page_owned_prefix_writer_reader_graph"
 BLOCKS, HEADS, DIM, QUERIES = 7, 6, 256, 8
 STATES = ("shared_prefix_forks", "partial_hit_changed_graph", "released_tail_reuse")
 SOURCE_PATHS = (
+    "tools/probe_prefix_cache.py", "tools/serving_variants.py",
+    "oscar_ascend/bf16_history_policy.py",
     "oscar_ascend/lifecycle.py", "oscar_ascend/layout.py",
     "oscar_ascend/ops/cv_dispatch.py", "csrc/kernels/rotate_clip_store_striped.cpp",
     "csrc/kernels/rotate_vector_init.cpp", "csrc/kernels/attention_tasks.cpp",
-    "csrc/kernels/attention_cv_mdl_decode.cpp", "csrc/kernels/merge_lse.cpp",
+    "csrc/kernels/attention_bf16_history_mdl.cpp",
+    "csrc/kernels/attention_bf16_history_operands.h",
+    "csrc/kernels/attention_striped_unpack_bf16.h",
+    "csrc/bf16_history_bindings.cpp", "csrc/include/oscar_bf16_history_launch.h",
+    "csrc/kernels/merge_lse.cpp",
 )
 
 
@@ -44,6 +51,7 @@ def fixture_layout():
 
 
 def selected_reader(config):
+    config = production_runtime_config(config)
     if config.get("enable_prefix_caching") is not True:
         raise ValueError("prefix gate requires explicit prefix caching enabled")
     if config.get("experimental_request_windows", False):
@@ -55,7 +63,8 @@ def selected_reader(config):
         mixed_cv=config.get("experimental_mixed_cv", False), striped_cache=True,
         decode_bundle=config.get("experimental_decode_bundle", False),
         c4_member_pipeline=config.get("experimental_c4_member_pipeline", False),
-        mdl_decode=config.get("experimental_mdl_decode", False))
+        mdl_decode=config.get("experimental_mdl_decode", False),
+        bf16_history=config["experimental_bf16_history"])
 
 
 def make_inputs(torch, logical, pages, seed):
@@ -143,7 +152,9 @@ def allocate(torch, device, cores):
         "partial": torch.empty((n, h, 3, d), dtype=torch.float32, device=device),
         "lse": torch.empty((n, h, 3), dtype=torch.float32, device=device),
         "status": torch.empty((n * 3, 2), dtype=torch.int32, device=device),
-        "workspace": torch.empty(cores * 1146880, dtype=torch.uint8, device=device),
+        # BF16 MDL: FP32 state arena plus its separate BF16 operand mirror.
+        # Public ABI: attention_bf16_history_mdl_workspace_per_core(256).
+        "workspace": torch.empty(cores * 1720320, dtype=torch.uint8, device=device),
         "output": torch.empty((n * h, d), dtype=torch.float32, device=device),
         "output_lse": torch.empty(n * h, dtype=torch.float32, device=device),
         "merge_status": torch.empty(n * h, dtype=torch.int32, device=device),
@@ -194,6 +205,7 @@ def check_state(torch, state, inputs, logical, immutable, tolerance):
 
 
 def run_device(torch, ops, config, cores, tolerance):
+    config = production_runtime_config(config)
     device = torch.device("npu:0")
     reader = selected_reader(config)
     rotate = "rotate_vector_init_out" if config.get("experimental_quantization_bundle", False) else "rotate_out"
@@ -274,7 +286,7 @@ def validate_evidence(report):
 
 
 def probe(config_path, acceptance_path):
-    config = json.loads(config_path.read_text()); selected_reader(config)
+    config = production_runtime_config(json.loads(config_path.read_text())); selected_reader(config)
     acceptance = json.loads(acceptance_path.read_text())
     if acceptance.get("frozen_before_measurement") is not True or acceptance["fused_attention"] != {"atol": .005, "rtol": .005}:
         raise RuntimeError("APC frozen precision contract changed")

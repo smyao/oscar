@@ -10,6 +10,17 @@ from tools import observe_serve
 from tools.phase import PhaseResult
 
 
+def isolate_candidate_gates(monkeypatch):
+    # #94/#125/#153: lifecycle tests isolate device execution explicitly;
+    # separate failure-injection tests below still require service blocking.
+    for name in ("_candidate_gate", "_fast_unpack_gate", "_mixed_optimization_gate",
+                 "_striped_cache_gate", "_c4_member_pipeline_gate", "_decode_bundle_gate",
+                 "_mdl_decode_gate", "_bf16_history_gate", "_prefix_cache_gate",
+                 "_current_only_gate", "_first_mtp_current_gate", "_mixed_decode_split_gate",
+                 "_request_window_gate"):
+        monkeypatch.setattr(observe_serve, name, lambda *args, **kwargs: None)
+
+
 def test_fe0_kernel_pin_and_candidate_flag():
     baseline = observe_serve._source_identity("baseline", {"experimental_history_reuse": False})
     assert baseline["fe0_production_kernels_match"] is True
@@ -62,7 +73,7 @@ def test_graph_only_step_keeps_whole_graph_time_but_no_attention_residual(tmp_pa
 def test_plan_makes_no_requests(capsys):
     assert observe_serve.main(["--plan"]) == 0
     plan = json.loads(capsys.readouterr().out)
-    assert plan["variant"] == "baseline"
+    assert plan["variant"] == "candidate"
     assert plan["inference_requests_generated"] == 0
     assert "managed_service_health" in plan["phases"]
 
@@ -115,6 +126,9 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     monkeypatch.setattr(observe_serve, "_c4_member_pipeline_gate", lambda *args: seen.append("c4-member-pipeline-gate"))
     monkeypatch.setattr(observe_serve, "_decode_bundle_gate", lambda *args: seen.append("decode-bundle-gate"))
     monkeypatch.setattr(observe_serve, "_mdl_decode_gate", lambda *args: seen.append("mdl-decode-gate"))
+    monkeypatch.setattr(observe_serve, "_bf16_history_gate", lambda *args: seen.append("bf16-history-gate"))
+    monkeypatch.setattr(observe_serve, "_prefix_cache_gate", lambda *args: seen.append("prefix-cache-gate"))
+    monkeypatch.setattr(observe_serve, "_request_window_gate", lambda *args: seen.append("request-window-gate"))
     monkeypatch.setattr(observe_serve, "_current_only_gate", lambda *args: seen.append("current-only-gate"))
     monkeypatch.setattr(observe_serve, "_first_mtp_current_gate", lambda *args: seen.append("first-mtp-current-gate"))
     monkeypatch.setattr(observe_serve, "_mixed_decode_split_gate", lambda *args: seen.append("mixed-decode-split-gate"))
@@ -126,7 +140,8 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     logs = tmp_path / "probe"
     assert observe_serve.run(config, logs, "candidate", probe_only=True, diagnose_mixed=diagnose_mixed) == 0
     assert seen == ["preflight", "candidate-gates", "fast-unpack-gate", "mixed-optimization-gate", "striped-cache-gate",
-                    "decode-bundle-gate", "mdl-decode-gate", "current-only-gate",
+                    "c4-member-pipeline-gate", "decode-bundle-gate", "mdl-decode-gate",
+                    "bf16-history-gate", "current-only-gate",
                     "first-mtp-current-gate", "mixed-decode-split-gate"]
     status = json.loads((logs / "status.json").read_text())
     assert status["service_started"] is False
@@ -350,7 +365,9 @@ def test_mixed_child_failure_survives_resource_observation_error(monkeypatch, tm
 
 def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeypatch, tmp_path):
     source = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
-    source["experimental_history_reuse"] = False
+    # Default omission must enable the current bundle; explicit false is an
+    # incompatible BF16 request and is covered by the rejection test below.
+    assert "experimental_history_reuse" not in source
     config_path = tmp_path / "target.json"
     config_path.write_text(json.dumps(source))
     logs = tmp_path / "logs"
@@ -367,14 +384,31 @@ def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeyp
     assert len(observed) == 2 and observed[0] == observed[1] == logs / "effective-target.json"
     effective = json.loads((logs / "effective-target.json").read_text())
     assert effective["experimental_history_reuse"] is True
-    assert effective["use_native_token_budget"] is True
-    assert "max_num_batched_tokens" not in effective and "scheduler_cls" not in effective
+    assert effective["use_native_token_budget"] is False
+    assert effective["max_num_batched_tokens"] == 16384 and "scheduler_cls" not in effective
     assert not effective.get("experimental_whole_prefill", False)
     assert not effective.get("experimental_bounded_whole_prefill", False)
-    assert json.loads(config_path.read_text())["experimental_history_reuse"] is False
+    assert json.loads(config_path.read_text()) == source
     status = json.loads((logs / "status.json").read_text())
     assert status["status"] == "failed"
     assert status["target_config"]["original_sha256"] != status["target_config"]["effective_sha256"]
+
+
+def test_explicit_incompatible_bf16_dependency_fails_before_gates_or_service(monkeypatch, tmp_path):
+    source = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    source["experimental_history_reuse"] = False
+    path = tmp_path / "target.json"; path.write_text(json.dumps(source))
+    monkeypatch.setattr(observe_serve, "_preflight", lambda *args:
+                        pytest.fail("invalid production config must not execute probes"))
+    monkeypatch.setattr(observe_serve, "managed_server", lambda *args, **kwargs:
+                        pytest.fail("invalid production config must not serve"))
+    monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
+    logs = tmp_path / "logs"
+    assert observe_serve.run(path, logs, "candidate") == 1
+    state = json.loads((logs / "status.json").read_text())
+    assert state["status"] == "failed"
+    assert "BF16 attention requires experimental_history_reuse=true" in state["error"]
+    assert json.loads(path.read_text()) == source
 
 
 def test_candidate_child_rc2_reaches_outer_status_without_serving(monkeypatch, tmp_path):
@@ -401,14 +435,13 @@ def test_candidate_child_rc2_reaches_outer_status_without_serving(monkeypatch, t
 def test_managed_service_only_observes_external_load(monkeypatch, tmp_path, diagnose_trap):
     from benchmarks import passive
     config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
-    config["experimental_history_reuse"] = False
     config_path = tmp_path / "target.json"
     config_path.write_text(json.dumps(config))
     logs = tmp_path / "logs"
     calls = []
 
     class Server:
-        base_url = "http://127.0.0.1:8989"
+        base_url = "http://127.0.0.1:7878"
         trace_dir = tmp_path / "trace"
         def check_alive(self):
             raise KeyboardInterrupt("test stop after READY")
@@ -441,12 +474,13 @@ def test_managed_service_only_observes_external_load(monkeypatch, tmp_path, diag
         return {"status": "not_run", "windows": [], "performance_acceptance": "not_run"}
 
     monkeypatch.setattr(observe_serve, "_preflight", lambda *args: calls.append(("preflight",)))
+    isolate_candidate_gates(monkeypatch)
     monkeypatch.setattr(observe_serve, "managed_server", managed)
     monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {"status": "observed"})
     monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs: {"status": "passed"})
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     monkeypatch.setattr(passive, "observe", passive_only)
-    assert observe_serve.run(config_path, logs, "baseline", diagnose_trap=diagnose_trap) == 0
+    assert observe_serve.run(config_path, logs, "candidate", diagnose_trap=diagnose_trap) == 0
     assert ("managed", False) in calls and ("passive", "oscar") in calls
     assert json.loads((logs / "status.json").read_text())["status"] == "stopped"
     assert json.loads((logs / "summary.json").read_text())["status"] == "observed"
@@ -465,7 +499,7 @@ def test_cleanup_resource_error_preserves_server_rc_and_late_summary(monkeypatch
         returncode = 7
         phase = "serve"
     class Server:
-        base_url = "http://127.0.0.1:8989"
+        base_url = "http://127.0.0.1:7878"
         trace_dir = trace
         def check_alive(self):
             raise KeyboardInterrupt("test stop")
@@ -485,13 +519,14 @@ def test_cleanup_resource_error_preserves_server_rc_and_late_summary(monkeypatch
         ready.set(); stop.wait(1)
         return {"status": "not_run", "windows": []}
     monkeypatch.setattr(observe_serve, "_preflight", lambda *args: None)
+    isolate_candidate_gates(monkeypatch)
     monkeypatch.setattr(observe_serve, "managed_server", managed)
     monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
     monkeypatch.setattr(observe_serve, "wait_for_release", lambda *args, **kwargs:
                         (_ for _ in ()).throw(OSError("resource observer unavailable")))
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     monkeypatch.setattr(passive, "observe", observe)
-    assert observe_serve.run(config_path, logs, "baseline") == 7
+    assert observe_serve.run(config_path, logs, "candidate") == 7
     state = json.loads((logs / "status.json").read_text())
     assert state["failed_phase"] == "serve" and state["returncode"] == 7
     assert state["resource_release"]["status"] == "failed"

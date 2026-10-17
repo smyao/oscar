@@ -1,0 +1,168 @@
+.....FF..........F                                                       [100%]
+=================================== FAILURES ===================================
+___ test_cpu_probe_host_cpp_syntax_and_declared_kernel_arity[cpu_probe.cpp] ____
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-208/test_cpu_probe_host_cpp_syntax0')
+source = 'cpu_probe.cpp'
+
+    @pytest.mark.parametrize("source", ["cpu_probe.cpp", "c16_cpu_probe.cpp"])
+    def test_cpu_probe_host_cpp_syntax_and_declared_kernel_arity(tmp_path, source):
+        compiler = shutil.which("clang++")
+        if compiler is None: pytest.skip("host C++ compiler unavailable; no CANN claim")
+        # This stub permits only C++ parsing/type checking of our host harness.
+        # No kernel is compiled or executed, and it provides no SDK validation.
+        (tmp_path/"tikicpulib.h").write_text('''#include <cstddef>
+    enum class KernelMode { AIV_MODE, MIX_MODE };
+    namespace AscendC { void* GmAlloc(std::size_t); void GmFree(void*); void SetKernelMode(KernelMode); }
+    #define ICPU_RUN_KF(kernel,cores,...) kernel(__VA_ARGS__)
+    ''')
+        result = subprocess.run([compiler, "-std=c++17", "-fsyntax-only", "-I", str(tmp_path),
+            str(ROOT/"csrc/experiments/request_windows_attention"/source)],
+            capture_output=True, text=True, timeout=30)
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: In file included from /Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/csrc/experiments/request_windows_attention/cpu_probe.cpp:5:
+E         In file included from /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1/cmath:308:
+E         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1/math.h:300:15: fatal error: 'math.h' file not found
+E         #include_next <math.h>
+E                       ^~~~~~~~
+E         1 error generated.
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++....h:300:15: fatal error: 'math.h' file not found\n#include_next <math.h>\n              ^~~~~~~~\n1 error generated.\n").returncode
+
+tests/test_request_window_attention_fixture.py:135: AssertionError
+_ test_cpu_probe_host_cpp_syntax_and_declared_kernel_arity[c16_cpu_probe.cpp] __
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-208/test_cpu_probe_host_cpp_syntax1')
+source = 'c16_cpu_probe.cpp'
+
+    @pytest.mark.parametrize("source", ["cpu_probe.cpp", "c16_cpu_probe.cpp"])
+    def test_cpu_probe_host_cpp_syntax_and_declared_kernel_arity(tmp_path, source):
+        compiler = shutil.which("clang++")
+        if compiler is None: pytest.skip("host C++ compiler unavailable; no CANN claim")
+        # This stub permits only C++ parsing/type checking of our host harness.
+        # No kernel is compiled or executed, and it provides no SDK validation.
+        (tmp_path/"tikicpulib.h").write_text('''#include <cstddef>
+    enum class KernelMode { AIV_MODE, MIX_MODE };
+    namespace AscendC { void* GmAlloc(std::size_t); void GmFree(void*); void SetKernelMode(KernelMode); }
+    #define ICPU_RUN_KF(kernel,cores,...) kernel(__VA_ARGS__)
+    ''')
+        result = subprocess.run([compiler, "-std=c++17", "-fsyntax-only", "-I", str(tmp_path),
+            str(ROOT/"csrc/experiments/request_windows_attention"/source)],
+            capture_output=True, text=True, timeout=30)
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: In file included from /Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/csrc/experiments/request_windows_attention/c16_cpu_probe.cpp:4:
+E         In file included from /Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/csrc/experiments/request_windows_attention/cpu_probe.cpp:5:
+E         In file included from /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1/cmath:308:
+E         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1/math.h:300:15: fatal error: 'math.h' file not found
+E         #include_next <math.h>
+E                       ^~~~~~~~
+E         1 error generated.
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++....h:300:15: fatal error: 'math.h' file not found\n#include_next <math.h>\n              ^~~~~~~~\n1 error generated.\n").returncode
+
+tests/test_request_window_attention_fixture.py:135: AssertionError
+__ test_actual_cpp_task_snapshot_guard_rejects_different_or_short_saved_tasks __
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-208/test_actual_cpp_task_snapshot_0')
+
+    def test_actual_cpp_task_snapshot_guard_rejects_different_or_short_saved_tasks(tmp_path):
+        compiler=shutil.which("clang++")
+        if compiler is None:pytest.skip("host compiler missing; no SDK gate was attempted")
+        source=(ROOT/"csrc/experiments/request_windows_attention/cpu_probe.cpp").read_text()
+        helper=source[source.index("std::vector<uint8_t> Read("):source.index("void Write(")]
+        assert "RequireMatchingTasks" in helper
+        cpp=tmp_path/"task_guard.cpp"
+        cpp.write_text("#include <vector>\n#include <cstdint>\n#include <cstring>\n#include <fstream>\n#include <stdexcept>\n#include <string>\n#include <iostream>\n"+helper+'''
+    int main(int argc,char** argv) {
+      const uint8_t actual[4]={1,2,3,4};
+      try {RequireMatchingTasks(argv[1],actual,4);return 0;}
+      catch(const std::exception& e){std::cerr<<e.what();return 1;}
+    }
+    ''')
+        executable=tmp_path/"task_guard"
+>       subprocess.run([compiler,"-std=c++17",str(cpp),"-o",str(executable)],check=True,capture_output=True,timeout=30)
+
+tests/test_request_window_reader_resume.py:91: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+input = None, capture_output = True, timeout = 30, check = True
+popenargs = (['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++', '-std=c++17', '/pr...olders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-208/test_actual_cpp_task_snapshot_0/task_guard'],)
+kwargs = {'stdout': -1, 'stderr': -1}
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+    
+        If timeout (seconds) is given and the process takes too long,
+         a TimeoutExpired exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++', '-std=c++17', '/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-208/test_actual_cpp_task_snapshot_0/task_guard.cpp', '-o', '/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-208/test_actual_cpp_task_snapshot_0/task_guard']' returned non-zero exit status 1.
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py:578: CalledProcessError
+=========================== short test summary info ============================
+FAILED tests/test_request_window_attention_fixture.py::test_cpu_probe_host_cpp_syntax_and_declared_kernel_arity[cpu_probe.cpp]
+FAILED tests/test_request_window_attention_fixture.py::test_cpu_probe_host_cpp_syntax_and_declared_kernel_arity[c16_cpu_probe.cpp]
+FAILED tests/test_request_window_reader_resume.py::test_actual_cpp_task_snapshot_guard_rejects_different_or_short_saved_tasks
+3 failed, 15 passed in 3.02s

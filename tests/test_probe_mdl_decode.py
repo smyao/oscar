@@ -175,10 +175,11 @@ def test_both_candidate_entrypoints_enable_mdl_and_failed_gate_blocks_service(mo
     assert install_serve.main(['--variant','candidate','--plan'])==0
     direct=json.loads(capsys.readouterr().out)
     assert direct['runtime_selection']==plan['runtime_selection']
-    assert direct['runtime_selection']['prefix_caching'] is True
+    assert direct['runtime_selection']['prefix_caching'] is False
     for name in ('_preflight','_candidate_gate','_fast_unpack_gate','_mixed_optimization_gate',
                  '_striped_cache_gate','_decode_bundle_gate','_c4_member_pipeline_gate',
-                 '_current_only_gate','_first_mtp_current_gate','_mixed_decode_split_gate','_request_window_gate'):
+                 '_current_only_gate','_first_mtp_current_gate','_mixed_decode_split_gate','_request_window_gate',
+                 '_bf16_history_gate','_prefix_cache_gate'):
         monkeypatch.setattr(observe,name,lambda *a,**k:None)
     def fail(path,config,*args):
         assert config['experimental_mdl_decode'] is True

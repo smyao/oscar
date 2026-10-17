@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="12" failures="0" skipped="0" tests="12" time="0.195" timestamp="2026-10-17T15:02:53.341150+08:00" hostname="lokiyaodeMacBook-Pro.local"><testcase classname="tests.test_bf16_reader_protocol" name="test_six_readers_execute_real_offsets_and_cube_bounds[range]" time="0.075"><error message="failed on setup with &quot;AssertionError: ld: library not found for -lc++&#10;  clang: error: linker command failed with exit code 1 (use -v to see invocation)&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x102cdfbb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-212'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def executable(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: host control-flow audit not executed")
+        version = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=15)
+        if version.returncode:
+            pytest.skip("clang++ unavailable: " + version.stderr.strip())
+        cpp = DECLARATIONS + _workspace_functions()
+        for index, (family, filename, cluster_size) in enumerate(FAMILIES):
+            cpp += f"namespace family{index} {{\n" + _model_source(filename, cluster_size, family) + "}\n"
+        cpp += "int main(int argc,char**argv){int f=atoi(argv[1]),kind=atoi(argv[2]),length=atoi(argv[3]),count=atoi(argv[4]),cluster=atoi(argv[5]),group=atoi(argv[6]),protocol=atoi(argv[7]);\n"
+        for index, (family, _, cluster_size) in enumerate(FAMILIES):
+            cpp += f"if(f=={index}){{using namespace family{index};Model m;m.InitOffsets();m.Layout();m.kind=kind;m.kvend=length;m.qcount=count;m.g.hq=group;\n"
+            if cluster_size:
+                cpp += f"TaskState members[{cluster_size}];for(int i=0;i&lt;{cluster_size};++i)members[i]={{i,0,length,count}};\n"
+                if cluster_size == 4:
+                    cpp += "if(protocol){for(actor=0;actor&lt;3;++actor){Model v;v.InitOffsets();v.lane=actor-1;v.g.hq=group;if(actor==0)v.CubeCluster(members);else v.VectorCluster(members);}return 0;}\n"
+                cpp += "if(cluster)m.CubeCluster(members);else "
+            if "mdl" in family:
+                cpp += "if(kind==0 &amp;&amp; length)m.HistoryCubeTask();else m.CubeTask();"
+            else:
+                cpp += "m.CubeTask();"
+            cpp += "return 0;}\n"
+        cpp += "return 1;}\n"
+        path = tmp_path_factory.mktemp("bf16_reader_protocol")
+        source, binary = path / "control.cpp", path / "control"
+        source.write_text(cpp)
+        result = subprocess.run([compiler, "-std=c++17", str(source), "-o", str(binary)],
+                                capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: ld: library not found for -lc++
+E         clang: error: linker command failed with exit code 1 (use -v to see invocation)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode
+
+tests/test_bf16_reader_protocol.py:160: AssertionError</error></testcase><testcase classname="tests.test_bf16_reader_protocol" name="test_six_readers_execute_real_offsets_and_cube_bounds[balanced]" time="0.000"><error message="failed on setup with &quot;AssertionError: ld: library not found for -lc++&#10;  clang: error: linker command failed with exit code 1 (use -v to see invocation)&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x102cdfbb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-212'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def executable(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: host control-flow audit not executed")
+        version = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=15)
+        if version.returncode:
+            pytest.skip("clang++ unavailable: " + version.stderr.strip())
+        cpp = DECLARATIONS + _workspace_functions()
+        for index, (family, filename, cluster_size) in enumerate(FAMILIES):
+            cpp += f"namespace family{index} {{\n" + _model_source(filename, cluster_size, family) + "}\n"
+        cpp += "int main(int argc,char**argv){int f=atoi(argv[1]),kind=atoi(argv[2]),length=atoi(argv[3]),count=atoi(argv[4]),cluster=atoi(argv[5]),group=atoi(argv[6]),protocol=atoi(argv[7]);\n"
+        for index, (family, _, cluster_size) in enumerate(FAMILIES):
+            cpp += f"if(f=={index}){{using namespace family{index};Model m;m.InitOffsets();m.Layout();m.kind=kind;m.kvend=length;m.qcount=count;m.g.hq=group;\n"
+            if cluster_size:
+                cpp += f"TaskState members[{cluster_size}];for(int i=0;i&lt;{cluster_size};++i)members[i]={{i,0,length,count}};\n"
+                if cluster_size == 4:
+                    cpp += "if(protocol){for(actor=0;actor&lt;3;++actor){Model v;v.InitOffsets();v.lane=actor-1;v.g.hq=group;if(actor==0)v.CubeCluster(members);else v.VectorCluster(members);}return 0;}\n"
+                cpp += "if(cluster)m.CubeCluster(members);else "
+            if "mdl" in family:
+                cpp += "if(kind==0 &amp;&amp; length)m.HistoryCubeTask();else m.CubeTask();"
+            else:
+                cpp += "m.CubeTask();"
+            cpp += "return 0;}\n"
+        cpp += "return 1;}\n"
+        path = tmp_path_factory.mktemp("bf16_reader_protocol")
+        source, binary = path / "control.cpp", path / "control"
+        source.write_text(cpp)
+        result = subprocess.run([compiler, "-std=c++17", str(source), "-o", str(binary)],
+                                capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: ld: library not found for -lc++
+E         clang: error: linker command failed with exit code 1 (use -v to see invocation)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode
+
+tests/test_bf16_reader_protocol.py:160: AssertionError</error></testcase><testcase classname="tests.test_bf16_reader_protocol" name="test_six_readers_execute_real_offsets_and_cube_bounds[cluster16]" time="0.000"><error message="failed on setup with &quot;AssertionError: ld: library not found for -lc++&#10;  clang: error: linker command failed with exit code 1 (use -v to see invocation)&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x102cdfbb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-212'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def executable(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: host control-flow audit not executed")
+        version = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=15)
+        if version.returncode:
+            pytest.skip("clang++ unavailable: " + version.stderr.strip())
+        cpp = DECLARATIONS + _workspace_functions()
+        for index, (family, filename, cluster_size) in enumerate(FAMILIES):
+            cpp += f"namespace family{index} {{\n" + _model_source(filename, cluster_size, family) + "}\n"
+        cpp += "int main(int argc,char**argv){int f=atoi(argv[1]),kind=atoi(argv[2]),length=atoi(argv[3]),count=atoi(argv[4]),cluster=atoi(argv[5]),group=atoi(argv[6]),protocol=atoi(argv[7]);\n"
+        for index, (family, _, cluster_size) in enumerate(FAMILIES):
+            cpp += f"if(f=={index}){{using namespace family{index};Model m;m.InitOffsets();m.Layout();m.kind=kind;m.kvend=length;m.qcount=count;m.g.hq=group;\n"
+            if cluster_size:
+                cpp += f"TaskState members[{cluster_size}];for(int i=0;i&lt;{cluster_size};++i)members[i]={{i,0,length,count}};\n"
+                if cluster_size == 4:
+                    cpp += "if(protocol){for(actor=0;actor&lt;3;++actor){Model v;v.InitOffsets();v.lane=actor-1;v.g.hq=group;if(actor==0)v.CubeCluster(members);else v.VectorCluster(members);}return 0;}\n"
+                cpp += "if(cluster)m.CubeCluster(members);else "
+            if "mdl" in family:
+                cpp += "if(kind==0 &amp;&amp; length)m.HistoryCubeTask();else m.CubeTask();"
+            else:
+                cpp += "m.CubeTask();"
+            cpp += "return 0;}\n"
+        cpp += "return 1;}\n"
+        path = tmp_path_factory.mktemp("bf16_reader_protocol")
+        source, binary = path / "control.cpp", path / "control"
+        source.write_text(cpp)
+        result = subprocess.run([compiler, "-std=c++17", str(source), "-o", str(binary)],
+                                capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: ld: library not found for -lc++
+E         clang: error: linker command failed with exit code 1 (use -v to see invocation)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode
+
+tests/test_bf16_reader_protocol.py:160: AssertionError</error></testcase><testcase classname="tests.test_bf16_reader_protocol" name="test_six_readers_execute_real_offsets_and_cube_bounds[cluster4]" time="0.000"><error message="failed on setup with &quot;AssertionError: ld: library not found for -lc++&#10;  clang: error: linker command failed with exit code 1 (use -v to see invocation)&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x102cdfbb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-212'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def executable(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: host control-flow audit not executed")
+        version = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=15)
+        if version.returncode:
+            pytest.skip("clang++ unavailable: " + version.stderr.strip())
+        cpp = DECLARATIONS + _workspace_functions()
+        for index, (family, filename, cluster_size) in enumerate(FAMILIES):
+            cpp += f"namespace family{index} {{\n" + _model_source(filename, cluster_size, family) + "}\n"
+        cpp += "int main(int argc,char**argv){int f=atoi(argv[1]),kind=atoi(argv[2]),length=atoi(argv[3]),count=atoi(argv[4]),cluster=atoi(argv[5]),group=atoi(argv[6]),protocol=atoi(argv[7]);\n"
+        for index, (family, _, cluster_size) in enumerate(FAMILIES):
+            cpp += f"if(f=={index}){{using namespace family{index};Model m;m.InitOffsets();m.Layout();m.kind=kind;m.kvend=length;m.qcount=count;m.g.hq=group;\n"
+            if cluster_size:
+                cpp += f"TaskState members[{cluster_size}];for(int i=0;i&lt;{cluster_size};++i)members[i]={{i,0,length,count}};\n"
+                if cluster_size == 4:
+                    cpp += "if(protocol){for(actor=0;actor&lt;3;++actor){Model v;v.InitOffsets();v.lane=actor-1;v.g.hq=group;if(actor==0)v.CubeCluster(members);else v.VectorCluster(members);}return 0;}\n"
+                cpp += "if(cluster)m.CubeCluster(members);else "
+            if "mdl" in family:
+                cpp += "if(kind==0 &amp;&amp; length)m.HistoryCubeTask();else m.CubeTask();"
+            else:
+                cpp += "m.CubeTask();"
+            cpp += "return 0;}\n"
+        cpp += "return 1;}\n"
+        path = tmp_path_factory.mktemp("bf16_reader_protocol")
+        source, binary = path / "control.cpp", path / "control"
+        source.write_text(cpp)
+        result = subprocess.run([compiler, "-std=c++17", str(source), "-o", str(binary)],
+                                capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: ld: library not found for -lc++
+E         clang: error: linker command failed with exit code 1 (use -v to see invocation)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode
+
+tests/test_bf16_reader_protocol.py:160: AssertionError</error></testcase><testcase classname="tests.test_bf16_reader_protocol" name="test_six_readers_execute_real_offsets_and_cube_bounds[mdl_q4]" time="0.000"><error message="failed on setup with &quot;AssertionError: ld: library not found for -lc++&#10;  clang: error: linker command failed with exit code 1 (use -v to see invocation)&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x102cdfbb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-212'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def executable(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: host control-flow audit not executed")
+        version = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=15)
+        if version.returncode:
+            pytest.skip("clang++ unavailable: " + version.stderr.strip())
+        cpp = DECLARATIONS + _workspace_functions()
+        for index, (family, filename, cluster_size) in enumerate(FAMILIES):
+            cpp += f"namespace family{index} {{\n" + _model_source(filename, cluster_size, family) + "}\n"
+        cpp += "int main(int argc,char**argv){int f=atoi(argv[1]),kind=atoi(argv[2]),length=atoi(argv[3]),count=atoi(argv[4]),cluster=atoi(argv[5]),group=atoi(argv[6]),protocol=atoi(argv[7]);\n"
+        for index, (family, _, cluster_size) in enumerate(FAMILIES):
+            cpp += f"if(f=={index}){{using namespace family{index};Model m;m.InitOffsets();m.Layout();m.kind=kind;m.kvend=length;m.qcount=count;m.g.hq=group;\n"
+            if cluster_size:
+                cpp += f"TaskState members[{cluster_size}];for(int i=0;i&lt;{cluster_size};++i)members[i]={{i,0,length,count}};\n"
+                if cluster_size == 4:
+                    cpp += "if(protocol){for(actor=0;actor&lt;3;++actor){Model v;v.InitOffsets();v.lane=actor-1;v.g.hq=group;if(actor==0)v.CubeCluster(members);else v.VectorCluster(members);}return 0;}\n"
+                cpp += "if(cluster)m.CubeCluster(members);else "
+            if "mdl" in family:
+                cpp += "if(kind==0 &amp;&amp; length)m.HistoryCubeTask();else m.CubeTask();"
+            else:
+                cpp += "m.CubeTask();"
+            cpp += "return 0;}\n"
+        cpp += "return 1;}\n"
+        path = tmp_path_factory.mktemp("bf16_reader_protocol")
+        source, binary = path / "control.cpp", path / "control"
+        source.write_text(cpp)
+        result = subprocess.run([compiler, "-std=c++17", str(source), "-o", str(binary)],
+                                capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: ld: library not found for -lc++
+E         clang: error: linker command failed with exit code 1 (use -v to see invocation)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode
+
+tests/test_bf16_reader_protocol.py:160: AssertionError</error></testcase><testcase classname="tests.test_bf16_reader_protocol" name="test_six_readers_execute_real_offsets_and_cube_bounds[mdl_q1]" time="0.000"><error message="failed on setup with &quot;AssertionError: ld: library not found for -lc++&#10;  clang: error: linker command failed with exit code 1 (use -v to see invocation)&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x102cdfbb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-212'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def executable(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: host control-flow audit not executed")
+        version = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=15)
+        if version.returncode:
+            pytest.skip("clang++ unavailable: " + version.stderr.strip())
+        cpp = DECLARATIONS + _workspace_functions()
+        for index, (family, filename, cluster_size) in enumerate(FAMILIES):
+            cpp += f"namespace family{index} {{\n" + _model_source(filename, cluster_size, family) + "}\n"
+        cpp += "int main(int argc,char**argv){int f=atoi(argv[1]),kind=atoi(argv[2]),length=atoi(argv[3]),count=atoi(argv[4]),cluster=atoi(argv[5]),group=atoi(argv[6]),protocol=atoi(argv[7]);\n"
+        for index, (family, _, cluster_size) in enumerate(FAMILIES):
+            cpp += f"if(f=={index}){{using namespace family{index};Model m;m.InitOffsets();m.Layout();m.kind=kind;m.kvend=length;m.qcount=count;m.g.hq=group;\n"
+            if cluster_size:
+                cpp += f"TaskState members[{cluster_size}];for(int i=0;i&lt;{cluster_size};++i)members[i]={{i,0,length,count}};\n"
+                if cluster_size == 4:
+                    cpp += "if(protocol){for(actor=0;actor&lt;3;++actor){Model v;v.InitOffsets();v.lane=actor-1;v.g.hq=group;if(actor==0)v.CubeCluster(members);else v.VectorCluster(members);}return 0;}\n"
+                cpp += "if(cluster)m.CubeCluster(members);else "
+            if "mdl" in family:
+                cpp += "if(kind==0 &amp;&amp; length)m.HistoryCubeTask();else m.CubeTask();"
+            else:
+                cpp += "m.CubeTask();"
+            cpp += "return 0;}\n"
+        cpp += "return 1;}\n"
+        path = tmp_path_factory.mktemp("bf16_reader_protocol")
+        source, binary = path / "control.cpp", path / "control"
+        source.write_text(cpp)
+        result = subprocess.run([compiler, "-std=c++17", str(source), "-o", str(binary)],
+                                capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: ld: library not found for -lc++
+E         clang: error: linker command failed with exit code 1 (use -v to see invocation)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode
+
+tests/test_bf16_reader_protocol.py:160: AssertionError</error></testcase><testcase classname="tests.test_bf16_reader_protocol" name="test_c4_real_control_flow_preserves_member_and_buffer_ownership[1]" time="0.000"><error message="failed on setup with &quot;AssertionError: ld: library not found for -lc++&#10;  clang: error: linker command failed with exit code 1 (use -v to see invocation)&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x102cdfbb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-212'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def executable(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: host control-flow audit not executed")
+        version = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=15)
+        if version.returncode:
+            pytest.skip("clang++ unavailable: " + version.stderr.strip())
+        cpp = DECLARATIONS + _workspace_functions()
+        for index, (family, filename, cluster_size) in enumerate(FAMILIES):
+            cpp += f"namespace family{index} {{\n" + _model_source(filename, cluster_size, family) + "}\n"
+        cpp += "int main(int argc,char**argv){int f=atoi(argv[1]),kind=atoi(argv[2]),length=atoi(argv[3]),count=atoi(argv[4]),cluster=atoi(argv[5]),group=atoi(argv[6]),protocol=atoi(argv[7]);\n"
+        for index, (family, _, cluster_size) in enumerate(FAMILIES):
+            cpp += f"if(f=={index}){{using namespace family{index};Model m;m.InitOffsets();m.Layout();m.kind=kind;m.kvend=length;m.qcount=count;m.g.hq=group;\n"
+            if cluster_size:
+                cpp += f"TaskState members[{cluster_size}];for(int i=0;i&lt;{cluster_size};++i)members[i]={{i,0,length,count}};\n"
+                if cluster_size == 4:
+                    cpp += "if(protocol){for(actor=0;actor&lt;3;++actor){Model v;v.InitOffsets();v.lane=actor-1;v.g.hq=group;if(actor==0)v.CubeCluster(members);else v.VectorCluster(members);}return 0;}\n"
+                cpp += "if(cluster)m.CubeCluster(members);else "
+            if "mdl" in family:
+                cpp += "if(kind==0 &amp;&amp; length)m.HistoryCubeTask();else m.CubeTask();"
+            else:
+                cpp += "m.CubeTask();"
+            cpp += "return 0;}\n"
+        cpp += "return 1;}\n"
+        path = tmp_path_factory.mktemp("bf16_reader_protocol")
+        source, binary = path / "control.cpp", path / "control"
+        source.write_text(cpp)
+        result = subprocess.run([compiler, "-std=c++17", str(source), "-o", str(binary)],
+                                capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: ld: library not found for -lc++
+E         clang: error: linker command failed with exit code 1 (use -v to see invocation)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode
+
+tests/test_bf16_reader_protocol.py:160: AssertionError</error></testcase><testcase classname="tests.test_bf16_reader_protocol" name="test_c4_real_control_flow_preserves_member_and_buffer_ownership[2]" time="0.000"><error message="failed on setup with &quot;AssertionError: ld: library not found for -lc++&#10;  clang: error: linker command failed with exit code 1 (use -v to see invocation)&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x102cdfbb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-212'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def executable(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: host control-flow audit not executed")
+        version = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=15)
+        if version.returncode:
+            pytest.skip("clang++ unavailable: " + version.stderr.strip())
+        cpp = DECLARATIONS + _workspace_functions()
+        for index, (family, filename, cluster_size) in enumerate(FAMILIES):
+            cpp += f"namespace family{index} {{\n" + _model_source(filename, cluster_size, family) + "}\n"
+        cpp += "int main(int argc,char**argv){int f=atoi(argv[1]),kind=atoi(argv[2]),length=atoi(argv[3]),count=atoi(argv[4]),cluster=atoi(argv[5]),group=atoi(argv[6]),protocol=atoi(argv[7]);\n"
+        for index, (family, _, cluster_size) in enumerate(FAMILIES):
+            cpp += f"if(f=={index}){{using namespace family{index};Model m;m.InitOffsets();m.Layout();m.kind=kind;m.kvend=length;m.qcount=count;m.g.hq=group;\n"
+            if cluster_size:
+                cpp += f"TaskState members[{cluster_size}];for(int i=0;i&lt;{cluster_size};++i)members[i]={{i,0,length,count}};\n"
+                if cluster_size == 4:
+                    cpp += "if(protocol){for(actor=0;actor&lt;3;++actor){Model v;v.InitOffsets();v.lane=actor-1;v.g.hq=group;if(actor==0)v.CubeCluster(members);else v.VectorCluster(members);}return 0;}\n"
+                cpp += "if(cluster)m.CubeCluster(members);else "
+            if "mdl" in family:
+                cpp += "if(kind==0 &amp;&amp; length)m.HistoryCubeTask();else m.CubeTask();"
+            else:
+                cpp += "m.CubeTask();"
+            cpp += "return 0;}\n"
+        cpp += "return 1;}\n"
+        path = tmp_path_factory.mktemp("bf16_reader_protocol")
+        source, binary = path / "control.cpp", path / "control"
+        source.write_text(cpp)
+        result = subprocess.run([compiler, "-std=c++17", str(source), "-o", str(binary)],
+                                capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: ld: library not found for -lc++
+E         clang: error: linker command failed with exit code 1 (use -v to see invocation)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode
+
+tests/test_bf16_reader_protocol.py:160: AssertionError</error></testcase><testcase classname="tests.test_bf16_reader_protocol" name="test_c4_real_control_flow_preserves_member_and_buffer_ownership[3]" time="0.001"><error message="failed on setup with &quot;AssertionError: ld: library not found for -lc++&#10;  clang: error: linker command failed with exit code 1 (use -v to see invocation)&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x102cdfbb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-212'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def executable(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: host control-flow audit not executed")
+        version = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=15)
+        if version.returncode:
+            pytest.skip("clang++ unavailable: " + version.stderr.strip())
+        cpp = DECLARATIONS + _workspace_functions()
+        for index, (family, filename, cluster_size) in enumerate(FAMILIES):
+            cpp += f"namespace family{index} {{\n" + _model_source(filename, cluster_size, family) + "}\n"
+        cpp += "int main(int argc,char**argv){int f=atoi(argv[1]),kind=atoi(argv[2]),length=atoi(argv[3]),count=atoi(argv[4]),cluster=atoi(argv[5]),group=atoi(argv[6]),protocol=atoi(argv[7]);\n"
+        for index, (family, _, cluster_size) in enumerate(FAMILIES):
+            cpp += f"if(f=={index}){{using namespace family{index};Model m;m.InitOffsets();m.Layout();m.kind=kind;m.kvend=length;m.qcount=count;m.g.hq=group;\n"
+            if cluster_size:
+                cpp += f"TaskState members[{cluster_size}];for(int i=0;i&lt;{cluster_size};++i)members[i]={{i,0,length,count}};\n"
+                if cluster_size == 4:
+                    cpp += "if(protocol){for(actor=0;actor&lt;3;++actor){Model v;v.InitOffsets();v.lane=actor-1;v.g.hq=group;if(actor==0)v.CubeCluster(members);else v.VectorCluster(members);}return 0;}\n"
+                cpp += "if(cluster)m.CubeCluster(members);else "
+            if "mdl" in family:
+                cpp += "if(kind==0 &amp;&amp; length)m.HistoryCubeTask();else m.CubeTask();"
+            else:
+                cpp += "m.CubeTask();"
+            cpp += "return 0;}\n"
+        cpp += "return 1;}\n"
+        path = tmp_path_factory.mktemp("bf16_reader_protocol")
+        source, binary = path / "control.cpp", path / "control"
+        source.write_text(cpp)
+        result = subprocess.run([compiler, "-std=c++17", str(source), "-o", str(binary)],
+                                capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: ld: library not found for -lc++
+E         clang: error: linker command failed with exit code 1 (use -v to see invocation)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode
+
+tests/test_bf16_reader_protocol.py:160: AssertionError</error></testcase><testcase classname="tests.test_bf16_reader_protocol" name="test_c4_real_control_flow_preserves_member_and_buffer_ownership[7]" time="0.000"><error message="failed on setup with &quot;AssertionError: ld: library not found for -lc++&#10;  clang: error: linker command failed with exit code 1 (use -v to see invocation)&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x102cdfbb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-212'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def executable(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: host control-flow audit not executed")
+        version = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=15)
+        if version.returncode:
+            pytest.skip("clang++ unavailable: " + version.stderr.strip())
+        cpp = DECLARATIONS + _workspace_functions()
+        for index, (family, filename, cluster_size) in enumerate(FAMILIES):
+            cpp += f"namespace family{index} {{\n" + _model_source(filename, cluster_size, family) + "}\n"
+        cpp += "int main(int argc,char**argv){int f=atoi(argv[1]),kind=atoi(argv[2]),length=atoi(argv[3]),count=atoi(argv[4]),cluster=atoi(argv[5]),group=atoi(argv[6]),protocol=atoi(argv[7]);\n"
+        for index, (family, _, cluster_size) in enumerate(FAMILIES):
+            cpp += f"if(f=={index}){{using namespace family{index};Model m;m.InitOffsets();m.Layout();m.kind=kind;m.kvend=length;m.qcount=count;m.g.hq=group;\n"
+            if cluster_size:
+                cpp += f"TaskState members[{cluster_size}];for(int i=0;i&lt;{cluster_size};++i)members[i]={{i,0,length,count}};\n"
+                if cluster_size == 4:
+                    cpp += "if(protocol){for(actor=0;actor&lt;3;++actor){Model v;v.InitOffsets();v.lane=actor-1;v.g.hq=group;if(actor==0)v.CubeCluster(members);else v.VectorCluster(members);}return 0;}\n"
+                cpp += "if(cluster)m.CubeCluster(members);else "
+            if "mdl" in family:
+                cpp += "if(kind==0 &amp;&amp; length)m.HistoryCubeTask();else m.CubeTask();"
+            else:
+                cpp += "m.CubeTask();"
+            cpp += "return 0;}\n"
+        cpp += "return 1;}\n"
+        path = tmp_path_factory.mktemp("bf16_reader_protocol")
+        source, binary = path / "control.cpp", path / "control"
+        source.write_text(cpp)
+        result = subprocess.run([compiler, "-std=c++17", str(source), "-o", str(binary)],
+                                capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: ld: library not found for -lc++
+E         clang: error: linker command failed with exit code 1 (use -v to see invocation)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode
+
+tests/test_bf16_reader_protocol.py:160: AssertionError</error></testcase><testcase classname="tests.test_bf16_reader_protocol" name="test_c4_real_control_flow_preserves_member_and_buffer_ownership[16]" time="0.000"><error message="failed on setup with &quot;AssertionError: ld: library not found for -lc++&#10;  clang: error: linker command failed with exit code 1 (use -v to see invocation)&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x102cdfbb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-212'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def executable(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: host control-flow audit not executed")
+        version = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=15)
+        if version.returncode:
+            pytest.skip("clang++ unavailable: " + version.stderr.strip())
+        cpp = DECLARATIONS + _workspace_functions()
+        for index, (family, filename, cluster_size) in enumerate(FAMILIES):
+            cpp += f"namespace family{index} {{\n" + _model_source(filename, cluster_size, family) + "}\n"
+        cpp += "int main(int argc,char**argv){int f=atoi(argv[1]),kind=atoi(argv[2]),length=atoi(argv[3]),count=atoi(argv[4]),cluster=atoi(argv[5]),group=atoi(argv[6]),protocol=atoi(argv[7]);\n"
+        for index, (family, _, cluster_size) in enumerate(FAMILIES):
+            cpp += f"if(f=={index}){{using namespace family{index};Model m;m.InitOffsets();m.Layout();m.kind=kind;m.kvend=length;m.qcount=count;m.g.hq=group;\n"
+            if cluster_size:
+                cpp += f"TaskState members[{cluster_size}];for(int i=0;i&lt;{cluster_size};++i)members[i]={{i,0,length,count}};\n"
+                if cluster_size == 4:
+                    cpp += "if(protocol){for(actor=0;actor&lt;3;++actor){Model v;v.InitOffsets();v.lane=actor-1;v.g.hq=group;if(actor==0)v.CubeCluster(members);else v.VectorCluster(members);}return 0;}\n"
+                cpp += "if(cluster)m.CubeCluster(members);else "
+            if "mdl" in family:
+                cpp += "if(kind==0 &amp;&amp; length)m.HistoryCubeTask();else m.CubeTask();"
+            else:
+                cpp += "m.CubeTask();"
+            cpp += "return 0;}\n"
+        cpp += "return 1;}\n"
+        path = tmp_path_factory.mktemp("bf16_reader_protocol")
+        source, binary = path / "control.cpp", path / "control"
+        source.write_text(cpp)
+        result = subprocess.run([compiler, "-std=c++17", str(source), "-o", str(binary)],
+                                capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: ld: library not found for -lc++
+E         clang: error: linker command failed with exit code 1 (use -v to see invocation)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode
+
+tests/test_bf16_reader_protocol.py:160: AssertionError</error></testcase><testcase classname="tests.test_bf16_reader_protocol" name="test_control_checks_reject_alias_and_missing_readiness" time="0.000"><error message="failed on setup with &quot;AssertionError: ld: library not found for -lc++&#10;  clang: error: linker command failed with exit code 1 (use -v to see invocation)&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x102cdfbb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-212'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def executable(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: host control-flow audit not executed")
+        version = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=15)
+        if version.returncode:
+            pytest.skip("clang++ unavailable: " + version.stderr.strip())
+        cpp = DECLARATIONS + _workspace_functions()
+        for index, (family, filename, cluster_size) in enumerate(FAMILIES):
+            cpp += f"namespace family{index} {{\n" + _model_source(filename, cluster_size, family) + "}\n"
+        cpp += "int main(int argc,char**argv){int f=atoi(argv[1]),kind=atoi(argv[2]),length=atoi(argv[3]),count=atoi(argv[4]),cluster=atoi(argv[5]),group=atoi(argv[6]),protocol=atoi(argv[7]);\n"
+        for index, (family, _, cluster_size) in enumerate(FAMILIES):
+            cpp += f"if(f=={index}){{using namespace family{index};Model m;m.InitOffsets();m.Layout();m.kind=kind;m.kvend=length;m.qcount=count;m.g.hq=group;\n"
+            if cluster_size:
+                cpp += f"TaskState members[{cluster_size}];for(int i=0;i&lt;{cluster_size};++i)members[i]={{i,0,length,count}};\n"
+                if cluster_size == 4:
+                    cpp += "if(protocol){for(actor=0;actor&lt;3;++actor){Model v;v.InitOffsets();v.lane=actor-1;v.g.hq=group;if(actor==0)v.CubeCluster(members);else v.VectorCluster(members);}return 0;}\n"
+                cpp += "if(cluster)m.CubeCluster(members);else "
+            if "mdl" in family:
+                cpp += "if(kind==0 &amp;&amp; length)m.HistoryCubeTask();else m.CubeTask();"
+            else:
+                cpp += "m.CubeTask();"
+            cpp += "return 0;}\n"
+        cpp += "return 1;}\n"
+        path = tmp_path_factory.mktemp("bf16_reader_protocol")
+        source, binary = path / "control.cpp", path / "control"
+        source.write_text(cpp)
+        result = subprocess.run([compiler, "-std=c++17", str(source), "-o", str(binary)],
+                                capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: ld: library not found for -lc++
+E         clang: error: linker command failed with exit code 1 (use -v to see invocation)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++...r='ld: library not found for -lc++\nclang: error: linker command failed with exit code 1 (use -v to see invocation)\n').returncode
+
+tests/test_bf16_reader_protocol.py:160: AssertionError</error></testcase></testsuite></testsuites>

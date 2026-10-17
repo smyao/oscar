@@ -1,5 +1,5 @@
 # 档案 #27/#28/#69/#77/#110/#140；H01/H02/H05/H09：扫描可执行语法，
-# 只允许已验证为 CPU 的原生 query_start_loc_cpu 镜像转列表，不放行 NPU 回读。
+# 只允许统一 helper 内已验证为 CPU 的原生整数镜像转列表，不放行 NPU 回读。
 import ast
 from pathlib import Path
 import re
@@ -32,21 +32,36 @@ def test_online_hooks_do_not_copy_device_data_to_host():
     for path in (ROOT / "oscar_ascend/integration").rglob("*.py"):
         tree = ast.parse(path.read_text())
         cpu_mirror = None
-        if path.name == "current_attention.py":
+        if path.name == "cpu_metadata.py":
             cpu_mirror = next((node for node in tree.body if isinstance(node, ast.FunctionDef)
-                               and node.name == "current_cumulative_lengths"), None)
+                               and node.name == "cpu_int_mirror_values"), None)
+            validator = next((node for node in tree.body if isinstance(node, ast.FunctionDef)
+                              and node.name == "validate_cpu_int_mirror"), None)
             assert cpu_mirror is not None
-            # Verify the explicit `starts.device.type != "cpu"` rejection
-            # remains in the same helper as the one allowed CPU conversion.
+            assert validator is not None
+            # The sole conversion must consume the checked return value;
+            # adding helpers or allowing another file is not a whitelist.
+            checked = cpu_mirror.body[1]
+            assert isinstance(checked, ast.Assign) and len(checked.targets) == 1
+            assert isinstance(checked.targets[0], ast.Name) and checked.targets[0].id == "starts"
+            assert isinstance(checked.value, ast.Call) and isinstance(checked.value.func, ast.Name)
+            assert checked.value.func.id == "validate_cpu_int_mirror"
+            assert isinstance(checked.value.args[0], ast.Name) and checked.value.args[0].id == "starts"
+            guard = validator.body[1]
+            assert isinstance(guard, ast.If) and isinstance(guard.test, ast.BoolOp)
+            assert isinstance(guard.test.op, ast.Or)
+            assert len(guard.body) == 1 and isinstance(guard.body[0], ast.Raise)
+            # Non-CPU tensors must be rejected, not copied or inspected.
             assert any(isinstance(node, ast.Compare)
                        and isinstance(node.left, ast.Attribute) and node.left.attr == "type"
                        and isinstance(node.left.value, ast.Attribute)
                        and node.left.value.attr == "device"
                        and isinstance(node.left.value.value, ast.Name)
                        and node.left.value.value.id == "starts"
+                       and len(node.ops) == 1 and isinstance(node.ops[0], ast.NotEq)
                        and any(isinstance(value, ast.Constant) and value.value == "cpu"
                                for value in node.comparators)
-                       for node in ast.walk(cpu_mirror))
+                       for node in guard.test.values)
         for node in ast.walk(tree):
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
                 if node.func.attr == "tolist":

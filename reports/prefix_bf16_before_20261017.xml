@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="6" skipped="0" tests="6" time="1.047" timestamp="2026-10-17T14:52:22.248520+08:00" hostname="lokiyaodeMacBook-Pro.local"><testcase classname="tests.test_prefix_bf16_contract" name="test_apc_reader_matches_current_production_precision" time="0.001"><failure message="AssertionError: assert 'attention_cv_mdl_decode_out' == 'attention_bf...story_mdl_out'&#10;  &#10;  - attention_bf16_history_mdl_out&#10;  + attention_cv_mdl_decode_out">def test_apc_reader_matches_current_production_precision():
+&gt;       assert probe.selected_reader(config()) == "attention_bf16_history_mdl_out"
+E       AssertionError: assert 'attention_cv_mdl_decode_out' == 'attention_bf...story_mdl_out'
+E         
+E         - attention_bf16_history_mdl_out
+E         + attention_cv_mdl_decode_out
+
+tests/test_prefix_bf16_contract.py:21: AssertionError</failure></testcase><testcase classname="tests.test_prefix_bf16_contract" name="test_apc_actual_allocator_reserves_bf16_mdl_arena" time="0.015"><failure message="assert 2293760 == (2 * 1720320)&#10; +  where 2293760 = &lt;built-in method numel of Tensor object at 0x10e86f4d0&gt;()&#10; +    where &lt;built-in method numel of Tensor object at 0x10e86f4d0&gt; = tensor([0, 0, 0,  ..., 0, 0, 0], dtype=torch.uint8).numel">def test_apc_actual_allocator_reserves_bf16_mdl_arena():
+        state = probe.allocate(torch, torch.device("cpu"), 2)
+        assert state["workspace"].dtype == torch.uint8
+&gt;       assert state["workspace"].numel() == 2 * 1_720_320
+E       assert 2293760 == (2 * 1720320)
+E        +  where 2293760 = &lt;built-in method numel of Tensor object at 0x10e86f4d0&gt;()
+E        +    where &lt;built-in method numel of Tensor object at 0x10e86f4d0&gt; = tensor([0, 0, 0,  ..., 0, 0, 0], dtype=torch.uint8).numel
+
+tests/test_prefix_bf16_contract.py:27: AssertionError</failure></testcase><testcase classname="tests.test_prefix_bf16_contract" name="test_apc_rejects_an_incomplete_or_retired_production_bundle[experimental_bf16_history]" time="0.001"><failure message="Failed: DID NOT RAISE ValueError">flag = 'experimental_bf16_history'
+
+    @pytest.mark.parametrize("flag", ["experimental_bf16_history",
+        "experimental_mdl_decode", "experimental_c4_member_pipeline"])
+    def test_apc_rejects_an_incomplete_or_retired_production_bundle(flag):
+&gt;       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_prefix_bf16_contract.py:36: Failed</failure></testcase><testcase classname="tests.test_prefix_bf16_contract" name="test_apc_rejects_an_incomplete_or_retired_production_bundle[experimental_mdl_decode]" time="0.000"><failure message="Failed: DID NOT RAISE ValueError">flag = 'experimental_mdl_decode'
+
+    @pytest.mark.parametrize("flag", ["experimental_bf16_history",
+        "experimental_mdl_decode", "experimental_c4_member_pipeline"])
+    def test_apc_rejects_an_incomplete_or_retired_production_bundle(flag):
+&gt;       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_prefix_bf16_contract.py:36: Failed</failure></testcase><testcase classname="tests.test_prefix_bf16_contract" name="test_apc_rejects_an_incomplete_or_retired_production_bundle[experimental_c4_member_pipeline]" time="0.000"><failure message="Failed: DID NOT RAISE ValueError">flag = 'experimental_c4_member_pipeline'
+
+    @pytest.mark.parametrize("flag", ["experimental_bf16_history",
+        "experimental_mdl_decode", "experimental_c4_member_pipeline"])
+    def test_apc_rejects_an_incomplete_or_retired_production_bundle(flag):
+&gt;       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_prefix_bf16_contract.py:36: Failed</failure></testcase><testcase classname="tests.test_prefix_bf16_contract" name="test_apc_source_binding_covers_actual_reader_helpers_and_policy" time="0.002"><failure message="AssertionError: assert {'csrc/bf16_history_bindings.cpp', 'csrc/include/oscar_bf16_history_launch.h', 'csrc/kernels/attention_bf16_history_md...n_bf16_history_operands.h', 'csrc/kernels/attention_striped_unpack_bf16.h', 'oscar_ascend/bf16_history_policy.py', ...} &lt;= dict_keys(['oscar_ascend/lifecycle.py', 'oscar_ascend/layout.py', 'oscar_ascend/ops/cv_dispatch.py', 'csrc/kernels/rot...it.cpp', 'csrc/kernels/attention_tasks.cpp', 'csrc/kernels/attention_cv_mdl_decode.cpp', 'csrc/kernels/merge_lse.cpp'])&#10; +  where dict_keys(['oscar_ascend/lifecycle.py', 'oscar_ascend/layout.py', 'oscar_ascend/ops/cv_dispatch.py', 'csrc/kernels/rot...it.cpp', 'csrc/kernels/attention_tasks.cpp', 'csrc/kernels/attention_cv_mdl_decode.cpp', 'csrc/kernels/merge_lse.cpp']) = &lt;built-in method keys of dict object at 0x10e8d2980&gt;()&#10; +    where &lt;built-in method keys of dict object at 0x10e8d2980&gt; = {'oscar_ascend/lifecycle.py': '8791998aabe84dd076e9366b87d0d158722135e5370e2ede09f443c6f67a314d', 'oscar_ascend/layout... 'csrc/kernels/rotate_clip_store_striped.cpp': '72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430', ...}.keys">def test_apc_source_binding_covers_actual_reader_helpers_and_policy():
+        bound = probe.source_binding()
+&gt;       assert {"tools/probe_prefix_cache.py", "tools/serving_variants.py",
+            "oscar_ascend/bf16_history_policy.py", "csrc/bf16_history_bindings.cpp",
+            "csrc/include/oscar_bf16_history_launch.h",
+            "csrc/kernels/attention_bf16_history_mdl.cpp",
+            "csrc/kernels/attention_bf16_history_operands.h",
+            "csrc/kernels/attention_striped_unpack_bf16.h"} &lt;= bound.keys()
+E       AssertionError: assert {'csrc/bf16_history_bindings.cpp', 'csrc/include/oscar_bf16_history_launch.h', 'csrc/kernels/attention_bf16_history_md...n_bf16_history_operands.h', 'csrc/kernels/attention_striped_unpack_bf16.h', 'oscar_ascend/bf16_history_policy.py', ...} &lt;= dict_keys(['oscar_ascend/lifecycle.py', 'oscar_ascend/layout.py', 'oscar_ascend/ops/cv_dispatch.py', 'csrc/kernels/rot...it.cpp', 'csrc/kernels/attention_tasks.cpp', 'csrc/kernels/attention_cv_mdl_decode.cpp', 'csrc/kernels/merge_lse.cpp'])
+E        +  where dict_keys(['oscar_ascend/lifecycle.py', 'oscar_ascend/layout.py', 'oscar_ascend/ops/cv_dispatch.py', 'csrc/kernels/rot...it.cpp', 'csrc/kernels/attention_tasks.cpp', 'csrc/kernels/attention_cv_mdl_decode.cpp', 'csrc/kernels/merge_lse.cpp']) = &lt;built-in method keys of dict object at 0x10e8d2980&gt;()
+E        +    where &lt;built-in method keys of dict object at 0x10e8d2980&gt; = {'oscar_ascend/lifecycle.py': '8791998aabe84dd076e9366b87d0d158722135e5370e2ede09f443c6f67a314d', 'oscar_ascend/layout... 'csrc/kernels/rotate_clip_store_striped.cpp': '72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430', ...}.keys
+
+tests/test_prefix_bf16_contract.py:42: AssertionError</failure></testcase></testsuite></testsuites>

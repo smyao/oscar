@@ -1,0 +1,1730 @@
+............EEEEEEEEFFFFFFF............................................. [  3%]
+........................................................................ [  7%]
+........................................................................ [ 10%]
+........................................................................ [ 14%]
+........................................................................ [ 18%]
+........................................................................ [ 21%]
+.........................................ssssssssssssssssssssssssssss... [ 25%]
+...................................................................... [ 28%]
+........................................................................ [ 32%]
+........................................................................ [ 36%]
+...................................................................... [ 39%]
+.........................s.............................................. [ 43%]
+........................................................................ [ 46%]
+...................................F..F................................. [ 50%]
+.................................................................... [ 54%]
+........................................................................ [ 57%]
+........................................................................ [ 61%]
+........................................................................ [ 64%]
+........................................................................ [ 68%]
+........................................................................ [ 72%]
+......................................EEEEEF.E..........FF.............. [ 75%]
+.......................FFFF..................sssssssssss [ 78%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 82%]
+sssssssssssssssssssss................................................... [ 85%]
+........................................................................ [ 89%]
+..............s................................................FF....... [ 93%]
+................................................................... [ 96%]
+......................................................................   [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_all_supplied_engine_rows_are_parsed_without_pid_or_clock_mixing _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_truncated_records_preserve_known_fields_and_do_not_invent_counts _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_client_tables_and_warmup_have_separate_time_denominators _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_client_latency_decomposition_respects_fixed_512_output_tokens _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_spec_totals_use_counts_rather_than_unweighted_percentage_means _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_observed_capacity_and_zero_counters_do_not_invent_memory_or_phases _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_server_counter_integration_does_not_use_client_duration _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_conditional_warmup_pool_bounds_include_the_reference_null_block _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_all_registered_target_and_draft_sidecars_are_allocated_before_load_returns _
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x108cc1b80>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:295: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x108b10830>
+
+    @pytest.fixture
+    def integrated(monkeypatch):
+        plugin.unregister()
+        config = configuration()
+>       provider = AscendRuntimeProvider(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_integration.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x108cc1b80>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:298: OscarReadinessError
+_ ERROR at setup of test_one_native_update_preserves_rewind_deferred_return_and_publishes_after_reorder _
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x13e19df40>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:295: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x12fc2e2e0>
+
+    @pytest.fixture
+    def integrated(monkeypatch):
+        plugin.unregister()
+        config = configuration()
+>       provider = AscendRuntimeProvider(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_integration.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x13e19df40>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:298: OscarReadinessError
+_ ERROR at setup of test_scope_cleans_up_and_other_stream_cannot_reuse_leases __
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x108cc2e40>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:295: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x12fc2dbe0>
+
+    @pytest.fixture
+    def integrated(monkeypatch):
+        plugin.unregister()
+        config = configuration()
+>       provider = AscendRuntimeProvider(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_integration.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x108cc2e40>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:298: OscarReadinessError
+_ ERROR at setup of test_unsupported_native_mode_fails_at_seal[enable_prefix_caching-True] _
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x13e19f110>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:295: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x12fc2da90>
+
+    @pytest.fixture
+    def integrated(monkeypatch):
+        plugin.unregister()
+        config = configuration()
+>       provider = AscendRuntimeProvider(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_integration.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x13e19f110>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:298: OscarReadinessError
+_ ERROR at setup of test_unsupported_native_mode_fails_at_seal[mamba_cache_mode-align] _
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x13e19fc50>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:295: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x12fc2f2a0>
+
+    @pytest.fixture
+    def integrated(monkeypatch):
+        plugin.unregister()
+        config = configuration()
+>       provider = AscendRuntimeProvider(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_integration.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x13e19fc50>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:298: OscarReadinessError
+_ ERROR at setup of test_dual_reshape_reuses_sidecars_and_shared_map_while_native_gdn_views_stay_original _
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x12ee84aa0>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:295: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x12fc2f9a0>
+
+    @pytest.fixture
+    def integrated(monkeypatch):
+        plugin.unregister()
+        config = configuration()
+>       provider = AscendRuntimeProvider(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_integration.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x12ee84aa0>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:298: OscarReadinessError
+=================================== FAILURES ===================================
+________ test_real_popped_completion_ids_keep_observed_latency_not_busy ________
+
+    def test_real_popped_completion_ids_keep_observed_latency_not_busy():
+>       paired = audit.pair_instructions(*real_pair())
+                                          ^^^^^^^^^^^
+
+tests/test_analyze_decode_completion.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_analyze_decode_completion.py:21: in real_pair
+    return [audit.read_trace(NZ / f"{ACTOR}.{suffix}.gz", ACTOR)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/experiments/analyze_decode_completion.py:91: in read_trace
+    with opener(path, "rt") as stream:
+         ^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:66: in open
+    binary_file = GzipFile(filename, gz_mode, compresslevel)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <gzip on 0x108dbdd50>
+filename = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz')
+mode = 'rb', compresslevel = 9, fileobj = None, mtime = None
+
+    def __init__(self, filename=None, mode=None,
+                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+        """Constructor for the GzipFile class.
+    
+        At least one of fileobj and filename must be given a
+        non-trivial value.
+    
+        The new class instance is based on fileobj, which can be a regular
+        file, an io.BytesIO object, or any other object which simulates
+        a file.  It defaults to None, in which case filename is opened to
+        provide a file object.
+    
+        When fileobj is not None, the filename argument is only used to be
+        included in the gzip file header, which may include the original
+        filename of the uncompressed file.  It defaults to the filename of
+        fileobj, if discernible; otherwise, it defaults to the empty string,
+        and in this case the original filename is not included in the
+        header.
+    
+        The mode argument can be any of 'r', 'rb', 'a', 'ab', 'w', 'wb',
+        'x', or 'xb' depending on whether the file will be read or written.
+        The default is the mode of fileobj if discernible; otherwise, the
+        default is 'rb'.  A mode of 'r' is equivalent to one of 'rb', and
+        similarly for 'w' and 'wb', 'a' and 'ab', and 'x' and 'xb'.
+    
+        The compresslevel argument is an integer from 0 to 9 controlling
+        the level of compression; 1 is fastest and produces the least
+        compression, and 9 is slowest and produces the most compression.
+        0 is no compression at all. The default is 9.
+    
+        The optional mtime argument is the timestamp requested by gzip.
+        The time is in Unix format, i.e., seconds since 00:00:00 UTC,
+        January 1, 1970.  If mtime is omitted or None, the current time
+        is used.  Use mtime = 0 to generate a compressed stream that does
+        not depend on creation time.
+    
+        """
+    
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
+    
+        if mode and ('t' in mode or 'U' in mode):
+            raise ValueError("Invalid mode: {!r}".format(mode))
+        if mode and 'b' not in mode:
+            mode += 'b'
+    
+        try:
+            if fileobj is None:
+>               fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:210: FileNotFoundError
+________ test_real_decode_markers_close_but_do_not_mean_math_completed _________
+
+    def test_real_decode_markers_close_but_do_not_mean_math_completed():
+>       rows = audit.read_trace(DECODE / f"{ACTOR}.instr_log.dump.gz", ACTOR)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_decode_completion.py:37: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/experiments/analyze_decode_completion.py:91: in read_trace
+    with opener(path, "rt") as stream:
+         ^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:66: in open
+    binary_file = GzipFile(filename, gz_mode, compresslevel)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <gzip on 0x108dbfb80>
+filename = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz')
+mode = 'rb', compresslevel = 9, fileobj = None, mtime = None
+
+    def __init__(self, filename=None, mode=None,
+                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+        """Constructor for the GzipFile class.
+    
+        At least one of fileobj and filename must be given a
+        non-trivial value.
+    
+        The new class instance is based on fileobj, which can be a regular
+        file, an io.BytesIO object, or any other object which simulates
+        a file.  It defaults to None, in which case filename is opened to
+        provide a file object.
+    
+        When fileobj is not None, the filename argument is only used to be
+        included in the gzip file header, which may include the original
+        filename of the uncompressed file.  It defaults to the filename of
+        fileobj, if discernible; otherwise, it defaults to the empty string,
+        and in this case the original filename is not included in the
+        header.
+    
+        The mode argument can be any of 'r', 'rb', 'a', 'ab', 'w', 'wb',
+        'x', or 'xb' depending on whether the file will be read or written.
+        The default is the mode of fileobj if discernible; otherwise, the
+        default is 'rb'.  A mode of 'r' is equivalent to one of 'rb', and
+        similarly for 'w' and 'wb', 'a' and 'ab', and 'x' and 'xb'.
+    
+        The compresslevel argument is an integer from 0 to 9 controlling
+        the level of compression; 1 is fastest and produces the least
+        compression, and 9 is slowest and produces the most compression.
+        0 is no compression at all. The default is 9.
+    
+        The optional mtime argument is the timestamp requested by gzip.
+        The time is in Unix format, i.e., seconds since 00:00:00 UTC,
+        January 1, 1970.  If mtime is omitted or None, the current time
+        is used.  Use mtime = 0 to generate a compressed stream that does
+        not depend on creation time.
+    
+        """
+    
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
+    
+        if mode and ('t' in mode or 'U' in mode):
+            raise ValueError("Invalid mode: {!r}".format(mode))
+        if mode and 'b' not in mode:
+            mode += 'b'
+    
+        try:
+            if fileobj is None:
+>               fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:210: FileNotFoundError
+_____ test_actual_pair_rejects_ambiguity_and_missing_witness[duplicate_id] _____
+
+damage = 'duplicate_id'
+
+    @pytest.mark.parametrize("damage", ["duplicate_id", "missing_completion", "wrong_pc", "flag_count"])
+    def test_actual_pair_rejects_ambiguity_and_missing_witness(damage):
+>       popped, completed = real_pair()
+                            ^^^^^^^^^^^
+
+tests/test_analyze_decode_completion.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_analyze_decode_completion.py:21: in real_pair
+    return [audit.read_trace(NZ / f"{ACTOR}.{suffix}.gz", ACTOR)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/experiments/analyze_decode_completion.py:91: in read_trace
+    with opener(path, "rt") as stream:
+         ^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:66: in open
+    binary_file = GzipFile(filename, gz_mode, compresslevel)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <gzip on 0x108dbceb0>
+filename = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz')
+mode = 'rb', compresslevel = 9, fileobj = None, mtime = None
+
+    def __init__(self, filename=None, mode=None,
+                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+        """Constructor for the GzipFile class.
+    
+        At least one of fileobj and filename must be given a
+        non-trivial value.
+    
+        The new class instance is based on fileobj, which can be a regular
+        file, an io.BytesIO object, or any other object which simulates
+        a file.  It defaults to None, in which case filename is opened to
+        provide a file object.
+    
+        When fileobj is not None, the filename argument is only used to be
+        included in the gzip file header, which may include the original
+        filename of the uncompressed file.  It defaults to the filename of
+        fileobj, if discernible; otherwise, it defaults to the empty string,
+        and in this case the original filename is not included in the
+        header.
+    
+        The mode argument can be any of 'r', 'rb', 'a', 'ab', 'w', 'wb',
+        'x', or 'xb' depending on whether the file will be read or written.
+        The default is the mode of fileobj if discernible; otherwise, the
+        default is 'rb'.  A mode of 'r' is equivalent to one of 'rb', and
+        similarly for 'w' and 'wb', 'a' and 'ab', and 'x' and 'xb'.
+    
+        The compresslevel argument is an integer from 0 to 9 controlling
+        the level of compression; 1 is fastest and produces the least
+        compression, and 9 is slowest and produces the most compression.
+        0 is no compression at all. The default is 9.
+    
+        The optional mtime argument is the timestamp requested by gzip.
+        The time is in Unix format, i.e., seconds since 00:00:00 UTC,
+        January 1, 1970.  If mtime is omitted or None, the current time
+        is used.  Use mtime = 0 to generate a compressed stream that does
+        not depend on creation time.
+    
+        """
+    
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
+    
+        if mode and ('t' in mode or 'U' in mode):
+            raise ValueError("Invalid mode: {!r}".format(mode))
+        if mode and 'b' not in mode:
+            mode += 'b'
+    
+        try:
+            if fileobj is None:
+>               fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:210: FileNotFoundError
+__ test_actual_pair_rejects_ambiguity_and_missing_witness[missing_completion] __
+
+damage = 'missing_completion'
+
+    @pytest.mark.parametrize("damage", ["duplicate_id", "missing_completion", "wrong_pc", "flag_count"])
+    def test_actual_pair_rejects_ambiguity_and_missing_witness(damage):
+>       popped, completed = real_pair()
+                            ^^^^^^^^^^^
+
+tests/test_analyze_decode_completion.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_analyze_decode_completion.py:21: in real_pair
+    return [audit.read_trace(NZ / f"{ACTOR}.{suffix}.gz", ACTOR)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/experiments/analyze_decode_completion.py:91: in read_trace
+    with opener(path, "rt") as stream:
+         ^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:66: in open
+    binary_file = GzipFile(filename, gz_mode, compresslevel)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <gzip on 0x108e3f9d0>
+filename = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz')
+mode = 'rb', compresslevel = 9, fileobj = None, mtime = None
+
+    def __init__(self, filename=None, mode=None,
+                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+        """Constructor for the GzipFile class.
+    
+        At least one of fileobj and filename must be given a
+        non-trivial value.
+    
+        The new class instance is based on fileobj, which can be a regular
+        file, an io.BytesIO object, or any other object which simulates
+        a file.  It defaults to None, in which case filename is opened to
+        provide a file object.
+    
+        When fileobj is not None, the filename argument is only used to be
+        included in the gzip file header, which may include the original
+        filename of the uncompressed file.  It defaults to the filename of
+        fileobj, if discernible; otherwise, it defaults to the empty string,
+        and in this case the original filename is not included in the
+        header.
+    
+        The mode argument can be any of 'r', 'rb', 'a', 'ab', 'w', 'wb',
+        'x', or 'xb' depending on whether the file will be read or written.
+        The default is the mode of fileobj if discernible; otherwise, the
+        default is 'rb'.  A mode of 'r' is equivalent to one of 'rb', and
+        similarly for 'w' and 'wb', 'a' and 'ab', and 'x' and 'xb'.
+    
+        The compresslevel argument is an integer from 0 to 9 controlling
+        the level of compression; 1 is fastest and produces the least
+        compression, and 9 is slowest and produces the most compression.
+        0 is no compression at all. The default is 9.
+    
+        The optional mtime argument is the timestamp requested by gzip.
+        The time is in Unix format, i.e., seconds since 00:00:00 UTC,
+        January 1, 1970.  If mtime is omitted or None, the current time
+        is used.  Use mtime = 0 to generate a compressed stream that does
+        not depend on creation time.
+    
+        """
+    
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
+    
+        if mode and ('t' in mode or 'U' in mode):
+            raise ValueError("Invalid mode: {!r}".format(mode))
+        if mode and 'b' not in mode:
+            mode += 'b'
+    
+        try:
+            if fileobj is None:
+>               fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:210: FileNotFoundError
+_______ test_actual_pair_rejects_ambiguity_and_missing_witness[wrong_pc] _______
+
+damage = 'wrong_pc'
+
+    @pytest.mark.parametrize("damage", ["duplicate_id", "missing_completion", "wrong_pc", "flag_count"])
+    def test_actual_pair_rejects_ambiguity_and_missing_witness(damage):
+>       popped, completed = real_pair()
+                            ^^^^^^^^^^^
+
+tests/test_analyze_decode_completion.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_analyze_decode_completion.py:21: in real_pair
+    return [audit.read_trace(NZ / f"{ACTOR}.{suffix}.gz", ACTOR)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/experiments/analyze_decode_completion.py:91: in read_trace
+    with opener(path, "rt") as stream:
+         ^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:66: in open
+    binary_file = GzipFile(filename, gz_mode, compresslevel)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <gzip on 0x108dbcdc0>
+filename = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz')
+mode = 'rb', compresslevel = 9, fileobj = None, mtime = None
+
+    def __init__(self, filename=None, mode=None,
+                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+        """Constructor for the GzipFile class.
+    
+        At least one of fileobj and filename must be given a
+        non-trivial value.
+    
+        The new class instance is based on fileobj, which can be a regular
+        file, an io.BytesIO object, or any other object which simulates
+        a file.  It defaults to None, in which case filename is opened to
+        provide a file object.
+    
+        When fileobj is not None, the filename argument is only used to be
+        included in the gzip file header, which may include the original
+        filename of the uncompressed file.  It defaults to the filename of
+        fileobj, if discernible; otherwise, it defaults to the empty string,
+        and in this case the original filename is not included in the
+        header.
+    
+        The mode argument can be any of 'r', 'rb', 'a', 'ab', 'w', 'wb',
+        'x', or 'xb' depending on whether the file will be read or written.
+        The default is the mode of fileobj if discernible; otherwise, the
+        default is 'rb'.  A mode of 'r' is equivalent to one of 'rb', and
+        similarly for 'w' and 'wb', 'a' and 'ab', and 'x' and 'xb'.
+    
+        The compresslevel argument is an integer from 0 to 9 controlling
+        the level of compression; 1 is fastest and produces the least
+        compression, and 9 is slowest and produces the most compression.
+        0 is no compression at all. The default is 9.
+    
+        The optional mtime argument is the timestamp requested by gzip.
+        The time is in Unix format, i.e., seconds since 00:00:00 UTC,
+        January 1, 1970.  If mtime is omitted or None, the current time
+        is used.  Use mtime = 0 to generate a compressed stream that does
+        not depend on creation time.
+    
+        """
+    
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
+    
+        if mode and ('t' in mode or 'U' in mode):
+            raise ValueError("Invalid mode: {!r}".format(mode))
+        if mode and 'b' not in mode:
+            mode += 'b'
+    
+        try:
+            if fileobj is None:
+>               fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:210: FileNotFoundError
+______ test_actual_pair_rejects_ambiguity_and_missing_witness[flag_count] ______
+
+damage = 'flag_count'
+
+    @pytest.mark.parametrize("damage", ["duplicate_id", "missing_completion", "wrong_pc", "flag_count"])
+    def test_actual_pair_rejects_ambiguity_and_missing_witness(damage):
+>       popped, completed = real_pair()
+                            ^^^^^^^^^^^
+
+tests/test_analyze_decode_completion.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_analyze_decode_completion.py:21: in real_pair
+    return [audit.read_trace(NZ / f"{ACTOR}.{suffix}.gz", ACTOR)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/experiments/analyze_decode_completion.py:91: in read_trace
+    with opener(path, "rt") as stream:
+         ^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:66: in open
+    binary_file = GzipFile(filename, gz_mode, compresslevel)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <gzip on 0x108dbe9e0>
+filename = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz')
+mode = 'rb', compresslevel = 9, fileobj = None, mtime = None
+
+    def __init__(self, filename=None, mode=None,
+                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+        """Constructor for the GzipFile class.
+    
+        At least one of fileobj and filename must be given a
+        non-trivial value.
+    
+        The new class instance is based on fileobj, which can be a regular
+        file, an io.BytesIO object, or any other object which simulates
+        a file.  It defaults to None, in which case filename is opened to
+        provide a file object.
+    
+        When fileobj is not None, the filename argument is only used to be
+        included in the gzip file header, which may include the original
+        filename of the uncompressed file.  It defaults to the filename of
+        fileobj, if discernible; otherwise, it defaults to the empty string,
+        and in this case the original filename is not included in the
+        header.
+    
+        The mode argument can be any of 'r', 'rb', 'a', 'ab', 'w', 'wb',
+        'x', or 'xb' depending on whether the file will be read or written.
+        The default is the mode of fileobj if discernible; otherwise, the
+        default is 'rb'.  A mode of 'r' is equivalent to one of 'rb', and
+        similarly for 'w' and 'wb', 'a' and 'ab', and 'x' and 'xb'.
+    
+        The compresslevel argument is an integer from 0 to 9 controlling
+        the level of compression; 1 is fastest and produces the least
+        compression, and 9 is slowest and produces the most compression.
+        0 is no compression at all. The default is 9.
+    
+        The optional mtime argument is the timestamp requested by gzip.
+        The time is in Unix format, i.e., seconds since 00:00:00 UTC,
+        January 1, 1970.  If mtime is omitted or None, the current time
+        is used.  Use mtime = 0 to generate a compressed stream that does
+        not depend on creation time.
+    
+        """
+    
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
+    
+        if mode and ('t' in mode or 'U' in mode):
+            raise ValueError("Invalid mode: {!r}".format(mode))
+        if mode and 'b' not in mode:
+            mode += 'b'
+    
+        try:
+            if fileobj is None:
+>               fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:210: FileNotFoundError
+___________ test_truncated_real_line_and_unclosed_real_markers_fail ____________
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-211/test_truncated_real_line_and_u0')
+
+    def test_truncated_real_line_and_unclosed_real_markers_fail(tmp_path):
+        path = DECODE / f"{ACTOR}.instr_log.dump.gz"
+>       with gzip.open(path, "rt") as stream:
+             ^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_decode_completion.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:66: in open
+    binary_file = GzipFile(filename, gz_mode, compresslevel)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <gzip on 0x108e3e8c0>
+filename = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz')
+mode = 'rb', compresslevel = 9, fileobj = None, mtime = None
+
+    def __init__(self, filename=None, mode=None,
+                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+        """Constructor for the GzipFile class.
+    
+        At least one of fileobj and filename must be given a
+        non-trivial value.
+    
+        The new class instance is based on fileobj, which can be a regular
+        file, an io.BytesIO object, or any other object which simulates
+        a file.  It defaults to None, in which case filename is opened to
+        provide a file object.
+    
+        When fileobj is not None, the filename argument is only used to be
+        included in the gzip file header, which may include the original
+        filename of the uncompressed file.  It defaults to the filename of
+        fileobj, if discernible; otherwise, it defaults to the empty string,
+        and in this case the original filename is not included in the
+        header.
+    
+        The mode argument can be any of 'r', 'rb', 'a', 'ab', 'w', 'wb',
+        'x', or 'xb' depending on whether the file will be read or written.
+        The default is the mode of fileobj if discernible; otherwise, the
+        default is 'rb'.  A mode of 'r' is equivalent to one of 'rb', and
+        similarly for 'w' and 'wb', 'a' and 'ab', and 'x' and 'xb'.
+    
+        The compresslevel argument is an integer from 0 to 9 controlling
+        the level of compression; 1 is fastest and produces the least
+        compression, and 9 is slowest and produces the most compression.
+        0 is no compression at all. The default is 9.
+    
+        The optional mtime argument is the timestamp requested by gzip.
+        The time is in Unix format, i.e., seconds since 00:00:00 UTC,
+        January 1, 1970.  If mtime is omitted or None, the current time
+        is used.  Use mtime = 0 to generate a compressed stream that does
+        not depend on creation time.
+    
+        """
+    
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
+    
+        if mode and ('t' in mode or 'U' in mode):
+            raise ValueError("Invalid mode: {!r}".format(mode))
+        if mode and 'b' not in mode:
+            mode += 'b'
+    
+        try:
+            if fileobj is None:
+>               fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:210: FileNotFoundError
+_____________________ test_no_silent_exception_swallowing ______________________
+
+    def test_no_silent_exception_swallowing():
+        for folder in ("oscar_ascend", "tools"):
+            for path in (ROOT / folder).rglob("*.py"):
+                tree = ast.parse(path.read_text())
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.ExceptHandler):
+>                       assert not all(isinstance(statement, ast.Pass) for statement in node.body), path
+E                       AssertionError: PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/experiments/replay_shared_fp32.py')
+E                       assert not True
+E                        +  where True = all(<generator object test_no_silent_exception_swallowing.<locals>.<genexpr> at 0x12f864040>)
+
+tests/test_no_fallback_static.py:28: AssertionError
+______________________ test_source_headers_trace_archive _______________________
+
+    def test_source_headers_trace_archive():
+        paths = []
+        for folder in ("oscar_ascend", "tools", "scripts", "tests", "benchmarks", "csrc"):
+            paths += [p for p in (ROOT / folder).rglob("*") if p.is_file() and p.suffix in {".py", ".cpp", ".h", ".cmake", ".sh"}]
+        paths += [ROOT / "csrc/CMakeLists.txt"]
+        for path in paths:
+            header = "\n".join(path.read_text().splitlines()[:18])
+>           assert any(word in header for word in ("档案", "Archive", "archive")), f"missing historical fault trace: {path}"
+E           AssertionError: missing historical fault trace: /Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/experiments/export_shared_fp32.py
+E           assert False
+E            +  where False = any(<generator object test_source_headers_trace_archive.<locals>.<genexpr> at 0x12f867220>)
+
+tests/test_no_fallback_static.py:94: AssertionError
+_ test_explicit_flag_keeps_native_scheduler_and_requires_full_capability_bundle _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x12fc2fb60>
+
+    def test_explicit_flag_keeps_native_scheduler_and_requires_full_capability_bundle(monkeypatch):
+        cfg = configuration()
+        for bad in (1, "true", None):
+            with pytest.raises(OscarReadinessError, match="explicit boolean"):
+                AscendRuntimeProvider(cfg | {"experimental_request_windows": bad})
+>       with pytest.raises(OscarReadinessError, match="native scheduler"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'native scheduler'
+E         Actual message: 'BF16 attention requires physical-page snapshots; request windows are unsupported'
+
+tests/test_request_window_integration.py:227: AssertionError
+_ test_request_window_workspace_follows_actual_native_capacity[2048-captures0-4096] _
+
+self = <oscar_ascend.integration.native_token_budget.NativeTokenBudgetRuntime object at 0x12f9b6be0>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:295: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x12fb19390>
+budget = 2048, captures = [4096], expected = 4096
+
+    @pytest.mark.parametrize("budget,captures,expected", [(2048, [4096], 4096), (8192, [512], 8192)])
+    def test_request_window_workspace_follows_actual_native_capacity(monkeypatch, budget, captures, expected):
+        config = configuration()
+        config["use_native_token_budget"] = True
+        config.pop("max_num_batched_tokens", None)
+>       provider = NativeTokenBudgetRuntime(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_native_scheduler.py:87: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+oscar_ascend/integration/native_token_budget.py:13: in __init__
+    super().__init__(config)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.integration.native_token_budget.NativeTokenBudgetRuntime object at 0x12f9b6be0>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:298: OscarReadinessError
+_ test_request_window_workspace_follows_actual_native_capacity[8192-captures1-8192] _
+
+self = <oscar_ascend.integration.native_token_budget.NativeTokenBudgetRuntime object at 0x12f9b45a0>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:295: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x12fb18d70>
+budget = 8192, captures = [512], expected = 8192
+
+    @pytest.mark.parametrize("budget,captures,expected", [(2048, [4096], 4096), (8192, [512], 8192)])
+    def test_request_window_workspace_follows_actual_native_capacity(monkeypatch, budget, captures, expected):
+        config = configuration()
+        config["use_native_token_budget"] = True
+        config.pop("max_num_batched_tokens", None)
+>       provider = NativeTokenBudgetRuntime(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_native_scheduler.py:87: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+oscar_ascend/integration/native_token_budget.py:13: in __init__
+    super().__init__(config)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.integration.native_token_budget.NativeTokenBudgetRuntime object at 0x12f9b45a0>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:298: OscarReadinessError
+____ test_unqualified_research_mdl_combination_is_rejected_by_both_entries _____
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-211/test_unqualified_research_mdl_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x12fc5d450>
+
+    def test_unqualified_research_mdl_combination_is_rejected_by_both_entries(tmp_path,capsys):
+        raw=configured();before=deepcopy(raw)
+        path=tmp_path/'research.json';path.write_text(json.dumps(raw))
+        # The fixed candidate now promises the qualified MDL q4 implementation.
+        # A research-only request-window reader has no matching MDL qualification.
+        for entry in (install_serve, observe_serve):
+>           with pytest.raises(ValueError,match='request-window MDL reader is not qualified'):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'request-window MDL reader is not qualified'
+E             Actual message: 'BF16 attention requires experimental_mdl_decode=true'
+
+tests/test_request_window_serving_config.py:33: AssertionError
+__ test_research_roundtrip_clears_every_owned_change_for_native_and_baseline ___
+
+    def test_research_roundtrip_clears_every_owned_change_for_native_and_baseline():
+        raw=configured()
+        # The current candidate promises MDL; an unfinished request-window MDL
+        # reader must be explicitly rejected, never silently mapped to its old op.
+>       with pytest.raises(ValueError,match='request-window MDL reader is not qualified'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'request-window MDL reader is not qualified'
+E         Actual message: 'BF16 attention requires experimental_mdl_decode=true'
+
+tests/test_request_window_serving_config.py:45: AssertionError
+_ test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x12fcc7310>
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-211/test_explicit_config_without_v0')
+
+    def test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase(monkeypatch,tmp_path):
+        raw=configured()
+        path=tmp_path/'explicit-research.json';path.write_text(json.dumps(raw));before=path.read_bytes()
+        logs=tmp_path/'launch';seen=[]
+        def check(selected_path):
+            assert Path(selected_path)==logs/'effective-target.json'
+            selected=json.loads(Path(selected_path).read_text())
+            assert 'max_num_batched_tokens' not in selected
+            assert 'history_token_capacity' not in selected
+            assert 'scheduler_cls' not in selected
+            assert selected['use_native_token_budget'] is True
+        def phase(name,command,*,env,**kwargs):
+            seen.append(name);check(env['OSCAR_TARGET_CONFIG'])
+            if '--config' in command:assert command[command.index('--config')+1]==env['OSCAR_TARGET_CONFIG']
+            return PhaseResult(name,command,0,0.,False,False,str(logs/name),True)
+        class HostExecIntercept(Exception):pass
+        def launch(executable,command,env):
+            check(command[-1]);assert command[-1]==env['OSCAR_TARGET_CONFIG']
+            assert seen==list(install_serve.BUILD_PHASES)
+            raise HostExecIntercept
+        monkeypatch.setattr(install_serve,'run_phase',phase)
+        monkeypatch.setattr(install_serve.os,'execvpe',launch)
+        with pytest.raises(HostExecIntercept):
+>           install_serve.main(['--config',str(path),'--log-dir',str(logs)])
+
+tests/test_request_window_serving_config.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/install_serve.py:55: in main
+    config = variant_config(config, args.variant)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/serving_variants.py:178: in variant_config
+    selected = production_runtime_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+>               raise ValueError(f"BF16 attention requires {flag}=true")
+E               ValueError: BF16 attention requires experimental_mdl_decode=true
+
+oscar_ascend/bf16_history_policy.py:58: ValueError
+----------------------------- Captured stdout call -----------------------------
+[oscar] install → build → rotations → serve (no tests, no probes); logs=/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-211/test_explicit_config_without_v0/launch
+_______ test_legacy_whole_capacity_cannot_reenter_through_research_flags _______
+
+    def test_legacy_whole_capacity_cannot_reenter_through_research_flags():
+        raw=configured()
+        raw.update(max_num_batched_tokens=66048, history_token_capacity=16896,
+                   scheduler_cls="oscar_ascend.integration.bounded_whole_prefill.BoundedWholePromptAsyncScheduler")
+>       selected=variant_config(raw,None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_serving_config.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:178: in variant_config
+    selected = production_runtime_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+>               raise ValueError(f"BF16 attention requires {flag}=true")
+E               ValueError: BF16 attention requires experimental_mdl_decode=true
+
+oscar_ascend/bf16_history_policy.py:58: ValueError
+_______________ test_real_log_mtp_accounting_and_unequal_windows _______________
+
+    def test_real_log_mtp_accounting_and_unequal_windows():
+        candidate = analyze(REPORTS / "target_striped_probe_and_longbench_20260930.txt")
+>       native = analyze(REPORTS / "target_native_longbench_20260930.txt")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_log_model.py:19: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/analyze_service_log.py:70: in analyze
+    raw = path.read_bytes()
+          ^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_native_longbench_20260930.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_native_longbench_20260930.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+________________ test_two_anchors_do_not_identify_speedup_share ________________
+
+    def test_two_anchors_do_not_identify_speedup_share():
+>       candidate = json.loads((REPORTS / "service_trace_candidate_20260930.json").read_text())
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_log_model.py:32: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:787: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/service_trace_candidate_20260930.json')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/service_trace_candidate_20260930.json'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+=========================== short test summary info ============================
+SKIPPED [28] tests/test_cv_contracts.py:67: real NPU test is opt-in; CPU is not substituted
+SKIPPED [1] tests/test_loader_linkage.py:202: ELF DT_NEEDED/SONAME regression requires Linux
+SKIPPED [104] tests/test_rotation_npu.py:145: not_run: real NPU rotation gate requires OSCAR_RUN_NPU_TESTS=1
+SKIPPED [1] tests/test_runtime.py:344: large FULL host route is needed once for C16
+ERROR tests/test_analyze_64k_evidence.py::test_all_supplied_engine_rows_are_parsed_without_pid_or_clock_mixing
+ERROR tests/test_analyze_64k_evidence.py::test_truncated_records_preserve_known_fields_and_do_not_invent_counts
+ERROR tests/test_analyze_64k_evidence.py::test_client_tables_and_warmup_have_separate_time_denominators
+ERROR tests/test_analyze_64k_evidence.py::test_client_latency_decomposition_respects_fixed_512_output_tokens
+ERROR tests/test_analyze_64k_evidence.py::test_spec_totals_use_counts_rather_than_unweighted_percentage_means
+ERROR tests/test_analyze_64k_evidence.py::test_observed_capacity_and_zero_counters_do_not_invent_memory_or_phases
+ERROR tests/test_analyze_64k_evidence.py::test_server_counter_integration_does_not_use_client_duration
+ERROR tests/test_analyze_64k_evidence.py::test_conditional_warmup_pool_bounds_include_the_reference_null_block
+ERROR tests/test_request_window_integration.py::test_all_registered_target_and_draft_sidecars_are_allocated_before_load_returns
+ERROR tests/test_request_window_integration.py::test_one_native_update_preserves_rewind_deferred_return_and_publishes_after_reorder
+ERROR tests/test_request_window_integration.py::test_scope_cleans_up_and_other_stream_cannot_reuse_leases
+ERROR tests/test_request_window_integration.py::test_unsupported_native_mode_fails_at_seal[enable_prefix_caching-True]
+ERROR tests/test_request_window_integration.py::test_unsupported_native_mode_fails_at_seal[mamba_cache_mode-align]
+ERROR tests/test_request_window_integration.py::test_dual_reshape_reuses_sidecars_and_shared_map_while_native_gdn_views_stay_original
+FAILED tests/test_analyze_decode_completion.py::test_real_popped_completion_ids_keep_observed_latency_not_busy
+FAILED tests/test_analyze_decode_completion.py::test_real_decode_markers_close_but_do_not_mean_math_completed
+FAILED tests/test_analyze_decode_completion.py::test_actual_pair_rejects_ambiguity_and_missing_witness[duplicate_id]
+FAILED tests/test_analyze_decode_completion.py::test_actual_pair_rejects_ambiguity_and_missing_witness[missing_completion]
+FAILED tests/test_analyze_decode_completion.py::test_actual_pair_rejects_ambiguity_and_missing_witness[wrong_pc]
+FAILED tests/test_analyze_decode_completion.py::test_actual_pair_rejects_ambiguity_and_missing_witness[flag_count]
+FAILED tests/test_analyze_decode_completion.py::test_truncated_real_line_and_unclosed_real_markers_fail
+FAILED tests/test_no_fallback_static.py::test_no_silent_exception_swallowing
+FAILED tests/test_no_fallback_static.py::test_source_headers_trace_archive - ...
+FAILED tests/test_request_window_integration.py::test_explicit_flag_keeps_native_scheduler_and_requires_full_capability_bundle
+FAILED tests/test_request_window_native_scheduler.py::test_request_window_workspace_follows_actual_native_capacity[2048-captures0-4096]
+FAILED tests/test_request_window_native_scheduler.py::test_request_window_workspace_follows_actual_native_capacity[8192-captures1-8192]
+FAILED tests/test_request_window_serving_config.py::test_unqualified_research_mdl_combination_is_rejected_by_both_entries
+FAILED tests/test_request_window_serving_config.py::test_research_roundtrip_clears_every_owned_change_for_native_and_baseline
+FAILED tests/test_request_window_serving_config.py::test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase
+FAILED tests/test_request_window_serving_config.py::test_legacy_whole_capacity_cannot_reenter_through_research_flags
+FAILED tests/test_service_log_model.py::test_real_log_mtp_accounting_and_unequal_windows
+FAILED tests/test_service_log_model.py::test_two_anchors_do_not_identify_speedup_share
+18 failed, 1819 passed, 134 skipped, 14 errors, 29 subtests passed in 103.41s (0:01:43)

@@ -9,6 +9,7 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 from .dummy_context import is_native_dummy_run
+from .cpu_metadata import cpu_int_mirror_values, validate_cpu_int_mirror
 
 
 class OscarMetadataError(ValueError):
@@ -126,6 +127,14 @@ def from_common(common: Any, *, capacity: MetadataCapacity | None = None,
     # existing CPU mirrors. Later draft/q1, dummy and capture never read them.
     read_current_cpu = main_prefill or first_draft_suffix or first_draft_partial
     cpu_starts = getattr(common, "query_start_loc_cpu", None) if read_current_cpu else None
+    if read_current_cpu:
+        # A cached cumulative tuple belongs to this native step, but never
+        # certifies the device/type of the mirror attached to another view.
+        # Validate even on a cache hit, before slicing or partition planning.
+        try:
+            validate_cpu_int_mirror(cpu_starts, rows + 1, label="native CPU query-start mirror")
+        except ValueError as error:
+            raise OscarMetadataError(str(error)) from error
     metadata = OscarMetadata(
         query_start_loc=query_start_loc, seq_lens=common.seq_lens,
         block_tables=common.block_table_tensor, slot_mapping=common.slot_mapping,
@@ -155,10 +164,14 @@ def from_common(common: Any, *, capacity: MetadataCapacity | None = None,
         if current_only and (main_prefill or first_draft_suffix):
             from .current_only_plan import plan_current_suffix
             upper = getattr(common, "seq_lens_cpu_upper_bound", None)
-            if (upper is None or upper.device.type != "cpu" or upper.ndim != 1
-                    or upper.numel() < rows):
-                raise OscarMetadataError("current-only experiment requires native CPU sequence upper bounds")
-            plan = plan_current_suffix(cpu_starts[:rows + 1].tolist(), upper[:rows].tolist(),
+            try:
+                upper_values = cpu_int_mirror_values(
+                    upper, rows, label="current-only native CPU sequence upper bounds")
+                start_values = cpu_int_mirror_values(
+                    cpu_starts, rows + 1, label="native CPU query-start mirror")
+            except ValueError as error:
+                raise OscarMetadataError(str(error)) from error
+            plan = plan_current_suffix(start_values, upper_values,
                                        actual_tokens=common.num_actual_tokens,
                                        padded_tokens=metadata.num_input_tokens)
             metadata = replace(metadata, current_only_plan=plan)

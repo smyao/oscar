@@ -1,7 +1,7 @@
 """Archive #27/#28/#34/#36/#74–78/#94/#95/#117: cross-module contracts.
 
 The target command is compared against the supplied Appendix A plus the later
-AGENTS.md default-APC-off instruction, not a copy of the implementation.
+AGENTS.md APC-off, explicit 16384, and 4-7/7878 instructions, not the implementation.
 Deployment failures are real subprocess
 executions. Fake host classes exercise only Python hook/cache semantics.
 """
@@ -60,6 +60,8 @@ class TargetContracts(unittest.TestCase):
         expected_options = _options(expected)
         # User 2026-10-13: this branch explicitly disables APC by default.
         expected_options["--no-enable-prefix-caching"] = True
+        expected_options["--max-num-batched-tokens"] = 16384
+        expected_options["--port"] = 7878
         self.assertEqual(_options(target_cli.serve_argv(config)), expected_options)
 
     def test_existing_plugin_allowlist_cannot_exclude_ascend(self):

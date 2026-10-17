@@ -92,15 +92,16 @@ def test_async_parent_still_owns_queue_and_config_restores_on_error():
     assert scheduler.scheduler_config is original
 
 
-def test_explicit_scheduler_class_reaches_real_server_cli_without_changing_defaults():
+def test_retired_scheduler_cannot_reach_real_server_cli():
     import json
     from tools.target_cli import serve_argv
     target=json.loads((ROOT/'configs/target.json').read_text())
     assert '--scheduler-cls' not in serve_argv(target)
     path='oscar_ascend.integration.whole_prefill_scheduler.WholePromptAsyncScheduler'
     proposed={**target,'max_num_batched_tokens':32768,'scheduler_cls':path}
-    args=serve_argv(proposed)
-    assert args[args.index('--scheduler-cls')+1]==path
-    assert args[args.index('--max-num-batched-tokens')+1]=='32768'
+    # User 2026-10-13 stable policy: keep research arithmetic above isolated
+    # from serving, including an explicitly supplied old scheduler class.
+    with pytest.raises(ValueError,match='native scheduler'):
+        serve_argv(proposed)
     with pytest.raises(ValueError,match='class path'):
         serve_argv({**target,'scheduler_cls':None})

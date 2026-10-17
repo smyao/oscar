@@ -1,5 +1,11 @@
 # OSCAR 优化与失败证据索引
 
+## 2026-10-17 PD 混合调度审计与验证链修复
+
+真实 forward 探针共享构造器仍按 FP32 默认分配 CV arena，与已默认 BF16 的 provider 不一致；现先归一化配置再分配，D256/C16 每 Cube 从错误的 4,997,120 B 改为所需 7,495,680 B。同步修复旧 reader 回执/能力集、first-MTP A/B 的 mixed 依赖。正式服务 allocator 原本正确，本轮不声称修复32K Trap。38文件主机套件714通过/1重复形状跳过，含1440次请求顺序/域检查；FE0 7/7、六派生源及冻结门保持不变。[完整审计与回归命令](pd_fusion_audit_20261017.md)。
+
+性能仍未实测：128-token 短前缀拆分上限、BF16 KV 临时发布/读取、C16 FP32 state spill/restore、Matmul 类型切换已按实际源码记账；不以M128/M32容量比宣称4倍计算减少，不以压缩率宣称吞吐增益。没有新性能优化或默认开关变更。[成本账](../reports/pd_fusion_costs_20261017.json)。既有BF16数值7/11失败（2最终输出）、#165未归因Trap和CANN/NPU/图/服务/质量欠账不变，不新增真机档案，不重跑AISBench。
+
 ## 2026-10-17 #165：32K异步故障复查，尚无生产修复
 
 用户回传09:23:34的两rank vector exception，均为PC偏移0x264，符合历史guard特征但缺少本轮site/family/code。GDN metadata H2D与输出event是异步暴露点，不能凭栈改GDN或BF16算术。本轮仅修正过期诊断配置断言及GDN状态ownership夹具形状，新增32K两16K块的主机分流检查，最终141项通过；生成检查与FE0哈希通过，生产源码未改。[诊断回执](../reports/guard_32k_diagnosis_20261017.json)。使用已有`--diagnose-trap`单请求定位，不重跑AISBench，不申领设备、图、服务、质量或性能通过；既有BF16数值7/11失败保持原状。

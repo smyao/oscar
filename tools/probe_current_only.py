@@ -1,4 +1,4 @@
-"""Archive #34/#36/#94/#95/#125/#140/#142/#148/#155: real NPU current-only gate.
+"""Archive #34/#36/#94/#95/#125/#140/#142/#148/#155/#164-165: real NPU current-only gate.
 
 D.4: this measures current FIA/copy/store, never historical dequant restore.
 The old 6.5s dequant and ~215ms store are failure context, not our timings.
@@ -62,9 +62,10 @@ def validate_case_evidence(report, target, acceptance):
     if any(not isinstance(name, str) for name in names) or set(names) != set(expected_cases):
         raise RuntimeError("current-only evidence has missing, duplicated or unexpected cases")
     policy = acceptance["performance"]
-    from oscar_ascend.ops.cv_dispatch import OPTIMIZED_STRIPED_OPS
-    def reader(name):
-        return OPTIMIZED_STRIPED_OPS[name] if target.get("experimental_decode_bundle", False) else name
+    from oscar_ascend.runtime import AscendRuntimeProvider
+    runtime_config = AscendRuntimeProvider(_configuration(target, True)).config
+    q4_reader = _reader(runtime_config, tokens=4, max_query_len=4)
+    q1_reader = _reader(runtime_config, tokens=2, max_query_len=1, q1_draft=True)
     for row in rows:
         name = row["case"]
         fresh, draft, slot_type, paired = expected_cases[name]
@@ -97,8 +98,8 @@ def validate_case_evidence(report, target, acceptance):
             if (any(row.get(key) != value for key, value in required_pair.items())
                     or not isinstance(decode, dict)
                     or any(decode.get(key) != value for key, value in required_decode.items())
-                    or calls.get(reader("attention_cv_striped_decode_out")) != 1
-                    or calls.get(reader("attention_cv_striped_q1_out")) != 1):
+                    or calls.get(q4_reader) != 1
+                    or calls.get(q1_reader) != 1):
                 raise RuntimeError(f"current-only case {name} lacks A/B, store or existing q1 reader evidence")
         else:
             events, median = row.get("device_event_ms"), row.get("device_event_median_ms")
@@ -144,13 +145,36 @@ def _configuration(target, enabled, *, probe_tokens=None):
     return config
 
 
+def _reader(config, *, tokens, max_query_len, q1_draft=False):
+    """Resolve call witnesses through the same normalized config and selector."""
+    from oscar_ascend.ops.cv_dispatch import select_cv_op
+    return select_cv_op(16 if config["experimental_mixed_cv"] else 4,
+        6, 1, tokens, max_query_len, q1_draft=q1_draft,
+        fast_unpack=config["experimental_fast_unpack"],
+        mixed_cv=config["experimental_mixed_cv"],
+        striped_cache=config["experimental_striped_cache"],
+        decode_bundle=config["experimental_decode_bundle"],
+        c4_member_pipeline=config["experimental_c4_member_pipeline"],
+        mdl_decode=config["experimental_mdl_decode"],
+        bf16_history=config["experimental_bf16_history"])
+
+
 def _runtime(torch, fixture, tensors, device, cores, target, enabled, *, hadamard=False):
     from oscar_ascend.runtime import AscendRuntimeProvider, GraphWorkspace, LayerState, WorkspaceGeometry
+    from oscar_ascend.bf16_history_policy import validate_bf16_history
     from oscar_ascend.integration.impl import OscarAttentionImpl
     spec = fixture["spec"]
+    # Normalize before reserving memory: omitted defaults now select the full
+    # BF16 bundle, whose per-Cube arena is 1.5x the old FP32 allocation.
+    provider = AscendRuntimeProvider(_configuration(target, enabled, probe_tokens=fixture["tokens"]))
+    config = provider.config
     workspace = GraphWorkspace(WorkspaceGeometry(
         fixture["tokens"], spec.heads, spec.kv_heads, spec.dim,
-        splits=1, cube_cores=cores, history_cluster_size=16), device)
+        splits=int(config.get("attention_splits", 1)), cube_cores=cores,
+        history_cluster_size=16 if config["experimental_mixed_cv"] else 4,
+        c4_member_pipeline=config["experimental_c4_member_pipeline"],
+        bf16_history=validate_bf16_history(config, head_dim=spec.dim,
+            cache_format=provider._cache_format)), device)
     # The independent fixture has a 64-byte diagnostic prefix. This FULL-only
     # runtime uses conv_bytes=0 and strips that prefix from both A/B buffers.
     raw = raw_to_striped(fixture)[reuse.PREFIX:].to(device)
@@ -163,7 +187,6 @@ def _runtime(torch, fixture, tensors, device, cores, target, enabled, *, hadamar
             speculative_tokens=reuse.SPECULATIVE, ring_tokens=spec.recent_tokens+reuse.SPECULATIVE),
         tensors["wk"].clone(), tensors["wv"].clone(), tensors["tags"].clone(),
         rk, rv, rk.T.contiguous(), rv.T.contiguous(), hadamard, fixture["blocks"], workspace, "striped_v1")
-    provider = AscendRuntimeProvider(_configuration(target, enabled, probe_tokens=fixture["tokens"]))
     provider.layers["probe.full"] = state
     provider.ops = CountedOps(torch.ops.oscar_ascend_ops)
     # Instantiate the real forward without model/distributed initialization.
@@ -366,11 +389,12 @@ def probe(config_path, acceptance_path):
     if _target_geometry(target)!=(6,1,256):raise RuntimeError("current-only gate requires Hq6/Hkv1/D256")
     import vllm_ascend.ops  # noqa: F401 -- initialize before native attention imports
     from oscar_ascend.ops.loader import require_capabilities,validate_build_artifacts
-    from oscar_ascend.ops.cv_dispatch import STRIPED_CV_OPS
+    from oscar_ascend.ops.cv_dispatch import BF16_HISTORY_CV_OPS
     manifest_path=ROOT/"build/ascendc/build_manifest.json"
     manifest=validate_build_artifacts(manifest_path)
-    require_capabilities(STRIPED_CV_OPS|{"copy_validate_current_out","prepare_attention_tasks_out",
-        "rotate_out","merge_lse_out","status_guard","rotate_clip_store_striped_out"},manifest_path)
+    require_capabilities(BF16_HISTORY_CV_OPS|{"copy_validate_current_out","prepare_attention_tasks_out",
+        "rotate_out","rotate_vector_init_out","merge_lse_out","status_guard",
+        "rotate_clip_store_striped_out"},manifest_path)
     cores=reuse._core_count(torch,target);device=torch.device("npu:0")
     rows=[]
     for case in case_plan():

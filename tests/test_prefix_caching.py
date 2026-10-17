@@ -4,6 +4,7 @@ Execute pinned native coordinator/managers/pool unchanged, including MTP's
 lookahead drop, native hash aggregation, refcounts, eviction and reset. This
 is host evidence; the byte checks do not stand in for an NPU attention run.
 User 2026-10-13 / AGENTS.md: APC defaults off, explicit budget 16384 stays.
+User 2026-10-16: native bypass is explicit; FP32 OSCAR baseline is retired.
 """
 import json
 import logging
@@ -27,8 +28,12 @@ def test_explicit_prefix_policy_reaches_native_argv_with_stable_budget(variant, 
     config.pop("enable_prefix_caching", None)
     if prefix is not None:
         config["enable_prefix_caching"] = prefix
+    if variant == "baseline":
+        with pytest.raises(ValueError, match="FP32 OSCAR production attention is retired"):
+            variant_config(config, variant)
+        return
     selected = variant_config(config, variant)
-    argv = serve_argv(selected)
+    argv = serve_argv(selected, native=variant == "native")
     assert ("--enable-prefix-caching" in argv) is (prefix is True)
     assert ("--no-enable-prefix-caching" in argv) is (prefix is not True)
     assert argv[argv.index("--max-num-batched-tokens") + 1] == "16384"

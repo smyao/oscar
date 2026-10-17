@@ -34,7 +34,8 @@ def complete_report():
                 decode_after_store={"status":"passed","reader":"production_subsequent_q1",
                     "output_bitwise":"passed","independent_oracle":"passed",
                     "subsequent_store_bitwise":"passed","sampled_queries":2,"max_output_abs":0.001})
-            row["real_operator_calls"].update(attention_cv_striped_decode_out=1,attention_cv_striped_q1_out=1)
+            row["real_operator_calls"].update(attention_bf16_history_mdl_out=1,
+                attention_bf16_history_mdl_q1_out=1)
         else:
             row.update(device_event_ms=[1.,2.,3.,4.,5.],device_event_median_ms=3.,
                 timing_scope="production_fresh_FIA_copy_validate_INT2_store_status_guard",
@@ -182,7 +183,8 @@ def test_observer_wires_enabled_gate_before_service_and_failure_blocks_it(tmp_pa
     source["experimental_current_only"]=True
     config=tmp_path/"config.json";config.write_text(json.dumps(source))
     for name in ("_preflight","_candidate_gate","_fast_unpack_gate","_mixed_optimization_gate",
-                 "_striped_cache_gate","_decode_bundle_gate"):
+                 "_striped_cache_gate","_decode_bundle_gate", "_c4_member_pipeline_gate",
+                 "_mdl_decode_gate", "_bf16_history_gate"):
         monkeypatch.setattr(observe_serve,name,lambda *a,**k:None)
     entered=[]
     def gate(*args):

@@ -117,4 +117,11 @@ def test_balanced_clone_changes_only_owner_schedule_and_exported_names():
                                 "oscar_attention_cv_fast_kernel")
     balanced = balanced.replace("attention_cv_fast_balanced_launch",
                                 "attention_cv_fast_launch")
+    # The base acquired this D256 ABI explanation after the clone. Ignore
+    # exactly these comment lines; keep the compile guard and trap identical.
+    base = base.replace(
+        "  // The independent striped-v1 physical slot exists only for D256. This\n"
+        "  // compile guard prevents unsupported helper instantiations; direct raw\n"
+        "  // entrypoint misuse fails visibly instead of running a wrong cache layout.\n",
+        "")
     assert balanced == base

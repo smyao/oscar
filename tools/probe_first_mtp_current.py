@@ -1,4 +1,4 @@
-"""Archive #126/#140/#142/#148/#155: first-MTP current partial, real NPU only.
+"""Archive #34/#36/#126/#140/#142/#148/#153/#155: first-MTP current partial, real NPU only.
 
 History/window CV and the INT2 writer remain production operators. Both arms
 start from identical cache snapshots for every timed iteration; a repeated
@@ -81,6 +81,15 @@ def validate_case_evidence(report, acceptance):
             raise RuntimeError('first-MTP current lacks subsequent q1 cache-reader evidence')
 
 
+def _case_configuration(target, enabled):
+    # Archive #34/#36/#155: compare only first-MTP current source placement.
+    # The independent mixed partition requires this feature and cannot stay
+    # enabled on the baseline side; disable it on BOTH sides for a paired gate.
+    return {**target, 'experimental_current_only': False,
+        'experimental_first_mtp_current_fia': enabled,
+        'experimental_mixed_decode_split': False}
+
+
 def run_case(torch,target,acceptance,device,cores,case):
     qlens,slot=case;name=case_name(case)
     shape=reuse.Shape(name,qlens,(511,769),256,1,1,False)
@@ -91,7 +100,7 @@ def run_case(torch,target,acceptance,device,cores,case):
     witnesses={k:0 for k in events};policy=acceptance['performance'];tol=acceptance['fused_attention']
     cache_names=('raw','window_key','window_value','window_tags')
     for side,enabled in (('baseline',False),('candidate',True)):
-        cfg={**target,'experimental_current_only':False,'experimental_first_mtp_current_fia':enabled}
+        cfg=_case_configuration(target,enabled)
         impl,state=shared._runtime(torch,fixture,tensors,device,cores,cfg,False,hadamard=False)
         metadata=shared._metadata(torch,fixture,tensors,draft=True,enabled=False)
         if enabled:
@@ -169,9 +178,9 @@ def probe(config_path,acceptance_path):
     if _target_geometry(target)!=(6,1,256):raise RuntimeError('requires target Hq6/Hkv1/D256')
     import vllm_ascend.ops  # noqa: F401
     from oscar_ascend.ops.loader import require_capabilities,validate_build_artifacts
-    from oscar_ascend.ops.cv_dispatch import STRIPED_CV_OPS
+    from oscar_ascend.ops.cv_dispatch import BF16_HISTORY_CV_OPS
     path=ROOT/'build/ascendc/build_manifest.json';manifest=validate_build_artifacts(path)
-    require_capabilities(STRIPED_CV_OPS|{'prepare_attention_tasks_out','rotate_out','merge_lse_out',
+    require_capabilities(BF16_HISTORY_CV_OPS|{'prepare_attention_tasks_out','rotate_out','rotate_vector_init_out','merge_lse_out',
         'status_guard','rotate_clip_store_striped_out'},path)
     rows=[];device=torch.device('npu:0');cores=reuse._core_count(torch,target)
     for case in case_plan():

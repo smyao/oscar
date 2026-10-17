@@ -1,4 +1,4 @@
-"""Real-NPU request partition gate; no native model/GDN edits or user dataset.
+"""Archive #34/#36/#129/#148/#153/#155: real-NPU request partition gate.
 
 Compare the actual FULL implementation with partition disabled/enabled. CPU
 mirrors define request boundaries; device guards and real CV/FIA/store calls
@@ -198,9 +198,9 @@ def probe(config_path,acceptance_path):
         raise RuntimeError('selected NPU does not match explicit target SoC')
     import vllm_ascend.ops  # noqa: F401
     from oscar_ascend.ops.loader import validate_build_artifacts,require_capabilities
-    from oscar_ascend.ops.cv_dispatch import DECODE_BUNDLE_OPS
+    from oscar_ascend.ops.cv_dispatch import BF16_HISTORY_CV_OPS
     manifest=validate_build_artifacts(ROOT/'build/ascendc/build_manifest.json')
-    require_capabilities(DECODE_BUNDLE_OPS|{'rotate_out','rotate_clip_store_striped_out','prepare_attention_tasks_out','merge_lse_out','status_guard'})
+    require_capabilities(BF16_HISTORY_CV_OPS|{'rotate_out','rotate_vector_init_out','rotate_clip_store_striped_out','prepare_attention_tasks_out','merge_lse_out','status_guard'})
     rows=[];device=torch.device('npu:0');cores=reuse._core_count(torch,target)
     for case in case_plan():
         rows.append(run_case(torch,target,acceptance,device,cores,case));gc.collect();torch.npu.empty_cache()

@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-17",
+  "parent_commit": "b5d2255e29372ac3da599fc73cbccca29fd4068a",
+  "branch": "oscar-new-3",
+  "scope": "PD mixed prefill/decode host protocol audit and BF16 forward-probe fixes; no production math or kernel change",
+  "report": "docs/pd_fusion_audit_20261017.md",
+  "fixes": [
+    "derive shared forward-probe WorkspaceGeometry from normalized BF16 provider config",
+    "require actual BF16 CV and rotate-vector-init capability symbols and reader witnesses",
+    "isolate first-MTP A/B by disabling dependent mixed partition in both arms",
+    "update obsolete native/retired-baseline and exact-comment-only clone tests"
+  ],
+  "host_validation": {
+    "test_files": 38,
+    "passed": 714,
+    "failed": 0,
+    "skipped": 1,
+    "returncode": 0,
+    "skip_scope": "duplicate large FULL host shape, another parameter covers C16",
+    "native_reorder_permutations": 720,
+    "main_first_mtp_domain_checks": 1440,
+    "permutation_tests_are_included_in_714": true,
+    "command": "reports/pd_fusion_host_command_20261017.json",
+    "junit": "reports/pd_fusion_host_final_20261017.xml",
+    "stdout": "reports/pd_fusion_host_final_20261017.log"
+  },
+  "invariants": "reports/pd_fusion_invariants_20261017.json",
+  "performance_evidence": "reports/pd_fusion_costs_20261017.json",
+  "performance_measured": false,
+  "speedup_claim": null,
+  "new_default_optimization": false,
+  "known_boundaries": {
+    "bf16_screen": "reports/bf16_all_sources_screen_20261016_v3.json",
+    "inherited_screen_source_hash_match": {
+      "configs/acceptance.json": true,
+      "oscar_ascend/ops/reference.py": true,
+      "tools/experiments/bf16_history_screen.py": true,
+      "tools/experiments/bf16_all_sources_screen.py": true,
+      "tools/experiments/bf16_direct_decode.py": true,
+      "tools/probe_history_reuse.py": true,
+      "csrc/kernels/attention_tasks.cpp": true,
+      "csrc/kernels/attention_cv_mdl_decode.cpp": true,
+      "csrc/kernels/attention_cv_member_pipeline_cluster4.cpp": true,
+      "csrc/kernels/rotate_clip_store_striped.cpp": true
+    },
+    "bf16_screen_failures": 7,
+    "bf16_screen_total": 11,
+    "final_output_failures": 2,
+    "trap_32k": "not localized or fixed; archive #165; no new device evidence",
+    "not_run": [
+      "CANN build",
+      "official CPU-debug",
+      "NPU execution",
+      "graph capture",
+      "graph replay",
+      "service",
+      "model quality",
+      "performance"
+    ],
+    "no_new_device_archive_entry": true
+  },
+  "delivery_scope": "install current BF16 candidate unchanged; fixes consumed by real forward probes; direct serve still supplies no acceptance evidence"
+}

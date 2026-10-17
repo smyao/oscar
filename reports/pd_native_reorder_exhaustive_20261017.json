@@ -1,0 +1,84 @@
+{
+  "archive_references": [
+    "#34",
+    "#36",
+    "#129",
+    "#140",
+    "#142",
+    "#157-163",
+    "#165"
+  ],
+  "status": "host_contract_passed",
+  "native_source": "references/vllm/vllm/v1/attention/backends/utils.py",
+  "native_function": "reorder_batch_to_split_decodes_and_prefills",
+  "permutations": 720,
+  "main_and_first_mtp_checks": 1440,
+  "shapes": {
+    "d1": [
+      1,
+      32768,
+      32768,
+      0
+    ],
+    "d4": [
+      4,
+      65536,
+      32768,
+      0
+    ],
+    "tail4": [
+      4,
+      32764,
+      32768,
+      1
+    ],
+    "continue": [
+      512,
+      16384,
+      32768,
+      2
+    ],
+    "fresh3": [
+      3,
+      0,
+      3,
+      3
+    ],
+    "fresh8192": [
+      8192,
+      0,
+      32768,
+      3
+    ]
+  },
+  "route": "decode q1/q4 -> warm q4 tail -> continued prefill 512 -> fresh 3/8192",
+  "production_changes": false,
+  "NPU_run": false,
+  "graph_replay": false,
+  "performance_claim": null,
+  "repeatable_pytest": "tests/test_pd_native_reorder.py",
+  "pytest_command": ".venv/bin/python -m pytest -q tests/test_pd_native_reorder.py",
+  "pytest_junit": "reports/pd_native_reorder_pytest_20261017.xml",
+  "pytest_result": {
+    "tests": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "permutations_per_test": 720,
+    "total_route_checks": 1440
+  },
+  "extended_assertions": [
+    "native four-region ordering",
+    "request-owned exact context and current upper bound",
+    "request-owned virtual block table",
+    "physical slot mapping for each current token",
+    "current-only excludes every nonzero context",
+    "mixed child metadata preserves request domains and tensor slice addresses"
+  ],
+  "source_sha256": {
+    "references/vllm/vllm/v1/attention/backends/utils.py": "f4f2f106ad84aa77cdf0b09d6948878f4e74c56568309312ec47bd190cc710cd",
+    "oscar_ascend/integration/metadata.py": "96d6dbd2c1b3015a8536d701bb145294ef26af6dbfb9a6150eb9e2a9ccdbf3d4",
+    "oscar_ascend/integration/mixed_decode_split.py": "8f2ed0599ef038a644e9d746e0e1d7066a3eac926a87ddf66605962c80c0ac0f",
+    "tests/test_pd_native_reorder.py": "858f8b10bd455145bb135f154164254402fda5ac451142d66bbadca8c0df3430"
+  }
+}

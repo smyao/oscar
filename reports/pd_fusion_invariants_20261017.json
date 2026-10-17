@@ -1,0 +1,87 @@
+{
+  "fe0": {
+    "status": "passed",
+    "kernel_count": 7,
+    "sha256": {
+      "attention_cv.cpp": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+      "attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+      "store_int2.cpp": "5a6fa9619e399bb80bc0455c4426396d98510326bb899900b4b96c65d2b58506",
+      "rotate_clip_store.cpp": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+      "merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+      "status_guard.cpp": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+      "oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+    }
+  },
+  "unchanged_tracked_trees": [
+    "oscar_ascend",
+    "csrc",
+    "configs",
+    "references",
+    "ops"
+  ],
+  "acceptance_sha256": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+  "generator": {
+    "returncode": 0,
+    "evidence": {
+      "mother_commit": "6029f2a8c6277ab8136e5a5eeaa2c2c16313ca08",
+      "check": true,
+      "kernels": [
+        {
+          "kernel": "csrc/kernels/attention_bf16_history_mdl.cpp",
+          "mother_sha256": "1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f",
+          "derived_sha256": "c2d12363a5309ca97f79e68cd507b522bd6abdb63a6dcdf02945f15d285cb3f0",
+          "inverse_identity": true,
+          "transformations": 28
+        },
+        {
+          "kernel": "csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp",
+          "mother_sha256": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+          "derived_sha256": "ea4ac1bcf3fb2c9258151fe36677fcf89f3c2ee900cf58b4fd2bb7bcba9d334d",
+          "inverse_identity": true,
+          "transformations": 29
+        },
+        {
+          "kernel": "csrc/kernels/attention_bf16_history_window_range_cluster16.cpp",
+          "mother_sha256": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+          "derived_sha256": "08b84a0c1ee6f76b090815fc073192b8ac8a50307080680a6cdefc73e8271e5d",
+          "inverse_identity": true,
+          "transformations": 27
+        },
+        {
+          "kernel": "csrc/kernels/attention_bf16_history_window_range.cpp",
+          "mother_sha256": "d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4",
+          "derived_sha256": "523c6504f00a93ab4a864f352994334af041e91523a526f14f05742f7d05378e",
+          "inverse_identity": true,
+          "transformations": 27
+        },
+        {
+          "kernel": "csrc/kernels/attention_bf16_history_window_range_balanced.cpp",
+          "mother_sha256": "1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013",
+          "derived_sha256": "67115c9651900008ed53caaab6a7a8b81aef88708d33298f0335fdefca2d54b1",
+          "inverse_identity": true,
+          "transformations": 27
+        }
+      ]
+    }
+  },
+  "pytest": [
+    {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "1",
+      "tests": "715",
+      "time": "11.363",
+      "timestamp": "2026-10-17T11:39:52.431120+08:00",
+      "hostname": "lokiyaodeMacBook-Pro.local"
+    }
+  ],
+  "skips": [
+    {
+      "class": "tests.test_runtime",
+      "name": "test_forward_dispatches_native_draft_strides_and_int32_slots_in_order[True-16-True-True-True-8192-20-1-8192]",
+      "message": "large FULL host route is needed once for C16"
+    }
+  ],
+  "checklist_ids": 42
+}

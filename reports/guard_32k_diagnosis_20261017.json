@@ -1,0 +1,121 @@
+{
+  "date": "2026-10-17",
+  "archive_entry": 165,
+  "local_parent_commit": "cc56b24b51ef9aed08b1744289f305b5ebd83445",
+  "target_commit": "not supplied in attachments",
+  "user_trigger": "32K input; error immediately after submitting request; exact concurrency/token count not supplied",
+  "target_logs": [
+    {
+      "label": "async_output",
+      "path": "reports/target_32k_guard_async_20261016.txt",
+      "bytes": 6538,
+      "sha256": "796324c50253cb06e3f1c115e2cf8fcdbef1a19bedf5020217389357e465c4a0",
+      "program_counters": [
+        {
+          "start": "0x1248022416cc",
+          "current": "0x124802241930",
+          "offset": "0x264"
+        }
+      ]
+    },
+    {
+      "label": "worker_metadata",
+      "path": "reports/target_32k_guard_worker_20261016.txt",
+      "bytes": 6863,
+      "sha256": "3880001e52230879e8639348a0dc57c2b1f2ed3df6aca41b627f8dbdf6064f08",
+      "program_counters": [
+        {
+          "start": "0x124c022416cc",
+          "current": "0x124c02241930",
+          "offset": "0x264"
+        }
+      ]
+    }
+  ],
+  "classification": {
+    "root_cause": "unresolved",
+    "production_fix": false,
+    "supported": "Both ranks report vector exception at entry+0x264, consistent with archived status-guard signature",
+    "not_proven": [
+      "loaded kernel symbol and hash",
+      "site/family/code",
+      "faulting request step",
+      "GDN computation fault",
+      "ArgSort as cause",
+      "BF16 numeric fault"
+    ]
+  },
+  "source_findings": [
+    "Native GDN metadata H2D and async-output event sync can surface an earlier asynchronous device failure.",
+    "Single fresh 32768-token request under 16384 budget: constructed native host metadata selects current-only for first chunk and BF16 C16 with history for second.",
+    "Existing --diagnose-trap enables OSCAR_GUARD_HOST_SYNC=1 and target enforce-eager; guard default/capture behavior and frozen kernels remain unchanged."
+  ],
+  "local_changes": [
+    "Update stale diagnostic launch assertions to checked-in target config and current branch APC-off/16384 contract.",
+    "Repair GDN ownership fixture to use native [B,H,V,K] cache and [B,H,K,V] result views before executing the unchanged native assignment.",
+    "Add two-chunk 32K host metadata/selector regression; no device execution or kernel simulation."
+  ],
+  "local_tests": [
+    {
+      "stage": "before",
+      "path": "reports/guard_32k_host_before_20261017.xml",
+      "tests": 136,
+      "failures": 5,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 131
+    },
+    {
+      "stage": "after",
+      "path": "reports/guard_32k_host_after_20261017.xml",
+      "tests": 141,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 140
+    },
+    {
+      "stage": "final",
+      "path": "reports/guard_32k_host_final_20261017.xml",
+      "tests": 141,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 141
+    }
+  ],
+  "regeneration_check": {
+    "command": ".venv/bin/python -m tools.experiments.generate_bf16_history_kernels --check",
+    "status": "passed"
+  },
+  "diagnostic_plan": "reports/guard_32k_diagnostic_plan_20261017.json",
+  "fe0_kernel_sha256": {
+    "attention_cv.cpp": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+    "attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+    "store_int2.cpp": "5a6fa9619e399bb80bc0455c4426396d98510326bb899900b4b96c65d2b58506",
+    "rotate_clip_store.cpp": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+    "merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+    "status_guard.cpp": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+    "oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+  },
+  "production_paths_unchanged_vs_parent": [
+    "csrc",
+    "oscar_ascend",
+    "tools",
+    "configs",
+    "references",
+    "ops"
+  ],
+  "limits": {
+    "CANN": "not executed",
+    "official_cpu_debug": "not executed",
+    "NPU": "not executed",
+    "graph": "not executed",
+    "service": "not executed",
+    "model_quality": "not accepted",
+    "performance": "not accepted",
+    "prior_bf16_screen": "7 of 11 cases failed, including 2 final-output failures; not rerun or waived"
+  },
+  "next_target_command": "bash scripts/install_serve.sh --variant candidate --rear-cards --diagnose-trap",
+  "next_target_evidence": "One original 32K request with max_tokens=16; first complete OSCAR status guard trapped or OSCAR device failure preceded status guard exception; no AISBench rerun."
+}

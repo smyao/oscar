@@ -28740,3 +28740,15 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **本地回归与边界**：母版本655ebe6；亲读G4/#81–83及D.4完整原始打点后修改。新增测试以真实整份头文件+仅供语言检查的声明桩运行Clang C++17，并实例化H16/32/64。先对未修源码复现同诊断，修复后通过；删掉关键字的负对照仍必须失败。相关生成/解包/缓存/路由/直启合计120项主机测试通过，五源生成反向恒等检查通过，冻结文件不变。此桩不验证AscendC重载、SDK后端、官方CPU-debug、异步执行或图；修复后CANN/NPU/图/服务待复验。既有BF16数值集7/11失败（含2例最终输出失败）、精度阈值与性能资格保持原状，不要求重跑AISBench。
 
 **复验命令**：同步修复后，`python3 -m tools.deploy --only build-ops`可只检查完整CANN构建；`bash scripts/install_serve.sh --variant candidate --rear-cards`仍按默认BF16候选编译并启动，不运行probe、不构成数值/质量/性能验收。任一构建失败仍停止，不允许复用未完成产物。
+
+## [165] 真机条目（2026-10-16 回传，2026-10-17 复查）· 32K请求刚进入后出现异步vector exception，具体guard来源待定位
+
+**原始证据**：两份用户附件原字节分别保存在`reports/target_32k_guard_async_20261016.txt`（6538字节）与`reports/target_32k_guard_worker_20261016.txt`（6863字节）；SHA256和PC逐项见`reports/guard_32k_diagnosis_20261017.json`。用户补充“32k输入，刚打入请求就报错了”。片段未提供实际git提交、加载算子签名、确切token数、并发数、内部step或逐族状态码。
+
+**已观察事实**：09:23:34，rank0/chip4为`0x1248022416cc→0x124802241930`，rank2/chip6为`0x124c022416cc→0x124c02241930`，相对偏移均为`0x264`，error mask均为`0x6500020bd00028c`，并报`timeout or trap error`/507035。与#142/#157–159的guard特征一致，但本轮没有目标符号绑定，不能把历史符号映射当成本轮逐码归因。rank0在异步输出event同步处暴露错误，rank2在GDN metadata构建的2048字节异步H2D处暴露错误；原生源码证实这些位置不是GDN数值计算。ArgSort为AiCPU提示，HCCL退出发生在后续09:23:35，均不能据此认定为首因。异常链中的allocator信息时间是09:14:29，不混同为09:23:34新发生的根因。
+
+**源码复查与本地修正**：在当前16384预算下，构造单个无命中32768-token请求的真实主机metadata，首16K块可走current-only，第二16K块必须保留历史并选择BF16 C16；新增回归验证此分流，不冒充重放用户的未知batch。诊断入口的旧测试仍断言0–3/8989/APC开启/原生预算，已按当前已签入target配置及分支约束更新。GDN ownership测试把二维扁平夹具直接传给原生四维状态赋值，导致`transpose(-1,-2)`转置batch轴；改为原生`[B,H,V,K]`缓存与`[B,H,K,V]`结果视图后执行同一原生语句，保留原断言和负对照。两项都是测试夹具修复，**不是此次真机Trap的生产修复**。
+
+**验证与边界**：母版本`cc56b24`；初次相关主机套件131通过/5失败，修正后一次新增计划断言失败（140通过/1失败，observe计划无顶层设备键），改查两入口共有的runtime_selection后最终141通过、0失败/跳过。全部XML保留。BF16五源生成检查通过，FE0哈希一致；生产源码、配置、原生参考树、冻结门均未修改。本机无CANN/NPU，本轮没有官方CPU-debug、设备/图/服务完成证据。既有BF16数值集7/11失败（含2例最终输出失败）不变，也不能直接将其等同于本次Trap原因。
+
+**待取得的定点证据**：现有`bash scripts/install_serve.sh --variant candidate --rear-cards --diagnose-trap`已经设置主模型eager和`OSCAR_GUARD_HOST_SYNC=1`，无需新增补丁；只发一条原32K请求、输出限制16 tokens，收集首条完整`OSCAR status guard trapped ... site/family/code`或`OSCAR device failure preceded status guard`。诊断只用于定位，不作性能证据；默认图路径、冻结status_guard及错误检查不变，不新增生产回读、不重跑AISBench。**本条根因未收口、生产故障未修复**，不得由141项主机测试通过提升真机完成状态。

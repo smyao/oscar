@@ -1,4 +1,8 @@
-"""Archive #157-159: optional eager attribution is not a performance run."""
+"""Archive #157-159/#165: optional eager attribution is not a performance run.
+
+Default expectations follow the user's 2026-10-16 device/port request and
+the branch's explicit 16384 budget/APC-off contract, not older launch settings.
+"""
 import json
 from pathlib import Path
 
@@ -21,10 +25,11 @@ def test_shared_target_argv_env_and_default_invariants(enabled):
     env = target_cli.target_env(selected, base={})
     assert ("--enforce-eager" in argv) is enabled
     assert env.get("OSCAR_GUARD_HOST_SYNC") == ("1" if enabled else None)
-    assert "--enable-prefix-caching" in argv
-    assert "--max-num-batched-tokens" not in argv and "--scheduler-cls" not in argv
-    assert env["ASCEND_RT_VISIBLE_DEVICES"] == "0,1,2,3"
-    assert argv[argv.index("--port") + 1] == "8989"
+    assert "--no-enable-prefix-caching" in argv
+    assert argv[argv.index("--max-num-batched-tokens") + 1] == "16384"
+    assert "--scheduler-cls" not in argv
+    assert env["ASCEND_RT_VISIBLE_DEVICES"] == "4,5,6,7"
+    assert argv[argv.index("--port") + 1] == "7878"
     assert json.loads(argv[argv.index("--speculative_config") + 1])["enforce_eager"] is True
 
 
@@ -43,7 +48,11 @@ def test_both_optional_plans_select_same_service_mode(entry, tmp_path, capsys):
     plan = json.loads(capsys.readouterr().out)
     assert plan["diagnose_trap"] is True
     assert "--enforce-eager" in plan["vllm_argv"]
-    assert plan["runtime_selection"]["token_budget_source"] == "native"
+    assert plan["runtime_selection"]["token_budget_source"] == "explicit"
+    assert plan["runtime_selection"]["max_num_batched_tokens"] == 16384
+    assert plan["runtime_selection"]["attention_compute_dtype"] == "bfloat16"
+    assert plan["runtime_selection"]["devices"] == [4, 5, 6, 7]
+    assert plan["runtime_selection"]["port"] == 7878
     assert not (tmp_path / "uncreated").exists()
 
 

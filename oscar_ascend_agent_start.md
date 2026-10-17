@@ -573,6 +573,7 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 | 历史现象 | 必须落实的检查与处理 |
 | --- | --- |
+| #165 32K请求刚进入后在异步event/H2D报507035，PC偏移0x264 | 区分guard特征与实际site/family/code；不能把GDN metadata拷贝、ArgSort告警或后续HCCL退出认作首因。用既有`--diagnose-trap`和单条32K/16输出定位，不动冻结guard、不放宽检查。主机回归覆盖两16K块的current-only→带历史BF16 C16分流；141项通过仅证明主机契约，生产故障尚未修复。 |
 | #164 BF16共享解包头中dependent-template缺少`template`，AIC/AIV编译及清建重试均失败 | 对依赖模板参数的`auto`表达式调用成员模板时显式写`offsets.template ReinterpretCast<uint32_t>()`。用真实头文件+声明桩做Clang语言回归，覆盖H16/32/64并删除关键字作失败对照；它不替代CANN API/设备验收。保留构建失败即禁止服务、源签名失效重编译，不改数学/布局/门槛。 |
 | #151 history解包64.71%，用户candidate整轮仍约19分钟 | 新整数布局/half转换保持旧数学和live/padding检查，原核保留独立对照；65536码穷举、特殊half逐位、NPU图和同形2+5速度门必过，局部份额不能外推整体19→8。 |
 | #151 q4测量已完成却最终缺证据：阶段状态覆盖同名结果 | 子进程输出不得占用run_phase的`<phase>.json`；保留数据/退出状态两个文件，用真实子进程回归验证，不仅mock phase。失败显示具体缺失字段，不降低精度/签名门。 |

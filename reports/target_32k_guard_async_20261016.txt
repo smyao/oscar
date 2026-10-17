@@ -1,0 +1,55 @@
+[rank0]:[W1016 09:23:34.425287900 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank1]:[W1016 09:23:34.426189920 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank3]:[W1016 09:23:34.426388940 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+[rank2]:[W1016 09:23:34.426421140 ArgSortKernelNpuOpApi.cpp:41] Warning: Warning: kernel [ArgSort] can not support dtype int32 or int64 on AiCore, Now this kernel is running on AiCpu.If you are more concerned about high-performance execution,please cast dtype to float32. (function operator())
+(Worker_TP0 pid=336040) Exception in thread WorkerAsyncOutputCopy:
+(Worker_TP0 pid=336040) Traceback (most recent call last):
+(Worker_TP0 pid=336040)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+(Worker_TP0 pid=336040)     self.run()
+(Worker_TP0 pid=336040)   File "/usr/local/python3.12.13/lib/python3.12/threading.py", line 1012, in run
+(Worker_TP0 pid=336040)     self._target(*self._args, **self._kwargs)
+(Worker_TP0 pid=336040)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 967, in async_output_busy_loop
+(Worker_TP0 pid=336040)     self.enqueue_output(output)
+(Worker_TP0 pid=336040)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 932, in enqueue_output
+(Worker_TP0 pid=336040)     output = output.get_output()
+(Worker_TP0 pid=336040)              ^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=336040)   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 288, in get_output
+(Worker_TP0 pid=336040)     self.async_copy_ready_event.synchronize()
+(Worker_TP0 pid=336040)   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/streams.py", line 192, in synchronize
+(Worker_TP0 pid=336040)     super(Event, self).synchronize()
+(Worker_TP0 pid=336040) RuntimeError: synchronize:../torch_npu/csrc/core/npu/NPUEvent.cpp:215 NPU function error: aclrtSynchronizeEvent(event_), error code is 507035
+(Worker_TP0 pid=336040) [ERROR] 2026-10-16-09:23:34 (PID:336040, Device:0, RankID:-1) ERR00100 PTA call acl api failed
+(Worker_TP0 pid=336040) [Error]: The vector core execution is abnormal. 
+(Worker_TP0 pid=336040)         Rectify the fault based on the error information in the ascend log.
+(Worker_TP0 pid=336040) EZ9999: Inner Error!
+(Worker_TP0 pid=336040) EZ9999[PID: 336040] 2026-10-16-09:23:34.971.279 (EZ9999):  The error from device(chipId:4, dieId:0), serial number is 87, there is an exception of aivec error, core id is 35, error code = 0, dump info: pc start: 0x1248022416cc, current: 0x124802241930, vec error info: 0x4b0000033b, mte error info: 0xe2000000b4, ifu error info: 0xc0204cb80e00, ccu error info: 0xfb9e1ca9010000c0, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c14071e400, aic cond: 0.
+(Worker_TP0 pid=336040) The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0xb4, fixp_error1 info: 0xe2, fsmId:1, tslot:6, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+(Worker_TP0 pid=336040) For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+(Worker_TP0 pid=336040) TraceBack (most recent call last):
+(Worker_TP0 pid=336040)        An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+(Worker_TP0 pid=336040)        rtEventSynchronize execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP0 pid=336040) 
+[rank3]:[W1016 09:23:35.709174940 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[rank3]:[E1016 09:23:35.709272490 ProcessGroupHCCL.cpp:2011] [Rank 3] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-16-09:23:35 (PID:336186, Device:3, RankID:-1) ERR02005 DIST internal error
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 3] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-16-09:23:35 (PID:336186, Device:3, RankID:-1) ERR02005 DIST internal error
+[rank0]:[W1016 09:23:35.710722080 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[rank0]:[E1016 09:23:35.710816140 ProcessGroupHCCL.cpp:2011] [Rank 0] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-16-09:23:35 (PID:336040, Device:0, RankID:-1) ERR02005 DIST internal error
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 0] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-16-09:23:35 (PID:336040, Device:0, RankID:-1) ERR02005 DIST internal error
+[rank2]:[W1016 09:23:35.713258100 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[rank2]:[E1016 09:23:35.713358900 ProcessGroupHCCL.cpp:2011] [Rank 2] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-16-09:23:35 (PID:336142, Device:2, RankID:-1) ERR02005 DIST internal error
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 2] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-16-09:23:35 (PID:336142, Device:2, RankID:-1) ERR02005 DIST internal error
+[rank1]:[W1016 09:23:35.715318510 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[rank1]:[E1016 09:23:35.715413910 ProcessGroupHCCL.cpp:2011] [Rank 1] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-16-09:23:35 (PID:336101, Device:1, RankID:-1) ERR02005 DIST internal error
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 1] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-16-09:23:35 (PID:336101, Device:1, RankID:-1) ERR02005 DIST internal error

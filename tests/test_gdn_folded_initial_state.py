@@ -1,4 +1,4 @@
-"""Archive #157-163: native four-token prefill fold must use committed GDN state.
+"""Archive #157-163/#165: native four-token prefill uses committed GDN state.
 
 Execute the pinned native fold and prefill state-store statements unchanged.
 This is host address/ownership evidence, not NPU or whole-service acceptance.
@@ -45,8 +45,17 @@ def _native_prefill_store(states, indices, final_state):
                 and isinstance(target.value, ast.Name) and target.value.id == "ssm_state"
                 and isinstance(target.slice, ast.Name) and target.slice.id == "prefill_state_indices"
                 for target in node.targets))
-    namespace = {"ssm_state": states, "prefill_state_indices": indices,
-                 "last_recurrent_state": final_state}
+    # The witnesses use flattened cache rows. Native chunk returns [B,H,K,V]
+    # while the cache stores [B,H,V,K]. Give this unchanged assignment a view
+    # with matrix axes so transpose(-1,-2) cannot transpose the batch axis.
+    # This changes only the host fixture, not the native statement or writes.
+    assert states.ndim == final_state.ndim == 2
+    assert final_state.shape == (indices.numel(), states.shape[1])
+    cache_view = states.view(states.shape[0], 1, 1, states.shape[1])
+    chunk_output = final_state.view(final_state.shape[0], 1, 1, states.shape[1])
+    chunk_output = chunk_output.transpose(-1, -2).contiguous()
+    namespace = {"ssm_state": cache_view, "prefill_state_indices": indices,
+                 "last_recurrent_state": chunk_output}
     exec(compile(ast.fix_missing_locations(ast.Module(body=[assignment], type_ignores=[])),
                  str(path), "exec"), namespace)
 

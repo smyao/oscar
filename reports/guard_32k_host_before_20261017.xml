@@ -1,0 +1,512 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="136" time="2.064" timestamp="2026-10-17T11:13:42.909271+08:00" hostname="lokiyaodeMacBook-Pro.local"><testcase classname="tests.test_guard_diag" name="test_default_path_is_one_fused_launch_without_sync" time="0.004" /><testcase classname="tests.test_guard_diag" name="test_capture_path_stays_fused_even_when_enabled" time="0.000" /><testcase classname="tests.test_guard_diag" name="test_diag_path_attributes_the_frozen_trap_without_readback" time="0.014" /><testcase classname="tests.test_guard_diag" name="test_diag_path_skips_empty_families" time="0.001" /><testcase classname="tests.test_guard_diag" name="test_device_predicates_cover_all_status_domains_without_losing_errors[1]" time="0.001" /><testcase classname="tests.test_guard_diag" name="test_device_predicates_cover_all_status_domains_without_losing_errors[2]" time="0.001" /><testcase classname="tests.test_guard_diag" name="test_device_predicates_cover_all_status_domains_without_losing_errors[3]" time="0.001" /><testcase classname="tests.test_guard_diag" name="test_device_predicates_cover_all_status_domains_without_losing_errors[4]" time="0.001" /><testcase classname="tests.test_guard_diag" name="test_device_predicates_cover_all_status_domains_without_losing_errors[5]" time="0.001" /><testcase classname="tests.test_guard_diag" name="test_device_predicates_cover_all_status_domains_without_losing_errors[-1]" time="0.001" /><testcase classname="tests.test_guard_diag" name="test_device_predicates_cover_all_status_domains_without_losing_errors[6]" time="0.001" /><testcase classname="tests.test_guard_diag" name="test_device_predicates_cover_all_status_domains_without_losing_errors[2147483647]" time="0.001" /><testcase classname="tests.test_guard_diag" name="test_device_predicates_cover_all_status_domains_without_losing_errors[-2147483648]" time="0.001" /><testcase classname="tests.test_guard_diag" name="test_prior_async_failure_is_not_misattributed_to_current_family_or_code" time="0.000" /><testcase classname="tests.test_trap_diagnostic_mode" name="test_shared_target_argv_env_and_default_invariants[False]" time="0.001"><failure message="AssertionError: assert '--enable-prefix-caching' in ['serve', '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', '--max-num-batched-tokens', '16384', '--served-model-name', 'qwen3.5', ...]">enabled = False
+
+    @pytest.mark.parametrize("enabled", [False, True])
+    def test_shared_target_argv_env_and_default_invariants(enabled):
+        selected = config()
+        if enabled:
+            selected["diagnose_guard"] = True
+        argv = target_cli.serve_argv(selected)
+        env = target_cli.target_env(selected, base={})
+        assert ("--enforce-eager" in argv) is enabled
+        assert env.get("OSCAR_GUARD_HOST_SYNC") == ("1" if enabled else None)
+&gt;       assert "--enable-prefix-caching" in argv
+E       AssertionError: assert '--enable-prefix-caching' in ['serve', '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', '--max-num-batched-tokens', '16384', '--served-model-name', 'qwen3.5', ...]
+
+tests/test_trap_diagnostic_mode.py:24: AssertionError</failure></testcase><testcase classname="tests.test_trap_diagnostic_mode" name="test_shared_target_argv_env_and_default_invariants[True]" time="0.001"><failure message="AssertionError: assert '--enable-prefix-caching' in ['serve', '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', '--max-num-batched-tokens', '16384', '--served-model-name', 'qwen3.5', ...]">enabled = True
+
+    @pytest.mark.parametrize("enabled", [False, True])
+    def test_shared_target_argv_env_and_default_invariants(enabled):
+        selected = config()
+        if enabled:
+            selected["diagnose_guard"] = True
+        argv = target_cli.serve_argv(selected)
+        env = target_cli.target_env(selected, base={})
+        assert ("--enforce-eager" in argv) is enabled
+        assert env.get("OSCAR_GUARD_HOST_SYNC") == ("1" if enabled else None)
+&gt;       assert "--enable-prefix-caching" in argv
+E       AssertionError: assert '--enable-prefix-caching' in ['serve', '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', '--max-num-batched-tokens', '16384', '--served-model-name', 'qwen3.5', ...]
+
+tests/test_trap_diagnostic_mode.py:24: AssertionError</failure></testcase><testcase classname="tests.test_trap_diagnostic_mode" name="test_diagnostic_config_is_strictly_typed[true]" time="0.000" /><testcase classname="tests.test_trap_diagnostic_mode" name="test_diagnostic_config_is_strictly_typed[1]" time="0.000" /><testcase classname="tests.test_trap_diagnostic_mode" name="test_diagnostic_config_is_strictly_typed[None]" time="0.001" /><testcase classname="tests.test_trap_diagnostic_mode" name="test_both_optional_plans_select_same_service_mode[tools.install_serve]" time="0.015"><failure message="AssertionError: assert 'explicit' == 'native'&#10;  &#10;  - native&#10;  + explicit">entry = &lt;module 'tools.install_serve' from '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/install_serve.py'&gt;
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-197/test_both_optional_plans_selec0')
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x132f29010&gt;
+
+    @pytest.mark.parametrize("entry", [install_serve, observe_serve])
+    def test_both_optional_plans_select_same_service_mode(entry, tmp_path, capsys):
+        assert entry.main(["--variant", "candidate", "--diagnose-trap", "--plan",
+                           "--log-dir", str(tmp_path / "uncreated")]) == 0
+        plan = json.loads(capsys.readouterr().out)
+        assert plan["diagnose_trap"] is True
+        assert "--enforce-eager" in plan["vllm_argv"]
+&gt;       assert plan["runtime_selection"]["token_budget_source"] == "native"
+E       AssertionError: assert 'explicit' == 'native'
+E         
+E         - native
+E         + explicit
+
+tests/test_trap_diagnostic_mode.py:46: AssertionError</failure></testcase><testcase classname="tests.test_trap_diagnostic_mode" name="test_both_optional_plans_select_same_service_mode[tools.observe_serve]" time="0.001"><failure message="AssertionError: assert 'explicit' == 'native'&#10;  &#10;  - native&#10;  + explicit">entry = &lt;module 'tools.observe_serve' from '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/observe_serve.py'&gt;
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-197/test_both_optional_plans_selec1')
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x132f13d90&gt;
+
+    @pytest.mark.parametrize("entry", [install_serve, observe_serve])
+    def test_both_optional_plans_select_same_service_mode(entry, tmp_path, capsys):
+        assert entry.main(["--variant", "candidate", "--diagnose-trap", "--plan",
+                           "--log-dir", str(tmp_path / "uncreated")]) == 0
+        plan = json.loads(capsys.readouterr().out)
+        assert plan["diagnose_trap"] is True
+        assert "--enforce-eager" in plan["vllm_argv"]
+&gt;       assert plan["runtime_selection"]["token_budget_source"] == "native"
+E       AssertionError: assert 'explicit' == 'native'
+E         
+E         - native
+E         + explicit
+
+tests/test_trap_diagnostic_mode.py:46: AssertionError</failure></testcase><testcase classname="tests.test_trap_diagnostic_mode" name="test_direct_install_exec_receives_diagnostic_config_and_env" time="0.004" /><testcase classname="tests.test_trap_diagnostic_mode" name="test_performance_gate_rejects_environment_or_saved_diagnostic_config" time="0.000" /><testcase classname="tests.test_trap_diagnostic_mode" name="test_existing_service_debug_modes_still_reach_service_preparation" time="0.002" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[6-128-4-False-attention_cv_mdl_decode_out]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[6-16384-1-True-attention_cv_mdl_decode_q1_out]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[6-84-84-False-attention_cv_member_pipeline_cluster4_out]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[6-512-None-False-attention_cv_member_pipeline_cluster4_out]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[6-8192-8192-False-attention_cv_window_range_cluster16_out]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[6-83-83-False-attention_cv_window_range_out]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[6-512-33-False-attention_cv_window_range_balanced_out]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[16-128-1-True-attention_cv_window_range_out]" time="0.001" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[16-512-1-True-attention_cv_window_range_balanced_out]" time="0.001" /><testcase classname="tests.test_bf16_history_dispatch" name="test_incomplete_bundle_cannot_silently_use_an_old_reader[fast_unpack]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_incomplete_bundle_cannot_silently_use_an_old_reader[mixed_cv]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_incomplete_bundle_cannot_silently_use_an_old_reader[striped_cache]" time="0.001" /><testcase classname="tests.test_bf16_history_dispatch" name="test_incomplete_bundle_cannot_silently_use_an_old_reader[decode_bundle]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_incomplete_bundle_cannot_silently_use_an_old_reader[c4_member_pipeline]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_incomplete_bundle_cannot_silently_use_an_old_reader[mdl_decode]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_selector_requires_strict_boolean[None]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_selector_requires_strict_boolean[0]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_selector_requires_strict_boolean[1]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_selector_requires_strict_boolean[true]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_missing_mapping_is_an_error_not_a_fallback" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_workspace_adds_only_a_bounded_bf16_mirror[1-False-1376256]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_workspace_adds_only_a_bounded_bf16_mirror[4-True-3741696]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_workspace_adds_only_a_bounded_bf16_mirror[16-True-7495680]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_research_config_reaches_actual_forward_abi[8-4-False-True]" time="0.011" /><testcase classname="tests.test_bf16_history_dispatch" name="test_research_config_reaches_actual_forward_abi[8-4-False-False]" time="0.002" /><testcase classname="tests.test_bf16_history_dispatch" name="test_research_config_reaches_actual_forward_abi[8-1-True-False]" time="0.002" /><testcase classname="tests.test_bf16_history_dispatch" name="test_research_config_reaches_actual_forward_abi[256-128-False-False]" time="0.009" /><testcase classname="tests.test_bf16_history_dispatch" name="test_research_config_reaches_actual_forward_abi[8192-8192-False-False]" time="0.243" /><testcase classname="tests.test_bf16_history_dispatch" name="test_research_config_reaches_actual_forward_abi[8-8-False-False]" time="0.002" /><testcase classname="tests.test_bf16_history_dispatch" name="test_research_config_reaches_actual_forward_abi[256-33-False-False]" time="0.009" /><testcase classname="tests.test_bf16_history_dispatch" name="test_default_build_and_production_require_every_bf16_reader" time="0.004" /><testcase classname="tests.test_bf16_history_dispatch" name="test_frozen_guard_and_existing_numerical_kernels_are_unchanged" time="0.004" /><testcase classname="tests.test_bf16_history_dispatch" name="test_research_config_preserves_mtp_graph_apc_and_native_scheduler" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_inverse_generation_preserves_exact_fixed_mother[mdl-attention_cv_mdl_decode.cpp-1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f]" time="0.003" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_inverse_generation_preserves_exact_fixed_mother[member_pipeline_cluster4-attention_cv_member_pipeline_cluster4.cpp-0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc]" time="0.003" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_inverse_generation_preserves_exact_fixed_mother[window_range_cluster16-attention_cv_window_range_cluster16.cpp-708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335]" time="0.003" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_inverse_generation_preserves_exact_fixed_mother[window_range-attention_cv_window_range.cpp-d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4]" time="0.003" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_inverse_generation_preserves_exact_fixed_mother[window_range_balanced-attention_cv_window_range_balanced.cpp-1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013]" time="0.003" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_all_source_operands_use_bf16_and_only_rotation_uses_fp32_matmul[mdl-attention_cv_mdl_decode.cpp-1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_all_source_operands_use_bf16_and_only_rotation_uses_fp32_matmul[member_pipeline_cluster4-attention_cv_member_pipeline_cluster4.cpp-0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_all_source_operands_use_bf16_and_only_rotation_uses_fp32_matmul[window_range_cluster16-attention_cv_window_range_cluster16.cpp-708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_all_source_operands_use_bf16_and_only_rotation_uses_fp32_matmul[window_range-attention_cv_window_range.cpp-d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_all_source_operands_use_bf16_and_only_rotation_uses_fp32_matmul[window_range_balanced-attention_cv_window_range_balanced.cpp-1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_cluster4_history_publisher_preserves_both_old_lane_domains" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_precise_kv_never_expands_fp32_and_preserves_guard_order[mdl-attention_cv_mdl_decode.cpp-1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_precise_kv_never_expands_fp32_and_preserves_guard_order[member_pipeline_cluster4-attention_cv_member_pipeline_cluster4.cpp-0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_precise_kv_never_expands_fp32_and_preserves_guard_order[window_range_cluster16-attention_cv_window_range_cluster16.cpp-708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_precise_kv_never_expands_fp32_and_preserves_guard_order[window_range-attention_cv_window_range.cpp-d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_precise_kv_never_expands_fp32_and_preserves_guard_order[window_range_balanced-attention_cv_window_range_balanced.cpp-1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_direct_unpack_allocations_cover_actual_strided_addresses[mdl-attention_cv_mdl_decode.cpp-1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_direct_unpack_allocations_cover_actual_strided_addresses[member_pipeline_cluster4-attention_cv_member_pipeline_cluster4.cpp-0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_direct_unpack_allocations_cover_actual_strided_addresses[window_range_cluster16-attention_cv_window_range_cluster16.cpp-708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_direct_unpack_allocations_cover_actual_strided_addresses[window_range-attention_cv_window_range.cpp-d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_direct_unpack_allocations_cover_actual_strided_addresses[window_range_balanced-attention_cv_window_range_balanced.cpp-1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_actual_buffers_and_per_core_arenas_fit_the_declared_resource_limits[mdl-attention_cv_mdl_decode.cpp-1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_actual_buffers_and_per_core_arenas_fit_the_declared_resource_limits[member_pipeline_cluster4-attention_cv_member_pipeline_cluster4.cpp-0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_actual_buffers_and_per_core_arenas_fit_the_declared_resource_limits[window_range_cluster16-attention_cv_window_range_cluster16.cpp-708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_actual_buffers_and_per_core_arenas_fit_the_declared_resource_limits[window_range-attention_cv_window_range.cpp-d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_actual_buffers_and_per_core_arenas_fit_the_declared_resource_limits[window_range_balanced-attention_cv_window_range_balanced.cpp-1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_shared_helper_rounding_and_resource_switch_order_are_explicit" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_every_new_project_local_include_exists_and_workspace_families_are_declared" time="0.008" /><testcase classname="tests.test_striped_unpack_bf16_source" name="test_raw_half_guard_and_error_override_are_identical_to_current_h32_helper" time="0.008" /><testcase classname="tests.test_striped_unpack_bf16_source" name="test_vector_repeat_mapping_covers_natural_dimensions_without_touching_padding[16]" time="0.002" /><testcase classname="tests.test_striped_unpack_bf16_source" name="test_vector_repeat_mapping_covers_natural_dimensions_without_touching_padding[32]" time="0.003" /><testcase classname="tests.test_striped_unpack_bf16_source" name="test_vector_repeat_mapping_covers_natural_dimensions_without_touching_padding[64]" time="0.007" /><testcase classname="tests.test_striped_unpack_bf16_source" name="test_code_major_table_byte_gather_preserves_bf16_bits_and_row_domain[16]" time="0.023" /><testcase classname="tests.test_striped_unpack_bf16_source" name="test_code_major_table_byte_gather_preserves_bf16_bits_and_row_domain[32]" time="0.001" /><testcase classname="tests.test_striped_unpack_bf16_source" name="test_code_major_table_byte_gather_preserves_bf16_bits_and_row_domain[64]" time="0.001" /><testcase classname="tests.test_striped_unpack_bf16_source" name="test_live_mask_boundary_preserves_incoming_error_until_a_live_invalid_row[16]" time="0.000" /><testcase classname="tests.test_striped_unpack_bf16_source" name="test_live_mask_boundary_preserves_incoming_error_until_a_live_invalid_row[32]" time="0.000" /><testcase classname="tests.test_striped_unpack_bf16_source" name="test_live_mask_boundary_preserves_incoming_error_until_a_live_invalid_row[64]" time="0.000" /><testcase classname="tests.test_striped_unpack_bf16_source" name="test_small_table_and_eight_row_index_scratch_have_disjoint_live_regions[16]" time="0.000" /><testcase classname="tests.test_striped_unpack_bf16_source" name="test_small_table_and_eight_row_index_scratch_have_disjoint_live_regions[32]" time="0.000" /><testcase classname="tests.test_striped_unpack_bf16_source" name="test_small_table_and_eight_row_index_scratch_have_disjoint_live_regions[64]" time="0.000" /><testcase classname="tests.test_striped_unpack_bf16_source" name="test_cpp_does_not_expand_fp32_kv_or_reinterpret_cast_bf16_as_half_arithmetic" time="0.000" /><testcase classname="tests.test_current_only_dispatch" name="test_current_suffix_keeps_prefix_and_checks_gpu_context_before_fia[False-False-False-lse_dtype0-False]" time="0.006" /><testcase classname="tests.test_current_only_dispatch" name="test_current_suffix_keeps_prefix_and_checks_gpu_context_before_fia[False-False-False-lse_dtype0-True]" time="0.001" /><testcase classname="tests.test_current_only_dispatch" name="test_current_suffix_keeps_prefix_and_checks_gpu_context_before_fia[True-False-False-lse_dtype1-False]" time="0.001" /><testcase classname="tests.test_current_only_dispatch" name="test_current_suffix_keeps_prefix_and_checks_gpu_context_before_fia[True-False-False-lse_dtype1-True]" time="0.001" /><testcase classname="tests.test_current_only_dispatch" name="test_current_suffix_keeps_prefix_and_checks_gpu_context_before_fia[False-True-False-lse_dtype2-False]" time="0.001" /><testcase classname="tests.test_current_only_dispatch" name="test_current_suffix_keeps_prefix_and_checks_gpu_context_before_fia[False-True-False-lse_dtype2-True]" time="0.001" /><testcase classname="tests.test_current_only_dispatch" name="test_current_suffix_keeps_prefix_and_checks_gpu_context_before_fia[False-False-True-lse_dtype3-False]" time="0.001" /><testcase classname="tests.test_current_only_dispatch" name="test_current_suffix_keeps_prefix_and_checks_gpu_context_before_fia[False-False-True-lse_dtype3-True]" time="0.001" /><testcase classname="tests.test_current_only_dispatch" name="test_current_suffix_keeps_prefix_and_checks_gpu_context_before_fia[False-False-False-lse_dtype4-False]" time="0.001" /><testcase classname="tests.test_current_only_dispatch" name="test_current_suffix_keeps_prefix_and_checks_gpu_context_before_fia[False-False-False-lse_dtype4-True]" time="0.001" /><testcase classname="tests.test_current_only_dispatch" name="test_current_suffix_keeps_prefix_and_checks_gpu_context_before_fia[False-False-False-lse_dtype5-False]" time="0.002" /><testcase classname="tests.test_current_only_dispatch" name="test_current_suffix_keeps_prefix_and_checks_gpu_context_before_fia[False-False-False-lse_dtype5-True]" time="0.001" /><testcase classname="tests.test_prefill_state_contract_hooks" name="test_real_native_warm_prefill_graph_collision_is_removed[False]" time="0.027" /><testcase classname="tests.test_prefill_state_contract_hooks" name="test_real_native_warm_prefill_graph_collision_is_removed[True]" time="0.024" /><testcase classname="tests.test_prefill_state_contract_hooks" name="test_prefix_enabled_dispatch_keeps_existing_selection[True-align]" time="0.023" /><testcase classname="tests.test_prefill_state_contract_hooks" name="test_prefix_enabled_dispatch_keeps_existing_selection[True-none]" time="0.023" /><testcase classname="tests.test_prefill_state_contract_hooks" name="test_native_dummy_and_forced_capture_selection_remain_unchanged" time="0.023" /><testcase classname="tests.test_prefill_state_contract_hooks" name="test_native_fold_hook_preserves_prefill_and_other_spec_counts[False-none-1]" time="0.024" /><testcase classname="tests.test_prefill_state_contract_hooks" name="test_native_fold_hook_preserves_prefill_and_other_spec_counts[True-align-4]" time="0.028" /><testcase classname="tests.test_prefill_state_contract_hooks" name="test_native_fold_hook_preserves_prefill_and_other_spec_counts[True-none-4]" time="0.024" /><testcase classname="tests.test_prefill_state_contract_hooks" name="test_registration_restores_both_native_descriptors_exactly" time="0.023" /><testcase classname="tests.test_prefill_state_contract_hooks" name="test_new_deferred_hooks_keep_registration_lightweight" time="0.044" /><testcase classname="tests.test_gdn_folded_initial_state" name="test_actual_native_fold_overwrites_recurrent_initial_index" time="0.007" /><testcase classname="tests.test_gdn_folded_initial_state" name="test_legal_int2_reused_page_exposes_folded_uninitialized_ssm" time="0.017"><failure message="RuntimeError: shape mismatch: value tensor of shape [196608, 2] cannot be broadcast to indexing result of shape [2, 196608]">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x132f64b40&gt;
+
+    def test_legal_int2_reused_page_exposes_folded_uninitialized_ssm(monkeypatch):
+        page = HybridPageLayout(SlotLayout(256), 30720, 393216, 262144,
+                                native_page_size_bytes=817152,
+                                native_mamba_cache_mode="none")
+        count = 9
+        raw = torch.zeros(count * page.page_size_bytes, dtype=torch.uint8)
+        states = raw[count * page.conv_bytes:count * (page.conv_bytes + page.ssm_bytes)]
+        states = states.view(torch.bfloat16).view(count, -1)
+        # A real finite INT2 quantizer input gives code bytes ff 7f. Reinterpreting
+        # a prior FULL page as BF16 SSM therefore produces NaN, without injecting
+        # invalid quantizer metadata or nonfinite model inputs.
+        vector = torch.zeros(256)
+        vector[:7] = 3
+        vector[7] = 1
+        encoded = encode_kv(vector, vector)
+        assert encoded[:2].tolist() == [255, 127]
+        table = torch.tensor([[1, 2, 3, 4], [5, 6, 7, 8]], dtype=torch.int32)
+        off = page.address(count, 4, 0)
+        raw[off:off + encoded.numel()] = encoded
+        assert torch.isnan(states[4, 0])
+        committed = torch.full((2, states.shape[1]), 0.25, dtype=torch.bfloat16)
+&gt;       _native_prefill_store(states, table[:, 0].long(), committed)
+
+tests/test_gdn_folded_initial_state.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gdn_folded_initial_state.py:50: in _native_prefill_store
+    exec(compile(ast.fix_missing_locations(ast.Module(body=[assignment], type_ignores=[])),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    #
+    # Copyright (c) 2025 Huawei Technologies Co., Ltd. All Rights Reserved.
+    # This file is a part of the vllm-ascend project.
+    #
+    # Licensed under the Apache License, Version 2.0 (the "License");
+    # you may not use this file except in compliance with the License.
+    # You may obtain a copy of the License at
+    #
+    #     http://www.apache.org/licenses/LICENSE-2.0
+    #
+    # Unless required by applicable law or agreed to in writing, software
+    # distributed under the License is distributed on an "AS IS" BASIS,
+    # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    # See the License for the specific language governing permissions and
+    # limitations under the License.
+    #
+    
+    import torch
+    from einops import rearrange
+    from vllm.distributed import get_pcp_group
+    from vllm.forward_context import get_forward_context
+    from vllm.model_executor.layers.fla.ops.l2norm import l2norm_fwd
+    from vllm.model_executor.layers.mamba.gdn.base import GatedDeltaNetAttention
+    from vllm.model_executor.layers.mamba.mamba_utils import MambaStateShapeCalculator
+    from vllm.triton_utils import triton
+    from vllm.v1.attention.backend import AttentionBackend, AttentionMetadata  # type: ignore
+    from vllm.v1.attention.backends.gdn_attn import GDNAttentionMetadata
+    from vllm.v1.attention.backends.utils import PAD_SLOT_ID
+    
+    from vllm_ascend.attention.utils import maybe_save_kv_layer_to_connector
+    from vllm_ascend.device.device_op import DeviceOperator
+    from vllm_ascend.ops.gdn_attn_builder import AscendGDNAttentionBackend
+    from vllm_ascend.ops.triton.fla.chunk import chunk_gated_delta_rule
+    from vllm_ascend.ops.triton.fla.fused_qkvzba_split_reshape import fused_qkvzba_split_reshape_cat
+    from vllm_ascend.ops.triton.fla.utils import clear_ssm_states
+    from vllm_ascend.ops.triton.mamba.causal_conv1d import extract_last_width
+    
+    
+    class AscendGatedDeltaNetAttention(GatedDeltaNetAttention):
+        def _split_ba_for_tp(self, ba: torch.Tensor) -&gt; tuple[torch.Tensor, torch.Tensor]:
+            if hasattr(self, "split_ba"):
+                return self.split_ba(ba)
+            return ba.chunk(2, dim=-1)
+    
+        def get_state_shape(
+            self,
+        ) -&gt; tuple[tuple[int, ...], tuple[int, ...], tuple[int, ...], tuple[int, ...]]:
+            return MambaStateShapeCalculator.gated_delta_net_state_shape(
+                self.tp_size,
+                self.num_k_heads,
+                self.num_v_heads,
+                self.head_k_dim,
+                self.head_v_dim,
+                self.conv_kernel_size,
+                self.num_spec,
+            )
+    
+        def _warmup_prefill_kernels(self, qkv_or_qkvz: torch.Tensor, v_dim: int) -&gt; None:
+            return
+    
+        def _warmup_prefill_kernels_v0202(self, mixed_qkv: torch.Tensor) -&gt; None:
+            return
+    
+        def get_attn_backend(self) -&gt; type[AttentionBackend]:
+            return AscendGDNAttentionBackend
+    
+        def forward(
+            self,
+            hidden_states: torch.Tensor,
+            output: torch.Tensor,
+        ):
+            """
+            Forward pass with three parts:
+            1. Input projection
+            2. Core attention (custom op)
+            3. Output projection
+            """
+            num_tokens = hidden_states.size(0)
+            if hasattr(self, "in_proj_qkv"):
+                mixed_qkv, _ = self.in_proj_qkv(hidden_states)
+                ba, _ = self.in_proj_ba(hidden_states)
+                z, _ = self.in_proj_z(hidden_states)
+                z = z.reshape(z.size(0), -1, self.head_v_dim)
+                b, a = self._split_ba_for_tp(ba)
+                b = b.contiguous()
+                a = a.contiguous()
+            else:
+                if not self.gqa_interleaved_layout:
+                    mixed_qkvz, _ = self.in_proj_qkvz(hidden_states)
+                    num_tokens = mixed_qkvz.size(0)
+                    qkv_size = (self.key_dim * 2 + self.value_dim) // self.tp_size
+                    z_size = self.value_dim // self.tp_size
+                    mixed_qkv, z = mixed_qkvz.split([qkv_size, z_size], dim=-1)
+                    z = z.reshape(z.size(0), -1, self.head_v_dim)
+                    ba, _ = self.in_proj_ba(hidden_states)
+                    b, a = self._split_ba_for_tp(ba)
+    
+                    b = b.contiguous()
+                    a = a.contiguous()
+                else:
+                    projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
+                    projected_states_ba, _ = self.in_proj_ba(hidden_states)
+                    num_tokens = projected_states_qkvz.size(0)
+    
+                    mixed_qkv, z, b, a = fused_qkvzba_split_reshape_cat(
+                        projected_states_qkvz,
+                        projected_states_ba,
+                        triton.cdiv(self.num_k_heads, self.tp_size),
+                        triton.cdiv(self.num_v_heads, self.tp_size),
+                        self.head_k_dim,
+                        self.head_v_dim,
+                    )
+    
+            # ============================================================
+            # Part 2: Core Attention (Custom Op)
+            # ============================================================
+            # Note: we should not use torch.empty here like other attention backends,
+            # see discussions in https://github.com/vllm-project/vllm/pull/28182
+            core_attn_out = torch.zeros(
+                (num_tokens, self.num_v_heads // self.tp_size, self.head_v_dim),
+                dtype=hidden_states.dtype,
+                device=hidden_states.device,
+            )
+    
+            torch.ops.vllm.qwen_gdn_attention_core(
+                mixed_qkv,
+                b,
+                a,
+                core_attn_out,
+                self.prefix,
+                False,
+            )
+    
+            # ============================================================
+            # Part 3: Output Projection
+            # ============================================================
+            maybe_save_kv_layer_to_connector("", [])
+            z_shape_og = z.shape
+            # Reshape input data into 2D tensor
+            core_attn_out = core_attn_out.reshape(-1, core_attn_out.shape[-1])
+            z = z.reshape(-1, z.shape[-1])
+            core_attn_out = self.norm(core_attn_out, z)
+            core_attn_out = core_attn_out.reshape(z_shape_og)
+            core_attn_out = rearrange(core_attn_out, "... h d -&gt; ... (h d)")
+            output[:num_tokens], _ = self.out_proj(core_attn_out)
+    
+        def _forward_core(
+            self,
+            mixed_qkv: torch.Tensor,
+            b: torch.Tensor,
+            a: torch.Tensor,
+            core_attn_out: torch.Tensor,
+        ):
+            """
+            Core attention computation (called by custom op).
+            """
+            forward_context = get_forward_context()
+            attn_metadata: AttentionMetadata = forward_context.attn_metadata
+    
+            if attn_metadata is None:
+                # V1 profile run
+                return
+    
+            assert isinstance(attn_metadata, dict)
+            attn_metadata = attn_metadata[self.prefix]
+            assert isinstance(attn_metadata, GDNAttentionMetadata)
+            spec_sequence_masks = attn_metadata.spec_sequence_masks
+            spec_token_indx = attn_metadata.spec_token_indx
+            non_spec_token_indx = attn_metadata.non_spec_token_indx
+            spec_state_indices_tensor = attn_metadata.spec_state_indices_tensor  # noqa: E501
+            non_spec_state_indices_tensor = attn_metadata.non_spec_state_indices_tensor  # noqa: E501
+            self_kv_cache = self.kv_cache
+            ssm_state = self_kv_cache[1]
+            num_actual_tokens = attn_metadata.num_actual_tokens
+    
+            mixed_qkv = mixed_qkv[:num_actual_tokens]
+            b = b[:num_actual_tokens]
+            a = a[:num_actual_tokens]
+    
+            # 1. Convolution sequence transformation
+            conv_weights = self.conv1d.weight.view(self.conv1d.weight.size(0), self.conv1d.weight.size(2))
+            if spec_sequence_masks is not None:
+                if attn_metadata.num_prefills == 0 and attn_metadata.num_decodes == 0:
+                    mixed_qkv_spec = mixed_qkv
+                    mixed_qkv_non_spec = None
+                else:
+                    mixed_qkv_spec = mixed_qkv.index_select(0, spec_token_indx)
+                    mixed_qkv_non_spec = mixed_qkv.index_select(0, non_spec_token_indx)
+            else:
+                mixed_qkv_spec = None
+                mixed_qkv_non_spec = mixed_qkv
+    
+            # 1.1: Process the multi-query part
+            if spec_sequence_masks is not None:
+                conv_weights_T = conv_weights.transpose(0, 1)
+                activation_num = 1 if self.activation else 0
+                spec_causal_conv1d_meta = attn_metadata.spec_decode_metadata.spec_causal_conv1d
+                spec_query_start_loc_device = spec_causal_conv1d_meta.query_start_loc
+                output_spec = torch.empty_like(mixed_qkv_spec)
+                torch.ops._C_ascend.npu_causal_conv1d_custom(
+                    output_spec,
+                    mixed_qkv_spec,
+                    conv_weights_T,
+                    conv_state=self_kv_cache[0],
+                    bias_opt=self.conv1d.bias,
+                    query_start_loc_opt=spec_query_start_loc_device,
+                    cache_indices_opt=spec_causal_conv1d_meta.cache_indices,
+                    initial_state_mode_opt=None,
+                    num_accepted_tokens_opt=spec_causal_conv1d_meta.num_accepted_tokens,
+                    activation_mode=activation_num,
+                    pad_slot_id=PAD_SLOT_ID,
+                    run_mode=1,
+                )
+                mixed_qkv_spec = output_spec
+    
+            # 1.2: Process the remaining part
+            if attn_metadata.num_prefills &gt; 0:
+                if mixed_qkv_non_spec is not None:
+                    non_spec_causal_conv1d_meta = attn_metadata.non_spec_prefill_metadata.causal_conv1d
+                    query_start_loc_opt = non_spec_causal_conv1d_meta.query_start_loc
+                    cache_indices_opt = non_spec_causal_conv1d_meta.cache_indices
+                    initial_state_mode_opt = non_spec_causal_conv1d_meta.initial_state_mode
+                    if get_pcp_group().world_size &gt; 1:
+                        conv_weights_T = conv_weights.transpose(0, 1)
+                        activation_num = 1 if self.activation else 0
+                        non_spec_query_start_loc = attn_metadata.non_spec_query_start_loc
+                        assert non_spec_query_start_loc is not None
+                        non_spec_state_indices_tensor = attn_metadata.non_spec_state_indices_tensor
+                        width = conv_weights.shape[1]
+                        state_len = width - 1
+                        num_seqs = non_spec_query_start_loc.shape[0] - 1
+                        prefill_seq_offset = max(0, num_seqs - attn_metadata.num_prefills)
+                        prefill_cache_indices = non_spec_state_indices_tensor[prefill_seq_offset:]
+                        mixed_qkv_non_spec_T = mixed_qkv_non_spec.transpose(0, 1)
+                        last_width_prefill_x = extract_last_width(
+                            mixed_qkv_non_spec_T, non_spec_query_start_loc[prefill_seq_offset:], state_len
+                        )
+                        pcp_rank = get_pcp_group().rank_in_group
+                        all_last_width_prefill_x = get_pcp_group().all_gather(
+                            last_width_prefill_x.unsqueeze(0).contiguous(), 0
+                        )
+                        if pcp_rank &gt; 0 and prefill_cache_indices.shape[0] &gt; 0:
+                            self_kv_cache[0][prefill_cache_indices, :state_len, :] = all_last_width_prefill_x[
+                                pcp_rank - 1, ...
+                            ].transpose(-1, -2)
+                        mixed_qkv_non_spec_output = torch.empty_like(mixed_qkv_non_spec)
+                        torch.ops._C_ascend.npu_causal_conv1d_custom(
+                            mixed_qkv_non_spec_output,
+                            mixed_qkv_non_spec,
+                            conv_weights_T,
+                            conv_state=self_kv_cache[0],
+                            bias_opt=self.conv1d.bias,
+                            query_start_loc_opt=query_start_loc_opt,
+                            cache_indices_opt=cache_indices_opt,
+                            initial_state_mode_opt=initial_state_mode_opt,
+                            num_accepted_tokens_opt=None,
+                            activation_mode=activation_num,
+                            pad_slot_id=PAD_SLOT_ID,
+                            run_mode=0,
+                        )
+                        mixed_qkv_non_spec = mixed_qkv_non_spec_output
+                        if prefill_cache_indices.shape[0] &gt; 0:
+                            self_kv_cache[0][prefill_cache_indices, :state_len, :] = all_last_width_prefill_x[
+                                -1, ...
+                            ].transpose(-1, -2)
+                    else:
+                        conv_weights_T = conv_weights.transpose(0, 1)
+                        activation_num = 1 if self.activation else 0
+                        mixed_qkv_non_spec_output = torch.empty_like(mixed_qkv_non_spec)
+                        torch.ops._C_ascend.npu_causal_conv1d_custom(
+                            mixed_qkv_non_spec_output,
+                            mixed_qkv_non_spec,
+                            conv_weights_T,
+                            conv_state=self_kv_cache[0],
+                            bias_opt=self.conv1d.bias,
+                            query_start_loc_opt=query_start_loc_opt,
+                            cache_indices_opt=cache_indices_opt,
+                            initial_state_mode_opt=initial_state_mode_opt,
+                            num_accepted_tokens_opt=None,
+                            activation_mode=activation_num,
+                            pad_slot_id=PAD_SLOT_ID,
+                            run_mode=0,
+                        )
+                        mixed_qkv_non_spec = mixed_qkv_non_spec_output
+            elif attn_metadata.num_decodes &gt; 0:
+                conv_weights_T = conv_weights.transpose(0, 1)
+                activation_num = 1 if self.activation else 0
+                non_spec_causal_conv1d_meta = attn_metadata.non_spec_decode_metadata.causal_conv1d
+                non_spec_query_start_loc_device = non_spec_causal_conv1d_meta.query_start_loc
+                output_non_spec = torch.empty_like(mixed_qkv_non_spec)
+                torch.ops._C_ascend.npu_causal_conv1d_custom(
+                    output_non_spec,
+                    mixed_qkv_non_spec,
+                    conv_weights_T,
+                    conv_state=self_kv_cache[0],
+                    bias_opt=self.conv1d.bias,
+                    query_start_loc_opt=non_spec_query_start_loc_device,
+                    cache_indices_opt=non_spec_causal_conv1d_meta.cache_indices,
+                    initial_state_mode_opt=None,
+                    num_accepted_tokens_opt=None,
+                    activation_mode=activation_num,
+                    pad_slot_id=PAD_SLOT_ID,
+                    run_mode=1,
+                )
+                mixed_qkv_non_spec = output_non_spec
+            else:
+                mixed_qkv_non_spec = None
+    
+            query_spec, key_spec, value_spec = self.rearrange_mixed_qkv(mixed_qkv_spec)
+            query_non_spec, key_non_spec, value_non_spec = self.rearrange_mixed_qkv(mixed_qkv_non_spec)
+    
+            # 2. Recurrent attention
+            g, beta = DeviceOperator.fused_gdn_gating(self.A_log, a, b, self.dt_bias)
+            if spec_sequence_masks is not None:
+                if attn_metadata.num_prefills == 0 and attn_metadata.num_decodes == 0:
+                    g_spec = g
+                    beta_spec = beta
+                    g_non_spec = None
+                    beta_non_spec = None
+                else:
+                    g_spec = g.index_select(1, spec_token_indx)
+                    beta_spec = beta.index_select(1, spec_token_indx)
+                    g_non_spec = g.index_select(1, non_spec_token_indx)
+                    beta_non_spec = beta.index_select(1, non_spec_token_indx)
+            else:
+                g_spec = None
+                beta_spec = None
+                g_non_spec = g
+                beta_non_spec = beta
+    
+            split_non_spec = (
+                spec_sequence_masks is None and attn_metadata.num_prefills &gt; 0 and attn_metadata.num_decodes &gt; 0
+            )
+            num_decode_tokens = attn_metadata.num_decode_tokens
+    
+            # 2.1: Process the multi-query part
+            if spec_sequence_masks is not None:
+                actual_seq_lengths = attn_metadata.spec_decode_metadata.actual_seq_lengths
+                query_spec = l2norm_fwd(query_spec)
+                key_spec = l2norm_fwd(key_spec)
+                # Dispatches to the vllm-ascend AscendC custom operator
+                # (csrc/recurrent_gated_delta_rule), NOT the built-in CANN operator.
+                # The custom op extends dtype support (e.g. float32 state) and is
+                # loaded at runtime via ASCEND_CUSTOM_OPP_PATH.
+                core_attn_out_spec = torch.ops._C_ascend.npu_recurrent_gated_delta_rule(
+                    query=query_spec.squeeze(0),
+                    key=key_spec.squeeze(0),
+                    value=value_spec.squeeze(0),
+                    g=g_spec.squeeze(0),
+                    beta=beta_spec.squeeze(0),
+                    state=ssm_state,
+                    scale=key_spec.shape[-1] ** -0.5,
+                    actual_seq_lengths=actual_seq_lengths,
+                    ssm_state_indices=spec_state_indices_tensor.flatten(),
+                    num_accepted_tokens=spec_causal_conv1d_meta.num_accepted_tokens.to(torch.int32),
+                ).unsqueeze(0)
+            else:
+                core_attn_out_spec, last_recurrent_state = None, None
+    
+            # 2.2: Process non-spec-decode part in mixed non-spec batches
+            if split_non_spec:
+                assert mixed_qkv_non_spec is not None
+                assert g_non_spec is not None
+                assert beta_non_spec is not None
+                query_decode, key_decode, value_decode = self.rearrange_mixed_qkv(mixed_qkv_non_spec[:num_decode_tokens])
+                actual_seq_lengths = attn_metadata.non_spec_decode_metadata.actual_seq_lengths
+                query_decode = l2norm_fwd(query_decode)
+                key_decode = l2norm_fwd(key_decode)
+                core_attn_out_decode = torch.ops._C_ascend.npu_recurrent_gated_delta_rule(
+                    query=query_decode.squeeze(0),
+                    key=key_decode.squeeze(0),
+                    value=value_decode.squeeze(0),
+                    g=g_non_spec[:, :num_decode_tokens].squeeze(0),
+                    beta=beta_non_spec[:, :num_decode_tokens].squeeze(0),
+                    state=ssm_state,
+                    scale=key_decode.shape[-1] ** -0.5,
+                    actual_seq_lengths=actual_seq_lengths,
+                    ssm_state_indices=non_spec_state_indices_tensor[: attn_metadata.num_decodes],
+                ).unsqueeze(0)
+            else:
+                core_attn_out_decode = None
+    
+            # 2.3: Process the remaining part
+            if attn_metadata.num_prefills &gt; 0:
+                prefill_query_start_loc = attn_metadata.prefill_query_start_loc
+                prefill_state_indices = attn_metadata.prefill_state_indices
+                prefill_has_initial_state = attn_metadata.prefill_has_initial_state
+                assert prefill_query_start_loc is not None
+                assert prefill_state_indices is not None
+                assert prefill_has_initial_state is not None
+                assert g_non_spec is not None
+                assert beta_non_spec is not None
+                if split_non_spec:
+                    query_non_spec = query_non_spec[:, num_decode_tokens:]
+                    key_non_spec = key_non_spec[:, num_decode_tokens:]
+                    value_non_spec = value_non_spec[:, num_decode_tokens:]
+                    g_non_spec = g_non_spec[:, num_decode_tokens:]
+                    beta_non_spec = beta_non_spec[:, num_decode_tokens:]
+    
+                initial_state = ssm_state[prefill_state_indices].transpose(-1, -2).contiguous()
+                clear_ssm_states(initial_state, prefill_has_initial_state)
+                (core_attn_out_non_spec, last_recurrent_state) = chunk_gated_delta_rule(
+                    q=query_non_spec,
+                    k=key_non_spec,
+                    v=value_non_spec,
+                    g=g_non_spec,
+                    beta=beta_non_spec,
+                    initial_state=initial_state,
+                    output_final_state=True,
+                    cu_seqlens=prefill_query_start_loc,
+                    prebuilt_meta=attn_metadata.non_spec_prefill_metadata.chunk,
+                    head_first=False,
+                    use_qk_l2norm_in_kernel=True,
+                )
+&gt;               ssm_state[prefill_state_indices] = last_recurrent_state.transpose(-1, -2).contiguous().to(ssm_state.dtype)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               RuntimeError: shape mismatch: value tensor of shape [196608, 2] cannot be broadcast to indexing result of shape [2, 196608]
+
+references/vllm-ascend/vllm_ascend/ops/gdn.py:415: RuntimeError</failure></testcase><testcase classname="tests.test_gdn_folded_initial_state" name="test_native_alignment_explains_none_only_four_token_prefill_tail" time="0.015" /><testcase classname="tests.test_gdn_folded_initial_state" name="test_folded_prefill_conv_checkpoint_is_also_column_zero" time="0.005" /><testcase classname="tests.test_gdn_folded_initial_state" name="test_changing_folded_count_alone_leaves_wrong_next_decode_checkpoint" time="0.004" /><testcase classname="tests.test_gdn_folded_initial_state" name="test_fixed_none_keeps_native_prefill_and_commits_next_decode_state" time="0.006" /><testcase classname="tests.test_gdn_folded_initial_state" name="test_prefix_enabled_or_align_fold_stays_byte_identical_to_native[True-align]" time="0.004" /><testcase classname="tests.test_gdn_folded_initial_state" name="test_prefix_enabled_or_align_fold_stays_byte_identical_to_native[True-none]" time="0.004" /><testcase classname="tests.test_gdn_folded_initial_state" name="test_prefix_enabled_or_align_fold_stays_byte_identical_to_native[False-align]" time="0.010" /><testcase classname="tests.test_gdn_folded_initial_state" name="test_only_live_none_prefill_four_token_step_requires_eager[computed0-prompts0-scheduled0-4-None-True]" time="0.001" /><testcase classname="tests.test_gdn_folded_initial_state" name="test_only_live_none_prefill_four_token_step_requires_eager[computed1-prompts1-scheduled1-4-None-False]" time="0.001" /><testcase classname="tests.test_gdn_folded_initial_state" name="test_only_live_none_prefill_four_token_step_requires_eager[computed2-prompts2-scheduled2-4-None-False]" time="0.000" /><testcase classname="tests.test_gdn_folded_initial_state" name="test_only_live_none_prefill_four_token_step_requires_eager[computed3-prompts3-scheduled3-4-None-False]" time="0.001" /><testcase classname="tests.test_gdn_folded_initial_state" name="test_only_live_none_prefill_four_token_step_requires_eager[computed4-prompts4-scheduled4-16-None-False]" time="0.001" /><testcase classname="tests.test_gdn_folded_initial_state" name="test_only_live_none_prefill_four_token_step_requires_eager[computed5-prompts5-scheduled5-4-True-False]" time="0.001" /></testsuite></testsuites>

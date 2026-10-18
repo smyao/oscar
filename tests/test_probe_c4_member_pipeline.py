@@ -105,10 +105,13 @@ def test_bf16_candidate_replaces_legacy_pipeline_gate_and_blocks_model_on_failur
     from tools import observe_serve as observe
     from tools import install_serve
     target=json.loads((observe.ROOT/'configs/target.json').read_text())
+    model=tmp_path/'model';model.mkdir()
+    (model/'config.json').write_text('{"architectures":["Qwen3_5ForConditionalGeneration"]}')
+    target['model']=str(model)
     config_path=tmp_path/'candidate.json';config_path.write_text(json.dumps(target))
     assert observe.main(['--config',str(config_path),'--variant','candidate','--plan','--probe-only'])==0
     plan=json.loads(capsys.readouterr().out)
-    assert 'bf16_attention_precision_error_graph_gate' in plan['phases']
+    assert 'aligned_codec_rotation_attention_precision_error_graph_gate' in plan['phases']
     assert plan['runtime_selection']['optimizations']['c4_member_pipeline'] is True
     assert install_serve.main(['--config',str(config_path),'--variant','candidate','--plan'])==0
     direct=json.loads(capsys.readouterr().out)
@@ -123,15 +126,15 @@ def test_bf16_candidate_replaces_legacy_pipeline_gate_and_blocks_model_on_failur
         assert config['experimental_c4_member_pipeline'] is True
         assert json.loads(Path(config_path).read_text())['experimental_c4_member_pipeline'] is True
         seen.append('pipeline_gate')
-        error=RuntimeError('BF16 NPU graph rejected');error.phase='bf16-attention-evidence';raise error
-    monkeypatch.setattr(observe,'_bf16_attention_gate',fail)
+        error=RuntimeError('BF16 NPU graph rejected');error.phase='aligned-attention-evidence';raise error
+    monkeypatch.setattr(observe,'_aligned_attention_gate',fail)
     monkeypatch.setattr(observe,'managed_server',lambda *a,**k:pytest.fail('failed BF16 gate must block model startup'))
     monkeypatch.setattr(observe,'_terminal',lambda *a,**k:None)
     logs=tmp_path/'observe'
     assert observe.run(config_path,logs,'candidate')==1
     assert seen==['pipeline_gate']
     status=json.loads((logs/'status.json').read_text())
-    assert status['status']=='failed' and status['failed_phase']=='bf16-attention-evidence'
+    assert status['status']=='failed' and status['failed_phase']=='aligned-attention-evidence'
 
 
 @pytest.mark.parametrize('baseline,candidate,passed',[(1.148704,1.0,False),(11.5,10.0,True),(10.0,10.0,False)])

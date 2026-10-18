@@ -216,7 +216,7 @@ def test_real_forward_and_mixed_dispatch_reuse_without_skipping_layer_work(monke
     assert len(candidate.workspace._oscar_prepared_tasks) == 2
 
 
-def test_default_16k_mixed_forward_selects_bf16_decode_and_c16_with_prepare_reuse(monkeypatch):
+def test_default_16k_mixed_forward_selects_aligned_decode_and_c16_with_prepare_reuse(monkeypatch):
     """Real dispatcher and numeric metadata, shape-only QKV to avoid model math."""
     from test_prepare_reuse import _fixture, AscendAttentionState
     from tools.serving_variants import variant_config
@@ -233,17 +233,26 @@ def test_default_16k_mixed_forward_selects_bf16_decode_and_c16_with_prepare_reus
     ops.rotate_vector_init_out = ops.rotate_out
     ops.rotate_clip_store_striped_out = ops.rotate_clip_store_out
     selected = []
-    for name in ('attention_cv_bf16_decode_out', 'attention_cv_bf16_cluster16_out'):
+    for name in ('attention_cv_aligned_decode_out', 'attention_cv_aligned_cluster16_out'):
         def cv(*args, name=name):
             assert args[4].dtype == torch.bfloat16
-            selected.append(name); ops.attention_cv_out(*args)
+            assert args[-2]==0  # native mixed prefill classification, not qcount inference
+            selected.append(name); ops.attention_cv_out(*(args[:-2]+args[-1:]))
         setattr(ops, name, cv)
+    f.workspace.query_rot_bf16=torch.empty(probe.TOKENS,6,256,dtype=torch.bfloat16,device='meta')
+    f.workspace.key_rot_bf16=torch.empty(probe.TOKENS,1,256,dtype=torch.bfloat16,device='meta')
+    f.workspace.value_rot_bf16=torch.empty_like(f.workspace.key_rot_bf16)
+    def qcopy(q,slots,out,status,cores):
+        f.counts['rotate']+=1;out.copy_(q);status.zero_()
+    ops.copy_validate_bf16_query_out=qcopy
+    ops.store_aligned_int2_out=ops.rotate_clip_store_out
     for state in f.states.values():
-        state.cache_format = 'striped_v1'
+        state.cache_format = 'striped_fp32_v2'
+        state.rotation_k_bf16=torch.empty(256,256,dtype=torch.bfloat16,device='meta')
         state.rotation_v_bf16 = torch.empty(256, 256, dtype=torch.bfloat16, device='meta')
         state.rotation_v_nz = None
     f.run(metadata)
-    assert selected == ['attention_cv_bf16_decode_out', 'attention_cv_bf16_cluster16_out']*16
+    assert selected == ['attention_cv_aligned_decode_out', 'attention_cv_aligned_cluster16_out']*16
     assert f.counts['prepare'] == f.counts['suppress'] == 2
     assert f.counts['cv'] == f.counts['current_fia'] == f.counts['store'] == f.counts['merge'] == 32
     assert f.counts['guard'] == 48
@@ -312,7 +321,7 @@ def test_observe_gate_binds_sources_and_artifact_keeps_reports_separate(monkeypa
 
 def test_prepare_gate_failure_blocks_managed_service_and_preserves_rc(monkeypatch, tmp_path):
     from tools import observe_serve
-    for name in ('_preflight', '_bf16_attention_gate', '_striped_cache_gate'):
+    for name in ('_preflight', '_aligned_attention_gate'):
         monkeypatch.setattr(observe_serve, name, lambda *args: None)
     def failure(*args):
         error = RuntimeError('metadata gate rejected'); error.returncode = 2
@@ -320,7 +329,11 @@ def test_prepare_gate_failure_blocks_managed_service_and_preserves_rc(monkeypatc
     monkeypatch.setattr(observe_serve, '_mixed_prepare_reuse_gate', failure)
     monkeypatch.setattr(observe_serve, 'managed_server', lambda *args, **kwargs: pytest.fail('gate must block service'))
     monkeypatch.setattr(observe_serve, '_terminal', lambda *args, **kwargs: None)
-    assert observe_serve.run(probe.ROOT/'configs/target.json', tmp_path, 'candidate') == 2
+    model=tmp_path/'model';model.mkdir()
+    (model/'config.json').write_text('{"architectures":["Qwen3_5ForConditionalGeneration"]}')
+    source=json.loads((probe.ROOT/'configs/target.json').read_text());source['model']=str(model)
+    config_path=tmp_path/'target.json';config_path.write_text(json.dumps(source))
+    assert observe_serve.run(config_path, tmp_path, 'candidate') == 2
     status = json.loads((tmp_path/'status.json').read_text())
     assert status['failed_phase'] == 'mixed-prepare-reuse' and status['returncode'] == 2
     effective = json.loads((tmp_path/'effective-target.json').read_text())

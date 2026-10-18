@@ -13,6 +13,7 @@ from .deploy import plan as deploy_plan
 from .phase import atomic_json, run_phase, terminal_line
 from .target_cli import target_env, serve_argv, diagnose_guard_enabled
 from .serving_variants import variant_config, variant_features, runtime_feature_summary
+from .model_config import add_model_arguments, apply_model_options
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -26,8 +27,8 @@ def main(argv=None) -> int:
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
     parser.add_argument("--plan", action="store_true", help="print commands without installing or touching an NPU")
     parser.add_argument("--log-dir", type=Path)
-    parser.add_argument("--variant", choices=("baseline", "candidate"),
-                        help="candidate enables C4, later-MTP q1, fast unpack mixed balanced/C16 and striped INT2/SIMD; baseline selects fe0; omitted respects config")
+    parser.add_argument("--variant", choices=("baseline", "candidate"), default="candidate",
+                        help="default candidate enables current BF16 alignment; explicit baseline selects the historical FP32 route")
     parser.add_argument("--rear-cards", action="store_true",
                         help="use physical Ascend devices 4,5,6,7 and port 7878 for this launch only")
     parser.add_argument("--native-token-budget", action="store_true",
@@ -36,6 +37,7 @@ def main(argv=None) -> int:
                         help="pass the native prefix-cache switch; disabled by default on aisbench-stable")
     parser.add_argument("--diagnose-trap", action="store_true",
                         help="attribute guard site/family/code with host sync and eager service; timings are invalid for performance")
+    add_model_arguments(parser)
     args = parser.parse_args(argv)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     log_dir = (args.log_dir or ROOT / "logs" / stamp).resolve()
@@ -46,6 +48,7 @@ def main(argv=None) -> int:
     try:
         config = json.loads(args.config.read_text())
         original_config = dict(config)
+        config = apply_model_options(config, args, require_model=not args.plan)
         if args.enable_prefix_caching is not None:
             config["enable_prefix_caching"] = args.enable_prefix_caching
         if args.native_token_budget:
@@ -89,6 +92,7 @@ def main(argv=None) -> int:
                   effective_config=str(effective_path),
                   placement="rear" if args.rear_cards else "configured",
                   target_devices=config["devices"], port=config["port"],
+                  model_resolution=config["model_resolution"],
                   optimizations=variant_features(config))
     if diagnose_guard_enabled(config):
         status.update(measurement="guard_diagnostic", performance_acceptance="invalid_diagnostic")
@@ -98,6 +102,7 @@ def main(argv=None) -> int:
                           "variant": variant, "optimizations": status["optimizations"],
                           "runtime_selection": runtime_feature_summary(config, variant),
                           "target_devices": config["devices"], "port": config["port"],
+                          "model_resolution": config["model_resolution"],
                           "diagnose_trap": diagnose_guard_enabled(config),
                           "placement": status["placement"]}, indent=2))
         return 0
@@ -117,6 +122,8 @@ def main(argv=None) -> int:
           f"STRIPED={'on' if config.get('experimental_striped_cache', False) else 'off'} "
           f"placement={status['placement']} config={effective_path}", flush=True)
     print(f"[oscar] devices={env.get('ASCEND_RT_VISIBLE_DEVICES', 'diagnostic')} port={config['port']}", flush=True)
+    print("[oscar] MODEL_SELECTION " + json.dumps(config["model_resolution"],
+          sort_keys=True, separators=(",", ":")), flush=True)
     print("[oscar] PERF_RUNTIME_CONFIG "+json.dumps(runtime_feature_summary(config,variant),
           sort_keys=True,separators=(",",":")),flush=True)
     rc = 0

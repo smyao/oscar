@@ -3,6 +3,9 @@ name: oscar-quant-optimization
 description: 在 gpt_new_oscar_kimi 工程优化 OSCAR INT2 量化、反量化及相关 attention 数据流，按现存源码、配对证据、冻结精度和一键候选交付形成闭环。用于该工程的性能迭代与真机反馈处理，不用于其他 OSCAR 工程或通用模型调优。
 ---
 
+> 2026-10-18最新：默认所有入口使用原版Qwen3.8-27B，移除默认ascend权重量化及旧YaRN×4覆盖，按模型自身RoPE；显式W8A8仍支持，MTP/APC-off/16384/设备端口不变。官方OSCAR339368e的qqt/sst→U·H·Pbr替代默认data-free H；模型采样在NPU，离线FP64统计/eigh采用CPU同精度实现，不是推理回退。candidate默认使用版本化144B FP32 normalized-zero metadata/BF16旋转与attention，原136B与旧oracle留作历史；新v3容差预先固定。用户禁止性能测试/真机连接，仅源码/编译/功能/图契约验证。只推codex/oscar-bf16-attention，main/stable不动。
+
+
 # OSCAR 量化优化闭环
 
 > 2026-10-16最新用户授权：本次仅新建BF16分支，main/stable保留。旧FP32-only与新旧输出逐位门被BF16计算合同替代；QK/PV/Rv BF16乘数、FP32硬件累加及在线状态，独立BF16 oracle容差预先冻结。INT2存储、原生vLLM参数/GDN/MTP不变。详见AGENTS.md最新节。

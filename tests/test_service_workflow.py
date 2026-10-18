@@ -42,7 +42,7 @@ def configured(tmp_path):
     config = json.loads((ROOT / "configs/target.json").read_text())
     model = tmp_path / "model"
     model.mkdir()
-    (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+    (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
         "full_attention_interval": 4, "head_dim": 64}))
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
@@ -153,13 +153,14 @@ def fake_command(tmp_path, config, mode="good"):
     return [sys.executable, str(program), str(config["port"]), mode, str(records)]
 
 
-def invoke(tmp_path, config_path, command, *, serve=False, resources=None):
+def invoke(tmp_path, config_path, command, *, serve=False, correctness_only=False, resources=None):
     observations = []
     def memory(config, **kwargs):
         observations.append(config["devices"])
         return snapshot(config["devices"]) if resources is None else resources(len(observations))
     report = run_service(config_path, output=tmp_path / "report.json", log_dir=tmp_path / "logs",
-        command=command, serve=serve, tokenizer_factory=lambda model: Tokenizer(), resource_reader=memory)
+        command=command, serve=serve, correctness_only=correctness_only,
+        tokenizer_factory=lambda model: Tokenizer(), resource_reader=memory)
     assert json.loads((tmp_path / "report.json").read_text()) == report
     assert report["status"] != "running"
     return report, observations
@@ -169,6 +170,35 @@ def test_exact_prompt_uses_local_encoded_ids_and_no_special_tokens():
     assert exact_prompt(Tokenizer(), 12) == [17,32,901,7,10,17,32,901,7,10,17,32]
     with pytest.raises(ValueError):
         exact_prompt(Tokenizer(), 0)
+
+
+@pytest.mark.parametrize("automatic", [False, True])
+def test_correctness_only_keeps_real_short_request_graph_mtp_and_cleanup(tmp_path, monkeypatch, automatic):
+    config, path = configured(tmp_path)
+    if automatic:
+        config["experimental_bf16_attention"] = True
+        path.write_text(json.dumps(config))
+    monkeypatch.setattr(service_probe, "run_synthetic_mixed",
+                        lambda *a, **k: pytest.fail("correctness-only must not run synthetic performance"))
+    report, observations = invoke(tmp_path, path, fake_command(tmp_path, config),
+                                  correctness_only=not automatic)
+    assert report["status"] == "passed"
+    assert len(report["requests"]) == 1 and report["requests"][0]["prompt_tokens"] == 128
+    assert report["mtp"]["status"] == report["telemetry"]["status"] == "passed"
+    assert report["server"]["cleanup_complete"] is True
+    assert report["resource_release"] == "passed" and len(observations) >= 2
+    assert report["performance"] == "not_run_user_requested"
+    assert report["scope"] == "short_service_startup_graph_mtp_not_model_quality"
+
+
+def test_correctness_only_does_not_relax_graph_mtp_evidence(tmp_path, monkeypatch):
+    config, path = configured(tmp_path)
+    monkeypatch.setattr(service_probe, "run_synthetic_mixed",
+                        lambda *a, **k: pytest.fail("correctness-only must not run synthetic performance"))
+    report, _ = invoke(tmp_path, path, fake_command(tmp_path, config, "no_mtp"), correctness_only=True)
+    assert report["status"] == "failed" and report["mtp"]["status"] == "failed"
+    assert report["performance"] == "not_run_user_requested"
+    assert report["server"]["cleanup_complete"] is True
 
 
 def test_worker_progress_distinguishes_no_debug_host_dispatch_and_device_checkpoint(tmp_path):

@@ -8,6 +8,7 @@ OSCAR scheduling override. No native default is guessed here.
 """
 
 FEATURE_FLAGS = {
+    "aligned_math": "experimental_aligned_math",
     "bf16_attention": "experimental_bf16_attention",
     "history_cluster4": "experimental_history_reuse",
     "later_mtp_q1": "experimental_history_reuse",
@@ -135,6 +136,8 @@ def variant_config(config: dict, variant: str | None) -> dict:
         raise ValueError("striped cache requires explicit mixed/fast/history candidate configuration")
     if selected.get("experimental_decode_bundle", False) and not selected.get("experimental_striped_cache", False):
         raise ValueError("decode bundle requires the explicit striped cache bundle")
+    if selected.get("experimental_aligned_math", False) and not selected.get("experimental_bf16_attention", False):
+        raise ValueError("aligned math requires BF16 attention")
     if selected.get("experimental_bf16_attention", False) and not (
             selected.get("experimental_striped_cache", False) and
             selected.get("experimental_decode_bundle", False) and
@@ -187,6 +190,9 @@ def runtime_feature_summary(config: dict, variant: str | None) -> dict:
     return {"variant":variant,"optimizations":variant_features(config),
             "attention_compute":{"operands":"bfloat16" if config.get("experimental_bf16_attention", False) else "float32",
                                  "accumulator":"float32", "softmax_lse_merge":"float32"},
+            "oscar_math_profile":"oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "legacy",
+            "rotation_method":config.get("rotation_method"),
+            "metadata_dtype":"float32" if config.get("experimental_aligned_math",False) else "float16",
             "prefix_caching":config.get("enable_prefix_caching", False),
             "token_budget_source":"native" if config.get("use_native_token_budget", False) else "explicit",
             "max_num_batched_tokens":config.get("max_num_batched_tokens"),

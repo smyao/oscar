@@ -85,5 +85,9 @@ def test_frozen_fe0_kernels_and_acceptance_are_unchanged():
         assert hashlib.sha256((ROOT/'csrc/kernels'/name).read_bytes()).hexdigest() == expected
     # Stable's launch fixture is independently captured from the user's base.
     frozen = json.loads((ROOT/'reports/stable_32k_64k_20261015/frozen_launch.json').read_text())
-    assert hashlib.sha256((ROOT/'configs/target.json').read_bytes()).hexdigest() == frozen['target_sha256']
+    from test_stable_launch_frozen import authorized_model_arguments
+    from tools.target_cli import serve_argv
+    from tools.serving_variants import variant_config
+    config=variant_config(json.loads((ROOT/'configs/target.json').read_text()),'candidate')
+    assert serve_argv(config)==authorized_model_arguments(frozen['cases']['direct_prefix_false']['argv'])
     assert hashlib.sha256((ROOT/'configs/acceptance.json').read_bytes()).hexdigest() == frozen['acceptance_sha256']

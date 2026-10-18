@@ -33,8 +33,11 @@ class SlotLayout:
     head_size: int
     head_size_v: int | None = None
     num_kv_heads: int = 1
+    metadata_bytes: int = 2
 
     def __post_init__(self) -> None:
+        if self.metadata_bytes not in (2, 4) or type(self.metadata_bytes) is not int:
+            raise ValueError("metadata_bytes must explicitly select legacy2 or aligned4")
         _positive("head_size", self.head_size)
         if self.head_size_v is None:
             object.__setattr__(self, "head_size_v", self.head_size)
@@ -55,11 +58,11 @@ class SlotLayout:
 
     @property
     def k_zero_offset(self) -> int:
-        return self.k_code_bytes + 2
+        return self.k_code_bytes + self.metadata_bytes
 
     @property
     def v_codes_offset(self) -> int:
-        return self.k_code_bytes + 4
+        return self.k_code_bytes + 2 * self.metadata_bytes
 
     @property
     def v_scale_offset(self) -> int:
@@ -67,11 +70,11 @@ class SlotLayout:
 
     @property
     def v_zero_offset(self) -> int:
-        return self.v_scale_offset + 2
+        return self.v_scale_offset + self.metadata_bytes
 
     @property
     def slot_bytes(self) -> int:
-        return self.k_code_bytes + self.v_code_bytes + 8
+        return self.k_code_bytes + self.v_code_bytes + 4 * self.metadata_bytes
 
     @property
     def token_bytes(self) -> int:

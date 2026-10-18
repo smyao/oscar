@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-18最新：默认所有入口使用原版Qwen3.8-27B，移除默认ascend权重量化及旧YaRN×4覆盖，按模型自身RoPE；显式W8A8仍支持，MTP/APC-off/16384/设备端口不变。官方OSCAR339368e的qqt/sst→U·H·Pbr替代默认data-free H；模型采样在NPU，离线FP64统计/eigh采用CPU同精度实现，不是推理回退。candidate默认使用版本化144B FP32 normalized-zero metadata/BF16旋转与attention，原136B与旧oracle留作历史；新v3容差预先固定。用户禁止性能测试/真机连接，仅源码/编译/功能/图契约验证。只推codex/oscar-bf16-attention，main/stable不动。
+
 ## 2026-10-16 BF16分支任务（优先于旧FP32-only门）
 
 - 用户报告当前main的32K约34分钟并同意保留；只在`codex/oscar-bf16-attention`开发和推送，基底为最新main `7047ce36`，main/stable不移动。默认vLLM argv、设备、端口、原生调度/GDN/prefix/MTP保持。

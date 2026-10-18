@@ -79,7 +79,8 @@ class OscarAttentionImpl(AttentionImpl):
             raise OscarReadinessError("target CV production ABI requires BF16 Q/K/V")
         state = self.provider.layer_state(layer.layer_name)
         striped_cache = self.provider.config.get("experimental_striped_cache", False)
-        expected_format = "striped_v1" if striped_cache else "canonical_v1"
+        aligned_math = self.provider.config.get("experimental_aligned_math",False)
+        expected_format = "striped_fp32_v2" if aligned_math else "striped_v1" if striped_cache else "canonical_v1"
         from oscar_ascend.integration.cache_storage_ops import (
             REQUEST_FORMAT, REQUEST_CLUSTER_READERS, storage_reader, request_map, store_current)
         if self.provider.config.get("experimental_request_windows", False):
@@ -218,7 +219,11 @@ class OscarAttentionImpl(AttentionImpl):
             # preset explicitly selects the separately registered vector-Init path.
             rotate_name = ("rotate_vector_init_out" if self.provider.config.get(
                 "experimental_quantization_bundle", False) else "rotate_out")
-            getattr(ops, rotate_name)(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
+            if aligned_math:
+                from .aligned_math import rotate_query
+                rotate_query(ops,state,q,slots,qr,workspace.rotate_status[:n])
+            else:
+                getattr(ops, rotate_name)(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
         cluster_size = getattr(g, "history_cluster_size", 1)
         # #150/#154: choose the preset's q4/q1 reader and its cache format.
         # Host shape selection also fixes the op recorded during capture.
@@ -234,10 +239,13 @@ class OscarAttentionImpl(AttentionImpl):
                               c16_l1_reuse=self.provider.config.get("experimental_c16_l1_reuse", False),
                               hybrid_l1_decode=self.provider.config.get("experimental_hybrid_l1_decode", False),
                               bf16_attention=self.provider.config.get("experimental_bf16_attention", False))
+        if aligned_math:
+            from ..ops.cv_dispatch import ALIGNED_CV_MAP
+            cv_name = ALIGNED_CV_MAP[cv_name]
         cv_name = storage_reader(state, cv_name)
-        from ..ops.cv_dispatch import HYBRID_L1_DECODE_CV_OP, BF16_CV_OPS
+        from ..ops.cv_dispatch import HYBRID_L1_DECODE_CV_OP, BF16_CV_OPS, ALIGNED_CV_OPS
         rotation_v = state.rotation_v
-        if cv_name in BF16_CV_OPS:
+        if cv_name in BF16_CV_OPS | ALIGNED_CV_OPS:
             rotation_v = getattr(state, "rotation_v_bf16", None)
             if rotation_v is None or rotation_v.dtype != torch.bfloat16:
                 raise OscarReadinessError("BF16 attention requires its preallocated natural BF16 V rotation")
@@ -255,6 +263,10 @@ class OscarAttentionImpl(AttentionImpl):
             cv_op = getattr(ops, cv_name)
             cv_extra = ((workspace.cluster_stats,)
                         if cv_name in CLUSTER_CV_OPS | REQUEST_CLUSTER_READERS else ())
+            mode_args = ()
+            if aligned_math:
+                from .aligned_math import dequant_mode
+                mode_args = (dequant_mode(attn_metadata),)
             cv_op(
                 q, qr, k, v, rotation_v, state.raw,
                 (attn_metadata.block_tables[:attn_metadata.num_reqs] if request_args
@@ -264,7 +276,7 @@ class OscarAttentionImpl(AttentionImpl):
                 state.spec.block_size, state.num_blocks,
                 state.num_blocks * state.spec.conv_bytes, state.spec.ssm_bytes,
                 state.snapshots.sink_tokens, state.snapshots.recent_tokens,
-                state.snapshots.speculative_tokens, source_splits, self.scale, g.cube_cores,
+                state.snapshots.speculative_tokens, source_splits, self.scale, *mode_args, g.cube_cores,
                 *request_attrs)
         if native_current:
             active = attn_metadata.num_actual_tokens

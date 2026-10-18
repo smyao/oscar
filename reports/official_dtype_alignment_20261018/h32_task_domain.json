@@ -1,0 +1,74 @@
+{
+  "S": 64,
+  "R": 1,
+  "speculative": 3,
+  "context": 96,
+  "cores": 4,
+  "live_queries": 337,
+  "padding_queries": 1,
+  "full_group_leaders": 16,
+  "shared_history_range": [
+    64,
+    96
+  ],
+  "tail_task_source0": [
+    336,
+    1,
+    0,
+    64,
+    96,
+    0,
+    0,
+    0,
+    96,
+    0,
+    0
+  ],
+  "padding_task_source0": [
+    337,
+    -1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "actual_cluster_stats": {
+    "c16": [
+      1,
+      16,
+      1,
+      1,
+      15,
+      1,
+      16,
+      1
+    ],
+    "c4": [
+      4,
+      16,
+      1,
+      4,
+      12,
+      1,
+      16,
+      4
+    ],
+    "c16-fault": [
+      1,
+      16,
+      1,
+      1,
+      15,
+      1,
+      16,
+      1
+    ]
+  },
+  "source2": "explicitly suppressed; q4 full-source cases cover current",
+  "all_assertions_passed": true
+}

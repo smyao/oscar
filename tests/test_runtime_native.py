@@ -708,3 +708,28 @@ def test_native_padded_mtp_requires_slot_derived_draft_position(monkeypatch, bas
     assert int(updated.seq_lens[0]) - 1 - logical_position == 3 - accepted_proposals
     assert metadata.draft_index == 1 and updates == [1]
     assert int(updated.query_start_loc[-1]) == 1
+
+
+@pytest.mark.parametrize("prefix", [False, True])
+def test_aligned_metadata_width_survives_native_spec_copy_and_keeps_gdn(native_specs, prefix):
+    interface, ours, registry = native_specs
+    mode = "align" if prefix else "none"
+    native_block = 768 if prefix else 262144
+    page_bytes = 801792 if prefix else 817152
+    conv_shape = (3, 2560) if prefix else (6, 2560)
+    full = interface.FullAttentionSpec(block_size=128, num_kv_heads=1, head_size=256,
+        dtype=torch.bfloat16, page_size_padded=page_bytes)
+    gdn = interface.MambaSpec(block_size=native_block, shapes=(conv_shape,(12,128,128)),
+        dtypes=(torch.bfloat16,torch.bfloat16),page_size_padded=page_bytes,
+        num_speculative_blocks=3,mamba_cache_mode=mode)
+    converted=ours.transform_native_specs({"full":full,"gdn":gdn},metadata_bytes=4)
+    assert converted["gdn"] is gdn
+    physical=converted["full"]; virtual=physical.copy_with_new_block_size(128)
+    assert physical.metadata_bytes==virtual.metadata_bytes==4
+    assert physical.layout.slot_layout.slot_bytes==144
+    assert physical.block_size==(2304 if prefix else 2688)
+    assert virtual.layout==physical.layout and virtual.storage_block_size==physical.block_size
+    assert physical.page_size_bytes==gdn.page_size_bytes
+    assert ours.OscarFullAttentionSpec.merge([physical,copy.deepcopy(physical)])==physical
+    with pytest.raises(AssertionError):
+        ours.OscarFullAttentionSpec.merge([physical,ours.transform_native_specs({"full":full,"gdn":gdn})["full"]])

@@ -1,0 +1,69 @@
+{
+  "status": "implemented_and_host_contracts_passed",
+  "official_commit": "339368e8fb440c53d5e157a5974036f25f3841a0",
+  "source_sha256": {
+    "oscar_ascend/rotations.py": "cfac56e4767a48d87ea78d8b5279ab0fbacabed5b26f101886b6cfdc0b986cb4",
+    "oscar_ascend/rotation_calibration.py": "eeb3681e07a4b5be3056a00ce94224516172f5629dbb89ccb2eb1c3722a1a7d1",
+    "oscar_ascend/integration/rotation_capture.py": "6e1cd989c845f66ac9489286bbc98fce86988585ea726a23f713b2bc9c40786d",
+    "tools/prepare_rotations.py": "e726ef0055c195ec85fb83746d3bf383fd0ded2402becb8b136a662acb4ee6c4",
+    "tools/calibrate_model_rotations.py": "c1be61a5482a6bad878aadd166951f705905d0da21fab76455e96376ff96b584",
+    "tests/test_official_rotation_calibration.py": "4c4de4cf9b41764a691f0919af7f49ce3648f8496a84bdf0ee8d3f70cf9bebd1",
+    "tests/test_rotation_capture.py": "3d3939c05fd59154ea60bf875c57bb650fd9b6490b7c5fd3d40379489eeb8904"
+  },
+  "primary_source_sha256": {
+    "qwen38.sh": "ecd21aaf27fccbc44d5d4164d833dab623d0e1e49f2aff8c58a2f80e331e2375",
+    "upstream/python/sglang/srt/mem_cache/oscar_calibration.py": "9c3630ee41edcd6749201b8ab68edd112f485d3d95ff451750261eca1e78f9f7",
+    "upstream/python/sglang/srt/entrypoints/oscar_startup_calibration.py": "e19ff378c042f2cae448969c450d57858eb8f374f38e59249016b2ae5b7f3d46",
+    "upstream/python/sglang/srt/mem_cache/oscar_rotation_paths.py": "fe6125dc16bca029a664d2669065779aa2cb4cc99bd104e6a5ce0a35d2edcc1f"
+  },
+  "recipe": {
+    "post_rope_one_pass": true,
+    "q_gram_dtype": "float64",
+    "q_gram_chunk_tokens": 512,
+    "weighted_v_covariance_chunk_tokens": 2048,
+    "V_energy_denominator_clamp": 1e-12,
+    "aggregation": "sum per local KV head across complete TP ranks, divide global KV heads times replication",
+    "decomposition": "batched FP64 eigh; U @ normalized Sylvester H @ eigenvalue-sorted bit-reversal permutation",
+    "rotation_storage": "float32",
+    "grouping": "global FULL layer, shared across heads",
+    "GPQA_choice_seed": 0,
+    "default_max_prompt_tokens": 30000,
+    "prompt_budget_policy": "whole ordered prompts; no truncation; one native prefill each",
+    "statistical_fitting_device": "CPU offline",
+    "model_forward_device": "NPU required; CPU inputs only explicit testing"
+  },
+  "artifact_contract": {
+    "official_K": "k_rotation_qqt_r_h_pbr.pt",
+    "official_V": "v_rotation_sst_r_h_pbr.pt",
+    "local_runtime": "calibrated.pt",
+    "publication": "exclusive pair lock; pending marker; atomic replacements; complete SHA manifest",
+    "runtime_validation": "shared lock, no pending, file SHA and generation, exact pair/combined constants, profile/model identity, NPU orthogonality validation",
+    "legacy_Hadamard_reuse": false
+  },
+  "host_validation": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_rotation_capture.py tests/test_official_rotation_calibration.py tests/test_rotations.py tests/test_rotation_pipeline.py",
+      "passed": 95,
+      "warnings": 1,
+      "seconds": 1.11
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_rotation_capture.py tests/test_official_rotation_calibration.py",
+      "passed": 31,
+      "warnings": 1,
+      "seconds": 0.91,
+      "scope": "final cache-descriptor edit"
+    }
+  ],
+  "NPU_model_run": "not_run",
+  "real_PT_generation": "not_run",
+  "model_quality": "not_run",
+  "performance": "not_run_user_request",
+  "native_source_modified": false,
+  "git_commit_by_this_agent": false,
+  "qualification_limits": [
+    "Host doubles prove API/order/lifetime, not real native model execution.",
+    "Offline FP64 CPU algebra matches official objectives; different hardware/eigenvector sign conventions do not imply byte-identical PT files.",
+    "Existing stricter matrix orthogonality threshold5e-4 retained; upstream publication uses5e-3."
+  ]
+}

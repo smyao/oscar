@@ -180,6 +180,9 @@ def test_observer_requires_signed_npu_evidence_and_preserves_phase_rc(tmp_path,m
 def test_observer_wires_enabled_gate_before_service_and_failure_blocks_it(tmp_path,monkeypatch):
     source=json.loads((observe_serve.ROOT/"configs/target.json").read_text())
     source["experimental_current_only"]=True
+    model=tmp_path/'model';model.mkdir()
+    (model/'config.json').write_text(json.dumps({'architectures':['Qwen3_5ForConditionalGeneration']}))
+    source['model']=str(model)
     config=tmp_path/"config.json";config.write_text(json.dumps(source))
     # Isolate the one gate under test; unrelated newer NPU gates must not
     # launch resource observers in this host-only wiring regression.

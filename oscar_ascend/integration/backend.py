@@ -41,7 +41,7 @@ class OscarAttentionBackend(AttentionBackend):
     def get_kv_cache_shape(num_blocks, block_size, num_kv_heads, head_size, cache_dtype_str=""):
         # Native signature has no head_size_v. Actual hybrid allocation must
         # use OscarFullAttentionSpec.layout and packed_view, not this hint.
-        return (num_blocks, block_size, num_kv_heads, SlotLayout(head_size).slot_bytes)
+        return (num_blocks, block_size, num_kv_heads, SlotLayout(head_size, metadata_bytes=4 if require_runtime().config.get("experimental_aligned_math",False) else 2).slot_bytes)
 
     @staticmethod
     def get_supported_kernel_block_sizes():

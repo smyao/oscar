@@ -27,6 +27,13 @@ def target():
     return json.loads((install_serve.ROOT / "configs/target.json").read_text())
 
 
+def local_target(tmp_path):
+    config=target();model=tmp_path/'model';model.mkdir(exist_ok=True)
+    (model/'config.json').write_text('{"architectures":["Qwen3_5ForConditionalGeneration"]}')
+    config['model']=str(model)
+    return config
+
+
 def selected():
     return variant_config(target(), "candidate")
 
@@ -130,7 +137,7 @@ def test_legacy_budgetless_config_retains_native_mode_and_rejects_foreign_schedu
 @pytest.mark.parametrize("rear", [False, True])
 def test_every_install_phase_and_service_receive_frozen_stable_config(monkeypatch, tmp_path, rear):
     path = tmp_path / "target.json"
-    path.write_text(json.dumps(target()))
+    path.write_text(json.dumps(local_target(tmp_path)))
     before = path.read_bytes()
     logs = tmp_path / "run"
     seen = []
@@ -215,7 +222,7 @@ def test_explicit_native_budget_shell_mode_remains_available(tmp_path, script, o
 
 
 def test_observe_candidate_gates_and_service_share_stable_effective_config(monkeypatch, tmp_path):
-    source = tmp_path / "target.json"; source.write_text(json.dumps(target()))
+    source = tmp_path / "target.json"; source.write_text(json.dumps(local_target(tmp_path)))
     before = source.read_bytes(); logs = tmp_path / "observe"
     seen = []
 
@@ -234,14 +241,14 @@ def test_observe_candidate_gates_and_service_share_stable_effective_config(monke
                    ("hybrid_l1_decode", "c16_l1_reuse", "c4_member_pipeline", "prepare_reuse"))
         assert "--scheduler-cls" not in serve_argv(config)
 
-    gates = ("_preflight", "_bf16_attention_gate", "_striped_cache_gate",
+    gates = ("_preflight", "_aligned_attention_gate",
              "_mixed_prepare_reuse_gate", "_current_only_gate",
              "_first_mtp_current_gate", "_mixed_decode_split_gate")
     for name in gates:
         def gate(path, config, env, *_args, name=name):
             check(path, config, env); seen.append(name)
         monkeypatch.setattr(observe_serve, name, gate)
-    for name in ("_prefix_cache_gate", "_c16_member_pipeline_gate", "_request_window_gate",
+    for name in ("_prefix_cache_gate", "_bf16_attention_gate", "_striped_cache_gate", "_c16_member_pipeline_gate", "_request_window_gate",
                  "_candidate_gate", "_fast_unpack_gate", "_mixed_optimization_gate",
                  "_c4_member_pipeline_gate", "_c16_l1_reuse_gate", "_decode_bundle_gate",
                  "_mdl_decode_gate", "_hybrid_l1_decode_gate"):

@@ -22,12 +22,19 @@ AUDITS = {"environment", "runtime-readiness", "binary-readiness", "native-integr
 
 def _configure(monkeypatch, tmp_path, *, devices=None):
     config = json.loads((ROOT / "configs/target.json").read_text())
+    model = tmp_path / "model"
+    model.mkdir()
+    (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"]}))
+    config["model"] = str(model)
+    from tools.model_config import apply_model_options
+    from tools.serving_variants import variant_config
+    config = variant_config(apply_model_options(config, require_model=True), "baseline")
     if devices is not None:
         config["devices"] = devices
     path = tmp_path / "target.json"
     path.write_text(json.dumps(config))
     logs = tmp_path / "logs"
-    monkeypatch.setattr(sys, "argv", ["deploy", "--config", str(path), "--log-dir", str(logs)])
+    monkeypatch.setattr(sys, "argv", ["deploy", "--variant", "baseline", "--config", str(path), "--log-dir", str(logs)])
     return config, path, logs
 
 

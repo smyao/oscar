@@ -32,6 +32,7 @@ class OscarFullAttentionSpec(FullAttentionSpec):
     native_mamba_cache_mode: str = "align"
     metadata_block_view: bool = False
     request_window_storage: bool = False
+    metadata_bytes: int = 2
 
     def __post_init__(self):
         super().__post_init__()
@@ -53,7 +54,7 @@ class OscarFullAttentionSpec(FullAttentionSpec):
     @property
     def layout(self) -> HybridPageLayout | DualRegionPageLayout:
         native = HybridPageLayout(
-            SlotLayout(self.head_size, self.head_size_v, self.num_kv_heads),
+            SlotLayout(self.head_size, self.head_size_v, self.num_kv_heads, self.metadata_bytes),
             self.conv_bytes, self.ssm_bytes, self.native_mamba_block_size, self.kernel_block_size,
             self.native_page_size_bytes, self.native_mamba_cache_mode)
         return DualRegionPageLayout(native) if self.request_window_storage else native
@@ -102,7 +103,7 @@ def register_oscar_spec() -> None:
         uniform_type_base_spec=OscarFullAttentionSpec)
 
 
-def transform_native_specs(native_specs: dict, *, request_windows: bool = False) -> dict:
+def transform_native_specs(native_specs: dict, *, request_windows: bool = False, metadata_bytes: int = 2) -> dict:
     """Initialization-only conversion; no online tensor data is touched.
 
     Exact type matching leaves MLA/sliding-window/hidden-state cache specs
@@ -131,7 +132,7 @@ def transform_native_specs(native_specs: dict, *, request_windows: bool = False)
         if type(spec) is not FullAttentionSpec:
             converted[name] = spec
             continue
-        layout = HybridPageLayout(SlotLayout(spec.head_size, spec.head_size_v, spec.num_kv_heads),
+        layout = HybridPageLayout(SlotLayout(spec.head_size, spec.head_size_v, spec.num_kv_heads, metadata_bytes),
                                   conv, ssm, mamba_block, native_page_size_bytes=native_page,
                                   native_mamba_cache_mode=mamba_mode)
         if request_windows:
@@ -143,7 +144,7 @@ def transform_native_specs(native_specs: dict, *, request_windows: bool = False)
             sliding_window=spec.sliding_window, attention_chunk_size=spec.attention_chunk_size,
             conv_bytes=conv, ssm_bytes=ssm, native_mamba_block_size=mamba_block,
             native_page_size_bytes=native_page, native_mamba_cache_mode=mamba_mode,
-            request_window_storage=request_windows)
+            request_window_storage=request_windows, metadata_bytes=metadata_bytes)
     if not any(isinstance(spec, OscarFullAttentionSpec) for spec in converted.values()):
         raise ValueError("no native FULL attention layer was converted to OSCAR")
     return converted

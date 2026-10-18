@@ -752,7 +752,7 @@ def run_device_event_diagnostic(server, config, tokenizer, *, primary: dict,
     return result
 
 
-def run_service(config_path, *, output, log_dir, serve=False, command=None,
+def run_service(config_path, *, output, log_dir, serve=False, correctness_only=False, command=None,
                 tokenizer_factory=None, resource_reader=None):
     """Run real service requests; injectable boundaries are only for fault tests."""
     config_path, output, log_dir = Path(config_path).resolve(), Path(output).resolve(), Path(log_dir).resolve()
@@ -778,6 +778,11 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
 
     try:
         config = json.loads(config_path.read_text())
+        correctness_only = correctness_only or config.get("experimental_bf16_attention", False)
+        if correctness_only:
+            report.update(validation_mode="correctness_only_user_requested",
+                          performance="not_run_user_requested",
+                          scope="short_service_startup_graph_mtp_not_model_quality")
         _require_no_guard_diagnostic(config)
         target_env(config)  # Fail before any NPU touch when selection is absent.
         report["devices"] = config["devices"]
@@ -792,7 +797,7 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
             raise ServiceProbeError("target MTP must retain three speculative tokens")
         duration = _positive_time(config, "phase_timeout_seconds", 1800)
         deadline = started + duration
-        lengths = (PROBE_LENGTHS[0],) if serve else PROBE_LENGTHS
+        lengths = (PROBE_LENGTHS[0],) if serve or correctness_only else PROBE_LENGTHS
         if max(lengths) + MIN_OUTPUT_TOKENS > config["max_model_len"]:
             raise ServiceProbeError("configured model length cannot cover mandatory service requests")
         for sig in (signal.SIGTERM, signal.SIGINT):
@@ -818,7 +823,7 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
                 report["requests"].append(record)
                 atomic_json(output, report)
                 _terminal(f"[oscar] service request complete prompt={length} generated={record['completion_tokens']}")
-            if not serve:
+            if not serve and not correctness_only:
                 pool = ThreadPoolExecutor(max_workers=4)
                 futures = []
                 try:
@@ -849,7 +854,7 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
             if report["mtp"]["status"] != "passed" or report["telemetry"]["status"] != "passed":
                 raise ServiceProbeError("HTTP completed, but mandatory TP4/FULL/graph/MTP evidence did not pass")
             report["device_completion"] = "real_service_requests_completed"
-            if not serve:
+            if not serve and not correctness_only:
                 try:
                     report["performance"] = run_synthetic_mixed(server, config, tokenizer,
                                                                 log_dir=log_dir, deadline=deadline)
@@ -1067,6 +1072,8 @@ def main():
     parser.add_argument("--output", type=Path, default=ROOT / "reports/service_probe.json")
     parser.add_argument("--log-dir", type=Path, default=ROOT / "logs/service-probe")
     parser.add_argument("--serve", action="store_true", help="keep the validated owned service running until interrupted")
+    parser.add_argument("--correctness-only", action="store_true",
+                        help="short startup/TP4/graph/MTP request gate without synthetic performance; automatic for BF16")
     parser.add_argument("--synthetic", action="store_true",
                         help="run only four synthetic 20/23/27/30K concurrent streaming requests")
     parser.add_argument("--native", action="store_true",
@@ -1077,6 +1084,8 @@ def main():
                         help="frozen policy used by the paired runner's diagnostic trigger")
     args = parser.parse_args()
     if args.synthetic:
+        if args.correctness_only:
+            parser.error("--correctness-only cannot be combined with --synthetic")
         report = run_synthetic_only(args.config, output=args.output, log_dir=args.log_dir,
                                     native=args.native, native_report_path=args.native_report,
                                     acceptance_path=args.acceptance)
@@ -1085,7 +1094,8 @@ def main():
         parser.error("--native requires --synthetic")
     if args.native_report is not None:
         parser.error("--native-report requires --synthetic")
-    report = run_service(args.config, output=args.output, log_dir=args.log_dir, serve=args.serve)
+    report = run_service(args.config, output=args.output, log_dir=args.log_dir, serve=args.serve,
+                         correctness_only=args.correctness_only)
     return 0 if report["status"] in {"passed", "stopped"} else 130 if report["status"] == "interrupted" else 1
 
 

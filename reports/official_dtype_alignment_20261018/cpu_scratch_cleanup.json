@@ -1,0 +1,44 @@
+[
+  {
+    "path": "/tmp/oscar-aligned-fullbuild-20261018/npuchk",
+    "files": 13,
+    "bytes": 107901528,
+    "evidence_preserved": true,
+    "removed_owned_generated_scratch": true
+  },
+  {
+    "path": "/tmp/oscar-aligned-fullbuild-20261018/cceprint",
+    "files": 13,
+    "bytes": 4401528,
+    "evidence_preserved": true,
+    "removed_owned_generated_scratch": true
+  },
+  {
+    "path": "/tmp/oscar-aligned-fullbuild-20261018/stub_reg.log",
+    "files": 1,
+    "bytes": 1105023,
+    "evidence_preserved": true,
+    "removed_owned_generated_scratch": true
+  },
+  {
+    "path": "/tmp/oscar-aligned-bfqr-cpu-20261018/npuchk",
+    "files": 37,
+    "bytes": 5308437739,
+    "evidence_preserved": true,
+    "removed_owned_generated_scratch": true
+  },
+  {
+    "path": "/tmp/oscar-aligned-bfqr-cpu-20261018/cceprint",
+    "files": 37,
+    "bytes": 133195880,
+    "evidence_preserved": true,
+    "removed_owned_generated_scratch": true
+  },
+  {
+    "path": "/tmp/oscar-aligned-bfqr-cpu-20261018/stub_reg.log",
+    "files": 1,
+    "bytes": 1105023,
+    "evidence_preserved": true,
+    "removed_owned_generated_scratch": true
+  }
+]

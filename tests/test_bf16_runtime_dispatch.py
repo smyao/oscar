@@ -38,15 +38,15 @@ def test_forward_fails_closed_before_cv_when_bf16_rv_missing_or_wrong_dtype(bad)
 def test_natural_bf16_rv_is_cached_during_workspace_reservation_without_changing_writer(
         monkeypatch,tmp_path,bf16):
     name="model.layers.0.self_attn.attn"
-    (tmp_path/"config.json").write_text(json.dumps({"num_hidden_layers":1,"layer_types":["full_attention"]}))
+    (tmp_path/"config.json").write_text(json.dumps({"num_hidden_layers":1,"layer_types":["full_attention"],"head_dim":256}))
     config=variant_config(json.loads(Path("configs/target.json").read_text()),"candidate")
-    config.update(model=str(tmp_path),experimental_bf16_attention=bf16)
+    config.update(model=str(tmp_path),experimental_bf16_attention=bf16,experimental_aligned_math=False,rotation_method="hadamard")
     provider=runtime.AscendRuntimeProvider(config)
     key=torch.eye(256);value=torch.eye(256)*2
     inverse=torch.arange(256*256,dtype=torch.float32).reshape(256,256)/4096 - 0.7
     original=inverse.clone();device_rotation=rotations.DeviceRotation(key,value,inverse,False)
     calls=[]
-    monkeypatch.setattr(rotations,"load_artifact",lambda *args,**kwargs: calls.append("load") or object())
+    monkeypatch.setattr(rotations,"load_active_artifact",lambda *args,**kwargs: calls.append("load") or object())
     def prepare(_artifact,*,device):
         assert device=="cpu";calls.append("prepare")
         return {name:device_rotation}
@@ -86,6 +86,7 @@ def test_natural_bf16_rv_is_cached_during_workspace_reservation_without_changing
 def test_missing_bf16_capability_fails_before_npu_initialization(monkeypatch,missing):
     from oscar_ascend.ops import loader
     config=variant_config(json.loads(Path("configs/target.json").read_text()),"candidate")
+    config["experimental_aligned_math"]=False
     provider=runtime.AscendRuntimeProvider(config)
     monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES",",".join(map(str,config["devices"])))
     monkeypatch.setattr(loader,"require_production_ops",lambda:None)

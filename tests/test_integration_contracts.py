@@ -55,6 +55,24 @@ class TargetContracts(unittest.TestCase):
         appendix = doc.split("## 附录 A：", 1)[1]
         command = appendix.split("```bash", 1)[1].split("```", 1)[0]
         expected = shlex.split(command.replace("\\\n", " "))[1:]
+        # 2026-10-18 authorized model/weight-quantization/dtype changes only;
+        # retain the historical appendix for all scheduling/MTP/graph options.
+        expected[1] = "/softwarePlatform/c00879303/Qwen3.8-27B"
+        expected[expected.index("--served-model-name") + 1] = "qwen3.8"
+        if "--quantization" in expected:
+            start = expected.index("--quantization")
+            expected[start:start + 2] = []
+        if "--dtype" not in expected:
+            expected += ["--dtype", "bfloat16"]
+        # The earlier stable launch policy explicitly disables APC and fixes
+        # 16384 tokens; these precede the new model-only authorization.
+        expected = ["--no-enable-prefix-caching" if arg == "--enable-prefix-caching" else arg
+                    for arg in expected]
+        if "--no-enable-prefix-caching" not in expected:
+            expected += ["--no-enable-prefix-caching"]
+        if "--max-num-batched-tokens" not in expected:
+            expected += ["--max-num-batched-tokens", "16384"]
+        expected[expected.index("--hf-overrides") + 1] = "{}"  # native checkpoint RoPE
         config = json.loads((ROOT / "configs/target.json").read_text())
         self.assertEqual(_options(target_cli.serve_argv(config)), _options(expected))
 
@@ -104,6 +122,9 @@ class TargetContracts(unittest.TestCase):
         config["devices"] = [4, 5, 6, 7]
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
+            model = root / 'model'; model.mkdir()
+            (model / 'config.json').write_text(json.dumps({'architectures':['Qwen3_5ForConditionalGeneration']}))
+            config['model'] = str(model)
             config_path = root / "target.json"
             config_path.write_text(json.dumps(config))
             logs = root / "logs"
@@ -115,7 +136,7 @@ class TargetContracts(unittest.TestCase):
                     ("service-probe", [sys.executable, "-c", marker]),
                 ]
 
-            with patch.object(deploy, "plan", plan), patch.object(sys, "argv", ["deploy", "--config", str(config_path), "--log-dir", str(logs)]):
+            with patch.object(deploy, "plan", plan), patch.object(sys, "argv", ["deploy", "--variant", "baseline", "--config", str(config_path), "--log-dir", str(logs)]):
                 code = deploy.main()
             self.assertEqual(code, 7)
             state = json.loads((logs / "status.json").read_text())
@@ -129,9 +150,12 @@ class TargetContracts(unittest.TestCase):
         config["devices"] = [4, 5, 6, 7]
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
+            model = root / 'model'; model.mkdir()
+            (model / 'config.json').write_text(json.dumps({'architectures':['Qwen3_5ForConditionalGeneration']}))
+            config['model'] = str(model)
             config_path = root / "target.json"
             config_path.write_text(json.dumps(config))
-            with patch.object(deploy, "plan", lambda *_args: []), patch.object(sys, "argv", ["deploy", "--config", str(config_path), "--log-dir", str(root / "logs")]):
+            with patch.object(deploy, "plan", lambda *_args: []), patch.object(sys, "argv", ["deploy", "--variant", "baseline", "--config", str(config_path), "--log-dir", str(root / "logs")]):
                 code = deploy.main()
             self.assertEqual(code, 1)
             state = json.loads((root / "logs/status.json").read_text())

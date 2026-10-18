@@ -10,7 +10,7 @@ cannot use these components until the complete capability/acceptance gate passes
 from dataclasses import dataclass
 
 ABI_VERSION = 1
-SOURCE_CAPABILITIES = frozenset({"attention_cv_bf16_decode_out", "attention_cv_bf16_decode_q1_out", "attention_cv_bf16_cluster4_out", "attention_cv_bf16_cluster16_out", "store_int2_out", "merge_lse_out", "rotate_out", "rotate_vector_init_out",
+SOURCE_CAPABILITIES = frozenset({"attention_cv_aligned_decode_out","attention_cv_aligned_decode_q1_out","attention_cv_aligned_cluster4_out","attention_cv_aligned_cluster16_out","store_aligned_int2_out","copy_validate_bf16_query_out","attention_cv_bf16_decode_out", "attention_cv_bf16_decode_q1_out", "attention_cv_bf16_cluster4_out", "attention_cv_bf16_cluster16_out", "store_int2_out", "merge_lse_out", "rotate_out", "rotate_vector_init_out",
     "rotate_clip_store_out", "prepare_attention_tasks_out", "attention_cv_out",
     "attention_cv_cluster4_out", "attention_cv_q1_out", "attention_cv_profile_out",
     "attention_cv_fast_out", "attention_cv_fast_q1_out", "attention_cv_fast_cluster4_out",

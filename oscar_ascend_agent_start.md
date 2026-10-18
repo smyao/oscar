@@ -1,5 +1,7 @@
 # Agent 启动指令（v2）：将 OSCAR KV Cache INT2 量化适配到 vLLM Ascend 0.23.0
 
+> 2026-10-18最新：默认所有入口使用原版Qwen3.8-27B，移除默认ascend权重量化及旧YaRN×4覆盖，按模型自身RoPE；显式W8A8仍支持，MTP/APC-off/16384/设备端口不变。官方OSCAR339368e的qqt/sst→U·H·Pbr替代默认data-free H；模型采样在NPU，离线FP64统计/eigh采用CPU同精度实现，不是推理回退。candidate默认使用版本化144B FP32 normalized-zero metadata/BF16旋转与attention，原136B与旧oracle留作历史；新v3容差预先固定。用户禁止性能测试/真机连接，仅源码/编译/功能/图契约验证。只推codex/oscar-bf16-attention，main/stable不动。
+
 > 2026-10-16 BF16回归修复（档案#164）：关闭APC的VEC UB越界按新分支回归处理；新增FP32→BF16发布统一使用normal-mask有界repeat转换，禁止重引入大count转换。真实指令功能验证与真机验收分列，固定candidate入口/MTP/APC-off保持。
 
 > 2026-10-16：用户明确授权在最新main7047ce36上新建BF16计算分支，main/stable不动。attention的FP32-only限制及旧FP32逐位比较由`configs/acceptance_bf16.json`独立BF16舍入合同替代；原始FP32参考和旧失败记录保留诊断。所有存储/调度/错误/图/部署边界及禁止连接真机要求仍有效。

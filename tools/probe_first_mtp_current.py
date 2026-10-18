@@ -58,6 +58,9 @@ def validate_case_evidence(report, acceptance):
     bf16=report.get('bf16_attention',False)
     forwards=1 if bf16 else 1+policy['warmup']+policy['repeats']
     for row in rows:
+        if report.get('aligned_math',False):
+            for side in ('baseline','candidate'):
+                shared.validate_aligned_calls(row.get('real_operator_calls',{}).get(side),report)
         qlens,slot=expected[row['case']]
         label='separate_BF16_native_contracts_passed' if bf16 else 'frozen_tolerance_passed'
         required={'status':'passed','ab_output':label,'ab_lse':label,
@@ -87,15 +90,15 @@ def validate_case_evidence(report, acceptance):
         if bf16:
             calls=row.get('bf16_cv_calls',{})
             if (any(not isinstance(calls.get(side),dict) or not sum(v for k,v in calls[side].items()
-                        if k!='attention_cv_bf16_decode_q1_out') for side in ('baseline','candidate')) or
-                follow.get('operator')!='attention_cv_bf16_decode_q1_out'):
+                        if k!=shared.selected_operators(report)['q1']) for side in ('baseline','candidate')) or
+                follow.get('operator')!=shared.selected_operators(report)['q1']):
                 raise RuntimeError('first-MTP did not exercise actual BF16 CV/q1')
 
 
 def run_case(torch,target,acceptance,device,cores,case):
     qlens,slot=case;name=case_name(case)
     shape=reuse.Shape(name,qlens,(511,769),256,1,1,False)
-    fixture=reuse.make_fixture(torch,shape,rotation_mode='identity')
+    fixture=shared.make_fixture(torch,shape,target,rotation_mode='identity')
     bf16=target.get('experimental_bf16_attention',False)
     expected={side:shared._expected(fixture,target,native_current=enabled)
               for side,enabled in (('baseline',False),('candidate',True))}
@@ -165,8 +168,9 @@ def run_case(torch,target,acceptance,device,cores,case):
          'device_event_median_ms':medians,'candidate_over_baseline':None if bf16 else medians['candidate']/medians['baseline'],
          'timing_scope':'same_input_eager_first_MTP_full_attention_forward',
          'full_model_performance':'not_established'}
-    if bf16:row.update(bf16_attention=True,performance='not_run_user_requested',math_contract='oscar_bf16_attention_v2',
-                       bf16_cv_calls={side:{name:impl.provider.ops.calls[name] for name in shared.BF16_OPERATORS.values()
+    if bf16:row.update(**shared.precision_fields(target),
+                       real_operator_calls={side:dict(impl.provider.ops.calls) for side,(impl,_,_) in sides.items()},
+                       bf16_cv_calls={side:{name:impl.provider.ops.calls[name] for name in shared.selected_operators(target).values()
                                            if impl.provider.ops.calls[name]} for side,(impl,_,_) in sides.items()},
                        ab_max_abs_diagnostic=float((outputs['candidate'].float()-outputs['baseline'].float()).abs().max()))
     print('[oscar] PERF_FIRST_MTP_CURRENT '+json.dumps({
@@ -181,6 +185,7 @@ def probe(config_path,acceptance_path):
     if target.get('experimental_first_mtp_current_fia') is not True:
         raise RuntimeError('requires explicit experimental_first_mtp_current_fia=true')
     shared._configuration(target,False)
+    bindings=shared.aligned_source_snapshot(target)
     if acceptance.get('frozen_before_measurement') is not True:raise RuntimeError('frozen acceptance required')
     from .probe_native_current_fia import _select_target_npu,_target_geometry
     _select_target_npu(target)
@@ -198,7 +203,7 @@ def probe(config_path,acceptance_path):
     from oscar_ascend.ops.cv_dispatch import STRIPED_CV_OPS
     path=ROOT/'build/ascendc/build_manifest.json';manifest=validate_build_artifacts(path)
     require_capabilities(STRIPED_CV_OPS|{'prepare_attention_tasks_out','rotate_out','merge_lse_out',
-        'status_guard','rotate_clip_store_striped_out'}|(set(shared.BF16_OPERATORS.values())
+        'status_guard',shared.selected_writer(target)}|(set(shared.selected_operators(target).values())
           if target.get('experimental_bf16_attention',False) else set()),path)
     rows=[];device=torch.device('npu:0');cores=reuse._core_count(torch,target)
     for case in case_plan():
@@ -209,7 +214,8 @@ def probe(config_path,acceptance_path):
             'artifact_sha256':manifest['sha256'],'graph_capture':'not_run_eager_scope',
             'graph_replay':'not_run_eager_scope','model_quality':'not_established',
             'full_model_performance':'not_established'}
-    if target.get('experimental_bf16_attention',False):report.update(bf16_attention=True,performance='not_run_user_requested',math_contract='oscar_bf16_attention_v2')
+    if target.get('experimental_bf16_attention',False):report.update(shared.precision_fields(target))
+    shared.bind_aligned_evidence(report,target,bindings)
     validate_case_evidence(report,acceptance)
     return report
 

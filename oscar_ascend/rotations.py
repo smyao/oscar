@@ -4,8 +4,9 @@ Archive G19/G20/G23, #23-#25: sample identity, finite covariance and solver
 validation; #86: target and draft layers are enumerated separately. #96/#97:
 lazy torch import and explicit, traceable data-free construction.
 Paper reference: rotation/compute_kv_rotation.py:23-46,93-136,234-312.
-All production numerical work requires NPU. CPU is an explicit test option.
-This module alone does not establish target-NPU correctness or calibration.
+Serving rotation computation/validation requires NPU. CPU is an explicit test
+option; requested official FP64 offline fitting lives in rotation_calibration.
+This module alone does not establish target-NPU correctness or model quality.
 """
 
 from __future__ import annotations
@@ -129,7 +130,8 @@ def _base_artifact(layer_names: Sequence[str], head_dim: int, model_id: str, pr_
 def validate_artifact(artifact: Mapping[str, Any], *, layer_names: Sequence[str],
                       head_dim: int, model_fingerprint: str,
                       pr_fingerprint: str = PR_FINGERPRINT, device: str = "npu",
-                      testing: bool = False, allow_identity: bool = False) -> dict[str, Any]:
+                      testing: bool = False, allow_identity: bool = False,
+                      require_calibrated: bool = False) -> dict[str, Any]:
     """Validate exact coverage, provenance, fp32 geometry and orthogonality.
 
     Validation returns matrices on the requested device. A test artifact
@@ -149,6 +151,10 @@ def validate_artifact(artifact: Mapping[str, Any], *, layer_names: Sequence[str]
         raise ValueError("CPU test rotation artifacts cannot enter production")
     if not artifact.get("objective"):
         raise ValueError("rotation objective is required")
+    if require_calibrated and (artifact.get("calibrated") is not True or
+            artifact.get("objective") != "qqt_sst_r_h_pbr" or
+            artifact.get("accumulation_dtype") != "float64"):
+        raise ValueError("official FP64 calibrated qqt/sst rotation required; data-free cache is not accepted")
     layers = artifact.get("layers")
     if not isinstance(layers, Mapping) or set(layers) != set(names):
         raise ValueError(f"rotation layer coverage mismatch: expected {names}, got {tuple(layers or ())}")
@@ -283,7 +289,9 @@ def build_sample_artifact(samples: Mapping[str, tuple[Any, Any, Any]], *,
                           sample_ids: Mapping[str, str], model_fingerprint: str,
                           eigensolver: Callable, device: str = "npu", testing: bool = False,
                           pr_fingerprint: str = PR_FINGERPRINT) -> dict[str, Any]:
-    """qqt/sst R @ H @ P construction with an explicitly supplied NPU solver.
+    """Legacy FP32 research helper, not the official automatic FP64 pipeline.
+
+    qqt/sst R @ H @ P construction with an explicitly supplied NPU solver.
 
     The caller must prove the solver uses NPU numerical kernels. Returning
     NPU tensors alone is insufficient evidence against hidden CPU execution.
@@ -340,3 +348,134 @@ def load_artifact(path: str | Path, **validation) -> dict[str, Any]:
     if not isinstance(artifact, Mapping):
         raise ValueError("rotation artifact must be a mapping")
     return validate_artifact(artifact, **validation)
+
+
+def calibration_cache_identity(config: Mapping[str, Any], fingerprint: str) -> dict[str, Any]:
+    """Pure host identity; no model load, tensor operation, or online download."""
+    from .rotation_calibration import OFFICIAL_COMMIT
+    prompts = config.get("rotation_calibration_prompts")
+    source = ({"path": str(Path(prompts).expanduser().resolve()),
+               "sha256": hashlib.sha256(Path(prompts).expanduser().read_bytes()).hexdigest()}
+              if prompts else {"source": "openai-simple-evals/gpqa_diamond-seed0-v1"})
+    budget = config.get("rotation_calibration_tokens", 30000)
+    if type(budget) is not int or budget <= 0:
+        raise ValueError("rotation_calibration_tokens must be a positive integer")
+    return {"official_commit": OFFICIAL_COMMIT, "model_fingerprint": fingerprint,
+            "objective": "qqt_sst_r_h_pbr", "accumulator_dtype": "float64",
+            "prompt_source": source, "max_tokens": budget, "GPQA_option_seed": 0,
+            "model_execution": {"dtype": "bfloat16", "quantization": config.get("quantization"),
+                                "revision": config.get("revision"), "hf_overrides": config.get("hf_overrides")}}
+
+
+def model_artifact_fingerprint(model: str | Path) -> str:
+    """Bind model location, config/index bytes and weight-file identity.
+
+    This is a cache invalidation identity, not a content hash of all weights.
+    Weight path/size/mtime/inode changes invalidate a same-architecture cache.
+    """
+    model = Path(model).expanduser().resolve()
+    config = (model / "config.json").read_bytes()
+    index = model / "model.safetensors.index.json"
+    index_bytes = index.read_bytes() if index.is_file() else b""
+    if index_bytes:
+        names = sorted(set(json.loads(index_bytes)["weight_map"].values()))
+        if any(Path(name).is_absolute() or ".." in Path(name).parts for name in names):
+            raise ValueError("weight index must name relative model files")
+        weights = [model / name for name in names]
+    else:
+        weights = sorted(set(model.glob("*.safetensors")) | set(model.glob("pytorch_model*.bin")))
+    records = []
+    for path in weights:
+        stat = path.stat()
+        records.append({"name": str(path.relative_to(model)), "size": stat.st_size,
+                        "resolved_path": str(path.resolve()),
+                        "mtime_ns": stat.st_mtime_ns, "inode": stat.st_ino})
+    # These small descriptors affect native quantized execution and prompt
+    # rendering even when the weight shards themselves are unchanged.
+    descriptors = {}
+    for name in ("quant_model_description.json", "tokenizer_config.json", "special_tokens_map.json", "chat_template.jinja",
+                 "tokenizer.json", "vocab.json", "merges.txt", "generation_config.json"):
+        path = model / name
+        if path.is_file():
+            descriptors[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    hasher = hashlib.sha256(config + b"\0" + index_bytes + b"\0")
+    hasher.update(json.dumps({"model_path": str(model), "weight_files": records, "descriptors": descriptors},
+                            sort_keys=True, separators=(",", ":")).encode())
+    return hasher.hexdigest()
+
+
+def checkpoint_identity(model: str | Path) -> tuple[list[str], int, str]:
+    """Shared model geometry/cache identity for preparation and runtime."""
+    model = Path(model)
+    config = json.loads((model / "config.json").read_text())
+    text = config.get("text_config", config)
+    count = text["num_hidden_layers"]
+    kinds = text.get("layer_types")
+    if kinds is None:
+        interval = text.get("full_attention_interval")
+        if type(interval) is not int or interval <= 0:
+            raise ValueError("model must declare layer_types or full_attention_interval")
+        kinds = ["full_attention" if (i + 1) % interval == 0 else "linear_attention" for i in range(count)]
+    if len(kinds) != count or any(kind not in {"full_attention", "linear_attention"} for kind in kinds):
+        raise ValueError("unexpected hybrid layer_types")
+    layers = [f"model.layers.{i}.self_attn.attn" for i, kind in enumerate(kinds) if kind == "full_attention"]
+    dim = text.get("head_dim")
+    if dim is None:
+        hidden, heads = text["hidden_size"], text["num_attention_heads"]
+        if hidden % heads:
+            raise ValueError("hidden_size is not divisible by query heads")
+        dim = hidden // heads
+    if not layers or type(dim) is not int or dim <= 0:
+        raise ValueError("model has no FULL layers or invalid head_dim")
+    return layers, dim, model_artifact_fingerprint(model)
+
+
+def load_active_artifact(config: Mapping[str, Any], *, device="npu", testing=False,
+                         layer_names=None, head_dim=None, model_fingerprint=None,
+                         path=None):
+    """Require a complete hashed official pair, not a hand-written boolean.
+
+    The combined constants must match both pair files bit-for-bit. Runtime
+    matrix validation runs on the requested device, outside inference/capture.
+    """
+    from .rotation_calibration import OFFICIAL_COMMIT,verified_pair_files,checkpoint_pair_artifact
+    names, dim, fingerprint = checkpoint_identity(config["model"])
+    if ((layer_names is not None and list(layer_names) != names) or
+            (head_dim is not None and head_dim != dim) or
+            (model_fingerprint is not None and model_fingerprint != fingerprint)):
+        raise ValueError("rotation caller/model identity differs")
+    destination = Path(path) if path is not None else rotation_artifact_path(config, fingerprint)
+    options = dict(layer_names=names, head_dim=dim, model_fingerprint=fingerprint,
+                   device=device, testing=testing)
+    if config.get("rotation_method", "qqt_sst") == "hadamard":
+        return load_artifact(destination, **options)
+    if config.get("rotation_method", "qqt_sst") != "qqt_sst":
+        raise ValueError("unsupported runtime rotation method")
+    k_state, v_state, artifact = verified_pair_files(destination.parent, artifact_name=destination.name)
+    expected = checkpoint_pair_artifact(k_state, v_state, layer_names=names, head_dim=dim,
+        model_fingerprint=fingerprint, testing=testing, validate_math=False)
+    if artifact.get("calibration") != expected.get("calibration"):
+        raise ValueError("combined artifact calibration metadata differs from pair")
+    if artifact.get("calibration_profile") != calibration_cache_identity(config, fingerprint):
+        raise ValueError("calibration cache profile differs")
+    torch = importlib.import_module("torch")
+    for name in names:
+        for key in ("Rk", "Rv"):
+            value = artifact.get("layers", {}).get(name, {}).get(key)
+            if not torch.is_tensor(value) or not torch.equal(value, expected["layers"][name][key]):
+                raise ValueError("combined rotation constants differ from official pair")
+    return validate_artifact(artifact, **options, pr_fingerprint=OFFICIAL_COMMIT, require_calibrated=True)
+
+
+def rotation_artifact_path(config: Mapping[str, Any], fingerprint: str, *, root=None) -> Path:
+    """One path contract shared by preparation and runtime; old H stays distinct."""
+    import os
+    explicit = config.get("rotation_artifact") or os.environ.get("OSCAR_ROTATION_ARTIFACT")
+    if explicit:
+        return Path(explicit).expanduser().resolve()
+    base = Path(root) if root is not None else Path(__file__).resolve().parents[1]
+    if config.get("rotation_method", "qqt_sst") == "hadamard":
+        return base / "artifacts/rotations" / fingerprint / "hadamard.pt"
+    identity = calibration_cache_identity(config, fingerprint)
+    digest = hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:20]
+    return base / "artifacts/rotations" / fingerprint / ("qqt_sst_" + digest) / "calibrated.pt"

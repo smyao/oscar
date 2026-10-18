@@ -67,6 +67,7 @@ class WorkspaceGeometry:
     c4_member_pipeline: bool = False
     c16_member_pipeline: bool = False
     c16_l1_reuse: bool = False
+    aligned_math: bool = False
 
     def __post_init__(self):
         dimensions = (self.tokens, self.query_heads, self.kv_heads, self.head_dim,
@@ -158,7 +159,9 @@ class WorkspaceGeometry:
         n, c = self.tokens, self.history_tokens
         h, k, d, p = self.query_heads, self.kv_heads, self.head_dim, 3 * self.splits
         return {
-            "query_rot": c * h * d * 4,
+            "query_rot": c * h * d * (2 if self.aligned_math else 4),
+            **({"query_rot_bf16": c*h*d*2, "key_rot_bf16": n*k*d*2,
+                "value_rot_bf16": n*k*d*2} if self.aligned_math else {}),
             "query_input": n * h * d * 2,
             "key_input": n * k * d * 2,
             "value_input": n * k * d * 2,
@@ -191,13 +194,16 @@ class GraphWorkspace:
         self.geometry = geometry
         n, h, d, p = geometry.tokens, geometry.query_heads, geometry.head_dim, 3 * geometry.splits
         c = geometry.history_tokens
-        self.query_rot = torch.empty((c, h, d), dtype=torch.float32, device=device)
+        self.query_rot = torch.empty((c, h, d), dtype=torch.bfloat16 if geometry.aligned_math else torch.float32, device=device)
         # qkv.split leaves a strided value projection in the native model.
         # These bounded current-step copies are reused; no historical KV is
         # ever copied here. Contiguous projections use their original storage.
         self.query_input = torch.empty((n, h, d), dtype=torch.bfloat16, device=device)
         self.key_input = torch.empty((n, geometry.kv_heads, d), dtype=torch.bfloat16, device=device)
         self.value_input = torch.empty_like(self.key_input)
+        self.query_rot_bf16 = (torch.empty((c,h,d),dtype=torch.bfloat16,device=device) if geometry.aligned_math else None)
+        self.key_rot_bf16 = torch.empty_like(self.key_input) if geometry.aligned_math else None
+        self.value_rot_bf16 = torch.empty_like(self.key_input) if geometry.aligned_math else None
         self.partial = torch.empty((c, h, p, d), dtype=torch.float32, device=device)
         self.partial_lse = torch.empty((c, h, p), dtype=torch.float32, device=device)
         self.output = torch.empty((c, h, d), dtype=torch.float32, device=device)
@@ -278,6 +284,7 @@ class LayerState:
     window_status: Any = None
     rotation_v_nz: Any = None
     rotation_v_bf16: Any = None
+    rotation_k_bf16: Any = None
 
 
 @dataclass(frozen=True)
@@ -317,7 +324,7 @@ class AscendRuntimeProvider:
                      "experimental_quantization_bundle", "experimental_c4_member_pipeline",
                      "experimental_mdl_decode", "experimental_hybrid_l1_decode",
                      "experimental_c16_member_pipeline", "experimental_c16_l1_reuse",
-                     "experimental_prepare_reuse", "experimental_bf16_attention"):
+                     "experimental_prepare_reuse", "experimental_bf16_attention", "experimental_aligned_math"):
             if type(self.config.get(flag, False)) is not bool:
                 raise OscarReadinessError(f"{flag} must be an explicit boolean")
         if self.config.get("experimental_fast_unpack", False) and not self.config.get("experimental_history_reuse", False):
@@ -336,9 +343,11 @@ class AscendRuntimeProvider:
                 self.config.get("experimental_c4_member_pipeline", False) and
                 self.config.get("experimental_c16_l1_reuse", False) and not self._request_windows):
             raise OscarReadinessError("BF16 attention requires the complete physical-page candidate bundle")
-        self._cache_format = ("striped_v1" if self.config.get("experimental_striped_cache", False)
+        if self.config.get("experimental_aligned_math",False) and not self.config.get("experimental_bf16_attention",False):
+            raise OscarReadinessError("aligned math requires BF16 attention")
+        self._cache_format = ("striped_fp32_v2" if self.config.get("experimental_aligned_math",False) else "striped_v1" if self.config.get("experimental_striped_cache", False)
                               else "canonical_v1")
-        if self.config.get("experimental_decode_bundle", False) and self._cache_format != "striped_v1":
+        if self.config.get("experimental_decode_bundle", False) and self._cache_format not in ("striped_v1", "striped_fp32_v2"):
             raise OscarReadinessError("decode bundle requires the explicit striped cache bundle")
         if self.config.get("experimental_mdl_decode", False) and not self.config.get("experimental_decode_bundle", False):
             raise OscarReadinessError("MDL decode requires the explicit decode bundle")
@@ -365,7 +374,7 @@ class AscendRuntimeProvider:
         if self.config.get("experimental_mixed_decode_split", False) and not self.config.get("experimental_first_mtp_current_fia", False):
             raise OscarReadinessError("mixed decode partition requires the qualified first-MTP current path")
         if self._request_windows:
-            if self._cache_format != "striped_v1":
+            if self._cache_format not in ("striped_v1", "striped_fp32_v2"):
                 raise OscarReadinessError("request windows require the explicit striped candidate bundle")
             if self.config.get("experimental_decode_bundle") is not True:
                 raise OscarReadinessError("request windows require the complete decode reader bundle")
@@ -397,6 +406,7 @@ class AscendRuntimeProvider:
         self.rotations: dict[tuple, dict] = {}
         self.hybrid_rotations: dict[tuple, dict] = {}
         self.bf16_rotations: dict[tuple, dict] = {}
+        self.bf16_key_rotations: dict[tuple, dict] = {}
         self.device_cores: dict[str, int] = {}
         self.ops = None
 
@@ -418,6 +428,9 @@ class AscendRuntimeProvider:
         if os.environ.get("ASCEND_RT_VISIBLE_DEVICES") != expected:
             raise OscarReadinessError("visible NPU selection does not match the current target configuration")
         require_production_ops()
+        if self.config.get("experimental_aligned_math", False):
+            from .ops.cv_dispatch import ALIGNED_CV_OPS
+            require_capabilities(ALIGNED_CV_OPS | {"store_aligned_int2_out", "copy_validate_bf16_query_out"})
         if self.config.get("experimental_bf16_attention", False):
             from .ops.cv_dispatch import BF16_CV_OPS
             require_capabilities(BF16_CV_OPS)
@@ -627,7 +640,8 @@ class AscendRuntimeProvider:
                                      history_token_capacity=self._history_token_capacity,
                                      c4_member_pipeline=self.config.get("experimental_c4_member_pipeline", False),
                                      c16_member_pipeline=self.config.get("experimental_c16_member_pipeline", False),
-                                     c16_l1_reuse=self.config.get("experimental_c16_l1_reuse", False))
+                                     c16_l1_reuse=self.config.get("experimental_c16_l1_reuse", False),
+                                     aligned_math=self.config.get("experimental_aligned_math",False))
         key = (str(device), geometry)
         if key not in self.workspaces:
             self.workspaces[key] = GraphWorkspace(geometry, device)
@@ -672,7 +686,7 @@ class AscendRuntimeProvider:
                 raise OscarReadinessError("request-window sidecars must be registered during model load before KV planning")
             converted = transform_native_specs(native_specs, request_windows=True)
         else:
-            converted = transform_native_specs(native_specs)
+            converted = transform_native_specs(native_specs, metadata_bytes=4 if self.config.get("experimental_aligned_math",False) else 2)
         # Validate precise snapshot geometry before the scheduler budgets its
         # pool. A page advertised as compressed must also preserve its window.
         from .integration.specs import OscarFullAttentionSpec
@@ -725,41 +739,26 @@ class AscendRuntimeProvider:
         import torch
         if self.config.get("experimental_bf16_attention", False) and dim != 256:
             raise OscarReadinessError("BF16 attention branch requires D256")
-        from .rotations import load_artifact, prepare_device_rotations, DeviceRotation
+        from .rotations import prepare_device_rotations, DeviceRotation
         cache_key = (str(device), dim)
         if cache_key in self.rotations:
             return self.rotations[cache_key]
-        model = Path(self.config["model"])
-        contents = (model / "config.json").read_bytes()
-        model_config = json.loads(contents)
-        text = model_config.get("text_config", model_config)
-        layer_types = text.get("layer_types")
-        count = text["num_hidden_layers"]
-        if layer_types is None:
-            interval = text.get("full_attention_interval")
-            if type(interval) is not int or interval <= 0:
-                raise OscarReadinessError("model config must declare FULL layer identities")
-            layer_types = ["full_attention" if (i + 1) % interval == 0 else "linear_attention"
-                           for i in range(count)]
-        if len(layer_types) != count:
-            raise OscarReadinessError("model layer_types differs from num_hidden_layers")
-        target = [f"model.layers.{i}.self_attn.attn" for i, kind in enumerate(layer_types)
-                  if kind == "full_attention"]
-        fingerprint = hashlib.sha256(contents)
-        index = model / "model.safetensors.index.json"
-        if index.is_file():
-            fingerprint.update(index.read_bytes())
-        artifact_path = self.config.get("rotation_artifact") or os.environ.get("OSCAR_ROTATION_ARTIFACT")
-        if artifact_path is None:
-            artifact_path = Path(__file__).resolve().parents[1] / "artifacts/rotations" / fingerprint.hexdigest() / "hadamard.pt"
-        artifact = load_artifact(artifact_path, layer_names=target, head_dim=dim,
-                                 model_fingerprint=fingerprint.hexdigest(), device=device)
+        from .rotations import checkpoint_identity, load_active_artifact
+        target, expected_dim, fingerprint = checkpoint_identity(Path(self.config["model"]))
+        if dim != expected_dim:
+            raise OscarReadinessError("runtime rotation dimension differs from model config")
+        artifact = load_active_artifact(self.config, layer_names=target, head_dim=dim,
+                                       model_fingerprint=fingerprint, device=device)
         prepared = prepare_device_rotations(artifact, device=device)
         identity = torch.eye(dim, device=device, dtype=torch.float32)
         prepared[None] = DeviceRotation(identity, identity, identity, False)
         if self.config.get("experimental_bf16_attention", False):
             # Reserve natural BF16 Rv before native KV profiling. The writer
-            # keeps its original FP32 matrices and the INT2 codec unchanged.
+            # retains FP32 artifact constants; aligned producers use BF16 copies.
+            if self.config.get("experimental_aligned_math",False):
+                self.bf16_key_rotations[cache_key] = {
+                    name: rotation.key_transposed.T.to(dtype=torch.bfloat16).contiguous()
+                    for name, rotation in prepared.items()}
             self.bf16_rotations[cache_key] = {
                 name: rotation.inverse_value_transposed.to(dtype=torch.bfloat16).contiguous()
                 for name, rotation in prepared.items()}
@@ -847,7 +846,9 @@ class AscendRuntimeProvider:
                                           if self.config.get("experimental_hybrid_l1_decode", False)
                                           and not self.config.get("experimental_bf16_attention", False) else None,
                                           self.bf16_rotations[(str(runner.device), spec.head_size)][canonical_rotation_name(name)]
-                                          if self.config.get("experimental_bf16_attention", False) else None)
+                                          if self.config.get("experimental_bf16_attention", False) else None,
+                                          self.bf16_key_rotations[(str(runner.device), spec.head_size)][canonical_rotation_name(name)]
+                                          if self.config.get("experimental_aligned_math",False) else None)
             views[name] = packed
             from .telemetry import emit_once
             emit_once("cache_layout", key=name, layer=name, physical_blocks=blocks,

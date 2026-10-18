@@ -1,0 +1,113 @@
+{
+  "scope": "v3 aligned probe preparation and host orchestration verification only",
+  "contract": "oscar_bf16_attention_v3",
+  "cache_format": "striped_fp32_v2",
+  "D256_slot_bytes": 144,
+  "query_rot_dtype": "bfloat16",
+  "operators": {
+    "q4": "attention_cv_aligned_decode_out",
+    "q1": "attention_cv_aligned_decode_q1_out",
+    "c4": "attention_cv_aligned_cluster4_out",
+    "c16": "attention_cv_aligned_cluster16_out"
+  },
+  "case_count": 30,
+  "dequant_modes": {
+    "0": "FP32 difference/product then BF16 prefill",
+    "1": "BF16 metadata/difference/product decode"
+  },
+  "gate_contents": [
+    "all four readers with v3 oracle for all prepare tasks/sources/splits; padding/metadata/QR faults",
+    "writer exact 144B code+FP32 metadata, raw original BF16 windows and canaries",
+    "writer invalid slot/position/rotated nonfinite/negative-padding exact statuses",
+    "BF16 matmul rotation and BF16 Qcopy status",
+    "fixed-address graph changed query/context and writer inputs; eager/replay comparison"
+  ],
+  "error_domain_source_review": {
+    "C4_C16": "kHalfKv16 remains lane ownership despite H32 unpack; bad80 at begin64 => lane1 code3; per-member QR error remains local",
+    "q4_q1": "kHalfKv64 / laneRows16",
+    "qualification": "source-derived declared expectation; no NPU completion claim"
+  },
+  "lifecycle": [
+    "current_only",
+    "first_mtp_current",
+    "mixed_decode_split",
+    "prefix_cache"
+  ],
+  "lifecycle_binding": "v3 contract/new cacheformat/clip ratios/source before-after/current signed artifact; full counted ops reject legacy reader/writer/rotation; same-v3 q1/store/output exact domains retained",
+  "startup": "aligned candidate uses signed build plus new core gate; old FP32 CV/striped writer gates remain legacy only; default BF16 NPU Event control disabled, passive HTTP metrics/heartbeat retained",
+  "host_validation": {
+    "pytest_passed": 231,
+    "git_diff_check": "passed",
+    "python_compileall": "passed",
+    "network_tests": "not_repeated_in_this_subtask"
+  },
+  "NPU": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_established",
+  "performance": "not_run_user_requested",
+  "owned_files_sha256_at_review": {
+    "tools/aligned_fixture.py": "6c52b2186ff060b4a2f19d67807f51a0752c2040e1d5161a7daea933eaa85577",
+    "tools/probe_aligned_attention.py": "66b1095afba8f79c7d824754c0c5ab6e8243eda3be9863f87b2f14e15c672188",
+    "tools/probe_current_only.py": "b2538a3be786390a6d46e7cf42b21e0f251efc6dc5706821909d54d2a69f7b85",
+    "tools/probe_first_mtp_current.py": "ce13be0dacebc7f53b8dd4409ffe6fbf9eb54f66f900384b708e5ffdf0797c25",
+    "tools/probe_mixed_decode_split.py": "93ea8ceceaed4e6d0085619ef49179e14e0353980f4c3a571e86c9c74e2e3f4f",
+    "tools/probe_prefix_cache.py": "e5c8d1cfc7e71fe283069a443618c507e953b9bc70016ed5ffdac8f846af3d90",
+    "tools/observe_serve.py": "789e2911fa2fea1c5af4f5cc12f2bd6113668b0945176ef9abc7237e2d6cfa08",
+    "tools/deploy.py": "30b0a7cdbfc5058ab78301e869c1a774abbc1e06fb38c2ac29986697da4650ef",
+    "tools/target_cli.py": "537e7004d88be1a6b811050578dfb4cb027a34d1308b5e6e845eb121992bcf1d",
+    "tests/test_probe_aligned_attention.py": "0c3ddb423ae5959cb025f5052fe1050a963776ab9c4e5cfd35624f797906cdb8",
+    "tests/test_probe_current_only.py": "a757603acfc49a11eb2b07f9836aebf70c4dc4b4a8e7d00259cf0bd504597b16",
+    "tests/test_probe_prefix_cache.py": "810925c44d974c2b7c8947ac006275c5a431064d3152b80f4df44572b116bed8",
+    "tests/test_observe_serve.py": "d193fa788684bd0ce3f911468c2926ee0271a891fb96e6f947d7f609f306fe26",
+    "tests/test_deploy_bf16.py": "2a26ff62676da0c733f79f10ec7a175d74566f560106883437398600651be05b",
+    "tests/test_integration_contracts.py": "47b2d2d58afff40f260bf8cee5dca3723698d168918f0cdc2422bc24d8438348"
+  },
+  "new_math_dependencies_provided_by_kernel_agent": [
+    "tools/aligned_reference.py",
+    "tools/aligned_runtime_oracle.py",
+    "configs/acceptance_aligned_bf16.json"
+  ],
+  "core_source_binding_paths": [
+    "csrc/kernels/attention_cv_aligned_decode.cpp",
+    "csrc/kernels/attention_cv_aligned_cluster4.cpp",
+    "csrc/kernels/attention_cv_aligned_cluster16.cpp",
+    "csrc/kernels/attention_aligned_unpack.h",
+    "csrc/kernels/store_aligned_int2.cpp",
+    "csrc/include/oscar_aligned_decode_launch.h",
+    "csrc/include/oscar_aligned_cluster_launch.h",
+    "csrc/include/oscar_aligned_store_launch.h",
+    "csrc/kernels/attention_bf16_cast.h",
+    "csrc/kernels/attention_tasks.cpp",
+    "csrc/kernels/merge_lse.cpp",
+    "csrc/striped_attention_bindings.cpp",
+    "csrc/torch_bindings.cpp",
+    "csrc/aligned_attention_bindings.cpp",
+    "csrc/aligned_store_bindings.cpp",
+    "tools/aligned_reference.py",
+    "tools/aligned_runtime_oracle.py",
+    "tools/aligned_fixture.py",
+    "tools/bf16_reference.py",
+    "oscar_ascend/ops/reference.py",
+    "tools/probe_history_reuse.py",
+    "tools/probe_bf16_attention.py",
+    "tools/probe_mdl_decode.py",
+    "tools/probe_striped_cache.py",
+    "configs/acceptance_aligned_bf16.json",
+    "oscar_ascend/runtime.py",
+    "oscar_ascend/integration/impl.py",
+    "oscar_ascend/integration/aligned_math.py",
+    "oscar_ascend/integration/cache_storage_ops.py",
+    "oscar_ascend/layout.py",
+    "oscar_ascend/integration/specs.py",
+    "oscar_ascend/ops/cv_dispatch.py",
+    "oscar_ascend/ops/contracts.py",
+    "tools/serving_variants.py",
+    "tools/probe_aligned_attention.py",
+    "tools/probe_current_only.py",
+    "tools/probe_first_mtp_current.py",
+    "tools/probe_mixed_decode_split.py",
+    "tools/probe_prefix_cache.py",
+    "tools/observe_serve.py"
+  ],
+  "shared_helper_boundary": "Shared online BF16 math/FP32 merge, shape allocation and graph comparison helpers are hash-bound; no old-codec numeric output is used as a v3 golden."
+}

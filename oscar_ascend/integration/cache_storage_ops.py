@@ -29,6 +29,11 @@ def storage_reader(state, original):
             return REQUEST_READERS[original]
         except KeyError as error:
             raise OscarReadinessError("request-window format requires its complete reader bundle") from error
+    if state.cache_format == "striped_fp32_v2":
+        from ..ops.cv_dispatch import ALIGNED_CV_OPS
+        if original not in ALIGNED_CV_OPS:
+            raise OscarReadinessError("144-byte aligned cache requires its versioned reader")
+        return original
     if state.cache_format not in ("striped_v1", "canonical_v1"):
         raise OscarReadinessError("unknown OSCAR storage format")
     return original
@@ -48,6 +53,11 @@ def request_map(state, metadata, first=0, count=None):
 
 def store_current(ops, state, key, value, slots, positions, starts, window_map, config):
     n = key.shape[0]
+    if state.cache_format == "striped_fp32_v2":
+        if not config.get("experimental_aligned_math",False):
+            raise OscarReadinessError("aligned writer selected without matching math profile")
+        from .aligned_math import store_aligned
+        return store_aligned(ops,state,key,value,slots,positions,config)
     prefix = (key, value, state.rotation_k_transpose, state.rotation_v_transpose,
               slots, positions)
     storage = (state.raw, state.window_key, state.window_value, state.window_tags,

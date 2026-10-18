@@ -32,6 +32,8 @@ BF16_Q1_CV_OP = "attention_cv_bf16_decode_q1_out"
 BF16_C4_CV_OP = "attention_cv_bf16_cluster4_out"
 BF16_C16_CV_OP = "attention_cv_bf16_cluster16_out"
 BF16_CV_OPS = frozenset({BF16_DECODE_CV_OP, BF16_Q1_CV_OP, BF16_C4_CV_OP, BF16_C16_CV_OP})
+ALIGNED_CV_MAP = {name: name.replace("_bf16_", "_aligned_") for name in BF16_CV_OPS}
+ALIGNED_CV_OPS = frozenset(ALIGNED_CV_MAP.values())
 
 OPTIMIZED_STRIPED_OPS = {
     STRIPED_CV_OP: "attention_cv_window_range_out",
@@ -48,7 +50,8 @@ CLUSTER_CV_OPS = frozenset({CLUSTER4_CV_OP, FAST_CLUSTER4_CV_OP,
                             "attention_cv_window_range_cluster4_out",
                             "attention_cv_window_range_cluster16_out",
                             MEMBER_PIPELINE_CV_OP, C16_MEMBER_PIPELINE_CV_OP,
-                            C16_L1_REUSE_CV_OP, BF16_C4_CV_OP, BF16_C16_CV_OP})
+                            C16_L1_REUSE_CV_OP, BF16_C4_CV_OP, BF16_C16_CV_OP,
+                            "attention_cv_aligned_cluster4_out", "attention_cv_aligned_cluster16_out"})
 FAST_CV_OPS = frozenset({FAST_CV_OP, FAST_Q1_CV_OP, FAST_CLUSTER4_CV_OP})
 MIXED_CV_OPS = frozenset({FAST_BALANCED_CV_OP, FAST_CLUSTER16_CV_OP})
 STRIPED_CV_OPS = frozenset({STRIPED_CV_OP, STRIPED_Q1_CV_OP,

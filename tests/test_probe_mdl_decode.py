@@ -170,12 +170,12 @@ def test_both_candidate_entrypoints_enable_mdl_and_failed_gate_blocks_service(mo
     from tools import install_serve
     assert observe.main(['--variant','candidate','--plan','--probe-only'])==0
     plan=json.loads(capsys.readouterr().out)
-    assert 'mdl_decode_gate' in plan['phases']
+    assert 'aligned_codec_rotation_attention_precision_error_graph_gate' in plan['phases']
     assert plan['runtime_selection']['optimizations']['mdl_decode'] is True
     assert install_serve.main(['--variant','candidate','--plan'])==0
     direct=json.loads(capsys.readouterr().out)
     assert direct['runtime_selection']==plan['runtime_selection']
-    assert direct['runtime_selection']['prefix_caching'] is True
+    assert direct['runtime_selection']['prefix_caching'] is False
     for name in ('_preflight','_candidate_gate','_fast_unpack_gate','_mixed_optimization_gate',
                  '_striped_cache_gate','_decode_bundle_gate','_c4_member_pipeline_gate',
                  '_current_only_gate','_first_mtp_current_gate','_mixed_decode_split_gate','_request_window_gate'):
@@ -183,11 +183,15 @@ def test_both_candidate_entrypoints_enable_mdl_and_failed_gate_blocks_service(mo
     def fail(path,config,*args):
         assert config['experimental_mdl_decode'] is True
         assert json.loads(Path(path).read_text())['experimental_mdl_decode'] is True
-        error=RuntimeError('MDL speedup below 1.15');error.phase='mdl-decode-evidence';raise error
-    monkeypatch.setattr(observe,'_mdl_decode_gate',fail)
+        error=RuntimeError('aligned precision rejected');error.phase='aligned-attention-evidence';raise error
+    monkeypatch.setattr(observe,'_aligned_attention_gate',fail)
     monkeypatch.setattr(observe,'managed_server',lambda *a,**k:pytest.fail('failed MDL gate must block service'))
     monkeypatch.setattr(observe,'_terminal',lambda *a,**k:None)
     log=tmp_path/'run'
-    assert observe.run(observe.ROOT/'configs/target.json',log,'candidate')==1
+    model=tmp_path/'model';model.mkdir()
+    (model/'config.json').write_text('{"architectures":["Qwen3_5ForConditionalGeneration"]}')
+    config=json.loads((observe.ROOT/'configs/target.json').read_text());config['model']=str(model)
+    path=tmp_path/'config.json';path.write_text(json.dumps(config))
+    assert observe.run(path,log,'candidate')==1
     result=json.loads((log/'status.json').read_text())
-    assert result['status']=='failed' and result['failed_phase']=='mdl-decode-evidence'
+    assert result['status']=='failed' and result['failed_phase']=='aligned-attention-evidence'

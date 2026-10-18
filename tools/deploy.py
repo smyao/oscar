@@ -6,11 +6,14 @@ from contextlib import contextmanager
 from dataclasses import asdict
 from datetime import datetime, timezone
 import json
+import hashlib
 import os
 from pathlib import Path
 import sys
 from .phase import atomic_json, run_phase, terminal_line
-from .target_cli import target_env
+from .target_cli import target_env, serve_argv
+from .model_config import add_model_arguments, apply_model_options
+from .serving_variants import variant_config
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -102,13 +105,89 @@ def _temporary_process_context(env: dict[str, str], argv: list[str]):
         sys.argv = prior_argv
 
 
-def main() -> int:
+def _bf16_plan(config_path: Path, log_dir: Path):
+    """Reuse the complete signed correctness gates, without paired load."""
+    return [
+        ("bf16-correctness-gates", [sys.executable, "-m", "tools.observe_serve",
+            "--config", str(config_path), "--variant", "candidate", "--probe-only",
+            "--log-dir", str(log_dir / "bf16-correctness")]),
+        ("service-probe", [sys.executable, "-m", "tools.service_probe", "--config", str(config_path),
+            "--correctness-only", "--log-dir", str(log_dir / "service-probe"),
+            "--output", str(log_dir / "service-probe-report.json")]),
+    ]
+
+
+def _run_bf16_deployment(config, config_path, log_dir, status, env) -> int:
+    status.update(performance="not_run_user_requested", validation_mode="correctness_only_user_requested")
+    digest = hashlib.sha256(config_path.read_bytes()).hexdigest()
+    stages = _bf16_plan(config_path, log_dir)
+    gate_status_path = log_dir / "bf16-correctness" / "status.json"
+    service_path = log_dir / "service-probe-report.json"
+    for path in (gate_status_path, service_path):
+        path.unlink(missing_ok=True)
+    for name, command in stages:
+        result = run_phase(name, command, cwd=ROOT, log_dir=log_dir, env=env,
+            timeout=config["phase_timeout_seconds"], grace=config["shutdown_timeout_seconds"], heartbeat=60)
+        status["phases"].append(asdict(result))
+        atomic_json(log_dir / "status.json", status)
+        if result.returncode or result.timed_out or not result.cleanup_complete:
+            status.update(status="failed", failed_phase=name, returncode=result.returncode or 1)
+            atomic_json(log_dir / "status.json", status)
+            return result.returncode or 1
+        try:
+            if name == "bf16-correctness-gates":
+                report = _report(gate_status_path)
+                if (report.get("status") != "operator_probes_passed"
+                        or report.get("service_started") is not False
+                        or report.get("performance_acceptance") != "not_run_user_requested"
+                        or report.get("target_config", {}).get("original_sha256") != digest
+                        or report.get("target_config", {}).get("effective_sha256") != digest
+                        or report.get("aligned_attention_gate" if config.get("experimental_aligned_math",False) else "bf16_attention_gate", {}).get("status") != "passed"):
+                    raise RuntimeError("fresh BF16 correctness/graph gates or effective config binding incomplete")
+                status["bf16_correctness"] = {"status": "passed", "report": str(gate_status_path)}
+            else:
+                report = _report(service_path)
+                if (report.get("status") != "passed" or report.get("resource_release") != "passed"
+                        or report.get("server", {}).get("cleanup_complete") is not True
+                        or report.get("device_completion") != "real_service_requests_completed"
+                        or report.get("mtp", {}).get("status") != "passed"
+                        or report.get("telemetry", {}).get("status") != "passed"
+                        or report.get("validation_mode") != "correctness_only_user_requested"
+                        or report.get("performance") != "not_run_user_requested"
+                        or report.get("target_config_sha256") != digest):
+                    raise RuntimeError("short BF16 service/TP4/graph/MTP or owned-resource evidence incomplete")
+                status["service_correctness"] = {"status": "passed", "report": str(service_path)}
+        except (RuntimeError, OSError, ValueError, TypeError, AttributeError) as error:
+            return _gate_failed(status, log_dir, name, str(error))
+    status["status"] = "probes_passed"
+    atomic_json(log_dir / "status.json", status)
+    from .service_probe import main as service_main
+    command = ["service_probe", "--config", str(config_path), "--serve", "--correctness-only",
+               "--log-dir", str(log_dir / "serve"), "--output", str(log_dir / "serve.json")]
+    try:
+        with _temporary_process_context(env, command):
+            rc = service_main()
+    except BaseException as error:
+        status.update(status="failed", failed_phase="serve", error=f"{type(error).__name__}: {error}")
+        atomic_json(log_dir / "status.json", status)
+        raise
+    status.update(status="stopped" if rc == 0 else "failed", service_returncode=rc)
+    if rc:
+        status["failed_phase"] = "serve"
+    atomic_json(log_dir / "status.json", status)
+    return rc
+
+
+def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
     parser.add_argument("--plan", action="store_true", help="print commands without installing or touching an NPU")
     parser.add_argument("--only", choices=["environment", "build-ops", "probe-ops", "probe-cv", "native-synthetic", "service-probe", "prepare-rotations", "runtime-readiness"])
     parser.add_argument("--log-dir", type=Path)
-    args = parser.parse_args()
+    parser.add_argument("--variant", choices=("baseline", "candidate"),
+                        help="full deployment defaults to candidate; baseline retains the legacy FP32 protocol")
+    add_model_arguments(parser)
+    args = parser.parse_args(argv)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     log_dir = (args.log_dir or ROOT / "logs" / stamp).resolve()
     status = {"status": "running", "npu_acceptance": "not_run", "phases": []}
@@ -119,13 +198,19 @@ def main() -> int:
         print(f"[oscar] install → build → probes → serve; logs={log_dir}", flush=True)
     try:
         config = json.loads(args.config.read_text())
+        original_config = dict(config)
+        require_model = not args.plan and args.only in {None, "prepare-rotations", "native-synthetic", "service-probe"}
+        config = apply_model_options(config, args, require_model=require_model)
+        config = variant_config(config, args.variant or (None if args.only else "candidate"))
     except (OSError, ValueError) as exc:
         if not args.plan:
             (log_dir / "config.log").write_text(f"FAILED phase=config: {exc}\n")
             status.update(status="failed", failed_phase="config", error=str(exc))
             atomic_json(log_dir / "status.json", status)
         raise
-    stages = plan(args.config, log_dir)
+    effective_path = log_dir / "effective-target.json" if config != original_config else args.config.resolve()
+    bf16 = config.get("experimental_bf16_attention", False) and not args.only
+    stages = _bf16_plan(effective_path, log_dir) if bf16 else plan(args.config, log_dir)
     if args.only:
         stages = [x for x in stages + diagnostic_plan(log_dir) if x[0] == args.only]
         if len(stages) != 1:
@@ -133,8 +218,13 @@ def main() -> int:
             if args.plan:
                 raise RuntimeError(error)
             return _gate_failed(status, log_dir, args.only, error)
+    for _, command in stages:
+        if "--config" in command:
+            command[command.index("--config") + 1] = str(effective_path)
     if args.plan:
-        print(json.dumps({"stages": stages, "serve": [sys.executable, "-m", "tools.target_cli", "--config", str(args.config.resolve())],
+        print(json.dumps({"stages": stages, "serve": [sys.executable, "-m", "tools.target_cli", "--config", str(effective_path)],
+                          "vllm_argv": serve_argv(config), "model_resolution": config["model_resolution"],
+                          "performance": "not_run_user_requested" if bf16 else "legacy_paired_protocol",
                           "target_devices": config["devices"], "production_status": "requires_target_probes_and_resource_release"}, indent=2))
         return 0
     # Observation can run without hardware ownership; actual NPU phases require it.
@@ -146,11 +236,20 @@ def main() -> int:
         atomic_json(log_dir / "status.json", status)
         raise
     rc = 0
-    env["OSCAR_TARGET_CONFIG"]=str(args.config.resolve())
+    if effective_path != args.config.resolve():
+        atomic_json(effective_path, config)
+    status.update(effective_config=str(effective_path), model_resolution=config["model_resolution"])
+    env["OSCAR_TARGET_CONFIG"]=str(effective_path)
     env["OSCAR_RUN_NPU_TESTS"]="1"
     if not args.only:
         env["OSCAR_TERMINAL_LOG_MODE"] = "compact"
     print(f"[oscar] devices={env.get('ASCEND_RT_VISIBLE_DEVICES', 'diagnostic')} port={config['port']}", flush=True)
+    print("[oscar] MODEL_SELECTION " + json.dumps(config["model_resolution"], sort_keys=True), flush=True)
+    if bf16:
+        try:
+            return _run_bf16_deployment(config, effective_path, log_dir, status, env)
+        except Exception as error:
+            return _gate_failed(status, log_dir, "bf16-deployment", f"{type(error).__name__}: {error}")
     validated = set()
     try:
         for name, command in stages:
@@ -256,10 +355,10 @@ def main() -> int:
         # The managed server preserves ownership and validates a real request
         # before staying in the foreground. It never starts after failed probes.
         from .service_probe import main as service_main
-        serve_argv = ["service_probe","--config",str(args.config.resolve()),"--serve",
+        service_argv = ["service_probe","--config",str(effective_path),"--serve",
                       "--log-dir",str(log_dir/"serve"),"--output",str(log_dir/"serve.json")]
         try:
-            with _temporary_process_context(env, serve_argv):
+            with _temporary_process_context(env, service_argv):
                 serve_rc = service_main()
         except BaseException as error:
             status.update(status="failed", failed_phase="serve",

@@ -23,8 +23,66 @@ from .phase import atomic_json
 from .probe_striped_cache import _store_bits_equal
 from .striped_fixture import raw_to_striped, striped_slots_to_canonical
 from .probe_bf16_attention import OPERATORS as BF16_OPERATORS
+from .probe_aligned_attention import OPERATORS as ALIGNED_OPERATORS
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def math_contract(target):
+    return "oscar_bf16_attention_v3" if target.get("experimental_aligned_math", target.get("aligned_math", False)) else "oscar_bf16_attention_v2"
+
+
+def selected_operators(target):
+    return ALIGNED_OPERATORS if target.get("experimental_aligned_math", target.get("aligned_math", False)) else BF16_OPERATORS
+
+
+def selected_writer(target):
+    return "store_aligned_int2_out" if target.get("experimental_aligned_math", False) else "rotate_clip_store_striped_out"
+
+
+def make_fixture(torch, shape, target, *, rotation_mode):
+    if target.get("experimental_aligned_math", False):
+        from .aligned_fixture import make_fixture as aligned_fixture
+        return aligned_fixture(torch, shape, rotation_mode=rotation_mode,
+            k_clip=target.get("k_clip_ratio", .96), v_clip=target.get("v_clip_ratio", .92))
+    return reuse.make_fixture(torch, shape, rotation_mode=rotation_mode)
+
+
+def precision_fields(target):
+    fields = {"bf16_attention": True, "math_contract": math_contract(target), "performance": "not_run_user_requested"}
+    if target.get("experimental_aligned_math", False):
+        fields.update(aligned_math=True, cache_format="striped_fp32_v2")
+    return fields
+
+
+def aligned_source_snapshot(target):
+    if target.get('experimental_aligned_math',False):
+        from .probe_aligned_attention import source_binding
+        return source_binding()
+    return None
+
+
+def bind_aligned_evidence(report, target, source_before=None):
+    if target.get('experimental_aligned_math',False):
+        from .probe_aligned_attention import source_binding
+        current=source_binding()
+        if source_before is not None and current!=source_before:
+            raise RuntimeError('aligned lifecycle source changed during the device gate')
+        report.update(aligned_source_binding=current, aligned_clip={
+            'k':target.get('k_clip_ratio',.96),'v':target.get('v_clip_ratio',.92)})
+    return report
+
+
+def validate_aligned_calls(calls, target):
+    if not target.get('experimental_aligned_math',target.get('aligned_math',False)):
+        return
+    allowed=set(ALIGNED_OPERATORS.values())
+    if not isinstance(calls,dict) or calls.get('store_aligned_int2_out',0)<1:
+        raise RuntimeError('aligned lifecycle lacks actual new writer witness')
+    for name,count in calls.items():
+        if count and ((name.startswith('attention_cv_') and name not in allowed) or
+                      name.startswith('rotate_clip_store') or name in {'rotate_out','rotate_vector_init_out'}):
+            raise RuntimeError('aligned lifecycle called a legacy codec/rotation/reader: '+name)
 
 
 def case_plan():
@@ -66,8 +124,8 @@ def validate_case_evidence(report, target, acceptance):
     bf16=target.get("experimental_bf16_attention",False)
     from oscar_ascend.ops.cv_dispatch import OPTIMIZED_STRIPED_OPS
     def reader(name):
-        if bf16:return {"attention_cv_striped_decode_out":"attention_cv_bf16_decode_out",
-                         "attention_cv_striped_q1_out":"attention_cv_bf16_decode_q1_out"}[name]
+        if bf16:return selected_operators(target)[{"attention_cv_striped_decode_out":"q4",
+                         "attention_cv_striped_q1_out":"q1"}[name]]
         return OPTIMIZED_STRIPED_OPS[name] if target.get("experimental_decode_bundle", False) else name
     for row in rows:
         name = row["case"]
@@ -83,13 +141,14 @@ def validate_case_evidence(report, target, acceptance):
         if type(error) not in (float, int) or not math.isfinite(error) or error < 0:
             raise RuntimeError(f"current-only case {name} lacks a finite oracle error")
         calls = row.get("real_operator_calls")
+        validate_aligned_calls(calls,target)
         expected_copy = 1 if paired or bf16 else 1 + policy["warmup"] + policy["repeats"]
         expected_store = 3 if paired else expected_copy
         if (not isinstance(calls, dict)
                 or type(calls.get("copy_validate_current_out")) is not int
                 or calls["copy_validate_current_out"] != expected_copy
-                or type(calls.get("rotate_clip_store_striped_out")) is not int
-                or calls["rotate_clip_store_striped_out"] != expected_store):
+                or type(calls.get(selected_writer(target))) is not int
+                or calls[selected_writer(target)] != expected_store):
             raise RuntimeError(f"current-only case {name} lacks real copy/writer call witnesses")
         if paired:
             required_pair = {"ab_output": "separate_BF16_native_contracts_passed" if bf16 else "frozen_tolerance_passed", "store_bitwise": "passed",
@@ -140,7 +199,10 @@ def _configuration(target, enabled, *, probe_tokens=None):
             raise RuntimeError(f"current-only gate requires explicit {key}=true")
     config = {**target, "experimental_current_only": enabled}
     if target.get("experimental_bf16_attention",False):
-        from .bf16_reference import load_acceptance
+        if target.get("experimental_aligned_math", False):
+            from .aligned_reference import load_acceptance
+        else:
+            from .bf16_reference import load_acceptance
         load_acceptance()
     if probe_tokens is not None:
         if type(probe_tokens) is not int or probe_tokens <= 0:
@@ -163,22 +225,26 @@ def _runtime(torch, fixture, tensors, device, cores, target, enabled, *, hadamar
         splits=1, cube_cores=cores, history_cluster_size=16,
         c4_member_pipeline=target.get("experimental_c4_member_pipeline",False) or target.get("experimental_bf16_attention",False),
         c16_member_pipeline=target.get("experimental_c16_member_pipeline",False),
-        c16_l1_reuse=target.get("experimental_c16_l1_reuse",False) or target.get("experimental_bf16_attention",False)), device)
+        c16_l1_reuse=target.get("experimental_c16_l1_reuse",False) or target.get("experimental_bf16_attention",False),
+        **({"aligned_math": True} if target.get("experimental_aligned_math", False) else {})), device)
     # The independent fixture has a 64-byte diagnostic prefix. This FULL-only
     # runtime uses conv_bytes=0 and strips that prefix from both A/B buffers.
-    raw = raw_to_striped(fixture)[reuse.PREFIX:].to(device)
+    aligned = target.get("experimental_aligned_math", False)
+    raw = (fixture['cpu']['raw'] if aligned else raw_to_striped(fixture))[reuse.PREFIX:].to(device)
     rk = (torch.eye(spec.dim,dtype=torch.float32) if fixture["rotation_mode"] == "identity"
           else reuse._hadamard(torch,spec.dim)).to(device)
-    rv = tensors["rv"]
+    rv = tensors["rv"].float() if aligned else tensors["rv"]
     state = LayerState(raw, raw, SimpleNamespace(block_size=reuse.BLOCK_TOKENS,
         conv_bytes=0, ssm_bytes=fixture["stride"]),
         SimpleNamespace(sink_tokens=reuse.SINK, recent_tokens=spec.recent_tokens,
             speculative_tokens=reuse.SPECULATIVE, ring_tokens=spec.recent_tokens+reuse.SPECULATIVE),
         tensors["wk"].clone(), tensors["wv"].clone(), tensors["tags"].clone(),
-        rk, rv, rk.T.contiguous(), rv.T.contiguous(), hadamard, fixture["blocks"], workspace, "striped_v1",
+        rk, rv, rk.T.contiguous(), rv.T.contiguous(), hadamard, fixture["blocks"], workspace,
+        "striped_fp32_v2" if aligned else "striped_v1",
         rotation_v_nz=(rv.reshape(spec.dim,spec.dim//8,8).permute(1,0,2).contiguous().view(spec.dim,spec.dim)
                        if target.get("experimental_hybrid_l1_decode",False) and not target.get("experimental_bf16_attention",False) else None),
-        rotation_v_bf16=rv.to(torch.bfloat16).contiguous() if target.get("experimental_bf16_attention",False) else None)
+        rotation_v_bf16=rv.to(torch.bfloat16).contiguous() if target.get("experimental_bf16_attention",False) else None,
+        **({"rotation_k_bf16": rk.to(torch.bfloat16).contiguous()} if aligned else {}))
     provider = AscendRuntimeProvider(_configuration(target, enabled, probe_tokens=fixture["tokens"]))
     provider.layers["probe.full"] = state
     provider.ops = CountedOps(torch.ops.oscar_ascend_ops)
@@ -228,22 +294,32 @@ def _assert_output(torch, output, expected, tolerance):
 
 def _expected(fixture,target,*,native_current):
     if not target.get("experimental_bf16_attention",False):return fixture["expected"]
+    if target.get("experimental_aligned_math", False):
+        from .aligned_runtime_oracle import sampled_fixture_expected
+        # All initial lifecycle metadata below explicitly uses ChunkedPrefill.
+        return sampled_fixture_expected(fixture, native_current=native_current, dequant_mode=0)
     from .bf16_runtime_oracle import sampled_fixture_expected
     return sampled_fixture_expected(fixture,native_current=native_current)
 
 
 def _next_bf16_decode_oracle(torch,fixture,state,q,k,v):
     from dataclasses import replace
-    from .bf16_runtime_oracle import sampled_fixture_expected
+    aligned=fixture.get('cache_format')=='striped_fp32_v2'
+    if aligned:
+        from .aligned_runtime_oracle import sampled_fixture_expected
+        from .aligned_reference import rotate_bf16
+    else:
+        from .bf16_runtime_oracle import sampled_fixture_expected
     spec=fixture['spec'];count=len(spec.qlens)
-    canonical=striped_slots_to_canonical(state.raw.cpu().view(fixture['blocks'],reuse.BLOCK_TOKENS,spec.kv_heads,136))
+    canonical=(state.raw.cpu().view(fixture['blocks'],reuse.BLOCK_TOKENS,spec.kv_heads,144) if aligned else
+        striped_slots_to_canonical(state.raw.cpu().view(fixture['blocks'],reuse.BLOCK_TOKENS,spec.kv_heads,136)))
     contexts=tuple(a+b for a,b in zip(spec.contexts,spec.qlens))
-    cpu={**fixture['cpu'],'q':q,'qr':q.float()@state.rotation_k.cpu(),'ck':k,'cv':v,
+    cpu={**fixture['cpu'],'q':q,'qr':rotate_bf16(q,state.rotation_k_bf16.cpu()) if aligned else q.float()@state.rotation_k.cpu(),'ck':k,'cv':v,
          'rv':state.rotation_v.cpu(),'raw':torch.cat((torch.zeros(reuse.PREFIX,dtype=torch.uint8),canonical.reshape(-1))),
          'wk':state.window_key.cpu(),'wv':state.window_value.cpu(),'tags':state.window_tags.cpu()}
     sample={**fixture,'cpu':cpu,'spec':replace(spec,qlens=(1,)*count,contexts=contexts,padded_tokens=count,slot_context=True),
             'tokens':count,'actual_tokens':count,'expected':{i:None for i in range(count)}}
-    return sampled_fixture_expected(sample,native_current=False)
+    return sampled_fixture_expected(sample,native_current=False,**({'dequant_mode':1} if aligned else {}))
 
 
 def _assert_stores(torch, old, new):
@@ -303,14 +379,19 @@ def _decode_after_store(torch, fixture, tensors, old_impl, old, new_impl, new, d
         torch.tensor([p+1 for p in contexts],dtype=torch.int32,device=device), tensors["table"],
         torch.tensor(slots,dtype=tensors["slots"].dtype,device=device),count,count,1,max(contexts)+1,
         num_input_tokens=count,is_draft=True,draft_index=1)
+    if new_impl.provider.config.get("experimental_aligned_math", False):
+        from dataclasses import replace
+        from vllm_ascend.attention.attention_v1 import AscendAttentionState
+        metadata = replace(metadata, attn_state=AscendAttentionState.SpecDecoding)
+    q1 = selected_operators(new_impl.provider.config)['q1']
     outputs=[]
     for impl,state in ((old_impl,old),(new_impl,new)):
         before=impl.provider.ops.calls["copy_validate_current_out"]
-        bf16_before=impl.provider.ops.calls["attention_cv_bf16_decode_q1_out"] if bf16 else None
+        bf16_before=impl.provider.ops.calls[q1] if bf16 else None
         outputs.append(_forward(torch,impl,state,inputs,metadata))
         if impl.provider.ops.calls["copy_validate_current_out"] != before:
             raise RuntimeError("subsequent q1 wrongly selected current-only")
-        if bf16 and impl.provider.ops.calls["attention_cv_bf16_decode_q1_out"]!=bf16_before+1:
+        if bf16 and impl.provider.ops.calls[q1]!=bf16_before+1:
             raise RuntimeError("subsequent q1 did not execute the BF16 reader")
     torch.npu.synchronize()
     if not _store_bits_equal(torch,*outputs):
@@ -318,7 +399,7 @@ def _decode_after_store(torch, fixture, tensors, old_impl, old, new_impl, new, d
     errors=_assert_output(torch,outputs[1],expected,tolerance)
     _assert_stores(torch,old,new)
     return {"status":"passed","reader":"production_subsequent_q1", "output_bitwise":"passed",
-            "operator":"attention_cv_bf16_decode_q1_out" if bf16 else "legacy_selected_q1",
+            "operator":q1 if bf16 else "legacy_selected_q1",
             "independent_oracle":"passed","subsequent_store_bitwise":"passed",**errors}
 
 
@@ -329,7 +410,7 @@ def run_case(torch, target, acceptance, device, cores, case):
     shape=reuse.Shape(name,(4,fresh) if paired else (fresh,),
         (511,0) if paired else (0,),256,1,1,False)
     rotation_mode = _rotation_mode(target,draft)
-    fixture=reuse.make_fixture(torch,shape,rotation_mode=rotation_mode)
+    fixture=make_fixture(torch,shape,target,rotation_mode=rotation_mode)
     bf16=target.get("experimental_bf16_attention",False)
     expected=_expected(fixture,target,native_current=tuple(not draft or context==0 for context in shape.contexts))
     hadamard = rotation_mode == "hadamard"
@@ -344,7 +425,7 @@ def run_case(torch, target, acceptance, device, cores, case):
     torch.npu.synchronize()
     tolerance=acceptance["fused_attention"]
     errors=_assert_output(torch,output,expected,tolerance)
-    if impl.provider.ops.calls["copy_validate_current_out"]!=1 or impl.provider.ops.calls["rotate_clip_store_striped_out"]!=(2 if paired else 1):
+    if impl.provider.ops.calls["copy_validate_current_out"]!=1 or impl.provider.ops.calls[selected_writer(target)]!=(2 if paired else 1):
         raise RuntimeError("production current-only/copy/striped-writer route witness mismatch")
     if _store_bits_equal(torch,original_raw,state.raw):
         raise RuntimeError("current-only writer did not publish compressed bytes")
@@ -391,7 +472,7 @@ def run_case(torch, target, acceptance, device, cores, case):
             timing_scope="production_fresh_FIA_copy_validate_INT2_store_status_guard",
             latency_gate="not_established_no_long_CV_baseline",store_bitwise="small_pairs_only")
     row["real_operator_calls"]=dict(impl.provider.ops.calls)
-    if bf16:row.update(bf16_attention=True,math_contract="oscar_bf16_attention_v2",performance="not_run_user_requested")
+    if bf16:row.update(precision_fields(target))
     print("[oscar] CURRENT_ONLY_CASE_DONE "+json.dumps(row,sort_keys=True),flush=True)
     return row
 
@@ -401,6 +482,7 @@ def probe(config_path, acceptance_path):
     if target.get("experimental_current_only") is not True:
         raise RuntimeError("current-only NPU gate requires an explicit experimental_current_only=true")
     _configuration(target,True)
+    bindings=aligned_source_snapshot(target)
     if acceptance.get("frozen_before_measurement") is not True:
         raise RuntimeError("frozen acceptance is required")
     from .probe_native_current_fia import _select_target_npu, _target_geometry
@@ -420,8 +502,8 @@ def probe(config_path, acceptance_path):
     manifest_path=ROOT/"build/ascendc/build_manifest.json"
     manifest=validate_build_artifacts(manifest_path)
     require_capabilities(STRIPED_CV_OPS|{"copy_validate_current_out","prepare_attention_tasks_out",
-        "rotate_out","merge_lse_out","status_guard","rotate_clip_store_striped_out"}|
-        ({"attention_cv_bf16_decode_out","attention_cv_bf16_decode_q1_out","attention_cv_bf16_cluster4_out","attention_cv_bf16_cluster16_out"}
+        "rotate_out","merge_lse_out","status_guard",selected_writer(target)}|
+        (set(selected_operators(target).values()) | ({'copy_validate_bf16_query_out'} if target.get('experimental_aligned_math',False) else set())
          if target.get("experimental_bf16_attention",False) else set()),manifest_path)
     cores=reuse._core_count(torch,target);device=torch.device("npu:0")
     rows=[]
@@ -433,7 +515,8 @@ def probe(config_path, acceptance_path):
         "artifact_signature":manifest["signature"],"artifact_sha256":manifest["sha256"],
         "graph_capture":"not_run_eager_scope","graph_replay":"not_run_eager_scope",
         "model_quality":"not_established","full_model_performance":"not_established"}
-    if target.get("experimental_bf16_attention",False):report.update(bf16_attention=True,performance="not_run_user_requested",math_contract="oscar_bf16_attention_v2")
+    if target.get("experimental_bf16_attention",False):report.update(precision_fields(target))
+    bind_aligned_evidence(report,target,bindings)
     validate_case_evidence(report,target,acceptance)
     return report
 

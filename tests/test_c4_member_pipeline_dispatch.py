@@ -86,6 +86,8 @@ def test_missing_new_capability_fails_before_any_device_work(monkeypatch, reques
     config["experimental_c4_member_pipeline"] = True
     config = variant_config(config, "candidate")
     config["experimental_request_windows"] = request_windows
+    config["experimental_bf16_attention"] = False  # Qualified legacy reader contract.
+    config["experimental_aligned_math"] = False
     if request_windows:
         config["experimental_mdl_decode"] = False  # Isolate the qualified request-window C4 reader.
         config["experimental_hybrid_l1_decode"] = False

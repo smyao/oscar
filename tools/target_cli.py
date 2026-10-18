@@ -6,6 +6,8 @@ import json
 import os
 from pathlib import Path
 import sys
+import tempfile
+from .model_config import add_model_arguments, apply_model_options
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -19,6 +21,7 @@ def diagnose_guard_enabled(config: dict) -> bool:
 
 
 def serve_argv(config: dict) -> list[str]:
+    config = apply_model_options(config)
     native_budget = config.get("use_native_token_budget", True)
     if type(native_budget) is not bool:
         raise ValueError("use_native_token_budget must be an explicit boolean")
@@ -37,8 +40,10 @@ def serve_argv(config: dict) -> list[str]:
     if not native_budget:
         args += ["--max-num-batched-tokens", str(budget)]
     for key in ("served_model_name", "host", "port", "data_parallel_size", "tensor_parallel_size",
-                "max_model_len", "max_num_seqs", "gpu_memory_utilization", "quantization"):
+                "max_model_len", "max_num_seqs", "gpu_memory_utilization", "dtype"):
         args += ["--" + key.replace("_", "-"), str(config[key])]
+    if config["quantization"] == "ascend":
+        args += ["--quantization", "ascend"]
     for key in ("compilation_config", "speculative_config", "additional_config", "hf_overrides"):
         # Keep the user-provided spelling for speculative_config.
         flag = "--speculative_config" if key == "speculative_config" else "--" + key.replace("_", "-")
@@ -69,6 +74,10 @@ def serve_argv(config: dict) -> list[str]:
 
 def target_env(config: dict, base: dict[str, str] | None = None) -> dict[str, str]:
     env = dict(os.environ if base is None else base)
+    if config.get("experimental_bf16_attention",False) and not diagnose_guard_enabled(config):
+        # User paused performance work. A stale inherited observer control
+        # must not install NPU Event sampling in a normal BF16 service.
+        env.pop("OSCAR_PASSIVE_TIMING_CONTROL",None)
     if diagnose_guard_enabled(config):
         env["OSCAR_GUARD_HOST_SYNC"] = "1"
     devices = config.get("devices")
@@ -86,25 +95,41 @@ def target_env(config: dict, base: dict[str, str] | None = None) -> dict[str, st
     return env
 
 
-def main() -> int:
+def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
     parser.add_argument("--print-command", action="store_true")
     parser.add_argument("--native",action="store_true",help="explicit unmodified native baseline, never selected after an OSCAR failure")
-    args = parser.parse_args()
-    config = json.loads(args.config.read_text())
+    add_model_arguments(parser)
+    args = parser.parse_args(argv)
+    original = json.loads(args.config.read_text())
+    config = apply_model_options(original, args, require_model=not args.print_command)
     command = serve_argv(config)
     if args.print_command:
         import shlex
         print("vllm " + shlex.join(command))
         return 0
-    os.environ.update(target_env(config))
-    os.environ["OSCAR_TARGET_CONFIG"]=str(args.config.resolve())
+    if config != original:
+        # Workers consume the same model choice as the native CLI, including
+        # direct target_cli overrides. Keep it alive until vLLM exits.
+        with tempfile.TemporaryDirectory(prefix="oscar-target-") as directory:
+            effective = Path(directory) / "effective-target.json"
+            effective.write_text(json.dumps(config, indent=2) + "\n")
+            return _run_service(config, effective, command, native=args.native)
+    return _run_service(config, args.config, command, native=args.native)
+
+
+def _run_service(config: dict, config_path: Path, command: list[str], *, native: bool) -> int:
+    env = target_env(config)
+    if "OSCAR_PASSIVE_TIMING_CONTROL" not in env:
+        os.environ.pop("OSCAR_PASSIVE_TIMING_CONTROL",None)
+    os.environ.update(env)
+    os.environ["OSCAR_TARGET_CONFIG"]=str(config_path.resolve())
     if diagnose_guard_enabled(config):
         print("[oscar] PERF_DIAGNOSTIC mode=trap target_eager=true "
               "guard_host_sync=1 requires_user_load=true performance_valid=false "
               "bug_fixed=not_established", flush=True)
-    if args.native:
+    if native:
         os.environ["OSCAR_ENABLED"]="0"
         if os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL"):
             # Passive runner/graph timing only; platform/cache routing stays

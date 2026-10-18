@@ -1,0 +1,24 @@
+.FF.F                                                                    [100%]
+=================================== FAILURES ===================================
+_____________________ test_no_silent_exception_swallowing ______________________
+tests/test_no_fallback_static.py:28: in test_no_silent_exception_swallowing
+    assert not all(isinstance(statement, ast.Pass) for statement in node.body), path
+E   AssertionError: PosixPath('/Users/sunao2000/gpt_new_oscar_kimi/tools/experiments/replay_shared_fp32.py')
+E   assert not True
+E    +  where True = all(<generator object test_no_silent_exception_swallowing.<locals>.<genexpr> at 0x101ad7bc0>)
+______________ test_online_hooks_do_not_copy_device_data_to_host _______________
+tests/test_no_fallback_static.py:53: in test_online_hooks_do_not_copy_device_data_to_host
+    assert cpu_mirror is not None and node in ast.walk(cpu_mirror), path
+E   AssertionError: PosixPath('/Users/sunao2000/gpt_new_oscar_kimi/oscar_ascend/integration/metadata.py')
+E   assert (None is not None)
+______________________ test_source_headers_trace_archive _______________________
+tests/test_no_fallback_static.py:79: in test_source_headers_trace_archive
+    assert any(word in header for word in ("档案", "Archive", "archive")), f"missing historical fault trace: {path}"
+E   AssertionError: missing historical fault trace: /Users/sunao2000/gpt_new_oscar_kimi/tools/experiments/export_shared_fp32.py
+E   assert False
+E    +  where False = any(<generator object test_source_headers_trace_archive.<locals>.<genexpr> at 0x102484110>)
+=========================== short test summary info ============================
+FAILED tests/test_no_fallback_static.py::test_no_silent_exception_swallowing
+FAILED tests/test_no_fallback_static.py::test_online_hooks_do_not_copy_device_data_to_host
+FAILED tests/test_no_fallback_static.py::test_source_headers_trace_archive - ...
+3 failed, 2 passed in 0.39s

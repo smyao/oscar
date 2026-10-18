@@ -1,0 +1,85 @@
+{
+  "scope": "host model selection, shared launch options, BF16 correctness-only deployment",
+  "default": {
+    "model": "/softwarePlatform/c00879303/Qwen3.8-27B",
+    "served_model_name": "qwen3.8",
+    "dtype": "bfloat16",
+    "quantization": null,
+    "quantization_mode": "none",
+    "variant": "candidate"
+  },
+  "shared_api": {
+    "module": "tools.model_config",
+    "arguments": "add_model_arguments(parser)",
+    "apply": "apply_model_options(config,args=None,require_model=False)",
+    "choices": [
+      "auto",
+      "none",
+      "ascend"
+    ],
+    "auto_override_rule": "explicit new --model resets quantization mode to auto unless --quantization is explicit"
+  },
+  "metadata_evidence": [
+    "references/vllm-ascend/vllm_ascend/quantization/utils.py:detect_quantization_method",
+    "references/vllm-ascend/vllm_ascend/quantization/modelslim_config.py:override_quantization_method",
+    "references/vllm-ascend/vllm_ascend/platform.py:main-model quantization inherited by speculative configuration",
+    "references/vllm/vllm/model_executor/models/qwen3_5.py:Qwen3_5ForConditionalGeneration and Qwen3_5ForCausalLM"
+  ],
+  "metadata_policy": "local config.json required at actual model startup; plan may defer; no basename inference; quantized metadata plus explicit none rejects rather than native auto-reenable",
+  "unchanged_native_policy": [
+    "MTP qwen3_5_mtp 3 tokens/eager draft",
+    "APC off",
+    "token budget 16384",
+    "native scheduler",
+    "devices 0,1,2,3",
+    "port 8989",
+    "FULL_DECODE_ONLY"
+  ],
+  "bf16_deploy": [
+    "observe candidate probe-only shared complete signed correctness gates, primitives, rotations and resource release",
+    "short 128 prompt / 16 output service check with TP4/FULL/graph/MTP evidence and owned cleanup",
+    "foreground managed service"
+  ],
+  "performance": "not_run_user_requested",
+  "host_validation": [
+    {
+      "passed": 179,
+      "scope": "latest model/install/frozen-launch/observe/stable-CV/deploy/APC/appendix tests"
+    },
+    {
+      "passed": 182,
+      "scope": "preceding model/install/frozen-launch/observe/stable-CV/deploy/service-workflow/stable-policy combined run; includes all 30 fake-HTTP service tests"
+    },
+    {
+      "passed": 3,
+      "scope": "new correctness-only fake-HTTP tests including strict MTP failure, no NPU"
+    }
+  ],
+  "not_established": [
+    "real model weights/configs on target",
+    "NPU completion",
+    "target graph replay",
+    "model quality",
+    "performance",
+    "official aligned codec math (separate workstream)"
+  ],
+  "files": {
+    "configs/target.json": "57d079238c9605f93b4664ea5e4df7282004f4467af8ce50a89dc086d52552c4",
+    "tools/model_config.py": "edcecd0ce120d3f45abf08fe3643dcdfb3dc690f15495db90ee0f3f892814def",
+    "tools/target_cli.py": "1b8267fa28f76e864a1c52a601df921e45c511451c83a373cc566156a114da65",
+    "tools/install_serve.py": "f66869d0fd238f74d9600d2a1ecfc75b70f4d2cfc35d2d3ebaf9571cd10d1122",
+    "tools/observe_serve.py": "ffc469814175a4445682770cda072db4303c0f34299dc507e27221575cb59a7b",
+    "tools/deploy.py": "a15c8c12b3fc984aad7d0938d7813eafa40bd34ed645e52306495f2df300c4b1",
+    "tools/service_probe.py": "d4a830a154a3c3d306776bf5103862a3e314f2bea28b01166a5b87d1fbbae6bc",
+    "tests/test_model_config.py": "53a8d84ba636e8d1d4fea0e7ee3fda3c7ecfac4329fcd04489a29f4771ba5e4c",
+    "tests/test_deploy_bf16.py": "5e38c1445c23e66a834544103935af8ce4aecf9cdfb3e6bfeb41c07fd1b317c6",
+    "tests/test_install_serve.py": "9f841878ac69eb31c7d72bfc453beea7d292e0ae7e7f75283eb6492461101196",
+    "tests/test_observe_serve.py": "2808fb5622e78c0f77646802c432d3ef1239ccc31e891bbd7a245944c449929e",
+    "tests/test_stable_cv_gate.py": "cfdbe1517e78f460c8737771cc8add178ebc0a3a16224f0aa5afd45c491176ee",
+    "tests/test_stable_launch_frozen.py": "43921b6160f984cf09d3d11b49c76421cb56ca3551ba1e048a5d47be21149a4b",
+    "tests/test_deploy_launcher.py": "e6541081e9cf1345507c4092bb9cf70925c51bd7f94e6e6918ab8a06026ef98e",
+    "tests/test_service_workflow.py": "0ccaa99e5387b6a6699e43ac6e4eadf82006e80ac062a54fc4f1c7dbd76bb9ce",
+    "tests/test_prefix_caching.py": "8bbfb79549084d1c9e07dae5ddcef70718531380d6736db8f8302603ab9aac31",
+    "tests/test_integration_contracts.py": "419c07fd8377be723a67b0c2e2f3290a8a55e9ff2447a40bf67f15bba3713db9"
+  }
+}

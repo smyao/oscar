@@ -1,4 +1,4 @@
-# 档案 G19/G20/G23/#86/#96/#97：自动生成可追溯 data-free artifact；不冒充样本校准。
+# Archive G19/G20/G23/#23-25/#86/#96/#97/#111: official one-pass calibration.
 from __future__ import annotations
 import argparse
 import hashlib
@@ -6,66 +6,126 @@ import json
 import os
 from pathlib import Path
 import sys
+import subprocess
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def model_geometry(model: Path) -> tuple[list[str], int, str]:
-    raw = (model / "config.json").read_bytes()
-    config = json.loads(raw)
-    text = config.get("text_config", config)
-    kinds = text.get("layer_types")
-    count = text["num_hidden_layers"]
-    if kinds is None:
-        interval = text.get("full_attention_interval")
-        if not isinstance(interval, int) or interval <= 0:
-            raise ValueError("model must declare layer_types or full_attention_interval")
-        kinds = ["full_attention" if (i+1) % interval == 0 else "linear_attention" for i in range(count)]
-    if len(kinds) != count or any(x not in {"full_attention", "linear_attention"} for x in kinds):
-        raise ValueError("unexpected hybrid layer_types")
-    layers = [f"model.layers.{i}.self_attn.attn" for i, kind in enumerate(kinds) if kind == "full_attention"]
-    dim = text.get("head_dim")
-    if dim is None:
-        hidden, heads = text["hidden_size"], text["num_attention_heads"]
-        if hidden % heads:
-            raise ValueError("hidden_size is not divisible by query heads")
-        dim = hidden // heads
-    if not layers or not isinstance(dim, int) or dim <= 0:
-        raise ValueError("model has no FULL layers or invalid head_dim")
-    # Source identity binds to actual config and weight index, not a path-only identifier.
-    hasher = hashlib.sha256(raw)
-    index = model / "model.safetensors.index.json"
-    if index.exists():
-        hasher.update(index.read_bytes())
-    return layers, dim, hasher.hexdigest()
+    from oscar_ascend.rotations import checkpoint_identity
+    return checkpoint_identity(model)
+
+
+def _capture(config_path, directory):
+    # The child owns the native model and exits before offline FP64 fitting.
+    # Inherit stdout/stderr so both one-key launchers preserve live failures.
+    subprocess.run([sys.executable,"-m","tools.calibrate_model_rotations",
+                    "--config",str(config_path),"--output-dir",str(directory)],check=True)
+    return json.loads((directory/"capture-manifest.json").read_text())
+
+
+def prepare(config, *, config_path=None, output=None, import_pair=None, capture_runner=None,
+            testing=False):
+    from oscar_ascend.rotations import (rotation_artifact_path,calibration_cache_identity,
+        build_hadamard_artifact,load_artifact,save_artifact,validate_artifact,load_active_artifact)
+    from oscar_ascend.rotation_calibration import (OFFICIAL_COMMIT,K_FILENAME,V_FILENAME,
+        fit_checkpoint_pair,checkpoint_pair_artifact,publish_checkpoint_pair,verified_pair_files)
+    import torch
+    layers,dim,fingerprint=model_geometry(Path(config["model"]))
+    method=config.get("rotation_method","qqt_sst")
+    if method not in {"qqt_sst","hadamard"}:raise ValueError("rotation_method must be qqt_sst or explicit data-free hadamard")
+    destination=Path(output).expanduser().resolve() if output else rotation_artifact_path(config,fingerprint)
+    device="cpu" if testing else "npu:0"
+    def validate(artifact):
+        return validate_artifact(artifact,layer_names=layers,head_dim=dim,
+            model_fingerprint=fingerprint,pr_fingerprint=OFFICIAL_COMMIT,
+            require_calibrated=True,device=device,testing=testing)
+    if method=="hadamard":
+        options=dict(layer_names=layers,head_dim=dim,model_fingerprint=fingerprint,device=device,testing=testing)
+        artifact=load_artifact(destination,**options) if destination.exists() else build_hadamard_artifact(**options)
+        if not destination.exists():save_artifact(artifact,destination)
+        return {"artifact":str(destination),"source":"hadamard_data_free","calibrated":False,
+            "official_calibration_aligned":False,"model_fingerprint":fingerprint,"quality_acceptance":"not_run"}
+    profile=calibration_cache_identity(config,fingerprint)
+    if import_pair is None:
+        k=config.get("rotation_k_path");v=config.get("rotation_v_path")
+        if bool(k)!=bool(v):raise ValueError("both rotation_k_path and rotation_v_path are required")
+        if k:import_pair=(Path(k),Path(v))
+    automatic_cache=(output is None and not config.get('rotation_artifact') and
+                     not os.environ.get('OSCAR_ROTATION_ARTIFACT'))
+    interrupted_pair=automatic_cache and (destination.parent/'.oscar.pending.json').exists()
+    if destination.exists() and not interrupted_pair:
+        # Never replace a malformed explicit artifact or reuse old Hadamard.
+        if not (destination.parent/'.oscar.complete.json').exists():
+            raise ValueError('official calibrated K/V pair manifest required; a data-free or standalone cache is not accepted')
+        load_active_artifact(config,path=destination,device=device,testing=testing,
+            layer_names=layers,head_dim=dim,model_fingerprint=fingerprint)
+        return {"artifact":str(destination),"source":"official_qqt_sst_cache","calibrated":True,
+            "model_fingerprint":fingerprint,"quality_acceptance":"not_run","reused":True}
+    destination.parent.mkdir(parents=True,exist_ok=True)
+    if import_pair is not None:
+        kpath,vpath=map(lambda p:Path(p).expanduser().resolve(),import_pair)
+        if kpath==vpath or os.path.samefile(kpath,vpath):raise ValueError('K/V import must be distinct files')
+        if kpath in {destination.parent/K_FILENAME,destination.parent/V_FILENAME} or vpath in {
+                destination.parent/K_FILENAME,destination.parent/V_FILENAME}:
+            raise ValueError('import destination must not overwrite the supplied K/V files')
+        kstate=torch.load(kpath,map_location='cpu',weights_only=True)
+        vstate=torch.load(vpath,map_location='cpu',weights_only=True)
+        artifact=checkpoint_pair_artifact(kstate,vstate,layer_names=layers,head_dim=dim,
+            model_fingerprint=fingerprint,testing=testing)
+        artifact['import_provenance']={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in (kpath,vpath)}
+        source='official_qqt_sst_import'
+    else:
+        if config_path is None and capture_runner is None:raise ValueError('native calibration requires a config path')
+        directory=Path(tempfile.mkdtemp(prefix='capture-',dir=destination.parent))
+        capture=(capture_runner or _capture)(config_path,directory)
+        if capture.get('status')!='native_post_rope_capture_complete':raise ValueError('native sampling did not complete')
+        if capture.get('model_fingerprint')!=fingerprint or capture.get('layer_ids')!=[int(x.split('.')[2]) for x in layers]:
+            raise ValueError('native sample model/layer identity differs')
+        if capture.get('rank_sha256') is not None and any(
+                capture['rank_sha256'].get(p)!=hashlib.sha256(Path(p).read_bytes()).hexdigest()
+                for p in capture['rank_paths']):
+            raise ValueError('captured rank payload changed after native completion')
+        ranks=[torch.load(Path(p),map_location='cpu',weights_only=True) for p in capture['rank_paths']]
+        model=json.loads((Path(config['model'])/'config.json').read_text());model=model.get('text_config',model)
+        kstate,vstate=fit_checkpoint_pair(ranks,layer_names=layers,head_dim=dim,
+            model_path=config['model'],model_fingerprint=fingerprint,
+            global_q_heads=model['num_attention_heads'],global_kv_heads=model['num_key_value_heads'],
+            tp_size=config['tensor_parallel_size'],prompt_sha256=capture['prompt_sha256'],
+            max_tokens=profile['max_tokens'],model_revision=config.get('revision'),testing=testing)
+        if kstate['calibration']['tokens']!=capture['token_count']:raise ValueError('captured prompt row budget differs')
+        artifact=checkpoint_pair_artifact(kstate,vstate,layer_names=layers,head_dim=dim,
+            model_fingerprint=fingerprint,testing=testing)
+        artifact['capture_manifest']=capture
+        source='official_qqt_sst_native_post_rope_calibration'
+    artifact['calibration_profile']=profile
+    validate(artifact)
+    publish_checkpoint_pair(kstate,vstate,destination.parent,artifact=artifact,artifact_name=destination.name)
+    # Read under the same pair lock and validate the published generation.
+    _,_,published=verified_pair_files(destination.parent,artifact_name=destination.name);validate(published)
+    return {"artifact":str(destination),"k_rotation":str(destination.parent/K_FILENAME),
+        "v_rotation":str(destination.parent/V_FILENAME),"source":source,"calibrated":True,
+        "model_fingerprint":fingerprint,"full_layers":layers,"accumulator_dtype":"float64",
+        "statistics_device":"cpu_offline","model_forward_device":"npu" if not testing else "cpu_test",
+        "quality_acceptance":"not_run","draft_layer":"explicit_identity_not_sampled","reused":False}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--import-k", type=Path)
+    parser.add_argument("--import-v", type=Path)
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     from .target_cli import target_env
     os.environ.update(target_env(config))
-    layers, dim, fingerprint = model_geometry(Path(config["model"]))
-    import torch
-    import torch_npu
-    torch.npu.set_device(0)  # logical 0 after physical selection
-    from oscar_ascend.rotations import build_hadamard_artifact, load_artifact, save_artifact
-    output = args.output or ROOT / "artifacts/rotations" / fingerprint / "hadamard.pt"
-    if config["rotation_method"] != "hadamard":
-        raise ValueError("automatic preparation currently implements the paper's explicit data-free Hadamard method only; calibrated artifact generation is not integrated")
-    if output.exists():
-        # Strict validation is repeated below through the public validator.
-        artifact = load_artifact(output, layer_names=layers, head_dim=dim,
-                                 model_fingerprint=fingerprint, device="npu:0")
-    else:
-        artifact = build_hadamard_artifact(layer_names=layers, head_dim=dim,
-                                           model_fingerprint=fingerprint, device="npu:0")
-        save_artifact(artifact, output)
-    print(json.dumps({"artifact": str(output), "source": "hadamard_data_free", "model_fingerprint": fingerprint,
-                      "full_layers": layers, "quality_acceptance": "not_run", "draft_layer": "not_yet_resolved"}))
+    if bool(args.import_k)!=bool(args.import_v):parser.error('both --import-k and --import-v are required')
+    # Do not initialize a parent NPU context before the native model child.
+    # Matrix validation lazily imports torch_npu after that child has exited.
+    pair=(args.import_k,args.import_v) if args.import_k else None
+    print(json.dumps(prepare(config,config_path=args.config,output=args.output,import_pair=pair)),flush=True)
     return 0
 
 

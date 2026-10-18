@@ -1,0 +1,191 @@
+{
+  "scope": "2026-10-18 source dtype alignment, no NPU/performance execution",
+  "upstream_files": {
+    "oscar_rotation_clip_int2_kv.py": {
+      "sha256": "66c8ed67781777ec1ded2bcc7cb0d4c5a440aa1abe842fd62dfffe13d730531e"
+    },
+    "python/sglang/srt/layers/attention/quantized_kv_prefill.py": {
+      "sha256": "bc3f1718015e7a353d0f32e6341446f6ab0294e5eab9fcf8625bc8af2645e081"
+    },
+    "python/sglang/srt/layers/attention/triton_ops/decode_attention.py": {
+      "sha256": "4490d2eff302d7af62ee1f1c4fd771dea01525b8014b887b88e4051cb644a9dc"
+    },
+    "python/sglang/srt/mem_cache/kv_quant_kernels.py": {
+      "sha256": "60aaa142c34d5113cb9b5e4366b74b9c474120f6eb6405fe6972b4cec8eb53eb"
+    },
+    "rotation/eval_oscar_gpqa.sh": {
+      "sha256": "9430ea3179fd79a1fcc1ce291cd3b0137dd7abfd6060b4abd3a6734c8cc5aad8"
+    }
+  },
+  "audit": [
+    {
+      "phase": "rotation",
+      "official": "BF16 operands and BF16 output",
+      "old_local": "FP32 input/matrix/rotation output",
+      "adaptation": "Native torch.matmul out=bounded preallocated BF16 buffers; aligned Q/Qrot/K/V/Rk/Rv GM operands allBF16. Query copy uses FP32 only in finite-check UB, then CastRne publishesBF16."
+    },
+    {
+      "phase": "clipping",
+      "official": "FP32 sorted absolute value at min(int(ratio*D),D-1); K .96, V .92",
+      "old_local": "torch.quantile-compatible interpolation at ratio*(D-1), default clipping disabled",
+      "new": "Integer order statistic after BF16 rotation, computed in FP32"
+    },
+    {
+      "phase": "quantization",
+      "official": "FP32 scale=max(range,1e-8)/3; zero=-min/scale; trunc(x/scale+zero+.5)",
+      "old_local": "scale=max(range/3,1e-8); FP16 rounded scale and raw-min zero before code assignment",
+      "new": "FP32 normalized-zero metadata without precast"
+    },
+    {
+      "phase": "metadata storage",
+      "official": "Script explicitly sets float32",
+      "old_local": "4 FP16 values, D256 total136B",
+      "new": "Versioned striped_fp32_v2, 4 FP32 values, D256 total144B; old136B retained"
+    },
+    {
+      "phase": "prefill dequant",
+      "official": "Crumbs/scale/zero converted toFP32, subtraction/multiplication FP32, final storeBF16",
+      "new": "Explicit mode0, tile reconstruction only"
+    },
+    {
+      "phase": "unified decode dequant",
+      "official": "Crumbs and metadata BF16, BF16 subtraction and multiplication",
+      "new": "Explicit mode1 using BF16 RNE boundaries represented in FP32 Vector scratch"
+    },
+    {
+      "phase": "attention arithmetic",
+      "official": "BF16 QK/PV operands; FP32 online states/accumulator",
+      "new": "Existing BF16 QK/PV/Rv and FP32 softmax/LSE/merge preserved"
+    },
+    {
+      "phase": "precise windows",
+      "official": "Rotated BF16 windows",
+      "local_adaptation": "Original-space BF16 windows and separate source0 partial Rv retained; differs in BF16 rounding from official merged-domain arrangement; no claim of bitwise cross-framework equality"
+    }
+  ],
+  "necessary_fp32": [
+    "Quantizer min/max/range/division/normalized-zero parameters",
+    "Prefill reconstruction before final BF16 round",
+    "Hardware matmul accumulation",
+    "Online max/sum/alpha/exp, normalization, LSE and cross-source merge"
+  ],
+  "known_non_equivalence": "Compressing FP32 metadata toBF16 leaves unified decode unchanged but changes official prefill; therefore136B BF16 metadata was rejected.",
+  "host_validation": {
+    "test": "tests/test_aligned_reference.py",
+    "passed": 16,
+    "scope": "independent math, format, corrupted metadata, generated source identity"
+  },
+  "device_validation": "Final BF16 QR six-case CANN CPU-debug and standard Release54cap compilation passed; NPU/graph/model/performance notrun",
+  "NPU": "not_run",
+  "performance": "not_run_user_requested",
+  "source_line_map": [
+    {
+      "topic": "Official launch dtype",
+      "file": "rotation/eval_oscar_gpqa.sh",
+      "lines": [
+        336,
+        337
+      ]
+    },
+    {
+      "topic": "Official rotation dtype",
+      "file": "python/sglang/srt/layers/attention/quantized_kv_prefill.py",
+      "lines": [
+        123,
+        137
+      ]
+    },
+    {
+      "topic": "Official integer clipping index",
+      "file": "oscar_rotation_clip_int2_kv.py",
+      "lines": [
+        387,
+        399
+      ]
+    },
+    {
+      "topic": "Official FP32 uniform quantization",
+      "file": "oscar_rotation_clip_int2_kv.py",
+      "lines": [
+        180,
+        196
+      ]
+    },
+    {
+      "topic": "Official prefill FP32 dequant",
+      "file": "python/sglang/srt/layers/attention/quantized_kv_prefill.py",
+      "lines": [
+        242,
+        278
+      ]
+    },
+    {
+      "topic": "Official unified decode BF16 K dequant",
+      "file": "python/sglang/srt/layers/attention/triton_ops/decode_attention.py",
+      "lines": [
+        1939,
+        1980
+      ]
+    },
+    {
+      "topic": "Official unified decode BF16 V dequant",
+      "file": "python/sglang/srt/layers/attention/triton_ops/decode_attention.py",
+      "lines": [
+        2140,
+        2180
+      ]
+    },
+    {
+      "topic": "New writer clipping/quant/meta",
+      "file": "csrc/kernels/store_aligned_int2.cpp",
+      "lines": [
+        19,
+        107
+      ]
+    },
+    {
+      "topic": "New writer original-space window preservation",
+      "file": "csrc/kernels/store_aligned_int2.cpp",
+      "lines": [
+        109,
+        222
+      ]
+    },
+    {
+      "topic": "New query dtype/guard bridge",
+      "file": "csrc/kernels/store_aligned_int2.cpp",
+      "lines": [
+        259,
+        321
+      ]
+    },
+    {
+      "topic": "New FP32meta decoder modes",
+      "file": "csrc/kernels/attention_aligned_unpack.h",
+      "lines": [
+        109,
+        160
+      ]
+    }
+  ],
+  "source_binding": {
+    "csrc/kernels/attention_cv_aligned_decode.cpp": "95cd76c1b105df263d78d7e11b7d7ed68a76d5529e33b6285d05b8c384fcbda8",
+    "csrc/kernels/store_aligned_int2.cpp": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
+    "csrc/kernels/attention_aligned_unpack.h": "ad8e7aee0a6521a71e9346fa12eac81f4b4356c01507a4257e5c72c866376e07",
+    "csrc/kernels/attention_bf16_cast.h": "a83070f6737096c864a6be9f603a45dfbc8cfeb06dd1a0bb3e306b238fc5740f",
+    "csrc/include/oscar_aligned_decode_launch.h": "68c7b1890565669dc82757186d73a822a7494bbae586283360ee9359b9671d2e",
+    "csrc/include/oscar_aligned_store_launch.h": "55a200d9cafeabe2be99ebecf47fecea860e34a94f795b451f6de5ab29e38eb9",
+    "tools/generate_aligned_codec.py": "b8015247af7fa23a3306847a887b9329b7eaa7b7863ce30eb4aef583543b953c",
+    "tools/aligned_reference.py": "f6a871ee8b2bbfd539e5e3b7269323cdafdaa68aca7a0c6510de3d809121446e",
+    "tools/aligned_runtime_oracle.py": "ed92635542f2f518bf0b784c990d936367f82e32b4469dd67f59fed2552baa60",
+    "configs/acceptance_aligned_bf16.json": "abc5db538ad9963d0c41dadc025b963503ed95033169577fafb892850a4fb45e",
+    "tests/test_aligned_reference.py": "8f813b1d59a9b9605bb37b8e2f6d0fb5071941276d0ddd4499d14f1908608070"
+  },
+  "oracle_dependencies": {
+    "tools/bf16_reference.py": "7b9b71b1bfe6198f41e36962c10adcca1e6863b03b9a9ad391c1533aed0ec859",
+    "oscar_ascend/ops/reference.py": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
+    "tools/aligned_fixture.py": "6c52b2186ff060b4a2f19d67807f51a0752c2040e1d5161a7daea933eaa85577"
+  },
+  "cpu_receipt": "reports/official_dtype_alignment_20261018/final-cpu-evidence.json",
+  "final_summary": "reports/official_dtype_alignment_20261018/summary.json"
+}

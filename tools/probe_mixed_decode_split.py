@@ -80,7 +80,7 @@ def _initial_forward(torch,impl,state,tensors,metadata,cut):
 
 def run_case(torch,target,acceptance,device,cores,case):
     mode='identity' if case.draft else 'hadamard'
-    fixture=reuse.make_fixture(torch,reuse.Shape(case.name,case.lengths,case.contexts,256,1,1,False),
+    fixture=shared.make_fixture(torch,reuse.Shape(case.name,case.lengths,case.contexts,256,1,1,False),target,
                                rotation_mode=mode)
     bf16=target.get('experimental_bf16_attention',False)
     expected_oracle=shared._expected(fixture,target,native_current=True)
@@ -141,8 +141,9 @@ def run_case(torch,target,acceptance,device,cores,case):
          'first_mtp':case.draft,'slot_dtype':case.slot_dtype,'rotation':mode,
          'partition':witness['new'],'original_source_splits_preserved':True,
          'decode_after_store':follow,'timings':timing,'full_model_performance':'not_established'}
-    if bf16:row.update(bf16_attention=True,math_contract='oscar_bf16_attention_v2',performance='not_run_user_requested',
-                       bf16_cv_calls={side:{name:impl.provider.ops.calls[name] for name in shared.BF16_OPERATORS.values()
+    if bf16:row.update(**shared.precision_fields(target),
+                       real_operator_calls={side:dict(impl.provider.ops.calls) for side,(impl,_,_) in sides.items()},
+                       bf16_cv_calls={side:{name:impl.provider.ops.calls[name] for name in shared.selected_operators(target).values()
                                            if impl.provider.ops.calls[name]} for side,(impl,_,_) in sides.items()},
                        ab_max_abs_diagnostic=float((outputs['new'].float()-outputs['old'].float()).abs().max()))
     print('[oscar] PERF_MIXED_DECODE_SPLIT '+json.dumps({'case':case.name,'status':row['status'],
@@ -159,6 +160,9 @@ def validate_case_evidence(report,acceptance):
     names=[r.get('case') for r in rows]
     if any(not isinstance(n,str) for n in names) or set(names)!=set(expected):raise RuntimeError('partition cases differ')
     for row in rows:
+        if report.get('aligned_math',False):
+            for side in ('old','new'):
+                shared.validate_aligned_calls(row.get('real_operator_calls',{}).get(side),report)
         case=expected[row['case']];cut=sum(case.lengths[:-1]);n=sum(case.lengths)
         label='BF16_independent_runtime_oracle_passed' if bf16 else 'frozen_output_LSE_and_independent_oracle_passed'
         if (row.get('status')!='passed' or row.get('precision')!=label
@@ -170,9 +174,9 @@ def validate_case_evidence(report,acceptance):
             raise RuntimeError('mixed partition route/numerical evidence differs')
         if bf16:
             calls=row.get('bf16_cv_calls',{})
-            if (calls.get('new',{}).get('attention_cv_bf16_decode_out',0)<1 or
-                calls.get('new',{}).get('attention_cv_bf16_cluster16_out',0)<1 or
-                calls.get('old',{}).get('attention_cv_bf16_cluster16_out',0)<1):
+            if (calls.get('new',{}).get(shared.selected_operators(report)['q4'],0)<1 or
+                calls.get('new',{}).get(shared.selected_operators(report)['c16'],0)<1 or
+                calls.get('old',{}).get(shared.selected_operators(report)['c16'],0)<1):
                 raise RuntimeError('partition did not execute actual BF16 short/long readers')
         if case.timed:
             if bf16:
@@ -199,6 +203,7 @@ def validate_case_evidence(report,acceptance):
 
 def probe(config_path,acceptance_path):
     target=json.loads(config_path.read_text());acceptance=json.loads(acceptance_path.read_text())
+    bindings=shared.aligned_source_snapshot(target)
     if any(target.get(k) is not True for k in ('experimental_decode_bundle','experimental_mixed_decode_split',
                                               'experimental_first_mtp_current_fia')):
         raise RuntimeError('partition gate requires explicit decoder, partition and first-MTP current flags')
@@ -221,8 +226,8 @@ def probe(config_path,acceptance_path):
     from oscar_ascend.ops.loader import validate_build_artifacts,require_capabilities
     from oscar_ascend.ops.cv_dispatch import DECODE_BUNDLE_OPS
     manifest=validate_build_artifacts(ROOT/'build/ascendc/build_manifest.json')
-    require_capabilities(DECODE_BUNDLE_OPS|{'rotate_out','rotate_clip_store_striped_out','prepare_attention_tasks_out','merge_lse_out','status_guard'}|
-                         (set(shared.BF16_OPERATORS.values()) if target.get('experimental_bf16_attention',False) else set()))
+    require_capabilities(DECODE_BUNDLE_OPS|{'rotate_out',shared.selected_writer(target),'prepare_attention_tasks_out','merge_lse_out','status_guard'}|
+                         (set(shared.selected_operators(target).values()) if target.get('experimental_bf16_attention',False) else set()))
     rows=[];device=torch.device('npu:0');cores=reuse._core_count(torch,target)
     for case in case_plan():
         rows.append(run_case(torch,target,acceptance,device,cores,case));gc.collect();torch.npu.empty_cache()
@@ -230,7 +235,8 @@ def probe(config_path,acceptance_path):
     report={'status':'passed','precision':'passed','performance':'not_run_user_requested' if target.get('experimental_bf16_attention',False) else 'passed','store_bitwise':'passed',
             'device_completion':'passed','cases':rows,'artifact_signature':manifest['signature'],
             'artifact_sha256':manifest['sha256'],'graph':'not_run_eager_scope','full_model_performance':'not_established'}
-    if target.get('experimental_bf16_attention',False):report.update(bf16_attention=True,math_contract='oscar_bf16_attention_v2')
+    if target.get('experimental_bf16_attention',False):report.update(shared.precision_fields(target))
+    shared.bind_aligned_evidence(report,target,bindings)
     validate_case_evidence(report,acceptance);return report
 
 

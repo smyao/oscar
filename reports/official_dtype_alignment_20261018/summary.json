@@ -1,0 +1,113 @@
+{
+  "scope": "2026-10-18 official dtype/math alignment; local correctness only",
+  "contract": "oscar_bf16_attention_v3",
+  "cache_format": "striped_fp32_v2",
+  "D256_slot_bytes": 144,
+  "dtype": {
+    "Q_Qrot_K_V_Rk_Rv_operands": "BF16",
+    "query_rotated_GM": "BF16; no FP32 carrier",
+    "history_code": "INT2",
+    "history_metadata": "FP32 scale and normalized zero",
+    "prefill_dequant": "FP32 subtract/multiply then RNE BF16",
+    "decode_dequant": "BF16 metadata/subtraction/product rounding, represented in bounded FP32 Vector UB",
+    "quantizer_clip": "FP32 to match official source",
+    "matmul_accumulator_softmax_LSE_merge": "FP32"
+  },
+  "host": {
+    "tests": "tests/test_aligned_reference.py",
+    "passed": 16,
+    "generators": "both aligned codec and cluster --check passed"
+  },
+  "CANN_standard_build": {
+    "tool": "tools.build_ops",
+    "build": "passed",
+    "configuration": "Release; ascend910b4; CANN9.1.0; two jobs; fresh stage",
+    "capabilities": 54,
+    "signature": "d10bc18fe9f4430b2592313f4a69a0283822fdb5e7cb8292d2da4aae51b9a9a8",
+    "sha256": {
+      "/tmp/oscar-aligned-final-standard-20261018/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so": "a5bff5b566b671d62fe0d42d2f1b6b66bb0cc0e348c4259b7c5436ec1d1c7167",
+      "/tmp/oscar-aligned-final-standard-20261018/build/ascendc/lib/liboscar_ascend_kernels_d10bc18fe9f4430b.so": "5c3162948c3c9a8459b33eb62a2e45f9aea501f08d15af2c58aa0ac151ce27d3"
+    }
+  },
+  "CPU": {
+    "passed_cases": [
+      "q4-prefill",
+      "q4-decode",
+      "q4-fault",
+      "c16",
+      "c4",
+      "c16-fault"
+    ],
+    "kernel_source_hashes_match_current": true,
+    "q4_max_output_abs": 7.15256e-07,
+    "H32_max_output_abs": 0.000353545,
+    "H32_max_partial_abs": 0.00101471,
+    "C16_actual_stats": [
+      1,
+      16,
+      1,
+      1,
+      15,
+      1,
+      16,
+      1
+    ],
+    "C4_actual_stats": [
+      4,
+      16,
+      1,
+      4,
+      12,
+      1,
+      16,
+      4
+    ],
+    "H32_geometry": {
+      "sink": 64,
+      "recent": 1,
+      "speculative": 3,
+      "context": 96,
+      "active_queries": 337,
+      "padding": 1,
+      "GQA": 6,
+      "cores": 4,
+      "source2": "explicitly suppressed; current-source numeric covered by q4 cases"
+    },
+    "tail_query336": "count1, nonpadding; padding is query337",
+    "writer_cache_metadata_windows": "exact byte equality",
+    "error_domains": "live writer/query NaN status2; padding NaN zero/status0; FP32 scale faults exactstatus3 across q4 and all17 H32 leaders",
+    "prior_core1_timeout": "preserved separately; same task/data/oracle passed with4 CPU blocks, unchanged120s deadline"
+  },
+  "reference_boundaries": [
+    "Official source metadata FP32 must remain to preserve prefill; BF16 metadata136B would only preserve the decode conversion path.",
+    "Original-space BF16 windows and per-source0-partial Rv before merge remain project adaptations; no cross-framework bitwise equivalence claim.",
+    "H32 check explicitly suppresses current source; q4 checks include all3sources."
+  ],
+  "NPU": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_established",
+  "performance": "not_run_user_requested",
+  "VM": "no owned compute processes; only own exited checker scratch removed after evidence collection",
+  "source_binding": {
+    "csrc/kernels/attention_aligned_unpack.h": "ad8e7aee0a6521a71e9346fa12eac81f4b4356c01507a4257e5c72c866376e07",
+    "csrc/kernels/attention_cv_aligned_cluster16.cpp": "a2e04814c64ad02d45d27d3c4e45ca89df7738ca6d1ef2ad89733e2437d2cab2",
+    "csrc/kernels/attention_cv_aligned_cluster4.cpp": "e59ffe2985b5082db34e2633ef826164322daea6ae4917391f63f10bdf78bfe4",
+    "csrc/kernels/attention_cv_aligned_decode.cpp": "95cd76c1b105df263d78d7e11b7d7ed68a76d5529e33b6285d05b8c384fcbda8",
+    "csrc/kernels/store_aligned_int2.cpp": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
+    "csrc/include/oscar_aligned_cluster_launch.h": "0f0501b3d6dd8196ec7a37332ed5c7250e226ddae20cd181e73853ccb1b002d2",
+    "csrc/include/oscar_aligned_decode_launch.h": "68c7b1890565669dc82757186d73a822a7494bbae586283360ee9359b9671d2e",
+    "csrc/include/oscar_aligned_store_launch.h": "55a200d9cafeabe2be99ebecf47fecea860e34a94f795b451f6de5ab29e38eb9",
+    "csrc/kernels/attention_bf16_cast.h": "a83070f6737096c864a6be9f603a45dfbc8cfeb06dd1a0bb3e306b238fc5740f",
+    "csrc/experiments/aligned_math_20261018/probe.cpp": "48a91287841ab103c54c7fabdb346aaf9bb2dd2b0ed3f83741de72948e20195b",
+    "csrc/experiments/aligned_math_20261018/cluster_probe.cpp": "666226cb2e4d173528d7fd79e0711429eaed953269cbf3310f1ce642847d859e",
+    "csrc/experiments/aligned_math_20261018/CMakeLists.txt": "bf2122acaa96d94315daf688667ef4160976b7b99edc63c83630968bd815a258",
+    "tools/generate_aligned_codec.py": "b8015247af7fa23a3306847a887b9329b7eaa7b7863ce30eb4aef583543b953c",
+    "tools/generate_aligned_clusters.py": "6e5b2c2222f8ad52c21d8548a51d5a6c5e50cd22b9d064c9f29202fa9bf8c6a3",
+    "tools/aligned_reference.py": "f6a871ee8b2bbfd539e5e3b7269323cdafdaa68aca7a0c6510de3d809121446e",
+    "tools/aligned_runtime_oracle.py": "ed92635542f2f518bf0b784c990d936367f82e32b4469dd67f59fed2552baa60",
+    "tools/bf16_reference.py": "7b9b71b1bfe6198f41e36962c10adcca1e6863b03b9a9ad391c1533aed0ec859",
+    "oscar_ascend/ops/reference.py": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
+    "configs/acceptance_aligned_bf16.json": "abc5db538ad9963d0c41dadc025b963503ed95033169577fafb892850a4fb45e",
+    "tests/test_aligned_reference.py": "8f813b1d59a9b9605bb37b8e2f6d0fb5071941276d0ddd4499d14f1908608070"
+  }
+}

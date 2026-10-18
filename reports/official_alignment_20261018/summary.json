@@ -1,0 +1,77 @@
+{
+  "status": "implemented_compiled_and_host_functional_validated",
+  "base_commit": "fc9c6cfd982ff63b784b15c0c32903d4523b3e2b",
+  "branch": "codex/oscar-bf16-attention",
+  "default_model": "/softwarePlatform/c00879303/Qwen3.8-27B",
+  "weight_quantization_default": null,
+  "activation_dtype": "bfloat16",
+  "rope": "checkpoint_native_no_YaRN_override",
+  "rotation": "official_qqt_sst_r_h_pbr_FP64_offline_statistics_from_native_NPU_QKV",
+  "codec": "striped_fp32_v2",
+  "contract": "oscar_bf16_attention_v3",
+  "build": {
+    "capabilities": 54,
+    "result": "passed",
+    "reused": false,
+    "signature": "d10bc18fe9f4430b2592313f4a69a0283822fdb5e7cb8292d2da4aae51b9a9a8",
+    "compiled_sources_current": 82,
+    "artifact_sha256": {
+      "/tmp/oscar-aligned-final-standard-20261018/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so": "a5bff5b566b671d62fe0d42d2f1b6b66bb0cc0e348c4259b7c5436ec1d1c7167",
+      "/tmp/oscar-aligned-final-standard-20261018/build/ascendc/lib/liboscar_ascend_kernels_d10bc18fe9f4430b.so": "5c3162948c3c9a8459b33eb62a2e45f9aea501f08d15af2c58aa0ac151ce27d3"
+    }
+  },
+  "CPU_operator_cases": {
+    "passed": 6,
+    "record": "../official_dtype_alignment_20261018/final-cpu-evidence.json"
+  },
+  "host_regressions": {
+    "passed": 732,
+    "skipped_repeated_host_shapes": 8,
+    "subtests_passed": 6,
+    "log": "host_regressions.log"
+  },
+  "followup_regressions": {
+    "passed": 112,
+    "overlap_with_main_suite": true,
+    "log": "followup_regressions.log",
+    "scope": "legacy explicit route expectations and expanded tokenizer/quantization metadata cache identity"
+  },
+  "extra_static_scan": {
+    "passed": 2,
+    "failed": 3,
+    "scope": "existing non-current implementation findings, not modified to hide failure",
+    "paths": [
+      "tools/experiments/replay_shared_fp32.py",
+      "oscar_ascend/integration/metadata.py",
+      "tools/experiments/export_shared_fp32.py"
+    ],
+    "log": "static_scan_scope.log"
+  },
+  "NPU": "not_run",
+  "graph": "not_run",
+  "real_model_rotation_PT": "generated_by_first_user_launch_not_generated_locally",
+  "model_quality": "not_established",
+  "performance": "not_run_user_requested",
+  "native_sources_modified": false,
+  "main_and_stable": "not_modified",
+  "known_adaptation": "original-space BF16 exact windows and per-source inverse rotation/LSE merge differ from SGLang ordering; no cross-framework bitwise equivalence claim",
+  "launch_plan_checks": {
+    "entries": [
+      "direct",
+      "observe",
+      "probe",
+      "rear"
+    ],
+    "default_quantization_argument": "omitted",
+    "default_model": "Qwen3.8-27B",
+    "BF16_and_v3_candidate": true,
+    "RoPE": "native_checkpoint",
+    "MTP_prefix_budget_devices": "preserved",
+    "reports": [
+      "direct_plan.json",
+      "observe_plan.json",
+      "probe_plan.json",
+      "rear_plan.json"
+    ]
+  }
+}

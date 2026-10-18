@@ -1,0 +1,20 @@
+........................................................................ [  9%]
+........................................................................ [ 19%]
+........................................................................ [ 29%]
+........................................................................ [ 38%]
+..........................................................s...s...s..... [ 48%]
+......s...s...s...s...s................................................. [ 58%]
+...................................................................... [ 67%]
+........................................................................ [ 77%]
+.................................................................... [ 86%]
+........................................................................ [ 96%]
+..........................                                               [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368
+  /Users/sunao2000/gpt_new_oscar_kimi/.venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+    cpu = _conversion_method_template(device=torch.device("cpu"))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [8] tests/test_runtime.py:334: large FULL host route is needed once for C16
+732 passed, 8 skipped, 1 warning, 6 subtests passed in 20.63s

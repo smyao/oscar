@@ -24,6 +24,7 @@ from .phase import atomic_json, live_log, run_phase, terminal_line
 from .service_probe import managed_server
 from .target_cli import target_env, serve_argv, diagnose_guard_enabled
 from .serving_variants import variant_config, variant_features, runtime_feature_summary
+from .model_config import add_model_arguments, apply_model_options
 
 ROOT = Path(__file__).resolve().parents[1]
 FE0_KERNEL_SHA256 = {
@@ -98,8 +99,8 @@ def _source_identity(variant: str, config: dict) -> dict:
             "kernel_sha256": actual, "experimental_history_reuse": flag,
             "experimental_fast_unpack": fast, "experimental_mixed_cv": mixed,
             "experimental_striped_cache": striped,
-            "attention_compute_contract":"oscar_bf16_attention_v2" if config.get("experimental_bf16_attention",False) else "legacy_fp32",
-            "cache_format": "striped_v1" if striped else "canonical_v1",
+            "attention_compute_contract":"oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2" if config.get("experimental_bf16_attention",False) else "legacy_fp32",
+            "cache_format": "striped_fp32_v2" if config.get("experimental_aligned_math",False) else "striped_v1" if striped else "canonical_v1",
             "striped_source_sha256": striped_sources,
             "fast_source_sha256": fast_sources,
             "candidate_kernel_sha256": hashlib.sha256(cluster.read_bytes()).hexdigest()
@@ -244,7 +245,27 @@ def _preflight(config_path: Path, config: dict, env: dict, log_dir: Path,
     acceptance = json.loads((ROOT / "configs/acceptance.json").read_text())
     if acceptance.get("frozen_before_measurement") is not True:
         raise RuntimeError("frozen operator acceptance policy is missing")
-    evidence = ensure_current_operators(config_path, config, acceptance, log_dir / "accuracy")
+    if config.get("experimental_aligned_math", False):
+        # v3 changes the codec and BF16 rotation rounding. The old FP32 CV
+        # oracle cannot certify it or veto the authorized contract. This
+        # verifies only the build; run() must execute the v3 gate afterward.
+        from oscar_ascend.ops.loader import validate_build_artifacts
+        from .environment import file_fingerprint
+        build_report = ROOT / "reports/build.json"
+        build_report.unlink(missing_ok=True)
+        _phase("operator-build", [python, "-m", "tools.build_ops", "--soc", config['soc_version'],
+            "--log-dir", str(log_dir / 'build')], config=config, env=env, log_dir=log_dir, status=status)
+        built = json.loads(build_report.read_text())
+        manifest = validate_build_artifacts(ROOT / "build/ascendc/build_manifest.json")
+        if (built.get('build') != 'passed' or built.get('signature') != manifest.get('signature') or
+                built.get('sha256') != manifest.get('sha256') or
+                built.get('configuration', {}).get('soc') != config['soc_version'] or
+                built.get('configuration', {}).get('source') != file_fingerprint(ROOT / 'csrc')):
+            raise RuntimeError('aligned current-source build identity incomplete')
+        evidence = {'status': 'passed', 'build': 'verified', 'accuracy': 'pending_aligned_v3_gate',
+                    'artifact_signature': manifest['signature'], 'artifact_sha256': manifest['sha256']}
+    else:
+        evidence = ensure_current_operators(config_path, config, acceptance, log_dir / "accuracy")
     if evidence.get("status") != "passed":
         raise RuntimeError("signed build and real NPU CV/rotation evidence incomplete")
     status["operator_gate"] = evidence
@@ -578,7 +599,7 @@ def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     """
     import importlib
     from oscar_ascend.ops.loader import validate_build_artifacts
-    if family not in {"c16_member_pipeline", "hybrid_l1_decode", "c16_l1_reuse", "mixed_prepare_reuse", "bf16_attention"}:
+    if family not in {"c16_member_pipeline", "hybrid_l1_decode", "c16_l1_reuse", "mixed_prepare_reuse", "bf16_attention", "aligned_attention"}:
         raise ValueError("unknown stable operator gate")
     probe = importlib.import_module(f"tools.probe_{family}")
     phase_name = family.replace("_", "-")
@@ -589,7 +610,7 @@ def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     release = None
     try:
         command = [sys.executable, "-m", f"tools.probe_{family}"]
-        if family == "bf16_attention":
+        if family in {"bf16_attention", "aligned_attention"}:
             command += ["npu", "--config", str(config_path), "--output", str(output)]
         else:
             command += ["--config", str(config_path), "--acceptance", str(ROOT/"configs/acceptance.json"),
@@ -621,6 +642,10 @@ def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     if family == "bf16_attention":
         expected.update(contract="oscar_bf16_attention_v2", performance="not_run_user_requested",
             effective_config_sha256=hashlib.sha256(config_path.read_bytes()).hexdigest())
+    if family == "aligned_attention":
+        expected.update(contract="oscar_bf16_attention_v3", cache_format="striped_fp32_v2",
+            performance="not_run_user_requested", slot_bytes=144,
+            effective_config_sha256=hashlib.sha256(config_path.read_bytes()).hexdigest())
     if family == "mixed_prepare_reuse":
         if config.get("experimental_bf16_attention", False):
             expected.update(validation_mode="correctness_only_user_requested", performance="not_run_user_requested")
@@ -634,7 +659,7 @@ def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
         raise error
     status[f"{family}_gate"] = {"status": "passed", "report": str(output),
         "artifact_signature": manifest["signature"], "full_service_performance": "not_established"}
-    if family == "bf16_attention" or (family == "mixed_prepare_reuse" and config.get("experimental_bf16_attention",False)):
+    if family in {"bf16_attention", "aligned_attention"} or (family == "mixed_prepare_reuse" and config.get("experimental_bf16_attention",False)):
         status[f"{family}_gate"].update(validation_mode="correctness_only_user_requested",
                                         performance="not_run_user_requested")
     atomic_json(log_dir/"status.json", status)
@@ -650,6 +675,10 @@ def _hybrid_l1_decode_gate(config_path, config, env, log_dir, status):
 
 def _bf16_attention_gate(config_path, config, env, log_dir, status):
     return _stable_cv_gate(config_path, config, env, log_dir, status, family="bf16_attention")
+
+
+def _aligned_attention_gate(config_path, config, env, log_dir, status):
+    return _stable_cv_gate(config_path, config, env, log_dir, status, family="aligned_attention")
 
 
 def _c16_l1_reuse_gate(config_path, config, env, log_dir, status):
@@ -721,9 +750,19 @@ def _lifecycle_precision_mismatches(report: dict, config: dict) -> list[str]:
     bad=[]
     if type(reported) is not bool or reported!=enabled:bad.append("bf16_attention")
     if enabled:
-        if report.get("math_contract")!="oscar_bf16_attention_v2":bad.append("math_contract")
+        aligned=config.get("experimental_aligned_math",False)
+        if type(aligned) is not bool:raise ValueError("experimental_aligned_math must be an explicit boolean")
+        if report.get("aligned_math",False) is not aligned:bad.append("aligned_math")
+        contract="oscar_bf16_attention_v3" if aligned else "oscar_bf16_attention_v2"
+        if report.get("math_contract")!=contract:bad.append("math_contract")
+        if aligned and report.get("cache_format")!="striped_fp32_v2":bad.append("cache_format")
+        if aligned:
+            from .probe_aligned_attention import source_binding
+            if report.get('aligned_source_binding')!=source_binding():bad.append('aligned_source_binding')
+            if report.get('aligned_clip')!={'k':config.get('k_clip_ratio',.96),'v':config.get('v_clip_ratio',.92)}:
+                bad.append('aligned_clip')
         if report.get("performance")!="not_run_user_requested":bad.append("performance")
-    elif report.get("performance")=="not_run_user_requested" or report.get("math_contract")=="oscar_bf16_attention_v2":
+    elif report.get("performance")=="not_run_user_requested" or report.get("math_contract") in {"oscar_bf16_attention_v2","oscar_bf16_attention_v3"}:
         bad.append("legacy_fp32_scope")
     return bad
 
@@ -774,7 +813,7 @@ def _prefix_cache_gate(config_path: Path, config: dict, env: dict, log_dir: Path
         "artifact_signature": manifest["signature"], "device_scope": "synthetic_page_owned_prefix",
         "full_service_performance": "not_established"}
     if config.get("experimental_bf16_attention",False):
-        status["prefix_cache_gate"].update(math_contract="oscar_bf16_attention_v2",performance="not_run_user_requested")
+        status["prefix_cache_gate"].update(math_contract="oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2",performance="not_run_user_requested")
     atomic_json(log_dir/"status.json", status)
 
 
@@ -833,7 +872,7 @@ def _current_only_gate(config_path: Path, config: dict, env: dict, log_dir: Path
         "artifact_signature": manifest["signature"], "graph_acceptance": "not_established_eager_gate",
         "model_quality": "not_established", "full_service_performance": "not_established"}
     if config.get("experimental_bf16_attention",False):
-        status["current_only_gate"].update(math_contract="oscar_bf16_attention_v2",performance="not_run_user_requested")
+        status["current_only_gate"].update(math_contract="oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2",performance="not_run_user_requested")
     atomic_json(log_dir / "status.json", status)
 
 
@@ -892,7 +931,7 @@ def _first_mtp_current_gate(config_path: Path, config: dict, env: dict, log_dir:
         "artifact_signature": manifest["signature"], "graph_acceptance": "not_established_eager_gate",
         "model_quality": "not_established", "full_service_performance": "not_established"}
     if config.get("experimental_bf16_attention",False):
-        status["first_mtp_current_gate"].update(math_contract="oscar_bf16_attention_v2",performance="not_run_user_requested")
+        status["first_mtp_current_gate"].update(math_contract="oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2",performance="not_run_user_requested")
     atomic_json(log_dir / "status.json", status)
 
 
@@ -1065,7 +1104,7 @@ def _mixed_decode_split_gate(config_path: Path, config: dict, env: dict, log_dir
         "artifact_signature": manifest["signature"], "graph_acceptance": "not_established_eager_gate",
         "model_quality": "not_established", "full_service_performance": "not_established"}
     if config.get("experimental_bf16_attention",False):
-        status["mixed_decode_split_gate"].update(math_contract="oscar_bf16_attention_v2",performance="not_run_user_requested")
+        status["mixed_decode_split_gate"].update(math_contract="oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2",performance="not_run_user_requested")
     atomic_json(log_dir / "status.json", status)
 
 
@@ -1115,7 +1154,8 @@ def _mixed_diagnostic(config_path: Path, config: dict, env: dict, log_dir: Path,
 
 def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = False,
         diagnose_q4: bool = False, diagnose_mixed: bool = False,
-        enable_prefix_caching: bool | None = None, diagnose_trap: bool = False) -> int:
+        enable_prefix_caching: bool | None = None, diagnose_trap: bool = False,
+        model_options: argparse.Namespace | None = None) -> int:
     config_path, log_dir = config_path.resolve(), log_dir.resolve()
     status = {"status": "preparing", "variant": variant,
               "measurement": "operator_microprobe" if probe_only else "passive_external_only",
@@ -1131,11 +1171,16 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
             raise ValueError("--diagnose-mixed requires --variant candidate")
         original = config_path.read_bytes()
         selected = json.loads(original)
+        selected = apply_model_options(selected, model_options, require_model=not probe_only)
         if enable_prefix_caching is not None:
             selected["enable_prefix_caching"] = enable_prefix_caching
         if diagnose_trap:
             selected["diagnose_guard"] = True
         config = variant_config(selected, variant)
+        timing_disabled = config.get('experimental_bf16_attention',False) and not (diagnose_trap or diagnose_q4 or diagnose_mixed)
+        if timing_disabled:
+            status.update(measurement='operator_correctness_probe' if probe_only else 'service_correctness_and_passive_counters',
+                          performance_acceptance='not_run_user_requested')
         if diagnose_guard_enabled(config):
             if variant == "native" or probe_only:
                 raise ValueError("--diagnose-trap requires an OSCAR service, not native or probe-only")
@@ -1143,6 +1188,7 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
         if type(config.get("experimental_current_only", False)) is not bool:
             raise ValueError("experimental_current_only must be an explicit boolean")
         status["optimizations"] = variant_features(config)
+        status["model_resolution"] = config["model_resolution"]
         effective_path = log_dir / "effective-target.json"
         atomic_json(effective_path, config)
         status["target_config"] = {"original": str(config_path),
@@ -1162,27 +1208,36 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
             env["OSCAR_ENABLED"] = "0"
         control = log_dir / "passive-control.json"
         control.unlink(missing_ok=True)
-        env["OSCAR_PASSIVE_TIMING_CONTROL"] = str(control)
+        if timing_disabled:
+            env.pop('OSCAR_PASSIVE_TIMING_CONTROL',None)
+        else:
+            env["OSCAR_PASSIVE_TIMING_CONTROL"] = str(control)
         _terminal(f"[oscar] OBSERVE_START variant={variant} devices={','.join(map(str,config['devices']))} "
                   f"port={config['port']} log={log_dir} user_load_only=true")
         _terminal("[oscar] PERF_RUNTIME_CONFIG "+json.dumps(runtime_feature_summary(config,variant),
                   sort_keys=True,separators=(",",":")))
+        _terminal("[oscar] MODEL_SELECTION " + json.dumps(config["model_resolution"],
+                  sort_keys=True, separators=(",", ":")))
         with _temporary_process_context(env, sys.argv):
             for key in _DEBUG_ENV:
                 os.environ.pop(key, None)
+            if timing_disabled:
+                os.environ.pop('OSCAR_PASSIVE_TIMING_CONTROL',None)
             current_phase = "preflight"
             with live_log(log_dir / "preflight-console.log", mode="compact") as preflight:
                 with redirect_stdout(preflight), redirect_stderr(preflight):
                     _preflight(effective_path, config, env, log_dir, status, variant)
                     if variant == "candidate":
-                        if config.get("experimental_bf16_attention", False):
+                        if config.get("experimental_aligned_math", False):
+                            _aligned_attention_gate(effective_path, config, env, log_dir, status)
+                        elif config.get("experimental_bf16_attention", False):
                             _bf16_attention_gate(effective_path, config, env, log_dir, status)
                         else:
                             _candidate_gate(effective_path, config, env, log_dir, status)
                             _fast_unpack_gate(effective_path, config, env, log_dir, status)
                             if config.get("experimental_mixed_cv", False):
                                 _mixed_optimization_gate(effective_path, config, env, log_dir, status)
-                        if config.get("experimental_striped_cache", False):
+                        if config.get("experimental_striped_cache", False) and not config.get("experimental_aligned_math", False):
                             _striped_cache_gate(effective_path, config, env, log_dir, status)
                         if diagnose_q4:
                             _q4_diagnostic(effective_path, config, env, log_dir, status)
@@ -1229,8 +1284,9 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                         with managed_server(config, effective_path, log_dir=log_dir / "serve",
                                             lifecycle=status.setdefault("server", {}),
                                             native=variant == "native") as server:
-                            atomic_json(control, {"enabled": True, "run_id": log_dir.name,
-                                                  "variant": variant})
+                            if not timing_disabled:
+                                atomic_json(control, {"enabled": True, "run_id": log_dir.name,
+                                                      "variant": variant})
                             status["status"] = "observer_starting"
                             atomic_json(log_dir / "status.json", status)
                             from benchmarks.passive import observe
@@ -1238,6 +1294,11 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                             observer_report: dict = {}
                             summary_path = log_dir / "summary.json"
                             def window_done(_index, window):
+                                if timing_disabled:
+                                    observer_report['latest_step_status']='not_run_user_requested'
+                                    _terminal(f"[oscar] OBSERVE_COUNTERS running={window.get('peak_observed_running')} "
+                                              f"waiting={window.get('peak_observed_waiting')} performance=not_run_user_requested")
+                                    return
                                 evidence = _step_summary(server.trace_dir, summary_path, variant)
                                 observer_report["latest_step_status"] = evidence["status"]
                                 mtp = window.get("mtp_delta", {})
@@ -1279,8 +1340,9 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                                 status["status"] = "stopping"
                             finally:
                                 stop.set(); thread.join(timeout=8)
-                                atomic_json(control, {"enabled": False, "run_id": log_dir.name,
-                                                      "variant": variant})
+                                if not timing_disabled:
+                                    atomic_json(control, {"enabled": False, "run_id": log_dir.name,
+                                                          "variant": variant})
                                 status["external_observation"] = observer_report.get("metrics", {
                                     "status": "missing", "reason": "observer did not finish"})
                                 status["step_evidence"] = {"status": "cleanup_pending",
@@ -1298,7 +1360,9 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                         f"{type(resource_error).__name__}: {resource_error}"}
                 status["resource_release"] = release
                 trace_path = status.get("server", {}).get("trace_dir")
-                if isinstance(trace_path, str):
+                if timing_disabled:
+                    status['step_evidence']={'status':'not_run_user_requested','scope':'NPU_event_timing_disabled'}
+                elif isinstance(trace_path, str):
                     try:
                         status["step_evidence"] = _step_summary(
                             Path(trace_path), log_dir / "summary.json", variant)
@@ -1332,7 +1396,7 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
-    parser.add_argument("--variant", choices=("baseline", "candidate", "native"), default="baseline")
+    parser.add_argument("--variant", choices=("baseline", "candidate", "native"), default="candidate")
     parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--plan", action="store_true")
     parser.add_argument("--enable-prefix-caching", action=argparse.BooleanOptionalAction, default=None,
@@ -1345,11 +1409,13 @@ def main(argv=None) -> int:
                         help="mixed shapes are included in the candidate optimization gate; retains the legacy diagnostic for older presets")
     parser.add_argument("--diagnose-trap", action="store_true",
                         help="attribute guard site/family/code with host sync and eager service; timings are invalid for performance")
+    add_model_arguments(parser)
     args = parser.parse_args(argv)
     log_dir = (args.log_dir or ROOT / "logs" / ("observe-" + datetime.now(timezone.utc).strftime(
         "%Y%m%dT%H%M%S.%fZ"))).resolve()
     if args.plan:
         selected = json.loads(args.config.read_text())
+        selected = apply_model_options(selected, args)
         if args.enable_prefix_caching is not None:
             selected["enable_prefix_caching"] = args.enable_prefix_caching
         if args.diagnose_trap:
@@ -1360,13 +1426,15 @@ def main(argv=None) -> int:
             parser.error("--diagnose-trap requires an OSCAR service, not native or probe-only")
         phases = ["install", "signed_operator_gate" if args.variant != "native" else "native_start"]
         if args.variant == "candidate":
-            if config.get("experimental_bf16_attention", False):
+            if config.get("experimental_aligned_math", False):
+                phases.append("aligned_codec_rotation_attention_precision_error_graph_gate")
+            elif config.get("experimental_bf16_attention", False):
                 phases.append("bf16_attention_precision_error_graph_gate")
             else:
                 phases += ["candidate_operator_graph_latency_gates", "fast_unpack_gate"]
                 if config.get("experimental_mixed_cv", False):
                     phases.append("mixed_optimization_gate")
-            if config.get("experimental_striped_cache", False):
+            if config.get("experimental_striped_cache", False) and not config.get("experimental_aligned_math", False):
                 phases.append("striped_cache_gate")
             if args.diagnose_q4:
                 phases.append("q4_native_comparison_and_profile")
@@ -1393,18 +1461,21 @@ def main(argv=None) -> int:
         if not args.probe_only:
             phases += ["managed_service_health", "external_metrics_and_bounded_async_events"]
         print(json.dumps({"variant": args.variant, "devices": config["devices"],
+            "model_resolution": config["model_resolution"],
             "optimizations": variant_features(config),
             "runtime_selection": runtime_feature_summary(config,args.variant),
             "diagnose_trap": diagnostic, "vllm_argv": serve_argv(config),
             "inference_requests_generated": 0,
             "measurement": "guard_diagnostic" if diagnostic else (
-                ("operator_correctness_probe" if config.get("experimental_bf16_attention",False) else "operator_microprobe") if args.probe_only else "passive_external_only"),
+                ("operator_correctness_probe" if config.get("experimental_bf16_attention",False) else "operator_microprobe") if args.probe_only else
+                "service_correctness_and_passive_counters" if config.get("experimental_bf16_attention",False) else "passive_external_only"),
             "probe_only": args.probe_only, "model_will_start": not args.probe_only,
             "phases": phases}, indent=2))
         return 0
     return run(args.config, log_dir, args.variant, probe_only=args.probe_only,
                diagnose_q4=args.diagnose_q4, diagnose_mixed=args.diagnose_mixed,
-               enable_prefix_caching=args.enable_prefix_caching, diagnose_trap=args.diagnose_trap)
+               enable_prefix_caching=args.enable_prefix_caching, diagnose_trap=args.diagnose_trap,
+               model_options=args)
 
 
 if __name__ == "__main__":

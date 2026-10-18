@@ -1,6 +1,7 @@
 {
-  "model": "/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp",
-  "served_model_name": "qwen3.5",
+  "model": "/softwarePlatform/c00879303/Qwen3.8-27B",
+  "served_model_name": "qwen3.8",
+  "dtype": "bfloat16",
   "host": "0.0.0.0",
   "port": 8989,
   "devices": [
@@ -63,30 +64,18 @@
     "num_speculative_tokens": 3,
     "enforce_eager": true
   },
-  "quantization": "ascend",
+  "quantization": null,
+  "quantization_mode": "none",
   "additional_config": {
     "enable_cpu_binding": true
   },
-  "hf_overrides": {
-    "text_config": {
-      "rope_parameters": {
-        "mrope_interleaved": true,
-        "mrope_section": [
-          11,
-          11,
-          10
-        ],
-        "rope_type": "yarn",
-        "rope_theta": 10000000,
-        "partial_rotary_factor": 0.25,
-        "factor": 4.0,
-        "original_max_position_embeddings": 262144
-      }
-    }
-  },
+  "hf_overrides": {},
   "sink_tokens": 64,
   "recent_tokens": 256,
-  "rotation_method": "hadamard",
+  "rotation_method": "qqt_sst",
+  "rotation_calibration_tokens": 30000,
+  "k_clip_ratio": 0.96,
+  "v_clip_ratio": 0.92,
   "phase_timeout_seconds": 1800,
   "shutdown_timeout_seconds": 30,
   "max_num_batched_tokens": 16384

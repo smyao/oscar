@@ -83,6 +83,7 @@ def test_shared_candidate_reaches_actual_forward_target_first_and_later_draft(ta
 def test_unqualified_request_window_mdl_combination_is_explicit():
     config=variant_config({},'candidate')
     config['experimental_bf16_attention']=False  # Historical MDL contract.
+    config['experimental_aligned_math']=False
     config['experimental_request_windows']=True
     with pytest.raises(ValueError,match="request-window MDL reader is not qualified"):
         variant_config(config,None)

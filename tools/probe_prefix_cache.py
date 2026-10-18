@@ -30,6 +30,10 @@ SOURCE_PATHS = (
     "csrc/kernels/attention_cv_mdl_decode.cpp", "csrc/kernels/merge_lse.cpp",
     "csrc/kernels/attention_cv_bf16_decode.cpp", "csrc/include/oscar_bf16_decode_launch.h",
     "tools/bf16_reference.py", "tools/bf16_runtime_oracle.py", "configs/acceptance_bf16.json",
+    "tools/aligned_reference.py", "tools/aligned_runtime_oracle.py", "configs/acceptance_aligned_bf16.json",
+    "csrc/kernels/attention_cv_aligned_decode.cpp", "csrc/kernels/attention_aligned_unpack.h",
+    "csrc/kernels/store_aligned_int2.cpp", "csrc/include/oscar_aligned_decode_launch.h",
+    "csrc/include/oscar_aligned_store_launch.h", "tools/probe_prefix_cache.py",
 )
 
 
@@ -38,10 +42,10 @@ def source_binding(root=ROOT):
             for name in SOURCE_PATHS}
 
 
-def fixture_layout():
+def fixture_layout(*, aligned=False):
     # Declared D256/TP4 align ABI fixture, NOT a new service allocation or a
     # claim that a model's runtime geometry was observed on this host.
-    return SnapshotLayout(HybridPageLayout(SlotLayout(DIM), 30720, 393216,
+    return SnapshotLayout(HybridPageLayout(SlotLayout(DIM, metadata_bytes=4 if aligned else 2), 30720, 393216,
                           768, native_page_size_bytes=817152), 64, 256, 3)
 
 
@@ -52,13 +56,17 @@ def selected_reader(config):
         raise ValueError("prefix gate requires physical-page snapshots")
     if not config.get("experimental_striped_cache", False):
         raise ValueError("prefix gate requires the candidate striped writer/reader")
-    return select_cv_op(16, HEADS, 1, QUERIES, 4,
+    selected = select_cv_op(16, HEADS, 1, QUERIES, 4,
         fast_unpack=config.get("experimental_fast_unpack", False),
         mixed_cv=config.get("experimental_mixed_cv", False), striped_cache=True,
         decode_bundle=config.get("experimental_decode_bundle", False),
         c4_member_pipeline=config.get("experimental_c4_member_pipeline", False),
         mdl_decode=config.get("experimental_mdl_decode", False),
         bf16_attention=config.get("experimental_bf16_attention", False))
+    if config.get("experimental_aligned_math",False):
+        from oscar_ascend.ops.cv_dispatch import ALIGNED_CV_MAP
+        return ALIGNED_CV_MAP[selected]
+    return selected
 
 
 def make_inputs(torch, logical, pages, seed):
@@ -85,20 +93,28 @@ def make_inputs(torch, logical, pages, seed):
             "lens": torch.tensor([c + 4 for c in contexts], dtype=torch.int32)}
 
 
-def oracle(torch, logical, inputs, *, bf16=False):
+def oracle(torch, logical, inputs, *, bf16=False, aligned=False, k_clip=.96, v_clip=.92):
     from oscar_ascend.ops.reference import attention, encode_kv, decode_kv
     outputs, lses = [], []
     for r, (key, value) in enumerate(logical):
         context = key.shape[0]
         # Identity rotation isolates physical caching from rotation accuracy;
         # the MDL gate separately exercises the production Hadamard rotation.
-        restored_k, restored_v = decode_kv(encode_kv(key.float(), value.float()), DIM)
+        if aligned:
+            from .aligned_reference import pack_kv, unpack_kv
+            restored_k, restored_v = unpack_kv(pack_kv(key, value, k_clip, v_clip), DIM, 1)
+        else:
+            restored_k, restored_v = decode_kv(encode_kv(key.float(), value.float()), DIM)
         if bf16:
-            from .bf16_runtime_oracle import request_samples
+            if aligned:
+                from .aligned_runtime_oracle import request_samples
+            else:
+                from .bf16_runtime_oracle import request_samples
             query=inputs['q'][r*4:r*4+4]
             result=request_samples(query,query.float(),inputs['key'][r*4:r*4+4],inputs['value'][r*4:r*4+4],
                 context,torch.eye(DIM),lambda p:(restored_k[p],restored_v[p]),
-                lambda p:(key[p],value[p]),range(4),native_current=False)
+                lambda p:(key[p],value[p]),range(4),native_current=False,
+                **({'dequant_mode':1} if aligned else {}))
             outputs.extend(result[i][0] for i in range(4));lses.extend(result[i][1] for i in range(4));continue
         for i in range(4):
             cut = min(context, max(64, context + i + 1 - 256))
@@ -119,15 +135,30 @@ def page_bytes(torch, raw, layout, page):
 
 
 def _store(torch, ops, state, key, value, slots, positions):
-    status = torch.empty(key.shape[0], dtype=torch.int32, device=key.device)
+    status = torch.empty((key.shape[0], key.shape[1]) if state.get('aligned_math',False) else (key.shape[0],),
+                         dtype=torch.int32, device=key.device)
     layout = state["layout"]
-    ops.rotate_clip_store_striped_out(key, value, state["rotation"], state["rotation"],
-        slots, positions, state["raw"], state["wk"], state["wv"], state["tags"], status,
-        layout.page.block_size, BLOCKS, BLOCKS * layout.page.conv_bytes,
-        layout.page.ssm_bytes, layout.sink_tokens, layout.ring_tokens, 0., 0., False)
+    _launch_store(ops, state, key, value, slots, positions, status)
     torch.npu.synchronize()
     if bool(status.cpu().ne(0).any()):
         raise RuntimeError("APC real prefix writer reported nonzero status")
+
+
+def _launch_store(ops, state, key, value, slots, positions, status):
+    layout = state['layout']
+    if state.get('aligned_math', False):
+        # This page-isolation fixture deliberately uses identity rotations;
+        # the new core gate checks nontrivial BF16 rotations separately.
+        ops.store_aligned_int2_out(key, value, key, value, slots, positions,
+            state['raw'], state['wk'], state['wv'], state['tags'], status,
+            layout.page.block_size, BLOCKS, BLOCKS * layout.page.conv_bytes,
+            layout.page.ssm_bytes, layout.sink_tokens, layout.ring_tokens,
+            state['k_clip'], state['v_clip'])
+    else:
+        ops.rotate_clip_store_striped_out(key, value, state['rotation'], state['rotation'],
+            slots, positions, state['raw'], state['wk'], state['wv'], state['tags'], status,
+            layout.page.block_size, BLOCKS, BLOCKS * layout.page.conv_bytes,
+            layout.page.ssm_bytes, layout.sink_tokens, layout.ring_tokens, 0., 0., False)
 
 
 def seed_page_chain(torch, ops, state, logical, pages):
@@ -139,8 +170,8 @@ def seed_page_chain(torch, ops, state, logical, pages):
            slots.to(state["raw"].device), positions.to(state["raw"].device))
 
 
-def allocate(torch, device, cores, *, bf16=False):
-    layout = fixture_layout()
+def allocate(torch, device, cores, *, bf16=False, aligned=False, k_clip=.96, v_clip=.92):
+    layout = fixture_layout(aligned=aligned)
     raw = torch.full((BLOCKS * layout.page.page_size_bytes,), 0x55, dtype=torch.uint8, device=device)
     wk, wv, tags = layout.views(raw, BLOCKS); tags.fill_(-1)
     n, h, d = QUERIES, HEADS, DIM
@@ -148,9 +179,10 @@ def allocate(torch, device, cores, *, bf16=False):
         "rotation": torch.eye(d, dtype=torch.float32, device=device),
         "rotation_bf16": torch.eye(d, dtype=torch.bfloat16, device=device) if bf16 else None,
         "bf16_attention":bf16,
+        "aligned_math":aligned, "k_clip":k_clip, "v_clip":v_clip,
         "tasks": torch.empty((n * 3, 16), dtype=torch.int64, device=device),
         "positions": torch.empty(n, dtype=torch.int64, device=device),
-        "qr": torch.empty((n, h, d), dtype=torch.float32, device=device),
+        "qr": torch.empty((n, h, d), dtype=torch.bfloat16 if aligned else torch.float32, device=device),
         "rotate_status": torch.empty((n, h), dtype=torch.int32, device=device),
         "partial": torch.empty((n, h, 3, d), dtype=torch.float32, device=device),
         "lse": torch.empty((n, h, 3), dtype=torch.float32, device=device),
@@ -160,28 +192,28 @@ def allocate(torch, device, cores, *, bf16=False):
         "output_lse": torch.empty(n * h, dtype=torch.float32, device=device),
         "merge_status": torch.empty(n * h, dtype=torch.int32, device=device),
         "bf16": torch.empty((n, h, d), dtype=torch.bfloat16, device=device),
-        "store_status": torch.empty(n, dtype=torch.int32, device=device)}
+        "store_status": torch.empty((n,1) if aligned else (n,), dtype=torch.int32, device=device)}
 
 
 def execute(ops, state, inputs, reader, rotate, cores):
     layout = state["layout"]
     ops.prepare_attention_tasks_out(inputs["starts"], inputs["lens"], inputs["slots"],
         state["tasks"], state["positions"], HEADS, 1, 64, 256, 1)
-    getattr(ops, rotate)(inputs["q"], state["rotation"], state["qr"], state["rotate_status"],
-                         False, inputs["slots"])
+    if state.get('aligned_math', False):
+        ops.copy_validate_bf16_query_out(inputs['q'], inputs['slots'], state['qr'], state['rotate_status'], cores)
+    else:
+        getattr(ops, rotate)(inputs["q"], state["rotation"], state["qr"], state["rotate_status"],
+                             False, inputs["slots"])
     getattr(ops, reader)(inputs["q"], state["qr"], inputs["key"], inputs["value"],
         state["rotation_bf16"] if state.get("bf16_attention",False) else state["rotation"], state["raw"], inputs["table"], state["wk"], state["wv"], state["tags"],
         state["tasks"], state["partial"], state["lse"], state["status"], state["workspace"],
         layout.page.block_size, BLOCKS, BLOCKS * layout.page.conv_bytes, layout.page.ssm_bytes,
-        64, 256, 3, 1, DIM ** -0.5, cores)
+        64, 256, 3, 1, DIM ** -0.5, *([1, cores] if state.get('aligned_math',False) else [cores]))
     ops.merge_lse_out(state["partial"].view(QUERIES * HEADS, 3, DIM),
         state["lse"].view(QUERIES * HEADS, 3), state["output"], state["output_lse"], state["merge_status"])
     state["bf16"].copy_(state["output"].view(QUERIES, HEADS, DIM))
     # Same read-before-write sequence as integration.impl.forward.
-    ops.rotate_clip_store_striped_out(inputs["key"], inputs["value"], state["rotation"], state["rotation"],
-        inputs["slots"], state["positions"], state["raw"], state["wk"], state["wv"], state["tags"],
-        state["store_status"], 2304, BLOCKS, BLOCKS * layout.page.conv_bytes,
-        layout.page.ssm_bytes, 64, 259, 0., 0., False)
+    _launch_store(ops, state, inputs['key'], inputs['value'], inputs['slots'], state['positions'], state['store_status'])
 
 
 def check_state(torch, state, inputs, logical, immutable, tolerance):
@@ -189,7 +221,8 @@ def check_state(torch, state, inputs, logical, immutable, tolerance):
     for name in ("status", "rotate_status", "merge_status", "store_status"):
         if bool(state[name].cpu().ne(0).any()):
             raise RuntimeError("APC forward status failed: " + name)
-    expected, expected_lse = oracle(torch, logical, inputs,bf16=state.get('bf16_attention',False))
+    expected, expected_lse = oracle(torch, logical, inputs,bf16=state.get('bf16_attention',False),
+        aligned=state.get('aligned_math',False),k_clip=state['k_clip'],v_clip=state['v_clip'])
     torch.testing.assert_close(state["output"].view(QUERIES, HEADS, DIM).cpu(), expected, **tolerance)
     torch.testing.assert_close(state["bf16"].float().cpu(), expected, **tolerance)
     torch.testing.assert_close(state["output_lse"].view(QUERIES, HEADS).cpu(), expected_lse, **tolerance)
@@ -210,8 +243,11 @@ def run_device(torch, ops, config, cores, tolerance):
     reader = selected_reader(config)
     rotate = "rotate_vector_init_out" if config.get("experimental_quantization_bundle", False) else "rotate_out"
     bf16=config.get('experimental_bf16_attention',False)
-    if bf16 and reader!='attention_cv_bf16_decode_out':raise RuntimeError('APC BF16 config did not select BF16 decode')
-    state = allocate(torch, device, cores,bf16=bf16)
+    aligned=config.get('experimental_aligned_math',False)
+    if bf16 and reader!=('attention_cv_aligned_decode_out' if aligned else 'attention_cv_bf16_decode_out'):
+        raise RuntimeError('APC BF16 config did not select the matching versioned reader')
+    state = allocate(torch, device, cores,bf16=bf16,aligned=aligned,
+        k_clip=config.get('k_clip_ratio',.96),v_clip=config.get('v_clip_ratio',.92))
     generator = torch.Generator().manual_seed(137081)
     shared = tuple(torch.randn((4608, 1, DIM), generator=generator).to(torch.bfloat16) for _ in range(2))
     seed_page_chain(torch, ops, state, shared, (3, 1))
@@ -259,7 +295,7 @@ def run_device(torch, ops, config, cores, tolerance):
     third.update(case=STATES[2], contexts=[512, 2304], suffix_isolation=True)
     if addresses != {k: v.data_ptr() for k, v in inputs.items()}:
         raise RuntimeError("APC graph changed input addresses")
-    return {"reader": reader, "writer": "rotate_clip_store_striped_out", "cases": [first, second, third],
+    return {"reader": reader, "writer": "store_aligned_int2_out" if aligned else "rotate_clip_store_striped_out", "cases": [first, second, third],
             "graph_capture": "passed", "graph_replay": "passed", "graph_same_addresses": True,
             "graph_eager_bitwise": "passed", "device_completion": "passed", "precision": "passed"}
 
@@ -268,7 +304,7 @@ def validate_evidence(report):
     wanted = {"status": "passed", "scope": SCOPE, "prefix_caching": True,
               "device_completion": "passed", "precision": "passed", "graph_capture": "passed",
               "graph_replay": "passed", "graph_same_addresses": True, "graph_eager_bitwise": "passed",
-              "writer": "rotate_clip_store_striped_out", "rotation_scope": "identity_storage_contract"}
+              "writer": "store_aligned_int2_out" if report.get('aligned_math',False) else "rotate_clip_store_striped_out", "rotation_scope": "identity_storage_contract"}
     bad = [k for k, v in wanted.items() if not isinstance(report, dict) or report.get(k) != v]
     cases = report.get("cases", []) if isinstance(report, dict) else []
     if not isinstance(cases, list) or len(cases) != len(STATES): return bad + ["cases"]
@@ -289,8 +325,13 @@ def validate_evidence(report):
 
 def probe(config_path, acceptance_path):
     config = json.loads(config_path.read_text()); selected_reader(config)
+    from .probe_current_only import aligned_source_snapshot
+    bindings=aligned_source_snapshot(config)
     if config.get('experimental_bf16_attention',False):
-        from .bf16_reference import load_acceptance
+        if config.get('experimental_aligned_math',False):
+            from .aligned_reference import load_acceptance
+        else:
+            from .bf16_reference import load_acceptance
         load_acceptance()
     acceptance = json.loads(acceptance_path.read_text())
     if acceptance.get("frozen_before_measurement") is not True or acceptance["fused_attention"] != {"atol": .005, "rtol": .005}:
@@ -307,8 +348,9 @@ def probe(config_path, acceptance_path):
     from oscar_ascend.ops.loader import validate_build_artifacts, require_capabilities
     manifest = validate_build_artifacts(ROOT / "build/ascendc/build_manifest.json")
     rotate = "rotate_vector_init_out" if config.get("experimental_quantization_bundle", False) else "rotate_out"
-    require_capabilities({selected_reader(config), rotate, "prepare_attention_tasks_out",
-                          "merge_lse_out", "rotate_clip_store_striped_out"})
+    aligned=config.get('experimental_aligned_math',False)
+    require_capabilities({selected_reader(config), "prepare_attention_tasks_out", "merge_lse_out"} |
+        ({'copy_validate_bf16_query_out','store_aligned_int2_out'} if aligned else {rotate,'rotate_clip_store_striped_out'}))
     report = {"status": "passed", "scope": SCOPE, "prefix_caching": True,
         "rotation_scope": "identity_storage_contract", "native_allocator": "host_contract_only",
         "model_quality": "not_established", "service_performance": "not_established",
@@ -316,7 +358,10 @@ def probe(config_path, acceptance_path):
         "source_binding": source_binding(), "artifact_signature": manifest["signature"],
         "artifact_sha256": manifest["sha256"],
         **run_device(torch, torch.ops.oscar_ascend_ops, config, reuse._core_count(torch, config), acceptance["fused_attention"])}
-    if config.get('experimental_bf16_attention',False):report.update(bf16_attention=True,math_contract='oscar_bf16_attention_v2',performance='not_run_user_requested')
+    if config.get('experimental_bf16_attention',False):
+        from .probe_current_only import precision_fields,bind_aligned_evidence
+        report.update(precision_fields(config))
+        bind_aligned_evidence(report,config,bindings)
     bad = validate_evidence(report)
     if bad: report.update(status="failed", evidence_mismatches=bad)
     return report

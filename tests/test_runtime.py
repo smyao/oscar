@@ -328,7 +328,7 @@ def test_online_forward_contains_no_host_request_loop_or_tensor_readback():
     (4, True, False, False), (16, True, True, False),
     (16, True, True, True)])
 @pytest.mark.parametrize("later_draft", [False, True])
-def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv, striped_cache, _rotation_variant=None, _member_pipeline=False, _mdl_variant=None, _mdl_target=False, _c16_l1=False, _bf16_expected=None, _bf16_rv="valid"):
+def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capacity, cube_cores, expected_splits, n, cluster_size, later_draft, fast_unpack, mixed_cv, striped_cache, _rotation_variant=None, _member_pipeline=False, _mdl_variant=None, _mdl_target=False, _c16_l1=False, _bf16_expected=None, _bf16_rv="valid", _aligned=False):
     """Host ABI exercise only: fake ops establish ordering, never accuracy."""
     if n == 8192 and (cluster_size != 16 or later_draft):
         pytest.skip("large FULL host route is needed once for C16")
@@ -354,7 +354,11 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     w.query_input = torch.empty(capacity, h, d, dtype=torch.bfloat16)
     w.key_input = torch.empty(capacity, hk, d, dtype=torch.bfloat16)
     w.value_input = torch.empty_like(w.key_input)
-    w.query_rot = torch.empty(capacity, h, d)
+    w.query_rot = torch.empty(capacity, h, d, dtype=torch.bfloat16 if _aligned else torch.float32)
+    if _aligned:
+        w.query_rot_bf16 = torch.empty(capacity,h,d,dtype=torch.bfloat16)
+        w.key_rot_bf16 = torch.empty(capacity,hk,d,dtype=torch.bfloat16)
+        w.value_rot_bf16 = torch.empty_like(w.key_rot_bf16)
     w.partial = torch.empty(capacity, h, parts, d)
     w.partial_lse = torch.empty(capacity, h, parts)
     w.output = torch.empty(capacity, h, d)
@@ -529,6 +533,27 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         def attention_cv_bf16_cluster16_out(self, *args):
             self._bf16_attention("attention_cv_bf16_cluster16_out", True, args)
 
+        def copy_validate_bf16_query_out(self, input, slots, output, status, cores):
+            assert input.dtype==torch.bfloat16 and input.data_ptr()==w.query_rot_bf16.data_ptr()
+            assert cores==cube_cores and slots.dtype==torch.int64
+            calls.append("bf16_copy");output.copy_(input);status.zero_()
+
+        def _aligned_attention(self,name,clustered,args):
+            assert args[-2] in (0,1)
+            self._bf16_attention(name,clustered,args[:-2]+args[-1:])
+
+        def attention_cv_aligned_decode_out(self,*args):self._aligned_attention("attention_cv_aligned_decode_out",False,args)
+        def attention_cv_aligned_decode_q1_out(self,*args):self._aligned_attention("attention_cv_aligned_decode_q1_out",False,args)
+        def attention_cv_aligned_cluster4_out(self,*args):self._aligned_attention("attention_cv_aligned_cluster4_out",True,args)
+        def attention_cv_aligned_cluster16_out(self,*args):self._aligned_attention("attention_cv_aligned_cluster16_out",True,args)
+
+        def store_aligned_int2_out(self,*args):
+            assert all(t.dtype==torch.bfloat16 for t in args[:4])
+            assert args[0].data_ptr()==w.key_rot_bf16.data_ptr()
+            assert args[1].data_ptr()==w.value_rot_bf16.data_ptr()
+            assert args[0].data_ptr()!=args[2].data_ptr() and args[1].data_ptr()!=args[3].data_ptr()
+            calls.append("aligned_store");args[10].zero_()
+
         def merge_lse_out(self, partial, lse, output, output_lse, status):
             calls.append("merge")
             assert partial.shape == (n * h, 3 * expected_splits, d)
@@ -579,6 +604,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         # replaced by a CPU result masquerading as a device qualification.
         from tools.serving_variants import variant_config
         selected=variant_config({"devices":[0,1,2,3],"port":8989},_rotation_variant)
+        selected["experimental_aligned_math"]=False
         provider=AscendRuntimeProvider(selected)
         assert provider.config==selected
         provider.layer_state=lambda _name: state
@@ -590,6 +616,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         # This helper branch preserves the historical FP32 MDL/hybrid seam.
         # New BF16 candidate routing is qualified separately below.
         selected["experimental_bf16_attention"] = False
+        selected["experimental_aligned_math"] = False
         assert selected["experimental_mdl_decode"] is True
         provider = AscendRuntimeProvider(selected)
         provider.layer_state = lambda _name: state
@@ -599,6 +626,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         from tools.serving_variants import variant_config
         from oscar_ascend.ops.hybrid_layout import pack_rotation_nz
         selected = variant_config({"devices": [0,1,2,3], "port":8989}, "candidate")
+        selected["experimental_aligned_math"] = _aligned
         assert selected["experimental_bf16_attention"] is True
         provider = AscendRuntimeProvider(selected)
         provider.layer_state = lambda _name: state
@@ -607,6 +635,9 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         state.rotation_v = torch.arange(d*d, dtype=torch.float32).reshape(d,d)/4096 - 0.7
         state.rotation_v_nz = pack_rotation_nz(state.rotation_v)
         state.rotation_v_bf16 = state.rotation_v.to(torch.bfloat16)
+        if _aligned:
+            state.cache_format="striped_fp32_v2"
+            state.rotation_k_bf16=torch.eye(d,dtype=torch.bfloat16)
         if _bf16_rv == "missing":
             state.rotation_v_bf16 = None
         elif _bf16_rv == "float32":
@@ -669,10 +700,25 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
                          draft_index=1 if later_draft else 0),output)
         assert calls == ["prepare", "rotate_vector_init"]
         return
-    result = impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),
-                          q, k, value, packed, replace(from_common(common), is_draft=True,
-                          draft_index=1 if later_draft else 0), output)
+    if _aligned:
+        from enum import Enum
+        common.attn_state=Enum("AscendAttentionState",["DecodeOnly","ChunkedPrefill"]).DecodeOnly if n<=128 else Enum("AscendAttentionState",["DecodeOnly","ChunkedPrefill"]).ChunkedPrefill
+        common.query_start_loc_cpu=common.query_start_loc.clone()
+        def native_matmul(input,matrix,*,out):
+            assert input.dtype==matrix.dtype==out.dtype==torch.bfloat16
+            assert matrix is state.rotation_k_bf16 or matrix is state.rotation_v_bf16
+            calls.append("native_bf16_matmul");out.fill_(0.25);return out
+        with patch.object(torch,"matmul",native_matmul):
+            result=impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),q,k,value,packed,
+                replace(from_common(common),is_draft=True,draft_index=1 if later_draft else 0),output)
+    else:
+        result = impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),
+                              q, k, value, packed, replace(from_common(common), is_draft=True,
+                              draft_index=1 if later_draft else 0), output)
     assert result is output and bool(torch.all(result == 7))
+    if _aligned:
+        assert calls==["prepare","native_bf16_matmul","bf16_copy",_bf16_expected,"merge", "native_bf16_matmul","native_bf16_matmul","aligned_store","guard"]
+        return
     if _bf16_expected is not None:
         assert calls == ["prepare", "rotate_vector_init", _bf16_expected,
                          "merge", "striped_store", "guard"]

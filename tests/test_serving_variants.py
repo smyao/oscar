@@ -20,7 +20,7 @@ def test_install_and_probe_plans_select_the_same_bundle(variant, enabled, capsys
         "first_mtp_current_fia": enabled, "compact_later_mtp": enabled,
         "mixed_decode_split": enabled, "prepare_reuse": enabled, "decode_bundle": enabled, "mdl_decode": enabled,
         "c4_member_pipeline": enabled, "c16_l1_reuse": enabled,
-        "hybrid_l1_decode": enabled, "bf16_attention": enabled, "whole_prefill": False}
+        "hybrid_l1_decode": enabled, "bf16_attention": enabled, "aligned_math": enabled, "whole_prefill": False}
     assert install["probes"] == "none"
 
 
@@ -80,7 +80,7 @@ def test_both_one_key_entries_enable_the_complete_candidate_without_manual_flags
     assert selected['optimizations']['whole_prefill'] is False
     assert selected['optimizations']['c4_member_pipeline'] is True
     assert all(value for key,value in selected['optimizations'].items() if key!='whole_prefill')
-    assert 'bf16_attention_precision_error_graph_gate' in observed['phases']
+    assert 'aligned_codec_rotation_attention_precision_error_graph_gate' in observed['phases']
     assert 'c4_member_pipeline_gate' not in observed['phases']
     assert selected['attention_compute'] == {'operands': 'bfloat16', 'accumulator': 'float32', 'softmax_lse_merge': 'float32'}
     assert 'mixed_prepare_reuse_gate' in observed['phases']
@@ -91,5 +91,5 @@ def test_both_one_key_entries_enable_the_complete_candidate_without_manual_flags
     assert selected['scheduler_cls'] is None
     assert selected['devices']==[0,1,2,3] and selected['port']==8989
     assert direct['probes']=='none'
-    assert {'bf16_attention_precision_error_graph_gate','current_only_gate','first_mtp_current_gate','mixed_decode_split_gate'}<=set(observed['phases'])
+    assert {'aligned_codec_rotation_attention_precision_error_graph_gate','current_only_gate','first_mtp_current_gate','mixed_decode_split_gate'}<=set(observed['phases'])
     assert observed['inference_requests_generated']==0

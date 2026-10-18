@@ -160,6 +160,9 @@ def test_each_bf16_lifecycle_parent_failure_blocks_service(monkeypatch,tmp_path,
     monkeypatch.setattr(observe,'_terminal',lambda *a,**k:None)
     config=json.loads((observe.ROOT/'configs/target.json').read_text())
     config.update({key:True for _,key in LIFECYCLE});config['experimental_bf16_attention']=True
+    model=tmp_path/'model';model.mkdir()
+    (model/'config.json').write_text(json.dumps({'architectures':['Qwen3_5ForConditionalGeneration']}))
+    config['model']=str(model)
     path=tmp_path/'target.json';path.write_text(json.dumps(config));logs=tmp_path/'run'
     rc=observe.run(path,logs,'candidate')
     assert rc==(37 if failure in ('child','child_and_release') else 1)

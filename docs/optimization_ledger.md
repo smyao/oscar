@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-18：默认原版Qwen3.8-27B（无强制ascend量化、按原生RoPE），保留Qwen3.5/W8A8选择；默认官方qqt/sst校准和新BF16/144B数学路径，性能测试停止。main/stable未动，真实NPU/图/模型质量未据本地证据升级。见[本轮实现及边界](qwen38_official_alignment_20261018.md)。
+
 ## 2026-10-16 独立BF16计算分支
 
 主分支7047ce36保持，新增 `codex/oscar-bf16-attention`。QK/PV/Rv均改BF16乘数和FP32累加，保留FP32 online softmax/LSE/merge；独立BF16v2 oracle容差预冻结，旧FP32 oracle不改。4种reader接入共享candidate，相关生命周期门支持不测速的正确性验证。48cap新鲜CANN/Torch构建、126源三方hash、q4/q1及C4/C16官方CPU-debug正常/故障通过。用户取消测速后不再执行模拟/真机性能验证；早先q4候选VM OOM中止原样保留。不得推导30%收益、访存bound或真实NPU通过。见[完整交付说明](bf16_attention_20261016.md)。

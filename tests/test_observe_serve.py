@@ -10,6 +10,14 @@ from tools import observe_serve
 from tools.phase import PhaseResult
 
 
+def _local_target(tmp_path):
+    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    model = tmp_path / "model"
+    model.mkdir(exist_ok=True)
+    (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"]}))
+    return {**config, "model": str(model)}
+
+
 def test_fe0_kernel_pin_and_candidate_flag():
     baseline = observe_serve._source_identity("baseline", {"experimental_history_reuse": False})
     assert baseline["fe0_production_kernels_match"] is True
@@ -62,14 +70,14 @@ def test_graph_only_step_keeps_whole_graph_time_but_no_attention_residual(tmp_pa
 def test_plan_makes_no_requests(capsys):
     assert observe_serve.main(["--plan"]) == 0
     plan = json.loads(capsys.readouterr().out)
-    assert plan["variant"] == "baseline"
+    assert plan["variant"] == "candidate"
     assert plan["inference_requests_generated"] == 0
     assert "managed_service_health" in plan["phases"]
 
 
 def test_candidate_gate_requires_signed_artifact_graph_and_precision(monkeypatch, tmp_path):
     from oscar_ascend.ops import loader
-    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    config = _local_target(tmp_path)
     config_path = tmp_path / "effective-target.json"
     config_path.write_text(json.dumps({**config, "experimental_history_reuse": True}))
     log_dir = tmp_path / "logs"
@@ -109,7 +117,7 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     config = observe_serve.ROOT / "configs/target.json"
     original_variant=observe_serve.variant_config
     monkeypatch.setattr(observe_serve,"variant_config",lambda value,variant:
-        {**original_variant(value,variant),"experimental_bf16_attention":bf16})
+        {**original_variant(value,variant),"experimental_bf16_attention":bf16,"experimental_aligned_math":False})
     seen = []
     monkeypatch.setattr(observe_serve, "_preflight", lambda *args: seen.append("preflight"))
     monkeypatch.setattr(observe_serve, "_bf16_attention_gate", lambda *args: seen.append("bf16-gate"))
@@ -149,7 +157,7 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
 
 def test_q4_diagnostic_records_gap_without_claiming_performance_pass(monkeypatch, tmp_path):
     from oscar_ascend.ops import loader
-    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    config = _local_target(tmp_path)
     manifest = {"signature": "q4-signature", "sha256": {"extension": "q4-binary"}}
     monkeypatch.setattr(loader, "validate_build_artifacts", lambda *args: manifest)
     monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
@@ -172,7 +180,7 @@ def test_q4_diagnostic_records_gap_without_claiming_performance_pass(monkeypatch
 
 def test_fast_unpack_gate_requires_exact_new_npu_evidence(monkeypatch, tmp_path):
     from oscar_ascend.ops import loader
-    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    config = _local_target(tmp_path)
     manifest = {"signature": "fast-signature", "sha256": {"extension": "fast-binary"}}
     monkeypatch.setattr(loader, "validate_build_artifacts", lambda *args: manifest)
     monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
@@ -198,7 +206,7 @@ def test_fast_unpack_gate_requires_exact_new_npu_evidence(monkeypatch, tmp_path)
 
 def test_mixed_optimization_gate_requires_exact_new_npu_evidence(monkeypatch, tmp_path):
     from oscar_ascend.ops import loader
-    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    config = _local_target(tmp_path)
     manifest = {"signature": "mixed-signature", "sha256": {"extension": "mixed-binary"}}
     monkeypatch.setattr(loader, "validate_build_artifacts", lambda *args: manifest)
     monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
@@ -224,7 +232,7 @@ def test_mixed_optimization_gate_requires_exact_new_npu_evidence(monkeypatch, tm
 
 def test_striped_cache_gate_requires_exact_new_npu_evidence(monkeypatch, tmp_path):
     from oscar_ascend.ops import loader
-    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    config = _local_target(tmp_path)
     manifest = {"signature": "striped-signature", "sha256": {"extension": "striped-binary"}}
     monkeypatch.setattr(loader, "validate_build_artifacts", lambda *args: manifest)
     monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
@@ -275,7 +283,7 @@ def test_real_phase_status_cannot_overwrite_q4_measurement(monkeypatch, tmp_path
     import sys
     from tools.phase import run_phase as real_run_phase
     from oscar_ascend.ops import loader
-    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    config = _local_target(tmp_path)
     manifest = {"signature": "probe-signature", "sha256": {"extension": "probe-binary"}}
     report = {"status": "observed", "native_oracle": "passed", "oscar_oracle": "passed",
               "profile_parity": "bitwise_passed", "profile_observed": True,
@@ -298,7 +306,7 @@ def test_real_phase_status_cannot_overwrite_q4_measurement(monkeypatch, tmp_path
 
 
 def test_q4_child_failure_is_not_hidden_by_resource_observation_error(monkeypatch, tmp_path):
-    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    config = _local_target(tmp_path)
     monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
     def fail(*args, **kwargs):
         error = RuntimeError("q4 child failed")
@@ -319,7 +327,7 @@ def test_mixed_diagnostic_retains_real_child_report_and_requires_signed_oracle(m
     import sys
     from tools.phase import run_phase as real_run_phase
     from oscar_ascend.ops import loader
-    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    config = _local_target(tmp_path)
     manifest = {"signature": "mixed-signature", "sha256": {"extension": "mixed-binary"}}
     report = {"status": "observed", "accuracy": "passed",
               "artifact_signature": manifest["signature"], "artifact_sha256": manifest["sha256"]}
@@ -344,7 +352,7 @@ def test_mixed_diagnostic_retains_real_child_report_and_requires_signed_oracle(m
 
 
 def test_mixed_child_failure_survives_resource_observation_error(monkeypatch, tmp_path):
-    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    config = _local_target(tmp_path)
     monkeypatch.setattr(observe_serve, "read_npu_resources", lambda *args, **kwargs: {})
     def fail(*args, **kwargs):
         error = RuntimeError("mixed child failed")
@@ -362,7 +370,7 @@ def test_mixed_child_failure_survives_resource_observation_error(monkeypatch, tm
 
 
 def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeypatch, tmp_path):
-    source = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    source = _local_target(tmp_path)
     source["experimental_history_reuse"] = False
     config_path = tmp_path / "target.json"
     config_path.write_text(json.dumps(source))
@@ -372,7 +380,7 @@ def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeyp
     def gate(path, *_args):
         observed.append(path)
         raise RuntimeError("candidate graph gate rejected")
-    monkeypatch.setattr(observe_serve, "_bf16_attention_gate", gate)
+    monkeypatch.setattr(observe_serve, "_aligned_attention_gate", gate)
     monkeypatch.setattr(observe_serve, "managed_server", lambda *_args, **kwargs:
                         pytest.fail("candidate service must not start after gate failure"))
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
@@ -392,7 +400,7 @@ def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeyp
 
 
 def test_candidate_child_rc2_reaches_outer_status_without_serving(monkeypatch, tmp_path):
-    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    config = _local_target(tmp_path)
     config_path = tmp_path / "target.json"
     config_path.write_text(json.dumps(config))
     logs = tmp_path / "logs"
@@ -406,15 +414,15 @@ def test_candidate_child_rc2_reaches_outer_status_without_serving(monkeypatch, t
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     assert observe_serve.run(config_path, logs, "candidate") == 2
     state = json.loads((logs / "status.json").read_text())
-    assert state["failed_phase"] == "bf16-attention"
+    assert state["failed_phase"] == "aligned-attention"
     assert state["returncode"] == 2
-    assert state["bf16_attention_resource_release"]["status"] == "passed"
+    assert state["aligned_attention_resource_release"]["status"] == "passed"
 
 
 @pytest.mark.parametrize("diagnose_trap", [False, True])
 def test_managed_service_only_observes_external_load(monkeypatch, tmp_path, diagnose_trap):
     from benchmarks import passive
-    config = json.loads((observe_serve.ROOT / "configs/target.json").read_text())
+    config = _local_target(tmp_path)
     config["experimental_history_reuse"] = False
     config_path = tmp_path / "target.json"
     config_path.write_text(json.dumps(config))
@@ -472,7 +480,7 @@ def test_managed_service_only_observes_external_load(monkeypatch, tmp_path, diag
 def test_cleanup_resource_error_preserves_server_rc_and_late_summary(monkeypatch, tmp_path):
     from benchmarks import passive
     config_path = tmp_path / "target.json"
-    config_path.write_text((observe_serve.ROOT / "configs/target.json").read_text())
+    config_path.write_text(json.dumps(_local_target(tmp_path)))
     logs = tmp_path / "logs"
     trace = tmp_path / "trace"
     class ServerFailure(RuntimeError):

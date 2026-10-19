@@ -151,7 +151,8 @@ def test_every_install_phase_and_service_receive_explicit_budget_config(monkeypa
     class Started(Exception):
         pass
 
-    def launch(executable, command, env):
+    def launch(config, config_path, *, log_dir, env):
+        command = ["--config", str(config_path)]
         config = check(env)
         assert seen == list(install_serve.BUILD_PHASES)
         assert command[-1] == env["OSCAR_TARGET_CONFIG"]
@@ -160,7 +161,7 @@ def test_every_install_phase_and_service_receive_explicit_budget_config(monkeypa
         raise Started
 
     monkeypatch.setattr(install_serve, "run_phase", phase)
-    monkeypatch.setattr(install_serve.os, "execvpe", launch)
+    monkeypatch.setattr(install_serve, "run_service", launch)
     with pytest.raises(Started):
         install_serve.main(["--config", str(path), "--log-dir", str(logs),
                             "--variant", "candidate"] +

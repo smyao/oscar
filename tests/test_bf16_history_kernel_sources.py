@@ -46,11 +46,11 @@ def integer_expression(expression, names):
 # Independent D256 allocation expectations, including the 32-byte-aligned
 # explicit vector buffers. TPipe/SDK-reserved UB is excluded by the 184KiB cap.
 EXPECTED = {
-    "mdl": (1146880, 1720320, 158656, 175040),
-    "member_pipeline_cluster4": (2494464, 3741696, 157760, 174144),
-    "window_range_cluster16": (4997120, 7495680, 157632, 174528),
-    "window_range": (917504, 1376256, 157632, 174528),
-    "window_range_balanced": (917504, 1376256, 157632, 174528),
+    "mdl": (1146880, 655360, 158656, 175040),
+    "member_pipeline_cluster4": (2494464, 1970176, 157760, 174144),
+    "window_range_cluster16": (4997120, 3883008, 157632, 174528),
+    "window_range": (917504, 786432, 157632, 174528),
+    "window_range_balanced": (917504, 786432, 157632, 174528),
 }
 
 
@@ -72,12 +72,15 @@ def test_all_source_operands_use_bf16_and_only_rotation_uses_fp32_matmul(name, m
     publisher = body(source, "void PublishOperand(")
     assert "oscar_bf16_history::Publish(operandWork[offset],source,operandBuf,elements);" in publisher
     assert "kind" not in publisher and "DataCopy(work" not in publisher
-    assert "PublishOperand(qOffset+row*D,dst,D)" in source
-    assert "else PublishBf16Operand(qOffset+row*D,src,D)" in source
+    assert "PublishOperand(qOffset+row*D,dst,D)" not in source
+    assert "PublishBf16Operand(qOffset+row*D,src,D)" in source
+    query = body(source, "void LoadQueries(")
+    assert "DataCopy(dst,qrChecksum[(packedRow+D)/2],8)" in query
+    assert "if(!Finite(dst.GetValue(0)))error=2" in query
     assert "PublishBf16Operand(qOffset+row*D,zeros,count*D)" in source
     assert "PublishBf16Operand((value?vOffset:kOffset)+slot*D,src,kElements)" in source
     assert "PublishOperand(pOffset+rowBase*kKvRows,scores,activeRows*kKvRows)" in source
-    assert "DataCopy(work[qOffset+lane*kLaneRows*D],acc,kLaneRows*D)" in source
+    assert "DataCopy(work[normOffset+lane*kLaneRows*D],acc,kLaneRows*D)" in source
     assert not re.search(r"Publish(?:History)?Operand\([^;]*\bacc\b", source)
     assert "using HistoryA=MatmulType<TPosition::GM,CubeFormat::ND,bfloat16_t,false>" in source
     assert "using HistoryB=MatmulType<TPosition::GM,CubeFormat::ND,bfloat16_t,true>" in source
@@ -124,13 +127,14 @@ def test_precise_kv_never_expands_fp32_and_preserves_guard_order(name, mother, s
         assert "auto dst=dequantBuf.Get<bfloat16_t>();" in loader
         assert "Cast(dst" not in loader
         assert "dequantBuf.Get<float>" not in loader
-        assert "CheckBf16Row(dst[" in loader
+        assert "oscar_bf16_precise_check::Check" in loader
     assert window.index("if(!Physical(position") < window.index("DataCopyPad(tags")
-    assert window.index("if(tags.GetValue(row)!=inpage+row)") < window.index("CheckBf16Row(")
+    assert "CheckTaggedRows" in window
     assert "DataCopyPad(dst[(j+begin)*D],wv[off],copy,pad)" in window
     assert "DataCopyPad(dst,cv[off],copy,pad)" in current
-    finite = body(source, "void CheckBf16Row(")
-    assert "Cast(row,source,RoundMode::CAST_NONE,D)" in finite
+    shared = (ROOT / "csrc/kernels/attention_bf16_precise_check.h").read_text()
+    finite = body(shared, "void CheckRow(")
+    assert "Cast(converted,source,RoundMode::CAST_NONE,rows*D)" in shared
     assert "ReduceSum(check,row,check[16],D)" in finite
     assert finite.index("Fence<HardEvent::V_S>()") < finite.index("if(!Finite")
     assert "Fence<HardEvent::S_V>()" in finite
@@ -184,19 +188,24 @@ def test_actual_buffers_and_per_core_arenas_fit_the_declared_resource_limits(nam
     assert total == candidate_ub == old_ub + 16384 + natural_extra
     assert total <= 184 * 1024
     assert "kOriginalVectorBytes+kNaturalPaddingBytes+oscar_bf16_history::kOperandScratchBytes<=184*1024" in source
-    assert "auto coreWorkspace=workspace+core*floatsPerCore*6;" in init
+    assert "auto coreWorkspace=workspace+core*layout.Bytes();" in init
     assert "work.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(coreWorkspace));" in init
-    assert "coreWorkspace+floatsPerCore*4" in init
-    floats = old_bytes // 4
-    assert candidate_bytes == floats * 6
+    assert "coreWorkspace+layout.FloatElements()*4" in init
+    floats, operands = {"mdl": (24576,278528),
+        "member_pipeline_cluster4": (263168,458752),
+        "window_range_cluster16": (626688,688128),
+        "window_range": (98304,196608),
+        "window_range_balanced": (98304,196608)}[name]
+    assert candidate_bytes == floats*4 + operands*2 < old_bytes
     for core in range(20):
-        fp32 = (core * candidate_bytes, core * candidate_bytes + old_bytes)
-        bf16 = (fp32[1], fp32[1] + floats * 2)
+        fp32 = (core * candidate_bytes, core * candidate_bytes + floats*4)
+        bf16 = (fp32[1], fp32[1] + operands*2)
         assert fp32[1] == bf16[0]
         assert bf16[1] == (core + 1) * candidate_bytes
         assert all(offset % 32 == 0 for offset in (*fp32, *bf16))
-    # The full original index space is mirrored, including C4 ping/pong slots.
-    last_bf16_element_end = old_bytes + (floats - 1) * 2 + 2
+    # Actual addresses and C4 member/slot reuse are executed independently in
+    # test_bf16_reader_protocol.py; neither arena reserves an unused mirror.
+    last_bf16_element_end = floats*4 + (operands - 1)*2 + 2
     assert last_bf16_element_end == candidate_bytes
 
 
@@ -224,6 +233,6 @@ def test_every_new_project_local_include_exists_and_workspace_families_are_decla
                 continue  # Official SDK is unavailable here, explicitly unvalidated.
             assert (path.parent / include).is_file(), (path, include)
     header = paths[-1].read_text()
-    for family, expected in (("", 1376256), ("mdl_", 1720320),
-                             ("member_pipeline_", 3741696), ("cluster16_", 7495680)):
+    for family, expected in (("", 786432), ("mdl_", 655360),
+                             ("member_pipeline_", 1970176), ("cluster16_", 3883008)):
         assert f"attention_bf16_history_{family}workspace_per_core(256)=={expected}" in header

@@ -1,0 +1,12 @@
+{
+  "fe0": {
+    "attention_cv.cpp": true,
+    "attention_tasks.cpp": true,
+    "store_int2.cpp": true,
+    "rotate_clip_store.cpp": true,
+    "merge_lse.cpp": true,
+    "status_guard.cpp": true,
+    "oscar_common.h": true
+  },
+  "acceptance_sha256": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811"
+}

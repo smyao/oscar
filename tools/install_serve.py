@@ -1,16 +1,18 @@
 # 档案 #75/#94/#95/#116/#117/#120/#125：相位输出实时到终端、完整日志落盘、保留真实退出码；本入口按用户要求只编译安装并直接启动，不含任何测试或probe。
 # #148/#150：安装最新产物不等于启用优化；显式candidate将同一有效配置传给所有相位和服务。
-"""Install, compile and prepare rotations, then exec the formal service; no tests, no probes."""
+# G21/G22: formal serve retains an owned-group supervisor; cleanup is not a
+# claim about device memory recovery and never targets a previous launch.
+"""Install, compile and prepare rotations, then supervise the formal service; no tests, no probes."""
 from __future__ import annotations
 import argparse
 from dataclasses import asdict
 from datetime import datetime, timezone
 import json
-import os
 from pathlib import Path
 import sys
 from .deploy import plan as deploy_plan
 from .phase import atomic_json, run_phase, terminal_line
+from .serve_process import run_service, shell_returncode
 from .target_cli import target_env, serve_argv, diagnose_guard_enabled
 from .serving_variants import variant_config, variant_features, runtime_feature_summary
 
@@ -141,8 +143,19 @@ def main(argv=None) -> int:
     status["status"] = "serving"
     atomic_json(log_dir / "status.json", status)
     terminal_line("[oscar] build complete; starting formal service in the foreground (no probes)")
-    os.execvpe(sys.executable, serve_command, env)
-    return 127  # unreachable: execvpe replaces this process
+    try:
+        result = run_service(config, effective_path, log_dir=log_dir, env=env)
+        status.update(service=asdict(result), service_returncode=result.returncode,
+                      npu_resource_release="not_measured",
+                      status="interrupted" if result.interrupted else "failed" if result.returncode else "stopped")
+        if result.returncode:
+            status["failed_phase"] = "serve"
+        return shell_returncode(result.returncode)
+    except BaseException as error:
+        status.update(status="failed", failed_phase="serve", error=f"{type(error).__name__}: {error}")
+        raise
+    finally:
+        atomic_json(log_dir / "status.json", status)
 
 
 if __name__ == "__main__":

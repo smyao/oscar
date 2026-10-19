@@ -137,7 +137,8 @@ class MemoryLedgerTests(unittest.TestCase):
         current = WorkspaceGeometry(16384, 6, 1, 256, 1, 20, 16,
                                     c4_member_pipeline=True, bf16_history=True)
         retired_same_cluster = WorkspaceGeometry(16384, 6, 1, 256, 1, 20, 16)
-        self.assertEqual(current.cv_bytes, 149913600)
+        self.assertEqual(current.cv_bytes, 77_660_160)
+        self.assertEqual(current.buffer_bytes["query_rot"], 16384 * 6 * 272 * 2)
         self.assertEqual(retired_same_cluster.cv_bytes, 99942400)
         self.assertEqual(candidate["workspace_per_rank"],
                          {"cv_bytes": current.cv_bytes, "total_bytes": current.total_bytes})

@@ -5,6 +5,7 @@ from __future__ import annotations
 import codecs
 from contextlib import contextmanager
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -322,33 +323,54 @@ def _signal_owned_group(proc: subprocess.Popen, signum: int) -> bool:
         return False  # disappearance was established by ESRCH, not EPERM
 
 
+def _wait_owned_group_exit(proc: subprocess.Popen, seconds: float) -> bool:
+    """Require ESRCH even across Darwin's transient zombie-only group EPERM.
+
+    A killed orphan can outlive the reaped leader by a small interval. The
+    direct child's waitpid cannot reap that orphan. Retry observation within
+    the existing shutdown bound; persistent denial still fails explicitly.
+    """
+    deadline = time.monotonic() + seconds
+    while True:
+        denied = None
+        proc.poll()
+        try:
+            if not _owned_group_exists(proc):
+                return True
+        except PermissionError as error:
+            denied = error
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            if denied is not None:
+                raise denied
+            return False
+        time.sleep(min(0.05, remaining))
+
+
 def cleanup_group(proc: subprocess.Popen, grace: float) -> bool:
     """Only touch the session created by this runner; never match process names."""
     if _owned_group_exists(proc) and not _signal_owned_group(proc, signal.SIGTERM):
         return True
-    deadline = time.monotonic() + grace
-    while time.monotonic() < deadline:
-        proc.poll()  # reap the direct child before checking the group
-        if not _owned_group_exists(proc):
-            return True
-        time.sleep(0.05)
+    if _wait_owned_group_exit(proc, grace):
+        return True
     if _owned_group_exists(proc) and not _signal_owned_group(proc, signal.SIGKILL):
         return True
     try:
         proc.wait(timeout=max(grace, 1))
     except subprocess.TimeoutExpired:
         return False
-    deadline = time.monotonic() + max(grace, 1)
-    while _owned_group_exists(proc) and time.monotonic() < deadline:
-        time.sleep(0.05)
-    return not _owned_group_exists(proc)
+    return _wait_owned_group_exit(proc, max(grace, 1))
 
 
 def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
-              timeout: float, env: dict[str, str] | None = None,
+              timeout: float | None, env: dict[str, str] | None = None,
               grace: float = 5, heartbeat: float = 15) -> PhaseResult:
-    if not command or timeout <= 0 or grace < 0:
-        raise ValueError("phase requires a command, positive timeout and nonnegative grace")
+    # None is explicit: foreground serving has no lifetime deadline. Its
+    # shutdown remains bounded by grace, exactly like installation phases.
+    if (not command or (timeout is not None and (not math.isfinite(timeout) or timeout <= 0))
+            or not math.isfinite(grace) or grace < 0
+            or not math.isfinite(heartbeat) or heartbeat < 0):
+        raise ValueError("phase requires a command, positive timeout (or None), and finite nonnegative grace/heartbeat")
     log_dir.mkdir(parents=True, exist_ok=True)
     logfile = log_dir / f"{name}.log"
     started = time.monotonic()
@@ -357,8 +379,11 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
     cleaned = True
     rc = 127
     old_signals = {}
+    interrupt_signal = None
 
     def on_signal(signum, _frame):
+        nonlocal interrupt_signal
+        interrupt_signal = signum
         raise KeyboardInterrupt(f"signal {signum}")
 
     environment = dict(os.environ if env is None else env)
@@ -366,33 +391,38 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
     with live_log(logfile, mode=environment.get("OSCAR_TERMINAL_LOG_MODE")) as stream:
         stream.write(f"START phase={name} cwd={cwd.resolve()} command={json.dumps(command)}\n")
         try:
-            for sig in (signal.SIGTERM, signal.SIGINT):
+            for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
                 old_signals[sig] = signal.signal(sig, on_signal)
             proc = subprocess.Popen(command, cwd=cwd, env=environment, stdin=subprocess.DEVNULL,
                                     stdout=stream, stderr=subprocess.STDOUT,
                                     start_new_session=True)
+            stream.write(f"OWNED_PROCESS phase={name} pid={proc.pid} pgid={proc.pid}\n")
             next_heartbeat = started + heartbeat
             while proc.poll() is None:
                 now = time.monotonic()
-                if now - started >= timeout:
+                if timeout is not None and now - started >= timeout:
                     expired = True
                     rc = 124
                     stream.write(f"TIMEOUT phase={name} limit={timeout}s\n")
                     break
-                if now >= next_heartbeat:
+                if heartbeat and now >= next_heartbeat:
                     terminal_line(f"[oscar] phase={name} running seconds={now-started:.1f} log={logfile}")
                     next_heartbeat = now + heartbeat
-                time.sleep(min(0.1, max(timeout-(now-started), 0.001)))
+                time.sleep(0.1 if timeout is None else min(0.1, max(timeout-(now-started), 0.001)))
             if not expired:
                 rc = int(proc.returncode)
         except KeyboardInterrupt as exc:
             interrupted = True
-            rc = 130
+            rc = 128 + (interrupt_signal or signal.SIGINT)
             stream.write(f"INTERRUPTED phase={name}: {exc}\n")
         except OSError as exc:
             stream.write(f"EXEC_ERROR phase={name}: {exc}\n")
         finally:
             try:
+                # Repeated Ctrl-C/TERM/HUP must not abort bounded cleanup and
+                # strand workers after the owned leader has already exited.
+                for sig in old_signals:
+                    signal.signal(sig, signal.SIG_IGN)
                 if proc is not None:
                     cleaned = cleanup_group(proc, grace)
             except BaseException as exc:

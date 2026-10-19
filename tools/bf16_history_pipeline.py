@@ -42,6 +42,7 @@ def execution_contract(config,cores):
     if config.get('rotation_method','hadamard')!='hadamard' or config.get('sink_tokens',64)!=64 or config.get('recent_tokens',256)!=256:
         raise ValueError('fixed full attention fixtures require Hadamard/sink64/recent256')
     settings={'rotate_operator':'rotate_vector_init_out' if config.get('experimental_quantization_bundle',False) else 'rotate_out',
+              'candidate_rotate_operator':'rotate_bf16_query_out',
               'hadamard':True,'k_clip_ratio':float(config.get('k_clip_ratio',0.0)),
               'v_clip_ratio':float(config.get('v_clip_ratio',0.0)),'guard_host_sync':False}
     return {'operand_contract':CONTRACT,'effective_config_sha256':config_sha256(config),'cube_cores':cores,
@@ -65,6 +66,7 @@ def validate_execution(contract):
         if contract['cv_arena_bytes']!={'baseline':replace(geometry,bf16_history=False).cv_bytes,'candidate':geometry.cv_bytes}:return False
         if (settings['guard_host_sync'] is not False or settings['hadamard'] is not True or
             settings['rotate_operator'] not in {'rotate_out','rotate_vector_init_out'} or
+            settings['candidate_rotate_operator']!='rotate_bf16_query_out' or
             any(type(settings[key]) not in (float,int) or not math.isfinite(settings[key]) or not 0<=settings[key]<1 for key in ('k_clip_ratio','v_clip_ratio'))):return False
         return (contract.get('operand_contract')==CONTRACT and isinstance(contract['effective_config_sha256'],str) and len(contract['effective_config_sha256'])==64 and
                 contract['synthetic_physical_pages'] is True and contract['physical_block_tokens']==512 and
@@ -152,7 +154,8 @@ def launch_pipeline(ops,fixture,tensors,buffers,cores,*,name,cluster,policy,sett
     else:ops.prepare_attention_tasks_out(*args,None,False)
     if policy['native_current']:
         current.suppress_current_source_tasks(buffers['tasks'],n,hk,s)
-    getattr(ops,settings['rotate_operator'])(q,tensors['rk_transpose'],tensors['qr'],
+    rotate=settings['candidate_rotate_operator'] if name.startswith('attention_bf16_history_') else settings['rotate_operator']
+    getattr(ops,rotate)(q,tensors['rk_transpose'],tensors['qr'],
                                            buffers['rotate_status'],settings['hadamard'],tensors['slots'])
     launch(ops,name,tensors,fixture,buffers,cores,cluster,merge=False)
     if policy['native_current']:
@@ -196,6 +199,7 @@ def build_pair(torch,ops,case,device,cores,config,first_receipt):
         tensors['rk_transpose']=rk.T.contiguous().to(device)
         tensors['rv_transpose']=fixture['cpu']['rv'].T.contiguous().to(device)
         buffers=probe.allocate(torch,fixture,device,cores,case.route,candidate=bool(candidate))
+        if candidate:tensors['qr']=buffers['qr_bf16']
         # Runtime reserves the maximal C16 arena once, shared by every route.
         buffers['workspace']=torch.empty(execution['cv_arena_bytes']['candidate' if candidate else 'baseline'],dtype=torch.uint8,device=device)
         buffers['rotate_status']=torch.empty((fixture['tokens'],case.shape.heads),dtype=torch.int32,device=device)
@@ -249,6 +253,21 @@ def full_oracle(torch,fixture,tasks,policy):
     return gold
 
 
+def check_query_pair(torch,old,new,slots):
+    """Check the changed storage contract, not nonexistent FP32/BF16 byte parity."""
+    from .probe_striped_cache import _store_bits_equal
+    if old.dtype!=torch.float32 or new.dtype!=torch.bfloat16 or new.shape!=(*old.shape[:-1],272):
+        raise RuntimeError('full attention query producer ABI differs')
+    if not _store_bits_equal(torch,old.cpu().to(torch.bfloat16),new[:,:,:256].cpu()):
+        raise RuntimeError('full attention BF16 query operands differ from rounded old rotation')
+    trailer=new[:,:,256:].contiguous().view(torch.float32)
+    if not bool(torch.isfinite(trailer[:,:,0]).all()) or bool(trailer[:,:,1:].view(torch.int32).ne(0).any()):
+        raise RuntimeError('full attention query checksum trailer is invalid')
+    inactive=slots<0
+    if bool(new[inactive].view(torch.int16).ne(0).any()):
+        raise RuntimeError('full attention inactive query producer rows are not zero')
+
+
 def check_pair(torch,case,fixture,pair,policy,acceptance):
     from . import probe_bf16_history as probe
     old,new=(arm['buffers'] for arm in pair)
@@ -261,9 +280,10 @@ def check_pair(torch,case,fixture,pair,policy,acceptance):
         for key in ('partial','lse'):
             if not probe.shared._store_bits_equal(torch,old[key][:,:,part],new[key][:,:,part]):
                 raise RuntimeError('unchanged native current partial changed '+key+' bits')
-    for key in (*STORAGE_KEYS,'qr'):
+    for key in STORAGE_KEYS:
         if not probe.shared._store_bits_equal(torch,pair[0]['tensors'][key],pair[1]['tensors'][key]):
-            raise RuntimeError('full attention changed writer/rotation '+key+' bytes')
+            raise RuntimeError('full attention changed writer '+key+' bytes')
+    check_query_pair(torch,pair[0]['tensors']['qr'],pair[1]['tensors']['qr'],pair[0]['tensors']['slots'])
     for arm in pair:
         for key in ('rotate_status','store_status'):
             if not bool((arm['buffers'][key]==0).all()):raise RuntimeError('full attention '+key+' failed')
@@ -273,7 +293,7 @@ def check_pair(torch,case,fixture,pair,policy,acceptance):
         if probe.shared._store_bits_equal(torch,arm['initial_storage']['raw'],arm['tensors']['raw']):
             raise RuntimeError('full attention did not publish current INT2 rows')
     return {'passed':detail['passed'],'precision':detail,'task_sha256':task_hash,
-            'writer_bytes_equal':True,'rotation_bytes_equal':True,'immutable_inputs':True,
+            'writer_bytes_equal':True,'rotation_bf16_operands_equal':True,'rotation_trailer_valid':True,'immutable_inputs':True,
             'all_status_zero':True,'same_arm_repeat_bitwise':True,
             'native_current_bitwise':True if policy['native_current'] else None}
 
@@ -357,7 +377,7 @@ def validate_receipt(case,row,*,timed,execution):
             not isinstance(receipt.get('initial_task_sha256'),str) or not receipt['initial_task_sha256'] or
             receipt.get('reset_scope')!='same_address_raw_window_tags_and_poison_outside_events'):
         bad.append(case.shape.name+'.full_attention.contract')
-    for key in ('passed','writer_bytes_equal','rotation_bytes_equal','immutable_inputs','all_status_zero','same_arm_repeat_bitwise'):
+    for key in ('passed','writer_bytes_equal','rotation_bf16_operands_equal','rotation_trailer_valid','immutable_inputs','all_status_zero','same_arm_repeat_bitwise'):
         if numeric.get(key) is not True:bad.append(case.shape.name+'.full_attention.'+key)
     if numeric.get('native_current_bitwise')!=(True if case_policy(case)['native_current'] else None):
         bad.append(case.shape.name+'.full_attention.native_current_bits')

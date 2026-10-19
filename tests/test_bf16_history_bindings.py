@@ -17,12 +17,22 @@ def _schema(source, name):
     return ''.join(re.findall(r'"([^"]*)"', block.group()))
 
 
-def test_research_binding_validation_is_identical_to_qualified_parent():
+def test_binding_validation_changes_only_the_explicit_packed_query_abi():
     old = (ROOT/'csrc/striped_attention_bindings.cpp').read_text()
     new = (ROOT/'csrc/bf16_history_bindings.cpp').read_text()
     def templates(text):
         return text[text.index('namespace {'):text.index('TORCH_LIBRARY_FRAGMENT')]
-    assert templates(old) == templates(new)
+    candidate = templates(new)
+    dtype = 'Check(queryRot,query,at::kBFloat16,"query_rot")'
+    assert candidate.count(dtype) == 2
+    candidate = candidate.replace(dtype, 'Check(queryRot,query,at::kFloat,"query_rot")')
+    packed_shape = '''TORCH_CHECK(query.dim()==3 && queryRot.dim()==3 &&
+      queryRot.size(0)==query.size(0) && queryRot.size(1)==query.size(1) &&
+      queryRot.size(2)==query.size(2)+16,"Q/checksum shape mismatch");'''
+    assert candidate.count(packed_shape) == 2
+    candidate = candidate.replace(packed_shape,
+        'TORCH_CHECK(query.dim()==3 && queryRot.sizes()==query.sizes(),"Q shape mismatch");')
+    assert templates(old) == candidate
 
 
 def test_all_six_schemas_preserve_aliases_argument_order_and_cluster_stats():

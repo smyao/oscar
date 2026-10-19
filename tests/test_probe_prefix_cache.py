@@ -100,6 +100,13 @@ def test_source_binding_exists_and_follows_current_source():
     assert len(probe.source_binding()) == len(probe.SOURCE_PATHS)
 
 
+def test_prefix_query_and_workspace_follow_bf16_reader_abi():
+    state = probe.allocate(torch, 'cpu', 2)
+    assert state['qr'].shape == (8, 6, 272)
+    assert state['qr'].dtype == torch.bfloat16
+    assert state['workspace'].numel() == 2 * 655360
+
+
 def test_no_real_npu_is_failure(monkeypatch, tmp_path):
     path = tmp_path / "config.json"; path.write_text(json.dumps(candidate()))
     monkeypatch.setattr(probe.reuse, "_active_device", lambda _: None)

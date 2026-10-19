@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="24" failures="0" skipped="0" tests="25" time="0.078" timestamp="2026-10-19T09:55:11.243500+08:00" hostname="lokiyaodeMacBook-Pro.local"><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[current-0]" time="0.008"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[current-1]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[current-3]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[current-4]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[current-5]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[current-15]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[current-16]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[current-17]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[current-31]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[current-32]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[current-63]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[current-64]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[sink-recent-tags-0]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[sink-recent-tags-1]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[sink-recent-tags-3]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[sink-recent-tags-4]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[sink-recent-tags-5]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[sink-recent-tags-15]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[sink-recent-tags-16]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[sink-recent-tags-17]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[sink-recent-tags-31]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[sink-recent-tags-32]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[sink-recent-tags-63]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_actual_header_preserves_every_reduction_status_and_bounds[sink-recent-tags-64]" time="0.000"><error message="failed on setup with &quot;AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode&quot;">tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=&lt;pluggy._tracing.TagTracerSub object at 0x105de3bb0&gt;, _basetemp=PosixPath...lders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-220'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def helper_program(tmp_path_factory):
+        compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+        if not compiler:
+            pytest.skip("clang++ unavailable: real-header host schedule not run")
+        source = HEADER.read_text().replace('#include "oscar_common.h"', STUB).replace("#pragma once", "")
+        path = tmp_path_factory.mktemp("bf16-precise") / "check"
+        result = subprocess.run([compiler, "-std=c++17", "-O0", "-fno-fast-math",
+                                 "-x", "c++", "-", "-o", str(path)],
+                                input=source + HARNESS, capture_output=True, text=True, timeout=30)
+&gt;       assert result.returncode == 0, result.stderr
+E       AssertionError: xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/usr/bin/clang++', '-std=c++17', '-O0', '-fno-fast-math', '-x', 'c++', '-', '-o', '/private/va...per path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun\n').returncode
+
+tests/test_bf16_precise_check.py:142: AssertionError</error></testcase><testcase classname="tests.test_bf16_precise_check" name="test_minimum_existing_natural_buffers_fit_without_new_allocation" time="0.000" /></testsuite></testsuites>

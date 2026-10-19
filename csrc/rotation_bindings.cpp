@@ -71,12 +71,20 @@ void NoOverlapPages(const at::Tensor& a,const at::Tensor& b,int64_t aRowBytes,in
 uint32_t Cores(int64_t rows) {
   return static_cast<uint32_t>(std::min<int64_t>(32,rows>0 ? (rows-1)/8+1 : 1));
 }
-template <bool VectorInit>
+template <bool VectorInit, bool PackedBf16 = false>
 void CheckedRotate(const at::Tensor& input,const at::Tensor& rotation,at::Tensor output,
                    at::Tensor status,bool hadamard,const std::optional<at::Tensor>& slots) {
   const int32_t dtype=Input(input); Matrix(rotation,input);
-  Tensor(output,input,at::kFloat,"output"); Tensor(status,input,at::kInt,"status");
-  TORCH_CHECK(output.sizes()==input.sizes(),"rotation output must match input [N,H,D]");
+  Tensor(output,input,PackedBf16 ? at::kBFloat16 : at::kFloat,"output");
+  Tensor(status,input,at::kInt,"status");
+  if constexpr (PackedBf16) {
+    TORCH_CHECK(input.scalar_type()==at::kBFloat16,"packed query input must be BF16");
+    TORCH_CHECK(output.dim()==3 && output.size(0)==input.size(0) &&
+        output.size(1)==input.size(1) && output.size(2)==input.size(2)+16,
+        "packed rotation output must be BF16 [N,H,D+16]");
+  } else {
+    TORCH_CHECK(output.sizes()==input.sizes(),"rotation output must match input [N,H,D]");
+  }
   TORCH_CHECK(status.dim()==2 && status.size(0)==input.size(0) && status.size(1)==input.size(1),
               "rotation status must be int32[N,H]");
   for (const auto& dst:{output,status}) {NoOverlap(dst,input);NoOverlap(dst,rotation);}
@@ -89,7 +97,11 @@ void CheckedRotate(const at::Tensor& input,const at::Tensor& rotation,at::Tensor
   if (input.size(0)==0) return;
   const c10_npu::OptionalNPUGuard guard(input.device());
   const int64_t rows=Product(input.size(0),input.size(1),"rows");
-  if constexpr (VectorInit) {
+  if constexpr (PackedBf16) {
+    oscar_ascend::rotate_bf16_query_launch(c10_npu::getCurrentNPUStream().stream(),input.data_ptr(),
+        rotation.data_ptr(),output.data_ptr(),status.data_ptr(),rows,input.size(2),
+        hadamard,slots.has_value() ? slots->data_ptr() : nullptr,input.size(1),Cores(rows));
+  } else if constexpr (VectorInit) {
     oscar_ascend::rotate_vector_init_launch(c10_npu::getCurrentNPUStream().stream(),input.data_ptr(),
         rotation.data_ptr(),output.data_ptr(),status.data_ptr(),rows,input.size(2),dtype,
         hadamard,slots.has_value() ? slots->data_ptr() : nullptr,input.size(1),Cores(rows));
@@ -106,6 +118,10 @@ void Rotate(const at::Tensor& input,const at::Tensor& rotation,at::Tensor output
 void RotateVectorInit(const at::Tensor& input,const at::Tensor& rotation,at::Tensor output,
                  at::Tensor status,bool hadamard,const std::optional<at::Tensor>& slots) {
   CheckedRotate<true>(input,rotation,output,status,hadamard,slots);
+}
+void RotateBf16Query(const at::Tensor& input,const at::Tensor& rotation,at::Tensor output,
+                 at::Tensor status,bool hadamard,const std::optional<at::Tensor>& slots) {
+  CheckedRotate<true,true>(input,rotation,output,status,hadamard,slots);
 }
 void RawView(const at::Tensor& raw,const at::Tensor& owner,int64_t blocks,int64_t rows,
              int64_t heads,int64_t dim,const char* name) {
@@ -236,6 +252,8 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
         "Tensor(b!) status, bool hadamard=False, Tensor? slots=None) -> ()");
   m.def("rotate_vector_init_out(Tensor input, Tensor rotation_transposed, Tensor(a!) output, "
         "Tensor(b!) status, bool hadamard=False, Tensor? slots=None) -> ()");
+  m.def("rotate_bf16_query_out(Tensor input, Tensor rotation_transposed, Tensor(a!) output, "
+        "Tensor(b!) status, bool hadamard=False, Tensor? slots=None) -> ()");
   m.def("rotate_clip_store_out(Tensor key, Tensor value, Tensor rk_transposed, "
         "Tensor rv_transposed, Tensor slots, Tensor positions, Tensor(a!) packed, "
         "Tensor(b!) raw_key, Tensor(c!) raw_value, Tensor(d!) raw_tags, Tensor(e!) status, "
@@ -245,5 +263,6 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
 TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
   m.impl("rotate_clip_store_striped_out",&RotateStoreStriped);
   m.impl("rotate_vector_init_out",&RotateVectorInit);
+  m.impl("rotate_bf16_query_out",&RotateBf16Query);
   m.impl("rotate_out",&Rotate);m.impl("rotate_clip_store_out",&RotateStore);
 }

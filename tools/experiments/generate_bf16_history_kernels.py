@@ -32,8 +32,9 @@ HEADER = """// SPDX-License-Identifier: Apache-2.0
 // (2) failed full-history restore cost6499.8-6655.1ms versus FIA18.5-18.9ms;
 // (3) fixed KV256 BF16 operands, exact BF16 window/current K/V; FP32
 // softmax/LSE/state/Rv, masks, error order and cross-core flags are retained;
-// (4) GM capacity=1.5x mother, extra UB16KiB (+512B on H16); Matmul switches,
-// resets and bounded unpack lookup add cost; no speed/acceptance claim.
+// (4) compact typed GM arenas, extra UB16KiB (+512B on H16); BF16-first Init
+// removes the unused initial FP32 allocation/reset. Later dtype switches and
+// bounded unpack lookup remain; reserved-byte reduction is not measured speed.
 // One active Matmul resource set avoids simultaneous L1/L0 allocations.
 // Re-Init/Reset needs actual SDK and device verification; host has neither.
 // The mother's inherited historical comments below are not claims about
@@ -254,6 +255,107 @@ static_assert(64*128*2*kHistoryCubeConfig.dbL0A<=64*1024 &&
         new = old.replace("dequantBuf.Get<float>()", "dequantBuf.Get<bfloat16_t>()")
         new = new.replace("natural [KV,D] FP32", "natural [KV,D] BF16")
         replace(old, new)
+
+    # Archive #126/#145/#148/#154 and D.4: typed offsets are independent.
+    # Keep all existing producers, barriers, atomics and state lifetimes;
+    # only final serialized normalization shares a single FP32 MxD input.
+    members = 4 if name == "member_pipeline_cluster4" else 16 if name == "window_range_cluster16" else 1
+    kv_buffers = 2 if name in ("mdl", "member_pipeline_cluster4") else 1
+    score_slots = 2 if name == "member_pipeline_cluster4" else 1
+    begin = text.index("    const int64_t " + ("baseFloats=" if members == 4 else "floatsPerCore="))
+    end = text.index("    if ASCEND_IS_AIC", begin)
+    compact = f"""    constexpr oscar_ascend::Bf16AttentionWorkspace layout{{D,kQueryRows,{members},{kv_buffers},{score_slots}}};
+    // Byte stride is per Cube; offsets below are elements in their own type.
+    // No unused FP32 K/V or BF16 score/accumulator mirror is reserved.
+    static_assert(layout.FloatElements()*4%32==0 && layout.Bytes()%32==0,
+        "typed workspace must preserve DMA alignment");
+    auto coreWorkspace=workspace+core*layout.Bytes();
+    work.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(coreWorkspace));
+    operandWork.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(
+        coreWorkspace+layout.FloatElements()*4));
+    qOffset=layout.Query();kOffset=layout.Key();vOffset=layout.Value();
+    normOffset=layout.Norm();scoreOffset=layout.Score();pOffset=layout.Probability();
+    pvOffset=layout.Pv();rotOffset=pvOffset;
+"""
+    if members > 1:
+        compact += "    accStateOffset=layout.Acc();statStateOffset=layout.Stat();\n"
+    if members == 4:
+        compact += "    baseKOffset=kOffset;baseScoreOffset=scoreOffset;basePOffset=pOffset;\n"
+        compact += "    extraKvOffset=layout.ExtraKv();extraScoreOffset=layout.ExtraScore();\n"
+        compact += "    extraPOffset=layout.ExtraProbability();\n"
+    if members > 1:
+        compact += "    for(int32_t i=0;i<8;++i)counters[i]=0;\n"
+    replace(text[begin:end], compact)
+    replace("int64_t qOffset,kOffset,vOffset,scoreOffset,pOffset,pvOffset,rotOffset;",
+            "int64_t qOffset,kOffset,vOffset,scoreOffset,pOffset,pvOffset,rotOffset,normOffset;")
+    if members == 4:
+        replace("scoreOffset=slot?extraScoreOffset:baseScoreOffset;pOffset=scoreOffset;",
+                "scoreOffset=slot?extraScoreOffset:baseScoreOffset;\n"
+                "    pOffset=slot?extraPOffset:basePOffset;")
+        replace("int64_t baseKOffset,baseScoreOffset,extraKvOffset,extraScoreOffset;",
+                "int64_t baseKOffset,baseScoreOffset,extraKvOffset,extraScoreOffset,basePOffset,extraPOffset;")
+    for old, new in (
+        ("DataCopy(work[qOffset+lane*kLaneRows*D],acc,kLaneRows*D)",
+         "DataCopy(work[normOffset+lane*kLaneRows*D],acc,kLaneRows*D)"),
+        ("Matmul(qOffset,0,rotOffset,rows,D,D,true)",
+         "Matmul(normOffset,0,rotOffset,rows,D,D,true)"),
+    ):
+        replace(old, new, text.count(old))
+    replace("mm.Init(static_cast<const TCubeTiling*>(nullptr),&pipe);",
+            "oscar_bf16_history::InitMatmul(historyMatmulActive,pipe,historyMm);")
+
+    # The producer now rounds rotated Q once and carries its pre-rounding
+    # FP32 row checksum in a 32B trailer. Preserve the CV finite check on
+    # those exact bits, without reconstructing/casting D values again.
+    replace("qr.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(queryRot));",
+            "qr.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(queryRot));\n"
+            "    qrChecksum.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(queryRot));")
+    replace("GlobalTensor<float> qr,rv,out,outLse,work;",
+            "GlobalTensor<float> qrChecksum,rv,out,outLse,work;\n"
+            "  GlobalTensor<bfloat16_t> qr;")
+    old = function_body("LoadQueries")
+    first = old.index("      if(kind==0) {DataCopy(dst,qr[off],D);")
+    last = old.index("Fence<HardEvent::MTE3_MTE2>();", first) + len("Fence<HardEvent::MTE3_MTE2>();")
+    check_size = "128" if name == "member_pipeline_cluster4" else ""
+    replacement = """      if(kind==0) {
+        const int64_t packedRow=(off/D)*(D+16);
+        // qFloatBuf is a checksum destination here, not a widened Q tile.
+        // Order its previous scalar reader before the next DMA overwrite.
+        Fence<HardEvent::S_MTE2>();
+        DataCopy(src,qr[packedRow],D);
+        DataCopy(dst,qrChecksum[(packedRow+D)/2],8);
+        Fence<HardEvent::MTE2_S>();
+        if(!Finite(dst.GetValue(0)))error=2;
+        // MTE2 -> S -> V -> MTE3 also orders the BF16 operand publication.
+        Fence<HardEvent::S_V>();
+      } else {
+        DataCopy(src,q[off],D);Fence<HardEvent::MTE2_V>();
+        Cast(dst,src,RoundMode::CAST_NONE,D);PipeBarrier<PIPE_V>();
+        auto check=scratchBuf.Get<float>(""" + check_size + """);
+        ReduceSum(check,dst,check[16],D);Fence<HardEvent::V_S>();
+        if(!Finite(check.GetValue(0)))error=2;
+      }
+      Fence<HardEvent::V_MTE3>();
+      PublishBf16Operand(qOffset+row*D,src,D);Fence<HardEvent::MTE3_MTE2>();"""
+    replace(old, old[:first] + replacement + old[last:])
+
+    # Exact rows keep the same per-row reduction and tag/error order, while
+    # four adjacent rows share one Cast into otherwise-dead natural scratch.
+    replace('#include "attention_bf16_history_operands.h"',
+            '#include "attention_bf16_history_operands.h"\n'
+            '#include "attention_bf16_precise_check.h"')
+    natural_rows = "kHistoryHalfKv" if name == "member_pipeline_cluster4" else "kHalfKv"
+    replace("      for(int32_t row=0;row<rows;++row) {\n"
+            "        CheckBf16Row(dst[row*D]);\n      }",
+            f"      oscar_bf16_precise_check::CheckRows<D,{natural_rows}>(\n"
+            "          dst,rows,naturalBuf,scratchBuf,error);")
+    replace("      for(int32_t row=0;row<rows;++row) {\n"
+            "        if(tags.GetValue(row)!=inpage+row) {error=4;continue;}\n"
+            "        CheckBf16Row(dst[(j+row)*D]);\n      }",
+            f"      oscar_bf16_precise_check::CheckTaggedRows<D,{natural_rows}>(\n"
+            "          dst[j*D],tags,inpage,rows,naturalBuf,scratchBuf,error);")
+    replace(function_body("CheckBf16Row"),
+            "  // Precise row validation uses the shared bounded four-row Cast helper.\n")
 
     # Reverse the transformations rather than trusting copied output alone.
     inverse = text

@@ -112,7 +112,7 @@ def test_mixed_cv_requires_explicit_fast_history_and_reserves_c16(monkeypatch):
     monkeypatch.setattr(runtime, "GraphWorkspace", FakeWorkspace)
     workspace = provider.ensure_workspace(6, 1, 256, "npu:0")
     assert workspace.geometry.history_cluster_size == 16
-    assert workspace.geometry.cv_bytes == 20 * 7495680
+    assert workspace.geometry.cv_bytes == 20 * 3883008
     assert provider.ensure_workspace(6, 1, 256, "npu:0") is workspace
 
 
@@ -364,7 +364,7 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
     w.query_input = torch.empty(capacity, h, d, dtype=torch.bfloat16)
     w.key_input = torch.empty(capacity, hk, d, dtype=torch.bfloat16)
     w.value_input = torch.empty_like(w.key_input)
-    w.query_rot = torch.empty(capacity, h, d)
+    w.query_rot = torch.empty(capacity, h, d+16, dtype=torch.bfloat16)
     w.partial = torch.empty(capacity, h, parts, d)
     w.partial_lse = torch.empty(capacity, h, parts)
     w.output = torch.empty(capacity, h, d)
@@ -393,7 +393,9 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
 
             def bf16_call(*args):
                 assert args[0].dtype == args[2].dtype == args[3].dtype == torch.bfloat16
-                assert args[1].dtype == args[4].dtype == args[11].dtype == args[12].dtype == torch.float32
+                assert args[1].dtype == torch.bfloat16
+                assert args[1].shape == (n,h,d+16)
+                assert args[4].dtype == args[11].dtype == args[12].dtype == torch.float32
                 assert args[5].dtype == args[14].dtype == torch.uint8
                 assert args[13].dtype == torch.int32
                 if name in BF16_HISTORY_CLUSTER_OPS:
@@ -418,7 +420,9 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             assert q.is_contiguous()
             assert slots.dtype == torch.int64 and slots.shape == (n,)
             assert slots.data_ptr() == w.slots.data_ptr()
-            out.copy_(q)
+            assert out.dtype == torch.bfloat16 and out.shape == (n,h,d+16)
+            out[..., :d].copy_(q)
+            out[..., d:].zero_()  # Host ABI mock, not a rotation/numerics oracle.
             status.zero_()
             if _rotation_variant is not None:
                 raise RotationReached(name)
@@ -426,8 +430,8 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
         def rotate_out(self, *args):
             return self._rotate("rotate", *args)
 
-        def rotate_vector_init_out(self, *args):
-            return self._rotate("rotate_vector_init", *args)
+        def rotate_bf16_query_out(self, *args):
+            return self._rotate("rotate_bf16_query", *args)
 
         def attention_cv_out(self, *args):
             calls.append("cv")
@@ -625,10 +629,10 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             impl.forward(SimpleNamespace(layer_name="model.layers.0.self_attn.attn" if _mdl_target else "mtp.layers.0.self_attn.attn"),
                          q, k, value, packed, replace(from_common(common), is_draft=not _mdl_target,
                          draft_index=1 if later_draft else 0), output)
-        assert calls == ["prepare", "rotate_vector_init", "cv"]
+        assert calls == ["prepare", "rotate_bf16_query", "cv"]
         return
     if _rotation_variant is not None:
-        expected_rotation="rotate_vector_init" if _rotation_variant=="candidate" else "rotate"
+        expected_rotation="rotate_bf16_query" if _rotation_variant=="candidate" else "rotate"
         with pytest.raises(RotationReached,match="^"+expected_rotation+"$"):
             impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),
                          q,k,value,packed,replace(from_common(common),is_draft=True,draft_index=0),output)
@@ -643,13 +647,13 @@ def test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(capaci
             impl.forward(SimpleNamespace(layer_name="model.layers.0.self_attn.attn" if _mdl_target else "mtp.layers.0.self_attn.attn"),
                          q, k, value, packed, replace(from_common(common), is_draft=not _mdl_target,
                          draft_index=1 if later_draft else 0), output)
-        assert calls == ["prepare", "rotate_vector_init", "cv"]
+        assert calls == ["prepare", "rotate_bf16_query", "cv"]
         return
     result = impl.forward(SimpleNamespace(layer_name="mtp.layers.0.self_attn.attn"),
                           q, k, value, packed, replace(from_common(common), is_draft=True,
                           draft_index=1 if later_draft else 0), output)
     assert result is output and bool(torch.all(result == 7))
-    assert calls == ["prepare", "rotate_vector_init", "cv", "merge", "striped_store", "guard"]
+    assert calls == ["prepare", "rotate_bf16_query", "cv", "merge", "striped_store", "guard"]
 
 
 @pytest.mark.parametrize("variant", ["candidate", "baseline", "native"])

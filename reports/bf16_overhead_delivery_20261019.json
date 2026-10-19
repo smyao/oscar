@@ -1,0 +1,125 @@
+{
+  "date": "2026-10-19",
+  "mother_commit": "8b1695a",
+  "branch": "oscar-new-3",
+  "target_log": {
+    "file": "reports/target_startup_memory_20261019.txt",
+    "sha256": "68e729b823040fd09bd4d404ca3dfb931aa58f34673a4b5b7778d922a3ef7a38",
+    "bytes": 28438
+  },
+  "startup": {
+    "kind": "native_startup_memory_insufficient",
+    "source": "reports/target_startup_memory_20261019.txt",
+    "native_message": "Free memory on device (1.19/29.49 GiB) on startup is less than desired GPU memory utilization (0.9, 26.54 GiB)",
+    "reported_gib": {
+      "free": "1.19",
+      "total": "29.49",
+      "required": "26.54"
+    },
+    "reported_utilization": "0.9",
+    "configured_devices": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "memory_owner": "not_established",
+    "npu_resource_release": "not_measured",
+    "read_only_checks": [
+      "npu-smi info",
+      "ps -eo pid,ppid,pgid,etime,args"
+    ]
+  },
+  "fixes": [
+    "owned foreground process-group supervision and real exit status",
+    "compact typed CV arenas",
+    "single BF16 Q publication with pre-round FP32 checksum",
+    "four-row exact-window check Cast",
+    "BF16 Matmul initialized first"
+  ],
+  "workspace_per_core": {
+    "general": {
+      "old_bytes_per_core": 1376256,
+      "new_bytes_per_core": 786432
+    },
+    "mdl": {
+      "old_bytes_per_core": 1720320,
+      "new_bytes_per_core": 655360
+    },
+    "c4": {
+      "old_bytes_per_core": 3741696,
+      "new_bytes_per_core": 1970176
+    },
+    "c16": {
+      "old_bytes_per_core": 7495680,
+      "new_bytes_per_core": 3883008
+    }
+  },
+  "example": {
+    "tokens": 16384,
+    "query_heads": 6,
+    "kv_heads": 1,
+    "head_dim": 256,
+    "splits": 1,
+    "cube_cores": 20,
+    "cluster": 16,
+    "old": {
+      "cv": 149913600,
+      "query_rot": 100663296,
+      "total": 729711872
+    },
+    "new": {
+      "cv": 77660160,
+      "query_rot": 53477376,
+      "total": 610272512
+    },
+    "saved_bytes": 119439360,
+    "saved_mib": 113.90625
+  },
+  "producer_max_ub_bytes": {
+    "hadamard": 48576,
+    "dense": 48608,
+    "added": 4352
+  },
+  "tests": {
+    "bf16_overhead_combined_v2_20261019.xml": {
+      "tests": 1128,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1
+    },
+    "bf16_query_abi_extra_20261019.xml": {
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "bf16_precise_check_host_20261019_xcode.xml": {
+      "tests": 25,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "bf16_query_binding_final_20261019.xml": {
+      "tests": 111,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "boundaries": {
+    "host": "passed in affected scope",
+    "generator": "passed",
+    "fe0": "7/7 byte frozen",
+    "acceptance": "unchanged",
+    "CANN": "not available on this host",
+    "official_cpu_debug": "not run",
+    "NPU": "not run",
+    "graph_capture_and_replay": "not run",
+    "service_memory_recovery": "not measured",
+    "quality": "existing BF16 screen 7/11 failures including 2 final-output failures retained",
+    "performance": "not measured; no speed claim",
+    "prior_issue_165": "unattributed 32K guard failure remains open"
+  },
+  "source_fingerprint_scope": "query producer launch header and C++ binding included in both direct BF16 probes"
+}

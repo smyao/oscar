@@ -193,6 +193,8 @@ def runtime_feature_summary(config: dict, variant: str | None) -> dict:
     return {"variant":variant,"optimizations":variant_features(config),
             "attention_compute_dtype": config.get(ATTENTION_COMPUTE_DTYPE, "bfloat16"),
             "attention_sources": "native" if variant == "native" else "history/sink/recent/current",
+            "query_rotation": None if variant == "native" else "rotate_bf16_query_out",
+            "cv_workspace_layout": None if variant == "native" else "compact_typed_v2",
             "prefix_caching":config.get("enable_prefix_caching", False),
             "token_budget_source":"native" if config.get("use_native_token_budget", False) else "explicit",
             "max_num_batched_tokens":config.get("max_num_batched_tokens"),

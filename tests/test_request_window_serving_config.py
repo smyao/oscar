@@ -70,12 +70,13 @@ def test_explicit_config_without_variant_persists_normalized_capacity_for_every_
         if '--config' in command:assert command[command.index('--config')+1]==env['OSCAR_TARGET_CONFIG']
         return PhaseResult(name,command,0,0.,False,False,str(logs/name),True)
     class HostExecIntercept(Exception):pass
-    def launch(executable,command,env):
+    def launch(config,config_path,*,log_dir,env):
+        command=["--config",str(config_path)]
         check(command[-1]);assert command[-1]==env['OSCAR_TARGET_CONFIG']
         assert seen==list(install_serve.BUILD_PHASES)
         raise HostExecIntercept
     monkeypatch.setattr(install_serve,'run_phase',phase)
-    monkeypatch.setattr(install_serve.os,'execvpe',launch)
+    monkeypatch.setattr(install_serve,'run_service',launch)
     with pytest.raises(HostExecIntercept):
         install_serve.main(['--config',str(path),'--log-dir',str(logs)])
     assert path.read_bytes()==before

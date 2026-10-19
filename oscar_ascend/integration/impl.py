@@ -171,10 +171,9 @@ class OscarAttentionImpl(AttentionImpl):
                 suppress_current_source_tasks(tasks, n, hk, source_splits)
         with phase("rotate", layer=layer.layer_name, tokens=n, hadamard=state.hadamard,
                    requests=attn_metadata.num_reqs, **timing_fields):
-            # Frozen rotate_out remains the baseline; the shared candidate
-            # preset explicitly selects the separately registered vector-Init path.
-            rotate_name = ("rotate_vector_init_out" if self.provider.config.get(
-                "experimental_quantization_bundle", False) else "rotate_out")
+            # Publish the rounded history operand once, with its pre-round
+            # FP32 finite-check checksum. Every history split reuses these bits.
+            rotate_name = "rotate_bf16_query_out"
             getattr(ops, rotate_name)(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
         cluster_size = getattr(g, "history_cluster_size", 1)
         # #150/#154: choose the preset's q4/q1 reader and its cache format.

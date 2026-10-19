@@ -56,7 +56,7 @@ def test_both_optional_plans_select_same_service_mode(entry, tmp_path, capsys):
     assert not (tmp_path / "uncreated").exists()
 
 
-def test_direct_install_exec_receives_diagnostic_config_and_env(monkeypatch, tmp_path):
+def test_direct_install_supervisor_receives_diagnostic_config_and_env(monkeypatch, tmp_path):
     source = tmp_path / "target.json"
     source.write_text(json.dumps(config()))
     original = source.read_bytes()
@@ -72,7 +72,8 @@ def test_direct_install_exec_receives_diagnostic_config_and_env(monkeypatch, tmp
     class Served(Exception):
         pass
 
-    def launch(_executable, command, env):
+    def launch(config, config_path, *, log_dir, env):
+        command = ["--config", str(config_path)]
         selected = json.loads(Path(command[-1]).read_text())
         assert env["OSCAR_TARGET_CONFIG"] == command[-1]
         assert env["OSCAR_GUARD_HOST_SYNC"] == "1"
@@ -82,7 +83,7 @@ def test_direct_install_exec_receives_diagnostic_config_and_env(monkeypatch, tmp
         raise Served
 
     monkeypatch.setattr(install_serve, "run_phase", build)
-    monkeypatch.setattr(install_serve.os, "execvpe", launch)
+    monkeypatch.setattr(install_serve, "run_service", launch)
     with pytest.raises(Served):
         install_serve.main(["--config", str(source), "--log-dir", str(tmp_path / "run"),
                             "--variant", "candidate", "--diagnose-trap"])

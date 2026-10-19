@@ -24,7 +24,8 @@ def test_apc_reader_matches_current_production_precision():
 def test_apc_actual_allocator_reserves_bf16_mdl_arena():
     state = probe.allocate(torch, torch.device("cpu"), 2)
     assert state["workspace"].dtype == torch.uint8
-    assert state["workspace"].numel() == 2 * 1_720_320
+    assert state["workspace"].numel() == 2 * 655_360
+    assert state["qr"].dtype == torch.bfloat16 and state["qr"].shape[-1] == 272
     # All public output/state precision stays FP32; operands are separate.
     for name in ("partial", "lse", "output", "output_lse"):
         assert state[name].dtype == torch.float32

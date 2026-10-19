@@ -84,11 +84,12 @@ def test_shared_runtime_reserves_actual_bf16_c16_arena(
     assert g.history_cluster_size == 16 and g.c4_member_pipeline and g.bf16_history
     assert impl.provider.config["experimental_bf16_history"] is True
     assert impl.provider.config["experimental_c4_member_pipeline"] is True
-    # Independent C16 formula: sixteen Q/state groups plus KV256 and scores.
+    # Independent typed C16 formula: Q16 in BF16; normalized input one tile.
     m, b, d = 128, 256, 256
-    fp32_per_core = ((16*m + 2*b + m + 16*m)*d + m*b + 16*2*m)*4
-    assert g.cv_bytes == 2 * fp32_per_core * 3 // 2 == 14_991_360
-    assert replace(g, bf16_history=False).cv_bytes < g.cv_bytes
+    float_bytes = (2*m*d + m*b + 16*m*d + 16*2*m)*4
+    operand_bytes = (16*m*d + 2*b*d + m*b)*2
+    assert g.cv_bytes == 2*(float_bytes+operand_bytes) == 7_766_016
+    assert replace(g, bf16_history=False).cv_bytes > g.cv_bytes
     actual = {name: getattr(state.workspace, name).numel() *
         getattr(state.workspace, name).element_size() for name in g.buffer_bytes}
     assert actual == g.buffer_bytes
@@ -182,5 +183,5 @@ def test_npu_probe_requests_actual_bf16_symbols_before_any_case(probe, monkeypat
     with pytest.raises(ReachedCapabilityCheck):
         probe.probe(config, acceptance)
     assert len(seen) == 1 and BF16_HISTORY_CV_OPS <= seen[0]
-    assert "rotate_vector_init_out" in seen[0]
+    assert "rotate_bf16_query_out" in seen[0]
     assert not any(name.startswith("attention_cv_") for name in seen[0])

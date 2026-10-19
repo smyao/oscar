@@ -49,6 +49,7 @@ SOURCE_PATHS = (
     'tools/probe_native_current_fia.py', 'tools/striped_fixture.py',
     'oscar_ascend/bf16_history_policy.py',
     'csrc/kernels/rotate_vector_init.cpp', 'csrc/kernels/rotate_clip_store_striped.cpp',
+    'csrc/rotation_bindings.cpp', 'csrc/include/oscar_rotation_vector_init_launch.h',
     'csrc/kernels/status_guard.cpp',
     'tools/probe_striped_cache.py', 'tools/experiments/bf16_history_screen.py',
     'tools/experiments/bf16_all_sources_screen.py', 'tools/experiments/bf16_direct_decode.py',
@@ -61,6 +62,7 @@ SOURCE_PATHS = (
     'csrc/kernels/attention_bf16_history_window_range_balanced.cpp',
     'csrc/include/oscar_bf16_history_launch.h', 'csrc/bf16_history_bindings.cpp',
     'csrc/kernels/attention_bf16_history_operands.h',
+    'csrc/kernels/attention_bf16_precise_check.h',
     'csrc/kernels/attention_striped_unpack_padded.h', 'csrc/kernels/attention_range_mask.h',
     'csrc/include/oscar_attention_launch.h', 'csrc/include/oscar_mdl_decode_launch.h',
     'csrc/include/oscar_member_pipeline_launch.h',
@@ -149,6 +151,8 @@ def make_fixture(torch, case, *, dense_oracle=True):
         rv = torch.linalg.qr(torch.randn((256,256), generator=rng)).Q.contiguous()
         fixture['cpu']['rv'] = rv
     fixture['cpu']['qr'] = (fixture['cpu']['q'].float() @ rk).contiguous()
+    fixture['cpu']['rk_transpose'] = rk.T.contiguous()
+    fixture['query_hadamard'] = case.rotation == 'hadamard'
     if case.shape.corrupt_qr:
         fixture['cpu']['qr'][case.shape.corrupt_qr_token,0,0] = float('nan')
     canonical = fixture['cpu']['raw'][reuse.PREFIX:].view(fixture['blocks'], reuse.BLOCK_TOKENS,
@@ -226,20 +230,52 @@ def partial_oracle(torch, fixture, tasks):
     return {'partial':output,'lse':lse}
 
 
+def candidate_workspace_per_core(route):
+    """Typed arena matching Bf16AttentionWorkspace; all audited routes are D256."""
+    if route not in ROUTES:raise ValueError('unknown BF16 attention route')
+    m=32 if route in ('mdl','mdl_q1') else 128
+    c=ROUTES[route][2];buffers=2 if route in ('mdl','mdl_q1','c4') else 1
+    slots=2 if route=='c4' else 1;n=d=256
+    floats=2*m*d+slots*m*n+(c*m*d+2*c*m if c>1 else 0)
+    operands=c*m*d+buffers*2*n*d+slots*m*n
+    return floats*4+operands*2
+
+
 def allocate(torch,fixture,device,cores,route,*,candidate):
     _,_,cluster,old_bytes=ROUTES[route]
     buffers=reuse._allocate(torch,fixture,device,cores,candidate=cluster>1)
-    buffers['workspace']=torch.empty(cores*(old_bytes*3//2 if candidate else old_bytes),dtype=torch.uint8,device=device)
+    buffers['workspace']=torch.empty(cores*(candidate_workspace_per_core(route) if candidate else old_bytes),dtype=torch.uint8,device=device)
     n,h,d=fixture['tokens'],fixture['spec'].heads,256
     buffers.update(output=torch.empty((n*h,d),dtype=torch.float32,device=device),
                    output_lse=torch.empty(n*h,dtype=torch.float32,device=device),
                    merge_status=torch.empty(n*h,dtype=torch.int32,device=device),
                    bf16=torch.empty((n*h,d),dtype=torch.bfloat16,device=device))
+    if candidate:
+        buffers['qr_bf16']=torch.empty((n,h,d+16),dtype=torch.bfloat16,device=device)
+        buffers['rotate_status']=torch.empty((n,h),dtype=torch.int32,device=device)
     return buffers
 
 
+def produce_bf16_query(ops,tensors,fixture,buffers):
+    """Real producer ABI, outside CV-only timing but inside changed-input graphs.
+
+    The independent FP32 CPU qr remains the old-reader input. The candidate
+    consumes BF16[D+16], including the producer's original FP32 sum trailer.
+    """
+    ops.rotate_bf16_query_out(tensors['q'],tensors['rk_transpose'],buffers['qr_bf16'],
+        buffers['rotate_status'],fixture['query_hadamard'],tensors['slots'])
+    if fixture['spec'].corrupt_qr:
+        token=fixture['spec'].corrupt_qr_token
+        # Deliberate post-producer corruption, equivalent to the old negative
+        # qr fixture: poison both operand and its original FP32 check value.
+        buffers['qr_bf16'][token,0,0]=float('nan')
+        buffers['qr_bf16'][token,0,256:258].view(dtype=buffers['output'].dtype).fill_(float('nan'))
+
+
 def launch(ops,name,tensors,fixture,buffers,cores,cluster,*,merge=True):
-    shared._launch(ops,name,tensors,fixture,buffers,cores,cluster)
+    inputs=({**tensors,'qr':buffers['qr_bf16']}
+            if name.startswith('attention_bf16_history_') else tensors)
+    shared._launch(ops,name,inputs,fixture,buffers,cores,cluster)
     if merge:
         n,h,s=fixture['tokens'],fixture['spec'].heads,3*fixture['spec'].splits
         ops.merge_lse_out(buffers['partial'].view(n*h,s,256),buffers['lse'].view(n*h,s),
@@ -293,6 +329,8 @@ def prepare(torch,ops,tensors,fixture,buffers):
 def compare_pair(torch,case,fixture,old,new,task_hash,acceptance,oracle=None):
     from .experiments.bf16_history_screen import compare, relative_l2
     invalid=_invalid(case)
+    if 'rotate_status' in new and not bool((new['rotate_status']==0).all()):
+        raise RuntimeError('BF16 query producer reported a nonzero status')
     for buffers in (old,new):
         reuse._check_status(torch,buffers,invalid=invalid)
         if reuse._fingerprint({'tasks':buffers['tasks'].cpu()})!=task_hash:
@@ -374,7 +412,9 @@ def graph_gate(torch,ops,case,fixture,tensors,pair,cores,acceptance):
         return {**{k:v.data_ptr() for k,v in tensors.items()},
                 **{str(i)+k:v.data_ptr() for i,b in enumerate(pair) for k,v in b.items() if v is not None}}
     before=addresses();graphs=[torch.npu.NPUGraph(),torch.npu.NPUGraph()]
-    def execute(i):launch(ops,names[i],tensors,fixture,pair[i],cores,cluster)
+    def execute(i):
+        if i:produce_bf16_query(ops,tensors,fixture,pair[i])
+        launch(ops,names[i],tensors,fixture,pair[i],cores,cluster)
     for i,graph in enumerate(graphs):
         with torch.npu.graph(graph,capture_error_mode='thread_local',auto_dispatch_capture=True):execute(i)
     states=[]
@@ -441,6 +481,7 @@ def run_case(torch,ops,case,device,cores,acceptance):
     receipt=reuse._prepare(torch,ops,tensors,fixture,pair[0])
     pair[1]['tasks'],pair[1]['positions']=pair[0]['tasks'],pair[0]['positions']
     original_inputs={k:v.clone() for k,v in tensors.items()}
+    produce_bf16_query(ops,tensors,fixture,pair[1])
     def execute(i,merge=True):launch(ops,names[i],tensors,fixture,pair[i],cores,cluster,merge=merge)
     for i,buffers in enumerate(pair):mdl.poison(torch,buffers);execute(i,merge=not _invalid(case))
     torch.npu.synchronize()
@@ -576,6 +617,7 @@ def time_case(torch,ops,case,device,cores,acceptance,first_receipt):
     if receipt['task_sha256']!=first_receipt['task_sha256']:
         raise RuntimeError('BF16 timing tasks differ from the numerical pass')
     pair[1]['tasks'],pair[1]['positions']=pair[0]['tasks'],pair[0]['positions']
+    produce_bf16_query(ops,tensors,fixture,pair[1])
     def execute(i,merge=True):launch(ops,names[i],tensors,fixture,pair[i],cores,cluster,merge=merge)
     for i,buffers in enumerate(pair):mdl.poison(torch,buffers);execute(i)
     torch.npu.synchronize()
@@ -689,7 +731,7 @@ def probe(config_path,acceptance_path,*,output_path=None):
     if normalize_soc(torch.npu.get_device_name(0))!=config['soc_version']:raise RuntimeError('BF16 target SoC differs')
     from oscar_ascend.ops.loader import validate_build_artifacts,require_capabilities
     manifest=validate_build_artifacts(ROOT/'build/ascendc/build_manifest.json')
-    require_capabilities({name for values in ROUTES.values() for name in values[:2]}|{'prepare_attention_tasks_out','merge_lse_out','rotate_out','rotate_vector_init_out',
+    require_capabilities({name for values in ROUTES.values() for name in values[:2]}|{'prepare_attention_tasks_out','merge_lse_out','rotate_out','rotate_vector_init_out','rotate_bf16_query_out',
                          'rotate_clip_store_striped_out','status_guard'})
     result={'schema':SCHEMA,'operand_contract':CONTRACT,'status':'running','device_completion':'not_run','cases':[],
             'source_binding':source_binding(),'acceptance_sha256':hashlib.sha256(acceptance_path.read_bytes()).hexdigest(),

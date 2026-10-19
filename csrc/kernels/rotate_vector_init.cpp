@@ -2,6 +2,12 @@
 // D.4: bounded rotate phase, never full-history recovery6499.8-6655.1ms.
 // Transform remains original row-major FP32; only integer index/sign Init changes.
 // Historical CPU/CAModel qualification is local; fresh full build/NPU/graph pending.
+// 2026-10-19, #126/#145/#154/#157, full D.4: packed-Q producer retains
+// FP32 rotation and the pre-round ReduceSum check, then publishes BF16 once.
+// D.4 scope is bounded rotate, not the failed full-history dequant phase.
+// Each row carries a 32B aligned original FP32 checksum trailer so readers
+// preserve the old finite/error predicate without re-rounding every split.
+// Extra UB is <=4352B; GM Q falls from 1024 to 544B/row at D256. No speed claim.
 // SPDX-License-Identifier: Apache-2.0
 // Archive G27, #13-22/#37-49/#70-71/#81-83/#91-92/#111:
 // raw window stays unrotated; scales/zero round to FP16 before quantization;
@@ -224,7 +230,7 @@ class ClipQuantize {
       divisorBuf_,qBuf_,scalarBuf_,metaBuf_;
 };
 
-template <typename T>
+template <typename T, bool PackedBf16 = false>
 class RotateOnly {
  public:
   __aicore__ inline void Run(GM_ADDR source,GM_ADDR rotation,GM_ADDR output,
@@ -232,6 +238,10 @@ class RotateOnly {
     input_.SetGlobalBuffer(reinterpret_cast<__gm__ T*>(source));
     matrix_.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(rotation));
     output_.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(output));
+    if constexpr (PackedBf16) {
+      packedOutput_.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(output));
+      pipe_.InitBuffer(packedBuf_,kRowTile*(kMaxDim+16)*2);
+    }
     status_.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(status));
     if (slots!=nullptr) slots_.SetGlobalBuffer(reinterpret_cast<__gm__ int64_t*>(slots));
     engine_.Init(&pipe_,dim,hadamard);
@@ -262,6 +272,10 @@ class RotateOnly {
         for (int32_t row=0;row<count;++row) if (!active[row]) engine_.ZeroInputRow(row);
         engine_.Transform(matrix_,count);
       }
+      if constexpr (PackedBf16) {
+        Duplicate(packedBuf_.template Get<uint16_t>(),static_cast<uint16_t>(0),count*(dim+16));
+        Fence<HardEvent::V_S>();
+      }
       for (int32_t row=0;row<count;++row) {
         if (!active[row]) {
           Duplicate(result[row*dim],0.0F,dim); PipeBarrier<PIPE_V>();
@@ -270,10 +284,25 @@ class RotateOnly {
         }
         ReduceSum(scalarBuf_.Get<float>(),result[row*dim],redBuf_.Get<float>(),dim);
         Fence<HardEvent::V_S>();
-        statusLocal.SetValue(row,Finite(scalarBuf_.Get<float>().GetValue(0)) ? 0 : 2);
+        const float sum=scalarBuf_.Get<float>().GetValue(0);
+        statusLocal.SetValue(row,Finite(sum) ? 0 : 2);
+        if constexpr (PackedBf16) {
+          packedBuf_.template Get<float>().SetValue((row*(dim+16)+dim)/2,sum);
+        }
       }
       Fence<HardEvent::V_MTE3>(); Fence<HardEvent::S_MTE3>();
-      DataCopy(output_[base*dim],result,count*dim);
+      if constexpr (PackedBf16) {
+        // The trailer starts on its own 32B block, never inside a cast range.
+        Fence<HardEvent::S_V>();
+        auto packed=packedBuf_.template Get<bfloat16_t>();
+        for(int32_t row=0;row<count;++row) {
+          Cast(packed[row*(dim+16)],result[row*dim],RoundMode::CAST_RINT,dim);
+        }
+        Fence<HardEvent::V_MTE3>();
+        DataCopy(packedOutput_[base*(dim+16)],packed,count*(dim+16));
+      } else {
+        DataCopy(output_[base*dim],result,count*dim);
+      }
       DataCopyExtParams statusCopy{1,static_cast<uint32_t>(count*4),0,0,0};
       DataCopyPad(status_[base],statusLocal,statusCopy);
       Fence<HardEvent::MTE3_V>(); Fence<HardEvent::MTE3_S>();
@@ -281,8 +310,9 @@ class RotateOnly {
   }
  private:
   TPipe pipe_; RotationEngine<T> engine_;
-  TBuf<TPosition::VECCALC> statusBuf_,redBuf_,scalarBuf_,slotBuf_;
+  TBuf<TPosition::VECCALC> statusBuf_,redBuf_,scalarBuf_,slotBuf_,packedBuf_;
   GlobalTensor<T> input_; GlobalTensor<float> matrix_,output_; GlobalTensor<int32_t> status_;
+  GlobalTensor<bfloat16_t> packedOutput_;
   GlobalTensor<int64_t> slots_;
 };
 
@@ -416,6 +446,13 @@ extern "C" __global__ __aicore__ void oscar_rotate_vector_init_kernel(GM_ADDR so
   else {RotateOnly<bfloat16_t> op;op.Run(source,rotation,output,status,rows,dim,hadamard,slots,heads);}
 }
 
+extern "C" __global__ __aicore__ void oscar_rotate_bf16_query_kernel(GM_ADDR source,
+    GM_ADDR rotation,GM_ADDR output,GM_ADDR status,int64_t rows,int64_t dim,
+    bool hadamard,GM_ADDR slots,int64_t heads) {
+  RotateOnly<bfloat16_t,true> op;
+  op.Run(source,rotation,output,status,rows,dim,hadamard,slots,heads);
+}
+
 extern "C" __global__ __aicore__ void oscar_store_vector_init_aux_kernel(
     GM_ADDR key,GM_ADDR value,GM_ADDR rk,GM_ADDR rv,GM_ADDR slots,GM_ADDR positions,
     GM_ADDR packed,GM_ADDR rawKey,GM_ADDR rawValue,GM_ADDR tags,GM_ADDR status,
@@ -434,6 +471,13 @@ extern "C" __global__ __aicore__ void oscar_store_vector_init_aux_kernel(
 
 #ifndef ASCENDC_CPU_DEBUG
 namespace oscar_ascend {
+void rotate_bf16_query_launch(void* stream,void* input,void* rotation,void* output,
+    void* status,int64_t rows,int64_t dim,bool hadamard,
+    void* slots,int64_t heads,uint32_t cores) {
+  oscar_rotate_bf16_query_kernel<<<cores,nullptr,stream>>>(static_cast<uint8_t*>(input),
+      static_cast<uint8_t*>(rotation),static_cast<uint8_t*>(output),
+      static_cast<uint8_t*>(status),rows,dim,hadamard,static_cast<uint8_t*>(slots),heads);
+}
 void rotate_vector_init_launch(void* stream,void* input,void* rotation,void* output,
     void* status,int64_t rows,int64_t dim,int32_t dtype,bool hadamard,
     void* slots,int64_t heads,uint32_t cores) {

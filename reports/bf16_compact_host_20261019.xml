@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="69" time="5.794" timestamp="2026-10-19T09:59:20.910274+08:00" hostname="lokiyaodeMacBook-Pro.local"><testcase classname="tests.test_bf16_reader_protocol" name="test_six_readers_execute_real_offsets_and_cube_bounds[range]" time="2.304" /><testcase classname="tests.test_bf16_reader_protocol" name="test_six_readers_execute_real_offsets_and_cube_bounds[balanced]" time="0.205" /><testcase classname="tests.test_bf16_reader_protocol" name="test_six_readers_execute_real_offsets_and_cube_bounds[cluster16]" time="0.275" /><testcase classname="tests.test_bf16_reader_protocol" name="test_six_readers_execute_real_offsets_and_cube_bounds[cluster4]" time="0.259" /><testcase classname="tests.test_bf16_reader_protocol" name="test_six_readers_execute_real_offsets_and_cube_bounds[mdl_q4]" time="0.187" /><testcase classname="tests.test_bf16_reader_protocol" name="test_six_readers_execute_real_offsets_and_cube_bounds[mdl_q1]" time="0.184" /><testcase classname="tests.test_bf16_reader_protocol" name="test_c4_real_control_flow_preserves_member_and_buffer_ownership[1]" time="0.009" /><testcase classname="tests.test_bf16_reader_protocol" name="test_c4_real_control_flow_preserves_member_and_buffer_ownership[2]" time="0.010" /><testcase classname="tests.test_bf16_reader_protocol" name="test_c4_real_control_flow_preserves_member_and_buffer_ownership[3]" time="0.012" /><testcase classname="tests.test_bf16_reader_protocol" name="test_c4_real_control_flow_preserves_member_and_buffer_ownership[7]" time="0.017" /><testcase classname="tests.test_bf16_reader_protocol" name="test_c4_real_control_flow_preserves_member_and_buffer_ownership[16]" time="0.029" /><testcase classname="tests.test_bf16_reader_protocol" name="test_control_checks_reject_alias_and_missing_readiness" time="0.007" /><testcase classname="tests.test_bf16_reader_protocol" name="test_actual_matmul_lifetime_helper_starts_with_one_bf16_allocation[bf16-first]" time="0.392" /><testcase classname="tests.test_bf16_reader_protocol" name="test_actual_matmul_lifetime_helper_starts_with_one_bf16_allocation[old-init-negative-control]" time="0.384" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_inverse_generation_preserves_exact_fixed_mother[mdl-attention_cv_mdl_decode.cpp-1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f]" time="0.006" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_inverse_generation_preserves_exact_fixed_mother[member_pipeline_cluster4-attention_cv_member_pipeline_cluster4.cpp-0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc]" time="0.008" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_inverse_generation_preserves_exact_fixed_mother[window_range_cluster16-attention_cv_window_range_cluster16.cpp-708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335]" time="0.004" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_inverse_generation_preserves_exact_fixed_mother[window_range-attention_cv_window_range.cpp-d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4]" time="0.004" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_inverse_generation_preserves_exact_fixed_mother[window_range_balanced-attention_cv_window_range_balanced.cpp-1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013]" time="0.005" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_all_source_operands_use_bf16_and_only_rotation_uses_fp32_matmul[mdl-attention_cv_mdl_decode.cpp-1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_all_source_operands_use_bf16_and_only_rotation_uses_fp32_matmul[member_pipeline_cluster4-attention_cv_member_pipeline_cluster4.cpp-0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_all_source_operands_use_bf16_and_only_rotation_uses_fp32_matmul[window_range_cluster16-attention_cv_window_range_cluster16.cpp-708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_all_source_operands_use_bf16_and_only_rotation_uses_fp32_matmul[window_range-attention_cv_window_range.cpp-d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_all_source_operands_use_bf16_and_only_rotation_uses_fp32_matmul[window_range_balanced-attention_cv_window_range_balanced.cpp-1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_cluster4_history_publisher_preserves_both_old_lane_domains" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_precise_kv_never_expands_fp32_and_preserves_guard_order[mdl-attention_cv_mdl_decode.cpp-1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f]" time="0.003" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_precise_kv_never_expands_fp32_and_preserves_guard_order[member_pipeline_cluster4-attention_cv_member_pipeline_cluster4.cpp-0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc]" time="0.002" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_precise_kv_never_expands_fp32_and_preserves_guard_order[window_range_cluster16-attention_cv_window_range_cluster16.cpp-708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335]" time="0.002" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_precise_kv_never_expands_fp32_and_preserves_guard_order[window_range-attention_cv_window_range.cpp-d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4]" time="0.002" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_precise_kv_never_expands_fp32_and_preserves_guard_order[window_range_balanced-attention_cv_window_range_balanced.cpp-1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013]" time="0.002" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_direct_unpack_allocations_cover_actual_strided_addresses[mdl-attention_cv_mdl_decode.cpp-1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_direct_unpack_allocations_cover_actual_strided_addresses[member_pipeline_cluster4-attention_cv_member_pipeline_cluster4.cpp-0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_direct_unpack_allocations_cover_actual_strided_addresses[window_range_cluster16-attention_cv_window_range_cluster16.cpp-708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_direct_unpack_allocations_cover_actual_strided_addresses[window_range-attention_cv_window_range.cpp-d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_direct_unpack_allocations_cover_actual_strided_addresses[window_range_balanced-attention_cv_window_range_balanced.cpp-1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_actual_buffers_and_per_core_arenas_fit_the_declared_resource_limits[mdl-attention_cv_mdl_decode.cpp-1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_actual_buffers_and_per_core_arenas_fit_the_declared_resource_limits[member_pipeline_cluster4-attention_cv_member_pipeline_cluster4.cpp-0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_actual_buffers_and_per_core_arenas_fit_the_declared_resource_limits[window_range_cluster16-attention_cv_window_range_cluster16.cpp-708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_actual_buffers_and_per_core_arenas_fit_the_declared_resource_limits[window_range-attention_cv_window_range.cpp-d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_actual_buffers_and_per_core_arenas_fit_the_declared_resource_limits[window_range_balanced-attention_cv_window_range_balanced.cpp-1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013]" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_shared_helper_rounding_and_resource_switch_order_are_explicit" time="0.001" /><testcase classname="tests.test_bf16_history_kernel_sources" name="test_every_new_project_local_include_exists_and_workspace_families_are_declared" time="0.003" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[6-128-4-False-attention_cv_mdl_decode_out]" time="0.001" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[6-16384-1-True-attention_cv_mdl_decode_q1_out]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[6-84-84-False-attention_cv_member_pipeline_cluster4_out]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[6-512-None-False-attention_cv_member_pipeline_cluster4_out]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[6-8192-8192-False-attention_cv_window_range_cluster16_out]" time="0.001" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[6-83-83-False-attention_cv_window_range_out]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[6-512-33-False-attention_cv_window_range_balanced_out]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[16-128-1-True-attention_cv_window_range_out]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_all_old_eligibility_results_map_explicitly[16-512-1-True-attention_cv_window_range_balanced_out]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_incomplete_bundle_cannot_silently_use_an_old_reader[fast_unpack]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_incomplete_bundle_cannot_silently_use_an_old_reader[mixed_cv]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_incomplete_bundle_cannot_silently_use_an_old_reader[striped_cache]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_incomplete_bundle_cannot_silently_use_an_old_reader[decode_bundle]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_incomplete_bundle_cannot_silently_use_an_old_reader[c4_member_pipeline]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_incomplete_bundle_cannot_silently_use_an_old_reader[mdl_decode]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_selector_requires_strict_boolean[None]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_selector_requires_strict_boolean[0]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_selector_requires_strict_boolean[1]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_selector_requires_strict_boolean[true]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_missing_mapping_is_an_error_not_a_fallback" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_workspace_uses_bounded_compact_typed_arenas[1-False-786432]" time="0.001" /><testcase classname="tests.test_bf16_history_dispatch" name="test_workspace_uses_bounded_compact_typed_arenas[4-True-1970176]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_workspace_uses_bounded_compact_typed_arenas[16-True-3883008]" time="0.000" /><testcase classname="tests.test_bf16_history_dispatch" name="test_research_config_reaches_actual_forward_abi[8-4-False-True]" time="0.067"><failure message="AttributeError: rotate_bf16_query_out">n = 8, length = 4, later = False, target = True
+
+    @pytest.mark.parametrize("n,length,later,target", [
+        (8,4,False,True),(8,4,False,False),(8,1,True,False),
+        (256,128,False,False),(8192,8192,False,False),
+        (8,8,False,False),(256,33,False,False),
+    ])
+    def test_research_config_reaches_actual_forward_abi(n,length,later,target):
+        from test_runtime import test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+&gt;       test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(
+            n,1,1,n,16,later,True,True,True,_member_pipeline=True,
+            _bf16_history=True,_bf16_max_query=length,_mdl_target=target)
+
+tests/test_bf16_history_dispatch.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_runtime.py:625: in test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+    impl.forward(SimpleNamespace(layer_name="model.layers.0.self_attn.attn" if _mdl_target else "mtp.layers.0.self_attn.attn"),
+oscar_ascend/integration/impl.py:177: in forward
+    getattr(ops, rotate_name)(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;test_runtime.test_forward_dispatches_native_draft_strides_and_int32_slots_in_order.&lt;locals&gt;.Ops object at 0x10c5b1400&gt;
+name = 'rotate_bf16_query_out'
+
+    def __getattr__(self, name):
+        from oscar_ascend.ops.cv_dispatch import BF16_HISTORY_CV_OPS, BF16_HISTORY_CLUSTER_OPS
+        if not _bf16_history or name not in BF16_HISTORY_CV_OPS:
+&gt;           raise AttributeError(name)
+E           AttributeError: rotate_bf16_query_out
+
+tests/test_runtime.py:392: AttributeError</failure></testcase><testcase classname="tests.test_bf16_history_dispatch" name="test_research_config_reaches_actual_forward_abi[8-4-False-False]" time="0.002"><failure message="AttributeError: rotate_bf16_query_out">n = 8, length = 4, later = False, target = False
+
+    @pytest.mark.parametrize("n,length,later,target", [
+        (8,4,False,True),(8,4,False,False),(8,1,True,False),
+        (256,128,False,False),(8192,8192,False,False),
+        (8,8,False,False),(256,33,False,False),
+    ])
+    def test_research_config_reaches_actual_forward_abi(n,length,later,target):
+        from test_runtime import test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+&gt;       test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(
+            n,1,1,n,16,later,True,True,True,_member_pipeline=True,
+            _bf16_history=True,_bf16_max_query=length,_mdl_target=target)
+
+tests/test_bf16_history_dispatch.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_runtime.py:625: in test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+    impl.forward(SimpleNamespace(layer_name="model.layers.0.self_attn.attn" if _mdl_target else "mtp.layers.0.self_attn.attn"),
+oscar_ascend/integration/impl.py:177: in forward
+    getattr(ops, rotate_name)(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;test_runtime.test_forward_dispatches_native_draft_strides_and_int32_slots_in_order.&lt;locals&gt;.Ops object at 0x10c5b2660&gt;
+name = 'rotate_bf16_query_out'
+
+    def __getattr__(self, name):
+        from oscar_ascend.ops.cv_dispatch import BF16_HISTORY_CV_OPS, BF16_HISTORY_CLUSTER_OPS
+        if not _bf16_history or name not in BF16_HISTORY_CV_OPS:
+&gt;           raise AttributeError(name)
+E           AttributeError: rotate_bf16_query_out
+
+tests/test_runtime.py:392: AttributeError</failure></testcase><testcase classname="tests.test_bf16_history_dispatch" name="test_research_config_reaches_actual_forward_abi[8-1-True-False]" time="0.002"><failure message="AttributeError: rotate_bf16_query_out">n = 8, length = 1, later = True, target = False
+
+    @pytest.mark.parametrize("n,length,later,target", [
+        (8,4,False,True),(8,4,False,False),(8,1,True,False),
+        (256,128,False,False),(8192,8192,False,False),
+        (8,8,False,False),(256,33,False,False),
+    ])
+    def test_research_config_reaches_actual_forward_abi(n,length,later,target):
+        from test_runtime import test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+&gt;       test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(
+            n,1,1,n,16,later,True,True,True,_member_pipeline=True,
+            _bf16_history=True,_bf16_max_query=length,_mdl_target=target)
+
+tests/test_bf16_history_dispatch.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_runtime.py:625: in test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+    impl.forward(SimpleNamespace(layer_name="model.layers.0.self_attn.attn" if _mdl_target else "mtp.layers.0.self_attn.attn"),
+oscar_ascend/integration/impl.py:177: in forward
+    getattr(ops, rotate_name)(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;test_runtime.test_forward_dispatches_native_draft_strides_and_int32_slots_in_order.&lt;locals&gt;.Ops object at 0x10c5b2f90&gt;
+name = 'rotate_bf16_query_out'
+
+    def __getattr__(self, name):
+        from oscar_ascend.ops.cv_dispatch import BF16_HISTORY_CV_OPS, BF16_HISTORY_CLUSTER_OPS
+        if not _bf16_history or name not in BF16_HISTORY_CV_OPS:
+&gt;           raise AttributeError(name)
+E           AttributeError: rotate_bf16_query_out
+
+tests/test_runtime.py:392: AttributeError</failure></testcase><testcase classname="tests.test_bf16_history_dispatch" name="test_research_config_reaches_actual_forward_abi[256-128-False-False]" time="0.008"><failure message="AttributeError: rotate_bf16_query_out">n = 256, length = 128, later = False, target = False
+
+    @pytest.mark.parametrize("n,length,later,target", [
+        (8,4,False,True),(8,4,False,False),(8,1,True,False),
+        (256,128,False,False),(8192,8192,False,False),
+        (8,8,False,False),(256,33,False,False),
+    ])
+    def test_research_config_reaches_actual_forward_abi(n,length,later,target):
+        from test_runtime import test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+&gt;       test_forward_dispatches_native_draft_strides_and_int32_slots_in_order(
+            n,1,1,n,16,later,True,True,True,_member_pipeline=True,
+            _bf16_history=True,_bf16_max_query=length,_mdl_target=target)
+
+tests/test_bf16_history_dispatch.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_runtime.py:625: in test_forward_dispatches_native_draft_strides_and_int32_slots_in_order
+    impl.forward(SimpleNamespace(layer_name="model.layers.0.self_attn.attn" if _mdl_target else "mtp.layers.0.self_attn.attn"),
+oscar_ascend/integration/impl.py:177: in forward
+    getattr(ops, rotate_name)(q, state.rotation_k_transpose, qr, workspace.rotate_status[:n], state.hadamard, slots)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;test_runtime.test_forward_dispatches_native_draft_strides_and_int32_slots_in_order.&lt;locals&gt;.Ops object at 0x10c5b38c0&gt;
+name = 'rotate_bf16_query_out'
+
+    def __getattr__(self, name):
+        from oscar_ascend.ops.cv_dispatch import BF16_HISTORY_CV_OPS, BF16_HISTORY_CLUSTER_OPS
+        if not _bf16_history or name not in BF16_HISTORY_CV_OPS:
+&gt;           raise AttributeError(name)
+E           AttributeError: rotate_bf16_query_out
+
+tests/test_runtime.py:392: AttributeError</failure></testcase></testsuite></testsuites>

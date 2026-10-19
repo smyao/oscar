@@ -33,7 +33,8 @@ def test_full_fixed_geometry_matches_runtime_selector_and_native_predicate(index
         attn_state=state.ChunkedPrefill if native else state.SpecDecoding)
     assert full.current.use_native_current(metadata)==policy['native_current']==native
     assert original.shape.splits in (1,3)  # independent operator diagnostics retained
-    assert EXECUTION['cv_arena_bytes']['candidate']==EXECUTION['cv_arena_bytes']['baseline']*3//2
+    assert EXECUTION['cv_arena_bytes']['candidate']==20*3_883_008
+    assert EXECUTION['cv_arena_bytes']['candidate']<EXECUTION['cv_arena_bytes']['baseline']
 
 
 @pytest.mark.parametrize('mutation',['native_budget','missing_budget','boolean_cores','invalid_capacity','wrong_rotation'])
@@ -91,12 +92,14 @@ def test_blocked_oracles_match_all_small_queries_and_bound_native_score_rows(mon
 
 
 @pytest.mark.parametrize('native,slot_context',[(True,False),(False,True)])
-def test_launch_order_uses_current_guard_source2_and_read_before_write(monkeypatch,native,slot_context):
+@pytest.mark.parametrize('candidate',[False,True])
+def test_launch_order_uses_current_guard_source2_and_read_before_write(monkeypatch,native,slot_context,candidate):
     events=[];n=4;h=6;s=2;spec=probe.reuse.Shape('host_mechanics',(2,),(80,),256,1,s,False,padded_tokens=n,slot_context=slot_context)
     fixture={'spec':spec,'tokens':n,'actual_tokens':2,'current_cumulative':(2,), 'blocks':1,'stride':512*136,'scale':1/16}
     tensors={key:torch.empty(1) for key in ('raw','wk','wv','tags','rv','table','starts','lens','rk_transpose','rv_transpose')}
     tensors.update({key:torch.zeros((n,1 if key in ('ck','cv') else h,256),dtype=torch.bfloat16) for key in ('q','ck','cv')})
     tensors.update(qr=torch.zeros(n,h,256),slots=torch.tensor([0,1,-1,-1]))
+    if candidate:tensors['qr']=torch.zeros(n,h,272,dtype=torch.bfloat16)
     buffers={'tasks':torch.zeros(n*3*s,16,dtype=torch.int64),'positions':torch.zeros(n,dtype=torch.int64),
         'partial':torch.zeros(n,h,3*s,256),'lse':torch.full((n,h,3*s),-float('inf')),
         'output':torch.empty(n*h,256),'output_lse':torch.empty(n*h),'bf16':torch.empty(n*h,256,dtype=torch.bfloat16),
@@ -119,7 +122,13 @@ def test_launch_order_uses_current_guard_source2_and_read_before_write(monkeypat
     def store(*args):
         events.append('store');assert args[6] is tensors['raw'] and args[7] is tensors['wk']
         assert bool((buffers['bf16']==2).all())  # final copy preceded publication
-    ops=SimpleNamespace(prepare_attention_tasks_out=prepare,rotate_vector_init_out=lambda *a:events.append('rotate'),
+    def rotate(*args):
+        events.append('rotate')
+        assert args[2] is tensors['qr']
+        assert args[2].shape[-1]==(272 if candidate else 256)
+        assert args[2].dtype==(torch.bfloat16 if candidate else torch.float32)
+    ops=SimpleNamespace(prepare_attention_tasks_out=prepare,
+        **{'rotate_bf16_query_out' if candidate else 'rotate_vector_init_out':rotate},
         merge_lse_out=merge,rotate_clip_store_striped_out=store)
     monkeypatch.setattr(probe,'launch',cv)
     monkeypatch.setattr(full.current,'suppress_current_source_tasks',lambda *a:events.append('suppress'))
@@ -127,7 +136,7 @@ def test_launch_order_uses_current_guard_source2_and_read_before_write(monkeypat
     monkeypatch.setattr(full.current,'native_current_partial',native_fia)
     monkeypatch.setattr(full.current,'write_current_partial',write)
     monkeypatch.setattr(full,'run_status_guard',lambda *a,**k:events.append('status_guard'))
-    full.launch_pipeline(ops,fixture,tensors,buffers,20,name='diagnostic',cluster=1,
+    full.launch_pipeline(ops,fixture,tensors,buffers,20,name='attention_bf16_history_mdl_out' if candidate else 'diagnostic',cluster=1,
         policy={'native_current':native},settings=EXECUTION['settings'])
     assert events==(['prepare','suppress','rotate','cv','current_guard','native','write_current','merge','store','status_guard']
         if native else ['prepare','rotate','cv','merge','store','status_guard'])

@@ -141,7 +141,7 @@ def synthetic_evidence():
                 'operator_input_sha256':row['input_sha256'],'operator_task_sha256':row['task_sha256'],
                 'reset_scope':'same_address_raw_window_tags_and_poison_outside_events',
                 'whole_model_performance':'not_established','model_quality':'not_established',
-                'numerical':{key:True for key in ('passed','writer_bytes_equal','rotation_bytes_equal','immutable_inputs','all_status_zero','same_arm_repeat_bitwise')},
+                'numerical':{key:True for key in ('passed','writer_bytes_equal','rotation_bf16_operands_equal','rotation_trailer_valid','immutable_inputs','all_status_zero','same_arm_repeat_bitwise')},
                 'timing':dict(row['timing'][probe.SCOPES[0]],scope=complete.SCOPE)}
             row['full_attention']['numerical']['precision']=full_detail
             row['full_attention']['numerical']['native_current_bitwise']=True if complete.case_policy(full_case)['native_current'] else None

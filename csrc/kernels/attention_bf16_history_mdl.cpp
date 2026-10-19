@@ -7,8 +7,9 @@
 // (2) failed full-history restore cost6499.8-6655.1ms versus FIA18.5-18.9ms;
 // (3) fixed KV256 BF16 operands, exact BF16 window/current K/V; FP32
 // softmax/LSE/state/Rv, masks, error order and cross-core flags are retained;
-// (4) GM capacity=1.5x mother, extra UB16KiB (+512B on H16); Matmul switches,
-// resets and bounded unpack lookup add cost; no speed/acceptance claim.
+// (4) compact typed GM arenas, extra UB16KiB (+512B on H16); BF16-first Init
+// removes the unused initial FP32 allocation/reset. Later dtype switches and
+// bounded unpack lookup remain; reserved-byte reduction is not measured speed.
 // One active Matmul resource set avoids simultaneous L1/L0 allocations.
 // Re-Init/Reset needs actual SDK and device verification; host has neither.
 // The mother's inherited historical comments below are not claims about
@@ -45,6 +46,7 @@
 // no memory grows with historical length. Source0 nonempty only.
 #include "oscar_common.h"
 #include "attention_bf16_history_operands.h"
+#include "attention_bf16_precise_check.h"
 #include "attention_striped_unpack_bf16.h"
 #include "../include/oscar_bf16_history_launch.h"
 #include "attention_striped_unpack_padded.h"
@@ -152,7 +154,8 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
       GM_ADDR lse,GM_ADDR status,GM_ADDR workspace,const Geometry& geometry) {
     g=geometry;
     q.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(query));
-    qr.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(queryRot));
+    qr.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(queryRot));
+    qrChecksum.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(queryRot));
     ck.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(key));
     cv.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(value));
     rv.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(rotation));
@@ -168,24 +171,22 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     int64_t core=GetBlockIdx();
     if ASCEND_IS_AIV {lane=core%2;core/=2;}
     coreIndex=core;
-    const int64_t floatsPerCore=((2*kQueryRows+4*kKvRows)*D+kQueryRows*kKvRows);
-    // One private region per Cube: unchanged float arena followed by its
-    // index-preserving BF16 mirror. Result/state/Rv never alias that mirror.
-    auto coreWorkspace=workspace+core*floatsPerCore*6;
+    constexpr oscar_ascend::Bf16AttentionWorkspace layout{D,kQueryRows,1,2,1};
+    // Byte stride is per Cube; offsets below are elements in their own type.
+    // No unused FP32 K/V or BF16 score/accumulator mirror is reserved.
+    static_assert(layout.FloatElements()*4%32==0 && layout.Bytes()%32==0,
+        "typed workspace must preserve DMA alignment");
+    auto coreWorkspace=workspace+core*layout.Bytes();
     work.SetGlobalBuffer(reinterpret_cast<__gm__ float*>(coreWorkspace));
     operandWork.SetGlobalBuffer(reinterpret_cast<__gm__ bfloat16_t*>(
-        coreWorkspace+floatsPerCore*4));
-    // Q(128D), K(256D), natural V(256D), score/P(128*256),
-    // PV/rotation(128D). Query accumulator stays in UB across KV units.
-    // QK is complete before Vector overwrites score with P; PV is consumed
-    // before the final Rv rotation reuses that same GM tile. No active aliases.
-    qOffset=0;kOffset=kQueryRows*D;vOffset=(kQueryRows+kKvRows)*D;
-    scoreOffset=(kQueryRows+4*kKvRows)*D;
-    pOffset=scoreOffset;pvOffset=pOffset+kQueryRows*kKvRows;rotOffset=pvOffset;
+        coreWorkspace+layout.FloatElements()*4));
+    qOffset=layout.Query();kOffset=layout.Key();vOffset=layout.Value();
+    normOffset=layout.Norm();scoreOffset=layout.Score();pOffset=layout.Probability();
+    pvOffset=layout.Pv();rotOffset=pvOffset;
     if ASCEND_IS_AIC {
       // Static tiling is compiler-derived by the real SDK. SetOrg/SingleShape
       // below specify each QK/PV/rotation matrix, never hand-written tiling POD.
-      mm.Init(static_cast<const TCubeTiling*>(nullptr),&pipe);
+      oscar_bf16_history::InitMatmul(historyMatmulActive,pipe,historyMm);
       SetHF32Mode(false);
     } else {
       pipe.InitBuffer(taskBuf,128);pipe.InitBuffer(packedBuf,kHalfKv*kPackedStride);
@@ -318,7 +319,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     }
     if(kind==0 && kvbegin<kvend) {
       CrossCoreWaitFlag(kVectorReady);
-      Matmul(qOffset,0,rotOffset,rows,D,D,true);
+      Matmul(normOffset,0,rotOffset,rows,D,D,true);
       CrossCoreSetFlag<2,PIPE_FIX>(kCubeReady);
       CrossCoreWaitFlag(kVectorReady);
     }
@@ -330,15 +331,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
       int32_t elements) {
     DataCopy(operandWork[offset],source,elements);
   }
-  __aicore__ void CheckBf16Row(LocalTensor<bfloat16_t> source) {
-    // Keep the original FP32 ReduceSum finite/error contract, one row only.
-    // Matrix operands retain the original BF16 bits, including signed zero.
-    auto row=qFloatBuf.Get<float>();auto check=scratchBuf.Get<float>();
-    Cast(row,source,RoundMode::CAST_NONE,D);PipeBarrier<PIPE_V>();
-    ReduceSum(check,row,check[16],D);Fence<HardEvent::V_S>();
-    if(!Finite(check.GetValue(0)))error=2;
-    Fence<HardEvent::S_V>();
-  }
+  // Precise row validation uses the shared bounded four-row Cast helper.
   __aicore__ void LoadQueries() {
     auto dst=qFloatBuf.Get<float>();auto src=qBf16Buf.Get<bfloat16_t>();
     const int64_t group=g.hq/g.hk;
@@ -347,15 +340,26 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     const int32_t validEnd=static_cast<int32_t>(Min64(laneEnd,Max64(laneBegin,rows)));
     for(int32_t row=laneBegin;row<validEnd;++row) {
       const int64_t off=((qbegin+row/group)*g.hq+kvhead*group+row%group)*D;
-      if(kind==0) {DataCopy(dst,qr[off],D);Fence<HardEvent::MTE2_V>();}
-      else {DataCopy(src,q[off],D);Fence<HardEvent::MTE2_V>();
-        Cast(dst,src,RoundMode::CAST_NONE,D);PipeBarrier<PIPE_V>();}
-      auto check=scratchBuf.Get<float>();
-      ReduceSum(check,dst,check[16],D);Fence<HardEvent::V_S>();
-      if(!Finite(check.GetValue(0)))error=2;
+      if(kind==0) {
+        const int64_t packedRow=(off/D)*(D+16);
+        // qFloatBuf is a checksum destination here, not a widened Q tile.
+        // Order its previous scalar reader before the next DMA overwrite.
+        Fence<HardEvent::S_MTE2>();
+        DataCopy(src,qr[packedRow],D);
+        DataCopy(dst,qrChecksum[(packedRow+D)/2],8);
+        Fence<HardEvent::MTE2_S>();
+        if(!Finite(dst.GetValue(0)))error=2;
+        // MTE2 -> S -> V -> MTE3 also orders the BF16 operand publication.
+        Fence<HardEvent::S_V>();
+      } else {
+        DataCopy(src,q[off],D);Fence<HardEvent::MTE2_V>();
+        Cast(dst,src,RoundMode::CAST_NONE,D);PipeBarrier<PIPE_V>();
+        auto check=scratchBuf.Get<float>();
+        ReduceSum(check,dst,check[16],D);Fence<HardEvent::V_S>();
+        if(!Finite(check.GetValue(0)))error=2;
+      }
       Fence<HardEvent::V_MTE3>();
-      if(kind==0)PublishOperand(qOffset+row*D,dst,D);
-      else PublishBf16Operand(qOffset+row*D,src,D);Fence<HardEvent::MTE3_MTE2>();
+      PublishBf16Operand(qOffset+row*D,src,D);Fence<HardEvent::MTE3_MTE2>();
     }
     // Pad the inactive query rows in bounded contiguous pieces. This keeps
     // the full initialized Q tile required by the Cube contract without
@@ -468,10 +472,8 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
       // Do NOT publish errors during the tag/DMA prepass. Original order is
       // physical->tag->finite for each row, K side first then V side. A later
       // bad tag must overwrite an earlier finite error, and vice versa.
-      for(int32_t row=0;row<rows;++row) {
-        if(tags.GetValue(row)!=inpage+row) {error=4;continue;}
-        CheckBf16Row(dst[(j+row)*D]);
-      }
+      oscar_bf16_precise_check::CheckTaggedRows<D,kHalfKv>(
+          dst[j*D],tags,inpage,rows,naturalBuf,scratchBuf,error);
       Fence<HardEvent::V_MTE2>();Fence<HardEvent::S_MTE2>();
       j+=rows;
     }
@@ -493,9 +495,8 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
       const int64_t off=(token*g.hk+kvhead)*D;
       if(value)DataCopyPad(dst,cv[off],copy,pad);else DataCopyPad(dst,ck[off],copy,pad);
       Fence<HardEvent::MTE2_V>();
-      for(int32_t row=0;row<rows;++row) {
-        CheckBf16Row(dst[row*D]);
-      }
+      oscar_bf16_precise_check::CheckRows<D,kHalfKv>(
+          dst,rows,naturalBuf,scratchBuf,error);
       return;
     }
     if(kind==1) {LoadWindowRuns(start,value);return;}
@@ -689,7 +690,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
       PipeBarrier<PIPE_V>();
     }
     if(kind==0 && kvbegin<kvend) {
-      Fence<HardEvent::V_MTE3>();DataCopy(work[qOffset+lane*kLaneRows*D],acc,kLaneRows*D);
+      Fence<HardEvent::V_MTE3>();DataCopy(work[normOffset+lane*kLaneRows*D],acc,kLaneRows*D);
       CrossCoreSetFlag<2,PIPE_MTE3>(kVectorReady);
       CrossCoreWaitFlag(kCubeReady);
       DataCopy(acc,work[rotOffset+lane*kLaneRows*D],kLaneRows*D);
@@ -774,7 +775,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
       // the one PV result buffer cannot be overwritten early.
     }
     CrossCoreWaitFlag(kNormReady);
-    Matmul(qOffset,0,rotOffset,rows,D,D,true);
+    Matmul(normOffset,0,rotOffset,rows,D,D,true);
     CrossCoreSetFlag<2,PIPE_FIX>(kRotReady);
     CrossCoreWaitFlag(kTaskDone);
   }
@@ -816,7 +817,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
       else {if(sum!=0.0F)error=2;Duplicate(acc[r*D],0.0F,D);}
       PipeBarrier<PIPE_V>();
     }
-    Fence<HardEvent::V_MTE3>();DataCopy(work[qOffset+lane*kLaneRows*D],acc,kLaneRows*D);
+    Fence<HardEvent::V_MTE3>();DataCopy(work[normOffset+lane*kLaneRows*D],acc,kLaneRows*D);
     CrossCoreSetFlag<2,PIPE_MTE3>(kNormReady);
     CrossCoreWaitFlag(kRotReady);
     DataCopy(acc,work[rotOffset+lane*kLaneRows*D],kLaneRows*D);
@@ -871,14 +872,15 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
   TBuf<TPosition::VECCALC> operandBuf;
   Geometry g;
   GlobalTensor<bfloat16_t> q,ck,cv,wk,wv;
-  GlobalTensor<float> qr,rv,out,outLse,work;
+  GlobalTensor<float> qrChecksum,rv,out,outLse,work;
+  GlobalTensor<bfloat16_t> qr;
   GlobalTensor<uint8_t> bytes;GlobalTensor<int32_t> bt,outStatus;
   GlobalTensor<int64_t> wt,taskGm;
   TBuf<TPosition::VECCALC> taskBuf,packedBuf,packedNextBuf,planeBuf,naturalBuf,wordBuf,maskBuf,
       wordIndexBuf,laneIndexBuf,metadataIndexBuf,metadataHalfBuf,dequantBuf,
       scoreBuf,accBuf,qFloatBuf,qBf16Buf,statsBuf,scratchBuf,addressBuf;
   int64_t coreIndex,qbegin,qcount,kvhead,kvbegin,kvend,request,split,kind,context,requestBegin;
-  int64_t qOffset,kOffset,vOffset,scoreOffset,pOffset,pvOffset,rotOffset;
+  int64_t qOffset,kOffset,vOffset,scoreOffset,pOffset,pvOffset,rotOffset,normOffset;
   int32_t lane=0,error=0,taskError=0,liveKvRows=0;
   int32_t pendingLive[kKvSubtiles],pendingKeyError[kKvSubtiles],pendingValueError[kKvSubtiles];
 };

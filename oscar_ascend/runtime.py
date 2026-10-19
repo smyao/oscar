@@ -122,10 +122,18 @@ class WorkspaceGeometry:
 
     @property
     def cv_bytes(self):
-        # Each core retains its FP32 arena and adds a BF16 operand mirror.
-        # Source1/2 and all public/online FP32 state use the original arena.
-        base = self._fp32_cv_bytes
-        return base * 3 // 2 if self.bf16_history else base
+        if not self.bf16_history:
+            return self._fp32_cv_bytes
+        # Archive #126/#145/#148/#154, D.4: separate compact typed arenas,
+        # matching Bf16AttentionWorkspace in oscar_bf16_history_launch.h.
+        # Every family keeps its own fixed tile protocol. The selected long
+        # reader's arena also covers the smaller MDL q4/q1 reader (655360B).
+        m, n, d = ATTENTION_QUERY_ROWS, ATTENTION_KV_ROWS, self.head_dim
+        c = self.history_cluster_size
+        buffers, slots = (2, 2) if c == 4 else (1, 1)
+        floats = 2*m*d + slots*m*n + (c*m*d + 2*c*m if c > 1 else 0)
+        operands = c*m*d + buffers*2*n*d + slots*m*n
+        return self.cube_cores * (floats*4 + operands*2)
 
     @property
     def _fp32_cv_bytes(self):
@@ -155,7 +163,7 @@ class WorkspaceGeometry:
         n, c = self.tokens, self.history_tokens
         h, k, d, p = self.query_heads, self.kv_heads, self.head_dim, 3 * self.splits
         return {
-            "query_rot": c * h * d * 4,
+            "query_rot": c * h * ((d+16)*2 if self.bf16_history else d*4),
             "query_input": n * h * d * 2,
             "key_input": n * k * d * 2,
             "value_input": n * k * d * 2,
@@ -188,7 +196,10 @@ class GraphWorkspace:
         self.geometry = geometry
         n, h, d, p = geometry.tokens, geometry.query_heads, geometry.head_dim, 3 * geometry.splits
         c = geometry.history_tokens
-        self.query_rot = torch.empty((c, h, d), dtype=torch.float32, device=device)
+        self.query_rot = torch.empty(
+            (c, h, d+16 if geometry.bf16_history else d),
+            dtype=torch.bfloat16 if geometry.bf16_history else torch.float32,
+            device=device)
         # qkv.split leaves a strided value projection in the native model.
         # These bounded current-step copies are reused; no historical KV is
         # ever copied here. Contiguous projections use their original storage.
@@ -399,7 +410,7 @@ class AscendRuntimeProvider:
         require_production_ops()
         if self.config.get("experimental_quantization_bundle", False):
             from .ops.loader import require_capabilities
-            require_capabilities({"rotate_vector_init_out"})
+            require_capabilities({"rotate_bf16_query_out"})
         # Only current production readers are mandatory. Retired FP32 readers
         # remain compiled for independent diagnostics, never serving selection.
         from .ops.loader import require_capabilities

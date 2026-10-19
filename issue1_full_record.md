@@ -28752,3 +28752,15 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **验证与边界**：母版本`cc56b24`；初次相关主机套件131通过/5失败，修正后一次新增计划断言失败（140通过/1失败，observe计划无顶层设备键），改查两入口共有的runtime_selection后最终141通过、0失败/跳过。全部XML保留。BF16五源生成检查通过，FE0哈希一致；生产源码、配置、原生参考树、冻结门均未修改。本机无CANN/NPU，本轮没有官方CPU-debug、设备/图/服务完成证据。既有BF16数值集7/11失败（含2例最终输出失败）不变，也不能直接将其等同于本次Trap原因。
 
 **待取得的定点证据**：现有`bash scripts/install_serve.sh --variant candidate --rear-cards --diagnose-trap`已经设置主模型eager和`OSCAR_GUARD_HOST_SYNC=1`，无需新增补丁；只发一条原32K请求、输出限制16 tokens，收集首条完整`OSCAR status guard trapped ... site/family/code`或`OSCAR device failure preceded status guard`。诊断只用于定位，不作性能证据；默认图路径、冻结status_guard及错误检查不变，不新增生产回读、不重跑AISBench。**本条根因未收口、生产故障未修复**，不得由141项主机测试通过提升真机完成状态。
+
+## [166] 真机条目（2026-10-19 用户回传）· 构建成功后原生设备初始化因空闲显存不足而失败
+
+**原文**：`reports/target_startup_memory_20261019.txt`，28438字节，SHA256 `68e729b823040fd09bd4d404ca3dfb931aa58f34673a4b5b7778d922a3ef7a38`。附件从 `PASSED phase=build-ops rc=0` 起，日志目录 `20261019T012808.805763Z`；prepare-rotations返回0并进入正式服务。模型为 `/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp`，端口7878，TP4/MTP3、BF16、APC关闭、预算16384、memory utilization0.9。没有git SHA，不将当前本地HEAD补写为目标运行版本。
+
+**首错**：01:29:54 Worker465257在原生`vllm_ascend/worker/worker.py::_init_device`报告 `Free memory on device (1.19/29.49 GiB) on startup is less than desired GPU memory utilization (0.9, 26.54 GiB)`；另两个worker随后报告1.20GiB。EngineCore启动失败和ERR99999为后续结果。当前只读原生源码中WorkerProc先`init_device()`后`load_model()`，内存检查在ModelRunner创建前；此错误不能归因OSCAR反量化、Attention或当前workspace大小。
+
+**能确认与不能确认**：本次启动设备快照不满足26.54GiB阈值；日志没有占用PID、设备资源清理状态或内部显存分类，不能断言是旧OSCAR残留、其他服务或缓存中的哪一种。前述build成功属于本次回传前的代码，不等于后续新优化CANN/NPU已通过。与#165请求期异步Trap是不同失败点。
+
+**本轮源码修复（不是目标恢复证据）**：`install_serve`原来最后`execvpe`替换自身，正式服务缺少外层owned-group监督/退出清理。本轮改成无运行截止时间的正式服务supervisor；仅清理本次新session的进程组，覆盖API leader先退出、worker持有日志fd、SIGINT/SIGTERM/SIGHUP和需要KILL的worker。输出实时并保留serve.log、真实rc和清理结果；持续权限拒绝不能当清理成功。失败后只解析当前日志给内存诊断及只读`npu-smi info`/进程检查命令，不降0.9、不杀未知旧进程、不新增默认前置审计或请求probe。
+
+**边界**：本机真实子进程回归及组合主机回归通过，见`docs/bf16_overhead_fix_20261019.md`及`reports/bf16_overhead_delivery_20261019.json`；它们只证明所构造的生命周期/源码协议，不证明目标NPU释放或服务已启动。用户机器仍需确认并释放已知可停止的占用。并行完成的BF16成本优化未改冻结阈值；既有7/11数值失败、#165未归因Trap和新CANN/NPU/图/模型质量/性能欠账保留。

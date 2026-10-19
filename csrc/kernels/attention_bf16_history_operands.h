@@ -5,7 +5,8 @@
 // (2) no repetition of the 6499.8-6655.1ms full-history restore;
 // (3) one KV256 tile, separate FP32 state/BF16 operands, explicit local
 // ownership fences, and one initialized Cube Matmul resource set at a time;
-// (4) 16KiB extra AIV scratch, finite tile traffic and dtype-switch overhead.
+// (4) 16KiB extra AIV scratch, finite tile traffic and dtype-switch overhead;
+// BF16-first initialization removes the unused initial FP32 allocation/reset.
 // No target precision, latency, CANN-build or resource-reinit claim follows.
 // Native A2 BF16 operand/float C precedent: sparse_flash_attention/op_kernel/
 // arch22/sparse_flash_attention_service_cube_mla.h; BF16 CAST_RINT precedent:
@@ -25,7 +26,8 @@ using oscar_ascend_device::Fence;
 constexpr int32_t kOperandScratchElements = 8192;
 constexpr int32_t kOperandScratchBytes = kOperandScratchElements * 2;
 
-// Rotated Q and each source's P call this. Exact BF16 Q/K/V bypass this cast.
+// Each source's P calls this. BF16 Q/K/V bypass this cast, including Q that
+// was rounded once by its producer and carries a pre-rounding check trailer.
 // All published lengths are D256 or
 // KV256 multiples, hence each BF16 DataCopy is a multiple of 32 bytes.
 // Each chunk finishes its MTE3 read before either Vector or MTE2 can reuse
@@ -43,6 +45,17 @@ __aicore__ inline void Publish(GlobalTensor<bfloat16_t> destination,
     DataCopy(destination[begin], rounded, count);
     Fence<HardEvent::MTE3_V>();
   }
+}
+
+// Every nonempty reader starts with BF16 QK. Allocate only that initial type;
+// do not allocate FP32 merely to End/Reset it before the first multiplication.
+// A later inverse rotation uses the unchanged single-live-type transition.
+template<class Bf16Matmul>
+__aicore__ inline void InitMatmul(bool& historyActive, TPipe& pipe,
+    Bf16Matmul& bf16) {
+  bf16.Init(static_cast<const TCubeTiling*>(nullptr), &pipe);
+  historyActive = true;
+  SetHF32Mode(false);
 }
 
 // The old MDL float Matmul alone reserves 395264B L1 and all double-buffered

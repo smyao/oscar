@@ -1,0 +1,25 @@
+..................F.................................................     [100%]
+=================================== FAILURES ===================================
+______ test_research_binding_validation_is_identical_to_qualified_parent _______
+
+    def test_research_binding_validation_is_identical_to_qualified_parent():
+        old = (ROOT/'csrc/striped_attention_bindings.cpp').read_text()
+        new = (ROOT/'csrc/bf16_history_bindings.cpp').read_text()
+        def templates(text):
+            return text[text.index('namespace {'):text.index('TORCH_LIBRARY_FRAGMENT')]
+>       assert templates(old) == templates(new)
+E       assert 'namespace {\...es));\n}\n}\n' == 'namespace {\...es));\n}\n}\n'
+E         
+E         Skipping 1741 identical leading characters in diff, use -v to show
+E         - uery,at::kBFloat16,"query_rot");
+E         ?           -     --
+E         + uery,at::kFloat,"query_rot");
+E             Check(currentKey,query,at::kBFloat16,"current_key");
+E             Check(currentValue,query,at::kBFloat16,"current_value");...
+E         
+E         ...Full output truncated (149 lines hidden), use '-vv' to show
+
+tests/test_bf16_history_bindings.py:25: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_bf16_history_bindings.py::test_research_binding_validation_is_identical_to_qualified_parent
+1 failed, 67 passed in 2.53s

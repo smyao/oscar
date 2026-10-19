@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Archive #108/#126/#148/#153/#154/#157: all-source BF16 production ABI.
-// The validation/launch templates are byte-identical to the striped parent;
-// only symbols and explicit typed-workspace capacities change below.
+// Query rotation carries BF16[D] plus a 32B pre-rounding checksum trailer;
+// compact typed-workspace capacities come from the shared launch header.
 // Numerical/device/graph qualification is separate from building the extension.
 // D.4: CV covers fused dequant+FIA; 6499.8-6655.1ms full-history recovery
 // is forbidden. Bind only per-core tile arenas, never full-history BF16.
@@ -46,7 +46,7 @@ void AttentionStriped(const at::Tensor& query,const at::Tensor& queryRot,
     at::Tensor lse,at::Tensor status,at::Tensor workspace,int64_t blockTokens,
     int64_t blocks,int64_t ssmOffset,int64_t pageStride,int64_t sink,
     int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores) {
-  Check(query,query,at::kBFloat16,"query");Check(queryRot,query,at::kFloat,"query_rot");
+  Check(query,query,at::kBFloat16,"query");Check(queryRot,query,at::kBFloat16,"query_rot");
   Check(currentKey,query,at::kBFloat16,"current_key");
   Check(currentValue,query,at::kBFloat16,"current_value");
   Check(rotation,query,at::kFloat,"rotation_v");Check(raw,query,at::kByte,"raw");
@@ -56,7 +56,9 @@ void AttentionStriped(const at::Tensor& query,const at::Tensor& queryRot,
   Check(windowTags,query,at::kLong,"window_tags",false);
   Check(partial,query,at::kFloat,"partial");Check(lse,query,at::kFloat,"lse");
   Check(status,query,at::kInt,"status");Check(workspace,query,at::kByte,"workspace");
-  TORCH_CHECK(query.dim()==3 && queryRot.sizes()==query.sizes(),"Q shape mismatch");
+  TORCH_CHECK(query.dim()==3 && queryRot.dim()==3 &&
+      queryRot.size(0)==query.size(0) && queryRot.size(1)==query.size(1) &&
+      queryRot.size(2)==query.size(2)+16,"Q/checksum shape mismatch");
   const auto n=query.size(0),hq=query.size(1),d=query.size(2);
   TORCH_CHECK(d==256,"striped-v1 requires D256");
   TORCH_CHECK(currentKey.dim()==3 && currentKey.size(0)==n &&
@@ -119,7 +121,7 @@ void AttentionStripedCluster(const at::Tensor& query,const at::Tensor& queryRot,
     at::Tensor lse,at::Tensor status,at::Tensor workspace,at::Tensor clusterStats,int64_t blockTokens,
     int64_t blocks,int64_t ssmOffset,int64_t pageStride,int64_t sink,
     int64_t recent,int64_t speculative,int64_t splits,double scale,int64_t cores) {
-  Check(query,query,at::kBFloat16,"query");Check(queryRot,query,at::kFloat,"query_rot");
+  Check(query,query,at::kBFloat16,"query");Check(queryRot,query,at::kBFloat16,"query_rot");
   Check(currentKey,query,at::kBFloat16,"current_key");
   Check(currentValue,query,at::kBFloat16,"current_value");
   Check(rotation,query,at::kFloat,"rotation_v");Check(raw,query,at::kByte,"raw");
@@ -130,7 +132,9 @@ void AttentionStripedCluster(const at::Tensor& query,const at::Tensor& queryRot,
   Check(partial,query,at::kFloat,"partial");Check(lse,query,at::kFloat,"lse");
   Check(status,query,at::kInt,"status");Check(workspace,query,at::kByte,"workspace");
   Check(clusterStats,query,at::kLong,"cluster_stats");
-  TORCH_CHECK(query.dim()==3 && queryRot.sizes()==query.sizes(),"Q shape mismatch");
+  TORCH_CHECK(query.dim()==3 && queryRot.dim()==3 &&
+      queryRot.size(0)==query.size(0) && queryRot.size(1)==query.size(1) &&
+      queryRot.size(2)==query.size(2)+16,"Q/checksum shape mismatch");
   const auto n=query.size(0),hq=query.size(1),d=query.size(2);
   TORCH_CHECK(d==256,"striped-v1 requires D256");
   TORCH_CHECK(currentKey.dim()==3 && currentKey.size(0)==n &&

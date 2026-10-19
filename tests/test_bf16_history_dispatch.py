@@ -61,18 +61,19 @@ def test_missing_mapping_is_an_error_not_a_fallback(monkeypatch):
         select_cv_op(16,6,1,128,4,bf16_history=True,**FLAGS)
 
 
-@pytest.mark.parametrize("cluster,pipeline,expected", [(1,False,1376256),
-    (4,True,3741696),(16,True,7495680)])
-def test_workspace_adds_only_a_bounded_bf16_mirror(cluster,pipeline,expected):
+@pytest.mark.parametrize("cluster,pipeline,expected", [(1,False,786432),
+    (4,True,1970176),(16,True,3883008)])
+def test_workspace_uses_bounded_compact_typed_arenas(cluster,pipeline,expected):
     old=WorkspaceGeometry(16384,6,1,256,cube_cores=20,
                           history_cluster_size=cluster,c4_member_pipeline=pipeline)
     new=replace(old,bf16_history=True)
-    assert new.cv_bytes == 20*expected == old.cv_bytes*3//2
+    assert new.cv_bytes == 20*expected < old.cv_bytes
     assert replace(new,tokens=128).cv_bytes == new.cv_bytes
     old_bytes,new_bytes=old.buffer_bytes,new.buffer_bytes
     changed={name for name in old_bytes if old_bytes[name]!=new_bytes[name]}
-    assert changed == {"cv"}
-    assert new.buffer_bytes["query_rot"] == old.buffer_bytes["query_rot"]
+    assert changed == {"cv", "query_rot"}
+    assert new.buffer_bytes["query_rot"] == new.history_tokens*6*(256+16)*2
+    assert new.buffer_bytes["query_rot"] < old.buffer_bytes["query_rot"]
     with pytest.raises(ValueError,match="D256"):
         replace(new,head_dim=128)
     with pytest.raises(ValueError,match="explicit boolean"):

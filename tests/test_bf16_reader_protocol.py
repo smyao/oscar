@@ -52,16 +52,20 @@ using uint16_t=unsigned short;
 extern "C" int printf(const char*,...);
 extern "C" int atoi(const char*);
 int actor=0;
+int activeMember[3]={};
 enum class HardEvent{V_S,V_MTE3,MTE2_V};
 enum Pipe{PIPE_MTE3,PIPE_MTE2,PIPE_FIX,PIPE_V};
 template<HardEvent>void Fence(){} template<Pipe>void PipeBarrier(){}
 void CrossCoreWaitFlag(int flag){printf("F %d wait %d\n",actor,flag);}
 template<int,Pipe>void CrossCoreSetFlag(int flag){printf("F %d set %d\n",actor,flag);}
-struct Tensor{Tensor operator[](int64_t)const{return{};}
+struct Tensor{int64_t offset=0;bool gm=false;
+  Tensor operator[](int64_t index)const{return {offset+index,gm};}
   float GetValue(int)const{return 1.0F;}};
 struct Buffer{template<class T>Tensor Get(){return{};}};
 template<class...A>void Duplicate(A...){} template<class...A>void Muls(A...){}
-template<class...A>void DataCopy(A...){}
+void DataCopy(Tensor dst,Tensor src,int elements){
+  if(dst.gm)printf("E %d normwrite %d %lld %d\n",actor,activeMember[actor],dst.offset,elements);
+  if(src.gm)printf("E %d rotread %d %lld %d\n",actor,activeMember[actor],src.offset,elements);}
 bool Finite(float){return true;}
 int64_t Min64(int64_t a,int64_t b){return a<b?a:b;}
 """
@@ -71,9 +75,9 @@ def _workspace_functions():
     source = _without_comments((ROOT / "csrc/include/oscar_attention_launch.h").read_text())
     constants = "\n".join(re.findall(
         r"constexpr int64_t kAttention(?:Query|Kv)Rows\s*=[^;]+;", source))
-    functions = "\n".join(_function(source, name) for name in (
-        "attention_workspace_per_core", "attention_cluster4_workspace_per_core",
-        "attention_cluster16_workspace_per_core"))
+    header = _without_comments((ROOT / "csrc/include/oscar_bf16_history_launch.h").read_text())
+    functions = header[header.index("struct Bf16AttentionWorkspace"):
+                       header.index("#define OSCAR_BF16_HISTORY_DECLARE")]
     return "namespace oscar_ascend {\n" + constants + functions + "\n}\n"
 
 
@@ -82,9 +86,8 @@ def _model_source(filename, cluster_size, family):
     constants = source[source.index("constexpr int32_t kQueryRows="):
                        source.index("constexpr SoftmaxConfig")]
     init = _function(source, "Init")
-    sizes = "\n".join(re.findall(
-        r"const int64_t (?:baseFloats|floatsPerCore)=[^;]+;", init))
-    offsets = init[init.index("qOffset=0;"):init.index("if ASCEND_IS_AIC")]
+    sizes = re.search(r"constexpr oscar_ascend::Bf16AttentionWorkspace layout\{[^;]+;", init).group()
+    offsets = init[init.index("qOffset=layout.Query();"):init.index("if ASCEND_IS_AIC")]
     body = _function(source, "CubeTask")
     if "mdl" in family:
         body += _function(source, "HistoryCubeTask") + _function(source, "TailColumns")
@@ -100,27 +103,30 @@ struct Model {
   struct{int hq=6,hk=1;}g;
   int64_t qOffset=0,kOffset=0,vOffset=0,scoreOffset=0,pOffset=0,pvOffset=0,rotOffset=0;
   int64_t accStateOffset=0,statStateOffset=0,baseKOffset=0,baseScoreOffset=0;
-  int64_t extraKvOffset=0,extraScoreOffset=0,counters[8]={},arena=0;
+  int64_t extraKvOffset=0,extraScoreOffset=0,basePOffset=0,extraPOffset=0,normOffset=0;
+  int64_t counters[8]={},arena=0,operandArena=0,bytesPerCore=0;
   int64_t kvbegin=0,kvend=0,qcount=1;
   int lane=0,error=0,kind=0,current=0;
-  Buffer accBuf,statsBuf;Tensor work;
+  Buffer accBuf,statsBuf;Tensor work{0,true};
   void InitOffsets(){
 """ + sizes + offsets + r"""
-    arena=floatsPerCore;
+    arena=layout.FloatElements();operandArena=layout.OperandElements();bytesPerCore=layout.Bytes();
   }
-  void Layout(){printf("L %lld %d %d %lld %lld %lld %lld %lld %lld %lld %lld %lld\n",
+  void Layout(){printf("L %lld %d %d %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld\n",
       arena,kQueryRows,kKvRows,kOffset,vOffset,scoreOffset,pvOffset,
-      accStateOffset,statStateOffset,extraKvOffset,extraScoreOffset,qOffset);}
-  void UseTask(const TaskState&t){current=t.id;}
+      accStateOffset,statStateOffset,extraKvOffset,extraScoreOffset,qOffset,
+      operandArena,bytesPerCore,normOffset,pOffset,extraPOffset);}
+  void UseTask(const TaskState&t){current=t.id;activeMember[actor]=current;}
   void LoadQueries(){printf("E %d query %d 0 0\n",actor,current);}
   void LoadClusterKv(int64_t start){printf("E %d kvwrite %lld %lld 0\n",actor,kOffset,start);}
   void SpillState(int member){printf("E %d spill %d 0 0\n",actor,member);}
   void RestoreState(int member){printf("E %d restore %d 0 0\n",actor,member);}
   void Softmax(int64_t start,int row){if(row==lane*kLaneRows)
-      printf("E %d soft %d %lld %lld\n",actor,current,start,pOffset);}
+      printf("E %d soft %d %lld %lld %lld\n",actor,current,start,scoreOffset,pOffset);}
   void PublishRows(int64_t id){printf("E %d publish %lld 0 0\n",actor,id);}
   void Matmul(int64_t a,int64_t b,int64_t c,int32_t m,int32_t n,int32_t k,
       bool rotation=false,bool transposeB=true){
+    if(rotation)printf("E %d rotation_query %lld 0 0\n",actor,qOffset/(kQueryRows*D));
     printf("M %d %lld %lld %lld %d %d %d %d %d 0\n",actor,a,b,c,m,n,k,rotation,transposeB);}
   void MatmulAtomic(int64_t a,int64_t b,int64_t c,int32_t m,int32_t n,int32_t k){
     printf("M %d %lld %lld %lld %d %d %d 0 0 1\n",actor,a,b,c,m,n,k);}
@@ -168,7 +174,8 @@ def _run(binary, family, source, length, queries, cluster=0, group=6, protocol=0
     assert result.returncode == 0, result.stderr
     lines = [line.split() for line in result.stdout.splitlines()]
     layout = dict(zip(("arena", "rows", "kvrows", "k", "v", "score", "pv", "acc",
-                       "stat", "extra_k", "extra_score", "q"), map(int, lines[0][1:])))
+                       "stat", "extra_k", "extra_score", "q", "operand_arena", "bytes",
+                       "norm", "p", "extra_p"), map(int, lines[0][1:])))
     return layout, lines[1:]
 
 
@@ -176,8 +183,8 @@ def _check_regions(layout, cluster_size, mdl):
     d, m, n = 256, layout["rows"], layout["kvrows"]
     members = cluster_size or 1
     mirror = [(0, members * m * d), (layout["k"], n * d),
-              (layout["v"], n * d), (layout["score"], m * n)]
-    results = [(0, members * m * d), (layout["score"], m * n),
+              (layout["v"], n * d), (layout["p"], m * n)]
+    results = [(layout["norm"], m * d), (layout["score"], m * n),
                (layout["pv"], m * d)]
     if mdl:
         mirror += [(layout["k"] + 2*n*d, n*d), (layout["v"] + 2*n*d, n*d)]
@@ -185,13 +192,15 @@ def _check_regions(layout, cluster_size, mdl):
         results += [(layout["acc"], members*m*d), (layout["stat"], members*2*m)]
     if cluster_size == 4:
         mirror += [(layout["extra_k"], n*d), (layout["extra_k"] + n*d, n*d),
-                   (layout["extra_score"], m*n)]
+                   (layout["extra_p"], m*n)]
         results += [(layout["extra_score"], m*n)]
-    for ranges in (mirror, results):
+    for ranges, limit in ((mirror, layout["operand_arena"]), (results, layout["arena"])):
         ordered = sorted(ranges)
         for start, size in ordered:
-            assert 0 <= start < start + size <= layout["arena"], "arena overflow"
+            assert 0 <= start < start + size <= limit, "arena overflow"
         assert all(a + size <= b for (a, size), (b, _) in zip(ordered, ordered[1:])), "live region alias"
+    assert layout["bytes"] == layout["arena"]*4 + layout["operand_arena"]*2
+    assert all(value % 32 == 0 for value in (layout["arena"]*4, layout["operand_arena"]*2, layout["bytes"]))
 
 
 @pytest.mark.parametrize("family", range(len(FAMILIES)), ids=[f[0] for f in FAMILIES])
@@ -217,16 +226,16 @@ def test_six_readers_execute_real_offsets_and_cube_bounds(executable, family):
                         assert m == query_max * group
                         if rotation:
                             assert n == k == 256 and c == layout["pv"]
-                            assert a + m*256 <= layout["k"]
+                            assert a == layout["norm"] and a + m*256 <= layout["score"]
                         elif transposed:
                             assert k == 256 and 0 < n <= 256
                             assert a + m*k <= layout["k"]
-                            assert 0 <= b and b + n*k <= layout["arena"]
+                            assert 0 <= b and b + n*k <= layout["operand_arena"]
                             assert c in (layout["score"], layout["extra_score"])
                         else:
                             assert n == 256 and 0 < k <= 256
-                            assert a in (layout["score"], layout["extra_score"])
-                            assert 0 <= b and b + k*n <= layout["arena"]
+                            assert a in (layout["p"], layout["extra_p"])
+                            assert 0 <= b and b + k*n <= layout["operand_arena"]
                             assert c == layout["pv"] or atomic
                         # Scores/P retain physical stride256 even for MDL tails.
                         assert 0 <= c and c + m*(256 if rotation else n if not transposed else 256) <= layout["arena"]
@@ -252,6 +261,7 @@ def _replay(traces, layout, tiles, seed):
     positions, v_to_c, c_to_v = [0, 0, 0], defaultdict(int), defaultdict(int)
     kv, scores, probabilities, atomics, produced = {}, {}, {}, defaultdict(int), defaultdict(int)
     restored, spilled = defaultdict(int), defaultdict(int)
+    normalized, rotated, rotation_query = {}, {}, None
     rng = random.Random(seed)
     while any(positions[a] < len(traces[a]) for a in range(3)):
         ready = []
@@ -287,20 +297,35 @@ def _replay(traces, layout, tiles, seed):
             offset, start, _ = args
             kv[actor, offset] = start // 256
         elif kind == "soft":
-            member, start, offset = args
-            assert scores[offset] == (member, start//256), "score member/round mismatch"
-            probabilities[actor, offset] = (member, start//256)
+            member, start, score_offset, p_offset = args
+            assert scores[score_offset] == (member, start//256), "score member/round mismatch"
+            probabilities[actor, p_offset] = (member, start//256)
         elif kind == "restore":
             member = args[0]
             assert atomics[member] == restored[actor, member], "restore before previous atomic"
             restored[actor, member] += 1
         elif kind == "spill":
             spilled[actor, args[0]] += 1
+        elif kind == "normwrite":
+            member, offset, count = args
+            assert offset == layout["norm"] + (actor-1)*layout["rows"]//2*256
+            assert offset+count <= layout["score"], "normalized input overflow"
+            normalized[actor] = member
+        elif kind == "rotation_query":
+            rotation_query = args[0]
+        elif kind == "rotread":
+            member, offset, count = args
+            assert rotated.get(actor) == member, "stale shared rotation result"
+            assert layout["pv"] <= offset < offset+count <= layout["pv"]+layout["rows"]*256
         elif kind == "matmul":
             a, b, c, _, _, _, rotation, transpose, atomic = args
             if rotation:
-                member = a // (layout["rows"]*256)
+                member = rotation_query
                 assert atomics[member] == tiles, "rotation before all atomics"
+                assert all(normalized.get(lane) == member for lane in (1, 2)), "stale shared normalized input"
+                assert a == layout["norm"]
+                for lane in (1, 2):
+                    rotated[lane] = member
             elif transpose:
                 member = a // (layout["rows"]*256)
                 round_ = produced[member]
@@ -340,3 +365,53 @@ def test_control_checks_reject_alias_and_missing_readiness(executable):
     del traces[1][index]
     with pytest.raises(AssertionError):
         _replay(traces, layout, 3, 0)
+
+
+@pytest.mark.parametrize("old_fp32_first", [False, True], ids=["bf16-first", "old-init-negative-control"])
+def test_actual_matmul_lifetime_helper_starts_with_one_bf16_allocation(tmp_path, old_fp32_first):
+    # This executes the real control helper, with resource API calls recorded.
+    # It does not model the official allocator or prove SDK repeated-Init safety.
+    compiler = os.environ.get("OSCAR_TEST_CLANGXX") or shutil.which("clang++")
+    if not compiler:
+        pytest.skip("clang++ unavailable")
+    version = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=15)
+    if version.returncode:
+        pytest.skip("clang++ unavailable: " + version.stderr.strip())
+    source = (KERNELS / "attention_bf16_history_operands.h").read_text()
+    source = source[source.index("template<class Bf16Matmul>"):source.rindex("}  // namespace")]
+    source = source.replace("__aicore__", "")
+    declarations = r"""
+extern "C" int printf(const char*,...);
+struct TCubeTiling{};
+struct TPipe {void Reset(){printf("reset\n");}};
+enum Pipe {PIPE_ALL};
+template<Pipe>void PipeBarrier(){printf("barrier\n");}
+void SetHF32Mode(bool){printf("hf32_off\n");}
+struct Matmul {const char* name;
+  void Init(const TCubeTiling*,TPipe*){printf("init_%s\n",name);}
+  void End(){printf("end_%s\n",name);}};
+"""
+    initial = ("fp32.Init(nullptr,&pipe);" if old_fp32_first else
+               "InitMatmul(active,pipe,bf16);")
+    main = "int main(){bool active=false;TPipe pipe;Matmul fp32{\"fp32\"},bf16{\"bf16\"};"
+    main += initial + "SelectMatmul(true,active,pipe,fp32,bf16);printf(\"first_qk\\n\");"
+    main += "SelectMatmul(true,active,pipe,fp32,bf16);SelectMatmul(false,active,pipe,fp32,bf16);"
+    main += "SelectMatmul(true,active,pipe,fp32,bf16);return 0;}"
+    cpp, binary = tmp_path / "lifetime.cpp", tmp_path / "lifetime"
+    cpp.write_text(declarations + source + main)
+    built = subprocess.run([compiler, "-std=c++17", str(cpp), "-o", str(binary)],
+                           capture_output=True, text=True, timeout=30)
+    assert built.returncode == 0, built.stderr
+    ran = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
+    assert ran.returncode == 0, ran.stderr
+    before, after = ran.stdout.split("first_qk\n")
+    if old_fp32_first:
+        assert before.splitlines() == ["init_fp32", "end_fp32", "barrier", "reset", "init_bf16", "hf32_off"]
+    else:
+        assert before.splitlines() == ["init_bf16", "hf32_off"]
+    assert after.splitlines() == ["end_bf16", "barrier", "reset", "init_fp32", "hf32_off",
+                                 "end_fp32", "barrier", "reset", "init_bf16", "hf32_off"]
+    for _, filename, _ in FAMILIES:
+        init = _function((KERNELS / filename).read_text(), "Init")
+        assert "oscar_bf16_history::InitMatmul(historyMatmulActive,pipe,historyMm);" in init
+        assert "mm.Init(" not in init and "historyMm.Init(" not in init

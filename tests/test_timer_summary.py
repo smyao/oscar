@@ -303,3 +303,86 @@ def test_byte_budget_reserves_comparisons_errors_and_footer(tmp_path):
     assert bounded[0] == lines[0]
     assert bounded[-1] == lines[-1]
     assert any(line.startswith("SUMMARY_COMPACTED") for line in bounded)
+
+
+def test_manifest_discovery_never_parses_raw_or_trace_json_twice(tmp_path, monkeypatch):
+    import tools.summarize_timer as module
+
+    write_json(tmp_path / "run.json", {"runs": [batch("p", "candidate", 4, "profile")]})
+    add_window(tmp_path, "p", 0)
+    old_manifest = next((tmp_path / "windows" / "p" / "rank0").glob("*.json"))
+    manifest = json.loads(old_manifest.read_text())
+    # Production exports live inside their rank's step directory, unlike the
+    # legacy fixture layout above. This is where the old recursive JSON read
+    # would parse trace_view once as a candidate manifest and again as a trace.
+    directory = old_manifest.parent / "step000007-decode-PipeUtilization"
+    manifest["profile_dir"] = str(directory)
+    old_manifest.unlink()
+    write_json(directory.with_suffix(".json"), manifest)
+    trace = directory / "ASCEND_PROFILER_OUTPUT" / "trace_view.json"
+    write_json(trace, {"traceEvents": [{"ph": "X", "name": "oscar_attention_cv_aligned", "cat": "npu_kernel",
+                                        "pid": 0, "tid": 0, "ts": 100, "dur": 500}]})
+    raw = directory / "PROF_001" / "host" / "raw_capture.json"
+    write_json(raw, {"payload": "must not parse as a manifest"})
+    info = directory / "profiler_info.json"
+    write_json(info, {"info": "not a window manifest"})
+    read_paths = []
+    original = module._read_json
+
+    def tracking(path, missing):
+        read_paths.append(Path(path))
+        return original(path, missing)
+
+    monkeypatch.setattr(module, "_read_json", tracking)
+    report = module.summarize(tmp_path)
+    assert read_paths.count(trace) == 1
+    assert raw not in read_paths
+    assert info not in read_paths
+    assert report["runs"][0]["device_windows"][0]["task_count"] == 1
+
+
+@pytest.mark.parametrize("status,analysis_status", [("captured_pending_analysis", "pending"),
+                                                       ("complete", "pending"), ("complete", "error")])
+def test_pending_or_failed_analysis_never_accepts_existing_csv(tmp_path, status, analysis_status):
+    write_json(tmp_path / "run.json", {"runs": [batch("p", "candidate", 4, "profile")]})
+    add_window(tmp_path, "p", 0)
+    path = next((tmp_path / "windows" / "p" / "rank0").glob("*.json"))
+    manifest = json.loads(path.read_text())
+    manifest.update(status=status, analysis_status=analysis_status, analysis_error="daemon workers cannot create children")
+    write_json(path, manifest)
+    report = summarize(tmp_path)
+    run = report["runs"][0]
+    assert report["evidence_status"] == "partial"
+    assert (0, "decode", "PipeUtilization") in run["required_windows_missing"]
+    assert run["device_windows"][0]["analysis_status"] == analysis_status
+    assert any("daemon workers cannot create children" in value for value in run["missing"])
+
+
+def test_none_return_from_offline_api_without_export_cannot_pass(tmp_path):
+    directory = tmp_path / "windows" / "p" / "rank0-pid1" / "step000001-decode-Memory"
+    write_json(directory / "profiler_info.json", {"export_api_return": None})
+    write_json(directory.with_suffix(".json"), {"t": "oscar-diagnostic-window", "run_id": "p",
+        "rank": 0, "window_id": directory.name, "profile_dir": str(directory), "status": "complete",
+        "analysis_status": "complete", "metric": "Memory", "bucket": "decode", "steps": [1]})
+    write_json(tmp_path / "run.json", {"runs": [batch("p", "candidate", 4, "profile")],
+        "offline_analysis": {"status": "complete", "windowstatus_summary": {"complete": 1}}})
+    report = summarize(tmp_path)
+    assert report["evidence_status"] == "missing"
+    assert any("device_tasks_missing" in reason for reason in report["runs"][0]["missing"])
+
+
+def test_offline_errors_and_window_status_summary_are_copyable(tmp_path):
+    offline = {"status": "partial", "scope": "offline_export_only_pmu_verified_by_summary", "daemon": False,
+        "windowstatus_summary": {"complete": 1, "missing": 2, "error": 1},
+        "windows": [{"manifest": "windows/p/rank0/step.json", "run_id": "p", "window_id": "step1", "rank": 0,
+                     "previous_status": "captured_pending_analysis", "status": "error", "analysis_status": "error",
+                     "error": "offline parse failed: daemon processes cannot have children"}],
+        "phase": {"returncode": 2, "log": "/tmp/offline-analysis.log"}}
+    write_json(tmp_path / "run.json", {"status": "failed", "runs": [], "offline_analysis": offline})
+    report = summarize(tmp_path)
+    assert report["offline_analysis"] == offline
+    assert "offline_analysis_not_complete:partial" in report["missing"]
+    lines = summary_lines(report)
+    assert any(line.startswith("OFFLINE_ANALYSIS") and '"windowstatus_summary"' in line and '"missing":2' in line for line in lines)
+    assert any(line.startswith("OFFLINE_ERROR") and "daemon processes cannot have children" in line for line in lines)
+    assert len(("\n".join(lines) + "\n").encode()) <= 50 * 1024

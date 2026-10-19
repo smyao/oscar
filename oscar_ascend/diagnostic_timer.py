@@ -1,10 +1,11 @@
 """Explicit, bounded worker-thread NPU profiles for paired service diagnosis.
 
-Archive #133: create/start/step/export/stop on the actual runner thread, never
+Archive #133: create/start/step/capture/stop on the actual runner thread, never
 HTTP profiler RPC; finish RECORD_AND_SAVE before stop. #140/#143: host launch
 intervals are not device time, TP ranks are not summed wall time, graph replay
 stays native. No per-phase NPU events, synchronization, or tensor readbacks
-are added; the requested profiler export owns its normal completion work.
+are added. The daemon worker saves raw data only (analyse_flag=False);
+analysis belongs to an ordinary child process after the service releases NPU.
 """
 from __future__ import annotations
 
@@ -47,6 +48,65 @@ def _atomic(path, record):
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(record, indent=2, sort_keys=True, allow_nan=False) + "\n")
     temporary.replace(path)
+
+
+def raw_capture_paths(profile_dir):
+    """Find real raw captures using the official ProfilerPathManager layout.
+
+    A capture root needs profiler_info[_{rank}].json plus nonempty payload in
+    FRAMEWORK or a PROF_<digits>_<digits>_<alnum> directory. Empty directories,
+    info-only files and already-parsed trace files cannot establish capture.
+    Returned paths are relative to profile_dir, suitable for offline analyse.
+    """
+    root = Path(profile_dir)
+    candidates = sorted({item.parent for item in root.rglob("profiler_info*.json")
+                         if re.fullmatch(r"profiler_info(?:_\d+)?\.json", item.name)
+                         and item.is_file() and not item.is_symlink() and item.stat().st_size > 0})
+    captures = []
+    for candidate in candidates:
+        sources = [child for child in candidate.iterdir() if child.is_dir() and not child.is_symlink()
+                   and (child.name == "FRAMEWORK" or re.fullmatch(r"PROF_\d+_\d+_[0-9a-zA-Z]+", child.name))]
+        if any(item.is_file() and not item.is_symlink() and item.stat().st_size > 0
+               for source in sources for item in source.rglob("*")):
+            captures.append(str(candidate.relative_to(root)))
+    return captures
+
+
+def _window_summary_status(missing, statuses):
+    values = list(statuses.values())
+    if "error" in values:
+        return "error"
+    if any(missing.values()) or len(values) != 4:
+        return "missing"
+    if all(value in {"complete", "host_only"} for value in values):
+        return "complete"
+    if all(value in {"complete", "host_only", "captured_pending_analysis"} for value in values):
+        return "captured_pending_analysis"
+    return "missing"
+
+
+def refresh_run_summary(path):
+    """Refresh saved window states after offline analysis; no device imports.
+
+    The caller must own a stopped service. Preserve original scheduler and
+    missing-coverage evidence; only window statuses/overall state are revised.
+    Accept either the run-summary.json path or its containing rank directory.
+    """
+    path = Path(path)
+    if path.is_dir():
+        path = path / "run-summary.json"
+    record = json.loads(path.read_text())
+    statuses = {}
+    for manifest_path in sorted(path.parent.glob("step*.json")):
+        manifest = json.loads(manifest_path.read_text())
+        if manifest.get("run_id") != record.get("run_id") or manifest.get("rank") != record.get("rank"):
+            raise ValueError("offline window does not match run summary identity")
+        statuses[manifest["window_id"]] = manifest["status"]
+    record["window_statuses"] = statuses
+    record["status"] = _window_summary_status(record.get("missing_windows", {}), statuses)
+    record["analysis_status_refreshed_unix"] = time.time()
+    _atomic(path, record)
+    return record
 
 
 def _rank():
@@ -126,7 +186,7 @@ def _summary(final=False):
                for group, metrics in expected.items()}
     record = {key: _run[key] for key in ("run_id", "variant", "rank", "pid", "output_dir",
                                         "target_batch", "min_decode_requests")}
-    record.update(schema_version=1, t="oscar-diagnostic-run", final=final,
+    record.update(schema_version=2, t="oscar-diagnostic-run", final=final,
                   expected_windows=expected, taken_windows=_run["taken"],
                   window_statuses=_run["window_statuses"],
                   missing_windows=missing, observed_steps=_run["observed"],
@@ -134,8 +194,7 @@ def _summary(final=False):
                   min_early_history_tokens=_run["min_early_history_tokens"],
                   early_history_unknown_steps=_run["early_history_unknown_steps"],
                   skipped_cold_prefill_steps=_run["skipped_cold_prefill_steps"],
-                  status="complete" if not any(missing.values()) and len(_run["window_statuses"]) == 4 and all(
-                      value in {"complete", "host_only"} for value in _run["window_statuses"].values()) else "missing",
+                  status=_window_summary_status(missing, _run["window_statuses"]),
                   missing_reason="mature_decode_not_observed" if missing["decode"] else None,
                   device_acceptance="requires_profile_artifact_analysis",
                   profiled_steps_are_uninstrumented_performance=False)
@@ -171,15 +230,16 @@ def _create_profiler(directory, metric, worker_name):
     experimental = api._ExperimentalConfig(
         export_type=api.ExportType.Text, profiler_level=api.ProfilerLevel.Level1,
         aic_metrics=metric_value, data_simplification=False)
-    # active=1 starts in RECORD_AND_SAVE; step() saves and moves to NONE.
+    # active=1 starts in RECORD_AND_SAVE; step() saves raw data and moves to NONE.
     # Unlike HTTP start/stop (#133), no worker waits for an external stop RPC.
+    # vLLM workers are daemons: parsing here cannot spawn the SDK's children.
     return api.profile(
         activities=[api.ProfilerActivity.CPU, api.ProfilerActivity.NPU],
         schedule=api.schedule(wait=0, warmup=0, active=1, repeat=1),
         record_shapes=False, profile_memory=False, with_stack=False, with_modules=False,
         experimental_config=experimental,
         on_trace_ready=api.tensorboard_trace_handler(str(directory), worker_name=worker_name,
-                                                    async_mode=False))
+                                                    analyse_flag=False, async_mode=False))
 
 
 def begin_step(scheduler_output):
@@ -221,7 +281,7 @@ def begin_step(scheduler_output):
     window_id = f"step{_serial:06d}-{bucket}-{metric}"
     profile_dir = Path(_run["directory"]) / window_id
     manifest_path = profile_dir.with_suffix(".json")
-    manifest = {"schema_version": 1, "t": "oscar-diagnostic-window", "run_id": _run["run_id"],
+    manifest = {"schema_version": 2, "t": "oscar-diagnostic-window", "run_id": _run["run_id"],
                 "variant": _run["variant"], "rank": _run["rank"], "pid": os.getpid(),
                 "window_id": window_id, "bucket": bucket, "metric": metric,
                 "steps": [_serial], "profiled": control.get("profile", True),
@@ -234,6 +294,8 @@ def begin_step(scheduler_output):
                 "context_min": metadata["context_min"], "context_max": metadata["context_max"],
                 "warm_prefill_history_max": warm_history,
                 "status": "starting", "profile_artifacts": [],
+                "capture_paths": [], "capture_status": "not_started", "analysis_status": "not_run",
+                "worker_analysis_enabled": False,
                 "graph_mode_modified": False, "profiled_performance_scope": "instrumented_only"}
     _atomic(manifest_path, manifest)
     profiler = None
@@ -251,7 +313,7 @@ def begin_step(scheduler_output):
         if profiler is not None:
             try:
                 profiler.start()
-                manifest["status"] = "collecting"
+                manifest.update(status="collecting", capture_status="collecting")
             except Exception as error:
                 manifest.update(status="error", error=f"profiler_start: {type(error).__name__}: {error}")
                 _atomic(manifest_path, manifest)
@@ -261,7 +323,7 @@ def begin_step(scheduler_output):
     manifest["profile_start_ms"] = (time.perf_counter_ns() - setup_start_ns) / 1e6
     _atomic(manifest_path, manifest)
     _summary()
-    _tls.step = {"schema_version": 1, "t": "oscar-diagnostic-step", **metadata,
+    _tls.step = {"schema_version": 2, "t": "oscar-diagnostic-step", **metadata,
                  "run_id": _run["run_id"], "variant": _run["variant"], "rank": _run["rank"],
                  "pid": os.getpid(), "step_id": _serial, "window_id": window_id, "metric": metric,
                  "profiled": profiler is not None, "host_start_ns": time.perf_counter_ns(),
@@ -290,18 +352,19 @@ def end_step(error=None):
     export_start_ns = time.perf_counter_ns()
     if profiler is not None:
         try:
-            profiler.step()  # RECORD_AND_SAVE -> export -> NONE
+            profiler.step()  # RECORD_AND_SAVE -> save raw (no daemon analyse) -> NONE
             profiler.stop()
             files = sorted(str(item.relative_to(Path(manifest["profile_dir"])))
                            for item in Path(manifest["profile_dir"]).rglob("*")
-                           if item.is_file() and item.stat().st_size > 0)
-            exported = [name for name in files if Path(name).name in {"trace_view.json", "kernel_details.csv"}
-                        or Path(name).name.startswith("op_summary") and name.endswith(".csv")
-                        or name.endswith(".pt.trace.json")]
-            if not exported:
-                manifest.update(status="missing", missing_reason="profiler_export_has_no_artifacts")
+                           if item.is_file() and not item.is_symlink() and item.stat().st_size > 0)
+            captures = raw_capture_paths(manifest["profile_dir"])
+            manifest.update(profile_artifacts=files, capture_paths=captures)
+            if not captures:
+                manifest.update(status="missing", capture_status="missing",
+                                missing_reason="profiler_capture_has_no_raw_payload")
             else:
-                manifest.update(status="complete" if error is None else "error", profile_artifacts=files)
+                manifest.update(status="captured_pending_analysis" if error is None else "error",
+                                capture_status="captured", analysis_status="pending")
         except Exception as failure:
             profile_error = failure
             manifest.update(status="error", error=f"profiler_finish: {type(failure).__name__}: {failure}")
@@ -311,10 +374,14 @@ def end_step(error=None):
         manifest.update(status="missing", missing_reason="unexpected_graph_capture_in_profiled_step")
     manifest["finished_unix"] = time.time()
     manifest["profile_export_ms"] = (time.perf_counter_ns() - export_start_ns) / 1e6
+    manifest["profile_capture_finalize_ms"] = manifest["profile_export_ms"]
+    manifest["profile_export_scope"] = "raw_capture_finalize_only_no_analysis"
     _atomic(manifest_path, manifest)
     step.update(status="complete" if error is None and profile_error is None else "error",
                 profile_status=manifest["status"], device_ms=None,
                 profile_export_ms=manifest["profile_export_ms"],
+                profile_capture_finalize_ms=manifest["profile_capture_finalize_ms"],
+                profile_export_scope=manifest["profile_export_scope"],
                 host_step_includes_profile_export=False,
                 host_timing_scope="runner_execute_through_sample_submission",
                 profiled_steps_are_uninstrumented_performance=False)

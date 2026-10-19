@@ -1,6 +1,7 @@
 # Archive #133/#140/#143: bounded same-thread profiler lifecycle, no HTTP/NPU
 # synchronization, mature native batch and warm-history coverage, honest gaps.
 import json
+import multiprocessing
 import os
 from pathlib import Path
 import subprocess
@@ -67,8 +68,10 @@ def setup(monkeypatch, tmp_path):
             self.record("step")
             assert self.state == "RECORD_AND_SAVE"
             self.state = "NONE"
-            self.directory.mkdir(parents=True)
-            (self.directory / "trace_view.json").write_text('{"traceEvents": []}')
+            capture = self.directory / "rank2_20261019_ascend_pt"
+            (capture / "FRAMEWORK").mkdir(parents=True)
+            (capture / "profiler_info_2.json").write_text('{"config": {}}')
+            (capture / "FRAMEWORK" / "torch.op_range").write_bytes(b"raw op payload")
         def stop(self):
             self.record("stop")
             assert self.state == "NONE", "#133: stop must not occur during RECORD"
@@ -115,12 +118,18 @@ def test_one_step_record_save_export_stop_same_thread_and_host_fields(setup):
     assert record["rank"] == 2 and record["graph_replays"] == 1
     assert record["context_min"] == 32772 and record["scheduled_decode_requests"] == 4
     assert record["scheduled_draft_tokens"] == 12
-    assert record["device_ms"] is None and record["profile_status"] == "complete"
+    assert record["device_ms"] is None and record["profile_status"] == "captured_pending_analysis"
     assert record["host_step_includes_profile_setup"] is False
     assert record["host_step_includes_profile_export"] is False
     assert record["profile_start_ms"] >= 0 and record["profile_export_ms"] >= 0
     manifest = manifests(setup)[0]
-    assert manifest["status"] == "complete" and manifest["profile_artifacts"] == ["trace_view.json"]
+    assert manifest["status"] == "captured_pending_analysis"
+    assert manifest["capture_status"] == "captured" and manifest["analysis_status"] == "pending"
+    assert manifest["worker_analysis_enabled"] is False
+    assert manifest["capture_paths"] == ["rank2_20261019_ascend_pt"]
+    assert manifest["profile_artifacts"] == ["rank2_20261019_ascend_pt/FRAMEWORK/torch.op_range",
+                                             "rank2_20261019_ascend_pt/profiler_info_2.json"]
+    assert record["profile_export_scope"] == "raw_capture_finalize_only_no_analysis"
 
 
 def test_requires_mature_batch_and_warm_history_then_bounded_four_windows(setup):
@@ -136,7 +145,7 @@ def test_requires_mature_batch_and_warm_history_then_bounded_four_windows(setup)
     assert [item.metric for item in setup.profiles] == ["PipeUtilization", "Memory"] * 2
     assert len(rows(setup)) == 4
     summary = json.loads(next(setup.path.glob("windows/*/*/run-summary.json")).read_text())
-    assert summary["status"] == "complete" and summary["skipped_cold_prefill_steps"] == 4
+    assert summary["status"] == "captured_pending_analysis" and summary["skipped_cold_prefill_steps"] == 4
 
 
 def test_unknown_cpu_history_is_explicit_missing_and_never_samples_first_chunk(setup):
@@ -216,7 +225,7 @@ def test_only_info_file_cannot_be_complete_profile(setup, monkeypatch):
         (profile.directory / "profiler_info.json").write_text("{}")
     monkeypatch.setattr(profile, "step", step)
     timer.end_step()
-    assert manifests(setup)[0]["missing_reason"] == "profiler_export_has_no_artifacts"
+    assert manifests(setup)[0]["missing_reason"] == "profiler_capture_has_no_raw_payload"
 
 
 def test_runner_error_keeps_original_failure_and_exports_bounded_window(setup):
@@ -348,8 +357,124 @@ def test_native_metric_enum_and_single_step_schedule_contract(setup, monkeypatch
     assert _REAL_CREATE(setup.path, "PipeUtilization", "worker") == "profiler"
     assert captured["schedule"] == {"wait": 0, "warmup": 0, "active": 1, "repeat": 1}
     assert captured["handler"]["async_mode"] is False
+    assert captured["handler"]["analyse_flag"] is False
     with pytest.raises(timer.ProfilerUnsupported, match="AiCMetrics.Memory"):
         _REAL_CREATE(setup.path, "Memory", "worker")
 
 
 _REAL_CREATE = timer._create_profiler
+
+
+@pytest.mark.parametrize("payload", ["FRAMEWORK/torch.op_range", "PROF_000001_20261019_test/device_0/data/ts_track"])
+def test_raw_capture_paths_accept_official_fwk_and_cann_layouts(tmp_path, payload):
+    capture = tmp_path / "worker_ascend_pt"
+    target = capture / payload
+    target.parent.mkdir(parents=True)
+    target.write_bytes(b"actual payload")
+    (capture / "profiler_info_3.json").write_text("{}")
+    assert timer.raw_capture_paths(tmp_path) == ["worker_ascend_pt"]
+
+
+@pytest.mark.parametrize("contents", ["empty", "info_only", "empty_payload", "parsed_trace_only", "raw_no_info"])
+def test_raw_capture_inventory_never_accepts_empty_or_parsed_only_data(tmp_path, contents):
+    capture = tmp_path / "worker_ascend_pt"
+    (capture / "FRAMEWORK").mkdir(parents=True)
+    if contents != "raw_no_info" and contents != "empty":
+        (capture / "profiler_info.json").write_text("{}")
+    if contents in {"empty_payload", "raw_no_info"}:
+        (capture / "FRAMEWORK" / "torch.op_range").write_bytes(b"" if contents == "empty_payload" else b"raw")
+    if contents == "parsed_trace_only":
+        (capture / "trace_view.json").write_text('{"traceEvents": []}')
+    assert timer.raw_capture_paths(tmp_path) == []
+
+
+def test_offline_analysis_refreshes_summary_without_rewriting_capture_evidence(setup, monkeypatch):
+    for kind in ("prefill", "prefill", "decode", "decode"):
+        timer.begin_step(schedule(kind, batch=4 if kind == "decode" else 1, computed=16384))
+        timer.end_step()
+    summary_path = next(setup.path.glob("windows/*/*/run-summary.json"))
+    original = json.loads(summary_path.read_text())
+    assert original["status"] == "captured_pending_analysis"
+    manifests_paths = sorted(summary_path.parent.glob("step*.json"))
+    for path in manifests_paths:
+        record = json.loads(path.read_text())
+        record.update(analysis_previous_status=record["status"], status="complete", analysis_status="complete")
+        path.write_text(json.dumps(record))
+    monkeypatch.setattr(timer, "_rank", lambda: pytest.fail("offline helper imported device"))
+    revised = timer.refresh_run_summary(summary_path)
+    assert revised["status"] == "complete"
+    assert revised["missing_windows"] == original["missing_windows"]
+    assert revised["observed_steps"] == original["observed_steps"]
+    assert all(value == "complete" for value in revised["window_statuses"].values())
+    failed = json.loads(manifests_paths[0].read_text())
+    failed.update(status="error", analysis_status="error", error="offline SDK parse failed")
+    manifests_paths[0].write_text(json.dumps(failed))
+    assert timer.refresh_run_summary(summary_path.parent)["status"] == "error"
+
+
+def _daemon_capture_child(result_queue, output_dir):
+    """Exercise the SDK callback contract in a real spawn daemon, without NPU.
+
+    Official torch_npu/profiler/profiler.py tensorboard_trace_handler defaults
+    analyse_flag=True and calls prof_inst.prof_if.analyse only when true. Its
+    analysis process cannot spawn children inside the native daemon worker.
+    """
+    calls = []
+    directory = Path(output_dir)
+    def trace_handler(path, worker_name=None, analyse_flag=True, async_mode=False):
+        def callback(profiler):
+            if analyse_flag:
+                profiler.prof_if.analyse(async_mode=async_mode)
+        return callback
+    class Profiler:
+        def __init__(self, **kwargs):
+            self.callback = kwargs["on_trace_ready"]
+            self.prof_if = SimpleNamespace(analyse=self.analyse)
+        def analyse(self, **kwargs):
+            calls.append("analyse")
+            assert not multiprocessing.current_process().daemon, "profiling data cannot be parsed during daemon process"
+        def start(self):
+            calls.append("start")
+        def step(self):
+            capture = directory / "daemon_worker_ascend_pt"
+            (capture / "FRAMEWORK").mkdir(parents=True)
+            (capture / "profiler_info_0.json").write_text("{}")
+            (capture / "FRAMEWORK" / "torch.op_range").write_bytes(b"raw event")
+            calls.append("save_raw")
+            self.callback(self)
+        def stop(self):
+            calls.append("stop")
+    api = SimpleNamespace(AiCMetrics=SimpleNamespace(PipeUtilization="pipe"),
+                          ExportType=SimpleNamespace(Text="text"), ProfilerLevel=SimpleNamespace(Level1="level1"),
+                          ProfilerActivity=SimpleNamespace(CPU="cpu", NPU="npu"),
+                          _ExperimentalConfig=lambda **kwargs: kwargs,
+                          schedule=lambda **kwargs: kwargs,
+                          tensorboard_trace_handler=trace_handler, profile=Profiler)
+    sys.modules["torch"] = SimpleNamespace(npu=SimpleNamespace(is_available=lambda: True))
+    sys.modules["torch_npu"] = SimpleNamespace(profiler=api)
+    profiler = timer._create_profiler(directory, "PipeUtilization", "worker")
+    profiler.start()
+    profiler.step()
+    profiler.stop()
+    result_queue.put({"daemon": multiprocessing.current_process().daemon,
+                      "calls": calls, "capture_paths": timer.raw_capture_paths(directory)})
+
+
+def test_daemon_worker_saves_raw_without_attempting_analysis(tmp_path):
+    context = multiprocessing.get_context("spawn")
+    queue = context.Queue()
+    process = context.Process(target=_daemon_capture_child, args=(queue, str(tmp_path)), daemon=True)
+    try:
+        process.start()
+        process.join(timeout=10)
+        assert not process.is_alive(), "daemon capture contract did not finish"
+        assert process.exitcode == 0
+        result = queue.get(timeout=2)
+        assert result == {"daemon": True, "calls": ["start", "save_raw", "stop"],
+                          "capture_paths": ["daemon_worker_ascend_pt"]}
+    finally:
+        if process.is_alive():
+            process.terminate()
+            process.join(timeout=3)
+        queue.close()
+        queue.join_thread()

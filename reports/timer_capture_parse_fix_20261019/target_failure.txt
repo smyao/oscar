@@ -1,0 +1,115 @@
+[W1019 08:58:27.965888340 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[timer32k] START native/resources-before
+[oscar] worker checkpoints debug_sync=False trace=/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/native/server/trace-f41d4668245c43e1987a74156694eac6
+[oscar] waiting for service health log=/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/native/server/server.log
+[oscar] waiting for service health log=/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/native/server/server.log
+[oscar] waiting for service health log=/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/native/server/server.log
+[oscar] waiting for service health log=/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/native/server/server.log
+[timer32k] BATCH variant=native bs=4 mode=control prompt=32768 output=256
+[timer32k] BATCH variant=native bs=4 mode=profile prompt=32768 output=256
+[oscar] CLEANUP_START owned_server pid=146084 log=/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/native/server/server.log
+[oscar] CLEANUP_END owned_server complete=True exit=0
+[timer32k] START native/resources-release
+[timer32k] FAILED rc=1 TimerRunError: no median for empty data
+[timer32k] FAILURE_LOG /workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/native/server/server.log
+(Worker_TP1 pid=146198) analyse("profiling_data_path")
+(Worker_TP2 pid=146199) [2026-10-19 09:04:30] [ERROR] [146199] profiler.py: The profiling data cannot be parsed during the daemon process, it is recommended that you use an offline parsing interface to parse the collected data. 
+(Worker_TP2 pid=146199) For example: 
+(Worker_TP2 pid=146199) from torch_npu.profiler.profiler import analyse
+(Worker_TP2 pid=146199) analyse("profiling_data_path")
+(Worker_TP0 pid=146197) [2026-10-19 09:04:30] [WARNING] [146197] profiler.py: Profiler won't be using warmup, this can skew profiler results
+(Worker_TP1 pid=146198) [2026-10-19 09:04:30] [WARNING] [146198] profiler.py: Profiler won't be using warmup, this can skew profiler results
+(Worker_TP2 pid=146199) [2026-10-19 09:04:30] [WARNING] [146199] profiler.py: Profiler won't be using warmup, this can skew profiler results
+(APIServer pid=146084) INFO:     127.0.0.1:60862 - "GET /metrics HTTP/1.1" 200 OK
+(Worker_TP0 pid=146197) [2026-10-19 09:04:31] [ERROR] [146197] profiler.py: The profiling data cannot be parsed during the daemon process, it is recommended that you use an offline parsing interface to parse the collected data. 
+(Worker_TP0 pid=146197) For example: 
+(Worker_TP0 pid=146197) from torch_npu.profiler.profiler import analyse
+(Worker_TP0 pid=146197) analyse("profiling_data_path")
+(Worker_TP3 pid=146200) [2026-10-19 09:04:31] [ERROR] [146200] profiler.py: The profiling data cannot be parsed during the daemon process, it is recommended that you use an offline parsing interface to parse the collected data. 
+(Worker_TP3 pid=146200) For example: 
+(Worker_TP3 pid=146200) from torch_npu.profiler.profiler import analyse
+(Worker_TP3 pid=146200) analyse("profiling_data_path")
+(Worker_TP1 pid=146198) [2026-10-19 09:04:31] [ERROR] [146198] profiler.py: The profiling data cannot be parsed during the daemon process, it is recommended that you use an offline parsing interface to parse the collected data. 
+(Worker_TP1 pid=146198) For example: 
+(Worker_TP1 pid=146198) from torch_npu.profiler.profiler import analyse
+(Worker_TP1 pid=146198) analyse("profiling_data_path")
+(Worker_TP2 pid=146199) [2026-10-19 09:04:31] [ERROR] [146199] profiler.py: The profiling data cannot be parsed during the daemon process, it is recommended that you use an offline parsing interface to parse the collected data. 
+(Worker_TP2 pid=146199) For example: 
+(Worker_TP2 pid=146199) from torch_npu.profiler.profiler import analyse
+(Worker_TP2 pid=146199) analyse("profiling_data_path")
+(APIServer pid=146084) INFO:     127.0.0.1:60868 - "GET /metrics HTTP/1.1" 200 OK
+(APIServer pid=146084) INFO:     127.0.0.1:60880 - "GET /metrics HTTP/1.1" 200 OK
+(APIServer pid=146084) INFO:     127.0.0.1:60882 - "GET /metrics HTTP/1.1" 200 OK
+(APIServer pid=146084) INFO:     127.0.0.1:60896 - "GET /metrics HTTP/1.1" 200 OK
+(APIServer pid=146084) INFO:     127.0.0.1:60900 - "GET /metrics HTTP/1.1" 200 OK
+(APIServer pid=146084) INFO:     127.0.0.1:60914 - "GET /metrics HTTP/1.1" 200 OK
+(APIServer pid=146084) INFO:     127.0.0.1:60922 - "GET /metrics HTTP/1.1" 200 OK
+(APIServer pid=146084) INFO:     127.0.0.1:60948 - "POST /v1/completions HTTP/1.1" 200 OK
+(APIServer pid=146084) INFO:     127.0.0.1:60936 - "GET /metrics HTTP/1.1" 200 OK
+SERVICE_ERROR StatisticsError: no median for empty data
+(EngineCore pid=146148) INFO 10-19 09:04:37 [core.py:1178] [shutdown] EngineCore: trigger received signal=SIGTERM
+(APIServer pid=146084) INFO 10-19 09:04:37 [launcher.py:100] [shutdown] API server: shutdown triggered
+(APIServer pid=146084) INFO 10-19 09:04:37 [launcher.py:116] [shutdown] API server: stopping engine client mode=abort timeout=0s
+(EngineCore pid=146148) INFO 10-19 09:04:37 [core.py:1297] [shutdown] EngineCore: start mode=abort timeout=0s
+(EngineCore pid=146148) INFO 10-19 09:04:37 [core.py:1328] [shutdown] EngineCore: request processing complete; starting resource teardown
+(EngineCore pid=146148) INFO 10-19 09:04:37 [core.py:1191] [shutdown] EngineCore: exiting busy loop
+(EngineCore pid=146148) INFO 10-19 09:04:37 [multiproc_executor.py:428] [shutdown] Executor: waiting for worker exit count=4
+(Worker_TP0 pid=146197) INFO 10-19 09:04:37 [multiproc_executor.py:790] Parent process exited, terminating worker queues
+(APIServer pid=146084) INFO 10-19 09:04:37 [core_client.py:652] [shutdown] MPClient: start timeout=0s
+(APIServer pid=146084) INFO 10-19 09:04:37 [core_client.py:654] [shutdown] MPClient: stopping engine manager
+(APIServer pid=146084) WARNING 10-19 09:04:37 [utils.py:607] [shutdown] Process manager: force killing remaining processes count=1
+(APIServer pid=146084) INFO 10-19 09:04:37 [core_client.py:656] [shutdown] MPClient: engine manager stopped
+(APIServer pid=146084) INFO 10-19 09:04:37 [core_client.py:657] [shutdown] MPClient: cleaning up background resources
+(APIServer pid=146084) INFO 10-19 09:04:37 [core_client.py:659] [shutdown] MPClient: complete
+(APIServer pid=146084) INFO 10-19 09:04:37 [launcher.py:125] [shutdown] API server: engine client stopped
+(APIServer pid=146084) INFO 10-19 09:04:37 [launcher.py:128] [shutdown] API server: signalling HTTP server shutdown
+(APIServer pid=146084) INFO 10-19 09:04:37 [launcher.py:149] [shutdown] API server: shutting down FastAPI HTTP server
+(APIServer pid=146084) INFO:     Shutting down
+(APIServer pid=146084) INFO:     Waiting for application shutdown.
+(APIServer pid=146084) INFO:     Application shutdown complete.
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 4 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 6 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+SERVICE_RESULT {"status": "failed", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "tools.target_cli", "--config", "/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/effective-target.json", "--native"], "variant": "native", "target_argv": ["serve", "/softwarePlatform/models_directory/Qwen3.8-27B", "--max-num-batched-tokens", "16384", "--served-model-name", "qwen3.8", "--host", "0.0.0.0", "--port", "8989", "--data-parallel-size", "1", "--tensor-parallel-size", "4", "--max-model-len", "262144", "--max-num-seqs", "128", "--gpu-memory-utilization", "0.9", "--dtype", "bfloat16", "--compilation-config", "{\"cudagraph_capture_sizes\":[1,4,8,12,16,24,32,48,56,64,72,84,96,108,112,128,160,172,196,200,212,232,272,288,312,328,344,360,384,400,416,432,448,480,512],\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}", "--speculative_config", "{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":3,\"enforce_eager\":true}", "--additional-config", "{\"enable_cpu_binding\":true}", "--hf-overrides", "{}", "--trust-remote-code", "--async-scheduling", "--allowed-local-media-path", "/", "--mm-processor-cache-gb", "0", "--mamba-cache-dtype", "bfloat16", "--mamba-ssm-cache-dtype", "bfloat16", "--no-enable-prefix-caching"], "log": "/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/native/server/server.log", "trace_dir": "/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/native/server/trace-f41d4668245c43e1987a74156694eac6", "cleanup_complete": true, "debug_sync": false, "pid": 146084, "owned_pids": [146084, 146092, 146147, 146148, 146155, 146197, 146198, 146199, 146200, 146217, 146226, 146239, 146250, 146309, 149288, 149299, 149310, 149319, 149322, 149333, 149344, 149384, 149389, 149397, 149401, 149405, 149428, 149443], "last_health_error": "URLError: <urlopen error [Errno 111] Connection refused>", "startup_seconds": 288.595181, "error": "StatisticsError: no median for empty data", "exit_code": 0, "elapsed_seconds": 347.192691}
+=== OSCAR_TIMER_SUMMARY_BEGIN ===
+RUN 182c25fb41734f70b364d361bb90112e status=failed evidence=missing pair_hash=8aa02dd9cbceeecaa83be7fe120e3105557c59812728a68019f487ec11d47559
+SOURCE {"git_commit":"fce13f9d68b2e7a3eb156b33a7a2918460534758","dirty":true}
+MODEL {"fingerprint":"a7b5defbf8558637d2de5bb4a03c7c28d4ff73d1556cd4378f2fbfebebe5bfeb","full_layers":["model.layers.3.self_attn.attn","model.layers.7.self_attn.attn","model.layers.11.self_attn.attn","model.layers.15.self_attn.attn","model.layers.19.self_attn.attn","model.layers.23.self_attn.attn","model.layers.27.self_attn.attn","model.layers.31.self_attn.attn","model.layers.35.self_attn.attn","model.layers.39.self_attn.attn","model.layers.43.self_attn.attn","model.layers.47.self_attn.attn","model.layers.51.self_attn.attn","model.layers.55.self_attn.attn","model.layers.59.self_attn....[see JSON]
+WORKLOAD {"prompt_tokens":32768,"output_tokens":256,"source":"synthetic_repeated_natural_sentence_with_record_prefix","manifest_sha256":"3f3f1e3b015d67040720305e15312b3ee96bed8d24ad6ec0da886bbff3d79b5f","prompt_ids_file":"/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/prompt-ids.json","cache_policy":"APC disabled and distinct run/request cache salts; same exact IDs in paired arms"}
+ACCOUNTING control=client wall with NPU profiler/phase sampling off; shared control-file polling/no-op hooks remain. Profile=device diagnosis only; TP ranks separate; task sum != wall; host scopes exclusive.
+BOUND timer alone cannot establish compute/HBM bound; PMU ratios are candidates, missing roofline remains inconclusive.
+FUSED_CV fused INT2 unpack/softmax/window work shares one kernel; timer does not invent internal sub-phase times.
+RUN_ERROR "TimerRunError: no median for empty data"
+BATCH 182c25fb41734f70b364d361bb90112e-native-b4-control variant=native client_bs=4 mode=control status=completed wall_s=26.2 done=4 output=1024.0 control_output_tps=39.08 compare_eligible=True
+BATCH_META pair=8aa02dd9cbceeecaa83be7fe120e3105557c59812728a68019f487ec11d47559 prompts=029d60d4be77871de73919bfafaea509cc6539acd9b82169a42f59cc6c527cb6 peak_running=4.0 peak_waiting=2.0 completion={"status":"passed","errors":[]} flush=None
+MTP 182c25fb41734f70b364d361bb90112e-native-b4-control {"status":"observed","mtp_counter_delta":{"vllm:spec_decode_num_drafts":311.0,"vllm:spec_decode_num_draft_tokens":933.0,"vllm:spec_decode_num_accepted_tokens":710.0},"baseline_missing":[],"device_timing":"not_observed"} counter_delta={"status":"observed","delta":{"vllm:num_preemptions_total":0.0,"vllm:generation_tokens_total":1024.0,"vllm:prompt_tokens_total":131072.0},"missing":[]}
+LATENCY 182c25fb41734f70b364d361bb90112e-native-b4-control {"ttft_ms":{"p50":14788.282254710793,"p95":20253.684340044856},"tpot_ms":{"p50":43.97781362720564,"p95":79.70655905995883},"e2e_ms":{"p50":26002.713575027883,"p95":26188.965691253543}}
+BATCH 182c25fb41734f70b364d361bb90112e-native-b4-profile variant=native client_bs=4 mode=profile status=completed wall_s=29.83 done=4 output=1024.0 control_output_tps=NA compare_eligible=False
+BATCH_META pair=8aa02dd9cbceeecaa83be7fe120e3105557c59812728a68019f487ec11d47559 prompts=029d60d4be77871de73919bfafaea509cc6539acd9b82169a42f59cc6c527cb6 peak_running=4.0 peak_waiting=2.0 completion={"status":"passed","errors":[]} flush=running
+MTP 182c25fb41734f70b364d361bb90112e-native-b4-profile {"status":"observed","mtp_counter_delta":{"vllm:spec_decode_num_drafts":303.0,"vllm:spec_decode_num_draft_tokens":909.0,"vllm:spec_decode_num_accepted_tokens":721.0},"baseline_missing":[],"device_timing":"not_observed"} counter_delta={"status":"observed","delta":{"vllm:num_preemptions_total":0.0,"vllm:generation_tokens_total":1024.0,"vllm:prompt_tokens_total":131072.0},"missing":[]}
+WINDOW_COVERAGE [{"rank":0,"target_batch":4,"max_decode_requests":4,"missing_windows":{"decode":[],"early":[]},"missing_reason":null},{"rank":1,"target_batch":4,"max_decode_requests":4,"missing_windows":{"decode":[],"early":[]},"missing_reason":null},{"rank":2,"target_batch":4,"max_decode_requests":4,"missing_windows":{"decode":[],"early":[]},"missing_reason":null},{"rank":3,"target_batch":4,"max_decode_requests":4,"missing_windows":{"decode":[],"early":[]},"missing_reason":null}]
+HOST 182c25fb41734f70b364d361bb90112e-native-b4-profile bucket=decode profiled=True rank_mean_ms={"0":102.73009,"1":88.625905,"2":88.66062500000001,"3":159.368355} steps=2 actual_requests_mean=4 prompt/decode/draft=0/32.0/24.0 graph=2.0
+HOST_EXCLUSIVE rank=3 bucket=decode graph_replay=149.162ms sample_tokens=75.649ms draft_proposal=43.936ms host_build_attention_metadata=14.390ms host_prepare_inputs=12.683ms host_update_full_graph_params_if_needed=8.717ms native_attention=3.902ms target_forward=1.149ms host_update_states=1.044ms host_bookkeeping_sync=0.480ms
+HOST 182c25fb41734f70b364d361bb90112e-native-b4-profile bucket=mixed profiled=True rank_mean_ms={"0":2313.15686,"1":2312.6811,"2":2331.52782,"3":2331.18634} steps=1 actual_requests_mean=3 prompt/decode/draft=16380.0/4.0/3.0 graph=0
+HOST_EXCLUSIVE rank=2 bucket=mixed sample_tokens=1916.274ms target_forward=328.282ms host_build_attention_metadata=39.932ms draft_proposal=21.656ms native_attention=10.642ms host_prepare_inputs=6.992ms host_update_states=4.055ms host_bookkeeping_sync=0.286ms host_update_full_graph_params_if_needed=0.102ms
+HOST 182c25fb41734f70b364d361bb90112e-native-b4-profile bucket=prefill profiled=True rank_mean_ms={"0":2233.13129,"1":2200.79872,"2":2197.18939,"3":2198.93417} steps=1 actual_requests_mean=1 prompt/decode/draft=16384.0/0/0 graph=0
+HOST_EXCLUSIVE rank=0 bucket=prefill host_prepare_inputs=1801.579ms target_forward=263.967ms host_build_attention_metadata=133.927ms draft_proposal=17.694ms native_attention=10.362ms sample_tokens=2.012ms host_update_states=0.434ms host_bookkeeping_sync=0.188ms host_update_full_graph_params_if_needed=0.082ms
+DEVICE 182c25fb41734f70b364d361bb90112e-native-b4-profile bucket=decode metric=Memory windows=4 rank_busy_union_ms={"0":[null],"1":[null],"2":[null],"3":[null]} representative=step000004-decode-Memory rank=0 tasks=0 sum_ms=0 span_ms=NA aligned=matched RANK_SKEW=NA shape_alignment=matched actual_requests=[4] decode_tokens=[16] context=[32776]..[32801]
+DEVICE_PHASES 
+PIPE_EVIDENCE bucket=decode metric=Memory mte2/max(cube,vector)=NA per_core=[] candidate=insufficient_device_counters verdict=inconclusive
+DEVICE 182c25fb41734f70b364d361bb90112e-native-b4-profile bucket=decode metric=PipeUtilization windows=4 rank_busy_union_ms={"0":[null],"1":[null],"2":[null],"3":[null]} representative=step000003-decode-PipeUtilization rank=0 tasks=0 sum_ms=0 span_ms=NA aligned=matched RANK_SKEW=NA shape_alignment=matched actual_requests=[4] decode_tokens=[16] context=[32772]..[32800]
+DEVICE_PHASES 
+PIPE_EVIDENCE bucket=decode metric=PipeUtilization mte2/max(cube,vector)=NA per_core=[] candidate=insufficient_device_counters verdict=inconclusive
+DEVICE 182c25fb41734f70b364d361bb90112e-native-b4-profile bucket=mixed metric=Memory windows=4 rank_busy_union_ms={"0":[null],"1":[null],"2":[null],"3":[null]} representative=step000002-mixed-Memory rank=0 tasks=0 sum_ms=0 span_ms=NA aligned=matched RANK_SKEW=NA shape_alignment=matched actual_requests=[3] decode_tokens=[4] context=[16372]..[32780]
+DEVICE_PHASES 
+PIPE_EVIDENCE bucket=mixed metric=Memory mte2/max(cube,vector)=NA per_core=[] candidate=insufficient_device_counters verdict=inconclusive
+DEVICE 182c25fb41734f70b364d361bb90112e-native-b4-profile bucket=prefill metric=PipeUtilization windows=4 rank_busy_union_ms={"0":[null],"1":[null],"2":[null],"3":[null]} representative=step000001-prefill-PipeUtilization rank=0 tasks=0 sum_ms=0 span_ms=NA aligned=matched RANK_SKEW=NA shape_alignment=matched actual_requests=[1] decode_tokens=[0] context=[32768]..[32768]
+DEVICE_PHASES 
+PIPE_EVIDENCE bucket=prefill metric=PipeUtilization mte2/max(cube,vector)=NA per_core=[] candidate=insufficient_device_counters verdict=inconclusive
+MISSING 182c25fb41734f70b364d361bb90112e-native-b4-profile ["window_missing:step000001-prefill-PipeUtilization:","device_tasks_missing:/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/native/b4-profile/profile/windows/182c25fb41734f70b364d361bb90112e-native-b4-profile/rank0-pid146197/step000001-prefill-PipeUtilization","pmu_counters_missing:step000001-prefill-PipeUtilization","window_missing:step000002-mixed-Memory:","device_tasks_missing:/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/native/b4-profile/profile/windows/182c25fb41734f70b364d361bb90112e-native-b4-profile/rank0-pid146197/step000002-mixed-Memory","pmu_counters_missing:step000002-mixed-Memory","window_missing:step000003-decode-PipeUtilization:","device_tasks_missing:/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/native/b4-profile/profile/windows/182c25fb41734f70b364d361bb90112e-native-b4-profile/rank0-pid146197/step000003-decode-PipeUtilization","pmu_counters_missing:step000003-decode-PipeUtilization","wind...[see JSON]
+FILES records=/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/native/b4-profile/batch.json profile=/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/native/b4-profile/profile
+GLOBAL_MISSING []
+FULL_REPORT /workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z/timer-summary.json RAW_ROOT /workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T085755.865321Z
+=== OSCAR_TIMER_SUMMARY_END ===
+root@node93:/workspace/gpt_new_oscar_kimi#

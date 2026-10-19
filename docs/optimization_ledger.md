@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-19 timer首轮修复：用户native BS4 control26.2秒/profile29.83秒均完成，但单tokenflush空TPOT median中断，daemon worker解析被SDK拒绝导致设备任务缺失。修为空统计null+样本数；worker只存raw，服务释放后由普通子进程离线解析并验证实际任务表。105项主机回归通过；OSCAR对照及bound仍待用户新日志。[修复说明](timer_capture_parse_fix_20261019.md)。
+
 2026-10-19计时专项：用户反馈OSCAR可容纳约31条/原生15条但仍慢，要求暂停大规模优化。按其后续要求交付32K native BS4 / OSCAR BS4 / OSCAR BS8的control与有界PMU诊断，默认256输出；少量终端摘要、完整数据落盘，等待用户运行后归因，不新增任何算法优化或性能达标结论。[设计与一键命令](timer_32k_diagnosis_20261019.md)。
 
 2026-10-19 后续：离线数据通过后，校准 LLM 两层 fork 触发 `Invalid thread pool!`（档案 #166）。校准子进程导入前强制使用原生支持的 spawn，覆盖 EngineCore/TP worker，正式服务参数不改；验证与边界见[线程池启动修复](rotation_process_startup_fix_20261019.md)。

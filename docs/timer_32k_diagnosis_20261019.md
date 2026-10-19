@@ -1,5 +1,8 @@
 # 32K 小批量计时与瓶颈诊断
 
+2026-10-19首轮反馈修复：单token收尾统计和daemon profiler解析已修正；
+worker只采raw，两服务退出后自动离线解析。见[问题与修法](timer_capture_parse_fix_20261019.md)。
+
 用户报告当前 OSCAR 可容纳约31条、原生约15条，但 OSCAR 总耗时仍更长。
 本轮停止性能改造，先取得可对照的阶段与硬件证据。按用户随后要求，默认使用
 **native BS4、OSCAR BS4、OSCAR BS8**，每条32768个输入token、256个输出token。
@@ -72,9 +75,11 @@ step/window/profile产物。证据缺失时仍打印摘要并返回非零，不�
 只能报告该融合kernel整体耗时及其硬件计数器，不能虚构每个内部子阶段的毫秒数。
 
 原档案#133曾记录HTTP start/stop profiler跨线程和RECORD状态停止造成崩溃，本轮不使用
-HTTP profiler。worker在实际runner同一线程创建/start/step/export/stop，单步schedule
+HTTP profiler。worker在实际runner同一线程创建/start/step/保存raw/stop，单步schedule
 走 `RECORD_AND_SAVE → step → NONE → stop`。不向捕获图中添加Event或相位同步；
-profiler自身的导出会扰动时序，故只用于归因。
+profiler自身采集会扰动时序，故只用于归因。worker是daemon，禁止在其中解析；
+使用 `analyse_flag=False` 保存raw并标记待解析。两个服务退出及资源释放后，普通子进程
+调用SDK离线解析；离线时间独立记录，不计入对照批次。
 
 ## 如何分析结果
 

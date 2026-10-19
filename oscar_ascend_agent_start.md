@@ -584,6 +584,7 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 | 历史现象 | 必须落实的检查与处理 |
 | --- | --- |
+| #167 timer单tokenflush空TPOT median；daemon worker不能解析profiler | 空延迟分布用null与sample_count0；worker仅采集raw，两个服务释放后普通子进程离线analyse，校验真实设备任务导出，不能以SDK返回None/0认定成功。 |
 | #166 校准 LLM 两层 fork 后 `Invalid thread pool!` | 在校准子进程创建和 vLLM 导入前设置 `VLLM_WORKER_MULTIPROC_METHOD=spawn`，核 EngineCore/Ascend worker 都用原生 get_mp_context；父进程建池不能替代两层隔离，正式服务配置保持。 |
 | #165 prepare-rotations 下载 GPQA 报 SSL 自签名证书链错误 | 默认使用随包固定 SHA 的官方数据，实际 wheel 必须包含压缩数据；禁网主机验证、数据 SHA 参与 PT 缓存身份，缺失匹配 PT 自动校准，数据损坏/显式坏 PT 继续失败，不关闭 TLS。 |
 | #151 history解包64.71%，用户candidate整轮仍约19分钟 | 新整数布局/half转换保持旧数学和live/padding检查，原核保留独立对照；65536码穷举、特殊half逐位、NPU图和同形2+5速度门必过，局部份额不能外推整体19→8。 |

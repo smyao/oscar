@@ -209,21 +209,25 @@ def flush_disarmed_control(server, config, token_ids, *, control, run_id, timeou
     request enters each runner once; its timing and counters are kept outside
     every paired batch. No profiling is armed for this request.
     """
-    _disarm(control, run_id)
     record = {} if report is None else report
     record.update(scope="disarmed marker observation only; excluded from paired wall and metrics",
                   profile_enabled=False, status="running")
-    rows = [{"id": "timer32k-control-flush", "token_ids": token_ids[:128]}]
-    server.check_alive()
-    with _heartbeat("disarmed-control-flush"):
-        sample = run_batch(server.base_url, rows, model=config["served_model_name"],
-            output_tokens=1, timeout=min(timeout, 120), repeat=f"{run_id}-flush", sample_interval=1)
-    check = _completion_check(sample, rows, 1)
-    record.update(sample=sample, completion_check=check, status=check["status"])
-    if check["status"] != "passed":
-        raise TimerRunError(f"{run_id}: disarmed control flush request failed", log=server.log)
-    server.check_alive()
-    return record
+    try:
+        _disarm(control, run_id)
+        rows = [{"id": "timer32k-control-flush", "token_ids": token_ids[:128]}]
+        server.check_alive()
+        with _heartbeat("disarmed-control-flush"):
+            sample = run_batch(server.base_url, rows, model=config["served_model_name"],
+                output_tokens=1, timeout=min(timeout, 120), repeat=f"{run_id}-flush", sample_interval=1)
+        check = _completion_check(sample, rows, 1)
+        record.update(sample=sample, completion_check=check, status=check["status"])
+        if check["status"] != "passed":
+            raise TimerRunError(f"{run_id}: disarmed control flush request failed", log=server.log)
+        server.check_alive()
+        return record
+    except BaseException as error:
+        record.update(status="failed", error=f"{type(error).__name__}: {error}")
+        raise
 
 
 def run_one_batch(server, config, rows, *, root, variant, mode, control,
@@ -302,6 +306,31 @@ def _validate_config(config, output_tokens):
         raise ValueError("timer diagnostic requires the existing 3-token MTP configuration")
     if config["max_model_len"] < PROMPT_TOKENS + output_tokens or config["max_num_seqs"] < CAPACITY_BATCH:
         raise ValueError("configured context/request capacity cannot contain the requested diagnostic")
+
+
+def analyse_stopped_profiles(root, config, manifest):
+    """SDK analysis creates child processes; run only after model workers exit."""
+    services = manifest.get("services", [])
+    if not services or any(s.get("lifecycle", {}).get("cleanup_complete") is not True or
+            s.get("resource_release", {}).get("status") != "passed" for s in services):
+        return {"status": "missing", "error": "owned services must be stopped and released before analysis"}
+    command = [sys.executable, "-m", "tools.analyse_timer_profiles", str(root)]
+    env = dict(os.environ)
+    for key in ("OSCAR_TIMER_CONTROL", "OSCAR_TRACE_DIR", "OSCAR_PASSIVE_TIMING_CONTROL",
+                "OSCAR_DEVICE_TIMING_CONTROL", "OSCAR_PROFILE_DIR"):
+        env.pop(key, None)
+    env.update(OSCAR_ENABLED="0", OSCAR_PROFILER="0", OSCAR_TIMING="0", OSCAR_DEBUG_SYNC="0")
+    result = _quiet_call(root / "analysis-supervisor.log", "offline-profile-analysis", run_phase,
+        "offline-profiles", command, cwd=ROOT, log_dir=root / "analysis", env=env,
+        timeout=600, grace=config["shutdown_timeout_seconds"], heartbeat=60)
+    path = root / "offline-analysis.json"
+    report = json.loads(path.read_text()) if path.is_file() else {
+        "status": "missing", "error": "analysis child did not publish its report"}
+    report["phase"] = asdict(result)
+    if result.returncode or not result.cleanup_complete:
+        report["status"] = "error" if result.returncode != 2 else "missing"
+        _failure_tail(result.log, limit=25)
+    return report
 
 
 def _run_service(config, config_path, rows, *, root, variant, control, manifest, args):
@@ -467,6 +496,19 @@ def main(argv=None):
         atomic_json(root / "run.json", manifest)
         for sig, handler in previous_signals.items():
             signal.signal(sig, handler)
+    try:
+        # Deliberately after BOTH owned service lifecycles and resource-release
+        # checks, so parsing cannot perturb the next control's timing or run in
+        # a daemon worker. Preserve any original request/cleanup failure code.
+        if rc != 130:
+            manifest["offline_analysis"] = analyse_stopped_profiles(root, config, manifest)
+            if manifest["offline_analysis"]["status"] != "complete":
+                rc = rc or 2
+    except Exception as error:
+        manifest["offline_analysis"] = {"status": "error", "error": f"{type(error).__name__}: {error}"}
+        rc = rc or 1
+    manifest["returncode"] = rc
+    atomic_json(root / "run.json", manifest)
     try:
         from .summarize_timer import summarize, summary_lines
         summary = summarize(root)

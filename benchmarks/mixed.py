@@ -1,8 +1,9 @@
 """Bounded 20-30K mixed-length concurrency diagnostic for an explicit service.
 
-Archive #70-#73/#130-#139: preserve exact request IDs, client SSE times,
+Archive #70-#73/#130-#139/#143: preserve exact request IDs, client SSE times,
 incomplete requests, scheduler gauges, and native counters. This is an HTTP
 diagnostic only; it cannot establish device phase time, graph, or accuracy.
+Single-token completions have no TPOT interval; retain null plus sample count.
 """
 from __future__ import annotations
 
@@ -27,6 +28,12 @@ MAX_METRICS_BYTES = 4 * 1024 * 1024
 
 def _percentile(values, fraction):
     return sorted(values)[math.ceil(fraction * len(values)) - 1] if values else None
+
+
+def _latency_stats(values):
+    values = list(values)
+    return {"p50": statistics.median(values) if values else None,
+            "p95": _percentile(values, .95), "sample_count": len(values)}
 
 
 def _metrics_gauges(url, timeout):
@@ -119,8 +126,7 @@ def run_batch(url, rows, *, model, output_tokens, timeout, repeat,
         "latency_ms": {}, "throughput_tps": {}}
     if completed:
         summary["latency_ms"] = {
-            name: {"p50": statistics.median(r[name] for r in completed if r.get(name) is not None),
-                   "p95": _percentile([r[name] for r in completed if r.get(name) is not None], .95)}
+            name: _latency_stats(r[name] for r in completed if r.get(name) is not None)
             for name in ("ttft_ms", "tpot_ms", "e2e_ms")}
         summary["throughput_tps"] = {
             "prompt": sum(r["usage"]["prompt_tokens"] for r in completed) / elapsed,

@@ -17,6 +17,8 @@
 
 # 症状速查表（报错关键字 → 条目编号）
 
+- timer的 `no median for empty data` / `profiling data cannot be parsed during the daemon process`：见 #167。
+
 - 校准数据准备成功后，`popen_fork.py` 多线程警告及 `ParallelOpenMP.cpp:64 Invalid thread pool!`：见 #166（与 #84 同族，父进程建池仍未消除本轮故障）。
 
 - `prepare-rotations` 下载 GPQA 时 `SSL: CERTIFICATE_VERIFY_FAILED` / `self-signed certificate in certificate chain`：见 #165。
@@ -28767,3 +28769,16 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修复**：按只读原生Ascend离线TP示例，在校准子进程启动及tokenizer/Torch/vLLM导入前设置 `VLLM_WORKER_MULTIPROC_METHOD=spawn`；源码确认 EngineCore和Ascend TP worker均经原生get_mp_context读取。环境副本只传校准子进程，不修改正式服务启动设置；失败不发布完成PT、不绕过采样。
 
 **验证和边界**：针对性主机回归、真实两层spawn的Torch线程池/autograd与进程退出、原生context源码契约记录于summary.json；没有连接真机，没有NPU引擎/校准/图/质量或性能验收，不将主机进程测试写成目标故障已完成复验。
+
+
+## [167] 真机条目（2026-10-19 用户回传）· timer单token统计中断与daemon profiler解析缺失
+
+**原始证据**：[`reports/timer_capture_parse_fix_20261019/target_failure.txt`](reports/timer_capture_parse_fix_20261019/target_failure.txt)，附件95162193-b5cc-4f48-9dfa-66a768c610f3。日志source=fce13f9d，dirty=true，不假定现场没有其它修改。native BS4 control/profile均4/4完成，wall约26.2/29.83秒，后续128→1收尾报 `no median for empty data`，服务清理complete、exit0；OSCAR未开始。
+
+**根因一**：stream_request对单输出token正确给出tpot_ms=None；run_batch汇总过滤后为空仍median，故在flush请求成功后统计崩溃。修为空p50/p95=None和sample_count=0，非零伪值；flush异常保存failed/error。
+
+**根因二**：四rank均提示 `profiling data cannot be parsed during the daemon process`。官方NpuProfiler.analyse检查daemon后直接返回，之前worker callback默认进行解析，只有raw但无设备任务表。采样window覆盖不等于导出成功，已有host时间不能当设备时间。
+
+**修复**：worker callback设analyse_flag=False、同线程完成raw采集，状态captured_pending_analysis。两个owned服务退出且资源释放后，普通Python子进程执行离线analyse，保留有界超时/日志/真实退出码，并校验实际非空设备任务CSV或trace。SDK静默返回、空表、info-only均不能通过；更新window/run-summary但保留原step当时pending事实。无模型/内核/精度/调度改动。
+
+**验证与边界**：105项主机测试通过，包括实际localhost SSE单token及完整客户端链、真实spawn daemon只采raw、普通进程创建解析子进程、静默解析失败/空表、清理和摘要缺失判断。没有连接真机或NPU复测，本次仍不能确定OSCAR主要耗时或compute/HBM bound。

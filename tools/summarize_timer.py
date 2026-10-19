@@ -1,5 +1,8 @@
 """Bounded 32K diagnostic summary; archive #70-73 separates host/device/wall.
 
+Archive #133: raw profiling capture is not an analysed device export; pending
+offline analysis and export failures stay visible, never accepted as completed.
+
 No torch import, NPU access, or inferred roofline verdict. CANN Task Duration is
 actual task time; aicore_time is a theoretical per-block metric, never wall.
 PMU column meanings: CANN Profiling atlasprofiling_16_0067 (op_summary), and
@@ -453,6 +456,33 @@ def _normal_result(batch):
             "reported_throughput_tps": sample.get("throughput_tps", {})}
 
 
+def _manifest_paths(root):
+    """Read only bounded control files, never JSON inside a profiling export.
+
+Production writes windows/<run>/rankN-pidN/{step*.json,run-summary.json}.
+Small legacy fixtures use arbitrary manifest names at those levels or directly
+under windows/. Export subdirectories (including large trace_view.json) are
+not descended into here; _load_window reads their selected device files once.
+"""
+    windows_roots = [root] if root.name == "windows" else []
+    windows_roots.extend(path for path in root.rglob("windows") if path.is_dir())
+    candidates = set()
+    for directory in windows_roots:
+        candidates.update(directory.glob("*.json"))
+        candidates.update(directory.glob("*/rank*/*.json"))
+    for path in sorted(candidates):
+        if path.name.startswith(("trace_view", "msprof_", "profiler_info", "profiler_metadata")):
+            continue
+        # Step/run summaries are our own schema. Other small names are legacy
+        # manifests, not permission to load arbitrary large profiler JSON.
+        if path.name == "run-summary.json" or path.name.startswith("step") or path.stat().st_size <= 256 * 1024:
+            yield path
+
+
+def _window_complete(window):
+    return window.get("status") == "complete" and window.get("analysis_status") in (None, "complete")
+
+
 def summarize(output_dir):
     """Read runner's run.json plus bounded step/window artifacts; never execute."""
     root = Path(output_dir).resolve()
@@ -461,17 +491,17 @@ def summarize(output_dir):
     report = {"schema_version": SCHEMA_VERSION, "kind": "oscar_timer_summary", "root": str(root),
               "run_id": document.get("run_id"), "status": document.get("status"), "pair_hash": document.get("pair_hash"),
               "error": document.get("error"),
+              "offline_analysis": document.get("offline_analysis"),
               "source": document.get("source"), "model_identity": document.get("model_identity"),
               "workload": document.get("workload"), "counter_reference": COUNTER_SOURCE, "runs": [], "missing": missing,
               "evidence_sources": [COUNTER_SOURCE, COUNTER_CONFIG_SOURCE],
               "bound": "inconclusive_until_device_counter_and_roofline_review", "comparisons": [], "device_phase_comparisons": [],
               "accounting": "No sum across TP ranks; no parent/child host double count; profiling windows never normal throughput."}
     manifests, runtime_summaries = [], []
-    for path in sorted(root.rglob("*.json")):
-        if "windows" not in path.parts:
-            continue
+    for path in _manifest_paths(root):
         item = _read_json(path, missing)
-        if isinstance(item, dict) and "window_id" in item and "profile_dir" in item:
+        if (isinstance(item, dict) and "window_id" in item and "profile_dir" in item
+                and item.get("t") in (None, "oscar-diagnostic-window")):
             manifests.append(item)
         elif isinstance(item, dict) and item.get("t") == "oscar-diagnostic-run":
             runtime_summaries.append(item)
@@ -493,10 +523,12 @@ def summarize(output_dir):
             run["missing"].append("bounded_step_records_missing")
         windows = [m for m in manifests if m.get("run_id") == run_id]
         for manifest in windows:
-            if manifest.get("status") != "complete":
-                run["missing"].append(f"window_{manifest.get('status', 'unknown')}:{manifest.get('window_id')}:{manifest.get('error', manifest.get('unsupported_reason', ''))}")
+            if not _window_complete(manifest):
+                detail = manifest.get("analysis_error", manifest.get("error", manifest.get("unsupported_reason", "")))
+                run["missing"].append(f"window_{manifest.get('status', 'unknown')}:{manifest.get('window_id')}:analysis={manifest.get('analysis_status', 'legacy_or_unavailable')}:{detail}")
             rows, sources, unaligned = _load_window(manifest, root, run["missing"])
             item = _device_summary(manifest, rows, sources)
+            item.update({key: manifest.get(key) for key in ("analysis_status", "analysis_error", "analysis_previous_status", "error")})
             item["unaligned_counter_exports"] = {"rows": len(unaligned), "counters": _counter_stats(unaligned),
                                                   "scope": "cannot attribute to selected task timings"}
             matched_steps = [s for s in steps if s.get("rank") == manifest.get("rank") and s.get("step_id") in manifest.get("steps", [])]
@@ -562,6 +594,10 @@ def summarize(output_dir):
                     "phase_task_ms": {p: {"native": baseline["phases"].get(p, {}).get("task_sum_ms", 0),
                                            "oscar": window["phases"].get(p, {}).get("task_sum_ms", 0),
                                            "delta": window["phases"].get(p, {}).get("task_sum_ms", 0) - baseline["phases"].get(p, {}).get("task_sum_ms", 0) if all(checks.values()) else None} for p in phases}})
+    offline = report.get("offline_analysis")
+    offline_ok = offline is None or isinstance(offline, dict) and offline.get("status") == "complete"
+    if not offline_ok:
+        missing.append("offline_analysis_not_complete:" + str(offline.get("status", "unknown") if isinstance(offline, dict) else "invalid_schema"))
     report["missing"] = list(dict.fromkeys(missing))
     profiles = [r for r in report["runs"] if r["mode"] == "profile"]
     live = [w for r in profiles for w in r["device_windows"] if w["task_count"]]
@@ -571,12 +607,12 @@ def summarize(output_dir):
         required = {(rank, bucket, metric) for rank in range(expected_ranks)
                     for bucket in ("early", "decode") for metric in ("PipeUtilization", "Memory")}
         present = {(w["rank"], "decode" if w["bucket"] == "decode" else "early", w["metric"])
-                   for w in run["device_windows"] if w["task_count"] and _metric_present(w) and w["status"] == "complete"
+                   for w in run["device_windows"] if w["task_count"] and _metric_present(w) and _window_complete(w)
                    and w["step_alignment"] == "matched"}
         run["required_windows_missing"] = sorted(required - present, key=str)
         if required - present:
             run["missing"].append("required_profile_windows_missing:" + repr(run["required_windows_missing"]))
-    if profiles and all(not r["missing"] for r in profiles):
+    if offline_ok and profiles and all(not r["missing"] for r in profiles):
         report["evidence_status"] = "complete"
     return report
 
@@ -593,7 +629,7 @@ def _compact(value, limit=600):
 def _bounded_lines(lines):
     """Protect comparison/footer evidence against the historical 65535B limit."""
     mandatory = {"===", "RUN", "RUN_ERROR", "SOURCE", "MODEL", "WORKLOAD", "ACCOUNTING", "BOUND", "FUSED_CV",
-                 "BATCH", "BATCH_ERROR", "BATCH_META", "MTP", "LATENCY", "COMPARE", "DEVICE_COMPARE", "GLOBAL_MISSING", "FULL_REPORT"}
+                 "BATCH", "BATCH_ERROR", "BATCH_META", "MTP", "LATENCY", "COMPARE", "DEVICE_COMPARE", "GLOBAL_MISSING", "FULL_REPORT", "OFFLINE_ANALYSIS", "OFFLINE_ERROR"}
     important = {"DEVICE", "DEVICE_PHASES", "PHASE_PMU", "PIPE_EVIDENCE", "WINDOW_COVERAGE", "MISSING", "FILES"}
     candidates, shortened = [], False
     for index, line in enumerate(lines):
@@ -628,6 +664,19 @@ def summary_lines(report):
     lines.append("FUSED_CV fused INT2 unpack/softmax/window work shares one kernel; timer does not invent internal sub-phase times.")
     if report.get("error"):
         lines.append("RUN_ERROR " + _compact(report["error"], 1200))
+    offline = report.get("offline_analysis")
+    if isinstance(offline, dict):
+        overview = {key: offline.get(key) for key in ("status", "scope", "daemon", "windowstatus_summary", "phase") if key in offline}
+        lines.append("OFFLINE_ANALYSIS " + _compact(overview, 1300))
+        if offline.get("error"):
+            lines.append("OFFLINE_ERROR " + _compact(offline["error"], 1200))
+        failures = defaultdict(list)
+        for window in offline.get("windows", []):
+            if isinstance(window, dict) and (window.get("status") != "complete" or window.get("analysis_status") not in (None, "complete")):
+                reason = str(window.get("error", window.get("analysis_error", window.get("analysis_status", window.get("status", "unknown")))))
+                failures[reason].append(f"{window.get('run_id')}/r{window.get('rank')}/{window.get('window_id')}")
+        for reason, windows in list(failures.items())[:6]:
+            lines.append(f"OFFLINE_ERROR windows={len(windows)} example={windows[0]} reason={_compact(reason, 1000)}")
     for run in report.get("runs", []):
         normal = run["normal"]
         lines.append(f"BATCH {run['run_id']} variant={run['variant']} client_bs={run['concurrency']} mode={run['mode']} status={run['status']} wall_s={_fmt(normal['client_wall_s'])} done={normal['completed_requests']} output={normal['output_tokens']} control_output_tps={_fmt(normal['output_tokens_per_second'] if run['mode'] != 'profile' else None)} compare_eligible={normal['eligible_for_throughput_comparison']}")
@@ -639,7 +688,7 @@ def summary_lines(report):
             lines.append(f"LATENCY {run['run_id']} {_compact(normal['latency_ms'])}")
             continue
         if run["runtime_summaries"]:
-            lines.append("WINDOW_COVERAGE " + _compact([{k: s.get(k) for k in ("rank", "target_batch", "max_decode_requests", "missing_windows", "missing_reason")} for s in run["runtime_summaries"]], 1100))
+            lines.append("WINDOW_COVERAGE " + _compact([{k: s.get(k) for k in ("rank", "target_batch", "max_decode_requests", "status", "window_statuses", "missing_windows", "missing_reason")} for s in run["runtime_summaries"]], 1400))
         # Host statistics are per rank and bucket; show largest rank plus full skew.
         host_groups = defaultdict(list)
         for h in run["host"]:

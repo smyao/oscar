@@ -140,6 +140,36 @@ def test_control_flush_retains_failed_usage_without_rearming_profiler(tmp_path, 
     assert report["status"] == "failed" and report["sample"]["requests"][0]["usage"]["completion_tokens"] == 0
 
 
+def test_control_flush_real_one_token_sse_has_no_tpot_and_completes(tmp_path):
+    from tests.test_benchmark_mixed import sse_service
+    control = tmp_path / "control.json"
+    timer32k.atomic_json(control, {"enabled": True})
+    report = {}
+    with sse_service() as (url, requests):
+        server = types.SimpleNamespace(base_url=url, log=tmp_path / "server.log", check_alive=lambda: None)
+        result = timer32k.flush_disarmed_control(server, {"served_model_name": "qwen3.8"}, list(range(256)),
+            control=control, run_id="real-one-token-flush", timeout=2, report=report)
+    assert result is report and report["status"] == "passed"
+    assert report["completion_check"]["status"] == "passed"
+    assert report["sample"]["latency_ms"]["tpot_ms"] == {"p50": None, "p95": None, "sample_count": 0}
+    assert json.loads(control.read_text())["enabled"] is False
+    assert len(requests) == 1 and len(requests[0]["prompt"]) == 128 and requests[0]["max_tokens"] == 1
+
+
+def test_control_flush_transport_exception_is_recorded_as_failed(tmp_path, monkeypatch):
+    control = tmp_path / "control.json"
+    server = types.SimpleNamespace(base_url="http://example.invalid", log=tmp_path / "server.log", check_alive=lambda: None)
+    def failed(*args, **kwargs):
+        raise RuntimeError("injected transport exception")
+    monkeypatch.setattr(timer32k, "run_batch", failed)
+    report = {}
+    with pytest.raises(RuntimeError, match="injected transport exception"):
+        timer32k.flush_disarmed_control(server, {"served_model_name": "qwen3.8"}, list(range(256)),
+            control=control, run_id="failed-flush", timeout=2, report=report)
+    assert report["status"] == "failed" and "RuntimeError: injected transport exception" == report["error"]
+    assert json.loads(control.read_text())["enabled"] is False
+
+
 def setup_fake_execution(tmp_path, monkeypatch, *, failing_batch=None, build_rc=0, release_status="passed"):
     path = config_file(tmp_path)
     state = {"phases": [], "requests": [], "services": [], "release": []}
@@ -188,6 +218,11 @@ def setup_fake_execution(tmp_path, monkeypatch, *, failing_batch=None, build_rc=
     fake_summary.summarize = lambda root: {"root": str(root), "status": "diagnostic"}
     fake_summary.summary_lines = lambda report: ["OSCAR_TIMER_BEGIN", "OSCAR_TIMER_END"]
     monkeypatch.setitem(sys.modules, "tools.summarize_timer", fake_summary)
+    def offline(root, config, manifest):
+        assert all(service["lifecycle"].get("cleanup_complete") is True
+                   for service in manifest["services"])
+        return {"status": "complete", "daemon": False}
+    monkeypatch.setattr(timer32k, "analyse_stopped_profiles", offline)
     return path, state
 
 
@@ -224,6 +259,31 @@ def test_complete_runner_pairs_exact_prompts_keeps_controls_unarmed_and_cleans_b
     assert json.loads((root / "timer-control.json").read_text())["enabled"] is False
     output = capsys.readouterr().out
     assert output.count("OSCAR_TIMER_BEGIN") == 1 and len(output.splitlines()) < 50
+
+
+def test_real_sse_batches_and_single_token_flush_continue_from_native_to_candidate(tmp_path, monkeypatch):
+    from benchmarks import mixed
+    from tests.test_benchmark_mixed import sse_service
+    config, state = setup_fake_execution(tmp_path, monkeypatch)
+    root = tmp_path / "logs"
+    with sse_service() as (url, requests):
+        # Installation/owned model lifecycle are host fakes, but every batch,
+        # flush, SSE parser, usage check and latency aggregation is real.
+        monkeypatch.setattr(timer32k, "run_batch", lambda _url, rows, **kwargs:
+                            mixed.run_batch(url, rows, **kwargs))
+        assert timer32k.main(["--config", str(config), "--log-dir", str(root)]) == 0
+    manifest = json.loads((root / "run.json").read_text())
+    assert state["services"] == ["native", "candidate"]
+    assert len(state["release"]) == 2 and manifest["status"] == "completed"
+    batches = [batch for service in manifest["services"] for batch in service["batches"]]
+    assert len(batches) == 6 and all(batch["status"] == "completed" for batch in batches)
+    for batch in batches:
+        if batch["mode"] == "profile":
+            flush = batch["control_flush"]
+            assert flush["status"] == "passed"
+            assert flush["sample"]["latency_ms"]["tpot_ms"] == {"p50": None, "p95": None, "sample_count": 0}
+    assert len(requests) == 37
+    assert sum(payload["max_tokens"] == 1 for payload in requests) == 3
 
 
 @pytest.mark.parametrize("failure,expected_rc", [("build", 17), ("request", 1), ("release", 1)])

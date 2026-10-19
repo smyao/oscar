@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-19",
+  "reported_source": "fce13f9d68b2e7a3eb156b33a7a2918460534758",
+  "reported_dirty": true,
+  "target_log_sha256": "458428fcd652740461c76927fac7dce47f87d436c3c4583da83fa27eebbf085d",
+  "target_facts": {
+    "native_control": {
+      "requests_completed": 4,
+      "prompt_tokens": 131072,
+      "output_tokens": 1024,
+      "wall_seconds_rounded": 26.2,
+      "output_tps_rounded": 39.08,
+      "preemptions": 0
+    },
+    "native_profile": {
+      "requests_completed": 4,
+      "wall_seconds_rounded": 29.83,
+      "device_tasks": 0
+    },
+    "oscar": "not_started",
+    "failure": [
+      "one_token_flush_empty_tpot_median",
+      "daemon_worker_cannot_parse_profiler"
+    ]
+  },
+  "fix": [
+    "missing_latency_null_sample_count",
+    "worker_analyse_flag_false_raw_only",
+    "offline_analysis_after_all_services_release",
+    "verify_device_tasks_not_sdk_return_code",
+    "preserve_pending_capture_history"
+  ],
+  "validation": {
+    "host_tests": 105,
+    "result": "passed",
+    "log": "host_regressions.log",
+    "NPU": "not_run",
+    "performance": "not_run_by_agent",
+    "real_localhost_sse": true,
+    "real_daemon_and_parser_child_processes": true
+  },
+  "native_api_sources": [
+    {
+      "url": "https://raw.githubusercontent.com/Ascend/pytorch/master/torch_npu/profiler/profiler.py",
+      "sha256": "0207c6042c0155a1fe2b517d0ea536d39d5bc06b8fa5abdf1d6814e250c2fcec"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Ascend/pytorch/master/torch_npu/profiler/analysis/_npu_profiler.py",
+      "sha256": "d3b09fbdb3b1f8cceb0a5434858c930654863f6993365835ceb484147f0f1552"
+    }
+  ],
+  "inference_math_changed": false,
+  "kernel_changed": false,
+  "bound_verdict": "not_available_without_oscar_and_device_evidence"
+}

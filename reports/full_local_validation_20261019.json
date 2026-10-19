@@ -122,11 +122,64 @@
     }
   },
   "loopback_retry": {
-    "status": "blocked_pending_user_authorization",
-    "scope": "33 blocked loopback HTTP nodes in 5 test files",
-    "attempts": 2,
-    "approval_result": "automatic review timed out twice; escalated command never ran",
-    "sockets_mocked_for_this_retry": false
+    "status": "passed",
+    "tested_commit": "79d3ae924b9c74b0ea12eb0150cf56b66d0b6006",
+    "authorization": "User explicitly approved local loopback tests after the two earlier automatic review timeouts.",
+    "earlier_approval_timeouts": 2,
+    "escalated_execution_returncode": 0,
+    "scope": "Five test files; actual local HTTP and owned subprocess fixtures; no target-machine or external service connection",
+    "command": ".venv/bin/python -m pytest -q tests/test_benchmark_measure.py tests/test_benchmark_mixed_passive.py tests/test_live_output.py tests/test_plog.py tests/test_service_workflow.py --junitxml=reports/full_local_loopback_20261019.xml",
+    "log": "reports/full_local_loopback_20261019.log",
+    "junit": "reports/full_local_loopback_20261019.xml",
+    "passed": 70,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "previously_blocked_nodes": 33,
+    "previously_blocked_all_passed": true,
+    "previously_blocked_passed_nodes": [
+      "tests.test_benchmark_measure::test_context_limit_is_recorded_without_silently_shortening_input",
+      "tests.test_benchmark_measure::test_default_lengths_are_explicit_standard_scope_and_keep_full_policy_matrix",
+      "tests.test_benchmark_measure::test_request_failures_are_retained_across_all_five_repeats",
+      "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[http_error-HTTP 503]",
+      "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[malformed-JSONDecodeError]",
+      "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[no_done-[DONE]]",
+      "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[no_token_ids-return_token_ids]",
+      "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[no_usage-usage/token IDs]",
+      "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[wrong_usage-usage/token IDs]",
+      "tests.test_benchmark_measure::test_stream_measures_first_actual_token_and_preserves_multi_token_burst",
+      "tests.test_benchmark_measure::test_stream_timeout_is_bounded_and_preserves_partial_results",
+      "tests.test_benchmark_measure::test_two_warmups_five_repeats_fingerprints_and_missing_device_evidence",
+      "tests.test_benchmark_mixed_passive::test_passive_observer_captures_only_external_metrics_window",
+      "tests.test_live_output::test_service_startup_and_ongoing_output_reach_terminal_before_response",
+      "tests.test_plog::test_failed_owned_server_fixture_is_attributed_after_cleanup",
+      "tests.test_service_workflow::test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint",
+      "tests.test_service_workflow::test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch",
+      "tests.test_service_workflow::test_healthy_run_records_streaming_synthetic_mixed_probe",
+      "tests.test_service_workflow::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_mtp-mandatory]",
+      "tests.test_service_workflow::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_trace-mandatory]",
+      "tests.test_service_workflow::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[wrong_usage-exactly 128]",
+      "tests.test_service_workflow::test_hung_startup_has_finite_deadline_and_nonempty_final_log",
+      "tests.test_service_workflow::test_interrupted_startup_still_releases_its_server_and_records_outcome",
+      "tests.test_service_workflow::test_long_request_has_wall_deadline_progress_and_reaped_client[hang_long]",
+      "tests.test_service_workflow::test_long_request_has_wall_deadline_progress_and_reaped_client[trickle_long]",
+      "tests.test_service_workflow::test_memory_not_released_turns_successful_requests_into_failed_probe",
+      "tests.test_service_workflow::test_missing_device_selection_fails_before_any_resource_or_server_launch",
+      "tests.test_service_workflow::test_nonregressed_synthetic_does_not_arm_diagnostic",
+      "tests.test_service_workflow::test_regressed_synthetic_runs_one_separate_same_server_device_diagnostic",
+      "tests.test_service_workflow::test_startup_failure_records_exit_and_never_kills_an_unrelated_group",
+      "tests.test_service_workflow::test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up",
+      "tests.test_service_workflow::test_synthetic_mixed_timeout_blocks_formal_service",
+      "tests.test_service_workflow::test_synthetic_refuses_inherited_debug_sync_before_service_start"
+    ],
+    "not_evidence_for": [
+      "NPU kernel completion",
+      "NPU memory release",
+      "graph capture or replay",
+      "real model service",
+      "model quality",
+      "performance"
+    ]
   },
   "host_regression": {
     "full_local_after": {
@@ -213,6 +266,18 @@
         "SDKROOT": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
         "OSCAR_TEST_CLANGXX": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
       }
+    },
+    "full_local_loopback": {
+      "junit": "reports/full_local_loopback_20261019.xml",
+      "returncode": 0,
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "70",
+      "time": "15.899",
+      "timestamp": "2026-10-19T18:55:31.506942+08:00",
+      "hostname": "lokiyaodeMacBook-Pro.local"
     }
   },
   "bf16_screen": {
@@ -310,5 +375,14 @@
     "reports/full_service_launch_signal_before_20261019.xml",
     "reports/full_service_cleanup_logging_before_20261019.xml"
   ],
-  "regression_note": "Initial full suite was run before repairs/new audit tests. The targeted post-change suites are not a replacement or a claim that the whole suite passes."
+  "regression_note": "Initial full suite was run before repairs/new audit tests. The targeted post-change suites are not a replacement or a claim that the whole suite passes.",
+  "remaining_initial_failures": {
+    "count": 32,
+    "categories": {
+      "missing_original_artifact": 17,
+      "retired_request_window_test_contract": 13,
+      "historical_static_rule_failure": 2
+    },
+    "note": "Node-level resolution across focused reruns; the full suite has not been re-run and is not claimed green."
+  }
 }

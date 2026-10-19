@@ -20,6 +20,7 @@
 | --- | --- | --- |
 | 全仓初轮pytest | 1899 passed / 52 failed / 14 errors / 134 skipped；另29 subtests passed，105.37s | 保留完整XML、日志与66个失败/错误节点；不是全仓通过 |
 | 修改后的相关25文件最终交叉回归 | 451 passed | 服务、候选入口、路由、BF16 producer/reader/arena契约，含33项真实进程故障注入；保留前一轮443项回执 |
+| 用户授权后的本机HTTP回环回归 | 70 passed，15.93s；此前受阻33项全部通过 | 实际127.0.0.1 HTTP与拥有的测试子进程，覆盖启动、流式请求、超时、故障、中断、清理与日志；NPU/模型资源为测试夹具，不是实际NPU服务 |
 | 实际解包源码尾段H16/H32/H64 | 9 passed | 每形2048组FP16元数据×256值，四级表/舍入/Gather与独立位oracle比较；错行偏移和覆盖活元数据两个负对照均被检出。SDK行为、Matmul与硬件同步不在此范围 |
 | 实际Python forward跨轮workspace | 8 passed | target/first-MTP × none/align × warm8232/16384；首16K→历史→q4并发128→拒绝3→later-q1，污染旧缓冲、逆序物理页，检查原生current抑制、写读顺序、padding与地址保持。NPU算子为明确主机替身 |
 | 完整BF16 CPU数值筛查 | rc2，4/11通过、7/11失败，其中2例最终输出失败 | 旧FP32对照11/11通过；保留原空间oracle和冻结阈值，不能宣布精度通过 |
@@ -28,7 +29,9 @@
 
 全仓66个节点分为：33个本机HTTP绑定被沙箱EPERM阻断；17个缺少历史原始报告/指令trace；13个已退出生产的request-window研究配置/旧错误顺序；2个旧实验静态规范门；1个producer能力断言已修复并通过。没有删除失败用例、伪造历史输入、绕过生产校验或修改冻结精度来制造全绿。
 
-HTTP回归曾请求沙箱外有限运行，自动审批两次超时，命令没有执行。已向用户说明原因并请求明确授权；未收到回复前保持未验证。其他无需端口的真实进程测试继续完成。模拟HTTP仅用于明确隔离的生命周期故障注入，不能替代上述33个HTTP节点。
+HTTP回归前两次沙箱外自动审批超时，均未执行。用户随后明确回复“允许运行本机回环测试”，在提交`79d3ae9`上成功执行5个测试文件，真实rc0、70项通过、0失败/错误/跳过。逐节点匹配确认初轮被EPERM阻断的33项全部在通过集合中；完整[日志](../reports/full_local_loopback_20261019.log)与[XML](../reports/full_local_loopback_20261019.xml)保留。本次不需要新增生产代码修复，不连接目标机或外部服务。
+
+初轮的33个权限节点及1个能力断言现已分别复验通过；剩余17个缺原始材料、13个旧研究契约与2个静态规范节点保持未通过。这是逐节点更新，不重写初轮全仓结果，也不宣称全仓已经重新跑绿。回环HTTP服务、model/tokenizer/遥测和NPU资源夹具只验证主机流程，不证明真实模型推理或设备显存释放。
 
 ## 数值失败为什么不能宣称已修复
 
@@ -52,6 +55,7 @@ export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platf
 export OSCAR_TEST_CLANGXX=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++
 .venv/bin/python -m pytest -q
 .venv/bin/python -m pytest -q tests/test_full_service_audit.py tests/test_full_runtime_audit.py tests/test_full_bf16_audit.py
+.venv/bin/python -m pytest -q tests/test_benchmark_measure.py tests/test_benchmark_mixed_passive.py tests/test_live_output.py tests/test_plog.py tests/test_service_workflow.py
 .venv/bin/python -m tools.experiments.bf16_all_sources_screen --output /tmp/oscar-bf16-local-screen.json
 ```
 

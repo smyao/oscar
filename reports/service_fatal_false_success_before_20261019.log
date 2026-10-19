@@ -1,0 +1,4 @@
+START phase=serve cwd=/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2 command=["/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python", "-m", "tools.target_cli", "--config", "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/configs/target.json"]
+OWNED_PROCESS phase=serve pid=49115 pgid=49115
+(EngineCore pid=488884) ERROR 10-19 06:39:32 [multiproc_executor.py:284] Worker proc VllmWorker-2 died unexpectedly, shutting down executor.
+RESULT {"phase": "serve", "command": ["/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python", "-m", "tools.target_cli", "--config", "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/configs/target.json"], "returncode": 0, "elapsed_seconds": 0.104618, "timed_out": false, "interrupted": false, "log": "/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-235/test_native_fatal_with_zero_pr0/serve.log", "cleanup_complete": true}

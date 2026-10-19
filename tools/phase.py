@@ -1,4 +1,6 @@
 # 档案 #35/#51/#52/#75/#94/#95/#101/#116/#117/#120/#125/#135：有界进程组、保留原始退出码与完整日志；仅精确折叠成功关闭期噪声。
+# #166/#167: the native process exit code is separate from a service failure verdict;
+# service-specific evidence is classified before any supervisor cleanup signal.
 """Run a phase in an owned process group, always recording its outcome."""
 from __future__ import annotations
 
@@ -15,6 +17,7 @@ import sys
 import threading
 import time
 from dataclasses import asdict, dataclass
+from typing import Callable
 
 
 @dataclass(frozen=True)
@@ -27,6 +30,8 @@ class PhaseResult:
     interrupted: bool
     log: str
     cleanup_complete: bool
+    process_returncode: int | None = None
+    failure: dict[str, object] | None = None
 
 
 def atomic_json(path: Path, value: object) -> None:
@@ -101,7 +106,7 @@ def _compact_should_mirror(line: str, state: dict[str, int]) -> bool:
         return False
     if "STARTUP_WAIT " in line:
         return True
-    if line.startswith("SERVICE_ERROR ") or line.startswith("[oscar] CLEANUP_END owned_server complete=False"):
+    if line.startswith(("SERVICE_ERROR ", "SERVICE_FAILURE ", "[oscar] CLEANUP_END owned_server complete=False")):
         return True
     if line.startswith(("START phase=", "START owned_service",
                         "RESULT ", "SERVICE_RESULT ")):
@@ -364,7 +369,8 @@ def cleanup_group(proc: subprocess.Popen, grace: float) -> bool:
 
 def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
               timeout: float | None, env: dict[str, str] | None = None,
-              grace: float = 5, heartbeat: float = 15) -> PhaseResult:
+              grace: float = 5, heartbeat: float = 15,
+              classify_failure: Callable[[Path, int], dict[str, object] | None] | None = None) -> PhaseResult:
     # None is explicit: foreground serving has no lifetime deadline. Its
     # shutdown remains bounded by grace, exactly like installation phases.
     if (not command or (timeout is not None and (not math.isfinite(timeout) or timeout <= 0))
@@ -380,6 +386,7 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
     rc = 127
     old_signals = {}
     interrupt_signal = None
+    failure = None
 
     def on_signal(signum, _frame):
         nonlocal interrupt_signal
@@ -423,6 +430,21 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
                 # strand workers after the owned leader has already exited.
                 for sig in old_signals:
                     signal.signal(sig, signal.SIG_IGN)
+                if proc is not None and classify_failure is not None:
+                    try:
+                        stream.flush()
+                        # Freeze evidence before our TERM/KILL can generate
+                        # worker death logs. A service may outlive the API
+                        # leader, so EOF or post-cleanup log size is unsafe.
+                        observed_bytes = os.fstat(stream.fileno()).st_size
+                        failure = classify_failure(logfile, observed_bytes)
+                    except Exception as error:
+                        failure = {"kind": "failure_classification_error",
+                                   "error": f"{type(error).__name__}: {error}"}
+                    if failure is not None:
+                        stream.write("SERVICE_FAILURE " + json.dumps(failure) + "\n")
+                        if rc == 0:
+                            rc = 1
                 if proc is not None:
                     cleaned = cleanup_group(proc, grace)
             except BaseException as exc:
@@ -434,11 +456,13 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
             if not cleaned and rc == 0:
                 rc = 125
             result = PhaseResult(name, command, rc, round(time.monotonic()-started, 6),
-                                 expired, interrupted, str(logfile.resolve()), cleaned)
+                                 expired, interrupted, str(logfile.resolve()), cleaned,
+                                 None if proc is None else proc.poll(), failure)
             stream.write("RESULT " + json.dumps(asdict(result)) + "\n")
             atomic_json(log_dir / f"{name}.json", asdict(result))
     state = "PASSED" if rc == 0 else "FAILED"
-    terminal_line(f"[oscar] {state} phase={name} rc={rc} log={logfile}")
+    process_code = f" process_rc={result.process_returncode}" if classify_failure is not None else ""
+    terminal_line(f"[oscar] {state} phase={name} rc={rc}{process_code} log={logfile}")
     return result
 
 

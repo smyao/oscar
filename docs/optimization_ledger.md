@@ -1,5 +1,9 @@
 # OSCAR 优化与失败证据索引
 
+## 2026-10-19 请求期 Trap 与服务退出结果
+
+新日志 #167 已完成启动，随后vector Trap/worker死亡；外层rc0/stopped不能代表服务正常。修复正式服务结束判定：清理前严格匹配原生fatal记录，保留process_returncode，原0+确认fatal时有效rc1/failed。仅结束时读日志，不增加Attention运算、NPU同步/回读或前置probe。生命周期179项、路由/异步边界152项通过（有重叠）。`8232>512`且原生同步在replay之前，异步dump不能唯一归因C16；NPU Trap仍未解决，既有7/11数值失败和设备/质量/性能欠账保留。[证据与最小诊断](runtime_trap_20261019.md)、[汇总回执](../reports/runtime_trap_diagnosis_20261019.json)。
+
 ## 2026-10-19 BF16 额外成本与正式服务生命周期
 
 默认候选接入紧凑 typed CV arena、一次发布 BF16 Q（附舍入前 FP32 checksum）、4行精确窗口检查 Cast、BF16-first Matmul 初始化。D256/C16/20 Cube、N16384/Hq6/S1 的整个共享 workspace 减少113.90625 MiB；这是源码字节账，未申领延时/吞吐收益。直启增加本次进程组 supervisor，实时日志、真实rc、有界清理；不加probe/前置环境审计、不清理未知服务、不降低0.9。

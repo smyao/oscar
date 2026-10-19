@@ -28764,3 +28764,15 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **本轮源码修复（不是目标恢复证据）**：`install_serve`原来最后`execvpe`替换自身，正式服务缺少外层owned-group监督/退出清理。本轮改成无运行截止时间的正式服务supervisor；仅清理本次新session的进程组，覆盖API leader先退出、worker持有日志fd、SIGINT/SIGTERM/SIGHUP和需要KILL的worker。输出实时并保留serve.log、真实rc和清理结果；持续权限拒绝不能当清理成功。失败后只解析当前日志给内存诊断及只读`npu-smi info`/进程检查命令，不降0.9、不杀未知旧进程、不新增默认前置审计或请求probe。
 
 **边界**：本机真实子进程回归及组合主机回归通过，见`docs/bf16_overhead_fix_20261019.md`及`reports/bf16_overhead_delivery_20261019.json`；它们只证明所构造的生命周期/源码协议，不证明目标NPU释放或服务已启动。用户机器仍需确认并释放已知可停止的占用。并行完成的BF16成本优化未改冻结阈值；既有7/11数值失败、#165未归因Trap和新CANN/NPU/图/模型质量/性能欠账保留。
+
+## [167] 真机条目（2026-10-19 用户回传）· 服务已启动后vector Trap，内部worker死亡但外层rc0/stopped
+
+**原始证据**：`reports/target_runtime_trap_20261019.txt`，65537字节，SHA256 `834fec8944f9ffc4c247195c85e565c278c2641368618042be9a9d1522ed82b1`；417行，最后scheduler stats中途截断。用户另贴serve/status JSON：目录`20261019T061557.758686Z`，candidate、物理4–7、端口7878、probes none，serve rc0、1403.510228秒、未超时/未中断、cleanup_complete=true、status=stopped。用户确认“包含最新的代码”，未提供目标SHA；不将本地母版本`19d157a`冒充目标指纹。
+
+**本次首错与上次区别**：06:21:25空闲29.12/29.49GiB，06:22:06 Application startup complete；本次已越过#166原生初始化内存不足。随后有HTTP200响应头、MTP_DISCARD_BRIDGE记录，06:39:19打印Replaying aclgraph，06:39:20在主模型`acl_graph.py:256`同步和输出线程处暴露vector exception 507035，各rank可见PC差0x264、mask `0x6500020bd00028c`；随后HCCL watchdog退出、06:39:32明确worker died unexpectedly。HTTP200不证明生成完成，HCCL后续异常不等同首因；没有本轮guard符号/site/family/code，设备根因仍未定位。
+
+**异步归因边界（原生源码与主机执行验证）**：`:256`同步在`:257 replay()`之前，因此本次回放尚未提交。末尾dump含单请求computed16384、本轮8232、无scheduled spec；8232大于capture上限512，该几何由原生dispatcher选NONE，条件进入OSCAR时为BF16 C16历史/窗口加原生current。EngineCore异步队列先提交新批次再等待最老future，错误dump绑定被等待的scheduler，不能视为同步处正在进入的图批次。不能因此排除首draft/后续draft或确定C16首因。
+
+**可复现的退出状态缺陷与修复**：原生`launcher.terminate_if_errored`可仅设`server.should_exit`，API/CLI仍正常返回0；旧supervisor只看该rc便记stopped/PASSED。本地主机子进程打印真实worker-death原句后exit0，稳定复现假成功，保留`reports/service_fatal_false_success_before_20261019.log`。正式服务现在精确匹配原生来源与完整fatal消息，固定清理前的日志字节边界后流式判定；`process_returncode`保留真实子进程码，原0+确认fatal的有效`returncode=1/status=failed`。先判定再写最终相位/终端，不输出假PASSED；不把普通请求异常、TBE EOF或监督器清理后新增的worker死亡记录当根因。只清理本次进程组，日志分类I/O失败显式失败，不修改原生代码/Attention/冻结guard，不加默认probe/前置审计。
+
+**本地验证和未收口项**：生命周期/部署/日志179项通过，路由/原生异步归因152项通过（套件存在重叠）；详见`reports/runtime_trap_diagnosis_20261019.json`及`docs/runtime_trap_20261019.md`。FE0七文件与精度门不变，没有新CANN/NPU/图完成/模型质量/性能证据，既有BF16数值7/11失败仍保留。此次只修复服务退出判定，**没有宣称#165或本次NPU Trap已修复**。既有`--diagnose-trap`可禁用主/draft图并逐族归因；仅一条原触发请求、16输出、并发1，收完整文件中的首条site/family/code或prior_work，不重跑AISBench。

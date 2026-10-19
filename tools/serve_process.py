@@ -1,6 +1,8 @@
 # Archive G21/G22/#94/#95/#125/#135: supervise only this launch's process
 # group, keep live/durable failures, and diagnose startup memory without
 # changing utilization, touching an existing service, or claiming NPU release.
+# Native launcher can return normally after an engine failure; classify only
+# exact native fatal records before owned cleanup (#94/#95/#125/#135/#166/#167).
 """Foreground service ownership, with no installation, probe or readiness gate."""
 from __future__ import annotations
 
@@ -22,6 +24,60 @@ _STARTUP_MEMORY = re.compile(
     r"on startup is less than desired GPU memory utilization "
     r"\((?P<utilization>[0-9.]+), (?P<required>[0-9.]+) GiB\)"
 )
+
+# These records are emitted only by terminal worker/engine failure branches.
+# Native multiproc_executor.monitor_workers first excludes shutting_down;
+# WorkerProc excludes shutdown_requested; engine.core logs these in its fatal
+# exception handler. Request exceptions and TBE EOF are not service verdicts.
+_ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
+_NATIVE_LOG = re.compile(
+    r"^(?:\([^()\n]+ pid=\d+\)\s*)*"
+    r"ERROR \d{2}-\d{2} \d{2}:\d{2}:\d{2} "
+    r"\[(?P<source>multiproc_executor\.py|core\.py):\d+\] (?P<message>[^\r\n]+)$"
+)
+_WORKER_DEATH = re.compile(r"Worker proc \S+ died unexpectedly, shutting down executor\.")
+
+
+def classify_service_failure(log: Path, observed_bytes: int) -> dict[str, object] | None:
+    """Read only pre-cleanup bytes, with bounded memory even for huge logs.
+
+    This diagnoses explicit native fatal records; it is not a health probe or
+    a general ERROR/Traceback matcher. Read/parse failures propagate so an
+    unavailable classification cannot turn a zero process exit into success.
+    """
+    offset = 0
+    continuation = False
+    with log.open("rb") as stream:
+        while offset < observed_bytes:
+            line_offset = offset
+            raw = stream.readline(min(65536, observed_bytes - offset))
+            if not raw:
+                raise OSError(f"service log shortened before pre-cleanup boundary {observed_bytes}")
+            offset += len(raw)
+            # Skip an oversized logical line entirely. A native fatal record
+            # is short; parsing a continuation as a log header could mistake
+            # request text for an engine record. The next line remains visible.
+            if continuation:
+                continuation = not raw.endswith(b"\n")
+                continue
+            if len(raw) == 65536 and not raw.endswith(b"\n"):
+                continuation = True
+                continue
+            line = _ANSI_ESCAPE.sub("", raw.decode("utf-8", errors="replace").rstrip("\r\n"))
+            match = _NATIVE_LOG.fullmatch(line)
+            if match is None:
+                continue
+            source, message = match["source"], match["message"]
+            fatal = ((source == "multiproc_executor.py" and (
+                        _WORKER_DEATH.fullmatch(message) is not None
+                        or message in {"WorkerProc failed to start.", "WorkerProc failed."}))
+                     or (source == "core.py" and message in {
+                         "EngineCore failed to start.", "EngineCore encountered a fatal error."}))
+            if fatal:
+                return {"kind": "native_service_fatal", "source": source,
+                        "message": message, "log_byte_offset": line_offset,
+                        "observed_bytes_before_cleanup": observed_bytes}
+    return None
 
 
 def startup_diagnostic(log: Path, config: dict) -> dict | None:
@@ -70,7 +126,8 @@ def run_service(config: dict, config_path: Path, *, log_dir: Path,
         command.append("--native")
     result = run_phase("serve", command, cwd=ROOT, log_dir=Path(log_dir),
                        timeout=None, env=environment,
-                       grace=config["shutdown_timeout_seconds"], heartbeat=0)
+                       grace=config["shutdown_timeout_seconds"], heartbeat=0,
+                       classify_failure=classify_service_failure)
     if result.returncode:
         diagnostic = startup_diagnostic(Path(result.log), config)
         if diagnostic is not None:
@@ -78,7 +135,8 @@ def run_service(config: dict, config_path: Path, *, log_dir: Path,
             try:
                 atomic_json(Path(log_dir) / "serve-diagnostic.json", diagnostic)
             except OSError as error:
-                terminal_line(f"[oscar] diagnostic write failed: {error}; original rc={result.returncode}", stderr=True)
+                terminal_line(f"[oscar] diagnostic write failed: {error}; effective_rc={result.returncode} "
+                              f"process_rc={result.process_returncode}", stderr=True)
             terminal_line(
                 "[oscar] STARTUP_MEMORY_INSUFFICIENT " + diagnostic["native_message"] +
                 f"; selected physical devices={config['devices']}; "

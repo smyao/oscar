@@ -1,0 +1,125 @@
+{
+  "date": "2026-10-19",
+  "mother_commit": "19d157a",
+  "branch": "oscar-new-3",
+  "target_version": {
+    "user_statement": "包含最新的代码",
+    "target_sha": "not_supplied"
+  },
+  "attachment": {
+    "file": "reports/target_runtime_trap_20261019.txt",
+    "bytes": 65537,
+    "sha256": "834fec8944f9ffc4c247195c85e565c278c2641368618042be9a9d1522ed82b1",
+    "lines": 417,
+    "ends_mid_line": true
+  },
+  "user_pasted_status_subset": {
+    "source": "user message; selected fields, not an original file",
+    "status": "stopped",
+    "phase": "serve",
+    "returncode": 0,
+    "elapsed_seconds": 1403.510228,
+    "timed_out": false,
+    "interrupted": false,
+    "cleanup_complete": true,
+    "log": "/workspace/oscar/oscar-new/logs/20261019T061557.758686Z/serve.log",
+    "npu_resource_release": "not_measured",
+    "variant": "candidate",
+    "devices": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "port": 7878
+  },
+  "observations": {
+    "application_startup_complete": "06:22:06",
+    "vector_exception": "06:39:20",
+    "error_code": 507035,
+    "pc_deltas_hex": [
+      "0x264"
+    ],
+    "worker_death": "06:39:32",
+    "queued_scheduler": {
+      "num_requests": 1,
+      "num_computed_tokens": 16384,
+      "num_scheduled_tokens": 8232,
+      "scheduled_spec_decode_tokens": {},
+      "max_graph_capture": 512
+    },
+    "guard_site_family_code": "not_present"
+  },
+  "classification_on_supplied_attachment": {
+    "kind": "native_service_fatal",
+    "source": "multiproc_executor.py",
+    "message": "Worker proc VllmWorker-2 died unexpectedly, shutting down executor.",
+    "log_byte_offset": 60708,
+    "observed_bytes_before_cleanup": 65537
+  },
+  "fix": {
+    "native_process_returncode": 0,
+    "effective_service_returncode": 1,
+    "status": "failed",
+    "scope": "strict native fatal evidence before supervisor cleanup; no attention or device-path modification",
+    "evidence_scope": "expected classification of supplied log and reproduced host subprocess, not a new target run"
+  },
+  "tests": {
+    "service_fatal_outcome_after_20261019.xml": {
+      "tests": 179,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "runtime_trap_routes_20261019.xml": {
+      "tests": 152,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "native_async_trap_attribution_20261019.xml": {
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "runtime_8232_contract_20261019.xml": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "commands": [
+    ".venv/bin/python -m pytest -q tests/test_service_fatal_outcome.py tests/test_serve_process.py tests/test_install_serve.py tests/test_native_token_budget.py tests/test_trap_diagnostic_mode.py tests/test_workflow.py tests/test_live_output.py tests/test_deploy_launcher.py tests/test_service_workflow.py --junitxml=reports/service_fatal_outcome_after_20261019.xml",
+    ".venv/bin/python -m pytest -q tests/test_serving_variants.py tests/test_bf16_history_dispatch.py tests/test_bf16_history_policy.py tests/test_native_async_trap_attribution.py tests/test_guard_diag.py tests/test_trap_diagnostic_mode.py --junitxml=reports/runtime_trap_routes_20261019.xml",
+    "SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk OSCAR_TEST_CLANGXX=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ .venv/bin/python -m pytest -q tests/test_runtime_8232_contract.py --junitxml=reports/runtime_8232_contract_20261019.xml"
+  ],
+  "boundaries": {
+    "tests_overlap": "do not add suite totals as unique coverage",
+    "fe0": "7/7 byte identical",
+    "acceptance_sha256": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+    "CANN": "not run",
+    "official_cpu_debug": "not run",
+    "NPU": "not run locally",
+    "graph_capture_replay": "not verified locally; target capture log does not prove successful replay",
+    "quality": "existing BF16 7/11 failed cases including 2 final-output failures retained",
+    "performance": "not accepted",
+    "trap_root_cause": "unresolved; no symbol/site/family/code attribution",
+    "resource_release": "not_measured"
+  },
+  "warm_8232_host_contract": {
+    "tests": 4,
+    "schedule": "23 C16 clusters plus 24 single history groups",
+    "active_tokens": 8232,
+    "padding_cases": [
+      8232,
+      8256
+    ],
+    "last_query_group": [
+      8211,
+      21
+    ],
+    "evidence": "actual source control flow and bounded host address stubs; no hardware completion or arithmetic proof"
+  }
+}

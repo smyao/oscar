@@ -125,6 +125,7 @@ def test_public_llm_rpc_sampling_and_shutdown_are_isolated(monkeypatch,tmp_path,
     from tools import model_config
     monkeypatch.setattr(model_config,'apply_model_options',lambda value,**_:value)
     monkeypatch.setenv('OMP_NUM_THREADS','1')
+    monkeypatch.setenv('VLLM_WORKER_MULTIPROC_METHOD','fork')
     model=tmp_path/'model';model.mkdir()
     (model/'config.json').write_text(json.dumps({'num_hidden_layers':4,'full_attention_interval':4,
         'head_dim':8,'num_attention_heads':4,'num_key_value_heads':2}))
@@ -140,11 +141,15 @@ def test_public_llm_rpc_sampling_and_shutdown_are_isolated(monkeypatch,tmp_path,
         config['rotation_calibration_tokens'] = 6
     config_path=tmp_path/'config.json';config_path.write_text(json.dumps(config));before=config_path.read_bytes()
     transformer=types.ModuleType('transformers')
-    transformer.AutoTokenizer=NS(from_pretrained=lambda *a,**k:NS(apply_chat_template=lambda *_a,**_k:[7,8,9]))
+    def tokenizer(*_args, **_kwargs):
+        assert cli.os.environ['VLLM_WORKER_MULTIPROC_METHOD']=='spawn'
+        return NS(apply_chat_template=lambda *_a,**_k:[7,8,9])
+    transformer.AutoTokenizer=NS(from_pretrained=tokenizer)
     monkeypatch.setitem(sys.modules,'transformers',transformer)
     calls=[];options={};run_spec={}
     class LLM:
         def __init__(self,**kwargs):
+            assert cli.os.environ['VLLM_WORKER_MULTIPROC_METHOD']=='spawn'
             options.update(kwargs);calls.append('warmup')
             self.llm_engine=NS(engine_core=NS(shutdown=lambda **_:calls.append('shutdown')))
         def collective_rpc(self,name,**kwargs):
@@ -172,6 +177,7 @@ def test_public_llm_rpc_sampling_and_shutdown_are_isolated(monkeypatch,tmp_path,
         cli.collect(config_path,out)
         report=json.loads((out/'capture-manifest.json').read_text())
         assert report['token_count']==6 and report['prompt_lengths']==[3,3] and report['rank_sha256']
+        assert report['worker_multiproc_method']=='spawn'
         if bundled:
             from tools.calibration_data import GPQA_SHA256
             assert report['prompt_source_sha256'] == GPQA_SHA256

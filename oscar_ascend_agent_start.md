@@ -582,6 +582,7 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 | 历史现象 | 必须落实的检查与处理 |
 | --- | --- |
+| #166 校准 LLM 两层 fork 后 `Invalid thread pool!` | 在校准子进程创建和 vLLM 导入前设置 `VLLM_WORKER_MULTIPROC_METHOD=spawn`，核 EngineCore/Ascend worker 都用原生 get_mp_context；父进程建池不能替代两层隔离，正式服务配置保持。 |
 | #165 prepare-rotations 下载 GPQA 报 SSL 自签名证书链错误 | 默认使用随包固定 SHA 的官方数据，实际 wheel 必须包含压缩数据；禁网主机验证、数据 SHA 参与 PT 缓存身份，缺失匹配 PT 自动校准，数据损坏/显式坏 PT 继续失败，不关闭 TLS。 |
 | #151 history解包64.71%，用户candidate整轮仍约19分钟 | 新整数布局/half转换保持旧数学和live/padding检查，原核保留独立对照；65536码穷举、特殊half逐位、NPU图和同形2+5速度门必过，局部份额不能外推整体19→8。 |
 | #151 q4测量已完成却最终缺证据：阶段状态覆盖同名结果 | 子进程输出不得占用run_phase的`<phase>.json`；保留数据/退出状态两个文件，用真实子进程回归验证，不仅mock phase。失败显示具体缺失字段，不降低精度/签名门。 |

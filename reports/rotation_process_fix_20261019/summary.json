@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-19",
+  "code_base_commit": "c5b3b234",
+  "target_log_sha256": "4fe45f6683cdc6d70e10cb207300078577f1237f3986cec16dea09b49d77ca16",
+  "target_observation": {
+    "build_ops": "passed_rc0",
+    "bundled_data": "passed",
+    "prompts": 99,
+    "tokens": 29867,
+    "model_capture": "not_started_engine_construction_failed",
+    "error": "ParallelOpenMP.cpp:64 Invalid thread pool in autograd thread_init",
+    "process_method": "fork_at_both_levels_observed_in_log",
+    "target_commit": "not_in_log"
+  },
+  "fix": "isolated_calibration_spawn_before_interpreter_and_native_imports",
+  "native_source_sha256": {
+    "references/vllm/vllm/utils/system_utils.py": "26127b114d896f776da2d5ba90eac5a023704150f07b1703eb66252bedf7eaa6",
+    "references/vllm/vllm/v1/engine/utils.py": "fc876c506ab019350b59e51dddedce5019a541eb695a6138c079f9a784e3b5b1",
+    "references/vllm-ascend/vllm_ascend/patch/platform/patch_multiproc_executor.py": "e6bac27986d863b10fa0d2e4a37965e57970991935c85881644c00bd86b6ea7d",
+    "references/vllm-ascend/examples/offline_inference_npu_tp2.py": "e73626de970e1377ae39cb8248a76f26f6c5e17629bb91fc0edd776d297f318c"
+  },
+  "validation": {
+    "host_capture_pt_install_data_tests": {
+      "count": 55,
+      "result": "passed",
+      "log": "host_regressions.log"
+    },
+    "process_environment_and_real_nested_spawn": {
+      "count": 5,
+      "result": "passed",
+      "command": ".venv/bin/python -m pytest -q tests/test_calibration_processes.py",
+      "worker_count": 2,
+      "process_count": 4,
+      "torch_threads_per_process": 2,
+      "actual_operation": "128x128 matrix autograd, every element gradient exactly 256",
+      "exit_codes": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "native_contract": "read-only get_mp_context function AST, platform checks stubbed; actual multiprocessing and Torch executed"
+    },
+    "distinct_tests_passed": 60
+  },
+  "formal_service_environment": "unchanged",
+  "native_sources": "read_only",
+  "cann": "not_rebuilt_no_kernel_changes",
+  "npu_engine_calibration": "not_run",
+  "device_graph": "not_run",
+  "model_quality": "not_run",
+  "performance": "not_run_user_requested",
+  "remote_device_access": false
+}

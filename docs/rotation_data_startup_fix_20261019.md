@@ -1,5 +1,8 @@
 # 一键启动校准数据证书错误修复（2026-10-19）
 
+后续用户日志已确认数据准备通过；校准引擎的另一处线程池启动错误及修复见
+[后续说明](rotation_process_startup_fix_20261019.md)。
+
 用户执行 `git pull --ff-only && bash scripts/install_serve.sh --variant candidate`，
 `build-ops` 返回 0；随后 `prepare-rotations` 的 GPQA 下载报
 `SSLCertVerificationError: self-signed certificate in certificate chain`。

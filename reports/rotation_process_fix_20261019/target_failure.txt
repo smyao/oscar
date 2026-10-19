@@ -1,0 +1,218 @@
+RESULT {"phase": "build-ops", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "tools.build_ops", "--soc", "ascend910b4", "--log-dir", "/workspace/gpt_new_oscar_kimi/logs/20261019T013530.348820Z/build"], "returncode": 0, "elapsed_seconds": 0.402215, "timed_out": false, "interrupted": false, "log": "/workspace/gpt_new_oscar_kimi/logs/20261019T013530.348820Z/build-ops.log", "cleanup_complete": true}
+[oscar] PASSED phase=build-ops rc=0 log=/workspace/gpt_new_oscar_kimi/logs/20261019T013530.348820Z/build-ops.log
+START phase=prepare-rotations cwd=/workspace/gpt_new_oscar_kimi command=["/usr/local/python3.12.13/bin/python3", "-m", "tools.prepare_rotations", "--config", "/workspace/gpt_new_oscar_kimi/logs/20261019T013530.348820Z/effective-target.json"]
+[W1019 01:35:40.594706460 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+{"rotation_prepare": "checking", "artifact": "/workspace/gpt_new_oscar_kimi/artifacts/rotations/a7b5defbf8558637d2de5bb4a03c7c28d4ff73d1556cd4378f2fbfebebe5bfeb/qqt_sst_a6d16c92d028d816d8a7/calibrated.pt", "prompt_source": {"source": "openai-simple-evals/gpqa_diamond-seed0-v1", "sha256": "41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305"}}
+{"rotation_prepare": "generating", "artifact": "/workspace/gpt_new_oscar_kimi/artifacts/rotations/a7b5defbf8558637d2de5bb4a03c7c28d4ff73d1556cd4378f2fbfebebe5bfeb/qqt_sst_a6d16c92d028d816d8a7/calibrated.pt", "reason": "matching_cache_missing"}
+{"rotation_capture": "calibration_data_ready", "source": "bundled_official_gpqa", "path": "/workspace/gpt_new_oscar_kimi/artifacts/rotations/a7b5defbf8558637d2de5bb4a03c7c28d4ff73d1556cd4378f2fbfebebe5bfeb/qqt_sst_a6d16c92d028d816d8a7/capture-arvsdfg3/gpqa_diamond.csv", "sha256": "41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305"}
+[W1019 01:35:52.138981410 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+{"rotation_capture": "input_prepared", "prompts": 99, "tokens": 29867, "prompt_sha256": "bc2279ebf68c5ba4bf4bad2f7fec37e9463fdb670eb74cba2e9d429ddfd4a8f9"}
+INFO 10-19 01:36:01 [__init__.py:44] Available plugins for group vllm.platform_plugins:
+INFO 10-19 01:36:01 [__init__.py:46] - ascend -> vllm_ascend:register
+INFO 10-19 01:36:01 [__init__.py:49] All plugins in this group will be loaded. Set `VLLM_PLUGINS` to control which plugins to load.
+INFO 10-19 01:36:01 [__init__.py:238] Platform plugin ascend is activated
+INFO 10-19 01:36:01 [platform.py:62] Breakable cudagraph is force disabled on Ascend because DeepSeek V4 PIECEWISE cudagraph is not supported yet.
+2026-10-19 01:36:07,950 - 136177 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.23.0+empty: default 1
+INFO 10-19 01:36:08 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-19 01:36:08 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+INFO 10-19 01:36:08 [api_utils.py:273] non-default args: {'trust_remote_code': True, 'dtype': 'bfloat16', 'max_model_len': 848, 'tensor_parallel_size': 4, 'enable_prefix_caching': False, 'gpu_memory_utilization': 0.9, 'max_num_batched_tokens': 16384, 'max_num_seqs': 1, 'disable_log_stats': True, 'enforce_eager': True, 'enable_chunked_prefill': False, 'worker_extension_cls': 'oscar_ascend.integration.rotation_capture.RotationCaptureWorker', 'mamba_cache_dtype': 'bfloat16', 'mamba_ssm_cache_dtype': 'bfloat16', 'additional_config': {'enable_cpu_binding': True}, 'model': '/softwarePlatform/models_directory/Qwen3.8-27B'}
+INFO 10-19 01:36:09 [model.py:611] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 10-19 01:36:09 [model.py:1745] Using max model len 848
+WARNING 10-19 01:36:09 [arg_utils.py:2388] This model does not officially support disabling chunked prefill. Disabling this manually may cause the engine to crash or produce incorrect outputs.
+WARNING 10-19 01:36:09 [scheduler.py:281] max_num_batched_tokens (16384) exceeds max_num_seqs * max_model_len (848). This may lead to unexpected behavior.
+WARNING 10-19 01:36:09 [config.py:554] Qwen3.5 model specifies mamba_ssm_dtype='float32' in its config, but --mamba-ssm-cache-dtype='bfloat16' was passed. Using the user-specified value.
+`Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+INFO 10-19 01:36:09 [patch_mamba_config.py:104] Setting attention block size to 768 tokens to ensure that attention page size is >= mamba page size.
+INFO 10-19 01:36:09 [patch_mamba_config.py:119] Padding mamba page size by 1.92% to ensure that mamba page size and attention page size are exactly equal.
+INFO 10-19 01:36:09 [vllm.py:999] Asynchronous scheduling is enabled.
+WARNING 10-19 01:36:09 [vllm.py:1055] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+WARNING 10-19 01:36:09 [vllm.py:1097] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+INFO 10-19 01:36:09 [kernel.py:270] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+INFO 10-19 01:36:09 [vllm.py:1273] Cudagraph is disabled under eager mode
+INFO 10-19 01:36:09 [utils.py:174] No quantization signature detected from model files for "/softwarePlatform/models_directory/Qwen3.8-27B". The model will be loaded as float. To force a quantization method, pass "--quantization <method>" explicitly.
+WARNING 10-19 01:36:09 [platform.py:1067] GPU-specific parameter is not supported on Ascend. parameter=disable_cascade_attn, value=True, action: resetting to False.
+INFO 10-19 01:36:09 [platform.py:1277] The timeout interval of the HCCL operator is 1836s. Timeout in seconds for execute_model RPC calls in multiprocessing must be greater than 1836s, Set VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS=3000
+INFO 10-19 01:36:09 [ascend_config.py:893] Dynamic EPLB is False
+INFO 10-19 01:36:09 [ascend_config.py:894] The number of redundant experts is 0
+INFO 10-19 01:36:09 [platform.py:528] Compilation disabled, using eager mode by default
+INFO 10-19 01:36:09 [platform.py:790] Set PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+INFO 10-19 01:36:09 [compilation.py:321] Enabled custom fusions: norm_quant, act_quant
+The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+WARNING 10-19 01:36:20 [warnings.py:112] /usr/local/python3.12.13/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=136177) is multi-threaded, use of fork() may lead to deadlocks in the child.
+(EngineCore pid=136398) INFO 10-19 01:36:20 [core.py:113] Initializing a V1 LLM engine (v0.23.0) with config: model='/softwarePlatform/models_directory/Qwen3.8-27B', speculative_config=None, tokenizer='/softwarePlatform/models_directory/Qwen3.8-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=848, download_dir=None, load_format=auto, tensor_parallel_size=4, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=None, quantization_config=None, enforce_eager=True, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=npu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=/softwarePlatform/models_directory/Qwen3.8-27B, enable_prefix_caching=False, enable_chunked_prefill=False, pooler_config=None, compilation_config={'mode': <CompilationMode.NONE: 0>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'vllm_ascend.compilation.compiler_interface.AscendCompiler', 'custom_ops': ['all'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [16384], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False}, 'max_cudagraph_capture_size': 0, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native']), enable_flashinfer_autotune=True, moe_backend='auto', linear_backend='auto')
+(EngineCore pid=136398) INFO 10-19 01:36:20 [multiproc_executor.py:140] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=135.82.26.93 (local), world_size=4, local_world_size=4
+(EngineCore pid=136398) WARNING 10-19 01:36:20 [warnings.py:112] /usr/local/python3.12.13/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=136398) is multi-threaded, use of fork() may lead to deadlocks in the child.
+(EngineCore pid=136398) INFO 10-19 01:36:21 [worker_base.py:282] Injected <class 'oscar_ascend.integration.rotation_capture.RotationCaptureWorker'> into <class 'vllm_ascend.worker.worker.NPUWorker'> for extended collective_rpc calls ['oscar_rotation_capture_abort', 'oscar_rotation_capture_finish', 'oscar_rotation_capture_start']
+(EngineCore pid=136398) INFO 10-19 01:36:21 [worker_base.py:282] Injected <class 'oscar_ascend.integration.rotation_capture.RotationCaptureWorker'> into <class 'vllm_ascend.worker.worker.NPUWorker'> for extended collective_rpc calls ['oscar_rotation_capture_abort', 'oscar_rotation_capture_finish', 'oscar_rotation_capture_start']
+(EngineCore pid=136398) INFO 10-19 01:36:21 [worker_base.py:282] Injected <class 'oscar_ascend.integration.rotation_capture.RotationCaptureWorker'> into <class 'vllm_ascend.worker.worker.NPUWorker'> for extended collective_rpc calls ['oscar_rotation_capture_abort', 'oscar_rotation_capture_finish', 'oscar_rotation_capture_start']
+(EngineCore pid=136398) INFO 10-19 01:36:21 [worker_base.py:282] Injected <class 'oscar_ascend.integration.rotation_capture.RotationCaptureWorker'> into <class 'vllm_ascend.worker.worker.NPUWorker'> for extended collective_rpc calls ['oscar_rotation_capture_abort', 'oscar_rotation_capture_finish', 'oscar_rotation_capture_start']
+terminate called recursively
+terminate called recursively
+terminate called after throwing an instance of 'c10::Error'
+  what():  pool INTERNAL ASSERT FAILED at "/pytorch/aten/src/ATen/ParallelOpenMP.cpp":64, please report a bug to PyTorch. Invalid thread pool!
+Exception raised from set_num_threads at /pytorch/aten/src/ATen/ParallelOpenMP.cpp:64 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0xc8 (0xffff6b5e5978 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0xc4 (0xffff6b589adc in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #2: c10::detail::torchInternalAssertFail(char const*, char const*, unsigned int, char const*, char const*) + 0x48 (0xffff6b5e2028 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #3: <unknown function> + 0x14b2868 (0xffff6c762868 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #4: torch::autograd::Engine::thread_init(int, std::shared_ptr<torch::autograd::ReadyQueue> const&, bool) + 0x234 (0xffff70d4a124 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #5: <unknown function> + 0xad58c4 (0xffff764658c4 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch_python.so)
+frame #6: <unknown function> + 0xd29cc (0xffff7f3e29cc in /lib/aarch64-linux-gnu/libstdc++.so.6)
+frame #7: <unknown function> + 0x803c8 (0xffff7f5c03c8 in /lib/aarch64-linux-gnu/libc.so.6)
+frame #8: <unknown function> + 0xe9edc (0xffff7f629edc in /lib/aarch64-linux-gnu/libc.so.6)
+
+terminate called after throwing an instance of 'c10::Error'
+  what():  pool INTERNAL ASSERT FAILED at "/pytorch/aten/src/ATen/ParallelOpenMP.cpp":64, please report a bug to PyTorch. Invalid thread pool!
+Exception raised from set_num_threads at /pytorch/aten/src/ATen/ParallelOpenMP.cpp:64 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0xc8 (0xffff6b5e5978 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0xc4 (0xffff6b589adc in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #2: c10::detail::torchInternalAssertFail(char const*, char const*, unsigned int, char const*, char const*) + 0x48 (0xffff6b5e2028 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #3: <unknown function> + 0x14b2868 (0xffff6c762868 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #4: torch::autograd::Engine::thread_init(int, std::shared_ptr<torch::autograd::ReadyQueue> const&, bool) + 0x234 (0xffff70d4a124 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #5: <unknown function> + 0xad58c4 (0xffff764658c4 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch_python.so)
+frame #6: <unknown function> + 0xd29cc (0xffff7f3e29cc in /lib/aarch64-linux-gnu/libstdc++.so.6)
+frame #7: <unknown function> + 0x803c8 (0xffff7f5c03c8 in /lib/aarch64-linux-gnu/libc.so.6)
+frame #8: <unknown function> + 0xe9edc (0xffff7f629edc in /lib/aarch64-linux-gnu/libc.so.6)
+
+(Worker pid=136407) INFO 10-19 01:36:24 [parallel_state.py:1568] world_size=4 rank=1 local_rank=1 distributed_init_method=tcp://127.0.0.1:42709 backend=hccl
+(Worker pid=136411) INFO 10-19 01:36:24 [parallel_state.py:1568] world_size=4 rank=3 local_rank=3 distributed_init_method=tcp://127.0.0.1:42709 backend=hccl
+(EngineCore pid=136398) INFO 10-19 01:36:29 [multiproc_executor.py:428] [shutdown] Executor: waiting for worker exit count=4
+(EngineCore pid=136398) WARNING 10-19 01:36:33 [multiproc_executor.py:438] [shutdown] Executor: workers still running after grace period; sending SIGTERM count=2
+[W1019 01:36:33.823981100 TCPStore.cpp:340] [c10d] TCP client failed to connect/validate to host 127.0.0.1:42709 - retrying (try=0, timeout=1800000ms, delay=1030ms): Interrupted system call
+Exception raised from delay at /pytorch/torch/csrc/distributed/c10d/socket.cpp:113 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0xc8 (0xffff6b5e5978 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x6669fa4 (0xffff71919fa4 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #2: <unknown function> + 0x666abd0 (0xffff7191abd0 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #3: <unknown function> + 0x666b098 (0xffff7191b098 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #4: <unknown function> + 0x65db50c (0xffff7188b50c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #5: c10d::TCPStore::TCPStore(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, c10d::TCPStoreOptions const&) + 0x30c (0xffff71894a6c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so)
+frame #6: <unknown function> + 0x11732b0 (0xffff76b032b0 in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch_python.so)
+frame #7: <unknown function> + 0x5c724c (0xffff75f5724c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch_python.so)
+<omitting python frames>
+frame #14: <unknown function> + 0x626f1c (0xffff75fb6f1c in /usr/local/python3.12.13/lib/python3.12/site-packages/torch/lib/libtorch_python.so)
+
+(EngineCore pid=136398) WARNING 10-19 01:36:37 [multiproc_executor.py:448] [shutdown] Executor: workers still running after SIGTERM; sending SIGKILL count=2
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195] EngineCore failed to start.
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195] Traceback (most recent call last):
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 1164, in run_engine_core
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]     return func(*args, **kwargs)
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 930, in __init__
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]     super().__init__(
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 122, in __init__
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]     self.model_executor = executor_class(vllm_config)
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 108, in __init__
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]     super().__init__(vllm_config)
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]     return func(*args, **kwargs)
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/abstract.py", line 109, in __init__
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]     self._init_executor()
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 201, in _init_executor
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]     self.workers = WorkerProc.wait_for_ready(unready_workers)
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 762, in wait_for_ready
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195]     raise e from None
+(EngineCore pid=136398) ERROR 10-19 01:36:37 [core.py:1195] Exception: WorkerProc initialization failed due to an exception in a background process. See stack trace for root cause.
+[oscar] phase=prepare-rotations running seconds=60.0 log=/workspace/gpt_new_oscar_kimi/logs/20261019T013530.348820Z/prepare-rotations.log
+(EngineCore pid=136398) Process EngineCore:
+(EngineCore pid=136398) Traceback (most recent call last):
+(EngineCore pid=136398)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+(EngineCore pid=136398)     self.run()
+(EngineCore pid=136398)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/process.py", line 108, in run
+(EngineCore pid=136398)     self._target(*self._args, **self._kwargs)
+(EngineCore pid=136398)   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/platform/patch_balance_schedule.py", line 692, in run_engine_core
+(EngineCore pid=136398)     return _ORIGINAL_RUN_ENGINE_CORE(*args, dp_rank=dp_rank, local_dp_rank=local_dp_rank, **kwargs)
+(EngineCore pid=136398)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=136398)   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 1199, in run_engine_core
+(EngineCore pid=136398)     raise e
+(EngineCore pid=136398)   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 1164, in run_engine_core
+(EngineCore pid=136398)     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=136398)                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=136398)   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=136398)     return func(*args, **kwargs)
+(EngineCore pid=136398)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=136398)   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 930, in __init__
+(EngineCore pid=136398)     super().__init__(
+(EngineCore pid=136398)   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 122, in __init__
+(EngineCore pid=136398)     self.model_executor = executor_class(vllm_config)
+(EngineCore pid=136398)                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=136398)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 108, in __init__
+(EngineCore pid=136398)     super().__init__(vllm_config)
+(EngineCore pid=136398)   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=136398)     return func(*args, **kwargs)
+(EngineCore pid=136398)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=136398)   File "/vllm-workspace/vllm/vllm/v1/executor/abstract.py", line 109, in __init__
+(EngineCore pid=136398)     self._init_executor()
+(EngineCore pid=136398)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 201, in _init_executor
+(EngineCore pid=136398)     self.workers = WorkerProc.wait_for_ready(unready_workers)
+(EngineCore pid=136398)                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=136398)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 762, in wait_for_ready
+(EngineCore pid=136398)     raise e from None
+(EngineCore pid=136398) Exception: WorkerProc initialization failed due to an exception in a background process. See stack trace for root cause.
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 1 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/gpt_new_oscar_kimi/tools/calibrate_model_rotations.py", line 209, in <module>
+    main()
+  File "/workspace/gpt_new_oscar_kimi/tools/calibrate_model_rotations.py", line 205, in main
+    collect(args.config, args.output_dir)
+  File "/workspace/gpt_new_oscar_kimi/tools/calibrate_model_rotations.py", line 148, in collect
+    llm = LLM(**options)
+          ^^^^^^^^^^^^^^
+  File "/vllm-workspace/vllm/vllm/entrypoints/llm.py", line 349, in __init__
+    self.llm_engine = LLMEngine.from_engine_args(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vllm-workspace/vllm/vllm/v1/engine/llm_engine.py", line 170, in from_engine_args
+    return cls(
+           ^^^^
+  File "/vllm-workspace/vllm/vllm/v1/engine/llm_engine.py", line 104, in __init__
+    self.engine_core = EngineCoreClient.make_client(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 102, in make_client
+    return SyncMPClient(vllm_config, executor_class, log_stats)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 771, in __init__
+    super().__init__(
+  File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 570, in __init__
+    with launch_core_engines(
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 144, in __exit__
+    next(self.gen)
+  File "/vllm-workspace/vllm/vllm/v1/engine/utils.py", line 1190, in launch_core_engines
+    wait_for_engine_startup(
+  File "/vllm-workspace/vllm/vllm/v1/engine/utils.py", line 1249, in wait_for_engine_startup
+    raise RuntimeError(
+RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {'EngineCore': 1}
+[ERROR] 2026-10-19-01:36:37 (PID:136177, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/gpt_new_oscar_kimi/tools/prepare_rotations.py", line 137, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/workspace/gpt_new_oscar_kimi/tools/prepare_rotations.py", line 132, in main
+    print(json.dumps(prepare(config,config_path=args.config,output=args.output,import_pair=pair)),flush=True)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/gpt_new_oscar_kimi/tools/prepare_rotations.py", line 86, in prepare
+    capture=(capture_runner or _capture)(config_path,directory)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/gpt_new_oscar_kimi/tools/prepare_rotations.py", line 23, in _capture
+    subprocess.run([sys.executable,"-m","tools.calibrate_model_rotations",
+  File "/usr/local/python3.12.13/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/usr/local/python3.12.13/bin/python3', '-m', 'tools.calibrate_model_rotations', '--config', '/workspace/gpt_new_oscar_kimi/logs/20261019T013530.348820Z/effective-target.json', '--output-dir', '/workspace/gpt_new_oscar_kimi/artifacts/rotations/a7b5defbf8558637d2de5bb4a03c7c28d4ff73d1556cd4378f2fbfebebe5bfeb/qqt_sst_a6d16c92d028d816d8a7/capture-arvsdfg3']' returned non-zero exit status 1.
+[ERROR] 2026-10-19-01:36:42 (PID:136162, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+RESULT {"phase": "prepare-rotations", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "tools.prepare_rotations", "--config", "/workspace/gpt_new_oscar_kimi/logs/20261019T013530.348820Z/effective-target.json"], "returncode": 1, "elapsed_seconds": 66.644656, "timed_out": false, "interrupted": false, "log": "/workspace/gpt_new_oscar_kimi/logs/20261019T013530.348820Z/prepare-rotations.log", "cleanup_complete": true}
+[oscar] FAILED phase=prepare-rotations rc=1 log=/workspace/gpt_new_oscar_kimi/logs/20261019T013530.348820Z/prepare-rotations.log
+[oscar] build phase failed rc=1; formal serve prohibited; logs=/workspace/gpt_new_oscar_kimi/logs/20261019T013530.348820Z
+root@node93:/workspace/gpt_new_oscar_kimi#

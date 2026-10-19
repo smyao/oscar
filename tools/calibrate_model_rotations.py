@@ -1,4 +1,4 @@
-"""Archive #23-25/#28/#86/#94-97: native, one-pass post-RoPE QKV sampling.
+"""Archive #23-25/#28/#84/#86/#94-97/#166: native post-RoPE QKV sampling.
 
 Official recipe pinned to OSCAR339368e: seed0 GPQA choice shuffle, chat-template
 prompt IDs, whole-prompt budget30000. Sampling uses native vLLM Ascend in an
@@ -91,16 +91,35 @@ def prompt_ids_sha256(prompts):
     return hashlib.sha256(json.dumps(prompts, separators=(",", ":")).encode()).hexdigest()
 
 
+def calibration_process_env(base=None):
+    """Use fresh interpreters at both native EngineCore and TP-worker boundaries.
+
+    vLLM's get_mp_context() reads this env directly; set_start_method() alone
+    would not override its explicit default fork. Keep this isolated from the
+    later service process, as in Ascend's official offline TP example.
+    """
+    env = dict(os.environ if base is None else base)
+    env["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
+    env["OSCAR_ENABLED"] = "0"
+    env.pop("OSCAR_PASSIVE_TIMING_CONTROL", None)
+    env.pop("OSCAR_TRACE_DIR", None)
+    return env
+
+
 def collect(config_path, output_dir):
     from tools.model_config import apply_model_options
     from tools.target_cli import target_env
     from tools.prepare_rotations import model_geometry
     from tools.phase import atomic_json
     config = apply_model_options(json.loads(Path(config_path).read_text()), require_model=True)
-    os.environ.update(target_env(config))
-    os.environ["OSCAR_ENABLED"] = "0"
+    # Do this before importing tokenizer/Torch/vLLM, including for direct -m
+    # invocation. _capture also sets it before this interpreter is started.
+    os.environ.update(calibration_process_env(target_env(config)))
     os.environ.pop("OSCAR_PASSIVE_TIMING_CONTROL", None)
     os.environ.pop("OSCAR_TRACE_DIR", None)
+    print(json.dumps({'rotation_capture': 'process_environment',
+        'worker_multiproc_method': os.environ['VLLM_WORKER_MULTIPROC_METHOD'],
+        'scope': 'isolated_calibration_engine_and_tp_workers'}), flush=True)
     output_dir = Path(output_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     if list(output_dir.glob("rank*.pt")) or (output_dir/'capture-manifest.json').exists():
@@ -128,8 +147,9 @@ def collect(config_path, output_dir):
         "output_dir": str(output_dir)}
     print(json.dumps({'rotation_capture':'input_prepared','prompts':len(prompts),
         'tokens':spec['token_count'],'prompt_sha256':spec['prompt_sha256']}),flush=True)
-    # Archive #84: initialize the parent's Torch pool even when OMP is already
-    # pinned; a forked worker must not inherit an uninitialized c10 pool.
+    # #84/#166: initialize this interpreter's pool even when OMP is pinned.
+    # Workers must still spawn: parent initialization alone did not make the
+    # two-level fork safe after tokenization/backend threads were started.
     import torch
     threads=int(os.environ.get('OMP_NUM_THREADS','1'))
     if threads<=0:raise ValueError('OMP_NUM_THREADS must be positive')
@@ -185,6 +205,7 @@ def collect(config_path, output_dir):
             else:raise RuntimeError(message)
     report = {**spec, "rank_paths": [row["path"] for row in sorted(finished, key=lambda row: row["rank"])],
         "prompt_source": str(source), "prompt_source_sha256": source_sha256,
+        "worker_multiproc_method": os.environ["VLLM_WORKER_MULTIPROC_METHOD"],
         "status": "native_post_rope_capture_complete", "forward_passes_per_prompt": 1,
         "weights_quantization": config.get("quantization"), "performance": "not_measured"}
     for row in finished:

@@ -18,10 +18,12 @@ def model_geometry(model: Path) -> tuple[list[str], int, str]:
 
 
 def _capture(config_path, directory):
+    from tools.calibrate_model_rotations import calibration_process_env
     # The child owns the native model and exits before offline FP64 fitting.
     # Inherit stdout/stderr so both one-key launchers preserve live failures.
     subprocess.run([sys.executable,"-m","tools.calibrate_model_rotations",
-                    "--config",str(config_path),"--output-dir",str(directory)],check=True)
+                    "--config",str(config_path),"--output-dir",str(directory)],
+                   env=calibration_process_env(),check=True)
     return json.loads((directory/"capture-manifest.json").read_text())
 
 

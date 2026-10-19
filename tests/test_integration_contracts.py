@@ -57,7 +57,7 @@ class TargetContracts(unittest.TestCase):
         expected = shlex.split(command.replace("\\\n", " "))[1:]
         # 2026-10-18 authorized model/weight-quantization/dtype changes only;
         # retain the historical appendix for all scheduling/MTP/graph options.
-        expected[1] = "/softwarePlatform/c00879303/Qwen3.8-27B"
+        expected[1] = "/softwarePlatform/models_directory/Qwen3.8-27B"
         expected[expected.index("--served-model-name") + 1] = "qwen3.8"
         if "--quantization" in expected:
             start = expected.index("--quantization")

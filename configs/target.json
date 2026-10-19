@@ -1,5 +1,5 @@
 {
-  "model": "/softwarePlatform/c00879303/Qwen3.8-27B",
+  "model": "/softwarePlatform/models_directory/Qwen3.8-27B",
   "served_model_name": "qwen3.8",
   "dtype": "bfloat16",
   "host": "0.0.0.0",

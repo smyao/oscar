@@ -60,7 +60,7 @@ def test_name_does_not_determine_quantization(tmp_path, name, quantized):
 
 def test_default_is_original_qwen38_and_no_quantization_flag():
     cfg = target()
-    assert cfg["model"] == "/softwarePlatform/c00879303/Qwen3.8-27B"
+    assert cfg["model"] == "/softwarePlatform/models_directory/Qwen3.8-27B"
     assert cfg["served_model_name"] == "qwen3.8"
     assert cfg["quantization"] is None and cfg["quantization_mode"] == "none"
     assert cfg["rotation_method"] == "qqt_sst"

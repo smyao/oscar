@@ -10,7 +10,7 @@
 
 ## 默认模型与启动
 
-默认模型目录是 `/softwarePlatform/c00879303/Qwen3.8-27B`，API模型名 `qwen3.8`，activation dtype为BF16。官方HF配置确认仍使用 `Qwen3_5ForConditionalGeneration`、64层、16个FULL attention层、D256、24 Q/4 KV头，所以保留已有原生Qwen3.5类与MTP方法，不编造Qwen3.8专用后端。
+默认模型目录是 `/softwarePlatform/models_directory/Qwen3.8-27B`，API模型名 `qwen3.8`，activation dtype为BF16。官方HF配置确认仍使用 `Qwen3_5ForConditionalGeneration`、64层、16个FULL attention层、D256、24 Q/4 KV头，所以保留已有原生Qwen3.5类与MTP方法，不编造Qwen3.8专用后端。
 
 移除了旧配置遗留的YaRN×4覆盖。Qwen3.8官方 `rope_type=default`、原生上下文262144；校准和服务均使用所选模型自身RoPE，显式用户HF覆盖仍由其配置决定。模型变更之外，MTP=3、APC默认关闭、16384 token预算、原生调度器、默认0–3卡/8989以及显式后四卡/7878保持。
 

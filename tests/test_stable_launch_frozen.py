@@ -17,7 +17,7 @@ FROZEN = json.loads((ROOT / 'reports/stable_32k_64k_20261015/frozen_launch.json'
 
 def authorized_model_arguments(argv):
     result = list(argv)
-    result[1] = '/softwarePlatform/c00879303/Qwen3.8-27B'
+    result[1] = '/softwarePlatform/models_directory/Qwen3.8-27B'
     result[result.index('--served-model-name') + 1] = 'qwen3.8'
     start = result.index('--quantization')
     result[start:start + 2] = ['--dtype', 'bfloat16']

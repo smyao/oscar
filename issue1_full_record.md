@@ -17,6 +17,8 @@
 
 # 症状速查表（报错关键字 → 条目编号）
 
+- `prepare-rotations` 下载 GPQA 时 `SSL: CERTIFICATE_VERIFY_FAILED` / `self-signed certificate in certificate chain`：见 #165。
+
 ## A. 编译 / build 失败（`cmake --build` exit 2）
 
 | 报错关键字 | 条目 |
@@ -28741,3 +28743,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **对照验证**：仅改变七处转换指令形式后，同输入q4完整实际指令模拟rc0、cleanup=true，全部24task、partial/LSE、status、外部guards和独立BF16v2 oracle通过；bad_output=0、bad_lse=0、最大输出绝对误差4.336e-6，模拟进程峰值RSS155168768B，原版则在相同转换处膨胀超过8GB。此处内存数据用于证明局部故障消失，未做吞吐/延迟比较。C4/C16窄CANN编译通过，C4 C1双KV头/S3完整CPU数值144tasks通过，38项宿主回归通过；聚合凭证见 `reports/bf16_ub_fix_20261016/summary.json`。
 
 **D.4四问与边界**：修复fused FIA内部固定tile转换指令，不恢复整段BF16历史；此前6.5秒整历史恢复结构仍禁止；不新增GM/UB容量、不改变数学，只限制每次VCONV的寻址范围；本地指令模拟的红绿证据成立，但没有目标产物的PC→symbol映射，不声称已直接回放用户真机或完成模型验收。
+
+
+## [165] 真机条目（2026-10-19 用户回传）· 自动校准下载 GPQA 遇 SSL 证书错误
+
+**原始证据**：[`reports/rotation_data_fix_20261019/target_failure.txt`](reports/rotation_data_fix_20261019/target_failure.txt)，来自附件 f497c8d9-ca2b-4664-bb34-71bb50fd7438；片段没有启动 SHA。用户执行固定 candidate 直启，build-ops rc0，prepare-rotations rc1。
+
+**症状与根因**：`calibrate_model_rotations.collect()` 在 `urllib.request.urlopen(GPQA_URL)` 报 `SSLCertVerificationError: self-signed certificate in certificate chain`，随后采样子进程与父准备阶段均失败，正式服务被阻断。新增校准流程依赖目标机临时联网及 Python 信任链，而未交付离线数据输入；错误发生在 tokenizer/NPU 模型加载前，不是 CANN 构建或 attention 算子故障。
+
+**修复**：公开官方 GPQA Diamond CSV 按原字节压缩随 Python 包交付，保留来源/署名，模型加载前校验 SHA256；默认不下载、不使用未校验的 HF 数据缓存、不关闭证书验证。数据 SHA 同时绑定 PT 缓存身份。缺少匹配 PT 自动采样生成，匹配完整 PT 严格验证后复用；中断发布重建，损坏完成缓存或显式不匹配文件继续报错。两一键入口共用此路径，校准数学与原生服务设置不改。
+
+**验证和边界**：55 项主机回归通过，覆盖禁网数据读取/坏数据拒绝/数据版本失效、采样 API 替身成功与失败清理、PT 生成复用和启动编排；实际 wheel 构建及隔离安装目录的禁网解压/SHA 验证通过。报告见上述目录 summary.json。没有连接真机、NPU 模型校准、图或性能验证，不能将主机修复证据写成目标整服务验收。

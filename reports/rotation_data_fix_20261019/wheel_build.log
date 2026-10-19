@@ -1,0 +1,10 @@
+WARNING: The directory '/Users/sunao2000/Library/Caches/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+Processing /Users/sunao2000/gpt_new_oscar_kimi
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: oscar-ascend-external
+  Building wheel for oscar-ascend-external (pyproject.toml): started
+  Building wheel for oscar-ascend-external (pyproject.toml): finished with status 'done'
+  Created wheel for oscar-ascend-external: filename=oscar_ascend_external-0.1.0-py3-none-any.whl size=1028603 sha256=f1059605eef8fed447780bee8416338e22fa2ca7485331b62b6ab8c200fbffa6
+  Stored in directory: /private/var/folders/g7/6f8zw7_n69z6vn52gwpsw_jh0000gn/T/pip-ephem-wheel-cache-idle6hg1/wheels/e2/be/13/e55e8b1ec1754f97be7558a9cc8df9fcfa0524edd9e120cace
+Successfully built oscar-ascend-external

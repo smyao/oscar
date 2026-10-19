@@ -31,6 +31,9 @@ bash scripts/install_serve.sh --variant candidate --model /path/to/Qwen3.5-27B -
 
 ## 旋转PT如何生成
 
+2026-10-19 修复：默认校准数据已随包固定并验证 SHA，启动不再在线下载 GPQA。
+每次检查匹配 PT，完整匹配则复用、缺失则自动生成；具体条件见[启动修复说明](rotation_data_startup_fix_20261019.md)。
+
 默认 `rotation_method=qqt_sst`。缺少匹配产物时，准备阶段启动独立的原生vLLM Ascend采样进程：模型在NPU推理，OSCAR缓存路由关闭；模型warmup完成后才安装采样hook，收集FULL层真实post-norm/post-RoPE Q/K/V。没有两次重放拼接Q与K/V，也没有拿随机数或固定H替代校准。
 
 采用官方GPQA-Diamond数据源、seed0选项排列、模型chat template和30000 token上限；只选完整prompt。每个prompt单次prefill，长度/顺序/实际token范围严格核对，排除padding、decode帧、重复帧与缓存命中。采样进程只采一个prefill logits token，不产生后续decode前向；其MTP/图设置不影响随后正式服务。

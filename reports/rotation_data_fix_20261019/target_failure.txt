@@ -1,0 +1,82 @@
+}
+RESULT {"phase": "build-ops", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "tools.build_ops", "--soc", "ascend910b4", "--log-dir", "/workspace/gpt_new_oscar_kimi/logs/20261019T010904.456722Z/build"], "returncode": 0, "elapsed_seconds": 274.193452, "timed_out": false, "interrupted": false, "log": "/workspace/gpt_new_oscar_kimi/logs/20261019T010904.456722Z/build-ops.log", "cleanup_complete": true}
+[oscar] PASSED phase=build-ops rc=0 log=/workspace/gpt_new_oscar_kimi/logs/20261019T010904.456722Z/build-ops.log
+START phase=prepare-rotations cwd=/workspace/gpt_new_oscar_kimi command=["/usr/local/python3.12.13/bin/python3", "-m", "tools.prepare_rotations", "--config", "/workspace/gpt_new_oscar_kimi/logs/20261019T010904.456722Z/effective-target.json"]
+[W1019 01:13:47.524156660 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+Traceback (most recent call last):
+  File "/usr/local/python3.12.13/lib/python3.12/urllib/request.py", line 1344, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+  File "/usr/local/python3.12.13/lib/python3.12/http/client.py", line 1358, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "/usr/local/python3.12.13/lib/python3.12/http/client.py", line 1404, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "/usr/local/python3.12.13/lib/python3.12/http/client.py", line 1353, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "/usr/local/python3.12.13/lib/python3.12/http/client.py", line 1113, in _send_output
+    self.send(msg)
+  File "/usr/local/python3.12.13/lib/python3.12/http/client.py", line 1057, in send
+    self.connect()
+  File "/usr/local/python3.12.13/lib/python3.12/http/client.py", line 1499, in connect
+    self.sock = self._context.wrap_socket(self.sock,
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/ssl.py", line 455, in wrap_socket
+    return self.sslsocket_class._create(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/ssl.py", line 1041, in _create
+    self.do_handshake()
+  File "/usr/local/python3.12.13/lib/python3.12/ssl.py", line 1319, in do_handshake
+    self._sslobj.do_handshake()
+ssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1010)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/gpt_new_oscar_kimi/tools/calibrate_model_rotations.py", line 216, in <module>
+    main()
+  File "/workspace/gpt_new_oscar_kimi/tools/calibrate_model_rotations.py", line 212, in main
+    collect(args.config, args.output_dir)
+  File "/workspace/gpt_new_oscar_kimi/tools/calibrate_model_rotations.py", line 115, in collect
+    with urllib.request.urlopen(GPQA_URL, timeout=60) as response:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/urllib/request.py", line 515, in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/urllib/request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/urllib/request.py", line 1392, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/python3.12.13/lib/python3.12/urllib/request.py", line 1347, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1010)>
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/gpt_new_oscar_kimi/tools/prepare_rotations.py", line 133, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/workspace/gpt_new_oscar_kimi/tools/prepare_rotations.py", line 128, in main
+    print(json.dumps(prepare(config,config_path=args.config,output=args.output,import_pair=pair)),flush=True)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/gpt_new_oscar_kimi/tools/prepare_rotations.py", line 82, in prepare
+    capture=(capture_runner or _capture)(config_path,directory)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/gpt_new_oscar_kimi/tools/prepare_rotations.py", line 23, in _capture
+    subprocess.run([sys.executable,"-m","tools.calibrate_model_rotations",
+  File "/usr/local/python3.12.13/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/usr/local/python3.12.13/bin/python3', '-m', 'tools.calibrate_model_rotations', '--config', '/workspace/gpt_new_oscar_kimi/logs/20261019T010904.456722Z/effective-target.json', '--output-dir', '/workspace/gpt_new_oscar_kimi/artifacts/rotations/a7b5defbf8558637d2de5bb4a03c7c28d4ff73d1556cd4378f2fbfebebe5bfeb/qqt_sst_532e634de4312679b9dd/capture-3k0c9ebb']' returned non-zero exit status 1.
+[ERROR] 2026-10-19-01:13:58 (PID:136091, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+RESULT {"phase": "prepare-rotations", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "tools.prepare_rotations", "--config", "/workspace/gpt_new_oscar_kimi/logs/20261019T010904.456722Z/effective-target.json"], "returncode": 1, "elapsed_seconds": 15.111831, "timed_out": false, "interrupted": false, "log": "/workspace/gpt_new_oscar_kimi/logs/20261019T010904.456722Z/prepare-rotations.log", "cleanup_complete": true}
+[oscar] FAILED phase=prepare-rotations rc=1 log=/workspace/gpt_new_oscar_kimi/logs/20261019T010904.456722Z/prepare-rotations.log
+[oscar] build phase failed rc=1; formal serve prohibited; logs=/workspace/gpt_new_oscar_kimi/logs/20261019T010904.456722Z
+root@node93:/workspace/gpt_new_oscar_kimi#

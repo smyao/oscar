@@ -15,10 +15,9 @@ import os
 from pathlib import Path
 import random
 import sys
-import urllib.request
+from tools.calibration_data import calibration_prompt_source
 
 ROOT = Path(__file__).resolve().parents[1]
-GPQA_URL = "https://openaipublic.blob.core.windows.net/simple-evals/gpqa_diamond.csv"
 GPQA_FIELDS = ("Question", "Correct Answer", "Incorrect Answer 1", "Incorrect Answer 2", "Incorrect Answer 3")
 GPQA_TEMPLATE = ("Answer the following multiple choice question. The last line of your "
     "response should be of the following format: 'Answer: $LETTER' (without "
@@ -106,17 +105,11 @@ def collect(config_path, output_dir):
     output_dir.mkdir(parents=True, exist_ok=True)
     if list(output_dir.glob("rank*.pt")) or (output_dir/'capture-manifest.json').exists():
         raise ValueError("calibration capture requires a fresh directory")
-    source = config.get("rotation_calibration_prompts")
-    if source is None:
-        cache = Path(os.environ.get("HF_HOME", "~/.cache/huggingface")).expanduser() / "oscar-calibration"
-        cache.mkdir(parents=True, exist_ok=True)
-        source = cache / "gpqa_diamond.csv"
-        if not source.exists():
-            with urllib.request.urlopen(GPQA_URL, timeout=60) as response:
-                data = response.read()
-            temporary = source.with_suffix(".csv.tmp")
-            temporary.write_bytes(data); temporary.replace(source)
-    source = Path(source).resolve()
+    source = calibration_prompt_source(config, output_dir)
+    source_sha256 = hashlib.sha256(source.read_bytes()).hexdigest()
+    print(json.dumps({'rotation_capture': 'calibration_data_ready',
+        'source': 'explicit' if config.get('rotation_calibration_prompts') else 'bundled_official_gpqa',
+        'path': str(source), 'sha256': source_sha256}), flush=True)
     messages = load_messages(source)
     from transformers import AutoTokenizer
     tokenizer = AutoTokenizer.from_pretrained(config["model"], trust_remote_code=True)
@@ -191,7 +184,7 @@ def collect(config_path, output_dir):
             if primary_error:print(message,file=sys.stderr,flush=True)
             else:raise RuntimeError(message)
     report = {**spec, "rank_paths": [row["path"] for row in sorted(finished, key=lambda row: row["rank"])],
-        "prompt_source": str(source), "prompt_source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+        "prompt_source": str(source), "prompt_source_sha256": source_sha256,
         "status": "native_post_rope_capture_complete", "forward_passes_per_prompt": 1,
         "weights_quantization": config.get("quantization"), "performance": "not_measured"}
     for row in finished:

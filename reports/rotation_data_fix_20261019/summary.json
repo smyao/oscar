@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-19",
+  "base_commit": "ccdcb47b",
+  "target_log_sha256": "d7aea7bab0d004c5da8c454de320b0dab185d8789ff43e4b3762ae02a16d7dff",
+  "target_observation": {
+    "build_ops": "passed_rc0",
+    "prepare_rotations": "failed_ssl_certificate_verify_before_model_load",
+    "target_commit": "not_in_log"
+  },
+  "fix": "bundled_official_gpqa_verified_before_model_load_no_runtime_download",
+  "gpqa_csv_sha256": "41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305",
+  "gpqa_csv_bytes": 1373492,
+  "gpqa_rows": 198,
+  "host_tests": {
+    "rotation_capture_official_calibration_install_serve": 46,
+    "calibration_data": 9,
+    "total_distinct": 55
+  },
+  "wheel_build": "passed",
+  "installed_wheel_offline_data": "passed",
+  "cann": "not_rerun_no_kernel_changes",
+  "npu_model_calibration": "not_run",
+  "device_graph": "not_run",
+  "model_quality": "not_run",
+  "performance": "not_run_user_requested",
+  "remote_device_access": false
+}

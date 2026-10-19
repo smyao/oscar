@@ -48,6 +48,8 @@ def prepare(config, *, config_path=None, output=None, import_pair=None, capture_
         return {"artifact":str(destination),"source":"hadamard_data_free","calibrated":False,
             "official_calibration_aligned":False,"model_fingerprint":fingerprint,"quality_acceptance":"not_run"}
     profile=calibration_cache_identity(config,fingerprint)
+    print(json.dumps({'rotation_prepare':'checking','artifact':str(destination),
+        'prompt_source':profile['prompt_source']}),flush=True)
     if import_pair is None:
         k=config.get("rotation_k_path");v=config.get("rotation_v_path")
         if bool(k)!=bool(v):raise ValueError("both rotation_k_path and rotation_v_path are required")
@@ -78,6 +80,8 @@ def prepare(config, *, config_path=None, output=None, import_pair=None, capture_
         source='official_qqt_sst_import'
     else:
         if config_path is None and capture_runner is None:raise ValueError('native calibration requires a config path')
+        print(json.dumps({'rotation_prepare':'generating','artifact':str(destination),
+            'reason':'interrupted_publication' if interrupted_pair else 'matching_cache_missing'}),flush=True)
         directory=Path(tempfile.mkdtemp(prefix='capture-',dir=destination.parent))
         capture=(capture_runner or _capture)(config_path,directory)
         if capture.get('status')!='native_post_rope_capture_complete':raise ValueError('native sampling did not complete')

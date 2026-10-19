@@ -20,6 +20,9 @@ oscar_ascend = "oscar_ascend.plugin:register"
 [tool.setuptools.packages.find]
 include = ["oscar_ascend*", "tools*", "benchmarks*"]
 
+[tool.setuptools.package-data]
+tools = ["data/*.csv.gz", "data/*.md"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"

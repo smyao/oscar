@@ -120,7 +120,8 @@ def test_whole_prompt_budget_stops_without_truncating_or_skipping():
 
 
 @pytest.mark.parametrize('failure',[None,'generate','start'])
-def test_public_llm_rpc_sampling_and_shutdown_are_isolated(monkeypatch,tmp_path,failure):
+@pytest.mark.parametrize('bundled', [False, True])
+def test_public_llm_rpc_sampling_and_shutdown_are_isolated(monkeypatch,tmp_path,failure,bundled):
     from tools import model_config
     monkeypatch.setattr(model_config,'apply_model_options',lambda value,**_:value)
     monkeypatch.setenv('OMP_NUM_THREADS','1')
@@ -130,6 +131,13 @@ def test_public_llm_rpc_sampling_and_shutdown_are_isolated(monkeypatch,tmp_path,
     source=tmp_path/'prompts.jsonl';source.write_text('"promptA"\n"promptB"\n')
     config={'model':str(model),'devices':[0,1,2,3],'tensor_parallel_size':1,'max_model_len':262144,
         'max_num_batched_tokens':16384,'gpu_memory_utilization':.7,'rotation_calibration_prompts':str(source)}
+    if bundled:
+        import urllib.request
+        monkeypatch.setattr(urllib.request, 'urlopen', lambda *_a, **_k: pytest.fail('startup must be offline'))
+        del config['rotation_calibration_prompts']
+        # Two complete three-token prompts; remaining bundled records exceed
+        # the budget. The model below remains an explicit host double.
+        config['rotation_calibration_tokens'] = 6
     config_path=tmp_path/'config.json';config_path.write_text(json.dumps(config));before=config_path.read_bytes()
     transformer=types.ModuleType('transformers')
     transformer.AutoTokenizer=NS(from_pretrained=lambda *a,**k:NS(apply_chat_template=lambda *_a,**_k:[7,8,9]))
@@ -164,6 +172,10 @@ def test_public_llm_rpc_sampling_and_shutdown_are_isolated(monkeypatch,tmp_path,
         cli.collect(config_path,out)
         report=json.loads((out/'capture-manifest.json').read_text())
         assert report['token_count']==6 and report['prompt_lengths']==[3,3] and report['rank_sha256']
+        if bundled:
+            from tools.calibration_data import GPQA_SHA256
+            assert report['prompt_source_sha256'] == GPQA_SHA256
+            assert Path(report['prompt_source']) == out/'gpqa_diamond.csv'
         assert calls.count('prefill')==2
     assert calls[-2:]==['oscar_rotation_capture_abort','shutdown']
     assert calls[0]=='warmup' and config_path.read_bytes()==before

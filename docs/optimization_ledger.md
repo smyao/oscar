@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-19实测分析报告：依据用户恢复的32K BS4/4/8摘要，先验证OSCAR的AIV向量重建/转换成本；Vector/MTE2活动比约3.79/3.87，不能冒称完整计算/搬运独占时间占比或HBM饱和。报告逐项列证据、C16/q4热点和一对一优化/否决条件，本轮未改算法或测速。[分析报告](oscar_32k_bottleneck_analysis_20261019.md)。
+
 2026-10-19摘要恢复：用户三组32K请求已推进至服务清理/离线解析，最后报str+float。按官方ts字符串/dur数值格式统一解析，并接官方CPU→NPU flow归因；新增仅恢复现有导出的--summarize-only，不重跑模型/SDK，保护原记录。113项主机测试含48窗口真实CLI通过，实际瓶颈仍待用户摘要。[恢复命令与证据](timer_summary_recovery_20261019.md)。
 
 2026-10-19 timer首轮修复：用户native BS4 control26.2秒/profile29.83秒均完成，但单tokenflush空TPOT median中断，daemon worker解析被SDK拒绝导致设备任务缺失。修为空统计null+样本数；worker只存raw，服务释放后由普通子进程离线解析并验证实际任务表。105项主机回归通过；OSCAR对照及bound仍待用户新日志。[修复说明](timer_capture_parse_fix_20261019.md)。

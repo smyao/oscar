@@ -1,5 +1,7 @@
 # Agent 启动指令（v2）：将 OSCAR KV Cache INT2 量化适配到 vLLM Ascend 0.23.0
 
+> 2026-10-19 C16内部诊断：用户要求继续拆解已观测的1199.604 ms CV热点。新增独立 `scripts/test_c16_breakdown.sh`，一次candidate服务、一条32K→16请求；在真实暖prefill输入上配对原C16与独立计时克隆，推理消费原核输出。设备内部阶段计数、逐位校验及计时扰动倍率一并报告；不将跨核相位相加或折算成旧1199 ms。普通启动和原生产内核不变，agent不连接真机、不运行性能测试。见 `docs/c16_internal_breakdown_20261019.md`。
+
 > 2026-10-19诊断专项：暂停大规模优化；交付 `scripts/test_timer_32k.sh` 给用户真机运行，默认native BS4 / OSCAR BS4 / OSCAR BS8，32K×256输出。只在显式诊断入口采样，完整对照与profile耗时分离、保留原生graph/MTP。最终摘要≤200行/50KiB，完整日志落盘；agent不连接真机。本轮不更改数学、内核或正常启动参数，不据timer单独认定计算/访存bound。见 `docs/timer_32k_diagnosis_20261019.md`。
 
 > 2026-10-18最新：默认所有入口使用原版Qwen3.8-27B，移除默认ascend权重量化及旧YaRN×4覆盖，按模型自身RoPE；显式W8A8仍支持，MTP/APC-off/16384/设备端口不变。官方OSCAR339368e的qqt/sst→U·H·Pbr替代默认data-free H；模型采样在NPU，离线FP64统计/eigh采用CPU同精度实现，不是推理回退。candidate默认使用版本化144B FP32 normalized-zero metadata/BF16旋转与attention，原136B与旧oracle留作历史；新v3容差预先固定。用户禁止性能测试/真机连接，仅源码/编译/功能/图契约验证。只推codex/oscar-bf16-attention，main/stable不动。

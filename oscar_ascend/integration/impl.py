@@ -12,6 +12,7 @@ PR oscar_attn.py:486-577: current-chunk K/V are exact; cached history is INT2.
 Native acl_graph.py:270 and attention_v1.py:454: graph-update interface.
 Native attention_cp.py:1017-1032: exact current TND FIA yields output plus LSE.
 """
+import os
 import torch
 from vllm.v1.attention.backend import AttentionImpl
 
@@ -261,6 +262,9 @@ class OscarAttentionImpl(AttentionImpl):
                    cube_cores=g.cube_cores, tasks=task_count, requests=attn_metadata.num_reqs,
                    cv_operator=cv_name, **timing_fields):
             cv_op = getattr(ops, cv_name)
+            if cv_name == "attention_cv_aligned_cluster16_out" and os.environ.get("OSCAR_C16_BREAKDOWN_DIR"):
+                from .c16_breakdown import wrap
+                cv_op = wrap(cv_op, layer=layer.layer_name, metadata=attn_metadata, tokens=n)
             cv_extra = ((workspace.cluster_stats,)
                         if cv_name in CLUSTER_CV_OPS | REQUEST_CLUSTER_READERS else ())
             mode_args = ()

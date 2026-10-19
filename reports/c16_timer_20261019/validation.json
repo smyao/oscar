@@ -1,0 +1,69 @@
+{
+  "status": "host_and_cann_validated_pending_user_npu",
+  "base_commit": "242dd949567382378c9922ba02887028764200c9",
+  "branch": "codex/oscar-bf16-attention",
+  "command": "git pull --ff-only && bash scripts/test_c16_breakdown.sh",
+  "host": {
+    "status": "passed",
+    "distinct_tests": 79,
+    "post_schema_test_subset": 60,
+    "includes": [
+      "actual localhost SSE completion",
+      "owned process interruption cleanup",
+      "no-evidence bounded summary failure",
+      "build cache and signed dependency validation",
+      "capture isolation",
+      "bitwise output ownership",
+      "full actor and layer coverage",
+      "clock consistency",
+      "150-line/40KiB summary cap"
+    ]
+  },
+  "cann": {
+    "status": "passed",
+    "soc": "ascend910b4",
+    "scope": "independent C16 device kernel and real Torch binding compiled and linked with CANN9.1.0",
+    "source_files_matched": 1115,
+    "library_sha256": "8b6aef8e95368cfbe8b6b833cb77c680459e9ccc8c2981b08a1aab8959c13809",
+    "kernel_library_sha256": "ffe92b0468984656f70c4efe00a27075b73674d189c55112b0dd278e2c7bd228",
+    "receipt": "cann-build-receipt.json"
+  },
+  "cpu_functional": {
+    "backend": "ascendc_cpu_debug",
+    "status": "passed",
+    "mode": "c16",
+    "oracle": true,
+    "paired_bitwise": true,
+    "timer_clock_acceptance": "not_npu",
+    "includes_bf16_rv": true,
+    "partial_max_abs": 0.00138092,
+    "lse_max_abs": 9.53674e-07,
+    "output_max_abs": 0.000481099,
+    "eligible_clusters": 1,
+    "independent_tail_leaders": 1,
+    "dequant_mode": 0,
+    "members": 16,
+    "gm_guards": true,
+    "inputs_immutable": true,
+    "task_count": 1014
+  },
+  "cpu_counter_structure": {
+    "status": "passed",
+    "actors": 12,
+    "exclusive_accounts_closed": true,
+    "max_stack_depth": 5,
+    "bf16_cast_occurrences": 6912,
+    "timing_acceptance": false
+  },
+  "preserved": [
+    "production C16 source and math",
+    "FE0/status guard kernels",
+    "target launch defaults",
+    "main and stable refs"
+  ],
+  "target_npu_execution": "not_run",
+  "target_clock_and_phase_measurement": "pending_user_script",
+  "graph_capture_replay": "not_run_this_turn",
+  "performance": "not_run",
+  "model_quality": "not_run"
+}

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "soc": "ascend910b4",
+  "clock_api": "AscendC::GetSystemCycle",
+  "clock_hz": 50000000,
+  "ticks_per_microsecond": 50,
+  "source_repository": "https://github.com/vllm-project/vllm-ascend",
+  "source_commit": "19e436985102f4ed3aad36c137a6481653688a6c",
+  "source_path": "csrc/utils/inc/kernel/moe_distribute_base.h",
+  "verified_local_path": "references/vllm-ascend/csrc/utils/inc/kernel/moe_distribute_base.h",
+  "source_file_sha256": "2f75b62f0ca7b7a20263979de2c9279f323fb3c2f71de1904b3a738b0dce62e5",
+  "source_license_notice": "Copyright (c) 2025 Huawei Technologies Co., Ltd.; CANN Open Software License Agreement Version 2.0",
+  "source_excerpts": [
+    {
+      "line_start": 25,
+      "line_end": 25,
+      "text": "constexpr uint32_t TIME_CYCLE = 50; // 系统cycle数转换成时间的基准单位，固定为50"
+    },
+    {
+      "line_start": 354,
+      "line_end": 356,
+      "text": "__aicore__ inline int64_t GetCurrentTimestampUs()\n{\n    return AscendC::GetSystemCycle() / TIME_CYCLE;"
+    }
+  ],
+  "verification": "Read the pinned native source and hashed its complete original bytes on 2026-10-19. The diagnostic build hashes this packaged contract; target deployment does not require a references checkout.",
+  "runtime_boundary": "This is the pinned A2 source timebase contract, not a measured hardware clock calibration. The diagnostic runtime independently rejects inconsistent cycle/event duration bounds."
+}

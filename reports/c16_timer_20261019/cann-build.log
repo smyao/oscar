@@ -1,0 +1,206 @@
+START phase=c16-generate cwd=/tmp/oscar-c16-timer-20261019 command=["/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python", "/tmp/oscar-c16-timer-20261019/csrc/experiments/c16_timer_20261019/generate.py", "--output-dir", "/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated"]
+{"source_sha256": "a2e04814c64ad02d45d27d3c4e45ca89df7738ca6d1ef2ad89733e2437d2cab2", "kernel": "/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp", "bindings": "/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/bindings.cpp", "header": "/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/launch.h"}
+RESULT {"phase": "c16-generate", "command": ["/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python", "/tmp/oscar-c16-timer-20261019/csrc/experiments/c16_timer_20261019/generate.py", "--output-dir", "/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated"], "returncode": 0, "elapsed_seconds": 0.107465, "timed_out": false, "interrupted": false, "log": "/tmp/oscar-c16-timer-20261019/logs-final/c16-generate.log", "cleanup_complete": true}
+[oscar] PASSED phase=c16-generate rc=0 log=/tmp/oscar-c16-timer-20261019/logs-final/c16-generate.log
+START phase=c16-configure cwd=/tmp/oscar-c16-timer-20261019 command=["/usr/bin/cmake", "-S", "/tmp/oscar-c16-timer-20261019/csrc/experiments/c16_timer_20261019", "-B", "/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake", "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0", "-DSOC_VERSION=ascend910b4", "-DASCEND_COMPUTE_UNIT=ascend910b4", "-DTORCH_NPU_PATH=/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu", "-DPython3_EXECUTABLE=/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python", "-DOSCAR_BUILD_SIGNATURE=e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5", "-DOSCAR_TIMER_KERNEL_SOURCE=/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp", "-DOSCAR_TIMER_BINDINGS_SOURCE=/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/bindings.cpp", "-DOSCAR_TIMER_GENERATED_DIR=/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated", "-DCMAKE_BUILD_TYPE=Release"]
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Python3: /home/sunao2000.linux/gpt_new_oscar/.venv/bin/python (found version "3.12.3") found components: Interpreter Development.Module 
+CMake Warning at /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:22 (message):
+  library kineto not found.
+Call Stack (most recent call first):
+  /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/share/cmake/Torch/TorchConfig.cmake:119 (append_torchlib_if_found)
+  CMakeLists.txt:62 (find_package)
+
+
+-- Found Torch: /home/sunao2000.linux/gpt_new_oscar/.venv/lib/python3.12/site-packages/torch/lib/libtorch.so  
+-- Configuring done (0.7s)
+-- Generating done (0.0s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    ASCEND_TOOLKIT_HOME
+    OSCAR_TIMER_BINDINGS_SOURCE
+
+
+-- Build files have been written to: /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake
+RESULT {"phase": "c16-configure", "command": ["/usr/bin/cmake", "-S", "/tmp/oscar-c16-timer-20261019/csrc/experiments/c16_timer_20261019", "-B", "/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake", "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_CANN_PACKAGE_PATH=/usr/local/Ascend/cann-9.1.0", "-DASCEND_TOOLKIT_HOME=/usr/local/Ascend/cann-9.1.0", "-DSOC_VERSION=ascend910b4", "-DASCEND_COMPUTE_UNIT=ascend910b4", "-DTORCH_NPU_PATH=/home/sunao2000.linux/.local/lib/python3.12/site-packages/torch_npu", "-DPython3_EXECUTABLE=/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python", "-DOSCAR_BUILD_SIGNATURE=e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5", "-DOSCAR_TIMER_KERNEL_SOURCE=/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp", "-DOSCAR_TIMER_BINDINGS_SOURCE=/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/bindings.cpp", "-DOSCAR_TIMER_GENERATED_DIR=/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated", "-DCMAKE_BUILD_TYPE=Release"], "returncode": 0, "elapsed_seconds": 0.848635, "timed_out": false, "interrupted": false, "log": "/tmp/oscar-c16-timer-20261019/logs-final/c16-configure.log", "cleanup_complete": true}
+[oscar] PASSED phase=c16-configure rc=0 log=/tmp/oscar-c16-timer-20261019/logs-final/c16-configure.log
+START phase=c16-compile cwd=/tmp/oscar-c16-timer-20261019 command=["/usr/bin/cmake", "--build", "/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake", "--parallel", "2"]
+[  2%] Creating directories for 'oscar_c16_timer_kernels_precompile'
+[  4%] No download step for 'oscar_c16_timer_kernels_precompile'
+[  6%] No update step for 'oscar_c16_timer_kernels_precompile'
+[  9%] No patch step for 'oscar_c16_timer_kernels_precompile'
+[ 11%] Performing configure step for 'oscar_c16_timer_kernels_precompile'
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    DYNAMIC_MODE
+    INCLUDE_DIR
+
+
+-- Build files have been written to: /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_precompile-prefix/src/oscar_c16_timer_kernels_precompile-build
+[ 13%] Performing build step for 'oscar_c16_timer_kernels_precompile'
+[100%] Building CXX object CMakeFiles/precompile_obj.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp.o
+[100%] Built target precompile_obj
+[100%] Built target check_src_template
+[ 15%] No install step for 'oscar_c16_timer_kernels_precompile'
+[ 18%] Completed 'oscar_c16_timer_kernels_precompile'
+[ 18%] Built target oscar_c16_timer_kernels_precompile
+[ 20%] Creating directories for 'oscar_c16_timer_kernels_preprocess'
+[ 22%] No download step for 'oscar_c16_timer_kernels_preprocess'
+[ 25%] No update step for 'oscar_c16_timer_kernels_preprocess'
+[ 27%] No patch step for 'oscar_c16_timer_kernels_preprocess'
+[ 29%] Performing configure step for 'oscar_c16_timer_kernels_preprocess'
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_preprocess-prefix/src/oscar_c16_timer_kernels_preprocess-build
+[ 31%] Performing build step for 'oscar_c16_timer_kernels_preprocess'
+[ 33%] Building CXX object CMakeFiles/preprocess_obj.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp.o
+[ 66%] Building CXX object CMakeFiles/aiv_obj.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp.o
+[ 66%] Built target preprocess_obj
+[100%] Building CXX object CMakeFiles/aic_obj.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp.o
+[100%] Built target aic_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_preprocess-prefix/src/oscar_c16_timer_kernels_preprocess-build/CMakeFiles/aic_obj.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp.o -o /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_preprocess-prefix/src/oscar_c16_timer_kernels_preprocess-build/CMakeFiles/aic_obj.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp.o[100%] Built target merge_aic_obj_text
+[100%] Built target aiv_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -m aicorelinux -Ttext=0 /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_preprocess-prefix/src/oscar_c16_timer_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp.o -o /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_preprocess-prefix/src/oscar_c16_timer_kernels_preprocess-build/CMakeFiles/aiv_obj.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp.o[100%] Built target merge_aiv_obj_text
+[100%] Built target _host_cpp
+[ 34%] No install step for 'oscar_c16_timer_kernels_preprocess'
+[ 36%] Completed 'oscar_c16_timer_kernels_preprocess'
+[ 36%] Built target oscar_c16_timer_kernels_preprocess
+[ 40%] Creating directories for 'oscar_c16_timer_kernels_aiv_device'
+[ 40%] Creating directories for 'oscar_c16_timer_kernels_aic_device'
+[ 43%] No download step for 'oscar_c16_timer_kernels_aic_device'
+[ 45%] No download step for 'oscar_c16_timer_kernels_aiv_device'
+[ 47%] No update step for 'oscar_c16_timer_kernels_aiv_device'
+[ 50%] No update step for 'oscar_c16_timer_kernels_aic_device'
+[ 52%] No patch step for 'oscar_c16_timer_kernels_aiv_device'
+[ 54%] No patch step for 'oscar_c16_timer_kernels_aic_device'
+[ 56%] Performing configure step for 'oscar_c16_timer_kernels_aiv_device'
+[ 59%] Performing configure step for 'oscar_c16_timer_kernels_aic_device'
+-- The C compiler identification is GNU 13.3.0
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_aiv_device-prefix/src/oscar_c16_timer_kernels_aiv_device-build
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_aic_device-prefix/src/oscar_c16_timer_kernels_aic_device-build
+[ 63%] Performing build step for 'oscar_c16_timer_kernels_aic_device'
+[ 63%] Performing build step for 'oscar_c16_timer_kernels_aiv_device'
+[100%] Building CXX object CMakeFiles/device_obj.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/auto_gen/oscar_c16_timer_kernels/auto_gen_c16_timer_kernel.cpp.o
+[100%] Building CXX object CMakeFiles/device_obj.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/auto_gen/oscar_c16_timer_kernels/auto_gen_c16_timer_kernel.cpp.o
+[100%] Built target device_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_aic_device-prefix/src/oscar_c16_timer_kernels_aic_device-build/CMakeFiles/device_obj.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/auto_gen/oscar_c16_timer_kernels/auto_gen_c16_timer_kernel.cpp.o -static -o /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_aic_device_dir/device.o
+[100%] Built target merge_device_obj
+[ 65%] No install step for 'oscar_c16_timer_kernels_aic_device'
+[ 68%] Completed 'oscar_c16_timer_kernels_aic_device'
+[ 68%] Built target oscar_c16_timer_kernels_aic_device
+[ 70%] Creating directories for 'oscar_c16_timer_kernels_host'
+[ 72%] No download step for 'oscar_c16_timer_kernels_host'
+[ 75%] No update step for 'oscar_c16_timer_kernels_host'
+[ 77%] No patch step for 'oscar_c16_timer_kernels_host'
+[ 79%] Performing configure step for 'oscar_c16_timer_kernels_host'
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    ASCEND_PYTHON_EXECUTABLE
+
+
+-- Build files have been written to: /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_host-prefix/src/oscar_c16_timer_kernels_host-build
+[ 81%] Performing build step for 'oscar_c16_timer_kernels_host'
+[100%] Building CXX object CMakeFiles/host_bisheng_obj.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp.o
+[100%] Built target host_bisheng_obj
+[ 84%] Performing install step for 'oscar_c16_timer_kernels_host'
+[100%] Built target host_bisheng_obj
+Install the project...
+-- Install configuration: "Release"
+-- Installing: /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_host_dir/./objects-Release/host_bisheng_obj/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp.o
+[ 86%] Completed 'oscar_c16_timer_kernels_host'
+[ 86%] Built target oscar_c16_timer_kernels_host
+[100%] Built target device_obj
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld  -m aicorelinux -r  -Ttext=0 /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_aiv_device-prefix/src/oscar_c16_timer_kernels_aiv_device-build/CMakeFiles/device_obj.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/auto_gen/oscar_c16_timer_kernels/auto_gen_c16_timer_kernel.cpp.o -static -o /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_aiv_device_dir/device.o
+[100%] Built target merge_device_obj
+[ 88%] No install step for 'oscar_c16_timer_kernels_aiv_device'
+[ 90%] Completed 'oscar_c16_timer_kernels_aiv_device'
+[ 90%] Built target oscar_c16_timer_kernels_aiv_device
+/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin/ld.lld -x -m aicorelinux   -Ttext=0 /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_aic_device_dir/device.o /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_aiv_device_dir/device.o -static -o /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_merge_obj_dir/device.o
+[ 90%] Built target oscar_c16_timer_kernels_merge_obj
+[ 93%] Building CXX object CMakeFiles/oscar_c16_timer_kernels_host_stub_obj.dir/auto_gen/oscar_c16_timer_kernels/host_stub.cpp.o
+[ 93%] Built target oscar_c16_timer_kernels_host_stub_obj
+[ 95%] Linking CXX shared library lib/liboscar_c16_timer_kernels_e7f05e415a08dccf.so
+/usr/local/Ascend/cann-9.1.0/bin/ascendc_pack_kernel /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/CMakeFiles/oscar_c16_timer_kernels_host_stub_obj.dir/auto_gen/oscar_c16_timer_kernels/host_stub.cpp.o /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_merge_obj_dir/device.o 0 /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/CMakeFiles/oscar_c16_timer_kernels_host_stub_obj.dir/auto_gen/oscar_c16_timer_kernels/host_stub.cpp.o
+recompile: /usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-z,defs -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -s -shared -Wl,-soname,liboscar_c16_timer_kernels_e7f05e415a08dccf.so -o lib/liboscar_c16_timer_kernels_e7f05e415a08dccf.so CMakeFiles/oscar_c16_timer_kernels_host_stub_obj.dir/auto_gen/oscar_c16_timer_kernels/host_stub.cpp.o /tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/oscar_c16_timer_kernels_host_dir/objects-Release/host_bisheng_obj/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp.o    -L/usr/local/Ascend/cann-9.1.0/lib64  -L/usr/local/Ascend/cann-9.1.0/tools/simulator/ascend910b4/lib  -Wl,-rpath,/usr/local/Ascend/cann-9.1.0/lib64 /usr/local/Ascend/cann-9.1.0/lib64/libascendc_runtime.a -lascend_dump -lc_sec -lascendcl -lruntime -lprofapi -lunified_dlog -lmmpa
+[ 95%] Built target oscar_c16_timer_kernels
+[ 97%] Building CXX object CMakeFiles/oscar_c16_timer.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/bindings.cpp.o
+[100%] Linking CXX shared library liboscar_c16_timer_e7f05e415a08dccf.so
+[100%] Built target oscar_c16_timer
+RESULT {"phase": "c16-compile", "command": ["/usr/bin/cmake", "--build", "/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake", "--parallel", "2"], "returncode": 0, "elapsed_seconds": 12.936016, "timed_out": false, "interrupted": false, "log": "/tmp/oscar-c16-timer-20261019/logs-final/c16-compile.log", "cleanup_complete": true}
+[oscar] PASSED phase=c16-compile rc=0 log=/tmp/oscar-c16-timer-20261019/logs-final/c16-compile.log
+[c16-build] built signed diagnostic library=/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/cmake/liboscar_c16_timer_e7f05e415a08dccf.so

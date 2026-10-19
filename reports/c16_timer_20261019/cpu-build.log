@@ -1,0 +1,7 @@
+[ 16%] Building CXX object CMakeFiles/c16_timer_paired_cpu.dir/probe.cpp.o
+[ 33%] Building CXX object CMakeFiles/c16_timer_paired_cpu.dir/tmp/oscar-c16-timer-20261019/build/c16_timer/e7f05e415a08dccfabde144448ee76de971c211a5c92d15ffda394f660cb94f5/attempt-33ab702cbef849f781ecbefcb6d55405/generated/c16_timer_kernel.cpp.o
+[ 50%] Building CXX object CMakeFiles/c16_timer_paired_cpu.dir/tmp/oscar-c16-timer-20261019/csrc/kernels/attention_cv_aligned_cluster16.cpp.o
+[ 66%] Building CXX object CMakeFiles/c16_timer_paired_cpu.dir/tmp/oscar-c16-timer-20261019/csrc/kernels/attention_tasks.cpp.o
+[ 83%] Building CXX object CMakeFiles/c16_timer_paired_cpu.dir/tmp/oscar-c16-timer-20261019/csrc/kernels/merge_lse.cpp.o
+[100%] Linking CXX executable c16_timer_paired_cpu
+[100%] Built target c16_timer_paired_cpu

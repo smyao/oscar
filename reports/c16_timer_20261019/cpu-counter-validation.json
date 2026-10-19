@@ -1,0 +1,1304 @@
+{
+  "status": "passed",
+  "clock_scope": "CPU-debug counters only; not NPU frequency or timing acceptance",
+  "valid": true,
+  "issues": [],
+  "actors": [
+    {
+      "core": 0,
+      "engine": "AIC",
+      "actor_index": 0,
+      "total_cycles": 55473458476,
+      "other_cycles": 542,
+      "flags": 0,
+      "ready": 1,
+      "max_stack_depth": 3,
+      "phases": {
+        "task_metadata": {
+          "cycles": 48963,
+          "count": 349
+        },
+        "query_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "history_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "precise_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "unpack_k": {
+          "cycles": 0,
+          "count": 0
+        },
+        "unpack_v": {
+          "cycles": 0,
+          "count": 0
+        },
+        "publish_kv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "qk": {
+          "cycles": 2507624751,
+          "count": 21
+        },
+        "softmax_score_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_math": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_publish_p": {
+          "cycles": 0,
+          "count": 0
+        },
+        "pv": {
+          "cycles": 2936363239,
+          "count": 21
+        },
+        "state_restore": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_spill": {
+          "cycles": 0,
+          "count": 0
+        },
+        "final_rv": {
+          "cycles": 2245622002,
+          "count": 17
+        },
+        "normalize": {
+          "cycles": 0,
+          "count": 0
+        },
+        "output_publish": {
+          "cycles": 0,
+          "count": 0
+        },
+        "cross_core_wait": {
+          "cycles": 47717631529,
+          "count": 66
+        },
+        "b1_load": {
+          "cycles": 65563088,
+          "count": 14
+        },
+        "bf16_cast": {
+          "cycles": 0,
+          "count": 0
+        },
+        "task_other": {
+          "cycles": 261666,
+          "count": 9
+        },
+        "cluster_other": {
+          "cycles": 188827,
+          "count": 1
+        },
+        "init": {
+          "cycles": 95332,
+          "count": 1
+        },
+        "process_other": {
+          "cycles": 58537,
+          "count": 1
+        }
+      }
+    },
+    {
+      "core": 0,
+      "engine": "AIV0",
+      "actor_index": 1,
+      "total_cycles": 57375028885,
+      "other_cycles": 334,
+      "flags": 0,
+      "ready": 1,
+      "max_stack_depth": 5,
+      "phases": {
+        "task_metadata": {
+          "cycles": 70545144,
+          "count": 349
+        },
+        "query_load": {
+          "cycles": 8059961439,
+          "count": 42
+        },
+        "history_load": {
+          "cycles": 23203747,
+          "count": 8
+        },
+        "precise_load": {
+          "cycles": 889334268,
+          "count": 64
+        },
+        "unpack_k": {
+          "cycles": 988255664,
+          "count": 8
+        },
+        "unpack_v": {
+          "cycles": 968723490,
+          "count": 8
+        },
+        "publish_kv": {
+          "cycles": 347503140,
+          "count": 80
+        },
+        "qk": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_score_load": {
+          "cycles": 49479866,
+          "count": 41
+        },
+        "softmax_math": {
+          "cycles": 5974632433,
+          "count": 42
+        },
+        "softmax_publish_p": {
+          "cycles": 411057742,
+          "count": 41
+        },
+        "pv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_restore": {
+          "cycles": 86454798,
+          "count": 32
+        },
+        "state_spill": {
+          "cycles": 757873377,
+          "count": 32
+        },
+        "final_rv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "normalize": {
+          "cycles": 1482998276,
+          "count": 25
+        },
+        "output_publish": {
+          "cycles": 22764564561,
+          "count": 26
+        },
+        "cross_core_wait": {
+          "cycles": 5864279010,
+          "count": 44
+        },
+        "b1_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "bf16_cast": {
+          "cycles": 7370261409,
+          "count": 1701
+        },
+        "task_other": {
+          "cycles": 260759381,
+          "count": 9
+        },
+        "cluster_other": {
+          "cycles": 301232886,
+          "count": 1
+        },
+        "init": {
+          "cycles": 2089825,
+          "count": 1
+        },
+        "process_other": {
+          "cycles": 701818095,
+          "count": 1
+        }
+      }
+    },
+    {
+      "core": 0,
+      "engine": "AIV1",
+      "actor_index": 2,
+      "total_cycles": 57203481085,
+      "other_cycles": 501,
+      "flags": 0,
+      "ready": 1,
+      "max_stack_depth": 5,
+      "phases": {
+        "task_metadata": {
+          "cycles": 70268143,
+          "count": 349
+        },
+        "query_load": {
+          "cycles": 7836742485,
+          "count": 42
+        },
+        "history_load": {
+          "cycles": 22989413,
+          "count": 8
+        },
+        "precise_load": {
+          "cycles": 882606626,
+          "count": 64
+        },
+        "unpack_k": {
+          "cycles": 976588329,
+          "count": 8
+        },
+        "unpack_v": {
+          "cycles": 972396848,
+          "count": 8
+        },
+        "publish_kv": {
+          "cycles": 323974523,
+          "count": 80
+        },
+        "qk": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_score_load": {
+          "cycles": 47525913,
+          "count": 40
+        },
+        "softmax_math": {
+          "cycles": 5800097963,
+          "count": 42
+        },
+        "softmax_publish_p": {
+          "cycles": 381559307,
+          "count": 40
+        },
+        "pv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_restore": {
+          "cycles": 82822937,
+          "count": 32
+        },
+        "state_spill": {
+          "cycles": 697011128,
+          "count": 32
+        },
+        "final_rv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "normalize": {
+          "cycles": 1479987278,
+          "count": 25
+        },
+        "output_publish": {
+          "cycles": 20650905483,
+          "count": 26
+        },
+        "cross_core_wait": {
+          "cycles": 8434347784,
+          "count": 44
+        },
+        "b1_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "bf16_cast": {
+          "cycles": 7249266761,
+          "count": 1670
+        },
+        "task_other": {
+          "cycles": 277018606,
+          "count": 9
+        },
+        "cluster_other": {
+          "cycles": 310826814,
+          "count": 1
+        },
+        "init": {
+          "cycles": 2102616,
+          "count": 1
+        },
+        "process_other": {
+          "cycles": 704441627,
+          "count": 1
+        }
+      }
+    },
+    {
+      "core": 1,
+      "engine": "AIC",
+      "actor_index": 3,
+      "total_cycles": 7519915534,
+      "other_cycles": 375,
+      "flags": 0,
+      "ready": 1,
+      "max_stack_depth": 3,
+      "phases": {
+        "task_metadata": {
+          "cycles": 47345,
+          "count": 333
+        },
+        "query_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "history_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "precise_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "unpack_k": {
+          "cycles": 0,
+          "count": 0
+        },
+        "unpack_v": {
+          "cycles": 0,
+          "count": 0
+        },
+        "publish_kv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "qk": {
+          "cycles": 525673474,
+          "count": 5
+        },
+        "softmax_score_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_math": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_publish_p": {
+          "cycles": 0,
+          "count": 0
+        },
+        "pv": {
+          "cycles": 616926754,
+          "count": 5
+        },
+        "state_restore": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_spill": {
+          "cycles": 0,
+          "count": 0
+        },
+        "final_rv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "normalize": {
+          "cycles": 0,
+          "count": 0
+        },
+        "output_publish": {
+          "cycles": 0,
+          "count": 0
+        },
+        "cross_core_wait": {
+          "cycles": 6335649214,
+          "count": 15
+        },
+        "b1_load": {
+          "cycles": 41215093,
+          "count": 10
+        },
+        "bf16_cast": {
+          "cycles": 0,
+          "count": 0
+        },
+        "task_other": {
+          "cycles": 268042,
+          "count": 9
+        },
+        "cluster_other": {
+          "cycles": 0,
+          "count": 0
+        },
+        "init": {
+          "cycles": 82833,
+          "count": 1
+        },
+        "process_other": {
+          "cycles": 52404,
+          "count": 1
+        }
+      }
+    },
+    {
+      "core": 1,
+      "engine": "AIV0",
+      "actor_index": 4,
+      "total_cycles": 11869730200,
+      "other_cycles": 625,
+      "flags": 0,
+      "ready": 1,
+      "max_stack_depth": 5,
+      "phases": {
+        "task_metadata": {
+          "cycles": 74967054,
+          "count": 333
+        },
+        "query_load": {
+          "cycles": 2046748793,
+          "count": 9
+        },
+        "history_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "precise_load": {
+          "cycles": 1062303626,
+          "count": 80
+        },
+        "unpack_k": {
+          "cycles": 0,
+          "count": 0
+        },
+        "unpack_v": {
+          "cycles": 0,
+          "count": 0
+        },
+        "publish_kv": {
+          "cycles": 269877345,
+          "count": 80
+        },
+        "qk": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_score_load": {
+          "cycles": 12855243,
+          "count": 9
+        },
+        "softmax_math": {
+          "cycles": 1079067560,
+          "count": 10
+        },
+        "softmax_publish_p": {
+          "cycles": 21348126,
+          "count": 9
+        },
+        "pv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_restore": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_spill": {
+          "cycles": 0,
+          "count": 0
+        },
+        "final_rv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "normalize": {
+          "cycles": 496063164,
+          "count": 9
+        },
+        "output_publish": {
+          "cycles": 2357125753,
+          "count": 10
+        },
+        "cross_core_wait": {
+          "cycles": 1163781106,
+          "count": 10
+        },
+        "b1_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "bf16_cast": {
+          "cycles": 2293780322,
+          "count": 611
+        },
+        "task_other": {
+          "cycles": 266127622,
+          "count": 9
+        },
+        "cluster_other": {
+          "cycles": 0,
+          "count": 0
+        },
+        "init": {
+          "cycles": 2604823,
+          "count": 1
+        },
+        "process_other": {
+          "cycles": 723079038,
+          "count": 1
+        }
+      }
+    },
+    {
+      "core": 1,
+      "engine": "AIV1",
+      "actor_index": 5,
+      "total_cycles": 11618785626,
+      "other_cycles": 334,
+      "flags": 0,
+      "ready": 1,
+      "max_stack_depth": 5,
+      "phases": {
+        "task_metadata": {
+          "cycles": 66693893,
+          "count": 333
+        },
+        "query_load": {
+          "cycles": 2078187090,
+          "count": 9
+        },
+        "history_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "precise_load": {
+          "cycles": 1047957555,
+          "count": 80
+        },
+        "unpack_k": {
+          "cycles": 0,
+          "count": 0
+        },
+        "unpack_v": {
+          "cycles": 0,
+          "count": 0
+        },
+        "publish_kv": {
+          "cycles": 256783604,
+          "count": 80
+        },
+        "qk": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_score_load": {
+          "cycles": 9637129,
+          "count": 8
+        },
+        "softmax_math": {
+          "cycles": 1023060152,
+          "count": 10
+        },
+        "softmax_publish_p": {
+          "cycles": 17916224,
+          "count": 8
+        },
+        "pv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_restore": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_spill": {
+          "cycles": 0,
+          "count": 0
+        },
+        "final_rv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "normalize": {
+          "cycles": 494398715,
+          "count": 9
+        },
+        "output_publish": {
+          "cycles": 2078377251,
+          "count": 10
+        },
+        "cross_core_wait": {
+          "cycles": 1331950845,
+          "count": 10
+        },
+        "b1_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "bf16_cast": {
+          "cycles": 2273568187,
+          "count": 596
+        },
+        "task_other": {
+          "cycles": 298538825,
+          "count": 9
+        },
+        "cluster_other": {
+          "cycles": 0,
+          "count": 0
+        },
+        "init": {
+          "cycles": 2362032,
+          "count": 1
+        },
+        "process_other": {
+          "cycles": 639353790,
+          "count": 1
+        }
+      }
+    },
+    {
+      "core": 2,
+      "engine": "AIC",
+      "actor_index": 6,
+      "total_cycles": 6381298005,
+      "other_cycles": 709,
+      "flags": 0,
+      "ready": 1,
+      "max_stack_depth": 3,
+      "phases": {
+        "task_metadata": {
+          "cycles": 45958,
+          "count": 331
+        },
+        "query_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "history_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "precise_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "unpack_k": {
+          "cycles": 0,
+          "count": 0
+        },
+        "unpack_v": {
+          "cycles": 0,
+          "count": 0
+        },
+        "publish_kv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "qk": {
+          "cycles": 515742805,
+          "count": 4
+        },
+        "softmax_score_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_math": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_publish_p": {
+          "cycles": 0,
+          "count": 0
+        },
+        "pv": {
+          "cycles": 598970697,
+          "count": 4
+        },
+        "state_restore": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_spill": {
+          "cycles": 0,
+          "count": 0
+        },
+        "final_rv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "normalize": {
+          "cycles": 0,
+          "count": 0
+        },
+        "output_publish": {
+          "cycles": 0,
+          "count": 0
+        },
+        "cross_core_wait": {
+          "cycles": 5226310739,
+          "count": 12
+        },
+        "b1_load": {
+          "cycles": 37530772,
+          "count": 8
+        },
+        "bf16_cast": {
+          "cycles": 0,
+          "count": 0
+        },
+        "task_other": {
+          "cycles": 2542866,
+          "count": 9
+        },
+        "cluster_other": {
+          "cycles": 0,
+          "count": 0
+        },
+        "init": {
+          "cycles": 85458,
+          "count": 1
+        },
+        "process_other": {
+          "cycles": 68001,
+          "count": 1
+        }
+      }
+    },
+    {
+      "core": 2,
+      "engine": "AIV0",
+      "actor_index": 7,
+      "total_cycles": 11161944313,
+      "other_cycles": 500,
+      "flags": 0,
+      "ready": 1,
+      "max_stack_depth": 5,
+      "phases": {
+        "task_metadata": {
+          "cycles": 73098228,
+          "count": 331
+        },
+        "query_load": {
+          "cycles": 2036688333,
+          "count": 9
+        },
+        "history_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "precise_load": {
+          "cycles": 835730654,
+          "count": 64
+        },
+        "unpack_k": {
+          "cycles": 0,
+          "count": 0
+        },
+        "unpack_v": {
+          "cycles": 0,
+          "count": 0
+        },
+        "publish_kv": {
+          "cycles": 155141657,
+          "count": 64
+        },
+        "qk": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_score_load": {
+          "cycles": 11494332,
+          "count": 8
+        },
+        "softmax_math": {
+          "cycles": 1018328163,
+          "count": 8
+        },
+        "softmax_publish_p": {
+          "cycles": 16498313,
+          "count": 8
+        },
+        "pv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_restore": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_spill": {
+          "cycles": 0,
+          "count": 0
+        },
+        "final_rv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "normalize": {
+          "cycles": 472496753,
+          "count": 9
+        },
+        "output_publish": {
+          "cycles": 2409192948,
+          "count": 10
+        },
+        "cross_core_wait": {
+          "cycles": 1149364244,
+          "count": 8
+        },
+        "b1_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "bf16_cast": {
+          "cycles": 2022247328,
+          "count": 594
+        },
+        "task_other": {
+          "cycles": 277058110,
+          "count": 9
+        },
+        "cluster_other": {
+          "cycles": 0,
+          "count": 0
+        },
+        "init": {
+          "cycles": 2543073,
+          "count": 1
+        },
+        "process_other": {
+          "cycles": 682061677,
+          "count": 1
+        }
+      }
+    },
+    {
+      "core": 2,
+      "engine": "AIV1",
+      "actor_index": 8,
+      "total_cycles": 10869425438,
+      "other_cycles": 541,
+      "flags": 0,
+      "ready": 1,
+      "max_stack_depth": 5,
+      "phases": {
+        "task_metadata": {
+          "cycles": 87260661,
+          "count": 331
+        },
+        "query_load": {
+          "cycles": 2008949627,
+          "count": 9
+        },
+        "history_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "precise_load": {
+          "cycles": 809106541,
+          "count": 64
+        },
+        "unpack_k": {
+          "cycles": 0,
+          "count": 0
+        },
+        "unpack_v": {
+          "cycles": 0,
+          "count": 0
+        },
+        "publish_kv": {
+          "cycles": 152742414,
+          "count": 64
+        },
+        "qk": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_score_load": {
+          "cycles": 11373499,
+          "count": 8
+        },
+        "softmax_math": {
+          "cycles": 1019788161,
+          "count": 8
+        },
+        "softmax_publish_p": {
+          "cycles": 16042896,
+          "count": 8
+        },
+        "pv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_restore": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_spill": {
+          "cycles": 0,
+          "count": 0
+        },
+        "final_rv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "normalize": {
+          "cycles": 493161592,
+          "count": 9
+        },
+        "output_publish": {
+          "cycles": 2091332550,
+          "count": 10
+        },
+        "cross_core_wait": {
+          "cycles": 1198320933,
+          "count": 8
+        },
+        "b1_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "bf16_cast": {
+          "cycles": 2048293333,
+          "count": 580
+        },
+        "task_other": {
+          "cycles": 262775211,
+          "count": 9
+        },
+        "cluster_other": {
+          "cycles": 0,
+          "count": 0
+        },
+        "init": {
+          "cycles": 2460866,
+          "count": 1
+        },
+        "process_other": {
+          "cycles": 667816613,
+          "count": 1
+        }
+      }
+    },
+    {
+      "core": 3,
+      "engine": "AIC",
+      "actor_index": 9,
+      "total_cycles": 6407632570,
+      "other_cycles": 625,
+      "flags": 0,
+      "ready": 1,
+      "max_stack_depth": 3,
+      "phases": {
+        "task_metadata": {
+          "cycles": 55342,
+          "count": 328
+        },
+        "query_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "history_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "precise_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "unpack_k": {
+          "cycles": 0,
+          "count": 0
+        },
+        "unpack_v": {
+          "cycles": 0,
+          "count": 0
+        },
+        "publish_kv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "qk": {
+          "cycles": 514731227,
+          "count": 4
+        },
+        "softmax_score_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_math": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_publish_p": {
+          "cycles": 0,
+          "count": 0
+        },
+        "pv": {
+          "cycles": 593827842,
+          "count": 4
+        },
+        "state_restore": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_spill": {
+          "cycles": 0,
+          "count": 0
+        },
+        "final_rv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "normalize": {
+          "cycles": 0,
+          "count": 0
+        },
+        "output_publish": {
+          "cycles": 0,
+          "count": 0
+        },
+        "cross_core_wait": {
+          "cycles": 5267035541,
+          "count": 12
+        },
+        "b1_load": {
+          "cycles": 30839841,
+          "count": 8
+        },
+        "bf16_cast": {
+          "cycles": 0,
+          "count": 0
+        },
+        "task_other": {
+          "cycles": 822953,
+          "count": 8
+        },
+        "cluster_other": {
+          "cycles": 0,
+          "count": 0
+        },
+        "init": {
+          "cycles": 106041,
+          "count": 1
+        },
+        "process_other": {
+          "cycles": 213158,
+          "count": 1
+        }
+      }
+    },
+    {
+      "core": 3,
+      "engine": "AIV0",
+      "actor_index": 10,
+      "total_cycles": 10545811847,
+      "other_cycles": 418,
+      "flags": 0,
+      "ready": 1,
+      "max_stack_depth": 5,
+      "phases": {
+        "task_metadata": {
+          "cycles": 71307810,
+          "count": 328
+        },
+        "query_load": {
+          "cycles": 1864923312,
+          "count": 8
+        },
+        "history_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "precise_load": {
+          "cycles": 825212817,
+          "count": 64
+        },
+        "unpack_k": {
+          "cycles": 0,
+          "count": 0
+        },
+        "unpack_v": {
+          "cycles": 0,
+          "count": 0
+        },
+        "publish_kv": {
+          "cycles": 163374871,
+          "count": 64
+        },
+        "qk": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_score_load": {
+          "cycles": 10524582,
+          "count": 8
+        },
+        "softmax_math": {
+          "cycles": 1028386380,
+          "count": 8
+        },
+        "softmax_publish_p": {
+          "cycles": 16630686,
+          "count": 8
+        },
+        "pv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_restore": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_spill": {
+          "cycles": 0,
+          "count": 0
+        },
+        "final_rv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "normalize": {
+          "cycles": 412983725,
+          "count": 8
+        },
+        "output_publish": {
+          "cycles": 2193563873,
+          "count": 8
+        },
+        "cross_core_wait": {
+          "cycles": 1139451784,
+          "count": 8
+        },
+        "b1_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "bf16_cast": {
+          "cycles": 1911877942,
+          "count": 584
+        },
+        "task_other": {
+          "cycles": 247913721,
+          "count": 8
+        },
+        "cluster_other": {
+          "cycles": 0,
+          "count": 0
+        },
+        "init": {
+          "cycles": 2553906,
+          "count": 1
+        },
+        "process_other": {
+          "cycles": 657106020,
+          "count": 1
+        }
+      }
+    },
+    {
+      "core": 3,
+      "engine": "AIV1",
+      "actor_index": 11,
+      "total_cycles": 10462364906,
+      "other_cycles": 292,
+      "flags": 0,
+      "ready": 1,
+      "max_stack_depth": 5,
+      "phases": {
+        "task_metadata": {
+          "cycles": 65396157,
+          "count": 328
+        },
+        "query_load": {
+          "cycles": 1865725713,
+          "count": 8
+        },
+        "history_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "precise_load": {
+          "cycles": 822747614,
+          "count": 64
+        },
+        "unpack_k": {
+          "cycles": 0,
+          "count": 0
+        },
+        "unpack_v": {
+          "cycles": 0,
+          "count": 0
+        },
+        "publish_kv": {
+          "cycles": 152583497,
+          "count": 64
+        },
+        "qk": {
+          "cycles": 0,
+          "count": 0
+        },
+        "softmax_score_load": {
+          "cycles": 12637619,
+          "count": 8
+        },
+        "softmax_math": {
+          "cycles": 1033335523,
+          "count": 8
+        },
+        "softmax_publish_p": {
+          "cycles": 16231606,
+          "count": 8
+        },
+        "pv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_restore": {
+          "cycles": 0,
+          "count": 0
+        },
+        "state_spill": {
+          "cycles": 0,
+          "count": 0
+        },
+        "final_rv": {
+          "cycles": 0,
+          "count": 0
+        },
+        "normalize": {
+          "cycles": 430160700,
+          "count": 8
+        },
+        "output_publish": {
+          "cycles": 2066128974,
+          "count": 8
+        },
+        "cross_core_wait": {
+          "cycles": 1216412572,
+          "count": 8
+        },
+        "b1_load": {
+          "cycles": 0,
+          "count": 0
+        },
+        "bf16_cast": {
+          "cycles": 1891544200,
+          "count": 576
+        },
+        "task_other": {
+          "cycles": 237979636,
+          "count": 8
+        },
+        "cluster_other": {
+          "cycles": 0,
+          "count": 0
+        },
+        "init": {
+          "cycles": 2374866,
+          "count": 1
+        },
+        "process_other": {
+          "cycles": 649105937,
+          "count": 1
+        }
+      }
+    }
+  ]
+}

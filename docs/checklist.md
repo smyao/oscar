@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-10-19诊断专项：新增32K native BS4 / OSCAR BS4 / OSCAR BS8的小批量timer/PMU一键入口，125项主机回归通过；没有运行目标NPU/性能测量，下方42项不因计时工具交付升级。用户运行后才分析计算、片内搬运或HBM瓶颈。[设计与证据边界](timer_32k_diagnosis_20261019.md)。
+
 2026-10-18：默认原版Qwen3.8-27B（无强制ascend量化、按原生RoPE），保留Qwen3.5/W8A8选择；默认官方qqt/sst校准和新BF16/144B数学路径，性能测试停止。main/stable未动，真实NPU/图/模型质量未据本地证据升级。见[本轮实现及边界](qwen38_official_alignment_20261018.md)。
 
 2026-10-16独立BF16分支：基于主分支7047ce36，main/stable保持不变。q4/q1/C4/C16采用BF16乘数、FP32累加与softmax/LSE；完整48cap CANN/Torch新构建及官方CPU-debug正常/错误路径通过。按用户最新指令停止测速，真机执行/图/服务/质量由用户验证，下方42项不升级。见[计算合同、证据与直启命令](bf16_attention_20261016.md)。

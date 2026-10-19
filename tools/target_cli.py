@@ -131,7 +131,7 @@ def _run_service(config: dict, config_path: Path, command: list[str], *, native:
               "bug_fixed=not_established", flush=True)
     if native:
         os.environ["OSCAR_ENABLED"]="0"
-        if os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL"):
+        if os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL") or os.environ.get("OSCAR_TIMER_CONTROL"):
             # Passive runner/graph timing only; platform/cache routing stays
             # native and no OSCAR runtime is installed.
             from oscar_ascend.plugin import register_passive_observer

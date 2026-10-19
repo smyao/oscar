@@ -1,0 +1,85 @@
+{
+  "date": "2026-10-19",
+  "base_commit": "15e3fae2210e844107e7b7387a848d6de1d58923",
+  "objective": "diagnostic delivery only; stop large-scale optimization",
+  "user_report": "OSCAR capacity about31 vs native15 but total time remains slower; not independently verified",
+  "arms": [
+    {
+      "variant": "native",
+      "bs": 4
+    },
+    {
+      "variant": "oscar",
+      "bs": 4
+    },
+    {
+      "variant": "oscar",
+      "bs": 8
+    }
+  ],
+  "prompt_tokens": 32768,
+  "output_tokens": 256,
+  "modes": [
+    "control_sampler_off",
+    "bounded_profile_repeat"
+  ],
+  "long_requests_total": 32,
+  "flush_requests": {
+    "count": 3,
+    "input_tokens": 128,
+    "output_tokens": 1,
+    "excluded_from_comparison": true
+  },
+  "profile_windows_per_rank_per_repeat": 4,
+  "metrics": [
+    "PipeUtilization",
+    "Memory"
+  ],
+  "warm_prefill_min_history": 16384,
+  "decode_min_requests": "client target4 or8; actual scheduler counts recorded",
+  "summary_limits": {
+    "lines": 200,
+    "utf8_bytes": 51200
+  },
+  "validation": {
+    "host_tests": 125,
+    "result": "passed",
+    "warning": "local Torch NumPy unavailable",
+    "log": "host_regressions.log",
+    "plan": "passed_read_only",
+    "CANN": "not_rebuilt_no_kernel_changes",
+    "NPU": "not_run",
+    "performance": "not_run_by_agent",
+    "quality": "not_run"
+  },
+  "bound_verdict": "pending_user_device_evidence",
+  "source_sha256": {
+    "oscar_ascend/diagnostic_timer.py": "01061d30e2c965b4396095ade2ff560e023b080afe11f43c2e74d20c515b8b40",
+    "oscar_ascend/plugin.py": "7b545b986da4d4669697eca72e1766c911bc915037a5ea81b7232938951b65ae",
+    "oscar_ascend/timing.py": "d881a600f4d27de561a2c416d737a66d51ee8b03bc7a6343caf1cf339b0812e2",
+    "oscar_ascend/integration/aligned_math.py": "e99f7850cc4d8342380e4a516de45b94e83d3e22c54056dddc1b4a0b7fbf707f",
+    "tools/timer32k.py": "a65e708fa7a3d39fd39d6d0fb1ca830d0bd7479b18b908b94cbcae303d5b466b",
+    "tools/summarize_timer.py": "a51da53eae9bed57f2f8dc1d2e59708934a84336eff131d20efba1b8dce4bab9",
+    "tools/service_probe.py": "959b830dd8a349dd3483f904d91d6ad7c727fb902142da9fbdf1f857fe648174",
+    "tools/target_cli.py": "014bd729f125c407feeacff2ff0517b2e0ad93c5ae0c9822863f25cd5ef38a21",
+    "scripts/test_timer_32k.sh": "64a11742b28f3d034e2a5e383ae5abd472c8cd7d49d6378af607b2d52eadb3ac"
+  },
+  "native_profiler_api_review": {
+    "url": "https://raw.githubusercontent.com/Ascend/pytorch/master/torch_npu/profiler/profiler.py",
+    "source_sha256": "0207c6042c0155a1fe2b517d0ea536d39d5bc06b8fa5abdf1d6814e250c2fcec",
+    "confirmed": [
+      "tensorboard_trace_handler async_mode=False",
+      "profile step transitions schedule action",
+      "profile stop uses current action"
+    ],
+    "scope": "upstream source API review only; target backend execution unverified"
+  },
+  "scope_guards": {
+    "native_sources_modified": false,
+    "kernels_modified": false,
+    "precision_or_format_changed": false,
+    "normal_service_default_timer_changed": false,
+    "main_stable_changed": false,
+    "target_device_access": false
+  }
+}

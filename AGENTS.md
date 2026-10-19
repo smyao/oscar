@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-19最新：用户要求停止大规模优化，仅交付当前分支32K计时诊断，由用户真机运行反馈。默认三臂改为native BS4、OSCAR BS4、OSCAR BS8（替代最初15/31），输出256；关闭采样的对照和有限profile重复分开。允许本轮显式诊断入口采集timer/设备PMU，不恢复日常入口计时或性能优化。终端摘要≤200行且≤50KiB，细节落盘；保留原生graph/MTP/APC/预算/精度，禁止把host时间、四rank累加或小batch推断冒充设备/整轮结论。仍不由agent连接真机，仅推BF16分支。
+
 > 2026-10-18最新：默认所有入口使用原版Qwen3.8-27B，移除默认ascend权重量化及旧YaRN×4覆盖，按模型自身RoPE；显式W8A8仍支持，MTP/APC-off/16384/设备端口不变。官方OSCAR339368e的qqt/sst→U·H·Pbr替代默认data-free H；模型采样在NPU，离线FP64统计/eigh采用CPU同精度实现，不是推理回退。candidate默认使用版本化144B FP32 normalized-zero metadata/BF16旋转与attention，原136B与旧oracle留作历史；新v3容差预先固定。用户禁止性能测试/真机连接，仅源码/编译/功能/图契约验证。只推codex/oscar-bf16-attention，main/stable不动。
 
 ## 2026-10-16 BF16分支任务（优先于旧FP32-only门）

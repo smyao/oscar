@@ -144,11 +144,15 @@ class Server:
 
 
 @contextmanager
-def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None, native=False):
+def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None, native=False,
+                   quiet=False):
     """Launch one owned process group; cleanup also runs before failed startup.
 
     ``command`` is dependency injection for subprocess fault tests; the CLI
     never accepts an alternate command or a replacement inference backend.
+    ``quiet`` is opt-in for the bounded timer diagnostic: preserve every child
+    byte in server.log while its caller prints a bounded failure excerpt.
+    Existing deployment callers retain their live terminal stream.
     """
     log_dir = Path(log_dir).resolve()
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -183,7 +187,7 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
                      debug_sync=environment.get("OSCAR_DEBUG_SYNC", "0").lower() in {"1", "true"})
     print(f"[oscar] worker checkpoints debug_sync={lifecycle['debug_sync']} trace={trace_dir}", flush=True)
     atomic_json(log_dir / "server_lifecycle.json", lifecycle)
-    with live_log(log) as stream:
+    with (log.open("w", buffering=1, encoding="utf-8") if quiet else live_log(log)) as stream:
         stream.write(f"START owned_service cwd={ROOT} command={json.dumps(command)}\n")
         try:
             process = subprocess.Popen(command, cwd=ROOT, env=environment, stdin=subprocess.DEVNULL,
@@ -192,7 +196,7 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
             ownership = OwnedProcessGroup(process.pid)
             server = Server(process, base_url, log, trace_dir, lifecycle, ownership)
             deadline = started + startup_timeout
-            heartbeat = started + 15
+            heartbeat = started + (60 if quiet else 15)
             last_health_error = None
             while True:
                 server.check_alive()
@@ -207,7 +211,7 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
                 if time.monotonic() >= heartbeat:
                     stream.write(f"STARTUP_WAIT elapsed={time.monotonic()-started:.1f} health={last_health_error}\n")
                     print(f"[oscar] waiting for service health log={log}", flush=True)
-                    heartbeat = time.monotonic() + 15
+                    heartbeat = time.monotonic() + (60 if quiet else 15)
                 time.sleep(min(0.2, max(0, deadline - time.monotonic())))
             lifecycle.update(status="healthy", startup_seconds=round(time.monotonic() - started, 6))
             atomic_json(log_dir / "server_lifecycle.json", lifecycle)

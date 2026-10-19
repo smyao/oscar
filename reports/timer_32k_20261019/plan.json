@@ -1,0 +1,189 @@
+{
+  "kind": "timer32k",
+  "stages": [
+    [
+      "build-dependencies",
+      [
+        "/Users/sunao2000/gpt_new_oscar_kimi/.venv/bin/python",
+        "-m",
+        "pip",
+        "install",
+        "setuptools>=69",
+        "wheel",
+        "pybind11>=3",
+        "cmake>=3.26",
+        "ninja",
+        "pytest"
+      ]
+    ],
+    [
+      "install-plugin",
+      [
+        "/Users/sunao2000/gpt_new_oscar_kimi/.venv/bin/python",
+        "-m",
+        "pip",
+        "install",
+        "--no-deps",
+        "--no-build-isolation",
+        "-e",
+        "/Users/sunao2000/gpt_new_oscar_kimi"
+      ]
+    ],
+    [
+      "build-ops",
+      [
+        "/Users/sunao2000/gpt_new_oscar_kimi/.venv/bin/python",
+        "-m",
+        "tools.build_ops",
+        "--soc",
+        "ascend910b4",
+        "--log-dir",
+        "/Users/sunao2000/gpt_new_oscar_kimi/logs/timer32k-20261019T084615.635519Z/phases/build"
+      ]
+    ],
+    [
+      "prepare-rotations",
+      [
+        "/Users/sunao2000/gpt_new_oscar_kimi/.venv/bin/python",
+        "-m",
+        "tools.prepare_rotations",
+        "--config",
+        "/Users/sunao2000/gpt_new_oscar_kimi/logs/timer32k-20261019T084615.635519Z/effective-target.json"
+      ]
+    ]
+  ],
+  "vllm_argv": [
+    "serve",
+    "/softwarePlatform/models_directory/Qwen3.8-27B",
+    "--max-num-batched-tokens",
+    "16384",
+    "--served-model-name",
+    "qwen3.8",
+    "--host",
+    "0.0.0.0",
+    "--port",
+    "8989",
+    "--data-parallel-size",
+    "1",
+    "--tensor-parallel-size",
+    "4",
+    "--max-model-len",
+    "262144",
+    "--max-num-seqs",
+    "128",
+    "--gpu-memory-utilization",
+    "0.9",
+    "--dtype",
+    "bfloat16",
+    "--compilation-config",
+    "{\"cudagraph_capture_sizes\":[1,4,8,12,16,24,32,48,56,64,72,84,96,108,112,128,160,172,196,200,212,232,272,288,312,328,344,360,384,400,416,432,448,480,512],\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+    "--speculative_config",
+    "{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":3,\"enforce_eager\":true}",
+    "--additional-config",
+    "{\"enable_cpu_binding\":true}",
+    "--hf-overrides",
+    "{}",
+    "--trust-remote-code",
+    "--async-scheduling",
+    "--allowed-local-media-path",
+    "/",
+    "--mm-processor-cache-gb",
+    "0",
+    "--mamba-cache-dtype",
+    "bfloat16",
+    "--mamba-ssm-cache-dtype",
+    "bfloat16",
+    "--no-enable-prefix-caching"
+  ],
+  "runtime_selection": {
+    "variant": "candidate",
+    "optimizations": {
+      "aligned_math": true,
+      "bf16_attention": true,
+      "history_cluster4": true,
+      "later_mtp_q1": true,
+      "fast_unpack": true,
+      "mixed_cv": true,
+      "striped_cache": true,
+      "quantization_bundle": true,
+      "current_only": true,
+      "first_mtp_current_fia": true,
+      "compact_later_mtp": true,
+      "mixed_decode_split": true,
+      "prepare_reuse": true,
+      "decode_bundle": true,
+      "mdl_decode": true,
+      "hybrid_l1_decode": true,
+      "c4_member_pipeline": true,
+      "c16_l1_reuse": true,
+      "whole_prefill": false
+    },
+    "attention_compute": {
+      "operands": "bfloat16",
+      "accumulator": "float32",
+      "softmax_lse_merge": "float32"
+    },
+    "oscar_math_profile": "oscar_bf16_attention_v3",
+    "rotation_method": "qqt_sst",
+    "metadata_dtype": "float32",
+    "prefix_caching": false,
+    "token_budget_source": "explicit",
+    "max_num_batched_tokens": 16384,
+    "scheduler_cls": null,
+    "devices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "port": 8989
+  },
+  "devices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "port": 8989,
+  "timer_control": "/Users/sunao2000/gpt_new_oscar_kimi/logs/timer32k-20261019T084615.635519Z/timer-control.json",
+  "prompt_tokens": 32768,
+  "output_tokens": 256,
+  "warmup": {
+    "prompt_tokens": 128,
+    "output_tokens": 16
+  },
+  "profile_flush": {
+    "prompt_tokens": 128,
+    "output_tokens": 1,
+    "profile_enabled": false,
+    "excluded_from_batch_wall_and_metrics": true
+  },
+  "arms": [
+    {
+      "variant": "native",
+      "concurrency": 4,
+      "modes": [
+        "control",
+        "profile"
+      ]
+    },
+    {
+      "variant": "candidate",
+      "concurrency": 4,
+      "modes": [
+        "control",
+        "profile"
+      ]
+    },
+    {
+      "variant": "candidate",
+      "concurrency": 8,
+      "modes": [
+        "control",
+        "profile"
+      ]
+    }
+  ],
+  "request_timeout_seconds": 900,
+  "policy": "same config and exact prompts; control wall only for comparison; no HTTP profiler"
+}

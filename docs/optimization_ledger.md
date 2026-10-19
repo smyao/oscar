@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-19计时专项：用户反馈OSCAR可容纳约31条/原生15条但仍慢，要求暂停大规模优化。按其后续要求交付32K native BS4 / OSCAR BS4 / OSCAR BS8的control与有界PMU诊断，默认256输出；少量终端摘要、完整数据落盘，等待用户运行后归因，不新增任何算法优化或性能达标结论。[设计与一键命令](timer_32k_diagnosis_20261019.md)。
+
 2026-10-19 后续：离线数据通过后，校准 LLM 两层 fork 触发 `Invalid thread pool!`（档案 #166）。校准子进程导入前强制使用原生支持的 spawn，覆盖 EngineCore/TP worker，正式服务参数不改；验证与边界见[线程池启动修复](rotation_process_startup_fix_20261019.md)。
 
 2026-10-19：修复自动 PT 准备下载 GPQA 时的 SSL 证书错误（档案 #165）：随包发布官方原字节压缩数据、校验 SHA 并纳入 PT 缓存身份，默认准备不再联网。55 项主机回归与隔离 wheel 离线数据验证通过；没有内核改动、真机连接或测速。[修复及复用/生成条件](rotation_data_startup_fix_20261019.md)。

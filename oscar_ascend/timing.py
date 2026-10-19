@@ -14,7 +14,7 @@ from pathlib import Path
 import sys
 import time
 
-from . import device_timing, passive_timing
+from . import device_timing, passive_timing, diagnostic_timer
 
 PHASES = frozenset({"prepare", "rotate", "fia", "history_window", "merge",
                     "phase1_stores", "stage_restore", "phase0_store",
@@ -135,6 +135,10 @@ def phase(name: str, **fields):
     a clock, creating events, recording scopes or synchronizing any stream.
     Fields must be already available host scalars, never tensor values.
     """
+    if diagnostic_timer.active():
+        if passive_timing.active() or device_timing.active() or enabled():
+            raise RuntimeError("bounded profiler cannot share another timing mode")
+        return diagnostic_timer.phase(name, **fields)
     passive = passive_timing.active()
     diagnostic = device_timing.active()
     if passive and diagnostic:

@@ -201,7 +201,11 @@ def _patch_runner(module: ModuleType) -> None:
 
     def updated(original):
         def wrapped(runner, scheduler_output):
-            result = original(runner, scheduler_output)
+            if os.environ.get("OSCAR_TIMER_CONTROL"):
+                with _observer_timer().phase("host_update_states"):
+                    result = original(runner, scheduler_output)
+            else:
+                result = original(runner, scheduler_output)
             provider = require_runtime()
             if getattr(provider, "request_windows_enabled", False):
                 provider.publish_request_window_map(runner, scheduler_output)
@@ -277,47 +281,46 @@ def _patch_attention_registration(module: ModuleType) -> None:
 
 def _patch_passive_runner(module: ModuleType) -> None:
     """Observe native runner boundaries without touching their arguments."""
-    if not os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL"):
+    if not _observer_requested():
         return
     cls = module.NPUModelRunner
 
     def execute(original):
         def wrapped(runner, scheduler_output, *args, **kwargs):
-            from . import passive_timing
-            passive_timing.begin_step(scheduler_output)
+            timer = _observer_timer()
+            timer.begin_step(scheduler_output)
             try:
                 result = original(runner, scheduler_output, *args, **kwargs)
             except BaseException as error:
-                passive_timing.end_step(error)
+                timer.end_step(error)
                 raise
             if result is not None:
-                passive_timing.end_step()
+                timer.end_step()
             return result
         return wrapped
 
     def sample(original):
         def wrapped(runner, *args, **kwargs):
-            from . import passive_timing
+            timer = _observer_timer()
             try:
-                result = original(runner, *args, **kwargs)
+                with timer.phase("sample_tokens"):
+                    result = original(runner, *args, **kwargs)
             except BaseException as error:
-                passive_timing.end_step(error)
+                timer.end_step(error)
                 raise
-            passive_timing.end_step()
+            timer.end_step()
             return result
         return wrapped
 
     def forward(original):
         def wrapped(runner, *args, **kwargs):
-            from . import passive_timing
-            with passive_timing.phase("target_forward"):
+            with _observer_timer().phase("target_forward"):
                 return original(runner, *args, **kwargs)
         return wrapped
 
     def draft(original):
         def wrapped(runner, *args, **kwargs):
-            from . import passive_timing
-            with passive_timing.phase("draft_proposal"):
+            with _observer_timer().phase("draft_proposal"):
                 return original(runner, *args, **kwargs)
         return wrapped
 
@@ -325,6 +328,38 @@ def _patch_passive_runner(module: ModuleType) -> None:
     _patch(cls, "sample_tokens", sample)
     _patch(cls, "_model_forward", forward)
     _patch(cls, "propose_draft_token_ids", draft)
+    # These CPU preparation seams exist in the pinned native runner. Observe
+    # availability without requiring optional seams in old host fixtures.
+    if _diagnostic_requested():
+        def host_scope(name):
+            def decorate(original):
+                def wrapped(runner, *args, **kwargs):
+                    with _observer_timer().phase(name):
+                        return original(runner, *args, **kwargs)
+                return wrapped
+            return decorate
+        for name in ("_update_states", "_prepare_inputs", "_build_attention_metadata", "_bookkeeping_sync",
+                     "_update_full_graph_params_if_needed"):
+            if hasattr(cls, name):
+                _patch(cls, name, host_scope("host" + name))
+
+
+def _diagnostic_requested():
+    path = os.environ.get("OSCAR_TIMER_CONTROL")
+    return bool(path and Path(path).is_file())
+
+
+def _observer_requested():
+    return bool(os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL")) or _diagnostic_requested()
+
+
+def _observer_timer():
+    # Installation checked the file once; hot scopes must not stat a file.
+    if os.environ.get("OSCAR_TIMER_CONTROL"):
+        from . import diagnostic_timer
+        return diagnostic_timer
+    from . import passive_timing
+    return passive_timing
 
 
 def _patch_mtp_forward(module: ModuleType) -> None:
@@ -338,11 +373,10 @@ def _patch_mtp_forward(module: ModuleType) -> None:
         return
     def draft_model(original):
         def wrapped(model, *args, **kwargs):
-            from . import passive_timing
-            with passive_timing.phase("draft_forward"):
+            with _observer_timer().phase("draft_forward"):
                 return original(model, *args, **kwargs)
         return wrapped
-    if os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL"):
+    if _observer_requested():
         _patch(cls, "forward", draft_model)
     if not _passive_only:
         def compact(original):
@@ -400,16 +434,27 @@ def _patch_mtp_proposer(module: ModuleType) -> None:
 
 def _patch_native_attention(module: ModuleType) -> None:
     """Record native attention, including CP inheritance and C8 override."""
-    if not os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL"):
+    if not _observer_requested():
         return
     def observe(original):
         def wrapped(impl, *args, **kwargs):
-            from . import passive_timing
-            with passive_timing.phase("native_attention", backend=type(impl).__name__):
+            with _observer_timer().phase("native_attention", backend=type(impl).__name__):
                 return original(impl, *args, **kwargs)
         return wrapped
     _patch(module.AscendAttentionBackendImpl, "forward", observe)
     _patch(module.AscendC8AttentionBackendImpl, "forward", observe)
+
+
+def _patch_native_gdn(module: ModuleType) -> None:
+    """#140/#143: observe native GDN separately from FULL; no data changes."""
+    if not _diagnostic_requested():
+        return
+    def observe(original):
+        def wrapped(layer, *args, **kwargs):
+            with _observer_timer().phase("native_gdn", backend=type(layer).__name__):
+                return original(layer, *args, **kwargs)
+        return wrapped
+    _patch(module.AscendGatedDeltaNetAttention, "forward", observe)
 
 
 def _patch_module_sampling_function(module: ModuleType, name: str, builder) -> None:
@@ -475,13 +520,14 @@ _callbacks = {
     "vllm_ascend.ops.triton.reject_sample": _patch_native_greedy_sampling,
     "vllm_ascend.sample.rejection_sampler": _patch_native_greedy_sampling,
     "vllm_ascend.ops.gdn_attn_builder": _patch_gdn_prefill_classification,
+    "vllm_ascend.ops.gdn": _patch_native_gdn,
 }
 
 
 def _patch_graph_evidence(module):
     # Native acl_graph.py:138-257 owns the capture/replay branch. Hook only
     # when explicitly collecting probe evidence, not in performance runs.
-    if not os.environ.get("OSCAR_TRACE_DIR"):
+    if not os.environ.get("OSCAR_TRACE_DIR") and not _diagnostic_requested():
         return
     def observe(original):
         def wrapped(wrapper,*args,**kwargs):
@@ -494,12 +540,14 @@ def _patch_graph_evidence(module):
             # batch. Captured kernels stay unchanged; time whole replay from
             # outside its graph. Eager attention has its own phase events.
             from . import device_timing
-            from . import passive_timing
+            observer = _observer_timer()
             from .integration.dummy_context import is_native_dummy_run
             if not is_native_dummy_run():
                 device_timing.refresh()
-            if replay and passive_timing.active():
-                with passive_timing.phase("graph_replay", tokens=getattr(descriptor, "num_tokens", None),
+            if active and not replay and os.environ.get("OSCAR_TIMER_CONTROL") and observer.active():
+                observer.note_graph_capture()
+            if replay and observer.active():
+                with observer.phase("graph_replay", tokens=getattr(descriptor, "num_tokens", None),
                                           requests=getattr(descriptor, "num_reqs", None),
                                           graph_scope="whole_model_graph"):
                     result=original(wrapper,*args,**kwargs)
@@ -538,7 +586,7 @@ def _apply_callback(callback, module: ModuleType) -> None:
         if callback is _patch_runner:
             callback = _patch_passive_runner
         elif callback not in {_patch_graph_evidence, _patch_mtp_forward,
-                              _patch_native_attention}:
+                              _patch_native_attention, _patch_native_gdn}:
             return
     first = len(_patches)
     try:
@@ -609,6 +657,10 @@ def register() -> None:
     """
     global _enabled, _finder
     if os.environ.get("OSCAR_ENABLED") != "1":
+        # Spawned native TP workers invoke this general-plugin entry point.
+        # They must install only observation, never the OSCAR runtime factory.
+        if _diagnostic_requested():
+            register_passive_observer()
         return
     if _enabled:
         return
@@ -635,7 +687,7 @@ def register() -> None:
 def register_passive_observer() -> None:
     """Instrument an explicitly native service without routing OSCAR FULL."""
     global _enabled, _finder, _passive_only
-    if not os.environ.get("OSCAR_PASSIVE_TIMING_CONTROL") or _enabled:
+    if not _observer_requested() or _enabled:
         return
     _passive_only = True
     _enabled = True

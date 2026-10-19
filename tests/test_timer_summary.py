@@ -386,3 +386,155 @@ def test_offline_errors_and_window_status_summary_are_copyable(tmp_path):
     assert any(line.startswith("OFFLINE_ANALYSIS") and '"windowstatus_summary"' in line and '"missing":2' in line for line in lines)
     assert any(line.startswith("OFFLINE_ERROR") and "daemon processes cannot have children" in line for line in lines)
     assert len(("\n".join(lines) + "\n").encode()) <= 50 * 1024
+
+
+@pytest.mark.parametrize("start", [1000, 1000.0, "1000", "1e3", "1000.0\t"])
+@pytest.mark.parametrize("duration", [100, 100.0, "100", "1e2"])
+def test_sdk_mixed_numeric_timestamp_duration_matrix(tmp_path, start, duration):
+    # Official create_x_event emits str ts with float dur. Both marker and
+    # kernel timestamps must normalize before nesting comparisons/addition.
+    path = tmp_path / "trace_view.json"
+    write_json(path, {"traceEvents": [
+        {"ph": "X", "name": "oscar_timer::q_rotation", "pid": 1, "tid": "2", "ts": start, "dur": duration},
+        {"ph": "X", "name": "aten::matmul", "pid": "1.0", "tid": 2, "ts": 1001.0, "dur": "3.0",
+         "args": {"External id": "42"}},
+        {"ph": "X", "name": "MatMul", "pid": 3, "tid": 7, "ts": "1004.0", "dur": 20.0,
+         "args": {"Task Type": "AI_CORE", "External id": 42}},
+    ]})
+    rows = parse_trace(path)
+    assert len(rows) == 1
+    assert rows[0]["phase"] == "q_rotation"
+    assert rows[0]["start_ms"] == pytest.approx(1.004)
+    assert rows[0]["duration_ms"] == pytest.approx(.02)
+
+
+@pytest.mark.parametrize("unit,factor", [("us", 1), ("ns", 1000), ("ms", .001)])
+def test_trace_unit_normalization_is_local_to_each_rank_export(tmp_path, unit, factor):
+    path = tmp_path / f"rank0-{unit}" / "trace_view.json"
+    write_json(path, {"displayTimeUnit": "ns", "traceEvents": [
+        {"ph": "X", "name": "oscar_timer::kv_rotation", "pid": "1", "tid": 2,
+         "ts": str(1000 * factor), "dur": 100 * factor},
+        {"ph": "X", "name": "aten::matmul", "pid": 1, "tid": "2", "ts": 1001 * factor,
+         "dur": str(3 * factor), "args": {"correlation": "5"}},
+        {"ph": "X", "name": "MatMul", "cat": "npu_kernel", "pid": 7, "tid": 9,
+         "ts": str(1004 * factor), "dur": str(20 * factor), "args": {"Correlation ID": 5}},
+    ]})
+    rows = parse_trace(path, time_unit=unit)
+    assert rows[0]["phase"] == "kv_rotation"
+    assert rows[0]["start_ms"] == pytest.approx(1.004)
+    assert rows[0]["duration_ms"] == pytest.approx(.02)
+
+
+@pytest.mark.parametrize("name,category", [("torch_to_npu", "async_npu"), ("acl_to_npu", "HostToDevice")])
+def test_official_flow_correlates_only_exact_device_endpoint_and_innermost_host_scope(tmp_path, name, category):
+    path = tmp_path / "trace_view.json"
+    write_json(path, {"traceEvents": [
+        {"ph": "X", "name": "oscar_timer::model", "pid": 1, "tid": 10, "ts": "1000", "dur": 100.0},
+        {"ph": "X", "name": "oscar_timer::q_rotation", "pid": 1, "tid": 10, "ts": 1002.0, "dur": "20"},
+        {"ph": "X", "name": "aten::matmul", "cat": "cpu_op", "pid": 1, "tid": 10,
+         "ts": "1003", "dur": "3", "args": {"Task Type": "AI_CORE"}},
+        {"ph": "s", "name": name, "cat": category, "id": 12345678901234567890,
+         "pid": "1", "tid": "10", "ts": "1003.0\t"},
+        {"ph": "f", "name": name, "cat": category, "id": "12345678901234567890",
+         "pid": 7, "tid": 2, "ts": "1050"},
+        {"ph": "X", "name": "MatMul", "pid": 7, "tid": 2, "ts": 1050.0, "dur": "10.0",
+         "args": {"Task Type": "AI_CORE", "Task Id": 99, "Stream Id": 2}},
+        {"ph": "X", "name": "MatMul", "pid": 7, "tid": 3, "ts": "1050", "dur": 10.0,
+         "args": {"Task Type": "AI_CORE", "Task Id": 100, "Stream Id": 3}},
+    ]})
+    rows = parse_trace(path)
+    assert len(rows) == 2  # cpu_op with AI_CORE in args is still a host event.
+    assert rows[0]["phase"] == "q_rotation"
+    assert rows[1]["phase"] == "native.GEMM_unattributed"
+    assert sum(row["duration_ms"] for row in rows) == pytest.approx(.02)
+
+
+def test_reused_disjoint_correlation_id_stays_ambiguous(tmp_path):
+    path = tmp_path / "trace_view.json"
+    write_json(path, {"traceEvents": [
+        {"ph": "X", "name": "oscar_timer::q_rotation", "pid": 1, "tid": 1, "ts": "0", "dur": 5,
+         "args": {"External id": 42}},
+        {"ph": "X", "name": "oscar_timer::kv_rotation", "pid": 1, "tid": 1, "ts": 10, "dur": "15",
+         "args": {"External id": 42}},
+        {"ph": "X", "name": "MatMul", "cat": "npu_kernel", "pid": 2, "tid": 2, "ts": "30", "dur": 5,
+         "args": {"External id": 42}},
+    ]})
+    assert parse_trace(path)[0]["phase"] == "native.GEMM_unattributed"
+
+
+@pytest.mark.parametrize("bad", [None, True, {}, [], "bad", "NaN", "Infinity", "1%"])
+def test_invalid_clock_records_are_reported_without_fabricated_time(tmp_path, bad):
+    path = tmp_path / "trace_view.json"
+    write_json(path, {"traceEvents": [
+        {"ph": "X", "name": "invalid_start", "cat": "npu_kernel", "ts": bad, "dur": 99},
+        {"ph": "X", "name": "invalid_duration", "cat": "npu_kernel", "ts": 10, "dur": bad},
+        {"ph": "X", "name": "negative_duration", "cat": "npu_kernel", "ts": 10, "dur": -1},
+        {"ph": "X", "name": "valid", "cat": "npu_kernel", "ts": "10.0", "dur": 20},
+    ]})
+    missing = []
+    rows = parse_trace(path, missing)
+    assert [row["name"] for row in rows] == ["valid"]
+    assert rows[0]["duration_ms"] == .02
+    assert any("invalid_clock_or_duration:3:" in reason for reason in missing)
+
+
+def test_null_and_malformed_args_metadata_ids_cannot_crash_or_turn_host_into_device(tmp_path):
+    path = tmp_path / "trace_view.json"
+    write_json(path, {"traceEvents": [
+        None, [], {"ph": []}, {"ph": None},
+        {"ph": "M", "name": "process_name", "pid": 1, "args": None},
+        {"ph": "M", "name": "process_name", "pid": 1, "args": []},
+        {"ph": "X", "name": "host_null", "cat": "cpu_op", "ts": "1", "dur": 9, "args": None},
+        {"ph": "X", "name": "host_bad", "cat": "cpu_op", "ts": "1", "dur": 9, "args": [1]},
+        {"ph": "X", "name": "unproven_kernel", "cat": "kernel", "ts": "1", "dur": 9, "args": {"Device Id": None}},
+        {"ph": "X", "name": "npu_null", "cat": "npu_kernel", "ts": "1", "dur": 9, "args": None},
+        {"ph": "X", "name": "npu_bad_ids", "ts": "10", "dur": 3,
+         "args": {"Task Type": "AI_CORE", "Task Id": [], "Stream Id": {}, "Device Id": [], "External id": {"bad": 1}}},
+    ]})
+    missing = []
+    rows = parse_trace(path, missing)
+    assert [row["name"] for row in rows] == ["npu_null", "npu_bad_ids"]
+    assert rows[-1]["task_id"] is None
+    assert rows[-1]["device_id"] is None
+    assert any("non_object_args" in reason for reason in missing)
+    assert any("invalid_event_phase" in reason for reason in missing)
+    assert parse_trace(path, time_unit={"not": "a unit"}) == []
+
+
+def test_csv_clock_numbers_reject_percent_nan_overflow_but_keep_valid_rows(tmp_path):
+    path = tmp_path / "kernel_details.csv"
+    rows = [{"Device_id": "0", "Name": "valid", "Duration(ms)": "2.5", "Start Time(us)": "1,004.0\t",
+             "aic_mac_ratio": "0.5", "aic_mte2_ratio": "N/A"}]
+    rows += [{**rows[0], "Name": f"bad{i}", "Duration(ms)": value} for i, value in enumerate(("1%", "nan", "inf", "", None))]
+    write_csv(path, rows)
+    missing = []
+    parsed = parse_csv(path, missing)
+    assert len(parsed) == 1
+    assert parsed[0]["start_ms"] == pytest.approx(1.004)
+    assert parsed[0]["duration_ms"] == 2.5
+    assert len(missing) == 5
+
+
+def test_historical_summary_failure_is_preserved_in_successful_reader(tmp_path):
+    error = "can only concatenate str (not float) to str"
+    write_json(tmp_path / "run.json", {"status": "failed", "summary_error": error, "runs": [batch("n", "native", 4, "control")]})
+    original = (tmp_path / "run.json").read_bytes()
+    report = summarize(tmp_path)
+    assert report["summary_error"] == error
+    assert (tmp_path / "run.json").read_bytes() == original
+    assert any(line.startswith("PREVIOUS_SUMMARY_ERROR") and error in line for line in summary_lines(report))
+
+
+def test_csv_trace_task_identifiers_normalize_without_clock_unit_guessing(tmp_path):
+    from tools.summarize_timer import _compatible
+
+    csv_path = tmp_path / "kernel_details.csv"
+    write_csv(csv_path, [{"Name": "MatMul", "Device_id": "0.0", "Task Id": "42.0", "Stream Id": "7.0",
+                          "Duration(us)": "20", "Start Time(us)": "1004"}])
+    trace_path = tmp_path / "trace_view.json"
+    write_json(trace_path, {"traceEvents": [{"ph": "X", "name": "MatMul", "ts": "1004", "dur": 20.0,
+        "args": {"Task Type": "AI_CORE", "Device Id": 0, "Task Id": 42, "Stream Id": 7}}]})
+    csv_row, trace_row = parse_csv(csv_path)[0], parse_trace(trace_path)[0]
+    assert _compatible(csv_row, trace_row)
+    assert csv_row["task_id"] == trace_row["task_id"] == "42"
+    assert csv_row["start_ms"] == trace_row["start_ms"] == 1.004

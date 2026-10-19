@@ -390,17 +390,84 @@ def _run_service(config, config_path, rows, *, root, variant, control, manifest,
         raise TimerRunError(f"{variant}: owned service/resource cleanup failed", log=directory / "server" / "server.log")
 
 
+def summarize_existing(directory):
+    """Recover saved timer exports on CPU without model/SDK analysis or traffic."""
+    from .analyse_timer_profiles import analyse_windows
+    from .summarize_timer import summarize, summary_lines
+    root = Path(directory).expanduser().resolve()
+    run_path = root / "run.json"
+    if not run_path.is_file():
+        raise ValueError(f"existing timer directory has no run.json: {root}")
+    manifest = json.loads(run_path.read_text())
+    if manifest.get("kind") != "timer32k":
+        raise ValueError("--summarize-only requires an existing timer32k run")
+    control = root / "timer-control.json"
+    if control.is_file() and json.loads(control.read_text()).get("enabled"):
+        raise ValueError("cannot recover summary while timer sampling is armed")
+    services = manifest.get("services", [])
+    if not services or any(service.get("lifecycle", {}).get("cleanup_complete") is not True
+                           for service in services):
+        raise ValueError("cannot recover summary before owned services have exited")
+    # Preserve the original diagnostic/failure record once; raw captures,
+    # per-request timings, step JSONL and their source identity are unchanged.
+    for path in (run_path, root / "offline-analysis.json", root / "timer-summary.json", root / "timer-summary.txt"):
+        saved = path.with_name(path.name + ".before-summary-recovery")
+        if path.is_file() and not saved.exists():
+            saved.write_bytes(path.read_bytes())
+    recovery = {"mode": "existing_exports_only", "model_started": False,
+                "sdk_analysis_started": False, "requests_sent": 0,
+                "started_unix": time.time(), "previous_returncode": manifest.get("returncode"),
+                "previous_summary_error": manifest.get("summary_error"), "status": "running"}
+    terminal_line(f"[timer32k] recover saved exports only; no model/requests/SDK reparse; logs={root}")
+    try:
+        # This only validates/refreshes already-exported tables. In particular
+        # it cannot start the SDK's multi-minute raw-data parser.
+        manifest["offline_analysis"] = _quiet_call(root / "summary-recovery.log",
+            "recover-export-status", analyse_windows, root, allow_analyse=False)
+        manifest["summary_recovery"] = recovery
+        atomic_json(run_path, manifest)
+        with _heartbeat("rebuild-summary-from-exports"):
+            report = summarize(root)
+            lines = list(summary_lines(report))
+        text = "\n".join(lines) + "\n"
+        if len(lines) > MAX_SUMMARY_LINES or len(text.encode("utf-8")) > 50 * 1024:
+            raise RuntimeError("timer summary exceeded its bounded output contract")
+        atomic_json(root / "timer-summary.json", report)
+        (root / "timer-summary.txt").write_text(text)
+        for line in lines:
+            terminal_line(line)
+        rc = 0 if report.get("evidence_status") == "complete" else 2
+        recovery.update(status="complete" if rc == 0 else "partial", returncode=rc)
+        return rc
+    except Exception as error:
+        recovery.update(status="error", error=f"{type(error).__name__}: {error}", returncode=1)
+        (root / "summary-recovery-error.txt").write_text(traceback.format_exc())
+        terminal_line(f"[timer32k] SUMMARY_RECOVERY_ERROR {error}; traceback={root / 'summary-recovery-error.txt'}", stderr=True)
+        return 1
+    finally:
+        recovery["finished_unix"] = time.time()
+        manifest["summary_recovery"] = recovery
+        atomic_json(run_path, manifest)
+        atomic_json(root / "summary-recovery.json", recovery)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
     parser.add_argument("--log-dir", type=Path)
     parser.add_argument("--plan", action="store_true", help="read-only plan; no installation, tokenizer, model or NPU load")
+    parser.add_argument("--summarize-only", type=Path,
+                        help="recover an existing run's exported timer data without model load, requests or SDK parsing")
     parser.add_argument("--rear-cards", action="store_true")
     parser.add_argument("--output-tokens", type=positive_int, default=256)
     parser.add_argument("--request-timeout", type=positive_seconds, default=900)
     parser.add_argument("--startup-timeout", type=positive_seconds)
     add_model_arguments(parser)
     args = parser.parse_args(argv)
+    if args.summarize_only is not None:
+        if args.plan or args.log_dir is not None:
+            parser.error("--summarize-only cannot be combined with --plan or --log-dir")
+        return summarize_existing(args.summarize_only)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     root = (args.log_dir or ROOT / "logs" / f"timer32k-{stamp}").resolve()
     if not args.plan and root.exists() and any(root.iterdir()):
@@ -526,6 +593,7 @@ def main(argv=None):
             terminal_line(line)
     except Exception as error:
         manifest["summary_error"] = f"{type(error).__name__}: {error}"
+        (root / "summary-error.txt").write_text(traceback.format_exc())
         rc = rc or 1
         manifest["returncode"] = rc
         atomic_json(root / "run.json", manifest)

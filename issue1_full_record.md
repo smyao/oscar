@@ -17,6 +17,8 @@
 
 # 症状速查表（报错关键字 → 条目编号）
 
+- `SUMMARY_FAILED can only concatenate str (not "float") to str`：见 #168（官方trace时间戳格式及已有导出恢复）。
+
 - timer的 `no median for empty data` / `profiling data cannot be parsed during the daemon process`：见 #167。
 
 - 校准数据准备成功后，`popen_fork.py` 多线程警告及 `ParallelOpenMP.cpp:64 Invalid thread pool!`：见 #166（与 #84 同族，父进程建池仍未消除本轮故障）。
@@ -28782,3 +28784,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修复**：worker callback设analyse_flag=False、同线程完成raw采集，状态captured_pending_analysis。两个owned服务退出且资源释放后，普通Python子进程执行离线analyse，保留有界超时/日志/真实退出码，并校验实际非空设备任务CSV或trace。SDK静默返回、空表、info-only均不能通过；更新window/run-summary但保留原step当时pending事实。无模型/内核/精度/调度改动。
 
 **验证与边界**：105项主机测试通过，包括实际localhost SSE单token及完整客户端链、真实spawn daemon只采raw、普通进程创建解析子进程、静默解析失败/空表、清理和摘要缺失判断。没有连接真机或NPU复测，本次仍不能确定OSCAR主要耗时或compute/HBM bound。
+
+
+## [168] 真机条目（2026-10-19 用户回传）· 全部负载后timer摘要str+float类型崩溃
+
+**证据**：用户文本节选保存于 `reports/timer_summary_recovery_20261019/target_excerpt.txt`。run=20261019T092907.267068Z，native和candidate均清理complete/exit0，candidate BS4/8的control/profile均已推进，随后offline-profile-analysis心跳至360秒，最后SUMMARY_FAILED类型错误。片段未含SHA或完整设备表，不据此判定所有PMU已成功或模型瓶颈。
+
+**根因复现**：官方TraceEventManager.create_x_event输出ts为字符串、dur为浮点数；本工程parse_trace只用_num检查，却在包含关系运算继续使用原字段。CPU marker ts='1000'/dur=100.0加aten/device事件即可复现同一str+float异常。不是用户环境问题。
+
+**修复**：入口一次规范化时间/标识符，非法记录明确缺失、设备判定不放宽；补官方torch_to_npu/HostToDevice flow的严格端点关联，保留歧义。新增固定入口--summarize-only读取已有CSV/trace，绝不重新加载模型/发送请求/调用SDK解析；只允许恢复分析错误，采样或模型错误不被覆盖。原记录先备份，CSV/trace/step逐字节保留，输出仍≤200行/50KiB。
+
+**验证**：113项主机回归通过，含官方混合类型矩阵、非法字段、flow、三组×四rank×四窗口的48窗口完整目录及真实CLI恢复，实际打印设备阶段/PMU/热点/对照。2项未改SSE测试不重复。本轮没有连接真机、重跑模型或取得用户设备耗时；后续先恢复已有日志再分析，不要求再跑32K。

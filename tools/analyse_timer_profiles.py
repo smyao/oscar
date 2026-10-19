@@ -29,14 +29,50 @@ def _device_exports(directory):
     return []
 
 
-def analyse_windows(root, *, analyzer=None, workers=2):
+class _CaptureFailure(RuntimeError):
+    """An export cannot repair an unfinished or failed model/capture step."""
+
+
+def _capture_failure(manifest):
+    state = manifest.get("capture_status")
+    if (manifest.get("status") == "collecting" or state == "collecting"
+            or manifest.get("analysis_previous_status") == "collecting"):
+        return "unfinished capture cannot be accepted by offline analysis"
+    if manifest.get("error") or manifest.get("capture_error"):
+        return str(manifest.get("error") or manifest["capture_error"])
+    if state in {"not_started", "missing", "error", "failed"}:
+        return f"capture status {state} cannot be accepted by offline analysis"
+    if manifest.get("status") == "unsupported":
+        return manifest.get("unsupported_reason", "capture is unsupported")
+    if manifest.get("status") == "error" and not (
+            state == "captured" and manifest.get("analysis_error")):
+        return "capture failed before offline analysis; no isolated analysis error to recover"
+    return None
+
+
+def _remember_analysis(manifest):
+    """Keep earlier failures when exports repair only the analysis stage."""
+    previous = {key: manifest[key] for key in (
+        "status", "capture_status", "error", "capture_error", "analysis_status", "analysis_error",
+        "analysis_finished_unix", "analysis_previous_error") if key in manifest}
+    if previous:
+        history = manifest.setdefault("analysis_history", [])
+        if not isinstance(history, list):
+            raise ValueError("analysis_history must be a list")
+        history.append(previous)
+
+
+def analyse_windows(root, *, analyzer=None, workers=2, allow_analyse=True):
     root = Path(root).resolve()
     if multiprocessing.current_process().daemon:
         raise RuntimeError("offline profile analysis must run in a non-daemon process")
     if type(workers) is not int or not 1 <= workers <= 8:
         raise ValueError("analysis workers must be in 1..8")
+    if type(allow_analyse) is not bool:
+        raise ValueError("allow_analyse must be boolean")
     report = {"schema_version": 1, "status": "missing", "daemon": False,
               "scope": "offline_export_only_pmu_verified_by_summary", "windows": [],
+              "allow_analyse": allow_analyse,
               "windowstatus_summary": {}, "started_unix": time.time()}
     destination = root / "offline-analysis.json"
     atomic_json(destination, report)
@@ -53,14 +89,18 @@ def analyse_windows(root, *, analyzer=None, workers=2):
             raise ValueError("profile directory escapes this timer run")
         row = {key: manifest.get(key) for key in ("run_id", "window_id", "rank")}
         row.update(manifest=str(path), previous_status=manifest.get("status"),
-                   status="missing", analysis_status="missing", capture_paths=[], profile_artifacts=[])
+                   status="missing", analysis_status="missing", capture_paths=[], profile_artifacts=[],
+                   sdk_analysis_invoked=False, reused_existing_exports=False)
+        _remember_analysis(manifest)
         try:
-            exports = _device_exports(profile_dir)
             captures = raw_capture_paths(profile_dir)
             row["capture_paths"] = captures
-            if manifest.get("status") == "collecting":
-                raise RuntimeError("unfinished capture cannot be accepted by offline analysis")
-            if not exports and captures:
+            failure = _capture_failure(manifest)
+            if failure:
+                raise _CaptureFailure(failure)
+            exports = _device_exports(profile_dir)
+            row["reused_existing_exports"] = bool(exports)
+            if not exports and captures and allow_analyse:
                 if analyzer is None:
                     # Import only in this ordinary analysis child, never a vLLM
                     # worker or the live service supervisor's request thread.
@@ -69,6 +109,7 @@ def analyse_windows(root, *, analyzer=None, workers=2):
                 manifest.setdefault("analysis_previous_status", manifest.get("status"))
                 manifest["analysis_status"] = "running"
                 atomic_json(path, manifest)
+                row["sdk_analysis_invoked"] = True
                 for relative in captures:
                     capture = (profile_dir / relative).resolve()
                     if not capture.is_relative_to(profile_dir):
@@ -77,23 +118,24 @@ def analyse_windows(root, *, analyzer=None, workers=2):
                 exports = _device_exports(profile_dir)
             row["profile_artifacts"] = exports
             if not exports:
-                row["error"] = "offline analysis produced no nonempty device task export"
-            elif manifest.get("status") == "error":
-                # Keep the original runner/capture failure even if partial raw
-                # data can be recovered; partial exports cannot erase it.
-                row.update(status="error", analysis_status="complete",
-                           error=manifest.get("error", "capture failed before offline analysis"))
+                row.update(error="offline_analysis_required" if not allow_analyse else
+                           "offline analysis produced no nonempty device task export", error_domain="analysis")
             else:
                 row.update(status="complete", analysis_status="complete")
+        except _CaptureFailure as error:
+            row.update(status="error", analysis_status="not_run", error_domain="capture", error=str(error))
         except Exception as error:
             row.update(status="error", analysis_status="error",
+                       error_domain="analysis",
                        error=f"{type(error).__name__}: {error}")
         manifest.setdefault("analysis_previous_status", row["previous_status"])
         manifest.update(status=row["status"], analysis_status=row["analysis_status"],
                         analysis_finished_unix=time.time(), analysis_capture_paths=row["capture_paths"],
                         analysis_artifacts=row["profile_artifacts"])
-        if row.get("error"):
+        if row.get("error") and row.get("error_domain") == "analysis":
             manifest["analysis_error"] = row["error"]
+        elif row.get("error"):
+            manifest.setdefault("capture_error", row["error"])
         if row["status"] == "complete":
             if "analysis_error" in manifest:
                 manifest["analysis_previous_error"] = manifest.pop("analysis_error")
@@ -120,8 +162,10 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("root", type=Path)
     parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--exports-only", action="store_true",
+                        help="reuse existing CSV/trace only; never import or call the profiler SDK")
     args = parser.parse_args(argv)
-    report = analyse_windows(args.root, workers=args.workers)
+    report = analyse_windows(args.root, workers=args.workers, allow_analyse=not args.exports_only)
     return 0 if report["status"] == "complete" else 2
 
 

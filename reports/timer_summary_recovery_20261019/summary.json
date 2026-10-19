@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-19",
+  "base_commit": "37ff79d8",
+  "target_run": "timer32k-20261019T092907.267068Z",
+  "target_source_sha": "not_in_excerpt",
+  "target_error": "SUMMARY_FAILED can only concatenate str (not float) to str",
+  "root_cause": "official trace ts is serialized string; dur numeric; old parser validated converted values then added raw types",
+  "changes": [
+    "normalize timestamps and scalar IDs before arithmetic",
+    "official torch_to_npu/HostToDevice flow attribution",
+    "thread-scoped interval index",
+    "exports-only recovery no model HTTP or SDK analysis",
+    "recover analysis-only failures while preserving capture errors and history"
+  ],
+  "validation": {
+    "host_tests_passed": 113,
+    "unchanged_SSE_tests_not_repeated": 2,
+    "production_layout_fixture_windows": 48,
+    "full_recovery_cli": "passed",
+    "breakdown_sections": [
+      "HOST_EXCLUSIVE",
+      "DEVICE_PHASES",
+      "PHASE_PMU",
+      "TOP",
+      "COMPARE",
+      "DEVICE_COMPARE"
+    ],
+    "max_summary_lines": 200,
+    "max_summary_utf8_bytes": 51200,
+    "raw_exports_byte_preservation": "passed",
+    "real_NPU": "not_run",
+    "real_model": "not_run",
+    "performance": "not_run",
+    "missing_arm_not_certified": "passed"
+  },
+  "reference": {
+    "url": "https://raw.githubusercontent.com/Ascend/pytorch/master/torch_npu/profiler/analysis/prof_common_func/_trace_event_manager.py",
+    "sha256": "52339b602f6b29276ba99d798d7d1e269edc1dfd664e4a8a3672f861e48b1638"
+  },
+  "bound_verdict": "await_user_recovered_actual_summary",
+  "model_math_or_kernel_changes": false,
+  "main_stable_changes": false
+}

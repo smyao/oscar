@@ -1,0 +1,23 @@
+User-provided console excerpt, 2026-10-19. Selected original lines, not the complete server log.
+
+[oscar] CLEANUP_START owned_server pid=150715 log=/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T092907.267068Z/native/server/server.log
+[oscar] CLEANUP_END owned_server complete=True exit=0
+[timer32k] START native/resources-release
+[timer32k] START candidate/resources-before
+[timer32k] BATCH variant=candidate bs=4 mode=control prompt=32768 output=256
+[timer32k] BATCH variant=candidate bs=4 mode=profile prompt=32768 output=256
+[timer32k] BATCH variant=candidate bs=8 mode=control prompt=32768 output=256
+[timer32k] candidate/bs8/control running_seconds=60
+[timer32k] BATCH variant=candidate bs=8 mode=profile prompt=32768 output=256
+[timer32k] candidate/bs8/profile running_seconds=60
+[oscar] CLEANUP_START owned_server pid=155046 log=/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T092907.267068Z/candidate/server/server.log
+[oscar] CLEANUP_END owned_server complete=True exit=0
+[timer32k] START candidate/resources-release
+[timer32k] START offline-profile-analysis
+[timer32k] offline-profile-analysis running_seconds=60
+[timer32k] offline-profile-analysis running_seconds=120
+[timer32k] offline-profile-analysis running_seconds=180
+[timer32k] offline-profile-analysis running_seconds=240
+[timer32k] offline-profile-analysis running_seconds=300
+[timer32k] offline-profile-analysis running_seconds=360
+[timer32k] SUMMARY_FAILED can only concatenate str (not "float") to str; evidence=/workspace/gpt_new_oscar_kimi/logs/timer32k-20261019T092907.267068Z

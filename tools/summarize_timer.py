@@ -32,11 +32,11 @@ def _canon(value):
 
 
 def _num(value):
-    if isinstance(value, bool) or value is None:
+    if type(value) not in (int, float, str):
         return None
     try:
         number = float(str(value).strip().replace(",", "").removesuffix("%"))
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
     return number if math.isfinite(number) else None
 
@@ -65,9 +65,11 @@ def _time_ms(row, names):
     wanted = {_canon(x) for x in names}
     for key, value in row.items():
         if _base(key) in wanted:
-            number, unit = _num(value), _unit(key).lower()
+            number = None if isinstance(value, str) and "%" in value else _num(value)
+            unit = _unit(key).lower()
             if number is not None and unit in _UNIT_MS:
-                return number * _UNIT_MS[unit]
+                converted = number * _UNIT_MS[unit]
+                return converted if math.isfinite(converted) else None
     return None
 
 
@@ -160,8 +162,8 @@ def parse_csv(path, missing=None):
                             if _counter(k) and (n := _num(v)) is not None}
                 result.append({"name": str(name), "op_type": str(kind), "duration_ms": duration,
                                "start_ms": _time_ms(row, ("Start Time", "Task Start Time", "Timestamp")),
-                               "task_id": _field(row, ("Task Id",)), "stream_id": _field(row, ("Stream Id",)),
-                               "step_id": _field(row, ("Step Id",)), "device_id": _field(row, ("Device Id",)),
+                               "task_id": _identity(_field(row, ("Task Id",))), "stream_id": _identity(_field(row, ("Stream Id",))),
+                               "step_id": _identity(_field(row, ("Step Id",))), "device_id": _identity(_field(row, ("Device Id",))),
                                "phase": classify_kernel(name, kind), "attribution": "kernel_name",
                                "counters": counters, "source": str(path), "row": index + 2})
     except (OSError, csv.Error, UnicodeError) as exc:
@@ -178,55 +180,193 @@ def _marker(name):
 
 
 def _correlations(event):
-    return {(str(_canon(k)), str(v)) for k, v in event.get("args", {}).items()
-            if _canon(k) in {"correlationid", "correlation", "externalid", "corrid"}}
+    aliases = {"correlationid": "correlation", "correlation": "correlation", "corrid": "correlation",
+               "externalid": "external", "connectionid": "connection"}
+    return {(aliases[_canon(k)], identity) for k, v in event["args"].items()
+            if _canon(k) in aliases and (identity := _identity(v)) is not None}
+
+
+def _identity(value):
+    """Scalar IDs only: normalize 1/'1'/1.0 without float-rounding large IDs."""
+    if type(value) is int:
+        return str(value)
+    if type(value) is float:
+        return str(int(value)) if math.isfinite(value) and value.is_integer() else str(value) if math.isfinite(value) else None
+    if type(value) is str:
+        text = value.strip()
+        if not text or text.lower() in {"none", "null", "n/a", "nan", "inf", "-inf", "+inf"}:
+            return None
+        if re.fullmatch(r"[+-]?\d+(?:\.0+)?", text) and len(text) < 1000:
+            return str(int(text.split(".")[0]))
+        return text
+    return None
+
+
+def _is_device_trace(event, devices):
+    args = {_canon(k): v for k, v in event["args"].items()}
+    cat = str(event.get("cat", "")).lower()
+    if cat in {"cpu_op", "user_annotation", "python_function", "cpu", "runtime"} or _marker(event.get("name")):
+        return False
+    task_type = _canon(args.get("tasktype", args.get("type", "")))
+    return task_type in {"aicore", "aicpu", "aivector", "aivectorcore", "mixaic", "mixaiv", "mix"} or (
+        cat in {"kernel", "kernels", "npu_kernel", "device_kernel", "aicore", "aicpu"}
+        and (event["pid"] is not None and event["pid"] in devices or _identity(args.get("deviceid")) is not None or "npu" in cat))
+
+
+def _flow_identity(event):
+    """Only the official torch/CANN host-to-device correlation flow families."""
+    name, cat = str(event.get("name", "")), str(event.get("cat", ""))
+    if not (name == "torch_to_npu" and cat == "async_npu" or _canon(cat) == "hosttodevice"):
+        return None
+    identity = _identity(event.get("id"))
+    if identity is not None:
+        return (name, cat, "id", identity)
+    id2 = event.get("id2")
+    if isinstance(id2, dict) and len(id2) == 1:
+        kind, value = next(iter(id2.items()))
+        identity = _identity(value)
+        if kind in {"global", "local"} and identity is not None:
+            return (name, cat, kind, identity, event["pid"] if kind == "local" else None)
+    return None
+
+
+def _scope_tree(scopes):
+    """Small host-thread interval index; queries do not rescan every layer."""
+    if not scopes:
+        return None
+    center = sorted(s["ts"] + s["dur"] / 2 for s in scopes)[len(scopes) // 2]
+    left, right, crossing = [], [], []
+    for scope in scopes:
+        (left if scope["end"] < center else right if scope["ts"] > center else crossing).append(scope)
+    return (center, sorted(crossing, key=lambda s: s["ts"]),
+            sorted(crossing, key=lambda s: s["end"], reverse=True), _scope_tree(left), _scope_tree(right))
+
+
+def _scopes_at(tree, timestamp):
+    if tree is None:
+        return []
+    center, starts, ends, left, right = tree
+    if timestamp == center:
+        return list(starts)
+    found = []
+    if timestamp < center:
+        for scope in starts:
+            if scope["ts"] > timestamp:
+                break
+            found.append(scope)
+        return found + _scopes_at(left, timestamp)
+    for scope in ends:
+        if scope["end"] < timestamp:
+            break
+        found.append(scope)
+    return found + _scopes_at(right, timestamp)
 
 
 def parse_trace(path, missing=None, time_unit="us"):
-    """Chrome complete events. displayTimeUnit is UI-only, not timestamp units."""
+    """Normalize SDK string timestamps once; only real device events add time.
+
+Ascend _trace_event_manager.create_x_event emits ts=str and dur=float. Flow
+families torch_to_npu/HostToDevice identify device tasks by exact pid/tid/ts;
+wall-clock coincidence alone is never used for cross-thread attribution.
+displayTimeUnit changes only Chrome's UI, not the timestamp unit.
+"""
     missing = missing if missing is not None else []
     document = _read_json(path, missing)
     events = document.get("traceEvents", []) if isinstance(document, dict) else document
-    if not isinstance(events, list) or time_unit not in _UNIT_MS:
+    if not isinstance(events, list) or not isinstance(time_unit, str) or time_unit not in _UNIT_MS:
         missing.append(f"unsupported_trace_schema_or_clock:{path}")
         return []
     factor = _UNIT_MS[time_unit]
-    devices = {str(e.get("pid")) for e in events if isinstance(e, dict) and e.get("ph") == "M"
-               and e.get("name") == "process_name" and any(v in str(e.get("args", {}).get("name", "")).lower()
-                                                          for v in ("ascend hardware", "npu", "device"))}
-    complete = [e for e in events if isinstance(e, dict) and e.get("ph") == "X"
-                and _num(e.get("ts")) is not None and _num(e.get("dur")) is not None and _num(e["dur"]) >= 0]
-    markers = [e for e in complete if _marker(e.get("name"))]
-    correlations = defaultdict(set)
-    for event in complete:
-        own = _marker(event.get("name"))
-        containing = [m for m in markers if m.get("pid") == event.get("pid") and m.get("tid") == event.get("tid")
-                      and m["ts"] <= event["ts"] and m["ts"] + m["dur"] >= event["ts"] + event["dur"]]
-        phase = own or (_marker(min(containing, key=lambda m: m["dur"])["name"]) if containing else None)
-        if phase:
-            for key in _correlations(event):
-                correlations[key].add(phase)
-    output = []
-    for event in complete:
-        args = {_canon(k): v for k, v in event.get("args", {}).items()}
-        cat = str(event.get("cat", "")).lower()
-        task_type = _canon(args.get("tasktype", args.get("type", "")))
-        is_device = task_type in {"aicore", "aicpu", "aivector", "aivectorcore", "mixaic", "mixaiv", "mix"} or (
-            cat in {"kernel", "kernels", "npu_kernel", "device_kernel", "aicore", "aicpu"}
-            and (str(event.get("pid")) in devices or "deviceid" in args or "npu" in cat))
-        if not is_device:
+    normalized, invalid = [], defaultdict(int)
+    for raw in events:
+        if not isinstance(raw, dict):
+            invalid["non_object_event"] += 1
             continue
+        event = dict(raw)
+        if not isinstance(event.get("ph"), str):
+            invalid["invalid_event_phase"] += 1
+            continue
+        args = event.get("args")
+        if args is None:
+            args = {}
+        elif not isinstance(args, dict):
+            invalid["non_object_args"] += 1
+            args = {}
+        event.update(args=args, pid=_identity(event.get("pid")), tid=_identity(event.get("tid")))
+        if event.get("ph") in {"X", "s", "f"}:
+            # Percent counters are accepted by _num; percentages are not clocks.
+            start = None if isinstance(event.get("ts"), str) and "%" in event["ts"] else _num(event.get("ts"))
+            duration = (None if isinstance(event.get("dur"), str) and "%" in event["dur"] else _num(event.get("dur"))) if event["ph"] == "X" else 0.0
+            if (start is None or duration is None or duration < 0 or not math.isfinite(start + duration)
+                    or not math.isfinite(start * factor) or not math.isfinite(duration * factor)):
+                invalid["invalid_clock_or_duration"] += 1
+                continue
+            event.update(ts=start, dur=duration, end=start + duration)
+        normalized.append(event)
+    for reason, count in sorted(invalid.items()):
+        missing.append(f"trace_invalid_records:{reason}:{count}:{path}")
+    devices = {e["pid"] for e in normalized if e.get("ph") == "M" and e["pid"] is not None
+               and e.get("name") == "process_name" and any(v in str(e["args"].get("name", "")).lower()
+                                                           for v in ("ascend hardware", "npu", "device"))}
+    complete = [e for e in normalized if e.get("ph") == "X"]
+    device_events = [e for e in complete if _is_device_trace(e, devices)]
+    markers = [e for e in complete if _marker(e.get("name")) and e["pid"] is not None and e["tid"] is not None]
+    thread_scopes = defaultdict(list)
+    for marker in markers:
+        thread_scopes[(marker["pid"], marker["tid"])].append(marker)
+    scope_indexes = {thread: _scope_tree(scopes) for thread, scopes in thread_scopes.items()}
+
+    def containing(event, point=False):
+        choices = [m for m in _scopes_at(scope_indexes.get((event["pid"], event["tid"])), event["ts"])
+                   if m["end"] >= (event["ts"] if point else event["end"])]
+        if not choices:
+            return []
+        smallest = min(m["dur"] for m in choices)
+        return [m for m in choices if m["dur"] == smallest]
+
+    anchors = defaultdict(list)
+    for event in complete:
+        if _is_device_trace(event, devices) or event["pid"] is None or event["tid"] is None:
+            continue
+        scopes = [event] if _marker(event.get("name")) else containing(event)
+        for scope in scopes:
+            for key in _correlations(event):
+                anchors[key].append(scope)
+    correlations = {}
+    for key, scopes in anchors.items():
+        leaves = [s for s in scopes if not any(t["pid"] == s["pid"] and t["tid"] == s["tid"]
+                  and t["ts"] >= s["ts"] and t["end"] <= s["end"] and t["dur"] < s["dur"] for t in scopes)]
+        correlations[key] = {_marker(s["name"]) for s in leaves}
+
+    flows = defaultdict(list)
+    for event in normalized:
+        if event.get("ph") in {"s", "f"} and (key := _flow_identity(event)) is not None:
+            flows[key].append(event)
+    device_points = defaultdict(list)
+    for index, event in enumerate(device_events):
+        if event["pid"] is not None and event["tid"] is not None:
+            device_points[(event["pid"], event["tid"], event["ts"])].append(index)
+    flow_phases = defaultdict(set)
+    for endpoints in flows.values():
+        phases = {_marker(scope["name"]) for e in endpoints if e["ph"] == "s" for scope in containing(e, point=True)}
+        for event in endpoints:
+            if event["ph"] == "f":
+                for index in device_points.get((event["pid"], event["tid"], event["ts"]), []):
+                    flow_phases[index].update(phases)
+    output = []
+    for index, event in enumerate(device_events):
+        args = {_canon(k): v for k, v in event["args"].items()}
         name, kind = str(event.get("name", "unknown")), str(args.get("optype", ""))
-        phases = set().union(*(correlations.get(key, set()) for key in _correlations(event)))
+        phases = flow_phases[index].union(*(correlations.get(key, set()) for key in _correlations(event)))
         named = classify_kernel(name, kind)
         # A custom kernel's exact identity is more specific than its enclosing host scope.
         phase = next(iter(phases)) if len(phases) == 1 and not named.startswith("oscar.") else named
-        output.append({"name": name, "op_type": kind, "duration_ms": float(event["dur"]) * factor,
-                       "start_ms": float(event["ts"]) * factor, "task_id": args.get("taskid"),
-                       "stream_id": args.get("streamid", event.get("tid")), "device_id": args.get("deviceid"),
+        output.append({"name": name, "op_type": kind, "duration_ms": event["dur"] * factor,
+                       "start_ms": event["ts"] * factor, "task_id": _identity(args.get("taskid")),
+                       "stream_id": _identity(args.get("streamid", event["tid"])), "device_id": _identity(args.get("deviceid")),
                        "phase": phase, "attribution": "trace_correlation" if phase != named else "kernel_name",
                        "counters": {k: {"value": n, "unit": _unit(k), "raw": v}
-                                    for k, v in event.get("args", {}).items() if _counter(k) and (n := _num(v)) is not None},
+                                    for k, v in event["args"].items() if _counter(k) and (n := _num(v)) is not None},
                        "source": str(path)})
     return output
 
@@ -491,6 +631,8 @@ def summarize(output_dir):
     report = {"schema_version": SCHEMA_VERSION, "kind": "oscar_timer_summary", "root": str(root),
               "run_id": document.get("run_id"), "status": document.get("status"), "pair_hash": document.get("pair_hash"),
               "error": document.get("error"),
+              "summary_error": document.get("summary_error"),
+              "summary_error_history": document.get("summary_error_history"),
               "offline_analysis": document.get("offline_analysis"),
               "source": document.get("source"), "model_identity": document.get("model_identity"),
               "workload": document.get("workload"), "counter_reference": COUNTER_SOURCE, "runs": [], "missing": missing,
@@ -598,6 +740,18 @@ def summarize(output_dir):
     offline_ok = offline is None or isinstance(offline, dict) and offline.get("status") == "complete"
     if not offline_ok:
         missing.append("offline_analysis_not_complete:" + str(offline.get("status", "unknown") if isinstance(offline, dict) else "invalid_schema"))
+    if document.get("kind") == "timer32k":
+        # A valid subset is useful evidence, but is not the completed three-arm
+        # diagnostic. Recovery must not certify a stopped native-only run.
+        for variant, concurrency in (("native", 4), ("candidate", 4), ("candidate", 8)):
+            for mode in ("control", "profile"):
+                candidates = [r for r in report["runs"]
+                              if r["variant"] in ({"native"} if variant == "native" else {"candidate", "oscar"})
+                              and r["concurrency"] == concurrency and r["mode"] == mode]
+                if (len(candidates) != 1 or candidates[0]["status"] not in {"complete", "completed", "passed"}
+                        or candidates[0]["normal"]["completed_requests"] != concurrency
+                        or (candidates[0].get("request_completion_check") or {}).get("status") != "passed"):
+                    missing.append(f"required_completed_batch_missing:{variant}:bs{concurrency}:{mode}")
     report["missing"] = list(dict.fromkeys(missing))
     profiles = [r for r in report["runs"] if r["mode"] == "profile"]
     live = [w for r in profiles for w in r["device_windows"] if w["task_count"]]
@@ -612,7 +766,7 @@ def summarize(output_dir):
         run["required_windows_missing"] = sorted(required - present, key=str)
         if required - present:
             run["missing"].append("required_profile_windows_missing:" + repr(run["required_windows_missing"]))
-    if offline_ok and profiles and all(not r["missing"] for r in profiles):
+    if offline_ok and profiles and not report["missing"] and all(not r["missing"] for r in profiles):
         report["evidence_status"] = "complete"
     return report
 
@@ -629,7 +783,7 @@ def _compact(value, limit=600):
 def _bounded_lines(lines):
     """Protect comparison/footer evidence against the historical 65535B limit."""
     mandatory = {"===", "RUN", "RUN_ERROR", "SOURCE", "MODEL", "WORKLOAD", "ACCOUNTING", "BOUND", "FUSED_CV",
-                 "BATCH", "BATCH_ERROR", "BATCH_META", "MTP", "LATENCY", "COMPARE", "DEVICE_COMPARE", "GLOBAL_MISSING", "FULL_REPORT", "OFFLINE_ANALYSIS", "OFFLINE_ERROR"}
+                 "BATCH", "BATCH_ERROR", "BATCH_META", "MTP", "LATENCY", "COMPARE", "DEVICE_COMPARE", "GLOBAL_MISSING", "FULL_REPORT", "OFFLINE_ANALYSIS", "OFFLINE_ERROR", "PREVIOUS_SUMMARY_ERROR"}
     important = {"DEVICE", "DEVICE_PHASES", "PHASE_PMU", "PIPE_EVIDENCE", "WINDOW_COVERAGE", "MISSING", "FILES"}
     candidates, shortened = [], False
     for index, line in enumerate(lines):
@@ -664,6 +818,8 @@ def summary_lines(report):
     lines.append("FUSED_CV fused INT2 unpack/softmax/window work shares one kernel; timer does not invent internal sub-phase times.")
     if report.get("error"):
         lines.append("RUN_ERROR " + _compact(report["error"], 1200))
+    if report.get("summary_error") or report.get("summary_error_history"):
+        lines.append("PREVIOUS_SUMMARY_ERROR " + _compact({"error": report.get("summary_error"), "history": report.get("summary_error_history")}, 1200))
     offline = report.get("offline_analysis")
     if isinstance(offline, dict):
         overview = {key: offline.get(key) for key in ("status", "scope", "daemon", "windowstatus_summary", "phase") if key in offline}

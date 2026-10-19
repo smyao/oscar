@@ -69,6 +69,107 @@ def test_old_worker_parse_failure_is_recoverable_without_erasing_previous_status
     assert json.loads(path.read_text())['analysis_previous_status'] == 'missing'
 
 
+def test_exports_only_repairs_isolated_old_analysis_error_and_reuses_csv_idempotently(tmp_path):
+    path, raw = fixture(tmp_path, 'error')
+    original_error = "TypeError: unsupported operand type(s) for +: 'str' and 'float'"
+    manifest = json.loads(path.read_text())
+    manifest.update(capture_status='captured', analysis_status='error', analysis_error=original_error,
+                    analysis_previous_status='captured_pending_analysis', analysis_finished_unix=123.0)
+    path.write_text(json.dumps(manifest))
+    _export_in_child(raw)
+    raw_bytes = (raw / 'FRAMEWORK/torch.op_range').read_bytes()
+    def no_sdk(*args, **kwargs):
+        pytest.fail('valid existing CSV must not invoke SDK again')
+    for _ in range(2):
+        report = analyse_windows(tmp_path, analyzer=no_sdk, allow_analyse=False)
+        assert report['status'] == 'complete' and report['allow_analyse'] is False
+        assert report['windows'][0]['reused_existing_exports'] is True
+        assert report['windows'][0]['sdk_analysis_invoked'] is False
+        current = json.loads(path.read_text())
+        assert current['status'] == current['analysis_status'] == 'complete'
+        assert current['capture_status'] == 'captured'
+        assert current['analysis_previous_error'] == original_error and 'analysis_error' not in current
+        assert current['analysis_previous_status'] == 'captured_pending_analysis'
+        assert any(entry.get('analysis_error') == original_error for entry in current['analysis_history'])
+    assert (raw / 'FRAMEWORK/torch.op_range').read_bytes() == raw_bytes
+
+
+@pytest.mark.parametrize('failure', [
+    {'status': 'error', 'capture_status': 'captured', 'error': 'runner: RuntimeError: model failed'},
+    {'status': 'error', 'capture_status': 'collecting', 'error': 'profiler_finish: RuntimeError: failed'},
+    {'status': 'error', 'capture_status': 'captured', 'capture_error': 'raw capture failed'},
+    {'status': 'collecting', 'capture_status': 'collecting'},
+    {'status': 'error', 'capture_status': 'not_started'},
+    {'status': 'error', 'analysis_previous_status': 'collecting'},
+])
+def test_exports_cannot_erase_original_capture_or_runner_failure(tmp_path, failure):
+    path, raw = fixture(tmp_path)
+    manifest = json.loads(path.read_text())
+    manifest.update(failure, analysis_error='TypeError: old parser exception', analysis_status='error')
+    path.write_text(json.dumps(manifest))
+    _export_in_child(raw)  # Partial valid exports do not prove the model step completed.
+    for _ in range(2):
+        report = analyse_windows(tmp_path, analyzer=lambda *_a, **_k: pytest.fail('SDK must not run'),
+                                 allow_analyse=False)
+        assert report['status'] == 'missing'
+        current = json.loads(path.read_text())
+        assert current['status'] == 'error' and report['windows'][0]['error_domain'] == 'capture'
+        if failure.get('error'):
+            assert current['error'] == failure['error']
+
+
+@pytest.mark.parametrize('content', [None, '', 'Name,Task Duration(us)\n',
+                                    'Name,Task Duration(us)\noscar_kernel,garbage\n',
+                                    'Name,Task Duration(us)\noscar_kernel,0\n',
+                                    'Name,Task Duration\noscar_kernel,8\n'])
+def test_exports_only_never_calls_sdk_or_accepts_empty_invalid_exports(tmp_path, monkeypatch, content):
+    import builtins
+    path, raw = fixture(tmp_path)
+    manifest = json.loads(path.read_text())
+    manifest['capture_status'] = 'captured'
+    path.write_text(json.dumps(manifest))
+    if content is not None:
+        (raw / 'kernel_details.csv').write_text(content)
+    original_import = builtins.__import__
+    def no_sdk_import(name, *args, **kwargs):
+        if name.startswith('torch_npu'):
+            pytest.fail('exports-only imported profiler SDK')
+        return original_import(name, *args, **kwargs)
+    monkeypatch.setattr(builtins, '__import__', no_sdk_import)
+    report = analyse_windows(tmp_path, allow_analyse=False)
+    assert report['status'] == 'missing'
+    assert report['windows'][0]['error'] == 'offline_analysis_required'
+    assert report['windows'][0]['sdk_analysis_invoked'] is False
+    assert report['windows'][0]['profile_artifacts'] == []
+    assert json.loads(path.read_text())['status'] == 'missing'
+
+
+def test_explicit_sdk_retry_can_repair_an_analysis_only_failure(tmp_path):
+    path, raw = fixture(tmp_path, 'error')
+    manifest = json.loads(path.read_text())
+    manifest.update(capture_status='captured', analysis_status='error', analysis_error='old SDK parser failed')
+    path.write_text(json.dumps(manifest))
+    calls = []
+    def analyzer(directory, **kwargs):
+        calls.append(directory)
+        _export_in_child(directory)
+    report = analyse_windows(tmp_path, analyzer=analyzer)
+    assert report['status'] == 'complete' and calls == [str(raw)]
+    assert report['windows'][0]['sdk_analysis_invoked'] is True
+    assert json.loads(path.read_text())['analysis_previous_error'] == 'old SDK parser failed'
+
+
+def test_exports_only_cli_publishes_reuse_without_sdk_analysis(tmp_path):
+    from tools.analyse_timer_profiles import main
+    _, raw = fixture(tmp_path)
+    _export_in_child(raw)
+    assert main([str(tmp_path), '--exports-only']) == 0
+    report = json.loads((tmp_path / 'offline-analysis.json').read_text())
+    assert report['allow_analyse'] is False
+    assert report['windows'][0]['reused_existing_exports'] is True
+    assert report['windows'][0]['sdk_analysis_invoked'] is False
+
+
 @pytest.mark.parametrize('mode', ['silent_return', 'empty_csv', 'exception', 'unfinished'])
 def test_sdk_return_does_not_prove_device_export(tmp_path, mode):
     manifest, raw = fixture(tmp_path, 'collecting' if mode == 'unfinished' else 'captured_pending_analysis')

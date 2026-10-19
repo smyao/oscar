@@ -1,5 +1,8 @@
 # 32K 小批量计时与瓶颈诊断
 
+已有20261019T092907.267068Z结果但最后摘要类型报错时，使用
+[`--summarize-only`恢复命令](timer_summary_recovery_20261019.md)，不重跑模型或SDK解析。
+
 2026-10-19首轮反馈修复：单token收尾统计和daemon profiler解析已修正；
 worker只采raw，两服务退出后自动离线解析。见[问题与修法](timer_capture_parse_fix_20261019.md)。
 

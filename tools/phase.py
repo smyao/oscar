@@ -386,11 +386,22 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
     rc = 127
     old_signals = {}
     interrupt_signal = None
+    launching = False
+    cleaning = False
     failure = None
 
     def on_signal(signum, _frame):
         nonlocal interrupt_signal
-        interrupt_signal = signum
+        if cleaning:
+            # Cover the small interval before every OS handler is SIG_IGN.
+            return
+        if interrupt_signal is None:
+            interrupt_signal = signum
+        if launching:
+            # Popen may have created the OS child before returning its handle.
+            # Unwind only after ownership is assigned; do not mask signals in
+            # the child or falsely report that no process needed cleanup.
+            return
         raise KeyboardInterrupt(f"signal {signum}")
 
     environment = dict(os.environ if env is None else env)
@@ -400,10 +411,22 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
         try:
             for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
                 old_signals[sig] = signal.signal(sig, on_signal)
-            proc = subprocess.Popen(command, cwd=cwd, env=environment, stdin=subprocess.DEVNULL,
-                                    stdout=stream, stderr=subprocess.STDOUT,
-                                    start_new_session=True)
-            stream.write(f"OWNED_PROCESS phase={name} pid={proc.pid} pgid={proc.pid}\n")
+            launching = True
+            launch_error = None
+            try:
+                proc = subprocess.Popen(command, cwd=cwd, env=environment, stdin=subprocess.DEVNULL,
+                                        stdout=stream, stderr=subprocess.STDOUT,
+                                        start_new_session=True)
+                stream.write(f"OWNED_PROCESS phase={name} pid={proc.pid} pgid={proc.pid}\n")
+            except BaseException as error:
+                launch_error = error
+                raise
+            finally:
+                launching = False
+                if interrupt_signal is not None:
+                    if launch_error is not None:
+                        stream.write(f"EXEC_ERROR phase={name}: {type(launch_error).__name__}: {launch_error}\n")
+                    raise KeyboardInterrupt(f"signal {interrupt_signal}") from launch_error
             next_heartbeat = started + heartbeat
             while proc.poll() is None:
                 now = time.monotonic()
@@ -425,6 +448,7 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
         except OSError as exc:
             stream.write(f"EXEC_ERROR phase={name}: {exc}\n")
         finally:
+            cleaning = True
             try:
                 # Repeated Ctrl-C/TERM/HUP must not abort bounded cleanup and
                 # strand workers after the owned leader has already exited.
@@ -442,17 +466,28 @@ def run_phase(name: str, command: list[str], *, cwd: Path, log_dir: Path,
                         failure = {"kind": "failure_classification_error",
                                    "error": f"{type(error).__name__}: {error}"}
                     if failure is not None:
-                        stream.write("SERVICE_FAILURE " + json.dumps(failure) + "\n")
                         if rc == 0:
                             rc = 1
-                if proc is not None:
-                    cleaned = cleanup_group(proc, grace)
+                        stream.write("SERVICE_FAILURE " + json.dumps(failure) + "\n")
             except BaseException as exc:
-                cleaned = False
-                stream.write(f"CLEANUP_ERROR phase={name}: {type(exc).__name__}: {exc}\n")
+                if rc == 0:
+                    rc = 125
+                try:
+                    stream.write(f"CLEANUP_ERROR phase={name}: {type(exc).__name__}: {exc}\n")
+                except BaseException as log_error:
+                    raise exc from log_error
             finally:
-                for sig, handler in old_signals.items():
-                    signal.signal(sig, handler)
+                # Failure classification and its logging are fallible. Neither
+                # may skip cleanup, even when recording the first error fails.
+                try:
+                    if proc is not None:
+                        cleaned = cleanup_group(proc, grace)
+                except BaseException as exc:
+                    cleaned = False
+                    stream.write(f"CLEANUP_ERROR phase={name}: {type(exc).__name__}: {exc}\n")
+                finally:
+                    for sig, handler in old_signals.items():
+                        signal.signal(sig, handler)
             if not cleaned and rc == 0:
                 rc = 125
             result = PhaseResult(name, command, rc, round(time.monotonic()-started, 6),

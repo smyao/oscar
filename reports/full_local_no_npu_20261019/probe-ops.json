@@ -1,0 +1,18 @@
+{
+  "phase": "probe-ops",
+  "command": [
+    "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python",
+    "-m",
+    "tools.probe_ops",
+    "--output",
+    "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/full_local_no_npu_20261019/operators.json"
+  ],
+  "returncode": 1,
+  "elapsed_seconds": 1.177663,
+  "timed_out": false,
+  "interrupted": false,
+  "log": "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/full_local_no_npu_20261019/probe-ops.log",
+  "cleanup_complete": true,
+  "process_returncode": 1,
+  "failure": null
+}

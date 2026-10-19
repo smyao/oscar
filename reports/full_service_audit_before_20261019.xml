@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.099" timestamp="2026-10-19T17:54:29.220198+08:00" hostname="lokiyaodeMacBook-Pro.local"><testcase classname="tests.test_full_service_audit" name="test_managed_service_does_not_accept_fatal_after_last_successful_check" time="0.044"><failure message="Failed: DID NOT RAISE ServiceProbeError">managed_fixture = ({'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'por...ki.yao/pytest-245/test_managed_service_does_not_0/finish'), &lt;function managed_fixture.&lt;locals&gt;.command at 0x1025aecf0&gt;)
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-245/test_managed_service_does_not_0')
+
+    def test_managed_service_does_not_accept_fatal_after_last_successful_check(managed_fixture, tmp_path):
+        config, path, ready, finish, command = managed_fixture
+        lifecycle = {}
+&gt;       with pytest.raises(service_probe.ServiceProbeError, match="fatal"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ServiceProbeError
+
+tests/test_full_service_audit.py:68: Failed</failure></testcase></testsuite></testsuites>

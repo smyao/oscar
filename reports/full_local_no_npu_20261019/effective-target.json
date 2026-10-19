@@ -1,0 +1,108 @@
+{
+  "model": "/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp",
+  "served_model_name": "qwen3.5",
+  "host": "0.0.0.0",
+  "port": 7878,
+  "devices": [
+    4,
+    5,
+    6,
+    7
+  ],
+  "device_policy": "User request 2026-10-16: physical NPU 4-7, port 7878; all child processes use this explicit selection",
+  "soc_version": "ascend910b4",
+  "tensor_parallel_size": 4,
+  "data_parallel_size": 1,
+  "max_model_len": 262144,
+  "use_native_token_budget": false,
+  "enable_prefix_caching": false,
+  "max_num_seqs": 128,
+  "gpu_memory_utilization": 0.9,
+  "compilation_config": {
+    "cudagraph_capture_sizes": [
+      1,
+      4,
+      8,
+      12,
+      16,
+      24,
+      32,
+      48,
+      56,
+      64,
+      72,
+      84,
+      96,
+      108,
+      112,
+      128,
+      160,
+      172,
+      196,
+      200,
+      212,
+      232,
+      272,
+      288,
+      312,
+      328,
+      344,
+      360,
+      384,
+      400,
+      416,
+      432,
+      448,
+      480,
+      512
+    ],
+    "cudagraph_mode": "FULL_DECODE_ONLY"
+  },
+  "speculative_config": {
+    "method": "qwen3_5_mtp",
+    "num_speculative_tokens": 3,
+    "enforce_eager": true
+  },
+  "quantization": "ascend",
+  "additional_config": {
+    "enable_cpu_binding": true
+  },
+  "hf_overrides": {
+    "text_config": {
+      "rope_parameters": {
+        "mrope_interleaved": true,
+        "mrope_section": [
+          11,
+          11,
+          10
+        ],
+        "rope_type": "yarn",
+        "rope_theta": 10000000,
+        "partial_rotary_factor": 0.25,
+        "factor": 4.0,
+        "original_max_position_embeddings": 262144
+      }
+    }
+  },
+  "sink_tokens": 64,
+  "recent_tokens": 256,
+  "rotation_method": "hadamard",
+  "phase_timeout_seconds": 1800,
+  "shutdown_timeout_seconds": 30,
+  "max_num_batched_tokens": 16384,
+  "experimental_bf16_history": true,
+  "attention_compute_dtype": "bfloat16",
+  "experimental_history_reuse": true,
+  "experimental_fast_unpack": true,
+  "experimental_mixed_cv": true,
+  "experimental_striped_cache": true,
+  "experimental_decode_bundle": true,
+  "experimental_mdl_decode": true,
+  "experimental_c4_member_pipeline": true,
+  "experimental_quantization_bundle": true,
+  "experimental_current_only": true,
+  "experimental_first_mtp_current_fia": true,
+  "experimental_compact_later_mtp": true,
+  "experimental_mixed_decode_split": true,
+  "experimental_whole_prefill": false
+}

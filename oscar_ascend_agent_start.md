@@ -573,6 +573,7 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 | 历史现象 | 必须落实的检查与处理 |
 | --- | --- |
+| #168 eager/guard诊断启动时free13.03GiB低于required26.54GiB | 原生init_device早于load_model，本次没有到Attention，不能给#165/#167新增归因；记录有效rc1与原始rc1，cleanup_complete不等同NPU资源释放。未知占用者不清理、不降0.9、不加默认前置审计。主机生命周期故障注入另记本地证据，不冒充该次显存问题根因。 |
 | #167 服务启动后vector Trap/worker死亡，API进程仍rc0/stopped | 正式服务保留process_returncode，并在监督器清理前按严格原生fatal记录判失败；普通请求错误/关闭噪声不得误判。原生同步在图回放之前，8232-token异步dump不能等同当前图批次或唯一归因C16。主机回归不等于Trap修复，保留site/family/code定点诊断和真实验收边界。 |
 | #165 32K请求刚进入后在异步event/H2D报507035，PC偏移0x264 | 区分guard特征与实际site/family/code；不能把GDN metadata拷贝、ArgSort告警或后续HCCL退出认作首因。用既有`--diagnose-trap`和单条32K/16输出定位，不动冻结guard、不放宽检查。主机回归覆盖两16K块的current-only→带历史BF16 C16分流；141项通过仅证明主机契约，生产故障尚未修复。 |
 | #164 BF16共享解包头中dependent-template缺少`template`，AIC/AIV编译及清建重试均失败 | 对依赖模板参数的`auto`表达式调用成员模板时显式写`offsets.template ReinterpretCast<uint32_t>()`。用真实头文件+声明桩做Clang语言回归，覆盖H16/32/64并删除关键字作失败对照；它不替代CANN API/设备验收。保留构建失败即禁止服务、源签名失效重编译，不改数学/布局/门槛。 |

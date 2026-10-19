@@ -1,0 +1,25 @@
+{
+  "status": "failed",
+  "error_type": "ModuleNotFoundError",
+  "error": "No module named 'torch_npu'",
+  "device_completion": "not_established",
+  "full_service_acceptance": "not_run",
+  "cann_plog": {
+    "status": "no_matching_evidence",
+    "started_at": 1792402779.748576,
+    "owned_pids": [
+      52823
+    ],
+    "roots": [
+      "/Users/loki.yao/ascend/log"
+    ],
+    "files_read": 0,
+    "bytes_read": 0,
+    "entries_scanned": 0,
+    "truncated": false,
+    "excerpts": [],
+    "diagnostic_errors": [],
+    "scope": "recent task-owned CANN log excerpts; not a device-completion or root-cause certificate"
+  },
+  "elapsed_seconds": 0.8588411808013916
+}

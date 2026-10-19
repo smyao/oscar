@@ -1,0 +1,314 @@
+{
+  "date": "2026-10-19",
+  "base_commit": "5ca84395da4a6e2bf29d398d1664d6fdda0652c0",
+  "branch": "oscar-new-3",
+  "scope": "Local comprehensive audit; no target-device service execution or hardware acceptance",
+  "environment": {
+    "platform": "macOS-15.7.7-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "torch_npu": false,
+    "bisheng": null,
+    "npu_smi": null,
+    "limactl": null
+  },
+  "production_changed": [
+    "tools/phase.py",
+    "tools/service_probe.py"
+  ],
+  "numerical_or_kernel_changes": [],
+  "default_candidates_changed": false,
+  "initial_full_suite": {
+    "command": ".venv/bin/python -m pytest -q --junitxml=reports/full_local_audit_before_20261019.xml",
+    "returncode": 1,
+    "passed": 1899,
+    "failed": 52,
+    "errors": 14,
+    "skipped": 134,
+    "subtests_passed": 29,
+    "log": "reports/full_local_audit_before_20261019.log",
+    "junit": "reports/full_local_audit_before_20261019.xml"
+  },
+  "initial_failure_categories": {
+    "missing_original_artifact": {
+      "count": 17,
+      "nodes": [
+        "tests.test_analyze_64k_evidence::test_all_supplied_engine_rows_are_parsed_without_pid_or_clock_mixing",
+        "tests.test_analyze_64k_evidence::test_truncated_records_preserve_known_fields_and_do_not_invent_counts",
+        "tests.test_analyze_64k_evidence::test_client_tables_and_warmup_have_separate_time_denominators",
+        "tests.test_analyze_64k_evidence::test_client_latency_decomposition_respects_fixed_512_output_tokens",
+        "tests.test_analyze_64k_evidence::test_spec_totals_use_counts_rather_than_unweighted_percentage_means",
+        "tests.test_analyze_64k_evidence::test_observed_capacity_and_zero_counters_do_not_invent_memory_or_phases",
+        "tests.test_analyze_64k_evidence::test_server_counter_integration_does_not_use_client_duration",
+        "tests.test_analyze_64k_evidence::test_conditional_warmup_pool_bounds_include_the_reference_null_block",
+        "tests.test_analyze_decode_completion::test_real_popped_completion_ids_keep_observed_latency_not_busy",
+        "tests.test_analyze_decode_completion::test_real_decode_markers_close_but_do_not_mean_math_completed",
+        "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[duplicate_id]",
+        "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[missing_completion]",
+        "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[wrong_pc]",
+        "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[flag_count]",
+        "tests.test_analyze_decode_completion::test_truncated_real_line_and_unclosed_real_markers_fail",
+        "tests.test_service_log_model::test_real_log_mtp_accounting_and_unequal_windows",
+        "tests.test_service_log_model::test_two_anchors_do_not_identify_speedup_share"
+      ]
+    },
+    "loopback_sandbox_blocked": {
+      "count": 33,
+      "nodes": [
+        "tests.test_benchmark_measure::test_stream_measures_first_actual_token_and_preserves_multi_token_burst",
+        "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[http_error-HTTP 503]",
+        "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[malformed-JSONDecodeError]",
+        "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[no_token_ids-return_token_ids]",
+        "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[no_usage-usage/token IDs]",
+        "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[wrong_usage-usage/token IDs]",
+        "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[no_done-[DONE]]",
+        "tests.test_benchmark_measure::test_stream_timeout_is_bounded_and_preserves_partial_results",
+        "tests.test_benchmark_measure::test_two_warmups_five_repeats_fingerprints_and_missing_device_evidence",
+        "tests.test_benchmark_measure::test_request_failures_are_retained_across_all_five_repeats",
+        "tests.test_benchmark_measure::test_context_limit_is_recorded_without_silently_shortening_input",
+        "tests.test_benchmark_measure::test_default_lengths_are_explicit_standard_scope_and_keep_full_policy_matrix",
+        "tests.test_benchmark_mixed_passive::test_passive_observer_captures_only_external_metrics_window",
+        "tests.test_live_output::test_service_startup_and_ongoing_output_reach_terminal_before_response",
+        "tests.test_plog::test_failed_owned_server_fixture_is_attributed_after_cleanup",
+        "tests.test_service_workflow::test_long_request_has_wall_deadline_progress_and_reaped_client[hang_long]",
+        "tests.test_service_workflow::test_long_request_has_wall_deadline_progress_and_reaped_client[trickle_long]",
+        "tests.test_service_workflow::test_healthy_run_records_streaming_synthetic_mixed_probe",
+        "tests.test_service_workflow::test_synthetic_mixed_timeout_blocks_formal_service",
+        "tests.test_service_workflow::test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up",
+        "tests.test_service_workflow::test_regressed_synthetic_runs_one_separate_same_server_device_diagnostic",
+        "tests.test_service_workflow::test_nonregressed_synthetic_does_not_arm_diagnostic",
+        "tests.test_service_workflow::test_synthetic_refuses_inherited_debug_sync_before_service_start",
+        "tests.test_service_workflow::test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch",
+        "tests.test_service_workflow::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_trace-mandatory]",
+        "tests.test_service_workflow::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[wrong_usage-exactly 128]",
+        "tests.test_service_workflow::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_mtp-mandatory]",
+        "tests.test_service_workflow::test_startup_failure_records_exit_and_never_kills_an_unrelated_group",
+        "tests.test_service_workflow::test_hung_startup_has_finite_deadline_and_nonempty_final_log",
+        "tests.test_service_workflow::test_interrupted_startup_still_releases_its_server_and_records_outcome",
+        "tests.test_service_workflow::test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint",
+        "tests.test_service_workflow::test_missing_device_selection_fails_before_any_resource_or_server_launch",
+        "tests.test_service_workflow::test_memory_not_released_turns_successful_requests_into_failed_probe"
+      ]
+    },
+    "historical_static_rule_failure": {
+      "count": 2,
+      "nodes": [
+        "tests.test_no_fallback_static::test_no_silent_exception_swallowing",
+        "tests.test_no_fallback_static::test_source_headers_trace_archive"
+      ]
+    },
+    "retired_request_window_test_contract": {
+      "count": 13,
+      "nodes": [
+        "tests.test_request_window_integration::test_all_registered_target_and_draft_sidecars_are_allocated_before_load_returns",
+        "tests.test_request_window_integration::test_one_native_update_preserves_rewind_deferred_return_and_publishes_after_reorder",
+        "tests.test_request_window_integration::test_scope_cleans_up_and_other_stream_cannot_reuse_leases",
+        "tests.test_request_window_integration::test_unsupported_native_mode_fails_at_seal[enable_prefix_caching-True]",
+        "tests.test_request_window_integration::test_unsupported_native_mode_fails_at_seal[mamba_cache_mode-align]",
+        "tests.test_request_window_integration::test_explicit_flag_keeps_native_scheduler_and_requires_full_capability_bundle",
+        "tests.test_request_window_integration::test_dual_reshape_reuses_sidecars_and_shared_map_while_native_gdn_views_stay_original",
+        "tests.test_request_window_native_scheduler::test_request_window_workspace_follows_actual_native_capacity[2048-captures0-4096]",
+        "tests.test_request_window_native_scheduler::test_request_window_workspace_follows_actual_native_capacity[8192-captures1-8192]",
+        "tests.test_request_window_serving_config::test_unqualified_research_mdl_combination_is_rejected_by_both_entries",
+        "tests.test_request_window_serving_config::test_research_roundtrip_clears_every_owned_change_for_native_and_baseline",
+        "tests.test_request_window_serving_config::test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase",
+        "tests.test_request_window_serving_config::test_legacy_whole_capacity_cannot_reenter_through_research_flags"
+      ]
+    },
+    "fixed_required_bf16_query_producer_assertion": {
+      "count": 1,
+      "nodes": [
+        "tests.test_request_window_registration::test_all_capability_surfaces_match_and_old_modes_do_not_require_new_ops"
+      ]
+    }
+  },
+  "loopback_retry": {
+    "status": "blocked_pending_user_authorization",
+    "scope": "33 blocked loopback HTTP nodes in 5 test files",
+    "attempts": 2,
+    "approval_result": "automatic review timed out twice; escalated command never ran",
+    "sockets_mocked_for_this_retry": false
+  },
+  "host_regression": {
+    "full_local_after": {
+      "junit": "reports/full_local_after_20261019.xml",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "443",
+      "time": "26.101",
+      "timestamp": "2026-10-19T18:08:57.826220+08:00",
+      "hostname": "lokiyaodeMacBook-Pro.local"
+    },
+    "full_service_audit_after": {
+      "junit": "reports/full_service_audit_after_20261019.xml",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "25",
+      "time": "1.492",
+      "timestamp": "2026-10-19T18:05:39.510223+08:00",
+      "hostname": "lokiyaodeMacBook-Pro.local"
+    },
+    "full_runtime_host_audit": {
+      "junit": "reports/full_runtime_host_audit_20261019.xml",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "8",
+      "time": "4.052",
+      "timestamp": "2026-10-19T17:53:11.079904+08:00",
+      "hostname": "lokiyaodeMacBook-Pro.local"
+    },
+    "full_bf16_audit_tests": {
+      "junit": "reports/full_bf16_audit_tests_20261019.xml",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "9",
+      "time": "6.782",
+      "timestamp": "2026-10-19T17:52:18.481662+08:00",
+      "hostname": "lokiyaodeMacBook-Pro.local"
+    },
+    "full_local_static_after": {
+      "junit": "reports/full_local_static_after_20261019.xml",
+      "name": "pytest",
+      "errors": "0",
+      "failures": "2",
+      "skipped": "0",
+      "tests": "5",
+      "time": "0.405",
+      "timestamp": "2026-10-19T18:13:21.128829+08:00",
+      "hostname": "lokiyaodeMacBook-Pro.local"
+    },
+    "full_service_cleanup_final": {
+      "junit": "reports/full_service_cleanup_final_20261019.xml",
+      "returncode": 0,
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "34",
+      "time": "3.144",
+      "timestamp": "2026-10-19T18:14:36.335036+08:00",
+      "hostname": "lokiyaodeMacBook-Pro.local"
+    },
+    "full_local_final": {
+      "junit": "reports/full_local_final_20261019.xml",
+      "returncode": 0,
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "451",
+      "time": "27.771",
+      "timestamp": "2026-10-19T18:15:49.055632+08:00",
+      "hostname": "lokiyaodeMacBook-Pro.local",
+      "command": ".venv/bin/python -m pytest -q tests/test_bf16_deploy_gate.py tests/test_bf16_history_bindings.py tests/test_bf16_history_dispatch.py tests/test_bf16_history_kernel_sources.py tests/test_bf16_history_policy.py tests/test_bf16_precise_check.py tests/test_bf16_probe_query_abi.py tests/test_bf16_query_producer.py tests/test_bf16_query_reader.py tests/test_bf16_reader_protocol.py tests/test_deploy_launcher.py tests/test_full_bf16_audit.py tests/test_full_runtime_audit.py tests/test_full_service_audit.py tests/test_install_serve.py tests/test_native_token_budget.py tests/test_observe_serve.py tests/test_prefix_bf16_contract.py tests/test_request_window_registration.py tests/test_serve_process.py tests/test_service_fatal_outcome.py tests/test_serving_variants.py tests/test_striped_unpack_bf16_source.py tests/test_trap_diagnostic_mode.py tests/test_workflow.py --junitxml=reports/full_local_final_20261019.xml",
+      "environment": {
+        "DEVELOPER_DIR": "/Applications/Xcode.app/Contents/Developer",
+        "SDKROOT": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+        "OSCAR_TEST_CLANGXX": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+      }
+    }
+  },
+  "bf16_screen": {
+    "report": "reports/full_bf16_audit_screen_20261019.json",
+    "details": "reports/full_bf16_audit_findings_20261019.json",
+    "returncode": 2,
+    "passed": 4,
+    "failed": 7,
+    "final_output_failed_cases": 2,
+    "baseline_fp32_passed": 11,
+    "acceptance_relaxed": false
+  },
+  "real_npu_probe_negative_control": {
+    "command": ".venv/bin/python -m tools.deploy --only probe-ops --log-dir reports/full_local_no_npu_20261019",
+    "status": "failed",
+    "returncode": 1,
+    "reason": "No module named torch_npu",
+    "service_started": false,
+    "status_file": "reports/full_local_no_npu_20261019/status.json",
+    "scope": "fail-closed without NPU, not device completion"
+  },
+  "target_incident": {
+    "archive_entry": 168,
+    "report": "reports/diagnostic_startup_memory_20261019.json",
+    "free_gib": 13.03,
+    "required_gib": 26.54,
+    "phase": "native init_device before load_model",
+    "owner": "not established",
+    "previous_trap_resolved": false
+  },
+  "fe0": {
+    "attention_cv.cpp": {
+      "expected": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+      "actual": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4"
+    },
+    "attention_tasks.cpp": {
+      "expected": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+      "actual": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952"
+    },
+    "store_int2.cpp": {
+      "expected": "5a6fa9619e399bb80bc0455c4426396d98510326bb899900b4b96c65d2b58506",
+      "actual": "5a6fa9619e399bb80bc0455c4426396d98510326bb899900b4b96c65d2b58506"
+    },
+    "rotate_clip_store.cpp": {
+      "expected": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+      "actual": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748"
+    },
+    "merge_lse.cpp": {
+      "expected": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+      "actual": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723"
+    },
+    "status_guard.cpp": {
+      "expected": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+      "actual": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab"
+    },
+    "oscar_common.h": {
+      "expected": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+      "actual": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+    }
+  },
+  "all_fe0_match": true,
+  "source_sha256": {
+    "tools/phase.py": "bd5f2ef0219eb0ec17ba747938d6d4d4a4bbf7723cafd7c8e7879fa8d3ec4476",
+    "tools/service_probe.py": "6062babb11ca1ea5521ad97bcfb61630f74b61386ce02270e7cbba21fc807824",
+    "tests/test_request_window_registration.py": "095373d5b45d84f081641a480a31b31108b00afddb9e0ebb9ee18cbe85d7ae1a",
+    "tests/test_full_service_audit.py": "40d3abb518a07afc847517c337ecd3b36ae7edf7563810b0933cfd31ec868b53",
+    "tests/test_full_runtime_audit.py": "d9ebc00aa3dc2460e7b8c4dbfbf857efae2a1070d583dedadd839fcf8dc4a11d",
+    "tests/test_full_bf16_audit.py": "16cec3fda29509180647d0bd32f10e85cec0491217c0d07654e4f952df5da496",
+    "configs/target.json": "0d90d116cccd2ca9b99cef447f66afb8bee7bb635d794afc72f6e937112ebdc0",
+    "configs/acceptance.json": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+    "oscar_ascend/ops/reference.py": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
+    "tools/serving_variants.py": "928b913d8a646d253b18b8e2f3d430dd0e201cf69ae7c75de3d231103988719f"
+  },
+  "acceptance": {
+    "CANN": "not_run",
+    "official_cpu_debug": "not_run",
+    "NPU": "not_run",
+    "graph_capture": "not_run",
+    "graph_replay": "not_run",
+    "real_model_service": "not_run",
+    "model_quality": "not_run",
+    "performance": "not_run",
+    "all_local_tests_passed": false,
+    "production_qualified": false
+  },
+  "host_regression_overlap": "Do not add suites as unique tests. The final 451-case cross-regression supersedes the 443-case run for changed paths and contains the smaller audit suites.",
+  "fixed_bugs": [
+    "managed service fatal/early exit could be marked finished or measured",
+    "managed cleanup failure did not always fail the caller",
+    "phase/managed Popen ownership window could strand the created child after a signal",
+    "phase diagnostic-write failure could skip owned-group cleanup; repeated cleanup signals were not fully guarded"
+  ],
+  "negative_controls": [
+    "reports/full_service_audit_before_20261019.xml",
+    "reports/full_service_launch_signal_before_20261019.xml",
+    "reports/full_service_cleanup_logging_before_20261019.xml"
+  ],
+  "regression_note": "Initial full suite was run before repairs/new audit tests. The targeted post-change suites are not a replacement or a claim that the whole suite passes."
+}

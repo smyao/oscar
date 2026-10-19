@@ -1,0 +1,525 @@
+{
+  "schema_version": 1,
+  "scope": "Read-only current production BF16 math/ABI audit plus actual-source host LUT/index-tail tests. No CANN changes.",
+  "source_commit": "5ca84395da4a6e2bf29d398d1664d6fdda0652c0",
+  "source_sha256": {
+    "configs/acceptance.json": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+    "oscar_ascend/ops/reference.py": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
+    "csrc/kernels/rotate_vector_init.cpp": "5c5c03094f28b142e8026e6cda6f7b52a66f17eb3eb9b81520716865128eaa04",
+    "csrc/kernels/rotate_clip_store_striped.cpp": "72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430",
+    "csrc/kernels/attention_striped_unpack_bf16.h": "7058cd7d649e3c11668cbfc68366bb6cc987710706e26e90997891669985279b",
+    "csrc/kernels/attention_bf16_history_operands.h": "ad01d9ffa96fc11e32ac5a4123b65280fdcdd6991018e03ab784fc5ff9fe900b",
+    "csrc/kernels/attention_bf16_precise_check.h": "e6ef1c9730269b02b1a276deff0f81dee1b02183d7a8e443ca71081cd3df3cda",
+    "csrc/include/oscar_bf16_history_launch.h": "c13bc4050f2d77a25b7cf4a100369df4e52f8e3ab5cbb41c9c6834f03344a55d",
+    "csrc/bf16_history_bindings.cpp": "6508cffbcbb795dadd342b9f4e41cb24649fb519713683895cd0d8f034176df1",
+    "csrc/rotation_bindings.cpp": "3f2d853a8adc48dad7c832e8de6ea656f41242ed53074c8f8f436141ef75b9e2",
+    "csrc/kernels/merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+    "oscar_ascend/runtime.py": "30e7b524e5a3fb438202b2d43b972693e7c62a74b579fcda94d1a0859994a36a",
+    "oscar_ascend/integration/impl.py": "91e777676b4c04b332a98095bf82d7efe679da99d4675dca8e0f832d16ced017",
+    "oscar_ascend/integration/current_attention.py": "724039a82c68babd65e5f69f9f2b74d467b16512080ccd25744a4c55a9002fc5",
+    "tools/experiments/generate_bf16_history_kernels.py": "f7f4e2dd739350b0219db5250fdb294c8d5d78289929b584a0d63fc4f7996030",
+    "tests/test_full_bf16_audit.py": "16cec3fda29509180647d0bd32f10e85cec0491217c0d07654e4f952df5da496",
+    "csrc/kernels/attention_bf16_history_mdl.cpp": "5e624b756ecd26d69cddf1ba68ca1281b079a9ddcd80ca4672799f91a01f70d8",
+    "csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp": "afeb8ab4bd58f3b3fa6ba2b94e445029b21149877c95fecbb1dbdbb331cea515",
+    "csrc/kernels/attention_bf16_history_window_range.cpp": "61a2bfa1e3785c5704bf885f137942bd3addb96e1a1a5b7a9b07145c4288338e",
+    "csrc/kernels/attention_bf16_history_window_range_balanced.cpp": "d00da551dc0ca94d0ab69918b99e0a860734913b455acea26213fdccc261a21a",
+    "csrc/kernels/attention_bf16_history_window_range_cluster16.cpp": "ad7df9e57bc0b174d4fa1033e03880f9da4df7a4f29b26b8d57f241b13842e35"
+  },
+  "precision_contract": [
+    {
+      "stage": "Input and exact sink/recent snapshots",
+      "actual": "BF16, exact payload copied. FP32 scratch is finite/checksum validation only.",
+      "source": "csrc/kernels/attention_bf16_history_window_range_cluster16.cpp:582,666,731"
+    },
+    {
+      "stage": "Quantization writer",
+      "actual": "FP32 rotation/clipping; scale and zero rounded to FP16 before INT2 code selection. BF16 snapshots copy original values.",
+      "source": "csrc/kernels/rotate_clip_store_striped.cpp"
+    },
+    {
+      "stage": "Historical reconstruction",
+      "actual": "Four FP32 multiply-then-add levels per vector, RNE BF16 once, bit Gather into BF16 K/V; no full FP32 K/V tile.",
+      "source": "csrc/kernels/attention_striped_unpack_bf16.h:172"
+    },
+    {
+      "stage": "Historical Q",
+      "actual": "FP32 rotation followed by BF16 RNE. D+16 BF16 row includes a 32-byte trailer with original FP32 ReduceSum; reader checks pre-round checksum and copies already-rounded payload.",
+      "source": "csrc/kernels/rotate_vector_init.cpp:233; csrc/kernels/attention_bf16_history_window_range_cluster16.cpp:582"
+    },
+    {
+      "stage": "CV QK and PV for all sources",
+      "actual": "BF16 operands, FP32 Matmul C, HF32 disabled. QK/PV results and online max/sum/alpha/accumulation are FP32; P is RNE BF16 only for PV. Softmax denominator uses unrounded FP32 exp weights.",
+      "source": "csrc/kernels/attention_bf16_history_window_range_cluster16.cpp:508,769; csrc/kernels/attention_bf16_history_operands.h:36"
+    },
+    {
+      "stage": "History inverse rotation and all-source merge",
+      "actual": "FP32 inverse Rv, FP32 partial and LSE, FP32 merge, then BF16 final output copy.",
+      "source": "csrc/kernels/attention_bf16_history_window_range_cluster16.cpp:508; csrc/kernels/merge_lse.cpp; oscar_ascend/integration/impl.py:229"
+    },
+    {
+      "stage": "Native current source in qualified eager prefill/first MTP",
+      "actual": "Original BF16 Q/K/V to native FIA, BF16 partial output and native LSE widened into FP32 merge buffers. Native internal P/accumulation order is not established by exposed call interface.",
+      "source": "oscar_ascend/integration/current_attention.py:165,201; oscar_ascend/integration/impl.py:211"
+    }
+  ],
+  "numerical_screen": {
+    "command": ".venv/bin/python -m tools.experiments.bf16_all_sources_screen --output reports/full_bf16_audit_screen_20261019.json",
+    "report": "reports/full_bf16_audit_screen_20261019.json",
+    "returncode": 2,
+    "passed_cases": 4,
+    "total_cases": 11,
+    "cases": [
+      {
+        "name": "identity_exact_cancellation",
+        "baseline_passed": true,
+        "candidate_passed": false,
+        "full_failed_metrics": {
+          "output": {
+            "passed": false,
+            "elements": 1536,
+            "failed_elements": 1536,
+            "nonfinite_mismatches": 0,
+            "matching_empty_lse": 0,
+            "max_abs": 3.6953163146972656,
+            "max_rel_nonzero_reference": 1.0,
+            "zero_reference_nonzero_error": 0,
+            "first_failure": {
+              "index": [
+                0,
+                0,
+                0
+              ],
+              "actual": 0.0,
+              "expected": -0.021484375,
+              "allowed": 0.0051074218936264515,
+              "abs_error": 0.021484375
+            }
+          },
+          "final_bf16_output": {
+            "passed": false,
+            "elements": 1536,
+            "failed_elements": 1536,
+            "nonfinite_mismatches": 0,
+            "matching_empty_lse": 0,
+            "max_abs": 3.6953125,
+            "max_rel_nonzero_reference": 1.0,
+            "zero_reference_nonzero_error": 0,
+            "first_failure": {
+              "index": [
+                0,
+                0,
+                0
+              ],
+              "actual": 0.0,
+              "expected": -0.021484375,
+              "allowed": 0.0051074218936264515,
+              "abs_error": 0.021484375
+            }
+          },
+          "partial_output": {
+            "passed": false,
+            "elements": 4608,
+            "failed_elements": 1536,
+            "nonfinite_mismatches": 0,
+            "matching_empty_lse": 0,
+            "max_abs": 5.375,
+            "max_rel_nonzero_reference": 1.0,
+            "zero_reference_nonzero_error": 0,
+            "first_failure": {
+              "index": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "actual": 0.0,
+              "expected": -0.03125,
+              "allowed": 0.005156249739229679,
+              "abs_error": 0.03125
+            }
+          },
+          "prefill_window_relative_l2": {
+            "passed": false,
+            "relative_l2": 0.12610612872233615,
+            "strict_upper_bound": 0.02
+          }
+        },
+        "ablation_failed_metrics": {
+          "fp32": [],
+          "kv_only": [
+            "output",
+            "final_bf16_output",
+            "partial_output",
+            "prefill_window_relative_l2"
+          ],
+          "q_only": [],
+          "p_only": []
+        }
+      },
+      {
+        "name": "empty_history_q4",
+        "baseline_passed": true,
+        "candidate_passed": true,
+        "full_failed_metrics": {},
+        "ablation_failed_metrics": {
+          "fp32": [],
+          "kv_only": [],
+          "q_only": [],
+          "p_only": []
+        }
+      },
+      {
+        "name": "frontier_q1_hkv2",
+        "baseline_passed": true,
+        "candidate_passed": true,
+        "full_failed_metrics": {},
+        "ablation_failed_metrics": {
+          "fp32": [],
+          "kv_only": [],
+          "q_only": [],
+          "p_only": []
+        }
+      },
+      {
+        "name": "frontier_q2_hkv2",
+        "baseline_passed": true,
+        "candidate_passed": false,
+        "full_failed_metrics": {
+          "partial_output": {
+            "passed": false,
+            "elements": 55296,
+            "failed_elements": 42,
+            "nonfinite_mismatches": 0,
+            "matching_empty_lse": 0,
+            "max_abs": 0.0224609375,
+            "max_rel_nonzero_reference": 14.07815170288086,
+            "zero_reference_nonzero_error": 144,
+            "first_failure": {
+              "index": [
+                0,
+                0,
+                6,
+                30
+              ],
+              "actual": -0.6650390625,
+              "expected": -0.6561279296875,
+              "allowed": 0.008280639536678791,
+              "abs_error": 0.0089111328125
+            }
+          }
+        },
+        "ablation_failed_metrics": {
+          "fp32": [],
+          "kv_only": [
+            "partial_output"
+          ],
+          "q_only": [],
+          "p_only": []
+        }
+      },
+      {
+        "name": "kv_tail_q3",
+        "baseline_passed": true,
+        "candidate_passed": false,
+        "full_failed_metrics": {
+          "partial_output": {
+            "passed": false,
+            "elements": 41472,
+            "failed_elements": 6,
+            "nonfinite_mismatches": 0,
+            "matching_empty_lse": 0,
+            "max_abs": 0.009815673343837261,
+            "max_rel_nonzero_reference": 715.0183715820312,
+            "zero_reference_nonzero_error": 0,
+            "first_failure": {
+              "index": [
+                1,
+                0,
+                5,
+                0
+              ],
+              "actual": 0.13399341702461243,
+              "expected": 0.1250610500574112,
+              "allowed": 0.0056253052316606045,
+              "abs_error": 0.008932366967201233
+            }
+          }
+        },
+        "ablation_failed_metrics": {
+          "fp32": [],
+          "kv_only": [
+            "partial_output"
+          ],
+          "q_only": [],
+          "p_only": []
+        }
+      },
+      {
+        "name": "kv_tail_q4",
+        "baseline_passed": true,
+        "candidate_passed": false,
+        "full_failed_metrics": {
+          "partial_output": {
+            "passed": false,
+            "elements": 55296,
+            "failed_elements": 4,
+            "nonfinite_mismatches": 0,
+            "matching_empty_lse": 0,
+            "max_abs": 0.009766936302185059,
+            "max_rel_nonzero_reference": 37.4935188293457,
+            "zero_reference_nonzero_error": 0,
+            "first_failure": {
+              "index": [
+                1,
+                1,
+                5,
+                0
+              ],
+              "actual": 0.07304206490516663,
+              "expected": 0.06327512860298157,
+              "allowed": 0.005316375754773617,
+              "abs_error": 0.009766936302185059
+            }
+          }
+        },
+        "ablation_failed_metrics": {
+          "fp32": [],
+          "kv_only": [
+            "partial_output"
+          ],
+          "q_only": [],
+          "p_only": []
+        }
+      },
+      {
+        "name": "hadamard_large_values",
+        "baseline_passed": true,
+        "candidate_passed": false,
+        "full_failed_metrics": {
+          "output": {
+            "passed": false,
+            "elements": 6144,
+            "failed_elements": 2023,
+            "nonfinite_mismatches": 0,
+            "matching_empty_lse": 0,
+            "max_abs": 0.2543773651123047,
+            "max_rel_nonzero_reference": 129.3861083984375,
+            "zero_reference_nonzero_error": 0,
+            "first_failure": {
+              "index": [
+                0,
+                0,
+                2
+              ],
+              "actual": 4.04133415222168,
+              "expected": 4.004711151123047,
+              "allowed": 0.025023553520441055,
+              "abs_error": 0.03662300109863281
+            }
+          },
+          "final_bf16_output": {
+            "passed": false,
+            "elements": 6144,
+            "failed_elements": 2137,
+            "nonfinite_mismatches": 0,
+            "matching_empty_lse": 0,
+            "max_abs": 0.233978271484375,
+            "max_rel_nonzero_reference": 129.7528839111328,
+            "zero_reference_nonzero_error": 0,
+            "first_failure": {
+              "index": [
+                0,
+                0,
+                2
+              ],
+              "actual": 4.03125,
+              "expected": 4.004711151123047,
+              "allowed": 0.025023553520441055,
+              "abs_error": 0.026538848876953125
+            }
+          },
+          "partial_output": {
+            "passed": false,
+            "elements": 18432,
+            "failed_elements": 3369,
+            "nonfinite_mismatches": 0,
+            "matching_empty_lse": 0,
+            "max_abs": 0.3363838195800781,
+            "max_rel_nonzero_reference": 6.766874313354492,
+            "zero_reference_nonzero_error": 0,
+            "first_failure": {
+              "index": [
+                0,
+                0,
+                0,
+                2
+              ],
+              "actual": 6.822010040283203,
+              "expected": 6.767514228820801,
+              "allowed": 0.03883757069706917,
+              "abs_error": 0.054495811462402344
+            }
+          }
+        },
+        "ablation_failed_metrics": {
+          "fp32": [],
+          "kv_only": [
+            "output",
+            "final_bf16_output",
+            "partial_output"
+          ],
+          "q_only": [
+            "output",
+            "final_bf16_output",
+            "partial_output"
+          ],
+          "p_only": [
+            "output",
+            "final_bf16_output",
+            "partial_output"
+          ]
+        }
+      },
+      {
+        "name": "ordinary_qr",
+        "baseline_passed": true,
+        "candidate_passed": true,
+        "full_failed_metrics": {},
+        "ablation_failed_metrics": {
+          "fp32": [],
+          "kv_only": [],
+          "q_only": [],
+          "p_only": []
+        }
+      },
+      {
+        "name": "groups_q84",
+        "baseline_passed": true,
+        "candidate_passed": false,
+        "full_failed_metrics": {
+          "partial_output": {
+            "passed": false,
+            "elements": 387072,
+            "failed_elements": 1,
+            "nonfinite_mismatches": 0,
+            "matching_empty_lse": 0,
+            "max_abs": 0.005415450781583786,
+            "max_rel_nonzero_reference": 550.540283203125,
+            "zero_reference_nonzero_error": 0,
+            "first_failure": {
+              "index": [
+                0,
+                55,
+                5,
+                0
+              ],
+              "actual": -0.02986743301153183,
+              "expected": -0.024451982229948044,
+              "allowed": 0.005122259724885225,
+              "abs_error": 0.005415450781583786
+            }
+          }
+        },
+        "ablation_failed_metrics": {
+          "fp32": [],
+          "kv_only": [
+            "partial_output"
+          ],
+          "q_only": [],
+          "p_only": []
+        }
+      },
+      {
+        "name": "groups_q168",
+        "baseline_passed": true,
+        "candidate_passed": false,
+        "full_failed_metrics": {
+          "partial_output": {
+            "passed": false,
+            "elements": 2322432,
+            "failed_elements": 63,
+            "nonfinite_mismatches": 0,
+            "matching_empty_lse": 0,
+            "max_abs": 0.01041802391409874,
+            "max_rel_nonzero_reference": 6256.99951171875,
+            "zero_reference_nonzero_error": 0,
+            "first_failure": {
+              "index": [
+                0,
+                3,
+                3,
+                0
+              ],
+              "actual": 0.08995615690946579,
+              "expected": 0.09550619125366211,
+              "allowed": 0.005477530881762505,
+              "abs_error": 0.00555003434419632
+            }
+          }
+        },
+        "ablation_failed_metrics": {
+          "fp32": [],
+          "kv_only": [
+            "partial_output"
+          ],
+          "q_only": [],
+          "p_only": []
+        }
+      },
+      {
+        "name": "long_history_16k",
+        "baseline_passed": true,
+        "candidate_passed": true,
+        "full_failed_metrics": {},
+        "ablation_failed_metrics": {
+          "fp32": [],
+          "kv_only": [],
+          "q_only": [],
+          "p_only": []
+        }
+      }
+    ]
+  },
+  "classification": {
+    "new_proven_production_kernel_bug": false,
+    "frozen_acceptance_passed": false,
+    "analytic_contract_conflict": {
+      "case": "identity_exact_cancellation",
+      "coordinate": [
+        0,
+        0,
+        0
+      ],
+      "premises": "Q=0, identity rotations, P=1, 1024 visible tokens; 704 historical tokens in opposite V pairs; exact sink/recent/current sum cancels at this coordinate.",
+      "fp32_reconstructed_opposite_pair_sum": -0.0625,
+      "historical_fp32_mean": -0.03125,
+      "historical_bf16_mean": 0.0,
+      "fp32_expected_final": -0.021484375,
+      "bf16_candidate_final": 0.0,
+      "frozen_allowed_error": 0.0051074218936264515,
+      "conclusion": "The prescribed BF16 operand rounding cannot guarantee the frozen FP32-reconstruction oracle gate for all these valid inputs. This counterexample needs no asynchronous or hardware error. No threshold/oracle/route was changed."
+    },
+    "other_failures": "Five cases fail only partial_output and already fail kv_only. Large-value case fails kv_only, q_only and p_only independently. These ablations support rounding sensitivity, but are not proofs of CANN implementation equivalence or unique hardware fault causes.",
+    "store_gate": "The retained codec_cast_counterexample also violates frozen store_dequant atol/rtol 0.002 after mandatory BF16 rounding; FP16 metadata/INT2 writer identity remains separately checked."
+  },
+  "new_actual_source_host_test": {
+    "file": "tests/test_full_bf16_audit.py",
+    "command": "SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk OSCAR_TEST_CLANGXX=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ .venv/bin/python -m pytest -q tests/test_full_bf16_audit.py --junitxml=reports/full_bf16_audit_tests_20261019.xml",
+    "result": "9 passed in 6.79s",
+    "returncode": 0,
+    "source_extracted": "Real Geometry and Unpack tail from FP16 metadata Cast through four-level table creation, BF16 Cast, index arithmetic and byte Gather.",
+    "coverage": "H16/H32/H64; each positive control checks 2048 distinct finite metadata rows x256 dimensions with real scratch aliasing and bounds against independent FP64->FP32->integer-RNE bit oracle. Both wrong-row-offset and live-metadata-alias mutations are detected at all three H.",
+    "not_covered": "Earlier packed-word extraction and metadata guards; full Matmul/Softmax; SDK vector semantics; hardware events or graph completion."
+  },
+  "remaining_evidence_limits": [
+    "No CANN/bisheng, official CPU-debug, A2/NPU or graph run available on this host. Repeated Matmul Init/TPipe Reset and mode2 cross-core flag semantics need SDK/device evidence; no speculative change made.",
+    "The CPU screen is not an exact production prefill emulator: its source2 CV model differs from native FIA BF16 partial publication in qualified eager prefill. It also cannot establish dense native FIA bit identity.",
+    "The screen embeds hashes for its model/oracle and old mother sources, not all actual production BF16 files; this separate audit records current relevant production hashes.",
+    "Current local references directory contains vllm and vllm-ascend only; the manifest OSCAR PR snapshot is absent. No failed OSCAR project or other external reference was accessed.",
+    "No new conclusion about the user device Trap cause, service health, model quality or performance acceptance follows from these host results."
+  ],
+  "production_changes": [],
+  "acceptance_oracle_changes": [],
+  "production_qualified": false,
+  "post_test_header_note": "After the recorded host run, the test docstring gained the required Archive reference; executable statements did not change."
+}

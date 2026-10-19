@@ -1,0 +1,332 @@
+[
+  {
+    "node": "tests.test_analyze_64k_evidence::test_all_supplied_engine_rows_are_parsed_without_pid_or_clock_mixing",
+    "kind": "error",
+    "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+  },
+  {
+    "node": "tests.test_analyze_64k_evidence::test_truncated_records_preserve_known_fields_and_do_not_invent_counts",
+    "kind": "error",
+    "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+  },
+  {
+    "node": "tests.test_analyze_64k_evidence::test_client_tables_and_warmup_have_separate_time_denominators",
+    "kind": "error",
+    "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+  },
+  {
+    "node": "tests.test_analyze_64k_evidence::test_client_latency_decomposition_respects_fixed_512_output_tokens",
+    "kind": "error",
+    "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+  },
+  {
+    "node": "tests.test_analyze_64k_evidence::test_spec_totals_use_counts_rather_than_unweighted_percentage_means",
+    "kind": "error",
+    "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+  },
+  {
+    "node": "tests.test_analyze_64k_evidence::test_observed_capacity_and_zero_counters_do_not_invent_memory_or_phases",
+    "kind": "error",
+    "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+  },
+  {
+    "node": "tests.test_analyze_64k_evidence::test_server_counter_integration_does_not_use_client_duration",
+    "kind": "error",
+    "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+  },
+  {
+    "node": "tests.test_analyze_64k_evidence::test_conditional_warmup_pool_bounds_include_the_reference_null_block",
+    "kind": "error",
+    "message": "failed on setup with \"FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'\""
+  },
+  {
+    "node": "tests.test_analyze_decode_completion::test_real_popped_completion_ids_keep_observed_latency_not_busy",
+    "kind": "failure",
+    "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+  },
+  {
+    "node": "tests.test_analyze_decode_completion::test_real_decode_markers_close_but_do_not_mean_math_completed",
+    "kind": "failure",
+    "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz'"
+  },
+  {
+    "node": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[duplicate_id]",
+    "kind": "failure",
+    "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+  },
+  {
+    "node": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[missing_completion]",
+    "kind": "failure",
+    "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+  },
+  {
+    "node": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[wrong_pc]",
+    "kind": "failure",
+    "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+  },
+  {
+    "node": "tests.test_analyze_decode_completion::test_actual_pair_rejects_ambiguity_and_missing_witness[flag_count]",
+    "kind": "failure",
+    "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'"
+  },
+  {
+    "node": "tests.test_analyze_decode_completion::test_truncated_real_line_and_unclosed_real_markers_fail",
+    "kind": "failure",
+    "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz'"
+  },
+  {
+    "node": "tests.test_benchmark_measure::test_stream_measures_first_actual_token_and_preserves_multi_token_burst",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[http_error-HTTP 503]",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[malformed-JSONDecodeError]",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[no_token_ids-return_token_ids]",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[no_usage-usage/token IDs]",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[wrong_usage-usage/token IDs]",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_benchmark_measure::test_stream_errors_cannot_be_counted_as_completed[no_done-[DONE]]",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_benchmark_measure::test_stream_timeout_is_bounded_and_preserves_partial_results",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_benchmark_measure::test_two_warmups_five_repeats_fingerprints_and_missing_device_evidence",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_benchmark_measure::test_request_failures_are_retained_across_all_five_repeats",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_benchmark_measure::test_context_limit_is_recorded_without_silently_shortening_input",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_benchmark_measure::test_default_lengths_are_explicit_standard_scope_and_keep_full_policy_matrix",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_benchmark_mixed_passive::test_passive_observer_captures_only_external_metrics_window",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_live_output::test_service_startup_and_ongoing_output_reach_terminal_before_response",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_no_fallback_static::test_no_silent_exception_swallowing",
+    "kind": "failure",
+    "message": "AssertionError: PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/experiments/replay_shared_fp32.py')\nassert not True\n +  where True = all(<generator object test_no_silent_exception_swallowing.<locals>.<genexpr> at 0x1037ae7a0>)"
+  },
+  {
+    "node": "tests.test_no_fallback_static::test_source_headers_trace_archive",
+    "kind": "failure",
+    "message": "AssertionError: missing historical fault trace: /Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/experiments/export_shared_fp32.py\nassert False\n +  where False = any(<generator object test_source_headers_trace_archive.<locals>.<genexpr> at 0x1030db840>)"
+  },
+  {
+    "node": "tests.test_plog::test_failed_owned_server_fixture_is_attributed_after_cleanup",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_request_window_integration::test_all_registered_target_and_draft_sidecars_are_allocated_before_load_returns",
+    "kind": "error",
+    "message": "failed on setup with \"oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported\""
+  },
+  {
+    "node": "tests.test_request_window_integration::test_one_native_update_preserves_rewind_deferred_return_and_publishes_after_reorder",
+    "kind": "error",
+    "message": "failed on setup with \"oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported\""
+  },
+  {
+    "node": "tests.test_request_window_integration::test_scope_cleans_up_and_other_stream_cannot_reuse_leases",
+    "kind": "error",
+    "message": "failed on setup with \"oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported\""
+  },
+  {
+    "node": "tests.test_request_window_integration::test_unsupported_native_mode_fails_at_seal[enable_prefix_caching-True]",
+    "kind": "error",
+    "message": "failed on setup with \"oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported\""
+  },
+  {
+    "node": "tests.test_request_window_integration::test_unsupported_native_mode_fails_at_seal[mamba_cache_mode-align]",
+    "kind": "error",
+    "message": "failed on setup with \"oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported\""
+  },
+  {
+    "node": "tests.test_request_window_integration::test_explicit_flag_keeps_native_scheduler_and_requires_full_capability_bundle",
+    "kind": "failure",
+    "message": "AssertionError: Regex pattern did not match.\n  Expected regex: 'native scheduler'\n  Actual message: 'BF16 attention requires physical-page snapshots; request windows are unsupported'"
+  },
+  {
+    "node": "tests.test_request_window_integration::test_dual_reshape_reuses_sidecars_and_shared_map_while_native_gdn_views_stay_original",
+    "kind": "error",
+    "message": "failed on setup with \"oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported\""
+  },
+  {
+    "node": "tests.test_request_window_native_scheduler::test_request_window_workspace_follows_actual_native_capacity[2048-captures0-4096]",
+    "kind": "failure",
+    "message": "oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported"
+  },
+  {
+    "node": "tests.test_request_window_native_scheduler::test_request_window_workspace_follows_actual_native_capacity[8192-captures1-8192]",
+    "kind": "failure",
+    "message": "oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported"
+  },
+  {
+    "node": "tests.test_request_window_registration::test_all_capability_surfaces_match_and_old_modes_do_not_require_new_ops",
+    "kind": "failure",
+    "message": "AssertionError: assert frozenset({'a...ge_out', ...}) == {'attention_b...nge_out', ...}\n  \n  Extra items in the left set:\n  'rotate_bf16_query_out'\n  Use -v to get more diff"
+  },
+  {
+    "node": "tests.test_request_window_serving_config::test_unqualified_research_mdl_combination_is_rejected_by_both_entries",
+    "kind": "failure",
+    "message": "AssertionError: Regex pattern did not match.\n  Expected regex: 'request-window MDL reader is not qualified'\n  Actual message: 'BF16 attention requires experimental_mdl_decode=true'"
+  },
+  {
+    "node": "tests.test_request_window_serving_config::test_research_roundtrip_clears_every_owned_change_for_native_and_baseline",
+    "kind": "failure",
+    "message": "AssertionError: Regex pattern did not match.\n  Expected regex: 'request-window MDL reader is not qualified'\n  Actual message: 'BF16 attention requires experimental_mdl_decode=true'"
+  },
+  {
+    "node": "tests.test_request_window_serving_config::test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase",
+    "kind": "failure",
+    "message": "ValueError: BF16 attention requires experimental_mdl_decode=true"
+  },
+  {
+    "node": "tests.test_request_window_serving_config::test_legacy_whole_capacity_cannot_reenter_through_research_flags",
+    "kind": "failure",
+    "message": "ValueError: BF16 attention requires experimental_mdl_decode=true"
+  },
+  {
+    "node": "tests.test_service_log_model::test_real_log_mtp_accounting_and_unequal_windows",
+    "kind": "failure",
+    "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_native_longbench_20260930.txt'"
+  },
+  {
+    "node": "tests.test_service_log_model::test_two_anchors_do_not_identify_speedup_share",
+    "kind": "failure",
+    "message": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/service_trace_candidate_20260930.json'"
+  },
+  {
+    "node": "tests.test_service_workflow::test_long_request_has_wall_deadline_progress_and_reaped_client[hang_long]",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_long_request_has_wall_deadline_progress_and_reaped_client[trickle_long]",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_healthy_run_records_streaming_synthetic_mixed_probe",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_synthetic_mixed_timeout_blocks_formal_service",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_regressed_synthetic_runs_one_separate_same_server_device_diagnostic",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_nonregressed_synthetic_does_not_arm_diagnostic",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_synthetic_refuses_inherited_debug_sync_before_service_start",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_trace-mandatory]",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[wrong_usage-exactly 128]",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_mtp-mandatory]",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_startup_failure_records_exit_and_never_kills_an_unrelated_group",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_hung_startup_has_finite_deadline_and_nonempty_final_log",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_interrupted_startup_still_releases_its_server_and_records_outcome",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_missing_device_selection_fails_before_any_resource_or_server_launch",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  },
+  {
+    "node": "tests.test_service_workflow::test_memory_not_released_turns_successful_requests_into_failed_probe",
+    "kind": "failure",
+    "message": "PermissionError: [Errno 1] Operation not permitted"
+  }
+]

@@ -10,6 +10,8 @@
 # mandatory 16-token functional service gates remain intact.
 # #133/#140-#142: a separately marked same-server NPU-event diagnostic may
 # follow the uninstrumented K4 batch; the native HTTP profiler is excluded.
+# #166/#167: all owned-service entrances classify pre-cleanup fatal evidence,
+# preserve raw process outcomes, and cannot succeed after failed cleanup.
 """Exercise the configured TP4/MTP service and preserve independent evidence."""
 from __future__ import annotations
 
@@ -37,6 +39,7 @@ from .npu_resources import DEFAULT_RELEASE_TOLERANCE, read_npu_resources, wait_f
 from .phase import atomic_json, cleanup_group, live_log, terminal_line
 from .plog import OwnedProcessGroup, attach_plog
 from .prepare_rotations import model_geometry
+from .serve_process import classify_service_failure
 from .target_cli import ROOT, serve_argv, target_env, diagnose_guard_enabled
 
 PROMPT_SENTENCE = (
@@ -147,6 +150,10 @@ class Server:
 def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None, native=False):
     """Launch one owned process group; cleanup also runs before failed startup.
 
+    The body borrows a live service. A process exit before the supervisor's
+    cleanup is unexpected, even if its launcher reports zero. A caller may
+    handle a user interruption inside the body and then return normally.
+
     ``command`` is dependency injection for subprocess fault tests; the CLI
     never accepts an alternate command or a replacement inference backend.
     """
@@ -177,6 +184,21 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
     grace = _positive_time(config, "shutdown_timeout_seconds", 30)
     process = None
     ownership = None
+    body_error = None
+    old_signals = {}
+    launching = False
+    interrupt_signal = None
+
+    def interrupt(signum, _frame):
+        nonlocal interrupt_signal
+        if interrupt_signal is None:
+            interrupt_signal = signum
+        lifecycle["interrupt_signal"] = interrupt_signal
+        if launching:
+            # Retain the Popen handle before unwinding the launch window.
+            return
+        raise KeyboardInterrupt(f"signal {signum}")
+
     lifecycle.update(status="starting", command=command, variant="native" if native else "oscar",
                      target_argv=serve_argv(config, native=native),
                      log=str(log), trace_dir=str(trace_dir), cleanup_complete=False,
@@ -186,9 +208,22 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
     with live_log(log) as stream:
         stream.write(f"START owned_service cwd={ROOT} command={json.dumps(command)}\n")
         try:
-            process = subprocess.Popen(command, cwd=ROOT, env=environment, stdin=subprocess.DEVNULL,
-                stdout=stream, stderr=subprocess.STDOUT, start_new_session=True)
-            lifecycle["pid"] = process.pid
+            for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+                old_signals[sig] = signal.signal(sig, interrupt)
+            launching = True
+            launch_error = None
+            try:
+                process = subprocess.Popen(command, cwd=ROOT, env=environment, stdin=subprocess.DEVNULL,
+                    stdout=stream, stderr=subprocess.STDOUT, start_new_session=True)
+                lifecycle["pid"] = process.pid
+            except BaseException as error:
+                launch_error = error
+                lifecycle["launch_error"] = f"{type(error).__name__}: {error}"
+                raise
+            finally:
+                launching = False
+                if interrupt_signal is not None:
+                    raise KeyboardInterrupt(f"signal {interrupt_signal}") from launch_error
             ownership = OwnedProcessGroup(process.pid)
             server = Server(process, base_url, log, trace_dir, lifecycle, ownership)
             deadline = started + startup_timeout
@@ -214,30 +249,72 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
             yield server
             lifecycle["status"] = "finished"
         except BaseException as error:
+            body_error = error
             lifecycle.update(status="interrupted" if isinstance(error, KeyboardInterrupt) else "failed",
                              error=f"{type(error).__name__}: {error}")
             stream.write("SERVICE_ERROR " + lifecycle["error"] + "\n")
             raise
         finally:
-            print(f"[oscar] CLEANUP_START owned_server pid={None if process is None else process.pid} log={log}", flush=True)
-            if ownership is not None:
-                ownership.refresh(force=True)
-                lifecycle["owned_pids"] = sorted(ownership.pids)
-                if ownership.error is not None:
-                    lifecycle["pid_observation_error"] = ownership.error
+            final_error = None
             try:
-                lifecycle["cleanup_complete"] = process is None or cleanup_group(process, grace)
+                # TERM/HUP must unwind the context just like Ctrl-C. Repeated
+                # signals cannot abort bounded cleanup and strand this group.
+                for sig in old_signals:
+                    signal.signal(sig, signal.SIG_IGN)
+                if process is not None:
+                    try:
+                        stream.flush()
+                        observed_bytes = os.fstat(stream.fileno()).st_size
+                        failure = classify_service_failure(log, observed_bytes)
+                    except Exception as error:
+                        failure = {"kind": "failure_classification_error",
+                                   "error": f"{type(error).__name__}: {error}"}
+                    before_cleanup = process.poll()
+                    lifecycle["process_returncode_before_cleanup"] = before_cleanup
+                    if failure is None and before_cleanup is not None and body_error is None:
+                        failure = {"kind": "unexpected_service_exit",
+                                   "message": f"owned vLLM server exited before cleanup rc={before_cleanup}"}
+                    if failure is not None:
+                        lifecycle.update(status="failed", failure=failure)
+                        final_error = ServiceProbeError(
+                            f"{failure['kind']}: {failure.get('message', failure.get('error'))}; log={log}")
+                        lifecycle.setdefault("error", str(final_error))
+                        stream.write("SERVICE_FAILURE " + json.dumps(failure) + "\n")
+                print(f"[oscar] CLEANUP_START owned_server pid={None if process is None else process.pid} log={log}", flush=True)
+                if ownership is not None:
+                    ownership.refresh(force=True)
+                    lifecycle["owned_pids"] = sorted(ownership.pids)
+                    if ownership.error is not None:
+                        lifecycle["pid_observation_error"] = ownership.error
             except BaseException as error:
-                lifecycle["cleanup_complete"] = False
-                lifecycle["cleanup_error"] = f"{type(error).__name__}: {error}"
-            lifecycle["exit_code"] = None if process is None else process.poll()
-            lifecycle["elapsed_seconds"] = round(time.monotonic() - started, 6)
-            if not lifecycle["cleanup_complete"]:
-                lifecycle["status"] = "failed"
-                lifecycle.setdefault("cleanup_error", "owned process group remains after bounded SIGTERM/SIGKILL")
-            stream.write("SERVICE_RESULT " + json.dumps(lifecycle, allow_nan=False) + "\n")
-            atomic_json(log_dir / "server_lifecycle.json", lifecycle)
-            print(f"[oscar] CLEANUP_END owned_server complete={lifecycle['cleanup_complete']} exit={lifecycle['exit_code']}", flush=True)
+                # Recording/observation must never skip owned-group cleanup.
+                lifecycle.update(status="failed", finalization_error=f"{type(error).__name__}: {error}")
+                final_error = final_error or ServiceProbeError(lifecycle["finalization_error"])
+            finally:
+                try:
+                    try:
+                        lifecycle["cleanup_complete"] = process is None or cleanup_group(process, grace)
+                    except BaseException as error:
+                        lifecycle["cleanup_complete"] = False
+                        lifecycle["cleanup_error"] = f"{type(error).__name__}: {error}"
+                    lifecycle["exit_code"] = None if process is None else process.poll()
+                    lifecycle["process_returncode"] = lifecycle["exit_code"]
+                    lifecycle["elapsed_seconds"] = round(time.monotonic() - started, 6)
+                    if not lifecycle["cleanup_complete"]:
+                        lifecycle["status"] = "failed"
+                        lifecycle.setdefault("cleanup_error", "owned process group cleanup remains incomplete after bounded SIGTERM/SIGKILL")
+                        final_error = final_error or ServiceProbeError(lifecycle["cleanup_error"])
+                    stream.write("SERVICE_RESULT " + json.dumps(lifecycle, allow_nan=False) + "\n")
+                    atomic_json(log_dir / "server_lifecycle.json", lifecycle)
+                    print(f"[oscar] CLEANUP_END owned_server complete={lifecycle['cleanup_complete']} exit={lifecycle['exit_code']}", flush=True)
+                except BaseException as error:
+                    lifecycle.update(status="failed", finalization_error=f"{type(error).__name__}: {error}")
+                    final_error = final_error or ServiceProbeError(lifecycle["finalization_error"])
+                finally:
+                    for sig, handler in old_signals.items():
+                        signal.signal(sig, handler)
+            if body_error is None and final_error is not None:
+                raise final_error
 
 
 def worker_progress(server):
@@ -923,6 +1000,9 @@ def run_service(config_path, *, output, log_dir, serve=False, command=None,
         if report["server"].get("cleanup_complete") is False:
             report["status"] = "failed"
             report.setdefault("error", report["server"].get("cleanup_error", "owned service process group cleanup failed"))
+        if report["server"].get("status") == "failed":
+            report["status"] = "failed"
+            report.setdefault("error", report["server"].get("error", "owned service lifecycle failed"))
         if report["server"].get("debug_sync") and report["server"].get("trace_dir"):
             # Debug-sync phase walls attribute device time per phase. Summary
             # failures never mask the probe outcome.
@@ -1053,6 +1133,9 @@ def run_synthetic_only(config_path, *, output, log_dir, command=None, tokenizer_
     finally:
         for sig, handler in old_signals.items():
             signal.signal(sig, handler)
+        if report["server"].get("status") == "failed":
+            report["status"] = "failed"
+            report.setdefault("error", report["server"].get("error", "owned service lifecycle failed"))
         report["elapsed_seconds"] = time.monotonic() - started
         atomic_json(output, report)
         if report.get("error"):

@@ -59,7 +59,11 @@ def test_all_capability_surfaces_match_and_old_modes_do_not_require_new_ops():
     assert EXPECTED<=SOURCE_CAPABILITIES
     assert {"attention_cv_member_pipeline_cluster4_out",PIPELINE_REQUEST_OP}<=SOURCE_CAPABILITIES
     from oscar_ascend.ops.contracts import BF16_HISTORY_CAPABILITIES
-    assert PRODUCTION_CAPABILITIES==(OLD_REQUIRED-{"attention_cv_out"})|BF16_HISTORY_CAPABILITIES
+    # Archive #154/#167: every production BF16 reader consumes the packed
+    # D+16 query ABI, so its producer is mandatory even when request-window
+    # research operators are not enabled.
+    assert PRODUCTION_CAPABILITIES==((OLD_REQUIRED-{"attention_cv_out"})|
+        BF16_HISTORY_CAPABILITIES|{"rotate_bf16_query_out"})
     assert not EXPECTED.intersection(PRODUCTION_CAPABILITIES)
     text=(ROOT/"csrc/torch_bindings.cpp").read_text()
     body=re.search(r'std::vector<std::string>\{(.*?)\};\}\);',text,re.S)[1]

@@ -28776,3 +28776,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **可复现的退出状态缺陷与修复**：原生`launcher.terminate_if_errored`可仅设`server.should_exit`，API/CLI仍正常返回0；旧supervisor只看该rc便记stopped/PASSED。本地主机子进程打印真实worker-death原句后exit0，稳定复现假成功，保留`reports/service_fatal_false_success_before_20261019.log`。正式服务现在精确匹配原生来源与完整fatal消息，固定清理前的日志字节边界后流式判定；`process_returncode`保留真实子进程码，原0+确认fatal的有效`returncode=1/status=failed`。先判定再写最终相位/终端，不输出假PASSED；不把普通请求异常、TBE EOF或监督器清理后新增的worker死亡记录当根因。只清理本次进程组，日志分类I/O失败显式失败，不修改原生代码/Attention/冻结guard，不加默认probe/前置审计。
 
 **本地验证和未收口项**：生命周期/部署/日志179项通过，路由/原生异步归因152项通过（套件存在重叠）；详见`reports/runtime_trap_diagnosis_20261019.json`及`docs/runtime_trap_20261019.md`。FE0七文件与精度门不变，没有新CANN/NPU/图完成/模型质量/性能证据，既有BF16数值7/11失败仍保留。此次只修复服务退出判定，**没有宣称#165或本次NPU Trap已修复**。既有`--diagnose-trap`可禁用主/draft图并逐族归因；仅一条原触发请求、16输出、并发1，收完整文件中的首条site/family/code或prior_work，不重跑AISBench。
+
+## [168] 真机条目（2026-10-19 用户回传）· eager/guard 诊断被设备初始化内存不足阻断
+
+**原始证据**：`reports/target_diagnostic_startup_memory_20261019.txt`，39702字节，SHA256 `147fe5dd934eea5e77508ccd743f354dc098d1974862f810cd0803a1e3c8bd7c`。运行目录 `20261019T084558.865108Z`；用户贴出的摘要为candidate、4–7卡、7878、probes none、guard_diagnostic/invalid_diagnostic，serve有效rc1、原始process_returncode1、148.80324秒、未超时/未中断、cleanup_complete=true，NPU资源释放未测。用户未提供目标SHA，不以本地母版本`5ca8439`替代。
+
+**首错**：08:47:47 Worker500971在原生`worker.py::_init_device`报告空闲13.03/29.49GiB，低于0.9要求的26.54GiB。只读原生`multiproc_executor.py`先`init_device()`后`load_model()`；本次尚未执行模型Attention，不能用于确认或排除#165/#167的具体guard site。TCPStore、EngineCore启动失败为后续错误；诊断模式没有提供新的Trap归因。
+
+**处置和边界**：已有supervisor此次正确记录failed/rc1，没有发生#167的rc0假成功。本地日志解析见`reports/diagnostic_startup_memory_20261019.json`。占用者与实际NPU回收状态仍未知；不降低0.9、不杀未知进程、不添加启动前置审计。需由目标机实际空闲资源满足配置后才能启动；主机进程清理通过不能证明目标显存已恢复。
+
+**独立本地验证**：本轮全面主机审计另发现并修复managed service的结束判定、清理失败传播及启动信号窗口所有权问题，记录于`docs/full_local_validation_20261019.md`；这些是本地故障注入证据，不是本条设备内存不足的已证实根因。本机无CANN/NPU，既有数值7/11失败和未归因Trap保持未解决。

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.298" timestamp="2026-10-19T18:11:04.923283+08:00" hostname="lokiyaodeMacBook-Pro.local"><testcase classname="tests.test_full_service_audit" name="test_phase_failure_record_write_error_cannot_skip_owned_cleanup" time="0.217"><failure message="AssertionError: failure logging bypassed owned-process cleanup&#10;assert 0 == 1&#10; +  where 0 = len([])">managed_fixture = ({'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'por...ki.yao/pytest-252/test_phase_failure_record_writ0/finish'), &lt;function managed_fixture.&lt;locals&gt;.command at 0x1024d05c0&gt;)
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10264a520&gt;
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-252/test_phase_failure_record_writ0')
+
+    def test_phase_failure_record_write_error_cannot_skip_owned_cleanup(managed_fixture, monkeypatch, tmp_path):
+        _, _, ready, _, command = managed_fixture
+        real_log, real_cleanup = phase.live_log, phase.cleanup_group
+        cleaned_children = []
+        original = OSError("injected SERVICE_FAILURE write failure")
+    
+        class FaultyWriter:
+            def __init__(self, stream):
+                self.stream = stream
+    
+            def __getattr__(self, name):
+                return getattr(self.stream, name)
+    
+            def write(self, value):
+                if value.startswith("SERVICE_FAILURE "):
+                    raise original
+                return self.stream.write(value)
+    
+        @contextmanager
+        def failing_log(*args, **kwargs):
+            with real_log(*args, **kwargs) as stream:
+                yield FaultyWriter(stream)
+    
+        def observe_cleanup(process, grace):
+            cleaned_children.append(process)
+            return real_cleanup(process, grace)
+    
+        monkeypatch.setattr(phase, "live_log", failing_log)
+        monkeypatch.setattr(phase, "cleanup_group", observe_cleanup)
+        result = None
+        try:
+            result = phase.run_phase("failure-write", command(fatal_start=True), cwd=ROOT,
+                log_dir=tmp_path / "phase", timeout=.2, grace=.15,
+                classify_failure=service_probe.classify_service_failure)
+            assert result.timed_out and result.returncode == 124
+            assert result.failure["kind"] == "native_service_fatal"
+&gt;           assert len(cleaned_children) == 1, "failure logging bypassed owned-process cleanup"
+E           AssertionError: failure logging bypassed owned-process cleanup
+E           assert 0 == 1
+E            +  where 0 = len([])
+
+tests/test_full_service_audit.py:370: AssertionError</failure></testcase></testsuite></testsuites>

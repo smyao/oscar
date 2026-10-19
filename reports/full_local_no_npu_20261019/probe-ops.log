@@ -1,0 +1,34 @@
+START phase=probe-ops cwd=/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2 command=["/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python", "-m", "tools.probe_ops", "--output", "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/full_local_no_npu_20261019/operators.json"]
+OWNED_PROCESS phase=probe-ops pid=52823 pgid=52823
+Traceback (most recent call last):
+  File "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/probe_ops.py", line 203, in main
+    report = probe()
+  File "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/probe_ops.py", line 18, in probe
+    import torch_npu
+ModuleNotFoundError: No module named 'torch_npu'
+{
+  "status": "failed",
+  "error_type": "ModuleNotFoundError",
+  "error": "No module named 'torch_npu'",
+  "device_completion": "not_established",
+  "full_service_acceptance": "not_run",
+  "cann_plog": {
+    "status": "no_matching_evidence",
+    "started_at": 1792402779.748576,
+    "owned_pids": [
+      52823
+    ],
+    "roots": [
+      "/Users/loki.yao/ascend/log"
+    ],
+    "files_read": 0,
+    "bytes_read": 0,
+    "entries_scanned": 0,
+    "truncated": false,
+    "excerpts": [],
+    "diagnostic_errors": [],
+    "scope": "recent task-owned CANN log excerpts; not a device-completion or root-cause certificate"
+  },
+  "elapsed_seconds": 0.8588411808013916
+}
+RESULT {"phase": "probe-ops", "command": ["/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/.venv/bin/python", "-m", "tools.probe_ops", "--output", "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/full_local_no_npu_20261019/operators.json"], "returncode": 1, "elapsed_seconds": 1.177663, "timed_out": false, "interrupted": false, "log": "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/full_local_no_npu_20261019/probe-ops.log", "cleanup_complete": true, "process_returncode": 1, "failure": null}

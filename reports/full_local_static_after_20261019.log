@@ -1,0 +1,35 @@
+.F..F                                                                    [100%]
+=================================== FAILURES ===================================
+_____________________ test_no_silent_exception_swallowing ______________________
+
+    def test_no_silent_exception_swallowing():
+        for folder in ("oscar_ascend", "tools"):
+            for path in (ROOT / folder).rglob("*.py"):
+                tree = ast.parse(path.read_text())
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.ExceptHandler):
+>                       assert not all(isinstance(statement, ast.Pass) for statement in node.body), path
+E                       AssertionError: PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/experiments/replay_shared_fp32.py')
+E                       assert not True
+E                        +  where True = all(<generator object test_no_silent_exception_swallowing.<locals>.<genexpr> at 0x104343680>)
+
+tests/test_no_fallback_static.py:28: AssertionError
+______________________ test_source_headers_trace_archive _______________________
+
+    def test_source_headers_trace_archive():
+        paths = []
+        for folder in ("oscar_ascend", "tools", "scripts", "tests", "benchmarks", "csrc"):
+            paths += [p for p in (ROOT / folder).rglob("*") if p.is_file() and p.suffix in {".py", ".cpp", ".h", ".cmake", ".sh"}]
+        paths += [ROOT / "csrc/CMakeLists.txt"]
+        for path in paths:
+            header = "\n".join(path.read_text().splitlines()[:18])
+>           assert any(word in header for word in ("档案", "Archive", "archive")), f"missing historical fault trace: {path}"
+E           AssertionError: missing historical fault trace: /Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/experiments/export_shared_fp32.py
+E           assert False
+E            +  where False = any(<generator object test_source_headers_trace_archive.<locals>.<genexpr> at 0x104343680>)
+
+tests/test_no_fallback_static.py:94: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_no_fallback_static.py::test_no_silent_exception_swallowing
+FAILED tests/test_no_fallback_static.py::test_source_headers_trace_archive - ...
+2 failed, 3 passed in 0.41s

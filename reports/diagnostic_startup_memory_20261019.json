@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-19",
+  "local_commit": "5ca8439",
+  "target_sha": "not supplied",
+  "attachment": {
+    "file": "reports/target_diagnostic_startup_memory_20261019.txt",
+    "bytes": 39702,
+    "sha256": "147fe5dd934eea5e77508ccd743f354dc098d1974862f810cd0803a1e3c8bd7c"
+  },
+  "native_memory_diagnostic": {
+    "kind": "native_startup_memory_insufficient",
+    "source": "reports/target_diagnostic_startup_memory_20261019.txt",
+    "native_message": "Free memory on device (13.03/29.49 GiB) on startup is less than desired GPU memory utilization (0.9, 26.54 GiB)",
+    "reported_gib": {
+      "free": "13.03",
+      "total": "29.49",
+      "required": "26.54"
+    },
+    "reported_utilization": "0.9",
+    "configured_devices": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "memory_owner": "not_established",
+    "npu_resource_release": "not_measured",
+    "read_only_checks": [
+      "npu-smi info",
+      "ps -eo pid,ppid,pgid,etime,args"
+    ]
+  },
+  "native_failure_classification": {
+    "kind": "native_service_fatal",
+    "source": "multiproc_executor.py",
+    "message": "WorkerProc failed to start.",
+    "log_byte_offset": 17930,
+    "observed_bytes_before_cleanup": 39702
+  },
+  "reported_deficit_gib_approx": 13.51,
+  "phase": "native device initialization before model loading",
+  "guard_diagnostic": "enabled but attention not reached",
+  "user_status": {
+    "returncode": 1,
+    "process_returncode": 1,
+    "cleanup_complete": true,
+    "npu_resource_release": "not_measured"
+  },
+  "boundary": "CPU log classification only; device memory owner, previous Trap root cause and successful restart not established",
+  "production_changes": []
+}

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="0.195" timestamp="2026-10-19T18:03:11.578364+08:00" hostname="lokiyaodeMacBook-Pro.local"><testcase classname="tests.test_full_service_audit" name="test_signal_during_popen_return_cannot_lose_owned_child[phase]" time="0.067"><failure message="AssertionError: assert (1 == 1 and None is not None)&#10; +  where 1 = len([&lt;Popen: returncode: None args: ['/Users/loki.yao/Documents/workgit/gpt_new_o...&gt;])&#10; +  and   None = poll()&#10; +    where poll = &lt;Popen: returncode: None args: ['/Users/loki.yao/Documents/workgit/gpt_new_o...&gt;.poll">managed_fixture = ({'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'por...ki.yao/pytest-248/test_signal_during_popen_retur0/finish'), &lt;function managed_fixture.&lt;locals&gt;.command at 0x104681640&gt;)
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x104646520&gt;
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-248/test_signal_during_popen_retur0')
+entry = 'phase'
+
+    @pytest.mark.parametrize("entry", ["phase", "managed_server"])
+    def test_signal_during_popen_return_cannot_lose_owned_child(managed_fixture, monkeypatch, tmp_path, entry):
+        config, path, _, _, command = managed_fixture
+        real_popen = subprocess.Popen
+        children = []
+    
+        def launch_and_interrupt(*args, **kwargs):
+            child = real_popen(*args, **kwargs)
+            children.append(child)
+            # This real signal arrives after the OS child exists but before the
+            # caller has assigned Popen's result to its owned-process variable.
+            os.kill(os.getpid(), signal.SIGTERM)
+            return child
+    
+        monkeypatch.setattr(subprocess, "Popen", launch_and_interrupt)
+        try:
+            if entry == "phase":
+                result = phase.run_phase("launch-interrupt", command(), cwd=ROOT,
+                    log_dir=tmp_path / "phase", timeout=3, grace=.15)
+                assert result.interrupted and result.returncode == 128 + signal.SIGTERM
+                assert result.cleanup_complete
+            else:
+                lifecycle = {}
+                with pytest.raises(KeyboardInterrupt, match=f"signal {signal.SIGTERM}"):
+                    with service_probe.managed_server(config, path, log_dir=tmp_path / "server",
+                            lifecycle=lifecycle, command=command()):
+                        pytest.fail("interrupted launch must not yield a service")
+                assert lifecycle["status"] == "interrupted" and lifecycle["cleanup_complete"]
+&gt;           assert len(children) == 1 and children[0].poll() is not None
+E           AssertionError: assert (1 == 1 and None is not None)
+E            +  where 1 = len([&lt;Popen: returncode: None args: ['/Users/loki.yao/Documents/workgit/gpt_new_o...&gt;])
+E            +  and   None = poll()
+E            +    where poll = &lt;Popen: returncode: None args: ['/Users/loki.yao/Documents/workgit/gpt_new_o...&gt;.poll
+
+tests/test_full_service_audit.py:258: AssertionError</failure></testcase><testcase classname="tests.test_full_service_audit" name="test_signal_during_popen_return_cannot_lose_owned_child[managed_server]" time="0.058"><failure message="AssertionError: assert (1 == 1 and None is not None)&#10; +  where 1 = len([&lt;Popen: returncode: None args: ['/Users/loki.yao/Documents/workgit/gpt_new_o...&gt;])&#10; +  and   None = poll()&#10; +    where poll = &lt;Popen: returncode: None args: ['/Users/loki.yao/Documents/workgit/gpt_new_o...&gt;.poll">managed_fixture = ({'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'por...ki.yao/pytest-248/test_signal_during_popen_retur1/finish'), &lt;function managed_fixture.&lt;locals&gt;.command at 0x10466bed0&gt;)
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x104646190&gt;
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-248/test_signal_during_popen_retur1')
+entry = 'managed_server'
+
+    @pytest.mark.parametrize("entry", ["phase", "managed_server"])
+    def test_signal_during_popen_return_cannot_lose_owned_child(managed_fixture, monkeypatch, tmp_path, entry):
+        config, path, _, _, command = managed_fixture
+        real_popen = subprocess.Popen
+        children = []
+    
+        def launch_and_interrupt(*args, **kwargs):
+            child = real_popen(*args, **kwargs)
+            children.append(child)
+            # This real signal arrives after the OS child exists but before the
+            # caller has assigned Popen's result to its owned-process variable.
+            os.kill(os.getpid(), signal.SIGTERM)
+            return child
+    
+        monkeypatch.setattr(subprocess, "Popen", launch_and_interrupt)
+        try:
+            if entry == "phase":
+                result = phase.run_phase("launch-interrupt", command(), cwd=ROOT,
+                    log_dir=tmp_path / "phase", timeout=3, grace=.15)
+                assert result.interrupted and result.returncode == 128 + signal.SIGTERM
+                assert result.cleanup_complete
+            else:
+                lifecycle = {}
+                with pytest.raises(KeyboardInterrupt, match=f"signal {signal.SIGTERM}"):
+                    with service_probe.managed_server(config, path, log_dir=tmp_path / "server",
+                            lifecycle=lifecycle, command=command()):
+                        pytest.fail("interrupted launch must not yield a service")
+                assert lifecycle["status"] == "interrupted" and lifecycle["cleanup_complete"]
+&gt;           assert len(children) == 1 and children[0].poll() is not None
+E           AssertionError: assert (1 == 1 and None is not None)
+E            +  where 1 = len([&lt;Popen: returncode: None args: ['/Users/loki.yao/Documents/workgit/gpt_new_o...&gt;])
+E            +  and   None = poll()
+E            +    where poll = &lt;Popen: returncode: None args: ['/Users/loki.yao/Documents/workgit/gpt_new_o...&gt;.poll
+
+tests/test_full_service_audit.py:258: AssertionError</failure></testcase></testsuite></testsuites>

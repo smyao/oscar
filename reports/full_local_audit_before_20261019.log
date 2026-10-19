@@ -1,0 +1,2878 @@
+............EEEEEEEEFFFFFFF..........................................FFF [  3%]
+FFFFFFFFF.....F......................................................... [  6%]
+........................................................................ [ 10%]
+........................................................................ [ 13%]
+........................................................................ [ 17%]
+........................................................................ [ 20%]
+........................................................................ [ 24%]
+............................ssssssssssssssssssssssssssss...................................................................................... [ 30%]
+........................................................................ [ 34%]
+...................................................................... [ 37%]
+........................................................................ [ 40%]
+F...........s........................................................... [ 44%]
+........................................................................ [ 47%]
+............................F..F.................................................................................................F.......... [ 54%]
+........................................................................ [ 57%]
+........................................................................ [ 61%]
+........................................................................ [ 64%]
+........................................................................ [ 68%]
+........................................................................ [ 71%]
+................................EEEEEF.E..........FF.................... [ 75%]
+.........F.......FFFF..................sssssssssssssssss [ 77%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 81%]
+sssssssssssssss......................................................... [ 84%]
+........................................................................ [ 88%]
+........s............................................................... [ 91%]
+.................................FF....FFF.FFFFFFFFFFFFFFF.............. [ 94%]
+................................................................... [ 98%]
+........................................                                 [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_all_supplied_engine_rows_are_parsed_without_pid_or_clock_mixing _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_truncated_records_preserve_known_fields_and_do_not_invent_counts _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_client_tables_and_warmup_have_separate_time_denominators _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_client_latency_decomposition_respects_fixed_512_output_tokens _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_spec_totals_use_counts_rather_than_unweighted_percentage_means _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_observed_capacity_and_zero_counters_do_not_invent_memory_or_phases _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_server_counter_integration_does_not_use_client_duration _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_conditional_warmup_pool_bounds_include_the_reference_null_block _
+
+    @pytest.fixture(scope="module")
+    def evidence():
+        source = Path(__file__).resolve().parents[1] / "reports/target_64k_120_20261009.txt"
+>       return parse_evidence(source.read_bytes(), source.as_posix())
+                              ^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_64k_evidence.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_64k_120_20261009.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+_ ERROR at setup of test_all_registered_target_and_draft_sidecars_are_allocated_before_load_returns _
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x153fe7980>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:306: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1208cc980>
+
+    @pytest.fixture
+    def integrated(monkeypatch):
+        plugin.unregister()
+        config = configuration()
+>       provider = AscendRuntimeProvider(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_integration.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x153fe7980>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:309: OscarReadinessError
+_ ERROR at setup of test_one_native_update_preserves_rewind_deferred_return_and_publishes_after_reorder _
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x153fe57c0>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:306: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x154f7a3c0>
+
+    @pytest.fixture
+    def integrated(monkeypatch):
+        plugin.unregister()
+        config = configuration()
+>       provider = AscendRuntimeProvider(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_integration.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x153fe57c0>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:309: OscarReadinessError
+_ ERROR at setup of test_scope_cleans_up_and_other_stream_cannot_reuse_leases __
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x153fe7e30>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:306: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x154fc6040>
+
+    @pytest.fixture
+    def integrated(monkeypatch):
+        plugin.unregister()
+        config = configuration()
+>       provider = AscendRuntimeProvider(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_integration.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x153fe7e30>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:309: OscarReadinessError
+_ ERROR at setup of test_unsupported_native_mode_fails_at_seal[enable_prefix_caching-True] _
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x153b2de50>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:306: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x154fc5c50>
+
+    @pytest.fixture
+    def integrated(monkeypatch):
+        plugin.unregister()
+        config = configuration()
+>       provider = AscendRuntimeProvider(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_integration.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x153b2de50>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:309: OscarReadinessError
+_ ERROR at setup of test_unsupported_native_mode_fails_at_seal[mamba_cache_mode-align] _
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x154dd3890>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:306: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x154fc54e0>
+
+    @pytest.fixture
+    def integrated(monkeypatch):
+        plugin.unregister()
+        config = configuration()
+>       provider = AscendRuntimeProvider(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_integration.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x154dd3890>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:309: OscarReadinessError
+_ ERROR at setup of test_dual_reshape_reuses_sidecars_and_shared_map_while_native_gdn_views_stay_original _
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x154adff20>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:306: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x154fc5ef0>
+
+    @pytest.fixture
+    def integrated(monkeypatch):
+        plugin.unregister()
+        config = configuration()
+>       provider = AscendRuntimeProvider(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_integration.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.runtime.AscendRuntimeProvider object at 0x154adff20>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:309: OscarReadinessError
+=================================== FAILURES ===================================
+________ test_real_popped_completion_ids_keep_observed_latency_not_busy ________
+
+    def test_real_popped_completion_ids_keep_observed_latency_not_busy():
+>       paired = audit.pair_instructions(*real_pair())
+                                          ^^^^^^^^^^^
+
+tests/test_analyze_decode_completion.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_analyze_decode_completion.py:21: in real_pair
+    return [audit.read_trace(NZ / f"{ACTOR}.{suffix}.gz", ACTOR)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/experiments/analyze_decode_completion.py:91: in read_trace
+    with opener(path, "rt") as stream:
+         ^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:66: in open
+    binary_file = GzipFile(filename, gz_mode, compresslevel)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <gzip on 0x120b85210>
+filename = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz')
+mode = 'rb', compresslevel = 9, fileobj = None, mtime = None
+
+    def __init__(self, filename=None, mode=None,
+                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+        """Constructor for the GzipFile class.
+    
+        At least one of fileobj and filename must be given a
+        non-trivial value.
+    
+        The new class instance is based on fileobj, which can be a regular
+        file, an io.BytesIO object, or any other object which simulates
+        a file.  It defaults to None, in which case filename is opened to
+        provide a file object.
+    
+        When fileobj is not None, the filename argument is only used to be
+        included in the gzip file header, which may include the original
+        filename of the uncompressed file.  It defaults to the filename of
+        fileobj, if discernible; otherwise, it defaults to the empty string,
+        and in this case the original filename is not included in the
+        header.
+    
+        The mode argument can be any of 'r', 'rb', 'a', 'ab', 'w', 'wb',
+        'x', or 'xb' depending on whether the file will be read or written.
+        The default is the mode of fileobj if discernible; otherwise, the
+        default is 'rb'.  A mode of 'r' is equivalent to one of 'rb', and
+        similarly for 'w' and 'wb', 'a' and 'ab', and 'x' and 'xb'.
+    
+        The compresslevel argument is an integer from 0 to 9 controlling
+        the level of compression; 1 is fastest and produces the least
+        compression, and 9 is slowest and produces the most compression.
+        0 is no compression at all. The default is 9.
+    
+        The optional mtime argument is the timestamp requested by gzip.
+        The time is in Unix format, i.e., seconds since 00:00:00 UTC,
+        January 1, 1970.  If mtime is omitted or None, the current time
+        is used.  Use mtime = 0 to generate a compressed stream that does
+        not depend on creation time.
+    
+        """
+    
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
+    
+        if mode and ('t' in mode or 'U' in mode):
+            raise ValueError("Invalid mode: {!r}".format(mode))
+        if mode and 'b' not in mode:
+            mode += 'b'
+    
+        try:
+            if fileobj is None:
+>               fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:210: FileNotFoundError
+________ test_real_decode_markers_close_but_do_not_mean_math_completed _________
+
+    def test_real_decode_markers_close_but_do_not_mean_math_completed():
+>       rows = audit.read_trace(DECODE / f"{ACTOR}.instr_log.dump.gz", ACTOR)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_decode_completion.py:37: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/experiments/analyze_decode_completion.py:91: in read_trace
+    with opener(path, "rt") as stream:
+         ^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:66: in open
+    binary_file = GzipFile(filename, gz_mode, compresslevel)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <gzip on 0x120b85090>
+filename = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz')
+mode = 'rb', compresslevel = 9, fileobj = None, mtime = None
+
+    def __init__(self, filename=None, mode=None,
+                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+        """Constructor for the GzipFile class.
+    
+        At least one of fileobj and filename must be given a
+        non-trivial value.
+    
+        The new class instance is based on fileobj, which can be a regular
+        file, an io.BytesIO object, or any other object which simulates
+        a file.  It defaults to None, in which case filename is opened to
+        provide a file object.
+    
+        When fileobj is not None, the filename argument is only used to be
+        included in the gzip file header, which may include the original
+        filename of the uncompressed file.  It defaults to the filename of
+        fileobj, if discernible; otherwise, it defaults to the empty string,
+        and in this case the original filename is not included in the
+        header.
+    
+        The mode argument can be any of 'r', 'rb', 'a', 'ab', 'w', 'wb',
+        'x', or 'xb' depending on whether the file will be read or written.
+        The default is the mode of fileobj if discernible; otherwise, the
+        default is 'rb'.  A mode of 'r' is equivalent to one of 'rb', and
+        similarly for 'w' and 'wb', 'a' and 'ab', and 'x' and 'xb'.
+    
+        The compresslevel argument is an integer from 0 to 9 controlling
+        the level of compression; 1 is fastest and produces the least
+        compression, and 9 is slowest and produces the most compression.
+        0 is no compression at all. The default is 9.
+    
+        The optional mtime argument is the timestamp requested by gzip.
+        The time is in Unix format, i.e., seconds since 00:00:00 UTC,
+        January 1, 1970.  If mtime is omitted or None, the current time
+        is used.  Use mtime = 0 to generate a compressed stream that does
+        not depend on creation time.
+    
+        """
+    
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
+    
+        if mode and ('t' in mode or 'U' in mode):
+            raise ValueError("Invalid mode: {!r}".format(mode))
+        if mode and 'b' not in mode:
+            mode += 'b'
+    
+        try:
+            if fileobj is None:
+>               fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:210: FileNotFoundError
+_____ test_actual_pair_rejects_ambiguity_and_missing_witness[duplicate_id] _____
+
+damage = 'duplicate_id'
+
+    @pytest.mark.parametrize("damage", ["duplicate_id", "missing_completion", "wrong_pc", "flag_count"])
+    def test_actual_pair_rejects_ambiguity_and_missing_witness(damage):
+>       popped, completed = real_pair()
+                            ^^^^^^^^^^^
+
+tests/test_analyze_decode_completion.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_analyze_decode_completion.py:21: in real_pair
+    return [audit.read_trace(NZ / f"{ACTOR}.{suffix}.gz", ACTOR)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/experiments/analyze_decode_completion.py:91: in read_trace
+    with opener(path, "rt") as stream:
+         ^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:66: in open
+    binary_file = GzipFile(filename, gz_mode, compresslevel)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <gzip on 0x120a70790>
+filename = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz')
+mode = 'rb', compresslevel = 9, fileobj = None, mtime = None
+
+    def __init__(self, filename=None, mode=None,
+                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+        """Constructor for the GzipFile class.
+    
+        At least one of fileobj and filename must be given a
+        non-trivial value.
+    
+        The new class instance is based on fileobj, which can be a regular
+        file, an io.BytesIO object, or any other object which simulates
+        a file.  It defaults to None, in which case filename is opened to
+        provide a file object.
+    
+        When fileobj is not None, the filename argument is only used to be
+        included in the gzip file header, which may include the original
+        filename of the uncompressed file.  It defaults to the filename of
+        fileobj, if discernible; otherwise, it defaults to the empty string,
+        and in this case the original filename is not included in the
+        header.
+    
+        The mode argument can be any of 'r', 'rb', 'a', 'ab', 'w', 'wb',
+        'x', or 'xb' depending on whether the file will be read or written.
+        The default is the mode of fileobj if discernible; otherwise, the
+        default is 'rb'.  A mode of 'r' is equivalent to one of 'rb', and
+        similarly for 'w' and 'wb', 'a' and 'ab', and 'x' and 'xb'.
+    
+        The compresslevel argument is an integer from 0 to 9 controlling
+        the level of compression; 1 is fastest and produces the least
+        compression, and 9 is slowest and produces the most compression.
+        0 is no compression at all. The default is 9.
+    
+        The optional mtime argument is the timestamp requested by gzip.
+        The time is in Unix format, i.e., seconds since 00:00:00 UTC,
+        January 1, 1970.  If mtime is omitted or None, the current time
+        is used.  Use mtime = 0 to generate a compressed stream that does
+        not depend on creation time.
+    
+        """
+    
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
+    
+        if mode and ('t' in mode or 'U' in mode):
+            raise ValueError("Invalid mode: {!r}".format(mode))
+        if mode and 'b' not in mode:
+            mode += 'b'
+    
+        try:
+            if fileobj is None:
+>               fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:210: FileNotFoundError
+__ test_actual_pair_rejects_ambiguity_and_missing_witness[missing_completion] __
+
+damage = 'missing_completion'
+
+    @pytest.mark.parametrize("damage", ["duplicate_id", "missing_completion", "wrong_pc", "flag_count"])
+    def test_actual_pair_rejects_ambiguity_and_missing_witness(damage):
+>       popped, completed = real_pair()
+                            ^^^^^^^^^^^
+
+tests/test_analyze_decode_completion.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_analyze_decode_completion.py:21: in real_pair
+    return [audit.read_trace(NZ / f"{ACTOR}.{suffix}.gz", ACTOR)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/experiments/analyze_decode_completion.py:91: in read_trace
+    with opener(path, "rt") as stream:
+         ^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:66: in open
+    binary_file = GzipFile(filename, gz_mode, compresslevel)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <gzip on 0x120b85450>
+filename = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz')
+mode = 'rb', compresslevel = 9, fileobj = None, mtime = None
+
+    def __init__(self, filename=None, mode=None,
+                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+        """Constructor for the GzipFile class.
+    
+        At least one of fileobj and filename must be given a
+        non-trivial value.
+    
+        The new class instance is based on fileobj, which can be a regular
+        file, an io.BytesIO object, or any other object which simulates
+        a file.  It defaults to None, in which case filename is opened to
+        provide a file object.
+    
+        When fileobj is not None, the filename argument is only used to be
+        included in the gzip file header, which may include the original
+        filename of the uncompressed file.  It defaults to the filename of
+        fileobj, if discernible; otherwise, it defaults to the empty string,
+        and in this case the original filename is not included in the
+        header.
+    
+        The mode argument can be any of 'r', 'rb', 'a', 'ab', 'w', 'wb',
+        'x', or 'xb' depending on whether the file will be read or written.
+        The default is the mode of fileobj if discernible; otherwise, the
+        default is 'rb'.  A mode of 'r' is equivalent to one of 'rb', and
+        similarly for 'w' and 'wb', 'a' and 'ab', and 'x' and 'xb'.
+    
+        The compresslevel argument is an integer from 0 to 9 controlling
+        the level of compression; 1 is fastest and produces the least
+        compression, and 9 is slowest and produces the most compression.
+        0 is no compression at all. The default is 9.
+    
+        The optional mtime argument is the timestamp requested by gzip.
+        The time is in Unix format, i.e., seconds since 00:00:00 UTC,
+        January 1, 1970.  If mtime is omitted or None, the current time
+        is used.  Use mtime = 0 to generate a compressed stream that does
+        not depend on creation time.
+    
+        """
+    
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
+    
+        if mode and ('t' in mode or 'U' in mode):
+            raise ValueError("Invalid mode: {!r}".format(mode))
+        if mode and 'b' not in mode:
+            mode += 'b'
+    
+        try:
+            if fileobj is None:
+>               fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:210: FileNotFoundError
+_______ test_actual_pair_rejects_ambiguity_and_missing_witness[wrong_pc] _______
+
+damage = 'wrong_pc'
+
+    @pytest.mark.parametrize("damage", ["duplicate_id", "missing_completion", "wrong_pc", "flag_count"])
+    def test_actual_pair_rejects_ambiguity_and_missing_witness(damage):
+>       popped, completed = real_pair()
+                            ^^^^^^^^^^^
+
+tests/test_analyze_decode_completion.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_analyze_decode_completion.py:21: in real_pair
+    return [audit.read_trace(NZ / f"{ACTOR}.{suffix}.gz", ACTOR)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/experiments/analyze_decode_completion.py:91: in read_trace
+    with opener(path, "rt") as stream:
+         ^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:66: in open
+    binary_file = GzipFile(filename, gz_mode, compresslevel)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <gzip on 0x120b86b30>
+filename = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz')
+mode = 'rb', compresslevel = 9, fileobj = None, mtime = None
+
+    def __init__(self, filename=None, mode=None,
+                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+        """Constructor for the GzipFile class.
+    
+        At least one of fileobj and filename must be given a
+        non-trivial value.
+    
+        The new class instance is based on fileobj, which can be a regular
+        file, an io.BytesIO object, or any other object which simulates
+        a file.  It defaults to None, in which case filename is opened to
+        provide a file object.
+    
+        When fileobj is not None, the filename argument is only used to be
+        included in the gzip file header, which may include the original
+        filename of the uncompressed file.  It defaults to the filename of
+        fileobj, if discernible; otherwise, it defaults to the empty string,
+        and in this case the original filename is not included in the
+        header.
+    
+        The mode argument can be any of 'r', 'rb', 'a', 'ab', 'w', 'wb',
+        'x', or 'xb' depending on whether the file will be read or written.
+        The default is the mode of fileobj if discernible; otherwise, the
+        default is 'rb'.  A mode of 'r' is equivalent to one of 'rb', and
+        similarly for 'w' and 'wb', 'a' and 'ab', and 'x' and 'xb'.
+    
+        The compresslevel argument is an integer from 0 to 9 controlling
+        the level of compression; 1 is fastest and produces the least
+        compression, and 9 is slowest and produces the most compression.
+        0 is no compression at all. The default is 9.
+    
+        The optional mtime argument is the timestamp requested by gzip.
+        The time is in Unix format, i.e., seconds since 00:00:00 UTC,
+        January 1, 1970.  If mtime is omitted or None, the current time
+        is used.  Use mtime = 0 to generate a compressed stream that does
+        not depend on creation time.
+    
+        """
+    
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
+    
+        if mode and ('t' in mode or 'U' in mode):
+            raise ValueError("Invalid mode: {!r}".format(mode))
+        if mode and 'b' not in mode:
+            mode += 'b'
+    
+        try:
+            if fileobj is None:
+>               fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:210: FileNotFoundError
+______ test_actual_pair_rejects_ambiguity_and_missing_witness[flag_count] ______
+
+damage = 'flag_count'
+
+    @pytest.mark.parametrize("damage", ["duplicate_id", "missing_completion", "wrong_pc", "flag_count"])
+    def test_actual_pair_rejects_ambiguity_and_missing_witness(damage):
+>       popped, completed = real_pair()
+                            ^^^^^^^^^^^
+
+tests/test_analyze_decode_completion.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_analyze_decode_completion.py:21: in real_pair
+    return [audit.read_trace(NZ / f"{ACTOR}.{suffix}.gz", ACTOR)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/experiments/analyze_decode_completion.py:91: in read_trace
+    with opener(path, "rt") as stream:
+         ^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:66: in open
+    binary_file = GzipFile(filename, gz_mode, compresslevel)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <gzip on 0x120b84bb0>
+filename = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz')
+mode = 'rb', compresslevel = 9, fileobj = None, mtime = None
+
+    def __init__(self, filename=None, mode=None,
+                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+        """Constructor for the GzipFile class.
+    
+        At least one of fileobj and filename must be given a
+        non-trivial value.
+    
+        The new class instance is based on fileobj, which can be a regular
+        file, an io.BytesIO object, or any other object which simulates
+        a file.  It defaults to None, in which case filename is opened to
+        provide a file object.
+    
+        When fileobj is not None, the filename argument is only used to be
+        included in the gzip file header, which may include the original
+        filename of the uncompressed file.  It defaults to the filename of
+        fileobj, if discernible; otherwise, it defaults to the empty string,
+        and in this case the original filename is not included in the
+        header.
+    
+        The mode argument can be any of 'r', 'rb', 'a', 'ab', 'w', 'wb',
+        'x', or 'xb' depending on whether the file will be read or written.
+        The default is the mode of fileobj if discernible; otherwise, the
+        default is 'rb'.  A mode of 'r' is equivalent to one of 'rb', and
+        similarly for 'w' and 'wb', 'a' and 'ab', and 'x' and 'xb'.
+    
+        The compresslevel argument is an integer from 0 to 9 controlling
+        the level of compression; 1 is fastest and produces the least
+        compression, and 9 is slowest and produces the most compression.
+        0 is no compression at all. The default is 9.
+    
+        The optional mtime argument is the timestamp requested by gzip.
+        The time is in Unix format, i.e., seconds since 00:00:00 UTC,
+        January 1, 1970.  If mtime is omitted or None, the current time
+        is used.  Use mtime = 0 to generate a compressed stream that does
+        not depend on creation time.
+    
+        """
+    
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
+    
+        if mode and ('t' in mode or 'U' in mode):
+            raise ValueError("Invalid mode: {!r}".format(mode))
+        if mode and 'b' not in mode:
+            mode += 'b'
+    
+        try:
+            if fileobj is None:
+>               fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/fp32_nz_ab_matmul_20261010/reports/nz-ab-camodel/pv_m126/nz/log_ca/core0.cubecore0.instr_popped_log.dump.gz'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:210: FileNotFoundError
+___________ test_truncated_real_line_and_unclosed_real_markers_fail ____________
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_truncated_real_line_and_u0')
+
+    def test_truncated_real_line_and_unclosed_real_markers_fail(tmp_path):
+        path = DECODE / f"{ACTOR}.instr_log.dump.gz"
+>       with gzip.open(path, "rt") as stream:
+             ^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_analyze_decode_completion.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:66: in open
+    binary_file = GzipFile(filename, gz_mode, compresslevel)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <gzip on 0x120be5930>
+filename = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz')
+mode = 'rb', compresslevel = 9, fileobj = None, mtime = None
+
+    def __init__(self, filename=None, mode=None,
+                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+        """Constructor for the GzipFile class.
+    
+        At least one of fileobj and filename must be given a
+        non-trivial value.
+    
+        The new class instance is based on fileobj, which can be a regular
+        file, an io.BytesIO object, or any other object which simulates
+        a file.  It defaults to None, in which case filename is opened to
+        provide a file object.
+    
+        When fileobj is not None, the filename argument is only used to be
+        included in the gzip file header, which may include the original
+        filename of the uncompressed file.  It defaults to the filename of
+        fileobj, if discernible; otherwise, it defaults to the empty string,
+        and in this case the original filename is not included in the
+        header.
+    
+        The mode argument can be any of 'r', 'rb', 'a', 'ab', 'w', 'wb',
+        'x', or 'xb' depending on whether the file will be read or written.
+        The default is the mode of fileobj if discernible; otherwise, the
+        default is 'rb'.  A mode of 'r' is equivalent to one of 'rb', and
+        similarly for 'w' and 'wb', 'a' and 'ab', and 'x' and 'xb'.
+    
+        The compresslevel argument is an integer from 0 to 9 controlling
+        the level of compression; 1 is fastest and produces the least
+        compression, and 9 is slowest and produces the most compression.
+        0 is no compression at all. The default is 9.
+    
+        The optional mtime argument is the timestamp requested by gzip.
+        The time is in Unix format, i.e., seconds since 00:00:00 UTC,
+        January 1, 1970.  If mtime is omitted or None, the current time
+        is used.  Use mtime = 0 to generate a compressed stream that does
+        not depend on creation time.
+    
+        """
+    
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
+    
+        if mode and ('t' in mode or 'U' in mode):
+            raise ValueError("Invalid mode: {!r}".format(mode))
+        if mode and 'b' not in mode:
+            mode += 'b'
+    
+        try:
+            if fileobj is None:
+>               fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/request_window_decode_completion_20261009/q4_r32_n128_c1025_s3-candidate/instruction_samples/core0.cubecore0.instr_log.dump.gz'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/gzip.py:210: FileNotFoundError
+___ test_stream_measures_first_actual_token_and_preserves_multi_token_burst ____
+
+    def test_stream_measures_first_actual_token_and_preserves_multi_token_burst():
+>       with server() as (url, _):
+             ^^^^^^^^
+
+tests/test_benchmark_measure.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/test_benchmark_measure.py:90: in server
+    http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:457: in __init__
+    self.server_bind()
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/server.py:148: in server_bind
+    socketserver.TCPServer.server_bind(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <http.server.ThreadingHTTPServer object at 0x1045c9e80>
+
+    def server_bind(self):
+        """Called by constructor to bind the socket.
+    
+        May be overridden.
+    
+        """
+        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+        # on other address families than AF_INET/AF_INET6.
+        if (
+            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
+            and self.address_family in (socket.AF_INET, socket.AF_INET6)
+        ):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+>       self.socket.bind(self.server_address)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:478: PermissionError
+____ test_stream_errors_cannot_be_counted_as_completed[http_error-HTTP 503] ____
+
+mode = 'http_error', fragment = 'HTTP 503'
+
+    @pytest.mark.parametrize("mode, fragment", [
+        ("http_error", "HTTP 503"), ("malformed", "JSONDecodeError"),
+        ("no_token_ids", "return_token_ids"), ("no_usage", "usage/token IDs"),
+        ("wrong_usage", "usage/token IDs"), ("no_done", "[DONE]"),
+    ])
+    def test_stream_errors_cannot_be_counted_as_completed(mode, fragment):
+>       with server(mode) as (url, _):
+             ^^^^^^^^^^^^
+
+tests/test_benchmark_measure.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/test_benchmark_measure.py:90: in server
+    http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:457: in __init__
+    self.server_bind()
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/server.py:148: in server_bind
+    socketserver.TCPServer.server_bind(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <http.server.ThreadingHTTPServer object at 0x120ae6990>
+
+    def server_bind(self):
+        """Called by constructor to bind the socket.
+    
+        May be overridden.
+    
+        """
+        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+        # on other address families than AF_INET/AF_INET6.
+        if (
+            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
+            and self.address_family in (socket.AF_INET, socket.AF_INET6)
+        ):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+>       self.socket.bind(self.server_address)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:478: PermissionError
+_ test_stream_errors_cannot_be_counted_as_completed[malformed-JSONDecodeError] _
+
+mode = 'malformed', fragment = 'JSONDecodeError'
+
+    @pytest.mark.parametrize("mode, fragment", [
+        ("http_error", "HTTP 503"), ("malformed", "JSONDecodeError"),
+        ("no_token_ids", "return_token_ids"), ("no_usage", "usage/token IDs"),
+        ("wrong_usage", "usage/token IDs"), ("no_done", "[DONE]"),
+    ])
+    def test_stream_errors_cannot_be_counted_as_completed(mode, fragment):
+>       with server(mode) as (url, _):
+             ^^^^^^^^^^^^
+
+tests/test_benchmark_measure.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/test_benchmark_measure.py:90: in server
+    http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:457: in __init__
+    self.server_bind()
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/server.py:148: in server_bind
+    socketserver.TCPServer.server_bind(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <http.server.ThreadingHTTPServer object at 0x120ae6ad0>
+
+    def server_bind(self):
+        """Called by constructor to bind the socket.
+    
+        May be overridden.
+    
+        """
+        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+        # on other address families than AF_INET/AF_INET6.
+        if (
+            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
+            and self.address_family in (socket.AF_INET, socket.AF_INET6)
+        ):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+>       self.socket.bind(self.server_address)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:478: PermissionError
+_ test_stream_errors_cannot_be_counted_as_completed[no_token_ids-return_token_ids] _
+
+mode = 'no_token_ids', fragment = 'return_token_ids'
+
+    @pytest.mark.parametrize("mode, fragment", [
+        ("http_error", "HTTP 503"), ("malformed", "JSONDecodeError"),
+        ("no_token_ids", "return_token_ids"), ("no_usage", "usage/token IDs"),
+        ("wrong_usage", "usage/token IDs"), ("no_done", "[DONE]"),
+    ])
+    def test_stream_errors_cannot_be_counted_as_completed(mode, fragment):
+>       with server(mode) as (url, _):
+             ^^^^^^^^^^^^
+
+tests/test_benchmark_measure.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/test_benchmark_measure.py:90: in server
+    http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:457: in __init__
+    self.server_bind()
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/server.py:148: in server_bind
+    socketserver.TCPServer.server_bind(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <http.server.ThreadingHTTPServer object at 0x120a97ce0>
+
+    def server_bind(self):
+        """Called by constructor to bind the socket.
+    
+        May be overridden.
+    
+        """
+        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+        # on other address families than AF_INET/AF_INET6.
+        if (
+            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
+            and self.address_family in (socket.AF_INET, socket.AF_INET6)
+        ):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+>       self.socket.bind(self.server_address)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:478: PermissionError
+_ test_stream_errors_cannot_be_counted_as_completed[no_usage-usage/token IDs] __
+
+mode = 'no_usage', fragment = 'usage/token IDs'
+
+    @pytest.mark.parametrize("mode, fragment", [
+        ("http_error", "HTTP 503"), ("malformed", "JSONDecodeError"),
+        ("no_token_ids", "return_token_ids"), ("no_usage", "usage/token IDs"),
+        ("wrong_usage", "usage/token IDs"), ("no_done", "[DONE]"),
+    ])
+    def test_stream_errors_cannot_be_counted_as_completed(mode, fragment):
+>       with server(mode) as (url, _):
+             ^^^^^^^^^^^^
+
+tests/test_benchmark_measure.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/test_benchmark_measure.py:90: in server
+    http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:457: in __init__
+    self.server_bind()
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/server.py:148: in server_bind
+    socketserver.TCPServer.server_bind(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <http.server.ThreadingHTTPServer object at 0x120a97360>
+
+    def server_bind(self):
+        """Called by constructor to bind the socket.
+    
+        May be overridden.
+    
+        """
+        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+        # on other address families than AF_INET/AF_INET6.
+        if (
+            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
+            and self.address_family in (socket.AF_INET, socket.AF_INET6)
+        ):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+>       self.socket.bind(self.server_address)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:478: PermissionError
+_ test_stream_errors_cannot_be_counted_as_completed[wrong_usage-usage/token IDs] _
+
+mode = 'wrong_usage', fragment = 'usage/token IDs'
+
+    @pytest.mark.parametrize("mode, fragment", [
+        ("http_error", "HTTP 503"), ("malformed", "JSONDecodeError"),
+        ("no_token_ids", "return_token_ids"), ("no_usage", "usage/token IDs"),
+        ("wrong_usage", "usage/token IDs"), ("no_done", "[DONE]"),
+    ])
+    def test_stream_errors_cannot_be_counted_as_completed(mode, fragment):
+>       with server(mode) as (url, _):
+             ^^^^^^^^^^^^
+
+tests/test_benchmark_measure.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/test_benchmark_measure.py:90: in server
+    http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:457: in __init__
+    self.server_bind()
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/server.py:148: in server_bind
+    socketserver.TCPServer.server_bind(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <http.server.ThreadingHTTPServer object at 0x120b5b9b0>
+
+    def server_bind(self):
+        """Called by constructor to bind the socket.
+    
+        May be overridden.
+    
+        """
+        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+        # on other address families than AF_INET/AF_INET6.
+        if (
+            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
+            and self.address_family in (socket.AF_INET, socket.AF_INET6)
+        ):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+>       self.socket.bind(self.server_address)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:478: PermissionError
+______ test_stream_errors_cannot_be_counted_as_completed[no_done-[DONE]] _______
+
+mode = 'no_done', fragment = '[DONE]'
+
+    @pytest.mark.parametrize("mode, fragment", [
+        ("http_error", "HTTP 503"), ("malformed", "JSONDecodeError"),
+        ("no_token_ids", "return_token_ids"), ("no_usage", "usage/token IDs"),
+        ("wrong_usage", "usage/token IDs"), ("no_done", "[DONE]"),
+    ])
+    def test_stream_errors_cannot_be_counted_as_completed(mode, fragment):
+>       with server(mode) as (url, _):
+             ^^^^^^^^^^^^
+
+tests/test_benchmark_measure.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/test_benchmark_measure.py:90: in server
+    http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:457: in __init__
+    self.server_bind()
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/server.py:148: in server_bind
+    socketserver.TCPServer.server_bind(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <http.server.ThreadingHTTPServer object at 0x120b77130>
+
+    def server_bind(self):
+        """Called by constructor to bind the socket.
+    
+        May be overridden.
+    
+        """
+        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+        # on other address families than AF_INET/AF_INET6.
+        if (
+            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
+            and self.address_family in (socket.AF_INET, socket.AF_INET6)
+        ):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+>       self.socket.bind(self.server_address)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:478: PermissionError
+_________ test_stream_timeout_is_bounded_and_preserves_partial_results _________
+
+    def test_stream_timeout_is_bounded_and_preserves_partial_results():
+>       with server("timeout") as (url, _):
+             ^^^^^^^^^^^^^^^^^
+
+tests/test_benchmark_measure.py:146: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/test_benchmark_measure.py:90: in server
+    http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:457: in __init__
+    self.server_bind()
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/server.py:148: in server_bind
+    socketserver.TCPServer.server_bind(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <http.server.ThreadingHTTPServer object at 0x120b75d00>
+
+    def server_bind(self):
+        """Called by constructor to bind the socket.
+    
+        May be overridden.
+    
+        """
+        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+        # on other address families than AF_INET/AF_INET6.
+        if (
+            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
+            and self.address_family in (socket.AF_INET, socket.AF_INET6)
+        ):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+>       self.socket.bind(self.server_address)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:478: PermissionError
+____ test_two_warmups_five_repeats_fingerprints_and_missing_device_evidence ____
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_two_warmups_five_repeats_0')
+
+    def test_two_warmups_five_repeats_fingerprints_and_missing_device_evidence(tmp_path):
+        config, identity = setup_config(tmp_path)
+        reports = []
+>       with server() as (url, state):
+             ^^^^^^^^
+
+tests/test_benchmark_measure.py:156: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/test_benchmark_measure.py:90: in server
+    http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:457: in __init__
+    self.server_bind()
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/server.py:148: in server_bind
+    socketserver.TCPServer.server_bind(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <http.server.ThreadingHTTPServer object at 0x120bdf150>
+
+    def server_bind(self):
+        """Called by constructor to bind the socket.
+    
+        May be overridden.
+    
+        """
+        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+        # on other address families than AF_INET/AF_INET6.
+        if (
+            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
+            and self.address_family in (socket.AF_INET, socket.AF_INET6)
+        ):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+>       self.socket.bind(self.server_address)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:478: PermissionError
+__________ test_request_failures_are_retained_across_all_five_repeats __________
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_request_failures_are_reta0')
+
+    def test_request_failures_are_retained_across_all_five_repeats(tmp_path):
+        config, identity = setup_config(tmp_path)
+>       with server("wrong_usage") as (url, _):
+             ^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_benchmark_measure.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/test_benchmark_measure.py:90: in server
+    http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:457: in __init__
+    self.server_bind()
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/server.py:148: in server_bind
+    socketserver.TCPServer.server_bind(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <http.server.ThreadingHTTPServer object at 0x120bdcd50>
+
+    def server_bind(self):
+        """Called by constructor to bind the socket.
+    
+        May be overridden.
+    
+        """
+        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+        # on other address families than AF_INET/AF_INET6.
+        if (
+            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
+            and self.address_family in (socket.AF_INET, socket.AF_INET6)
+        ):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+>       self.socket.bind(self.server_address)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:478: PermissionError
+_______ test_context_limit_is_recorded_without_silently_shortening_input _______
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_context_limit_is_recorded0')
+
+    def test_context_limit_is_recorded_without_silently_shortening_input(tmp_path):
+        config, _ = setup_config(tmp_path)
+>       with server() as (url, state):
+             ^^^^^^^^
+
+tests/test_benchmark_measure.py:195: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/test_benchmark_measure.py:90: in server
+    http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:457: in __init__
+    self.server_bind()
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/server.py:148: in server_bind
+    socketserver.TCPServer.server_bind(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <http.server.ThreadingHTTPServer object at 0x120b46300>
+
+    def server_bind(self):
+        """Called by constructor to bind the socket.
+    
+        May be overridden.
+    
+        """
+        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+        # on other address families than AF_INET/AF_INET6.
+        if (
+            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
+            and self.address_family in (socket.AF_INET, socket.AF_INET6)
+        ):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+>       self.socket.bind(self.server_address)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:478: PermissionError
+_ test_default_lengths_are_explicit_standard_scope_and_keep_full_policy_matrix _
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_default_lengths_are_expli0')
+
+    def test_default_lengths_are_explicit_standard_scope_and_keep_full_policy_matrix(tmp_path):
+        config, identity = setup_config(tmp_path)
+>       with server() as (url, _):
+             ^^^^^^^^
+
+tests/test_benchmark_measure.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+tests/test_benchmark_measure.py:90: in server
+    http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:457: in __init__
+    self.server_bind()
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/server.py:148: in server_bind
+    socketserver.TCPServer.server_bind(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <http.server.ThreadingHTTPServer object at 0x120b47b60>
+
+    def server_bind(self):
+        """Called by constructor to bind the socket.
+    
+        May be overridden.
+    
+        """
+        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+        # on other address families than AF_INET/AF_INET6.
+        if (
+            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
+            and self.address_family in (socket.AF_INET, socket.AF_INET6)
+        ):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+>       self.socket.bind(self.server_address)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:478: PermissionError
+_________ test_passive_observer_captures_only_external_metrics_window __________
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_passive_observer_captures0')
+
+    def test_passive_observer_captures_only_external_metrics_window(tmp_path):
+        state = {"running": 0, "waiting": 0, "prompt": 0, "generation": 0,
+                 "kv": .1, "preemptions": 0, "posts": 0}
+        lock = threading.Lock()
+    
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args):
+                pass
+    
+            def do_GET(self):
+                assert self.path == "/metrics"
+                with lock:
+                    snapshot = dict(state)
+                body = (f"vllm:num_requests_running {snapshot['running']}\n"
+                        f"vllm:num_requests_waiting {snapshot['waiting']}\n"
+                        f"vllm:kv_cache_usage_perc {snapshot['kv']}\n"
+                        f"vllm:num_preemptions_total {snapshot['preemptions']}\n"
+                        f"vllm:prompt_tokens_total {snapshot['prompt']}\n"
+                        f"vllm:generation_tokens_total {snapshot['generation']}\n").encode()
+                self.send_response(200)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+    
+            def do_POST(self):
+                with lock:
+                    state["posts"] += 1
+                self.send_error(500)
+    
+>       server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_benchmark_mixed_passive.py:44: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:457: in __init__
+    self.server_bind()
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/server.py:148: in server_bind
+    socketserver.TCPServer.server_bind(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <http.server.ThreadingHTTPServer object at 0x120abb3f0>
+
+    def server_bind(self):
+        """Called by constructor to bind the socket.
+    
+        May be overridden.
+    
+        """
+        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+        # on other address families than AF_INET/AF_INET6.
+        if (
+            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
+            and self.address_family in (socket.AF_INET, socket.AF_INET6)
+        ):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+>       self.socket.bind(self.server_address)
+E       PermissionError: [Errno 1] Operation not permitted
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/socketserver.py:478: PermissionError
+____ test_service_startup_and_ongoing_output_reach_terminal_before_response ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x117cffe00>
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_service_startup_and_ongoi0')
+acknowledgment = (PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_service_startup_and_ongoi0/terminal-ack'), 11)
+
+    def test_service_startup_and_ongoing_output_reach_terminal_before_response(
+        monkeypatch, tmp_path, acknowledgment
+    ):
+        fifo, descriptor = acknowledgment
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_live_output.py:263: PermissionError
+_____________________ test_no_silent_exception_swallowing ______________________
+
+    def test_no_silent_exception_swallowing():
+        for folder in ("oscar_ascend", "tools"):
+            for path in (ROOT / folder).rglob("*.py"):
+                tree = ast.parse(path.read_text())
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.ExceptHandler):
+>                       assert not all(isinstance(statement, ast.Pass) for statement in node.body), path
+E                       AssertionError: PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/experiments/replay_shared_fp32.py')
+E                       assert not True
+E                        +  where True = all(<generator object test_no_silent_exception_swallowing.<locals>.<genexpr> at 0x1037ae7a0>)
+
+tests/test_no_fallback_static.py:28: AssertionError
+______________________ test_source_headers_trace_archive _______________________
+
+    def test_source_headers_trace_archive():
+        paths = []
+        for folder in ("oscar_ascend", "tools", "scripts", "tests", "benchmarks", "csrc"):
+            paths += [p for p in (ROOT / folder).rglob("*") if p.is_file() and p.suffix in {".py", ".cpp", ".h", ".cmake", ".sh"}]
+        paths += [ROOT / "csrc/CMakeLists.txt"]
+        for path in paths:
+            header = "\n".join(path.read_text().splitlines()[:18])
+>           assert any(word in header for word in ("档案", "Archive", "archive")), f"missing historical fault trace: {path}"
+E           AssertionError: missing historical fault trace: /Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/experiments/export_shared_fp32.py
+E           assert False
+E            +  where False = any(<generator object test_source_headers_trace_archive.<locals>.<genexpr> at 0x1030db840>)
+
+tests/test_no_fallback_static.py:94: AssertionError
+_________ test_failed_owned_server_fixture_is_attributed_after_cleanup _________
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_failed_owned_server_fixtu0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x117e57070>
+
+    def test_failed_owned_server_fixture_is_attributed_after_cleanup(tmp_path, monkeypatch):
+        root = tmp_path / "cann"
+        root.mkdir()
+        monkeypatch.setenv("ASCEND_PROCESS_LOG_PATH", str(root))
+        monkeypatch.setenv("HOME", str(tmp_path / "home"))
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4, "head_dim": 64, "full_attention_interval": 4}))
+        config = json.loads((Path(__file__).resolve().parents[1] / "configs/target.json").read_text())
+        with socket.socket() as bound:
+>           bound.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_plog.py:152: PermissionError
+_ test_explicit_flag_keeps_native_scheduler_and_requires_full_capability_bundle _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x154fc64a0>
+
+    def test_explicit_flag_keeps_native_scheduler_and_requires_full_capability_bundle(monkeypatch):
+        cfg = configuration()
+        for bad in (1, "true", None):
+            with pytest.raises(OscarReadinessError, match="explicit boolean"):
+                AscendRuntimeProvider(cfg | {"experimental_request_windows": bad})
+>       with pytest.raises(OscarReadinessError, match="native scheduler"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'native scheduler'
+E         Actual message: 'BF16 attention requires physical-page snapshots; request windows are unsupported'
+
+tests/test_request_window_integration.py:227: AssertionError
+_ test_request_window_workspace_follows_actual_native_capacity[2048-captures0-4096] _
+
+self = <oscar_ascend.integration.native_token_budget.NativeTokenBudgetRuntime object at 0x154d51590>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:306: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1208cf5b0>
+budget = 2048, captures = [4096], expected = 4096
+
+    @pytest.mark.parametrize("budget,captures,expected", [(2048, [4096], 4096), (8192, [512], 8192)])
+    def test_request_window_workspace_follows_actual_native_capacity(monkeypatch, budget, captures, expected):
+        config = configuration()
+        config["use_native_token_budget"] = True
+        config.pop("max_num_batched_tokens", None)
+>       provider = NativeTokenBudgetRuntime(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_native_scheduler.py:87: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+oscar_ascend/integration/native_token_budget.py:13: in __init__
+    super().__init__(config)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.integration.native_token_budget.NativeTokenBudgetRuntime object at 0x154d51590>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:309: OscarReadinessError
+_ test_request_window_workspace_follows_actual_native_capacity[8192-captures1-8192] _
+
+self = <oscar_ascend.integration.native_token_budget.NativeTokenBudgetRuntime object at 0x154d51480>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+>           self.config = production_runtime_config(supplied)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+oscar_ascend/runtime.py:306: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+                raise ValueError(f"BF16 attention requires {flag}=true")
+        request_windows = config.get("experimental_request_windows", False)
+        if type(request_windows) is not bool:
+            raise ValueError("experimental_request_windows must be an explicit boolean")
+        if request_windows:
+>           raise ValueError("BF16 attention requires physical-page snapshots; request windows are unsupported")
+E           ValueError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/bf16_history_policy.py:63: ValueError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x154fc0e50>
+budget = 8192, captures = [512], expected = 8192
+
+    @pytest.mark.parametrize("budget,captures,expected", [(2048, [4096], 4096), (8192, [512], 8192)])
+    def test_request_window_workspace_follows_actual_native_capacity(monkeypatch, budget, captures, expected):
+        config = configuration()
+        config["use_native_token_budget"] = True
+        config.pop("max_num_batched_tokens", None)
+>       provider = NativeTokenBudgetRuntime(config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_native_scheduler.py:87: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+oscar_ascend/integration/native_token_budget.py:13: in __init__
+    super().__init__(config)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <oscar_ascend.integration.native_token_budget.NativeTokenBudgetRuntime object at 0x154d51480>
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+
+    def __init__(self, config=None):
+        path = Path(os.environ.get("OSCAR_TARGET_CONFIG", Path(__file__).resolve().parents[1] / "configs/target.json"))
+        supplied = dict(config) if config is not None else json.loads(path.read_text())
+        try:
+            from tools.serving_variants import production_runtime_config
+            self.config = production_runtime_config(supplied)
+            require_bf16_history_production(self.config)
+        except ValueError as error:
+>           raise OscarReadinessError(str(error)) from error
+E           oscar_ascend.integration.runtime_api.OscarReadinessError: BF16 attention requires physical-page snapshots; request windows are unsupported
+
+oscar_ascend/runtime.py:309: OscarReadinessError
+___ test_all_capability_surfaces_match_and_old_modes_do_not_require_new_ops ____
+
+    def test_all_capability_surfaces_match_and_old_modes_do_not_require_new_ops():
+        assert _runtime_caps()==EXPECTED
+        assert EXPECTED<=SOURCE_CAPABILITIES
+        assert {"attention_cv_member_pipeline_cluster4_out",PIPELINE_REQUEST_OP}<=SOURCE_CAPABILITIES
+        from oscar_ascend.ops.contracts import BF16_HISTORY_CAPABILITIES
+>       assert PRODUCTION_CAPABILITIES==(OLD_REQUIRED-{"attention_cv_out"})|BF16_HISTORY_CAPABILITIES
+E       AssertionError: assert frozenset({'a...ge_out', ...}) == {'attention_b...nge_out', ...}
+E         
+E         Extra items in the left set:
+E         'rotate_bf16_query_out'
+E         Use -v to get more diff
+
+tests/test_request_window_registration.py:62: AssertionError
+____ test_unqualified_research_mdl_combination_is_rejected_by_both_entries _____
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_unqualified_research_mdl_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x156766dd0>
+
+    def test_unqualified_research_mdl_combination_is_rejected_by_both_entries(tmp_path,capsys):
+        raw=configured();before=deepcopy(raw)
+        path=tmp_path/'research.json';path.write_text(json.dumps(raw))
+        # The fixed candidate now promises the qualified MDL q4 implementation.
+        # A research-only request-window reader has no matching MDL qualification.
+        for entry in (install_serve, observe_serve):
+>           with pytest.raises(ValueError,match='request-window MDL reader is not qualified'):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'request-window MDL reader is not qualified'
+E             Actual message: 'BF16 attention requires experimental_mdl_decode=true'
+
+tests/test_request_window_serving_config.py:33: AssertionError
+__ test_research_roundtrip_clears_every_owned_change_for_native_and_baseline ___
+
+    def test_research_roundtrip_clears_every_owned_change_for_native_and_baseline():
+        raw=configured()
+        # The current candidate promises MDL; an unfinished request-window MDL
+        # reader must be explicitly rejected, never silently mapped to its old op.
+>       with pytest.raises(ValueError,match='request-window MDL reader is not qualified'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'request-window MDL reader is not qualified'
+E         Actual message: 'BF16 attention requires experimental_mdl_decode=true'
+
+tests/test_request_window_serving_config.py:45: AssertionError
+_ test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x154f719b0>
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_explicit_config_without_v0')
+
+    def test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase(monkeypatch,tmp_path):
+        raw=configured()
+        path=tmp_path/'explicit-research.json';path.write_text(json.dumps(raw));before=path.read_bytes()
+        logs=tmp_path/'launch';seen=[]
+        def check(selected_path):
+            assert Path(selected_path)==logs/'effective-target.json'
+            selected=json.loads(Path(selected_path).read_text())
+            assert 'max_num_batched_tokens' not in selected
+            assert 'history_token_capacity' not in selected
+            assert 'scheduler_cls' not in selected
+            assert selected['use_native_token_budget'] is True
+        def phase(name,command,*,env,**kwargs):
+            seen.append(name);check(env['OSCAR_TARGET_CONFIG'])
+            if '--config' in command:assert command[command.index('--config')+1]==env['OSCAR_TARGET_CONFIG']
+            return PhaseResult(name,command,0,0.,False,False,str(logs/name),True)
+        class HostExecIntercept(Exception):pass
+        def launch(config,config_path,*,log_dir,env):
+            command=["--config",str(config_path)]
+            check(command[-1]);assert command[-1]==env['OSCAR_TARGET_CONFIG']
+            assert seen==list(install_serve.BUILD_PHASES)
+            raise HostExecIntercept
+        monkeypatch.setattr(install_serve,'run_phase',phase)
+        monkeypatch.setattr(install_serve,'run_service',launch)
+        with pytest.raises(HostExecIntercept):
+>           install_serve.main(['--config',str(path),'--log-dir',str(logs)])
+
+tests/test_request_window_serving_config.py:81: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/install_serve.py:57: in main
+    config = variant_config(config, args.variant)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/serving_variants.py:178: in variant_config
+    selected = production_runtime_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+>               raise ValueError(f"BF16 attention requires {flag}=true")
+E               ValueError: BF16 attention requires experimental_mdl_decode=true
+
+oscar_ascend/bf16_history_policy.py:58: ValueError
+----------------------------- Captured stdout call -----------------------------
+[oscar] install → build → rotations → serve (no tests, no probes); logs=/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_explicit_config_without_v0/launch
+_______ test_legacy_whole_capacity_cannot_reenter_through_research_flags _______
+
+    def test_legacy_whole_capacity_cannot_reenter_through_research_flags():
+        raw=configured()
+        raw.update(max_num_batched_tokens=66048, history_token_capacity=16896,
+                   scheduler_cls="oscar_ascend.integration.bounded_whole_prefill.BoundedWholePromptAsyncScheduler")
+>       selected=variant_config(raw,None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_serving_config.py:89: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/serving_variants.py:178: in variant_config
+    selected = production_runtime_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/serving_variants.py:158: in production_runtime_config
+    selected = production_attention_config(config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+oscar_ascend/bf16_history_policy.py:42: in production_attention_config
+    validate_bf16_history(selected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp', 'served_model_name': 'qwen3.5', 'host': '0.0.0.0', 'port': 7878, ...}
+head_dim = None, cache_format = None, production = False
+
+    def validate_bf16_history(config, *, head_dim=None, cache_format=None,
+                              production=False) -> bool:
+        """Validate all-source BF16 layout; False is diagnostic-only."""
+        enabled = normalize_bf16_history(config)
+        if not enabled:
+            if production:
+                raise ValueError(f"{BF16_HISTORY_FLAG}=false cannot select retired FP32 production attention")
+            return False
+        for flag in BF16_HISTORY_DEPENDENCIES:
+            if type(config.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if not config.get(flag, False):
+>               raise ValueError(f"BF16 attention requires {flag}=true")
+E               ValueError: BF16 attention requires experimental_mdl_decode=true
+
+oscar_ascend/bf16_history_policy.py:58: ValueError
+_______________ test_real_log_mtp_accounting_and_unequal_windows _______________
+
+    def test_real_log_mtp_accounting_and_unequal_windows():
+        candidate = analyze(REPORTS / "target_striped_probe_and_longbench_20260930.txt")
+>       native = analyze(REPORTS / "target_native_longbench_20260930.txt")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_log_model.py:19: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/analyze_service_log.py:70: in analyze
+    raw = path.read_bytes()
+          ^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:777: in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_native_longbench_20260930.txt')
+mode = 'rb', buffering = 0, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/target_native_longbench_20260930.txt'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+________________ test_two_anchors_do_not_identify_speedup_share ________________
+
+    def test_two_anchors_do_not_identify_speedup_share():
+>       candidate = json.loads((REPORTS / "service_trace_candidate_20260930.json").read_text())
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_log_model.py:32: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:787: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/service_trace_candidate_20260930.json')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/reports/service_trace_candidate_20260930.json'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError
+__ test_long_request_has_wall_deadline_progress_and_reaped_client[hang_long] ___
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_long_request_has_wall_dea0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1209fbb60>
+capsys = <_pytest.capture.CaptureFixture object at 0x1578774d0>
+mode = 'hang_long'
+
+    @pytest.mark.parametrize("mode", ["hang_long", "trickle_long"])
+    def test_long_request_has_wall_deadline_progress_and_reaped_client(tmp_path, monkeypatch, capsys, mode):
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:210: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_long_request_has_wall_dea0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+_ test_long_request_has_wall_deadline_progress_and_reaped_client[trickle_long] _
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_long_request_has_wall_dea1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x154ffbbd0>
+capsys = <_pytest.capture.CaptureFixture object at 0x154c051d0>
+mode = 'trickle_long'
+
+    @pytest.mark.parametrize("mode", ["hang_long", "trickle_long"])
+    def test_long_request_has_wall_deadline_progress_and_reaped_client(tmp_path, monkeypatch, capsys, mode):
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:210: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_long_request_has_wall_dea1')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+___________ test_healthy_run_records_streaming_synthetic_mixed_probe ___________
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_healthy_run_records_strea0')
+
+    def test_healthy_run_records_streaming_synthetic_mixed_probe(tmp_path):
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:233: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_healthy_run_records_strea0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+______________ test_synthetic_mixed_timeout_blocks_formal_service ______________
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_synthetic_mixed_timeout_b0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x154ff9550>
+
+    def test_synthetic_mixed_timeout_blocks_formal_service(tmp_path, monkeypatch):
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:261: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_synthetic_mixed_timeout_b0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+_____ test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up ______
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_synthetic_fast_path_strea0')
+
+    def test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up(tmp_path):
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:283: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_synthetic_fast_path_strea0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+___ test_regressed_synthetic_runs_one_separate_same_server_device_diagnostic ___
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_regressed_synthetic_runs_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x154ffae40>
+
+    def test_regressed_synthetic_runs_one_separate_same_server_device_diagnostic(tmp_path, monkeypatch):
+        from tools import paired_concurrency_probe as paired
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:309: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_regressed_synthetic_runs_0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+_____________ test_nonregressed_synthetic_does_not_arm_diagnostic ______________
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_nonregressed_synthetic_do0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x154fc74d0>
+
+    def test_nonregressed_synthetic_does_not_arm_diagnostic(tmp_path, monkeypatch):
+        from tools import paired_concurrency_probe as paired
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:331: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_nonregressed_synthetic_do0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+_______ test_synthetic_refuses_inherited_debug_sync_before_service_start _______
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_synthetic_refuses_inherit0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1209da4a0>
+
+    def test_synthetic_refuses_inherited_debug_sync_before_service_start(tmp_path, monkeypatch):
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:344: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_synthetic_refuses_inherit0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+__ test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch ___
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_healthy_http_with_full_ev0')
+
+    def test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch(tmp_path):
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:354: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_healthy_http_with_full_ev0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+_ test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_trace-mandatory] _
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_http_success_cannot_hide_0')
+mode = 'no_trace', diagnostic = 'mandatory'
+
+    @pytest.mark.parametrize("mode, diagnostic", [("no_trace", "mandatory"), ("wrong_usage", "exactly 128"), ("no_mtp", "mandatory")])
+    def test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count(tmp_path, mode, diagnostic):
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:367: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_http_success_cannot_hide_0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+_ test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[wrong_usage-exactly 128] _
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_http_success_cannot_hide_1')
+mode = 'wrong_usage', diagnostic = 'exactly 128'
+
+    @pytest.mark.parametrize("mode, diagnostic", [("no_trace", "mandatory"), ("wrong_usage", "exactly 128"), ("no_mtp", "mandatory")])
+    def test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count(tmp_path, mode, diagnostic):
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:367: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_http_success_cannot_hide_1')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+_ test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_mtp-mandatory] _
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_http_success_cannot_hide_2')
+mode = 'no_mtp', diagnostic = 'mandatory'
+
+    @pytest.mark.parametrize("mode, diagnostic", [("no_trace", "mandatory"), ("wrong_usage", "exactly 128"), ("no_mtp", "mandatory")])
+    def test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count(tmp_path, mode, diagnostic):
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:367: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_http_success_cannot_hide_2')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+_____ test_startup_failure_records_exit_and_never_kills_an_unrelated_group _____
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_startup_failure_records_e0')
+
+    def test_startup_failure_records_exit_and_never_kills_an_unrelated_group(tmp_path):
+>       _, path = configured(tmp_path)
+                  ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:375: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_startup_failure_records_e0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+_________ test_hung_startup_has_finite_deadline_and_nonempty_final_log _________
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_hung_startup_has_finite_d0')
+
+    def test_hung_startup_has_finite_deadline_and_nonempty_final_log(tmp_path):
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:387: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_hung_startup_has_finite_d0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+____ test_interrupted_startup_still_releases_its_server_and_records_outcome ____
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_interrupted_startup_still0')
+
+    def test_interrupted_startup_still_releases_its_server_and_records_outcome(tmp_path):
+>       _, path = configured(tmp_path)
+                  ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:398: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_interrupted_startup_still0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+_ test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint _
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_formal_serve_validates_on0')
+
+    def test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint(tmp_path):
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:406: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_formal_serve_validates_on0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+___ test_missing_device_selection_fails_before_any_resource_or_server_launch ___
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_missing_device_selection_0')
+
+    def test_missing_device_selection_fails_before_any_resource_or_server_launch(tmp_path):
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:414: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_missing_device_selection_0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+_____ test_memory_not_released_turns_successful_requests_into_failed_probe _____
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_memory_not_released_turns0')
+
+    def test_memory_not_released_turns_successful_requests_into_failed_probe(tmp_path):
+>       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:423: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-243/test_memory_not_released_turns0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+>           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError
+=========================== short test summary info ============================
+SKIPPED [28] tests/test_cv_contracts.py:67: real NPU test is opt-in; CPU is not substituted
+SKIPPED [1] tests/test_loader_linkage.py:202: ELF DT_NEEDED/SONAME regression requires Linux
+SKIPPED [104] tests/test_rotation_npu.py:145: not_run: real NPU rotation gate requires OSCAR_RUN_NPU_TESTS=1
+SKIPPED [1] tests/test_runtime.py:344: large FULL host route is needed once for C16
+ERROR tests/test_analyze_64k_evidence.py::test_all_supplied_engine_rows_are_parsed_without_pid_or_clock_mixing
+ERROR tests/test_analyze_64k_evidence.py::test_truncated_records_preserve_known_fields_and_do_not_invent_counts
+ERROR tests/test_analyze_64k_evidence.py::test_client_tables_and_warmup_have_separate_time_denominators
+ERROR tests/test_analyze_64k_evidence.py::test_client_latency_decomposition_respects_fixed_512_output_tokens
+ERROR tests/test_analyze_64k_evidence.py::test_spec_totals_use_counts_rather_than_unweighted_percentage_means
+ERROR tests/test_analyze_64k_evidence.py::test_observed_capacity_and_zero_counters_do_not_invent_memory_or_phases
+ERROR tests/test_analyze_64k_evidence.py::test_server_counter_integration_does_not_use_client_duration
+ERROR tests/test_analyze_64k_evidence.py::test_conditional_warmup_pool_bounds_include_the_reference_null_block
+ERROR tests/test_request_window_integration.py::test_all_registered_target_and_draft_sidecars_are_allocated_before_load_returns
+ERROR tests/test_request_window_integration.py::test_one_native_update_preserves_rewind_deferred_return_and_publishes_after_reorder
+ERROR tests/test_request_window_integration.py::test_scope_cleans_up_and_other_stream_cannot_reuse_leases
+ERROR tests/test_request_window_integration.py::test_unsupported_native_mode_fails_at_seal[enable_prefix_caching-True]
+ERROR tests/test_request_window_integration.py::test_unsupported_native_mode_fails_at_seal[mamba_cache_mode-align]
+ERROR tests/test_request_window_integration.py::test_dual_reshape_reuses_sidecars_and_shared_map_while_native_gdn_views_stay_original
+FAILED tests/test_analyze_decode_completion.py::test_real_popped_completion_ids_keep_observed_latency_not_busy
+FAILED tests/test_analyze_decode_completion.py::test_real_decode_markers_close_but_do_not_mean_math_completed
+FAILED tests/test_analyze_decode_completion.py::test_actual_pair_rejects_ambiguity_and_missing_witness[duplicate_id]
+FAILED tests/test_analyze_decode_completion.py::test_actual_pair_rejects_ambiguity_and_missing_witness[missing_completion]
+FAILED tests/test_analyze_decode_completion.py::test_actual_pair_rejects_ambiguity_and_missing_witness[wrong_pc]
+FAILED tests/test_analyze_decode_completion.py::test_actual_pair_rejects_ambiguity_and_missing_witness[flag_count]
+FAILED tests/test_analyze_decode_completion.py::test_truncated_real_line_and_unclosed_real_markers_fail
+FAILED tests/test_benchmark_measure.py::test_stream_measures_first_actual_token_and_preserves_multi_token_burst
+FAILED tests/test_benchmark_measure.py::test_stream_errors_cannot_be_counted_as_completed[http_error-HTTP 503]
+FAILED tests/test_benchmark_measure.py::test_stream_errors_cannot_be_counted_as_completed[malformed-JSONDecodeError]
+FAILED tests/test_benchmark_measure.py::test_stream_errors_cannot_be_counted_as_completed[no_token_ids-return_token_ids]
+FAILED tests/test_benchmark_measure.py::test_stream_errors_cannot_be_counted_as_completed[no_usage-usage/token IDs]
+FAILED tests/test_benchmark_measure.py::test_stream_errors_cannot_be_counted_as_completed[wrong_usage-usage/token IDs]
+FAILED tests/test_benchmark_measure.py::test_stream_errors_cannot_be_counted_as_completed[no_done-[DONE]]
+FAILED tests/test_benchmark_measure.py::test_stream_timeout_is_bounded_and_preserves_partial_results
+FAILED tests/test_benchmark_measure.py::test_two_warmups_five_repeats_fingerprints_and_missing_device_evidence
+FAILED tests/test_benchmark_measure.py::test_request_failures_are_retained_across_all_five_repeats
+FAILED tests/test_benchmark_measure.py::test_context_limit_is_recorded_without_silently_shortening_input
+FAILED tests/test_benchmark_measure.py::test_default_lengths_are_explicit_standard_scope_and_keep_full_policy_matrix
+FAILED tests/test_benchmark_mixed_passive.py::test_passive_observer_captures_only_external_metrics_window
+FAILED tests/test_live_output.py::test_service_startup_and_ongoing_output_reach_terminal_before_response
+FAILED tests/test_no_fallback_static.py::test_no_silent_exception_swallowing
+FAILED tests/test_no_fallback_static.py::test_source_headers_trace_archive - ...
+FAILED tests/test_plog.py::test_failed_owned_server_fixture_is_attributed_after_cleanup
+FAILED tests/test_request_window_integration.py::test_explicit_flag_keeps_native_scheduler_and_requires_full_capability_bundle
+FAILED tests/test_request_window_native_scheduler.py::test_request_window_workspace_follows_actual_native_capacity[2048-captures0-4096]
+FAILED tests/test_request_window_native_scheduler.py::test_request_window_workspace_follows_actual_native_capacity[8192-captures1-8192]
+FAILED tests/test_request_window_registration.py::test_all_capability_surfaces_match_and_old_modes_do_not_require_new_ops
+FAILED tests/test_request_window_serving_config.py::test_unqualified_research_mdl_combination_is_rejected_by_both_entries
+FAILED tests/test_request_window_serving_config.py::test_research_roundtrip_clears_every_owned_change_for_native_and_baseline
+FAILED tests/test_request_window_serving_config.py::test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase
+FAILED tests/test_request_window_serving_config.py::test_legacy_whole_capacity_cannot_reenter_through_research_flags
+FAILED tests/test_service_log_model.py::test_real_log_mtp_accounting_and_unequal_windows
+FAILED tests/test_service_log_model.py::test_two_anchors_do_not_identify_speedup_share
+FAILED tests/test_service_workflow.py::test_long_request_has_wall_deadline_progress_and_reaped_client[hang_long]
+FAILED tests/test_service_workflow.py::test_long_request_has_wall_deadline_progress_and_reaped_client[trickle_long]
+FAILED tests/test_service_workflow.py::test_healthy_run_records_streaming_synthetic_mixed_probe
+FAILED tests/test_service_workflow.py::test_synthetic_mixed_timeout_blocks_formal_service
+FAILED tests/test_service_workflow.py::test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up
+FAILED tests/test_service_workflow.py::test_regressed_synthetic_runs_one_separate_same_server_device_diagnostic
+FAILED tests/test_service_workflow.py::test_nonregressed_synthetic_does_not_arm_diagnostic
+FAILED tests/test_service_workflow.py::test_synthetic_refuses_inherited_debug_sync_before_service_start
+FAILED tests/test_service_workflow.py::test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch
+FAILED tests/test_service_workflow.py::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_trace-mandatory]
+FAILED tests/test_service_workflow.py::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[wrong_usage-exactly 128]
+FAILED tests/test_service_workflow.py::test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_mtp-mandatory]
+FAILED tests/test_service_workflow.py::test_startup_failure_records_exit_and_never_kills_an_unrelated_group
+FAILED tests/test_service_workflow.py::test_hung_startup_has_finite_deadline_and_nonempty_final_log
+FAILED tests/test_service_workflow.py::test_interrupted_startup_still_releases_its_server_and_records_outcome
+FAILED tests/test_service_workflow.py::test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint
+FAILED tests/test_service_workflow.py::test_missing_device_selection_fails_before_any_resource_or_server_launch
+FAILED tests/test_service_workflow.py::test_memory_not_released_turns_successful_requests_into_failed_probe
+52 failed, 1899 passed, 134 skipped, 14 errors, 29 subtests passed in 105.37s (0:01:45)

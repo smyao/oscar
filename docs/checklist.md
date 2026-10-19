@@ -166,4 +166,6 @@ q4诊断接入同一`--probe-only`：原生paged BF16 FIA与OSCAR CV+merge的未
 
 #157（2026-10-12 真机回传；2026-10-13复审修正）：已确认冻结 status_guard Trap 与 MTP attention 族归因；没有确切错误码回传。旧记录中依靠低 generation 判纯 prefill、prefix hit=0 排除 align/自身窗口、将错误5写作已收口根因的判断均撤回，原始记录保留于档案。E06/NPU/图/质量/整轮性能仍未验收。
 
+2026-10-19 大 batch 离线实验：原生planner容量执行、78个实际Cube控制流计数形状、36组Python host profiling、1920点条件模型和37项回归完成，见`docs/batch_profiling_20261019.md`。相同净KV预算/已有形状条件下驻留容量20/11/6→46/31/19；吞吐是显式参数模拟，不是目标卡计时。生产候选、FE0、原生源码、精度门均不改；CANN/设备/图/质量/E06状态不因本机计数升级。保留42个稳定checkpoint编号和既有未验收状态。
+
 2026-10-13 c5b2ad40 修复：撤掉每层 slot/table 全扫描及“解析失败即discard”；外部 proposer 作用域绑定当前原生 `discard_request_mask.gpu`，metadata builder 在模型调用前只给明确 discard 行写插件自有 padding 副本。活行非法slot与非负padding尾部原样保留给设备guard；首draft、主模型不变，不改GDN/冻结算子。固定地址副本随当前批次更新，scope异常退出恢复。07a分族同步保留，a0c内容回读撤回。主机100项关键调用/错误域检查通过，真NPU/图/服务反馈待认证；没有从删除重复工作声明性能倍率。见 `docs/kimi_commit_review_20261013.md`。

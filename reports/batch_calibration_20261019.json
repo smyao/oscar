@@ -1,0 +1,1260 @@
+{
+  "schema_version": 1,
+  "kind": "read_only_batch_calibration_evidence_not_a_performance_forecast",
+  "date": "2026-10-19",
+  "checkout": "73280bdfdbbd22a3fe2eb06b25c7ab95a9660d79",
+  "archive_refs": [
+    "#134",
+    "#135",
+    "#136",
+    "#137",
+    "#138",
+    "#139",
+    "#140",
+    "#148",
+    "#151",
+    "#152",
+    "#154",
+    "#155",
+    "#156",
+    "#166",
+    "#167"
+  ],
+  "policy": {
+    "raw_logs_only_for_measurements": true,
+    "native_source_only_for_runtime_cost_contracts": true,
+    "failed_oscar_source_read": false,
+    "production_modified": false,
+    "AISBench_rerun": false,
+    "current_npu_execution": false,
+    "current_bf16_measured_throughput": null
+  },
+  "decision": {
+    "current_end_to_end_seconds_calibrated": false,
+    "reason": "The retained measurements do not separately identify current BF16 attention, dense projections, GDN core, TP communication, host gaps or MTP costs. No exact target model config/quantization tensor inventory or current BF16 device trace is present.",
+    "acceptable_use": "Use exact logical workload, native first/later-draft shape contracts, symbolic operation counts and clearly labelled historical comparison points. Keep current device time and bandwidth as explicit independent inputs. Do not fit them to old wall-time targets.",
+    "forbidden_substitutions": [
+      "old FP32 NPU milliseconds as current BF16 milliseconds",
+      "CAModel task ticks divided by an assumed clock as measured NPU seconds",
+      "10.17 GiB resident weight allocation as exactly that many HBM bytes per decode step",
+      "prepare sync time as all GDN/MLP/TP cost",
+      "client TTFT as device prefill time",
+      "client TPOT as isolated decode-kernel time",
+      "three valid draft rows as three physical dense-projection rows",
+      "old printed acceptance windows as current run acceptance or a count of batched engine steps"
+    ]
+  },
+  "source_availability": {
+    "complete_local_64k_original": {
+      "path": "reports/target_64k_mixed_20260929.txt",
+      "available": true,
+      "sha256": "52c27ec05f19688fc7cf74672ca8a856e1f53e28c83ff804baf9a47bc07400af",
+      "bytes": 40030,
+      "lines": 218,
+      "relevant_lines": [
+        [
+          49,
+          89
+        ],
+        [
+          144,
+          184
+        ],
+        [
+          195,
+          213
+        ]
+      ]
+    },
+    "derived_64k_report_verified_against_original": {
+      "path": "reports/performance_budget_20260929.json",
+      "available": true,
+      "sha256": "580bc2ceb6ccc882fb6b6269a7f40d33fd855e42b9b8565918bd3ffacd6989fe",
+      "bytes": 8982,
+      "lines": 275
+    },
+    "missing_later_64k_original": {
+      "path": "reports/target_64k_120_20261009.txt",
+      "available": false,
+      "sha256": null
+    },
+    "missing_later_64k_derived_report": {
+      "path": "reports/evidence_64k_120_20261009.json",
+      "available": false,
+      "sha256": null
+    },
+    "archived_later_64k_secondary_record": {
+      "path": "issue1_full_record.md",
+      "available": true,
+      "sha256": "900cec481f787568e7a049ab193ccfd71757de4c8c30338871f85e4d0f2d2ceb",
+      "bytes": 3367394,
+      "lines": 28788,
+      "relevant_lines": [
+        [
+          28611,
+          28617
+        ]
+      ]
+    },
+    "missing_source_expected_sha256_from_archive": "03eb53109a97a3e82b02c91550b5661dc8cf0c3360585693f567a3217c7311bb",
+    "missing_source_expected_bytes_from_archive": 263011,
+    "target_model_config": {
+      "path": "/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp/config.json",
+      "available_on_local_host": false,
+      "sha256": null
+    }
+  },
+  "historical_64k_20260929": {
+    "applicable_version": "OSCAR user-declared 6f11ad1 candidate per archive #152; FP32 CV era, not current BF16; native paired command/config identity is not fully archived.",
+    "workload": {
+      "requests": 120,
+      "input_tokens_per_request": 65100,
+      "output_tokens_per_request": 512,
+      "client_concurrency": 32,
+      "max_model_len": 262144
+    },
+    "measurements": {
+      "native": {
+        "wall_seconds": 1371.9691525,
+        "input_tokens": 7812000,
+        "actual_output_tokens": 61440,
+        "output_tokens_per_second": 44.78234797629679,
+        "input_tokens_per_second": 5694.0055727674235,
+        "mean_ttft_seconds": 235.0516,
+        "mean_e2e_seconds": 343.45759999999996,
+        "mean_tpot_ms": 212.1,
+        "mean_post_first_token_seconds": 108.40599999999998,
+        "successful_requests": 120,
+        "failed_requests": 0
+      },
+      "oscar": {
+        "wall_seconds": 3331.5501112,
+        "input_tokens": 7812000,
+        "actual_output_tokens": 61440,
+        "output_tokens_per_second": 18.44186578297325,
+        "input_tokens_per_second": 2344.8544188897627,
+        "mean_ttft_seconds": 174.163,
+        "mean_e2e_seconds": 880.7758,
+        "mean_tpot_ms": 1382.8,
+        "mean_post_first_token_seconds": 706.6128,
+        "successful_requests": 120,
+        "failed_requests": 0
+      }
+    },
+    "oscar_over_native_wall": 2.4282981181677843,
+    "server_resident_requests": {
+      "native": 12,
+      "oscar": 31,
+      "status": "user observation only; no service-side track accompanies this original"
+    },
+    "not_identifiable": [
+      "device prefill seconds",
+      "pure decode seconds",
+      "end-to-end attention share",
+      "MTP acceptance",
+      "per-step GDN/MLP/TP ms"
+    ],
+    "selected_as_current_time_calibration": false,
+    "selection_reason": "Complete historical throughput comparison only. Current code changes matrix precision, buffers, routes and memory layout; no current physical device transfer has been measured."
+  },
+  "historical_64k_20261009_archive_only": {
+    "measurements": {
+      "oscar": {
+        "wall_seconds": 2467.1275737,
+        "actual_output_tokens": 61440,
+        "output_tokens_per_second": 24.903454792918232,
+        "mean_ttft_seconds": 208.9315,
+        "mean_e2e_seconds": 649.3244,
+        "mean_tpot_ms": 861.8,
+        "mean_post_first_token_seconds": 440.39289999999994,
+        "printed_window_accepted_over_drafted_fraction": 0.637857,
+        "conditional_mean_acceptance_length_if_every_draft_has_3_tokens": 2.913571
+      },
+      "native": {
+        "wall_seconds": 1342.4437259,
+        "actual_output_tokens": 61440,
+        "output_tokens_per_second": 45.767281573616394,
+        "mean_ttft_seconds": 230.3687,
+        "mean_e2e_seconds": 335.9201,
+        "mean_tpot_ms": 206.6,
+        "mean_post_first_token_seconds": 105.5514,
+        "printed_window_accepted_over_drafted_fraction": 0.92966,
+        "conditional_mean_acceptance_length_if_every_draft_has_3_tokens": 3.78898
+      }
+    },
+    "source_tier": "secondary preserved archive text; original cannot be rechecked on this host",
+    "applicable_version": "before current BF16 rewrite; original target SHA not supplied",
+    "sampled_peak_running": {
+      "oscar": 27,
+      "native": 12
+    },
+    "selected_as_current_time_calibration": false,
+    "selection_reason": "Missing original and different implementation. Printed Spec windows include warmup and missing intervals cannot be reconstructed."
+  },
+  "mtp_acceptance": {
+    "definition": "Native metric mean_acceptance_length = 1 + accepted_tokens / num_drafts; the 1 is the conventional bonus token. accepted_tokens/drafted_tokens is a different metric.",
+    "fixed3_conversion": "If every observed draft proposes exactly3 tokens, num_drafts=drafted_tokens/3 and mean=1+3*acceptance_fraction.",
+    "historical_2_914_3_789": {
+      "oscar": 2.913571,
+      "native": 3.78898,
+      "source": {
+        "path": "issue1_full_record.md",
+        "line": 28615
+      },
+      "precision": "Derived from archived acceptance percentages rounded to4 decimal places; not a directly rechecked current metric.",
+      "equal_cost_step_ratio_native_mean_over_oscar_mean": 1.3004591273046031,
+      "interpretation": "Conditional accepted-output factor only. Does not give model-cycle cost, batched engine-step count, current precision quality or current service throughput."
+    },
+    "other_retained_old_windows": {
+      "source": {
+        "path": "reports/target_striped_probe_and_longbench_20260930.txt",
+        "available": true,
+        "sha256": "61a4f56c4986fb2067b3e0ca89847445d1ee78e84a496f81ad826caa00ac166c",
+        "bytes": 75145,
+        "lines": 375,
+        "relevant_lines": [
+          [
+            93,
+            368
+          ]
+        ]
+      },
+      "complete_printed_windows": 89,
+      "accepted_tokens_sum": 56517,
+      "drafted_tokens_sum": 99015,
+      "mean_if_fixed3": 2.7123769125890016,
+      "printed_mean_min": 1.86,
+      "printed_mean_max": 4.0,
+      "selection": "not selected; different 127-request20K LongBench workload, old code, includes early/tail windows"
+    },
+    "current_successful_valid_draft_mean": {
+      "central": null,
+      "lower": 1,
+      "upper": 4,
+      "bound_kind": "semantic range only; not a probabilistic or performance confidence interval",
+      "reason": "k=3 configured but no current BF16 acceptance measurement. Discarded/padded rows and failed service do not produce this guaranteed number of emitted user tokens."
+    },
+    "sources": [
+      {
+        "path": "references/vllm/vllm/v1/spec_decode/metrics.py",
+        "available": true,
+        "sha256": "acf306f1b453f33f9cebd13abfa6547dea5dff4a1dc92d4e9b701daf526746ee",
+        "bytes": 7661,
+        "lines": 215,
+        "relevant_lines": [
+          [
+            75,
+            114
+          ]
+        ]
+      },
+      {
+        "path": "references/vllm-ascend/vllm_ascend/spec_decode/llm_base_proposer.py",
+        "available": true,
+        "sha256": "4a90532c5c3667d9eb4fec666bf03c65a2f1c92cd402f731b644ef8fa2ed82ab",
+        "bytes": 105077,
+        "lines": 2095,
+        "relevant_lines": [
+          [
+            1070,
+            1100
+          ],
+          [
+            1139,
+            1185
+          ],
+          [
+            1210,
+            1287
+          ],
+          [
+            1337,
+            1369
+          ]
+        ]
+      },
+      {
+        "path": "references/vllm/vllm/model_executor/models/qwen3_5_mtp.py",
+        "available": true,
+        "sha256": "99c19c38107a3cade90aa5a0f86396f6a25b2defcf8a538fbed521f7567eb743",
+        "bytes": 17170,
+        "lines": 458,
+        "relevant_lines": [
+          [
+            70,
+            107
+          ],
+          [
+            133,
+            159
+          ]
+        ]
+      },
+      {
+        "path": "references/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py",
+        "available": true,
+        "sha256": "21fc9a2064f9b490ffcf3d61bacc8ddb67806a4c7490895a33128e65438838d3",
+        "bytes": 8743,
+        "lines": 209,
+        "relevant_lines": [
+          [
+            154,
+            196
+          ]
+        ]
+      }
+    ]
+  },
+  "native_nonattention_work_contract": {
+    "variables": {
+      "P": "TP size=4",
+      "N": "physical token rows executed by main model including graph padding",
+      "Nd": "physical token rows passed to each MTP draft model",
+      "B": "valid active requests sampled by draft logits",
+      "H": "hidden_size, unknown on target",
+      "F": "intermediate_size, unknown on target",
+      "V": "vocab_size, unknown on target",
+      "Q": "global full-attention query heads",
+      "K": "global full-attention KV heads",
+      "D": "full-attention head dimension",
+      "dk": "linear_key_heads*linear_key_head_dim",
+      "dv": "linear_value_heads*linear_value_head_dim",
+      "hv": "linear_value_heads",
+      "g": "attn_output_gate boolean0/1"
+    },
+    "dense_gemm_flops_per_rank": {
+      "mlp_per_layer": "6*N*H*F/P",
+      "full_qkv_gate_and_o_projection_per_layer": "2*N*H*((g+2)*Q+2*K)*D/P",
+      "gdn_input_ba_output_projection_per_layer": "2*N*H*(2*dk+3*dv+2*hv)/P",
+      "mtp_fc_per_draft": "4*Nd*H*H/P",
+      "mtp_dense_layer_per_draft": "full projection formula withN=Nd + MLP formula withN=Nd",
+      "draft_logits_per_draft_if_normal_tp_head": "2*B*H*V/P; verify actual LMHead TP/reduce-sample configuration before assigning network cost"
+    },
+    "excluded_from_these_counts": [
+      "FULL QK/PV and softmax",
+      "GDN convolution/state update/chunk kernel",
+      "norm,gate,RoPE,embedding",
+      "quantization/casts and W8A8 scales",
+      "TP collective latency/bandwidth",
+      "host scheduling and graph launch",
+      "memory stalls and kernel launch overhead"
+    ],
+    "conditional_geometry_from_historical_source_ledger": {
+      "full_layers": 16,
+      "main_layers": 64,
+      "gdn_layers": 48,
+      "global_q_heads": 24,
+      "global_kv_heads": 4,
+      "head_dim": 256,
+      "linear_key_heads": 16,
+      "linear_value_heads": 48,
+      "linear_key_dim": 128,
+      "linear_value_dim": 128,
+      "conv_kernel": 4,
+      "status": "reference geometry only; not a substitute for missing live target model config",
+      "source": {
+        "path": "reports/memory_64k_prefix_align_20261012.json",
+        "available": true,
+        "sha256": "dce248f7d00cfaf3c6d24cde93e9b9bb4127cdf3d41a4d5744bb68ff6f6074fd",
+        "bytes": 16347,
+        "lines": 340,
+        "relevant_lines": [
+          [
+            14,
+            27
+          ]
+        ]
+      }
+    },
+    "conditional_simplification_P4_gate_true": {
+      "main_MLP_flops": "96*N*H*F",
+      "main_FULL_projection_flops": "163840*N*H",
+      "main_GDN_projection_flops": "542976*N*H",
+      "main_all_dense_projection_flops": "96*N*H*F+706816*N*H",
+      "one_MTP_dense_layer_plus_fc_flops": "1.5*Nd*H*F+10240*Nd*H+Nd*H^2",
+      "warning": "Conditional symbolic FLOPs, not evaluated target FLOPs; H/F missing and dtype/efficiency per GEMM unknown."
+    },
+    "physical_mtp_rows": {
+      "first_pass": "set_inputs_first_pass uses target_token_ids.shape[0]; MTP dense layers run first-pass input rows, not merely last-token sample rows.",
+      "later_pass": "input_batch_size=num_input_tokens for method=mtp; later passes fill first batch_size rows but model_input_ids/model_hidden_states still slice[:input_batch_size].",
+      "steady_q4_example": "If num_input_tokens=4B and no extra padding, each of3 draft dense forwards may execute4B rows: total12B rows, while each draft logits samples B rows and later Attention has q1 valid rows.",
+      "mixed_prefill_example": "Do not replace Nd byB: first-pass rows can include scheduled prefill rows plus decode rows. Exact padding comes from native execution metadata.",
+      "deployment_identity": "This is the checked readonly reference contract. Target native commit/hash is not supplied; do not silently claim identical deployed behavior."
+    },
+    "tp_communication": {
+      "logical_reductions": "Standard TP path: each main layer has attention/GDN output RowParallelLinear plus MLP down_proj; each MTP dense layer has2 such output reductions. With64 main layers and3 one-layer drafts this is134 logical reductions, not proof of134 separately timed HCCL calls.",
+      "logical_payload_per_reduction": "N_or_Nd * H * output_element_bytes; BF16 output_element_bytes=2 if actual output isBF16.",
+      "mtp_fc_allgathers": "ColumnParallelLinear(gather_output=True) requires hidden-state assembly each draft; no zero-cost assumption.",
+      "additional_collectives": "Embedding/logits and actual Ascend custom/flash communication route must also be accounted; selected implementation/network topology and timing not measured.",
+      "latency_seconds": null,
+      "bandwidth_bytes_per_second": null
+    },
+    "sources": [
+      {
+        "path": "references/vllm/vllm/model_executor/models/qwen3_5.py",
+        "available": true,
+        "sha256": "04f3de5372973770d71c5c05f2e8a5e221ec52b62cca7a1e302d9201b61b8adc",
+        "bytes": 29662,
+        "lines": 809,
+        "relevant_lines": [
+          [
+            120,
+            174
+          ]
+        ]
+      },
+      {
+        "path": "references/vllm/vllm/model_executor/models/qwen3_next.py",
+        "available": true,
+        "sha256": "8d614ce262ab9340585f9a2ad4ab117228f076e3672fcb5f04930ff0a38223ae",
+        "bytes": 30278,
+        "lines": 830,
+        "relevant_lines": [
+          [
+            207,
+            258
+          ]
+        ]
+      },
+      {
+        "path": "references/vllm/vllm/model_executor/models/qwen2_moe.py",
+        "available": true,
+        "sha256": "40b659be214fbd1a96f6d4a4f881a8e20c85f058dbe45d5ead8018b5e9e00f0b",
+        "bytes": 23094,
+        "lines": 603,
+        "relevant_lines": [
+          [
+            77,
+            123
+          ]
+        ]
+      },
+      {
+        "path": "references/vllm/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py",
+        "available": true,
+        "sha256": "885c56f5e3584ab60bb4ce4b42cf8259e5e92c86ba13aa6128e6ed7a2a20d2b0",
+        "bytes": 68663,
+        "lines": 1828,
+        "relevant_lines": [
+          [
+            442,
+            551
+          ],
+          [
+            568,
+            633
+          ]
+        ]
+      },
+      {
+        "path": "references/vllm-ascend/vllm_ascend/ops/gdn.py",
+        "available": true,
+        "sha256": "d6ec29919268178f5bf6e70e689c1d273d04b1cb1d84dc94efa7bbbc35490816",
+        "bytes": 21887,
+        "lines": 454,
+        "relevant_lines": [
+          [
+            68,
+            145
+          ]
+        ]
+      },
+      {
+        "path": "references/vllm/vllm/model_executor/layers/linear.py",
+        "available": true,
+        "sha256": "a5e099997f868a5ce670aa2afe94da90222fceace36aef4e1275f3830ee257ab",
+        "bytes": 63273,
+        "lines": 1571,
+        "relevant_lines": [
+          [
+            576,
+            590
+          ],
+          [
+            1541,
+            1558
+          ]
+        ]
+      },
+      {
+        "path": "references/vllm-ascend/vllm_ascend/ops/linear_op.py",
+        "available": true,
+        "sha256": "0333d3229dbfed3010413510b76395a9ad89138dfd1d578caab057573b6cd0fb",
+        "bytes": 30813,
+        "lines": 811,
+        "relevant_lines": [
+          [
+            742,
+            784
+          ]
+        ]
+      }
+    ]
+  },
+  "current_model_capacity_evidence": {
+    "target_config": {
+      "path": "configs/target.json",
+      "available": true,
+      "sha256": "0d90d116cccd2ca9b99cef447f66afb8bee7bb635d794afc72f6e937112ebdc0",
+      "bytes": 1792,
+      "lines": 93
+    },
+    "model_name": "/softwarePlatform/c00879303/Qwen3.5-27B-w8a8-mtp",
+    "full_layer_receipt": {
+      "source": {
+        "path": "reports/target_diagnostic_startup_memory_20261019.txt",
+        "available": true,
+        "sha256": "147fe5dd934eea5e77508ccd743f354dc098d1974862f810cd0803a1e3c8bd7c",
+        "bytes": 39702,
+        "lines": 289,
+        "relevant_lines": [
+          7
+        ]
+      },
+      "layer_indices": [
+        3,
+        7,
+        11,
+        15,
+        19,
+        23,
+        27,
+        31,
+        35,
+        39,
+        43,
+        47,
+        51,
+        55,
+        59,
+        63
+      ],
+      "full_layer_count": 16,
+      "model_fingerprint": "f8d190c5b89c1521220f935d2567a587d6e291ed69066a45a106560b05a2174c",
+      "scope": "rotation preparation receipt even though this diagnostic subsequently failed before model load; does not provideH/F/V."
+    },
+    "successful_profile_before_later_trap": {
+      "source": {
+        "path": "reports/target_runtime_trap_20261019.txt",
+        "available": true,
+        "sha256": "834fec8944f9ffc4c247195c85e565c278c2641368618042be9a9d1522ed82b1",
+        "bytes": 65537,
+        "lines": 417,
+        "relevant_lines": [
+          [
+            1,
+            5
+          ],
+          [
+            415,
+            417
+          ]
+        ]
+      },
+      "reported_gib_per_rank": {
+        "weights": 10.17,
+        "peak_activation": 1.36,
+        "non_torch": 0.49,
+        "graph_min": 0.37,
+        "graph_max": 0.38,
+        "current_kv": 14.53,
+        "startup_free": 29.12,
+        "total": 29.49
+      },
+      "weights_rounding_interval_gib": [
+        10.165,
+        10.175
+      ],
+      "scope": "Native memory profiling only; target startupSHA unknown and subsequent runtime failed. No stable throughput measurement."
+    },
+    "missing_geometry": {
+      "hidden_size": null,
+      "intermediate_size": null,
+      "vocab_size": null,
+      "quantization_exclusion_list": null,
+      "actual_active_weight_bytes_per_step": null
+    },
+    "reference_class_defaults_rejected": {
+      "source": {
+        "path": "references/vllm/vllm/transformers_utils/configs/qwen3_5.py",
+        "available": true,
+        "sha256": "7fb6eb71d72f2fc53ac8cf09f3d0937c5ed5cf93204f04fa5db8401f7672ee2c",
+        "bytes": 7235,
+        "lines": 200,
+        "relevant_lines": [
+          [
+            42,
+            65
+          ]
+        ]
+      },
+      "hidden_size": 4096,
+      "intermediate_size": 12288,
+      "num_hidden_layers": 32,
+      "reason": "Class defaults are not the target27B checkpoint config; do not substitute these values or infer hidden_size=Q*D."
+    }
+  },
+  "historical_local_device_anchors": {
+    "selection": "historical operator cost only; all excluded from current BF16 milliseconds calibration",
+    "q4_same_shape_native_ms": 1.4508999586105347,
+    "q4_fe0_cv_ms": 15.330120086669922,
+    "q4_fe0_cv_merge_ms": 15.401080131530762,
+    "q4_source": {
+      "path": "reports/target_q4_report_collision_20260928.txt",
+      "available": true,
+      "sha256": "005f838c24ec9a7bcbd44f45f75b71bff0ab1d17b4624f648ce84e1f665ff9c1",
+      "bytes": 8483,
+      "lines": 62,
+      "relevant_lines": [
+        47,
+        49,
+        51,
+        53
+      ]
+    },
+    "mixed_cases": {
+      "mixed_cold_first_chunk": {
+        "source_line": 213,
+        "total_n": 16384,
+        "requests": 32,
+        "splits": 1,
+        "prompt_q": 16260,
+        "decode_q": 124,
+        "prefill_context": 0,
+        "operator": "attention_cv_fast_cluster4_out",
+        "total_ms": 46.41529846191406,
+        "cv_ms": 35.65578079223633,
+        "current_ms": 6.97376012802124,
+        "merge_ms": 3.368720054626465,
+        "oracle": "passed",
+        "cv_to_total_reported_median_ratio": 0.7681902729009397
+      },
+      "mixed_history_30k": {
+        "source_line": 202,
+        "total_n": 16384,
+        "requests": 32,
+        "splits": 1,
+        "prompt_q": 16260,
+        "decode_q": 124,
+        "prefill_context": 13740,
+        "operator": "attention_cv_fast_cluster4_out",
+        "total_ms": 137.67056274414062,
+        "cv_ms": 125.10415649414062,
+        "current_ms": 7.015120029449463,
+        "merge_ms": 5.157320022583008,
+        "oracle": "passed",
+        "cv_to_total_reported_median_ratio": 0.9087211819323021
+      },
+      "decode_from_mixed_history_30k_n128_s3": {
+        "source_line": 209,
+        "total_n": 128,
+        "requests": 31,
+        "splits": 3,
+        "prompt_q": 0,
+        "decode_q": 124,
+        "prefill_context": null,
+        "operator": "attention_cv_fast_out",
+        "total_ms": 11.395779609680176,
+        "cv_ms": 11.328499794006348,
+        "current_ms": 0.0,
+        "merge_ms": 0.06846000254154205,
+        "oracle": "passed",
+        "cv_to_total_reported_median_ratio": 0.9940960760932339
+      },
+      "decode_from_mixed_history_30k_n16384_s1": {
+        "source_line": 195,
+        "total_n": 16384,
+        "requests": 31,
+        "splits": 1,
+        "prompt_q": 0,
+        "decode_q": 124,
+        "prefill_context": null,
+        "operator": "attention_cv_fast_out",
+        "total_ms": 36.737998962402344,
+        "cv_ms": 34.971641540527344,
+        "current_ms": 0.0,
+        "merge_ms": 1.771340012550354,
+        "oracle": "passed",
+        "cv_to_total_reported_median_ratio": 0.9519201515661566
+      }
+    },
+    "mixed_source": {
+      "path": "reports/target_64k_mixed_20260929.txt",
+      "available": true,
+      "sha256": "52c27ec05f19688fc7cf74672ca8a856e1f53e28c83ff804baf9a47bc07400af",
+      "bytes": 40030,
+      "lines": 218,
+      "relevant_lines": [
+        [
+          195,
+          213
+        ]
+      ]
+    },
+    "current16k_native_ms": 6.595860004425049,
+    "current16k_source": {
+      "path": "reports/target_k4_43s_performance.txt",
+      "available": true,
+      "sha256": "f904b5bef5f4fe70851f587d200a939af48765b9cbcbbeb59f14674a74aafc0f",
+      "bytes": 11312,
+      "lines": 119,
+      "relevant_lines": [
+        28
+      ]
+    },
+    "paired_K4": {
+      "native_seconds": 14.7,
+      "oscar_seconds": 43.3,
+      "workload_inputs": [
+        20000,
+        23000,
+        27000,
+        30000
+      ],
+      "outputs_per_request": 64,
+      "applicable_oscar_commit": "d7ba977 FP32-era",
+      "source": {
+        "path": "reports/target_k4_43s_performance.txt",
+        "available": true,
+        "sha256": "f904b5bef5f4fe70851f587d200a939af48765b9cbcbbeb59f14674a74aafc0f",
+        "bytes": 11312,
+        "lines": 119,
+        "relevant_lines": [
+          [
+            24,
+            31
+          ],
+          [
+            104,
+            116
+          ]
+        ]
+      },
+      "cannot_identify": "Whole batch wall cannot uniquely decompose GDN/MLP/TP and each Attention source."
+    },
+    "q4_native_reparsed_anchor": {
+      "source": {
+        "path": "reports/target_q4_report_collision_20260928.txt",
+        "sha256": "005f838c24ec9a7bcbd44f45f75b71bff0ab1d17b4624f648ce84e1f665ff9c1",
+        "measurement_line": 47,
+        "commit_update_lines": [
+          9,
+          10
+        ],
+        "available": true
+      },
+      "version": {
+        "observed_repository_commit": "928edb34482f887dd97af591543b4b74565f34fd",
+        "source_identity_evidence": "The retained shell log shows git fast-forward to928edb3 followed by this diagnostic; it does not contain a target torch_npu/CANN library hash.",
+        "probe_source": {
+          "path": "tools/probe_decode_hotpath.py",
+          "repository_commit": "928edb34482f887dd97af591543b4b74565f34fd",
+          "git_blob": "57fcbd902bfb9ff46b3fd8d57185b3d5bcff0fb7",
+          "sha256": "616def148b6dd6893243aaffeedad5a2cf3f7990d36c3ef9d18fc840b2ca4dca",
+          "bytes": 26763,
+          "lines": 478,
+          "relevant_lines": [
+            [
+              21,
+              25
+            ],
+            [
+              53,
+              68
+            ],
+            [
+              80,
+              108
+            ],
+            [
+              132,
+              148
+            ],
+            [
+              232,
+              282
+            ],
+            [
+              293,
+              325
+            ],
+            [
+              395,
+              413
+            ]
+          ],
+          "scope": "read-only versioned source in this repository; not a recreated device artifact"
+        },
+        "fixture_type_source": {
+          "path": "tools/probe_history_reuse.py",
+          "repository_commit": "928edb34482f887dd97af591543b4b74565f34fd",
+          "git_blob": "4aecf697dda040614b0fc99be237e1bca8fbbdc8",
+          "sha256": "035cf22027b7a5e4a6d87c5b216645c929a4228daedc20ebd6228b32ea46e81c",
+          "bytes": 63032,
+          "lines": 1161,
+          "relevant_lines": [
+            [
+              30,
+              34
+            ],
+            [
+              49,
+              71
+            ]
+          ],
+          "scope": "read-only versioned source in this repository; not a recreated device artifact"
+        },
+        "driver_source": {
+          "path": "tools/observe_serve.py",
+          "repository_commit": "928edb34482f887dd97af591543b4b74565f34fd",
+          "git_blob": "1e701b16d1e1588ab696f8d6955db2b69ad5b0c9",
+          "sha256": "70656e3960685e511314303f7c1d65fa1984b84e4efb58a7d9ea0b525166543c",
+          "bytes": 32334,
+          "lines": 531,
+          "relevant_lines": [
+            [
+              295,
+              338
+            ],
+            [
+              379,
+              389
+            ]
+          ],
+          "scope": "read-only versioned source in this repository; not a recreated device artifact"
+        }
+      },
+      "shape": {
+        "requests": 32,
+        "query_lengths": [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        "actual_query_tokens": 128,
+        "padded_query_tokens": 128,
+        "contexts": [
+          20000,
+          23000,
+          27000,
+          30000,
+          20000,
+          23000,
+          27000,
+          30000,
+          20000,
+          23000,
+          27000,
+          30000,
+          20000,
+          23000,
+          27000,
+          30000,
+          20000,
+          23000,
+          27000,
+          30000,
+          20000,
+          23000,
+          27000,
+          30000,
+          20000,
+          23000,
+          27000,
+          30000,
+          20000,
+          23000,
+          27000,
+          30000
+        ],
+        "mean_history_context": 25000.0,
+        "native_kv_lengths": [
+          20004,
+          23004,
+          27004,
+          30004,
+          20004,
+          23004,
+          27004,
+          30004,
+          20004,
+          23004,
+          27004,
+          30004,
+          20004,
+          23004,
+          27004,
+          30004,
+          20004,
+          23004,
+          27004,
+          30004,
+          20004,
+          23004,
+          27004,
+          30004,
+          20004,
+          23004,
+          27004,
+          30004,
+          20004,
+          23004,
+          27004,
+          30004
+        ],
+        "native_q_cumulative": [
+          4,
+          8,
+          12,
+          16,
+          20,
+          24,
+          28,
+          32,
+          36,
+          40,
+          44,
+          48,
+          52,
+          56,
+          60,
+          64,
+          68,
+          72,
+          76,
+          80,
+          84,
+          88,
+          92,
+          96,
+          100,
+          104,
+          108,
+          112,
+          116,
+          120,
+          124,
+          128
+        ],
+        "query_heads_per_rank": 6,
+        "kv_heads_per_rank": 1,
+        "head_dim": 256,
+        "head_geometry_tensor_parallel_size": 4,
+        "actually_measured_devices": 1,
+        "device": "npu:0 after selected visibility",
+        "logged_visible_physical_devices": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "oscar_source_splits": 3,
+        "native_split_count": "internal FIA, not observed; OSCAR S3 is not a native FIA split parameter",
+        "oscar_launch_cube_cores": 20,
+        "native_launch_cube_cores": "not observed; do not assign the OSCAR launch count to FIA",
+        "native_block_size": 128,
+        "native_block_table_shape": [
+          32,
+          235
+        ],
+        "native_physical_pages": 6264,
+        "native_layout": "TND",
+        "q_k_v_dtype": "BF16",
+        "output_dtype": "BF16",
+        "native_sparse_mode": 3,
+        "native_scale": 0.0625,
+        "native_mask_dtype": "int8",
+        "native_mask_shape": [
+          2048,
+          2048
+        ],
+        "native_causal_scope": "Each q4 row sees context+local_query_index+1; actual_seq_lengths_kv=context+4."
+      },
+      "timing": {
+        "native_fia_median_ms": 1.4508999586105347,
+        "warmup": 2,
+        "measured_samples": 5,
+        "statistic": "median",
+        "sample_values_available": false,
+        "same_stream_events": true,
+        "measurement_operator": "torch_npu.npu_fused_infer_attention_score.out",
+        "operator_wrapper_window": "Events bracket only native .out with preallocated workspace and outputs; separate synchronize completes end event.",
+        "alternating_order": "Native first for warmup and even measured iteration, OSCAR first for odd measured iteration.",
+        "included": [
+          "native FIA .out device work"
+        ],
+        "excluded": [
+          "cache fill",
+          "workspace allocation",
+          "model layers outside this FIA call",
+          "MTP model forwards",
+          "tensor-parallel communications",
+          "graph capture/replay",
+          "CPU independent oracle checks"
+        ],
+        "driver_order": "This checked driver runs preflight then candidate_gate then q4_diagnostic synchronously; interleaved terminal lines do not prove concurrent device probes."
+      },
+      "evidence_limits": [
+        "Original diagnostic JSON was overwritten by same-name phase report per archive#151; retained terminal median is reparseable, but individual5 Event samples, target artifact SHA, logical input hash, full native oracle residual and library identity cannot be recovered here.",
+        "No native FIA kernel-level duration/hardware-counter trace is retained; this is torch_npu Event duration for the operator wrapper, potentially including multiple internal kernels.",
+        "One B32/q4/20–30K shape cannot identify fixed launch cost, bandwidth versus compute shares, q1 scaling, B scaling, context scaling, graph effects, model-layer interference or steady production memory-cache behavior.",
+        "This is a historical BF16 native FIA call with a contemporaneous FP32-era OSCAR comparison. It is not a current BF16 OSCAR time measurement."
+      ],
+      "logical_normalizer": {
+        "logical_kv_tokens_once": 800128,
+        "logical_bf16_kv_bytes_once": 819331072,
+        "allocated_paged_kv_bytes": 821035008,
+        "query_and_output_bytes_each": 393216,
+        "causal_query_key_pairs_across_requests": 3200320,
+        "matmul_flops_qk_plus_pv": 19662766080,
+        "effective_logical_kv_GB_per_second": 564.7054210302953,
+        "effective_logical_kv_GiB_per_second": 525.9229066132524,
+        "equivalent_qk_pv_TFLOP_per_second": 13.552117059008117,
+        "definition": "Logical K/V footprint read once acrossq4 requests divided by measured Event median; QK/PV count uses2FLOPs/FMA and per-query causal lengths. Neither is measured HBM traffic or hardware FLOP utilization.",
+        "usage": "Historical shape-local normalization only. A BW-only conditional scenario may use this scalar with explicit ideal one-pass KV reuse; it is not a measured HBM peak or an independently calibrated current throughput predictor.",
+        "q4_reuse_limit": "FIA can tile/re-read K/V and reuse data across query rows/heads; actual HBM bytes are unknown. Do not multiply logicalKV bytes byq4 orHq6 and call it measured traffic."
+      },
+      "selected_as_current_oscar_time_calibration": false,
+      "selected_as_historical_native_shape_normalization": true
+    }
+  },
+  "historical_sync_attribution_rejected_for_nonattention_zero": {
+    "source": {
+      "path": "issue1_full_record.md",
+      "available": true,
+      "sha256": "900cec481f787568e7a049ab193ccfd71757de4c8c30338871f85e4d0f2d2ceb",
+      "bytes": 3367394,
+      "lines": 28788,
+      "relevant_lines": [
+        [
+          28227,
+          28255
+        ],
+        [
+          28258,
+          28282
+        ]
+      ]
+    },
+    "fia_device_sum_seconds": 2463.859,
+    "fia_device_count": 868,
+    "prepare_device_sum_seconds": 0.725,
+    "reason": "Four-rank sums of instrumented OSCAR phase intervals with4 unpaired waiting events. prepare is not a complete measured envelope around all model nonattention work. No complete same-run layer timeline or GDN/MLP/TP events are retained; neither zero nonattention cost nor full-run99.3% Attention share is identified."
+  },
+  "simulator_cycle_evidence": {
+    "complete_comparisons": [
+      {
+        "source": {
+          "path": "reports/decode_integrated_batch32_retry_after_oom_20261007/q4_r32_n128_20to30k_s3-comparison.json",
+          "available": true,
+          "sha256": "4a42ceb76d9523cd7363095459f4c1f0b917ca7aa954cc28f2bd3c885e5155f7",
+          "bytes": 3051,
+          "lines": 80
+        },
+        "shape": "R32/N128/D256/Hq6/Hkv1/S3; 20–30K synthetic contexts",
+        "baseline_ticks": 16290667,
+        "candidate_ticks": 9589788,
+        "baseline_over_candidate": 1.6987515261025583,
+        "units": "CAModel task.duration ticks",
+        "npu_seconds": null,
+        "current_bf16_calibration_selected": false,
+        "reason": "Historical pre-BF16 operator and exact synthetic fixture only; no measured tick-to-NPU-seconds transfer, whole model, GDN, MLP, TP or current BF16 counterpart."
+      },
+      {
+        "source": {
+          "path": "reports/decode_mdl_load_20261012/completed/reports/mdl-comparison.json",
+          "available": true,
+          "sha256": "f180a3cc634f19ca0192844943bcf9ebbb68c73c79050c3b077237e098398901",
+          "bytes": 674,
+          "lines": 20
+        },
+        "shape": "R2/N8/q4/context1341/S1",
+        "baseline_ticks": 1079788,
+        "candidate_ticks": 931042,
+        "baseline_over_candidate": 1.1597629322844727,
+        "units": "CAModel task.duration ticks",
+        "npu_seconds": null,
+        "current_bf16_calibration_selected": false,
+        "reason": "Historical pre-BF16 operator and exact synthetic fixture only; no measured tick-to-NPU-seconds transfer, whole model, GDN, MLP, TP or current BF16 counterpart."
+      },
+      {
+        "source": {
+          "path": "reports/q1_mdl_qualification_20261013/completed/comparison.json",
+          "available": true,
+          "sha256": "7c7e9d328ad55d69980e2852d117a50db2684550a139922f264a5cbb40ebb3aa",
+          "bytes": 789,
+          "lines": 24
+        },
+        "shape": "R2/N8/q1/contexts1344,1376/S1",
+        "baseline_ticks": 948223,
+        "candidate_ticks": 797943,
+        "baseline_over_candidate": 1.188334254451759,
+        "units": "CAModel task.duration ticks",
+        "npu_seconds": null,
+        "current_bf16_calibration_selected": false,
+        "reason": "Historical pre-BF16 operator and exact synthetic fixture only; no measured tick-to-NPU-seconds transfer, whole model, GDN, MLP, TP or current BF16 counterpart."
+      },
+      {
+        "source": {
+          "path": "reports/c4_composed_long_20261013/completed/comparison.json",
+          "available": true,
+          "sha256": "19f661fac86084dfb8b3086cbea90cd775416f9839dafd36ba85b36467b06866",
+          "bytes": 1547,
+          "lines": 30
+        },
+        "shape": "R1/Q336/context1341/S1/20core;1008tasks",
+        "baseline_ticks": 3540306,
+        "candidate_ticks": 2671072,
+        "baseline_over_candidate": 1.3254251476560721,
+        "units": "CAModel task.duration ticks",
+        "npu_seconds": null,
+        "current_bf16_calibration_selected": false,
+        "reason": "Historical pre-BF16 operator and exact synthetic fixture only; no measured tick-to-NPU-seconds transfer, whole model, GDN, MLP, TP or current BF16 counterpart."
+      }
+    ],
+    "r32_model_conditions": {
+      "source": {
+        "path": "reports/decode_integrated_batch32_camodel_20261007/q4_r32_n128_20to30k_s3-baseline/report.json",
+        "available": true,
+        "sha256": "25799f6fd5f31fc131bc63ff746e135b4102518695a32de2aaa1adfd04695103",
+        "bytes": 20959,
+        "lines": 870
+      },
+      "launch_aic_cores": 20,
+      "model_aic_cores": 24,
+      "model_aiv_cores": 48,
+      "L2_cache_enable": 0,
+      "library_sha256": "11ae2f408e3c34cd444fe9567702fad4819a343c1a41b1317e2079ce305bde23"
+    },
+    "small_critical_chain": {
+      "source": {
+        "path": "reports/decode_critical_chain_20261012.json",
+        "available": true,
+        "sha256": "729c5ecfc94d4f1341bf81b83ad697595c9e01f4ab6b53ac9b8d76a8aa4f7f0a",
+        "bytes": 10174,
+        "lines": 363,
+        "relevant_lines": [
+          [
+            1,
+            21
+          ]
+        ]
+      },
+      "normal_ticks": 1072361,
+      "profile_ticks": 1093991,
+      "instrumentation_perturbation": 0.020170446332904657,
+      "scope": "R2 q4/context1341, complete trace but not current BF16 or full model"
+    },
+    "old_fp32_source_type_evidence": {
+      "path": "csrc/kernels/attention_cv_striped_decode_simd.cpp",
+      "available": true,
+      "sha256": "c67219ce15c98e932acaa8b1c5515a3f31c99dd6e4963823623528ba2b3a3930",
+      "bytes": 32028,
+      "lines": 623,
+      "relevant_lines": [
+        [
+          32,
+          38
+        ],
+        [
+          67,
+          75
+        ]
+      ]
+    },
+    "tick_to_physical_second_factor": null,
+    "why_no_seconds": "No retained same-shape same-build current BF16 physical-device calibration, no measured frequency/bandwidth mapping, and kernels omit target model nonattention/TP/MTP. Event elapsed is recorded as zero in the older CAModel report.",
+    "previous_simulator_calibration": {
+      "path": "reports/simulator_b4_performance_20260930.json",
+      "available": true,
+      "sha256": "ddf6604f02a8e6f1758d5b3b75085908a1be0a147c75381a2f802bc015718c03",
+      "bytes": 8553,
+      "lines": 173
+    }
+  },
+  "roofline_parameters_for_parent": {
+    "safe_fixed": {
+      "tensor_parallel": 4,
+      "num_speculative_tokens": 3,
+      "input_tokens_64k_fixture": 65100,
+      "output_tokens_per_request": 512,
+      "requests": 120,
+      "max_num_batched_tokens": 16384,
+      "max_num_seqs": 128,
+      "current_full_layer_count_from_receipt": 16
+    },
+    "historical_sensitivity_points_only": {
+      "native_total_64k_seconds": [
+        1371.9691525,
+        1342.4437259
+      ],
+      "old_oscar_total_64k_seconds": [
+        3331.5501112,
+        2467.1275737
+      ],
+      "native_fixed3_window_mean": 3.78898,
+      "old_oscar_fixed3_window_mean": 2.913571,
+      "do_not_use_as_current_point_estimates": true
+    },
+    "unidentified_current_parameters": {
+      "nonattention_seconds_per_step": null,
+      "attention_seconds_per_step": null,
+      "GDN_seconds_per_step": null,
+      "MLP_seconds_per_step": null,
+      "TP_seconds_per_step": null,
+      "MTP_seconds_per_step": null,
+      "effective_W8A8_flops_per_second": null,
+      "effective_BF16_flops_per_second": null,
+      "HBM_bandwidth_bytes_per_second": null,
+      "current_acceptance_point": null,
+      "clock_hz_for_CAModel_conversion": null
+    },
+    "bounds": {
+      "successful_valid_draft_metric_mean": [
+        1,
+        4
+      ],
+      "current_nonattention_seconds_per_step_lower": 0,
+      "current_nonattention_seconds_per_step_finite_upper": null,
+      "nonattention_bound_interpretation": "Mathematical nonnegative bound only; zero is not a selected central value. Existing observations do not supply a useful finite current upper bound."
+    },
+    "whole_step_equation": "T_step = T_main_FULL_Attention + T_main_dense_projections + T_GDN_core + T_vector_misc + T_MTP_models_and_logits + T_collectives + T_host_and_launch - measured_overlap. Every term requires independent measurement or an explicitly labelled analytic assumption; none is recovered uniquely from one wall-time anchor.",
+    "steady_throughput_equation": "For a successful stable cohort withB valid requests: generated_tok_s = B*E[emitted_tokens_per_verified_request]/T_step. This excludes arrival/ramp/drain/mixed-prefill effects; using it alone is not an end-to-end65100/512/120 simulation.",
+    "historical_native_shape_normalizer": {
+      "logical_bf16_KV_bytes_per_second": 564705421030.2953,
+      "shape": "B32/q4/contexts20K,23K,27K,30K each8; Hq6/Hkv1/D256; one device",
+      "source_section": "historical_local_device_anchors.q4_native_reparsed_anchor",
+      "current_time_calibration": false,
+      "fixed_and_linear_nonattention_ms": null
+    }
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "kind": "local_profile_validation_not_NPU_acceptance",
+  "source_commit": "73280bdfdbbd22a3fe2eb06b25c7ab95a9660d79",
+  "tests": {
+    "passed": 37,
+    "failures": 0,
+    "errors": 0,
+    "xml": "reports/batch_profiling_tests_20261019.xml"
+  },
+  "experiments": {
+    "source_cost_decode_cases": 78,
+    "actual_cube_shape_checks": 30,
+    "actual_unpack_H_variants": 3,
+    "host_profile_shapes": 36,
+    "sensitivity_cases": 1920
+  },
+  "production_changes": false,
+  "frozen_sha256": {
+    "attention_cv.cpp": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4",
+    "attention_tasks.cpp": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952",
+    "store_int2.cpp": "5a6fa9619e399bb80bc0455c4426396d98510326bb899900b4b96c65d2b58506",
+    "rotate_clip_store.cpp": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748",
+    "merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+    "status_guard.cpp": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+    "oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+    "configs/acceptance.json": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+    "oscar_ascend/ops/reference.py": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c"
+  },
+  "initial_local_model_failure": {
+    "failed_tests": 2,
+    "cause": "zero optional GM-byte denominator in limiting-case break-even computation",
+    "resolution": "return None when threshold is inapplicable; final tests pass"
+  },
+  "initial_host_profile_superseded": "reports/batch_host_profile_20261019_initial_repeated_builder.json",
+  "source_review_corrections": [
+    "one native metadata build per attention group, shared across 16 layer decisions",
+    "eager draft 4B retained across later passes, not target capture-rounded N",
+    "first-MTP native current FIA excluded from custom-CV counts"
+  ],
+  "not_run": [
+    "current CANN/CAModel",
+    "NPU service/model profiling",
+    "graph",
+    "model quality",
+    "AISBench"
+  ],
+  "unchanged_existing_failures": [
+    "BF16 frozen screen 7/11 failed, including two final outputs",
+    "target Trap not attributed or resolved"
+  ],
+  "evidence": [
+    {
+      "path": "reports/batch_calibration_20261019.json",
+      "sha256": "4ccef27273213127d5dde7f371c1634bbc90a5c076388c02a1c5b4dfb337fd81"
+    },
+    {
+      "path": "reports/batch_capacity_20261019.json",
+      "sha256": "e83faefee3463ccb07dd8494e5592671a2e26aa05205b06903dbfbddae8f7903"
+    },
+    {
+      "path": "reports/batch_host_profile_20261019.json",
+      "sha256": "20a7da0bc4da9ea648ca8afc9cbb17cc4cf9af05573f42e3931266d7dbce9bbb"
+    },
+    {
+      "path": "reports/batch_kernel_cost_20261019.json",
+      "sha256": "91818e59df675fa9225bd493bf6bb7bccc86d4b9b45669913021fa463ecb4318"
+    },
+    {
+      "path": "reports/batch_simulation_assumptions_20261019.json",
+      "sha256": "edc7759ddda12dc08dbbba1e4844b6111b8966c9948248c26c95edd5a3b9a2a7"
+    },
+    {
+      "path": "reports/batch_throughput_simulation_20261019.json",
+      "sha256": "10403ea8e7c8b9dd74dbca15dce02a1ae4bff19df552aeaaa63fd0c2422452a8"
+    },
+    {
+      "path": "tests/test_batch_capacity_20261019.py",
+      "sha256": "f0303e81ffc81704156d95912894932f0656dc4850fff9ac90b060706a5f3d78"
+    },
+    {
+      "path": "tests/test_batch_host_profile_20261019.py",
+      "sha256": "761a2f8388a4c7529124cb36c3fbdc9750aea77cc64233533cdab65792ef7286"
+    },
+    {
+      "path": "tests/test_batch_kernel_cost_20261019.py",
+      "sha256": "f0a2dcbff4147c606f9b92b4d314aa9846fd724d7c17f4bf361eedaa45344d5a"
+    },
+    {
+      "path": "tests/test_batch_throughput_simulation_20261019.py",
+      "sha256": "ac8d82757f8438c8eb0ab772eda1a53fc9f7f15fef139a3c8657c80fa1a2d92b"
+    },
+    {
+      "path": "tools/experiments/batch_capacity_20261019.py",
+      "sha256": "921edb2222b25a2f659e46b6327ec523702720f9e13a9c969ffe5664626e2f08"
+    },
+    {
+      "path": "tools/experiments/batch_host_profile_20261019.py",
+      "sha256": "552b161b38f9651dc40008f63f3b4dd3fb385b0d3005cbd201bdc71320559176"
+    },
+    {
+      "path": "tools/experiments/batch_kernel_cost_20261019.py",
+      "sha256": "8b2b04a3d82f1189a146193f00f15961148379f124c73ae2b234ccedde33c28a"
+    },
+    {
+      "path": "tools/experiments/batch_throughput_simulation_20261019.py",
+      "sha256": "279c484731eda102d543276f1d2dc2f2c9812b2f8eee279b918103c87ad6cf6d"
+    }
+  ]
+}

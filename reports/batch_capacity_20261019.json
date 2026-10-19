@@ -1,0 +1,3597 @@
+{
+  "schema": 1,
+  "evidence_kind": "source_arithmetic_and_native_planner_host_execution_not_NPU_profiling",
+  "git_head": "73280bdfdbbd22a3fe2eb06b25c7ab95a9660d79",
+  "configuration": {
+    "tp": 4,
+    "devices": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "port": 7878,
+    "apc": false,
+    "budget_tokens": 16384,
+    "max_seqs": 128,
+    "mtp": 3
+  },
+  "model": {
+    "geometry": {
+      "target_full_layers": 16,
+      "gdn_layers": 48,
+      "draft_full_layers": 1,
+      "local_query_heads": 6,
+      "local_kv_heads": 1,
+      "head_dim": 256,
+      "linear_key_heads": 16,
+      "linear_value_heads": 48,
+      "linear_key_dim": 128,
+      "linear_value_dim": 128,
+      "conv_kernel": 4
+    },
+    "status": "conditional_existing_native_shape_fixture",
+    "model_config": null,
+    "missing": "Current target model config/KVCacheSpec dump absent; 16+1 FULL and 48 GDN are conditional existing fixture dimensions.",
+    "gdn_shapes": [
+      [
+        6,
+        2560
+      ],
+      [
+        12,
+        128,
+        128
+      ]
+    ],
+    "gdn_dtype": "bfloat16",
+    "conv_bytes": 30720,
+    "ssm_bytes": 393216
+  },
+  "budgets": {
+    "source": "reports/target_runtime_trap_20261019.txt",
+    "lines": [
+      1,
+      2,
+      3,
+      5
+    ],
+    "current_kv_gib_printed_by_rank": [
+      "14.53",
+      "14.53",
+      "14.53",
+      "14.53"
+    ],
+    "current_oscar_budget_interval_bytes": [
+      15596099993,
+      15606837411
+    ],
+    "current_budget_rounding": "Two-decimal log rounding interval; exact runtime KV allocation absent.",
+    "suggested_fit_requested_utilization_bytes_by_rank": [
+      15039989350,
+      15039903334,
+      15035635302,
+      15035758182
+    ],
+    "scenarios": {
+      "observed_oscar_rounding_lower": 15596099993,
+      "observed_oscar_rounding_upper": 15606837411,
+      "suggested_fit_0_9_min_rank": 15035635302
+    },
+    "native_same_run_profiled_budget_bytes": null,
+    "comparison_scope": "Native uses the SAME supplied net KV pool budget as a conditional comparison. Native post-profile budget is not measured by this OSCAR log.",
+    "do_not_double_subtract": "The observed KV budget already follows model/workspace profiling; do not subtract OSCAR scratch or rotations a second time."
+  },
+  "modes": [
+    {
+      "mode": "none",
+      "production_default": true,
+      "native_full_tokens_per_page": 768,
+      "oscar_full_tokens_per_page": 2816,
+      "page_bytes_per_layer": 817152,
+      "shared_pool_width": 17,
+      "group_layer_counts": [
+        17,
+        16,
+        16,
+        16
+      ],
+      "full_groups": 1,
+      "gdn_groups": 3,
+      "gdn_padding_slots": 3,
+      "one_pool_block_and_null_bytes": 13891584,
+      "gdn_states_per_group_minimum": 4,
+      "gdn_states_per_group_peak": 4,
+      "gdn_per_request_raw_payload_at_peak": 81395712,
+      "oscar_full_page_components": {
+        "int2_capacity": 382976,
+        "precise_snapshot": 333336,
+        "unused_conv": 30720,
+        "unused_ssm_tail": 10240,
+        "unused_padding": 59880
+      },
+      "native_planner_allocations": {
+        "observed_oscar_rounding_lower": {
+          "num_pool_blocks": 1122,
+          "tensor_count": 17,
+          "allocated_bytes": 15586357248,
+          "unused_budget_bytes": 9742745
+        },
+        "observed_oscar_rounding_upper": {
+          "num_pool_blocks": 1123,
+          "tensor_count": 17,
+          "allocated_bytes": 15600248832,
+          "unused_budget_bytes": 6588579
+        },
+        "suggested_fit_0_9_min_rank": {
+          "num_pool_blocks": 1082,
+          "tensor_count": 17,
+          "allocated_bytes": 15030693888,
+          "unused_budget_bytes": 4941414
+        }
+      },
+      "requests": [
+        {
+          "context_tokens": 32768,
+          "additional_output_reserve": 0,
+          "mtp_lookahead_tokens": 3,
+          "reserved_full_tokens": 32771,
+          "per_request_bytes_per_rank": {
+            "native": {
+              "full_pool_blocks": 43,
+              "full_bytes": 597338112,
+              "total_min_live_bytes": 764037120,
+              "total_peak_reserved_bytes": 764037120
+            },
+            "oscar": {
+              "full_pool_blocks": 12,
+              "full_bytes": 166699008,
+              "total_min_live_bytes": 333398016,
+              "total_peak_reserved_bytes": 333398016
+            }
+          },
+          "capacity": {
+            "observed_oscar_rounding_lower": {
+              "native": {
+                "max_B_by_minimum_live": 20,
+                "max_B_by_peak_reservation": 20
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 46,
+                "max_B_by_peak_reservation": 46
+              }
+            },
+            "observed_oscar_rounding_upper": {
+              "native": {
+                "max_B_by_minimum_live": 20,
+                "max_B_by_peak_reservation": 20
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 46,
+                "max_B_by_peak_reservation": 46
+              }
+            },
+            "suggested_fit_0_9_min_rank": {
+              "native": {
+                "max_B_by_minimum_live": 19,
+                "max_B_by_peak_reservation": 19
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 45,
+                "max_B_by_peak_reservation": 45
+              }
+            }
+          },
+          "batch_sweep": [
+            {
+              "batch": 1,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 777928704,
+                  "peak_reserved_pool_bytes_including_one_null": 777928704,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 347289600,
+                  "peak_reserved_pool_bytes_including_one_null": 347289600,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 4,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 4,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 3070040064,
+                  "peak_reserved_pool_bytes_including_one_null": 3070040064,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 1347483648,
+                  "peak_reserved_pool_bytes_including_one_null": 1347483648,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 16,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 8,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 6126188544,
+                  "peak_reserved_pool_bytes_including_one_null": 6126188544,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 2681075712,
+                  "peak_reserved_pool_bytes_including_one_null": 2681075712,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 32,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 16,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 12238485504,
+                  "peak_reserved_pool_bytes_including_one_null": 12238485504,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 5348259840,
+                  "peak_reserved_pool_bytes_including_one_null": 5348259840,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 64,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 32,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 24463079424,
+                  "peak_reserved_pool_bytes_including_one_null": 24463079424,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 10682628096,
+                  "peak_reserved_pool_bytes_including_one_null": 10682628096,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 128,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 64,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 48912267264,
+                  "peak_reserved_pool_bytes_including_one_null": 48912267264,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 21351364608,
+                  "peak_reserved_pool_bytes_including_one_null": 21351364608,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 256,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 128,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 97810642944,
+                  "peak_reserved_pool_bytes_including_one_null": 97810642944,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 42688837632,
+                  "peak_reserved_pool_bytes_including_one_null": 42688837632,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 512,
+              "within_max_seqs_and_token_budget": true
+            }
+          ],
+          "native_over_oscar_full_physical_ratio": 3.5833333333333335,
+          "native_over_oscar_all_kv_peak_ratio": 2.2916666666666665
+        },
+        {
+          "context_tokens": 32768,
+          "additional_output_reserve": 512,
+          "mtp_lookahead_tokens": 3,
+          "reserved_full_tokens": 33283,
+          "per_request_bytes_per_rank": {
+            "native": {
+              "full_pool_blocks": 44,
+              "full_bytes": 611229696,
+              "total_min_live_bytes": 777928704,
+              "total_peak_reserved_bytes": 777928704
+            },
+            "oscar": {
+              "full_pool_blocks": 12,
+              "full_bytes": 166699008,
+              "total_min_live_bytes": 333398016,
+              "total_peak_reserved_bytes": 333398016
+            }
+          },
+          "capacity": {
+            "observed_oscar_rounding_lower": {
+              "native": {
+                "max_B_by_minimum_live": 20,
+                "max_B_by_peak_reservation": 20
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 46,
+                "max_B_by_peak_reservation": 46
+              }
+            },
+            "observed_oscar_rounding_upper": {
+              "native": {
+                "max_B_by_minimum_live": 20,
+                "max_B_by_peak_reservation": 20
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 46,
+                "max_B_by_peak_reservation": 46
+              }
+            },
+            "suggested_fit_0_9_min_rank": {
+              "native": {
+                "max_B_by_minimum_live": 19,
+                "max_B_by_peak_reservation": 19
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 45,
+                "max_B_by_peak_reservation": 45
+              }
+            }
+          },
+          "batch_sweep": [
+            {
+              "batch": 1,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 791820288,
+                  "peak_reserved_pool_bytes_including_one_null": 791820288,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 347289600,
+                  "peak_reserved_pool_bytes_including_one_null": 347289600,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 4,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 4,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 3125606400,
+                  "peak_reserved_pool_bytes_including_one_null": 3125606400,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 1347483648,
+                  "peak_reserved_pool_bytes_including_one_null": 1347483648,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 16,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 8,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 6237321216,
+                  "peak_reserved_pool_bytes_including_one_null": 6237321216,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 2681075712,
+                  "peak_reserved_pool_bytes_including_one_null": 2681075712,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 32,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 16,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 12460750848,
+                  "peak_reserved_pool_bytes_including_one_null": 12460750848,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 5348259840,
+                  "peak_reserved_pool_bytes_including_one_null": 5348259840,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 64,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 32,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 24907610112,
+                  "peak_reserved_pool_bytes_including_one_null": 24907610112,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 10682628096,
+                  "peak_reserved_pool_bytes_including_one_null": 10682628096,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 128,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 64,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 49801328640,
+                  "peak_reserved_pool_bytes_including_one_null": 49801328640,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 21351364608,
+                  "peak_reserved_pool_bytes_including_one_null": 21351364608,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 256,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 128,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 99588765696,
+                  "peak_reserved_pool_bytes_including_one_null": 99588765696,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 42688837632,
+                  "peak_reserved_pool_bytes_including_one_null": 42688837632,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 512,
+              "within_max_seqs_and_token_budget": true
+            }
+          ],
+          "native_over_oscar_full_physical_ratio": 3.6666666666666665,
+          "native_over_oscar_all_kv_peak_ratio": 2.3333333333333335
+        },
+        {
+          "context_tokens": 65536,
+          "additional_output_reserve": 0,
+          "mtp_lookahead_tokens": 3,
+          "reserved_full_tokens": 65539,
+          "per_request_bytes_per_rank": {
+            "native": {
+              "full_pool_blocks": 86,
+              "full_bytes": 1194676224,
+              "total_min_live_bytes": 1361375232,
+              "total_peak_reserved_bytes": 1361375232
+            },
+            "oscar": {
+              "full_pool_blocks": 24,
+              "full_bytes": 333398016,
+              "total_min_live_bytes": 500097024,
+              "total_peak_reserved_bytes": 500097024
+            }
+          },
+          "capacity": {
+            "observed_oscar_rounding_lower": {
+              "native": {
+                "max_B_by_minimum_live": 11,
+                "max_B_by_peak_reservation": 11
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 31,
+                "max_B_by_peak_reservation": 31
+              }
+            },
+            "observed_oscar_rounding_upper": {
+              "native": {
+                "max_B_by_minimum_live": 11,
+                "max_B_by_peak_reservation": 11
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 31,
+                "max_B_by_peak_reservation": 31
+              }
+            },
+            "suggested_fit_0_9_min_rank": {
+              "native": {
+                "max_B_by_minimum_live": 11,
+                "max_B_by_peak_reservation": 11
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 30,
+                "max_B_by_peak_reservation": 30
+              }
+            }
+          },
+          "batch_sweep": [
+            {
+              "batch": 1,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 1375266816,
+                  "peak_reserved_pool_bytes_including_one_null": 1375266816,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 513988608,
+                  "peak_reserved_pool_bytes_including_one_null": 513988608,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 4,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 4,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 5459392512,
+                  "peak_reserved_pool_bytes_including_one_null": 5459392512,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 2014279680,
+                  "peak_reserved_pool_bytes_including_one_null": 2014279680,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 16,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 8,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 10904893440,
+                  "peak_reserved_pool_bytes_including_one_null": 10904893440,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 4014667776,
+                  "peak_reserved_pool_bytes_including_one_null": 4014667776,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 32,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 16,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 21795895296,
+                  "peak_reserved_pool_bytes_including_one_null": 21795895296,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 8015443968,
+                  "peak_reserved_pool_bytes_including_one_null": 8015443968,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 64,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 32,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 43577899008,
+                  "peak_reserved_pool_bytes_including_one_null": 43577899008,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 16016996352,
+                  "peak_reserved_pool_bytes_including_one_null": 16016996352,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 128,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 64,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 87141906432,
+                  "peak_reserved_pool_bytes_including_one_null": 87141906432,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 32020101120,
+                  "peak_reserved_pool_bytes_including_one_null": 32020101120,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 256,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 128,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 174269921280,
+                  "peak_reserved_pool_bytes_including_one_null": 174269921280,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 64026310656,
+                  "peak_reserved_pool_bytes_including_one_null": 64026310656,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 512,
+              "within_max_seqs_and_token_budget": true
+            }
+          ],
+          "native_over_oscar_full_physical_ratio": 3.5833333333333335,
+          "native_over_oscar_all_kv_peak_ratio": 2.7222222222222223
+        },
+        {
+          "context_tokens": 65536,
+          "additional_output_reserve": 512,
+          "mtp_lookahead_tokens": 3,
+          "reserved_full_tokens": 66051,
+          "per_request_bytes_per_rank": {
+            "native": {
+              "full_pool_blocks": 87,
+              "full_bytes": 1208567808,
+              "total_min_live_bytes": 1375266816,
+              "total_peak_reserved_bytes": 1375266816
+            },
+            "oscar": {
+              "full_pool_blocks": 24,
+              "full_bytes": 333398016,
+              "total_min_live_bytes": 500097024,
+              "total_peak_reserved_bytes": 500097024
+            }
+          },
+          "capacity": {
+            "observed_oscar_rounding_lower": {
+              "native": {
+                "max_B_by_minimum_live": 11,
+                "max_B_by_peak_reservation": 11
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 31,
+                "max_B_by_peak_reservation": 31
+              }
+            },
+            "observed_oscar_rounding_upper": {
+              "native": {
+                "max_B_by_minimum_live": 11,
+                "max_B_by_peak_reservation": 11
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 31,
+                "max_B_by_peak_reservation": 31
+              }
+            },
+            "suggested_fit_0_9_min_rank": {
+              "native": {
+                "max_B_by_minimum_live": 10,
+                "max_B_by_peak_reservation": 10
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 30,
+                "max_B_by_peak_reservation": 30
+              }
+            }
+          },
+          "batch_sweep": [
+            {
+              "batch": 1,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 1389158400,
+                  "peak_reserved_pool_bytes_including_one_null": 1389158400,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 513988608,
+                  "peak_reserved_pool_bytes_including_one_null": 513988608,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 4,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 4,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 5514958848,
+                  "peak_reserved_pool_bytes_including_one_null": 5514958848,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 2014279680,
+                  "peak_reserved_pool_bytes_including_one_null": 2014279680,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 16,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 8,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 11016026112,
+                  "peak_reserved_pool_bytes_including_one_null": 11016026112,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 4014667776,
+                  "peak_reserved_pool_bytes_including_one_null": 4014667776,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 32,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 16,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 22018160640,
+                  "peak_reserved_pool_bytes_including_one_null": 22018160640,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 8015443968,
+                  "peak_reserved_pool_bytes_including_one_null": 8015443968,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 64,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 32,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 44022429696,
+                  "peak_reserved_pool_bytes_including_one_null": 44022429696,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 16016996352,
+                  "peak_reserved_pool_bytes_including_one_null": 16016996352,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 128,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 64,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 88030967808,
+                  "peak_reserved_pool_bytes_including_one_null": 88030967808,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 32020101120,
+                  "peak_reserved_pool_bytes_including_one_null": 32020101120,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 256,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 128,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 176048044032,
+                  "peak_reserved_pool_bytes_including_one_null": 176048044032,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 64026310656,
+                  "peak_reserved_pool_bytes_including_one_null": 64026310656,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 512,
+              "within_max_seqs_and_token_budget": true
+            }
+          ],
+          "native_over_oscar_full_physical_ratio": 3.625,
+          "native_over_oscar_all_kv_peak_ratio": 2.75
+        },
+        {
+          "context_tokens": 131072,
+          "additional_output_reserve": 0,
+          "mtp_lookahead_tokens": 3,
+          "reserved_full_tokens": 131075,
+          "per_request_bytes_per_rank": {
+            "native": {
+              "full_pool_blocks": 171,
+              "full_bytes": 2375460864,
+              "total_min_live_bytes": 2542159872,
+              "total_peak_reserved_bytes": 2542159872
+            },
+            "oscar": {
+              "full_pool_blocks": 47,
+              "full_bytes": 652904448,
+              "total_min_live_bytes": 819603456,
+              "total_peak_reserved_bytes": 819603456
+            }
+          },
+          "capacity": {
+            "observed_oscar_rounding_lower": {
+              "native": {
+                "max_B_by_minimum_live": 6,
+                "max_B_by_peak_reservation": 6
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 19,
+                "max_B_by_peak_reservation": 19
+              }
+            },
+            "observed_oscar_rounding_upper": {
+              "native": {
+                "max_B_by_minimum_live": 6,
+                "max_B_by_peak_reservation": 6
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 19,
+                "max_B_by_peak_reservation": 19
+              }
+            },
+            "suggested_fit_0_9_min_rank": {
+              "native": {
+                "max_B_by_minimum_live": 5,
+                "max_B_by_peak_reservation": 5
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 18,
+                "max_B_by_peak_reservation": 18
+              }
+            }
+          },
+          "batch_sweep": [
+            {
+              "batch": 1,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 2556051456,
+                  "peak_reserved_pool_bytes_including_one_null": 2556051456,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 833495040,
+                  "peak_reserved_pool_bytes_including_one_null": 833495040,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 4,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 4,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 10182531072,
+                  "peak_reserved_pool_bytes_including_one_null": 10182531072,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 3292305408,
+                  "peak_reserved_pool_bytes_including_one_null": 3292305408,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 16,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 8,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 20351170560,
+                  "peak_reserved_pool_bytes_including_one_null": 20351170560,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 6570719232,
+                  "peak_reserved_pool_bytes_including_one_null": 6570719232,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 32,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 16,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 40688449536,
+                  "peak_reserved_pool_bytes_including_one_null": 40688449536,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 13127546880,
+                  "peak_reserved_pool_bytes_including_one_null": 13127546880,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 64,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 32,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 81363007488,
+                  "peak_reserved_pool_bytes_including_one_null": 81363007488,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 26241202176,
+                  "peak_reserved_pool_bytes_including_one_null": 26241202176,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 128,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 64,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 162712123392,
+                  "peak_reserved_pool_bytes_including_one_null": 162712123392,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 52468512768,
+                  "peak_reserved_pool_bytes_including_one_null": 52468512768,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 256,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 128,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 325410355200,
+                  "peak_reserved_pool_bytes_including_one_null": 325410355200,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 104923133952,
+                  "peak_reserved_pool_bytes_including_one_null": 104923133952,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 512,
+              "within_max_seqs_and_token_budget": true
+            }
+          ],
+          "native_over_oscar_full_physical_ratio": 3.6382978723404253,
+          "native_over_oscar_all_kv_peak_ratio": 3.1016949152542375
+        },
+        {
+          "context_tokens": 131072,
+          "additional_output_reserve": 512,
+          "mtp_lookahead_tokens": 3,
+          "reserved_full_tokens": 131587,
+          "per_request_bytes_per_rank": {
+            "native": {
+              "full_pool_blocks": 172,
+              "full_bytes": 2389352448,
+              "total_min_live_bytes": 2556051456,
+              "total_peak_reserved_bytes": 2556051456
+            },
+            "oscar": {
+              "full_pool_blocks": 47,
+              "full_bytes": 652904448,
+              "total_min_live_bytes": 819603456,
+              "total_peak_reserved_bytes": 819603456
+            }
+          },
+          "capacity": {
+            "observed_oscar_rounding_lower": {
+              "native": {
+                "max_B_by_minimum_live": 6,
+                "max_B_by_peak_reservation": 6
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 19,
+                "max_B_by_peak_reservation": 19
+              }
+            },
+            "observed_oscar_rounding_upper": {
+              "native": {
+                "max_B_by_minimum_live": 6,
+                "max_B_by_peak_reservation": 6
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 19,
+                "max_B_by_peak_reservation": 19
+              }
+            },
+            "suggested_fit_0_9_min_rank": {
+              "native": {
+                "max_B_by_minimum_live": 5,
+                "max_B_by_peak_reservation": 5
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 18,
+                "max_B_by_peak_reservation": 18
+              }
+            }
+          },
+          "batch_sweep": [
+            {
+              "batch": 1,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 2569943040,
+                  "peak_reserved_pool_bytes_including_one_null": 2569943040,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 833495040,
+                  "peak_reserved_pool_bytes_including_one_null": 833495040,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 4,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 4,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 10238097408,
+                  "peak_reserved_pool_bytes_including_one_null": 10238097408,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 3292305408,
+                  "peak_reserved_pool_bytes_including_one_null": 3292305408,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 16,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 8,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 20462303232,
+                  "peak_reserved_pool_bytes_including_one_null": 20462303232,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 6570719232,
+                  "peak_reserved_pool_bytes_including_one_null": 6570719232,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 32,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 16,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 40910714880,
+                  "peak_reserved_pool_bytes_including_one_null": 40910714880,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 13127546880,
+                  "peak_reserved_pool_bytes_including_one_null": 13127546880,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 64,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 32,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 81807538176,
+                  "peak_reserved_pool_bytes_including_one_null": 81807538176,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 26241202176,
+                  "peak_reserved_pool_bytes_including_one_null": 26241202176,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 128,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 64,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 163601184768,
+                  "peak_reserved_pool_bytes_including_one_null": 163601184768,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 52468512768,
+                  "peak_reserved_pool_bytes_including_one_null": 52468512768,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 256,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 128,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 327188477952,
+                  "peak_reserved_pool_bytes_including_one_null": 327188477952,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 104923133952,
+                  "peak_reserved_pool_bytes_including_one_null": 104923133952,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 512,
+              "within_max_seqs_and_token_budget": true
+            }
+          ],
+          "native_over_oscar_full_physical_ratio": 3.6595744680851063,
+          "native_over_oscar_all_kv_peak_ratio": 3.1186440677966103
+        }
+      ]
+    },
+    {
+      "mode": "align",
+      "production_default": false,
+      "native_full_tokens_per_page": 768,
+      "oscar_full_tokens_per_page": 2304,
+      "page_bytes_per_layer": 817152,
+      "shared_pool_width": 17,
+      "group_layer_counts": [
+        17,
+        16,
+        16,
+        16
+      ],
+      "full_groups": 1,
+      "gdn_groups": 3,
+      "gdn_padding_slots": 3,
+      "one_pool_block_and_null_bytes": 13891584,
+      "gdn_states_per_group_minimum": 4,
+      "gdn_states_per_group_peak": 5,
+      "gdn_per_request_raw_payload_at_peak": 101744640,
+      "oscar_full_page_components": {
+        "int2_capacity": 313344,
+        "precise_snapshot": 333336,
+        "unused_conv": 30720,
+        "unused_ssm_tail": 79872,
+        "unused_padding": 59880
+      },
+      "native_planner_allocations": {
+        "observed_oscar_rounding_lower": {
+          "num_pool_blocks": 1122,
+          "tensor_count": 17,
+          "allocated_bytes": 15586357248,
+          "unused_budget_bytes": 9742745
+        },
+        "observed_oscar_rounding_upper": {
+          "num_pool_blocks": 1123,
+          "tensor_count": 17,
+          "allocated_bytes": 15600248832,
+          "unused_budget_bytes": 6588579
+        },
+        "suggested_fit_0_9_min_rank": {
+          "num_pool_blocks": 1082,
+          "tensor_count": 17,
+          "allocated_bytes": 15030693888,
+          "unused_budget_bytes": 4941414
+        }
+      },
+      "requests": [
+        {
+          "context_tokens": 32768,
+          "additional_output_reserve": 0,
+          "mtp_lookahead_tokens": 3,
+          "reserved_full_tokens": 32771,
+          "per_request_bytes_per_rank": {
+            "native": {
+              "full_pool_blocks": 43,
+              "full_bytes": 597338112,
+              "total_min_live_bytes": 764037120,
+              "total_peak_reserved_bytes": 805711872
+            },
+            "oscar": {
+              "full_pool_blocks": 15,
+              "full_bytes": 208373760,
+              "total_min_live_bytes": 375072768,
+              "total_peak_reserved_bytes": 416747520
+            }
+          },
+          "capacity": {
+            "observed_oscar_rounding_lower": {
+              "native": {
+                "max_B_by_minimum_live": 20,
+                "max_B_by_peak_reservation": 19
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 41,
+                "max_B_by_peak_reservation": 37
+              }
+            },
+            "observed_oscar_rounding_upper": {
+              "native": {
+                "max_B_by_minimum_live": 20,
+                "max_B_by_peak_reservation": 19
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 41,
+                "max_B_by_peak_reservation": 37
+              }
+            },
+            "suggested_fit_0_9_min_rank": {
+              "native": {
+                "max_B_by_minimum_live": 19,
+                "max_B_by_peak_reservation": 18
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 40,
+                "max_B_by_peak_reservation": 36
+              }
+            }
+          },
+          "batch_sweep": [
+            {
+              "batch": 1,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 777928704,
+                  "peak_reserved_pool_bytes_including_one_null": 819603456,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 388964352,
+                  "peak_reserved_pool_bytes_including_one_null": 430639104,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 4,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 4,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 3070040064,
+                  "peak_reserved_pool_bytes_including_one_null": 3236739072,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 1514182656,
+                  "peak_reserved_pool_bytes_including_one_null": 1680881664,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 16,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 8,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 6126188544,
+                  "peak_reserved_pool_bytes_including_one_null": 6459586560,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 3014473728,
+                  "peak_reserved_pool_bytes_including_one_null": 3347871744,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 32,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 16,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 12238485504,
+                  "peak_reserved_pool_bytes_including_one_null": 12905281536,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 6015055872,
+                  "peak_reserved_pool_bytes_including_one_null": 6681851904,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 64,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 32,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 24463079424,
+                  "peak_reserved_pool_bytes_including_one_null": 25796671488,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 12016220160,
+                  "peak_reserved_pool_bytes_including_one_null": 13349812224,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 128,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 64,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 48912267264,
+                  "peak_reserved_pool_bytes_including_one_null": 51579451392,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 24018548736,
+                  "peak_reserved_pool_bytes_including_one_null": 26685732864,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 256,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 128,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 97810642944,
+                  "peak_reserved_pool_bytes_including_one_null": 103145011200,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 48023205888,
+                  "peak_reserved_pool_bytes_including_one_null": 53357574144,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 512,
+              "within_max_seqs_and_token_budget": true
+            }
+          ],
+          "native_over_oscar_full_physical_ratio": 2.8666666666666667,
+          "native_over_oscar_all_kv_peak_ratio": 1.9333333333333333
+        },
+        {
+          "context_tokens": 32768,
+          "additional_output_reserve": 512,
+          "mtp_lookahead_tokens": 3,
+          "reserved_full_tokens": 33283,
+          "per_request_bytes_per_rank": {
+            "native": {
+              "full_pool_blocks": 44,
+              "full_bytes": 611229696,
+              "total_min_live_bytes": 777928704,
+              "total_peak_reserved_bytes": 819603456
+            },
+            "oscar": {
+              "full_pool_blocks": 15,
+              "full_bytes": 208373760,
+              "total_min_live_bytes": 375072768,
+              "total_peak_reserved_bytes": 416747520
+            }
+          },
+          "capacity": {
+            "observed_oscar_rounding_lower": {
+              "native": {
+                "max_B_by_minimum_live": 20,
+                "max_B_by_peak_reservation": 19
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 41,
+                "max_B_by_peak_reservation": 37
+              }
+            },
+            "observed_oscar_rounding_upper": {
+              "native": {
+                "max_B_by_minimum_live": 20,
+                "max_B_by_peak_reservation": 19
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 41,
+                "max_B_by_peak_reservation": 37
+              }
+            },
+            "suggested_fit_0_9_min_rank": {
+              "native": {
+                "max_B_by_minimum_live": 19,
+                "max_B_by_peak_reservation": 18
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 40,
+                "max_B_by_peak_reservation": 36
+              }
+            }
+          },
+          "batch_sweep": [
+            {
+              "batch": 1,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 791820288,
+                  "peak_reserved_pool_bytes_including_one_null": 833495040,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 388964352,
+                  "peak_reserved_pool_bytes_including_one_null": 430639104,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 4,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 4,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 3125606400,
+                  "peak_reserved_pool_bytes_including_one_null": 3292305408,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 1514182656,
+                  "peak_reserved_pool_bytes_including_one_null": 1680881664,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 16,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 8,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 6237321216,
+                  "peak_reserved_pool_bytes_including_one_null": 6570719232,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 3014473728,
+                  "peak_reserved_pool_bytes_including_one_null": 3347871744,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 32,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 16,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 12460750848,
+                  "peak_reserved_pool_bytes_including_one_null": 13127546880,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 6015055872,
+                  "peak_reserved_pool_bytes_including_one_null": 6681851904,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 64,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 32,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 24907610112,
+                  "peak_reserved_pool_bytes_including_one_null": 26241202176,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 12016220160,
+                  "peak_reserved_pool_bytes_including_one_null": 13349812224,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 128,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 64,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 49801328640,
+                  "peak_reserved_pool_bytes_including_one_null": 52468512768,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 24018548736,
+                  "peak_reserved_pool_bytes_including_one_null": 26685732864,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 256,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 128,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 99588765696,
+                  "peak_reserved_pool_bytes_including_one_null": 104923133952,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 48023205888,
+                  "peak_reserved_pool_bytes_including_one_null": 53357574144,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 512,
+              "within_max_seqs_and_token_budget": true
+            }
+          ],
+          "native_over_oscar_full_physical_ratio": 2.933333333333333,
+          "native_over_oscar_all_kv_peak_ratio": 1.9666666666666666
+        },
+        {
+          "context_tokens": 65536,
+          "additional_output_reserve": 0,
+          "mtp_lookahead_tokens": 3,
+          "reserved_full_tokens": 65539,
+          "per_request_bytes_per_rank": {
+            "native": {
+              "full_pool_blocks": 86,
+              "full_bytes": 1194676224,
+              "total_min_live_bytes": 1361375232,
+              "total_peak_reserved_bytes": 1403049984
+            },
+            "oscar": {
+              "full_pool_blocks": 29,
+              "full_bytes": 402855936,
+              "total_min_live_bytes": 569554944,
+              "total_peak_reserved_bytes": 611229696
+            }
+          },
+          "capacity": {
+            "observed_oscar_rounding_lower": {
+              "native": {
+                "max_B_by_minimum_live": 11,
+                "max_B_by_peak_reservation": 11
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 27,
+                "max_B_by_peak_reservation": 25
+              }
+            },
+            "observed_oscar_rounding_upper": {
+              "native": {
+                "max_B_by_minimum_live": 11,
+                "max_B_by_peak_reservation": 11
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 27,
+                "max_B_by_peak_reservation": 25
+              }
+            },
+            "suggested_fit_0_9_min_rank": {
+              "native": {
+                "max_B_by_minimum_live": 11,
+                "max_B_by_peak_reservation": 10
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 26,
+                "max_B_by_peak_reservation": 24
+              }
+            }
+          },
+          "batch_sweep": [
+            {
+              "batch": 1,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 1375266816,
+                  "peak_reserved_pool_bytes_including_one_null": 1416941568,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 583446528,
+                  "peak_reserved_pool_bytes_including_one_null": 625121280,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 4,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 4,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 5459392512,
+                  "peak_reserved_pool_bytes_including_one_null": 5626091520,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 2292111360,
+                  "peak_reserved_pool_bytes_including_one_null": 2458810368,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 16,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 8,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 10904893440,
+                  "peak_reserved_pool_bytes_including_one_null": 11238291456,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 4570331136,
+                  "peak_reserved_pool_bytes_including_one_null": 4903729152,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 32,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 16,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 21795895296,
+                  "peak_reserved_pool_bytes_including_one_null": 22462691328,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 9126770688,
+                  "peak_reserved_pool_bytes_including_one_null": 9793566720,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 64,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 32,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 43577899008,
+                  "peak_reserved_pool_bytes_including_one_null": 44911491072,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 18239649792,
+                  "peak_reserved_pool_bytes_including_one_null": 19573241856,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 128,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 64,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 87141906432,
+                  "peak_reserved_pool_bytes_including_one_null": 89809090560,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 36465408000,
+                  "peak_reserved_pool_bytes_including_one_null": 39132592128,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 256,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 128,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 174269921280,
+                  "peak_reserved_pool_bytes_including_one_null": 179604289536,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 72916924416,
+                  "peak_reserved_pool_bytes_including_one_null": 78251292672,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 512,
+              "within_max_seqs_and_token_budget": true
+            }
+          ],
+          "native_over_oscar_full_physical_ratio": 2.9655172413793105,
+          "native_over_oscar_all_kv_peak_ratio": 2.2954545454545454
+        },
+        {
+          "context_tokens": 65536,
+          "additional_output_reserve": 512,
+          "mtp_lookahead_tokens": 3,
+          "reserved_full_tokens": 66051,
+          "per_request_bytes_per_rank": {
+            "native": {
+              "full_pool_blocks": 87,
+              "full_bytes": 1208567808,
+              "total_min_live_bytes": 1375266816,
+              "total_peak_reserved_bytes": 1416941568
+            },
+            "oscar": {
+              "full_pool_blocks": 29,
+              "full_bytes": 402855936,
+              "total_min_live_bytes": 569554944,
+              "total_peak_reserved_bytes": 611229696
+            }
+          },
+          "capacity": {
+            "observed_oscar_rounding_lower": {
+              "native": {
+                "max_B_by_minimum_live": 11,
+                "max_B_by_peak_reservation": 10
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 27,
+                "max_B_by_peak_reservation": 25
+              }
+            },
+            "observed_oscar_rounding_upper": {
+              "native": {
+                "max_B_by_minimum_live": 11,
+                "max_B_by_peak_reservation": 11
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 27,
+                "max_B_by_peak_reservation": 25
+              }
+            },
+            "suggested_fit_0_9_min_rank": {
+              "native": {
+                "max_B_by_minimum_live": 10,
+                "max_B_by_peak_reservation": 10
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 26,
+                "max_B_by_peak_reservation": 24
+              }
+            }
+          },
+          "batch_sweep": [
+            {
+              "batch": 1,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 1389158400,
+                  "peak_reserved_pool_bytes_including_one_null": 1430833152,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 583446528,
+                  "peak_reserved_pool_bytes_including_one_null": 625121280,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 4,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 4,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 5514958848,
+                  "peak_reserved_pool_bytes_including_one_null": 5681657856,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 2292111360,
+                  "peak_reserved_pool_bytes_including_one_null": 2458810368,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 16,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 8,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 11016026112,
+                  "peak_reserved_pool_bytes_including_one_null": 11349424128,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 4570331136,
+                  "peak_reserved_pool_bytes_including_one_null": 4903729152,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 32,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 16,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 22018160640,
+                  "peak_reserved_pool_bytes_including_one_null": 22684956672,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 9126770688,
+                  "peak_reserved_pool_bytes_including_one_null": 9793566720,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 64,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 32,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 44022429696,
+                  "peak_reserved_pool_bytes_including_one_null": 45356021760,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 18239649792,
+                  "peak_reserved_pool_bytes_including_one_null": 19573241856,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 128,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 64,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 88030967808,
+                  "peak_reserved_pool_bytes_including_one_null": 90698151936,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 36465408000,
+                  "peak_reserved_pool_bytes_including_one_null": 39132592128,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 256,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 128,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 176048044032,
+                  "peak_reserved_pool_bytes_including_one_null": 181382412288,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 72916924416,
+                  "peak_reserved_pool_bytes_including_one_null": 78251292672,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 512,
+              "within_max_seqs_and_token_budget": true
+            }
+          ],
+          "native_over_oscar_full_physical_ratio": 3.0,
+          "native_over_oscar_all_kv_peak_ratio": 2.3181818181818183
+        },
+        {
+          "context_tokens": 131072,
+          "additional_output_reserve": 0,
+          "mtp_lookahead_tokens": 3,
+          "reserved_full_tokens": 131075,
+          "per_request_bytes_per_rank": {
+            "native": {
+              "full_pool_blocks": 171,
+              "full_bytes": 2375460864,
+              "total_min_live_bytes": 2542159872,
+              "total_peak_reserved_bytes": 2583834624
+            },
+            "oscar": {
+              "full_pool_blocks": 57,
+              "full_bytes": 791820288,
+              "total_min_live_bytes": 958519296,
+              "total_peak_reserved_bytes": 1000194048
+            }
+          },
+          "capacity": {
+            "observed_oscar_rounding_lower": {
+              "native": {
+                "max_B_by_minimum_live": 6,
+                "max_B_by_peak_reservation": 6
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 16,
+                "max_B_by_peak_reservation": 15
+              }
+            },
+            "observed_oscar_rounding_upper": {
+              "native": {
+                "max_B_by_minimum_live": 6,
+                "max_B_by_peak_reservation": 6
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 16,
+                "max_B_by_peak_reservation": 15
+              }
+            },
+            "suggested_fit_0_9_min_rank": {
+              "native": {
+                "max_B_by_minimum_live": 5,
+                "max_B_by_peak_reservation": 5
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 15,
+                "max_B_by_peak_reservation": 15
+              }
+            }
+          },
+          "batch_sweep": [
+            {
+              "batch": 1,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 2556051456,
+                  "peak_reserved_pool_bytes_including_one_null": 2597726208,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 972410880,
+                  "peak_reserved_pool_bytes_including_one_null": 1014085632,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 4,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 4,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 10182531072,
+                  "peak_reserved_pool_bytes_including_one_null": 10349230080,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 3847968768,
+                  "peak_reserved_pool_bytes_including_one_null": 4014667776,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 16,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 8,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 20351170560,
+                  "peak_reserved_pool_bytes_including_one_null": 20684568576,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 7682045952,
+                  "peak_reserved_pool_bytes_including_one_null": 8015443968,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 32,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 16,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 40688449536,
+                  "peak_reserved_pool_bytes_including_one_null": 41355245568,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 15350200320,
+                  "peak_reserved_pool_bytes_including_one_null": 16016996352,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 64,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 32,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 81363007488,
+                  "peak_reserved_pool_bytes_including_one_null": 82696599552,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 30686509056,
+                  "peak_reserved_pool_bytes_including_one_null": 32020101120,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 128,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 64,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 162712123392,
+                  "peak_reserved_pool_bytes_including_one_null": 165379307520,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 61359126528,
+                  "peak_reserved_pool_bytes_including_one_null": 64026310656,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 256,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 128,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 325410355200,
+                  "peak_reserved_pool_bytes_including_one_null": 330744723456,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 122704361472,
+                  "peak_reserved_pool_bytes_including_one_null": 128038729728,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 512,
+              "within_max_seqs_and_token_budget": true
+            }
+          ],
+          "native_over_oscar_full_physical_ratio": 3.0,
+          "native_over_oscar_all_kv_peak_ratio": 2.5833333333333335
+        },
+        {
+          "context_tokens": 131072,
+          "additional_output_reserve": 512,
+          "mtp_lookahead_tokens": 3,
+          "reserved_full_tokens": 131587,
+          "per_request_bytes_per_rank": {
+            "native": {
+              "full_pool_blocks": 172,
+              "full_bytes": 2389352448,
+              "total_min_live_bytes": 2556051456,
+              "total_peak_reserved_bytes": 2597726208
+            },
+            "oscar": {
+              "full_pool_blocks": 58,
+              "full_bytes": 805711872,
+              "total_min_live_bytes": 972410880,
+              "total_peak_reserved_bytes": 1014085632
+            }
+          },
+          "capacity": {
+            "observed_oscar_rounding_lower": {
+              "native": {
+                "max_B_by_minimum_live": 6,
+                "max_B_by_peak_reservation": 5
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 16,
+                "max_B_by_peak_reservation": 15
+              }
+            },
+            "observed_oscar_rounding_upper": {
+              "native": {
+                "max_B_by_minimum_live": 6,
+                "max_B_by_peak_reservation": 6
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 16,
+                "max_B_by_peak_reservation": 15
+              }
+            },
+            "suggested_fit_0_9_min_rank": {
+              "native": {
+                "max_B_by_minimum_live": 5,
+                "max_B_by_peak_reservation": 5
+              },
+              "oscar": {
+                "max_B_by_minimum_live": 15,
+                "max_B_by_peak_reservation": 14
+              }
+            }
+          },
+          "batch_sweep": [
+            {
+              "batch": 1,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 2569943040,
+                  "peak_reserved_pool_bytes_including_one_null": 2611617792,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 986302464,
+                  "peak_reserved_pool_bytes_including_one_null": 1027977216,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 4,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 4,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 10238097408,
+                  "peak_reserved_pool_bytes_including_one_null": 10404796416,
+                  "fits_observed_lower_at_peak": true
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 3903535104,
+                  "peak_reserved_pool_bytes_including_one_null": 4070234112,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 16,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 8,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 20462303232,
+                  "peak_reserved_pool_bytes_including_one_null": 20795701248,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 7793178624,
+                  "peak_reserved_pool_bytes_including_one_null": 8126576640,
+                  "fits_observed_lower_at_peak": true
+                }
+              },
+              "q4_scheduler_tokens": 32,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 16,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 40910714880,
+                  "peak_reserved_pool_bytes_including_one_null": 41577510912,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 15572465664,
+                  "peak_reserved_pool_bytes_including_one_null": 16239261696,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 64,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 32,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 81807538176,
+                  "peak_reserved_pool_bytes_including_one_null": 83141130240,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 31131039744,
+                  "peak_reserved_pool_bytes_including_one_null": 32464631808,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 128,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 64,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 163601184768,
+                  "peak_reserved_pool_bytes_including_one_null": 166268368896,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 62248187904,
+                  "peak_reserved_pool_bytes_including_one_null": 64915372032,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 256,
+              "within_max_seqs_and_token_budget": true
+            },
+            {
+              "batch": 128,
+              "variants": {
+                "native": {
+                  "min_live_pool_bytes_including_one_null": 327188477952,
+                  "peak_reserved_pool_bytes_including_one_null": 332522846208,
+                  "fits_observed_lower_at_peak": false
+                },
+                "oscar": {
+                  "min_live_pool_bytes_including_one_null": 124482484224,
+                  "peak_reserved_pool_bytes_including_one_null": 129816852480,
+                  "fits_observed_lower_at_peak": false
+                }
+              },
+              "q4_scheduler_tokens": 512,
+              "within_max_seqs_and_token_budget": true
+            }
+          ],
+          "native_over_oscar_full_physical_ratio": 2.9655172413793105,
+          "native_over_oscar_all_kv_peak_ratio": 2.5616438356164384
+        }
+      ]
+    }
+  ],
+  "fixed_oscar_allocations": {
+    "workspace_instances_per_rank_if_uniform_target_and_draft": 1,
+    "workspace_buffer_bytes": {
+      "query_rot": 53477376,
+      "query_input": 50331648,
+      "key_input": 8388608,
+      "value_input": 8388608,
+      "partial": 301989888,
+      "partial_lse": 1179648,
+      "output": 100663296,
+      "lse": 393216,
+      "merge_status": 393216,
+      "rotate_status": 393216,
+      "store_status": 65536,
+      "tasks": 6291456,
+      "attention_status": 393216,
+      "positions": 131072,
+      "slots": 131072,
+      "cv": 77660160,
+      "cluster_stats": 1280
+    },
+    "workspace_total_bytes": 610272512,
+    "cube_cores": 20,
+    "cube_cores_status": "caller_supplied_conditional_not_current_log_measured",
+    "persistent_rotations_bytes": 12845056,
+    "source": "runtime.ensure_workspace key=(device,geometry); rotation cache=(device,D), target three matrices, shared draft identity.",
+    "native_fia_causal_mask_bytes_if_materialized": 4194304,
+    "native_fia_current_output_lse_and_other_temporaries": "Dynamic/device-framework peaks not known; included in target profiling, not invented as fixed bytes.",
+    "double_subtraction_from_profiled_budget": false
+  },
+  "pure_decode_work": [
+    {
+      "batch": 1,
+      "stages": [
+        {
+          "stage": "target",
+          "calls_per_step": 1,
+          "full_layers": 16,
+          "input_rows": 4,
+          "live_rows": 4,
+          "padding_rows": 0,
+          "source_splits": 20,
+          "operator": "attention_bf16_history_mdl_out",
+          "task_descriptors_per_layer": 240,
+          "live_leader_source_split_tasks_per_layer": 60,
+          "native_current_source2": false,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 140,
+              "history_kv256_tiles_stage": 2240
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 260,
+              "history_kv256_tiles_stage": 4160
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 520,
+              "history_kv256_tiles_stage": 8320
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        },
+        {
+          "stage": "first_mtp",
+          "calls_per_step": 1,
+          "full_layers": 1,
+          "input_rows": 4,
+          "live_rows": 4,
+          "padding_rows": 0,
+          "source_splits": 20,
+          "operator": "attention_bf16_history_mdl_out",
+          "task_descriptors_per_layer": 240,
+          "live_leader_source_split_tasks_per_layer": 60,
+          "native_current_source2": true,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 140,
+              "history_kv256_tiles_stage": 140
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 260,
+              "history_kv256_tiles_stage": 260
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 520,
+              "history_kv256_tiles_stage": 520
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        },
+        {
+          "stage": "later_mtp",
+          "calls_per_step": 2,
+          "full_layers": 1,
+          "input_rows": 4,
+          "live_rows": 1,
+          "padding_rows": 3,
+          "source_splits": 20,
+          "operator": "attention_bf16_history_mdl_q1_out",
+          "task_descriptors_per_layer": 240,
+          "live_leader_source_split_tasks_per_layer": 60,
+          "native_current_source2": false,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 140,
+              "history_kv256_tiles_stage": 280
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 260,
+              "history_kv256_tiles_stage": 520
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 520,
+              "history_kv256_tiles_stage": 1040
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        }
+      ]
+    },
+    {
+      "batch": 4,
+      "stages": [
+        {
+          "stage": "target",
+          "calls_per_step": 1,
+          "full_layers": 16,
+          "input_rows": 16,
+          "live_rows": 16,
+          "padding_rows": 0,
+          "source_splits": 20,
+          "operator": "attention_bf16_history_mdl_out",
+          "task_descriptors_per_layer": 960,
+          "live_leader_source_split_tasks_per_layer": 240,
+          "native_current_source2": false,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 140,
+              "history_kv256_tiles_stage": 8960
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 260,
+              "history_kv256_tiles_stage": 16640
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 520,
+              "history_kv256_tiles_stage": 33280
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        },
+        {
+          "stage": "first_mtp",
+          "calls_per_step": 1,
+          "full_layers": 1,
+          "input_rows": 16,
+          "live_rows": 16,
+          "padding_rows": 0,
+          "source_splits": 20,
+          "operator": "attention_bf16_history_mdl_out",
+          "task_descriptors_per_layer": 960,
+          "live_leader_source_split_tasks_per_layer": 240,
+          "native_current_source2": true,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 140,
+              "history_kv256_tiles_stage": 560
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 260,
+              "history_kv256_tiles_stage": 1040
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 520,
+              "history_kv256_tiles_stage": 2080
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        },
+        {
+          "stage": "later_mtp",
+          "calls_per_step": 2,
+          "full_layers": 1,
+          "input_rows": 16,
+          "live_rows": 4,
+          "padding_rows": 12,
+          "source_splits": 20,
+          "operator": "attention_bf16_history_mdl_q1_out",
+          "task_descriptors_per_layer": 960,
+          "live_leader_source_split_tasks_per_layer": 240,
+          "native_current_source2": false,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 140,
+              "history_kv256_tiles_stage": 1120
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 260,
+              "history_kv256_tiles_stage": 2080
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 520,
+              "history_kv256_tiles_stage": 4160
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        }
+      ]
+    },
+    {
+      "batch": 8,
+      "stages": [
+        {
+          "stage": "target",
+          "calls_per_step": 1,
+          "full_layers": 16,
+          "input_rows": 32,
+          "live_rows": 32,
+          "padding_rows": 0,
+          "source_splits": 10,
+          "operator": "attention_bf16_history_mdl_out",
+          "task_descriptors_per_layer": 960,
+          "live_leader_source_split_tasks_per_layer": 240,
+          "native_current_source2": false,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 130,
+              "history_kv256_tiles_stage": 16640
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 260,
+              "history_kv256_tiles_stage": 33280
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 520,
+              "history_kv256_tiles_stage": 66560
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        },
+        {
+          "stage": "first_mtp",
+          "calls_per_step": 1,
+          "full_layers": 1,
+          "input_rows": 32,
+          "live_rows": 32,
+          "padding_rows": 0,
+          "source_splits": 10,
+          "operator": "attention_bf16_history_mdl_out",
+          "task_descriptors_per_layer": 960,
+          "live_leader_source_split_tasks_per_layer": 240,
+          "native_current_source2": true,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 130,
+              "history_kv256_tiles_stage": 1040
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 260,
+              "history_kv256_tiles_stage": 2080
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 520,
+              "history_kv256_tiles_stage": 4160
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        },
+        {
+          "stage": "later_mtp",
+          "calls_per_step": 2,
+          "full_layers": 1,
+          "input_rows": 32,
+          "live_rows": 8,
+          "padding_rows": 24,
+          "source_splits": 10,
+          "operator": "attention_bf16_history_mdl_q1_out",
+          "task_descriptors_per_layer": 960,
+          "live_leader_source_split_tasks_per_layer": 240,
+          "native_current_source2": false,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 130,
+              "history_kv256_tiles_stage": 2080
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 260,
+              "history_kv256_tiles_stage": 4160
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 520,
+              "history_kv256_tiles_stage": 8320
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        }
+      ]
+    },
+    {
+      "batch": 16,
+      "stages": [
+        {
+          "stage": "target",
+          "calls_per_step": 1,
+          "full_layers": 16,
+          "input_rows": 64,
+          "live_rows": 64,
+          "padding_rows": 0,
+          "source_splits": 5,
+          "operator": "attention_bf16_history_mdl_out",
+          "task_descriptors_per_layer": 960,
+          "live_leader_source_split_tasks_per_layer": 240,
+          "native_current_source2": false,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 130,
+              "history_kv256_tiles_stage": 33280
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 255,
+              "history_kv256_tiles_stage": 65280
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 515,
+              "history_kv256_tiles_stage": 131840
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        },
+        {
+          "stage": "first_mtp",
+          "calls_per_step": 1,
+          "full_layers": 1,
+          "input_rows": 64,
+          "live_rows": 64,
+          "padding_rows": 0,
+          "source_splits": 5,
+          "operator": "attention_bf16_history_mdl_out",
+          "task_descriptors_per_layer": 960,
+          "live_leader_source_split_tasks_per_layer": 240,
+          "native_current_source2": true,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 130,
+              "history_kv256_tiles_stage": 2080
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 255,
+              "history_kv256_tiles_stage": 4080
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 515,
+              "history_kv256_tiles_stage": 8240
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        },
+        {
+          "stage": "later_mtp",
+          "calls_per_step": 2,
+          "full_layers": 1,
+          "input_rows": 64,
+          "live_rows": 16,
+          "padding_rows": 48,
+          "source_splits": 5,
+          "operator": "attention_bf16_history_mdl_q1_out",
+          "task_descriptors_per_layer": 960,
+          "live_leader_source_split_tasks_per_layer": 240,
+          "native_current_source2": false,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 130,
+              "history_kv256_tiles_stage": 4160
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 255,
+              "history_kv256_tiles_stage": 8160
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 515,
+              "history_kv256_tiles_stage": 16480
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        }
+      ]
+    },
+    {
+      "batch": 32,
+      "stages": [
+        {
+          "stage": "target",
+          "calls_per_step": 1,
+          "full_layers": 16,
+          "input_rows": 128,
+          "live_rows": 128,
+          "padding_rows": 0,
+          "source_splits": 3,
+          "operator": "attention_bf16_history_mdl_out",
+          "task_descriptors_per_layer": 1152,
+          "live_leader_source_split_tasks_per_layer": 288,
+          "native_current_source2": false,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 129,
+              "history_kv256_tiles_stage": 66048
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 255,
+              "history_kv256_tiles_stage": 130560
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 513,
+              "history_kv256_tiles_stage": 262656
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        },
+        {
+          "stage": "first_mtp",
+          "calls_per_step": 1,
+          "full_layers": 1,
+          "input_rows": 128,
+          "live_rows": 128,
+          "padding_rows": 0,
+          "source_splits": 3,
+          "operator": "attention_bf16_history_mdl_out",
+          "task_descriptors_per_layer": 1152,
+          "live_leader_source_split_tasks_per_layer": 288,
+          "native_current_source2": true,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 129,
+              "history_kv256_tiles_stage": 4128
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 255,
+              "history_kv256_tiles_stage": 8160
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 513,
+              "history_kv256_tiles_stage": 16416
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        },
+        {
+          "stage": "later_mtp",
+          "calls_per_step": 2,
+          "full_layers": 1,
+          "input_rows": 128,
+          "live_rows": 32,
+          "padding_rows": 96,
+          "source_splits": 3,
+          "operator": "attention_bf16_history_mdl_q1_out",
+          "task_descriptors_per_layer": 1152,
+          "live_leader_source_split_tasks_per_layer": 288,
+          "native_current_source2": false,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 129,
+              "history_kv256_tiles_stage": 8256
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 255,
+              "history_kv256_tiles_stage": 16320
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 513,
+              "history_kv256_tiles_stage": 32832
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        }
+      ]
+    },
+    {
+      "batch": 64,
+      "stages": [
+        {
+          "stage": "target",
+          "calls_per_step": 1,
+          "full_layers": 16,
+          "input_rows": 272,
+          "live_rows": 256,
+          "padding_rows": 16,
+          "source_splits": 2,
+          "operator": "attention_bf16_history_mdl_out",
+          "task_descriptors_per_layer": 1632,
+          "live_leader_source_split_tasks_per_layer": 384,
+          "native_current_source2": false,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 128,
+              "history_kv256_tiles_stage": 131072
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 256,
+              "history_kv256_tiles_stage": 262144
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 512,
+              "history_kv256_tiles_stage": 524288
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        },
+        {
+          "stage": "first_mtp",
+          "calls_per_step": 1,
+          "full_layers": 1,
+          "input_rows": 256,
+          "live_rows": 256,
+          "padding_rows": 0,
+          "source_splits": 2,
+          "operator": "attention_bf16_history_mdl_out",
+          "task_descriptors_per_layer": 1536,
+          "live_leader_source_split_tasks_per_layer": 384,
+          "native_current_source2": true,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 128,
+              "history_kv256_tiles_stage": 8192
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 256,
+              "history_kv256_tiles_stage": 16384
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 512,
+              "history_kv256_tiles_stage": 32768
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        },
+        {
+          "stage": "later_mtp",
+          "calls_per_step": 2,
+          "full_layers": 1,
+          "input_rows": 256,
+          "live_rows": 64,
+          "padding_rows": 192,
+          "source_splits": 2,
+          "operator": "attention_bf16_history_mdl_q1_out",
+          "task_descriptors_per_layer": 1536,
+          "live_leader_source_split_tasks_per_layer": 384,
+          "native_current_source2": false,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 128,
+              "history_kv256_tiles_stage": 16384
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 256,
+              "history_kv256_tiles_stage": 32768
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 512,
+              "history_kv256_tiles_stage": 65536
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        }
+      ]
+    },
+    {
+      "batch": 128,
+      "stages": [
+        {
+          "stage": "target",
+          "calls_per_step": 1,
+          "full_layers": 16,
+          "input_rows": 512,
+          "live_rows": 512,
+          "padding_rows": 0,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_mdl_out",
+          "task_descriptors_per_layer": 1536,
+          "live_leader_source_split_tasks_per_layer": 384,
+          "native_current_source2": false,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 127,
+              "history_kv256_tiles_stage": 260096
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 255,
+              "history_kv256_tiles_stage": 522240
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 511,
+              "history_kv256_tiles_stage": 1046528
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        },
+        {
+          "stage": "first_mtp",
+          "calls_per_step": 1,
+          "full_layers": 1,
+          "input_rows": 512,
+          "live_rows": 512,
+          "padding_rows": 0,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_mdl_out",
+          "task_descriptors_per_layer": 1536,
+          "live_leader_source_split_tasks_per_layer": 384,
+          "native_current_source2": true,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 127,
+              "history_kv256_tiles_stage": 16256
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 255,
+              "history_kv256_tiles_stage": 32640
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 511,
+              "history_kv256_tiles_stage": 65408
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        },
+        {
+          "stage": "later_mtp",
+          "calls_per_step": 2,
+          "full_layers": 1,
+          "input_rows": 512,
+          "live_rows": 128,
+          "padding_rows": 384,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_mdl_q1_out",
+          "task_descriptors_per_layer": 1536,
+          "live_leader_source_split_tasks_per_layer": 384,
+          "native_current_source2": false,
+          "compact_later_applies": false,
+          "history_tiles": [
+            {
+              "context": 32768,
+              "history_kv256_tiles_per_request_per_layer": 127,
+              "history_kv256_tiles_stage": 32512
+            },
+            {
+              "context": 65536,
+              "history_kv256_tiles_per_request_per_layer": 255,
+              "history_kv256_tiles_stage": 65280
+            },
+            {
+              "context": 131072,
+              "history_kv256_tiles_per_request_per_layer": 511,
+              "history_kv256_tiles_stage": 130816
+            }
+          ],
+          "history_tile_scope": "At the same cached context L in each stage; actual rejection/accepted-position shifts can change boundary tiles. No latency or bandwidth inference."
+        }
+      ]
+    }
+  ],
+  "mixed_continued_prefill_work": [
+    {
+      "q4_prefix_requests": 31,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 124,
+      "continuation_query_tokens": 512,
+      "actual_tokens": 636,
+      "within_max_seqs_and_token_budget": true,
+      "plan": {
+        "prefix_requests": 31,
+        "prefix_tokens": 124,
+        "actual_tokens": 636,
+        "original_tokens": 636
+      },
+      "whole_batch_operator": "attention_bf16_history_member_pipeline_cluster4_out",
+      "launches": [
+        {
+          "segment": "short_prefix",
+          "input_rows": 124,
+          "max_query_len": 4,
+          "cv_shape_tokens": 636,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_mdl_out"
+        },
+        {
+          "segment": "long_suffix",
+          "input_rows": 512,
+          "max_query_len": 512,
+          "cv_shape_tokens": 636,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_member_pipeline_cluster4_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": null
+    },
+    {
+      "q4_prefix_requests": 31,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 124,
+      "continuation_query_tokens": 8232,
+      "actual_tokens": 8356,
+      "within_max_seqs_and_token_budget": true,
+      "plan": {
+        "prefix_requests": 31,
+        "prefix_tokens": 124,
+        "actual_tokens": 8356,
+        "original_tokens": 8356
+      },
+      "whole_batch_operator": "attention_bf16_history_window_range_cluster16_out",
+      "launches": [
+        {
+          "segment": "short_prefix",
+          "input_rows": 124,
+          "max_query_len": 4,
+          "cv_shape_tokens": 8356,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_mdl_out"
+        },
+        {
+          "segment": "long_suffix",
+          "input_rows": 8232,
+          "max_query_len": 8232,
+          "cv_shape_tokens": 8356,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_window_range_cluster16_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": null
+    },
+    {
+      "q4_prefix_requests": 31,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 124,
+      "continuation_query_tokens": 16260,
+      "actual_tokens": 16384,
+      "within_max_seqs_and_token_budget": true,
+      "plan": {
+        "prefix_requests": 31,
+        "prefix_tokens": 124,
+        "actual_tokens": 16384,
+        "original_tokens": 16384
+      },
+      "whole_batch_operator": "attention_bf16_history_window_range_cluster16_out",
+      "launches": [
+        {
+          "segment": "short_prefix",
+          "input_rows": 124,
+          "max_query_len": 4,
+          "cv_shape_tokens": 16384,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_mdl_out"
+        },
+        {
+          "segment": "long_suffix",
+          "input_rows": 16260,
+          "max_query_len": 16260,
+          "cv_shape_tokens": 16384,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_window_range_cluster16_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": null
+    },
+    {
+      "q4_prefix_requests": 32,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 128,
+      "continuation_query_tokens": 512,
+      "actual_tokens": 640,
+      "within_max_seqs_and_token_budget": true,
+      "plan": {
+        "prefix_requests": 32,
+        "prefix_tokens": 128,
+        "actual_tokens": 640,
+        "original_tokens": 640
+      },
+      "whole_batch_operator": "attention_bf16_history_member_pipeline_cluster4_out",
+      "launches": [
+        {
+          "segment": "short_prefix",
+          "input_rows": 128,
+          "max_query_len": 4,
+          "cv_shape_tokens": 640,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_mdl_out"
+        },
+        {
+          "segment": "long_suffix",
+          "input_rows": 512,
+          "max_query_len": 512,
+          "cv_shape_tokens": 640,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_member_pipeline_cluster4_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": null
+    },
+    {
+      "q4_prefix_requests": 32,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 128,
+      "continuation_query_tokens": 8232,
+      "actual_tokens": 8360,
+      "within_max_seqs_and_token_budget": true,
+      "plan": {
+        "prefix_requests": 32,
+        "prefix_tokens": 128,
+        "actual_tokens": 8360,
+        "original_tokens": 8360
+      },
+      "whole_batch_operator": "attention_bf16_history_window_range_cluster16_out",
+      "launches": [
+        {
+          "segment": "short_prefix",
+          "input_rows": 128,
+          "max_query_len": 4,
+          "cv_shape_tokens": 8360,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_mdl_out"
+        },
+        {
+          "segment": "long_suffix",
+          "input_rows": 8232,
+          "max_query_len": 8232,
+          "cv_shape_tokens": 8360,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_window_range_cluster16_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": null
+    },
+    {
+      "q4_prefix_requests": 32,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 128,
+      "continuation_query_tokens": 16256,
+      "actual_tokens": 16384,
+      "within_max_seqs_and_token_budget": true,
+      "plan": {
+        "prefix_requests": 32,
+        "prefix_tokens": 128,
+        "actual_tokens": 16384,
+        "original_tokens": 16384
+      },
+      "whole_batch_operator": "attention_bf16_history_window_range_cluster16_out",
+      "launches": [
+        {
+          "segment": "short_prefix",
+          "input_rows": 128,
+          "max_query_len": 4,
+          "cv_shape_tokens": 16384,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_mdl_out"
+        },
+        {
+          "segment": "long_suffix",
+          "input_rows": 16256,
+          "max_query_len": 16256,
+          "cv_shape_tokens": 16384,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_window_range_cluster16_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": null
+    },
+    {
+      "q4_prefix_requests": 33,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 132,
+      "continuation_query_tokens": 512,
+      "actual_tokens": 644,
+      "within_max_seqs_and_token_budget": true,
+      "plan": null,
+      "whole_batch_operator": "attention_bf16_history_member_pipeline_cluster4_out",
+      "launches": [
+        {
+          "segment": "whole_batch",
+          "input_rows": 644,
+          "max_query_len": 512,
+          "cv_shape_tokens": 644,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_member_pipeline_cluster4_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": "q4 prefix has more than 128 tokens; normal whole-batch CV route remains active."
+    },
+    {
+      "q4_prefix_requests": 33,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 132,
+      "continuation_query_tokens": 8232,
+      "actual_tokens": 8364,
+      "within_max_seqs_and_token_budget": true,
+      "plan": null,
+      "whole_batch_operator": "attention_bf16_history_window_range_cluster16_out",
+      "launches": [
+        {
+          "segment": "whole_batch",
+          "input_rows": 8364,
+          "max_query_len": 8232,
+          "cv_shape_tokens": 8364,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_window_range_cluster16_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": "q4 prefix has more than 128 tokens; normal whole-batch CV route remains active."
+    },
+    {
+      "q4_prefix_requests": 33,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 132,
+      "continuation_query_tokens": 16252,
+      "actual_tokens": 16384,
+      "within_max_seqs_and_token_budget": true,
+      "plan": null,
+      "whole_batch_operator": "attention_bf16_history_window_range_cluster16_out",
+      "launches": [
+        {
+          "segment": "whole_batch",
+          "input_rows": 16384,
+          "max_query_len": 16252,
+          "cv_shape_tokens": 16384,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_window_range_cluster16_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": "q4 prefix has more than 128 tokens; normal whole-batch CV route remains active."
+    },
+    {
+      "q4_prefix_requests": 64,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 256,
+      "continuation_query_tokens": 512,
+      "actual_tokens": 768,
+      "within_max_seqs_and_token_budget": true,
+      "plan": null,
+      "whole_batch_operator": "attention_bf16_history_member_pipeline_cluster4_out",
+      "launches": [
+        {
+          "segment": "whole_batch",
+          "input_rows": 768,
+          "max_query_len": 512,
+          "cv_shape_tokens": 768,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_member_pipeline_cluster4_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": "q4 prefix has more than 128 tokens; normal whole-batch CV route remains active."
+    },
+    {
+      "q4_prefix_requests": 64,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 256,
+      "continuation_query_tokens": 8232,
+      "actual_tokens": 8488,
+      "within_max_seqs_and_token_budget": true,
+      "plan": null,
+      "whole_batch_operator": "attention_bf16_history_window_range_cluster16_out",
+      "launches": [
+        {
+          "segment": "whole_batch",
+          "input_rows": 8488,
+          "max_query_len": 8232,
+          "cv_shape_tokens": 8488,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_window_range_cluster16_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": "q4 prefix has more than 128 tokens; normal whole-batch CV route remains active."
+    },
+    {
+      "q4_prefix_requests": 64,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 256,
+      "continuation_query_tokens": 16128,
+      "actual_tokens": 16384,
+      "within_max_seqs_and_token_budget": true,
+      "plan": null,
+      "whole_batch_operator": "attention_bf16_history_window_range_cluster16_out",
+      "launches": [
+        {
+          "segment": "whole_batch",
+          "input_rows": 16384,
+          "max_query_len": 16128,
+          "cv_shape_tokens": 16384,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_window_range_cluster16_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": "q4 prefix has more than 128 tokens; normal whole-batch CV route remains active."
+    },
+    {
+      "q4_prefix_requests": 127,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 508,
+      "continuation_query_tokens": 512,
+      "actual_tokens": 1020,
+      "within_max_seqs_and_token_budget": true,
+      "plan": null,
+      "whole_batch_operator": "attention_bf16_history_member_pipeline_cluster4_out",
+      "launches": [
+        {
+          "segment": "whole_batch",
+          "input_rows": 1020,
+          "max_query_len": 512,
+          "cv_shape_tokens": 1020,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_member_pipeline_cluster4_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": "q4 prefix has more than 128 tokens; normal whole-batch CV route remains active."
+    },
+    {
+      "q4_prefix_requests": 127,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 508,
+      "continuation_query_tokens": 8232,
+      "actual_tokens": 8740,
+      "within_max_seqs_and_token_budget": true,
+      "plan": null,
+      "whole_batch_operator": "attention_bf16_history_window_range_cluster16_out",
+      "launches": [
+        {
+          "segment": "whole_batch",
+          "input_rows": 8740,
+          "max_query_len": 8232,
+          "cv_shape_tokens": 8740,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_window_range_cluster16_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": "q4 prefix has more than 128 tokens; normal whole-batch CV route remains active."
+    },
+    {
+      "q4_prefix_requests": 127,
+      "continuation_requests": 1,
+      "q4_prefix_tokens": 508,
+      "continuation_query_tokens": 15876,
+      "actual_tokens": 16384,
+      "within_max_seqs_and_token_budget": true,
+      "plan": null,
+      "whole_batch_operator": "attention_bf16_history_window_range_cluster16_out",
+      "launches": [
+        {
+          "segment": "whole_batch",
+          "input_rows": 16384,
+          "max_query_len": 15876,
+          "cv_shape_tokens": 16384,
+          "source_splits": 1,
+          "operator": "attention_bf16_history_window_range_cluster16_out"
+        }
+      ],
+      "comparison_scope": "Target eager continued prefill with positive cached context on every request; current-only suffix removal is inapplicable. Planner and selector execute on host; no device execution.",
+      "unpartitioned_reason": "q4 prefix has more than 128 tokens; normal whole-batch CV route remains active."
+    }
+  ],
+  "boundaries": [
+    "Zero cross-request prefix sharing; align checkpoint caching is evictable within the same pool.",
+    "One null pool block deducted globally, not one per request.",
+    "MTP lookahead +3 FULL tokens is distinct from 3 reserved GDN states.",
+    "All capacity counts assume resident full histories; scheduler admission, phase peaks, fragmentation and output growth can lower live B.",
+    "Pure q4 verification assumes three draft tokens available. Mixed prefill and first-token q1 steps differ.",
+    "Mixed continued prefill allows a q4 prefix up to B32/128 rows. B33/132 rows remains on the normal whole-batch C4/C16 route. Qualified child launches retain the original batch split count, not pure-decode parallelism.",
+    "Later MTP keeps N=4B with only B live rows for these shapes; no shape recovery or automatic compact applied.",
+    "Task counts and KV tile work are not device time or HBM bytes. Numerical gates and target Trap remain unresolved."
+  ],
+  "sources": [
+    {
+      "path": "configs/target.json",
+      "sha256": "0d90d116cccd2ca9b99cef447f66afb8bee7bb635d794afc72f6e937112ebdc0"
+    },
+    {
+      "path": "references/vllm/vllm/v1/core/kv_cache_utils.py",
+      "sha256": "b89f9afa7f95fcc30412ae2031d5370a23e95f35d068fa14e5824dce1c900ee5",
+      "definition_lines": {
+        "max_memory_usage_bytes": 753,
+        "get_num_blocks": 952,
+        "_get_kv_cache_groups_uniform_page_size": 1074,
+        "get_kv_cache_config_from_groups": 1247
+      }
+    },
+    {
+      "path": "references/vllm/vllm/model_executor/layers/mamba/mamba_utils.py",
+      "sha256": "aa9b7dc46725a012fc61b83a7181baaddad7ab4b0eb8e4144350799697ad6a42",
+      "definition_lines": {
+        "MambaStateShapeCalculator.gated_delta_net_state_shape": 213
+      }
+    },
+    {
+      "path": "references/vllm/vllm/v1/kv_cache_interface.py",
+      "sha256": "8d6be98bbf75b3d55007b64ccf5afef047ca01790a432522f70a196412c103d9",
+      "definition_lines": {
+        "KVCacheSpec.max_memory_usage_bytes": 118,
+        "FullAttentionSpec.max_memory_usage_bytes": 226,
+        "ChunkedLocalAttentionSpec.max_memory_usage_bytes": 441,
+        "SlidingWindowSpec.max_memory_usage_bytes": 510,
+        "MambaSpec": 608,
+        "MambaSpec.max_memory_usage_bytes": 627,
+        "EncoderOnlyAttentionSpec.max_memory_usage_bytes": 650,
+        "CrossAttentionSpec.max_memory_usage_bytes": 661,
+        "UniformTypeKVCacheSpecs.max_memory_usage_bytes": 735
+      }
+    },
+    {
+      "path": "reports/target_runtime_trap_20261019.txt",
+      "sha256": "834fec8944f9ffc4c247195c85e565c278c2641368618042be9a9d1522ed82b1"
+    },
+    {
+      "path": "oscar_ascend/layout.py",
+      "sha256": "87bbee7a38f55545563823d798172e807f774c0bad8f72a07ec668ec562e3fc0",
+      "definition_lines": {
+        "HybridPageLayout": 86
+      }
+    },
+    {
+      "path": "oscar_ascend/lifecycle.py",
+      "sha256": "8791998aabe84dd076e9366b87d0d158722135e5370e2ede09f443c6f67a314d",
+      "definition_lines": {
+        "SnapshotLayout": 14
+      }
+    },
+    {
+      "path": "oscar_ascend/runtime.py",
+      "sha256": "30e7b524e5a3fb438202b2d43b972693e7c62a74b579fcda94d1a0859994a36a",
+      "definition_lines": {
+        "AscendRuntimeProvider.ensure_workspace": 574,
+        "AscendRuntimeProvider._prepare_rotations": 691
+      }
+    },
+    {
+      "path": "oscar_ascend/rotations.py",
+      "sha256": "478cb0a20994e0ac6119e8a921ad2f4719cc35610dd90f80e9b089d9b0fb1481",
+      "definition_lines": {
+        "prepare_device_rotations": 45
+      }
+    },
+    {
+      "path": "oscar_ascend/ops/cv_dispatch.py",
+      "sha256": "d27ad044fec0fa95ee3e3983d3b6e36d846d34d6e3781d1067935591f213fe12",
+      "definition_lines": {
+        "select_cv_op": 62
+      }
+    },
+    {
+      "path": "oscar_ascend/integration/impl.py",
+      "sha256": "91e777676b4c04b332a98095bf82d7efe679da99d4675dca8e0f832d16ced017",
+      "definition_lines": {
+        "OscarAttentionImpl.forward": 63
+      }
+    },
+    {
+      "path": "oscar_ascend/integration/compact_later_mtp.py",
+      "sha256": "ddd13aa7247572252302edd4394eafd9d3a996b238ec4824b50860f37b342c4f",
+      "definition_lines": {
+        "should_compact_rows": 25
+      }
+    },
+    {
+      "path": "oscar_ascend/integration/mixed_decode_split.py",
+      "sha256": "6184598243c0ae531ac5fa454ab54d9228538bf7a60cba43fa831cb26d701544",
+      "definition_lines": {
+        "plan_mixed_decode": 27,
+        "_slice_metadata": 59,
+        "dispatch_mixed_decode": 77
+      }
+    },
+    {
+      "path": "tools/serving_variants.py",
+      "sha256": "928b913d8a646d253b18b8e2f3d430dd0e201cf69ae7c75de3d231103988719f",
+      "definition_lines": {}
+    },
+    {
+      "path": "references/vllm-ascend/vllm_ascend/patch/platform/patch_mamba_config.py",
+      "sha256": "ee38c68c27357a7d18f7e368e03a352bb312f79c3576431a64f688ce953716ac",
+      "definition_lines": {
+        "verify_and_update_config": 31
+      }
+    },
+    {
+      "path": "references/vllm/vllm/v1/core/kv_cache_manager.py",
+      "sha256": "a69aa08062714b40b149648bbec031a42d22e422fbf9543cd10fbd12d2496edb",
+      "definition_lines": {
+        "KVCacheManager.allocate_slots": 238
+      }
+    },
+    {
+      "path": "references/vllm/vllm/v1/core/single_type_kv_cache_manager.py",
+      "sha256": "dc425e1e87b6157f3e5c46be2bfee54076ccb020b86c5a8aaa3d9901c75e46ef",
+      "definition_lines": {}
+    },
+    {
+      "path": "references/vllm-ascend/vllm_ascend/spec_decode/llm_base_proposer.py",
+      "sha256": "4a90532c5c3667d9eb4fec666bf03c65a2f1c92cd402f731b644ef8fa2ed82ab",
+      "definition_lines": {
+        "AscendSpecDecodeBaseProposer.attn_update_stack_num_spec_norm": 1515
+      }
+    },
+    {
+      "path": "csrc/kernels/attention_tasks.cpp",
+      "sha256": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952"
+    },
+    {
+      "path": "tests/test_runtime_native.py",
+      "sha256": "3e930546faaf0c8ceab596984022008a697c00ccd733463347c6b04050918754",
+      "definition_lines": {}
+    },
+    {
+      "path": "tests/test_memory_64k_accounting.py",
+      "sha256": "6be3886867ff80974c5977ad64cad312ee8f629023a5a1024fb40a43123da96a",
+      "definition_lines": {}
+    },
+    {
+      "path": "tools/experiments/batch_capacity_20261019.py",
+      "sha256": "921edb2222b25a2f659e46b6327ec523702720f9e13a9c969ffe5664626e2f08",
+      "definition_lines": {}
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "kind": "predeclared_synthetic_sensitivity_not_device_calibration",
+  "name": "quarter_extra_GM_HBM_quarter_unmodelled_cost",
+  "temporary_equivalent_hbm_fraction": 0.25,
+  "additional_serial_cost_per_request_in_native_history_units": 0.25,
+  "common_fixed_cost_in_native_batch_history_units": 0.5,
+  "common_linear_cost_in_native_batch_history_units": 0.5,
+  "oscar_over_native_emitted_tokens_per_request": 1.0,
+  "meaning": "At native resident B, the synthetic reference step is 50% long-history KV service, 25% batch-independent common cost, 25% per-request common cost. OSCAR uses source-counted KV and other GM requests. Extra unpack/compute/launch/sync/merge costs beyond counted byte service are a separately assumed, non-overlapped 25% of native history service per request. None of these shares is inferred from current device evidence.",
+  "units": "Native 19-FULL-call once-per-KV long-history read at the native resident batch equals 1 time unit. No seconds, clock frequency or absolute tokens/s conversion.",
+  "predeclared_grid": {
+    "temporary_equivalent_hbm_fraction": [0.0, 0.1, 0.25, 0.5, 1.0],
+    "additional_serial_cost_per_request_in_native_history_units": [0.0, 0.25, 0.5, 1.0],
+    "common_fixed_cost_in_native_batch_history_units": [0.0, 0.5, 1.0, 2.0],
+    "common_linear_cost_in_native_batch_history_units": [0.0, 0.5, 1.0, 2.0],
+    "oscar_over_native_emitted_tokens_per_request": [0.8, 1.0]
+  }
+}

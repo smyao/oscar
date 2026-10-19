@@ -1,0 +1,1020 @@
+{
+  "evidence_kind": "executed_CPU_Python_profile_not_NPU_or_service_timing",
+  "environment": {
+    "platform": "macOS-15.7.7-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "torch": "2.14.1",
+    "torch_threads": 1
+  },
+  "loops": 100,
+  "repeats": 5,
+  "rows": [
+    {
+      "kind": "pure_target",
+      "short_requests": 1,
+      "layers": 16,
+      "actual_tokens": 4,
+      "median_host_us": 50.38042,
+      "minimum_host_us": 49.86791,
+      "maximum_host_us": 51.15583,
+      "repeat_host_us": [
+        51.15583,
+        49.86791,
+        51.10667,
+        50.38042,
+        49.9675
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": false
+      }
+    },
+    {
+      "kind": "pure_target",
+      "short_requests": 8,
+      "layers": 16,
+      "actual_tokens": 32,
+      "median_host_us": 51.08334,
+      "minimum_host_us": 49.785830000000004,
+      "maximum_host_us": 52.34625,
+      "repeat_host_us": [
+        50.50208,
+        49.785830000000004,
+        51.08334,
+        52.010419999999996,
+        52.34625
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": false
+      }
+    },
+    {
+      "kind": "pure_target",
+      "short_requests": 20,
+      "layers": 16,
+      "actual_tokens": 80,
+      "median_host_us": 51.712089999999996,
+      "minimum_host_us": 51.21333,
+      "maximum_host_us": 52.56458,
+      "repeat_host_us": [
+        51.84042,
+        52.56458,
+        51.21333,
+        51.39416000000001,
+        51.712089999999996
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": false
+      }
+    },
+    {
+      "kind": "pure_target",
+      "short_requests": 31,
+      "layers": 16,
+      "actual_tokens": 124,
+      "median_host_us": 51.50167,
+      "minimum_host_us": 49.98375,
+      "maximum_host_us": 51.8025,
+      "repeat_host_us": [
+        49.98375,
+        50.855,
+        51.52875,
+        51.50167,
+        51.8025
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": false
+      }
+    },
+    {
+      "kind": "pure_target",
+      "short_requests": 32,
+      "layers": 16,
+      "actual_tokens": 128,
+      "median_host_us": 51.14875,
+      "minimum_host_us": 49.9375,
+      "maximum_host_us": 52.520410000000005,
+      "repeat_host_us": [
+        51.14875,
+        50.23333,
+        52.520410000000005,
+        49.9375,
+        51.20875
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": false
+      }
+    },
+    {
+      "kind": "pure_target",
+      "short_requests": 33,
+      "layers": 16,
+      "actual_tokens": 132,
+      "median_host_us": 51.434160000000006,
+      "minimum_host_us": 50.02167,
+      "maximum_host_us": 51.82792,
+      "repeat_host_us": [
+        51.434160000000006,
+        51.746660000000006,
+        51.09,
+        50.02167,
+        51.82792
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": false
+      }
+    },
+    {
+      "kind": "pure_target",
+      "short_requests": 46,
+      "layers": 16,
+      "actual_tokens": 184,
+      "median_host_us": 53.08042,
+      "minimum_host_us": 52.097089999999994,
+      "maximum_host_us": 53.20917,
+      "repeat_host_us": [
+        52.89625,
+        53.20917,
+        52.097089999999994,
+        53.1775,
+        53.08042
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": false
+      }
+    },
+    {
+      "kind": "pure_target",
+      "short_requests": 64,
+      "layers": 16,
+      "actual_tokens": 256,
+      "median_host_us": 52.09917,
+      "minimum_host_us": 49.497080000000004,
+      "maximum_host_us": 52.855419999999995,
+      "repeat_host_us": [
+        51.36041,
+        49.497080000000004,
+        52.09917,
+        52.855419999999995,
+        52.77
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": false
+      }
+    },
+    {
+      "kind": "pure_target",
+      "short_requests": 127,
+      "layers": 16,
+      "actual_tokens": 508,
+      "median_host_us": 53.37333,
+      "minimum_host_us": 52.8775,
+      "maximum_host_us": 54.68,
+      "repeat_host_us": [
+        54.68,
+        53.50167,
+        52.8775,
+        53.28667,
+        53.37333
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": false
+      }
+    },
+    {
+      "kind": "first_draft",
+      "short_requests": 1,
+      "layers": 1,
+      "actual_tokens": 4,
+      "median_host_us": 23.70541,
+      "minimum_host_us": 23.51417,
+      "maximum_host_us": 24.00791,
+      "repeat_host_us": [
+        24.00791,
+        23.814580000000003,
+        23.51417,
+        23.70541,
+        23.68667
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "first_draft",
+      "short_requests": 8,
+      "layers": 1,
+      "actual_tokens": 32,
+      "median_host_us": 24.765,
+      "minimum_host_us": 24.71959,
+      "maximum_host_us": 25.03042,
+      "repeat_host_us": [
+        25.03042,
+        24.779169999999997,
+        24.765,
+        24.74917,
+        24.71959
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "first_draft",
+      "short_requests": 20,
+      "layers": 1,
+      "actual_tokens": 80,
+      "median_host_us": 27.21583,
+      "minimum_host_us": 27.08875,
+      "maximum_host_us": 28.09709,
+      "repeat_host_us": [
+        27.08875,
+        27.584169999999997,
+        27.21583,
+        27.215419999999998,
+        28.09709
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "first_draft",
+      "short_requests": 31,
+      "layers": 1,
+      "actual_tokens": 124,
+      "median_host_us": 29.905,
+      "minimum_host_us": 29.10625,
+      "maximum_host_us": 30.23958,
+      "repeat_host_us": [
+        29.905,
+        29.10625,
+        30.21208,
+        30.23958,
+        29.2725
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "first_draft",
+      "short_requests": 32,
+      "layers": 1,
+      "actual_tokens": 128,
+      "median_host_us": 29.211669999999998,
+      "minimum_host_us": 28.27667,
+      "maximum_host_us": 30.319580000000002,
+      "repeat_host_us": [
+        28.27667,
+        28.4775,
+        29.72375,
+        29.211669999999998,
+        30.319580000000002
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "first_draft",
+      "short_requests": 33,
+      "layers": 1,
+      "actual_tokens": 132,
+      "median_host_us": 29.48125,
+      "minimum_host_us": 28.29084,
+      "maximum_host_us": 30.21625,
+      "repeat_host_us": [
+        28.29084,
+        29.507080000000002,
+        29.31541,
+        30.21625,
+        29.48125
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "first_draft",
+      "short_requests": 46,
+      "layers": 1,
+      "actual_tokens": 184,
+      "median_host_us": 31.55291,
+      "minimum_host_us": 31.37958,
+      "maximum_host_us": 32.01583,
+      "repeat_host_us": [
+        32.01583,
+        31.55291,
+        31.37958,
+        31.92,
+        31.41
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "first_draft",
+      "short_requests": 64,
+      "layers": 1,
+      "actual_tokens": 256,
+      "median_host_us": 35.07833,
+      "minimum_host_us": 34.84458,
+      "maximum_host_us": 36.05459,
+      "repeat_host_us": [
+        35.07833,
+        34.8825,
+        34.84458,
+        36.05459,
+        35.2525
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "first_draft",
+      "short_requests": 127,
+      "layers": 1,
+      "actual_tokens": 508,
+      "median_host_us": 48.144589999999994,
+      "minimum_host_us": 47.20875,
+      "maximum_host_us": 48.75084,
+      "repeat_host_us": [
+        47.7275,
+        47.20875,
+        48.75084,
+        48.3375,
+        48.144589999999994
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "continued_mixed",
+      "short_requests": 1,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 141.05791,
+      "minimum_host_us": 140.48583,
+      "maximum_host_us": 143.12917000000002,
+      "repeat_host_us": [
+        140.48583,
+        142.54083,
+        143.12917000000002,
+        141.05791,
+        140.73583
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": true,
+        "short_prefix_tokens": 4,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "continued_mixed",
+      "short_requests": 8,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 154.46917000000002,
+      "minimum_host_us": 149.7775,
+      "maximum_host_us": 157.09292000000002,
+      "repeat_host_us": [
+        157.03792,
+        154.46917000000002,
+        157.09292000000002,
+        149.7775,
+        150.06
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": true,
+        "short_prefix_tokens": 32,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "continued_mixed",
+      "short_requests": 20,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 183.28916,
+      "minimum_host_us": 171.4825,
+      "maximum_host_us": 237.49667000000002,
+      "repeat_host_us": [
+        171.4825,
+        189.07583,
+        237.49667000000002,
+        183.28916,
+        173.30208
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": true,
+        "short_prefix_tokens": 80,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "continued_mixed",
+      "short_requests": 31,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 181.43541,
+      "minimum_host_us": 180.13166,
+      "maximum_host_us": 188.33875,
+      "repeat_host_us": [
+        188.33875,
+        181.43541,
+        181.75332999999998,
+        180.6475,
+        180.13166
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": true,
+        "short_prefix_tokens": 124,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "continued_mixed",
+      "short_requests": 32,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 184.62832999999998,
+      "minimum_host_us": 183.26833,
+      "maximum_host_us": 185.72332999999998,
+      "repeat_host_us": [
+        185.1875,
+        185.72332999999998,
+        184.62832999999998,
+        183.26833,
+        184.275
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": true,
+        "short_prefix_tokens": 128,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "continued_mixed",
+      "short_requests": 33,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 187.17625,
+      "minimum_host_us": 177.70792,
+      "maximum_host_us": 187.40625,
+      "repeat_host_us": [
+        177.70792,
+        187.24334,
+        185.84625,
+        187.17625,
+        187.40625
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_window_range_cluster16_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "continued_mixed",
+      "short_requests": 46,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 201.93957999999998,
+      "minimum_host_us": 199.70833,
+      "maximum_host_us": 203.595,
+      "repeat_host_us": [
+        203.595,
+        203.07958,
+        201.93957999999998,
+        199.70833,
+        199.82834
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_window_range_cluster16_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "continued_mixed",
+      "short_requests": 64,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 232.57667,
+      "minimum_host_us": 230.27042,
+      "maximum_host_us": 233.6775,
+      "repeat_host_us": [
+        232.1375,
+        232.57667,
+        233.6775,
+        230.27042,
+        232.98709
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_window_range_cluster16_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "continued_mixed",
+      "short_requests": 127,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 344.25541999999996,
+      "minimum_host_us": 342.65625,
+      "maximum_host_us": 347.5575,
+      "repeat_host_us": [
+        347.5575,
+        346.32708,
+        342.65625,
+        342.7125,
+        344.25541999999996
+      ],
+      "route": {
+        "current_suffix": false,
+        "mixed_split": false,
+        "short_prefix_tokens": null,
+        "short_request_operator": "attention_bf16_history_window_range_cluster16_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "fresh_mixed",
+      "short_requests": 1,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 70.02459,
+      "minimum_host_us": 69.84917,
+      "maximum_host_us": 70.30041,
+      "repeat_host_us": [
+        70.30041,
+        70.02875,
+        70.02459,
+        69.84917,
+        69.86084
+      ],
+      "route": {
+        "current_suffix": true,
+        "mixed_split": false,
+        "short_prefix_tokens": 4,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "fresh_mixed",
+      "short_requests": 8,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 72.07875,
+      "minimum_host_us": 71.81459,
+      "maximum_host_us": 72.91792,
+      "repeat_host_us": [
+        72.91792,
+        72.26042,
+        71.8975,
+        71.81459,
+        72.07875
+      ],
+      "route": {
+        "current_suffix": true,
+        "mixed_split": false,
+        "short_prefix_tokens": 32,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "fresh_mixed",
+      "short_requests": 20,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 74.77667,
+      "minimum_host_us": 74.71916999999999,
+      "maximum_host_us": 74.82875,
+      "repeat_host_us": [
+        74.82875,
+        74.77791,
+        74.71958000000001,
+        74.77667,
+        74.71916999999999
+      ],
+      "route": {
+        "current_suffix": true,
+        "mixed_split": false,
+        "short_prefix_tokens": 80,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "fresh_mixed",
+      "short_requests": 31,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 77.80583,
+      "minimum_host_us": 77.76458,
+      "maximum_host_us": 78.60916999999999,
+      "repeat_host_us": [
+        77.775,
+        77.85083,
+        77.76458,
+        78.60916999999999,
+        77.80583
+      ],
+      "route": {
+        "current_suffix": true,
+        "mixed_split": false,
+        "short_prefix_tokens": 124,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "fresh_mixed",
+      "short_requests": 32,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 78.10334,
+      "minimum_host_us": 78.0375,
+      "maximum_host_us": 80.23375,
+      "repeat_host_us": [
+        78.10334,
+        78.0825,
+        78.0375,
+        80.23375,
+        80.19042
+      ],
+      "route": {
+        "current_suffix": true,
+        "mixed_split": false,
+        "short_prefix_tokens": 128,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "fresh_mixed",
+      "short_requests": 33,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 81.73542,
+      "minimum_host_us": 80.13,
+      "maximum_host_us": 82.58375,
+      "repeat_host_us": [
+        81.39667,
+        81.78,
+        81.73542,
+        82.58375,
+        80.13
+      ],
+      "route": {
+        "current_suffix": true,
+        "mixed_split": false,
+        "short_prefix_tokens": 132,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "fresh_mixed",
+      "short_requests": 46,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 81.43417,
+      "minimum_host_us": 81.31708,
+      "maximum_host_us": 82.1275,
+      "repeat_host_us": [
+        81.64708,
+        82.1275,
+        81.39666,
+        81.31708,
+        81.43417
+      ],
+      "route": {
+        "current_suffix": true,
+        "mixed_split": false,
+        "short_prefix_tokens": 184,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "fresh_mixed",
+      "short_requests": 64,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 86.69166,
+      "minimum_host_us": 86.56583,
+      "maximum_host_us": 87.04042,
+      "repeat_host_us": [
+        86.765,
+        86.64375,
+        87.04042,
+        86.56583,
+        86.69166
+      ],
+      "route": {
+        "current_suffix": true,
+        "mixed_split": false,
+        "short_prefix_tokens": 256,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    },
+    {
+      "kind": "fresh_mixed",
+      "short_requests": 127,
+      "layers": 16,
+      "actual_tokens": 16384,
+      "median_host_us": 104.71667,
+      "minimum_host_us": 104.59416,
+      "maximum_host_us": 105.52792,
+      "repeat_host_us": [
+        105.52792,
+        105.15417,
+        104.59416,
+        104.59625,
+        104.71667
+      ],
+      "route": {
+        "current_suffix": true,
+        "mixed_split": false,
+        "short_prefix_tokens": 508,
+        "short_request_operator": "attention_bf16_history_mdl_out",
+        "cpu_cumulative_cached": true
+      }
+    }
+  ],
+  "cprofile": [
+    {
+      "path": "oscar_ascend/integration/mixed_decode_split.py",
+      "line": 27,
+      "function": "plan_mixed_decode",
+      "calls": 1600,
+      "self_seconds": 0.01922814,
+      "cumulative_seconds": 0.033086236000000005
+    },
+    {
+      "path": "oscar_ascend/ops/cv_dispatch.py",
+      "line": 62,
+      "function": "select_cv_op",
+      "calls": 8000,
+      "self_seconds": 0.009383743,
+      "cumulative_seconds": 0.01510037
+    },
+    {
+      "path": "oscar_ascend/integration/metadata.py",
+      "line": 81,
+      "function": "from_common",
+      "calls": 100,
+      "self_seconds": 0.000877892,
+      "cumulative_seconds": 0.010404958
+    },
+    {
+      "path": "oscar_ascend/integration/cpu_metadata.py",
+      "line": 21,
+      "function": "cpu_int_mirror_values",
+      "calls": 1900,
+      "self_seconds": 0.0028637230000000003,
+      "cumulative_seconds": 0.005813901000000001
+    },
+    {
+      "path": "oscar_ascend/ops/cv_dispatch.py",
+      "line": 65,
+      "function": "<genexpr>",
+      "calls": 64000,
+      "self_seconds": 0.0053673620000000005,
+      "cumulative_seconds": 0.0053673620000000005
+    },
+    {
+      "path": "oscar_ascend/integration/mixed_decode_split.py",
+      "line": 40,
+      "function": "<genexpr>",
+      "calls": 76800,
+      "self_seconds": 0.004665809,
+      "cumulative_seconds": 0.004665809
+    },
+    {
+      "path": "oscar_ascend/integration/current_only_plan.py",
+      "line": 21,
+      "function": "plan_current_suffix",
+      "calls": 100,
+      "self_seconds": 0.0019921540000000003,
+      "cumulative_seconds": 0.003548672
+    },
+    {
+      "path": "oscar_ascend/integration/current_attention.py",
+      "line": 56,
+      "function": "current_cumulative_lengths",
+      "calls": 100,
+      "self_seconds": 0.001179172,
+      "cumulative_seconds": 0.00221909
+    },
+    {
+      "path": "oscar_ascend/integration/cpu_metadata.py",
+      "line": 12,
+      "function": "validate_cpu_int_mirror",
+      "calls": 2000,
+      "self_seconds": 0.001613031,
+      "cumulative_seconds": 0.002074485
+    },
+    {
+      "path": "oscar_ascend/integration/current_only_plan.py",
+      "line": 25,
+      "function": "<genexpr>",
+      "calls": 9600,
+      "self_seconds": 0.0008622870000000001,
+      "cumulative_seconds": 0.0008622870000000001
+    },
+    {
+      "path": "oscar_ascend/integration/metadata.py",
+      "line": 62,
+      "function": "from_native_buffers",
+      "calls": 100,
+      "self_seconds": 0.00022863900000000002,
+      "cumulative_seconds": 0.000418
+    },
+    {
+      "path": "oscar_ascend/integration/current_only_plan.py",
+      "line": 31,
+      "function": "<genexpr>",
+      "calls": 4800,
+      "self_seconds": 0.000323876,
+      "cumulative_seconds": 0.000323876
+    },
+    {
+      "path": "oscar_ascend/integration/current_attention.py",
+      "line": 65,
+      "function": "<genexpr>",
+      "calls": 4800,
+      "self_seconds": 0.00032363000000000004,
+      "cumulative_seconds": 0.00032363000000000004
+    },
+    {
+      "path": "oscar_ascend/integration/current_only_plan.py",
+      "line": 26,
+      "function": "<genexpr>",
+      "calls": 4800,
+      "self_seconds": 0.00029459,
+      "cumulative_seconds": 0.00029459
+    },
+    {
+      "path": "oscar_ascend/integration/metadata.py",
+      "line": 66,
+      "function": "<genexpr>",
+      "calls": 400,
+      "self_seconds": 9.9795e-05,
+      "cumulative_seconds": 0.00012041200000000001
+    },
+    {
+      "path": "oscar_ascend/integration/dummy_context.py",
+      "line": 15,
+      "function": "is_native_dummy_run",
+      "calls": 100,
+      "self_seconds": 2.3997e-05,
+      "cumulative_seconds": 3.5463e-05
+    },
+    {
+      "path": "oscar_ascend/integration/metadata.py",
+      "line": 71,
+      "function": "validate",
+      "calls": 100,
+      "self_seconds": 1.8326e-05,
+      "cumulative_seconds": 1.8326e-05
+    }
+  ],
+  "sources": [
+    {
+      "path": "oscar_ascend/integration/metadata.py",
+      "sha256": "591aeb33a01a1293c20f73ffbeac31cc9feb13b276dd7bf050b48a2adac54445"
+    },
+    {
+      "path": "oscar_ascend/integration/impl.py",
+      "sha256": "91e777676b4c04b332a98095bf82d7efe679da99d4675dca8e0f832d16ced017"
+    },
+    {
+      "path": "oscar_ascend/integration/current_only_plan.py",
+      "sha256": "7f5fa1d9ab5a1f48c396eb9978f16b8fe8257a9115df5a4989b45825c4f2d366"
+    },
+    {
+      "path": "oscar_ascend/integration/mixed_decode_split.py",
+      "sha256": "6184598243c0ae531ac5fa454ab54d9228538bf7a60cba43fa831cb26d701544"
+    },
+    {
+      "path": "oscar_ascend/ops/cv_dispatch.py",
+      "sha256": "d27ad044fec0fa95ee3e3983d3b6e36d846d34d6e3781d1067935591f213fe12"
+    },
+    {
+      "path": "tools/serving_variants.py",
+      "sha256": "928b913d8a646d253b18b8e2f3d430dd0e201cf69ae7c75de3d231103988719f"
+    },
+    {
+      "path": "references/vllm-ascend/vllm_ascend/worker/model_runner_v1.py",
+      "sha256": "94d75dbeb5d23ab5b383cdc69114167392b967994bb21342cf748b733ba9a968"
+    },
+    {
+      "path": "tools/experiments/batch_host_profile_20261019.py",
+      "sha256": "552b161b38f9651dc40008f63f3b4dd3fb385b0d3005cbd201bdc71320559176"
+    }
+  ],
+  "limits": [
+    "No target-device timing or CPU-to-NPU scale conversion.",
+    "Metadata and dispatch decisions only; no actual attention execution.",
+    "Pure target simulates capture-time metadata/routing, not replay-time host cost. Per-layer Python forward may be bypassed during replay.",
+    "One from_common per FULL group; first draft one layer, target fixtures 16 routing decisions. Guard binding/child dispatch are excluded.",
+    "All shapes are conditional local 6-query/1-KV/D256 fixture."
+  ]
+}

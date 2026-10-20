@@ -173,12 +173,17 @@ def _patch_runner(module: ModuleType) -> None:
     if hasattr(cls, "_determine_batch_execution_and_padding"):
         _patch(cls, "_determine_batch_execution_and_padding", classified_dispatch)
 
-    # Optional for old host fixture providers, mandatory when the explicit
-    # request-window feature seals a real runner. Registration remains light.
+    # Validate target identity before Attention constructors select rotations;
+    # request-window sidecars are sealed after native loading. Registration is light.
     def loaded(original):
         def wrapped(runner, *args, **kwargs):
-            result = original(runner, *args, **kwargs)
             provider = require_runtime()
+            # #86/#97: raw `vllm serve` can differ from OSCAR_TARGET_CONFIG.
+            # Attention constructors load rotations inside original(), so the
+            # model identity must agree before entering native model loading.
+            from .integration.model_identity import validate_runner_model_identity
+            validate_runner_model_identity(provider.config, runner)
+            result = original(runner, *args, **kwargs)
             if getattr(provider, "request_windows_enabled", False):
                 provider.seal_request_windows(runner)
             return result

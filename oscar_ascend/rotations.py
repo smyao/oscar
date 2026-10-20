@@ -3,6 +3,8 @@
 Archive G19/G20/G23, #23-#25: sample identity, finite covariance and solver
 validation; #86: target and draft layers are enumerated separately. #96/#97:
 lazy torch import and explicit, traceable data-free construction.
+#165/#166: bind the effective native sampling configuration to cached pairs;
+#86/#97: missing import provenance must never be inferred from the target.
 Paper reference: rotation/compute_kv_rotation.py:23-46,93-136,234-312.
 Serving rotation computation/validation requires NPU. CPU is an explicit test
 option; requested official FP64 offline fitting lives in rotation_calibration.
@@ -22,6 +24,10 @@ from typing import Any, Callable, Mapping, Sequence
 
 
 FORMAT_VERSION = 1
+# Version the local sampling recipe independently of the pinned upstream math.
+# v2 binds actual native BF16 GDN state and the authenticated capture/pair
+# execution profile; it does not change the serving or sampling state dtype.
+CALIBRATION_RECIPE_VERSION = 2
 PR_FINGERPRINT = "57286d5d2cb08c3dcd8c17bb59e132d6985e6796"
 ORTHOGONALITY_ATOL = 5e-4
 EIGEN_RESIDUAL_RTOL = 5e-4
@@ -354,6 +360,7 @@ def calibration_cache_identity(config: Mapping[str, Any], fingerprint: str) -> d
     """Pure host identity; no model load, tensor operation, or online download."""
     from .rotation_calibration import OFFICIAL_COMMIT
     from tools.calibration_data import GPQA_SHA256
+    from tools.model_config import resolve_mamba_cache_dtypes
     prompts = config.get("rotation_calibration_prompts")
     source = ({"path": str(Path(prompts).expanduser().resolve()),
                "sha256": hashlib.sha256(Path(prompts).expanduser().read_bytes()).hexdigest()}
@@ -362,11 +369,13 @@ def calibration_cache_identity(config: Mapping[str, Any], fingerprint: str) -> d
     budget = config.get("rotation_calibration_tokens", 30000)
     if type(budget) is not int or budget <= 0:
         raise ValueError("rotation_calibration_tokens must be a positive integer")
-    return {"official_commit": OFFICIAL_COMMIT, "model_fingerprint": fingerprint,
+    return {"official_commit": OFFICIAL_COMMIT, "recipe_version": CALIBRATION_RECIPE_VERSION,
+            "model_fingerprint": fingerprint,
             "objective": "qqt_sst_r_h_pbr", "accumulator_dtype": "float64",
             "prompt_source": source, "max_tokens": budget, "GPQA_option_seed": 0,
             "model_execution": {"dtype": "bfloat16", "quantization": config.get("quantization"),
-                                "revision": config.get("revision"), "hf_overrides": config.get("hf_overrides")}}
+                                "revision": config.get("revision"), "hf_overrides": config.get("hf_overrides"),
+                                **resolve_mamba_cache_dtypes(config)}}
 
 
 def model_artifact_fingerprint(model: str | Path) -> str:
@@ -454,11 +463,13 @@ def load_active_artifact(config: Mapping[str, Any], *, device="npu", testing=Fal
     if config.get("rotation_method", "qqt_sst") != "qqt_sst":
         raise ValueError("unsupported runtime rotation method")
     k_state, v_state, artifact = verified_pair_files(destination.parent, artifact_name=destination.name)
+    profile = calibration_cache_identity(config, fingerprint)
     expected = checkpoint_pair_artifact(k_state, v_state, layer_names=names, head_dim=dim,
-        model_fingerprint=fingerprint, testing=testing, validate_math=False)
+        model_fingerprint=fingerprint, calibration_profile=profile,
+        testing=testing, validate_math=False)
     if artifact.get("calibration") != expected.get("calibration"):
         raise ValueError("combined artifact calibration metadata differs from pair")
-    if artifact.get("calibration_profile") != calibration_cache_identity(config, fingerprint):
+    if artifact.get("calibration_profile") != profile:
         raise ValueError("calibration cache profile differs")
     torch = importlib.import_module("torch")
     for name in names:

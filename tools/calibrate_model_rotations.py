@@ -1,4 +1,4 @@
-"""Archive #23-25/#28/#84/#86/#94-97/#166: native post-RoPE QKV sampling.
+"""Archive #23-25/#28/#84/#86/#94-97/#127/#128/#166: native post-RoPE QKV sampling.
 
 Official recipe pinned to OSCAR339368e: seed0 GPQA choice shuffle, chat-template
 prompt IDs, whole-prompt budget30000. Sampling uses native vLLM Ascend in an
@@ -107,7 +107,8 @@ def calibration_process_env(base=None):
 
 
 def collect(config_path, output_dir):
-    from tools.model_config import apply_model_options
+    from tools.model_config import apply_model_options, resolve_mamba_cache_dtypes
+    from oscar_ascend.rotations import calibration_cache_identity
     from tools.target_cli import target_env
     from tools.prepare_rotations import model_geometry
     from tools.phase import atomic_json
@@ -137,6 +138,8 @@ def collect(config_path, output_dir):
     if max(map(len, prompts)) + 1 > min(chunk, config["max_model_len"]):
         raise ValueError("calibration prefill plus one sampled token must fit the explicit native budget")
     layers, dim, fingerprint = model_geometry(Path(config["model"]))
+    state_dtypes = resolve_mamba_cache_dtypes(config, require_model=True)
+    calibration_profile = calibration_cache_identity(config, fingerprint)
     raw = json.loads((Path(config["model"]) / "config.json").read_text())
     text = raw.get("text_config", raw)
     spec = {"layer_ids": [int(name.split(".")[2]) for name in layers], "head_dim": dim,
@@ -146,7 +149,8 @@ def collect(config_path, output_dir):
         "prompt_sha256": prompt_ids_sha256(prompts), "model_fingerprint": fingerprint,
         "output_dir": str(output_dir)}
     print(json.dumps({'rotation_capture':'input_prepared','prompts':len(prompts),
-        'tokens':spec['token_count'],'prompt_sha256':spec['prompt_sha256']}),flush=True)
+        'tokens':spec['token_count'],'prompt_sha256':spec['prompt_sha256'],
+        'mamba_cache_dtypes':state_dtypes}),flush=True)
     # #84/#166: initialize this interpreter's pool even when OMP is pinned.
     # Workers must still spawn: parent initialization alone did not make the
     # two-level fork safe after tokenization/backend threads were started.
@@ -162,7 +166,7 @@ def collect(config_path, output_dir):
         max_num_seqs=1, gpu_memory_utilization=config["gpu_memory_utilization"], seed=0,
         hf_overrides=config.get("hf_overrides"), additional_config=config.get("additional_config"),
         worker_extension_cls="oscar_ascend.integration.rotation_capture.RotationCaptureWorker",
-        mamba_cache_dtype="bfloat16", mamba_ssm_cache_dtype="bfloat16")
+        **state_dtypes)
     # max_tokens=1 samples the prefill logits and schedules no decode forward.
     # The normal service's MTP/APC/graph settings are untouched by this process.
     llm = LLM(**options)
@@ -207,6 +211,7 @@ def collect(config_path, output_dir):
         "prompt_source": str(source), "prompt_source_sha256": source_sha256,
         "worker_multiproc_method": os.environ["VLLM_WORKER_MULTIPROC_METHOD"],
         "status": "native_post_rope_capture_complete", "forward_passes_per_prompt": 1,
+        "calibration_profile": calibration_profile, "mamba_cache_dtypes": state_dtypes,
         "weights_quantization": config.get("quantization"), "performance": "not_measured"}
     for row in finished:
         path=Path(row['path']).resolve()

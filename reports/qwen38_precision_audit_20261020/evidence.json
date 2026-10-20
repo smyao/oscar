@@ -1,0 +1,60 @@
+{
+  "scope": "local source audit and synthetic CPU checks only; no NPU, model quality or performance run",
+  "head": "b388590f3fe27409c0e2f0f1bd3babde0a2d58a6",
+  "user_observation": {
+    "w8a8_score_advantage_points_approx": 5,
+    "w8a8_rotations": "regenerated automatically for W8A8"
+  },
+  "ssm": {
+    "saved_official_model_dtype": "float32",
+    "serve_flags": {
+      "--mamba-cache-dtype": "bfloat16",
+      "--mamba-ssm-cache-dtype": "bfloat16"
+    },
+    "calibration_kwargs": {
+      "mamba_cache_dtype": "bfloat16",
+      "mamba_ssm_cache_dtype": "bfloat16"
+    },
+    "config_attempt_float32_still_ignored": true,
+    "model_quality_causality": "not established"
+  },
+  "calibration_coverage": {
+    "historical_input_log": "reports/rotation_process_fix_20261019/target_failure.txt",
+    "prompts": 99,
+    "total_tokens": 29867,
+    "max_prompt_tokens_inferred_from_engine_max_len": 847,
+    "historical_run_completed": false,
+    "current_successful_PT_not_available": true
+  },
+  "clip_counterexample": {
+    "scope": "synthetic rotated-domain input, not real model activations",
+    "D": 256,
+    "Q": "8*e0",
+    "K": [
+      "10*e0",
+      "0"
+    ],
+    "V": [
+      "all +1",
+      "all -1"
+    ],
+    "k_clip_ratio": 0.96,
+    "uncompressed_attention_first_coordinate": 0.9866143465042114,
+    "after_k_clip_and_int2_first_coordinate": 0.0,
+    "all_key_coordinates_removed": true,
+    "model_quality_causality": "not established"
+  },
+  "tests": {
+    "command": ".venv/bin/python -m pytest -q tests/test_model_config.py tests/test_official_rotation_calibration.py tests/test_rotation_capture.py tests/test_aligned_reference.py",
+    "passed": 73,
+    "warning": "Torch NumPy initialization warning: numpy not installed; tensor tests passed"
+  },
+  "gate_false_positive": "output_gate_type swish belongs to GDN; FULL sigmoid is independent; no bug demonstrated",
+  "production_modified": false,
+  "ssm_interpretation_correction": {
+    "BF16_is_not_an_established_bug": true,
+    "pinned_910B4_native_chunk_support": "BF16 state only",
+    "default_FP32_switch": "withdrawn",
+    "repair_validation": "repair_validation.json"
+  }
+}

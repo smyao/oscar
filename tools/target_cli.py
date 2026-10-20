@@ -1,5 +1,6 @@
 # 档案 #28/#29/#30/#84：建引擎前初始化父进程线程池；保留附录 A 参数及 MTP eager 作用域。
 # #34/#36：原生预算模式不传预算参数；worker按原生有效容量预分配。
+# #127/#128：绑定原生910B4的BF16状态精度，原生页容量与MTP视图继续由原生spec决定。
 from __future__ import annotations
 import argparse
 import json
@@ -7,7 +8,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
-from .model_config import add_model_arguments, apply_model_options
+from .model_config import add_model_arguments, apply_model_options, resolve_mamba_cache_dtypes
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -48,8 +49,11 @@ def serve_argv(config: dict) -> list[str]:
         # Keep the user-provided spelling for speculative_config.
         flag = "--speculative_config" if key == "speculative_config" else "--" + key.replace("_", "-")
         args += [flag, json.dumps(config[key], separators=(",", ":"))]
+    state_dtypes = resolve_mamba_cache_dtypes(config)
     args += ["--trust-remote-code", "--async-scheduling", "--allowed-local-media-path", "/",
-             "--mm-processor-cache-gb", "0", "--mamba-cache-dtype", "bfloat16", "--mamba-ssm-cache-dtype", "bfloat16"]
+             "--mm-processor-cache-gb", "0",
+             "--mamba-cache-dtype", state_dtypes["mamba_cache_dtype"],
+             "--mamba-ssm-cache-dtype", state_dtypes["mamba_ssm_cache_dtype"]]
     # Archive #26/#37-49/#127: prefix sharing changes native GDN geometry.
     # User 2026-10-13 stable branch policy: disable APC by default. This is
     # an explicit launch policy, never an automatic response to a failure.

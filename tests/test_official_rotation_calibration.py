@@ -1,4 +1,7 @@
-"""Offline CPU calibration semantics; no model/NPU/quality acceptance claim."""
+"""Archive #86/#97/#165/#166: calibration provenance must fail closed.
+
+Offline CPU calibration semantics; no model/NPU/quality acceptance claim.
+"""
 import copy, hashlib, json
 from pathlib import Path
 import pytest
@@ -6,7 +9,8 @@ import torch
 from oscar_ascend.rotation_calibration import (OfflineLayerAccumulator,local_covariance_sums,
     fit_checkpoint_pair,checkpoint_pair_artifact,publish_checkpoint_pair,verified_pair_files,OFFICIAL_COMMIT)
 from oscar_ascend.rotations import (rotation_artifact_path,model_artifact_fingerprint,
-    build_hadamard_artifact,save_artifact,load_active_artifact,checkpoint_identity)
+    build_hadamard_artifact,save_artifact,load_active_artifact,checkpoint_identity,
+    calibration_cache_identity,CALIBRATION_RECIPE_VERSION)
 from tools.prepare_rotations import model_geometry,prepare
 
 NAME='model.layers.3.self_attn.attn'
@@ -71,11 +75,20 @@ def rank_states(fingerprint='model',prompt='prompt',n=615):
     return result
 
 
-def fitted(states=None,fingerprint='model'):
+def profile(fingerprint='model'):
+    # Standalone statistic tests have no model files. Declare both concrete
+    # native state dtypes instead of inventing metadata for an absent model.
+    return calibration_cache_identity({'mamba_cache_dtype':'bfloat16',
+        'mamba_ssm_cache_dtype':'bfloat16'},fingerprint)
+
+
+def fitted(states=None,fingerprint='model',calibration_profile=None):
     states=rank_states(fingerprint) if states is None else states
+    expected_profile=profile(fingerprint) if calibration_profile is None else calibration_profile
     return fit_checkpoint_pair(states,layer_names=[NAME],head_dim=8,model_path='/model',
         model_fingerprint=fingerprint,global_q_heads=4,global_kv_heads=2,tp_size=2,
-        prompt_sha256='prompt',max_tokens=30000,testing=True)
+        prompt_sha256='prompt',max_tokens=expected_profile['max_tokens'],
+        calibration_profile=expected_profile,testing=True)
 
 
 def test_tp_global_layer_rotation_uses_fp64_eigh_hadamard_then_official_pbr():
@@ -107,7 +120,8 @@ def test_rank_identity_and_complete_coverage_fail_closed(mutation,match):
 
 def test_official_pair_import_publication_and_corruption_do_not_fall_back(tmp_path):
     k,v=fitted()
-    artifact=checkpoint_pair_artifact(k,v,layer_names=[NAME],head_dim=8,model_fingerprint='model',testing=True)
+    artifact=checkpoint_pair_artifact(k,v,layer_names=[NAME],head_dim=8,model_fingerprint='model',
+        calibration_profile=profile(),testing=True)
     assert artifact['pr_fingerprint']==OFFICIAL_COMMIT and artifact['calibrated']
     publish_checkpoint_pair(k,v,tmp_path,artifact=artifact)
     gotk,gotv,got=verified_pair_files(tmp_path)
@@ -123,16 +137,18 @@ def test_official_pair_import_publication_and_corruption_do_not_fall_back(tmp_pa
 def test_pair_generation_and_objective_mismatch_is_rejected():
     k,v=fitted();v['calibration']['generation_id']='other'
     with pytest.raises(ValueError,match='generation mismatch'):
-        checkpoint_pair_artifact(k,v,layer_names=[NAME],head_dim=8,model_fingerprint='model',testing=True)
+        checkpoint_pair_artifact(k,v,layer_names=[NAME],head_dim=8,model_fingerprint='model',
+            calibration_profile=profile(),testing=True)
     v['objective']='hadamard'
     with pytest.raises(ValueError,match='objective'):
-        checkpoint_pair_artifact(k,v,layer_names=[NAME],head_dim=8,model_fingerprint='model',testing=True)
+        checkpoint_pair_artifact(k,v,layer_names=[NAME],head_dim=8,model_fingerprint='model',
+            calibration_profile=profile(),testing=True)
 
 
 def model(tmp_path):
     (tmp_path/'config.json').write_text(json.dumps({'num_hidden_layers':4,
         'layer_types':['linear_attention']*3+['full_attention'],'head_dim':8,
-        'num_attention_heads':4,'num_key_value_heads':2}))
+        'num_attention_heads':4,'num_key_value_heads':2,'mamba_ssm_dtype':'float32'}))
     (tmp_path/'model.safetensors').write_bytes(b'test-weight-identity')
     return {'model':str(tmp_path),'rotation_method':'qqt_sst','tensor_parallel_size':2,
             'rotation_calibration_tokens':1000}
@@ -166,13 +182,19 @@ def test_prepare_calls_native_capture_then_offline_fit_and_reuses_verified_pair(
         for rank in rank_states(fp,n=13):
             path=directory/f'rank{rank["rank"]}.pt';torch.save(rank,path);paths.append(str(path))
         return {'status':'native_post_rope_capture_complete','model_fingerprint':fp,
-            'layer_ids':[3],'prompt_sha256':'prompt','token_count':13,'rank_paths':paths}
+            'layer_ids':[3],'prompt_sha256':'prompt','token_count':13,'rank_paths':paths,
+            'calibration_profile':calibration_cache_identity(config,fp)}
     output=tmp_path/'generated/calibrated.pt'
     first=prepare(config,output=output,capture_runner=capture,testing=True)
     assert first['calibrated'] and first['accumulator_dtype']=='float64' and calls==['native-capture']
     second=prepare(config,output=output,capture_runner=lambda *_:pytest.fail('cache resampled'),testing=True)
     assert second['reused'] is True
     assert (output.parent/'k_rotation_qqt_r_h_pbr.pt').exists()
+    # An explicit path cannot make unsupported native state storage valid,
+    # even though the weights and all file hashes still match this checkpoint.
+    with pytest.raises(ValueError,match='unsupported.*Ascend910B4'):
+        load_active_artifact({**config,'mamba_ssm_cache_dtype':'float32'},
+            path=output,device='cpu',testing=True)
 
 
 def test_old_explicit_hadamard_is_rejected_without_overwriting(tmp_path):
@@ -194,7 +216,8 @@ def test_interrupted_managed_pair_is_recalibrated_but_never_reused(tmp_path,monk
         for rank in rank_states(fp,n=13):
             path=directory/f'rank{rank["rank"]}.pt';torch.save(rank,path);paths.append(str(path))
         return {'status':'native_post_rope_capture_complete','model_fingerprint':fp,
-            'layer_ids':[3],'prompt_sha256':'prompt','token_count':13,'rank_paths':paths}
+            'layer_ids':[3],'prompt_sha256':'prompt','token_count':13,'rank_paths':paths,
+            'calibration_profile':calibration_cache_identity(config,fp)}
     prepare(config,capture_runner=capture,testing=True)
     (output.parent/'.oscar.pending.json').write_text('{}')
     result=prepare(config,capture_runner=capture,testing=True)
@@ -206,7 +229,7 @@ def test_interrupted_managed_pair_is_recalibrated_but_never_reused(tmp_path,monk
 def test_official_pair_import_and_active_loader_bind_complete_generation(tmp_path):
     config=model(tmp_path);_,_,fp=model_geometry(tmp_path)
     assert checkpoint_identity(tmp_path)==model_geometry(tmp_path)
-    k,v=fitted(rank_states(fp),fp);source=tmp_path/'source';source.mkdir()
+    k,v=fitted(rank_states(fp),fp,calibration_cache_identity(config,fp));source=tmp_path/'source';source.mkdir()
     kp,vp=source/'k.pt',source/'v.pt';torch.save(k,kp);torch.save(v,vp)
     originals={p:p.read_bytes() for p in (kp,vp)}
     output=tmp_path/'runtime/calibrated.pt'
@@ -233,3 +256,120 @@ def test_model_identity_changes_with_tokenizer_and_quantization_descriptors(tmp_
         path.write_text('second')
         changed=model_artifact_fingerprint(tmp_path);assert changed!=after
         before=changed
+
+
+def test_calibration_path_binds_native_bf16_state_and_rejects_unsupported_storage(tmp_path):
+    config=model(tmp_path);_,_,fp=model_geometry(tmp_path)
+    current=calibration_cache_identity(config,fp)
+    assert current['recipe_version']==CALIBRATION_RECIPE_VERSION
+    assert current['model_execution']['mamba_cache_dtype']=='bfloat16'
+    # This fixture's HF JSON declares float32, but the pinned 910B4 chunked
+    # prefill route supports BF16 state; model metadata cannot override that.
+    assert current['model_execution']['mamba_ssm_cache_dtype']=='bfloat16'
+    current_path=rotation_artifact_path(config,fp,root=tmp_path)
+    for choice in ('auto','bfloat16'):
+        explicit={**config,'mamba_cache_dtype':choice,'mamba_ssm_cache_dtype':choice}
+        assert rotation_artifact_path(explicit,fp,root=tmp_path)==current_path
+    for name in ('mamba_cache_dtype','mamba_ssm_cache_dtype'):
+        for dtype in ('float16','float32'):
+            with pytest.raises(ValueError,match='unsupported.*Ascend910B4'):
+                rotation_artifact_path({**config,name:dtype},fp,root=tmp_path)
+
+
+@pytest.mark.parametrize('field',['mamba_cache_dtype','mamba_ssm_cache_dtype'])
+@pytest.mark.parametrize('dtype',['float16','float32'])
+def test_current_recipe_cannot_fit_a_forged_non_native_state_profile(field,dtype):
+    altered=profile()
+    altered['model_execution'][field]=dtype
+    with pytest.raises(ValueError,match='requires the current native BF16 state'):
+        fitted(calibration_profile=altered)
+
+
+@pytest.mark.parametrize('mutation,match',[
+    (lambda meta:meta.pop('model_fingerprint'),'fingerprint'),
+    (lambda meta:meta.update(model_fingerprint='different-weights'),'fingerprint'),
+    (lambda meta:meta.pop('calibration_profile'),'execution/profile'),
+    (lambda meta:meta['calibration_profile']['model_execution'].update(
+        mamba_ssm_cache_dtype='float32'),'execution/profile'),
+    (lambda meta:meta['calibration_profile']['model_execution'].update(
+        quantization='ascend'),'execution/profile'),
+    (lambda meta:meta['calibration_profile'].pop('recipe_version'),'execution/profile'),
+])
+def test_import_rejects_missing_or_different_model_and_execution_identity(tmp_path,mutation,match):
+    config=model(tmp_path);_,_,fp=model_geometry(tmp_path)
+    expected=calibration_cache_identity(config,fp)
+    k,v=fitted(rank_states(fp,n=13),fp,expected)
+    for state in (k,v):
+        # Official external PTs may omit our fingerprint. That omission is
+        # unknown provenance, never permission to relabel another model's PT.
+        state['calibration']=copy.deepcopy(state['calibration'])
+        mutation(state['calibration'])
+    source=tmp_path/'foreign';source.mkdir()
+    paths=source/'k.pt',source/'v.pt'
+    for state,path in zip((k,v),paths):torch.save(state,path)
+    before={path:path.read_bytes() for path in paths}
+    output=tmp_path/'selected/calibrated.pt'
+    with pytest.raises(ValueError,match=match):
+        prepare(config,output=output,import_pair=paths,testing=True)
+    assert not output.exists() and not (output.parent/'.oscar.complete.json').exists()
+    assert all(path.read_bytes()==data for path,data in before.items())
+
+
+def test_old_automatic_recipe_moves_path_and_generates_once_old_explicit_pair_fails(tmp_path,monkeypatch):
+    from oscar_ascend import rotations
+    config=model(tmp_path);_,_,fp=model_geometry(tmp_path)
+    expected=calibration_cache_identity(config,fp)
+    k,v=fitted(rank_states(fp,n=13),fp,expected)
+    artifact=checkpoint_pair_artifact(k,v,layer_names=[NAME],head_dim=8,
+        model_fingerprint=fp,calibration_profile=expected,testing=True)
+    # Recreate the pre-fix cache schema and directory, including a valid pair
+    # manifest. A valid hash does not bind the old pair's native execution recipe.
+    legacy=copy.deepcopy(expected);legacy.pop('recipe_version')
+    for name in ('mamba_cache_dtype','mamba_ssm_cache_dtype'):
+        legacy['model_execution'].pop(name)
+    artifact['calibration_profile']=legacy
+    for state in (k,v,artifact):
+        state['calibration']=copy.deepcopy(state['calibration'])
+        state['calibration'].pop('calibration_profile')
+    digest=hashlib.sha256(json.dumps(legacy,sort_keys=True,separators=(',',':')).encode()).hexdigest()[:20]
+    old=tmp_path/'artifacts/rotations'/fp/('qqt_sst_'+digest)/'calibrated.pt'
+    publish_checkpoint_pair(k,v,old.parent,artifact=artifact)
+    old_files={path:path.read_bytes() for path in old.parent.iterdir() if path.suffix in {'.pt','.json'}}
+    original_path=rotations.rotation_artifact_path
+    monkeypatch.setattr(rotations,'rotation_artifact_path',
+        lambda config,fingerprint:original_path(config,fingerprint,root=tmp_path))
+    new=rotations.rotation_artifact_path(config,fp)
+    assert new!=old
+    calls=[]
+    def capture(_config,directory):
+        calls.append(1);paths=[]
+        for rank in rank_states(fp,n=13):
+            path=directory/f'rank{rank["rank"]}.pt';torch.save(rank,path);paths.append(str(path))
+        return {'status':'native_post_rope_capture_complete','model_fingerprint':fp,
+            'layer_ids':[3],'prompt_sha256':'prompt','token_count':13,'rank_paths':paths,
+            'calibration_profile':expected}
+    first=prepare(config,capture_runner=capture,testing=True)
+    second=prepare(config,capture_runner=lambda *_:pytest.fail('new cache resampled'),testing=True)
+    assert first['reused'] is False and second['reused'] is True and calls==[1]
+    assert Path(first['artifact'])==new
+    loaded=load_active_artifact(config,device='cpu',testing=True)
+    assert loaded['calibration']['calibration_profile']==expected
+    with pytest.raises(ValueError,match='execution/profile'):
+        prepare(config,output=old,capture_runner=lambda *_:pytest.fail('explicit old cache replaced'),testing=True)
+    assert all(path.read_bytes()==data for path,data in old_files.items())
+
+
+@pytest.mark.parametrize('missing',[True,False])
+def test_prepare_rejects_capture_from_unbound_or_different_state_precision(tmp_path,missing):
+    config=model(tmp_path);_,_,fp=model_geometry(tmp_path)
+    expected=calibration_cache_identity(config,fp)
+    captured=copy.deepcopy(expected)
+    captured['model_execution']['mamba_ssm_cache_dtype']='float32'
+    def capture(_config,_directory):
+        result={'status':'native_post_rope_capture_complete','model_fingerprint':fp,'layer_ids':[3]}
+        if not missing:result['calibration_profile']=captured
+        return result
+    output=tmp_path/'capture/calibrated.pt'
+    with pytest.raises(ValueError,match='native sample calibration execution/profile'):
+        prepare(config,output=output,capture_runner=capture,testing=True)
+    assert not output.exists() and not (output.parent/'.oscar.complete.json').exists()

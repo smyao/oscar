@@ -65,9 +65,15 @@ def native_runner_type(base):
 
 
 @pytest.fixture
-def integrated(monkeypatch):
+def integrated(monkeypatch, tmp_path):
     plugin.unregister()
     config = configuration()
+    model = tmp_path / "model"
+    model.mkdir()
+    (model / "config.json").write_text(json.dumps({
+        "architectures": ["Qwen3_5ForConditionalGeneration"],
+        "text_config": {"model_type": "qwen3_5_text", "mamba_ssm_dtype": "float32"}}))
+    config["model"] = str(model)
     provider = AscendRuntimeProvider(config)
     stream = object()
     timeline, allocations, context = [], [], {}
@@ -144,10 +150,13 @@ def integrated(monkeypatch):
     Runner = native_runner_type(Base)
     plugin._patch_runner(NS(NPUModelRunner=Runner))
     runner = Runner()
-    runner.model_config = NS(max_model_len=config["max_model_len"])
+    runner.model_config = NS(max_model_len=config["max_model_len"], model=str(model),
+        quantization=None, dtype=torch.bfloat16, revision=None, hf_overrides={})
     runner.compilation_config = NS(static_forward_context=context)
     runner.vllm_config = NS(
-        cache_config=NS(enable_prefix_caching=False, mamba_cache_mode="none"),
+        model_config=runner.model_config,
+        cache_config=NS(enable_prefix_caching=False, mamba_cache_mode="none",
+                        mamba_cache_dtype="bfloat16", mamba_ssm_cache_dtype="bfloat16"),
         scheduler_config=NS(scheduler_cls=None, get_scheduler_cls=lambda: Scheduler,
                             max_num_seqs=config["max_num_seqs"],
                             max_num_batched_tokens=16384),

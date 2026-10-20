@@ -1,4 +1,4 @@
-# Archive #26/#28-30/#84/#86/#96/#97: preserve native MTP/GDN and lightweight
+# Archive #26/#28-30/#84/#86/#96/#97/#127/#128: preserve native MTP/GDN and lightweight
 # startup ordering; inspect only model JSON, never import torch or native code.
 """Shared model selection for direct, observed and native service entrypoints.
 
@@ -16,6 +16,7 @@ from pathlib import Path
 
 QUANTIZATION_MODES = ("auto", "none", "ascend")
 SUPPORTED_ARCHITECTURES = {"Qwen3_5ForConditionalGeneration", "Qwen3_5ForCausalLM"}
+MAMBA_CACHE_DTYPES = {"auto", "bfloat16"}
 
 
 def add_model_arguments(parser: argparse.ArgumentParser) -> None:
@@ -38,6 +39,31 @@ def _nonempty_string(value, label: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{label} must be a nonempty string")
     return value
+
+
+def resolve_mamba_cache_dtypes(config: dict, *, require_model: bool = False) -> dict[str, str]:
+    """Bind the existing 910B4 native GDN route, not the HF dtype declaration.
+
+    The pinned chunk_gated_delta_rule tiling rejects FP32 state on 910B4.
+    Its recurrent kernel's FP32 support does not establish full-model support.
+    Keep BF16 for both service and calibration, and reject unsupported explicit
+    storage requests instead of silently ignoring or downcasting them.
+    """
+    if require_model:
+        model = config.get("model")
+        path = Path(model).expanduser() / "config.json" if model else None
+        if path is None or not path.is_file():
+            raise ValueError(f"model config.json is unavailable: {path}")
+    if config.get("dtype", "bfloat16") != "bfloat16":
+        raise ValueError("current Ascend910B4 GDN route requires dtype=bfloat16 activations")
+    result = {}
+    for name in ("mamba_cache_dtype", "mamba_ssm_cache_dtype"):
+        value = config.get(name, "bfloat16")
+        if not isinstance(value, str) or value not in MAMBA_CACHE_DTYPES:
+            raise ValueError(f"{name}={value!r} is unsupported by the current Ascend910B4 "
+                             "GDN route; use bfloat16 or auto")
+        result[name] = "bfloat16"  # Native auto follows the BF16 model/conv dtype.
+    return result
 
 
 def apply_model_options(config: dict, args=None, *, require_model: bool = False) -> dict:
@@ -76,6 +102,7 @@ def apply_model_options(config: dict, args=None, *, require_model: bool = False)
             raise ValueError(f"model config.json is unavailable: {model_file}; select a local checkpoint with --model")
         result["quantization"] = {"auto": "auto", "none": None, "ascend": "ascend"}[mode]
         resolution.update(status="deferred_model_unavailable", quantization=result["quantization"])
+        resolution["mamba_cache_dtypes"] = resolve_mamba_cache_dtypes(result)
         result["model_resolution"] = resolution
         return result
 
@@ -120,5 +147,6 @@ def apply_model_options(config: dict, args=None, *, require_model: bool = False)
     result["quantization"] = resolved
     resolution.update(status="resolved", architectures=architectures,
                       detected_quantization=detected, quantization=resolved)
+    resolution["mamba_cache_dtypes"] = resolve_mamba_cache_dtypes(result)
     result["model_resolution"] = resolution
     return result

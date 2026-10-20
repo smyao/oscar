@@ -1,4 +1,4 @@
-# 档案 #75/#94/#95/#101/#116/#117/#120：注入真实失败/超时，验证退出码、日志与清理。
+# 档案 #75/#94/#95/#101/#116/#117/#120/#127/#128：失败/超时、日志与原生状态精度契约。
 import json
 from pathlib import Path
 import sys
@@ -156,8 +156,14 @@ def test_build_cleanup_is_project_owned(tmp_path):
     assert tmp_path.exists()
 
 
-def test_target_command_preserves_graph_mtp_and_dtype():
+def test_target_command_preserves_graph_mtp_and_dtype(tmp_path):
     config = json.loads((ROOT / "configs/target.json").read_text())
+    # Model declarations do not override the supported 910B4 BF16 GDN route.
+    model = tmp_path / "model"
+    model.mkdir()
+    (model / "config.json").write_bytes(
+        (ROOT / "reports/official_alignment_20261018/official_qwen38_config.json").read_bytes())
+    config["model"] = str(model)
     argv = serve_argv(config)
     assert json.loads(argv[argv.index("--compilation-config")+1])["cudagraph_mode"] == "FULL_DECODE_ONLY"
     assert json.loads(argv[argv.index("--speculative_config")+1])["num_speculative_tokens"] == 3

@@ -2,6 +2,8 @@
 
 Archive G19/G20/G23/#23-25/#86/#96/#97/#111: one aligned observation,
 complete FULL-layer coverage, finite FP64 statistics, separate draft identity.
+#86/#97/#165/#166: imported/cached pairs must identify the actual model and
+native sampling recipe, including both effective GDN state dtypes.
 Implements the requested official FP64 offline fitting; serving stays NPU.
 Model forwards remain NPU-only. No Q/K/V is replayed to estimate a second pass.
 Primary: FutureMLS-Lab/OSCAR sglang-rebase oscar_calibration.py, observe,
@@ -20,6 +22,24 @@ COVARIANCE_CHUNK=2048
 
 
 def _torch():return importlib.import_module("torch")
+
+
+def _validated_calibration_profile(profile, model_fingerprint):
+    from .rotations import CALIBRATION_RECIPE_VERSION
+    if not isinstance(profile, Mapping):
+        raise ValueError("rotation calibration profile is required")
+    if (profile.get("recipe_version") != CALIBRATION_RECIPE_VERSION or
+            profile.get("official_commit") != OFFICIAL_COMMIT or
+            profile.get("model_fingerprint") != model_fingerprint):
+        raise ValueError("rotation calibration recipe/model identity differs")
+    execution = profile.get("model_execution")
+    if (not isinstance(execution, Mapping) or execution.get("dtype") != "bfloat16" or
+            any(execution.get(name) != "bfloat16"
+                for name in ("mamba_cache_dtype", "mamba_ssm_cache_dtype"))):
+        raise ValueError("rotation calibration execution profile requires the current native BF16 state dtypes")
+    # Keep a portable snapshot: changing the caller's config must not relabel
+    # an already fitted pair, and no tensors/custom objects belong in identity.
+    return json.loads(json.dumps(profile, sort_keys=True, allow_nan=False))
 
 
 class OfflineLayerAccumulator:
@@ -105,9 +125,12 @@ def local_covariance_sums(payload,*,testing=False):
 
 def fit_checkpoint_pair(rank_payloads,*,layer_names,head_dim,model_path,model_fingerprint,
                         global_q_heads,global_kv_heads,tp_size,prompt_sha256,max_tokens,
-                        model_revision=None,testing=False):
+                        calibration_profile,model_revision=None,testing=False):
     from .rotations import _names
     torch=_torch();names=_names(layer_names);ids=[int(name.split('.')[2]) for name in names]
+    profile=_validated_calibration_profile(calibration_profile,model_fingerprint)
+    if profile.get('max_tokens')!=max_tokens:
+        raise ValueError('rotation calibration profile token budget differs')
     if len(rank_payloads)!=tp_size or {p['rank'] for p in rank_payloads}!=set(range(tp_size)):
         raise ValueError("complete unique TP rank payloads required")
     if global_q_heads%tp_size or not (global_kv_heads%tp_size==0 or tp_size%global_kv_heads==0):
@@ -144,7 +167,7 @@ def fit_checkpoint_pair(rank_payloads,*,layer_names,head_dim,model_path,model_fi
         'max_tokens':max_tokens,'global_q_heads':global_q_heads,'global_kv_heads':global_kv_heads,
         'tp_size':tp_size,'post_rope':True,'accumulator_dtype':'float64','created_at_unix':time.time(),
         'statistics_device':'cpu_offline','model_forward_device':'npu' if not testing else 'cpu_test',
-        'official_commit':OFFICIAL_COMMIT,'test_only':testing}
+        'official_commit':OFFICIAL_COMMIT,'test_only':testing,'calibration_profile':profile}
     def checkpoint(index,objective):
         return {'format_version':1,'objective':objective,'source_grouping':'layer','calibration':dict(meta),
             'layers':{layer:{'layer_id':layer,'rotation':matrices[index*len(ids)+i],
@@ -152,9 +175,11 @@ def fit_checkpoint_pair(rank_payloads,*,layer_names,head_dim,model_path,model_fi
     return checkpoint(0,'qqt_r_h_pbr'),checkpoint(1,'sst_r_h_pbr')
 
 
-def checkpoint_pair_artifact(k_state,v_state,*,layer_names,head_dim,model_fingerprint,testing=False,validate_math=True):
+def checkpoint_pair_artifact(k_state,v_state,*,layer_names,head_dim,model_fingerprint,
+                             calibration_profile,testing=False,validate_math=True):
     from .rotations import _base_artifact,_names,ORTHOGONALITY_ATOL
     torch=_torch();names=_names(layer_names);ids={int(n.split('.')[2]) for n in names}
+    profile=_validated_calibration_profile(calibration_profile,model_fingerprint)
     states=[]
     for state,objective in ((k_state,'qqt_r_h_pbr'),(v_state,'sst_r_h_pbr')):
         if state.get('format_version')!=1 or state.get('source_grouping')!='layer' or state.get('objective')!=objective:
@@ -165,7 +190,10 @@ def checkpoint_pair_artifact(k_state,v_state,*,layer_names,head_dim,model_finger
         if meta and (meta.get('accumulator_dtype')!='float64' or meta.get('post_rope') is not True):
             raise ValueError('official calibration requires FP64 post-RoPE statistics')
         if meta.get('test_only') and not testing:raise ValueError('CPU test calibration cannot enter production')
-        if meta.get('model_fingerprint',model_fingerprint)!=model_fingerprint:raise ValueError('rotation model fingerprint mismatch')
+        if meta.get('model_fingerprint')!=model_fingerprint:
+            raise ValueError('rotation model fingerprint missing or mismatched; regenerate for the selected model')
+        if meta.get('calibration_profile')!=profile:
+            raise ValueError('rotation calibration execution/profile missing or mismatched; regenerate for the selected configuration')
         for layer,entry in normalized.items():
             matrix=entry.get('rotation')
             if entry.get('layer_id')!=layer or not torch.is_tensor(matrix) or matrix.dtype!=torch.float32 or matrix.shape!=(head_dim,head_dim):
@@ -176,10 +204,11 @@ def checkpoint_pair_artifact(k_state,v_state,*,layer_names,head_dim,model_finger
                 raise ValueError('official rotation is not orthogonal')
         states.append(normalized)
     km,vm=k_state.get('calibration',{}),v_state.get('calibration',{})
-    for field in ('generation_id','prompt_sha256','tokens','max_tokens','global_q_heads','global_kv_heads','tp_size','model_path','model_revision','accumulator_dtype','post_rope','test_only'):
+    for field in ('generation_id','prompt_sha256','tokens','max_tokens','global_q_heads','global_kv_heads','tp_size','model_path','model_revision','accumulator_dtype','post_rope','test_only','calibration_profile'):
         if km.get(field)!=vm.get(field):raise ValueError('K/V calibration generation mismatch: '+field)
     result=_base_artifact(names,head_dim,model_fingerprint,OFFICIAL_COMMIT,'qqt_sst_r_h_pbr',testing)
-    result.update(calibrated=True,accumulation_dtype='float64',calibration=dict(km),official_pair_objectives=[k_state['objective'],v_state['objective']])
+    result.update(calibrated=True,accumulation_dtype='float64',calibration=dict(km),
+        calibration_profile=profile,official_pair_objectives=[k_state['objective'],v_state['objective']])
     for name in names:
         layer=int(name.split('.')[2]);result['layers'][name]={'layer_id':layer,'Rk':states[0][layer]['rotation'].contiguous(),'Rv':states[1][layer]['rotation'].contiguous()}
     return result

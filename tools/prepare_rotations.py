@@ -1,4 +1,5 @@
-# Archive G19/G20/G23/#23-25/#86/#96/#97/#111: official one-pass calibration.
+# Archive G19/G20/G23/#23-25/#86/#96/#97/#111/#165/#166: official one-pass
+# calibration; only reuse/import the exact model and native execution recipe.
 from __future__ import annotations
 import argparse
 import hashlib
@@ -77,7 +78,7 @@ def prepare(config, *, config_path=None, output=None, import_pair=None, capture_
         kstate=torch.load(kpath,map_location='cpu',weights_only=True)
         vstate=torch.load(vpath,map_location='cpu',weights_only=True)
         artifact=checkpoint_pair_artifact(kstate,vstate,layer_names=layers,head_dim=dim,
-            model_fingerprint=fingerprint,testing=testing)
+            model_fingerprint=fingerprint,calibration_profile=profile,testing=testing)
         artifact['import_provenance']={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in (kpath,vpath)}
         source='official_qqt_sst_import'
     else:
@@ -89,6 +90,8 @@ def prepare(config, *, config_path=None, output=None, import_pair=None, capture_
         if capture.get('status')!='native_post_rope_capture_complete':raise ValueError('native sampling did not complete')
         if capture.get('model_fingerprint')!=fingerprint or capture.get('layer_ids')!=[int(x.split('.')[2]) for x in layers]:
             raise ValueError('native sample model/layer identity differs')
+        if capture.get('calibration_profile')!=profile:
+            raise ValueError('native sample calibration execution/profile differs')
         if capture.get('rank_sha256') is not None and any(
                 capture['rank_sha256'].get(p)!=hashlib.sha256(Path(p).read_bytes()).hexdigest()
                 for p in capture['rank_paths']):
@@ -99,10 +102,11 @@ def prepare(config, *, config_path=None, output=None, import_pair=None, capture_
             model_path=config['model'],model_fingerprint=fingerprint,
             global_q_heads=model['num_attention_heads'],global_kv_heads=model['num_key_value_heads'],
             tp_size=config['tensor_parallel_size'],prompt_sha256=capture['prompt_sha256'],
-            max_tokens=profile['max_tokens'],model_revision=config.get('revision'),testing=testing)
+            max_tokens=profile['max_tokens'],calibration_profile=profile,
+            model_revision=config.get('revision'),testing=testing)
         if kstate['calibration']['tokens']!=capture['token_count']:raise ValueError('captured prompt row budget differs')
         artifact=checkpoint_pair_artifact(kstate,vstate,layer_names=layers,head_dim=dim,
-            model_fingerprint=fingerprint,testing=testing)
+            model_fingerprint=fingerprint,calibration_profile=profile,testing=testing)
         artifact['capture_manifest']=capture
         source='official_qqt_sst_native_post_rope_calibration'
     artifact['calibration_profile']=profile
@@ -117,14 +121,17 @@ def prepare(config, *, config_path=None, output=None, import_pair=None, capture_
         "quality_acceptance":"not_run","draft_layer":"explicit_identity_not_sampled","reused":False}
 
 
-def main() -> int:
+def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, default=ROOT / "configs/target.json")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--import-k", type=Path)
     parser.add_argument("--import-v", type=Path)
-    args = parser.parse_args()
-    config = json.loads(args.config.read_text())
+    args = parser.parse_args(argv)
+    from .model_config import apply_model_options
+    # The standalone prepare command can receive raw "auto" configuration;
+    # bind the same resolved weights mode that the capture child will execute.
+    config = apply_model_options(json.loads(args.config.read_text()), require_model=True)
     from .target_cli import target_env
     os.environ.update(target_env(config))
     if bool(args.import_k)!=bool(args.import_v):parser.error('both --import-k and --import-v are required')

@@ -1,4 +1,7 @@
-"""Native API/lifetime host doubles only, not NPU or model-quality evidence."""
+"""Archive #86/#97/#127/#128: native API/lifetime and state-precision host doubles.
+
+No NPU or model-quality evidence is claimed from the fake native LLM.
+"""
 import csv,json,sys,types
 from pathlib import Path
 from types import SimpleNamespace as NS
@@ -121,14 +124,19 @@ def test_whole_prompt_budget_stops_without_truncating_or_skipping():
 
 @pytest.mark.parametrize('failure',[None,'generate','start'])
 @pytest.mark.parametrize('bundled', [False, True])
-def test_public_llm_rpc_sampling_and_shutdown_are_isolated(monkeypatch,tmp_path,failure,bundled):
+@pytest.mark.parametrize('state_dtype', ['bfloat16', 'float32'])
+def test_public_llm_rpc_sampling_and_shutdown_are_isolated(monkeypatch,tmp_path,failure,bundled,state_dtype):
     from tools import model_config
+    # collect() deliberately changes its child process environment. This host
+    # double runs in pytest's process, so isolate that environment as a child
+    # would; otherwise the selected NPU IDs leak into later readiness tests.
+    monkeypatch.setattr(cli.os, 'environ', dict(cli.os.environ))
     monkeypatch.setattr(model_config,'apply_model_options',lambda value,**_:value)
     monkeypatch.setenv('OMP_NUM_THREADS','1')
     monkeypatch.setenv('VLLM_WORKER_MULTIPROC_METHOD','fork')
     model=tmp_path/'model';model.mkdir()
     (model/'config.json').write_text(json.dumps({'num_hidden_layers':4,'full_attention_interval':4,
-        'head_dim':8,'num_attention_heads':4,'num_key_value_heads':2}))
+        'head_dim':8,'num_attention_heads':4,'num_key_value_heads':2,'mamba_ssm_dtype':state_dtype}))
     source=tmp_path/'prompts.jsonl';source.write_text('"promptA"\n"promptB"\n')
     config={'model':str(model),'devices':[0,1,2,3],'tensor_parallel_size':1,'max_model_len':262144,
         'max_num_batched_tokens':16384,'gpu_memory_utilization':.7,'rotation_calibration_prompts':str(source)}
@@ -178,6 +186,9 @@ def test_public_llm_rpc_sampling_and_shutdown_are_isolated(monkeypatch,tmp_path,
         report=json.loads((out/'capture-manifest.json').read_text())
         assert report['token_count']==6 and report['prompt_lengths']==[3,3] and report['rank_sha256']
         assert report['worker_multiproc_method']=='spawn'
+        assert report['mamba_cache_dtypes']=={'mamba_cache_dtype':'bfloat16',
+            'mamba_ssm_cache_dtype':'bfloat16'}
+        assert report['calibration_profile']['model_execution']['mamba_ssm_cache_dtype']=='bfloat16'
         if bundled:
             from tools.calibration_data import GPQA_SHA256
             assert report['prompt_source_sha256'] == GPQA_SHA256
@@ -189,3 +200,4 @@ def test_public_llm_rpc_sampling_and_shutdown_are_isolated(monkeypatch,tmp_path,
     assert options['enforce_eager'] and not options['enable_prefix_caching'] and not options['enable_chunked_prefill']
     assert options['max_model_len']==4 and options['max_num_batched_tokens']==16384
     assert 'speculative_config' not in options and options['dtype']=='bfloat16'
+    assert options['mamba_cache_dtype']=='bfloat16' and options['mamba_ssm_cache_dtype']=='bfloat16'

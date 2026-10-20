@@ -63,6 +63,48 @@ def oracle_buffers(fixture,tasks):
             'merge_status':torch.zeros(n*h,dtype=torch.int32),'bf16':merged.output.bfloat16().view(n*h,256)}
 
 
+@pytest.mark.parametrize('bad_arms',[('baseline',),('candidate',),('baseline','candidate')])
+def test_failed_pair_reports_both_arms_and_source_without_swallowing_error(bad_arms,capsys):
+    case=probe.case_plan()[0]
+    fixture={'spec':case.shape}
+    def buffers():
+        return {'partial':torch.zeros(1,6,9,256),'lse':torch.full((1,6,9),float('-inf')),
+                'status':torch.zeros(9,2,dtype=torch.int32),
+                'merge_status':torch.zeros(6,dtype=torch.int32),
+                'tasks':torch.zeros(9,16,dtype=torch.int64)}
+    old,new=buffers(),buffers()
+    for name,arm in (('baseline',old),('candidate',new)):
+        if name in bad_arms:
+            arm['partial'][0,2,4,17]=float('inf')  # sink/recent split 1
+            arm['lse'][0,1,0]=float('nan')        # history split 0
+            arm['merge_status'][2]=2
+    task_hash=probe.reuse._fingerprint({'tasks':old['tasks']})
+    with pytest.raises(probe.reuse.HistoryReuseProbeError,match='NaN LSE') as caught:
+        probe.compare_pair(torch,case,fixture,old,new,task_hash,ACCEPTANCE)
+    report=caught.value.bf16_failure_diagnostics
+    assert set(report['arms'])=={'baseline','candidate'}
+    for name,arm in report['arms'].items():
+        count=int(name in bad_arms)
+        assert arm['sources']['history']['invalid_lse_elements']==count
+        assert arm['sources']['sink_recent']['nonfinite_partial_elements']==count
+        assert arm['sources']['current']['invalid_lse_elements']==0
+        assert arm['merge_status']['nonzero_elements']==count
+        if count:assert arm['partial_first_bad_coordinates']==[[0,2,4,17]]
+    assert 'BF16_HISTORY_FAILURE' in capsys.readouterr().out
+    json.dumps(report,allow_nan=False)
+
+
+def test_failure_diagnostics_accepts_empty_lse_but_counts_positive_infinity():
+    case=probe.case_plan()[0]
+    buffers={'partial':torch.zeros(1,6,9,256),'lse':torch.full((1,6,9),float('-inf'))}
+    buffers['lse'][0,0,8]=float('inf')
+    detail=probe.failure_diagnostics(torch,case,{'spec':case.shape},buffers,buffers)
+    for arm in detail['arms'].values():
+        assert arm['sources']['history']['invalid_lse_elements']==0
+        assert arm['sources']['current']['invalid_lse_elements']==1
+        assert arm['sources']['current']['empty_lse_elements']==17
+
+
 @pytest.mark.parametrize('index',[0,1,4,5,6,8,9,10,11])
 def test_independent_partial_merge_matches_every_dense_query(index):
     case=probe.case_plan()[index];fixture=probe.make_fixture(torch,case);tasks=task_fixture(fixture)

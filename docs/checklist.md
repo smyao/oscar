@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-10-20 #170：独立配对探针报告NaN LSE或非有限partial，当前固定首例MDL q4，旧臂/候选尚未区分。新增仅探针失败取证，57项主机回归通过；设备故障未修复，42个checkpoint不提升。回执：`reports/bf16_failure_diagnostics_20261020.xml`。
+
 2026-10-20 新真机#169：eager/compact later-MTP明确报`site=forward:mtp.layers.0.self_attn.attn family=merge code=2`；非法LSE或输出归约非有限，坏值来源未确定。主机相关68项通过，未发现可复现的compact尾部误读/漏写缺陷，未改生产代码。FE0/精度门不变；[诊断报告](mtp_merge_diagnosis_20261020.md)。42个checkpoint及设备、图、质量、性能状态不提升，不能将本轮归因当作修复。
 
 2026-10-19 全面本地验证（母版本`5ca8439`）：全仓初轮1899通过、52失败、14初始化错误、134跳过，另29 subtests通过；失败逐项保留。修复共享managed service假成功/清理失败传播、启动信号所有权竞态，及过期BF16 producer能力断言；相关25文件最终451项通过（保留初次443项回执）。新增真实源解包、共享workspace跨轮PD/MTP和真实主机进程故障注入分别记录，不能等同NPU。用户随后明确授权本机回环测试，提交`79d3ae9`的5文件70项通过，含原受沙箱阻断的33项；17缺历史文件、13旧研究布局测试、2静态规范门仍失败。全源BF16筛查仍7/11失败（2例最终输出），不放宽精度门。新真机#168在模型加载前因free13.03GiB不足而失败，不能归因Attention；见[完整审计和后续回执](full_local_validation_20261019.md)。42个checkpoint及CANN/NPU/图/质量/性能状态不提升。

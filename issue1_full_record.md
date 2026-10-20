@@ -28796,3 +28796,11 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **归因边界**：compact原N≥1024且当前配置S1，主机partial与merge均取B对应连续头部；未发现读取旧大N尾部的证据。bridge requests=1只打印一次，不能确定错误步的B；异步scheduler dump的8232不能当作出错算子的输入几何。dump中一个运行请求、KV约1.98%，不支持大BS容量不足判断。后续HCCL/event/HTTP错误不是首因；监督器正确把native fatal+原始rc0判成失败。
 
 **本地审计与处置**：68项主机相关回归通过，q1发布/事件源码审计未复现可证明的越界、漏写或缺失同步；未修改生产代码、默认candidate或冻结merge/guard。详见`docs/mtp_merge_diagnosis_20261020.md`及机器回执。尚缺merge前三源partial/LSE与当前几何的决定性证据，本机无CANN/NPU，**已定位但未修复**；既有BF16数值7/11失败、设备/图/质量/性能欠账保留，不要求重跑AISBench。
+
+## [170] 真机条目（2026-10-20 用户回传）· 独立BF16配对探针遇到NaN LSE或非有限partial
+
+**原始证据**：用户粘贴终端记录保存为`reports/target_bf16_probe_failure_20261020.txt`，SHA256 `b45cc065c4a3261fee2f9e72a8fc1a5c9c84870bd8ffc9c2f7be5c7397f14e42`。命令`bash scripts/diagnose_bf16.sh`，结果目录`logs/bf16_diag_sk6EsueF`，复用`20261020T064430.498396Z/effective-target.json`；14.313052秒后rc2，未超时/未中断，owned-group cleanup_complete=true。尚未收到result.json、git-head或压缩包，不假定目标提交。
+
+**实证与边界**：已越过CPU筛查复用，实际进入NPU run_case并完成同步，在compare_pair调用_check_status时报`valid CV case left NaN LSE or non-finite partial`。按当前固定用例顺序及没有前置CASE完成行，首先测试的是mdl_q4，而非服务#169的later-q1。检查旧臂在先、BF16候选在后；原异常缺臂名，不能断言候选独有错误，不能确认与服务故障同根。LD_PRELOAD/32-padding警告和已知CPU筛查失败不是这条异常的已证实原因。非有限数据也可能是poison残留，不能仅凭消息断言数值溢出。
+
+**本轮改动**：仅补独立探针失败取证；保留原异常及失败码，同时检查两臂，记录算子名、history/sink_recent/current异常计数、前16个坏坐标及状态码，打印BF16_HISTORY_FAILURE并写入result.json.failure_diagnostics。合法空LSE -Inf不计非法；读取失败附diagnostic_error，不覆盖原异常。生产路由/算子/冻结精度均不改。57项本地主机回归通过，含旧臂/候选/双臂异常和Inf/-Inf区别；不是设备修复或质量通过。当前NPU故障仍未解决，不能将诊断增强当作内核修复。

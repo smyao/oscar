@@ -1,0 +1,27 @@
+root@node93:/workspace/oscar/oscar-new# cd /workspace/oscar/oscar-new && bash scripts/diagnose_bf16.sh
+只运行独立算子诊断，不启动服务；请先正常停止自己的模型服务。
+实时日志：tail -f logs/bf16_diag_latest/bf16-probe.log
+结果目录：logs/bf16_diag_sk6EsueF
+START phase=bf16-probe cwd=/workspace/oscar/oscar-new command=["python3", "-u", "-m", "tools.probe_bf16_history", "--config", "logs/20261020T064430.498396Z/effective-target.json", "--output", "logs/bf16_diag_sk6EsueF/result.json"]
+OWNED_PROCESS phase=bf16-probe pid=586405 pgid=586405
+[W1020 11:21:49.164508370 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[oscar] BF16_HISTORY_CPU_SCREEN {"status": "cpu_screen_failed", "source_bound_report": "/workspace/oscar/oscar-new/reports/bf16_all_sources_screen_20261016_v3.json", "reused": true}
+[W1020 11:21:57.819111810 NPUCachingAllocator.cpp:202] Warning: The current CANN and HDK(driver) versions require processing for 32 padding size, with memory allocation. (function operator())
+Traceback (most recent call last):
+  File "/workspace/oscar/oscar-new/tools/probe_bf16_history.py", line 788, in main
+    try:report=probe(args.config,args.acceptance,output_path=args.output)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/oscar/oscar-new/tools/probe_bf16_history.py", line 746, in probe
+    try:row=run_case(torch,torch.ops.oscar_ascend_ops,case,torch.device('npu:0'),cores,acceptance)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/oscar/oscar-new/tools/probe_bf16_history.py", line 488, in run_case
+    detail=compare_pair(torch,case,fixture,*pair,receipt['task_sha256'],acceptance)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/oscar/oscar-new/tools/probe_bf16_history.py", line 335, in compare_pair
+    reuse._check_status(torch,buffers,invalid=invalid)
+  File "/workspace/oscar/oscar-new/tools/probe_history_reuse.py", line 477, in _check_status
+    raise HistoryReuseProbeError("valid CV case left NaN LSE or non-finite partial")
+tools.probe_history_reuse.HistoryReuseProbeError: valid CV case left NaN LSE or non-finite partial
+[oscar] BF16_HISTORY_RESULT {"status": "failed", "report": "logs/bf16_diag_sk6EsueF/result.json"}
+RESULT {"phase": "bf16-probe", "command": ["python3", "-u", "-m", "tools.probe_bf16_history", "--config", "logs/20261020T064430.498396Z/effective-target.json", "--output", "logs/bf16_diag_sk6EsueF/result.json"], "returncode": 2, "elapsed_seconds": 14.313052, "timed_out": false, "interrupted": false, "log": "logs/bf16_diag_sk6EsueF/bf16-probe.log", "cleanup_complete": true, "process_returncode": 2, "failure": null}
+[oscar] FAILED phase=bf16-probe rc=2 log=logs/bf16_diag_sk6EsueF/bf16-probe.log

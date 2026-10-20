@@ -326,7 +326,60 @@ def prepare(torch,ops,tensors,fixture,buffers):
     return {'task_sha256':reuse._fingerprint({'tasks':tasks}),'source0_leaders':0}
 
 
+def failure_diagnostics(torch,case,fixture,old,new):
+    """#170: bounded host evidence from this offline probe only, never serving.
+
+    Inspect both arms even when the first one fails. -Inf LSE is legal for
+    empty sources; nonfinite partials remain failures under the existing gate.
+    Coordinates identify token/head/source-split, not a claimed device cause.
+    """
+    result={'case':case.shape.name,'route':case.route,'arms':{}}
+    sources=('history','sink_recent','current')
+    splits=fixture['spec'].splits
+    for arm,buffers in (('baseline',old),('candidate',new)):
+        detail={'operator':ROUTES[case.route][0 if arm=='baseline' else 1]}
+        result['arms'][arm]=detail
+        try:
+            partial=buffers['partial'].detach().cpu()
+            lse=buffers['lse'].detach().cpu()
+            bad_partial=~torch.isfinite(partial)
+            bad_lse=~torch.isfinite(lse)&~torch.isneginf(lse)
+            detail['partial_shape']=list(partial.shape)
+            detail['lse_shape']=list(lse.shape)
+            detail['sources']={}
+            for index,name in enumerate(sources):
+                sl=slice(index*splits,(index+1)*splits)
+                detail['sources'][name]={
+                    'nonfinite_partial_elements':int(bad_partial[:,:,sl].sum()),
+                    'invalid_lse_elements':int(bad_lse[:,:,sl].sum()),
+                    'empty_lse_elements':int(torch.isneginf(lse[:,:,sl]).sum())}
+            for name,mask in (('partial',bad_partial),('lse',bad_lse)):
+                detail[name+'_first_bad_coordinates']=mask.nonzero()[:16].tolist()
+            for name in ('status','rotate_status','merge_status'):
+                if name not in buffers:continue
+                status=buffers[name].detach().cpu()
+                bad=status!=0
+                detail[name]={'nonzero_elements':int(bad.sum()),
+                              'first_bad_coordinates':bad.nonzero()[:16].tolist(),
+                              'first_bad_values':status[bad][:16].tolist()}
+        except Exception as error:
+            # Preserve the original failure when an unhealthy device cannot
+            # supply further diagnostics. Never replace it with a read error.
+            detail['diagnostic_error']=f'{type(error).__name__}: {error}'
+    return result
+
+
 def compare_pair(torch,case,fixture,old,new,task_hash,acceptance,oracle=None):
+    try:
+        return _compare_pair(torch,case,fixture,old,new,task_hash,acceptance,oracle)
+    except Exception as error:
+        detail=failure_diagnostics(torch,case,fixture,old,new)
+        error.bf16_failure_diagnostics=detail
+        print('[oscar] BF16_HISTORY_FAILURE '+json.dumps(detail,allow_nan=False),flush=True)
+        raise
+
+
+def _compare_pair(torch,case,fixture,old,new,task_hash,acceptance,oracle=None):
     from .experiments.bf16_history_screen import compare, relative_l2
     invalid=_invalid(case)
     if 'rotate_status' in new and not bool((new['rotate_status']==0).all()):
@@ -746,6 +799,8 @@ def probe(config_path,acceptance_path,*,output_path=None):
         try:row=run_case(torch,torch.ops.oscar_ascend_ops,case,torch.device('npu:0'),cores,acceptance)
         except Exception as error:
             result.update(status='failed',device_completion='incomplete',first_error=f'{case.shape.name}: {error}')
+            detail=getattr(error,'bf16_failure_diagnostics',None)
+            if detail is not None:result['failure_diagnostics']=detail
             error.bf16_report=result
             if output_path:atomic_json(output_path,result)
             raise

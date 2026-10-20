@@ -1,0 +1,160 @@
+(Worker_TP3 pid=178294) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "<string>", line 5, in execution_fn
+(Worker_TP3 pid=178294) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/piecewise_backend.py", line 380, in __call__
+(Worker_TP3 pid=178294) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return range_entry.runnable(*args)
+(Worker_TP3 pid=178294) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=178294) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/compiler_interface.py", line 363, in compiled_fn
+(Worker_TP3 pid=178294) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     result = _inner_fn(*args, **kwargs)
+(Worker_TP3 pid=178294) ERROR 10-20 00:19:49 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=178294) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/dynamo/npugraph_ex/npu_fx_compiler.py", line 511, in __call__
+(Worker_TP3 pid=178294) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     gm_result = self.run_kernel(*args, **kwargs)
+(Worker_TP3 pid=178294) ERROR 10-20 00:19:49 [multiproc_executor.py:987]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=178294) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "<string>", line 113, in kernel
+(Worker_TP3 pid=178294) ERROR 10-20 00:19:49 [multiproc_executor.py:987] ValueError: too many values to unpack (expected 20)
+(Worker_TP3 pid=178294) ERROR 10-20 00:19:49 [multiproc_executor.py:987] 
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 561, in determine_available_memory
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     self.model_runner.profile_run()
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3694, in profile_run
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     super().profile_run()
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6228, in profile_run
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     hidden_states, last_hidden_states = self._dummy_run(
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]                                         ^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar_kimi/oscar_ascend/plugin.py", line 146, in wrapped
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return original(runner, *args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3632, in _dummy_run
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     outputs = self._model_forward(
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]               ^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2867, in _model_forward
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     hidden_states = run_model()
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]                     ^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar_kimi/oscar_ascend/plugin.py", line 561, in wrapped
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     result=original(wrapper,*args,**kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/acl_graph.py", line 150, in __call__
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return self.runnable(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return self._call_impl(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return forward_call(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py", line 661, in forward
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     hidden_states = self.language_model.model(
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 573, in __call__
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     output = self.aot_compiled_fn(self, *args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_dynamo/aot_compile.py", line 124, in __call__
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return self.fn(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py", line 505, in forward
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     def forward(
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/caching.py", line 217, in __call__
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return self.optimized_call(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "<string>", line 5, in execution_fn
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/piecewise_backend.py", line 380, in __call__
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return range_entry.runnable(*args)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/compiler_interface.py", line 363, in compiled_fn
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     result = _inner_fn(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/dynamo/npugraph_ex/npu_fx_compiler.py", line 511, in __call__
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     gm_result = self.run_kernel(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "<string>", line 113, in kernel
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987] ValueError: too many values to unpack (expected 20)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 561, in determine_available_memory
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     self.model_runner.profile_run()
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3694, in profile_run
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     super().profile_run()
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6228, in profile_run
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     hidden_states, last_hidden_states = self._dummy_run(
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]                                         ^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar_kimi/oscar_ascend/plugin.py", line 146, in wrapped
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return original(runner, *args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 3632, in _dummy_run
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     outputs = self._model_forward(
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]               ^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2867, in _model_forward
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     hidden_states = run_model()
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]                     ^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/workspace/gpt_new_oscar_kimi/oscar_ascend/plugin.py", line 561, in wrapped
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     result=original(wrapper,*args,**kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/acl_graph.py", line 150, in __call__
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return self.runnable(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return self._call_impl(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return forward_call(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5.py", line 661, in forward
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     hidden_states = self.language_model.model(
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 573, in __call__
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     output = self.aot_compiled_fn(self, *args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_dynamo/aot_compile.py", line 124, in __call__
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return self.fn(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_next.py", line 505, in forward
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     def forward(
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/caching.py", line 217, in __call__
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return self.optimized_call(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "<string>", line 5, in execution_fn
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/piecewise_backend.py", line 380, in __call__
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     return range_entry.runnable(*args)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/compilation/compiler_interface.py", line 363, in compiled_fn
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     result = _inner_fn(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/dynamo/npugraph_ex/npu_fx_compiler.py", line 511, in __call__
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]     gm_result = self.run_kernel(*args, **kwargs)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987]   File "<string>", line 113, in kernel
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987] ValueError: too many values to unpack (expected 20)
+(Worker_TP1 pid=178292) ERROR 10-20 00:19:49 [multiproc_executor.py:987] 
+STARTUP_WAIT elapsed=180.4 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=240.5 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=300.6 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=360.7 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=420.8 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=480.9 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=541.0 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=601.1 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=661.3 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=721.4 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=781.5 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=841.6 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=901.6 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=961.8 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=1021.9 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=1082.0 health=<urlopen error [Errno 111] Connection refused>
+STARTUP_WAIT elapsed=1142.1 health=<urlopen error [Errno 111] Connection refused>

@@ -10,10 +10,13 @@
 # mandatory 16-token functional service gates remain intact.
 # #133/#140-#142: a separately marked same-server NPU-event diagnostic may
 # follow the uninstrumented K4 batch; the native HTTP profiler is excluded.
+# #94/#95/#125/#133: quiet startup still exposes worker failures immediately;
+# a living API-server parent does not prove its workers initialized correctly.
 """Exercise the configured TP4/MTP service and preserve independent evidence."""
 from __future__ import annotations
 
 import argparse
+from collections import deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -47,6 +50,103 @@ PROBE_LENGTHS = (128, 16384, 32768, 50000)
 MIN_OUTPUT_TOKENS = 16
 MAX_RESPONSE_BYTES = 4 * 1024 * 1024
 REQUEST_HEARTBEAT_SECONDS = 15.0
+QUIET_STARTUP_HEARTBEAT_SECONDS = 60.0
+
+# Native worker_busy_loop logs this and continues after a failed startup RPC:
+# references/vllm/vllm/v1/executor/multiproc_executor.py:978-993.  Generic ERROR,
+# WARNING and Traceback lines alone are not proof of a fatal startup failure.
+_STARTUP_FATAL = re.compile(
+    r"WorkerProc hit an exception\.|"
+    r"Worker proc .+ died unexpectedly, shutting down executor\.|"
+    r"EngineCore failed to start\.|Engine core initialization failed|"
+    r"EngineDeadError:|!!!!!!! Segfault encountered !!!!!!!"
+)
+_STARTUP_EXCEPTION = re.compile(r"\b[A-Za-z_][\w.]*(?:Error|Exception): .+")
+_STARTUP_TRACE_DRAIN_SECONDS = 0.5
+
+
+class _QuietStartupLog:
+    """Incremental, bounded log observation; no device access or child pipes.
+
+    Keep all bytes in the existing regular log file.  Observe explicit native
+    worker/engine failure markers even when the parent remains alive; briefly
+    collect their traceback before the usual owned-process cleanup.  Do not
+    treat recoverable logger ERRORs or background-thread tracebacks as fatal.
+    """
+
+    def __init__(self, path):
+        self.path = Path(path)
+        self.offset = 0
+        self.pending = b""
+        self.lines = deque(maxlen=96)
+        self.latest = "no child output yet"
+        self.failure = None
+        self.failure_at = None
+        self.cause = None
+
+    def refresh(self):
+        with self.path.open("rb") as stream:
+            stream.seek(self.offset)
+            block = stream.read(1024 * 1024)
+            self.offset = stream.tell()
+        data = self.pending + block
+        lines = data.split(b"\n")
+        self.pending = lines.pop()[-8192:]
+        for raw in lines:
+            line = raw.decode("utf-8", errors="replace").replace("\r", " ").strip()
+            if not line or line.startswith(("START owned_service", "STARTUP_WAIT ",
+                                             "SERVICE_ERROR ", "SERVICE_RESULT ")):
+                continue
+            self.lines.append(line[:1024])
+            self.latest = line[:400]
+            marker = _STARTUP_FATAL.search(line)
+            if marker and self.failure is None:
+                self.failure = marker.group(0)
+                self.failure_at = time.monotonic()
+            if self.failure is not None:
+                exception = _STARTUP_EXCEPTION.search(line)
+                if exception:
+                    self.cause = exception.group(0)[:1024]
+
+    def check(self, lifecycle):
+        self.refresh()
+        if self.failure is None or time.monotonic() - self.failure_at < _STARTUP_TRACE_DRAIN_SECONDS:
+            return
+        # Bound the immediate display independently of the durable full log.
+        excerpt = []
+        size = 0
+        for line in reversed(self.lines):
+            encoded = len(line.encode("utf-8")) + 1
+            if size + encoded > 16 * 1024 or len(excerpt) >= 64:
+                break
+            excerpt.append(line)
+            size += encoded
+        excerpt.reverse()
+        lifecycle["startup_failure"] = {
+            "marker": self.failure, "cause": self.cause,
+            "log": str(self.path), "excerpt": excerpt,
+        }
+        _terminal(f"[oscar] STARTUP_FAILED {self.failure} cause={self.cause or 'see traceback'} log={self.path}", stderr=True)
+        _terminal("[oscar] STARTUP_ERROR_EXCERPT_BEGIN", stderr=True)
+        for line in excerpt:
+            _terminal(line, stderr=True)
+        _terminal("[oscar] STARTUP_ERROR_EXCERPT_END", stderr=True)
+        raise ServiceProbeError(
+            f"owned vLLM worker failed during startup: {self.failure} "
+            f"cause={self.cause or 'see traceback'}; log={self.path}"
+        )
+
+
+def _quiet_startup_progress(server, observer, started, last_health_error):
+    """At most two bounded lines per minute; host progress is not NPU completion."""
+    progress = worker_progress(server)
+    server.lifecycle["startup_worker_progress"] = progress
+    server.lifecycle["startup_latest_log"] = observer.latest
+    display = [{**entry, "event": entry.get("event") or entry.get("phase") or entry.get("state")}
+               for entry in progress]
+    _terminal(f"[oscar] waiting for service health elapsed={time.monotonic()-started:.0f}s "
+              f"workers={compact_workers(display)[:1200]} log={server.log}")
+    _terminal(f"[oscar] startup latest={observer.latest} health={str(last_health_error)[:200]}")
 
 _PRINT_LOCK = threading.Lock()
 
@@ -151,7 +251,7 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
     ``command`` is dependency injection for subprocess fault tests; the CLI
     never accepts an alternate command or a replacement inference backend.
     ``quiet`` is opt-in for the bounded timer diagnostic: preserve every child
-    byte in server.log while its caller prints a bounded failure excerpt.
+    byte in server.log, show bounded progress and fail on explicit worker errors.
     Existing deployment callers retain their live terminal stream.
     """
     log_dir = Path(log_dir).resolve()
@@ -195,23 +295,38 @@ def managed_server(config, config_path, *, log_dir, lifecycle=None, command=None
             lifecycle["pid"] = process.pid
             ownership = OwnedProcessGroup(process.pid)
             server = Server(process, base_url, log, trace_dir, lifecycle, ownership)
+            startup_log = _QuietStartupLog(log) if quiet else None
             deadline = started + startup_timeout
-            heartbeat = started + (60 if quiet else 15)
+            heartbeat = started + (QUIET_STARTUP_HEARTBEAT_SECONDS if quiet else 15)
             last_health_error = None
             while True:
+                if startup_log is not None:
+                    startup_log.check(lifecycle)
                 server.check_alive()
                 remaining = _remaining(deadline, 2)
                 try:
                     _http(base_url + "/health", timeout=remaining)
                     server.check_alive()
-                    break
                 except (OSError, urllib.error.URLError, ServiceProbeError, TimeoutError) as error:
                     last_health_error = str(error)
                     lifecycle["last_health_error"] = f"{type(error).__name__}: {error}"
+                else:
+                    if startup_log is not None:
+                        startup_log.check(lifecycle)
+                        # An HTTP 200 cannot erase a worker exception already
+                        # observed while collecting its bounded traceback.
+                        if startup_log.failure is not None:
+                            time.sleep(0.05)
+                            continue
+                    break
                 if time.monotonic() >= heartbeat:
                     stream.write(f"STARTUP_WAIT elapsed={time.monotonic()-started:.1f} health={last_health_error}\n")
-                    print(f"[oscar] waiting for service health log={log}", flush=True)
-                    heartbeat = time.monotonic() + (60 if quiet else 15)
+                    if startup_log is not None:
+                        _quiet_startup_progress(server, startup_log, started, last_health_error)
+                        atomic_json(log_dir / "server_lifecycle.json", lifecycle)
+                    else:
+                        print(f"[oscar] waiting for service health log={log}", flush=True)
+                    heartbeat = time.monotonic() + (QUIET_STARTUP_HEARTBEAT_SECONDS if quiet else 15)
                 time.sleep(min(0.2, max(0, deadline - time.monotonic())))
             lifecycle.update(status="healthy", startup_seconds=round(time.monotonic() - started, 6))
             atomic_json(log_dir / "server_lifecycle.json", lifecycle)

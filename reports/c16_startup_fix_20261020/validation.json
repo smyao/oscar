@@ -1,0 +1,54 @@
+{
+  "status": "host_validated_pending_target",
+  "base_commit": "b44fba28f2753506d1da4e9ce126f94387cebb43",
+  "target_failure": {
+    "file": "target_failure.txt",
+    "sha256": "cece756a27a700226cc16a90422df10d0af9a150af7feddfcbe8a090dde7c9bf",
+    "observed_error": "ValueError: too many values to unpack (expected 20)",
+    "stage": "determine_available_memory/profile_run/_dummy_run/cached npugraph_ex kernel",
+    "after_error_wait_seconds_observed": 1142.1,
+    "actual_target_source_commit": "not_in_excerpt"
+  },
+  "host_tests": {
+    "status": "passed",
+    "total_distinct": 164,
+    "cache_guard_namespace_native_load_and_launch_contract": 93,
+    "quiet_failure_lifecycle_and_c16_orchestration": 71
+  },
+  "root_cause_evidence": {
+    "input_unpack": "native kernel(*args) fixed tuple assignment",
+    "native_load": "references/vllm-ascend/vllm_ascend/compilation/compiler_interface.py:350-369",
+    "inner_artifact_save": "same file:179-199",
+    "installed_native_codegen": "torch_npu/dynamo/npugraph_ex/_acl_concrete_graph/fx2acl_converter.py:588-625,652-658",
+    "installed_codegen_sha256": "6fe85435695e36b58f1308d6f207f575d2b15fd86a4b2cbde9894712d5038e74",
+    "reproduction": "real CPU AOT outer3/inner2 alias plus input mutation; bare cache raises unpack error; full AOT wrapper returns5 and updates input to2",
+    "specific_target_alias_mapping": "not_observed"
+  },
+  "implementation": [
+    "stable source/config/version-bound VLLM cache namespace for outer and inner caches",
+    "pre-execution cached input count validation; incompatible uses original native cache-miss compiler",
+    "no runtime retry, argument truncation, eager switch or cache deletion",
+    "quiet startup fatal worker detection, bounded traceback, owned cleanup and bounded stage progress"
+  ],
+  "preserved": [
+    "vllm argv",
+    "model/dtype/MTP/APC/token budget/graph",
+    "attention/GDN math and CANN kernels",
+    "main/stable"
+  ],
+  "source_sha256": {
+    "oscar_ascend/integration/compile_cache.py": "2c1ca01f8aadf8ac1685175bc749d0e6a82eab936f61f4e3bdc2404b97c3c2f8",
+    "oscar_ascend/plugin.py": "7b764c2abee8efd08cdca8f0ff6a12747c60c6e5ee4c4e7f5af94b88ae45cc66",
+    "tools/compile_cache.py": "e37bf3e10e21240ed30c38a1e284de490385d0554ce7504a25357c778487b277",
+    "tools/target_cli.py": "ada00ed7ead1f6f565b222abae19ee87cc3ab52f4706f1b1ca0eea5b9af1aaba",
+    "tools/service_probe.py": "11ce913577332ef44f2d944e60439bcc1c046672d020dc462145e5a78d66c89b",
+    "tests/test_compile_cache_guard.py": "7118bdfcca23931149f26ad0032be9c1af197acaa27a4d53af51511134218f8f",
+    "tests/test_compile_cache_native.py": "da83186ab4a61cd72705eb1ad49223f15b0f43b6fb3b7a2a7bcd7c3e1fcedd85",
+    "tests/test_compile_cache.py": "4f35e8d907f712319f058009a84f6a2eb64fad4590432102ab5d245a9595a7cd",
+    "tests/test_startup_error_visibility.py": "a32621286bad2294711283d52bf5d5dda011f8fb9dda3edb32f0b43ee0a70d67"
+  },
+  "npu_execution": "not_run",
+  "target_startup": "not_revalidated",
+  "performance": "not_run",
+  "cann_build": "not_repeated_no_CANN_changes"
+}

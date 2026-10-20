@@ -121,6 +121,11 @@ def main(argv=None) -> int:
 
 def _run_service(config: dict, config_path: Path, command: list[str], *, native: bool) -> int:
     env = target_env(config)
+    # Outer AOT lookup precedes the inner backend hash. Bind both namespaces
+    # before plugin/torch/vLLM imports; keep the complete serving argv unchanged.
+    from .compile_cache import select_compile_cache
+    cache = select_compile_cache(config, native=native, env=env)
+    print("[oscar] COMPILE_CACHE " + json.dumps(cache, separators=(",", ":")), flush=True)
     if "OSCAR_PASSIVE_TIMING_CONTROL" not in env:
         os.environ.pop("OSCAR_PASSIVE_TIMING_CONTROL",None)
     os.environ.update(env)

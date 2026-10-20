@@ -586,6 +586,7 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 | 历史现象 | 必须落实的检查与处理 |
 | --- | --- |
+| #169 C16启动图缓存输入解包expected20，worker失败后继续空等 | 外部插件加载前校验kernel/forward输入数与example_inputs，不兼容走原生cache-miss重编译并保留AOT包装；外层/内层缓存按源码/配置/版本隔离；quiet启动发现明确worker失败即显示片段并清理，不能仅看父进程存活。 |
 | #168 timer最后汇总str+float报错 | 官方trace ts为字符串、dur为数值；解析入口统一规范化并覆盖官方flow，混合类型全目录CLI回归；优先--summarize-only恢复已有导出，不能要求重跑模型或伪造断点。 |
 | #167 timer单tokenflush空TPOT median；daemon worker不能解析profiler | 空延迟分布用null与sample_count0；worker仅采集raw，两个服务释放后普通子进程离线analyse，校验真实设备任务导出，不能以SDK返回None/0认定成功。 |
 | #166 校准 LLM 两层 fork 后 `Invalid thread pool!` | 在校准子进程创建和 vLLM 导入前设置 `VLLM_WORKER_MULTIPROC_METHOD=spawn`，核 EngineCore/Ascend worker 都用原生 get_mp_context；父进程建池不能替代两层隔离，正式服务配置保持。 |

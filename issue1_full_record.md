@@ -17,6 +17,8 @@
 
 # 症状速查表（报错关键字 → 条目编号）
 
+- C16实验启动`npugraph_ex kernel: too many values to unpack (expected 20)`，WorkerProc失败后health一直connection refused：见 #169。
+
 - `SUMMARY_FAILED can only concatenate str (not "float") to str`：见 #168（官方trace时间戳格式及已有导出恢复）。
 
 - timer的 `no median for empty data` / `profiling data cannot be parsed during the daemon process`：见 #167。
@@ -28795,3 +28797,16 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修复**：入口一次规范化时间/标识符，非法记录明确缺失、设备判定不放宽；补官方torch_to_npu/HostToDevice flow的严格端点关联，保留歧义。新增固定入口--summarize-only读取已有CSV/trace，绝不重新加载模型/发送请求/调用SDK解析；只允许恢复分析错误，采样或模型错误不被覆盖。原记录先备份，CSV/trace/step逐字节保留，输出仍≤200行/50KiB。
 
 **验证**：113项主机回归通过，含官方混合类型矩阵、非法字段、flow、三组×四rank×四窗口的48窗口完整目录及真实CLI恢复，实际打印设备阶段/PMU/热点/对照。2项未改SSE测试不重复。本轮没有连接真机、重跑模型或取得用户设备耗时；后续先恢复已有日志再分析，不要求再跑32K。
+
+
+## [169] 真机条目（2026-10-20 用户回传）· C16启动图缓存输入解包expected20后health持续空等
+
+**原文**：`reports/c16_startup_fix_20261020/target_failure.txt`，附件3c35eb0d-7ce8-440f-96a1-f5a71751ad56，run=20261020T001102.745071Z。用户前一片段显示build-ops/prepare-rotations/build-c16-timer完成；本片段00:19:49多个worker在determine_available_memory/profile_run/_dummy_run报错，随后STARTUP_WAIT一直到1142.1秒。片段没有启动SHA，不将本地HEAD当作现场SHA。
+
+**已定位的故障边界**：`compiler_interface.py:363 compiled_fn`属于原生AscendCompiler.load的磁盘缓存包装；`npu_fx_compiler.py:511`调用生成的kernel，`<string>:113`报`ValueError: too many values to unpack (expected 20)`。本机原生codegen对应`kernel(*args, **kwargs)`中的固定输入解包，不是attention返回值。原生保存AOT后的内层代码、加载时接受外层图参数，缺少输入数量校验；真实CPU AOT的别名/原地修改用例可产生外3/内2差异，裸缓存重现同类ValueError。现场缺生成缓存和实参数，不能声称具体20个参数的别名来源已确认，不能单归咎于旧缓存。
+
+**监督缺口**：原生WorkerProc在RPC异常后记录错误并继续循环，API父进程可能仍存活；旧quiet管理仅poll父进程和health，将错误隐藏在server.log，持续等待30分钟上限。
+
+**修复**：外部插件在AscendCompiler.load执行缓存前静态核验顶层kernel/forward固定输入数量。错配/未知/损坏走原生缺失缓存重编译分支，保留完整AOT包装；不截断参数、不捕获执行错误后重试、不切eager。进入vLLM前以插件源码、扩展身份、有效配置、版本及native/OSCAR/C16模式选择稳定VLLM_CACHE_ROOT子目录，不删除原缓存。quiet启动增量观察明确worker/engine失败，显示有界traceback并清理owned进程；普通warning/error不误判，每分钟显示实际阶段和最近日志。
+
+**验证与边界**：真实CPU AOT别名/原地修改反例、只读原生load方法的cache-miss执行、插件安装恢复、稳定缓存复用/失效、真实子进程失败后父进程仍活着/HTTP200及清理均有主机回归。具体通过数量见该目录validation.json。未连接真机、未运行NPU模型/图/性能；输入数量匹配沿用原生缓存行为，不宣称已重新证明任意AOT变换的全部缓存契约。原生argv、GDN/MTP、BF16数学、冻结核及main/stable不变。

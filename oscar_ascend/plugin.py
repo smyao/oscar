@@ -509,7 +509,21 @@ def _patch_native_greedy_sampling(module: ModuleType) -> None:
             print("[oscar] PERF_SAMPLER_FIX greedy_rows=isolated cumulative_prefix_bytes=32", flush=True)
 
 
+def _patch_compiler_cache(module):
+    # Archive #169: native cache load must not call inner AOT code with the
+    # outer graph's argument list. Installed only for active OSCAR routing.
+    def checked_load(original):
+        def wrapped(compiler, handle, graph, example_inputs, graph_index, compile_range):
+            from .integration.compile_cache import load_compatible
+            return load_compatible(original, compiler, handle, graph,
+                                   example_inputs, graph_index, compile_range)
+        return wrapped
+
+    _patch(module.AscendCompiler, "load", checked_load)
+
+
 _callbacks = {
+    "vllm_ascend.compilation.compiler_interface": _patch_compiler_cache,
     "vllm_ascend.platform": _patch_platform,
     "vllm_ascend.worker.model_runner_v1": _patch_runner,
     "vllm_ascend.attention.attention_v1": _patch_native_attention,

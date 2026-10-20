@@ -106,7 +106,7 @@ TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
 }
 PYBIND11_MODULE(_oscar_ascend_ops,m) {
   m.def("abi_version",[]{return 1;});
-  m.def("capabilities",[]{return std::vector<std::string>{"attention_cv_aligned_decode_out","attention_cv_aligned_decode_q1_out","attention_cv_aligned_cluster4_out","attention_cv_aligned_cluster16_out","store_aligned_int2_out","copy_validate_bf16_query_out","attention_cv_bf16_decode_out","attention_cv_bf16_decode_q1_out","attention_cv_bf16_cluster4_out","attention_cv_bf16_cluster16_out","store_int2_out","merge_lse_out",
+  m.def("capabilities",[]{return std::vector<std::string>{"attention_cv_aligned_decode_out","attention_cv_aligned_decode_q1_out","attention_cv_aligned_cluster4_out","attention_cv_aligned_cluster16_out", "attention_cv_aligned_cluster16_control_out","store_aligned_int2_out","copy_validate_bf16_query_out","attention_cv_bf16_decode_out","attention_cv_bf16_decode_q1_out","attention_cv_bf16_cluster4_out","attention_cv_bf16_cluster16_out","store_int2_out","merge_lse_out",
       "rotate_out","rotate_vector_init_out","rotate_clip_store_out","prepare_attention_tasks_out","attention_cv_out",
       "attention_cv_cluster4_out","attention_cv_q1_out","attention_cv_profile_out",
       "attention_cv_fast_out","attention_cv_fast_q1_out","attention_cv_fast_cluster4_out",

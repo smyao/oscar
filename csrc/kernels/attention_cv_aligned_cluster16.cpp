@@ -1,3 +1,17 @@
+// Generated from preserved C16 SHA256 a2e04814c64ad02d45d27d3c4e45ca89df7738ca6d1ef2ad89733e2437d2cab2
+// Timer-directed options: softmax=1 cast=1.
+// D.4: fused history/window FIA; old full restoration cost6.5s.
+// This keeps bounded tiles, cache bytes and FP32 online math;
+// no full-history arena or protocol shortcuts. Speed is unmeasured.
+// C16_TIMER_TARGETED_SOFTMAX_FINITE_V1
+// Archive #126/#134/#145/#148/#164; D.4 complete raw log reread.
+// D.4: fused history FIA finite-check only; old full-history dequant
+// 6499.8-6655.1ms/95.4% and stores209-215ms remain forbidden structures.
+// Same bounded KV256 tile, FP32 ACC_VAL reduction and finite predicate;
+// no history materialization, precision change or cross-core flag change.
+// Removes unused scalar UB result publication in complete-history rows.
+// Target softmax_math23.4-23.8ms is measured; its finite subshare and this
+// candidate's full-C16/device/model speed remain unmeasured.
 // Versioned aligned codec: FP32 scale/normalized zero, 144B/D256.
 // dequantMode=0: FP32 prefill reconstruction; 1: BF16 decode steps.
 // Archive #111/#126/#145/#164; D.4 bounded tile protocol retained.
@@ -267,6 +281,7 @@
 // add_rms_norm_bias_multi_n.h Gather; PR triton_oscar_decode.py INT2 and LSE.
 #include "oscar_common.h"
 #include "attention_bf16_cast.h"
+#include "attention_c16_softmax_helpers.h"
 #include "attention_range_mask.h"
 #include "attention_fast_unpack.h"
 #include "../include/oscar_attention_launch.h"
@@ -277,6 +292,8 @@
 #include "lib/matmul_intf.h"
 #include "lib/matmul/constant_tiling.h"
 #include "adv_api/activation/softmaxflashv2.h"
+#include "attention_c16_cast.h"
+#define oscar_bf16 oscar_c16_cast
 using namespace oscar_ascend_device;
 namespace {
 constexpr int32_t kQueryRows=oscar_ascend::kAttentionQueryRows;
@@ -950,19 +967,10 @@ template<int32_t D> class AttentionCv {
     const bool fullyVisibleHistory=kind==0 && jEnd==kKvRows && start>=g.sink &&
         tileEnd<=Min64(context,Min64(earliestCut,earliestPosition+1));
     if(fullyVisibleHistory) {
-      // Natural unpack is dead until later alpha Brcb. Each scalar result
-      // has its own32B-aligned slot; the original tmp[16] reduction work
-      // area stays separate. PIPE_V keeps its reuse in original row order.
+      // Same A2 count-mode vcadd/ACC_VAL per row, consumed as a scalar
+      // finite predicate. No scalar-to-UB publication has a consumer here.
       auto finiteSums=naturalBuf.Get<float>(kHalfRows*8);
-      for(int32_t r=0;r<activeRows;++r) {
-        PipeBarrier<PIPE_V>();
-        ReduceSum(finiteSums[r*8],scores[r*kKvRows],tmp[16],kKvRows);
-      }
-      Fence<HardEvent::V_S>();
-      for(int32_t r=0;r<activeRows;++r)
-        if(!Finite(finiteSums.GetValue(r*8)))error=2;
-      // Protect scalar reads before any later Vector reuse of naturalBuf.
-      Fence<HardEvent::S_V>();
+      if(!oscar_c16_softmax::FiniteRows256(finiteSums,scores,activeRows))error=2;
     } else {
     for(int32_t r=0;r<activeRows;++r) {
       const int64_t row=rowBase+r;
@@ -1296,3 +1304,5 @@ void attention_cv_fast_cluster4_launch(void* stream,void* query,void* queryRot,v
 #endif
 
 #undef OSCAR_STRIPED_D256_ONLY
+
+#undef oscar_bf16

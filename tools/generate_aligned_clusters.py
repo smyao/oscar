@@ -45,10 +45,18 @@ def generate(cluster):
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()
     for cluster in (4,16):
-        path=ROOT/f'csrc/kernels/attention_cv_aligned_cluster{cluster}.cpp';text=generate(cluster)
+        suffix='_control' if cluster==16 else ''
+        path=ROOT/f'csrc/kernels/attention_cv_aligned_cluster{cluster}{suffix}.cpp';text=generate(cluster)
+        if cluster==16:text=text.replace('attention_cv_aligned_cluster16','attention_cv_aligned_cluster16_control')
         if args.check:
             if path.read_text()!=text:raise ValueError('aligned cluster source drift')
         else:path.write_text(text)
+    from tools.generate_c16_tuned import generate as tuned
+    path=ROOT/'csrc/kernels/attention_cv_aligned_cluster16.cpp'
+    text=tuned().replace('attention_cv_aligned_cluster16_tuned','attention_cv_aligned_cluster16')
+    if args.check:
+        if path.read_text()!=text:raise ValueError('targeted C16 source drift')
+    else:path.write_text(text)
 
 
 if __name__=='__main__':main()

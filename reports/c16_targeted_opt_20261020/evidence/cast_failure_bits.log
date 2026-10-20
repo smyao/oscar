@@ -1,0 +1,13 @@
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 75358] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 75359] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 75360] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 75361] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 75362] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 75363] exit success!
+C16 cast CPU functional failure: independent RNE mismatch count=31 index=82 input_bits=0x7f7f8000 old_bits=0x7f7f new_bits=0x7f7f expected_bits=0x7f80

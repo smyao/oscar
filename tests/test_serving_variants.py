@@ -20,7 +20,8 @@ def test_install_and_probe_plans_select_the_same_bundle(variant, enabled, capsys
         "first_mtp_current_fia": enabled, "compact_later_mtp": enabled,
         "mixed_decode_split": enabled, "prepare_reuse": enabled, "decode_bundle": enabled, "mdl_decode": enabled,
         "c4_member_pipeline": enabled, "c16_l1_reuse": enabled,
-        "hybrid_l1_decode": enabled, "bf16_attention": enabled, "aligned_math": enabled, "whole_prefill": False}
+        "hybrid_l1_decode": enabled, "bf16_attention": enabled, "aligned_math": enabled,
+        "c16_tuned": enabled, "whole_prefill": False}
     assert install["probes"] == "none"
 
 

@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-10-20 C16定向优化：基于既有timer，仅减少完整历史tile有限性归约的多余结果发布，以及BF16转换的逐repeat发射。candidate已接入；原核保留显式control，现有timer文件不改。完整C16 CPU-debug 12例、helper 355例、55能力CANN fresh构建通过；主机148通过/3项基底已有静态失败/1项平台跳过。真NPU完成、图回放、模型质量和速度未验收，下方42项不升级。[变更与证据](c16_targeted_optimization_20261020.md)。
+
 2026-10-20用户回传C16诊断完成：32K→16请求passed、四rank共68次调用valid、目标层覆盖完整且issues=0；64/64个目标调用的主AIV首位具体阶段均为softmax_math。仅确认本实验范围，不将42项整体或全模型质量/性能升级。[完整拆解](c16_breakdown_analysis_20261020.md)。
 
 2026-10-20 C16启动修复：图缓存输入契约校验与稳定命名空间、quiet启动worker失败快速退出已接入；保留原生graph/MTP/argv，真实CPU AOT与子进程验证另列，NPU启动状态不升级。[故障与修复](c16_startup_fix_20261020.md)。

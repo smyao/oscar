@@ -1,0 +1,249 @@
+{
+  "status": "passed",
+  "cases": [
+    {
+      "name": "full_tile_qr_nan",
+      "fixture": {
+        "name": "full_tile_qr_nan",
+        "query": 22,
+        "context": 577,
+        "padding": 1,
+        "heads": 1,
+        "splits": 1,
+        "recent": 1,
+        "bad_metadata": -1,
+        "bad_qr": 0,
+        "qr_value": "nan",
+        "dead_metadata": false,
+        "dequant_mode": 0,
+        "input_sha256": {
+          "q": "9f397a32bceef083459233878ac438a61a1f5241f29d25d21206fdf3fa33dca1",
+          "qr": "8a2f1e7e034aabfc1abdc8ec0b60049ab5735cfc79879aae4dab8ef201c1e3e3",
+          "ck": "d182f572354563a376e8834bc90f3eb69f3b348a360258127c1899532aa54b62",
+          "cv": "addbada696b6a342bf96fcdea835e6c5116742ee118e2f1622f0fa626d75fda8",
+          "rv": "af4155480d294a9f997607d6386cc8afd62fb235fd9e4bfb79140de1bb3b56b2",
+          "raw": "b8b8689373956983f7fc6276e65e6bf9168a79764518ee99d57ef2b174a0598e",
+          "table": "445a325557e298d4151bc835532cbdf404a1084fb593d20c14f55151179d801b",
+          "wk": "6f6a213f0165f32931cfa1f8ed3c7dfebe489f46809f9d794319ef60cfffee5c",
+          "wv": "0f32dee3fd38ed238e2ccbf1c8a5e38af7d409564775f3f50f55d00a4182afb5",
+          "tags": "68e930bc5bf9d65b17605493960932dc6fd70b0f9ace6b72b4076f6b55a047ee",
+          "starts": "2fadf4ab7636b03d3758c4a68ff2515662d477c3bd20e95dcd39e6c4c77b0090",
+          "lens": "6e8918ff494423144d56e0786afbca587d722d6acf461678412a70790ed72f4a",
+          "slots": "016829f88dacf282ce348e30d8cb0b8b3503a21f5829533cdd159559f9737a5f",
+          "expected_positions": "3410dfa876e314d6a40134dd4cd0a4180da0e597046eb6286d68824d9ad695cd",
+          "required_status_checks": "845c35898d2cf4c1a70d3ed5cc85ccc2366c5acbfbdb1d91829efee5a4f30394"
+        },
+        "fault": true,
+        "source2_suppressed": false,
+        "oracle": "pending_actual_prepare_tasks",
+        "NPU": "not_run",
+        "performance": "not_run"
+      },
+      "result": {
+        "backend": "ascendc_cpu_debug",
+        "status": "passed",
+        "mode": "c16",
+        "oracle": false,
+        "paired_bitwise": true,
+        "timing_acceptance": false,
+        "includes_bf16_rv": true,
+        "partial_max_abs": 0,
+        "lse_max_abs": 0,
+        "output_max_abs": 0,
+        "eligible_clusters": 0,
+        "independent_tail_leaders": 2,
+        "dequant_mode": 0,
+        "members": 0,
+        "gm_guards": true,
+        "inputs_immutable": true,
+        "task_count": 69
+      }
+    },
+    {
+      "name": "full_tile_metadata_lane1",
+      "fixture": {
+        "name": "full_tile_metadata_lane1",
+        "query": 22,
+        "context": 577,
+        "padding": 1,
+        "heads": 1,
+        "splits": 1,
+        "recent": 1,
+        "bad_metadata": 80,
+        "bad_qr": -1,
+        "qr_value": "nan",
+        "dead_metadata": false,
+        "dequant_mode": 0,
+        "input_sha256": {
+          "q": "9f397a32bceef083459233878ac438a61a1f5241f29d25d21206fdf3fa33dca1",
+          "qr": "b820c510d80015fbaf5ce49373c538dca3722bc639fa1af9a282cd6e90b76fcc",
+          "ck": "d182f572354563a376e8834bc90f3eb69f3b348a360258127c1899532aa54b62",
+          "cv": "addbada696b6a342bf96fcdea835e6c5116742ee118e2f1622f0fa626d75fda8",
+          "rv": "af4155480d294a9f997607d6386cc8afd62fb235fd9e4bfb79140de1bb3b56b2",
+          "raw": "33ec68610da5e2eea02fe895ebab674db9e04d322f6ff7dd83072af5e5e6441d",
+          "table": "445a325557e298d4151bc835532cbdf404a1084fb593d20c14f55151179d801b",
+          "wk": "6f6a213f0165f32931cfa1f8ed3c7dfebe489f46809f9d794319ef60cfffee5c",
+          "wv": "0f32dee3fd38ed238e2ccbf1c8a5e38af7d409564775f3f50f55d00a4182afb5",
+          "tags": "68e930bc5bf9d65b17605493960932dc6fd70b0f9ace6b72b4076f6b55a047ee",
+          "starts": "2fadf4ab7636b03d3758c4a68ff2515662d477c3bd20e95dcd39e6c4c77b0090",
+          "lens": "6e8918ff494423144d56e0786afbca587d722d6acf461678412a70790ed72f4a",
+          "slots": "016829f88dacf282ce348e30d8cb0b8b3503a21f5829533cdd159559f9737a5f",
+          "expected_positions": "3410dfa876e314d6a40134dd4cd0a4180da0e597046eb6286d68824d9ad695cd",
+          "required_status_checks": "f21cd924f715c4c9e42e37a4ccdc0b7a7922e03b30be43df341a2f52d5e75b8c"
+        },
+        "fault": true,
+        "source2_suppressed": false,
+        "oracle": "pending_actual_prepare_tasks",
+        "NPU": "not_run",
+        "performance": "not_run"
+      },
+      "result": {
+        "backend": "ascendc_cpu_debug",
+        "status": "passed",
+        "mode": "c16",
+        "oracle": false,
+        "paired_bitwise": true,
+        "timing_acceptance": false,
+        "includes_bf16_rv": true,
+        "partial_max_abs": 0,
+        "lse_max_abs": 0,
+        "output_max_abs": 0,
+        "eligible_clusters": 0,
+        "independent_tail_leaders": 2,
+        "dequant_mode": 0,
+        "members": 0,
+        "gm_guards": true,
+        "inputs_immutable": true,
+        "task_count": 69
+      }
+    }
+  ],
+  "phases": [
+    {
+      "phase": "make-fixtures",
+      "command": [
+        "/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu_fixture.py",
+        "make",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/fixtures",
+        "--case",
+        "full_tile_qr_nan",
+        "--case",
+        "full_tile_metadata_lane1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.928503,
+      "timed_out": false,
+      "interrupted": false,
+      "log": "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/logs/make-fixtures.log",
+      "cleanup_complete": true
+    },
+    {
+      "phase": "full_tile_qr_nan-prepare",
+      "command": [
+        "/tmp/oscar-c16-targeted-20261020/build/c16-paired-cpu/c16_tuned_paired_cpu",
+        "c16",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/fixtures/full_tile_qr_nan",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/outputs/full_tile_qr_nan",
+        "0",
+        "prepare-only"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.101286,
+      "timed_out": false,
+      "interrupted": false,
+      "log": "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/logs/full_tile_qr_nan-prepare.log",
+      "cleanup_complete": true
+    },
+    {
+      "phase": "full_tile_qr_nan-oracle",
+      "command": [
+        "/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu_fixture.py",
+        "golden",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/fixtures/full_tile_qr_nan",
+        "--output",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/outputs/full_tile_qr_nan"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.7268,
+      "timed_out": false,
+      "interrupted": false,
+      "log": "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/logs/full_tile_qr_nan-oracle.log",
+      "cleanup_complete": true
+    },
+    {
+      "phase": "full_tile_qr_nan-functional",
+      "command": [
+        "/tmp/oscar-c16-targeted-20261020/build/c16-paired-cpu/c16_tuned_paired_cpu",
+        "c16",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/fixtures/full_tile_qr_nan",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/outputs/full_tile_qr_nan",
+        "0"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 12.652142,
+      "timed_out": false,
+      "interrupted": false,
+      "log": "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/logs/full_tile_qr_nan-functional.log",
+      "cleanup_complete": true
+    },
+    {
+      "phase": "full_tile_metadata_lane1-prepare",
+      "command": [
+        "/tmp/oscar-c16-targeted-20261020/build/c16-paired-cpu/c16_tuned_paired_cpu",
+        "c16",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/fixtures/full_tile_metadata_lane1",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/outputs/full_tile_metadata_lane1",
+        "0",
+        "prepare-only"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.101084,
+      "timed_out": false,
+      "interrupted": false,
+      "log": "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/logs/full_tile_metadata_lane1-prepare.log",
+      "cleanup_complete": true
+    },
+    {
+      "phase": "full_tile_metadata_lane1-oracle",
+      "command": [
+        "/home/sunao2000.linux/gpt_new_oscar/.venv/bin/python",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu_fixture.py",
+        "golden",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/fixtures/full_tile_metadata_lane1",
+        "--output",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/outputs/full_tile_metadata_lane1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.618666,
+      "timed_out": false,
+      "interrupted": false,
+      "log": "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/logs/full_tile_metadata_lane1-oracle.log",
+      "cleanup_complete": true
+    },
+    {
+      "phase": "full_tile_metadata_lane1-functional",
+      "command": [
+        "/tmp/oscar-c16-targeted-20261020/build/c16-paired-cpu/c16_tuned_paired_cpu",
+        "c16",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/fixtures/full_tile_metadata_lane1",
+        "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/outputs/full_tile_metadata_lane1",
+        "0"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 12.054257,
+      "timed_out": false,
+      "interrupted": false,
+      "log": "/tmp/oscar-c16-targeted-20261020/reports/c16_targeted_opt_20261020/cpu-errors/logs/full_tile_metadata_lane1-functional.log",
+      "cleanup_complete": true
+    }
+  ],
+  "NPU": "not_run",
+  "performance": "not_run",
+  "per_phase_timeout_seconds": {
+    "prepare": 120,
+    "oracle": 120,
+    "functional": 300
+  }
+}

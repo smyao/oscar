@@ -1,0 +1,56 @@
+{
+  "scope": "Independent source and existing CANN AIV artifact review; no performance or NPU execution",
+  "date": "2026-10-20",
+  "archive": ["126", "134", "145", "148", "164", "startup D.4"],
+  "original_build_signature_prefix": "8efb9fb74791976c",
+  "vm_workspace": "/tmp/oscar-c16-targeted-20261020",
+  "source_sha256": {
+    "csrc/kernels/attention_cv_aligned_cluster16.cpp": "76813a84b057769677fb1b31b77e7d93d3d189b120842ad1ebae1293afa25693",
+    "csrc/kernels/attention_cv_aligned_cluster16_control.cpp": "72169fe37bbbcadccb09a8e18ace583d6ede7831bcc84d10392833f1ff3632b4",
+    "csrc/kernels/attention_c16_softmax_helpers.h": "ceb949f6550a7b288ef6fedf9d8dc3924f14e1c890fca5aaa0d1f7f73e070b58",
+    "csrc/kernels/attention_c16_cast.h": "28ae39446d4321d16ecf02b24b1e977804d32bd13e27e572eda50fcdbe422bd7"
+  },
+  "sdk_reduce_source": {
+    "path": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/asc/impl/basic_api/dav_c220/kernel_operator_vec_reduce_impl.h",
+    "lines": "153-178",
+    "sha256": "804ac27889146c36d6bd3f7dafe3d09dca10a1d578dd787cc679dec8fcda08ed"
+  },
+  "source_review": {
+    "status": "passed",
+    "same_reduction": "A2 count-mode vcadd(dst, src, 1, 1, 1, 8, 1), 256 FP32 elements per row and the same ACC_VAL scalar read",
+    "retained_dependencies": "Every row still has PIPE_V and V_S before get_acc_val; original score/P MTE3_MTE2 and cross-core flags are unchanged",
+    "removed_work": "The SDK's scalar result store to the temporary result slot and its S_V/S_MTE3 publication; the candidate consumes the identical scalar finite predicate without that store",
+    "mask": "Counter mask 256 is set once for the complete-history row loop and normal full mask restored afterward; actual functionality is checked separately by the 289-case SDK probe",
+    "unchanged": ["FP32 SoftmaxFlashV2", "max/sum/alpha and accumulator arithmetic", "partial/precise row mask and finite paths", "C16 ABI", "UB allocation bounds", "cross-core protocol"],
+    "limit": "Source/preprocessed identity does not establish the final compiler's emitted instruction or synchronization counts"
+  },
+  "assembly_review": {
+    "status": "unavailable",
+    "compiler_command_source": "build/ascendc/oscar_ascend_kernels_aiv_device-prefix/src/oscar_ascend_kernels_aiv_device-build/compile_commands.json",
+    "target": "dav-c220-vec",
+    "flags": "Kept all original ISA, macro, O3, auto-sync and stack flags; only temporary output path and the requested diagnostic emission flag changed",
+    "dash_S": {
+      "returncode": 1,
+      "error": "unsupported option '-S' on device side",
+      "assembly_created": false
+    },
+    "save_temps_obj": {
+      "candidate_returncode": 0,
+      "control_returncode": 0,
+      "products": [".ccei", ".o"],
+      "assembly_created": false,
+      "command_receipt": "/tmp/oscar-c16-targeted-20261020/assembly_review/compile_review.json"
+    },
+    "objdump": {
+      "path": "/usr/local/Ascend/cann-9.1.0/aarch64-linux/bin/llvm-objdump",
+      "result": "All disassembled instruction positions report <not available>; no readable vcadd or ACC_VAL mnemonics",
+      "machine_instruction_equivalence": "not_established"
+    },
+    "temporary_object_sha256": {
+      "auto_gen_attention_cv_aligned_cluster16.o": "f8a34cd995a85ff4d5726353a777c660687097eb082d195e37c15a452c52631a",
+      "auto_gen_attention_cv_aligned_cluster16_control.o": "d571472aefea42f064e2ea1b73247cb634ef61693f0248325cb7e876d59d5bf1"
+    }
+  },
+  "performance": "not_run",
+  "npu": "not_run"
+}

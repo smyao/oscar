@@ -13,5 +13,6 @@ void name(void* stream,void* query,void* query_rot,void* current_key,void* curre
     float scale,int32_t dequant_mode,uint32_t cores)
 OSCAR_ALIGNED_CLUSTER_DECL(attention_cv_aligned_cluster4_launch);
 OSCAR_ALIGNED_CLUSTER_DECL(attention_cv_aligned_cluster16_launch);
+OSCAR_ALIGNED_CLUSTER_DECL(attention_cv_aligned_cluster16_control_launch);
 #undef OSCAR_ALIGNED_CLUSTER_DECL
 }

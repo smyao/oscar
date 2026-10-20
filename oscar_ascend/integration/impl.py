@@ -243,6 +243,9 @@ class OscarAttentionImpl(AttentionImpl):
         if aligned_math:
             from ..ops.cv_dispatch import ALIGNED_CV_MAP
             cv_name = ALIGNED_CV_MAP[cv_name]
+            if (cv_name == "attention_cv_aligned_cluster16_out"
+                    and not self.provider.config.get("experimental_c16_tuned", False)):
+                cv_name = "attention_cv_aligned_cluster16_control_out"
         cv_name = storage_reader(state, cv_name)
         from ..ops.cv_dispatch import HYBRID_L1_DECODE_CV_OP, BF16_CV_OPS, ALIGNED_CV_OPS
         rotation_v = state.rotation_v

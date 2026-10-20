@@ -219,11 +219,18 @@ TORCH_LIBRARY_FRAGMENT(oscar_ascend_ops,m) {
       "Tensor(d!) workspace, Tensor(e!) cluster_stats, int block_tokens, int physical_blocks, int raw_ssm_offset, "
       "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
       "int splits, float scale, int dequant_mode, int cube_cores) -> ()");
+  m.def("attention_cv_aligned_cluster16_control_out(Tensor query, Tensor query_rot, Tensor current_key, Tensor current_value, "
+      "Tensor rotation_v, Tensor raw, Tensor block_table, Tensor window_key, Tensor window_value, "
+      "Tensor window_tags, Tensor tasks, Tensor(a!) partial, Tensor(b!) lse, Tensor(c!) status, "
+      "Tensor(d!) workspace, Tensor(e!) cluster_stats, int block_tokens, int physical_blocks, int raw_ssm_offset, "
+      "int physical_page_stride, int sink_tokens, int recent_tokens, int speculative_tokens, "
+      "int splits, float scale, int dequant_mode, int cube_cores) -> ()");
 }
 TORCH_LIBRARY_IMPL(oscar_ascend_ops,PrivateUse1,m) {
   m.impl("attention_cv_aligned_decode_out", &AttentionStriped<oscar_ascend::attention_cv_aligned_decode_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256),true>);
   m.impl("attention_cv_aligned_decode_q1_out", &AttentionStriped<oscar_ascend::attention_cv_aligned_decode_q1_launch,true,oscar_ascend::attention_decode_bundle_workspace_per_core(256),true>);
   m.impl("attention_cv_aligned_cluster4_out", &AttentionStripedCluster<oscar_ascend::attention_cv_aligned_cluster4_launch,4,oscar_ascend::attention_bf16_cluster4_workspace_per_core(256),true>);
   m.impl("attention_cv_aligned_cluster16_out", &AttentionStripedCluster<oscar_ascend::attention_cv_aligned_cluster16_launch,16,oscar_ascend::attention_bf16_cluster16_workspace_per_core(256),true>);
+  m.impl("attention_cv_aligned_cluster16_control_out", &AttentionStripedCluster<oscar_ascend::attention_cv_aligned_cluster16_control_launch,16,oscar_ascend::attention_bf16_cluster16_workspace_per_core(256),true>);
 
 }

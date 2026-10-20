@@ -1,0 +1,165 @@
+{
+  "date": "2026-10-20",
+  "base_commit": "b388590f3fe27409c0e2f0f1bd3babde0a2d58a6",
+  "branch": "codex/oscar-bf16-attention",
+  "status": "local_qualified_target_acceptance_pending",
+  "measured_basis": {
+    "run": "2ae27c282db34edfbb383587023dcb63",
+    "report": "docs/c16_breakdown_analysis_20261020.md",
+    "applies_to": "C16 only; not q4/q1/C4 or whole-model percentage"
+  },
+  "changes": [
+    "same A2 count-mode vcadd/ACC_VAL finite predicate without unused scalar UB publication",
+    "C16-only normal-mask BF16 RNE multi-repeat issue with identical strides"
+  ],
+  "timer": {
+    "status": "unchanged",
+    "base": "b388590f",
+    "sha256": {
+      "csrc/experiments/c16_timer_20261019/CMakeLists.txt": "3e6f03e8f41cf27fef76009c0a764fe742419dca3288aa13ba5cf1280c09cbd4",
+      "csrc/experiments/c16_timer_20261019/clock_contract.json": "118f6ab148b1d83755a6178ffa1722f11313d0ab6ec521545a420f56a8a35328",
+      "csrc/experiments/c16_timer_20261019/generate.py": "9178f7f4abcff33008d59bd4f6dc4e362351fb2f773bb3259d22a6571731db58",
+      "csrc/experiments/c16_timer_20261019/timer.h": "71bcfdd8f760ea9a6d33ddfc8f51c23d0b0390b1a9fc45cf36d2cc1bc6d48117",
+      "oscar_ascend/c16_timer_schema.py": "c82f88af2a5361135e84c5d96728d4acb10f1abe576757f4bc8c91626e90d0b5",
+      "oscar_ascend/integration/c16_breakdown.py": "272a231d285b353dcb0d6a9d0007b12dc7740d473e2d692a45db3e4845a281b2",
+      "scripts/test_c16_breakdown.sh": "47702ecb105e3543216577fd9b08f6d5204d35cc5bbee6031124460fc437bf11",
+      "tools/build_c16_timer.py": "42f25b534121236782286786ceecb14aa4af12346760a110b2553029cc932024",
+      "tools/c16_breakdown.py": "6091ebace6d49f7d1606ca61feb87f42e95ed42e6249b4426f4e5f01a2c33f5a",
+      "tools/summarize_c16_breakdown.py": "f0837b2dae1df462cc3afc3c8bfdd662c4af3d74bcd754c38c1fc1eaebf2443f"
+    }
+  },
+  "preserved_control": {
+    "canonical_sha256": "a2e04814c64ad02d45d27d3c4e45ca89df7738ca6d1ef2ad89733e2437d2cab2",
+    "normalization": "replace attention_cv_aligned_cluster16_control with attention_cv_aligned_cluster16",
+    "exact_base_identity": true
+  },
+  "source_sha256": {
+    "csrc/kernels/attention_cv_aligned_cluster16.cpp": "76813a84b057769677fb1b31b77e7d93d3d189b120842ad1ebae1293afa25693",
+    "csrc/kernels/attention_cv_aligned_cluster16_control.cpp": "72169fe37bbbcadccb09a8e18ace583d6ede7831bcc84d10392833f1ff3632b4",
+    "csrc/kernels/attention_c16_cast.h": "28ae39446d4321d16ecf02b24b1e977804d32bd13e27e572eda50fcdbe422bd7",
+    "csrc/kernels/attention_c16_softmax_helpers.h": "ceb949f6550a7b288ef6fedf9d8dc3924f14e1c890fca5aaa0d1f7f73e070b58",
+    "tools/c16_cast_transform.py": "0e0f7b097d76d92768e35c316c16e4c3b96041fa2e0ab9575e00fcc41d8004df",
+    "tools/c16_softmax_transform.py": "73711c0ec241436f9d22df4f74eaab8b5930802399f3328c43087a5c9455f676",
+    "tools/generate_c16_tuned.py": "d37ba47f7684e773fd309238986a4ac712cb32abd1ffc8736d311e01537c9a61",
+    "tools/generate_aligned_clusters.py": "64c0f8404eac5995bc31498f9f2bdcee37d0fe7aa6540a0c8ba2d63c265bb539",
+    "tools/serving_variants.py": "35a5b4be72c5cbdc2392cf617466eb7d95179dcc5d7eda1c9349963f2436bcc1",
+    "oscar_ascend/integration/impl.py": "6e5d0503b4984855499e09d008d49348628b10c0f381d41f0c88b6ee16144656",
+    "oscar_ascend/runtime.py": "18b36aabf84303d7ae2afbfe37cc500c780415813a1a65b4f279367d4614f263",
+    "oscar_ascend/ops/cv_dispatch.py": "a833ed4f84a11c0dd1fba557ce41f484f44a70e674c4fb66286f469b5258c866",
+    "oscar_ascend/ops/meta.py": "5ffb33f5a731a35e2804c0e750cdb40a9508a3bb8f05d458825138f470e001c5",
+    "oscar_ascend/ops/contracts.py": "0c6e187ec9b6beb024adef0a44e99d6b62d4beb7dde90a9753594408ed8f9490"
+  },
+  "cann": {
+    "build": "passed",
+    "fresh": true,
+    "source_capabilities": 55,
+    "signature": "8efb9fb74791976c8f89b1e5f7f63c5090dba1d34426d89b47957511ef784c86",
+    "source_hashes_verified": 1116,
+    "manifest": "evidence/fullbuild_manifest.json",
+    "full_source_manifest": "evidence/fullbuild_signature.json",
+    "log": "evidence/fullbuild.log",
+    "command": "python -m tools.build_ops --soc ascend910b4 --jobs 2 --log-dir reports/c16_targeted_opt_20261020/fullbuild"
+  },
+  "cpu_debug": {
+    "complete_c16": {
+      "status": "passed",
+      "cases": [
+        "mature_h32_tail",
+        "mature_multiple_kv_tiles",
+        "independent_multiple_kv_tiles",
+        "hkv2_s3_window_current",
+        "cold_second_score_block",
+        "empty_history_window",
+        "metadata_lane1",
+        "qr_last_member_nan",
+        "qr_last_member_inf",
+        "unread_dead_metadata",
+        "full_tile_qr_nan",
+        "full_tile_metadata_lane1"
+      ],
+      "outputs_bytewise": [
+        "partial",
+        "lse",
+        "status",
+        "cluster_stats"
+      ],
+      "independent_reference": "frozen oscar_bf16_attention_v3 for valid cases; declared status checks for fault cases",
+      "memory": "different output poison; NaN workspace; input immutability and guards",
+      "logs": [
+        "evidence/cpu_matrix.json",
+        "evidence/cpu_full_tile_errors.json"
+      ]
+    },
+    "finite_helper": {
+      "status": "passed",
+      "cases": 289,
+      "log": "evidence/finite_final.log"
+    },
+    "cast_helper": {
+      "status": "passed",
+      "cases": 66,
+      "bitwise_elements": 317020,
+      "independent_rne_elements": 280205,
+      "log": "evidence/cast_final.log",
+      "first_failure": "Independent reference initially assumed non-saturating finite overflow; old/new SDK agreed. SDK CTRL[48] semantics corrected in reference; original failure preserved. Production/tolerances unchanged.",
+      "failure_logs": [
+        "evidence/cast_initial_failure.log",
+        "evidence/cast_failure_bits.log"
+      ]
+    }
+  },
+  "host": {
+    "passed_distinct": 148,
+    "failed_preexisting": 3,
+    "skipped_platform": 1,
+    "subtests_passed": 4,
+    "targeted_suite": {
+      "passed": 71,
+      "log": "evidence/host_targeted.log"
+    },
+    "contract_suite": {
+      "passed": 77,
+      "failed": 3,
+      "skipped": 1,
+      "log": "evidence/host_contracts.log"
+    },
+    "summary_only_followup": {
+      "passed": 14,
+      "duplicates_not_added_to_total": true,
+      "log": "evidence/host_summary_followup.log"
+    },
+    "preexisting_failure_identity": "preexisting_static_findings.json"
+  },
+  "independent_review": {
+    "status": "no_blocker_found",
+    "scope": [
+      "control identity",
+      "dispatch and storage registration",
+      "27-argument schema and aliases",
+      "Meta registration",
+      "BF16 Rv and cluster_stats arguments",
+      "C16-only macro isolation",
+      "finite/error semantics",
+      "original MTE3_MTE2 and cross-core flags",
+      "unchanged timer"
+    ],
+    "limitation": "read-only source review; not NPU execution"
+  },
+  "assembly": {
+    "status": "unavailable",
+    "report": "softmax_compile_review.json",
+    "machine_instruction_count_verified": false
+  },
+  "target_npu": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "model_quality": "not_run",
+  "performance": "not_run",
+  "delivery": {
+    "candidate_feature": "experimental_c16_tuned",
+    "command": "git pull --ff-only && bash scripts/install_serve.sh --variant candidate",
+    "main_stable": "not_modified",
+    "timer_changes": false,
+    "unrelated_worktree_changes": "rotation calibration edits excluded from this delivery"
+  }
+}

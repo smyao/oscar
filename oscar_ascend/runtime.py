@@ -324,7 +324,7 @@ class AscendRuntimeProvider:
                      "experimental_quantization_bundle", "experimental_c4_member_pipeline",
                      "experimental_mdl_decode", "experimental_hybrid_l1_decode",
                      "experimental_c16_member_pipeline", "experimental_c16_l1_reuse",
-                     "experimental_prepare_reuse", "experimental_bf16_attention", "experimental_aligned_math"):
+                     "experimental_prepare_reuse", "experimental_bf16_attention", "experimental_aligned_math", "experimental_c16_tuned"):
             if type(self.config.get(flag, False)) is not bool:
                 raise OscarReadinessError(f"{flag} must be an explicit boolean")
         if self.config.get("experimental_fast_unpack", False) and not self.config.get("experimental_history_reuse", False):
@@ -345,6 +345,8 @@ class AscendRuntimeProvider:
             raise OscarReadinessError("BF16 attention requires the complete physical-page candidate bundle")
         if self.config.get("experimental_aligned_math",False) and not self.config.get("experimental_bf16_attention",False):
             raise OscarReadinessError("aligned math requires BF16 attention")
+        if self.config.get("experimental_c16_tuned",False) and not self.config.get("experimental_aligned_math",False):
+            raise OscarReadinessError("timer-directed C16 requires aligned BF16 attention")
         self._cache_format = ("striped_fp32_v2" if self.config.get("experimental_aligned_math",False) else "striped_v1" if self.config.get("experimental_striped_cache", False)
                               else "canonical_v1")
         if self.config.get("experimental_decode_bundle", False) and self._cache_format not in ("striped_v1", "striped_fp32_v2"):

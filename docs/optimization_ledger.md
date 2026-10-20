@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-20 timer驱动C16定向优化：只针对实测softmax链和BF16转换，保留同一256列归约/ACC_VAL，省略无用标量结果UB发布；C16专用normal-mask转换批量发射repeat，RNE/stride不变。candidate统一启用`c16_tuned`，原核保留显式control，现有timer逐字不变。12例完整C16与355例helper CPU-debug、55能力CANN fresh构建通过；主机148通过/3项已有静态失败/1项跳过。仅交付待真机认证，不计提速或>30%收益；后续依据实际收益决定保留/继续，不能将全部23.8ms视作可消除。见[实现与证据边界](c16_targeted_optimization_20261020.md)。
+
 2026-10-20 C16内部实测收口：用户run `2ae27c282db34edfbb383587023dcb63`完整通过；64/64个目标调用主AIV的具体非等待首位为softmax_math。代表AIV23.4–23.8ms，BF16转换7.5–7.6ms，INT2解包约5.4ms，历史读取2.0–2.6ms。C16优化顺序调整为softmax链→转换→状态/交接，不能套用到q4 decode；诊断扰动约11%，不折算为原1199ms或整轮收益。本轮只交付分析。[证据与定向方案](c16_breakdown_analysis_20261020.md)。
 
 2026-10-20 C16实验启动故障：用户日志确认cache load内层kernel输入解包expected20后持续health空等。新增输入契约预检、外层/内层缓存身份隔离及quiet启动明确worker异常快速清理；不关graph/MTP、不改数学或模型参数，不计性能收益。[修复与边界](c16_startup_fix_20261020.md)。

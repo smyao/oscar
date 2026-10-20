@@ -1,0 +1,17 @@
+{
+  "tools/experiments/replay_shared_fp32.py": {
+    "tracked_at_base": true,
+    "matches_base": true,
+    "sha256": "ce3ca0f3e31b75bd0da006fb826890b6a521e51ac2aadeee603b42a013f57f6f"
+  },
+  "tools/experiments/export_shared_fp32.py": {
+    "tracked_at_base": true,
+    "matches_base": true,
+    "sha256": "56982601250a1e29b075c7ac160d8973c2e6c87a5b0b1408bbea2029da61a2ed"
+  },
+  "oscar_ascend/integration/metadata.py": {
+    "tracked_at_base": true,
+    "matches_base": true,
+    "sha256": "85336e8265d4dc01f4637f3fbf58faa6f26cba6b1af54c5300650fe7e9640dd7"
+  }
+}

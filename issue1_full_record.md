@@ -28823,3 +28823,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **#171 本次源码修复（目标复测待回传）**：`HistoryVectorTask`预取下一V后，用`PipelineConsumePv`把当前FP32 PV读回同一`dequantBuf`；已有`MTE3_V`只约束Vector，当前`PvReady`也不依赖下一V的`KvReady`，缺少“下一V写出读UB完成→当前PV的MTE2覆盖UB”依赖。参考档案#147及只读原生`sparse_flash_attention_service_vector_mla.h`的MTE3_MTE2复用保护，在候选BF16 MDL的`PipelineConsumePv`首次DataCopy前补`Fence<HardEvent::MTE3_MTE2>()`，生成器同步，q4/q1共享生效。待完成的MTE3已发出且不依赖后续PV读取，未发现循环等待。C4不具有同址PV读入/下一V预取组合，保持不动。有限FP32字节覆写BF16可形成NaN只是可证伪的解释，不冒充捕获到的设备事实。
 
 **验证边界**：`reports/bf16_mdl_handoff_local_20261020.xml`记录168项本地回归通过，包括源代码依赖图删除修复后的负对照、有限FP32字节重解释BF16的污染示例、取证保留性、编译失败禁止探针、q4/q1路由与默认候选传递。五个生成内核逆向一致检查通过。只增加每tile一个本地依赖，无新分配、生产回读、精度变更或全历史恢复；实际延迟必须真机测量。本机没有CANN/NPU，不能证明新内核设备执行成功，也未解除既有冻结数值筛查失败。`diagnose_bf16.sh`现先编译再探针，任何编译失败直接停止并保留退出码。
+
+
+## [172] 真机续报（2026-10-20）· c4_mature 图缩短输入后合法无簇，被探针误判
+
+**用户证据**：`logs/bf16_diag_rZPnoIwg`，run_exit_code与script_exit_code均2。两臂history/sink_recent/current partial非有限数均0、LSE非法数均0、各源空LSE均102，status/rotate/merge全0；异常为`BF16 mature case did not execute shared history`。这是用户粘贴提取，不是本机设备执行或完整result.json。已越过此前mdl_q4非有限首错，但不据此声称完整服务/质量/性能通过。
+
+**源码定位**：N352、H6、各源102空LSE对应17个padding，实际335行，吻合graph_gate的`smaller_live_rows`。prepare_attention_tasks按21-query分组，C4按84-token锚点；recent256时，336行仅anchor252的4个完整组具备相同成熟历史区间。缩为335后末组只20行，不满足IsClusterMember的完整组条件，两臂合法独立执行，探针却沿用expect_clusters=True。C16的672→671也会丢掉唯一成熟簇。旧错误不等于C4数值失败或新内核故障。
+
+**修复**：固定成熟输入改为C4=337、C16=673，padding分配仍352/688，graph缩短一行后保留原完整成熟簇。不关闭覆盖断言，不改生产路由/算子、oracle或验收阈值。异常补充graph replay state。回归用独立CPU任务描述符复现旧长度缩短后簇数1→0，再验证新长度及缩短后均1；CPU不代替真实图执行。目标短probe仍待回传，不要求AISBench。
+
+**本地结果**：`reports/bf16_mature_graph_fixture_20261020.xml`记录101项通过（含探针、C4/C16边界负对照、生产分派、诊断脚本退出码）。不代表设备图或模型通过。

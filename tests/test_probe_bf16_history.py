@@ -459,3 +459,26 @@ def test_empty_protocol_remains_bitwise_even_with_all_source_bf16_arithmetic():
     new['partial'][-1,0,0,0]=0.001  # below frozen atol, but invalid empty protocol
     with pytest.raises(RuntimeError,match='empty partial zero'):
         probe.compare_pair(torch,case,fixture,old,new,probe.reuse._fingerprint({'tasks':tasks}),ACCEPTANCE)
+
+
+@pytest.mark.parametrize('route,cluster,old_length',[('c4',4,336),('c16',16,672)])
+def test_mature_fixture_retains_complete_cluster_after_graph_shrink(route,cluster,old_length):
+    case=next(c for c in probe.case_plan() if c.route==route)
+    def eligible(length):
+        spec=replace(case.shape,qlens=(length,))
+        # CPU descriptors also used by independent per-source oracle tests.
+        tasks=task_fixture({'spec':spec,'tokens':spec.padded_tokens})
+        width=cluster*21;found=0
+        for anchor in range(0,length,width):
+            members=[tasks[(anchor+j*21)*3] for j in range(cluster)
+                     if anchor+j*21<length]
+            if len(members)!=cluster:continue
+            if all(int(r[1])==21 and int(r[4])==int(r[8]) and int(r[3])<int(r[4])
+                   and torch.equal(r[3:5],members[0][3:5]) for r in members):found+=1
+        return found
+    assert eligible(old_length)==1
+    assert eligible(old_length-1)==0  # reproduces the old graph-only failure
+    assert eligible(case.shape.qlens[0])==1
+    assert eligible(case.shape.qlens[0]-1)==1
+    assert case.shape.expect_clusters  # coverage gate must not be disabled
+    assert case.shape.qlens[0]<case.shape.padded_tokens

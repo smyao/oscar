@@ -90,8 +90,9 @@ def case_plan():
     """Fixed before measurement; preserve cancellation and all six real routes."""
     short = reuse.Shape('mdl_q4', (4, 4), (1341, 1373), 256, 1, 3, False, padded_tokens=12)
     q1 = replace(short, name='mdl_q1', qlens=(1, 1), padded_tokens=8, slot_context=True)
-    c4 = reuse.Shape('c4_mature', (336,), (1341,), 256, 1, 1, True, padded_tokens=352)
-    c16 = reuse.Shape('c16_mature', (672,), (1341,), 256, 1, 1, True, padded_tokens=688)
+    # #172: retain one complete mature cluster after graph qlen-1 replay.
+    c4 = reuse.Shape('c4_mature', (337,), (1341,), 256, 1, 1, True, padded_tokens=352)
+    c16 = reuse.Shape('c16_mature', (673,), (1341,), 256, 1, 1, True, padded_tokens=688)
     general = reuse.Shape('general_multiblock', (17,), (641,), 256, 2, 3, False, padded_tokens=24)
     balanced = reuse.Shape('balanced_mixed', (4, 17), (641, 769), 256, 1, 3, False, padded_tokens=64)
     rows = [Case(short, 'mdl', graph=True, timed=True),
@@ -592,7 +593,13 @@ def graph_gate(torch,ops,case,fixture,tensors,pair,cores,acceptance):
         for buffers in pair:mdl.poison(torch,buffers)
         for graph in graphs:graph.replay()
         torch.npu.synchronize()
-        detail=compare_pair(torch,replace(case,shape=shape),fixture,*pair,receipt['task_sha256'],acceptance)
+        try:
+            detail=compare_pair(torch,replace(case,shape=shape),fixture,*pair,receipt['task_sha256'],acceptance)
+        except Exception as error:
+            error.add_note('BF16 graph replay state='+label)
+            if hasattr(error,'bf16_failure_diagnostics'):
+                error.bf16_failure_diagnostics['graph_state']=label
+            raise
         captured=[snapshot(b) for b in pair]
         for i,buffers in enumerate(pair):mdl.poison(torch,buffers);execute(i)
         torch.npu.synchronize()

@@ -1,0 +1,74 @@
+{
+  "evidence_kind": "structured_extract_of_user_pasted_history_stage",
+  "scope": "last_nonempty_history_per_core_only",
+  "cores": 20,
+  "rotation_finite": true,
+  "tasks": [
+    {
+      "core": 0,
+      "task_id": 0,
+      "qbegin": 0,
+      "qcount": 4,
+      "split": 0,
+      "norm_nonfinite_elements": 432,
+      "norm_max_abs": null,
+      "partial_nonfinite_elements": 6144,
+      "cpu_rotation_nonfinite_elements": 6144
+    },
+    {
+      "core": 1,
+      "task_id": 36,
+      "qbegin": 4,
+      "qcount": 4,
+      "split": 0,
+      "norm_nonfinite_elements": 384,
+      "norm_max_abs": null,
+      "partial_nonfinite_elements": 6144,
+      "cpu_rotation_nonfinite_elements": 6144
+    },
+    {
+      "core": 3,
+      "task_id": 1,
+      "qbegin": 0,
+      "qcount": 4,
+      "split": 1,
+      "norm_nonfinite_elements": 456,
+      "norm_max_abs": null,
+      "partial_nonfinite_elements": 6144,
+      "cpu_rotation_nonfinite_elements": 6144
+    },
+    {
+      "core": 4,
+      "task_id": 37,
+      "qbegin": 4,
+      "qcount": 4,
+      "split": 1,
+      "norm_nonfinite_elements": 432,
+      "norm_max_abs": null,
+      "partial_nonfinite_elements": 6144,
+      "cpu_rotation_nonfinite_elements": 6144
+    },
+    {
+      "core": 6,
+      "task_id": 2,
+      "qbegin": 0,
+      "qcount": 4,
+      "split": 2,
+      "norm_nonfinite_elements": 600,
+      "norm_max_abs": null,
+      "partial_nonfinite_elements": 6144,
+      "cpu_rotation_nonfinite_elements": 6144
+    },
+    {
+      "core": 7,
+      "task_id": 38,
+      "qbegin": 4,
+      "qcount": 4,
+      "split": 2,
+      "norm_nonfinite_elements": 576,
+      "norm_max_abs": null,
+      "partial_nonfinite_elements": 6144,
+      "cpu_rotation_nonfinite_elements": 6144
+    }
+  ]
+}

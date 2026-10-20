@@ -1,6 +1,6 @@
 # 完成状态与证据
 
-2026-10-20 #171续报：候选MDL q4的history全部有效partial非有限，旧臂及候选精确源有限；仅增强离线Norm分段取证。生产代码不变，根因未收口，42个checkpoint状态不提升。
+2026-10-20 #171续报：候选MDL q4的history全部有效partial非有限，旧臂及候选精确源有限；续报Norm已经非有限；源码修复MDL下一V发布与当前PV覆盖共用UB之间缺失的MTE3→MTE2依赖，覆盖q4/q1。168项本地回归通过，目标机复测待回传，42个checkpoint状态不提升。
 
 2026-10-20 #170：独立配对探针报告NaN LSE或非有限partial，当前固定首例MDL q4，旧臂/候选尚未区分。新增仅探针失败取证，57项主机回归通过；设备故障未修复，42个checkpoint不提升。回执：`reports/bf16_failure_diagnostics_20261020.xml`。
 

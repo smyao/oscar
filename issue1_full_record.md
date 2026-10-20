@@ -28814,3 +28814,12 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **源码/本地边界**：Norm/Score/Pv三个FP32区域分离，精确源不覆盖Norm；按segment-major调度，在20core首例各历史core只处理一次非空history，不能仅用“FP32 Matmul第二次Init失败”解释。固定合成输入的数值范围不支持正确算法下的合法FP32溢出解释，但未获得设备中间值，不能据此猜改Reset或冻结merge。
 
 **本轮动作**：只增强独立探针失败回读：根据实际tasks与core数定位每core最后非空history写者，检查Norm活行和对应partial，读取实际rv并给CPU Norm@Rv.T有限性参考。精确源、padding和被覆盖的较早history均不误当Norm写者；只对MDL/q1有明确布局时启用。保留异常与冻结门，生产算子/配置不变。主机测试回执`reports/bf16_history_stage_diagnostics_20261020.xml`不等于NPU验收；坏值根因与修复仍未完成。
+
+**#171 中间值续报（用户粘贴，非本机设备执行）**：20core中history core0/1/3/4/6/7的Norm分别有432/384/456/432/600/576个非有限元素（均为24活行的整数倍）；各partial6144非有限，实际rv有限，CPU Norm@Rv.T也各6144非有限。提取记录`reports/target_bf16_norm_failure_20261020.json`。因此本例坏值已在逆旋转前出现；不能再以逆旋转为首坏点。列污染是假设，计数本身不能证明每行坏列相同；尚需V/P输入与Norm列对应证据。
+
+**本次离线取证补充**：只对每core最后非空任务仍为该history者检查typed arena中的V双缓冲与P活行，后续precise覆盖者标记不可用，单tile不读取未发布的第二缓冲；按最后tile奇偶说明每个slot内容。输出Norm坏列及V坏列/坐标、P非有限数，不改生产/冻结内核、数学或门槛。本地回执`reports/bf16_value_stage_diagnostics_20261020.xml`，没有新设备修复完成证据。
+
+
+**#171 本次源码修复（目标复测待回传）**：`HistoryVectorTask`预取下一V后，用`PipelineConsumePv`把当前FP32 PV读回同一`dequantBuf`；已有`MTE3_V`只约束Vector，当前`PvReady`也不依赖下一V的`KvReady`，缺少“下一V写出读UB完成→当前PV的MTE2覆盖UB”依赖。参考档案#147及只读原生`sparse_flash_attention_service_vector_mla.h`的MTE3_MTE2复用保护，在候选BF16 MDL的`PipelineConsumePv`首次DataCopy前补`Fence<HardEvent::MTE3_MTE2>()`，生成器同步，q4/q1共享生效。待完成的MTE3已发出且不依赖后续PV读取，未发现循环等待。C4不具有同址PV读入/下一V预取组合，保持不动。有限FP32字节覆写BF16可形成NaN只是可证伪的解释，不冒充捕获到的设备事实。
+
+**验证边界**：`reports/bf16_mdl_handoff_local_20261020.xml`记录168项本地回归通过，包括源代码依赖图删除修复后的负对照、有限FP32字节重解释BF16的污染示例、取证保留性、编译失败禁止探针、q4/q1路由与默认候选传递。五个生成内核逆向一致检查通过。只增加每tile一个本地依赖，无新分配、生产回读、精度变更或全历史恢复；实际延迟必须真机测量。本机没有CANN/NPU，不能证明新内核设备执行成功，也未解除既有冻结数值筛查失败。`diagnose_bf16.sh`现先编译再探针，任何编译失败直接停止并保留退出码。

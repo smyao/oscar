@@ -347,13 +347,18 @@ def mdl_history_stage_diagnostics(torch,case,fixture,buffers,rotation):
     owner=1 if case.route=='mdl_q1' else 4
     tiles=(n+owner-1)//owner;per_token=spec.kv_heads*3*spec.splits
     tasks=buffers['tasks'].detach().cpu().reshape(n*per_token,16).tolist()
-    last={}
+    last={};last_operand_writer={}
     for work in range(tiles*per_token):
         begin=(work%tiles)*owner;segment=work//tiles
         for token in range(begin,min(begin+owner,n)):
             task_id=token*per_token+segment
             row=tasks[task_id]
             qbegin,count,hk,first,end,request,split,kind,context,request_begin,error=row[:11]
+            # Empty/padding tasks publish output/status but never touch operands.
+            # A later precise task, even with invalid data, makes these old
+            # history operand planes unsuitable as evidence.
+            if count>0 and first<end:
+                last_operand_writer[work%cores]=task_id
             if count<=0 or kind!=0 or first>=end or error:continue
             if not (0<=qbegin<n and count<=owner and qbegin+count<=n
                     and 0<=hk<spec.kv_heads and 0<=split<3*spec.splits
@@ -376,8 +381,31 @@ def mdl_history_stage_diagnostics(torch,case,fixture,buffers,rotation):
         finite=torch.isfinite(norm)
         detail={'core':core,'task_id':task_id,'qbegin':qbegin,'qcount':count,'split':split,
                 'norm_nonfinite_elements':int((~finite).sum()),
+                'norm_bad_columns':(~finite).any(dim=0).nonzero().flatten().tolist(),
                 'norm_max_abs':float(norm.abs().max()) if bool(finite.all()) else None,
                 'partial_nonfinite_elements':int((~torch.isfinite(output)).sum())}
+        if last_operand_writer.get(core)==task_id:
+            # Bf16AttentionWorkspace{256,32,1,2,1}: three FP32 MxD planes,
+            # then BF16 Q, K0/V0, K1/V1 and P. Only inspect published tiles;
+            # the unused double-buffer slot may intentionally remain poisoned.
+            operand=arena[core,3*32*256*4:].contiguous().view(torch.bfloat16)
+            tile_count=(row[4]-row[3]+255)//256
+            values=[]
+            for slot in range(min(tile_count,2)):
+                last_tile=tile_count-1-((tile_count-1-slot)%2)
+                offset=32*256+256*256+slot*2*256*256
+                v=operand[offset:offset+256*256].reshape(256,256).float()
+                bad=~torch.isfinite(v)
+                values.append({'slot':slot,'tile_index':last_tile,
+                               'nonfinite_elements':int(bad.sum()),
+                               'bad_columns':bad.any(dim=0).nonzero().flatten().tolist(),
+                               'first_bad_coordinates':bad.nonzero()[:8].tolist()})
+            p=operand[32*256+4*256*256:][:count*group*256].float()
+            detail['retained_operands']={'status':'available',
+                                         'value_tiles':values,
+                                         'probability_nonfinite_elements':int((~torch.isfinite(p)).sum())}
+        else:
+            detail['retained_operands']={'status':'overwritten_by_later_task'}
         if rv is not None:
             # CPU FP32 diagnostic reference, not device arithmetic equivalence
             # or a replacement for any frozen numerical gate.

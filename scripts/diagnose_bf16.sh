@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 档案 #94/#95/#125/#169：实时输出、保留失败码，失败仍打包诊断附件。
-# 只运行已有独立NPU探针，不启动服务、不修改配置或冻结算子。
+# 编译当前独立算子后运行NPU探针，不启动服务、不修改配置或冻结算子。
 set -euo pipefail
 TASK_ROOT="${BASH_SOURCE[0]%/*}/.."
 cd -- "$TASK_ROOT"
@@ -25,15 +25,22 @@ out=$(mktemp -d logs/bf16_diag_XXXXXXXX)
 ln -sfn "${out#logs/}" "$latest"
 git rev-parse HEAD > "$out/git-head.txt"
 git diff --stat > "$out/local-diff.txt"
-echo "只运行独立算子诊断，不启动服务；请先正常停止自己的模型服务。"
+echo "编译当前算子后运行独立诊断，不启动服务；请先正常停止自己的模型服务。"
 echo "实时日志：tail -f logs/bf16_diag_latest/bf16-probe.log"
 echo "结果目录：$out"
 
 rc=0
 "$py" -u -m tools.phase \
-  --name bf16-probe --log-dir "$out" --timeout 900 -- \
-  "$py" -u -m tools.probe_bf16_history \
-  --config "$cfg" --output "$out/result.json" || rc=$?
+  --name build-ops --log-dir "$out" --timeout 1800 -- \
+  "$py" -u -m tools.build_ops --soc ascend910b4 --log-dir "$out/build" || rc=$?
+if [[ "$rc" -eq 0 ]]; then
+  "$py" -u -m tools.phase \
+    --name bf16-probe --log-dir "$out" --timeout 900 -- \
+    "$py" -u -m tools.probe_bf16_history \
+    --config "$cfg" --output "$out/result.json" || rc=$?
+else
+  echo "算子编译失败，未运行探针；见 $out/build-ops.log"
+fi
 printf '%s\n' "$rc" > "$out/exit-code.txt"
 
 files=("$out" "$cfg")
@@ -51,10 +58,10 @@ else
   echo "打包失败，请上传目录：$(pwd)/$out"
   [[ "$rc" -ne 0 ]] || rc=1
 fi
-printf 'probe_exit_code=%s\nscript_exit_code=%s\narchive=%s\n' \
+printf 'run_exit_code=%s\nscript_exit_code=%s\narchive=%s\n' \
   "$(cat "$out/exit-code.txt")" "$rc" "$out.tar.gz" > "$out/summary.txt"
 # Summary is outside the already-created archive; exit-code.txt and phase JSON
-# inside it retain the original probe outcome, including nonzero exits.
+# inside it retain the original build/probe outcome, including nonzero exits.
 echo "查看结果：cat logs/bf16_diag_latest/summary.txt"
 cat "$out/summary.txt"
 exit "$rc"

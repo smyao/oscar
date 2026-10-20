@@ -132,6 +132,32 @@ def test_retained_norm_diagnostic_only_uses_last_history_writer(route,count,begi
     assert row['partial_nonfinite_elements']==count*6*256
     assert row['cpu_rotation_nonfinite_elements']==(256 if norm_bad else 0)
     assert report['rotation_finite'] is True
+    assert row['retained_operands']['status']=='overwritten_by_later_task'
+
+
+@pytest.mark.parametrize('tiles',[1,2,3,4])
+def test_retained_history_value_planes_exclude_unpublished_slot(tiles):
+    case=probe.case_plan()[0]
+    spec=SimpleNamespace(heads=6,kv_heads=1,splits=1,qlens=(4,))
+    tasks=torch.zeros(12,16,dtype=torch.int64)
+    tasks[0,:11]=torch.tensor([0,4,0,64,64+tiles*256,0,0,0,4096,0,0])
+    workspace=torch.zeros(probe.candidate_workspace_per_core('mdl'),dtype=torch.uint8)
+    operand=workspace[3*32*256*4:].view(torch.bfloat16)
+    for slot in range(2):
+        offset=32*256+256*256+slot*2*256*256
+        operand[offset+17]=float('nan')
+    norm=workspace[:32*256*4].view(torch.float32).reshape(32,256)
+    norm[:24,17]=float('nan')
+    result=probe.mdl_history_stage_diagnostics(torch,case,{'tokens':4,'spec':spec},
+        {'tasks':tasks,'workspace':workspace,'partial':torch.zeros(4,6,3,256)},torch.eye(256))
+    row=result['tasks'][0]
+    assert row['norm_bad_columns']==[17]
+    values=row['retained_operands']['value_tiles']
+    assert len(values)==min(2,tiles)
+    for entry in values:
+        assert entry['nonfinite_elements']==1 and entry['bad_columns']==[17]
+        assert entry['tile_index']==max(t for t in range(tiles) if t%2==entry['slot'])
+    assert row['retained_operands']['probability_nonfinite_elements']==0
 
 
 @pytest.mark.parametrize('index',[0,1,4,5,6,8,9,10,11])

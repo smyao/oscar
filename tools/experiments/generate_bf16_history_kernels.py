@@ -357,6 +357,18 @@ static_assert(64*128*2*kHistoryCubeConfig.dbL0A<=64*1024 &&
     replace(function_body("CheckBf16Row"),
             "  // Precise row validation uses the shared bounded four-row Cast helper.\n")
 
+    if name == "mdl":
+        replace("  __aicore__ void PipelineConsumePv() {\n",
+                """  __aicore__ void PipelineConsumePv() {
+    // Archive #147/#171, D.4: bounded KV/PV handoff, no full-history restore.
+    // PrefetchValues publishes next V from dequantBuf on MTE3. This task's
+    // current PVReady does not depend on that NEXT tile's KVReady, so MTE2
+    // must not overwrite dequantBuf until its last outgoing read completes.
+    // MTE3_V alone gates Vector, not this incoming DMA. No arithmetic,
+    // allocation or host readback is added; one local dependency per KV tile.
+    Fence<HardEvent::MTE3_MTE2>();
+""")
+
     # Reverse the transformations rather than trusting copied output alone.
     inverse = text
     for old, new, count in reversed(edits):
@@ -366,6 +378,9 @@ static_assert(64*128*2*kHistoryCubeConfig.dbL0A<=64*1024 &&
     if inverse != source:
         raise ValueError(f"inverse identity failed: {mother}")
     prefix = HEADER.format(mother=mother, commit=MOTHER_COMMIT, sha=expected_sha)
+    if name == "mdl":
+        prefix += ("// Archive #147/#171 fix: next-V MTE3 read must retire before\n"
+                   "// current-PV MTE2 overwrites the shared bounded UB tile.\n")
     return prefix + text, len(edits)
 
 

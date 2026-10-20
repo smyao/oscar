@@ -14,6 +14,8 @@
 // Re-Init/Reset needs actual SDK and device verification; host has neither.
 // The mother's inherited historical comments below are not claims about
 // this BF16 candidate. The executable delta and independent gates govern it.
+// Archive #147/#171 fix: next-V MTE3 read must retire before
+// current-PV MTE2 overwrites the shared bounded UB tile.
 // Qualified MDL q4/q1 candidates; NPU/graph gates pending. Archive G3-G13/#21/#81-85/#126/#129/#140/#145/#148/#154-156.
 // Startup D.4 complete original log reread; four questions:
 // 1. Fused FIA QK/PV ND-to-L1 delivery, not a new dequant or service path.
@@ -747,6 +749,13 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     }
   }
   __aicore__ void PipelineConsumePv() {
+    // Archive #147/#171, D.4: bounded KV/PV handoff, no full-history restore.
+    // PrefetchValues publishes next V from dequantBuf on MTE3. This task's
+    // current PVReady does not depend on that NEXT tile's KVReady, so MTE2
+    // must not overwrite dequantBuf until its last outgoing read completes.
+    // MTE3_V alone gates Vector, not this incoming DMA. No arithmetic,
+    // allocation or host readback is added; one local dependency per KV tile.
+    Fence<HardEvent::MTE3_MTE2>();
     auto result=dequantBuf.Get<float>();auto acc=accBuf.Get<float>();
     const int32_t activeRows=static_cast<int32_t>(qcount*(g.hq/g.hk));
     for(int32_t row=lane*kLaneRows;row<(lane+1)*kLaneRows && row<activeRows;

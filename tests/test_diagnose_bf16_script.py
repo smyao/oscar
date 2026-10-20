@@ -10,8 +10,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
-@pytest.mark.parametrize("rc", [0, 2, 124])
-def test_probe_exit_and_bundle(tmp_path, rc):
+@pytest.mark.parametrize("rc,build_rc", [(0,0), (2,0), (124,0), (0,7)])
+def test_probe_exit_and_bundle(tmp_path, rc, build_rc):
     (tmp_path / "scripts").mkdir()
     script = tmp_path / "scripts/diagnose_bf16.sh"
     shutil.copyfile(ROOT / "scripts/diagnose_bf16.sh", script)
@@ -27,7 +27,13 @@ def test_probe_exit_and_bundle(tmp_path, rc):
     python = bindir / "probe-python"
     python.write_text("""#!/bin/bash
 set -eu
-[[ "$*" == *"tools.phase"* && "$*" == *"tools.probe_bf16_history"* ]]
+[[ "$*" == *"tools.phase"* ]]
+if [[ "$*" == *"tools.build_ops"* ]]; then
+  while [[ "$1" != "--log-dir" ]]; do shift; done
+  printf 'build output\\n' > "$2/build-ops.log"
+  exit "$FAKE_BUILD_RC"
+fi
+[[ "$*" == *"tools.probe_bf16_history"* ]]
 while [[ "$1" != "--log-dir" ]]; do shift; done
 out="$2"
 printf 'device probe stdout and stderr\\n' | tee "$out/bf16-probe.log"
@@ -36,22 +42,24 @@ exit "$FAKE_PROBE_RC"
 """)
     python.chmod(0o755)
     env = {**os.environ, "PATH": str(bindir) + os.pathsep + os.environ["PATH"],
-           "OSCAR_PYTHON": str(python), "FAKE_PROBE_RC": str(rc)}
+           "OSCAR_PYTHON": str(python), "FAKE_PROBE_RC": str(rc), "FAKE_BUILD_RC": str(build_rc)}
     result = subprocess.run(["bash", str(script)], cwd=tmp_path.parent,
                             env=env, text=True, capture_output=True)
-    assert result.returncode == rc, result.stdout + result.stderr
+    expected=build_rc or rc
+    assert result.returncode == expected, result.stdout + result.stderr
     latest = tmp_path / "logs/bf16_diag_latest"
     assert latest.is_symlink()
-    assert (latest / "exit-code.txt").read_text().strip() == str(rc)
-    assert f"script_exit_code={rc}" in (latest / "summary.txt").read_text()
+    assert (latest / "exit-code.txt").read_text().strip() == str(expected)
+    assert f"script_exit_code={expected}" in (latest / "summary.txt").read_text()
     archives = list((tmp_path / "logs").glob("*.tar.gz"))
     assert len(archives) == 1
     with tarfile.open(archives[0]) as archive:
         names = archive.getnames()
         assert "logs/20261020T064430.498396Z/serve.log" in names
-        assert any(name.endswith("/bf16-probe.log") for name in names)
-        assert any(name.endswith("/result.json") for name in names)
-    assert "device probe stdout and stderr" in result.stdout
+        assert any(name.endswith("/build-ops.log") for name in names)
+        assert any(name.endswith("/bf16-probe.log") for name in names)==(build_rc==0)
+        assert any(name.endswith("/result.json") for name in names)==(build_rc==0)
+    assert ("device probe stdout and stderr" in result.stdout)==(build_rc==0)
     assert (run / "serve.log").read_text() == "original failure\n"
 
 

@@ -1,0 +1,1926 @@
+{
+  "source_sha256": "c0cb1d5c6030a299957f165ac5331218b74c63c0242c84f8d3f694bd1dd0158d",
+  "lines": 134,
+  "validation": {
+    "line": 8,
+    "text": "C16_VALIDATION request={\"status\":\"passed\",\"errors\":[]} issues=0 calls=68 expected_ranks=4 target_layers=[3, 7, 11, 15, 19, 23, 27, 31, 35, 39, 43, 47, 51, 55, 59, 63]"
+  },
+  "calls": [
+    {
+      "rank": 0,
+      "call": 1,
+      "role": "target",
+      "baseline_ms": 70.282,
+      "diagnostic_ms": 77.774,
+      "line": 17
+    },
+    {
+      "rank": 0,
+      "call": 2,
+      "role": "target",
+      "baseline_ms": 70.197,
+      "diagnostic_ms": 77.766,
+      "line": 18
+    },
+    {
+      "rank": 0,
+      "call": 3,
+      "role": "target",
+      "baseline_ms": 70.07,
+      "diagnostic_ms": 77.794,
+      "line": 19
+    },
+    {
+      "rank": 0,
+      "call": 4,
+      "role": "target",
+      "baseline_ms": 69.748,
+      "diagnostic_ms": 77.766,
+      "line": 20
+    },
+    {
+      "rank": 0,
+      "call": 5,
+      "role": "target",
+      "baseline_ms": 70.222,
+      "diagnostic_ms": 77.827,
+      "line": 21
+    },
+    {
+      "rank": 0,
+      "call": 6,
+      "role": "target",
+      "baseline_ms": 69.976,
+      "diagnostic_ms": 77.528,
+      "line": 22
+    },
+    {
+      "rank": 0,
+      "call": 7,
+      "role": "target",
+      "baseline_ms": 69.565,
+      "diagnostic_ms": 77.298,
+      "line": 23
+    },
+    {
+      "rank": 0,
+      "call": 8,
+      "role": "target",
+      "baseline_ms": 70.126,
+      "diagnostic_ms": 77.894,
+      "line": 24
+    },
+    {
+      "rank": 0,
+      "call": 9,
+      "role": "target",
+      "baseline_ms": 70.476,
+      "diagnostic_ms": 77.882,
+      "line": 25
+    },
+    {
+      "rank": 0,
+      "call": 10,
+      "role": "target",
+      "baseline_ms": 69.969,
+      "diagnostic_ms": 77.315,
+      "line": 26
+    },
+    {
+      "rank": 0,
+      "call": 11,
+      "role": "target",
+      "baseline_ms": 70.208,
+      "diagnostic_ms": 77.539,
+      "line": 27
+    },
+    {
+      "rank": 0,
+      "call": 12,
+      "role": "target",
+      "baseline_ms": 69.534,
+      "diagnostic_ms": 77.545,
+      "line": 28
+    },
+    {
+      "rank": 0,
+      "call": 13,
+      "role": "target",
+      "baseline_ms": 69.827,
+      "diagnostic_ms": 77.872,
+      "line": 29
+    },
+    {
+      "rank": 0,
+      "call": 14,
+      "role": "target",
+      "baseline_ms": 69.818,
+      "diagnostic_ms": 77.648,
+      "line": 30
+    },
+    {
+      "rank": 0,
+      "call": 15,
+      "role": "target",
+      "baseline_ms": 69.891,
+      "diagnostic_ms": 77.452,
+      "line": 31
+    },
+    {
+      "rank": 0,
+      "call": 16,
+      "role": "target",
+      "baseline_ms": 69.717,
+      "diagnostic_ms": 77.582,
+      "line": 32
+    },
+    {
+      "rank": 0,
+      "call": 17,
+      "role": "draft",
+      "baseline_ms": 70.531,
+      "diagnostic_ms": 77.57,
+      "line": 33
+    },
+    {
+      "rank": 1,
+      "call": 1,
+      "role": "target",
+      "baseline_ms": 69.975,
+      "diagnostic_ms": 78.16,
+      "line": 34
+    },
+    {
+      "rank": 1,
+      "call": 2,
+      "role": "target",
+      "baseline_ms": 69.684,
+      "diagnostic_ms": 77.363,
+      "line": 35
+    },
+    {
+      "rank": 1,
+      "call": 3,
+      "role": "target",
+      "baseline_ms": 70.036,
+      "diagnostic_ms": 77.496,
+      "line": 36
+    },
+    {
+      "rank": 1,
+      "call": 4,
+      "role": "target",
+      "baseline_ms": 69.361,
+      "diagnostic_ms": 77.358,
+      "line": 37
+    },
+    {
+      "rank": 1,
+      "call": 5,
+      "role": "target",
+      "baseline_ms": 70.213,
+      "diagnostic_ms": 77.657,
+      "line": 38
+    },
+    {
+      "rank": 1,
+      "call": 6,
+      "role": "target",
+      "baseline_ms": 69.753,
+      "diagnostic_ms": 77.22,
+      "line": 39
+    },
+    {
+      "rank": 1,
+      "call": 7,
+      "role": "target",
+      "baseline_ms": 69.964,
+      "diagnostic_ms": 77.861,
+      "line": 40
+    },
+    {
+      "rank": 1,
+      "call": 8,
+      "role": "target",
+      "baseline_ms": 69.914,
+      "diagnostic_ms": 77.35,
+      "line": 41
+    },
+    {
+      "rank": 1,
+      "call": 9,
+      "role": "target",
+      "baseline_ms": 69.943,
+      "diagnostic_ms": 77.278,
+      "line": 42
+    },
+    {
+      "rank": 1,
+      "call": 10,
+      "role": "target",
+      "baseline_ms": 69.977,
+      "diagnostic_ms": 76.4,
+      "line": 43
+    },
+    {
+      "rank": 1,
+      "call": 11,
+      "role": "target",
+      "baseline_ms": 69.854,
+      "diagnostic_ms": 77.314,
+      "line": 44
+    },
+    {
+      "rank": 1,
+      "call": 12,
+      "role": "target",
+      "baseline_ms": 69.671,
+      "diagnostic_ms": 77.214,
+      "line": 45
+    },
+    {
+      "rank": 1,
+      "call": 13,
+      "role": "target",
+      "baseline_ms": 69.843,
+      "diagnostic_ms": 77.185,
+      "line": 46
+    },
+    {
+      "rank": 1,
+      "call": 14,
+      "role": "target",
+      "baseline_ms": 69.468,
+      "diagnostic_ms": 76.756,
+      "line": 47
+    },
+    {
+      "rank": 1,
+      "call": 15,
+      "role": "target",
+      "baseline_ms": 69.899,
+      "diagnostic_ms": 77.52,
+      "line": 48
+    },
+    {
+      "rank": 1,
+      "call": 16,
+      "role": "target",
+      "baseline_ms": 69.957,
+      "diagnostic_ms": 77.546,
+      "line": 49
+    },
+    {
+      "rank": 1,
+      "call": 17,
+      "role": "draft",
+      "baseline_ms": 70.496,
+      "diagnostic_ms": 78.136,
+      "line": 50
+    },
+    {
+      "rank": 2,
+      "call": 1,
+      "role": "target",
+      "baseline_ms": 69.775,
+      "diagnostic_ms": 77.455,
+      "line": 51
+    },
+    {
+      "rank": 2,
+      "call": 2,
+      "role": "target",
+      "baseline_ms": 69.5,
+      "diagnostic_ms": 77.797,
+      "line": 52
+    },
+    {
+      "rank": 2,
+      "call": 3,
+      "role": "target",
+      "baseline_ms": 70.309,
+      "diagnostic_ms": 77.581,
+      "line": 53
+    },
+    {
+      "rank": 2,
+      "call": 4,
+      "role": "target",
+      "baseline_ms": 70.007,
+      "diagnostic_ms": 77.509,
+      "line": 54
+    },
+    {
+      "rank": 2,
+      "call": 5,
+      "role": "target",
+      "baseline_ms": 70.201,
+      "diagnostic_ms": 77.705,
+      "line": 55
+    },
+    {
+      "rank": 2,
+      "call": 6,
+      "role": "target",
+      "baseline_ms": 69.866,
+      "diagnostic_ms": 77.344,
+      "line": 56
+    },
+    {
+      "rank": 2,
+      "call": 7,
+      "role": "target",
+      "baseline_ms": 69.951,
+      "diagnostic_ms": 77.747,
+      "line": 57
+    },
+    {
+      "rank": 2,
+      "call": 8,
+      "role": "target",
+      "baseline_ms": 70.048,
+      "diagnostic_ms": 77.321,
+      "line": 58
+    },
+    {
+      "rank": 2,
+      "call": 9,
+      "role": "target",
+      "baseline_ms": 70.024,
+      "diagnostic_ms": 77.795,
+      "line": 59
+    },
+    {
+      "rank": 2,
+      "call": 10,
+      "role": "target",
+      "baseline_ms": 69.944,
+      "diagnostic_ms": 77.922,
+      "line": 60
+    },
+    {
+      "rank": 2,
+      "call": 11,
+      "role": "target",
+      "baseline_ms": 69.955,
+      "diagnostic_ms": 77.449,
+      "line": 61
+    },
+    {
+      "rank": 2,
+      "call": 12,
+      "role": "target",
+      "baseline_ms": 69.753,
+      "diagnostic_ms": 77.521,
+      "line": 62
+    },
+    {
+      "rank": 2,
+      "call": 13,
+      "role": "target",
+      "baseline_ms": 70.148,
+      "diagnostic_ms": 77.26,
+      "line": 63
+    },
+    {
+      "rank": 2,
+      "call": 14,
+      "role": "target",
+      "baseline_ms": 69.815,
+      "diagnostic_ms": 77.059,
+      "line": 64
+    },
+    {
+      "rank": 2,
+      "call": 15,
+      "role": "target",
+      "baseline_ms": 69.989,
+      "diagnostic_ms": 77.572,
+      "line": 65
+    },
+    {
+      "rank": 2,
+      "call": 16,
+      "role": "target",
+      "baseline_ms": 70.362,
+      "diagnostic_ms": 77.346,
+      "line": 66
+    },
+    {
+      "rank": 2,
+      "call": 17,
+      "role": "draft",
+      "baseline_ms": 70.168,
+      "diagnostic_ms": 77.449,
+      "line": 67
+    },
+    {
+      "rank": 3,
+      "call": 1,
+      "role": "target",
+      "baseline_ms": 69.362,
+      "diagnostic_ms": 77.417,
+      "line": 68
+    },
+    {
+      "rank": 3,
+      "call": 2,
+      "role": "target",
+      "baseline_ms": 69.6,
+      "diagnostic_ms": 77.794,
+      "line": 69
+    },
+    {
+      "rank": 3,
+      "call": 3,
+      "role": "target",
+      "baseline_ms": 69.817,
+      "diagnostic_ms": 77.283,
+      "line": 70
+    },
+    {
+      "rank": 3,
+      "call": 4,
+      "role": "target",
+      "baseline_ms": 70.212,
+      "diagnostic_ms": 77.811,
+      "line": 71
+    },
+    {
+      "rank": 3,
+      "call": 5,
+      "role": "target",
+      "baseline_ms": 68.973,
+      "diagnostic_ms": 77.973,
+      "line": 72
+    },
+    {
+      "rank": 3,
+      "call": 6,
+      "role": "target",
+      "baseline_ms": 69.954,
+      "diagnostic_ms": 77.387,
+      "line": 73
+    },
+    {
+      "rank": 3,
+      "call": 7,
+      "role": "target",
+      "baseline_ms": 69.854,
+      "diagnostic_ms": 77.91,
+      "line": 74
+    },
+    {
+      "rank": 3,
+      "call": 8,
+      "role": "target",
+      "baseline_ms": 70.004,
+      "diagnostic_ms": 77.78,
+      "line": 75
+    },
+    {
+      "rank": 3,
+      "call": 9,
+      "role": "target",
+      "baseline_ms": 69.799,
+      "diagnostic_ms": 77.333,
+      "line": 76
+    },
+    {
+      "rank": 3,
+      "call": 10,
+      "role": "target",
+      "baseline_ms": 69.716,
+      "diagnostic_ms": 77.787,
+      "line": 77
+    },
+    {
+      "rank": 3,
+      "call": 11,
+      "role": "target",
+      "baseline_ms": 70.102,
+      "diagnostic_ms": 77.465,
+      "line": 78
+    },
+    {
+      "rank": 3,
+      "call": 12,
+      "role": "target",
+      "baseline_ms": 69.788,
+      "diagnostic_ms": 77.548,
+      "line": 79
+    },
+    {
+      "rank": 3,
+      "call": 13,
+      "role": "target",
+      "baseline_ms": 70.189,
+      "diagnostic_ms": 78.008,
+      "line": 80
+    },
+    {
+      "rank": 3,
+      "call": 14,
+      "role": "target",
+      "baseline_ms": 69.771,
+      "diagnostic_ms": 77.309,
+      "line": 81
+    },
+    {
+      "rank": 3,
+      "call": 15,
+      "role": "target",
+      "baseline_ms": 69.349,
+      "diagnostic_ms": 77.539,
+      "line": 82
+    },
+    {
+      "rank": 3,
+      "call": 16,
+      "role": "target",
+      "baseline_ms": 70.286,
+      "diagnostic_ms": 77.612,
+      "line": 83
+    },
+    {
+      "rank": 3,
+      "call": 17,
+      "role": "draft",
+      "baseline_ms": 70.309,
+      "diagnostic_ms": 77.46,
+      "line": 84
+    }
+  ],
+  "ranks": [
+    {
+      "rank": 0,
+      "baseline_sum_from_rounded_calls_ms": 1190.157,
+      "diagnostic_sum_from_rounded_calls_ms": 1320.052,
+      "diagnostic_overhead_percent": 10.914106290178527,
+      "versus_previous_c16_percent": 0.05885038298987233
+    },
+    {
+      "rank": 1,
+      "baseline_sum_from_rounded_calls_ms": 1188.008,
+      "diagnostic_sum_from_rounded_calls_ms": 1315.814,
+      "diagnostic_overhead_percent": 10.758008363580052,
+      "versus_previous_c16_percent": -0.12182029278906548
+    },
+    {
+      "rank": 2,
+      "baseline_sum_from_rounded_calls_ms": 1189.815,
+      "diagnostic_sum_from_rounded_calls_ms": 1317.8319999999999,
+      "diagnostic_overhead_percent": 10.759403772855425,
+      "versus_previous_c16_percent": 0.030097767300540923
+    },
+    {
+      "rank": 3,
+      "baseline_sum_from_rounded_calls_ms": 1187.085,
+      "diagnostic_sum_from_rounded_calls_ms": 1319.416,
+      "diagnostic_overhead_percent": 11.14755893638617,
+      "versus_previous_c16_percent": -0.19941872636001223
+    }
+  ],
+  "consistency": {
+    "0": {
+      "line": 10,
+      "winners": {
+        "softmax_math": 16
+      }
+    },
+    "1": {
+      "line": 12,
+      "winners": {
+        "softmax_math": 16
+      }
+    },
+    "2": {
+      "line": 14,
+      "winners": {
+        "softmax_math": 16
+      }
+    },
+    "3": {
+      "line": 16,
+      "winners": {
+        "softmax_math": 16
+      }
+    }
+  },
+  "representative_actors": {
+    "r0/c8/core7/AIC": {
+      "line": 85,
+      "total_cycles": 3889915,
+      "total_ms": 77.7983,
+      "other_cycles": 15,
+      "phases": {
+        "cross_core_wait": {
+          "cycles": 1856951,
+          "ms": 37.13902,
+          "count": 3865,
+          "percent": 47.73757267189643,
+          "category": "wait",
+          "line": 87
+        },
+        "qk": {
+          "cycles": 1060025,
+          "ms": 21.2005,
+          "count": 3239,
+          "percent": 27.250595450029113,
+          "category": "compute",
+          "line": 87
+        },
+        "pv": {
+          "cycles": 816910,
+          "ms": 16.3382,
+          "count": 3239,
+          "percent": 21.00071595394758,
+          "category": "compute",
+          "line": 87
+        },
+        "b1_load": {
+          "cycles": 54400,
+          "ms": 1.088,
+          "count": 723,
+          "percent": 1.3984881417717354,
+          "category": "data_movement",
+          "line": 87
+        },
+        "cluster_other": {
+          "cycles": 40940,
+          "ms": 0.8188,
+          "count": 3,
+          "percent": 1.0524651566936554,
+          "category": "mixed",
+          "line": 87
+        },
+        "task_metadata": {
+          "cycles": 37436,
+          "ms": 0.74872,
+          "count": 3224,
+          "percent": 0.9623860675618876,
+          "category": "mixed",
+          "line": 87
+        },
+        "final_rv": {
+          "cycles": 10244,
+          "ms": 0.20488,
+          "count": 50,
+          "percent": 0.2633476566968687,
+          "category": "compute",
+          "line": 88
+        },
+        "process_other": {
+          "cycles": 9040,
+          "ms": 0.1808,
+          "count": 1,
+          "percent": 0.2323958235591266,
+          "category": "mixed",
+          "line": 88
+        },
+        "task_other": {
+          "cycles": 3941,
+          "ms": 0.07882,
+          "count": 81,
+          "percent": 0.10131326777063251,
+          "category": "mixed",
+          "line": 88
+        },
+        "init": {
+          "cycles": 13,
+          "ms": 0.00026,
+          "count": 1,
+          "percent": 0.000334197533879275,
+          "category": "mixed",
+          "line": 88
+        }
+      },
+      "categories": {
+        "compute": {
+          "cycles": 1887179,
+          "ms": 37.74358,
+          "percent": 48.514659060673566
+        },
+        "data_movement": {
+          "cycles": 54400,
+          "ms": 1.088,
+          "percent": 1.3984881417717354
+        },
+        "wait": {
+          "cycles": 1856951,
+          "ms": 37.13902,
+          "percent": 47.73757267189643
+        },
+        "mixed": {
+          "cycles": 91370,
+          "ms": 1.8274,
+          "percent": 2.3488945131191814
+        }
+      },
+      "category_line": 86
+    },
+    "r0/c8/core7/AIV0": {
+      "line": 90,
+      "total_cycles": 3890615,
+      "total_ms": 77.8123,
+      "other_cycles": 20,
+      "phases": {
+        "softmax_math": {
+          "cycles": 1189325,
+          "ms": 23.7865,
+          "count": 6478,
+          "percent": 30.569074555051067,
+          "category": "compute",
+          "line": 92
+        },
+        "cross_core_wait": {
+          "cycles": 671464,
+          "ms": 13.42928,
+          "count": 3648,
+          "percent": 17.258556809142,
+          "category": "wait",
+          "line": 92
+        },
+        "bf16_cast": {
+          "cycles": 381391,
+          "ms": 7.62782,
+          "count": 17981,
+          "percent": 9.80284607960438,
+          "category": "compute",
+          "line": 92
+        },
+        "query_load": {
+          "cycles": 232238,
+          "ms": 4.64476,
+          "count": 179,
+          "percent": 5.969184820394719,
+          "category": "mixed",
+          "line": 92
+        },
+        "state_restore": {
+          "cycles": 186286,
+          "ms": 3.72572,
+          "count": 3120,
+          "percent": 4.788086202309918,
+          "category": "data_movement",
+          "line": 92
+        },
+        "softmax_score_load": {
+          "cycles": 166054,
+          "ms": 3.32108,
+          "count": 6478,
+          "percent": 4.268065588602316,
+          "category": "data_movement",
+          "line": 92
+        },
+        "softmax_publish_p": {
+          "cycles": 151771,
+          "ms": 3.03542,
+          "count": 6478,
+          "percent": 3.9009513920035777,
+          "category": "data_movement",
+          "line": 93
+        },
+        "unpack_k": {
+          "cycles": 136783,
+          "ms": 2.73566,
+          "count": 1280,
+          "percent": 3.5157166669022764,
+          "category": "compute",
+          "line": 93
+        },
+        "unpack_v": {
+          "cycles": 134174,
+          "ms": 2.68348,
+          "count": 1280,
+          "percent": 3.448657860004138,
+          "category": "compute",
+          "line": 93
+        },
+        "history_load": {
+          "cycles": 128687,
+          "ms": 2.57374,
+          "count": 1280,
+          "percent": 3.3076261722118483,
+          "category": "data_movement",
+          "line": 93
+        },
+        "state_spill": {
+          "cycles": 125802,
+          "ms": 2.51604,
+          "count": 3120,
+          "percent": 3.233473371176536,
+          "category": "data_movement",
+          "line": 93
+        },
+        "output_publish": {
+          "cycles": 109992,
+          "ms": 2.19984,
+          "count": 129,
+          "percent": 2.8271108809275654,
+          "category": "data_movement",
+          "line": 93
+        },
+        "cluster_other": {
+          "cycles": 87083,
+          "ms": 1.74166,
+          "count": 3,
+          "percent": 2.238283664664841,
+          "category": "mixed",
+          "line": 94
+        },
+        "publish_kv": {
+          "cycles": 62490,
+          "ms": 1.2498,
+          "count": 3184,
+          "percent": 1.6061728030144335,
+          "category": "data_movement",
+          "line": 94
+        },
+        "task_metadata": {
+          "cycles": 33414,
+          "ms": 0.66828,
+          "count": 3224,
+          "percent": 0.8588359423895708,
+          "category": "mixed",
+          "line": 94
+        },
+        "process_other": {
+          "cycles": 30899,
+          "ms": 0.61798,
+          "count": 1,
+          "percent": 0.794193205958441,
+          "category": "mixed",
+          "line": 94
+        },
+        "task_other": {
+          "cycles": 23372,
+          "ms": 0.46744,
+          "count": 81,
+          "percent": 0.6007276484566064,
+          "category": "mixed",
+          "line": 94
+        },
+        "precise_load": {
+          "cycles": 22782,
+          "ms": 0.45564,
+          "count": 624,
+          "percent": 0.5855629508445322,
+          "category": "mixed",
+          "line": 94
+        },
+        "normalize": {
+          "cycles": 16554,
+          "ms": 0.33108,
+          "count": 129,
+          "percent": 0.42548543096656954,
+          "category": "compute",
+          "line": 95
+        },
+        "init": {
+          "cycles": 34,
+          "ms": 0.00068,
+          "count": 1,
+          "percent": 0.0008738978284924106,
+          "category": "mixed",
+          "line": 95
+        }
+      },
+      "categories": {
+        "compute": {
+          "cycles": 1858227,
+          "ms": 37.16454,
+          "percent": 47.76178059252843
+        },
+        "data_movement": {
+          "cycles": 931082,
+          "ms": 18.62164,
+          "percent": 23.931486410246194
+        },
+        "wait": {
+          "cycles": 671464,
+          "ms": 13.42928,
+          "percent": 17.258556809142
+        },
+        "mixed": {
+          "cycles": 429822,
+          "ms": 8.59644,
+          "percent": 11.047662130537203
+        }
+      },
+      "category_line": 91,
+      "unpack_kv": {
+        "cycles": 270957,
+        "ms": 5.41914,
+        "percent": 6.964374526906415
+      },
+      "softmax_plus_all_casts": {
+        "cycles": 1570716,
+        "ms": 31.41432,
+        "percent": 40.371920634655446
+      },
+      "state_roundtrip": {
+        "cycles": 312088,
+        "ms": 6.24176,
+        "percent": 8.021559573486455
+      },
+      "score_and_p_transfers": {
+        "cycles": 317825,
+        "ms": 6.3565,
+        "percent": 8.169016980605894
+      },
+      "kv_read_unpack_publish_excluding_cast": {
+        "cycles": 462134,
+        "ms": 9.24268,
+        "percent": 11.878173502132697
+      },
+      "compute_over_explicit_movement": 1.9957715861760834
+    },
+    "r1/c1/core2/AIC": {
+      "line": 97,
+      "total_cycles": 3899763,
+      "total_ms": 77.99526,
+      "other_cycles": 15,
+      "phases": {
+        "cross_core_wait": {
+          "cycles": 1849533,
+          "ms": 36.99066,
+          "count": 3865,
+          "percent": 47.42680516739094,
+          "category": "wait",
+          "line": 99
+        },
+        "qk": {
+          "cycles": 1052097,
+          "ms": 21.04194,
+          "count": 3239,
+          "percent": 26.978485615664336,
+          "category": "compute",
+          "line": 99
+        },
+        "pv": {
+          "cycles": 842865,
+          "ms": 16.8573,
+          "count": 3239,
+          "percent": 21.613236496679413,
+          "category": "compute",
+          "line": 99
+        },
+        "b1_load": {
+          "cycles": 53655,
+          "ms": 1.0731,
+          "count": 723,
+          "percent": 1.3758528402879868,
+          "category": "data_movement",
+          "line": 99
+        },
+        "cluster_other": {
+          "cycles": 40805,
+          "ms": 0.8161,
+          "count": 3,
+          "percent": 1.0463456369015245,
+          "category": "mixed",
+          "line": 99
+        },
+        "task_metadata": {
+          "cycles": 37414,
+          "ms": 0.74828,
+          "count": 3223,
+          "percent": 0.9593916348249881,
+          "category": "mixed",
+          "line": 99
+        },
+        "final_rv": {
+          "cycles": 10246,
+          "ms": 0.20492,
+          "count": 50,
+          "percent": 0.2627339148558515,
+          "category": "compute",
+          "line": 100
+        },
+        "process_other": {
+          "cycles": 9087,
+          "ms": 0.18174,
+          "count": 1,
+          "percent": 0.23301416009126708,
+          "category": "mixed",
+          "line": 100
+        },
+        "task_other": {
+          "cycles": 4032,
+          "ms": 0.08064,
+          "count": 80,
+          "percent": 0.10339089836997786,
+          "category": "mixed",
+          "line": 100
+        },
+        "init": {
+          "cycles": 14,
+          "ms": 0.00028,
+          "count": 1,
+          "percent": 0.0003589961748957565,
+          "category": "mixed",
+          "line": 100
+        }
+      },
+      "categories": {
+        "compute": {
+          "cycles": 1905208,
+          "ms": 38.10416,
+          "percent": 48.8544560271996
+        },
+        "data_movement": {
+          "cycles": 53655,
+          "ms": 1.0731,
+          "percent": 1.3758528402879868
+        },
+        "wait": {
+          "cycles": 1849533,
+          "ms": 36.99066,
+          "percent": 47.42680516739094
+        },
+        "mixed": {
+          "cycles": 91352,
+          "ms": 1.82704,
+          "percent": 2.3425013263626533
+        }
+      },
+      "category_line": 98
+    },
+    "r1/c1/core2/AIV0": {
+      "line": 102,
+      "total_cycles": 3900582,
+      "total_ms": 78.01164,
+      "other_cycles": 105,
+      "phases": {
+        "softmax_math": {
+          "cycles": 1189097,
+          "ms": 23.78194,
+          "count": 6478,
+          "percent": 30.485117349154564,
+          "category": "compute",
+          "line": 104
+        },
+        "cross_core_wait": {
+          "cycles": 726486,
+          "ms": 14.52972,
+          "count": 3648,
+          "percent": 18.625066720812434,
+          "category": "wait",
+          "line": 104
+        },
+        "bf16_cast": {
+          "cycles": 380707,
+          "ms": 7.61414,
+          "count": 17954,
+          "percent": 9.760261417398738,
+          "category": "compute",
+          "line": 104
+        },
+        "query_load": {
+          "cycles": 219668,
+          "ms": 4.39336,
+          "count": 178,
+          "percent": 5.631672401708258,
+          "category": "mixed",
+          "line": 104
+        },
+        "state_restore": {
+          "cycles": 182448,
+          "ms": 3.64896,
+          "count": 3120,
+          "percent": 4.677455825822916,
+          "category": "data_movement",
+          "line": 104
+        },
+        "softmax_score_load": {
+          "cycles": 163047,
+          "ms": 3.26094,
+          "count": 6478,
+          "percent": 4.1800685128526975,
+          "category": "data_movement",
+          "line": 104
+        },
+        "softmax_publish_p": {
+          "cycles": 155138,
+          "ms": 3.10276,
+          "count": 6478,
+          "percent": 3.9773038997770076,
+          "category": "data_movement",
+          "line": 105
+        },
+        "unpack_k": {
+          "cycles": 137050,
+          "ms": 2.741,
+          "count": 1280,
+          "percent": 3.513578230120531,
+          "category": "compute",
+          "line": 105
+        },
+        "unpack_v": {
+          "cycles": 134148,
+          "ms": 2.68296,
+          "count": 1280,
+          "percent": 3.4391790763532213,
+          "category": "compute",
+          "line": 105
+        },
+        "state_spill": {
+          "cycles": 129168,
+          "ms": 2.58336,
+          "count": 3120,
+          "percent": 3.3115058214389546,
+          "category": "data_movement",
+          "line": 105
+        },
+        "output_publish": {
+          "cycles": 106561,
+          "ms": 2.13122,
+          "count": 128,
+          "percent": 2.731925645967704,
+          "category": "data_movement",
+          "line": 105
+        },
+        "history_load": {
+          "cycles": 99516,
+          "ms": 1.99032,
+          "count": 1280,
+          "percent": 2.5513115735036465,
+          "category": "data_movement",
+          "line": 105
+        },
+        "cluster_other": {
+          "cycles": 86572,
+          "ms": 1.73144,
+          "count": 3,
+          "percent": 2.219463659525681,
+          "category": "mixed",
+          "line": 106
+        },
+        "publish_kv": {
+          "cycles": 65891,
+          "ms": 1.31782,
+          "count": 3184,
+          "percent": 1.6892607308345267,
+          "category": "data_movement",
+          "line": 106
+        },
+        "task_metadata": {
+          "cycles": 32415,
+          "ms": 0.6483,
+          "count": 3223,
+          "percent": 0.8310298309329223,
+          "category": "mixed",
+          "line": 106
+        },
+        "process_other": {
+          "cycles": 30104,
+          "ms": 0.60208,
+          "count": 1,
+          "percent": 0.7717822622367636,
+          "category": "mixed",
+          "line": 106
+        },
+        "task_other": {
+          "cycles": 23193,
+          "ms": 0.46386,
+          "count": 80,
+          "percent": 0.5946035745434912,
+          "category": "mixed",
+          "line": 106
+        },
+        "precise_load": {
+          "cycles": 22689,
+          "ms": 0.45378,
+          "count": 624,
+          "percent": 0.5816824258533726,
+          "category": "mixed",
+          "line": 106
+        },
+        "normalize": {
+          "cycles": 16544,
+          "ms": 0.33088,
+          "count": 128,
+          "percent": 0.42414183319309784,
+          "category": "compute",
+          "line": 107
+        },
+        "init": {
+          "cycles": 35,
+          "ms": 0.0007,
+          "count": 1,
+          "percent": 0.0008973019923693439,
+          "category": "mixed",
+          "line": 107
+        }
+      },
+      "categories": {
+        "compute": {
+          "cycles": 1857546,
+          "ms": 37.15092,
+          "percent": 47.62227790622015
+        },
+        "data_movement": {
+          "cycles": 901769,
+          "ms": 18.03538,
+          "percent": 23.11883201019745
+        },
+        "wait": {
+          "cycles": 726486,
+          "ms": 14.52972,
+          "percent": 18.625066720812434
+        },
+        "mixed": {
+          "cycles": 414676,
+          "ms": 8.29352,
+          "percent": 10.631131456792858
+        }
+      },
+      "category_line": 103,
+      "unpack_kv": {
+        "cycles": 271198,
+        "ms": 5.42396,
+        "percent": 6.952757306473752
+      },
+      "softmax_plus_all_casts": {
+        "cycles": 1569804,
+        "ms": 31.39608,
+        "percent": 40.2453787665533
+      },
+      "state_roundtrip": {
+        "cycles": 311616,
+        "ms": 6.23232,
+        "percent": 7.9889616472618705
+      },
+      "score_and_p_transfers": {
+        "cycles": 318185,
+        "ms": 6.3637,
+        "percent": 8.157372412629705
+      },
+      "kv_read_unpack_publish_excluding_cast": {
+        "cycles": 436605,
+        "ms": 8.7321,
+        "percent": 11.193329610811926
+      },
+      "compute_over_explicit_movement": 2.0598911694680124
+    },
+    "r2/c10/core7/AIC": {
+      "line": 109,
+      "total_cycles": 3891218,
+      "total_ms": 77.82436,
+      "other_cycles": 15,
+      "phases": {
+        "cross_core_wait": {
+          "cycles": 1865396,
+          "ms": 37.30792,
+          "count": 3865,
+          "percent": 47.938614593168516,
+          "category": "wait",
+          "line": 111
+        },
+        "qk": {
+          "cycles": 1040916,
+          "ms": 20.81832,
+          "count": 3239,
+          "percent": 26.75039023770963,
+          "category": "compute",
+          "line": 111
+        },
+        "pv": {
+          "cycles": 822858,
+          "ms": 16.45716,
+          "count": 3239,
+          "percent": 21.146540748937735,
+          "category": "compute",
+          "line": 111
+        },
+        "b1_load": {
+          "cycles": 59998,
+          "ms": 1.19996,
+          "count": 723,
+          "percent": 1.5418822589739254,
+          "category": "data_movement",
+          "line": 111
+        },
+        "cluster_other": {
+          "cycles": 40655,
+          "ms": 0.8131,
+          "count": 3,
+          "percent": 1.0447885469279798,
+          "category": "mixed",
+          "line": 111
+        },
+        "task_metadata": {
+          "cycles": 38097,
+          "ms": 0.76194,
+          "count": 3224,
+          "percent": 0.9790507753613393,
+          "category": "mixed",
+          "line": 111
+        },
+        "final_rv": {
+          "cycles": 10261,
+          "ms": 0.20522,
+          "count": 50,
+          "percent": 0.2636963542006642,
+          "category": "compute",
+          "line": 112
+        },
+        "process_other": {
+          "cycles": 9077,
+          "ms": 0.18154,
+          "count": 1,
+          "percent": 0.23326886337388447,
+          "category": "mixed",
+          "line": 112
+        },
+        "task_other": {
+          "cycles": 3931,
+          "ms": 0.07862,
+          "count": 81,
+          "percent": 0.10102235341222209,
+          "category": "mixed",
+          "line": 112
+        },
+        "init": {
+          "cycles": 14,
+          "ms": 0.00028,
+          "count": 1,
+          "percent": 0.0003597845199112463,
+          "category": "mixed",
+          "line": 112
+        }
+      },
+      "categories": {
+        "compute": {
+          "cycles": 1874035,
+          "ms": 37.4807,
+          "percent": 48.16062734084803
+        },
+        "data_movement": {
+          "cycles": 59998,
+          "ms": 1.19996,
+          "percent": 1.5418822589739254
+        },
+        "wait": {
+          "cycles": 1865396,
+          "ms": 37.30792,
+          "percent": 47.938614593168516
+        },
+        "mixed": {
+          "cycles": 91774,
+          "ms": 1.83548,
+          "percent": 2.358490323595337
+        }
+      },
+      "category_line": 110
+    },
+    "r2/c10/core7/AIV1": {
+      "line": 114,
+      "total_cycles": 3891925,
+      "total_ms": 77.8385,
+      "other_cycles": 22,
+      "phases": {
+        "softmax_math": {
+          "cycles": 1170952,
+          "ms": 23.41904,
+          "count": 6478,
+          "percent": 30.086705165181755,
+          "category": "compute",
+          "line": 116
+        },
+        "cross_core_wait": {
+          "cycles": 718277,
+          "ms": 14.36554,
+          "count": 3648,
+          "percent": 18.45557147170102,
+          "category": "wait",
+          "line": 116
+        },
+        "bf16_cast": {
+          "cycles": 373781,
+          "ms": 7.47562,
+          "count": 17830,
+          "percent": 9.604013438080127,
+          "category": "compute",
+          "line": 116
+        },
+        "query_load": {
+          "cycles": 214017,
+          "ms": 4.28034,
+          "count": 179,
+          "percent": 5.499001136969494,
+          "category": "mixed",
+          "line": 116
+        },
+        "softmax_score_load": {
+          "cycles": 201431,
+          "ms": 4.02862,
+          "count": 6478,
+          "percent": 5.175613610231441,
+          "category": "data_movement",
+          "line": 116
+        },
+        "state_restore": {
+          "cycles": 195719,
+          "ms": 3.91438,
+          "count": 3120,
+          "percent": 5.028848192090033,
+          "category": "data_movement",
+          "line": 116
+        },
+        "softmax_publish_p": {
+          "cycles": 148900,
+          "ms": 2.978,
+          "count": 6478,
+          "percent": 3.8258702313122686,
+          "category": "data_movement",
+          "line": 117
+        },
+        "unpack_k": {
+          "cycles": 136838,
+          "ms": 2.73676,
+          "count": 1280,
+          "percent": 3.515946478927523,
+          "category": "compute",
+          "line": 117
+        },
+        "unpack_v": {
+          "cycles": 134123,
+          "ms": 2.68246,
+          "count": 1280,
+          "percent": 3.446186655703797,
+          "category": "compute",
+          "line": 117
+        },
+        "state_spill": {
+          "cycles": 118021,
+          "ms": 2.36042,
+          "count": 3120,
+          "percent": 3.032458230824078,
+          "category": "data_movement",
+          "line": 117
+        },
+        "history_load": {
+          "cycles": 101576,
+          "ms": 2.03152,
+          "count": 1280,
+          "percent": 2.6099166864726326,
+          "category": "data_movement",
+          "line": 117
+        },
+        "output_publish": {
+          "cycles": 101519,
+          "ms": 2.03038,
+          "count": 129,
+          "percent": 2.6084521155983222,
+          "category": "data_movement",
+          "line": 117
+        },
+        "cluster_other": {
+          "cycles": 87757,
+          "ms": 1.75514,
+          "count": 3,
+          "percent": 2.2548481792429196,
+          "category": "mixed",
+          "line": 118
+        },
+        "publish_kv": {
+          "cycles": 61741,
+          "ms": 1.23482,
+          "count": 3184,
+          "percent": 1.586387199136674,
+          "category": "data_movement",
+          "line": 118
+        },
+        "task_metadata": {
+          "cycles": 34841,
+          "ms": 0.69682,
+          "count": 3224,
+          "percent": 0.8952125233656867,
+          "category": "mixed",
+          "line": 118
+        },
+        "process_other": {
+          "cycles": 30061,
+          "ms": 0.60122,
+          "count": 1,
+          "percent": 0.7723941237305446,
+          "category": "mixed",
+          "line": 118
+        },
+        "task_other": {
+          "cycles": 23145,
+          "ms": 0.4629,
+          "count": 81,
+          "percent": 0.5946928576475652,
+          "category": "mixed",
+          "line": 118
+        },
+        "precise_load": {
+          "cycles": 22535,
+          "ms": 0.4507,
+          "count": 624,
+          "percent": 0.5790193798698587,
+          "category": "mixed",
+          "line": 118
+        },
+        "normalize": {
+          "cycles": 16634,
+          "ms": 0.33268,
+          "count": 129,
+          "percent": 0.4273977530399481,
+          "category": "compute",
+          "line": 119
+        },
+        "init": {
+          "cycles": 35,
+          "ms": 0.0007,
+          "count": 1,
+          "percent": 0.0008992979052782363,
+          "category": "mixed",
+          "line": 119
+        }
+      },
+      "categories": {
+        "compute": {
+          "cycles": 1832328,
+          "ms": 36.64656,
+          "percent": 47.08024949093315
+        },
+        "data_movement": {
+          "cycles": 928907,
+          "ms": 18.57814,
+          "percent": 23.86754626566545
+        },
+        "wait": {
+          "cycles": 718277,
+          "ms": 14.36554,
+          "percent": 18.45557147170102
+        },
+        "mixed": {
+          "cycles": 412391,
+          "ms": 8.24782,
+          "percent": 10.596067498731347
+        }
+      },
+      "category_line": 115,
+      "unpack_kv": {
+        "cycles": 270961,
+        "ms": 5.41922,
+        "percent": 6.96213313463132
+      },
+      "softmax_plus_all_casts": {
+        "cycles": 1544733,
+        "ms": 30.89466,
+        "percent": 39.690718603261885
+      },
+      "state_roundtrip": {
+        "cycles": 313740,
+        "ms": 6.2748,
+        "percent": 8.061306422914111
+      },
+      "score_and_p_transfers": {
+        "cycles": 350331,
+        "ms": 7.00662,
+        "percent": 9.00148384154371
+      },
+      "kv_read_unpack_publish_excluding_cast": {
+        "cycles": 434278,
+        "ms": 8.68556,
+        "percent": 11.158437020240626
+      },
+      "compute_over_explicit_movement": 1.972563453607304
+    },
+    "r3/c13/core2/AIC": {
+      "line": 121,
+      "total_cycles": 3895939,
+      "total_ms": 77.91878,
+      "other_cycles": 16,
+      "phases": {
+        "cross_core_wait": {
+          "cycles": 1832555,
+          "ms": 36.6511,
+          "count": 3865,
+          "percent": 47.03756912005039,
+          "category": "wait",
+          "line": 123
+        },
+        "qk": {
+          "cycles": 1050876,
+          "ms": 21.01752,
+          "count": 3239,
+          "percent": 26.97362561374806,
+          "category": "compute",
+          "line": 123
+        },
+        "pv": {
+          "cycles": 856956,
+          "ms": 17.13912,
+          "count": 3239,
+          "percent": 21.996134949751525,
+          "category": "compute",
+          "line": 123
+        },
+        "b1_load": {
+          "cycles": 53409,
+          "ms": 1.06818,
+          "count": 723,
+          "percent": 1.3708890205929816,
+          "category": "data_movement",
+          "line": 123
+        },
+        "cluster_other": {
+          "cycles": 40658,
+          "ms": 0.81316,
+          "count": 3,
+          "percent": 1.0435995019429205,
+          "category": "mixed",
+          "line": 123
+        },
+        "task_metadata": {
+          "cycles": 38166,
+          "ms": 0.76332,
+          "count": 3223,
+          "percent": 0.9796354614381796,
+          "category": "mixed",
+          "line": 123
+        },
+        "final_rv": {
+          "cycles": 10283,
+          "ms": 0.20566,
+          "count": 50,
+          "percent": 0.2639415042175968,
+          "category": "compute",
+          "line": 124
+        },
+        "process_other": {
+          "cycles": 9082,
+          "ms": 0.18164,
+          "count": 1,
+          "percent": 0.23311453285074535,
+          "category": "mixed",
+          "line": 124
+        },
+        "task_other": {
+          "cycles": 3925,
+          "ms": 0.0785,
+          "count": 80,
+          "percent": 0.10074593057026816,
+          "category": "mixed",
+          "line": 124
+        },
+        "init": {
+          "cycles": 13,
+          "ms": 0.00026,
+          "count": 1,
+          "percent": 0.0003336807891499328,
+          "category": "mixed",
+          "line": 124
+        }
+      },
+      "categories": {
+        "compute": {
+          "cycles": 1918115,
+          "ms": 38.3623,
+          "percent": 49.23370206771718
+        },
+        "data_movement": {
+          "cycles": 53409,
+          "ms": 1.06818,
+          "percent": 1.3708890205929816
+        },
+        "wait": {
+          "cycles": 1832555,
+          "ms": 36.6511,
+          "percent": 47.03756912005039
+        },
+        "mixed": {
+          "cycles": 91844,
+          "ms": 1.83688,
+          "percent": 2.3574291075912637
+        }
+      },
+      "category_line": 122
+    },
+    "r3/c13/core2/AIV0": {
+      "line": 126,
+      "total_cycles": 3896769,
+      "total_ms": 77.93538,
+      "other_cycles": 104,
+      "phases": {
+        "softmax_math": {
+          "cycles": 1189451,
+          "ms": 23.78902,
+          "count": 6478,
+          "percent": 30.52403157590301,
+          "category": "compute",
+          "line": 128
+        },
+        "cross_core_wait": {
+          "cycles": 731450,
+          "ms": 14.629,
+          "count": 3648,
+          "percent": 18.77067899072283,
+          "category": "wait",
+          "line": 128
+        },
+        "bf16_cast": {
+          "cycles": 380666,
+          "ms": 7.61332,
+          "count": 17954,
+          "percent": 9.768759708363518,
+          "category": "compute",
+          "line": 128
+        },
+        "query_load": {
+          "cycles": 216557,
+          "ms": 4.33114,
+          "count": 178,
+          "percent": 5.557347638517962,
+          "category": "mixed",
+          "line": 128
+        },
+        "state_restore": {
+          "cycles": 182660,
+          "ms": 3.6532,
+          "count": 3120,
+          "percent": 4.687473134794493,
+          "category": "data_movement",
+          "line": 128
+        },
+        "softmax_score_load": {
+          "cycles": 167157,
+          "ms": 3.34314,
+          "count": 6478,
+          "percent": 4.289630717140277,
+          "category": "data_movement",
+          "line": 128
+        },
+        "softmax_publish_p": {
+          "cycles": 149176,
+          "ms": 2.98352,
+          "count": 6478,
+          "percent": 3.8281971551303142,
+          "category": "data_movement",
+          "line": 129
+        },
+        "unpack_k": {
+          "cycles": 136479,
+          "ms": 2.72958,
+          "count": 1280,
+          "percent": 3.50236311159322,
+          "category": "compute",
+          "line": 129
+        },
+        "unpack_v": {
+          "cycles": 134169,
+          "ms": 2.68338,
+          "count": 1280,
+          "percent": 3.4430832312615913,
+          "category": "compute",
+          "line": 129
+        },
+        "state_spill": {
+          "cycles": 122776,
+          "ms": 2.45552,
+          "count": 3120,
+          "percent": 3.1507128084831306,
+          "category": "data_movement",
+          "line": 129
+        },
+        "history_load": {
+          "cycles": 106874,
+          "ms": 2.13748,
+          "count": 1280,
+          "percent": 2.7426311387716336,
+          "category": "data_movement",
+          "line": 129
+        },
+        "output_publish": {
+          "cycles": 103530,
+          "ms": 2.0706,
+          "count": 128,
+          "percent": 2.6568164548629905,
+          "category": "data_movement",
+          "line": 129
+        },
+        "cluster_other": {
+          "cycles": 86966,
+          "ms": 1.73932,
+          "count": 3,
+          "percent": 2.231746351913598,
+          "category": "mixed",
+          "line": 130
+        },
+        "publish_kv": {
+          "cycles": 63317,
+          "ms": 1.26634,
+          "count": 3184,
+          "percent": 1.6248589536613538,
+          "category": "data_movement",
+          "line": 130
+        },
+        "task_metadata": {
+          "cycles": 32746,
+          "ms": 0.65492,
+          "count": 3223,
+          "percent": 0.8403372127010864,
+          "category": "mixed",
+          "line": 130
+        },
+        "process_other": {
+          "cycles": 29678,
+          "ms": 0.59356,
+          "count": 1,
+          "percent": 0.7616053196892092,
+          "category": "mixed",
+          "line": 130
+        },
+        "task_other": {
+          "cycles": 23509,
+          "ms": 0.47018,
+          "count": 80,
+          "percent": 0.6032946782321457,
+          "category": "mixed",
+          "line": 130
+        },
+        "precise_load": {
+          "cycles": 22688,
+          "ms": 0.45376,
+          "count": 624,
+          "percent": 0.5822259415428526,
+          "category": "mixed",
+          "line": 130
+        },
+        "normalize": {
+          "cycles": 16781,
+          "ms": 0.33562,
+          "count": 128,
+          "percent": 0.4306388189805452,
+          "category": "compute",
+          "line": 131
+        },
+        "init": {
+          "cycles": 35,
+          "ms": 0.0007,
+          "count": 1,
+          "percent": 0.0008981800050246756,
+          "category": "mixed",
+          "line": 131
+        }
+      },
+      "categories": {
+        "compute": {
+          "cycles": 1857546,
+          "ms": 37.15092,
+          "percent": 47.66887644610188
+        },
+        "data_movement": {
+          "cycles": 895490,
+          "ms": 17.9098,
+          "percent": 22.980320362844193
+        },
+        "wait": {
+          "cycles": 731450,
+          "ms": 14.629,
+          "percent": 18.77067899072283
+        },
+        "mixed": {
+          "cycles": 412179,
+          "ms": 8.24358,
+          "percent": 10.577455322601878
+        }
+      },
+      "category_line": 127,
+      "unpack_kv": {
+        "cycles": 270648,
+        "ms": 5.41296,
+        "percent": 6.945446342854812
+      },
+      "softmax_plus_all_casts": {
+        "cycles": 1570117,
+        "ms": 31.40234,
+        "percent": 40.29279128426653
+      },
+      "state_roundtrip": {
+        "cycles": 305436,
+        "ms": 6.10872,
+        "percent": 7.838185943277623
+      },
+      "score_and_p_transfers": {
+        "cycles": 316333,
+        "ms": 6.32666,
+        "percent": 8.117827872270592
+      },
+      "kv_read_unpack_publish_excluding_cast": {
+        "cycles": 440839,
+        "ms": 8.81678,
+        "percent": 11.3129364352878
+      },
+      "compute_over_explicit_movement": 2.0743347217724373
+    }
+  },
+  "scope": "four representative calls, actor-local exclusive diagnostic intervals; shares are not production-wall or PMU saturation",
+  "rounding": "call-ms sums use printed rounded inputs; actor intervals use supplied raw cycles"
+}

@@ -28810,3 +28810,5 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修复**：外部插件在AscendCompiler.load执行缓存前静态核验顶层kernel/forward固定输入数量。错配/未知/损坏走原生缺失缓存重编译分支，保留完整AOT包装；不截断参数、不捕获执行错误后重试、不切eager。进入vLLM前以插件源码、扩展身份、有效配置、版本及native/OSCAR/C16模式选择稳定VLLM_CACHE_ROOT子目录，不删除原缓存。quiet启动增量观察明确worker/engine失败，显示有界traceback并清理owned进程；普通warning/error不误判，每分钟显示实际阶段和最近日志。
 
 **验证与边界**：真实CPU AOT别名/原地修改反例、只读原生load方法的cache-miss执行、插件安装恢复、稳定缓存复用/失效、真实子进程失败后父进程仍活着/HTTP200及清理均有主机回归。具体通过数量见该目录validation.json。未连接真机、未运行NPU模型/图/性能；输入数量匹配沿用原生缓存行为，不宣称已重新证明任意AOT变换的全部缓存契约。原生argv、GDN/MTP、BF16数学、冻结核及main/stable不变。
+
+**2026-10-20后续用户结果**：run `2ae27c282db34edfbb383587023dcb63`报告93b325fb/dirty=true，32K→16请求passed，四rank共68次C16配对调用valid且issues=0，见`reports/c16_breakdown_analysis_20261020/user_summary.txt`。本次实验的启动、请求及C16诊断链已完成；摘要未列cache-hit/rebuild分支，不据此单独判定哪条缓存修复分支实际触发，也不推广为全模型质量或全部图场景通过。

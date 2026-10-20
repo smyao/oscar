@@ -1,0 +1,97 @@
+root@node93:/workspace/oscar/oscar-new# cd /workspace/oscar/oscar-new
+python3 - <<'PY' > logs/bf16_result_key.log
+import json
+from pathlib import Path
+
+r = json.loads(Path("logs/bf16_diag_latest/result.json").read_text())
+keys = ("status", "first_error", "device_completion", "precision",
+        "error_domain", "graph_capture", "graph_replay",
+        "cv_performance", "full_attention_performance")
+print("SUMMARY", json.dumps({k:r.get(k) for k in keys}, ensure_ascii=False))
+
+cpu = r.get("cpu_screen") or {}
+print("CPU_SCREEN", json.dumps(
+    {k:cpu.get(k) for k in ("status", "returncode", "next_stage")},
+    ensure_ascii=False))
+print("PERFORMANCE_GATE", json.dumps(r.get("performance_gate"), ensure_ascii=False))
+errors = r.get("evidence_mismatches") or []
+print("EVIDENCE_MISMATCHES", len(errors), json.dumps(errors[:30], ensure_ascii=False))
+
+for c in r.get("cases", []):
+    p = c.get("precision") or {}
+    g = c.get("graph") or {}
+    print("CASE", c.get("case"), "status=", c.get("status"),
+          "precision=", p.get("passed"),
+          "graph=", g.get("replay"))
+    failed = []
+    def walk(v, path):
+        if isinstance(v, dict):
+            if v.get("passed") is False:
+                failed.append((path, {k:x for k,x in v.items()
+                                      if not isinstance(x, (dict, list))}))
+cat logs/bf16_result_key.log, path, json.dumps(detail, ensure_ascii=False))
+SUMMARY {"status": "failed", "first_error": null, "device_completion": "passed", "precision": "failed", "error_domain": "passed", "graph_capture": "not_complete", "graph_replay": "not_complete", "cv_performance": "not_run_numerical_gate_failed", "full_attention_performance": "not_run_numerical_gate_failed"}
+CPU_SCREEN {"status": "cpu_screen_failed", "returncode": 2, "next_stage": "numerical_gate_failed_no_performance_qualification"}
+PERFORMANCE_GATE {"status": "not_run_numerical_gate_failed", "blocking_errors": ["cpu_screen.returncode", "cpu_screen.identity_exact_cancellation.numerics", "cpu_screen.frontier_q2_hkv2.numerics", "cpu_screen.kv_tail_q3.numerics", "cpu_screen.kv_tail_q4.numerics", "cpu_screen.hadamard_large_values.numerics", "cpu_screen.groups_q84.numerics", "cpu_screen.groups_q168.numerics", "mdl_q4.contract", "mdl_q4.precision", "mdl_q4.candidate.oracle", "mdl_q4.graph", "mdl_q4.graph_states", "mdl_q1.contract", "mdl_q1.graph", "mdl_q1.graph_states", "c16_mature.contract", "c16_mature.precision", "c16_mature.candidate.oracle", "c16_mature.graph", "c16_mature.graph_states", "general_multiblock.contract", "general_multiblock.precision", "general_multiblock.candidate.oracle", "general_multiblock.graph", "general_multiblock.graph_states", "balanced_mixed.contract", "balanced_mixed.precision", "balanced_mixed.candidate.oracle", "balanced_mixed.graph", "balanced_mixed.graph_states", "identity_exact_cancellation.contract", "identity_exact_cancellation.precision", "identity_exact_cancellation.candidate.oracle", "hadamard_large_values.contract", "hadamard_large_values.precision", "hadamard_large_values.candidate.oracle", "frontier_q2.contract", "frontier_q2.precision", "frontier_q2.candidate.oracle", "kv_tail_q3.contract", "kv_tail_q3.precision", "kv_tail_q3.candidate.oracle", "mdl_q4_dead_tail.contract", "mdl_q4_dead_tail.precision", "mdl_q4_dead_tail.candidate.oracle", "c16_mature_dead_tail.contract", "c16_mature_dead_tail.precision", "c16_mature_dead_tail.candidate.oracle", "general_multiblock_dead_tail.contract", "general_multiblock_dead_tail.precision", "general_multiblock_dead_tail.candidate.oracle", "balanced_mixed_dead_tail.contract", "balanced_mixed_dead_tail.precision", "balanced_mixed_dead_tail.candidate.oracle"]}
+EVIDENCE_MISMATCHES 161 ["status", "precision", "graph_capture", "graph_replay", "cv_performance", "full_attention_performance", "cpu_screen.returncode", "cpu_screen.identity_exact_cancellation.numerics", "cpu_screen.frontier_q2_hkv2.numerics", "cpu_screen.kv_tail_q3.numerics", "cpu_screen.kv_tail_q4.numerics", "cpu_screen.hadamard_large_values.numerics", "cpu_screen.groups_q84.numerics", "cpu_screen.groups_q168.numerics", "mdl_q4.contract", "mdl_q4.precision", "mdl_q4.candidate.oracle", "mdl_q4.graph", "mdl_q4.graph_states", "mdl_q1.contract", "mdl_q1.graph", "mdl_q1.graph_states", "c16_mature.contract", "c16_mature.precision", "c16_mature.candidate.oracle", "c16_mature.graph", "c16_mature.graph_states", "general_multiblock.contract", "general_multiblock.precision", "general_multiblock.candidate.oracle"]
+CASE mdl_q4 status= failed precision= False graph= None
+FAILED_CHECK precision {"passed": false, "oracle": "all_actual_queries_raw_space", "queries": 8, "status_lane_bits": true, "empty_partial_bits": true, "operand_contract": "all_sources_bf16_qkvp_fp32_online_merge_direct_int2_v2"}
+FAILED_CHECK precision.comparisons.candidate.partial {"passed": false, "elements": 165888, "failed_elements": 1, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 0.005895157344639301, "max_rel_nonzero_reference": 336.8949279785156, "zero_reference_nonzero_error": 0}
+CASE mdl_q1 status= failed precision= True graph= passed
+FAILED_CHECK graph.states.1.precision {"passed": false, "oracle": "all_actual_queries_raw_space", "queries": 2, "status_lane_bits": true, "empty_partial_bits": true, "operand_contract": "all_sources_bf16_qkvp_fp32_online_merge_direct_int2_v2"}
+FAILED_CHECK graph.states.1.precision.comparisons.candidate.partial {"passed": false, "elements": 110592, "failed_elements": 1, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 0.0051496271044015884, "max_rel_nonzero_reference": 80.47428131103516, "zero_reference_nonzero_error": 0}
+CASE c4_mature status= passed precision= True graph= passed
+CASE c16_mature status= failed precision= False graph= None
+FAILED_CHECK precision {"passed": false, "oracle": "all_actual_queries_raw_space", "queries": 673, "status_lane_bits": true, "empty_partial_bits": true, "operand_contract": "all_sources_bf16_qkvp_fp32_online_merge_direct_int2_v2"}
+FAILED_CHECK precision.comparisons.candidate.partial {"passed": false, "elements": 3170304, "failed_elements": 1, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 0.005861204117536545, "max_rel_nonzero_reference": 4826.1796875, "zero_reference_nonzero_error": 0}
+CASE general_multiblock status= failed precision= False graph= None
+FAILED_CHECK precision {"passed": false, "oracle": "all_actual_queries_raw_space", "queries": 17, "status_lane_bits": true, "empty_partial_bits": true, "operand_contract": "all_sources_bf16_qkvp_fp32_online_merge_direct_int2_v2"}
+FAILED_CHECK precision.comparisons.candidate.partial {"passed": false, "elements": 663552, "failed_elements": 45, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 0.012594372034072876, "max_rel_nonzero_reference": 301.69696044921875, "zero_reference_nonzero_error": 0}
+CASE balanced_mixed status= failed precision= False graph= None
+FAILED_CHECK precision {"passed": false, "oracle": "all_actual_queries_raw_space", "queries": 21, "status_lane_bits": true, "empty_partial_bits": true, "operand_contract": "all_sources_bf16_qkvp_fp32_online_merge_direct_int2_v2"}
+FAILED_CHECK precision.comparisons.candidate.partial {"passed": false, "elements": 884736, "failed_elements": 17, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 0.01724708080291748, "max_rel_nonzero_reference": 138.7355194091797, "zero_reference_nonzero_error": 0}
+CASE identity_exact_cancellation status= failed precision= False graph= None
+FAILED_CHECK precision {"passed": false, "oracle": "all_actual_queries_raw_space", "queries": 1, "status_lane_bits": true, "empty_partial_bits": true, "operand_contract": "all_sources_bf16_qkvp_fp32_online_merge_direct_int2_v2"}
+FAILED_CHECK precision.comparisons.candidate.partial {"passed": false, "elements": 4608, "failed_elements": 1536, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 5.375, "max_rel_nonzero_reference": 1.0, "zero_reference_nonzero_error": 0}
+FAILED_CHECK precision.comparisons.candidate.output {"passed": false, "elements": 1536, "failed_elements": 1536, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 3.6953125, "max_rel_nonzero_reference": 1.0, "zero_reference_nonzero_error": 0}
+FAILED_CHECK precision.comparisons.candidate.bf16 {"passed": false, "elements": 1536, "failed_elements": 1536, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 3.6953125, "max_rel_nonzero_reference": 1.0, "zero_reference_nonzero_error": 0}
+FAILED_CHECK precision.comparisons.candidate.relative_l2 {"passed": false, "relative_l2": 0.1261059985317709, "strict_upper_bound": 0.02}
+CASE hadamard_large_values status= failed precision= False graph= None
+FAILED_CHECK precision {"passed": false, "oracle": "all_actual_queries_raw_space", "queries": 4, "status_lane_bits": true, "empty_partial_bits": true, "operand_contract": "all_sources_bf16_qkvp_fp32_online_merge_direct_int2_v2"}
+FAILED_CHECK precision.comparisons.candidate.partial {"passed": false, "elements": 55296, "failed_elements": 9656, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 0.7494125366210938, "max_rel_nonzero_reference": 94.19092559814453, "zero_reference_nonzero_error": 0}
+FAILED_CHECK precision.comparisons.candidate.output {"passed": false, "elements": 6144, "failed_elements": 2056, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 0.2891387939453125, "max_rel_nonzero_reference": 5.998496055603027, "zero_reference_nonzero_error": 0}
+FAILED_CHECK precision.comparisons.candidate.bf16 {"passed": false, "elements": 6144, "failed_elements": 2206, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 0.3165779113769531, "max_rel_nonzero_reference": 5.990028381347656, "zero_reference_nonzero_error": 0}
+CASE ordinary_qr status= passed precision= True graph= None
+CASE empty_history status= passed precision= True graph= None
+CASE frontier_q2 status= failed precision= False graph= None
+FAILED_CHECK precision {"passed": false, "oracle": "all_actual_queries_raw_space", "queries": 2, "status_lane_bits": true, "empty_partial_bits": true, "operand_contract": "all_sources_bf16_qkvp_fp32_online_merge_direct_int2_v2"}
+FAILED_CHECK precision.comparisons.candidate.partial {"passed": false, "elements": 55296, "failed_elements": 6, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 0.021240234375, "max_rel_nonzero_reference": 8.084325790405273, "zero_reference_nonzero_error": 390}
+CASE kv_tail_q3 status= failed precision= False graph= None
+FAILED_CHECK precision {"passed": false, "oracle": "all_actual_queries_raw_space", "queries": 3, "status_lane_bits": true, "empty_partial_bits": true, "operand_contract": "all_sources_bf16_qkvp_fp32_online_merge_direct_int2_v2"}
+FAILED_CHECK precision.comparisons.candidate.partial {"passed": false, "elements": 41472, "failed_elements": 12, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 0.011009752750396729, "max_rel_nonzero_reference": 102.32661437988281, "zero_reference_nonzero_error": 0}
+CASE mdl_q4_bad_metadata status= passed precision= True graph= None
+CASE mdl_q4_bad_qr status= passed precision= True graph= None
+CASE mdl_q4_dead_tail status= failed precision= False graph= None
+FAILED_CHECK precision {"passed": false, "oracle": "all_actual_queries_raw_space", "queries": 8, "status_lane_bits": true, "empty_partial_bits": true, "operand_contract": "all_sources_bf16_qkvp_fp32_online_merge_direct_int2_v2"}
+FAILED_CHECK precision.comparisons.candidate.partial {"passed": false, "elements": 165888, "failed_elements": 1, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 0.005895157344639301, "max_rel_nonzero_reference": 336.8949279785156, "zero_reference_nonzero_error": 0}
+CASE mdl_q1_bad_metadata status= passed precision= True graph= None
+CASE mdl_q1_bad_qr status= passed precision= True graph= None
+CASE mdl_q1_dead_tail status= passed precision= True graph= None
+CASE c4_mature_bad_metadata status= passed precision= True graph= None
+CASE c4_mature_bad_qr status= passed precision= True graph= None
+CASE c4_mature_dead_tail status= passed precision= True graph= None
+CASE c16_mature_bad_metadata status= passed precision= True graph= None
+CASE c16_mature_bad_qr status= passed precision= True graph= None
+CASE c16_mature_dead_tail status= failed precision= False graph= None
+FAILED_CHECK precision {"passed": false, "oracle": "all_actual_queries_raw_space", "queries": 673, "status_lane_bits": true, "empty_partial_bits": true, "operand_contract": "all_sources_bf16_qkvp_fp32_online_merge_direct_int2_v2"}
+FAILED_CHECK precision.comparisons.candidate.partial {"passed": false, "elements": 3170304, "failed_elements": 1, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 0.005861204117536545, "max_rel_nonzero_reference": 4826.1796875, "zero_reference_nonzero_error": 0}
+CASE general_multiblock_bad_metadata status= passed precision= True graph= None
+CASE general_multiblock_bad_qr status= passed precision= True graph= None
+CASE general_multiblock_dead_tail status= failed precision= False graph= None
+FAILED_CHECK precision {"passed": false, "oracle": "all_actual_queries_raw_space", "queries": 17, "status_lane_bits": true, "empty_partial_bits": true, "operand_contract": "all_sources_bf16_qkvp_fp32_online_merge_direct_int2_v2"}
+FAILED_CHECK precision.comparisons.candidate.partial {"passed": false, "elements": 663552, "failed_elements": 45, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 0.012594372034072876, "max_rel_nonzero_reference": 301.69696044921875, "zero_reference_nonzero_error": 0}
+CASE balanced_mixed_bad_metadata status= passed precision= True graph= None
+CASE balanced_mixed_bad_qr status= passed precision= True graph= None
+CASE balanced_mixed_dead_tail status= failed precision= False graph= None
+FAILED_CHECK precision {"passed": false, "oracle": "all_actual_queries_raw_space", "queries": 21, "status_lane_bits": true, "empty_partial_bits": true, "operand_contract": "all_sources_bf16_qkvp_fp32_online_merge_direct_int2_v2"}
+FAILED_CHECK precision.comparisons.candidate.partial {"passed": false, "elements": 884736, "failed_elements": 17, "nonfinite_mismatches": 0, "matching_empty_lse": 0, "max_abs": 0.01724708080291748, "max_rel_nonzero_reference": 138.7355194091797, "zero_reference_nonzero_error": 0}

@@ -482,3 +482,24 @@ def test_mature_fixture_retains_complete_cluster_after_graph_shrink(route,cluste
     assert eligible(case.shape.qlens[0]-1)==1
     assert case.shape.expect_clusters  # coverage gate must not be disabled
     assert case.shape.qlens[0]<case.shape.padded_tokens
+
+
+def test_cancellation_cast_alone_reproduces_target_error():
+    # #173: independent uniform mean, no candidate kernel/online-softmax use.
+    case=next(c for c in probe.case_plan() if c.cancellation)
+    f=probe.make_fixture(torch,case)
+    _,q,k,v,ck,cv,dk,dv=f['logical'][0]
+    assert not q.any()  # all scores zero: attention is the arithmetic mean
+    cut=case.shape.contexts[0]+1-case.shape.recent_tokens
+    exact=v.float().clone();rounded=exact.clone()
+    exact[probe.reuse.SINK:cut]=dv[probe.reuse.SINK:cut]
+    rounded[probe.reuse.SINK:cut]=dv[probe.reuse.SINK:cut].bfloat16().float()
+    gold=f['expected'][0][0]
+    mean=torch.cat((exact,cv.float())).mean(0).expand_as(gold)
+    cast_mean=torch.cat((rounded,cv.float())).mean(0).expand_as(gold)
+    assert torch.equal(mean,gold)
+    assert float((cast_mean-gold).abs().max())==3.6953125
+    from tools.experiments.bf16_history_screen import relative_l2
+    result=relative_l2(cast_mean,gold,ACCEPTANCE['prefill_window']['relative_l2_lt'])
+    assert not result['passed']
+    assert result['relative_l2']==pytest.approx(0.1261059985317709,abs=1e-9)

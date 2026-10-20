@@ -28834,3 +28834,12 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修复**：固定成熟输入改为C4=337、C16=673，padding分配仍352/688，graph缩短一行后保留原完整成熟簇。不关闭覆盖断言，不改生产路由/算子、oracle或验收阈值。异常补充graph replay state。回归用独立CPU任务描述符复现旧长度缩短后簇数1→0，再验证新长度及缩短后均1；CPU不代替真实图执行。目标短probe仍待回传，不要求AISBench。
 
 **本地结果**：`reports/bf16_mature_graph_fixture_20261020.xml`记录101项通过（含探针、C4/C16边界负对照、生产分派、诊断脚本退出码）。不代表设备图或模型通过。
+
+
+## [173] 真机续报（2026-10-20）· 执行完成后BF16精度门失败，抵消误差可由舍入单独复现
+
+**用户回传**：`bf16_diag_sesix1wi`关键报告，device_completion=passed、error_domain=passed、precision=failed、graph_capture/replay=not_complete，性能因numerical gate失败未运行。C4 mature包含图通过；MDL q1初始精度通过、changed_q_qr状态partial一个元素失败；其他多个普通用例partial有限但超差。identity_exact_cancellation最终output/bf16各1536元素失败，max_abs=3.6953125、relative_l2=0.1261059985317709（阈值0.02）；large_values最终输出也失败。不能把161项派生evidence mismatch当成161个独立算子故障，不能把device完成当成服务/精度/性能通过。
+
+**本地独立复现**：同一fixture Q全0，因此softmax为均匀权重；不用候选内核或online实现，直接对704个历史token使用FP32解码V、其他token保持原BF16，算术均值逐位等于独立oracle。只将这704个历史V舍入BF16后取均值，max_abs=3.6953125、relative_l2=0.12610599855542043，与目标回传吻合。重建示例2133.3125→2128、2218.625→2224；最终前四维oracle为[-0.021484375,-0.021484375,29.3046875,-0.021484375]，舍入均值为[0,0,33,0]。见`reports/bf16_cancellation_analytic_20261020.json`及新增回归。只证明该抵消失败由BF16舍入足以解释，不泛化其他用例全因已定位。
+
+**处置边界**：单份BF16值丢失的残差无法靠FP32累加或事件同步恢复。保持当前冻结门且不恢复旧FP32路由，就需另行设计保留残差的补偿计算，意味着增加矩阵乘/搬运，不再是单份BF16基线计算流程；不能承诺未经测试的吞吐或全部精度。当前没有改生产内核、oracle或容差，没有掩盖失败，也未解除部署数值门。

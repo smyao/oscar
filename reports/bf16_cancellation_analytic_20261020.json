@@ -1,0 +1,35 @@
+{
+  "scope": "CPU analytic uniform-softmax cancellation, not NPU execution",
+  "history_tokens": 704,
+  "fp32_decoded_first": [
+    2048.0,
+    2133.3125,
+    2218.625,
+    2303.9375
+  ],
+  "bf16_decoded_first": [
+    2048.0,
+    2128.0,
+    2224.0,
+    2304.0
+  ],
+  "oracle_first": [
+    -0.021484375,
+    -0.021484375,
+    29.3046875,
+    -0.021484375
+  ],
+  "rounded_first": [
+    0.0,
+    0.0,
+    33.0,
+    0.0
+  ],
+  "fp32_mean_vs_oracle_max_abs": 0.0,
+  "bf16_mean_vs_oracle_max_abs": 3.6953125,
+  "relative_l2": {
+    "passed": false,
+    "relative_l2": 0.12610599855542043,
+    "strict_upper_bound": 0.02
+  }
+}

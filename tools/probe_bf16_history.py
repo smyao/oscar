@@ -326,7 +326,68 @@ def prepare(torch,ops,tensors,fixture,buffers):
     return {'task_sha256':reuse._fingerprint({'tasks':tasks}),'source0_leaders':0}
 
 
-def failure_diagnostics(torch,case,fixture,old,new):
+def mdl_history_stage_diagnostics(torch,case,fixture,buffers,rotation):
+    """#171: inspect retained Norm, without launching/changing any device kernel.
+
+    MDL Norm is a separate FP32 plane written only by nonempty history tasks.
+    Later precise/padding tasks leave it intact. Match each core's LAST writer,
+    not every task ever assigned to that core. Mirrors CvTaskSchedule's
+    segment-major ordering; only active rows are compared with final partial.
+    """
+    if case.route not in ('mdl','mdl_q1') or 'workspace' not in buffers:
+        return {'status':'not_available'}
+    stride=candidate_workspace_per_core(case.route)
+    workspace=buffers['workspace'].detach().cpu()
+    if workspace.dtype!=torch.uint8 or workspace.numel()%stride:
+        raise ValueError('unexpected MDL workspace geometry')
+    cores=workspace.numel()//stride
+    if cores<=0:raise ValueError('empty MDL workspace')
+    spec=fixture['spec']
+    n=fixture['tokens'];group=spec.heads//spec.kv_heads
+    owner=1 if case.route=='mdl_q1' else 4
+    tiles=(n+owner-1)//owner;per_token=spec.kv_heads*3*spec.splits
+    tasks=buffers['tasks'].detach().cpu().reshape(n*per_token,16).tolist()
+    last={}
+    for work in range(tiles*per_token):
+        begin=(work%tiles)*owner;segment=work//tiles
+        for token in range(begin,min(begin+owner,n)):
+            task_id=token*per_token+segment
+            row=tasks[task_id]
+            qbegin,count,hk,first,end,request,split,kind,context,request_begin,error=row[:11]
+            if count<=0 or kind!=0 or first>=end or error:continue
+            if not (0<=qbegin<n and count<=owner and qbegin+count<=n
+                    and 0<=hk<spec.kv_heads and 0<=split<3*spec.splits
+                    and 0<=first<end<=context and 0<=request<len(spec.qlens)
+                    and 0<=request_begin<=qbegin and count*group<=32):
+                raise ValueError('invalid history descriptor in stage diagnostic')
+            last[work%cores]=(task_id,row)
+    arena=workspace.reshape(cores,stride)
+    partial=buffers['partial'].detach().cpu()
+    rv=None if rotation is None else rotation.detach().cpu().float()
+    if rv is not None and tuple(rv.shape)!=(256,256):
+        raise ValueError('unexpected shared rotation geometry')
+    result={'scope':'last_nonempty_history_per_core_only','cores':cores,
+            'rotation_finite':None if rv is None else bool(torch.isfinite(rv).all()),
+            'tasks':[]}
+    for core,(task_id,row) in sorted(last.items()):
+        qbegin,count,hk,_,_,_,split=row[:7]
+        norm=arena[core,:32*256*4].contiguous().view(torch.float32).reshape(32,256)[:count*group]
+        output=partial[qbegin:qbegin+count,hk*group:(hk+1)*group,split].reshape(count*group,256)
+        finite=torch.isfinite(norm)
+        detail={'core':core,'task_id':task_id,'qbegin':qbegin,'qcount':count,'split':split,
+                'norm_nonfinite_elements':int((~finite).sum()),
+                'norm_max_abs':float(norm.abs().max()) if bool(finite.all()) else None,
+                'partial_nonfinite_elements':int((~torch.isfinite(output)).sum())}
+        if rv is not None:
+            # CPU FP32 diagnostic reference, not device arithmetic equivalence
+            # or a replacement for any frozen numerical gate.
+            rotated=norm@rv.T
+            detail['cpu_rotation_nonfinite_elements']=int((~torch.isfinite(rotated)).sum())
+        result['tasks'].append(detail)
+    return result
+
+
+def failure_diagnostics(torch,case,fixture,old,new,device_rotation=None):
     """#170: bounded host evidence from this offline probe only, never serving.
 
     Inspect both arms even when the first one fails. -Inf LSE is legal for
@@ -366,14 +427,19 @@ def failure_diagnostics(torch,case,fixture,old,new):
             # Preserve the original failure when an unhealthy device cannot
             # supply further diagnostics. Never replace it with a read error.
             detail['diagnostic_error']=f'{type(error).__name__}: {error}'
+    try:
+        result['history_stage']=mdl_history_stage_diagnostics(
+            torch,case,fixture,new,device_rotation)
+    except Exception as error:
+        result['history_stage']={'diagnostic_error':f'{type(error).__name__}: {error}'}
     return result
 
 
-def compare_pair(torch,case,fixture,old,new,task_hash,acceptance,oracle=None):
+def compare_pair(torch,case,fixture,old,new,task_hash,acceptance,oracle=None,*,device_rotation=None):
     try:
         return _compare_pair(torch,case,fixture,old,new,task_hash,acceptance,oracle)
     except Exception as error:
-        detail=failure_diagnostics(torch,case,fixture,old,new)
+        detail=failure_diagnostics(torch,case,fixture,old,new,device_rotation)
         error.bf16_failure_diagnostics=detail
         print('[oscar] BF16_HISTORY_FAILURE '+json.dumps(detail,allow_nan=False),flush=True)
         raise
@@ -538,7 +604,8 @@ def run_case(torch,ops,case,device,cores,acceptance):
     def execute(i,merge=True):launch(ops,names[i],tensors,fixture,pair[i],cores,cluster,merge=merge)
     for i,buffers in enumerate(pair):mdl.poison(torch,buffers);execute(i,merge=not _invalid(case))
     torch.npu.synchronize()
-    detail=compare_pair(torch,case,fixture,*pair,receipt['task_sha256'],acceptance)
+    detail=compare_pair(torch,case,fixture,*pair,receipt['task_sha256'],acceptance,
+                        device_rotation=tensors['rv'])
     for i,buffers in enumerate(pair):
         expected=snapshot(buffers,merge=not _invalid(case));mdl.poison(torch,buffers);execute(i,merge=not _invalid(case))
         torch.npu.synchronize();same_bits(torch,expected,buffers,'same-arm repeat')

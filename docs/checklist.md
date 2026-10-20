@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-10-20 #171续报：候选MDL q4的history全部有效partial非有限，旧臂及候选精确源有限；仅增强离线Norm分段取证。生产代码不变，根因未收口，42个checkpoint状态不提升。
+
 2026-10-20 #170：独立配对探针报告NaN LSE或非有限partial，当前固定首例MDL q4，旧臂/候选尚未区分。新增仅探针失败取证，57项主机回归通过；设备故障未修复，42个checkpoint不提升。回执：`reports/bf16_failure_diagnostics_20261020.xml`。
 
 2026-10-20 新真机#169：eager/compact later-MTP明确报`site=forward:mtp.layers.0.self_attn.attn family=merge code=2`；非法LSE或输出归约非有限，坏值来源未确定。主机相关68项通过，未发现可复现的compact尾部误读/漏写缺陷，未改生产代码。FE0/精度门不变；[诊断报告](mtp_merge_diagnosis_20261020.md)。42个checkpoint及设备、图、质量、性能状态不提升，不能将本轮归因当作修复。

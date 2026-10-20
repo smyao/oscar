@@ -105,6 +105,35 @@ def test_failure_diagnostics_accepts_empty_lse_but_counts_positive_infinity():
         assert arm['sources']['current']['empty_lse_elements']==17
 
 
+@pytest.mark.parametrize('route,count,begin',[('mdl',4,4),('mdl_q1',1,7)])
+@pytest.mark.parametrize('norm_bad',[False,True])
+def test_retained_norm_diagnostic_only_uses_last_history_writer(route,count,begin,norm_bad):
+    case=replace(probe.case_plan()[0],route=route)
+    spec=SimpleNamespace(heads=6,kv_heads=1,splits=3,qlens=(4,4))
+    tasks=torch.zeros(8*9,16,dtype=torch.int64)
+    tasks[0,:11]=torch.tensor([0,count,0,64,128,0,0,0,1341,0,0])
+    last=begin*9+2
+    tasks[last,:11]=torch.tensor([begin,count,0,128,192,1,2,0,1341,4,0])
+    # A later precise task must not become the retained Norm owner.
+    tasks[begin*9+8,:11]=torch.tensor([begin,count,0,1341,1342,1,8,2,1341,4,0])
+    workspace=torch.empty(probe.candidate_workspace_per_core(route),dtype=torch.uint8)
+    workspace.view(torch.float32).fill_(float('nan'))
+    norm=workspace[:32*256*4].view(torch.float32).reshape(32,256)
+    norm[:count*6].fill_(1)
+    if norm_bad:norm[0,0]=float('nan')
+    partial=torch.full((8,6,9,256),float('nan'))
+    buffers={'workspace':workspace,'tasks':tasks,'partial':partial}
+    report=probe.mdl_history_stage_diagnostics(
+        torch,case,{'tokens':8,'spec':spec},buffers,torch.eye(256))
+    assert len(report['tasks'])==1
+    row=report['tasks'][0]
+    assert row['task_id']==last and row['qbegin']==begin and row['split']==2
+    assert row['norm_nonfinite_elements']==int(norm_bad)
+    assert row['partial_nonfinite_elements']==count*6*256
+    assert row['cpu_rotation_nonfinite_elements']==(256 if norm_bad else 0)
+    assert report['rotation_finite'] is True
+
+
 @pytest.mark.parametrize('index',[0,1,4,5,6,8,9,10,11])
 def test_independent_partial_merge_matches_every_dense_query(index):
     case=probe.case_plan()[index];fixture=probe.make_fixture(torch,case);tasks=task_fixture(fixture)

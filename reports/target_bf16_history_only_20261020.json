@@ -1,0 +1,59 @@
+{
+  "evidence_kind": "structured_extract_of_user_terminal_paste",
+  "run_directory": "logs/bf16_diag_5HTewynr",
+  "case": "mdl_q4",
+  "route": "mdl",
+  "target_commit": "not_provided_for_this_rerun",
+  "baseline_operator": "attention_cv_mdl_decode_out",
+  "candidate_operator": "attention_bf16_history_mdl_out",
+  "partial_shape": [
+    12,
+    6,
+    9,
+    256
+  ],
+  "lse_shape": [
+    12,
+    6,
+    9
+  ],
+  "baseline": {
+    "nonfinite_partial_elements": 0,
+    "invalid_lse_elements": 0,
+    "nonzero_status": 0,
+    "nonzero_merge_status": 0
+  },
+  "candidate": {
+    "history_nonfinite_partial_elements": 36864,
+    "sink_recent_nonfinite_partial_elements": 0,
+    "current_nonfinite_partial_elements": 0,
+    "invalid_lse_elements": 0,
+    "nonzero_status": 0,
+    "nonzero_rotate_status": 0,
+    "nonzero_merge_status": 48,
+    "first_16_merge_status_values": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+    ]
+  },
+  "returncode": 2,
+  "elapsed_seconds": 14.312227,
+  "timed_out": false,
+  "interrupted": false,
+  "cleanup_complete": true,
+  "source_note": "Values extracted from pasted BF16_HISTORY_FAILURE and phase RESULT; not a complete raw serve/probe log and not a new device run by the agent."
+}

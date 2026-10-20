@@ -573,6 +573,7 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 | 历史现象 | 必须落实的检查与处理 |
 | --- | --- |
+| #171 候选历史36864元素非有限，旧臂/精确源有限，LSE正常 | 区分PV/归一化与逆旋转/发布；离线检查每core最后有效history的Norm及对应partial，不能把精确源后写或旧任务当成Norm写者。不能据此猜改Reset或冻结merge；设备根因未收口。 |
 | #170 独立配对探针检查NaN LSE/非有限partial失败 | 先明确case、旧臂/候选与三源坐标；现有检查先旧后新，不能直接认定BF16候选根因。失败仍保存两臂诊断、保留原异常/退出码，生产算子不变；本地57项通过不等于设备修复。 |
 | #169 eager/compact later-MTP报merge code2 | code2指非法partial LSE或输出归约非有限，不是slot错误；attention/rotate通过不保证PV/逆旋转结果有限。compact原N≥1024、S1，但一次性bridge日志不能证明当前B。68项主机回归及源码审计尚未复现设备缺陷，冻结merge/guard不变，不把归因当修复；详见docs/mtp_merge_diagnosis_20261020.md。 |
 | #168 eager/guard诊断启动时free13.03GiB低于required26.54GiB | 原生init_device早于load_model，本次没有到Attention，不能给#165/#167新增归因；记录有效rc1与原始rc1，cleanup_complete不等同NPU资源释放。未知占用者不清理、不降0.9、不加默认前置审计。主机生命周期故障注入另记本地证据，不冒充该次显存问题根因。 |

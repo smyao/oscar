@@ -28804,3 +28804,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **实证与边界**：已越过CPU筛查复用，实际进入NPU run_case并完成同步，在compare_pair调用_check_status时报`valid CV case left NaN LSE or non-finite partial`。按当前固定用例顺序及没有前置CASE完成行，首先测试的是mdl_q4，而非服务#169的later-q1。检查旧臂在先、BF16候选在后；原异常缺臂名，不能断言候选独有错误，不能确认与服务故障同根。LD_PRELOAD/32-padding警告和已知CPU筛查失败不是这条异常的已证实原因。非有限数据也可能是poison残留，不能仅凭消息断言数值溢出。
 
 **本轮改动**：仅补独立探针失败取证；保留原异常及失败码，同时检查两臂，记录算子名、history/sink_recent/current异常计数、前16个坏坐标及状态码，打印BF16_HISTORY_FAILURE并写入result.json.failure_diagnostics。合法空LSE -Inf不计非法；读取失败附diagnostic_error，不覆盖原异常。生产路由/算子/冻结精度均不改。57项本地主机回归通过，含旧臂/候选/双臂异常和Inf/-Inf区别；不是设备修复或质量通过。当前NPU故障仍未解决，不能将诊断增强当作内核修复。
+
+## [171] 真机续报（2026-10-20）· BF16 MDL q4仅历史partial全部非有限，旧臂有限
+
+**用户实证**：运行`logs/bf16_diag_5HTewynr`，14.312227秒、rc2、未超时/未中断。用户粘贴的BF16_HISTORY_FAILURE关键字段提取于`reports/target_bf16_history_only_20261020.json`，明确标为提取而非完整原始日志。本次目标HEAD未另报，不能把上一轮ba4007a当作包含补丁后的源码指纹。
+
+**已收窄**：旧attention_cv_mdl_decode_out的所有partial有限、LSE无非法、status及merge_status全0。BF16候选attention_bf16_history_mdl_out的history含36864个非有限元素，恰等于8有效query×6head×3split×256dim；sink/recent/current无非有限值，所有来源LSE无非法、attention/rotate状态为0，但48有效输出行merge code2。旧臂有限不是完整精度通过，未到oracle比较；本例也不是later-q1服务修复证据。当前证据定位为候选历史值路径，尚不能区分PV/归一化与FP32逆旋转/发布，也不能把nonfinite直接等同NaN。
+
+**源码/本地边界**：Norm/Score/Pv三个FP32区域分离，精确源不覆盖Norm；按segment-major调度，在20core首例各历史core只处理一次非空history，不能仅用“FP32 Matmul第二次Init失败”解释。固定合成输入的数值范围不支持正确算法下的合法FP32溢出解释，但未获得设备中间值，不能据此猜改Reset或冻结merge。
+
+**本轮动作**：只增强独立探针失败回读：根据实际tasks与core数定位每core最后非空history写者，检查Norm活行和对应partial，读取实际rv并给CPU Norm@Rv.T有限性参考。精确源、padding和被覆盖的较早history均不误当Norm写者；只对MDL/q1有明确布局时启用。保留异常与冻结门，生产算子/配置不变。主机测试回执`reports/bf16_history_stage_diagnostics_20261020.xml`不等于NPU验收；坏值根因与修复仍未完成。

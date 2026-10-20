@@ -28799,7 +28799,7 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 
 ## [170] 真机条目（2026-10-20 用户回传）· 独立BF16配对探针遇到NaN LSE或非有限partial
 
-**原始证据**：用户粘贴终端记录保存为`reports/target_bf16_probe_failure_20261020.txt`，SHA256 `b45cc065c4a3261fee2f9e72a8fc1a5c9c84870bd8ffc9c2f7be5c7397f14e42`。命令`bash scripts/diagnose_bf16.sh`，结果目录`logs/bf16_diag_sk6EsueF`，复用`20261020T064430.498396Z/effective-target.json`；14.313052秒后rc2，未超时/未中断，owned-group cleanup_complete=true。尚未收到result.json、git-head或压缩包，不假定目标提交。
+**原始证据**：用户粘贴终端记录保存为`reports/target_bf16_probe_failure_20261020.txt`，SHA256 `b45cc065c4a3261fee2f9e72a8fc1a5c9c84870bd8ffc9c2f7be5c7397f14e42`。命令`bash scripts/diagnose_bf16.sh`，结果目录`logs/bf16_diag_sk6EsueF`，复用`20261020T064430.498396Z/effective-target.json`；14.313052秒后rc2，未超时/未中断，owned-group cleanup_complete=true。后续用户回传精简结果确认目标HEAD=`ba4007af9a8a450c73ca37852e3ce0eca76ab08d`，first_error为`mdl_q4: valid CV case left NaN LSE or non-finite partial`、completed_case_count=0，failure_diagnostics未记录。该版本早于分路诊断提交77c8370；尚未收到完整压缩包。
 
 **实证与边界**：已越过CPU筛查复用，实际进入NPU run_case并完成同步，在compare_pair调用_check_status时报`valid CV case left NaN LSE or non-finite partial`。按当前固定用例顺序及没有前置CASE完成行，首先测试的是mdl_q4，而非服务#169的later-q1。检查旧臂在先、BF16候选在后；原异常缺臂名，不能断言候选独有错误，不能确认与服务故障同根。LD_PRELOAD/32-padding警告和已知CPU筛查失败不是这条异常的已证实原因。非有限数据也可能是poison残留，不能仅凭消息断言数值溢出。
 

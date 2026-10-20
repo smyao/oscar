@@ -1,0 +1,441 @@
+(Worker_TP1 pid=567678) [oscar] MTP_DISCARD_BRIDGE proposer=AscendEagleProposer method=mtp requests=1 mask_capacity=128 draft_index=1 source=native.discard_request_mask binding=queued cache_position=logical_rejection_boundary
+(Worker_TP0 pid=567657) [oscar] MTP_DISCARD_BRIDGE proposer=AscendEagleProposer method=mtp requests=1 mask_capacity=128 draft_index=1 source=native.discard_request_mask binding=queued cache_position=logical_rejection_boundary
+(Worker_TP2 pid=567768) [oscar] MTP_DISCARD_BRIDGE proposer=AscendEagleProposer method=mtp requests=1 mask_capacity=128 draft_index=1 source=native.discard_request_mask binding=queued cache_position=logical_rejection_boundary
+(Worker_TP3 pid=567812) [oscar] MTP_DISCARD_BRIDGE proposer=AscendEagleProposer method=mtp requests=1 mask_capacity=128 draft_index=1 source=native.discard_request_mask binding=queued cache_position=logical_rejection_boundary
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] WorkerProc hit an exception.
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/guard_diag.py", line 61, in run_status_guard
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     torch.npu.synchronize()
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/utils.py", line 72, in synchronize
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return torch_npu._C._npu_synchronize()
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] RuntimeError: npuSynchronizeDevice:../torch_npu/csrc/core/npu/NPUStream.cpp:714 NPU function error: AclrtSynchronizeDeviceWithTimeout, error code is 507035
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] [ERROR] 2026-10-20-06:57:11 (PID:567678, Device:1, RankID:-1) ERR00100 PTA call acl api failed
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] [Error]: The vector core execution is abnormal. 
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]         Rectify the fault based on the error information in the ascend log.
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] EZ9999: Inner Error!
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] EZ9999[PID: 567678] 2026-10-20-06:57:11.724.761 (EZ9999):  The error from device(chipId:5, dieId:0), serial number is 34, there is an exception of aivec error, core id is 37, error code = 0, dump info: pc start: 0x124a02263020, current: 0x124a0226326c, vec error info: 0x71049c50ec, mte error info: 0xe2000000b4, ifu error info: 0x1e8247f7bc0c0, ccu error info: 0x763103af010000c0, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c1406ea800, aic cond: 0.
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0xb4, fixp_error1 info: 0xe2, fsmId:1, tslot:7, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] TraceBack (most recent call last):
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]        An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]        rtDeviceSynchronizeWithTimeout execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] The above exception was the direct cause of the following exception:
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 679, in sample_tokens
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self.model_runner.sample_tokens(grammar_output)
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2517, in sample_tokens
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     propose_draft_token_ids(sampler_output.sampled_token_ids)
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2471, in propose_draft_token_ids
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     self._draft_token_ids = self.propose_draft_token_ids(
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 1897, in propose_draft_token_ids
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     draft_token_ids = self.drafter._propose(
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]                       ^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/plugin.py", line 393, in wrapped
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return original(proposer, *args, **kwargs)
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/spec_decode/llm_base_proposer.py", line 1035, in _propose
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     draft_token_ids = run_draft()
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]                       ^^^^^^^^^^^
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/spec_decode/llm_base_proposer.py", line 1284, in _run_merged_draft
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     ret_hidden_states = self.model(**model_kwargs)
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/plugin.py", line 357, in wrapped
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return compact_later_mtp_call(original, model, args, kwargs, provider)
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/compact_later_mtp.py", line 187, in compact_later_mtp_call
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return _compact_call(original, model, args, kwargs, provider, context, flags, groups)
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/compact_later_mtp.py", line 160, in _compact_call
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     result = original(model, **call)
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 507, in __call__
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] WorkerProc hit an exception.
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self.forward(*args, **kwargs)
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] Traceback (most recent call last):
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/guard_diag.py", line 61, in run_status_guard
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5_mtp.py", line 427, in forward
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     torch.npu.synchronize()
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     hidden_states = self.model(
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/utils.py", line 72, in synchronize
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                     ^^^^^^^^^^^
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return torch_npu._C._npu_synchronize()
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 507, in __call__
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self.forward(*args, **kwargs)
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] RuntimeError: npuSynchronizeDevice:../torch_npu/csrc/core/npu/NPUStream.cpp:714 NPU function error: AclrtSynchronizeDeviceWithTimeout, error code is 507035
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] [ERROR] 2026-10-20-06:57:11 (PID:567657, Device:0, RankID:-1) ERR00100 PTA call acl api failed
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py", line 175, in qwen3_5_mtp_forward
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] [Error]: The vector core execution is abnormal. 
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     hidden_states, residual = self.layers[current_step_idx](
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]         Rectify the fault based on the error information in the ascend log.
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] EZ9999: Inner Error!
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] EZ9999[PID: 567657] 2026-10-20-06:57:11.726.024 (EZ9999):  The error from device(chipId:4, dieId:0), serial number is 91, there is an exception of aivec error, core id is 22, error code = 0, dump info: pc start: 0x124802263020, current: 0x124802263274, vec error info: 0x7d00000012, mte error info: 0xe2000000b4, ifu error info: 0x750f478844040, ccu error info: 0x481212513e0000bd, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c1406f8400, aic cond: 0.
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self._call_impl(*args, **kwargs)
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0xb4, fixp_error1 info: 0xe2, fsmId:0, tslot:2, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] TraceBack (most recent call last):
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return forward_call(*args, **kwargs)
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]        An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]        rtDeviceSynchronizeWithTimeout execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py", line 120, in forward
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     self.self_attn(
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] The above exception was the direct cause of the following exception:
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self._call_impl(*args, **kwargs)
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] Traceback (most recent call last):
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return forward_call(*args, **kwargs)
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py", line 81, in forward
+(Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     attn_output = self.attn(q, k, v)
+(Worker_TP0 pid=567657) (Worker_TP3 pid=567812) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] WorkerProc hit an exception.
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return func(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                   ^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] Traceback (most recent call last):
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/guard_diag.py", line 61, in run_status_guard
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 679, in sample_tokens
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self._call_impl(*args, **kwargs)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     torch.npu.synchronize()
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self.model_runner.sample_tokens(grammar_output)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/utils.py", line 72, in synchronize
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return torch_npu._C._npu_synchronize()
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return forward_call(*args, **kwargs)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return func(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] RuntimeError: npuSynchronizeDevice:../torch_npu/csrc/core/npu/NPUStream.cpp:714 NPU function error: AclrtSynchronizeDeviceWithTimeout, error code is 507035
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/layers/attention/attention.py", line 521, in forward
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] [ERROR] 2026-10-20-06:57:11 (PID:567812, Device:3, RankID:-1) ERR00100 PTA call acl api failed
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2517, in sample_tokens
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     torch.ops.vllm.unified_attention_with_output(
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] [Error]: The vector core execution is abnormal. 
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     propose_draft_token_ids(sampler_output.sampled_token_ids)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_ops.py", line 1209, in __call__
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]         Rectify the fault based on the error information in the ascend log.
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2471, in propose_draft_token_ids
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self._op(*args, **kwargs)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] EZ9999: Inner Error!
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     self._draft_token_ids = self.propose_draft_token_ids(
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] EZ9999[PID: 567812] 2026-10-20-06:57:11.727.026 (EZ9999):  The error from device(chipId:7, dieId:0), serial number is 31, there is an exception of aivec error, core id is 27, error code = 0, dump info: pc start: 0x124e02263020, current: 0x124e02263274, vec error info: 0x710cdc29a3, mte error info: 0xe2000000b4, ifu error info: 0x11d004e8c5000, ccu error info: 0x8d110238010000c0, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c1406ea800, aic cond: 0.
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/layers/attention/kv_transfer_utils.py", line 40, in wrapper
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0xb4, fixp_error1 info: 0xe2, fsmId:0, tslot:0, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 1897, in propose_draft_token_ids
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     draft_token_ids = self.drafter._propose(
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] TraceBack (most recent call last):
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                       ^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/layers/attention/attention.py", line 751, in unified_attention_with_output
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]        An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/plugin.py", line 393, in wrapped
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     self.impl.forward(
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]        rtDeviceSynchronizeWithTimeout execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return original(proposer, *args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/impl.py", line 246, in forward
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     run_status_guard(ops, f"forward:{layer.layer_name}",
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/spec_decode/llm_base_proposer.py", line 1035, in _propose
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/guard_diag.py", line 63, in run_status_guard
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] The above exception was the direct cause of the following exception:
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     draft_token_ids = run_draft()
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     raise OscarReadinessError(
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                       ^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] oscar_ascend.integration.runtime_api.OscarReadinessError: OSCAR status guard trapped at site=forward:mtp.layers.0.self_attn.attn family=merge code=2
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987] Traceback (most recent call last):
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/spec_decode/llm_base_proposer.py", line 1284, in _run_merged_draft
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     ret_hidden_states = self.model(**model_kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/guard_diag.py", line 61, in run_status_guard
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     torch.npu.synchronize()
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/plugin.py", line 357, in wrapped
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/utils.py", line 72, in synchronize
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return compact_later_mtp_call(original, model, args, kwargs, provider)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return torch_npu._C._npu_synchronize()
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return func(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/compact_later_mtp.py", line 187, in compact_later_mtp_call
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] RuntimeError: npuSynchronizeDevice:../torch_npu/csrc/core/npu/NPUStream.cpp:714 NPU function error: AclrtSynchronizeDeviceWithTimeout, error code is 507035
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 679, in sample_tokens
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return _compact_call(original, model, args, kwargs, provider, context, flags, groups)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] [ERROR] 2026-10-20-06:57:11 (PID:567678, Device:1, RankID:-1) ERR00100 PTA call acl api failed
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self.model_runner.sample_tokens(grammar_output)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] [Error]: The vector core execution is abnormal. 
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/compact_later_mtp.py", line 160, in _compact_call
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]         Rectify the fault based on the error information in the ascend log.
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     result = original(model, **call)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] EZ9999: Inner Error!
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return func(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] EZ9999[PID: 567678] 2026-10-20-06:57:11.724.761 (EZ9999):  The error from device(chipId:5, dieId:0), serial number is 34, there is an exception of aivec error, core id is 37, error code = 0, dump info: pc start: 0x124a02263020, current: 0x124a0226326c, vec error info: 0x71049c50ec, mte error info: 0xe2000000b4, ifu error info: 0x1e8247f7bc0c0, ccu error info: 0x763103af010000c0, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c1406ea800, aic cond: 0.
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 507, in __call__
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0xb4, fixp_error1 info: 0xe2, fsmId:1, tslot:7, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2517, in sample_tokens
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self.forward(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     propose_draft_token_ids(sampler_output.sampled_token_ids)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] TraceBack (most recent call last):
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2471, in propose_draft_token_ids
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5_mtp.py", line 427, in forward
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]        An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     self._draft_token_ids = self.propose_draft_token_ids(
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     hidden_states = self.model(
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]        rtDeviceSynchronizeWithTimeout execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                     ^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 1897, in propose_draft_token_ids
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 507, in __call__
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     draft_token_ids = self.drafter._propose(
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self.forward(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] The above exception was the direct cause of the following exception:
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]                       ^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/plugin.py", line 393, in wrapped
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py", line 175, in qwen3_5_mtp_forward
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] Traceback (most recent call last):
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return original(proposer, *args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     hidden_states, residual = self.layers[current_step_idx](
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     output = func(*args, **kwargs)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/spec_decode/llm_base_proposer.py", line 1035, in _propose
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     draft_token_ids = run_draft()
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self._call_impl(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]                       ^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/spec_decode/llm_base_proposer.py", line 1284, in _run_merged_draft
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     ret_hidden_states = self.model(**model_kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return forward_call(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 679, in sample_tokens
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self.model_runner.sample_tokens(grammar_output)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/plugin.py", line 357, in wrapped
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py", line 120, in forward
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return compact_later_mtp_call(original, model, args, kwargs, provider)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     self.self_attn(
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return func(*args, **kwargs)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/compact_later_mtp.py", line 187, in compact_later_mtp_call
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self._call_impl(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return _compact_call(original, model, args, kwargs, provider, context, flags, groups)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2517, in sample_tokens
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     propose_draft_token_ids(sampler_output.sampled_token_ids)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/compact_later_mtp.py", line 160, in _compact_call
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return forward_call(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 2471, in propose_draft_token_ids
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     result = original(model, **call)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     self._draft_token_ids = self.propose_draft_token_ids(
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py", line 81, in forward
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 507, in __call__
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     attn_output = self.attn(q, k, v)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/model_runner_v1.py", line 1897, in propose_draft_token_ids
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self.forward(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                   ^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     draft_token_ids = self.drafter._propose(
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                       ^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5_mtp.py", line 427, in forward
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self._call_impl(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/plugin.py", line 393, in wrapped
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     hidden_states = self.model(
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return original(proposer, *args, **kwargs)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]                     ^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 507, in __call__
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return forward_call(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/spec_decode/llm_base_proposer.py", line 1035, in _propose
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self.forward(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     draft_token_ids = run_draft()
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/layers/attention/attention.py", line 521, in forward
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                       ^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py", line 175, in qwen3_5_mtp_forward
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     torch.ops.vllm.unified_attention_with_output(
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/spec_decode/llm_base_proposer.py", line 1284, in _run_merged_draft
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     hidden_states, residual = self.layers[current_step_idx](
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_ops.py", line 1209, in __call__
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     ret_hidden_states = self.model(**model_kwargs)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self._op(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/plugin.py", line 357, in wrapped
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self._call_impl(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/layers/attention/kv_transfer_utils.py", line 40, in wrapper
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return compact_later_mtp_call(original, model, args, kwargs, provider)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return func(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/compact_later_mtp.py", line 187, in compact_later_mtp_call
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return forward_call(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/layers/attention/attention.py", line 751, in unified_attention_with_output
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return _compact_call(original, model, args, kwargs, provider, context, flags, groups)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     self.impl.forward(
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py", line 120, in forward
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/impl.py", line 246, in forward
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/compact_later_mtp.py", line 160, in _compact_call
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     self.self_attn(
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     run_status_guard(ops, f"forward:{layer.layer_name}",
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     result = original(model, **call)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/guard_diag.py", line 63, in run_status_guard
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]              ^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self._call_impl(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     raise OscarReadinessError(
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 507, in __call__
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] oscar_ascend.integration.runtime_api.OscarReadinessError: OSCAR status guard trapped at site=forward:mtp.layers.0.self_attn.attn family=merge code=2
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self.forward(*args, **kwargs)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] Traceback (most recent call last):
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return forward_call(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/guard_diag.py", line 61, in run_status_guard
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/models/qwen3_5_mtp.py", line 427, in forward
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     torch.npu.synchronize()
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     hidden_states = self.model(
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py", line 81, in forward
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/npu/utils.py", line 72, in synchronize
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                     ^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     attn_output = self.attn(q, k, v)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return torch_npu._C._npu_synchronize()
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/compilation/decorators.py", line 507, in __call__
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]                   ^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self.forward(*args, **kwargs)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] RuntimeError: npuSynchronizeDevice:../torch_npu/csrc/core/npu/NPUStream.cpp:714 NPU function error: AclrtSynchronizeDeviceWithTimeout, error code is 507035
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self._call_impl(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] [ERROR] 2026-10-20-06:57:11 (PID:567657, Device:0, RankID:-1) ERR00100 PTA call acl api failed
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py", line 175, in qwen3_5_mtp_forward
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] [Error]: The vector core execution is abnormal. 
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     hidden_states, residual = self.layers[current_step_idx](
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]         Rectify the fault based on the error information in the ascend log.
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return forward_call(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] EZ9999: Inner Error!
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] EZ9999[PID: 567657] 2026-10-20-06:57:11.726.024 (EZ9999):  The error from device(chipId:4, dieId:0), serial number is 91, there is an exception of aivec error, core id is 22, error code = 0, dump info: pc start: 0x124802263020, current: 0x124802263274, vec error info: 0x7d00000012, mte error info: 0xe2000000b4, ifu error info: 0x750f478844040, ccu error info: 0x481212513e0000bd, cube error info: 0, biu error info: 0, aic error mask: 0x6500020bd00028c, para base: 0x12c1406f8400, aic cond: 0.
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self._call_impl(*args, **kwargs)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/layers/attention/attention.py", line 521, in forward
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] The extend info: errcode:(0, 0, 0) errorStr: timeout or trap error. fixp_error0 info: 0xb4, fixp_error1 info: 0xe2, fsmId:0, tslot:2, thread:0, ctxid:0, blk:0, sublk:0, subErrType:2.
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     torch.ops.vllm.unified_attention_with_output(
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] For details, see the troubleshooting document on the Ascend official website. Search for the keyword "AI Core Error".[FUNC:PrintCoreInfo][FILE:device_error_core_proc.cc][LINE:1060]
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/_ops.py", line 1209, in __call__
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] TraceBack (most recent call last):
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return forward_call(*args, **kwargs)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self._op(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]        An error occurred in the kernel task, retCode=0x31, [vector core exception].[FUNC:PreCheckTaskErr][FILE:davinci_kernel_task.cc][LINE:1262]
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]        rtDeviceSynchronizeWithTimeout execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py", line 120, in forward
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/layers/attention/kv_transfer_utils.py", line 40, in wrapper
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     self.self_attn(
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return func(*args, **kwargs)
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] The above exception was the direct cause of the following exception:
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return self._call_impl(*args, **kwargs)
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/model_executor/layers/attention/attention.py", line 751, in unified_attention_with_output
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] 
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]     self.impl.forward(
+ERROR 10-20 06:57:11 [multiproc_executor.py:987] Traceback (most recent call last):
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+(Worker_TP3 pid=567812) (Worker_TP0 pid=567657) (Worker_TP1 pid=567678) ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/workspace/oscar/oscar-new/oscar_ascend/integration/impl.py", line 246, in forward
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 982, in worker_busy_loop
+ERROR 10-20 06:57:11 [multiproc_executor.py:987]     return forward_call(*args, **kwargs)

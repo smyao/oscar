@@ -1,0 +1,193 @@
+[rank0]:[W1020 06:57:11.398437110 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[rank0]:[E1020 06:57:11.398545610 ProcessGroupHCCL.cpp:2011] [Rank 0] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-20-06:57:11 (PID:567657, Device:0, RankID:-1) ERR02005 DIST internal error
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 0] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-20-06:57:11 (PID:567657, Device:0, RankID:-1) ERR02005 DIST internal error
+[rank3]:[W1020 06:57:11.398656030 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[rank3]:[E1020 06:57:11.398786830 ProcessGroupHCCL.cpp:2011] [Rank 3] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-20-06:57:11 (PID:567812, Device:3, RankID:-1) ERR02005 DIST internal error
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 3] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-20-06:57:11 (PID:567812, Device:3, RankID:-1) ERR02005 DIST internal error
+[rank1]:[W1020 06:57:11.399894710 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[rank1]:[E1020 06:57:11.400032500 ProcessGroupHCCL.cpp:2011] [Rank 1] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-20-06:57:11 (PID:567678, Device:1, RankID:-1) ERR02005 DIST internal error
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 1] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-20-06:57:11 (PID:567678, Device:1, RankID:-1) ERR02005 DIST internal error
+[rank2]:[W1020 06:57:11.401768500 Logger.cpp:75] Warning: Failed to generate log message. (function operator())
+[rank2]:[E1020 06:57:11.401895440 ProcessGroupHCCL.cpp:2011] [Rank 2] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-20-06:57:11 (PID:567768, Device:2, RankID:-1) ERR02005 DIST internal error
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  [Rank 2] HCCL watchdog thread terminated with exception: 
+[ERROR] 2026-10-20-06:57:11 (PID:567768, Device:2, RankID:-1) ERR02005 DIST internal error
+(Worker_TP3 pid=567812) Process VllmWorker-3:
+(Worker_TP3 pid=567812) Traceback (most recent call last):
+(Worker_TP3 pid=567812)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+(Worker_TP3 pid=567812)     self.run()
+(Worker_TP3 pid=567812)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/process.py", line 108, in run
+(Worker_TP3 pid=567812)     self._target(*self._args, **self._kwargs)
+(Worker_TP3 pid=567812)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 920, in worker_main
+(Worker_TP3 pid=567812)     worker.shutdown()
+(Worker_TP3 pid=567812)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 775, in shutdown
+(Worker_TP3 pid=567812)     self.worker.shutdown()
+(Worker_TP3 pid=567812)   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 220, in shutdown
+(Worker_TP3 pid=567812)     self.worker.shutdown()
+(Worker_TP3 pid=567812)   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 389, in shutdown
+(Worker_TP3 pid=567812)     shutdown_fn()
+(Worker_TP3 pid=567812)   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6288, in shutdown
+(Worker_TP3 pid=567812)     self._cleanup_profiling_kv_cache()
+(Worker_TP3 pid=567812)   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6306, in _cleanup_profiling_kv_cache
+(Worker_TP3 pid=567812)     torch.accelerator.synchronize()
+(Worker_TP3 pid=567812)   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/accelerator/__init__.py", line 262, in synchronize
+(Worker_TP3 pid=567812)     torch._C._accelerator_synchronizeDevice(device_index)
+(Worker_TP3 pid=567812) RuntimeError: npuSynchronizeDevice:../torch_npu/csrc/core/npu/NPUStream.cpp:714 NPU function error: AclrtSynchronizeDeviceWithTimeout, error code is 507035
+(Worker_TP3 pid=567812) [ERROR] 2026-10-20-06:57:11 (PID:567812, Device:3, RankID:-1) ERR00100 PTA call acl api failed
+(Worker_TP3 pid=567812) [Error]: The vector core execution is abnormal. 
+(Worker_TP3 pid=567812)         Rectify the fault based on the error information in the ascend log.
+(Worker_TP3 pid=567812) EE9999: Inner Error!
+(Worker_TP3 pid=567812) EE9999[PID: 567812] 2026-10-20-06:57:11.775.123 (EE9999):  rtDeviceSynchronizeWithTimeout execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP3 pid=567812) TraceBack (most recent call last):
+(Worker_TP3 pid=567812) 
+(Worker_TP0 pid=567657) Process VllmWorker-0:
+(Worker_TP0 pid=567657) Traceback (most recent call last):
+(Worker_TP0 pid=567657)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+(Worker_TP0 pid=567657)     self.run()
+(Worker_TP0 pid=567657)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/process.py", line 108, in run
+(Worker_TP0 pid=567657)     self._target(*self._args, **self._kwargs)
+(Worker_TP0 pid=567657)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 920, in worker_main
+(Worker_TP0 pid=567657)     worker.shutdown()
+(Worker_TP0 pid=567657)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 775, in shutdown
+(Worker_TP0 pid=567657)     self.worker.shutdown()
+(Worker_TP0 pid=567657)   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 220, in shutdown
+(Worker_TP0 pid=567657)     self.worker.shutdown()
+(Worker_TP0 pid=567657)   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 389, in shutdown
+(Worker_TP0 pid=567657)     shutdown_fn()
+(Worker_TP0 pid=567657)   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6288, in shutdown
+(Worker_TP0 pid=567657)     self._cleanup_profiling_kv_cache()
+(Worker_TP0 pid=567657)   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6306, in _cleanup_profiling_kv_cache
+(Worker_TP0 pid=567657)     torch.accelerator.synchronize()
+(Worker_TP0 pid=567657)   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/accelerator/__init__.py", line 262, in synchronize
+(Worker_TP0 pid=567657)     torch._C._accelerator_synchronizeDevice(device_index)
+(Worker_TP0 pid=567657) RuntimeError: npuSynchronizeDevice:../torch_npu/csrc/core/npu/NPUStream.cpp:714 NPU function error: AclrtSynchronizeDeviceWithTimeout, error code is 507035
+(Worker_TP0 pid=567657) [ERROR] 2026-10-20-06:57:11 (PID:567657, Device:0, RankID:-1) ERR00100 PTA call acl api failed
+(Worker_TP0 pid=567657) [Error]: The vector core execution is abnormal. 
+(Worker_TP0 pid=567657)         Rectify the fault based on the error information in the ascend log.
+(Worker_TP0 pid=567657) EE9999: Inner Error!
+(Worker_TP0 pid=567657) EE9999[PID: 567657] 2026-10-20-06:57:11.775.847 (EE9999):  rtDeviceSynchronizeWithTimeout execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP0 pid=567657) TraceBack (most recent call last):
+(Worker_TP0 pid=567657) 
+(Worker_TP1 pid=567678) Process VllmWorker-1:
+(Worker_TP1 pid=567678) Traceback (most recent call last):
+(Worker_TP1 pid=567678)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+(Worker_TP1 pid=567678)     self.run()
+(Worker_TP1 pid=567678)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/process.py", line 108, in run
+(Worker_TP1 pid=567678)     self._target(*self._args, **self._kwargs)
+(Worker_TP1 pid=567678)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 920, in worker_main
+(Worker_TP1 pid=567678)     worker.shutdown()
+(Worker_TP1 pid=567678)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 775, in shutdown
+(Worker_TP1 pid=567678)     self.worker.shutdown()
+(Worker_TP1 pid=567678)   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 220, in shutdown
+(Worker_TP1 pid=567678)     self.worker.shutdown()
+(Worker_TP1 pid=567678)   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 389, in shutdown
+(Worker_TP1 pid=567678)     shutdown_fn()
+(Worker_TP1 pid=567678)   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6288, in shutdown
+(Worker_TP1 pid=567678)     self._cleanup_profiling_kv_cache()
+(Worker_TP1 pid=567678)   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6306, in _cleanup_profiling_kv_cache
+(Worker_TP1 pid=567678)     torch.accelerator.synchronize()
+(Worker_TP1 pid=567678) (Worker_TP2 pid=567768)   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/accelerator/__init__.py", line 262, in synchronize
+(Worker_TP1 pid=567678) Process VllmWorker-2:
+    torch._C._accelerator_synchronizeDevice(device_index)
+(Worker_TP1 pid=567678) RuntimeError: npuSynchronizeDevice:../torch_npu/csrc/core/npu/NPUStream.cpp:714 NPU function error: AclrtSynchronizeDeviceWithTimeout, error code is 507035
+(Worker_TP1 pid=567678) [ERROR] 2026-10-20-06:57:11 (PID:567678, Device:1, RankID:-1) ERR00100 PTA call acl api failed
+(Worker_TP1 pid=567678) [Error]: The vector core execution is abnormal. 
+(Worker_TP1 pid=567678)         Rectify the fault based on the error information in the ascend log.
+(Worker_TP1 pid=567678) EE9999: Inner Error!
+(Worker_TP1 pid=567678) EE9999[PID: 567678] 2026-10-20-06:57:11.775.134 (EE9999):  rtDeviceSynchronizeWithTimeout execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP1 pid=567678) TraceBack (most recent call last):
+(Worker_TP1 pid=567678) 
+(Worker_TP2 pid=567768) Traceback (most recent call last):
+(Worker_TP2 pid=567768)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+(Worker_TP2 pid=567768)     self.run()
+(Worker_TP2 pid=567768)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/process.py", line 108, in run
+(Worker_TP2 pid=567768)     self._target(*self._args, **self._kwargs)
+(Worker_TP2 pid=567768)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 920, in worker_main
+(Worker_TP2 pid=567768)     worker.shutdown()
+(Worker_TP2 pid=567768)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 775, in shutdown
+(Worker_TP2 pid=567768)     self.worker.shutdown()
+(Worker_TP2 pid=567768)   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 220, in shutdown
+(Worker_TP2 pid=567768)     self.worker.shutdown()
+(Worker_TP2 pid=567768)   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 389, in shutdown
+(Worker_TP2 pid=567768)     shutdown_fn()
+(Worker_TP2 pid=567768)   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6288, in shutdown
+(Worker_TP2 pid=567768)     self._cleanup_profiling_kv_cache()
+(Worker_TP2 pid=567768)   File "/vllm-workspace/vllm/vllm/v1/worker/gpu_model_runner.py", line 6306, in _cleanup_profiling_kv_cache
+(Worker_TP2 pid=567768)     torch.accelerator.synchronize()
+(Worker_TP2 pid=567768)   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch/accelerator/__init__.py", line 262, in synchronize
+(Worker_TP2 pid=567768)     torch._C._accelerator_synchronizeDevice(device_index)
+(Worker_TP2 pid=567768) RuntimeError: npuSynchronizeDevice:../torch_npu/csrc/core/npu/NPUStream.cpp:714 NPU function error: AclrtSynchronizeDeviceWithTimeout, error code is 507035
+(Worker_TP2 pid=567768) [ERROR] 2026-10-20-06:57:11 (PID:567768, Device:2, RankID:-1) ERR00100 PTA call acl api failed
+(Worker_TP2 pid=567768) [Error]: The vector core execution is abnormal. 
+(Worker_TP2 pid=567768)         Rectify the fault based on the error information in the ascend log.
+(Worker_TP2 pid=567768) EE9999: Inner Error!
+(Worker_TP2 pid=567768) EE9999[PID: 567768] 2026-10-20-06:57:11.793.225 (EE9999):  rtDeviceSynchronizeWithTimeout execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP2 pid=567768) TraceBack (most recent call last):
+(Worker_TP2 pid=567768) 
+(APIServer pid=567549) INFO:     135.82.26.93:41796 - "POST /v1/chat/completions HTTP/1.1" 500 Internal Server Error
+(APIServer pid=567549) INFO:     135.82.26.93:41800 - "POST /v1/chat/completions HTTP/1.1" 500 Internal Server Error
+(APIServer pid=567549) INFO:     135.82.26.93:41796 - "POST /v1/chat/completions HTTP/1.1" 500 Internal Server Error
+(APIServer pid=567549) INFO:     135.82.26.93:41800 - "POST /v1/chat/completions HTTP/1.1" 500 Internal Server Error
+(APIServer pid=567549) INFO:     135.82.26.93:41796 - "POST /v1/chat/completions HTTP/1.1" 500 Internal Server Error
+[rank1]:[W1020 06:57:11.532636310 NPUStream.cpp:734] Warning: NPU warning, error code is 507035[Error]: 
+[Error]: The vector core execution is abnormal. 
+        Rectify the fault based on the error information in the ascend log.
+EE9999: Inner Error!
+EE9999[PID: 567678] 2026-10-20-06:57:11.973.819 (EE9999):  rtDeviceSynchronizeWithTimeout execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+TraceBack (most recent call last):
+ (function npuSynchronizeUsedDevices)
+(APIServer pid=567549) INFO:     135.82.26.93:41800 - "POST /v1/chat/completions HTTP/1.1" 500 Internal Server Error
+(Worker_TP1 pid=567678) [rank1]:W1020 06:57:11.977000 567678 site-packages/torch_npu/distributed/distributed_c10d.py:500] Failed to shutdown process group during NPU exit.
+(Worker_TP1 pid=567678) [rank1]:W1020 06:57:11.977000 567678 site-packages/torch_npu/distributed/distributed_c10d.py:500] Traceback (most recent call last):
+(Worker_TP1 pid=567678) [rank1]:W1020 06:57:11.977000 567678 site-packages/torch_npu/distributed/distributed_c10d.py:500]   File "/usr/local/python3.12.13/lib/python3.12/site-packages/torch_npu/distributed/distributed_c10d.py", line 498, in _destructor_process_group
+(Worker_TP1 pid=567678) [rank1]:W1020 06:57:11.977000 567678 site-packages/torch_npu/distributed/distributed_c10d.py:500]     pg_to_shutdown.shutdown()
+(Worker_TP1 pid=567678) [rank1]:W1020 06:57:11.977000 567678 site-packages/torch_npu/distributed/distributed_c10d.py:500] RuntimeError: synchronize:../torch_npu/csrc/core/npu/NPUStream.cpp:414 NPU function error: c10_npu::acl::AclrtSynchronizeStreamWithTimeout(stream()), error code is 507035
+(Worker_TP1 pid=567678) [rank1]:W1020 06:57:11.977000 567678 site-packages/torch_npu/distributed/distributed_c10d.py:500] [ERROR] 2026-10-20-06:57:11 (PID:567678, Device:1, RankID:-1) ERR00100 PTA call acl api failed
+(Worker_TP1 pid=567678) [rank1]:W1020 06:57:11.977000 567678 site-packages/torch_npu/distributed/distributed_c10d.py:500] [Error]: The vector core execution is abnormal. 
+(Worker_TP1 pid=567678) [rank1]:W1020 06:57:11.977000 567678 site-packages/torch_npu/distributed/distributed_c10d.py:500]         Rectify the fault based on the error information in the ascend log.
+(Worker_TP1 pid=567678) [rank1]:W1020 06:57:11.977000 567678 site-packages/torch_npu/distributed/distributed_c10d.py:500] EE9999: Inner Error!
+(Worker_TP1 pid=567678) [rank1]:W1020 06:57:11.977000 567678 site-packages/torch_npu/distributed/distributed_c10d.py:500] EE9999[PID: 567678] 2026-10-20-06:57:11.976.989 (EE9999):  rtStreamSynchronizeWithTimeout execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+(Worker_TP1 pid=567678) [rank1]:W1020 06:57:11.977000 567678 site-packages/torch_npu/distributed/distributed_c10d.py:500] TraceBack (most recent call last):
+(Worker_TP1 pid=567678) [rank1]:W1020 06:57:11.977000 567678 site-packages/torch_npu/distributed/distributed_c10d.py:500] 
+(APIServer pid=567549) INFO:     135.82.26.93:41796 - "POST /v1/chat/completions HTTP/1.1" 500 Internal Server Error
+[W1020 06:57:11.543596450 NPUStream.cpp:716] Warning: NPU warning, error code is 507035[Error]: 
+[Error]: The vector core execution is abnormal. 
+        Rectify the fault based on the error information in the ascend log.
+EE9999: Inner Error!
+EE9999[PID: 567678] 2026-10-20-06:57:11.986.146 (EE9999):  rtDeviceSynchronizeWithTimeout execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+TraceBack (most recent call last):
+ (function npuSynchronizeDevice)
+[W1020 06:57:11.544280260 NPUStream.cpp:716] Warning: NPU warning, error code is 507035[Error]: 
+[Error]: The vector core execution is abnormal. 
+        Rectify the fault based on the error information in the ascend log.
+EE9999: Inner Error!
+EE9999[PID: 567678] 2026-10-20-06:57:11.986.957 (EE9999):  rtDeviceSynchronizeWithTimeout execution failed, reason=vector core exception[FUNC:FuncErrorReason][FILE:error_message_manage.cc][LINE:69]
+TraceBack (most recent call last):
+ (function npuSynchronizeDevice)
+(APIServer pid=567549) INFO:     135.82.26.93:41800 - "POST /v1/chat/completions HTTP/1.1" 500 Internal Server Error
+(APIServer pid=567549) INFO:     135.82.26.93:41796 - "POST /v1/chat/completions HTTP/1.1" 500 Internal Server Error
+(APIServer pid=567549) INFO:     135.82.26.93:41800 - "POST /v1/chat/completions HTTP/1.1" 500 Internal Server Error
+(APIServer pid=567549) INFO:     Shutting down
+(APIServer pid=567549) INFO:     Waiting for application shutdown.
+(APIServer pid=567549) INFO:     Application shutdown complete.
+(APIServer pid=567549) INFO:     Finished server process [567549]
+(APIServer pid=567549) INFO 10-20 06:57:12 [core_client.py:652] [shutdown] MPClient: start timeout=0s
+(APIServer pid=567549) INFO 10-20 06:57:12 [core_client.py:654] [shutdown] MPClient: stopping engine manager
+(APIServer pid=567549) WARNING 10-20 06:57:12 [utils.py:607] [shutdown] Process manager: force killing remaining processes count=1
+(APIServer pid=567549) INFO 10-20 06:57:12 [core_client.py:656] [shutdown] MPClient: engine manager stopped
+(APIServer pid=567549) INFO 10-20 06:57:12 [core_client.py:657] [shutdown] MPClient: cleaning up background resources
+(APIServer pid=567549) INFO 10-20 06:57:12 [core_client.py:659] [shutdown] MPClient: complete
+/usr/local/python3.12.13/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 6 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+SERVICE_FAILURE {"kind": "native_service_fatal", "source": "core.py", "message": "EngineCore encountered a fatal error.", "log_byte_offset": 176259, "observed_bytes_before_cleanup": 257166}
+RESULT {"phase": "serve", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "tools.target_cli", "--config", "/workspace/oscar/oscar-new/logs/20261020T064430.498396Z/effective-target.json"], "returncode": 1, "elapsed_seconds": 741.968088, "timed_out": false, "interrupted": false, "log": "/workspace/oscar/oscar-new/logs/20261020T064430.498396Z/serve.log", "cleanup_complete": true, "process_returncode": 0, "failure": {"kind": "native_service_fatal", "source": "core.py", "message": "EngineCore encountered a fatal error.", "log_byte_offset": 176259, "observed_bytes_before_cleanup": 257166}}

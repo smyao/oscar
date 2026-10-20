@@ -28786,3 +28786,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **处置和边界**：已有supervisor此次正确记录failed/rc1，没有发生#167的rc0假成功。本地日志解析见`reports/diagnostic_startup_memory_20261019.json`。占用者与实际NPU回收状态仍未知；不降低0.9、不杀未知进程、不添加启动前置审计。需由目标机实际空闲资源满足配置后才能启动；主机进程清理通过不能证明目标显存已恢复。
 
 **独立本地验证**：本轮全面主机审计另发现并修复managed service的结束判定、清理失败传播及启动信号窗口所有权问题，记录于`docs/full_local_validation_20261019.md`；这些是本地故障注入证据，不是本条设备内存不足的已证实根因。本机无CANN/NPU，既有数值7/11失败和未归因Trap保持未解决。
+
+## [169] 真机条目（2026-10-20 用户回传）· eager/compact later-MTP 的 merge guard code2
+
+**原始证据**：`reports/target_mtp_merge_worker_20261020.txt`（65534字节，SHA256 `81a406cc760266aa3cd96106ffceb79e8ae1028eafeebf9920fcd11c1e633b23`）、`reports/target_mtp_merge_engine_20261020.txt`（65536字节，`0de8c83a2cce468fb1b381d164151c66506280c7245d4d9d2db6a6a43b1d2e57`）、`reports/target_mtp_merge_cleanup_20261020.txt`（19485字节，`c10edf5172c80624074ece96c1bd80fbc9c98ff4b6cd5b208d8162fdad58b79e`）。它们是用户粘贴片段，不是完整serve.log。运行目录`20261020T064430.498396Z`，candidate、4–7卡、7878、probes none、guard_diagnostic/invalid_diagnostic；741.968088秒后有效rc1、原始process_returncode0，cleanup_complete=true，NPU资源释放未测。目标SHA未提供。
+
+**明确定位**：异常链`site=forward:mtp.layers.0.self_attn.attn family=merge code=2`。原生`_run_merged_draft`调用栈经过compact实际`original(model, **call)`行；诊断配置关闭图。本次已经越过#168初始化内存不足。冻结merge的code2表示非法partial LSE（合法-inf除外），或最终FP32输出ReduceSum非有限；不是slot错误。诊断顺序中attention/rotate检查先通过，store尚未检查；PV/逆旋转结果没有完整finite校验，不能因此证明所有partial正常。
+
+**归因边界**：compact原N≥1024且当前配置S1，主机partial与merge均取B对应连续头部；未发现读取旧大N尾部的证据。bridge requests=1只打印一次，不能确定错误步的B；异步scheduler dump的8232不能当作出错算子的输入几何。dump中一个运行请求、KV约1.98%，不支持大BS容量不足判断。后续HCCL/event/HTTP错误不是首因；监督器正确把native fatal+原始rc0判成失败。
+
+**本地审计与处置**：68项主机相关回归通过，q1发布/事件源码审计未复现可证明的越界、漏写或缺失同步；未修改生产代码、默认candidate或冻结merge/guard。详见`docs/mtp_merge_diagnosis_20261020.md`及机器回执。尚缺merge前三源partial/LSE与当前几何的决定性证据，本机无CANN/NPU，**已定位但未修复**；既有BF16数值7/11失败、设备/图/质量/性能欠账保留，不要求重跑AISBench。

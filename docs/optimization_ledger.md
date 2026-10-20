@@ -1,5 +1,9 @@
 # OSCAR 优化与失败证据索引
 
+## 2026-10-20 later-MTP merge code2：已定位、未修复
+
+新真机档案#169将故障定位到eager/compact later-MTP的merge族code2。主机布局与q1发布/事件源码审计没有复现可证明的缺陷；前序attention/rotate通过不保证PV/逆旋转结果有限。相关68项主机回归通过，FE0/精度门未变；[报告及后续决定性证据](mtp_merge_diagnosis_20261020.md)。本轮无生产修改、无默认候选变化、无新性能收益；数值7/11失败、设备/图/质量/性能门保留。重复现有guard启动不能补足坏值来源，不要求重跑AISBench。
+
 ## 2026-10-19 大 batch 本地 profiling 与条件吞吐模型
 
 本轮仅离线研究，没有生产优化、候选开关或默认配置变更。原生 planner 主机执行按相同净KV14.525GiB、现有模型形状夹具和512输出预留，none布局驻留上限为32K/64K/128K的20/11/6→46/31/19；当前目标完整config及同轮原生净预算缺失，条件明确保留。真实AscendC Cube控制流/Unpack API桩计数78形状、36组真实Python planner profiling、1920点预声明成本模型完成，新回归37项通过。

@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-20",
+  "local_parent": "157ba09",
+  "target_commit": "not_provided",
+  "archive": 169,
+  "status": "localized_not_fixed",
+  "site": "forward:mtp.layers.0.self_attn.attn",
+  "family": "merge",
+  "code": 2,
+  "production_changes": false,
+  "host_tests": {
+    "passed": 68,
+    "seconds": 1.84,
+    "junit": "reports/mtp_merge_host_20261020.xml"
+  },
+  "fe0": {
+    "attention_cv.cpp": true,
+    "attention_tasks.cpp": true,
+    "store_int2.cpp": true,
+    "rotate_clip_store.cpp": true,
+    "merge_lse.cpp": true,
+    "status_guard.cpp": true,
+    "oscar_common.h": true
+  },
+  "acceptance_sha256": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+  "oracle_sha256": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c",
+  "target_verification": "not_run",
+  "logs": {
+    "reports/target_mtp_merge_cleanup_20261020.txt": {
+      "bytes": 19485,
+      "sha256": "c10edf5172c80624074ece96c1bd80fbc9c98ff4b6cd5b208d8162fdad58b79e"
+    },
+    "reports/target_mtp_merge_engine_20261020.txt": {
+      "bytes": 65536,
+      "sha256": "0de8c83a2cce468fb1b381d164151c66506280c7245d4d9d2db6a6a43b1d2e57"
+    },
+    "reports/target_mtp_merge_worker_20261020.txt": {
+      "bytes": 65534,
+      "sha256": "81a406cc760266aa3cd96106ffceb79e8ae1028eafeebf9920fcd11c1e633b23"
+    }
+  }
+}

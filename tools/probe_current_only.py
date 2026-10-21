@@ -393,7 +393,7 @@ def probe(config_path, acceptance_path):
     manifest_path=ROOT/"build/ascendc/build_manifest.json"
     manifest=validate_build_artifacts(manifest_path)
     require_capabilities(BF16_HISTORY_CV_OPS|{"copy_validate_current_out","prepare_attention_tasks_out",
-        "rotate_out","rotate_bf16_query_out","merge_lse_out","status_guard",
+        "rotate_out","rotate_vector_init_out","merge_lse_out","status_guard",
         "rotate_clip_store_striped_out"},manifest_path)
     cores=reuse._core_count(torch,target);device=torch.device("npu:0")
     rows=[]

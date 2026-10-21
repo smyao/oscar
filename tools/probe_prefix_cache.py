@@ -151,7 +151,7 @@ def allocate(torch, device, cores):
         "rotation": torch.eye(d, dtype=torch.float32, device=device),
         "tasks": torch.empty((n * 3, 16), dtype=torch.int64, device=device),
         "positions": torch.empty(n, dtype=torch.int64, device=device),
-        "qr": torch.empty((n, h, d+16), dtype=torch.bfloat16, device=device),
+        "qr": torch.empty((n, h, d), dtype=torch.float32, device=device),
         "rotate_status": torch.empty((n, h), dtype=torch.int32, device=device),
         "partial": torch.empty((n, h, 3, d), dtype=torch.float32, device=device),
         "lse": torch.empty((n, h, 3), dtype=torch.float32, device=device),
@@ -212,7 +212,7 @@ def run_device(torch, ops, config, cores, tolerance):
     config = production_runtime_config(config)
     device = torch.device("npu:0")
     reader = selected_reader(config)
-    rotate = "rotate_bf16_query_out"
+    rotate = "rotate_vector_init_out"
     state = allocate(torch, device, cores)
     generator = torch.Generator().manual_seed(137081)
     shared = tuple(torch.randn((4608, 1, DIM), generator=generator).to(torch.bfloat16) for _ in range(2))
@@ -305,7 +305,7 @@ def probe(config_path, acceptance_path):
     if normalize_soc(torch.npu.get_device_name(0)) != config["soc_version"]: raise RuntimeError("APC target SoC differs")
     from oscar_ascend.ops.loader import validate_build_artifacts, require_capabilities
     manifest = validate_build_artifacts(ROOT / "build/ascendc/build_manifest.json")
-    rotate = "rotate_bf16_query_out"
+    rotate = "rotate_vector_init_out"
     require_capabilities({selected_reader(config), rotate, "prepare_attention_tasks_out",
                           "merge_lse_out", "rotate_clip_store_striped_out"})
     report = {"status": "passed", "scope": SCOPE, "prefix_caching": True,

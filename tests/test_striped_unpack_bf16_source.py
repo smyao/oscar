@@ -119,7 +119,7 @@ def test_cpp_does_not_expand_fp32_kv_or_reinterpret_cast_bf16_as_half_arithmetic
     assert "PipeBarrier<PIPE_V>();" in source[mul:add]
     assert "PipeBarrier<PIPE_V>();" in source[add:cast]
     assert "PipeBarrier<PIPE_V>();" in source[gather:]
-    assert source.count("values.ReinterpretCast<half>()") == 1
+    assert source.count("values.ReinterpretCast<half>()") == 2
     assert source.count("tableBf16.ReinterpretCast<half>()") == 1
     assert "Gather(halfMetadata,packedBuf.Get<half>()" in source
     assert "static_assert(indexScratchBytes==16384 && scratchBytes<=2048);" in source

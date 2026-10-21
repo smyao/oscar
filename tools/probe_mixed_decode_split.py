@@ -200,7 +200,7 @@ def probe(config_path,acceptance_path):
     from oscar_ascend.ops.loader import validate_build_artifacts,require_capabilities
     from oscar_ascend.ops.cv_dispatch import BF16_HISTORY_CV_OPS
     manifest=validate_build_artifacts(ROOT/'build/ascendc/build_manifest.json')
-    require_capabilities(BF16_HISTORY_CV_OPS|{'rotate_out','rotate_bf16_query_out','rotate_clip_store_striped_out','prepare_attention_tasks_out','merge_lse_out','status_guard'})
+    require_capabilities(BF16_HISTORY_CV_OPS|{'rotate_out','rotate_vector_init_out','rotate_clip_store_striped_out','prepare_attention_tasks_out','merge_lse_out','status_guard'})
     rows=[];device=torch.device('npu:0');cores=reuse._core_count(torch,target)
     for case in case_plan():
         rows.append(run_case(torch,target,acceptance,device,cores,case));gc.collect();torch.npu.empty_cache()

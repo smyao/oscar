@@ -21,18 +21,23 @@ struct Model {
  struct{int hq=12,hk=2;}g;
  int qcount=1,qbegin=3,kvhead=1,lane=0,kind=0,error=1,qOffset=32;
  TPipe pipe;TBuf<TPosition::VECCALC>qFloatBuf,qBf16Buf,scratchBuf,dequantBuf;
- GlobalTensor<bfloat16_t>q,qr;GlobalTensor<float>qrChecksum;
+ GlobalTensor<bfloat16_t>q,operandWork;GlobalTensor<float>qr;
+ int64_t residualOffset=qOffset+kQueryRows*D+32;
  std::vector<bfloat16_t> published;
  Model(){pipe.InitBuffer(qFloatBuf,D*4);pipe.InitBuffer(qBf16Buf,D*2);
   pipe.InitBuffer(scratchBuf,(D+16)*4);pipe.InitBuffer(dequantBuf,kHalfKv*D*2);
-  published.resize(qOffset+kQueryRows*D+32,{0x5a5a});}
+  published.resize(2*residualOffset,{0x5a5a});operandWork={published.data(),published.size()};}
  void PublishBf16Operand(int64_t off,LocalTensor<bfloat16_t>src,int elements){
   DataCopy(Tensor<bfloat16_t>{published.data(),published.size()}[off],src,elements);}
+ void PublishOperand(int64_t off,LocalTensor<float>src,int elements){
+  for(int i=0;i<elements;++i){float value=src.GetValue(i);uint16_t high=round_bf16(value);
+   uint32_t bits=uint32_t(high)<<16;float reconstructed;std::memcpy(&reconstructed,&bits,4);
+   published[off+i]={high};published[residualOffset+off+i]={round_bf16(value-reconstructed)};}}
 ''' + _function(source,'LoadQueries') + r'''
 };
 int check(){
  constexpr int d=256,tokens=32,heads=12,rows=tokens*heads;
- prepared.resize(rows*d);std::vector<bfloat16_t>input(rows*d),packed(rows*(d+16));
+ prepared.resize(rows*d);std::vector<bfloat16_t>input(rows*d);std::vector<float>packed(rows*d);
  std::vector<float> matrix(d*d);std::vector<int>status(rows);
  for(int repeat=0;repeat<2;++repeat){
   for(int r=0;r<rows;++r)for(int j=0;j<d;++j){
@@ -40,26 +45,29 @@ int check(){
    if(repeat && r==3*heads+6)v=std::numeric_limits<float>::max();
    if(repeat && r==4*heads+7 && j==9)v=std::numeric_limits<float>::quiet_NaN();
    prepared[r*d+j]=v;input[r*d+j]={round_bf16(v)};}
-  for(block=0;block<blocks;++block){RotateOnly<bfloat16_t,true>p;
+  for(block=0;block<blocks;++block){RotateOnly<bfloat16_t>p;
    p.Run((GM_ADDR)input.data(),(GM_ADDR)matrix.data(),(GM_ADDR)packed.data(),
      (GM_ADDR)status.data(),rows,d,true,nullptr,heads);}
   for(int count:{1,4})for(int kind:{0,1,2})for(int lane:{0,1}){
    Model m;m.qcount=count;m.kind=kind;m.lane=lane;
    m.q={input.data(),input.size()};m.qr={packed.data(),packed.size()};
-   m.qrChecksum={reinterpret_cast<float*>(packed.data()),packed.size()/2};m.LoadQueries();
+   m.LoadQueries();
    int expectedError=1;
    for(int r=lane*kLaneRows;r<(lane+1)*kLaneRows;++r){
     bool live=r<count*6;int inputrow=(m.qbegin+r/6)*heads+6+r%6;
     if(live){float sum=0;
-     if(kind==0)std::memcpy(&sum,&packed[inputrow*(d+16)+d],4);
+     if(kind==0)for(int j=0;j<d;++j)sum+=packed[inputrow*d+j];
      else for(int j=0;j<d;++j){uint32_t bits=uint32_t(input[inputrow*d+j].bits)<<16;
        float value;std::memcpy(&value,&bits,4);sum+=value;}
      if(!std::isfinite(sum))expectedError=2;}
-    for(int j=0;j<d;++j){uint16_t expected=live?(kind==0?packed[inputrow*(d+16)+j].bits:input[inputrow*d+j].bits):0;
-     if(m.published[m.qOffset+r*d+j].bits!=expected)return 12;}}
+    for(int j=0;j<d;++j){uint16_t expected=live?(kind==0?round_bf16(packed[inputrow*d+j]):input[inputrow*d+j].bits):0;
+     if(m.published[m.qOffset+r*d+j].bits!=expected)return 12;
+     if(kind==0){uint16_t lowExpected=0;if(live){uint32_t bits=uint32_t(expected)<<16;
+       float high;std::memcpy(&high,&bits,4);lowExpected=round_bf16(packed[inputrow*d+j]-high);}
+       if(m.published[m.residualOffset+m.qOffset+r*d+j].bits!=lowExpected)return 16;}}}
    if(m.error!=expectedError)return 13;
    for(int i=0;i<m.qOffset;++i)if(m.published[i].bits!=0x5a5a)return 14;
-   for(size_t i=m.qOffset+kQueryRows*d;i<m.published.size();++i)if(m.published[i].bits!=0x5a5a)return 15;
+   for(size_t i=m.qOffset+kQueryRows*d;i<size_t(m.residualOffset);++i)if(m.published[i].bits!=0x5a5a)return 15;
   }
  }
  return 0;

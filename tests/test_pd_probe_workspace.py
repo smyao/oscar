@@ -84,12 +84,12 @@ def test_shared_runtime_reserves_actual_bf16_c16_arena(
     assert g.history_cluster_size == 16 and g.c4_member_pipeline and g.bf16_history
     assert impl.provider.config["experimental_bf16_history"] is True
     assert impl.provider.config["experimental_c4_member_pipeline"] is True
-    # Independent typed C16 formula: Q16 in BF16; normalized input one tile.
+    # #173: C16 has two BF16 operand planes and one normalized FP32 tile.
     m, b, d = 128, 256, 256
     float_bytes = (2*m*d + m*b + 16*m*d + 16*2*m)*4
-    operand_bytes = (16*m*d + 2*b*d + m*b)*2
-    assert g.cv_bytes == 2*(float_bytes+operand_bytes) == 7_766_016
-    assert replace(g, bf16_history=False).cv_bytes > g.cv_bytes
+    operand_bytes = (16*m*d + 2*b*d + m*b)*4
+    assert g.cv_bytes == 2*(float_bytes+operand_bytes) == 10_518_528
+    assert replace(g, bf16_history=False).cv_bytes < g.cv_bytes
     actual = {name: getattr(state.workspace, name).numel() *
         getattr(state.workspace, name).element_size() for name in g.buffer_bytes}
     assert actual == g.buffer_bytes
@@ -183,5 +183,18 @@ def test_npu_probe_requests_actual_bf16_symbols_before_any_case(probe, monkeypat
     with pytest.raises(ReachedCapabilityCheck):
         probe.probe(config, acceptance)
     assert len(seen) == 1 and BF16_HISTORY_CV_OPS <= seen[0]
-    assert "rotate_bf16_query_out" in seen[0]
+    assert "rotate_vector_init_out" in seen[0]
     assert not any(name.startswith("attention_cv_") for name in seen[0])
+
+
+@pytest.mark.parametrize("tokens", [4, 1])
+def test_generic_workspace_allocates_full_mdl_capacity(cpu_allocations, tokens):
+    # #173: M32 double KV main/residual planes exceed M128 generic storage.
+    # The real allocator must use the maximum, regardless of active Q rows.
+    geometry = runtime.WorkspaceGeometry(tokens,6,1,256,cube_cores=2,
+        history_cluster_size=1,bf16_history=True)
+    workspace = runtime.GraphWorkspace(geometry, "cpu")
+    assert workspace.cv.dtype == torch.uint8
+    assert workspace.cv.numel() == 2*1212416 == geometry.buffer_bytes["cv"]
+    assert workspace.query_rot.shape == (tokens,6,256)
+    assert workspace.query_rot.dtype == torch.float32

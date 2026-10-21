@@ -46,11 +46,11 @@ def integer_expression(expression, names):
 # Independent D256 allocation expectations, including the 32-byte-aligned
 # explicit vector buffers. TPipe/SDK-reserved UB is excluded by the 184KiB cap.
 EXPECTED = {
-    "mdl": (1146880, 655360, 158656, 175040),
-    "member_pipeline_cluster4": (2494464, 1970176, 157760, 174144),
-    "window_range_cluster16": (4997120, 3883008, 157632, 174528),
-    "window_range": (917504, 786432, 157632, 174528),
-    "window_range_balanced": (917504, 786432, 157632, 174528),
+    "mdl": (1146880, 1212416, 158656, 175040),
+    "member_pipeline_cluster4": (2494464, 2887680, 157760, 174144),
+    "window_range_cluster16": (4997120, 5259264, 157632, 174528),
+    "window_range": (917504, 1179648, 157632, 174528),
+    "window_range_balanced": (917504, 1179648, 157632, 174528),
 }
 
 
@@ -70,15 +70,15 @@ def test_inverse_generation_preserves_exact_fixed_mother(name, mother, sha):
 def test_all_source_operands_use_bf16_and_only_rotation_uses_fp32_matmul(name, mother, sha):
     source = (ROOT / "csrc/kernels" / f"attention_bf16_history_{name}.cpp").read_text()
     publisher = body(source, "void PublishOperand(")
-    assert "oscar_bf16_history::Publish(operandWork[offset],source,operandBuf,elements);" in publisher
+    assert "oscar_bf16_history::Publish(operandWork[offset],operandWork[residualOffset+offset],source,operandBuf,elements);" in publisher
     assert "kind" not in publisher and "DataCopy(work" not in publisher
-    assert "PublishOperand(qOffset+row*D,dst,D)" not in source
+    assert "if(kind==0)PublishOperand(qOffset+row*D,dst,D)" in source
     assert "PublishBf16Operand(qOffset+row*D,src,D)" in source
     query = body(source, "void LoadQueries(")
-    assert "DataCopy(dst,qrChecksum[(packedRow+D)/2],8)" in query
-    assert "if(!Finite(dst.GetValue(0)))error=2" in query
+    assert "DataCopy(dst,qr[off],D)" in query
+    assert "if(!Finite(check.GetValue(0)))error=2" in query
     assert "PublishBf16Operand(qOffset+row*D,zeros,count*D)" in source
-    assert "PublishBf16Operand((value?vOffset:kOffset)+slot*D,src,kElements)" in source
+    assert "PublishUnpackedOperand((value?vOffset:kOffset)+slot*D,src,kElements)" in source
     assert "PublishOperand(pOffset+rowBase*kKvRows,scores,activeRows*kKvRows)" in source
     assert "DataCopy(work[normOffset+lane*kLaneRows*D],acc,kLaneRows*D)" in source
     assert not re.search(r"Publish(?:History)?Operand\([^;]*\bacc\b", source)
@@ -89,7 +89,7 @@ def test_all_source_operands_use_bf16_and_only_rotation_uses_fp32_matmul(name, m
     dot = body(source, "void Matmul(")
     assert "const bool history=!rotation;" in dot
     assert dot.index("SelectMatmul(history,") < dot.index("if(history)")
-    assert "historyMm.template IterateAll<true>(work[c]);" in dot
+    assert "historyMm.template IterateAll<true>(work[c],static_cast<uint8_t>((ai||bi)?1:0));" in dot
     assert "mm.SetTensorB(rv,true);" in dot
     assert "mm.SetTensorB(work[b]" not in dot
     assert "mm.template IterateAll<true>(work[c]);" in dot
@@ -161,7 +161,7 @@ def test_direct_unpack_allocations_cover_actual_strided_addresses(name, mother, 
     assert 8 * 256 * 4 * 2 == 16384
     if name == "mdl":
         pipeline = body(source, "void PipelinePublishKv(")
-        assert "PublishBf16Operand" in pipeline and "dequantBuf.Get<bfloat16_t>()" in pipeline
+        assert "PublishUnpackedOperand" in pipeline and "dequantBuf.Get<bfloat16_t>()" in pipeline
 
 
 @pytest.mark.parametrize("name,mother,sha", SPECS)
@@ -196,16 +196,16 @@ def test_actual_buffers_and_per_core_arenas_fit_the_declared_resource_limits(nam
         "window_range_cluster16": (626688,688128),
         "window_range": (98304,196608),
         "window_range_balanced": (98304,196608)}[name]
-    assert candidate_bytes == floats*4 + operands*2 < old_bytes
+    assert candidate_bytes == floats*4 + operands*4
     for core in range(20):
         fp32 = (core * candidate_bytes, core * candidate_bytes + floats*4)
-        bf16 = (fp32[1], fp32[1] + operands*2)
+        bf16 = (fp32[1], fp32[1] + operands*4)
         assert fp32[1] == bf16[0]
         assert bf16[1] == (core + 1) * candidate_bytes
         assert all(offset % 32 == 0 for offset in (*fp32, *bf16))
     # Actual addresses and C4 member/slot reuse are executed independently in
     # test_bf16_reader_protocol.py; neither arena reserves an unused mirror.
-    last_bf16_element_end = floats*4 + (operands - 1)*2 + 2
+    last_bf16_element_end = floats*4 + (operands*2 - 1)*2 + 2
     assert last_bf16_element_end == candidate_bytes
 
 
@@ -233,6 +233,6 @@ def test_every_new_project_local_include_exists_and_workspace_families_are_decla
                 continue  # Official SDK is unavailable here, explicitly unvalidated.
             assert (path.parent / include).is_file(), (path, include)
     header = paths[-1].read_text()
-    for family, expected in (("", 786432), ("mdl_", 655360),
-                             ("member_pipeline_", 1970176), ("cluster16_", 3883008)):
+    for family, expected in (("", 1179648), ("mdl_", 1212416),
+                             ("member_pipeline_", 2887680), ("cluster16_", 5259264)):
         assert f"attention_bf16_history_{family}workspace_per_core(256)=={expected}" in header

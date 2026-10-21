@@ -77,10 +77,10 @@ def test_current_metadata_routes_warm_8232_to_c16_without_dropping_history():
         "c4_member_pipeline", "mdl_decode", "bf16_history")}
     assert select_cv_op(16, 6, 1, 8232, metadata.max_query_len, **flags) == \
         "attention_bf16_history_window_range_cluster16_out"
-    assert 8232*6*272*2 <= geometry.buffer_bytes["query_rot"]
+    assert 8232*6*256*4 <= geometry.buffer_bytes["query_rot"]
     assert 8232*6*3*256*4 <= geometry.buffer_bytes["partial"]
     assert 8232*3*16*8 <= geometry.buffer_bytes["tasks"]
-    assert geometry.cv_bytes == 20*3_883_008
+    assert geometry.cv_bytes == 20*5_259_264
 
 
 def _scheduler_program():
@@ -213,7 +213,7 @@ void Cast(Tensor<float>d,Tensor<bfloat16_t>s,RoundMode,size_t n){for(size_t i=0;
     result = subprocess.run([str(binary)], text=True, capture_output=True, timeout=20)
     assert result.returncode == 0, result.stdout + result.stderr
     # Negative control: the old D-stride must not pass the long-row contract.
-    assert "(off/D)*(D+16)" in cpp
-    binary = _compile(tmp_path, cpp.replace("(off/D)*(D+16)", "off"))
+    assert "DataCopy(dst,qr[off],D)" in cpp
+    binary = _compile(tmp_path, cpp.replace("DataCopy(dst,qr[off],D)", "DataCopy(dst,qr[(off/D)*(D+16)],D)"))
     result = subprocess.run([str(binary)], text=True, capture_output=True, timeout=20)
     assert result.returncode != 0

@@ -126,14 +126,22 @@ class WorkspaceGeometry:
             return self._fp32_cv_bytes
         # Archive #126/#145/#148/#154, D.4: separate compact typed arenas,
         # matching Bf16AttentionWorkspace in oscar_bf16_history_launch.h.
-        # Every family keeps its own fixed tile protocol. The selected long
-        # reader's arena also covers the smaller MDL q4/q1 reader (655360B).
+        # #173: BF16 main/residual operand planes preserve rounding information.
+        # Every family keeps its own fixed tile protocol. MDL has two KV
+        # buffers and can now exceed the generic single-buffer arena despite
+        # its smaller query tile. Reserve the larger size before profiling.
+        # Arena size remains independent of history length.
         m, n, d = ATTENTION_QUERY_ROWS, ATTENTION_KV_ROWS, self.head_dim
         c = self.history_cluster_size
         buffers, slots = (2, 2) if c == 4 else (1, 1)
         floats = 2*m*d + slots*m*n + (c*m*d + 2*c*m if c > 1 else 0)
         operands = c*m*d + buffers*2*n*d + slots*m*n
-        return self.cube_cores * (floats*4 + operands*2)
+        selected_bytes = floats*4 + operands*4
+        mdl_rows = 32
+        mdl_floats = 2*mdl_rows*d + mdl_rows*n
+        mdl_operands = mdl_rows*d + 4*n*d + mdl_rows*n
+        mdl_bytes = mdl_floats*4 + mdl_operands*4
+        return self.cube_cores * max(selected_bytes, mdl_bytes)
 
     @property
     def _fp32_cv_bytes(self):
@@ -163,7 +171,7 @@ class WorkspaceGeometry:
         n, c = self.tokens, self.history_tokens
         h, k, d, p = self.query_heads, self.kv_heads, self.head_dim, 3 * self.splits
         return {
-            "query_rot": c * h * ((d+16)*2 if self.bf16_history else d*4),
+            "query_rot": c * h * d * 4,
             "query_input": n * h * d * 2,
             "key_input": n * k * d * 2,
             "value_input": n * k * d * 2,
@@ -197,8 +205,8 @@ class GraphWorkspace:
         n, h, d, p = geometry.tokens, geometry.query_heads, geometry.head_dim, 3 * geometry.splits
         c = geometry.history_tokens
         self.query_rot = torch.empty(
-            (c, h, d+16 if geometry.bf16_history else d),
-            dtype=torch.bfloat16 if geometry.bf16_history else torch.float32,
+            (c, h, d),
+            dtype=torch.float32,
             device=device)
         # qkv.split leaves a strided value projection in the native model.
         # These bounded current-step copies are reused; no historical KV is
@@ -410,7 +418,7 @@ class AscendRuntimeProvider:
         require_production_ops()
         if self.config.get("experimental_quantization_bundle", False):
             from .ops.loader import require_capabilities
-            require_capabilities({"rotate_bf16_query_out"})
+            require_capabilities({"rotate_vector_init_out"})
         # Only current production readers are mandatory. Retired FP32 readers
         # remain compiled for independent diagnostics, never serving selection.
         from .ops.loader import require_capabilities

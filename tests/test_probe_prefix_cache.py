@@ -102,9 +102,9 @@ def test_source_binding_exists_and_follows_current_source():
 
 def test_prefix_query_and_workspace_follow_bf16_reader_abi():
     state = probe.allocate(torch, 'cpu', 2)
-    assert state['qr'].shape == (8, 6, 272)
-    assert state['qr'].dtype == torch.bfloat16
-    assert state['workspace'].numel() == 2 * 655360
+    assert state['qr'].shape == (8, 6, 256)
+    assert state['qr'].dtype == torch.float32
+    assert state['workspace'].numel() == 2 * 1212416
 
 
 def test_no_real_npu_is_failure(monkeypatch, tmp_path):

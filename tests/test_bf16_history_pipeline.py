@@ -33,8 +33,8 @@ def test_full_fixed_geometry_matches_runtime_selector_and_native_predicate(index
         attn_state=state.ChunkedPrefill if native else state.SpecDecoding)
     assert full.current.use_native_current(metadata)==policy['native_current']==native
     assert original.shape.splits in (1,3)  # independent operator diagnostics retained
-    assert EXECUTION['cv_arena_bytes']['candidate']==20*3_883_008
-    assert EXECUTION['cv_arena_bytes']['candidate']<EXECUTION['cv_arena_bytes']['baseline']
+    assert EXECUTION['cv_arena_bytes']['candidate']==20*5_259_264
+    assert EXECUTION['cv_arena_bytes']['candidate']>EXECUTION['cv_arena_bytes']['baseline']
 
 
 @pytest.mark.parametrize('mutation',['native_budget','missing_budget','boolean_cores','invalid_capacity','wrong_rotation'])
@@ -99,7 +99,7 @@ def test_launch_order_uses_current_guard_source2_and_read_before_write(monkeypat
     tensors={key:torch.empty(1) for key in ('raw','wk','wv','tags','rv','table','starts','lens','rk_transpose','rv_transpose')}
     tensors.update({key:torch.zeros((n,1 if key in ('ck','cv') else h,256),dtype=torch.bfloat16) for key in ('q','ck','cv')})
     tensors.update(qr=torch.zeros(n,h,256),slots=torch.tensor([0,1,-1,-1]))
-    if candidate:tensors['qr']=torch.zeros(n,h,272,dtype=torch.bfloat16)
+    if candidate:tensors['qr']=torch.zeros(n,h,256,dtype=torch.float32)
     buffers={'tasks':torch.zeros(n*3*s,16,dtype=torch.int64),'positions':torch.zeros(n,dtype=torch.int64),
         'partial':torch.zeros(n,h,3*s,256),'lse':torch.full((n,h,3*s),-float('inf')),
         'output':torch.empty(n*h,256),'output_lse':torch.empty(n*h),'bf16':torch.empty(n*h,256,dtype=torch.bfloat16),
@@ -125,10 +125,10 @@ def test_launch_order_uses_current_guard_source2_and_read_before_write(monkeypat
     def rotate(*args):
         events.append('rotate')
         assert args[2] is tensors['qr']
-        assert args[2].shape[-1]==(272 if candidate else 256)
-        assert args[2].dtype==(torch.bfloat16 if candidate else torch.float32)
+        assert args[2].shape[-1]==256
+        assert args[2].dtype==torch.float32
     ops=SimpleNamespace(prepare_attention_tasks_out=prepare,
-        **{'rotate_bf16_query_out' if candidate else 'rotate_vector_init_out':rotate},
+        rotate_vector_init_out=rotate,
         merge_lse_out=merge,rotate_clip_store_striped_out=store)
     monkeypatch.setattr(probe,'launch',cv)
     monkeypatch.setattr(full.current,'suppress_current_source_tasks',lambda *a:events.append('suppress'))

@@ -61,23 +61,46 @@ def test_missing_mapping_is_an_error_not_a_fallback(monkeypatch):
         select_cv_op(16,6,1,128,4,bf16_history=True,**FLAGS)
 
 
-@pytest.mark.parametrize("cluster,pipeline,expected", [(1,False,786432),
-    (4,True,1970176),(16,True,3883008)])
-def test_workspace_uses_bounded_compact_typed_arenas(cluster,pipeline,expected):
+@pytest.mark.parametrize("cluster,pipeline,expected", [(1,False,1212416),
+    (4,True,2887680),(16,True,5259264)])
+def test_workspace_uses_bounded_residual_typed_arenas(cluster,pipeline,expected):
     old=WorkspaceGeometry(16384,6,1,256,cube_cores=20,
                           history_cluster_size=cluster,c4_member_pipeline=pipeline)
     new=replace(old,bf16_history=True)
-    assert new.cv_bytes == 20*expected < old.cv_bytes
+    assert new.cv_bytes == 20*expected > old.cv_bytes
     assert replace(new,tokens=128).cv_bytes == new.cv_bytes
     old_bytes,new_bytes=old.buffer_bytes,new.buffer_bytes
     changed={name for name in old_bytes if old_bytes[name]!=new_bytes[name]}
-    assert changed == {"cv", "query_rot"}
-    assert new.buffer_bytes["query_rot"] == new.history_tokens*6*(256+16)*2
-    assert new.buffer_bytes["query_rot"] < old.buffer_bytes["query_rot"]
+    assert changed == {"cv"}
+    assert new.buffer_bytes["query_rot"] == new.history_tokens*6*256*4
+    assert new.buffer_bytes["query_rot"] == old.buffer_bytes["query_rot"]
     with pytest.raises(ValueError,match="D256"):
         replace(new,head_dim=128)
     with pytest.raises(ValueError,match="explicit boolean"):
         replace(new,bf16_history=1)
+
+
+@pytest.mark.parametrize("later,name", [
+    (False, "attention_bf16_history_mdl_out"),
+    (True, "attention_bf16_history_mdl_q1_out"),
+])
+def test_single_cluster_arena_reserves_mdl_double_kv_storage(later, name):
+    # #173: both MDL readers have M32 but two K/V tiles. The generic M128
+    # single-buffer family is 1179648 B and cannot cover 1212416 B MDL.
+    geometry = WorkspaceGeometry(128,6,1,256,cube_cores=20,
+        history_cluster_size=1,bf16_history=True)
+    rows, kv, dim = 32, 256, 256
+    required = ((2*rows*dim + rows*kv)*4 +
+                (rows*dim + 4*kv*dim + rows*kv)*2*2)
+    assert required == 1212416
+    assert geometry.buffer_bytes["cv"] == 20*required
+    # Production still requires the complete C16 bundle; do not relax that
+    # guard just to exercise the allocator's general capacity contract.
+    assert select_cv_op(16,6,1,128,1 if later else 4,q1_draft=later,
+                        bf16_history=True,**FLAGS) == name
+    with pytest.raises(ValueError,match="complete C16 candidate bundle"):
+        select_cv_op(1,6,1,128,1 if later else 4,q1_draft=later,
+                     bf16_history=True,**FLAGS)
 
 
 @pytest.mark.parametrize("n,length,later,target", [

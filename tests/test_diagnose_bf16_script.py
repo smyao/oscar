@@ -27,6 +27,7 @@ def test_probe_exit_and_bundle(tmp_path, rc, build_rc):
     python = bindir / "probe-python"
     python.write_text("""#!/bin/bash
 set -eu
+if [[ "$*" == *"tools.summarize_bf16"* ]]; then printf 'compact result\\n'; exit 0; fi
 [[ "$*" == *"tools.phase"* ]]
 if [[ "$*" == *"tools.build_ops"* ]]; then
   while [[ "$1" != "--log-dir" ]]; do shift; done

@@ -4,7 +4,7 @@
 // D.4 four questions: (1) bounded INT2 reconstruction inside fused history
 // attention; (2) prior whole-history restoration cost6499.8-6655.1ms/card;
 // (3) only four FP32 Mul->Add values/token, one RNE to BF16, then indexed
-// 16-bit copies: no FP32 K/V tile, no history-sized restored allocation;
+// high/low 16-bit copies (#173): no FP32 K/V tile or history-sized allocation;
 // (4) existing H16/32/64 tile, 16KiB bounded index scratch, 32H-byte small
 // scratch, and BF16 publication. These work bounds are not measured speed.
 // Native API evidence (references/vllm-ascend/csrc): scatter_nd_update_v2/
@@ -35,7 +35,7 @@ template<int32_t D,int32_t HalfKv=16> struct Geometry {
   static constexpr int32_t packedStride=((D/2+8+31)/32)*32;
   static constexpr int32_t naturalStride=D+16;
   static constexpr int32_t naturalBytes=HalfKv*naturalStride*2;
-  static constexpr int32_t outputBytes=elements*2;
+  static constexpr int32_t outputBytes=elements*4;
   static constexpr int32_t scratchBytes=HalfKv*8*4;
   static constexpr int32_t indexRows=8;
   static constexpr int32_t indexElements=indexRows*D;
@@ -68,11 +68,11 @@ __aicore__ inline void InitIndices(
 }
 
 // Buffer minima: packed160H B, four guard buffers32B each, natural544H B,
-// mask64B, metadataIndex8H B, metadataHalf4H B, output512H B, scratch32H B,
+// mask64B, metadataIndex8H B, metadataHalf4H B, output1024H B (high+low), scratch32H B,
 // indexScratch16384B. The buffers must not alias. Their existing larger
 // allocations may be retained for softmax/PV use outside this call.
 // Caller owns packed MTE2->V, prior output MTE3->V, and output V->MTE3.
-// Output is contiguous [HalfKv,D] BF16 in dequantBuf, including padded rows.
+// Output is two contiguous [HalfKv,D] BF16 planes in dequantBuf, including padding.
 // LoadPacked initializes dead rows to code0/scale0/zero0; this helper must
 // not sanitize invalid live metadata or change its later error precedence.
 template<int32_t D,int32_t HalfKv=16>
@@ -190,6 +190,17 @@ __aicore__ inline void Unpack(bool value,int32_t liveKvRows,int32_t& error,
   Cast(tableBf16,table,RoundMode::CAST_RINT,4*HalfKv);
   PipeBarrier<PIPE_V>();
 
+  // Archive #173: capture the rounding residual before the small FP32
+  // level table dies. Use the otherwise not-yet-live index scratch.
+  auto tableLow=tableBf16[4*HalfKv];
+  auto levelResidual=indexScratchBuf.Get<float>();
+  Cast(levelResidual,tableBf16,RoundMode::CAST_NONE,4*HalfKv);
+  PipeBarrier<PIPE_V>();
+  Sub(levelResidual,table,levelResidual,4*HalfKv);
+  PipeBarrier<PIPE_V>();
+  Cast(tableLow,levelResidual,RoundMode::CAST_RINT,4*HalfKv);
+  PipeBarrier<PIPE_V>();
+
   // Eight rows at a time: float codes0..3 -> exact int32 byte offsets.
   // Neither half of this scratch ever contains dequantized floating K/V.
   auto codeFloat=indexScratchBuf.Get<float>();
@@ -210,6 +221,8 @@ __aicore__ inline void Unpack(bool value,int32_t liveKvRows,int32_t& error,
       Adds(offsets[row*D],offsets[row*D],static_cast<int32_t>(2*(begin+row)),D);
     PipeBarrier<PIPE_V>();
     Gather(values.ReinterpretCast<half>()[begin*D],tableBf16.ReinterpretCast<half>(),
+        offsets.template ReinterpretCast<uint32_t>(),0,G::indexElements);
+    Gather(values.ReinterpretCast<half>()[G::elements+begin*D],tableLow.ReinterpretCast<half>(),
         offsets.template ReinterpretCast<uint32_t>(),0,G::indexElements);
     // Gather must finish reading offsets/table before the next chunk, and
     // before the caller reuses indexScratch as the Q/P Cast publisher.

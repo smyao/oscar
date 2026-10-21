@@ -199,8 +199,8 @@ def _check_regions(layout, cluster_size, mdl):
         for start, size in ordered:
             assert 0 <= start < start + size <= limit, "arena overflow"
         assert all(a + size <= b for (a, size), (b, _) in zip(ordered, ordered[1:])), "live region alias"
-    assert layout["bytes"] == layout["arena"]*4 + layout["operand_arena"]*2
-    assert all(value % 32 == 0 for value in (layout["arena"]*4, layout["operand_arena"]*2, layout["bytes"]))
+    assert layout["bytes"] == layout["arena"]*4 + layout["operand_arena"]*4
+    assert all(value % 32 == 0 for value in (layout["arena"]*4, layout["operand_arena"]*4, layout["bytes"]))
 
 
 @pytest.mark.parametrize("family", range(len(FAMILIES)), ids=[f[0] for f in FAMILIES])

@@ -1,9 +1,9 @@
-"""Archive #13-22/#126/#154/#167: audit the real direct-decode LUT/index tail.
+"""Archive #13-22/#126/#154/#167/#173: audit the real direct-decode LUT/index tail.
 
 The extracted source is unmodified for positive controls. Vector primitives
 are scalar host models: this checks arithmetic, scratch aliasing and byte
 addresses, not CANN overloads, A2 rounding/fences, or NPU/graph completion.
-Frozen attention acceptance is checked separately by the failing screen; this
+Frozen attention acceptance is checked separately by the numerical screen; this
 file never reclassifies an acceptance failure as an expected pytest success.
 """
 import os
@@ -66,6 +66,10 @@ void Cast(Tensor<float>d,Tensor<half>s,RoundMode,int n){
 void Cast(Tensor<bfloat16_t>d,Tensor<float>s,RoundMode mode,int n){
  if(mode!=RoundMode::CAST_RINT)throw std::runtime_error("round mode");
  for(int i=0;i<n;++i)d.SetValue(i,{bf16_rne(s.GetValue(i))});}
+void Cast(Tensor<float>d,Tensor<bfloat16_t>s,RoundMode mode,int n){
+ if(mode!=RoundMode::CAST_NONE)throw std::runtime_error("widen mode");
+ for(int i=0;i<n;++i){uint32_t bits=uint32_t(s.GetValue(i).bits)<<16;
+  float value;std::memcpy(&value,&bits,4);d.SetValue(i,value);}}
 void Cast(Tensor<int32_t>d,Tensor<float>s,RoundMode mode,int n){
  if(mode!=RoundMode::CAST_ROUND)throw std::runtime_error("index round mode");
  for(int i=0;i<n;++i){float v=s.GetValue(i);
@@ -80,6 +84,8 @@ void Mul(Tensor<float>d,Tensor<float>a,Tensor<float>b,int n){
  for(int i=0;i<n;++i)d.SetValue(i,a.GetValue(i)*b.GetValue(i));}
 void Add(Tensor<float>d,Tensor<float>a,Tensor<float>b,int n){
  for(int i=0;i<n;++i)d.SetValue(i,a.GetValue(i)+b.GetValue(i));}
+void Sub(Tensor<float>d,Tensor<float>a,Tensor<float>b,int n){
+ for(int i=0;i<n;++i)d.SetValue(i,a.GetValue(i)-b.GetValue(i));}
 void Muls(Tensor<int32_t>d,Tensor<int32_t>s,int32_t v,int n){
  for(int i=0;i<n;++i)d.SetValue(i,s.GetValue(i)*v);}
 void Adds(Tensor<int32_t>d,Tensor<int32_t>s,int32_t v,int n){
@@ -146,7 +152,20 @@ def fixture(rows):
     zeros[:8] = [0, 0x8000, 0x8001, 0xbc00, 0x7bff, 0xfbff, 0x8000, 0x3c04]
     codes = ((np.arange(size)[:, None]*13 + np.arange(256)*7) % 4).astype(np.uint8)
     table = independent_level_bits(scales, zeros)
-    expected = table[np.arange(size)[:, None], codes]
+    expected_high = table[np.arange(size)[:, None], codes]
+    # Independent FP64 arithmetic establishes FP32 levels, then explicit
+    # nearest-even integer rounding establishes their BF16 residuals.
+    scale = scales.view(np.float16).astype(np.float64)
+    zero = zeros.view(np.float16).astype(np.float64)
+    product = (scale[:, None]*np.arange(4, dtype=np.float64)).astype(np.float32)
+    levels = (product.astype(np.float64)+zero[:, None]).astype(np.float32)
+    high_float = (table.astype(np.uint32) << 16).view(np.float32)
+    residual = (levels.astype(np.float64)-high_float.astype(np.float64)).astype(np.float32)
+    bits = residual.view(np.uint32)
+    top, bottom = bits >> 16, bits & 65535
+    residual_bits = (top + ((bottom > 32768) | ((bottom == 32768) & ((top & 1) != 0)))).astype(np.uint16)
+    expected_low = residual_bits[np.arange(size)[:, None], codes]
+    expected = np.stack((expected_high, expected_low))
     binary = bytearray()
     for first in range(0, size, rows):
         binary.extend(scales[first:first+rows].tobytes())
@@ -170,7 +189,9 @@ def test_actual_cpp_lookup_tail_matches_independent_bit_oracle(tmp_path, rows, m
     payload, expected = fixture(rows)
     result = subprocess.run([str(binary)], input=payload, capture_output=True, timeout=15)
     assert result.returncode == 0, result.stderr.decode()
-    actual = np.frombuffer(result.stdout, dtype=np.uint16).reshape(expected.shape)
+    # Kernel emits high then low for each HalfKv subtile, not global planes.
+    actual = np.frombuffer(result.stdout, dtype=np.uint16).reshape(-1, 2, rows, 256)
+    actual = actual.transpose(1, 0, 2, 3).reshape(expected.shape)
     if mutation == 'none':
         np.testing.assert_array_equal(actual, expected)
     else:

@@ -24,6 +24,11 @@ def test_install_and_probe_plans_select_the_same_bundle(variant, enabled, capsys
         "mixed_decode_split": enabled, "decode_bundle": enabled, "mdl_decode": enabled,
         "c4_member_pipeline": enabled, "whole_prefill": False, "bf16_history": enabled}
     assert install["probes"] == "none"
+    # #173: both fixed commands expose the producer/arena actually used.
+    for plan in (install, probe):
+        selection = plan["runtime_selection"]
+        assert selection["query_rotation"] == "rotate_vector_init_out"
+        assert selection["cv_workspace_layout"] == "bf16_hi_lo_typed_v3"
 
 
 def test_default_retains_config_and_candidate_does_not_mutate_input():

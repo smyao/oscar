@@ -53,6 +53,7 @@ template<class... A> void Cast(A...);
 template<class T, class U, class... A> void Compares(A...);
 template<class... A> void Mul(A...);
 template<class... A> void Add(A...);
+template<class... A> void Sub(A...);
 template<class... A> void Muls(A...);
 template<class... A> void Adds(A...);
 }

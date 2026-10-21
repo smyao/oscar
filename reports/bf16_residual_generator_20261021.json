@@ -1,0 +1,41 @@
+{
+  "mother_commit": "6029f2a8c6277ab8136e5a5eeaa2c2c16313ca08",
+  "check": true,
+  "kernels": [
+    {
+      "kernel": "csrc/kernels/attention_bf16_history_mdl.cpp",
+      "mother_sha256": "1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f",
+      "derived_sha256": "7b2a9d7c4b740d797883cdb3ff321d446cf6f0101ea805581486c3d88f42fea7",
+      "inverse_identity": true,
+      "transformations": 38
+    },
+    {
+      "kernel": "csrc/kernels/attention_bf16_history_member_pipeline_cluster4.cpp",
+      "mother_sha256": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc",
+      "derived_sha256": "78d5967db0c4b7f2abdf9d2639c86bb71ab7f8fd3ac98d9705f15e9bd8163181",
+      "inverse_identity": true,
+      "transformations": 40
+    },
+    {
+      "kernel": "csrc/kernels/attention_bf16_history_window_range_cluster16.cpp",
+      "mother_sha256": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335",
+      "derived_sha256": "5b8946b0952e89a68b0f20fc32e3fcd2bb04ad4ba9019f7198ec3faea4f15974",
+      "inverse_identity": true,
+      "transformations": 36
+    },
+    {
+      "kernel": "csrc/kernels/attention_bf16_history_window_range.cpp",
+      "mother_sha256": "d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4",
+      "derived_sha256": "df5aa0ab951f8ba5164b61f0f28771686ae991303f2820d414a82b7885e2cdd4",
+      "inverse_identity": true,
+      "transformations": 36
+    },
+    {
+      "kernel": "csrc/kernels/attention_bf16_history_window_range_balanced.cpp",
+      "mother_sha256": "1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013",
+      "derived_sha256": "d7f75e2bcb8a494be981fdcc8a390a611a654505e057ca30780ea995ca36254f",
+      "inverse_identity": true,
+      "transformations": 36
+    }
+  ]
+}

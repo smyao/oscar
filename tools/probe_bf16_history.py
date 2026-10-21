@@ -25,10 +25,10 @@ from .phase import atomic_json
 from .striped_fixture import raw_to_striped
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA = 'oscar.bf16_history.npu.v2'
-from .experiments.bf16_direct_decode import CONTRACT
+SCHEMA = 'oscar.bf16_history.residual.npu.v3'
+from .experiments.bf16_residual_screen import CONTRACT
 MIN_SPEEDUP = 1.15
-CPU_SCREEN_REPORT = ROOT / 'reports/bf16_all_sources_screen_20261016_v3.json'
+CPU_SCREEN_REPORT = ROOT / 'reports/bf16_residual_screen_20261021_v2.json'
 ROUTES = {
     'mdl': ('attention_cv_mdl_decode_out', 'attention_bf16_history_mdl_out', 1, 1146880),
     'mdl_q1': ('attention_cv_mdl_decode_q1_out', 'attention_bf16_history_mdl_q1_out', 1, 1146880),
@@ -52,7 +52,7 @@ SOURCE_PATHS = (
     'csrc/rotation_bindings.cpp', 'csrc/include/oscar_rotation_vector_init_launch.h',
     'csrc/kernels/status_guard.cpp',
     'tools/probe_striped_cache.py', 'tools/experiments/bf16_history_screen.py',
-    'tools/experiments/bf16_all_sources_screen.py', 'tools/experiments/bf16_direct_decode.py',
+    'tools/experiments/bf16_residual_screen.py', 'tools/experiments/bf16_all_sources_screen.py', 'tools/experiments/bf16_direct_decode.py',
     'csrc/kernels/attention_striped_unpack_bf16.h', 'tools/experiments/generate_bf16_history_kernels.py',
     'oscar_ascend/ops/reference.py', 'configs/acceptance.json',
     'csrc/kernels/attention_bf16_history_mdl.cpp',
@@ -239,7 +239,7 @@ def candidate_workspace_per_core(route):
     slots=2 if route=='c4' else 1;n=d=256
     floats=2*m*d+slots*m*n+(c*m*d+2*c*m if c>1 else 0)
     operands=c*m*d+buffers*2*n*d+slots*m*n
-    return floats*4+operands*2
+    return floats*4+operands*4
 
 
 def allocate(torch,fixture,device,cores,route,*,candidate):
@@ -252,7 +252,7 @@ def allocate(torch,fixture,device,cores,route,*,candidate):
                    merge_status=torch.empty(n*h,dtype=torch.int32,device=device),
                    bf16=torch.empty((n*h,d),dtype=torch.bfloat16,device=device))
     if candidate:
-        buffers['qr_bf16']=torch.empty((n,h,d+16),dtype=torch.bfloat16,device=device)
+        buffers['qr_residual']=torch.empty((n,h,d),dtype=torch.float32,device=device)
         buffers['rotate_status']=torch.empty((n,h),dtype=torch.int32,device=device)
     return buffers
 
@@ -261,20 +261,19 @@ def produce_bf16_query(ops,tensors,fixture,buffers):
     """Real producer ABI, outside CV-only timing but inside changed-input graphs.
 
     The independent FP32 CPU qr remains the old-reader input. The candidate
-    consumes BF16[D+16], including the producer's original FP32 sum trailer.
+    consumes original FP32 rotation; the reader splits it into two BF16 planes.
     """
-    ops.rotate_bf16_query_out(tensors['q'],tensors['rk_transpose'],buffers['qr_bf16'],
+    ops.rotate_vector_init_out(tensors['q'],tensors['rk_transpose'],buffers['qr_residual'],
         buffers['rotate_status'],fixture['query_hadamard'],tensors['slots'])
     if fixture['spec'].corrupt_qr:
         token=fixture['spec'].corrupt_qr_token
         # Deliberate post-producer corruption, equivalent to the old negative
-        # qr fixture: poison both operand and its original FP32 check value.
-        buffers['qr_bf16'][token,0,0]=float('nan')
-        buffers['qr_bf16'][token,0,256:258].view(dtype=buffers['output'].dtype).fill_(float('nan'))
+        # qr fixture: poison the FP32 rotation before residual splitting.
+        buffers['qr_residual'][token,0,0]=float('nan')
 
 
 def launch(ops,name,tensors,fixture,buffers,cores,cluster,*,merge=True):
-    inputs=({**tensors,'qr':buffers['qr_bf16']}
+    inputs=({**tensors,'qr':buffers['qr_residual']}
             if name.startswith('attention_bf16_history_') else tensors)
     shared._launch(ops,name,inputs,fixture,buffers,cores,cluster)
     if merge:
@@ -689,12 +688,13 @@ def numerical_matrix_errors(rows):
     return bad
 
 
-from .experiments.bf16_all_sources_screen import SOURCE_PATHS as CPU_SOURCE_PATHS
+from .experiments.bf16_residual_screen import SOURCE_PATHS as CPU_SOURCE_PATHS
 
 
 def direct_decode_errors(report):
     if not isinstance(report,dict):return ['missing']
-    expected={'contract':CONTRACT,'status':'cpu_direct_decode_passed','returncode':0,'packed_words':65536,
+    from .experiments.bf16_direct_decode import CONTRACT as DIRECT_CONTRACT
+    expected={'contract':DIRECT_CONTRACT,'status':'cpu_direct_decode_passed','returncode':0,'packed_words':65536,
         'packed_code_positions_checked':524288,'valid_scale_patterns':31743,'finite_zero_patterns':63488,
         'metadata_pairs':634872,'levels_checked':2539488,'metadata_cartesian_product_exhaustive':False,
         'negative_zero_code0_bits':0,'device_completion':'not_run','production_qualified':False}
@@ -706,7 +706,7 @@ def direct_decode_errors(report):
 
 def cpu_screen_identity_errors(report):
     """An existing failed screen is reusable only for exactly these sources."""
-    from .experiments import bf16_all_sources_screen as screen
+    from .experiments import bf16_residual_screen as screen
     if not isinstance(report,dict):return ['missing']
     expected_cases=[asdict(case) for case in screen.CASES]
     acceptance=json.loads((ROOT/'configs/acceptance.json').read_text())
@@ -716,6 +716,13 @@ def cpu_screen_identity_errors(report):
               'source_sha256':{name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in CPU_SOURCE_PATHS}}
     bad=[key for key,value in expected.items() if report.get(key)!=value]
     bad += ['direct_decode.'+key for key in direct_decode_errors(report.get('direct_decode'))]
+    split=report.get('residual_split') or {}
+    required_split={'contract':CONTRACT,'status':'cpu_residual_split_passed','returncode':0,
+                    'levels_checked':2539488,'metadata_pairs':634872,'codes_checked_per_pair':4,
+                    'metadata_cartesian_product_exhaustive':False,'device_completion':'not_run',
+                    'production_qualified':False}
+    bad += ['residual_split.'+k for k,v in required_split.items() if split.get(k)!=v]
+
     rows=report.get('cases')
     if not isinstance(rows,list) or len(rows)!=len(expected_cases):return bad+['cases']
     for expected_case,row in zip(expected_cases,rows):
@@ -744,7 +751,7 @@ def cpu_screen_errors(report):
 
 
 def run_cpu_screen():
-    from .experiments import bf16_all_sources_screen as screen
+    from .experiments import bf16_residual_screen as screen
     # Reuse the already completed full falsification only when every fixture,
     # frozen threshold and input source hash still matches. Failed evidence is
     # reusable as a failure; it never becomes a performance authorization.
@@ -886,7 +893,7 @@ def probe(config_path,acceptance_path,*,output_path=None):
     if normalize_soc(torch.npu.get_device_name(0))!=config['soc_version']:raise RuntimeError('BF16 target SoC differs')
     from oscar_ascend.ops.loader import validate_build_artifacts,require_capabilities
     manifest=validate_build_artifacts(ROOT/'build/ascendc/build_manifest.json')
-    require_capabilities({name for values in ROUTES.values() for name in values[:2]}|{'prepare_attention_tasks_out','merge_lse_out','rotate_out','rotate_vector_init_out','rotate_bf16_query_out',
+    require_capabilities({name for values in ROUTES.values() for name in values[:2]}|{'prepare_attention_tasks_out','merge_lse_out','rotate_out','rotate_vector_init_out',
                          'rotate_clip_store_striped_out','status_guard'})
     result={'schema':SCHEMA,'operand_contract':CONTRACT,'status':'running','device_completion':'not_run','cases':[],
             'source_binding':source_binding(),'acceptance_sha256':hashlib.sha256(acceptance_path.read_bytes()).hexdigest(),

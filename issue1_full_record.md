@@ -28843,3 +28843,6 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **本地独立复现**：同一fixture Q全0，因此softmax为均匀权重；不用候选内核或online实现，直接对704个历史token使用FP32解码V、其他token保持原BF16，算术均值逐位等于独立oracle。只将这704个历史V舍入BF16后取均值，max_abs=3.6953125、relative_l2=0.12610599855542043，与目标回传吻合。重建示例2133.3125→2128、2218.625→2224；最终前四维oracle为[-0.021484375,-0.021484375,29.3046875,-0.021484375]，舍入均值为[0,0,33,0]。见`reports/bf16_cancellation_analytic_20261020.json`及新增回归。只证明该抵消失败由BF16舍入足以解释，不泛化其他用例全因已定位。
 
 **处置边界**：单份BF16值丢失的残差无法靠FP32累加或事件同步恢复。保持当前冻结门且不恢复旧FP32路由，就需另行设计保留残差的补偿计算，意味着增加矩阵乘/搬运，不再是单份BF16基线计算流程；不能承诺未经测试的吞吐或全部精度。当前没有改生产内核、oracle或容差，没有掩盖失败，也未解除部署数值门。
+
+
+**#173 后续源码修复（2026-10-21，非新增真机条目）**：用户明确授权BF16残差补偿。当前candidate在有界tile内用高/低两份BF16表示历史Q/K/P/V，历史QK/PV四项、精确源PV两项，原FP32旋转保留到reader拆分，不恢复FP32 QK/PV。同步typed workspace/绑定/生产入口和probe；MDL预取发布低平面，保留#171跨pipe依赖。CPU固定11例及当前probe的13项数学回归通过；成本、资源及边界见`docs/bf16_residual_implementation_20261021.md`。尚无本次目标机CANN/NPU/图/服务结果，不能将CPU结果写成设备修复完成。

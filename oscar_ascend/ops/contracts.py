@@ -48,7 +48,7 @@ def source_capabilities(*, bf16_history=True):
 # Exact callable symbols, not names of abstract components. Compilation,
 # CPU simulation, NPU execution and service acceptance remain separate gates.
 PRODUCTION_CAPABILITIES = frozenset({"store_int2_out", "merge_lse_out", "rotate_out",
-    "rotate_clip_store_out", "prepare_attention_tasks_out", "status_guard", "rotate_bf16_query_out"}) | BF16_HISTORY_CAPABILITIES
+    "rotate_clip_store_out", "prepare_attention_tasks_out", "status_guard", "rotate_vector_init_out"}) | BF16_HISTORY_CAPABILITIES
 SUPPORTED_HEAD_DIMS = (64, 128, 256)
 MAX_SPLITS = 128
 DEVICE_STATUS = {

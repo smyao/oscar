@@ -15,7 +15,7 @@ import math
 import statistics
 
 from oscar_ascend.integration import current_attention as current
-from .experiments.bf16_direct_decode import CONTRACT
+from .experiments.bf16_residual_screen import CONTRACT
 from oscar_ascend.integration.guard_diag import guard_diag_enabled, run_status_guard
 
 SCOPE = 'complete_attention_eager_prepare_rotate_cv_native_current_merge_copy_store_guard_device_events'
@@ -42,7 +42,7 @@ def execution_contract(config,cores):
     if config.get('rotation_method','hadamard')!='hadamard' or config.get('sink_tokens',64)!=64 or config.get('recent_tokens',256)!=256:
         raise ValueError('fixed full attention fixtures require Hadamard/sink64/recent256')
     settings={'rotate_operator':'rotate_vector_init_out' if config.get('experimental_quantization_bundle',False) else 'rotate_out',
-              'candidate_rotate_operator':'rotate_bf16_query_out',
+              'candidate_rotate_operator':'rotate_vector_init_out',
               'hadamard':True,'k_clip_ratio':float(config.get('k_clip_ratio',0.0)),
               'v_clip_ratio':float(config.get('v_clip_ratio',0.0)),'guard_host_sync':False}
     return {'operand_contract':CONTRACT,'effective_config_sha256':config_sha256(config),'cube_cores':cores,
@@ -66,7 +66,7 @@ def validate_execution(contract):
         if contract['cv_arena_bytes']!={'baseline':replace(geometry,bf16_history=False).cv_bytes,'candidate':geometry.cv_bytes}:return False
         if (settings['guard_host_sync'] is not False or settings['hadamard'] is not True or
             settings['rotate_operator'] not in {'rotate_out','rotate_vector_init_out'} or
-            settings['candidate_rotate_operator']!='rotate_bf16_query_out' or
+            settings['candidate_rotate_operator']!='rotate_vector_init_out' or
             any(type(settings[key]) not in (float,int) or not math.isfinite(settings[key]) or not 0<=settings[key]<1 for key in ('k_clip_ratio','v_clip_ratio'))):return False
         return (contract.get('operand_contract')==CONTRACT and isinstance(contract['effective_config_sha256'],str) and len(contract['effective_config_sha256'])==64 and
                 contract['synthetic_physical_pages'] is True and contract['physical_block_tokens']==512 and
@@ -199,7 +199,7 @@ def build_pair(torch,ops,case,device,cores,config,first_receipt):
         tensors['rk_transpose']=rk.T.contiguous().to(device)
         tensors['rv_transpose']=fixture['cpu']['rv'].T.contiguous().to(device)
         buffers=probe.allocate(torch,fixture,device,cores,case.route,candidate=bool(candidate))
-        if candidate:tensors['qr']=buffers['qr_bf16']
+        if candidate:tensors['qr']=buffers['qr_residual']
         # Runtime reserves the maximal C16 arena once, shared by every route.
         buffers['workspace']=torch.empty(execution['cv_arena_bytes']['candidate' if candidate else 'baseline'],dtype=torch.uint8,device=device)
         buffers['rotate_status']=torch.empty((fixture['tokens'],case.shape.heads),dtype=torch.int32,device=device)
@@ -254,17 +254,15 @@ def full_oracle(torch,fixture,tasks,policy):
 
 
 def check_query_pair(torch,old,new,slots):
-    """Check the changed storage contract, not nonexistent FP32/BF16 byte parity."""
+    """Residual inputs retain unrounded rotation, with exact same-arm bytes."""
     from .probe_striped_cache import _store_bits_equal
-    if old.dtype!=torch.float32 or new.dtype!=torch.bfloat16 or new.shape!=(*old.shape[:-1],272):
-        raise RuntimeError('full attention query producer ABI differs')
-    if not _store_bits_equal(torch,old.cpu().to(torch.bfloat16),new[:,:,:256].cpu()):
-        raise RuntimeError('full attention BF16 query operands differ from rounded old rotation')
-    trailer=new[:,:,256:].contiguous().view(torch.float32)
-    if not bool(torch.isfinite(trailer[:,:,0]).all()) or bool(trailer[:,:,1:].view(torch.int32).ne(0).any()):
-        raise RuntimeError('full attention query checksum trailer is invalid')
-    inactive=slots<0
-    if bool(new[inactive].view(torch.int16).ne(0).any()):
+    if old.dtype!=torch.float32 or new.dtype!=torch.float32 or new.shape!=old.shape:
+        raise RuntimeError('full attention residual query producer ABI differs')
+    if not _store_bits_equal(torch,old.cpu(),new.cpu()):
+        raise RuntimeError('full attention unrounded query rotation differs')
+    if not bool(torch.isfinite(new).all()):
+        raise RuntimeError('full attention query rotation is nonfinite')
+    if bool(new[slots<0].view(torch.int32).ne(0).any()):
         raise RuntimeError('full attention inactive query producer rows are not zero')
 
 

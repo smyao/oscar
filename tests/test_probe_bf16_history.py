@@ -356,15 +356,19 @@ def test_all_padding_oracle_has_only_zero_output_and_negative_infinite_lse():
 def synthetic_cpu_pass():
     """Deliberately fabricated parser fixture, never saved as numerical evidence."""
     from dataclasses import asdict
-    from tools.experiments import bf16_all_sources_screen as screen
+    from tools.experiments import bf16_residual_screen as screen
     import hashlib
     cases=[asdict(case) for case in screen.CASES]
-    direct={'contract':probe.CONTRACT,'status':'cpu_direct_decode_passed','returncode':0,'packed_words':65536,
+    from tools.experiments.bf16_direct_decode import CONTRACT as DIRECT_CONTRACT
+    direct={'contract':DIRECT_CONTRACT,'status':'cpu_direct_decode_passed','returncode':0,'packed_words':65536,
         'packed_code_positions_checked':524288,'valid_scale_patterns':31743,'finite_zero_patterns':63488,
         'metadata_pairs':634872,'levels_checked':2539488,'exact_halfway_values_checked':142980,
         'metadata_cartesian_product_exhaustive':False,'negative_zero_code0_bits':0,
         'device_completion':'not_run','production_qualified':False}
     return {'schema_version':2,'operand_contract':probe.CONTRACT,'direct_decode':direct,'status':'cpu_screen_passed_not_qualified','returncode':0,'required_cases_complete':True,
+            'residual_split':{'contract':probe.CONTRACT,'status':'cpu_residual_split_passed','returncode':0,
+                'levels_checked':2539488,'metadata_pairs':634872,'codes_checked_per_pair':4,
+                'metadata_cartesian_product_exhaustive':False,'device_completion':'not_run','production_qualified':False},
             'required_cases':cases,'frozen_attention_gate':ACCEPTANCE['fused_attention'],
             'frozen_prefill_window_gate':ACCEPTANCE['prefill_window'],'next_stage':'device_design_allowed',
             'source_sha256':{name:hashlib.sha256((probe.ROOT/name).read_bytes()).hexdigest() for name in probe.CPU_SOURCE_PATHS},
@@ -409,7 +413,7 @@ def test_performance_code_is_reachable_only_after_all_mandatory_receipts(monkeyp
 
 
 def test_cpu_performance_prerequisite_runs_the_fixed_complete_screen(monkeypatch,tmp_path):
-    from tools.experiments import bf16_all_sources_screen as screen
+    from tools.experiments import bf16_residual_screen as screen
     called=[];sentinel=object()
     def run(*,cases,progress):
         called.append(cases)
@@ -429,7 +433,7 @@ def test_first_device_pass_contains_no_timing_call():
 
 
 def test_completed_source_bound_cpu_failure_is_reused_and_still_blocks_performance(monkeypatch,tmp_path):
-    from tools.experiments import bf16_all_sources_screen as screen
+    from tools.experiments import bf16_residual_screen as screen
     cpu=synthetic_cpu_pass()
     cpu['cases'][0]['candidate_passed']=False
     cpu.update(status='cpu_screen_failed',returncode=2,next_stage='numerical_gate_failed_no_performance_qualification')
@@ -442,7 +446,7 @@ def test_completed_source_bound_cpu_failure_is_reused_and_still_blocks_performan
 
 
 def test_stale_cpu_report_cannot_authorize_timing_and_requires_full_rerun(monkeypatch,tmp_path):
-    from tools.experiments import bf16_all_sources_screen as screen
+    from tools.experiments import bf16_residual_screen as screen
     cpu=synthetic_cpu_pass();cpu['source_sha256']['configs/acceptance.json']='stale'
     path=tmp_path/'cpu.json';path.write_text(json.dumps(cpu))
     monkeypatch.setattr(probe,'CPU_SCREEN_REPORT',path)
@@ -503,3 +507,14 @@ def test_cancellation_cast_alone_reproduces_target_error():
     result=relative_l2(cast_mean,gold,ACCEPTANCE['prefill_window']['relative_l2_lt'])
     assert not result['passed']
     assert result['relative_l2']==pytest.approx(0.1261059985317709,abs=1e-9)
+
+
+def test_residual_screen_cannot_reuse_single_plane_or_unchecked_split():
+    report=synthetic_cpu_pass()
+    assert probe.cpu_screen_errors(report)==[]
+    report.pop('residual_split')
+    assert any(e.startswith('residual_split.') for e in probe.cpu_screen_errors(report))
+    report=synthetic_cpu_pass()
+    from tools.experiments.bf16_direct_decode import CONTRACT as OLD_CONTRACT
+    report['operand_contract']=OLD_CONTRACT
+    assert 'operand_contract' in probe.cpu_screen_errors(report)

@@ -10,6 +10,7 @@
 #include "oscar_member_pipeline_launch.h"
 
 namespace oscar_ascend {
+// Archive #173: high/low BF16 operand planes; workspace remains tile bounded.
 // Element offsets are relative to their OWN typed arena. Q/K/V/P are BF16;
 // score, PV, normalized inverse-rotation input, accumulators and stats FP32.
 // Normalized input and PV/rotation each need one MxD tile: final member
@@ -31,7 +32,7 @@ struct Bf16AttentionWorkspace {
   constexpr int64_t Probability() const { return Key()+kvBuffers*2*kAttentionKvRows*dim; }
   constexpr int64_t ExtraProbability() const { return Probability()+rows*kAttentionKvRows; }
   constexpr int64_t OperandElements() const { return Probability()+scoreSlots*rows*kAttentionKvRows; }
-  constexpr int64_t Bytes() const { return FloatElements()*4+OperandElements()*2; }
+  constexpr int64_t Bytes() const { return FloatElements()*4+OperandElements()*4; }
 };
 constexpr int64_t attention_bf16_history_workspace_per_core(int64_t dim) {
   return Bf16AttentionWorkspace{dim,128,1,1,1}.Bytes();
@@ -45,10 +46,10 @@ constexpr int64_t attention_bf16_history_member_pipeline_workspace_per_core(int6
 constexpr int64_t attention_bf16_history_cluster16_workspace_per_core(int64_t dim) {
   return Bf16AttentionWorkspace{dim,128,16,1,1}.Bytes();
 }
-static_assert(attention_bf16_history_workspace_per_core(256)==786432);
-static_assert(attention_bf16_history_mdl_workspace_per_core(256)==655360);
-static_assert(attention_bf16_history_member_pipeline_workspace_per_core(256)==1970176);
-static_assert(attention_bf16_history_cluster16_workspace_per_core(256)==3883008);
+static_assert(attention_bf16_history_workspace_per_core(256)==1179648);
+static_assert(attention_bf16_history_mdl_workspace_per_core(256)==1212416);
+static_assert(attention_bf16_history_member_pipeline_workspace_per_core(256)==2887680);
+static_assert(attention_bf16_history_cluster16_workspace_per_core(256)==5259264);
 
 #define OSCAR_BF16_HISTORY_DECLARE(name) \
 void name(void* stream,void* query,void* query_rot,void* current_key, \

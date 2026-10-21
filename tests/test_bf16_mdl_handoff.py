@@ -14,7 +14,7 @@ def body(source, name):
 
 
 def publication_precedes_overwrite(source):
-    publish = body(source, "PipelinePublishKv").split("PublishBf16Operand", 1)[1]
+    publish = body(source, "PipelinePublishKv").split("PublishUnpackedOperand", 1)[1]
     consume = body(source, "PipelineConsumePv").split("DataCopy(", 1)[0]
     # A Fence records Set on its source pipe and Wait on its destination.
     # CPU issuing a Wait on V does not serialize another MTE2 DMA.

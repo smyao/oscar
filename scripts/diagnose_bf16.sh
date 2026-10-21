@@ -42,6 +42,14 @@ else
   echo "算子编译失败，未运行探针；见 $out/build-ops.log"
 fi
 printf '%s\n' "$rc" > "$out/exit-code.txt"
+if [[ -f "$out/result.json" ]]; then
+  if "$py" -m tools.summarize_bf16 "$out/result.json" > "$out/result-key.log"; then
+    cat "$out/result-key.log"
+  else
+    echo "摘要提取失败，原始结果保留在 $out/result.json"
+  fi
+fi
+
 
 files=("$out" "$cfg")
 for file in "$run/serve.log" "$run/status.json" "$run/serve.json" \
@@ -63,5 +71,6 @@ printf 'run_exit_code=%s\nscript_exit_code=%s\narchive=%s\n' \
 # Summary is outside the already-created archive; exit-code.txt and phase JSON
 # inside it retain the original build/probe outcome, including nonzero exits.
 echo "查看结果：cat logs/bf16_diag_latest/summary.txt"
+echo "精简诊断：cat logs/bf16_diag_latest/result-key.log"
 cat "$out/summary.txt"
 exit "$rc"

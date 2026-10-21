@@ -36,7 +36,7 @@ def _workspace():
         history_cluster_size=16, c4_member_pipeline=True, bf16_history=True)
     for name, shape, dtype in (
         ('query_input', (n,h,d), torch.bfloat16), ('key_input', (n,1,d), torch.bfloat16),
-        ('value_input', (n,1,d), torch.bfloat16), ('query_rot', (n,h,d+16), torch.bfloat16),
+        ('value_input', (n,1,d), torch.bfloat16), ('query_rot', (n,h,d), torch.float32),
         ('partial', (n,h,3,d), torch.float32), ('partial_lse', (n,h,3), torch.float32),
         ('output', (n,h,d), torch.float32), ('lse', (n,h), torch.float32),
         ('rotate_status', (n,h), torch.int32), ('merge_status', (n,h), torch.int32),
@@ -117,9 +117,10 @@ def test_serial_first_chunk_history_q4_q1_preserves_cache_and_workspace(monkeypa
             view[:active,:,2,:,3]=begin
             view[:active,:,2,:,4]=begin+active
 
-        def rotate_bf16_query_out(self,q,rotation,qr,status,hadamard,slots):
+        def rotate_vector_init_out(self,q,rotation,qr,status,hadamard,slots):
             events.append(('rotate',q.shape[0]))
-            qr[...,:256].copy_(q);qr[...,256:].zero_();status.zero_()
+            assert qr.dtype == torch.float32 and qr.shape == q.shape
+            qr.copy_(q);status.zero_()
 
         def __getattr__(self,name):
             if name not in {'attention_bf16_history_window_range_cluster16_out',

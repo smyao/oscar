@@ -37,7 +37,7 @@ def test_real_impl_native_later_batches_reuse_poisoned_flat_workspace(monkeypatc
     w.geometry = WorkspaceGeometry(cap, h, 1, d, cube_cores=20, history_cluster_size=16, c4_member_pipeline=True, bf16_history=True)
     for name, shape, dtype in (
         ("query_input", (cap,h,d), torch.bfloat16), ("key_input", (cap,1,d), torch.bfloat16),
-        ("value_input", (cap,1,d), torch.bfloat16), ("query_rot", (cap,h,d+16), torch.bfloat16),
+        ("value_input", (cap,1,d), torch.bfloat16), ("query_rot", (cap,h,d), torch.float32),
         ("partial", (cap,h,3,d), torch.float32), ("partial_lse", (cap,h,3), torch.float32),
         ("output", (cap,h,d), torch.float32), ("lse", (cap,h), torch.float32),
         ("rotate_status", (cap,h), torch.int32), ("merge_status", (cap,h), torch.int32),
@@ -61,11 +61,10 @@ def test_real_impl_native_later_batches_reuse_poisoned_flat_workspace(monkeypatc
                 positions[row] = column * 128 + offset
                 assert int(positions[row]) < int(lens[row])
 
-        def rotate_bf16_query_out(self, q, rotation, out, status, hadamard, slots):
-            assert out.dtype == torch.bfloat16 and out.shape == (*q.shape[:-1], d+16)
-            out.zero_(); out[slots >= 0, :, :d] = q[slots >= 0]; status.zero_()
-            sums = q.float().sum(-1)
-            out.view(torch.float32)[slots >= 0, :, d//2] = sums[slots >= 0]
+        def rotate_vector_init_out(self, q, rotation, out, status, hadamard, slots):
+            assert out.dtype == torch.float32 and out.shape == q.shape
+            out.zero_(); out[slots >= 0] = q[slots >= 0].float(); status.zero_()
+
 
         def attention_bf16_history_mdl_q1_out(self, q, qr, k, v, rotation, raw, table,
                 wk, wv, tags, tasks, partial, lse, status, workspace, *attrs):

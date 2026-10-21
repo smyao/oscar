@@ -180,7 +180,7 @@ def probe(config_path,acceptance_path):
     from oscar_ascend.ops.loader import require_capabilities,validate_build_artifacts
     from oscar_ascend.ops.cv_dispatch import BF16_HISTORY_CV_OPS
     path=ROOT/'build/ascendc/build_manifest.json';manifest=validate_build_artifacts(path)
-    require_capabilities(BF16_HISTORY_CV_OPS|{'prepare_attention_tasks_out','rotate_out','rotate_bf16_query_out','merge_lse_out',
+    require_capabilities(BF16_HISTORY_CV_OPS|{'prepare_attention_tasks_out','rotate_out','rotate_vector_init_out','merge_lse_out',
         'status_guard','rotate_clip_store_striped_out'},path)
     rows=[];device=torch.device('npu:0');cores=reuse._core_count(torch,target)
     for case in case_plan():

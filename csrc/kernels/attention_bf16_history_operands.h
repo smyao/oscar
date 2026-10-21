@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Unified BF16 precision contract; default selection is not target acceptance.
+// Residual-compensated BF16 precision contract (#173); default selection is not target acceptance.
 // Archive G4/#81-83/#126/#145/#148/#154/#157; startup D.4 reread in full.
 // D.4: (1) bounded all-source operand publication and QK/PV inside fused FIA;
 // (2) no repetition of the 6499.8-6655.1ms full-history restore;
@@ -26,23 +26,31 @@ using oscar_ascend_device::Fence;
 constexpr int32_t kOperandScratchElements = 8192;
 constexpr int32_t kOperandScratchBytes = kOperandScratchElements * 2;
 
-// Each source's P calls this. BF16 Q/K/V bypass this cast, including Q that
-// was rounded once by its producer and carries a pre-rounding check trailer.
-// All published lengths are D256 or
-// KV256 multiples, hence each BF16 DataCopy is a multiple of 32 bytes.
-// Each chunk finishes its MTE3 read before either Vector or MTE2 can reuse
-// the scratch. Existing caller fences continue to own the source FP32 UB.
+// Archive #173: preserve the BF16 rounding residual without modifying source
+// (softmax still needs its original FP32 probabilities for the denominator).
+// D.4: two bounded BF16 planes, no full history restoration; 4 Cube products
+// per history multiplication are additional work, not a performance claim.
 __aicore__ inline void Publish(GlobalTensor<bfloat16_t> destination,
-    LocalTensor<float> source, TBuf<TPosition::VECCALC>& scratch,
-    int32_t elements) {
-  auto rounded = scratch.Get<bfloat16_t>();
-  for (int32_t begin = 0; begin < elements; begin += kOperandScratchElements) {
-    const int32_t count = elements - begin < kOperandScratchElements
-        ? elements - begin : kOperandScratchElements;
+    GlobalTensor<bfloat16_t> residualDestination, LocalTensor<float> source,
+    TBuf<TPosition::VECCALC>& scratch, int32_t elements) {
+  constexpr int32_t chunk=2048;
+  static_assert(chunk*8<=kOperandScratchBytes);
+  auto high=scratch.Get<bfloat16_t>();
+  auto low=high[chunk];
+  auto reconstructed=scratch.Get<float>()[chunk];
+  for(int32_t begin=0;begin<elements;begin+=chunk) {
+    const int32_t count=elements-begin<chunk?elements-begin:chunk;
     Fence<HardEvent::MTE3_V>();
-    Cast(rounded, source[begin], RoundMode::CAST_RINT, count);
+    Cast(high,source[begin],RoundMode::CAST_RINT,count);
+    PipeBarrier<PIPE_V>();
+    Cast(reconstructed,high,RoundMode::CAST_NONE,count);
+    PipeBarrier<PIPE_V>();
+    Sub(reconstructed,source[begin],reconstructed,count);
+    PipeBarrier<PIPE_V>();
+    Cast(low,reconstructed,RoundMode::CAST_RINT,count);
     Fence<HardEvent::V_MTE3>();
-    DataCopy(destination[begin], rounded, count);
+    DataCopy(destination[begin],high,count);
+    DataCopy(residualDestination[begin],low,count);
     Fence<HardEvent::MTE3_V>();
   }
 }

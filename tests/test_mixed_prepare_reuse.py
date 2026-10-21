@@ -216,13 +216,14 @@ def test_real_forward_and_mixed_dispatch_reuse_without_skipping_layer_work(monke
     assert len(candidate.workspace._oscar_prepared_tasks) == 2
 
 
-def test_default_16k_mixed_forward_selects_aligned_decode_and_c16_with_prepare_reuse(monkeypatch):
+def test_legacy_v3_16k_mixed_forward_selects_aligned_decode_and_c16_with_prepare_reuse(monkeypatch):
     """Real dispatcher and numeric metadata, shape-only QKV to avoid model math."""
     from test_prepare_reuse import _fixture, AscendAttentionState
     from tools.serving_variants import variant_config
     from oscar_ascend.runtime import WorkspaceGeometry
     f = _fixture(monkeypatch, True, tokens=probe.TOKENS, dim=256, data_device='meta')
     config = variant_config(json.loads((probe.ROOT/'configs/target.json').read_text()), 'candidate')
+    config['experimental_official_math'] = False  # This regression pins the retained v3 route.
     f.impl.provider.config = config
     f.workspace.geometry = WorkspaceGeometry(probe.TOKENS, 6, 1, 256, cube_cores=20,
                                              history_cluster_size=16, c16_l1_reuse=True)
@@ -321,7 +322,7 @@ def test_observe_gate_binds_sources_and_artifact_keeps_reports_separate(monkeypa
 
 def test_prepare_gate_failure_blocks_managed_service_and_preserves_rc(monkeypatch, tmp_path):
     from tools import observe_serve
-    for name in ('_preflight', '_aligned_attention_gate'):
+    for name in ('_preflight', '_aligned_attention_gate', '_official_attention_gate'):
         monkeypatch.setattr(observe_serve, name, lambda *args: None)
     def failure(*args):
         error = RuntimeError('metadata gate rejected'); error.returncode = 2

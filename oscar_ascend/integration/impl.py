@@ -8,6 +8,8 @@ device metadata, exact physical-page snapshots, and no BF16 history restore.
 #the original native-current predicate still rejects every MTP draft.
 #34/#36/#129/#157: eager prepare reuse retains the original tasks/positions,
 #each layer's statuses and every alternate-writer invalidation boundary.
+#13-20/#148/#164: V4 keeps all source partials FP32 in one rotated frame;
+# final inverse follows the merge, and original error families retain priority.
 PR oscar_attn.py:486-577: current-chunk K/V are exact; cached history is INT2.
 Native acl_graph.py:270 and attention_v1.py:454: graph-update interface.
 Native attention_cp.py:1017-1032: exact current TND FIA yields output plus LSE.
@@ -81,7 +83,8 @@ class OscarAttentionImpl(AttentionImpl):
         state = self.provider.layer_state(layer.layer_name)
         striped_cache = self.provider.config.get("experimental_striped_cache", False)
         aligned_math = self.provider.config.get("experimental_aligned_math",False)
-        expected_format = "striped_fp32_v2" if aligned_math else "striped_v1" if striped_cache else "canonical_v1"
+        official_math = self.provider.config.get("experimental_official_math",False)
+        expected_format = "striped_rotated_fp32_v3" if official_math else "striped_fp32_v2" if aligned_math else "striped_v1" if striped_cache else "canonical_v1"
         from oscar_ascend.integration.cache_storage_ops import (
             REQUEST_FORMAT, REQUEST_CLUSTER_READERS, storage_reader, request_map, store_current)
         if self.provider.config.get("experimental_request_windows", False):
@@ -98,6 +101,7 @@ class OscarAttentionImpl(AttentionImpl):
         if attn_metadata.slot_mapping.dtype not in (torch.int32, torch.int64):
             raise OscarReadinessError("native slot mapping must be int32 or int64")
         native_current = use_native_current(attn_metadata)
+        native_prefill_stage = native_current
         first_draft_suffix = (attn_metadata.is_draft and attn_metadata.draft_index == 0
                               and attn_metadata.first_draft_current_only)
         if (self.provider.config.get("experimental_current_only", False)
@@ -112,12 +116,17 @@ class OscarAttentionImpl(AttentionImpl):
                                                attn_metadata, output, attn_metadata.current_only_plan)
             finally:
                 invalidate_prepare_reuse(state.workspace)
+        # Native FIA returns a BF16 current partial. V4 keeps every partial
+        # FP32 until the final merge; only the proven single-source suffix
+        # above can use its BF16 whole-attention output without an early round.
+        if official_math:
+            native_current = False
         if self.provider.config.get("experimental_mixed_decode_split", False):
             from .mixed_decode_split import plan_mixed_decode, dispatch_mixed_decode
             reuse_mixed = mixed_prepare_eligible(
                 attn_metadata, layer.layer_name,
                 enabled=self.provider.config.get("experimental_prepare_reuse", False),
-                native_current=native_current)
+                native_current=native_prefill_stage)
             mixed_plan = plan_mixed_decode(attn_metadata, n,query_heads=h,kv_heads=hk,
                                            immutable_starts=reuse_mixed)
             if mixed_plan is not None:
@@ -133,7 +142,7 @@ class OscarAttentionImpl(AttentionImpl):
                     if not reuse_mixed:
                         invalidate_prepare_reuse(state.workspace)
         timing_fields = {"stage": "draft" if attn_metadata.is_draft else
-                         ("prefill" if native_current else "decode"),
+                         ("prefill" if native_prefill_stage else "decode"),
                          "is_draft": attn_metadata.is_draft,
                          "draft_index": attn_metadata.draft_index,
                          "max_seq_len": attn_metadata.max_seq_len,
@@ -161,10 +170,10 @@ class OscarAttentionImpl(AttentionImpl):
         partial, partial_lse = workspace.partial_views(n, source_splits)
         ops = self.provider.ops
         prepare_geometry = (n, h, hk, state.snapshots.sink_tokens,
-                            state.snapshots.recent_tokens, source_splits)
+                            state.snapshots.recent_tokens, official_math, source_splits)
         reuse_prepare = can_reuse_prepare(
             attn_metadata, enabled=self.provider.config.get("experimental_prepare_reuse", False),
-            native_current=native_current)
+            native_current=native_prefill_stage)
         prepare_stream = torch.npu.current_stream() if reuse_prepare else None
         if reuse_prepare:
             # Native creates a new ForwardContext even when tensor buffers or
@@ -197,7 +206,9 @@ class OscarAttentionImpl(AttentionImpl):
                 slot_output.copy_(slots)
                 slots = slot_output
             if cached_slots is None:
-                ops.prepare_attention_tasks_out(
+                prepare_op = (ops.prepare_official_attention_tasks_out if official_math
+                              else ops.prepare_attention_tasks_out)
+                prepare_op(
                     attn_metadata.query_start_loc[:attn_metadata.num_reqs + 1],
                     attn_metadata.seq_lens[:attn_metadata.num_reqs],
                     slots, tasks, positions, h, hk,
@@ -220,7 +231,11 @@ class OscarAttentionImpl(AttentionImpl):
             # preset explicitly selects the separately registered vector-Init path.
             rotate_name = ("rotate_vector_init_out" if self.provider.config.get(
                 "experimental_quantization_bundle", False) else "rotate_out")
-            if aligned_math:
+            if official_math:
+                from .official_math import rotate_inputs
+                attention_q, attention_k, attention_v = rotate_inputs(ops,state,q,k,v,slots)
+                qr = attention_q
+            elif aligned_math:
                 from .aligned_math import rotate_query
                 rotate_query(ops,state,q,slots,qr,workspace.rotate_status[:n])
             else:
@@ -240,16 +255,19 @@ class OscarAttentionImpl(AttentionImpl):
                               c16_l1_reuse=self.provider.config.get("experimental_c16_l1_reuse", False),
                               hybrid_l1_decode=self.provider.config.get("experimental_hybrid_l1_decode", False),
                               bf16_attention=self.provider.config.get("experimental_bf16_attention", False))
-        if aligned_math:
+        if official_math:
+            from ..ops.cv_dispatch import OFFICIAL_CV_MAP
+            cv_name = OFFICIAL_CV_MAP[cv_name]
+        elif aligned_math:
             from ..ops.cv_dispatch import ALIGNED_CV_MAP
             cv_name = ALIGNED_CV_MAP[cv_name]
             if (cv_name == "attention_cv_aligned_cluster16_out"
                     and not self.provider.config.get("experimental_c16_tuned", False)):
                 cv_name = "attention_cv_aligned_cluster16_control_out"
         cv_name = storage_reader(state, cv_name)
-        from ..ops.cv_dispatch import HYBRID_L1_DECODE_CV_OP, BF16_CV_OPS, ALIGNED_CV_OPS
+        from ..ops.cv_dispatch import HYBRID_L1_DECODE_CV_OP, BF16_CV_OPS, ALIGNED_CV_OPS, OFFICIAL_CV_OPS
         rotation_v = state.rotation_v
-        if cv_name in BF16_CV_OPS | ALIGNED_CV_OPS:
+        if cv_name in BF16_CV_OPS | ALIGNED_CV_OPS | OFFICIAL_CV_OPS:
             rotation_v = getattr(state, "rotation_v_bf16", None)
             if rotation_v is None or rotation_v.dtype != torch.bfloat16:
                 raise OscarReadinessError("BF16 attention requires its preallocated natural BF16 V rotation")
@@ -275,7 +293,9 @@ class OscarAttentionImpl(AttentionImpl):
                 from .aligned_math import dequant_mode
                 mode_args = (dequant_mode(attn_metadata),)
             cv_op(
-                q, qr, k, v, rotation_v, state.raw,
+                attention_q if official_math else q, qr,
+                attention_k if official_math else k, attention_v if official_math else v,
+                rotation_v, state.raw,
                 (attn_metadata.block_tables[:attn_metadata.num_reqs] if request_args
                  else attn_metadata.block_tables),
                 state.window_key, state.window_value, state.window_tags, *request_args, tasks,
@@ -308,7 +328,11 @@ class OscarAttentionImpl(AttentionImpl):
                 partial.view(n * h, splits, d), partial_lse.view(n * h, splits),
                 workspace.output[:n].view(n * h, d), workspace.lse[:n].view(n * h),
                 workspace.merge_status[:n].view(n * h))
-            output.view(n, h, d).copy_(workspace.output[:n])
+            if official_math:
+                from .official_math import finalize_output
+                finalize_output(ops,state,workspace.output[:n],workspace.lse[:n],output)
+            else:
+                output.view(n, h, d).copy_(workspace.output[:n])
         # Read before write is essential for a chunk longer than the ring:
         # every query sees the previous exact window until attention completes.
         # Current K/V was read directly; only now publish the new physical data.
@@ -316,13 +340,18 @@ class OscarAttentionImpl(AttentionImpl):
                    requests=attn_metadata.num_reqs, **timing_fields):
             store_current(ops, state, k, v, slots, positions,
                           attn_metadata.query_start_loc[:attn_metadata.num_reqs + 1],
-                          window_map, self.provider.config)
+                          window_map, self.provider.config,
+                          rotated_kv=(attention_k,attention_v) if official_math else None)
         with phase("status_guard", layer=layer.layer_name, tokens=n,
                    requests=attn_metadata.num_reqs, **timing_fields):
             run_status_guard(ops, f"forward:{layer.layer_name}",
                              [("attention", statuses), ("rotate", workspace.rotate_status[:n]),
                               ("merge", workspace.merge_status[:n]), ("store", workspace.store_status[:n])],
                              capture=attn_metadata.capture_origin or attn_metadata.dummy_origin)
+            if official_math:
+                from .official_math import guard_final_output
+                guard_final_output(ops,state,n,
+                    capture=attn_metadata.capture_origin or attn_metadata.dummy_origin)
         emit_once("attention_dispatched", key=(layer.layer_name, n, attn_metadata.max_query_len),
                   layer=layer.layer_name, tokens=n, requests=attn_metadata.num_reqs,
                   max_query_len=attn_metadata.max_query_len,

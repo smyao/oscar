@@ -16,7 +16,7 @@ def candidate():
     config=variant_config(json.loads((probe.ROOT / "configs/target.json").read_text()), "candidate")
     # APC is explicitly opt-in under the frozen stable launch. These legacy
     # storage tests exercise that opt-in, independently of the BF16 branch.
-    return {**config,"enable_prefix_caching":True,"experimental_bf16_attention":False,"experimental_aligned_math":False}
+    return {**config,"enable_prefix_caching":True,"experimental_bf16_attention":False,"experimental_aligned_math":False,"experimental_official_math":False}
 
 
 def synthetic_report():

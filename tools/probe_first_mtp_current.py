@@ -62,7 +62,8 @@ def validate_case_evidence(report, acceptance):
             for side in ('baseline','candidate'):
                 shared.validate_aligned_calls(row.get('real_operator_calls',{}).get(side),report)
         qlens,slot=expected[row['case']]
-        label='separate_BF16_native_contracts_passed' if bf16 else 'frozen_tolerance_passed'
+        label=('official_rotated_FP32_partials_passed' if shared.official_enabled(report) else
+               'separate_BF16_native_contracts_passed' if bf16 else 'frozen_tolerance_passed')
         required={'status':'passed','ab_output':label,'ab_lse':label,
                   'independent_oracle':'passed','store_bitwise':'passed','rotation':'draft_identity',
                   'slot_dtype':slot,'cache_reset_before_each_forward':True}
@@ -70,8 +71,11 @@ def validate_case_evidence(report, acceptance):
             raise RuntimeError('first-MTP current lacks exact shape/rotation/numerical evidence')
         if row.get('contexts')!=[511,769] or row.get('current_only_calls')!=0:
             raise RuntimeError('first-MTP current incorrectly tested a fresh-suffix shortcut')
-        if row.get('native_current_calls')!={'baseline':0,'candidate':forwards}:
-            raise RuntimeError('first-MTP current lacks actual native FIA witnesses')
+        expected_native={'baseline':0,'candidate':0 if shared.official_enabled(report) else forwards}
+        if row.get('native_current_calls')!=expected_native:
+            raise RuntimeError('first-MTP current lacks the selected native/CV route witnesses')
+        if shared.official_enabled(report) and row.get('final_inverse_calls')!=4:
+            raise RuntimeError('official first-MTP lacks complete final inverse call witnesses')
         for side in ('baseline','candidate'):
             if bf16:
                 if row.get('performance')!='not_run_user_requested':raise RuntimeError('BF16 first-MTP must not fabricate performance')
@@ -102,7 +106,7 @@ def run_case(torch,target,acceptance,device,cores,case):
     bf16=target.get('experimental_bf16_attention',False)
     expected={side:shared._expected(fixture,target,native_current=enabled)
               for side,enabled in (('baseline',False),('candidate',True))}
-    tensors={key:value.to(device) for key,value in fixture['cpu'].items()}
+    tensors=shared.device_tensors(torch,fixture,device)
     tensors['slots']=tensors['slots'].to(getattr(torch,slot))
     sides={};snapshots={};outputs={};lses={};events={k:[] for k in ('baseline','candidate')}
     witnesses={k:0 for k in events};policy=acceptance['performance'];tol=acceptance['fused_attention']
@@ -130,7 +134,7 @@ def run_case(torch,target,acceptance,device,cores,case):
                 shared._forward(torch,impl,state,tensors,metadata,output)
                 if not bf16:end.record()
                 torch.npu.synchronize()
-            expected_calls=0 if side=='baseline' else 1
+            expected_calls=0 if shared.official_enabled(target) or side=='baseline' else 1
             if len(calls)!=expected_calls or (calls and calls[0]!={'tokens':sum(qlens),'cumulative':(qlens[0],sum(qlens))}):
                 raise RuntimeError('first-MTP native-current call geometry mismatch')
             witnesses[side]+=len(calls)
@@ -157,13 +161,17 @@ def run_case(torch,target,acceptance,device,cores,case):
         follow=shared._decode_after_store(torch,fixture,tensors,old_impl,old,new_impl,new,device,tol)
     if later_calls:raise RuntimeError('later q1 incorrectly selected first-MTP current FIA')
     copy_calls=sum(impl.provider.ops.calls['copy_validate_current_out'] for impl,_,_ in sides.values())
-    if copy_calls:raise RuntimeError('first-MTP partial gate selected whole current-only shortcut')
+    if shared.official_enabled(target):
+        if copy_calls!=4:raise RuntimeError('official first-MTP and followup lack final inverse witnesses')
+    elif copy_calls:raise RuntimeError('first-MTP partial gate selected whole current-only shortcut')
     medians={k:statistics.median(v) if v else None for k,v in events.items()}
-    label='separate_BF16_native_contracts_passed' if bf16 else 'frozen_tolerance_passed'
+    label=('official_rotated_FP32_partials_passed' if shared.official_enabled(target) else
+           'separate_BF16_native_contracts_passed' if bf16 else 'frozen_tolerance_passed')
     row={'case':name,'status':'passed','qlens':list(qlens),'contexts':[511,769],
          'slot_dtype':slot,'rotation':'draft_identity','ab_output':label,
          'ab_lse':label,'independent_oracle':'passed','store_bitwise':'passed',
-         'cache_reset_before_each_forward':True,'current_only_calls':copy_calls,
+         'cache_reset_before_each_forward':True,'current_only_calls':0 if shared.official_enabled(target) else copy_calls,
+         'final_inverse_calls':copy_calls if shared.official_enabled(target) else 0,
          'native_current_calls':witnesses,'decode_after_store':follow,'device_event_ms':events,
          'device_event_median_ms':medians,'candidate_over_baseline':None if bf16 else medians['candidate']/medians['baseline'],
          'timing_scope':'same_input_eager_first_MTP_full_attention_forward',
@@ -202,7 +210,7 @@ def probe(config_path,acceptance_path):
     from oscar_ascend.ops.loader import require_capabilities,validate_build_artifacts
     from oscar_ascend.ops.cv_dispatch import STRIPED_CV_OPS
     path=ROOT/'build/ascendc/build_manifest.json';manifest=validate_build_artifacts(path)
-    require_capabilities(STRIPED_CV_OPS|{'prepare_attention_tasks_out','rotate_out','merge_lse_out',
+    require_capabilities(STRIPED_CV_OPS|{shared.selected_prepare(target),'rotate_out','merge_lse_out',
         'status_guard',shared.selected_writer(target)}|(set(shared.selected_operators(target).values())
           if target.get('experimental_bf16_attention',False) else set()),path)
     rows=[];device=torch.device('npu:0');cores=reuse._core_count(torch,target)

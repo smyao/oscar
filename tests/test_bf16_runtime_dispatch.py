@@ -41,7 +41,7 @@ def test_natural_bf16_rv_is_cached_during_workspace_reservation_without_changing
     (tmp_path/"config.json").write_text(json.dumps({"num_hidden_layers":1,"layer_types":["full_attention"],"head_dim":256}))
     config=variant_config(json.loads(Path("configs/target.json").read_text()),"candidate")
     config.update(model=str(tmp_path),experimental_bf16_attention=bf16,experimental_aligned_math=False,
-                  experimental_c16_tuned=False,rotation_method="hadamard")
+                  experimental_c16_tuned=False,experimental_official_math=False,rotation_method="hadamard")
     provider=runtime.AscendRuntimeProvider(config)
     key=torch.eye(256);value=torch.eye(256)*2
     inverse=torch.arange(256*256,dtype=torch.float32).reshape(256,256)/4096 - 0.7
@@ -88,6 +88,7 @@ def test_missing_bf16_capability_fails_before_npu_initialization(monkeypatch,mis
     from oscar_ascend.ops import loader
     config=variant_config(json.loads(Path("configs/target.json").read_text()),"candidate")
     config["experimental_aligned_math"]=False
+    config["experimental_official_math"]=False
     config["experimental_c16_tuned"]=False
     provider=runtime.AscendRuntimeProvider(config)
     monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES",",".join(map(str,config["devices"])))

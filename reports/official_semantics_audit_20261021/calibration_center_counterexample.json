@@ -1,0 +1,15 @@
+{
+  "scope": "D64 attention algebra counterexample; no model/NPU inference",
+  "q": "[1,0,...,0]",
+  "history_key": "[80,0,...,0]",
+  "raw_window_key": "[80,0,...,0]",
+  "key_mean": "[80,0,...,0]",
+  "scale": 0.125,
+  "history_value": 1,
+  "raw_window_value": 0,
+  "original_output": 0.5,
+  "only_history_centered_output": 4.5397868702434395e-05,
+  "all_sources_centered_output": 0.5,
+  "history_logit_lse_correction_to_keep_raw_sources": 10.0,
+  "interpretation": "Centering is an exact softmax invariance only when every compared key uses the same mean, or when centered-history logits/LSE are corrected by q dot mean times attention scale before merging with original-space exact sources."
+}

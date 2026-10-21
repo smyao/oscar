@@ -117,7 +117,7 @@ def test_probe_only_finishes_after_operator_gate_without_model(monkeypatch, tmp_
     config = observe_serve.ROOT / "configs/target.json"
     original_variant=observe_serve.variant_config
     monkeypatch.setattr(observe_serve,"variant_config",lambda value,variant:
-        {**original_variant(value,variant),"experimental_bf16_attention":bf16,"experimental_aligned_math":False})
+        {**original_variant(value,variant),"experimental_bf16_attention":bf16,"experimental_aligned_math":False,"experimental_official_math":False})
     seen = []
     monkeypatch.setattr(observe_serve, "_preflight", lambda *args: seen.append("preflight"))
     monkeypatch.setattr(observe_serve, "_bf16_attention_gate", lambda *args: seen.append("bf16-gate"))
@@ -380,7 +380,7 @@ def test_candidate_effective_config_is_one_click_and_gate_blocks_service(monkeyp
     def gate(path, *_args):
         observed.append(path)
         raise RuntimeError("candidate graph gate rejected")
-    monkeypatch.setattr(observe_serve, "_aligned_attention_gate", gate)
+    monkeypatch.setattr(observe_serve, "_official_attention_gate", gate)
     monkeypatch.setattr(observe_serve, "managed_server", lambda *_args, **kwargs:
                         pytest.fail("candidate service must not start after gate failure"))
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
@@ -414,9 +414,9 @@ def test_candidate_child_rc2_reaches_outer_status_without_serving(monkeypatch, t
     monkeypatch.setattr(observe_serve, "_terminal", lambda *args, **kwargs: None)
     assert observe_serve.run(config_path, logs, "candidate") == 2
     state = json.loads((logs / "status.json").read_text())
-    assert state["failed_phase"] == "aligned-attention"
+    assert state["failed_phase"] == "official-attention"
     assert state["returncode"] == 2
-    assert state["aligned_attention_resource_release"]["status"] == "passed"
+    assert state["official_attention_resource_release"]["status"] == "passed"
 
 
 @pytest.mark.parametrize("diagnose_trap", [False, True])

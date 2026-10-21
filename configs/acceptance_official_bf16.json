@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "contract": "oscar_bf16_attention_v4",
+  "frozen_before_measurement": true,
+  "authorization": "2026-10-21 user authorizes repair of the confirmed rotation-domain and inverse/merge-order mismatch; legacy v3/FP32 contracts remain unchanged",
+  "upstream_commit": "38680852e52c10bd6b9e9a64ed9bc815e742859b",
+  "recipe_scope": "uniform INT2 V1, one shared orthogonal K/V rotation per FULL layer, group256; no claim of matching unknown RotationZoo V2/per-head/centering artifacts",
+  "cache_format": "striped_rotated_fp32_v3",
+  "slot_bytes_D256": 144,
+  "metadata": "FP32 Kscale,Kzero_code,Vscale,Vzero_code; no metadata rounding before quantization",
+  "rotation": "BF16 Q/K/V and rotation operands; FP32 dot accumulation; BF16 rotated output for every source",
+  "source_domains": "history, exact sink/recent, and current all consume the same rotated Q; all K/V including exact windows and current are rotated BF16",
+  "clip": "FP32 sorted(abs(row))[min(int(ratio*D),D-1)]; K0.96,V0.92 for this V1 recipe; ratio0 disables",
+  "quantize": "FP32 scale=max(max-min,1e-8)/3; zero_code=-min/scale; code=trunc(clamp(x/scale+zero_code+0.5,0,3))",
+  "prefill_dequant": "mode0: FP32(crumb-zero_code)*scale, then RNE BF16",
+  "decode_dequant": "mode1: metadata RNE BF16; difference RNE BF16; product RNE BF16",
+  "attention": "fixed KV256 online tiles; BF16 QK/PV operands, FP32 accumulators/max/sum/alpha/LSE; denominator consumes unrounded FP32 exponential, PV consumes RNE BF16 probability",
+  "partials": "normalized rotated-domain FP32 output and FP32 LSE for every source/split; no inverse rotation or BF16 partial publication inside a CV task",
+  "final_output": "merge all rotated partials using FP32 LSE weights, RNE BF16 once, then BF16 merged_output @ BF16 Rv.T with FP32 accumulation and BF16 output",
+  "native_current": "Mixed history/window/current forwards retain current CV tasks so all normalized source/split partials stay FP32. Only genuine zero-history current-only forwards may use one native FIA BF16 output from rotated Q/K/V followed by the final BF16 inverse. Closed FIA reduction/P rounding is not claimed bitwise equal to KV256 or CUDA.",
+  "window_policy": "Each forward consumes an explicit fixed cached_quant_end per request. This native vLLM adaptation uses cut=max(min(sink,context),context+1-recent), physical exact snapshots and recent+speculative ring storage. It retains MTP3 and does not reproduce SGLang page8 flush allocation. The independent oracle requires the supplied map and never infers it from query length or position.",
+  "fused_attention": {
+    "atol": 0.005,
+    "rtol": 0.005,
+    "per_element": true
+  },
+  "protocol": {
+    "status_and_metadata_exact": true,
+    "padding_output_exact_zero": true,
+    "padding_lse_exact_negative_infinity": true
+  },
+  "adaptation_boundary": "CUDA tile/split selection and hardware reduction order differ; the independent KV256 contract does not claim cross-framework bitwise equality. Rotation domain and final inverse placement are mandatory, not tolerance-dependent. The cache-tier map is a native vLLM adaptation, not a claim of SGLang allocator or unknown RotationZoo artifact equivalence.",
+  "legacy_oracle": "v3/v2 and original FP32 contracts are retained unchanged and are not the v4 numeric golden",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_established",
+  "performance": {
+    "execution": "not_run_user_requested",
+    "hard_gate": false
+  }
+}

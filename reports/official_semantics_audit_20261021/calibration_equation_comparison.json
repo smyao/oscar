@@ -1,0 +1,115 @@
+{
+  "official_commit": "38680852e52c10bd6b9e9a64ed9bc815e742859b",
+  "scope": "CPU equation/source comparison only; no model forward, no NPU, no performance or LongBench acceptance",
+  "covariance_and_rotation_cases": [
+    {
+      "dim": 8,
+      "local_q_heads": 6,
+      "local_kv_heads": 1,
+      "tokens": 2111,
+      "tp": 4,
+      "per_rank_covariance_bitwise_equal": true,
+      "fp32_rotation_max_abs_errors": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "dim": 64,
+      "local_q_heads": 12,
+      "local_kv_heads": 2,
+      "tokens": 615,
+      "tp": 2,
+      "per_rank_covariance_bitwise_equal": true,
+      "fp32_rotation_max_abs_errors": [
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "prompts": {
+    "gpqa_sha256": "41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305",
+    "messages_count": 198,
+    "all_messages_identical": true,
+    "template_identical": true,
+    "fields_identical": true,
+    "budget_selection_identical_with_host_tokenizer": true,
+    "real_model_tokenizer_executed": false
+  },
+  "eigenvector_sign_counterexample": {
+    "input": [
+      -3.0,
+      1.0,
+      4.0,
+      -2.0,
+      8.0,
+      0.5,
+      -1.0,
+      12.0
+    ],
+    "cases": [
+      {
+        "eigen_residual": 0.0,
+        "codes": [
+          0.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          1.0,
+          1.0,
+          3.0
+        ],
+        "reconstruction_l2_error": 5.307227776030219
+      },
+      {
+        "eigen_residual": 0.0,
+        "codes": [
+          0.0,
+          2.0,
+          2.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          3.0
+        ],
+        "reconstruction_l2_error": 3.9791121287711073
+      }
+    ],
+    "interpretation": "Valid eigenvector signs may change INT2 error after U H Pbr. This is a cross-backend reproducibility limitation, not a demonstrated defect or justification to change official math."
+  },
+  "source_identity_vs_saved_339368e": {
+    "python/sglang/srt/mem_cache/oscar_calibration.py": {
+      "sha256": "9c3630ee41edcd6749201b8ab68edd112f485d3d95ff451750261eca1e78f9f7",
+      "matches_saved_339368e": true
+    },
+    "python/sglang/srt/entrypoints/oscar_startup_calibration.py": {
+      "sha256": "e19ff378c042f2cae448969c450d57858eb8f374f38e59249016b2ae5b7f3d46",
+      "matches_saved_339368e": true
+    },
+    "rotation/compute_kv_rotation.py": {
+      "sha256": "14e218335ad763e66e09af3e487a6958413891eceb7bb4f4dc0a3a9aa4414be8",
+      "matches_saved_339368e": true
+    },
+    "python/sglang/srt/layers/attention/quantized_kv_prefill.py": {
+      "sha256": "bc3f1718015e7a353d0f32e6341446f6ab0294e5eab9fcf8625bc8af2645e081",
+      "matches_saved_339368e": true
+    }
+  },
+  "confirmed": [
+    "V1 covariance/composition matches extracted official CPU methods",
+    "198 GPQA message records are identical",
+    "official startup also uses short prefill-only prompts",
+    "current code supports optional V2 companions and per-head rotations",
+    "local default remains V1 layer-shared qqt/sst",
+    "public RotationZoo snapshot has no Qwen3.8 files"
+  ],
+  "not_verified": [
+    "actual Qwen3.8 published PT schema and source samples",
+    "actual per-head K clipping table for Qwen3.8 results",
+    "actual QKV sample parity across engines/hardware",
+    "cause or contribution to the reported LongBench loss",
+    "model accuracy or speed improvement"
+  ]
+}

@@ -1,7 +1,8 @@
 """Archive #34/#36/#129/#142/#157/#161: real mixed-prepare region gate.
 
-Only the frozen prepare operator, existing source2 rewrite/boundary guards,
-and identical device consumer copies are executed. No attention/model/AISBench
+The selected legacy/official prepare, boundary guards and identical device
+consumer copies are executed. V4 retains source2 FP32 CV tasks; only the
+legacy path applies its existing source2 suppression. No attention/model/AISBench
 is substituted. One native ForwardContext owns each synthetic main-model step;
 same-address32K->64K and invalid-length steps must refresh both regions.
 The complete metadata-chain timing has a non-regression1.0 gate, never a CV
@@ -42,12 +43,13 @@ MODES=('off','on')
 MIN_SPEEDUP=1.0
 TIMING_SCOPE='complete_mixed_metadata_prepare_suppress_boundary_guards_identical_device_consumers'
 SOURCE_PATHS=(
-    'csrc/kernels/attention_tasks.cpp','csrc/kernels/status_guard.cpp',
+    'csrc/kernels/attention_tasks.cpp','csrc/kernels/attention_official_tasks.cpp','csrc/kernels/status_guard.cpp',
     'csrc/kernels/oscar_common.h','csrc/torch_bindings.cpp',
     'oscar_ascend/integration/prepare_reuse.py','oscar_ascend/integration/metadata.py',
     'oscar_ascend/integration/mixed_decode_split.py','oscar_ascend/integration/impl.py',
     'oscar_ascend/integration/current_attention.py','oscar_ascend/integration/guard_diag.py',
     'oscar_ascend/runtime.py','oscar_ascend/ops/cv_dispatch.py','tools/probe_mixed_prepare_reuse.py',
+    'tools/official_reference.py','configs/acceptance_official_bf16.json',
 )
 
 
@@ -104,7 +106,7 @@ def native_context(metadata,names):
 
 
 def execute_epoch(torch,ops,workspace,audit,metadata,*,enabled,epoch,
-                  suppress=None,scope=native_context):
+                  suppress=None,scope=native_context,official=False):
     """Actual prepare calls; injectable CPU seams exist only for host tests."""
     if suppress is None:
         from oscar_ascend.integration.current_attention import suppress_current_source_tasks
@@ -127,6 +129,7 @@ def execute_epoch(torch,ops,workspace,audit,metadata,*,enabled,epoch,
                 (SHORT_REQUESTS,SHORT_REQUESTS+1,SHORT_TOKENS,TOKENS,'long_suffix')):
                 child=_slice_metadata(metadata,rb,re,begin,end,TOKENS,segment,prepare_reuse=reuse)
                 n=end-begin;geometry=(n,HEADS,KV_HEADS,SINK,RECENT,splits)
+                if official:geometry=(*geometry,True)
                 if reuse:
                     tasks,positions,slot_out=prepare_views(workspace,child,n,KV_HEADS,splits,name,context)
                     cached=reused_slots(workspace,child,name,geometry,torch.npu.current_stream(),context)
@@ -137,10 +140,13 @@ def execute_epoch(torch,ops,workspace,audit,metadata,*,enabled,epoch,
                 if cached is None:
                     if slots.dtype==torch.int32:
                         slot_out.copy_(slots);slots=slot_out
-                    ops.prepare_attention_tasks_out(child.query_start_loc,child.seq_lens,slots,tasks,
+                    prepare=(ops.prepare_official_attention_tasks_out if official else ops.prepare_attention_tasks_out)
+                    prepare(child.query_start_loc,child.seq_lens,slots,tasks,
                         positions,HEADS,KV_HEADS,SINK,RECENT,splits,None,False)
-                    suppress(tasks,n,KV_HEADS,splits)
-                    counts['prepare']+=1;counts['suppress']+=1
+                    if not official:
+                        suppress(tasks,n,KV_HEADS,splits)
+                        counts['suppress']+=1
+                    counts['prepare']+=1
                     counts['task_bytes_written']+=tasks.numel()*tasks.element_size()
                     if reuse:remember_prepared(workspace,child,name,geometry,torch.npu.current_stream(),slots,context)
                 # Identical consumers in both arms; these copies intentionally
@@ -148,7 +154,8 @@ def execute_epoch(torch,ops,workspace,audit,metadata,*,enabled,epoch,
                 audit['tasks'][layer,begin*factor:end*factor].copy_(tasks)
                 audit['positions'][layer,begin:end].copy_(positions)
                 counts['consumer_copies']+=2
-    return {**counts,'native_context_class':context_class,'native_context_id':id(context),
+    return {**counts,**({'prepare_operator':'prepare_official_attention_tasks_out','current_source':'CV_FP32'} if official else {}),
+            'native_context_class':context_class,'native_context_id':id(context),
             'region_order':['short_prefix','long_suffix'],'extra_production_hbm_bytes':0}
 
 
@@ -167,9 +174,10 @@ def _check(torch,snapshot,values,*,invalid_length=False):
             'complete_task_fields':True,'complete_positions':True}
 
 
-def _counts_valid(receipt,mode):
+def _counts_valid(receipt,mode,official=False):
     launches=2 if mode=='on' else 2*LAYERS
-    return (receipt.get('prepare')==receipt.get('suppress')==launches
+    return (receipt.get('prepare')==launches and receipt.get('suppress')==(0 if official else launches)
+            and (not official or (receipt.get('prepare_operator')=='prepare_official_attention_tasks_out' and receipt.get('current_source')=='CV_FP32'))
             and receipt.get('boundary_guards')==LAYERS and receipt.get('consumer_copies')==LAYERS*4
             and receipt.get('task_bytes_written')==TOKENS*3*16*8*(1 if mode=='on' else LAYERS)
             and receipt.get('native_context_class')=='vllm.forward_context.ForwardContext'
@@ -190,7 +198,7 @@ def validate_evidence(report):
                 or not case.get('complete_task_fields') or not case.get('complete_positions')):
             bad.append(case['case']+'.fields')
         for mode in MODES:
-            if not _counts_valid(case.get(mode,{}) or {},mode):bad.append(case['case']+'.'+mode)
+            if not _counts_valid(case.get(mode,{}) or {},mode,report.get('official_math',False)):bad.append(case['case']+'.'+mode)
         current=case.get('on',{}).get('native_context_id')
         if current is None or current==previous:bad.append(case['case']+'.new_context')
         previous=current
@@ -215,6 +223,7 @@ def validate_evidence(report):
 def probe(config_path,acceptance_path):
     target=json.loads(config_path.read_text());acceptance=json.loads(acceptance_path.read_text())
     correctness_only=target.get('experimental_bf16_attention',False) is True
+    official=target.get('experimental_official_math',False) is True
     from .probe_history_reuse import _active_device
     _active_device(target)
     if target.get('experimental_prepare_reuse') is not True:
@@ -229,7 +238,7 @@ def probe(config_path,acceptance_path):
     import vllm_ascend.ops  # noqa: F401; archive #28/#78 native import order
     from oscar_ascend.ops.loader import validate_build_artifacts,require_capabilities
     manifest=validate_build_artifacts(ROOT/'build/ascendc/build_manifest.json')
-    require_capabilities({'prepare_attention_tasks_out','status_guard'})
+    require_capabilities({'prepare_official_attention_tasks_out' if official else 'prepare_attention_tasks_out','status_guard'})
     ops=torch.ops.oscar_ascend_ops;device=torch.device('npu:0')
     workspace,audit=allocate(torch,device)
     metadata,tensors=parent_metadata(torch,input_values(torch,32768),device)
@@ -244,7 +253,7 @@ def probe(config_path,acceptance_path):
             values=input_values(torch,32768 if index==0 else 65536,invalid_length=index==2)
             for key,tensor in tensors.items():tensor.copy_(values[key])
             original={key:value.clone() for key,value in tensors.items()}
-            receipt=execute_epoch(torch,ops,workspace,audit,metadata,enabled=mode=='on',epoch=epoch);epoch+=1
+            receipt=execute_epoch(torch,ops,workspace,audit,metadata,enabled=mode=='on',epoch=epoch,official=official);epoch+=1
             torch.npu.synchronize();snapshot=_snapshot(audit)
             detail=_check(torch,snapshot,values,invalid_length=index==2)
             if any(not torch.equal(value,original[key]) for key,value in tensors.items()):
@@ -263,10 +272,10 @@ def probe(config_path,acceptance_path):
         for mode in order:
             begin,end=torch.npu.Event(enable_timing=True),torch.npu.Event(enable_timing=True)
             begin.record()
-            receipt=execute_epoch(torch,ops,workspace,audit,metadata,enabled=mode=='on',epoch=epoch);epoch+=1
+            receipt=execute_epoch(torch,ops,workspace,audit,metadata,enabled=mode=='on',epoch=epoch,official=official);epoch+=1
             end.record();end.synchronize();elapsed=float(begin.elapsed_time(end))
             snapshot=_snapshot(audit)
-            if (not _counts_valid(receipt,mode) or not math.isfinite(elapsed) or elapsed<=0
+            if (not _counts_valid(receipt,mode,official) or not math.isfinite(elapsed) or elapsed<=0
                     or any(not torch.equal(snapshot[key],goldens[CASE_NAMES[0]][key]) for key in snapshot)):
                 raise RuntimeError('timed full metadata chain changed fields/counts')
             if repeat>=2:samples[mode].append(elapsed)
@@ -284,6 +293,7 @@ def probe(config_path,acceptance_path):
         'source_binding':source_binding(),'whole_service_performance':'not_established',
         'validation_mode':'correctness_only_user_requested' if correctness_only else 'metadata_latency',
         'performance':'not_run_user_requested' if correctness_only else ('passed' if new<=old else 'failed')}
+    if official:result.update(official_math=True,math_contract='oscar_bf16_attention_v4')
     bad=validate_evidence(result)
     if bad:result.update(status='failed',evidence_mismatches=bad)
     return result

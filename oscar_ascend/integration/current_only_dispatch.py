@@ -8,6 +8,8 @@ an incorrect host zero-context proof before executing current attention.
 #34/#36/#127-129/#140: full-input buffers may exceed the historical-CV row
 # budget. Validate the historical prefix separately before any prefix writes;
 # the existing #142 dummy/capture and device context checks remain mandatory.
+#13-20/#148/#164: V4 exact-only also rotates Q/K/V and applies one final
+# inverse; skipping INT2 history does not skip the official numerical frame.
 """
 from dataclasses import replace
 
@@ -35,6 +37,7 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
     if actual!=metadata.num_actual_tokens or n-actual!=plan.padded_tokens:
         raise OscarReadinessError('current-only plan does not match active/padded tokens')
     state=impl.provider.layer_state(layer.layer_name)
+    official_math=impl.provider.config.get("experimental_official_math",False)
     workspace=state.workspace
     workspace.validate_current_only(n,h,hk,d)
     if cut:
@@ -72,7 +75,9 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
         task_count=fresh*hk*3
         tasks=workspace.tasks[:task_count]
         positions=workspace.positions[:fresh]
-        ops.prepare_attention_tasks_out(starts,metadata.seq_lens[r:r+plan.fresh_requests],
+        prepare_op=(ops.prepare_official_attention_tasks_out if official_math
+                    else ops.prepare_attention_tasks_out)
+        prepare_op(starts,metadata.seq_lens[r:r+plan.fresh_requests],
             slots,tasks,positions,h,hk,state.snapshots.sink_tokens,
             state.snapshots.recent_tokens,1,None,False)
         # Preserve all metadata failures. No host tensor reads or ignored
@@ -89,7 +94,12 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
             run_status_guard(ops,'current_only.padding',
                              [("padding",bad_padding),("rotate",empty),("merge",empty),("store",empty)])
     with phase('current_native_fia',**fields):
-        current,lse=native_current_partial(q,k,v,plan.cumulative,
+        if official_math:
+            from .official_math import rotate_inputs
+            attention_q,attention_k,attention_v=rotate_inputs(ops,state,q,k,v,slots,current_only=True)
+        else:
+            attention_q,attention_k,attention_v=q,k,v
+        current,lse=native_current_partial(attention_q,attention_k,attention_v,plan.cumulative,
                                            heads=h,kv_heads=hk,scale=impl.scale)
     with phase('current_only_copy',**fields):
         if lse.dtype not in (torch.float16,torch.bfloat16,torch.float32):
@@ -97,23 +107,33 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
         # Canonical ND buffers, matching the existing copy into partials.
         # Q rotation is unused in this zero-history suffix; its status arena
         # can hold the temporary FP32 LSE after the prefix guard has executed.
-        current_nd=workspace.query_input[:fresh]
-        current_nd.copy_(current)
-        lse_nd=workspace.rotate_status[:fresh].view(torch.float32)
-        # Match write_current_partial: native FP16/BF16 LSE is widened into
-        # the preallocated FP32 merge arena before the FP32 operator ABI.
-        lse_nd.copy_(lse.squeeze(-1))
-        ops.copy_validate_current_out(current_nd,lse_nd.view(fresh,h,1),
-            output[cut:actual].view(fresh,h,d),workspace.lse[:fresh],
-            workspace.merge_status[:fresh])
+        if official_math:
+            from .official_math import finalize_output
+            workspace.lse[:fresh].copy_(lse.squeeze(-1))
+            finalize_output(ops,state,current.view(fresh,h,d),workspace.lse[:fresh],
+                            output[cut:actual])
+        else:
+            current_nd=workspace.query_input[:fresh]
+            current_nd.copy_(current)
+            lse_nd=workspace.rotate_status[:fresh].view(torch.float32)
+            # Match write_current_partial: native FP16/BF16 LSE is widened
+            # before the FP32 copy ABI; V4 retains the query status separately.
+            lse_nd.copy_(lse.squeeze(-1))
+            ops.copy_validate_current_out(current_nd,lse_nd.view(fresh,h,1),
+                output[cut:actual].view(fresh,h,d),workspace.lse[:fresh],
+                workspace.merge_status[:fresh])
         if actual<n:
             output[actual:n].zero_()
     with phase('phase1_stores',**fields):
         from .cache_storage_ops import store_current
-        store_current(ops,state,k,v,slots,positions,starts,window_map,impl.provider.config)
+        store_current(ops,state,k,v,slots,positions,starts,window_map,impl.provider.config,
+                      rotated_kv=(attention_k,attention_v) if official_math else None)
     with phase('status_guard',**fields):
         run_status_guard(ops,'current_only.final',
-                         [("metadata",status.view(-1)),("rotate",empty),
+                         [("metadata",status.view(-1)),("rotate",workspace.rotate_status[:fresh] if official_math else empty),
                           ("merge",workspace.merge_status[:fresh].view(-1)),
                           ("store",workspace.store_status[:fresh].view(-1))])
+        if official_math:
+            from .official_math import guard_final_output
+            guard_final_output(ops,state,fresh)
     return output

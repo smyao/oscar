@@ -9,6 +9,8 @@ and fixed workspaces. #28/#77/#78: imported only after native initialization.
 #34/#36/#127-129/#140/#142/#145/#155: optional history-query capacity is
 # independent of current-only input capacity; ordinary CV, dummy and capture
 # retain strict capacity checks. Every buffer is reserved before KV profiling.
+#13-20/#148/#164: V4 adds a separate rotated-window format and final-output
+# status buffers; old numerical contracts and native GDN storage remain intact.
 """
 from __future__ import annotations
 
@@ -68,6 +70,7 @@ class WorkspaceGeometry:
     c16_member_pipeline: bool = False
     c16_l1_reuse: bool = False
     aligned_math: bool = False
+    official_math: bool = False
 
     def __post_init__(self):
         dimensions = (self.tokens, self.query_heads, self.kv_heads, self.head_dim,
@@ -96,6 +99,8 @@ class WorkspaceGeometry:
             raise ValueError("C16 L1 reuse must be an explicit boolean")
         if self.c16_l1_reuse and self.history_cluster_size != 16:
             raise ValueError("C16 L1 reuse requires a C16 workspace")
+        if type(self.official_math) is not bool or (self.official_math and not self.aligned_math):
+            raise ValueError("official math requires explicit aligned BF16 buffers")
 
     @property
     def history_tokens(self):
@@ -160,8 +165,9 @@ class WorkspaceGeometry:
         h, k, d, p = self.query_heads, self.kv_heads, self.head_dim, 3 * self.splits
         return {
             "query_rot": c * h * d * (2 if self.aligned_math else 4),
-            **({"query_rot_bf16": c*h*d*2, "key_rot_bf16": n*k*d*2,
+            **({"query_rot_bf16": (n if self.official_math else c)*h*d*2, "key_rot_bf16": n*k*d*2,
                 "value_rot_bf16": n*k*d*2} if self.aligned_math else {}),
+            **({"final_status": n*h*4, "final_lse": n*h*4} if self.official_math else {}),
             "query_input": n * h * d * 2,
             "key_input": n * k * d * 2,
             "value_input": n * k * d * 2,
@@ -201,9 +207,11 @@ class GraphWorkspace:
         self.query_input = torch.empty((n, h, d), dtype=torch.bfloat16, device=device)
         self.key_input = torch.empty((n, geometry.kv_heads, d), dtype=torch.bfloat16, device=device)
         self.value_input = torch.empty_like(self.key_input)
-        self.query_rot_bf16 = (torch.empty((c,h,d),dtype=torch.bfloat16,device=device) if geometry.aligned_math else None)
+        self.query_rot_bf16 = (torch.empty((n if geometry.official_math else c,h,d),dtype=torch.bfloat16,device=device) if geometry.aligned_math else None)
         self.key_rot_bf16 = torch.empty_like(self.key_input) if geometry.aligned_math else None
         self.value_rot_bf16 = torch.empty_like(self.key_input) if geometry.aligned_math else None
+        self.final_status = torch.empty((n,h),dtype=torch.int32,device=device) if geometry.official_math else None
+        self.final_lse = torch.empty((n,h),dtype=torch.float32,device=device) if geometry.official_math else None
         self.partial = torch.empty((c, h, p, d), dtype=torch.float32, device=device)
         self.partial_lse = torch.empty((c, h, p), dtype=torch.float32, device=device)
         self.output = torch.empty((c, h, d), dtype=torch.float32, device=device)
@@ -324,7 +332,7 @@ class AscendRuntimeProvider:
                      "experimental_quantization_bundle", "experimental_c4_member_pipeline",
                      "experimental_mdl_decode", "experimental_hybrid_l1_decode",
                      "experimental_c16_member_pipeline", "experimental_c16_l1_reuse",
-                     "experimental_prepare_reuse", "experimental_bf16_attention", "experimental_aligned_math", "experimental_c16_tuned"):
+                     "experimental_prepare_reuse", "experimental_bf16_attention", "experimental_aligned_math", "experimental_c16_tuned", "experimental_official_math"):
             if type(self.config.get(flag, False)) is not bool:
                 raise OscarReadinessError(f"{flag} must be an explicit boolean")
         if self.config.get("experimental_fast_unpack", False) and not self.config.get("experimental_history_reuse", False):
@@ -347,9 +355,11 @@ class AscendRuntimeProvider:
             raise OscarReadinessError("aligned math requires BF16 attention")
         if self.config.get("experimental_c16_tuned",False) and not self.config.get("experimental_aligned_math",False):
             raise OscarReadinessError("timer-directed C16 requires aligned BF16 attention")
-        self._cache_format = ("striped_fp32_v2" if self.config.get("experimental_aligned_math",False) else "striped_v1" if self.config.get("experimental_striped_cache", False)
+        if self.config.get("experimental_official_math",False) and not self.config.get("experimental_aligned_math",False):
+            raise OscarReadinessError("official math requires the aligned BF16 codec")
+        self._cache_format = ("striped_rotated_fp32_v3" if self.config.get("experimental_official_math",False) else "striped_fp32_v2" if self.config.get("experimental_aligned_math",False) else "striped_v1" if self.config.get("experimental_striped_cache", False)
                               else "canonical_v1")
-        if self.config.get("experimental_decode_bundle", False) and self._cache_format not in ("striped_v1", "striped_fp32_v2"):
+        if self.config.get("experimental_decode_bundle", False) and self._cache_format not in ("striped_v1", "striped_fp32_v2", "striped_rotated_fp32_v3"):
             raise OscarReadinessError("decode bundle requires the explicit striped cache bundle")
         if self.config.get("experimental_mdl_decode", False) and not self.config.get("experimental_decode_bundle", False):
             raise OscarReadinessError("MDL decode requires the explicit decode bundle")
@@ -430,6 +440,9 @@ class AscendRuntimeProvider:
         if os.environ.get("ASCEND_RT_VISIBLE_DEVICES") != expected:
             raise OscarReadinessError("visible NPU selection does not match the current target configuration")
         require_production_ops()
+        if self.config.get("experimental_official_math", False):
+            from .ops.cv_dispatch import OFFICIAL_CV_OPS
+            require_capabilities(OFFICIAL_CV_OPS | {"prepare_official_attention_tasks_out", "copy_validate_current_out"})
         if self.config.get("experimental_aligned_math", False):
             from .ops.cv_dispatch import ALIGNED_CV_OPS
             require_capabilities(ALIGNED_CV_OPS | {"store_aligned_int2_out", "copy_validate_bf16_query_out"})
@@ -643,7 +656,8 @@ class AscendRuntimeProvider:
                                      c4_member_pipeline=self.config.get("experimental_c4_member_pipeline", False),
                                      c16_member_pipeline=self.config.get("experimental_c16_member_pipeline", False),
                                      c16_l1_reuse=self.config.get("experimental_c16_l1_reuse", False),
-                                     aligned_math=self.config.get("experimental_aligned_math",False))
+                                     aligned_math=self.config.get("experimental_aligned_math",False),
+                                     official_math=self.config.get("experimental_official_math",False))
         key = (str(device), geometry)
         if key not in self.workspaces:
             self.workspaces[key] = GraphWorkspace(geometry, device)

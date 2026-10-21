@@ -99,8 +99,8 @@ def _source_identity(variant: str, config: dict) -> dict:
             "kernel_sha256": actual, "experimental_history_reuse": flag,
             "experimental_fast_unpack": fast, "experimental_mixed_cv": mixed,
             "experimental_striped_cache": striped,
-            "attention_compute_contract":"oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2" if config.get("experimental_bf16_attention",False) else "legacy_fp32",
-            "cache_format": "striped_fp32_v2" if config.get("experimental_aligned_math",False) else "striped_v1" if striped else "canonical_v1",
+            "attention_compute_contract":"oscar_bf16_attention_v4" if config.get("experimental_official_math",False) else "oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2" if config.get("experimental_bf16_attention",False) else "legacy_fp32",
+            "cache_format": "striped_rotated_fp32_v3" if config.get("experimental_official_math",False) else "striped_fp32_v2" if config.get("experimental_aligned_math",False) else "striped_v1" if striped else "canonical_v1",
             "striped_source_sha256": striped_sources,
             "fast_source_sha256": fast_sources,
             "candidate_kernel_sha256": hashlib.sha256(cluster.read_bytes()).hexdigest()
@@ -599,7 +599,7 @@ def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     """
     import importlib
     from oscar_ascend.ops.loader import validate_build_artifacts
-    if family not in {"c16_member_pipeline", "hybrid_l1_decode", "c16_l1_reuse", "mixed_prepare_reuse", "bf16_attention", "aligned_attention"}:
+    if family not in {"c16_member_pipeline", "hybrid_l1_decode", "c16_l1_reuse", "mixed_prepare_reuse", "bf16_attention", "aligned_attention", "official_attention"}:
         raise ValueError("unknown stable operator gate")
     probe = importlib.import_module(f"tools.probe_{family}")
     phase_name = family.replace("_", "-")
@@ -610,7 +610,7 @@ def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     release = None
     try:
         command = [sys.executable, "-m", f"tools.probe_{family}"]
-        if family in {"bf16_attention", "aligned_attention"}:
+        if family in {"bf16_attention", "aligned_attention", "official_attention"}:
             command += ["npu", "--config", str(config_path), "--output", str(output)]
         else:
             command += ["--config", str(config_path), "--acceptance", str(ROOT/"configs/acceptance.json"),
@@ -646,6 +646,10 @@ def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
         expected.update(contract="oscar_bf16_attention_v3", cache_format="striped_fp32_v2",
             performance="not_run_user_requested", slot_bytes=144,
             effective_config_sha256=hashlib.sha256(config_path.read_bytes()).hexdigest())
+    if family == "official_attention":
+        expected.update(contract="oscar_bf16_attention_v4", cache_format="striped_rotated_fp32_v3",
+            performance="not_run_user_requested", slot_bytes=144,
+            effective_config_sha256=hashlib.sha256(config_path.read_bytes()).hexdigest())
     if family == "mixed_prepare_reuse":
         if config.get("experimental_bf16_attention", False):
             expected.update(validation_mode="correctness_only_user_requested", performance="not_run_user_requested")
@@ -659,7 +663,7 @@ def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
         raise error
     status[f"{family}_gate"] = {"status": "passed", "report": str(output),
         "artifact_signature": manifest["signature"], "full_service_performance": "not_established"}
-    if family in {"bf16_attention", "aligned_attention"} or (family == "mixed_prepare_reuse" and config.get("experimental_bf16_attention",False)):
+    if family in {"bf16_attention", "aligned_attention", "official_attention"} or (family == "mixed_prepare_reuse" and config.get("experimental_bf16_attention",False)):
         status[f"{family}_gate"].update(validation_mode="correctness_only_user_requested",
                                         performance="not_run_user_requested")
     atomic_json(log_dir/"status.json", status)
@@ -679,6 +683,10 @@ def _bf16_attention_gate(config_path, config, env, log_dir, status):
 
 def _aligned_attention_gate(config_path, config, env, log_dir, status):
     return _stable_cv_gate(config_path, config, env, log_dir, status, family="aligned_attention")
+
+
+def _official_attention_gate(config_path, config, env, log_dir, status):
+    return _stable_cv_gate(config_path, config, env, log_dir, status, family="official_attention")
 
 
 def _c16_l1_reuse_gate(config_path, config, env, log_dir, status):
@@ -753,16 +761,22 @@ def _lifecycle_precision_mismatches(report: dict, config: dict) -> list[str]:
         aligned=config.get("experimental_aligned_math",False)
         if type(aligned) is not bool:raise ValueError("experimental_aligned_math must be an explicit boolean")
         if report.get("aligned_math",False) is not aligned:bad.append("aligned_math")
-        contract="oscar_bf16_attention_v3" if aligned else "oscar_bf16_attention_v2"
+        official=config.get("experimental_official_math",False)
+        if type(official) is not bool:raise ValueError("experimental_official_math must be an explicit boolean")
+        if report.get("official_math",False) is not official:bad.append("official_math")
+        contract="oscar_bf16_attention_v4" if official else "oscar_bf16_attention_v3" if aligned else "oscar_bf16_attention_v2"
         if report.get("math_contract")!=contract:bad.append("math_contract")
-        if aligned and report.get("cache_format")!="striped_fp32_v2":bad.append("cache_format")
+        if aligned and report.get("cache_format")!=("striped_rotated_fp32_v3" if official else "striped_fp32_v2"):bad.append("cache_format")
         if aligned:
-            from .probe_aligned_attention import source_binding
+            if official:
+                from .probe_official_attention import source_binding
+            else:
+                from .probe_aligned_attention import source_binding
             if report.get('aligned_source_binding')!=source_binding():bad.append('aligned_source_binding')
             if report.get('aligned_clip')!={'k':config.get('k_clip_ratio',.96),'v':config.get('v_clip_ratio',.92)}:
                 bad.append('aligned_clip')
         if report.get("performance")!="not_run_user_requested":bad.append("performance")
-    elif report.get("performance")=="not_run_user_requested" or report.get("math_contract") in {"oscar_bf16_attention_v2","oscar_bf16_attention_v3"}:
+    elif report.get("performance")=="not_run_user_requested" or report.get("math_contract") in {"oscar_bf16_attention_v2","oscar_bf16_attention_v3","oscar_bf16_attention_v4"}:
         bad.append("legacy_fp32_scope")
     return bad
 
@@ -813,7 +827,7 @@ def _prefix_cache_gate(config_path: Path, config: dict, env: dict, log_dir: Path
         "artifact_signature": manifest["signature"], "device_scope": "synthetic_page_owned_prefix",
         "full_service_performance": "not_established"}
     if config.get("experimental_bf16_attention",False):
-        status["prefix_cache_gate"].update(math_contract="oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2",performance="not_run_user_requested")
+        status["prefix_cache_gate"].update(math_contract="oscar_bf16_attention_v4" if config.get("experimental_official_math",False) else "oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2",performance="not_run_user_requested")
     atomic_json(log_dir/"status.json", status)
 
 
@@ -872,7 +886,7 @@ def _current_only_gate(config_path: Path, config: dict, env: dict, log_dir: Path
         "artifact_signature": manifest["signature"], "graph_acceptance": "not_established_eager_gate",
         "model_quality": "not_established", "full_service_performance": "not_established"}
     if config.get("experimental_bf16_attention",False):
-        status["current_only_gate"].update(math_contract="oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2",performance="not_run_user_requested")
+        status["current_only_gate"].update(math_contract="oscar_bf16_attention_v4" if config.get("experimental_official_math",False) else "oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2",performance="not_run_user_requested")
     atomic_json(log_dir / "status.json", status)
 
 
@@ -931,7 +945,7 @@ def _first_mtp_current_gate(config_path: Path, config: dict, env: dict, log_dir:
         "artifact_signature": manifest["signature"], "graph_acceptance": "not_established_eager_gate",
         "model_quality": "not_established", "full_service_performance": "not_established"}
     if config.get("experimental_bf16_attention",False):
-        status["first_mtp_current_gate"].update(math_contract="oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2",performance="not_run_user_requested")
+        status["first_mtp_current_gate"].update(math_contract="oscar_bf16_attention_v4" if config.get("experimental_official_math",False) else "oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2",performance="not_run_user_requested")
     atomic_json(log_dir / "status.json", status)
 
 
@@ -1104,7 +1118,7 @@ def _mixed_decode_split_gate(config_path: Path, config: dict, env: dict, log_dir
         "artifact_signature": manifest["signature"], "graph_acceptance": "not_established_eager_gate",
         "model_quality": "not_established", "full_service_performance": "not_established"}
     if config.get("experimental_bf16_attention",False):
-        status["mixed_decode_split_gate"].update(math_contract="oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2",performance="not_run_user_requested")
+        status["mixed_decode_split_gate"].update(math_contract="oscar_bf16_attention_v4" if config.get("experimental_official_math",False) else "oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "oscar_bf16_attention_v2",performance="not_run_user_requested")
     atomic_json(log_dir / "status.json", status)
 
 
@@ -1228,7 +1242,9 @@ def run(config_path: Path, log_dir: Path, variant: str, *, probe_only: bool = Fa
                 with redirect_stdout(preflight), redirect_stderr(preflight):
                     _preflight(effective_path, config, env, log_dir, status, variant)
                     if variant == "candidate":
-                        if config.get("experimental_aligned_math", False):
+                        if config.get("experimental_official_math", False):
+                            _official_attention_gate(effective_path, config, env, log_dir, status)
+                        elif config.get("experimental_aligned_math", False):
                             _aligned_attention_gate(effective_path, config, env, log_dir, status)
                         elif config.get("experimental_bf16_attention", False):
                             _bf16_attention_gate(effective_path, config, env, log_dir, status)
@@ -1426,7 +1442,9 @@ def main(argv=None) -> int:
             parser.error("--diagnose-trap requires an OSCAR service, not native or probe-only")
         phases = ["install", "signed_operator_gate" if args.variant != "native" else "native_start"]
         if args.variant == "candidate":
-            if config.get("experimental_aligned_math", False):
+            if config.get("experimental_official_math", False):
+                phases.append("official_rotation_merge_precision_error_graph_gate")
+            elif config.get("experimental_aligned_math", False):
                 phases.append("aligned_codec_rotation_attention_precision_error_graph_gate")
             elif config.get("experimental_bf16_attention", False):
                 phases.append("bf16_attention_precision_error_graph_gate")

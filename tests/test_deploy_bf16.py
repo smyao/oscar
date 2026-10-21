@@ -66,11 +66,11 @@ def _setup(tmp_path, monkeypatch, failure=None):
             report = {"status": "operator_probes_passed", "service_started": False,
                 "performance_acceptance": "not_run_user_requested",
                 "target_config": {"original_sha256": digest, "effective_sha256": digest},
-                "aligned_attention_gate": {"status": "passed"}}
+                "official_attention_gate": {"status": "passed"}}
             if failure == "stale_config":
                 report["target_config"]["effective_sha256"] = "stale"
             if failure == "fake_gate":
-                report["aligned_attention_gate"]["status"] = "not_run"
+                report["official_attention_gate"]["status"] = "not_run"
             if failure == "malformed_receipt":
                 report["target_config"] = "invalid"
         else:

@@ -8,6 +8,7 @@ OSCAR scheduling override. No native default is guessed here.
 """
 
 FEATURE_FLAGS = {
+    "official_math": "experimental_official_math",
     "c16_tuned": "experimental_c16_tuned",
     "aligned_math": "experimental_aligned_math",
     "bf16_attention": "experimental_bf16_attention",
@@ -139,6 +140,8 @@ def variant_config(config: dict, variant: str | None) -> dict:
         raise ValueError("decode bundle requires the explicit striped cache bundle")
     if selected.get("experimental_aligned_math", False) and not selected.get("experimental_bf16_attention", False):
         raise ValueError("aligned math requires BF16 attention")
+    if selected.get("experimental_official_math", False) and not selected.get("experimental_aligned_math", False):
+        raise ValueError("official math requires the aligned BF16 codec")
     if selected.get("experimental_c16_tuned", False) and not selected.get("experimental_aligned_math", False):
         raise ValueError("timer-directed C16 requires aligned BF16 attention")
     if selected.get("experimental_bf16_attention", False) and not (
@@ -191,13 +194,16 @@ def variant_features(config: dict) -> dict:
 def runtime_feature_summary(config: dict, variant: str | None) -> dict:
     """One compact startup line shows the actual effective feature selection."""
     return {"variant":variant,"optimizations":variant_features(config),
-            **({"aligned_c16_operator": ("attention_cv_aligned_cluster16_out"
+            **({"aligned_c16_operator": ("attention_cv_official_cluster16_out" if config.get("experimental_official_math",False) else "attention_cv_aligned_cluster16_out"
                                         if config.get("experimental_c16_tuned", False)
                                         else "attention_cv_aligned_cluster16_control_out")}
                if config.get("experimental_aligned_math", False) else {}),
             "attention_compute":{"operands":"bfloat16" if config.get("experimental_bf16_attention", False) else "float32",
                                  "accumulator":"float32", "softmax_lse_merge":"float32"},
-            "oscar_math_profile":"oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "legacy",
+            "oscar_math_profile":"oscar_bf16_attention_v4" if config.get("experimental_official_math",False) else "oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "legacy",
+            "attention_coordinate_frame":"all_sources_rotated" if config.get("experimental_official_math",False) else "legacy_mixed",
+            "inverse_rotation":"once_after_fp32_merge" if config.get("experimental_official_math",False) else "per_history_partial",
+            "cached_precision_policy":"native_fixed_per_forward" if config.get("experimental_official_math",False) else "legacy_query_relative",
             "rotation_method":config.get("rotation_method"),
             "metadata_dtype":"float32" if config.get("experimental_aligned_math",False) else "float16",
             "prefix_caching":config.get("enable_prefix_caching", False),

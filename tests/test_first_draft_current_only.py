@@ -182,7 +182,7 @@ def test_forward_dispatches_qualified_first_draft_without_widening_native_curren
     impl = object.__new__(module.OscarAttentionImpl)
     impl.num_heads, impl.num_kv_heads, impl.head_size = 6, 1, 64
     cache = torch.empty(1, dtype=torch.uint8)
-    state = SimpleNamespace(packed=cache, cache_format="canonical_v1")
+    state = SimpleNamespace(packed=cache, cache_format="canonical_v1", workspace=SimpleNamespace())
     impl.provider = SimpleNamespace(config={"experimental_current_only": True}, layer_state=lambda _: state)
     metadata = from_common(common(), is_draft=True, current_only=True, first_draft_current_only=True)
     calls = []

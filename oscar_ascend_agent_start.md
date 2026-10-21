@@ -1,5 +1,7 @@
 # Agent 启动指令（v2）：将 OSCAR KV Cache INT2 量化适配到 vLLM Ascend 0.23.0
 
+> 2026-10-21数值修复：candidate默认v4，所有FULL来源统一旋转域、FP32 partial合并后仅一次最终逆旋转；新reader/prepare与current-only/MTP/APC探针一起切换，旧v3与timer不改。窗口采用明确native fixed-per-forward映射，不冒称SGLang 8-token分配器/未知V2 PT等价。原生GDN BF16、graph、预算与设备不变，禁止连接真机/测速，模型质量仍待用户验收。见docs/official_math_v4_20261021.md。
+
 > 2026-10-20定向优化恢复：用户授权根据已有timer优化，并禁止修改timer。只针对C16已测softmax处理链及BF16转换；原C16保留为control，生产ABI/source名保持，candidate通过统一配置选择优化实现。完整数值/错误域/CANN与真实速度分别记账，不恢复真机连接或性能测试，不修改main/stable。见 `docs/c16_targeted_optimization_20261020.md`。
 
 > 2026-10-19 C16内部诊断：用户要求继续拆解已观测的1199.604 ms CV热点。新增独立 `scripts/test_c16_breakdown.sh`，一次candidate服务、一条32K→16请求；在真实暖prefill输入上配对原C16与独立计时克隆，推理消费原核输出。设备内部阶段计数、逐位校验及计时扰动倍率一并报告；不将跨核相位相加或折算成旧1199 ms。普通启动和原生产内核不变，agent不连接真机、不运行性能测试。见 `docs/c16_internal_breakdown_20261019.md`。

@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-21 官方V1算术链修复：新增v4 reader与prepare，历史/HP/current统一旋转域，FP32 partial合并后一次BF16逆旋转；current-only不再省略旋转，混合current避免提前BF16舍入。单forward精度边界固定，native MTP/APC/物理快照保持；不声称完全复刻SGLang分配器。新合同/独立oracle及一键gate同步，旧母源/guard/timer不改。CANN、CPU与主机证据及未验收的NPU/图/质量/性能见[交付说明](official_math_v4_20261021.md)。
+
 2026-10-20 timer驱动C16定向优化：只针对实测softmax链和BF16转换，保留同一256列归约/ACC_VAL，省略无用标量结果UB发布；C16专用normal-mask转换批量发射repeat，RNE/stride不变。candidate统一启用`c16_tuned`，原核保留显式control，现有timer逐字不变。12例完整C16与355例helper CPU-debug、55能力CANN fresh构建通过；主机148通过/3项已有静态失败/1项跳过。仅交付待真机认证，不计提速或>30%收益；后续依据实际收益决定保留/继续，不能将全部23.8ms视作可消除。见[实现与证据边界](c16_targeted_optimization_20261020.md)。
 
 2026-10-20 精度排查后的模型/校准身份修复：原生load_model前绑定实际runner模型/量化模式，修复手动CLI与OSCAR配置漂移仍可选择同形状旧PT的缺口。保持当前910B4原生GDN的BF16状态，撤回仅凭HF声明FP32判定原生配置错误的推断。服务/采样/PT profile统一有效精度；recipe v2绑定采样manifest与K/V产物，拒绝无来源或不匹配的导入；独立prepare入口先解析auto量化。旧自动PT换路径生成，新产物可复用。主机回归和原生算子能力源码核验见[排查与修复边界](qwen38_precision_audit_20261020.md)，没有真机、质量或速度验收，不宣称用户约5点差已修复。

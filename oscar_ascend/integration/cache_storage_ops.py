@@ -24,6 +24,11 @@ REQUEST_CLUSTER_READERS = frozenset({
 
 
 def storage_reader(state, original):
+    if state.cache_format == "striped_rotated_fp32_v3":
+        from ..ops.cv_dispatch import OFFICIAL_CV_OPS
+        if original not in OFFICIAL_CV_OPS:
+            raise OscarReadinessError("rotated-window cache requires its official-domain reader")
+        return original
     if state.cache_format == REQUEST_FORMAT:
         try:
             return REQUEST_READERS[original]
@@ -51,8 +56,13 @@ def request_map(state, metadata, first=0, count=None):
     return value[first:first + count]
 
 
-def store_current(ops, state, key, value, slots, positions, starts, window_map, config):
+def store_current(ops, state, key, value, slots, positions, starts, window_map, config, *, rotated_kv=None):
     n = key.shape[0]
+    if state.cache_format == "striped_rotated_fp32_v3":
+        if not config.get("experimental_official_math", False):
+            raise OscarReadinessError("rotated-window writer selected without official math")
+        from .official_math import store_rotated
+        return store_rotated(ops,state,key,value,slots,positions,config,rotated_kv=rotated_kv)
     if state.cache_format == "striped_fp32_v2":
         if not config.get("experimental_aligned_math",False):
             raise OscarReadinessError("aligned writer selected without matching math profile")

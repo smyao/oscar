@@ -1,0 +1,103 @@
+{
+  "official_commit": "38680852e52c10bd6b9e9a64ed9bc815e742859b",
+  "local_audit_head": "7786910f",
+  "production_modified": false,
+  "W8A8_specific_KV_compensation_found": false,
+  "same_keys_domain_bias": [
+    {
+      "mode": 0,
+      "same_original_keys": true,
+      "int2_kv_roundtrip_exact": true,
+      "history_logit": 16.1378173828125,
+      "local_exact_logit": 16.0,
+      "official_exact_logit": 16.1378173828125,
+      "local_output": 0.06884765625,
+      "official_output": 0.0,
+      "max_abs_difference": 0.06884765625
+    },
+    {
+      "mode": 1,
+      "same_original_keys": true,
+      "int2_kv_roundtrip_exact": true,
+      "history_logit": 16.1378173828125,
+      "local_exact_logit": 16.0,
+      "official_exact_logit": 16.1378173828125,
+      "local_output": 0.06884765625,
+      "official_output": 0.0,
+      "max_abs_difference": 0.06884765625
+    }
+  ],
+  "inverse_split_difference": [
+    0.0078125,
+    0.0078125
+  ],
+  "uniform_codec_checks": [
+    {
+      "clip_ratio": 0,
+      "sort_index": -1,
+      "codes_scale_zero_equal": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "clip_ratio": 0.92,
+      "sort_index": 235,
+      "codes_scale_zero_equal": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "clip_ratio": 0.96,
+      "sort_index": 245,
+      "codes_scale_zero_equal": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "clip_ratio": 1,
+      "sort_index": 255,
+      "codes_scale_zero_equal": [
+        true,
+        true,
+        true
+      ]
+    }
+  ],
+  "V1_calibration_same_sample_checks": [
+    {
+      "dim": 8,
+      "local_q_heads": 6,
+      "local_kv_heads": 1,
+      "tokens": 2111,
+      "tp": 4,
+      "per_rank_covariance_bitwise_equal": true,
+      "fp32_rotation_max_abs_errors": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "dim": 64,
+      "local_q_heads": 12,
+      "local_kv_heads": 2,
+      "tokens": 615,
+      "tp": 2,
+      "per_rank_covariance_bitwise_equal": true,
+      "fp32_rotation_max_abs_errors": [
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "GPQA_messages_equal": true,
+  "NPU": "not_run",
+  "model_quality": "reported gap remains unresolved; no recovery claim",
+  "performance": "not_run",
+  "report": "docs/oscar_official_numerical_alignment_20261021.md"
+}

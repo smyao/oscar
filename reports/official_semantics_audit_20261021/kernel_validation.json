@@ -1,0 +1,295 @@
+{
+  "scope": "local Lima CANN full extension and official SDK CPU-debug functional validation",
+  "build": "passed",
+  "build_signature": "1178b5e2767c178d22fb08658a92a4e57b8407a5ed5ec0f23afd498bf2449702",
+  "binary_sha256": {
+    "/tmp/oscar-official-math-20261021/build/ascendc/_oscar_ascend_ops.cpython-312-aarch64-linux-gnu.so": "f29df83fb2f53ced48f4835971152a4acd525eb7ec24f35862d7732e54f05596",
+    "/tmp/oscar-official-math-20261021/build/ascendc/lib/liboscar_ascend_kernels_1178b5e2767c178d.so": "dd1c5a1d7e257207c483e86d513ed52da47a264b00282fb94e22db83e16e731e"
+  },
+  "production_source_binding": {
+    "csrc/kernels/attention_official_tasks.cpp": {
+      "sha256": "bfcc571b3917fd7f8ee187fe46aac64b5246acfcba0bb6118e5f71ef723cf06c",
+      "matches_completed_build": true
+    },
+    "csrc/kernels/attention_cv_official_cluster4.cpp": {
+      "sha256": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+      "matches_completed_build": true
+    },
+    "csrc/kernels/attention_cv_official_decode.cpp": {
+      "sha256": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+      "matches_completed_build": true
+    },
+    "csrc/kernels/attention_cv_official_cluster16.cpp": {
+      "sha256": "df843b991b0112e97b524f9b2d10f53f8805a650c2187ae47345a545b0f0582f",
+      "matches_completed_build": true
+    },
+    "csrc/include/oscar_official_tasks_launch.h": {
+      "sha256": "021ba204f4d171f788d9211bb1db93daf5c0e238d9a71d04d70f8e7cafc3eced",
+      "matches_completed_build": true
+    },
+    "csrc/include/oscar_official_cluster_launch.h": {
+      "sha256": "c260d9005b9a9cd9360e0ea8f28f273ddf42be1a01b2bf14aacdbffbb06867b2",
+      "matches_completed_build": true
+    },
+    "csrc/include/oscar_official_decode_launch.h": {
+      "sha256": "f6b42d74cfb1ae0367971938e7cbe80463568955feeeed15aa42904c35b436a7",
+      "matches_completed_build": true
+    },
+    "csrc/official_attention_bindings.cpp": {
+      "sha256": "4c708a041f991b0b3373921f71f3e72354af04445140e6df6fbdd716b9cec28b",
+      "matches_completed_build": true
+    },
+    "csrc/CMakeLists.txt": {
+      "sha256": "9cfb8358f78bb6aa9b5b8dcdacd4067e0069420d11aab8262bae03552ef5cdec",
+      "matches_completed_build": true
+    },
+    "csrc/torch_bindings.cpp": {
+      "sha256": "00d2ef71ab7bd0dd227c7ef6bfb98699ee1679ef96abd216f91a409f8bb27743",
+      "matches_completed_build": true
+    }
+  },
+  "cpu_cases": {
+    "q4_mode0": {
+      "backend": "ascendc_cpu_debug",
+      "status": "passed",
+      "mode": "q4",
+      "oracle": true,
+      "includes_bf16_rv": false,
+      "partial_max_abs": 4.98593e-05,
+      "lse_max_abs": 4.76837e-07,
+      "output_max_abs": 1.38767e-05,
+      "writer_bytes_exact": true,
+      "query_copy_exact": true,
+      "dequant_mode": 0,
+      "gm_guards": true,
+      "inputs_immutable": true,
+      "task_count": 90,
+      "log": "vm_evidence/reports/official-cpu-v1/logs/q4_mode0-execute.log"
+    },
+    "q4_mode1": {
+      "backend": "ascendc_cpu_debug",
+      "status": "passed",
+      "mode": "q4",
+      "oracle": true,
+      "includes_bf16_rv": false,
+      "partial_max_abs": 4.98891e-05,
+      "lse_max_abs": 4.76837e-07,
+      "output_max_abs": 1.38655e-05,
+      "writer_bytes_exact": true,
+      "query_copy_exact": true,
+      "dequant_mode": 1,
+      "gm_guards": true,
+      "inputs_immutable": true,
+      "task_count": 90,
+      "log": "vm_evidence/reports/official-cpu-v1/logs/q4_mode1-execute.log"
+    },
+    "q1_mode1": {
+      "backend": "ascendc_cpu_debug",
+      "status": "passed",
+      "mode": "q1",
+      "oracle": true,
+      "includes_bf16_rv": false,
+      "partial_max_abs": 5.36442e-07,
+      "lse_max_abs": 4.76837e-07,
+      "output_max_abs": 1.49012e-07,
+      "writer_bytes_exact": true,
+      "query_copy_exact": true,
+      "dequant_mode": 1,
+      "gm_guards": true,
+      "inputs_immutable": true,
+      "task_count": 36,
+      "log": "vm_evidence/reports/official-cpu-v1/logs/q1_mode1-execute.log"
+    },
+    "c4_mode0": {
+      "backend": "ascendc_cpu_debug",
+      "status": "passed",
+      "mode": "c4",
+      "oracle": true,
+      "includes_bf16_rv": false,
+      "partial_max_abs": 0.00055024,
+      "lse_max_abs": 9.53674e-07,
+      "output_max_abs": 0.000324696,
+      "eligible_clusters": 2,
+      "independent_tail_leaders": 2,
+      "dequant_mode": 0,
+      "members": 8,
+      "gm_guards": true,
+      "inputs_immutable": true,
+      "task_count": 516,
+      "log": "vm_evidence/reports/official-cpu-v3/logs/c4_mode0-execute.log"
+    },
+    "c4_mode1": {
+      "backend": "ascendc_cpu_debug",
+      "status": "passed",
+      "mode": "c4",
+      "oracle": true,
+      "includes_bf16_rv": false,
+      "partial_max_abs": 0.00055024,
+      "lse_max_abs": 9.53674e-07,
+      "output_max_abs": 0.000324726,
+      "eligible_clusters": 2,
+      "independent_tail_leaders": 2,
+      "dequant_mode": 1,
+      "members": 8,
+      "gm_guards": true,
+      "inputs_immutable": true,
+      "task_count": 516,
+      "log": "vm_evidence/reports/official-cpu-v3/logs/c4_mode1-execute.log"
+    },
+    "c16_mode0": {
+      "backend": "ascendc_cpu_debug",
+      "status": "passed",
+      "mode": "c16",
+      "oracle": true,
+      "includes_bf16_rv": false,
+      "partial_max_abs": 0.000764146,
+      "lse_max_abs": 9.53674e-07,
+      "output_max_abs": 0.000550248,
+      "eligible_clusters": 1,
+      "independent_tail_leaders": 1,
+      "dequant_mode": 0,
+      "members": 16,
+      "gm_guards": true,
+      "inputs_immutable": true,
+      "task_count": 1014,
+      "log": "vm_evidence/reports/official-cpu-v3/logs/c16_mode0-execute.log"
+    },
+    "c16_mode1": {
+      "backend": "ascendc_cpu_debug",
+      "status": "passed",
+      "mode": "c16",
+      "oracle": true,
+      "includes_bf16_rv": false,
+      "partial_max_abs": 0.000764146,
+      "lse_max_abs": 4.76837e-07,
+      "output_max_abs": 0.000550218,
+      "eligible_clusters": 1,
+      "independent_tail_leaders": 1,
+      "dequant_mode": 1,
+      "members": 16,
+      "gm_guards": true,
+      "inputs_immutable": true,
+      "task_count": 1014,
+      "log": "vm_evidence/reports/official-cpu-v3/logs/c16_mode1-execute.log"
+    },
+    "q4_mode1_fault": {
+      "backend": "ascendc_cpu_debug",
+      "status": "passed",
+      "mode": "q4",
+      "oracle": false,
+      "includes_bf16_rv": false,
+      "partial_max_abs": 0,
+      "lse_max_abs": 0,
+      "output_max_abs": 0,
+      "writer_bytes_exact": true,
+      "query_copy_exact": true,
+      "dequant_mode": 1,
+      "gm_guards": true,
+      "inputs_immutable": true,
+      "task_count": 90,
+      "log": "vm_evidence/reports/official-cpu-v3/logs/q4_mode1_fault-execute.log"
+    },
+    "c4_mode1_fault": {
+      "backend": "ascendc_cpu_debug",
+      "status": "passed",
+      "mode": "c4",
+      "oracle": false,
+      "includes_bf16_rv": false,
+      "partial_max_abs": 0,
+      "lse_max_abs": 0,
+      "output_max_abs": 0,
+      "eligible_clusters": 2,
+      "independent_tail_leaders": 2,
+      "dequant_mode": 1,
+      "members": 8,
+      "gm_guards": true,
+      "inputs_immutable": true,
+      "task_count": 516,
+      "log": "vm_evidence/reports/official-cpu-v3/logs/c4_mode1_fault-execute.log"
+    },
+    "c16_mode1_fault": {
+      "backend": "ascendc_cpu_debug",
+      "status": "passed",
+      "mode": "c16",
+      "oracle": false,
+      "includes_bf16_rv": false,
+      "partial_max_abs": 0,
+      "lse_max_abs": 0,
+      "output_max_abs": 0,
+      "eligible_clusters": 1,
+      "independent_tail_leaders": 1,
+      "dequant_mode": 1,
+      "members": 16,
+      "gm_guards": true,
+      "inputs_immutable": true,
+      "task_count": 1014,
+      "log": "vm_evidence/reports/official-cpu-v3/logs/c16_mode1_fault-execute.log"
+    },
+    "c16_mode0_empty_history": {
+      "backend": "ascendc_cpu_debug",
+      "status": "passed",
+      "mode": "c16",
+      "oracle": true,
+      "includes_bf16_rv": false,
+      "partial_max_abs": 0.000649475,
+      "lse_max_abs": 4.76837e-07,
+      "output_max_abs": 0.000559047,
+      "eligible_clusters": 1,
+      "independent_tail_leaders": 1,
+      "dequant_mode": 0,
+      "members": 16,
+      "gm_guards": true,
+      "inputs_immutable": true,
+      "task_count": 1014,
+      "empty_history_exact_zero_and_negative_infinity": true,
+      "log": "vm_evidence/reports/official-cpu-v4/logs/c16_mode0_empty_history-execute.log"
+    }
+  },
+  "cpu_matrix_complete": true,
+  "q4_fault_full_status": {
+    "scope": "existing CPU output complete task/lane status inspection",
+    "case": "q4_mode1_fault",
+    "passed": true,
+    "status_words": 180,
+    "required_error": {
+      "task": 0,
+      "lane": 0,
+      "code": 3
+    },
+    "all_other_words_exact_zero": true,
+    "status_sha256": "fc29ebb606ffb802936a66df8f69c48992f162b72709dd0ec11e556b6c695bdb"
+  },
+  "original_runs": [
+    {
+      "path": "vm_evidence/reports/official-cpu-v1/summary.json",
+      "status": "failed",
+      "failed_phase": "c4_mode0-execute"
+    },
+    {
+      "path": "vm_evidence/reports/official-cpu-v2/summary.json",
+      "status": "failed",
+      "failed_phase": "c4_mode0-execute"
+    },
+    {
+      "path": "vm_evidence/reports/official-cpu-v3/summary.json",
+      "status": "passed",
+      "failed_phase": null
+    },
+    {
+      "path": "vm_evidence/reports/official-cpu-v4/summary.json",
+      "status": "passed",
+      "failed_phase": null
+    }
+  ],
+  "first_failure_explanations": [
+    "First CANN source stage omitted the existing current_only include dependency; rc2 logs retained, complete v2 build passed after staging it.",
+    "CPU v1/v2 C4 harness retained the ancestor 337-token fixture's x4 count conversion; the new 85-token double-KV fixture declares two clusters. Actual2/members8/skips8 matched geometry. Removed only that harness conversion; original failed outputs/logs retained."
+  ],
+  "target_npu": "not_run",
+  "graph_capture": "not_run",
+  "graph_replay": "not_run",
+  "model_quality": "not_run",
+  "performance": "not_run_user_prohibited",
+  "archive_sha256": "452974f0b0aabacbe54301af985db9229df6ae4e64fe966a53a59f00974cc19d",
+  "status": "passed"
+}

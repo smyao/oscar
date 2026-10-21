@@ -142,7 +142,7 @@ def _run_bf16_deployment(config, config_path, log_dir, status, env) -> int:
                         or report.get("performance_acceptance") != "not_run_user_requested"
                         or report.get("target_config", {}).get("original_sha256") != digest
                         or report.get("target_config", {}).get("effective_sha256") != digest
-                        or report.get("aligned_attention_gate" if config.get("experimental_aligned_math",False) else "bf16_attention_gate", {}).get("status") != "passed"):
+                        or report.get("official_attention_gate" if config.get("experimental_official_math",False) else "aligned_attention_gate" if config.get("experimental_aligned_math",False) else "bf16_attention_gate", {}).get("status") != "passed"):
                     raise RuntimeError("fresh BF16 correctness/graph gates or effective config binding incomplete")
                 status["bf16_correctness"] = {"status": "passed", "report": str(gate_status_path)}
             else:

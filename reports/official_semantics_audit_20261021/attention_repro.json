@@ -1,0 +1,140 @@
+{
+  "classification": "artificial CPU mathematical counterexamples; no attribution of the reported 5 LongBench points",
+  "upstream_commit": "38680852e52c10bd6b9e9a64ed9bc815e742859b",
+  "production_edits": false,
+  "npu_execution": false,
+  "performance_measured": false,
+  "exact_token_rotation_domain": {
+    "shape": {
+      "queries": 1,
+      "kv_tokens": 1,
+      "head_dim": 256
+    },
+    "input_v_first2": [
+      1.0,
+      1.0
+    ],
+    "local_original_space_output_first2": [
+      1.0,
+      1.0
+    ],
+    "official_rotated_space_output_first2": [
+      1.0078125,
+      1.0078125
+    ],
+    "max_abs_difference": 0.0078125,
+    "original_fp32_rotation_orthogonality_error": 1.1920928955078125e-07,
+    "rounded_bf16_rotation_orthogonality_error": 0.0031280517578125,
+    "compression_used": false
+  },
+  "query_key_rotation_domain": {
+    "raw_logits": [
+      2.0,
+      0.0
+    ],
+    "rotated_logits": [
+      2.0172271728515625,
+      0.0
+    ],
+    "raw_attention_output": 0.7612357139587402,
+    "rotated_attention_output": 0.7653745412826538,
+    "raw_lse": 2.1269280910491943,
+    "rotated_lse": 2.1421170234680176,
+    "compression_used": false,
+    "attention_implementation": "same declared BF16 online-tile oracle on both sides; not GPU or NPU execution"
+  },
+  "same_keys_history_exact_domain_bias": [
+    {
+      "mode": 0,
+      "same_original_keys": true,
+      "int2_kv_roundtrip_exact": true,
+      "history_logit": 16.1378173828125,
+      "local_exact_logit": 16.0,
+      "official_exact_logit": 16.1378173828125,
+      "local_output": 0.06884765625,
+      "official_output": 0.0,
+      "max_abs_difference": 0.06884765625
+    },
+    {
+      "mode": 1,
+      "same_original_keys": true,
+      "int2_kv_roundtrip_exact": true,
+      "history_logit": 16.1378173828125,
+      "local_exact_logit": 16.0,
+      "official_exact_logit": 16.1378173828125,
+      "local_output": 0.06884765625,
+      "official_output": 0.0,
+      "max_abs_difference": 0.06884765625
+    }
+  ],
+  "partial_inverse_before_merge": [
+    {
+      "mode": 0,
+      "split_lengths": [
+        3,
+        2
+      ],
+      "unrounded_partial_first_component": [
+        1.0052083730697632,
+        1.0
+      ],
+      "local_split_output": 1.0078125,
+      "official_merge_then_inverse_output": 1.0,
+      "local_one_split_output": 1.0,
+      "max_abs_difference": 0.0078125
+    },
+    {
+      "mode": 1,
+      "split_lengths": [
+        3,
+        2
+      ],
+      "unrounded_partial_first_component": [
+        1.0052083730697632,
+        1.0
+      ],
+      "local_split_output": 1.0078125,
+      "official_merge_then_inverse_output": 1.0,
+      "local_one_split_output": 1.0,
+      "max_abs_difference": 0.0078125
+    }
+  ],
+  "v1_shared_rotation_gqa_12q_2kv_ratio6": "same output as repeated per-head matrices",
+  "prefill_prefix_precision_cut": {
+    "context": 512,
+    "sink": 64,
+    "recent": 256,
+    "cases": [
+      {
+        "query_position": 512,
+        "prefix_token": 300,
+        "cut": 257,
+        "local_tier": "exact",
+        "local_output_first_component": 0.001953125,
+        "upstream_if_fixed_hp": 0.001953125,
+        "upstream_if_fixed_int2": 0.0
+      },
+      {
+        "query_position": 612,
+        "prefix_token": 300,
+        "cut": 357,
+        "local_tier": "int2",
+        "local_output_first_component": 0.0,
+        "upstream_if_fixed_hp": 0.0016326904296875,
+        "upstream_if_fixed_int2": 0.0
+      }
+    ],
+    "upstream_live_tier": "not inferred; both possible fixed classifications shown",
+    "meaning": "within one forward upstream dequantizes prefix once; local chooses prefix precision separately for each query"
+  },
+  "sources_sha256": {
+    "reports/official_semantics_audit_20261021/upstream/python/sglang/srt/layers/attention/quantized_kv_prefill.py": "bc3f1718015e7a353d0f32e6341446f6ab0294e5eab9fcf8625bc8af2645e081",
+    "reports/official_semantics_audit_20261021/upstream/python/sglang/srt/layers/attention/triton_backend.py": "10d6993f05b37ca58d7feff212be7039af1b88bfe59eb2d1fcddf2de1e6bbf34",
+    "reports/official_semantics_audit_20261021/upstream/python/sglang/srt/layers/attention/triton_ops/decode_attention.py": "4490d2eff302d7af62ee1f1c4fd771dea01525b8014b887b88e4051cb644a9dc",
+    "csrc/kernels/store_aligned_int2.cpp": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
+    "csrc/kernels/attention_cv_aligned_decode.cpp": "95cd76c1b105df263d78d7e11b7d7ed68a76d5529e33b6285d05b8c384fcbda8",
+    "oscar_ascend/integration/current_only_dispatch.py": "37e68b3600b317a6730f73cf913dcf057813f0ce4aaec7be364b43defc889e05",
+    "tools/bf16_reference.py": "7b9b71b1bfe6198f41e36962c10adcca1e6863b03b9a9ad391c1533aed0ec859",
+    "reports/official_semantics_audit_20261021/upstream/python/sglang/QuantKernel/oscar_rotate_rows.py": "42bf07f672c307430b16cb4ded4c43aedf7140885c293eaa3411cf6ee195c2ae"
+  }
+}

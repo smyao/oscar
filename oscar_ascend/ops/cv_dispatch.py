@@ -33,6 +33,8 @@ BF16_C4_CV_OP = "attention_cv_bf16_cluster4_out"
 BF16_C16_CV_OP = "attention_cv_bf16_cluster16_out"
 BF16_CV_OPS = frozenset({BF16_DECODE_CV_OP, BF16_Q1_CV_OP, BF16_C4_CV_OP, BF16_C16_CV_OP})
 ALIGNED_CV_MAP = {name: name.replace("_bf16_", "_aligned_") for name in BF16_CV_OPS}
+OFFICIAL_CV_MAP = {name: name.replace("_bf16_", "_official_") for name in BF16_CV_OPS}
+OFFICIAL_CV_OPS = frozenset(OFFICIAL_CV_MAP.values())
 CONTROL_C16_CV_OP = "attention_cv_aligned_cluster16_control_out"
 ALIGNED_CV_OPS = frozenset(ALIGNED_CV_MAP.values()) | {CONTROL_C16_CV_OP}
 
@@ -53,6 +55,7 @@ CLUSTER_CV_OPS = frozenset({CLUSTER4_CV_OP, FAST_CLUSTER4_CV_OP,
                             MEMBER_PIPELINE_CV_OP, C16_MEMBER_PIPELINE_CV_OP,
                             C16_L1_REUSE_CV_OP, BF16_C4_CV_OP, BF16_C16_CV_OP,
                             "attention_cv_aligned_cluster4_out", "attention_cv_aligned_cluster16_out",
+                            "attention_cv_official_cluster4_out", "attention_cv_official_cluster16_out",
                             CONTROL_C16_CV_OP})
 FAST_CV_OPS = frozenset({FAST_CV_OP, FAST_Q1_CV_OP, FAST_CLUSTER4_CV_OP})
 MIXED_CV_OPS = frozenset({FAST_BALANCED_CV_OP, FAST_CLUSTER16_CV_OP})

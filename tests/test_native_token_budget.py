@@ -241,7 +241,7 @@ def test_observe_candidate_gates_and_service_share_stable_effective_config(monke
                    ("hybrid_l1_decode", "c16_l1_reuse", "c4_member_pipeline", "prepare_reuse"))
         assert "--scheduler-cls" not in serve_argv(config)
 
-    gates = ("_preflight", "_aligned_attention_gate",
+    gates = ("_preflight", "_official_attention_gate",
              "_mixed_prepare_reuse_gate", "_current_only_gate",
              "_first_mtp_current_gate", "_mixed_decode_split_gate")
     for name in gates:

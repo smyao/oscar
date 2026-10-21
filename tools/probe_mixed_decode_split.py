@@ -83,11 +83,11 @@ def run_case(torch,target,acceptance,device,cores,case):
     fixture=shared.make_fixture(torch,reuse.Shape(case.name,case.lengths,case.contexts,256,1,1,False),target,
                                rotation_mode=mode)
     bf16=target.get('experimental_bf16_attention',False)
-    expected_oracle=shared._expected(fixture,target,native_current=True)
+    expected_oracle=shared._expected(fixture,target,native_current=not shared.official_enabled(target))
     pages=fixture['page_assignments']
     if sum(len(p) for p in pages)!=len({p for group in pages for p in group}):
         raise RuntimeError('partition fixture must have independent physical request pages')
-    tensors={k:v.to(device) for k,v in fixture['cpu'].items()}
+    tensors=shared.device_tensors(torch,fixture,device)
     tensors['slots']=tensors['slots'].to(getattr(torch,case.slot_dtype))
     cut=sum(case.lengths[:-1]);n=fixture['tokens'];tol=acceptance['fused_attention']
     sides={};snapshots={};outputs={};lses={};witness={}
@@ -226,7 +226,7 @@ def probe(config_path,acceptance_path):
     from oscar_ascend.ops.loader import validate_build_artifacts,require_capabilities
     from oscar_ascend.ops.cv_dispatch import DECODE_BUNDLE_OPS
     manifest=validate_build_artifacts(ROOT/'build/ascendc/build_manifest.json')
-    require_capabilities(DECODE_BUNDLE_OPS|{'rotate_out',shared.selected_writer(target),'prepare_attention_tasks_out','merge_lse_out','status_guard'}|
+    require_capabilities(DECODE_BUNDLE_OPS|{'rotate_out',shared.selected_writer(target),shared.selected_prepare(target),'merge_lse_out','status_guard'}|
                          (set(shared.selected_operators(target).values()) if target.get('experimental_bf16_attention',False) else set()))
     rows=[];device=torch.device('npu:0');cores=reuse._core_count(torch,target)
     for case in case_plan():

@@ -28,11 +28,23 @@ from .probe_aligned_attention import OPERATORS as ALIGNED_OPERATORS
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def official_enabled(target):
+    return target.get("experimental_official_math", target.get("official_math", False)) is True
+
+
+def selected_prepare(target):
+    return "prepare_official_attention_tasks_out" if official_enabled(target) else "prepare_attention_tasks_out"
+
+
 def math_contract(target):
+    if official_enabled(target):
+        return "oscar_bf16_attention_v4"
     return "oscar_bf16_attention_v3" if target.get("experimental_aligned_math", target.get("aligned_math", False)) else "oscar_bf16_attention_v2"
 
 
 def selected_operators(target):
+    if official_enabled(target):
+        return {family: name.replace("_aligned_", "_official_") for family, name in ALIGNED_OPERATORS.items()}
     return ALIGNED_OPERATORS if target.get("experimental_aligned_math", target.get("aligned_math", False)) else BF16_OPERATORS
 
 
@@ -41,6 +53,10 @@ def selected_writer(target):
 
 
 def make_fixture(torch, shape, target, *, rotation_mode):
+    if official_enabled(target):
+        from .official_fixture import make_fixture as official_fixture
+        return official_fixture(torch, shape, rotation_mode=rotation_mode,
+            k_clip=target.get("k_clip_ratio", .96), v_clip=target.get("v_clip_ratio", .92))
     if target.get("experimental_aligned_math", False):
         from .aligned_fixture import make_fixture as aligned_fixture
         return aligned_fixture(torch, shape, rotation_mode=rotation_mode,
@@ -52,10 +68,26 @@ def precision_fields(target):
     fields = {"bf16_attention": True, "math_contract": math_contract(target), "performance": "not_run_user_requested"}
     if target.get("experimental_aligned_math", False):
         fields.update(aligned_math=True, cache_format="striped_fp32_v2")
+    if official_enabled(target):
+        fields.update(official_math=True, cache_format="striped_rotated_fp32_v3")
     return fields
 
 
+def device_tensors(torch, fixture, device):
+    tensors = {key: value.to(device) for key, value in fixture["cpu"].items()}
+    if fixture.get("cache_format") == "striped_rotated_fp32_v3":
+        originals = fixture.get("original_inputs")
+        if not isinstance(originals, dict) or not {"q", "ck", "cv"} <= set(originals):
+            raise RuntimeError("official lifecycle fixture lacks original runtime projection inputs")
+        for key in ("q", "ck", "cv"):
+            tensors[key] = originals[key].to(device)
+    return tensors
+
+
 def aligned_source_snapshot(target):
+    if official_enabled(target):
+        from .probe_official_attention import source_binding
+        return source_binding()
     if target.get('experimental_aligned_math',False):
         from .probe_aligned_attention import source_binding
         return source_binding()
@@ -64,7 +96,10 @@ def aligned_source_snapshot(target):
 
 def bind_aligned_evidence(report, target, source_before=None):
     if target.get('experimental_aligned_math',False):
-        from .probe_aligned_attention import source_binding
+        if official_enabled(target):
+            from .probe_official_attention import source_binding
+        else:
+            from .probe_aligned_attention import source_binding
         current=source_binding()
         if source_before is not None and current!=source_before:
             raise RuntimeError('aligned lifecycle source changed during the device gate')
@@ -76,13 +111,18 @@ def bind_aligned_evidence(report, target, source_before=None):
 def validate_aligned_calls(calls, target):
     if not target.get('experimental_aligned_math',target.get('aligned_math',False)):
         return
-    allowed=set(ALIGNED_OPERATORS.values())
+    allowed=set(selected_operators(target).values())
     if not isinstance(calls,dict) or calls.get('store_aligned_int2_out',0)<1:
         raise RuntimeError('aligned lifecycle lacks actual new writer witness')
+    if official_enabled(target) and (calls.get(selected_prepare(target), 0) < 1 or
+            calls.get("copy_validate_current_out", 0) < 1):
+        raise RuntimeError("official lifecycle lacks actual prepare/final-output witnesses")
     for name,count in calls.items():
         if count and ((name.startswith('attention_cv_') and name not in allowed) or
                       name.startswith('rotate_clip_store') or name in {'rotate_out','rotate_vector_init_out'}):
             raise RuntimeError('aligned lifecycle called a legacy codec/rotation/reader: '+name)
+        if official_enabled(target) and count and name == "prepare_attention_tasks_out":
+            raise RuntimeError("official lifecycle called the legacy moving-tier prepare")
 
 
 def case_plan():
@@ -142,7 +182,8 @@ def validate_case_evidence(report, target, acceptance):
             raise RuntimeError(f"current-only case {name} lacks a finite oracle error")
         calls = row.get("real_operator_calls")
         validate_aligned_calls(calls,target)
-        expected_copy = 1 if paired or bf16 else 1 + policy["warmup"] + policy["repeats"]
+        expected_copy = ((3 if paired else 1) if official_enabled(target) else
+                         1 if paired or bf16 else 1 + policy["warmup"] + policy["repeats"])
         expected_store = 3 if paired else expected_copy
         if (not isinstance(calls, dict)
                 or type(calls.get("copy_validate_current_out")) is not int
@@ -152,7 +193,7 @@ def validate_case_evidence(report, target, acceptance):
             raise RuntimeError(f"current-only case {name} lacks real copy/writer call witnesses")
         if paired:
             required_pair = {"ab_output": "separate_BF16_native_contracts_passed" if bf16 else "frozen_tolerance_passed", "store_bitwise": "passed",
-                "baseline": "complete_current_CV" if draft else "existing_main_current_FIA_merge"}
+                "baseline": "complete_rotated_current_CV" if official_enabled(target) else "complete_current_CV" if draft else "existing_main_current_FIA_merge"}
             decode = row.get("decode_after_store", {})
             required_decode = {"status": "passed", "reader": "production_subsequent_q1",
                 "output_bitwise": "passed", "independent_oracle": "passed",
@@ -199,7 +240,9 @@ def _configuration(target, enabled, *, probe_tokens=None):
             raise RuntimeError(f"current-only gate requires explicit {key}=true")
     config = {**target, "experimental_current_only": enabled}
     if target.get("experimental_bf16_attention",False):
-        if target.get("experimental_aligned_math", False):
+        if official_enabled(target):
+            from .official_reference import load_acceptance
+        elif target.get("experimental_aligned_math", False):
             from .aligned_reference import load_acceptance
         else:
             from .bf16_reference import load_acceptance
@@ -226,12 +269,13 @@ def _runtime(torch, fixture, tensors, device, cores, target, enabled, *, hadamar
         c4_member_pipeline=target.get("experimental_c4_member_pipeline",False) or target.get("experimental_bf16_attention",False),
         c16_member_pipeline=target.get("experimental_c16_member_pipeline",False),
         c16_l1_reuse=target.get("experimental_c16_l1_reuse",False) or target.get("experimental_bf16_attention",False),
-        **({"aligned_math": True} if target.get("experimental_aligned_math", False) else {})), device)
+        **({"aligned_math": True, "official_math": official_enabled(target)} if target.get("experimental_aligned_math", False) else {})), device)
     # The independent fixture has a 64-byte diagnostic prefix. This FULL-only
     # runtime uses conv_bytes=0 and strips that prefix from both A/B buffers.
     aligned = target.get("experimental_aligned_math", False)
     raw = (fixture['cpu']['raw'] if aligned else raw_to_striped(fixture))[reuse.PREFIX:].to(device)
-    rk = (torch.eye(spec.dim,dtype=torch.float32) if fixture["rotation_mode"] == "identity"
+    rk = (fixture["rotation_k"].float() if official_enabled(target) else
+          torch.eye(spec.dim,dtype=torch.float32) if fixture["rotation_mode"] == "identity"
           else reuse._hadamard(torch,spec.dim)).to(device)
     rv = tensors["rv"].float() if aligned else tensors["rv"]
     state = LayerState(raw, raw, SimpleNamespace(block_size=reuse.BLOCK_TOKENS,
@@ -240,7 +284,7 @@ def _runtime(torch, fixture, tensors, device, cores, target, enabled, *, hadamar
             speculative_tokens=reuse.SPECULATIVE, ring_tokens=spec.recent_tokens+reuse.SPECULATIVE),
         tensors["wk"].clone(), tensors["wv"].clone(), tensors["tags"].clone(),
         rk, rv, rk.T.contiguous(), rv.T.contiguous(), hadamard, fixture["blocks"], workspace,
-        "striped_fp32_v2" if aligned else "striped_v1",
+        "striped_rotated_fp32_v3" if official_enabled(target) else "striped_fp32_v2" if aligned else "striped_v1",
         rotation_v_nz=(rv.reshape(spec.dim,spec.dim//8,8).permute(1,0,2).contiguous().view(spec.dim,spec.dim)
                        if target.get("experimental_hybrid_l1_decode",False) and not target.get("experimental_bf16_attention",False) else None),
         rotation_v_bf16=rv.to(torch.bfloat16).contiguous() if target.get("experimental_bf16_attention",False) else None,
@@ -294,6 +338,9 @@ def _assert_output(torch, output, expected, tolerance):
 
 def _expected(fixture,target,*,native_current):
     if not target.get("experimental_bf16_attention",False):return fixture["expected"]
+    if official_enabled(target):
+        from .official_runtime_oracle import sampled_fixture_expected
+        return sampled_fixture_expected(fixture, native_current=native_current, dequant_mode=0)
     if target.get("experimental_aligned_math", False):
         from .aligned_runtime_oracle import sampled_fixture_expected
         # All initial lifecycle metadata below explicitly uses ChunkedPrefill.
@@ -304,8 +351,12 @@ def _expected(fixture,target,*,native_current):
 
 def _next_bf16_decode_oracle(torch,fixture,state,q,k,v):
     from dataclasses import replace
-    aligned=fixture.get('cache_format')=='striped_fp32_v2'
-    if aligned:
+    official=fixture.get('cache_format')=='striped_rotated_fp32_v3'
+    aligned=official or fixture.get('cache_format')=='striped_fp32_v2'
+    if official:
+        from .official_runtime_oracle import sampled_fixture_expected
+        from .official_reference import rotate_bf16
+    elif aligned:
         from .aligned_runtime_oracle import sampled_fixture_expected
         from .aligned_reference import rotate_bf16
     else:
@@ -319,6 +370,11 @@ def _next_bf16_decode_oracle(torch,fixture,state,q,k,v):
          'wk':state.window_key.cpu(),'wv':state.window_value.cpu(),'tags':state.window_tags.cpu()}
     sample={**fixture,'cpu':cpu,'spec':replace(spec,qlens=(1,)*count,contexts=contexts,padded_tokens=count,slot_context=True),
             'tokens':count,'actual_tokens':count,'expected':{i:None for i in range(count)}}
+    if official:
+        qr=rotate_bf16(q,state.rotation_k_bf16.cpu())
+        sample['cpu'].update(q=qr,qr=qr,ck=rotate_bf16(k,state.rotation_k_bf16.cpu()),
+            cv=rotate_bf16(v,state.rotation_v_bf16.cpu()))
+        sample['cached_quant_ends']=[max(min(reuse.SINK,c),c+1-spec.recent_tokens) for c in contexts]
     return sampled_fixture_expected(sample,native_current=False,**({'dequant_mode':1} if aligned else {}))
 
 
@@ -389,7 +445,8 @@ def _decode_after_store(torch, fixture, tensors, old_impl, old, new_impl, new, d
         before=impl.provider.ops.calls["copy_validate_current_out"]
         bf16_before=impl.provider.ops.calls[q1] if bf16 else None
         outputs.append(_forward(torch,impl,state,inputs,metadata))
-        if impl.provider.ops.calls["copy_validate_current_out"] != before:
+        expected_copy_delta=1 if official_enabled(impl.provider.config) else 0
+        if impl.provider.ops.calls["copy_validate_current_out"] != before+expected_copy_delta:
             raise RuntimeError("subsequent q1 wrongly selected current-only")
         if bf16 and impl.provider.ops.calls[q1]!=bf16_before+1:
             raise RuntimeError("subsequent q1 did not execute the BF16 reader")
@@ -414,7 +471,7 @@ def run_case(torch, target, acceptance, device, cores, case):
     bf16=target.get("experimental_bf16_attention",False)
     expected=_expected(fixture,target,native_current=tuple(not draft or context==0 for context in shape.contexts))
     hadamard = rotation_mode == "hadamard"
-    tensors={key:value.to(device) for key,value in fixture["cpu"].items()}
+    tensors=device_tensors(torch,fixture,device)
     tensors["slots"]=tensors["slots"].to(getattr(torch,slot_type))
     impl,state=_runtime(torch,fixture,tensors,device,cores,target,True,hadamard=hadamard)
     metadata=_metadata(torch,fixture,tensors,draft=draft,enabled=True)
@@ -425,7 +482,8 @@ def run_case(torch, target, acceptance, device, cores, case):
     torch.npu.synchronize()
     tolerance=acceptance["fused_attention"]
     errors=_assert_output(torch,output,expected,tolerance)
-    if impl.provider.ops.calls["copy_validate_current_out"]!=1 or impl.provider.ops.calls[selected_writer(target)]!=(2 if paired else 1):
+    expected_initial_copies=(2 if paired else 1) if official_enabled(target) else 1
+    if impl.provider.ops.calls["copy_validate_current_out"]!=expected_initial_copies or impl.provider.ops.calls[selected_writer(target)]!=(2 if paired else 1):
         raise RuntimeError("production current-only/copy/striped-writer route witness mismatch")
     if _store_bits_equal(torch,original_raw,state.raw):
         raise RuntimeError("current-only writer did not publish compressed bytes")
@@ -444,15 +502,15 @@ def run_case(torch, target, acceptance, device, cores, case):
         old_meta=_metadata(torch,fixture,tensors,draft=draft,enabled=False)
         old_output=_forward(torch,old_impl,old,tensors,old_meta)
         torch.npu.synchronize()
-        if old_impl.provider.ops.calls["copy_validate_current_out"]:
+        if old_impl.provider.ops.calls["copy_validate_current_out"] != (1 if official_enabled(target) else 0):
             raise RuntimeError("disabled A/B baseline selected current-only")
-        old_expected=_expected(fixture,target,native_current=not draft)
+        old_expected=_expected(fixture,target,native_current=False if official_enabled(target) else not draft)
         _assert_output(torch,old_output,old_expected,tolerance)
         if not bf16:torch.testing.assert_close(output.float(),old_output.float(),**tolerance)
         _assert_stores(torch,old,state)
         row.update(ab_output="separate_BF16_native_contracts_passed" if bf16 else "frozen_tolerance_passed",store_bitwise="passed",
             ab_max_abs_diagnostic=float((output.float()-old_output.float()).abs().max()) if bf16 else None,
-            baseline="complete_current_CV" if draft else "existing_main_current_FIA_merge",
+            baseline="complete_rotated_current_CV" if official_enabled(target) else "complete_current_CV" if draft else "existing_main_current_FIA_merge",
             decode_after_store=_decode_after_store(torch,fixture,tensors,old_impl,old,impl,state,device,tolerance))
     elif bf16:
         row.update(performance="not_run_user_requested",store_bitwise="small_pairs_only")
@@ -501,7 +559,7 @@ def probe(config_path, acceptance_path):
     from oscar_ascend.ops.cv_dispatch import STRIPED_CV_OPS
     manifest_path=ROOT/"build/ascendc/build_manifest.json"
     manifest=validate_build_artifacts(manifest_path)
-    require_capabilities(STRIPED_CV_OPS|{"copy_validate_current_out","prepare_attention_tasks_out",
+    require_capabilities(STRIPED_CV_OPS|{"copy_validate_current_out",selected_prepare(target),
         "rotate_out","merge_lse_out","status_guard",selected_writer(target)}|
         (set(selected_operators(target).values()) | ({'copy_validate_bf16_query_out'} if target.get('experimental_aligned_math',False) else set())
          if target.get("experimental_bf16_attention",False) else set()),manifest_path)

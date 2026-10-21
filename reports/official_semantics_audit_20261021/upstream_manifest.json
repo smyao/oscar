@@ -1,0 +1,153 @@
+{
+  "repository": "https://github.com/FutureMLS-Lab/OSCAR",
+  "requested_ref": "sglang-rebase",
+  "resolved_commit": "38680852e52c10bd6b9e9a64ed9bc815e742859b",
+  "files": {
+    "rotation/run/qwen3.8-27b.sh": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/rotation/run/qwen3.8-27b.sh",
+      "sha256": "ecd21aaf27fccbc44d5d4164d833dab623d0e1e49f2aff8c58a2f80e331e2375",
+      "bytes": 1637
+    },
+    "rotation/run/_common.sh": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/rotation/run/_common.sh",
+      "sha256": "86eafdf48254b189d441b53e5678350d334641c5ff1bb9df6f91481c2c21de28",
+      "bytes": 2637
+    },
+    "rotation/eval_oscar_gpqa.sh": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/rotation/eval_oscar_gpqa.sh",
+      "sha256": "56fc61b252f142456b2f8b32d6e3fa0beb48da8bce2eec9991564b4e9993381c",
+      "bytes": 24157
+    },
+    "rotation/compute_kv_rotation.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/rotation/compute_kv_rotation.py",
+      "sha256": "14e218335ad763e66e09af3e487a6958413891eceb7bb4f4dc0a3a9aa4414be8",
+      "bytes": 21084
+    },
+    "python/sglang/QuantKernel/oscar_rotation_clip_int2_kv.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/QuantKernel/oscar_rotation_clip_int2_kv.py",
+      "sha256": "66c8ed67781777ec1ded2bcc7cb0d4c5a440aa1abe842fd62dfffe13d730531e",
+      "bytes": 39023
+    },
+    "python/sglang/srt/environ.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/environ.py",
+      "sha256": "91d64b7cbe02198a2ebd2680dad1e7fea05db493990ffb9dc566a1afd2ea689a",
+      "bytes": 135760
+    },
+    "python/sglang/srt/mem_cache/oscar_calibration.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/mem_cache/oscar_calibration.py",
+      "sha256": "9c3630ee41edcd6749201b8ab68edd112f485d3d95ff451750261eca1e78f9f7",
+      "bytes": 37717
+    },
+    "python/sglang/srt/mem_cache/oscar_rotation_paths.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/mem_cache/oscar_rotation_paths.py",
+      "sha256": "fe6125dc16bca029a664d2669065779aa2cb4cc99bd104e6a5ce0a35d2edcc1f",
+      "bytes": 7448
+    },
+    "python/sglang/srt/mem_cache/unified_kv_pool.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/mem_cache/unified_kv_pool.py",
+      "sha256": "d5d73f6a72e27a20392323a5f92fa47e4ca51a90147ed0ab7f0711450898af1f",
+      "bytes": 72645
+    },
+    "python/sglang/srt/mem_cache/memory_pool.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/mem_cache/memory_pool.py",
+      "sha256": "f7ee43761f72247f5885286c7d92cf25c3a5c24124d828ed64053463260b453b",
+      "bytes": 272542
+    },
+    "python/sglang/srt/mem_cache/kv_quant_kernels.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/mem_cache/kv_quant_kernels.py",
+      "sha256": "60aaa142c34d5113cb9b5e4366b74b9c474120f6eb6405fe6972b4cec8eb53eb",
+      "bytes": 21648
+    },
+    "python/sglang/srt/entrypoints/oscar_startup_calibration.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/entrypoints/oscar_startup_calibration.py",
+      "sha256": "e19ff378c042f2cae448969c450d57858eb8f374f38e59249016b2ae5b7f3d46",
+      "bytes": 11821
+    },
+    "python/sglang/srt/layers/attention/quantized_kv_prefill.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/layers/attention/quantized_kv_prefill.py",
+      "sha256": "bc3f1718015e7a353d0f32e6341446f6ab0294e5eab9fcf8625bc8af2645e081",
+      "bytes": 22066
+    },
+    "python/sglang/srt/layers/attention/triton_ops/decode_attention.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/layers/attention/triton_ops/decode_attention.py",
+      "sha256": "4490d2eff302d7af62ee1f1c4fd771dea01525b8014b887b88e4051cb644a9dc",
+      "bytes": 120408
+    },
+    "python/sglang/srt/layers/attention/triton_backend.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/layers/attention/triton_backend.py",
+      "sha256": "10d6993f05b37ca58d7feff212be7039af1b88bfe59eb2d1fcddf2de1e6bbf34",
+      "bytes": 187902
+    },
+    "python/sglang/srt/layers/radix_attention.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/layers/radix_attention.py",
+      "sha256": "5e01d90cdc27413d270e0c8643f143e2adc36c3a2ba13d9a3f4368d6580d0285",
+      "bytes": 25547
+    },
+    "python/sglang/srt/models/qwen3_5.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/models/qwen3_5.py",
+      "sha256": "9f1e188c7490c519c65de28be1176de105ffe2102d62aeec9cadbc020d737d51",
+      "bytes": 121012
+    },
+    "README.md": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/README.md",
+      "sha256": "f0baca9f04bb4aaa4dac5acbda10a6f215957094d880528eededf00c1f02ee67",
+      "bytes": 28100
+    },
+    "rotation/README.md": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/rotation/README.md",
+      "error": "curl: (56) The requested URL returned error: 404"
+    },
+    ".gitmodules": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/.gitmodules",
+      "sha256": "f7422f184accb9de01888942e1d08aa622385d05bf51a8b36af62a4de4ab83ce",
+      "bytes": 122
+    },
+    "rotation/dump_gpqa_prompts.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/rotation/dump_gpqa_prompts.py",
+      "error": "curl: (56) The requested URL returned error: 404"
+    },
+    "python/sglang/QuantKernel/oscar_rotate_rows.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/QuantKernel/oscar_rotate_rows.py",
+      "sha256": "42bf07f672c307430b16cb4ded4c43aedf7140885c293eaa3411cf6ee195c2ae",
+      "bytes": 4354
+    },
+    "rotation_zoo_model_tree.json": {
+      "url": "https://huggingface.co/api/models/Zhongzhu/OSCAR-RotationZoo/tree/main/Qwen3.8-27B?recursive=true&expand=false",
+      "error": "curl: (56) The requested URL returned error: 404"
+    },
+    "rotation_zoo_model_info.json": {
+      "url": "https://huggingface.co/api/models/Zhongzhu/OSCAR-RotationZoo",
+      "sha256": "4d3809848e367e3f08db2c480a9f8f9a4d612176dae8f2241a2ff155459f8d47",
+      "bytes": 7782
+    },
+    "python/sglang/srt/mem_cache/unified_kv_allocator.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/mem_cache/unified_kv_allocator.py",
+      "sha256": "f1659411db96d0f87a402ba80e3238b29b0e997fa455457467790fbd5acf63ea",
+      "bytes": 19064
+    },
+    "python/sglang/srt/managers/schedule_batch.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/managers/schedule_batch.py",
+      "sha256": "d1ffc680852ec643ddcd707d11e5f1469f0c4d6725f2bf468d599b0fd45012bc",
+      "bytes": 173375
+    },
+    "python/sglang/srt/mem_cache/allocator.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/mem_cache/allocator.py",
+      "error": "curl: (56) The requested URL returned error: 404"
+    },
+    "python/sglang/srt/mem_cache/allocation.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/mem_cache/allocation.py",
+      "sha256": "1be60073e3af259aeb40ff6495a0e91d8e59741af3971963bd4750b01e8d132e",
+      "bytes": 53695
+    },
+    "python/sglang/srt/mem_cache/mixed_kv_prefix_mixin.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/mem_cache/mixed_kv_prefix_mixin.py",
+      "sha256": "6def1ee214107e34b649a0cfae9d12200b4085c064e07be1da801aae91a43c23",
+      "bytes": 12254
+    },
+    "python/sglang/QuantKernel/gpu_flush_int2.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/QuantKernel/gpu_flush_int2.py",
+      "sha256": "5a1a6b26c0358453212f992c17be8189df18f5b05a57c37154da5de3eb8f55d1",
+      "bytes": 44329
+    }
+  }
+}

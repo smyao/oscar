@@ -8,6 +8,7 @@ def summarize(report):
     keys = ('status', 'first_error', 'device_completion', 'precision', 'error_domain',
             'graph_capture', 'graph_replay', 'cv_performance', 'full_attention_performance')
     result = {k: report.get(k) for k in keys}
+    result['progress'] = report.get('progress')
     result['cpu_screen'] = (report.get('cpu_screen') or {}).get('status')
     errors = (report.get('performance_gate') or {}).get('blocking_errors') or []
     result['blocking_error_count'] = len(errors)

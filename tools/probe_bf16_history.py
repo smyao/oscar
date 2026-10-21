@@ -22,6 +22,7 @@ from . import probe_history_reuse as reuse
 from . import probe_mdl_decode as mdl
 from . import probe_striped_cache as shared
 from .phase import atomic_json
+from .bf16_probe_progress import checkpoint, recording
 from .striped_fixture import raw_to_striped
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,7 +41,7 @@ ROUTES = {
 SCOPES = ('complete_cv_all_three_sources_device_events',
           'complete_cv_all_three_sources_merge_bf16_copy_device_events')
 SOURCE_PATHS = (
-    'tools/probe_bf16_history.py', 'tools/bf16_history_pipeline.py',
+    'tools/probe_bf16_history.py', 'tools/bf16_history_pipeline.py', 'tools/bf16_probe_progress.py',
     'tools/probe_history_reuse.py', 'tools/probe_mdl_decode.py',
     'oscar_ascend/integration/impl.py', 'oscar_ascend/integration/current_attention.py',
     'oscar_ascend/integration/guard_diag.py', 'oscar_ascend/integration/cache_storage_ops.py',
@@ -800,7 +801,9 @@ def performance_phase(torch,ops,rows,cpu_report,device,cores,acceptance,config):
     # Complete all six full-path numerical receipts before timing any scope.
     for case,row in zip(case_plan(),rows):
         if not case.timed:continue
+        checkpoint('full_numerical_begin', case=case.shape.name)
         row['full_attention']=complete.numerical_case(torch,ops,case,device,cores,config,acceptance,row)
+        checkpoint('full_numerical_complete', case=case.shape.name)
     execution=complete.execution_contract(config,cores)
     full_errors=[error for case,row in zip(case_plan(),rows) if case.timed
                  for error in complete.validate_receipt(case,row,timed=False,execution=execution)]
@@ -811,10 +814,13 @@ def performance_phase(torch,ops,rows,cpu_report,device,cores,acceptance,config):
     # Retain the first numerical/graph receipts and update only measured fields.
     for case,row in zip(case_plan(),rows):
         if not case.timed:continue
+        checkpoint('cv_timing_begin', case=case.shape.name)
         row['timing']=time_case(torch,ops,case,device,cores,acceptance,row)
+        checkpoint('full_timing_begin', case=case.shape.name)
         row['full_attention']['timing']=complete.timing_case(torch,ops,case,device,cores,config,acceptance,row)
         if (not all(entry['gate']=='passed' for entry in row['timing'].values()) or
                 row['full_attention']['timing']['gate']!='passed'):row['status']='failed'
+        checkpoint('timing_complete', case=case.shape.name)
         gc.collect();torch.npu.empty_cache()
     cv_passed=all(all(entry['gate']=='passed' for entry in row['timing'].values())
                   for case,row in zip(case_plan(),rows) if case.timed)
@@ -921,8 +927,11 @@ def probe(config_path,acceptance_path,*,output_path=None):
         gc.collect();torch.npu.empty_cache()
     rows=result['cases']
     try:
-        performance=performance_phase(torch,torch.ops.oscar_ascend_ops,rows,result['cpu_screen'],
-                                      torch.device('npu:0'),cores,acceptance,config)
+        with recording(result, lambda: atomic_json(output_path,result) if output_path else None):
+            checkpoint('operator_matrix_complete', completed_cases=len(rows))
+            performance=performance_phase(torch,torch.ops.oscar_ascend_ops,rows,result['cpu_screen'],
+                                          torch.device('npu:0'),cores,acceptance,config)
+            checkpoint('performance_phase_complete', status=performance['status'])
     except Exception as error:
         result.update(status='failed',cv_performance='incomplete',first_error=f'performance: {error}')
         error.bf16_report=result

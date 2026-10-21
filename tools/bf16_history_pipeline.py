@@ -14,6 +14,8 @@ import json
 import math
 import statistics
 
+from .bf16_probe_progress import checkpoint
+
 from oscar_ascend.integration import current_attention as current
 from .experiments.bf16_residual_screen import CONTRACT
 from oscar_ascend.integration.guard_diag import guard_diag_enabled, run_status_guard
@@ -111,6 +113,8 @@ def bounded_dense_oracle(torch,fixture,*,block_rows=32):
             for offset in range(stop-local):
                 fixture['expected'][begin+local+offset]=(result.output[offset],result.lse[offset])
             local=stop
+            if local == len(q) or local % 256 == 0:
+                checkpoint('cpu_oracle_rows', query_begin=begin, completed_rows=local, total_rows=len(q))
 
 
 def case_policy(case):
@@ -180,8 +184,11 @@ def launch_pipeline(ops,fixture,tensors,buffers,cores,*,name,cluster,policy,sett
 def build_pair(torch,ops,case,device,cores,config,first_receipt):
     from . import probe_bf16_history as probe
     if getattr(device,'type',None)!='npu':raise RuntimeError('full attention gate requires real NPU')
+    checkpoint('cpu_fixture_begin', case=case.shape.name, qlens=list(case.shape.qlens))
     fixture=probe.make_fixture(torch,case,dense_oracle=False)
+    checkpoint('cpu_oracle_begin', case=case.shape.name)
     bounded_dense_oracle(torch,fixture)
+    checkpoint('device_fixture_begin', case=case.shape.name)
     previous=first_receipt.get('full_attention')
     if previous and fixture['input_sha256']!=previous['input_sha256']:
         raise RuntimeError('full attention fixture differs from its numerical pass')
@@ -301,12 +308,16 @@ def numerical_case(torch,ops,case,device,cores,config,acceptance,first_receipt):
     case=production_case(case,execution_contract(config,cores))
     fixture,pair,policy,settings=build_pair(torch,ops,case,device,cores,config,first_receipt)
     for arm in pair:
+        checkpoint('full_launch_begin', case=case.shape.name, operator=arm['name'])
         reset_arm(torch,arm)
         launch_pipeline(ops,fixture,arm['tensors'],arm['buffers'],cores,name=arm['name'],
                         cluster=ROUTES[case.route][2],policy=policy,settings=settings)
+    checkpoint('full_synchronize_begin', case=case.shape.name)
     torch.npu.synchronize()
+    checkpoint('full_compare_begin', case=case.shape.name)
     detail=check_pair(torch,case,fixture,pair,policy,acceptance)
     for arm in pair:
+        checkpoint('full_repeat_begin', case=case.shape.name, operator=arm['name'])
         reference=snapshot_arm(arm);reset_arm(torch,arm)
         launch_pipeline(ops,fixture,arm['tensors'],arm['buffers'],cores,name=arm['name'],
                         cluster=ROUTES[case.route][2],policy=policy,settings=settings)
@@ -330,15 +341,19 @@ def timing_case(torch,ops,case,device,cores,config,acceptance,first_receipt):
     if policy!=previous['policy'] or settings!=previous['settings'] or fixture['execution']!=previous['execution']:
         raise RuntimeError('full attention policy/settings changed after numerical qualification')
     for arm in pair:
+        checkpoint('full_launch_begin', case=case.shape.name, operator=arm['name'])
         reset_arm(torch,arm)
         launch_pipeline(ops,fixture,arm['tensors'],arm['buffers'],cores,name=arm['name'],
                         cluster=ROUTES[case.route][2],policy=policy,settings=settings)
+    checkpoint('timing_precheck_synchronize_begin', case=case.shape.name)
     torch.npu.synchronize()
+    checkpoint('timing_precheck_compare_begin', case=case.shape.name)
     checked=check_pair(torch,case,fixture,pair,policy,acceptance)
     if not checked['passed'] or checked['task_sha256']!=previous['numerical']['task_sha256']:
         raise RuntimeError('full attention numerics/tasks changed before timing')
     references=[snapshot_arm(arm) for arm in pair];samples={arm['name']:[] for arm in pair}
     for repeat in range(7):
+        checkpoint('full_timing_repeat', case=case.shape.name, repeat=repeat)
         for index in ((0,1) if repeat<2 or repeat%2==0 else (1,0)):
             arm=pair[index]
             # Restore exact initial cache at the same addresses, on the same

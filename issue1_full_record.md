@@ -28846,3 +28846,11 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 
 
 **#173 后续源码修复（2026-10-21，非新增真机条目）**：用户明确授权BF16残差补偿。当前candidate在有界tile内用高/低两份BF16表示历史Q/K/P/V，历史QK/PV四项、精确源PV两项，原FP32旋转保留到reader拆分，不恢复FP32 QK/PV。同步typed workspace/绑定/生产入口和probe；MDL预取发布低平面，保留#171跨pipe依赖。CPU固定11例及当前probe的13项数学回归通过；成本、资源及边界见`docs/bf16_residual_implementation_20261021.md`。尚无本次目标机CANN/NPU/图/服务结果，不能将CPU结果写成设备修复完成。
+
+## [174] 真机续报（2026-10-21）· 残差版本30项通过后独立探针900秒超时
+
+**证据**：用户回传 bf16_diag_8rg76WFY，30项 BF16_HISTORY_CASE 均passed，6项主路径graph passed；phase elapsed_seconds=900.551052、timed_out=true、returncode=124、process_returncode=-15、cleanup_complete=true。没有算子异常栈。result最后检查点仍status=running，不能把device_completion=not_run解释为未执行前30项。
+
+**已定位的诊断缺陷**：performance_phase在30项后执行6项完整Attention数值验证和性能测量，原实现直到整阶段返回才落盘；CPU oracle/设备执行/比较均无阶段日志。现有日志不足以确认慢点或死锁，不能归因C16、残差算子或CPU参考计算。
+
+**修复与边界**：仅探针添加上下文隔离的实时checkpoint及原子落盘；完整路径fixture、分块CPU oracle、设备launch/sync、比较、重复和计时轮均有进度；摘要输出最后progress。计时区间内不加入日志、同步或文件写入，不变更生产内核、900秒期限、精度门槛和必测路径。本地39项相关回归通过；目标机下一次进度及完整服务尚待验证。

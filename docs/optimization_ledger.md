@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-21 v4质量反馈续查：用户报告精度仍低，实际v4启用标识待核。定向复核未发现重复RoPE/gate/GQA或Q scratch覆盖K/V的新错误；确认官方结果表center配方与本地共享层V1 PT仍不同。新增只读运行配置/PT识别和已保存校准样本的perhead/center量化误差诊断，不改生产、不重新加载模型、不连接NPU，不将score代理冒充LongBench。见[证据与下一步](precision_followup_20261021.md)。
+
 2026-10-21 官方V1算术链修复：新增v4 reader与prepare，历史/HP/current统一旋转域，FP32 partial合并后一次BF16逆旋转；current-only不再省略旋转，混合current避免提前BF16舍入。单forward精度边界固定，native MTP/APC/物理快照保持；不声称完全复刻SGLang分配器。新合同/独立oracle及一键gate同步，旧母源/guard/timer不改。CANN、CPU与主机证据及未验收的NPU/图/质量/性能见[交付说明](official_math_v4_20261021.md)。
 
 2026-10-20 timer驱动C16定向优化：只针对实测softmax链和BF16转换，保留同一256列归约/ACC_VAL，省略无用标量结果UB发布；C16专用normal-mask转换批量发射repeat，RNE/stride不变。candidate统一启用`c16_tuned`，原核保留显式control，现有timer逐字不变。12例完整C16与355例helper CPU-debug、55能力CANN fresh构建通过；主机148通过/3项已有静态失败/1项跳过。仅交付待真机认证，不计提速或>30%收益；后续依据实际收益决定保留/继续，不能将全部23.8ms视作可消除。见[实现与证据边界](c16_targeted_optimization_20261020.md)。

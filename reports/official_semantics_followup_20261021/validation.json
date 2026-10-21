@@ -1,0 +1,14 @@
+{
+  "command": ".venv/bin/python -m pytest -q tests/test_precision_diagnostic.py",
+  "returncode": 0,
+  "summary": "5 passed, 1 warning in 0.50s",
+  "scope": "host diagnostic only; no production math changed",
+  "official_basis_small_AST_check_max_abs": 0,
+  "NPU": "not_run",
+  "LongBench": "not_run",
+  "sources": {
+    "tools/audit_precision_identity.py": "5488b6490de96fb4012391267e44afe8fc84a25d5d06bcfecdecdcddfe4cbc7a",
+    "tools/rotation_recipe_diagnostic.py": "ebd92ee68b1b7c44ff5e3627929fadcf4a8040271bd6bc2facadbdb0d8aa8312",
+    "tests/test_precision_diagnostic.py": "03056f21fd0d991486b15faee06fb1a352a2302f5dad551b465b0dfc9b0a805e"
+  }
+}

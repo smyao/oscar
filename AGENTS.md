@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-21追加：用户拒绝诊断实验，只运行固定candidate一键命令。candidate升级官方perhead_center配方，recipe3/schema2；优先验证并复用旧校准原始样本重拟合，缺样本自动校准，新PT匹配后复用。Qwen27B TP4按全局KV头切矩阵与均值，全部K来源一致BF16中心化，MTP为identity+零均值。仅必要本地功能验证，不连接真机、不测速；CANN/timer/argv不改，不宣称质量已恢复。见docs/official_center_recipe_20261021.md。
+
 > 2026-10-21最新：用户要求修复与官方OSCAR数值链不对齐并推送。candidate采用独立v4合同：历史/精确窗口/current统一BF16旋转域，CV partial保持FP32至LSE合并后再一次BF16逆旋转；current-only同样旋转，混合current不提前舍入。窗口在单次forward固定cut，保留native物理快照/MTP3/APC；不声称复刻SGLang不支持MTP的8-token分配器或未知V2 PT。旧合同/母源/冻结guard和timer保持不变；只做本地源码/CANN/CPU功能验证，不连接真机、不测速，只推BF16分支。详见docs/official_math_v4_20261021.md，模型质量未验收不得称5点已恢复。
 
 > 2026-10-20最新：用户恢复额度并明确授权仅根据两天timer结果做定向优化，随后要求“不要改timer”。本轮限定C16 softmax有限性检查与BF16转换发射开销；现有timer脚本、hook、schema、汇总及生成器保持不变。保留FP32 online softmax/max/sum/alpha、原错误域、全部跨核/跨DMA所有权、MTP/graph/argv。允许源码/CANN/CPU功能验证，仍不由agent连接真机或启动性能实验；速度收益未测不得宣称。只推BF16分支，main/stable不动。

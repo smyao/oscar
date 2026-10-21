@@ -167,7 +167,8 @@ class WorkspaceGeometry:
             "query_rot": c * h * d * (2 if self.aligned_math else 4),
             **({"query_rot_bf16": (n if self.official_math else c)*h*d*2, "key_rot_bf16": n*k*d*2,
                 "value_rot_bf16": n*k*d*2} if self.aligned_math else {}),
-            **({"final_status": n*h*4, "final_lse": n*h*4} if self.official_math else {}),
+            **({"final_status": n*h*4, "final_lse": n*h*4,
+                "centered_key_bf16": n*k*d*2} if self.official_math else {}),
             "query_input": n * h * d * 2,
             "key_input": n * k * d * 2,
             "value_input": n * k * d * 2,
@@ -210,6 +211,7 @@ class GraphWorkspace:
         self.query_rot_bf16 = (torch.empty((n if geometry.official_math else c,h,d),dtype=torch.bfloat16,device=device) if geometry.aligned_math else None)
         self.key_rot_bf16 = torch.empty_like(self.key_input) if geometry.aligned_math else None
         self.value_rot_bf16 = torch.empty_like(self.key_input) if geometry.aligned_math else None
+        self.centered_key_bf16 = torch.empty_like(self.key_input) if geometry.official_math else None
         self.final_status = torch.empty((n,h),dtype=torch.int32,device=device) if geometry.official_math else None
         self.final_lse = torch.empty((n,h),dtype=torch.float32,device=device) if geometry.official_math else None
         self.partial = torch.empty((c, h, p, d), dtype=torch.float32, device=device)
@@ -293,6 +295,7 @@ class LayerState:
     rotation_v_nz: Any = None
     rotation_v_bf16: Any = None
     rotation_k_bf16: Any = None
+    key_mean_bf16: Any = None
 
 
 @dataclass(frozen=True)
@@ -419,6 +422,7 @@ class AscendRuntimeProvider:
         self.hybrid_rotations: dict[tuple, dict] = {}
         self.bf16_rotations: dict[tuple, dict] = {}
         self.bf16_key_rotations: dict[tuple, dict] = {}
+        self.bf16_key_means: dict[tuple, dict] = {}
         self.device_cores: dict[str, int] = {}
         self.ops = None
 
@@ -765,9 +769,31 @@ class AscendRuntimeProvider:
             raise OscarReadinessError("runtime rotation dimension differs from model config")
         artifact = load_active_artifact(self.config, layer_names=target, head_dim=dim,
                                        model_fingerprint=fingerprint, device=device)
-        prepared = prepare_device_rotations(artifact, device=device)
+        if artifact.get("format_version") == 2:
+            if not self.config.get("experimental_official_math", False):
+                raise OscarReadinessError("perhead-center artifacts require the official candidate math path")
+            from vllm.distributed import (get_tensor_model_parallel_rank,
+                                          get_tensor_model_parallel_world_size)
+            rank, world = get_tensor_model_parallel_rank(), get_tensor_model_parallel_world_size()
+            if world != self.config.get("tensor_parallel_size"):
+                raise OscarReadinessError("rotation TP configuration differs from the native worker group")
+            try:
+                prepared = prepare_device_rotations(artifact, device=device, tp_rank=rank, tp_size=world)
+            except ValueError as error:
+                raise OscarReadinessError(str(error)) from error
+            for rotation in prepared.values():
+                mean = getattr(rotation, "key_mean", None)
+                if (rotation.key_transposed.ndim != 2 or rotation.inverse_value_transposed.ndim != 2
+                        or mean is None or tuple(mean.shape) != (dim,)):
+                    raise OscarReadinessError("perhead-center runtime requires one local KV head and its explicit mean (Qwen27B TP4)")
+        else:
+            prepared = prepare_device_rotations(artifact, device=device)
         identity = torch.eye(dim, device=device, dtype=torch.float32)
-        prepared[None] = DeviceRotation(identity, identity, identity, False)
+        # The uncalibrated native draft is its own layer: identity + zero mean,
+        # never any target layer's per-head centering vector (archive #86).
+        prepared[None] = DeviceRotation(identity, identity, identity, False,
+                                       key_mean=(torch.zeros(dim, device=device, dtype=torch.float32)
+                                                 if artifact.get("format_version") == 2 else None))
         if self.config.get("experimental_bf16_attention", False):
             # Reserve natural BF16 Rv before native KV profiling. The writer
             # retains FP32 artifact constants; aligned producers use BF16 copies.
@@ -778,6 +804,11 @@ class AscendRuntimeProvider:
             self.bf16_rotations[cache_key] = {
                 name: rotation.inverse_value_transposed.to(dtype=torch.bfloat16).contiguous()
                 for name, rotation in prepared.items()}
+            if self.config.get("experimental_official_math", False):
+                self.bf16_key_means[cache_key] = {
+                    name: (rotation.key_mean.to(dtype=torch.bfloat16).contiguous()
+                           if getattr(rotation, "key_mean", None) is not None else None)
+                    for name, rotation in prepared.items()}
         elif self.config.get("experimental_hybrid_l1_decode", False):
             # #34/#36/#148: reserve immutable constants before native KV
             # profiling. NZ changes addresses only, not the FP32 Rv values.
@@ -864,7 +895,9 @@ class AscendRuntimeProvider:
                                           self.bf16_rotations[(str(runner.device), spec.head_size)][canonical_rotation_name(name)]
                                           if self.config.get("experimental_bf16_attention", False) else None,
                                           self.bf16_key_rotations[(str(runner.device), spec.head_size)][canonical_rotation_name(name)]
-                                          if self.config.get("experimental_aligned_math",False) else None)
+                                          if self.config.get("experimental_aligned_math",False) else None,
+                                          self.bf16_key_means[(str(runner.device), spec.head_size)][canonical_rotation_name(name)]
+                                          if self.config.get("experimental_official_math",False) else None)
             views[name] = packed
             from .telemetry import emit_once
             emit_once("cache_layout", key=name, layer=name, physical_blocks=blocks,

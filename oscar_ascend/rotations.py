@@ -28,6 +28,7 @@ FORMAT_VERSION = 1
 # v2 binds actual native BF16 GDN state and the authenticated capture/pair
 # execution profile; it does not change the serving or sampling state dtype.
 CALIBRATION_RECIPE_VERSION = 2
+CENTER_CALIBRATION_RECIPE_VERSION = 3
 PR_FINGERPRINT = "57286d5d2cb08c3dcd8c17bb59e132d6985e6796"
 ORTHOGONALITY_ATOL = 5e-4
 EIGEN_RESIDUAL_RTOL = 5e-4
@@ -47,10 +48,12 @@ class DeviceRotation:
     value_transposed: Any
     inverse_value_transposed: Any
     hadamard: bool
+    key_mean: Any = None
 
 
 def prepare_device_rotations(artifact: Mapping[str, Any], *, device: str = "npu",
-                             testing: bool = False) -> dict[str, DeviceRotation]:
+                             testing: bool = False, tp_rank: int = 0,
+                             tp_size: int = 1) -> dict[str, DeviceRotation]:
     """Prepare already validated artifact matrices once, outside graph capture.
 
     Archive #111: keep rotation inputs/outputs FP32; do not narrow rotated K/V
@@ -75,8 +78,26 @@ def prepare_device_rotations(artifact: Mapping[str, Any], *, device: str = "npu"
                   for j in range(dim)] for i in range(dim)]
         pattern = torch.tensor(signs, dtype=torch.float32, device=selected)
     result = {}
+    per_head = artifact.get("source_grouping") == "layer_kv_head"
+    if per_head:
+        heads = artifact.get("global_kv_heads")
+        # The deployed Qwen27B TP4 route has exactly one KV head per rank.
+        # Never broadcast a global/per-head matrix as a shared rotation.
+        if (type(tp_size) is not int or type(tp_rank) is not int or
+                not 0 <= tp_rank < tp_size or heads != tp_size):
+            raise ValueError("perhead_center currently requires one KV head per TP rank (Qwen27B TP4)")
     for name, entry in layers.items():
         k, v = entry.get("Rk"), entry.get("Rv")
+        mean = None
+        if per_head:
+            if any(not torch.is_tensor(x) or tuple(x.shape) != (heads, dim, dim) for x in (k, v)):
+                raise ValueError(f"{name}: per-head matrix geometry differs")
+            mean = entry.get("k_mean")
+            if (not torch.is_tensor(mean) or mean.dtype != torch.float32 or
+                    tuple(mean.shape) != (heads, dim) or mean.device != selected or
+                    not bool(torch.isfinite(mean).all())):
+                raise ValueError(f"{name}: finite per-head key mean required")
+            k, v, mean = k[tp_rank].contiguous(), v[tp_rank].contiguous(), mean[tp_rank].contiguous()
         for label, matrix in (("Rk", k), ("Rv", v)):
             if (not torch.is_tensor(matrix) or matrix.dtype != torch.float32
                     or tuple(matrix.shape) != (dim, dim) or matrix.device != selected
@@ -87,7 +108,7 @@ def prepare_device_rotations(artifact: Mapping[str, Any], *, device: str = "npu"
             for label, matrix in (("Rk", k), ("Rv", v)):
                 if not bool(matrix[0, 0] > 0) or not torch.equal(matrix, pattern * matrix[0, 0]):
                     raise ValueError(f"{name}/{label}: hadamard objective does not match exact Sylvester pattern")
-        result[name] = DeviceRotation(k.T.contiguous(), v.T.contiguous(), v.contiguous(), fast)
+        result[name] = DeviceRotation(k.T.contiguous(), v.T.contiguous(), v.contiguous(), fast, mean)
     return result
 
 
@@ -145,8 +166,12 @@ def validate_artifact(artifact: Mapping[str, Any], *, layer_names: Sequence[str]
     """
     torch, selected = _runtime(device, testing)
     names = _names(layer_names)
-    if artifact.get("format_version") != FORMAT_VERSION or artifact.get("source_grouping") != "layer":
+    per_head = (artifact.get("format_version") == 2 and artifact.get("source_grouping") == "layer_kv_head")
+    if not per_head and (artifact.get("format_version") != FORMAT_VERSION or artifact.get("source_grouping") != "layer"):
         raise ValueError("unsupported rotation artifact schema")
+    heads = artifact.get("global_kv_heads") if per_head else None
+    if per_head and (type(heads) is not int or heads <= 0 or artifact.get("rotation_variant") != "perhead_center"):
+        raise ValueError("perhead_center artifact requires its global KV-head identity")
     if artifact.get("model_fingerprint") != model_fingerprint:
         raise ValueError("rotation model fingerprint mismatch")
     if artifact.get("pr_fingerprint") != pr_fingerprint:
@@ -175,17 +200,24 @@ def validate_artifact(artifact: Mapping[str, Any], *, layer_names: Sequence[str]
         entry = {"layer_id": layer_id}
         for key in ("Rk", "Rv"):
             matrix = source.get(key)
-            if not torch.is_tensor(matrix) or matrix.dtype != torch.float32 or matrix.shape != (head_dim, head_dim):
-                raise ValueError(f"{name}/{key}: expected fp32 [{head_dim},{head_dim}]")
+            shape = (heads, head_dim, head_dim) if per_head else (head_dim, head_dim)
+            if not torch.is_tensor(matrix) or matrix.dtype != torch.float32 or tuple(matrix.shape) != shape:
+                raise ValueError(f"{name}/{key}: expected fp32 {shape}")
             matrix = matrix.to(device=selected).contiguous()
             if not bool(torch.isfinite(matrix).all()):
                 raise ValueError(f"{name}/{key}: non-finite rotation")
-            error = (matrix.T @ matrix - identity).abs().amax()
+            error = (matrix.transpose(-1, -2) @ matrix - identity).abs().amax()
             if float(error) > ORTHOGONALITY_ATOL:
                 raise ValueError(f"{name}/{key}: non-orthogonal rotation, max_error={float(error)}")
-            if torch.equal(matrix, identity) and not allow_identity:
+            if bool(((matrix - identity) == 0).all(dim=-1).all(dim=-1).any()) and not allow_identity:
                 raise ValueError(f"{name}/{key}: identity requires explicit allow_identity=True")
             entry[key] = matrix
+        if per_head:
+            mean = source.get("k_mean")
+            if (not torch.is_tensor(mean) or mean.dtype != torch.float32 or
+                    tuple(mean.shape) != (heads, head_dim) or not bool(torch.isfinite(mean).all())):
+                raise ValueError(f"{name}/k_mean: finite fp32 [{heads},{head_dim}] required")
+            entry["k_mean"] = mean.to(device=selected).contiguous()
         result["layers"][name] = entry
     return result
 
@@ -369,7 +401,13 @@ def calibration_cache_identity(config: Mapping[str, Any], fingerprint: str) -> d
     budget = config.get("rotation_calibration_tokens", 30000)
     if type(budget) is not int or budget <= 0:
         raise ValueError("rotation_calibration_tokens must be a positive integer")
-    return {"official_commit": OFFICIAL_COMMIT, "recipe_version": CALIBRATION_RECIPE_VERSION,
+    variant = config.get("rotation_variant", "shared_v1")
+    if variant not in ("shared_v1", "perhead_center"):
+        raise ValueError("rotation_variant must be shared_v1 or perhead_center")
+    center = variant == "perhead_center"
+    return {"official_commit": OFFICIAL_COMMIT,
+            "recipe_version": CENTER_CALIBRATION_RECIPE_VERSION if center else CALIBRATION_RECIPE_VERSION,
+            **({"rotation_variant": "perhead_center"} if center else {}),
             "model_fingerprint": fingerprint,
             "objective": "qqt_sst_r_h_pbr", "accumulator_dtype": "float64",
             "prompt_source": source, "max_tokens": budget, "GPQA_option_seed": 0,
@@ -471,9 +509,17 @@ def load_active_artifact(config: Mapping[str, Any], *, device="npu", testing=Fal
         raise ValueError("combined artifact calibration metadata differs from pair")
     if artifact.get("calibration_profile") != profile:
         raise ValueError("calibration cache profile differs")
+    for key in ("format_version", "source_grouping", "global_kv_heads", "rotation_variant"):
+        if artifact.get(key) != expected.get(key):
+            raise ValueError("combined artifact recipe/schema differs from pair: " + key)
+    if profile.get("rotation_variant") == "perhead_center":
+        model_config = json.loads((Path(config['model']) / 'config.json').read_text())
+        text = model_config.get('text_config', model_config)
+        if artifact.get('global_kv_heads') != text.get('num_key_value_heads'):
+            raise ValueError('per-head artifact KV-head count differs from selected model')
     torch = importlib.import_module("torch")
     for name in names:
-        for key in ("Rk", "Rv"):
+        for key in (("Rk", "Rv", "k_mean") if profile.get('rotation_variant') == 'perhead_center' else ("Rk", "Rv")):
             value = artifact.get("layers", {}).get(name, {}).get(key)
             if not torch.is_tensor(value) or not torch.equal(value, expected["layers"][name][key]):
                 raise ValueError("combined rotation constants differ from official pair")

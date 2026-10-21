@@ -47,7 +47,7 @@ def test_natural_bf16_rv_is_cached_during_workspace_reservation_without_changing
     inverse=torch.arange(256*256,dtype=torch.float32).reshape(256,256)/4096 - 0.7
     original=inverse.clone();device_rotation=rotations.DeviceRotation(key,value,inverse,False)
     calls=[]
-    monkeypatch.setattr(rotations,"load_active_artifact",lambda *args,**kwargs: calls.append("load") or object())
+    monkeypatch.setattr(rotations,"load_active_artifact",lambda *args,**kwargs: calls.append("load") or {"format_version":1})
     def prepare(_artifact,*,device):
         assert device=="cpu";calls.append("prepare")
         return {name:device_rotation}

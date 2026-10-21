@@ -8,6 +8,8 @@ Implements the requested official FP64 offline fitting; serving stays NPU.
 Model forwards remain NPU-only. No Q/K/V is replayed to estimate a second pass.
 Primary: FutureMLS-Lab/OSCAR sglang-rebase oscar_calibration.py, observe,
 local_covariance_sums, _energy_weighted_v_covariance and finalize.
+Recipe3: official fit_oscar2_variants.py perhead/center keeps global KV-head
+identity, normalizes each M_q by trace/D, and publishes the FP32 key mean.
 """
 from __future__ import annotations
 import fcntl, hashlib, importlib, json, math, os, tempfile, time, uuid
@@ -25,10 +27,13 @@ def _torch():return importlib.import_module("torch")
 
 
 def _validated_calibration_profile(profile, model_fingerprint):
-    from .rotations import CALIBRATION_RECIPE_VERSION
     if not isinstance(profile, Mapping):
         raise ValueError("rotation calibration profile is required")
-    if (profile.get("recipe_version") != CALIBRATION_RECIPE_VERSION or
+    variant = profile.get("rotation_variant", "shared_v1")
+    if variant not in {"shared_v1", "perhead_center"}:
+        raise ValueError("unsupported rotation calibration variant")
+    recipe = 3 if variant == "perhead_center" else 2
+    if (profile.get("recipe_version") != recipe or
             profile.get("official_commit") != OFFICIAL_COMMIT or
             profile.get("model_fingerprint") != model_fingerprint):
         raise ValueError("rotation calibration recipe/model identity differs")
@@ -96,7 +101,7 @@ class OfflineLayerAccumulator:
             "source_device":self.source_device,"test_only":self.testing}
 
 
-def local_covariance_sums(payload,*,testing=False):
+def local_head_covariances(payload,*,testing=False):
     torch=_torch();n=payload["count"];hk=payload["local_kv_heads"];d=payload["head_dim"]
     if n<=0 or n!=payload["token_budget"]:raise ValueError("incomplete calibration rows")
     if not testing and (payload.get("test_only") or payload.get("source_device")!="npu"):
@@ -118,9 +123,14 @@ def local_covariance_sums(payload,*,testing=False):
         numerator.add_(torch.einsum("th,thd,the->hde",energy,vc,vc))
     # Same official denominator clamp; no sqrt, fitted epsilon or FP32 pass.
     v_cov=numerator/denominator.clamp_min(1e-12)[:,None,None]
-    sums=torch.stack((q_cov.sum(dim=0),v_cov.sum(dim=0)))
-    if not bool(torch.isfinite(sums).all()):raise ValueError("non-finite official covariance")
-    return sums
+    if not bool(torch.isfinite(q_cov).all() & torch.isfinite(v_cov).all()):
+        raise ValueError("non-finite official covariance")
+    return q_cov,v_cov
+
+
+def local_covariance_sums(payload,*,testing=False):
+    q_cov,v_cov=local_head_covariances(payload,testing=testing)
+    return _torch().stack((q_cov.sum(dim=0),v_cov.sum(dim=0)))
 
 
 def fit_checkpoint_pair(rank_payloads,*,layer_names,head_dim,model_path,model_fingerprint,
@@ -135,8 +145,14 @@ def fit_checkpoint_pair(rank_payloads,*,layer_names,head_dim,model_path,model_fi
         raise ValueError("complete unique TP rank payloads required")
     if global_q_heads%tp_size or not (global_kv_heads%tp_size==0 or tp_size%global_kv_heads==0):
         raise ValueError("unsupported global/TP head geometry")
+    centered=profile.get('rotation_variant')=='perhead_center'
+    if centered and (tp_size>global_kv_heads or global_kv_heads%tp_size):
+        raise ValueError('perhead_center requires disjoint TP KV-head shards; replicated KV is unsupported')
     replication=max(1,tp_size//global_kv_heads);local_hk=max(1,global_kv_heads//tp_size)
     sums=torch.zeros((2,len(ids),head_dim,head_dim),dtype=torch.float64,device='cpu');counts=set()
+    if centered:
+        head_cov=torch.empty((2,len(ids),global_kv_heads,head_dim,head_dim),dtype=torch.float64,device='cpu')
+        means=torch.empty((len(ids),global_kv_heads,head_dim),dtype=torch.float64,device='cpu')
     for rank in sorted(rank_payloads,key=lambda x:x['rank']):
         for key,want in [('tp_size',tp_size),('global_q_heads',global_q_heads),
                          ('global_kv_heads',global_kv_heads),('prompt_sha256',prompt_sha256),
@@ -147,11 +163,24 @@ def fit_checkpoint_pair(rank_payloads,*,layer_names,head_dim,model_path,model_fi
             data=rank['layers'][layer];counts.add(data['count'])
             if (data['head_dim'],data['local_kv_heads'],data['local_q_heads'])!=(head_dim,local_hk,global_q_heads//tp_size):
                 raise ValueError('rank/layer head geometry differs')
-            sums[:,index].add_(local_covariance_sums(data,testing=testing))
+            if centered:
+                start=rank['rank']*local_hk
+                q_cov,v_cov=local_head_covariances(data,testing=testing)
+                head_cov[0,index,start:start+local_hk]=q_cov
+                head_cov[1,index,start:start+local_hk]=v_cov
+                means[index,start:start+local_hk]=data['k'].to(torch.float64).mean(0)
+            else:
+                sums[:,index].add_(local_covariance_sums(data,testing=testing))
     if len(counts)!=1 or not 0<next(iter(counts))<=max_tokens:raise ValueError('inconsistent selected prompt token count')
-    tokens=next(iter(counts));cov=sums/(global_kv_heads*replication)
+    tokens=next(iter(counts));cov=head_cov if centered else sums/(global_kv_heads*replication)
     cov=(cov+cov.transpose(-1,-2))/2
-    flat=cov.reshape(2*len(ids),head_dim,head_dim)
+    if centered:
+        mean_eigenvalue=cov[0].diagonal(dim1=-2,dim2=-1).sum(-1)/head_dim
+        if not bool(torch.isfinite(mean_eigenvalue).all()) or bool((mean_eigenvalue<=0).any()):
+            raise ValueError('per-head query covariance must have a positive finite trace')
+        # Official center uses unit_mean_eig(M_q), but leaves S_v unscaled.
+        cov[0]=cov[0]/mean_eigenvalue[...,None,None]
+    flat=cov.reshape(-1,head_dim,head_dim)
     values,vectors=torch.linalg.eigh(flat)
     if not bool(torch.isfinite(values).all()&torch.isfinite(vectors).all()):raise ValueError('nonfinite FP64 eigensolver result')
     h=torch.ones((1,1),dtype=torch.float64,device='cpu')
@@ -161,7 +190,9 @@ def fit_checkpoint_pair(rank_payloads,*,layer_names,head_dim,model_path,model_fi
     for u,e in zip(vectors,values):
         order=torch.argsort(e,descending=True);perm=torch.empty(head_dim,dtype=torch.long,device='cpu');perm[br]=order
         matrices.append(u@h@torch.eye(head_dim,dtype=torch.float64,device='cpu')[:,perm])
-    matrices=torch.stack(matrices).float().contiguous();generation=uuid.uuid4().hex
+    axes=(2,len(ids),global_kv_heads) if centered else (2,len(ids))
+    matrices=torch.stack(matrices).float().reshape(*axes,head_dim,head_dim).contiguous()
+    values=values.reshape(*axes,head_dim);generation=uuid.uuid4().hex
     meta={'generation_id':generation,'model_path':str(model_path),'model_revision':model_revision,
         'model_fingerprint':model_fingerprint,'prompt_sha256':prompt_sha256,'tokens':tokens,
         'max_tokens':max_tokens,'global_q_heads':global_q_heads,'global_kv_heads':global_kv_heads,
@@ -169,9 +200,13 @@ def fit_checkpoint_pair(rank_payloads,*,layer_names,head_dim,model_path,model_fi
         'statistics_device':'cpu_offline','model_forward_device':'npu' if not testing else 'cpu_test',
         'official_commit':OFFICIAL_COMMIT,'test_only':testing,'calibration_profile':profile}
     def checkpoint(index,objective):
-        return {'format_version':1,'objective':objective,'source_grouping':'layer','calibration':dict(meta),
-            'layers':{layer:{'layer_id':layer,'rotation':matrices[index*len(ids)+i],
-                            'eigenvalues':values[index*len(ids)+i].float().contiguous()} for i,layer in enumerate(ids)}}
+        entries={layer:{'layer_id':layer,'rotation':matrices[index,i],
+                        'eigenvalues':values[index,i].float().contiguous()} for i,layer in enumerate(ids)}
+        if centered and index==0:
+            for i,layer in enumerate(ids):entries[layer]['k_mean']=means[i].float().contiguous()
+        return {'format_version':2 if centered else 1,'objective':objective,
+            'source_grouping':'layer_kv_head' if centered else 'layer','calibration':dict(meta),
+            **({'global_kv_heads':global_kv_heads} if centered else {}),'layers':entries}
     return checkpoint(0,'qqt_r_h_pbr'),checkpoint(1,'sst_r_h_pbr')
 
 
@@ -180,9 +215,15 @@ def checkpoint_pair_artifact(k_state,v_state,*,layer_names,head_dim,model_finger
     from .rotations import _base_artifact,_names,ORTHOGONALITY_ATOL
     torch=_torch();names=_names(layer_names);ids={int(n.split('.')[2]) for n in names}
     profile=_validated_calibration_profile(calibration_profile,model_fingerprint)
+    centered=profile.get('rotation_variant')=='perhead_center'
+    global_heads=k_state.get('global_kv_heads') if centered else None
+    if centered and (type(global_heads) is not int or global_heads<=0 or v_state.get('global_kv_heads')!=global_heads):
+        raise ValueError('per-head pair requires matching positive global_kv_heads')
+    matrix_shape=(global_heads,head_dim,head_dim) if centered else (head_dim,head_dim)
     states=[]
     for state,objective in ((k_state,'qqt_r_h_pbr'),(v_state,'sst_r_h_pbr')):
-        if state.get('format_version')!=1 or state.get('source_grouping')!='layer' or state.get('objective')!=objective:
+        if (state.get('format_version')!=(2 if centered else 1) or
+                state.get('source_grouping')!=('layer_kv_head' if centered else 'layer') or state.get('objective')!=objective):
             raise ValueError('official calibrated pair schema/objective differs')
         layers=state.get('layers',{});keys=[int(i) for i in layers]
         if len(set(keys))!=len(keys) or set(keys)!=ids:raise ValueError('official FULL layer coverage differs')
@@ -194,14 +235,25 @@ def checkpoint_pair_artifact(k_state,v_state,*,layer_names,head_dim,model_finger
             raise ValueError('rotation model fingerprint missing or mismatched; regenerate for the selected model')
         if meta.get('calibration_profile')!=profile:
             raise ValueError('rotation calibration execution/profile missing or mismatched; regenerate for the selected configuration')
+        if centered and meta.get('global_kv_heads')!=global_heads:
+            raise ValueError('per-head metadata and matrix head counts differ')
         for layer,entry in normalized.items():
             matrix=entry.get('rotation')
-            if entry.get('layer_id')!=layer or not torch.is_tensor(matrix) or matrix.dtype!=torch.float32 or matrix.shape!=(head_dim,head_dim):
+            if entry.get('layer_id')!=layer or not torch.is_tensor(matrix) or matrix.dtype!=torch.float32 or matrix.shape!=matrix_shape:
                 raise ValueError('official layer rotation geometry/dtype differs')
             if matrix.device.type!='cpu':raise ValueError('official pair must contain CPU constants')
             if validate_math and not bool(torch.isfinite(matrix).all()):raise ValueError('official pair must contain finite CPU constants')
-            if validate_math and float((matrix.T@matrix-torch.eye(head_dim,device='cpu')).abs().amax())>ORTHOGONALITY_ATOL:
+            if validate_math and float((matrix.transpose(-1,-2)@matrix-torch.eye(head_dim,device='cpu')).abs().amax())>ORTHOGONALITY_ATOL:
                 raise ValueError('official rotation is not orthogonal')
+            if centered and any(key in entry for key in ('q_rotation','o_rotation')):
+                raise ValueError('perhead_center does not accept non-orthogonal companion transforms')
+            if centered and objective=='qqt_r_h_pbr':
+                mean=entry.get('k_mean')
+                if (not torch.is_tensor(mean) or mean.dtype!=torch.float32 or
+                        mean.device.type!='cpu' or mean.shape!=(global_heads,head_dim)):
+                    raise ValueError('per-head K mean geometry/dtype differs')
+                if validate_math and not bool(torch.isfinite(mean).all()):
+                    raise ValueError('per-head K mean must be finite')
         states.append(normalized)
     km,vm=k_state.get('calibration',{}),v_state.get('calibration',{})
     for field in ('generation_id','prompt_sha256','tokens','max_tokens','global_q_heads','global_kv_heads','tp_size','model_path','model_revision','accumulator_dtype','post_rope','test_only','calibration_profile'):
@@ -209,8 +261,12 @@ def checkpoint_pair_artifact(k_state,v_state,*,layer_names,head_dim,model_finger
     result=_base_artifact(names,head_dim,model_fingerprint,OFFICIAL_COMMIT,'qqt_sst_r_h_pbr',testing)
     result.update(calibrated=True,accumulation_dtype='float64',calibration=dict(km),
         calibration_profile=profile,official_pair_objectives=[k_state['objective'],v_state['objective']])
+    if centered:
+        result.update(format_version=2,source_grouping='layer_kv_head',
+                      global_kv_heads=global_heads,rotation_variant='perhead_center')
     for name in names:
         layer=int(name.split('.')[2]);result['layers'][name]={'layer_id':layer,'Rk':states[0][layer]['rotation'].contiguous(),'Rv':states[1][layer]['rotation'].contiguous()}
+        if centered:result['layers'][name]['k_mean']=states[0][layer]['k_mean'].contiguous()
     return result
 
 

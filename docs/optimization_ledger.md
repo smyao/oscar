@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-21 用户要求直接修复center配方：candidate升级recipe3/schema2逐KV头K/V旋转与key mean，默认TP4按rank选择；全部K来源统一BF16中心化，MTP独立零均值。旧PT自动失效，验证后复用已有原始校准样本重拟合，缺失时自动采样。只交付一键启动，不要求诊断实验；数学/迁移/运行时功能验证与LongBench未验收分列，见[实现与边界](official_center_recipe_20261021.md)。
+
 2026-10-21 v4质量反馈续查：用户报告精度仍低，实际v4启用标识待核。定向复核未发现重复RoPE/gate/GQA或Q scratch覆盖K/V的新错误；确认官方结果表center配方与本地共享层V1 PT仍不同。新增只读运行配置/PT识别和已保存校准样本的perhead/center量化误差诊断，不改生产、不重新加载模型、不连接NPU，不将score代理冒充LongBench。见[证据与下一步](precision_followup_20261021.md)。
 
 2026-10-21 官方V1算术链修复：新增v4 reader与prepare，历史/HP/current统一旋转域，FP32 partial合并后一次BF16逆旋转；current-only不再省略旋转，混合current避免提前BF16舍入。单forward精度边界固定，native MTP/APC/物理快照保持；不声称完全复刻SGLang分配器。新合同/独立oracle及一键gate同步，旧母源/guard/timer不改。CANN、CPU与主机证据及未验收的NPU/图/质量/性能见[交付说明](official_math_v4_20261021.md)。

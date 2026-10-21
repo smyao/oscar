@@ -11,6 +11,28 @@ CACHE_FORMAT = "striped_rotated_fp32_v3"
 CONTRACT = "oscar_bf16_attention_v4"
 
 
+def _center_key(state, key, torch):
+    """Archive G19-24/#86: subtract only this TP head's BF16 mean.
+
+    V1 has no mean. V2 is validated before profiling and currently scoped to
+    one local KV head; never broadcast one target head's mean across others.
+    """
+    mean = getattr(state, "key_mean_bf16", None)
+    if mean is None:
+        return key
+    n, heads, dim = key.shape
+    if (heads != 1 or mean.dtype != torch.bfloat16 or tuple(mean.shape) != (dim,)
+            or mean.device != key.device or not mean.is_contiguous()):
+        raise OscarReadinessError("perhead-center requires one local KV head with its own contiguous BF16 mean")
+    buffer = getattr(state.workspace, "centered_key_bf16", None)
+    if buffer is None or buffer.shape[0] < n or tuple(buffer.shape[1:]) != (heads, dim):
+        raise OscarReadinessError("centered current-key scratch must be reserved before KV profiling")
+    centered = buffer[:n]
+    # Preserve the official visible BF16 subtraction before BF16 rotation.
+    torch.sub(key, mean.view(1, 1, dim), out=centered)
+    return centered
+
+
 def rotate_inputs(ops, state, query, key, value, slots, *, current_only=False):
     import torch
     workspace = state.workspace
@@ -25,7 +47,7 @@ def rotate_inputs(ops, state, query, key, value, slots, *, current_only=False):
     torch.matmul(query, _matrix(state, "rotation_k_bf16", dim, torch), out=qbuf[:n])
     ops.copy_validate_bf16_query_out(qbuf[:n], slots, qr, workspace.rotate_status[:n],
                                      workspace.geometry.cube_cores)
-    torch.matmul(key, _matrix(state, "rotation_k_bf16", dim, torch), out=kbuf[:n])
+    torch.matmul(_center_key(state, key, torch), _matrix(state, "rotation_k_bf16", dim, torch), out=kbuf[:n])
     torch.matmul(value, _matrix(state, "rotation_v_bf16", dim, torch), out=vbuf[:n])
     return qr, kbuf[:n], vbuf[:n]
 
@@ -37,7 +59,7 @@ def store_rotated(ops, state, key, value, slots, positions, config, *, rotated_k
         raise OscarReadinessError("official writer requires rotated-window cache format")
     if rotated_kv is None:
         kr, vr = state.workspace.key_rot_bf16[:n], state.workspace.value_rot_bf16[:n]
-        torch.matmul(key, _matrix(state, "rotation_k_bf16", dim, torch), out=kr)
+        torch.matmul(_center_key(state, key, torch), _matrix(state, "rotation_k_bf16", dim, torch), out=kr)
         torch.matmul(value, _matrix(state, "rotation_v_bf16", dim, torch), out=vr)
     else:
         kr, vr = rotated_kv

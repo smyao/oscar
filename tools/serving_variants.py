@@ -83,6 +83,17 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if variant not in {None, "baseline", "candidate", "native"}:
         raise ValueError(f"unknown serving variant: {variant}")
     selected = dict(config)
+    if selected.get("rotation_variant") not in (None, "shared_v1", "perhead_center"):
+        raise ValueError("rotation_variant must be omitted, shared_v1 or perhead_center")
+    if variant == "candidate":
+        if selected.get("rotation_method", "qqt_sst") == "qqt_sst":
+            selected["rotation_variant"] = "perhead_center"
+        else:
+            selected.pop("rotation_variant", None)
+    elif variant in {"baseline", "native"}:
+        selected.pop("rotation_variant", None)
+    if selected.get("rotation_variant") == "perhead_center" and selected.get("rotation_method", "qqt_sst") != "qqt_sst":
+        raise ValueError("perhead_center requires qqt_sst calibration")
     # User 2026-10-13: this stable branch defaults to APC disabled.
     selected.setdefault("enable_prefix_caching", False)
     selected.setdefault("experimental_c4_member_pipeline", False)
@@ -205,6 +216,10 @@ def runtime_feature_summary(config: dict, variant: str | None) -> dict:
             "inverse_rotation":"once_after_fp32_merge" if config.get("experimental_official_math",False) else "per_history_partial",
             "cached_precision_policy":"native_fixed_per_forward" if config.get("experimental_official_math",False) else "legacy_query_relative",
             "rotation_method":config.get("rotation_method"),
+            "rotation_variant":"hadamard_data_free" if config.get("rotation_method")=="hadamard" else config.get("rotation_variant", "shared_v1"),
+            "rotation_grouping":"layer_kv_head" if config.get("rotation_variant")=="perhead_center" else "layer",
+            "key_centering":config.get("rotation_variant")=="perhead_center",
+            "calibration_recipe_version":None if config.get("rotation_method")=="hadamard" else 3 if config.get("rotation_variant")=="perhead_center" else 2,
             "metadata_dtype":"float32" if config.get("experimental_aligned_math",False) else "float16",
             "prefix_caching":config.get("enable_prefix_caching", False),
             "token_budget_source":"native" if config.get("use_native_token_budget", False) else "explicit",

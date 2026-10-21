@@ -28,6 +28,69 @@ def _capture(config_path, directory):
     return json.loads((directory/"capture-manifest.json").read_text())
 
 
+
+def _sha256(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _retained_capture(config, profile, fingerprint, layers, dim, *, testing):
+    """Authenticate one exact recipe-2 cache; never scan arbitrary old runs.
+
+    A missing retained capture is recoverable by normal native calibration.
+    Corrupt complete artifacts or changed retained files are errors, not a
+    reason to trust or relabel unknown samples. No NPU context is initialized.
+    """
+    from oscar_ascend.rotations import calibration_cache_identity, rotation_artifact_path
+    from oscar_ascend.rotation_calibration import verified_pair_files, checkpoint_pair_artifact
+    import torch
+    old_config = dict(config)
+    old_config.pop("rotation_variant", None)
+    old_profile = calibration_cache_identity(old_config, fingerprint)
+    old_path = rotation_artifact_path(old_config, fingerprint)
+    if old_profile.get("recipe_version") != 2:
+        raise ValueError("retained capture migration requires the fixed recipe-2 source")
+    if not old_path.is_file():
+        return None, None
+    kstate, vstate, artifact = verified_pair_files(old_path.parent, artifact_name=old_path.name)
+    expected = checkpoint_pair_artifact(kstate, vstate, layer_names=layers, head_dim=dim,
+        model_fingerprint=fingerprint, calibration_profile=old_profile, testing=testing)
+    if (artifact.get("format_version") != 1 or artifact.get("model_fingerprint") != fingerprint
+            or artifact.get("calibrated") is not True
+            or artifact.get("calibration_profile") != old_profile
+            or artifact.get("calibration") != expected["calibration"]
+            or (artifact.get("test_only") and not testing)):
+        raise ValueError("retained recipe-2 artifact model/profile identity differs")
+    for name in layers:
+        for key in ("Rk", "Rv"):
+            matrix = artifact.get("layers", {}).get(name, {}).get(key)
+            if not torch.is_tensor(matrix) or not torch.equal(matrix, expected["layers"][name][key]):
+                raise ValueError("retained combined rotation constants differ from authenticated pair")
+    sampling = lambda item: {k: v for k, v in item.items() if k not in {"recipe_version", "rotation_variant"}}
+    if sampling(old_profile) != sampling(profile):
+        raise ValueError("recipe migration would change the native sampling profile")
+    capture = artifact.get("capture_manifest")
+    if not isinstance(capture, dict) or not capture.get("rank_paths") or not capture.get("rank_sha256"):
+        return None, None
+    if capture.get("calibration_profile") != old_profile:
+        raise ValueError("retained native capture profile differs from its source artifact")
+    paths = capture["rank_paths"]
+    if not isinstance(paths, list) or not isinstance(capture["rank_sha256"], dict):
+        raise ValueError("retained capture path/hash manifest is malformed")
+    if any(not Path(path).is_file() for path in paths):
+        return None, None
+    for path in paths:
+        if capture["rank_sha256"].get(path) != _sha256(path):
+            raise ValueError("retained rank payload changed after native capture: " + str(path))
+    provenance = {"source_artifact": str(old_path.resolve()), "source_artifact_sha256": _sha256(old_path),
+        "source_calibration_profile": old_profile, "fit_calibration_profile": profile,
+        "model_forward_executed": False, "operation": "refit_authenticated_retained_native_samples"}
+    return capture, provenance
+
+
 def prepare(config, *, config_path=None, output=None, import_pair=None, capture_runner=None,
             testing=False):
     from oscar_ascend.rotations import (rotation_artifact_path,calibration_cache_identity,
@@ -52,7 +115,8 @@ def prepare(config, *, config_path=None, output=None, import_pair=None, capture_
             "official_calibration_aligned":False,"model_fingerprint":fingerprint,"quality_acceptance":"not_run"}
     profile=calibration_cache_identity(config,fingerprint)
     print(json.dumps({'rotation_prepare':'checking','artifact':str(destination),
-        'prompt_source':profile['prompt_source']}),flush=True)
+        'prompt_source':profile['prompt_source'],'recipe_version':profile['recipe_version'],
+        'rotation_variant':profile.get('rotation_variant','shared_v1')}),flush=True)
     if import_pair is None:
         k=config.get("rotation_k_path");v=config.get("rotation_v_path")
         if bool(k)!=bool(v):raise ValueError("both rotation_k_path and rotation_v_path are required")
@@ -67,7 +131,9 @@ def prepare(config, *, config_path=None, output=None, import_pair=None, capture_
         load_active_artifact(config,path=destination,device=device,testing=testing,
             layer_names=layers,head_dim=dim,model_fingerprint=fingerprint)
         return {"artifact":str(destination),"source":"official_qqt_sst_cache","calibrated":True,
-            "model_fingerprint":fingerprint,"quality_acceptance":"not_run","reused":True}
+            "model_fingerprint":fingerprint,"quality_acceptance":"not_run","reused":True,
+            "rotation_variant":profile.get("rotation_variant","shared_v1"),
+            "recipe_version":profile["recipe_version"],"model_forward_executed":False}
     destination.parent.mkdir(parents=True,exist_ok=True)
     if import_pair is not None:
         kpath,vpath=map(lambda p:Path(p).expanduser().resolve(),import_pair)
@@ -82,19 +148,26 @@ def prepare(config, *, config_path=None, output=None, import_pair=None, capture_
         artifact['import_provenance']={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in (kpath,vpath)}
         source='official_qqt_sst_import'
     else:
-        if config_path is None and capture_runner is None:raise ValueError('native calibration requires a config path')
-        print(json.dumps({'rotation_prepare':'generating','artifact':str(destination),
-            'reason':'interrupted_publication' if interrupted_pair else 'matching_cache_missing'}),flush=True)
-        directory=Path(tempfile.mkdtemp(prefix='capture-',dir=destination.parent))
-        capture=(capture_runner or _capture)(config_path,directory)
+        capture, provenance = (None, None)
+        if automatic_cache and config.get("rotation_variant") == "perhead_center":
+            capture, provenance = _retained_capture(config, profile, fingerprint, layers, dim, testing=testing)
+        if capture is None:
+            if config_path is None and capture_runner is None:raise ValueError('native calibration requires a config path')
+            print(json.dumps({'rotation_prepare':'generating','artifact':str(destination),
+                'reason':'interrupted_publication' if interrupted_pair else 'matching_cache_missing'}),flush=True)
+            directory=Path(tempfile.mkdtemp(prefix='capture-',dir=destination.parent))
+            capture=(capture_runner or _capture)(config_path,directory)
+        else:
+            print(json.dumps({'rotation_prepare':'refitting_retained_capture','artifact':str(destination),
+                'source_artifact':provenance['source_artifact'],'model_forward_executed':False}),flush=True)
         if capture.get('status')!='native_post_rope_capture_complete':raise ValueError('native sampling did not complete')
         if capture.get('model_fingerprint')!=fingerprint or capture.get('layer_ids')!=[int(x.split('.')[2]) for x in layers]:
             raise ValueError('native sample model/layer identity differs')
-        if capture.get('calibration_profile')!=profile:
+        capture_profile = provenance['source_calibration_profile'] if provenance else profile
+        if capture.get('calibration_profile')!=capture_profile:
             raise ValueError('native sample calibration execution/profile differs')
         if capture.get('rank_sha256') is not None and any(
-                capture['rank_sha256'].get(p)!=hashlib.sha256(Path(p).read_bytes()).hexdigest()
-                for p in capture['rank_paths']):
+                capture['rank_sha256'].get(p)!=_sha256(p) for p in capture['rank_paths']):
             raise ValueError('captured rank payload changed after native completion')
         ranks=[torch.load(Path(p),map_location='cpu',weights_only=True) for p in capture['rank_paths']]
         model=json.loads((Path(config['model'])/'config.json').read_text());model=model.get('text_config',model)
@@ -108,7 +181,11 @@ def prepare(config, *, config_path=None, output=None, import_pair=None, capture_
         artifact=checkpoint_pair_artifact(kstate,vstate,layer_names=layers,head_dim=dim,
             model_fingerprint=fingerprint,calibration_profile=profile,testing=testing)
         artifact['capture_manifest']=capture
-        source='official_qqt_sst_native_post_rope_calibration'
+        if provenance:
+            artifact['capture_fit_profile']=profile
+            artifact['refit_provenance']=provenance
+        source=('official_qqt_sst_refit_retained_samples' if provenance else
+                'official_qqt_sst_native_post_rope_calibration')
     artifact['calibration_profile']=profile
     validate(artifact)
     publish_checkpoint_pair(kstate,vstate,destination.parent,artifact=artifact,artifact_name=destination.name)
@@ -118,7 +195,10 @@ def prepare(config, *, config_path=None, output=None, import_pair=None, capture_
         "v_rotation":str(destination.parent/V_FILENAME),"source":source,"calibrated":True,
         "model_fingerprint":fingerprint,"full_layers":layers,"accumulator_dtype":"float64",
         "statistics_device":"cpu_offline","model_forward_device":"npu" if not testing else "cpu_test",
-        "quality_acceptance":"not_run","draft_layer":"explicit_identity_not_sampled","reused":False}
+        "quality_acceptance":"not_run","draft_layer":"explicit_identity_not_sampled","reused":False,
+        "rotation_variant":config.get("rotation_variant","shared_v1"),
+        "capture_reused":source=="official_qqt_sst_refit_retained_samples",
+        "model_forward_executed":source=="official_qqt_sst_native_post_rope_calibration"}
 
 
 def main(argv=None) -> int:

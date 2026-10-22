@@ -64,7 +64,7 @@ class RequestWindowLayout:
     @classmethod
     def from_config(cls, config: Mapping[str, Any], *, num_kv_heads: int, head_dim: int):
         return cls(config["max_num_seqs"], config["sink_tokens"], config["recent_tokens"],
-                   config["speculative_config"]["num_speculative_tokens"],
+                   (config.get("speculative_config") or {}).get("num_speculative_tokens", 0),
                    num_kv_heads, head_dim, config["max_model_len"])
 
     @property

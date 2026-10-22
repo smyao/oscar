@@ -27,7 +27,10 @@ def event(*, new=(), finished=(), preempted=(), resumed=()):
 
 class LayoutTests(unittest.TestCase):
     def target(self):
-        return RequestWindowLayout.from_config(json.loads((ROOT / "configs/target.json").read_text()),
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        # Keep MTP rollback coverage independent of the serving default.
+        config["speculative_config"] = {"num_speculative_tokens": 3}
+        return RequestWindowLayout.from_config(config,
                                                num_kv_heads=1, head_dim=256)
 
     def small(self):

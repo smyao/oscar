@@ -46,9 +46,7 @@ def test_actual_metadata_selects_all_four_models(tmp_path, version, quantized):
     assert ("--quantization" in argv) is quantized
     assert argv[argv.index("--dtype") + 1] == "bfloat16"
     assert argv[argv.index("--max-num-batched-tokens") + 1] == "16384"
-    prefix_flag = ("--enable-prefix-caching" if original["enable_prefix_caching"]
-                   else "--no-enable-prefix-caching")
-    assert prefix_flag in argv and "--scheduler-cls" not in argv
+    assert "--no-enable-prefix-caching" in argv and "--scheduler-cls" not in argv
     assert selected["speculative_config"] == original["speculative_config"]
     assert selected["devices"] == original["devices"] and selected["port"] == original["port"]
 

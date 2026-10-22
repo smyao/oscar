@@ -67,20 +67,6 @@ def test_checked_in_target_has_current_task_devices_and_build_soc():
     assert env["ASCEND_RT_VISIBLE_DEVICES"] == "4,5,6,7"
 
 
-def test_candidate_launch_preserves_disabled_mtp_and_enabled_prefix_cache():
-    from tools.serving_variants import variant_config
-    from tools.target_cli import serve_argv
-
-    config = json.loads((ROOT / "configs/target.json").read_text())
-    selected = variant_config(config, "candidate")
-    assert selected["speculative_config"] is None
-    assert selected["enable_prefix_caching"] is True
-    argv = serve_argv(selected)
-    assert json.loads(argv[argv.index("--speculative_config") + 1]) is None
-    assert "--enable-prefix-caching" in argv
-    assert "--no-enable-prefix-caching" not in argv
-
-
 def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypatch, tmp_path):
     config, config_path, logs = _configure(monkeypatch, tmp_path, devices=[8, 9, 10, 11])
     monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "4,5,6,7")

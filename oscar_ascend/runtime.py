@@ -512,7 +512,7 @@ class AscendRuntimeProvider:
     def _window_config_signature(self):
         return tuple(self.config[name] for name in
                      ("max_num_seqs", "sink_tokens", "recent_tokens", "max_model_len")) + (
-            (self.config.get("speculative_config") or {}).get("num_speculative_tokens", 0),)
+            self.config["speculative_config"]["num_speculative_tokens"],)
 
     def _allocate_request_window_sidecar(self, layout):
         """Called inside native Attention construction and model memory profiler."""
@@ -731,7 +731,7 @@ class AscendRuntimeProvider:
             raise OscarReadinessError("target CV FULL spec requires equal K/V head dimensions")
         return SnapshotLayout(
             spec.layout, int(self.config["sink_tokens"]), int(self.config["recent_tokens"]),
-            int((self.config.get("speculative_config") or {}).get("num_speculative_tokens", 0)))
+            int(self.config.get("speculative_config", {}).get("num_speculative_tokens", 0)))
 
     def allocate_kv_cache_tensors(self, runner, config, native_allocate):
         """Allocate each native shared tensor exactly once as raw bytes."""

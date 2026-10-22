@@ -32,24 +32,6 @@ def _common():
         max_seq_len=32768, causal=True)
 
 
-@pytest.mark.parametrize("speculative_config,expected", [(None, 0), ({"num_speculative_tokens": 3}, 3)])
-def test_window_geometry_accepts_disabled_mtp(speculative_config, expected):
-    from oscar_ascend.layout import HybridPageLayout, SlotLayout
-    from oscar_ascend.request_window_storage import RequestWindowLayout
-
-    config = {"max_num_seqs": 128, "sink_tokens": 64, "recent_tokens": 256,
-              "max_model_len": 262144, "speculative_config": speculative_config}
-    provider = AscendRuntimeProvider(config)
-    page = HybridPageLayout(SlotLayout(256), 15360, 393216, 768,
-                            native_page_size_bytes=801792)
-    snapshot = provider._snapshot_layout(SimpleNamespace(
-        head_size=256, head_size_v=256, layout=page))
-    window = RequestWindowLayout.from_config(config, num_kv_heads=1, head_dim=256)
-    assert snapshot.speculative_tokens == window.speculative_tokens == expected
-    assert snapshot.rows == window.rows == 320 + expected
-    assert provider._window_config_signature()[-1] == expected
-
-
 def test_native_graph_metadata_mutates_values_at_the_same_captured_addresses():
     common = _common()
     bindings = GraphMetadataBindings()

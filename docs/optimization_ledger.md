@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-23 PC低命中修复：外部插件按实际FULL/GDN共同边界选择checkpoint，并计入prompt−1/原生MTP尾页；低预算保留native状态块推进，共同checkpoint之后仍调用原生尾部切分，避免partial状态误hash。15000-token无MTP本地重复前缀命中0→13824；32768/MTP/剩余15360为0→29952。227项相关主机测试通过；保持GDN/spec/hash/argv、timer及CANN，非对齐状态与encoder输入保留原生路径。实际流量命中率、NPU/图/模型质量及性能未验收，不能消除稀疏状态和完整页drop的固有限制。见[排查、修复及证据](prefix_checkpoint_alignment_20261023.md)。
+
 2026-10-23 FP32量化等级读端修复：实际BF16行1/1.0078125经过真实144B codec在mode0逐位恢复，而旧decode mode1变1/1.015625。candidate所有阶段和capture统一mode0，保留INT2、PTrecipe3、CANN及原生argv；新增运行策略overlay，不放宽v4容差。数学/路由检查不代表LongBench目标已达成，见[实现与证据](fp32_dequant_precision_20261023.md)。
 
 2026-10-23 recipe4质量回归：用户报告约10点损失。实际clip selector的D256反例：代理995.372→421.137，选择.96→.94，attention正确1.0却变0.761594，两种dequant模式均成立。撤下candidate默认recipe4并恢复recipe3，双缓存回归验证不误用recipe4；这不能证明10点全部归因已闭合，长历史跨tile CPU检查继续。见docs/oscar_logic_review_20261023.md。

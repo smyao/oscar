@@ -1,5 +1,7 @@
 # OSCAR prefix caching 兼容闭环
 
+> 2026-10-23 修复更新：已用外部插件修复原生768生成边界与OSCAR2304共同查询边界错位，同时处理prompt−1/MTP尾页与低预算推进。共同checkpoint之后保留原生尾部协议，非对齐状态/encoder输入仍由原生切分；227项相关主机测试通过，未宣称NPU命中率恢复。详见 [反例、实现与验收边界](prefix_checkpoint_alignment_20261023.md)。下文2026-10-12的默认APC=true及省略budget描述为历史，当前stable策略为默认APC=false、显式16384预算、已有显式开启模式自动接入本修复。
+
 档案依据：#26（前缀窗口必须精确）、#37–49（窗口生命周期及 MTP 接受边界）、#127（none/align 原生几何）、#128（128 虚拟块与物理页分离）、#129（host 通过不等于设备完成）。本页从属于 `skills/oscar-quant-optimization/SKILL.md`；不取代性能主目标。
 
 ## 当前源码事实与本轮修复

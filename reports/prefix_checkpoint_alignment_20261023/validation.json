@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-23",
+  "evidence": "local source/native AST/host integration only",
+  "base_git_head": "f6276b364b9b68a4bbf9f7dbed9b34b78580f1cc",
+  "tests": {
+    "passed": 227,
+    "command": ".venv/bin/python -m pytest -q tests/test_prefix_checkpoint_audit.py tests/test_prefix_checkpoint_integration.py tests/test_prefix_caching.py tests/test_plugin.py tests/test_runtime_native.py tests/test_request_window_native_scheduler.py tests/test_prefill_state_contract_hooks.py"
+  },
+  "audit_cases": 336,
+  "fixed_cases": 84,
+  "fixed_complete": true,
+  "symbolic_state_identity_violations": 0,
+  "native_full_lookup_ceiling_reached_for_fixed_repeat_prompts": true,
+  "production_scope": "actual OSCAR + APC + align; aligned state start; no encoder inputs; native tail retained",
+  "unchanged": [
+    "native source",
+    "GDN shape/dtype/block size",
+    "hash granularity",
+    "MTP depth and rollback",
+    "launch argv",
+    "16384 token budget",
+    "timer",
+    "CANN kernels",
+    "recipe3/PT"
+  ],
+  "not_validated": [
+    "NPU",
+    "graph capture/replay",
+    "model quality",
+    "real traffic prefix-hit rate",
+    "performance"
+  ],
+  "audit_sha256": "c3be4c63935a86549b198e6df44756ee01e9376eb2ead1aca0c29819b2187fce",
+  "source_sha256": {
+    "oscar_ascend/integration/prefix_checkpoint.py": "ec148ccaf6f3c9da66c3eedb595bd7d68eca31854510342bc1cf37b34ba8c232",
+    "oscar_ascend/integration/specs.py": "ae2a93a93f319e31baed9e4640e4ae9813c2c222c380e0ca4fea4add6dc5c1ea",
+    "oscar_ascend/layout.py": "8d0504b03367ca982968e3f92b80af3c47c231b0a6a8607c453e3d6e118db96e",
+    "oscar_ascend/plugin.py": "7cf5ca8ec1b4e9179edb43ccfd7501272936b3dc924e9de6642150e1123aad67",
+    "references/vllm-ascend/vllm_ascend/core/single_type_kv_cache_manager.py": "5292cf9c33c90f83abe7097de1a8b07e1381f3601f38c57bd65119388263e408",
+    "references/vllm-ascend/vllm_ascend/patch/platform/patch_kv_cache_coordinator.py": "35a62e6bb3960f88192ff609751d631eeafbbc29f087560afd60906b3a504999",
+    "references/vllm-ascend/vllm_ascend/patch/platform/patch_mamba_manager.py": "f39b28a75509ff5b8617104a00c73e6bd21b8b7acd43f81b50c57ea7c474815e",
+    "references/vllm/vllm/v1/core/block_pool.py": "84755b84c36ed6460ceefe2690c9484a9c31488c5da6daa6c918f497d8837dee",
+    "references/vllm/vllm/v1/core/kv_cache_utils.py": "b89f9afa7f95fcc30412ae2031d5370a23e95f35d068fa14e5824dce1c900ee5",
+    "references/vllm/vllm/v1/core/sched/scheduler.py": "9ae1491f57a6294e32416b93ef2ea68107fa0d65c3a4d7f745f1261012f735e9",
+    "references/vllm/vllm/v1/core/single_type_kv_cache_manager.py": "dc425e1e87b6157f3e5c46be2bfee54076ccb020b86c5a8aaa3d9901c75e46ef",
+    "references/vllm/vllm/v1/kv_cache_interface.py": "8d6be98bbf75b3d55007b64ccf5afef047ca01790a432522f70a196412c103d9",
+    "references/vllm/vllm/v1/kv_cache_spec_registry.py": "16b3f6458538910f72cdac48554c20432c7ac0e5122e91c8a6219a1ec25f44fe",
+    "tests/test_prefix_caching.py": "8bbfb79549084d1c9e07dae5ddcef70718531380d6736db8f8302603ab9aac31",
+    "tests/test_prefix_checkpoint_audit.py": "44049b719948020d381e32a143bfbf0ac1e898e4d68fb6f4d889facb7e04babb",
+    "tests/test_runtime_native.py": "82b5aa72b27fef95573cf84b778291b9052890aa2162592bf1b95d8d6e16fb8f",
+    "tools/experiments/prefix_checkpoint_audit.py": "8c39ab6bae7622c8c7de639147a557c2c62321c816181c369749323c340e69dc"
+  },
+  "integration_test_sha256": "1f862bcb2e8fd593491cd8867b9d1a3cd900e55a6ea795722bfe6ea692aded04",
+  "audit_artifact": "audit.json.gz",
+  "audit_artifact_sha256": "a99386652ee3225ba4e3298863698fc44eda01c42ac04bd1f00d8b3c0a5cf2bb",
+  "prior_audit_artifact": "audit_before_fix.json.gz"
+}

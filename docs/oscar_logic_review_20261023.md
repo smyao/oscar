@@ -28,4 +28,8 @@ git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 
 源码和主机复核未确认重复scale、重复RoPE、clip污染精确窗口、跨TP头错配、MTP逻辑位置或prepare reuse静默错读。store只改独立UB，精确窗口重读原始旋转域BF16；read-before-write、ring259及原生物理页所有权不变。上述结果不等于证明目标NPU无错误。
 
-发现旧v4 CPU矩阵的实质覆盖缺口：C4/C16历史很短，未直接覆盖多个KV256块时的在线alpha与旧累积值更新。正在补充解析长历史输入的本地AscendC CPU验证；真实结果另落reports/oscar_logic_review_20261023。无真机/性能测试，模型1点以内目标尚未达成。
+发现旧v4 CPU矩阵的实质覆盖缺口：C4/C16历史很短，未直接覆盖多个KV256块时的在线alpha与旧累积值更新。已补充q4/C4/C16三个本地AscendC CPU解析病例：可见历史625个token跨三块，后块提高最大logit；检查FP64独立dense结果、status、padding、future mask、输入不变与保护区。12个阶段全部rc0，无重编内核，25个CPU源码依赖哈希吻合。
+
+history关键行最大误差1.19209e-7，未发现此用例的alpha/旧acc更新错误。最终输出最大绝对误差q4为0.000474274、C4为0.000475883、C16为0.000641227；LSE≤1.91e-6。一个constant-V partial得到2.996892而非3，可由BF16 P舍入、FP32 denominator的既定公式精确解释，不另改分母掩盖。
+
+这些用例使用recent16/context704验证通用多tile数学，包含一个C16成熟簇及尾部；不是当前recent256或真NPU所有场景的完整验收。真实证据与复现脚本位于reports/logic_precision_20261023及csrc/experiments/logic_precision_20261023。无真机/性能测试，模型1点以内目标尚未达成。

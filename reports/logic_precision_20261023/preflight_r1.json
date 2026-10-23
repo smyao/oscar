@@ -1,0 +1,7 @@
+{
+  "status": "failed_before_cpu_execution",
+  "kind": "new_harness_source_path_normalization",
+  "error": "RuntimeError: completed CPU build source differs: csrc/kernels/../include/oscar_official_decode_launch.h",
+  "fix": "resolve dependency paths before relative-to-root lookup; retry in a new r2 directory",
+  "production_kernel_changed": false
+}

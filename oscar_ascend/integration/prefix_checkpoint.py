@@ -7,6 +7,8 @@ are distinct. Never mutate CacheConfig or any native cache spec.
 Archive #157/#163: keep native MTP admission/rollback and decode dispatch.
 Evidence: native scheduler.py:_mamba_block_aligned_split used CacheConfig's
 768 after OSCAR changed FULL to 2304; AscendMambaManager queries the LCM.
+Archive #37-49/#171: retain the existing prompt checkpoint with native pool
+references until its request is freed. Never copy or manufacture GDN states.
 """
 
 from dataclasses import dataclass
@@ -27,6 +29,69 @@ class PrefixCheckpointPolicy:
         limit = min(max(readable // block - int(drop), 0) * block
                     for block, drop in self.full_lookup_blocks)
         return limit // self.alignment_tokens * self.alignment_tokens
+
+
+class PrefixCheckpointLeases:
+    """Keep one real joint prompt checkpoint while FULL pages remain owned.
+
+    Native align-mode GDN removes old states from its request block table.
+    Without an additional owner, decode allocation can evict every prompt
+    checkpoint even while that request still owns all FULL prefix pages.
+    Hold only the final readable prompt checkpoint, not decode history.
+    The extra references consume the existing native pool's capacity and
+    therefore participate in its ordinary admission/preemption accounting.
+    """
+
+    def __init__(self, coordinator, policy: PrefixCheckpointPolicy):
+        from vllm.v1.kv_cache_interface import MambaSpec
+
+        self.coordinator = coordinator
+        self.policy = policy
+        self.managers = tuple(m for m in coordinator.single_type_managers
+                              if isinstance(m.kv_cache_spec, MambaSpec))
+        self.blocks_by_request: dict[str, tuple] = {}
+
+    def observe(self, request, num_computed_tokens: int) -> None:
+        if request.request_id in self.blocks_by_request:
+            return
+        # Output tokens and speculative lookahead must never move the anchor.
+        terminal = self.policy.terminal_position(request.num_prompt_tokens)
+        if terminal == 0 or num_computed_tokens < terminal:
+            return
+        from vllm.v1.core.kv_cache_utils import (
+            BlockHashListWithBlockSize, make_block_hash_with_group_id)
+
+        blocks = []
+        for manager in self.managers:
+            index = terminal // manager.block_size - 1
+            owned = manager.req_to_blocks.get(request.request_id, ())
+            if index >= len(owned) or owned[index].is_null:
+                return  # A partial/external resume may never own this checkpoint.
+            block = owned[index]
+            hashes = request.block_hashes
+            if manager.block_size != self.coordinator.hash_block_size:
+                hashes = BlockHashListWithBlockSize(
+                    hashes, self.coordinator.hash_block_size, manager.block_size)
+            if index >= len(hashes):
+                return
+            expected = make_block_hash_with_group_id(hashes[index], manager.kv_cache_group_id)
+            if block.block_hash != expected:
+                return  # Require native published identity, not just a token count.
+            blocks.append(block)
+        # Acquire the complete same-position group atomically on the scheduler
+        # thread. Publication is not device-completion evidence: native same-step
+        # admission barriers still apply. No new page, state copy or device op.
+        self.coordinator.block_pool.touch(blocks)
+        self.blocks_by_request[request.request_id] = tuple(blocks)
+
+    def release(self, request_id: str) -> None:
+        blocks = self.blocks_by_request.pop(request_id, ())
+        if blocks:
+            self.coordinator.block_pool.free_blocks(blocks)
+
+    def release_all(self) -> None:
+        for request_id in tuple(self.blocks_by_request):
+            self.release(request_id)
 
 
 def policy_for_scheduler(scheduler) -> PrefixCheckpointPolicy | None:

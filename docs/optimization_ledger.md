@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-23 PC联合检查点保留：主机真实native链复现20请求decode周转后GDN checkpoint被回收，联合命中29952→0。外部插件持有每活跃请求最后可读prompt已有GDN页，完成/取消/抢占/卸载释放；配对修复后保持29952，全体释放无泄漏。最多3页/请求的真实池占用代价，PT/数学/argv/timer/CANN不变，现场命中与模型质量未验收。见[报告](prefix_checkpoint_retention_20261023.md)。
+
 2026-10-23 PC低命中修复：外部插件按实际FULL/GDN共同边界选择checkpoint，并计入prompt−1/原生MTP尾页；低预算保留native状态块推进，共同checkpoint之后仍调用原生尾部切分，避免partial状态误hash。15000-token无MTP本地重复前缀命中0→13824；32768/MTP/剩余15360为0→29952。227项相关主机测试通过；保持GDN/spec/hash/argv、timer及CANN，非对齐状态与encoder输入保留原生路径。实际流量命中率、NPU/图/模型质量及性能未验收，不能消除稀疏状态和完整页drop的固有限制。见[排查、修复及证据](prefix_checkpoint_alignment_20261023.md)。
 
 2026-10-23 FP32量化等级读端修复：实际BF16行1/1.0078125经过真实144B codec在mode0逐位恢复，而旧decode mode1变1/1.015625。candidate所有阶段和capture统一mode0，保留INT2、PTrecipe3、CANN及原生argv；新增运行策略overlay，不放宽v4容差。数学/路由检查不代表LongBench目标已达成，见[实现与证据](fp32_dequant_precision_20261023.md)。

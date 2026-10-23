@@ -1,0 +1,754 @@
+{
+  "scope": "CPU real native coordinator/manager/pool/hash; synthetic request identities",
+  "device_and_tensor_state": "not_run",
+  "cases": [
+    {
+      "pool_blocks": 795,
+      "strategy": "control",
+      "requests": 20,
+      "prompt_tokens": 32768,
+      "scheduled_q": 4,
+      "committed_increment": 1,
+      "decode_steps": 2048,
+      "trace": [
+        {
+          "phase": "after20prefill",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 194,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 254,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode256",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 194,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode768",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 254,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1021",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 254,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1022",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 194,
+          "hash_evictions": 46,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1024",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 194,
+          "hash_evictions": 46,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1536",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 254,
+          "hash_evictions": 46,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode2048",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 234,
+          "hash_evictions": 66,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "after_first_completion",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 262,
+          "hash_evictions": 66,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        }
+      ],
+      "request21_get_computed_blocks_tokens": 0,
+      "free_all_no_leak": true,
+      "max_extra_lease_blocks_per_request": 3
+    },
+    {
+      "pool_blocks": 795,
+      "strategy": "extra_scratch_first",
+      "requests": 20,
+      "prompt_tokens": 32768,
+      "scheduled_q": 4,
+      "committed_increment": 1,
+      "decode_steps": 2048,
+      "trace": [
+        {
+          "phase": "after20prefill",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 194,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 254,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode256",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 194,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode768",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 254,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1021",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 254,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1022",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 194,
+          "hash_evictions": 46,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1024",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 194,
+          "hash_evictions": 46,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1536",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 254,
+          "hash_evictions": 46,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode2048",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 234,
+          "hash_evictions": 66,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "after_first_completion",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 262,
+          "hash_evictions": 66,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        }
+      ],
+      "request21_get_computed_blocks_tokens": 0,
+      "free_all_no_leak": true,
+      "max_extra_lease_blocks_per_request": 3
+    },
+    {
+      "pool_blocks": 795,
+      "strategy": "lease",
+      "requests": 20,
+      "prompt_tokens": 32768,
+      "scheduled_q": 4,
+      "committed_increment": 1,
+      "decode_steps": 2048,
+      "trace": [
+        {
+          "phase": "after20prefill",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 134,
+          "hash_evictions": 0,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 194,
+          "hash_evictions": 0,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode256",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 134,
+          "hash_evictions": 0,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode768",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 194,
+          "hash_evictions": 0,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1021",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 194,
+          "hash_evictions": 0,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1022",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            29952
+          ],
+          "free_blocks": 134,
+          "hash_evictions": 46,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1024",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            29952
+          ],
+          "free_blocks": 134,
+          "hash_evictions": 46,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1536",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            29952
+          ],
+          "free_blocks": 194,
+          "hash_evictions": 46,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode2048",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            29952
+          ],
+          "free_blocks": 174,
+          "hash_evictions": 66,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "after_first_completion",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            29952
+          ],
+          "free_blocks": 205,
+          "hash_evictions": 66,
+          "leased_blocks": 57,
+          "extra_scratch_preferred": 0
+        }
+      ],
+      "request21_get_computed_blocks_tokens": 29952,
+      "free_all_no_leak": true,
+      "max_extra_lease_blocks_per_request": 3
+    },
+    {
+      "pool_blocks": 800,
+      "strategy": "control",
+      "requests": 20,
+      "prompt_tokens": 32768,
+      "scheduled_q": 4,
+      "committed_increment": 1,
+      "decode_steps": 2048,
+      "trace": [
+        {
+          "phase": "after20prefill",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 199,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 259,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode256",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 199,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode768",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 259,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1021",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 259,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1022",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 199,
+          "hash_evictions": 41,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1024",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 199,
+          "hash_evictions": 41,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1536",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 259,
+          "hash_evictions": 41,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode2048",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 239,
+          "hash_evictions": 61,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "after_first_completion",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 267,
+          "hash_evictions": 61,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        }
+      ],
+      "request21_get_computed_blocks_tokens": 0,
+      "free_all_no_leak": true,
+      "max_extra_lease_blocks_per_request": 3
+    },
+    {
+      "pool_blocks": 800,
+      "strategy": "extra_scratch_first",
+      "requests": 20,
+      "prompt_tokens": 32768,
+      "scheduled_q": 4,
+      "committed_increment": 1,
+      "decode_steps": 2048,
+      "trace": [
+        {
+          "phase": "after20prefill",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 199,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 259,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode256",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 199,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode768",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 259,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1021",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 259,
+          "hash_evictions": 0,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1022",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 199,
+          "hash_evictions": 41,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1024",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 199,
+          "hash_evictions": 41,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1536",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 259,
+          "hash_evictions": 41,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode2048",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 239,
+          "hash_evictions": 61,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "after_first_completion",
+          "hit_tokens": 0,
+          "joint_checkpoints": [],
+          "free_blocks": 267,
+          "hash_evictions": 61,
+          "leased_blocks": 0,
+          "extra_scratch_preferred": 0
+        }
+      ],
+      "request21_get_computed_blocks_tokens": 0,
+      "free_all_no_leak": true,
+      "max_extra_lease_blocks_per_request": 3
+    },
+    {
+      "pool_blocks": 800,
+      "strategy": "lease",
+      "requests": 20,
+      "prompt_tokens": 32768,
+      "scheduled_q": 4,
+      "committed_increment": 1,
+      "decode_steps": 2048,
+      "trace": [
+        {
+          "phase": "after20prefill",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 139,
+          "hash_evictions": 0,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 199,
+          "hash_evictions": 0,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode256",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 139,
+          "hash_evictions": 0,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode768",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 199,
+          "hash_evictions": 0,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1021",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            16128,
+            29952
+          ],
+          "free_blocks": 199,
+          "hash_evictions": 0,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1022",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            29952
+          ],
+          "free_blocks": 139,
+          "hash_evictions": 41,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1024",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            29952
+          ],
+          "free_blocks": 139,
+          "hash_evictions": 41,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode1536",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            29952
+          ],
+          "free_blocks": 199,
+          "hash_evictions": 41,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "decode2048",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            29952
+          ],
+          "free_blocks": 179,
+          "hash_evictions": 61,
+          "leased_blocks": 60,
+          "extra_scratch_preferred": 0
+        },
+        {
+          "phase": "after_first_completion",
+          "hit_tokens": 29952,
+          "joint_checkpoints": [
+            29952
+          ],
+          "free_blocks": 210,
+          "hash_evictions": 61,
+          "leased_blocks": 57,
+          "extra_scratch_preferred": 0
+        }
+      ],
+      "request21_get_computed_blocks_tokens": 29952,
+      "free_all_no_leak": true,
+      "max_extra_lease_blocks_per_request": 3
+    }
+  ],
+  "source_sha256": {
+    "tests/test_prefix_checkpoint_retention.py": "9f859982474b42c8ac44e0d848df5e0f0332207aecb4e12b8a1d737f6d7c7ef3",
+    "tests/test_runtime_native.py": "f262d89114db8d4aed5df7d25d7f582617700b3775ed3dff70199fb24a7f6836",
+    "tests/test_prefix_caching.py": "8bbfb79549084d1c9e07dae5ddcef70718531380d6736db8f8302603ab9aac31",
+    "oscar_ascend/integration/prefix_checkpoint.py": "7e9eac665bcbaae7366ad53fbc3b0ae88838406bce2e09a7ab0d9aa45f421a9c",
+    "oscar_ascend/plugin.py": "3f511e2352931d2c5074e388882e3973e376a4774d08233c71e41b7ef1b979b7",
+    "references/vllm/vllm/v1/core/kv_cache_coordinator.py": "aeca063d319413d2bd0f094158a16be08c2a4c9b1c96a21617f97936c23bd9ce",
+    "references/vllm/vllm/v1/core/kv_cache_manager.py": "a69aa08062714b40b149648bbec031a42d22e422fbf9543cd10fbd12d2496edb",
+    "references/vllm/vllm/v1/core/single_type_kv_cache_manager.py": "dc425e1e87b6157f3e5c46be2bfee54076ccb020b86c5a8aaa3d9901c75e46ef",
+    "references/vllm/vllm/v1/core/block_pool.py": "84755b84c36ed6460ceefe2690c9484a9c31488c5da6daa6c918f497d8837dee",
+    "references/vllm/vllm/v1/core/kv_cache_utils.py": "b89f9afa7f95fcc30412ae2031d5370a23e95f35d068fa14e5824dce1c900ee5",
+    "references/vllm-ascend/vllm_ascend/patch/platform/patch_mamba_manager.py": "f39b28a75509ff5b8617104a00c73e6bd21b8b7acd43f81b50c57ea7c474815e",
+    "references/vllm-ascend/vllm_ascend/patch/platform/patch_kv_cache_coordinator.py": "35a62e6bb3960f88192ff609751d631eeafbbc29f087560afd60906b3a504999"
+  }
+}

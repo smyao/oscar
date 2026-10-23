@@ -1,0 +1,39 @@
+{
+  "scope": "host native allocation/cache/async lifecycle and launch contracts",
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_prefix_checkpoint_retention.py",
+    "tests/test_prefix_checkpoint_lifecycle.py",
+    "tests/test_prefix_checkpoint_integration.py",
+    "tests/test_prefix_checkpoint_audit.py",
+    "tests/test_prefix_caching.py",
+    "tests/test_runtime_native.py",
+    "tests/test_plugin.py",
+    "tests/test_stable_launch_frozen.py",
+    "tests/test_serving_variants.py"
+  ],
+  "exit_code": 0,
+  "output_log": "validation.log",
+  "base_commit": "ccc254b4a05758d75aaacc02cfddf9e4dca2a90f",
+  "sha256": {
+    "oscar_ascend/integration/prefix_checkpoint.py": "7e9eac665bcbaae7366ad53fbc3b0ae88838406bce2e09a7ab0d9aa45f421a9c",
+    "oscar_ascend/plugin.py": "3f511e2352931d2c5074e388882e3973e376a4774d08233c71e41b7ef1b979b7",
+    "tests/test_prefix_checkpoint_retention.py": "9f859982474b42c8ac44e0d848df5e0f0332207aecb4e12b8a1d737f6d7c7ef3",
+    "tests/test_prefix_checkpoint_lifecycle.py": "7de62e4a67aef5da1ae5cf3284196577c9e9fc26a43be440ba80d7164d32a82e",
+    "tests/test_prefix_checkpoint_integration.py": "1f862bcb2e8fd593491cd8867b9d1a3cd900e55a6ea795722bfe6ea692aded04",
+    "tests/test_prefix_checkpoint_audit.py": "44049b719948020d381e32a143bfbf0ac1e898e4d68fb6f4d889facb7e04babb",
+    "tests/test_prefix_caching.py": "8bbfb79549084d1c9e07dae5ddcef70718531380d6736db8f8302603ab9aac31",
+    "tests/test_runtime_native.py": "f262d89114db8d4aed5df7d25d7f582617700b3775ed3dff70199fb24a7f6836",
+    "tests/test_plugin.py": "45a01e116a5e5f46aa365d63effec21f98bdb061429ab0a403d93da99ae96fd7",
+    "tests/test_stable_launch_frozen.py": "aaf72df6c12cf0ede5f24239328709702b2733289ac74916a0ba0c7110db974b",
+    "tests/test_serving_variants.py": "7f0b5e1d9e362a7bebe894ee843017d1403bc50151136fcf7f4ec35d3d7147c1"
+  },
+  "npu": "not_run",
+  "cann": "unchanged_not_rebuilt",
+  "model_quality": "not_run",
+  "performance": "not_run",
+  "pytest_summary": "233 passed, 1 warning in 8.84s"
+}

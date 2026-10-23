@@ -1,0 +1,17 @@
+{
+  "source": "/tmp/oscar-logic-precision-20261023-r2",
+  "archive": "/private/tmp/oscar-logic-precision-20261023-r2-sdk.tar.gz",
+  "bytes": 306313768,
+  "members": 56,
+  "uncompressed_file_bytes": 6264280318,
+  "sha256": "68274440cba9b793dac54f26a3ea6476bd0b27c0a40fb76f01b3e6765bac980e",
+  "observed_before_cleanup": {
+    "disk_blocks_percent": 100,
+    "inode_percent": 4,
+    "mkdir_error": "No space left on device",
+    "r5_npuchk_approx": "3.8GiB",
+    "r5_numeric_evidence_approx": "21MiB"
+  },
+  "failed_runs_r3_r5_preserved": true,
+  "free_disk_after": 5593894912
+}

@@ -649,6 +649,7 @@ def _stable_cv_gate(config_path: Path, config: dict, env: dict, log_dir: Path,
     if family == "official_attention":
         expected.update(contract="oscar_bf16_attention_v4", cache_format="striped_rotated_fp32_v3",
             performance="not_run_user_requested", slot_bytes=144,
+            runtime_precision=probe.runtime_precision(config),
             effective_config_sha256=hashlib.sha256(config_path.read_bytes()).hexdigest())
     if family == "mixed_prepare_reuse":
         if config.get("experimental_bf16_attention", False):

@@ -10,6 +10,8 @@ Primary: FutureMLS-Lab/OSCAR sglang-rebase oscar_calibration.py, observe,
 local_covariance_sums, _energy_weighted_v_covariance and finalize.
 Recipe3: official fit_oscar2_variants.py perhead/center keeps global KV-head
 identity, normalizes each M_q by trace/D, and publishes the FP32 key mean.
+Recipe4 additionally selects per-head K clips using a frozen LOCAL proxy;
+this does not claim to reproduce an unpublished official clipping selector.
 """
 from __future__ import annotations
 import fcntl, hashlib, importlib, json, math, os, tempfile, time, uuid
@@ -32,7 +34,10 @@ def _validated_calibration_profile(profile, model_fingerprint):
     variant = profile.get("rotation_variant", "shared_v1")
     if variant not in {"shared_v1", "perhead_center"}:
         raise ValueError("unsupported rotation calibration variant")
-    recipe = 3 if variant == "perhead_center" else 2
+    clipping = profile.get('rotation_k_clip')
+    if clipping not in (None, 'per_head_calibrated') or (clipping and variant != 'perhead_center'):
+        raise ValueError('per-head clip calibration requires perhead_center')
+    recipe = 4 if clipping else 3 if variant == "perhead_center" else 2
     if (profile.get("recipe_version") != recipe or
             profile.get("official_commit") != OFFICIAL_COMMIT or
             profile.get("model_fingerprint") != model_fingerprint):
@@ -42,6 +47,9 @@ def _validated_calibration_profile(profile, model_fingerprint):
             any(execution.get(name) != "bfloat16"
                 for name in ("mamba_cache_dtype", "mamba_ssm_cache_dtype"))):
         raise ValueError("rotation calibration execution profile requires the current native BF16 state dtypes")
+    if clipping:
+        from .clip_calibration import validate_policy
+        validate_policy(profile.get('clip_calibration'))
     # Keep a portable snapshot: changing the caller's config must not relabel
     # an already fitted pair, and no tensors/custom objects belong in identity.
     return json.loads(json.dumps(profile, sort_keys=True, allow_nan=False))
@@ -193,6 +201,21 @@ def fit_checkpoint_pair(rank_payloads,*,layer_names,head_dim,model_path,model_fi
     axes=(2,len(ids),global_kv_heads) if centered else (2,len(ids))
     matrices=torch.stack(matrices).float().reshape(*axes,head_dim,head_dim).contiguous()
     values=values.reshape(*axes,head_dim);generation=uuid.uuid4().hex
+    clipped=profile.get('rotation_k_clip')=='per_head_calibrated'
+    if clipped:
+        from .clip_calibration import select_head_clip,POLICY,CRITERION
+        clips=torch.empty((len(ids),global_kv_heads),dtype=torch.float64,device='cpu')
+        decisions={layer:{'policy':POLICY,'criterion':CRITERION,
+            'source':'local_predeclared_calibration_proxy','heads':[]} for layer in ids}
+        for rank in sorted(rank_payloads,key=lambda row:row['rank']):
+            for index,layer in enumerate(ids):
+                data=rank['layers'][layer]
+                for local_head in range(local_hk):
+                    head=rank['rank']*local_hk+local_head
+                    ratio,decision=select_head_clip(data['k'][:,local_head],head_cov[0,index,head],
+                        matrices[0,index,head],means[index,head].float(),profile['clip_calibration'])
+                    clips[index,head]=ratio
+                    decisions[layer]['heads'].append({'global_kv_head':head,**decision})
     meta={'generation_id':generation,'model_path':str(model_path),'model_revision':model_revision,
         'model_fingerprint':model_fingerprint,'prompt_sha256':prompt_sha256,'tokens':tokens,
         'max_tokens':max_tokens,'global_q_heads':global_q_heads,'global_kv_heads':global_kv_heads,
@@ -203,7 +226,10 @@ def fit_checkpoint_pair(rank_payloads,*,layer_names,head_dim,model_path,model_fi
         entries={layer:{'layer_id':layer,'rotation':matrices[index,i],
                         'eigenvalues':values[index,i].float().contiguous()} for i,layer in enumerate(ids)}
         if centered and index==0:
-            for i,layer in enumerate(ids):entries[layer]['k_mean']=means[i].float().contiguous()
+            for i,layer in enumerate(ids):
+                entries[layer]['k_mean']=means[i].float().contiguous()
+                if clipped:
+                    entries[layer].update(k_clip_ratio=clips[i].contiguous(),clip_selection=decisions[layer])
         return {'format_version':2 if centered else 1,'objective':objective,
             'source_grouping':'layer_kv_head' if centered else 'layer','calibration':dict(meta),
             **({'global_kv_heads':global_kv_heads} if centered else {}),'layers':entries}
@@ -216,6 +242,7 @@ def checkpoint_pair_artifact(k_state,v_state,*,layer_names,head_dim,model_finger
     torch=_torch();names=_names(layer_names);ids={int(n.split('.')[2]) for n in names}
     profile=_validated_calibration_profile(calibration_profile,model_fingerprint)
     centered=profile.get('rotation_variant')=='perhead_center'
+    clipped=profile.get('rotation_k_clip')=='per_head_calibrated'
     global_heads=k_state.get('global_kv_heads') if centered else None
     if centered and (type(global_heads) is not int or global_heads<=0 or v_state.get('global_kv_heads')!=global_heads):
         raise ValueError('per-head pair requires matching positive global_kv_heads')
@@ -254,6 +281,25 @@ def checkpoint_pair_artifact(k_state,v_state,*,layer_names,head_dim,model_finger
                     raise ValueError('per-head K mean geometry/dtype differs')
                 if validate_math and not bool(torch.isfinite(mean).all()):
                     raise ValueError('per-head K mean must be finite')
+            if clipped and objective=='qqt_r_h_pbr':
+                from .clip_calibration import POLICY,CRITERION
+                ratios,decision=entry.get('k_clip_ratio'),entry.get('clip_selection')
+                if (not torch.is_tensor(ratios) or ratios.dtype!=torch.float64 or
+                        ratios.device.type!='cpu' or ratios.shape!=(global_heads,) or
+                        not bool(torch.isfinite(ratios).all()) or bool(((ratios<=0)|(ratios>1)).any())):
+                    raise ValueError('per-head K clip ratios must be finite FP64 [global_kv_heads] in (0,1]')
+                if (not isinstance(decision,Mapping) or decision.get('policy')!=POLICY or
+                        decision.get('criterion')!=CRITERION or
+                        decision.get('source')!='local_predeclared_calibration_proxy' or
+                        not isinstance(decision.get('heads'),list) or len(decision['heads'])!=global_heads):
+                    raise ValueError('per-head K clip selection provenance differs')
+                for head,row in enumerate(decision['heads']):
+                    if (row.get('global_kv_head')!=head or row.get('selected_ratio')!=float(ratios[head]) or
+                            row.get('baseline_ratio')!=profile['clip_calibration']['baseline_ratio'] or
+                            row.get('policy')!=POLICY or row.get('criterion')!=CRITERION):
+                        raise ValueError('per-head K clip decision does not bind its ratio/head/profile')
+            elif 'k_clip_ratio' in entry or 'clip_selection' in entry:
+                raise ValueError('K clip fields are not permitted on V or an older recipe')
         states.append(normalized)
     km,vm=k_state.get('calibration',{}),v_state.get('calibration',{})
     for field in ('generation_id','prompt_sha256','tokens','max_tokens','global_q_heads','global_kv_heads','tp_size','model_path','model_revision','accumulator_dtype','post_rope','test_only','calibration_profile'):
@@ -267,6 +313,9 @@ def checkpoint_pair_artifact(k_state,v_state,*,layer_names,head_dim,model_finger
     for name in names:
         layer=int(name.split('.')[2]);result['layers'][name]={'layer_id':layer,'Rk':states[0][layer]['rotation'].contiguous(),'Rv':states[1][layer]['rotation'].contiguous()}
         if centered:result['layers'][name]['k_mean']=states[0][layer]['k_mean'].contiguous()
+        if clipped:
+            result['layers'][name].update(k_clip_ratio=states[0][layer]['k_clip_ratio'].contiguous(),
+                clip_selection=json.loads(json.dumps(states[0][layer]['clip_selection'],allow_nan=False)))
     return result
 
 

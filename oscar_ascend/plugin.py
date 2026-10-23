@@ -8,6 +8,8 @@ Archive #37-49/#127-129/#142/#155: request-window lease notifications wrap
 native lifecycle methods without changing scheduler selection or token budget.
 Archive #157-160: greedy sampling hooks keep masked rows outside the writer
 without changing random probabilities or the frozen device kernels.
+Archive #26/#127/#128: prefix checkpoints follow actual FULL/GDN alignment,
+without changing state layouts, scheduler class, token budget or native files.
 """
 
 import functools
@@ -269,6 +271,46 @@ def request_window_scheduler_hooks_present(scheduler_cls):
              if patch.owner in scheduler_cls.__mro__ and
              getattr(scheduler_cls, patch.name) is patch.replacement}
     return {"_preempt_request", "schedule"} <= names
+
+
+def _patch_prefix_checkpoint_scheduler(module):
+    """Bind physical group boundaries while retaining the native scheduler."""
+    def initialized(original):
+        def wrapped(scheduler, *args, **kwargs):
+            result = original(scheduler, *args, **kwargs)
+            from .integration.prefix_checkpoint import policy_for_scheduler
+            policy = policy_for_scheduler(scheduler)
+            scheduler._oscar_prefix_checkpoint_policy = policy
+            if policy is not None:
+                print("[oscar] PREFIX_CHECKPOINT_FIX "
+                      f"joint_tokens={policy.alignment_tokens} "
+                      f"gdn_tokens={policy.state_block_tokens} "
+                      "terminal=last_token_and_full_drop low_budget=native_state_blocks",
+                      flush=True)
+            return result
+        return wrapped
+
+    def aligned(original):
+        def wrapped(scheduler, request, num_new_tokens,
+                    num_new_local_computed_tokens=0, num_external_computed_tokens=0):
+            if scheduler._oscar_prefix_checkpoint_policy is not None:
+                from .integration.prefix_checkpoint import split_prefix_checkpoint
+                planned = split_prefix_checkpoint(scheduler, request, num_new_tokens,
+                                                  num_new_local_computed_tokens,
+                                                  num_external_computed_tokens)
+                if planned is not None:
+                    return planned
+            return original(scheduler, request, num_new_tokens,
+                            num_new_local_computed_tokens, num_external_computed_tokens)
+        return wrapped
+
+    _patch(module.Scheduler, "__init__", initialized)
+    _patch(module.Scheduler, "_mamba_block_aligned_split", aligned)
+
+
+def _patch_scheduler(module):
+    _patch_prefix_checkpoint_scheduler(module)
+    _patch_request_window_scheduler(module)
 
 
 def _patch_attention_registration(module: ModuleType) -> None:
@@ -535,7 +577,7 @@ _callbacks = {
     "vllm.model_executor.models.qwen3_5_mtp": _patch_mtp_forward,
     "vllm_ascend.spec_decode.llm_base_proposer": _patch_mtp_proposer,
     "vllm.model_executor.layers.attention.attention": _patch_attention_registration,
-    "vllm.v1.core.sched.scheduler": _patch_request_window_scheduler,
+    "vllm.v1.core.sched.scheduler": _patch_scheduler,
     "vllm_ascend.ops.triton.reject_sample": _patch_native_greedy_sampling,
     "vllm_ascend.sample.rejection_sampler": _patch_native_greedy_sampling,
     "vllm_ascend.ops.gdn_attn_builder": _patch_gdn_prefill_classification,

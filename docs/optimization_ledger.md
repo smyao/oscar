@@ -1,5 +1,13 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-23 PC低命中修复：外部插件按实际FULL/GDN共同边界选择checkpoint，并计入prompt−1/原生MTP尾页；低预算保留native状态块推进，共同checkpoint之后仍调用原生尾部切分，避免partial状态误hash。15000-token无MTP本地重复前缀命中0→13824；32768/MTP/剩余15360为0→29952。227项相关主机测试通过；保持GDN/spec/hash/argv、timer及CANN，非对齐状态与encoder输入保留原生路径。实际流量命中率、NPU/图/模型质量及性能未验收，不能消除稀疏状态和完整页drop的固有限制。见[排查、修复及证据](prefix_checkpoint_alignment_20261023.md)。
+
+2026-10-23 FP32量化等级读端修复：实际BF16行1/1.0078125经过真实144B codec在mode0逐位恢复，而旧decode mode1变1/1.015625。candidate所有阶段和capture统一mode0，保留INT2、PTrecipe3、CANN及原生argv；新增运行策略overlay，不放宽v4容差。数学/路由检查不代表LongBench目标已达成，见[实现与证据](fp32_dequant_precision_20261023.md)。
+
+2026-10-23 recipe4质量回归：用户报告约10点损失。实际clip selector的D256反例：代理995.372→421.137，选择.96→.94，attention正确1.0却变0.761594，两种dequant模式均成立。撤下candidate默认recipe4并恢复recipe3，双缓存回归验证不误用recipe4；这不能证明10点全部归因已闭合，长历史跨tile CPU检查继续。见docs/oscar_logic_review_20261023.md。
+
+2026-10-23 剩余精度差对齐：用户确认center后约3点差，目标1点以内。确认唯一新增明确配方缺口为逐头K clip；补齐PT/TP/writer接入及本地预先固定的四指标非劣校准选择，自动升级recipe4。官方未公开实际Qwen表/selector，不声称逐值复刻；反量化与S_v复核一致，窗口/tile差异保留声明，不盲改CANN。见[细粒度证据与修复](head_clip_alignment_20261023.md)，真机质量仍未验收。
+
 2026-10-21 用户要求直接修复center配方：candidate升级recipe3/schema2逐KV头K/V旋转与key mean，默认TP4按rank选择；全部K来源统一BF16中心化，MTP独立零均值。旧PT自动失效，验证后复用已有原始校准样本重拟合，缺失时自动采样。只交付一键启动，不要求诊断实验；数学/迁移/运行时功能验证与LongBench未验收分列，见[实现与边界](official_center_recipe_20261021.md)。
 
 2026-10-21 v4质量反馈续查：用户报告精度仍低，实际v4启用标识待核。定向复核未发现重复RoPE/gate/GQA或Q scratch覆盖K/V的新错误；确认官方结果表center配方与本地共享层V1 PT仍不同。新增只读运行配置/PT识别和已保存校准样本的perhead/center量化误差诊断，不改生产、不重新加载模型、不连接NPU，不将score代理冒充LongBench。见[证据与下一步](precision_followup_20261021.md)。

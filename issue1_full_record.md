@@ -28812,3 +28812,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **验证与边界**：真实CPU AOT别名/原地修改反例、只读原生load方法的cache-miss执行、插件安装恢复、稳定缓存复用/失效、真实子进程失败后父进程仍活着/HTTP200及清理均有主机回归。具体通过数量见该目录validation.json。未连接真机、未运行NPU模型/图/性能；输入数量匹配沿用原生缓存行为，不宣称已重新证明任意AOT变换的全部缓存契约。原生argv、GDN/MTP、BF16数学、冻结核及main/stable不变。
 
 **2026-10-20后续用户结果**：run `2ae27c282db34edfbb383587023dcb63`报告93b325fb/dirty=true，32K→16请求passed，四rank共68次C16配对调用valid且issues=0，见`reports/c16_breakdown_analysis_20261020/user_summary.txt`。本次实验的启动、请求及C16诊断链已完成；摘要未列cache-hit/rebuild分支，不据此单独判定哪条缓存修复分支实际触发，也不推广为全模型质量或全部图场景通过。
+
+
+## [170] 质量回归条目（2026-10-23 用户回传）· recipe4后与原生差距扩大到约10点
+
+**现场证据范围**：用户文字反馈“现在最新commit 跟原生精度差了10个点”，此前反馈center版本差距约3点。没有收到本次原始评测报告、启动SHA或PT路径；交付时最新提交为a2d9b42f，但不能将本地HEAD当成已核实的现场加载身份。
+
+**已证明的问题**：a2d9b42f把本地协方差加权K误差选择器设为candidate默认。实际selector的D256数学反例中，Kclip由.96选为.94，四项校准代理995.372314降至421.136719，但两个key的attention输出从正确1.0变为0.761594（prefill/decode均成立）。该反例不是用户激活，不证明10点的全部因果占比；它证明默认化局部代理缺乏质量依据。测试为tests/test_clip_proxy_attention_counterexample.py。
+
+**处置**：b22564de撤下candidate默认recipe4，保留perhead_center recipe3并清除残留clip开关；双缓存功能检查确认prepare选择recipe3，不误用recipe4。此举是控制回归，不是达成用户“小于1点”的目标。既有PT与原始校准样本保留；不要求用户执行额外诊断。
+
+**进一步逻辑检查**：独立本地AscendC CPU三tile解析检查覆盖q4/C4/C16的历史alpha更新、PV累积、因果mask及padding；报告见reports/logic_precision_20261023。此类本地结果不写成真NPU通过。没有连接真机/跑性能或完成新的模型质量验收；详见docs/oscar_logic_review_20261023.md。

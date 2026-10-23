@@ -349,7 +349,7 @@ def _expected(fixture,target,*,native_current):
     return sampled_fixture_expected(fixture,native_current=native_current)
 
 
-def _next_bf16_decode_oracle(torch,fixture,state,q,k,v):
+def _next_bf16_decode_oracle(torch,fixture,state,q,k,v,config=None):
     from dataclasses import replace
     official=fixture.get('cache_format')=='striped_rotated_fp32_v3'
     aligned=official or fixture.get('cache_format')=='striped_fp32_v2'
@@ -375,7 +375,10 @@ def _next_bf16_decode_oracle(torch,fixture,state,q,k,v):
         sample['cpu'].update(q=qr,qr=qr,ck=rotate_bf16(k,state.rotation_k_bf16.cpu()),
             cv=rotate_bf16(v,state.rotation_v_bf16.cpu()))
         sample['cached_quant_ends']=[max(min(reuse.SINK,c),c+1-spec.recent_tokens) for c in contexts]
-    return sampled_fixture_expected(sample,native_current=False,**({'dequant_mode':1} if aligned else {}))
+    if aligned:
+        from oscar_ascend.integration.aligned_math import dequant_mode
+        mode = dequant_mode(SimpleNamespace(attn_state=SimpleNamespace(name='SpecDecoding')), config)
+    return sampled_fixture_expected(sample,native_current=False,**({'dequant_mode':mode} if aligned else {}))
 
 
 def _assert_stores(torch, old, new):
@@ -425,7 +428,7 @@ def _decode_after_store(torch, fixture, tensors, old_impl, old, new_impl, new, d
     v = torch.randn(count,spec.kv_heads,spec.dim,generator=generator).to(torch.bfloat16)
     bf16=new_impl.provider.config.get("experimental_bf16_attention",False)
     if bf16!=old_impl.provider.config.get("experimental_bf16_attention",False):raise RuntimeError("lifecycle A/B readers use different precision contracts")
-    expected = (_next_bf16_decode_oracle(torch,fixture,new,q,k,v) if bf16 else
+    expected = (_next_bf16_decode_oracle(torch,fixture,new,q,k,v,new_impl.provider.config) if bf16 else
                 _next_decode_oracle(torch,fixture,new,q,k,v))
     contexts = [old+length for old,length in zip(spec.contexts,spec.qlens)]
     slots = [fixture["page_assignments"][r][p//reuse.BLOCK_TOKENS]*reuse.BLOCK_TOKENS+p%reuse.BLOCK_TOKENS

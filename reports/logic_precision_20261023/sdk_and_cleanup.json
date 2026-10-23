@@ -1,0 +1,12 @@
+{
+  "sdk": "CANN 9.1.0 local Lima read-only source",
+  "lock_available_after_completion": true,
+  "sdk_sha256": {
+    "softmax_flashv2_base_impl.h": "96ddbe74b1390a4418237657fd8e666a390cd7e5d9f25402a7739c75a26d8316",
+    "membase/v220/softmax_flashv2_impl.h": "09d52e7a1a9987202f0a827399415f11d90d8e7a4d594cb12de1ff50928c7b14"
+  },
+  "fixture_program_sha256": {
+    "csrc/experiments/logic_precision_20261023/analytic_case.py": "199f0eae7f292ed98953ba5e65f9dc75045c7211237a54b621fdd42932e5ad92",
+    "csrc/experiments/logic_precision_20261023/run_guest.py": "f29e40aa83f30dec3303ab1ecbd617dfe6107b2dab808d6d2894ceb1e011e113"
+  }
+}

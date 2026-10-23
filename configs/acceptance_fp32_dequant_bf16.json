@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "contract": "oscar_bf16_runtime_fp32_dequant_v1",
+  "kernel_contract": "oscar_bf16_attention_v4",
+  "kernel_acceptance": "configs/acceptance_official_bf16.json",
+  "frozen_before_measurement": true,
+  "authorization": "2026-10-23 precision-first read-side overlay: retain the existing v4 kernel contract and recipe-3 constants; reconstruct stored FP32 quantizer levels without intermediate BF16 metadata/difference rounding",
+  "archive_references": ["#13-20", "#126", "#145", "#148", "#164"],
+  "cache_format": "striped_rotated_fp32_v3",
+  "slot_bytes_D256": 144,
+  "dequant_modes": {
+    "prefill": 0,
+    "decode": 0,
+    "mtp": 0,
+    "capture": 0
+  },
+  "dequantize": "FP32 stored scale and normalized zero; FP32(code-zero)*scale; one final RNE BF16 publication. No intermediate BF16 metadata or difference rounding.",
+  "quantize": "Unchanged v4 FP32 clipping, scale, normalized-zero and INT2 code assignment; the 144-byte packed representation is unchanged.",
+  "rotation_recipe_version": 3,
+  "rotation_artifacts": "Reuse the authenticated recipe-3 PT bytes unchanged: per-head Rk/Rv, key mean, model identity and native capture profile. This read-side overlay neither refits nor relabels a PT.",
+  "attention": "Unchanged v4 BF16 QK/PV operands and FP32 accumulation/max/sum/alpha/LSE; rotated FP32 partials merge before the existing final BF16 inverse rotation.",
+  "exact_sources": "Sink, recent and current remain in the v4 rotated BF16 frame; physical snapshots, native MTP/APC ownership and fixed-per-forward cache cuts are unchanged.",
+  "fused_attention": {
+    "atol": 0.005,
+    "rtol": 0.005,
+    "per_element": true
+  },
+  "protocol": {
+    "status_and_metadata_exact": true,
+    "padding_output_exact_zero": true,
+    "padding_lse_exact_negative_infinity": true
+  },
+  "compatibility": "All existing v4 readers already accept mode 0. This overlay changes the selected read arithmetic only; v4 mode-1 coverage, its original acceptance file, all CANN sources and native launch parameters remain separate and unchanged.",
+  "accuracy_boundary": "Mode 0 avoids extra quantization of the stored FP32 levels. It does not guarantee monotonically smaller error against every original K/V value, attention output or model score. It is an Ascend precision policy, not an upstream bug claim or a claim of CUDA decode equivalence.",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_established",
+  "performance": {
+    "execution": "not_run_user_requested",
+    "hard_gate": false
+  }
+}

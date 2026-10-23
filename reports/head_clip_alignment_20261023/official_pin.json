@@ -1,0 +1,7 @@
+{
+  "url": "https://api.github.com/repos/FutureMLS-Lab/OSCAR/branches/sglang-rebase",
+  "checked_date": "2026-10-23",
+  "commit": "38680852e52c10bd6b9e9a64ed9bc815e742859b",
+  "source_files": "reports/official_semantics_audit_20261021/upstream_manifest.json",
+  "public_clip_selector": "not_present_in_fixed_tree; selection policy explicitly local"
+}

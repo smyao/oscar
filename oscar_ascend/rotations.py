@@ -29,6 +29,7 @@ FORMAT_VERSION = 1
 # execution profile; it does not change the serving or sampling state dtype.
 CALIBRATION_RECIPE_VERSION = 2
 CENTER_CALIBRATION_RECIPE_VERSION = 3
+HEAD_CLIP_CALIBRATION_RECIPE_VERSION = 4
 PR_FINGERPRINT = "57286d5d2cb08c3dcd8c17bb59e132d6985e6796"
 ORTHOGONALITY_ATOL = 5e-4
 EIGEN_RESIDUAL_RTOL = 5e-4
@@ -49,6 +50,7 @@ class DeviceRotation:
     inverse_value_transposed: Any
     hadamard: bool
     key_mean: Any = None
+    key_clip_ratio: float | None = None
 
 
 def prepare_device_rotations(artifact: Mapping[str, Any], *, device: str = "npu",
@@ -88,7 +90,7 @@ def prepare_device_rotations(artifact: Mapping[str, Any], *, device: str = "npu"
             raise ValueError("perhead_center currently requires one KV head per TP rank (Qwen27B TP4)")
     for name, entry in layers.items():
         k, v = entry.get("Rk"), entry.get("Rv")
-        mean = None
+        mean, clip = None, None
         if per_head:
             if any(not torch.is_tensor(x) or tuple(x.shape) != (heads, dim, dim) for x in (k, v)):
                 raise ValueError(f"{name}: per-head matrix geometry differs")
@@ -98,6 +100,13 @@ def prepare_device_rotations(artifact: Mapping[str, Any], *, device: str = "npu"
                     not bool(torch.isfinite(mean).all())):
                 raise ValueError(f"{name}: finite per-head key mean required")
             k, v, mean = k[tp_rank].contiguous(), v[tp_rank].contiguous(), mean[tp_rank].contiguous()
+            if artifact.get('calibration_profile', {}).get('rotation_k_clip') == 'per_head_calibrated':
+                ratios = entry.get('k_clip_ratio')
+                if (not torch.is_tensor(ratios) or ratios.dtype != torch.float64 or
+                        ratios.device.type != 'cpu' or tuple(ratios.shape) != (heads,) or
+                        not bool(torch.isfinite(ratios).all()) or bool(((ratios <= 0) | (ratios > 1)).any())):
+                    raise ValueError(f'{name}: finite per-head host clipping constants required')
+                clip = float(ratios[tp_rank])
         for label, matrix in (("Rk", k), ("Rv", v)):
             if (not torch.is_tensor(matrix) or matrix.dtype != torch.float32
                     or tuple(matrix.shape) != (dim, dim) or matrix.device != selected
@@ -108,7 +117,7 @@ def prepare_device_rotations(artifact: Mapping[str, Any], *, device: str = "npu"
             for label, matrix in (("Rk", k), ("Rv", v)):
                 if not bool(matrix[0, 0] > 0) or not torch.equal(matrix, pattern * matrix[0, 0]):
                     raise ValueError(f"{name}/{label}: hadamard objective does not match exact Sylvester pattern")
-        result[name] = DeviceRotation(k.T.contiguous(), v.T.contiguous(), v.contiguous(), fast, mean)
+        result[name] = DeviceRotation(k.T.contiguous(), v.T.contiguous(), v.contiguous(), fast, mean, clip)
     return result
 
 
@@ -170,6 +179,9 @@ def validate_artifact(artifact: Mapping[str, Any], *, layer_names: Sequence[str]
     if not per_head and (artifact.get("format_version") != FORMAT_VERSION or artifact.get("source_grouping") != "layer"):
         raise ValueError("unsupported rotation artifact schema")
     heads = artifact.get("global_kv_heads") if per_head else None
+    clipped = artifact.get('calibration_profile', {}).get('rotation_k_clip') == 'per_head_calibrated'
+    if clipped and (not per_head or artifact.get('calibration_profile', {}).get('recipe_version') != HEAD_CLIP_CALIBRATION_RECIPE_VERSION):
+        raise ValueError('per-head clipping requires the recipe-4 center artifact')
     if per_head and (type(heads) is not int or heads <= 0 or artifact.get("rotation_variant") != "perhead_center"):
         raise ValueError("perhead_center artifact requires its global KV-head identity")
     if artifact.get("model_fingerprint") != model_fingerprint:
@@ -218,6 +230,17 @@ def validate_artifact(artifact: Mapping[str, Any], *, layer_names: Sequence[str]
                     tuple(mean.shape) != (heads, head_dim) or not bool(torch.isfinite(mean).all())):
                 raise ValueError(f"{name}/k_mean: finite fp32 [{heads},{head_dim}] required")
             entry["k_mean"] = mean.to(device=selected).contiguous()
+        if clipped:
+            ratios = source.get('k_clip_ratio')
+            if (not torch.is_tensor(ratios) or ratios.dtype != torch.float64 or tuple(ratios.shape) != (heads,)
+                    or not bool(torch.isfinite(ratios).all()) or bool(((ratios <= 0) | (ratios > 1)).any())):
+                raise ValueError(f'{name}/k_clip_ratio: finite FP64 per-head ratios in (0,1] required')
+            if not isinstance(source.get('clip_selection'), Mapping):
+                raise ValueError(f'{name}: calibrated clip selection provenance required')
+            entry['k_clip_ratio'] = ratios.detach().cpu().contiguous()
+            entry['clip_selection'] = source['clip_selection']
+        elif 'k_clip_ratio' in source or 'clip_selection' in source:
+            raise ValueError('per-head clip fields cannot enter an older recipe')
         result["layers"][name] = entry
     return result
 
@@ -405,9 +428,24 @@ def calibration_cache_identity(config: Mapping[str, Any], fingerprint: str) -> d
     if variant not in ("shared_v1", "perhead_center"):
         raise ValueError("rotation_variant must be shared_v1 or perhead_center")
     center = variant == "perhead_center"
+    clip_method = config.get('rotation_k_clip')
+    if clip_method not in (None, 'per_head_calibrated') or (clip_method and not center):
+        raise ValueError('per_head_calibrated clipping requires perhead_center')
+    clip_profile = {}
+    if clip_method:
+        baseline = float(config.get('k_clip_ratio', .96))
+        if not math.isfinite(baseline) or not 0 < baseline <= 1:
+            raise ValueError('per-head clipping baseline must be in (0,1]')
+        clip_profile = {'rotation_k_clip': clip_method, 'clip_calibration': {
+            'policy': 'centered_rotated_score_proxy_v1', 'baseline_ratio': baseline,
+            'candidate_ratios': [.80, .85, .90, .92, .94, .96, .98, 1.0],
+            'max_samples': 1024, 'dequant_modes': [0, 1],
+            'criterion': 'both_modes_raw_and_centered_nonworse_minimax_relative'}}
     return {"official_commit": OFFICIAL_COMMIT,
-            "recipe_version": CENTER_CALIBRATION_RECIPE_VERSION if center else CALIBRATION_RECIPE_VERSION,
+            "recipe_version": (HEAD_CLIP_CALIBRATION_RECIPE_VERSION if clip_method else
+                               CENTER_CALIBRATION_RECIPE_VERSION if center else CALIBRATION_RECIPE_VERSION),
             **({"rotation_variant": "perhead_center"} if center else {}),
+            **clip_profile,
             "model_fingerprint": fingerprint,
             "objective": "qqt_sst_r_h_pbr", "accumulator_dtype": "float64",
             "prompt_source": source, "max_tokens": budget, "GPQA_option_seed": 0,
@@ -519,7 +557,12 @@ def load_active_artifact(config: Mapping[str, Any], *, device="npu", testing=Fal
             raise ValueError('per-head artifact KV-head count differs from selected model')
     torch = importlib.import_module("torch")
     for name in names:
-        for key in (("Rk", "Rv", "k_mean") if profile.get('rotation_variant') == 'perhead_center' else ("Rk", "Rv")):
+        keys = ('Rk', 'Rv', 'k_mean') if profile.get('rotation_variant') == 'perhead_center' else ('Rk', 'Rv')
+        if profile.get('rotation_k_clip') == 'per_head_calibrated':
+            keys += ('k_clip_ratio',)
+            if artifact.get('layers', {}).get(name, {}).get('clip_selection') != expected['layers'][name].get('clip_selection'):
+                raise ValueError('combined clip selection provenance differs from official pair')
+        for key in keys:
             value = artifact.get("layers", {}).get(name, {}).get(key)
             if not torch.is_tensor(value) or not torch.equal(value, expected["layers"][name][key]):
                 raise ValueError("combined rotation constants differ from official pair")

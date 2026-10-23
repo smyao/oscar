@@ -38,57 +38,68 @@ def _sha256(path):
 
 
 def _retained_capture(config, profile, fingerprint, layers, dim, *, testing):
-    """Authenticate one exact recipe-2 cache; never scan arbitrary old runs.
+    """Authenticate exact prior recipe paths, newest first; never scan runs.
 
-    A missing retained capture is recoverable by normal native calibration.
-    Corrupt complete artifacts or changed retained files are errors, not a
-    reason to trust or relabel unknown samples. No NPU context is initialized.
+    Recipes only change offline fitting. Preserve the original capture profile,
+    including a recipe-2 capture reused by recipe 3. Missing rows trigger normal
+    calibration; corrupted pair/identity/rows fail rather than being relabelled.
     """
     from oscar_ascend.rotations import calibration_cache_identity, rotation_artifact_path
     from oscar_ascend.rotation_calibration import verified_pair_files, checkpoint_pair_artifact
     import torch
-    old_config = dict(config)
-    old_config.pop("rotation_variant", None)
-    old_profile = calibration_cache_identity(old_config, fingerprint)
-    old_path = rotation_artifact_path(old_config, fingerprint)
-    if old_profile.get("recipe_version") != 2:
-        raise ValueError("retained capture migration requires the fixed recipe-2 source")
-    if not old_path.is_file():
-        return None, None
-    kstate, vstate, artifact = verified_pair_files(old_path.parent, artifact_name=old_path.name)
-    expected = checkpoint_pair_artifact(kstate, vstate, layer_names=layers, head_dim=dim,
-        model_fingerprint=fingerprint, calibration_profile=old_profile, testing=testing)
-    if (artifact.get("format_version") != 1 or artifact.get("model_fingerprint") != fingerprint
-            or artifact.get("calibrated") is not True
-            or artifact.get("calibration_profile") != old_profile
-            or artifact.get("calibration") != expected["calibration"]
-            or (artifact.get("test_only") and not testing)):
-        raise ValueError("retained recipe-2 artifact model/profile identity differs")
-    for name in layers:
-        for key in ("Rk", "Rv"):
-            matrix = artifact.get("layers", {}).get(name, {}).get(key)
-            if not torch.is_tensor(matrix) or not torch.equal(matrix, expected["layers"][name][key]):
-                raise ValueError("retained combined rotation constants differ from authenticated pair")
-    sampling = lambda item: {k: v for k, v in item.items() if k not in {"recipe_version", "rotation_variant"}}
-    if sampling(old_profile) != sampling(profile):
-        raise ValueError("recipe migration would change the native sampling profile")
-    capture = artifact.get("capture_manifest")
-    if not isinstance(capture, dict) or not capture.get("rank_paths") or not capture.get("rank_sha256"):
-        return None, None
-    if capture.get("calibration_profile") != old_profile:
-        raise ValueError("retained native capture profile differs from its source artifact")
-    paths = capture["rank_paths"]
-    if not isinstance(paths, list) or not isinstance(capture["rank_sha256"], dict):
-        raise ValueError("retained capture path/hash manifest is malformed")
-    if any(not Path(path).is_file() for path in paths):
-        return None, None
-    for path in paths:
-        if capture["rank_sha256"].get(path) != _sha256(path):
-            raise ValueError("retained rank payload changed after native capture: " + str(path))
-    provenance = {"source_artifact": str(old_path.resolve()), "source_artifact_sha256": _sha256(old_path),
-        "source_calibration_profile": old_profile, "fit_calibration_profile": profile,
-        "model_forward_executed": False, "operation": "refit_authenticated_retained_native_samples"}
-    return capture, provenance
+    center_config = dict(config)
+    center_config.pop('rotation_k_clip', None)
+    shared_config = dict(center_config)
+    shared_config.pop('rotation_variant', None)
+    sources = ([center_config] if profile.get('recipe_version') == 4 else []) + [shared_config]
+    allowed_profiles = [calibration_cache_identity(item, fingerprint) for item in sources]
+    fitting_fields = {'recipe_version', 'rotation_variant', 'rotation_k_clip', 'clip_calibration'}
+    sampling = lambda item: {k:v for k,v in item.items() if k not in fitting_fields}
+    for old_config, old_profile in zip(sources, allowed_profiles):
+        if old_profile.get('recipe_version') not in (2, 3):
+            raise ValueError('retained capture migration requires fixed recipe 2 or 3')
+        old_path = rotation_artifact_path(old_config, fingerprint)
+        if not old_path.is_file():
+            continue
+        kstate, vstate, artifact = verified_pair_files(old_path.parent, artifact_name=old_path.name)
+        expected = checkpoint_pair_artifact(kstate, vstate, layer_names=layers, head_dim=dim,
+            model_fingerprint=fingerprint, calibration_profile=old_profile, testing=testing)
+        if (artifact.get('format_version') != expected['format_version'] or
+                artifact.get('model_fingerprint') != fingerprint or artifact.get('calibrated') is not True or
+                artifact.get('calibration_profile') != old_profile or
+                artifact.get('calibration') != expected['calibration'] or
+                (artifact.get('test_only') and not testing)):
+            raise ValueError('retained artifact model/profile identity differs')
+        for name in layers:
+            for key in (('Rk','Rv','k_mean') if old_profile['recipe_version']==3 else ('Rk','Rv')):
+                matrix = artifact.get('layers', {}).get(name, {}).get(key)
+                if not torch.is_tensor(matrix) or not torch.equal(matrix, expected['layers'][name][key]):
+                    raise ValueError('retained combined rotation constants differ from authenticated pair')
+        if sampling(old_profile) != sampling(profile):
+            raise ValueError('recipe migration would change the native sampling profile')
+        capture = artifact.get('capture_manifest')
+        if not isinstance(capture, dict) or not capture.get('rank_paths') or not capture.get('rank_sha256'):
+            continue
+        raw_profile = capture.get('calibration_profile')
+        if raw_profile not in allowed_profiles:
+            raise ValueError('retained native capture profile differs from its source artifact')
+        if raw_profile != old_profile and (artifact.get('capture_fit_profile') != old_profile or
+                artifact.get('refit_provenance', {}).get('source_calibration_profile') != raw_profile):
+            raise ValueError('retained refit capture provenance differs')
+        paths = capture['rank_paths']
+        if not isinstance(paths, list) or not isinstance(capture['rank_sha256'], dict):
+            raise ValueError('retained capture path/hash manifest is malformed')
+        if any(not Path(path).is_file() for path in paths):
+            continue
+        for path in paths:
+            if capture['rank_sha256'].get(path) != _sha256(path):
+                raise ValueError('retained rank payload changed after native capture: ' + str(path))
+        provenance = {'source_artifact':str(old_path.resolve()), 'source_artifact_sha256':_sha256(old_path),
+            'source_artifact_calibration_profile':old_profile, 'source_calibration_profile':raw_profile,
+            'fit_calibration_profile':profile, 'model_forward_executed':False,
+            'operation':'refit_authenticated_retained_native_samples'}
+        return capture, provenance
+    return None, None
 
 
 def prepare(config, *, config_path=None, output=None, import_pair=None, capture_runner=None,

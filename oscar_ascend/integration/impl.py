@@ -291,7 +291,7 @@ class OscarAttentionImpl(AttentionImpl):
             mode_args = ()
             if aligned_math:
                 from .aligned_math import dequant_mode
-                mode_args = (dequant_mode(attn_metadata),)
+                mode_args = (dequant_mode(attn_metadata, self.provider.config),)
             cv_op(
                 attention_q if official_math else q, qr,
                 attention_k if official_math else k, attention_v if official_math else v,

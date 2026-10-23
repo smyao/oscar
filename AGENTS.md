@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-23部署配置更新：用户要求当前服务默认使用前四张物理卡 `0,1,2,3`、端口 `7878`，以 `configs/target.json` 为准，覆盖下方历史设备/端口默认值。固定candidate直启命令无需附加参数；`--rear-cards`仍为显式后四卡选项。档案 #123：所有子进程共用本次配置，不继承其他任务卡号。
+
 > 2026-10-23精度续修：candidate默认fp32_metadata读端策略，现有mode0用于prefill/decode/MTP/capture；已存FP32量化等级不再附加BF16 metadata/减法舍入。独立overlay继承v4门，旧合同/核不改；recipe3/PT/clip/旋转/窗口/argv保持，recipe4实验仍关闭。此为精度优先政策，区别官方CUDA的decode速度取舍；不能宣称模型已达1点以内。见docs/fp32_dequant_precision_20261023.md。
 
 > 2026-10-23紧急回归：用户反馈recipe4默认后差距扩大到约10点。已用实际selector+D256反例证明四项score代理改善仍可令attention输出从1变0.7616。candidate撤下recipe4默认，恢复用户实测约3点的perhead_center recipe3、K=.96/V=.92，清除残留clip开关并绑定recipe3 PT；研究能力保留但不自动启用。继续检查跨KV256历史累积，未完成前不得声称内核或模型质量已验收。不要求用户诊断实验。

@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-23 FP32量化等级读端修复：实际BF16行1/1.0078125经过真实144B codec在mode0逐位恢复，而旧decode mode1变1/1.015625。candidate所有阶段和capture统一mode0，保留INT2、PTrecipe3、CANN及原生argv；新增运行策略overlay，不放宽v4容差。数学/路由检查不代表LongBench目标已达成，见[实现与证据](fp32_dequant_precision_20261023.md)。
+
 2026-10-23 recipe4质量回归：用户报告约10点损失。实际clip selector的D256反例：代理995.372→421.137，选择.96→.94，attention正确1.0却变0.761594，两种dequant模式均成立。撤下candidate默认recipe4并恢复recipe3，双缓存回归验证不误用recipe4；这不能证明10点全部归因已闭合，长历史跨tile CPU检查继续。见docs/oscar_logic_review_20261023.md。
 
 2026-10-23 剩余精度差对齐：用户确认center后约3点差，目标1点以内。确认唯一新增明确配方缺口为逐头K clip；补齐PT/TP/writer接入及本地预先固定的四指标非劣校准选择，自动升级recipe4。官方未公开实际Qwen表/selector，不声称逐值复刻；反量化与S_v复核一致，窗口/tile差异保留声明，不盲改CANN。见[细粒度证据与修复](head_clip_alignment_20261023.md)，真机质量仍未验收。

@@ -36,7 +36,7 @@ SOURCE_PATHS = (
  'tools/bf16_reference.py', 'oscar_ascend/ops/reference.py',
  'tools/probe_history_reuse.py', 'tools/probe_bf16_attention.py',
  'tools/probe_mdl_decode.py', 'tools/probe_striped_cache.py',
- 'configs/acceptance_official_bf16.json', 'oscar_ascend/runtime.py',
+ 'configs/acceptance_official_bf16.json', 'configs/acceptance_fp32_dequant_bf16.json', 'oscar_ascend/runtime.py',
  'oscar_ascend/integration/impl.py', 'oscar_ascend/integration/aligned_math.py',
  'oscar_ascend/integration/official_math.py',
  'oscar_ascend/integration/cache_storage_ops.py', 'oscar_ascend/layout.py', 'oscar_ascend/integration/specs.py',
@@ -409,12 +409,31 @@ def writer_rotation_gate(torch, ops, device, cores):
             'graph_capture': 'passed', 'graph_replay': 'passed', 'graph_same_addresses': True}
 
 
-def validate_evidence(report):
+def runtime_precision(config):
+    """Bind selected runtime arithmetic without rewriting the dual-mode v4 oracle."""
+    from types import SimpleNamespace
+    from oscar_ascend.integration.aligned_math import dequant_mode
+    policy = config.get('oscar_dequant_policy', 'native_phase')
+    modes = {stage: dequant_mode(SimpleNamespace(attn_state=SimpleNamespace(name=state),
+             capture_origin=stage == 'capture'), config)
+             for stage,state in (('prefill','ChunkedPrefill'),('decode','DecodeOnly'),
+                                 ('mtp','SpecDecoding'),('capture','DecodeOnly'))}
+    acceptance = 'configs/acceptance_fp32_dequant_bf16.json' if policy == 'fp32_metadata' else 'configs/acceptance_official_bf16.json'
+    declared = json.loads((ROOT / acceptance).read_text())
+    if policy == 'fp32_metadata' and declared.get('dequant_modes') != modes:
+        raise RuntimeError('runtime dequant modes differ from the declared precision overlay')
+    return {'policy':policy, 'contract':('oscar_bf16_runtime_fp32_dequant_v1' if policy == 'fp32_metadata' else CONTRACT),
+            'dequant_modes':modes, 'acceptance_sha256':digest(ROOT / acceptance)}
+
+
+def validate_evidence(report, config=None):
     required = {'status': 'passed', 'contract': CONTRACT, 'cache_format': CACHE_FORMAT,
                 'slot_bytes': 144, 'device_completion': 'passed', 'precision': 'passed',
                 'error_domain': 'passed', 'graph_capture': 'passed', 'graph_replay': 'passed',
                 'performance': 'not_run_user_requested'}
     bad = [k for k, v in required.items() if report.get(k) != v]
+    if config is not None and report.get('runtime_precision') != runtime_precision(config):
+        bad.append('runtime_precision')
     for field, path in (('acceptance_sha256', 'configs/acceptance_official_bf16.json'),
                         ('oracle_sha256', 'tools/official_reference.py'), ('probe_sha256', 'tools/probe_official_attention.py')):
         if report.get(field) != digest(ROOT / path):
@@ -475,13 +494,14 @@ def run_npu(config_path=ROOT / 'configs/target.json'):
     if bindings != source_binding() or digest(config_path) != config_hash:
         raise RuntimeError('official source/config changed during device gate')
     report = {'status': 'passed', 'contract': CONTRACT, 'cache_format': CACHE_FORMAT, 'slot_bytes': 144,
+        'runtime_precision': runtime_precision(config),
         'source_binding': bindings, 'effective_config_sha256': config_hash, 'operator_families': OPERATORS,
         'acceptance_sha256': digest(ACCEPTANCE), 'oracle_sha256': digest(ROOT / 'tools/official_reference.py'),
         'probe_sha256': digest(__file__), 'artifact_signature': manifest['signature'], 'artifact_sha256': manifest['sha256'],
         'writer_rotation': writer, 'cases': rows, 'device_completion': 'passed', 'precision': 'passed',
         'error_domain': 'passed', 'graph_capture': 'passed', 'graph_replay': 'passed',
         'performance': 'not_run_user_requested', 'model_quality': 'not_established'}
-    bad = validate_evidence(report)
+    bad = validate_evidence(report, config)
     if bad: report.update(status='failed', evidence_mismatches=bad)
     return report
 

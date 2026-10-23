@@ -1,0 +1,106 @@
+{
+  "scope": "local CPU math evidence; no production kernel changes",
+  "full_C16_R256": {
+    "status": "not_completed",
+    "run": "r3",
+    "returncode": 124,
+    "deadline_seconds": 180
+  },
+  "q4_R256_splits4": {
+    "family": "q4",
+    "status": "passed",
+    "context": 944,
+    "recent": 256,
+    "source_splits": 4,
+    "fully_masked_history_split": 3,
+    "fully_masked_history_interval": [
+      724,
+      944
+    ],
+    "empty_split_exact_positive_zero_and_negative_infinity": true,
+    "real_merge_with_empty_history_split_checked": true,
+    "padding_exact_positive_zero_and_negative_infinity": true,
+    "dense_fp64_errors": {
+      "partial": 0.0030052661895751953,
+      "lse": 9.5367431640625e-07,
+      "output": 0.00030517578125,
+      "output_lse": 1.9073486328125e-06
+    },
+    "npu": "not_run",
+    "model_quality": "not_run",
+    "performance": "not_run"
+  },
+  "isolated_C16_history_from_saved_outputs": {
+    "family": "c16",
+    "status": "passed",
+    "dense_fp64_errors": {
+      "partial": 0.0005533099174499512,
+      "lse": 0.0,
+      "output": 0.0005533099174499512,
+      "output_lse": 0.0
+    },
+    "history_without_probability_rounding_max_abs": 1.1920928955078125e-07,
+    "padding_exact_zero_and_negative_infinity": true,
+    "expected_full_history_lse_gamma_zero": 6.437751649736401,
+    "future_current_mask_checked": false,
+    "npu": "not_run",
+    "model_quality": "not_run",
+    "performance": "not_run",
+    "context": 944,
+    "recent": 256,
+    "source_splits": 1,
+    "trailing_fully_masked_history_tile_checked": true,
+    "isolated_history_only": true,
+    "source1_source2_empty_ranges_exact_zero_and_negative_infinity": true,
+    "full_R256_case": "not_completed; independent r3 180s timeout retained"
+  },
+  "original_isolated_run": {
+    "run": "r5",
+    "returncode": 1,
+    "disk_full_observed": true,
+    "exact_final_failing_call": "not_available_from_truncated_log"
+  },
+  "tiny_mode0": {
+    "mode": 0,
+    "status": "passed",
+    "actual_merged_output": 0.6000000238418579,
+    "analytic_merged_output": 0.6,
+    "absolute_error_to_unquantized_attention": 2.384185793236071e-08,
+    "errors_to_own_mode_analytic": {
+      "partial": 0.0,
+      "lse": 0.0,
+      "output": 0.0,
+      "output_lse": 0.0
+    },
+    "writer_bytes_verified_by_executor": true,
+    "probability_rounding": "none",
+    "model_quality": "not_run",
+    "npu": "not_run",
+    "performance": "not_run"
+  },
+  "tiny_mode1": {
+    "mode": 1,
+    "status": "passed",
+    "actual_merged_output": 0.5796245336532593,
+    "analytic_merged_output": 0.5796245933121972,
+    "absolute_error_to_unquantized_attention": 0.0203754663467407,
+    "errors_to_own_mode_analytic": {
+      "partial": 0.0,
+      "lse": 0.0,
+      "output": 5.960464477539063e-08,
+      "output_lse": 0.0
+    },
+    "writer_bytes_verified_by_executor": true,
+    "probability_rounding": "none",
+    "model_quality": "not_run",
+    "npu": "not_run",
+    "performance": "not_run"
+  },
+  "tiny_result_domain": "FP32 merge output before final BF16 inverse, not model quality",
+  "model_quality_target": "not_achieved_by_this_evidence",
+  "npu": "not_run",
+  "performance": "not_run",
+  "owned_cpu_processes_remaining": [],
+  "lock_available": true,
+  "free_disk_after": 5593894912
+}

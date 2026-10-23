@@ -87,7 +87,10 @@ def variant_config(config: dict, variant: str | None) -> dict:
         raise ValueError("rotation_variant must be omitted, shared_v1 or perhead_center")
     if selected.get("rotation_k_clip") not in (None, "per_head_calibrated"):
         raise ValueError("rotation_k_clip must be omitted or per_head_calibrated")
+    if selected.get('oscar_dequant_policy', 'native_phase') not in ('native_phase', 'fp32_metadata'):
+        raise ValueError('oscar_dequant_policy must be native_phase or fp32_metadata')
     if variant == "candidate":
+        selected['oscar_dequant_policy'] = 'fp32_metadata'
         # Recipe4's proxy-fitted clip table regressed user model quality.
         # The fixed candidate entrypoint restores recipe3 even when its
         # input config retains the experimental clip policy. Explicit
@@ -98,6 +101,7 @@ def variant_config(config: dict, variant: str | None) -> dict:
         else:
             selected.pop("rotation_variant", None)
     elif variant in {"baseline", "native"}:
+        selected.pop('oscar_dequant_policy', None)
         selected.pop("rotation_variant", None)
         selected.pop("rotation_k_clip", None)
     if selected.get("rotation_variant") == "perhead_center" and selected.get("rotation_method", "qqt_sst") != "qqt_sst":
@@ -203,6 +207,9 @@ def variant_config(config: dict, variant: str | None) -> dict:
             selected.get("experimental_striped_cache",False) and
             selected.get("experimental_decode_bundle",False)):
         raise ValueError("request windows require the striped decode bundle")
+    if selected.get('oscar_dequant_policy') == 'fp32_metadata' and not all(selected.get(flag, False)
+            for flag in ('experimental_official_math', 'experimental_aligned_math', 'experimental_bf16_attention')):
+        raise ValueError('FP32 metadata reconstruction requires the official BF16 reader bundle')
     return selected
 
 
@@ -235,6 +242,12 @@ def runtime_feature_summary(config: dict, variant: str | None) -> dict:
                 (4 if config.get("rotation_k_clip")=="per_head_calibrated" else 3)
                 if config.get("rotation_variant")=="perhead_center" else 2,
             "metadata_dtype":"float32" if config.get("experimental_aligned_math",False) else "float16",
+            "dequant_policy":config.get('oscar_dequant_policy', 'native_phase'),
+            "runtime_precision_contract":('oscar_bf16_runtime_fp32_dequant_v1'
+                if config.get('oscar_dequant_policy') == 'fp32_metadata' else 'native_phase'),
+            "dequant_arithmetic":('float32_then_bfloat16' if config.get('oscar_dequant_policy') == 'fp32_metadata'
+                                  else 'prefill_float32_decode_bfloat16' if config.get('experimental_aligned_math', False)
+                                  else 'legacy_reader_defined'),
             "prefix_caching":config.get("enable_prefix_caching", False),
             "token_budget_source":"native" if config.get("use_native_token_budget", False) else "explicit",
             "max_num_batched_tokens":config.get("max_num_batched_tokens"),

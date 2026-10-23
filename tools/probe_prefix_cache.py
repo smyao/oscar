@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 import traceback
 
 from oscar_ascend.layout import HybridPageLayout, SlotLayout
@@ -36,7 +37,7 @@ SOURCE_PATHS = (
     "csrc/include/oscar_aligned_store_launch.h", "tools/probe_prefix_cache.py",
     "tools/official_reference.py", "tools/official_runtime_oracle.py", "configs/acceptance_official_bf16.json",
     "csrc/kernels/attention_official_tasks.cpp", "csrc/kernels/attention_cv_official_decode.cpp",
-    "oscar_ascend/integration/official_math.py",
+    "oscar_ascend/integration/official_math.py", "oscar_ascend/integration/aligned_math.py",
 )
 
 
@@ -99,7 +100,8 @@ def make_inputs(torch, logical, pages, seed):
             "lens": torch.tensor([c + 4 for c in contexts], dtype=torch.int32)}
 
 
-def oracle(torch, logical, inputs, *, bf16=False, aligned=False, official=False, k_clip=.96, v_clip=.92):
+def oracle(torch, logical, inputs, *, bf16=False, aligned=False, official=False, k_clip=.96, v_clip=.92,
+           dequant_mode=1):
     from oscar_ascend.ops.reference import attention, encode_kv, decode_kv
     outputs, lses = [], []
     for r, (key, value) in enumerate(logical):
@@ -108,10 +110,10 @@ def oracle(torch, logical, inputs, *, bf16=False, aligned=False, official=False,
         # the MDL gate separately exercises the production Hadamard rotation.
         if official:
             from .official_reference import pack_kv, unpack_kv
-            restored_k, restored_v = unpack_kv(pack_kv(key, value, k_clip, v_clip), DIM, 1)
+            restored_k, restored_v = unpack_kv(pack_kv(key, value, k_clip, v_clip), DIM, dequant_mode)
         elif aligned:
             from .aligned_reference import pack_kv, unpack_kv
-            restored_k, restored_v = unpack_kv(pack_kv(key, value, k_clip, v_clip), DIM, 1)
+            restored_k, restored_v = unpack_kv(pack_kv(key, value, k_clip, v_clip), DIM, dequant_mode)
         else:
             restored_k, restored_v = decode_kv(encode_kv(key.float(), value.float()), DIM)
         if bf16:
@@ -125,7 +127,7 @@ def oracle(torch, logical, inputs, *, bf16=False, aligned=False, official=False,
             result=request_samples(query,query.float(),inputs['key'][r*4:r*4+4],inputs['value'][r*4:r*4+4],
                 context,torch.eye(DIM),lambda p:(restored_k[p],restored_v[p]),
                 lambda p:(key[p],value[p]),range(4),native_current=False,
-                **({'dequant_mode':1} if aligned else {}),
+                **({'dequant_mode':dequant_mode} if aligned else {}),
                 **({'cached_quant_end':max(min(64,context),context+1-256)} if official else {}))
             outputs.extend(result[i][0] for i in range(4));lses.extend(result[i][1] for i in range(4));continue
         for i in range(4):
@@ -182,7 +184,8 @@ def seed_page_chain(torch, ops, state, logical, pages):
            slots.to(state["raw"].device), positions.to(state["raw"].device))
 
 
-def allocate(torch, device, cores, *, bf16=False, aligned=False, official=False, k_clip=.96, v_clip=.92):
+def allocate(torch, device, cores, *, bf16=False, aligned=False, official=False, k_clip=.96, v_clip=.92,
+             dequant_mode=1):
     layout = fixture_layout(aligned=aligned)
     raw = torch.full((BLOCKS * layout.page.page_size_bytes,), 0x55, dtype=torch.uint8, device=device)
     wk, wv, tags = layout.views(raw, BLOCKS); tags.fill_(-1)
@@ -192,6 +195,7 @@ def allocate(torch, device, cores, *, bf16=False, aligned=False, official=False,
         "rotation_bf16": torch.eye(d, dtype=torch.bfloat16, device=device) if bf16 else None,
         "bf16_attention":bf16,
         "aligned_math":aligned, "official_math":official, "k_clip":k_clip, "v_clip":v_clip,
+        "dequant_mode":dequant_mode,
         "tasks": torch.empty((n * 3, 16), dtype=torch.int64, device=device),
         "positions": torch.empty(n, dtype=torch.int64, device=device),
         "qr": torch.empty((n, h, d), dtype=torch.bfloat16 if aligned else torch.float32, device=device),
@@ -225,7 +229,8 @@ def execute(ops, state, inputs, reader, rotate, cores):
         state["rotation_bf16"] if state.get("bf16_attention",False) else state["rotation"], state["raw"], inputs["table"], state["wk"], state["wv"], state["tags"],
         state["tasks"], state["partial"], state["lse"], state["status"], state["workspace"],
         layout.page.block_size, BLOCKS, BLOCKS * layout.page.conv_bytes, layout.page.ssm_bytes,
-        64, 256, 3, 1, DIM ** -0.5, *([1, cores] if state.get('aligned_math',False) else [cores]))
+        64, 256, 3, 1, DIM ** -0.5,
+        *([state['dequant_mode'], cores] if state.get('aligned_math',False) else [cores]))
     ops.merge_lse_out(state["partial"].view(QUERIES * HEADS, 3, DIM),
         state["lse"].view(QUERIES * HEADS, 3), state["output"], state["output_lse"], state["merge_status"])
     if state.get("official_math",False):
@@ -246,7 +251,8 @@ def check_state(torch, state, inputs, logical, immutable, tolerance):
         if bool(state[name].cpu().ne(0).any()):
             raise RuntimeError("APC forward status failed: " + name)
     expected, expected_lse = oracle(torch, logical, inputs,bf16=state.get('bf16_attention',False),
-        aligned=state.get('aligned_math',False),official=state.get('official_math',False),k_clip=state['k_clip'],v_clip=state['v_clip'])
+        aligned=state.get('aligned_math',False),official=state.get('official_math',False),
+        k_clip=state['k_clip'],v_clip=state['v_clip'],dequant_mode=state['dequant_mode'])
     torch.testing.assert_close(state["output"].view(QUERIES, HEADS, DIM).cpu(), expected, **tolerance)
     torch.testing.assert_close(state["bf16"].float().cpu(), expected, **tolerance)
     torch.testing.assert_close(state["output_lse"].view(QUERIES, HEADS).cpu(), expected_lse, **tolerance)
@@ -271,10 +277,12 @@ def run_device(torch, ops, config, cores, tolerance):
     bf16=config.get('experimental_bf16_attention',False)
     aligned=config.get('experimental_aligned_math',False)
     official=config.get('experimental_official_math',False)
+    from oscar_ascend.integration.aligned_math import dequant_mode
+    mode = dequant_mode(SimpleNamespace(attn_state=SimpleNamespace(name='SpecDecoding')), config) if aligned else 1
     if bf16 and reader!=('attention_cv_official_decode_out' if official else 'attention_cv_aligned_decode_out' if aligned else 'attention_cv_bf16_decode_out'):
         raise RuntimeError('APC BF16 config did not select the matching versioned reader')
     state = allocate(torch, device, cores,bf16=bf16,aligned=aligned,official=official,
-        k_clip=config.get('k_clip_ratio',.96),v_clip=config.get('v_clip_ratio',.92))
+        k_clip=config.get('k_clip_ratio',.96),v_clip=config.get('v_clip_ratio',.92),dequant_mode=mode)
     generator = torch.Generator().manual_seed(137081)
     shared = tuple(torch.randn((4608, 1, DIM), generator=generator).to(torch.bfloat16) for _ in range(2))
     seed_page_chain(torch, ops, state, shared, (3, 1))

@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-23精度续修：candidate默认fp32_metadata读端策略，现有mode0用于prefill/decode/MTP/capture；已存FP32量化等级不再附加BF16 metadata/减法舍入。独立overlay继承v4门，旧合同/核不改；recipe3/PT/clip/旋转/窗口/argv保持，recipe4实验仍关闭。此为精度优先政策，区别官方CUDA的decode速度取舍；不能宣称模型已达1点以内。见docs/fp32_dequant_precision_20261023.md。
+
 > 2026-10-23紧急回归：用户反馈recipe4默认后差距扩大到约10点。已用实际selector+D256反例证明四项score代理改善仍可令attention输出从1变0.7616。candidate撤下recipe4默认，恢复用户实测约3点的perhead_center recipe3、K=.96/V=.92，清除残留clip开关并绑定recipe3 PT；研究能力保留但不自动启用。继续检查跨KV256历史累积，未完成前不得声称内核或模型质量已验收。不要求用户诊断实验。
 
 > 2026-10-23：用户实测center后差距从5–6点降到约3点，目标仍需1点以内。candidate进一步补齐逐头K clip，recipe4绑定本地预先固定的四项score代理非劣选择，不能冒称官方未公开clip表/选择器或LongBench达标。自动认证复用recipe3/2原始校准样本生成新PT，缺失才自动校准；只交付固定candidate命令，不要求用户诊断实验。CANN/timer/argv/窗口/MTP保持，详见docs/head_clip_alignment_20261023.md。

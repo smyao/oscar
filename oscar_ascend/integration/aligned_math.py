@@ -7,13 +7,22 @@ from .runtime_api import OscarReadinessError
 from ..diagnostic_timer import phase as timer_phase
 
 
-def dequant_mode(metadata):
+def dequant_mode(metadata, config=None):
+    config = {} if config is None else config
+    policy = config.get("oscar_dequant_policy", "native_phase")
+    if policy not in ("native_phase", "fp32_metadata"):
+        raise OscarReadinessError(f"unknown OSCAR dequantization policy {policy!r}")
+    fp32 = policy == "fp32_metadata"
+    if fp32 and not all(config.get(flag) is True for flag in (
+            "experimental_official_math", "experimental_aligned_math", "experimental_bf16_attention")):
+        raise OscarReadinessError("fp32_metadata requires official aligned BF16 attention")
     # Captured target graphs are FULL_DECODE_ONLY; dummy labels may be prefill.
+    # The fixed policy also selects the scalar recorded during graph capture.
     if getattr(metadata, "capture_origin", False):
-        return 1
+        return 0 if fp32 else 1
     state = getattr(getattr(metadata, "attn_state", None), "name", None)
     if state in {"DecodeOnly", "SpecDecoding"}:
-        return 1
+        return 0 if fp32 else 1
     if state in {"PrefillNoCache", "PrefillCacheHit", "ChunkedPrefill"}:
         return 0
     raise OscarReadinessError(f"aligned dequant requires native prefill/decode classification, got {state!r}")

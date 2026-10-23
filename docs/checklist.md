@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-10-23 PC续修：活跃请求保留原生GDN prompt checkpoint引用，修复主机复现的并发decode周转后联合命中丢失；共享、释放、async接缝见[报告](prefix_checkpoint_retention_20261023.md)。无本轮NPU/图/模型质量/性能验收，42项状态不升级。
+
 2026-10-21 v4数值修复：candidate使用统一旋转域、FP32 partial合并后一次逆旋转及固定forward精度边界；current-only、MTP、APC和新gate一起切换。源码/主机/CANN/CPU指令证据分列于[交付说明](official_math_v4_20261021.md)。C04/C05/E01的旧版本记录不冒充新版本真NPU验收；D08图/服务、模型质量及E06性能没有本轮目标证据，42项编号与未完成状态保持。
 
 2026-10-20 C16定向优化：基于既有timer，仅减少完整历史tile有限性归约的多余结果发布，以及BF16转换的逐repeat发射。candidate已接入；原核保留显式control，现有timer文件不改。完整C16 CPU-debug 12例、helper 355例、55能力CANN fresh构建通过；主机148通过/3项基底已有静态失败/1项平台跳过。真NPU完成、图回放、模型质量和速度未验收，下方42项不升级。[变更与证据](c16_targeted_optimization_20261020.md)。

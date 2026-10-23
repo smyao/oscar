@@ -28823,3 +28823,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **处置**：b22564de撤下candidate默认recipe4，保留perhead_center recipe3并清除残留clip开关；双缓存功能检查确认prepare选择recipe3，不误用recipe4。此举是控制回归，不是达成用户“小于1点”的目标。既有PT与原始校准样本保留；不要求用户执行额外诊断。
 
 **进一步逻辑检查**：独立本地AscendC CPU三tile解析检查覆盖q4/C4/C16的历史alpha更新、PV累积、因果mask及padding；报告见reports/logic_precision_20261023。此类本地结果不写成真NPU通过。没有连接真机/跑性能或完成新的模型质量验收；详见docs/oscar_logic_review_20261023.md。
+
+
+## [171] 真机低命中反馈（2026-10-23）· PC开启、重复请求显示0.0%
+
+**现场证据**：用户确认PC开启，第21与第1请求相同。原文保存在reports/prefix_turnover_20261023/user_server.log，包含PREFIX_CHECKPOINT_FIX joint_tokens=2304/gdn_tokens=768及后续请求期间Prefix cache hit rate: 0.0%。没有逐请求hash/驱逐记录，不把本地合成驱逐时刻写成现场记录。
+
+**同族与本地定位**：#26/#37–49的状态/页身份与生命周期，#127/#128的物理页粒度，#157的MTP原生边界。真实原生coordinator/manager/pool主机配对中，20个32768-token请求完成prefill后继续MTP q4周转，GDN prompt共同checkpoint进入LRU并被重分配，FULL仍在、联合命中29952→0；795/800页池均复现。旧单请求prefill测试未覆盖该生命周期。
+
+**修复**：外部插件在原生cache_blocks后完整校验各GDN组的prompt terminal真实页/hash，各加一个native pool引用，仅保留一组既有checkpoint。native coordinator.free之后归还，覆盖完成/取消/抢占；共享及卸载平衡释放。当前最多3页/活跃请求，20请求最多60页的真实容量代价。PT、数学、CANN、timer、argv不变。
+
+**验证边界**：相同合成trace修复后重复prompt命中29952，所有请求释放后引用归零。详见docs/prefix_checkpoint_retention_20261023.md及对应validation.json。未连接真机、运行性能或质量评测，不宣称现场已恢复或LongBench达标。

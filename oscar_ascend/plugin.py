@@ -23,6 +23,7 @@ import sys
 from dataclasses import dataclass
 from types import ModuleType
 from typing import Any
+from weakref import WeakSet
 
 from .integration.runtime_api import require_runtime
 
@@ -44,6 +45,7 @@ _patches: list[_Patch] = []
 _finder = None
 _enabled = False
 _passive_only = False
+_prefix_checkpoint_leases = WeakSet()
 
 
 def _clear_loaded_selector_cache() -> None:
@@ -282,10 +284,16 @@ def _patch_prefix_checkpoint_scheduler(module):
             policy = policy_for_scheduler(scheduler)
             scheduler._oscar_prefix_checkpoint_policy = policy
             if policy is not None:
+                from .integration.prefix_checkpoint import PrefixCheckpointLeases
+                coordinator = scheduler.kv_cache_manager.coordinator
+                _patch_prefix_checkpoint_coordinator(type(coordinator))
+                coordinator._oscar_prefix_checkpoint_leases = PrefixCheckpointLeases(coordinator, policy)
+                _prefix_checkpoint_leases.add(coordinator._oscar_prefix_checkpoint_leases)
                 print("[oscar] PREFIX_CHECKPOINT_FIX "
                       f"joint_tokens={policy.alignment_tokens} "
                       f"gdn_tokens={policy.state_block_tokens} "
-                      "terminal=last_token_and_full_drop low_budget=native_state_blocks",
+                      "terminal=last_token_and_full_drop low_budget=native_state_blocks "
+                      "retention=active_prompt_checkpoint_v1",
                       flush=True)
             return result
         return wrapped
@@ -306,6 +314,33 @@ def _patch_prefix_checkpoint_scheduler(module):
 
     _patch(module.Scheduler, "__init__", initialized)
     _patch(module.Scheduler, "_mamba_block_aligned_split", aligned)
+
+
+def _patch_prefix_checkpoint_coordinator(cls):
+    """Archive #37-49/#171: pair native checkpoint ownership and native free."""
+    def cached(original):
+        def wrapped(coordinator, request, num_computed_tokens):
+            result = original(coordinator, request, num_computed_tokens)
+            leases = getattr(coordinator, "_oscar_prefix_checkpoint_leases", None)
+            if leases is not None:
+                leases.observe(request, num_computed_tokens)
+            return result
+        return wrapped
+
+    def freed(original):
+        def wrapped(coordinator, request_id):
+            result = original(coordinator, request_id)
+            leases = getattr(coordinator, "_oscar_prefix_checkpoint_leases", None)
+            if leases is not None:
+                # All native completion/abort/preemption paths converge here.
+                # Rejoin native LRU after the corresponding FULL pages. A state
+                # still in the request table has already lost its native owner.
+                leases.release(request_id)
+            return result
+        return wrapped
+
+    _patch(cls, "cache_blocks", cached)
+    _patch(cls, "free", freed)
 
 
 def _patch_scheduler(module):
@@ -770,6 +805,9 @@ def unregister() -> None:
     for patch in _patches:
         if patch.owner.__dict__.get(patch.name) is not patch.replacement:
             raise OscarHookConflictError(f"cannot restore externally changed {patch.owner.__name__}.{patch.name}")
+    for leases in _prefix_checkpoint_leases:
+        leases.release_all()
+    _prefix_checkpoint_leases.clear()
     for patch in reversed(_patches):
         if patch.had_own_attribute:
             setattr(patch.owner, patch.name, patch.original)

@@ -319,11 +319,17 @@ def _native_coordinator(native_groups, monkeypatch):
         "references/vllm-ascend/vllm_ascend/core/single_type_kv_cache_manager.py", "native_manager_factory_contract",
         {"get_manager_for_kv_cache_spec"},
         {**interface.__dict__, "__name__": "native_manager_factory_contract"}, monkeypatch)
+    inherited = definitions(
+        "references/vllm/vllm/v1/core/kv_cache_coordinator.py", "native_coordinator_lifecycle_contract",
+        set(), {}, monkeypatch, methods=[("HybridKVCacheCoordinator", "cache_blocks"),
+                                        ("KVCacheCoordinator", "free")])
+    hybrid_base = type("NativeHybridLifecycle", (), {
+        "cache_blocks": inherited.cache_blocks, "free": inherited.free})
     coordinator = definitions(
         "references/vllm-ascend/vllm_ascend/patch/platform/patch_kv_cache_coordinator.py", "native_coordinator_contract",
         {"AscendHybridKVCacheCoordinator"},
         {**interface.__dict__, "__name__": "native_coordinator_contract", "lcm": math.lcm,
-         "HybridKVCacheCoordinator": object, "BlockPool": pool_types.BlockPool,
+         "HybridKVCacheCoordinator": hybrid_base, "BlockPool": pool_types.BlockPool,
          "get_manager_for_kv_cache_spec": factory.get_manager_for_kv_cache_spec,
          "SlidingWindowManager": managers.SlidingWindowManager, "envs_vllm": SimpleNamespace(),
          "vllm_kv_cache_coordinator": SimpleNamespace()}, monkeypatch)

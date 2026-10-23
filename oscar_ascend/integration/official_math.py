@@ -65,12 +65,17 @@ def store_rotated(ops, state, key, value, slots, positions, config, *, rotated_k
         kr, vr = rotated_kv
     # The last K/V pair supplies the exact window, before clipping. Using
     # original-space inputs here would reintroduce the cross-source bias.
+    # This immutable host scalar was selected from the authenticated global
+    # head table before profiling; MTP/old recipes keep their config scalar.
+    k_clip = getattr(state, "key_clip_ratio", None)
+    if k_clip is None:
+        k_clip = float(config.get("k_clip_ratio", .96))
     ops.store_aligned_int2_out(kr, vr, kr, vr, slots, positions,
         state.raw, state.window_key, state.window_value, state.window_tags,
         state.workspace.store_status[:n], state.spec.block_size, state.num_blocks,
         state.num_blocks * state.spec.conv_bytes, state.spec.ssm_bytes,
         state.snapshots.sink_tokens, state.snapshots.ring_tokens,
-        float(config.get("k_clip_ratio", .96)), float(config.get("v_clip_ratio", .92)))
+        k_clip, float(config.get("v_clip_ratio", .92)))
 
 
 def finalize_output(ops, state, rotated_output, lse, output):

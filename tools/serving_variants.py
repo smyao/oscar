@@ -85,15 +85,22 @@ def variant_config(config: dict, variant: str | None) -> dict:
     selected = dict(config)
     if selected.get("rotation_variant") not in (None, "shared_v1", "perhead_center"):
         raise ValueError("rotation_variant must be omitted, shared_v1 or perhead_center")
+    if selected.get("rotation_k_clip") not in (None, "per_head_calibrated"):
+        raise ValueError("rotation_k_clip must be omitted or per_head_calibrated")
     if variant == "candidate":
         if selected.get("rotation_method", "qqt_sst") == "qqt_sst":
             selected["rotation_variant"] = "perhead_center"
+            selected["rotation_k_clip"] = "per_head_calibrated"
         else:
             selected.pop("rotation_variant", None)
+            selected.pop("rotation_k_clip", None)
     elif variant in {"baseline", "native"}:
         selected.pop("rotation_variant", None)
+        selected.pop("rotation_k_clip", None)
     if selected.get("rotation_variant") == "perhead_center" and selected.get("rotation_method", "qqt_sst") != "qqt_sst":
         raise ValueError("perhead_center requires qqt_sst calibration")
+    if selected.get("rotation_k_clip") == "per_head_calibrated" and selected.get("rotation_variant") != "perhead_center":
+        raise ValueError("per_head_calibrated clipping requires perhead_center")
     # User 2026-10-13: this stable branch defaults to APC disabled.
     selected.setdefault("enable_prefix_caching", False)
     selected.setdefault("experimental_c4_member_pipeline", False)
@@ -219,7 +226,10 @@ def runtime_feature_summary(config: dict, variant: str | None) -> dict:
             "rotation_variant":"hadamard_data_free" if config.get("rotation_method")=="hadamard" else config.get("rotation_variant", "shared_v1"),
             "rotation_grouping":"layer_kv_head" if config.get("rotation_variant")=="perhead_center" else "layer",
             "key_centering":config.get("rotation_variant")=="perhead_center",
-            "calibration_recipe_version":None if config.get("rotation_method")=="hadamard" else 3 if config.get("rotation_variant")=="perhead_center" else 2,
+            "clip_policy":config.get("rotation_k_clip", "scalar"),
+            "calibration_recipe_version":None if config.get("rotation_method")=="hadamard" else
+                (4 if config.get("rotation_k_clip")=="per_head_calibrated" else 3)
+                if config.get("rotation_variant")=="perhead_center" else 2,
             "metadata_dtype":"float32" if config.get("experimental_aligned_math",False) else "float16",
             "prefix_caching":config.get("enable_prefix_caching", False),
             "token_budget_source":"native" if config.get("use_native_token_budget", False) else "explicit",

@@ -80,17 +80,21 @@ def test_candidate_enables_center_baseline_native_restore_shared_without_argv_ch
     base = json.loads((install_serve.ROOT / 'configs/target.json').read_text())
     candidate = variant_config(base, 'candidate')
     assert candidate['rotation_variant'] == 'perhead_center'
+    assert candidate['rotation_k_clip'] == 'per_head_calibrated'
     assert 'rotation_variant' not in base
     # These are model/serving options; fitting recipe must not alter native argv.
     assert serve_argv(candidate) == serve_argv(variant_config(base, 'baseline'))
     for variant in ('baseline', 'native'):
         assert 'rotation_variant' not in variant_config(candidate, variant)
+        assert 'rotation_k_clip' not in variant_config(candidate, variant)
     summary = runtime_feature_summary(candidate, 'candidate')
     assert summary['rotation_grouping'] == 'layer_kv_head'
-    assert summary['key_centering'] is True and summary['calibration_recipe_version'] == 3
+    assert summary['key_centering'] is True and summary['calibration_recipe_version'] == 4
+    assert summary['clip_policy'] == 'per_head_calibrated'
     assert summary['rotation_variant'] == 'perhead_center'
     data_free = variant_config({**base, 'rotation_method': 'hadamard'}, 'candidate')
     assert 'rotation_variant' not in data_free
+    assert 'rotation_k_clip' not in data_free
     assert runtime_feature_summary(data_free, 'candidate')['calibration_recipe_version'] is None
 
 
@@ -101,6 +105,8 @@ def test_both_one_key_plans_show_the_selected_center_recipe(entrypoint, capsys):
     assert plan['runtime_selection']['rotation_variant'] == 'perhead_center'
     assert plan['runtime_selection']['rotation_grouping'] == 'layer_kv_head'
     assert plan['runtime_selection']['key_centering'] is True
+    assert plan['runtime_selection']['clip_policy'] == 'per_head_calibrated'
+    assert plan['runtime_selection']['calibration_recipe_version'] == 4
     assert plan['runtime_selection']['max_num_batched_tokens'] == 16384
 
 

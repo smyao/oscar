@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-23：用户实测center后差距从5–6点降到约3点，目标仍需1点以内。candidate进一步补齐逐头K clip，recipe4绑定本地预先固定的四项score代理非劣选择，不能冒称官方未公开clip表/选择器或LongBench达标。自动认证复用recipe3/2原始校准样本生成新PT，缺失才自动校准；只交付固定candidate命令，不要求用户诊断实验。CANN/timer/argv/窗口/MTP保持，详见docs/head_clip_alignment_20261023.md。
+
 > 2026-10-21追加：用户拒绝诊断实验，只运行固定candidate一键命令。candidate升级官方perhead_center配方，recipe3/schema2；优先验证并复用旧校准原始样本重拟合，缺样本自动校准，新PT匹配后复用。Qwen27B TP4按全局KV头切矩阵与均值，全部K来源一致BF16中心化，MTP为identity+零均值。仅必要本地功能验证，不连接真机、不测速；CANN/timer/argv不改，不宣称质量已恢复。见docs/official_center_recipe_20261021.md。
 
 > 2026-10-21最新：用户要求修复与官方OSCAR数值链不对齐并推送。candidate采用独立v4合同：历史/精确窗口/current统一BF16旋转域，CV partial保持FP32至LSE合并后再一次BF16逆旋转；current-only同样旋转，混合current不提前舍入。窗口在单次forward固定cut，保留native物理快照/MTP3/APC；不声称复刻SGLang不支持MTP的8-token分配器或未知V2 PT。旧合同/母源/冻结guard和timer保持不变；只做本地源码/CANN/CPU功能验证，不连接真机、不测速，只推BF16分支。详见docs/official_math_v4_20261021.md，模型质量未验收不得称5点已恢复。

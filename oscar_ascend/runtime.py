@@ -296,6 +296,7 @@ class LayerState:
     rotation_v_bf16: Any = None
     rotation_k_bf16: Any = None
     key_mean_bf16: Any = None
+    key_clip_ratio: float | None = None
 
 
 @dataclass(frozen=True)
@@ -788,6 +789,16 @@ class AscendRuntimeProvider:
                     raise OscarReadinessError("perhead-center runtime requires one local KV head and its explicit mean (Qwen27B TP4)")
         else:
             prepared = prepare_device_rotations(artifact, device=device)
+        # Archive #86/#97: target-head constants are loaded once before KV
+        # profiling. A requested calibrated clip must never silently use the
+        # shared scalar. The uncalibrated MTP identity is added only afterward.
+        require_clip = self.config.get("rotation_k_clip") == "per_head_calibrated"
+        for name, rotation in prepared.items():
+            clip = getattr(rotation, "key_clip_ratio", None)
+            if (require_clip and clip is None) or (clip is not None and
+                    (type(clip) is not float or not 0.0 < clip <= 1.0)):
+                raise OscarReadinessError(
+                    f"{name}: per_head_calibrated requires a finite host K clip ratio in (0, 1]")
         identity = torch.eye(dim, device=device, dtype=torch.float32)
         # The uncalibrated native draft is its own layer: identity + zero mean,
         # never any target layer's per-head centering vector (archive #86).
@@ -897,7 +908,8 @@ class AscendRuntimeProvider:
                                           self.bf16_key_rotations[(str(runner.device), spec.head_size)][canonical_rotation_name(name)]
                                           if self.config.get("experimental_aligned_math",False) else None,
                                           self.bf16_key_means[(str(runner.device), spec.head_size)][canonical_rotation_name(name)]
-                                          if self.config.get("experimental_official_math",False) else None)
+                                          if self.config.get("experimental_official_math",False) else None,
+                                          getattr(rotation, "key_clip_ratio", None))
             views[name] = packed
             from .telemetry import emit_once
             emit_once("cache_layout", key=name, layer=name, physical_blocks=blocks,

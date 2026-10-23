@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-23 剩余精度差对齐：用户确认center后约3点差，目标1点以内。确认唯一新增明确配方缺口为逐头K clip；补齐PT/TP/writer接入及本地预先固定的四指标非劣校准选择，自动升级recipe4。官方未公开实际Qwen表/selector，不声称逐值复刻；反量化与S_v复核一致，窗口/tile差异保留声明，不盲改CANN。见[细粒度证据与修复](head_clip_alignment_20261023.md)，真机质量仍未验收。
+
 2026-10-21 用户要求直接修复center配方：candidate升级recipe3/schema2逐KV头K/V旋转与key mean，默认TP4按rank选择；全部K来源统一BF16中心化，MTP独立零均值。旧PT自动失效，验证后复用已有原始校准样本重拟合，缺失时自动采样。只交付一键启动，不要求诊断实验；数学/迁移/运行时功能验证与LongBench未验收分列，见[实现与边界](official_center_recipe_20261021.md)。
 
 2026-10-21 v4质量反馈续查：用户报告精度仍低，实际v4启用标识待核。定向复核未发现重复RoPE/gate/GQA或Q scratch覆盖K/V的新错误；确认官方结果表center配方与本地共享层V1 PT仍不同。新增只读运行配置/PT识别和已保存校准样本的perhead/center量化误差诊断，不改生产、不重新加载模型、不连接NPU，不将score代理冒充LongBench。见[证据与下一步](precision_followup_20261021.md)。

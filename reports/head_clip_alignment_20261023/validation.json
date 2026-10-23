@@ -1,0 +1,61 @@
+{
+  "baseline_commit": "e2a1a97a",
+  "official_commit": "38680852e52c10bd6b9e9a64ed9bc815e742859b",
+  "user_reported_gap_points": "about 3 after center, previously 5-6",
+  "quality_target_points": "within 1; not yet established",
+  "host_tests": {
+    "command": [
+      ".venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_head_clip_prepare.py",
+      "tests/test_clip_calibration.py",
+      "tests/test_clip_bias_guard.py",
+      "tests/test_per_head_clip_runtime.py",
+      "tests/test_center_rotations.py",
+      "tests/test_center_prepare.py",
+      "tests/test_center_calibration.py",
+      "tests/test_center_runtime.py",
+      "tests/test_official_rotation_calibration.py",
+      "tests/test_serving_variants.py",
+      "tests/test_install_serve.py",
+      "tests/test_stable_launch_frozen.py"
+    ],
+    "returncode": 0,
+    "summary": "142 passed, 1 warning in 1.40s"
+  },
+  "source_sha256": {
+    "AGENTS.md": "93a59e4ed6c58fdc17c71e29cda56d9608869051c343ba6668afb8360d924191",
+    "docs/optimization_ledger.md": "8d0493fdd15c9ae17ac45e506b0e435951ebed4d620cc60e018ba7c8f04562c5",
+    "oscar_ascend/clip_calibration.py": "927218692c301ab7615dfe650be2152f5e25a4521fd5f963fe1099fd80ca00fc",
+    "oscar_ascend/integration/official_math.py": "b080a6a67f41819a15d3b88807b7e9819367c2d49d84cbe37ab26c5ad1ba6439",
+    "oscar_ascend/rotation_calibration.py": "feaf1daa00e72ec6b95d7f25eaa1e9a370fb5108c17432fca1cca1953c82379a",
+    "oscar_ascend/rotations.py": "50d6459a911f6b6972e83a36363b4b140b64cf12c1e25f2d98f65298a338231b",
+    "oscar_ascend/runtime.py": "4660b4a6c60384528a1c238215618ecb12d38926c0ae80a38da0c42b71accd9f",
+    "tests/test_center_prepare.py": "7a246b07780846316e720b6fccee8cccf909e666a214db9d8617ae1ed7cfe96d",
+    "tests/test_clip_bias_guard.py": "3b17b32d8a36fc30474ef6b51c77ad1850f1a808a769f00a4c33e68e97fab89f",
+    "tests/test_clip_calibration.py": "525c7264f5ce61af477f47d756507db147a2cc9169ea4a20cc93798ada93069e",
+    "tests/test_head_clip_prepare.py": "14037382da99aa2f490b67cbabb554a050051cfc73f5800922bc743e87b8bf49",
+    "tests/test_per_head_clip_runtime.py": "20cdd0fe58845b51279018da1c21e35f1250c6f294a972618699774593c7c663",
+    "tools/prepare_rotations.py": "54a09de4fb0bbc21362db500a4d8321b750d0f11cc6e1fc98069720e65f015d8",
+    "tools/serving_variants.py": "742112f471bfde9d278c3d4cbbc4f7d45cd7fff584e44d6d8457d31b67e4f8ff"
+  },
+  "cann_matches_completed_v4_build": {
+    "csrc/kernels/attention_official_tasks.cpp": true,
+    "csrc/kernels/attention_cv_official_cluster4.cpp": true,
+    "csrc/kernels/attention_cv_official_decode.cpp": true,
+    "csrc/kernels/attention_cv_official_cluster16.cpp": true,
+    "csrc/include/oscar_official_tasks_launch.h": true,
+    "csrc/include/oscar_official_cluster_launch.h": true,
+    "csrc/include/oscar_official_decode_launch.h": true,
+    "csrc/official_attention_bindings.cpp": true,
+    "csrc/CMakeLists.txt": true,
+    "csrc/torch_bindings.cpp": true
+  },
+  "production_cann_and_timer_changed": false,
+  "selection_policy": "local_predeclared_calibration_proxy; official table and selector unavailable",
+  "NPU": "not_run",
+  "LongBench": "not_run",
+  "performance": "not_run_user_prohibited"
+}

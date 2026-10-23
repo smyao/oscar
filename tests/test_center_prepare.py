@@ -80,7 +80,7 @@ def test_candidate_enables_center_baseline_native_restore_shared_without_argv_ch
     base = json.loads((install_serve.ROOT / 'configs/target.json').read_text())
     candidate = variant_config(base, 'candidate')
     assert candidate['rotation_variant'] == 'perhead_center'
-    assert candidate['rotation_k_clip'] == 'per_head_calibrated'
+    assert 'rotation_k_clip' not in candidate
     assert 'rotation_variant' not in base
     # These are model/serving options; fitting recipe must not alter native argv.
     assert serve_argv(candidate) == serve_argv(variant_config(base, 'baseline'))
@@ -89,8 +89,9 @@ def test_candidate_enables_center_baseline_native_restore_shared_without_argv_ch
         assert 'rotation_k_clip' not in variant_config(candidate, variant)
     summary = runtime_feature_summary(candidate, 'candidate')
     assert summary['rotation_grouping'] == 'layer_kv_head'
-    assert summary['key_centering'] is True and summary['calibration_recipe_version'] == 4
-    assert summary['clip_policy'] == 'per_head_calibrated'
+    assert summary['key_centering'] is True and summary['calibration_recipe_version'] == 3
+    assert summary['clip_policy'] == 'scalar'
+    assert summary['head_clip_experiment_enabled'] is False
     assert summary['rotation_variant'] == 'perhead_center'
     data_free = variant_config({**base, 'rotation_method': 'hadamard'}, 'candidate')
     assert 'rotation_variant' not in data_free
@@ -105,9 +106,35 @@ def test_both_one_key_plans_show_the_selected_center_recipe(entrypoint, capsys):
     assert plan['runtime_selection']['rotation_variant'] == 'perhead_center'
     assert plan['runtime_selection']['rotation_grouping'] == 'layer_kv_head'
     assert plan['runtime_selection']['key_centering'] is True
-    assert plan['runtime_selection']['clip_policy'] == 'per_head_calibrated'
-    assert plan['runtime_selection']['calibration_recipe_version'] == 4
+    assert plan['runtime_selection']['clip_policy'] == 'scalar'
+    assert plan['runtime_selection']['head_clip_experiment_enabled'] is False
+    assert plan['runtime_selection']['calibration_recipe_version'] == 3
     assert plan['runtime_selection']['max_num_batched_tokens'] == 16384
+
+
+def test_candidate_clears_residual_clip_policy_and_reuses_recipe3_not_recipe4(environment):
+    _, center, fingerprint = environment
+    center_path, _ = publish_old(center, fingerprint)
+    experimental = {**center, 'rotation_k_clip': 'per_head_calibrated'}
+    clip_path, _ = publish_old(experimental, fingerprint)
+    before = {**frozen_files(center_path), **frozen_files(clip_path)}
+    candidate = variant_config(experimental, 'candidate')
+    assert 'rotation_k_clip' not in candidate
+    assert candidate['rotation_variant'] == 'perhead_center'
+    assert rotations.rotation_artifact_path(candidate, fingerprint) == center_path
+    assert center_path != clip_path
+    result = prepare(candidate, capture_runner=forbid_capture, testing=True)
+    assert result['reused'] and result['recipe_version'] == 3
+    assert Path(result['artifact']) == center_path
+    loaded = rotations.load_active_artifact(candidate, device='cpu', testing=True)
+    assert 'k_clip_ratio' not in loaded['layers'][NAME]
+    assert all(path.read_bytes() == data for path, data in before.items())
+    # Explicit research configuration retains the quarantined capability.
+    research = variant_config(experimental, None)
+    assert research['rotation_k_clip'] == 'per_head_calibrated'
+    summary = runtime_feature_summary(research, None)
+    assert summary['calibration_recipe_version'] == 4
+    assert summary['head_clip_experiment_enabled'] is True
 
 
 def test_recipe2_retained_samples_refit_to_distinct_center_cache_and_then_reuse(environment):

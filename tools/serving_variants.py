@@ -88,12 +88,15 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if selected.get("rotation_k_clip") not in (None, "per_head_calibrated"):
         raise ValueError("rotation_k_clip must be omitted or per_head_calibrated")
     if variant == "candidate":
+        # Recipe4's proxy-fitted clip table regressed user model quality.
+        # The fixed candidate entrypoint restores recipe3 even when its
+        # input config retains the experimental clip policy. Explicit
+        # research configs may still select it with variant=None.
+        selected.pop("rotation_k_clip", None)
         if selected.get("rotation_method", "qqt_sst") == "qqt_sst":
             selected["rotation_variant"] = "perhead_center"
-            selected["rotation_k_clip"] = "per_head_calibrated"
         else:
             selected.pop("rotation_variant", None)
-            selected.pop("rotation_k_clip", None)
     elif variant in {"baseline", "native"}:
         selected.pop("rotation_variant", None)
         selected.pop("rotation_k_clip", None)
@@ -227,6 +230,7 @@ def runtime_feature_summary(config: dict, variant: str | None) -> dict:
             "rotation_grouping":"layer_kv_head" if config.get("rotation_variant")=="perhead_center" else "layer",
             "key_centering":config.get("rotation_variant")=="perhead_center",
             "clip_policy":config.get("rotation_k_clip", "scalar"),
+            "head_clip_experiment_enabled":config.get("rotation_k_clip")=="per_head_calibrated",
             "calibration_recipe_version":None if config.get("rotation_method")=="hadamard" else
                 (4 if config.get("rotation_k_clip")=="per_head_calibrated" else 3)
                 if config.get("rotation_variant")=="perhead_center" else 2,

@@ -1,0 +1,28 @@
+{
+  "vm_workspace": "/tmp/oscar-finite-20261027",
+  "sha256": {
+    "csrc/kernels/._attention_official_finite.h": "31bcc57d4ddf5599d0005c5449242e0d92afc91348f1de2b88261c73f4863014",
+    "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+    "csrc/kernels/attention_official_finite.h": "776e507213aba7e7089dcc5c4706944859f4916929e9ad1688a22b90d1abd695",
+    "csrc/kernels/attention_c16_softmax_helpers.h": "ceb949f6550a7b288ef6fedf9d8dc3924f14e1c890fca5aaa0d1f7f73e070b58",
+    "csrc/kernels/._oscar_common.h": "31bcc57d4ddf5599d0005c5449242e0d92afc91348f1de2b88261c73f4863014",
+    "csrc/kernels/._attention_c16_softmax_helpers.h": "31bcc57d4ddf5599d0005c5449242e0d92afc91348f1de2b88261c73f4863014",
+    "csrc/experiments/official_finite_20261027/main.cpp": "05ce79c9a60f66c4f37d087003fb83d40bf388ada3000cfcf0a370ab9ac98f6f",
+    "csrc/experiments/official_finite_20261027/kernel.cpp": "ba9d017be921de96269975b6c7d326d0318af0433974d8014051e41d83a82e1b",
+    "csrc/experiments/official_finite_20261027/._kernel.cpp": "31bcc57d4ddf5599d0005c5449242e0d92afc91348f1de2b88261c73f4863014",
+    "csrc/experiments/official_finite_20261027/._main.cpp": "31bcc57d4ddf5599d0005c5449242e0d92afc91348f1de2b88261c73f4863014",
+    "csrc/experiments/official_finite_20261027/CMakeLists.txt": "6740d8aec8cf4bfbbe85d72236b211ee8708976a120bcd24b71469a81a12aceb",
+    "build-cpu/oscar_official_finite_cpu": "ec55105d1d847fc9994831f2d153e236cdca2aec67542320eb1190054521754d",
+    "build-device-release/lib/liboscar_official_finite_kernel.so": "d49bd1bb905016d2ecdb350c79e429e8e4dc75d005a013c01ca4c157a7963af3"
+  },
+  "cpu_returncode": 0,
+  "cpu_result": {
+    "status": "passed",
+    "cases": 1507,
+    "engine": "official_CANN_CPU_debug",
+    "score_bytes": "unchanged",
+    "guards": "passed",
+    "performance": "not_run",
+    "NPU": "not_run"
+  }
+}

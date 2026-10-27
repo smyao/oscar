@@ -1,0 +1,21 @@
+{
+  "scope": "local Lima CPU-debug validation infrastructure",
+  "phase": "q4_mode0_fault-after",
+  "returncode": 1,
+  "timed_out": false,
+  "cleanup_complete": true,
+  "observed": [
+    "SDK GmAlloc/memset_s SIGBUS at unchanged probe.cpp:132 query-copy, before the candidate attention call",
+    "VM root filesystem was 100 percent full",
+    "subsequent phase-report writes raised OSError Errno 28 No space left on device"
+  ],
+  "completed_before_failure": [
+    "CPU baseline and candidate compilation",
+    "candidate Ascend910B4 CANN compilation",
+    "q4 mode0 healthy partial/LSE/status/merged output bitwise pair and independent v4 oracle"
+  ],
+  "resolution": "Preserved first phase logs and original validation.json; removed only completed owned SDK npuchk/cceprint output; continue uncompleted cases under distinct resume phase names with per-phase debug-output cleanup and unchanged 180 second execution deadlines",
+  "npu": "not_run",
+  "graph": "not_run",
+  "performance": "not_run"
+}

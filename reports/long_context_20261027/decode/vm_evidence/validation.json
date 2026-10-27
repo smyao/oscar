@@ -1,0 +1,141 @@
+{
+  "scope": "local CANN and official SDK CPU-debug paired functionality",
+  "npu": "not_run",
+  "graph": "not_run",
+  "performance": "not_run",
+  "status": "running",
+  "phases": [
+    {
+      "name": "configure-cpu",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/configure-cpu.log",
+      "timed_out": false,
+      "cleanup_complete": true
+    },
+    {
+      "name": "compile-cpu",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/compile-cpu.log",
+      "timed_out": false,
+      "cleanup_complete": true
+    },
+    {
+      "name": "configure-device",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/configure-device.log",
+      "timed_out": false,
+      "cleanup_complete": true
+    },
+    {
+      "name": "compile-device",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/compile-device.log",
+      "timed_out": false,
+      "cleanup_complete": true
+    },
+    {
+      "name": "q4_mode0-fixture",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q4_mode0-fixture.log",
+      "timed_out": false,
+      "cleanup_complete": true
+    },
+    {
+      "name": "q4_mode0-prepare",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q4_mode0-prepare.log",
+      "timed_out": false,
+      "cleanup_complete": true
+    },
+    {
+      "name": "q4_mode0-oracle",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q4_mode0-oracle.log",
+      "timed_out": false,
+      "cleanup_complete": true
+    },
+    {
+      "name": "q4_mode0-before",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q4_mode0-before.log",
+      "timed_out": false,
+      "cleanup_complete": true
+    },
+    {
+      "name": "q4_mode0-after",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q4_mode0-after.log",
+      "timed_out": false,
+      "cleanup_complete": true
+    },
+    {
+      "name": "q4_mode0_fault-fixture",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q4_mode0_fault-fixture.log",
+      "timed_out": false,
+      "cleanup_complete": true
+    },
+    {
+      "name": "q4_mode0_fault-prepare",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q4_mode0_fault-prepare.log",
+      "timed_out": false,
+      "cleanup_complete": true
+    },
+    {
+      "name": "q4_mode0_fault-oracle",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q4_mode0_fault-oracle.log",
+      "timed_out": false,
+      "cleanup_complete": true
+    },
+    {
+      "name": "q4_mode0_fault-before",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q4_mode0_fault-before.log",
+      "timed_out": false,
+      "cleanup_complete": true
+    }
+  ],
+  "cases": [
+    {
+      "case": "q4_mode0",
+      "status": "passed",
+      "files": {
+        "partial.bin": {
+          "before_sha256": "2117d59064e6cc179a25927d34adefc7f1784cd4c5b07c5df8979c09f7702b7c",
+          "after_sha256": "2117d59064e6cc179a25927d34adefc7f1784cd4c5b07c5df8979c09f7702b7c",
+          "bytes": 552960,
+          "bitwise_equal": true
+        },
+        "lse.bin": {
+          "before_sha256": "ee04d8e17449b6d13f53bc9d40c2feb4883be1ebecbe8eebe6c5d77bc2f8f517",
+          "after_sha256": "ee04d8e17449b6d13f53bc9d40c2feb4883be1ebecbe8eebe6c5d77bc2f8f517",
+          "bytes": 2160,
+          "bitwise_equal": true
+        },
+        "status.bin": {
+          "before_sha256": "fe2f74a1e0b16a66452888eb4d734bc455cf1304481bb495d59afa8cf9cae93b",
+          "after_sha256": "fe2f74a1e0b16a66452888eb4d734bc455cf1304481bb495d59afa8cf9cae93b",
+          "bytes": 720,
+          "bitwise_equal": true
+        },
+        "output.bin": {
+          "before_sha256": "4ba230b2907146c1c7f2cd70cc408915525b5975993e459e8036df476e147fea",
+          "after_sha256": "4ba230b2907146c1c7f2cd70cc408915525b5975993e459e8036df476e147fea",
+          "bytes": 61440,
+          "bitwise_equal": true
+        },
+        "output_lse.bin": {
+          "before_sha256": "42a045d67bc78762837f86ce8c2834b25eae83918b9b7b952094527763dc6f13",
+          "after_sha256": "42a045d67bc78762837f86ce8c2834b25eae83918b9b7b952094527763dc6f13",
+          "bytes": 240,
+          "bitwise_equal": true
+        }
+      },
+      "same_fixture_and_prepared_tasks": true,
+      "independent_v4_oracle": true,
+      "exact_error_checks": false
+    }
+  ]
+}

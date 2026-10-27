@@ -1,0 +1,120 @@
+{
+  "backend": "official_CANN_CPU_debug",
+  "performance": "not_run",
+  "NPU": "not_run",
+  "cases": [
+    {
+      "name": "mature_history_current",
+      "queries": 337,
+      "context": 320,
+      "mode": 0,
+      "heads": 1,
+      "recent": 1,
+      "bitwise": "passed",
+      "hashes": {
+        "tasks": "e830a198df889eaa1a931c86b23f2b73a909213a110697e839e45ff06f46a20b",
+        "partial": "b3ec9b9a3d92395a34f3546c8351ea568302b2123131cc87bec780ccca1b40cd",
+        "lse": "e9941e8f7665e19b99402669b1a7cbf93bc5c8e538c22ace832cc3a98c8a01f3",
+        "status": "7160b48403878b3699858e9822464a6d3aac41174aed6cd70ebf51574b5189dd",
+        "cluster_stats": "56df5c5451840ae504dcef75d801509297daf91336c80e98e6812d685cbb0645",
+        "output": "3599cfbabc5eb68061a43c7a87e4b00ea04905cf9ba9f2733bf85fed6d74fec4",
+        "output_lse": "b915b0d34fac46df2c22810b03d9831fc69f55e79b13399a939878fcf60f0f8f"
+      },
+      "oracle": "v4_frozen_0.005"
+    },
+    {
+      "name": "independent_multiple_kv",
+      "queries": 22,
+      "context": 577,
+      "mode": 0,
+      "heads": 1,
+      "recent": 16,
+      "bitwise": "passed",
+      "hashes": {
+        "tasks": "a59c3483307bd0a0ddb68c0103172cefacf72aba1a464900840ae3bbc2216a5e",
+        "partial": "8da4d0c01d09ab81c4133785fb40f7b3e68ecede32daa6f09c7df2a1d9af0df9",
+        "lse": "42d3770e91dd8b8ec32ad3fa835db138b5e8449e33579b38d4c4665b7097f17d",
+        "status": "0345bffb28f80f4d0ded1a2af09a337b18ab3a80c68205bc8321a6ad4d409500",
+        "cluster_stats": "1e89e5abcba93958cc06f43f1c9db458c5789728652110cbab233324b9d04d19",
+        "output": "8ec8cce5c4f6a02cd99220d7e41b993a1e5749fddc1a24a03e0cad0d6fffe73e",
+        "output_lse": "672983261ee9f19b0702d882d5ac6ac899664e61078c44c4e6e7bd4f6ee966cc"
+      },
+      "oracle": "v4_frozen_0.005"
+    },
+    {
+      "name": "full_window_two_heads",
+      "queries": 22,
+      "context": 320,
+      "mode": 0,
+      "heads": 2,
+      "recent": 256,
+      "bitwise": "passed",
+      "hashes": {
+        "tasks": "d9d9c8b17fed50aa89f730873cb81f44a497f45ca00b3acc3eb2404ba53e17a5",
+        "partial": "b0e062141014a1e94b8dc4b218458729ce008ced68d44ee37a21357e71e8a64e",
+        "lse": "ebfb464de6d12eb513a763fd8bbed7519f32b70ca745f7b7d7184d6052186b1e",
+        "status": "9688ec46af8fa56e8423a06a9e420db47500eb701e44ba3855faf7984ed1a0a6",
+        "cluster_stats": "64be5c6648080340ca94b2bfe5fecf1005d917a730353c2cd7ce4d2a266d022b",
+        "output": "5d08adfae98d35ff1dc04c6f67949975c5ea2acddd80230d5bdd39b5061d909b",
+        "output_lse": "21a3083361547a9c6af724a6d737a067f1ee7ad210840afe36c9c17c95510ab2"
+      },
+      "oracle": "v4_frozen_0.005"
+    },
+    {
+      "name": "legacy_mode1_current",
+      "queries": 337,
+      "context": 96,
+      "mode": 1,
+      "heads": 1,
+      "recent": 16,
+      "bitwise": "passed",
+      "hashes": {
+        "tasks": "503b3d2fcd2e2397e204f1343135e41a7e67ad10ff8516e9d2775990c1ddb4e8",
+        "partial": "b607550550faa747bef29a91f88094e02a1ad8087137c94d2b62ff3e38425522",
+        "lse": "d25f83e5c665892dd74b79c4f644702f3133265d1b9604eb842efdce446a2972",
+        "status": "7160b48403878b3699858e9822464a6d3aac41174aed6cd70ebf51574b5189dd",
+        "cluster_stats": "56df5c5451840ae504dcef75d801509297daf91336c80e98e6812d685cbb0645",
+        "output": "8ff758af5308d35e63894887a2006caa81347a0a44d802f11fdb728273084320",
+        "output_lse": "dda85f564bba97f9bd981fd53bfb01ed8cb15ee8e78910aa44f79be691a645f1"
+      },
+      "oracle": "v4_frozen_0.005"
+    },
+    {
+      "name": "metadata_fault",
+      "queries": 22,
+      "context": 577,
+      "mode": 0,
+      "heads": 1,
+      "recent": 16,
+      "bitwise": "passed",
+      "hashes": {
+        "tasks": "a59c3483307bd0a0ddb68c0103172cefacf72aba1a464900840ae3bbc2216a5e",
+        "partial": "c4ba7b7c22c76f663e879cea1764cd47159d1a9f37e8ae0590bcd37a9dfb4c15",
+        "lse": "c8051ee1a1a285848ca16bc9fc43de85085bb9e7316c9c0f0f433cddbbba3efa",
+        "status": "9e0cc4b53863430c5d2dab4a254627629849404207dc0eaf4df561f229558d4c",
+        "cluster_stats": "1e89e5abcba93958cc06f43f1c9db458c5789728652110cbab233324b9d04d19"
+      },
+      "oracle": "exact_error_domain"
+    },
+    {
+      "name": "all_masked_history",
+      "queries": 22,
+      "context": 96,
+      "mode": 0,
+      "heads": 1,
+      "recent": 256,
+      "bitwise": "passed",
+      "hashes": {
+        "tasks": "d5fd47fe480c3b9d3a1613eee459c5c7245d4d816843ce68bd9efb0599746193",
+        "partial": "2c2d3450842506ca3448671892c108983c061482f7e985aca362892d5c7635f2",
+        "lse": "de2ae8cf3d1f5d917971d9a88bb4d329db1c28bbf90a8b279f0786fa06af103c",
+        "status": "0345bffb28f80f4d0ded1a2af09a337b18ab3a80c68205bc8321a6ad4d409500",
+        "cluster_stats": "0c4e97bcf313ff202e5530c7745e148403a180372fc28f08dcc1f5662818ec96",
+        "output": "39439d8b25e22956367a0b31ace0ddd534e60bdf8de298a12fe003018889bed3",
+        "output_lse": "0d10c0fc10dfec19f67c0c3bf69cca8d4e53aec91321feed3f7b540c8ccc5eb3"
+      },
+      "oracle": "v4_frozen_0.005"
+    }
+  ],
+  "status": "passed"
+}

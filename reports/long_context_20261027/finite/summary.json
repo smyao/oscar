@@ -1,0 +1,132 @@
+{
+  "scope": "Independent CANN9.1 A2 functional finite certificate validation, no timing or NPU execution",
+  "cpu": {
+    "status": "passed",
+    "cases": 1507,
+    "engine": "official_CANN_CPU_debug",
+    "score_bytes": "unchanged",
+    "guards": "passed",
+    "performance": "not_run",
+    "NPU": "not_run"
+  },
+  "cpu_returncode": 0,
+  "device_compile": {
+    "status": "passed",
+    "returncode": 0,
+    "build": "/tmp/oscar-finite-20261027/build-device-release",
+    "log": "logs/build-device-release.log",
+    "shared_libraries": [
+      "build-device-release/lib/liboscar_official_finite_kernel.so"
+    ]
+  },
+  "production_headers_unchanged_during_validation": true,
+  "cpu_source_binding": "source_manifest.json records exact CPU build input; final test changes only include path to the same header and device CMake setup. All production header and main.cpp bytes unchanged. vm_artifacts.json records CPU binary and final device library hashes.",
+  "coverage": {
+    "rows": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32
+    ],
+    "nonfinite_offsets": "first and last elements of each64 column repeat for every32 row, includes8191",
+    "nonfinite_bits": [
+      "7fc00123",
+      "7f800000",
+      "ff800000",
+      "7f800001"
+    ],
+    "boundary": "2^110 previous/exact/next float, positive/negative single element and distributed sum",
+    "large_finite": "each row FLT_MAX overflow and cancellation periods2/4/8/16/128/256",
+    "other": [
+      "inactive NaN rows",
+      "signed zero",
+      "subnormal",
+      "unchanged raw input and score bytes",
+      "GM and UB guards",
+      "scratch inactive elements"
+    ]
+  },
+  "sdk_source_review": {
+    "count_api": "kernel_operator_vec_reduce_intf_impl.h:1161-1181 permits1..TOTAL_UB_SIZE/sizeof(float);2201 directlyReduceSumImpl",
+    "instruction": "dav_c220/kernel_operator_vec_reduce_impl.h:153-178 count-mode vcadd and ACC_VAL; count8192 fits",
+    "nan_propagation": "CPU-debug tested for every64 repeat; no claim of measured target hardware behavior"
+  },
+  "resource_review": {
+    "dequant_scratch_floats": 8192,
+    "maximum_certificate_floats": 8192,
+    "new_production_ub_bytes": 0,
+    "score_and_result_scratch_disjoint": true,
+    "lifetime": "official C16 K/V publication finishes before Softmax; next-KV LoadClusterKv follows all16 member softmax phases; softWork later reuses dead scratch"
+  },
+  "preserved_failed_attempts": [
+    {
+      "phase": "configure-device",
+      "rc": 1,
+      "reason": "SOC_VERSION missing",
+      "log": "logs/configure-device.log"
+    },
+    {
+      "phase": "build-device-retry",
+      "rc": 2,
+      "reason": "SDK precompile does not inherit target include; fixed independent kernel to relative include",
+      "log": "logs/build-device-retry.log"
+    },
+    {
+      "phase": "build-device-final",
+      "rc": 2,
+      "reason": "llvm-objdump absent from build process PATH",
+      "log": "logs/build-device-final.log"
+    },
+    {
+      "phase": "build-device-env",
+      "rc": 2,
+      "reason": "SDK merge invoked with empty --build-type; added default Release",
+      "log": "logs/build-device-env.log"
+    }
+  ],
+  "performance": "not_run",
+  "NPU": "not_run",
+  "full_attention": "not_established_by_this_helper_probe",
+  "source_manifests": [
+    "source_manifest.json",
+    "final_source_manifest.json",
+    "vm_artifacts.json"
+  ],
+  "vm_cleanup": {
+    "status": "completed",
+    "removed": "all six owned build directories after logs/source and binary hashes collected",
+    "freed_bytes": 49561600,
+    "remaining_workspace_bytes": "1.4MiB including small source/log files",
+    "vm_free_after_bytes": 49561600,
+    "artifact_retention": "CPU/device binaries removed from VM; SHA and complete build/functional logs retained locally"
+  }
+}

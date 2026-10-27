@@ -1,0 +1,26 @@
+{
+  "csrc/kernels/attention_cv_official_decode.cpp": {
+    "sha256": "1a106ba0fffd6591c2a69e0c2aee00112a34317f2b116f84be223e2f2a926536",
+    "matches_staged": true
+  },
+  "csrc/kernels/attention_c16_cast.h": {
+    "sha256": "28ae39446d4321d16ecf02b24b1e977804d32bd13e27e572eda50fcdbe422bd7",
+    "matches_staged": true
+  },
+  "csrc/kernels/attention_aligned_unpack.h": {
+    "sha256": "ad8e7aee0a6521a71e9346fa12eac81f4b4356c01507a4257e5c72c866376e07",
+    "matches_staged": true
+  },
+  "csrc/kernels/attention_official_tasks.cpp": {
+    "sha256": "bfcc571b3917fd7f8ee187fe46aac64b5246acfcba0bb6118e5f71ef723cf06c",
+    "matches_staged": true
+  },
+  "csrc/kernels/store_aligned_int2.cpp": {
+    "sha256": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
+    "matches_staged": true
+  },
+  "csrc/kernels/merge_lse.cpp": {
+    "sha256": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+    "matches_staged": true
+  }
+}

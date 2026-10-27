@@ -1,0 +1,602 @@
+{
+  "scope": "local CANN and official SDK CPU-debug paired functionality",
+  "npu": "not_run",
+  "graph": "not_run",
+  "performance": "not_run",
+  "status": "passed",
+  "phases": [
+    {
+      "name": "resume-q4_mode0_fault-oracle",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q4_mode0_fault-oracle.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "resume-q4_mode0_fault-before",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q4_mode0_fault-before.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 707516215,
+        "cceprint": 29288023
+      }
+    },
+    {
+      "name": "resume-q4_mode0_fault-after",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q4_mode0_fault-after.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 632512976,
+        "cceprint": 24524733
+      }
+    },
+    {
+      "name": "resume-q4_mode1-fixture",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q4_mode1-fixture.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "resume-q4_mode1-prepare",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q4_mode1-prepare.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 396726418,
+        "cceprint": 19930933
+      }
+    },
+    {
+      "name": "resume-q4_mode1-oracle",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q4_mode1-oracle.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "resume-q4_mode1-before",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q4_mode1-before.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 775649784,
+        "cceprint": 33147125
+      }
+    },
+    {
+      "name": "resume-q4_mode1-after",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q4_mode1-after.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 700442449,
+        "cceprint": 28378681
+      }
+    },
+    {
+      "name": "resume-q4_mode1_fault-fixture",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q4_mode1_fault-fixture.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "resume-q4_mode1_fault-prepare",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q4_mode1_fault-prepare.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 396726418,
+        "cceprint": 19930933
+      }
+    },
+    {
+      "name": "resume-q4_mode1_fault-oracle",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q4_mode1_fault-oracle.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "resume-q4_mode1_fault-before",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q4_mode1_fault-before.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 765983256,
+        "cceprint": 32490480
+      }
+    },
+    {
+      "name": "resume-q4_mode1_fault-after",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q4_mode1_fault-after.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 690797127,
+        "cceprint": 27721256
+      }
+    },
+    {
+      "name": "resume-q1_mode0-fixture",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode0-fixture.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "resume-q1_mode0-prepare",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode0-prepare.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 391567477,
+        "cceprint": 19624965
+      }
+    },
+    {
+      "name": "resume-q1_mode0-oracle",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode0-oracle.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "resume-q1_mode0-before",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode0-before.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 494424526,
+        "cceprint": 20983110
+      }
+    },
+    {
+      "name": "resume-q1_mode0-after",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode0-after.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 548005155,
+        "cceprint": 22796515
+      }
+    },
+    {
+      "name": "resume-q1_mode0_fault-fixture",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode0_fault-fixture.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "resume-q1_mode0_fault-prepare",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode0_fault-prepare.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 391567477,
+        "cceprint": 19624959
+      }
+    },
+    {
+      "name": "resume-q1_mode0_fault-oracle",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode0_fault-oracle.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "resume-q1_mode0_fault-before",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode0_fault-before.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 583451291,
+        "cceprint": 25390510
+      }
+    },
+    {
+      "name": "resume-q1_mode0_fault-after",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode0_fault-after.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 545410034,
+        "cceprint": 22617490
+      }
+    },
+    {
+      "name": "resume-q1_mode1-fixture",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode1-fixture.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "resume-q1_mode1-prepare",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode1-prepare.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 391567477,
+        "cceprint": 19624963
+      }
+    },
+    {
+      "name": "resume-q1_mode1-oracle",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode1-oracle.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "resume-q1_mode1-before",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode1-before.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 673993590,
+        "cceprint": 30206790
+      }
+    },
+    {
+      "name": "resume-q1_mode1-after",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode1-after.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 443274120,
+        "cceprint": 21294784
+      }
+    },
+    {
+      "name": "resume-q1_mode1_fault-fixture",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode1_fault-fixture.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "resume-q1_mode1_fault-prepare",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode1_fault-prepare.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 391567477,
+        "cceprint": 19624965
+      }
+    },
+    {
+      "name": "resume-q1_mode1_fault-oracle",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode1_fault-oracle.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "resume-q1_mode1_fault-before",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode1_fault-before.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 671392800,
+        "cceprint": 30031128
+      }
+    },
+    {
+      "name": "resume-q1_mode1_fault-after",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/resume-q1_mode1_fault-after.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 493773102,
+        "cceprint": 22645053
+      }
+    }
+  ],
+  "cases": [
+    {
+      "case": "q4_mode0",
+      "status": "passed",
+      "files": {
+        "partial.bin": {
+          "before_sha256": "2117d59064e6cc179a25927d34adefc7f1784cd4c5b07c5df8979c09f7702b7c",
+          "after_sha256": "2117d59064e6cc179a25927d34adefc7f1784cd4c5b07c5df8979c09f7702b7c",
+          "bytes": 552960,
+          "bitwise_equal": true
+        },
+        "lse.bin": {
+          "before_sha256": "ee04d8e17449b6d13f53bc9d40c2feb4883be1ebecbe8eebe6c5d77bc2f8f517",
+          "after_sha256": "ee04d8e17449b6d13f53bc9d40c2feb4883be1ebecbe8eebe6c5d77bc2f8f517",
+          "bytes": 2160,
+          "bitwise_equal": true
+        },
+        "status.bin": {
+          "before_sha256": "fe2f74a1e0b16a66452888eb4d734bc455cf1304481bb495d59afa8cf9cae93b",
+          "after_sha256": "fe2f74a1e0b16a66452888eb4d734bc455cf1304481bb495d59afa8cf9cae93b",
+          "bytes": 720,
+          "bitwise_equal": true
+        },
+        "output.bin": {
+          "before_sha256": "4ba230b2907146c1c7f2cd70cc408915525b5975993e459e8036df476e147fea",
+          "after_sha256": "4ba230b2907146c1c7f2cd70cc408915525b5975993e459e8036df476e147fea",
+          "bytes": 61440,
+          "bitwise_equal": true
+        },
+        "output_lse.bin": {
+          "before_sha256": "42a045d67bc78762837f86ce8c2834b25eae83918b9b7b952094527763dc6f13",
+          "after_sha256": "42a045d67bc78762837f86ce8c2834b25eae83918b9b7b952094527763dc6f13",
+          "bytes": 240,
+          "bitwise_equal": true
+        }
+      },
+      "same_fixture_and_prepared_tasks": true,
+      "independent_v4_oracle": true,
+      "exact_error_checks": false
+    },
+    {
+      "case": "q4_mode0_fault",
+      "status": "passed",
+      "files": {
+        "partial.bin": {
+          "before_sha256": "e674fd967f5d0eed0a20b8b5c9be633dc7a9a1ac01d73b4f60782e152e74a444",
+          "after_sha256": "e674fd967f5d0eed0a20b8b5c9be633dc7a9a1ac01d73b4f60782e152e74a444",
+          "bytes": 552960,
+          "bitwise_equal": true
+        },
+        "lse.bin": {
+          "before_sha256": "26677c52f0e19b15b75cb0f8c2197e2c7dd36849c8e10d9209c8a9be0fd76756",
+          "after_sha256": "26677c52f0e19b15b75cb0f8c2197e2c7dd36849c8e10d9209c8a9be0fd76756",
+          "bytes": 2160,
+          "bitwise_equal": true
+        },
+        "status.bin": {
+          "before_sha256": "fc29ebb606ffb802936a66df8f69c48992f162b72709dd0ec11e556b6c695bdb",
+          "after_sha256": "fc29ebb606ffb802936a66df8f69c48992f162b72709dd0ec11e556b6c695bdb",
+          "bytes": 720,
+          "bitwise_equal": true
+        }
+      },
+      "same_fixture_and_prepared_tasks": true,
+      "independent_v4_oracle": false,
+      "exact_error_checks": true
+    },
+    {
+      "case": "q4_mode1",
+      "status": "passed",
+      "files": {
+        "partial.bin": {
+          "before_sha256": "f3521e3a20a8f47114d7fcf65b5f7f93dd82f61ec33786f7b9daab1641203879",
+          "after_sha256": "f3521e3a20a8f47114d7fcf65b5f7f93dd82f61ec33786f7b9daab1641203879",
+          "bytes": 552960,
+          "bitwise_equal": true
+        },
+        "lse.bin": {
+          "before_sha256": "6f841f140d216bf363c9530a71db3f420d568e812d15d07bb79085c49f9a1e35",
+          "after_sha256": "6f841f140d216bf363c9530a71db3f420d568e812d15d07bb79085c49f9a1e35",
+          "bytes": 2160,
+          "bitwise_equal": true
+        },
+        "status.bin": {
+          "before_sha256": "fe2f74a1e0b16a66452888eb4d734bc455cf1304481bb495d59afa8cf9cae93b",
+          "after_sha256": "fe2f74a1e0b16a66452888eb4d734bc455cf1304481bb495d59afa8cf9cae93b",
+          "bytes": 720,
+          "bitwise_equal": true
+        },
+        "output.bin": {
+          "before_sha256": "c3c1ff2bc783c958ff94a831ffd59455a0dc6a5be0b4bad1e954ba0ecf5e3b8c",
+          "after_sha256": "c3c1ff2bc783c958ff94a831ffd59455a0dc6a5be0b4bad1e954ba0ecf5e3b8c",
+          "bytes": 61440,
+          "bitwise_equal": true
+        },
+        "output_lse.bin": {
+          "before_sha256": "1894384f64d4d9ea788214c367b9fce2e3dfa25ee56ec18fdca93df1738db9d6",
+          "after_sha256": "1894384f64d4d9ea788214c367b9fce2e3dfa25ee56ec18fdca93df1738db9d6",
+          "bytes": 240,
+          "bitwise_equal": true
+        }
+      },
+      "same_fixture_and_prepared_tasks": true,
+      "independent_v4_oracle": true,
+      "exact_error_checks": false
+    },
+    {
+      "case": "q4_mode1_fault",
+      "status": "passed",
+      "files": {
+        "partial.bin": {
+          "before_sha256": "ca08f3376e57157681411d9d52c75652b9f69b746994c702ee5ca166320abb4b",
+          "after_sha256": "ca08f3376e57157681411d9d52c75652b9f69b746994c702ee5ca166320abb4b",
+          "bytes": 552960,
+          "bitwise_equal": true
+        },
+        "lse.bin": {
+          "before_sha256": "73c320d4c6e321456020162f42384dd61dd39b3a2d9183ef4ffab21cb42d252c",
+          "after_sha256": "73c320d4c6e321456020162f42384dd61dd39b3a2d9183ef4ffab21cb42d252c",
+          "bytes": 2160,
+          "bitwise_equal": true
+        },
+        "status.bin": {
+          "before_sha256": "fc29ebb606ffb802936a66df8f69c48992f162b72709dd0ec11e556b6c695bdb",
+          "after_sha256": "fc29ebb606ffb802936a66df8f69c48992f162b72709dd0ec11e556b6c695bdb",
+          "bytes": 720,
+          "bitwise_equal": true
+        }
+      },
+      "same_fixture_and_prepared_tasks": true,
+      "independent_v4_oracle": false,
+      "exact_error_checks": true
+    },
+    {
+      "case": "q1_mode0",
+      "status": "passed",
+      "files": {
+        "partial.bin": {
+          "before_sha256": "0906c5180dd0ae09fb1e4822355f3d7ac89ed4d89df12e5fc1f1912cd43e5a33",
+          "after_sha256": "0906c5180dd0ae09fb1e4822355f3d7ac89ed4d89df12e5fc1f1912cd43e5a33",
+          "bytes": 221184,
+          "bitwise_equal": true
+        },
+        "lse.bin": {
+          "before_sha256": "8fb0a83f96cd0103a5b281cc76738f63afba3732cf6024f51a54bff9150b9143",
+          "after_sha256": "8fb0a83f96cd0103a5b281cc76738f63afba3732cf6024f51a54bff9150b9143",
+          "bytes": 864,
+          "bitwise_equal": true
+        },
+        "status.bin": {
+          "before_sha256": "2d5565fb483d8ea4525a7a9229677d1038ad34b6e22c8d5152e1d7f7b9817597",
+          "after_sha256": "2d5565fb483d8ea4525a7a9229677d1038ad34b6e22c8d5152e1d7f7b9817597",
+          "bytes": 288,
+          "bitwise_equal": true
+        },
+        "output.bin": {
+          "before_sha256": "dfc4f5dfcccd6d81e96a7a3c4b1e934796c8c52ddf2e5490c2926f87d70d13f4",
+          "after_sha256": "dfc4f5dfcccd6d81e96a7a3c4b1e934796c8c52ddf2e5490c2926f87d70d13f4",
+          "bytes": 24576,
+          "bitwise_equal": true
+        },
+        "output_lse.bin": {
+          "before_sha256": "31272d49b77cab27c4d16564a3c2855ea3c6f67663fe27d837308f3cbaf96f4d",
+          "after_sha256": "31272d49b77cab27c4d16564a3c2855ea3c6f67663fe27d837308f3cbaf96f4d",
+          "bytes": 96,
+          "bitwise_equal": true
+        }
+      },
+      "same_fixture_and_prepared_tasks": true,
+      "independent_v4_oracle": true,
+      "exact_error_checks": false
+    },
+    {
+      "case": "q1_mode0_fault",
+      "status": "passed",
+      "files": {
+        "partial.bin": {
+          "before_sha256": "b4d9d618173b63eab10f911bd13106c4a6b5d90569f4784f5c09bfd03078746e",
+          "after_sha256": "b4d9d618173b63eab10f911bd13106c4a6b5d90569f4784f5c09bfd03078746e",
+          "bytes": 221184,
+          "bitwise_equal": true
+        },
+        "lse.bin": {
+          "before_sha256": "6056feecf4ff3f57b545911fe7517b02eea524fadab93645bb64b315fa1f5d26",
+          "after_sha256": "6056feecf4ff3f57b545911fe7517b02eea524fadab93645bb64b315fa1f5d26",
+          "bytes": 864,
+          "bitwise_equal": true
+        },
+        "status.bin": {
+          "before_sha256": "2bb5e535791ce3779fbe5a015fc4c025742ed0af0d0b8bb9c9907528d137ebff",
+          "after_sha256": "2bb5e535791ce3779fbe5a015fc4c025742ed0af0d0b8bb9c9907528d137ebff",
+          "bytes": 288,
+          "bitwise_equal": true
+        }
+      },
+      "same_fixture_and_prepared_tasks": true,
+      "independent_v4_oracle": false,
+      "exact_error_checks": true
+    },
+    {
+      "case": "q1_mode1",
+      "status": "passed",
+      "files": {
+        "partial.bin": {
+          "before_sha256": "8494b51ee6f6fdc5f88ba1cff1fc9c282a5a62d489aa00ddc0118a313c128edb",
+          "after_sha256": "8494b51ee6f6fdc5f88ba1cff1fc9c282a5a62d489aa00ddc0118a313c128edb",
+          "bytes": 221184,
+          "bitwise_equal": true
+        },
+        "lse.bin": {
+          "before_sha256": "4ebee73c8d6dbd7ddac3c326a05788edca08f6fef2873633a979771bb084f190",
+          "after_sha256": "4ebee73c8d6dbd7ddac3c326a05788edca08f6fef2873633a979771bb084f190",
+          "bytes": 864,
+          "bitwise_equal": true
+        },
+        "status.bin": {
+          "before_sha256": "2d5565fb483d8ea4525a7a9229677d1038ad34b6e22c8d5152e1d7f7b9817597",
+          "after_sha256": "2d5565fb483d8ea4525a7a9229677d1038ad34b6e22c8d5152e1d7f7b9817597",
+          "bytes": 288,
+          "bitwise_equal": true
+        },
+        "output.bin": {
+          "before_sha256": "429d8c5ee58c36c7dc0d988812c261de39c9aa48595419cded79bbf4d8f0fc04",
+          "after_sha256": "429d8c5ee58c36c7dc0d988812c261de39c9aa48595419cded79bbf4d8f0fc04",
+          "bytes": 24576,
+          "bitwise_equal": true
+        },
+        "output_lse.bin": {
+          "before_sha256": "78cf8e00b4931691c757d7850dd8295e6c62141cc9bd3ffab269a18fb70400c3",
+          "after_sha256": "78cf8e00b4931691c757d7850dd8295e6c62141cc9bd3ffab269a18fb70400c3",
+          "bytes": 96,
+          "bitwise_equal": true
+        }
+      },
+      "same_fixture_and_prepared_tasks": true,
+      "independent_v4_oracle": true,
+      "exact_error_checks": false
+    },
+    {
+      "case": "q1_mode1_fault",
+      "status": "passed",
+      "files": {
+        "partial.bin": {
+          "before_sha256": "6e3d2477b751e01f69ebdcbc59b05c45633c8fb97fb420ea82da6330589df7d3",
+          "after_sha256": "6e3d2477b751e01f69ebdcbc59b05c45633c8fb97fb420ea82da6330589df7d3",
+          "bytes": 221184,
+          "bitwise_equal": true
+        },
+        "lse.bin": {
+          "before_sha256": "4c4d47aa409310ec7d616f78ad7a12da03e2bf175992ac6f234303757ab761f1",
+          "after_sha256": "4c4d47aa409310ec7d616f78ad7a12da03e2bf175992ac6f234303757ab761f1",
+          "bytes": 864,
+          "bitwise_equal": true
+        },
+        "status.bin": {
+          "before_sha256": "2bb5e535791ce3779fbe5a015fc4c025742ed0af0d0b8bb9c9907528d137ebff",
+          "after_sha256": "2bb5e535791ce3779fbe5a015fc4c025742ed0af0d0b8bb9c9907528d137ebff",
+          "bytes": 288,
+          "bitwise_equal": true
+        }
+      },
+      "same_fixture_and_prepared_tasks": true,
+      "independent_v4_oracle": false,
+      "exact_error_checks": true
+    }
+  ],
+  "build_reused_from": "validation.json",
+  "first_failure": "q4_mode0_fault-after: SDK GmAlloc SIGBUS before CV; disk100%, subsequent report write ENOSPC",
+  "cleanup_before_resume": {}
+}

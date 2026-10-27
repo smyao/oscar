@@ -1,0 +1,189 @@
+{
+  "status": "passed",
+  "scope": "complete q4/q1 mode0 two-history-tile CPU pair",
+  "npu": "not_run",
+  "graph": "not_run",
+  "performance": "not_run",
+  "phases": [
+    {
+      "name": "q4_mode0_context850-fixture",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q4_mode0_context850-fixture.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "q4_mode0_context850-prepare",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q4_mode0_context850-prepare.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 1007880171,
+        "cceprint": 50342227
+      }
+    },
+    {
+      "name": "q4_mode0_context850-oracle",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q4_mode0_context850-oracle.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "q4_mode0_context850-before",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q4_mode0_context850-before.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 1490179768,
+        "cceprint": 64772733
+      }
+    },
+    {
+      "name": "q4_mode0_context850-after",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q4_mode0_context850-after.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 1361012242,
+        "cceprint": 56763429
+      }
+    },
+    {
+      "name": "q1_mode0_context850-fixture",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q1_mode0_context850-fixture.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "q1_mode0_context850-prepare",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q1_mode0_context850-prepare.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 1002674197,
+        "cceprint": 50036232
+      }
+    },
+    {
+      "name": "q1_mode0_context850-oracle",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q1_mode0_context850-oracle.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {}
+    },
+    {
+      "name": "q1_mode0_context850-before",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q1_mode0_context850-before.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 1381512835,
+        "cceprint": 61579681
+      }
+    },
+    {
+      "name": "q1_mode0_context850-after",
+      "returncode": 0,
+      "log": "/tmp/oscar-long-context-20261027-decode/reports/long_context_20261027/decode/logs/q1_mode0_context850-after.log",
+      "timed_out": false,
+      "cleanup_complete": true,
+      "completed_sdk_debug_removed_bytes": {
+        "npuchk": 1261150182,
+        "cceprint": 54237486
+      }
+    }
+  ],
+  "cases": [
+    {
+      "case": "q4_mode0_context850",
+      "status": "passed",
+      "files": {
+        "partial.bin": {
+          "bytes": 552960,
+          "before_sha256": "363b69c9ce446ef088ecbb21a041e94de82af486f390d77dc3315fbf58967219",
+          "after_sha256": "363b69c9ce446ef088ecbb21a041e94de82af486f390d77dc3315fbf58967219",
+          "bitwise_equal": true
+        },
+        "lse.bin": {
+          "bytes": 2160,
+          "before_sha256": "90558e00d1db6e5405373d926805977cc8bb2b87eb88a81d65885c5055bf4eac",
+          "after_sha256": "90558e00d1db6e5405373d926805977cc8bb2b87eb88a81d65885c5055bf4eac",
+          "bitwise_equal": true
+        },
+        "status.bin": {
+          "bytes": 720,
+          "before_sha256": "fe2f74a1e0b16a66452888eb4d734bc455cf1304481bb495d59afa8cf9cae93b",
+          "after_sha256": "fe2f74a1e0b16a66452888eb4d734bc455cf1304481bb495d59afa8cf9cae93b",
+          "bitwise_equal": true
+        },
+        "output.bin": {
+          "bytes": 61440,
+          "before_sha256": "944bc855b6bb93e0c0d9a88de23d4a9a43d31bf71d3c260dc38cf665915304ce",
+          "after_sha256": "944bc855b6bb93e0c0d9a88de23d4a9a43d31bf71d3c260dc38cf665915304ce",
+          "bitwise_equal": true
+        },
+        "output_lse.bin": {
+          "bytes": 240,
+          "before_sha256": "e278d276a0e2ff0cc060030fea6888b1b8cebf3145ade4e2c47de7dd397ffbef",
+          "after_sha256": "e278d276a0e2ff0cc060030fea6888b1b8cebf3145ade4e2c47de7dd397ffbef",
+          "bitwise_equal": true
+        }
+      },
+      "independent_v4_oracle": true,
+      "context": 850,
+      "history_tiles_per_split": 2,
+      "same_fixture_and_prepared_tasks": true
+    },
+    {
+      "case": "q1_mode0_context850",
+      "status": "passed",
+      "files": {
+        "partial.bin": {
+          "bytes": 221184,
+          "before_sha256": "88be19c8530f65a2d525e8eda890af64e28e4d27fe938f7aedb38f87e57dd96a",
+          "after_sha256": "88be19c8530f65a2d525e8eda890af64e28e4d27fe938f7aedb38f87e57dd96a",
+          "bitwise_equal": true
+        },
+        "lse.bin": {
+          "bytes": 864,
+          "before_sha256": "d714d034f46ba22827d68751114b6a109bcbd24e977ab0dd28688da0403293ae",
+          "after_sha256": "d714d034f46ba22827d68751114b6a109bcbd24e977ab0dd28688da0403293ae",
+          "bitwise_equal": true
+        },
+        "status.bin": {
+          "bytes": 288,
+          "before_sha256": "2d5565fb483d8ea4525a7a9229677d1038ad34b6e22c8d5152e1d7f7b9817597",
+          "after_sha256": "2d5565fb483d8ea4525a7a9229677d1038ad34b6e22c8d5152e1d7f7b9817597",
+          "bitwise_equal": true
+        },
+        "output.bin": {
+          "bytes": 24576,
+          "before_sha256": "55c2f5f3f198f9d126d16c7f7c69fa2ed52604556c7bf49aaec6a9210c43eba1",
+          "after_sha256": "55c2f5f3f198f9d126d16c7f7c69fa2ed52604556c7bf49aaec6a9210c43eba1",
+          "bitwise_equal": true
+        },
+        "output_lse.bin": {
+          "bytes": 96,
+          "before_sha256": "bebbd89a0a1febb1a22a9d1cb469e6988a3da8bb48cb084643c7ec5d737dcca7",
+          "after_sha256": "bebbd89a0a1febb1a22a9d1cb469e6988a3da8bb48cb084643c7ec5d737dcca7",
+          "bitwise_equal": true
+        }
+      },
+      "independent_v4_oracle": true,
+      "context": 850,
+      "history_tiles_per_split": 2,
+      "same_fixture_and_prepared_tasks": true
+    }
+  ]
+}

@@ -29,8 +29,22 @@ def test_generated_sources_keep_numerical_hot_path_and_old_mothers(family):
     path = ROOT / f"csrc/kernels/attention_cv_official_{family}.cpp"
     source = path.read_text()
     assert source == generated.outputs()[path]
+    # Only the independently verified transforms below may differ. Reverse
+    # their exact anchors before checking ALL numerical/ownership code.
+    numerical_source = source
+    if family == "decode":
+        numerical_source = numerical_source.replace(
+            "oscar_c16_cast::CastRne(rounded,scores,activeRows*kKvRows);",
+            "oscar_bf16::CastRne(rounded,scores,activeRows*kKvRows);")
+    if family == "cluster16":
+        from tools import official_finite_transform as finite
+        from tools import official_softmax_visibility_transform as visibility
+        assert numerical_source.count(finite.NEW) == 1
+        assert numerical_source.count(visibility.NEW) == 1
+        numerical_source = numerical_source.replace(finite.NEW, finite.OLD)
+        numerical_source = numerical_source.replace(visibility.NEW, visibility.OLD)
     for name in ("Softmax", "LoadQueries", "PublishRows", "PublishStatus", "PublishEmpty"):
-        assert function(source, name) == function(generated.fixed_cut(original.read_text()), name)
+        assert function(numerical_source, name) == function(generated.fixed_cut(original.read_text()), name)
     assert "Matmul(qOffset,0,rotOffset" not in source
     assert "MatmulResidentB(qOffset,rotOffset" not in source
     assert "LoadResidentB(0,true)" not in source

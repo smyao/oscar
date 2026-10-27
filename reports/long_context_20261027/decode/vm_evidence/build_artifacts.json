@@ -1,0 +1,10 @@
+{
+  "build/decode-pair-cpu/oscar_decode_before": "e202275169224634991c2465d2be26fa075f9742f93008d2aed9ef0a28a8fd57",
+  "build/decode-pair-cpu/oscar_decode_after": "d24f71c8b7d76526d3987d02a19c4f8b93441e8e4096f58ad9d09c4428541362",
+  "build/decode-pair-device/lib/liboscar_long_context_decode.so": "a024292f9cb275b8376b2f18c24f31172769664c656fca945bf06cf3e6c4b151",
+  "csrc/kernels/long_context_decode_baseline.cpp": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+  "csrc/kernels/attention_cv_official_decode.cpp": "1a106ba0fffd6591c2a69e0c2aee00112a34317f2b116f84be223e2f2a926536",
+  "csrc/kernels/attention_c16_cast.h": "28ae39446d4321d16ecf02b24b1e977804d32bd13e27e572eda50fcdbe422bd7",
+  "csrc/experiments/long_context_20261027/validate_decode_pair.py": "1e41304c79b37ada011c05870361bd928628d12dccc37816a581e24ca111c9e5",
+  "csrc/experiments/long_context_20261027/decode_long_pair.py": "dd027afd573fba484df62f418f5df2bbb3057dc693c40a882ef52ca4866fbc53"
+}

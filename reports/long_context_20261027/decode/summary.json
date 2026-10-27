@@ -1,0 +1,34 @@
+{
+  "scope": "local CPU/CANN decode cast validation; no NPU or performance acceptance",
+  "status": "passed",
+  "paired_cases": 10,
+  "cases": [
+    "q4_mode0",
+    "q4_mode0_fault",
+    "q4_mode1",
+    "q4_mode1_fault",
+    "q1_mode0",
+    "q1_mode0_fault",
+    "q1_mode1",
+    "q1_mode1_fault",
+    "q4_mode0_context850",
+    "q1_mode0_context850"
+  ],
+  "bitwise_output_files": 42,
+  "compared_bytes": 4149936,
+  "independent_v4_oracle_cases": 6,
+  "exact_error_cases": 4,
+  "cpu_compilation": "passed",
+  "cann_ascend910b4_compilation": "passed",
+  "first_failure_preserved": "first_failure.json",
+  "source_binding": "source_binding.json",
+  "artifacts": "vm_evidence/build_artifacts.json",
+  "reports": [
+    "vm_evidence/validation.json",
+    "vm_evidence/validation_resume.json",
+    "vm_evidence/long_validation.json"
+  ],
+  "npu": "not_run",
+  "graph": "not_run",
+  "performance": "not_run"
+}

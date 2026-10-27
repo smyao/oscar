@@ -1,0 +1,10 @@
+{
+  "backend": "official_CANN_CPU_debug",
+  "performance": "not_run",
+  "NPU": "not_run",
+  "cases": [],
+  "status": "failed",
+  "failed_phase": "history_current-baseline-prepare",
+  "returncode": 127,
+  "log": "/tmp/oscar-long-context-20261027-c16/reports/long-context-c16/logs/history_current-baseline-prepare.log"
+}

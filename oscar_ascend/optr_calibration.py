@@ -5,6 +5,8 @@ Archive #86: this head-level fitter receives target FULL traces, never MTP/GDN.
 Archive #145/#148/#164/#170: CPU replay and a decreasing calibration objective
 are not NPU execution, model quality, or performance acceptance. This module
 must not be imported by serving. It changes only offline matrix coefficients.
+Archive #94/#95/#97: report real fitting boundaries and completed work through
+an optional callback; never conceal a stalled fitter behind a timer heartbeat.
 
 The sequential orthogonal correction follows the user-authorized OptR source
 at 66d46561b9bdf5d715f591e0f5845a4cbd927dee. Unlike its separate K/V proxies,
@@ -15,7 +17,7 @@ are not bitwise equivalents; the declared source partition is a fitting model.
 """
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 import math
 from typing import Any
 
@@ -274,6 +276,7 @@ def _training_batches(samples, phase, rk, rv, mean, policy):
                 size = batch["q"].shape[0]
                 if query is not None:
                     cached["q"] = query[offset:offset + size]
+                cached["target"] = project_output(batch["teacher"], batch)
                 batches.append((batch, cached))
                 offset += size
     return batches
@@ -310,15 +313,72 @@ def project_output(attention: torch.Tensor, sample: Mapping[str, Any]) -> torch.
     return torch.einsum("mgd,ghd->mh", gated, sample["wo"])
 
 
-def _metric(rk, rv, mean, samples, policy) -> dict[str, Any]:
+def _metric_batches(samples, policy):
+    """Cache invariant teacher projection with the original microbatch shape.
+
+    Keep the same batch boundaries and FP64 scalar reduction order as the
+    uncached metric. Projection over a whole sample instead can select another
+    BLAS reduction and must not replace this operation for equivalence.
+    """
+    result = []
+    with torch.no_grad():
+        for sample in samples:
+            batches = []
+            for batch in _batches(sample, policy["query_batch_size"]):
+                expected = project_output(batch["teacher"], batch)
+                energy = float(expected.double().square().sum())
+                batches.append((batch, expected, energy, {}))
+            result.append((sample, {}, batches))
+    return result
+
+
+def _phase_metric_batches(prepared, phase, rk, rv, mean, policy):
+    """Reuse only the phase's fixed side across validation candidates.
+
+    Rotated histories are CPU-only and scoped to one head/phase. The variable
+    side is built once per sample during each metric call, then freed; there
+    is no candidate-wide cache of complete K/V pairs or attention matrices.
+    """
+    result = []
+    with torch.no_grad():
+        for sample, _, batches in prepared:
+            if phase == "k":
+                value = _bf16(sample["v"].float() @ _bf16(rv))
+                common = {"v": value, "v_quant": quantize_dequantize(value, policy["v_clip"])}
+            else:
+                key = _bf16(_bf16(sample["k"].float() - _bf16(mean)) @ _bf16(rk))
+                common = {"k": key, "k_quant": quantize_dequantize(key, policy["k_clip"])}
+            cached_batches = []
+            for batch, expected, energy, _ in batches:
+                # Query projection retains the original metric microbatch
+                # shape even when its K rotation is fixed for the V phase.
+                cached = {} if phase == "k" else {"q": _bf16(batch["q"].float() @ _bf16(rk))}
+                cached_batches.append((batch, expected, energy, cached))
+            result.append((sample, common, cached_batches))
+    return result
+
+
+def _metric(rk, rv, mean, samples, policy, *, prepared=None, sample_progress=None) -> dict[str, Any]:
+    prepared = _metric_batches(samples, policy) if prepared is None else prepared
     requests = {}
-    for sample in samples:
+    for sample_index, (sample, fixed, batches) in enumerate(prepared):
         request = requests.setdefault(sample["request_id"], {"squared_error": 0., "teacher_energy": 0.})
-        for batch in _batches(sample, policy["query_batch_size"]):
-            actual = project_output(_replay(rk, rv, mean, batch, policy), batch)
-            expected = project_output(batch["teacher"], batch)
+        # Rowwise history transforms use the same full [L,D] shapes as before,
+        # but are no longer repeated for every selected-query microbatch.
+        history = dict(fixed)
+        if "k" not in history:
+            key = _bf16(_bf16(sample["k"].float() - _bf16(mean)) @ _bf16(rk))
+            history.update(k=key, k_quant=quantize_dequantize(key, policy["k_clip"]))
+        if "v" not in history:
+            value = _bf16(sample["v"].float() @ _bf16(rv))
+            history.update(v=value, v_quant=quantize_dequantize(value, policy["v_clip"]))
+        for batch, expected, energy, cached in batches:
+            actual = project_output(_replay(rk, rv, mean, batch, policy, frozen={**history, **cached}), batch)
             request["squared_error"] += float((actual - expected).double().square().sum())
-            request["teacher_energy"] += float(expected.double().square().sum())
+            request["teacher_energy"] += energy
+        if sample_progress is not None:
+            sample_progress({"sample": sample_index + 1, "samples": len(prepared),
+                             "request_id": sample["request_id"]})
     errors = []
     for request_id, item in requests.items():
         errors.append({"request_id": request_id, **item,
@@ -354,13 +414,23 @@ def _improves(candidate: Mapping[str, Any], incumbent: Mapping[str, Any]) -> boo
 
 def fit_head(base_k: torch.Tensor, base_v: torch.Tensor, mean: torch.Tensor,
              train_samples: Sequence[Mapping[str, Any]], validation_samples: Sequence[Mapping[str, Any]],
-             *, policy: Mapping[str, Any]) -> tuple[torch.Tensor, torch.Tensor, dict[str, Any]]:
+             *, policy: Mapping[str, Any], progress: Callable[[dict[str, Any]], None] | None = None,
+             ) -> tuple[torch.Tensor, torch.Tensor, dict[str, Any]]:
     """Fit K then V with fixed online operation count and a baseline candidate.
 
     Independent test samples must be evaluated by the caller only after this
     selection. A baseline selection is a valid reported optimizer outcome; it
     must never be presented as an accuracy improvement or hidden runtime bypass.
+    ``progress`` receives actual phase/step/validation boundaries, including
+    each completed validation sample. It is synchronous, optional, and absent
+    from the policy/certificate; callback errors propagate to the caller.
     """
+    if progress is not None and not callable(progress):
+        raise ValueError("progress must be callable or None")
+    def emit(event, **fields):
+        if progress is not None:
+            progress({"event": event, **fields})
+
     dim = _matrices(base_k, base_v, mean)
     p = _policy(policy)
     if not train_samples or not validation_samples:
@@ -372,17 +442,23 @@ def fit_head(base_k: torch.Tensor, base_v: torch.Tensor, mean: torch.Tensor,
     if train_ids & validation_ids:
         raise ValueError("training and validation request identities overlap")
     rk, rv = base_k.detach().clone(), base_v.detach().clone()
+    emit("baseline_start")
     with torch.no_grad():
-        baseline = _metric(rk, rv, mean, validation_samples, p)
+        prepared_metrics = _metric_batches(validation_samples, p)
+        baseline = _metric(rk, rv, mean, validation_samples, p, prepared=prepared_metrics,
+                           sample_progress=lambda fields: emit("baseline_sample_done", **fields))
         energy = sum(float(project_output(s["teacher"], s).double().square().sum()) for s in train_samples)
+    emit("baseline_done", normalized_error=baseline["normalized_error"])
     normalizer = max(energy, 1e-20)
     best = baseline
     decisions = []
     for phase in ("k", "v"):
+        emit("phase_start", phase=phase, steps=p["steps"])
         origin = (rk if phase == "k" else rv).detach().clone()
         correction = torch.zeros((dim, dim), requires_grad=True)
         optimizer = torch.optim.Adam([correction], lr=p["lr"])
         batches = _training_batches(train_samples, phase, rk, rv, mean, p)
+        validation_batches = _phase_metric_batches(prepared_metrics, phase, rk, rv, mean, p)
         for step in range(p["steps"]):
             optimizer.zero_grad(set_to_none=True)
             for batch, cached in batches:
@@ -391,7 +467,7 @@ def fit_head(base_k: torch.Tensor, base_v: torch.Tensor, mean: torch.Tensor,
                 matrix = origin @ torch.matrix_exp(correction - correction.T)
                 trial_k, trial_v = (matrix, rv) if phase == "k" else (rk, matrix)
                 prediction = project_output(_replay(trial_k, trial_v, mean, batch, p, frozen=cached), batch)
-                target = project_output(batch["teacher"], batch)
+                target = cached["target"]
                 loss = (prediction - target).square().sum() / normalizer
                 if not bool(torch.isfinite(loss)):
                     raise ValueError("nonfinite output-aware training loss")
@@ -399,19 +475,28 @@ def fit_head(base_k: torch.Tensor, base_v: torch.Tensor, mean: torch.Tensor,
             if correction.grad is None or not bool(torch.isfinite(correction.grad).all()):
                 raise ValueError("nonfinite or missing rotation gradient")
             optimizer.step()
+            emit("step_done", phase=phase, step=step + 1, steps=p["steps"])
             if (step + 1) % p["eval_every"] and step + 1 != p["steps"]:
                 continue
+            emit("validation_start", phase=phase, step=step + 1, steps=p["steps"])
             with torch.no_grad():
                 matrix = origin @ torch.matrix_exp(correction - correction.T)
                 trial_k, trial_v = (matrix, rv) if phase == "k" else (rk, matrix)
                 _matrices(trial_k, trial_v, mean)
-                candidate = _metric(trial_k, trial_v, mean, validation_samples, p)
+                candidate = _metric(trial_k, trial_v, mean, validation_samples, p,
+                    prepared=validation_batches, sample_progress=lambda fields:
+                    emit("validation_sample_done", phase=phase, step=step + 1, **fields))
                 accepted = _improves(candidate, best)
                 decisions.append({"phase": phase, "step": step + 1,
                                   "normalized_error": candidate["normalized_error"], "accepted": accepted})
                 if accepted:
                     best = candidate
                     rk, rv = trial_k.detach().clone(), trial_v.detach().clone()
+            emit("validation_done", phase=phase, step=step + 1, steps=p["steps"],
+                 normalized_error=candidate["normalized_error"], accepted=accepted)
+        del validation_batches, batches
+        emit("phase_done", phase=phase, normalized_error=best["normalized_error"])
+    emit("fit_done", accepted=_improves(best, baseline), normalized_error=best["normalized_error"])
     return rk.contiguous(), rv.contiguous(), {
         "accepted": _improves(best, baseline), "baseline": baseline, "selected": best,
         "candidates": decisions, "policy": p, "replay_contract": REPLAY_CONTRACT,

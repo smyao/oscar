@@ -1,4 +1,4 @@
-"""Archive #13-20/#86/#126/#148/#164/#170: offline OptR numerical safeguards.
+"""Archive #13-20/#86/#94/#95/#97/#126/#148/#164/#170: offline OptR safeguards.
 
 These tests prove CPU fitting properties, not NPU/model/performance acceptance.
 """
@@ -6,6 +6,7 @@ import copy
 
 import pytest
 import torch
+import oscar_ascend.optr_calibration as calibration
 
 from oscar_ascend.optr_calibration import (
     _improves, evaluate_head, fit_head, project_output, quantize_dequantize,
@@ -218,3 +219,101 @@ def test_bad_inputs_fail_explicitly(malformation):
         validation["request_id"] = "train"
     with pytest.raises(ValueError):
         fit_head(rk, rv, torch.zeros(8), [training], [validation], policy={"steps": 0})
+
+
+def uncached_metric(rk, rv, mean, samples, policy, *, prepared=None, sample_progress=None):
+    """Pre-cache metric order retained as an independent optimization check."""
+    requests = {}
+    for sample_index, sample in enumerate(samples):
+        item = requests.setdefault(sample["request_id"], {"squared_error": 0., "teacher_energy": 0.})
+        for batch in calibration._batches(sample, policy["query_batch_size"]):
+            attention = calibration._replay(rk, rv, mean, batch, policy)
+            actual = project_output(attention, batch)
+            expected = project_output(batch["teacher"], batch)
+            item["squared_error"] += float((actual - expected).double().square().sum())
+            item["teacher_energy"] += float(expected.double().square().sum())
+        if sample_progress is not None:
+            sample_progress({"sample": sample_index + 1, "samples": len(samples),
+                             "request_id": sample["request_id"]})
+    errors = [{"request_id": key, **item,
+               "normalized_error": item["squared_error"] / max(item["teacher_energy"], 1e-20)}
+              for key, item in requests.items()]
+    error = sum(item["squared_error"] for item in errors)
+    energy = sum(item["teacher_energy"] for item in errors)
+    return {"squared_error": error, "teacher_energy": energy,
+            "normalized_error": error / max(energy, 1e-20), "requests": errors}
+
+
+@pytest.mark.parametrize("phase", ["k", "v"])
+def test_validation_phase_cache_is_exact_and_transforms_each_history_once(phase, monkeypatch):
+    history = trace(17, "history", length=541, queries=9, group=6)
+    history["history_splits"] = torch.full((9,), 20)
+    current = trace(21, "current", length=29, queries=5, group=6)
+    current["contexts"].zero_()
+    current["history_splits"] = torch.ones(5, dtype=torch.int64)
+    samples = [history, current]
+    mean = torch.linspace(-.4, .4, 8)
+    rng = torch.Generator().manual_seed(70)
+    base_k = torch.linalg.qr(torch.randn(8, 8, generator=rng)).Q.contiguous()
+    base_v = torch.linalg.qr(torch.randn(8, 8, generator=rng)).Q.contiguous()
+    candidate = torch.linalg.qr(torch.randn(8, 8, generator=rng)).Q.contiguous()
+    rk, rv = (candidate, base_v) if phase == "k" else (base_k, candidate)
+    policy = calibration._policy({"sink_tokens": 2, "recent_tokens": 4,
+                                 "query_batch_size": 2, "replay_partition": "captured_runtime_frames"})
+    with torch.no_grad():
+        expected = uncached_metric(rk, rv, mean, samples, policy)
+        prepared = calibration._metric_batches(samples, policy)
+        fixed = calibration._phase_metric_batches(prepared, phase, base_k, base_v, mean, policy)
+        calls = []
+        original = calibration.quantize_dequantize
+        def counted(value, clip):
+            calls.append((tuple(value.shape), clip))
+            return original(value, clip)
+        monkeypatch.setattr(calibration, "quantize_dequantize", counted)
+        actual = calibration._metric(rk, rv, mean, samples, policy, prepared=fixed)
+    assert actual == expected  # All errors, energy and per-request metrics exact.
+    variable_clip = policy["k_clip" if phase == "k" else "v_clip"]
+    assert calls == [((541, 8), variable_clip), ((29, 8), variable_clip)]
+
+
+def test_cached_fit_preserves_complete_result_and_reports_real_progress(monkeypatch):
+    training = [trace(0, "train", queries=5)]
+    validation = [trace(10, "validation", queries=5), trace(11, "validation-two", queries=3)]
+    base = torch.eye(8)
+    mean = torch.zeros(8)
+    policy = {"sink_tokens": 2, "recent_tokens": 4, "steps": 2,
+              "eval_every": 1, "query_batch_size": 2, "lr": .005}
+    original = calibration._metric
+    monkeypatch.setattr(calibration, "_metric", uncached_metric)
+    reference = fit_head(base, base, mean, training, validation, policy=policy)
+    monkeypatch.setattr(calibration, "_metric", original)
+    events = []
+    actual = fit_head(base, base, mean, training, validation, policy=policy, progress=events.append)
+    assert torch.equal(reference[0], actual[0]) and torch.equal(reference[1], actual[1])
+    assert reference[2] == actual[2]  # Callback/cache absent from certificate.
+    assert events[0] == {"event": "baseline_start"}
+    assert [e["event"] for e in events[:4]] == ["baseline_start", "baseline_sample_done",
+                                               "baseline_sample_done", "baseline_done"]
+    assert [e["phase"] for e in events if e["event"] == "phase_start"] == ["k", "v"]
+    assert [(e["phase"], e["step"]) for e in events if e["event"] == "step_done"] == [
+        ("k", 1), ("k", 2), ("v", 1), ("v", 2)]
+    for phase in ("k", "v"):
+        for step in (1, 2):
+            selected = [e for e in events if e.get("phase") == phase and e.get("step") == step]
+            assert [e["event"] for e in selected] == ["step_done", "validation_start",
+                "validation_sample_done", "validation_sample_done", "validation_done"]
+            assert [e["sample"] for e in selected if e["event"] == "validation_sample_done"] == [1, 2]
+    assert events[-1]["event"] == "fit_done"
+    assert events[-1]["accepted"] == actual[2]["accepted"]
+
+
+def test_progress_errors_propagate_and_do_not_claim_success():
+    events = []
+    def fail_callback(event):
+        events.append(event)
+        if event["event"] == "baseline_sample_done":
+            raise RuntimeError("progress log unavailable")
+    with pytest.raises(RuntimeError, match="progress log unavailable"):
+        fit_head(torch.eye(8), torch.eye(8), torch.zeros(8), [trace(0, "train")],
+                 [trace(10, "validation")], policy={"steps": 1}, progress=fail_callback)
+    assert all(event["event"] != "fit_done" for event in events)

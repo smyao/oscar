@@ -1,4 +1,4 @@
-"""Archive #86/#97/#148: offline-only, authenticated output-aware refinement.
+"""Archive #86/#97/#148/#172: resumable offline output-aware refinement.
 
 The normal candidate preparation calls this module; serving loads only final
 constants. Native sampling runs in an isolated child and releases its model
@@ -21,14 +21,16 @@ from oscar_ascend.optr_policy import OBJECTIVE, optr_policy, validate_refinement
 
 
 def _progress(**fields):
-    print(json.dumps({"rotation_prepare": "optr", **fields}), flush=True)
+    print("[oscar] OPTR_PROGRESS " + json.dumps({"rotation_prepare": "optr", **fields}), flush=True)
 
 
 def _capture(config_path, directory):
     from tools.calibrate_model_rotations import calibration_process_env
+    from tools.rotation_preparation_limits import preparation_progress_timeout
+    timeout = preparation_progress_timeout(json.loads(Path(config_path).read_text()))
     subprocess.run([sys.executable, "-m", "tools.calibrate_optr_traces",
                     "--config", str(config_path), "--output-dir", str(directory)],
-                   env=calibration_process_env(), check=True)
+                   env=calibration_process_env(), check=True, timeout=timeout)
     return json.loads((directory / "capture-manifest.json").read_text())
 
 
@@ -71,19 +73,22 @@ def _prepare_base(config, directory, *, testing, import_pair, base_runner):
             command += ["--import-k", str(import_pair[0]), "--import-v", str(import_pair[1])]
         environment = dict(os.environ)
         environment.pop("OSCAR_ROTATION_ARTIFACT", None)
-        subprocess.run(command, check=True, env=environment)
+        from tools.rotation_preparation_limits import preparation_progress_timeout
+        subprocess.run(command, check=True, env=environment, timeout=preparation_progress_timeout(config))
     artifact = load_active_artifact(config, device="cpu", testing=True)
     if artifact.get("test_only") and not testing:
         raise ValueError("test-only base artifact cannot enter production")
     return artifact
 
 
-def _metrics(constants, samples, policy):
+def _metrics(constants, samples, policy, *, progress=None):
     """Check both the fitting partition and native-captured frame partition."""
     from oscar_ascend.optr_traces import aggregate_layer_error
     rows = []
     for partition in policy["validation_partitions"]:
         metric = aggregate_layer_error(constants, samples, {**policy, "replay_partition": partition})
+        if progress:
+            progress(event="partition_checked", partition=partition)
         for row in metric["requests"]:
             rows.append({**row, "request_id": row["request_id"] + ":" + partition,
                          "partition": partition})
@@ -93,29 +98,63 @@ def _metrics(constants, samples, policy):
             "normalized_error": error / max(energy, 1e-20), "requests": rows}
 
 
-def refine_layer(name, baseline, samples, policy, *, fitter=None):
+def _validate_head_result(result, baseline, head):
+    import torch
+    from oscar_ascend.optr_calibration import _matrices
+    if not isinstance(result, dict) or not isinstance(result.get("decision"), dict):
+        raise ValueError("invalid completed OptR head checkpoint")
+    _matrices(result.get("Rk"), result.get("Rv"), baseline["k_mean"][head])
+    if result["decision"].get("accepted") is False and any(not torch.equal(
+            result[key], baseline[key][head]) for key in ("Rk", "Rv")):
+        raise ValueError("rejected OptR head checkpoint changed baseline matrices")
+    return result["Rk"], result["Rv"], result["decision"]
+
+
+def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=None, progress=None):
     """Per-head fitting, then all-TP output selection, then untouched test."""
     from oscar_ascend.optr_calibration import fit_head
-    fitter = fit_head if fitter is None else fitter
+    real_fitter = fitter is None
+    fitter = fit_head if real_fitter else fitter
+    emit = _progress if progress is None else progress
     trial = {key: value.clone() if hasattr(value, "clone") else value
              for key, value in baseline.items()}
     decisions = []
     for head in range(baseline["Rk"].shape[0]):
-        _progress(layer=name, head=head, phase="fitting")
-        rk, rv, decision = fitter(baseline["Rk"][head], baseline["Rv"][head],
-            baseline["k_mean"][head], samples["train"][head], samples["validation"][head], policy=policy)
+        owner = f"layer-{baseline['layer_id']}-head-{head}"
+        emit(layer=name, head=head, phase="fitting")
+        saved = checkpoints.load(owner) if checkpoints else None
+        if saved is None:
+            options = {"policy": policy}
+            if real_fitter:
+                options["progress"] = lambda row: emit(layer=name, head=head, **row)
+            rk, rv, decision = fitter(baseline["Rk"][head], baseline["Rv"][head],
+                baseline["k_mean"][head], samples["train"][head], samples["validation"][head], **options)
+            saved = {"Rk": rk.detach().cpu().contiguous(), "Rv": rv.detach().cpu().contiguous(),
+                     "decision": decision}
+            _validate_head_result(saved, baseline, head)
+            if checkpoints:
+                checkpoints.save(owner, saved)
+            emit(layer=name, head=head, phase="head_fit_saved")
+        else:
+            rk, rv, decision = _validate_head_result(saved, baseline, head)
+            emit(layer=name, head=head, phase="head_fit_resumed")
         trial["Rk"][head], trial["Rv"][head] = rk, rv
         decisions.append(decision)
-    before = _metrics(baseline, samples["validation"], policy)
-    after = _metrics(trial, samples["validation"], policy)
+    def measure(constants, split, candidate):
+        emit(layer=name, phase="joint_output_check", split=split, candidate=candidate)
+        options = {} if progress is None else {"progress": lambda **row: emit(
+            layer=name, phase="joint_output_check", split=split, candidate=candidate, **row)}
+        return _metrics(constants, samples[split], policy, **options)
+    before = measure(baseline, "validation", "baseline")
+    after = measure(trial, "validation", "refined")
     accepted = nonworse(before, after) and after["squared_error"] < before["squared_error"]
     selected = trial if accepted else baseline
     if not accepted:
         after = before
     # This dataset never chooses a matrix/step/hyperparameter. A failure is
     # reported and blocks publication; it cannot silently reselect on test.
-    test_before = _metrics(baseline, samples["test"], policy)
-    test_after = _metrics(selected, samples["test"], policy) if accepted else test_before
+    test_before = measure(baseline, "test", "baseline")
+    test_after = measure(selected, "test", "selected") if accepted else test_before
     if not nonworse(test_before, test_after):
         raise ValueError(f"OptR {name}: independent test regressed; artifact not published")
     record = {"accepted": accepted, "head_decisions": decisions,
@@ -123,11 +162,38 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None):
               "selected_constants_sha256": matrix_digest({name: selected}),
               "validation": {"baseline": before, "selected": after},
               "test": {"baseline": test_before, "selected": test_after}}
-    _progress(layer=name, phase="checked", accepted=accepted,
+    emit(layer=name, phase="checked", accepted=accepted,
               validation_before=before["normalized_error"], validation_after=after["normalized_error"],
               independent_test_before=test_before["normalized_error"],
               independent_test_after=test_after["normalized_error"])
     return selected, record
+
+
+def _layer_artifact(template, certificate, name, selected, record):
+    return {**template, "layers": {name: selected}, "refinement_certificate": {
+        **certificate, "layers": {name: record}, "accepted_layers": [name] if record["accepted"] else [],
+        "matrices_sha256": matrix_digest({name: selected})}}
+
+
+def _validate_layer_checkpoint(saved, template, certificate, name, baseline):
+    import torch
+    from oscar_ascend.rotations import validate_artifact
+    from oscar_ascend.optr_artifacts import validate_refinement_metadata
+    artifact = saved.get("artifact")
+    if not isinstance(artifact, dict) or artifact.get("test_only") != template["test_only"]:
+        raise ValueError("OptR completed layer checkpoint identity differs")
+    validate_refinement_metadata(artifact, expected_profile=template["calibration_profile"])
+    got = validate_artifact(artifact, layer_names=[name], head_dim=template["head_dim"],
+        model_fingerprint=template["model_fingerprint"], pr_fingerprint=template["pr_fingerprint"],
+        device="cpu", testing=True, require_calibrated=True)
+    record = got["refinement_certificate"]["layers"][name]
+    for key in ("base_artifact_sha256", "trace_manifest_sha256"):
+        if got["refinement_certificate"][key] != certificate[key]:
+            raise ValueError("OptR completed layer checkpoint source differs")
+    if (record["base_constants_sha256"] != matrix_digest({name: baseline}) or
+            not torch.equal(got["layers"][name]["k_mean"], baseline["k_mean"])):
+        raise ValueError("OptR completed layer checkpoint seed/mean differs")
+    return got["layers"][name], record
 
 
 def prepare(config, *, config_path=None, output=None, import_pair=None,
@@ -186,12 +252,38 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
         "model_quality": "not_measured", "performance": "not_measured",
         "base_artifact_sha256": base_hash, "trace_manifest_sha256": file_sha256(trace_manifest),
         "layers": {}}
-    for name in names:
-        samples = load_layer_samples(manifest, baseline["layers"][name]["layer_id"])
-        selected, record = refine_layer(name, baseline["layers"][name], samples, policy, fitter=fitter)
-        artifact["layers"][name] = selected
-        certificate["layers"][name] = record
-        del samples
+    from oscar_ascend.optr_checkpoint import FitCheckpoints, fitting_implementation_digest
+    from tools.optr_progress import ProgressWatchdog
+    from tools.rotation_preparation_limits import preparation_progress_timeout
+    checkpoints = FitCheckpoints(destination.parent / "fit-checkpoints", {
+        "profile": profile, "base_artifact_sha256": base_hash,
+        "trace_manifest_sha256": certificate["trace_manifest_sha256"],
+        "full_layers": names, "global_kv_heads": baseline["global_kv_heads"], "head_dim": dim,
+        "fitting_implementation_sha256": fitting_implementation_digest(), "test_only": testing})
+    _progress(phase="fit_plan", layers=len(names), heads_per_layer=baseline["global_kv_heads"],
+              steps_per_phase=policy["steps"], progress_timeout_seconds=preparation_progress_timeout(config),
+              checkpoints=str(checkpoints.root))
+    with ProgressWatchdog(preparation_progress_timeout(config), output=_progress) as watchdog:
+        for layer_index, name in enumerate(names):
+            seed = baseline["layers"][name]
+            owner = f"layer-{seed['layer_id']}"
+            watchdog.progress(layer=name, layer_index=layer_index + 1, layers=len(names), phase="layer_start")
+            saved = checkpoints.load(owner)
+            if saved is None:
+                samples = load_layer_samples(manifest, seed["layer_id"])
+                watchdog.progress(layer=name, phase="layer_traces_verified")
+                selected, record = refine_layer(name, seed, samples, policy, fitter=fitter,
+                    checkpoints=checkpoints, progress=watchdog.progress)
+                saved = {"artifact": _layer_artifact(artifact, certificate, name, selected, record)}
+                _validate_layer_checkpoint(saved, artifact, certificate, name, seed)
+                checkpoints.save(owner, saved)
+                del samples
+                watchdog.progress(layer=name, phase="layer_checked_saved")
+            else:
+                selected, record = _validate_layer_checkpoint(saved, artifact, certificate, name, seed)
+                watchdog.progress(layer=name, phase="layer_checked_resumed")
+            artifact["layers"][name] = selected
+            certificate["layers"][name] = record
     certificate["accepted_layers"] = sorted(n for n, row in certificate["layers"].items() if row["accepted"])
     certificate["matrices_sha256"] = matrix_digest(artifact["layers"])
     artifact["refinement_certificate"] = certificate

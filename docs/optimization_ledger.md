@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-27 OptR准备超时续修（#172）：目标构建/原生capture已完成，CPU全层拟合错误套用1800秒总时限。改为有限规模预算+真实进展监督，新增认证头/完成层原子断点；验证固定侧历史与teacher复用，配对结果逐位一致，不降低拟合与验收配置。362项本地主机/CPU检查和Python包验证通过；无在线源码或工作量变更，不申领目标性能/质量收益。见[修复证据](optr_preparation_timeout_20261027.md)。
+
 2026-10-27 OptR输出感知旋转：固定BF16 candidate准备阶段启用recipe5，在已认证recipe3上离线精修Rk/Rv。联合KV、BF16 gate、GQA/全部TP交叉项、真实frame分片纳入输出误差；候选含原矩阵，独立test只判通过/失败，不参与选择。线上核/runtime/布局/argv/timer不改；首次采样和CPU拟合有成本，匹配PT复用。CPU/主机验证不代表真机模型精度或性能不退化。见[源码复核与实现](optr_implementation_20261027.md)。
 
 2026-10-23 PC联合检查点保留：主机真实native链复现20请求decode周转后GDN checkpoint被回收，联合命中29952→0。外部插件持有每活跃请求最后可读prompt已有GDN页，完成/取消/抢占/卸载释放；配对修复后保持29952，全体释放无泄漏。最多3页/请求的真实池占用代价，PT/数学/argv/timer/CANN不变，现场命中与模型质量未验收。见[报告](prefix_checkpoint_retention_20261023.md)。

@@ -276,7 +276,8 @@ def test_joint_output_metric_keeps_cross_rank_cancellation_and_cross_terms(monke
 
 
 @pytest.mark.parametrize("real_fitter", [False, True])
-def test_full_prepare_load_publish_and_cache_reuse_with_authenticated_traces(tmp_path, monkeypatch, real_fitter):
+@pytest.mark.parametrize("interrupt_publication", [False, True])
+def test_full_prepare_load_publish_and_cache_reuse_with_authenticated_traces(tmp_path, monkeypatch, real_fitter, interrupt_publication):
     from tools import prepare_optr_rotations as prepare
     from oscar_ascend.rotation_calibration import OFFICIAL_COMMIT
     from oscar_ascend.rotations import checkpoint_identity, load_active_artifact, prepare_device_rotations
@@ -296,7 +297,8 @@ def test_full_prepare_load_publish_and_cache_reuse_with_authenticated_traces(tmp
     monkeypatch.setattr(prepare, "_base_config", lambda *_: base_config)
     def seed(*_a, **_kw):
         seed_calls.append(True)
-        torch.save(baseline, seed_path)
+        if not seed_path.exists():
+            torch.save(baseline, seed_path)
         return baseline
     monkeypatch.setattr(prepare, "_prepare_base", seed)
     def native_capture(config_path, destination):
@@ -324,11 +326,29 @@ def test_full_prepare_load_publish_and_cache_reuse_with_authenticated_traces(tmp
         fits.append(True)
         assert train and validation and train[0]["wo"].dtype == torch.float32
         return rk.clone(), rv.clone(), {"status": "explicit_test_baseline"}
+    def forbidden(*_a, **_kw):
+        pytest.fail("authenticated completed work must not resample or refit")
     output = tmp_path / "refined" / "calibrated.pt"
-    result = prepare.prepare(config, output=output, capture_runner=native_capture,
-                             testing=True, fitter=None if real_fitter else retain)
+    if interrupt_publication:
+        def interrupted(*_a, **_kw):
+            raise RuntimeError("interrupted before final publication")
+        with monkeypatch.context() as patch:
+            patch.setattr(prepare, "publish_artifact", interrupted)
+            with pytest.raises(RuntimeError, match="before final publication"):
+                prepare.prepare(config, output=output, capture_runner=native_capture,
+                                testing=True, fitter=None if real_fitter else retain)
+        assert not output.exists()
+        # Completed layers include validated joint/test evidence. A restarted
+        # process validates that checkpoint and publishes without replaying it.
+        with monkeypatch.context() as patch:
+            patch.setattr(traces, "load_layer_samples", forbidden)
+            result = prepare.prepare(config, output=output, capture_runner=forbidden,
+                                     testing=True, fitter=forbidden)
+    else:
+        result = prepare.prepare(config, output=output, capture_runner=native_capture,
+                                 testing=True, fitter=None if real_fitter else retain)
     assert not result["reused"] and result["recipe_version"] == 5
-    assert len(seed_calls) == 1 and len(captures) == 1
+    assert len(seed_calls) == 1 + interrupt_publication and len(captures) == 1
     if not real_fitter:
         assert len(fits) == 2 and not result["accepted_layers"]
     artifact = load_active_artifact(config, path=output, device="cpu", testing=True)
@@ -338,8 +358,6 @@ def test_full_prepare_load_publish_and_cache_reuse_with_authenticated_traces(tmp
     assert rotations[names[0]].key_transposed.shape == (dim, dim)
     with pytest.raises(ValueError, match="test"):
         load_active_artifact(config, path=output, device="cpu", testing=False)
-    def forbidden(*_a, **_kw):
-        pytest.fail("authenticated cached artifact must not resample or refit")
     monkeypatch.setattr(prepare, "_prepare_base", forbidden)
     second = prepare.prepare(config, output=output, capture_runner=forbidden, testing=True, fitter=forbidden)
     assert second["reused"] and second["source"] == "optr_authenticated_cache"

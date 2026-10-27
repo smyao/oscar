@@ -1,0 +1,216 @@
+{
+  "date": "2026-10-27",
+  "baseline_commit": "e5423c2e69993c6ed9c620bef05bec93f3808c34",
+  "branch": "oscar-new-4-back",
+  "target_evidence": {
+    "path": "target_failure.txt",
+    "sha256": "6d04e85e3f90b36c8f3ab4bd699b27b80138b7b321000fe7bcab37044ad0cf28",
+    "target_startup_commit": "not_in_pasted_excerpt",
+    "phases": [
+      {
+        "phase": "build-ops",
+        "command": [
+          "/usr/local/python3.12.13/bin/python3",
+          "-m",
+          "tools.build_ops",
+          "--soc",
+          "ascend910b4",
+          "--log-dir",
+          "/workspace/oscar/oscar-new/logs/20261027T122755.789409Z/build"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 294.118939,
+        "timed_out": false,
+        "interrupted": false,
+        "log": "/workspace/oscar/oscar-new/logs/20261027T122755.789409Z/build-ops.log",
+        "cleanup_complete": true
+      },
+      {
+        "phase": "prepare-rotations",
+        "command": [
+          "/usr/local/python3.12.13/bin/python3",
+          "-m",
+          "tools.prepare_rotations",
+          "--config",
+          "/workspace/oscar/oscar-new/logs/20261027T122755.789409Z/effective-target.json"
+        ],
+        "returncode": 124,
+        "elapsed_seconds": 1800.35106,
+        "timed_out": true,
+        "interrupted": false,
+        "log": "/workspace/oscar/oscar-new/logs/20261027T122755.789409Z/prepare-rotations.log",
+        "cleanup_complete": true
+      }
+    ],
+    "saved_requests": [
+      "train_4096_0",
+      "validation_4096_0",
+      "validation_32768_1",
+      "validation_65536_2",
+      "test_4096_0",
+      "test_32768_1",
+      "test_65536_2"
+    ],
+    "capture_complete": {
+      "optr_capture": "native_optr_capture_complete",
+      "requests": 7,
+      "ranks": 4,
+      "layers": 16
+    },
+    "heads_started": [
+      {
+        "rotation_prepare": "optr",
+        "layer": "model.layers.3.self_attn.attn",
+        "head": 0,
+        "phase": "fitting"
+      },
+      {
+        "rotation_prepare": "optr",
+        "layer": "model.layers.3.self_attn.attn",
+        "head": 1,
+        "phase": "fitting"
+      },
+      {
+        "rotation_prepare": "optr",
+        "layer": "model.layers.3.self_attn.attn",
+        "head": 2,
+        "phase": "fitting"
+      },
+      {
+        "rotation_prepare": "optr",
+        "layer": "model.layers.3.self_attn.attn",
+        "head": 3,
+        "phase": "fitting"
+      }
+    ]
+  },
+  "diagnosis": "generic 1800-second total deadline killed progressing full-model CPU fitting after successful CANN build/native capture",
+  "pytest": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_optr_calibration.py tests/test_optr_capture.py tests/test_optr_traces.py tests/test_optr_integration.py tests/test_optr_resume.py tests/test_rotation_preparation_limits.py tests/test_serving_variants.py tests/test_install_serve.py tests/test_deploy_bf16.py tests/test_center_rotations.py tests/test_center_prepare.py tests/test_center_calibration.py tests/test_official_rotation_calibration.py tests/test_rotation_pipeline.py tests/test_rotation_capture.py tests/test_fp32_dequant_precision.py tests/test_per_head_clip_runtime.py tests/test_build_reuse.py tests/test_workflow.py --junitxml=reports/optr_preparation_timeout_20261027/pytest.xml",
+      "junit": "pytest.xml",
+      "tests": 361,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_optr_resume.py::test_real_stalled_preparer_terminates_and_launcher_cleans_owned_children --junitxml=reports/optr_preparation_timeout_20261027/watchdog_process.xml",
+      "junit": "watchdog_process.xml",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "unique_host_cpu_tests_passed": 362,
+  "host_environment": {
+    "python": "3.14.6 (v3.14.6:c63aec69bd5, Jun 10 2026, 08:07:54) [Clang 21.0.0 (clang-2100.1.1.101)]",
+    "torch": "2.14.1"
+  },
+  "cold_and_resume_pipeline": "test_only synthetic authenticated traces, real fitter, head interruption, complete layer and final publication interruption, final artifact reuse",
+  "real_watchdog_process": "SIGTERM observed with original negative signal status; owned descendant cleanup complete",
+  "budgets": {
+    "optr_preparation_cap_seconds": 86400,
+    "default_no_progress_seconds": 1800,
+    "bf16_parent_cap_seconds": 88200,
+    "ordinary_phase_seconds": 1800,
+    "wall_heartbeat_resets_progress": false,
+    "scope": "execution bounds, not runtime estimates"
+  },
+  "numerical_equivalence_report": "fitter_equivalence.json",
+  "protected_prior_manifest": "reports/optr_implementation_20261027/verification.json",
+  "protected_prior_files_sha256_unchanged": 690,
+  "additional_unchanged_files": [
+    {
+      "path": "oscar_ascend/optr_policy.py",
+      "sha256": "f8809b48a2c9b683288c2bea8c0e379a65a48a8ed00a8b89aa2fbcb411153d15"
+    },
+    {
+      "path": "oscar_ascend/optr_artifacts.py",
+      "sha256": "f5d6be5f33cfa47309508939796353ae45b883c0b559db93289d16f1d6475e5d"
+    },
+    {
+      "path": "oscar_ascend/optr_traces.py",
+      "sha256": "1d6f30fdb572bebb545d3991192a12b23e43930ce15769c1609b9102bfeb083e"
+    },
+    {
+      "path": "oscar_ascend/rotations.py",
+      "sha256": "3d4784f550bbe2f7dceee242a1957175e89425b2c90264f517b2818c715986d7"
+    },
+    {
+      "path": "oscar_ascend/integration/optr_capture.py",
+      "sha256": "68e61c8b265e75564546c215488b9686dea61a8db89e02a6df80cf7aaa8e5cca"
+    },
+    {
+      "path": "tools/calibrate_optr_traces.py",
+      "sha256": "0cdde737a31657fbb04ecf106f07a85f93044f9876c2ebf9437729324616e77f"
+    },
+    {
+      "path": "tools/serving_variants.py",
+      "sha256": "9cdf9ee5d0921341f107b92072d9aeeb8f571b6656cd7ad724facc30f3597fdc"
+    },
+    {
+      "path": "tools/build_ops.py",
+      "sha256": "775ff305fb0eb3a83be082f05c0ff369683e4b4239861dc26cdfa4932e64f369"
+    },
+    {
+      "path": "tools/target_cli.py",
+      "sha256": "ca282f3b52f866159f2f8ad7ab9d3f5b616cdd0b707dfd43f979b6caff6e07b5"
+    }
+  ],
+  "new_modules_and_fitter": [
+    {
+      "path": "oscar_ascend/optr_checkpoint.py",
+      "sha256": "c2be0f71e758961cc941c0939d4f7ebc8406af7cbc5cc2a689e95fb8a50ed7de"
+    },
+    {
+      "path": "oscar_ascend/optr_calibration.py",
+      "sha256": "745caea68d9fcdc86b603da42f09f64274c42ee83d77c117bd1a2839c7d1c739"
+    },
+    {
+      "path": "tools/prepare_optr_rotations.py",
+      "sha256": "2cb832b87aa39d6be085092df274dce2c6a54ddc86542af27825c0de17a7cab1"
+    },
+    {
+      "path": "tools/rotation_preparation_limits.py",
+      "sha256": "abaae08b7e552c97970c03b1a349cf0ccd030ae7e4d39d180b74c79388d9d983"
+    },
+    {
+      "path": "tools/optr_progress.py",
+      "sha256": "2f8c0921b5cd2fcd5c82e892e3b99a0235c5cd2d3ed578dbb75a4066bd1936a3"
+    }
+  ],
+  "trace_profile_and_path_unchanged": true,
+  "new_fit_implementation_hash_separate_from_trace_identity": true,
+  "online_extra_operations": 0,
+  "online_extra_kv_bytes": 0,
+  "samples_steps_and_quality_thresholds_changed": false,
+  "wheel": {
+    "build": "passed --no-deps --no-build-isolation --no-index",
+    "sha256": "85cc0900f0e4285ff58178b8e25e05a334762cf632153224dbae3501b04f0f45",
+    "new_modules_match_source": true,
+    "isolated_imports": "passed, no torch_npu/vllm imported"
+  },
+  "review": "independent source review found no remaining blocking issue; requested layer/publication resume tests added and passed",
+  "cann_build": "not_rerun_no_CANN_changes; target log proves prior build passed",
+  "npu_connection": "not_run_per_project_instruction",
+  "target_complete_fit": "not_run",
+  "graph_replay": "not_run",
+  "model_quality": "not_measured",
+  "performance": "not_measured",
+  "git_push": "not_performed_current_workspace_branch_differs_from_authorized_remote_BF16_branch",
+  "git_diff_check": "passed",
+  "native_compile_cache": "existing whole-package Python source identity may select a new graph cache; no cache weakening or manual cleanup",
+  "full_prefixed_fitter_comparison": {
+    "command": ".venv/bin/python reports/optr_preparation_timeout_20261027/compare_fitter.py",
+    "cases_passed": 3,
+    "head_dimensions": [
+      8,
+      64,
+      256
+    ],
+    "gqa": 6,
+    "matrices_and_all_decisions": "bitwise_equal_to_fixed_pre_fix_full_implementation"
+  }
+}

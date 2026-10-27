@@ -14,6 +14,7 @@ from .phase import atomic_json, run_phase, terminal_line
 from .target_cli import target_env, serve_argv
 from .model_config import add_model_arguments, apply_model_options
 from .serving_variants import variant_config
+from .rotation_preparation_limits import phase_timeout
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -127,7 +128,7 @@ def _run_bf16_deployment(config, config_path, log_dir, status, env) -> int:
         path.unlink(missing_ok=True)
     for name, command in stages:
         result = run_phase(name, command, cwd=ROOT, log_dir=log_dir, env=env,
-            timeout=config["phase_timeout_seconds"], grace=config["shutdown_timeout_seconds"], heartbeat=60)
+            timeout=phase_timeout(config, name), grace=config["shutdown_timeout_seconds"], heartbeat=60)
         status["phases"].append(asdict(result))
         atomic_json(log_dir / "status.json", status)
         if result.returncode or result.timed_out or not result.cleanup_complete:
@@ -260,7 +261,7 @@ def main(argv=None) -> int:
                 if name == "native-synthetic":
                     (log_dir / "native-synthetic" / "native" / "report.json").unlink(missing_ok=True)
             result = run_phase(name, command, cwd=ROOT, log_dir=log_dir,
-                               timeout=config["phase_timeout_seconds"], env=env,
+                               timeout=phase_timeout(config, name), env=env,
                                grace=config["shutdown_timeout_seconds"], heartbeat=60)
             status["phases"].append(asdict(result))
             atomic_json(log_dir / "status.json", status)

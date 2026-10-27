@@ -28834,3 +28834,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修复**：外部插件在原生cache_blocks后完整校验各GDN组的prompt terminal真实页/hash，各加一个native pool引用，仅保留一组既有checkpoint。native coordinator.free之后归还，覆盖完成/取消/抢占；共享及卸载平衡释放。当前最多3页/活跃请求，20请求最多60页的真实容量代价。PT、数学、CANN、timer、argv不变。
 
 **验证边界**：相同合成trace修复后重复prompt命中29952，所有请求释放后引用归零。详见docs/prefix_checkpoint_retention_20261023.md及对应validation.json。未连接真机、运行性能或质量评测，不宣称现场已恢复或LongBench达标。
+
+
+## [172] 真机条目（2026-10-27 用户回传）· OptR采样完成后CPU拟合被通用1800秒时限终止
+
+**原始证据**：`reports/optr_preparation_timeout_20261027/target_failure.txt`，附件4edb05ec-89ed-49b5-8df6-abce25bf3e2b，run=`20261027T122755.789409Z`。片段未含启动SHA。CANN9.1.0/ascend910b4构建rc0、294.118939秒；recipe3认证缓存命中；7个原生请求全部保存，4rank/16FULL层的capture报告complete。随后第3层head0→1→2→3陆续开始，最终`TIMEOUT phase=prepare-rotations limit=1800s`，rc124、1800.35106秒、cleanup_complete=true，正式服务被正确禁止。
+
+**原因与归属**：上一轮OptR首次准备的工程缺口。64个全局KV头的CPU拟合及4K/32K/64K验证错误共用普通构建1800秒总时限；头内没有真实步骤进展，已完成拟合未保存。这是校准任务编排问题，日志不支持编译失败或CPU死锁结论。沿用#94/#95的实时错误与真实退出码、#97的自动PT准备、#120的有界清理、#148/#170的输出误差/质量边界、#165/#166的离线数据与采样进程隔离。
+
+**修复**：仅OptR准备按FULL层/头/steps给有限总预算，当前上限86400秒；BF16外层准备包装同步调整，普通build/probe/service时限不变。CPU每个step/验证样本/实际阶段输出进展，默认1800秒无进展报告最后层/头后终止自身，固定launcher清理owned组，定时心跳不续期。原生capture与seed准备子进程继续有界。完成头原子落盘，完成层必须先过联合validation和独立test；恢复绑定基底/trace/profile/实现/test-only身份及哈希并重新认证。最终全层验证和原子发布保持。旧trace身份不改，本次7请求可自动复用；旧运行未保存的头无法恢复。减少离线固定侧历史旋转/量化、teacher投影及变量侧按query batch重复历史计算，保留数学/样本/步数/质量门，不改在线CANN/runtime/timer/argv。
+
+**验证与边界**：362项主机/CPU检查通过，包含完整旧新优化逐位一致、头中断续作、已验证整层及发布中断恢复、来源变更隔离/损坏拒绝、真实停滞进程SIGTERM及owned子进程清理、三入口和父阶段超时、构建缓存与旧模式。纯Python wheel禁网构建、隔离导入及新增模块完整性通过。详细证据见上述目录verification.json。用户日志证明旧运行构建/capture已完成，但本轮没有连接真机、重新执行目标拟合、NPU/graph/质量/性能验证；不宣称目标服务一次成功、精度达标或性能实测无回退。24小时为预算上限，不是ETA。

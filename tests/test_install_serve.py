@@ -62,6 +62,10 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
     def run_phase(name, command, *, env, **kwargs):
         seen.append(name)
         selected = json.loads(open(env["OSCAR_TARGET_CONFIG"]).read())
+        expected_timeout = (86400 if name == "prepare-rotations" and
+                            selected.get("rotation_refinement") == "optr" else
+                            selected["phase_timeout_seconds"])
+        assert kwargs["timeout"] == expected_timeout
         assert selected["experimental_history_reuse"] is enabled
         assert selected.get("experimental_fast_unpack", False) is (variant != "baseline")
         assert selected.get("experimental_mixed_cv", False) is (variant != "baseline")

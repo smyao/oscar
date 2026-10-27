@@ -1,6 +1,8 @@
 # 完成状态与证据
 
-2026-10-27 OptR离线旋转精修：candidate准备/加载recipe5，保留线上算子、buffer、INT2布局和argv。完成范围为源码、CPU数学及主机采样/认证/发布/加载接缝；首次原生模型采样、NPU/graph、最终模型质量与吞吐均未验收，不升级下方42个checkpoint。详见[改造与边界](optr_implementation_20261027.md)。
+2026-10-27 OptR准备超时续修（#172）：用户日志已证明CANN构建及7请求原生capture完成，随后CPU拟合被1800秒总时限终止。已补任务规模预算、真实进展监督和认证头/层断点；362项本地主机/CPU检查及Python包构建通过。目标完整拟合、NPU/graph、模型质量与吞吐未验收，不升级下方42个checkpoint。见[修复与边界](optr_preparation_timeout_20261027.md)。
+
+2026-10-27 OptR离线旋转精修：candidate准备/加载recipe5，保留线上算子、buffer、INT2布局和argv。原始交付范围与边界见[改造与边界](optr_implementation_20261027.md)。
 
 2026-10-23 PC续修：活跃请求保留原生GDN prompt checkpoint引用，修复主机复现的并发decode周转后联合命中丢失；共享、释放、async接缝见[报告](prefix_checkpoint_retention_20261023.md)。无本轮NPU/图/模型质量/性能验收，42项状态不升级。
 

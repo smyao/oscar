@@ -25,6 +25,7 @@ from .service_probe import managed_server
 from .target_cli import target_env, serve_argv, diagnose_guard_enabled
 from .serving_variants import variant_config, variant_features, runtime_feature_summary
 from .model_config import add_model_arguments, apply_model_options
+from .rotation_preparation_limits import phase_timeout
 
 ROOT = Path(__file__).resolve().parents[1]
 FE0_KERNEL_SHA256 = {
@@ -218,7 +219,7 @@ def _headline(summary: dict) -> str:
 def _phase(name: str, command: list[str], *, config: dict, env: dict,
            log_dir: Path, status: dict) -> None:
     result = run_phase(name, command, cwd=ROOT, log_dir=log_dir, env=env,
-                       timeout=float(config["phase_timeout_seconds"]),
+                       timeout=phase_timeout(config, name),
                        grace=float(config["shutdown_timeout_seconds"]), heartbeat=60)
     status["phases"].append(asdict(result))
     atomic_json(log_dir / "status.json", status)

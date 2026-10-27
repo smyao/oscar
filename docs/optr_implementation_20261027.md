@@ -1,5 +1,7 @@
 # OptR 离线旋转精修：源码复核、改造与验收边界
 
+2026-10-27用户部署反馈已确认原生capture完成，但全层CPU拟合被原通用1800秒时限终止。准备时限、真实进展及断点续作已在[后续修复](optr_preparation_timeout_20261027.md)中更新；下文首次交付的“phase timeout不改”记录不再代表当前行为。
+
 本轮基于工作区 `4f4ef7ef589741c3866ee3aac62448ac142fe813`，把输出感知优化接入固定 candidate 准备流程。线上只替换现有 Rk/Rv 常量；不是新增 attention 算法，也没有把优化器放入服务。分析依据见 [OptR 集成分析](optr_integration_analysis_20261027.md)。上游算法来源固定为 [66d4656](https://github.com/daniel-eai/Output-Aware-INT2-KV-Cache-Quantization/tree/66d46561b9bdf5d715f591e0f5845a4cbd927dee)，不依赖运行时下载或执行上游工程。
 
 ## 复核后的取舍

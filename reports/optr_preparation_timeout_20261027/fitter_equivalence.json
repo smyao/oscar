@@ -1,0 +1,36 @@
+{
+  "baseline_commit": "e5423c2e69993c6ed9c620bef05bec93f3808c34",
+  "baseline_source_sha256": "99fba4893d7890d3b18ec59af5869b318726dd214883dd8971eac0345012638a",
+  "current_source_sha256": "745caea68d9fcdc86b603da42f09f64274c42ee83d77c117bd1a2839c7d1c739",
+  "cases": [
+    {
+      "head_dim": 8,
+      "gqa": 6,
+      "history_splits": 1,
+      "history_tokens": 541,
+      "rk_rv_bitwise_equal": true,
+      "complete_decision_equal": true,
+      "accepted": false
+    },
+    {
+      "head_dim": 64,
+      "gqa": 6,
+      "history_splits": 20,
+      "history_tokens": 541,
+      "rk_rv_bitwise_equal": true,
+      "complete_decision_equal": true,
+      "accepted": false
+    },
+    {
+      "head_dim": 256,
+      "gqa": 6,
+      "history_splits": 20,
+      "history_tokens": 541,
+      "rk_rv_bitwise_equal": true,
+      "complete_decision_equal": true,
+      "accepted": false
+    }
+  ],
+  "performance": "not_measured",
+  "scope": "synthetic_cpu_math_only"
+}

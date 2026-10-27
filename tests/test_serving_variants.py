@@ -91,7 +91,8 @@ def test_both_one_key_entries_enable_the_complete_candidate_without_manual_flags
     assert selected['token_budget_source']=='explicit'
     assert direct['vllm_argv'][direct['vllm_argv'].index('--max-num-batched-tokens')+1]=='16384'
     assert selected['scheduler_cls'] is None
-    assert selected['devices']==[0,1,2,3] and selected['port']==8989
+    assert selected['devices']==[0,1,2,3] and selected['port']==7878
+    assert selected['rotation_refinement']=='optr' and selected['calibration_recipe_version']==5
     assert direct['probes']=='none'
     assert {'official_rotation_merge_precision_error_graph_gate','current_only_gate','first_mtp_current_gate','mixed_decode_split_gate'}<=set(observed['phases'])
     assert observed['inference_requests_generated']==0

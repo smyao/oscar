@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-10-27 OptR离线旋转精修：candidate准备/加载recipe5，保留线上算子、buffer、INT2布局和argv。完成范围为源码、CPU数学及主机采样/认证/发布/加载接缝；首次原生模型采样、NPU/graph、最终模型质量与吞吐均未验收，不升级下方42个checkpoint。详见[改造与边界](optr_implementation_20261027.md)。
+
 2026-10-23 PC续修：活跃请求保留原生GDN prompt checkpoint引用，修复主机复现的并发decode周转后联合命中丢失；共享、释放、async接缝见[报告](prefix_checkpoint_retention_20261023.md)。无本轮NPU/图/模型质量/性能验收，42项状态不升级。
 
 2026-10-21 v4数值修复：candidate使用统一旋转域、FP32 partial合并后一次逆旋转及固定forward精度边界；current-only、MTP、APC和新gate一起切换。源码/主机/CANN/CPU指令证据分列于[交付说明](official_math_v4_20261021.md)。C04/C05/E01的旧版本记录不冒充新版本真NPU验收；D08图/服务、模型质量及E06性能没有本轮目标证据，42项编号与未完成状态保持。

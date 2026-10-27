@@ -1,0 +1,2835 @@
+{
+  "date": "2026-10-27",
+  "baseline_commit": "4f4ef7ef589741c3866ee3aac62448ac142fe813",
+  "branch": "oscar-new-4-back",
+  "upstream_optr_commit": "66d46561b9bdf5d715f591e0f5845a4cbd927dee",
+  "pytest": {
+    "command": ".venv/bin/python -m pytest -q tests/test_optr_calibration.py tests/test_optr_capture.py tests/test_optr_traces.py tests/test_optr_integration.py tests/test_serving_variants.py tests/test_install_serve.py tests/test_center_rotations.py tests/test_center_prepare.py tests/test_center_calibration.py tests/test_official_rotation_calibration.py tests/test_rotation_pipeline.py tests/test_rotation_capture.py tests/test_fp32_dequant_precision.py tests/test_per_head_clip_runtime.py",
+    "passed": 268,
+    "failed": 0,
+    "scope": "CPU and host only"
+  },
+  "protected_files": [
+    {
+      "path": "configs/acceptance.json",
+      "sha256": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811"
+    },
+    {
+      "path": "configs/acceptance_fp32_dequant_bf16.json",
+      "sha256": "d1a1be1bf0711e99810260234bd409ac60b52fb6160da0c9cdafbd31f7bdf45c"
+    },
+    {
+      "path": "configs/acceptance_official_bf16.json",
+      "sha256": "02c2765fac7d582d833ffca88841658af81b51f037ea86052fa0d34d0c38fed7"
+    },
+    {
+      "path": "configs/target.json",
+      "sha256": "c9dcee276297fcc5ee0bd77ae8e62c9d0620f3d00b5ab148e8f9bc0092b5d3fd"
+    },
+    {
+      "path": "csrc/CMakeLists.txt",
+      "sha256": "9cfb8358f78bb6aa9b5b8dcdacd4067e0069420d11aab8262bae03552ef5cdec"
+    },
+    {
+      "path": "csrc/aligned_attention_bindings.cpp",
+      "sha256": "9425b8d3aaf61e995ecc1f7aacd7488bc098b072f17b3193339377ca6f47c1e1"
+    },
+    {
+      "path": "csrc/aligned_store_bindings.cpp",
+      "sha256": "09d33bee17579ce980a6ee66be85b3a0bbca5fc73cef12309b0bfb891e283763"
+    },
+    {
+      "path": "csrc/attention_bindings.cpp",
+      "sha256": "428afac0f0cb5f362815f3305c027179caedd999d7d42625d50155e162b06a86"
+    },
+    {
+      "path": "csrc/cpu/CMakeLists.txt",
+      "sha256": "e1c53fda5cb208f7c97754f116829912f9c600762ee6e7f6a9512a714ddef740"
+    },
+    {
+      "path": "csrc/cpu/cv_probe.cpp",
+      "sha256": "41c17c8db45c8d3e89b4246a50281f0786a7f682fa0806eb44b14d8901ccaaa8"
+    },
+    {
+      "path": "csrc/cpu/fast_unpack_probe.cpp",
+      "sha256": "f337bdd92194fa118d9232cdf5da30c881a61eba62f843104e4968a096e60de6"
+    },
+    {
+      "path": "csrc/cpu/prefix_q1_probe.cpp",
+      "sha256": "35e0684fba405a668ff2748ffe690303c5cd4f2c307c3662b093fa40d85fb2e0"
+    },
+    {
+      "path": "csrc/cpu/primitive_probe.cpp",
+      "sha256": "f1cd3c8fca22d4b03d175762025e8446d6bc937324ccc9441b543a281005a453"
+    },
+    {
+      "path": "csrc/cpu/rotation_probe.cpp",
+      "sha256": "02245026bd7561568e12f58c54225f083f1f8e0d91bc9393c0e661e83ad91c2a"
+    },
+    {
+      "path": "csrc/current_only_bindings.cpp",
+      "sha256": "1597a7beb6185c71e452cb6da4975dbf3c00a0329d980d24a433ea94b2ccdc9c"
+    },
+    {
+      "path": "csrc/experiments/active_identity_store/CMakeLists.txt",
+      "sha256": "117442d52e47eaaaeb1bdd33f4a82373aed0c464e260cda5f82e6348e94f668f"
+    },
+    {
+      "path": "csrc/experiments/active_identity_store/active_identity_store.cpp",
+      "sha256": "91ed0caa1982afa1f960096a0543f1879e4c216df4e61fa03363ee5f8c96aa8e"
+    },
+    {
+      "path": "csrc/experiments/active_identity_store/compare_store.py",
+      "sha256": "c3e9c94fa62d93d0fa47e67bc0ba7d81a91c527b878a67f03c4390266bec32e4"
+    },
+    {
+      "path": "csrc/experiments/active_identity_store/host_camodel.py",
+      "sha256": "466ae425ba6e3a3a5e6d38f2f1d4a38c6017ade37fcf0e8153a9788b8850d103"
+    },
+    {
+      "path": "csrc/experiments/active_identity_store/replay_store.py",
+      "sha256": "416f9cf2d90ba0976e98cf5746822451fcb402689f9d896844f33407d54a3558"
+    },
+    {
+      "path": "csrc/experiments/active_identity_store/run_cpu.py",
+      "sha256": "9e1a4b2612ee1b2c79f20f4dad751e49c8c87c4c1ef7f2a259bfc90062bbe9f1"
+    },
+    {
+      "path": "csrc/experiments/active_identity_store/store_cpu.cpp",
+      "sha256": "a5014526c7f8dae6c7fc2598a958852a1d7a1de9fdd4294953d87be7464d674d"
+    },
+    {
+      "path": "csrc/experiments/aligned_math_20261018/CMakeLists.txt",
+      "sha256": "bf2122acaa96d94315daf688667ef4160976b7b99edc63c83630968bd815a258"
+    },
+    {
+      "path": "csrc/experiments/aligned_math_20261018/cluster_fixture.py",
+      "sha256": "7c486aa84f6a94b512d56be368bd1835c4fb2781376eb140d6b7a528b2de6b26"
+    },
+    {
+      "path": "csrc/experiments/aligned_math_20261018/cluster_probe.cpp",
+      "sha256": "666226cb2e4d173528d7fd79e0711429eaed953269cbf3310f1ce642847d859e"
+    },
+    {
+      "path": "csrc/experiments/aligned_math_20261018/fixture.py",
+      "sha256": "a8d07083c9eb95794362c9a2cd5175d6cb6c014fa1cbaf7948b9169306721c56"
+    },
+    {
+      "path": "csrc/experiments/aligned_math_20261018/probe.cpp",
+      "sha256": "48a91287841ab103c54c7fabdb346aaf9bb2dd2b0ed3f83741de72948e20195b"
+    },
+    {
+      "path": "csrc/experiments/bf16_clusters_20261016/CMakeLists.txt",
+      "sha256": "022caeb6aee3cad8ec842c1df41195a67465071d317e21fa15e10a56ca81ceea"
+    },
+    {
+      "path": "csrc/experiments/bf16_clusters_20261016/README.md",
+      "sha256": "971a9e73c63e47f4e724d0101d78f2521c1a1f1e8459e1c74e4c01584cbe3261"
+    },
+    {
+      "path": "csrc/experiments/bf16_clusters_20261016/check_fault_outputs.py",
+      "sha256": "0273e0864bcdc43d714239c1c8d8635edbea5b7e73d49c78c982f6009c615b08"
+    },
+    {
+      "path": "csrc/experiments/bf16_clusters_20261016/fixture.py",
+      "sha256": "1494c6a4986b950df274a492ef4cf1ffbf4c07d821900476a96f5231eeb6d49c"
+    },
+    {
+      "path": "csrc/experiments/bf16_clusters_20261016/harness.json",
+      "sha256": "8ee4eed700c614137daa6fe80c20e3c1dcbb8dca8a1ebcebc85d47c9e1f6e11c"
+    },
+    {
+      "path": "csrc/experiments/bf16_clusters_20261016/harness.py",
+      "sha256": "1b7621d1fe37384b3d703ba72d14a665855d0dbf8ae5527dac3cd0214e6c5bc9"
+    },
+    {
+      "path": "csrc/experiments/bf16_clusters_20261016/probe.cpp",
+      "sha256": "68dfc72a0211a689b03ac955b78fa48f2d1fa36abc914593db979024d820bb0f"
+    },
+    {
+      "path": "csrc/experiments/bf16_clusters_20261016/run_phase.sh",
+      "sha256": "37c531e868cd7a4a6b3cb2fe85ec510bcdb7f28f6bb64b29980e45c86d5870fa"
+    },
+    {
+      "path": "csrc/experiments/bf16_decode_20261016/CMakeLists.txt",
+      "sha256": "7cd35948905112818ad7cfaf47a9e4e7c1f5b1daccaea2cd4600dc444e89fbc0"
+    },
+    {
+      "path": "csrc/experiments/bf16_decode_20261016/README.md",
+      "sha256": "a350adcd51c1ece4096eb427b86cf81daa0628da449b7e9a73fdb9631eb2ab79"
+    },
+    {
+      "path": "csrc/experiments/bf16_decode_20261016/probe.cpp",
+      "sha256": "b265fb67fb5465fb8e62635924cc7ceb1788afbe4237838264bda87f4493d060"
+    },
+    {
+      "path": "csrc/experiments/bf16_decode_20261016/replay.py",
+      "sha256": "73c4f03eb8d02ebc43c7599df2ef12f0881a6b1a0509a0e046eba42ea7f31c11"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/README.md",
+      "sha256": "852f44b9d9987f5e15efdc02ca4ed294a1bea07150c0b18b1eb4feceb0e75ec7"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/c16_baseline.cpp",
+      "sha256": "1d62c601d0d578a2995e551a2e8f8fe69785c5e9a4569832dc178a3b8f289b4d"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/c16_candidate.cpp",
+      "sha256": "38b3c795a50d52afdf8133e965ff3fea0a0f09fdf71d06f4c41f9cff42e4db05"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/fixtures/full337/native.json",
+      "sha256": "92189154d6a73dfe9a2edb39b757df9b469076a2880b07e8a67d96b9f9194abb"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/fixtures/full337/prepare_receipt.json",
+      "sha256": "8d950393b3f59324b8f0a1863910648e13b95b4d361e494ab42a1650d86e7ac2"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/fixtures/full337/tasks.bin.gz",
+      "sha256": "6579463cd234370c2371255dbdf5bd1bd27b45e979fb5a0f977e1a434180f9ec"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/fixtures/provenance.json",
+      "sha256": "558e0e9bfd33bb68f6f93fa5e3baf1f6a54dc30c6358beb40dbff7de100b5eec"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/fixtures/small337/native.json",
+      "sha256": "22170d6cfd5371e292dd4a590c7adaa9ce4d8fabc7c3ba51c054c159d4818500"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/fixtures/small337/prepare_receipt.json",
+      "sha256": "ed4c810d105428e3b6fb98962162f8548e37d9ddb14052558cb995e401d86480"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/fixtures/small337/tasks.bin.gz",
+      "sha256": "620fa4e34f55e069169ebfd0ce80eec849f307c3b501b7f90de76596d5ab012a"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/fixtures/small65/native.json",
+      "sha256": "050f9e44d64e4255a7ac25c052f17f6780c6f0a4d6bb3207284ca662ebcc2a71"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/fixtures/small65/prepare_receipt.json",
+      "sha256": "c43ad91b8de4f7414314d382edf88b1b35c3739085eb0a3a7aa32f761b6fa489"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/fixtures/small65/tasks.bin.gz",
+      "sha256": "a74a25ddd595559213d84de38ad6deb7c570ddec107323759bfffc200d2d779c"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/generate.py",
+      "sha256": "2e210a73fdc56a8cd4430d9a5d1aaa7cfc45ebbe304dfebeaadbf1997371cc48"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/host_replay.cpp",
+      "sha256": "6cfe85daa19de490ef9c0de10d9019d1332f1413ce3cca3fd5751f1ec6f8c002"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/host_replay.py",
+      "sha256": "845424914471921c557d3a5418b8c279b5ea0a348d1283c8f181cccaf99dc35d"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/host_template.cpp",
+      "sha256": "7a8a7682fdf64dd5453f0faeaf429eac831f30b3dc0a2ee949bb89358799f03e"
+    },
+    {
+      "path": "csrc/experiments/c16_anchor_skip_20261015/manifest.json",
+      "sha256": "a4f41d307ed7f8b4854d82bba0e872030b09e44a4fd534d3c26ea6e333c235ec"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/CMakeLists.txt",
+      "sha256": "ce9f2483ded41122d9659d21431fe60b38108537a8769907e6c8bd5cab864753"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/README.md",
+      "sha256": "568ff36bd0acb2ed9cb0d705c534d5656199dfec70b2678b169bb088b096bfcc"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/c16_baseline.cpp",
+      "sha256": "6bcc9913868353837ae537011e1509bb093f275083b5119959e25071ee074981"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/c16_candidate.cpp",
+      "sha256": "1f8c424f5d4d88ccfd935eb05c21c4c0dcb1aabb5c865c4536b04ed5ad199438"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/cv_probe_small.cpp",
+      "sha256": "d39ab8c5b0e0db5fcd2b21c748ac25eb04a2ad7d29eb666489e1bd183b4a4010"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/cv_replay_small.py",
+      "sha256": "11d2be7c8597cf26bdcc5d01ec17a6606762794c4cc73b6dc73eee58724b86c2"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/finite_probe.py",
+      "sha256": "355577fd5220987ec161dda4a78822cac531cba837cf03be1f8d4ffea7539bb7"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/finite_probe/CMakeLists.txt",
+      "sha256": "4b6688cc3c46c66bc1a2d49728b869350cc4c0752a3cf15979ee666f456912f5"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/finite_probe/baseline.cpp",
+      "sha256": "2948f558544edc6074d6404fd0bc322365e1c2d179ce6dec18adffdcf861ed1f"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/finite_probe/candidate.cpp",
+      "sha256": "8a8036d9379a78d1a257587c0941118e8b8f99f4ed0f1e9be8e174048c45b988"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/finite_probe/main.cpp",
+      "sha256": "59591a1908c42e51f6beddf63d36ecfbfce41ce3543b3f98768cc59ca4cdd900"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/finite_probe/manifest.json",
+      "sha256": "f4ebd36a3364ce9eaae8ef42e529836b2dda43f0984520a57c8c4158b11fca5f"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/finite_transform.py",
+      "sha256": "faa0d0ed620722b116af32b768836944710c4bc8b2e53a107298f21340cc6aa6"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/fixture.py",
+      "sha256": "0915ac3ca959702aaee09b0b16881ba228f1ebb3843f6d05dcc7968891a02f13"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/generate.py",
+      "sha256": "f587afdd36f79e6e73f58b4e3a9af4df24cf3e080348bc363eb3e8e490178090"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/harness.json",
+      "sha256": "ce0c631efb593010bf8bb6d736ef6bc4e1777a80edfc87ffed1ca2f25aa196d7"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/harness.py",
+      "sha256": "cfc0d0bee17901d56c62dc38bc7beda2f20264cc00f1c8fd2b5c237c42176c5c"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/manifest.json",
+      "sha256": "f5331e2b5787588638b99b9f239a2bf38dca0f4628bcfb4ca5b90103893eb2fd"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/predicate_proof.py",
+      "sha256": "e5b2bc4376182a05854033915d51c575ab0aade607bca802486f2709777d9bbc"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/run.py",
+      "sha256": "2cb8e846fe377e43ddc72df9bfe4098beab84f05d427ef8899fe4e8f117db05a"
+    },
+    {
+      "path": "csrc/experiments/c16_b1_followup_20261015/run_finite.py",
+      "sha256": "d0185e5a228d530be4d7b4b4d22d3fa94cb10d4e89282be692cd658fed5b4883"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/CMakeLists.txt",
+      "sha256": "4a00b688bfb19aefdfdacfd885dbe610157fd261875d3260f3c1fdc5509fff3b"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/README.md",
+      "sha256": "4fbc0dde681674d07ec98dbb3e7d27926645572f11c4405cf9ca5b64fc825d60"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/backend_split.py",
+      "sha256": "a247e82116093b76947dcce4bb77d38cf52bf4ea186c1881e9fabfab88d80f52"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/c16_baseline.cpp",
+      "sha256": "502ecfdafbeaba68ad66ebf56ab32a8deca53b48016424b93d2170e68cb7d0e5"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/c16_candidate.cpp",
+      "sha256": "1deb6ab15a34ed263000c9a99530d0f9ee1a7e682a84ba7657b2c968d2ae6ec0"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/c16_stable.cpp",
+      "sha256": "dd3ef2f2efdf832b87da5d3e564c08319b403d6a4eb452d5ee6ab51baaa6e79a"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/cv_compare.py",
+      "sha256": "207ca993cdff5efeaabc5745865dc96bc46449510d599c8f98771f5c8967b67a"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/cv_probe.cpp",
+      "sha256": "2bcc59edbcb429f4a0d870a91f0c3f410636f5339f2828e57fe874b2f8cd4982"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/cv_probe_nonzero.cpp",
+      "sha256": "75dd7281817d921a10613d20a7adeac8f2f3f569436207f855d735dd1b189701"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/cv_probe_qr.cpp",
+      "sha256": "46c9c60f78bb4b1498869728e07504132206f3052353fea5fdbdf9981c671606"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/cv_probe_small.cpp",
+      "sha256": "210227ba894de81a1a8f7db11a1bbc121a2fdb21eca042fccd4ebbc0060118ce"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/cv_replay.py",
+      "sha256": "8190509389abe79693f42d89b31d50e7ccc48a1b64ebc3d8a805e2174f4bca90"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/cv_replay_backend_split.py",
+      "sha256": "7f6306ade08cd1a42a531911a0055969e9981921d744f2edddb0bb6d734ce0b9"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/cv_replay_small.py",
+      "sha256": "92ce08069aecce7bac1b6df0382fa657194295c1b314ece84dba5aab4116d6db"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/generate.py",
+      "sha256": "c43bc2e0d8b0c633e46b43fffb03f676cd8931a6240a6625deeb91cc9db22e35"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/harness.json",
+      "sha256": "7e6cbc8f0b5aa4d0571402d152292ba6888438f64729e3ce6536e50e6db4c44b"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/harness.py",
+      "sha256": "0ae48d8b14ec8855f592b7fc71addf3e72e0ac287ec62ab7b45c2541afe7eebe"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/manifest.json",
+      "sha256": "0d2819fd6249498877c11fd10d4a1da6c9f71893d615c68d144c2dec642ac6b0"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/nonzero_cpu.py",
+      "sha256": "895fdfe7264890f459a7615260cc0294e872df6512e2d46e93bf09f02040adba"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/nonzero_fixture.py",
+      "sha256": "a0fa2e36e482850a4505f79fea6a9aaa67385f506da1021ac00d4db40655386d"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/pins.json",
+      "sha256": "f0cb19b6200cd3ba6a91e7977b1dafc704865771c48ac77ce28434d3eb48c835"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/qr_cpu.py",
+      "sha256": "d77c71c0cd178a534f7d50a414007ffcdd27dc943084ebc633a7d15a9e59e1f4"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/qr_fixture.py",
+      "sha256": "52ce055a9c5ae4e565dd26e5f6781d767f3ef79c0abd0bb94de94a96527c6022"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/qualified_faults.py",
+      "sha256": "2a29eb13d231c9bbbd3c8966249a97c5505e4e1b5aed72de24f4123294aa5fa0"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/run.py",
+      "sha256": "a113a04cc68242176ce1bf338eabf92ab570a566850accbe77014a3056cd6dc1"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/safe_logging_runner.py",
+      "sha256": "b4aaafbb245961d8da956e9c9a119adb155f48072dcf5c0ba2bab3fcfa685f0d"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/safe_three_arm.py",
+      "sha256": "aa6f91fda91374ee21c6b9afe84d93cc37a2ae382198c946c81498c1cae6aff6"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/small_three_arm.py",
+      "sha256": "328d20fc0edfee2e5cbd4b8f17249aacf5a98ec92800dcbfa2b78efb3b25f021"
+    },
+    {
+      "path": "csrc/experiments/c16_l1_reuse_20261015/three_arm.py",
+      "sha256": "e86097f0789595f21b3817511f33e58f26e527824eff95eb3ca802fe7c96697b"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/CMakeLists.txt",
+      "sha256": "3288236ad5d0f5303656290e768923b6b2b0cd39f04ef8666f0ca1ab9cb9780c"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/README.md",
+      "sha256": "32dbc828e89dacf8745dcf10fa348e15bb5c92430d8a6aff762bbe65af7b72ee"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/backend_split.py",
+      "sha256": "0a59c9e6d7b92b0c6cc180d108867ffbf5c94191e17905ec34cad2910fa750f3"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/c16_baseline.cpp",
+      "sha256": "595cf959a3db8a8a9c44643771ba44e7092fb5a4d32c933d2fcff86b0739aa51"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/c16_candidate.cpp",
+      "sha256": "f70e90fe6c9a6b63a9a676e9d0761f85b62d68ba0eb02b625d8ea3a7b3eb456e"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/cv_compare.py",
+      "sha256": "207ca993cdff5efeaabc5745865dc96bc46449510d599c8f98771f5c8967b67a"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/cv_probe.cpp",
+      "sha256": "87b4f22122bf420449fc608736d2fab69b106979e9eb764d1e32965a90073aa4"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/cv_probe_small.cpp",
+      "sha256": "1cb8c275c1b326b0153df1dcbf113f7c1944764f3b51cbe2b9e6eec523cd8225"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/cv_replay.py",
+      "sha256": "ac7e34f64f5e950a7ac862cb126205f3cd45b94619ac4380eaaec39245fa4619"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/cv_replay_backend_split.py",
+      "sha256": "475a70570449a49e3b1619c01a406f70fe7efb6f6dfe5b697ba582e425395ac0"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/fixture.py",
+      "sha256": "7f9712008970c1b9758d0bc2c909d241811bc4a2c333c940aeec1664acead6fe"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/generate.py",
+      "sha256": "9888fdfa869007c721bbdb2f30653ef3d64645fa0adf652426f0ef2bef5e55a5"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/harness.json",
+      "sha256": "1014f117b861bc52a56a714d8892cd57481225570a00a033321ce7a676f9594f"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/harness.py",
+      "sha256": "8ec456e5d4ca9f49e373b97d9645b8255276365f05ed512c6f6978aba8a65fd2"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/manifest.json",
+      "sha256": "b86e57cbd775b9f71a38198804e9bb47040b25b173dbbe46a0d2f012d91a498c"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/pins.json",
+      "sha256": "287fd484f846b6372c0a136865fb3b82f49d79cdd94fa906eed59a1f726d92ff"
+    },
+    {
+      "path": "csrc/experiments/c16_member_pipeline/run.py",
+      "sha256": "b7a452b90b3f349211b3f96ef2699516c71f814aabb9f308f2c6c06bbbab533e"
+    },
+    {
+      "path": "csrc/experiments/c16_rv_reuse_20261015/CMakeLists.txt",
+      "sha256": "2d4960ad3ee8e03e5f8ec1a767721b8d095bcf88e8b03c923b1eff37c4126b0e"
+    },
+    {
+      "path": "csrc/experiments/c16_rv_reuse_20261015/README.md",
+      "sha256": "642a54d28fe59eba2eb240e382914d9c5c69327060f668c0bd7458277e5e2fd1"
+    },
+    {
+      "path": "csrc/experiments/c16_rv_reuse_20261015/c16_baseline.cpp",
+      "sha256": "2025c3601494604a84e1f0b4890f27355956f532a5303ce71589b37c044dd30b"
+    },
+    {
+      "path": "csrc/experiments/c16_rv_reuse_20261015/c16_candidate.cpp",
+      "sha256": "9603817dddfba0e6357b42756a9956880137348ce8076c61aff58884acb6210b"
+    },
+    {
+      "path": "csrc/experiments/c16_rv_reuse_20261015/cv_probe_qr.cpp",
+      "sha256": "d7a31ecf725beddc38e706651ead7019ea4488fbd0c2bd77a0b823aca5266148"
+    },
+    {
+      "path": "csrc/experiments/c16_rv_reuse_20261015/cv_probe_small.cpp",
+      "sha256": "8f753b1d70c1c4c15a614cb4c9934be36d216df38605bdfde9b69834fd6ceace"
+    },
+    {
+      "path": "csrc/experiments/c16_rv_reuse_20261015/cv_replay_small.py",
+      "sha256": "83454c566b41f76f8fc683a1c4c1727834e8eb88edb50b083d7b2a237b974e23"
+    },
+    {
+      "path": "csrc/experiments/c16_rv_reuse_20261015/generate.py",
+      "sha256": "abfe9abcc4c0b83eadf225f17ae766ccebab110d803f44492316b1a5c91c18c2"
+    },
+    {
+      "path": "csrc/experiments/c16_rv_reuse_20261015/manifest.json",
+      "sha256": "fb3bbe641bba61b681ca0193f5da906e4e612a49197e787fda6dfd0289c599ca"
+    },
+    {
+      "path": "csrc/experiments/c16_rv_reuse_20261015/pins.json",
+      "sha256": "b3e74f012e778751de49771ee52a0e381b1e196ce434322a26c86b1a2a56c22e"
+    },
+    {
+      "path": "csrc/experiments/c16_rv_reuse_20261015/run.py",
+      "sha256": "b3ed43ffea3d3ea994214d4564b74cb5a75d94ba6cdf044aaefd686d273dd79b"
+    },
+    {
+      "path": "csrc/experiments/c16_timer_20261019/CMakeLists.txt",
+      "sha256": "3e6f03e8f41cf27fef76009c0a764fe742419dca3288aa13ba5cf1280c09cbd4"
+    },
+    {
+      "path": "csrc/experiments/c16_timer_20261019/clock_contract.json",
+      "sha256": "118f6ab148b1d83755a6178ffa1722f11313d0ab6ec521545a420f56a8a35328"
+    },
+    {
+      "path": "csrc/experiments/c16_timer_20261019/generate.py",
+      "sha256": "9178f7f4abcff33008d59bd4f6dc4e362351fb2f773bb3259d22a6571731db58"
+    },
+    {
+      "path": "csrc/experiments/c16_timer_20261019/timer.h",
+      "sha256": "71bcfdd8f760ea9a6d33ddfc8f51c23d0b0390b1a9fc45cf36d2cc1bc6d48117"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/CMakeLists.txt",
+      "sha256": "657b681cb41a695bc4e2395ec6a778b1c2e8f80bb4a0f9dd410ff687cab34304"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/README.md",
+      "sha256": "5e301cf2b8d2f835c3cc60ac612febc98fd525225706132f754dbea0293a24b4"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/fixture.py",
+      "sha256": "7abbd92c17c2f55412aacab78a72e36073534ae31284ce2dd174d3f7efe52ecd"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/fixture_readback.py",
+      "sha256": "f5aa5eb2df92cc03dd0b31fcab47127ecbf0922599551de10573a59c7ef78f11"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/fixture_recovery.py",
+      "sha256": "e338eea59e1f6ffa05468ac30dc1246fdc5d3acbef4faaa6cdaee9c462804060"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/generate_readback_v2.py",
+      "sha256": "7bbeeca19d964f5ca6c585ff430eafd5216db2812dd50fe56c34ec980dedae62"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/generate_recovery_v3.py",
+      "sha256": "15a7d657d6b2dc4678ab6fcddafffdf1d1d3a19b35e771b7c0a5475183e6d313"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/kernel.cpp",
+      "sha256": "7145f951e9e7b073c2918a3968986394999effd4d7d897526504c612ec1a4f51"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/kernel_readback.cpp",
+      "sha256": "bcd752fbf0448fa61c18aab9e1bd620e5de5fe202fbd81a26f6834eea590ce93"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/kernel_recovery.cpp",
+      "sha256": "d225fbeda5f2f354a5cb9de02c737e271e5d474ef073921b75027af31ec5cb43"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/probe.cpp",
+      "sha256": "d868e8ee0492e5ae73f60d41fba3cefb34776edd3db7c67b55047ffacb56ace0"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/probe_readback.cpp",
+      "sha256": "67efd092e98f8cec1471d10e2dfec7bb45c89ce200cfece7277c37d4ea80b1a0"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/probe_recovery.cpp",
+      "sha256": "d727748713d15cdbfb265a0cbb4940d56459fa9343c676efa6053ed534ebfa88"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/replay.py",
+      "sha256": "d572f4230b0480e5eeea3516e8eea023bc83fee7d361ab61d6c70d2fdc7a847e"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/replay_readback.py",
+      "sha256": "9eee4e36bfd99062c720a2594566b8c83819613188f6046c882253463dfc637e"
+    },
+    {
+      "path": "csrc/experiments/c4_atomic_state/replay_recovery.py",
+      "sha256": "ef2ed4c8d3bd49c61f92a9b8ffa21183d5b98ab495bf7874ef7e7ee7a7db2c71"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/CMakeLists.txt",
+      "sha256": "8445d16fb3fc4469f8e17328f92b22f1d223b48965c24f47572f2a810b9602b3"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/c4_baseline.cpp",
+      "sha256": "29f9e899a2e40ef0351497cf36777a178801231c12ac511acd4ad6a862a43500"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/c4_candidate.cpp",
+      "sha256": "e33cf9485a3a754857c9cb747732ff33d58e43397b27779650dfc1ac1734a236"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/cv_compare.py",
+      "sha256": "06267f4977e12ed6e38a37b1c9cd63969642b8a7fbe3bc7a17ceeeffe55a3c5c"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/cv_probe.cpp",
+      "sha256": "119fb472f0d358bf1d20ebc51174d08c64dfeaa66303e76173160c4a8f503e21"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/cv_replay.py",
+      "sha256": "a81d7d7120f7500082244b088460ac2cc0a6b678fd5c3769af1f94af6a473674"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/cv_replay_publisher.py",
+      "sha256": "455b8bbe0e8bb4a3227da19521cabfe30c92ad493f060b648a19d84bb8f05e00"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/entrypoints.json",
+      "sha256": "9e1268df980b3f537e2d87380e856f54a0daa5406125a5021b98c36d9a66a0b3"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/fixture.py",
+      "sha256": "5b600674a81b3bf251ced4030f94f33861e07b53846238eac0b67f31f3124e98"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/generate.py",
+      "sha256": "3a420eb8a2d995a0a605e83bb59483c749746e579c8d1b72176d12f2d203ab61"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/generate_entrypoints.py",
+      "sha256": "836bbad1ca668446c8f7f4bb034a719935ae52f1662ffa565cec5ef9744f75c4"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/generate_publisher_replay.py",
+      "sha256": "116f871ca0960ca54348bafc1412e55ddfc70ed27247d91f6bf1266ab826055f"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/manifest.json",
+      "sha256": "761ea567b143acf87315d439d22422e4015e21531367d1f8dc1a4c55ec57994e"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/publisher_probe.cpp",
+      "sha256": "ead37d7c63a848a6b4171243c6a108d862e5383c58db34da9156dda61bd10491"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/publisher_probe.py",
+      "sha256": "b414dc93c939f274f1e2be3b7695ed082c1fab6a16c48ec07f0577d8059a565c"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz/publisher_replay_identity.json",
+      "sha256": "2986e53d80adae760d0455f0e8384784cb25cc323934fe8fac481c22d17b6877"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz_vt/CMakeLists.txt",
+      "sha256": "79170866a03fe64c7cbf42d832273eace8d19bf901fcf71c9ccc8fa1e476489f"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz_vt/c4_baseline.cpp",
+      "sha256": "5e5821d8d9a86daa16b02872c7b4a5e4b191477676e2404a712e531dd9bc4d73"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz_vt/c4_candidate.cpp",
+      "sha256": "6ea0ad44ad458813710a57f5c6ff2517b8a2b8f01d0b29ad5bfe5c0ea1c8c24e"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz_vt/cv_replay.py",
+      "sha256": "408991770be4eb5461b47fa6ed1ddf987f551b7af9581edadf3c856118cbf10f"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz_vt/generate.py",
+      "sha256": "cae78c87bd705e9fc164d038b50c3fa1229d02bd6f6c1aa803822d638811805e"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz_vt/generate_replay.py",
+      "sha256": "cfe6764c689af21db9f38357c240eacda11b56476a2115279492d11484222536"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz_vt/manifest.json",
+      "sha256": "ba0ae1a9582be0aa2df138f6e44ef323f1b926fb1f3a31fbf996df6f3e4a7b79"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz_vt/publisher_probe.cpp",
+      "sha256": "70590b5569e6e59be8876be08d9a8817b96a71253a8ce9457012d59362846f5f"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz_vt/publisher_probe.py",
+      "sha256": "4b40d65357bbbb8f09619c087dda3bb7c3a4af5abf82e476f2bdbb56f1cb7471"
+    },
+    {
+      "path": "csrc/experiments/c4_b_nz_vt/replay_identity.json",
+      "sha256": "07d61a1cb45245a1f2169247083bdba2e6e8a1c997935006b7268dfaa4ffa9df"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/CMakeLists.txt",
+      "sha256": "ca5cb5d4cca62296662989f8462de2ba002812fe7d16e9ce547a81893e976711"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/README.md",
+      "sha256": "9d273870b1b4a4e13139f470dadd5594a319986ff6cff3bfb1d73c1e374d64f3"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/backend_split_contract.py",
+      "sha256": "f20b08f1d9053f97c51406c5790d879b5d6d9a3ac9cd2d0207a7a894aaea1b21"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/budget.py",
+      "sha256": "88c0ce2ed1da5347494db0abc71bb8e3f3f473f6827be69de567a7e3fed86abb"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/c4_baseline.cpp",
+      "sha256": "824d01eb4b7668aa33ecf821f862cc112bc1033cabe010868d1eaca5f7ba306a"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/c4_candidate.cpp",
+      "sha256": "f0199c2cdeb37e6c6276ecc709733748a8abbe7407e30657f181c0ba74aab193"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/cv_compare.py",
+      "sha256": "75ed75ea88b2fd4daf7bab54a808ac6e9b2bf088c086b82f7055b3c67910a708"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/cv_probe.cpp",
+      "sha256": "5b80ff91dfa87a134bac52295a377e1b25e6ede11a537a8b7fb4347136997812"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/cv_replay.py",
+      "sha256": "43374dbb48c415d5642955850fcce325f1331afe5963e3c40293c9a29b9a906d"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/cv_replay_backend_split.py",
+      "sha256": "bb1555300b7841779dc8af75c239cacbf884d055d9a8e79b2d4651c655b9b790"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/fixture.py",
+      "sha256": "2a17a9ae540527c03d7f83e8018e6c46a31a22fe14f959eb697eab172037ae8c"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/generate.py",
+      "sha256": "b61681f079e705665fa941507aba6256a2dc6b75102b5d6c953a787bf71a5b3b"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/generate_backend_split.py",
+      "sha256": "f9b1d8a8365346d75012ee92af5f694066b1a7eba7661b6b89b075144614af8d"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/make_small_cpu_evidence.py",
+      "sha256": "ad25903711d908221bfcd39a45b4fe51c4047358902d72985835b10cf8a19aa2"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/manifest.json",
+      "sha256": "2a7ceb9f1fa0ac0467f6ef396ad7661c27e13d60a70483890f5b8bc3b177f731"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/qualify.py",
+      "sha256": "f73224bf47af9be9c553cd151b41066ba49c554767f886a401f4c78a904b6ccd"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/qualify_backend_split.py",
+      "sha256": "9262d541cffe52a445cf15692b1a305c4b6c4fda6ed7920227c76c19a8073fe6"
+    },
+    {
+      "path": "csrc/experiments/c4_composed_long/test_backend_split.py",
+      "sha256": "713e04a19d499d010d902ab900d87198db5ad9282e9839f84c434707fb47b611"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz/CMakeLists.txt",
+      "sha256": "2a16a5ef26f976ff79139e8baf539649c0455a56397398b8f403c1bbb55313f4"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz/README.md",
+      "sha256": "32ee0c69e491745649999529cc59124b0a5258f998ac7765313eff988e7e88a3"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz/c4_baseline.cpp",
+      "sha256": "229ad4366ef7a0ee10e16f2455ff75a649b915df6a61aa5f0b147e024e98b04e"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz/c4_candidate.cpp",
+      "sha256": "c5e0791c3213d81f1c655c4a09fe52dba1718c0ea01f7d9836ac722b89fab45d"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz/cv_replay.py",
+      "sha256": "4cdc6a30ef4b77ef96888265300f07d608a0cd087110720636e53cc7e53b9d74"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz/generate.py",
+      "sha256": "ea2ab25bbd2fe5297668dcefe0e10c1e4a0c0eda855cfd6a87d9a999254aae3d"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz/generate_replay.py",
+      "sha256": "935c329a284c025d92537faaee3bc39edb8105dcb5eceb13ed8a7c54f69dd7d4"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz/manifest.json",
+      "sha256": "843f523f561389034a567610177cb81d5710b6ac88ab0c58188804463faa6ca3"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz/publisher_probe.cpp",
+      "sha256": "45ce7523941e6eecbd010d71b3a63189be7d0e0cd5009a302e0d3fbea91a91da"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz/publisher_probe.py",
+      "sha256": "b0c82a4a7c480ee88086270078fd5c230ef6ac61576d60841dc878b4ee0c1263"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz/replay_identity.json",
+      "sha256": "61ca5f7f838e03549bc9546ab292f744286575f8bc125ce9b4108f72f1e3f055"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz_u32/CMakeLists.txt",
+      "sha256": "1f6ca57a10a70a9662ed8c4e2398bb3a773b2848bc4b4e596155969bdb7c9aa6"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz_u32/README.md",
+      "sha256": "18f35a412db20dab39745730dca31d9d853a6b7c7c53ac118b1c58693572083b"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz_u32/c4_baseline.cpp",
+      "sha256": "4e0ba46886ace38dce6a428d191352a6b36c6f2b8ad5a2088774b15d21ed9624"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz_u32/c4_candidate.cpp",
+      "sha256": "06bdee18c644773e08fa8ea5ca63a0e6b2e7b56e7b9ad5526a0f18ae69531a16"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz_u32/cv_replay.py",
+      "sha256": "955bd01d49c3ee3142c3e8d91f98db2b431aa2b765cb5ff80561b633dbe71a3b"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz_u32/generate.py",
+      "sha256": "c8a1a7138598b55a0184ff68d24a69f93485a18fb52f47459386d9645e79ef4a"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz_u32/generate_replay.py",
+      "sha256": "b9b3c9ece18f28373b72fc5853231a10e624633676fe7d871795a93af97a56df"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz_u32/manifest.json",
+      "sha256": "5a79b2dd06d8b01decaab475bbc59657eaf00543ed75fa9d20db334f8d696b9e"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz_u32/publisher_probe.cpp",
+      "sha256": "9d0a4de740c6e5bb57d885624ee37a8b2f72821275bfc3b1c20aab746e135ab7"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz_u32/publisher_probe.py",
+      "sha256": "2acd96ba7d82be6625c388eae3301cb07b8852f176dffd13d4ce1c87ef9b5a18"
+    },
+    {
+      "path": "csrc/experiments/c4_kvt_nz_u32/replay_identity.json",
+      "sha256": "6b0f77f9934de886b622bac60fe3e6b9e3ad5b6871a9e99d894a5df638cac9ef"
+    },
+    {
+      "path": "csrc/experiments/c4_l1_reuse_20261013/generate.py",
+      "sha256": "b8a4ab1b23a73eb8c83a06a7d3cfee4b1f8460edf42bc149b0e489677cdd7fa4"
+    },
+    {
+      "path": "csrc/experiments/c4_member_pipeline/CMakeLists.txt",
+      "sha256": "0de57ecfbac90c29fe5c4850b7e0778b13fe6a1bce572423fb69fde9fd4c178f"
+    },
+    {
+      "path": "csrc/experiments/c4_member_pipeline/README.md",
+      "sha256": "152f9a432aeb4dfc33b93e9ba00e27f3c86351c16ef303cf722b5c10bff0e215"
+    },
+    {
+      "path": "csrc/experiments/c4_member_pipeline/c4_baseline.cpp",
+      "sha256": "c44a583a23e74d415d31caf6c02df761f22f3a1e3fb875e43816713825911704"
+    },
+    {
+      "path": "csrc/experiments/c4_member_pipeline/c4_candidate.cpp",
+      "sha256": "da59a923a44cdb7ac0916596cd89f802a24fc1ffef4426952402d90b5d2e7b31"
+    },
+    {
+      "path": "csrc/experiments/c4_member_pipeline/cv_compare.py",
+      "sha256": "9fb3b466e5e0a8e5ba4c2986abaed7af6443cd4d674495a7a2670816083e3dc1"
+    },
+    {
+      "path": "csrc/experiments/c4_member_pipeline/cv_probe.cpp",
+      "sha256": "e79ff6d3219fbc73dc0dc4b63c7cc06129ede6f1bec4959b4325a61c0268d823"
+    },
+    {
+      "path": "csrc/experiments/c4_member_pipeline/cv_replay.py",
+      "sha256": "71c38e9dd2fb545de1cb4514ddf256984587c62fb3397560cbe73e7a44eb8091"
+    },
+    {
+      "path": "csrc/experiments/c4_member_pipeline/entrypoints.json",
+      "sha256": "edf21cf251f259afdc8f0e296fd1fc234c2c671c1321acd7723170932786934c"
+    },
+    {
+      "path": "csrc/experiments/c4_member_pipeline/fixture.py",
+      "sha256": "35a0d4266565a72770385f0a5a9fa05de20220cd5a0ae27d47e491ede06a71c0"
+    },
+    {
+      "path": "csrc/experiments/c4_member_pipeline/generate.py",
+      "sha256": "6bbee90d304c3cddbc274b7ec05de9e39d7cb5b88876481c9bcca46ad4f1e585"
+    },
+    {
+      "path": "csrc/experiments/c4_member_pipeline/generate_entrypoints.py",
+      "sha256": "d9ef02ae60cd3df3a73dc7ad1ab2c0e4c35a72ef6b4319c411868b6aff878cec"
+    },
+    {
+      "path": "csrc/experiments/c4_member_pipeline/manifest.json",
+      "sha256": "ed6d7d9a13efcc50753419192815c255f00f5f8f00db6aa5b6a609a1d7360acc"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/CMakeLists.txt",
+      "sha256": "29c7715ffd38679e00b30ca6bb6e299ff92f99ebc6c0b7ad3003963775ba4ce0"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/README.md",
+      "sha256": "ca0dd452d6e2db7312c40698c0f954b96940610890c1c5b183f9438c19ab5b74"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/analyze.py",
+      "sha256": "f1806f8de7b7bc69a80584e3aa0c9f8aabf7d174b898c8fcddbebb8bb87c18b9"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/compare.py",
+      "sha256": "5bd47c70e115529c3f4bdb6566f35d1a18336cfbca386fc0f6e38a0dad548251"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/fixture.py",
+      "sha256": "7e922a6132b052ca9746f48b3189dfedc9c9cbfdb94b0b4ffc5f0ef5fd499ca2"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/full_partition_budget.py",
+      "sha256": "752042d0e77b66666c5386ae8448b01869b4e074752501b32172d758815cf0ea"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/generate.py",
+      "sha256": "afb9cfa04df3db39481eebe203840cbdb78c299a13cdc31c7f884397693d5779"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/manifest.json",
+      "sha256": "cbcc03b1e466beb40ee113ed86cc9fecbf84f5f420928088e357390ee4254b04"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/markers.py",
+      "sha256": "1ff11fe02bfc0492848291432ec48a4112b01bcadf1200b21534e6827fb379e8"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/normal.cpp",
+      "sha256": "1da2a46c053035e11ca4a256033631f9c0b0ad611fb111ecf12352dccf307ac2"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/partial_loop_budget.py",
+      "sha256": "619990fdda77208c80e63837379b51a4ddf0a0da4ddf949b4c990a0eadd14354"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/plan.json",
+      "sha256": "009474e21cc78981e918e5b7fd9513aedbfd82876415d644dd848dbc585de3ff"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/plan_q336.json",
+      "sha256": "242f825aeea97da72d2c6219cd75d2bb9885f9a183257f468f37a973e5652aaa"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/prepare_cpu.cpp",
+      "sha256": "bf0df423665758032297dcdea36e75e49ed10e812aed8e542a0e27cbcdaa3266"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/profile.cpp",
+      "sha256": "83ecf27c998b5cb0e2c4dcec29977210190d47ec329ef58da8e3fa69efea943a"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/replay.py",
+      "sha256": "4fde51d703064808343ba052619e05dffafe14a402ed4b8d603646ea22e20719"
+    },
+    {
+      "path": "csrc/experiments/c4_phase_profile/test_host_contract.py",
+      "sha256": "f24c6a46271d2c5b0507e0b8dca8b8d8d8524fbe113443e5af4824240521f32a"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/CMakeLists.txt",
+      "sha256": "d612991a00cf9f9788b7873f7ebdd24ac03472631c129ff32b3ab229304df385"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/README.md",
+      "sha256": "b9c32b935b27bd6bdcb8c51e1d22e29774b0d49cab40927decb629a61e38295b"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/c4_baseline.cpp",
+      "sha256": "4ceddce6df7ded7ee5a54800c74b189d03cc70f65c2b12fe62558c8334a1072e"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/c4_candidate.cpp",
+      "sha256": "55632524933f1417053529e34a32f7f7fb9ac859ec7b2a0c4e7a84d815e84e11"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/c4_manifest.json",
+      "sha256": "89034d5174d73b702e1f251567b4c6f0bb43fd39d68321e7e17681863246bb95"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/compare.py",
+      "sha256": "3e579c2d91445cdf5d20fc65080641c8d26554dcd274f5a47e6c3791f7fdcfc8"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/cv_compare.py",
+      "sha256": "721b7158e1135c5a4ad7685fc0dd8ba03a4f6bf540529ccac9d3d39bf3bcd973"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/cv_fixture.py",
+      "sha256": "59e22c27f5eb20bbf109a652e92cf1cd8a4bce309a50cf04ee675a643177f306"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/cv_probe.cpp",
+      "sha256": "c1d41828af8ae4d27cd747d6126746292cd4c81295fc2ccb50062403e755e77d"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/cv_replay.py",
+      "sha256": "3bf995295d5ff716c9fe026a36e01310c3e2940e254eb5cbaf75556981f65958"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/fixture.py",
+      "sha256": "0a20ed3b24ae2598cddf79d64e3fe599e2e6afc8d04a818639b2c376c5a7627f"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/generate.py",
+      "sha256": "52383388fa4485e4d642276a8aa02c6a8f8694604fbd4208e63d50ff8b93a072"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/generate_c4.py",
+      "sha256": "08ad4b8029e813ac6de3694f6be710b7d6ed567d21bc4fa4d1c40d9d20dc2a61"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/helper_kernel.cpp",
+      "sha256": "c128456f59f3551e24c95066854dd0fa42ed27604e6073c6a7bdd9cd3ca32a30"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/manifest.json",
+      "sha256": "932d9023de2a90f1d33a0548118c3dd925168b7eadcfe5c0862029e831168671"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/probe.cpp",
+      "sha256": "7abbe9f46024578b14e865b3cf14dd493a9e3ceeeb4023b3e35e7c7a9fa28e1f"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/replay.py",
+      "sha256": "4ffcd208a2b1ca6796df6cf5b17ec27525c0019454fe00c0dc3c6530a9457156"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/test_host.py",
+      "sha256": "6be3ea7aa98fcd69b710acf3ea031c236535c28e512c1b1c0c40db72f4c612c3"
+    },
+    {
+      "path": "csrc/experiments/c4_unpack32/unpack32.h",
+      "sha256": "ea73ea49efaad4cfb43f9cdb91c8f1493fa95579e7e1750d33cac6c51c002bfc"
+    },
+    {
+      "path": "csrc/experiments/current_only/CMakeLists.txt",
+      "sha256": "e025667267395c2e42dc671c523357947064929d362d795ddb31f399c011fbf2"
+    },
+    {
+      "path": "csrc/experiments/current_only/README.md",
+      "sha256": "4fa4ef7823400d82c6b70e8f93d98e986900a135e4a0b54c7d6f55d3c5b4ef49"
+    },
+    {
+      "path": "csrc/experiments/current_only/baseline_cast.cpp",
+      "sha256": "410bfd60cf2154ffad12061182b74c8cfa186bdce80ca407a51de4cfefc83205"
+    },
+    {
+      "path": "csrc/experiments/current_only/current_only.cpp",
+      "sha256": "022a00e65a76ffcc4f466acdab84c5130d4888b492a749502f2e9aaa69beb927"
+    },
+    {
+      "path": "csrc/experiments/current_only/current_only_cpu.cpp",
+      "sha256": "0023c647caeaa976e1612e160f66c106cdc1d7944f6f9016d001255c92093173"
+    },
+    {
+      "path": "csrc/experiments/decode_bundle/CMakeLists.txt",
+      "sha256": "c314e0f656d2520910eeacdc61d33d22459905a22db427992898c9f5c629ec84"
+    },
+    {
+      "path": "csrc/experiments/decode_bundle/attention_bundle.cpp",
+      "sha256": "ee79e3dc55b0547f9e407caed429c3a475eff48d87f752d8b4bc73355eb3ef4e"
+    },
+    {
+      "path": "csrc/experiments/decode_bundle/batch_fixture.py",
+      "sha256": "e18be56bc8570cbf3fe046129c208d841fdc14e736e1fa16bbb33a1565c3d1ce"
+    },
+    {
+      "path": "csrc/experiments/decode_bundle/edge_fixture.py",
+      "sha256": "b7bee15a11882f1cff7382b2e85010540e93c25f89280dced89adef684d1385d"
+    },
+    {
+      "path": "csrc/experiments/decode_bundle/generate.py",
+      "sha256": "fae26e7cc5cd9931790d3bd466ed7a6a4b4f3f6b2a66baf835a119c8b117651b"
+    },
+    {
+      "path": "csrc/experiments/decode_bundle/source_identity.json",
+      "sha256": "5c75f4d2497570971a75073512fb4226e6cc3dc9a2e52b1a2f943c004442a018"
+    },
+    {
+      "path": "csrc/experiments/decode_direct_nz/direct_nz_unpack.h",
+      "sha256": "46a5d8086f767e608cde3517826c0bfadadecceb1f6971cadc2d2dfda45a9508"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/CMakeLists.txt",
+      "sha256": "b09a18914eb6e017cffa7589d16fdb3a6fb5e30b2afac0da3138cdc4270adf02"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/README.md",
+      "sha256": "dc270f376fdc98edb43e21d9aa3f9e0f4abf85477b75b095f0d9253d7a5ace56"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/denominators/q1_b0f09e6.cpp",
+      "sha256": "1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/denominators/q4_b0f09e6.cpp",
+      "sha256": "03df3835144e26ad399e9be8cd41f684b2705ed280c77029bf78c4e74bc9bad0"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/diagnostic.json",
+      "sha256": "434ef5e3f1b2341e8b61f02987c4bf95b8d6db0f90dda08745bbf434ede1d9be"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/diagnostic.py",
+      "sha256": "a0dc871393741eaa7015c0e674c7718ae1bb19d5b8c3de03b30e1c3765653bb7"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/diagnostic_probe.cpp",
+      "sha256": "5910be8219b3a3c09de0fb3760d131b81913da697176694177e59ef7bf82f2e3"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/finite_probe.py",
+      "sha256": "120d46a8e81ed7f037bbb478c3020dbc96f8d49011b71752e3f31219afa7340d"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/finite_probe/CMakeLists.txt",
+      "sha256": "049454eb5da5a2b059bb1323b3c90ad6ec6a2a12a4fdf3390eff9706a1ef644f"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/finite_probe/main.cpp",
+      "sha256": "b95c0bd58cf4a62db7523d7f11553e2fb4f3a2315530b354986ec1d54ef32440"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/finite_probe/manifest.json",
+      "sha256": "791b3b60031dd3dcb0285d946ff37bcb42431fd29c5552526425b90c59d32f62"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/finite_probe/q1_baseline.cpp",
+      "sha256": "963a5cf9df2476aa1ed40542e3e9f4ee8b2656e8868d0d69a24fda104c1c7c53"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/finite_probe/q1_candidate.cpp",
+      "sha256": "8844fd66e3c4933693a62c5b327b012080e2e3a97aca1bac7436fc8406f1e183"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/finite_probe/q4_baseline.cpp",
+      "sha256": "57ac7c5f5a4aa6b21bc2f70f39b6b9118d76e73420b33917cadecb5c86d84876"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/finite_probe/q4_candidate.cpp",
+      "sha256": "33b76a1e46ef833d03fcd94194abda51b465aa4d0b3dd7dae09230473510fde9"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/fixture.py",
+      "sha256": "f3ddaad3029f99ed1af562f32de0cd7c4848887c0c4da4443f8ad0edec3ac101"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/generate.py",
+      "sha256": "9a6668979965cb738f0b88db6fa021a6578d76495ac1a2bd0413318679372182"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/harness.json",
+      "sha256": "6e845b5374ee73ecfad8564e7aea76780cd23d424d8217a2d642b42665243e0e"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/harness.py",
+      "sha256": "fc7dd8933629db843d9248808e716a63012f712822cb6c65be97149a7b7ece63"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/manifest.json",
+      "sha256": "75c0f248c3079b6c2deff6432bbb8c6609b71e0bdf77e3a8e381259ada83a838"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/probe.cpp",
+      "sha256": "667ff4de1290657bca35633d3da0c081147123289b524f102e3bc8b25c2025ef"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/q1_baseline.cpp",
+      "sha256": "097aa6ea720ce2496ba8a4bab0b7fc1f5be326ff293cd7cefe54e9dfff2bc269"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/q1_candidate.cpp",
+      "sha256": "621472072929fb00830152b04501833859c6823d3eab376b4cb6d6b5dd952d7a"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/q4_baseline.cpp",
+      "sha256": "531b60a02337e661a3b02fe7d2e71570495df5de12da963c2bbb9b14e554580d"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/q4_candidate.cpp",
+      "sha256": "dd732015252328efef1befc66895d27a99d9efd516935841dd775f17329eb5c1"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/q4_diagnostic.cpp",
+      "sha256": "95b150372d2de92bf758597314ae408dd83b3f52de405f4a0905c2485dc3d074"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/qualify.py",
+      "sha256": "f0eab1d0431c44855541b63411c29d08ce5f9a5ef1665b6b57f8282553d3ce8c"
+    },
+    {
+      "path": "csrc/experiments/decode_finite_20261015/run.py",
+      "sha256": "44d3bc1fa6af0fd3c7b77338ab11d4ce2b37a4f766d8d2a94979d926d1a8e155"
+    },
+    {
+      "path": "csrc/experiments/decode_history_pipeline/CMakeLists.txt",
+      "sha256": "9deda17253f3313d3045b81c5018ebd3a3aca85759a25f90afd367aa73822c2b"
+    },
+    {
+      "path": "csrc/experiments/decode_history_pipeline/README.md",
+      "sha256": "b6381fe2802d4307b10194744fe658fb36a6cf1f2990f96d2d458ad8d72b4c9c"
+    },
+    {
+      "path": "csrc/experiments/decode_history_pipeline/attention_pipeline.cpp",
+      "sha256": "f9cb6862783dc2289944405766d3cbc56101e24bf538b6da913fe082e0ccb372"
+    },
+    {
+      "path": "csrc/experiments/decode_history_pipeline/fixture.py",
+      "sha256": "665deccef914dad3ff2a2042b9775b3d5a71f5e354b703e3e3695c73ad80f13e"
+    },
+    {
+      "path": "csrc/experiments/decode_history_pipeline/long_fixture.py",
+      "sha256": "a5593c7a95b8519dae0700698fac5f8e81e717ff9a1f3dbfeafc9da108b0f3fb"
+    },
+    {
+      "path": "csrc/experiments/decode_history_pipeline/prepare_tasks.py",
+      "sha256": "805d77ad53324a9a6a10edee0b92343e21f9fb6322df65c28298bf6b33c2a497"
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/CMakeLists.txt",
+      "sha256": "0a1a233a0aa5f1b2cce1467a2a2b276a2eeb4700ca60b8de11421ed6210e2921"
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/README.md",
+      "sha256": "fb54245843af014f0745799641ae8560b8c56b9af1b3e301b31fd41549aab1f9"
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/attention_baseline.cpp",
+      "sha256": "d3a0798c14d638b70f40b2c1db52ab93601b15a8028be7d34c19c213c87d126e"
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/attention_candidate.cpp",
+      "sha256": "f2047dde10aa464202c23c8a8d39a9806c712ac8eb090ff752d7346d1b723151"
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/extract_trace.py",
+      "sha256": "3d62ca39d3e2c9833a387bfa7028f64bd1a0609f9e5f30f4238a923b9cff0a7e"
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/generate.py",
+      "sha256": "81703c5b5a73aa66dad7b90243768adcd680610adbb61a107c4781e5f72d333b"
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/manifest.json",
+      "sha256": "f021f30f32003e5e16fdcf0f8b861d86fe28f7d22100cca5d5fa4fb5e179d8ae"
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/probe.cpp",
+      "sha256": "90ced4a3090b774b361a43cd2db793a63085badb2af85b950afd0ccebbf71ce4"
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/q1_fixture.py",
+      "sha256": "fad4008df5b930c81c6cddfc6acc94e43f9a9280950f5c9e5427e2b4a68f734f"
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/qualify_q1.py",
+      "sha256": "c52cf4fcee91b555604ed1682e41fe81c6651e57a6a02dbb1cb6bbfefcb78951"
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/recover_q1_postprocess.py",
+      "sha256": "61149d16326e9a2ed549c5883b160d2b8354c28dd76a0337be85ad47dfaeb9c8"
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/run.py",
+      "sha256": "b3093e1d73be217fb1f2c24795c3436f79c802c7edfb593e03b4640e2a6850b6"
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/test_q1_postprocess.py",
+      "sha256": "50d79cc59b08607d677eeb5796396fc89229b9bb2ed35e9d5fe826ed01984a3d"
+    },
+    {
+      "path": "csrc/experiments/decode_mdl_load/test_q1_runner.py",
+      "sha256": "dd3c86c3f4f7a269026adcf36cdf458cccd43eb7d636a8661176096e510544b8"
+    },
+    {
+      "path": "csrc/experiments/decode_mmad_barrier/CMakeLists.txt",
+      "sha256": "73edb651a45c5d2dcc3defd5126da814dc0b1567eaa289b9fde20b6996ad3de5"
+    },
+    {
+      "path": "csrc/experiments/decode_mmad_barrier/README.md",
+      "sha256": "e4a4c5ccb129a9dab26608ba988cad8a6a8c25c930abb50fe42563a58c08cda7"
+    },
+    {
+      "path": "csrc/experiments/decode_mmad_barrier/fixture.py",
+      "sha256": "9e33d21e0703e6e0c6d26cefa32252d8624ed0642ed8d5ab0d7d4ec1d9bf792d"
+    },
+    {
+      "path": "csrc/experiments/decode_mmad_barrier/kernel.cpp",
+      "sha256": "3714200c932e81007eb0a341a775ef36bbb0477250229a572fb1d9b38c9aa05c"
+    },
+    {
+      "path": "csrc/experiments/decode_mmad_barrier/probe.cpp",
+      "sha256": "04faece13f3b3977c16d0390b1a6c6be9730fb3ece5936c4b558cfdf2be08b25"
+    },
+    {
+      "path": "csrc/experiments/decode_mmad_barrier/replay.py",
+      "sha256": "bc1307d91337f97b6eab9f73760b525ae9db39b6ca359ca27a6ac2d3326fe3e3"
+    },
+    {
+      "path": "csrc/experiments/decode_natural_padding/CMakeLists.txt",
+      "sha256": "40ba1ec326e4a4ae4d06800d63d739bbb00222ddeb57d66be4aac9ef40f220ed"
+    },
+    {
+      "path": "csrc/experiments/decode_natural_padding/attention_natural_pad.cpp",
+      "sha256": "c6c4814d401871a17ed2db6ca24bba158cb8e97245f39764c9a7fa5cc319b8f1"
+    },
+    {
+      "path": "csrc/experiments/decode_natural_padding/generate.py",
+      "sha256": "2f31e7ecc5cb497242a84c4421fbce024f60745a058ad8dad6340bc663c31bea"
+    },
+    {
+      "path": "csrc/experiments/decode_natural_padding/padded_unpack.h",
+      "sha256": "93de4ce78d7b12b2463b6e85e2827643874ea88111dc7ad917b1ea2d69c1b6fd"
+    },
+    {
+      "path": "csrc/experiments/decode_natural_padding/source_identity.json",
+      "sha256": "a64b9396030e9562e4453082d0a27b991dddb77085b8fcdabfa0ee8e27f4bbf0"
+    },
+    {
+      "path": "csrc/experiments/decode_phase_profile/CMakeLists.txt",
+      "sha256": "b137698e63ae5f0c321c0c66a11c5a6962f7b090d21890039fd74a1f79ee4c82"
+    },
+    {
+      "path": "csrc/experiments/decode_phase_profile/README.md",
+      "sha256": "5be18e667d9bd114c49313421fb1d35340a4479574e9eeeb84ba1645c0b35814"
+    },
+    {
+      "path": "csrc/experiments/decode_phase_profile/analyze_markers.py",
+      "sha256": "a0e591c050cb40d905253e7030e8a0105b4ed4a17b26d8bf91c9c152586cb8dc"
+    },
+    {
+      "path": "csrc/experiments/decode_phase_profile/generate.py",
+      "sha256": "49298a943ce3c3c3a54abf9fdd69d07044b5d31cb5ec264ad622b319d23bdc44"
+    },
+    {
+      "path": "csrc/experiments/decode_phase_profile/manifest.json",
+      "sha256": "842b42d5884575ec23dbcb3229e0f8ca7031b7fa42b39b0a970e6d372a2271ab"
+    },
+    {
+      "path": "csrc/experiments/decode_phase_profile/pipeline_profile.cpp",
+      "sha256": "852b1d0b766a82820161d3fc723d7c34d97ceca9129a905a1f436c07f03ea65d"
+    },
+    {
+      "path": "csrc/experiments/decode_phase_profile/simd_profile.cpp",
+      "sha256": "105efb93e9d8ba55a58890db7394d7fc93ff39ab9d5f0ecdf022e70766ebbfa0"
+    },
+    {
+      "path": "csrc/experiments/decode_range_mask/CMakeLists.txt",
+      "sha256": "a56d0c15c1208f552a3c071e9ad7bc8c943ba0962c4c1f68ef3c19a608f4c6b5"
+    },
+    {
+      "path": "csrc/experiments/decode_range_mask/attention_range_mask.cpp",
+      "sha256": "f86b74c63d11c2675f3eda4937ffc5ab80b5f91ba6bdb27b93f9f0a01c7398c7"
+    },
+    {
+      "path": "csrc/experiments/decode_range_mask/generate.py",
+      "sha256": "760663efa96352da211f28bbd3b49f6392d21ee3917a03de46a47cdfbac6b7f9"
+    },
+    {
+      "path": "csrc/experiments/decode_static_matmul/CMakeLists.txt",
+      "sha256": "9fec41b160295b4e35a4c3cbc1d94d6b6a730469715a0aa607f71f1df53c78ff"
+    },
+    {
+      "path": "csrc/experiments/decode_static_matmul/attention_static.cpp",
+      "sha256": "1162800a9d4857344246ccb2165b122701942c5765c3c04fdea5b0d0f634c1a2"
+    },
+    {
+      "path": "csrc/experiments/decode_static_matmul/generate.py",
+      "sha256": "e5ce5a0c11bce48fbea13733844e4312a171e490e864e11a8683e6c2642bf93a"
+    },
+    {
+      "path": "csrc/experiments/decode_tail_range/CMakeLists.txt",
+      "sha256": "d22d001c930148a4ed17c84d153dfec70428336078aebf5d4f779cc98ca58722"
+    },
+    {
+      "path": "csrc/experiments/decode_tail_range/attention_tail_range.cpp",
+      "sha256": "10f2958f662fd19f9b50b4b5a68fd700b96c37ef764f0e831dbb2b21118fac74"
+    },
+    {
+      "path": "csrc/experiments/decode_tail_range/generate.py",
+      "sha256": "50237481db6dba5c21a2d90f235d2d8dada1de5cbe9ca769ce8bb410ad5285ad"
+    },
+    {
+      "path": "csrc/experiments/decode_task_overlap/CMakeLists.txt",
+      "sha256": "bfc883b9ceb2753121c6ff5b643ea8a1efb4d59f08f4046e523977981e784886"
+    },
+    {
+      "path": "csrc/experiments/decode_task_overlap/README.md",
+      "sha256": "eb225cee75110b9c86b6ede7a0e544d2091082f1aad9f2b0fc6377f3aad28d12"
+    },
+    {
+      "path": "csrc/experiments/decode_task_overlap/attention_baseline.cpp",
+      "sha256": "71ac488e6b1622697453dc65ecaca840a13e59bfc98be6ffe8300816cfe10794"
+    },
+    {
+      "path": "csrc/experiments/decode_task_overlap/attention_candidate.cpp",
+      "sha256": "5a810451fcdd60ad237534c70cf12fbe588ec79b4f91f3e67f7fb9808fb2040d"
+    },
+    {
+      "path": "csrc/experiments/decode_task_overlap/fixture.py",
+      "sha256": "6a54ff78739f1c41b4872160251872e0769612dbe2184f70ddd4257962b4ce96"
+    },
+    {
+      "path": "csrc/experiments/decode_task_overlap/generate.py",
+      "sha256": "52b632466f50251e18bca0794628311c48b8198e3844ded80acd1716dbd29a03"
+    },
+    {
+      "path": "csrc/experiments/decode_task_overlap/manifest.json",
+      "sha256": "ddbf07d9375ea98d0c79a0b5b09e9ab7590221cf6b97b7c21a2c830c63820e29"
+    },
+    {
+      "path": "csrc/experiments/decode_task_overlap/probe.cpp",
+      "sha256": "efb79d979be338fefc3eda24f7de05be6872645d29528ca5bda9f3fcba89759f"
+    },
+    {
+      "path": "csrc/experiments/decode_task_overlap/run_pair.py",
+      "sha256": "7a924876382c8dce722b5aa4db19a2ae47f240ed7ba801f275df393ee4485a66"
+    },
+    {
+      "path": "csrc/experiments/decode_weighted/CMakeLists.txt",
+      "sha256": "7990b90c4ce8ad595eee412ed450164c64889cfa6e1f749b64fb315ceafe5d45"
+    },
+    {
+      "path": "csrc/experiments/decode_weighted/attention_weighted.cpp",
+      "sha256": "89961807211a1402cf5d4c95dd139452d2d2a8388ad1b22be48187907c9e2a4c"
+    },
+    {
+      "path": "csrc/experiments/decode_weighted/fixture.py",
+      "sha256": "e50ff9eb98a458e5a05fc971c368d475cac8b419ba87fe80af832a52a16fcf12"
+    },
+    {
+      "path": "csrc/experiments/decode_weighted/generate.py",
+      "sha256": "dac38805795384d426bac173fb1b1aace8177089c135417a84a78abebd0229b6"
+    },
+    {
+      "path": "csrc/experiments/decode_weighted/reuse_cpu_baseline.py",
+      "sha256": "08dd9d6f5e26520311211fd53e6015306ac46317d9a5da0ed193a1fc8422410f"
+    },
+    {
+      "path": "csrc/experiments/decode_weighted/work_ledger.py",
+      "sha256": "d636eea232b223501817de7ed33edd8f9a64a3fef363334e8c050ea6693daf45"
+    },
+    {
+      "path": "csrc/experiments/finite_guard/CMakeLists.txt",
+      "sha256": "e29d436ecaeb6245d6af94ef72674ef2eb67ea059564e6df10442f722024b909"
+    },
+    {
+      "path": "csrc/experiments/finite_guard/README.md",
+      "sha256": "df3371d958aaa74f703692915ba683e953e3a9af57fe81f98722ec36aae8e85a"
+    },
+    {
+      "path": "csrc/experiments/finite_guard/attention_cv_checked_fast.cpp",
+      "sha256": "d43c243c04f8226a979d86ecd6cee8f1419c77145003b3ed7ef7f1bed6b090a4"
+    },
+    {
+      "path": "csrc/experiments/finite_guard/finite_guard_probe.cpp",
+      "sha256": "2e386a8130f01112077c771501e217cc653f6415bd7a80e6eaefea5f22194ba2"
+    },
+    {
+      "path": "csrc/experiments/fp32_bf16_mmad_ratio/CMakeLists.txt",
+      "sha256": "676e3c72d93fd74de9d8559d99d3911cc75719c335d97bb976b8d12fc5d3620d"
+    },
+    {
+      "path": "csrc/experiments/fp32_bf16_mmad_ratio/README.md",
+      "sha256": "6e73f7018f22249d354035cfb7dbc1f85b30fbae1564146b6eb813934a0d7cb0"
+    },
+    {
+      "path": "csrc/experiments/fp32_bf16_mmad_ratio/compare.py",
+      "sha256": "3c661ca45b13449d255242765b4d18a3b7a48b4b3bd460ae91360fdb9661f472"
+    },
+    {
+      "path": "csrc/experiments/fp32_bf16_mmad_ratio/fixture.py",
+      "sha256": "9fac400849507687c52d2a944e8f4cd3d2214b8a775ac8da84305937ce224c35"
+    },
+    {
+      "path": "csrc/experiments/fp32_bf16_mmad_ratio/kernel.cpp",
+      "sha256": "fff777c808673c6bb1adc19c0d685f1e8c7ee8d5fbb545cc6e6c4812ba34ffdb"
+    },
+    {
+      "path": "csrc/experiments/fp32_bf16_mmad_ratio/probe.cpp",
+      "sha256": "ea576c21adeba23650a88e7b34cc9e7f9e0c97991c3f24f8e74d2bf79e410111"
+    },
+    {
+      "path": "csrc/experiments/fp32_bf16_mmad_ratio/replay.py",
+      "sha256": "57aa082c6488d5b02984493589dfc7468d70184b93f00fcfe81b696b5cec3a36"
+    },
+    {
+      "path": "csrc/experiments/fp32_dataflow_20261013/README.md",
+      "sha256": "2e7bb95dc9801a61a934ccc52012fbd1e2b1b826327795c58149158a94452370"
+    },
+    {
+      "path": "csrc/experiments/fp32_dataflow_20261013/attention_candidate.cpp",
+      "sha256": "78a21cd466b1eff15991c1b6a1095402dfab2ed4c919b6a58536cad6ed2c56b1"
+    },
+    {
+      "path": "csrc/experiments/fp32_dataflow_20261013/manifest.json",
+      "sha256": "2dd169911c1d5ad85f31042c1772b2f0e58de7e89d5df38f288467b0c45af3b6"
+    },
+    {
+      "path": "csrc/experiments/fp32_kmajor_matmul/CMakeLists.txt",
+      "sha256": "29af076ed049afe44a4f612d0783938203ef8e89468dfae638c7e8b26b1b71b2"
+    },
+    {
+      "path": "csrc/experiments/fp32_kmajor_matmul/compare.py",
+      "sha256": "1852fb3562243ae4d6ff24028b84183f7ed0f93c7da68bfda66af7980846aa63"
+    },
+    {
+      "path": "csrc/experiments/fp32_kmajor_matmul/fixture.py",
+      "sha256": "d6fb88e6de45edf86d13d33b8875539dee962079275f91d73d80aad88aee6ae0"
+    },
+    {
+      "path": "csrc/experiments/fp32_kmajor_matmul/kernel.cpp",
+      "sha256": "eff8b3c397f81aa289da812b896c1b4378ef9185f3d7ed9401062478b25048f4"
+    },
+    {
+      "path": "csrc/experiments/fp32_kmajor_matmul/probe.cpp",
+      "sha256": "daa1b521cae7c2bb2d838917565a67b87671184d8a55b5e203beb756c127a3c5"
+    },
+    {
+      "path": "csrc/experiments/fp32_kmajor_matmul/replay.py",
+      "sha256": "134eff5d7423d4259b04920e88a9221da85a05fd9c40594408696640d03649d9"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_ab_matmul/CMakeLists.txt",
+      "sha256": "d6ca1dcfbe4603c988a9453a35cf1327e802f54ab6a51560db8396ba3866eb4c"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_ab_matmul/compare.py",
+      "sha256": "c59179aaedb1fcdef12dd602d940f41a36cbb5bd8d60ad50de1062ded3653cd7"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_ab_matmul/fixture.py",
+      "sha256": "f0c26c517ad3ab5474360f7ba1469c635c559ebbdde36587167c1c13b96ecc72"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_ab_matmul/kernel.cpp",
+      "sha256": "966f234ff8d65a68f19d67ad501dad0d714d4e94399b0feaf5366327b99d7c24"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_ab_matmul/probe.cpp",
+      "sha256": "e6ed8cb9a96ab0dbe06336fbcb8336ab0463a6b0f38e0afc9257f03d842614e0"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_ab_matmul/replay.py",
+      "sha256": "2c4b3680ffec5fc032884b27fb2e68370a7ffdc2da695804a23ddd01e6e27457"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_b_matmul/CMakeLists.txt",
+      "sha256": "ac643886aabf853d73403bb732da638d5d2b29881b8ec34090de5c85e06a42c4"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_b_matmul/compare.py",
+      "sha256": "6079613911e813aef8cc5afb45ea0015741d5d346958d77f0211a8811acbfc08"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_b_matmul/fixture.py",
+      "sha256": "4370c8e87a744ffd5abd1dfd26e26a5b2c775effd86a1e10c9d3b2531087bb05"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_b_matmul/kernel.cpp",
+      "sha256": "2797e16a75c6314ffed1cb3e7b9b72b62663e2e5ff5f071c7690df2386ff0113"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_b_matmul/probe.cpp",
+      "sha256": "874fc0aee30afac48e301f0687e1443333bb6c75d0d13809d295b9f514f8b973"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_b_matmul/replay.py",
+      "sha256": "835244022187a6f4ec44707ce06c3330f19597c742a3221e3a7558d79b7f3bba"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_matched_shapes/CMakeLists.txt",
+      "sha256": "83cf80f11b413ac0d6e9dfa8a22a15f359226875281f9325ead0f1a89e548589"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_matched_shapes/compare.py",
+      "sha256": "28b5f273abc9ac2e983432b4b5f2bf62abf4114f86cbf65ba6b7b30c51b2d4b7"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_matched_shapes/fixture.py",
+      "sha256": "5d2340d7c1b2396a587fa7673827cac4bb349c6548316d43e55f93b4617d0cc2"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_matched_shapes/kernel.cpp",
+      "sha256": "2871b5c744ea9d083842c7f125302bb4340ac977a7a2f3c5cc69033ce115e064"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_matched_shapes/probe.cpp",
+      "sha256": "918316655d049e242621ffd6946ce0335c1e79088ffbc070440331fff06dd9d1"
+    },
+    {
+      "path": "csrc/experiments/fp32_nz_matched_shapes/replay.py",
+      "sha256": "306799a062175f4f1a5fdeb2162365136cdacab0043ef65e61fc83e3630cc64c"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/CMakeLists.txt",
+      "sha256": "e7ed0c668692bd6710db3ef378ca728a27df4abdd676ba59bf8315400250cd52"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/README.md",
+      "sha256": "bd376ca83453be53f3969e797e1b1c4ef5c33c18437719c0cf2ebcae47e17f91"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/compare_rotate.py",
+      "sha256": "a84ed58f662c2d2339bf9ab68a2ada0583131afd2993a4822580ac189cae334a"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/compare_writer.py",
+      "sha256": "30956946180fd77f3cfb2056be9d48d9e316478517b1b65f79415aecacafe830"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/entrypoints.py",
+      "sha256": "0088334acb49267c3773233b9b2d8dd233d53bebddb76afecbd3307acd747c5c"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/generate.py",
+      "sha256": "5fe0de0f65ec5de4b0f89d8af62d6f9f131d0ce0460010e25be9be51e166fa03"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/replay_writer.py",
+      "sha256": "e2f1731c30b9d49c488931538de7ffd7fbd0c3f66939dd2a545d60fa42560ca5"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/rotate_batch.cpp",
+      "sha256": "8f34370289fe77e357e38ffe757b9076519b96c7167c30378df4f40b908c1302"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/rotate_cpu.cpp",
+      "sha256": "7f21f642c0b4e421c4323db02dc4ce9b6871ba61e7b2b13447eb5563f35c9fcb"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/rotate_fixture.py",
+      "sha256": "847dcd318283fac92f5a2c11072d4ad3047d14daf528cbea286d01273c6f8f2b"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/rotate_init.cpp",
+      "sha256": "82774ea4c67dd1da9f94a3fbacbe85b67f1f3ac28a9e4e183e955db4e616c872"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/rotate_replay.py",
+      "sha256": "0e644f3ec39f7022266c3f2357ef4894aa1b5154283e28e73fb339e0a9298a44"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/store_cpu.cpp",
+      "sha256": "d65ff9eda10f771aa9efc6690c3fcab19e88b6fa56fae7eca3c4d9e1a434d25e"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/writer_batch.cpp",
+      "sha256": "52a58519fd1b0fc378fd2ea750f7340040071c072eb76f1cd3801b64082bbf2d"
+    },
+    {
+      "path": "csrc/experiments/hadamard_batch8/writer_fixture.py",
+      "sha256": "d8614036f6af748934f85760c7a486304e076093ffa12a22707b387a9fe29d21"
+    },
+    {
+      "path": "csrc/experiments/hadamard_indices/CMakeLists.txt",
+      "sha256": "780ed5391a002765d404f6be0b40dd4a7b42779f6dda832af22a2b65f78724e0"
+    },
+    {
+      "path": "csrc/experiments/hadamard_indices/kernel.cpp",
+      "sha256": "dfc3292fb7102a93578fb93292beb4c1274896e0f153e94504d6c5b8379658e6"
+    },
+    {
+      "path": "csrc/experiments/hadamard_indices/probe.cpp",
+      "sha256": "8813406ae18951ac28ae501861aa01988f322cbf6d4d013dee69b27503ef2231"
+    },
+    {
+      "path": "csrc/experiments/hadamard_indices/replay.py",
+      "sha256": "134a49c1854d698d72cec943a017743b9d08e13871131fbe78cda9e8fa09287c"
+    },
+    {
+      "path": "csrc/experiments/hadamard_indices/vector_indices.h",
+      "sha256": "8f92beaefbb46791709c2102bbda34a47321309bc4e320999765653e9f25c970"
+    },
+    {
+      "path": "csrc/experiments/logic_precision_20261023/CMakeLists.txt",
+      "sha256": "37b1f15fb130d1c053cc58de678216f274d0fc346398666cb9bde17eba27d50f"
+    },
+    {
+      "path": "csrc/experiments/logic_precision_20261023/analytic_case.py",
+      "sha256": "199f0eae7f292ed98953ba5e65f9dc75045c7211237a54b621fdd42932e5ad92"
+    },
+    {
+      "path": "csrc/experiments/logic_precision_20261023/dequant_case.py",
+      "sha256": "03415335858c4333596a2854858e8991c709e3541eda647ae2ff42b876c18fe3"
+    },
+    {
+      "path": "csrc/experiments/logic_precision_20261023/extended_case.py",
+      "sha256": "2aaf1ad22ab776f8dafbdab3153993daace1ad11bb90cf9827bf78b58a5466d3"
+    },
+    {
+      "path": "csrc/experiments/logic_precision_20261023/history_only_probe.cpp",
+      "sha256": "e60bb27764df6219b895ae146a3d64132c3e34b7b2f4ba7d7b2f338b8cedb902"
+    },
+    {
+      "path": "csrc/experiments/logic_precision_20261023/resume_history_check.py",
+      "sha256": "2cd2fadccb1384e1211f4ec299a8f105541017a2e5895b5ee8e2b2bf98e5777f"
+    },
+    {
+      "path": "csrc/experiments/logic_precision_20261023/run_dequant_guest.py",
+      "sha256": "2064cddead447503b750958f61ff79bea482ebd89a17544279ff49b574669828"
+    },
+    {
+      "path": "csrc/experiments/logic_precision_20261023/run_extended_guest.py",
+      "sha256": "af4d61e5c8cd9b5e0890e3678bd5145684c50c5403b89b8afc4d8d5e9dce60e5"
+    },
+    {
+      "path": "csrc/experiments/logic_precision_20261023/run_guest.py",
+      "sha256": "f29e40aa83f30dec3303ab1ecbd617dfe6107b2dab808d6d2894ceb1e011e113"
+    },
+    {
+      "path": "csrc/experiments/logic_precision_20261023/source_hashes.json",
+      "sha256": "7cb3af5c8c3579221f2d01d297792115072335752c4d1bdba64678ab3243be14"
+    },
+    {
+      "path": "csrc/experiments/official_math_20261021/CMakeLists.txt",
+      "sha256": "3b9eba25d6d6e19d4f4efafcbe270160716067c8a01509634fbb4ff49301d9c0"
+    },
+    {
+      "path": "csrc/experiments/official_math_20261021/cluster_probe.cpp",
+      "sha256": "33484fd41783489e79bb713101567321c8e7d4018cb9281b8d6379b4a071d983"
+    },
+    {
+      "path": "csrc/experiments/official_math_20261021/fixture.py",
+      "sha256": "78934820b648d5158ed66f4322a54f1c46973fd8b4f2bb8e8442c09918279faa"
+    },
+    {
+      "path": "csrc/experiments/official_math_20261021/probe.cpp",
+      "sha256": "e806c4aa67dc8b2e14e2226adfcb60b5b92310756046b5b41a0baa4408a013b0"
+    },
+    {
+      "path": "csrc/experiments/official_math_20261021/run_cpu.py",
+      "sha256": "bbbef75ff519911b91df9e6d0748db7e6bffa4d6c38018cce4ee9d044eb6e4da"
+    },
+    {
+      "path": "csrc/experiments/prefill_window_range/CMakeLists.txt",
+      "sha256": "cc43757168af8b2faca31b1969b910340be27d61b8dc056f2bf722a75bf42ecf"
+    },
+    {
+      "path": "csrc/experiments/prefill_window_range/balanced.cpp",
+      "sha256": "d39f833659b7f8edb628a885aceaa2fecbf3140321a9655850529af2e78ab5f0"
+    },
+    {
+      "path": "csrc/experiments/prefill_window_range/balanced_body.cpp",
+      "sha256": "a44379844e4db49250e8206317aa8d40f85b4022103b2e3ac6dd9f7250b0f296"
+    },
+    {
+      "path": "csrc/experiments/prefill_window_range/base.cpp",
+      "sha256": "57e443ea481f3d93c72f8433f3d92199bad047e429c716b0703df341f871c9fb"
+    },
+    {
+      "path": "csrc/experiments/prefill_window_range/base_body.cpp",
+      "sha256": "b594d68c827fca42a1d85a610326179e1826543b83ee00fa95bcf1674ec2cb2b"
+    },
+    {
+      "path": "csrc/experiments/prefill_window_range/cluster16.cpp",
+      "sha256": "efa080c121ffcf5fb91c98e7edb261863eff934570c2b398b6c0bca46e384af6"
+    },
+    {
+      "path": "csrc/experiments/prefill_window_range/cluster16_body.cpp",
+      "sha256": "68a4377ae25c1ac1fd5f2022190c1513fe27498caeef592e44305e5a064b4c19"
+    },
+    {
+      "path": "csrc/experiments/prefill_window_range/cluster4.cpp",
+      "sha256": "ac224fe686c14053c93190f71c81a9cdb30b3dbfda0cd41f9b560e4ea733f87e"
+    },
+    {
+      "path": "csrc/experiments/prefill_window_range/cluster4_body.cpp",
+      "sha256": "14b5b0b4f95304f1ec3d0888c7d8414153612d7775e80139d22e8ae8ec9a46e7"
+    },
+    {
+      "path": "csrc/experiments/prefill_window_range/generate.py",
+      "sha256": "3d472c01d81bac2ccd0f73248c340e95610f206057b96ed3fed16a5573a67a4b"
+    },
+    {
+      "path": "csrc/experiments/prefill_window_range/probe.cpp",
+      "sha256": "1317863db94a6033932a45dbeeb5c701a51f03d0bb86c11b9d8eed49a5cbfc94"
+    },
+    {
+      "path": "csrc/experiments/prefill_window_range/run_cpu.py",
+      "sha256": "99dec401c107676dd14a35ab70df0e1f9620fad52dfd61a358c967f50afc0b09"
+    },
+    {
+      "path": "csrc/experiments/prefill_window_range/source_identity.json",
+      "sha256": "6d5bc5835f2cffa9078d0d32821262271f4158043e3e2dcb074a70d7657fcb06"
+    },
+    {
+      "path": "csrc/experiments/range_mask/CMakeLists.txt",
+      "sha256": "2e5c4ec40daccd1dde148639ba04e057d241e1b66a2c9cb9d035cbc92978af9b"
+    },
+    {
+      "path": "csrc/experiments/range_mask/README.md",
+      "sha256": "1b88c0bd49e347e845fff5684f1f5133b3238dff85ba9624db84dba0e43bf0c2"
+    },
+    {
+      "path": "csrc/experiments/range_mask/range_mask.h",
+      "sha256": "6e194937c98e2611c31afe879b544373ff133134eb6dc131356079ce48c185e2"
+    },
+    {
+      "path": "csrc/experiments/range_mask/range_mask_cpu.cpp",
+      "sha256": "24a36e4906943b78718e09d6f9c201bb338395cee77d039c5c3d5def114560d0"
+    },
+    {
+      "path": "csrc/experiments/range_mask/range_mask_probe.cpp",
+      "sha256": "ce840d58b2943a99ed71c7fc34ed7e605077c0f9183b44435ce79e2a63f3ea74"
+    },
+    {
+      "path": "csrc/experiments/request_window_decode_profile/CMakeLists.txt",
+      "sha256": "4c7fd52af08d5bd897a50e337b18dbfc5a4182349e37013041b2e10ee9370306"
+    },
+    {
+      "path": "csrc/experiments/request_window_decode_profile/README.md",
+      "sha256": "1096a8e0ff1a13942c4b4519ab9975ff4fa853ec8cb5fadc5e41a2fdb1f57bd0"
+    },
+    {
+      "path": "csrc/experiments/request_window_decode_profile/compare.py",
+      "sha256": "c78f9bc773c6719118e7f061ffcdbf95be78240271c5cfb313867980ddada8d6"
+    },
+    {
+      "path": "csrc/experiments/request_window_decode_profile/fixture.py",
+      "sha256": "27f5274a6058c514d82c7a29f73952111f0cb85585c79231bb18d13bc6bca8c5"
+    },
+    {
+      "path": "csrc/experiments/request_window_decode_profile/generate.py",
+      "sha256": "5507a3adc527513e7a7a1ffb0a8ad665afcaa68d3f2a3a5632d1ef7079765223"
+    },
+    {
+      "path": "csrc/experiments/request_window_decode_profile/manifest.json",
+      "sha256": "cad95169b13b36a5b94f6a040befefbe35d33223fdd64308ab117e22f8fa5db2"
+    },
+    {
+      "path": "csrc/experiments/request_window_decode_profile/normal.cpp",
+      "sha256": "fbe07e53b3378111584f6ea3c233153c2fc4fcdcae779598fffd3f07ca725494"
+    },
+    {
+      "path": "csrc/experiments/request_window_decode_profile/plan.json",
+      "sha256": "4294e714a0f19d54b106fa8e36b3c9608b15b1076006deb21ae9e2a3da65d360"
+    },
+    {
+      "path": "csrc/experiments/request_window_decode_profile/profile.cpp",
+      "sha256": "0df420ba90d55b45d5aee96bf3f08fce98522c0894d4ba802b52461db3cd46a0"
+    },
+    {
+      "path": "csrc/experiments/request_window_decode_profile/test_host_contract.py",
+      "sha256": "b9d0591809facee7ae96bfa163fcd4329a5f2a55c215722c5c7ac9d09111289a"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/CMakeLists.txt",
+      "sha256": "b93afe1c24bfdeca2b5dd94dcc20a670a4fbfb2978d988a5a144efea6631c765"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/README.md",
+      "sha256": "0d09d34fc239cb9ea6bafa48123fb4a405143c9a943847becded9598fce04e7b"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/bindings.py",
+      "sha256": "181491b3e277d7d4a9bf52c75ab2183ec6f34cbf20cd1e4a1e079d2a8c22aa6c"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/build_vm.sh",
+      "sha256": "3979588fd96c639839bb687e126393ca99abc506a8dcccea41ff400a2f48c125"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/c16_cpu_probe.cpp",
+      "sha256": "5f424f5d6f3380ef37b057cd2d449fee5b119cd5c77911a85efc094c3011022a"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/cpu_probe.cpp",
+      "sha256": "bbc3270bb920ab2ea6a5c1c8bdb87aabd02e982eb487931acafe399c97fa35b5"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/decode_bundle.cpp",
+      "sha256": "fea301dfc9f66874d4b937f4daa5d134c666850dda7aea06af3a0f1a6069426f"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/fixture.py",
+      "sha256": "012964c93350bd18dac2ed75a8cce80d05358ae2348f26cbbb5aab8f8b323364"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/generate.py",
+      "sha256": "7d61114ea636a4628905dddeffed3fb8bb62b3c0b3c105823d56feb282bf1323"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/member_pipeline_cluster4.cpp",
+      "sha256": "c4901c3910bc67ab821141bb10f90e407b2048e5aacc7b1625edf69b2a16e319"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/run_cpu.py",
+      "sha256": "934d5edfa8d8f5f3146e59a4e28ff2c01dc0016c7d357d9b063e9522bd6ce9e3"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/sources.json",
+      "sha256": "ff82b10ecd163b748422b5e2781b6e895fa865fdd3c918db10b799bae9f13386"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/window_range.cpp",
+      "sha256": "a5432dae1b46e4f739161d21edcaa393afcd51ba61a86f399246bd63486e98f1"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/window_range_balanced.cpp",
+      "sha256": "3d64838c25432c76121042890295ab62772e0a4d1005a4ff3c501de405d93dd1"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/window_range_cluster16.cpp",
+      "sha256": "1e88e6de8feac6da8e14c59430f8d5ad66fdf35d9a798fde6ee279359abd30db"
+    },
+    {
+      "path": "csrc/experiments/request_windows_attention/window_range_cluster4.cpp",
+      "sha256": "e26a59e5133ba2f5eb90f35f45c42e94477d46e1352df4e84bcaed9435410447"
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/CMakeLists.txt",
+      "sha256": "9625b17a17ccd41d9efbb86ff9ee38cdf9d26ebccf900cbf0451bd10d6f5d3c8"
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/README.md",
+      "sha256": "dfc68670ad9ed4d7c73a78c8a23c27eeb109c19a6eff47ad288d7025e2c47ae0"
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/fixture.py",
+      "sha256": "4a559e5f231fe0fb2a6a4199d1dd0e630f4c8c37922064d303bd9977d6ea6a30"
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/generate.py",
+      "sha256": "b7e0758ab762fbfb234c0d7061b5baadf86076ebdb78cd9c5518c568b4e7c282"
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/host_validation.json",
+      "sha256": "83abb679b83082b0afcd333b26f92edadab60adcee3a817edce167f480df80fe"
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/packed_store.cpp",
+      "sha256": "c3a69d4ad0ae4e2bf0edc2aa38299795ed40c7248db88cbe27073fc92c9bf225"
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/request_window_launch.h",
+      "sha256": "b9d60325765afe6b7f9b47d3351c761df983636d6606c5fb6148d91db0637998"
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/run_cpu.py",
+      "sha256": "af9e3884d593f6a4c916bbfabfdedc3b508fb1bcc5a9d10fd87d38c11aef33e2"
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/source_identity.json",
+      "sha256": "7744f2d52fadcc0714515cc08a50286122a742e01c138db08a161c0ef7501c1d"
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/store_cpu.cpp",
+      "sha256": "cad1c784b168e0f0c84f011e9521100832473097005c880a2b2527b381a57d9c"
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/test_fixture.py",
+      "sha256": "3699d9c56da58b1599768eb822ef6b6419738b0ba3e9dd10daaaa2d5556caa5c"
+    },
+    {
+      "path": "csrc/experiments/request_windows_store/window_store.cpp",
+      "sha256": "9f87c6850b4b528ac5f48b0f6efbc06c2e6d352330b42ebf7690650d344d809b"
+    },
+    {
+      "path": "csrc/experiments/shared_fp32/CMakeLists.txt",
+      "sha256": "9357947258c838c5041bebaff19a55e969c2b9585d097065a0ca4be16dc058af"
+    },
+    {
+      "path": "csrc/experiments/shared_fp32/README.md",
+      "sha256": "07469e6d93fc93b9fd99afb0c46eee11fee3aaa4618f6d42080cd3ddd5a91701"
+    },
+    {
+      "path": "csrc/experiments/shared_fp32/consumer.cpp",
+      "sha256": "a5c506730d36fd084c2937577126c67f41a3b91853e1e5aa67dfdf08d0983cf7"
+    },
+    {
+      "path": "csrc/experiments/shared_fp32/probe_consumer.cpp",
+      "sha256": "4254412d1d7f5ceec7cfbeee42efbf4a4ec0690fcb7204bb54cfd935741d83e7"
+    },
+    {
+      "path": "csrc/experiments/shared_fp32/probe_producer.cpp",
+      "sha256": "869259b84925a9fe57f133ef343041ac147400d02d8502bdb0468b7a6feb8e5c"
+    },
+    {
+      "path": "csrc/experiments/shared_fp32/producer.cpp",
+      "sha256": "debff93c63364a635c1656903a29639f0f1250a0d23ba8e9c78d488c7162e830"
+    },
+    {
+      "path": "csrc/experiments/striped_decode/CMakeLists.txt",
+      "sha256": "65e9614e24d2802bbf22020eac2ddfa078eb0730bef26b25b5438cee53282408"
+    },
+    {
+      "path": "csrc/experiments/striped_decode/metadata_kernel.cpp",
+      "sha256": "11e93466046b42b8010b57c44f9e635d6392346318335738f5c9dcf2cc5d8f17"
+    },
+    {
+      "path": "csrc/experiments/striped_decode/probe.cpp",
+      "sha256": "9d58a7337b962d246cb50d0f49a8599a3d34c8d9d025d5f29a3e29b53507cde7"
+    },
+    {
+      "path": "csrc/experiments/striped_decode/probe_metadata.cpp",
+      "sha256": "94988c41f5bd758bca4ab5621a2bb4de8b190f54b605fb7b1f2f6dd287d70a9c"
+    },
+    {
+      "path": "csrc/experiments/striped_prefill/CMakeLists.txt",
+      "sha256": "fc9818b037b5bc87b0697129e1bcf4d0a9b9cf6e5a28645f86331ae40a05618b"
+    },
+    {
+      "path": "csrc/experiments/striped_prefill/probe.cpp",
+      "sha256": "2883bb4e4166f4fd64dc84dc25146b5a8e37958aeff5d94008b99c5821b8df1c"
+    },
+    {
+      "path": "csrc/experiments/striped_prefill/probe_common.h",
+      "sha256": "71097e62629a98384f7c4a73c1f22b4e41f8160955fd3796a4161cc2035b9e53"
+    },
+    {
+      "path": "csrc/experiments/striped_store/CMakeLists.txt",
+      "sha256": "f993b925a29d0d7b18de60bda6325ee394103d734c1505af887902e7048fdd58"
+    },
+    {
+      "path": "csrc/experiments/striped_store/striped_store_probe.cpp",
+      "sha256": "2a72572f550cacb3971eae319cc0c0200a868f71f9884ef9fa0d89edfb63e6f6"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/CMakeLists.txt",
+      "sha256": "7984b24a2d421cafbc94866744df8c44e6a13c34cec3b2288f63e62719b06a52"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/README.md",
+      "sha256": "af71dc9758a12b13f64fe06ea5e96577ee1c650916468fe5a474f642bd6f5aa9"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/build.sh",
+      "sha256": "ec24205f380080c0540151a71bf0020375432a5f670196539ca7479a9880b786"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/compare.py",
+      "sha256": "f6bbb6cc50b790da4f708ccdb6e2fd145ae7b2288b56565a6f88a4c16cd4a5e1"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/fixture.py",
+      "sha256": "c16785ac86542e5ef74d01ddb9a1ef13575ba6c0a0866838a29a21dabd2d05d1"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/frozen_sources.json",
+      "sha256": "427c3bd856b41d57a3be253842f77f1bd55b060839f8a31248e35dc6bda2b872"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/generate.py",
+      "sha256": "b4b44c9177c3c9e0e80b43fde7b922164c7296d318fa3158d1698e376690541c"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/pack.h",
+      "sha256": "019fd5330ae0c7a850fbf015dee18df4c262f6440a6da387085c362d3b445ac3"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/pack_cpu.cpp",
+      "sha256": "735d13b03fe80e7a3bdfe6ee9f41a061f839d55b6ae9f2c7af2053a81b500adf"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/pack_kernel.cpp",
+      "sha256": "911ca6742538d25e77c48ce50f1d0c009bfd9051863461fdfc7eb36417335e0e"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/replay.py",
+      "sha256": "79de03e263b8129ce4c1be99aa7928e7436aed85e2378e92907dee8090410b1a"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/store_cpu.cpp",
+      "sha256": "f6403ae0f868c24e3d24e7424073342b779b9a4d4b43aa0799b9746d2582c005"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/writer_baseline.cpp",
+      "sha256": "674b6115f93b1c8387bdc8ba8440218c7b1e78e3563cb4f76e37624e0eae62eb"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/writer_pack.cpp",
+      "sha256": "c01eb6dce3a725567ed8b92032e1d0baaf9d674e02d7ebc0fe51599a5b458fab"
+    },
+    {
+      "path": "csrc/experiments/striped_store_simd_pack/writer_pack_init.cpp",
+      "sha256": "7cbb1b1205c380afcaa3893f23d9ef1337f468c13f7c437c2af8ef91bf123a17"
+    },
+    {
+      "path": "csrc/experiments/striped_unpack/CMakeLists.txt",
+      "sha256": "d821d229303bd4005fd86c62564adec35f7cc0fb036cdc2e47a34d42953e3211"
+    },
+    {
+      "path": "csrc/experiments/striped_unpack/kernel.cpp",
+      "sha256": "06065b7933a6f9a07ed4060fcfab684d76ee1f3756f4a0cf27252112ed9ffee7"
+    },
+    {
+      "path": "csrc/experiments/striped_unpack/probe.cpp",
+      "sha256": "840cc5c630f7e9d038eb98f3704d00985d9d3b67b3a5276f7087ae613625066c"
+    },
+    {
+      "path": "csrc/experiments/wide_fp32/CMakeLists.txt",
+      "sha256": "fa064286dd306a8e8314c77c7b61b3b5e22f1e2636abf6f19dd1231c7be86845"
+    },
+    {
+      "path": "csrc/experiments/wide_fp32/wide_fp32.cpp",
+      "sha256": "4e1973293564ddb0c7e04d497bb300f946bb6fa9891dadf706a069b7faef67c0"
+    },
+    {
+      "path": "csrc/experiments/wide_fp32/wide_fp32_cpu.cpp",
+      "sha256": "39818a9b29fa13f61b1d0e882a496b9a132322141daffbd6aec66e2065ba1bc8"
+    },
+    {
+      "path": "csrc/experiments/wide_fp32_simd/CMakeLists.txt",
+      "sha256": "1e3536c1a731b0c711114fe078dcb8adbf90215de9d1ec69940e01c1d5731f78"
+    },
+    {
+      "path": "csrc/experiments/wide_fp32_simd/compare_math.py",
+      "sha256": "05ca54c67e194fae42a03aeda898f92e89ad9d57a49b4f733c36316f2506f3e4"
+    },
+    {
+      "path": "csrc/experiments/wide_fp32_simd/host_camodel.py",
+      "sha256": "63bc518345bc5c25d47b3b668131a17b8cd05273050f7e0ab40108acaf832ea1"
+    },
+    {
+      "path": "csrc/experiments/wide_fp32_simd/kv256_baseline.cpp",
+      "sha256": "337b7fb101f55a43390e9bd935648b7d5c1a62f3c00eac0d6b3b11448aa37e0e"
+    },
+    {
+      "path": "csrc/experiments/wide_fp32_simd/kv256_cpu.cpp",
+      "sha256": "875ac9c4cfc03e7dd52430930e83aa1768b4376accdfb5047489b9f06396a271"
+    },
+    {
+      "path": "csrc/experiments/wide_fp32_simd/replay_math.py",
+      "sha256": "1f7b3c22d343714c2f99c99c21b41b7bc46a22602a4237fc3b74229e159f3834"
+    },
+    {
+      "path": "csrc/experiments/wide_fp32_simd/run_cpu.sh",
+      "sha256": "ab10c33843821037d2f6952ce2853b4f901cb5117d7d5b0993aa698619ec1af8"
+    },
+    {
+      "path": "csrc/experiments/wide_fp32_simd/wide_fp32_simd.cpp",
+      "sha256": "66c784fea11fb2cffad27b4827cebaf0111a0db5efe0f61b93252ab659c9b210"
+    },
+    {
+      "path": "csrc/experiments/wide_fp32_simd/wide_fp32_simd_cpu.cpp",
+      "sha256": "b573cc3099cbad1ed7d4eb6ac42ff7cc779c6ebfe1fb4bc7dfae9f714aaa3e26"
+    },
+    {
+      "path": "csrc/experiments/window_batch_decode/CAMODEL_PLAN.md",
+      "sha256": "eb26ddedfecb1aafaf6ab76df344055b5c47fece9811d7395db535cac01cfd71"
+    },
+    {
+      "path": "csrc/experiments/window_batch_decode/CMakeLists.txt",
+      "sha256": "db70cd3e32daf906c51d1e8c48909475570454600e03ed77e7514af8cc04a012"
+    },
+    {
+      "path": "csrc/experiments/window_batch_decode/README.md",
+      "sha256": "86cf7bfa65c2dee8d06fd4b8a9ed7f75b7ab8d2d183e8089cf106a43e49834c9"
+    },
+    {
+      "path": "csrc/experiments/window_batch_decode/compare_camodel.py",
+      "sha256": "d664d0b58c04f7f1e79d64e4ed994d1d80ebf6f930030d0e38b329422839e7b7"
+    },
+    {
+      "path": "csrc/experiments/window_batch_decode/fixture.py",
+      "sha256": "489237219ca6e83134bc20cb2f745a4ace760be388d67be349aca14c0f6f3a6b"
+    },
+    {
+      "path": "csrc/experiments/window_batch_decode/host_camodel.py",
+      "sha256": "8be3662330a2d19710253e755d2f5e654164b2d6a35fd32ed8093660fcb6ae42"
+    },
+    {
+      "path": "csrc/experiments/window_batch_decode/probe.cpp",
+      "sha256": "6ec80adb49cff8c90d08234730101204611d6e2d65a2b0c2cb9273f42858ac54"
+    },
+    {
+      "path": "csrc/experiments/window_batch_decode/replay_camodel.py",
+      "sha256": "2b435e186ad6aa8112d620fa83299cacc7c9b7a60d02f77b59a1b43e9447883c"
+    },
+    {
+      "path": "csrc/experiments/window_batch_decode/run_cpu.py",
+      "sha256": "5364b1953c57596e4b1f81ed1fe8f5d2312675e754a303d08d1df6083633acfd"
+    },
+    {
+      "path": "csrc/experiments/window_batch_decode/window_batch_decode.cpp",
+      "sha256": "4e782a8ce963e0e4637027b80eaa48b815bd7b517643a0c27c8e025bdc18e807"
+    },
+    {
+      "path": "csrc/include/oscar_aligned_cluster_launch.h",
+      "sha256": "ef59b60323e7c791a98bd7fe5c058e4cedebc28363222c0a5004570746358bc5"
+    },
+    {
+      "path": "csrc/include/oscar_aligned_decode_launch.h",
+      "sha256": "68c7b1890565669dc82757186d73a822a7494bbae586283360ee9359b9671d2e"
+    },
+    {
+      "path": "csrc/include/oscar_aligned_store_launch.h",
+      "sha256": "55a200d9cafeabe2be99ebecf47fecea860e34a94f795b451f6de5ab29e38eb9"
+    },
+    {
+      "path": "csrc/include/oscar_attention_launch.h",
+      "sha256": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df"
+    },
+    {
+      "path": "csrc/include/oscar_bf16_cluster_launch.h",
+      "sha256": "784c178aa10a23083a4b107b9eb27b24a473f449c2ac9d9a51dbc0e6696c75a3"
+    },
+    {
+      "path": "csrc/include/oscar_bf16_decode_launch.h",
+      "sha256": "d9f259f1f6da1ddd9f775f568ccc4857cc74baddb93f44c08fc3c8f66363bd88"
+    },
+    {
+      "path": "csrc/include/oscar_c16_l1_reuse_launch.h",
+      "sha256": "e551af6ad5e2d2574339458fd0e886696230256659cfd2caf22ae25b04c35b28"
+    },
+    {
+      "path": "csrc/include/oscar_c16_member_pipeline_launch.h",
+      "sha256": "cb1bf7491486c970bfaa9966980f5674ab1ca125df3a57b13e2478c1840a4fae"
+    },
+    {
+      "path": "csrc/include/oscar_current_only_launch.h",
+      "sha256": "747a39099b9c6f9b72f737684ea94112a8195b6c6e0cd4f5d2511293ee0a260d"
+    },
+    {
+      "path": "csrc/include/oscar_cv_schedule.h",
+      "sha256": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8"
+    },
+    {
+      "path": "csrc/include/oscar_hybrid_l1_decode_launch.h",
+      "sha256": "17279aacec0938a32a6771e8000df4e2ccb5bd23a861a8b85f435452d0aa6c45"
+    },
+    {
+      "path": "csrc/include/oscar_launch.h",
+      "sha256": "c8b51d610755a8053455757ce9a921aa401e756edc6234318edcf2b7d422bbe9"
+    },
+    {
+      "path": "csrc/include/oscar_mdl_decode_launch.h",
+      "sha256": "ee41be8a18c8db8dd6c42a16320482717735aef3c70e4aa7d4f9e0e9821a127f"
+    },
+    {
+      "path": "csrc/include/oscar_member_pipeline_launch.h",
+      "sha256": "fb87c667495249b94fecc3d626fa703f9332e7fd638eb533bc5c8d2fd4bc9a48"
+    },
+    {
+      "path": "csrc/include/oscar_official_cluster_launch.h",
+      "sha256": "c260d9005b9a9cd9360e0ea8f28f273ddf42be1a01b2bf14aacdbffbb06867b2"
+    },
+    {
+      "path": "csrc/include/oscar_official_decode_launch.h",
+      "sha256": "f6b42d74cfb1ae0367971938e7cbe80463568955feeeed15aa42904c35b436a7"
+    },
+    {
+      "path": "csrc/include/oscar_official_tasks_launch.h",
+      "sha256": "021ba204f4d171f788d9211bb1db93daf5c0e238d9a71d04d70f8e7cafc3eced"
+    },
+    {
+      "path": "csrc/include/oscar_request_window_launch.h",
+      "sha256": "7bce985a09880eb034f1aca514af4ca7f7326d375229583b1f93610b35235f71"
+    },
+    {
+      "path": "csrc/include/oscar_request_window_store_launch.h",
+      "sha256": "b9d60325765afe6b7f9b47d3351c761df983636d6606c5fb6148d91db0637998"
+    },
+    {
+      "path": "csrc/include/oscar_rotation_launch.h",
+      "sha256": "a92c685f318b680d5d7f07ec15bec954bba5eb5c6b19b298739bd4780932a99b"
+    },
+    {
+      "path": "csrc/include/oscar_rotation_vector_init_launch.h",
+      "sha256": "8664cf9b591f50c2bcd0faaca3e5a283c9a7eef9796889b3a01f6ada589e35b5"
+    },
+    {
+      "path": "csrc/kernels/attention_aligned_unpack.h",
+      "sha256": "ad8e7aee0a6521a71e9346fa12eac81f4b4356c01507a4257e5c72c866376e07"
+    },
+    {
+      "path": "csrc/kernels/attention_bf16_cast.h",
+      "sha256": "a83070f6737096c864a6be9f603a45dfbc8cfeb06dd1a0bb3e306b238fc5740f"
+    },
+    {
+      "path": "csrc/kernels/attention_c16_cast.h",
+      "sha256": "28ae39446d4321d16ecf02b24b1e977804d32bd13e27e572eda50fcdbe422bd7"
+    },
+    {
+      "path": "csrc/kernels/attention_c16_softmax_helpers.h",
+      "sha256": "ceb949f6550a7b288ef6fedf9d8dc3924f14e1c890fca5aaa0d1f7f73e070b58"
+    },
+    {
+      "path": "csrc/kernels/attention_cv.cpp",
+      "sha256": "febd753f3bc1bb67639e3ab24cf7f4742608eaada3e835e52d04b92b235c0ec4"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_aligned_cluster16.cpp",
+      "sha256": "76813a84b057769677fb1b31b77e7d93d3d189b120842ad1ebae1293afa25693"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_aligned_cluster16_control.cpp",
+      "sha256": "72169fe37bbbcadccb09a8e18ace583d6ede7831bcc84d10392833f1ff3632b4"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_aligned_cluster4.cpp",
+      "sha256": "e59ffe2985b5082db34e2633ef826164322daea6ae4917391f63f10bdf78bfe4"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_aligned_decode.cpp",
+      "sha256": "95cd76c1b105df263d78d7e11b7d7ed68a76d5529e33b6285d05b8c384fcbda8"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_bf16_cluster16.cpp",
+      "sha256": "2bc977be4faf9cf49d9b9b88664291c5739e120bc6c2662da8799c6e85b4a5aa"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_bf16_cluster4.cpp",
+      "sha256": "9b57d8bd6421ec3a594ddb3916465bcadaedfdd75bbcd1edc6ac4a9c9f2ec811"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_bf16_decode.cpp",
+      "sha256": "bf0795568c145015d32da6b471419ae82da5e74db03c3c521a004dfd744830f8"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_cluster.cpp",
+      "sha256": "c2412de931041f92a6fd340ad690accb32c12b1012f069342d296b3aa335ec82"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_decode_bundle.cpp",
+      "sha256": "d8171f0403cf176087e1c76c64e454e6fb1e74fd79252aab3b59e848cca19401"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_fast.cpp",
+      "sha256": "de351cc7706d1e632b9d7660a1836c4e8e6e30343da36dc4045fecc507c19e7a"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_fast_balanced.cpp",
+      "sha256": "b202a837794ea6dad7f1fd73ae2f8090df4fb3c5307b2f7672e69f8f2ca8dd7a"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_fast_cluster16.cpp",
+      "sha256": "f27da9b270f29effa7427996fa59c2f8c76b642fee8ed2e402d43fd2b5acc8cb"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_fast_cluster4.cpp",
+      "sha256": "42b67219b4e646ddb80b24ef4bd2736786bb01aef3ddb06651eff8b7c4dfeb03"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_fast_q1.cpp",
+      "sha256": "3e2eda0e28bf1e577e06a0c05edd7269467a9c4d721901ef9703a6f52c6cc4f1"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_hybrid_l1_decode.cpp",
+      "sha256": "ffe5a3a5e919e03c631f91f3cdb8b93305e8fe50571f86ab417175b47531d81d"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_l1_reuse_cluster16.cpp",
+      "sha256": "d6b8ee9040678e57a21bc72215b7cdc1b9cf67b2b395c57a574d4377d27621b3"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_mdl_decode.cpp",
+      "sha256": "1d451bd9c0c47e1d61a5531c785ef5b0a72a1978c79ee972dca8f7a1c6cf7b0f"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_member_pipeline_cluster16.cpp",
+      "sha256": "e2be8877e0a2b877bb8a9532c3940a5c6f2aa6d134cd834922a50e56477580af"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_member_pipeline_cluster4.cpp",
+      "sha256": "0795a07b1db0ba3d12e7ae762929b752d3bfb6d7475a925cf9e25e62ddeeb4bc"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_official_cluster16.cpp",
+      "sha256": "df843b991b0112e97b524f9b2d10f53f8805a650c2187ae47345a545b0f0582f"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_official_cluster4.cpp",
+      "sha256": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_official_decode.cpp",
+      "sha256": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_profile.cpp",
+      "sha256": "15d9b0800f61b51e85416c53061b3893e33efee69016a03b3454afcfd99b0188"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_q1.cpp",
+      "sha256": "498644c51c4857828e19ec7e8ef5064653b524d1e7bd2344aaec1b82481152d7"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_striped.cpp",
+      "sha256": "b03f82a22ebbedc63f06b4d98c04fd86a468697c0fa5b6e66d120194496a0af7"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_striped_balanced.cpp",
+      "sha256": "fa2034a47ad8f50bf91a9e1124cbdce1afa962dc2eb2a9277f0dea5c964e9250"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_striped_cluster16.cpp",
+      "sha256": "b851d25cfc24c94668347be91bc31863f50df4e5bd307becff887031cf3f9e06"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_striped_cluster4.cpp",
+      "sha256": "c7e090747a8d89ddfc6f1f116ae48fac5c3e90adff6ad23dadcc4c3762448ea1"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_striped_decode.cpp",
+      "sha256": "ef37d8a108e13fc549e33d2358697587a3ce6a20e0dd9f4ea4e727209b220e90"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_striped_decode_simd.cpp",
+      "sha256": "c67219ce15c98e932acaa8b1c5515a3f31c99dd6e4963823623528ba2b3a3930"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_window_range.cpp",
+      "sha256": "d6d50b5c91b0cdf64398edab2b071f0a5b69490759511f7dd8e4f1585b64ffc4"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_window_range_balanced.cpp",
+      "sha256": "1bae967a1b9e0126e627b5bf0c29e6b9799f6202d12a3bc373c2455ea00ca013"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_window_range_cluster16.cpp",
+      "sha256": "708d83d87d436550bd82f545d64af19cd5c5af34acc92b47fbe6375a0496f335"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_window_range_cluster4.cpp",
+      "sha256": "14b28f9181220432a15bcc3f23679e539473b12e01d858bbb00ff3345522ba65"
+    },
+    {
+      "path": "csrc/kernels/attention_fast_unpack.h",
+      "sha256": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566"
+    },
+    {
+      "path": "csrc/kernels/attention_hybrid_l1_unpack.h",
+      "sha256": "c6ea519cb28b8ee7fb35c13ac333941b6ba28c7ceabb49bcd8041b22a084cd94"
+    },
+    {
+      "path": "csrc/kernels/attention_official_tasks.cpp",
+      "sha256": "bfcc571b3917fd7f8ee187fe46aac64b5246acfcba0bb6118e5f71ef723cf06c"
+    },
+    {
+      "path": "csrc/kernels/attention_range_mask.h",
+      "sha256": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84"
+    },
+    {
+      "path": "csrc/kernels/attention_request_window.cpp",
+      "sha256": "ad2fffccbfc9ced927887e84fa3021fda6a49580f3ae94e5f9ac8f7a8a4d0505"
+    },
+    {
+      "path": "csrc/kernels/attention_request_window_balanced.cpp",
+      "sha256": "781966806cad6d5dc65fbcbbbc1ece92b282deacf37418d9f44f696cf732e0b3"
+    },
+    {
+      "path": "csrc/kernels/attention_request_window_cluster16.cpp",
+      "sha256": "36f93ef2bef848304e391fa0a85c78fa92be85d8c10b05d1e12bf65918f49cd5"
+    },
+    {
+      "path": "csrc/kernels/attention_request_window_cluster4.cpp",
+      "sha256": "aae9ed040757699d57259b6da6c71e4845af12ef3edf50cd207dd993abc9f1fc"
+    },
+    {
+      "path": "csrc/kernels/attention_request_window_decode.cpp",
+      "sha256": "60fc6925dac38092b18de81ce53e668fa39bfbf41451f8da56e225259d8c3a87"
+    },
+    {
+      "path": "csrc/kernels/attention_request_window_member_pipeline_cluster4.cpp",
+      "sha256": "9692e6edc13837cbcf88dd35a7010d95ba688880457eadb7994529d0b5c273f0"
+    },
+    {
+      "path": "csrc/kernels/attention_striped_unpack.h",
+      "sha256": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21"
+    },
+    {
+      "path": "csrc/kernels/attention_striped_unpack32.h",
+      "sha256": "c0aeab7e8fb9e078d37147ca411013f1c42e1547bd0a1d066ed3aece0c5514ca"
+    },
+    {
+      "path": "csrc/kernels/attention_striped_unpack_padded.h",
+      "sha256": "1551af143666d7465352426dbbe7024af8a86d81ee12d7ccfd9840c328e4ceee"
+    },
+    {
+      "path": "csrc/kernels/attention_striped_unpack_simd.h",
+      "sha256": "8baeac1d37395bd445f87b1f913b85e6d61bd1c681f5df0cfa21d04e0c6396ad"
+    },
+    {
+      "path": "csrc/kernels/attention_tasks.cpp",
+      "sha256": "1e6c7c4e4d5f71d8c8679573bcc3c4d523361f93ae4e16b2fa3606acb7bc3952"
+    },
+    {
+      "path": "csrc/kernels/current_only.cpp",
+      "sha256": "b56a5f31680fcd12d64ac5578d5739c633667310fece30fe60d80958685ca240"
+    },
+    {
+      "path": "csrc/kernels/hadamard_indices.h",
+      "sha256": "5c9b3905e89ebfd73bd6947d2f6d15f225e0d55ac19d0eba547dd2f4c132520f"
+    },
+    {
+      "path": "csrc/kernels/merge_lse.cpp",
+      "sha256": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723"
+    },
+    {
+      "path": "csrc/kernels/oscar_common.h",
+      "sha256": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+    },
+    {
+      "path": "csrc/kernels/rotate_clip_store.cpp",
+      "sha256": "e18bfc08673b3f5a49d24029c9ad34797e0d5b9114e79639ac01310658982748"
+    },
+    {
+      "path": "csrc/kernels/rotate_clip_store_request_packed.cpp",
+      "sha256": "b78a267de4d4a7f0fc8868619cf223ae4d68707716353cdf1a78d820d37dd269"
+    },
+    {
+      "path": "csrc/kernels/rotate_clip_store_request_window.cpp",
+      "sha256": "491d65a5d6ee1fe3d73602db3d2b6a9567b82c8990381dfd0a28bc5f769c1bb1"
+    },
+    {
+      "path": "csrc/kernels/rotate_clip_store_striped.cpp",
+      "sha256": "72c6a6fc456969ebcb40156fc64900313856c4dda854cee1dcfd758008c9d430"
+    },
+    {
+      "path": "csrc/kernels/rotate_vector_init.cpp",
+      "sha256": "3aed72cb5f8bb00596f95bbe6d3d1e5684157019996a9aef300b7672e4751c10"
+    },
+    {
+      "path": "csrc/kernels/status_guard.cpp",
+      "sha256": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab"
+    },
+    {
+      "path": "csrc/kernels/store_aligned_int2.cpp",
+      "sha256": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134"
+    },
+    {
+      "path": "csrc/kernels/store_int2.cpp",
+      "sha256": "5a6fa9619e399bb80bc0455c4426396d98510326bb899900b4b96c65d2b58506"
+    },
+    {
+      "path": "csrc/kernels/striped_store_pack.h",
+      "sha256": "95c2936c4e2f31bd444bb9126928e7cd270f3eaf38978b0a7801c107a5eb7f3e"
+    },
+    {
+      "path": "csrc/official_attention_bindings.cpp",
+      "sha256": "4c708a041f991b0b3373921f71f3e72354af04445140e6df6fbdd716b9cec28b"
+    },
+    {
+      "path": "csrc/request_window_attention_bindings.cpp",
+      "sha256": "911568f96abf19b03d3d4b5986d7395cdfc787b07276b5e7d5218885a75ee1a9"
+    },
+    {
+      "path": "csrc/request_window_store_bindings.cpp",
+      "sha256": "32d3040eda24c7a3cb9a2de36e28a95247c9e4eb3ca4fbbaca14f91b6045950f"
+    },
+    {
+      "path": "csrc/rotation_bindings.cpp",
+      "sha256": "87f97a819cb34f12f80473cd4c0bd8f8941e776d4a6436825d0403cfd5752703"
+    },
+    {
+      "path": "csrc/status_bindings.cpp",
+      "sha256": "2912ac6aa6be89eb0e6b8507b16c10a3ac8c996182bc52ed0afc87c45d3b2c40"
+    },
+    {
+      "path": "csrc/striped_attention_bindings.cpp",
+      "sha256": "02662b60f0ecdde204f9ace4c7a27df5b85b27915799a000f6d9732e650d67a7"
+    },
+    {
+      "path": "csrc/torch_bindings.cpp",
+      "sha256": "00d2ef71ab7bd0dd227c7ef6bfb98699ee1679ef96abd216f91a409f8bb27743"
+    },
+    {
+      "path": "oscar_ascend/integration/__init__.py",
+      "sha256": "b3dd8e07c5f89c5cb47c900b680da2bd6d88b8fb3f28c7eddf18efeddabd74bf"
+    },
+    {
+      "path": "oscar_ascend/integration/aligned_math.py",
+      "sha256": "88f16ef5cd13d1c668890b8b53f4d458870311b36c0c64b957f08e2bcdc7da56"
+    },
+    {
+      "path": "oscar_ascend/integration/backend.py",
+      "sha256": "104844953a118e37c567cbc9e8093172b8cc62c2e6e5247fd2ac9bbc14917bc3"
+    },
+    {
+      "path": "oscar_ascend/integration/bounded_whole_prefill.py",
+      "sha256": "023d108bbf967b4ae38c2004c3869787a4c347bd077430c5da05d81b73d60148"
+    },
+    {
+      "path": "oscar_ascend/integration/c16_breakdown.py",
+      "sha256": "272a231d285b353dcb0d6a9d0007b12dc7740d473e2d692a45db3e4845a281b2"
+    },
+    {
+      "path": "oscar_ascend/integration/cache_storage_ops.py",
+      "sha256": "627d5765e14592842527e54261a2d642728b5c3fc53c065d7d0195352b201587"
+    },
+    {
+      "path": "oscar_ascend/integration/compact_later_mtp.py",
+      "sha256": "ddd13aa7247572252302edd4394eafd9d3a996b238ec4824b50860f37b342c4f"
+    },
+    {
+      "path": "oscar_ascend/integration/compile_cache.py",
+      "sha256": "2c1ca01f8aadf8ac1685175bc749d0e6a82eab936f61f4e3bdc2404b97c3c2f8"
+    },
+    {
+      "path": "oscar_ascend/integration/current_attention.py",
+      "sha256": "79da9df9abecd6f02f386afac83b9c21e4d347fe02fcfe8376465f54192a823c"
+    },
+    {
+      "path": "oscar_ascend/integration/current_only_dispatch.py",
+      "sha256": "14b588f4a86c21660b023f3469cc17ecae84d592698b983cabf1faa7a7b08646"
+    },
+    {
+      "path": "oscar_ascend/integration/current_only_plan.py",
+      "sha256": "7f5fa1d9ab5a1f48c396eb9978f16b8fe8257a9115df5a4989b45825c4f2d366"
+    },
+    {
+      "path": "oscar_ascend/integration/draft_discard.py",
+      "sha256": "73007f4a84ef7f18d6448182ff20d0941e67bcfe525a6da2a26a702bc8a69889"
+    },
+    {
+      "path": "oscar_ascend/integration/dummy_context.py",
+      "sha256": "ae5d3155f5f9c9d1d6a56c90f1b3257bbb3febc904d706c4dc78ce0c7c797b94"
+    },
+    {
+      "path": "oscar_ascend/integration/first_draft_current_only.py",
+      "sha256": "d5a0ae0803ff19d6a13826a0b3b83e6be8750ccd8b1d328bad643e0ddf4f681d"
+    },
+    {
+      "path": "oscar_ascend/integration/greedy_sampling.py",
+      "sha256": "fa7865bd39df52ad2f9b2c8934eca40f8ff6fdc699dcb40d26e67760c96cf863"
+    },
+    {
+      "path": "oscar_ascend/integration/guard_diag.py",
+      "sha256": "26176a951f67f33dde806af4e273e7b6e7d57fe6c50825f0fa4a82c297a33b65"
+    },
+    {
+      "path": "oscar_ascend/integration/impl.py",
+      "sha256": "069ce6aa7038f1b9378efaf42eaaf4b9b8a400257b3304dd537442c7d49ebe3a"
+    },
+    {
+      "path": "oscar_ascend/integration/metadata.py",
+      "sha256": "85336e8265d4dc01f4637f3fbf58faa6f26cba6b1af54c5300650fe7e9640dd7"
+    },
+    {
+      "path": "oscar_ascend/integration/mixed_decode_split.py",
+      "sha256": "f7c49a7d92ddbf0aab5036a3b4828cfa0bd7c9989c2570d188370e26ad622181"
+    },
+    {
+      "path": "oscar_ascend/integration/model_identity.py",
+      "sha256": "116eb8cb156ba85c36d1929c58fa0530ef3c8f4fbd610034727a162d664bcaca"
+    },
+    {
+      "path": "oscar_ascend/integration/native_token_budget.py",
+      "sha256": "3471e2d7007c9daf747315e857607c9a3eaa6964286b512d4fb90aa802b84147"
+    },
+    {
+      "path": "oscar_ascend/integration/official_math.py",
+      "sha256": "b080a6a67f41819a15d3b88807b7e9819367c2d49d84cbe37ab26c5ad1ba6439"
+    },
+    {
+      "path": "oscar_ascend/integration/prefill_state_contract.py",
+      "sha256": "93e69c88ef61a4363eae7fd1b511c22365507fdd4f02c985abf783cf77478bba"
+    },
+    {
+      "path": "oscar_ascend/integration/prefix_checkpoint.py",
+      "sha256": "7e9eac665bcbaae7366ad53fbc3b0ae88838406bce2e09a7ab0d9aa45f421a9c"
+    },
+    {
+      "path": "oscar_ascend/integration/prepare_reuse.py",
+      "sha256": "3d1000086bcf58e8f8f9c823718efae89575cd81f29bd2711514cf37cfdaee8d"
+    },
+    {
+      "path": "oscar_ascend/integration/rotation_capture.py",
+      "sha256": "6e1cd989c845f66ac9489286bbc98fce86988585ea726a23f713b2bc9c40786d"
+    },
+    {
+      "path": "oscar_ascend/integration/runtime_api.py",
+      "sha256": "67e61db68604b68443af0d7cbffa098a19ede26a699d80034e061892785d029e"
+    },
+    {
+      "path": "oscar_ascend/integration/specs.py",
+      "sha256": "ae2a93a93f319e31baed9e4640e4ae9813c2c222c380e0ca4fea4add6dc5c1ea"
+    },
+    {
+      "path": "oscar_ascend/integration/whole_prefill_scheduler.py",
+      "sha256": "a4308ebf5d82b83e2dac3b5c6071ceaf813878a7543941929a0c89229f0afa16"
+    },
+    {
+      "path": "oscar_ascend/ops/__init__.py",
+      "sha256": "121a4a46ea91e1a0a4336de76e6003fc18a5fde411d3a1d1eaa706bb01710d08"
+    },
+    {
+      "path": "oscar_ascend/ops/contracts.py",
+      "sha256": "b8db0b7f7aefb094650f18af3c681fc35ba2cf9e1de0db9e676e084e50d1319c"
+    },
+    {
+      "path": "oscar_ascend/ops/cv_dispatch.py",
+      "sha256": "40a27b068cf051a8dee562340c3ea9c2133311de48c422fde9243267c7cbf5b6"
+    },
+    {
+      "path": "oscar_ascend/ops/hybrid_layout.py",
+      "sha256": "800a018907de75c5ae277bd356a36e3cd1cbd4e277c0fb5d07e26b1d154bc54c"
+    },
+    {
+      "path": "oscar_ascend/ops/loader.py",
+      "sha256": "f1643c42a7f63d500e13a6433e83064875a43f831c611c6557689f0092bbd07c"
+    },
+    {
+      "path": "oscar_ascend/ops/meta.py",
+      "sha256": "8ee78b1a4357c4da5811a0fc149f6c698bf1e3317822d7fc10ec9749ab8c6408"
+    },
+    {
+      "path": "oscar_ascend/ops/reference.py",
+      "sha256": "8fa1d3a7912073d0e37fd3189a2467ea0d8e4ddeb4dfb7ea1cec3e6add43c20c"
+    },
+    {
+      "path": "oscar_ascend/runtime.py",
+      "sha256": "4660b4a6c60384528a1c238215618ecb12d38926c0ae80a38da0c42b71accd9f"
+    },
+    {
+      "path": "tools/target_cli.py",
+      "sha256": "ca282f3b52f866159f2f8ad7ab9d3f5b616cdd0b707dfd43f979b6caff6e07b5"
+    },
+    {
+      "path": "tools/timer32k.py",
+      "sha256": "36a72ec8ab2f8883fda632307f6200919dbf493805b6679c878f41eec3ac336a"
+    }
+  ],
+  "protected_file_count": 690,
+  "prepare_device_rotations_source_unchanged": true,
+  "serving_argv_unchanged": "verified by test_candidate_changes_only_preparation_constants_and_keeps_native_argv",
+  "online_extra_matmuls": 0,
+  "online_extra_kv_bytes": 0,
+  "first_preparation_cost": "new native traces plus CPU optimization; not measured; existing phase timeout preserved",
+  "cold_pipeline": "tested on synthetic test_only CPU traces including real fitter, publication, load and warm-cache reuse",
+  "review": "independent source review blockers resolved",
+  "npu_execution": "not_run_per_project_instruction",
+  "graph_replay": "not_run",
+  "model_quality": "not_measured",
+  "performance": "not_measured",
+  "cann_build": "not_run_no_CANN_changes",
+  "git_push": "not_performed_current_workspace_branch_differs_from_authorized_remote_BF16_branch",
+  "git_diff_check": "passed",
+  "new_implementation_and_test_files": [
+    {
+      "path": "oscar_ascend/integration/optr_capture.py",
+      "sha256": "68e61c8b265e75564546c215488b9686dea61a8db89e02a6df80cf7aaa8e5cca"
+    },
+    {
+      "path": "oscar_ascend/optr_artifacts.py",
+      "sha256": "f5d6be5f33cfa47309508939796353ae45b883c0b559db93289d16f1d6475e5d"
+    },
+    {
+      "path": "oscar_ascend/optr_calibration.py",
+      "sha256": "99fba4893d7890d3b18ec59af5869b318726dd214883dd8971eac0345012638a"
+    },
+    {
+      "path": "oscar_ascend/optr_policy.py",
+      "sha256": "f8809b48a2c9b683288c2bea8c0e379a65a48a8ed00a8b89aa2fbcb411153d15"
+    },
+    {
+      "path": "oscar_ascend/optr_traces.py",
+      "sha256": "1d6f30fdb572bebb545d3991192a12b23e43930ce15769c1609b9102bfeb083e"
+    },
+    {
+      "path": "tests/test_optr_calibration.py",
+      "sha256": "d8e763085c108edfddb3a79213927128976dfa1efa91808ddf6bd3a78826eca3"
+    },
+    {
+      "path": "tests/test_optr_capture.py",
+      "sha256": "c0abf3a512a65255afa26f7b208e67cd5a84d9979a220fb5512f47702ac2bf9a"
+    },
+    {
+      "path": "tests/test_optr_integration.py",
+      "sha256": "317e5fb0abdaadfef7f297711e5605e3105e9df726426b573382908acd5af039"
+    },
+    {
+      "path": "tests/test_optr_traces.py",
+      "sha256": "addf24e9fe22a12d4ba460d6397bcd8eff34f203b0ef9f3c215bf9438e0367b2"
+    },
+    {
+      "path": "tools/calibrate_optr_traces.py",
+      "sha256": "0cdde737a31657fbb04ecf106f07a85f93044f9876c2ebf9437729324616e77f"
+    },
+    {
+      "path": "tools/prepare_optr_rotations.py",
+      "sha256": "0dd0b37d51f7589581159d170e4d5624571735873bce68fcbe267eff961111f1"
+    }
+  ]
+}

@@ -104,6 +104,12 @@ def _retained_capture(config, profile, fingerprint, layers, dim, *, testing):
 
 def prepare(config, *, config_path=None, output=None, import_pair=None, capture_runner=None,
             testing=False):
+    from oscar_ascend.optr_policy import validate_refinement_config
+    validate_refinement_config(config)
+    if config.get("rotation_refinement") == "optr":
+        from tools.prepare_optr_rotations import prepare as prepare_refinement
+        return prepare_refinement(config, config_path=config_path, output=output,
+            import_pair=import_pair, capture_runner=capture_runner, testing=testing)
     from oscar_ascend.rotations import (rotation_artifact_path,calibration_cache_identity,
         build_hadamard_artifact,load_artifact,save_artifact,validate_artifact,load_active_artifact)
     from oscar_ascend.rotation_calibration import (OFFICIAL_COMMIT,K_FILENAME,V_FILENAME,

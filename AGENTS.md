@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-27 OptR离线精修：用户要求review后直接改造且不增加在线开销。原生BF16 candidate在recipe3基础上启用独立recipe5输出感知旋转；gate后联合KV、GQA/全部TP输出、动态分片及独立test必须非劣，变更层验证总误差严格改善。仅准备/加载最终矩阵，不改线上CANN/runtime/timer/argv/MTP/GDN/graph。首次需要新增原生采样和CPU拟合，完整PT匹配后复用；不能冒称零启动成本或已达到模型/性能验收。显式Hadamard/W8A8保留旧路径；见docs/optr_implementation_20261027.md。
+
 > 2026-10-23部署配置更新：用户要求当前服务默认使用前四张物理卡 `0,1,2,3`、端口 `7878`，以 `configs/target.json` 为准，覆盖下方历史设备/端口默认值。固定candidate直启命令无需附加参数；`--rear-cards`仍为显式后四卡选项。档案 #123：所有子进程共用本次配置，不继承其他任务卡号。
 
 > 2026-10-23精度续修：candidate默认fp32_metadata读端策略，现有mode0用于prefill/decode/MTP/capture；已存FP32量化等级不再附加BF16 metadata/减法舍入。独立overlay继承v4门，旧合同/核不改；recipe3/PT/clip/旋转/窗口/argv保持，recipe4实验仍关闭。此为精度优先政策，区别官方CUDA的decode速度取舍；不能宣称模型已达1点以内。见docs/fp32_dequant_precision_20261023.md。

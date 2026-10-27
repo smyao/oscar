@@ -1,0 +1,178 @@
+{
+  "date": "2026-10-27",
+  "scope": "static_analysis_and_arithmetic_only",
+  "local_head": "4f4ef7ef589741c3866ee3aac62448ac142fe813",
+  "local_branch": "oscar-new-4-back",
+  "upstream": {
+    "url": "https://github.com/daniel-eai/Output-Aware-INT2-KV-Cache-Quantization",
+    "commit_from_archive_pax_comment": "66d46561b9bdf5d715f591e0f5845a4cbd927dee",
+    "tree_api_sha": "66d46561b9bdf5d715f591e0f5845a4cbd927dee",
+    "files": [
+      {
+        "path": "README.md",
+        "git_blob_sha": "6aa5721f61f25c54a912aa894fe10266e829fe05",
+        "sha256": "69336c6d2dd6e84fa0eaef3b86b0fa6353705dc00e2315df92805cab4b37fa73"
+      },
+      {
+        "path": "optr/calibrate_optr.py",
+        "git_blob_sha": "0be7f8efcddc16cf3703ce7d8db1dbafe2caac04",
+        "sha256": "21e4f991a57ad6cf370f195dd06ca7182c3fe41d9a46fbcbceec7d997cda31ae"
+      },
+      {
+        "path": "optr/optr_common.py",
+        "git_blob_sha": "7690a59d7beedf77b52aef6b282e1369aa60f7bf",
+        "sha256": "555a248042db64dc58a2d55e76de4c69e12768c2aecd206e427a1445e71fc615"
+      },
+      {
+        "path": "rotation/kv_calib_utils.py",
+        "git_blob_sha": "8f5575115abd985d70bae8dd8e796f19d15067ef",
+        "sha256": "9b3ea32c1e3df73f94559eb2241711f2c6459f3283b8657a64470e47468785f0"
+      },
+      {
+        "path": "rotation/compute_kv_rotation.py",
+        "git_blob_sha": "a80b31abb0926fa057673489f5d5075b97195bf1",
+        "sha256": "b01ea3cbd862e807803f925d41a789bf4f0c89a1977e002ef9775647e4b7e9b5"
+      },
+      {
+        "path": "rotation/compute_k_mean.py",
+        "git_blob_sha": "2d1b79c0a1f7bc96b6bab88e552111c878d5f78b",
+        "sha256": "cd2c36c3d40d1ce613e8620281cbc8c42a2dca22ddfb37859a35c7ed23220f06"
+      },
+      {
+        "path": "scripts/calibrate.sh",
+        "git_blob_sha": "a76abc23bdf939f32e4696be00ccac1484f4c609",
+        "sha256": "2daad1388143fde903e9fbd180a6a954c6b2896a971eeddd1390597b82f087f7"
+      },
+      {
+        "path": "scripts/prepare.sh",
+        "git_blob_sha": "a6a6cf60a156a178a4fe2b8d7173e7a6c1d16124",
+        "sha256": "23173da6d93ac9047fa7ef0d6b800696b9dad71e56afc8a76f8bd8692be43a8e"
+      },
+      {
+        "path": "run.sh",
+        "git_blob_sha": "3345fc483be7ac53846f1dc9b4e3154e91fc482d",
+        "sha256": "d906d1b967836c821969bc369768018cfa24603b435255c2d9012ae913d68ed9"
+      },
+      {
+        "path": "engine/sglang-research/python/sglang/srt/models/utils.py",
+        "git_blob_sha": "b94329076180c84e09d8757a4752e69e73852335",
+        "sha256": "b09ab84ea647c83026b81a9d2762b0eacc080e06bef78cd5a5a211525abe3e47"
+      },
+      {
+        "path": "engine/sglang-research/python/sglang/srt/layers/attention/quantized_kv_prefill.py",
+        "git_blob_sha": "75e11dcae8f0de72a60ccc601daec9e487903fdb",
+        "sha256": "80e878f3c2388ccfeb63d5d3a274488cc10b2624b20e01191a938ac12bf5164f"
+      },
+      {
+        "path": "engine/sglang-research/python/sglang/srt/layers/attention/triton_backend.py",
+        "git_blob_sha": "9602af6b91c30ac0a78b9f1a84d1cc5aa820372f",
+        "sha256": "4d02c4cd3e10fdd0985e7a96924c277edb68ea65bc8e6bbc1710449321ce7ec7"
+      },
+      {
+        "path": "engine/sglang-research/python/sglang/srt/mem_cache/unified_kv_pool.py",
+        "git_blob_sha": "5379ed70eb2909cc197da4e8e41d395482ccc7ec",
+        "sha256": "f018343a1be1a0f968d99212136c29907364aac3d84b8d708a022dd4f0bdba33"
+      },
+      {
+        "path": "engine/sglang-research/python/sglang/QuantKernel/oscar_rotation_clip_int2_kv.py",
+        "git_blob_sha": "c0be5265a90ea922d630cd2d211fab05bff9eb10",
+        "sha256": "bf6a52fa04c412117e1bc4f234d92a8d23e2a21a87c05ec089c8a03448dbe6a3"
+      }
+    ]
+  },
+  "local_files": [
+    {
+      "path": "tools/calibrate_model_rotations.py",
+      "sha256": "70b0307f4616ca86531b085c0851b0a0271fbd19128307c9c59afdf46e24556f"
+    },
+    {
+      "path": "oscar_ascend/integration/rotation_capture.py",
+      "sha256": "6e1cd989c845f66ac9489286bbc98fce86988585ea726a23f713b2bc9c40786d"
+    },
+    {
+      "path": "oscar_ascend/rotation_calibration.py",
+      "sha256": "feaf1daa00e72ec6b95d7f25eaa1e9a370fb5108c17432fca1cca1953c82379a"
+    },
+    {
+      "path": "oscar_ascend/rotations.py",
+      "sha256": "50d6459a911f6b6972e83a36363b4b140b64cf12c1e25f2d98f65298a338231b"
+    },
+    {
+      "path": "oscar_ascend/runtime.py",
+      "sha256": "4660b4a6c60384528a1c238215618ecb12d38926c0ae80a38da0c42b71accd9f"
+    },
+    {
+      "path": "oscar_ascend/integration/official_math.py",
+      "sha256": "b080a6a67f41819a15d3b88807b7e9819367c2d49d84cbe37ab26c5ad1ba6439"
+    },
+    {
+      "path": "tools/serving_variants.py",
+      "sha256": "354061eb242f8730ef0326674240b339f4f6539ad563c0924c8c0ceb3e7a5c4f"
+    },
+    {
+      "path": "tools/prepare_rotations.py",
+      "sha256": "54a09de4fb0bbc21362db500a4d8321b750d0f11cc6e1fc98069720e65f015d8"
+    },
+    {
+      "path": "configs/target.json",
+      "sha256": "c9dcee276297fcc5ee0bd77ae8e62c9d0620f3d00b5ab148e8f9bc0092b5d3fd"
+    },
+    {
+      "path": "csrc/kernels/store_aligned_int2.cpp",
+      "sha256": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134"
+    },
+    {
+      "path": "references/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py",
+      "sha256": "21fc9a2064f9b490ffcf3d61bacc8ddb67806a4c7490895a33128e65438838d3"
+    },
+    {
+      "path": "reports/official_alignment_20261018/official_qwen38_config.json",
+      "sha256": "191e0af232104ed8b65258cf3fb2b842e288008baca7633c11b82a1ac7203aab"
+    }
+  ],
+  "candidate": {
+    "model": "/softwarePlatform/models_directory/Qwen3.8-27B",
+    "tensor_parallel_size": 4,
+    "k_clip_ratio": 0.96,
+    "v_clip_ratio": 0.92,
+    "rotation_variant": "perhead_center",
+    "rotation_k_clip": null,
+    "oscar_dequant_policy": "fp32_metadata",
+    "experimental_official_math": true,
+    "max_num_batched_tokens": 16384,
+    "enable_prefix_caching": false
+  },
+  "arithmetic": {
+    "target_full_layers": 16,
+    "query_heads": 24,
+    "kv_heads": 4,
+    "head_dim": 256,
+    "bf16_rotation_total_bytes": 16777216,
+    "bf16_rotation_per_tp4_rank_bytes": 4194304,
+    "recommended_rotation_storage_increment_bytes": 0,
+    "mac_per_full_layer_per_rank_per_new_query_with_one_kv_token": 917504,
+    "group256_kv_bytes_per_token_head": 144,
+    "hypothetical_group128_fp32_metadata_bytes_per_token_head": 160,
+    "trace_estimates": [
+      {
+        "sequence_tokens": 32768,
+        "all_full_layers_qkv_and_gate_bf16_bytes": 15032385536,
+        "all_full_layers_kv_plus_64_q_gate_bf16_bytes": 2172649472,
+        "one_head_64_by_length_logits_fp32_bytes": 8388608
+      },
+      {
+        "sequence_tokens": 65536,
+        "all_full_layers_qkv_and_gate_bf16_bytes": 30064771072,
+        "all_full_layers_kv_plus_64_q_gate_bf16_bytes": 4320133120,
+        "one_head_64_by_length_logits_fp32_bytes": 16777216
+      }
+    ]
+  },
+  "execution": {
+    "external_code_executed": false,
+    "npu_connected": false,
+    "training_run": false,
+    "performance_measured": false,
+    "production_modified": false
+  }
+}

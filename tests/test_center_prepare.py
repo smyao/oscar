@@ -89,7 +89,8 @@ def test_candidate_enables_center_baseline_native_restore_shared_without_argv_ch
         assert 'rotation_k_clip' not in variant_config(candidate, variant)
     summary = runtime_feature_summary(candidate, 'candidate')
     assert summary['rotation_grouping'] == 'layer_kv_head'
-    assert summary['key_centering'] is True and summary['calibration_recipe_version'] == 3
+    assert summary['key_centering'] is True and summary['calibration_recipe_version'] == 5
+    assert summary['rotation_refinement'] == 'optr'
     assert summary['clip_policy'] == 'scalar'
     assert summary['head_clip_experiment_enabled'] is False
     assert summary['rotation_variant'] == 'perhead_center'
@@ -108,17 +109,19 @@ def test_both_one_key_plans_show_the_selected_center_recipe(entrypoint, capsys):
     assert plan['runtime_selection']['key_centering'] is True
     assert plan['runtime_selection']['clip_policy'] == 'scalar'
     assert plan['runtime_selection']['head_clip_experiment_enabled'] is False
-    assert plan['runtime_selection']['calibration_recipe_version'] == 3
+    assert plan['runtime_selection']['calibration_recipe_version'] == 5
     assert plan['runtime_selection']['max_num_batched_tokens'] == 16384
 
 
-def test_candidate_clears_residual_clip_policy_and_reuses_recipe3_not_recipe4(environment):
+def test_native_budget_candidate_clears_residual_clip_and_keeps_recipe3(environment):
     _, center, fingerprint = environment
     center_path, _ = publish_old(center, fingerprint)
     experimental = {**center, 'rotation_k_clip': 'per_head_calibrated'}
     clip_path, _ = publish_old(experimental, fingerprint)
     before = {**frozen_files(center_path), **frozen_files(clip_path)}
     candidate = variant_config(experimental, 'candidate')
+    assert candidate['use_native_token_budget'] is True
+    assert candidate.get('rotation_refinement') is None
     assert 'rotation_k_clip' not in candidate
     assert candidate['rotation_variant'] == 'perhead_center'
     assert rotations.rotation_artifact_path(candidate, fingerprint) == center_path

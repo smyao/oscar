@@ -83,6 +83,8 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if variant not in {None, "baseline", "candidate", "native"}:
         raise ValueError(f"unknown serving variant: {variant}")
     selected = dict(config)
+    if selected.get("rotation_refinement") not in (None, "optr"):
+        raise ValueError("rotation_refinement must be omitted or optr")
     if selected.get("rotation_variant") not in (None, "shared_v1", "perhead_center"):
         raise ValueError("rotation_variant must be omitted, shared_v1 or perhead_center")
     if selected.get("rotation_k_clip") not in (None, "per_head_calibrated"):
@@ -98,12 +100,21 @@ def variant_config(config: dict, variant: str | None) -> dict:
         selected.pop("rotation_k_clip", None)
         if selected.get("rotation_method", "qqt_sst") == "qqt_sst":
             selected["rotation_variant"] = "perhead_center"
+            if selected.get("quantization") is None:
+                selected["rotation_refinement"] = "optr"
+            else:
+                # Explicit W8A8 retains its existing recipe3 path: the
+                # output-aware native BF16 calibration cannot model its W_O.
+                selected.pop("rotation_refinement", None)
         else:
             selected.pop("rotation_variant", None)
+            selected.pop("rotation_refinement", None)
     elif variant in {"baseline", "native"}:
         selected.pop('oscar_dequant_policy', None)
         selected.pop("rotation_variant", None)
         selected.pop("rotation_k_clip", None)
+        selected.pop("rotation_refinement", None)
+        selected.pop("optr_calibration", None)
     if selected.get("rotation_variant") == "perhead_center" and selected.get("rotation_method", "qqt_sst") != "qqt_sst":
         raise ValueError("perhead_center requires qqt_sst calibration")
     if selected.get("rotation_k_clip") == "per_head_calibrated" and selected.get("rotation_variant") != "perhead_center":
@@ -210,6 +221,12 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if selected.get('oscar_dequant_policy') == 'fp32_metadata' and not all(selected.get(flag, False)
             for flag in ('experimental_official_math', 'experimental_aligned_math', 'experimental_bf16_attention')):
         raise ValueError('FP32 metadata reconstruction requires the official BF16 reader bundle')
+    if variant == "candidate" and native_budget:
+        # OptR binds source partitions to an explicit serving capacity. Keep
+        # the older optional native-budget route without inventing a budget.
+        selected.pop("rotation_refinement", None)
+    from oscar_ascend.optr_policy import validate_refinement_config
+    validate_refinement_config(selected)
     return selected
 
 
@@ -238,8 +255,9 @@ def runtime_feature_summary(config: dict, variant: str | None) -> dict:
             "key_centering":config.get("rotation_variant")=="perhead_center",
             "clip_policy":config.get("rotation_k_clip", "scalar"),
             "head_clip_experiment_enabled":config.get("rotation_k_clip")=="per_head_calibrated",
+            "rotation_refinement":config.get("rotation_refinement"),
             "calibration_recipe_version":None if config.get("rotation_method")=="hadamard" else
-                (4 if config.get("rotation_k_clip")=="per_head_calibrated" else 3)
+                (5 if config.get("rotation_refinement")=="optr" else 4 if config.get("rotation_k_clip")=="per_head_calibrated" else 3)
                 if config.get("rotation_variant")=="perhead_center" else 2,
             "metadata_dtype":"float32" if config.get("experimental_aligned_math",False) else "float16",
             "dequant_policy":config.get('oscar_dequant_policy', 'native_phase'),

@@ -1,0 +1,116 @@
+{
+  "date": "2026-10-27",
+  "scope": "source analysis and existing local CPU tests; no NPU, model, graph or performance execution",
+  "head": "c271083efed8b4fb0ae496ecfe42179c4dbfa8f7",
+  "branch": "oscar-new-4",
+  "effective_candidate_from_config_only": {
+    "variant": "candidate",
+    "optimizations": {
+      "official_math": true,
+      "c16_tuned": true,
+      "aligned_math": true,
+      "bf16_attention": true,
+      "history_cluster4": true,
+      "later_mtp_q1": true,
+      "fast_unpack": true,
+      "mixed_cv": true,
+      "striped_cache": true,
+      "quantization_bundle": true,
+      "current_only": true,
+      "first_mtp_current_fia": true,
+      "compact_later_mtp": true,
+      "mixed_decode_split": true,
+      "prepare_reuse": true,
+      "decode_bundle": true,
+      "mdl_decode": true,
+      "hybrid_l1_decode": true,
+      "c4_member_pipeline": true,
+      "c16_l1_reuse": true,
+      "whole_prefill": false
+    },
+    "aligned_c16_operator": "attention_cv_official_cluster16_out",
+    "attention_compute": {
+      "operands": "bfloat16",
+      "accumulator": "float32",
+      "softmax_lse_merge": "float32"
+    },
+    "oscar_math_profile": "oscar_bf16_attention_v4",
+    "attention_coordinate_frame": "all_sources_rotated",
+    "inverse_rotation": "once_after_fp32_merge",
+    "cached_precision_policy": "native_fixed_per_forward",
+    "rotation_method": "qqt_sst",
+    "rotation_variant": "perhead_center",
+    "rotation_grouping": "layer_kv_head",
+    "key_centering": true,
+    "clip_policy": "scalar",
+    "head_clip_experiment_enabled": false,
+    "calibration_recipe_version": 3,
+    "metadata_dtype": "float32",
+    "dequant_policy": "fp32_metadata",
+    "runtime_precision_contract": "oscar_bf16_runtime_fp32_dequant_v1",
+    "dequant_arithmetic": "float32_then_bfloat16",
+    "prefix_caching": false,
+    "token_budget_source": "explicit",
+    "max_num_batched_tokens": 16384,
+    "scheduler_cls": null,
+    "devices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "port": 7878
+  },
+  "runtime_loaded_identity_verified": false,
+  "config": {
+    "sink_tokens": 64,
+    "recent_tokens": 256,
+    "rotation_calibration_tokens": 30000,
+    "k_clip_ratio": 0.96,
+    "v_clip_ratio": 0.92,
+    "speculative_config": {
+      "method": "qwen3_5_mtp",
+      "num_speculative_tokens": 3,
+      "enforce_eager": true
+    },
+    "model": "/softwarePlatform/models_directory/Qwen3.8-27B",
+    "quantization": null
+  },
+  "source_sha256": {
+    "configs/target.json": "c9dcee276297fcc5ee0bd77ae8e62c9d0620f3d00b5ab148e8f9bc0092b5d3fd",
+    "tools/serving_variants.py": "354061eb242f8730ef0326674240b339f4f6539ad563c0924c8c0ceb3e7a5c4f",
+    "tools/calibrate_model_rotations.py": "70b0307f4616ca86531b085c0851b0a0271fbd19128307c9c59afdf46e24556f",
+    "oscar_ascend/rotation_calibration.py": "feaf1daa00e72ec6b95d7f25eaa1e9a370fb5108c17432fca1cca1953c82379a",
+    "oscar_ascend/integration/official_math.py": "b080a6a67f41819a15d3b88807b7e9819367c2d49d84cbe37ab26c5ad1ba6439",
+    "oscar_ascend/integration/aligned_math.py": "88f16ef5cd13d1c668890b8b53f4d458870311b36c0c64b957f08e2bcdc7da56",
+    "csrc/kernels/store_aligned_int2.cpp": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
+    "csrc/kernels/attention_cv_official_cluster16.cpp": "df843b991b0112e97b524f9b2d10f53f8805a650c2187ae47345a545b0f0582f",
+    "tests/test_clip_proxy_attention_counterexample.py": "f55173a615236178eeb0173d940c0779bec35a7ce5473d9f88edd6d1ea2ee214",
+    "tests/test_fp32_dequant_precision.py": "ff7cc03bee6fc468f987a4ba6ed4d0a58b5e8917af65a84b1564d4627b39d6c9"
+  },
+  "local_tests": {
+    "command": ".venv/bin/python -m pytest -q tests/test_clip_proxy_attention_counterexample.py tests/test_fp32_dequant_precision.py",
+    "exit_code": 0,
+    "result": "7 passed in 1.57s",
+    "scope": "CPU mathematical counterexamples and configuration contract only"
+  },
+  "arithmetic": {
+    "score_step_if_N127_pp": 0.7874015748031497,
+    "history_row_bytes_D256": {
+      "INT2_group256_FP32_metadata": 144,
+      "INT2_group128_FP32_metadata_proposal": 160,
+      "INT2_group64_FP32_metadata_proposal": 192,
+      "INT4_group256_FP32_metadata_proposal": 272,
+      "BF16": 1024
+    },
+    "logical_KV_only_compression_32768_S64_R256": 6.710628711857464
+  },
+  "upstream_review": {
+    "paper": "https://arxiv.org/html/2605.17757v1",
+    "official_implementation_source": "previous pinned audits in reports/official_semantics_audit_20261021 and reports/official_semantics_followup_20261021; OSCAR reference trees absent in this checkout",
+    "native_reference_roots": [
+      "references/vllm",
+      "references/vllm-ascend"
+    ]
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "date": "2026-10-27",
+  "branch": "codex/oscar-bf16-attention",
+  "base_commit": "232b563b69e01495046a9b0025ac9150bc11b9d7",
+  "status": "local_qualified_target_acceptance_pending",
+  "user_reported_performance": {
+    "scope": "200 requests, client BS32, APC enabled, budget16384",
+    "32k_vs_native_total_time": "about30 percent faster, user reports accepted",
+    "64k_vs_native_total_time": "about10 percent slower",
+    "new_candidate_performance": "not measured"
+  },
+  "production_changes": [
+    "q4/q1 same-RNE multi-repeat publication",
+    "C16 full-visibility current/window path",
+    "C16 sufficient finite bound with original exact predicate for uncertified blocks"
+  ],
+  "source_sha256": {
+    "csrc/kernels/attention_cv_official_cluster16.cpp": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
+    "csrc/kernels/attention_cv_official_decode.cpp": "1a106ba0fffd6591c2a69e0c2aee00112a34317f2b116f84be223e2f2a926536",
+    "csrc/kernels/attention_official_finite.h": "776e507213aba7e7089dcc5c4706944859f4916929e9ad1688a22b90d1abd695",
+    "tools/generate_official_attention.py": "69424e0aa1a4111cfcc69445fa2563a6c0d68bcb5bfe02c3971bd4e90d492932",
+    "tools/official_finite_transform.py": "46734e4e12a29e399eadc1ee32e3df82b56d528758b5e066ecb378b42d80f23e",
+    "tools/official_softmax_visibility_transform.py": "0057a2b315fd42efac84a564a1b641a392257c236a07eeddf91c14d05a58296a",
+    "tools/official_decode_cast_transform.py": "167a025353ae488c10acb24ef83b5ae626041b2cf230aa723dce03b136d2aa42"
+  },
+  "host": {
+    "status": "passed",
+    "tests": 101,
+    "log": "host_tests.log",
+    "generation": "exact source regeneration checked",
+    "candidate_routing": "q4/q1/C16 official readers; C4 unchanged"
+  },
+  "finite_cpu": {
+    "status": "passed",
+    "cases": 1507,
+    "report": "finite/summary.json"
+  },
+  "complete_c16_cpu": {
+    "status": "passed",
+    "cases": 6,
+    "comparison": [
+      "tasks",
+      "partial",
+      "lse",
+      "status",
+      "cluster_stats",
+      "healthy merged output and LSE"
+    ],
+    "reference": "independent v4 frozen0.005/0.005 or exact fault status",
+    "report": "c16/evidence/reports/long-context-c16-v3/summary.json"
+  },
+  "cann": {
+    "status": "passed",
+    "returncode": 0,
+    "scope": "complete official C16/C4/decode device library plus independent finite helper",
+    "log": "c16/device_build.log",
+    "sha256_binding": "c16/vm_artifact_sha256.txt"
+  },
+  "preserved_sources": "preserved_sources.json",
+  "work_model": "work_model.json",
+  "verification_failures_retained": [
+    {
+      "scope": "initial C16 harness startup",
+      "returncode": 127,
+      "reason": "libunified_dlog.so missing from LD_LIBRARY_PATH; corrected runner only",
+      "report": "c16/evidence/reports/long-context-c16/summary.json"
+    },
+    {
+      "scope": "q337/context577 complete control CPU attempt",
+      "caller_returncode": 120,
+      "reason": "SDK operation traces filled local VM disk; no numerical conclusion; original180s limit retained",
+      "raw_archive_local": "c16/first_cpu_attempt.tar.gz",
+      "raw_archive_sha256": "e83f0759237050a0ed25c157217534eeec761799a1c9f471e45c2ae80fd10216",
+      "replacement_coverage": "six complementary complete-kernel cases; no tolerance or production change"
+    },
+    {
+      "scope": "decode first-run resource failure",
+      "report": "decode/first_failure.json"
+    },
+    {
+      "scope": "finite isolated build setup corrections",
+      "report": "finite/summary.json"
+    }
+  ],
+  "acceptance": {
+    "source": "passed",
+    "host": "passed",
+    "CPU_debug": "passed",
+    "CANN": "passed",
+    "NPU": "not_run",
+    "graph_capture": "not_run",
+    "graph_replay": "not_run",
+    "model_quality": "not_run",
+    "32k_performance_non_regression": "not_run",
+    "64k_30_percent_target": "not_run"
+  },
+  "delivery": {
+    "command": "git pull --ff-only && bash scripts/install_serve.sh --variant candidate",
+    "argv": "unchanged; preserves users existing APC-enabled config",
+    "push": "branch-only delivery after this validation record",
+    "main_stable": "not_modified"
+  },
+  "complete_decode_cpu": {
+    "status": "passed",
+    "cases": 10,
+    "bitwise_files": 42,
+    "bitwise_bytes": 4149936,
+    "healthy_v4_oracles": 6,
+    "exact_fault_cases": 4,
+    "context850_prefetch_cases": [
+      "q4",
+      "q1"
+    ],
+    "report": "decode/summary.json"
+  },
+  "phase_logs_archive": {
+    "path": "phase_logs.tar.gz",
+    "files": 184,
+    "sha256": "b3b239513e3494d9fdd9ac046d1b76beba81304d61424909400ea62f29e0179b",
+    "extract_from_repository_root": "tar -xzf reports/long_context_20261027/phase_logs.tar.gz"
+  }
+}

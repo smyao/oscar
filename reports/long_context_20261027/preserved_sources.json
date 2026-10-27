@@ -1,0 +1,31 @@
+{
+  "base": "232b563b69e01495046a9b0025ac9150bc11b9d7",
+  "status": "byte_identical",
+  "files": {
+    "configs/target.json": "855b35cc37935ef52e61308a742c758b7ae7081b27d826ade33e6a89e00fc416",
+    "tools/serving_variants.py": "354061eb242f8730ef0326674240b339f4f6539ad563c0924c8c0ceb3e7a5c4f",
+    "scripts/install_serve.sh": "c113e55423a9b3a6fdb91111a9e1e804400d76e49ad96a3f1fbe551caa00e6fe",
+    "scripts/install_observe_serve.sh": "ce7f8cd69af2bb91a23f58ed87ba031e0a4c55c70b54f931f03b6f00074deb53",
+    "oscar_ascend/integration/impl.py": "069ce6aa7038f1b9378efaf42eaaf4b9b8a400257b3304dd537442c7d49ebe3a",
+    "oscar_ascend/runtime.py": "4660b4a6c60384528a1c238215618ecb12d38926c0ae80a38da0c42b71accd9f",
+    "oscar_ascend/ops/cv_dispatch.py": "40a27b068cf051a8dee562340c3ea9c2133311de48c422fde9243267c7cbf5b6",
+    "csrc/kernels/attention_c16_cast.h": "28ae39446d4321d16ecf02b24b1e977804d32bd13e27e572eda50fcdbe422bd7",
+    "csrc/kernels/attention_c16_softmax_helpers.h": "ceb949f6550a7b288ef6fedf9d8dc3924f14e1c890fca5aaa0d1f7f73e070b58",
+    "csrc/kernels/attention_cv_official_cluster4.cpp": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+    "configs/acceptance.json": "b044a5f485cd8cfed81dc76c7199717952853167b4e1d8e0aa9bff499b290811",
+    "configs/acceptance_aligned_bf16.json": "abc5db538ad9963d0c41dadc025b963503ed95033169577fafb892850a4fb45e",
+    "configs/acceptance_bf16.json": "0e137f2233f5d76418e4291cb773f0a501b7a9e3f2d35c1c6d485a51551b9054",
+    "configs/acceptance_fp32_dequant_bf16.json": "d1a1be1bf0711e99810260234bd409ac60b52fb6160da0c9cdafbd31f7bdf45c",
+    "configs/acceptance_official_bf16.json": "02c2765fac7d582d833ffca88841658af81b51f037ea86052fa0d34d0c38fed7",
+    "csrc/experiments/c16_timer_20261019/CMakeLists.txt": "3e6f03e8f41cf27fef76009c0a764fe742419dca3288aa13ba5cf1280c09cbd4",
+    "csrc/experiments/c16_timer_20261019/clock_contract.json": "118f6ab148b1d83755a6178ffa1722f11313d0ab6ec521545a420f56a8a35328",
+    "csrc/experiments/c16_timer_20261019/generate.py": "9178f7f4abcff33008d59bd4f6dc4e362351fb2f773bb3259d22a6571731db58",
+    "csrc/experiments/c16_timer_20261019/timer.h": "71bcfdd8f760ea9a6d33ddfc8f51c23d0b0390b1a9fc45cf36d2cc1bc6d48117",
+    "oscar_ascend/c16_timer_schema.py": "c82f88af2a5361135e84c5d96728d4acb10f1abe576757f4bc8c91626e90d0b5",
+    "oscar_ascend/integration/c16_breakdown.py": "272a231d285b353dcb0d6a9d0007b12dc7740d473e2d692a45db3e4845a281b2",
+    "scripts/test_c16_breakdown.sh": "47702ecb105e3543216577fd9b08f6d5204d35cc5bbee6031124460fc437bf11",
+    "tools/build_c16_timer.py": "42f25b534121236782286786ceecb14aa4af12346760a110b2553029cc932024",
+    "tools/c16_breakdown.py": "6091ebace6d49f7d1606ca61feb87f42e95ed42e6249b4426f4e5f01a2c33f5a",
+    "tools/summarize_c16_breakdown.py": "f0837b2dae1df462cc3afc3c8bfdd662c4af3d74bcd754c38c1fc1eaebf2443f"
+  }
+}

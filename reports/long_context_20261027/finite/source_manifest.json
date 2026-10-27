@@ -1,0 +1,8 @@
+{
+  "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964",
+  "csrc/kernels/attention_c16_softmax_helpers.h": "ceb949f6550a7b288ef6fedf9d8dc3924f14e1c890fca5aaa0d1f7f73e070b58",
+  "csrc/kernels/attention_official_finite.h": "776e507213aba7e7089dcc5c4706944859f4916929e9ad1688a22b90d1abd695",
+  "csrc/experiments/official_finite_20261027/CMakeLists.txt": "b153502c009019d0ee5efa6a5c1ce4afd92c58a07a6f088496cbdfd6b3ab9eef",
+  "csrc/experiments/official_finite_20261027/kernel.cpp": "fe614c8d31aea9a1caf4ccf08780b52a8569b5805e8b6000279e923188e9cda9",
+  "csrc/experiments/official_finite_20261027/main.cpp": "05ce79c9a60f66c4f37d087003fb83d40bf388ada3000cfcf0a370ab9ac98f6f"
+}

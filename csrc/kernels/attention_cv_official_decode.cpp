@@ -22,6 +22,10 @@
 #include "lib/matmul_intf.h"
 #include "lib/matmul/constant_tiling.h"
 #include "adv_api/activation/softmaxflashv2.h"
+// Archive #126/#145/#164, D.4: bounded q4/q1 publication only; preserve
+// all fences and numerical work, with no history restore or extra UB/GM.
+// The normal-mask helper batches at most255 repeats, including D256/HalfKv64.
+#include "attention_c16_cast.h"
 using namespace oscar_ascend_device;
 namespace {
 constexpr int32_t kQueryRows=32;
@@ -446,7 +450,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     // K/V remain natural [KV,D]; Cube handles the dtype-specific NZ16.
     Fence<HardEvent::V_MTE3>();
     auto rounded=naturalBuf.Get<bfloat16_t>();
-    oscar_bf16::CastRne(rounded,src,kElements);Fence<HardEvent::V_MTE3>();
+    oscar_c16_cast::CastRne(rounded,src,kElements);Fence<HardEvent::V_MTE3>();
     DataCopy(operands[2*(value?vOffset:kOffset)+slot*D],rounded,kElements);
     Fence<HardEvent::MTE3_V>();
   }
@@ -587,7 +591,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     // V2 may use padded UB rows to satisfy its 8-row shape, but Cube PV has
     // M=qcount*group and consumes only the real P rows from this block.
     auto rounded=naturalBuf.Get<bfloat16_t>();
-    oscar_bf16::CastRne(rounded,scores,activeRows*kKvRows);
+    oscar_c16_cast::CastRne(rounded,scores,activeRows*kKvRows);
     Fence<HardEvent::V_MTE3>();
     DataCopy(operands[2*pOffset+rowBase*kKvRows],rounded,activeRows*kKvRows);
     Fence<HardEvent::MTE3_V>();
@@ -666,7 +670,7 @@ template<int32_t D,int32_t OwnerTile> class AttentionCv {
     const int64_t slot=subtile*(2*kHalfKv)+lane*kHalfKv;
     Fence<HardEvent::V_MTE3>();
     auto rounded=naturalBuf.Get<bfloat16_t>();
-    oscar_bf16::CastRne(rounded,dequantBuf.Get<float>(),kElements);
+    oscar_c16_cast::CastRne(rounded,dequantBuf.Get<float>(),kElements);
     Fence<HardEvent::V_MTE3>();
     DataCopy(operands[2*((value?vOffset:kOffset)+buffer*(2*kKvRows*D))+slot*D],
         rounded,kElements);

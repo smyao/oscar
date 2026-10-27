@@ -1,0 +1,9 @@
+{
+  "csrc/experiments/official_finite_20261027/CMakeLists.txt": "6740d8aec8cf4bfbbe85d72236b211ee8708976a120bcd24b71469a81a12aceb",
+  "csrc/experiments/official_finite_20261027/kernel.cpp": "ba9d017be921de96269975b6c7d326d0318af0433974d8014051e41d83a82e1b",
+  "csrc/experiments/official_finite_20261027/README.md": "ea6889b5b8fd084cf58c091455224fe1974507a21db4e96dfe5689016efc05ef",
+  "csrc/experiments/official_finite_20261027/main.cpp": "05ce79c9a60f66c4f37d087003fb83d40bf388ada3000cfcf0a370ab9ac98f6f",
+  "csrc/kernels/attention_official_finite.h": "776e507213aba7e7089dcc5c4706944859f4916929e9ad1688a22b90d1abd695",
+  "csrc/kernels/attention_c16_softmax_helpers.h": "ceb949f6550a7b288ef6fedf9d8dc3924f14e1c890fca5aaa0d1f7f73e070b58",
+  "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+}

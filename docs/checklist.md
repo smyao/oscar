@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-10-27 长上下文：固定16384/当前APC配置，交付 official C16 finite/可见性与q4/q1转换优化；详细源码、主机工作量、CPU配对与CANN证据见[分析报告](long_context_optimization_20261027.md)。用户报告的既有32K达标和64K慢10%单列；本轮新核的NPU、图、模型质量与两长度性能不据本地验证升级，下方42项保持原状态。
+
 2026-10-23 PC续修：活跃请求保留原生GDN prompt checkpoint引用，修复主机复现的并发decode周转后联合命中丢失；共享、释放、async接缝见[报告](prefix_checkpoint_retention_20261023.md)。无本轮NPU/图/模型质量/性能验收，42项状态不升级。
 
 2026-10-21 v4数值修复：candidate使用统一旋转域、FP32 partial合并后一次逆旋转及固定forward精度边界；current-only、MTP、APC和新gate一起切换。源码/主机/CANN/CPU指令证据分列于[交付说明](official_math_v4_20261021.md)。C04/C05/E01的旧版本记录不冒充新版本真NPU验收；D08图/服务、模型质量及E06性能没有本轮目标证据，42项编号与未完成状态保持。

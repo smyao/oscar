@@ -1,0 +1,873 @@
+{
+  "actual_policy_host_replay": {
+    "32768": {
+      "conditional_retained_identical_prefix_tail": {
+        "assumed_cached_prefix_tokens": 29952,
+        "chunks": [
+          {
+            "cluster_size": 4,
+            "cluster_state_loop_gm_address_bytes": 2225553408,
+            "context_tokens": 29952,
+            "current_qk_pv_tile_pairs": 264,
+            "end_tokens": 31488,
+            "history_clusters": 18,
+            "history_qk_pv_tile_pairs": 8658,
+            "history_tiles_per_group": 117,
+            "history_unpack_tiles_after_reuse": 2340,
+            "native_current_only_tokens": 0,
+            "new_tokens": 1536,
+            "query_groups": 74,
+            "route": "official_C4",
+            "source_splits": 1,
+            "unclustered_history_groups": 2,
+            "warm_tokens": 1536,
+            "window_qk_pv_tile_pairs": 148
+          },
+          {
+            "cluster_size": 4,
+            "cluster_state_loop_gm_address_bytes": 1949736960,
+            "context_tokens": 31488,
+            "current_qk_pv_tile_pairs": 185,
+            "end_tokens": 32768,
+            "history_clusters": 15,
+            "history_qk_pv_tile_pairs": 7503,
+            "history_tiles_per_group": 123,
+            "history_unpack_tiles_after_reuse": 1968,
+            "native_current_only_tokens": 0,
+            "new_tokens": 1280,
+            "query_groups": 61,
+            "route": "official_C4",
+            "source_splits": 1,
+            "unclustered_history_groups": 1,
+            "warm_tokens": 1280,
+            "window_qk_pv_tile_pairs": 122
+          }
+        ],
+        "prompt_tokens": 32768,
+        "totals_per_request_per_full_layer_per_rank": {
+          "cluster_state_loop_gm_address_bytes": 4175290368,
+          "current_qk_pv_tile_pairs": 449,
+          "history_qk_pv_tile_pairs": 16161,
+          "history_unpack_tiles_after_reuse": 4308,
+          "native_current_only_tokens": 0,
+          "new_tokens": 2816,
+          "warm_tokens": 2816,
+          "window_qk_pv_tile_pairs": 270
+        }
+      },
+      "explicit_cold_prefill_work_model": {
+        "assumed_cached_prefix_tokens": 0,
+        "chunks": [
+          {
+            "cluster_size": 0,
+            "cluster_state_loop_gm_address_bytes": 0,
+            "context_tokens": 0,
+            "current_qk_pv_tile_pairs": 0,
+            "end_tokens": 16128,
+            "history_clusters": 0,
+            "history_qk_pv_tile_pairs": 0,
+            "history_tiles_per_group": 0,
+            "history_unpack_tiles_after_reuse": 0,
+            "native_current_only_tokens": 16128,
+            "new_tokens": 16128,
+            "query_groups": 768,
+            "route": "native_rotated_current_only",
+            "source_splits": 1,
+            "unclustered_history_groups": 0,
+            "warm_tokens": 0,
+            "window_qk_pv_tile_pairs": 0
+          },
+          {
+            "cluster_size": 16,
+            "cluster_state_loop_gm_address_bytes": 10918526976,
+            "context_tokens": 16128,
+            "current_qk_pv_tile_pairs": 18167,
+            "end_tokens": 29952,
+            "history_clusters": 41,
+            "history_qk_pv_tile_pairs": 41517,
+            "history_tiles_per_group": 63,
+            "history_unpack_tiles_after_reuse": 2772,
+            "native_current_only_tokens": 0,
+            "new_tokens": 13824,
+            "query_groups": 659,
+            "route": "official_C16",
+            "source_splits": 1,
+            "unclustered_history_groups": 3,
+            "warm_tokens": 13824,
+            "window_qk_pv_tile_pairs": 1318
+          },
+          {
+            "cluster_size": 4,
+            "cluster_state_loop_gm_address_bytes": 2225553408,
+            "context_tokens": 29952,
+            "current_qk_pv_tile_pairs": 264,
+            "end_tokens": 31488,
+            "history_clusters": 18,
+            "history_qk_pv_tile_pairs": 8658,
+            "history_tiles_per_group": 117,
+            "history_unpack_tiles_after_reuse": 2340,
+            "native_current_only_tokens": 0,
+            "new_tokens": 1536,
+            "query_groups": 74,
+            "route": "official_C4",
+            "source_splits": 1,
+            "unclustered_history_groups": 2,
+            "warm_tokens": 1536,
+            "window_qk_pv_tile_pairs": 148
+          },
+          {
+            "cluster_size": 4,
+            "cluster_state_loop_gm_address_bytes": 1949736960,
+            "context_tokens": 31488,
+            "current_qk_pv_tile_pairs": 185,
+            "end_tokens": 32768,
+            "history_clusters": 15,
+            "history_qk_pv_tile_pairs": 7503,
+            "history_tiles_per_group": 123,
+            "history_unpack_tiles_after_reuse": 1968,
+            "native_current_only_tokens": 0,
+            "new_tokens": 1280,
+            "query_groups": 61,
+            "route": "official_C4",
+            "source_splits": 1,
+            "unclustered_history_groups": 1,
+            "warm_tokens": 1280,
+            "window_qk_pv_tile_pairs": 122
+          }
+        ],
+        "prompt_tokens": 32768,
+        "totals_per_request_per_full_layer_per_rank": {
+          "cluster_state_loop_gm_address_bytes": 15093817344,
+          "current_qk_pv_tile_pairs": 18616,
+          "history_qk_pv_tile_pairs": 57678,
+          "history_unpack_tiles_after_reuse": 7080,
+          "native_current_only_tokens": 16128,
+          "new_tokens": 32768,
+          "warm_tokens": 16640,
+          "window_qk_pv_tile_pairs": 1588
+        }
+      },
+      "host_native_and_oscar_replays": {
+        "native": {
+          "arm": "native",
+          "cached_mamba_checkpoint_tokens": [
+            16128,
+            31488
+          ],
+          "chunks": [
+            {
+              "before": 0,
+              "end": 16128,
+              "joint_aligned": true,
+              "proposed": 16384,
+              "remaining_budget": 16384,
+              "scheduled": 16128,
+              "splitter_route": "pinned_native"
+            },
+            {
+              "before": 16128,
+              "end": 31488,
+              "joint_aligned": true,
+              "proposed": 16384,
+              "remaining_budget": 16384,
+              "scheduled": 15360,
+              "splitter_route": "pinned_native"
+            },
+            {
+              "before": 31488,
+              "end": 32768,
+              "joint_aligned": false,
+              "proposed": 1280,
+              "remaining_budget": 16384,
+              "scheduled": 1280,
+              "splitter_route": "pinned_native"
+            }
+          ],
+          "completed_prompt_tokens": 32768,
+          "full_block_tokens": 768,
+          "full_only_native_lookup_ceiling_tokens": 31488,
+          "global_token_budget": 16384,
+          "hash_block_tokens": 768,
+          "hypothetical": false,
+          "joint_aligned_mamba_checkpoint_tokens": [
+            16128,
+            31488
+          ],
+          "joint_lookup_alignment": 768,
+          "mamba_block_tokens": 768,
+          "mamba_speculative_blocks": 3,
+          "max_lookup_tokens": 32767,
+          "metadata_bytes": null,
+          "mtp": true,
+          "native_cache_config_block_size": 768,
+          "native_final_cache_position": 31488,
+          "production_policy_executed": false,
+          "production_terminal_checkpoint": null,
+          "prompt_tokens": 32768,
+          "remaining_budget_cycle": [
+            16384
+          ],
+          "repeat_prompt_hit_fraction": 0.9609375,
+          "repeat_prompt_hit_tokens": 31488,
+          "splitter_view_block_size": 768,
+          "status": "completed",
+          "symbolic_state_identity_violations": []
+        },
+        "oscar_fixed": {
+          "arm": "oscar_fixed",
+          "cached_mamba_checkpoint_tokens": [
+            16128,
+            29952,
+            31488
+          ],
+          "chunks": [
+            {
+              "before": 0,
+              "end": 16128,
+              "joint_aligned": true,
+              "proposed": 16384,
+              "remaining_budget": 16384,
+              "scheduled": 16128,
+              "splitter_route": "production_policy"
+            },
+            {
+              "before": 16128,
+              "end": 29952,
+              "joint_aligned": true,
+              "proposed": 16384,
+              "remaining_budget": 16384,
+              "scheduled": 13824,
+              "splitter_route": "production_policy"
+            },
+            {
+              "before": 29952,
+              "end": 31488,
+              "joint_aligned": false,
+              "proposed": 2816,
+              "remaining_budget": 16384,
+              "scheduled": 1536,
+              "splitter_route": "native_tail"
+            },
+            {
+              "before": 31488,
+              "end": 32768,
+              "joint_aligned": false,
+              "proposed": 1280,
+              "remaining_budget": 16384,
+              "scheduled": 1280,
+              "splitter_route": "native_tail"
+            }
+          ],
+          "completed_prompt_tokens": 32768,
+          "full_block_tokens": 2304,
+          "full_only_native_lookup_ceiling_tokens": 29952,
+          "global_token_budget": 16384,
+          "hash_block_tokens": 768,
+          "hypothetical": false,
+          "joint_aligned_mamba_checkpoint_tokens": [
+            16128,
+            29952
+          ],
+          "joint_lookup_alignment": 2304,
+          "mamba_block_tokens": 768,
+          "mamba_speculative_blocks": 3,
+          "max_lookup_tokens": 32767,
+          "metadata_bytes": 4,
+          "mtp": true,
+          "native_cache_config_block_size": 768,
+          "native_final_cache_position": 31488,
+          "production_policy_executed": true,
+          "production_terminal_checkpoint": 29952,
+          "prompt_tokens": 32768,
+          "remaining_budget_cycle": [
+            16384
+          ],
+          "repeat_prompt_hit_fraction": 0.9140625,
+          "repeat_prompt_hit_tokens": 29952,
+          "splitter_view_block_size": 768,
+          "status": "completed",
+          "symbolic_state_identity_violations": []
+        }
+      }
+    },
+    "65536": {
+      "conditional_retained_identical_prefix_tail": {
+        "assumed_cached_prefix_tokens": 62208,
+        "chunks": [
+          {
+            "cluster_size": 4,
+            "cluster_state_loop_gm_address_bytes": 6933454848,
+            "context_tokens": 62208,
+            "current_qk_pv_tile_pairs": 555,
+            "end_tokens": 64512,
+            "history_clusters": 27,
+            "history_qk_pv_tile_pairs": 26730,
+            "history_tiles_per_group": 243,
+            "history_unpack_tiles_after_reuse": 7047,
+            "native_current_only_tokens": 0,
+            "new_tokens": 2304,
+            "query_groups": 110,
+            "route": "official_C4",
+            "source_splits": 1,
+            "unclustered_history_groups": 2,
+            "warm_tokens": 2304,
+            "window_qk_pv_tile_pairs": 220
+          },
+          {
+            "cluster_size": 4,
+            "cluster_state_loop_gm_address_bytes": 3195666432,
+            "context_tokens": 64512,
+            "current_qk_pv_tile_pairs": 124,
+            "end_tokens": 65536,
+            "history_clusters": 12,
+            "history_qk_pv_tile_pairs": 12348,
+            "history_tiles_per_group": 252,
+            "history_unpack_tiles_after_reuse": 3276,
+            "native_current_only_tokens": 0,
+            "new_tokens": 1024,
+            "query_groups": 49,
+            "route": "official_C4",
+            "source_splits": 1,
+            "unclustered_history_groups": 1,
+            "warm_tokens": 1024,
+            "window_qk_pv_tile_pairs": 98
+          }
+        ],
+        "prompt_tokens": 65536,
+        "totals_per_request_per_full_layer_per_rank": {
+          "cluster_state_loop_gm_address_bytes": 10129121280,
+          "current_qk_pv_tile_pairs": 679,
+          "history_qk_pv_tile_pairs": 39078,
+          "history_unpack_tiles_after_reuse": 10323,
+          "native_current_only_tokens": 0,
+          "new_tokens": 3328,
+          "warm_tokens": 3328,
+          "window_qk_pv_tile_pairs": 318
+        }
+      },
+      "explicit_cold_prefill_work_model": {
+        "assumed_cached_prefix_tokens": 0,
+        "chunks": [
+          {
+            "cluster_size": 0,
+            "cluster_state_loop_gm_address_bytes": 0,
+            "context_tokens": 0,
+            "current_qk_pv_tile_pairs": 0,
+            "end_tokens": 16128,
+            "history_clusters": 0,
+            "history_qk_pv_tile_pairs": 0,
+            "history_tiles_per_group": 0,
+            "history_unpack_tiles_after_reuse": 0,
+            "native_current_only_tokens": 16128,
+            "new_tokens": 16128,
+            "query_groups": 768,
+            "route": "native_rotated_current_only",
+            "source_splits": 1,
+            "unclustered_history_groups": 0,
+            "warm_tokens": 0,
+            "window_qk_pv_tile_pairs": 0
+          },
+          {
+            "cluster_size": 16,
+            "cluster_state_loop_gm_address_bytes": 12782665728,
+            "context_tokens": 16128,
+            "current_qk_pv_tile_pairs": 24606,
+            "end_tokens": 32256,
+            "history_clusters": 48,
+            "history_qk_pv_tile_pairs": 48384,
+            "history_tiles_per_group": 63,
+            "history_unpack_tiles_after_reuse": 3024,
+            "native_current_only_tokens": 0,
+            "new_tokens": 16128,
+            "query_groups": 768,
+            "route": "official_C16",
+            "source_splits": 1,
+            "unclustered_history_groups": 0,
+            "warm_tokens": 16128,
+            "window_qk_pv_tile_pairs": 1536
+          },
+          {
+            "cluster_size": 16,
+            "cluster_state_loop_gm_address_bytes": 25565331456,
+            "context_tokens": 32256,
+            "current_qk_pv_tile_pairs": 24606,
+            "end_tokens": 48384,
+            "history_clusters": 48,
+            "history_qk_pv_tile_pairs": 96768,
+            "history_tiles_per_group": 126,
+            "history_unpack_tiles_after_reuse": 6048,
+            "native_current_only_tokens": 0,
+            "new_tokens": 16128,
+            "query_groups": 768,
+            "route": "official_C16",
+            "source_splits": 1,
+            "unclustered_history_groups": 0,
+            "warm_tokens": 16128,
+            "window_qk_pv_tile_pairs": 1536
+          },
+          {
+            "cluster_size": 16,
+            "cluster_state_loop_gm_address_bytes": 32755580928,
+            "context_tokens": 48384,
+            "current_qk_pv_tile_pairs": 18167,
+            "end_tokens": 62208,
+            "history_clusters": 41,
+            "history_qk_pv_tile_pairs": 124551,
+            "history_tiles_per_group": 189,
+            "history_unpack_tiles_after_reuse": 8316,
+            "native_current_only_tokens": 0,
+            "new_tokens": 13824,
+            "query_groups": 659,
+            "route": "official_C16",
+            "source_splits": 1,
+            "unclustered_history_groups": 3,
+            "warm_tokens": 13824,
+            "window_qk_pv_tile_pairs": 1318
+          },
+          {
+            "cluster_size": 4,
+            "cluster_state_loop_gm_address_bytes": 6933454848,
+            "context_tokens": 62208,
+            "current_qk_pv_tile_pairs": 555,
+            "end_tokens": 64512,
+            "history_clusters": 27,
+            "history_qk_pv_tile_pairs": 26730,
+            "history_tiles_per_group": 243,
+            "history_unpack_tiles_after_reuse": 7047,
+            "native_current_only_tokens": 0,
+            "new_tokens": 2304,
+            "query_groups": 110,
+            "route": "official_C4",
+            "source_splits": 1,
+            "unclustered_history_groups": 2,
+            "warm_tokens": 2304,
+            "window_qk_pv_tile_pairs": 220
+          },
+          {
+            "cluster_size": 4,
+            "cluster_state_loop_gm_address_bytes": 3195666432,
+            "context_tokens": 64512,
+            "current_qk_pv_tile_pairs": 124,
+            "end_tokens": 65536,
+            "history_clusters": 12,
+            "history_qk_pv_tile_pairs": 12348,
+            "history_tiles_per_group": 252,
+            "history_unpack_tiles_after_reuse": 3276,
+            "native_current_only_tokens": 0,
+            "new_tokens": 1024,
+            "query_groups": 49,
+            "route": "official_C4",
+            "source_splits": 1,
+            "unclustered_history_groups": 1,
+            "warm_tokens": 1024,
+            "window_qk_pv_tile_pairs": 98
+          }
+        ],
+        "prompt_tokens": 65536,
+        "totals_per_request_per_full_layer_per_rank": {
+          "cluster_state_loop_gm_address_bytes": 81232699392,
+          "current_qk_pv_tile_pairs": 68058,
+          "history_qk_pv_tile_pairs": 308781,
+          "history_unpack_tiles_after_reuse": 27711,
+          "native_current_only_tokens": 16128,
+          "new_tokens": 65536,
+          "warm_tokens": 49408,
+          "window_qk_pv_tile_pairs": 4708
+        }
+      },
+      "host_native_and_oscar_replays": {
+        "native": {
+          "arm": "native",
+          "cached_mamba_checkpoint_tokens": [
+            16128,
+            32256,
+            48384,
+            64512
+          ],
+          "chunks": [
+            {
+              "before": 0,
+              "end": 16128,
+              "joint_aligned": true,
+              "proposed": 16384,
+              "remaining_budget": 16384,
+              "scheduled": 16128,
+              "splitter_route": "pinned_native"
+            },
+            {
+              "before": 16128,
+              "end": 32256,
+              "joint_aligned": true,
+              "proposed": 16384,
+              "remaining_budget": 16384,
+              "scheduled": 16128,
+              "splitter_route": "pinned_native"
+            },
+            {
+              "before": 32256,
+              "end": 48384,
+              "joint_aligned": true,
+              "proposed": 16384,
+              "remaining_budget": 16384,
+              "scheduled": 16128,
+              "splitter_route": "pinned_native"
+            },
+            {
+              "before": 48384,
+              "end": 64512,
+              "joint_aligned": true,
+              "proposed": 16384,
+              "remaining_budget": 16384,
+              "scheduled": 16128,
+              "splitter_route": "pinned_native"
+            },
+            {
+              "before": 64512,
+              "end": 65536,
+              "joint_aligned": false,
+              "proposed": 1024,
+              "remaining_budget": 16384,
+              "scheduled": 1024,
+              "splitter_route": "pinned_native"
+            }
+          ],
+          "completed_prompt_tokens": 65536,
+          "full_block_tokens": 768,
+          "full_only_native_lookup_ceiling_tokens": 64512,
+          "global_token_budget": 16384,
+          "hash_block_tokens": 768,
+          "hypothetical": false,
+          "joint_aligned_mamba_checkpoint_tokens": [
+            16128,
+            32256,
+            48384,
+            64512
+          ],
+          "joint_lookup_alignment": 768,
+          "mamba_block_tokens": 768,
+          "mamba_speculative_blocks": 3,
+          "max_lookup_tokens": 65535,
+          "metadata_bytes": null,
+          "mtp": true,
+          "native_cache_config_block_size": 768,
+          "native_final_cache_position": 64512,
+          "production_policy_executed": false,
+          "production_terminal_checkpoint": null,
+          "prompt_tokens": 65536,
+          "remaining_budget_cycle": [
+            16384
+          ],
+          "repeat_prompt_hit_fraction": 0.984375,
+          "repeat_prompt_hit_tokens": 64512,
+          "splitter_view_block_size": 768,
+          "status": "completed",
+          "symbolic_state_identity_violations": []
+        },
+        "oscar_fixed": {
+          "arm": "oscar_fixed",
+          "cached_mamba_checkpoint_tokens": [
+            16128,
+            32256,
+            48384,
+            62208,
+            64512
+          ],
+          "chunks": [
+            {
+              "before": 0,
+              "end": 16128,
+              "joint_aligned": true,
+              "proposed": 16384,
+              "remaining_budget": 16384,
+              "scheduled": 16128,
+              "splitter_route": "production_policy"
+            },
+            {
+              "before": 16128,
+              "end": 32256,
+              "joint_aligned": true,
+              "proposed": 16384,
+              "remaining_budget": 16384,
+              "scheduled": 16128,
+              "splitter_route": "production_policy"
+            },
+            {
+              "before": 32256,
+              "end": 48384,
+              "joint_aligned": true,
+              "proposed": 16384,
+              "remaining_budget": 16384,
+              "scheduled": 16128,
+              "splitter_route": "production_policy"
+            },
+            {
+              "before": 48384,
+              "end": 62208,
+              "joint_aligned": true,
+              "proposed": 16384,
+              "remaining_budget": 16384,
+              "scheduled": 13824,
+              "splitter_route": "production_policy"
+            },
+            {
+              "before": 62208,
+              "end": 64512,
+              "joint_aligned": true,
+              "proposed": 3328,
+              "remaining_budget": 16384,
+              "scheduled": 2304,
+              "splitter_route": "native_tail"
+            },
+            {
+              "before": 64512,
+              "end": 65536,
+              "joint_aligned": false,
+              "proposed": 1024,
+              "remaining_budget": 16384,
+              "scheduled": 1024,
+              "splitter_route": "native_tail"
+            }
+          ],
+          "completed_prompt_tokens": 65536,
+          "full_block_tokens": 2304,
+          "full_only_native_lookup_ceiling_tokens": 62208,
+          "global_token_budget": 16384,
+          "hash_block_tokens": 768,
+          "hypothetical": false,
+          "joint_aligned_mamba_checkpoint_tokens": [
+            16128,
+            32256,
+            48384,
+            62208,
+            64512
+          ],
+          "joint_lookup_alignment": 2304,
+          "mamba_block_tokens": 768,
+          "mamba_speculative_blocks": 3,
+          "max_lookup_tokens": 65535,
+          "metadata_bytes": 4,
+          "mtp": true,
+          "native_cache_config_block_size": 768,
+          "native_final_cache_position": 64512,
+          "production_policy_executed": true,
+          "production_terminal_checkpoint": 62208,
+          "prompt_tokens": 65536,
+          "remaining_budget_cycle": [
+            16384
+          ],
+          "repeat_prompt_hit_fraction": 0.94921875,
+          "repeat_prompt_hit_tokens": 62208,
+          "splitter_view_block_size": 768,
+          "status": "completed",
+          "symbolic_state_identity_violations": []
+        }
+      }
+    }
+  },
+  "decode_publication_cast_issue_examples": [
+    {
+      "converted_elements": 1536,
+      "elements": 1536,
+      "new_batched_repeat_instructions": 1,
+      "old_single_repeat_instructions": 24
+    },
+    {
+      "converted_elements": 4096,
+      "elements": 4096,
+      "new_batched_repeat_instructions": 1,
+      "old_single_repeat_instructions": 64
+    },
+    {
+      "converted_elements": 16384,
+      "elements": 16384,
+      "new_batched_repeat_instructions": 2,
+      "old_single_repeat_instructions": 256
+    }
+  ],
+  "evidence_kind": "source_work_counts_and_host_native_contract_replay_not_timing",
+  "ideal_16k_cold_chunks": {
+    "32768": {
+      "assumed_cached_prefix_tokens": 0,
+      "chunks": [
+        {
+          "cluster_size": 0,
+          "cluster_state_loop_gm_address_bytes": 0,
+          "context_tokens": 0,
+          "current_qk_pv_tile_pairs": 0,
+          "end_tokens": 16384,
+          "history_clusters": 0,
+          "history_qk_pv_tile_pairs": 0,
+          "history_tiles_per_group": 0,
+          "history_unpack_tiles_after_reuse": 0,
+          "native_current_only_tokens": 16384,
+          "new_tokens": 16384,
+          "query_groups": 781,
+          "route": "native_rotated_current_only",
+          "source_splits": 1,
+          "unclustered_history_groups": 0,
+          "warm_tokens": 0,
+          "window_qk_pv_tile_pairs": 0
+        },
+        {
+          "cluster_size": 16,
+          "cluster_state_loop_gm_address_bytes": 12985565184,
+          "context_tokens": 16384,
+          "current_qk_pv_tile_pairs": 25438,
+          "end_tokens": 32768,
+          "history_clusters": 48,
+          "history_qk_pv_tile_pairs": 49984,
+          "history_tiles_per_group": 64,
+          "history_unpack_tiles_after_reuse": 3904,
+          "native_current_only_tokens": 0,
+          "new_tokens": 16384,
+          "query_groups": 781,
+          "route": "official_C16",
+          "source_splits": 1,
+          "unclustered_history_groups": 13,
+          "warm_tokens": 16384,
+          "window_qk_pv_tile_pairs": 1562
+        }
+      ],
+      "prompt_tokens": 32768,
+      "totals_per_request_per_full_layer_per_rank": {
+        "cluster_state_loop_gm_address_bytes": 12985565184,
+        "current_qk_pv_tile_pairs": 25438,
+        "history_qk_pv_tile_pairs": 49984,
+        "history_unpack_tiles_after_reuse": 3904,
+        "native_current_only_tokens": 16384,
+        "new_tokens": 32768,
+        "warm_tokens": 16384,
+        "window_qk_pv_tile_pairs": 1562
+      }
+    },
+    "65536": {
+      "assumed_cached_prefix_tokens": 0,
+      "chunks": [
+        {
+          "cluster_size": 0,
+          "cluster_state_loop_gm_address_bytes": 0,
+          "context_tokens": 0,
+          "current_qk_pv_tile_pairs": 0,
+          "end_tokens": 16384,
+          "history_clusters": 0,
+          "history_qk_pv_tile_pairs": 0,
+          "history_tiles_per_group": 0,
+          "history_unpack_tiles_after_reuse": 0,
+          "native_current_only_tokens": 16384,
+          "new_tokens": 16384,
+          "query_groups": 781,
+          "route": "native_rotated_current_only",
+          "source_splits": 1,
+          "unclustered_history_groups": 0,
+          "warm_tokens": 0,
+          "window_qk_pv_tile_pairs": 0
+        },
+        {
+          "cluster_size": 16,
+          "cluster_state_loop_gm_address_bytes": 12985565184,
+          "context_tokens": 16384,
+          "current_qk_pv_tile_pairs": 25438,
+          "end_tokens": 32768,
+          "history_clusters": 48,
+          "history_qk_pv_tile_pairs": 49984,
+          "history_tiles_per_group": 64,
+          "history_unpack_tiles_after_reuse": 3904,
+          "native_current_only_tokens": 0,
+          "new_tokens": 16384,
+          "query_groups": 781,
+          "route": "official_C16",
+          "source_splits": 1,
+          "unclustered_history_groups": 13,
+          "warm_tokens": 16384,
+          "window_qk_pv_tile_pairs": 1562
+        },
+        {
+          "cluster_size": 16,
+          "cluster_state_loop_gm_address_bytes": 25971130368,
+          "context_tokens": 32768,
+          "current_qk_pv_tile_pairs": 25438,
+          "end_tokens": 49152,
+          "history_clusters": 48,
+          "history_qk_pv_tile_pairs": 99968,
+          "history_tiles_per_group": 128,
+          "history_unpack_tiles_after_reuse": 7808,
+          "native_current_only_tokens": 0,
+          "new_tokens": 16384,
+          "query_groups": 781,
+          "route": "official_C16",
+          "source_splits": 1,
+          "unclustered_history_groups": 13,
+          "warm_tokens": 16384,
+          "window_qk_pv_tile_pairs": 1562
+        },
+        {
+          "cluster_size": 16,
+          "cluster_state_loop_gm_address_bytes": 38956695552,
+          "context_tokens": 49152,
+          "current_qk_pv_tile_pairs": 25438,
+          "end_tokens": 65536,
+          "history_clusters": 48,
+          "history_qk_pv_tile_pairs": 149952,
+          "history_tiles_per_group": 192,
+          "history_unpack_tiles_after_reuse": 11712,
+          "native_current_only_tokens": 0,
+          "new_tokens": 16384,
+          "query_groups": 781,
+          "route": "official_C16",
+          "source_splits": 1,
+          "unclustered_history_groups": 13,
+          "warm_tokens": 16384,
+          "window_qk_pv_tile_pairs": 1562
+        }
+      ],
+      "prompt_tokens": 65536,
+      "totals_per_request_per_full_layer_per_rank": {
+        "cluster_state_loop_gm_address_bytes": 77913391104,
+        "current_qk_pv_tile_pairs": 76314,
+        "history_qk_pv_tile_pairs": 299904,
+        "history_unpack_tiles_after_reuse": 23424,
+        "native_current_only_tokens": 16384,
+        "new_tokens": 65536,
+        "warm_tokens": 49152,
+        "window_qk_pv_tile_pairs": 4686
+      }
+    }
+  },
+  "schema_version": 1,
+  "scope": {
+    "apc_replay": "APC on; isolated request receives full16384 remaining budget each step",
+    "bytes": "GM address bytes, not measured L2/HBM or elapsed time",
+    "cold_samples": "declared zero-hit examples, not the observed run's hit rate",
+    "counts": "per request, per FULL layer, per TP rank; Hq6/Hkv1/D256",
+    "not_modeled": [
+      "BS32 arrival/admission/preemption trajectory",
+      "MTP acceptance",
+      "real prefix distribution/eviction",
+      "GDN arithmetic",
+      "device overlap/cache"
+    ]
+  },
+  "source_sha256": {
+    "csrc/kernels/attention_cv_official_cluster16.cpp": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
+    "csrc/kernels/attention_cv_official_cluster4.cpp": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+    "csrc/kernels/attention_cv_official_decode.cpp": "1a106ba0fffd6591c2a69e0c2aee00112a34317f2b116f84be223e2f2a926536",
+    "csrc/kernels/attention_official_tasks.cpp": "bfcc571b3917fd7f8ee187fe46aac64b5246acfcba0bb6118e5f71ef723cf06c",
+    "oscar_ascend/integration/impl.py": "069ce6aa7038f1b9378efaf42eaaf4b9b8a400257b3304dd537442c7d49ebe3a",
+    "oscar_ascend/integration/prefix_checkpoint.py": "7e9eac665bcbaae7366ad53fbc3b0ae88838406bce2e09a7ab0d9aa45f421a9c",
+    "oscar_ascend/ops/cv_dispatch.py": "40a27b068cf051a8dee562340c3ea9c2133311de48c422fde9243267c7cbf5b6",
+    "oscar_ascend/runtime.py": "4660b4a6c60384528a1c238215618ecb12d38926c0ae80a38da0c42b71accd9f",
+    "tools/analyze_long_context_work.py": "77eab9975c17f7fcdbd7d0dacfb6f9cdb3bf9470724e46f50ca55e612d87293b",
+    "tools/experiments/prefix_checkpoint_audit.py": "8c39ab6bae7622c8c7de639147a557c2c62321c816181c369749323c340e69dc"
+  },
+  "user_report": {
+    "32k_total_time_vs_native": "30% faster, user reported",
+    "64k_total_time_vs_native": "10% slower, user reported",
+    "actual_phase_times": null,
+    "actual_prefix_hit_tokens": null,
+    "client_batch_size": 32,
+    "output_tokens_per_request": null,
+    "prefix_cache_enabled": true,
+    "requests": 200,
+    "token_budget": 16384
+  }
+}

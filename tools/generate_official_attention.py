@@ -101,7 +101,7 @@ def remove_c1_inverse(text, publish):
     return edit_function(text, "VectorTask", vector)
 
 
-def decode():
+def decode(*, optimize=True):
     text = remove_c1_inverse(mother("decode"), "CastRne(rounded,acc")
     text = replace(text, "kNormReady=12,kRotReady=13,kTaskDone=14;", "kTaskDone=14;")
     text = edit_function(text, "HistoryCubeTask", lambda f: replace(f,
@@ -120,10 +120,13 @@ def decode():
     text = edit_function(text, "HistoryVectorTask", history_vector)
     if any(x in text for x in ("kNormReady", "kRotReady", "Matmul(qOffset,0,rotOffset")):
         raise ValueError("decode partial inverse survived")
+    if optimize:
+        from tools.official_decode_cast_transform import transform
+        text = transform(text)
     return text
 
 
-def cluster(size):
+def cluster(size, *, optimize=True):
     text = remove_c1_inverse(mother(f"cluster{size}"), "PublishNormalizedQueries()")
     def cube(f):
         begin = f.rindex("    SelectClusterSlots(0,0);")
@@ -152,6 +155,10 @@ def cluster(size):
     if any(x in text for x in ("PublishNormalizedQueries", "Matmul(qOffset,0,rotOffset",
                                "MatmulResidentB(qOffset,rotOffset", "LoadResidentB(0,true)")):
         raise ValueError("cluster partial inverse survived")
+    if optimize and size == 16:
+        from tools.official_softmax_visibility_transform import transform as visibility
+        from tools.official_finite_transform import transform as finite
+        text = finite(visibility(text))
     return text
 
 

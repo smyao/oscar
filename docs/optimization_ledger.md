@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-27 长上下文：用户报告 200请求/BS32/APC，32K 相对 native 总时间快30%、64K慢10%，预算固定16384。源码确认 warm prefill 的历史循环与 current CV 放大；当前 APC 冷请求主机模型中历史 QK/PV 单元增长5.35倍，不能冒充现场占比。candidate 实际 official C16 接入充分界 finite 证书、完全可见 current/window 路径；q4/q1 发布使用相同 RNE 的多 repeat 转换。原数学、错误语义、workspace、调度、PT、argv、timer与C4保持。源码/主机/CPU/CANN及保留的验证环境失败见[分析与优化](long_context_optimization_20261027.md)与[本轮回执](../reports/long_context_20261027/validation.json)。无真机连接或测速，不宣称64K已达30%或32K速度不退；后续以实际净收益决定是否保留和继续优化FP32状态搬运。
+
 2026-10-23 PC联合检查点保留：主机真实native链复现20请求decode周转后GDN checkpoint被回收，联合命中29952→0。外部插件持有每活跃请求最后可读prompt已有GDN页，完成/取消/抢占/卸载释放；配对修复后保持29952，全体释放无泄漏。最多3页/请求的真实池占用代价，PT/数学/argv/timer/CANN不变，现场命中与模型质量未验收。见[报告](prefix_checkpoint_retention_20261023.md)。
 
 2026-10-23 PC低命中修复：外部插件按实际FULL/GDN共同边界选择checkpoint，并计入prompt−1/原生MTP尾页；低预算保留native状态块推进，共同checkpoint之后仍调用原生尾部切分，避免partial状态误hash。15000-token无MTP本地重复前缀命中0→13824；32768/MTP/剩余15360为0→29952。227项相关主机测试通过；保持GDN/spec/hash/argv、timer及CANN，非对齐状态与encoder输入保留原生路径。实际流量命中率、NPU/图/模型质量及性能未验收，不能消除稀疏状态和完整页drop的固有限制。见[排查、修复及证据](prefix_checkpoint_alignment_20261023.md)。

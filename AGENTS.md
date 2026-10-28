@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-28用户明确恢复OptR测试：固定 `candidate` 在当前原生BF16、qqt_sst/perhead_center、显式预算配置直接启用OptR recipe5，无需新增开关，不允许通过撤下OptR默认来绕过测试。本条覆盖下方#173的默认撤回处置；独立test失败报告和禁止发布仍保持，不按test重选或放宽阈值。保留已有显式Hadamard/W8A8/native-budget兼容入口；显式请求不兼容OptR仍报错。线上核/runtime/timer/argv不改，不宣称原第7层质量失败已修复或模型/性能已验收。
+
 > 2026-10-28直启资源生命周期（#174）：用户回传4个worker在新权重加载前各仅余1.19/29.49GiB，低于0.9所需26.54GiB；占用者身份未获证实。固定直启以外层监督替代exec，按本checkout物理卡持锁覆盖build/prepare/serve，退出及INT/TERM/HUP有界清理本次新进程组，日志/原始子进程状态及shell退出码落盘。正常服务不加时限、探针或设备轮询；仅显存错误后一次有界只读占用诊断。不自动杀历史/未知进程、不降预算、不改卡号或在线核/argv/timer；无真机复验。
 
 > 2026-10-28 OptR独立test失败处置（#173）：用户回传第7层联合validation选中候选后，独立test明确退化，准备rc1而非超时。撤下未验收OptR的candidate强制默认，恢复perhead_center recipe3及原FP32 metadata/BF16性能组合；固定直启/探针共用，残留optr配置清除，显式不匹配PT仍报错。显式variant=None研究保留recipe5与全部原质量门，失败保存逐请求/分片原始指标，不按test重选、不放宽门、不自动重试。线上核/runtime/timer/argv不改；未实现OptR精度收益，未连接真机或验收性能。见docs/optr_independent_test_failure_20261028.md。本条覆盖下方10月27日的candidate默认OptR描述。

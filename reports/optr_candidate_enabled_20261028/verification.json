@@ -1,0 +1,118 @@
+{
+  "baseline_commit": "b640247ef1945c2558025c15d62831cc2d830777",
+  "preset_comparison": [
+    {
+      "preset": "candidate",
+      "config_difference": {
+        "rotation_refinement": {
+          "before": null,
+          "after": "optr"
+        }
+      },
+      "vllm_argv_unchanged": true
+    },
+    {
+      "preset": "baseline",
+      "config_difference": {},
+      "vllm_argv_unchanged": true
+    },
+    {
+      "preset": "native",
+      "config_difference": {},
+      "vllm_argv_unchanged": true
+    },
+    {
+      "preset": "hadamard",
+      "config_difference": {},
+      "vllm_argv_unchanged": true
+    },
+    {
+      "preset": "w8a8",
+      "config_difference": {},
+      "vllm_argv_unchanged": true
+    },
+    {
+      "preset": "native-budget",
+      "config_difference": {},
+      "vllm_argv_unchanged": true
+    }
+  ],
+  "current_runtime_selection": {
+    "variant": "candidate",
+    "optimizations": {
+      "official_math": true,
+      "c16_tuned": true,
+      "aligned_math": true,
+      "bf16_attention": true,
+      "history_cluster4": true,
+      "later_mtp_q1": true,
+      "fast_unpack": true,
+      "mixed_cv": true,
+      "striped_cache": true,
+      "quantization_bundle": true,
+      "current_only": true,
+      "first_mtp_current_fia": true,
+      "compact_later_mtp": true,
+      "mixed_decode_split": true,
+      "prepare_reuse": true,
+      "decode_bundle": true,
+      "mdl_decode": true,
+      "hybrid_l1_decode": true,
+      "c4_member_pipeline": true,
+      "c16_l1_reuse": true,
+      "whole_prefill": false
+    },
+    "aligned_c16_operator": "attention_cv_official_cluster16_out",
+    "attention_compute": {
+      "operands": "bfloat16",
+      "accumulator": "float32",
+      "softmax_lse_merge": "float32"
+    },
+    "oscar_math_profile": "oscar_bf16_attention_v4",
+    "attention_coordinate_frame": "all_sources_rotated",
+    "inverse_rotation": "once_after_fp32_merge",
+    "cached_precision_policy": "native_fixed_per_forward",
+    "rotation_method": "qqt_sst",
+    "rotation_variant": "perhead_center",
+    "rotation_grouping": "layer_kv_head",
+    "key_centering": true,
+    "clip_policy": "scalar",
+    "head_clip_experiment_enabled": false,
+    "rotation_refinement": "optr",
+    "calibration_recipe_version": 5,
+    "metadata_dtype": "float32",
+    "dequant_policy": "fp32_metadata",
+    "runtime_precision_contract": "oscar_bf16_runtime_fp32_dequant_v1",
+    "dequant_arithmetic": "float32_then_bfloat16",
+    "prefix_caching": false,
+    "token_budget_source": "explicit",
+    "max_num_batched_tokens": 16384,
+    "scheduler_cls": null,
+    "devices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "port": 7878
+  },
+  "previous_explicit_optr_config_equals_current_candidate": true,
+  "optr_profile_unchanged": true,
+  "fitting_implementation_digest": "5ae615236f8751b9cddf5da9e649febcce72b04bdee7d7020a53ddf0c9ca095b",
+  "npu": "not_run_user_constraint",
+  "model_quality": "not_measured_prior_independent_test_failure_unresolved",
+  "performance": "not_measured",
+  "git_push": "not_run",
+  "protected_file_count": 690,
+  "protected_file_mismatches": [],
+  "fitting_implementation_unchanged": true,
+  "pytest": {
+    "command": ".venv/bin/python -m pytest -q tests/test_optr_integration.py tests/test_optr_traces.py tests/test_optr_resume.py tests/test_optr_quality_failure.py tests/test_rotation_preparation_limits.py tests/test_serving_variants.py tests/test_install_serve.py tests/test_deploy_bf16.py tests/test_center_prepare.py tests/test_fp32_dequant_precision.py tests/test_per_head_clip_runtime.py --junitxml=reports/optr_candidate_enabled_20261028/pytest.xml",
+    "tests": 176,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit": "reports/optr_candidate_enabled_20261028/pytest.xml"
+  },
+  "git_diff_check": "passed"
+}

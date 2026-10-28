@@ -117,7 +117,7 @@ def test_deploy_only_prepare_uses_effective_candidate_and_retains_failure(tmp_pa
     monkeypatch.setattr(deploy, "run_phase", phase)
     assert deploy.main(["--config", str(path), "--variant", "candidate", "--only", "prepare-rotations",
                         "--log-dir", str(tmp_path / "logs")]) == 124
-    assert seen == [("prepare-rotations", 1800, None)]
+    assert seen == [("prepare-rotations", 86400, "optr")]
     status = json.loads((tmp_path / "logs/status.json").read_text())
     assert status["failed_phase"] == "prepare-rotations"
 

@@ -27,7 +27,7 @@ def configuration(tmp_path):
     selected = variant_config({"model": str(model), "tensor_parallel_size": 2,
         "mamba_cache_dtype": "bfloat16", "mamba_ssm_cache_dtype": "bfloat16",
         "max_num_batched_tokens": 16384, "use_native_token_budget": False}, "candidate")
-    return variant_config({**selected, "rotation_refinement": "optr"}, None)
+    return selected
 
 
 def metric(split, error=1.):
@@ -58,21 +58,26 @@ def artifact(config):
             "matrices_sha256": constants_hash, "layers": {NAME: record}, "accepted_layers": []}}
 
 
-def test_candidate_withdraws_unqualified_optr_without_changing_online_bundle():
+def test_candidate_enables_optr_without_changing_online_bundle_or_extra_flags():
     config = json.loads(Path("configs/target.json").read_text())
     selected = variant_config(config, "candidate")
-    research = variant_config({**selected, "rotation_refinement": "optr"}, None)
-    assert serve_argv(selected) == serve_argv(research)
-    assert selected.get("rotation_refinement") is None
-    assert runtime_feature_summary(selected, "candidate")["calibration_recipe_version"] == 3
-    assert runtime_feature_summary(research, None)["calibration_recipe_version"] == 5
-    assert variant_config(research, "native").get("rotation_refinement") is None
-    stale = {**research, "optr_calibration": {"steps": 16}}
-    assert variant_config(stale, "candidate") == selected
-    assert stale["rotation_refinement"] == "optr" and "optr_calibration" in stale
-    for override in ({"rotation_method": "hadamard"}, {"quantization": "ascend"}):
+    seed = {k: v for k, v in selected.items() if k != "rotation_refinement"}
+    assert serve_argv(selected) == serve_argv(seed)
+    assert "rotation_refinement" not in config
+    assert selected["rotation_refinement"] == "optr"
+    assert runtime_feature_summary(selected, "candidate")["calibration_recipe_version"] == 5
+    for variant in ("baseline", "native"):
+        assert variant_config(selected, variant).get("rotation_refinement") is None
+    calibrated = {**selected, "optr_calibration": {"steps": 8}}
+    assert variant_config(calibrated, "candidate") == calibrated
+    assert variant_config({**config, "rotation_refinement": None}, "candidate") == selected
+    assert variant_config(selected, "candidate") == selected
+    for override in ({"rotation_method": "hadamard"}, {"quantization": "ascend"},
+                     {"use_native_token_budget": True}):
         explicit = variant_config({**config, **override}, "candidate")
         assert explicit.get("rotation_refinement") is None
+        with pytest.raises(ValueError, match="OptR requires|OptR native"):
+            variant_config({**selected, **override}, "candidate")
 
 
 def test_refinement_cache_binds_online_math_and_keeps_recipe3_identity(tmp_path, monkeypatch):

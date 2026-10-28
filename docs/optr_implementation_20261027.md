@@ -1,6 +1,6 @@
 # OptR 离线旋转精修：源码复核、改造与验收边界
 
-2026-10-28更新：用户回传独立test退化，固定candidate已撤下recipe5默认并恢复recipe3；OptR保留为显式研究，原质量门保持。下文是首次实现记录，不能据此判断当前默认；见[最新处置](optr_independent_test_failure_20261028.md)。
+2026-10-28最新用户指令：先测试OptR，不通过开关绕过或关闭。固定candidate已恢复直接启用recipe5，无需新增参数；准备和服务加载同一OptR产物，recipe3缓存不会替代它。此前[独立test失败](optr_independent_test_failure_20261028.md)仍是失败证据，原报告/禁止发布逻辑和阈值保持；本次改的是默认选择，不是拟合数学或精度修复。线上核/runtime/timer/argv保持，未连接真机或验收质量/性能。
 
 2026-10-27用户部署反馈已确认原生capture完成，但全层CPU拟合被原通用1800秒时限终止。准备时限、真实进展及断点续作已在[后续修复](optr_preparation_timeout_20261027.md)中更新；下文首次交付的“phase timeout不改”记录不再代表当前行为。
 

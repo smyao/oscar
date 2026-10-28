@@ -66,6 +66,7 @@ def test_all_phases_and_service_share_selected_config_without_mutating_original(
                             selected.get("rotation_refinement") == "optr" else
                             selected["phase_timeout_seconds"])
         assert kwargs["timeout"] == expected_timeout
+        assert selected.get("rotation_refinement") == (None if variant == "baseline" else "optr")
         assert selected["experimental_history_reuse"] is enabled
         assert selected.get("experimental_fast_unpack", False) is (variant != "baseline")
         assert selected.get("experimental_mixed_cv", False) is (variant != "baseline")
@@ -85,6 +86,7 @@ def test_all_phases_and_service_share_selected_config_without_mutating_original(
         assert seen == list(install_serve.BUILD_PHASES)
         assert command[-1] == env["OSCAR_TARGET_CONFIG"]
         selected = json.loads(open(command[-1]).read())
+        assert selected.get("rotation_refinement") == (None if variant == "baseline" else "optr")
         assert selected["experimental_history_reuse"] is enabled
         assert selected.get("experimental_striped_cache", False) is (variant != "baseline")
         assert selected["devices"] == devices

@@ -57,8 +57,9 @@ def _setup(tmp_path, monkeypatch, failure=None):
             raise OSError("host phase launch failed")
         path = Path(env["OSCAR_TARGET_CONFIG"])
         config = json.loads(path.read_text())
-        assert config.get("rotation_refinement") is None
-        assert kwargs["timeout"] == config["phase_timeout_seconds"]
+        assert config["rotation_refinement"] == "optr"
+        assert kwargs["timeout"] == (86400 + config["phase_timeout_seconds"]
+                                    if name == "bf16-correctness-gates" else config["phase_timeout_seconds"])
         assert config["experimental_bf16_attention"] is True
         assert config["model"] == str(model) and config["quantization"] is None
         assert command[command.index("--config") + 1] == str(path)

@@ -94,16 +94,9 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if variant == "candidate":
         selected['oscar_dequant_policy'] = 'fp32_metadata'
         # Recipe4's proxy-fitted clip table regressed user model quality.
-        # The fixed candidate entrypoint restores recipe3 even when its
-        # input config retains the experimental clip policy. Explicit
-        # research configs may still select it with variant=None.
+        # OptR refines the recipe3 seed with its fixed scalar clips. Explicit
+        # recipe4 research configs may still select it with variant=None.
         selected.pop("rotation_k_clip", None)
-        # #173: the OptR candidate failed independent test on target traces.
-        # Withdraw its forced default before preparation; never catch a failed
-        # test and reselect matrices. Explicit variant=None research retains
-        # OptR and its unchanged accept-or-fail publication contract.
-        selected.pop("rotation_refinement", None)
-        selected.pop("optr_calibration", None)
         if selected.get("rotation_method", "qqt_sst") == "qqt_sst":
             selected["rotation_variant"] = "perhead_center"
         else:
@@ -220,6 +213,13 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if selected.get('oscar_dequant_policy') == 'fp32_metadata' and not all(selected.get(flag, False)
             for flag in ('experimental_official_math', 'experimental_aligned_math', 'experimental_bf16_attention')):
         raise ValueError('FP32 metadata reconstruction requires the official BF16 reader bundle')
+    # User 2026-10-28: the fixed BF16 candidate must run OptR without another
+    # flag. Keep #173's failed-test reporting/publication gate, not its preset
+    # withdrawal. Existing explicit Hadamard/W8A8/native-budget modes retain
+    # their supported recipes; an explicitly incompatible OptR request fails.
+    if (variant == "candidate" and selected.get("rotation_variant") == "perhead_center"
+            and selected.get("quantization") is None and not native_budget):
+        selected["rotation_refinement"] = "optr"
     from oscar_ascend.optr_policy import validate_refinement_config
     validate_refinement_config(selected)
     return selected

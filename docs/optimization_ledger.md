@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-28用户要求先测OptR：恢复当前原生BF16固定candidate的recipe5默认，覆盖下方#173静态撤回处置，不增加开关或静默改走recipe3。训练/trace/断点身份、独立质量门、线上核/runtime/argv/timer保持；本次不计精度或速度收益。固定入口、双缓存实际选择及失败阻断的本地证据见`reports/optr_candidate_enabled_20261028/verification.json`。
+
 2026-10-28启动显存不足（#174）：四worker初始化时各仅1.19GiB空闲，尚未加载新权重，未确认占用者。修复直启exec后无人监督清理的缺口，新增本checkout逐卡锁、正式服务完整退出/信号清理与有界只读失败诊断。在线核/数学/argv/预算/timer保持，不领取性能或模型收益；真实主机进程及源码基底配对见`reports/direct_service_lifecycle_20261028/verification.json`。
 
 2026-10-28 OptR独立test失败（#173）：第7层通过联合validation但独立test退化，禁止发布的质量门正确触发。固定candidate撤下过早默认化的recipe5，恢复recipe3，BF16/FP32 metadata及其他性能组合保持；显式研究继续严格失败并保存完整指标与身份。不把恢复启动路径算作OptR收益，不将失败测试改成选择集。见[原因、处置与验证](optr_independent_test_failure_20261028.md)，覆盖下方历史默认描述。

@@ -89,8 +89,8 @@ def test_candidate_enables_center_baseline_native_restore_shared_without_argv_ch
         assert 'rotation_k_clip' not in variant_config(candidate, variant)
     summary = runtime_feature_summary(candidate, 'candidate')
     assert summary['rotation_grouping'] == 'layer_kv_head'
-    assert summary['key_centering'] is True and summary['calibration_recipe_version'] == 5
-    assert summary['rotation_refinement'] == 'optr'
+    assert summary['key_centering'] is True and summary['calibration_recipe_version'] == 3
+    assert summary['rotation_refinement'] is None
     assert summary['clip_policy'] == 'scalar'
     assert summary['head_clip_experiment_enabled'] is False
     assert summary['rotation_variant'] == 'perhead_center'
@@ -109,7 +109,7 @@ def test_both_one_key_plans_show_the_selected_center_recipe(entrypoint, capsys):
     assert plan['runtime_selection']['key_centering'] is True
     assert plan['runtime_selection']['clip_policy'] == 'scalar'
     assert plan['runtime_selection']['head_clip_experiment_enabled'] is False
-    assert plan['runtime_selection']['calibration_recipe_version'] == 5
+    assert plan['runtime_selection']['calibration_recipe_version'] == 3
     assert plan['runtime_selection']['max_num_batched_tokens'] == 16384
 
 
@@ -138,6 +138,38 @@ def test_native_budget_candidate_clears_residual_clip_and_keeps_recipe3(environm
     summary = runtime_feature_summary(research, None)
     assert summary['calibration_recipe_version'] == 4
     assert summary['head_clip_experiment_enabled'] is True
+
+
+def test_fixed_candidate_uses_recipe3_with_both_optr_and_center_caches(environment, monkeypatch):
+    """#173: preset withdrawal selects recipe3 before any OptR preparation."""
+    from oscar_ascend.optr_artifacts import publish_artifact
+    from test_optr_integration import artifact as refined_artifact
+    _, center, fingerprint = environment
+    candidate = variant_config({**center, 'use_native_token_budget': False,
+                                'max_num_batched_tokens': 16384,
+                                'k_clip_ratio': .96, 'v_clip_ratio': .92}, 'candidate')
+    center_path, _ = publish_old(candidate, fingerprint)
+    research = variant_config({**candidate, 'rotation_refinement': 'optr'}, None)
+    refined_path = rotations.rotation_artifact_path(research, fingerprint)
+    publish_artifact(refined_artifact(research), refined_path)
+    before = {**frozen_files(center_path), **frozen_files(refined_path)}
+    stale = {**research, 'optr_calibration': {'steps': 16}}
+    selected = variant_config(stale, 'candidate')
+    assert selected == candidate and selected['oscar_dequant_policy'] == 'fp32_metadata'
+    assert selected['k_clip_ratio'] == candidate['k_clip_ratio']
+    assert selected['v_clip_ratio'] == candidate['v_clip_ratio']
+    assert rotations.rotation_artifact_path(selected, fingerprint) == center_path != refined_path
+    result = prepare(selected, capture_runner=forbid_capture, testing=True)
+    assert result['reused'] and result['recipe_version'] == 3
+    loaded = rotations.load_active_artifact(selected, device='cpu', testing=True)
+    assert loaded['calibration_profile']['recipe_version'] == 3
+    # An explicit conflicting artifact is not silently ignored or relabelled.
+    with pytest.raises(ValueError):
+        prepare({**selected, 'rotation_artifact': str(refined_path)}, testing=True)
+    monkeypatch.setenv('OSCAR_ROTATION_ARTIFACT', str(refined_path))
+    with pytest.raises(FileNotFoundError, match=r'\.oscar\.complete\.json'):
+        rotations.load_active_artifact(selected, device='cpu', testing=True)
+    assert all(path.read_bytes() == data for path, data in before.items())
 
 
 def test_recipe2_retained_samples_refit_to_distinct_center_cache_and_then_reuse(environment):

@@ -28845,3 +28845,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修复**：仅OptR准备按FULL层/头/steps给有限总预算，当前上限86400秒；BF16外层准备包装同步调整，普通build/probe/service时限不变。CPU每个step/验证样本/实际阶段输出进展，默认1800秒无进展报告最后层/头后终止自身，固定launcher清理owned组，定时心跳不续期。原生capture与seed准备子进程继续有界。完成头原子落盘，完成层必须先过联合validation和独立test；恢复绑定基底/trace/profile/实现/test-only身份及哈希并重新认证。最终全层验证和原子发布保持。旧trace身份不改，本次7请求可自动复用；旧运行未保存的头无法恢复。减少离线固定侧历史旋转/量化、teacher投影及变量侧按query batch重复历史计算，保留数学/样本/步数/质量门，不改在线CANN/runtime/timer/argv。
 
 **验证与边界**：362项主机/CPU检查通过，包含完整旧新优化逐位一致、头中断续作、已验证整层及发布中断恢复、来源变更隔离/损坏拒绝、真实停滞进程SIGTERM及owned子进程清理、三入口和父阶段超时、构建缓存与旧模式。纯Python wheel禁网构建、隔离导入及新增模块完整性通过。详细证据见上述目录verification.json。用户日志证明旧运行构建/capture已完成，但本轮没有连接真机、重新执行目标拟合、NPU/graph/质量/性能验证；不宣称目标服务一次成功、精度达标或性能实测无回退。24小时为预算上限，不是ETA。
+
+
+## [173] 真机条目（2026-10-28 用户回传）· OptR第7层独立test退化阻止发布
+
+**原始证据**：`reports/optr_independent_test_failure_20261028/target_failure.txt`为用户本轮直接粘贴原文，目标run=`20261027T133233.150213Z`，报错时间2026-10-27 14:30:57。第7层test的baseline/selected均完成single_split及captured_runtime_frames，随后`independent test regressed; artifact not published`；prepare rc1、3498.906897秒、timed_out=false、cleanup_complete=true。片段无现场SHA、失败指标值或PT，不把本地HEAD当现场版本，不推断具体长度/幅度或模型任务分数。
+
+**故障归属与复核**：不是编译错误或#172超时复发。当前refine_layer只有联合validation接受trial后才另测selected，因此日志证明已选候选未通过未参与选择的独立test；质量门正确阻止不合格PT发布。前一附件的第7层head3验证误差下降不能推出新请求输出非劣。源码复核未证明确定性计算bug；稀疏4K训练、同源长验证前缀及高维旋转的泛化是待验证原因，不能写成已闭合现场根因。将未经完整验收的OptR强制作为服务默认，是此次启动阻断的交付缺口。
+
+**处置**：参照#170静态撤下默认配方，candidate恢复perhead_center recipe3与原BF16/FP32 metadata性能组合；两固定入口共用，清残留optr字段，认证旧recipe3缓存可直接复用，显式不匹配PT仍报错。独立研究variant=None继续recipe5和严格accept-or-fail；不捕获失败后按test重选，不增加容差，不改样本/优化器/阈值，不自动重新拟合碰碰运气。失败单独原子保存身份、policy、矩阵哈希、head decisions和完整validation/test逐请求/分片指标；失败报告不是已验证层断点，禁止最终发布。报告输出或I/O异常也不升级质量状态。
+
+**验证与边界**：针对性主机/CPU回归、双缓存实际发布/加载、总量改善但单请求退化的阻断、失败报告/异常及正常发布、固定argv与打包证据见该目录verification.json及docs/optr_independent_test_failure_20261028.md。诊断文件修改触发既有拟合实现哈希隔离，旧fit断点不会直接命中；原生trace身份不变。线上CANN/runtime/timer/目标配置未改，没有连接NPU、复跑模型或测性能；此为默认入口回归控制，不是OptR更高精度目标已实现。

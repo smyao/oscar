@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-28 OptR独立test失败（#173）：第7层通过联合validation但独立test退化，禁止发布的质量门正确触发。固定candidate撤下过早默认化的recipe5，恢复recipe3，BF16/FP32 metadata及其他性能组合保持；显式研究继续严格失败并保存完整指标与身份。不把恢复启动路径算作OptR收益，不将失败测试改成选择集。见[原因、处置与验证](optr_independent_test_failure_20261028.md)，覆盖下方历史默认描述。
+
 2026-10-27 OptR准备超时续修（#172）：目标构建/原生capture已完成，CPU全层拟合错误套用1800秒总时限。改为有限规模预算+真实进展监督，新增认证头/完成层原子断点；验证固定侧历史与teacher复用，配对结果逐位一致，不降低拟合与验收配置。362项本地主机/CPU检查和Python包验证通过；无在线源码或工作量变更，不申领目标性能/质量收益。见[修复证据](optr_preparation_timeout_20261027.md)。
 
 2026-10-27 OptR输出感知旋转：固定BF16 candidate准备阶段启用recipe5，在已认证recipe3上离线精修Rk/Rv。联合KV、BF16 gate、GQA/全部TP交叉项、真实frame分片纳入输出误差；候选含原矩阵，独立test只判通过/失败，不参与选择。线上核/runtime/布局/argv/timer不改；首次采样和CPU拟合有成本，匹配PT复用。CPU/主机验证不代表真机模型精度或性能不退化。见[源码复核与实现](optr_implementation_20261027.md)。

@@ -1,4 +1,4 @@
-"""Archive #148-151: one candidate preset for probes and direct serving.
+"""Archive #148-151/#170/#173: one candidate preset for probes and direct serving.
 
 Every delivered optimization flag belongs here so installation and observation
 cannot silently select different numerical paths. Physical placement is separate.
@@ -98,17 +98,16 @@ def variant_config(config: dict, variant: str | None) -> dict:
         # input config retains the experimental clip policy. Explicit
         # research configs may still select it with variant=None.
         selected.pop("rotation_k_clip", None)
+        # #173: the OptR candidate failed independent test on target traces.
+        # Withdraw its forced default before preparation; never catch a failed
+        # test and reselect matrices. Explicit variant=None research retains
+        # OptR and its unchanged accept-or-fail publication contract.
+        selected.pop("rotation_refinement", None)
+        selected.pop("optr_calibration", None)
         if selected.get("rotation_method", "qqt_sst") == "qqt_sst":
             selected["rotation_variant"] = "perhead_center"
-            if selected.get("quantization") is None:
-                selected["rotation_refinement"] = "optr"
-            else:
-                # Explicit W8A8 retains its existing recipe3 path: the
-                # output-aware native BF16 calibration cannot model its W_O.
-                selected.pop("rotation_refinement", None)
         else:
             selected.pop("rotation_variant", None)
-            selected.pop("rotation_refinement", None)
     elif variant in {"baseline", "native"}:
         selected.pop('oscar_dequant_policy', None)
         selected.pop("rotation_variant", None)
@@ -221,10 +220,6 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if selected.get('oscar_dequant_policy') == 'fp32_metadata' and not all(selected.get(flag, False)
             for flag in ('experimental_official_math', 'experimental_aligned_math', 'experimental_bf16_attention')):
         raise ValueError('FP32 metadata reconstruction requires the official BF16 reader bundle')
-    if variant == "candidate" and native_budget:
-        # OptR binds source partitions to an explicit serving capacity. Keep
-        # the older optional native-budget route without inventing a budget.
-        selected.pop("rotation_refinement", None)
     from oscar_ascend.optr_policy import validate_refinement_config
     validate_refinement_config(selected)
     return selected

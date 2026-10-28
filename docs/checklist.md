@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-10-28 OptR独立test失败（#173）：目标日志证明第7层候选被独立质量门拒绝，未证明具体退化幅度或模型任务分数。固定candidate恢复recipe3；显式OptR研究严格保留阻断并落盘失败证据。主机双缓存/发布/异常/旧配方及打包验证见[报告](optr_independent_test_failure_20261028.md)。未连接NPU，目标整服务/图/模型质量/性能未复验，下方42项不升级；原OptR更高精度目标仍未完成。
+
 2026-10-27 OptR准备超时续修（#172）：用户日志已证明CANN构建及7请求原生capture完成，随后CPU拟合被1800秒总时限终止。已补任务规模预算、真实进展监督和认证头/层断点；362项本地主机/CPU检查及Python包构建通过。目标完整拟合、NPU/graph、模型质量与吞吐未验收，不升级下方42个checkpoint。见[修复与边界](optr_preparation_timeout_20261027.md)。
 
 2026-10-27 OptR离线旋转精修：candidate准备/加载recipe5，保留线上算子、buffer、INT2布局和argv。原始交付范围与边界见[改造与边界](optr_implementation_20261027.md)。

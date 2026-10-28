@@ -24,9 +24,10 @@ def configuration(tmp_path):
     (model / "config.json").write_text(json.dumps({"num_hidden_layers": 4,
         "full_attention_interval": 4, "head_dim": 64, "hidden_size": 256,
         "num_attention_heads": 4, "num_key_value_heads": 2}))
-    return variant_config({"model": str(model), "tensor_parallel_size": 2,
+    selected = variant_config({"model": str(model), "tensor_parallel_size": 2,
         "mamba_cache_dtype": "bfloat16", "mamba_ssm_cache_dtype": "bfloat16",
         "max_num_batched_tokens": 16384, "use_native_token_budget": False}, "candidate")
+    return variant_config({**selected, "rotation_refinement": "optr"}, None)
 
 
 def metric(split, error=1.):
@@ -57,15 +58,18 @@ def artifact(config):
             "matrices_sha256": constants_hash, "layers": {NAME: record}, "accepted_layers": []}}
 
 
-def test_candidate_changes_only_preparation_constants_and_keeps_native_argv():
+def test_candidate_withdraws_unqualified_optr_without_changing_online_bundle():
     config = json.loads(Path("configs/target.json").read_text())
     selected = variant_config(config, "candidate")
-    previous = dict(selected)
-    previous.pop("rotation_refinement")
-    assert serve_argv(selected) == serve_argv(previous)
-    assert selected["rotation_refinement"] == "optr"
-    assert runtime_feature_summary(selected, "candidate")["calibration_recipe_version"] == 5
-    assert variant_config(selected, "native").get("rotation_refinement") is None
+    research = variant_config({**selected, "rotation_refinement": "optr"}, None)
+    assert serve_argv(selected) == serve_argv(research)
+    assert selected.get("rotation_refinement") is None
+    assert runtime_feature_summary(selected, "candidate")["calibration_recipe_version"] == 3
+    assert runtime_feature_summary(research, None)["calibration_recipe_version"] == 5
+    assert variant_config(research, "native").get("rotation_refinement") is None
+    stale = {**research, "optr_calibration": {"steps": 16}}
+    assert variant_config(stale, "candidate") == selected
+    assert stale["rotation_refinement"] == "optr" and "optr_calibration" in stale
     for override in ({"rotation_method": "hadamard"}, {"quantization": "ascend"}):
         explicit = variant_config({**config, **override}, "candidate")
         assert explicit.get("rotation_refinement") is None

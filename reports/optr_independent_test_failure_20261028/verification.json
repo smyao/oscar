@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-28",
+  "baseline_commit": "32a72330bdc2c8c34ee8c75bccc0f2fae5d518c2",
+  "branch": "oscar-new-4-back",
+  "target_evidence": {
+    "source": "user inline pasted message, 2026-10-28",
+    "path": "target_failure.txt",
+    "sha256": "9614b11f0845148fb2479cd1a6b9377c8566540d981e64ed515c66a1ef308e85",
+    "reported_failure_date": "2026-10-27",
+    "target_startup_commit": "not_in_pasted_excerpt",
+    "phase": {
+      "phase": "prepare-rotations",
+      "command": [
+        "/usr/local/python3.12.13/bin/python3",
+        "-m",
+        "tools.prepare_rotations",
+        "--config",
+        "/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/effective-target.json"
+      ],
+      "returncode": 1,
+      "elapsed_seconds": 3498.906897,
+      "timed_out": false,
+      "interrupted": false,
+      "log": "/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log",
+      "cleanup_complete": true
+    },
+    "independent_test_failed_layer": "model.layers.7.self_attn.attn",
+    "failed_metrics": "not_in_original_log",
+    "task_accuracy": "not_measured"
+  },
+  "preceding_progress": {
+    "source_attachment": "14a64a7c-c6a2-496c-8184-63a9102887c1",
+    "path": "head_progress_truncated.txt",
+    "bytes": 65536,
+    "sha256": "67a636b5bef24761985d396767559c67bfa13ec2e43dbd00a2ddb109c4e75025",
+    "truncated": true
+  },
+  "pytest": {
+    "command": ".venv/bin/python -m pytest -q tests/test_optr_calibration.py tests/test_optr_capture.py tests/test_optr_traces.py tests/test_optr_integration.py tests/test_optr_resume.py tests/test_optr_quality_failure.py tests/test_rotation_preparation_limits.py tests/test_serving_variants.py tests/test_install_serve.py tests/test_deploy_bf16.py tests/test_center_rotations.py tests/test_center_prepare.py tests/test_center_calibration.py tests/test_official_rotation_calibration.py tests/test_rotation_pipeline.py tests/test_rotation_capture.py tests/test_fp32_dequant_precision.py tests/test_per_head_clip_runtime.py tests/test_build_reuse.py tests/test_workflow.py --junitxml=reports/optr_independent_test_failure_20261028/pytest.xml",
+    "tests": 372,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 372,
+    "returncode": 0,
+    "junit": "pytest.xml",
+    "scope": "local host/CPU; synthetic failure fixtures do not reproduce target numerical regression"
+  },
+  "source_and_preset": "source_and_preset.json",
+  "wheel": "wheel.json",
+  "modified_code_and_tests": [
+    {
+      "path": "tools/serving_variants.py",
+      "sha256": "1874420de873d34d846f85ba458c49e36870361272109d0c611573047cffcbe2"
+    },
+    {
+      "path": "tools/prepare_optr_rotations.py",
+      "sha256": "464b68f7dd28f743b104b2f15a6b19eb7d423354525415be7855d796b4082aff"
+    },
+    {
+      "path": "tests/test_optr_quality_failure.py",
+      "sha256": "7c82685074d95ff79692c8b2874d9fa02ff391c2dda6b82c54c3f8693c0ab74f"
+    },
+    {
+      "path": "tests/test_optr_integration.py",
+      "sha256": "366ff3fd3f9055c6931847cc55f5d334de99f5a78ed8b6b363c0fcb8d391cee7"
+    },
+    {
+      "path": "tests/test_center_prepare.py",
+      "sha256": "f9f5babe6ae97884ff613db30c59c53f9cdaa9f8d77959b07b15eb476e2269bf"
+    },
+    {
+      "path": "tests/test_serving_variants.py",
+      "sha256": "f2c0cf18d7b0b38ccf73e0fd35bb6a56ebdea5a3bf28fd7a1a6dca4a7a40af14"
+    },
+    {
+      "path": "tests/test_deploy_bf16.py",
+      "sha256": "4bdf47ea73d5a5779fae2b850f5e0dd503c8c034d03c0939f4f205dff4b1849a"
+    },
+    {
+      "path": "tests/test_rotation_preparation_limits.py",
+      "sha256": "d39e19b6249011fb02ee6026bd7c40c3ec9d95f82b9f4819ca203dce27daf3ee"
+    }
+  ],
+  "candidate_default": {
+    "recipe": 3,
+    "perhead_center": true,
+    "fp32_metadata": true,
+    "optr_forced_default": false,
+    "online_features_unchanged": true,
+    "vllm_argv_unchanged": true
+  },
+  "explicit_research": {
+    "recipe": 5,
+    "policy_unchanged": true,
+    "strict_test_gate_unchanged": true,
+    "test_reselection": false,
+    "failure_report_added": true,
+    "native_trace_identity_unchanged": true,
+    "previous_fit_checkpoint_implementation_hash_reused": false
+  },
+  "evidence_boundaries": {
+    "cann_source": "unchanged; no new compilation",
+    "online_kernel_runtime_timer": "unchanged",
+    "npu_connection": "not_performed",
+    "target_service": "not_revalidated",
+    "graph_capture_and_replay": "not_revalidated",
+    "optr_generalization": "not_improved_by_this_patch",
+    "model_quality": "not_measured",
+    "performance": "not_measured",
+    "remote_push": "not_performed"
+  }
+}

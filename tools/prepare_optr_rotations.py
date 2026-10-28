@@ -1,8 +1,9 @@
-"""Archive #86/#97/#148/#172: resumable offline output-aware refinement.
+"""Archive #86/#97/#148/#170/#172/#173: offline output-aware refinement.
 
-The normal candidate preparation calls this module; serving loads only final
-constants. Native sampling runs in an isolated child and releases its model
-before CPU optimization. No runtime/kernel/scheduler implementation is changed.
+Explicit OptR research preparation calls this module; serving loads only final
+constants after its quality gates pass. Native sampling runs in an isolated
+child and releases its model before CPU optimization. No runtime/kernel/
+scheduler implementation is changed; candidate defaults remain separate.
 """
 from __future__ import annotations
 
@@ -110,6 +111,86 @@ def _validate_head_result(result, baseline, head):
     return result["Rk"], result["Rv"], result["decision"]
 
 
+class IndependentTestRegression(ValueError):
+    """A failed quality gate, with evidence that never authorizes publication."""
+
+    def __init__(self, message, report):
+        super().__init__(message)
+        self.report = report
+        self.reporting_errors = ()
+
+
+def _report_independent_test_failure(name, layer_id, record, policy, checkpoints, emit):
+    """Archive #148/#170/#173: retain the failed test; never use it to reselect.
+
+    This filename is deliberately not a completed layer checkpoint. The
+    original scalar values are serialized without rounding or conversion to
+    task accuracy. Persist before terminal/callback output. I/O errors during
+    either operation must never replace the already-established quality gate.
+    """
+    baseline, selected = record["test"]["baseline"], record["test"]["selected"]
+    compared = ("squared_error", "normalized_error")
+    scalar_keys = ("squared_error", "teacher_energy", "normalized_error")
+    total = {"baseline": {key: baseline[key] for key in scalar_keys},
+             "selected": {key: selected[key] for key in scalar_keys},
+             "regressed_metrics": [key for key in compared if selected[key] > baseline[key]]}
+    before = {row["request_id"]: row for row in baseline["requests"]}
+    regressions = []
+    for row in selected["requests"]:
+        previous = before[row["request_id"]]
+        regressed = [key for key in compared if row[key] > previous[key]]
+        if regressed:
+            regressions.append({"request_id": row["request_id"], "partition": row.get("partition"),
+                                "baseline": previous, "selected": row,
+                                "regressed_metrics": regressed})
+    report = {"schema_version": 1, "status": "independent_test_failed", "layer": name,
+        "layer_id": layer_id, "identity": copy.deepcopy(checkpoints.identity) if checkpoints else None,
+        "policy": copy.deepcopy(policy), "metric": "all_tp_heads_bf16_gate_fp32_wo_output",
+        "arithmetic_evidence": "cpu_deployment_reference_not_npu_bitwise",
+        "model_quality": "not_measured", "performance": "not_measured",
+        "artifact_publish_allowed": False, "test_used_for_selection": False,
+        "test_policy_unchanged": True,
+        "record": record, "total": total, "regressed_requests": regressions}
+    message = f"OptR {name}: independent test regressed; artifact not published"
+    reporting_errors = []
+    persistence_event = None
+    if checkpoints:
+        from tools.phase import atomic_json
+        path = checkpoints.root / f"layer-{layer_id}-independent-test-failed.json"
+        report["report_path"] = str(path)
+        try:
+            atomic_json(path, report)
+        except Exception as error:
+            reporting_errors.append(error)
+            persistence_event = {"layer": name, "phase": "independent_test_failure_report_error",
+                                 "path": str(path), "error": str(error)}
+        else:
+            persistence_event = {"layer": name, "phase": "independent_test_failure_saved", "path": str(path)}
+    events = [{"layer": name, "phase": "independent_test_failed", "metric": report["metric"],
+               "baseline": total["baseline"], "selected": total["selected"],
+               "regressed_total_metrics": total["regressed_metrics"], "regressed_requests": len(regressions),
+               "artifact_publish_allowed": False, "test_used_for_selection": False}]
+    events.extend({"layer": name, "phase": "independent_test_request_regressed", **row} for row in regressions)
+    if persistence_event is not None:
+        events.append(persistence_event)
+    for event in events:
+        try:
+            emit(**event)
+        except Exception as error:
+            reporting_errors.append(error)
+            break  # A failed output sink must not prevent the quality failure.
+    failure = IndependentTestRegression(message, report)
+    failure.reporting_errors = tuple(reporting_errors)
+    if reporting_errors:
+        # Preserve the first original I/O exception as the cause; retain any
+        # secondary output failure too, including on Python 3.10 (no add_note).
+        if hasattr(failure, "add_note"):
+            for error in reporting_errors[1:]:
+                failure.add_note(f"Additional diagnostic failure: {type(error).__name__}: {error}")
+        raise failure from reporting_errors[0]
+    raise failure
+
+
 def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=None, progress=None):
     """Per-head fitting, then all-TP output selection, then untouched test."""
     from oscar_ascend.optr_calibration import fit_head
@@ -155,13 +236,13 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
     # reported and blocks publication; it cannot silently reselect on test.
     test_before = measure(baseline, "test", "baseline")
     test_after = measure(selected, "test", "selected") if accepted else test_before
-    if not nonworse(test_before, test_after):
-        raise ValueError(f"OptR {name}: independent test regressed; artifact not published")
     record = {"accepted": accepted, "head_decisions": decisions,
               "base_constants_sha256": matrix_digest({name: baseline}),
               "selected_constants_sha256": matrix_digest({name: selected}),
               "validation": {"baseline": before, "selected": after},
               "test": {"baseline": test_before, "selected": test_after}}
+    if not nonworse(test_before, test_after):
+        _report_independent_test_failure(name, baseline["layer_id"], record, policy, checkpoints, emit)
     emit(layer=name, phase="checked", accepted=accepted,
               validation_before=before["normalized_error"], validation_after=after["normalized_error"],
               independent_test_before=test_before["normalized_error"],

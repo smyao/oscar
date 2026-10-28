@@ -1,0 +1,33 @@
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "baseline", "event": "partition_checked", "partition": "single_split"}
+[oscar] phase=prepare-rotations running seconds=3122.3 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] phase=prepare-rotations running seconds=3182.4 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "baseline", "event": "partition_checked", "partition": "captured_runtime_frames"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "selected"}
+[oscar] phase=prepare-rotations running seconds=3242.4 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] phase=prepare-rotations running seconds=3302.5 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] phase=prepare-rotations running seconds=3362.5 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "selected", "event": "partition_checked", "partition": "single_split"}
+[oscar] phase=prepare-rotations running seconds=3422.6 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] phase=prepare-rotations running seconds=3482.6 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "selected", "event": "partition_checked", "partition": "captured_runtime_frames"}
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/oscar/oscar-new/tools/prepare_rotations.py", line 243, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/workspace/oscar/oscar-new/tools/prepare_rotations.py", line 238, in main
+    print(json.dumps(prepare(config,config_path=args.config,output=args.output,import_pair=pair)),flush=True)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/oscar/oscar-new/tools/prepare_rotations.py", line 111, in prepare
+    return prepare_refinement(config, config_path=config_path, output=output,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/oscar/oscar-new/tools/prepare_optr_rotations.py", line 275, in prepare
+    selected, record = refine_layer(name, seed, samples, policy, fitter=fitter,
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/oscar/oscar-new/tools/prepare_optr_rotations.py", line 159, in refine_layer
+    raise ValueError(f"OptR {name}: independent test regressed; artifact not published")
+ValueError: OptR model.layers.7.self_attn.attn: independent test regressed; artifact not published
+[ERROR] 2026-10-27-14:30:57 (PID:1135831, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+RESULT {"phase": "prepare-rotations", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "tools.prepare_rotations", "--config", "/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/effective-target.json"], "returncode": 1, "elapsed_seconds": 3498.906897, "timed_out": false, "interrupted": false, "log": "/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log", "cleanup_complete": true}
+[oscar] FAILED phase=prepare-rotations rc=1 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log

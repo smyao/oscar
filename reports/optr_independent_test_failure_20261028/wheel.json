@@ -1,0 +1,20 @@
+{
+  "command": ".venv/bin/python -m pip wheel . --no-deps --no-build-isolation --no-index --wheel-dir /private/tmp/oscar-optr-rejection-wheel",
+  "returncode": 0,
+  "wheel": "/private/tmp/oscar-optr-rejection-wheel/oscar_ascend_external-0.1.0-py3-none-any.whl",
+  "sha256": "e01e30a3ab8d90d5cafb52a51d951a8d835b41a3e692b92615a50eaf428ed8fe",
+  "size_bytes": 1207665,
+  "source_modules_byte_identical": [
+    "tools/serving_variants.py",
+    "tools/prepare_optr_rotations.py",
+    "oscar_ascend/optr_policy.py",
+    "oscar_ascend/optr_checkpoint.py"
+  ],
+  "isolated_wheel_imports": [
+    "/private/tmp/oscar-optr-rejection-wheel/oscar_ascend_external-0.1.0-py3-none-any.whl/tools/serving_variants.py",
+    "/private/tmp/oscar-optr-rejection-wheel/oscar_ascend_external-0.1.0-py3-none-any.whl/tools/prepare_optr_rotations.py"
+  ],
+  "candidate_recipe": 3,
+  "explicit_research_recipe": 5,
+  "npu_used": false
+}

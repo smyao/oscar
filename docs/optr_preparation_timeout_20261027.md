@@ -1,5 +1,7 @@
 # OptR 首次准备超时修复（档案 #172）
 
+2026-10-28更新：后续运行越过旧超时后，在第7层被独立test拒绝。固定candidate恢复recipe3；本文件的OptR预算与断点能力保留给显式研究，不能理解为当前默认会继续拟合。见[后续质量失败处置](optr_independent_test_failure_20261028.md)。
+
 本次用户日志中的 CANN 编译已经成功：`build-ops` 返回 0，耗时 294.118939 秒。7 个原生采样请求全部保存，4 个 TP rank、16 个 FULL 层的 capture 完成；随后 CPU 拟合逐步进入第 3 层的 head 0、1、2、3。最终 `prepare-rotations` 被通用 1800 秒总时限终止，返回 124。原始证据保存在 [target_failure.txt](../reports/optr_preparation_timeout_20261027/target_failure.txt)。片段未含启动 SHA，不把本地基底 `e5423c2` 当作现场版本证明。
 
 故障来自上一轮准备流程的耗时与恢复设计：将覆盖全部层、头、优化 step 和长序列验证的离线任务塞入普通构建时限；单头内部缺少进度；完成的头和层没有持久化。日志已经证明计算在推进，不能将其误诊为编译失败或死锁。

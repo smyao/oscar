@@ -112,12 +112,12 @@ def test_deploy_only_prepare_uses_effective_candidate_and_retains_failure(tmp_pa
     seen = []
     def phase(name, command, **kwargs):
         selected = json.loads(Path(kwargs["env"]["OSCAR_TARGET_CONFIG"]).read_text())
-        seen.append((name, kwargs["timeout"], selected["rotation_refinement"]))
+        seen.append((name, kwargs["timeout"], selected.get("rotation_refinement")))
         return PhaseResult(name, command, 124, 1., True, False, "log", True)
     monkeypatch.setattr(deploy, "run_phase", phase)
     assert deploy.main(["--config", str(path), "--variant", "candidate", "--only", "prepare-rotations",
                         "--log-dir", str(tmp_path / "logs")]) == 124
-    assert seen == [("prepare-rotations", 86400, "optr")]
+    assert seen == [("prepare-rotations", 1800, None)]
     status = json.loads((tmp_path / "logs/status.json").read_text())
     assert status["failed_phase"] == "prepare-rotations"
 

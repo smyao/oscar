@@ -586,6 +586,8 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 ### 8.2 将历史错误转化为回归检查
 
+2026-10-28新增档案#173：OptR第7层联合validation接受后独立test退化，prepare rc1。固定candidate静态恢复recipe3并保留完整BF16/FP32 metadata性能组合；显式研究不改变test门，失败保存完整指标且不发布PT。回归覆盖双缓存/残留配置、总量改善但单请求退化仍失败、报告I/O异常不掩盖质量错误。见[处置与证据](docs/optr_independent_test_failure_20261028.md)；没有目标精度或性能达标结论。
+
 2026-10-27新增档案#172：OptR全部原生采样完成后CPU拟合被1800秒通用总时限杀死。回归覆盖规模预算/嵌套父阶段、真实进展停滞终止与进程组清理、头/已验证层/发布中断恢复、认证trace复用和旧新数值逐位一致。详见[修复证据](docs/optr_preparation_timeout_20261027.md)；本机通过不升级目标完整拟合、模型质量/性能状态。
 
 2026-10-23新增档案#171：PC开启时20请求decode周转可能淘汰GDN prompt checkpoint，联合命中归零。外部原生引用保留与完成/取消/抢占/共享/卸载回归见 [证据与成本](docs/prefix_checkpoint_retention_20261023.md)；仅主机通过，不升级NPU/质量/性能状态。

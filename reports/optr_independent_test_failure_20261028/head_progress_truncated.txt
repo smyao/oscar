@@ -1,0 +1,346 @@
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "baseline_start"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "baseline_sample_done", "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "baseline_sample_done", "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "baseline_sample_done", "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "baseline_done", "normalized_error": 0.0013643999692559646}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "phase_start", "phase": "k", "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 1, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 2, "steps": 16}
+[oscar] phase=prepare-rotations running seconds=1801.3 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 3, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_start", "phase": "k", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "k", "step": 4, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "k", "step": 4, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "k", "step": 4, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_done", "phase": "k", "step": 4, "steps": 16, "normalized_error": 0.001582082627411021, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 5, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 6, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 7, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_start", "phase": "k", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "k", "step": 8, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "k", "step": 8, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "k", "step": 8, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_done", "phase": "k", "step": 8, "steps": 16, "normalized_error": 0.0015177318361463358, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 9, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 10, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 11, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_start", "phase": "k", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "k", "step": 12, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "k", "step": 12, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "k", "step": 12, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_done", "phase": "k", "step": 12, "steps": 16, "normalized_error": 0.0015893922142868337, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 13, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 14, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 15, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "k", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_start", "phase": "k", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "k", "step": 16, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] phase=prepare-rotations running seconds=1861.4 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "k", "step": 16, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "k", "step": 16, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_done", "phase": "k", "step": 16, "steps": 16, "normalized_error": 0.0016104907832317076, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "phase_done", "phase": "k", "normalized_error": 0.0013643999692559646}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "phase_start", "phase": "v", "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 1, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 2, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 3, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_start", "phase": "v", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "v", "step": 4, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "v", "step": 4, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "v", "step": 4, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_done", "phase": "v", "step": 4, "steps": 16, "normalized_error": 0.001507398769499638, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 5, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 6, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 7, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_start", "phase": "v", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "v", "step": 8, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "v", "step": 8, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "v", "step": 8, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_done", "phase": "v", "step": 8, "steps": 16, "normalized_error": 0.0016162526326389893, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 9, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 10, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 11, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_start", "phase": "v", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "v", "step": 12, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "v", "step": 12, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] phase=prepare-rotations running seconds=1921.4 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "v", "step": 12, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_done", "phase": "v", "step": 12, "steps": 16, "normalized_error": 0.001647046713604248, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 13, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 14, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 15, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "step_done", "phase": "v", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_start", "phase": "v", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "v", "step": 16, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "v", "step": 16, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_sample_done", "phase": "v", "step": 16, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "validation_done", "phase": "v", "step": 16, "steps": 16, "normalized_error": 0.0016792830371102094, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "phase_done", "phase": "v", "normalized_error": 0.0013643999692559646}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "event": "fit_done", "accepted": false, "normalized_error": 0.0013643999692559646}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 0, "phase": "head_fit_saved"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "phase": "fitting"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "baseline_start"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "baseline_sample_done", "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "baseline_sample_done", "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "baseline_sample_done", "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "baseline_done", "normalized_error": 0.020755466735322407}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "phase_start", "phase": "k", "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 1, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 2, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 3, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_start", "phase": "k", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "k", "step": 4, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "k", "step": 4, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] phase=prepare-rotations running seconds=1981.5 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "k", "step": 4, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_done", "phase": "k", "step": 4, "steps": 16, "normalized_error": 0.018627922063151163, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 5, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 6, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 7, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_start", "phase": "k", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "k", "step": 8, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "k", "step": 8, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "k", "step": 8, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_done", "phase": "k", "step": 8, "steps": 16, "normalized_error": 0.01653335172558625, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 9, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 10, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 11, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_start", "phase": "k", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "k", "step": 12, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "k", "step": 12, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "k", "step": 12, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_done", "phase": "k", "step": 12, "steps": 16, "normalized_error": 0.02166136663203254, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 13, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 14, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 15, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "k", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_start", "phase": "k", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "k", "step": 16, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "k", "step": 16, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] phase=prepare-rotations running seconds=2041.5 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "k", "step": 16, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_done", "phase": "k", "step": 16, "steps": 16, "normalized_error": 0.021901647173502837, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "phase_done", "phase": "k", "normalized_error": 0.020755466735322407}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "phase_start", "phase": "v", "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 1, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 2, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 3, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_start", "phase": "v", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "v", "step": 4, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "v", "step": 4, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "v", "step": 4, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_done", "phase": "v", "step": 4, "steps": 16, "normalized_error": 0.018929923427147114, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 5, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 6, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 7, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_start", "phase": "v", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "v", "step": 8, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "v", "step": 8, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "v", "step": 8, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_done", "phase": "v", "step": 8, "steps": 16, "normalized_error": 0.020795551491695968, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 9, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 10, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 11, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_start", "phase": "v", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "v", "step": 12, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "v", "step": 12, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "v", "step": 12, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_done", "phase": "v", "step": 12, "steps": 16, "normalized_error": 0.020830313860823197, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 13, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 14, "steps": 16}
+[oscar] phase=prepare-rotations running seconds=2101.6 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 15, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "step_done", "phase": "v", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_start", "phase": "v", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "v", "step": 16, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "v", "step": 16, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_sample_done", "phase": "v", "step": 16, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "validation_done", "phase": "v", "step": 16, "steps": 16, "normalized_error": 0.020635988409044143, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "phase_done", "phase": "v", "normalized_error": 0.020755466735322407}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "event": "fit_done", "accepted": false, "normalized_error": 0.020755466735322407}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 1, "phase": "head_fit_saved"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "phase": "fitting"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "baseline_start"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "baseline_sample_done", "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "baseline_sample_done", "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "baseline_sample_done", "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "baseline_done", "normalized_error": 0.0023048193651528433}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "phase_start", "phase": "k", "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 1, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 2, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 3, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_start", "phase": "k", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "k", "step": 4, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "k", "step": 4, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "k", "step": 4, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_done", "phase": "k", "step": 4, "steps": 16, "normalized_error": 0.00230650270346254, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 5, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 6, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 7, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_start", "phase": "k", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "k", "step": 8, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] phase=prepare-rotations running seconds=2161.6 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "k", "step": 8, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "k", "step": 8, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_done", "phase": "k", "step": 8, "steps": 16, "normalized_error": 0.002390303519057967, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 9, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 10, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 11, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_start", "phase": "k", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "k", "step": 12, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "k", "step": 12, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "k", "step": 12, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_done", "phase": "k", "step": 12, "steps": 16, "normalized_error": 0.0024383421035806775, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 13, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 14, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 15, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "k", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_start", "phase": "k", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "k", "step": 16, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "k", "step": 16, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "k", "step": 16, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_done", "phase": "k", "step": 16, "steps": 16, "normalized_error": 0.0023241003333879756, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "phase_done", "phase": "k", "normalized_error": 0.0023048193651528433}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "phase_start", "phase": "v", "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 1, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 2, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 3, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_start", "phase": "v", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "v", "step": 4, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "v", "step": 4, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] phase=prepare-rotations running seconds=2221.7 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "v", "step": 4, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_done", "phase": "v", "step": 4, "steps": 16, "normalized_error": 0.002225374075502675, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 5, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 6, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 7, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_start", "phase": "v", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "v", "step": 8, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "v", "step": 8, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "v", "step": 8, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_done", "phase": "v", "step": 8, "steps": 16, "normalized_error": 0.002153227364017216, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 9, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 10, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 11, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_start", "phase": "v", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "v", "step": 12, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "v", "step": 12, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "v", "step": 12, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_done", "phase": "v", "step": 12, "steps": 16, "normalized_error": 0.002053045565213255, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 13, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 14, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 15, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "step_done", "phase": "v", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_start", "phase": "v", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "v", "step": 16, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "v", "step": 16, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] phase=prepare-rotations running seconds=2281.7 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_sample_done", "phase": "v", "step": 16, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "validation_done", "phase": "v", "step": 16, "steps": 16, "normalized_error": 0.002075229383315798, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "phase_done", "phase": "v", "normalized_error": 0.0023048193651528433}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "event": "fit_done", "accepted": false, "normalized_error": 0.0023048193651528433}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 2, "phase": "head_fit_saved"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "phase": "fitting"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "baseline_start"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "baseline_sample_done", "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "baseline_sample_done", "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "baseline_sample_done", "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "baseline_done", "normalized_error": 0.003319737907123906}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "phase_start", "phase": "k", "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 1, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 2, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 3, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_start", "phase": "k", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "k", "step": 4, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "k", "step": 4, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "k", "step": 4, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_done", "phase": "k", "step": 4, "steps": 16, "normalized_error": 0.003655766551057468, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 5, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 6, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 7, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_start", "phase": "k", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "k", "step": 8, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "k", "step": 8, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "k", "step": 8, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_done", "phase": "k", "step": 8, "steps": 16, "normalized_error": 0.004215602435345843, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 9, "steps": 16}
+[oscar] phase=prepare-rotations running seconds=2341.7 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 10, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 11, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_start", "phase": "k", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "k", "step": 12, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "k", "step": 12, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "k", "step": 12, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_done", "phase": "k", "step": 12, "steps": 16, "normalized_error": 0.0030935255494011567, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 13, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 14, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 15, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "k", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_start", "phase": "k", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "k", "step": 16, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "k", "step": 16, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "k", "step": 16, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_done", "phase": "k", "step": 16, "steps": 16, "normalized_error": 0.0032509802675552944, "accepted": true}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "phase_done", "phase": "k", "normalized_error": 0.0032509802675552944}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "phase_start", "phase": "v", "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 1, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 2, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 3, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_start", "phase": "v", "step": 4, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "v", "step": 4, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "v", "step": 4, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "v", "step": 4, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_done", "phase": "v", "step": 4, "steps": 16, "normalized_error": 0.00341618959056652, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 5, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 6, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 7, "steps": 16}
+[oscar] phase=prepare-rotations running seconds=2401.8 log=/workspace/oscar/oscar-new/logs/20261027T133233.150213Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_start", "phase": "v", "step": 8, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "v", "step": 8, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "v", "step": 8, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "v", "step": 8, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_done", "phase": "v", "step": 8, "steps": 16, "normalized_error": 0.003276341424802371, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 9, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 10, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 11, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_start", "phase": "v", "step": 12, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "v", "step": 12, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "v", "step": 12, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "v", "step": 12, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_done", "phase": "v", "step": 12, "steps": 16, "normalized_error": 0.0030706464108648376, "accepted": true}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 13, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 14, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 15, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "step_done", "phase": "v", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_start", "phase": "v", "step": 16, "steps": 16}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "v", "step": 16, "sample": 1, "samples": 3, "request_id": "validation_4096_0"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "v", "step": 16, "sample": 2, "samples": 3, "request_id": "validation_32768_1"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_sample_done", "phase": "v", "step": 16, "sample": 3, "samples": 3, "request_id": "validation_65536_2"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "validation_done", "phase": "v", "step": 16, "steps": 16, "normalized_error": 0.0032616416936241954, "accepted": false}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "phase_done", "phase": "v", "normalized_error": 0.0030706464108648376}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "head": 3, "event": "fit_done", "accepted": true, "normalized_error": 0.0030706464108648376}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.7.self_attn.attn", "he

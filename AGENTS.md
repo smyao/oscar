@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-28 OptR独立test失败处置（#173）：用户回传第7层联合validation选中候选后，独立test明确退化，准备rc1而非超时。撤下未验收OptR的candidate强制默认，恢复perhead_center recipe3及原FP32 metadata/BF16性能组合；固定直启/探针共用，残留optr配置清除，显式不匹配PT仍报错。显式variant=None研究保留recipe5与全部原质量门，失败保存逐请求/分片原始指标，不按test重选、不放宽门、不自动重试。线上核/runtime/timer/argv不改；未实现OptR精度收益，未连接真机或验收性能。见docs/optr_independent_test_failure_20261028.md。本条覆盖下方10月27日的candidate默认OptR描述。
+
 > 2026-10-27 OptR准备超时续修：用户回传CANN构建和7条原生采样均已成功，CPU拟合被通用1800秒总时限终止（#172）。candidate离线准备单独按任务规模分配有限总预算，当前上限24h；保留默认1800秒真实无进展终止，心跳不续期。认证原生trace不失效，新增原子头/完成层断点并保留全部联合validation/独立test门。只减少离线重复计算，不减样本/steps，不改线上核/runtime/timer/argv，不宣称目标整服务已复验。见docs/optr_preparation_timeout_20261027.md。
 
 > 2026-10-27 OptR离线精修：用户要求review后直接改造且不增加在线开销。原生BF16 candidate在recipe3基础上启用独立recipe5输出感知旋转；gate后联合KV、GQA/全部TP输出、动态分片及独立test必须非劣，变更层验证总误差严格改善。仅准备/加载最终矩阵，不改线上CANN/runtime/timer/argv/MTP/GDN/graph。首次需要新增原生采样和CPU拟合，完整PT匹配后复用；不能冒称零启动成本或已达到模型/性能验收。显式Hadamard/W8A8保留旧路径；见docs/optr_implementation_20261027.md。

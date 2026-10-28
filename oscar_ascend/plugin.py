@@ -168,7 +168,10 @@ def _patch_runner(module: ModuleType) -> None:
                     values["max_num_scheduled_tokens"], values.get("force_uniform_decode")):
                 values["force_eager"] = True
                 if not getattr(runner, "_oscar_prefill_state_logged", False):
-                    print("[oscar] PREFILL_STATE_FIX cache_mode=none "
+                    cache = getattr(runner, "cache_config", None)
+                    if cache is None:
+                        cache = runner.vllm_config.cache_config
+                    print(f"[oscar] PREFILL_STATE_FIX cache_mode={cache.mamba_cache_mode} "
                           "route=native_prefill mtp=enabled decode_graph=retained", flush=True)
                     runner._oscar_prefill_state_logged = True
             return original(*bound.args, **bound.kwargs)
@@ -476,7 +479,7 @@ def _patch_mtp_forward(module: ModuleType) -> None:
 
 
 def _patch_gdn_prefill_classification(module: ModuleType) -> None:
-    """#163: preserve none-mode prefill state; GDN kernels remain native."""
+    """#163/#174: preserve prompt state in none/align; GDN kernels stay native."""
     def retain_prefill(original):
         def wrapped(builder, common_attn_metadata, spec_sequence_masks_cpu, num_accepted_tokens):
             from .integration.prefill_state_contract import keep_prefill_state

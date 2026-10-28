@@ -1,0 +1,381 @@
+{
+  "NPU": "not_run",
+  "actual_native_prefix_hit": {
+    "all_references_released": true,
+    "hit_tokens": 2304,
+    "remaining_chunks": [
+      1536,
+      1156,
+      4
+    ]
+  },
+  "backend": "pinned_native_host_AST_and_synthetic_CPU_state_addresses",
+  "fixed_global_token_budget": 16384,
+  "limits": [
+    "Request lengths and remaining batch budgets are synthetic valid inputs, not a user traffic replay.",
+    "State payloads .25/-42/4 are finite ownership witnesses, not complete Qwen hidden states.",
+    "Existing native preprocess copy is represented by a CPU copy callback; no NPU copy was executed.",
+    "The native prefill SSM assignment and native speculative initial-state index are executed/read unchanged.",
+    "This proves a state-protocol defect and its host repair, not the share of LongBench score/runtime loss."
+  ],
+  "mixed_routes": [
+    {
+      "attention_operator": "attention_cv_official_decode_out",
+      "later_true_decode_restores_graph": true,
+      "prefill_mask_and_accepted_preserved": true,
+      "query_lengths": [
+        4,
+        4
+      ]
+    },
+    {
+      "attention_operator": "attention_cv_official_cluster4_out",
+      "later_true_decode_restores_graph": false,
+      "prefill_mask_and_accepted_preserved": true,
+      "query_lengths": [
+        4,
+        512
+      ]
+    },
+    {
+      "attention_operator": "attention_cv_official_cluster16_out",
+      "later_true_decode_restores_graph": false,
+      "prefill_mask_and_accepted_preserved": true,
+      "query_lengths": [
+        4,
+        8192
+      ]
+    }
+  ],
+  "model_quality": "not_run",
+  "performance": "not_run",
+  "source_sha256": {
+    "oscar_ascend/integration/prefill_state_contract.py": "874e4b149ee2fb42a05b58bd5868da207dd3dbcf454f1f54428a764fb0afa5f4",
+    "oscar_ascend/integration/prefix_checkpoint.py": "7e9eac665bcbaae7366ad53fbc3b0ae88838406bce2e09a7ab0d9aa45f421a9c",
+    "oscar_ascend/plugin.py": "14e7e6f0068a9884e24b0bf3b47c64239bc2e6e477fc0bba916cf86f3e39fbdd",
+    "references/vllm-ascend/csrc/attention/recurrent_gated_delta_rule/op_kernel/recurrent_gated_delta_rule.h": "96e6d9667af1e3457316ffce92a8a983fcb90096df08e3efd13ec0b35b8b1c5b",
+    "references/vllm-ascend/csrc/moe/causal_conv1d/op_kernel/causal_conv1d.h": "83af972763a708fce1b723106dcd243260fb3302c947d3a59ed34a868c6e0bf3",
+    "references/vllm-ascend/vllm_ascend/ops/gdn.py": "74341a517aab1eadafb4fdbfc90697637eb12f9910f488f851712ba9c8541338",
+    "references/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py": "42cc0284b57193112b8a8ad19704aa3401f02294f0c36333c307d748f462fe16",
+    "references/vllm-ascend/vllm_ascend/patch/worker/patch_mamba_utils.py": "a8862c3509f698c05cdeba5aa408a28e506349eff97801b28161569b8e3c9778",
+    "references/vllm/vllm/model_executor/layers/mamba/mamba_utils.py": "aa9b7dc46725a012fc61b83a7181baaddad7ab4b0eb8e4144350799697ad6a42",
+    "references/vllm/vllm/v1/attention/backends/utils.py": "f4f2f106ad84aa77cdf0b09d6948878f4e74c56568309312ec47bd190cc710cd",
+    "references/vllm/vllm/v1/core/sched/scheduler.py": "9ae1491f57a6294e32416b93ef2ea68107fa0d65c3a4d7f745f1261012f735e9",
+    "reports/gdn_prefill_state_20261028/align_repro.py": "fc6748c65c13317a7026dae063b015287d630262e2713c088d63e8be02d0d7f8",
+    "tests/test_align_prefill_state_contract.py": "b7be5d9c2479f7f6ccebf43610f9f2a6190df6e2b7d1faf1e3f0a5b14227131e"
+  },
+  "state_cases": [
+    {
+      "context": 768,
+      "copies_before_tail": [
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "copies_total_including_next_decode": [
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "fixed_commit_page": 2,
+      "native_align_table": [
+        [
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "next_decode_initial_value": 4.0,
+      "old_read_page": 5,
+      "old_read_value": -42.0,
+      "valid_initial_value": 0.25,
+      "warm_tokens": 4
+    },
+    {
+      "context": 4606,
+      "copies_before_tail": [
+        [
+          5,
+          6,
+          0
+        ]
+      ],
+      "copies_total_including_next_decode": [
+        [
+          5,
+          6,
+          0
+        ]
+      ],
+      "fixed_commit_page": 7,
+      "native_align_table": [
+        [
+          7,
+          8,
+          9,
+          10
+        ]
+      ],
+      "next_decode_initial_value": 4.0,
+      "old_read_page": 10,
+      "old_read_value": -42.0,
+      "valid_initial_value": 0.25,
+      "warm_tokens": 4
+    },
+    {
+      "context": 4996,
+      "copies_before_tail": [],
+      "copies_total_including_next_decode": [],
+      "fixed_commit_page": 7,
+      "native_align_table": [
+        [
+          7,
+          8,
+          9,
+          10
+        ]
+      ],
+      "next_decode_initial_value": 4.0,
+      "old_read_page": 10,
+      "old_read_value": -42.0,
+      "valid_initial_value": 0.25,
+      "warm_tokens": 4
+    },
+    {
+      "context": 19968,
+      "copies_before_tail": [
+        [
+          25,
+          26,
+          0
+        ]
+      ],
+      "copies_total_including_next_decode": [
+        [
+          25,
+          26,
+          0
+        ]
+      ],
+      "fixed_commit_page": 27,
+      "native_align_table": [
+        [
+          27,
+          28,
+          29,
+          30
+        ]
+      ],
+      "next_decode_initial_value": 4.0,
+      "old_read_page": 30,
+      "old_read_value": -42.0,
+      "valid_initial_value": 0.25,
+      "warm_tokens": 4
+    },
+    {
+      "context": 32764,
+      "copies_before_tail": [],
+      "copies_total_including_next_decode": [],
+      "fixed_commit_page": 43,
+      "native_align_table": [
+        [
+          43,
+          44,
+          45,
+          46
+        ]
+      ],
+      "next_decode_initial_value": 4.0,
+      "old_read_page": 46,
+      "old_read_value": -42.0,
+      "valid_initial_value": 0.25,
+      "warm_tokens": 4
+    },
+    {
+      "context": 65532,
+      "copies_before_tail": [],
+      "copies_total_including_next_decode": [],
+      "fixed_commit_page": 86,
+      "native_align_table": [
+        [
+          86,
+          87,
+          88,
+          89
+        ]
+      ],
+      "next_decode_initial_value": 4.0,
+      "old_read_page": 89,
+      "old_read_value": -42.0,
+      "valid_initial_value": 0.25,
+      "warm_tokens": 4
+    }
+  ],
+  "tail_schedules": [
+    {
+      "prompt": 772,
+      "trace": [
+        {
+          "available_budget": 768,
+          "before": 0,
+          "scheduled": 768
+        },
+        {
+          "available_budget": 16384,
+          "before": 768,
+          "scheduled": 4
+        }
+      ]
+    },
+    {
+      "prompt": 4610,
+      "trace": [
+        {
+          "available_budget": 16384,
+          "before": 0,
+          "scheduled": 2304
+        },
+        {
+          "available_budget": 16384,
+          "before": 2304,
+          "scheduled": 1536
+        },
+        {
+          "available_budget": 766,
+          "before": 3840,
+          "scheduled": 766
+        },
+        {
+          "available_budget": 16384,
+          "before": 4606,
+          "scheduled": 4
+        }
+      ]
+    },
+    {
+      "prompt": 5000,
+      "trace": [
+        {
+          "available_budget": 16384,
+          "before": 0,
+          "scheduled": 2304
+        },
+        {
+          "available_budget": 16384,
+          "before": 2304,
+          "scheduled": 1536
+        },
+        {
+          "available_budget": 1156,
+          "before": 3840,
+          "scheduled": 1156
+        },
+        {
+          "available_budget": 16384,
+          "before": 4996,
+          "scheduled": 4
+        }
+      ]
+    },
+    {
+      "prompt": 19972,
+      "trace": [
+        {
+          "available_budget": 16384,
+          "before": 0,
+          "scheduled": 16128
+        },
+        {
+          "available_budget": 16384,
+          "before": 16128,
+          "scheduled": 3072
+        },
+        {
+          "available_budget": 768,
+          "before": 19200,
+          "scheduled": 768
+        },
+        {
+          "available_budget": 16384,
+          "before": 19968,
+          "scheduled": 4
+        }
+      ]
+    },
+    {
+      "prompt": 32768,
+      "trace": [
+        {
+          "available_budget": 16384,
+          "before": 0,
+          "scheduled": 16128
+        },
+        {
+          "available_budget": 16384,
+          "before": 16128,
+          "scheduled": 13824
+        },
+        {
+          "available_budget": 16384,
+          "before": 29952,
+          "scheduled": 1536
+        },
+        {
+          "available_budget": 1276,
+          "before": 31488,
+          "scheduled": 1276
+        },
+        {
+          "available_budget": 16384,
+          "before": 32764,
+          "scheduled": 4
+        }
+      ]
+    },
+    {
+      "prompt": 65536,
+      "trace": [
+        {
+          "available_budget": 16384,
+          "before": 0,
+          "scheduled": 16128
+        },
+        {
+          "available_budget": 16384,
+          "before": 16128,
+          "scheduled": 16128
+        },
+        {
+          "available_budget": 16384,
+          "before": 32256,
+          "scheduled": 16128
+        },
+        {
+          "available_budget": 16384,
+          "before": 48384,
+          "scheduled": 13824
+        },
+        {
+          "available_budget": 16384,
+          "before": 62208,
+          "scheduled": 2304
+        },
+        {
+          "available_budget": 1020,
+          "before": 64512,
+          "scheduled": 1020
+        },
+        {
+          "available_budget": 16384,
+          "before": 65532,
+          "scheduled": 4
+        }
+      ]
+    }
+  ]
+}

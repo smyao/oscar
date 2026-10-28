@@ -1,0 +1,32 @@
+{
+  "scope": "source and host native contracts; no NPU/model/performance claim",
+  "accepted_performance_base": "614c73982d762365e20c7362adc6f9350e465218",
+  "checks": {
+    "related_pytest_passed": 207,
+    "related_pytest_failed": 0,
+    "native_chain_source_hashes_match": true,
+    "production_CANN_and_target_config_identical_to_accepted": true
+  },
+  "pytest_command": ".venv/bin/python -m pytest -q tests/test_gdn_folded_initial_state.py tests/test_prefill_state_contract_hooks.py tests/test_align_prefill_state_contract.py tests/test_prefill_state_numeric.py tests/test_prefill_state_performance_protection.py tests/test_universal_bf16_regression_protection.py tests/test_plugin.py tests/test_prefix_checkpoint_integration.py tests/test_prefix_checkpoint_retention.py tests/test_mtp_logical_slots.py tests/test_mixed_decode_split.py",
+  "host_log": "host_tests.log",
+  "source_sha256": {
+    "oscar_ascend/integration/prefill_state_contract.py": "874e4b149ee2fb42a05b58bd5868da207dd3dbcf454f1f54428a764fb0afa5f4",
+    "oscar_ascend/plugin.py": "14e7e6f0068a9884e24b0bf3b47c64239bc2e6e477fc0bba916cf86f3e39fbdd",
+    "tests/test_gdn_folded_initial_state.py": "9db8c39203c7557a28e13950b5aa7369e0e1dd3b7652f2e3f96407d0ac75cb68",
+    "tests/test_prefill_state_contract_hooks.py": "8ed2550877ac73a0340c541226c536e5a36162b5d296e87814f0228ecbc9f056",
+    "tests/test_align_prefill_state_contract.py": "b7be5d9c2479f7f6ccebf43610f9f2a6190df6e2b7d1faf1e3f0a5b14227131e",
+    "tests/test_prefill_state_numeric.py": "5e7d44bc982cd498f78e3f7500571ffe705da414a2156aa3468e24e8cac65b8c",
+    "tests/test_prefill_state_performance_protection.py": "03726ec426c58fe19afff40cc92178a430131e6f55f9b02f28057b622f8118af",
+    "tests/test_universal_bf16_regression_protection.py": "0453d32793892685c5ff0ea354457fa87a414f7d3026d0579968897b9b9fd8e5",
+    "tests/test_plugin.py": "45a01e116a5e5f46aa365d63effec21f98bdb061429ab0a403d93da99ae96fd7",
+    "tests/test_prefix_checkpoint_integration.py": "1f862bcb2e8fd593491cd8867b9d1a3cd900e55a6ea795722bfe6ea692aded04",
+    "tests/test_prefix_checkpoint_retention.py": "9f859982474b42c8ac44e0d848df5e0f0332207aecb4e12b8a1d737f6d7c7ef3",
+    "tests/test_mtp_logical_slots.py": "975325ded63e12ac5d7f957135ce62e99d383f9f2f2e38be0137e260638cef31",
+    "tests/test_mixed_decode_split.py": "fa7ff6ab98fc40e52d313efcf092d4ad912f7800391131a819f590968320fdcf"
+  },
+  "changed_execution": "Real MTP prefill remains prefill in none/align; uniform-decode graph collision is corrected, genuine decode graph is retained.",
+  "limits": [
+    "Affected warm prefill step uses native eager prefill gather/chunk/store rather than speculative decode; no zero-latency claim for that step.",
+    "Synthetic schedule and finite-state witnesses are not the user dataset or four-metric ten-run acceptance."
+  ]
+}

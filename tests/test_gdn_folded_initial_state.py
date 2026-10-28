@@ -109,10 +109,12 @@ def test_legal_int2_reused_page_exposes_folded_uninitialized_ssm(monkeypatch):
     assert accepted.tolist() == [4, 2]
 
 
-def test_native_alignment_explains_none_only_four_token_prefill_tail(monkeypatch):
+def test_native_alignment_avoids_one_specific_fixed_prompt_tail(monkeypatch):
     # A 32K prompt follows a four-token decode row in a 16K budget. Its first
     # chunk already materialized 16K. Native none permits 16380 + 4, whereas
     # native align rounds the same interior chunk to 128-token alignment.
+    # This interior example does not prove short tails impossible after the
+    # last cache boundary; test_align_prefill_state_contract covers that case.
     scheduler = definitions("references/vllm/vllm/v1/core/sched/scheduler.py",
         "native_gdn_fold_scheduler", set(), {}, monkeypatch,
         methods=[("Scheduler", "_mamba_block_aligned_split")])
@@ -210,15 +212,15 @@ def test_fixed_none_keeps_native_prefill_and_commits_next_decode_state(monkeypat
 
 
 @pytest.mark.parametrize("apc,mode", [(True, "align"), (True, "none"), (False, "align")])
-def test_prefix_enabled_or_align_fold_stays_byte_identical_to_native(monkeypatch, apc, mode):
+def test_prefix_enabled_or_align_preserves_real_prefill_state(monkeypatch, apc, mode):
     from oscar_ascend.integration.prefill_state_contract import keep_prefill_state
     original, common = _fold_fixture(monkeypatch)
     builder = _owner(apc=apc, mode=mode)
     mask, counts = torch.tensor([False, True]), torch.tensor([1, 2], dtype=torch.int32)
-    expected = original(builder, common, mask, counts)
+    old_mask, old_counts = original(builder, common, mask, counts)
+    assert old_mask.tolist() == [True, True] and old_counts.tolist() == [4, 2]
     observed = keep_prefill_state(builder, original, common, mask, counts)
-    assert torch.equal(expected[0], observed[0])
-    assert torch.equal(expected[1], observed[1])
+    assert observed[0] is mask and observed[1] is counts
     assert mask.tolist() == [False, True] and counts.tolist() == [1, 2]
 
 
@@ -230,13 +232,46 @@ def test_prefix_enabled_or_align_fold_stays_byte_identical_to_native(monkeypatch
     ([32764, 32800], [32768, 32768], [4, 16], 16, None, False),
     ([32764, 32800], [32768, 32768], [4, 4], 4, True, False),
 ])
-def test_only_live_none_prefill_four_token_step_requires_eager(
-        computed, prompts, scheduled, max_tokens, uniform, expected):
+@pytest.mark.parametrize("mode", ["none", "align"])
+def test_only_live_prefill_four_token_step_requires_eager(
+        computed, prompts, scheduled, max_tokens, uniform, expected, mode):
     from oscar_ascend.integration.prefill_state_contract import force_prefill_eager
-    runner = _owner()
+    runner = _owner(mode=mode)
     runner.input_batch = SimpleNamespace(num_reqs=2,
         num_computed_tokens_cpu=torch.tensor(computed),
         num_prompt_tokens=torch.tensor(prompts))
     assert force_prefill_eager(runner, 2, torch.tensor(scheduled), max_tokens, uniform) is expected
     runner.cache_config.enable_prefix_caching = True
-    assert not force_prefill_eager(runner, 2, torch.tensor(scheduled), max_tokens, uniform)
+    assert force_prefill_eager(runner, 2, torch.tensor(scheduled), max_tokens, uniform) is expected
+
+
+@pytest.mark.parametrize("mode,method", [("all", "mtp"), ("align", "eagle"), ("none", "eagle")])
+def test_unrelated_state_protocols_keep_original_fold(monkeypatch, mode, method):
+    from oscar_ascend.integration.prefill_state_contract import keep_prefill_state
+    original, common = _fold_fixture(monkeypatch)
+    builder = _owner(apc=True, mode=mode, method=method)
+    mask, counts = torch.tensor([False, True]), torch.tensor([1, 2], dtype=torch.int32)
+    expected = original(builder, common, mask, counts)
+    observed = keep_prefill_state(builder, original, common, mask, counts)
+    assert all(torch.equal(a, b) for a, b in zip(expected, observed))
+
+
+@pytest.mark.parametrize("mode", ["none", "align"])
+@pytest.mark.parametrize("drafts", [1, 2, 3, 7])
+def test_prefill_contract_uses_speculation_protocol_width_not_input_length(monkeypatch, mode, drafts):
+    from oscar_ascend.integration.prefill_state_contract import keep_prefill_state, force_prefill_eager
+    original, common = _fold_fixture(monkeypatch)
+    width = drafts + 1
+    owner = _owner(apc=True, mode=mode)
+    owner.num_spec = drafts
+    owner.speculative_config.num_speculative_tokens = drafts
+    common.query_start_loc_cpu = torch.tensor([0, width, 2 * width], dtype=torch.int32)
+    mask, counts = torch.tensor([False, True]), torch.tensor([1, 1], dtype=torch.int32)
+    assert original(owner, common, mask, counts)[1].tolist() == [width, 1]
+    actual = keep_prefill_state(owner, original, common, mask, counts)
+    assert actual[0] is mask and actual[1] is counts
+    owner.input_batch = SimpleNamespace(num_computed_tokens_cpu=torch.tensor([32768 - width, 32900]),
+                                       num_prompt_tokens=torch.tensor([32768, 32768]))
+    assert force_prefill_eager(owner, 2, torch.tensor([width, width]), width)
+    owner.input_batch.num_computed_tokens_cpu[0] = 32768
+    assert not force_prefill_eager(owner, 2, torch.tensor([width, width]), width)

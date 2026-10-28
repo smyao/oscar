@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-10-28 当前修复：PC align的warm spec-width prefill也会被错误fold为decode，读写错误GDN checkpoint。已扩展#163的原生prefill分类与图接缝修复，207项相关主机回归通过，全部生产CANN与614c相同。固定candidate自动启用；四项模型验收状态不据本地反例升级。见[状态修复与范围](gdn_prefill_state_20261028.md)。
+
 2026-10-28 后续裁决：撤下已提交bcbf4153；新MTP/APC方案因精度或命中/容量反例未放行，未新增生产优化或提升任何设备/质量/性能验收状态。四项质量和32K/64K性能保护的共同目标仍未完成，见[本轮裁决与证据](precision_followup_20261028.md)。
 
 2026-10-28 质量续修：用户最新单轮127/127、FAIL=0，accuracy/easy/hard/short为38.58/44.19/35.71/38.58，进度19:04、API1173.43秒。上一轮native_exact默认政策撤下，current-only/probe恢复已获32K/64K性能确认的614c实现，清除旧配置残留；[失败与撤下记录](native_exact_current_precision_20261028.md)、[用户原文节选](../reports/precision_followup_20261028/user_result_20261028_080248.txt)。这不是新的十轮top3统计，不将撤下、局部数值反例或主机回归写成模型质量达标；四指标各<1点与性能保持仍须同时成立。

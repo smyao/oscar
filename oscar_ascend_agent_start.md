@@ -1,5 +1,7 @@
 # Agent 启动指令（v2）：将 OSCAR KV Cache INT2 量化适配到 vLLM Ascend 0.23.0
 
+> 2026-10-28最新：PC align的短prefill续块也会触发#163错误fold。当前外部插件按真实prefill阶段统一保护none/align MTP及图选择；正常decode和所有OSCAR CANN/PT/16K/PC hash/lookup/MTP/timer保持。207项主机回归通过，不冒称四指标已达标。此前native_exact已撤下，见[当前状态修复](docs/gdn_prefill_state_20261028.md)。
+
 > 2026-10-21数值修复：candidate默认v4，所有FULL来源统一旋转域、FP32 partial合并后仅一次最终逆旋转；新reader/prepare与current-only/MTP/APC探针一起切换，旧v3与timer不改。窗口采用明确native fixed-per-forward映射，不冒称SGLang 8-token分配器/未知V2 PT等价。原生GDN BF16、graph、预算与设备不变，禁止连接真机/测速，模型质量仍待用户验收。见docs/official_math_v4_20261021.md。
 
 > 2026-10-20定向优化恢复：用户授权根据已有timer优化，并禁止修改timer。只针对C16已测softmax处理链及BF16转换；原C16保留为control，生产ABI/source名保持，candidate通过统一配置选择优化实现。完整数值/错误域/CANN与真实速度分别记账，不恢复真机连接或性能测试，不修改main/stable。见 `docs/c16_targeted_optimization_20261020.md`。
@@ -586,7 +588,9 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 ### 8.2 将历史错误转化为回归检查
 
-2026-10-28新增档案#173：性能已达标但127条PC质量集十轮top3四项不合格。新native_exact政策仅在原无历史current-only资格内省去额外旋转往返，保留同源缓存writer及原history读核。须核原Q输入检查、独立scratch、LSE/status本次写入、PT复用、同incoming缓存写入和原资格；不得以局部反例代替模型分数。见[精度修复](docs/native_exact_current_precision_20261028.md)。
+2026-10-28本地续审#163：不得由固定32K内部块对齐外推align永无末4续块。回归覆盖实际prefix命中、末尾剩余预算、同块/换块SSM与conv状态、nativeprefill最终提交/下一decode及图恢复；当前修复扩展到none/align，见[修复与207项回归](docs/gdn_prefill_state_20261028.md)。这不是新增真机条目。
+
+2026-10-28档案#173/#174：性能已达标但127条PC质量集十轮top3四项不合格。native_exact局部旋转方案后来被用户反馈否决，默认已撤下。保留失败与独立数值证据，不再启用该policy；见[历史交付及撤下](docs/native_exact_current_precision_20261028.md)。
 
 2026-10-28新增档案#172：用户实测34bc的64K达标，但32K及以下退化30%。所有长度统一撤销decode批量Cast，恢复232b完整decode源；C16保持34bc完整源。禁止新增长度分界；新回归门同时固定两条阶段路径和原分流/配置身份，见[通用修复](docs/universal_regression_repair_20261028.md)。
 
@@ -596,7 +600,8 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 | 历史现象 | 必须落实的检查与处理 |
 | --- | --- |
-| #173 四指标精度不合格；精确单源仍有旋转往返误差 | 已有无历史资格内用原Q/K/V native FIA，保原输入/output/error门；缓存仍原center/rotation/INT2。历史和混合保持原核，独立raw oracle及policy回执绑定；两性能场景与四质量指标同时验收。 |
+| #163续审：PC align的warm spec-width prefill读错GDN状态 | 保留真实prefill分类与第0列最终提交，阻止误入decode图；normal decode/dummy/capture保持。末尾预算、prefix命中、跨块预处理、conv/SSM与下一decode成链验证，不用总输入长度分界。 |
+| #173/#174 四指标精度不合格；native_exact方案无有效模型交付 | 默认撤下该policy并清除旧配置残留，保留失败证据；局部旋转误差改善不能替代四项质量与两性能场景共同验收。 |
 | #172 长输入改善而短输入回归 | 不将某个prefill helper直接移入共用decode；拆开实际执行阶段，保住已达标基底。所有长度使用相同组合，禁止按输入/context/历史长度切版本；两端目标必须同时成立。源码身份与实际路由测试防止生成链混回撤下项。 |
 | #169 C16启动图缓存输入解包expected20，worker失败后继续空等 | 外部插件加载前校验kernel/forward输入数与example_inputs，不兼容走原生cache-miss重编译并保留AOT包装；外层/内层缓存按源码/配置/版本隔离；quiet启动发现明确worker失败即显示片段并清理，不能仅看父进程存活。 |
 | #168 timer最后汇总str+float报错 | 官方trace ts为字符串、dur为数值；解析入口统一规范化并覆盖官方flow，混合类型全目录CLI回归；优先--summarize-only恢复已有导出，不能要求重跑模型或伪造断点。 |

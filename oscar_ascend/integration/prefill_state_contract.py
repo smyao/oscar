@@ -1,21 +1,24 @@
-"""Archive #163: preserve the native prefill state protocol in uncached MTP.
+"""Archive #163/#174: preserve the native prefill state protocol in MTP.
 
 Native GDN run_mode=0 writes conv history at 0..width-2 and final SSM at
 state column 0. Folding a four-token prompt continuation into speculative
 decode instead reads history at offset 3 and SSM column 3, and publishes its
-final state in speculative slots. Those are different protocols in mode=none.
+final state in speculative slots. Those protocols differ in both none and
+align mode: align preprocessing copies only the committed column zero and
+resets accepted to one; it does not initialize three speculative checkpoints.
 
 Keep actual prompt work on the native prefill route and prevent a shape-only
 decode graph from overriding that classification. No native source, arithmetic,
-MTP depth, cache layout or device guard is changed. APC-on keeps its existing
-route. D.4: only existing O(batch) CPU metadata at the dispatch boundary, no
+MTP depth, cache layout or device guard is changed. Prefix-cache alignment
+still permits short prompt continuations after its last caching boundary.
+D.4: only existing O(batch) CPU metadata at the dispatch boundary, no
 device readback or historical KV scan/materialization.
 """
 
 from .dummy_context import is_native_dummy_run
 
 
-def uncached_mtp(owner):
+def mtp_prefill_state(owner):
     config = getattr(owner, "vllm_config", None)
     cache = getattr(owner, "cache_config", None)
     if cache is None:
@@ -23,8 +26,7 @@ def uncached_mtp(owner):
     spec = getattr(owner, "speculative_config", None)
     if spec is None:
         spec = getattr(config, "speculative_config", None)
-    return (getattr(cache, "enable_prefix_caching", None) is False
-            and getattr(cache, "mamba_cache_mode", None) == "none"
+    return (getattr(cache, "mamba_cache_mode", None) in {"none", "align"}
             and getattr(spec, "method", None) == "mtp")
 
 
@@ -34,7 +36,7 @@ def keep_prefill_state(builder, original, common, mask, counts):
     The paired dispatch hook prevents these rows from replaying a decode graph.
     Existing genuine spec rows and their native accepted counts are unchanged.
     """
-    if uncached_mtp(builder):
+    if mtp_prefill_state(builder):
         return mask, counts
     return original(builder, common, mask, counts)
 
@@ -48,7 +50,7 @@ def force_prefill_eager(runner, num_reqs, num_scheduled_tokens_np,
     has not finished. All arrays here are the runner's existing CPU mirrors.
     Capture/dummy calls retain their explicit native graph selection.
     """
-    if (not uncached_mtp(runner) or is_native_dummy_run()
+    if (not mtp_prefill_state(runner) or is_native_dummy_run()
             or force_uniform_decode is not None or num_reqs <= 0):
         return False
     spec = runner.speculative_config

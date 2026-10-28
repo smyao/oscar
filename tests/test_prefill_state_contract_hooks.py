@@ -133,10 +133,13 @@ def test_real_native_warm_prefill_graph_collision_is_removed(monkeypatch, positi
 
 
 @pytest.mark.parametrize("prefix,cache_mode", [(True, "align"), (True, "none")])
-def test_prefix_enabled_dispatch_keeps_existing_selection(monkeypatch, prefix, cache_mode):
+def test_prefix_enabled_dispatch_preserves_prompt_then_decode(monkeypatch, prefix, cache_mode):
     runner_mod, _ = _native_modules(monkeypatch)
     runner, calls = _runner(runner_mod.NPUModelRunner, prefix=prefix, mode=cache_mode)
     _register(monkeypatch)
+    assert _invoke(runner)[0] is Mode.NONE
+    assert calls == []
+    runner.input_batch.num_computed_tokens_cpu[0] = 32768
     assert _invoke(runner)[0] is Mode.FULL
     assert calls[-1]["uniform_decode"] is True
 
@@ -152,7 +155,7 @@ def test_native_dummy_and_forced_capture_selection_remain_unchanged(monkeypatch)
 
 
 @pytest.mark.parametrize("prefix,mode,expected", [
-    (False, "none", 1), (True, "align", 4), (True, "none", 4)])
+    (False, "none", 1), (True, "align", 1), (True, "none", 1)])
 def test_native_fold_hook_preserves_prefill_and_other_spec_counts(monkeypatch, prefix, mode, expected):
     runner_mod, builder_mod = _native_modules(monkeypatch)
     runner, _ = _runner(runner_mod.NPUModelRunner, prefix=prefix, mode=mode)

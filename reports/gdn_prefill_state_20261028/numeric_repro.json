@@ -1,0 +1,75 @@
+{
+  "scope": "Pinned native CPU golden and AST contracts; finite synthetic values; no model, NPU or performance evidence",
+  "alignment_lifecycle_reference": "align_repro.py: prompt5000 -> 4996+4, same table[7,8,9,10], no preprocess copy",
+  "initial_committed_state": 0.25,
+  "initial_stale_state": -42.0,
+  "original_accepted": [
+    1
+  ],
+  "folded_accepted": [
+    4
+  ],
+  "committed_state_column": 0,
+  "incorrect_initial_state_column": 3,
+  "gdn_scale": 0.08838834764831845,
+  "gdn_old_output": [
+    -1.8125,
+    -0.86328125,
+    -0.38671875,
+    -0.1494140625
+  ],
+  "gdn_correct_output": [
+    0.05517578125,
+    0.07177734375,
+    0.080078125,
+    0.08447265625
+  ],
+  "gdn_selector_only_current_output_equals_correct": true,
+  "independent_correct_state_sequence": [
+    0.625,
+    0.8125,
+    0.90625,
+    0.953125
+  ],
+  "gdn_correct_final_col0": 0.953125,
+  "gdn_selector_only_col0": 0.625,
+  "gdn_selector_only_col3": 0.953125,
+  "next_gdn_old": -0.86328125,
+  "next_gdn_selector_only": 0.07177734375,
+  "next_gdn_correct": 0.08642578125,
+  "conv_width": 4,
+  "conv_state_len": 6,
+  "conv_old_pre_activation": [
+    -125.0,
+    -81.0,
+    -36.0,
+    10.0
+  ],
+  "conv_correct_pre_activation": [
+    1.75,
+    3.5,
+    6.25,
+    10.0
+  ],
+  "conv_old_silu": [
+    -0.0,
+    -5.378138284271438e-34,
+    -8.350282034027493e-15,
+    9.99954605102539
+  ],
+  "conv_correct_silu": [
+    1.4909173250198364,
+    3.397407293319702,
+    6.237957954406738,
+    9.99954605102539
+  ],
+  "next_conv_selector_only": 6.5,
+  "next_conv_correct": 14.0,
+  "source_sha256": {
+    "references/vllm-ascend/vllm_ascend/ops/gdn_attn_builder.py": "42cc0284b57193112b8a8ad19704aa3401f02294f0c36333c307d748f462fe16",
+    "references/vllm-ascend/vllm_ascend/ops/gdn.py": "74341a517aab1eadafb4fdbfc90697637eb12f9910f488f851712ba9c8541338",
+    "references/vllm-ascend/tests/e2e/nightly/single_node/ops/singlecard_ops/test_recurrent_gated_delta_rule.py": "d4518a48311e612761cf06cee9dc2ce433218cfed39a6f7d2e8278017e8ebd75",
+    "references/vllm-ascend/csrc/attention/recurrent_gated_delta_rule/op_kernel/recurrent_gated_delta_rule.h": "96e6d9667af1e3457316ffce92a8a983fcb90096df08e3efd13ec0b35b8b1c5b",
+    "references/vllm-ascend/csrc/moe/causal_conv1d/op_kernel/causal_conv1d.h": "83af972763a708fce1b723106dcd243260fb3302c947d3a59ed34a868c6e0bf3"
+  }
+}

@@ -28746,6 +28746,8 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **验证**：`test_gdn_folded_initial_state.py`复现旧错误并验证新状态提交；`test_prefill_state_contract_hooks.py`执行真实native dispatcher/fold AST，旧FULL→修复NONE、下一轮decode恢复FULL、APC路径不变、位置/关键字参数、轻量可逆插件注册均通过；相关关键套件合计133 passed。两固定一键入口均经同一插件安装。以上是主机/native源码契约证据，不冒充NPU整轮已完成。
 
 
+**2026-10-28 本地续审补充（不是新增真机记录）**：上文“APC开启路径保持原选择”描述的是当时none-only修复范围，不代表align协议安全。当前真实scheduler/align preprocess/copy-spec/builder合同复现5000→2304/1536/1156/4及2304 prefix命中后的末4续块；align只复制已提交SSM到第0列并重置accepted1，fold再改4仍会读错状态。外部插件现将相同prefill分类与图接缝保护扩展到none/align，保持真实decode的原mask/count/图。207项主机回归通过，全部生产CANN与用户确认的614c源一致；局部原生GDN数值反例不是LongBench分数，未宣称现场全部归因或双门验收。见 `docs/gdn_prefill_state_20261028.md`。
+
 ## [164] 真机条目（2026-10-16 用户回传）· 新BF16分支关闭APC时报VEC UB越界
 
 **用户原始证据**：`reports/bf16_ub_fix_20261016/target_apc_off_failure.txt`。用户明确prefix cache关闭。服务启动并完成多条HTTP请求后，04:54:23四rank报507015，VEC UB read/write out-of-bounds；四卡current−start均0x69b8。栈在DynamicQuantV2/OSCAR query rotation提交处暴露，异步栈不用于把责任推给原生算子。本次按新BF16分支引入的回归修复，APC-off、MTP和INT2路径保留。

@@ -1,0 +1,711 @@
+{
+  "scope": "Host production splitter and native AST dispatch; synthetic bounded schedules, not user traffic replay or wall timing",
+  "accepted_commit": "614c73982d762365e20c7362adc6f9350e465218",
+  "tests_passed": 32,
+  "performance_measurement": "not_performed",
+  "quality_measurement": "not_performed",
+  "global_token_budget": 16384,
+  "normal_decode_graph_contexts": [
+    64,
+    768,
+    20000,
+    32768,
+    65536,
+    131072
+  ],
+  "normal_decode_graph": "original FULL selected; same descriptor and CV q4/q1 operators",
+  "cann_diff_from_accepted": [],
+  "entrypoints": [
+    "install_serve candidate",
+    "observe_serve candidate"
+  ],
+  "launch_preserved": [
+    "prefix enabled",
+    "token budget16384",
+    "qwen3_5_mtp3 normalizes to mtp",
+    "BF16 official v4",
+    "recipe3 perhead_center",
+    "devices0-3",
+    "port8989"
+  ],
+  "cases": [
+    {
+      "prompt_tokens": 4096,
+      "residual_budgets": [
+        16384
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 3072,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 3072,
+          "scheduled": 1024,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 4096,
+      "residual_budgets": [
+        16380
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 3072,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 3072,
+          "scheduled": 1024,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 4096,
+      "residual_budgets": [
+        16260
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 3072,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 3072,
+          "scheduled": 1024,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 8192,
+      "residual_budgets": [
+        16384
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 4608,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 4608,
+          "scheduled": 2304,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 6912,
+          "scheduled": 1280,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 8192,
+      "residual_budgets": [
+        16380
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 4608,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 4608,
+          "scheduled": 2304,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 6912,
+          "scheduled": 1280,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 8192,
+      "residual_budgets": [
+        16260
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 4608,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 4608,
+          "scheduled": 2304,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 6912,
+          "scheduled": 1280,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 16384,
+      "residual_budgets": [
+        16384
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 13824,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 13824,
+          "scheduled": 1536,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 15360,
+          "scheduled": 1024,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 16384,
+      "residual_budgets": [
+        16380
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 13824,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 13824,
+          "scheduled": 1536,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 15360,
+          "scheduled": 1024,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 16384,
+      "residual_budgets": [
+        16260
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 13824,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 13824,
+          "scheduled": 1536,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 15360,
+          "scheduled": 1024,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 32768,
+      "residual_budgets": [
+        16384
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 16128,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 16128,
+          "scheduled": 13824,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 29952,
+          "scheduled": 1536,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 31488,
+          "scheduled": 1280,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 32768,
+      "residual_budgets": [
+        16380
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 16128,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 16128,
+          "scheduled": 13824,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 29952,
+          "scheduled": 1536,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 31488,
+          "scheduled": 1280,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 32768,
+      "residual_budgets": [
+        16260
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 16128,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 16128,
+          "scheduled": 13824,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 29952,
+          "scheduled": 1536,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 31488,
+          "scheduled": 1280,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 65536,
+      "residual_budgets": [
+        16384
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 16128,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 16128,
+          "scheduled": 16128,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 32256,
+          "scheduled": 16128,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 48384,
+          "scheduled": 13824,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 62208,
+          "scheduled": 2304,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 64512,
+          "scheduled": 1024,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 65536,
+      "residual_budgets": [
+        16380
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 16128,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 16128,
+          "scheduled": 16128,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 32256,
+          "scheduled": 16128,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 48384,
+          "scheduled": 13824,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 62208,
+          "scheduled": 2304,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 64512,
+          "scheduled": 1024,
+          "available_budget": 16380,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 65536,
+      "residual_budgets": [
+        16260
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 16128,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 16128,
+          "scheduled": 16128,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 32256,
+          "scheduled": 16128,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 48384,
+          "scheduled": 13824,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 62208,
+          "scheduled": 2304,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 64512,
+          "scheduled": 1024,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 19968,
+      "residual_budgets": [
+        16384,
+        16260,
+        2304,
+        768,
+        4
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 16128,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 16128,
+          "scheduled": 3072,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 19200,
+          "scheduled": 768,
+          "available_budget": 2304,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 19969,
+      "residual_budgets": [
+        16384,
+        16260,
+        2304,
+        768,
+        4
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 16128,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 16128,
+          "scheduled": 3072,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 19200,
+          "scheduled": 769,
+          "available_budget": 2304,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 19972,
+      "residual_budgets": [
+        16384,
+        16260,
+        2304,
+        768,
+        4
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 16128,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 16128,
+          "scheduled": 3072,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 19200,
+          "scheduled": 772,
+          "available_budget": 2304,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 20000,
+      "residual_budgets": [
+        16384,
+        16260,
+        2304,
+        768,
+        4
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 16128,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 16128,
+          "scheduled": 3072,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 19200,
+          "scheduled": 800,
+          "available_budget": 2304,
+          "corrected_warm_prefill": false
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 20740,
+      "residual_budgets": [
+        16384,
+        16260,
+        2304,
+        768,
+        4
+      ],
+      "initial_context": 0,
+      "rows": [
+        {
+          "context": 0,
+          "scheduled": 16128,
+          "available_budget": 16384,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 16128,
+          "scheduled": 2304,
+          "available_budget": 16260,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 18432,
+          "scheduled": 1536,
+          "available_budget": 2304,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 19968,
+          "scheduled": 768,
+          "available_budget": 768,
+          "corrected_warm_prefill": false
+        },
+        {
+          "context": 20736,
+          "scheduled": 4,
+          "available_budget": 4,
+          "corrected_warm_prefill": true
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 19972,
+      "residual_budgets": [
+        4
+      ],
+      "initial_context": 19968,
+      "rows": [
+        {
+          "context": 19968,
+          "scheduled": 4,
+          "available_budget": 4,
+          "corrected_warm_prefill": true
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 32768,
+      "residual_budgets": [
+        4
+      ],
+      "initial_context": 32764,
+      "rows": [
+        {
+          "context": 32764,
+          "scheduled": 4,
+          "available_budget": 4,
+          "corrected_warm_prefill": true
+        }
+      ]
+    },
+    {
+      "prompt_tokens": 65536,
+      "residual_budgets": [
+        4
+      ],
+      "initial_context": 65532,
+      "rows": [
+        {
+          "context": 65532,
+          "scheduled": 4,
+          "available_budget": 4,
+          "corrected_warm_prefill": true
+        }
+      ]
+    }
+  ],
+  "cost_boundary": "Affected real warm q4 prompt steps use native eager prefill; ordinary decode keeps its graph. Added CPU classification work is not assigned a wall-time bound.",
+  "source_sha256": {
+    "tests/test_prefill_state_performance_protection.py": "03726ec426c58fe19afff40cc92178a430131e6f55f9b02f28057b622f8118af",
+    "oscar_ascend/integration/prefill_state_contract.py": "874e4b149ee2fb42a05b58bd5868da207dd3dbcf454f1f54428a764fb0afa5f4",
+    "references/vllm/vllm/v1/core/sched/scheduler.py": "9ae1491f57a6294e32416b93ef2ea68107fa0d65c3a4d7f745f1261012f735e9",
+    "references/vllm/vllm/config/speculative.py": "e985d7c75401dc4a58d026a618680fb757450aeac937214f293fabf793751f7b"
+  }
+}

@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-28 当前精度修复：发现此前none-only分类保护遗漏PC align末尾短续块。真实native调度5000→2304/1536/1156/4与2304 prefix命中后续步可复现；fold将accepted1改4并读旧GDN状态，有限值即可造成错误输出。外部插件统一保护none/align真正prefill，纠正图选择与最终提交；正常decode图、CANN/codec/PT/预算/PC/MTP/timer保持。207项主机回归与32K/64K选路/源码门通过；不将局部结果写成四项质量分数。见[完整修复](gdn_prefill_state_20261028.md)。
+
 2026-10-28 后续方案裁决：native_exact撤下提交bcbf4153；MTP query-relative/扩大259窗口、APC发布门及matched-cohort lookup均有明确精度、有效命中或native admission容量反例，未接production。当前无满足质量与性能保护双门的新默认优化，目标未完成。两项协议现象已有本地repro，未归因为全部LongBench分差。见[本轮裁决](precision_followup_20261028.md)。
 
 2026-10-28 native_exact撤下：用户最新质量单轮38.58/44.19/35.71/38.58，API1173.43秒，仍未交付要求的质量与耗时。按用户要求撤下fef8f5ba的native_exact默认政策，current-only与相关probe恢复614c原实现；所有variant清除残留policy。recipe3/PT、q4/q1/C4/C16、16K预算、PC/MTP/timer保持。原302项主机结果与单token旋转反例保留为历史；它们不能支持模型达标。撤下是失败处置，后续仍须解决四项十轮top3差距各<1点并保护两种性能负载。见[失败证据与处置](native_exact_current_precision_20261028.md)、档案#174。

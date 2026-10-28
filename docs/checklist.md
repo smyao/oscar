@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+> 2026-10-28本地后四卡：默认配置改为物理 `4,5,6,7` / 端口 `7878`，安装/编译/采样/拟合/服务共用；两个历史探针移除前四卡硬编码。`test_install_serve`、`test_deploy_launcher`、`test_model_config`、`test_stable_launch_frozen`、`test_optr_sequential`、`test_probe_cv_hotshape`、`test_probe_history_reuse` 共122项本地测试通过；三个安装启动入口在父环境残留前四卡时的只读计划均选后四卡。未执行本轮CANN编译、NPU、图、模型质量或性能验证，42项验收状态不升级。
+
 > 2026-10-28 OptR官方分阶段目标/昇腾准备加速：NPU FP32 proxy、CPU正交参数化与最终验证；固定candidate启用，原在线路径不变。官方数学对照/CPU功能/产物恢复见 `reports/optr_sequential_ascend_20261028/`；未连接NPU，设备拟合、模型质量、性能未验收。详见[实现记录](optr_sequential_ascend_20261028.md)。
 
 2026-10-28明确授权实验PT：独立test只记录不阻断，validation/数值/身份门保留。schema2显式标记实验产物与失败层，固定candidate直接准备/加载，旧严格证书不放宽。自动兼容审核过的父版本断点，原生trace身份保持；本地发布/加载/跨层继续/认证复用证据见`reports/optr_experimental_publication_20261028/verification.json`。实验发布不升级42项模型质量/NPU/图/性能验收。

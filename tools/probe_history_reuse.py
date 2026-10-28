@@ -26,6 +26,7 @@ import time
 import traceback
 
 from .phase import atomic_json
+from .target_cli import target_env
 from oscar_ascend.ops.cv_dispatch import CLUSTER4_CV_OP, FE0_CV_OP, Q1_CV_OP, select_cv_op
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -325,9 +326,12 @@ def make_fixture(torch, shape: Shape, *, on_request=None, rotation_mode="nontriv
 
 
 def _active_device(target: dict):
-    if target.get("devices") != [0, 1, 2, 3] or target.get("soc_version") != "ascend910b4":
-        raise HistoryReuseProbeError("explicit target devices 0,1,2,3 and ascend910b4 are required")
-    selection = "0,1,2,3"
+    if target.get("soc_version") != "ascend910b4":
+        raise HistoryReuseProbeError("target SOC must be ascend910b4")
+    try:
+        selection = target_env(target, base={})["ASCEND_RT_VISIBLE_DEVICES"]
+    except (ValueError, TypeError) as exc:
+        raise HistoryReuseProbeError(str(exc)) from exc
     inherited = os.environ.get("ASCEND_RT_VISIBLE_DEVICES")
     if inherited is not None and inherited != selection:
         raise HistoryReuseProbeError(f"physical device selection {inherited!r} differs from target")

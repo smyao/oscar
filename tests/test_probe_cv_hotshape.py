@@ -10,6 +10,7 @@ import subprocess
 import pytest
 
 from tools import probe_cv_hotshape as hot
+from tools import probe_history_reuse as reuse
 from tools.environment import file_fingerprint
 
 
@@ -39,14 +40,49 @@ def test_source_check_fails_closed_for_wrong_baseline(monkeypatch, tmp_path):
     assert hot._source_check({"source": {"kernel.cpp": "old"}}, "baseline", root=tmp_path)
 
 
-def test_baseline_availability_reports_missing_evidence_without_torch(monkeypatch, tmp_path):
+@pytest.mark.parametrize("devices", [[0, 1, 2, 3], [4, 5, 6, 7]])
+def test_baseline_availability_reports_missing_evidence_without_torch(monkeypatch, tmp_path, devices):
     target = tmp_path / "target.json"
-    target.write_text('{"devices":[0,1,2,3],"soc_version":"ascend910b4"}')
+    target.write_text(json.dumps({"devices": devices, "soc_version": "ascend910b4"}))
     monkeypatch.setattr(hot, "_verify_artifact",
                         lambda *args: (_ for _ in ()).throw(hot.BaselineUnavailable("missing old SO")))
     assert hot.baseline_availability(tmp_path / "missing.json", target) == {
         "status": "not_available", "reason": "missing old SO",
         "source_revision": hot.BASELINE_REVISION}
+
+
+@pytest.mark.parametrize("select,error", [
+    (hot._select_device, hot.HotShapeError),
+    (reuse._active_device, reuse.HistoryReuseProbeError),
+])
+@pytest.mark.parametrize("devices", [[0, 1, 2, 3], [4, 5, 6, 7]])
+def test_probe_selection_uses_config_and_rejects_conflicting_visibility(monkeypatch, select, error, devices):
+    import os
+    target = {"devices": devices, "soc_version": "ascend910b4"}
+    monkeypatch.delenv("ASCEND_RT_VISIBLE_DEVICES", raising=False)
+    select(target)
+    assert os.environ["ASCEND_RT_VISIBLE_DEVICES"] == ",".join(map(str, devices))
+    select(target)  # A launcher that already applied this config is accepted.
+    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "8,9,10,11")
+    with pytest.raises(error, match="differs from target"):
+        select(target)
+    assert os.environ["ASCEND_RT_VISIBLE_DEVICES"] == "8,9,10,11"
+
+
+@pytest.mark.parametrize("select,error", [
+    (hot._select_device, hot.HotShapeError),
+    (reuse._active_device, reuse.HistoryReuseProbeError),
+])
+@pytest.mark.parametrize("devices,soc", [
+    ([4, 5, 6], "ascend910b4"), ([4, 5, 6, 6], "ascend910b4"),
+    ([True, 5, 6, 7], "ascend910b4"), ([4, 5, 6, 7], "unknown"),
+])
+def test_probe_rejects_invalid_config_before_changing_visibility(monkeypatch, select, error, devices, soc):
+    import os
+    monkeypatch.delenv("ASCEND_RT_VISIBLE_DEVICES", raising=False)
+    with pytest.raises(error):
+        select({"devices": devices, "soc_version": soc})
+    assert "ASCEND_RT_VISIBLE_DEVICES" not in os.environ
 
 
 def test_cli_baseline_unavailable_is_explicit_zero_rc_skip(monkeypatch, tmp_path):

@@ -42,7 +42,7 @@ def test_candidate_plan_is_read_only_and_has_no_probes(tmp_path, capsys, rear_ca
     assert plan["probes"] == "none" and not logs.exists()
     assert plan["serve"][-1] == str(logs / "effective-target.json")
     assert plan["stages"][-1][1][-1] == plan["serve"][-1]
-    assert plan["target_devices"] == ([4, 5, 6, 7] if rear_cards else [0, 1, 2, 3])
+    assert plan["target_devices"] == [4, 5, 6, 7]
     assert plan["port"] == 7878
 
 
@@ -55,7 +55,7 @@ def test_all_phases_and_service_share_selected_config_without_mutating_original(
     path = config_file(tmp_path, original)
     before = path.read_bytes()
     logs = tmp_path / "run"
-    devices = [4, 5, 6, 7] if rear_cards else [0, 1, 2, 3]
+    devices = [4, 5, 6, 7]
     port = 7878
     monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "8,9,10,11")
     seen = []
@@ -133,7 +133,7 @@ def test_device_lease_covers_build_service_and_failure_diagnostics(monkeypatch, 
     events = []
     def locked():
         with pytest.raises(RuntimeError, match='already has an active direct launcher'):
-            with device_lease(tmp_path, [0,1,2,3], tmp_path/'duplicate'):
+            with device_lease(tmp_path, [4,5,6,7], tmp_path/'duplicate'):
                 pytest.fail('must retain lease through teardown')
     def phase(name, command, **kwargs):
         locked(); events.append(name)
@@ -153,7 +153,7 @@ def test_device_lease_covers_build_service_and_failure_diagnostics(monkeypatch, 
     assert state['status'] == 'failed' and state['failed_phase'] == 'serve'
     assert state['service_returncode'] == 1 and state['cleanup_complete']
     assert 'diagnostic unavailable' in state['diagnostic_error']
-    with device_lease(tmp_path, [0,1,2,3], tmp_path/'next'):
+    with device_lease(tmp_path, [4,5,6,7], tmp_path/'next'):
         pass
 
 
@@ -163,8 +163,8 @@ def test_active_direct_launcher_blocks_duplicate_before_build(monkeypatch, tmp_p
     logs = tmp_path/'duplicate'
     monkeypatch.setattr(install_serve, 'ROOT', tmp_path)
     monkeypatch.setattr(install_serve, 'run_phase', lambda *args, **kwargs: pytest.fail('duplicate must not build/load'))
-    with device_lease(tmp_path, [0,1,2,3], tmp_path/'active'):
-        with pytest.raises(RuntimeError, match='physical NPU 0 already has an active direct launcher'):
+    with device_lease(tmp_path, [4,5,6,7], tmp_path/'active'):
+        with pytest.raises(RuntimeError, match='physical NPU 4 already has an active direct launcher'):
             install_serve.main(['--config',str(path),'--log-dir',str(logs)])
     state = json.loads((logs/'status.json').read_text())
     assert state['status'] == 'failed' and not state['phases']

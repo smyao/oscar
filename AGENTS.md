@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-28本地部署更新：用户要求启动、打包等默认适用后四张物理卡 `4,5,6,7`，端口保持 `7878`。以 `configs/target.json` 为唯一默认来源，安装/编译/采样/OptR拟合/探针/正式服务共用本次选择，覆盖下方历史前四卡默认值。固定candidate命令无需追加参数，`--rear-cards`保留兼容；单卡拟合的逻辑 `npu:0` 映射物理卡4。显式自定义配置仍有效，不继承其他任务卡号，不连接真机或测速。
+
 > 2026-10-28用户要求参考官方OptR拟合并加快昇腾准备：candidate采用sequential K=KL+post-W_O误差、V=固定P_K的value误差，官方80步/lr0.02/零基每20步验证；NPU执行FP32大矩阵、CPU执行matrix_exp/Adam及最终部署验证。保留Qwen gate/D256、原采样、整层validation逐请求非劣和实验test记录规则。版本化新目标，不复用旧拟合PT/断点，只精确认证复用原生trace。线上runtime/CANN/timer/argv不改，不连接真机。见docs/optr_sequential_ascend_20261028.md；设备速度/质量未实测。本条覆盖旧CPU拟合及拟合身份不变要求。
 
 > 2026-10-28用户明确授权“允许生成实验PT，先测试OptR”：独立test仍执行并完整记录，退化不阻断实验PT/后续服务；validation逐请求非劣、数值/身份/正交检查继续保持，test不参与重选矩阵。固定candidate无需新增参数。新证书schema2明确experimental、publication_policy及独立test通过/失败/退化层，服务加载实时显示，禁止把实验放行写成质量通过。本条覆盖下方独立test退化禁止发布的旧要求。保留历史拟合/trace身份，审核通过的旧头/完整层断点可自动复用，旧失败报告不充当已完成层；线上核/runtime/argv/timer不改。

@@ -35,6 +35,7 @@ import traceback
 
 from .environment import file_fingerprint
 from .phase import atomic_json
+from .target_cli import target_env
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE_REVISION = "5288b2e85d1cb920d8c852b2884c1feac8a0120a"
@@ -104,16 +105,16 @@ def _source_check(configuration: dict, variant: str, *, root: Path = ROOT) -> st
 
 
 def _select_device(target: dict) -> str:
-    devices = target.get("devices")
-    if devices != [0, 1, 2, 3] or any(type(device) is not int for device in devices):
-        raise HotShapeError("hot-shape target must select explicit physical devices 0,1,2,3")
-    selected = ",".join(map(str, devices))
+    if target.get("soc_version") != "ascend910b4":
+        raise HotShapeError("target SOC must be ascend910b4")
+    try:
+        selected = target_env(target, base={})["ASCEND_RT_VISIBLE_DEVICES"]
+    except (ValueError, TypeError) as exc:
+        raise HotShapeError(str(exc)) from exc
     inherited = os.environ.get("ASCEND_RT_VISIBLE_DEVICES")
     if inherited is not None and inherited != selected:
         raise HotShapeError(f"inherited NPU selection {inherited!r} differs from target {selected!r}")
     os.environ["ASCEND_RT_VISIBLE_DEVICES"] = selected
-    if target.get("soc_version") != "ascend910b4":
-        raise HotShapeError("target SOC must be ascend910b4")
     return selected
 
 
@@ -180,10 +181,9 @@ def baseline_availability(manifest_path: Path = ROOT / "build/ascendc/build_mani
     """Read-only artifact gate for the parent; does not import torch or touch NPU."""
     try:
         target = json.loads(target_path.read_text())
-        if (target.get("devices") != [0, 1, 2, 3]
-                or any(type(device) is not int for device in target["devices"])
-                or target.get("soc_version") != "ascend910b4"):
-            raise BaselineUnavailable("target devices/SOC are not the signed 0-3/A2 configuration")
+        target_env(target, base={})  # Validate selection without changing the parent environment.
+        if target.get("soc_version") != "ascend910b4":
+            raise BaselineUnavailable("target SOC must be ascend910b4")
         manifest, _, source_digest = _verify_artifact("baseline", manifest_path, target)
     except (OSError, ValueError, KeyError, TypeError, AttributeError,
             RuntimeError, subprocess.SubprocessError) as exc:

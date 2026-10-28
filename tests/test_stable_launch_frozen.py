@@ -3,7 +3,8 @@
 The fixture was captured from f96820f1. The 2026-10-18 user authorization changes
 model, public model name, activation dtype, weight quantization and the old
 checkpoint-specific YaRN override (official Qwen3.8 uses default RoPE).
-Every other native argument remains checked against the original fixture.
+The user subsequently selected port 7878 (2026-10-23) and rear physical cards
+4-7 (2026-10-28). Every other native argument remains checked against the original fixture.
 """
 import json
 from pathlib import Path
@@ -22,6 +23,7 @@ def authorized_model_arguments(argv):
     start = result.index('--quantization')
     result[start:start + 2] = ['--dtype', 'bfloat16']
     result[result.index("--hf-overrides")+1] = "{}"
+    result[result.index("--port") + 1] = "7878"
     return result
 
 
@@ -35,6 +37,6 @@ def test_complete_stable_vllm_launch_is_preserved(name, entry, prefix, capsys):
     actual = json.loads(capsys.readouterr().out)
     expected = FROZEN['cases'][f'{name}_prefix_{str(prefix).lower()}']
     assert actual['vllm_argv'] == authorized_model_arguments(expected['argv'])
-    assert actual.get('target_devices', actual.get('devices')) == expected['devices']
+    assert actual.get('target_devices', actual.get('devices')) == [4, 5, 6, 7]
     argv = actual['vllm_argv']
-    assert int(argv[argv.index('--port') + 1]) == expected['port']
+    assert int(argv[argv.index('--port') + 1]) == 7878

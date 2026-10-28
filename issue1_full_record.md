@@ -17,6 +17,8 @@
 
 # 症状速查表（报错关键字 → 条目编号）
 
+- `34bc2b75` 后64K达标但32K及以下慢30%：见 #172，共用decode批量Cast与C16组合回归；禁止按输入长度切版本。
+
 - C16实验启动`npugraph_ex kernel: too many values to unpack (expected 20)`，WorkerProc失败后health一直connection refused：见 #169。
 
 - `SUMMARY_FAILED can only concatenate str (not "float") to str`：见 #168（官方trace时间戳格式及已有导出恢复）。
@@ -28834,3 +28836,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修复**：外部插件在原生cache_blocks后完整校验各GDN组的prompt terminal真实页/hash，各加一个native pool引用，仅保留一组既有checkpoint。native coordinator.free之后归还，覆盖完成/取消/抢占；共享及卸载平衡释放。当前最多3页/活跃请求，20请求最多60页的真实容量代价。PT、数学、CANN、timer、argv不变。
 
 **验证边界**：相同合成trace修复后重复prompt命中29952，所有请求释放后引用归零。详见docs/prefix_checkpoint_retention_20261023.md及对应validation.json。未连接真机、运行性能或质量评测，不宣称现场已恢复或LongBench达标。
+
+
+## [172] 性能回归条目（2026-10-28 用户回传）· 64K达标但32K及以下慢30%
+
+**现场事实与用户约束**：用户实测上一轮交付后“64K达标了，但是32K及以下都慢了30%”，明确以 `232b563b69e01495046a9b0025ac9150bc11b9d7` 为已达标短输入基底，要求两者同时满足，并追加“所有的改动都不准依赖输入长度分界，必须普世通用”。节选保存于 `reports/universal_regression_repair_20261028/user_feedback.txt`。上一轮交付提交为34bc2b75；反馈未包含现场完整日志、逐相位计时或部署哈希回显，记录用户测得的回归，不填造分相位耗时。
+
+**源码确定的变更范围**：232b到34bc只有official C16、official q4/q1 decode和新finite helper改变在线执行。整个oscar_ascend/configs/scripts以及生产CMake/binding均相同。C16增加完整可见source路径和有限性充分界；decode三个发布点把原single-repeat Cast改为multi-repeat。无历史current-only和C4原样，因此不进入C16的短输入仍有唯一新增的decode计算组织。这足以要求拆撤共用decode项，不能仅把回归归咎于C16的Abs，也不能用源码发射数量代替真实流水性能。
+
+**修复**：生产generator显式关闭decode cast变换，生成的整个decode源恢复为232b字节身份（SHA817a5cbb…）；C16与finite helper完整保留34bc字节身份（SHA1bcf9ccf…/776e5072…）。所有长度采用同一decode/C16组合；没有新增长度阈值或context条件，不修改原host分流。32K仍可能执行warm C16，故不把“恢复decode”写成“32K整个执行图回退”。PT、精度、FP32状态、窗口、PC/GDN/MTP、预算、argv和timer保持。
+
+**回归保护与D.4四问**：①对应有界fused FIA的BF16发布；②不恢复旧6.5秒全历史dequant，也不按长度绕开OSCAR；③复用两条现存完整实现，不新增运行分支、内存或同步协议；④固定短输入基底和长prefill版本的源码身份，主机实际路由加fresh组合CANN验证，复用同源CPU配对证据。新组合的双目标必须同时成立，不能以64K单项通过抵销32K回归。详见 `docs/universal_regression_repair_20261028.md` 和本轮validation；此前34bc本地通过记录原样保留。

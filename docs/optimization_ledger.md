@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-28 用户实测回归：34bc2b75的64K达标，但32K及以下慢30%；该组合不满足双场景目标。修复撤下所有长度q4/q1的三处批量Cast绑定，decode完整原源恢复232b；C16和finite helper完整保持34bc，C4/current-only/调度/16K预算/APC/MTP/PT/timer不动。不新增长度阈值或版本路由。源码身份、路径覆盖、编译审查与交付证据见[通用回归修复](universal_regression_repair_20261028.md)。原34bc的本地通过及现场退化同时保留，不把前者当作后者的否定证据。
+
 2026-10-27 长上下文：用户报告 200请求/BS32/APC，32K 相对 native 总时间快30%、64K慢10%，预算固定16384。源码确认 warm prefill 的历史循环与 current CV 放大；当前 APC 冷请求主机模型中历史 QK/PV 单元增长5.35倍，不能冒充现场占比。candidate 实际 official C16 接入充分界 finite 证书、完全可见 current/window 路径；q4/q1 发布使用相同 RNE 的多 repeat 转换。原数学、错误语义、workspace、调度、PT、argv、timer与C4保持。源码/主机/CPU/CANN及保留的验证环境失败见[分析与优化](long_context_optimization_20261027.md)与[本轮回执](../reports/long_context_20261027/validation.json)。无真机连接或测速，不宣称64K已达30%或32K速度不退；后续以实际净收益决定是否保留和继续优化FP32状态搬运。
 
 2026-10-23 PC联合检查点保留：主机真实native链复现20请求decode周转后GDN checkpoint被回收，联合命中29952→0。外部插件持有每活跃请求最后可读prompt已有GDN页，完成/取消/抢占/卸载释放；配对修复后保持29952，全体释放无泄漏。最多3页/请求的真实池占用代价，PT/数学/argv/timer/CANN不变，现场命中与模型质量未验收。见[报告](prefix_checkpoint_retention_20261023.md)。

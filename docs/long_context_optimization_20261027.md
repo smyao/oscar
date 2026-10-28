@@ -1,5 +1,7 @@
 # 32K 已达标、64K 变慢：执行路径与通用优化
 
+> 2026-10-28 用户实测更新：本轮34bc2b75使64K达标，但32K及以下慢30%，组合失败。下文保留当时实现和本地证据；decode批量转换已从默认生成链撤下，所有长度恢复232b原decode，C16保持34bc原源。当前状态以[回归修复](universal_regression_repair_20261028.md)为准。
+
 2026-10-27，限定分支 `codex/oscar-bf16-attention`。
 
 **已找到会使 64K 的额外成本增长快于输入长度的执行机制：16K token budget 下，后续 prefill 反复访问越来越长的历史；C16 虽然共享了 INT2 解包，仍为每个 query group 执行 QK、softmax、PV，并在每个 KV256 上读写 FP32 在线状态。当前 v4 的 warm prefill 还必须在同一自定义 CV 路径处理 current 部分。这些工作没有随 KV 压缩消失。** 本轮针对其中重复的转换指令发射、完全可见块的逐行检查和 Scalar/Vector 等待做三项通用优化。

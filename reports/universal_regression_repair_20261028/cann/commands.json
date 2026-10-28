@@ -1,0 +1,34 @@
+{
+  "cwd": "/tmp/oscar-phase-composition-20261028",
+  "environment": {
+    "PATH_prefix": [
+      "/usr/local/Ascend/cann-9.1.0/aarch64-linux/bin",
+      "/usr/local/Ascend/cann-9.1.0/aarch64-linux/ccec_compiler/bin"
+    ]
+  },
+  "configure": {
+    "argv": [
+      "cmake",
+      "-S",
+      "csrc/experiments/official_math_20261021",
+      "-B",
+      "build-device",
+      "-DSOC_VERSION=ascend910b4",
+      "-DASCEND_HOME_PATH=/usr/local/Ascend/cann-9.1.0"
+    ],
+    "timeout_seconds": 180,
+    "log": "configure.log"
+  },
+  "compile": {
+    "argv": [
+      "cmake",
+      "--build",
+      "build-device",
+      "-j2"
+    ],
+    "timeout_seconds": 600,
+    "log": "compile.log"
+  },
+  "execution": "local Lima only; device code compilation; no NPU execution/performance test",
+  "archive": "G7-G13/#126/#145/#148/#164; startup D.4"
+}

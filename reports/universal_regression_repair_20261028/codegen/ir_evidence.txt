@@ -1,0 +1,155 @@
+=== before actual device IR lines3460-3535 ===
+3460:   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(96) %138, ptr noundef nonnull align 8 dereferenceable(96) %141, i64 96, i1 false)
+3461:   call void @llvm.lifetime.start.p0(i64 16, ptr nonnull %134) #6
+3462:   store i32 8, ptr %134, align 4, !tbaa !269
+3463:   store i16 1, ptr %254, align 4, !tbaa !271
+3464:   store i16 1, ptr %255, align 2, !tbaa !272
+3465:   store i8 4, ptr %256, align 4, !tbaa !273
+3466:   store i8 8, ptr %257, align 1, !tbaa !274
+3467:   store i8 0, ptr %258, align 2, !tbaa !275
+3468:   store i8 0, ptr %259, align 1, !tbaa !276
+3469:   store i8 0, ptr %260, align 4, !tbaa !277
+3470:   %869 = call i64 @llvm.hivm.GET.CTRL()
+3471:   %870 = call i64 @llvm.hivm.SBITSET0(i64 %869, i64 56)
+3472:   call void @llvm.hivm.SET.CTRL(i64 %870)
+3473:   br label %871
+3474: 
+3475: 871:                                              ; preds = %871, %856
+3476:   %872 = phi i32 [ 0, %856 ], [ %883, %871 ]
+3477:   call void @llvm.lifetime.start.p0(i64 96, ptr nonnull %135) #6
+3478:   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(96) %135, ptr noundef nonnull align 8 dereferenceable(96) %140, i64 96, i1 false)
+3479:   %873 = shl nuw nsw i32 %872, 1
+3480:   %874 = load i32, ptr %135, align 8, !tbaa !278, !alias.scope !280
+3481:   %875 = sub i32 %874, %873
+3482:   store i32 %875, ptr %135, align 8, !tbaa !278, !alias.scope !280
+3483:   %876 = load i32, ptr %261, align 4, !tbaa !283, !alias.scope !280
+3484:   %877 = add i32 %876, %873
+3485:   store i32 %877, ptr %261, align 4, !tbaa !283, !alias.scope !280
+3486:   call void @llvm.lifetime.start.p0(i64 96, ptr nonnull %136) #6
+3487:   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(96) %136, ptr noundef nonnull align 8 dereferenceable(96) %138, i64 96, i1 false)
+3488:   %878 = shl nuw nsw i32 %872, 2
+3489:   %879 = load i32, ptr %136, align 8, !tbaa !221, !alias.scope !284
+3490:   %880 = sub i32 %879, %878
+3491:   store i32 %880, ptr %136, align 8, !tbaa !221, !alias.scope !284
+3492:   %881 = load i32, ptr %262, align 4, !tbaa !225, !alias.scope !284
+3493:   %882 = add i32 %881, %878
+3494:   store i32 %882, ptr %262, align 4, !tbaa !225, !alias.scope !284
+3495:   call void @llvm.lifetime.start.p0(i64 1, ptr nonnull %137) #6
+3496:   store i8 1, ptr %137, align 4, !tbaa !287
+3497:   call void @_ZN7AscendC4CastIu6__bf16fLb1EEEvRKNS_11LocalTensorIT_EERKNS1_IT0_EERKNS_9RoundModeEmhRKNS_17UnaryRepeatParamsE(ptr noundef nonnull align 8 dereferenceable(96) %135, ptr noundef nonnull align 8 dereferenceable(96) %136, ptr noundef nonnull align 1 dereferenceable(1) %137, i64 noundef 64, i8 noundef zeroext 1, ptr noundef nonnull align 4 dereferenceable(13) %134)
+3498:   call void @llvm.lifetime.end.p0(i64 1, ptr nonnull %137) #6
+3499:   call void @llvm.lifetime.end.p0(i64 96, ptr nonnull %136) #6
+3500:   call void @llvm.lifetime.end.p0(i64 96, ptr nonnull %135) #6
+3501:   %883 = add nuw nsw i32 %872, 64
+3502:   %884 = icmp ult i32 %872, 16320
+3503:   br i1 %884, label %871, label %885, !llvm.loop !289
+3504: 
+3505: 885:                                              ; preds = %871
+3506:   call void @llvm.hivm.MOVEMASK(i64 1, i64 -1)
+3507:   call void @llvm.hivm.MOVEMASK(i64 0, i64 -1)
+3508:   call void @llvm.lifetime.end.p0(i64 16, ptr nonnull %134) #6
+3509:   call void @llvm.lifetime.end.p0(i64 96, ptr nonnull %138)
+3510:   %886 = load ptr, ptr @g_vecTPipePtr, align 8, !tbaa !21
+3511:   %887 = getelementptr inbounds %"struct.AscendC::TEventPool", ptr %886, i64 3
+3512:   %888 = load i64, ptr %887, align 8, !tbaa !18
+3513:   %889 = call i64 @llvm.hivm.SFF0(i64 %888)
+3514:   %890 = shl i64 %889, 56
+3515:   %891 = ashr exact i64 %890, 56
+3516:   call void @llvm.hivm.SET.FLAG.REG(i64 1, i64 5, i64 %891)
+3517:   call void @llvm.hivm.WAIT.FLAG.REG(i64 1, i64 5, i64 %891)
+3518:   call void @llvm.lifetime.start.p0(i64 104, ptr nonnull %142) #6
+3519:   %892 = load i64, ptr %264, align 8
+3520:   %893 = shl nsw i32 %862, 6
+3521:   %894 = sext i32 %893 to i64
+3522:   %895 = add nsw i64 %751, %894
+3523:   %896 = shl nsw i64 %892, 1
+3524:   %897 = shl nsw i64 %895, 8
+3525:   %898 = add nsw i64 %896, %897
+3526:   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(104) %142, ptr noundef nonnull align 8 dereferenceable(104) %265, i64 104, i1 false)
+3527:   %899 = load ptr addrspace(1), ptr %142, align 8, !tbaa !143, !alias.scope !290
+3528:   %900 = getelementptr inbounds bfloat, ptr addrspace(1) %899, i64 %898
+3529:   store ptr addrspace(1) %900, ptr %142, align 8, !tbaa !143, !alias.scope !290
+3530:   %901 = load ptr addrspace(1), ptr %266, align 8, !tbaa !144, !alias.scope !290
+3531:   %902 = getelementptr inbounds bfloat, ptr addrspace(1) %901, i64 %898
+3532:   store ptr addrspace(1) %902, ptr %266, align 8, !tbaa !144, !alias.scope !290
+3533:   call void @_ZN7AscendC8DataCopyIu6__bf16EEvRKNS_12GlobalTensorIT_EERKNS_11LocalTensorIS2_EEj(ptr noundef nonnull align 8 dereferenceable(100) %142, ptr noundef nonnull align 8 dereferenceable(96) %139, i32 noundef 16384)
+3534:   call void @llvm.lifetime.end.p0(i64 104, ptr nonnull %142) #6
+3535:   %903 = load ptr, ptr @g_vecTPipePtr, align 8, !tbaa !21
+
+=== after actual device IR lines3460-3535 ===
+3460:   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(96) %138, ptr noundef nonnull align 8 dereferenceable(96) %141, i64 96, i1 false)
+3461:   call void @llvm.lifetime.start.p0(i64 16, ptr nonnull %134) #6
+3462:   store i32 8, ptr %134, align 4, !tbaa !269
+3463:   store i16 1, ptr %254, align 4, !tbaa !271
+3464:   store i16 1, ptr %255, align 2, !tbaa !272
+3465:   store i8 4, ptr %256, align 4, !tbaa !273
+3466:   store i8 8, ptr %257, align 1, !tbaa !274
+3467:   store i8 0, ptr %258, align 2, !tbaa !275
+3468:   store i8 0, ptr %259, align 1, !tbaa !276
+3469:   store i8 0, ptr %260, align 4, !tbaa !277
+3470:   %869 = call i64 @llvm.hivm.GET.CTRL()
+3471:   %870 = call i64 @llvm.hivm.SBITSET0(i64 %869, i64 56)
+3472:   call void @llvm.hivm.SET.CTRL(i64 %870)
+3473:   call void @llvm.lifetime.start.p0(i64 96, ptr nonnull %135) #6
+3474:   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(96) %135, ptr noundef nonnull align 8 dereferenceable(96) %140, i64 96, i1 false)
+3475:   call void @llvm.lifetime.start.p0(i64 96, ptr nonnull %136) #6
+3476:   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(96) %136, ptr noundef nonnull align 8 dereferenceable(96) %141, i64 96, i1 false)
+3477:   call void @llvm.lifetime.start.p0(i64 1, ptr nonnull %137) #6
+3478:   store i8 1, ptr %137, align 4, !tbaa !278
+3479:   call void @_ZN7AscendC4CastIu6__bf16fLb1EEEvRKNS_11LocalTensorIT_EERKNS1_IT0_EERKNS_9RoundModeEmhRKNS_17UnaryRepeatParamsE(ptr noundef nonnull align 8 dereferenceable(96) %135, ptr noundef nonnull align 8 dereferenceable(96) %136, ptr noundef nonnull align 1 dereferenceable(1) %137, i64 noundef 64, i8 noundef zeroext -1, ptr noundef nonnull align 4 dereferenceable(13) %134)
+3480:   call void @llvm.lifetime.end.p0(i64 1, ptr nonnull %137) #6
+3481:   call void @llvm.lifetime.end.p0(i64 96, ptr nonnull %136) #6
+3482:   call void @llvm.lifetime.end.p0(i64 96, ptr nonnull %135) #6
+3483:   call void @llvm.lifetime.start.p0(i64 96, ptr nonnull %135) #6
+3484:   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(96) %135, ptr noundef nonnull align 8 dereferenceable(96) %140, i64 96, i1 false)
+3485:   %871 = load i32, ptr %135, align 8, !tbaa !280, !alias.scope !282
+3486:   %872 = add i32 %871, -32640
+3487:   store i32 %872, ptr %135, align 8, !tbaa !280, !alias.scope !282
+3488:   %873 = load i32, ptr %261, align 4, !tbaa !285, !alias.scope !282
+3489:   %874 = add i32 %873, 32640
+3490:   store i32 %874, ptr %261, align 4, !tbaa !285, !alias.scope !282
+3491:   call void @llvm.lifetime.start.p0(i64 96, ptr nonnull %136) #6
+3492:   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(96) %136, ptr noundef nonnull align 8 dereferenceable(96) %138, i64 96, i1 false)
+3493:   %875 = load i32, ptr %136, align 8, !tbaa !221, !alias.scope !286
+3494:   %876 = add i32 %875, -65280
+3495:   store i32 %876, ptr %136, align 8, !tbaa !221, !alias.scope !286
+3496:   %877 = load i32, ptr %262, align 4, !tbaa !225, !alias.scope !286
+3497:   %878 = add i32 %877, 65280
+3498:   store i32 %878, ptr %262, align 4, !tbaa !225, !alias.scope !286
+3499:   call void @llvm.lifetime.start.p0(i64 1, ptr nonnull %137) #6
+3500:   store i8 1, ptr %137, align 4, !tbaa !278
+3501:   call void @_ZN7AscendC4CastIu6__bf16fLb1EEEvRKNS_11LocalTensorIT_EERKNS1_IT0_EERKNS_9RoundModeEmhRKNS_17UnaryRepeatParamsE(ptr noundef nonnull align 8 dereferenceable(96) %135, ptr noundef nonnull align 8 dereferenceable(96) %136, ptr noundef nonnull align 1 dereferenceable(1) %137, i64 noundef 64, i8 noundef zeroext 1, ptr noundef nonnull align 4 dereferenceable(13) %134)
+3502:   call void @llvm.lifetime.end.p0(i64 1, ptr nonnull %137) #6
+3503:   call void @llvm.lifetime.end.p0(i64 96, ptr nonnull %136) #6
+3504:   call void @llvm.lifetime.end.p0(i64 96, ptr nonnull %135) #6
+3505:   %879 = load ptr, ptr @g_vecTPipePtr, align 8, !tbaa !21
+3506:   %880 = getelementptr inbounds %"struct.AscendC::TEventPool", ptr %879, i64 3
+3507:   %881 = load i64, ptr %880, align 8, !tbaa !18
+3508:   call void @llvm.hivm.MOVEMASK(i64 1, i64 -1)
+3509:   call void @llvm.hivm.MOVEMASK(i64 0, i64 -1)
+3510:   call void @llvm.lifetime.end.p0(i64 16, ptr nonnull %134) #6
+3511:   call void @llvm.lifetime.end.p0(i64 96, ptr nonnull %138)
+3512:   %882 = call i64 @llvm.hivm.SFF0(i64 %881)
+3513:   %883 = shl i64 %882, 56
+3514:   %884 = ashr exact i64 %883, 56
+3515:   call void @llvm.hivm.SET.FLAG.REG(i64 1, i64 5, i64 %884)
+3516:   call void @llvm.hivm.WAIT.FLAG.REG(i64 1, i64 5, i64 %884)
+3517:   call void @llvm.lifetime.start.p0(i64 104, ptr nonnull %142) #6
+3518:   %885 = load i64, ptr %264, align 8
+3519:   %886 = shl nsw i32 %862, 6
+3520:   %887 = sext i32 %886 to i64
+3521:   %888 = add nsw i64 %751, %887
+3522:   %889 = shl nsw i64 %885, 1
+3523:   %890 = shl nsw i64 %888, 8
+3524:   %891 = add nsw i64 %889, %890
+3525:   call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 8 dereferenceable(104) %142, ptr noundef nonnull align 8 dereferenceable(104) %265, i64 104, i1 false)
+3526:   %892 = load ptr addrspace(1), ptr %142, align 8, !tbaa !143, !alias.scope !289
+3527:   %893 = getelementptr inbounds bfloat, ptr addrspace(1) %892, i64 %891
+3528:   store ptr addrspace(1) %893, ptr %142, align 8, !tbaa !143, !alias.scope !289
+3529:   %894 = load ptr addrspace(1), ptr %266, align 8, !tbaa !144, !alias.scope !289
+3530:   %895 = getelementptr inbounds bfloat, ptr addrspace(1) %894, i64 %891
+3531:   store ptr addrspace(1) %895, ptr %266, align 8, !tbaa !144, !alias.scope !289
+3532:   call void @_ZN7AscendC8DataCopyIu6__bf16EEvRKNS_12GlobalTensorIT_EERKNS_11LocalTensorIS2_EEj(ptr noundef nonnull align 8 dereferenceable(100) %142, ptr noundef nonnull align 8 dereferenceable(96) %139, i32 noundef 16384)
+3533:   call void @llvm.lifetime.end.p0(i64 104, ptr nonnull %142) #6
+3534:   %896 = load ptr, ptr @g_vecTPipePtr, align 8, !tbaa !21
+3535:   %897 = getelementptr inbounds %"struct.AscendC::TEventPool", ptr %896, i64 2

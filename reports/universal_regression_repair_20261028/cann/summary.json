@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-28",
+  "scope": "Fresh CANN9.1 ascend910b4 build of the composed official q4/q1 decode,C4,C16 kernel library",
+  "status": "passed",
+  "configure_returncode": 0,
+  "compile_returncode": 0,
+  "fresh_build": true,
+  "source_files": 18,
+  "host_stage_vm_current_source_hashes": "all_identical",
+  "source_identities": {
+    "csrc/kernels/attention_cv_official_decode.cpp": {
+      "commit": "232b563b",
+      "expected_sha256": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+      "current_sha256": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+      "identical": true
+    },
+    "csrc/kernels/attention_cv_official_cluster4.cpp": {
+      "commit": "34bc2b75",
+      "expected_sha256": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+      "current_sha256": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+      "identical": true
+    },
+    "csrc/kernels/attention_cv_official_cluster16.cpp": {
+      "commit": "34bc2b75",
+      "expected_sha256": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
+      "current_sha256": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
+      "identical": true
+    },
+    "csrc/kernels/attention_official_finite.h": {
+      "commit": "34bc2b75",
+      "expected_sha256": "776e507213aba7e7089dcc5c4706944859f4916929e9ad1688a22b90d1abd695",
+      "current_sha256": "776e507213aba7e7089dcc5c4706944859f4916929e9ad1688a22b90d1abd695",
+      "identical": true
+    }
+  },
+  "artifact": {
+    "path": "build-device/lib/liboscar_official_math.so",
+    "bytes": 619112,
+    "sha256": "b9a6528fa372487fcc808d5e3c8eb48c2cd0d212e20decd0a5f31e41b5cd2c3f",
+    "local_path": "reports/universal_regression_repair_20261028/cann/evidence/build-device/lib/liboscar_official_math.so"
+  },
+  "kernel_exports_verified": [
+    "oscar_attention_cv_official_decode_kernel",
+    "oscar_attention_cv_official_decode_q1_kernel",
+    "oscar_attention_cv_official_cluster4_kernel",
+    "oscar_attention_cv_official_cluster16_kernel"
+  ],
+  "logs": [
+    "evidence/configure.log",
+    "evidence/compile.log"
+  ],
+  "manifest": "vm_manifest.json",
+  "commands": "commands.json",
+  "failed_attempts": [],
+  "CPU_debug": "not_rerun; production sources individually byte-identical to earlier validated versions",
+  "NPU": "not_run",
+  "graph": "not_run",
+  "performance": "not_run",
+  "no_production_file_changes_by_probe": true
+}

@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-10-28 用户确认34bc的64K达标、32K及以下退化30%；该组合的双目标判定为失败。当前修复按阶段统一撤销decode批量Cast并保留C16，禁止输入长度特判；[修复记录](universal_regression_repair_20261028.md)保存原基底与长prefill源身份。32K、64K必须同时满足，不能以单项通过覆盖另一项退化。
+
 2026-10-27 长上下文：固定16384/当前APC配置，交付 official C16 finite/可见性与q4/q1转换优化；详细源码、主机工作量、CPU配对与CANN证据见[分析报告](long_context_optimization_20261027.md)。用户报告的既有32K达标和64K慢10%单列；本轮新核的NPU、图、模型质量与两长度性能不据本地验证升级，下方42项保持原状态。
 
 2026-10-23 PC续修：活跃请求保留原生GDN prompt checkpoint引用，修复主机复现的并发decode周转后联合命中丢失；共享、释放、async接缝见[报告](prefix_checkpoint_retention_20261023.md)。无本轮NPU/图/模型质量/性能验收，42项状态不升级。

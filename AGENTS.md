@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-28 性能回归硬约束：用户实测34bc2b75的64K达标，但32K及以下慢30%；232b563b69e01495046a9b0025ac9150bc11b9d7为已达标短输入保护基底。必须同时保住32K及以下与64K，禁止新增任何按输入/context/历史长度分界的版本选择。此次按执行阶段拆撤decode批量Cast，所有长度q4/q1统一恢复232b完整原源；C16完整保留34bc源，C4/current-only/调度/PT/argv/timer不动。新组合需按源码身份门保持这两个来源，不能以64K单项通过覆盖短输入退化。见docs/universal_regression_repair_20261028.md及档案#172。
+
 > 2026-10-23 PC续修：PC开启的OSCAR align路径保留每活跃请求最后可读prompt联合GDN checkpoint引用，最多3页/请求，native free后释放；原生hash/lookup/状态推进不改，无额外状态copy。修复20请求decode周转后联合命中0的主机反例；保持PT/数值/argv/timer/CANN，不能宣称现场命中或模型质量验收。见docs/prefix_checkpoint_retention_20261023.md。
 
 > 2026-10-23精度续修：candidate默认fp32_metadata读端策略，现有mode0用于prefill/decode/MTP/capture；已存FP32量化等级不再附加BF16 metadata/减法舍入。独立overlay继承v4门，旧合同/核不改；recipe3/PT/clip/旋转/窗口/argv保持，recipe4实验仍关闭。此为精度优先政策，区别官方CUDA的decode速度取舍；不能宣称模型已达1点以内。见docs/fp32_dequant_precision_20261023.md。

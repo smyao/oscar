@@ -1,0 +1,14 @@
+
+/tmp/oscar-long-context-20261027-decode/codegen_review_20261028/before.o:	file format elf64-hiipu
+
+Sections:
+Idx Name                      Size     VMA              Type
+  4 .ascend.stack.size.record 00000008 0000000000000000 
+ 12 __CCE_KernelArgSize       00000004 0000000000000000 
+ 13 __CCE_KernelArgSize       00000004 0000000000000000 
+Contents of section .ascend.stack.size.record:
+ 0000 00800000 00000000                    ........
+Contents of section __CCE_KernelArgSize:
+ 0000 18010000                             ....
+Contents of section __CCE_KernelArgSize:
+ 0000 18010000                             ....

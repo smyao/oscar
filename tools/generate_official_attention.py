@@ -101,7 +101,10 @@ def remove_c1_inverse(text, publish):
     return edit_function(text, "VectorTask", vector)
 
 
-def decode(*, optimize=True):
+def decode(*, optimize=False):
+    # Archive #172: preserve the 232b563b q4/q1 implementation at every
+    # context length. The batched-cast experiment remains explicitly
+    # reproducible, but must not be composed into serving output again.
     text = remove_c1_inverse(mother("decode"), "CastRne(rounded,acc")
     text = replace(text, "kNormReady=12,kRotReady=13,kTaskDone=14;", "kTaskDone=14;")
     text = edit_function(text, "HistoryCubeTask", lambda f: replace(f,
@@ -209,7 +212,7 @@ def prepare_tasks():
 
 
 def outputs():
-    result = {ROOT / "csrc/kernels/attention_cv_official_decode.cpp": decode()}
+    result = {ROOT / "csrc/kernels/attention_cv_official_decode.cpp": decode(optimize=False)}
     result[ROOT / "csrc/kernels/attention_official_tasks.cpp"] = prepare_tasks()
     for size in (4, 16):
         result[ROOT / f"csrc/kernels/attention_cv_official_cluster{size}.cpp"] = cluster(size)

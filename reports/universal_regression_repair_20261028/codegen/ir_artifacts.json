@@ -1,0 +1,26 @@
+{
+  "before.bc": {
+    "sha256": "0d025f6b42da8548f8601b2c13b7d5890e3fa6a446ae9ff99d861bbcc87335b7",
+    "bytes": 323036
+  },
+  "after.bc": {
+    "sha256": "f231bd22e09b29edaf67be9218948e294129931898bbfa7493f0c6ba97dce24f",
+    "bytes": 326044
+  },
+  "before_device.ll": {
+    "sha256": "2e54bda7baa6a7ff90710618b40fc89df8471c3a8724cb65c0ea9ee930ccba4a",
+    "bytes": 1709613
+  },
+  "after_device.ll": {
+    "sha256": "a6b499bed7cdfea06850159bc9defc69f36baf2db97daad3e87a5a4a408461ff",
+    "bytes": 1725497
+  },
+  "before.o": {
+    "sha256": "01f75fe99a02b01516c1ceabb78107e5393a35eea3e13fb7aebd6ccfeb20eddd",
+    "bytes": 84280
+  },
+  "after.o": {
+    "sha256": "6e324f08f94437ac6ccdcef586a09fe5bcc6caec989bc7e281bbad549d8de2c8",
+    "bytes": 84920
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "scope": "232b563b versus 34bc2b75 official decode, CANN9.1 dav-c220-vec source and compilation audit; no kernel execution",
+  "source_versions": [
+    "232b563b",
+    "34bc2b75"
+  ],
+  "confirmed": {
+    "below_8192_query_production_changes": "Only q4/q1 decode has changed code; official C4 and current-only paths are unchanged. A short total prompt still also runs q4/q1 generation.",
+    "source_bindings": "Three decode publications use the new helper: K/V ordinary, P, K/V pipeline; zero-padding and shared unpack retain the original helper.",
+    "sdk_semantics": "Both helpers SetMaskNorm, use FP32-to-BF16 RINT with strides1,1,4,8, and ResetMask. Explicit mask/repeat overload does not enable count mode or change saturation CTRL48.",
+    "constant_kv_count_16384_ir": "Baseline device IR retains repeat1 Cast in offset+=64 loop with limit16320; candidate device IR folds batching into two Cast calls with unsigned repeat255 and repeat1, no remaining while/255 branch at this fixed-count publication.",
+    "source_c16_count_boundary": "Existing C16 maximal publication is8192=128 repeats; decode maximal publication is16384=255+1 repeats. This proves distinct source instruction grouping only; no helper-level resource measurement is available.",
+    "object_text_bytes": {
+      "before": 78860,
+      "after": 79456,
+      "delta": 596
+    },
+    "kernel_argument_size_bytes": {
+      "before": 280,
+      "after": 280
+    },
+    "stack_size_record_bytes": {
+      "before": 32768,
+      "after": 32768,
+      "meaning": "Matches fixed compiler stack budget; does not establish live registers or spill bytes."
+    },
+    "compile_status": "Both exact commit sources compile successfully with original O3/ISA/auto-sync flags."
+  },
+  "unsupported_or_unknown": {
+    "resource_usage_flag": "Official --cce-res-usage accepted but explicitly reported unused for this compilation mode.",
+    "machine_disassembly": "Official llvm-objdump reports <not available> at instruction positions; no repeated disassembler attempts.",
+    "register_spills": "Unknown; identical stack record is not proof of identical spills.",
+    "long_repeat_issue_or_pipe_blocking": "Unknown; no device scheduling/timing evidence collected.",
+    "root_cause_of_30_percent_short_regression": "Not proven by total wall times or source. Decode is the only changed kernel family reachable when all prefill queries stay below8192, hence a justified narrow isolation target.",
+    "retaining_64k_gain_after_decode_restore": "Requires user hardware result; C16 remains byte-identical to the user-reported successful64K version."
+  },
+  "ir_limit": "O3 device-target LLVM IR is before final machine code/register allocation. Fixed-count loop statements are established at this IR stage only.",
+  "first_attempts_preserved": "Resource-flag unused warning; host-target IR serialization warning then target-preserving serialization; unsupported -### driver diagnostic. No further compiler-option attempts.",
+  "npu": "not_run",
+  "graph": "not_run",
+  "performance": "not_run"
+}

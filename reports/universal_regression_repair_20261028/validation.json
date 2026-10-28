@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-28",
+  "branch": "codex/oscar-bf16-attention",
+  "parent_commit": "34bc2b7575e929a3ebcf3d183d60cf04da64550d",
+  "status": "universal_stage_composition_delivered_for_joint_acceptance",
+  "user_feedback": {
+    "source": "user_feedback.txt",
+    "232b563b": "32K and below accepted",
+    "34bc2b75": "64K accepted;32K and below30 percent slower",
+    "joint_result_of_34bc": "failed"
+  },
+  "change": "restore every-context q4/q1 decode to232b bytes while retaining34bc C16 bytes",
+  "no_input_length_boundary": {
+    "new_input_context_history_thresholds": 0,
+    "new_runtime_routes": 0,
+    "new_workspace_bytes": 0,
+    "proof": "whole-file dispatch/runtime and configs preserved; all decoded contexts share one source"
+  },
+  "source_identity": {
+    "csrc/kernels/attention_cv_official_decode.cpp": {
+      "reference": "232b563b",
+      "sha256": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+      "byte_identical": true
+    },
+    "csrc/kernels/attention_cv_official_cluster4.cpp": {
+      "reference": "232b563b",
+      "sha256": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+      "byte_identical": true
+    },
+    "csrc/kernels/attention_cv_official_cluster16.cpp": {
+      "reference": "34bc2b75",
+      "sha256": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
+      "byte_identical": true
+    },
+    "csrc/kernels/attention_official_finite.h": {
+      "reference": "34bc2b75",
+      "sha256": "776e507213aba7e7089dcc5c4706944859f4916929e9ad1688a22b90d1abd695",
+      "byte_identical": true
+    },
+    "oscar_ascend/ops/cv_dispatch.py": {
+      "reference": "232b563b",
+      "sha256": "40a27b068cf051a8dee562340c3ea9c2133311de48c422fde9243267c7cbf5b6",
+      "byte_identical": true
+    },
+    "oscar_ascend/integration/impl.py": {
+      "reference": "232b563b",
+      "sha256": "069ce6aa7038f1b9378efaf42eaaf4b9b8a400257b3304dd537442c7d49ebe3a",
+      "byte_identical": true
+    },
+    "oscar_ascend/integration/current_only_dispatch.py": {
+      "reference": "232b563b",
+      "sha256": "14b588f4a86c21660b023f3469cc17ecae84d592698b983cabf1faa7a7b08646",
+      "byte_identical": true
+    },
+    "oscar_ascend/runtime.py": {
+      "reference": "232b563b",
+      "sha256": "4660b4a6c60384528a1c238215618ecb12d38926c0ae80a38da0c42b71accd9f",
+      "byte_identical": true
+    },
+    "tools/serving_variants.py": {
+      "reference": "232b563b",
+      "sha256": "354061eb242f8730ef0326674240b339f4f6539ad563c0924c8c0ceb3e7a5c4f",
+      "byte_identical": true
+    },
+    "configs/target.json": {
+      "reference": "232b563b",
+      "sha256": "855b35cc37935ef52e61308a742c758b7ae7081b27d826ade33e6a89e00fc416",
+      "byte_identical": true
+    },
+    "scripts/install_serve.sh": {
+      "reference": "232b563b",
+      "sha256": "c113e55423a9b3a6fdb91111a9e1e804400d76e49ad96a3f1fbe551caa00e6fe",
+      "byte_identical": true
+    },
+    "scripts/install_observe_serve.sh": {
+      "reference": "232b563b",
+      "sha256": "ce7f8cd69af2bb91a23f58ed87ba031e0a4c55c70b54f931f03b6f00074deb53",
+      "byte_identical": true
+    }
+  },
+  "generator": {
+    "default_decode_optimize": false,
+    "packaged_decode_optimize": false,
+    "check": "passed"
+  },
+  "host": {
+    "status": "passed",
+    "tests": 107,
+    "log": "host_tests.log"
+  },
+  "cann": {
+    "status": "passed",
+    "fresh": true,
+    "report": "cann/summary.json"
+  },
+  "cpu_numerical_evidence": {
+    "mode": "reuse exact unchanged source evidence",
+    "decode": "../long_context_20261027/decode/summary.json: ten before-arm cases",
+    "c16": "../long_context_20261027/c16/evidence/reports/long-context-c16-v3/summary.json: six candidate-arm cases",
+    "finite": "../long_context_20261027/finite/summary.json:1507 cases",
+    "new_cpu_runs": 0
+  },
+  "frozen_files": {
+    "status": "all25 prior hashes unchanged",
+    "source": "../long_context_20261027/preserved_sources.json"
+  },
+  "acceptance": {
+    "source_identity": "passed",
+    "host_routes": "passed",
+    "CANN": "passed",
+    "new_NPU_execution": "not_run",
+    "new_graph_replay": "not_run",
+    "joint_32k_and_64k_device_performance": "pending",
+    "completion_rule": "both constraints must hold; one passing length cannot override the other failing"
+  },
+  "delivery": {
+    "branch_only": "codex/oscar-bf16-attention",
+    "command": "git pull --ff-only && bash scripts/install_serve.sh --variant candidate",
+    "input_length_options_added": false,
+    "main_stable_changed": false
+  },
+  "codegen_audit": {
+    "report": "codegen/audit.json",
+    "scope": "compile and device IR; no execution",
+    "result": "old fixed-publication loop retained; new255+1 constant-folded; no ABI change; machine spill/queue cause not established"
+  }
+}

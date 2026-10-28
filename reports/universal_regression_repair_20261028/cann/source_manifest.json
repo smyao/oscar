@@ -1,0 +1,51 @@
+{
+  "scope": "fresh compile only; q4/q1 old decode plus retained official C16/certificate and C4",
+  "vm_workspace": "/tmp/oscar-phase-composition-20261028",
+  "source_sha256": {
+    "csrc/experiments/official_math_20261021/CMakeLists.txt": "3b9eba25d6d6e19d4f4efafcbe270160716067c8a01509634fbb4ff49301d9c0",
+    "csrc/include/oscar_attention_launch.h": "d8731742b2d928b3f8d9a9e330767df449ace11af6808917a3b41721dd2707df",
+    "csrc/include/oscar_bf16_cluster_launch.h": "784c178aa10a23083a4b107b9eb27b24a473f449c2ac9d9a51dbc0e6696c75a3",
+    "csrc/include/oscar_cv_schedule.h": "36c9bb6276e2ac066057d3d30be0f22f83bc65d6b3aef9497f6ceca946313db8",
+    "csrc/include/oscar_official_cluster_launch.h": "c260d9005b9a9cd9360e0ea8f28f273ddf42be1a01b2bf14aacdbffbb06867b2",
+    "csrc/include/oscar_official_decode_launch.h": "f6b42d74cfb1ae0367971938e7cbe80463568955feeeed15aa42904c35b436a7",
+    "csrc/kernels/attention_aligned_unpack.h": "ad8e7aee0a6521a71e9346fa12eac81f4b4356c01507a4257e5c72c866376e07",
+    "csrc/kernels/attention_bf16_cast.h": "a83070f6737096c864a6be9f603a45dfbc8cfeb06dd1a0bb3e306b238fc5740f",
+    "csrc/kernels/attention_c16_cast.h": "28ae39446d4321d16ecf02b24b1e977804d32bd13e27e572eda50fcdbe422bd7",
+    "csrc/kernels/attention_c16_softmax_helpers.h": "ceb949f6550a7b288ef6fedf9d8dc3924f14e1c890fca5aaa0d1f7f73e070b58",
+    "csrc/kernels/attention_cv_official_cluster16.cpp": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
+    "csrc/kernels/attention_cv_official_cluster4.cpp": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+    "csrc/kernels/attention_cv_official_decode.cpp": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+    "csrc/kernels/attention_fast_unpack.h": "f2366ee6fa895139524bb49e85f7d522a65d1f11c1d11e690f6d97099a1f2566",
+    "csrc/kernels/attention_official_finite.h": "776e507213aba7e7089dcc5c4706944859f4916929e9ad1688a22b90d1abd695",
+    "csrc/kernels/attention_range_mask.h": "c1608937a57a0d74159f236b823a38682024bb3ea1893d75a9d1f3652788aa84",
+    "csrc/kernels/attention_striped_unpack.h": "2f03998b9ac66474acaab70563b1608c4f3646369b7767a76ccd171eecbf3e21",
+    "csrc/kernels/oscar_common.h": "20574a83f919df5bd6450cd581d1dba5a5a6f169768e7e237ba62f51b7499964"
+  },
+  "identities": {
+    "csrc/kernels/attention_cv_official_decode.cpp": {
+      "commit": "232b563b",
+      "expected_sha256": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+      "current_sha256": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+      "identical": true
+    },
+    "csrc/kernels/attention_cv_official_cluster4.cpp": {
+      "commit": "34bc2b75",
+      "expected_sha256": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+      "current_sha256": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+      "identical": true
+    },
+    "csrc/kernels/attention_cv_official_cluster16.cpp": {
+      "commit": "34bc2b75",
+      "expected_sha256": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
+      "current_sha256": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
+      "identical": true
+    },
+    "csrc/kernels/attention_official_finite.h": {
+      "commit": "34bc2b75",
+      "expected_sha256": "776e507213aba7e7089dcc5c4706944859f4916929e9ad1688a22b90d1abd695",
+      "current_sha256": "776e507213aba7e7089dcc5c4706944859f4916929e9ad1688a22b90d1abd695",
+      "identical": true
+    }
+  },
+  "production_source_changes_by_probe": false
+}

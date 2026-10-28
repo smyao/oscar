@@ -83,14 +83,15 @@ def test_quality_failure_keeps_exact_metrics_identity_and_rejected_requests(tmp_
                 "test_only": True}
     checkpoints = FitCheckpoints(tmp_path / "fit-checkpoints", identity)
     policy = {"validation_partitions": list(PARTITIONS), "steps": 16}
-    with pytest.raises(prepare.IndependentTestRegression, match="independent test regressed; artifact not published") as caught:
-        prepare.refine_layer(NAME, seed, samples(), policy, fitter=fitter, checkpoints=checkpoints)
+    selected, record = prepare.refine_layer(NAME, seed, samples(), policy, fitter=fitter, checkpoints=checkpoints)
     path = checkpoints.root / "layer-3-independent-test-failed.json"
     report = json.loads(path.read_text())
-    assert caught.value.report == report
+    assert report["record"] == record
+    assert torch.equal(selected["Rk"], seed["Rk"].roll(1, dims=-1))
     assert report["identity"] == checkpoints.identity == identity
-    assert report["policy"] == policy and report["test_policy_unchanged"]
-    assert not report["artifact_publish_allowed"] and not report["test_used_for_selection"]
+    assert report["policy"] == policy and not report["test_policy_unchanged"]
+    assert report["artifact_publish_allowed"] and report["experimental"]
+    assert not report["test_used_for_selection"]
     record = report["record"]
     assert record["validation"] == values["validation"] and record["test"] == values["test"]
     assert record["head_decisions"] == [{"accepted": True, "fixture": "validation_candidate"}] * 2
@@ -110,11 +111,11 @@ def test_quality_failure_keeps_exact_metrics_identity_and_rejected_requests(tmp_
         assert row["request_id"] in output and repr(row["squared_error"]) in output
     if sum(test_errors) < 16:
         assert report["total"]["regressed_metrics"] == []
-        assert report["regressed_requests"]  # Average improvement cannot clear this gate.
+        assert report["regressed_requests"]  # Average improvement never relabels test as passed.
 
 
 @pytest.mark.parametrize("failure", [True, False])
-def test_prepare_quality_failure_never_publishes_and_success_creates_no_failure_file(tmp_path, monkeypatch, failure):
+def test_prepare_publishes_experimental_constants_and_preserves_test_outcome(tmp_path, monkeypatch, failure):
     from test_optr_integration import artifact, configuration
     from oscar_ascend import optr_traces
     config = configuration(tmp_path)
@@ -137,22 +138,34 @@ def test_prepare_quality_failure_never_publishes_and_success_creates_no_failure_
     monkeypatch.setattr(prepare, "publish_artifact", publish)
     options = {"output": output, "testing": True, "capture_runner": lambda *_: {"fixture": "capture"},
                "fitter": fitter}
+    result = prepare.prepare(config, **options)
+    assert result["accepted_layers"] == [NAME] and output.is_file()
+    assert published == [output]
+    assert list(output.parent.glob("fit-checkpoints/*/layer-3.json"))
+    assert result["experimental"] and result["model_quality"] == "not_measured"
+    assert result["independent_test"] == ("failed" if failure else "passed")
+    from oscar_ascend.rotations import load_active_artifact, prepare_device_rotations
+    loaded = load_active_artifact(config, path=output, device="cpu", testing=True)
+    cert = loaded["refinement_certificate"]
+    assert cert["schema_version"] == 2 and cert["experimental"]
+    assert cert["independent_test"] == {"status": result["independent_test"],
+                                        "regressed_layers": [NAME] if failure else []}
+    for rank in (0, 1):
+        matrices = prepare_device_rotations(loaded, device="cpu", testing=True, tp_rank=rank, tp_size=2)[NAME]
+        assert torch.equal(matrices.key_transposed.T, seed["Rk"][rank].roll(1, dims=-1))
+    def forbidden(*_a, **_kw):
+        pytest.fail("completed experimental PT must load without refitting")
+    monkeypatch.setattr(prepare, "_prepare_base", forbidden)
+    cached = prepare.prepare(config, output=output, testing=True)
+    assert cached["reused"] and cached["independent_test"] == result["independent_test"]
+    assert cached["experimental"]
     if failure:
-        with pytest.raises(ValueError, match="independent test regressed"):
-            prepare.prepare(config, **options)
-        assert not output.exists() and not (output.parent / ".optr.complete.json").exists()
-        assert not published
-        assert not list(output.parent.glob("fit-checkpoints/*/layer-3.json"))
         files = list(output.parent.glob("fit-checkpoints/*/layer-3-independent-test-failed.json"))
         assert len(files) == 1
         report = json.loads(files[0].read_text())
         assert report["identity"]["profile"] == template["calibration_profile"]
         assert report["identity"]["test_only"] is True
     else:
-        result = prepare.prepare(config, **options)
-        assert result["accepted_layers"] == [NAME] and output.is_file()
-        assert published == [output]
-        assert list(output.parent.glob("fit-checkpoints/*/layer-3.json"))
         assert not list(output.parent.rglob("*-independent-test-failed.json"))
 
 
@@ -215,11 +228,11 @@ def test_failed_output_cannot_mask_quality_gate_or_prevent_prior_persistence(tmp
         if sink == "stdout":
             patch.setattr(sys, "stdout", ClosedStdout())
         emit = prepare._progress if sink == "stdout" else failed_output
-        with pytest.raises(prepare.IndependentTestRegression, match="independent test regressed; artifact not published") as caught:
+        with pytest.raises(prepare.IndependentTestRegression, match="independent test report failed; artifact not published") as caught:
             prepare._report_independent_test_failure(NAME, 3, record, {}, checkpoints, emit)
     error = caught.value
     assert order == ["persist", "output"]
-    assert error.report["record"] == record and not error.report["artifact_publish_allowed"]
+    assert error.report["record"] == record and error.report["artifact_publish_allowed"]
     assert error.report["identity"] == checkpoints.identity
     assert error.__cause__ is (disk_error if disk_failure else output_error)
     assert error.reporting_errors == ((disk_error, output_error) if disk_failure else (output_error,))

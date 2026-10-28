@@ -15,7 +15,7 @@ from pathlib import Path
 import tempfile
 import uuid
 
-from .optr_policy import OBJECTIVE, RECIPE_VERSION, UPSTREAM_COMMIT
+from .optr_policy import OBJECTIVE, RECIPE_VERSION, UPSTREAM_COMMIT, EXPERIMENTAL_PUBLICATION_POLICY
 
 
 def file_sha256(path):
@@ -87,6 +87,30 @@ def nonworse(before, after):
                 right[key]["normalized_error"] <= left[key]["normalized_error"] for key in left))
 
 
+def independent_test_summary(records):
+    regressed = sorted(name for name, record in records.items()
+                       if not nonworse(record["test"]["baseline"], record["test"]["selected"]))
+    return {"status": "failed" if regressed else "passed", "regressed_layers": regressed}
+
+
+def experimental_certificate(certificate):
+    """Version publication separately from the unchanged fitting/cache policy."""
+    return {**certificate, "schema_version": 2,
+            "publication_policy": EXPERIMENTAL_PUBLICATION_POLICY, "experimental": True,
+            "independent_test": independent_test_summary(certificate["layers"])}
+
+
+def artifact_test_status(artifact):
+    """Startup-only receipt; callers validate the artifact before reporting."""
+    certificate = artifact["refinement_certificate"]
+    summary = certificate.get("independent_test", {"status": "passed", "regressed_layers": []})
+    return {"experimental": certificate.get("experimental", False),
+            "publication_policy": certificate.get("publication_policy", "strict_independent_test_v1"),
+            "independent_test": summary["status"],
+            "independent_test_regressed_layers": summary["regressed_layers"],
+            "model_quality": "not_measured", "performance": "not_measured"}
+
+
 def validate_refinement_metadata(artifact, *, expected_profile=None):
     """Check the complete certificate before constants can reach device memory."""
     profile = artifact.get("calibration_profile", {})
@@ -103,13 +127,20 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
             base.get("model_fingerprint") != artifact.get("model_fingerprint")):
         raise ValueError("OptR must refine the authenticated recipe3 model")
     certificate = artifact.get("refinement_certificate", {})
-    if (certificate.get("schema_version") != 1 or
+    schema = certificate.get("schema_version")
+    if (type(schema) is not int or schema not in (1, 2) or
             certificate.get("policy") != profile.get("refinement_policy") or
             certificate.get("metric") != "all_tp_heads_bf16_gate_fp32_wo_output" or
             certificate.get("arithmetic_evidence") != "cpu_deployment_reference_not_npu_bitwise" or
             certificate.get("model_quality") != "not_measured" or
             certificate.get("performance") != "not_measured"):
         raise ValueError("OptR certificate policy/evidence boundary differs")
+    if schema == 2:
+        if (certificate.get("publication_policy") != EXPERIMENTAL_PUBLICATION_POLICY or
+                certificate.get("experimental") is not True):
+            raise ValueError("OptR report-only publication requires an explicit experimental certificate")
+    elif any(key in certificate for key in ("publication_policy", "experimental", "independent_test")):
+        raise ValueError("legacy OptR certificate cannot change its publication policy")
     for key in ("base_artifact_sha256", "trace_manifest_sha256", "matrices_sha256"):
         value = certificate.get(key)
         if not isinstance(value, str) or len(value) != 64 or any(c not in "0123456789abcdef" for c in value):
@@ -126,7 +157,8 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
             raise ValueError("OptR layer certificate lacks baseline constants hash")
         for split in ("validation", "test"):
             result = record.get(split, {})
-            if not nonworse(result.get("baseline"), result.get("selected")):
+            passed = nonworse(result.get("baseline"), result.get("selected"))
+            if not passed and (split == "validation" or schema == 1):
                 raise ValueError(f"OptR {name} worsens {split} output error")
         if type(record.get("accepted")) is not bool:
             raise ValueError("OptR layer decision is missing")
@@ -145,6 +177,8 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
     accepted = sorted(name for name, record in certificate["layers"].items() if record["accepted"])
     if certificate.get("accepted_layers") != accepted:
         raise ValueError("OptR accepted layer list differs")
+    if schema == 2 and certificate.get("independent_test") != independent_test_summary(certificate["layers"]):
+        raise ValueError("OptR independent test status does not match recorded errors")
     if matrix_digest(layers) != certificate["matrices_sha256"]:
         raise ValueError("OptR certificate does not bind the deployed matrices")
     return certificate
@@ -205,6 +239,9 @@ def load_refined_artifact(config, destination, *, device, testing, layer_names, 
     model = model.get("text_config", model)
     if artifact.get("global_kv_heads") != model.get("num_key_value_heads"):
         raise ValueError("OptR KV-head count differs from selected model")
-    return validate_artifact(artifact, layer_names=layer_names, head_dim=head_dim,
+    validated = validate_artifact(artifact, layer_names=layer_names, head_dim=head_dim,
         model_fingerprint=model_fingerprint, pr_fingerprint=OFFICIAL_COMMIT,
         require_calibrated=True, device=device, testing=testing)
+    print("[oscar] OPTR_ARTIFACT " + json.dumps({"artifact": str(destination),
+          **artifact_test_status(validated)}), flush=True)
+    return validated

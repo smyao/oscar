@@ -15,6 +15,20 @@ import uuid
 
 from .optr_artifacts import file_sha256
 
+# Audited parent implementation (1114168): this change only alters publication
+# and reporting. Reuse its hashed head/layer payloads only while both numerical
+# implementations remain byte-identical and every other identity field matches.
+_LEGACY_IMPLEMENTATION = "5ae615236f8751b9cddf5da9e649febcce72b04bdee7d7020a53ddf0c9ca095b"
+_LEGACY_NUMERICAL_SOURCES = {
+    "oscar_ascend/optr_calibration.py": "745caea68d9fcdc86b603da42f09f64274c42ee83d77c117bd1a2839c7d1c739",
+    "oscar_ascend/optr_traces.py": "1d6f30fdb572bebb545d3991192a12b23e43930ce15769c1609b9102bfeb083e",
+}
+
+
+def _identity_directory(directory, identity):
+    encoded = json.dumps(identity, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    return Path(directory) / hashlib.sha256(encoded.encode()).hexdigest()
+
 
 def fitting_implementation_digest():
     root = Path(__file__).resolve().parents[1]
@@ -33,7 +47,7 @@ class FitCheckpoints:
         # profile: fixing execution must reuse already completed sampling.
         encoded = json.dumps(identity, sort_keys=True, separators=(",", ":"), allow_nan=False)
         self.identity = json.loads(encoded)
-        self.root = Path(directory) / hashlib.sha256(encoded.encode()).hexdigest()
+        self.root = _identity_directory(directory, self.identity)
         self.root.mkdir(parents=True, exist_ok=True)
 
     def _path(self, key):
@@ -42,22 +56,37 @@ class FitCheckpoints:
         return self.root / (key + ".json")
 
     def load(self, key):
-        import torch
         manifest_path = self._path(key)
-        if not manifest_path.is_file():
+        if manifest_path.is_file():
+            return self._load_from(manifest_path, key, self.identity)
+        # No scan, loose identity matching or failed-report promotion. The
+        # caller still validates resumed matrices/layer certificates normally.
+        if self.identity.get("fitting_implementation_sha256") != fitting_implementation_digest():
             return None
+        source = Path(__file__).resolve().parents[1]
+        if any(file_sha256(source / name) != digest for name, digest in _LEGACY_NUMERICAL_SOURCES.items()):
+            return None
+        legacy_identity = {**self.identity, "fitting_implementation_sha256": _LEGACY_IMPLEMENTATION}
+        legacy_path = _identity_directory(self.root.parent, legacy_identity) / manifest_path.name
+        if legacy_path.is_file():
+            return self._load_from(legacy_path, key, legacy_identity)
+        return None
+
+    @staticmethod
+    def _load_from(manifest_path, key, identity):
+        import torch
         manifest = json.loads(manifest_path.read_text())
         if (manifest.get("schema_version") != 1 or manifest.get("key") != key or
-                manifest.get("identity") != self.identity):
+                manifest.get("identity") != identity):
             raise ValueError("offline checkpoint manifest identity differs")
         name = manifest.get("file")
         if not isinstance(name, str) or not re.fullmatch(re.escape(key) + r"-[0-9a-f]{32}\.pt", name):
             raise ValueError("offline checkpoint file does not belong to its owner")
-        path = self.root / name
+        path = manifest_path.parent / name
         if not path.is_file() or file_sha256(path) != manifest.get("sha256"):
             raise ValueError("offline checkpoint file hash differs")
         saved = torch.load(path, map_location="cpu", weights_only=True)
-        if (not isinstance(saved, dict) or saved.get("identity") != self.identity or
+        if (not isinstance(saved, dict) or saved.get("identity") != identity or
                 saved.get("key") != key or not isinstance(saved.get("payload"), dict)):
             raise ValueError("offline checkpoint payload identity differs")
         return saved["payload"]

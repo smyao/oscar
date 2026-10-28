@@ -1,10 +1,18 @@
 # OptR 第7层独立测试失败：原因复核与处置
 
+> 最新明确授权：用户选择“允许生成实验 PT，先测试 OptR”。现采用schema2实验发布证书：独立test退化保留失败指标与状态，继续后续层、发布和服务；validation、数值合法性、矩阵身份及正交性检查保持。下文禁止发布和需要确认的描述属于授权前历史，不再代表当前行为。本变更不意味着退化已修复，模型质量仍未测；固定candidate无新增参数。证据见`reports/optr_experimental_publication_20261028/verification.json`。
+
 > 2026-10-28后续用户指令覆盖默认处置：用户要求先测试OptR，禁止通过开关绕过或关闭。当前固定candidate已恢复recipe5，准备/加载均直接走OptR，无需新增参数；下文撤回默认及recipe3选择的描述是当时的历史处置，已被本指令替代。独立test失败报告、禁止发布和全部质量阈值未改，本次未修复已观察到的泛化失败，也未重新取得真机质量或性能证据。已有匹配trace/拟合断点身份不因本次预设修改而变化。
 
 这次失败来自质量验收：第7层候选在联合 validation 被接受，在独立 test 上退化，程序因此禁止发布。没有证据支持将它修成“忽略异常即可成功”。此前把未完成完整验收的 OptR 强制作为 candidate 默认过早；本次先撤下该默认，恢复原 recipe3，同时保留显式研究能力与原质量门。**OptR 获得更高模型精度的目标尚未完成。**
 
 ## 现场能证明什么
+
+2026-10-28后续运行 `20261028T031557.011852Z` 的[新增原始日志](../reports/optr_test_metrics_20261028/target_failure.txt)已给出具体指标；[机器可读分析](../reports/optr_test_metrics_20261028/analysis.json)保留原值及计算结果。prepare耗时3629.800522秒（60.50分钟），rc1、未超时、cleanup_complete=true。第7层独立test总normalized error由0.003534305215807693降至0.0035226326595371314，相对改善0.3303%；但同一条`test_65536_2`在single_split和captured_runtime_frames下分别相对退化0.08509%和0.08620%。两条失败记录具有同一个sample hash，不能说成两条独立请求退化。
+
+本次可以确认触发的是严格逐请求门，而非总量门：`regressed_total_metrics=[]`，两行64K输出误差上升。源码`nonworse`显式要求总量和每行同时非劣，日志所示比较与实现一致；不是编译错误、超时或已证明的数值计算bug。该幅度是CPU重放输出误差的相对变化，不是LongBench分数，也没有证据将它当作浮点噪声。按相邻心跳定位，第7层联合validation开始到prepare失败约1047.7–1107.7秒（17.46–18.46分钟），这是阶段时间窗，不是设备内核计时。
+
+本次源码复核未改训练、选择、test或发布标准。若要在独立test退化后仍生成实验PT并继续模型测试，必须明确改变原来的发布判定并标注未通过独立test，不能把它称作质量修复或通过。本条补充失败证据，不改变固定candidate继续启用OptR的用户要求。
 
 用户本轮粘贴的 [原始失败日志](../reports/optr_independent_test_failure_20261028/target_failure.txt) 对应目标 run `20261027T133233.150213Z`。`prepare-rotations` 运行 3498.906897 秒后返回 1，`timed_out=false`、`cleanup_complete=true`。baseline 和 selected 均完成 test 的 `single_split`、`captured_runtime_frames` 检查，随后报 `independent test regressed; artifact not published`。这次已经越过旧1800秒时限；不是编译报错或超时复发。
 

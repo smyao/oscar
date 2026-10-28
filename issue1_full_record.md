@@ -28858,6 +28858,10 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **验证与边界**：针对性主机/CPU回归、双缓存实际发布/加载、总量改善但单请求退化的阻断、失败报告/异常及正常发布、固定argv与打包证据见该目录verification.json及docs/optr_independent_test_failure_20261028.md。诊断文件修改触发既有拟合实现哈希隔离，旧fit断点不会直接命中；原生trace身份不变。线上CANN/runtime/timer/目标配置未改，没有连接NPU、复跑模型或测性能；此为默认入口回归控制，不是OptR更高精度目标已实现。
 
 
+**2026-10-28后续证据补充**：用户新附件对应run `20261028T031557.011852Z`，原文见`reports/optr_test_metrics_20261028/target_failure.txt`。prepare rc1、3629.800522秒、未超时且清理完成。第7层独立test总normalized error从0.003534305215807693降至0.0035226326595371314（相对改善0.3303%），但同一64K请求在single_split/captured_runtime_frames下分别相对退化0.08509%/0.08620%；两条失败行的sample hash相同。明确触发逐请求非劣门而非总量门。源码比较与日志相符，未证明计算bug；不是模型任务分数或性能证据。当前保留用户要求的OptR默认，未改质量门，不能重复拟合或放宽门后宣称此失败已修复。
+
+**2026-10-28用户明确授权后续处理（非新增真机验证）**：用户确认“允许生成实验 PT，先测试 OptR”。保留OptR默认、validation逐请求非劣和数值合法性；独立test仅记录、不得用于重选，schema2实验PT明确标记通过/失败和退化层，并允许后续服务测试。schema1仍执行原严格门。精确匹配并认证旧断点可复用；不将失败JSON冒充完成层。257项本地主机/CPU回归通过、离线wheel构建和隔离导入通过，证据见`reports/optr_experimental_publication_20261028/verification.json`。这是经授权改变实验发布规则，不是修复test误差或完成模型质量/性能验收；未连接真机。
+
 ## [174] 真机条目（2026-10-28 用户回传）· 正式服务初始化时四卡仅余1.19GiB
 
 **证据**：附件c94fa0ca-edb6-4106-9461-52596ccbe4ef原字节保存在`reports/direct_service_lifecycle_20261028/target_failure.txt`。01:12:24–26四worker报`Free memory on device (1.19/29.49 GiB)`低于配置0.9要求26.54GiB；EngineCore初始化失败，API进程在01:12:32退出。片段无启动SHA、占用进程表或父launcher最终状态，不能确认既有占用者、部署前清理结果或把本地b449015当现场身份。

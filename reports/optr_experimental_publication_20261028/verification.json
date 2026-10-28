@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-28",
+  "baseline_commit": "11141683f84539b7d023746cea2c676f51788c79",
+  "authorization": "User explicitly approved experimental PT publication and model testing despite independent test regressions; validation/numerical gates retained.",
+  "certificate_schema": 2,
+  "publication_policy": "validation_gate_independent_test_report_v1",
+  "independent_test": "recorded_pass_or_fail_not_used_for_selection",
+  "legacy_certificate_schema_1": "still_requires_independent_test_nonregression",
+  "protected_files_unchanged": 690,
+  "protected_file_mismatches": [],
+  "preset_comparison": [
+    {
+      "name": "candidate",
+      "effective_config_unchanged": true,
+      "vllm_argv_unchanged": true
+    },
+    {
+      "name": "baseline",
+      "effective_config_unchanged": true,
+      "vllm_argv_unchanged": true
+    },
+    {
+      "name": "native",
+      "effective_config_unchanged": true,
+      "vllm_argv_unchanged": true
+    },
+    {
+      "name": "hadamard",
+      "effective_config_unchanged": true,
+      "vllm_argv_unchanged": true
+    },
+    {
+      "name": "w8a8",
+      "effective_config_unchanged": true,
+      "vllm_argv_unchanged": true
+    },
+    {
+      "name": "native-budget",
+      "effective_config_unchanged": true,
+      "vllm_argv_unchanged": true
+    }
+  ],
+  "fitting_and_trace_policy_unchanged": true,
+  "nonworse_comparison_unchanged": true,
+  "audited_legacy_fitting_digest": "5ae615236f8751b9cddf5da9e649febcce72b04bdee7d7020a53ddf0c9ca095b",
+  "current_fitting_digest": "0c12552ecc3e766ba82dd77f921190c3c27f28114bb9077fe6bf6b6d92c28425",
+  "legacy_resume": "exact identity except audited implementation; payload hashes and numeric-source guards required; failed JSON reports are not completed layers",
+  "pytest": {
+    "tests": 240,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit": "pytest.xml",
+    "command": ".venv/bin/python -m pytest -q tests/test_optr_experimental_publication.py tests/test_optr_calibration.py tests/test_optr_capture.py tests/test_optr_integration.py tests/test_optr_traces.py tests/test_optr_resume.py tests/test_optr_quality_failure.py tests/test_rotation_preparation_limits.py tests/test_serving_variants.py tests/test_install_serve.py tests/test_deploy_bf16.py tests/test_center_prepare.py tests/test_fp32_dequant_precision.py tests/test_per_head_clip_runtime.py --junitxml=reports/optr_experimental_publication_20261028/pytest.xml"
+  },
+  "wheel": "wheel.json",
+  "npu": "not_run_user_constraint",
+  "model_quality": "not_measured_test_regression_not_fixed",
+  "performance": "not_measured_online_kernels_unchanged",
+  "git_diff_check": {
+    "result": "passed with core.whitespace=cr-at-eol",
+    "reason": "Raw user attachment retains original CRLF bytes; default git whitespace check flags those CR bytes. Source-code diff is clean.",
+    "raw_attachment_sha256": "8816355098bcd533c66f05526f29a4fca4b15982e3db8bca34aa63792b48ae3a",
+    "raw_attachment_byte_identity": true
+  },
+  "git_push": "not_run",
+  "live_output_pytest": {
+    "tests": 17,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit": "live-output.xml",
+    "command": ".venv/bin/python -m pytest -q tests/test_live_output.py --junitxml=reports/optr_experimental_publication_20261028/live-output.xml",
+    "execution": "local host outside sandbox; no NPU or remote access"
+  },
+  "live_output_sandbox_attempt": {
+    "junit": "live-output-sandbox-denied.xml",
+    "result": "16 passed; 1 failed because sandbox denied localhost bind with EPERM; all 17 passed on approved local-host rerun"
+  },
+  "total_passed": 257
+}

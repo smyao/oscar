@@ -153,7 +153,7 @@ def test_small_teacher_energy_has_one_fixed_normalization():
     assert nonworse(tiny, copy.deepcopy(tiny))
 
 
-def test_joint_layer_selection_rejects_local_only_gain_and_blocks_test_regression(monkeypatch):
+def test_joint_layer_selection_rejects_local_only_gain_and_records_test_regression(monkeypatch):
     from tools import prepare_optr_rotations as prepare
     baseline = {"Rk": torch.eye(2).unsqueeze(0), "Rv": torch.eye(2).unsqueeze(0),
                 "k_mean": torch.zeros(1, 2), "layer_id": 3}
@@ -171,5 +171,6 @@ def test_joint_layer_selection_rejects_local_only_gain_and_blocks_test_regressio
         changed = constants["Rk"][0, 0, 0] < 0
         return metric(split, (.5 if split == "validation" else 2) if changed else 1)
     monkeypatch.setattr(prepare, "_metrics", test_regression)
-    with pytest.raises(ValueError, match="independent test regressed"):
-        prepare.refine_layer(NAME, baseline, samples, {}, fitter=fitted)
+    selected, record = prepare.refine_layer(NAME, baseline, samples, {}, fitter=fitted)
+    assert record["accepted"] and torch.equal(selected["Rk"], -baseline["Rk"])
+    assert not nonworse(record["test"]["baseline"], record["test"]["selected"])

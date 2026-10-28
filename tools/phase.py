@@ -120,6 +120,8 @@ def _compact_should_mirror(line: str, state: dict[str, int]) -> bool:
     # through nested compact launchers; ordinary model/JSON chatter stays out.
     if line.startswith(("[oscar] OPTR_PROGRESS ", '{"optr_capture":')):
         return True
+    if "[oscar] OPTR_ARTIFACT " in line:
+        return True  # Include native worker prefixes; test status must be visible.
     # #158: one host-only bridge receipt per worker may carry its native
     # Worker_TP prefix. Preserve that exact marker without mirroring INFO spam.
     if "[oscar] MTP_DISCARD_BRIDGE " in line:

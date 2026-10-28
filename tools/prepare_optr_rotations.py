@@ -1,7 +1,8 @@
 """Archive #86/#97/#148/#170/#172/#173: offline output-aware refinement.
 
-Explicit OptR research preparation calls this module; serving loads only final
-constants after its quality gates pass. Native sampling runs in an isolated
+The fixed candidate calls this module. User 2026-10-28 authorizes experimental
+constants after validation, with independent test recorded, never reselected.
+Native sampling runs in an isolated
 child and releases its model before CPU optimization. No runtime/kernel/
 scheduler implementation is changed; candidate defaults remain separate.
 """
@@ -17,8 +18,9 @@ import sys
 import tempfile
 
 from oscar_ascend.optr_artifacts import (file_sha256, matrix_digest, nonworse,
-    publish_artifact)
-from oscar_ascend.optr_policy import OBJECTIVE, optr_policy, validate_refinement_config
+    publish_artifact, experimental_certificate, artifact_test_status)
+from oscar_ascend.optr_policy import (OBJECTIVE, optr_policy, validate_refinement_config,
+    EXPERIMENTAL_PUBLICATION_POLICY)
 
 
 def _progress(**fields):
@@ -112,7 +114,7 @@ def _validate_head_result(result, baseline, head):
 
 
 class IndependentTestRegression(ValueError):
-    """A failed quality gate, with evidence that never authorizes publication."""
+    """Test regression evidence whose mandatory reporting could not complete."""
 
     def __init__(self, message, report):
         super().__init__(message)
@@ -125,8 +127,8 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
 
     This filename is deliberately not a completed layer checkpoint. The
     original scalar values are serialized without rounding or conversion to
-    task accuracy. Persist before terminal/callback output. I/O errors during
-    either operation must never replace the already-established quality gate.
+    task accuracy. Persist before terminal/callback output. Reporting I/O must
+    complete before an experimental artifact can publish.
     """
     baseline, selected = record["test"]["baseline"], record["test"]["selected"]
     compared = ("squared_error", "normalized_error")
@@ -148,10 +150,11 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
         "policy": copy.deepcopy(policy), "metric": "all_tp_heads_bf16_gate_fp32_wo_output",
         "arithmetic_evidence": "cpu_deployment_reference_not_npu_bitwise",
         "model_quality": "not_measured", "performance": "not_measured",
-        "artifact_publish_allowed": False, "test_used_for_selection": False,
-        "test_policy_unchanged": True,
+        "artifact_publish_allowed": True, "test_used_for_selection": False,
+        "experimental": True, "publication_policy": EXPERIMENTAL_PUBLICATION_POLICY,
+        "test_policy_unchanged": False,
         "record": record, "total": total, "regressed_requests": regressions}
-    message = f"OptR {name}: independent test regressed; artifact not published"
+    message = f"OptR {name}: independent test report failed; artifact not published"
     reporting_errors = []
     persistence_event = None
     if checkpoints:
@@ -169,7 +172,8 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
     events = [{"layer": name, "phase": "independent_test_failed", "metric": report["metric"],
                "baseline": total["baseline"], "selected": total["selected"],
                "regressed_total_metrics": total["regressed_metrics"], "regressed_requests": len(regressions),
-               "artifact_publish_allowed": False, "test_used_for_selection": False}]
+               "artifact_publish_allowed": True, "experimental": True,
+               "publication_policy": EXPERIMENTAL_PUBLICATION_POLICY, "test_used_for_selection": False}]
     events.extend({"layer": name, "phase": "independent_test_request_regressed", **row} for row in regressions)
     if persistence_event is not None:
         events.append(persistence_event)
@@ -178,17 +182,17 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
             emit(**event)
         except Exception as error:
             reporting_errors.append(error)
-            break  # A failed output sink must not prevent the quality failure.
-    failure = IndependentTestRegression(message, report)
-    failure.reporting_errors = tuple(reporting_errors)
+            break  # Required diagnostic output failed; do not publish silently.
     if reporting_errors:
+        failure = IndependentTestRegression(message, report)
+        failure.reporting_errors = tuple(reporting_errors)
         # Preserve the first original I/O exception as the cause; retain any
         # secondary output failure too, including on Python 3.10 (no add_note).
         if hasattr(failure, "add_note"):
             for error in reporting_errors[1:]:
                 failure.add_note(f"Additional diagnostic failure: {type(error).__name__}: {error}")
         raise failure from reporting_errors[0]
-    raise failure
+    return report
 
 
 def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=None, progress=None):
@@ -232,8 +236,8 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
     selected = trial if accepted else baseline
     if not accepted:
         after = before
-    # This dataset never chooses a matrix/step/hyperparameter. A failure is
-    # reported and blocks publication; it cannot silently reselect on test.
+    # This dataset never chooses a matrix/step/hyperparameter. User 2026-10-28
+    # permits experimental publication with failed test explicitly recorded.
     test_before = measure(baseline, "test", "baseline")
     test_after = measure(selected, "test", "selected") if accepted else test_before
     record = {"accepted": accepted, "head_decisions": decisions,
@@ -241,9 +245,11 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
               "selected_constants_sha256": matrix_digest({name: selected}),
               "validation": {"baseline": before, "selected": after},
               "test": {"baseline": test_before, "selected": test_after}}
-    if not nonworse(test_before, test_after):
+    test_passed = nonworse(test_before, test_after)
+    if not test_passed:
         _report_independent_test_failure(name, baseline["layer_id"], record, policy, checkpoints, emit)
     emit(layer=name, phase="checked", accepted=accepted,
+              experimental=True, independent_test="passed" if test_passed else "failed",
               validation_before=before["normalized_error"], validation_after=after["normalized_error"],
               independent_test_before=test_before["normalized_error"],
               independent_test_after=test_after["normalized_error"])
@@ -251,9 +257,9 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
 
 
 def _layer_artifact(template, certificate, name, selected, record):
-    return {**template, "layers": {name: selected}, "refinement_certificate": {
+    return {**template, "layers": {name: selected}, "refinement_certificate": experimental_certificate({
         **certificate, "layers": {name: record}, "accepted_layers": [name] if record["accepted"] else [],
-        "matrices_sha256": matrix_digest({name: selected})}}
+        "matrices_sha256": matrix_digest({name: selected})})}
 
 
 def _validate_layer_checkpoint(saved, template, certificate, name, baseline):
@@ -295,6 +301,7 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
             raise ValueError("test-only refined artifact cannot enter production")
         return {"artifact": str(destination), "source": "optr_authenticated_cache", "reused": True,
                 "recipe_version": 5, "accepted_layers": artifact["refinement_certificate"]["accepted_layers"],
+                **artifact_test_status(artifact),
                 "quality_acceptance": "not_run", "performance": "not_measured"}
     if not testing and (base_runner is not None or fitter is not None or capture_runner is not None):
         raise ValueError("injected OptR preparation hooks are test-only")
@@ -367,7 +374,7 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
             certificate["layers"][name] = record
     certificate["accepted_layers"] = sorted(n for n, row in certificate["layers"].items() if row["accepted"])
     certificate["matrices_sha256"] = matrix_digest(artifact["layers"])
-    artifact["refinement_certificate"] = certificate
+    artifact["refinement_certificate"] = experimental_certificate(certificate)
     # CPU math validation here does not permit a CPU test artifact in serving.
     # The existing runtime performs its normal NPU validation on final load.
     validate_artifact(artifact, layer_names=names, head_dim=dim, model_fingerprint=fingerprint,
@@ -376,6 +383,7 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
     load_active_artifact(config, path=destination, device="cpu", testing=True)
     return {"artifact": str(destination), "source": "optr_native_output_refinement", "reused": False,
             "recipe_version": 5, "accepted_layers": certificate["accepted_layers"],
+            **artifact_test_status(artifact),
             "quality_acceptance": "not_run", "performance": "not_measured",
             "model_forward_device": "cpu_test" if testing else "npu",
             "optimization_device": "cpu_offline", "online_operations": "unchanged"}

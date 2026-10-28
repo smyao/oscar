@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-28用户批准实验PT：保留validation和数值门，独立test退化记录为failed并允许实验发布/后续服务，不按test重选，不恢复recipe3，不加命令开关。schema2明确发布政策和test状态，旧schema1继续严格检查；兼容审核过的旧拟合断点以避免重做已完成头/层。训练数值与线上核/runtime/timer/argv不改，不申领精度或速度收益。证据见`reports/optr_experimental_publication_20261028/verification.json`。
+
 2026-10-28用户要求先测OptR：恢复当前原生BF16固定candidate的recipe5默认，覆盖下方#173静态撤回处置，不增加开关或静默改走recipe3。训练/trace/断点身份、独立质量门、线上核/runtime/argv/timer保持；本次不计精度或速度收益。固定入口、双缓存实际选择及失败阻断的本地证据见`reports/optr_candidate_enabled_20261028/verification.json`。
 
 2026-10-28启动显存不足（#174）：四worker初始化时各仅1.19GiB空闲，尚未加载新权重，未确认占用者。修复直启exec后无人监督清理的缺口，新增本checkout逐卡锁、正式服务完整退出/信号清理与有界只读失败诊断。在线核/数学/argv/预算/timer保持，不领取性能或模型收益；真实主机进程及源码基底配对见`reports/direct_service_lifecycle_20261028/verification.json`。

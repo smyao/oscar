@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-10-28明确授权实验PT：独立test只记录不阻断，validation/数值/身份门保留。schema2显式标记实验产物与失败层，固定candidate直接准备/加载，旧严格证书不放宽。自动兼容审核过的父版本断点，原生trace身份保持；本地发布/加载/跨层继续/认证复用证据见`reports/optr_experimental_publication_20261028/verification.json`。实验发布不升级42项模型质量/NPU/图/性能验收。
+
 2026-10-28用户要求直接测试OptR：固定candidate恢复recipe5，直启和探针统一，不增加启用/绕过开关；保留#173独立test失败阻断和报告。此为默认入口纠正，未修复原质量失败，不升级42项NPU/图/模型质量/性能状态。源码和本地回归证据见`reports/optr_candidate_enabled_20261028/verification.json`。
 
 2026-10-28直启资源管理（#174）：补正式服务进程组监督、每卡锁及失败证据。主机真实进程回归、固定配置比较和历史测试基底对照见`reports/direct_service_lifecycle_20261028/verification.json`。当前占用者未确认，未连接目标机或释放其显存；不升级42项NPU/图/模型质量及性能状态。

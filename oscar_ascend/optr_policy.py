@@ -12,6 +12,10 @@ RECIPE_VERSION = 5
 OBJECTIVE = "optr_post_gate_output_v1"
 UPSTREAM_COMMIT = "66d46561b9bdf5d715f591e0f5845a4cbd927dee"
 POLICY_VERSION = "optr_native_gate_v1"
+# User 2026-10-28: publish experimental constants after recording independent
+# test, including regressions. Preserve fitting/trace cache identity; schema 2
+# certificates declare the publication policy separately from this v1 profile.
+EXPERIMENTAL_PUBLICATION_POLICY = "validation_gate_independent_test_report_v1"
 
 
 def optr_policy(config):

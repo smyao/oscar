@@ -1,6 +1,8 @@
 # OptR 离线旋转精修：源码复核、改造与验收边界
 
-2026-10-28最新用户指令：先测试OptR，不通过开关绕过或关闭。固定candidate已恢复直接启用recipe5，无需新增参数；准备和服务加载同一OptR产物，recipe3缓存不会替代它。此前[独立test失败](optr_independent_test_failure_20261028.md)仍是失败证据，原报告/禁止发布逻辑和阈值保持；本次改的是默认选择，不是拟合数学或精度修复。线上核/runtime/timer/argv保持，未连接真机或验收质量/性能。
+2026-10-28最新用户授权：允许生成实验PT，先测试OptR。固定candidate直接启用recipe5，无需新增参数；独立test执行并记录退化，但不阻断实验PT/后续服务。validation逐请求非劣和数值合法性仍严格，test不参与矩阵重选。新证书schema2声明experimental和发布政策，逐层原始test指标及汇总失败状态随PT保存，加载时显示`OPTR_ARTIFACT`；不能将[历史失败](optr_independent_test_failure_20261028.md)改记为通过。下文旧独立test禁止发布描述是历史合同，由本授权替代；训练数学、线上核/runtime/timer/argv未改，未验收模型质量或性能。
+
+拟合/trace profile保留历史v1字节身份，避免重复原生采样；其旧`test_policy`字段不是schema2的发布判定，后者由证书`publication_policy=validation_gate_independent_test_report_v1`明确声明。schema1旧PT继续要求独立test非劣，不能无标识放行。只兼容审核过的父版本拟合实现：矩阵优化和trace数值源码哈希、模型/基底/trace/profile/维度/test-only身份均匹配才复用旧头/完整层；原文件不改，哈希损坏仍失败。未完成层的联合检查重新执行，不把旧失败报告当完成断点。
 
 2026-10-27用户部署反馈已确认原生capture完成，但全层CPU拟合被原通用1800秒时限终止。准备时限、真实进展及断点续作已在[后续修复](optr_preparation_timeout_20261027.md)中更新；下文首次交付的“phase timeout不改”记录不再代表当前行为。
 

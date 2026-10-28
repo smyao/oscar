@@ -214,8 +214,8 @@ def variant_config(config: dict, variant: str | None) -> dict:
             for flag in ('experimental_official_math', 'experimental_aligned_math', 'experimental_bf16_attention')):
         raise ValueError('FP32 metadata reconstruction requires the official BF16 reader bundle')
     # User 2026-10-28: the fixed BF16 candidate must run OptR without another
-    # flag. Keep #173's failed-test reporting/publication gate, not its preset
-    # withdrawal. Existing explicit Hadamard/W8A8/native-budget modes retain
+    # flag. The later explicit authorization permits reported test regressions
+    # in experimental PTs. Existing Hadamard/W8A8/native-budget modes retain
     # their supported recipes; an explicitly incompatible OptR request fails.
     if (variant == "candidate" and selected.get("rotation_variant") == "perhead_center"
             and selected.get("quantization") is None and not native_budget):
@@ -233,7 +233,11 @@ def variant_features(config: dict) -> dict:
 
 def runtime_feature_summary(config: dict, variant: str | None) -> dict:
     """One compact startup line shows the actual effective feature selection."""
+    from oscar_ascend.optr_policy import EXPERIMENTAL_PUBLICATION_POLICY
     return {"variant":variant,"optimizations":variant_features(config),
+            **({"optr_publication_policy": EXPERIMENTAL_PUBLICATION_POLICY,
+                "independent_test_blocks_publication": False}
+               if config.get("rotation_refinement") == "optr" else {}),
             **({"aligned_c16_operator": ("attention_cv_official_cluster16_out" if config.get("experimental_official_math",False) else "attention_cv_aligned_cluster16_out"
                                         if config.get("experimental_c16_tuned", False)
                                         else "attention_cv_aligned_cluster16_control_out")}

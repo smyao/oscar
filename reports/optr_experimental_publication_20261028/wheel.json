@@ -1,0 +1,16 @@
+{
+  "wheel": "oscar_ascend_external-0.1.0-py3-none-any.whl",
+  "sha256": "83d4a81f7b9a8957e9a158ae935ad56848463a970b410933e5393f8b01a97a5c",
+  "files_verified": [
+    "oscar_ascend/optr_artifacts.py",
+    "oscar_ascend/optr_checkpoint.py",
+    "oscar_ascend/optr_policy.py",
+    "tools/prepare_optr_rotations.py",
+    "tools/serving_variants.py",
+    "tools/phase.py"
+  ],
+  "isolated_import": "passed",
+  "fitting_digest_matches_checkout": true,
+  "network": "disabled",
+  "returncode": 0
+}

@@ -1,0 +1,65 @@
+{
+  "source_attachment": "/Users/loki.yao/.codex/attachments/97050180-a088-4634-b8e1-292e4a7f8daa/已粘贴的文本.txt",
+  "source_sha256": "8816355098bcd533c66f05526f29a4fca4b15982e3db8bca34aa63792b48ae3a",
+  "target_run": "20261028T031557.011852Z",
+  "target_commit": "not_present_in_excerpt",
+  "phase_result": {
+    "phase": "prepare-rotations",
+    "command": [
+      "/usr/local/python3.12.13/bin/python3",
+      "-m",
+      "tools.prepare_rotations",
+      "--config",
+      "/workspace/oscar/oscar-new/logs/20261028T031557.011852Z/effective-target.json"
+    ],
+    "returncode": 1,
+    "elapsed_seconds": 3629.800522,
+    "timed_out": false,
+    "interrupted": false,
+    "log": "/workspace/oscar/oscar-new/logs/20261028T031557.011852Z/prepare-rotations.log",
+    "cleanup_complete": true
+  },
+  "elapsed_minutes": 60.496675366666665,
+  "metrics": [
+    {
+      "scope": "all_test_requests_and_partitions",
+      "baseline_normalized_error": 0.003534305215807693,
+      "selected_normalized_error": 0.0035226326595371314,
+      "absolute_normalized_error_change": -1.167255627056163e-05,
+      "relative_error_change_percent": -0.33026452323230426,
+      "teacher_energy_equal": true
+    },
+    {
+      "scope": "test_65536_2:single_split",
+      "baseline_normalized_error": 0.004259416012627191,
+      "selected_normalized_error": 0.00426304046518544,
+      "absolute_normalized_error_change": 3.624452558248503e-06,
+      "relative_error_change_percent": 0.08509271100787252,
+      "teacher_energy_equal": true
+    },
+    {
+      "scope": "test_65536_2:captured_runtime_frames",
+      "baseline_normalized_error": 0.004257088401211,
+      "selected_normalized_error": 0.0042607579935639486,
+      "absolute_normalized_error_change": 3.6695923529483573e-06,
+      "relative_error_change_percent": 0.086199580725288,
+      "teacher_energy_equal": true
+    }
+  ],
+  "failed_request_count": 1,
+  "failed_partition_rows": 2,
+  "joint_validation_start_heartbeat_bounds_seconds": [
+    2522.1,
+    2582.1
+  ],
+  "joint_validation_test_to_phase_exit_elapsed_bounds_seconds": [
+    1047.700522,
+    1107.700522
+  ],
+  "gate_behavior": "total_improved_but_per_request_nonworse_failed",
+  "numerical_bug": "not_established_by_this_log",
+  "model_accuracy": "not_measured_proxy_output_error_only",
+  "production_code_changed": false,
+  "acceptance_policy_changed": false,
+  "analysis_stage": "Before explicit authorization for experimental publication; production_code_changed describes that analysis stage."
+}

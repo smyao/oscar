@@ -1,0 +1,17 @@
+{
+  "baseline_commit": "b449015dd317c41853c88c5774d820ce47ced12c",
+  "returncode": 1,
+  "failures": [
+    "tests.test_stable_launch_frozen::test_complete_stable_vllm_launch_is_preserved[False-direct-main]",
+    "tests.test_stable_launch_frozen::test_complete_stable_vllm_launch_is_preserved[False-observe-main]",
+    "tests.test_stable_launch_frozen::test_complete_stable_vllm_launch_is_preserved[True-direct-main]",
+    "tests.test_stable_launch_frozen::test_complete_stable_vllm_launch_is_preserved[True-observe-main]",
+    "tests.test_mamba_precision_config::test_pinned_native_chunk_tiling_rejects_fp32_state_on_non_950_soc",
+    "tests.test_mamba_precision_config::test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.install_serve-False]",
+    "tests.test_mamba_precision_config::test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.install_serve-True]",
+    "tests.test_mamba_precision_config::test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.observe_serve-False]",
+    "tests.test_mamba_precision_config::test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.observe_serve-True]",
+    "tests.test_mamba_precision_config::test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.deploy-False]",
+    "tests.test_mamba_precision_config::test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.deploy-True]"
+  ]
+}

@@ -63,7 +63,7 @@ def test_direct_install_exec_receives_diagnostic_config_and_env(monkeypatch, tmp
     class Served(Exception):
         pass
 
-    def launch(_executable, command, env):
+    def launch(command, *, env, **kwargs):
         selected = json.loads(Path(command[-1]).read_text())
         assert env["OSCAR_TARGET_CONFIG"] == command[-1]
         assert env["OSCAR_GUARD_HOST_SYNC"] == "1"
@@ -73,7 +73,7 @@ def test_direct_install_exec_receives_diagnostic_config_and_env(monkeypatch, tmp
         raise Served
 
     monkeypatch.setattr(install_serve, "run_phase", build)
-    monkeypatch.setattr(install_serve.os, "execvpe", launch)
+    monkeypatch.setattr(install_serve, "run_service", launch)
     with pytest.raises(Served):
         install_serve.main(["--config", str(source), "--log-dir", str(tmp_path / "run"),
                             "--variant", "candidate", "--diagnose-trap"])

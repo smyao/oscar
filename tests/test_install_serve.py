@@ -50,7 +50,7 @@ def test_candidate_plan_is_read_only_and_has_no_probes(tmp_path, capsys, rear_ca
     ("candidate", False, True), ("baseline", True, False), (None, True, True), (None, False, True),
 ])
 @pytest.mark.parametrize("rear_cards", [False, True])
-def test_all_phases_and_exec_share_selected_config_without_mutating_original(
+def test_all_phases_and_service_share_selected_config_without_mutating_original(
         monkeypatch, tmp_path, variant, original, enabled, rear_cards):
     path = config_file(tmp_path, original)
     before = path.read_bytes()
@@ -80,9 +80,7 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
         if "--config" in command:
             assert command[command.index("--config") + 1] == env["OSCAR_TARGET_CONFIG"]
         return PhaseResult(name, command, 0, 0.0, False, False, str(logs / name), True)
-    class Served(Exception):
-        pass
-    def launch(executable, command, env):
+    def launch(command, *, env, **kwargs):
         from tools.target_cli import serve_argv
         assert seen == list(install_serve.BUILD_PHASES)
         assert command[-1] == env["OSCAR_TARGET_CONFIG"]
@@ -94,29 +92,77 @@ def test_all_phases_and_exec_share_selected_config_without_mutating_original(
         assert service_args[service_args.index("--max-num-batched-tokens") + 1] == "16384"
         assert "--scheduler-cls" not in service_args
         assert service_args[service_args.index("--port") + 1] == str(port)
-        raise Served
+        assert kwargs['grace'] == selected['shutdown_timeout_seconds']
+        assert 'timeout' not in kwargs
+        return PhaseResult('serve', command, 0, 0., False, False, str(logs/'serve.log'), True)
     monkeypatch.setattr(install_serve, "run_phase", run_phase)
-    monkeypatch.setattr(install_serve.os, "execvpe", launch)
+    monkeypatch.setattr(install_serve, "run_service", launch)
     args = ["--config", str(path), "--log-dir", str(logs)]
     if variant:
         args += ["--variant", variant]
     if rear_cards:
         args += ["--rear-cards"]
-    with pytest.raises(Served):
-        install_serve.main(args)
+    assert install_serve.main(args) == 0
     assert path.read_bytes() == before
     status = json.loads((logs / "status.json").read_text())
     assert status["variant"] == ("candidate" if enabled else "baseline")
     assert status["probes"] == "none"
+    assert status['status'] == 'stopped' and status['service_returncode'] == 0
+    assert status['cleanup_complete'] is True
 
 
 def test_build_failure_preserves_rc_and_prevents_exec(monkeypatch, tmp_path):
     path = config_file(tmp_path)
     monkeypatch.setattr(install_serve, "run_phase", lambda name, command, **kwargs:
         PhaseResult(name, command, 7, 0.0, False, False, "failure.log", True))
-    monkeypatch.setattr(install_serve.os, "execvpe", lambda *args:
+    monkeypatch.setattr(install_serve, "run_service", lambda *args, **kwargs:
                         pytest.fail("must not start service after failed installation"))
     logs = tmp_path / "failed"
     assert install_serve.main(["--config", str(path), "--log-dir", str(logs),
                                "--variant", "candidate"]) == 7
     assert json.loads((logs / "status.json").read_text())["status"] == "failed"
+
+
+def test_device_lease_covers_build_service_and_failure_diagnostics(monkeypatch, tmp_path):
+    from tools.formal_service import device_lease
+    path = config_file(tmp_path)
+    logs = tmp_path/'run'
+    monkeypatch.setattr(install_serve, 'ROOT', tmp_path)
+    events = []
+    def locked():
+        with pytest.raises(RuntimeError, match='already has an active direct launcher'):
+            with device_lease(tmp_path, [0,1,2,3], tmp_path/'duplicate'):
+                pytest.fail('must retain lease through teardown')
+    def phase(name, command, **kwargs):
+        locked(); events.append(name)
+        return PhaseResult(name, command, 0, 0., False, False, str(logs/name), True)
+    def launch(command, **kwargs):
+        locked(); events.append('serve')
+        return PhaseResult('serve', command, 1, 0., False, False, str(logs/'serve.log'), True)
+    def diagnose(*args, **kwargs):
+        locked(); events.append('diagnose')
+        raise OSError('diagnostic unavailable')
+    monkeypatch.setattr(install_serve, 'run_phase', phase)
+    monkeypatch.setattr(install_serve, 'run_service', launch)
+    monkeypatch.setattr(install_serve, 'memory_failure_diagnostics', diagnose)
+    assert install_serve.main(['--config',str(path),'--log-dir',str(logs)]) == 1
+    assert events == [*install_serve.BUILD_PHASES, 'serve', 'diagnose']
+    state = json.loads((logs/'status.json').read_text())
+    assert state['status'] == 'failed' and state['failed_phase'] == 'serve'
+    assert state['service_returncode'] == 1 and state['cleanup_complete']
+    assert 'diagnostic unavailable' in state['diagnostic_error']
+    with device_lease(tmp_path, [0,1,2,3], tmp_path/'next'):
+        pass
+
+
+def test_active_direct_launcher_blocks_duplicate_before_build(monkeypatch, tmp_path):
+    from tools.formal_service import device_lease
+    path = config_file(tmp_path)
+    logs = tmp_path/'duplicate'
+    monkeypatch.setattr(install_serve, 'ROOT', tmp_path)
+    monkeypatch.setattr(install_serve, 'run_phase', lambda *args, **kwargs: pytest.fail('duplicate must not build/load'))
+    with device_lease(tmp_path, [0,1,2,3], tmp_path/'active'):
+        with pytest.raises(RuntimeError, match='physical NPU 0 already has an active direct launcher'):
+            install_serve.main(['--config',str(path),'--log-dir',str(logs)])
+    state = json.loads((logs/'status.json').read_text())
+    assert state['status'] == 'failed' and not state['phases']

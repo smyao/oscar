@@ -1,0 +1,13 @@
+{
+  "wheel": "/private/tmp/oscar-direct-service-wheel/oscar_ascend_external-0.1.0-py3-none-any.whl",
+  "sha256": "57d47c63f37233c7a981d23b2261717ef7387c8766d531935408e456cfb2ca2e",
+  "bytes": 1211348,
+  "source_byte_matches": [
+    "tools/formal_service.py",
+    "tools/install_serve.py",
+    "tools/phase.py"
+  ],
+  "isolated_import": "passed",
+  "build_command": ".venv/bin/python -m pip wheel . --no-deps --no-build-isolation --no-index --wheel-dir /private/tmp/oscar-direct-service-wheel",
+  "npu_used": false
+}

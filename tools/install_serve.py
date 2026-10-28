@@ -1,12 +1,12 @@
 # 档案 #75/#94/#95/#116/#117/#120/#125：相位输出实时到终端、完整日志落盘、保留真实退出码；本入口按用户要求只编译安装并直接启动，不含任何测试或probe。
 # #148/#150：安装最新产物不等于启用优化；显式candidate将同一有效配置传给所有相位和服务。
-"""Install, compile and prepare rotations, then exec the formal service; no tests, no probes."""
+# #174/G21/G22: retain ownership through formal service exit; never lower the memory budget.
+"""Install, compile and prepare rotations, then supervise the formal service; no tests, no probes."""
 from __future__ import annotations
 import argparse
 from dataclasses import asdict
 from datetime import datetime, timezone
 import json
-import os
 from pathlib import Path
 import sys
 from .deploy import plan as deploy_plan
@@ -15,6 +15,7 @@ from .target_cli import target_env, serve_argv, diagnose_guard_enabled
 from .serving_variants import variant_config, variant_features, runtime_feature_summary
 from .model_config import add_model_arguments, apply_model_options
 from .rotation_preparation_limits import phase_timeout
+from .formal_service import device_lease, run_service, memory_failure_diagnostics
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -127,6 +128,17 @@ def main(argv=None) -> int:
           sort_keys=True, separators=(",", ":")), flush=True)
     print("[oscar] PERF_RUNTIME_CONFIG "+json.dumps(runtime_feature_summary(config,variant),
           sort_keys=True,separators=(",",":")),flush=True)
+    try:
+        with device_lease(ROOT, config["devices"], log_dir):
+            return _run(config, stages, serve_command, log_dir, env, status)
+    except Exception as exc:
+        status.update(status="failed", error=f"{type(exc).__name__}: {exc}")
+        atomic_json(log_dir / "status.json", status)
+        terminal_line(f"[oscar] direct launcher failed: {exc}; logs={log_dir}", stderr=True)
+        raise
+
+
+def _run(config, stages, serve_command, log_dir, env, status):
     rc = 0
     try:
         for name, command in stages:
@@ -149,8 +161,22 @@ def main(argv=None) -> int:
     status["status"] = "serving"
     atomic_json(log_dir / "status.json", status)
     terminal_line("[oscar] build complete; starting formal service in the foreground (no probes)")
-    os.execvpe(sys.executable, serve_command, env)
-    return 127  # unreachable: execvpe replaces this process
+    result = run_service(serve_command, cwd=ROOT, log_dir=log_dir, env=env,
+                         grace=config["shutdown_timeout_seconds"])
+    status["phases"].append(asdict(result))
+    status.update(status="stopped" if result.returncode == 0 else "failed",
+                  service_returncode=result.returncode, cleanup_complete=result.cleanup_complete)
+    if result.returncode:
+        status["failed_phase"] = "serve"
+    atomic_json(log_dir / "status.json", status)
+    try:
+        memory_failure_diagnostics(result, config, cwd=ROOT, log_dir=log_dir, env=env)
+    except Exception as exc:
+        # Read-only evidence collection cannot replace the real service error.
+        status["diagnostic_error"] = f"{type(exc).__name__}: {exc}"
+        atomic_json(log_dir / "status.json", status)
+        terminal_line(f"[oscar] memory failure diagnostics failed: {exc}", stderr=True)
+    return result.returncode
 
 
 if __name__ == "__main__":

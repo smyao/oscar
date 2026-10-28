@@ -1,0 +1,96 @@
+FFFF..............................F.FFFFFF.........                      [100%]
+=================================== FAILURES ===================================
+_______ test_complete_stable_vllm_launch_is_preserved[False-direct-main] _______
+tests/test_stable_launch_frozen.py:37: in test_complete_stable_vllm_launch_is_preserved
+    assert actual['vllm_argv'] == authorized_model_arguments(expected['argv'])
+E   AssertionError: assert ['serve', '/s...qwen3.8', ...] == ['serve', '/s...qwen3.8', ...]
+E     
+E     At index 9 diff: '7878' != '8989'
+E     Use -v to get more diff
+______ test_complete_stable_vllm_launch_is_preserved[False-observe-main] _______
+tests/test_stable_launch_frozen.py:37: in test_complete_stable_vllm_launch_is_preserved
+    assert actual['vllm_argv'] == authorized_model_arguments(expected['argv'])
+E   AssertionError: assert ['serve', '/s...qwen3.8', ...] == ['serve', '/s...qwen3.8', ...]
+E     
+E     At index 9 diff: '7878' != '8989'
+E     Use -v to get more diff
+_______ test_complete_stable_vllm_launch_is_preserved[True-direct-main] ________
+tests/test_stable_launch_frozen.py:37: in test_complete_stable_vllm_launch_is_preserved
+    assert actual['vllm_argv'] == authorized_model_arguments(expected['argv'])
+E   AssertionError: assert ['serve', '/s...qwen3.8', ...] == ['serve', '/s...qwen3.8', ...]
+E     
+E     At index 9 diff: '7878' != '8989'
+E     Use -v to get more diff
+_______ test_complete_stable_vllm_launch_is_preserved[True-observe-main] _______
+tests/test_stable_launch_frozen.py:37: in test_complete_stable_vllm_launch_is_preserved
+    assert actual['vllm_argv'] == authorized_model_arguments(expected['argv'])
+E   AssertionError: assert ['serve', '/s...qwen3.8', ...] == ['serve', '/s...qwen3.8', ...]
+E     
+E     At index 9 diff: '7878' != '8989'
+E     Use -v to get more diff
+______ test_pinned_native_chunk_tiling_rejects_fp32_state_on_non_950_soc _______
+tests/test_mamba_precision_config.py:162: in test_pinned_native_chunk_tiling_rejects_fp32_state_on_non_950_soc
+    "chunk_gated_delta_rule/op_host/chunk_gated_delta_rule_tiling.cpp").read_text()
+                                                                        ^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:787: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/references/vllm-ascend/csrc/attention/chunk_gated_delta_rule/op_host/chunk_gated_delta_rule_tiling.cpp'
+_ test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.install_serve-False] _
+tests/test_mamba_precision_config.py:212: in test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy
+    assert argv_option(argv, "port") == "8989"
+E   AssertionError: assert '7878' == '8989'
+E     
+E     - 8989
+E     + 7878
+_ test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.install_serve-True] _
+tests/test_mamba_precision_config.py:212: in test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy
+    assert argv_option(argv, "port") == "8989"
+E   AssertionError: assert '7878' == '8989'
+E     
+E     - 8989
+E     + 7878
+_ test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.observe_serve-False] _
+tests/test_mamba_precision_config.py:212: in test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy
+    assert argv_option(argv, "port") == "8989"
+E   AssertionError: assert '7878' == '8989'
+E     
+E     - 8989
+E     + 7878
+_ test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.observe_serve-True] _
+tests/test_mamba_precision_config.py:212: in test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy
+    assert argv_option(argv, "port") == "8989"
+E   AssertionError: assert '7878' == '8989'
+E     
+E     - 8989
+E     + 7878
+_ test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.deploy-False] _
+tests/test_mamba_precision_config.py:212: in test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy
+    assert argv_option(argv, "port") == "8989"
+E   AssertionError: assert '7878' == '8989'
+E     
+E     - 8989
+E     + 7878
+_ test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.deploy-True] _
+tests/test_mamba_precision_config.py:212: in test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy
+    assert argv_option(argv, "port") == "8989"
+E   AssertionError: assert '7878' == '8989'
+E     
+E     - 8989
+E     + 7878
+=========================== short test summary info ============================
+FAILED tests/test_stable_launch_frozen.py::test_complete_stable_vllm_launch_is_preserved[False-direct-main]
+FAILED tests/test_stable_launch_frozen.py::test_complete_stable_vllm_launch_is_preserved[False-observe-main]
+FAILED tests/test_stable_launch_frozen.py::test_complete_stable_vllm_launch_is_preserved[True-direct-main]
+FAILED tests/test_stable_launch_frozen.py::test_complete_stable_vllm_launch_is_preserved[True-observe-main]
+FAILED tests/test_mamba_precision_config.py::test_pinned_native_chunk_tiling_rejects_fp32_state_on_non_950_soc
+FAILED tests/test_mamba_precision_config.py::test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.install_serve-False]
+FAILED tests/test_mamba_precision_config.py::test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.install_serve-True]
+FAILED tests/test_mamba_precision_config.py::test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.observe_serve-False]
+FAILED tests/test_mamba_precision_config.py::test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.observe_serve-True]
+FAILED tests/test_mamba_precision_config.py::test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.deploy-False]
+FAILED tests/test_mamba_precision_config.py::test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.deploy-True]
+11 failed, 40 passed in 0.99s

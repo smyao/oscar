@@ -1,0 +1,845 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="35" skipped="0" tests="223" time="5.584" timestamp="2026-10-28T09:29:11.089650+08:00" hostname="lokiyaodeMacBook-Pro.local"><testcase classname="tests.test_formal_service" name="test_old_exec_style_leaves_worker_after_api_failure" time="0.193"><failure message="PermissionError: [Errno 1] Operation not permitted">proc = &lt;Popen: returncode: 7 args: ['/Users/loki.yao/Documents/workgit/gpt_new_osca...&gt;
+
+    def _owned_group_exists(proc: subprocess.Popen) -&gt; bool:
+        try:
+&gt;           return group_exists(proc.pid)
+                   ^^^^^^^^^^^^^^^^^^^^^^
+
+tools/phase.py:310: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+pgid = 4217
+
+    def group_exists(pgid: int) -&gt; bool:
+        try:
+&gt;           os.killpg(pgid, 0)
+E           PermissionError: [Errno 1] Operation not permitted
+
+tools/phase.py:291: PermissionError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_old_exec_style_leaves_wor0')
+
+    def test_old_exec_style_leaves_worker_after_api_failure(tmp_path):
+        # The old direct launcher becomes the API process: no owner remains to
+        # run cleanup after it exits. Reproduce that missing lifecycle boundary.
+        process = subprocess.Popen(api_command(tmp_path, 7), start_new_session=True,
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            assert process.wait(timeout=5) == 7
+            worker = int((tmp_path / 'worker.pid').read_text())
+            os.kill(worker, 0)
+            assert group_exists(process.pid)
+        finally:
+&gt;           assert cleanup_group(process, .1)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_formal_service.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/phase.py:346: in cleanup_group
+    while _owned_group_exists(proc) and time.monotonic() &lt; deadline:
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/phase.py:313: in _owned_group_exists
+    return group_exists(proc.pid)  # one fresh probe; persistent EPERM fails
+           ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+pgid = 4217
+
+    def group_exists(pgid: int) -&gt; bool:
+        try:
+&gt;           os.killpg(pgid, 0)
+E           PermissionError: [Errno 1] Operation not permitted
+
+tools/phase.py:291: PermissionError</failure></testcase><testcase classname="tests.test_formal_service" name="test_supervisor_reaps_leftover_worker_preserves_api_status_and_outsider[0]" time="0.284" /><testcase classname="tests.test_formal_service" name="test_supervisor_reaps_leftover_worker_preserves_api_status_and_outsider[7]" time="0.304" /><testcase classname="tests.test_formal_service" name="test_supervisor_signal_cleans_api_and_stubborn_worker[2]" time="0.537" /><testcase classname="tests.test_formal_service" name="test_supervisor_signal_cleans_api_and_stubborn_worker[15]" time="0.499"><failure message="assert False">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_supervisor_signal_cleans_1')
+signum = &lt;Signals.SIGTERM: 15&gt;
+
+    @pytest.mark.parametrize('signum', [signal.SIGINT, signal.SIGTERM, signal.SIGHUP])
+    def test_supervisor_signal_cleans_api_and_stubborn_worker(tmp_path, signum):
+        command = api_command(tmp_path, 'wait')
+        runner = tmp_path/'supervisor.py'
+        runner.write_text('import json,os,sys\nfrom pathlib import Path\n'
+                         f'sys.path.insert(0,{str(ROOT)!r})\n'
+                         'from tools.formal_service import run_service\n'
+                         f'r=run_service({command!r},cwd=Path({str(ROOT)!r}),'
+                         f'log_dir=Path({str(tmp_path / "logs")!r}),env=dict(os.environ),grace=.3)\n'
+                         'sys.exit(r.returncode)\n')
+        supervisor = subprocess.Popen([sys.executable, str(runner)], start_new_session=True,
+                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            wait_file(tmp_path/'worker.pid', supervisor)
+            supervisor.send_signal(signum)
+            # The supervisor owns shutdown: another signal must not abort cleanup.
+            time.sleep(.08)
+            if supervisor.poll() is None:
+                supervisor.send_signal(signum)
+            assert supervisor.wait(timeout=6) == 128 + signum
+            lifecycle = json.loads((tmp_path/'logs/serve-lifecycle.json').read_text())
+&gt;           assert lifecycle['result']['cleanup_complete']
+E           assert False
+
+tests/test_formal_service.py:110: AssertionError</failure></testcase><testcase classname="tests.test_formal_service" name="test_supervisor_signal_cleans_api_and_stubborn_worker[1]" time="0.489"><failure message="assert False">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_supervisor_signal_cleans_2')
+signum = &lt;Signals.SIGHUP: 1&gt;
+
+    @pytest.mark.parametrize('signum', [signal.SIGINT, signal.SIGTERM, signal.SIGHUP])
+    def test_supervisor_signal_cleans_api_and_stubborn_worker(tmp_path, signum):
+        command = api_command(tmp_path, 'wait')
+        runner = tmp_path/'supervisor.py'
+        runner.write_text('import json,os,sys\nfrom pathlib import Path\n'
+                         f'sys.path.insert(0,{str(ROOT)!r})\n'
+                         'from tools.formal_service import run_service\n'
+                         f'r=run_service({command!r},cwd=Path({str(ROOT)!r}),'
+                         f'log_dir=Path({str(tmp_path / "logs")!r}),env=dict(os.environ),grace=.3)\n'
+                         'sys.exit(r.returncode)\n')
+        supervisor = subprocess.Popen([sys.executable, str(runner)], start_new_session=True,
+                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            wait_file(tmp_path/'worker.pid', supervisor)
+            supervisor.send_signal(signum)
+            # The supervisor owns shutdown: another signal must not abort cleanup.
+            time.sleep(.08)
+            if supervisor.poll() is None:
+                supervisor.send_signal(signum)
+            assert supervisor.wait(timeout=6) == 128 + signum
+            lifecycle = json.loads((tmp_path/'logs/serve-lifecycle.json').read_text())
+&gt;           assert lifecycle['result']['cleanup_complete']
+E           assert False
+
+tests/test_formal_service.py:110: AssertionError</failure></testcase><testcase classname="tests.test_formal_service" name="test_device_leases_are_per_card_noninherited_and_released" time="0.410" /><testcase classname="tests.test_formal_service" name="test_failed_cleanup_cannot_report_success" time="0.048" /><testcase classname="tests.test_formal_service" name="test_child_signal_exit_retains_raw_status_and_conventional_shell_code" time="0.026" /><testcase classname="tests.test_formal_service" name="test_signal_before_popen_returns_does_not_lose_child_handle" time="0.007" /><testcase classname="tests.test_formal_service" name="test_native_memory_failure_keeps_budget_and_records_readonly_evidence[True]" time="0.002" /><testcase classname="tests.test_formal_service" name="test_native_memory_failure_keeps_budget_and_records_readonly_evidence[False]" time="0.001" /><testcase classname="tests.test_formal_service" name="test_success_and_unrelated_errors_do_not_query_npus" time="0.001" /><testcase classname="tests.test_install_serve" name="test_candidate_plan_is_read_only_and_has_no_probes[False]" time="0.003" /><testcase classname="tests.test_install_serve" name="test_candidate_plan_is_read_only_and_has_no_probes[True]" time="0.002" /><testcase classname="tests.test_install_serve" name="test_all_phases_and_service_share_selected_config_without_mutating_original[False-candidate-False-True]" time="0.006" /><testcase classname="tests.test_install_serve" name="test_all_phases_and_service_share_selected_config_without_mutating_original[False-baseline-True-False]" time="0.005" /><testcase classname="tests.test_install_serve" name="test_all_phases_and_service_share_selected_config_without_mutating_original[False-None-True-True]" time="0.005" /><testcase classname="tests.test_install_serve" name="test_all_phases_and_service_share_selected_config_without_mutating_original[False-None-False-True]" time="0.005" /><testcase classname="tests.test_install_serve" name="test_all_phases_and_service_share_selected_config_without_mutating_original[True-candidate-False-True]" time="0.005" /><testcase classname="tests.test_install_serve" name="test_all_phases_and_service_share_selected_config_without_mutating_original[True-baseline-True-False]" time="0.005" /><testcase classname="tests.test_install_serve" name="test_all_phases_and_service_share_selected_config_without_mutating_original[True-None-True-True]" time="0.005" /><testcase classname="tests.test_install_serve" name="test_all_phases_and_service_share_selected_config_without_mutating_original[True-None-False-True]" time="0.005" /><testcase classname="tests.test_install_serve" name="test_build_failure_preserves_rc_and_prevents_exec" time="0.004" /><testcase classname="tests.test_install_serve" name="test_device_lease_covers_build_service_and_failure_diagnostics" time="0.006" /><testcase classname="tests.test_install_serve" name="test_active_direct_launcher_blocks_duplicate_before_build" time="0.003" /><testcase classname="tests.test_serving_variants" name="test_install_and_probe_plans_select_the_same_bundle[candidate-True]" time="0.001" /><testcase classname="tests.test_serving_variants" name="test_install_and_probe_plans_select_the_same_bundle[baseline-False]" time="0.002" /><testcase classname="tests.test_serving_variants" name="test_default_retains_config_and_candidate_does_not_mutate_input" time="0.000" /><testcase classname="tests.test_serving_variants" name="test_candidate_features_cannot_leak_to_native[experimental_current_only]" time="0.000" /><testcase classname="tests.test_serving_variants" name="test_candidate_features_cannot_leak_to_native[experimental_first_mtp_current_fia]" time="0.000" /><testcase classname="tests.test_serving_variants" name="test_candidate_features_cannot_leak_to_native[experimental_compact_later_mtp]" time="0.000" /><testcase classname="tests.test_serving_variants" name="test_candidate_features_cannot_leak_to_native[experimental_mixed_decode_split]" time="0.001" /><testcase classname="tests.test_serving_variants" name="test_candidate_features_cannot_leak_to_native[experimental_decode_bundle]" time="0.000" /><testcase classname="tests.test_serving_variants" name="test_candidate_features_cannot_leak_to_native[experimental_c4_member_pipeline]" time="0.000" /><testcase classname="tests.test_serving_variants" name="test_candidate_features_cannot_leak_to_native[experimental_bf16_attention]" time="0.000" /><testcase classname="tests.test_serving_variants" name="test_both_one_key_entries_enable_the_complete_candidate_without_manual_flags" time="0.002" /><testcase classname="tests.test_stable_launch_frozen" name="test_complete_stable_vllm_launch_is_preserved[False-direct-main]" time="0.001"><failure message="AssertionError: assert ['serve', '/s...qwen3.8', ...] == ['serve', '/s...qwen3.8', ...]&#10;  &#10;  At index 9 diff: '7878' != '8989'&#10;  Use -v to get more diff">name = 'direct', entry = &lt;function main at 0x104323a00&gt;, prefix = False
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x10bb12f90&gt;
+
+    @pytest.mark.parametrize('name,entry', [('direct', install_serve.main), ('observe', observe_serve.main)])
+    @pytest.mark.parametrize('prefix', [False, True])
+    def test_complete_stable_vllm_launch_is_preserved(name, entry, prefix, capsys):
+        options = ['--variant', 'candidate', '--plan']
+        if prefix:
+            options.append('--enable-prefix-caching')
+        assert entry(options) == 0
+        actual = json.loads(capsys.readouterr().out)
+        expected = FROZEN['cases'][f'{name}_prefix_{str(prefix).lower()}']
+&gt;       assert actual['vllm_argv'] == authorized_model_arguments(expected['argv'])
+E       AssertionError: assert ['serve', '/s...qwen3.8', ...] == ['serve', '/s...qwen3.8', ...]
+E         
+E         At index 9 diff: '7878' != '8989'
+E         Use -v to get more diff
+
+tests/test_stable_launch_frozen.py:37: AssertionError</failure></testcase><testcase classname="tests.test_stable_launch_frozen" name="test_complete_stable_vllm_launch_is_preserved[False-observe-main]" time="0.001"><failure message="AssertionError: assert ['serve', '/s...qwen3.8', ...] == ['serve', '/s...qwen3.8', ...]&#10;  &#10;  At index 9 diff: '7878' != '8989'&#10;  Use -v to get more diff">name = 'observe', entry = &lt;function main at 0x1049f7270&gt;, prefix = False
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x10bccc050&gt;
+
+    @pytest.mark.parametrize('name,entry', [('direct', install_serve.main), ('observe', observe_serve.main)])
+    @pytest.mark.parametrize('prefix', [False, True])
+    def test_complete_stable_vllm_launch_is_preserved(name, entry, prefix, capsys):
+        options = ['--variant', 'candidate', '--plan']
+        if prefix:
+            options.append('--enable-prefix-caching')
+        assert entry(options) == 0
+        actual = json.loads(capsys.readouterr().out)
+        expected = FROZEN['cases'][f'{name}_prefix_{str(prefix).lower()}']
+&gt;       assert actual['vllm_argv'] == authorized_model_arguments(expected['argv'])
+E       AssertionError: assert ['serve', '/s...qwen3.8', ...] == ['serve', '/s...qwen3.8', ...]
+E         
+E         At index 9 diff: '7878' != '8989'
+E         Use -v to get more diff
+
+tests/test_stable_launch_frozen.py:37: AssertionError</failure></testcase><testcase classname="tests.test_stable_launch_frozen" name="test_complete_stable_vllm_launch_is_preserved[True-direct-main]" time="0.001"><failure message="AssertionError: assert ['serve', '/s...qwen3.8', ...] == ['serve', '/s...qwen3.8', ...]&#10;  &#10;  At index 9 diff: '7878' != '8989'&#10;  Use -v to get more diff">name = 'direct', entry = &lt;function main at 0x104323a00&gt;, prefix = True
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x10bccc6b0&gt;
+
+    @pytest.mark.parametrize('name,entry', [('direct', install_serve.main), ('observe', observe_serve.main)])
+    @pytest.mark.parametrize('prefix', [False, True])
+    def test_complete_stable_vllm_launch_is_preserved(name, entry, prefix, capsys):
+        options = ['--variant', 'candidate', '--plan']
+        if prefix:
+            options.append('--enable-prefix-caching')
+        assert entry(options) == 0
+        actual = json.loads(capsys.readouterr().out)
+        expected = FROZEN['cases'][f'{name}_prefix_{str(prefix).lower()}']
+&gt;       assert actual['vllm_argv'] == authorized_model_arguments(expected['argv'])
+E       AssertionError: assert ['serve', '/s...qwen3.8', ...] == ['serve', '/s...qwen3.8', ...]
+E         
+E         At index 9 diff: '7878' != '8989'
+E         Use -v to get more diff
+
+tests/test_stable_launch_frozen.py:37: AssertionError</failure></testcase><testcase classname="tests.test_stable_launch_frozen" name="test_complete_stable_vllm_launch_is_preserved[True-observe-main]" time="0.001"><failure message="AssertionError: assert ['serve', '/s...qwen3.8', ...] == ['serve', '/s...qwen3.8', ...]&#10;  &#10;  At index 9 diff: '7878' != '8989'&#10;  Use -v to get more diff">name = 'observe', entry = &lt;function main at 0x1049f7270&gt;, prefix = True
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x10bca5350&gt;
+
+    @pytest.mark.parametrize('name,entry', [('direct', install_serve.main), ('observe', observe_serve.main)])
+    @pytest.mark.parametrize('prefix', [False, True])
+    def test_complete_stable_vllm_launch_is_preserved(name, entry, prefix, capsys):
+        options = ['--variant', 'candidate', '--plan']
+        if prefix:
+            options.append('--enable-prefix-caching')
+        assert entry(options) == 0
+        actual = json.loads(capsys.readouterr().out)
+        expected = FROZEN['cases'][f'{name}_prefix_{str(prefix).lower()}']
+&gt;       assert actual['vllm_argv'] == authorized_model_arguments(expected['argv'])
+E       AssertionError: assert ['serve', '/s...qwen3.8', ...] == ['serve', '/s...qwen3.8', ...]
+E         
+E         At index 9 diff: '7878' != '8989'
+E         Use -v to get more diff
+
+tests/test_stable_launch_frozen.py:37: AssertionError</failure></testcase><testcase classname="tests.test_aisbench_stable_policy" name="test_candidate_one_key_has_explicit_stable_policy[main0]" time="0.001" /><testcase classname="tests.test_aisbench_stable_policy" name="test_candidate_one_key_has_explicit_stable_policy[main1]" time="0.001" /><testcase classname="tests.test_aisbench_stable_policy" name="test_explicit_native_override_and_rear_cards" time="0.001" /><testcase classname="tests.test_aisbench_stable_policy" name="test_invalid_explicit_budget_is_rejected[0]" time="0.000" /><testcase classname="tests.test_aisbench_stable_policy" name="test_invalid_explicit_budget_is_rejected[-1]" time="0.000" /><testcase classname="tests.test_aisbench_stable_policy" name="test_invalid_explicit_budget_is_rejected[True]" time="0.000" /><testcase classname="tests.test_aisbench_stable_policy" name="test_invalid_explicit_budget_is_rejected[16384]" time="0.001" /><testcase classname="tests.test_aisbench_stable_policy" name="test_invalid_explicit_budget_is_rejected[None]" time="0.000" /><testcase classname="tests.test_center_prepare" name="test_candidate_enables_center_baseline_native_restore_shared_without_argv_changes" time="0.000" /><testcase classname="tests.test_center_prepare" name="test_both_one_key_plans_show_the_selected_center_recipe[tools.install_serve]" time="0.001" /><testcase classname="tests.test_center_prepare" name="test_both_one_key_plans_show_the_selected_center_recipe[tools.observe_serve]" time="0.001" /><testcase classname="tests.test_center_prepare" name="test_native_budget_candidate_clears_residual_clip_and_keeps_recipe3" time="0.058" /><testcase classname="tests.test_center_prepare" name="test_fixed_candidate_uses_recipe3_with_both_optr_and_center_caches" time="0.017" /><testcase classname="tests.test_center_prepare" name="test_recipe2_retained_samples_refit_to_distinct_center_cache_and_then_reuse" time="0.020" /><testcase classname="tests.test_center_prepare" name="test_unavailable_retained_samples_trigger_one_normal_new_recipe_capture[artifact]" time="0.012" /><testcase classname="tests.test_center_prepare" name="test_unavailable_retained_samples_trigger_one_normal_new_recipe_capture[manifest]" time="0.020" /><testcase classname="tests.test_center_prepare" name="test_unavailable_retained_samples_trigger_one_normal_new_recipe_capture[rank_file]" time="0.020" /><testcase classname="tests.test_center_prepare" name="test_unavailable_retained_samples_trigger_one_normal_new_recipe_capture[rank_hash]" time="0.023" /><testcase classname="tests.test_center_prepare" name="test_corrupt_retained_provenance_fails_instead_of_silently_resampling[rank_hash]" time="0.008" /><testcase classname="tests.test_center_prepare" name="test_corrupt_retained_provenance_fails_instead_of_silently_resampling[rank_identity]" time="0.013" /><testcase classname="tests.test_center_prepare" name="test_corrupt_retained_provenance_fails_instead_of_silently_resampling[old_pair_hash]" time="0.007" /><testcase classname="tests.test_center_prepare" name="test_corrupt_retained_provenance_fails_instead_of_silently_resampling[source_profile]" time="0.011" /><testcase classname="tests.test_center_prepare" name="test_explicit_old_artifact_is_not_relabelled_or_replaced" time="0.009" /><testcase classname="tests.test_center_prepare" name="test_new_matching_path_corruption_is_not_hidden_by_old_sample_refit" time="0.015" /><testcase classname="tests.test_model_config" name="test_actual_metadata_selects_all_four_models[False-3.5]" time="0.001" /><testcase classname="tests.test_model_config" name="test_actual_metadata_selects_all_four_models[False-3.8]" time="0.001" /><testcase classname="tests.test_model_config" name="test_actual_metadata_selects_all_four_models[True-3.5]" time="0.002" /><testcase classname="tests.test_model_config" name="test_actual_metadata_selects_all_four_models[True-3.8]" time="0.001" /><testcase classname="tests.test_model_config" name="test_name_does_not_determine_quantization[misleading-w8a8-name-False]" time="0.001" /><testcase classname="tests.test_model_config" name="test_name_does_not_determine_quantization[original-looking-name-True]" time="0.001" /><testcase classname="tests.test_model_config" name="test_default_is_original_qwen38_and_no_quantization_flag" time="0.001" /><testcase classname="tests.test_model_config" name="test_plan_missing_model_is_deferred_and_actual_launch_is_blocked" time="0.001" /><testcase classname="tests.test_model_config" name="test_explicit_none_rejects_metadata_instead_of_native_auto_quantization" time="0.001" /><testcase classname="tests.test_model_config" name="test_explicit_ascend_and_served_name_override" time="0.001" /><testcase classname="tests.test_model_config" name="test_config_quantization_metadata_is_used[quant0]" time="0.001" /><testcase classname="tests.test_model_config" name="test_config_quantization_metadata_is_used[quant1]" time="0.001" /><testcase classname="tests.test_model_config" name="test_config_quantization_metadata_is_used[quant2]" time="0.002" /><testcase classname="tests.test_model_config" name="test_metadata_failures_are_not_name_based_fallbacks[architecture-unsupported model architectures]" time="0.001" /><testcase classname="tests.test_model_config" name="test_metadata_failures_are_not_name_based_fallbacks[conflict-conflicting checkpoint]" time="0.001" /><testcase classname="tests.test_model_config" name="test_metadata_failures_are_not_name_based_fallbacks[unsupported-unsupported checkpoint quantization]" time="0.002" /><testcase classname="tests.test_model_config" name="test_metadata_failures_are_not_name_based_fallbacks[invalid_json-Expecting]" time="0.001" /><testcase classname="tests.test_model_config" name="test_metadata_failures_are_not_name_based_fallbacks[empty_sidecar-empty ModelSlim]" time="0.001" /><testcase classname="tests.test_model_config" name="test_direct_install_plan_binds_all_phases_to_one_selected_model" time="0.002" /><testcase classname="tests.test_model_config" name="test_target_cli_overrides_use_same_effective_config_and_cleanup" time="0.002" /><testcase classname="tests.test_model_config" name="test_actual_install_missing_model_records_config_failure_and_never_builds" time="0.002" /><testcase classname="tests.test_model_config" name="test_existing_non_bf16_activation_config_is_rejected" time="0.000" /><testcase classname="tests.test_mamba_precision_config" name="test_checkpoint_ssm_precision_is_independent_of_weight_quantization[False]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_checkpoint_ssm_precision_is_independent_of_weight_quantization[True]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_explicit_state_override_and_native_auto_semantics[overrides0-expected0]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_explicit_state_override_and_native_auto_semantics[overrides1-expected1]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_explicit_state_override_and_native_auto_semantics[overrides2-expected2]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_explicit_state_override_and_native_auto_semantics[overrides3-expected3]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_hf_model_state_declaration_does_not_override_native_cache_storage[state0]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_hf_model_state_declaration_does_not_override_native_cache_storage[auto]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_hf_model_state_declaration_does_not_override_native_cache_storage[float16]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_hf_model_state_declaration_does_not_override_native_cache_storage[float32]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_hf_model_state_declaration_does_not_override_native_cache_storage[bfloat16]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_missing_model_is_deferred_only_for_read_only_plans" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_hf_state_override_does_not_change_native_cache_precision[False]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_hf_state_override_does_not_change_native_cache_precision[True]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_nested_model_does_not_apply_top_level_text_dtype_override" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_invalid_explicit_state_precision_fails_closed[None-mamba_cache_dtype]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_invalid_explicit_state_precision_fails_closed[None-mamba_ssm_cache_dtype]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_invalid_explicit_state_precision_fails_closed[True-mamba_cache_dtype]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_invalid_explicit_state_precision_fails_closed[True-mamba_ssm_cache_dtype]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_invalid_explicit_state_precision_fails_closed[32-mamba_cache_dtype]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_invalid_explicit_state_precision_fails_closed[32-mamba_ssm_cache_dtype]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_invalid_explicit_state_precision_fails_closed[float64-mamba_cache_dtype]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_invalid_explicit_state_precision_fails_closed[float64-mamba_ssm_cache_dtype]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_invalid_explicit_state_precision_fails_closed[bf16-mamba_cache_dtype]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_invalid_explicit_state_precision_fails_closed[bf16-mamba_ssm_cache_dtype]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_invalid_explicit_state_precision_fails_closed[float16-mamba_cache_dtype]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_invalid_explicit_state_precision_fails_closed[float16-mamba_ssm_cache_dtype]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_invalid_explicit_state_precision_fails_closed[float32-mamba_cache_dtype]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_invalid_explicit_state_precision_fails_closed[float32-mamba_ssm_cache_dtype]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_explicit_fp32_state_is_rejected_before_install_or_model_execution" time="0.002" /><testcase classname="tests.test_mamba_precision_config" name="test_pinned_native_chunk_tiling_rejects_fp32_state_on_non_950_soc" time="0.001"><failure message="FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/references/vllm-ascend/csrc/attention/chunk_gated_delta_rule/op_host/chunk_gated_delta_rule_tiling.cpp'">def test_pinned_native_chunk_tiling_rejects_fp32_state_on_non_950_soc():
+        """Source evidence only: recurrent FP32 support is not a prefill contract."""
+        source = (install_serve.ROOT / "references/vllm-ascend/csrc/attention/"
+&gt;                 "chunk_gated_delta_rule/op_host/chunk_gated_delta_rule_tiling.cpp").read_text()
+                                                                                      ^^^^^^^^^^^
+
+tests/test_mamba_precision_config.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:787: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/references/vllm-ascend/csrc/attention/chunk_gated_delta_rule/op_host/chunk_gated_delta_rule_tiling.cpp')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+&gt;       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/references/vllm-ascend/csrc/attention/chunk_gated_delta_rule/op_host/chunk_gated_delta_rule_tiling.cpp'
+
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py:771: FileNotFoundError</failure></testcase><testcase classname="tests.test_mamba_precision_config" name="test_changing_model_recomputes_derived_state_dtype_but_preserves_explicit_choice" time="0.002" /><testcase classname="tests.test_mamba_precision_config" name="test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.install_serve-False]" time="0.002"><failure message="AssertionError: assert '7878' == '8989'&#10;  &#10;  - 8989&#10;  + 7878">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_all_one_key_plans_use_mod0')
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x10bcd74d0&gt;, prefix = False
+entrypoint = &lt;module 'tools.install_serve' from '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/install_serve.py'&gt;
+
+    @pytest.mark.parametrize("prefix", [False, True])
+    @pytest.mark.parametrize("entrypoint", [install_serve, observe_serve, deploy])
+    def test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy(
+            tmp_path, capsys, prefix, entrypoint):
+        config = config_for(checkpoint(tmp_path), enable_prefix_caching=prefix)
+        config_path = tmp_path / "target.json"
+        config_path.write_text(json.dumps(config))
+        log_dir = tmp_path / "plan-must-not-create-logs"
+        before = config_path.read_bytes()
+        assert entrypoint.main(["--config", str(config_path), "--variant", "candidate",
+                                "--plan", "--log-dir", str(log_dir)]) == 0
+        plan = json.loads(capsys.readouterr().out)
+        argv = plan["vllm_argv"]
+        assert argv_option(argv, "mamba_cache_dtype") == "bfloat16"
+        assert argv_option(argv, "mamba_ssm_cache_dtype") == "bfloat16"
+        assert plan["model_resolution"]["mamba_cache_dtypes"]["mamba_ssm_cache_dtype"] == "bfloat16"
+        assert argv_option(argv, "max_num_batched_tokens") == "16384"
+        assert argv_option(argv, "tensor_parallel_size") == "4"
+&gt;       assert argv_option(argv, "port") == "8989"
+E       AssertionError: assert '7878' == '8989'
+E         
+E         - 8989
+E         + 7878
+
+tests/test_mamba_precision_config.py:212: AssertionError</failure></testcase><testcase classname="tests.test_mamba_precision_config" name="test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.install_serve-True]" time="0.002"><failure message="AssertionError: assert '7878' == '8989'&#10;  &#10;  - 8989&#10;  + 7878">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_all_one_key_plans_use_mod1')
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x10bcd4710&gt;, prefix = True
+entrypoint = &lt;module 'tools.install_serve' from '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/install_serve.py'&gt;
+
+    @pytest.mark.parametrize("prefix", [False, True])
+    @pytest.mark.parametrize("entrypoint", [install_serve, observe_serve, deploy])
+    def test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy(
+            tmp_path, capsys, prefix, entrypoint):
+        config = config_for(checkpoint(tmp_path), enable_prefix_caching=prefix)
+        config_path = tmp_path / "target.json"
+        config_path.write_text(json.dumps(config))
+        log_dir = tmp_path / "plan-must-not-create-logs"
+        before = config_path.read_bytes()
+        assert entrypoint.main(["--config", str(config_path), "--variant", "candidate",
+                                "--plan", "--log-dir", str(log_dir)]) == 0
+        plan = json.loads(capsys.readouterr().out)
+        argv = plan["vllm_argv"]
+        assert argv_option(argv, "mamba_cache_dtype") == "bfloat16"
+        assert argv_option(argv, "mamba_ssm_cache_dtype") == "bfloat16"
+        assert plan["model_resolution"]["mamba_cache_dtypes"]["mamba_ssm_cache_dtype"] == "bfloat16"
+        assert argv_option(argv, "max_num_batched_tokens") == "16384"
+        assert argv_option(argv, "tensor_parallel_size") == "4"
+&gt;       assert argv_option(argv, "port") == "8989"
+E       AssertionError: assert '7878' == '8989'
+E         
+E         - 8989
+E         + 7878
+
+tests/test_mamba_precision_config.py:212: AssertionError</failure></testcase><testcase classname="tests.test_mamba_precision_config" name="test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.observe_serve-False]" time="0.002"><failure message="AssertionError: assert '7878' == '8989'&#10;  &#10;  - 8989&#10;  + 7878">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_all_one_key_plans_use_mod2')
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x10bb694f0&gt;, prefix = False
+entrypoint = &lt;module 'tools.observe_serve' from '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/observe_serve.py'&gt;
+
+    @pytest.mark.parametrize("prefix", [False, True])
+    @pytest.mark.parametrize("entrypoint", [install_serve, observe_serve, deploy])
+    def test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy(
+            tmp_path, capsys, prefix, entrypoint):
+        config = config_for(checkpoint(tmp_path), enable_prefix_caching=prefix)
+        config_path = tmp_path / "target.json"
+        config_path.write_text(json.dumps(config))
+        log_dir = tmp_path / "plan-must-not-create-logs"
+        before = config_path.read_bytes()
+        assert entrypoint.main(["--config", str(config_path), "--variant", "candidate",
+                                "--plan", "--log-dir", str(log_dir)]) == 0
+        plan = json.loads(capsys.readouterr().out)
+        argv = plan["vllm_argv"]
+        assert argv_option(argv, "mamba_cache_dtype") == "bfloat16"
+        assert argv_option(argv, "mamba_ssm_cache_dtype") == "bfloat16"
+        assert plan["model_resolution"]["mamba_cache_dtypes"]["mamba_ssm_cache_dtype"] == "bfloat16"
+        assert argv_option(argv, "max_num_batched_tokens") == "16384"
+        assert argv_option(argv, "tensor_parallel_size") == "4"
+&gt;       assert argv_option(argv, "port") == "8989"
+E       AssertionError: assert '7878' == '8989'
+E         
+E         - 8989
+E         + 7878
+
+tests/test_mamba_precision_config.py:212: AssertionError</failure></testcase><testcase classname="tests.test_mamba_precision_config" name="test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.observe_serve-True]" time="0.002"><failure message="AssertionError: assert '7878' == '8989'&#10;  &#10;  - 8989&#10;  + 7878">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_all_one_key_plans_use_mod3')
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x10bb6bac0&gt;, prefix = True
+entrypoint = &lt;module 'tools.observe_serve' from '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/observe_serve.py'&gt;
+
+    @pytest.mark.parametrize("prefix", [False, True])
+    @pytest.mark.parametrize("entrypoint", [install_serve, observe_serve, deploy])
+    def test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy(
+            tmp_path, capsys, prefix, entrypoint):
+        config = config_for(checkpoint(tmp_path), enable_prefix_caching=prefix)
+        config_path = tmp_path / "target.json"
+        config_path.write_text(json.dumps(config))
+        log_dir = tmp_path / "plan-must-not-create-logs"
+        before = config_path.read_bytes()
+        assert entrypoint.main(["--config", str(config_path), "--variant", "candidate",
+                                "--plan", "--log-dir", str(log_dir)]) == 0
+        plan = json.loads(capsys.readouterr().out)
+        argv = plan["vllm_argv"]
+        assert argv_option(argv, "mamba_cache_dtype") == "bfloat16"
+        assert argv_option(argv, "mamba_ssm_cache_dtype") == "bfloat16"
+        assert plan["model_resolution"]["mamba_cache_dtypes"]["mamba_ssm_cache_dtype"] == "bfloat16"
+        assert argv_option(argv, "max_num_batched_tokens") == "16384"
+        assert argv_option(argv, "tensor_parallel_size") == "4"
+&gt;       assert argv_option(argv, "port") == "8989"
+E       AssertionError: assert '7878' == '8989'
+E         
+E         - 8989
+E         + 7878
+
+tests/test_mamba_precision_config.py:212: AssertionError</failure></testcase><testcase classname="tests.test_mamba_precision_config" name="test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.deploy-False]" time="0.002"><failure message="AssertionError: assert '7878' == '8989'&#10;  &#10;  - 8989&#10;  + 7878">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_all_one_key_plans_use_mod4')
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x10bc9ea30&gt;, prefix = False
+entrypoint = &lt;module 'tools.deploy' from '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/deploy.py'&gt;
+
+    @pytest.mark.parametrize("prefix", [False, True])
+    @pytest.mark.parametrize("entrypoint", [install_serve, observe_serve, deploy])
+    def test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy(
+            tmp_path, capsys, prefix, entrypoint):
+        config = config_for(checkpoint(tmp_path), enable_prefix_caching=prefix)
+        config_path = tmp_path / "target.json"
+        config_path.write_text(json.dumps(config))
+        log_dir = tmp_path / "plan-must-not-create-logs"
+        before = config_path.read_bytes()
+        assert entrypoint.main(["--config", str(config_path), "--variant", "candidate",
+                                "--plan", "--log-dir", str(log_dir)]) == 0
+        plan = json.loads(capsys.readouterr().out)
+        argv = plan["vllm_argv"]
+        assert argv_option(argv, "mamba_cache_dtype") == "bfloat16"
+        assert argv_option(argv, "mamba_ssm_cache_dtype") == "bfloat16"
+        assert plan["model_resolution"]["mamba_cache_dtypes"]["mamba_ssm_cache_dtype"] == "bfloat16"
+        assert argv_option(argv, "max_num_batched_tokens") == "16384"
+        assert argv_option(argv, "tensor_parallel_size") == "4"
+&gt;       assert argv_option(argv, "port") == "8989"
+E       AssertionError: assert '7878' == '8989'
+E         
+E         - 8989
+E         + 7878
+
+tests/test_mamba_precision_config.py:212: AssertionError</failure></testcase><testcase classname="tests.test_mamba_precision_config" name="test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy[tools.deploy-True]" time="0.002"><failure message="AssertionError: assert '7878' == '8989'&#10;  &#10;  - 8989&#10;  + 7878">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_all_one_key_plans_use_mod5')
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x10bb760d0&gt;, prefix = True
+entrypoint = &lt;module 'tools.deploy' from '/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/deploy.py'&gt;
+
+    @pytest.mark.parametrize("prefix", [False, True])
+    @pytest.mark.parametrize("entrypoint", [install_serve, observe_serve, deploy])
+    def test_all_one_key_plans_use_model_state_precision_without_changing_launch_policy(
+            tmp_path, capsys, prefix, entrypoint):
+        config = config_for(checkpoint(tmp_path), enable_prefix_caching=prefix)
+        config_path = tmp_path / "target.json"
+        config_path.write_text(json.dumps(config))
+        log_dir = tmp_path / "plan-must-not-create-logs"
+        before = config_path.read_bytes()
+        assert entrypoint.main(["--config", str(config_path), "--variant", "candidate",
+                                "--plan", "--log-dir", str(log_dir)]) == 0
+        plan = json.loads(capsys.readouterr().out)
+        argv = plan["vllm_argv"]
+        assert argv_option(argv, "mamba_cache_dtype") == "bfloat16"
+        assert argv_option(argv, "mamba_ssm_cache_dtype") == "bfloat16"
+        assert plan["model_resolution"]["mamba_cache_dtypes"]["mamba_ssm_cache_dtype"] == "bfloat16"
+        assert argv_option(argv, "max_num_batched_tokens") == "16384"
+        assert argv_option(argv, "tensor_parallel_size") == "4"
+&gt;       assert argv_option(argv, "port") == "8989"
+E       AssertionError: assert '7878' == '8989'
+E         
+E         - 8989
+E         + 7878
+
+tests/test_mamba_precision_config.py:212: AssertionError</failure></testcase><testcase classname="tests.test_mamba_precision_config" name="test_native_and_candidate_keep_identical_model_state_precision[False]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_native_and_candidate_keep_identical_model_state_precision[True]" time="0.001" /><testcase classname="tests.test_mamba_precision_config" name="test_standalone_rotation_entry_resolves_auto_before_profile_without_rewriting_input[None-False]" time="0.002" /><testcase classname="tests.test_mamba_precision_config" name="test_standalone_rotation_entry_resolves_auto_before_profile_without_rewriting_input[None-True]" time="0.002" /><testcase classname="tests.test_mamba_precision_config" name="test_standalone_rotation_entry_resolves_auto_before_profile_without_rewriting_input[auto-False]" time="0.002" /><testcase classname="tests.test_mamba_precision_config" name="test_standalone_rotation_entry_resolves_auto_before_profile_without_rewriting_input[auto-True]" time="0.002" /><testcase classname="tests.test_mamba_precision_config" name="test_real_capture_entrypoint_and_service_share_state_kwargs[None]" time="0.007" /><testcase classname="tests.test_mamba_precision_config" name="test_real_capture_entrypoint_and_service_share_state_kwargs[bfloat16]" time="0.003" /><testcase classname="tests.test_mamba_precision_config" name="test_real_capture_entrypoint_and_service_share_state_kwargs[auto]" time="0.004" /><testcase classname="tests.test_deploy_bf16" name="test_every_entrypoint_uses_same_model_controls[main0]" time="0.002" /><testcase classname="tests.test_deploy_bf16" name="test_every_entrypoint_uses_same_model_controls[main1]" time="0.002" /><testcase classname="tests.test_deploy_bf16" name="test_every_entrypoint_uses_same_model_controls[main2]" time="0.002" /><testcase classname="tests.test_deploy_bf16" name="test_default_bf16_deploy_plan_has_no_synthetic_performance" time="0.001" /><testcase classname="tests.test_deploy_bf16" name="test_correctness_success_reaches_formal_service_without_performance" time="0.003" /><testcase classname="tests.test_deploy_bf16" name="test_bad_correctness_receipt_blocks_service[child]" time="0.003" /><testcase classname="tests.test_deploy_bf16" name="test_bad_correctness_receipt_blocks_service[missing_receipt]" time="0.002" /><testcase classname="tests.test_deploy_bf16" name="test_bad_correctness_receipt_blocks_service[stale_config]" time="0.003" /><testcase classname="tests.test_deploy_bf16" name="test_bad_correctness_receipt_blocks_service[fake_gate]" time="0.003" /><testcase classname="tests.test_deploy_bf16" name="test_bad_correctness_receipt_blocks_service[resource]" time="0.003" /><testcase classname="tests.test_deploy_bf16" name="test_bad_correctness_receipt_blocks_service[telemetry]" time="0.003" /><testcase classname="tests.test_deploy_bf16" name="test_bad_correctness_receipt_blocks_service[malformed_receipt]" time="0.003" /><testcase classname="tests.test_deploy_bf16" name="test_bad_correctness_receipt_blocks_service[phase_exception]" time="0.002" /><testcase classname="tests.test_workflow" name="test_failure_keeps_original_code_and_diagnostic" time="0.111" /><testcase classname="tests.test_workflow" name="test_silent_failure_still_has_log" time="0.115" /><testcase classname="tests.test_workflow" name="test_timeout_is_bounded_and_reaped" time="0.219" /><testcase classname="tests.test_workflow" name="test_exec_failure_recorded" time="0.019" /><testcase classname="tests.test_workflow" name="test_cleanup_reaps_exiting_owned_child_before_confirming_group_disappearance[0]" time="0.001" /><testcase classname="tests.test_workflow" name="test_cleanup_reaps_exiting_owned_child_before_confirming_group_disappearance[15]" time="0.001" /><testcase classname="tests.test_workflow" name="test_cleanup_reaps_exiting_owned_child_before_confirming_group_disappearance[9]" time="0.000" /><testcase classname="tests.test_workflow" name="test_cleanup_never_treats_persistent_group_permission_error_as_absence" time="0.001" /><testcase classname="tests.test_workflow" name="test_cleanup_live_child_permission_error_has_one_bounded_wait_and_still_fails" time="0.000" /><testcase classname="tests.test_workflow" name="test_signal_denial_is_not_hidden_when_owned_group_still_exists[15]" time="0.001" /><testcase classname="tests.test_workflow" name="test_signal_denial_is_not_hidden_when_owned_group_still_exists[9]" time="0.001" /><testcase classname="tests.test_workflow" name="test_native_mutation_detects_new_deleted_and_changed" time="0.002" /><testcase classname="tests.test_workflow" name="test_soc_mapping_does_not_select_310p_headers" time="0.001" /><testcase classname="tests.test_workflow" name="test_build_cleanup_is_project_owned" time="0.001" /><testcase classname="tests.test_workflow" name="test_target_command_preserves_graph_mtp_and_dtype" time="0.002" /><testcase classname="tests.test_workflow" name="test_device_selection_does_not_inherit_somebody_elses_devices" time="0.000" /><testcase classname="tests.test_workflow" name="test_model_geometry_reads_real_config" time="0.002" /><testcase classname="tests.test_service_workflow" name="test_exact_prompt_uses_local_encoded_ids_and_no_special_tokens" time="0.000" /><testcase classname="tests.test_service_workflow" name="test_correctness_only_keeps_real_short_request_graph_mtp_and_cleanup[False]" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_correctness_only_keeps_re0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10bb23f50&gt;
+automatic = False
+
+    @pytest.mark.parametrize("automatic", [False, True])
+    def test_correctness_only_keeps_real_short_request_graph_mtp_and_cleanup(tmp_path, monkeypatch, automatic):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_correctness_only_keeps_re0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_correctness_only_keeps_real_short_request_graph_mtp_and_cleanup[True]" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_correctness_only_keeps_re1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10bd8d010&gt;
+automatic = True
+
+    @pytest.mark.parametrize("automatic", [False, True])
+    def test_correctness_only_keeps_real_short_request_graph_mtp_and_cleanup(tmp_path, monkeypatch, automatic):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_correctness_only_keeps_re1')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_correctness_only_does_not_relax_graph_mtp_evidence" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_correctness_only_does_not0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10bd8d470&gt;
+
+    def test_correctness_only_does_not_relax_graph_mtp_evidence(tmp_path, monkeypatch):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:195: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_correctness_only_does_not0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_worker_progress_distinguishes_no_debug_host_dispatch_and_device_checkpoint" time="0.001" /><testcase classname="tests.test_service_workflow" name="test_compact_workers_renders_one_short_chunk_per_rank" time="0.000" /><testcase classname="tests.test_service_workflow" name="test_long_request_has_wall_deadline_progress_and_reaped_client[hang_long]" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_long_request_has_wall_dea0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10bd8f620&gt;
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x10bdb9450&gt;
+mode = 'hang_long'
+
+    @pytest.mark.parametrize("mode", ["hang_long", "trickle_long"])
+    def test_long_request_has_wall_deadline_progress_and_reaped_client(tmp_path, monkeypatch, capsys, mode):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:240: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_long_request_has_wall_dea0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_long_request_has_wall_deadline_progress_and_reaped_client[trickle_long]" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_long_request_has_wall_dea1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10bd8dd30&gt;
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x10bdb8fd0&gt;
+mode = 'trickle_long'
+
+    @pytest.mark.parametrize("mode", ["hang_long", "trickle_long"])
+    def test_long_request_has_wall_deadline_progress_and_reaped_client(tmp_path, monkeypatch, capsys, mode):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:240: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_long_request_has_wall_dea1')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_healthy_run_records_streaming_synthetic_mixed_probe" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_healthy_run_records_strea0')
+
+    def test_healthy_run_records_streaming_synthetic_mixed_probe(tmp_path):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:263: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_healthy_run_records_strea0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_parse_gauges_sums_named_series_and_rejects_bad_values" time="0.000" /><testcase classname="tests.test_service_workflow" name="test_synthetic_mixed_timeout_blocks_formal_service" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_synthetic_mixed_timeout_b0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10bd8e580&gt;
+
+    def test_synthetic_mixed_timeout_blocks_formal_service(tmp_path, monkeypatch):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:291: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_synthetic_mixed_timeout_b0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_synthetic_fast_path_strea0')
+
+    def test_synthetic_fast_path_streams_four_unequal_prompts_and_cleans_up(tmp_path):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:313: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_synthetic_fast_path_strea0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_regressed_synthetic_runs_one_separate_same_server_device_diagnostic" time="0.007"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_regressed_synthetic_runs_0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10bd8f070&gt;
+
+    def test_regressed_synthetic_runs_one_separate_same_server_device_diagnostic(tmp_path, monkeypatch):
+        from tools import paired_concurrency_probe as paired
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:339: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_regressed_synthetic_runs_0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_nonregressed_synthetic_does_not_arm_diagnostic" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_nonregressed_synthetic_do0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10bd8def0&gt;
+
+    def test_nonregressed_synthetic_does_not_arm_diagnostic(tmp_path, monkeypatch):
+        from tools import paired_concurrency_probe as paired
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:361: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_nonregressed_synthetic_do0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_synthetic_refuses_inherited_debug_sync_before_service_start" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_synthetic_refuses_inherit0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10bdf58d0&gt;
+
+    def test_synthetic_refuses_inherited_debug_sync_before_service_start(tmp_path, monkeypatch):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:374: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_synthetic_refuses_inherit0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_healthy_http_with_full_ev0')
+
+    def test_healthy_http_with_full_evidence_executes_all_lengths_and_mixed_batch(tmp_path):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:384: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_healthy_http_with_full_ev0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_trace-mandatory]" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_http_success_cannot_hide_0')
+mode = 'no_trace', diagnostic = 'mandatory'
+
+    @pytest.mark.parametrize("mode, diagnostic", [("no_trace", "mandatory"), ("wrong_usage", "exactly 128"), ("no_mtp", "mandatory")])
+    def test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count(tmp_path, mode, diagnostic):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:397: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_http_success_cannot_hide_0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[wrong_usage-exactly 128]" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_http_success_cannot_hide_1')
+mode = 'wrong_usage', diagnostic = 'exactly 128'
+
+    @pytest.mark.parametrize("mode, diagnostic", [("no_trace", "mandatory"), ("wrong_usage", "exactly 128"), ("no_mtp", "mandatory")])
+    def test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count(tmp_path, mode, diagnostic):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:397: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_http_success_cannot_hide_1')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count[no_mtp-mandatory]" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_http_success_cannot_hide_2')
+mode = 'no_mtp', diagnostic = 'mandatory'
+
+    @pytest.mark.parametrize("mode, diagnostic", [("no_trace", "mandatory"), ("wrong_usage", "exactly 128"), ("no_mtp", "mandatory")])
+    def test_http_success_cannot_hide_missing_route_mtp_or_wrong_token_count(tmp_path, mode, diagnostic):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:397: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_http_success_cannot_hide_2')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_startup_failure_records_exit_and_never_kills_an_unrelated_group" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_startup_failure_records_e0')
+
+    def test_startup_failure_records_exit_and_never_kills_an_unrelated_group(tmp_path):
+&gt;       _, path = configured(tmp_path)
+                  ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:405: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_startup_failure_records_e0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_hung_startup_has_finite_deadline_and_nonempty_final_log" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_hung_startup_has_finite_d0')
+
+    def test_hung_startup_has_finite_deadline_and_nonempty_final_log(tmp_path):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:417: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_hung_startup_has_finite_d0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_interrupted_startup_still_releases_its_server_and_records_outcome" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_interrupted_startup_still0')
+
+    def test_interrupted_startup_still_releases_its_server_and_records_outcome(tmp_path):
+&gt;       _, path = configured(tmp_path)
+                  ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:428: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_interrupted_startup_still0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_formal_serve_validates_on0')
+
+    def test_formal_serve_validates_one_real_request_then_stops_owned_group_on_sigint(tmp_path):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:436: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_formal_serve_validates_on0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_missing_device_selection_fails_before_any_resource_or_server_launch" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_missing_device_selection_0')
+
+    def test_missing_device_selection_fails_before_any_resource_or_server_launch(tmp_path):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:444: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_missing_device_selection_0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_memory_not_released_turns_successful_requests_into_failed_probe" time="0.001"><failure message="PermissionError: [Errno 1] Operation not permitted">tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_memory_not_released_turns0')
+
+    def test_memory_not_released_turns_successful_requests_into_failed_probe(tmp_path):
+&gt;       config, path = configured(tmp_path)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_service_workflow.py:453: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-339/test_memory_not_released_turns0')
+
+    def configured(tmp_path):
+        config = json.loads((ROOT / "configs/target.json").read_text())
+        model = tmp_path / "model"
+        model.mkdir()
+        (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"], "num_hidden_layers": 4,
+            "full_attention_interval": 4, "head_dim": 64}))
+        with socket.socket() as sock:
+&gt;           sock.bind(("127.0.0.1", 0))
+E           PermissionError: [Errno 1] Operation not permitted
+
+tests/test_service_workflow.py:48: PermissionError</failure></testcase><testcase classname="tests.test_service_workflow" name="test_per_rank_layer_graph_checks_do_not_reduce_to_http_200" time="0.001" /><testcase classname="tests.test_service_workflow" name="test_malformed_trace_is_a_failure_with_source_location" time="0.001" /><testcase classname="tests.test_service_workflow" name="test_native_mtp_counter_parsing_records_acceptance_without_quality_claim" time="0.000" /><testcase classname="tests.test_service_workflow" name="test_release_comparison_is_per_device_and_total_memory_cannot_change" time="0.000" /><testcase classname="tests.test_service_workflow" name="test_resource_observer_failure_is_not_a_zero_or_an_infinite_retry" time="0.001" /><testcase classname="tests.test_rotation_preparation_limits" name="test_default_budget_covers_all_heads_but_progress_deadline_does_not_grow" time="0.001" /><testcase classname="tests.test_rotation_preparation_limits" name="test_budget_scales_full_layers_heads_steps_and_stays_bounded" time="0.002" /><testcase classname="tests.test_rotation_preparation_limits" name="test_progress_deadline_preserves_stricter_limit[1-1]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_progress_deadline_preserves_stricter_limit[0.05-0.05]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_progress_deadline_preserves_stricter_limit[1800-1800]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_progress_deadline_preserves_stricter_limit[7200-1800]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_progress_deadline_preserves_original_capture_default" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_invalid_progress_deadline_fails[0]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_invalid_progress_deadline_fails[-1]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_invalid_progress_deadline_fails[True]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_invalid_progress_deadline_fails[1800]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_invalid_progress_deadline_fails[inf]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_invalid_progress_deadline_fails[nan]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_unknown_plan_geometry_uses_bound_without_device_or_model_work" time="0.001" /><testcase classname="tests.test_rotation_preparation_limits" name="test_other_phases_keep_exact_existing_limit[build-ops]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_other_phases_keep_exact_existing_limit[install-plugin]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_other_phases_keep_exact_existing_limit[probe-ops]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_other_phases_keep_exact_existing_limit[service-probe]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_other_phases_keep_exact_existing_limit[native-synthetic]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_other_phases_keep_exact_existing_limit[official-attention-npu]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_other_phases_keep_exact_existing_limit[q4-hotpath]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_non_optr_recipes_keep_exact_existing_limit[prepare-rotations]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_non_optr_recipes_keep_exact_existing_limit[bf16-correctness-gates]" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_observe_phase_selects_only_calibration_budget[prepare-rotations]" time="0.001" /><testcase classname="tests.test_rotation_preparation_limits" name="test_observe_phase_selects_only_calibration_budget[probe-ops]" time="0.001" /><testcase classname="tests.test_rotation_preparation_limits" name="test_observe_phase_selects_only_calibration_budget[operator-build]" time="0.001" /><testcase classname="tests.test_rotation_preparation_limits" name="test_deploy_only_prepare_uses_effective_candidate_and_retains_failure" time="0.003" /><testcase classname="tests.test_rotation_preparation_limits" name="test_compact_filter_keeps_exact_calibration_events_only" time="0.000" /><testcase classname="tests.test_rotation_preparation_limits" name="test_real_compact_child_shows_progress_and_preserves_complete_log" time="0.116" /></testsuite></testsuites>

@@ -1,4 +1,4 @@
-# 档案 #35/#51/#52/#75/#94/#95/#101/#116/#117/#120/#125/#135：有界进程组、保留原始退出码与完整日志；仅精确折叠成功关闭期噪声。
+# 档案 #35/#51/#52/#75/#94/#95/#101/#116/#117/#120/#125/#135/#174：有界进程组、保留原始退出码与完整日志；仅精确折叠成功关闭期噪声。
 """Run a phase in an owned process group, always recording its outcome."""
 from __future__ import annotations
 
@@ -310,7 +310,17 @@ def _owned_group_exists(proc: subprocess.Popen) -> bool:
         return group_exists(proc.pid)
     except PermissionError as error:
         _reap_exiting_child(proc, error)
-        return group_exists(proc.pid)  # one fresh probe; persistent EPERM fails
+        # Host Darwin reproduction: the leader is reaped but a killed orphan
+        # can still be transiently unreaped by init. Only fresh ESRCH proves
+        # absence; allow four bounded observations, never translate EPERM to
+        # success or retry a signal against an unowned PID.
+        for attempt in range(4):
+            try:
+                return group_exists(proc.pid)
+            except PermissionError:
+                if attempt == 3:
+                    raise
+                time.sleep(0.05)
 
 
 def _signal_owned_group(proc: subprocess.Popen, signum: int) -> bool:

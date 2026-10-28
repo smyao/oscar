@@ -1,0 +1,106 @@
+{
+  "date": "2026-10-28",
+  "baseline_commit": "b449015dd317c41853c88c5774d820ce47ced12c",
+  "branch": "oscar-new-4-back",
+  "target_evidence": {
+    "file": "target_failure.txt",
+    "source_attachment": "c94fa0ca-edb6-4106-9461-52596ccbe4ef",
+    "sha256": "99e40b3caabd31f2c53b235df3ba1f1d2fc950a27285024a6e42388901112aeb",
+    "failure": "four workers rejected at init_device before loading new model weights",
+    "free_gib_per_worker": 1.19,
+    "total_gib": 29.49,
+    "requested_memory_utilization": 0.9,
+    "requested_gib": 26.54,
+    "startup_sha": "not_in_excerpt",
+    "occupying_process_identity": "unknown",
+    "target_memory_released": "not_verified"
+  },
+  "pytest": {
+    "command": ".venv/bin/python -m pytest -q tests/test_formal_service.py tests/test_install_serve.py tests/test_serving_variants.py tests/test_aisbench_stable_policy.py tests/test_center_prepare.py tests/test_model_config.py tests/test_deploy_bf16.py tests/test_workflow.py tests/test_service_workflow.py tests/test_rotation_preparation_limits.py --junitxml=reports/direct_service_lifecycle_20261028/pytest.xml",
+    "tests": 174,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 174,
+    "returncode": 0,
+    "execution": "host outside sandbox, synthetic child processes and localhost HTTP only",
+    "junit": "pytest.xml"
+  },
+  "legacy_test_comparisons": [
+    {
+      "baseline": "baseline-legacy-tests.json",
+      "current": "current-legacy-tests.json",
+      "unchanged_failure_count": 13,
+      "new_failures": []
+    },
+    {
+      "baseline": "baseline-additional-tests.json",
+      "current": "current-additional-tests.json",
+      "unchanged_failure_count": 11,
+      "new_failures": []
+    }
+  ],
+  "earlier_failed_checks": {
+    "sandbox-expanded-tests.xml": "sandbox denied localhost bindings/owned-group queries, plus legacy failures; not a passing result",
+    "darwin-orphan-reaping-failure.xml": "real local transient EPERM after orphan kill; subsequently fixed with bounded fresh existence checks; not target evidence"
+  },
+  "source_and_launch_proof": "source-and-config.json",
+  "wheel": "wheel.json",
+  "code_and_test_hashes": [
+    {
+      "path": "tools/formal_service.py",
+      "sha256": "abc8f06de86d63db7eb96cb992fab52a44d76bebc3561d7146141a432ca119ea"
+    },
+    {
+      "path": "tools/install_serve.py",
+      "sha256": "33c96a52762ca9b2684033db1e889e7b53ad754df6dd09f53ddbf9d61631144c"
+    },
+    {
+      "path": "tools/phase.py",
+      "sha256": "cd84c7e2409ab5925b066b15ffbf01f97cb1205bb5f4d3e4c58bbac1c3d183d3"
+    },
+    {
+      "path": "tests/test_formal_service.py",
+      "sha256": "49ca397e26a9a726c4d5e5f7d59cf5f0268acba0c6ab9631ee44fd31884b40a1"
+    },
+    {
+      "path": "tests/test_install_serve.py",
+      "sha256": "606f21060e1fa9924bd81b8c5477e38675a417feee7a8d38ae076e30fa353fc0"
+    },
+    {
+      "path": "tests/test_workflow.py",
+      "sha256": "85f5009e3d9fe5b70f020c10d1e55d93a479444fb5e2577d40e9b95157cb5026"
+    },
+    {
+      "path": "tests/test_trap_diagnostic_mode.py",
+      "sha256": "1fd194b28869c5d613234860bb80dcdbc9a18b5e57f5b4c954e576094f80d614"
+    },
+    {
+      "path": "tests/test_native_token_budget.py",
+      "sha256": "6731eb9923d3463f0011f1996ca4f9f9744f31da0eacc31d7189e907b42249be"
+    },
+    {
+      "path": "tests/test_request_window_serving_config.py",
+      "sha256": "304dc5d9ce94e93850f0e1a23fd834105eb75e612bfd5d7c5bb419cd5ccdae5b"
+    }
+  ],
+  "review": "independent read-only review; signal/pid ownership and bounded EPERM findings addressed",
+  "runtime_scope": {
+    "online_attention_math_kernel_runtime_timer": "unchanged",
+    "model_vllm_argv_memory_budget_devices": "unchanged",
+    "added_host_cost": "one waiting supervisor process and existing log-mirroring thread; lock operations only on entry/exit",
+    "successful_launch_new_npu_probes": 0,
+    "service_timeout": null,
+    "legacy_or_external_process_killing": false,
+    "occupancy_diagnostic": "once after native memory failure, npu-smi info, 10s timeout plus bounded cleanup"
+  },
+  "acceptance": {
+    "cann_compilation": "not_run; unchanged CANN sources",
+    "npu_connection": "not_performed",
+    "target_service": "not_revalidated",
+    "target_memory_owner": "not_identified",
+    "model_quality": "not_measured",
+    "performance": "not_measured",
+    "remote_push": "not_performed"
+  }
+}

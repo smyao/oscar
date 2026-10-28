@@ -1,0 +1,232 @@
+INFO 10-28 01:12:19 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+2026-10-28 01:12:19,457 - 1152974 - ServiceProfiler - INFO - VLLM_USE_V1 not set, auto-detected via vLLM 0.23.0+empty: default 1
+INFO 10-28 01:12:19 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.netloader.netloader.ModelNetLoaderElastic'>` with load format `netloader`
+INFO 10-28 01:12:19 [__init__.py:115] Registered model loader `<class 'vllm_ascend.model_loader.rfork.rfork_loader.RForkModelLoader'>` with load format `rfork`
+`Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+[oscar] PERF_SAMPLER_FIX greedy_rows=isolated cumulative_prefix_bytes=32
+`Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+`Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+[oscar] PERF_SAMPLER_FIX greedy_rows=isolated cumulative_prefix_bytes=32
+[oscar] PERF_SAMPLER_FIX greedy_rows=isolated cumulative_prefix_bytes=32
+`Qwen2VLImageProcessorFast` is deprecated. The `Fast` suffix for image processors has been removed; use `Qwen2VLImageProcessor` instead.
+[oscar] PERF_SAMPLER_FIX greedy_rows=isolated cumulative_prefix_bytes=32
+INFO 10-28 01:12:22 [ascend_config.py:893] Dynamic EPLB is False
+INFO 10-28 01:12:22 [ascend_config.py:894] The number of redundant experts is 0
+INFO 10-28 01:12:23 [ascend_config.py:893] Dynamic EPLB is False
+INFO 10-28 01:12:23 [ascend_config.py:894] The number of redundant experts is 0
+INFO 10-28 01:12:23 [ascend_config.py:893] Dynamic EPLB is False
+INFO 10-28 01:12:23 [ascend_config.py:894] The number of redundant experts is 0
+INFO 10-28 01:12:23 [ascend_config.py:893] Dynamic EPLB is False
+INFO 10-28 01:12:23 [ascend_config.py:894] The number of redundant experts is 0
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888] WorkerProc failed to start.
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888] Traceback (most recent call last):
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 855, in worker_main
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]     worker = WorkerProc(*args, **kwargs)
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]     return func(*args, **kwargs)
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 626, in __init__
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]     self.worker.init_device()
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 325, in init_device
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]     self.worker.init_device()  # type: ignore
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]     ^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 509, in init_device
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]     self.device = self._init_device()
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]                   ^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 472, in _init_device
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888]     raise ValueError(
+(Worker pid=1152971) ERROR 10-28 01:12:24 [multiproc_executor.py:888] ValueError: Free memory on device (1.19/29.49 GiB) on startup is less than desired GPU memory utilization (0.9, 26.54 GiB). Decrease GPU memory utilization or reduce GPU memory used by other processes.
+(EngineCore pid=1152943) INFO 10-28 01:12:24 [multiproc_executor.py:428] [shutdown] Executor: waiting for worker exit count=4
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888] WorkerProc failed to start.
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888] Traceback (most recent call last):
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 855, in worker_main
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]     worker = WorkerProc(*args, **kwargs)
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]     return func(*args, **kwargs)
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 626, in __init__
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]     self.worker.init_device()
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 325, in init_device
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]     self.worker.init_device()  # type: ignore
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]     ^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 509, in init_device
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]     self.device = self._init_device()
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]                   ^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 472, in _init_device
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888]     raise ValueError(
+(Worker pid=1152973) ERROR 10-28 01:12:25 [multiproc_executor.py:888] ValueError: Free memory on device (1.19/29.49 GiB) on startup is less than desired GPU memory utilization (0.9, 26.54 GiB). Decrease GPU memory utilization or reduce GPU memory used by other processes.
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888] WorkerProc failed to start.
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888] Traceback (most recent call last):
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 855, in worker_main
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]     worker = WorkerProc(*args, **kwargs)
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]     return func(*args, **kwargs)
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 626, in __init__
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]     self.worker.init_device()
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 325, in init_device
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]     self.worker.init_device()  # type: ignore
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]     ^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 509, in init_device
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]     self.device = self._init_device()
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]                   ^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 472, in _init_device
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888]     raise ValueError(
+(Worker pid=1152972) ERROR 10-28 01:12:25 [multiproc_executor.py:888] ValueError: Free memory on device (1.19/29.49 GiB) on startup is less than desired GPU memory utilization (0.9, 26.54 GiB). Decrease GPU memory utilization or reduce GPU memory used by other processes.
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888] WorkerProc failed to start.
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888] Traceback (most recent call last):
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 855, in worker_main
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]     worker = WorkerProc(*args, **kwargs)
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]     return func(*args, **kwargs)
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]            ^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 626, in __init__
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]     self.worker.init_device()
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]   File "/vllm-workspace/vllm/vllm/v1/worker/worker_base.py", line 325, in init_device
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]     self.worker.init_device()  # type: ignore
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]     ^^^^^^^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 509, in init_device
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]     self.device = self._init_device()
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]                   ^^^^^^^^^^^^^^^^^^^
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]   File "/vllm-workspace/vllm-ascend/vllm_ascend/worker/worker.py", line 472, in _init_device
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888]     raise ValueError(
+(Worker pid=1152974) ERROR 10-28 01:12:26 [multiproc_executor.py:888] ValueError: Free memory on device (1.19/29.49 GiB) on startup is less than desired GPU memory utilization (0.9, 26.54 GiB). Decrease GPU memory utilization or reduce GPU memory used by other processes.
+(EngineCore pid=1152943) WARNING 10-28 01:12:28 [multiproc_executor.py:438] [shutdown] Executor: workers still running after grace period; sending SIGTERM count=4
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195] EngineCore failed to start.
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195] Traceback (most recent call last):
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 1164, in run_engine_core
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]     return func(*args, **kwargs)
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 930, in __init__
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]     super().__init__(
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 122, in __init__
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]     self.model_executor = executor_class(vllm_config)
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 108, in __init__
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]     super().__init__(vllm_config)
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]     return func(*args, **kwargs)
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/abstract.py", line 109, in __init__
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]     self._init_executor()
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 201, in _init_executor
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]     self.workers = WorkerProc.wait_for_ready(unready_workers)
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 762, in wait_for_ready
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195]     raise e from None
+(EngineCore pid=1152943) ERROR 10-28 01:12:29 [core.py:1195] Exception: WorkerProc initialization failed due to an exception in a background process. See stack trace for root cause.
+(EngineCore pid=1152943) Process EngineCore:
+(EngineCore pid=1152943) Traceback (most recent call last):
+(EngineCore pid=1152943)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+(EngineCore pid=1152943)     self.run()
+(EngineCore pid=1152943)   File "/usr/local/python3.12.13/lib/python3.12/multiprocessing/process.py", line 108, in run
+(EngineCore pid=1152943)     self._target(*self._args, **self._kwargs)
+(EngineCore pid=1152943)   File "/vllm-workspace/vllm-ascend/vllm_ascend/patch/platform/patch_balance_schedule.py", line 692, in run_engine_core
+(EngineCore pid=1152943)     return _ORIGINAL_RUN_ENGINE_CORE(*args, dp_rank=dp_rank, local_dp_rank=local_dp_rank, **kwargs)
+(EngineCore pid=1152943)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=1152943)   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 1199, in run_engine_core
+(EngineCore pid=1152943)     raise e
+(EngineCore pid=1152943)   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 1164, in run_engine_core
+(EngineCore pid=1152943)     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=1152943)                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=1152943)   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=1152943)     return func(*args, **kwargs)
+(EngineCore pid=1152943)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=1152943)   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 930, in __init__
+(EngineCore pid=1152943)     super().__init__(
+(EngineCore pid=1152943)   File "/vllm-workspace/vllm/vllm/v1/engine/core.py", line 122, in __init__
+(EngineCore pid=1152943)     self.model_executor = executor_class(vllm_config)
+(EngineCore pid=1152943)                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=1152943)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 108, in __init__
+(EngineCore pid=1152943)     super().__init__(vllm_config)
+(EngineCore pid=1152943)   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=1152943)     return func(*args, **kwargs)
+(EngineCore pid=1152943)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=1152943)   File "/vllm-workspace/vllm/vllm/v1/executor/abstract.py", line 109, in __init__
+(EngineCore pid=1152943)     self._init_executor()
+(EngineCore pid=1152943)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 201, in _init_executor
+(EngineCore pid=1152943)     self.workers = WorkerProc.wait_for_ready(unready_workers)
+(EngineCore pid=1152943)                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=1152943)   File "/vllm-workspace/vllm/vllm/v1/executor/multiproc_executor.py", line 762, in wait_for_ready
+(EngineCore pid=1152943)     raise e from None
+(EngineCore pid=1152943) Exception: WorkerProc initialization failed due to an exception in a background process. See stack trace for root cause.
+(APIServer pid=1152752) Traceback (most recent call last):
+(APIServer pid=1152752)   File "<frozen runpy>", line 198, in _run_module_as_main
+(APIServer pid=1152752)   File "<frozen runpy>", line 88, in _run_code
+(APIServer pid=1152752)   File "/workspace/oscar/oscar-new/tools/target_cli.py", line 164, in <module>
+(APIServer pid=1152752)     sys.exit(main())
+(APIServer pid=1152752)              ^^^^^^
+(APIServer pid=1152752)   File "/workspace/oscar/oscar-new/tools/target_cli.py", line 123, in main
+(APIServer pid=1152752)     return _run_service(config, args.config, command, native=args.native)
+(APIServer pid=1152752)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1152752)   File "/workspace/oscar/oscar-new/tools/target_cli.py", line 159, in _run_service
+(APIServer pid=1152752)     vllm_main()
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/entrypoints/cli/main.py", line 95, in main
+(APIServer pid=1152752)     args.dispatch_function(args)
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/entrypoints/cli/serve.py", line 148, in cmd
+(APIServer pid=1152752)     uvloop.run(run_server(args))
+(APIServer pid=1152752)   File "/usr/local/python3.12.13/lib/python3.12/site-packages/uvloop/__init__.py", line 96, in run
+(APIServer pid=1152752)     return __asyncio.run(
+(APIServer pid=1152752)            ^^^^^^^^^^^^^^
+(APIServer pid=1152752)   File "/usr/local/python3.12.13/lib/python3.12/asyncio/runners.py", line 195, in run
+(APIServer pid=1152752)     return runner.run(main)
+(APIServer pid=1152752)            ^^^^^^^^^^^^^^^^
+(APIServer pid=1152752)   File "/usr/local/python3.12.13/lib/python3.12/asyncio/runners.py", line 118, in run
+(APIServer pid=1152752)     return self._loop.run_until_complete(task)
+(APIServer pid=1152752)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1152752)   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+(APIServer pid=1152752)   File "/usr/local/python3.12.13/lib/python3.12/site-packages/uvloop/__init__.py", line 48, in wrapper
+(APIServer pid=1152752)     return await main
+(APIServer pid=1152752)            ^^^^^^^^^^
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/entrypoints/openai/api_server.py", line 665, in run_server
+(APIServer pid=1152752)     await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/entrypoints/openai/api_server.py", line 679, in run_server_worker
+(APIServer pid=1152752)     async with build_async_engine_client(
+(APIServer pid=1152752)                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1152752)   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=1152752)     return await anext(self.gen)
+(APIServer pid=1152752)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/entrypoints/openai/api_server.py", line 99, in build_async_engine_client
+(APIServer pid=1152752)     async with build_async_engine_client_from_engine_args(
+(APIServer pid=1152752)                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1152752)   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=1152752)     return await anext(self.gen)
+(APIServer pid=1152752)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/entrypoints/openai/api_server.py", line 135, in build_async_engine_client_from_engine_args
+(APIServer pid=1152752)     async_llm = AsyncLLM.from_vllm_config(
+(APIServer pid=1152752)                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/v1/engine/async_llm.py", line 217, in from_vllm_config
+(APIServer pid=1152752)     return cls(
+(APIServer pid=1152752)            ^^^^
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/v1/engine/async_llm.py", line 146, in __init__
+(APIServer pid=1152752)     self.engine_core = EngineCoreClient.make_async_mp_client(
+(APIServer pid=1152752)                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(APIServer pid=1152752)     return func(*args, **kwargs)
+(APIServer pid=1152752)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 131, in make_async_mp_client
+(APIServer pid=1152752)     return AsyncMPClient(*client_args)
+(APIServer pid=1152752)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/tracing/otel.py", line 178, in sync_wrapper
+(APIServer pid=1152752)     return func(*args, **kwargs)
+(APIServer pid=1152752)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 948, in __init__
+(APIServer pid=1152752)     super().__init__(
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/v1/engine/core_client.py", line 570, in __init__
+(APIServer pid=1152752)     with launch_core_engines(
+(APIServer pid=1152752)          ^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1152752)   File "/usr/local/python3.12.13/lib/python3.12/contextlib.py", line 144, in __exit__
+(APIServer pid=1152752)     next(self.gen)
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/v1/engine/utils.py", line 1190, in launch_core_engines
+(APIServer pid=1152752)     wait_for_engine_startup(
+(APIServer pid=1152752)   File "/vllm-workspace/vllm/vllm/v1/engine/utils.py", line 1249, in wait_for_engine_startup
+(APIServer pid=1152752)     raise RuntimeError(
+(APIServer pid=1152752) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+(APIServer pid=1152752) [ERROR] 2026-10-28-01:12:32 (PID:1152752, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception

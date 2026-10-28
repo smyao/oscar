@@ -1,0 +1,130 @@
+FF...FFF..........................F.F.F..F...........FFFF                [100%]
+=================================== FAILURES ===================================
+__________ test_shared_target_argv_env_and_default_invariants[False] ___________
+tests/test_trap_diagnostic_mode.py:24: in test_shared_target_argv_env_and_default_invariants
+    assert "--enable-prefix-caching" in argv
+E   AssertionError: assert '--enable-prefix-caching' in ['serve', '/softwarePlatform/models_directory/Qwen3.8-27B', '--max-num-batched-tokens', '16384', '--served-model-name', 'qwen3.8', ...]
+___________ test_shared_target_argv_env_and_default_invariants[True] ___________
+tests/test_trap_diagnostic_mode.py:24: in test_shared_target_argv_env_and_default_invariants
+    assert "--enable-prefix-caching" in argv
+E   AssertionError: assert '--enable-prefix-caching' in ['serve', '/softwarePlatform/models_directory/Qwen3.8-27B', '--max-num-batched-tokens', '16384', '--served-model-name', 'qwen3.8', ...]
+____ test_both_optional_plans_select_same_service_mode[tools.install_serve] ____
+tests/test_trap_diagnostic_mode.py:46: in test_both_optional_plans_select_same_service_mode
+    assert plan["runtime_selection"]["token_budget_source"] == "native"
+E   AssertionError: assert 'explicit' == 'native'
+E     
+E     - native
+E     + explicit
+____ test_both_optional_plans_select_same_service_mode[tools.observe_serve] ____
+tests/test_trap_diagnostic_mode.py:46: in test_both_optional_plans_select_same_service_mode
+    assert plan["runtime_selection"]["token_budget_source"] == "native"
+E   AssertionError: assert 'explicit' == 'native'
+E     
+E     - native
+E     + explicit
+_________ test_direct_install_exec_receives_diagnostic_config_and_env __________
+tests/test_trap_diagnostic_mode.py:78: in test_direct_install_exec_receives_diagnostic_config_and_env
+    install_serve.main(["--config", str(source), "--log-dir", str(tmp_path / "run"),
+tools/install_serve.py:53: in main
+    config = apply_model_options(config, args, require_model=not args.plan)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/model_config.py:102: in apply_model_options
+    raise ValueError(f"model config.json is unavailable: {model_file}; select a local checkpoint with --model")
+E   ValueError: model config.json is unavailable: /softwarePlatform/models_directory/Qwen3.8-27B/config.json; select a local checkpoint with --model
+----------------------------- Captured stdout call -----------------------------
+[oscar] install → build → rotations → serve (no tests, no probes); logs=/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-340/test_direct_install_exec_recei0/run
+___ test_every_install_phase_and_service_receive_frozen_stable_config[False] ___
+tests/test_native_token_budget.py:176: in test_every_install_phase_and_service_receive_frozen_stable_config
+    install_serve.main(["--config", str(path), "--log-dir", str(logs),
+tools/install_serve.py:133: in main
+    return _run(config, stages, serve_command, log_dir, env, status)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/install_serve.py:145: in _run
+    result = run_phase(name, command, cwd=ROOT, log_dir=log_dir,
+tests/test_native_token_budget.py:157: in phase
+    check(env)
+tests/test_native_token_budget.py:153: in check
+    assert config["port"] == (7878 if rear else 8989)
+E   assert 7878 == 8989
+----------------------------- Captured stdout call -----------------------------
+[oscar] install → build → rotations → serve (no tests, no probes); logs=/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-340/test_every_install_phase_and_s0/run
+[oscar] SERVE_MODE variant=candidate C4=on Q1=on FAST_UNPACK=on STRIPED=on placement=configured config=/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-340/test_every_install_phase_and_s0/run/effective-target.json
+[oscar] devices=0,1,2,3 port=7878
+[oscar] MODEL_SELECTION {"architectures":["Qwen3_5ForConditionalGeneration"],"detected_quantization":null,"dtype":"bfloat16","mamba_cache_dtypes":{"mamba_cache_dtype":"bfloat16","mamba_ssm_cache_dtype":"bfloat16"},"metadata":{"config.json":"8699309dc389068017a310526cc26fb1a89a6e8d70e73dbbd7a1e4d7b976460b"},"model":"/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-340/test_every_install_phase_and_s0/model","quantization":null,"requested_quantization":"none","status":"resolved"}
+[oscar] PERF_RUNTIME_CONFIG {"aligned_c16_operator":"attention_cv_official_cluster16_out","attention_compute":{"accumulator":"float32","operands":"bfloat16","softmax_lse_merge":"float32"},"attention_coordinate_frame":"all_sources_rotated","cached_precision_policy":"native_fixed_per_forward","calibration_recipe_version":3,"clip_policy":"scalar","dequant_arithmetic":"float32_then_bfloat16","dequant_policy":"fp32_metadata","devices":[0,1,2,3],"head_clip_experiment_enabled":false,"inverse_rotation":"once_after_fp32_merge","key_centering":true,"max_num_batched_tokens":16384,"metadata_dtype":"float32","optimizations":{"aligned_math":true,"bf16_attention":true,"c16_l1_reuse":true,"c16_tuned":true,"c4_member_pipeline":true,"compact_later_mtp":true,"current_only":true,"decode_bundle":true,"fast_unpack":true,"first_mtp_current_fia":true,"history_cluster4":true,"hybrid_l1_decode":true,"later_mtp_q1":true,"mdl_decode":true,"mixed_cv":true,"mixed_decode_split":true,"official_math":true,"prepare_reuse":true,"quantization_bundle":true,"striped_cache":true,"whole_prefill":false},"oscar_math_profile":"oscar_bf16_attention_v4","port":7878,"prefix_caching":false,"rotation_grouping":"layer_kv_head","rotation_method":"qqt_sst","rotation_refinement":null,"rotation_variant":"perhead_center","runtime_precision_contract":"oscar_bf16_runtime_fp32_dequant_v1","scheduler_cls":null,"token_budget_source":"explicit","variant":"candidate"}
+----------------------------- Captured stderr call -----------------------------
+[oscar] direct launcher failed: assert 7878 == 8989; logs=/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-340/test_every_install_phase_and_s0/run
+_ test_fixed_shell_entrypoints_keep_stable_budget_without_extra_option[install_serve.sh-placement0] _
+tests/test_native_token_budget.py:201: in test_fixed_shell_entrypoints_keep_stable_budget_without_extra_option
+    assert runtime["port"] == (7878 if placement else 8989)
+E   assert 7878 == 8989
+_ test_fixed_shell_entrypoints_keep_stable_budget_without_extra_option[install_observe_serve.sh-placement2] _
+tests/test_native_token_budget.py:201: in test_fixed_shell_entrypoints_keep_stable_budget_without_extra_option
+    assert runtime["port"] == (7878 if placement else 8989)
+E   assert 7878 == 8989
+____ test_observe_candidate_gates_and_service_share_stable_effective_config ____
+tests/test_native_token_budget.py:275: in test_observe_candidate_gates_and_service_share_stable_effective_config
+    assert observe_serve.main(["--config", str(source), "--log-dir", str(logs),
+E   AssertionError: assert 1 == 91
+E    +  where 1 = <function main at 0x105a5cbf0>(['--config', '/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-340/test_observe_cand...78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-340/test_observe_candidate_gates_a0/observe', '--variant', 'candidate'])
+E    +    where <function main at 0x105a5cbf0> = observe_serve.main
+----------------------------- Captured stderr call -----------------------------
+Traceback (most recent call last):
+  File "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tools/observe_serve.py", line 1245, in run
+    _preflight(effective_path, config, env, log_dir, status, variant)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tests/test_native_token_budget.py", line 249, in gate
+    check(path, config, env); seen.append(name)
+    ~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2/tests/test_native_token_budget.py", line 239, in check
+    assert config["devices"] == [0, 1, 2, 3] and config["port"] == 8989
+AssertionError: assert ([0, 1, 2, 3] == [0, 1, 2, 3]
+  
+  Use -v to get more diff and 7878 == 8989)
+____ test_unqualified_research_mdl_combination_is_rejected_by_both_entries _____
+tests/test_request_window_serving_config.py:33: in test_unqualified_research_mdl_combination_is_rejected_by_both_entries
+    with pytest.raises(ValueError,match='request-window MDL reader is not qualified'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'request-window MDL reader is not qualified'
+E     Actual message: 'BF16 attention requires physical-page storage'
+__ test_research_roundtrip_clears_every_owned_change_for_native_and_baseline ___
+tests/test_request_window_serving_config.py:45: in test_research_roundtrip_clears_every_owned_change_for_native_and_baseline
+    with pytest.raises(ValueError,match='request-window MDL reader is not qualified'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'request-window MDL reader is not qualified'
+E     Actual message: 'BF16 attention requires physical-page storage'
+_ test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase _
+tests/test_request_window_serving_config.py:80: in test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase
+    install_serve.main(['--config',str(path),'--log-dir',str(logs)])
+tools/install_serve.py:53: in main
+    config = apply_model_options(config, args, require_model=not args.plan)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/model_config.py:102: in apply_model_options
+    raise ValueError(f"model config.json is unavailable: {model_file}; select a local checkpoint with --model")
+E   ValueError: model config.json is unavailable: /softwarePlatform/models_directory/Qwen3.8-27B/config.json; select a local checkpoint with --model
+----------------------------- Captured stdout call -----------------------------
+[oscar] install → build → rotations → serve (no tests, no probes); logs=/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-340/test_explicit_config_without_v0/launch
+_______ test_legacy_whole_capacity_cannot_reenter_through_research_flags _______
+tests/test_request_window_serving_config.py:88: in test_legacy_whole_capacity_cannot_reenter_through_research_flags
+    selected=variant_config(raw,None)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+tools/serving_variants.py:189: in variant_config
+    raise ValueError("BF16 attention requires physical-page storage")
+E   ValueError: BF16 attention requires physical-page storage
+=========================== short test summary info ============================
+FAILED tests/test_trap_diagnostic_mode.py::test_shared_target_argv_env_and_default_invariants[False]
+FAILED tests/test_trap_diagnostic_mode.py::test_shared_target_argv_env_and_default_invariants[True]
+FAILED tests/test_trap_diagnostic_mode.py::test_both_optional_plans_select_same_service_mode[tools.install_serve]
+FAILED tests/test_trap_diagnostic_mode.py::test_both_optional_plans_select_same_service_mode[tools.observe_serve]
+FAILED tests/test_trap_diagnostic_mode.py::test_direct_install_exec_receives_diagnostic_config_and_env
+FAILED tests/test_native_token_budget.py::test_every_install_phase_and_service_receive_frozen_stable_config[False]
+FAILED tests/test_native_token_budget.py::test_fixed_shell_entrypoints_keep_stable_budget_without_extra_option[install_serve.sh-placement0]
+FAILED tests/test_native_token_budget.py::test_fixed_shell_entrypoints_keep_stable_budget_without_extra_option[install_observe_serve.sh-placement2]
+FAILED tests/test_native_token_budget.py::test_observe_candidate_gates_and_service_share_stable_effective_config
+FAILED tests/test_request_window_serving_config.py::test_unqualified_research_mdl_combination_is_rejected_by_both_entries
+FAILED tests/test_request_window_serving_config.py::test_research_roundtrip_clears_every_owned_change_for_native_and_baseline
+FAILED tests/test_request_window_serving_config.py::test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase
+FAILED tests/test_request_window_serving_config.py::test_legacy_whole_capacity_cannot_reenter_through_research_flags
+13 failed, 44 passed in 0.81s

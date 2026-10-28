@@ -1,0 +1,25 @@
+{
+  "baseline_commit": "b449015dd317c41853c88c5774d820ce47ced12c",
+  "source_method": "exact git HEAD sources executed at original module paths, no working-tree reset",
+  "files": [
+    "tests/test_trap_diagnostic_mode.py",
+    "tests/test_native_token_budget.py",
+    "tests/test_request_window_serving_config.py"
+  ],
+  "returncode": 1,
+  "failures": [
+    "tests.test_trap_diagnostic_mode::test_shared_target_argv_env_and_default_invariants[False]",
+    "tests.test_trap_diagnostic_mode::test_shared_target_argv_env_and_default_invariants[True]",
+    "tests.test_trap_diagnostic_mode::test_both_optional_plans_select_same_service_mode[tools.install_serve]",
+    "tests.test_trap_diagnostic_mode::test_both_optional_plans_select_same_service_mode[tools.observe_serve]",
+    "tests.test_trap_diagnostic_mode::test_direct_install_exec_receives_diagnostic_config_and_env",
+    "tests.test_native_token_budget::test_every_install_phase_and_service_receive_frozen_stable_config[False]",
+    "tests.test_native_token_budget::test_fixed_shell_entrypoints_keep_stable_budget_without_extra_option[install_serve.sh-placement0]",
+    "tests.test_native_token_budget::test_fixed_shell_entrypoints_keep_stable_budget_without_extra_option[install_observe_serve.sh-placement2]",
+    "tests.test_native_token_budget::test_observe_candidate_gates_and_service_share_stable_effective_config",
+    "tests.test_request_window_serving_config::test_unqualified_research_mdl_combination_is_rejected_by_both_entries",
+    "tests.test_request_window_serving_config::test_research_roundtrip_clears_every_owned_change_for_native_and_baseline",
+    "tests.test_request_window_serving_config::test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase",
+    "tests.test_request_window_serving_config::test_legacy_whole_capacity_cannot_reenter_through_research_flags"
+  ]
+}

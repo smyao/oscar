@@ -58,6 +58,8 @@ git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 
 它只执行安装构建依赖/插件 → 编译算子 → 自动准备旋转文件，全部成功后以 `tools.target_cli` 前台路径直接拉起正式服务（与 `scripts/serve_direct.sh` 同一启动入口）；任一相位失败即保留真实退出码并停止，不会拉起服务。该入口不执行算子/服务探针和配对性能门，不能充当验收证据；正式验收仍使用 `scripts/install_probe_serve.sh`。
 
+直启外层会持续持有本次服务进程组：正常退出、启动失败或INT/TERM/HUP中断后，有界清理本次子进程，保存`serve.log`、`serve.json`、`serve-lifecycle.json`及最终`status.json`。同一checkout按物理卡加锁，阻止另一条直启在构建/校准/服务期间重复占卡；不终止已有服务。正式服务没有阶段时限、健康探针或设备轮询。仅出现原生启动显存不足时，自动保存原错误并运行一次限时10秒的只读`npu-smi info`，不调低预算、不换卡、不自动杀未知占用进程。详见档案#174及`reports/direct_service_lifecycle_20261028/verification.json`。
+
 `--variant candidate`生成本轮有效配置并启用C4历史复用、后续MTP q1调度和新fast unpack；新版本应先通过上面的真实NPU短probe。终端打印`SERVE_MODE variant=candidate C4=on Q1=on FAST_UNPACK=on`。它不启用独立q4 profile算子。`--variant baseline`使用fe0；省略该参数时遵循原配置，当前`configs/target.json`默认未启用这些实验路径。原配置文件不会被修改。
 
 当前分支默认使用前四张物理卡 **0,1,2,3**、端口 **7878**。如需切换到后四卡 **4,5,6,7**，显式追加`--rear-cards`：

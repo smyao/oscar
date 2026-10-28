@@ -28856,3 +28856,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **处置**：参照#170静态撤下默认配方，candidate恢复perhead_center recipe3与原BF16/FP32 metadata性能组合；两固定入口共用，清残留optr字段，认证旧recipe3缓存可直接复用，显式不匹配PT仍报错。独立研究variant=None继续recipe5和严格accept-or-fail；不捕获失败后按test重选，不增加容差，不改样本/优化器/阈值，不自动重新拟合碰碰运气。失败单独原子保存身份、policy、矩阵哈希、head decisions和完整validation/test逐请求/分片指标；失败报告不是已验证层断点，禁止最终发布。报告输出或I/O异常也不升级质量状态。
 
 **验证与边界**：针对性主机/CPU回归、双缓存实际发布/加载、总量改善但单请求退化的阻断、失败报告/异常及正常发布、固定argv与打包证据见该目录verification.json及docs/optr_independent_test_failure_20261028.md。诊断文件修改触发既有拟合实现哈希隔离，旧fit断点不会直接命中；原生trace身份不变。线上CANN/runtime/timer/目标配置未改，没有连接NPU、复跑模型或测性能；此为默认入口回归控制，不是OptR更高精度目标已实现。
+
+
+## [174] 真机条目（2026-10-28 用户回传）· 正式服务初始化时四卡仅余1.19GiB
+
+**证据**：附件c94fa0ca-edb6-4106-9461-52596ccbe4ef原字节保存在`reports/direct_service_lifecycle_20261028/target_failure.txt`。01:12:24–26四worker报`Free memory on device (1.19/29.49 GiB)`低于配置0.9要求26.54GiB；EngineCore初始化失败，API进程在01:12:32退出。片段无启动SHA、占用进程表或父launcher最终状态，不能确认既有占用者、部署前清理结果或把本地b449015当现场身份。
+
+**同族与已知边界**：G21/G22的启动前显存不足及错误解析死循环；#94/#95的真实退出码和日志；#120的有界监督。只读原生worker的snapshot预算检查位于init_device，executor先init_device后load_model，因此不是新模型加载后KV预算爆出。原生worker的parent-death监听在初始化成功后启用。此日志不能证明是上一轮OSCAR、其它服务或驱动占用，不能据1.19GiB改低预算。
+
+**源码缺口与修复**：旧固定直启在准备成功后exec成API服务，没有外层在API退出后清理worker；真实主机合成API返回7但子worker继续存活可复现。新监督器创建独立session并阻塞等待，API正常/失败退出及INT/TERM/HUP后有界TERM/KILL本次进程组；启动Popen窗口及清理期间的重复信号不丢失句柄或打断清理。原child返回值和shell信号退出码分开保留，清理失败不能报成功。每个物理卡的本checkout非继承flock覆盖build→prepare→serve→清理，活持有者只报冲突、不杀进程；锁文件不unlink避免双inode。日志实时镜像并落盘完整状态。只在原生显存不足失败后自动运行一次限时10秒的npu-smi info；工具缺失/失败显式记录且不覆盖服务退出码。无NPU上下文预检查、无限等释放、自动降低预算或按名字全局kill。
+
+**验证与未完成边界**：真实本机子进程红绿、旁路组保持存活、信号/锁竞争/FD不继承、有效配置/argv及构建检查见该目录verification.json。扩展历史测试与未修改HEAD逐项配对，旧失败不能计作通过；沙箱禁止localhost/部分进程组检查的结果单独保存，必要主机检查在本机沙箱外执行，不访问目标NPU。线上kernel/runtime/精度/预算/timer未改；增加一个主机监督进程和日志线程，不申领性能收益。没有自动处理身份未知的现存占用、监督器SIGKILL/掉电或任意主动脱组子进程，不声称目标显存已释放或服务已复验。

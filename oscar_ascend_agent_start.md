@@ -586,6 +586,8 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 ### 8.2 将历史错误转化为回归检查
 
+2026-10-28新增档案#174：正式服务在新权重加载前因每卡仅1.19GiB空闲被原生预算门拒绝。直启新增完整进程组监督与本checkout每卡互斥，回归覆盖正常/API失败遗留worker、INT/TERM/HUP、Popen窗口及重复信号、真实退出码、其它进程不受影响；显存不足只做有界只读诊断，不自动终止未知历史进程。证据在`reports/direct_service_lifecycle_20261028/verification.json`，不将本地清理结果冒充目标机显存已释放。
+
 2026-10-28新增档案#173：OptR第7层联合validation接受后独立test退化，prepare rc1。固定candidate静态恢复recipe3并保留完整BF16/FP32 metadata性能组合；显式研究不改变test门，失败保存完整指标且不发布PT。回归覆盖双缓存/残留配置、总量改善但单请求退化仍失败、报告I/O异常不掩盖质量错误。见[处置与证据](docs/optr_independent_test_failure_20261028.md)；没有目标精度或性能达标结论。
 
 2026-10-27新增档案#172：OptR全部原生采样完成后CPU拟合被1800秒通用总时限杀死。回归覆盖规模预算/嵌套父阶段、真实进展停滞终止与进程组清理、头/已验证层/发布中断恢复、认证trace复用和旧新数值逐位一致。详见[修复证据](docs/optr_preparation_timeout_20261027.md)；本机通过不升级目标完整拟合、模型质量/性能状态。

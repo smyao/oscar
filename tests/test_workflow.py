@@ -101,7 +101,21 @@ def test_cleanup_never_treats_persistent_group_permission_error_as_absence(monke
     with pytest.raises(PermissionError) as failure:
         phase.cleanup_group(child, grace=0)
     assert failure.value is denied and child.returncode == -15
-    assert calls == [(child.pid, 0), (child.pid, 0)]
+    assert calls == [(child.pid, 0)] * 5  # initial check + four bounded fresh observations
+
+
+def test_cleanup_waits_for_orphan_reaping_but_requires_fresh_esrch(monkeypatch):
+    child = ExitingChild()
+    calls = []
+    def killpg(pid, signum):
+        assert pid == child.pid and signum == 0
+        calls.append(signum)
+        if len(calls) < 4:
+            raise PermissionError('already-killed orphan not reaped by init yet')
+        raise ProcessLookupError('group now absent')
+    monkeypatch.setattr(phase.os, 'killpg', killpg)
+    assert phase.cleanup_group(child, grace=0)
+    assert len(calls) >= 4 and set(calls) == {0} and child.returncode == -15
 
 
 def test_cleanup_live_child_permission_error_has_one_bounded_wait_and_still_fails(monkeypatch):

@@ -1,6 +1,6 @@
 # 当前工程约束
 
-> 2026-10-28 精度任务：用户确认614c739的32K/64K性能均达标；127条、PC开启、平均20K的质量集要求两侧各10轮、top3均值，accuracy/easy/hard/short四项与基线差距均小于1个百分点。禁止按输入长度或数据集特判，保护既有性能。candidate新增native_exact current-only政策：仅在原有CPU上界+设备prepare已证明无历史的精确suffix，使用原Q/K/V执行原native FIA，删除Q旋转/最终逆旋转；保留Q/output/slot/status检查、K中心化+K/V旋转和原INT2/snapshot writer。所有历史/混合读核、PTrecipe3、clip、预算、PC/MTP、timer不变；旧v4 oracle不改，独立overlay验证该精确路径。见docs/native_exact_current_precision_20261028.md及档案#173。不得把局部反例修复写成四指标已达标，不以RPS差异归因或调参。
+> 2026-10-28 精度续修：用户确认614c739的32K/64K性能均达标；127条、PC开启、平均20K的质量集要求两侧各10轮、top3均值，accuracy/easy/hard/short四项与基线差距均小于1个百分点。用户最新单轮仍为38.58/44.19/35.71/38.58、API耗时1173.43秒，明确要求弃用无效改动。fef8f5ba的native_exact默认政策已撤下，current-only与相关probe恢复614c原实现，所有variant清除旧生成配置的oscar_current_only_policy；原数值反例和失败记录保留。撤下不等于质量达标。禁止输入长度/数据集特判；保护已达标性能、recipe3/PT/clip/16K预算/PC/MTP/timer，不以RPS差异归因或调参。见docs/native_exact_current_precision_20261028.md及档案#174。
 
 > 2026-10-28 性能回归硬约束：用户实测34bc2b75的64K达标，但32K及以下慢30%；232b563b69e01495046a9b0025ac9150bc11b9d7为已达标短输入保护基底。必须同时保住32K及以下与64K，禁止新增任何按输入/context/历史长度分界的版本选择。此次按执行阶段拆撤decode批量Cast，所有长度q4/q1统一恢复232b完整原源；C16完整保留34bc源，C4/current-only/调度/PT/argv/timer不动。新组合需按源码身份门保持这两个来源，不能以64K单项通过覆盖短输入退化。见docs/universal_regression_repair_20261028.md及档案#172。
 
@@ -37,7 +37,7 @@
 - 本轮禁止以任何方式连接或使用真机；本地源码、CPU-debug、CANN编译与CAModel独立完成，最后交付一键命令由用户验证。不要索要已完成AISBench重跑，也不能把本地算子倍率写成整轮达标。
 - 用户随后明确接纳完整stable→B1（3888161→3172246 ticks）进入主分支作为继续迭代基底；不因相对中间pipeline仅4.1%而剔除。每点不再机械要求1.15倍，保留真实净收益并按新基底去重计账，精度和协议门不变。继续叠加到两场景相对同参native端到端超过30%；完成后推主分支给用户验证，stable仅由用户验证后维护。
 
-先读 `oscar_ascend_agent_start.md`，按其档案引用制度执行。`issue1_full_record.md` 实际为173条（G1–G34、#1–#139），按标题定位；旧标题条数与旧行号存在漂移。
+先读 `oscar_ascend_agent_start.md`，按其档案引用制度执行。`issue1_full_record.md` 最新追加至#174，按标题定位；旧标题条数与旧行号存在漂移。
 
 - 只允许参考本项目 `references/` 内指定PR和原生实现；禁止读任何失败OSCAR项目代码。所有参考树只读，不运行格式化或修改。
 - 适配代码为外部插件与独立AscendC工程，不能覆盖原生vLLM/Ascend源码，不使用 `cp` 部署。

@@ -1,0 +1,114 @@
+{
+  "purpose": "Retire unsuccessful native_exact delivery and prevent stale generated configs from enabling it.",
+  "validation_scope": "host/source/algebra only; not new model quality or NPU/performance acceptance",
+  "restored_identity": [
+    {
+      "path": "oscar_ascend/integration/current_only_dispatch.py",
+      "sha256": "14b588f4a86c21660b023f3469cc17ecae84d592698b983cabf1faa7a7b08646",
+      "matches_614c7398": true
+    },
+    {
+      "path": "tools/probe_current_only.py",
+      "sha256": "85679cab1cf9d0412a1c4862c209d2f0a28383fc95320addd6d6526a7230c43a",
+      "matches_614c7398": true
+    },
+    {
+      "path": "tools/probe_official_attention.py",
+      "sha256": "32d6709810b514ad81f03ae855fbc342bcb57b7bb1b388982c46791c7edb8ae8",
+      "matches_614c7398": true
+    },
+    {
+      "path": "tests/test_official_lifecycle_probes.py",
+      "sha256": "7ac5c1c0479301a712c5f8cbae342b93936337573da90968238eeabaad468323",
+      "matches_614c7398": true
+    }
+  ],
+  "retired_identity": [
+    {
+      "original_path": "configs/acceptance_native_exact_current.json",
+      "archived_path": "reports/precision_followup_20261028/retired_native_exact/configs__acceptance_native_exact_current.json",
+      "sha256": "bbdb6292a5885ec27e478796bd8fcd1587d54239ce8b6ed28ed6a8b69fde0ee2",
+      "matches_fef8f5ba": true
+    },
+    {
+      "original_path": "oscar_ascend/integration/current_only_dispatch.py",
+      "archived_path": "reports/precision_followup_20261028/retired_native_exact/oscar_ascend__integration__current_only_dispatch.py",
+      "sha256": "94731152fd9d15be20e073fa4fb2585dc2b8b1305600cda3ee8214302c748b8e",
+      "matches_fef8f5ba": true
+    },
+    {
+      "original_path": "oscar_ascend/integration/native_exact_current.py",
+      "archived_path": "reports/precision_followup_20261028/retired_native_exact/oscar_ascend__integration__native_exact_current.py",
+      "sha256": "36f5fca252aec5cdc8ee8bd704685cdb17449bfacfe828a03bda615ab4a1b8bb",
+      "matches_fef8f5ba": true
+    },
+    {
+      "original_path": "tests/test_native_exact_current.py",
+      "archived_path": "reports/precision_followup_20261028/retired_native_exact/tests__test_native_exact_current.py",
+      "sha256": "50bfc7a1e11773ecd346a79ec7a6aeb75d77ab9c58d491647ec1bd584e29819f",
+      "matches_fef8f5ba": true
+    },
+    {
+      "original_path": "tests/test_native_exact_current_probes.py",
+      "archived_path": "reports/precision_followup_20261028/retired_native_exact/tests__test_native_exact_current_probes.py",
+      "sha256": "994ae65f32eb86515f3a7d54a3aa43a73630b5721f4878c3304643fa0b29fe0f",
+      "matches_fef8f5ba": true
+    },
+    {
+      "original_path": "tests/test_official_lifecycle_probes.py",
+      "archived_path": "reports/precision_followup_20261028/retired_native_exact/tests__test_official_lifecycle_probes.py",
+      "sha256": "ba39eee74f79105e4961d0c67280e2783be55e26e799b4b7ec9402eef317f1ab",
+      "matches_fef8f5ba": true
+    },
+    {
+      "original_path": "tests/test_universal_bf16_regression_protection.py",
+      "archived_path": "reports/precision_followup_20261028/retired_native_exact/tests__test_universal_bf16_regression_protection.py",
+      "sha256": "2817db16897775c2e11a607ddc8331f9e0032d40183e4c374e4587ae34df2638",
+      "matches_fef8f5ba": true
+    },
+    {
+      "original_path": "tools/native_exact_current_reference.py",
+      "archived_path": "reports/precision_followup_20261028/retired_native_exact/tools__native_exact_current_reference.py",
+      "sha256": "3ada22b693ecd93c8a84c1e11a1546026b43769e9317e3d41916c259403b37b7",
+      "matches_fef8f5ba": true
+    },
+    {
+      "original_path": "tools/probe_current_only.py",
+      "archived_path": "reports/precision_followup_20261028/retired_native_exact/tools__probe_current_only.py",
+      "sha256": "e76fa70bb256aeeb0826f791be771de3f1be501330c171e90c6a2f8f56e78d80",
+      "matches_fef8f5ba": true
+    },
+    {
+      "original_path": "tools/probe_official_attention.py",
+      "archived_path": "reports/precision_followup_20261028/retired_native_exact/tools__probe_official_attention.py",
+      "sha256": "7648a1884038a2b4cc6d598eb4f8da5a856978ac1a998219589c046032470709",
+      "matches_fef8f5ba": true
+    },
+    {
+      "original_path": "tools/serving_variants.py",
+      "archived_path": "reports/precision_followup_20261028/retired_native_exact/tools__serving_variants.py",
+      "sha256": "4c15477885deeebcbc213be8ae4cea5b123400da7a71e0e15d8e8797833fe12c",
+      "matches_fef8f5ba": true
+    }
+  ],
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_universal_bf16_regression_protection.py tests/test_official_lifecycle_probes.py tests/test_serving_variants.py csrc/experiments/native_exact_current_20261028/test_counterexample.py",
+      "passed": 69,
+      "failed": 0,
+      "seconds": 1.59,
+      "warnings": [
+        "Existing Torch warning: NumPy not installed."
+      ]
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_current_only_dispatch.py tests/test_probe_current_only.py tests/test_first_draft_current_only.py",
+      "passed": 60,
+      "failed": 0
+    }
+  ],
+  "remaining_delivery_requirements": [
+    "All four ten-run top3 quality metrics within less than one percentage point of native.",
+    "Retain accepted 32K and 64K performance without length- or dataset-dependent version switches."
+  ]
+}

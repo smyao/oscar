@@ -1,6 +1,14 @@
-# 精确current路径的额外误差与精度修复
+# 精确current政策的历史交付与撤下
 
 2026-10-28，仅 `codex/oscar-bf16-attention`。用户已确认614c739的32K、64K性能数据集均达标；本轮保护这组性能实现，处理127条PC开启质量集。未使用评测题目拟合PT或修改采样/评分规则。
+
+## 2026-10-28 后续反馈与处置
+
+**fef8f5ba的native_exact默认改动已撤下。** 用户最新提供单轮127/127、FAIL=0，accuracy/easy/hard/short为38.582677165354326 / 44.18604651162791 / 35.714285714285715 / 38.582677165354326，进度19:04、API1173.43秒。原文节选及结构化记录见[反馈](../reports/precision_followup_20261028/user_result_20261028_080248.txt)与[JSON](../reports/precision_followup_20261028/user_result_20261028_080248.json)。客户端节选没有服务加载SHA，不伪填该身份，也不从单轮推导十轮top3统计。
+
+按用户“如果上一轮改动无效，请弃用”的要求，current-only dispatcher、相关probe及生命周期检查恢复614c实现；所有variant清除旧生成配置中的`oscar_current_only_policy`，避免遗留配置重新启用已撤下政策。独立overlay及其生产模块退出活跃树，原文件保存在[退役文件目录](../reports/precision_followup_20261028/retired_native_exact/)。生产recipe3拟合的数学反例仍可独立复现，但它没有证明用户要求的模型质量收益，不能继续作为该默认改动的交付依据。
+
+此次撤下不等于质量达标，也不把单轮成绩全部归因为某一算子。既有四项质量与32K/64K性能约束继续同时成立。下文保留上一轮的设计、局部结果及限制，均属**已撤下方案的历史记录**。
 
 ## 十轮日志与四项交付门
 
@@ -34,14 +42,14 @@
 
 ## 新执行链与性能保护
 
-candidate默认`oscar_current_only_policy=native_exact`，只修改**已有current-only资格内部的算术**；原CPU序列上界、设备prepare零context证明、slot/padding检查、首MTP限制和capture/draft排除条件原样保留。未增加任何按输入、context区间、历史长度或数据集选择版本的判断。
+历史fef8f5ba candidate默认`oscar_current_only_policy=native_exact`（现已撤下），只修改**已有current-only资格内部的算术**；原CPU序列上界、设备prepare零context证明、slot/padding检查、首MTP限制和capture/draft排除条件原样保留。未增加任何按输入、context区间、历史长度或数据集选择版本的判断。
 
 1. 原Q由现有`copy_validate_bf16_query_out`检查并写入独立、预分配的`query_rot_bf16`，FIA消费其原空间副本。
 2. 原K/V与该Q进入现有native因果FIA，shape、GQA、scale、mask及cumulative不变。
 3. 保留原尺寸的连续输出规范化copy、LSE复制和`copy_validate_current_out`；不做最终逆旋转。每个被guard读取的status都有本次写入。
 4. 缓存写入仍调用原`store_rotated`：相同BF16中心化、K/V旋转、K=.96/V=.92、INT2 codec、精确snapshot和页所有权。所有后续历史/混合读取仍使用原旋转域。
 
-生产实现：[current_only_dispatch.py](../oscar_ascend/integration/current_only_dispatch.py)、[native_exact_current.py](../oscar_ascend/integration/native_exact_current.py)。没有错误后切换路径或历史BF16恢复。
+当时实现：[current_only_dispatch.py退役副本](../reports/precision_followup_20261028/retired_native_exact/oscar_ascend__integration__current_only_dispatch.py)、[native_exact_current.py退役副本](../reports/precision_followup_20261028/retired_native_exact/oscar_ascend__integration__native_exact_current.py)。没有错误后切换路径或历史BF16恢复。
 
 | 工作 | 原路径 | 新路径 |
 |---|---:|---:|
@@ -58,7 +66,7 @@ candidate默认`oscar_current_only_policy=native_exact`，只修改**已有curre
 
 ## 探针和独立参考
 
-旧v4 oracle及容差不改。新增[精确current合同](../configs/acceptance_native_exact_current.json)和[原空间独立参考](../tools/native_exact_current_reference.py)。只对已资格、无历史的样本使用原Q/K/V的FP64期望；历史、未启用shortcut和后续q1仍调用原v4参考。
+旧v4 oracle及容差不改。新增[精确current合同](../reports/precision_followup_20261028/retired_native_exact/configs__acceptance_native_exact_current.json)和[原空间独立参考](../reports/precision_followup_20261028/retired_native_exact/tools__native_exact_current_reference.py)。只对已资格、无历史的样本使用原Q/K/V的FP64期望；历史、未启用shortcut和后续q1仍调用原v4参考。
 
 current-only/首MTP探针继续执行实际服务forward、相同store和后续decode检查；新policy、合同、overlay/oracle SHA及raw-Q检查调用证据均绑定，旧回执不能放行新policy。disabled对照显式使用旧rotated_v4，避免对照配置自相矛盾。
 
@@ -78,4 +86,4 @@ current-only/首MTP探针继续执行实际服务forward、相同store和后续d
 git pull --ff-only && bash scripts/install_serve.sh --variant candidate
 ```
 
-仍复用recipe3 PT，不需要删PT、重新拟合或额外诊断参数。启动摘要显示`current_only_policy=native_exact`、`current_only_coordinate_frame=original_native`；cached/mixed仍是v4旋转域和FP32 metadata读端。
+撤下后固定命令继续复用recipe3 PT，无需删PT、重新拟合或增加诊断参数。current-only恢复614c的v4旋转域；原历史/混合读核和FP32 metadata政策保持。当前入口不再生成或显示`native_exact`政策。

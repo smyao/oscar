@@ -1,6 +1,6 @@
 # 完成状态与证据
 
-2026-10-28 质量：用户确认当前32K/64K性能数据集达标；本轮附件127条质量集十轮top3四项仍失败。新增native_exact current-only精度政策，保留历史读核/缓存写入与既有性能参数，见[精度修复](native_exact_current_precision_20261028.md)。质量门保持四指标各<1个百分点；单token等价、302项主机回归与旧CANN原字节证据不充当新的模型分数。
+2026-10-28 质量续修：用户最新单轮127/127、FAIL=0，accuracy/easy/hard/short为38.58/44.19/35.71/38.58，进度19:04、API1173.43秒。上一轮native_exact默认政策撤下，current-only/probe恢复已获32K/64K性能确认的614c实现，清除旧配置残留；[失败与撤下记录](native_exact_current_precision_20261028.md)、[用户原文节选](../reports/precision_followup_20261028/user_result_20261028_080248.txt)。这不是新的十轮top3统计，不将撤下、局部数值反例或主机回归写成模型质量达标；四指标各<1点与性能保持仍须同时成立。
 
 2026-10-28 用户确认34bc的64K达标、32K及以下退化30%；该组合的双目标判定为失败。当前修复按阶段统一撤销decode批量Cast并保留C16，禁止输入长度特判；[修复记录](universal_regression_repair_20261028.md)保存原基底与长prefill源身份。32K、64K必须同时满足，不能以单项通过覆盖另一项退化。
 

@@ -1,6 +1,8 @@
 # OSCAR 优化与失败证据索引
 
-2026-10-28 精度续修：用户确认614c的32/64K性能通过，127条PC质量集仍失败。两组10轮逐指标top3差距为4.4619/2.3256/4.7619/4.4619个百分点。真实recipe3拟合的无历史单token反例中，旋转往返令774/1536元素改变、max_abs0.00830078，而无INT2时原attention应直接返回V。candidate仅在原已证明current-only路由使用原空间native FIA，缓存writer输入保持，省2个query-head GEMM、无新增copy/算子/缓冲；历史/C4/C16/decode/PT/argv/timer不变。302项主机/参考回归通过；原质量数据与chunk精度层依赖另存，不用局部数值代替四项交付分数。见[实现与完整证据](native_exact_current_precision_20261028.md)。
+2026-10-28 native_exact撤下：用户最新质量单轮38.58/44.19/35.71/38.58，API1173.43秒，仍未交付要求的质量与耗时。按用户要求撤下fef8f5ba的native_exact默认政策，current-only与相关probe恢复614c原实现；所有variant清除残留policy。recipe3/PT、q4/q1/C4/C16、16K预算、PC/MTP/timer保持。原302项主机结果与单token旋转反例保留为历史；它们不能支持模型达标。撤下是失败处置，后续仍须解决四项十轮top3差距各<1点并保护两种性能负载。见[失败证据与处置](native_exact_current_precision_20261028.md)、档案#174。
+
+2026-10-28 native_exact历史交付（已撤下）：用户确认614c的32/64K性能通过，127条PC质量集仍失败。两组10轮逐指标top3差距为4.4619/2.3256/4.7619/4.4619个百分点。真实recipe3拟合的无历史单token反例中，旋转往返令774/1536元素改变、max_abs0.00830078，而无INT2时原attention应直接返回V。candidate仅在原已证明current-only路由使用原空间native FIA，缓存writer输入保持，省2个query-head GEMM、无新增copy/算子/缓冲；历史/C4/C16/decode/PT/argv/timer不变。302项主机/参考回归通过；原质量数据与chunk精度层依赖另存，不用局部数值代替四项交付分数。见[实现与完整证据](native_exact_current_precision_20261028.md)。
 
 2026-10-28 用户实测回归：34bc2b75的64K达标，但32K及以下慢30%；该组合不满足双场景目标。修复撤下所有长度q4/q1的三处批量Cast绑定，decode完整原源恢复232b；C16和finite helper完整保持34bc，C4/current-only/调度/16K预算/APC/MTP/PT/timer不动。不新增长度阈值或版本路由。源码身份、路径覆盖、编译审查与交付证据见[通用回归修复](universal_regression_repair_20261028.md)。原34bc的本地通过及现场退化同时保留，不把前者当作后者的否定证据。
 

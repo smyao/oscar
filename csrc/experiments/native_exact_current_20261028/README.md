@@ -1,4 +1,9 @@
-# Exact-current numerical audit
+# Exact-current numerical audit (retired delivery)
+
+The native-exact default was withdrawn after the 2026-10-28 user feedback.
+This experiment remains a reproducible algebra counterexample; its local
+results did not establish the model-quality target. See
+[the retirement record](../../../docs/native_exact_current_precision_20261028.md).
 
 This is a CPU algebra counterexample using the actual recipe3 fitter on
 512 disclosed synthetic observations per TP rank. It does not use user

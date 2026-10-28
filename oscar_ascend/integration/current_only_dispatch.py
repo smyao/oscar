@@ -1,4 +1,4 @@
-"""Verified fresh-suffix execution under the existing native-context proof.
+"""Experimental fresh-suffix execution; not enabled by serving presets.
 
 Archive #126/#129/#142/#148/#155 and D.4: a proven zero-history suffix has only
 exact current BF16 attention. Existing-prefix requests retain the complete
@@ -8,9 +8,8 @@ an incorrect host zero-context proof before executing current attention.
 #34/#36/#127-129/#140: full-input buffers may exceed the historical-CV row
 # budget. Validate the historical prefix separately before any prefix writes;
 # the existing #142 dummy/capture and device context checks remain mandatory.
-#13-20/#148/#164: legacy V4 exact-only rotates Q/K/V and applies one inverse.
-#173: explicit native_exact policy keeps the proven fresh suffix in native
-# attention arithmetic; its cache writer still uses the official rotated frame.
+#13-20/#148/#164: V4 exact-only also rotates Q/K/V and applies one final
+# inverse; skipping INT2 history does not skip the official numerical frame.
 """
 from dataclasses import replace
 
@@ -39,8 +38,6 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
         raise OscarReadinessError('current-only plan does not match active/padded tokens')
     state=impl.provider.layer_state(layer.layer_name)
     official_math=impl.provider.config.get("experimental_official_math",False)
-    native_exact=(official_math and
-        impl.provider.config.get("oscar_current_only_policy", "rotated_v4")=="native_exact")
     workspace=state.workspace
     workspace.validate_current_only(n,h,hk,d)
     if cut:
@@ -97,11 +94,7 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
             run_status_guard(ops,'current_only.padding',
                              [("padding",bad_padding),("rotate",empty),("merge",empty),("store",empty)])
     with phase('current_native_fia',**fields):
-        if native_exact:
-            from .native_exact_current import verified_query
-            attention_q=verified_query(ops,state,q,slots)
-            attention_k,attention_v=k,v
-        elif official_math:
+        if official_math:
             from .official_math import rotate_inputs
             attention_q,attention_k,attention_v=rotate_inputs(ops,state,q,k,v,slots,current_only=True)
         else:
@@ -112,12 +105,9 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
         if lse.dtype not in (torch.float16,torch.bfloat16,torch.float32):
             raise OscarReadinessError('current-only kernel received an unsupported native LSE dtype')
         # Canonical ND buffers, matching the existing copy into partials.
-        # Official paths retain Q-validation status and separate FP32 LSE.
-        # The legacy nonofficial path may reuse its unused rotate-status arena.
-        if native_exact:
-            from .native_exact_current import finalize_output
-            finalize_output(ops,state,current,lse,output[cut:actual])
-        elif official_math:
+        # Q rotation is unused in this zero-history suffix; its status arena
+        # can hold the temporary FP32 LSE after the prefix guard has executed.
+        if official_math:
             from .official_math import finalize_output
             workspace.lse[:fresh].copy_(lse.squeeze(-1))
             finalize_output(ops,state,current.view(fresh,h,d),workspace.lse[:fresh],
@@ -137,17 +127,13 @@ def dispatch_current_suffix(impl, layer, query, key, value, kv_cache, metadata,
     with phase('phase1_stores',**fields):
         from .cache_storage_ops import store_current
         store_current(ops,state,k,v,slots,positions,starts,window_map,impl.provider.config,
-                      rotated_kv=(attention_k,attention_v) if official_math and not native_exact else None)
+                      rotated_kv=(attention_k,attention_v) if official_math else None)
     with phase('status_guard',**fields):
         run_status_guard(ops,'current_only.final',
                          [("metadata",status.view(-1)),("rotate",workspace.rotate_status[:fresh] if official_math else empty),
                           ("merge",workspace.merge_status[:fresh].view(-1)),
                           ("store",workspace.store_status[:fresh].view(-1))])
         if official_math:
-            if native_exact:
-                from .native_exact_current import guard_output
-                guard_output(ops,state,fresh)
-            else:
-                from .official_math import guard_final_output
-                guard_final_output(ops,state,fresh)
+            from .official_math import guard_final_output
+            guard_final_output(ops,state,fresh)
     return output

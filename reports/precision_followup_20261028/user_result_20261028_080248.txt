@@ -1,0 +1,6 @@
+[2026-10-28 08:03:54,436] [ais_bench] [INFO] Starting progress bar Total data num: 127 Finished data num: 0 Left data num: 127
+Progress: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 127/127 [19:04<00:00,  9.01s/case]
+POST=127 (0.0/s)  RECV=127 (0.0/s)  FAIL=0 (0.0/s)  FINISH=127 (0.0/s)
+[2026-10-28 08:22:58,723] [ais_bench] [INFO] Api infer task time elapsed: 1173.43s
+[2026-10-28 08:23:29,348] [ais_bench] [INFO] Task vllm-api-stream-chat/LongBenchv2: {'accuracy': 38.582677165354326, 'accuracy_easy': 44.18604651162791, 'accuracy_hard': 35.714285714285715, 'accuracy_short': 38.582677165354326}
+[2026-10-28 08:23:31,449] [ais_bench] [INFO] write summary to /workspace/benchmark-3.1-20260119-master/outputs/default/20261028_080248/summary/summary_20261028_080248.txt

@@ -17,6 +17,8 @@
 
 # 症状速查表（报错关键字 → 条目编号）
 
+- native_exact交付后质量单轮38.58/44.19/35.71/38.58、API1173.43秒，用户要求弃用：见 #174；仅记录实测反馈，未将局部反例确认为现场全部根因。
+
 - 32K/64K性能通过，但127条PC质量集十轮top3四项仍落后：见 #173，原无历史精确current路径的额外旋转误差与native_exact政策。
 
 - `34bc2b75` 后64K达标但32K及以下慢30%：见 #172，共用decode批量Cast与C16组合回归；禁止按输入长度切版本。
@@ -28860,3 +28862,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修复**：新candidate政策native_exact仅改变已有无历史精确suffix内部算术：原Q/K/V native FIA直接输出；原Q copy/finite检查、slot/context/padding证明和最终output/status检查保留；K中心化+K/V旋转、INT2和精确snapshot writer不变。独立Q scratch避免strided输入别名；所有被guard读取的状态本次都写入。删除Q旋转和最终逆旋转两个GEMM，无新增copy/算子/缓冲。历史/混合仍完整v4，q4/q1/C4/C16等CANN源逐字不变，PT/clip/预算/PC/MTP/timer保持。
 
 **验收与D.4**：对应已有current fused FIA，不引入历史恢复或错误后退路；原资格/所有权不动，仅消除不必要坐标往返。新增独立合同和原空间参考，旧v4 oracle/容差不改；同incoming K/V的12份writer输入逐位一致，302项主机/参考/接缝回归通过。本文不写入新的模型通过分数；四项质量和两项性能仍作为共同交付条件。设计、操作账、复现、原始失败及本地验证见 `docs/native_exact_current_precision_20261028.md` 与本轮validation。
+
+
+## [174] 质量反馈条目（2026-10-28 用户回传）· native_exact交付后仍不满意，撤下该默认政策
+
+**现场事实**：用户最新run `20261028_080248`的127条LongBenchv2均完成、FAIL=0，accuracy/easy/hard/short分别为38.582677165354326、44.18604651162791、35.714285714285715、38.582677165354326。进度耗时19:04，API infer task耗时1173.43秒。原文节选与结构化数据保存在 `reports/precision_followup_20261028/user_result_20261028_080248.txt/json`。本次只有一轮，不能写成十轮top3验收。最近交付为fef8f5ba，但客户端没有服务加载SHA或policy回显，不把交付身份伪写成现场已核实身份。
+
+**用户要求与处置**：用户明确要求“如果你上一轮的改动无效，请你弃用上一轮的，然后直接给我满意的优化”。撤下native_exact默认政策，current-only dispatcher和相关probe恢复614c原实现；所有variant清除旧生成配置中的`oscar_current_only_policy`。精确current独立overlay退出活跃树，原文件、302项主机结果和数学反例保留。此处置不是四项质量达标，不改变已确认的614c性能基底、PT/clip、16K预算、PC/MTP或timer。
+
+**根因边界**：#173的旋转往返反例只证明局部有限精度差异，不能证明模型收益；本次反馈不支持继续以它作为默认改动的交付依据。没有逐层激活、设备相位或同轮对照，不将单轮分数与耗时全部归因到某个算子，也不以RPS差异解释结果。后续代码审计与合成协议反例必须单列本地证据，不写成本条已确认的现场根因。
+
+**回归检查**：撤下验证固定current-only完整源码身份、candidate配置与614c快照一致、旧配置残留不能重新启用退役policy；保留原q4/q1/C4/C16源码与原路由门。具体主机结果见本轮withdrawal_validation.json；不将恢复源码或主机通过写成新的NPU/质量/性能验收。

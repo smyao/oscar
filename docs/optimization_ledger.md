@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-28 后续方案裁决：native_exact撤下提交bcbf4153；MTP query-relative/扩大259窗口、APC发布门及matched-cohort lookup均有明确精度、有效命中或native admission容量反例，未接production。当前无满足质量与性能保护双门的新默认优化，目标未完成。两项协议现象已有本地repro，未归因为全部LongBench分差。见[本轮裁决](precision_followup_20261028.md)。
+
 2026-10-28 native_exact撤下：用户最新质量单轮38.58/44.19/35.71/38.58，API1173.43秒，仍未交付要求的质量与耗时。按用户要求撤下fef8f5ba的native_exact默认政策，current-only与相关probe恢复614c原实现；所有variant清除残留policy。recipe3/PT、q4/q1/C4/C16、16K预算、PC/MTP/timer保持。原302项主机结果与单token旋转反例保留为历史；它们不能支持模型达标。撤下是失败处置，后续仍须解决四项十轮top3差距各<1点并保护两种性能负载。见[失败证据与处置](native_exact_current_precision_20261028.md)、档案#174。
 
 2026-10-28 native_exact历史交付（已撤下）：用户确认614c的32/64K性能通过，127条PC质量集仍失败。两组10轮逐指标top3差距为4.4619/2.3256/4.7619/4.4619个百分点。真实recipe3拟合的无历史单token反例中，旋转往返令774/1536元素改变、max_abs0.00830078，而无INT2时原attention应直接返回V。candidate仅在原已证明current-only路由使用原空间native FIA，缓存writer输入保持，省2个query-head GEMM、无新增copy/算子/缓冲；历史/C4/C16/decode/PT/argv/timer不变。302项主机/参考回归通过；原质量数据与chunk精度层依赖另存，不用局部数值代替四项交付分数。见[实现与完整证据](native_exact_current_precision_20261028.md)。

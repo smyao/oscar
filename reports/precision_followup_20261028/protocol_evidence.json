@@ -1,0 +1,527 @@
+{
+  "NPU": "not_run",
+  "graph": "not_run",
+  "head": "fef8f5ba747173addf38fda7f16152130bc90046",
+  "limits": [
+    "Synthetic hash identities, model inputs and a fixed synthetic projection/head; no real LongBench examples.",
+    "Native ownership/cache methods execute unchanged; block-pool pressure is not a full scheduler/service trace.",
+    "Execution-owner tags are symbolic; separate numerical examples demonstrate distinguishable valid FULL/GDN payloads.",
+    "GDN uses the pinned Ascend pure-torch reference, not actual device GDN or complete Qwen weights.",
+    "The numerical examples are compositional counterexamples, not a measured share of accuracy loss or runtime variance.",
+    "No uncommitted-token hash publication or physical-page write race is claimed by these examples."
+  ],
+  "model_quality": "not_run",
+  "native_cohort_replay": {
+    "A_initial_joint_lookup": {
+      "groups": [
+        {
+          "group": 0,
+          "live_blocks": [
+            {
+              "block_id": 1,
+              "ref_count": 1,
+              "symbolic_writer": [
+                "A",
+                2304
+              ]
+            }
+          ]
+        },
+        {
+          "group": 1,
+          "live_blocks": [
+            {
+              "block_id": 3,
+              "ref_count": 1,
+              "symbolic_writer": [
+                "A",
+                2304
+              ]
+            }
+          ]
+        },
+        {
+          "group": 2,
+          "live_blocks": [
+            {
+              "block_id": 7,
+              "ref_count": 1,
+              "symbolic_writer": [
+                "A",
+                2304
+              ]
+            }
+          ]
+        },
+        {
+          "group": 3,
+          "live_blocks": [
+            {
+              "block_id": 11,
+              "ref_count": 1,
+              "symbolic_writer": [
+                "A",
+                2304
+              ]
+            }
+          ]
+        }
+      ],
+      "hit_tokens": 2304
+    },
+    "B_owned_FULL_first_block": 43,
+    "X_initial_joint_lookup": {
+      "groups": [
+        {
+          "group": 0,
+          "live_blocks": [
+            {
+              "block_id": 1,
+              "ref_count": 1,
+              "symbolic_writer": [
+                "A",
+                2304
+              ]
+            }
+          ]
+        },
+        {
+          "group": 1,
+          "live_blocks": [
+            {
+              "block_id": 3,
+              "ref_count": 1,
+              "symbolic_writer": [
+                "A",
+                2304
+              ]
+            }
+          ]
+        },
+        {
+          "group": 2,
+          "live_blocks": [
+            {
+              "block_id": 7,
+              "ref_count": 1,
+              "symbolic_writer": [
+                "A",
+                2304
+              ]
+            }
+          ]
+        },
+        {
+          "group": 3,
+          "live_blocks": [
+            {
+              "block_id": 11,
+              "ref_count": 1,
+              "symbolic_writer": [
+                "A",
+                2304
+              ]
+            }
+          ]
+        }
+      ],
+      "hit_tokens": 2304
+    },
+    "X_keeps_FULL_A": 1,
+    "X_leases_after_advance": {
+      "X": [
+        24,
+        28,
+        32
+      ]
+    },
+    "after_B_joint_lookup": {
+      "groups": [
+        {
+          "group": 0,
+          "live_blocks": [
+            {
+              "block_id": 1,
+              "ref_count": 1,
+              "symbolic_writer": [
+                "A",
+                2304
+              ]
+            }
+          ]
+        },
+        {
+          "group": 1,
+          "live_blocks": [
+            {
+              "block_id": 46,
+              "ref_count": 1,
+              "symbolic_writer": [
+                "B",
+                2304
+              ]
+            }
+          ]
+        },
+        {
+          "group": 2,
+          "live_blocks": [
+            {
+              "block_id": 50,
+              "ref_count": 1,
+              "symbolic_writer": [
+                "B",
+                2304
+              ]
+            }
+          ]
+        },
+        {
+          "group": 3,
+          "live_blocks": [
+            {
+              "block_id": 54,
+              "ref_count": 1,
+              "symbolic_writer": [
+                "B",
+                2304
+              ]
+            }
+          ]
+        }
+      ],
+      "hit_tokens": 2304
+    },
+    "backend": "actual production leases/splitter and pinned native manager/coordinator/pool/hash contracts",
+    "before_B_joint_lookup": {
+      "groups": [
+        {
+          "group": 0,
+          "live_blocks": []
+        },
+        {
+          "group": 1,
+          "live_blocks": []
+        },
+        {
+          "group": 2,
+          "live_blocks": []
+        },
+        {
+          "group": 3,
+          "live_blocks": []
+        }
+      ],
+      "hit_tokens": 0
+    },
+    "block_owners_are_symbolic_execution_tags": true,
+    "global_budget": 16384,
+    "hash_block_tokens": 768,
+    "max_extra_GDN_lease_pages_per_request": 3,
+    "mixed_execution_origins_proven": true,
+    "pool_blocks": 160,
+    "pressure_allocated_only_free_blocks": [
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      112,
+      113,
+      114,
+      115,
+      116,
+      117,
+      118,
+      119,
+      120,
+      121,
+      122,
+      123,
+      124,
+      125,
+      126,
+      127,
+      128,
+      129,
+      130,
+      131,
+      132,
+      133,
+      134,
+      135,
+      136,
+      137,
+      138,
+      139,
+      140,
+      141,
+      142,
+      143,
+      144,
+      145,
+      146,
+      147,
+      148,
+      149,
+      150,
+      151,
+      152,
+      153,
+      154,
+      155,
+      156,
+      157,
+      158,
+      159,
+      18,
+      2,
+      19,
+      6,
+      15,
+      4,
+      5,
+      20,
+      10,
+      16,
+      8,
+      9,
+      21,
+      14,
+      17,
+      12,
+      13,
+      3,
+      7,
+      11
+    ],
+    "trace": [
+      {
+        "before": 0,
+        "end": 2304,
+        "request": "A",
+        "scheduled": 2304
+      },
+      {
+        "before": 2304,
+        "end": 3840,
+        "request": "A",
+        "scheduled": 1536
+      },
+      {
+        "before": 3840,
+        "end": 5000,
+        "request": "A",
+        "scheduled": 1160
+      },
+      {
+        "before": 2304,
+        "end": 4608,
+        "request": "X",
+        "scheduled": 2304
+      },
+      {
+        "before": 4608,
+        "end": 6912,
+        "request": "X",
+        "scheduled": 2304
+      },
+      {
+        "before": 6912,
+        "end": 8000,
+        "request": "X",
+        "scheduled": 1088
+      },
+      {
+        "before": 0,
+        "end": 768,
+        "request": "B",
+        "scheduled": 768
+      },
+      {
+        "before": 768,
+        "end": 1536,
+        "request": "B",
+        "scheduled": 768
+      },
+      {
+        "before": 1536,
+        "end": 2304,
+        "request": "B",
+        "scheduled": 768
+      },
+      {
+        "before": 2304,
+        "end": 3072,
+        "request": "B",
+        "scheduled": 768
+      },
+      {
+        "before": 3072,
+        "end": 3840,
+        "request": "B",
+        "scheduled": 768
+      },
+      {
+        "before": 3840,
+        "end": 4608,
+        "request": "B",
+        "scheduled": 768
+      },
+      {
+        "before": 4608,
+        "end": 5000,
+        "request": "B",
+        "scheduled": 392
+      }
+    ]
+  },
+  "numerical_evidence": {
+    "MTP": {
+      "actual_greedy_adapter_output": [
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "all_BF16_serial_argmax": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "all_BF16_verify_argmax": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "context": 768,
+      "fixed_two_class_head": "logits=[.25-x,x-.25],x=output[head0,dim0]",
+      "selected_cached_token": 514,
+      "serial_q1_target_argmax": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "serial_third_query_cut": 515,
+      "third_draft_accepted_despite_serial_target_disagreement": true,
+      "third_serial_output": 0.333984375,
+      "third_verify_output": 0.2001953125,
+      "third_verify_query_position": 770,
+      "verify_fixed_cut": 513,
+      "verify_target_argmax": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "codec": "actual test-only144B pack/unpack, Kclip.96,Vclip.92,mode0",
+    "cohort_payload": {
+      "A_hidden_element": 0.19921875,
+      "A_projected_element": 0.59765625,
+      "B_hidden_element": 0.33203125,
+      "B_projected_element": 0.73046875,
+      "FULL_INT2_slot_different_bytes": 64,
+      "FULL_snapshot_different_elements": 128,
+      "GDN_A_final_element": 0.08984375,
+      "GDN_B_final_element": 0.1494140625,
+      "GDN_final_different_elements": 128,
+      "GDN_reference": "references/vllm-ascend/tests/e2e/nightly/single_node/ops/singlecard_ops/test_recurrent_gated_delta_rule.py",
+      "GDN_reference_execution": "same BF16 initial state,104-token suffix2200..2303, first V from hidden; remaining V0; beta=.5,g=-.001; K switches e0 to e1",
+      "all_BF16_split_ablation_bitwise_equal": true,
+      "checkpoint": 2304,
+      "position_in_last259_snapshot_rows": true,
+      "query_position": 2200,
+      "same_linear_projection": "y[:128]=h[:128]+.4*h[-1]; other dimensions unchanged"
+    },
+    "synthetic_inputs": "D256/Hq6/Hkv1; identity rotations, zero center; K/Q first13 dims4; selected V first128 dimsBF16(.2), next64=-1,last64=1; all others0"
+  },
+  "performance": "not_run",
+  "source_sha256": {
+    "csrc/kernels/attention_cv_official_decode.cpp": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+    "csrc/kernels/attention_official_tasks.cpp": "bfcc571b3917fd7f8ee187fe46aac64b5246acfcba0bb6118e5f71ef723cf06c",
+    "oscar_ascend/integration/greedy_sampling.py": "fa7865bd39df52ad2f9b2c8934eca40f8ff6fdc699dcb40d26e67760c96cf863",
+    "oscar_ascend/integration/prefix_checkpoint.py": "7e9eac665bcbaae7366ad53fbc3b0ae88838406bce2e09a7ab0d9aa45f421a9c",
+    "oscar_ascend/plugin.py": "3f511e2352931d2c5074e388882e3973e376a4774d08233c71e41b7ef1b979b7",
+    "references/vllm-ascend/tests/e2e/nightly/single_node/ops/singlecard_ops/test_recurrent_gated_delta_rule.py": "d4518a48311e612761cf06cee9dc2ce433218cfed39a6f7d2e8278017e8ebd75",
+    "references/vllm-ascend/vllm_ascend/patch/platform/patch_kv_cache_coordinator.py": "35a62e6bb3960f88192ff609751d631eeafbbc29f087560afd60906b3a504999",
+    "references/vllm-ascend/vllm_ascend/patch/platform/patch_mamba_manager.py": "f39b28a75509ff5b8617104a00c73e6bd21b8b7acd43f81b50c57ea7c474815e",
+    "references/vllm/vllm/v1/core/block_pool.py": "84755b84c36ed6460ceefe2690c9484a9c31488c5da6daa6c918f497d8837dee",
+    "references/vllm/vllm/v1/core/kv_cache_coordinator.py": "aeca063d319413d2bd0f094158a16be08c2a4c9b1c96a21617f97936c23bd9ce",
+    "references/vllm/vllm/v1/core/single_type_kv_cache_manager.py": "dc425e1e87b6157f3e5c46be2bfee54076ccb020b86c5a8aaa3d9901c75e46ef",
+    "reports/precision_followup_20261028/reproduce_protocol.py": "8a5902ed6a66a71fbea0dbbfaa1ac96f801538bb1c5bf92d6d18b50e6c3a0cdb",
+    "tests/test_prefix_checkpoint_retention.py": "9f859982474b42c8ac44e0d848df5e0f0332207aecb4e12b8a1d737f6d7c7ef3",
+    "tests/test_runtime_native.py": "f262d89114db8d4aed5df7d25d7f582617700b3775ed3dff70199fb24a7f6836",
+    "tools/official_reference.py": "605083aa91d0e5296df3aa78ec72d54e3c87f015bd2fcf69a6e2e972fdabbb96"
+  },
+  "source_state": "working-tree hashes bind actual inputs independently of HEAD"
+}

@@ -1,0 +1,38 @@
+{
+  "backend": "pinned native host contracts; synthetic identities",
+  "production_enabled": false,
+  "cases": [
+    {
+      "policy": "promote",
+      "long_prefix_before": 6912,
+      "short_B_hit": 2304,
+      "long_prefix_after": 4608,
+      "short_C_hit_after_recompute": 2304,
+      "stats": {
+        "publication_boundaries": 8,
+        "full_dependencies_checked": 7,
+        "published_cohorts": 4,
+        "withdrawn_advertisements": 11,
+        "promoted_conflicts": 3,
+        "invalidated_cohorts": 2,
+        "existing_cohort_preserved": 2
+      }
+    },
+    {
+      "policy": "preserve",
+      "long_prefix_before": 6912,
+      "short_B_hit": 0,
+      "long_prefix_after": 6912,
+      "short_C_hit_after_recompute": 0,
+      "stats": {
+        "publication_boundaries": 8,
+        "full_dependencies_checked": 10,
+        "published_cohorts": 2,
+        "withdrawn_advertisements": 14,
+        "promoted_conflicts": 1,
+        "invalidated_cohorts": 1,
+        "valid_descendant_preserved": 4
+      }
+    }
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "scope": "synthetic CPU/reference and current candidate route audit; no production edit",
+  "numerical_review": {
+    "context": 768,
+    "logical_query": 770,
+    "selected_old_token": 514,
+    "old_q4_cut": 513,
+    "query_relative_cut": 515,
+    "old_q4": {
+      "output_dim0": 0.2001953125,
+      "argmax": 0
+    },
+    "query_relative": {
+      "output_dim0": 0.333984375,
+      "argmax": 1
+    },
+    "all_bf16": {
+      "output_dim0": 0.2001953125,
+      "argmax": 0
+    },
+    "old_q4_equals_all_bf16": true,
+    "uniform_mask_fix_can_worsen_attention_and_argmax": true
+  },
+  "rollback_review": {
+    "writer_ring_rows": 259,
+    "written_positions": [
+      768,
+      771
+    ],
+    "accepted_drafts": 0,
+    "next_context": 769,
+    "old_cut": 514,
+    "old_invalid_tags": [],
+    "expanded_cut": 511,
+    "expanded_invalid_tags": [
+      {
+        "logical": 511,
+        "observed_tag": 770
+      },
+      {
+        "logical": 512,
+        "observed_tag": 771
+      }
+    ],
+    "extra_spec_rows_are_rollback_reserve": true
+  },
+  "route_review": [
+    {
+      "lengths": [
+        4,
+        768
+      ],
+      "partitioned": true,
+      "parent_operator": "attention_cv_official_cluster4_out",
+      "q4_operator": "attention_cv_official_decode_out"
+    },
+    {
+      "lengths": [
+        768,
+        4
+      ],
+      "partitioned": false,
+      "parent_operator": "attention_cv_official_cluster4_out",
+      "q4_operator": "attention_cv_official_cluster4_out"
+    },
+    {
+      "lengths": [
+        4,
+        8192
+      ],
+      "partitioned": true,
+      "parent_operator": "attention_cv_official_cluster16_out",
+      "q4_operator": "attention_cv_official_decode_out"
+    },
+    {
+      "lengths": [
+        8192,
+        4
+      ],
+      "partitioned": false,
+      "parent_operator": "attention_cv_official_cluster16_out",
+      "q4_operator": "attention_cv_official_cluster16_out"
+    },
+    {
+      "lengths": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        8192
+      ],
+      "partitioned": false,
+      "parent_operator": "attention_cv_official_cluster16_out",
+      "q4_operator": "attention_cv_official_cluster16_out"
+    }
+  ],
+  "native_commit_review": {
+    "uncommitted_drafts_excluded_in_all_cases": true,
+    "cases": [
+      {
+        "context": 767,
+        "scheduled_end": 771,
+        "finalized_end": 768,
+        "actual_native_cache_end": 768,
+        "FULL2304_hashed_pages": 0
+      },
+      {
+        "context": 768,
+        "scheduled_end": 772,
+        "finalized_end": 769,
+        "actual_native_cache_end": 769,
+        "FULL2304_hashed_pages": 0
+      },
+      {
+        "context": 2301,
+        "scheduled_end": 2305,
+        "finalized_end": 2302,
+        "actual_native_cache_end": 2302,
+        "FULL2304_hashed_pages": 0
+      },
+      {
+        "context": 2302,
+        "scheduled_end": 2306,
+        "finalized_end": 2303,
+        "actual_native_cache_end": 2303,
+        "FULL2304_hashed_pages": 0
+      },
+      {
+        "context": 2303,
+        "scheduled_end": 2307,
+        "finalized_end": 2304,
+        "actual_native_cache_end": 2304,
+        "FULL2304_hashed_pages": 1
+      },
+      {
+        "context": 2304,
+        "scheduled_end": 2308,
+        "finalized_end": 2305,
+        "actual_native_cache_end": 2305,
+        "FULL2304_hashed_pages": 1
+      },
+      {
+        "context": 4607,
+        "scheduled_end": 4611,
+        "finalized_end": 4608,
+        "actual_native_cache_end": 4608,
+        "FULL2304_hashed_pages": 2
+      }
+    ]
+  },
+  "source_sha256": {
+    "csrc/kernels/attention_cv_official_decode.cpp": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+    "csrc/kernels/attention_cv_official_cluster4.cpp": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+    "csrc/kernels/attention_cv_official_cluster16.cpp": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
+    "csrc/kernels/attention_official_tasks.cpp": "bfcc571b3917fd7f8ee187fe46aac64b5246acfcba0bb6118e5f71ef723cf06c",
+    "csrc/kernels/store_aligned_int2.cpp": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
+    "oscar_ascend/lifecycle.py": "8791998aabe84dd076e9366b87d0d158722135e5370e2ede09f443c6f67a314d",
+    "oscar_ascend/integration/mixed_decode_split.py": "f7c49a7d92ddbf0aab5036a3b4828cfa0bd7c9989c2570d188370e26ad622181",
+    "oscar_ascend/ops/cv_dispatch.py": "40a27b068cf051a8dee562340c3ea9c2133311de48c422fde9243267c7cbf5b6",
+    "tools/official_reference.py": "605083aa91d0e5296df3aa78ec72d54e3c87f015bd2fcf69a6e2e972fdabbb96",
+    "references/vllm/vllm/v1/core/kv_cache_manager.py": "a69aa08062714b40b149648bbec031a42d22e422fbf9543cd10fbd12d2496edb",
+    "reports/precision_followup_20261028/review_mtp_cut.py": "27c970d258b3c218ae43e251eb354de81806b15e5b0bd620ca9b032416f91546"
+  }
+}

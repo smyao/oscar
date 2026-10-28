@@ -1,0 +1,164 @@
+{
+  "scope": "saved official source SHA verification and unchanged host AST dispatch; GPU kernels not executed",
+  "official_commit": "38680852e52c10bd6b9e9a64ed9bc815e742859b",
+  "sources": {
+    "rotation/run/qwen3.8-27b.sh": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/rotation/run/qwen3.8-27b.sh",
+      "sha256": "ecd21aaf27fccbc44d5d4164d833dab623d0e1e49f2aff8c58a2f80e331e2375",
+      "manifest_match": true
+    },
+    "rotation/run/_common.sh": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/rotation/run/_common.sh",
+      "sha256": "86eafdf48254b189d441b53e5678350d334641c5ff1bb9df6f91481c2c21de28",
+      "manifest_match": true
+    },
+    "rotation/eval_oscar_gpqa.sh": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/rotation/eval_oscar_gpqa.sh",
+      "sha256": "56fc61b252f142456b2f8b32d6e3fa0beb48da8bce2eec9991564b4e9993381c",
+      "manifest_match": true
+    },
+    "python/sglang/srt/mem_cache/unified_kv_pool.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/mem_cache/unified_kv_pool.py",
+      "sha256": "d5d73f6a72e27a20392323a5f92fa47e4ca51a90147ed0ab7f0711450898af1f",
+      "manifest_match": true
+    },
+    "python/sglang/srt/mem_cache/kv_quant_kernels.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/mem_cache/kv_quant_kernels.py",
+      "sha256": "60aaa142c34d5113cb9b5e4366b74b9c474120f6eb6405fe6972b4cec8eb53eb",
+      "manifest_match": true
+    },
+    "python/sglang/QuantKernel/oscar_rotation_clip_int2_kv.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/QuantKernel/oscar_rotation_clip_int2_kv.py",
+      "sha256": "66c8ed67781777ec1ded2bcc7cb0d4c5a440aa1abe842fd62dfffe13d730531e",
+      "manifest_match": true
+    },
+    "python/sglang/QuantKernel/gpu_flush_int2.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/QuantKernel/gpu_flush_int2.py",
+      "sha256": "5a1a6b26c0358453212f992c17be8189df18f5b05a57c37154da5de3eb8f55d1",
+      "manifest_match": true
+    },
+    "python/sglang/srt/layers/attention/triton_ops/decode_attention.py": {
+      "url": "https://raw.githubusercontent.com/FutureMLS-Lab/OSCAR/38680852e52c10bd6b9e9a64ed9bc815e742859b/python/sglang/srt/layers/attention/triton_ops/decode_attention.py",
+      "sha256": "4490d2eff302d7af62ee1f1c4fd771dea01525b8014b887b88e4051cb644a9dc",
+      "manifest_match": true
+    }
+  },
+  "earlier_qwen38_recipe": {
+    "commit": "339368e8fb440c53d5e157a5974036f25f3841a0",
+    "url": "https://github.com/FutureMLS-Lab/OSCAR/blob/339368e8fb440c53d5e157a5974036f25f3841a0/rotation/run/qwen3.8-27b.sh",
+    "sha256": "ecd21aaf27fccbc44d5d4164d833dab623d0e1e49f2aff8c58a2f80e331e2375",
+    "matches_later_recipe": true
+  },
+  "target_recipe": {
+    "model": "Qwen3.8-27B",
+    "GROUP_SIZE_default": 256,
+    "LLOYD_MAX_default": 0
+  },
+  "source_correction": "Old generic/Qwen3-8B/Qwen3-32B scripts default128; they do not override target Qwen3.8 recipe256.",
+  "dispatch_cases": [
+    {
+      "head_dim": 256,
+      "requested_group_size": 256,
+      "resolved": [
+        256,
+        1
+      ],
+      "K_and_V_launches": [
+        {
+          "name": "single",
+          "grid": [
+            1,
+            1
+          ],
+          "constexprs": {
+            "HP_OFFSET": -1,
+            "HEAD_DIM": 256,
+            "BLOCK_QUARTER": 64,
+            "BLOCK_TOK": 4,
+            "CLIP_INDEX": 245,
+            "CLIP_PER_HEAD": false,
+            "LLOYD_MAX": false,
+            "num_warps": 4,
+            "num_stages": 1
+          }
+        },
+        {
+          "name": "single",
+          "grid": [
+            1,
+            1
+          ],
+          "constexprs": {
+            "HP_OFFSET": -1,
+            "HEAD_DIM": 256,
+            "BLOCK_QUARTER": 64,
+            "BLOCK_TOK": 4,
+            "CLIP_INDEX": 235,
+            "CLIP_PER_HEAD": false,
+            "LLOYD_MAX": false,
+            "num_warps": 4,
+            "num_stages": 1
+          }
+        }
+      ],
+      "decode_flush_config": [
+        64,
+        1,
+        256
+      ]
+    },
+    {
+      "head_dim": 256,
+      "requested_group_size": 128,
+      "resolved": [
+        128,
+        2
+      ],
+      "K_and_V_launches": [
+        {
+          "name": "grouped",
+          "grid": [
+            1,
+            1
+          ],
+          "constexprs": {
+            "HEAD_DIM": 256,
+            "BLOCK_QUARTER": 64,
+            "NUM_GROUPS": 2,
+            "GROUP_SIZE": 128,
+            "HP_OFFSET": -1,
+            "BLOCK_TOK": 4,
+            "CLIP_INDEX": 245,
+            "CLIP_PER_HEAD": false,
+            "num_warps": 4,
+            "num_stages": 1
+          }
+        },
+        {
+          "name": "grouped",
+          "grid": [
+            1,
+            1
+          ],
+          "constexprs": {
+            "HEAD_DIM": 256,
+            "BLOCK_QUARTER": 64,
+            "NUM_GROUPS": 2,
+            "GROUP_SIZE": 128,
+            "HP_OFFSET": -1,
+            "BLOCK_TOK": 4,
+            "CLIP_INDEX": 235,
+            "CLIP_PER_HEAD": false,
+            "num_warps": 4,
+            "num_stages": 1
+          }
+        }
+      ],
+      "decode_flush_config": [
+        64,
+        2,
+        128
+      ]
+    }
+  ]
+}

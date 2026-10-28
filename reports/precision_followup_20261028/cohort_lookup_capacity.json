@@ -1,0 +1,15 @@
+{
+  "backend": "pinned native host contracts; no NPU/model/performance experiment",
+  "production_enabled": false,
+  "native_hit_tokens": 2304,
+  "matched_hit_tokens": 2304,
+  "native_FULL_free_pages_needed": 0,
+  "matched_FULL_free_pages_needed": 1,
+  "native_references_before": {
+    "FULL_A": 1,
+    "FULL_B": 0
+  },
+  "matched_adoption_free_pool_consumption": 4,
+  "extra_allocated_device_pages": 0,
+  "capacity_note": "Selecting the correct existing producer FULL can need an additional free-pool reference; native admission counts it."
+}

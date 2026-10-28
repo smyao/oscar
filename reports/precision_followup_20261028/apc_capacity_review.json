@@ -1,0 +1,22 @@
+{
+  "scope": "actual pinned native host FULL manager/pool; synthetic duplicate hash, no device inference",
+  "same_prefix_tokens": 2304,
+  "canonical_active_full": 1,
+  "producer_idle_full": 2,
+  "canonical_refcount": 1,
+  "producer_refcount": 0,
+  "free_pages": 1,
+  "native_needed_canonical": 1,
+  "native_needed_producer": 2,
+  "canonical_admission_fits": true,
+  "producer_admission_fits": false,
+  "free_after_canonical_touch": 1,
+  "free_after_producer_touch": 0,
+  "no_new_device_allocation_does_not_imply_no_capacity_cost": true,
+  "source_sha256": {
+    "references/vllm/vllm/v1/core/single_type_kv_cache_manager.py": "dc425e1e87b6157f3e5c46be2bfee54076ccb020b86c5a8aaa3d9901c75e46ef",
+    "references/vllm/vllm/v1/core/block_pool.py": "84755b84c36ed6460ceefe2690c9484a9c31488c5da6daa6c918f497d8837dee",
+    "tests/test_prefix_checkpoint_retention.py": "9f859982474b42c8ac44e0d848df5e0f0332207aecb4e12b8a1d737f6d7c7ef3",
+    "reports/precision_followup_20261028/review_apc_capacity.py": "432684e5e4ffc1110ead045b42eb7591fec46a92cff2931defe2a32071ec54bb"
+  }
+}

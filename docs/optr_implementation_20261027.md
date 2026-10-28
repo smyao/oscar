@@ -1,5 +1,7 @@
 # OptR 离线旋转精修：源码复核、改造与验收边界
 
+> 2026-10-28最新：按用户要求切换官方sequential目标及NPU大矩阵拟合，CPU保留小矩阵指数/最终部署验证；旧原生trace可认证复用，旧拟合PT/断点因目标变化隔离。下文历史CPU拟合描述不再代表默认候选。见[本轮实现与边界](optr_sequential_ascend_20261028.md)。
+
 2026-10-28最新用户授权：允许生成实验PT，先测试OptR。固定candidate直接启用recipe5，无需新增参数；独立test执行并记录退化，但不阻断实验PT/后续服务。validation逐请求非劣和数值合法性仍严格，test不参与矩阵重选。新证书schema2声明experimental和发布政策，逐层原始test指标及汇总失败状态随PT保存，加载时显示`OPTR_ARTIFACT`；不能将[历史失败](optr_independent_test_failure_20261028.md)改记为通过。下文旧独立test禁止发布描述是历史合同，由本授权替代；训练数学、线上核/runtime/timer/argv未改，未验收模型质量或性能。
 
 拟合/trace profile保留历史v1字节身份，避免重复原生采样；其旧`test_policy`字段不是schema2的发布判定，后者由证书`publication_policy=validation_gate_independent_test_report_v1`明确声明。schema1旧PT继续要求独立test非劣，不能无标识放行。只兼容审核过的父版本拟合实现：矩阵优化和trace数值源码哈希、模型/基底/trace/profile/维度/test-only身份均匹配才复用旧头/完整层；原文件不改，哈希损坏仍失败。未完成层的联合检查重新执行，不把旧失败报告当完成断点。

@@ -13,7 +13,8 @@ import math
 from pathlib import Path
 
 from .optr_artifacts import file_sha256
-from .optr_policy import optr_policy, validate_refinement_config
+from .optr_policy import (optr_policy, validate_refinement_config,
+                          legacy_capture_policy, legacy_capture_profile)
 
 
 def _hash(value):
@@ -130,7 +131,10 @@ def load_trace_manifest(path, config, layers, dim, fingerprint, testing=False):
         raise ValueError("OptR capture is incomplete or its directory identity differs")
     policy = optr_policy(config)
     profile = calibration_cache_identity(config, fingerprint)
-    if top.get("optr_policy") != policy or top.get("calibration_profile") != profile:
+    current = top.get("optr_policy") == policy and top.get("calibration_profile") == profile
+    legacy = (top.get("optr_policy") == legacy_capture_policy(config) and
+              top.get("calibration_profile") == legacy_capture_profile(profile, config))
+    if not (current or legacy):
         raise ValueError("OptR trace policy/calibration profile differs")
     if top.get("prompt_source_sha256") != profile["base_calibration_profile"]["prompt_source"]["sha256"]:
         raise ValueError("OptR trace source hash differs from its authenticated calibration source")

@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+> 2026-10-28 OptR官方分阶段目标/昇腾准备加速：NPU FP32 proxy、CPU正交参数化与最终验证；固定candidate启用，原在线路径不变。官方数学对照/CPU功能/产物恢复见 `reports/optr_sequential_ascend_20261028/`；未连接NPU，设备拟合、模型质量、性能未验收。详见[实现记录](optr_sequential_ascend_20261028.md)。
+
 2026-10-28明确授权实验PT：独立test只记录不阻断，validation/数值/身份门保留。schema2显式标记实验产物与失败层，固定candidate直接准备/加载，旧严格证书不放宽。自动兼容审核过的父版本断点，原生trace身份保持；本地发布/加载/跨层继续/认证复用证据见`reports/optr_experimental_publication_20261028/verification.json`。实验发布不升级42项模型质量/NPU/图/性能验收。
 
 2026-10-28用户要求直接测试OptR：固定candidate恢复recipe5，直启和探针统一，不增加启用/绕过开关；保留#173独立test失败阻断和报告。此为默认入口纠正，未修复原质量失败，不升级42项NPU/图/模型质量/性能状态。源码和本地回归证据见`reports/optr_candidate_enabled_20261028/verification.json`。

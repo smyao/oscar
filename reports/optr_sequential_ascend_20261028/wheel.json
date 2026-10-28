@@ -1,0 +1,16 @@
+{
+  "name": "oscar_ascend_external-0.1.0-py3-none-any.whl",
+  "sha256": "a4769b657a6f567120c3548b92283a5a9363d7802fc2efbb7873b6a79db73d9a",
+  "files_verified": [
+    "oscar_ascend/optr_sequential.py",
+    "oscar_ascend/optr_calibration.py",
+    "oscar_ascend/optr_checkpoint.py",
+    "oscar_ascend/optr_policy.py",
+    "oscar_ascend/optr_traces.py",
+    "tools/prepare_optr_rotations.py"
+  ],
+  "isolated_import": "passed",
+  "fitting_digest_matches_checkout": true,
+  "network": "disabled",
+  "returncode": 0
+}

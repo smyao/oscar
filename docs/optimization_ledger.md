@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+> 2026-10-28 OptR官方分阶段目标/昇腾准备加速：NPU FP32 proxy、CPU正交参数化与最终验证；固定candidate启用，原在线路径不变。官方数学对照/CPU功能/产物恢复见 `reports/optr_sequential_ascend_20261028/`；未连接NPU，设备拟合、模型质量、性能未验收。详见[实现记录](optr_sequential_ascend_20261028.md)。
+
 2026-10-28用户批准实验PT：保留validation和数值门，独立test退化记录为failed并允许实验发布/后续服务，不按test重选，不恢复recipe3，不加命令开关。schema2明确发布政策和test状态，旧schema1继续严格检查；兼容审核过的旧拟合断点以避免重做已完成头/层。训练数值与线上核/runtime/timer/argv不改，不申领精度或速度收益。证据见`reports/optr_experimental_publication_20261028/verification.json`。
 
 2026-10-28用户要求先测OptR：恢复当前原生BF16固定candidate的recipe5默认，覆盖下方#173静态撤回处置，不增加开关或静默改走recipe3。训练/trace/断点身份、独立质量门、线上核/runtime/argv/timer保持；本次不计精度或速度收益。固定入口、双缓存实际选择及失败阻断的本地证据见`reports/optr_candidate_enabled_20261028/verification.json`。

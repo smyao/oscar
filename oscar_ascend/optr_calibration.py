@@ -299,7 +299,15 @@ def replay_sample(rk: torch.Tensor, rv: torch.Tensor, mean: torch.Tensor,
     dim = _matrices(rk, rv, mean)
     _sample(sample, dim)
     p = _policy(policy)
-    return torch.cat([_replay(rk, rv, mean, batch, p)
+    # Final all-head validation previously rotated/quantized the entire 64K
+    # history again for each query microbatch. Shapes and arithmetic stay
+    # identical; share only the query-independent history inside this call.
+    key = _bf16(_bf16(sample["k"].float() - _bf16(mean)) @ _bf16(rk))
+    value = _bf16(sample["v"].float() @ _bf16(rv))
+    history = {"k": key, "v": value,
+               "k_quant": quantize_dequantize(key, p["k_clip"]),
+               "v_quant": quantize_dequantize(value, p["v_clip"])}
+    return torch.cat([_replay(rk, rv, mean, batch, p, frozen=history)
                       for batch in _batches(sample, p["query_batch_size"])])
 
 

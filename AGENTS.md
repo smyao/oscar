@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-28用户要求参考官方OptR拟合并加快昇腾准备：candidate采用sequential K=KL+post-W_O误差、V=固定P_K的value误差，官方80步/lr0.02/零基每20步验证；NPU执行FP32大矩阵、CPU执行matrix_exp/Adam及最终部署验证。保留Qwen gate/D256、原采样、整层validation逐请求非劣和实验test记录规则。版本化新目标，不复用旧拟合PT/断点，只精确认证复用原生trace。线上runtime/CANN/timer/argv不改，不连接真机。见docs/optr_sequential_ascend_20261028.md；设备速度/质量未实测。本条覆盖旧CPU拟合及拟合身份不变要求。
+
 > 2026-10-28用户明确授权“允许生成实验PT，先测试OptR”：独立test仍执行并完整记录，退化不阻断实验PT/后续服务；validation逐请求非劣、数值/身份/正交检查继续保持，test不参与重选矩阵。固定candidate无需新增参数。新证书schema2明确experimental、publication_policy及独立test通过/失败/退化层，服务加载实时显示，禁止把实验放行写成质量通过。本条覆盖下方独立test退化禁止发布的旧要求。保留历史拟合/trace身份，审核通过的旧头/完整层断点可自动复用，旧失败报告不充当已完成层；线上核/runtime/argv/timer不改。
 
 > 2026-10-28用户明确恢复OptR测试：固定 `candidate` 在当前原生BF16、qqt_sst/perhead_center、显式预算配置直接启用OptR recipe5，无需新增开关，不允许通过撤下OptR默认来绕过测试。本条覆盖下方#173的默认撤回处置；独立test失败报告和禁止发布仍保持，不按test重选或放宽阈值。保留已有显式Hadamard/W8A8/native-budget兼容入口；显式请求不兼容OptR仍报错。线上核/runtime/timer/argv不改，不宣称原第7层质量失败已修复或模型/性能已验收。

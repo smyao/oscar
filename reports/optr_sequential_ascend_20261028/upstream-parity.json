@@ -1,0 +1,31 @@
+{
+  "upstream_commit": "66d46561b9bdf5d715f591e0f5845a4cbd927dee",
+  "source_hashes": {
+    "optr/calibrate_optr.py": "21e4f991a57ad6cf370f195dd06ca7182c3fe41d9a46fbcbceec7d997cda31ae",
+    "rotation/kv_calib_utils.py": "9b3ea32c1e3df73f94559eb2241711f2c6459f3283b8657a64470e47468785f0"
+  },
+  "scope": "CPU official ungated proxy with group=head_dim and identical tail queries; not NPU or model validation",
+  "loss_gradient_tolerance": {
+    "atol": 2e-06,
+    "rtol": 2e-05
+  },
+  "rotation_tolerance": {
+    "atol": 2e-05,
+    "rtol": 2e-05
+  },
+  "phases": {
+    "k": {
+      "official_loss": 0.04524088278412819,
+      "adapted_loss": 0.0452408567070961,
+      "gradient_max_abs_difference": 8.940696716308594e-08
+    },
+    "v": {
+      "official_loss": 0.011424951255321503,
+      "adapted_loss": 0.011424950323998928,
+      "gradient_max_abs_difference": 7.450580596923828e-09
+    }
+  },
+  "k_matrix_max_abs_difference": 2.2724270820617676e-07,
+  "v_matrix_max_abs_difference": 0.0,
+  "passed": true
+}

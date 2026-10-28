@@ -68,35 +68,28 @@ def test_experimental_publication_keeps_orthogonality_gate(tmp_path):
             device="cpu", testing=True, require_calibrated=True)
 
 
-@pytest.mark.parametrize("change", [None, "profile", "base_artifact_sha256", "trace_manifest_sha256", "test_only", "math", "unknown_implementation", "corrupt"])
-def test_legacy_resume_is_limited_to_audited_math_and_exact_source_identity(tmp_path, monkeypatch, change):
-    from oscar_ascend import optr_checkpoint as checkpoint
+@pytest.mark.parametrize("change", [None, "profile", "base_artifact_sha256", "trace_manifest_sha256", "test_only", "failed_report", "unknown_implementation", "corrupt"])
+def test_old_joint_fitter_cannot_resume_as_official_sequential_fit(tmp_path, change):
     identity = {"profile": {"recipe_version": 5}, "base_artifact_sha256": "a" * 64,
         "trace_manifest_sha256": "b" * 64, "test_only": True,
-        "fitting_implementation_sha256": checkpoint._LEGACY_IMPLEMENTATION}
+        "fitting_implementation_sha256": "5ae615236f8751b9cddf5da9e649febcce72b04bdee7d7020a53ddf0c9ca095b"}
     legacy = FitCheckpoints(tmp_path, identity)
     payload = {"Rk": -torch.eye(4), "Rv": -torch.eye(4), "decision": {"accepted": False}}
     legacy.save("layer-3-head-0", payload)
     current_identity = {**identity, "fitting_implementation_sha256": fitting_implementation_digest()}
     if change in ("profile", "base_artifact_sha256", "trace_manifest_sha256", "test_only"):
         current_identity[change] = False if change == "test_only" else "different"
-    if change == "math":
-        monkeypatch.setattr(checkpoint, "_LEGACY_NUMERICAL_SOURCES", {"oscar_ascend/optr_calibration.py": "0" * 64})
     if change == "unknown_implementation":
         current_identity["fitting_implementation_sha256"] = "0" * 64
-    store = FitCheckpoints(tmp_path, current_identity)
-    assert store.root != legacy.root
     if change == "corrupt":
         pointer = json.loads((legacy.root / "layer-3-head-0.json").read_text())
         (legacy.root / pointer["file"]).write_bytes(b"bad")
-        with pytest.raises(ValueError, match="hash"):
-            store.load("layer-3-head-0")
-    elif change is None:
-        assert torch.equal(store.load("layer-3-head-0")["Rk"], payload["Rk"])
+    if change == "failed_report":
         (legacy.root / "layer-3-independent-test-failed.json").write_text('{"status":"failed"}')
-        assert store.load("layer-3") is None
-    else:
-        assert store.load("layer-3-head-0") is None
+    store = FitCheckpoints(tmp_path, current_identity)
+    assert store.root != legacy.root
+    assert store.load("layer-3-head-0") is None
+    assert store.load("layer-3") is None
 
 
 def test_regressed_first_layer_does_not_stop_later_layers(tmp_path, monkeypatch):

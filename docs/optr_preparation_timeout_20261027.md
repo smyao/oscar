@@ -1,5 +1,7 @@
 # OptR 首次准备超时修复（档案 #172）
 
+> 2026-10-28最新：按用户要求切换官方sequential目标及NPU大矩阵拟合，CPU保留小矩阵指数/最终部署验证；旧原生trace可认证复用，旧拟合PT/断点因目标变化隔离。下文历史CPU拟合描述不再代表默认候选。见[本轮实现与边界](optr_sequential_ascend_20261028.md)。
+
 2026-10-28最新用户授权：固定candidate直接测试OptR，独立test退化完整记录但允许生成实验PT并继续服务，无需附加参数。本文件的有限准备预算、真实进展监督保持。训练数学和trace身份不改；发布工具修改建立新断点命名空间，并对审核过的父版本按完整来源身份及数值源码哈希兼容旧头/完整层。未完成层的联合检查仍执行。第7层[失败证据](optr_independent_test_failure_20261028.md)保持失败，不把实验放行视为精度改善。
 
 本次用户日志中的 CANN 编译已经成功：`build-ops` 返回 0，耗时 294.118939 秒。7 个原生采样请求全部保存，4 个 TP rank、16 个 FULL 层的 capture 完成；随后 CPU 拟合逐步进入第 3 层的 head 0、1、2、3。最终 `prepare-rotations` 被通用 1800 秒总时限终止，返回 124。原始证据保存在 [target_failure.txt](../reports/optr_preparation_timeout_20261027/target_failure.txt)。片段未含启动 SHA，不把本地基底 `e5423c2` 当作现场版本证明。

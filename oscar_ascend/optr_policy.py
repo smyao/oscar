@@ -11,7 +11,7 @@ import math
 RECIPE_VERSION = 5
 OBJECTIVE = "optr_post_gate_output_v1"
 UPSTREAM_COMMIT = "66d46561b9bdf5d715f591e0f5845a4cbd927dee"
-POLICY_VERSION = "optr_native_gate_v1"
+POLICY_VERSION = "optr_sequential_ascend_v2"
 # User 2026-10-28: publish experimental constants after recording independent
 # test, including regressions. Preserve fitting/trace cache identity; schema 2
 # certificates declare the publication policy separately from this v1 profile.
@@ -25,7 +25,9 @@ def optr_policy(config):
         "capture_lengths": {"train": [4096], "validation": [4096, 32768, 65536],
                             "test": [4096, 32768, 65536]},
         "decode_tokens": 8, "query_samples_per_frame": 8,
-        "steps": 16, "lr": 0.002, "eval_every": 4, "query_batch_size": 8,
+        "steps": 80, "lr": 0.02, "eval_every": 20, "query_batch_size": 8,
+        "fitting_objective": "sequential_kl_output_k_then_conditional_v_gate_v1",
+        "lambda_output": 1.0,
         "kv_tile_size": 256, "history_splits": 1,
         "validation_partitions": ["single_split", "captured_runtime_frames"],
         "sink_tokens": int(config.get("sink_tokens", 64)),
@@ -36,7 +38,7 @@ def optr_policy(config):
         "math_contract": "oscar_bf16_attention_v4_fp32_metadata",
         "selection": "joint_all_heads_each_request_nonworse",
         "test_policy": "independent_accept_or_fail_no_reselection",
-        "execution": "cpu_offline_native_npu_traces",
+        "execution": "npu_fp32_proxy_cpu_orthogonal_and_deployment_validation",
         "source_plan": "disjoint_records_packed_calibration_only_v1",
         "sampling_chunk_tokens": config.get("max_num_batched_tokens", 16384),
         "tensor_parallel_size": config.get("tensor_parallel_size", 4),
@@ -79,6 +81,22 @@ def optr_policy(config):
     if any(not math.isfinite(policy[k]) or not 0 < policy[k] <= 1 for k in ("k_clip", "v_clip")):
         raise ValueError("OptR clipping must be finite and in (0,1]")
     return policy
+
+
+def legacy_capture_policy(config):
+    """Exact prior profile, for raw-trace reuse only, never fitted constants."""
+    policy = optr_policy(config)
+    policy.pop("fitting_objective")
+    policy.pop("lambda_output")
+    policy.update(policy_version="optr_native_gate_v1", execution="cpu_offline_native_npu_traces")
+    overrides = config.get("optr_calibration", {})
+    for key, old in (("steps", 16), ("lr", .002), ("eval_every", 4)):
+        policy[key] = overrides.get(key, old)
+    return policy
+
+
+def legacy_capture_profile(profile, config):
+    return {**profile, "refinement_policy": legacy_capture_policy(config)}
 
 
 def validate_refinement_config(config):

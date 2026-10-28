@@ -153,7 +153,10 @@ def test_fixed_candidate_uses_optr_with_both_optr_and_center_caches(environment,
     refined_path = rotations.rotation_artifact_path(candidate, fingerprint)
     publish_artifact(refined_artifact(candidate), refined_path)
     before = {**frozen_files(center_path), **frozen_files(refined_path)}
-    stale = {**candidate, 'optr_calibration': {'steps': 16}}
+    stale = {**candidate, 'optr_calibration': {'steps': 80}}
+    # New official default must not authenticate the old 16-step fit as done.
+    assert rotations.rotation_artifact_path(
+        {**candidate, 'optr_calibration': {'steps': 16}}, fingerprint) != refined_path
     selected = variant_config(stale, 'candidate')
     assert selected == stale and selected['oscar_dequant_policy'] == 'fp32_metadata'
     assert selected['k_clip_ratio'] == candidate['k_clip_ratio']

@@ -3,7 +3,7 @@
 The fixed candidate calls this module. User 2026-10-28 authorizes experimental
 constants after validation, with independent test recorded, never reselected.
 Native sampling runs in an isolated
-child and releases its model before CPU optimization. No runtime/kernel/
+child and releases its model before NPU proxy fitting and CPU verification. No runtime/kernel/
 scheduler implementation is changed; candidate defaults remain separate.
 """
 from __future__ import annotations
@@ -195,9 +195,10 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
     return report
 
 
-def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=None, progress=None):
+def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=None, progress=None,
+                 fit_device="cpu"):
     """Per-head fitting, then all-TP output selection, then untouched test."""
-    from oscar_ascend.optr_calibration import fit_head
+    from oscar_ascend.optr_sequential import fit_head
     real_fitter = fitter is None
     fitter = fit_head if real_fitter else fitter
     emit = _progress if progress is None else progress
@@ -212,6 +213,7 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
             options = {"policy": policy}
             if real_fitter:
                 options["progress"] = lambda row: emit(layer=name, head=head, **row)
+                options["device"] = fit_device
             rk, rv, decision = fitter(baseline["Rk"][head], baseline["Rv"][head],
                 baseline["k_mean"][head], samples["train"][head], samples["validation"][head], **options)
             saved = {"Rk": rk.detach().cpu().contiguous(), "Rv": rv.detach().cpu().contiguous(),
@@ -254,6 +256,18 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
               independent_test_before=test_before["normalized_error"],
               independent_test_after=test_after["normalized_error"])
     return selected, record
+
+
+def _existing_trace_manifest(destination, profile, config):
+    """Reuse the exact old native capture without copying/relabeling any trace."""
+    from oscar_ascend.optr_policy import legacy_capture_profile
+    current = destination.parent / "native-traces" / "capture-manifest.json"
+    if current.is_file():
+        return current
+    legacy = legacy_capture_profile(profile, config)
+    digest = hashlib.sha256(json.dumps(legacy, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:20]
+    old = destination.parent.parent / ("optr_" + digest) / "native-traces" / "capture-manifest.json"
+    return old if old.is_file() else current
 
 
 def _layer_artifact(template, certificate, name, selected, record):
@@ -307,7 +321,7 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
         raise ValueError("injected OptR preparation hooks are test-only")
     destination.parent.mkdir(parents=True, exist_ok=True)
     _progress(phase="preparing_seed", artifact=str(destination), recipe_version=5,
-              online_operations="unchanged", first_preparation="native_capture_and_cpu_optimization")
+              online_operations="unchanged", first_preparation="native_capture_and_npu_sequential_optimization")
     base_config = _base_config(config, fingerprint)
     if Path(base_config["rotation_artifact"]).resolve() == destination:
         raise ValueError("refined destination must not overwrite the recipe3 seed")
@@ -316,7 +330,7 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
     base_hash = file_sha256(base_config["rotation_artifact"])
     trace_dir = destination.parent / "native-traces"
     trace_dir.mkdir(exist_ok=True)
-    trace_manifest = trace_dir / "capture-manifest.json"
+    trace_manifest = _existing_trace_manifest(destination, profile, config)
     # The selected config is serialized, never an earlier raw --config file.
     capture_config = destination.parent / "refinement-config.json"
     capture_config.write_text(json.dumps(config, indent=2) + "\n")
@@ -329,6 +343,9 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
         from tools.phase import atomic_json
         atomic_json(trace_manifest, captured)
     manifest = load_trace_manifest(trace_manifest, config, names, dim, fingerprint, testing=testing)
+    if trace_manifest.parent != trace_dir:
+        _progress(phase="native_trace_resumed", manifest=str(trace_manifest),
+                  fitting="new_sequential_objective_old_fitted_constants_not_reused")
     artifact = {"format_version": 2, "source_grouping": "layer_kv_head",
         "rotation_variant": "perhead_center", "global_kv_heads": baseline["global_kv_heads"],
         "head_dim": dim, "model_fingerprint": fingerprint, "pr_fingerprint": OFFICIAL_COMMIT,
@@ -350,7 +367,10 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
         "fitting_implementation_sha256": fitting_implementation_digest(), "test_only": testing})
     _progress(phase="fit_plan", layers=len(names), heads_per_layer=baseline["global_kv_heads"],
               steps_per_phase=policy["steps"], progress_timeout_seconds=preparation_progress_timeout(config),
-              checkpoints=str(checkpoints.root))
+              checkpoints=str(checkpoints.root), fitting_objective=policy["fitting_objective"],
+              fitting_device="cpu_test" if testing else "npu:0", matrix_exp_device="cpu",
+              deployment_validation_device="cpu")
+    fit_device = None
     with ProgressWatchdog(preparation_progress_timeout(config), output=_progress) as watchdog:
         for layer_index, name in enumerate(names):
             seed = baseline["layers"][name]
@@ -360,8 +380,11 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
             if saved is None:
                 samples = load_layer_samples(manifest, seed["layer_id"])
                 watchdog.progress(layer=name, phase="layer_traces_verified")
+                if fit_device is None:
+                    from oscar_ascend.optr_sequential import fitting_device
+                    fit_device = fitting_device(config, testing=testing)
                 selected, record = refine_layer(name, seed, samples, policy, fitter=fitter,
-                    checkpoints=checkpoints, progress=watchdog.progress)
+                    checkpoints=checkpoints, progress=watchdog.progress, fit_device=fit_device)
                 saved = {"artifact": _layer_artifact(artifact, certificate, name, selected, record)}
                 _validate_layer_checkpoint(saved, artifact, certificate, name, seed)
                 checkpoints.save(owner, saved)
@@ -386,4 +409,5 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
             **artifact_test_status(artifact),
             "quality_acceptance": "not_run", "performance": "not_measured",
             "model_forward_device": "cpu_test" if testing else "npu",
-            "optimization_device": "cpu_offline", "online_operations": "unchanged"}
+            "optimization_device": "cpu_test" if testing else "npu_fp32_cpu_matrix_exp",
+            "deployment_validation_device": "cpu", "online_operations": "unchanged"}

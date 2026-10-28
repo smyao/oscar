@@ -1,7 +1,7 @@
 """Archive #126/#145/#148/#172: source identity and universal route protection.
 
 The fixed hashes were read from git show 232b563b:<path> and 34bc2b75:<path>.
-They protect the complete decoder and unchanged current-only/C4/routing path,
+They protect the complete decoder and unchanged current-only qualification/C4/routing path,
 while retaining the independently changed C16 from 34bc2b75. No context-length
 parameter or new threshold is permitted in those pinned dispatch/runtime files.
 This does not assert that every 32K stage is original: warm C16 still differs
@@ -26,13 +26,11 @@ ROOT = Path(__file__).resolve().parents[1]
 BASE_232B_SHA256 = {
     "csrc/kernels/attention_cv_official_decode.cpp": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
     "csrc/kernels/attention_cv_official_cluster4.cpp": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
-    "oscar_ascend/integration/current_only_dispatch.py": "14b588f4a86c21660b023f3469cc17ecae84d592698b983cabf1faa7a7b08646",
     "oscar_ascend/integration/current_only_plan.py": "7f5fa1d9ab5a1f48c396eb9978f16b8fe8257a9115df5a4989b45825c4f2d366",
     "oscar_ascend/integration/current_attention.py": "79da9df9abecd6f02f386afac83b9c21e4d347fe02fcfe8376465f54192a823c",
     "oscar_ascend/ops/cv_dispatch.py": "40a27b068cf051a8dee562340c3ea9c2133311de48c422fde9243267c7cbf5b6",
     "oscar_ascend/integration/impl.py": "069ce6aa7038f1b9378efaf42eaaf4b9b8a400257b3304dd537442c7d49ebe3a",
     "oscar_ascend/runtime.py": "4660b4a6c60384528a1c238215618ecb12d38926c0ae80a38da0c42b71accd9f",
-    "tools/serving_variants.py": "354061eb242f8730ef0326674240b339f4f6539ad563c0924c8c0ceb3e7a5c4f",
     "tools/target_cli.py": "ca282f3b52f866159f2f8ad7ab9d3f5b616cdd0b707dfd43f979b6caff6e07b5",
     "configs/target.json": "855b35cc37935ef52e61308a742c758b7ae7081b27d826ade33e6a89e00fc416",
 }
@@ -40,6 +38,11 @@ RETAINED_34BC_SHA256 = {
     "csrc/kernels/attention_cv_official_cluster16.cpp": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
     "csrc/kernels/attention_official_finite.h": "776e507213aba7e7089dcc5c4706944859f4916929e9ad1688a22b90d1abd695",
 }
+
+# #173 intentionally changes arithmetic only inside the existing proven
+# current-only route. Its eligibility/prefix/padding proof and every launch
+# option are checked below against the accepted614c source/config, instead
+# of replacing the old whole-file hashes with hashes of the new code.
 
 
 def digest(data):
@@ -67,6 +70,46 @@ def test_default_and_packaged_generation_cannot_reenable_decode_cast_experiment(
         "csrc/kernels/attention_cv_official_cluster16.cpp"]
     assert digest(generated.cluster(4)) == BASE_232B_SHA256[
         "csrc/kernels/attention_cv_official_cluster4.cpp"]
+
+
+def test_current_only_qualification_prefix_and_padding_proof_remain_accepted_bytes():
+    text = (ROOT / 'oscar_ascend/integration/current_only_dispatch.py').read_text()
+    proof = text[text.index('def dispatch_current_suffix('):
+                 text.index("    with phase('current_native_fia',**fields):")]
+    policy_read = '''    native_exact=(official_math and
+        impl.provider.config.get("oscar_current_only_policy", "rotated_v4")=="native_exact")
+'''
+    assert proof.count(policy_read) == 1
+    # SHA of this exact proof prefix from accepted614c7398, not the candidate.
+    assert digest(proof.replace(policy_read, '')) == 'a134ff389c3c279b0c14e2e2045ce350d4b9f083e39ed7e9d660444086629c7d'
+
+
+@pytest.mark.parametrize('prefix', [False, True])
+def test_precision_policy_is_the_only_candidate_configuration_change(prefix):
+    expected = json.loads((ROOT / 'reports/precision_stability_20261028/accepted_candidate_config.json').read_text())
+    expected['enable_prefix_caching'] = prefix
+    current = candidate_config(prefix)
+    assert current.pop('oscar_current_only_policy') == 'native_exact'
+    assert current == expected
+
+
+def test_native_exact_current_does_not_refit_or_relabel_recipe3_pt():
+    from oscar_ascend.rotations import calibration_cache_identity, rotation_artifact_path
+    accepted = json.loads((ROOT / 'reports/precision_stability_20261028/accepted_candidate_config.json').read_text())
+    current = candidate_config(False)
+    fingerprint = 'a' * 64
+    assert calibration_cache_identity(current, fingerprint) == calibration_cache_identity(accepted, fingerprint)
+    assert rotation_artifact_path(current, fingerprint) == rotation_artifact_path(accepted, fingerprint)
+
+
+def test_native_exact_policy_is_explicit_validated_and_cleared_for_native():
+    current = candidate_config()
+    for variant in ('native', 'baseline'):
+        assert 'oscar_current_only_policy' not in variant_config(current, variant)
+    with pytest.raises(ValueError, match='oscar_current_only_policy'):
+        variant_config({'oscar_current_only_policy': 'guess'}, 'candidate')
+    with pytest.raises(ValueError, match='native-exact current requires'):
+        variant_config({'oscar_current_only_policy': 'native_exact'}, None)
 
 
 def candidate_config(prefix=True):

@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-28 精度续修：用户确认614c的32/64K性能通过，127条PC质量集仍失败。两组10轮逐指标top3差距为4.4619/2.3256/4.7619/4.4619个百分点。真实recipe3拟合的无历史单token反例中，旋转往返令774/1536元素改变、max_abs0.00830078，而无INT2时原attention应直接返回V。candidate仅在原已证明current-only路由使用原空间native FIA，缓存writer输入保持，省2个query-head GEMM、无新增copy/算子/缓冲；历史/C4/C16/decode/PT/argv/timer不变。302项主机/参考回归通过；原质量数据与chunk精度层依赖另存，不用局部数值代替四项交付分数。见[实现与完整证据](native_exact_current_precision_20261028.md)。
+
 2026-10-28 用户实测回归：34bc2b75的64K达标，但32K及以下慢30%；该组合不满足双场景目标。修复撤下所有长度q4/q1的三处批量Cast绑定，decode完整原源恢复232b；C16和finite helper完整保持34bc，C4/current-only/调度/16K预算/APC/MTP/PT/timer不动。不新增长度阈值或版本路由。源码身份、路径覆盖、编译审查与交付证据见[通用回归修复](universal_regression_repair_20261028.md)。原34bc的本地通过及现场退化同时保留，不把前者当作后者的否定证据。
 
 2026-10-27 长上下文：用户报告 200请求/BS32/APC，32K 相对 native 总时间快30%、64K慢10%，预算固定16384。源码确认 warm prefill 的历史循环与 current CV 放大；当前 APC 冷请求主机模型中历史 QK/PV 单元增长5.35倍，不能冒充现场占比。candidate 实际 official C16 接入充分界 finite 证书、完全可见 current/window 路径；q4/q1 发布使用相同 RNE 的多 repeat 转换。原数学、错误语义、workspace、调度、PT、argv、timer与C4保持。源码/主机/CPU/CANN及保留的验证环境失败见[分析与优化](long_context_optimization_20261027.md)与[本轮回执](../reports/long_context_20261027/validation.json)。无真机连接或测速，不宣称64K已达30%或32K速度不退；后续以实际净收益决定是否保留和继续优化FP32状态搬运。

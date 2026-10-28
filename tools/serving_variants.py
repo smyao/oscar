@@ -89,8 +89,14 @@ def variant_config(config: dict, variant: str | None) -> dict:
         raise ValueError("rotation_k_clip must be omitted or per_head_calibrated")
     if selected.get('oscar_dequant_policy', 'native_phase') not in ('native_phase', 'fp32_metadata'):
         raise ValueError('oscar_dequant_policy must be native_phase or fp32_metadata')
+    if selected.get('oscar_current_only_policy', 'rotated_v4') not in ('rotated_v4', 'native_exact'):
+        raise ValueError('oscar_current_only_policy must be rotated_v4 or native_exact')
     if variant == "candidate":
         selected['oscar_dequant_policy'] = 'fp32_metadata'
+        # Archive #173: the already-proven zero-history source needs no
+        # lossy rotation round trip. Cached writes and all mixed readers stay
+        # in their existing rotated frame; no length/dataset rule is added.
+        selected['oscar_current_only_policy'] = 'native_exact'
         # Recipe4's proxy-fitted clip table regressed user model quality.
         # The fixed candidate entrypoint restores recipe3 even when its
         # input config retains the experimental clip policy. Explicit
@@ -102,6 +108,7 @@ def variant_config(config: dict, variant: str | None) -> dict:
             selected.pop("rotation_variant", None)
     elif variant in {"baseline", "native"}:
         selected.pop('oscar_dequant_policy', None)
+        selected.pop('oscar_current_only_policy', None)
         selected.pop("rotation_variant", None)
         selected.pop("rotation_k_clip", None)
     if selected.get("rotation_variant") == "perhead_center" and selected.get("rotation_method", "qqt_sst") != "qqt_sst":
@@ -210,6 +217,10 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if selected.get('oscar_dequant_policy') == 'fp32_metadata' and not all(selected.get(flag, False)
             for flag in ('experimental_official_math', 'experimental_aligned_math', 'experimental_bf16_attention')):
         raise ValueError('FP32 metadata reconstruction requires the official BF16 reader bundle')
+    if selected.get('oscar_current_only_policy') == 'native_exact' and not (
+            selected.get('experimental_official_math', False) and
+            selected.get('experimental_current_only', False)):
+        raise ValueError('native-exact current requires the official current-only route')
     return selected
 
 
@@ -229,7 +240,13 @@ def runtime_feature_summary(config: dict, variant: str | None) -> dict:
             "attention_compute":{"operands":"bfloat16" if config.get("experimental_bf16_attention", False) else "float32",
                                  "accumulator":"float32", "softmax_lse_merge":"float32"},
             "oscar_math_profile":"oscar_bf16_attention_v4" if config.get("experimental_official_math",False) else "oscar_bf16_attention_v3" if config.get("experimental_aligned_math",False) else "legacy",
-            "attention_coordinate_frame":"all_sources_rotated" if config.get("experimental_official_math",False) else "legacy_mixed",
+            "attention_coordinate_frame":("rotated_cached_and_mixed" if config.get('oscar_current_only_policy') == 'native_exact'
+                                          else "all_sources_rotated" if config.get("experimental_official_math",False) else "legacy_mixed"),
+            "current_only_policy":config.get('oscar_current_only_policy', 'rotated_v4'),
+            "current_only_coordinate_frame":('original_native' if config.get('oscar_current_only_policy') == 'native_exact'
+                                             else 'rotated_v4' if config.get('experimental_official_math',False) else 'original_native'),
+            "current_only_inverse_rotation":(config.get("experimental_official_math",False)
+                                              and config.get('oscar_current_only_policy', 'rotated_v4') != 'native_exact'),
             "inverse_rotation":"once_after_fp32_merge" if config.get("experimental_official_math",False) else "per_history_partial",
             "cached_precision_policy":"native_fixed_per_forward" if config.get("experimental_official_math",False) else "legacy_query_relative",
             "rotation_method":config.get("rotation_method"),

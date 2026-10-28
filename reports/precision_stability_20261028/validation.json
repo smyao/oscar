@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-28",
+  "branch": "codex/oscar-bf16-attention",
+  "base_commit": "614c73982d762365e20c7362adc6f9350e465218",
+  "status": "native_exact_current_repair_ready_for_model_acceptance",
+  "supplied_data": "log_analysis.json",
+  "raw_sources": "input_manifest.json",
+  "user_confirmed_performance": "32K and64K accepted at the starting version; both must remain accepted",
+  "quality_rule": {
+    "runs_each_side": 10,
+    "top_k": 3,
+    "metrics": [
+      "accuracy",
+      "accuracy_easy",
+      "accuracy_hard",
+      "accuracy_short"
+    ],
+    "required_gap_pp_strictly_below": 1,
+    "top3_conventions_reported": [
+      "independent per metric",
+      "same top3 overall rounds with ties retained"
+    ],
+    "new_model_scores": "not_present"
+  },
+  "policy": "native_exact",
+  "contract": "configs/acceptance_native_exact_current.json",
+  "source_change": "only the existing proven current-only arithmetic plus policy/probe/independent reference; all cached readers and writer unchanged",
+  "host": {
+    "status": "passed",
+    "tests": 302,
+    "log": "host_tests_final.log"
+  },
+  "counterexamples": {
+    "recipe3_rotations": "native_exact_current/counterexample.json",
+    "execution": "native_exact_current/execution_final.json",
+    "chunk_dependence": "chunk_dependence/result.json",
+    "scope": "synthetic CPU mathematics, not target activations or dataset accuracy"
+  },
+  "operation_protection": {
+    "query_head_gemms_removed": 2,
+    "copy_count_delta": 0,
+    "new_kernel_calls": 0,
+    "new_workspace_bytes": 0,
+    "cache_writer_inputs": "bit-identical for identical incoming K/V",
+    "PT_identity": "unchanged recipe3/cache path",
+    "new_input_length_thresholds": 0,
+    "new_dataset_rules": 0,
+    "timer": "byte_identical; K/V rotation work moves from FIA phase into store phase"
+  },
+  "preserved": "preserved_sources.json",
+  "CANN": "no production C++ or ABI change; reuse exact earlier source qualification, no new compile claim",
+  "NPU": "not_run",
+  "graph": "new route remains excluded from capture by unchanged eligibility",
+  "model_quality": "four new top3 scores pending; local numerical success is not model acceptance",
+  "retained_local_failures": {
+    "host_collection_error.log": "pytest invocation named one nonexistent file; no tests ran; corrected selection passed302",
+    "universal_identity_initial": "host_initial_identity_gate.log: intended current-only/policy changes triggered previous whole-file pins; replaced by accepted proof-prefix identity, all-other-config equality and behavior tests, not candidate hash substitution"
+  },
+  "delivery": {
+    "command": "git pull --ff-only && bash scripts/install_serve.sh --variant candidate",
+    "same_PT_reused": true,
+    "extra_diagnostic_flags": false,
+    "only_branch": "codex/oscar-bf16-attention"
+  },
+  "changed_source_sha256": {
+    "oscar_ascend/integration/current_only_dispatch.py": "94731152fd9d15be20e073fa4fb2585dc2b8b1305600cda3ee8214302c748b8e",
+    "oscar_ascend/integration/native_exact_current.py": "36f5fca252aec5cdc8ee8bd704685cdb17449bfacfe828a03bda615ab4a1b8bb",
+    "tools/serving_variants.py": "4c15477885deeebcbc213be8ae4cea5b123400da7a71e0e15d8e8797833fe12c",
+    "tools/native_exact_current_reference.py": "3ada22b693ecd93c8a84c1e11a1546026b43769e9317e3d41916c259403b37b7",
+    "configs/acceptance_native_exact_current.json": "bbdb6292a5885ec27e478796bd8fcd1587d54239ce8b6ed28ed6a8b69fde0ee2"
+  },
+  "status_guard_sha256": "01cbbcfdf99d41daf0ac1372e2ebaa8549380d543bc7c29b426814c96eb593ab",
+  "production_CANN_diff_vs_accepted_614c": "empty"
+}

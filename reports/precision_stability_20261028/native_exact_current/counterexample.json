@@ -1,0 +1,203 @@
+{
+  "status": "passed",
+  "scope": "actual recipe3 fitter plus synthetic CPU algebra, not user activations",
+  "calibration": {
+    "rows_per_rank": 512,
+    "rank_seed": "28102026 + rank",
+    "recipe": 3,
+    "rotation_variant": "perhead_center",
+    "geometry": {
+      "global_query_heads": 24,
+      "global_kv_heads": 4,
+      "tp": 4,
+      "head_dim": 256
+    }
+  },
+  "rotations": [
+    {
+      "head": 0,
+      "rk_fp32_gram_max": 4.76837158203125e-07,
+      "rv_fp32_gram_max": 6.556510925292969e-07,
+      "rk_bf16_gram_max": 0.0009956955909729004,
+      "rv_bf16_gram_max": 0.0010776519775390625,
+      "rk_sha256": "9c5ee4358b5dcc1458f45bceda61c065c53e7bedb1d704acf6ffd123ac350614",
+      "rv_sha256": "c8b689a1cadc838c9c921ad2f8e5a5d3b486ce7b4ef7f3956d51d47f12d64d8b",
+      "mean_sha256": "1fd7123a542edf6f726bda27249abcd01cad35ec1cc24bd92aa54d167dc56ad3"
+    },
+    {
+      "head": 1,
+      "rk_fp32_gram_max": 5.960464477539062e-07,
+      "rv_fp32_gram_max": 6.556510925292969e-07,
+      "rk_bf16_gram_max": 0.0011687278747558594,
+      "rv_bf16_gram_max": 0.0011110305786132812,
+      "rk_sha256": "6cab77f4aa15e9533531da7663bec790e0651192f4f6dba7957ec718e9153d60",
+      "rv_sha256": "90e5a31c33687f1facc3716063ef59a3b77eab6cabf3394e79985da3b6eb92ab",
+      "mean_sha256": "b471317012658a2f0f9949604c6455a58c2af4695add76a7f8cc0e0facf995af"
+    },
+    {
+      "head": 2,
+      "rk_fp32_gram_max": 8.344650268554688e-07,
+      "rv_fp32_gram_max": 5.960464477539062e-07,
+      "rk_bf16_gram_max": 0.0009014606475830078,
+      "rv_bf16_gram_max": 0.0010704398155212402,
+      "rk_sha256": "ccc14dc12409f2c4a055330d1a970873adb2e088e146af0702c3ea1450d7eafc",
+      "rv_sha256": "7461192211d3710269b68131e6cad6e191a25fea6d8b0717b7c4aed42ca9f38b",
+      "mean_sha256": "03285b485e1acbc6d338980e1d78c8baa97ef4ee1f0af5fdca0a7809cc9d3b0f"
+    },
+    {
+      "head": 3,
+      "rk_fp32_gram_max": 5.960464477539062e-07,
+      "rv_fp32_gram_max": 5.364418029785156e-07,
+      "rk_bf16_gram_max": 0.0011782050132751465,
+      "rv_bf16_gram_max": 0.0011049509048461914,
+      "rk_sha256": "49b8ae14f86bda9d883832cc9f65478111ba6aa86cd59f16f918ad615064a3c9",
+      "rv_sha256": "e9fe0768c82a0b72abe001314852ee53499ea5b6aac92873c695c1f000ea61ad",
+      "mean_sha256": "47be3e0e346e8a0890bee368eb76638289e364da3df3f917bb1bc6608a892572"
+    }
+  ],
+  "cases": [
+    {
+      "tokens": 1,
+      "seed": 1001,
+      "max_abs_old_vs_original_space": 0.00830078125,
+      "relative_l2_old_vs_original_space": 0.0031656683422625065,
+      "different_elements": 774,
+      "total_elements": 1536,
+      "input_sha256": {
+        "q": "6f9f6de26a90f87dcfca7155d757e56f7549d8e3cd1ecaf4dc71f6cd664a6a98",
+        "k": "ada157158cc67cf0171fa5c4191fe06aa95bc4282464bbb3f46ed410a4bf8e39",
+        "v": "9a5d0c7ee38ad555ef6bdbb8618de45601f25cc79ddb38af84ecc9a34d494520"
+      },
+      "writer_inputs": {
+        "quantized_key_input": {
+          "equal": true,
+          "before_sha256": "ce118df445e6cdbc25211fd0e67daea40723e0813626b7b0166367418be22ba4",
+          "after_sha256": "ce118df445e6cdbc25211fd0e67daea40723e0813626b7b0166367418be22ba4"
+        },
+        "quantized_value_input": {
+          "equal": true,
+          "before_sha256": "ce4435aed1d11a055ca7800400d60e23defef4360dff09b3fff668a57ff322a1",
+          "after_sha256": "ce4435aed1d11a055ca7800400d60e23defef4360dff09b3fff668a57ff322a1"
+        },
+        "exact_key_input": {
+          "equal": true,
+          "before_sha256": "ce118df445e6cdbc25211fd0e67daea40723e0813626b7b0166367418be22ba4",
+          "after_sha256": "ce118df445e6cdbc25211fd0e67daea40723e0813626b7b0166367418be22ba4"
+        },
+        "exact_value_input": {
+          "equal": true,
+          "before_sha256": "ce4435aed1d11a055ca7800400d60e23defef4360dff09b3fff668a57ff322a1",
+          "after_sha256": "ce4435aed1d11a055ca7800400d60e23defef4360dff09b3fff668a57ff322a1"
+        }
+      },
+      "original_space_equals_v_exact": true
+    },
+    {
+      "tokens": 33,
+      "seed": 1033,
+      "max_abs_old_vs_original_space": 0.015625,
+      "relative_l2_old_vs_original_space": 0.004700509365648031,
+      "different_elements": 33953,
+      "total_elements": 50688,
+      "input_sha256": {
+        "q": "8d5ef89a8ca104caf6071a7e58b6964293059b45247843a0fe93aa6548292d36",
+        "k": "83db2d67915cf2ae625eff75f472b84cef955b9cbf4b93ef72c2c4f4df5f1c55",
+        "v": "fb498d9137f53829ee15318cbb1b0a161f4875fdf8ba3fca6e8340ec12866d51"
+      },
+      "writer_inputs": {
+        "quantized_key_input": {
+          "equal": true,
+          "before_sha256": "e9bb016016209b1d28bc4bf048e6ad710ad425ef2a5c29645752c5856e129a80",
+          "after_sha256": "e9bb016016209b1d28bc4bf048e6ad710ad425ef2a5c29645752c5856e129a80"
+        },
+        "quantized_value_input": {
+          "equal": true,
+          "before_sha256": "851fa45d9d5b4dcdc2f94093388bc21a9d9875a12a4fcc4caeb432de0c32580d",
+          "after_sha256": "851fa45d9d5b4dcdc2f94093388bc21a9d9875a12a4fcc4caeb432de0c32580d"
+        },
+        "exact_key_input": {
+          "equal": true,
+          "before_sha256": "e9bb016016209b1d28bc4bf048e6ad710ad425ef2a5c29645752c5856e129a80",
+          "after_sha256": "e9bb016016209b1d28bc4bf048e6ad710ad425ef2a5c29645752c5856e129a80"
+        },
+        "exact_value_input": {
+          "equal": true,
+          "before_sha256": "851fa45d9d5b4dcdc2f94093388bc21a9d9875a12a4fcc4caeb432de0c32580d",
+          "after_sha256": "851fa45d9d5b4dcdc2f94093388bc21a9d9875a12a4fcc4caeb432de0c32580d"
+        }
+      }
+    },
+    {
+      "tokens": 257,
+      "seed": 1257,
+      "max_abs_old_vs_original_space": 0.015625,
+      "relative_l2_old_vs_original_space": 0.005175271537154913,
+      "different_elements": 276081,
+      "total_elements": 394752,
+      "input_sha256": {
+        "q": "d1109ef88a7a766522baefb443a6f787093afb7f27d11a5363b71df6ea312afd",
+        "k": "678723f106ead6daf18dbf9394d6da9a9e2aab10623de84ca367c200586216da",
+        "v": "a59e832aaa9da8df39058fb0cb5591ca4c9154181f0f31a46bea47a0bf6e5f77"
+      },
+      "writer_inputs": {
+        "quantized_key_input": {
+          "equal": true,
+          "before_sha256": "d772691f28e80f0a6bab670653602e4bb231a0d44a68672c13ca25ddd6c66c35",
+          "after_sha256": "d772691f28e80f0a6bab670653602e4bb231a0d44a68672c13ca25ddd6c66c35"
+        },
+        "quantized_value_input": {
+          "equal": true,
+          "before_sha256": "24b1b37867c71c52c715955c39935698e9ae323af565b57314ffed28d87c53e2",
+          "after_sha256": "24b1b37867c71c52c715955c39935698e9ae323af565b57314ffed28d87c53e2"
+        },
+        "exact_key_input": {
+          "equal": true,
+          "before_sha256": "d772691f28e80f0a6bab670653602e4bb231a0d44a68672c13ca25ddd6c66c35",
+          "after_sha256": "d772691f28e80f0a6bab670653602e4bb231a0d44a68672c13ca25ddd6c66c35"
+        },
+        "exact_value_input": {
+          "equal": true,
+          "before_sha256": "24b1b37867c71c52c715955c39935698e9ae323af565b57314ffed28d87c53e2",
+          "after_sha256": "24b1b37867c71c52c715955c39935698e9ae323af565b57314ffed28d87c53e2"
+        }
+      }
+    }
+  ],
+  "operation_ledger": {
+    "per_rank": {
+      "query_heads": 6,
+      "kv_heads": 1,
+      "head_dim": 256
+    },
+    "removed_matmuls": [
+      "Q @ Rk",
+      "BF16 attention output @ Rv.T"
+    ],
+    "removed_matmul_flops_per_token": 1572864,
+    "removed_query_head_bf16_copies": 0,
+    "output_copy": "Preserve the original-size N*Hq*D BF16 copy into contiguous preallocated storage; native FIA does not guarantee output contiguity.",
+    "preserved": [
+      "raw-Q finite validation/copy",
+      "same native FIA shape/mask/scale",
+      "key centering",
+      "K/V rotations",
+      "INT2 writer/clip",
+      "rotated exact snapshot bytes",
+      "fixed output/LSE validation"
+    ]
+  },
+  "limits": [
+    "No NPU FIA or model quality measurement; FP64 dense attention isolates the coordinate-transform loss.",
+    "Writer equality is for one layer with the same incoming K/V; downstream model K/V may legitimately change.",
+    "New exact-current policy intentionally differs from v4 cold rotation; not a v4 lifecycle defect.",
+    "Deleted operations prove a smaller source workload, not a measured runtime gain."
+  ],
+  "npu": "not_run",
+  "performance": "not_run",
+  "model_quality": "not_run",
+  "source_sha256": {
+    "oscar_ascend/rotation_calibration.py": "feaf1daa00e72ec6b95d7f25eaa1e9a370fb5108c17432fca1cca1953c82379a",
+    "oscar_ascend/integration/official_math.py": "b080a6a67f41819a15d3b88807b7e9819367c2d49d84cbe37ab26c5ad1ba6439",
+    "csrc/experiments/native_exact_current_20261028/counterexample.py": "2d308a47a24a96d32a23e09449567fdc7afe185e1771c2ccf1f20d0bfa71fca1"
+  }
+}

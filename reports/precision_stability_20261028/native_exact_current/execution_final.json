@@ -1,0 +1,15 @@
+{
+  "scope": "Final implementation operation ledger; preserve canonical output copy. No performance measurement.",
+  "command": [
+    "/Users/sunao2000/gpt_new_oscar_kimi/.venv/bin/python",
+    "-m",
+    "csrc.experiments.native_exact_current_20261028.counterexample",
+    "--output",
+    "reports/precision_stability_20261028/native_exact_current/counterexample.json"
+  ],
+  "returncode": 0,
+  "log": "counterexample_final.log",
+  "original_execution": "execution.json",
+  "numerical_counterexamples_unchanged": true,
+  "rotation_metrics_unchanged": true
+}

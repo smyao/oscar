@@ -1,4 +1,4 @@
-"""Archive #111/#126/#145/#148/#157/#164: v4 rotated-source attention device gate.
+"""Archive #111/#126/#145/#148/#157/#164/#173: v4 reader and policy evidence.
 
 D.4: bounded new-token writer and KV256 fused reader; no whole-history device
 restore. All goldens come from independent predeclared v4 math. This command
@@ -39,6 +39,9 @@ SOURCE_PATHS = (
  'configs/acceptance_official_bf16.json', 'configs/acceptance_fp32_dequant_bf16.json', 'oscar_ascend/runtime.py',
  'oscar_ascend/integration/impl.py', 'oscar_ascend/integration/aligned_math.py',
  'oscar_ascend/integration/official_math.py',
+ 'oscar_ascend/integration/current_only_dispatch.py', 'oscar_ascend/integration/native_exact_current.py',
+ 'oscar_ascend/integration/current_only_plan.py', 'oscar_ascend/integration/current_attention.py',
+ 'tools/native_exact_current_reference.py', 'configs/acceptance_native_exact_current.json',
  'oscar_ascend/integration/cache_storage_ops.py', 'oscar_ascend/layout.py', 'oscar_ascend/integration/specs.py',
  'oscar_ascend/ops/cv_dispatch.py', 'oscar_ascend/ops/contracts.py',
  'tools/serving_variants.py', 'tools/probe_official_attention.py', 'tools/probe_current_only.py',
@@ -409,6 +412,28 @@ def writer_rotation_gate(torch, ops, device, cores):
             'graph_capture': 'passed', 'graph_replay': 'passed', 'graph_same_addresses': True}
 
 
+def current_only_precision(config):
+    """Bind the exact-source policy separately from cached-reader arithmetic."""
+    policy = config.get('oscar_current_only_policy', config.get('current_only_policy', 'rotated_v4'))
+    if policy not in ('rotated_v4', 'native_exact'):
+        raise RuntimeError('unknown current-only precision policy')
+    if policy == 'native_exact':
+        if config.get('experimental_official_math', config.get('official_math', False)) is not True:
+            raise RuntimeError('native-exact current evidence requires the official reader bundle')
+        from .native_exact_current_reference import load_acceptance, CONTRACT as exact_contract
+        load_acceptance()
+        contract = exact_contract
+        acceptance = 'configs/acceptance_native_exact_current.json'
+        oracle = 'tools/native_exact_current_reference.py'
+    else:
+        contract = CONTRACT
+        acceptance = 'configs/acceptance_official_bf16.json'
+        oracle = 'tools/official_runtime_oracle.py'
+    return {'current_only_policy': policy, 'current_only_contract': contract,
+            'current_only_acceptance_sha256': digest(ROOT / acceptance),
+            'current_only_oracle_sha256': digest(ROOT / oracle)}
+
+
 def runtime_precision(config):
     """Bind selected runtime arithmetic without rewriting the dual-mode v4 oracle."""
     from types import SimpleNamespace
@@ -423,7 +448,8 @@ def runtime_precision(config):
     if policy == 'fp32_metadata' and declared.get('dequant_modes') != modes:
         raise RuntimeError('runtime dequant modes differ from the declared precision overlay')
     return {'policy':policy, 'contract':('oscar_bf16_runtime_fp32_dequant_v1' if policy == 'fp32_metadata' else CONTRACT),
-            'dequant_modes':modes, 'acceptance_sha256':digest(ROOT / acceptance)}
+            'dequant_modes':modes, 'acceptance_sha256':digest(ROOT / acceptance),
+            **current_only_precision(config)}
 
 
 def validate_evidence(report, config=None):

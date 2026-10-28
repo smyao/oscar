@@ -1,0 +1,261 @@
+{
+  "NPU": "not_run",
+  "checkpoint_provenance": {
+    "git_head": "614c73982d762365e20c7362adc6f9350e465218",
+    "sha256": {
+      "oscar_ascend/integration/prefix_checkpoint.py": "7e9eac665bcbaae7366ad53fbc3b0ae88838406bce2e09a7ab0d9aa45f421a9c",
+      "oscar_ascend/integration/specs.py": "ae2a93a93f319e31baed9e4640e4ae9813c2c222c380e0ca4fea4add6dc5c1ea",
+      "oscar_ascend/layout.py": "8d0504b03367ca982968e3f92b80af3c47c231b0a6a8607c453e3d6e118db96e",
+      "oscar_ascend/plugin.py": "3f511e2352931d2c5074e388882e3973e376a4774d08233c71e41b7ef1b979b7",
+      "references/vllm-ascend/vllm_ascend/core/single_type_kv_cache_manager.py": "5292cf9c33c90f83abe7097de1a8b07e1381f3601f38c57bd65119388263e408",
+      "references/vllm-ascend/vllm_ascend/patch/platform/patch_kv_cache_coordinator.py": "35a62e6bb3960f88192ff609751d631eeafbbc29f087560afd60906b3a504999",
+      "references/vllm-ascend/vllm_ascend/patch/platform/patch_mamba_manager.py": "f39b28a75509ff5b8617104a00c73e6bd21b8b7acd43f81b50c57ea7c474815e",
+      "references/vllm/vllm/v1/core/block_pool.py": "84755b84c36ed6460ceefe2690c9484a9c31488c5da6daa6c918f497d8837dee",
+      "references/vllm/vllm/v1/core/kv_cache_utils.py": "b89f9afa7f95fcc30412ae2031d5370a23e95f35d068fa14e5824dce1c900ee5",
+      "references/vllm/vllm/v1/core/sched/scheduler.py": "9ae1491f57a6294e32416b93ef2ea68107fa0d65c3a4d7f745f1261012f735e9",
+      "references/vllm/vllm/v1/core/single_type_kv_cache_manager.py": "dc425e1e87b6157f3e5c46be2bfee54076ccb020b86c5a8aaa3d9901c75e46ef",
+      "references/vllm/vllm/v1/kv_cache_interface.py": "8d6be98bbf75b3d55007b64ccf5afef047ca01790a432522f70a196412c103d9",
+      "references/vllm/vllm/v1/kv_cache_spec_registry.py": "16b3f6458538910f72cdac48554c20432c7ac0e5122e91c8a6219a1ec25f44fe",
+      "tests/test_prefix_caching.py": "8bbfb79549084d1c9e07dae5ddcef70718531380d6736db8f8302603ab9aac31",
+      "tests/test_prefix_checkpoint_audit.py": "44049b719948020d381e32a143bfbf0ac1e898e4d68fb6f4d889facb7e04babb",
+      "tests/test_runtime_native.py": "f262d89114db8d4aed5df7d25d7f582617700b3775ed3dff70199fb24a7f6836",
+      "tools/experiments/prefix_checkpoint_audit.py": "8c39ab6bae7622c8c7de639147a557c2c62321c816181c369749323c340e69dc"
+    },
+    "source_state": "working tree; file hashes bind uncommitted source as well"
+  },
+  "git_head_at_execution": "614c73982d762365e20c7362adc6f9350e465218",
+  "interpretation": [
+    "Legal remaining budgets change the precision tier of the same prior token for the same query.",
+    "The unchanged all-BF16 source-split ablation isolates this difference from splitting/merge rounding.",
+    "Both schedule replays produce a queryable2304 joint checkpoint for the same synthetic prompt hashes.",
+    "The attention output difference can feed later layers' KV/GDN state; this script does not execute a full model or GDN payload.",
+    "No physical-page contamination, shared-page overwrite or device race is demonstrated by this example.",
+    "Equal budgets/cache seed paths may produce identical outputs; not every cold/hot cache run must differ.",
+    "No attribution fraction, LongBench result, one-point quality claim or performance claim follows from this synthetic counterexample."
+  ],
+  "model_quality": "not_run",
+  "performance": "not_run",
+  "query_tier_difference": {
+    "large_chunk": {
+      "context": 0,
+      "query_in_chunk": 2000,
+      "selected_token64": "exact_current"
+    },
+    "small_chunk": {
+      "context": 1536,
+      "fixed_cut": 1281,
+      "query_in_chunk": 464,
+      "selected_token64": "INT2_history"
+    }
+  },
+  "results": {
+    "all_exact_output_first": 0.19921875,
+    "all_exact_source_split_ablation_bitwise_equal": true,
+    "all_exact_source_split_ablation_max_abs": 0.0,
+    "all_outputs_finite": true,
+    "dequantized_selected_value": 0.333984375,
+    "quantized_tier_difference_max_abs": 0.1328125,
+    "quantized_tier_different_elements": 768,
+    "raw_selected_value": 0.2001953125,
+    "split_all_exact_output_first": 0.19921875,
+    "split_quantized_output_first": 0.33203125
+  },
+  "schedules": {
+    "full_remaining_budget": {
+      "arm": "oscar_fixed",
+      "cached_mamba_checkpoint_tokens": [
+        2304,
+        3840
+      ],
+      "chunks": [
+        {
+          "before": 0,
+          "end": 2304,
+          "joint_aligned": true,
+          "proposed": 5000,
+          "remaining_budget": 16384,
+          "scheduled": 2304,
+          "splitter_route": "production_policy"
+        },
+        {
+          "before": 2304,
+          "end": 3840,
+          "joint_aligned": false,
+          "proposed": 2696,
+          "remaining_budget": 16384,
+          "scheduled": 1536,
+          "splitter_route": "native_tail"
+        },
+        {
+          "before": 3840,
+          "end": 5000,
+          "joint_aligned": false,
+          "proposed": 1160,
+          "remaining_budget": 16384,
+          "scheduled": 1160,
+          "splitter_route": "native_tail"
+        }
+      ],
+      "completed_prompt_tokens": 5000,
+      "full_block_tokens": 2304,
+      "full_only_native_lookup_ceiling_tokens": 2304,
+      "global_token_budget": 16384,
+      "hash_block_tokens": 768,
+      "hypothetical": false,
+      "joint_aligned_mamba_checkpoint_tokens": [
+        2304
+      ],
+      "joint_lookup_alignment": 2304,
+      "mamba_block_tokens": 768,
+      "mamba_speculative_blocks": 3,
+      "max_lookup_tokens": 4999,
+      "metadata_bytes": 4,
+      "mtp": true,
+      "native_cache_config_block_size": 768,
+      "native_final_cache_position": 3840,
+      "production_policy_executed": true,
+      "production_terminal_checkpoint": 2304,
+      "prompt_tokens": 5000,
+      "remaining_budget_cycle": [
+        16384
+      ],
+      "repeat_prompt_hit_fraction": 0.4608,
+      "repeat_prompt_hit_tokens": 2304,
+      "splitter_view_block_size": 768,
+      "status": "completed",
+      "symbolic_state_identity_violations": []
+    },
+    "other_requests_leave_768": {
+      "arm": "oscar_fixed",
+      "cached_mamba_checkpoint_tokens": [
+        768,
+        1536,
+        2304,
+        3072,
+        3840,
+        4608
+      ],
+      "chunks": [
+        {
+          "before": 0,
+          "end": 768,
+          "joint_aligned": false,
+          "proposed": 768,
+          "remaining_budget": 768,
+          "scheduled": 768,
+          "splitter_route": "production_policy"
+        },
+        {
+          "before": 768,
+          "end": 1536,
+          "joint_aligned": false,
+          "proposed": 768,
+          "remaining_budget": 768,
+          "scheduled": 768,
+          "splitter_route": "production_policy"
+        },
+        {
+          "before": 1536,
+          "end": 2304,
+          "joint_aligned": true,
+          "proposed": 768,
+          "remaining_budget": 768,
+          "scheduled": 768,
+          "splitter_route": "production_policy"
+        },
+        {
+          "before": 2304,
+          "end": 3072,
+          "joint_aligned": false,
+          "proposed": 768,
+          "remaining_budget": 768,
+          "scheduled": 768,
+          "splitter_route": "native_tail"
+        },
+        {
+          "before": 3072,
+          "end": 3840,
+          "joint_aligned": false,
+          "proposed": 768,
+          "remaining_budget": 768,
+          "scheduled": 768,
+          "splitter_route": "native_tail"
+        },
+        {
+          "before": 3840,
+          "end": 4608,
+          "joint_aligned": true,
+          "proposed": 768,
+          "remaining_budget": 768,
+          "scheduled": 768,
+          "splitter_route": "native_tail"
+        },
+        {
+          "before": 4608,
+          "end": 5000,
+          "joint_aligned": false,
+          "proposed": 392,
+          "remaining_budget": 768,
+          "scheduled": 392,
+          "splitter_route": "native_tail"
+        }
+      ],
+      "completed_prompt_tokens": 5000,
+      "full_block_tokens": 2304,
+      "full_only_native_lookup_ceiling_tokens": 2304,
+      "global_token_budget": 16384,
+      "hash_block_tokens": 768,
+      "hypothetical": false,
+      "joint_aligned_mamba_checkpoint_tokens": [
+        2304,
+        4608
+      ],
+      "joint_lookup_alignment": 2304,
+      "mamba_block_tokens": 768,
+      "mamba_speculative_blocks": 3,
+      "max_lookup_tokens": 4999,
+      "metadata_bytes": 4,
+      "mtp": true,
+      "native_cache_config_block_size": 768,
+      "native_final_cache_position": 3840,
+      "production_policy_executed": true,
+      "production_terminal_checkpoint": 2304,
+      "prompt_tokens": 5000,
+      "remaining_budget_cycle": [
+        768
+      ],
+      "repeat_prompt_hit_fraction": 0.4608,
+      "repeat_prompt_hit_tokens": 2304,
+      "splitter_view_block_size": 768,
+      "status": "completed",
+      "symbolic_state_identity_violations": []
+    }
+  },
+  "scope": "synthetic CPU numerical counterexample and production/pinned-native host contracts",
+  "source_sha256": {
+    "csrc/kernels/attention_cv_official_cluster16.cpp": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
+    "csrc/kernels/attention_cv_official_cluster4.cpp": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+    "csrc/kernels/attention_cv_official_decode.cpp": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+    "csrc/kernels/attention_official_tasks.cpp": "bfcc571b3917fd7f8ee187fe46aac64b5246acfcba0bb6118e5f71ef723cf06c",
+    "csrc/kernels/store_aligned_int2.cpp": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
+    "reports/precision_stability_20261028/chunk_dependence/reproduce.py": "c693c57cd5699b4de174808493b617475247588c3d9ab93b81899b88a2996fa3",
+    "tools/official_reference.py": "605083aa91d0e5296df3aa78ec72d54e3c87f015bd2fcf69a6e2e972fdabbb96"
+  },
+  "source_state": "working-tree source hashes; HEAD alone is not the evidence identity",
+  "synthetic_inputs": {
+    "D": 256,
+    "Hkv": 1,
+    "Hq": 6,
+    "attention": "frozen independent v4 KV256 oracle",
+    "codec": "144B striped FP32 metadata, mode0",
+    "k_clip": 0.96,
+    "key_mean": "zero",
+    "key_nonzero": "token64 first13 dimensions=4; all other entries=0",
+    "prompt_tokens": 5000,
+    "query_nonzero": "first13 dimensions=4 in each query head",
+    "query_position": 2000,
+    "rotation": "identity",
+    "v_clip": 0.92,
+    "value_nonzero": "token64 dims0:128=BF16(.2),128:192=-1,192:256=1; all others=0"
+  }
+}

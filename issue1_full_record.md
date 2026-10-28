@@ -17,6 +17,8 @@
 
 # 症状速查表（报错关键字 → 条目编号）
 
+- 32K/64K性能通过，但127条PC质量集十轮top3四项仍落后：见 #173，原无历史精确current路径的额外旋转误差与native_exact政策。
+
 - `34bc2b75` 后64K达标但32K及以下慢30%：见 #172，共用decode批量Cast与C16组合回归；禁止按输入长度切版本。
 
 - C16实验启动`npugraph_ex kernel: too many values to unpack (expected 20)`，WorkerProc失败后health一直connection refused：见 #169。
@@ -28847,3 +28849,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修复**：生产generator显式关闭decode cast变换，生成的整个decode源恢复为232b字节身份（SHA817a5cbb…）；C16与finite helper完整保留34bc字节身份（SHA1bcf9ccf…/776e5072…）。所有长度采用同一decode/C16组合；没有新增长度阈值或context条件，不修改原host分流。32K仍可能执行warm C16，故不把“恢复decode”写成“32K整个执行图回退”。PT、精度、FP32状态、窗口、PC/GDN/MTP、预算、argv和timer保持。
 
 **回归保护与D.4四问**：①对应有界fused FIA的BF16发布；②不恢复旧6.5秒全历史dequant，也不按长度绕开OSCAR；③复用两条现存完整实现，不新增运行分支、内存或同步协议；④固定短输入基底和长prefill版本的源码身份，主机实际路由加fresh组合CANN验证，复用同源CPU配对证据。新组合的双目标必须同时成立，不能以64K单项通过抵销32K回归。详见 `docs/universal_regression_repair_20261028.md` 和本轮validation；此前34bc本地通过记录原样保留。
+
+
+## [173] 质量反馈条目（2026-10-28 用户回传）· 127条PC质量集十轮top3四指标差距超过1点
+
+**现场事实**：用户确认当前32K和64K性能数据集均达标，随后提供两组127条、并发32的LongBenchv2客户端日志，要求两侧各10轮、top3均值、四指标差距均小于1个百分点，并保护已达标性能、禁止输入长度/数据集特判。原始附件按字节保存于 `reports/precision_stability_20261028/baseline_client.txt` 与 `candidate_client.txt`，各10轮、每轮127/127、FAIL=0。逐指标top3基线减OSCAR差距为4.46194226、2.32558140、4.76190476、4.46194226个百分点；按overall统一选三轮的另一口径及并列第三名也保留。RPS差异不作为精度归因或修改理由。
+
+**源码与独立反例**：已有current-only路线已经证明无历史，却仍先BF16旋转Q/K/V，native FIA后再逆旋转。真实recipe3 fitter对披露的合成样本生成的D256旋转，在单token下令本应严格等于V的输出改变774/1536元素、max_abs0.00830078125。此为可复现的额外有限精度误差，不是用户真实激活，不证明它解释全部分数差。另保存了合法chunk划分改变INT2/精确来源归属的反例，未据此冒称内存污染或修改调度。
+
+**修复**：新candidate政策native_exact仅改变已有无历史精确suffix内部算术：原Q/K/V native FIA直接输出；原Q copy/finite检查、slot/context/padding证明和最终output/status检查保留；K中心化+K/V旋转、INT2和精确snapshot writer不变。独立Q scratch避免strided输入别名；所有被guard读取的状态本次都写入。删除Q旋转和最终逆旋转两个GEMM，无新增copy/算子/缓冲。历史/混合仍完整v4，q4/q1/C4/C16等CANN源逐字不变，PT/clip/预算/PC/MTP/timer保持。
+
+**验收与D.4**：对应已有current fused FIA，不引入历史恢复或错误后退路；原资格/所有权不动，仅消除不必要坐标往返。新增独立合同和原空间参考，旧v4 oracle/容差不改；同incoming K/V的12份writer输入逐位一致，302项主机/参考/接缝回归通过。本文不写入新的模型通过分数；四项质量和两项性能仍作为共同交付条件。设计、操作账、复现、原始失败及本地验证见 `docs/native_exact_current_precision_20261028.md` 与本轮validation。

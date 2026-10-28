@@ -1,0 +1,31 @@
+{
+  "scope": "CPU algebra and producer-input regression only",
+  "phases": [
+    {
+      "name": "counterexample",
+      "command": [
+        "/Users/sunao2000/gpt_new_oscar_kimi/.venv/bin/python",
+        "-m",
+        "csrc.experiments.native_exact_current_20261028.counterexample",
+        "--output",
+        "reports/precision_stability_20261028/native_exact_current/counterexample.json"
+      ],
+      "returncode": 0,
+      "log": "counterexample.log"
+    },
+    {
+      "name": "regression",
+      "command": [
+        "/Users/sunao2000/gpt_new_oscar_kimi/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "csrc/experiments/native_exact_current_20261028/test_counterexample.py"
+      ],
+      "returncode": 0,
+      "log": "regression.log"
+    }
+  ],
+  "npu": "not_run",
+  "performance": "not_run"
+}

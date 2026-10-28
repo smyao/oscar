@@ -1,0 +1,41 @@
+........................................................................ [ 69%]
+......F....F....................                                         [100%]
+=================================== FAILURES ===================================
+_ test_restored_and_unchanged_production_bytes_match_232b[oscar_ascend/integration/current_only_dispatch.py-14b588f4a86c21660b023f3469cc17ecae84d592698b983cabf1faa7a7b08646] _
+
+path = 'oscar_ascend/integration/current_only_dispatch.py'
+expected = '14b588f4a86c21660b023f3469cc17ecae84d592698b983cabf1faa7a7b08646'
+
+    @pytest.mark.parametrize("path,expected", sorted(BASE_232B_SHA256.items()))
+    def test_restored_and_unchanged_production_bytes_match_232b(path, expected):
+>       assert digest((ROOT / path).read_bytes()) == expected
+E       AssertionError: assert 'ae1d537cecd9...a8d260795e94c' == '14b588f4a86c...1faa7a7b08646'
+E         
+E         - 14b588f4a86c21660b023f3469cc17ecae84d592698b983cabf1faa7a7b08646
+E         + ae1d537cecd9fe6050c156c392d9fa10cb1cea8afee884f1a1ba8d260795e94c
+
+tests/test_universal_bf16_regression_protection.py:51: AssertionError
+_ test_restored_and_unchanged_production_bytes_match_232b[tools/serving_variants.py-354061eb242f8730ef0326674240b339f4f6539ad563c0924c8c0ceb3e7a5c4f] _
+
+path = 'tools/serving_variants.py'
+expected = '354061eb242f8730ef0326674240b339f4f6539ad563c0924c8c0ceb3e7a5c4f'
+
+    @pytest.mark.parametrize("path,expected", sorted(BASE_232B_SHA256.items()))
+    def test_restored_and_unchanged_production_bytes_match_232b(path, expected):
+>       assert digest((ROOT / path).read_bytes()) == expected
+E       AssertionError: assert '4c15477885de...e8797833fe12c' == '354061eb242f...c0ceb3e7a5c4f'
+E         
+E         - 354061eb242f8730ef0326674240b339f4f6539ad563c0924c8c0ceb3e7a5c4f
+E         + 4c15477885deeebcbc213be8ae4cea5b123400da7a71e0e15d8e8797833fe12c
+
+tests/test_universal_bf16_regression_protection.py:51: AssertionError
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368
+  /Users/sunao2000/gpt_new_oscar_kimi/.venv/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+    cpu = _conversion_method_template(device=torch.device("cpu"))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_universal_bf16_regression_protection.py::test_restored_and_unchanged_production_bytes_match_232b[oscar_ascend/integration/current_only_dispatch.py-14b588f4a86c21660b023f3469cc17ecae84d592698b983cabf1faa7a7b08646]
+FAILED tests/test_universal_bf16_regression_protection.py::test_restored_and_unchanged_production_bytes_match_232b[tools/serving_variants.py-354061eb242f8730ef0326674240b339f4f6539ad563c0924c8c0ceb3e7a5c4f]
+2 failed, 102 passed, 1 warning in 1.29s

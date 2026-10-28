@@ -1,5 +1,7 @@
 # 同时保护短输入与长输入的阶段组合修复
 
+> 后续质量任务更新：用户已确认本修复614c739的32K/64K性能通过。新的native_exact精度政策只在原current-only资格内省去旋转往返，q4/q1/C4/C16组合继续保持本报告来源；当前精度执行链与更新后的保护门见[精度修复](native_exact_current_precision_20261028.md)。下文保留614c交付时的事实。
+
 2026-10-28。限定 `codex/oscar-bf16-attention`。
 
 用户实测：`34bc2b75` 的64K已经达标，但32K及以下慢30%。短输入保护基底是 `232b563b69e01495046a9b0025ac9150bc11b9d7`。这说明上一轮组合失败；源码发射次数减少和数值逐位一致不能代替组合性能。用户原话节选保存在[现场反馈](../reports/universal_regression_repair_20261028/user_feedback.txt)。

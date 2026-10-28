@@ -1,0 +1,14 @@
+{
+  "baseline": {
+    "attachment": "/Users/sunao2000/.codex/attachments/38685d16-1107-4c71-8284-1b27943b4de8/已粘贴的文本.txt",
+    "saved_copy": "reports/precision_stability_20261028/baseline_client.txt",
+    "bytes": 50304,
+    "sha256": "36c8c0f5e7d28da1e6830b566b9a94b2ae05c330f2dd1c64ba9db9d77f4bbb58"
+  },
+  "candidate": {
+    "attachment": "/Users/sunao2000/.codex/attachments/3d0eaacc-36e6-4270-874e-734ccf0cba6d/已粘贴的文本.txt",
+    "saved_copy": "reports/precision_stability_20261028/candidate_client.txt",
+    "bytes": 65737,
+    "sha256": "e23c4c8db2620954cccb6574bc5c2731b855cd2d7b35cf27be7270c01283aaaf"
+  }
+}

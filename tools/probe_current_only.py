@@ -1,4 +1,4 @@
-"""Archive #34/#36/#94/#95/#125/#140/#142/#148/#155: real NPU current-only gate.
+"""Archive #34/#36/#94/#95/#125/#140/#142/#148/#155/#173: current-only gate.
 
 D.4: this measures current FIA/copy/store, never historical dequant restore.
 The old 6.5s dequant and ~215ms store are failure context, not our timings.
@@ -70,6 +70,8 @@ def precision_fields(target):
         fields.update(aligned_math=True, cache_format="striped_fp32_v2")
     if official_enabled(target):
         fields.update(official_math=True, cache_format="striped_rotated_fp32_v3")
+        from .probe_official_attention import current_only_precision
+        fields.update(current_only_precision(target))
     return fields
 
 
@@ -152,6 +154,12 @@ def _rotation_label(mode):
 
 def validate_case_evidence(report, target, acceptance):
     """Reject partial/stale reports even when their top-level status says pass."""
+    current_precision = {}
+    if official_enabled(target):
+        from .probe_official_attention import current_only_precision
+        current_precision = current_only_precision(target)
+        if any(report.get(key) != value for key, value in current_precision.items()):
+            raise RuntimeError('current-only evidence lacks the selected precision policy/contract binding')
     rows = report.get("cases")
     expected_cases = {_case_name(case): case for case in case_plan()}
     if (not isinstance(rows, list) or len(rows) != len(expected_cases)
@@ -170,6 +178,8 @@ def validate_case_evidence(report, target, acceptance):
     for row in rows:
         name = row["case"]
         fresh, draft, slot_type, paired = expected_cases[name]
+        if any(row.get(key) != value for key, value in current_precision.items()):
+            raise RuntimeError(f'current-only case {name} lacks its precision policy/contract binding')
         required = {"status": "passed", "independent_oracle": "passed", "copy_lse_oracle": "passed",
             "slot_dtype": slot_type,
             "rotation": _rotation_label(_rotation_mode(target,draft))}
@@ -185,6 +195,9 @@ def validate_case_evidence(report, target, acceptance):
         expected_copy = ((3 if paired else 1) if official_enabled(target) else
                          1 if paired or bf16 else 1 + policy["warmup"] + policy["repeats"])
         expected_store = 3 if paired else expected_copy
+        if (current_precision.get('current_only_policy') == 'native_exact' and
+                (not isinstance(calls, dict) or calls.get('copy_validate_bf16_query_out') != expected_copy)):
+            raise RuntimeError(f'current-only case {name} lacks raw query validation witnesses')
         if (not isinstance(calls, dict)
                 or type(calls.get("copy_validate_current_out")) is not int
                 or calls["copy_validate_current_out"] != expected_copy
@@ -239,6 +252,10 @@ def _configuration(target, enabled, *, probe_tokens=None):
         if target.get(key) is not True:
             raise RuntimeError(f"current-only gate requires explicit {key}=true")
     config = {**target, "experimental_current_only": enabled}
+    if not enabled and official_enabled(target):
+        # This private A/B side deliberately executes complete v4 CV, including
+        # current. Do not attach a fresh-only policy to a disabled fresh route.
+        config['oscar_current_only_policy'] = 'rotated_v4'
     if target.get("experimental_bf16_attention",False):
         if official_enabled(target):
             from .official_reference import load_acceptance
@@ -247,6 +264,9 @@ def _configuration(target, enabled, *, probe_tokens=None):
         else:
             from .bf16_reference import load_acceptance
         load_acceptance()
+        if official_enabled(target):
+            from .probe_official_attention import current_only_precision
+            current_only_precision(target)
     if probe_tokens is not None:
         if type(probe_tokens) is not int or probe_tokens <= 0:
             raise ValueError("independent probe token capacity must be a positive integer")
@@ -339,7 +359,11 @@ def _assert_output(torch, output, expected, tolerance):
 def _expected(fixture,target,*,native_current):
     if not target.get("experimental_bf16_attention",False):return fixture["expected"]
     if official_enabled(target):
-        from .official_runtime_oracle import sampled_fixture_expected
+        from .probe_official_attention import current_only_precision
+        if current_only_precision(target)['current_only_policy'] == 'native_exact':
+            from .native_exact_current_reference import sampled_fixture_expected
+        else:
+            from .official_runtime_oracle import sampled_fixture_expected
         return sampled_fixture_expected(fixture, native_current=native_current, dequant_mode=0)
     if target.get("experimental_aligned_math", False):
         from .aligned_runtime_oracle import sampled_fixture_expected

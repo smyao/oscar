@@ -1,0 +1,28 @@
+{
+  "rounds": {
+    "candidate": 10,
+    "baseline": 10
+  },
+  "comparisons": {
+    "accuracy": {
+      "all_rounds_baseline_minus_candidate_pp": 2.0472440944881924,
+      "independent_top3_baseline_minus_candidate_pp": 4.461942257217849,
+      "overall_top3_baseline_minus_candidate_pp": 4.461942257217849
+    },
+    "accuracy_easy": {
+      "all_rounds_baseline_minus_candidate_pp": 0.46511627906976827,
+      "independent_top3_baseline_minus_candidate_pp": 2.3255813953488413,
+      "overall_top3_baseline_minus_candidate_pp": 3.875968992248062
+    },
+    "accuracy_hard": {
+      "all_rounds_baseline_minus_candidate_pp": 2.857142857142861,
+      "independent_top3_baseline_minus_candidate_pp": 4.761904761904759,
+      "overall_top3_baseline_minus_candidate_pp": 4.761904761904759
+    },
+    "accuracy_short": {
+      "all_rounds_baseline_minus_candidate_pp": 2.0472440944881924,
+      "independent_top3_baseline_minus_candidate_pp": 4.461942257217849,
+      "overall_top3_baseline_minus_candidate_pp": 4.461942257217849
+    }
+  }
+}

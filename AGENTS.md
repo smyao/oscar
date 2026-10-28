@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-28 精度任务：用户确认614c739的32K/64K性能均达标；127条、PC开启、平均20K的质量集要求两侧各10轮、top3均值，accuracy/easy/hard/short四项与基线差距均小于1个百分点。禁止按输入长度或数据集特判，保护既有性能。candidate新增native_exact current-only政策：仅在原有CPU上界+设备prepare已证明无历史的精确suffix，使用原Q/K/V执行原native FIA，删除Q旋转/最终逆旋转；保留Q/output/slot/status检查、K中心化+K/V旋转和原INT2/snapshot writer。所有历史/混合读核、PTrecipe3、clip、预算、PC/MTP、timer不变；旧v4 oracle不改，独立overlay验证该精确路径。见docs/native_exact_current_precision_20261028.md及档案#173。不得把局部反例修复写成四指标已达标，不以RPS差异归因或调参。
+
 > 2026-10-28 性能回归硬约束：用户实测34bc2b75的64K达标，但32K及以下慢30%；232b563b69e01495046a9b0025ac9150bc11b9d7为已达标短输入保护基底。必须同时保住32K及以下与64K，禁止新增任何按输入/context/历史长度分界的版本选择。此次按执行阶段拆撤decode批量Cast，所有长度q4/q1统一恢复232b完整原源；C16完整保留34bc源，C4/current-only/调度/PT/argv/timer不动。新组合需按源码身份门保持这两个来源，不能以64K单项通过覆盖短输入退化。见docs/universal_regression_repair_20261028.md及档案#172。
 
 > 2026-10-23 PC续修：PC开启的OSCAR align路径保留每活跃请求最后可读prompt联合GDN checkpoint引用，最多3页/请求，native free后释放；原生hash/lookup/状态推进不改，无额外状态copy。修复20请求decode周转后联合命中0的主机反例；保持PT/数值/argv/timer/CANN，不能宣称现场命中或模型质量验收。见docs/prefix_checkpoint_retention_20261023.md。

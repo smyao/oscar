@@ -152,11 +152,13 @@ def test_official_current_only_reports_require_new_readers_and_final_copy_counts
     from test_probe_current_only import complete_report
     config = target()
     report = complete_report()
+    report.update(shared.precision_fields(config))
     for row, case in zip(report['cases'], shared.case_plan()):
         paired = case[3]
         row.update(shared.precision_fields(config))
         row['real_operator_calls'] = {'prepare_official_attention_tasks_out': 3 if paired else 1,
-            'copy_validate_current_out': 3 if paired else 1, 'store_aligned_int2_out': 3 if paired else 1}
+            'copy_validate_current_out': 3 if paired else 1, 'store_aligned_int2_out': 3 if paired else 1,
+            'copy_validate_bf16_query_out': 3 if paired else 1}
         if paired:
             row.update(ab_output='separate_BF16_native_contracts_passed', baseline='complete_rotated_current_CV')
             row['real_operator_calls'].update(attention_cv_official_decode_out=1,

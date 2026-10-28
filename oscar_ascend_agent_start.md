@@ -586,6 +586,8 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 ### 8.2 将历史错误转化为回归检查
 
+2026-10-28新增档案#173：性能已达标但127条PC质量集十轮top3四项不合格。新native_exact政策仅在原无历史current-only资格内省去额外旋转往返，保留同源缓存writer及原history读核。须核原Q输入检查、独立scratch、LSE/status本次写入、PT复用、同incoming缓存写入和原资格；不得以局部反例代替模型分数。见[精度修复](docs/native_exact_current_precision_20261028.md)。
+
 2026-10-28新增档案#172：用户实测34bc的64K达标，但32K及以下退化30%。所有长度统一撤销decode批量Cast，恢复232b完整decode源；C16保持34bc完整源。禁止新增长度分界；新回归门同时固定两条阶段路径和原分流/配置身份，见[通用修复](docs/universal_regression_repair_20261028.md)。
 
 2026-10-23新增档案#171：PC开启时20请求decode周转可能淘汰GDN prompt checkpoint，联合命中归零。外部原生引用保留与完成/取消/抢占/共享/卸载回归见 [证据与成本](docs/prefix_checkpoint_retention_20261023.md)；仅主机通过，不升级NPU/质量/性能状态。
@@ -594,6 +596,7 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 | 历史现象 | 必须落实的检查与处理 |
 | --- | --- |
+| #173 四指标精度不合格；精确单源仍有旋转往返误差 | 已有无历史资格内用原Q/K/V native FIA，保原输入/output/error门；缓存仍原center/rotation/INT2。历史和混合保持原核，独立raw oracle及policy回执绑定；两性能场景与四质量指标同时验收。 |
 | #172 长输入改善而短输入回归 | 不将某个prefill helper直接移入共用decode；拆开实际执行阶段，保住已达标基底。所有长度使用相同组合，禁止按输入/context/历史长度切版本；两端目标必须同时成立。源码身份与实际路由测试防止生成链混回撤下项。 |
 | #169 C16启动图缓存输入解包expected20，worker失败后继续空等 | 外部插件加载前校验kernel/forward输入数与example_inputs，不兼容走原生cache-miss重编译并保留AOT包装；外层/内层缓存按源码/配置/版本隔离；quiet启动发现明确worker失败即显示片段并清理，不能仅看父进程存活。 |
 | #168 timer最后汇总str+float报错 | 官方trace ts为字符串、dur为数值；解析入口统一规范化并覆盖官方flow，混合类型全目录CLI回归；优先--summarize-only恢复已有导出，不能要求重跑模型或伪造断点。 |

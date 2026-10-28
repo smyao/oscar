@@ -1,0 +1,563 @@
+root@node205:/workspace# cat baseline.log 
+nohup: ignoring input
+[W1022 12:29:34.363286420 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 12:29:42,328] [ais_bench] [INFO] Loading vllm_api_stream_chat: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./models/vllm_api/vllm_api_stream_chat.py
+[2026-10-22 12:29:42,335] [ais_bench] [INFO] Loading longbenchv2_gen: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./datasets/longbenchv2/longbenchv2_gen.py
+[2026-10-22 12:29:42,339] [ais_bench] [INFO] Loading example: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./summarizers/example.py
+[2026-10-22 12:29:42,390] [ais_bench] [INFO] Current exp folder: outputs/default/20261022_122925
+[2026-10-22 12:29:42,500] [ais_bench] [INFO] Starting inference tasks...
+[2026-10-22 12:29:42,508] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 12:29:42,526] [ais_bench] [INFO] Launch TasksMonitor, PID: 56329, Refresh interval: 0.5, Run in background: True
+[W1022 12:29:51.061487940 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 12:30:00,639] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 12:30:00,641] [ais_bench] [INFO] Task [vllm-api-stream-chat/LongBenchv2]
+[2026-10-22 12:30:09,557] [ais_bench] [INFO] Zero Retriever initialized, returning empty shot case for all queries
+[2026-10-22 12:30:09,719] [ais_bench] [INFO] Apply ice template finished
+[2026-10-22 12:30:09,723] [ais_bench] [INFO] Start warmup, run with concurrency: 32
+Warmup: 100%|██████████| 1/1 [00:17<00:00, 17.52s/case]
+[2026-10-22 12:30:27,245] [ais_bench] [INFO] Warmup finished Total Count: 1 Success Count: 1 Failed Count: 0 
+[2026-10-22 12:30:27,278] [ais_bench] [INFO] Dataset needed memory size: 11.01827526 MB
+[2026-10-22 12:30:27,278] [ais_bench] [INFO] Memory usage check passed: 4.00% < 80% (Available: 1443.17 GB)
+[2026-10-22 12:30:27,295] [ais_bench] [INFO] Traffic request rate: 10 RPS with burstiness 1.0.
+[2026-10-22 12:30:27,299] [ais_bench] [INFO] Debug mode, run with concurrency: 32
+[2026-10-22 12:30:27,399] [ais_bench] [INFO] All subprocesses have finished deserializing the first batch of data
+[2026-10-22 12:30:27,498] [ais_bench] [INFO] Starting progress bar Total data num: 127 Finished data num: 0 Left data num: 127
+Progress: 100%|██████████| 127/127 [14:02<00:00,  6.63s/case]
+POST=127 (0.0/s)  RECV=127 (1.6/s)  FAIL=0 (0.0/s)  FINISH=127 (1.6/s)   
+[2026-10-22 12:44:29,703] [ais_bench] [INFO] Api infer task time elapsed: 869.06s
+[2026-10-22 12:44:31,751] [ais_bench] [INFO] Inference tasks completed.
+[2026-10-22 12:44:31,752] [ais_bench] [INFO] Starting evaluation tasks...
+[2026-10-22 12:44:31,759] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 12:44:31,776] [ais_bench] [INFO] Launch TasksMonitor, PID: 56389, Refresh interval: 0.5, Run in background: True
+[W1022 12:44:40.722020180 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 12:44:50,274] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 12:44:58,415] [ais_bench] [INFO] Running 1-th replica of evaluation
+[2026-10-22 12:44:58,444] [ais_bench] [INFO] Task vllm-api-stream-chat/LongBenchv2: {'accuracy': 47.24409448818898, 'accuracy_easy': 51.162790697674424, 'accuracy_hard': 45.23809523809524, 'accuracy_short': 47.24409448818898}
+[2026-10-22 12:44:58,445] [ais_bench] [INFO] Evaluation task time elapsed: 8.17s
+[2026-10-22 12:45:00,323] [ais_bench] [INFO] Evaluation tasks completed.
+[2026-10-22 12:45:00,324] [ais_bench] [INFO] Summarizing evaluation results...
+[2026-10-22 12:45:00,331] [ais_bench] [INFO] write summary to /workspace/outputs/default/20261022_122925/summary/summary_20261022_122925.txt
+[2026-10-22 12:45:00,332] [ais_bench] [INFO] write csv to /workspace/outputs/default/20261022_122925/summary/summary_20261022_122925.csv
+[2026-10-22 12:45:00,332] [ais_bench] [INFO] write markdown summary to /workspace/outputs/default/20261022_122925/summary/summary_20261022_122925.md
+dataset        version  metric          mode      vllm-api-stream-chat
+-----------  ---------  --------------  ------  ----------------------
+LongBenchv2     324293  accuracy        gen                      47.24
+LongBenchv2     324293  accuracy_easy   gen                      51.16
+LongBenchv2     324293  accuracy_hard   gen                      45.24
+LongBenchv2     324293  accuracy_short  gen                      47.24
+
+
+The markdown format results is as below:
+
+| dataset | version | metric | mode | vllm-api-stream-chat |
+|----- | ----- | ----- | ----- | -----|
+| LongBenchv2 | 324293 | accuracy | gen | 47.24 |
+| LongBenchv2 | 324293 | accuracy_easy | gen | 51.16 |
+| LongBenchv2 | 324293 | accuracy_hard | gen | 45.24 |
+| LongBenchv2 | 324293 | accuracy_short | gen | 47.24 |
+
+[W1022 12:45:11.858396930 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 12:45:18,833] [ais_bench] [INFO] Loading vllm_api_stream_chat: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./models/vllm_api/vllm_api_stream_chat.py
+[2026-10-22 12:45:18,840] [ais_bench] [INFO] Loading longbenchv2_gen: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./datasets/longbenchv2/longbenchv2_gen.py
+[2026-10-22 12:45:18,844] [ais_bench] [INFO] Loading example: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./summarizers/example.py
+[2026-10-22 12:45:18,895] [ais_bench] [INFO] Current exp folder: outputs/default/20261022_124502
+[2026-10-22 12:45:19,006] [ais_bench] [INFO] Starting inference tasks...
+[2026-10-22 12:45:19,013] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 12:45:19,031] [ais_bench] [INFO] Launch TasksMonitor, PID: 56432, Refresh interval: 0.5, Run in background: True
+[W1022 12:45:27.519203210 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 12:45:36,809] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 12:45:36,811] [ais_bench] [INFO] Task [vllm-api-stream-chat/LongBenchv2]
+[2026-10-22 12:45:43,256] [ais_bench] [INFO] Zero Retriever initialized, returning empty shot case for all queries
+[2026-10-22 12:45:43,415] [ais_bench] [INFO] Apply ice template finished
+[2026-10-22 12:45:43,418] [ais_bench] [INFO] Start warmup, run with concurrency: 32
+Warmup: 100%|██████████| 1/1 [00:17<00:00, 17.27s/case]
+[2026-10-22 12:46:00,696] [ais_bench] [INFO] Warmup finished Total Count: 1 Success Count: 1 Failed Count: 0 
+[2026-10-22 12:46:00,725] [ais_bench] [INFO] Dataset needed memory size: 11.01827526 MB
+[2026-10-22 12:46:00,725] [ais_bench] [INFO] Memory usage check passed: 4.17% < 80% (Available: 1440.73 GB)
+[2026-10-22 12:46:00,744] [ais_bench] [INFO] Traffic request rate: 10 RPS with burstiness 1.0.
+[2026-10-22 12:46:00,747] [ais_bench] [INFO] Debug mode, run with concurrency: 32
+[2026-10-22 12:46:00,847] [ais_bench] [INFO] All subprocesses have finished deserializing the first batch of data
+[2026-10-22 12:46:00,946] [ais_bench] [INFO] Starting progress bar Total data num: 127 Finished data num: 0 Left data num: 127
+Progress: 100%|██████████| 127/127 [12:01<00:00,  5.68s/case]
+POST=127 (0.0/s)  RECV=127 (1.2/s)  FAIL=0 (0.0/s)  FINISH=127 (1.2/s)   
+[2026-10-22 12:58:02,254] [ais_bench] [INFO] Api infer task time elapsed: 745.44s
+[2026-10-22 12:58:04,544] [ais_bench] [INFO] Inference tasks completed.
+[2026-10-22 12:58:04,545] [ais_bench] [INFO] Starting evaluation tasks...
+[2026-10-22 12:58:04,552] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 12:58:04,569] [ais_bench] [INFO] Launch TasksMonitor, PID: 56488, Refresh interval: 0.5, Run in background: True
+[W1022 12:58:13.507237300 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 12:58:22,888] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 12:58:31,051] [ais_bench] [INFO] Running 1-th replica of evaluation
+[2026-10-22 12:58:31,080] [ais_bench] [INFO] Task vllm-api-stream-chat/LongBenchv2: {'accuracy': 42.51968503937008, 'accuracy_easy': 44.18604651162791, 'accuracy_hard': 41.66666666666667, 'accuracy_short': 42.51968503937008}
+[2026-10-22 12:58:31,082] [ais_bench] [INFO] Evaluation task time elapsed: 8.19s
+[2026-10-22 12:58:32,927] [ais_bench] [INFO] Evaluation tasks completed.
+[2026-10-22 12:58:32,927] [ais_bench] [INFO] Summarizing evaluation results...
+[2026-10-22 12:58:32,935] [ais_bench] [INFO] write summary to /workspace/outputs/default/20261022_124502/summary/summary_20261022_124502.txt
+[2026-10-22 12:58:32,936] [ais_bench] [INFO] write csv to /workspace/outputs/default/20261022_124502/summary/summary_20261022_124502.csv
+[2026-10-22 12:58:32,936] [ais_bench] [INFO] write markdown summary to /workspace/outputs/default/20261022_124502/summary/summary_20261022_124502.md
+dataset        version  metric          mode      vllm-api-stream-chat
+-----------  ---------  --------------  ------  ----------------------
+LongBenchv2     324293  accuracy        gen                      42.52
+LongBenchv2     324293  accuracy_easy   gen                      44.19
+LongBenchv2     324293  accuracy_hard   gen                      41.67
+LongBenchv2     324293  accuracy_short  gen                      42.52
+
+
+The markdown format results is as below:
+
+| dataset | version | metric | mode | vllm-api-stream-chat |
+|----- | ----- | ----- | ----- | -----|
+| LongBenchv2 | 324293 | accuracy | gen | 42.52 |
+| LongBenchv2 | 324293 | accuracy_easy | gen | 44.19 |
+| LongBenchv2 | 324293 | accuracy_hard | gen | 41.67 |
+| LongBenchv2 | 324293 | accuracy_short | gen | 42.52 |
+
+[W1022 12:58:43.512382440 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 12:58:51,508] [ais_bench] [INFO] Loading vllm_api_stream_chat: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./models/vllm_api/vllm_api_stream_chat.py
+[2026-10-22 12:58:51,515] [ais_bench] [INFO] Loading longbenchv2_gen: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./datasets/longbenchv2/longbenchv2_gen.py
+[2026-10-22 12:58:51,519] [ais_bench] [INFO] Loading example: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./summarizers/example.py
+[2026-10-22 12:58:51,570] [ais_bench] [INFO] Current exp folder: outputs/default/20261022_125835
+[2026-10-22 12:58:51,680] [ais_bench] [INFO] Starting inference tasks...
+[2026-10-22 12:58:51,688] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 12:58:51,706] [ais_bench] [INFO] Launch TasksMonitor, PID: 56527, Refresh interval: 0.5, Run in background: True
+[W1022 12:59:00.186224890 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 12:59:09,494] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 12:59:09,496] [ais_bench] [INFO] Task [vllm-api-stream-chat/LongBenchv2]
+[2026-10-22 12:59:16,856] [ais_bench] [INFO] Zero Retriever initialized, returning empty shot case for all queries
+[2026-10-22 12:59:17,014] [ais_bench] [INFO] Apply ice template finished
+[2026-10-22 12:59:17,019] [ais_bench] [INFO] Start warmup, run with concurrency: 32
+Warmup: 100%|██████████| 1/1 [00:16<00:00, 16.94s/case]
+[2026-10-22 12:59:33,958] [ais_bench] [INFO] Warmup finished Total Count: 1 Success Count: 1 Failed Count: 0 
+[2026-10-22 12:59:33,987] [ais_bench] [INFO] Dataset needed memory size: 11.01827526 MB
+[2026-10-22 12:59:33,987] [ais_bench] [INFO] Memory usage check passed: 4.18% < 80% (Available: 1440.54 GB)
+[2026-10-22 12:59:34,004] [ais_bench] [INFO] Traffic request rate: 10 RPS with burstiness 1.0.
+[2026-10-22 12:59:34,008] [ais_bench] [INFO] Debug mode, run with concurrency: 32
+[2026-10-22 12:59:34,108] [ais_bench] [INFO] All subprocesses have finished deserializing the first batch of data
+[2026-10-22 12:59:34,207] [ais_bench] [INFO] Starting progress bar Total data num: 127 Finished data num: 0 Left data num: 127
+Progress: 100%|██████████| 127/127 [13:09<00:00,  6.22s/case]
+POST=127 (0.0/s)  RECV=127 (1.2/s)  FAIL=0 (0.0/s)  FINISH=127 (1.2/s)   
+[2026-10-22 13:12:43,561] [ais_bench] [INFO] Api infer task time elapsed: 814.07s
+[2026-10-22 13:12:45,516] [ais_bench] [INFO] Inference tasks completed.
+[2026-10-22 13:12:45,517] [ais_bench] [INFO] Starting evaluation tasks...
+[2026-10-22 13:12:45,524] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 13:12:45,541] [ais_bench] [INFO] Launch TasksMonitor, PID: 56587, Refresh interval: 0.5, Run in background: True
+[W1022 13:12:54.513115060 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 13:13:04,043] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 13:13:11,834] [ais_bench] [INFO] Running 1-th replica of evaluation
+[2026-10-22 13:13:11,864] [ais_bench] [INFO] Task vllm-api-stream-chat/LongBenchv2: {'accuracy': 38.582677165354326, 'accuracy_easy': 39.53488372093023, 'accuracy_hard': 38.095238095238095, 'accuracy_short': 38.582677165354326}
+[2026-10-22 13:13:11,865] [ais_bench] [INFO] Evaluation task time elapsed: 7.82s
+[2026-10-22 13:13:13,730] [ais_bench] [INFO] Evaluation tasks completed.
+[2026-10-22 13:13:13,730] [ais_bench] [INFO] Summarizing evaluation results...
+[2026-10-22 13:13:13,738] [ais_bench] [INFO] write summary to /workspace/outputs/default/20261022_125835/summary/summary_20261022_125835.txt
+[2026-10-22 13:13:13,739] [ais_bench] [INFO] write csv to /workspace/outputs/default/20261022_125835/summary/summary_20261022_125835.csv
+[2026-10-22 13:13:13,739] [ais_bench] [INFO] write markdown summary to /workspace/outputs/default/20261022_125835/summary/summary_20261022_125835.md
+dataset        version  metric          mode      vllm-api-stream-chat
+-----------  ---------  --------------  ------  ----------------------
+LongBenchv2     324293  accuracy        gen                      38.58
+LongBenchv2     324293  accuracy_easy   gen                      39.53
+LongBenchv2     324293  accuracy_hard   gen                      38.10
+LongBenchv2     324293  accuracy_short  gen                      38.58
+
+
+The markdown format results is as below:
+
+| dataset | version | metric | mode | vllm-api-stream-chat |
+|----- | ----- | ----- | ----- | -----|
+| LongBenchv2 | 324293 | accuracy | gen | 38.58 |
+| LongBenchv2 | 324293 | accuracy_easy | gen | 39.53 |
+| LongBenchv2 | 324293 | accuracy_hard | gen | 38.10 |
+| LongBenchv2 | 324293 | accuracy_short | gen | 38.58 |
+
+[W1022 13:13:24.143919280 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 13:13:32,245] [ais_bench] [INFO] Loading vllm_api_stream_chat: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./models/vllm_api/vllm_api_stream_chat.py
+[2026-10-22 13:13:32,252] [ais_bench] [INFO] Loading longbenchv2_gen: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./datasets/longbenchv2/longbenchv2_gen.py
+[2026-10-22 13:13:32,256] [ais_bench] [INFO] Loading example: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./summarizers/example.py
+[2026-10-22 13:13:32,307] [ais_bench] [INFO] Current exp folder: outputs/default/20261022_131315
+[2026-10-22 13:13:32,421] [ais_bench] [INFO] Starting inference tasks...
+[2026-10-22 13:13:32,429] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 13:13:32,447] [ais_bench] [INFO] Launch TasksMonitor, PID: 56630, Refresh interval: 0.5, Run in background: True
+[W1022 13:13:41.033059690 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 13:13:50,351] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 13:13:50,353] [ais_bench] [INFO] Task [vllm-api-stream-chat/LongBenchv2]
+[2026-10-22 13:13:56,782] [ais_bench] [INFO] Zero Retriever initialized, returning empty shot case for all queries
+[2026-10-22 13:13:56,946] [ais_bench] [INFO] Apply ice template finished
+[2026-10-22 13:13:56,949] [ais_bench] [INFO] Start warmup, run with concurrency: 32
+Warmup: 100%|██████████| 1/1 [00:17<00:00, 17.70s/case]
+[2026-10-22 13:14:14,656] [ais_bench] [INFO] Warmup finished Total Count: 1 Success Count: 1 Failed Count: 0 
+[2026-10-22 13:14:14,684] [ais_bench] [INFO] Dataset needed memory size: 11.01827526 MB
+[2026-10-22 13:14:14,684] [ais_bench] [INFO] Memory usage check passed: 4.18% < 80% (Available: 1440.50 GB)
+[2026-10-22 13:14:14,701] [ais_bench] [INFO] Traffic request rate: 10 RPS with burstiness 1.0.
+[2026-10-22 13:14:14,704] [ais_bench] [INFO] Debug mode, run with concurrency: 32
+[2026-10-22 13:14:14,804] [ais_bench] [INFO] All subprocesses have finished deserializing the first batch of data
+[2026-10-22 13:14:14,904] [ais_bench] [INFO] Starting progress bar Total data num: 127 Finished data num: 0 Left data num: 127
+Progress: 100%|██████████| 127/127 [11:45<00:00,  5.55s/case]
+POST=127 (0.0/s)  RECV=127 (1.2/s)  FAIL=0 (0.0/s)  FINISH=127 (1.2/s)   
+[2026-10-22 13:26:00,216] [ais_bench] [INFO] Api infer task time elapsed: 729.86s
+[2026-10-22 13:26:02,120] [ais_bench] [INFO] Inference tasks completed.
+[2026-10-22 13:26:02,121] [ais_bench] [INFO] Starting evaluation tasks...
+[2026-10-22 13:26:02,129] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 13:26:02,146] [ais_bench] [INFO] Launch TasksMonitor, PID: 56686, Refresh interval: 0.5, Run in background: True
+[W1022 13:26:11.142811560 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 13:26:20,523] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 13:26:29,491] [ais_bench] [INFO] Running 1-th replica of evaluation
+[2026-10-22 13:26:29,521] [ais_bench] [INFO] Task vllm-api-stream-chat/LongBenchv2: {'accuracy': 40.15748031496063, 'accuracy_easy': 41.86046511627907, 'accuracy_hard': 39.285714285714285, 'accuracy_short': 40.15748031496063}
+[2026-10-22 13:26:29,523] [ais_bench] [INFO] Evaluation task time elapsed: 9.00s
+[2026-10-22 13:26:31,320] [ais_bench] [INFO] Evaluation tasks completed.
+[2026-10-22 13:26:31,321] [ais_bench] [INFO] Summarizing evaluation results...
+[2026-10-22 13:26:31,329] [ais_bench] [INFO] write summary to /workspace/outputs/default/20261022_131315/summary/summary_20261022_131315.txt
+[2026-10-22 13:26:31,330] [ais_bench] [INFO] write csv to /workspace/outputs/default/20261022_131315/summary/summary_20261022_131315.csv
+[2026-10-22 13:26:31,330] [ais_bench] [INFO] write markdown summary to /workspace/outputs/default/20261022_131315/summary/summary_20261022_131315.md
+dataset        version  metric          mode      vllm-api-stream-chat
+-----------  ---------  --------------  ------  ----------------------
+LongBenchv2     324293  accuracy        gen                      40.16
+LongBenchv2     324293  accuracy_easy   gen                      41.86
+LongBenchv2     324293  accuracy_hard   gen                      39.29
+LongBenchv2     324293  accuracy_short  gen                      40.16
+
+
+The markdown format results is as below:
+
+| dataset | version | metric | mode | vllm-api-stream-chat |
+|----- | ----- | ----- | ----- | -----|
+| LongBenchv2 | 324293 | accuracy | gen | 40.16 |
+| LongBenchv2 | 324293 | accuracy_easy | gen | 41.86 |
+| LongBenchv2 | 324293 | accuracy_hard | gen | 39.29 |
+| LongBenchv2 | 324293 | accuracy_short | gen | 40.16 |
+
+[W1022 13:26:42.921790790 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 13:26:49,991] [ais_bench] [INFO] Loading vllm_api_stream_chat: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./models/vllm_api/vllm_api_stream_chat.py
+[2026-10-22 13:26:49,998] [ais_bench] [INFO] Loading longbenchv2_gen: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./datasets/longbenchv2/longbenchv2_gen.py
+[2026-10-22 13:26:50,002] [ais_bench] [INFO] Loading example: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./summarizers/example.py
+[2026-10-22 13:26:50,054] [ais_bench] [INFO] Current exp folder: outputs/default/20261022_132633
+[2026-10-22 13:26:50,164] [ais_bench] [INFO] Starting inference tasks...
+[2026-10-22 13:26:50,171] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 13:26:50,190] [ais_bench] [INFO] Launch TasksMonitor, PID: 56725, Refresh interval: 0.5, Run in background: True
+[W1022 13:26:58.671156450 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 13:27:08,058] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 13:27:08,060] [ais_bench] [INFO] Task [vllm-api-stream-chat/LongBenchv2]
+[2026-10-22 13:27:14,653] [ais_bench] [INFO] Zero Retriever initialized, returning empty shot case for all queries
+[2026-10-22 13:27:14,810] [ais_bench] [INFO] Apply ice template finished
+[2026-10-22 13:27:14,814] [ais_bench] [INFO] Start warmup, run with concurrency: 32
+Warmup: 100%|██████████| 1/1 [00:16<00:00, 16.97s/case]
+[2026-10-22 13:27:31,782] [ais_bench] [INFO] Warmup finished Total Count: 1 Success Count: 1 Failed Count: 0 
+[2026-10-22 13:27:31,813] [ais_bench] [INFO] Dataset needed memory size: 11.01827526 MB
+[2026-10-22 13:27:31,814] [ais_bench] [INFO] Memory usage check passed: 4.19% < 80% (Available: 1440.42 GB)
+[2026-10-22 13:27:31,831] [ais_bench] [INFO] Traffic request rate: 10 RPS with burstiness 1.0.
+[2026-10-22 13:27:31,834] [ais_bench] [INFO] Debug mode, run with concurrency: 32
+[2026-10-22 13:27:31,934] [ais_bench] [INFO] All subprocesses have finished deserializing the first batch of data
+[2026-10-22 13:27:32,034] [ais_bench] [INFO] Starting progress bar Total data num: 127 Finished data num: 0 Left data num: 127
+Progress: 100%|██████████| 127/127 [11:32<00:00,  5.45s/case]
+POST=127 (0.0/s)  RECV=127 (1.2/s)  FAIL=0 (0.0/s)  FINISH=127 (1.2/s)   
+[2026-10-22 13:39:04,322] [ais_bench] [INFO] Api infer task time elapsed: 716.26s
+[2026-10-22 13:39:06,253] [ais_bench] [INFO] Inference tasks completed.
+[2026-10-22 13:39:06,254] [ais_bench] [INFO] Starting evaluation tasks...
+[2026-10-22 13:39:06,262] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 13:39:06,279] [ais_bench] [INFO] Launch TasksMonitor, PID: 56785, Refresh interval: 0.5, Run in background: True
+[W1022 13:39:15.281481030 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 13:39:24,646] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 13:39:31,424] [ais_bench] [INFO] Running 1-th replica of evaluation
+[2026-10-22 13:39:31,454] [ais_bench] [INFO] Task vllm-api-stream-chat/LongBenchv2: {'accuracy': 47.24409448818898, 'accuracy_easy': 53.48837209302325, 'accuracy_hard': 44.047619047619044, 'accuracy_short': 47.24409448818898}
+[2026-10-22 13:39:31,455] [ais_bench] [INFO] Evaluation task time elapsed: 6.81s
+[2026-10-22 13:39:33,341] [ais_bench] [INFO] Evaluation tasks completed.
+[2026-10-22 13:39:33,342] [ais_bench] [INFO] Summarizing evaluation results...
+[2026-10-22 13:39:33,351] [ais_bench] [INFO] write summary to /workspace/outputs/default/20261022_132633/summary/summary_20261022_132633.txt
+[2026-10-22 13:39:33,351] [ais_bench] [INFO] write csv to /workspace/outputs/default/20261022_132633/summary/summary_20261022_132633.csv
+[2026-10-22 13:39:33,352] [ais_bench] [INFO] write markdown summary to /workspace/outputs/default/20261022_132633/summary/summary_20261022_132633.md
+dataset        version  metric          mode      vllm-api-stream-chat
+-----------  ---------  --------------  ------  ----------------------
+LongBenchv2     324293  accuracy        gen                      47.24
+LongBenchv2     324293  accuracy_easy   gen                      53.49
+LongBenchv2     324293  accuracy_hard   gen                      44.05
+LongBenchv2     324293  accuracy_short  gen                      47.24
+
+
+The markdown format results is as below:
+
+| dataset | version | metric | mode | vllm-api-stream-chat |
+|----- | ----- | ----- | ----- | -----|
+| LongBenchv2 | 324293 | accuracy | gen | 47.24 |
+| LongBenchv2 | 324293 | accuracy_easy | gen | 53.49 |
+| LongBenchv2 | 324293 | accuracy_hard | gen | 44.05 |
+| LongBenchv2 | 324293 | accuracy_short | gen | 47.24 |
+
+[W1022 13:39:43.757817970 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 13:39:51,852] [ais_bench] [INFO] Loading vllm_api_stream_chat: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./models/vllm_api/vllm_api_stream_chat.py
+[2026-10-22 13:39:51,859] [ais_bench] [INFO] Loading longbenchv2_gen: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./datasets/longbenchv2/longbenchv2_gen.py
+[2026-10-22 13:39:51,863] [ais_bench] [INFO] Loading example: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./summarizers/example.py
+[2026-10-22 13:39:51,914] [ais_bench] [INFO] Current exp folder: outputs/default/20261022_133935
+[2026-10-22 13:39:52,029] [ais_bench] [INFO] Starting inference tasks...
+[2026-10-22 13:39:52,037] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 13:39:52,055] [ais_bench] [INFO] Launch TasksMonitor, PID: 56824, Refresh interval: 0.5, Run in background: True
+[W1022 13:40:00.584590030 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 13:40:09,893] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 13:40:09,895] [ais_bench] [INFO] Task [vllm-api-stream-chat/LongBenchv2]
+[2026-10-22 13:40:18,543] [ais_bench] [INFO] Zero Retriever initialized, returning empty shot case for all queries
+[2026-10-22 13:40:18,704] [ais_bench] [INFO] Apply ice template finished
+[2026-10-22 13:40:18,708] [ais_bench] [INFO] Start warmup, run with concurrency: 32
+Warmup: 100%|██████████| 1/1 [00:17<00:00, 17.17s/case]
+[2026-10-22 13:40:35,883] [ais_bench] [INFO] Warmup finished Total Count: 1 Success Count: 1 Failed Count: 0 
+[2026-10-22 13:40:35,914] [ais_bench] [INFO] Dataset needed memory size: 11.01827526 MB
+[2026-10-22 13:40:35,914] [ais_bench] [INFO] Memory usage check passed: 4.19% < 80% (Available: 1440.43 GB)
+[2026-10-22 13:40:35,931] [ais_bench] [INFO] Traffic request rate: 10 RPS with burstiness 1.0.
+[2026-10-22 13:40:35,934] [ais_bench] [INFO] Debug mode, run with concurrency: 32
+[2026-10-22 13:40:36,035] [ais_bench] [INFO] All subprocesses have finished deserializing the first batch of data
+[2026-10-22 13:40:36,134] [ais_bench] [INFO] Starting progress bar Total data num: 127 Finished data num: 0 Left data num: 127
+Progress: 100%|██████████| 127/127 [12:15<00:00,  5.79s/case]
+POST=127 (0.0/s)  RECV=127 (1.2/s)  FAIL=0 (0.0/s)  FINISH=127 (1.2/s)   
+[2026-10-22 13:52:51,462] [ais_bench] [INFO] Api infer task time elapsed: 761.57s
+[2026-10-22 13:52:53,498] [ais_bench] [INFO] Inference tasks completed.
+[2026-10-22 13:52:53,499] [ais_bench] [INFO] Starting evaluation tasks...
+[2026-10-22 13:52:53,506] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 13:52:53,524] [ais_bench] [INFO] Launch TasksMonitor, PID: 56880, Refresh interval: 0.5, Run in background: True
+[W1022 13:53:02.496979820 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 13:53:11,829] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 13:53:20,793] [ais_bench] [INFO] Running 1-th replica of evaluation
+[2026-10-22 13:53:20,823] [ais_bench] [INFO] Task vllm-api-stream-chat/LongBenchv2: {'accuracy': 43.30708661417323, 'accuracy_easy': 51.162790697674424, 'accuracy_hard': 39.285714285714285, 'accuracy_short': 43.30708661417323}
+[2026-10-22 13:53:20,825] [ais_bench] [INFO] Evaluation task time elapsed: 9.00s
+[2026-10-22 13:53:22,694] [ais_bench] [INFO] Evaluation tasks completed.
+[2026-10-22 13:53:22,694] [ais_bench] [INFO] Summarizing evaluation results...
+[2026-10-22 13:53:22,703] [ais_bench] [INFO] write summary to /workspace/outputs/default/20261022_133935/summary/summary_20261022_133935.txt
+[2026-10-22 13:53:22,703] [ais_bench] [INFO] write csv to /workspace/outputs/default/20261022_133935/summary/summary_20261022_133935.csv
+[2026-10-22 13:53:22,703] [ais_bench] [INFO] write markdown summary to /workspace/outputs/default/20261022_133935/summary/summary_20261022_133935.md
+dataset        version  metric          mode      vllm-api-stream-chat
+-----------  ---------  --------------  ------  ----------------------
+LongBenchv2     324293  accuracy        gen                      43.31
+LongBenchv2     324293  accuracy_easy   gen                      51.16
+LongBenchv2     324293  accuracy_hard   gen                      39.29
+LongBenchv2     324293  accuracy_short  gen                      43.31
+
+
+The markdown format results is as below:
+
+| dataset | version | metric | mode | vllm-api-stream-chat |
+|----- | ----- | ----- | ----- | -----|
+| LongBenchv2 | 324293 | accuracy | gen | 43.31 |
+| LongBenchv2 | 324293 | accuracy_easy | gen | 51.16 |
+| LongBenchv2 | 324293 | accuracy_hard | gen | 39.29 |
+| LongBenchv2 | 324293 | accuracy_short | gen | 43.31 |
+
+[W1022 13:53:33.290673260 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 13:53:41,200] [ais_bench] [INFO] Loading vllm_api_stream_chat: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./models/vllm_api/vllm_api_stream_chat.py
+[2026-10-22 13:53:41,207] [ais_bench] [INFO] Loading longbenchv2_gen: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./datasets/longbenchv2/longbenchv2_gen.py
+[2026-10-22 13:53:41,211] [ais_bench] [INFO] Loading example: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./summarizers/example.py
+[2026-10-22 13:53:41,262] [ais_bench] [INFO] Current exp folder: outputs/default/20261022_135324
+[2026-10-22 13:53:41,373] [ais_bench] [INFO] Starting inference tasks...
+[2026-10-22 13:53:41,380] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 13:53:41,399] [ais_bench] [INFO] Launch TasksMonitor, PID: 56923, Refresh interval: 0.5, Run in background: True
+[W1022 13:53:50.896563440 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 13:53:59,257] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 13:53:59,259] [ais_bench] [INFO] Task [vllm-api-stream-chat/LongBenchv2]
+[2026-10-22 13:54:08,428] [ais_bench] [INFO] Zero Retriever initialized, returning empty shot case for all queries
+[2026-10-22 13:54:08,586] [ais_bench] [INFO] Apply ice template finished
+[2026-10-22 13:54:08,590] [ais_bench] [INFO] Start warmup, run with concurrency: 32
+Warmup: 100%|██████████| 1/1 [00:17<00:00, 17.48s/case]
+[2026-10-22 13:54:26,071] [ais_bench] [INFO] Warmup finished Total Count: 1 Success Count: 1 Failed Count: 0 
+[2026-10-22 13:54:26,101] [ais_bench] [INFO] Dataset needed memory size: 11.01827526 MB
+[2026-10-22 13:54:26,102] [ais_bench] [INFO] Memory usage check passed: 4.19% < 80% (Available: 1440.37 GB)
+[2026-10-22 13:54:26,119] [ais_bench] [INFO] Traffic request rate: 10 RPS with burstiness 1.0.
+[2026-10-22 13:54:26,122] [ais_bench] [INFO] Debug mode, run with concurrency: 32
+[2026-10-22 13:54:26,223] [ais_bench] [INFO] All subprocesses have finished deserializing the first batch of data
+[2026-10-22 13:54:26,322] [ais_bench] [INFO] Starting progress bar Total data num: 127 Finished data num: 0 Left data num: 127
+Progress: 100%|██████████| 127/127 [12:24<00:00,  5.86s/case]
+POST=127 (0.0/s)  RECV=127 (2.5/s)  FAIL=0 (0.0/s)  FINISH=127 (2.5/s)   
+[2026-10-22 14:06:50,686] [ais_bench] [INFO] Api infer task time elapsed: 771.43s
+[2026-10-22 14:06:53,237] [ais_bench] [INFO] Inference tasks completed.
+[2026-10-22 14:06:53,238] [ais_bench] [INFO] Starting evaluation tasks...
+[2026-10-22 14:06:53,246] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 14:06:53,264] [ais_bench] [INFO] Launch TasksMonitor, PID: 56979, Refresh interval: 0.5, Run in background: True
+[W1022 14:07:02.192072320 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 14:07:11,572] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 14:07:21,376] [ais_bench] [INFO] Running 1-th replica of evaluation
+[2026-10-22 14:07:21,405] [ais_bench] [INFO] Task vllm-api-stream-chat/LongBenchv2: {'accuracy': 43.30708661417323, 'accuracy_easy': 48.837209302325576, 'accuracy_hard': 40.476190476190474, 'accuracy_short': 43.30708661417323}
+[2026-10-22 14:07:21,407] [ais_bench] [INFO] Evaluation task time elapsed: 9.84s
+[2026-10-22 14:07:23,360] [ais_bench] [INFO] Evaluation tasks completed.
+[2026-10-22 14:07:23,360] [ais_bench] [INFO] Summarizing evaluation results...
+[2026-10-22 14:07:23,368] [ais_bench] [INFO] write summary to /workspace/outputs/default/20261022_135324/summary/summary_20261022_135324.txt
+[2026-10-22 14:07:23,368] [ais_bench] [INFO] write csv to /workspace/outputs/default/20261022_135324/summary/summary_20261022_135324.csv
+[2026-10-22 14:07:23,369] [ais_bench] [INFO] write markdown summary to /workspace/outputs/default/20261022_135324/summary/summary_20261022_135324.md
+dataset        version  metric          mode      vllm-api-stream-chat
+-----------  ---------  --------------  ------  ----------------------
+LongBenchv2     324293  accuracy        gen                      43.31
+LongBenchv2     324293  accuracy_easy   gen                      48.84
+LongBenchv2     324293  accuracy_hard   gen                      40.48
+LongBenchv2     324293  accuracy_short  gen                      43.31
+
+
+The markdown format results is as below:
+
+| dataset | version | metric | mode | vllm-api-stream-chat |
+|----- | ----- | ----- | ----- | -----|
+| LongBenchv2 | 324293 | accuracy | gen | 43.31 |
+| LongBenchv2 | 324293 | accuracy_easy | gen | 48.84 |
+| LongBenchv2 | 324293 | accuracy_hard | gen | 40.48 |
+| LongBenchv2 | 324293 | accuracy_short | gen | 43.31 |
+
+[W1022 14:07:33.653678420 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 14:07:41,638] [ais_bench] [INFO] Loading vllm_api_stream_chat: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./models/vllm_api/vllm_api_stream_chat.py
+[2026-10-22 14:07:41,645] [ais_bench] [INFO] Loading longbenchv2_gen: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./datasets/longbenchv2/longbenchv2_gen.py
+[2026-10-22 14:07:41,649] [ais_bench] [INFO] Loading example: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./summarizers/example.py
+[2026-10-22 14:07:41,700] [ais_bench] [INFO] Current exp folder: outputs/default/20261022_140725
+[2026-10-22 14:07:41,809] [ais_bench] [INFO] Starting inference tasks...
+[2026-10-22 14:07:41,817] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 14:07:41,836] [ais_bench] [INFO] Launch TasksMonitor, PID: 57022, Refresh interval: 0.5, Run in background: True
+[W1022 14:07:50.340926290 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 14:07:59,685] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 14:07:59,688] [ais_bench] [INFO] Task [vllm-api-stream-chat/LongBenchv2]
+[2026-10-22 14:08:07,029] [ais_bench] [INFO] Zero Retriever initialized, returning empty shot case for all queries
+[2026-10-22 14:08:07,191] [ais_bench] [INFO] Apply ice template finished
+[2026-10-22 14:08:07,195] [ais_bench] [INFO] Start warmup, run with concurrency: 32
+Warmup: 100%|██████████| 1/1 [00:17<00:00, 17.09s/case]
+[2026-10-22 14:08:24,290] [ais_bench] [INFO] Warmup finished Total Count: 1 Success Count: 1 Failed Count: 0 
+[2026-10-22 14:08:24,320] [ais_bench] [INFO] Dataset needed memory size: 11.01827526 MB
+[2026-10-22 14:08:24,320] [ais_bench] [INFO] Memory usage check passed: 4.19% < 80% (Available: 1440.37 GB)
+[2026-10-22 14:08:24,337] [ais_bench] [INFO] Traffic request rate: 10 RPS with burstiness 1.0.
+[2026-10-22 14:08:24,340] [ais_bench] [INFO] Debug mode, run with concurrency: 32
+[2026-10-22 14:08:24,440] [ais_bench] [INFO] All subprocesses have finished deserializing the first batch of data
+[2026-10-22 14:08:24,540] [ais_bench] [INFO] Starting progress bar Total data num: 127 Finished data num: 0 Left data num: 127
+Progress: 100%|██████████| 127/127 [11:42<00:00,  5.53s/case]
+POST=127 (0.0/s)  RECV=127 (3.3/s)  FAIL=0 (0.0/s)  FINISH=127 (3.3/s)   
+[2026-10-22 14:20:06,627] [ais_bench] [INFO] Api infer task time elapsed: 726.94s
+[2026-10-22 14:20:08,613] [ais_bench] [INFO] Inference tasks completed.
+[2026-10-22 14:20:08,614] [ais_bench] [INFO] Starting evaluation tasks...
+[2026-10-22 14:20:08,622] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 14:20:08,640] [ais_bench] [INFO] Launch TasksMonitor, PID: 57078, Refresh interval: 0.5, Run in background: True
+[W1022 14:20:17.577599040 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 14:20:26,916] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 14:20:35,495] [ais_bench] [INFO] Running 1-th replica of evaluation
+[2026-10-22 14:20:35,524] [ais_bench] [INFO] Task vllm-api-stream-chat/LongBenchv2: {'accuracy': 47.24409448818898, 'accuracy_easy': 51.162790697674424, 'accuracy_hard': 45.23809523809524, 'accuracy_short': 47.24409448818898}
+[2026-10-22 14:20:35,525] [ais_bench] [INFO] Evaluation task time elapsed: 8.61s
+[2026-10-22 14:20:37,377] [ais_bench] [INFO] Evaluation tasks completed.
+[2026-10-22 14:20:37,378] [ais_bench] [INFO] Summarizing evaluation results...
+[2026-10-22 14:20:37,386] [ais_bench] [INFO] write summary to /workspace/outputs/default/20261022_140725/summary/summary_20261022_140725.txt
+[2026-10-22 14:20:37,386] [ais_bench] [INFO] write csv to /workspace/outputs/default/20261022_140725/summary/summary_20261022_140725.csv
+[2026-10-22 14:20:37,386] [ais_bench] [INFO] write markdown summary to /workspace/outputs/default/20261022_140725/summary/summary_20261022_140725.md
+dataset        version  metric          mode      vllm-api-stream-chat
+-----------  ---------  --------------  ------  ----------------------
+LongBenchv2     324293  accuracy        gen                      47.24
+LongBenchv2     324293  accuracy_easy   gen                      51.16
+LongBenchv2     324293  accuracy_hard   gen                      45.24
+LongBenchv2     324293  accuracy_short  gen                      47.24
+
+
+The markdown format results is as below:
+
+| dataset | version | metric | mode | vllm-api-stream-chat |
+|----- | ----- | ----- | ----- | -----|
+| LongBenchv2 | 324293 | accuracy | gen | 47.24 |
+| LongBenchv2 | 324293 | accuracy_easy | gen | 51.16 |
+| LongBenchv2 | 324293 | accuracy_hard | gen | 45.24 |
+| LongBenchv2 | 324293 | accuracy_short | gen | 47.24 |
+
+[W1022 14:20:48.888540700 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 14:20:55,940] [ais_bench] [INFO] Loading vllm_api_stream_chat: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./models/vllm_api/vllm_api_stream_chat.py
+[2026-10-22 14:20:55,947] [ais_bench] [INFO] Loading longbenchv2_gen: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./datasets/longbenchv2/longbenchv2_gen.py
+[2026-10-22 14:20:55,951] [ais_bench] [INFO] Loading example: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./summarizers/example.py
+[2026-10-22 14:20:56,003] [ais_bench] [INFO] Current exp folder: outputs/default/20261022_142039
+[2026-10-22 14:20:56,115] [ais_bench] [INFO] Starting inference tasks...
+[2026-10-22 14:20:56,123] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 14:20:56,142] [ais_bench] [INFO] Launch TasksMonitor, PID: 57117, Refresh interval: 0.5, Run in background: True
+[W1022 14:21:04.627330630 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 14:21:14,152] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 14:21:14,155] [ais_bench] [INFO] Task [vllm-api-stream-chat/LongBenchv2]
+[2026-10-22 14:21:25,546] [ais_bench] [INFO] Zero Retriever initialized, returning empty shot case for all queries
+[2026-10-22 14:21:25,701] [ais_bench] [INFO] Apply ice template finished
+[2026-10-22 14:21:25,705] [ais_bench] [INFO] Start warmup, run with concurrency: 32
+Warmup: 100%|██████████| 1/1 [00:17<00:00, 17.12s/case]
+[2026-10-22 14:21:42,829] [ais_bench] [INFO] Warmup finished Total Count: 1 Success Count: 1 Failed Count: 0 
+[2026-10-22 14:21:42,864] [ais_bench] [INFO] Dataset needed memory size: 11.01827526 MB
+[2026-10-22 14:21:42,865] [ais_bench] [INFO] Memory usage check passed: 4.19% < 80% (Available: 1440.29 GB)
+[2026-10-22 14:21:42,883] [ais_bench] [INFO] Traffic request rate: 10 RPS with burstiness 1.0.
+[2026-10-22 14:21:42,886] [ais_bench] [INFO] Debug mode, run with concurrency: 32
+[2026-10-22 14:21:42,987] [ais_bench] [INFO] All subprocesses have finished deserializing the first batch of data
+[2026-10-22 14:21:43,086] [ais_bench] [INFO] Starting progress bar Total data num: 127 Finished data num: 0 Left data num: 127
+Progress: 100%|██████████| 127/127 [12:36<00:00,  5.95s/case]
+POST=127 (0.0/s)  RECV=127 (3.3/s)  FAIL=0 (0.0/s)  FINISH=127 (3.3/s)   
+[2026-10-22 14:34:19,359] [ais_bench] [INFO] Api infer task time elapsed: 785.21s
+[2026-10-22 14:34:21,343] [ais_bench] [INFO] Inference tasks completed.
+[2026-10-22 14:34:21,344] [ais_bench] [INFO] Starting evaluation tasks...
+[2026-10-22 14:34:21,352] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 14:34:21,369] [ais_bench] [INFO] Launch TasksMonitor, PID: 57177, Refresh interval: 0.5, Run in background: True
+[W1022 14:34:30.323159590 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 14:34:39,834] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 14:34:46,412] [ais_bench] [INFO] Running 1-th replica of evaluation
+[2026-10-22 14:34:46,441] [ais_bench] [INFO] Task vllm-api-stream-chat/LongBenchv2: {'accuracy': 40.15748031496063, 'accuracy_easy': 41.86046511627907, 'accuracy_hard': 39.285714285714285, 'accuracy_short': 40.15748031496063}
+[2026-10-22 14:34:46,443] [ais_bench] [INFO] Evaluation task time elapsed: 6.61s
+[2026-10-22 14:34:48,362] [ais_bench] [INFO] Evaluation tasks completed.
+[2026-10-22 14:34:48,362] [ais_bench] [INFO] Summarizing evaluation results...
+[2026-10-22 14:34:48,370] [ais_bench] [INFO] write summary to /workspace/outputs/default/20261022_142039/summary/summary_20261022_142039.txt
+[2026-10-22 14:34:48,370] [ais_bench] [INFO] write csv to /workspace/outputs/default/20261022_142039/summary/summary_20261022_142039.csv
+[2026-10-22 14:34:48,371] [ais_bench] [INFO] write markdown summary to /workspace/outputs/default/20261022_142039/summary/summary_20261022_142039.md
+dataset        version  metric          mode      vllm-api-stream-chat
+-----------  ---------  --------------  ------  ----------------------
+LongBenchv2     324293  accuracy        gen                      40.16
+LongBenchv2     324293  accuracy_easy   gen                      41.86
+LongBenchv2     324293  accuracy_hard   gen                      39.29
+LongBenchv2     324293  accuracy_short  gen                      40.16
+
+
+The markdown format results is as below:
+
+| dataset | version | metric | mode | vllm-api-stream-chat |
+|----- | ----- | ----- | ----- | -----|
+| LongBenchv2 | 324293 | accuracy | gen | 40.16 |
+| LongBenchv2 | 324293 | accuracy_easy | gen | 41.86 |
+| LongBenchv2 | 324293 | accuracy_hard | gen | 39.29 |
+| LongBenchv2 | 324293 | accuracy_short | gen | 40.16 |
+
+[W1022 14:34:59.080173190 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 14:35:07,410] [ais_bench] [INFO] Loading vllm_api_stream_chat: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./models/vllm_api/vllm_api_stream_chat.py
+[2026-10-22 14:35:07,417] [ais_bench] [INFO] Loading longbenchv2_gen: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./datasets/longbenchv2/longbenchv2_gen.py
+[2026-10-22 14:35:07,421] [ais_bench] [INFO] Loading example: /workspace/benchmark-3.1-20260119-master/ais_bench/benchmark/configs/./summarizers/example.py
+[2026-10-22 14:35:07,473] [ais_bench] [INFO] Current exp folder: outputs/default/20261022_143450
+[2026-10-22 14:35:07,584] [ais_bench] [INFO] Starting inference tasks...
+[2026-10-22 14:35:07,591] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 14:35:07,612] [ais_bench] [INFO] Launch TasksMonitor, PID: 57220, Refresh interval: 0.5, Run in background: True
+[W1022 14:35:16.311280320 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 14:35:26,077] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 14:35:26,080] [ais_bench] [INFO] Task [vllm-api-stream-chat/LongBenchv2]
+[2026-10-22 14:35:34,353] [ais_bench] [INFO] Zero Retriever initialized, returning empty shot case for all queries
+[2026-10-22 14:35:34,519] [ais_bench] [INFO] Apply ice template finished
+[2026-10-22 14:35:34,523] [ais_bench] [INFO] Start warmup, run with concurrency: 32
+Warmup: 100%|██████████| 1/1 [00:17<00:00, 17.28s/case]
+[2026-10-22 14:35:51,803] [ais_bench] [INFO] Warmup finished Total Count: 1 Success Count: 1 Failed Count: 0 
+[2026-10-22 14:35:51,833] [ais_bench] [INFO] Dataset needed memory size: 11.01827526 MB
+[2026-10-22 14:35:51,833] [ais_bench] [INFO] Memory usage check passed: 4.20% < 80% (Available: 1440.22 GB)
+[2026-10-22 14:35:51,851] [ais_bench] [INFO] Traffic request rate: 10 RPS with burstiness 1.0.
+[2026-10-22 14:35:51,854] [ais_bench] [INFO] Debug mode, run with concurrency: 32
+[2026-10-22 14:35:51,954] [ais_bench] [INFO] All subprocesses have finished deserializing the first batch of data
+[2026-10-22 14:35:52,053] [ais_bench] [INFO] Starting progress bar Total data num: 127 Finished data num: 0 Left data num: 127
+Progress: 100%|██████████| 127/127 [13:07<00:00,  6.20s/case]
+POST=127 (0.0/s)  RECV=127 (3.3/s)  FAIL=0 (0.0/s)  FINISH=127 (3.3/s)   
+[2026-10-22 14:48:59,284] [ais_bench] [INFO] Api infer task time elapsed: 813.21s
+[2026-10-22 14:49:01,302] [ais_bench] [INFO] Inference tasks completed.
+[2026-10-22 14:49:01,303] [ais_bench] [INFO] Starting evaluation tasks...
+[2026-10-22 14:49:01,311] [ais_bench] [INFO] Partitioned into 1 tasks.
+[2026-10-22 14:49:01,332] [ais_bench] [INFO] Launch TasksMonitor, PID: 57280, Refresh interval: 0.5, Run in background: True
+[W1022 14:49:10.543824360 FunctionLoader.cpp:48] Warning: LD_PRELOAD detected, FunctionLoader prefers RTLD_DEFAULT for symbol resolution. (function operator())
+[2026-10-22 14:49:20,354] [ais_bench] [INFO] Debug mode, print progress directly
+[2026-10-22 14:49:27,006] [ais_bench] [INFO] Running 1-th replica of evaluation
+[2026-10-22 14:49:27,036] [ais_bench] [INFO] Task vllm-api-stream-chat/LongBenchv2: {'accuracy': 43.30708661417323, 'accuracy_easy': 46.51162790697674, 'accuracy_hard': 41.66666666666667, 'accuracy_short': 43.30708661417323}
+[2026-10-22 14:49:27,037] [ais_bench] [INFO] Evaluation task time elapsed: 6.68s
+[2026-10-22 14:49:28,954] [ais_bench] [INFO] Evaluation tasks completed.
+[2026-10-22 14:49:28,954] [ais_bench] [INFO] Summarizing evaluation results...
+[2026-10-22 14:49:28,963] [ais_bench] [INFO] write summary to /workspace/outputs/default/20261022_143450/summary/summary_20261022_143450.txt
+[2026-10-22 14:49:28,964] [ais_bench] [INFO] write csv to /workspace/outputs/default/20261022_143450/summary/summary_20261022_143450.csv
+[2026-10-22 14:49:28,964] [ais_bench] [INFO] write markdown summary to /workspace/outputs/default/20261022_143450/summary/summary_20261022_143450.md
+dataset        version  metric          mode      vllm-api-stream-chat
+-----------  ---------  --------------  ------  ----------------------
+LongBenchv2     324293  accuracy        gen                      43.31
+LongBenchv2     324293  accuracy_easy   gen                      46.51
+LongBenchv2     324293  accuracy_hard   gen                      41.67
+LongBenchv2     324293  accuracy_short  gen                      43.31
+
+
+The markdown format results is as below:
+
+| dataset | version | metric | mode | vllm-api-stream-chat |
+|----- | ----- | ----- | ----- | -----|
+| LongBenchv2 | 324293 | accuracy | gen | 43.31 |
+| LongBenchv2 | 324293 | accuracy_easy | gen | 46.51 |
+| LongBenchv2 | 324293 | accuracy_hard | gen | 41.67 |
+| LongBenchv2 | 324293 | accuracy_short | gen | 43.31 |
+
+current task done

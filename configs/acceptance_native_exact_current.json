@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "contract": "oscar_native_exact_current_v1",
+  "frozen_before_measurement": true,
+  "policy": "native_exact",
+  "scope": "Only the existing current-only suffix proven to have zero historical context, including its qualified first-MTP case. No new length, dataset, or request-content routing.",
+  "cached_reader_contract": "oscar_bf16_attention_v4",
+  "cached_reader_policy": "oscar_bf16_runtime_fp32_dequant_v1",
+  "cache_format": "striped_rotated_fp32_v3",
+  "attention": "Original BF16 Q/K/V, unchanged native causal FIA/scale; no Q/K/V rotation or inverse rotation in the exact single-source attention computation.",
+  "query_validation": "Retain the existing copy_validate_bf16_query_out finite/slot check using disjoint preallocated raw-query scratch.",
+  "cache_write": "Unchanged per-head BF16 key centering, BF16 K/V rotation, original INT2 quantizer/clip and rotated exact snapshots. Same original K/V and same PT must produce bit-identical writer inputs and cache bytes.",
+  "history_and_mixed": "Unchanged rotated FP32 partials and FP32 merge before one inverse rotation. Cached history is never reconstructed or bypassed.",
+  "native_single_key": "Output is the original BF16 V exactly for every GQA query head.",
+  "fused_attention": {"atol": 0.005, "rtol": 0.005, "per_element": true},
+  "protocol": {"status_and_metadata_exact": true, "padding_output_exact_zero": true, "padding_lse_exact_negative_infinity": true},
+  "operation_change": {"new_workspace_bytes": 0, "removed_query_head_gemms": 2, "removed_query_head_bf16_copies": 0, "output_copy": "Keep the original-size copy into contiguous preallocated storage; native FIA validates shape/dtype but not output contiguity.", "kv_center_and_rotation": "unchanged", "FIA": "same shape/mask/scale"},
+  "model_quality_gate": "Ten runs per side, top-three means, each of accuracy/accuracy_easy/accuracy_hard/accuracy_short within one percentage point; source/functional checks are not model scores. Top-three ranking convention must be explicit.",
+  "performance_gate": "Preserve both already accepted32K and64K performance workloads; no length boundary or changed launch parameters."
+}

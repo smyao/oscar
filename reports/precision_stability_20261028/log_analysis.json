@@ -1,0 +1,1743 @@
+{
+  "schema": 1,
+  "date": "2026-10-28",
+  "sources": {
+    "candidate": {
+      "role": "candidate",
+      "source": {
+        "path": "/Users/sunao2000/gpt_new_oscar_kimi/reports/precision_stability_20261028/candidate_client.txt",
+        "bytes": 65737,
+        "sha256": "e23c4c8db2620954cccb6574bc5c2731b855cd2d7b35cf27be7270c01283aaaf",
+        "line_count": 576,
+        "contains_baseline_log_header": false
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "experiment": "outputs/default/20261028_020352",
+          "date": "2026-10-28",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 40.15748031496063,
+            "accuracy_easy": 41.86046511627907,
+            "accuracy_hard": 39.285714285714285,
+            "accuracy_short": 40.15748031496063
+          },
+          "raw_metrics_literal": "{'accuracy': 40.15748031496063, 'accuracy_easy': 41.86046511627907, 'accuracy_hard': 39.285714285714285, 'accuracy_short': 40.15748031496063}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 1122
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 1149.45,
+          "request_rate_rps": 0.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 8,
+            "metrics": 37,
+            "progress": 27,
+            "finish": 28,
+            "api_elapsed": 29,
+            "rps": 22,
+            "concurrency": 24,
+            "warmup": 19,
+            "evaluation_done": 39
+          },
+          "inferred_correct_counts": {
+            "accuracy": 51,
+            "accuracy_easy": 18,
+            "accuracy_hard": 33,
+            "accuracy_short": 51
+          }
+        },
+        {
+          "round": 2,
+          "experiment": "outputs/default/20261028_022413",
+          "date": "2026-10-28",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 43.30708661417323,
+            "accuracy_easy": 46.51162790697674,
+            "accuracy_hard": 41.66666666666667,
+            "accuracy_short": 43.30708661417323
+          },
+          "raw_metrics_literal": "{'accuracy': 43.30708661417323, 'accuracy_easy': 46.51162790697674, 'accuracy_hard': 41.66666666666667, 'accuracy_short': 43.30708661417323}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 1119
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 1143.76,
+          "request_rate_rps": 0.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 65,
+            "metrics": 94,
+            "progress": 84,
+            "finish": 85,
+            "api_elapsed": 86,
+            "rps": 79,
+            "concurrency": 81,
+            "warmup": 76,
+            "evaluation_done": 96
+          },
+          "inferred_correct_counts": {
+            "accuracy": 55,
+            "accuracy_easy": 20,
+            "accuracy_hard": 35,
+            "accuracy_short": 55
+          }
+        },
+        {
+          "round": 3,
+          "experiment": "outputs/default/20261028_024428",
+          "date": "2026-10-28",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 41.732283464566926,
+            "accuracy_easy": 46.51162790697674,
+            "accuracy_hard": 39.285714285714285,
+            "accuracy_short": 41.732283464566926
+          },
+          "raw_metrics_literal": "{'accuracy': 41.732283464566926, 'accuracy_easy': 46.51162790697674, 'accuracy_hard': 39.285714285714285, 'accuracy_short': 41.732283464566926}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 1123
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 1147.58,
+          "request_rate_rps": 0.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 122,
+            "metrics": 151,
+            "progress": 141,
+            "finish": 142,
+            "api_elapsed": 143,
+            "rps": 136,
+            "concurrency": 138,
+            "warmup": 133,
+            "evaluation_done": 153
+          },
+          "inferred_correct_counts": {
+            "accuracy": 53,
+            "accuracy_easy": 20,
+            "accuracy_hard": 33,
+            "accuracy_short": 53
+          }
+        },
+        {
+          "round": 4,
+          "experiment": "outputs/default/20261028_030446",
+          "date": "2026-10-28",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 40.94488188976378,
+            "accuracy_easy": 48.837209302325576,
+            "accuracy_hard": 36.904761904761905,
+            "accuracy_short": 40.94488188976378
+          },
+          "raw_metrics_literal": "{'accuracy': 40.94488188976378, 'accuracy_easy': 48.837209302325576, 'accuracy_hard': 36.904761904761905, 'accuracy_short': 40.94488188976378}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 1116
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 1141.4,
+          "request_rate_rps": 0.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 179,
+            "metrics": 208,
+            "progress": 198,
+            "finish": 199,
+            "api_elapsed": 200,
+            "rps": 193,
+            "concurrency": 195,
+            "warmup": 190,
+            "evaluation_done": 210
+          },
+          "inferred_correct_counts": {
+            "accuracy": 52,
+            "accuracy_easy": 21,
+            "accuracy_hard": 31,
+            "accuracy_short": 52
+          }
+        },
+        {
+          "round": 5,
+          "experiment": "outputs/default/20261028_032459",
+          "date": "2026-10-28",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 41.732283464566926,
+            "accuracy_easy": 48.837209302325576,
+            "accuracy_hard": 38.095238095238095,
+            "accuracy_short": 41.732283464566926
+          },
+          "raw_metrics_literal": "{'accuracy': 41.732283464566926, 'accuracy_easy': 48.837209302325576, 'accuracy_hard': 38.095238095238095, 'accuracy_short': 41.732283464566926}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 1052
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 1077.39,
+          "request_rate_rps": 0.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 236,
+            "metrics": 265,
+            "progress": 255,
+            "finish": 256,
+            "api_elapsed": 257,
+            "rps": 250,
+            "concurrency": 252,
+            "warmup": 247,
+            "evaluation_done": 267
+          },
+          "inferred_correct_counts": {
+            "accuracy": 53,
+            "accuracy_easy": 21,
+            "accuracy_hard": 32,
+            "accuracy_short": 53
+          }
+        },
+        {
+          "round": 6,
+          "experiment": "outputs/default/20261028_034406",
+          "date": "2026-10-28",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 39.37007874015748,
+            "accuracy_easy": 46.51162790697674,
+            "accuracy_hard": 35.714285714285715,
+            "accuracy_short": 39.37007874015748
+          },
+          "raw_metrics_literal": "{'accuracy': 39.37007874015748, 'accuracy_easy': 46.51162790697674, 'accuracy_hard': 35.714285714285715, 'accuracy_short': 39.37007874015748}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 1076
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 1100.65,
+          "request_rate_rps": 0.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 293,
+            "metrics": 322,
+            "progress": 312,
+            "finish": 313,
+            "api_elapsed": 314,
+            "rps": 307,
+            "concurrency": 309,
+            "warmup": 304,
+            "evaluation_done": 324
+          },
+          "inferred_correct_counts": {
+            "accuracy": 50,
+            "accuracy_easy": 20,
+            "accuracy_hard": 30,
+            "accuracy_short": 50
+          }
+        },
+        {
+          "round": 7,
+          "experiment": "outputs/default/20261028_040338",
+          "date": "2026-10-28",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 40.15748031496063,
+            "accuracy_easy": 44.18604651162791,
+            "accuracy_hard": 38.095238095238095,
+            "accuracy_short": 40.15748031496063
+          },
+          "raw_metrics_literal": "{'accuracy': 40.15748031496063, 'accuracy_easy': 44.18604651162791, 'accuracy_hard': 38.095238095238095, 'accuracy_short': 40.15748031496063}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 1133
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 1158.46,
+          "request_rate_rps": 0.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 350,
+            "metrics": 379,
+            "progress": 369,
+            "finish": 370,
+            "api_elapsed": 371,
+            "rps": 364,
+            "concurrency": 366,
+            "warmup": 361,
+            "evaluation_done": 381
+          },
+          "inferred_correct_counts": {
+            "accuracy": 51,
+            "accuracy_easy": 19,
+            "accuracy_hard": 32,
+            "accuracy_short": 51
+          }
+        },
+        {
+          "round": 8,
+          "experiment": "outputs/default/20261028_042408",
+          "date": "2026-10-28",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 43.30708661417323,
+            "accuracy_easy": 51.162790697674424,
+            "accuracy_hard": 39.285714285714285,
+            "accuracy_short": 43.30708661417323
+          },
+          "raw_metrics_literal": "{'accuracy': 43.30708661417323, 'accuracy_easy': 51.162790697674424, 'accuracy_hard': 39.285714285714285, 'accuracy_short': 43.30708661417323}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 1192
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 1218.2,
+          "request_rate_rps": 0.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 407,
+            "metrics": 436,
+            "progress": 426,
+            "finish": 427,
+            "api_elapsed": 428,
+            "rps": 421,
+            "concurrency": 423,
+            "warmup": 418,
+            "evaluation_done": 438
+          },
+          "inferred_correct_counts": {
+            "accuracy": 55,
+            "accuracy_easy": 22,
+            "accuracy_hard": 33,
+            "accuracy_short": 55
+          }
+        },
+        {
+          "round": 9,
+          "experiment": "outputs/default/20261028_044540",
+          "date": "2026-10-28",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 41.732283464566926,
+            "accuracy_easy": 46.51162790697674,
+            "accuracy_hard": 39.285714285714285,
+            "accuracy_short": 41.732283464566926
+          },
+          "raw_metrics_literal": "{'accuracy': 41.732283464566926, 'accuracy_easy': 46.51162790697674, 'accuracy_hard': 39.285714285714285, 'accuracy_short': 41.732283464566926}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 1017
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 1045.65,
+          "request_rate_rps": 0.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 464,
+            "metrics": 493,
+            "progress": 483,
+            "finish": 484,
+            "api_elapsed": 485,
+            "rps": 478,
+            "concurrency": 480,
+            "warmup": 475,
+            "evaluation_done": 495
+          },
+          "inferred_correct_counts": {
+            "accuracy": 53,
+            "accuracy_easy": 20,
+            "accuracy_hard": 33,
+            "accuracy_short": 53
+          }
+        },
+        {
+          "round": 10,
+          "experiment": "outputs/default/20261028_050417",
+          "date": "2026-10-28",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 40.15748031496063,
+            "accuracy_easy": 44.18604651162791,
+            "accuracy_hard": 38.095238095238095,
+            "accuracy_short": 40.15748031496063
+          },
+          "raw_metrics_literal": "{'accuracy': 40.15748031496063, 'accuracy_easy': 44.18604651162791, 'accuracy_hard': 38.095238095238095, 'accuracy_short': 40.15748031496063}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 1112
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 1138.35,
+          "request_rate_rps": 0.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 521,
+            "metrics": 550,
+            "progress": 540,
+            "finish": 541,
+            "api_elapsed": 542,
+            "rps": 535,
+            "concurrency": 537,
+            "warmup": 532,
+            "evaluation_done": 552
+          },
+          "inferred_correct_counts": {
+            "accuracy": 51,
+            "accuracy_easy": 19,
+            "accuracy_hard": 32,
+            "accuracy_short": 51
+          }
+        }
+      ],
+      "parse_warnings": [],
+      "optional_field_source_lines": {
+        "temperature": [],
+        "top_p": [],
+        "top_k": [],
+        "seed": [],
+        "input_output_tokens": [],
+        "max_tokens": [],
+        "finish_reason": [],
+        "prefix_cache_hit_rate": [],
+        "loaded_commit": []
+      },
+      "all_rounds_stats": {
+        "accuracy": {
+          "n": 10,
+          "mean": 41.25984251968504,
+          "min": 39.37007874015748,
+          "max": 43.30708661417323,
+          "range": 3.937007874015748,
+          "sample_stddev": 1.3485808481538193
+        },
+        "accuracy_easy": {
+          "n": 10,
+          "mean": 46.51162790697674,
+          "min": 41.86046511627907,
+          "max": 51.162790697674424,
+          "range": 9.302325581395351,
+          "sample_stddev": 2.6853500892540727
+        },
+        "accuracy_hard": {
+          "n": 10,
+          "mean": 38.57142857142857,
+          "min": 35.714285714285715,
+          "max": 41.66666666666667,
+          "range": 5.952380952380956,
+          "sample_stddev": 1.607020375501317
+        },
+        "accuracy_short": {
+          "n": 10,
+          "mean": 41.25984251968504,
+          "min": 39.37007874015748,
+          "max": 43.30708661417323,
+          "range": 3.937007874015748,
+          "sample_stddev": 1.3485808481538193
+        }
+      },
+      "timing_stats": {
+        "api_infer_task_seconds": {
+          "n": 10,
+          "mean": 1132.089,
+          "min": 1045.65,
+          "max": 1218.2,
+          "range": 172.54999999999995,
+          "sample_stddev": 47.56995841214632
+        },
+        "progress_duration_seconds": {
+          "n": 10,
+          "mean": 1106.2,
+          "min": 1017,
+          "max": 1192,
+          "range": 175,
+          "sample_stddev": 47.97175094666536
+        }
+      },
+      "top3_per_metric": {
+        "accuracy": {
+          "selection_metric": "accuracy",
+          "tie_break_for_display": "earliest chronological round",
+          "selected_rounds": [
+            2,
+            8,
+            3
+          ],
+          "cutoff_value": 41.732283464566926,
+          "tied_at_cutoff_rounds": [
+            3,
+            5,
+            9
+          ],
+          "possible_selected_round_sets": [
+            [
+              2,
+              3,
+              8
+            ],
+            [
+              2,
+              5,
+              8
+            ],
+            [
+              2,
+              8,
+              9
+            ]
+          ],
+          "means": {
+            "accuracy": 42.78215223097113,
+            "accuracy_easy": 48.06201550387597,
+            "accuracy_hard": 40.07936507936508,
+            "accuracy_short": 42.78215223097113
+          },
+          "means_over_cutoff_tie_choices": {
+            "accuracy": {
+              "min": 42.78215223097113,
+              "max": 42.78215223097113
+            },
+            "accuracy_easy": {
+              "min": 48.06201550387597,
+              "max": 48.83720930232558
+            },
+            "accuracy_hard": {
+              "min": 39.682539682539684,
+              "max": 40.07936507936508
+            },
+            "accuracy_short": {
+              "min": 42.78215223097113,
+              "max": 42.78215223097113
+            }
+          }
+        },
+        "accuracy_easy": {
+          "selection_metric": "accuracy_easy",
+          "tie_break_for_display": "earliest chronological round",
+          "selected_rounds": [
+            8,
+            4,
+            5
+          ],
+          "cutoff_value": 48.837209302325576,
+          "tied_at_cutoff_rounds": [
+            4,
+            5
+          ],
+          "possible_selected_round_sets": [
+            [
+              4,
+              5,
+              8
+            ]
+          ],
+          "means": {
+            "accuracy": 41.99475065616798,
+            "accuracy_easy": 49.61240310077519,
+            "accuracy_hard": 38.095238095238095,
+            "accuracy_short": 41.99475065616798
+          },
+          "means_over_cutoff_tie_choices": {
+            "accuracy": {
+              "min": 41.99475065616798,
+              "max": 41.99475065616798
+            },
+            "accuracy_easy": {
+              "min": 49.61240310077519,
+              "max": 49.61240310077519
+            },
+            "accuracy_hard": {
+              "min": 38.095238095238095,
+              "max": 38.095238095238095
+            },
+            "accuracy_short": {
+              "min": 41.99475065616798,
+              "max": 41.99475065616798
+            }
+          }
+        },
+        "accuracy_hard": {
+          "selection_metric": "accuracy_hard",
+          "tie_break_for_display": "earliest chronological round",
+          "selected_rounds": [
+            2,
+            1,
+            3
+          ],
+          "cutoff_value": 39.285714285714285,
+          "tied_at_cutoff_rounds": [
+            1,
+            3,
+            8,
+            9
+          ],
+          "possible_selected_round_sets": [
+            [
+              1,
+              2,
+              3
+            ],
+            [
+              1,
+              2,
+              8
+            ],
+            [
+              1,
+              2,
+              9
+            ],
+            [
+              2,
+              3,
+              8
+            ],
+            [
+              2,
+              3,
+              9
+            ],
+            [
+              2,
+              8,
+              9
+            ]
+          ],
+          "means": {
+            "accuracy": 41.732283464566926,
+            "accuracy_easy": 44.96124031007752,
+            "accuracy_hard": 40.07936507936508,
+            "accuracy_short": 41.732283464566926
+          },
+          "means_over_cutoff_tie_choices": {
+            "accuracy": {
+              "min": 41.732283464566926,
+              "max": 42.78215223097113
+            },
+            "accuracy_easy": {
+              "min": 44.96124031007752,
+              "max": 48.06201550387597
+            },
+            "accuracy_hard": {
+              "min": 40.07936507936508,
+              "max": 40.07936507936508
+            },
+            "accuracy_short": {
+              "min": 41.732283464566926,
+              "max": 42.78215223097113
+            }
+          }
+        },
+        "accuracy_short": {
+          "selection_metric": "accuracy_short",
+          "tie_break_for_display": "earliest chronological round",
+          "selected_rounds": [
+            2,
+            8,
+            3
+          ],
+          "cutoff_value": 41.732283464566926,
+          "tied_at_cutoff_rounds": [
+            3,
+            5,
+            9
+          ],
+          "possible_selected_round_sets": [
+            [
+              2,
+              3,
+              8
+            ],
+            [
+              2,
+              5,
+              8
+            ],
+            [
+              2,
+              8,
+              9
+            ]
+          ],
+          "means": {
+            "accuracy": 42.78215223097113,
+            "accuracy_easy": 48.06201550387597,
+            "accuracy_hard": 40.07936507936508,
+            "accuracy_short": 42.78215223097113
+          },
+          "means_over_cutoff_tie_choices": {
+            "accuracy": {
+              "min": 42.78215223097113,
+              "max": 42.78215223097113
+            },
+            "accuracy_easy": {
+              "min": 48.06201550387597,
+              "max": 48.83720930232558
+            },
+            "accuracy_hard": {
+              "min": 39.682539682539684,
+              "max": 40.07936507936508
+            },
+            "accuracy_short": {
+              "min": 42.78215223097113,
+              "max": 42.78215223097113
+            }
+          }
+        }
+      },
+      "top3_by_overall_accuracy": {
+        "selection_metric": "accuracy",
+        "tie_break_for_display": "earliest chronological round",
+        "selected_rounds": [
+          2,
+          8,
+          3
+        ],
+        "cutoff_value": 41.732283464566926,
+        "tied_at_cutoff_rounds": [
+          3,
+          5,
+          9
+        ],
+        "possible_selected_round_sets": [
+          [
+            2,
+            3,
+            8
+          ],
+          [
+            2,
+            5,
+            8
+          ],
+          [
+            2,
+            8,
+            9
+          ]
+        ],
+        "means": {
+          "accuracy": 42.78215223097113,
+          "accuracy_easy": 48.06201550387597,
+          "accuracy_hard": 40.07936507936508,
+          "accuracy_short": 42.78215223097113
+        },
+        "means_over_cutoff_tie_choices": {
+          "accuracy": {
+            "min": 42.78215223097113,
+            "max": 42.78215223097113
+          },
+          "accuracy_easy": {
+            "min": 48.06201550387597,
+            "max": 48.83720930232558
+          },
+          "accuracy_hard": {
+            "min": 39.682539682539684,
+            "max": 40.07936507936508
+          },
+          "accuracy_short": {
+            "min": 42.78215223097113,
+            "max": 42.78215223097113
+          }
+        }
+      }
+    },
+    "baseline": {
+      "role": "baseline",
+      "source": {
+        "path": "/Users/sunao2000/gpt_new_oscar_kimi/reports/precision_stability_20261028/baseline_client.txt",
+        "bytes": 50304,
+        "sha256": "36c8c0f5e7d28da1e6830b566b9a94b2ae05c330f2dd1c64ba9db9d77f4bbb58",
+        "line_count": 563,
+        "contains_baseline_log_header": true
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "experiment": "outputs/default/20261022_122925",
+          "date": "2026-10-22",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 47.24409448818898,
+            "accuracy_easy": 51.162790697674424,
+            "accuracy_hard": 45.23809523809524,
+            "accuracy_short": 47.24409448818898
+          },
+          "raw_metrics_literal": "{'accuracy': 47.24409448818898, 'accuracy_easy': 51.162790697674424, 'accuracy_hard': 45.23809523809524, 'accuracy_short': 47.24409448818898}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 842
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 869.06,
+          "request_rate_rps": 10.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 7,
+            "metrics": 35,
+            "progress": 25,
+            "finish": 26,
+            "api_elapsed": 27,
+            "rps": 21,
+            "concurrency": 22,
+            "warmup": 18,
+            "evaluation_done": 37
+          },
+          "inferred_correct_counts": {
+            "accuracy": 60,
+            "accuracy_easy": 22,
+            "accuracy_hard": 38,
+            "accuracy_short": 60
+          }
+        },
+        {
+          "round": 2,
+          "experiment": "outputs/default/20261022_124502",
+          "date": "2026-10-22",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 42.51968503937008,
+            "accuracy_easy": 44.18604651162791,
+            "accuracy_hard": 41.66666666666667,
+            "accuracy_short": 42.51968503937008
+          },
+          "raw_metrics_literal": "{'accuracy': 42.51968503937008, 'accuracy_easy': 44.18604651162791, 'accuracy_hard': 41.66666666666667, 'accuracy_short': 42.51968503937008}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 721
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 745.44,
+          "request_rate_rps": 10.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 63,
+            "metrics": 91,
+            "progress": 81,
+            "finish": 82,
+            "api_elapsed": 83,
+            "rps": 77,
+            "concurrency": 78,
+            "warmup": 74,
+            "evaluation_done": 93
+          },
+          "inferred_correct_counts": {
+            "accuracy": 54,
+            "accuracy_easy": 19,
+            "accuracy_hard": 35,
+            "accuracy_short": 54
+          }
+        },
+        {
+          "round": 3,
+          "experiment": "outputs/default/20261022_125835",
+          "date": "2026-10-22",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 38.582677165354326,
+            "accuracy_easy": 39.53488372093023,
+            "accuracy_hard": 38.095238095238095,
+            "accuracy_short": 38.582677165354326
+          },
+          "raw_metrics_literal": "{'accuracy': 38.582677165354326, 'accuracy_easy': 39.53488372093023, 'accuracy_hard': 38.095238095238095, 'accuracy_short': 38.582677165354326}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 789
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 814.07,
+          "request_rate_rps": 10.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 119,
+            "metrics": 147,
+            "progress": 137,
+            "finish": 138,
+            "api_elapsed": 139,
+            "rps": 133,
+            "concurrency": 134,
+            "warmup": 130,
+            "evaluation_done": 149
+          },
+          "inferred_correct_counts": {
+            "accuracy": 49,
+            "accuracy_easy": 17,
+            "accuracy_hard": 32,
+            "accuracy_short": 49
+          }
+        },
+        {
+          "round": 4,
+          "experiment": "outputs/default/20261022_131315",
+          "date": "2026-10-22",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 40.15748031496063,
+            "accuracy_easy": 41.86046511627907,
+            "accuracy_hard": 39.285714285714285,
+            "accuracy_short": 40.15748031496063
+          },
+          "raw_metrics_literal": "{'accuracy': 40.15748031496063, 'accuracy_easy': 41.86046511627907, 'accuracy_hard': 39.285714285714285, 'accuracy_short': 40.15748031496063}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 705
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 729.86,
+          "request_rate_rps": 10.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 175,
+            "metrics": 203,
+            "progress": 193,
+            "finish": 194,
+            "api_elapsed": 195,
+            "rps": 189,
+            "concurrency": 190,
+            "warmup": 186,
+            "evaluation_done": 205
+          },
+          "inferred_correct_counts": {
+            "accuracy": 51,
+            "accuracy_easy": 18,
+            "accuracy_hard": 33,
+            "accuracy_short": 51
+          }
+        },
+        {
+          "round": 5,
+          "experiment": "outputs/default/20261022_132633",
+          "date": "2026-10-22",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 47.24409448818898,
+            "accuracy_easy": 53.48837209302325,
+            "accuracy_hard": 44.047619047619044,
+            "accuracy_short": 47.24409448818898
+          },
+          "raw_metrics_literal": "{'accuracy': 47.24409448818898, 'accuracy_easy': 53.48837209302325, 'accuracy_hard': 44.047619047619044, 'accuracy_short': 47.24409448818898}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 692
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 716.26,
+          "request_rate_rps": 10.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 231,
+            "metrics": 259,
+            "progress": 249,
+            "finish": 250,
+            "api_elapsed": 251,
+            "rps": 245,
+            "concurrency": 246,
+            "warmup": 242,
+            "evaluation_done": 261
+          },
+          "inferred_correct_counts": {
+            "accuracy": 60,
+            "accuracy_easy": 23,
+            "accuracy_hard": 37,
+            "accuracy_short": 60
+          }
+        },
+        {
+          "round": 6,
+          "experiment": "outputs/default/20261022_133935",
+          "date": "2026-10-22",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 43.30708661417323,
+            "accuracy_easy": 51.162790697674424,
+            "accuracy_hard": 39.285714285714285,
+            "accuracy_short": 43.30708661417323
+          },
+          "raw_metrics_literal": "{'accuracy': 43.30708661417323, 'accuracy_easy': 51.162790697674424, 'accuracy_hard': 39.285714285714285, 'accuracy_short': 43.30708661417323}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 735
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 761.57,
+          "request_rate_rps": 10.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 287,
+            "metrics": 315,
+            "progress": 305,
+            "finish": 306,
+            "api_elapsed": 307,
+            "rps": 301,
+            "concurrency": 302,
+            "warmup": 298,
+            "evaluation_done": 317
+          },
+          "inferred_correct_counts": {
+            "accuracy": 55,
+            "accuracy_easy": 22,
+            "accuracy_hard": 33,
+            "accuracy_short": 55
+          }
+        },
+        {
+          "round": 7,
+          "experiment": "outputs/default/20261022_135324",
+          "date": "2026-10-22",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 43.30708661417323,
+            "accuracy_easy": 48.837209302325576,
+            "accuracy_hard": 40.476190476190474,
+            "accuracy_short": 43.30708661417323
+          },
+          "raw_metrics_literal": "{'accuracy': 43.30708661417323, 'accuracy_easy': 48.837209302325576, 'accuracy_hard': 40.476190476190474, 'accuracy_short': 43.30708661417323}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 744
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 771.43,
+          "request_rate_rps": 10.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 343,
+            "metrics": 371,
+            "progress": 361,
+            "finish": 362,
+            "api_elapsed": 363,
+            "rps": 357,
+            "concurrency": 358,
+            "warmup": 354,
+            "evaluation_done": 373
+          },
+          "inferred_correct_counts": {
+            "accuracy": 55,
+            "accuracy_easy": 21,
+            "accuracy_hard": 34,
+            "accuracy_short": 55
+          }
+        },
+        {
+          "round": 8,
+          "experiment": "outputs/default/20261022_140725",
+          "date": "2026-10-22",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 47.24409448818898,
+            "accuracy_easy": 51.162790697674424,
+            "accuracy_hard": 45.23809523809524,
+            "accuracy_short": 47.24409448818898
+          },
+          "raw_metrics_literal": "{'accuracy': 47.24409448818898, 'accuracy_easy': 51.162790697674424, 'accuracy_hard': 45.23809523809524, 'accuracy_short': 47.24409448818898}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 702
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 726.94,
+          "request_rate_rps": 10.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 399,
+            "metrics": 427,
+            "progress": 417,
+            "finish": 418,
+            "api_elapsed": 419,
+            "rps": 413,
+            "concurrency": 414,
+            "warmup": 410,
+            "evaluation_done": 429
+          },
+          "inferred_correct_counts": {
+            "accuracy": 60,
+            "accuracy_easy": 22,
+            "accuracy_hard": 38,
+            "accuracy_short": 60
+          }
+        },
+        {
+          "round": 9,
+          "experiment": "outputs/default/20261022_142039",
+          "date": "2026-10-22",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 40.15748031496063,
+            "accuracy_easy": 41.86046511627907,
+            "accuracy_hard": 39.285714285714285,
+            "accuracy_short": 40.15748031496063
+          },
+          "raw_metrics_literal": "{'accuracy': 40.15748031496063, 'accuracy_easy': 41.86046511627907, 'accuracy_hard': 39.285714285714285, 'accuracy_short': 40.15748031496063}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 756
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 785.21,
+          "request_rate_rps": 10.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 455,
+            "metrics": 483,
+            "progress": 473,
+            "finish": 474,
+            "api_elapsed": 475,
+            "rps": 469,
+            "concurrency": 470,
+            "warmup": 466,
+            "evaluation_done": 485
+          },
+          "inferred_correct_counts": {
+            "accuracy": 51,
+            "accuracy_easy": 18,
+            "accuracy_hard": 33,
+            "accuracy_short": 51
+          }
+        },
+        {
+          "round": 10,
+          "experiment": "outputs/default/20261022_143450",
+          "date": "2026-10-22",
+          "dataset_version": "324293",
+          "metrics": {
+            "accuracy": 43.30708661417323,
+            "accuracy_easy": 46.51162790697674,
+            "accuracy_hard": 41.66666666666667,
+            "accuracy_short": 43.30708661417323
+          },
+          "raw_metrics_literal": "{'accuracy': 43.30708661417323, 'accuracy_easy': 46.51162790697674, 'accuracy_hard': 41.66666666666667, 'accuracy_short': 43.30708661417323}",
+          "progress": {
+            "finished": 127,
+            "total": 127,
+            "duration_seconds": 787
+          },
+          "transport": {
+            "post": 127,
+            "recv": 127,
+            "fail": 0,
+            "finish": 127
+          },
+          "api_infer_task_seconds": 813.21,
+          "request_rate_rps": 10.0,
+          "burstiness": 1.0,
+          "concurrency": 32,
+          "warmup": {
+            "total": 1,
+            "success": 1,
+            "failed": 0
+          },
+          "source_lines": {
+            "experiment": 511,
+            "metrics": 539,
+            "progress": 529,
+            "finish": 530,
+            "api_elapsed": 531,
+            "rps": 525,
+            "concurrency": 526,
+            "warmup": 522,
+            "evaluation_done": 541
+          },
+          "inferred_correct_counts": {
+            "accuracy": 55,
+            "accuracy_easy": 20,
+            "accuracy_hard": 35,
+            "accuracy_short": 55
+          }
+        }
+      ],
+      "parse_warnings": [],
+      "optional_field_source_lines": {
+        "temperature": [],
+        "top_p": [],
+        "top_k": [],
+        "seed": [],
+        "input_output_tokens": [],
+        "max_tokens": [],
+        "finish_reason": [],
+        "prefix_cache_hit_rate": [],
+        "loaded_commit": []
+      },
+      "all_rounds_stats": {
+        "accuracy": {
+          "n": 10,
+          "mean": 43.30708661417323,
+          "min": 38.582677165354326,
+          "max": 47.24409448818898,
+          "range": 8.661417322834652,
+          "sample_stddev": 3.1496062992126
+        },
+        "accuracy_easy": {
+          "n": 10,
+          "mean": 46.97674418604651,
+          "min": 39.53488372093023,
+          "max": 53.48837209302325,
+          "range": 13.95348837209302,
+          "sample_stddev": 4.878180689163496
+        },
+        "accuracy_hard": {
+          "n": 10,
+          "mean": 41.42857142857143,
+          "min": 38.095238095238095,
+          "max": 45.23809523809524,
+          "range": 7.142857142857146,
+          "sample_stddev": 2.6202498443205053
+        },
+        "accuracy_short": {
+          "n": 10,
+          "mean": 43.30708661417323,
+          "min": 38.582677165354326,
+          "max": 47.24409448818898,
+          "range": 8.661417322834652,
+          "sample_stddev": 3.1496062992126
+        }
+      },
+      "timing_stats": {
+        "api_infer_task_seconds": {
+          "n": 10,
+          "mean": 773.3050000000001,
+          "min": 716.26,
+          "max": 869.06,
+          "range": 152.79999999999995,
+          "sample_stddev": 48.04389272090446
+        },
+        "progress_duration_seconds": {
+          "n": 10,
+          "mean": 747.3,
+          "min": 692,
+          "max": 842,
+          "range": 150,
+          "sample_stddev": 47.27237859234267
+        }
+      },
+      "top3_per_metric": {
+        "accuracy": {
+          "selection_metric": "accuracy",
+          "tie_break_for_display": "earliest chronological round",
+          "selected_rounds": [
+            1,
+            5,
+            8
+          ],
+          "cutoff_value": 47.24409448818898,
+          "tied_at_cutoff_rounds": [
+            1,
+            5,
+            8
+          ],
+          "possible_selected_round_sets": [
+            [
+              1,
+              5,
+              8
+            ]
+          ],
+          "means": {
+            "accuracy": 47.24409448818898,
+            "accuracy_easy": 51.93798449612403,
+            "accuracy_hard": 44.84126984126984,
+            "accuracy_short": 47.24409448818898
+          },
+          "means_over_cutoff_tie_choices": {
+            "accuracy": {
+              "min": 47.24409448818898,
+              "max": 47.24409448818898
+            },
+            "accuracy_easy": {
+              "min": 51.93798449612403,
+              "max": 51.93798449612403
+            },
+            "accuracy_hard": {
+              "min": 44.84126984126984,
+              "max": 44.84126984126984
+            },
+            "accuracy_short": {
+              "min": 47.24409448818898,
+              "max": 47.24409448818898
+            }
+          }
+        },
+        "accuracy_easy": {
+          "selection_metric": "accuracy_easy",
+          "tie_break_for_display": "earliest chronological round",
+          "selected_rounds": [
+            5,
+            1,
+            6
+          ],
+          "cutoff_value": 51.162790697674424,
+          "tied_at_cutoff_rounds": [
+            1,
+            6,
+            8
+          ],
+          "possible_selected_round_sets": [
+            [
+              1,
+              5,
+              6
+            ],
+            [
+              1,
+              5,
+              8
+            ],
+            [
+              5,
+              6,
+              8
+            ]
+          ],
+          "means": {
+            "accuracy": 45.93175853018373,
+            "accuracy_easy": 51.93798449612403,
+            "accuracy_hard": 42.857142857142854,
+            "accuracy_short": 45.93175853018373
+          },
+          "means_over_cutoff_tie_choices": {
+            "accuracy": {
+              "min": 45.93175853018373,
+              "max": 47.24409448818898
+            },
+            "accuracy_easy": {
+              "min": 51.93798449612403,
+              "max": 51.93798449612403
+            },
+            "accuracy_hard": {
+              "min": 42.857142857142854,
+              "max": 44.84126984126984
+            },
+            "accuracy_short": {
+              "min": 45.93175853018373,
+              "max": 47.24409448818898
+            }
+          }
+        },
+        "accuracy_hard": {
+          "selection_metric": "accuracy_hard",
+          "tie_break_for_display": "earliest chronological round",
+          "selected_rounds": [
+            1,
+            8,
+            5
+          ],
+          "cutoff_value": 44.047619047619044,
+          "tied_at_cutoff_rounds": [
+            5
+          ],
+          "possible_selected_round_sets": [
+            [
+              1,
+              5,
+              8
+            ]
+          ],
+          "means": {
+            "accuracy": 47.24409448818898,
+            "accuracy_easy": 51.93798449612403,
+            "accuracy_hard": 44.84126984126984,
+            "accuracy_short": 47.24409448818898
+          },
+          "means_over_cutoff_tie_choices": {
+            "accuracy": {
+              "min": 47.24409448818898,
+              "max": 47.24409448818898
+            },
+            "accuracy_easy": {
+              "min": 51.93798449612403,
+              "max": 51.93798449612403
+            },
+            "accuracy_hard": {
+              "min": 44.84126984126984,
+              "max": 44.84126984126984
+            },
+            "accuracy_short": {
+              "min": 47.24409448818898,
+              "max": 47.24409448818898
+            }
+          }
+        },
+        "accuracy_short": {
+          "selection_metric": "accuracy_short",
+          "tie_break_for_display": "earliest chronological round",
+          "selected_rounds": [
+            1,
+            5,
+            8
+          ],
+          "cutoff_value": 47.24409448818898,
+          "tied_at_cutoff_rounds": [
+            1,
+            5,
+            8
+          ],
+          "possible_selected_round_sets": [
+            [
+              1,
+              5,
+              8
+            ]
+          ],
+          "means": {
+            "accuracy": 47.24409448818898,
+            "accuracy_easy": 51.93798449612403,
+            "accuracy_hard": 44.84126984126984,
+            "accuracy_short": 47.24409448818898
+          },
+          "means_over_cutoff_tie_choices": {
+            "accuracy": {
+              "min": 47.24409448818898,
+              "max": 47.24409448818898
+            },
+            "accuracy_easy": {
+              "min": 51.93798449612403,
+              "max": 51.93798449612403
+            },
+            "accuracy_hard": {
+              "min": 44.84126984126984,
+              "max": 44.84126984126984
+            },
+            "accuracy_short": {
+              "min": 47.24409448818898,
+              "max": 47.24409448818898
+            }
+          }
+        }
+      },
+      "top3_by_overall_accuracy": {
+        "selection_metric": "accuracy",
+        "tie_break_for_display": "earliest chronological round",
+        "selected_rounds": [
+          1,
+          5,
+          8
+        ],
+        "cutoff_value": 47.24409448818898,
+        "tied_at_cutoff_rounds": [
+          1,
+          5,
+          8
+        ],
+        "possible_selected_round_sets": [
+          [
+            1,
+            5,
+            8
+          ]
+        ],
+        "means": {
+          "accuracy": 47.24409448818898,
+          "accuracy_easy": 51.93798449612403,
+          "accuracy_hard": 44.84126984126984,
+          "accuracy_short": 47.24409448818898
+        },
+        "means_over_cutoff_tie_choices": {
+          "accuracy": {
+            "min": 47.24409448818898,
+            "max": 47.24409448818898
+          },
+          "accuracy_easy": {
+            "min": 51.93798449612403,
+            "max": 51.93798449612403
+          },
+          "accuracy_hard": {
+            "min": 44.84126984126984,
+            "max": 44.84126984126984
+          },
+          "accuracy_short": {
+            "min": 47.24409448818898,
+            "max": 47.24409448818898
+          }
+        }
+      }
+    }
+  },
+  "comparisons": {
+    "accuracy": {
+      "all_rounds_baseline_minus_candidate_pp": 2.0472440944881924,
+      "independent_top3_baseline_minus_candidate_pp": 4.461942257217849,
+      "overall_top3_baseline_minus_candidate_pp": 4.461942257217849
+    },
+    "accuracy_easy": {
+      "all_rounds_baseline_minus_candidate_pp": 0.46511627906976827,
+      "independent_top3_baseline_minus_candidate_pp": 2.3255813953488413,
+      "overall_top3_baseline_minus_candidate_pp": 3.875968992248062
+    },
+    "accuracy_hard": {
+      "all_rounds_baseline_minus_candidate_pp": 2.857142857142861,
+      "independent_top3_baseline_minus_candidate_pp": 4.761904761904759,
+      "overall_top3_baseline_minus_candidate_pp": 4.761904761904759
+    },
+    "accuracy_short": {
+      "all_rounds_baseline_minus_candidate_pp": 2.0472440944881924,
+      "independent_top3_baseline_minus_candidate_pp": 4.461942257217849,
+      "overall_top3_baseline_minus_candidate_pp": 4.461942257217849
+    }
+  },
+  "denominator_inference": {
+    "counts": {
+      "accuracy": 127,
+      "accuracy_easy": 43,
+      "accuracy_hard": 84,
+      "accuracy_short": 127
+    },
+    "method": "Unique integer denominators <=127 jointly fitting all20 raw percentage vectors, with easy+hard=127; assumes ordinary correct/count accuracy and an easy/hard partition. Subgroup labels/counts were not explicitly printed.",
+    "alternatives_before_partition": {
+      "accuracy": [
+        127
+      ],
+      "accuracy_easy": [
+        43,
+        86
+      ],
+      "accuracy_hard": [
+        84
+      ],
+      "accuracy_short": [
+        127
+      ]
+    }
+  },
+  "limits": [
+    "Only10 aggregate evaluations per source; no127 per-item answers, predictions, IDs or per-item scores are present.",
+    "No input/output token counts, finish_reason, empty-output count, truncation count or answer-parser error count are printed. FAIL=0 is request completion, not proof all answers parsed or were untruncated.",
+    "No temperature/top_p/top_k/seed/max_tokens values are printed; cannot establish identical sampling.",
+    "RPS differs(10 vs0), dates differ(10/22 vs10/28). Shell labels node205/node93 identify client terminals, not necessarily serving hosts. Full engine/model launch configurations are absent. Do not assign accuracy differences to RPS or infer different NPU machines.",
+    "Native/candidate roles follow user identification plus date/experiment/header evidence; these client logs do not contain loaded OSCAR/commit/PT identities.",
+    "Averages of per-metric independent top3 can combine different rounds. Unified overall top3 retains cutoff ties, with chronological tie break only for display.",
+    "Top3 summaries are selected best runs and do not replace the full10-run variability summary."
+  ],
+  "NPU": "not_run",
+  "performance_tests": "not_run",
+  "production_modified": false
+}

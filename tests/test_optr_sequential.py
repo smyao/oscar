@@ -1,4 +1,8 @@
-"""Independent joint native-target objective, guarded devices, deployment gate."""
+"""Archive #170/#173/#175/#176: upstream objective and frame adapters.
+
+Official OptR 66d46561b9bdf uses FP32 effective K/V and separate-head W_O
+errors. Native/BF16/joint-output checks remain in the deployment validator.
+"""
 import copy
 import json
 import sys
@@ -25,88 +29,66 @@ def policy(**kwargs):
 
 
 def direct_loss(rotation, sample, mean, phase, p, rk=None):
-    # Independent literal per-query formula: actual forward cut, BF16 writer
-    # operands and full W_O projection (no Gram or cached split probabilities).
-    def bf(x):
-        return x + (x.bfloat16().float() - x).detach()
+    # Literal original-space OptR formula, evaluated per captured query to
+    # exercise the multi-forward exact-window adapter independently.
     def quant(x, clip):
-        index = min(int(float(torch.tensor(clip)) * x.shape[-1]), x.shape[-1] - 1)
+        index = min(max(int(clip * x.shape[-1]), 0), x.shape[-1] - 1)
         threshold = x.detach().abs().sort(-1).values[:, index:index + 1]
-        x = x.clamp(-threshold, threshold)
+        x = torch.minimum(torch.maximum(x, -threshold), threshold)
         low, high = x.amin(-1, keepdim=True), x.amax(-1, keepdim=True)
         scale = (high - low).clamp_min(1e-8) / 3
         z = -low / scale
         a = x / scale + z
-        return bf((a + ((a + .5).floor().clamp(0, 3) - a).detach() - z) * scale)
-    kr = bf(rotation if phase == 'k' else rk)
-    k = bf(bf(sample['k'].float() - bf(mean)) @ kr)
-    kq = quant(k, p['k_clip'])
+        return (a + ((a + .5).floor().clamp(0, 3) - a).detach() - z) * scale
+    k, v = sample['k'].float() - mean, sample['v'].float()
+    kr = rotation if phase == 'k' else rk
+    kq = quant(k @ kr, p['k_clip']) @ kr.T
     if phase == 'v':
-        vr = bf(rotation)
-        v = bf(sample['v'].float() @ vr)
-        vq = quant(v, p['v_clip'])
+        vq = quant(v @ rotation, p['v_clip']) @ rotation.T
     vals = []
-    group = sample['q'].shape[1]
     for i, position in enumerate(sample['positions'].tolist()):
-        contributions, divergences = [], []
-        for h in range(group):
-            context = int(sample['contexts'][i])
-            cut = min(context, max(p['sink_tokens'], context + 1 - p['recent_tokens']))
-            exact = (torch.arange(len(k)) < p['sink_tokens']) | (torch.arange(len(k)) >= cut)
-            key = torch.where(exact[:, None], k, kq)
+        context = int(sample['contexts'][i])
+        cut = min(context, max(p['sink_tokens'], context + 1 - p['recent_tokens']))
+        exact = (torch.arange(len(k)) < p['sink_tokens']) | (torch.arange(len(k)) >= cut)
+        key = torch.where(exact[:, None], k, kq)
+        for h in range(sample['q'].shape[1]):
             q = sample['q'][i, h].float()
-            logits = key[:position + 1] @ bf(q @ kr) / k.shape[-1] ** .5
-            pq = logits.softmax(-1)
+            pq = ((key[:position + 1] @ q) / k.shape[-1] ** .5).softmax(-1)
             if phase == 'k':
-                pt = ((sample['k'][:position + 1].float() @ q) / k.shape[-1] ** .5).softmax(-1)
+                pt = ((k[:position + 1] @ q) / k.shape[-1] ** .5).softmax(-1)
                 kl = (pt * (pt.clamp_min(1e-12).log() - pq.clamp_min(1e-12).log())).sum()
-                actual = pq @ sample['v'][:position + 1].float()
-                teacher = sample['teacher'][i, h].float()
+                error = (pq - pt) @ v[:position + 1]
             else:
                 kl = 0.
                 value = torch.where(exact[:, None], v, vq)
-                actual = bf(bf(pq @ value[:position + 1]) @ vr.T)
-                teacher = pq @ sample['v'][:position + 1].float()
-            gate = sample['gate'][i, h].float()
-            # Native gate rounds both operands separately, before subtraction.
-            error = bf(bf(actual) * gate) - bf(bf(teacher) * gate)
-            contributions.append(error @ sample['wo'][h].T)
-            divergences.append(kl)
-        joint_error = torch.stack(contributions).sum(0)
-        output_loss = joint_error.square().mean() / group
-        vals.append(sum(divergences) / group + output_loss * (p['lambda_output'] if phase == 'k' else 1))
+                error = pq @ (value[:position + 1] - v[:position + 1])
+            projected = error @ sample['wo'][h].T
+            vals.append(kl + projected.square().mean() * (p['lambda_output'] if phase == 'k' else 1))
     return torch.stack(vals).mean()
 
 
 def stage_v(row, rk, p):
     with torch.no_grad():
-        row['selected_k_p'] = sequential._key_probabilities(rk, row, p)
-        row['selected_k_exact_p'] = row['selected_k_p'] * row['exact']
-        row['selected_k_quant_p'] = row['selected_k_p'].masked_fill(row['exact'], 0)
-        teacher = (row['selected_k_p'] @ row['v']).bfloat16().float()
-        row['conditional_teacher_gated'] = (teacher * row['gate']).bfloat16().float()
+        row['selected_k_quant_p'] = sequential._key_probabilities(rk, row, p).masked_fill(row['exact'], 0)
 
 
 def test_train_and_held_reuse_only_the_same_fixed_output_projection():
     train, held = trace(17, 'train'), trace(19, 'held')
-    held['wo'] = train['wo']  # Production loader shares this model weight.
+    held['wo'] = train['wo']
     weights = {}
     left = sequential.prepare_samples([train], torch.zeros(8), policy(), 'cpu', weights=weights)[0]
     right = sequential.prepare_samples([held], torch.zeros(8), policy(), 'cpu', weights=weights)[0]
-    assert left['wo_joint'] is right['wo_joint'] and len(weights) == 1
-    assert left['teacher_gated'] is not right['teacher_gated']
+    assert left['wo_t'] is right['wo_t'] and len(weights) == 1
+    assert left['teacher_p'] is not right['teacher_p']
     other = trace(23, 'other')
     third = sequential.prepare_samples([other], torch.zeros(8), policy(), 'cpu', weights=weights)[0]
-    assert third['wo_joint'] is not left['wo_joint'] and len(weights) == 2
+    assert third['wo_t'] is not left['wo_t'] and len(weights) == 2
 
 
 @pytest.mark.parametrize('phase', ['k', 'v'])
-@pytest.mark.parametrize('gate', [True, False])
 @pytest.mark.parametrize('group', [1, 3])
-def test_joint_loss_and_gradient_match_literal_native_target_formula(phase, gate, group):
+def test_loss_and_gradient_match_original_space_formula_per_frame(phase, group):
     s = trace(17, length=81, dim=8, queries=7, group=group)
-    if not gate:
-        s['gate'].fill_(1)
     mean = torch.linspace(-.2, .3, 8)
     p = policy()
     base = torch.linalg.qr(torch.randn(8, 8, generator=torch.Generator().manual_seed(14))).Q
@@ -115,8 +97,7 @@ def test_joint_loss_and_gradient_match_literal_native_target_formula(phase, gate
     expected.backward()
     row = sequential.prepare_samples([s], mean, p, 'cpu')[0]
     if phase == 'v':
-        with torch.no_grad():
-            stage_v(row, base, p)
+        stage_v(row, base, p)
     rotation = base.clone().requires_grad_()
     actual = sequential.phase_loss(rotation, row, phase, p)
     actual.backward()
@@ -124,68 +105,33 @@ def test_joint_loss_and_gradient_match_literal_native_target_formula(phase, gate
     torch.testing.assert_close(rotation.grad, reference.grad, atol=2e-6, rtol=2e-5)
 
 
-def test_joint_projection_rejects_improvement_that_only_reduces_separate_head_errors():
-    # Both GQA heads project to the same output. Their signs matter, even
-    # though the old separate-head squared norms discard those signs.
-    before = torch.tensor([[[1.]], [[-1.]]])
-    after = torch.tensor([[[.5]], [[.5]]])
-    row = {'gate': torch.ones_like(before), 'wo_joint': torch.ones(2, 1)}
-    teacher = torch.zeros_like(before)
-    old_before, old_after = before.square().mean(), after.square().mean()
-    new_before = sequential._projected_mse(before, teacher, row)
-    new_after = sequential._projected_mse(after, teacher, row)
-    assert old_after < old_before
-    assert new_after > new_before
-    assert (float(old_before), float(old_after), float(new_before), float(new_after)) == (1., .25, 0., .5)
+@pytest.mark.parametrize('phase', ['k', 'v'])
+def test_optimizer_uses_upstream_target_not_native_teacher_or_gate(phase):
+    original = trace(13, length=81, dim=8, queries=4, group=3)
+    changed = copy.deepcopy(original)
+    changed['teacher'].add_(1)
+    changed['gate'].zero_()
+    p, mean = policy(), torch.linspace(-.2, .3, 8)
+    values, gradients = [], []
+    for sample in (original, changed):
+        row = sequential.prepare_samples([sample], mean, p, 'cpu')[0]
+        if phase == 'v':
+            stage_v(row, torch.eye(8), p)
+        rotation = torch.eye(8, requires_grad=True)
+        loss = sequential.phase_loss(rotation, row, phase, p)
+        loss.backward()
+        values.append(loss.detach()); gradients.append(rotation.grad)
+    torch.testing.assert_close(values[0], values[1], atol=0, rtol=0)
+    torch.testing.assert_close(gradients[0], gradients[1], atol=0, rtol=0)
 
 
-def test_gate_difference_uses_separately_rounded_native_products():
-    actual = torch.tensor([[[1.0078125]]])
-    teacher = torch.tensor([[[1.]]])
-    gate = torch.tensor([[[.1]]]).bfloat16().float()
-    row = {'gate': gate, 'wo_joint': torch.ones(1, 1)}
-    rounded_teacher = (teacher * gate).bfloat16().float()
-    expected_difference = (actual * gate).bfloat16().float() - rounded_teacher
-    old_difference = (actual - teacher) * gate
-    assert float(old_difference) == .000782012939453125
-    assert float(expected_difference) == .0009765625
-    actual_loss = sequential._projected_mse(actual, rounded_teacher, row)
-    torch.testing.assert_close(actual_loss, expected_difference.square().mean(), atol=0, rtol=0)
-    assert actual_loss != old_difference.square().mean()
-
-
-def test_k_output_target_uses_captured_teacher_while_kl_target_is_unchanged():
-    s = trace(13, length=81, dim=8, queries=4, group=3)
-    p, mean, rotation = policy(), torch.zeros(8), torch.eye(8)
-    row = sequential.prepare_samples([s], mean, p, 'cpu')[0]
-    with torch.no_grad():
-        actual = sequential._key_probabilities(rotation, row, p) @ row['v']
-    matching = {**s, 'teacher': actual.transpose(0, 1).bfloat16()}
-    changed = {**matching, 'teacher': (matching['teacher'].float() + 1).bfloat16()}
-    a, b = sequential.prepare_samples([matching, changed], mean, p, 'cpu')
-    assert torch.equal(a['teacher_p'], b['teacher_p'])
-    assert torch.equal(a['teacher_logp'], b['teacher_logp'])
-    kl_only = {**p, 'lambda_output': 0.}
-    a_kl = sequential.phase_loss(rotation, a, 'k', kl_only)
-    b_kl = sequential.phase_loss(rotation, b, 'k', kl_only)
-    torch.testing.assert_close(a_kl, b_kl, atol=0, rtol=0)
-    a_loss = sequential.phase_loss(rotation, a, 'k', p)
-    b_loss = sequential.phase_loss(rotation, b, 'k', p)
-    torch.testing.assert_close(a_loss, a_kl, atol=0, rtol=0)
-    assert b_loss > a_loss
-
-
-def test_joint_projection_stays_nonnegative_with_d256_gqa6_cancellation():
-    generator = torch.Generator().manual_seed(6)
-    weight = torch.randn(3, 256, 17, generator=generator).bfloat16().float()
-    value = torch.randn(3, 2, 256, generator=generator).bfloat16().float()
-    actual = torch.cat((value, -value), dim=0).requires_grad_()
-    row = {'gate': torch.ones_like(actual),
-           'wo_joint': torch.cat((weight, weight), dim=0).reshape(1536, 17)}
-    loss = sequential._projected_mse(actual, torch.zeros_like(actual), row)
-    assert torch.isfinite(loss) and 0 <= loss < 1e-7
+def test_projection_uses_upstream_mean_of_separate_gqa_head_squares():
+    error = torch.tensor([[[1.]], [[-1.]]], requires_grad=True)
+    row = {'wo_t': torch.ones(2, 1, 1)}
+    loss = sequential._projected_mse(error, row)
+    assert float(loss.detach()) == 1.  # Jointly squaring would incorrectly give zero.
     loss.backward()
-    assert torch.isfinite(actual.grad).all()
+    torch.testing.assert_close(error.grad, error.detach(), atol=0, rtol=0)
 
 
 @pytest.mark.parametrize('phase', ['k', 'v'])
@@ -217,6 +163,14 @@ def test_v_steps_use_fixed_k_probabilities_without_qk_softmax(monkeypatch):
     r = torch.eye(8, requires_grad=True)
     sequential.phase_loss(r, row, 'v', p).backward()
     assert torch.isfinite(r.grad).all()
+
+
+@pytest.mark.parametrize('heads', [0, -1, True, 1.5])
+def test_global_head_reduction_requires_positive_integer(heads):
+    with pytest.raises(ValueError, match='global_kv_heads'):
+        sequential.fit_head(torch.eye(8), torch.eye(8), torch.zeros(8),
+                            [trace(1, 'train')], [trace(2, 'held')],
+                            policy=policy(steps=1), global_kv_heads=heads)
 
 
 @pytest.mark.parametrize('phase', ['k', 'v'])

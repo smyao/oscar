@@ -38,47 +38,45 @@ def _capture(config_path, directory):
 
 
 def _base_config(config, fingerprint):
-    """Keep recipe3's exact numerical route; this is NOT variant='baseline'."""
+    """Source-bound shared OSCAR seed; preserve the existing serving layout."""
     from oscar_ascend.rotations import calibration_cache_identity
+    from oscar_ascend.optr_oscar_seed import SEED_RECIPE
     base = copy.deepcopy(config)
     for key in ("rotation_refinement", "optr_calibration", "rotation_artifact"):
         base.pop(key, None)
+    base["rotation_seed"] = SEED_RECIPE
     profile = calibration_cache_identity(base, fingerprint)
     digest = hashlib.sha256(json.dumps(profile, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:20]
     root = Path(__file__).resolve().parents[1]
     # Explicit final-artifact overrides must not overwrite/import the seed PT.
     base["rotation_artifact"] = str(root / "artifacts/rotations" / fingerprint /
-                                     ("qqt_sst_" + digest) / "calibrated.pt")
+                                     ("oscar_base_" + digest) / "seed.pt")
     return base
 
 
 def _prepare_base(config, directory, *, testing, import_pair, base_runner):
-    from oscar_ascend.rotations import load_active_artifact
+    from tools.prepare_optr_seed import load_seed
+    if import_pair is not None or config.get("rotation_k_path") or config.get("rotation_v_path"):
+        raise ValueError("OptR source OSCAR seed must use authenticated native source statistics; old recipe3 imports are incompatible")
     config_path = directory / "base-config.json"
     child_config = copy.deepcopy(config)
-    if not testing:
-        # Retain the seed preparer's authenticated recipe2 raw-sample reuse.
-        # Its automatic cache decision intentionally excludes explicit paths.
-        child_config.pop("rotation_artifact", None)
     config_path.write_text(json.dumps(child_config, indent=2) + "\n")
     if base_runner is not None:
         if not testing:
             raise ValueError("injected base preparation is test-only")
         base_runner(config, config_path)
     elif testing:
-        from tools.prepare_rotations import prepare
-        prepare(config, config_path=config_path, import_pair=import_pair, testing=True)
+        from tools.prepare_optr_seed import prepare
+        prepare(config, config_path=config_path, testing=True)
     else:
         # Even base validation may initialize torch_npu. Keep that context out
         # of this parent so the subsequent native trace model has all memory.
-        command = [sys.executable, "-m", "tools.prepare_rotations", "--config", str(config_path)]
-        if import_pair:
-            command += ["--import-k", str(import_pair[0]), "--import-v", str(import_pair[1])]
+        command = [sys.executable, "-m", "tools.prepare_optr_seed", "--config", str(config_path)]
         environment = dict(os.environ)
         environment.pop("OSCAR_ROTATION_ARTIFACT", None)
         from tools.rotation_preparation_limits import preparation_progress_timeout
         subprocess.run(command, check=True, env=environment, timeout=preparation_progress_timeout(config))
-    artifact = load_active_artifact(config, device="cpu", testing=True)
+    artifact = load_seed(config, testing=testing)
     if artifact.get("test_only") and not testing:
         raise ValueError("test-only base artifact cannot enter production")
     return artifact
@@ -225,6 +223,7 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
             if real_fitter:
                 options["progress"] = lambda row: emit(layer=name, head=head, **row)
                 options["device"] = fit_device
+                options["global_kv_heads"] = baseline["Rk"].shape[0]
             rk, rv, decision = fitter(baseline["Rk"][head], baseline["Rv"][head],
                 baseline["k_mean"][head], samples["train"][head], samples["validation"][head], **options)
             saved = {"Rk": rk.detach().cpu().contiguous(), "Rv": rv.detach().cpu().contiguous(),
@@ -387,7 +386,7 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
               online_operations="unchanged", first_preparation="native_capture_and_npu_sequential_optimization")
     base_config = _base_config(config, fingerprint)
     if Path(base_config["rotation_artifact"]).resolve() == destination:
-        raise ValueError("refined destination must not overwrite the recipe3 seed")
+        raise ValueError("refined destination must not overwrite the source OSCAR seed")
     baseline = _prepare_base(base_config, destination.parent, testing=testing,
                              import_pair=import_pair, base_runner=base_runner)
     base_hash = file_sha256(base_config["rotation_artifact"])

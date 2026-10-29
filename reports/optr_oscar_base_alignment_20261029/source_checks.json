@@ -1,0 +1,69 @@
+{
+  "base_commit": "478fe18c850edfdba4505c37c38da44fd25afa58",
+  "protected_online_files_changed": [],
+  "rotations_functions_changed": [
+    "calibration_cache_identity"
+  ],
+  "candidate_config_equal_to_base": true,
+  "argv_equal_to_base": true,
+  "devices": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "port": 7878,
+  "legacy_raw_trace_profile_checks": [
+    {
+      "sampling": "default",
+      "version": "v1",
+      "exact_historical_profile_match": true,
+      "sha256": "6a42a99ebd6c5fbb4d9d90a3fa610290fed843412bf7381f6edb279b4c32f7ff"
+    },
+    {
+      "sampling": "default",
+      "version": "v2",
+      "exact_historical_profile_match": true,
+      "sha256": "ec3d1370e195bd2e0eef7557461cab62b6b53df7649a694b22e61649df1fde4a"
+    },
+    {
+      "sampling": "default",
+      "version": "v3",
+      "exact_historical_profile_match": true,
+      "sha256": "b2a5524f3c90166c9d13b42676d2af17b50672bafb75434f4b7e8a4229e19d00"
+    },
+    {
+      "sampling": "default",
+      "version": "v4",
+      "exact_historical_profile_match": true,
+      "sha256": "aca5652c6eb57e33b9b473334b852f69ab76b0f6190b1ce5b0cf8c6adb7ccb77"
+    },
+    {
+      "sampling": "explicit",
+      "version": "v1",
+      "exact_historical_profile_match": true,
+      "sha256": "d9c0c133c5b5ae6384f2725ef933aa2f3e8dbc35206349da3ba5148b6eb4565c"
+    },
+    {
+      "sampling": "explicit",
+      "version": "v2",
+      "exact_historical_profile_match": true,
+      "sha256": "7e375e79aae2511643ec47c4a62eefb793b6637a594b2479930dd8f1733dc60d"
+    },
+    {
+      "sampling": "explicit",
+      "version": "v3",
+      "exact_historical_profile_match": true,
+      "sha256": "e0630faeaa19d3a37fdd5b4fa7de07d2055ff805997c823ac46d36d513bc945c"
+    },
+    {
+      "sampling": "explicit",
+      "version": "v4",
+      "exact_historical_profile_match": true,
+      "sha256": "584053ef8c1fcf3136b1e77a655f6150da7d64cccdf30afab8a0cc18b0a73bfe"
+    }
+  ],
+  "performance": "not_measured",
+  "model_quality": "not_measured",
+  "npu_execution": "not_run"
+}

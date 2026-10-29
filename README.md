@@ -2,6 +2,8 @@
 
 固定优化交付入口：`git pull --ff-only && bash scripts/install_serve.sh --variant candidate`。每轮实现均须同步编译、候选配置和实际算子路由；直启与probe共用`tools/serving_variants.py`候选预设。该直启命令仍不运行测试/probe/AISBench，当前分支默认使用前四卡`0,1,2,3`、端口`7878`。
 
+当前 candidate 自动执行用户指定本机 OSCAR 的共享零均值基底拟合与官方 OptR K→V 精修（policy v5），旧 PT 自动按身份隔离；四卡并行和线上算子保持。无需新增开关，源码对照、采样与验收边界见[拟合修正记录](docs/optr_oscar_base_alignment_20261029.md)。本地功能验证不代表 LongBench 精度已恢复。
+
 已实现 FULL 层 INT2 缓存、真正的 Cube/Vector attention、融合旋转/裁剪/写入、精确窗口、MTP 位置修正、固定图缓冲、外部插件及一键安装/探针/服务流程。GDN 使用原生状态和 reshape。新增代码不覆盖原生 vLLM/Ascend 源文件。
 
 ## fe0 精度基准与历史复用实验

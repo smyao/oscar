@@ -66,6 +66,34 @@ def test_afterwarmup_capture_excludes_padding_and_restores_native_method(worker)
     assert instance.oscar_rotation_capture_abort()['status']=='not_armed'
 
 
+def test_source_seed_flag_selects_bounded_native_collector_and_restores(worker, monkeypatch):
+    from oscar_ascend import optr_oscar_seed
+    actual = optr_oscar_seed.BaseSeedAccumulator
+    # Only the host double enables CPU input; production receives no such flag.
+    monkeypatch.setattr(optr_oscar_seed, 'BaseSeedAccumulator',
+                        lambda **kwargs: actual(**kwargs, testing=True))
+    instance, impl, spec = worker
+    spec['rotation_seed'] = optr_oscar_seed.SEED_RECIPE
+    instance.oscar_rotation_capture_start(spec)
+    collector = instance._oscar_rotation_capture[2][3]
+    assert isinstance(collector, actual)
+    q, k, v = tensors()
+    q[3:] = float('nan')
+    assert impl.forward(None, q, k, v, None, metadata(padding=True)) == 'native-result'
+    result = instance.oscar_rotation_capture_finish()
+    payload = torch.load(result['path'], weights_only=True)['layers'][3]
+    assert payload['count'] == payload['statistics_count'] == 3
+    assert 'oscar_base_seed' in payload and 'q_gram' not in payload
+    assert 'forward' not in impl.__dict__ and collector._rows is None
+
+
+def test_unknown_source_seed_does_not_arm_native_hooks(worker):
+    instance, impl, spec = worker
+    with pytest.raises(ValueError, match='unsupported source'):
+        instance.oscar_rotation_capture_start({**spec, 'rotation_seed': 'unknown'})
+    assert 'forward' not in impl.__dict__
+
+
 @pytest.mark.parametrize('case',['warmup','decode','history','chunked','duplicate','key-short'])
 def test_nonprefill_and_repeat_frames_never_enter_samples(worker,case):
     instance,impl,spec=worker;instance.oscar_rotation_capture_start(spec);q,k,v=tensors();meta=metadata()

@@ -69,6 +69,8 @@ def test_candidate_enables_optr_without_changing_online_bundle_or_extra_flags():
     assert serve_argv(selected) == serve_argv(seed)
     assert "rotation_refinement" not in config
     assert selected["rotation_refinement"] == "optr"
+    assert config["devices"] == selected["devices"] == [0, 1, 2, 3]
+    assert config["port"] == selected["port"] == 7878
     assert runtime_feature_summary(selected, "candidate")["calibration_recipe_version"] == 5
     for variant in ("baseline", "native"):
         assert variant_config(selected, variant).get("rotation_refinement") is None
@@ -84,14 +86,20 @@ def test_candidate_enables_optr_without_changing_online_bundle_or_extra_flags():
             variant_config({**selected, **override}, "candidate")
 
 
-def test_refinement_cache_binds_online_math_and_keeps_recipe3_identity(tmp_path, monkeypatch):
+def test_refinement_cache_binds_online_math_and_separates_shared_zero_mean_seed(tmp_path, monkeypatch):
+    from oscar_ascend.optr_oscar_seed import legacy_base_profile, seed_profile, source_provenance
     monkeypatch.delenv("OSCAR_ROTATION_ARTIFACT", raising=False)
     config = configuration(tmp_path)
     base = {k: v for k, v in config.items() if k != "rotation_refinement"}
     profile = calibration_cache_identity(config, "model")
     old = calibration_cache_identity(base, "model")
     assert profile["recipe_version"] == 5 and profile["accumulator_dtype"] == "float32"
-    assert profile["base_calibration_profile"] == old and old["recipe_version"] == 3
+    seed = profile["base_calibration_profile"]
+    assert old["recipe_version"] == 3 and seed["recipe_version"] == 6
+    assert seed == seed_profile(old) and seed != old
+    assert seed["key_centering"] == "none" and seed["fitted_grouping"] == "layer"
+    assert seed["source_provenance"] == source_provenance()
+    assert legacy_base_profile(seed) == old
     assert rotation_artifact_path(config, "model", root=tmp_path) != rotation_artifact_path(base, "model", root=tmp_path)
     for key, value in (("sink_tokens", 32), ("recent_tokens", 512), ("k_clip_ratio", .97),
                        ("v_clip_ratio", .93), ("attention_splits", 2), ("cube_cores", 16),
@@ -109,6 +117,8 @@ def test_frame_aware_default_trains_all_deployment_lengths_without_changing_sche
         "test": [4096, 32768, 65536]}
     assert (current["steps"], current["lr"], current["eval_every"]) == (80, .02, 20)
     assert current["selection"] == "joint_all_heads_each_request_frame_and_terminal_nonworse"
+    assert current["policy_version"] == "optr_oscar_base_upstream_ascend_v5"
+    assert current["fitting_objective"] == "upstream_fp32_independent_gqa_kl_output_k_then_conditional_v"
     for version in ("v1", "v2"):
         old = legacy_capture_policy({}, version)
         assert old["capture_lengths"]["train"] == [4096]
@@ -116,31 +126,34 @@ def test_frame_aware_default_trains_all_deployment_lengths_without_changing_sche
         assert old["selection"] == "joint_all_heads_each_request_nonworse"
     # Never relabel old seven-request data as the new nine-request plan.
     assert [p["refinement_policy"]["policy_version"] for p in compatible_capture_profiles({}, {})] == [
-        "optr_frame_bf16_ascend_v3"]
+        "optr_joint_gqa_bf16_ascend_v4", "optr_frame_bf16_ascend_v3"]
 
 
-def test_historical_capture_profiles_keep_exact_explicit_sampling_plan():
+def test_historical_capture_profiles_restore_original_seed_and_exact_sampling_plan(tmp_path):
     from oscar_ascend.optr_policy import (compatible_capture_profiles,
         legacy_capture_policy, legacy_capture_profile)
-    config = {"optr_calibration": {"capture_lengths": {
+    config = {**configuration(tmp_path), "optr_calibration": {"capture_lengths": {
         "train": [4, 32, 64], "validation": [4, 32, 64], "test": [4, 32, 64]},
         "decode_tokens": 3, "query_samples_per_frame": 2, "steps": 5}}
-    profile = {"recipe_version": 5, "refinement_policy": optr_policy(config),
-               "base_calibration_profile": {"model_fingerprint": "preserved"}}
+    profile = calibration_cache_identity(config, "preserved")
+    legacy_config = {k: v for k, v in config.items() if k not in ("rotation_refinement", "optr_calibration")}
+    original_seed = calibration_cache_identity(legacy_config, "preserved")
     compatible = compatible_capture_profiles(profile, config)
-    assert compatible == [legacy_capture_profile(profile, config, version) for version in ("v3", "v2", "v1")]
+    assert compatible == [legacy_capture_profile(profile, config, version) for version in ("v4", "v3", "v2", "v1")]
     for candidate in compatible:
         policy = candidate["refinement_policy"]
         assert policy["capture_lengths"] == config["optr_calibration"]["capture_lengths"]
         assert policy["decode_tokens"] == 3 and policy["query_samples_per_frame"] == 2
-        assert candidate["base_calibration_profile"] == profile["base_calibration_profile"]
+        assert candidate["base_calibration_profile"] == original_seed
+        assert candidate["base_calibration_profile"] != profile["base_calibration_profile"]
+        assert candidate["base_calibration_profile"]["recipe_version"] == 3
     assert legacy_capture_policy(config, "v1")["steps"] == 5
     assert legacy_capture_policy(config, "v2")["steps"] == 5
     assert legacy_capture_policy(config, "v1")["lr"] == .002
     assert legacy_capture_policy(config, "v2")["lr"] == .02
 
 
-@pytest.mark.parametrize("version", ["v1", "v2", "v3"])
+@pytest.mark.parametrize("version", ["v1", "v2", "v3", "v4"])
 def test_completed_older_fit_cannot_bypass_new_objective_via_artifact_cache(tmp_path, version):
     from oscar_ascend.optr_policy import legacy_capture_profile
     config = configuration(tmp_path)

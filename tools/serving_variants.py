@@ -233,10 +233,12 @@ def variant_features(config: dict) -> dict:
 
 def runtime_feature_summary(config: dict, variant: str | None) -> dict:
     """One compact startup line shows the actual effective feature selection."""
-    from oscar_ascend.optr_policy import EXPERIMENTAL_PUBLICATION_POLICY
+    from oscar_ascend.optr_policy import EXPERIMENTAL_PUBLICATION_POLICY, POLICY_VERSION
     return {"variant":variant,"optimizations":variant_features(config),
             **({"optr_publication_policy": EXPERIMENTAL_PUBLICATION_POLICY,
-                "independent_test_blocks_publication": False}
+                "independent_test_blocks_publication": False,
+                "optr_fitting_policy": POLICY_VERSION,
+                "optr_seed": "oscar_base_shared_zero_mean"}
                if config.get("rotation_refinement") == "optr" else {}),
             **({"aligned_c16_operator": ("attention_cv_official_cluster16_out" if config.get("experimental_official_math",False) else "attention_cv_aligned_cluster16_out"
                                         if config.get("experimental_c16_tuned", False)
@@ -251,7 +253,7 @@ def runtime_feature_summary(config: dict, variant: str | None) -> dict:
             "rotation_method":config.get("rotation_method"),
             "rotation_variant":"hadamard_data_free" if config.get("rotation_method")=="hadamard" else config.get("rotation_variant", "shared_v1"),
             "rotation_grouping":"layer_kv_head" if config.get("rotation_variant")=="perhead_center" else "layer",
-            "key_centering":config.get("rotation_variant")=="perhead_center",
+            "key_centering":config.get("rotation_variant")=="perhead_center" and config.get("rotation_refinement")!="optr",
             "clip_policy":config.get("rotation_k_clip", "scalar"),
             "head_clip_experiment_enabled":config.get("rotation_k_clip")=="per_head_calibrated",
             "rotation_refinement":config.get("rotation_refinement"),

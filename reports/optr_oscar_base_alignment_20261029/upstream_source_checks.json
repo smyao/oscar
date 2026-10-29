@@ -1,0 +1,55 @@
+{
+  "upstream_commit": "66d46561b9bdf5d715f591e0f5845a4cbd927dee",
+  "reference_functions_ast_matched": [
+    {
+      "file": "rotation/kv_calib_utils.py",
+      "name": "quant_int2_ste",
+      "source_sha256": "9b3ea32c1e3df73f94559eb2241711f2c6459f3283b8657a64470e47468785f0"
+    },
+    {
+      "file": "rotation/kv_calib_utils.py",
+      "name": "rotate_headwise",
+      "source_sha256": "9b3ea32c1e3df73f94559eb2241711f2c6459f3283b8657a64470e47468785f0"
+    },
+    {
+      "file": "rotation/kv_calib_utils.py",
+      "name": "derotate_headwise",
+      "source_sha256": "9b3ea32c1e3df73f94559eb2241711f2c6459f3283b8657a64470e47468785f0"
+    },
+    {
+      "file": "rotation/kv_calib_utils.py",
+      "name": "restore_exact_window",
+      "source_sha256": "9b3ea32c1e3df73f94559eb2241711f2c6459f3283b8657a64470e47468785f0"
+    },
+    {
+      "file": "optr/optr_common.py",
+      "name": "head_layout",
+      "source_sha256": "555a248042db64dc58a2d55e76de4c69e12768c2aecd206e427a1445e71fc615"
+    },
+    {
+      "file": "optr/calibrate_optr.py",
+      "name": "k_eff_headwise",
+      "source_sha256": "21e4f991a57ad6cf370f195dd06ca7182c3fe41d9a46fbcbceec7d997cda31ae"
+    },
+    {
+      "file": "optr/calibrate_optr.py",
+      "name": "v_eff_headwise",
+      "source_sha256": "21e4f991a57ad6cf370f195dd06ca7182c3fe41d9a46fbcbceec7d997cda31ae"
+    },
+    {
+      "file": "optr/calibrate_optr.py",
+      "name": "k_loss_by_head",
+      "source_sha256": "21e4f991a57ad6cf370f195dd06ca7182c3fe41d9a46fbcbceec7d997cda31ae"
+    },
+    {
+      "file": "optr/calibrate_optr.py",
+      "name": "v_loss_by_head",
+      "source_sha256": "21e4f991a57ad6cf370f195dd06ca7182c3fe41d9a46fbcbceec7d997cda31ae"
+    },
+    {
+      "file": "optr/calibrate_optr.py",
+      "name": "learn_rotation",
+      "source_sha256": "21e4f991a57ad6cf370f195dd06ca7182c3fe41d9a46fbcbceec7d997cda31ae"
+    }
+  ]
+}

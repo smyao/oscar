@@ -156,11 +156,12 @@ def test_partial_pool_start_is_owned_and_cleanup_cannot_lose_child(tmp_path, mon
 @pytest.mark.parametrize("implementation", [
     "db3b72ec7d53ee57649fff212186d5c8c9a04030fe8e30fb472e17c6c33ce2db",
     "5ed45fb740f865a23ac1d2af6116f2c51300f01822d80265e2b5b301e6fe9490"])
-def test_v3_fits_cannot_resume_into_joint_gqa_objective(tmp_path, implementation):
+@pytest.mark.parametrize("old_policy", ["optr_frame_bf16_ascend_v3", "optr_joint_gqa_bf16_ascend_v4"])
+def test_older_fits_cannot_resume_into_source_seed_upstream_objective(tmp_path, implementation, old_policy):
     import torch
     from oscar_ascend.optr_checkpoint import FitCheckpoints, fitting_implementation_digest
     from oscar_ascend.optr_policy import POLICY_VERSION
-    identity = {"profile": {"refinement_policy": {"policy_version": "optr_frame_bf16_ascend_v3"}},
+    identity = {"profile": {"refinement_policy": {"policy_version": old_policy}},
                 "fitting_implementation_sha256": implementation,
                 "base_artifact_sha256": "seed", "trace_manifest_sha256": "trace", "test_only": True}
     old = FitCheckpoints(tmp_path, identity)
@@ -190,6 +191,7 @@ def two_layer_bundle(tmp_path):
     from test_optr_traces import build_bundle, json_save
     from oscar_ascend.optr_artifacts import file_sha256
     from oscar_ascend.rotations import checkpoint_identity, calibration_cache_identity
+    from oscar_ascend.optr_policy import legacy_capture_profile
     path, config, top = build_bundle(tmp_path, dim=64, steps=2)
     config["devices"] = [0, 1, 2, 3]
     model = Path(config["model"]) / "config.json"
@@ -197,8 +199,11 @@ def two_layer_bundle(tmp_path):
     raw["num_hidden_layers"] = 8
     json_save(model, raw)
     names, dim, fingerprint = checkpoint_identity(config["model"])
+    # Real workers must authenticate historical native data under its exact
+    # recipe3 capture identity, then fit the new zero-mean source seed.
+    historical = legacy_capture_profile(calibration_cache_identity(config, fingerprint), config, "v4")
     top.update(layer_ids=[3, 7], model_fingerprint=fingerprint,
-               calibration_profile=calibration_cache_identity(config, fingerprint))
+               calibration_profile=historical, optr_policy=historical["refinement_policy"])
     for rank_path in top["rank_paths"]:
         rank = json.loads(Path(rank_path).read_text())
         origin = copy.deepcopy(rank["layers"]["3"])
@@ -227,37 +232,37 @@ def test_real_parallel_prepare_matches_serial_and_reuses_validated_layers(tmp_pa
     import torch
     from tools import prepare_optr_rotations as prep
     from oscar_ascend.rotations import calibration_cache_identity
-    from oscar_ascend.rotation_calibration import OFFICIAL_COMMIT
+    from oscar_ascend.optr_oscar_seed import BaseSeedAccumulator, SEED_RECIPE, fit_seed_artifact
     from oscar_ascend.optr_artifacts import file_sha256
+    from tools.prepare_optr_seed import load_seed, publish_seed
     path, config, names, dim, fingerprint = two_layer_bundle(tmp_path)
     seed_path = tmp_path / "seed.pt"
     base_config = {k: v for k, v in config.items() if k not in ("rotation_refinement", "optr_calibration")}
     base_config["rotation_artifact"] = str(seed_path)
+    base_config["rotation_seed"] = SEED_RECIPE
     generator = torch.Generator().manual_seed(7)
-    baseline = {"format_version": 2, "source_grouping": "layer_kv_head", "rotation_variant": "perhead_center",
-        "global_kv_heads": 2, "head_dim": dim, "model_fingerprint": fingerprint, "pr_fingerprint": OFFICIAL_COMMIT,
-        "objective": "qqt_sst_r_h_pbr", "calibrated": True, "accumulation_dtype": "float64", "test_only": True,
-        "calibration_profile": calibration_cache_identity(base_config, fingerprint), "layers": {}}
-    for name, layer_id in zip(names, (3, 7)):
-        rotation = torch.linalg.qr(torch.randn(2, dim, dim, generator=generator)).Q
-        baseline["layers"][name] = {"layer_id": layer_id, "Rk": rotation, "Rv": rotation.clone(),
-                                     "k_mean": torch.zeros(2, dim)}
-    from oscar_ascend.rotation_calibration import checkpoint_pair_artifact, publish_checkpoint_pair
-    metadata = {"model_fingerprint": fingerprint, "calibration_profile": baseline["calibration_profile"],
-                "global_kv_heads": 2, "accumulator_dtype": "float64", "post_rope": True, "test_only": True,
-                "generation_id": "synthetic-parallel-test"}
-    states = []
-    for key, objective in (("Rk", "qqt_r_h_pbr"), ("Rv", "sst_r_h_pbr")):
-        state = {"format_version": 2, "source_grouping": "layer_kv_head", "global_kv_heads": 2,
-                 "objective": objective, "calibration": metadata, "layers": {}}
-        for entry in baseline["layers"].values():
-            state["layers"][entry["layer_id"]] = {"layer_id": entry["layer_id"], "rotation": entry[key]}
-            if key == "Rk":
-                state["layers"][entry["layer_id"]]["k_mean"] = entry["k_mean"]
-        states.append(state)
-    baseline = checkpoint_pair_artifact(*states, layer_names=names, head_dim=dim,
-        model_fingerprint=fingerprint, calibration_profile=baseline["calibration_profile"], testing=True)
-    publish_checkpoint_pair(*states, seed_path.parent, artifact=baseline, artifact_name=seed_path.name)
+    ranks = []
+    for rank in range(2):
+        payload = {"rank": rank, "model_fingerprint": fingerprint, "prompt_sha256": "e" * 64,
+                   "tp_size": 2, "global_q_heads": 4, "global_kv_heads": 2, "layers": {}}
+        for layer_id in (3, 7):
+            accumulator = BaseSeedAccumulator(head_dim=dim, local_kv_heads=1, local_q_heads=2,
+                                              token_budget=8, testing=True)
+            accumulator.observe(torch.randn(8, 2, dim, generator=generator).bfloat16(),
+                                torch.randn(8, 1, dim, generator=generator).bfloat16(),
+                                torch.randn(8, 1, dim, generator=generator).bfloat16())
+            payload["layers"][layer_id] = accumulator.export_payload()
+        ranks.append(payload)
+    baseline = fit_seed_artifact(ranks, calibration_cache_identity(base_config, fingerprint),
+        layer_names=names, head_dim=dim, global_q_heads=4, global_kv_heads=2, tp_size=2,
+        prompt_sha256="e" * 64, testing=True)
+    publish_seed(baseline, seed_path)
+    loaded_seed = load_seed(base_config, testing=True)
+    assert loaded_seed["calibration_profile"]["recipe_version"] == 6
+    for entry in loaded_seed["layers"].values():
+        assert torch.equal(entry["Rk"][0], entry["Rk"][1])
+        assert torch.equal(entry["Rv"][0], entry["Rv"][1])
+        assert torch.count_nonzero(entry["k_mean"]) == 0
     monkeypatch.setattr(prep, "_base_config", lambda *_: base_config)
     monkeypatch.setattr(prep, "_prepare_base", lambda *a, **k: baseline)
     monkeypatch.setattr(prep, "_existing_trace_manifest", lambda *a: path)
@@ -290,3 +295,6 @@ def test_real_parallel_prepare_matches_serial_and_reuses_validated_layers(tmp_pa
     assert not any(e.get("phase") == "fit_worker_started" for e in events)
     assert torch.load(parallel, weights_only=True)["refinement_certificate"] == right["refinement_certificate"]
     assert file_sha256(path) == right["refinement_certificate"]["trace_manifest_sha256"]
+    captured_profile = json.loads(path.read_text())["calibration_profile"]
+    assert captured_profile["base_calibration_profile"]["recipe_version"] == 3
+    assert right["calibration_profile"]["base_calibration_profile"]["recipe_version"] == 6

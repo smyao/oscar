@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-29用户指定本机OSCAR拟合：明确授权只读 `/Users/loki.yao/Documents/workgit/oscar_base`（9cd2429），不扩展到其他禁止参考树。固定candidate继续OptR，改用该源码的FP32共享qqt/sst、CPU FP64 eigh+epsilon/UHP、零K均值作独立recipe6 seed，再运行官方OptR FP32独立GQA K→V目标；撤掉v4自定义训练目标，保留部署验证和已授权实验test政策。policy v5隔离旧PT/fit；同采样覆盖的历史raw trace精确认证复用，旧FP64 Gram不能冒充新seed统计。前4卡、四worker、线上CANN/runtime/timer/argv不改；本轮仅本地commit不推送，不连接真机。详见docs/optr_oscar_base_alignment_20261029.md；数学/CPU通过不能宣称模型精度恢复。本条覆盖下方旧拟合目标及旧拟合断点兼容描述。
+
 > 2026-10-29 OptR离线并行：用户要求缩短2～3小时拟合，固定candidate在采样结束后自动按完整层调度至本次配置的四张NPU，每卡一个spawn进程；先绑定逻辑设备再初始化精度选项。CPU线程有界，单worker无进展独立超时，失败/信号/启动中断清理owned进程，全部退出后才发布。每层K→V、样本/80步/精度/联合选择/test政策和线上代码保持；仅精确认证兼容4204e22的v3串行断点，旧v1/v2不沿用。完整PT及原生trace身份不变，无需新开关。按用户要求本轮仅本地commit、不推送；见docs/optr_parallel_fit_20261029.md，未连接真机或验收设备速度。
 
 > 2026-10-29 OptR精度续修：用户反馈OptR比原OSCAR掉点更严重，要求直接修复且继续启用。candidate仍为recipe5，但拟合policy升级 `optr_frame_bf16_ascend_v3`：按真实forward固定cut及BF16写读数值链训练，train覆盖4K/32K/64K；validation逐请求/逐forward/双分片非劣，缓存各头输出后穷举最多16种组合保留有效头。旧完整PT/拟合断点不得沿用，新旧采样计划不一致时自动重采，不能把旧validation/test转为训练。独立test仍按已授权实验政策记录，不参与重选；线上CANN/runtime/timer/argv不改。详见docs/optr_accuracy_fix_20261029.md；本地反例与测试不是模型质量/NPU验收。

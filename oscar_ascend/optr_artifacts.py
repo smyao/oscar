@@ -210,7 +210,11 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
     if expected_profile is not None and profile != expected_profile:
         raise ValueError("OptR calibration profile differs from selected configuration")
     base = profile.get("base_calibration_profile", {})
-    if (base.get("recipe_version") != 3 or base.get("rotation_variant") != "perhead_center" or
+    source_seed = profile.get("refinement_policy", {}).get("policy_version") == "optr_oscar_base_upstream_ascend_v5"
+    if source_seed:
+        from .optr_oscar_seed import validate_seed_profile
+        validate_seed_profile(base, artifact.get("model_fingerprint"))
+    elif (base.get("recipe_version") != 3 or base.get("rotation_variant") != "perhead_center" or
             base.get("model_fingerprint") != artifact.get("model_fingerprint")):
         raise ValueError("OptR must refine the authenticated recipe3 model")
     certificate = artifact.get("refinement_certificate", {})
@@ -240,6 +244,11 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
     require_frames = (require_terminal or certificate["policy"].get("policy_version") == "optr_frame_bf16_ascend_v3"
                       or certificate["policy"].get("selection") == "joint_all_heads_each_request_and_frame_nonworse")
     for name, record in certificate["layers"].items():
+        if source_seed:
+            import torch
+            mean = layers[name].get("k_mean")
+            if not torch.is_tensor(mean) or bool(torch.count_nonzero(mean)):
+                raise ValueError("source OSCAR OptR must retain zero key mean")
         selected_digest = matrix_digest({name: layers[name]})
         if record.get("selected_constants_sha256") != selected_digest:
             raise ValueError("OptR layer certificate does not bind selected constants")

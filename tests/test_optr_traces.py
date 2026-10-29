@@ -143,7 +143,7 @@ def test_loader_streams_one_layer_and_reconstructs_actual_frame_partitions(tmp_p
     assert load(canonical, config)["_root"] == str(path.parent)
 
 
-@pytest.mark.parametrize("version", ["v1", "v2", "v3"])
+@pytest.mark.parametrize("version", ["v1", "v2", "v3", "v4"])
 def test_legacy_capture_reuse_requires_exact_policy_and_sampling_coverage(tmp_path, version):
     from oscar_ascend.optr_policy import legacy_capture_profile
     path, config, top = build_bundle(tmp_path)
@@ -167,6 +167,19 @@ def test_legacy_capture_reuse_requires_exact_policy_and_sampling_coverage(tmp_pa
     with pytest.raises(ValueError, match="policy/calibration profile"):
         load(path, expanded)
     top["optr_policy"] = optr_policy(config)
+    json_save(path, top)
+    with pytest.raises(ValueError, match="policy/calibration profile"):
+        load(path, config)
+
+
+def test_old_raw_trace_must_keep_its_real_recipe3_seed_identity(tmp_path):
+    from oscar_ascend.optr_policy import legacy_capture_profile
+    path, config, top = build_bundle(tmp_path)
+    current = top["calibration_profile"]
+    historical = legacy_capture_profile(current, config, "v4")
+    assert historical["base_calibration_profile"]["recipe_version"] == 3
+    historical["base_calibration_profile"] = current["base_calibration_profile"]
+    top.update(calibration_profile=historical, optr_policy=historical["refinement_policy"])
     json_save(path, top)
     with pytest.raises(ValueError, match="policy/calibration profile"):
         load(path, config)

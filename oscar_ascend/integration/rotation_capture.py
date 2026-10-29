@@ -24,6 +24,12 @@ class RotationCaptureWorker:
             raise RuntimeError("rotation collector is already armed")
         from vllm.distributed import get_tensor_model_parallel_rank
         from oscar_ascend.rotation_calibration import OfflineLayerAccumulator
+        accumulator = OfflineLayerAccumulator
+        if spec.get("rotation_seed") is not None:
+            from oscar_ascend.optr_oscar_seed import SEED_RECIPE, BaseSeedAccumulator
+            if spec["rotation_seed"] != SEED_RECIPE:
+                raise ValueError("unsupported source OSCAR seed capture")
+            accumulator = BaseSeedAccumulator
         rank = get_tensor_model_parallel_rank()
         expected = set(spec["layer_ids"])
         lengths = spec.get("prompt_lengths")
@@ -49,7 +55,7 @@ class RotationCaptureWorker:
                     raise RuntimeError("calibration Q geometry differs from the model")
                 if hk * spec["tp_size"] != spec["global_kv_heads"]:
                     raise RuntimeError("Qwen27B calibration requires disjoint TP KV shards")
-                collector = OfflineLayerAccumulator(head_dim=dim, local_kv_heads=hk,
+                collector = accumulator(head_dim=dim, local_kv_heads=hk,
                     local_q_heads=hq, token_budget=spec["token_count"])
                 original = impl.forward
                 had_own = "forward" in impl.__dict__

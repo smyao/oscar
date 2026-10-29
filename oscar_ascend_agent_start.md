@@ -586,6 +586,8 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 ### 8.2 将历史错误转化为回归检查
 
+2026-10-29按用户指定本机OSCAR续修#176：共享、零均值FP32 seed及CPU FP64 UHP按只读oscar_base@9cd2429对齐，OptR恢复官方独立GQA FP32损失并补全KV头平均梯度。v5隔离旧PT/fit，历史raw trace保持真实recipe3身份认证复用；旧v4自定义训练目标退出当前默认。此为源码与CPU修正，不新增真机故障记录、不升级质量验收，详见[记录](docs/optr_oscar_base_alignment_20261029.md)。
+
 2026-10-29档案#176：用户LongBenchv2回传40.94并反馈比原OSCAR差，现场SHA/PT未知。v4离线目标修正联合GQA交叉项、原生K teacher与BF16 gate，并增加prefill末query门；严格认证复用v3原始trace，旧PT/fit隔离，四卡并行保持。CPU反例和接缝验证见[记录](docs/optr_joint_calibration_20261029.md)，不把本地通过当作模型质量恢复。
 
 2026-10-28新增档案#174：正式服务在新权重加载前因每卡仅1.19GiB空闲被原生预算门拒绝。直启新增完整进程组监督与本checkout每卡互斥，回归覆盖正常/API失败遗留worker、INT/TERM/HUP、Popen窗口及重复信号、真实退出码、其它进程不受影响；显存不足只做有界只读诊断，不自动终止未知历史进程。证据在`reports/direct_service_lifecycle_20261028/verification.json`，不将本地清理结果冒充目标机显存已释放。

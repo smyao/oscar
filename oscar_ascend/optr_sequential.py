@@ -1,13 +1,12 @@
 """Offline OptR sequential objective, adapted from upstream 66d46561b9bdf.
 
-Archive #86/#148/#170/#172/#173/#175: proposals are not deployment acceptance.
+Archive #86/#148/#170/#172/#173/#175/#176: proposals are not deployment acceptance.
 K minimizes KL + post-W_O attention-shift MSE; V minimizes value-error MSE
-under the selected K probabilities. Native captured gates, per-forward exact
-windows and BF16 rotation/codec operands adapt the upstream proxy to Qwen/OSCAR.
-The K output target is captured native attention, and all GQA contributions
-are summed after the BF16 gate before squaring, including their cross terms.
-The independent
-BF16 deployment replay remains the final validation gate in the caller.
+under the selected K probabilities, using upstream's FP32 original-space
+effective K/V and separate GQA-head losses. A trace contains several forwards,
+so its exact-window mask uses each captured forward's context. Native gate,
+BF16 rounding and joint-head output checks belong to the independent deployment
+replay in the caller; they do not redefine the published OptR optimizer.
 
 Large FP32 products run on Ascend in production. Only the small orthogonal
 parameterization/Adam remains on CPU; differentiable device copies carry its
@@ -19,12 +18,6 @@ from __future__ import annotations
 import torch
 
 from .optr_calibration import _matrices, _sample
-
-
-def _bf16(value):
-    # RNE forward / STE backward. Finiteness is checked on the complete loss
-    # and gradient, avoiding an NPU->host synchronization at every rounding.
-    return value + (value.to(torch.bfloat16).float() - value).detach()
 
 
 def fitting_device(config, *, testing=False, logical_index=0):
@@ -53,7 +46,7 @@ def fitting_device(config, *, testing=False, logical_index=0):
 
 def quant_int2(value, clip):
     """Upstream FP32 four-level STE, one deployed head-wide group per row."""
-    index = min(int(float(torch.tensor(clip, dtype=torch.float32)) * value.shape[-1]), value.shape[-1] - 1)
+    index = min(max(int(clip * value.shape[-1]), 0), value.shape[-1] - 1)
     threshold = value.detach().abs().sort(dim=-1).values[..., index:index + 1]
     clipped = torch.minimum(torch.maximum(value, -threshold), threshold)
     low = clipped.amin(-1, keepdim=True)
@@ -64,58 +57,36 @@ def quant_int2(value, clip):
     return (unrounded + (code - unrounded).detach() - zero) * scale
 
 
-def _effective(value, rotation, exact, clip):
-    approximation = quant_int2(value @ rotation, clip) @ rotation.T
-    return torch.where(exact[:, None], value, approximation)
-
-
 def _probabilities(row, key):
     logits = (row["q"] @ key.T) * row["scale"]
     return logits.masked_fill(row["causal"], -torch.inf).softmax(-1)
 
 
 def _key_probabilities(rotation, row, policy):
-    """The writer rounds centered K and Q/K rotations before QK.
-
-    A trace contains queries from several forwards. Each query keeps the
-    exact cached tail/current belonging to its own forward, irrespective of
-    later rows saved in the same trace. No inverse-K shortcut across BF16.
-    """
-    rb = _bf16(rotation)
-    query = _bf16(row["q"] @ rb)
-    key = _bf16(row["k"] @ rb)
-    quantized = _bf16(quant_int2(key, policy["k_clip"]))
-    exact_logits = query @ key.T
-    quantized_logits = query @ quantized.T
-    logits = torch.where(row["exact"], exact_logits, quantized_logits) * row["scale"]
+    """Upstream effective K, with the exact window of each captured forward."""
+    effective = quant_int2(row["k"] @ rotation, policy["k_clip"]) @ rotation.T
+    quantized_logits = (row["q"] @ effective.T) * row["scale"]
+    # Selecting logits is the same rowwise exact replacement as upstream,
+    # without materializing query-dependent [queries,history,dim] tensors.
+    logits = torch.where(row["exact"], row["teacher_logits"], quantized_logits)
     return logits.masked_fill(row["causal"], -torch.inf).softmax(-1)
 
 
-def _gated(value, gate):
-    # Native attention and the gate product are both BF16. Rounding a
-    # difference times the gate is not the difference of rounded products.
-    return _bf16(_bf16(value) * gate)
-
-
-def _projected_mse(actual, teacher_gated, row):
-    z = _gated(actual, row["gate"]) - teacher_gated
-    group, queries, dim = z.shape
-    projected = z.transpose(0, 1).reshape(queries, group * dim) @ row["wo_joint"]
-    # Preserve the former per-GQA normalization relative to mean KL, while
-    # retaining cross-head terms. Direct projection avoids the negative
-    # quadratic forms a rounded Gram can produce near cancelling heads.
-    return projected.square().mean() / group
+def _projected_mse(error, row):
+    # Upstream squares each GQA head's post-W_O contribution separately,
+    # then averages over heads, queries and hidden coordinates. Direct
+    # projection preserves this formula without a rounded Gram surrogate.
+    return torch.bmm(error, row["wo_t"]).square().mean()
 
 
 def prepare_samples(samples, mean, policy, device, *, weights=None):
-    """Stage complete histories once; cache native targets and joint W_O."""
+    """Stage FP32 histories once; cache fixed teacher probabilities and W_O."""
     rows = []
     weights = {} if weights is None else weights
     with torch.no_grad():
         for sample in samples:
             q = sample["q"].float().to(device).transpose(0, 1).contiguous()
-            raw_key = sample["k"].float().to(device)
-            k = _bf16(raw_key - _bf16(mean.to(device)))
+            k = sample["k"].float().to(device) - mean.to(device)
             v = sample["v"].float().to(device)
             # Frame metadata is authenticated on CPU. Build masks once here;
             # no NPU int64 minimum/clamp kernels or per-step host round trips.
@@ -126,23 +97,19 @@ def prepare_samples(samples, mean, policy, device, *, weights=None):
             wo = sample["wo"]
             identity = id(wo)
             if identity not in weights:
-                weights[identity] = wo.permute(0, 2, 1).reshape(-1, wo.shape[1]).contiguous().to(device)
+                weights[identity] = wo.transpose(1, 2).contiguous().to(device)
             # Same cached cut as the deployed reader: fixed at forward start.
             # Tokens >= context (current/future) are exact; causality masks
             # future tokens. context=0 therefore has no INT2 history.
             cuts = torch.minimum(contexts, (contexts + 1 - policy["recent_tokens"]).clamp_min(policy["sink_tokens"]))
             row = {"q": q, "k": k, "v": v, "scale": k.shape[-1] ** -.5,
-                   "gate": sample["gate"].float().to(device).transpose(0, 1).contiguous(),
-                   "wo_joint": weights[identity], "request_id": sample["request_id"],
+                   "wo_t": weights[identity], "request_id": sample["request_id"],
                    "causal": (indices[None, :] > positions[:, None]).to(device),
                    "exact": ((indices[None, :] < policy["sink_tokens"]) |
                              (indices[None, :] >= cuts[:, None])).to(device)}
-            row["teacher_p"] = _probabilities(row, raw_key)
+            row["teacher_logits"] = (q @ k.T) * row["scale"]
+            row["teacher_p"] = row["teacher_logits"].masked_fill(row["causal"], -torch.inf).softmax(-1)
             row["teacher_logp"] = row["teacher_p"].clamp_min(1e-12).log()
-            # Use the already authenticated native output for the output
-            # objective; dense teacher P remains the separate KL target.
-            native = sample["teacher"].float().to(device).transpose(0, 1)
-            row["teacher_gated"] = _gated(native, row["gate"])
             rows.append(row)
     return rows
 
@@ -152,17 +119,13 @@ def phase_loss(rotation, row, phase, policy):
         p = _key_probabilities(rotation, row, policy)
         pt = row["teacher_p"]
         kl = (pt * (row["teacher_logp"] - p.clamp_min(1e-12).log())).sum(-1).mean()
-        return kl + policy["lambda_output"] * _projected_mse(p @ row["v"], row["teacher_gated"], row)
+        return kl + policy["lambda_output"] * _projected_mse((p - pt) @ row["v"], row)
     if phase != "v":
         raise ValueError("OptR phase must be k or v")
-    rb = _bf16(rotation)
-    value = _bf16(row["v"] @ rb)
-    quantized = _bf16(quant_int2(value, policy["v_clip"]))
-    # Two cached probability partitions replace query-dependent [M,L,D]
-    # materialization. No QK/softmax or frozen-side products per V step.
-    output = row["selected_k_quant_p"] @ quantized + row["selected_k_exact_p"] @ value
-    output = _bf16(_bf16(output) @ rb.T)
-    return _projected_mse(output, row["conditional_teacher_gated"], row)
+    effective = quant_int2(row["v"] @ rotation, policy["v_clip"]) @ rotation.T
+    # Upstream exact V rows have zero error. Cache their masked probabilities
+    # once; no QK/softmax or query-dependent history expansion per V step.
+    return _projected_mse(row["selected_k_quant_p"] @ (effective - row["v"]), row)
 
 
 def _values(rotation, rows, phase, policy, emit):
@@ -179,14 +142,16 @@ def _values(rotation, rows, phase, policy, emit):
 
 
 def fit_head(base_k, base_v, mean, train_samples, validation_samples, *, policy,
-             progress=None, device="cpu"):
+             progress=None, device="cpu", global_kv_heads=1):
     """Sequential K/V learning and best held-out selection.
 
-    Joint GQA projection, captured native K target, BF16 gate and sparse query
-    sampling are explicit adaptations to upstream's separate-head proxy. The
-    candidate is subsequently subjected to unchanged all-head BF16 replay;
-    these FP32 proxy losses must never be labelled normalized output errors.
+    Heads run independently, with the upstream all-KV-head mean retained in
+    the backward loss. Adam's epsilon makes omitting this scale observable.
+    Sparse query capture and frame windows are explicit input adaptations.
+    These FP32 proxy losses are not normalized deployment output errors.
     """
+    if type(global_kv_heads) is not int or global_kv_heads < 1:
+        raise ValueError("global_kv_heads must be a positive integer")
     dim = _matrices(base_k, base_v, mean)
     if not train_samples or not validation_samples:
         raise ValueError("nonempty separate training/validation samples required")
@@ -209,12 +174,9 @@ def fit_head(base_k, base_v, mean, train_samples, validation_samples, *, policy,
             with torch.no_grad():
                 rotation = rk.to(device)
                 for row in (*train, *held):
-                    row["selected_k_p"] = _key_probabilities(rotation, row, policy)
-                    row["selected_k_exact_p"] = row["selected_k_p"] * row["exact"]
-                    row["selected_k_quant_p"] = row["selected_k_p"].masked_fill(row["exact"], 0)
-                    row["conditional_teacher_gated"] = _gated(row["selected_k_p"] @ row["v"], row["gate"])
+                    row["selected_k_quant_p"] = _key_probabilities(rotation, row, policy).masked_fill(row["exact"], 0)
                     # No K quantization, QK or softmax in any V optimization step.
-                    del row["teacher_p"], row["teacher_logp"], row["teacher_gated"], row["selected_k_p"]
+                    del row["teacher_p"], row["teacher_logp"], row["teacher_logits"]
             emit("fixed_k_probabilities_ready", phase=phase, samples=len(train) + len(held))
         baseline = best = _values(origin.to(device), held, phase, policy, emit)
         best_rotation = origin.clone()
@@ -228,7 +190,7 @@ def fit_head(base_k, base_v, mean, train_samples, validation_samples, *, policy,
             loss = torch.stack([phase_loss(rotation, row, phase, policy) for row in train]).mean()
             if not bool(torch.isfinite(loss)):
                 raise ValueError("nonfinite OptR training proxy loss")
-            loss.backward()
+            (loss / global_kv_heads).backward()
             if correction.grad is None or not bool(torch.isfinite(correction.grad).all()):
                 raise ValueError("nonfinite or missing OptR rotation gradient")
             optimizer.step()
@@ -261,5 +223,6 @@ def fit_head(base_k, base_v, mean, train_samples, validation_samples, *, policy,
     return rk.contiguous(), rv.contiguous(), {
         "accepted": accepted, "phases": decisions, "policy": policy,
         "objective": policy["fitting_objective"], "fit_device": str(device),
-        "matrix_exp_device": "cpu", "selection": "native_joint_gqa_proxy_then_joint_deployment_gate",
+        "matrix_exp_device": "cpu", "selection": "upstream_separate_head_proxy_then_joint_deployment_gate",
+        "optimizer_loss_divisor": global_kv_heads,
         "model_quality": "not_measured", "npu_equivalence": "not_measured"}

@@ -1,0 +1,44 @@
+{
+  "base_commit": "478fe18c850edfdba4505c37c38da44fd25afa58",
+  "local_tests": {
+    "tests": 543,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "junit": "pytest.xml",
+  "source_checks": "source_checks.json",
+  "upstream_ast_checks": "upstream_source_checks.json",
+  "initial_test_fixture_repairs": {
+    "pytest-initial.xml": "Historical-v4 fixture initially combined v4 policy with the new seed6; restore authentic legacy profile and test both v4/v5.",
+    "seams-initial.xml": "New production-child host fixture lacked required served_model_name/architecture; supply native-compatible model metadata."
+  },
+  "wheel": {
+    "filename": "oscar_ascend_external-0.1.0-py3-none-any.whl",
+    "sha256": "27be3ddcee466beb4e28079f9eea4e347b39ded3b73e4b83e5f7791483248c13",
+    "changed_modules_verified": [
+      "oscar_ascend/integration/rotation_capture.py",
+      "oscar_ascend/optr_artifacts.py",
+      "oscar_ascend/optr_checkpoint.py",
+      "oscar_ascend/optr_oscar_seed.py",
+      "oscar_ascend/optr_policy.py",
+      "oscar_ascend/optr_sequential.py",
+      "oscar_ascend/rotations.py",
+      "tools/calibrate_model_rotations.py",
+      "tools/optr_fit_worker.py",
+      "tools/prepare_optr_rotations.py",
+      "tools/prepare_optr_seed.py",
+      "tools/serving_variants.py"
+    ],
+    "isolated_wheel_import": true,
+    "seed_recipe": "oscar_base_shared_v1"
+  },
+  "review": "independent source, seed/capture/worker/profile/publication review found no blocking issues",
+  "online_workload": "unchanged_at_same_shapes",
+  "cann_compilation": "not_run_no_CANN_changes",
+  "target_npu": "not_run",
+  "graph": "not_run",
+  "model_quality": "not_measured",
+  "performance": "not_measured",
+  "remote_push": "not_performed"
+}

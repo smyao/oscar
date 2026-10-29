@@ -459,6 +459,12 @@ def calibration_cache_identity(config: Mapping[str, Any], fingerprint: str) -> d
                                 **resolve_mamba_cache_dtypes(config)}}
     from .optr_policy import validate_refinement_config, refinement_profile
     validate_refinement_config(config)
+    if config.get("rotation_seed") is not None:
+        from .optr_oscar_seed import SEED_RECIPE, seed_profile
+        if (config["rotation_seed"] != SEED_RECIPE or not center or clip_method or
+                config.get("rotation_refinement") is not None):
+            raise ValueError("invalid private OptR seed configuration")
+        return seed_profile(profile)
     return refinement_profile(profile, config) if config.get("rotation_refinement") == "optr" else profile
 
 

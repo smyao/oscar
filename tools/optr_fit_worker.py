@@ -17,7 +17,7 @@ def fit_worker(spec, index, cpu_threads, pipe):
     from oscar_ascend.optr_policy import optr_policy
     from oscar_ascend.optr_sequential import fitting_device
     from oscar_ascend.optr_traces import load_trace_manifest, load_layer_samples
-    from oscar_ascend.rotations import load_active_artifact
+    from tools.prepare_optr_seed import load_seed
     from tools.prepare_optr_rotations import refine_layer, _layer_artifact, _validate_layer_checkpoint
 
     name = None
@@ -29,7 +29,7 @@ def fit_worker(spec, index, cpu_threads, pipe):
         config, testing = spec["config"], spec["testing"]
         if file_sha256(spec["base_config"]["rotation_artifact"]) != spec["certificate"]["base_artifact_sha256"]:
             raise ValueError("OptR worker seed file changed")
-        baseline = load_active_artifact(spec["base_config"], device="cpu", testing=True)
+        baseline = load_seed(spec["base_config"], testing=testing)
         if baseline.get("test_only") and not testing:
             raise ValueError("test-only seed cannot enter a production OptR worker")
         manifest = load_trace_manifest(spec["trace_manifest"], config, spec["names"],

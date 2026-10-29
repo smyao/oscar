@@ -91,6 +91,17 @@ def prompt_ids_sha256(prompts):
     return hashlib.sha256(json.dumps(prompts, separators=(",", ":")).encode()).hexdigest()
 
 
+def source_seed_prompt_prefix(prompts):
+    """Keep whole prompts through the source's bounded aligned sample cap."""
+    from oscar_ascend.optr_oscar_seed import SAMPLE_CAP
+    count = 0
+    for index, ids in enumerate(prompts):
+        count += len(ids)
+        if count >= SAMPLE_CAP:
+            return prompts[:index + 1]
+    return prompts
+
+
 def calibration_process_env(base=None):
     """Use fresh interpreters at both native EngineCore and TP-worker boundaries.
 
@@ -135,6 +146,13 @@ def collect(config_path, output_dir):
     tokenizer = AutoTokenizer.from_pretrained(config["model"], trust_remote_code=True)
     chunk = int(config.get("max_num_batched_tokens", 16384))
     prompts = render_prompt_ids(tokenizer, messages, config.get("rotation_calibration_tokens", 30000), chunk)
+    if config.get("rotation_seed") is not None:
+        # oscar_base fits at most 512 aligned rows. Stop after the complete
+        # prompt that supplies that cap; no truncation or extra model forward.
+        from oscar_ascend.optr_oscar_seed import SEED_RECIPE
+        if config["rotation_seed"] != SEED_RECIPE:
+            raise ValueError("unsupported source OSCAR seed capture")
+        prompts = source_seed_prompt_prefix(prompts)
     if max(map(len, prompts)) + 1 > min(chunk, config["max_model_len"]):
         raise ValueError("calibration prefill plus one sampled token must fit the explicit native budget")
     layers, dim, fingerprint = model_geometry(Path(config["model"]))
@@ -148,6 +166,8 @@ def collect(config_path, output_dir):
         "prompt_lengths": list(map(len,prompts)),
         "prompt_sha256": prompt_ids_sha256(prompts), "model_fingerprint": fingerprint,
         "output_dir": str(output_dir)}
+    if config.get("rotation_seed") is not None:
+        spec["rotation_seed"] = config["rotation_seed"]
     print(json.dumps({'rotation_capture':'input_prepared','prompts':len(prompts),
         'tokens':spec['token_count'],'prompt_sha256':spec['prompt_sha256'],
         'mamba_cache_dtypes':state_dtypes}),flush=True)

@@ -11,7 +11,7 @@ import math
 RECIPE_VERSION = 5
 OBJECTIVE = "optr_post_gate_output_v1"
 UPSTREAM_COMMIT = "66d46561b9bdf5d715f591e0f5845a4cbd927dee"
-POLICY_VERSION = "optr_joint_gqa_bf16_ascend_v4"
+POLICY_VERSION = "optr_oscar_base_upstream_ascend_v5"
 # User 2026-10-28: publish experimental constants after recording independent
 # test, including regressions. The publication policy is separate from the
 # fitting version: v4 invalidates old fits without changing that authorization.
@@ -26,7 +26,7 @@ def optr_policy(config):
                             "test": [4096, 32768, 65536]},
         "decode_tokens": 8, "query_samples_per_frame": 8,
         "steps": 80, "lr": 0.02, "eval_every": 20, "query_batch_size": 8,
-        "fitting_objective": "sequential_native_k_joint_gqa_bf16_gate_conditional_v_v3",
+        "fitting_objective": "upstream_fp32_independent_gqa_kl_output_k_then_conditional_v",
         "lambda_output": 1.0,
         "kv_tile_size": 256, "history_splits": 1,
         "validation_partitions": ["single_split", "captured_runtime_frames"],
@@ -90,10 +90,14 @@ def legacy_capture_policy(config, version="v1"):
     default must not silently describe those seven requests as today's nine.
     Explicit research overrides remain part of the historical identity.
     """
-    if version not in ("v1", "v2", "v3"):
+    if version not in ("v1", "v2", "v3", "v4"):
         raise ValueError("unknown historical OptR capture policy")
     policy = optr_policy(config)
     overrides = config.get("optr_calibration", {})
+    if version == "v4":
+        policy.update(policy_version="optr_joint_gqa_bf16_ascend_v4",
+                      fitting_objective="sequential_native_k_joint_gqa_bf16_gate_conditional_v_v3")
+        return policy
     if version == "v3":
         policy.update(policy_version="optr_frame_bf16_ascend_v3",
                       fitting_objective="sequential_frame_bf16_kl_output_k_then_conditional_v_gate_v2",
@@ -114,7 +118,12 @@ def legacy_capture_policy(config, version="v1"):
 
 
 def legacy_capture_profile(profile, config, version="v1"):
-    return {**profile, "refinement_policy": legacy_capture_policy(config, version)}
+    from .optr_oscar_seed import legacy_base_profile
+    previous = copy.deepcopy(profile)
+    base = previous.get("base_calibration_profile")
+    if base is not None:
+        previous["base_calibration_profile"] = legacy_base_profile(base)
+    return {**previous, "refinement_policy": legacy_capture_policy(config, version)}
 
 
 def compatible_capture_profiles(profile, config):
@@ -126,7 +135,7 @@ def compatible_capture_profiles(profile, config):
     """
     current = optr_policy(config)
     sampling = ("capture_lengths", "decode_tokens", "query_samples_per_frame")
-    candidates = [legacy_capture_profile(profile, config, version) for version in ("v3", "v2", "v1")]
+    candidates = [legacy_capture_profile(profile, config, version) for version in ("v4", "v3", "v2", "v1")]
     return [candidate for candidate in candidates if all(
         candidate["refinement_policy"][key] == current[key] for key in sampling)]
 
@@ -143,7 +152,7 @@ def validate_refinement_config(config):
         if (config.get("rotation_method", "qqt_sst") != "qqt_sst" or
                 config.get("rotation_variant") != "perhead_center" or
                 config.get("rotation_k_clip") is not None):
-            raise ValueError("OptR requires recipe3 perhead_center and fixed scalar clips")
+            raise ValueError("OptR requires the per-head artifact layout and fixed scalar clips")
         if (not config.get("experimental_official_math") or
                 config.get("oscar_dequant_policy") != "fp32_metadata"):
             raise ValueError("OptR requires the existing v4 FP32 metadata serving path")
@@ -153,9 +162,10 @@ def validate_refinement_config(config):
 
 
 def refinement_profile(base_profile, config):
+    from .optr_oscar_seed import seed_profile
     validate_refinement_config(config)
     return {**base_profile, "recipe_version": RECIPE_VERSION, "objective": OBJECTIVE,
             "accumulator_dtype": "float32",
             "rotation_refinement": "optr", "refinement_upstream_commit": UPSTREAM_COMMIT,
             "refinement_policy": optr_policy(config),
-            "base_calibration_profile": copy.deepcopy(base_profile)}
+            "base_calibration_profile": seed_profile(base_profile)}

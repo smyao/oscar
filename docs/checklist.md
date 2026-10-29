@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+> 2026-10-29前四卡恢复：默认物理卡改回 `0,1,2,3`，端口 `7878`；所有部署相位仍共用本次配置，`--rear-cards`保留显式后四卡。安装/设备锁/部署/模型配置/冻结argv/OptR设备映射/历史探针共122项本地回归通过，三个安装启动入口在父环境残留后四卡时的只读计划均选前四卡。未连接真机，CANN/NPU/图/质量/性能验收状态不升级。
+
 > 2026-10-28本地后四卡：默认配置改为物理 `4,5,6,7` / 端口 `7878`，安装/编译/采样/拟合/服务共用；两个历史探针移除前四卡硬编码。`test_install_serve`、`test_deploy_launcher`、`test_model_config`、`test_stable_launch_frozen`、`test_optr_sequential`、`test_probe_cv_hotshape`、`test_probe_history_reuse` 共122项本地测试通过；三个安装启动入口在父环境残留前四卡时的只读计划均选后四卡。未执行本轮CANN编译、NPU、图、模型质量或性能验证，42项验收状态不升级。
 
 > 2026-10-28 OptR官方分阶段目标/昇腾准备加速：NPU FP32 proxy、CPU正交参数化与最终验证；固定candidate启用，原在线路径不变。官方数学对照/CPU功能/产物恢复见 `reports/optr_sequential_ascend_20261028/`；未连接NPU，设备拟合、模型质量、性能未验收。详见[实现记录](optr_sequential_ascend_20261028.md)。

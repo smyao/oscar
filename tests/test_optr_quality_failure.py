@@ -35,7 +35,9 @@ def metrics(split, errors):
         partition = PARTITIONS[index % 2]
         rows.append({"request_id": request_id + ":" + partition, "partition": partition,
                      "sample_sha256": hashlib.sha256(request_id.encode()).hexdigest(),
-                     "squared_error": error, "teacher_energy": 4., "normalized_error": error / 4.})
+                     "squared_error": error, "teacher_energy": 4., "normalized_error": error / 4.,
+                     "frames": [{"frame_id": 0, "context": 0, "current_end": 1, "query_positions": [0],
+                                 "squared_error": error, "teacher_energy": 4., "normalized_error": error / 4.}]})
     error = sum(row["squared_error"] for row in rows)
     energy = sum(row["teacher_energy"] for row in rows)
     return {"squared_error": error, "teacher_energy": energy,

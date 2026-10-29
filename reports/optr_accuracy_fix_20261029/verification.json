@@ -1,0 +1,87 @@
+{
+  "base_commit": "75e4fd9d4c201382f50681e45da13111f6051e59",
+  "tests": [
+    {
+      "file": "pytest.xml",
+      "tests": 287,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "compatibility.xml",
+      "tests": 44,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "tests_passed": 331,
+  "wheel": {
+    "sha256": "aff77b21a8b9b33b4e72614c2e42eb05c2b964ec2441ba07e595c5afb69a847e",
+    "source_members_verified": [
+      "oscar_ascend/optr_policy.py",
+      "oscar_ascend/optr_sequential.py",
+      "oscar_ascend/optr_selection.py",
+      "oscar_ascend/optr_traces.py",
+      "oscar_ascend/optr_artifacts.py",
+      "oscar_ascend/optr_checkpoint.py",
+      "tools/prepare_optr_rotations.py"
+    ],
+    "isolated_import": {
+      "policy_version": "optr_frame_bf16_ascend_v3",
+      "npu_imported": false,
+      "wheel_import": true
+    }
+  },
+  "candidate": {
+    "rotation_refinement": "optr",
+    "policy_version": "optr_frame_bf16_ascend_v3",
+    "devices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "port": 7878,
+    "capture_lengths": {
+      "train": [
+        4096,
+        32768,
+        65536
+      ],
+      "validation": [
+        4096,
+        32768,
+        65536
+      ],
+      "test": [
+        4096,
+        32768,
+        65536
+      ]
+    }
+  },
+  "source_sha256": {
+    "oscar_ascend/optr_policy.py": "33c5f2abd64eaed34d087ec785266bff448698e9fc4b9e1f2d1e95d69b60c2e9",
+    "oscar_ascend/optr_sequential.py": "11f5f9b57576bbb04308a06c766e97b48d87de00aebdd6502f8375766c190f69",
+    "oscar_ascend/optr_selection.py": "ad94ab74c6183aed9252bef56999b6d8961d845fbc38e58222868debac292faf",
+    "oscar_ascend/optr_traces.py": "9568a345c45e0f6ebc6f1dda6c81944a218c5686dfd596dd6541e54bb03864cd",
+    "oscar_ascend/optr_artifacts.py": "808e9b8964373d2a50e8af0c318fb8e3400132a0f76c4d0dcf48dd49d206ec1d",
+    "oscar_ascend/optr_checkpoint.py": "6ee91a8c2cbcf1512ffb36e3a2ce7d510ac7b59fa3743dd32c8e7842ba71b8aa",
+    "tools/prepare_optr_rotations.py": "09f0dc0cca68da6d02463822d3b71785677925c8d97763ea420a169bb9339889"
+  },
+  "unchanged_online_paths": [
+    "csrc",
+    "oscar_ascend/runtime.py",
+    "oscar_ascend/integration",
+    "oscar_ascend/timing.py",
+    "tools/target_cli.py",
+    "tools/serving_variants.py",
+    "configs/target.json"
+  ],
+  "cann": "not_run_no_kernel_changes",
+  "npu": "not_run_user_constraint",
+  "model_quality": "not_measured",
+  "performance": "not_measured"
+}

@@ -1,4 +1,4 @@
-"""Archive #86/#97/#148: authenticated offline OptR constants and certificates.
+"""Archive #86/#97/#148/#170/#173: authenticated OptR constants/certificates.
 
 Used during preparation/loading only. No optimizer, traces or extra matrix
 operations are installed in the serving forward path. The old qqt/sst pair
@@ -40,7 +40,42 @@ def matrix_digest(layers):
     return digest.hexdigest()
 
 
-def _metric(metric):
+def _frames(row, *, required=False):
+    """Validate captured-forward evidence without weakening old certificates."""
+    if "frames" not in row:
+        if required:
+            raise ValueError("OptR frame-aware policy requires per-frame metrics")
+        return None
+    frames = row["frames"]
+    if not isinstance(frames, list) or not frames:
+        raise ValueError("OptR frame metrics must be a nonempty list")
+    previous_end = 0
+    for index, frame in enumerate(frames):
+        if not isinstance(frame, dict):
+            raise ValueError("OptR frame metric must be an object")
+        frame_id, context, end = (frame.get(key) for key in ("frame_id", "context", "current_end"))
+        positions = frame.get("query_positions")
+        if (any(type(value) is not int for value in (frame_id, context, end))
+                or frame_id != index or context != previous_end or end <= context
+                or not isinstance(positions, list) or not positions
+                or any(type(position) is not int or not context <= position < end for position in positions)
+                or any(left >= right for left, right in zip(positions, positions[1:]))):
+            raise ValueError("OptR captured frame geometry/positions differ")
+        previous_end = end
+        for key in ("normalized_error", "squared_error", "teacher_energy"):
+            value = frame.get(key)
+            if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+                raise ValueError("OptR per-frame metric must be finite and nonnegative")
+        expected = frame["squared_error"] / max(frame["teacher_energy"], 1e-20)
+        if not math.isclose(frame["normalized_error"], expected, rel_tol=1e-12, abs_tol=0):
+            raise ValueError("OptR per-frame normalization differs")
+    for key in ("squared_error", "teacher_energy"):
+        if not math.isclose(row[key], sum(frame[key] for frame in frames), rel_tol=1e-12, abs_tol=0):
+            raise ValueError("OptR per-request totals differ from captured frames")
+    return frames
+
+
+def _metric(metric, *, require_frames=False):
     if not isinstance(metric, dict):
         raise ValueError("OptR metric must be an object")
     for key in ("normalized_error", "squared_error", "teacher_energy"):
@@ -48,7 +83,7 @@ def _metric(metric):
         if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
             raise ValueError("OptR metrics must be finite and nonnegative")
     rows = metric.get("requests")
-    if not isinstance(rows, list) or not rows:
+    if not isinstance(rows, list) or not rows or any(not isinstance(row, dict) for row in rows):
         raise ValueError("OptR certificate requires per-request metrics")
     ids = [row.get("request_id") for row in rows]
     if any(not isinstance(x, str) or not x for x in ids) or len(ids) != len(set(ids)):
@@ -64,6 +99,7 @@ def _metric(metric):
         expected = row["squared_error"] / max(row["teacher_energy"], 1e-20)
         if not math.isclose(row["normalized_error"], expected, rel_tol=1e-12, abs_tol=0):
             raise ValueError("OptR per-request normalization differs")
+        _frames(row, required=require_frames)
     for key in ("squared_error", "teacher_energy"):
         if not math.isclose(metric[key], sum(row[key] for row in rows), rel_tol=1e-12, abs_tol=0):
             raise ValueError("OptR metric totals differ from requests")
@@ -73,18 +109,39 @@ def _metric(metric):
     return {row["request_id"]: row for row in rows}
 
 
-def nonworse(before, after):
-    """No relaxed margin: same samples, same denominator, every request passes."""
-    left, right = _metric(before), _metric(after)
+def nonworse(before, after, *, require_frames=False):
+    """Exact nonregression for every request and its captured-forward metrics.
+
+    Historical request-only evidence remains readable when both sides omit
+    frames. New frame-aware certificates must explicitly require the evidence;
+    discarding only one side or changing frame geometry is never permitted.
+    """
+    left = _metric(before, require_frames=require_frames)
+    right = _metric(after, require_frames=require_frames)
     if set(left) != set(right) or before["teacher_energy"] != after["teacher_energy"]:
         raise ValueError("OptR comparison used different requests or teacher")
+    frame_pairs = []
     for key in left:
         if any(left[key][field] != right[key][field] for field in ("sample_sha256", "teacher_energy")):
             raise ValueError("OptR comparison sample/teacher identity differs")
+        before_frames, after_frames = left[key].get("frames"), right[key].get("frames")
+        if (before_frames is None) != (after_frames is None):
+            raise ValueError("OptR comparison captured frame coverage differs")
+        if before_frames is not None:
+            if len(before_frames) != len(after_frames):
+                raise ValueError("OptR comparison captured frame coverage differs")
+            for previous, selected in zip(before_frames, after_frames):
+                if any(previous[field] != selected[field] for field in
+                       ("frame_id", "context", "current_end", "query_positions", "teacher_energy")):
+                    raise ValueError("OptR comparison frame geometry/teacher identity differs")
+                frame_pairs.append((previous, selected))
     return (after["squared_error"] <= before["squared_error"] and
             after["normalized_error"] <= before["normalized_error"] and
             all(right[key]["squared_error"] <= left[key]["squared_error"] and
-                right[key]["normalized_error"] <= left[key]["normalized_error"] for key in left))
+                right[key]["normalized_error"] <= left[key]["normalized_error"] for key in left) and
+            all(selected["squared_error"] <= previous["squared_error"] and
+                selected["normalized_error"] <= previous["normalized_error"]
+                for previous, selected in frame_pairs))
 
 
 def independent_test_summary(records):
@@ -105,6 +162,8 @@ def artifact_test_status(artifact):
     certificate = artifact["refinement_certificate"]
     summary = certificate.get("independent_test", {"status": "passed", "regressed_layers": []})
     return {"experimental": certificate.get("experimental", False),
+            "refinement_policy_version": certificate.get("policy", {}).get("policy_version"),
+            "fitting_objective": certificate.get("policy", {}).get("fitting_objective"),
             "publication_policy": certificate.get("publication_policy", "strict_independent_test_v1"),
             "independent_test": summary["status"],
             "independent_test_regressed_layers": summary["regressed_layers"],
@@ -148,6 +207,8 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
     layers = artifact.get("layers", {})
     if set(certificate.get("layers", {})) != set(layers) or not layers:
         raise ValueError("OptR certificate FULL layer coverage differs")
+    require_frames = (certificate["policy"].get("policy_version") == "optr_frame_bf16_ascend_v3"
+                      or certificate["policy"].get("selection") == "joint_all_heads_each_request_and_frame_nonworse")
     for name, record in certificate["layers"].items():
         selected_digest = matrix_digest({name: layers[name]})
         if record.get("selected_constants_sha256") != selected_digest:
@@ -157,7 +218,7 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
             raise ValueError("OptR layer certificate lacks baseline constants hash")
         for split in ("validation", "test"):
             result = record.get(split, {})
-            passed = nonworse(result.get("baseline"), result.get("selected"))
+            passed = nonworse(result.get("baseline"), result.get("selected"), require_frames=require_frames)
             if not passed and (split == "validation" or schema == 1):
                 raise ValueError(f"OptR {name} worsens {split} output error")
         if type(record.get("accepted")) is not bool:

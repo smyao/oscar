@@ -1,4 +1,4 @@
-"""Archive #86/#97/#148: offline artifacts and candidate startup boundaries."""
+"""Archive #86/#97/#148/#170/#173: artifacts and candidate quality boundaries."""
 import copy
 import json
 from pathlib import Path
@@ -33,6 +33,8 @@ def configuration(tmp_path):
 def metric(split, error=1.):
     row = {"request_id": split, "sample_sha256": ("a" if split == "validation" else "b") * 64,
            "squared_error": error, "teacher_energy": 4., "normalized_error": error / 4.}
+    row["frames"] = [{"frame_id": 0, "context": 0, "current_end": 1, "query_positions": [0],
+                      "squared_error": error, "teacher_energy": 4., "normalized_error": error / 4.}]
     return {key: row[key] for key in ("squared_error", "teacher_energy", "normalized_error")} | {"requests": [row]}
 
 
@@ -97,6 +99,59 @@ def test_refinement_cache_binds_online_math_and_keeps_recipe3_identity(tmp_path,
         optr_policy({**config, "optr_calibration": {"selection": "allow_regression"}})
 
 
+def test_frame_aware_default_trains_all_deployment_lengths_without_changing_schedule():
+    from oscar_ascend.optr_policy import legacy_capture_policy, compatible_capture_profiles
+    current = optr_policy({})
+    assert current["capture_lengths"] == {
+        "train": [4096, 32768, 65536], "validation": [4096, 32768, 65536],
+        "test": [4096, 32768, 65536]}
+    assert (current["steps"], current["lr"], current["eval_every"]) == (80, .02, 20)
+    assert current["selection"] == "joint_all_heads_each_request_and_frame_nonworse"
+    for version in ("v1", "v2"):
+        old = legacy_capture_policy({}, version)
+        assert old["capture_lengths"]["train"] == [4096]
+        assert sum(map(len, old["capture_lengths"].values())) == 7
+        assert old["selection"] == "joint_all_heads_each_request_nonworse"
+    # Never relabel old seven-request data as the new nine-request plan.
+    assert compatible_capture_profiles({}, {}) == []
+
+
+def test_historical_capture_profiles_keep_exact_explicit_sampling_plan():
+    from oscar_ascend.optr_policy import (compatible_capture_profiles,
+        legacy_capture_policy, legacy_capture_profile)
+    config = {"optr_calibration": {"capture_lengths": {
+        "train": [4, 32, 64], "validation": [4, 32, 64], "test": [4, 32, 64]},
+        "decode_tokens": 3, "query_samples_per_frame": 2, "steps": 5}}
+    profile = {"recipe_version": 5, "refinement_policy": optr_policy(config),
+               "base_calibration_profile": {"model_fingerprint": "preserved"}}
+    compatible = compatible_capture_profiles(profile, config)
+    assert compatible == [legacy_capture_profile(profile, config, version) for version in ("v2", "v1")]
+    for candidate in compatible:
+        policy = candidate["refinement_policy"]
+        assert policy["capture_lengths"] == config["optr_calibration"]["capture_lengths"]
+        assert policy["decode_tokens"] == 3 and policy["query_samples_per_frame"] == 2
+        assert candidate["base_calibration_profile"] == profile["base_calibration_profile"]
+    assert legacy_capture_policy(config, "v1")["steps"] == 5
+    assert legacy_capture_policy(config, "v2")["steps"] == 5
+    assert legacy_capture_policy(config, "v1")["lr"] == .002
+    assert legacy_capture_policy(config, "v2")["lr"] == .02
+
+
+@pytest.mark.parametrize("version", ["v1", "v2"])
+def test_completed_older_fit_cannot_bypass_new_objective_via_artifact_cache(tmp_path, version):
+    from oscar_ascend.optr_policy import legacy_capture_profile
+    config = configuration(tmp_path)
+    value = artifact(config)
+    value["calibration_profile"] = legacy_capture_profile(value["calibration_profile"], config, version)
+    value["refinement_certificate"]["policy"] = value["calibration_profile"]["refinement_policy"]
+    path = tmp_path / "old-complete" / "calibrated.pt"
+    # This is an internally valid completed historical artifact. Selecting
+    # the current candidate must reject it even through an explicit path.
+    publish_artifact(value, path)
+    with pytest.raises(ValueError, match="profile"):
+        load_active_artifact(config, path=path, device="cpu", testing=True)
+
+
 def test_published_refinement_loads_normal_tp_constants_and_cannot_be_relabelled(tmp_path):
     config = configuration(tmp_path)
     value = artifact(config)
@@ -150,6 +205,7 @@ def test_small_teacher_energy_has_one_fixed_normalization():
     tiny = metric("validation", 1e-25)
     tiny["teacher_energy"] = tiny["requests"][0]["teacher_energy"] = 1e-27
     tiny["normalized_error"] = tiny["requests"][0]["normalized_error"] = 1e-5
+    tiny["requests"][0]["frames"][0].update(teacher_energy=1e-27, normalized_error=1e-5)
     assert nonworse(tiny, copy.deepcopy(tiny))
 
 

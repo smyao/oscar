@@ -1,0 +1,37 @@
+{
+  "base_commit": "75e4fd9d4c201382f50681e45da13111f6051e59",
+  "scope": "CPU synthetic causality counterexample; not model-quality or NPU evidence",
+  "future_invariance": {
+    "previous_fp32_global_tail": {
+      "visible_prefix_loss": 0.024855364114046097,
+      "with_masked_future_loss": 0.029565954580903053,
+      "absolute_change": 0.0047105904668569565
+    },
+    "new_bf16_forward_window": {
+      "visible_prefix_loss": 0.024912886321544647,
+      "with_masked_future_loss": 0.024912886321544647,
+      "absolute_change": 0.0
+    }
+  },
+  "training_lengths": {
+    "train": [
+      4096,
+      32768,
+      65536
+    ],
+    "validation": [
+      4096,
+      32768,
+      65536
+    ],
+    "test": [
+      4096,
+      32768,
+      65536
+    ]
+  },
+  "online_runtime_changed": false,
+  "npu_validation": "not_run",
+  "model_quality": "not_measured",
+  "performance": "not_measured"
+}

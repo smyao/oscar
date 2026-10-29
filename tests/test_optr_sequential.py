@@ -25,10 +25,11 @@ def policy(**kwargs):
 
 
 def direct_loss(rotation, sample, mean, phase, p, rk=None):
-    # Independent literal formulation: full output projection, per query head,
-    # no Gram caching. Official FP32 proxy adapted only for captured gates/rows.
-    def effective(value, r, clip):
-        x = value @ r
+    # Independent literal per-query formula: actual forward cut, BF16 writer
+    # operands and full W_O projection (no Gram or cached split probabilities).
+    def bf(x):
+        return x + (x.bfloat16().float() - x).detach()
+    def quant(x, clip):
         index = min(int(float(torch.tensor(clip)) * x.shape[-1]), x.shape[-1] - 1)
         threshold = x.detach().abs().sort(-1).values[:, index:index + 1]
         x = x.clamp(-threshold, threshold)
@@ -36,35 +37,49 @@ def direct_loss(rotation, sample, mean, phase, p, rk=None):
         scale = (high - low).clamp_min(1e-8) / 3
         z = -low / scale
         a = x / scale + z
-        dq = (a + ((a + .5).floor().clamp(0, 3) - a).detach() - z) * scale
-        result = dq @ r.T
-        exact = torch.arange(len(x)) < p['sink_tokens']
-        exact |= torch.arange(len(x)) >= len(x) - p['recent_tokens']
-        return torch.where(exact[:, None], value, result)
-    k = sample['k'].float() - mean
-    v = sample['v'].float()
-    mask = torch.arange(len(k))[None] > sample['positions'][:, None]
-    kh = effective(k, rotation if phase == 'k' else rk, p['k_clip'])
-    dv = None if phase == 'k' else effective(v, rotation, p['v_clip']) - v
+        return bf((a + ((a + .5).floor().clamp(0, 3) - a).detach() - z) * scale)
+    kr = bf(rotation if phase == 'k' else rk)
+    k = bf(bf(sample['k'].float() - bf(mean)) @ kr)
+    kq = quant(k, p['k_clip'])
+    if phase == 'v':
+        vr = bf(rotation)
+        v = bf(sample['v'].float() @ vr)
+        vq = quant(v, p['v_clip'])
     vals = []
     for h in range(sample['q'].shape[1]):
-        q = sample['q'][:, h].float()
-        pq = ((q @ kh.T) / k.shape[-1] ** .5).masked_fill(mask, -torch.inf).softmax(-1)
-        if phase == 'k':
-            pt = ((q @ k.T) / k.shape[-1] ** .5).masked_fill(mask, -torch.inf).softmax(-1)
-            kl = (pt * (pt.clamp_min(1e-12).log() - pq.clamp_min(1e-12).log())).sum(-1).mean()
-            error = (pq - pt) @ v
-        else:
-            kl = 0.
-            error = pq @ dv
-        error = (error * sample['gate'][:, h].float()) @ sample['wo'][h].T
-        vals.append(kl + error.square().mean() * (p['lambda_output'] if phase == 'k' else 1))
+        for i, position in enumerate(sample['positions'].tolist()):
+            context = int(sample['contexts'][i])
+            cut = min(context, max(p['sink_tokens'], context + 1 - p['recent_tokens']))
+            exact = (torch.arange(len(k)) < p['sink_tokens']) | (torch.arange(len(k)) >= cut)
+            key = torch.where(exact[:, None], k, kq)
+            q = sample['q'][i, h].float()
+            logits = key[:position + 1] @ bf(q @ kr) / k.shape[-1] ** .5
+            pq = logits.softmax(-1)
+            if phase == 'k':
+                pt = ((sample['k'][:position + 1].float() @ q) / k.shape[-1] ** .5).softmax(-1)
+                kl = (pt * (pt.clamp_min(1e-12).log() - pq.clamp_min(1e-12).log())).sum()
+                error = (pq - pt) @ sample['v'][:position + 1].float()
+            else:
+                kl = 0.
+                value = torch.where(exact[:, None], v, vq)
+                actual = bf(bf(pq @ value[:position + 1]) @ vr.T)
+                error = actual - pq @ sample['v'][:position + 1].float()
+            error = (error * sample['gate'][i, h].float()) @ sample['wo'][h].T
+            vals.append(kl + error.square().mean() * (p['lambda_output'] if phase == 'k' else 1))
     return torch.stack(vals).mean()
+
+
+def stage_v(row, rk, p):
+    with torch.no_grad():
+        row['selected_k_p'] = sequential._key_probabilities(rk, row, p)
+        row['selected_k_exact_p'] = row['selected_k_p'] * row['exact']
+        row['selected_k_quant_p'] = row['selected_k_p'].masked_fill(row['exact'], 0)
+        row['conditional_teacher_v'] = row['selected_k_p'] @ row['v']
 
 
 @pytest.mark.parametrize('phase', ['k', 'v'])
 @pytest.mark.parametrize('gate', [True, False])
-def test_batched_gram_loss_and_gradient_match_direct_official_formula(phase, gate):
+def test_batched_gram_loss_and_gradient_match_direct_frame_bf16_formula(phase, gate):
     s = trace(17, length=81, dim=8, queries=7, group=3)
     if not gate:
         s['gate'].fill_(1)
@@ -77,7 +92,7 @@ def test_batched_gram_loss_and_gradient_match_direct_official_formula(phase, gat
     row = sequential.prepare_samples([s], mean, p, 'cpu')[0]
     if phase == 'v':
         with torch.no_grad():
-            row['selected_k_p'] = sequential._probabilities(row, sequential._effective(row['k'], base, row['exact'], p['k_clip']))
+            stage_v(row, base, p)
     rotation = base.clone().requires_grad_()
     actual = sequential.phase_loss(rotation, row, phase, p)
     actual.backward()
@@ -89,13 +104,53 @@ def test_v_steps_use_fixed_k_probabilities_without_qk_softmax(monkeypatch):
     s = trace(17)
     p = policy()
     row = sequential.prepare_samples([s], torch.zeros(8), p, 'cpu')[0]
-    row['selected_k_p'] = sequential._probabilities(row, row['k'])
+    stage_v(row, torch.eye(8), p)
     def forbidden(*_a, **_kw):
         pytest.fail('V phase must not recompute K probabilities')
     monkeypatch.setattr(sequential, '_probabilities', forbidden)
+    monkeypatch.setattr(sequential, '_key_probabilities', forbidden)
     r = torch.eye(8, requires_grad=True)
     sequential.phase_loss(r, row, 'v', p).backward()
     assert torch.isfinite(r.grad).all()
+
+
+@pytest.mark.parametrize('phase', ['k', 'v'])
+def test_masked_future_rows_cannot_change_visible_loss_or_gradient(phase):
+    # Same captured forward, but the trace later accumulated more tokens.
+    # The old global-tail mask changed which *visible* keys were quantized.
+    short = trace(17, length=21, queries=1, group=2)
+    short['contexts'].fill_(17)
+    long = copy.deepcopy(short)
+    extra = trace(29, length=16)
+    long['k'] = torch.cat((short['k'], extra['k']))
+    long['v'] = torch.cat((short['v'], extra['v']))
+    p, mean = policy(), torch.linspace(-.2, .3, 8)
+    base = torch.linalg.qr(torch.randn(8, 8, generator=torch.Generator().manual_seed(18))).Q
+    values, gradients = [], []
+    for sample in (short, long):
+        row = sequential.prepare_samples([sample], mean, p, 'cpu')[0]
+        if phase == 'v':
+            stage_v(row, base, p)
+        rotation = base.clone().requires_grad_()
+        loss = sequential.phase_loss(rotation, row, phase, p)
+        loss.backward()
+        values.append(loss.detach()); gradients.append(rotation.grad)
+    torch.testing.assert_close(values[0], values[1], atol=2e-7, rtol=2e-5)
+    torch.testing.assert_close(gradients[0], gradients[1], atol=2e-6, rtol=2e-5)
+
+
+def test_proxy_masks_share_forward_cut_and_keep_prefill_current_exact():
+    sample = trace(11, length=25, queries=4)
+    sample['positions'] = torch.tensor([3, 17, 20, 24])
+    sample['contexts'] = torch.tensor([0, 17, 17, 24])
+    sample['current_ends'] = torch.tensor([4, 21, 21, 25])
+    row = sequential.prepare_samples([sample], torch.zeros(8), policy(), 'cpu')[0]
+    assert bool(row['exact'][0].all())
+    assert torch.equal(row['exact'][1], row['exact'][2])
+    assert torch.where(~row['exact'][1])[0].tolist() == list(range(2, 14))
+    assert torch.where(~row['exact'][3])[0].tolist() == list(range(2, 21))
+    # The short/long case would fail even with a causal attention mask if the
+    # exact tail were computed from len(sample['k']) instead of frame context.
 
 
 def test_official_schedule_and_orthogonal_selection():
@@ -225,14 +280,17 @@ def test_old_artifact_and_fit_are_not_the_new_objective(tmp_path):
     assert new.load('layer-3-head-0') is None
 
 
-def test_native_trace_discovery_uses_only_exact_previous_profile_path(tmp_path):
+@pytest.mark.parametrize('version', ['v1', 'v2'])
+def test_native_trace_discovery_uses_only_exact_previous_profile_path(tmp_path, version):
     import hashlib
     from tools.prepare_optr_rotations import _existing_trace_manifest
     from test_optr_integration import configuration
     from oscar_ascend.rotations import calibration_cache_identity
     config = configuration(tmp_path)
+    config['optr_calibration'] = {'capture_lengths': {'train': [4096],
+        'validation': [4096, 32768, 65536], 'test': [4096, 32768, 65536]}}
     profile = calibration_cache_identity(config, 'toy')
-    old = legacy_capture_profile(profile, config)
+    old = legacy_capture_profile(profile, config, version=version)
     digest = hashlib.sha256(json.dumps(old, sort_keys=True, separators=(',', ':')).encode()).hexdigest()[:20]
     path = tmp_path / ('optr_' + digest) / 'native-traces' / 'capture-manifest.json'
     path.parent.mkdir(parents=True)
@@ -242,3 +300,7 @@ def test_native_trace_discovery_uses_only_exact_previous_profile_path(tmp_path):
     other = copy.deepcopy(profile)
     other['model_fingerprint'] = 'different'
     assert _existing_trace_manifest(destination, other, config) != path
+    # Normal v3 must acquire genuine long-context training, not reinterpret
+    # the old validation/test samples as training or reuse the seven-request capture.
+    config.pop('optr_calibration')
+    assert _existing_trace_manifest(destination, calibration_cache_identity(config, 'toy'), config) != path

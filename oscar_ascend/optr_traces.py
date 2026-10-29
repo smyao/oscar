@@ -1,4 +1,4 @@
-"""Archive #23-25/#86/#97/#148: authenticated, offline-only OptR traces.
+"""Archive #23-25/#86/#97/#148/#170/#173: authenticated, offline-only OptR traces.
 
 Load one target FULL layer at a time, verify whole-request source partitions
 and TP alignment, and measure the sum of all head contributions before SSE.
@@ -14,7 +14,7 @@ from pathlib import Path
 
 from .optr_artifacts import file_sha256
 from .optr_policy import (optr_policy, validate_refinement_config,
-                          legacy_capture_policy, legacy_capture_profile)
+                          compatible_capture_profiles)
 
 
 def _hash(value):
@@ -132,8 +132,9 @@ def load_trace_manifest(path, config, layers, dim, fingerprint, testing=False):
     policy = optr_policy(config)
     profile = calibration_cache_identity(config, fingerprint)
     current = top.get("optr_policy") == policy and top.get("calibration_profile") == profile
-    legacy = (top.get("optr_policy") == legacy_capture_policy(config) and
-              top.get("calibration_profile") == legacy_capture_profile(profile, config))
+    legacy = any(top.get("calibration_profile") == candidate and
+                 top.get("optr_policy") == candidate["refinement_policy"]
+                 for candidate in compatible_capture_profiles(profile, config))
     if not (current or legacy):
         raise ValueError("OptR trace policy/calibration profile differs")
     if top.get("prompt_source_sha256") != profile["base_calibration_profile"]["prompt_source"]["sha256"]:
@@ -342,8 +343,16 @@ def load_layer_samples(manifest, layer_id):
     return result
 
 
-def aggregate_layer_error(layer_matrices, head_samples, policy):
-    """Sum all TP and GQA head contributions before squaring each request."""
+def aggregate_layer_error(layer_matrices, head_samples, policy, *,
+                          projected_outputs=None, projected_teachers=None):
+    """Sum TP/GQA outputs before SSE and preserve each captured forward.
+
+    Archive #170/#173: a lower request aggregate can conceal worse decode
+    tokens. Frame metrics retain that evidence without another attention
+    replay or counting the same output twice in the request/layer totals.
+    Optional [head][request] FP32 projected tensors let offline head-subset
+    selection reuse the same replay. They never enter the serving path.
+    """
     import torch
     from .optr_calibration import replay_sample, project_output
     if not isinstance(head_samples, list) or not head_samples or any(not isinstance(head, list) or not head for head in head_samples):
@@ -361,6 +370,12 @@ def aggregate_layer_error(layer_matrices, head_samples, policy):
         raise ValueError("OptR joint metric request IDs are duplicated")
     if any([sample["request_id"] for sample in head] != expected_ids for head in head_samples):
         raise ValueError("OptR joint metric TP request identity/order differs")
+    cached = projected_outputs is not None or projected_teachers is not None
+    if cached:
+        for values in (projected_outputs, projected_teachers):
+            if (not isinstance(values, list) or len(values) != heads
+                    or any(not isinstance(head, list) or len(head) != len(expected_ids) for head in values)):
+                raise ValueError("OptR cached projections require every head/request on both sides")
     rows = []
     with torch.no_grad():
         for request_index, request_id in enumerate(expected_ids):
@@ -372,22 +387,51 @@ def aggregate_layer_error(layer_matrices, head_samples, policy):
                     if key not in sample or key not in first or not torch.equal(sample[key], first[key]):
                         raise ValueError("OptR joint metric TP sample identities/positions differ")
                 identities.append(_hash(sample.get("sample_sha256")))
-                actual = project_output(replay_sample(layer_matrices["Rk"][head], layer_matrices["Rv"][head],
-                                                      mean[head], sample, policy), sample)
-                teacher = project_output(sample["teacher"], sample)
+                if cached:
+                    actual, teacher = projected_outputs[head][request_index], projected_teachers[head][request_index]
+                    shape = (sample["q"].shape[0], sample["wo"].shape[1])
+                    _tensor(actual, torch.float32, shape, "cached projected output")
+                    _tensor(teacher, torch.float32, shape, "cached projected teacher")
+                else:
+                    actual = project_output(replay_sample(layer_matrices["Rk"][head], layer_matrices["Rv"][head],
+                                                          mean[head], sample, policy), sample)
+                    teacher = project_output(sample["teacher"], sample)
                 if actual_sum is None:
                     actual_sum, teacher_sum = actual.double(), teacher.double()
                 else:
                     if actual.shape != actual_sum.shape or teacher.shape != teacher_sum.shape:
                         raise ValueError("OptR joint metric TP output geometry differs")
                     actual_sum += actual.double(); teacher_sum += teacher.double()
-            error = float((actual_sum - teacher_sum).square().sum())
-            energy = float(teacher_sum.square().sum())
+            frame_ids = first["frame_ids"]
+            _tensor(frame_ids, torch.int64, (actual_sum.shape[0],), "joint frame IDs")
+            unique = torch.unique_consecutive(frame_ids)
+            if not torch.equal(unique, torch.arange(unique.numel())):
+                raise ValueError("OptR joint metric requires ordered contiguous captured frame IDs")
+            query_errors = (actual_sum - teacher_sum).square().sum(-1)
+            query_energies = teacher_sum.square().sum(-1)
+            frames = []
+            for frame_id in unique.tolist():
+                selected = frame_ids == frame_id
+                contexts = first["contexts"][selected]
+                ends = first["current_ends"][selected]
+                positions = first["positions"][selected]
+                if (not bool((contexts == contexts[0]).all()) or not bool((ends == ends[0]).all())
+                        or bool((positions[1:] <= positions[:-1]).any())):
+                    raise ValueError("OptR joint metric captured frame extents/positions differ")
+                error = float(query_errors[selected].sum())
+                energy = float(query_energies[selected].sum())
+                frames.append({"frame_id": frame_id, "context": int(contexts[0]),
+                               "current_end": int(ends[0]), "query_positions": positions.tolist(),
+                               "squared_error": error, "teacher_energy": energy,
+                               "normalized_error": error / max(energy, 1e-20)})
+            error = sum(frame["squared_error"] for frame in frames)
+            energy = sum(frame["teacher_energy"] for frame in frames)
             rows.append({"request_id": request_id, "sample_sha256": _digest(identities), "squared_error": error,
-                         "teacher_energy": energy, "normalized_error": error / max(energy, 1e-20)})
+                         "teacher_energy": energy, "normalized_error": error / max(energy, 1e-20),
+                         "frames": frames})
     error, energy = sum(row["squared_error"] for row in rows), sum(row["teacher_energy"] for row in rows)
     result = {"squared_error": error, "teacher_energy": energy, "normalized_error": error / max(energy, 1e-20), "requests": rows}
-    if any(not math.isfinite(value) or value < 0 for row in [result, *rows]
+    if any(not math.isfinite(value) or value < 0 for row in [result, *rows, *(frame for row in rows for frame in row["frames"])]
            for key, value in row.items() if key in {"squared_error", "teacher_energy", "normalized_error"}):
         raise ValueError("OptR joint metric is nonfinite")
     return result

@@ -28871,3 +28871,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **源码缺口与修复**：旧固定直启在准备成功后exec成API服务，没有外层在API退出后清理worker；真实主机合成API返回7但子worker继续存活可复现。新监督器创建独立session并阻塞等待，API正常/失败退出及INT/TERM/HUP后有界TERM/KILL本次进程组；启动Popen窗口及清理期间的重复信号不丢失句柄或打断清理。原child返回值和shell信号退出码分开保留，清理失败不能报成功。每个物理卡的本checkout非继承flock覆盖build→prepare→serve→清理，活持有者只报冲突、不杀进程；锁文件不unlink避免双inode。日志实时镜像并落盘完整状态。只在原生显存不足失败后自动运行一次限时10秒的npu-smi info；工具缺失/失败显式记录且不覆盖服务退出码。无NPU上下文预检查、无限等释放、自动降低预算或按名字全局kill。
 
 **验证与未完成边界**：真实本机子进程红绿、旁路组保持存活、信号/锁竞争/FD不继承、有效配置/argv及构建检查见该目录verification.json。扩展历史测试与未修改HEAD逐项配对，旧失败不能计作通过；沙箱禁止localhost/部分进程组检查的结果单独保存，必要主机检查在本机沙箱外执行，不访问目标NPU。线上kernel/runtime/精度/预算/timer未改；增加一个主机监督进程和日志线程，不申领性能收益。没有自动处理身份未知的现存占用、监督器SIGKILL/掉电或任意主动脱组子进程，不声称目标显存已释放或服务已复验。
+
+
+## [175] 质量回归反馈（2026-10-29）· OptR比此前OSCAR掉点更严重
+
+**现场证据范围**：用户直接反馈“当前精度掉点很厉害，比之前oscar精度还差”，要求检查优化并继续启用。未提供本次现场SHA、PT路径/证书或评测分数；不把当前本地HEAD当现场加载身份，不给掉点幅度或因果比例。
+
+**源码与本地复现**：旧sequential代理按完整轨迹最终长度计算所有query的精确窗口；相同可见前缀仅追加causal-mask遮住的未来行，K loss仍变化，v3按真实forward的context固定cut后不再变化。旧FP32逆K代理与部署BF16中心化/QKV旋转/INT2读端存在明确舍入差异。另用实际CPU重放证明总请求SSE下降仍可掩盖末次decode SSE上升11.53%。这些是可复现的风险，不是现场模型全部掉点的实证归因。沿用#170/#173的代理与最终质量边界。
+
+**修复**：固定candidate继续OptR，policy升级optr_frame_bf16_ascend_v3，隔离旧完整PT/拟合断点；拟合改用真实frame窗口及BF16 operands，train覆盖4K/32K/64K且不占用validation/test。validation增加逐forward非劣；缓存各头已投影结果，最多16种头组合选择有效改善，不增加attention重放次数。独立test保留用户已授权的实验报告政策及frame退化记录，不按test重选。
+
+**验证边界**：源码、独立损失/梯度公式、因果不变性、真实CPU小样本拟合接缝、产物/断点/启动兼容与wheel结果见reports/optr_accuracy_fix_20261029。线上CANN/runtime/timer/argv未改；未连接真机，没有新的NPU/图/模型分数或吞吐结果。新增长训练可能增加首次离线准备时间，不承诺精度已达论文标准或性能实测提升。

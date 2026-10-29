@@ -141,10 +141,18 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
     for row in selected["requests"]:
         previous = before[row["request_id"]]
         regressed = [key for key in compared if row[key] > previous[key]]
-        if regressed:
+        previous_frames = {frame["frame_id"]: frame for frame in previous.get("frames", [])}
+        frame_regressions = []
+        for frame in row.get("frames", []):
+            old = previous_frames[frame["frame_id"]]
+            fields = [key for key in compared if frame[key] > old[key]]
+            if fields:
+                frame_regressions.append({"frame_id": frame["frame_id"], "baseline": old,
+                                          "selected": frame, "regressed_metrics": fields})
+        if regressed or frame_regressions:
             regressions.append({"request_id": row["request_id"], "partition": row.get("partition"),
                                 "baseline": previous, "selected": row,
-                                "regressed_metrics": regressed})
+                                "regressed_metrics": regressed, "regressed_frames": frame_regressions})
     report = {"schema_version": 1, "status": "independent_test_failed", "layer": name,
         "layer_id": layer_id, "identity": copy.deepcopy(checkpoints.identity) if checkpoints else None,
         "policy": copy.deepcopy(policy), "metric": "all_tp_heads_bf16_gate_fp32_wo_output",
@@ -232,12 +240,22 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
         options = {} if progress is None else {"progress": lambda **row: emit(
             layer=name, phase="joint_output_check", split=split, candidate=candidate, **row)}
         return _metrics(constants, samples[split], policy, **options)
-    before = measure(baseline, "validation", "baseline")
-    after = measure(trial, "validation", "refined")
-    accepted = nonworse(before, after) and after["squared_error"] < before["squared_error"]
-    selected = trial if accepted else baseline
-    if not accepted:
-        after = before
+    selection = None
+    if real_fitter:
+        from oscar_ascend.optr_selection import select_head_subset
+        selected, before, after, selection = select_head_subset(
+            baseline, trial, samples["validation"], policy, progress=lambda **row: emit(
+                layer=name, phase="joint_output_check", split="validation", **row))
+        accepted = after["squared_error"] < before["squared_error"]
+    else:
+        # Injected fitters exist only for host orchestration tests; production
+        # always uses the cached joint subset selector above.
+        before = measure(baseline, "validation", "baseline")
+        after = measure(trial, "validation", "refined")
+        accepted = nonworse(before, after) and after["squared_error"] < before["squared_error"]
+        selected = trial if accepted else baseline
+        if not accepted:
+            after = before
     # This dataset never chooses a matrix/step/hyperparameter. User 2026-10-28
     # permits experimental publication with failed test explicitly recorded.
     test_before = measure(baseline, "test", "baseline")
@@ -247,6 +265,8 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
               "selected_constants_sha256": matrix_digest({name: selected}),
               "validation": {"baseline": before, "selected": after},
               "test": {"baseline": test_before, "selected": test_after}}
+    if selection is not None:
+        record["head_subset_selection"] = selection
     test_passed = nonworse(test_before, test_after)
     if not test_passed:
         _report_independent_test_failure(name, baseline["layer_id"], record, policy, checkpoints, emit)
@@ -259,15 +279,17 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
 
 
 def _existing_trace_manifest(destination, profile, config):
-    """Reuse the exact old native capture without copying/relabeling any trace."""
-    from oscar_ascend.optr_policy import legacy_capture_profile
+    """Reuse only captures with identical train/held-out coverage and source."""
+    from oscar_ascend.optr_policy import compatible_capture_profiles
     current = destination.parent / "native-traces" / "capture-manifest.json"
     if current.is_file():
         return current
-    legacy = legacy_capture_profile(profile, config)
-    digest = hashlib.sha256(json.dumps(legacy, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:20]
-    old = destination.parent.parent / ("optr_" + digest) / "native-traces" / "capture-manifest.json"
-    return old if old.is_file() else current
+    for legacy in compatible_capture_profiles(profile, config):
+        digest = hashlib.sha256(json.dumps(legacy, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:20]
+        old = destination.parent.parent / ("optr_" + digest) / "native-traces" / "capture-manifest.json"
+        if old.is_file():
+            return old
+    return current
 
 
 def _layer_artifact(template, certificate, name, selected, record):

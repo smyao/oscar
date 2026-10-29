@@ -2,8 +2,8 @@
 
 Archive #86/#148/#170/#172/#173: proposals are not deployment acceptance.
 K minimizes KL + post-W_O attention-shift MSE; V minimizes value-error MSE
-under the selected K probabilities. Native captured gates, query positions
-and head-wide groups adapt the upstream proxy to Qwen/OSCAR. The independent
+under the selected K probabilities. Native captured gates, per-forward exact
+windows and BF16 rotation/codec operands adapt the upstream proxy to Qwen/OSCAR. The independent
 BF16 deployment replay remains the final validation gate in the caller.
 
 Large FP32 products run on Ascend in production. Only the small orthogonal
@@ -16,6 +16,12 @@ from __future__ import annotations
 import torch
 
 from .optr_calibration import _matrices, _sample
+
+
+def _bf16(value):
+    # RNE forward / STE backward. Finiteness is checked on the complete loss
+    # and gradient, avoiding an NPU->host synchronization at every rounding.
+    return value + (value.to(torch.bfloat16).float() - value).detach()
 
 
 def fitting_device(config, *, testing=False):
@@ -61,6 +67,23 @@ def _probabilities(row, key):
     return logits.masked_fill(row["causal"], -torch.inf).softmax(-1)
 
 
+def _key_probabilities(rotation, row, policy):
+    """The writer rounds centered K and Q/K rotations before QK.
+
+    A trace contains queries from several forwards. Each query keeps the
+    exact cached tail/current belonging to its own forward, irrespective of
+    later rows saved in the same trace. No inverse-K shortcut across BF16.
+    """
+    rb = _bf16(rotation)
+    query = _bf16(row["q"] @ rb)
+    key = _bf16(row["k"] @ rb)
+    quantized = _bf16(quant_int2(key, policy["k_clip"]))
+    exact_logits = query @ key.T
+    quantized_logits = query @ quantized.T
+    logits = torch.where(row["exact"], exact_logits, quantized_logits) * row["scale"]
+    return logits.masked_fill(row["causal"], -torch.inf).softmax(-1)
+
+
 def _projected_mse(error, row):
     # Algebraically ||(error * gate) W_O^T||^2 / hidden. Retain independent
     # GQA heads here, as upstream; cross-head terms are checked by the caller.
@@ -74,22 +97,31 @@ def prepare_samples(samples, mean, policy, device):
     with torch.no_grad():
         for sample in samples:
             q = sample["q"].float().to(device).transpose(0, 1).contiguous()
-            k = sample["k"].float().to(device) - mean.to(device)
+            raw_key = sample["k"].float().to(device)
+            k = _bf16(raw_key - _bf16(mean.to(device)))
             v = sample["v"].float().to(device)
-            positions = sample["positions"].to(device)
+            # Frame metadata is authenticated on CPU. Build masks once here;
+            # no NPU int64 minimum/clamp kernels or per-step host round trips.
+            positions = sample["positions"]
+            contexts = sample["contexts"]
             length = k.shape[0]
-            indices = torch.arange(length, device=device)
+            indices = torch.arange(length)
             wo = sample["wo"]
             identity = id(wo)
             if identity not in grams:
                 weight = wo.to(device)
                 grams[identity] = (weight.transpose(-1, -2) @ weight) / weight.shape[1]
+            # Same cached cut as the deployed reader: fixed at forward start.
+            # Tokens >= context (current/future) are exact; causality masks
+            # future tokens. context=0 therefore has no INT2 history.
+            cuts = torch.minimum(contexts, (contexts + 1 - policy["recent_tokens"]).clamp_min(policy["sink_tokens"]))
             row = {"q": q, "k": k, "v": v, "scale": k.shape[-1] ** -.5,
                    "gate": sample["gate"].float().to(device).transpose(0, 1).contiguous(),
                    "gram": grams[identity], "request_id": sample["request_id"],
-                   "causal": indices[None, :] > positions[:, None],
-                   "exact": (indices < policy["sink_tokens"]) | (indices >= length - policy["recent_tokens"])}
-            row["teacher_p"] = _probabilities(row, k)
+                   "causal": (indices[None, :] > positions[:, None]).to(device),
+                   "exact": ((indices[None, :] < policy["sink_tokens"]) |
+                             (indices[None, :] >= cuts[:, None])).to(device)}
+            row["teacher_p"] = _probabilities(row, raw_key)
             row["teacher_logp"] = row["teacher_p"].clamp_min(1e-12).log()
             rows.append(row)
     return rows
@@ -97,15 +129,20 @@ def prepare_samples(samples, mean, policy, device):
 
 def phase_loss(rotation, row, phase, policy):
     if phase == "k":
-        key = _effective(row["k"], rotation, row["exact"], policy["k_clip"])
-        p = _probabilities(row, key)
+        p = _key_probabilities(rotation, row, policy)
         pt = row["teacher_p"]
         kl = (pt * (row["teacher_logp"] - p.clamp_min(1e-12).log())).sum(-1).mean()
         return kl + policy["lambda_output"] * _projected_mse((p - pt) @ row["v"], row)
     if phase != "v":
         raise ValueError("OptR phase must be k or v")
-    value = _effective(row["v"], rotation, row["exact"], policy["v_clip"])
-    return _projected_mse(row["selected_k_p"] @ (value - row["v"]), row)
+    rb = _bf16(rotation)
+    value = _bf16(row["v"] @ rb)
+    quantized = _bf16(quant_int2(value, policy["v_clip"]))
+    # Two cached probability partitions replace query-dependent [M,L,D]
+    # materialization. No QK/softmax or frozen-side products per V step.
+    output = row["selected_k_quant_p"] @ quantized + row["selected_k_exact_p"] @ value
+    output = _bf16(_bf16(output) @ rb.T)
+    return _projected_mse(output - row["conditional_teacher_v"], row)
 
 
 def _values(rotation, rows, phase, policy, emit):
@@ -150,10 +187,12 @@ def fit_head(base_k, base_v, mean, train_samples, validation_samples, *, policy,
             with torch.no_grad():
                 rotation = rk.to(device)
                 for row in (*train, *held):
-                    key = _effective(row["k"], rotation, row["exact"], policy["k_clip"])
-                    row["selected_k_p"] = _probabilities(row, key)
+                    row["selected_k_p"] = _key_probabilities(rotation, row, policy)
+                    row["selected_k_exact_p"] = row["selected_k_p"] * row["exact"]
+                    row["selected_k_quant_p"] = row["selected_k_p"].masked_fill(row["exact"], 0)
+                    row["conditional_teacher_v"] = row["selected_k_p"] @ row["v"]
                     # No K quantization, QK or softmax in any V optimization step.
-                    del row["teacher_p"], row["teacher_logp"]
+                    del row["teacher_p"], row["teacher_logp"], row["selected_k_p"]
             emit("fixed_k_probabilities_ready", phase=phase, samples=len(train) + len(held))
         baseline = best = _values(origin.to(device), held, phase, policy, emit)
         best_rotation = origin.clone()

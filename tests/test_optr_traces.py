@@ -1,4 +1,4 @@
-"""Archive #86/#97/#148: trace authenticity, source isolation and TP output SSE.
+"""Archive #86/#97/#148/#170/#173: trace authenticity and TP/frame output SSE.
 
 Tiny synthetic CPU payloads are explicitly test_only; they do not represent
 native NPU model traces. Tests exercise corruption and the cross-head terms
@@ -143,6 +143,26 @@ def test_loader_streams_one_layer_and_reconstructs_actual_frame_partitions(tmp_p
     assert load(canonical, config)["_root"] == str(path.parent)
 
 
+@pytest.mark.parametrize("version", ["v1", "v2"])
+def test_legacy_capture_reuse_requires_exact_policy_and_sampling_coverage(tmp_path, version):
+    from oscar_ascend.optr_policy import legacy_capture_profile
+    path, config, top = build_bundle(tmp_path)
+    historical = legacy_capture_profile(top["calibration_profile"], config, version)
+    top.update(calibration_profile=historical, optr_policy=historical["refinement_policy"])
+    json_save(path, top)
+    assert traces.load_layer_samples(load(path, config), 3)["train"][0][0]["length_bucket"] == 4
+    # Adding a training bucket requires another actual native request. Old
+    # trace bytes must not be relabelled as the expanded coverage.
+    expanded = {**config, "optr_calibration": {**config["optr_calibration"],
+                "capture_lengths": {"train": [4, 5], "validation": [5], "test": [5]}}}
+    with pytest.raises(ValueError, match="policy/calibration profile"):
+        load(path, expanded)
+    top["optr_policy"] = optr_policy(config)
+    json_save(path, top)
+    with pytest.raises(ValueError, match="policy/calibration profile"):
+        load(path, config)
+
+
 @pytest.mark.parametrize("corruption", ["source_overlap", "policy", "profile", "rank_hash", "rank_order", "escape", "test_only"])
 def test_manifest_corruption_and_test_only_fail_closed(tmp_path, corruption):
     path, config, top = build_bundle(tmp_path)
@@ -264,6 +284,9 @@ def test_joint_output_metric_keeps_cross_rank_cancellation_and_cross_terms(monke
     monkeypatch.setattr(optr_calibration, "replay_sample", cancel)
     metric = traces.aggregate_layer_error(constants, heads, {})
     assert metric["squared_error"] == 0 and metric["teacher_energy"] == 4
+    assert metric["requests"][0]["frames"] == [{"frame_id": 0, "context": 0,
+        "current_end": 1, "query_positions": [0], "squared_error": 0.,
+        "teacher_energy": 4., "normalized_error": 0.}]
     assert nonworse(metric, metric)
     monkeypatch.setattr(optr_calibration, "replay_sample", lambda *_: torch.tensor([[[2., 0.]]]))
     aligned = traces.aggregate_layer_error(constants, heads, {})
@@ -273,6 +296,95 @@ def test_joint_output_metric_keeps_cross_rank_cancellation_and_cross_terms(monke
     heads[1][0]["token_ids"][0] = 6
     with pytest.raises(ValueError, match="identities"):
         traces.aggregate_layer_error(constants, heads, {})
+
+
+def test_joint_metric_exposes_decode_regression_hidden_by_lower_request_error():
+    """#170/#173: real CPU replay, not a mocked metric or a model-quality claim.
+
+    An orthogonal proposal can reduce one request's aggregate while making
+    its final generated query worse. Every decode is its own captured frame,
+    so preserve its error for the deployment selector instead of averaging it
+    away with the other generated queries.
+    """
+    rng = torch.Generator().manual_seed(75)
+    dim, group, length = 8, 2, 40
+    positions = torch.tensor([0, 4, 8, 13, 17, 22, 26, 31, *range(32, 40)])
+    contexts = torch.tensor([0] * 8 + list(range(32, 40)))
+    ends = torch.tensor([32] * 8 + list(range(33, 41)))
+    k = torch.randn(length, dim, generator=rng).bfloat16()
+    v = torch.randn(length, dim, generator=rng).bfloat16()
+    q = torch.randn(16, group, dim, generator=rng).bfloat16()
+    scores = torch.einsum("mgd,ld->mgl", q.float(), k.float()) / dim ** .5
+    scores.masked_fill_(torch.arange(length)[None, None] > positions[:, None, None], -torch.inf)
+    teacher = torch.einsum("mgl,ld->mgd", scores.softmax(-1), v.float()).bfloat16()
+    sample = {"request_id": "frame-regression", "q": q, "k": k, "v": v,
+              "positions": positions, "contexts": contexts, "current_ends": ends,
+              "gate": torch.sigmoid(torch.randn(16, group, dim, generator=rng)).bfloat16(),
+              "wo": torch.randn(group, 12, dim, generator=rng), "teacher": teacher,
+              "token_ids": torch.arange(length), "frame_ids": torch.tensor([0] * 8 + list(range(1, 9))),
+              "sample_sha256": digest("synthetic-frame-counterexample")}
+    baseline = {"Rk": torch.eye(dim)[None], "Rv": torch.eye(dim)[None], "k_mean": torch.zeros(1, dim)}
+    for _ in range(18):
+        correction = torch.randn(dim, dim, generator=rng) * .03
+        rk = torch.matrix_exp(correction - correction.T)
+        correction = torch.randn(dim, dim, generator=rng) * .03
+        rv = torch.matrix_exp(correction - correction.T)
+    candidate = {**baseline, "Rk": rk[None], "Rv": rv[None]}
+    policy = {"sink_tokens": 2, "recent_tokens": 4}
+    before = traces.aggregate_layer_error(baseline, [[sample]], policy)
+    after = traces.aggregate_layer_error(candidate, [[sample]], policy)
+    assert after["normalized_error"] < before["normalized_error"]
+    previous = before["requests"][0]["frames"][-1]
+    current = after["requests"][0]["frames"][-1]
+    assert current["normalized_error"] > previous["normalized_error"] * 1.1
+    assert current["query_positions"] == [39] and current["context"] == 39 and current["current_end"] == 40
+    for metric in (before, after):
+        request = metric["requests"][0]
+        assert len(request["frames"]) == 9
+        assert request["frames"][0]["query_positions"] == positions[:8].tolist()
+        for key in ("squared_error", "teacher_energy"):
+            assert request[key] == sum(frame[key] for frame in request["frames"]) == metric[key]
+
+
+def test_joint_metric_rejects_unordered_frame_ids():
+    constants, heads = metric_samples()
+    for head in heads:
+        head[0]["frame_ids"] = torch.tensor([1])
+    with pytest.raises(ValueError, match="ordered contiguous"):
+        traces.aggregate_layer_error(constants, heads, {})
+
+
+def test_cached_projections_preserve_joint_frame_metrics_without_another_replay(monkeypatch):
+    from oscar_ascend import optr_calibration
+    constants, heads = metric_samples()
+    expected = traces.aggregate_layer_error(constants, heads, {})
+    actual, teacher = [], []
+    for head, samples in enumerate(heads):
+        actual.append([optr_calibration.project_output(optr_calibration.replay_sample(
+            constants["Rk"][head], constants["Rv"][head], constants["k_mean"][head], sample, {}), sample)
+            for sample in samples])
+        teacher.append([optr_calibration.project_output(sample["teacher"], sample) for sample in samples])
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("cached subset aggregation must not replay or project again")
+    monkeypatch.setattr(optr_calibration, "replay_sample", forbidden)
+    monkeypatch.setattr(optr_calibration, "project_output", forbidden)
+    assert traces.aggregate_layer_error(constants, heads, {}, projected_outputs=actual,
+                                         projected_teachers=teacher) == expected
+
+
+@pytest.mark.parametrize("fault", ["missing_teacher", "heads", "requests", "shape", "dtype", "nonfinite"])
+def test_cached_projection_geometry_and_finiteness_are_checked(fault):
+    constants, heads = metric_samples()
+    actual, teacher = [[torch.ones(1, 1)] for _ in heads], [[torch.ones(1, 1)] for _ in heads]
+    if fault == "missing_teacher": teacher = None
+    elif fault == "heads": actual.pop()
+    elif fault == "requests": actual[0].append(torch.ones(1, 1))
+    elif fault == "shape": actual[0][0] = torch.ones(1, 2)
+    elif fault == "dtype": teacher[0][0] = teacher[0][0].double()
+    elif fault == "nonfinite": actual[0][0].fill_(float("nan"))
+    with pytest.raises(ValueError, match="cached"):
+        traces.aggregate_layer_error(constants, heads, {}, projected_outputs=actual,
+                                     projected_teachers=teacher)
 
 
 @pytest.mark.parametrize("real_fitter", [False, True])

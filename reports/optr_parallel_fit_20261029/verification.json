@@ -1,0 +1,105 @@
+{
+  "base_commit": "4204e22f14f6ab8b9641ae1fc0ea42adaad65a79",
+  "tests": {
+    "tests": 357,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "wheel": {
+    "sha256": "89b23d5888b2bd3498df211e300286fe01c8e193cf0f0b474a2e3cb662710ba2",
+    "members_verified": [
+      "tools/optr_parallel.py",
+      "tools/optr_fit_worker.py",
+      "tools/prepare_optr_rotations.py",
+      "oscar_ascend/optr_checkpoint.py",
+      "oscar_ascend/optr_sequential.py"
+    ],
+    "isolated_import": {
+      "plan": {
+        "workers": 4,
+        "devices": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "cpu_threads_per_worker": 2,
+        "start_method": "spawn",
+        "unit": "complete_layer"
+      },
+      "implementation": "5ed45fb740f865a23ac1d2af6116f2c51300f01822d80265e2b5b301e6fe9490",
+      "npu_imported": false
+    }
+  },
+  "unchanged_fitting_functions": {
+    "oscar_ascend/optr_sequential.py": [
+      "fit_head",
+      "phase_loss",
+      "prepare_samples",
+      "quant_int2",
+      "_key_probabilities"
+    ],
+    "tools/prepare_optr_rotations.py": [
+      "refine_layer",
+      "_metrics",
+      "_validate_layer_checkpoint",
+      "_validate_head_result"
+    ]
+  },
+  "unchanged_paths": [
+    "csrc",
+    "oscar_ascend/runtime.py",
+    "oscar_ascend/integration",
+    "oscar_ascend/timing.py",
+    "tools/target_cli.py",
+    "tools/serving_variants.py",
+    "configs/target.json",
+    "oscar_ascend/optr_policy.py",
+    "oscar_ascend/optr_calibration.py",
+    "oscar_ascend/optr_selection.py",
+    "oscar_ascend/optr_traces.py",
+    "oscar_ascend/optr_artifacts.py"
+  ],
+  "source_sha256": {
+    "tools/optr_parallel.py": "c091970fdf579116bba6a6bd75b258fb53e56c3c4ca59e6bf9ba7182cd66a2a8",
+    "tools/optr_fit_worker.py": "7bccbb55ff9ed7edee21c543430464541bf94cf9e0706c60ee055b2b1e559392",
+    "tools/prepare_optr_rotations.py": "4cccc3e821554bf43c68c6ea74160e257c83a792ae03a12701238a6b6fbaa5f7",
+    "oscar_ascend/optr_checkpoint.py": "4bda0ba5d6501b2ba8381c2e0e17e414fdea5051ad24c165034c382eaffd1e80",
+    "oscar_ascend/optr_sequential.py": "4ff2f46105ff7f1d3f6e68359d497dfb4faaf0f3da7adf90619c0d758c93faa7"
+  },
+  "host_evidence": [
+    "four simultaneous spawned processes",
+    "dynamic complete-layer scheduling",
+    "exit7 and sibling cleanup",
+    "SIGTERM-resistant worker killed",
+    "per-worker stall despite peer progress",
+    "SIGTERM and start-window cancellation",
+    "partial spawn failure",
+    "checkpoint validation failure cleanup",
+    "reviewed serial-v3 checkpoints authenticated",
+    "real two-layer CPU serial/parallel matrices and certificates identical",
+    "completed layers resume without worker startup"
+  ],
+  "candidate": {
+    "default_parallel": true,
+    "physical_devices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "port": 7878,
+    "worker_limit": 4,
+    "cpu_threads_per_worker_max": 4,
+    "policy_unchanged": true,
+    "steps_per_K_or_V": 80
+  },
+  "validation_boundaries": {
+    "cann": "not_run_no_kernel_changes",
+    "npu": "not_run_user_constraint",
+    "model_quality": "not_measured",
+    "performance": "not_measured"
+  },
+  "remote_delivery": "not_pushed_per_user_instruction"
+}

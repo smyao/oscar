@@ -24,24 +24,28 @@ def _bf16(value):
     return value + (value.to(torch.bfloat16).float() - value).detach()
 
 
-def fitting_device(config, *, testing=False):
-    """Select this run's first physical card, after native capture has exited."""
+def fitting_device(config, *, testing=False, logical_index=0):
+    """Select one card from this run's explicit list, after capture has exited."""
     if testing:
         return "cpu"
     import os
     from tools.target_cli import target_env
     visible = target_env(config)["ASCEND_RT_VISIBLE_DEVICES"]
+    if type(logical_index) is not int or not 0 <= logical_index < len(config["devices"]):
+        raise ValueError("OptR worker logical device is outside the selected cards")
     if os.environ.get("ASCEND_RT_VISIBLE_DEVICES") not in (None, visible):
         raise ValueError("OptR fitting device visibility differs from this run's configuration")
     os.environ["ASCEND_RT_VISIBLE_DEVICES"] = visible
     import torch_npu  # noqa: F401; registers the NPU backend, never cuda->cpu fallback
     if not torch.npu.is_available():
         raise RuntimeError("OptR production fitting requires the configured Ascend NPU")
+    # Bind before options/compile setup can initialize an accelerator context.
+    # Each parallel worker must own its assigned device, including workers 1-3.
+    torch.npu.set_device(logical_index)
     torch.npu.set_option({"ACL_PRECISION_MODE": "must_keep_origin_dtype",
                           "ALLOW_MATMUL_HF32": "disable"})
     torch.npu.set_compile_mode(jit_compile=False)
-    torch.npu.set_device(0)  # logical zero in the explicit physical-card list
-    return "npu:0"
+    return f"npu:{logical_index}"
 
 
 def quant_int2(value, clip):

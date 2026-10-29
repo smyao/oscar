@@ -319,14 +319,52 @@ def _validate_layer_checkpoint(saved, template, certificate, name, baseline):
     return got["layers"][name], record
 
 
+def _parallel_layers(config, names, baseline, artifact, certificate, base_config,
+                     trace_manifest, checkpoints, watchdog, *, testing=False):
+    from tools.optr_parallel import run_layer_workers
+    from tools.rotation_preparation_limits import preparation_progress_timeout
+    pending = []
+
+    def completed(name):
+        seed = baseline["layers"][name]
+        saved = checkpoints.load(f"layer-{seed['layer_id']}")
+        if saved is None:
+            raise ValueError(f"OptR worker did not publish a completed layer: {name}")
+        selected, record = _validate_layer_checkpoint(saved, artifact, certificate, name, seed)
+        artifact["layers"][name] = selected
+        certificate["layers"][name] = record
+        watchdog.progress(layer=name, phase="layer_checked_collected")
+
+    for name in names:
+        seed = baseline["layers"][name]
+        if checkpoints.load(f"layer-{seed['layer_id']}") is None:
+            pending.append(name)
+        else:
+            completed(name)
+            watchdog.progress(layer=name, phase="layer_checked_resumed")
+    # Keep tensors out of spawn arguments and IPC. Workers load the verified
+    # seed once, then only their assigned layer's histories at any one time.
+    spec = {"config": config, "base_config": base_config, "testing": testing,
+            "names": names, "trace_manifest": str(trace_manifest),
+            "template": {**artifact, "layers": {}}, "certificate": {**certificate, "layers": {}},
+            "checkpoint_directory": str(checkpoints.root.parent), "checkpoint_identity": checkpoints.identity}
+    run_layer_workers(spec, pending, progress=watchdog.progress, completed=completed,
+                      timeout=preparation_progress_timeout(config))
+    # Completion order cannot change the serialized layer order or reductions.
+    artifact["layers"] = {name: artifact["layers"][name] for name in names}
+    certificate["layers"] = {name: certificate["layers"][name] for name in names}
+
+
 def prepare(config, *, config_path=None, output=None, import_pair=None,
-            capture_runner=None, testing=False, base_runner=None, fitter=None):
+            capture_runner=None, testing=False, base_runner=None, fitter=None, parallel_testing=False):
     import torch
     from oscar_ascend.rotations import (checkpoint_identity, rotation_artifact_path,
         calibration_cache_identity, load_active_artifact, validate_artifact)
     from oscar_ascend.rotation_calibration import OFFICIAL_COMMIT
     from oscar_ascend.optr_traces import load_trace_manifest, load_layer_samples
     validate_refinement_config(config)
+    if parallel_testing and (not testing or fitter is not None):
+        raise ValueError("parallel CPU preparation is test-only and requires the real fitter")
     policy = optr_policy(config)
     names, dim, fingerprint = checkpoint_identity(config["model"])
     destination = Path(output).expanduser().resolve() if output else rotation_artifact_path(config, fingerprint)
@@ -390,11 +428,14 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
     _progress(phase="fit_plan", layers=len(names), heads_per_layer=baseline["global_kv_heads"],
               steps_per_phase=policy["steps"], progress_timeout_seconds=preparation_progress_timeout(config),
               checkpoints=str(checkpoints.root), fitting_objective=policy["fitting_objective"],
-              fitting_device="cpu_test" if testing else "npu:0", matrix_exp_device="cpu",
+              fitting_device="cpu_test" if testing else "selected_npus_per_layer", matrix_exp_device="cpu",
               deployment_validation_device="cpu")
     fit_device = None
     with ProgressWatchdog(preparation_progress_timeout(config), output=_progress) as watchdog:
-        for layer_index, name in enumerate(names):
+        if not testing or parallel_testing:
+            _parallel_layers(config, names, baseline, artifact, certificate, base_config,
+                             trace_manifest, checkpoints, watchdog, testing=testing)
+        for layer_index, name in enumerate(names if testing and not parallel_testing else []):
             seed = baseline["layers"][name]
             owner = f"layer-{seed['layer_id']}"
             watchdog.progress(layer=name, layer_index=layer_index + 1, layers=len(names), phase="layer_start")
@@ -431,5 +472,5 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
             **artifact_test_status(artifact),
             "quality_acceptance": "not_run", "performance": "not_measured",
             "model_forward_device": "cpu_test" if testing else "npu",
-            "optimization_device": "cpu_test" if testing else "npu_fp32_cpu_matrix_exp",
+            "optimization_device": "cpu_test" if testing else "parallel_npu_fp32_cpu_matrix_exp",
             "deployment_validation_device": "cpu", "online_operations": "unchanged"}

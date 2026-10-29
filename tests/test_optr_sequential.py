@@ -197,18 +197,25 @@ def test_sequential_rejects_invalid_input_or_broken_progress(fault):
 
 
 @pytest.mark.parametrize('devices', [[0, 1, 2, 3], [4, 5, 6, 7]])
-def test_npu_selection_uses_this_run_visibility_and_fp32(monkeypatch, devices):
+@pytest.mark.parametrize('index', [0, 1, 2, 3])
+def test_npu_selection_uses_this_run_visibility_and_fp32(monkeypatch, devices, index):
     calls = []
     monkeypatch.delenv('ASCEND_RT_VISIBLE_DEVICES', raising=False)
     monkeypatch.setitem(sys.modules, 'torch_npu', SimpleNamespace())
     monkeypatch.setattr(torch, 'npu', SimpleNamespace(is_available=lambda: True,
         set_compile_mode=lambda **x: calls.append(x),
         set_option=lambda x: calls.append(x), set_device=lambda x: calls.append(x)), raising=False)
-    assert sequential.fitting_device({'devices': devices}) == 'npu:0'
+    assert sequential.fitting_device({'devices': devices}, logical_index=index) == f'npu:{index}'
     import os
     assert os.environ['ASCEND_RT_VISIBLE_DEVICES'] == ','.join(map(str, devices))
-    assert calls == [{'ACL_PRECISION_MODE': 'must_keep_origin_dtype', 'ALLOW_MATMUL_HF32': 'disable'},
-                     {'jit_compile': False}, 0]
+    assert calls == [index, {'ACL_PRECISION_MODE': 'must_keep_origin_dtype', 'ALLOW_MATMUL_HF32': 'disable'},
+                     {'jit_compile': False}]
+
+
+@pytest.mark.parametrize('index', [-1, 4, True, '1'])
+def test_fitting_rejects_invalid_logical_devices_before_npu_import(index):
+    with pytest.raises(ValueError, match='logical device'):
+        sequential.fitting_device({'devices': [0, 1, 2, 3]}, logical_index=index)
 
 
 def test_missing_npu_and_conflicting_visibility_never_fall_back(monkeypatch):

@@ -15,6 +15,10 @@ import uuid
 
 from .optr_artifacts import file_sha256
 
+# Reviewed 4204e22 v3 serial implementation. Only scheduling/device ownership
+# changes in this revision; never accept pre-v3 objectives or arbitrary hashes.
+SERIAL_V3_IMPLEMENTATION = "db3b72ec7d53ee57649fff212186d5c8c9a04030fe8e30fb472e17c6c33ce2db"
+
 def _identity_directory(directory, identity):
     encoded = json.dumps(identity, sort_keys=True, separators=(",", ":"), allow_nan=False)
     return Path(directory) / hashlib.sha256(encoded.encode()).hexdigest()
@@ -25,7 +29,7 @@ def fitting_implementation_digest():
     names = ("oscar_ascend/optr_calibration.py", "oscar_ascend/optr_sequential.py", "oscar_ascend/optr_traces.py",
              "oscar_ascend/optr_selection.py",
              "oscar_ascend/optr_artifacts.py", "oscar_ascend/optr_checkpoint.py",
-             "tools/prepare_optr_rotations.py")
+             "tools/prepare_optr_rotations.py", "tools/optr_parallel.py", "tools/optr_fit_worker.py")
     digest = hashlib.sha256()
     for name in names:
         digest.update(name.encode() + b"\0" + (root / name).read_bytes())
@@ -50,9 +54,16 @@ class FitCheckpoints:
         manifest_path = self._path(key)
         if manifest_path.is_file():
             return self._load_from(manifest_path, key, self.identity)
-        # The sequential objective changes optimization, not just publication.
-        # Older fitted constants cannot be resumed as this algorithm's work.
-        # Raw native traces have a separate authenticated reuse path.
+        profile = self.identity.get("profile", {})
+        if (isinstance(profile, dict) and
+                profile.get("refinement_policy", {}).get("policy_version") == "optr_frame_bf16_ascend_v3" and
+                self.identity.get("fitting_implementation_sha256") == fitting_implementation_digest()):
+            old_identity = {**self.identity, "fitting_implementation_sha256": SERIAL_V3_IMPLEMENTATION}
+            old_path = _identity_directory(self.root.parent, old_identity) / manifest_path.name
+            if old_path.is_file():
+                return self._load_from(old_path, key, old_identity)
+        # Different objectives, seed/trace identities and unreviewed binaries
+        # still cannot supply a completed fit to this implementation.
         return None
 
     @staticmethod

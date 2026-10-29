@@ -28882,3 +28882,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **修复**：固定candidate继续OptR，policy升级optr_frame_bf16_ascend_v3，隔离旧完整PT/拟合断点；拟合改用真实frame窗口及BF16 operands，train覆盖4K/32K/64K且不占用validation/test。validation增加逐forward非劣；缓存各头已投影结果，最多16种头组合选择有效改善，不增加attention重放次数。独立test保留用户已授权的实验报告政策及frame退化记录，不按test重选。
 
 **验证边界**：源码、独立损失/梯度公式、因果不变性、真实CPU小样本拟合接缝、产物/断点/启动兼容与wheel结果见reports/optr_accuracy_fix_20261029。线上CANN/runtime/timer/argv未改；未连接真机，没有新的NPU/图/模型分数或吞吐结果。新增长训练可能增加首次离线准备时间，不承诺精度已达论文标准或性能实测提升。
+
+
+## [176] 质量回归反馈（2026-10-29）· LongBenchv2 accuracy 40.94
+
+**现场证据**：用户提供version324293、accuracy40.94488188976378、easy48.837209302325576、hard36.904761904761905、short40.94488188976378，反馈低于原OSCAR。原文见reports/optr_joint_calibration_20261029/target_feedback.txt。没有现场SHA/PT或同条件旧OSCAR分数；9.94s为评估时间，不是推理性能。不能确定该次加载了本地v3修复，不能将下述反例当成全部掉点实证归因。
+
+**本地源码复现**：逐GQA头WO误差平方的平均遗漏跨头项，存在旧目标1→0.25而联合误差0→0.5的反例；BF16实际门控差不能替代为误差乘gate。旧K输出项还未使用已捕获的原生teacher。逐frame总SSE9→1仍可能掩盖最后prefill query从0→1；该query已在原始采样中。
+
+**修复**：candidate继续OptR，policy为optr_joint_gqa_bf16_ascend_v4。K保留KL并使用原生BF16目标，K/V投影先联合GQA、分别舍入门控乘积后平方；V仍固定所选K的条件目标。直接投影规避Gram抵消产生负二次型，固定WO跨train/held共享。最终validation额外逐frame末query非劣，test仍按授权只记录实验结果且不重选。认证v3原始trace可复用，新PT和fit隔离，四卡并行不变。
+
+**边界**：CPU公式/梯度、D256/GQA6、末query证书、报告、采样兼容、四进程恢复与打包见reports/optr_joint_calibration_20261029/verification.json。直接投影有额外离线算量，线上kernel/runtime/timer/argv无改动。没有连接真机、重跑AISBench或取得本轮模型/NPU/图/性能结果，不宣称40.94已恢复。

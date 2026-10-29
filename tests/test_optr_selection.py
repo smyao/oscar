@@ -34,7 +34,8 @@ def case(monkeypatch, base_values, trial_values, *, second_partition=None, uncha
         return value
     monkeypatch.setattr(selection, "replay_sample", replay)
     monkeypatch.setattr(selection, "project_output", projected)
-    policy = {"validation_partitions": ["single_split", "captured_runtime_frames"]}
+    policy = {"validation_partitions": ["single_split", "captured_runtime_frames"],
+              "selection": "joint_all_heads_each_request_frame_and_terminal_nonworse"}
     return baseline, trial, samples, policy, calls, projections
 
 

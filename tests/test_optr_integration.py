@@ -34,7 +34,9 @@ def metric(split, error=1.):
     row = {"request_id": split, "sample_sha256": ("a" if split == "validation" else "b") * 64,
            "squared_error": error, "teacher_energy": 4., "normalized_error": error / 4.}
     row["frames"] = [{"frame_id": 0, "context": 0, "current_end": 1, "query_positions": [0],
-                      "squared_error": error, "teacher_energy": 4., "normalized_error": error / 4.}]
+                      "squared_error": error, "teacher_energy": 4., "normalized_error": error / 4.,
+                      "terminal_query": {"position": 0, "squared_error": error,
+                                         "teacher_energy": 4., "normalized_error": error / 4.}}]
     return {key: row[key] for key in ("squared_error", "teacher_energy", "normalized_error")} | {"requests": [row]}
 
 
@@ -106,14 +108,15 @@ def test_frame_aware_default_trains_all_deployment_lengths_without_changing_sche
         "train": [4096, 32768, 65536], "validation": [4096, 32768, 65536],
         "test": [4096, 32768, 65536]}
     assert (current["steps"], current["lr"], current["eval_every"]) == (80, .02, 20)
-    assert current["selection"] == "joint_all_heads_each_request_and_frame_nonworse"
+    assert current["selection"] == "joint_all_heads_each_request_frame_and_terminal_nonworse"
     for version in ("v1", "v2"):
         old = legacy_capture_policy({}, version)
         assert old["capture_lengths"]["train"] == [4096]
         assert sum(map(len, old["capture_lengths"].values())) == 7
         assert old["selection"] == "joint_all_heads_each_request_nonworse"
     # Never relabel old seven-request data as the new nine-request plan.
-    assert compatible_capture_profiles({}, {}) == []
+    assert [p["refinement_policy"]["policy_version"] for p in compatible_capture_profiles({}, {})] == [
+        "optr_frame_bf16_ascend_v3"]
 
 
 def test_historical_capture_profiles_keep_exact_explicit_sampling_plan():
@@ -125,7 +128,7 @@ def test_historical_capture_profiles_keep_exact_explicit_sampling_plan():
     profile = {"recipe_version": 5, "refinement_policy": optr_policy(config),
                "base_calibration_profile": {"model_fingerprint": "preserved"}}
     compatible = compatible_capture_profiles(profile, config)
-    assert compatible == [legacy_capture_profile(profile, config, version) for version in ("v2", "v1")]
+    assert compatible == [legacy_capture_profile(profile, config, version) for version in ("v3", "v2", "v1")]
     for candidate in compatible:
         policy = candidate["refinement_policy"]
         assert policy["capture_lengths"] == config["optr_calibration"]["capture_lengths"]
@@ -137,7 +140,7 @@ def test_historical_capture_profiles_keep_exact_explicit_sampling_plan():
     assert legacy_capture_policy(config, "v2")["lr"] == .02
 
 
-@pytest.mark.parametrize("version", ["v1", "v2"])
+@pytest.mark.parametrize("version", ["v1", "v2", "v3"])
 def test_completed_older_fit_cannot_bypass_new_objective_via_artifact_cache(tmp_path, version):
     from oscar_ascend.optr_policy import legacy_capture_profile
     config = configuration(tmp_path)
@@ -206,6 +209,7 @@ def test_small_teacher_energy_has_one_fixed_normalization():
     tiny["teacher_energy"] = tiny["requests"][0]["teacher_energy"] = 1e-27
     tiny["normalized_error"] = tiny["requests"][0]["normalized_error"] = 1e-5
     tiny["requests"][0]["frames"][0].update(teacher_energy=1e-27, normalized_error=1e-5)
+    tiny["requests"][0]["frames"][0]["terminal_query"].update(teacher_energy=1e-27, normalized_error=1e-5)
     assert nonworse(tiny, copy.deepcopy(tiny))
 
 

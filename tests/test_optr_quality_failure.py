@@ -37,11 +37,35 @@ def metrics(split, errors):
                      "sample_sha256": hashlib.sha256(request_id.encode()).hexdigest(),
                      "squared_error": error, "teacher_energy": 4., "normalized_error": error / 4.,
                      "frames": [{"frame_id": 0, "context": 0, "current_end": 1, "query_positions": [0],
-                                 "squared_error": error, "teacher_energy": 4., "normalized_error": error / 4.}]})
+                                 "squared_error": error, "teacher_energy": 4., "normalized_error": error / 4.,
+                                 "terminal_query": {"position": 0, "squared_error": error,
+                                                    "teacher_energy": 4., "normalized_error": error / 4.}}]})
     error = sum(row["squared_error"] for row in rows)
     energy = sum(row["teacher_energy"] for row in rows)
     return {"squared_error": error, "teacher_energy": energy,
             "normalized_error": error / energy, "requests": rows}
+
+
+def test_terminal_only_regression_is_printed_and_persisted(tmp_path):
+    from test_optr_frame_gate import metric
+    from oscar_ascend.optr_policy import optr_policy
+    before, after = metric(split="test"), metric((3., .5), split="test")
+    after["requests"][0]["frames"][0]["terminal_query"].update(
+        squared_error=2.5, normalized_error=1.25)
+    record = {"test": {"baseline": before, "selected": after}}
+    checkpoints = FitCheckpoints(tmp_path, {"test_only": True})
+    events = []
+    report = prepare._report_independent_test_failure(
+        NAME, 3, record, optr_policy({}), checkpoints, lambda **row: events.append(row))
+    row = report["regressed_requests"][0]
+    assert row["regressed_metrics"] == []
+    frame = row["regressed_frames"][0]
+    assert frame["regressed_metrics"] == []
+    assert frame["regressed_terminal_metrics"] == ["squared_error", "normalized_error"]
+    assert report["artifact_publish_allowed"] and not report["test_used_for_selection"]
+    assert json.loads((checkpoints.root / "layer-3-independent-test-failed.json").read_text())["regressed_requests"] == [row]
+    assert any(event.get("phase") == "independent_test_request_regressed" and
+               event["regressed_frames"] == [frame] for event in events)
 
 
 def samples(heads=2):

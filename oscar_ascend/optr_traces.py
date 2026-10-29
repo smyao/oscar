@@ -348,7 +348,7 @@ def aggregate_layer_error(layer_matrices, head_samples, policy, *,
     """Sum TP/GQA outputs before SSE and preserve each captured forward.
 
     Archive #170/#173: a lower request aggregate can conceal worse decode
-    tokens. Frame metrics retain that evidence without another attention
+    tokens. Frame and terminal-query metrics retain that evidence without another attention
     replay or counting the same output twice in the request/layer totals.
     Optional [head][request] FP32 projected tensors let offline head-subset
     selection reuse the same replay. They never enter the serving path.
@@ -416,14 +416,20 @@ def aggregate_layer_error(layer_matrices, head_samples, policy, *,
                 ends = first["current_ends"][selected]
                 positions = first["positions"][selected]
                 if (not bool((contexts == contexts[0]).all()) or not bool((ends == ends[0]).all())
-                        or bool((positions[1:] <= positions[:-1]).any())):
+                        or bool((positions[1:] <= positions[:-1]).any())
+                        or int(positions[-1]) != int(ends[0]) - 1):
                     raise ValueError("OptR joint metric captured frame extents/positions differ")
                 error = float(query_errors[selected].sum())
                 energy = float(query_energies[selected].sum())
+                terminal_error = float(query_errors[selected][-1])
+                terminal_energy = float(query_energies[selected][-1])
                 frames.append({"frame_id": frame_id, "context": int(contexts[0]),
                                "current_end": int(ends[0]), "query_positions": positions.tolist(),
                                "squared_error": error, "teacher_energy": energy,
-                               "normalized_error": error / max(energy, 1e-20)})
+                               "normalized_error": error / max(energy, 1e-20),
+                               "terminal_query": {"position": int(positions[-1]),
+                                   "squared_error": terminal_error, "teacher_energy": terminal_energy,
+                                   "normalized_error": terminal_error / max(terminal_energy, 1e-20)}})
             error = sum(frame["squared_error"] for frame in frames)
             energy = sum(frame["teacher_energy"] for frame in frames)
             rows.append({"request_id": request_id, "sample_sha256": _digest(identities), "squared_error": error,
@@ -431,7 +437,9 @@ def aggregate_layer_error(layer_matrices, head_samples, policy, *,
                          "frames": frames})
     error, energy = sum(row["squared_error"] for row in rows), sum(row["teacher_energy"] for row in rows)
     result = {"squared_error": error, "teacher_energy": energy, "normalized_error": error / max(energy, 1e-20), "requests": rows}
-    if any(not math.isfinite(value) or value < 0 for row in [result, *rows, *(frame for row in rows for frame in row["frames"])]
+    frame_rows = [frame for row in rows for frame in row["frames"]]
+    if any(not math.isfinite(value) or value < 0 for row in [result, *rows, *frame_rows,
+                                                          *(frame["terminal_query"] for frame in frame_rows)]
            for key, value in row.items() if key in {"squared_error", "teacher_energy", "normalized_error"}):
         raise ValueError("OptR joint metric is nonfinite")
     return result

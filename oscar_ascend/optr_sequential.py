@@ -1,9 +1,12 @@
 """Offline OptR sequential objective, adapted from upstream 66d46561b9bdf.
 
-Archive #86/#148/#170/#172/#173: proposals are not deployment acceptance.
+Archive #86/#148/#170/#172/#173/#175: proposals are not deployment acceptance.
 K minimizes KL + post-W_O attention-shift MSE; V minimizes value-error MSE
 under the selected K probabilities. Native captured gates, per-forward exact
-windows and BF16 rotation/codec operands adapt the upstream proxy to Qwen/OSCAR. The independent
+windows and BF16 rotation/codec operands adapt the upstream proxy to Qwen/OSCAR.
+The K output target is captured native attention, and all GQA contributions
+are summed after the BF16 gate before squaring, including their cross terms.
+The independent
 BF16 deployment replay remains the final validation gate in the caller.
 
 Large FP32 products run on Ascend in production. Only the small orthogonal
@@ -88,16 +91,26 @@ def _key_probabilities(rotation, row, policy):
     return logits.masked_fill(row["causal"], -torch.inf).softmax(-1)
 
 
-def _projected_mse(error, row):
-    # Algebraically ||(error * gate) W_O^T||^2 / hidden. Retain independent
-    # GQA heads here, as upstream; cross-head terms are checked by the caller.
-    z = error * row["gate"]
-    return ((z @ row["gram"]) * z).sum(-1).mean()
+def _gated(value, gate):
+    # Native attention and the gate product are both BF16. Rounding a
+    # difference times the gate is not the difference of rounded products.
+    return _bf16(_bf16(value) * gate)
 
 
-def prepare_samples(samples, mean, policy, device):
-    """Stage each complete history once; cache teacher P and W_O^T W_O."""
-    rows, grams = [], {}
+def _projected_mse(actual, teacher_gated, row):
+    z = _gated(actual, row["gate"]) - teacher_gated
+    group, queries, dim = z.shape
+    projected = z.transpose(0, 1).reshape(queries, group * dim) @ row["wo_joint"]
+    # Preserve the former per-GQA normalization relative to mean KL, while
+    # retaining cross-head terms. Direct projection avoids the negative
+    # quadratic forms a rounded Gram can produce near cancelling heads.
+    return projected.square().mean() / group
+
+
+def prepare_samples(samples, mean, policy, device, *, weights=None):
+    """Stage complete histories once; cache native targets and joint W_O."""
+    rows = []
+    weights = {} if weights is None else weights
     with torch.no_grad():
         for sample in samples:
             q = sample["q"].float().to(device).transpose(0, 1).contiguous()
@@ -112,21 +125,24 @@ def prepare_samples(samples, mean, policy, device):
             indices = torch.arange(length)
             wo = sample["wo"]
             identity = id(wo)
-            if identity not in grams:
-                weight = wo.to(device)
-                grams[identity] = (weight.transpose(-1, -2) @ weight) / weight.shape[1]
+            if identity not in weights:
+                weights[identity] = wo.permute(0, 2, 1).reshape(-1, wo.shape[1]).contiguous().to(device)
             # Same cached cut as the deployed reader: fixed at forward start.
             # Tokens >= context (current/future) are exact; causality masks
             # future tokens. context=0 therefore has no INT2 history.
             cuts = torch.minimum(contexts, (contexts + 1 - policy["recent_tokens"]).clamp_min(policy["sink_tokens"]))
             row = {"q": q, "k": k, "v": v, "scale": k.shape[-1] ** -.5,
                    "gate": sample["gate"].float().to(device).transpose(0, 1).contiguous(),
-                   "gram": grams[identity], "request_id": sample["request_id"],
+                   "wo_joint": weights[identity], "request_id": sample["request_id"],
                    "causal": (indices[None, :] > positions[:, None]).to(device),
                    "exact": ((indices[None, :] < policy["sink_tokens"]) |
                              (indices[None, :] >= cuts[:, None])).to(device)}
             row["teacher_p"] = _probabilities(row, raw_key)
             row["teacher_logp"] = row["teacher_p"].clamp_min(1e-12).log()
+            # Use the already authenticated native output for the output
+            # objective; dense teacher P remains the separate KL target.
+            native = sample["teacher"].float().to(device).transpose(0, 1)
+            row["teacher_gated"] = _gated(native, row["gate"])
             rows.append(row)
     return rows
 
@@ -136,7 +152,7 @@ def phase_loss(rotation, row, phase, policy):
         p = _key_probabilities(rotation, row, policy)
         pt = row["teacher_p"]
         kl = (pt * (row["teacher_logp"] - p.clamp_min(1e-12).log())).sum(-1).mean()
-        return kl + policy["lambda_output"] * _projected_mse((p - pt) @ row["v"], row)
+        return kl + policy["lambda_output"] * _projected_mse(p @ row["v"], row["teacher_gated"], row)
     if phase != "v":
         raise ValueError("OptR phase must be k or v")
     rb = _bf16(rotation)
@@ -146,7 +162,7 @@ def phase_loss(rotation, row, phase, policy):
     # materialization. No QK/softmax or frozen-side products per V step.
     output = row["selected_k_quant_p"] @ quantized + row["selected_k_exact_p"] @ value
     output = _bf16(_bf16(output) @ rb.T)
-    return _projected_mse(output - row["conditional_teacher_v"], row)
+    return _projected_mse(output, row["conditional_teacher_gated"], row)
 
 
 def _values(rotation, rows, phase, policy, emit):
@@ -164,9 +180,10 @@ def _values(rotation, rows, phase, policy, emit):
 
 def fit_head(base_k, base_v, mean, train_samples, validation_samples, *, policy,
              progress=None, device="cpu"):
-    """Official sequential K/V learning and best held-out selection.
+    """Sequential K/V learning and best held-out selection.
 
-    Native gate and sparse query sampling are explicit adaptations. The
+    Joint GQA projection, captured native K target, BF16 gate and sparse query
+    sampling are explicit adaptations to upstream's separate-head proxy. The
     candidate is subsequently subjected to unchanged all-head BF16 replay;
     these FP32 proxy losses must never be labelled normalized output errors.
     """
@@ -181,8 +198,9 @@ def fit_head(base_k, base_v, mean, train_samples, validation_samples, *, policy,
         if progress is not None:
             progress({"event": event, **fields})
     emit("staging_start", device=str(device), objective=policy["fitting_objective"])
-    train = prepare_samples(train_samples, mean, policy, device)
-    held = prepare_samples(validation_samples, mean, policy, device)
+    weights = {}  # One fixed projection for both splits of this model head.
+    train = prepare_samples(train_samples, mean, policy, device, weights=weights)
+    held = prepare_samples(validation_samples, mean, policy, device, weights=weights)
     rk, rv = base_k.clone(), base_v.clone()
     decisions = []
     for phase, origin in (("k", base_k), ("v", base_v)):
@@ -194,9 +212,9 @@ def fit_head(base_k, base_v, mean, train_samples, validation_samples, *, policy,
                     row["selected_k_p"] = _key_probabilities(rotation, row, policy)
                     row["selected_k_exact_p"] = row["selected_k_p"] * row["exact"]
                     row["selected_k_quant_p"] = row["selected_k_p"].masked_fill(row["exact"], 0)
-                    row["conditional_teacher_v"] = row["selected_k_p"] @ row["v"]
+                    row["conditional_teacher_gated"] = _gated(row["selected_k_p"] @ row["v"], row["gate"])
                     # No K quantization, QK or softmax in any V optimization step.
-                    del row["teacher_p"], row["teacher_logp"], row["selected_k_p"]
+                    del row["teacher_p"], row["teacher_logp"], row["teacher_gated"], row["selected_k_p"]
             emit("fixed_k_probabilities_ready", phase=phase, samples=len(train) + len(held))
         baseline = best = _values(origin.to(device), held, phase, policy, emit)
         best_rotation = origin.clone()
@@ -243,5 +261,5 @@ def fit_head(base_k, base_v, mean, train_samples, validation_samples, *, policy,
     return rk.contiguous(), rv.contiguous(), {
         "accepted": accepted, "phases": decisions, "policy": policy,
         "objective": policy["fitting_objective"], "fit_device": str(device),
-        "matrix_exp_device": "cpu", "selection": "official_heldout_proxy_then_joint_deployment_gate",
+        "matrix_exp_device": "cpu", "selection": "native_joint_gqa_proxy_then_joint_deployment_gate",
         "model_quality": "not_measured", "npu_equivalence": "not_measured"}

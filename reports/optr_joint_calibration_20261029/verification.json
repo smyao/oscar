@@ -1,0 +1,188 @@
+{
+  "base_commit": "645d2b071935065732d0339f9d74d9d6916abfea",
+  "tests": [
+    {
+      "file": "pytest.xml",
+      "tests": 299,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "file": "compatibility.xml",
+      "tests": 94,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "tests_passed": 393,
+  "wheel": {
+    "sha256": "cff948bdd933de32cd45f176ffd392957c7f6873a2d35b72f0f540f19fbd76ab",
+    "source_members_verified": [
+      "oscar_ascend/optr_policy.py",
+      "oscar_ascend/optr_sequential.py",
+      "oscar_ascend/optr_selection.py",
+      "oscar_ascend/optr_traces.py",
+      "oscar_ascend/optr_artifacts.py",
+      "oscar_ascend/optr_checkpoint.py",
+      "tools/prepare_optr_rotations.py",
+      "tools/optr_parallel.py",
+      "tools/optr_fit_worker.py"
+    ],
+    "isolated_import": {
+      "policy": {
+        "policy_version": "optr_joint_gqa_bf16_ascend_v4",
+        "capture_lengths": {
+          "train": [
+            4096,
+            32768,
+            65536
+          ],
+          "validation": [
+            4096,
+            32768,
+            65536
+          ],
+          "test": [
+            4096,
+            32768,
+            65536
+          ]
+        },
+        "decode_tokens": 8,
+        "query_samples_per_frame": 8,
+        "steps": 80,
+        "lr": 0.02,
+        "eval_every": 20,
+        "query_batch_size": 8,
+        "fitting_objective": "sequential_native_k_joint_gqa_bf16_gate_conditional_v_v3",
+        "lambda_output": 1.0,
+        "kv_tile_size": 256,
+        "history_splits": 1,
+        "validation_partitions": [
+          "single_split",
+          "captured_runtime_frames"
+        ],
+        "sink_tokens": 64,
+        "recent_tokens": 256,
+        "k_clip": 0.96,
+        "v_clip": 0.92,
+        "group_size": "head_dim",
+        "math_contract": "oscar_bf16_attention_v4_fp32_metadata",
+        "selection": "joint_all_heads_each_request_frame_and_terminal_nonworse",
+        "test_policy": "independent_accept_or_fail_no_reselection",
+        "execution": "npu_fp32_proxy_cpu_orthogonal_and_deployment_validation",
+        "source_plan": "disjoint_records_packed_calibration_only_v1",
+        "sampling_chunk_tokens": 16384,
+        "tensor_parallel_size": 4,
+        "max_model_len": 262144,
+        "attention_splits": 1,
+        "history_token_capacity": null,
+        "cube_cores": null,
+        "compilation_config": {
+          "cudagraph_capture_sizes": [
+            1,
+            4,
+            8,
+            12,
+            16,
+            24,
+            32,
+            48,
+            56,
+            64,
+            72,
+            84,
+            96,
+            108,
+            112,
+            128,
+            160,
+            172,
+            196,
+            200,
+            212,
+            232,
+            272,
+            288,
+            312,
+            328,
+            344,
+            360,
+            384,
+            400,
+            416,
+            432,
+            448,
+            480,
+            512
+          ],
+          "cudagraph_mode": "FULL_DECODE_ONLY"
+        }
+      },
+      "devices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "port": 7878,
+      "argv_unchanged": true,
+      "npu_imported": false,
+      "worker_plan": {
+        "workers": 4,
+        "devices": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "cpu_threads_per_worker": 2,
+        "start_method": "spawn",
+        "unit": "complete_layer"
+      },
+      "implementation": "d1e2a3d823d0c798bbf92dbb084b89566d7a95d84366fc392a52d6b7d45cfae6"
+    }
+  },
+  "unchanged_online_and_capture_paths": [
+    "csrc",
+    "oscar_ascend/runtime.py",
+    "oscar_ascend/integration",
+    "oscar_ascend/timing.py",
+    "tools/target_cli.py",
+    "tools/serving_variants.py",
+    "configs/target.json",
+    "tools/optr_parallel.py",
+    "tools/optr_fit_worker.py",
+    "tools/calibrate_optr_traces.py"
+  ],
+  "source_sha256": {
+    "oscar_ascend/optr_policy.py": "d8bf76d0c67fb912675ff23cd0a97db130f02df7bde3375f27a258ae60fe68e3",
+    "oscar_ascend/optr_sequential.py": "b230276a249ef295a3f2c7b04f0ba91a219930229fd838ff9f58bad94a35e087",
+    "oscar_ascend/optr_selection.py": "8d245fde507f339ab44316116881cab4d83be384124529818f0c078506524b76",
+    "oscar_ascend/optr_traces.py": "b62583f453af0241d26c4856fe5f08f02226d30dcb9b19b8bef875d03222956d",
+    "oscar_ascend/optr_artifacts.py": "8ce0a4a08454a39f2e8c78c0be45ef4a41b574c2f2e3644f221145940276947b",
+    "oscar_ascend/optr_checkpoint.py": "b3ba56832f627fc78a539f85faea6d47748f375f35f3b1f14e047d32cf33dace",
+    "tools/prepare_optr_rotations.py": "0c09ad69903cda988f0d7656c6780fd3f5ef8761a22f289ff7a7211d38d39ebd",
+    "tools/optr_parallel.py": "c091970fdf579116bba6a6bd75b258fb53e56c3c4ca59e6bf9ba7182cd66a2a8",
+    "tools/optr_fit_worker.py": "7bccbb55ff9ed7edee21c543430464541bf94cf9e0706c60ee055b2b1e559392"
+  },
+  "historical_policy_identity": "v1/v2/v3 exact comparison against HEAD for default and explicit sampling plans passed",
+  "offline_cost": "joint direct projection adds FLOPs; fixed W_O shared across train/held; no NPU timing",
+  "target_feedback": {
+    "dataset": "LongBenchv2",
+    "version": "324293",
+    "accuracy": 40.94488188976378,
+    "source_sha": null,
+    "artifact_identity": null,
+    "paired_baseline": null
+  },
+  "boundaries": {
+    "cann": "not_run_no_kernel_changes",
+    "npu": "not_run_user_constraint",
+    "model_quality": "not_measured_for_new_code",
+    "performance": "not_measured"
+  },
+  "remote_delivery": "not_pushed_per_user_instruction"
+}

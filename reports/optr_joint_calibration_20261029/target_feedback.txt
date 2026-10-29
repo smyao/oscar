@@ -1,0 +1,17 @@
+Source: user-pasted AISBench result, received 2026-10-29.
+No service source SHA, loaded PT identity, launch argv or paired OSCAR baseline was supplied.
+
+[2026-10-29 08:48:41,104] [ais_bench] [INFO] Task vllm-api-stream-chat/LongBenchv2: {'accuracy': 40.94488188976378, 'accuracy_easy': 48.837209302325576, 'accuracy_hard': 36.904761904761905, 'accuracy_short': 40.94488188976378}
+[2026-10-29 08:48:41,106] [ais_bench] [INFO] Evaluation task time elapsed: 9.94s
+[2026-10-29 08:48:43,844] [ais_bench] [INFO] Evaluation tasks completed.
+[2026-10-29 08:48:43,844] [ais_bench] [INFO] Summarizing evaluation results...
+dataset        version  metric          mode      vllm-api-stream-chat
+-----------  ---------  --------------  ------  ----------------------
+LongBenchv2     324293  accuracy        gen                      40.94
+LongBenchv2     324293  accuracy_easy   gen                      48.84
+LongBenchv2     324293  accuracy_hard   gen                      36.90
+LongBenchv2     324293  accuracy_short  gen                      40.94
+[2026-10-29 08:48:43,852] [ais_bench] [INFO] write summary to /workspace/benchmark-3.1-20260119-master/outputs/default/20261029_082941/summary/summary_20261029_082941.txt
+[2026-10-29 08:48:43,853] [ais_bench] [INFO] write csv to /workspace/benchmark-3.1-20260119-master/outputs/default/20261029_082941/summary/summary_20261029_082941.csv
+
+User: 精度不如原oscar，必须严谨校准和做一下优化

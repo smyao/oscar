@@ -143,14 +143,23 @@ def test_loader_streams_one_layer_and_reconstructs_actual_frame_partitions(tmp_p
     assert load(canonical, config)["_root"] == str(path.parent)
 
 
-@pytest.mark.parametrize("version", ["v1", "v2"])
+@pytest.mark.parametrize("version", ["v1", "v2", "v3"])
 def test_legacy_capture_reuse_requires_exact_policy_and_sampling_coverage(tmp_path, version):
     from oscar_ascend.optr_policy import legacy_capture_profile
     path, config, top = build_bundle(tmp_path)
     historical = legacy_capture_profile(top["calibration_profile"], config, version)
     top.update(calibration_profile=historical, optr_policy=historical["refinement_policy"])
     json_save(path, top)
-    assert traces.load_layer_samples(load(path, config), 3)["train"][0][0]["length_bucket"] == 4
+    samples = traces.load_layer_samples(load(path, config), 3)
+    assert samples["train"][0][0]["length_bucket"] == 4
+    # All historical captures already include each forward's terminal row;
+    # the stronger v4 certificate needs no new native sampling policy.
+    for split in samples.values():
+        for head in split:
+            for sample in head:
+                for frame_id in torch.unique(sample["frame_ids"]):
+                    rows = sample["frame_ids"] == frame_id
+                    assert sample["positions"][rows][-1] == sample["current_ends"][rows][0] - 1
     # Adding a training bucket requires another actual native request. Old
     # trace bytes must not be relabelled as the expanded coverage.
     expanded = {**config, "optr_calibration": {**config["optr_calibration"],
@@ -286,7 +295,8 @@ def test_joint_output_metric_keeps_cross_rank_cancellation_and_cross_terms(monke
     assert metric["squared_error"] == 0 and metric["teacher_energy"] == 4
     assert metric["requests"][0]["frames"] == [{"frame_id": 0, "context": 0,
         "current_end": 1, "query_positions": [0], "squared_error": 0.,
-        "teacher_energy": 4., "normalized_error": 0.}]
+        "teacher_energy": 4., "normalized_error": 0., "terminal_query": {
+            "position": 0, "squared_error": 0., "teacher_energy": 4., "normalized_error": 0.}}]
     assert nonworse(metric, metric)
     monkeypatch.setattr(optr_calibration, "replay_sample", lambda *_: torch.tensor([[[2., 0.]]]))
     aligned = traces.aggregate_layer_error(constants, heads, {})
@@ -370,6 +380,49 @@ def test_cached_projections_preserve_joint_frame_metrics_without_another_replay(
     monkeypatch.setattr(optr_calibration, "project_output", forbidden)
     assert traces.aggregate_layer_error(constants, heads, {}, projected_outputs=actual,
                                          projected_teachers=teacher) == expected
+
+
+def test_cached_terminal_prefill_metric_blocks_regression_hidden_in_frame_total(monkeypatch):
+    """#170/#173: final prefill output selects the next token, not its frame mean."""
+    from oscar_ascend import optr_calibration
+    constants, heads = metric_samples()
+    for head in heads:
+        sample = head[0]
+        for key in ("q", "k", "v", "gate", "teacher"):
+            sample[key] = sample[key].repeat(2, *([1] * (sample[key].ndim - 1)))
+        sample.update(positions=torch.tensor([0, 1]), contexts=torch.tensor([0, 0]),
+                      current_ends=torch.tensor([2, 2]), frame_ids=torch.tensor([0, 0]),
+                      token_ids=torch.tensor([5, 6]), history_splits=torch.tensor([1, 1]))
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("terminal query evidence must reuse cached projections")
+    monkeypatch.setattr(optr_calibration, "replay_sample", forbidden)
+    monkeypatch.setattr(optr_calibration, "project_output", forbidden)
+    teacher = [[torch.ones(2, 1)] for _ in heads]
+    baseline = [[torch.tensor([[4.], [1.]])], [torch.ones(2, 1)]]
+    selected = [[torch.ones(2, 1)], [torch.tensor([[1.], [2.]])]]
+    before = traces.aggregate_layer_error(constants, heads, {}, projected_outputs=baseline,
+                                         projected_teachers=teacher)
+    after = traces.aggregate_layer_error(constants, heads, {}, projected_outputs=selected,
+                                        projected_teachers=teacher)
+    assert before["squared_error"] == 9. and after["squared_error"] == 1.
+    assert before["requests"][0]["frames"][0]["terminal_query"]["squared_error"] == 0.
+    terminal = after["requests"][0]["frames"][0]["terminal_query"]
+    assert terminal == {"position": 1, "squared_error": 1., "teacher_energy": 4., "normalized_error": .25}
+    assert not nonworse(before, after, require_terminal=True)
+    # Historical frame-only acceptance would allow exactly these outputs.
+    for value in (before, after):
+        value["requests"][0]["frames"][0].pop("terminal_query")
+    assert nonworse(before, after, require_frames=True)
+
+
+def test_joint_metric_requires_actual_terminal_sample_for_every_frame():
+    constants, heads = metric_samples()
+    for head in heads:
+        head[0]["current_ends"] = torch.tensor([2])
+    cached = [[torch.ones(1, 1)] for _ in heads]
+    with pytest.raises(ValueError, match="frame extents/positions"):
+        traces.aggregate_layer_error(constants, heads, {}, projected_outputs=cached,
+                                     projected_teachers=cached)
 
 
 @pytest.mark.parametrize("fault", ["missing_teacher", "heads", "requests", "shape", "dtype", "nonfinite"])

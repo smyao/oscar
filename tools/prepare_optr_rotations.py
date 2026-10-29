@@ -146,9 +146,12 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
         for frame in row.get("frames", []):
             old = previous_frames[frame["frame_id"]]
             fields = [key for key in compared if frame[key] > old[key]]
-            if fields:
+            terminal_fields = [key for key in compared if frame.get("terminal_query", {}).get(key, 0) >
+                               old.get("terminal_query", {}).get(key, 0)]
+            if fields or terminal_fields:
                 frame_regressions.append({"frame_id": frame["frame_id"], "baseline": old,
-                                          "selected": frame, "regressed_metrics": fields})
+                                          "selected": frame, "regressed_metrics": fields,
+                                          "regressed_terminal_metrics": terminal_fields})
         if regressed or frame_regressions:
             regressions.append({"request_id": row["request_id"], "partition": row.get("partition"),
                                 "baseline": previous, "selected": row,

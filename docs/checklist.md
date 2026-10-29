@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+> 2026-10-29 LongBenchv2 40.94反馈续修：candidate默认OptR v4，联合GQA/native teacher/BF16 gate离线目标与每帧terminal query校验生效；新PT/fit身份隔离，认证v3原始轨迹复用，四卡并行保持。下方v3串行断点兼容仅为当时并行版本历史行为，v4不复用旧拟合。CPU数学/梯度/证书/恢复与打包见[本轮记录](optr_joint_calibration_20261029.md)，CANN/NPU/图/模型质量/性能状态不升级，42项编号不变。
+
 > 2026-10-29 OptR准备并行：固定candidate使用四个独立spawn进程按层拟合，各自执行原有完整验证；真实本地主机并发/崩溃/单卡停滞/信号/启动失败清理及CPU串并行拟合一致性见`reports/optr_parallel_fit_20261029/`。仅离线调度和设备归属变更；CANN/线上NPU/图/模型质量/性能状态不升级，未连接真机。兼容认证v3串行断点，既有完整PT和trace继续复用。
 
 > 2026-10-29 OptR精度续修：按forward窗口/BF16 operands拟合、4K/32K/64K训练、逐forward输出选择及缓存头组合搜索已进入固定candidate。旧拟合产物版本隔离；本地数学反例、主机接缝与打包证据见 `reports/optr_accuracy_fix_20261029/`。本轮未连接真机/运行CANN编译/NPU/图/模型质量或吞吐测试，42项相关验收状态不升级。详见[修复说明](optr_accuracy_fix_20261029.md)。

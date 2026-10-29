@@ -20,6 +20,10 @@ def metric(errors=(4., 1.), *, split="validation"):
     ]
     for frame, error in zip(frames, errors):
         frame.update(squared_error=error, teacher_energy=4., normalized_error=error / 4.)
+        fraction = 1 / len(frame["query_positions"])
+        frame["terminal_query"] = {"position": frame["query_positions"][-1],
+            "squared_error": error * fraction, "teacher_energy": 4. * fraction,
+            "normalized_error": error / 4.}
     total = sum(errors)
     row = {"request_id": split, "sample_sha256": ("a" if split == "validation" else "b") * 64,
            "squared_error": total, "teacher_energy": 8., "normalized_error": total / 8.,
@@ -72,6 +76,9 @@ def test_frame_identity_must_match_even_when_request_identity_matches(fault):
     elif fault == "teacher":
         for frame, energy in zip(frames, (3., 5.)):
             frame.update(teacher_energy=energy, normalized_error=frame["squared_error"] / energy)
+            terminal = frame["terminal_query"]
+            terminal.update(teacher_energy=energy / len(frame["query_positions"]),
+                            normalized_error=frame["normalized_error"])
     else: after["requests"][0].pop("frames")
     with pytest.raises(ValueError, match="frame"):
         nonworse(before, after)
@@ -110,6 +117,24 @@ def test_historical_certificates_keep_request_only_interpretation(tmp_path, vers
     assert validate_refinement_metadata(value) is certificate
 
 
+def test_v3_historical_certificate_still_requires_frames_but_not_new_terminal_metrics(tmp_path):
+    from test_optr_integration import NAME, artifact, configuration
+    from oscar_ascend.optr_policy import legacy_capture_profile
+    config = configuration(tmp_path)
+    value = artifact(config)
+    value["calibration_profile"] = legacy_capture_profile(value["calibration_profile"], config, "v3")
+    certificate = value["refinement_certificate"]
+    certificate["policy"] = value["calibration_profile"]["refinement_policy"]
+    for split in ("validation", "test"):
+        for choice in ("baseline", "selected"):
+            for frame in certificate["layers"][NAME][split][choice]["requests"][0]["frames"]:
+                frame.pop("terminal_query")
+    assert validate_refinement_metadata(value) is certificate
+    certificate["layers"][NAME]["test"]["selected"]["requests"][0].pop("frames")
+    with pytest.raises(ValueError, match="requires per-frame"):
+        validate_refinement_metadata(value)
+
+
 def test_experimental_frame_regression_is_reported_without_relaxing_validation(tmp_path):
     from test_optr_integration import NAME, artifact, configuration
     value = artifact(configuration(tmp_path))
@@ -125,5 +150,97 @@ def test_experimental_frame_regression_is_reported_without_relaxing_validation(t
     checked = validate_refinement_metadata(value)
     assert checked["independent_test"] == {"status": "failed", "regressed_layers": [NAME]}
     record["validation"]["selected"] = metric((1., 2.))
+    with pytest.raises(ValueError, match="worsens validation"):
+        validate_refinement_metadata(value)
+
+
+def test_terminal_prefill_regression_cannot_hide_in_lower_frame_error():
+    before, after = metric(), metric((3., .5))
+    terminal = after["requests"][0]["frames"][0]["terminal_query"]
+    terminal.update(squared_error=2.5, normalized_error=1.25)
+    assert after["squared_error"] < before["squared_error"]
+    assert after["requests"][0]["frames"][0]["squared_error"] < 4.
+    assert not nonworse(before, after, require_terminal=True)
+    terminal.update(squared_error=2.000000000000001, normalized_error=1.0000000000000004)
+    assert not nonworse(before, after, require_terminal=True)  # No added tolerance.
+    terminal.update(squared_error=2., normalized_error=1.)
+    assert nonworse(before, after, require_terminal=True)
+
+
+@pytest.mark.parametrize("fault", ["missing", "none", "position", "bool", "nan",
+                                   "normalization", "error_total", "energy_total", "single_query"])
+def test_invalid_terminal_evidence_fails_closed(fault):
+    value = metric()
+    frame = value["requests"][0]["frames"][0]
+    terminal = frame["terminal_query"]
+    if fault == "missing": frame.pop("terminal_query")
+    elif fault == "none": frame["terminal_query"] = None
+    elif fault == "position": terminal["position"] = 2
+    elif fault == "bool": terminal["position"] = True
+    elif fault == "nan": terminal["squared_error"] = float("nan")
+    elif fault == "normalization": terminal["normalized_error"] = 99.
+    elif fault == "error_total": terminal.update(squared_error=5., normalized_error=2.5)
+    elif fault == "energy_total": terminal.update(teacher_energy=5., normalized_error=.4)
+    else:
+        terminal = value["requests"][0]["frames"][1]["terminal_query"]
+        terminal.update(squared_error=.5, normalized_error=.125)
+    with pytest.raises(ValueError, match="terminal"):
+        nonworse(value, copy.deepcopy(value), require_terminal=True)
+
+
+def test_old_frame_evidence_is_optional_only_when_both_sides_agree():
+    before, after = metric(), metric((2., .5))
+    for value in (before, after):
+        for frame in value["requests"][0]["frames"]: frame.pop("terminal_query")
+    assert nonworse(before, after, require_frames=True)
+    with pytest.raises(ValueError, match="requires terminal"):
+        nonworse(before, after, require_terminal=True)
+    with pytest.raises(ValueError, match="terminal query coverage"):
+        nonworse(before, metric((2., .5)))
+    for value in (before, after): value["requests"][0].pop("frames")
+    with pytest.raises(ValueError, match="requires per-frame"):
+        nonworse(before, after, require_terminal=True)
+
+
+def test_terminal_teacher_identity_is_preserved_when_frame_teacher_sum_matches():
+    before, after = metric(), metric((2., .5))
+    terminal = after["requests"][0]["frames"][0]["terminal_query"]
+    terminal.update(teacher_energy=1., normalized_error=1.)
+    with pytest.raises(ValueError, match="terminal query position/teacher"):
+        nonworse(before, after)
+
+
+@pytest.mark.parametrize("split", ["validation", "test"])
+@pytest.mark.parametrize("choice", ["baseline", "selected"])
+def test_v4_certificate_requires_terminal_query_for_every_frame(tmp_path, split, choice):
+    from test_optr_integration import NAME, artifact, configuration
+    value = artifact(configuration(tmp_path))
+    policy = value["calibration_profile"]["refinement_policy"]
+    policy.update(policy_version="optr_joint_gqa_bf16_ascend_v4",
+                  selection="joint_all_heads_each_request_frame_and_terminal_nonworse")
+    value["refinement_certificate"]["policy"] = copy.deepcopy(policy)
+    frame = value["refinement_certificate"]["layers"][NAME][split][choice]["requests"][0]["frames"][0]
+    frame.pop("terminal_query", None)
+    with pytest.raises(ValueError, match="requires terminal query"):
+        validate_refinement_metadata(value)
+
+
+def test_terminal_only_independent_test_regression_is_report_only(tmp_path):
+    from test_optr_integration import NAME, artifact, configuration
+    value = artifact(configuration(tmp_path))
+    certificate = value["refinement_certificate"]
+    record = certificate["layers"][NAME]
+    before, after = metric(split="test"), metric((3., .5), split="test")
+    after["requests"][0]["frames"][0]["terminal_query"].update(squared_error=2.5, normalized_error=1.25)
+    record.update(accepted=True, base_constants_sha256="e" * 64,
+                  validation={"baseline": metric(), "selected": metric((2., .5))},
+                  test={"baseline": before, "selected": after})
+    certificate["accepted_layers"] = [NAME]
+    value["refinement_certificate"] = experimental_certificate(certificate)
+    assert validate_refinement_metadata(value)["independent_test"] == {
+        "status": "failed", "regressed_layers": [NAME]}
+    record["validation"] = {"baseline": metric(), "selected": metric((3., .5))}
+    record["validation"]["selected"]["requests"][0]["frames"][0]["terminal_query"].update(
+        squared_error=2.5, normalized_error=1.25)
     with pytest.raises(ValueError, match="worsens validation"):
         validate_refinement_metadata(value)

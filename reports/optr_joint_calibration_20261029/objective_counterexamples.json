@@ -1,0 +1,54 @@
+{
+  "scope": "local CPU synthetic mathematical counterexamples, not target model accuracy or NPU performance",
+  "gqa_cross_terms": {
+    "old_baseline_loss": 1.0,
+    "old_candidate_loss": 0.25,
+    "joint_baseline_loss": 0.0,
+    "joint_candidate_loss": 0.5,
+    "group": 2,
+    "dimension": 1,
+    "hidden": 1,
+    "baseline_errors": [
+      1.0,
+      -1.0
+    ],
+    "candidate_errors": [
+      0.5,
+      0.5
+    ],
+    "projection_weights": [
+      1.0,
+      1.0
+    ],
+    "claim": "separate-head objective improves while actual joint output objective regresses"
+  },
+  "bf16_gate": {
+    "actual": 1.0078125,
+    "teacher": 1.0,
+    "gate": 0.10009765625,
+    "old_difference": 0.000782012939453125,
+    "native_product_difference": 0.0009765625,
+    "old_squared_error": 6.11544237472117e-07,
+    "native_squared_error": 9.5367431640625e-07
+  },
+  "native_teacher_sensitivity": {
+    "matching_target_loss": 0.02097845822572708,
+    "changed_target_loss": 1.688156008720398,
+    "matching_target_kl": 0.02097845822572708,
+    "changed_target_kl": 0.02097845822572708,
+    "same_kl_probability_target": true
+  },
+  "offline_projection_cost_geometry": {
+    "gqa": 6,
+    "dim": 256,
+    "hidden": 5120,
+    "queries": 40,
+    "direct_weight_bytes_fp32": 31457280,
+    "joint_gram_bytes_fp32": 9437184,
+    "direct_projection_fma": 314572800,
+    "joint_gram_fma": 94371840,
+    "single_64k_history_rotation_fma": 4294967296,
+    "measurement": "arithmetic operation counts only, no latency measurement",
+    "online_changes": false
+  }
+}

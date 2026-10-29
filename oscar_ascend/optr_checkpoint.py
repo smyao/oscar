@@ -15,10 +15,6 @@ import uuid
 
 from .optr_artifacts import file_sha256
 
-# Reviewed 4204e22 v3 serial implementation. Only scheduling/device ownership
-# changes in this revision; never accept pre-v3 objectives or arbitrary hashes.
-SERIAL_V3_IMPLEMENTATION = "db3b72ec7d53ee57649fff212186d5c8c9a04030fe8e30fb472e17c6c33ce2db"
-
 def _identity_directory(directory, identity):
     encoded = json.dumps(identity, sort_keys=True, separators=(",", ":"), allow_nan=False)
     return Path(directory) / hashlib.sha256(encoded.encode()).hexdigest()
@@ -54,16 +50,9 @@ class FitCheckpoints:
         manifest_path = self._path(key)
         if manifest_path.is_file():
             return self._load_from(manifest_path, key, self.identity)
-        profile = self.identity.get("profile", {})
-        if (isinstance(profile, dict) and
-                profile.get("refinement_policy", {}).get("policy_version") == "optr_frame_bf16_ascend_v3" and
-                self.identity.get("fitting_implementation_sha256") == fitting_implementation_digest()):
-            old_identity = {**self.identity, "fitting_implementation_sha256": SERIAL_V3_IMPLEMENTATION}
-            old_path = _identity_directory(self.root.parent, old_identity) / manifest_path.name
-            if old_path.is_file():
-                return self._load_from(old_path, key, old_identity)
-        # Different objectives, seed/trace identities and unreviewed binaries
-        # still cannot supply a completed fit to this implementation.
+        # v4 changes the objective and selection. Even reviewed v3 serial or
+        # parallel fits cannot supply completed work to this implementation;
+        # only authenticated raw captures are compatible across that change.
         return None
 
     @staticmethod

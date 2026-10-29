@@ -153,24 +153,34 @@ def test_partial_pool_start_is_owned_and_cleanup_cannot_lose_child(tmp_path, mon
                 os.kill(child.pid, 0)
 
 
-def test_only_reviewed_serial_v3_checkpoints_resume(tmp_path):
+@pytest.mark.parametrize("implementation", [
+    "db3b72ec7d53ee57649fff212186d5c8c9a04030fe8e30fb472e17c6c33ce2db",
+    "5ed45fb740f865a23ac1d2af6116f2c51300f01822d80265e2b5b301e6fe9490"])
+def test_v3_fits_cannot_resume_into_joint_gqa_objective(tmp_path, implementation):
     import torch
-    from oscar_ascend.optr_checkpoint import FitCheckpoints, SERIAL_V3_IMPLEMENTATION, fitting_implementation_digest
+    from oscar_ascend.optr_checkpoint import FitCheckpoints, fitting_implementation_digest
+    from oscar_ascend.optr_policy import POLICY_VERSION
     identity = {"profile": {"refinement_policy": {"policy_version": "optr_frame_bf16_ascend_v3"}},
-                "fitting_implementation_sha256": SERIAL_V3_IMPLEMENTATION,
+                "fitting_implementation_sha256": implementation,
                 "base_artifact_sha256": "seed", "trace_manifest_sha256": "trace", "test_only": True}
     old = FitCheckpoints(tmp_path, identity)
     old.save("layer-3-head-0", {"Rk": torch.eye(4)})
-    current = {**identity, "fitting_implementation_sha256": fitting_implementation_digest()}
-    assert torch.equal(FitCheckpoints(tmp_path, current).load("layer-3-head-0")["Rk"], torch.eye(4))
+    current = {**identity, "fitting_implementation_sha256": fitting_implementation_digest(),
+               "profile": {"refinement_policy": {"policy_version": POLICY_VERSION}}}
+    assert FitCheckpoints(tmp_path, current).load("layer-3-head-0") is None
+    # Even relabelling the old profile cannot grant cross-implementation reuse.
+    assert FitCheckpoints(tmp_path, {**current, "profile": identity["profile"]}).load("layer-3-head-0") is None
+    active = FitCheckpoints(tmp_path, current)
+    active.save("layer-3-head-0", {"Rk": torch.eye(4)})
+    assert torch.equal(active.load("layer-3-head-0")["Rk"], torch.eye(4))
     for key in ("base_artifact_sha256", "trace_manifest_sha256", "test_only"):
         changed = {**current, key: "different"}
         assert FitCheckpoints(tmp_path, changed).load("layer-3-head-0") is None
     bad = copy.deepcopy(current)
     bad["profile"]["refinement_policy"]["policy_version"] = "optr_sequential_ascend_v2"
     assert FitCheckpoints(tmp_path, bad).load("layer-3-head-0") is None
-    pointer = json.loads((old.root / "layer-3-head-0.json").read_text())
-    (old.root / pointer["file"]).write_bytes(b"corrupt")
+    pointer = json.loads((active.root / "layer-3-head-0.json").read_text())
+    (active.root / pointer["file"]).write_bytes(b"corrupt")
     with pytest.raises(ValueError, match="hash"):
         FitCheckpoints(tmp_path, current).load("layer-3-head-0")
 

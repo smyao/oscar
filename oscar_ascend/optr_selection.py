@@ -89,10 +89,11 @@ def select_head_subset(baseline, trial, samples, policy, *, progress=None):
 
     combined = {mask: _merge_partitions(metrics[mask], partitions) for mask in masks}
     before = combined[0]
-    nonworse(before, before, require_frames=True)
+    require_terminal = policy["selection"] == "joint_all_heads_each_request_frame_and_terminal_nonworse"
+    nonworse(before, before, require_frames=True, require_terminal=require_terminal)
     admissible = [mask for mask in masks if mask and
                   combined[mask]["squared_error"] < before["squared_error"] and
-                  nonworse(before, combined[mask], require_frames=True)]
+                  nonworse(before, combined[mask], require_frames=True, require_terminal=require_terminal)]
     selected_mask = min(admissible, key=lambda mask: (
         combined[mask]["squared_error"], len(chosen[mask]), mask)) if admissible else 0
     selected = baseline

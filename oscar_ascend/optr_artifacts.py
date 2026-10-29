@@ -40,10 +40,10 @@ def matrix_digest(layers):
     return digest.hexdigest()
 
 
-def _frames(row, *, required=False):
+def _frames(row, *, required=False, require_terminal=False):
     """Validate captured-forward evidence without weakening old certificates."""
     if "frames" not in row:
-        if required:
+        if required or require_terminal:
             raise ValueError("OptR frame-aware policy requires per-frame metrics")
         return None
     frames = row["frames"]
@@ -69,13 +69,33 @@ def _frames(row, *, required=False):
         expected = frame["squared_error"] / max(frame["teacher_energy"], 1e-20)
         if not math.isclose(frame["normalized_error"], expected, rel_tol=1e-12, abs_tol=0):
             raise ValueError("OptR per-frame normalization differs")
+        terminal = frame.get("terminal_query")
+        if terminal is None:
+            if require_terminal or "terminal_query" in frame:
+                raise ValueError("OptR terminal-aware policy requires terminal query metrics")
+            continue
+        if (not isinstance(terminal, dict) or type(terminal.get("position")) is not int
+                or terminal["position"] != positions[-1] or positions[-1] != end - 1):
+            raise ValueError("OptR terminal query must identify the captured frame's final token")
+        for key in ("normalized_error", "squared_error", "teacher_energy"):
+            value = terminal.get(key)
+            if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+                raise ValueError("OptR terminal query metric must be finite and nonnegative")
+        expected = terminal["squared_error"] / max(terminal["teacher_energy"], 1e-20)
+        if not math.isclose(terminal["normalized_error"], expected, rel_tol=1e-12, abs_tol=0):
+            raise ValueError("OptR terminal query normalization differs")
+        if any(terminal[key] > frame[key] for key in ("squared_error", "teacher_energy")):
+            raise ValueError("OptR terminal query metrics exceed captured frame totals")
+        if len(positions) == 1 and any(terminal[key] != frame[key] for key in
+                                     ("squared_error", "teacher_energy", "normalized_error")):
+            raise ValueError("OptR single-query frame and terminal query metrics differ")
     for key in ("squared_error", "teacher_energy"):
         if not math.isclose(row[key], sum(frame[key] for frame in frames), rel_tol=1e-12, abs_tol=0):
             raise ValueError("OptR per-request totals differ from captured frames")
     return frames
 
 
-def _metric(metric, *, require_frames=False):
+def _metric(metric, *, require_frames=False, require_terminal=False):
     if not isinstance(metric, dict):
         raise ValueError("OptR metric must be an object")
     for key in ("normalized_error", "squared_error", "teacher_energy"):
@@ -99,7 +119,7 @@ def _metric(metric, *, require_frames=False):
         expected = row["squared_error"] / max(row["teacher_energy"], 1e-20)
         if not math.isclose(row["normalized_error"], expected, rel_tol=1e-12, abs_tol=0):
             raise ValueError("OptR per-request normalization differs")
-        _frames(row, required=require_frames)
+        _frames(row, required=require_frames, require_terminal=require_terminal)
     for key in ("squared_error", "teacher_energy"):
         if not math.isclose(metric[key], sum(row[key] for row in rows), rel_tol=1e-12, abs_tol=0):
             raise ValueError("OptR metric totals differ from requests")
@@ -109,15 +129,15 @@ def _metric(metric, *, require_frames=False):
     return {row["request_id"]: row for row in rows}
 
 
-def nonworse(before, after, *, require_frames=False):
+def nonworse(before, after, *, require_frames=False, require_terminal=False):
     """Exact nonregression for every request and its captured-forward metrics.
 
-    Historical request-only evidence remains readable when both sides omit
-    frames. New frame-aware certificates must explicitly require the evidence;
-    discarding only one side or changing frame geometry is never permitted.
+    Historical request/frame-only evidence remains readable when both sides
+    omit finer evidence. New policies explicitly require frame/terminal
+    metrics; discarding one side or changing geometry is never permitted.
     """
-    left = _metric(before, require_frames=require_frames)
-    right = _metric(after, require_frames=require_frames)
+    left = _metric(before, require_frames=require_frames, require_terminal=require_terminal)
+    right = _metric(after, require_frames=require_frames, require_terminal=require_terminal)
     if set(left) != set(right) or before["teacher_energy"] != after["teacher_energy"]:
         raise ValueError("OptR comparison used different requests or teacher")
     frame_pairs = []
@@ -135,6 +155,14 @@ def nonworse(before, after, *, require_frames=False):
                        ("frame_id", "context", "current_end", "query_positions", "teacher_energy")):
                     raise ValueError("OptR comparison frame geometry/teacher identity differs")
                 frame_pairs.append((previous, selected))
+                before_terminal, after_terminal = previous.get("terminal_query"), selected.get("terminal_query")
+                if (before_terminal is None) != (after_terminal is None):
+                    raise ValueError("OptR comparison terminal query coverage differs")
+                if before_terminal is not None:
+                    if any(before_terminal[field] != after_terminal[field] for field in
+                           ("position", "teacher_energy")):
+                        raise ValueError("OptR comparison terminal query position/teacher identity differs")
+                    frame_pairs.append((before_terminal, after_terminal))
     return (after["squared_error"] <= before["squared_error"] and
             after["normalized_error"] <= before["normalized_error"] and
             all(right[key]["squared_error"] <= left[key]["squared_error"] and
@@ -207,7 +235,9 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
     layers = artifact.get("layers", {})
     if set(certificate.get("layers", {})) != set(layers) or not layers:
         raise ValueError("OptR certificate FULL layer coverage differs")
-    require_frames = (certificate["policy"].get("policy_version") == "optr_frame_bf16_ascend_v3"
+    require_terminal = (certificate["policy"].get("policy_version") == "optr_joint_gqa_bf16_ascend_v4"
+                        or certificate["policy"].get("selection") == "joint_all_heads_each_request_frame_and_terminal_nonworse")
+    require_frames = (require_terminal or certificate["policy"].get("policy_version") == "optr_frame_bf16_ascend_v3"
                       or certificate["policy"].get("selection") == "joint_all_heads_each_request_and_frame_nonworse")
     for name, record in certificate["layers"].items():
         selected_digest = matrix_digest({name: layers[name]})
@@ -218,7 +248,8 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
             raise ValueError("OptR layer certificate lacks baseline constants hash")
         for split in ("validation", "test"):
             result = record.get(split, {})
-            passed = nonworse(result.get("baseline"), result.get("selected"), require_frames=require_frames)
+            passed = nonworse(result.get("baseline"), result.get("selected"), require_frames=require_frames,
+                             require_terminal=require_terminal)
             if not passed and (split == "validation" or schema == 1):
                 raise ValueError(f"OptR {name} worsens {split} output error")
         if type(record.get("accepted")) is not bool:

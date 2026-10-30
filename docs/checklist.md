@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+> 2026-10-30接近原OSCAR后续优化：v9保留既有V检查点、原主候选失败再严格整层复核；修正离线归一次序和相同分片重复回放。768项CPU/主机回归、wheel/隔离导入/启动对照见`reports/optr_candidate_search_20261030/verification.json`；官方训练/seed/线上路径保持，新增离线池与验证成本明确，42项编号及NPU/图/模型质量/性能状态不升级，仅本地提交。
+
 > 2026-10-30再次精度排查：v8补齐逐采样query和BF16投影边界检查；真实80步共享拟合与D256/GQA6/TP4反例覆盖旧门误接受。694项CPU/主机回归、wheel及713个保护文件/启动argv核对见`reports/optr_precision_review_20261030/verification.json`。官方损失、seed、线上核不变；42项编号及CANN/NPU/图/模型质量/性能状态不升级，仅本地提交。
 
 > 2026-10-30全面复查：v7修复seed/train隔离及无用prompt阻断，添加大采样有界缓存、非有限正交误差拒绝；共享数学/严格validation及实验test政策保持。630项CPU/主机回归、wheel/启动对照证据见`reports/optr_self_review_20261030/verification.json`。42项编号保持，CANN/NPU/图/质量/性能状态不升级。

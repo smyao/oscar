@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-30",
+  "base_commit": "46e3e712f3e5891b4bf112a50cb0b0d1cfa6c11c",
+  "scope": "local_source_CPU_process_package_only",
+  "user_feedback": "current accuracy close to previous OSCAR; no new model score/commit/PT supplied",
+  "archive_references": [
+    170,
+    172,
+    173,
+    175,
+    176
+  ],
+  "new_policy": "optr_oscar_shared_candidates_ascend_v9",
+  "seed_policy_unchanged": "oscar_base_shared_train_v2",
+  "changes": [
+    "retain_existing_V_checkpoints_with_fixed_K_and_strict_first_nonworse_deployment_selection",
+    "match_deployed_FP32_reciprocal_then_multiply_normalization",
+    "reuse_proven_identical_single_split_metrics_with_two_partition_identities_preserved"
+  ],
+  "unchanged": [
+    "official_K_then_V_loss_gradient_Adam_trajectory",
+    "80_steps_per_phase_lr_0.02",
+    "shared_train_only_seed",
+    "sampling_clip_exact_window",
+    "v8_query_frame_projection_nonworse_gates",
+    "test_never_used_for_selection",
+    "online_kernel_runtime_codec_timer_argv"
+  ],
+  "candidate_policy": {
+    "primary_first": true,
+    "try_alternatives_only_if_primary_rejected": true,
+    "default_candidates": "initial V plus 5 already scored checkpoints",
+    "maximum_candidates": 6,
+    "dense_override_retention": "5 best (proxy_loss,step) plus initial V",
+    "fixed_k": true,
+    "shared_per_layer": true,
+    "independent_test": "baseline and final selected only; failed test report does not retry selection"
+  },
+  "costs": {
+    "new_optimizer_steps": 0,
+    "new_training_samples": 0,
+    "extra_offline_validation_pairs_maximum": 5,
+    "persistent_candidate_matrix_bytes_D256": 1572864,
+    "possible_extra_transient_matrix_bytes_D256": 262144,
+    "fixed_pool_bytes_are_not_total_process_peak": true,
+    "extra_certificate_storage_and_loading": true,
+    "same_partition_replay_calls_in_TP4_fixture": [
+      8,
+      4
+    ],
+    "same_partition_projection_calls_in_TP4_fixture": [
+      16,
+      8
+    ],
+    "end_to_end_preparation_speedup_not_claimed": true
+  },
+  "pytest": {
+    "tests": 768,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 768,
+    "junit_time_seconds": 21.151,
+    "command": [
+      ".venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_calibration_data.py",
+      "tests/test_calibration_processes.py",
+      "tests/test_center_calibration.py",
+      "tests/test_center_rotations.py",
+      "tests/test_deploy_bf16.py",
+      "tests/test_deploy_launcher.py",
+      "tests/test_install_serve.py",
+      "tests/test_model_config.py",
+      "tests/test_official_rotation_calibration.py",
+      "tests/test_optr_calibration.py",
+      "tests/test_optr_capture.py",
+      "tests/test_optr_experimental_publication.py",
+      "tests/test_optr_frame_gate.py",
+      "tests/test_optr_integration.py",
+      "tests/test_optr_numerical_validation.py",
+      "tests/test_optr_oscar_seed.py",
+      "tests/test_optr_parallel.py",
+      "tests/test_optr_projection_gate.py",
+      "tests/test_optr_quality_failure.py",
+      "tests/test_optr_query_gate.py",
+      "tests/test_optr_resume.py",
+      "tests/test_optr_seed_preparation.py",
+      "tests/test_optr_selection.py",
+      "tests/test_optr_sequential.py",
+      "tests/test_optr_shared.py",
+      "tests/test_optr_shared_cache.py",
+      "tests/test_optr_traces.py",
+      "tests/test_optr_upstream_parity.py",
+      "tests/test_rotation_capture.py",
+      "tests/test_rotation_pipeline.py",
+      "tests/test_rotation_preparation_limits.py",
+      "tests/test_serving_variants.py",
+      "tests/test_optr_candidate_pool.py",
+      "tests/test_optr_checkpoint_candidates.py",
+      "tests/test_optr_partition_reuse.py",
+      "tests/test_optr_replay_normalization.py",
+      "--junitxml=reports/optr_candidate_search_20261030/pytest.xml"
+    ],
+    "env": {
+      "OSCAR_BASE_REFERENCE_ROOT": "/Users/loki.yao/Documents/workgit/oscar_base"
+    },
+    "log": "pytest.log",
+    "xml": "pytest.xml"
+  },
+  "source_package_checks": "source_package_checks.json",
+  "counterexamples": [
+    "counterexample.json",
+    "normalization_counterexample.json"
+  ],
+  "reference_oscar": {
+    "path": "/Users/loki.yao/Documents/workgit/oscar_base",
+    "commit": "9cd2429fb4fb934889fa6f51da5d54396012b5df",
+    "read_only": true
+  },
+  "reference_optr_commit": "66d46561b9bdf5d715f591e0f5845a4cbd927dee",
+  "environment": {
+    "python": "3.14.6",
+    "platform": "macOS-15.7.7-arm64-arm-64bit-Mach-O"
+  },
+  "boundaries": {
+    "npu_connected": false,
+    "cann_changed_or_recompiled": false,
+    "model_accuracy_measured": false,
+    "aisbench_rerun": false,
+    "performance_measured": false,
+    "online_new_operations": false,
+    "published_to_git_remote": false
+  },
+  "remaining_risks": [
+    "sparse_calibration_distribution",
+    "additional_validation_candidate_selection_bias",
+    "unseen_queries_and_cross_layer_error_propagation",
+    "CPU_replay_not_NPU_bitwise",
+    "independent_test_experimental_publication_allowed_by_user"
+  ],
+  "evidence_sha256": {
+    "counterexample.json": "0ddcecffee79fc921bdad72a92180c798f53f4c4dc9ccc792c84fd780cab173c",
+    "normalization_counterexample.json": "360e6e2b6a4a67611221e1264c66b1d13683fbbbbf6f1471947ca912012c12a1",
+    "pool_tests.log": "7a240a74c52e445123f4b8f822d8157e04ce0debd348ace073f144a94f31df0f",
+    "pytest.log": "9644dabc24a785cc6e064e6684740d8d208eea9222b707924e38dca0da1b23ee",
+    "pytest.xml": "af25a20776e3ffdbb678feb62418c055107e3048b24d67450f3473b2ecc048e1",
+    "source_package_checks.json": "738cb74da2c7b5b68e08bae07eb3c5a233addd8b441aed1011217556640c4f38",
+    "targeted.log": "d50d44680088a4e9c8c24e8210219dae1fc360c208fea28132e334458f78d110",
+    "test_command.json": "8d23d2c010abe43bfd6af72bf7cb1665c6a53fe4bd83a0fba46c9992c806e72f",
+    "wheel.log": "20fe83a824dafed02baaef520a48de6fd99526c56c43939dafc2e3a0e81026fa"
+  }
+}

@@ -1,0 +1,3833 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "46e3e71",
+  "archive_references": [
+    170,
+    173,
+    175,
+    176
+  ],
+  "fixture": "tests/test_optr_checkpoint_candidates.py::actual_candidate_case",
+  "evidence": "synthetic_CPU_actual_shared_OptR_80_step_optimizer_and_existing_V_validation_checkpoints",
+  "not_model_data": true,
+  "synthetic_construction": {
+    "seed": 2,
+    "heads": 2,
+    "head_dim": 8,
+    "gqa_group": 2,
+    "hidden_size": 12,
+    "history_length": 49,
+    "query_positions": [
+      0,
+      6,
+      13,
+      20,
+      26,
+      33,
+      40,
+      47,
+      48
+    ],
+    "frames": [
+      {
+        "context": 0,
+        "current_end": 48,
+        "sampled_queries": 8
+      },
+      {
+        "context": 48,
+        "current_end": 49,
+        "sampled_queries": 1
+      }
+    ],
+    "prefill_queries": "explicitly_zero",
+    "value_rows": "opposite_BF16_pairs_at_(1,2),(15,16),(28,29),(42,43);_other_rows_zero",
+    "decode_query": "nonzero_seeded_BF16",
+    "teachers": "unquantized_dense_causal_FP32_attention_then_BF16_rounding_not_actual_NPU_capture",
+    "WO": "same_BF16_coefficients_per_head_across_all_splits",
+    "train_validation_test": "independent_seeded_tensors",
+    "base_rotation": "identity_shared_across_heads",
+    "key_means": "zero"
+  },
+  "policy": {
+    "policy_version": "optr_oscar_shared_candidates_ascend_v9",
+    "capture_lengths": {
+      "train": [
+        4096,
+        32768,
+        65536
+      ],
+      "validation": [
+        4096,
+        32768,
+        65536
+      ],
+      "test": [
+        4096,
+        32768,
+        65536
+      ]
+    },
+    "decode_tokens": 8,
+    "query_samples_per_frame": 8,
+    "steps": 80,
+    "lr": 0.02,
+    "eval_every": 20,
+    "query_batch_size": 8,
+    "fitting_objective": "upstream_fp32_independent_gqa_kl_output_k_then_conditional_v",
+    "fitted_grouping": "layer",
+    "lambda_output": 1.0,
+    "kv_tile_size": 256,
+    "history_splits": 1,
+    "validation_partitions": [
+      "single_split",
+      "captured_runtime_frames"
+    ],
+    "validation_projection_views": [
+      "fp32",
+      "bf16_output",
+      "bf16_rank_output"
+    ],
+    "sink_tokens": 2,
+    "recent_tokens": 4,
+    "k_clip": 0.96,
+    "v_clip": 0.92,
+    "group_size": "head_dim",
+    "math_contract": "oscar_bf16_attention_v4_fp32_metadata",
+    "selection": "shared_layer_each_query_and_projection_nonworse",
+    "deployment_candidate_selection": "fixed_k_existing_v_checkpoints_first_nonworse",
+    "max_deployment_candidates": 6,
+    "test_policy": "independent_accept_or_fail_no_reselection",
+    "execution": "npu_fp32_proxy_cpu_orthogonal_and_deployment_validation",
+    "source_plan": "disjoint_records_packed_calibration_only_v1",
+    "sampling_chunk_tokens": 16384,
+    "tensor_parallel_size": 4,
+    "max_model_len": 262144,
+    "attention_splits": 1,
+    "history_token_capacity": null,
+    "cube_cores": null,
+    "compilation_config": {}
+  },
+  "optimizer_steps_per_phase": 80,
+  "eval_every": 20,
+  "lr": 0.02,
+  "evaluated_steps": [
+    0,
+    1,
+    21,
+    41,
+    61,
+    80
+  ],
+  "official_selected_k_step": 21,
+  "official_selected_v_step": 1,
+  "baseline_hashes": {
+    "Rk_float32_bytes_sha256": "fa606f41f17f8ca8ca53aca6333689882afd1b0b1984e5cb5083e20bffde1c91",
+    "Rv_float32_bytes_sha256": "fa606f41f17f8ca8ca53aca6333689882afd1b0b1984e5cb5083e20bffde1c91",
+    "layer_constants_sha256": "a2c033db0d1fa9fefafe70ec90804bb1aaff07c024c350a5b0fee27b32977fd8"
+  },
+  "original_selected_pair_hashes": {
+    "Rk_float32_bytes_sha256": "056c32a909217bb53bd3124ee07776a4df37d3ccc730263f601d7d4c6e8473f7",
+    "Rv_float32_bytes_sha256": "a63261a17b0fefc183c3762908d9e633731a60966d8e3fce7093ed28de769ea8",
+    "layer_constants_sha256": "d8d7cf4cac7b50e4d3c7b93f5512ad8643efe048433365be9bf5fd728fd8dd52"
+  },
+  "last_step_80_rotations_hashes": {
+    "Rk_float32_bytes_sha256": "0bdd08a57493df6b86c4599beadf5c32f963e599c9d5d24da8a02d005391ef6f",
+    "Rv_float32_bytes_sha256": "03407130e248591d6582fe186a2925b894d3991600975fe0780dd1d0e5fe200b",
+    "layer_constants_sha256": "4052c00bd28feeeab091eb7dad4e364e5f532ef1dc2e9700171b38220484b499"
+  },
+  "passing_existing_checkpoint_hashes": {
+    "Rk_float32_bytes_sha256": "056c32a909217bb53bd3124ee07776a4df37d3ccc730263f601d7d4c6e8473f7",
+    "Rv_float32_bytes_sha256": "3e847382d9a19ade50960a4f429b6cef640547c4d932fad8980bfbad69682a24",
+    "layer_constants_sha256": "5aed1fc609d0c83b2716adda094d6128012354a41bad44563c8b53e7b4834606"
+  },
+  "original_proxy_selected_pair": {
+    "passes_all_v8_validation_gates": false,
+    "v_proxy_loss": 0.00016960307402769104,
+    "fp32_squared_error": 0.08053665570001314,
+    "bf16_output_squared_error": 0.08026424050331116,
+    "bf16_rank_output_squared_error": 0.08055424690246582
+  },
+  "baseline_validation": {
+    "fp32_squared_error": 0.053975687152939995,
+    "bf16_output_squared_error": 0.054219961166381836,
+    "bf16_rank_output_squared_error": 0.05362570285797119
+  },
+  "existing_checkpoint_step61": {
+    "passes_all_v8_validation_gates": true,
+    "v_proxy_loss": 0.00035241240402683616,
+    "relative_fp32_sse_improvement_percent": 55.91346448759508,
+    "fp32_squared_error": 0.023796010484745472,
+    "bf16_output_squared_error": 0.023840129375457764,
+    "bf16_rank_output_squared_error": 0.024196654558181763
+  },
+  "all_evaluated_v_checkpoints": [
+    {
+      "v_step": 0,
+      "v_proxy_loss": 0.00021009425836382434,
+      "passes_all_v8_validation_gates": false,
+      "fp32_squared_error": 0.058976411733397335,
+      "bf16_output_squared_error": 0.058841586112976074,
+      "bf16_rank_output_squared_error": 0.05902695655822754,
+      "constants": {
+        "Rk_float32_bytes_sha256": "056c32a909217bb53bd3124ee07776a4df37d3ccc730263f601d7d4c6e8473f7",
+        "Rv_float32_bytes_sha256": "fa606f41f17f8ca8ca53aca6333689882afd1b0b1984e5cb5083e20bffde1c91",
+        "layer_constants_sha256": "8775f48fab1de5d9c2370177afe4d6f7280a8c01af4e2d76fbc7b5b64eb44810"
+      }
+    },
+    {
+      "v_step": 1,
+      "v_proxy_loss": 0.00016960307402769104,
+      "passes_all_v8_validation_gates": false,
+      "fp32_squared_error": 0.08053665570001314,
+      "bf16_output_squared_error": 0.08026424050331116,
+      "bf16_rank_output_squared_error": 0.08055424690246582,
+      "constants": {
+        "Rk_float32_bytes_sha256": "056c32a909217bb53bd3124ee07776a4df37d3ccc730263f601d7d4c6e8473f7",
+        "Rv_float32_bytes_sha256": "a63261a17b0fefc183c3762908d9e633731a60966d8e3fce7093ed28de769ea8",
+        "layer_constants_sha256": "d8d7cf4cac7b50e4d3c7b93f5512ad8643efe048433365be9bf5fd728fd8dd52"
+      }
+    },
+    {
+      "v_step": 21,
+      "v_proxy_loss": 0.0007643818971700966,
+      "passes_all_v8_validation_gates": false,
+      "fp32_squared_error": 0.17629958172502674,
+      "bf16_output_squared_error": 0.1761017143726349,
+      "bf16_rank_output_squared_error": 0.17576123028993607,
+      "constants": {
+        "Rk_float32_bytes_sha256": "056c32a909217bb53bd3124ee07776a4df37d3ccc730263f601d7d4c6e8473f7",
+        "Rv_float32_bytes_sha256": "c33c48c97e224c981ed1b40875f45f1c114c1b9ea0694b533cec3fa77a7e7973",
+        "layer_constants_sha256": "d3d9e458af7735d46880d169c786a32cb9dd8dacd4734382470dd77bd53c63e1"
+      }
+    },
+    {
+      "v_step": 41,
+      "v_proxy_loss": 0.00041795756260398775,
+      "passes_all_v8_validation_gates": false,
+      "fp32_squared_error": 0.13441940177450393,
+      "bf16_output_squared_error": 0.1345655620098114,
+      "bf16_rank_output_squared_error": 0.1347230151295662,
+      "constants": {
+        "Rk_float32_bytes_sha256": "056c32a909217bb53bd3124ee07776a4df37d3ccc730263f601d7d4c6e8473f7",
+        "Rv_float32_bytes_sha256": "d980878d64fef89d64c770b33b643262d838da5fb31df92673ea2b26b0337183",
+        "layer_constants_sha256": "5456fa67d63781d96fdaecd91c84f669aa95c50dbb98241454d6c3a6c0473a20"
+      }
+    },
+    {
+      "v_step": 61,
+      "v_proxy_loss": 0.00035241240402683616,
+      "passes_all_v8_validation_gates": true,
+      "fp32_squared_error": 0.023796010484745472,
+      "bf16_output_squared_error": 0.023840129375457764,
+      "bf16_rank_output_squared_error": 0.024196654558181763,
+      "constants": {
+        "Rk_float32_bytes_sha256": "056c32a909217bb53bd3124ee07776a4df37d3ccc730263f601d7d4c6e8473f7",
+        "Rv_float32_bytes_sha256": "3e847382d9a19ade50960a4f429b6cef640547c4d932fad8980bfbad69682a24",
+        "layer_constants_sha256": "5aed1fc609d0c83b2716adda094d6128012354a41bad44563c8b53e7b4834606"
+      }
+    },
+    {
+      "v_step": 80,
+      "v_proxy_loss": 0.0003540680045261979,
+      "passes_all_v8_validation_gates": true,
+      "fp32_squared_error": 0.035902805363282754,
+      "bf16_output_squared_error": 0.03576350212097168,
+      "bf16_rank_output_squared_error": 0.03596949577331543,
+      "constants": {
+        "Rk_float32_bytes_sha256": "056c32a909217bb53bd3124ee07776a4df37d3ccc730263f601d7d4c6e8473f7",
+        "Rv_float32_bytes_sha256": "03407130e248591d6582fe186a2925b894d3991600975fe0780dd1d0e5fe200b",
+        "layer_constants_sha256": "b1fa38efcb8a937d4f12c8420ab46cc321a0ad0cbd2a322fdc8b531f0c2cded7"
+      }
+    }
+  ],
+  "same_fixed_k_for_every_v_checkpoint": true,
+  "new_optimizer_steps_or_samples": 0,
+  "independent_test_used_for_selection": false,
+  "independent_test_metrics": "executed_only_after_final_validation_selection;_not_used_for_selection",
+  "full_validation_evidence": {
+    "baseline": {
+      "squared_error": 0.053975687152939995,
+      "teacher_energy": 0.5955385135613005,
+      "normalized_error": 0.09063341148193285,
+      "requests": [
+        {
+          "request_id": "validation:single_split",
+          "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+          "squared_error": 0.026987843576469998,
+          "teacher_energy": 0.29776925678065025,
+          "normalized_error": 0.09063341148193285,
+          "frames": [
+            {
+              "frame_id": 0,
+              "context": 0,
+              "current_end": 48,
+              "query_positions": [
+                0,
+                6,
+                13,
+                20,
+                26,
+                33,
+                40,
+                47
+              ],
+              "squared_error": 0.0,
+              "teacher_energy": 0.0,
+              "normalized_error": 0.0,
+              "terminal_query": {
+                "position": 47,
+                "squared_error": 0.0,
+                "teacher_energy": 0.0,
+                "normalized_error": 0.0
+              },
+              "queries": [
+                {
+                  "position": 0,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 6,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 13,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 20,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 26,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 33,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 40,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 47,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                }
+              ]
+            },
+            {
+              "frame_id": 1,
+              "context": 48,
+              "current_end": 49,
+              "query_positions": [
+                48
+              ],
+              "squared_error": 0.026987843576469998,
+              "teacher_energy": 0.29776925678065025,
+              "normalized_error": 0.09063341148193285,
+              "terminal_query": {
+                "position": 48,
+                "squared_error": 0.026987843576469998,
+                "teacher_energy": 0.29776925678065025,
+                "normalized_error": 0.09063341148193285
+              },
+              "queries": [
+                {
+                  "position": 48,
+                  "squared_error": 0.026987843576469998,
+                  "teacher_energy": 0.29776925678065025,
+                  "normalized_error": 0.09063341148193285
+                }
+              ]
+            }
+          ],
+          "partition": "single_split"
+        },
+        {
+          "request_id": "validation:captured_runtime_frames",
+          "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+          "squared_error": 0.026987843576469998,
+          "teacher_energy": 0.29776925678065025,
+          "normalized_error": 0.09063341148193285,
+          "frames": [
+            {
+              "frame_id": 0,
+              "context": 0,
+              "current_end": 48,
+              "query_positions": [
+                0,
+                6,
+                13,
+                20,
+                26,
+                33,
+                40,
+                47
+              ],
+              "squared_error": 0.0,
+              "teacher_energy": 0.0,
+              "normalized_error": 0.0,
+              "terminal_query": {
+                "position": 47,
+                "squared_error": 0.0,
+                "teacher_energy": 0.0,
+                "normalized_error": 0.0
+              },
+              "queries": [
+                {
+                  "position": 0,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 6,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 13,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 20,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 26,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 33,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 40,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 47,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                }
+              ]
+            },
+            {
+              "frame_id": 1,
+              "context": 48,
+              "current_end": 49,
+              "query_positions": [
+                48
+              ],
+              "squared_error": 0.026987843576469998,
+              "teacher_energy": 0.29776925678065025,
+              "normalized_error": 0.09063341148193285,
+              "terminal_query": {
+                "position": 48,
+                "squared_error": 0.026987843576469998,
+                "teacher_energy": 0.29776925678065025,
+                "normalized_error": 0.09063341148193285
+              },
+              "queries": [
+                {
+                  "position": 48,
+                  "squared_error": 0.026987843576469998,
+                  "teacher_energy": 0.29776925678065025,
+                  "normalized_error": 0.09063341148193285
+                }
+              ]
+            }
+          ],
+          "partition": "captured_runtime_frames"
+        }
+      ],
+      "projection_checks": {
+        "bf16_output": {
+          "squared_error": 0.054219961166381836,
+          "teacher_energy": 0.5952622890472412,
+          "normalized_error": 0.09108583252126498,
+          "requests": [
+            {
+              "request_id": "validation:single_split",
+              "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+              "squared_error": 0.027109980583190918,
+              "teacher_energy": 0.2976311445236206,
+              "normalized_error": 0.09108583252126498,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 48,
+                  "query_positions": [
+                    0,
+                    6,
+                    13,
+                    20,
+                    26,
+                    33,
+                    40,
+                    47
+                  ],
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0,
+                  "terminal_query": {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  "queries": [
+                    {
+                      "position": 0,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 6,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 13,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 20,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 26,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 33,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 40,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 48,
+                  "current_end": 49,
+                  "query_positions": [
+                    48
+                  ],
+                  "squared_error": 0.027109980583190918,
+                  "teacher_energy": 0.2976311445236206,
+                  "normalized_error": 0.09108583252126498,
+                  "terminal_query": {
+                    "position": 48,
+                    "squared_error": 0.027109980583190918,
+                    "teacher_energy": 0.2976311445236206,
+                    "normalized_error": 0.09108583252126498
+                  },
+                  "queries": [
+                    {
+                      "position": 48,
+                      "squared_error": 0.027109980583190918,
+                      "teacher_energy": 0.2976311445236206,
+                      "normalized_error": 0.09108583252126498
+                    }
+                  ]
+                }
+              ],
+              "partition": "single_split"
+            },
+            {
+              "request_id": "validation:captured_runtime_frames",
+              "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+              "squared_error": 0.027109980583190918,
+              "teacher_energy": 0.2976311445236206,
+              "normalized_error": 0.09108583252126498,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 48,
+                  "query_positions": [
+                    0,
+                    6,
+                    13,
+                    20,
+                    26,
+                    33,
+                    40,
+                    47
+                  ],
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0,
+                  "terminal_query": {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  "queries": [
+                    {
+                      "position": 0,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 6,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 13,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 20,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 26,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 33,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 40,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 48,
+                  "current_end": 49,
+                  "query_positions": [
+                    48
+                  ],
+                  "squared_error": 0.027109980583190918,
+                  "teacher_energy": 0.2976311445236206,
+                  "normalized_error": 0.09108583252126498,
+                  "terminal_query": {
+                    "position": 48,
+                    "squared_error": 0.027109980583190918,
+                    "teacher_energy": 0.2976311445236206,
+                    "normalized_error": 0.09108583252126498
+                  },
+                  "queries": [
+                    {
+                      "position": 48,
+                      "squared_error": 0.027109980583190918,
+                      "teacher_energy": 0.2976311445236206,
+                      "normalized_error": 0.09108583252126498
+                    }
+                  ]
+                }
+              ],
+              "partition": "captured_runtime_frames"
+            }
+          ]
+        },
+        "bf16_rank_output": {
+          "squared_error": 0.05362570285797119,
+          "teacher_energy": 0.5954314470291138,
+          "normalized_error": 0.0900619258951386,
+          "requests": [
+            {
+              "request_id": "validation:single_split",
+              "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+              "squared_error": 0.026812851428985596,
+              "teacher_energy": 0.2977157235145569,
+              "normalized_error": 0.0900619258951386,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 48,
+                  "query_positions": [
+                    0,
+                    6,
+                    13,
+                    20,
+                    26,
+                    33,
+                    40,
+                    47
+                  ],
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0,
+                  "terminal_query": {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  "queries": [
+                    {
+                      "position": 0,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 6,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 13,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 20,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 26,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 33,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 40,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 48,
+                  "current_end": 49,
+                  "query_positions": [
+                    48
+                  ],
+                  "squared_error": 0.026812851428985596,
+                  "teacher_energy": 0.2977157235145569,
+                  "normalized_error": 0.0900619258951386,
+                  "terminal_query": {
+                    "position": 48,
+                    "squared_error": 0.026812851428985596,
+                    "teacher_energy": 0.2977157235145569,
+                    "normalized_error": 0.0900619258951386
+                  },
+                  "queries": [
+                    {
+                      "position": 48,
+                      "squared_error": 0.026812851428985596,
+                      "teacher_energy": 0.2977157235145569,
+                      "normalized_error": 0.0900619258951386
+                    }
+                  ]
+                }
+              ],
+              "partition": "single_split"
+            },
+            {
+              "request_id": "validation:captured_runtime_frames",
+              "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+              "squared_error": 0.026812851428985596,
+              "teacher_energy": 0.2977157235145569,
+              "normalized_error": 0.0900619258951386,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 48,
+                  "query_positions": [
+                    0,
+                    6,
+                    13,
+                    20,
+                    26,
+                    33,
+                    40,
+                    47
+                  ],
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0,
+                  "terminal_query": {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  "queries": [
+                    {
+                      "position": 0,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 6,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 13,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 20,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 26,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 33,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 40,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 48,
+                  "current_end": 49,
+                  "query_positions": [
+                    48
+                  ],
+                  "squared_error": 0.026812851428985596,
+                  "teacher_energy": 0.2977157235145569,
+                  "normalized_error": 0.0900619258951386,
+                  "terminal_query": {
+                    "position": 48,
+                    "squared_error": 0.026812851428985596,
+                    "teacher_energy": 0.2977157235145569,
+                    "normalized_error": 0.0900619258951386
+                  },
+                  "queries": [
+                    {
+                      "position": 48,
+                      "squared_error": 0.026812851428985596,
+                      "teacher_energy": 0.2977157235145569,
+                      "normalized_error": 0.0900619258951386
+                    }
+                  ]
+                }
+              ],
+              "partition": "captured_runtime_frames"
+            }
+          ]
+        }
+      }
+    },
+    "original_proxy_selected_pair": {
+      "squared_error": 0.08053665570001314,
+      "teacher_energy": 0.5955385135613005,
+      "normalized_error": 0.1352333289385545,
+      "requests": [
+        {
+          "request_id": "validation:single_split",
+          "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+          "squared_error": 0.04026832785000657,
+          "teacher_energy": 0.29776925678065025,
+          "normalized_error": 0.1352333289385545,
+          "frames": [
+            {
+              "frame_id": 0,
+              "context": 0,
+              "current_end": 48,
+              "query_positions": [
+                0,
+                6,
+                13,
+                20,
+                26,
+                33,
+                40,
+                47
+              ],
+              "squared_error": 0.0,
+              "teacher_energy": 0.0,
+              "normalized_error": 0.0,
+              "terminal_query": {
+                "position": 47,
+                "squared_error": 0.0,
+                "teacher_energy": 0.0,
+                "normalized_error": 0.0
+              },
+              "queries": [
+                {
+                  "position": 0,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 6,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 13,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 20,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 26,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 33,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 40,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 47,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                }
+              ]
+            },
+            {
+              "frame_id": 1,
+              "context": 48,
+              "current_end": 49,
+              "query_positions": [
+                48
+              ],
+              "squared_error": 0.04026832785000657,
+              "teacher_energy": 0.29776925678065025,
+              "normalized_error": 0.1352333289385545,
+              "terminal_query": {
+                "position": 48,
+                "squared_error": 0.04026832785000657,
+                "teacher_energy": 0.29776925678065025,
+                "normalized_error": 0.1352333289385545
+              },
+              "queries": [
+                {
+                  "position": 48,
+                  "squared_error": 0.04026832785000657,
+                  "teacher_energy": 0.29776925678065025,
+                  "normalized_error": 0.1352333289385545
+                }
+              ]
+            }
+          ],
+          "partition": "single_split"
+        },
+        {
+          "request_id": "validation:captured_runtime_frames",
+          "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+          "squared_error": 0.04026832785000657,
+          "teacher_energy": 0.29776925678065025,
+          "normalized_error": 0.1352333289385545,
+          "frames": [
+            {
+              "frame_id": 0,
+              "context": 0,
+              "current_end": 48,
+              "query_positions": [
+                0,
+                6,
+                13,
+                20,
+                26,
+                33,
+                40,
+                47
+              ],
+              "squared_error": 0.0,
+              "teacher_energy": 0.0,
+              "normalized_error": 0.0,
+              "terminal_query": {
+                "position": 47,
+                "squared_error": 0.0,
+                "teacher_energy": 0.0,
+                "normalized_error": 0.0
+              },
+              "queries": [
+                {
+                  "position": 0,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 6,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 13,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 20,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 26,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 33,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 40,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 47,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                }
+              ]
+            },
+            {
+              "frame_id": 1,
+              "context": 48,
+              "current_end": 49,
+              "query_positions": [
+                48
+              ],
+              "squared_error": 0.04026832785000657,
+              "teacher_energy": 0.29776925678065025,
+              "normalized_error": 0.1352333289385545,
+              "terminal_query": {
+                "position": 48,
+                "squared_error": 0.04026832785000657,
+                "teacher_energy": 0.29776925678065025,
+                "normalized_error": 0.1352333289385545
+              },
+              "queries": [
+                {
+                  "position": 48,
+                  "squared_error": 0.04026832785000657,
+                  "teacher_energy": 0.29776925678065025,
+                  "normalized_error": 0.1352333289385545
+                }
+              ]
+            }
+          ],
+          "partition": "captured_runtime_frames"
+        }
+      ],
+      "projection_checks": {
+        "bf16_output": {
+          "squared_error": 0.08026424050331116,
+          "teacher_energy": 0.5952622890472412,
+          "normalized_error": 0.134838443456211,
+          "requests": [
+            {
+              "request_id": "validation:single_split",
+              "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+              "squared_error": 0.04013212025165558,
+              "teacher_energy": 0.2976311445236206,
+              "normalized_error": 0.134838443456211,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 48,
+                  "query_positions": [
+                    0,
+                    6,
+                    13,
+                    20,
+                    26,
+                    33,
+                    40,
+                    47
+                  ],
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0,
+                  "terminal_query": {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  "queries": [
+                    {
+                      "position": 0,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 6,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 13,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 20,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 26,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 33,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 40,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 48,
+                  "current_end": 49,
+                  "query_positions": [
+                    48
+                  ],
+                  "squared_error": 0.04013212025165558,
+                  "teacher_energy": 0.2976311445236206,
+                  "normalized_error": 0.134838443456211,
+                  "terminal_query": {
+                    "position": 48,
+                    "squared_error": 0.04013212025165558,
+                    "teacher_energy": 0.2976311445236206,
+                    "normalized_error": 0.134838443456211
+                  },
+                  "queries": [
+                    {
+                      "position": 48,
+                      "squared_error": 0.04013212025165558,
+                      "teacher_energy": 0.2976311445236206,
+                      "normalized_error": 0.134838443456211
+                    }
+                  ]
+                }
+              ],
+              "partition": "single_split"
+            },
+            {
+              "request_id": "validation:captured_runtime_frames",
+              "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+              "squared_error": 0.04013212025165558,
+              "teacher_energy": 0.2976311445236206,
+              "normalized_error": 0.134838443456211,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 48,
+                  "query_positions": [
+                    0,
+                    6,
+                    13,
+                    20,
+                    26,
+                    33,
+                    40,
+                    47
+                  ],
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0,
+                  "terminal_query": {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  "queries": [
+                    {
+                      "position": 0,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 6,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 13,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 20,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 26,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 33,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 40,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 48,
+                  "current_end": 49,
+                  "query_positions": [
+                    48
+                  ],
+                  "squared_error": 0.04013212025165558,
+                  "teacher_energy": 0.2976311445236206,
+                  "normalized_error": 0.134838443456211,
+                  "terminal_query": {
+                    "position": 48,
+                    "squared_error": 0.04013212025165558,
+                    "teacher_energy": 0.2976311445236206,
+                    "normalized_error": 0.134838443456211
+                  },
+                  "queries": [
+                    {
+                      "position": 48,
+                      "squared_error": 0.04013212025165558,
+                      "teacher_energy": 0.2976311445236206,
+                      "normalized_error": 0.134838443456211
+                    }
+                  ]
+                }
+              ],
+              "partition": "captured_runtime_frames"
+            }
+          ]
+        },
+        "bf16_rank_output": {
+          "squared_error": 0.08055424690246582,
+          "teacher_energy": 0.5954314470291138,
+          "normalized_error": 0.1352871893219424,
+          "requests": [
+            {
+              "request_id": "validation:single_split",
+              "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+              "squared_error": 0.04027712345123291,
+              "teacher_energy": 0.2977157235145569,
+              "normalized_error": 0.1352871893219424,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 48,
+                  "query_positions": [
+                    0,
+                    6,
+                    13,
+                    20,
+                    26,
+                    33,
+                    40,
+                    47
+                  ],
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0,
+                  "terminal_query": {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  "queries": [
+                    {
+                      "position": 0,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 6,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 13,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 20,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 26,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 33,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 40,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 48,
+                  "current_end": 49,
+                  "query_positions": [
+                    48
+                  ],
+                  "squared_error": 0.04027712345123291,
+                  "teacher_energy": 0.2977157235145569,
+                  "normalized_error": 0.1352871893219424,
+                  "terminal_query": {
+                    "position": 48,
+                    "squared_error": 0.04027712345123291,
+                    "teacher_energy": 0.2977157235145569,
+                    "normalized_error": 0.1352871893219424
+                  },
+                  "queries": [
+                    {
+                      "position": 48,
+                      "squared_error": 0.04027712345123291,
+                      "teacher_energy": 0.2977157235145569,
+                      "normalized_error": 0.1352871893219424
+                    }
+                  ]
+                }
+              ],
+              "partition": "single_split"
+            },
+            {
+              "request_id": "validation:captured_runtime_frames",
+              "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+              "squared_error": 0.04027712345123291,
+              "teacher_energy": 0.2977157235145569,
+              "normalized_error": 0.1352871893219424,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 48,
+                  "query_positions": [
+                    0,
+                    6,
+                    13,
+                    20,
+                    26,
+                    33,
+                    40,
+                    47
+                  ],
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0,
+                  "terminal_query": {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  "queries": [
+                    {
+                      "position": 0,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 6,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 13,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 20,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 26,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 33,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 40,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 48,
+                  "current_end": 49,
+                  "query_positions": [
+                    48
+                  ],
+                  "squared_error": 0.04027712345123291,
+                  "teacher_energy": 0.2977157235145569,
+                  "normalized_error": 0.1352871893219424,
+                  "terminal_query": {
+                    "position": 48,
+                    "squared_error": 0.04027712345123291,
+                    "teacher_energy": 0.2977157235145569,
+                    "normalized_error": 0.1352871893219424
+                  },
+                  "queries": [
+                    {
+                      "position": 48,
+                      "squared_error": 0.04027712345123291,
+                      "teacher_energy": 0.2977157235145569,
+                      "normalized_error": 0.1352871893219424
+                    }
+                  ]
+                }
+              ],
+              "partition": "captured_runtime_frames"
+            }
+          ]
+        }
+      }
+    },
+    "existing_v_step61": {
+      "squared_error": 0.023796010484745472,
+      "teacher_energy": 0.5955385135613005,
+      "normalized_error": 0.03995713113908641,
+      "requests": [
+        {
+          "request_id": "validation:single_split",
+          "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+          "squared_error": 0.011898005242372736,
+          "teacher_energy": 0.29776925678065025,
+          "normalized_error": 0.03995713113908641,
+          "frames": [
+            {
+              "frame_id": 0,
+              "context": 0,
+              "current_end": 48,
+              "query_positions": [
+                0,
+                6,
+                13,
+                20,
+                26,
+                33,
+                40,
+                47
+              ],
+              "squared_error": 0.0,
+              "teacher_energy": 0.0,
+              "normalized_error": 0.0,
+              "terminal_query": {
+                "position": 47,
+                "squared_error": 0.0,
+                "teacher_energy": 0.0,
+                "normalized_error": 0.0
+              },
+              "queries": [
+                {
+                  "position": 0,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 6,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 13,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 20,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 26,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 33,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 40,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 47,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                }
+              ]
+            },
+            {
+              "frame_id": 1,
+              "context": 48,
+              "current_end": 49,
+              "query_positions": [
+                48
+              ],
+              "squared_error": 0.011898005242372736,
+              "teacher_energy": 0.29776925678065025,
+              "normalized_error": 0.03995713113908641,
+              "terminal_query": {
+                "position": 48,
+                "squared_error": 0.011898005242372736,
+                "teacher_energy": 0.29776925678065025,
+                "normalized_error": 0.03995713113908641
+              },
+              "queries": [
+                {
+                  "position": 48,
+                  "squared_error": 0.011898005242372736,
+                  "teacher_energy": 0.29776925678065025,
+                  "normalized_error": 0.03995713113908641
+                }
+              ]
+            }
+          ],
+          "partition": "single_split"
+        },
+        {
+          "request_id": "validation:captured_runtime_frames",
+          "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+          "squared_error": 0.011898005242372736,
+          "teacher_energy": 0.29776925678065025,
+          "normalized_error": 0.03995713113908641,
+          "frames": [
+            {
+              "frame_id": 0,
+              "context": 0,
+              "current_end": 48,
+              "query_positions": [
+                0,
+                6,
+                13,
+                20,
+                26,
+                33,
+                40,
+                47
+              ],
+              "squared_error": 0.0,
+              "teacher_energy": 0.0,
+              "normalized_error": 0.0,
+              "terminal_query": {
+                "position": 47,
+                "squared_error": 0.0,
+                "teacher_energy": 0.0,
+                "normalized_error": 0.0
+              },
+              "queries": [
+                {
+                  "position": 0,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 6,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 13,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 20,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 26,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 33,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 40,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                {
+                  "position": 47,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                }
+              ]
+            },
+            {
+              "frame_id": 1,
+              "context": 48,
+              "current_end": 49,
+              "query_positions": [
+                48
+              ],
+              "squared_error": 0.011898005242372736,
+              "teacher_energy": 0.29776925678065025,
+              "normalized_error": 0.03995713113908641,
+              "terminal_query": {
+                "position": 48,
+                "squared_error": 0.011898005242372736,
+                "teacher_energy": 0.29776925678065025,
+                "normalized_error": 0.03995713113908641
+              },
+              "queries": [
+                {
+                  "position": 48,
+                  "squared_error": 0.011898005242372736,
+                  "teacher_energy": 0.29776925678065025,
+                  "normalized_error": 0.03995713113908641
+                }
+              ]
+            }
+          ],
+          "partition": "captured_runtime_frames"
+        }
+      ],
+      "projection_checks": {
+        "bf16_output": {
+          "squared_error": 0.023840129375457764,
+          "teacher_energy": 0.5952622890472412,
+          "normalized_error": 0.04004978950307024,
+          "requests": [
+            {
+              "request_id": "validation:single_split",
+              "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+              "squared_error": 0.011920064687728882,
+              "teacher_energy": 0.2976311445236206,
+              "normalized_error": 0.04004978950307024,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 48,
+                  "query_positions": [
+                    0,
+                    6,
+                    13,
+                    20,
+                    26,
+                    33,
+                    40,
+                    47
+                  ],
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0,
+                  "terminal_query": {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  "queries": [
+                    {
+                      "position": 0,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 6,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 13,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 20,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 26,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 33,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 40,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 48,
+                  "current_end": 49,
+                  "query_positions": [
+                    48
+                  ],
+                  "squared_error": 0.011920064687728882,
+                  "teacher_energy": 0.2976311445236206,
+                  "normalized_error": 0.04004978950307024,
+                  "terminal_query": {
+                    "position": 48,
+                    "squared_error": 0.011920064687728882,
+                    "teacher_energy": 0.2976311445236206,
+                    "normalized_error": 0.04004978950307024
+                  },
+                  "queries": [
+                    {
+                      "position": 48,
+                      "squared_error": 0.011920064687728882,
+                      "teacher_energy": 0.2976311445236206,
+                      "normalized_error": 0.04004978950307024
+                    }
+                  ]
+                }
+              ],
+              "partition": "single_split"
+            },
+            {
+              "request_id": "validation:captured_runtime_frames",
+              "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+              "squared_error": 0.011920064687728882,
+              "teacher_energy": 0.2976311445236206,
+              "normalized_error": 0.04004978950307024,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 48,
+                  "query_positions": [
+                    0,
+                    6,
+                    13,
+                    20,
+                    26,
+                    33,
+                    40,
+                    47
+                  ],
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0,
+                  "terminal_query": {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  "queries": [
+                    {
+                      "position": 0,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 6,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 13,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 20,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 26,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 33,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 40,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 48,
+                  "current_end": 49,
+                  "query_positions": [
+                    48
+                  ],
+                  "squared_error": 0.011920064687728882,
+                  "teacher_energy": 0.2976311445236206,
+                  "normalized_error": 0.04004978950307024,
+                  "terminal_query": {
+                    "position": 48,
+                    "squared_error": 0.011920064687728882,
+                    "teacher_energy": 0.2976311445236206,
+                    "normalized_error": 0.04004978950307024
+                  },
+                  "queries": [
+                    {
+                      "position": 48,
+                      "squared_error": 0.011920064687728882,
+                      "teacher_energy": 0.2976311445236206,
+                      "normalized_error": 0.04004978950307024
+                    }
+                  ]
+                }
+              ],
+              "partition": "captured_runtime_frames"
+            }
+          ]
+        },
+        "bf16_rank_output": {
+          "squared_error": 0.024196654558181763,
+          "teacher_energy": 0.5954314470291138,
+          "normalized_error": 0.040637179441747995,
+          "requests": [
+            {
+              "request_id": "validation:single_split",
+              "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+              "squared_error": 0.012098327279090881,
+              "teacher_energy": 0.2977157235145569,
+              "normalized_error": 0.040637179441747995,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 48,
+                  "query_positions": [
+                    0,
+                    6,
+                    13,
+                    20,
+                    26,
+                    33,
+                    40,
+                    47
+                  ],
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0,
+                  "terminal_query": {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  "queries": [
+                    {
+                      "position": 0,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 6,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 13,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 20,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 26,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 33,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 40,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 48,
+                  "current_end": 49,
+                  "query_positions": [
+                    48
+                  ],
+                  "squared_error": 0.012098327279090881,
+                  "teacher_energy": 0.2977157235145569,
+                  "normalized_error": 0.040637179441747995,
+                  "terminal_query": {
+                    "position": 48,
+                    "squared_error": 0.012098327279090881,
+                    "teacher_energy": 0.2977157235145569,
+                    "normalized_error": 0.040637179441747995
+                  },
+                  "queries": [
+                    {
+                      "position": 48,
+                      "squared_error": 0.012098327279090881,
+                      "teacher_energy": 0.2977157235145569,
+                      "normalized_error": 0.040637179441747995
+                    }
+                  ]
+                }
+              ],
+              "partition": "single_split"
+            },
+            {
+              "request_id": "validation:captured_runtime_frames",
+              "sample_sha256": "61e4308c282094ece1c3aac8df8b91e5d0943e5cbbf1971e58a5dc0dd20bba2d",
+              "squared_error": 0.012098327279090881,
+              "teacher_energy": 0.2977157235145569,
+              "normalized_error": 0.040637179441747995,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 48,
+                  "query_positions": [
+                    0,
+                    6,
+                    13,
+                    20,
+                    26,
+                    33,
+                    40,
+                    47
+                  ],
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0,
+                  "terminal_query": {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  "queries": [
+                    {
+                      "position": 0,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 6,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 13,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 20,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 26,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 33,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 40,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 48,
+                  "current_end": 49,
+                  "query_positions": [
+                    48
+                  ],
+                  "squared_error": 0.012098327279090881,
+                  "teacher_energy": 0.2977157235145569,
+                  "normalized_error": 0.040637179441747995,
+                  "terminal_query": {
+                    "position": 48,
+                    "squared_error": 0.012098327279090881,
+                    "teacher_energy": 0.2977157235145569,
+                    "normalized_error": 0.040637179441747995
+                  },
+                  "queries": [
+                    {
+                      "position": 48,
+                      "squared_error": 0.012098327279090881,
+                      "teacher_energy": 0.2977157235145569,
+                      "normalized_error": 0.040637179441747995
+                    }
+                  ]
+                }
+              ],
+              "partition": "captured_runtime_frames"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "optimizer_decision": {
+    "accepted": true,
+    "phases": [
+      {
+        "phase": "k",
+        "baseline_proxy_loss": 0.002557559171691537,
+        "selected_proxy_loss": 0.002250577206723392,
+        "accepted": true,
+        "candidates": [
+          {
+            "step": 1,
+            "proxy_loss": 0.004308289149776101,
+            "accepted": false
+          },
+          {
+            "step": 21,
+            "proxy_loss": 0.002250577206723392,
+            "accepted": true
+          },
+          {
+            "step": 41,
+            "proxy_loss": 0.006215738831087947,
+            "accepted": false
+          },
+          {
+            "step": 61,
+            "proxy_loss": 0.004994265851564705,
+            "accepted": false
+          },
+          {
+            "step": 80,
+            "proxy_loss": 0.003524182247929275,
+            "accepted": false
+          }
+        ]
+      },
+      {
+        "phase": "v",
+        "baseline_proxy_loss": 0.00021009425836382434,
+        "selected_proxy_loss": 0.00016960307402769104,
+        "accepted": true,
+        "candidates": [
+          {
+            "step": 1,
+            "proxy_loss": 0.00016960307402769104,
+            "accepted": true
+          },
+          {
+            "step": 21,
+            "proxy_loss": 0.0007643818971700966,
+            "accepted": false
+          },
+          {
+            "step": 41,
+            "proxy_loss": 0.00041795756260398775,
+            "accepted": false
+          },
+          {
+            "step": 61,
+            "proxy_loss": 0.00035241240402683616,
+            "accepted": false
+          },
+          {
+            "step": 80,
+            "proxy_loss": 0.0003540680045261979,
+            "accepted": false
+          }
+        ]
+      }
+    ],
+    "policy": {
+      "policy_version": "optr_oscar_shared_candidates_ascend_v9",
+      "capture_lengths": {
+        "train": [
+          4096,
+          32768,
+          65536
+        ],
+        "validation": [
+          4096,
+          32768,
+          65536
+        ],
+        "test": [
+          4096,
+          32768,
+          65536
+        ]
+      },
+      "decode_tokens": 8,
+      "query_samples_per_frame": 8,
+      "steps": 80,
+      "lr": 0.02,
+      "eval_every": 20,
+      "query_batch_size": 8,
+      "fitting_objective": "upstream_fp32_independent_gqa_kl_output_k_then_conditional_v",
+      "fitted_grouping": "layer",
+      "lambda_output": 1.0,
+      "kv_tile_size": 256,
+      "history_splits": 1,
+      "validation_partitions": [
+        "single_split",
+        "captured_runtime_frames"
+      ],
+      "validation_projection_views": [
+        "fp32",
+        "bf16_output",
+        "bf16_rank_output"
+      ],
+      "sink_tokens": 2,
+      "recent_tokens": 4,
+      "k_clip": 0.96,
+      "v_clip": 0.92,
+      "group_size": "head_dim",
+      "math_contract": "oscar_bf16_attention_v4_fp32_metadata",
+      "selection": "shared_layer_each_query_and_projection_nonworse",
+      "deployment_candidate_selection": "fixed_k_existing_v_checkpoints_first_nonworse",
+      "max_deployment_candidates": 6,
+      "test_policy": "independent_accept_or_fail_no_reselection",
+      "execution": "npu_fp32_proxy_cpu_orthogonal_and_deployment_validation",
+      "source_plan": "disjoint_records_packed_calibration_only_v1",
+      "sampling_chunk_tokens": 16384,
+      "tensor_parallel_size": 4,
+      "max_model_len": 262144,
+      "attention_splits": 1,
+      "history_token_capacity": null,
+      "cube_cores": null,
+      "compilation_config": {}
+    },
+    "objective": "upstream_fp32_independent_gqa_kl_output_k_then_conditional_v",
+    "fit_device": "cpu",
+    "matrix_exp_device": "cpu",
+    "fitted_grouping": "layer",
+    "staging_resources": {
+      "mode": "resident",
+      "estimated_resident_fixed_bytes": 62248,
+      "resident_fixed_budget_bytes": 8589934592,
+      "streamed_row_fixed_budget_bytes": 536870912,
+      "largest_staged_fixed_row_bytes": 15946,
+      "train_rows": 2,
+      "validation_rows": 2,
+      "query_chunk_weighting": "chunk_queries/full_request_queries",
+      "extra_transfers_per_iteration": false,
+      "teacher_recomputed_per_iteration": false,
+      "selected_k_probabilities_recomputed_per_v_iteration": false,
+      "budget_scope": "fixed_tensor_cache_excludes_autograd_working_memory_and_allocator"
+    },
+    "selection": "shared_layer_proxy_then_joint_deployment_gate",
+    "loss_reduction": "mean_kv_heads_mean_requests_mean_gqa_queries_hidden",
+    "model_quality": "not_measured",
+    "npu_equivalence": "not_measured"
+  },
+  "npu_quality_and_performance": "not_measured",
+  "cost_boundary": "candidate_matrices_are_already_evaluated_by_official_proxy;_extra_offline_deployment_replay_is_required_to_check_alternatives",
+  "replay_normalization": "FP32_accumulator_times_FP32_reciprocal_of_sum",
+  "replay_source_sha256": "b1abf804b14e519b12b2ac646f6496a930a319694fa3f43cfd9e99a70fdc604d",
+  "actual_v9_selection": {
+    "strategy": "primary_first;_only_if_rejected_try_distinct_existing_V_by_(proxy_loss,step);_stop_at_first_strictly_passing",
+    "full_proxy_order_steps": [
+      1,
+      0,
+      61,
+      80,
+      41,
+      21
+    ],
+    "evaluated_candidates": [
+      "primary",
+      "v_step_0",
+      "v_step_61"
+    ],
+    "selected_candidate": "v_step_61",
+    "accepted": true,
+    "passes_all_strict_validation_gates": true,
+    "original_optimizer_phases_unchanged": true,
+    "steps_run_per_phase": {
+      "k": 80,
+      "v": 80
+    },
+    "selected_hashes": {
+      "Rk_float32_bytes_sha256": "056c32a909217bb53bd3124ee07776a4df37d3ccc730263f601d7d4c6e8473f7",
+      "Rv_float32_bytes_sha256": "3e847382d9a19ade50960a4f429b6cef640547c4d932fad8980bfbad69682a24",
+      "layer_constants_sha256": "5aed1fc609d0c83b2716adda094d6128012354a41bad44563c8b53e7b4834606"
+    },
+    "selected_validation": {
+      "fp32_squared_error": 0.023796010484745472,
+      "bf16_output_squared_error": 0.023840129375457764,
+      "bf16_rank_output_squared_error": 0.024196654558181763
+    },
+    "relative_fp32_sse_improvement_percent": 55.91346448759508,
+    "independent_test_used_for_selection": false,
+    "test_evaluated_candidates": [
+      "baseline",
+      "selected"
+    ],
+    "independent_test_report": {
+      "baseline": {
+        "squared_error": 0.18648894204570762,
+        "teacher_energy": 0.26916636295532215,
+        "normalized_error": 0.6928389565402798,
+        "requests": [
+          {
+            "request_id": "test:single_split",
+            "sample_sha256": "280464e85a913401151241d230b78e7877952350806b7ef3feb313f3aca4f4c3",
+            "squared_error": 0.09324447102285381,
+            "teacher_energy": 0.13458318147766107,
+            "normalized_error": 0.6928389565402798,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 48,
+                "query_positions": [
+                  0,
+                  6,
+                  13,
+                  20,
+                  26,
+                  33,
+                  40,
+                  47
+                ],
+                "squared_error": 0.0,
+                "teacher_energy": 0.0,
+                "normalized_error": 0.0,
+                "terminal_query": {
+                  "position": 47,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                "queries": [
+                  {
+                    "position": 0,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 6,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 13,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 20,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 26,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 33,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 40,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 48,
+                "current_end": 49,
+                "query_positions": [
+                  48
+                ],
+                "squared_error": 0.09324447102285381,
+                "teacher_energy": 0.13458318147766107,
+                "normalized_error": 0.6928389565402798,
+                "terminal_query": {
+                  "position": 48,
+                  "squared_error": 0.09324447102285381,
+                  "teacher_energy": 0.13458318147766107,
+                  "normalized_error": 0.6928389565402798
+                },
+                "queries": [
+                  {
+                    "position": 48,
+                    "squared_error": 0.09324447102285381,
+                    "teacher_energy": 0.13458318147766107,
+                    "normalized_error": 0.6928389565402798
+                  }
+                ]
+              }
+            ],
+            "partition": "single_split"
+          },
+          {
+            "request_id": "test:captured_runtime_frames",
+            "sample_sha256": "280464e85a913401151241d230b78e7877952350806b7ef3feb313f3aca4f4c3",
+            "squared_error": 0.09324447102285381,
+            "teacher_energy": 0.13458318147766107,
+            "normalized_error": 0.6928389565402798,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 48,
+                "query_positions": [
+                  0,
+                  6,
+                  13,
+                  20,
+                  26,
+                  33,
+                  40,
+                  47
+                ],
+                "squared_error": 0.0,
+                "teacher_energy": 0.0,
+                "normalized_error": 0.0,
+                "terminal_query": {
+                  "position": 47,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                "queries": [
+                  {
+                    "position": 0,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 6,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 13,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 20,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 26,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 33,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 40,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 48,
+                "current_end": 49,
+                "query_positions": [
+                  48
+                ],
+                "squared_error": 0.09324447102285381,
+                "teacher_energy": 0.13458318147766107,
+                "normalized_error": 0.6928389565402798,
+                "terminal_query": {
+                  "position": 48,
+                  "squared_error": 0.09324447102285381,
+                  "teacher_energy": 0.13458318147766107,
+                  "normalized_error": 0.6928389565402798
+                },
+                "queries": [
+                  {
+                    "position": 48,
+                    "squared_error": 0.09324447102285381,
+                    "teacher_energy": 0.13458318147766107,
+                    "normalized_error": 0.6928389565402798
+                  }
+                ]
+              }
+            ],
+            "partition": "captured_runtime_frames"
+          }
+        ],
+        "projection_checks": {
+          "bf16_output": {
+            "squared_error": 0.1871908325701952,
+            "teacher_energy": 0.2690882682800293,
+            "normalized_error": 0.6956484344958259,
+            "requests": [
+              {
+                "request_id": "test:single_split",
+                "sample_sha256": "280464e85a913401151241d230b78e7877952350806b7ef3feb313f3aca4f4c3",
+                "squared_error": 0.0935954162850976,
+                "teacher_energy": 0.13454413414001465,
+                "normalized_error": 0.6956484344958259,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 48,
+                    "query_positions": [
+                      0,
+                      6,
+                      13,
+                      20,
+                      26,
+                      33,
+                      40,
+                      47
+                    ],
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0,
+                    "terminal_query": {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    "queries": [
+                      {
+                        "position": 0,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 6,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 13,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 20,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 26,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 33,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 40,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 47,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 48,
+                    "current_end": 49,
+                    "query_positions": [
+                      48
+                    ],
+                    "squared_error": 0.0935954162850976,
+                    "teacher_energy": 0.13454413414001465,
+                    "normalized_error": 0.6956484344958259,
+                    "terminal_query": {
+                      "position": 48,
+                      "squared_error": 0.0935954162850976,
+                      "teacher_energy": 0.13454413414001465,
+                      "normalized_error": 0.6956484344958259
+                    },
+                    "queries": [
+                      {
+                        "position": 48,
+                        "squared_error": 0.0935954162850976,
+                        "teacher_energy": 0.13454413414001465,
+                        "normalized_error": 0.6956484344958259
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "test:captured_runtime_frames",
+                "sample_sha256": "280464e85a913401151241d230b78e7877952350806b7ef3feb313f3aca4f4c3",
+                "squared_error": 0.0935954162850976,
+                "teacher_energy": 0.13454413414001465,
+                "normalized_error": 0.6956484344958259,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 48,
+                    "query_positions": [
+                      0,
+                      6,
+                      13,
+                      20,
+                      26,
+                      33,
+                      40,
+                      47
+                    ],
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0,
+                    "terminal_query": {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    "queries": [
+                      {
+                        "position": 0,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 6,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 13,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 20,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 26,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 33,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 40,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 47,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 48,
+                    "current_end": 49,
+                    "query_positions": [
+                      48
+                    ],
+                    "squared_error": 0.0935954162850976,
+                    "teacher_energy": 0.13454413414001465,
+                    "normalized_error": 0.6956484344958259,
+                    "terminal_query": {
+                      "position": 48,
+                      "squared_error": 0.0935954162850976,
+                      "teacher_energy": 0.13454413414001465,
+                      "normalized_error": 0.6956484344958259
+                    },
+                    "queries": [
+                      {
+                        "position": 48,
+                        "squared_error": 0.0935954162850976,
+                        "teacher_energy": 0.13454413414001465,
+                        "normalized_error": 0.6956484344958259
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ]
+          },
+          "bf16_rank_output": {
+            "squared_error": 0.1871185302734375,
+            "teacher_energy": 0.2689659595489502,
+            "normalized_error": 0.6956959556786704,
+            "requests": [
+              {
+                "request_id": "test:single_split",
+                "sample_sha256": "280464e85a913401151241d230b78e7877952350806b7ef3feb313f3aca4f4c3",
+                "squared_error": 0.09355926513671875,
+                "teacher_energy": 0.1344829797744751,
+                "normalized_error": 0.6956959556786704,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 48,
+                    "query_positions": [
+                      0,
+                      6,
+                      13,
+                      20,
+                      26,
+                      33,
+                      40,
+                      47
+                    ],
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0,
+                    "terminal_query": {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    "queries": [
+                      {
+                        "position": 0,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 6,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 13,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 20,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 26,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 33,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 40,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 47,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 48,
+                    "current_end": 49,
+                    "query_positions": [
+                      48
+                    ],
+                    "squared_error": 0.09355926513671875,
+                    "teacher_energy": 0.1344829797744751,
+                    "normalized_error": 0.6956959556786704,
+                    "terminal_query": {
+                      "position": 48,
+                      "squared_error": 0.09355926513671875,
+                      "teacher_energy": 0.1344829797744751,
+                      "normalized_error": 0.6956959556786704
+                    },
+                    "queries": [
+                      {
+                        "position": 48,
+                        "squared_error": 0.09355926513671875,
+                        "teacher_energy": 0.1344829797744751,
+                        "normalized_error": 0.6956959556786704
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "test:captured_runtime_frames",
+                "sample_sha256": "280464e85a913401151241d230b78e7877952350806b7ef3feb313f3aca4f4c3",
+                "squared_error": 0.09355926513671875,
+                "teacher_energy": 0.1344829797744751,
+                "normalized_error": 0.6956959556786704,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 48,
+                    "query_positions": [
+                      0,
+                      6,
+                      13,
+                      20,
+                      26,
+                      33,
+                      40,
+                      47
+                    ],
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0,
+                    "terminal_query": {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    "queries": [
+                      {
+                        "position": 0,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 6,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 13,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 20,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 26,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 33,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 40,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 47,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 48,
+                    "current_end": 49,
+                    "query_positions": [
+                      48
+                    ],
+                    "squared_error": 0.09355926513671875,
+                    "teacher_energy": 0.1344829797744751,
+                    "normalized_error": 0.6956959556786704,
+                    "terminal_query": {
+                      "position": 48,
+                      "squared_error": 0.09355926513671875,
+                      "teacher_energy": 0.1344829797744751,
+                      "normalized_error": 0.6956959556786704
+                    },
+                    "queries": [
+                      {
+                        "position": 48,
+                        "squared_error": 0.09355926513671875,
+                        "teacher_energy": 0.1344829797744751,
+                        "normalized_error": 0.6956959556786704
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ]
+          }
+        }
+      },
+      "selected": {
+        "squared_error": 0.07277150924005427,
+        "teacher_energy": 0.26916636295532215,
+        "normalized_error": 0.27035885331679915,
+        "requests": [
+          {
+            "request_id": "test:single_split",
+            "sample_sha256": "280464e85a913401151241d230b78e7877952350806b7ef3feb313f3aca4f4c3",
+            "squared_error": 0.03638575462002713,
+            "teacher_energy": 0.13458318147766107,
+            "normalized_error": 0.27035885331679915,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 48,
+                "query_positions": [
+                  0,
+                  6,
+                  13,
+                  20,
+                  26,
+                  33,
+                  40,
+                  47
+                ],
+                "squared_error": 0.0,
+                "teacher_energy": 0.0,
+                "normalized_error": 0.0,
+                "terminal_query": {
+                  "position": 47,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                "queries": [
+                  {
+                    "position": 0,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 6,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 13,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 20,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 26,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 33,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 40,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 48,
+                "current_end": 49,
+                "query_positions": [
+                  48
+                ],
+                "squared_error": 0.03638575462002713,
+                "teacher_energy": 0.13458318147766107,
+                "normalized_error": 0.27035885331679915,
+                "terminal_query": {
+                  "position": 48,
+                  "squared_error": 0.03638575462002713,
+                  "teacher_energy": 0.13458318147766107,
+                  "normalized_error": 0.27035885331679915
+                },
+                "queries": [
+                  {
+                    "position": 48,
+                    "squared_error": 0.03638575462002713,
+                    "teacher_energy": 0.13458318147766107,
+                    "normalized_error": 0.27035885331679915
+                  }
+                ]
+              }
+            ],
+            "partition": "single_split"
+          },
+          {
+            "request_id": "test:captured_runtime_frames",
+            "sample_sha256": "280464e85a913401151241d230b78e7877952350806b7ef3feb313f3aca4f4c3",
+            "squared_error": 0.03638575462002713,
+            "teacher_energy": 0.13458318147766107,
+            "normalized_error": 0.27035885331679915,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 48,
+                "query_positions": [
+                  0,
+                  6,
+                  13,
+                  20,
+                  26,
+                  33,
+                  40,
+                  47
+                ],
+                "squared_error": 0.0,
+                "teacher_energy": 0.0,
+                "normalized_error": 0.0,
+                "terminal_query": {
+                  "position": 47,
+                  "squared_error": 0.0,
+                  "teacher_energy": 0.0,
+                  "normalized_error": 0.0
+                },
+                "queries": [
+                  {
+                    "position": 0,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 6,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 13,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 20,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 26,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 33,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 40,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  },
+                  {
+                    "position": 47,
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 48,
+                "current_end": 49,
+                "query_positions": [
+                  48
+                ],
+                "squared_error": 0.03638575462002713,
+                "teacher_energy": 0.13458318147766107,
+                "normalized_error": 0.27035885331679915,
+                "terminal_query": {
+                  "position": 48,
+                  "squared_error": 0.03638575462002713,
+                  "teacher_energy": 0.13458318147766107,
+                  "normalized_error": 0.27035885331679915
+                },
+                "queries": [
+                  {
+                    "position": 48,
+                    "squared_error": 0.03638575462002713,
+                    "teacher_energy": 0.13458318147766107,
+                    "normalized_error": 0.27035885331679915
+                  }
+                ]
+              }
+            ],
+            "partition": "captured_runtime_frames"
+          }
+        ],
+        "projection_checks": {
+          "bf16_output": {
+            "squared_error": 0.07308245450258255,
+            "teacher_energy": 0.2690882682800293,
+            "normalized_error": 0.27159286790804493,
+            "requests": [
+              {
+                "request_id": "test:single_split",
+                "sample_sha256": "280464e85a913401151241d230b78e7877952350806b7ef3feb313f3aca4f4c3",
+                "squared_error": 0.036541227251291275,
+                "teacher_energy": 0.13454413414001465,
+                "normalized_error": 0.27159286790804493,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 48,
+                    "query_positions": [
+                      0,
+                      6,
+                      13,
+                      20,
+                      26,
+                      33,
+                      40,
+                      47
+                    ],
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0,
+                    "terminal_query": {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    "queries": [
+                      {
+                        "position": 0,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 6,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 13,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 20,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 26,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 33,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 40,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 47,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 48,
+                    "current_end": 49,
+                    "query_positions": [
+                      48
+                    ],
+                    "squared_error": 0.036541227251291275,
+                    "teacher_energy": 0.13454413414001465,
+                    "normalized_error": 0.27159286790804493,
+                    "terminal_query": {
+                      "position": 48,
+                      "squared_error": 0.036541227251291275,
+                      "teacher_energy": 0.13454413414001465,
+                      "normalized_error": 0.27159286790804493
+                    },
+                    "queries": [
+                      {
+                        "position": 48,
+                        "squared_error": 0.036541227251291275,
+                        "teacher_energy": 0.13454413414001465,
+                        "normalized_error": 0.27159286790804493
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "test:captured_runtime_frames",
+                "sample_sha256": "280464e85a913401151241d230b78e7877952350806b7ef3feb313f3aca4f4c3",
+                "squared_error": 0.036541227251291275,
+                "teacher_energy": 0.13454413414001465,
+                "normalized_error": 0.27159286790804493,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 48,
+                    "query_positions": [
+                      0,
+                      6,
+                      13,
+                      20,
+                      26,
+                      33,
+                      40,
+                      47
+                    ],
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0,
+                    "terminal_query": {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    "queries": [
+                      {
+                        "position": 0,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 6,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 13,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 20,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 26,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 33,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 40,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 47,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 48,
+                    "current_end": 49,
+                    "query_positions": [
+                      48
+                    ],
+                    "squared_error": 0.036541227251291275,
+                    "teacher_energy": 0.13454413414001465,
+                    "normalized_error": 0.27159286790804493,
+                    "terminal_query": {
+                      "position": 48,
+                      "squared_error": 0.036541227251291275,
+                      "teacher_energy": 0.13454413414001465,
+                      "normalized_error": 0.27159286790804493
+                    },
+                    "queries": [
+                      {
+                        "position": 48,
+                        "squared_error": 0.036541227251291275,
+                        "teacher_energy": 0.13454413414001465,
+                        "normalized_error": 0.27159286790804493
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ]
+          },
+          "bf16_rank_output": {
+            "squared_error": 0.07324698567390442,
+            "teacher_energy": 0.2689659595489502,
+            "normalized_error": 0.2723280886426593,
+            "requests": [
+              {
+                "request_id": "test:single_split",
+                "sample_sha256": "280464e85a913401151241d230b78e7877952350806b7ef3feb313f3aca4f4c3",
+                "squared_error": 0.03662349283695221,
+                "teacher_energy": 0.1344829797744751,
+                "normalized_error": 0.2723280886426593,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 48,
+                    "query_positions": [
+                      0,
+                      6,
+                      13,
+                      20,
+                      26,
+                      33,
+                      40,
+                      47
+                    ],
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0,
+                    "terminal_query": {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    "queries": [
+                      {
+                        "position": 0,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 6,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 13,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 20,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 26,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 33,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 40,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 47,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 48,
+                    "current_end": 49,
+                    "query_positions": [
+                      48
+                    ],
+                    "squared_error": 0.03662349283695221,
+                    "teacher_energy": 0.1344829797744751,
+                    "normalized_error": 0.2723280886426593,
+                    "terminal_query": {
+                      "position": 48,
+                      "squared_error": 0.03662349283695221,
+                      "teacher_energy": 0.1344829797744751,
+                      "normalized_error": 0.2723280886426593
+                    },
+                    "queries": [
+                      {
+                        "position": 48,
+                        "squared_error": 0.03662349283695221,
+                        "teacher_energy": 0.1344829797744751,
+                        "normalized_error": 0.2723280886426593
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "test:captured_runtime_frames",
+                "sample_sha256": "280464e85a913401151241d230b78e7877952350806b7ef3feb313f3aca4f4c3",
+                "squared_error": 0.03662349283695221,
+                "teacher_energy": 0.1344829797744751,
+                "normalized_error": 0.2723280886426593,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 48,
+                    "query_positions": [
+                      0,
+                      6,
+                      13,
+                      20,
+                      26,
+                      33,
+                      40,
+                      47
+                    ],
+                    "squared_error": 0.0,
+                    "teacher_energy": 0.0,
+                    "normalized_error": 0.0,
+                    "terminal_query": {
+                      "position": 47,
+                      "squared_error": 0.0,
+                      "teacher_energy": 0.0,
+                      "normalized_error": 0.0
+                    },
+                    "queries": [
+                      {
+                        "position": 0,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 6,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 13,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 20,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 26,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 33,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 40,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      },
+                      {
+                        "position": 47,
+                        "squared_error": 0.0,
+                        "teacher_energy": 0.0,
+                        "normalized_error": 0.0
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 48,
+                    "current_end": 49,
+                    "query_positions": [
+                      48
+                    ],
+                    "squared_error": 0.03662349283695221,
+                    "teacher_energy": 0.1344829797744751,
+                    "normalized_error": 0.2723280886426593,
+                    "terminal_query": {
+                      "position": 48,
+                      "squared_error": 0.03662349283695221,
+                      "teacher_energy": 0.1344829797744751,
+                      "normalized_error": 0.2723280886426593
+                    },
+                    "queries": [
+                      {
+                        "position": 48,
+                        "squared_error": 0.03662349283695221,
+                        "teacher_energy": 0.1344829797744751,
+                        "normalized_error": 0.2723280886426593
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

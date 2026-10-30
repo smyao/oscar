@@ -67,7 +67,7 @@ def backward_shared(rotation, rows, phase, policy):
 
 
 def fit_shared(base_k, base_v, mean, train_heads, validation_heads, *, policy,
-               progress=None, device="cpu"):
+               progress=None, device="cpu", value_candidate_callback=None):
     """One layer-wide K search, then one V search conditional on selected K."""
     heads, dim = validate_shared_pair(base_k, base_v, mean)
     for split in (train_heads, validation_heads):
@@ -103,6 +103,8 @@ def fit_shared(base_k, base_v, mean, train_heads, validation_heads, *, policy,
             emit("fixed_k_probabilities_ready" if resources["mode"] == "resident"
                  else "fixed_k_rotation_ready", phase=phase, samples=len(train) + len(held))
         baseline = best = _score(origin.to(device), held, phase, policy, emit)
+        if phase == "v" and value_candidate_callback is not None:
+            value_candidate_callback(step=0, rotation=origin, proxy_loss=baseline)
         best_rotation = origin.clone()
         correction = torch.zeros_like(origin, requires_grad=True)
         optimizer = torch.optim.Adam([correction], lr=policy["lr"])
@@ -123,6 +125,8 @@ def fit_shared(base_k, base_v, mean, train_heads, validation_heads, *, policy,
                 score = _score(candidate.to(device), held, phase, policy, emit)
                 accepted = score < best
                 candidates.append({"step": step + 1, "proxy_loss": score, "accepted": accepted})
+                if phase == "v" and value_candidate_callback is not None:
+                    value_candidate_callback(step=step + 1, rotation=candidate, proxy_loss=score)
                 if accepted:
                     best, best_rotation = score, candidate.clone()
             emit("validation_done", phase=phase, step=step + 1, steps=policy["steps"],

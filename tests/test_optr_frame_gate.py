@@ -239,13 +239,13 @@ def test_terminal_teacher_identity_is_preserved_when_frame_teacher_sum_matches()
 
 @pytest.mark.parametrize("split", ["validation", "test"])
 @pytest.mark.parametrize("choice", ["baseline", "selected"])
-@pytest.mark.parametrize("version", ["v4", "v5", "v6", "v7", "v8"])
+@pytest.mark.parametrize("version", ["v4", "v5", "v6", "v7", "v8", "v9"])
 def test_certificate_requires_terminal_query_for_every_frame(tmp_path, split, choice, version):
     from test_optr_integration import NAME, artifact, configuration
     from oscar_ascend.optr_policy import legacy_capture_profile
     config = configuration(tmp_path)
     value = artifact(config)
-    if version != "v8":
+    if version != "v9":
         value["calibration_profile"] = legacy_capture_profile(value["calibration_profile"], config, version)
     policy = value["calibration_profile"]["refinement_policy"]
     value["refinement_certificate"]["policy"] = copy.deepcopy(policy)
@@ -329,9 +329,15 @@ def test_query_teacher_identity_cannot_hide_in_unchanged_frame_energy():
 @pytest.mark.parametrize("view", ["fp32", "bf16_output", "bf16_rank_output"])
 @pytest.mark.parametrize("split,choice", [("validation", "baseline"), ("validation", "selected"),
                                          ("test", "baseline"), ("test", "selected")])
-def test_v8_requires_every_query_in_every_view_and_record(tmp_path, view, split, choice):
+@pytest.mark.parametrize("version", ["v8", "v9"])
+def test_projection_policies_require_every_query_in_every_view_and_record(tmp_path, view, split, choice, version):
     from test_optr_integration import NAME, artifact, configuration
-    value = artifact(configuration(tmp_path))
+    from oscar_ascend.optr_policy import legacy_capture_profile
+    config = configuration(tmp_path)
+    value = artifact(config)
+    if version == "v8":
+        value["calibration_profile"] = legacy_capture_profile(value["calibration_profile"], config, version)
+        value["refinement_certificate"]["policy"] = value["calibration_profile"]["refinement_policy"]
     result = value["refinement_certificate"]["layers"][NAME][split][choice]
     if view != "fp32": result = result["projection_checks"][view]
     result["requests"][0]["frames"][0].pop("queries")
@@ -372,9 +378,15 @@ def test_projection_evidence_cannot_be_dropped_from_only_one_side():
 @pytest.mark.parametrize("split,choice", [("validation", "baseline"), ("validation", "selected"),
                                          ("test", "baseline"), ("test", "selected")])
 @pytest.mark.parametrize("view", [None, "bf16_output", "bf16_rank_output"])
-def test_v8_certificate_cannot_publish_missing_projection_checks(tmp_path, split, choice, view):
+@pytest.mark.parametrize("version", ["v8", "v9"])
+def test_projection_certificates_cannot_publish_missing_projection_checks(tmp_path, split, choice, view, version):
     from test_optr_integration import NAME, artifact, configuration
-    value = artifact(configuration(tmp_path))
+    from oscar_ascend.optr_policy import legacy_capture_profile
+    config = configuration(tmp_path)
+    value = artifact(config)
+    if version == "v8":
+        value["calibration_profile"] = legacy_capture_profile(value["calibration_profile"], config, version)
+        value["refinement_certificate"]["policy"] = value["calibration_profile"]["refinement_policy"]
     result = value["refinement_certificate"]["layers"][NAME][split][choice]
     if view is None: result.pop("projection_checks")
     else: result["projection_checks"].pop(view)

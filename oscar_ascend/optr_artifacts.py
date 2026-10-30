@@ -16,7 +16,8 @@ import tempfile
 import uuid
 
 from .optr_policy import (OBJECTIVE, RECIPE_VERSION, UPSTREAM_COMMIT,
-                          EXPERIMENTAL_PUBLICATION_POLICY, PROJECTION_VIEWS)
+                          EXPERIMENTAL_PUBLICATION_POLICY, PROJECTION_VIEWS,
+                          DEPLOYMENT_CANDIDATE_SELECTION, MAX_DEPLOYMENT_CANDIDATES)
 
 
 def file_sha256(path):
@@ -277,7 +278,8 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
         raise ValueError("OptR calibration profile differs from selected configuration")
     base = profile.get("base_calibration_profile", {})
     policy = profile.get("refinement_policy", {})
-    projection_policy = policy.get("policy_version") == "optr_oscar_shared_projection_ascend_v8"
+    candidate_policy = policy.get("policy_version") == "optr_oscar_shared_candidates_ascend_v9"
+    projection_policy = candidate_policy or policy.get("policy_version") == "optr_oscar_shared_projection_ascend_v8"
     train_seed = projection_policy or policy.get("policy_version") == "optr_oscar_shared_train_seed_ascend_v7"
     shared_layer = train_seed or policy.get("policy_version") == "optr_oscar_shared_upstream_ascend_v6"
     source_seed = shared_layer or policy.get("policy_version") == "optr_oscar_base_upstream_ascend_v5"
@@ -287,6 +289,10 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
         raise ValueError("shared-layer OptR requires shared fitting and whole-layer selection")
     if projection_policy and policy.get("validation_projection_views") != list(PROJECTION_VIEWS):
         raise ValueError("OptR projection policy requires all frozen validation views")
+    if candidate_policy and (policy.get("deployment_candidate_selection") != DEPLOYMENT_CANDIDATE_SELECTION or
+            type(policy.get("max_deployment_candidates")) is not int or
+            policy["max_deployment_candidates"] != MAX_DEPLOYMENT_CANDIDATES):
+        raise ValueError("OptR candidate policy requires frozen selection and bounded candidate count")
     if source_seed:
         from .optr_oscar_seed import validate_seed_profile
         validate_seed_profile(base, artifact.get("model_fingerprint"), allow_legacy=not train_seed)

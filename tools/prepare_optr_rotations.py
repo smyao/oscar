@@ -82,12 +82,47 @@ def _prepare_base(config, directory, *, testing, import_pair, base_runner):
     return artifact
 
 
+def _single_partition_equivalent(samples, policy):
+    """Only captured, valid one-split geometry can reuse fixed-one replay.
+
+    The first real replay still validates every tensor and policy. Missing
+    captured-only metadata must reach the captured replay's existing error,
+    never be hidden by this arithmetic equivalence shortcut.
+    """
+    import torch
+    if type(policy.get("history_splits", 1)) is not int or policy.get("history_splits", 1) != 1:
+        return False
+    for head in samples:
+        for sample in head:
+            positions = sample.get("positions")
+            ends = sample.get("current_ends")
+            splits = sample.get("history_splits")
+            if (not isinstance(positions, torch.Tensor) or positions.device.type != "cpu"
+                    or positions.dtype != torch.int64 or positions.ndim != 1 or not positions.numel()):
+                return False
+            for vector in (ends, splits):
+                if (not isinstance(vector, torch.Tensor) or vector.device.type != "cpu"
+                        or vector.dtype != torch.int64 or vector.shape != positions.shape):
+                    return False
+            if not bool((splits == 1).all()):
+                return False
+    return True
+
+
 def _metrics(constants, samples, policy, *, progress=None):
     """Check both the fitting partition and native-captured frame partition."""
     from oscar_ascend.optr_traces import aggregate_layer_error
     rows = {view: [] for view in policy.get("validation_projection_views", ["fp32"])}
+    single = None
     for partition in policy["validation_partitions"]:
-        metric = aggregate_layer_error(constants, samples, {**policy, "replay_partition": partition})
+        if partition == "captured_runtime_frames" and single is not None and _single_partition_equivalent(samples, policy):
+            # _replay differs only in split_counts, which are identical here.
+            # Preserve separate mutable evidence and both partition identities.
+            metric = copy.deepcopy(single)
+        else:
+            metric = aggregate_layer_error(constants, samples, {**policy, "replay_partition": partition})
+        if partition == "single_split":
+            single = metric
         if progress:
             progress(event="partition_checked", partition=partition)
         views = {"fp32": metric, **metric.get("projection_checks", {})}
@@ -103,7 +138,7 @@ def _metrics(constants, samples, policy, *, progress=None):
     return result
 
 
-def _validate_shared_result(result, baseline):
+def _validate_shared_result(result, baseline, *, policy=None, require_candidates=False):
     import torch
     from oscar_ascend.optr_shared import validate_shared_pair
     if not isinstance(result, dict) or not isinstance(result.get("decision"), dict):
@@ -112,6 +147,9 @@ def _validate_shared_result(result, baseline):
     if result["decision"].get("accepted") is False and any(not torch.equal(
             result[key], baseline[key]) for key in ("Rk", "Rv")):
         raise ValueError("rejected OptR shared checkpoint changed baseline matrices")
+    if require_candidates or result.get("value_candidates") is not None:
+        from oscar_ascend.optr_candidates import validate_candidates
+        validate_candidates(result.get("value_candidates"), result, baseline, policy)
     return result["Rk"], result["Rv"], result["decision"]
 
 
@@ -242,6 +280,11 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
     validate_shared_pair(baseline["Rk"], baseline["Rv"], baseline["k_mean"])
     real_fitter = fitter is None
     fitter = fit_shared if real_fitter else fitter
+    candidate_search = "deployment_candidate_selection" in policy
+    collector = None
+    if real_fitter and candidate_search:
+        from oscar_ascend.optr_candidates import ValueCandidates
+        collector = ValueCandidates(policy)
     emit = _progress if progress is None else progress
     owner = f"layer-{baseline['layer_id']}-shared"
     emit(layer=name, phase="fitting", fitted_grouping="layer")
@@ -251,16 +294,21 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
         if real_fitter:
             options["progress"] = lambda row: emit(layer=name, **row)
             options["device"] = fit_device
+            if collector is not None:
+                options["value_candidate_callback"] = collector.observe
         rk, rv, decision = fitter(baseline["Rk"], baseline["Rv"], baseline["k_mean"],
             samples["train"], samples["validation"], **options)
         saved = {"Rk": rk.detach().cpu().contiguous(), "Rv": rv.detach().cpu().contiguous(),
-                 "decision": decision}
-        _validate_shared_result(saved, baseline)
+                 "decision": decision,
+                 "value_candidates": collector.payload(rk) if collector is not None else None}
+        _validate_shared_result(saved, baseline, policy=policy,
+                                require_candidates=real_fitter and candidate_search)
         if checkpoints:
             checkpoints.save(owner, saved)
         emit(layer=name, phase="shared_fit_saved")
     else:
-        rk, rv, decision = _validate_shared_result(saved, baseline)
+        rk, rv, decision = _validate_shared_result(saved, baseline, policy=policy,
+            require_candidates=real_fitter and candidate_search)
         emit(layer=name, phase="shared_fit_resumed")
     trial = {**baseline, "Rk": rk, "Rv": rv}
     def measure(constants, split, candidate):
@@ -279,6 +327,37 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
     selected, after = (trial, proposal) if accepted else (baseline, before)
     selection = {"method": "shared_layer_projection_validation_v2" if projection else "shared_layer_validation_v1", "accepted": accepted,
                  "test_used_for_selection": False, "proposal": proposal}
+    if candidate_search:
+        from oscar_ascend.optr_candidates import alternatives
+        selection.update(method="shared_existing_v_checkpoints_v1",
+            candidate_order="primary_then_proxy_loss_then_step_first_nonworse",
+            max_candidates=policy["max_deployment_candidates"], selected_candidate="primary" if accepted else "seed",
+            evaluated_candidates=[{"candidate": "primary", "accepted": accepted,
+                "constants_sha256": matrix_digest({name: trial}), "validation": proposal}])
+        # A primary passing the unchanged strict gate needs no alternatives.
+        # Only a rejected primary opens this bounded checkpoint search.
+        # K stays fixed throughout; no test data is touched in this loop.
+        if not accepted and saved.get("value_candidates") is not None:
+            import torch
+            for candidate in alternatives(saved["value_candidates"]["values"], rv):
+                candidate_id = f"v_step_{candidate['step']}"
+                value = candidate["Rv"].expand_as(rv).clone().contiguous()
+                if torch.equal(rk, baseline["Rk"]) and torch.equal(value, baseline["Rv"]):
+                    continue  # The unchanged seed cannot strictly improve itself.
+                constants = {**baseline, "Rk": rk, "Rv": value}
+                measured = measure(constants, "validation", candidate_id)
+                accepted = nonworse(before, measured, **acceptance) and (
+                    measured["squared_error"] < before["squared_error"])
+                selection["evaluated_candidates"].append({"candidate": candidate_id,
+                    "step": candidate["step"], "proxy_loss": candidate["proxy_loss"],
+                    "constants_sha256": matrix_digest({name: constants}),
+                    "accepted": accepted, "validation": measured})
+                emit(layer=name, phase="joint_output_check", split="validation",
+                     event="existing_v_candidate_checked", candidate=candidate_id, accepted=accepted)
+                if accepted:
+                    selected, after = constants, measured
+                    selection.update(accepted=True, selected_candidate=candidate_id)
+                    break
     emit(layer=name, phase="joint_output_check", split="validation", event="shared_layer_selected",
          accepted=accepted, fitted_grouping="layer")
     # This dataset never chooses a matrix/step/hyperparameter. User 2026-10-28

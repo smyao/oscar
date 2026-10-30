@@ -143,7 +143,7 @@ def test_loader_streams_one_layer_and_reconstructs_actual_frame_partitions(tmp_p
     assert load(canonical, config)["_root"] == str(path.parent)
 
 
-@pytest.mark.parametrize("version", ["v1", "v2", "v3", "v4", "v5", "v6", "v7"])
+@pytest.mark.parametrize("version", ["v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8"])
 def test_legacy_capture_reuse_requires_exact_policy_and_sampling_coverage(tmp_path, version):
     from oscar_ascend.optr_policy import legacy_capture_profile
     path, config, top = build_bundle(tmp_path)
@@ -208,12 +208,13 @@ def test_shared_raw_trace_retains_its_old_seed_identity(tmp_path, version):
         load(path, config)
 
 
-def test_v7_raw_trace_keeps_authenticated_train_seed_without_relabelling(tmp_path):
+@pytest.mark.parametrize("version", ["v7", "v8"])
+def test_train_seed_raw_trace_keeps_authenticated_source_without_relabelling(tmp_path, version):
     from oscar_ascend.optr_policy import legacy_capture_profile
     from oscar_ascend.optr_oscar_seed import legacy_seed_profile
     path, config, top = build_bundle(tmp_path)
     current = top["calibration_profile"]
-    historical = legacy_capture_profile(current, config, "v7")
+    historical = legacy_capture_profile(current, config, version)
     assert historical["base_calibration_profile"] == current["base_calibration_profile"]
     assert historical["refinement_policy"] != current["refinement_policy"]
     top.update(calibration_profile=historical, optr_policy=historical["refinement_policy"])

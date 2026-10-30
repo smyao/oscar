@@ -30,7 +30,7 @@ DEFAULT_POLICY = {
     "kv_tile_size": 256, "history_splits": 1,
     "replay_partition": "fixed_splits",
 }
-REPLAY_CONTRACT = "offline_bf16_rotated_fp32_metadata_source_split_v1"
+REPLAY_CONTRACT = "offline_bf16_rotated_fp32_metadata_reciprocal_source_split_v2"
 
 
 def _policy(policy: Mapping[str, Any]) -> dict[str, Any]:
@@ -172,7 +172,10 @@ def _tiles(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor,
         maximum = new_max
     live = denominator > 0
     safe_sum = torch.where(live, denominator, torch.ones_like(denominator))
-    output = accumulator / safe_sum[..., None]
+    # All deployed official decode/C4/C16 producers normalize with the FP32
+    # scalar reciprocal first, then Muls(acc, 1.0F/sum). Direct division can
+    # round onto the other side of a later BF16 midpoint, even with exact QKV.
+    output = accumulator * (1.0 / safe_sum)[..., None]
     lse = torch.where(live, maximum + torch.log(safe_sum), torch.full_like(maximum, -math.inf))
     return output, lse
 

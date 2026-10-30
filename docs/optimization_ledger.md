@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+> 2026-10-30接近原OSCAR后续优化：v9补回同次已有V检查点的部署选择机会，真实80+80步反例中原代理赢家失败、第61步通过全部v8门；合成SSE下降55.91%不作为模型收益。离线归一按生产核倒数乘法修正，S=1双分片回放等价复用。原损失/梯度/seed/线上保持；候选最多6个、test不重选，额外离线验证/内存成本如实记录。768项本地回归和包/启动证据见[续修](optr_oscar_base_alignment_20261029.md)、`reports/optr_candidate_search_20261030/verification.json`；仅本地提交，不申领NPU质量或性能收益。
+
 > 2026-10-30再次精度排查：v8修复非末query退化被帧均值掩盖、FP32投影改善但BF16输出退化两类候选误接受。真实80步反例总SSE下降63.67%仍有位置增加25.68%/290.12%；精确舍入反例FP32改善16倍仍使BF16误差从0变非零。新验证复用既有attention/W_O结果，增加离线CPU指标/证书成本，不改官方loss/共享seed或线上计算。694项本地回归及wheel/启动核对见[详细比较与剩余风险](optr_oscar_base_alignment_20261029.md)、`reports/optr_precision_review_20261030/verification.json`；仅本地提交，无模型分数或性能收益申领。
 
 > 2026-10-30自查续修：确认seed原顺序取样混入held-out来源，改为同trace的train分区并升级v7/seed v2身份；完整prompt足量即停止。共享公式/官方目标/线上路径不变；补大采样有界固定缓存及非有限正交误差拒绝。630项本地回归、包和启动对照见[自查记录](optr_oscar_base_alignment_20261029.md)及`reports/optr_self_review_20261030/verification.json`。仅本地提交，无NPU/模型质量/性能验收。

@@ -1,0 +1,105 @@
+{
+  "baseline_commit": "46e3e712f3e5891b4bf112a50cb0b0d1cfa6c11c",
+  "scope": "offline CPU replay arithmetic order; no online kernel or upstream fitting loss change",
+  "finding": "FP32 accumulator/sum is not numerically equivalent to accumulator*(FP32(1/sum)) before BF16 output rounding",
+  "deployed_source_evidence": [
+    {
+      "path": "csrc/kernels/attention_cv_official_decode.cpp",
+      "sha256": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+      "lines": [
+        649,
+        773
+      ],
+      "source_expression": "Muls(acc[r*D],acc[r*D],1.0F/sum,D)"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_official_cluster4.cpp",
+      "sha256": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+      "lines": [
+        946,
+        1028
+      ],
+      "source_expression": "Muls(acc[r*D],acc[r*D],1.0F/sum,D)"
+    },
+    {
+      "path": "csrc/kernels/attention_cv_official_cluster16.cpp",
+      "sha256": "df843b991b0112e97b524f9b2d10f53f8805a650c2187ae47345a545b0f0582f",
+      "lines": [
+        991,
+        1073
+      ],
+      "source_expression": "Muls(acc[r*D],acc[r*D],1.0F/sum,D)"
+    }
+  ],
+  "partial_counterexample": {
+    "head_dim": 256,
+    "gqa": 6,
+    "keys": 7,
+    "q_and_k": "all zero",
+    "v_nonzero_entries": {
+      "[0,0]": 9.4375,
+      "[1,0]": -0.00390625
+    },
+    "all_qkv_exactly_bf16": true,
+    "probability_denominator": 7.0,
+    "pv_accumulator": 9.43359375,
+    "old_division": 1.34765625,
+    "source_reciprocal_multiply": 1.3476563692092896,
+    "old_after_bf16": 1.34375,
+    "source_order_after_bf16": 1.3515625
+  },
+  "full_replay_counterexample": {
+    "api": "oscar_ascend.optr_calibration.replay_sample",
+    "head_dim": 256,
+    "gqa": 6,
+    "history_length": 4,
+    "context": 1,
+    "position": 3,
+    "current_end": 4,
+    "source_splits": 1,
+    "replay_partition": "captured_runtime_frames",
+    "q_and_k": "all zero",
+    "v_nonzero_entries": {
+      "[1,0]": 1.0,
+      "[2,0]": 0.00390625
+    },
+    "rk_and_rv": "identity",
+    "key_mean": "zero",
+    "exact_window_rows": 1,
+    "current_rows": 3,
+    "quantized_history_rows": 0,
+    "old_output_per_gqa_coordinate_0": 0.25,
+    "fixed_output_per_gqa_coordinate_0": 0.251953125,
+    "changed_gqa_coordinates": 6,
+    "absolute_difference": 0.001953125,
+    "includes": "source merge and final BF16 inverse"
+  },
+  "red_before_fix": {
+    "command": ".venv/bin/python -m pytest -q tests/test_optr_replay_normalization.py",
+    "exit_code": 1,
+    "failed": 2,
+    "passed": 1,
+    "failed_tests": [
+      "test_partial_normalization_uses_source_reciprocal_multiply_order",
+      "test_reciprocal_order_survives_real_d256_gqa6_window_merge_and_inverse"
+    ]
+  },
+  "green_after_fix": {
+    "command": ".venv/bin/python -m pytest -q tests/test_optr_replay_normalization.py tests/test_optr_calibration.py tests/test_optr_traces.py tests/test_optr_frame_gate.py tests/test_optr_query_gate.py tests/test_optr_projection_gate.py",
+    "exit_code": 0,
+    "passed": 188
+  },
+  "identity": {
+    "old_replay_contract": "offline_bf16_rotated_fp32_metadata_source_split_v1",
+    "new_replay_contract": "offline_bf16_rotated_fp32_metadata_reciprocal_source_split_v2",
+    "replay_contract_consumers": "local definition and legacy fit_head result metadata only; absent from raw trace/calibration profile identity",
+    "shared_candidate_versioning": "parent implementation upgrades fit/artifact policy to v9; raw native trace identity unchanged"
+  },
+  "boundaries": {
+    "npu_execution": "not_measured",
+    "device_bitwise_equivalence": "not_claimed; CPU GEMM, Exp/reductions, native FIA and HCCL remain modeling boundaries",
+    "model_accuracy": "not_measured",
+    "performance": "not_measured; production operations unchanged",
+    "independent_official_reference": "unchanged; this report pins the actual deployed producer source rather than widening that historical oracle contract"
+  }
+}

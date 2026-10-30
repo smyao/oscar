@@ -24,6 +24,7 @@ def fitting_implementation_digest():
     root = Path(__file__).resolve().parents[1]
     names = ("oscar_ascend/optr_calibration.py", "oscar_ascend/optr_sequential.py", "oscar_ascend/optr_traces.py",
              "oscar_ascend/optr_selection.py", "oscar_ascend/optr_shared.py", "oscar_ascend/optr_shared_cache.py",
+             "oscar_ascend/optr_candidates.py",
              "oscar_ascend/optr_artifacts.py", "oscar_ascend/optr_checkpoint.py",
              "oscar_ascend/optr_oscar_seed.py", "tools/prepare_optr_seed.py",
              "tools/prepare_optr_rotations.py", "tools/optr_parallel.py", "tools/optr_fit_worker.py")

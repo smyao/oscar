@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-30接近原OSCAR后续优化：candidate升级OptR v9，官方共享K→V训练及80步/采样/clip/全部v8门保持；保留同次已有V验证检查点和起始V（最多6个，密集schedule取proxy前5+seed），原主候选失败才按固定顺序复核，固定K、整层首个非劣接受，test仅最终一次不参与重选。修正离线acc/sum为生产核acc*(1/sum)，两套合法S=1分片验证复用且保留完整证据。旧PT/fit隔离，seed v2及认证v1–v8 rawtrace复用。候选池稳态D256每层1.5MiB、替换有额外瞬时矩阵，备用候选增加有界离线验证，不承诺准备总耗时下降；线上链/argv/timer不改。768项本地回归、包/入口通过，仅本地提交不推送，模型质量/NPU/性能未测；详见docs/optr_oscar_base_alignment_20261029.md首节。
+
 > 2026-10-30再次精度排查：candidate升级OptR v8，修复帧均值/末query改善仍掩盖其他query退化，以及FP32投影改善但BF16输出退化的误接受。最终验证逐采样query检查FP32、BF16最终输出、逐rank再最终BF16三种视图，复用已有attention/W_O乘积；CPU参考不冒称HCCL逐位模拟。共享train-only seed v2、官方80步K→V、采样/clip/线上链保持，旧PT/fit隔离、seed及认证v1–v7 rawtrace复用。新增离线CPU指标/证书工作，线上无新增操作；694项本地回归和包/入口核对通过，NPU/模型质量/性能未测。仅本地提交不推送，详见docs/optr_oscar_base_alignment_20261029.md首节。
 
 > 2026-10-30全面自查续修：修复seed原顺序采样混入held-out来源，candidate升级OptR v7，source seed仅用同一固定train分区，身份oscar_base_shared_train_v2；旧seed/PT/fit隔离，历史v1–v6原生trace严格认证复用。达到512行的完整prompt即停止；共享OSCAR统计/官方OptR目标/整层接受保持。离线固定缓存≤8GiB沿用原驻留，超限按query加权分块（完整K/V不截断），明确额外离线搬运及总峰值未测；默认无额外NPU重算。正交门显式拒绝非有限Gram误差。630项本地回归通过，线上CANN/runtime/timer/argv不改，不升级NPU/质量/性能验收；仅本地提交不推送。见docs/optr_oscar_base_alignment_20261029.md自查节。

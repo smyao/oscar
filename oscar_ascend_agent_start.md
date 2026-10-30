@@ -586,6 +586,8 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 ### 8.2 将历史错误转化为回归检查
 
+2026-10-30再次精度续修#176：v8补齐每个已捕获query及BF16投影输出边界的非劣门，真实共享80步和精确舍入反例证明旧门存在误接受。官方目标/seed/线上链不变；694项本地回归、wheel和启动对照通过，旧PT/fit隔离、认证v1–v7 rawtrace复用。详见[再次排查](docs/optr_oscar_base_alignment_20261029.md)；CPU证据不新增真机档案、不升级模型质量/性能，仅本地提交不推送。
+
 2026-10-30自查续修：v7将source seed限定为同一train分区，修复held-out来源交叉与足量后无用prompt检查；旧seed/PT/fit隔离，v1–v6 rawtrace精确认证。大采样有界缓存、共享梯度/选择、完整启动与打包回归630项通过；线上链保持。记录于[全面自查](docs/optr_oscar_base_alignment_20261029.md)，仅本地提交，不新增真机档案或升级质量/性能。
 
 2026-10-30继续#176：用户要求保留原OSCAR结构，candidate改为v6共享层参数OptR及整层接受；seed/采样/官方损失/线上链不变。旧PT/fit隔离，认证raw trace复用；仅本地CPU/主机和打包验证，不新增真机记录或升级质量/性能验收。详见[10-30续修](docs/optr_oscar_base_alignment_20261029.md)。

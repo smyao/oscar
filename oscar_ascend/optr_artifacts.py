@@ -15,7 +15,8 @@ from pathlib import Path
 import tempfile
 import uuid
 
-from .optr_policy import OBJECTIVE, RECIPE_VERSION, UPSTREAM_COMMIT, EXPERIMENTAL_PUBLICATION_POLICY
+from .optr_policy import (OBJECTIVE, RECIPE_VERSION, UPSTREAM_COMMIT,
+                          EXPERIMENTAL_PUBLICATION_POLICY, PROJECTION_VIEWS)
 
 
 def file_sha256(path):
@@ -40,10 +41,10 @@ def matrix_digest(layers):
     return digest.hexdigest()
 
 
-def _frames(row, *, required=False, require_terminal=False):
+def _frames(row, *, required=False, require_terminal=False, require_queries=False):
     """Validate captured-forward evidence without weakening old certificates."""
     if "frames" not in row:
-        if required or require_terminal:
+        if required or require_terminal or require_queries:
             raise ValueError("OptR frame-aware policy requires per-frame metrics")
         return None
     frames = row["frames"]
@@ -71,7 +72,7 @@ def _frames(row, *, required=False, require_terminal=False):
             raise ValueError("OptR per-frame normalization differs")
         terminal = frame.get("terminal_query")
         if terminal is None:
-            if require_terminal or "terminal_query" in frame:
+            if require_terminal or require_queries or "queries" in frame or "terminal_query" in frame:
                 raise ValueError("OptR terminal-aware policy requires terminal query metrics")
             continue
         if (not isinstance(terminal, dict) or type(terminal.get("position")) is not int
@@ -89,13 +90,44 @@ def _frames(row, *, required=False, require_terminal=False):
         if len(positions) == 1 and any(terminal[key] != frame[key] for key in
                                      ("squared_error", "teacher_energy", "normalized_error")):
             raise ValueError("OptR single-query frame and terminal query metrics differ")
+        queries = frame.get("queries")
+        if queries is None and not require_queries and "queries" not in frame:
+            continue
+        if not isinstance(queries, list) or len(queries) != len(positions):
+            raise ValueError("OptR query-aware policy requires every captured query metric")
+        for position, query in zip(positions, queries):
+            if (not isinstance(query, dict) or type(query.get("position")) is not int or
+                    query["position"] != position):
+                raise ValueError("OptR per-query position/coverage differs")
+            for key in ("normalized_error", "squared_error", "teacher_energy"):
+                value = query.get(key)
+                if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+                    raise ValueError("OptR per-query metric must be finite and nonnegative")
+            expected = query["squared_error"] / max(query["teacher_energy"], 1e-20)
+            if not math.isclose(query["normalized_error"], expected, rel_tol=1e-12, abs_tol=0):
+                raise ValueError("OptR per-query normalization differs")
+        if terminal != queries[-1]:
+            raise ValueError("OptR terminal query differs from final per-query metric")
+        for key in ("squared_error", "teacher_energy"):
+            if not math.isclose(frame[key], sum(query[key] for query in queries), rel_tol=1e-12, abs_tol=0):
+                raise ValueError("OptR captured frame totals differ from per-query metrics")
     for key in ("squared_error", "teacher_energy"):
         if not math.isclose(row[key], sum(frame[key] for frame in frames), rel_tol=1e-12, abs_tol=0):
             raise ValueError("OptR per-request totals differ from captured frames")
     return frames
 
 
-def _metric(metric, *, require_frames=False, require_terminal=False):
+def _projection_geometry(rows):
+    """Rounding views share samples/queries, but have different teacher energy."""
+    return {key: (row["sample_sha256"], None if "frames" not in row else [
+        (frame["frame_id"], frame["context"], frame["current_end"], frame["query_positions"],
+         [query["position"] for query in frame["queries"]] if "queries" in frame else None,
+         frame.get("terminal_query", {}).get("position")) for frame in row["frames"]])
+        for key, row in rows.items()}
+
+
+def _metric(metric, *, require_frames=False, require_terminal=False, require_queries=False,
+            require_projection=False, allow_projection=True):
     if not isinstance(metric, dict):
         raise ValueError("OptR metric must be an object")
     for key in ("normalized_error", "squared_error", "teacher_energy"):
@@ -119,25 +151,41 @@ def _metric(metric, *, require_frames=False, require_terminal=False):
         expected = row["squared_error"] / max(row["teacher_energy"], 1e-20)
         if not math.isclose(row["normalized_error"], expected, rel_tol=1e-12, abs_tol=0):
             raise ValueError("OptR per-request normalization differs")
-        _frames(row, required=require_frames, require_terminal=require_terminal)
+        _frames(row, required=require_frames, require_terminal=require_terminal, require_queries=require_queries)
     for key in ("squared_error", "teacher_energy"):
         if not math.isclose(metric[key], sum(row[key] for row in rows), rel_tol=1e-12, abs_tol=0):
             raise ValueError("OptR metric totals differ from requests")
     expected = metric["squared_error"] / max(metric["teacher_energy"], 1e-20)
     if not math.isclose(metric["normalized_error"], expected, rel_tol=1e-12, abs_tol=0):
         raise ValueError("OptR metric normalization differs")
-    return {row["request_id"]: row for row in rows}
+    result = {row["request_id"]: row for row in rows}
+    if "projection_checks" in metric or require_projection:
+        if not allow_projection:
+            raise ValueError("OptR projection metrics cannot contain nested projection checks")
+        views = metric.get("projection_checks")
+        if not isinstance(views, dict) or set(views) != set(PROJECTION_VIEWS[1:]):
+            raise ValueError("OptR projection-aware policy requires both BF16 projection metrics")
+        for view in views.values():
+            view_rows = _metric(view, require_frames=require_frames, require_terminal=require_terminal,
+                                require_queries=require_queries, allow_projection=False)
+            if _projection_geometry(view_rows) != _projection_geometry(result):
+                raise ValueError("OptR projection sample/frame/query coverage differs")
+    return result
 
 
-def nonworse(before, after, *, require_frames=False, require_terminal=False):
+def nonworse(before, after, *, require_frames=False, require_terminal=False, require_queries=False,
+             require_projection=False):
     """Exact nonregression for every request and its captured-forward metrics.
 
     Historical request/frame-only evidence remains readable when both sides
-    omit finer evidence. New policies explicitly require frame/terminal
-    metrics; discarding one side or changing geometry is never permitted.
+    omit finer evidence. New policies explicitly require frame/terminal,
+    query and projection metrics; discarding one side or changing geometry
+    is never permitted.
     """
-    left = _metric(before, require_frames=require_frames, require_terminal=require_terminal)
-    right = _metric(after, require_frames=require_frames, require_terminal=require_terminal)
+    options = dict(require_frames=require_frames, require_terminal=require_terminal,
+                   require_queries=require_queries, require_projection=require_projection)
+    left = _metric(before, **options)
+    right = _metric(after, **options)
     if set(left) != set(right) or before["teacher_energy"] != after["teacher_energy"]:
         raise ValueError("OptR comparison used different requests or teacher")
     frame_pairs = []
@@ -155,6 +203,15 @@ def nonworse(before, after, *, require_frames=False, require_terminal=False):
                        ("frame_id", "context", "current_end", "query_positions", "teacher_energy")):
                     raise ValueError("OptR comparison frame geometry/teacher identity differs")
                 frame_pairs.append((previous, selected))
+                before_queries, after_queries = previous.get("queries"), selected.get("queries")
+                if (before_queries is None) != (after_queries is None):
+                    raise ValueError("OptR comparison per-query coverage differs")
+                if before_queries is not None:
+                    for before_query, after_query in zip(before_queries, after_queries):
+                        if any(before_query[field] != after_query[field] for field in
+                               ("position", "teacher_energy")):
+                            raise ValueError("OptR comparison per-query position/teacher identity differs")
+                        frame_pairs.append((before_query, after_query))
                 before_terminal, after_terminal = previous.get("terminal_query"), selected.get("terminal_query")
                 if (before_terminal is None) != (after_terminal is None):
                     raise ValueError("OptR comparison terminal query coverage differs")
@@ -163,7 +220,15 @@ def nonworse(before, after, *, require_frames=False, require_terminal=False):
                            ("position", "teacher_energy")):
                         raise ValueError("OptR comparison terminal query position/teacher identity differs")
                     frame_pairs.append((before_terminal, after_terminal))
-    return (after["squared_error"] <= before["squared_error"] and
+    before_views, after_views = before.get("projection_checks"), after.get("projection_checks")
+    if (before_views is None) != (after_views is None):
+        raise ValueError("OptR comparison projection coverage differs")
+    projection_passed = []
+    if before_views is not None:
+        for view in PROJECTION_VIEWS[1:]:
+            projection_passed.append(nonworse(before_views[view], after_views[view],
+                require_frames=require_frames, require_terminal=require_terminal, require_queries=require_queries))
+    return (all(projection_passed) and after["squared_error"] <= before["squared_error"] and
             after["normalized_error"] <= before["normalized_error"] and
             all(right[key]["squared_error"] <= left[key]["squared_error"] and
                 right[key]["normalized_error"] <= left[key]["normalized_error"] for key in left) and
@@ -192,6 +257,7 @@ def artifact_test_status(artifact):
     return {"experimental": certificate.get("experimental", False),
             "refinement_policy_version": certificate.get("policy", {}).get("policy_version"),
             "fitting_objective": certificate.get("policy", {}).get("fitting_objective"),
+            "validation_projection_views": certificate.get("policy", {}).get("validation_projection_views", ["fp32"]),
             "publication_policy": certificate.get("publication_policy", "strict_independent_test_v1"),
             "independent_test": summary["status"],
             "independent_test_regressed_layers": summary["regressed_layers"],
@@ -211,12 +277,16 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
         raise ValueError("OptR calibration profile differs from selected configuration")
     base = profile.get("base_calibration_profile", {})
     policy = profile.get("refinement_policy", {})
-    train_seed = policy.get("policy_version") == "optr_oscar_shared_train_seed_ascend_v7"
+    projection_policy = policy.get("policy_version") == "optr_oscar_shared_projection_ascend_v8"
+    train_seed = projection_policy or policy.get("policy_version") == "optr_oscar_shared_train_seed_ascend_v7"
     shared_layer = train_seed or policy.get("policy_version") == "optr_oscar_shared_upstream_ascend_v6"
     source_seed = shared_layer or policy.get("policy_version") == "optr_oscar_base_upstream_ascend_v5"
-    if shared_layer and (policy.get("fitted_grouping") != "layer" or
-            policy.get("selection") != "shared_layer_each_request_frame_and_terminal_nonworse"):
+    selection = ("shared_layer_each_query_and_projection_nonworse" if projection_policy
+                 else "shared_layer_each_request_frame_and_terminal_nonworse")
+    if shared_layer and (policy.get("fitted_grouping") != "layer" or policy.get("selection") != selection):
         raise ValueError("shared-layer OptR requires shared fitting and whole-layer selection")
+    if projection_policy and policy.get("validation_projection_views") != list(PROJECTION_VIEWS):
+        raise ValueError("OptR projection policy requires all frozen validation views")
     if source_seed:
         from .optr_oscar_seed import validate_seed_profile
         validate_seed_profile(base, artifact.get("model_fingerprint"), allow_legacy=not train_seed)
@@ -280,7 +350,8 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
         for split in ("validation", "test"):
             result = record.get(split, {})
             passed = nonworse(result.get("baseline"), result.get("selected"), require_frames=require_frames,
-                             require_terminal=require_terminal)
+                             require_terminal=require_terminal, require_queries=projection_policy,
+                             require_projection=projection_policy)
             if not passed and (split == "validation" or schema == 1):
                 raise ValueError(f"OptR {name} worsens {split} output error")
         if type(record.get("accepted")) is not bool:

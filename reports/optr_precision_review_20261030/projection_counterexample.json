@@ -1,0 +1,72 @@
+{
+  "evidence": "synthetic_CPU_BF16_representable_operands",
+  "fixture": "tests/test_optr_projection_gate.py",
+  "archive_references": [
+    170,
+    173,
+    175,
+    176
+  ],
+  "cases": [
+    {
+      "case": "rank",
+      "shape": {
+        "D": 256,
+        "GQA": 6,
+        "TP": 4
+      },
+      "attention": "fixed BF16 values to isolate projection boundary",
+      "actual_project_output": true,
+      "fp32_sse": {
+        "baseline": 3.814697265625e-06,
+        "selected": 2.384185791015625e-07
+      },
+      "rounded_sse": {
+        "bf16_output": {
+          "baseline": 0.0,
+          "selected": 6.103515625e-05
+        },
+        "bf16_rank_output": {
+          "baseline": 0.0,
+          "selected": 6.103515625e-05
+        }
+      },
+      "counts_for_two_candidates": {
+        "attention_replay": 8,
+        "wo_products": 16
+      },
+      "v8_gate_accepts": false
+    },
+    {
+      "case": "tp",
+      "shape": {
+        "D": 256,
+        "GQA": 6,
+        "TP": 4
+      },
+      "attention": "fixed BF16 values to isolate projection boundary",
+      "actual_project_output": true,
+      "fp32_sse": {
+        "baseline": 3.814697265625e-06,
+        "selected": 2.384185791015625e-07
+      },
+      "rounded_sse": {
+        "bf16_output": {
+          "baseline": 0.0,
+          "selected": 6.103515625e-05
+        },
+        "bf16_rank_output": {
+          "baseline": 0.0,
+          "selected": 6.103515625e-05
+        }
+      },
+      "counts_for_two_candidates": {
+        "attention_replay": 8,
+        "wo_products": 16
+      },
+      "v8_gate_accepts": false
+    }
+  ],
+  "npu_or_hccl_bitwise_claim": false,
+  "npu_quality_and_performance": "not_measured"
+}

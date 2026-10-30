@@ -233,12 +233,13 @@ def variant_features(config: dict) -> dict:
 
 def runtime_feature_summary(config: dict, variant: str | None) -> dict:
     """One compact startup line shows the actual effective feature selection."""
-    from oscar_ascend.optr_policy import EXPERIMENTAL_PUBLICATION_POLICY, POLICY_VERSION
+    from oscar_ascend.optr_policy import EXPERIMENTAL_PUBLICATION_POLICY, POLICY_VERSION, PROJECTION_VIEWS
     return {"variant":variant,"optimizations":variant_features(config),
             **({"optr_publication_policy": EXPERIMENTAL_PUBLICATION_POLICY,
                 "independent_test_blocks_publication": False,
                 "optr_fitting_policy": POLICY_VERSION,
                 "optr_fitted_grouping": "layer",
+                "optr_validation_projection_views": list(PROJECTION_VIEWS),
                 "optr_seed": "oscar_base_shared_zero_mean",
                 "optr_seed_partition": "train"}
                if config.get("rotation_refinement") == "optr" else {}),

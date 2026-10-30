@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-30再次精度排查：candidate升级OptR v8，修复帧均值/末query改善仍掩盖其他query退化，以及FP32投影改善但BF16输出退化的误接受。最终验证逐采样query检查FP32、BF16最终输出、逐rank再最终BF16三种视图，复用已有attention/W_O乘积；CPU参考不冒称HCCL逐位模拟。共享train-only seed v2、官方80步K→V、采样/clip/线上链保持，旧PT/fit隔离、seed及认证v1–v7 rawtrace复用。新增离线CPU指标/证书工作，线上无新增操作；694项本地回归和包/入口核对通过，NPU/模型质量/性能未测。仅本地提交不推送，详见docs/optr_oscar_base_alignment_20261029.md首节。
+
 > 2026-10-30全面自查续修：修复seed原顺序采样混入held-out来源，candidate升级OptR v7，source seed仅用同一固定train分区，身份oscar_base_shared_train_v2；旧seed/PT/fit隔离，历史v1–v6原生trace严格认证复用。达到512行的完整prompt即停止；共享OSCAR统计/官方OptR目标/整层接受保持。离线固定缓存≤8GiB沿用原驻留，超限按query加权分块（完整K/V不截断），明确额外离线搬运及总峰值未测；默认无额外NPU重算。正交门显式拒绝非有限Gram误差。630项本地回归通过，线上CANN/runtime/timer/argv不改，不升级NPU/质量/性能验收；仅本地提交不推送。见docs/optr_oscar_base_alignment_20261029.md自查节。
 
 > 2026-10-30用户要求尽量保持原OSCAR逻辑：固定candidate使用OptR v6，在指定oscar_base的共享、零均值seed上每层只优化一对Rk/Rv，保留官方FP32独立GQA目标与K→V；撤掉当前逐头独立搜索/头子集混选，最终整层接受。v6发布/加载严格共享，旧PT/fit隔离，seed及认证v1–v5 raw trace复用；不改变采样/clip/窗口/线上CANN/runtime/timer/argv。四卡层并行和已授权实验test政策保持，仅本地提交不推送。CPU对照不代表模型精度恢复；离线全头固定缓存有额外驻留量，线上操作无新增。详见docs/optr_oscar_base_alignment_20261029.md的10-30续修。

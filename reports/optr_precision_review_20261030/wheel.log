@@ -1,0 +1,10 @@
+WARNING: The directory '/Users/loki.yao/Library/Caches/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+Processing ./.
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: oscar-ascend-external
+  Building wheel for oscar-ascend-external (pyproject.toml): started
+  Building wheel for oscar-ascend-external (pyproject.toml): finished with status 'done'
+  Created wheel for oscar-ascend-external: filename=oscar_ascend_external-0.1.0-py3-none-any.whl size=1246609 sha256=a61c57223011a2d4fb4c422f5d96faa114f224575e57a3a5df7cece2c35c1ecc
+  Stored in directory: /private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pip-ephem-wheel-cache-mw0ckx9_/wheels/57/9c/61/421954cf4cd1d0e6ad1d207f0552cb525c505ce4482ef8c907
+Successfully built oscar-ascend-external

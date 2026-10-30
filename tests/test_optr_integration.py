@@ -38,7 +38,10 @@ def metric(split, error=1.):
                       "squared_error": error, "teacher_energy": 4., "normalized_error": error / 4.,
                       "terminal_query": {"position": 0, "squared_error": error,
                                          "teacher_energy": 4., "normalized_error": error / 4.}}]
-    return {key: row[key] for key in ("squared_error", "teacher_energy", "normalized_error")} | {"requests": [row]}
+    row["frames"][0]["queries"] = [copy.deepcopy(row["frames"][0]["terminal_query"])]
+    result = {key: row[key] for key in ("squared_error", "teacher_energy", "normalized_error")} | {"requests": [row]}
+    result["projection_checks"] = {name: copy.deepcopy(result) for name in ("bf16_output", "bf16_rank_output")}
+    return result
 
 
 def artifact(config):
@@ -74,7 +77,9 @@ def test_candidate_enables_optr_without_changing_online_bundle_or_extra_flags():
     assert config["port"] == selected["port"] == 7878
     assert runtime_feature_summary(selected, "candidate")["calibration_recipe_version"] == 5
     assert runtime_feature_summary(selected, "candidate")["optr_fitted_grouping"] == "layer"
-    assert runtime_feature_summary(selected, "candidate")["optr_fitting_policy"] == "optr_oscar_shared_train_seed_ascend_v7"
+    assert runtime_feature_summary(selected, "candidate")["optr_fitting_policy"] == "optr_oscar_shared_projection_ascend_v8"
+    assert runtime_feature_summary(selected, "candidate")["optr_validation_projection_views"] == [
+        "fp32", "bf16_output", "bf16_rank_output"]
     assert runtime_feature_summary(selected, "candidate")["optr_seed_partition"] == "train"
     for variant in ("baseline", "native"):
         assert variant_config(selected, variant).get("rotation_refinement") is None
@@ -109,7 +114,8 @@ def test_refinement_cache_binds_online_math_and_separates_shared_zero_mean_seed(
                        ("v_clip_ratio", .93), ("attention_splits", 2), ("cube_cores", 16),
                        ("max_num_batched_tokens", 8192), ("tensor_parallel_size", 4)):
         assert calibration_cache_identity({**config, key: value}, "model") != profile
-    for override in ({"selection": "allow_regression"}, {"fitted_grouping": "layer_kv_head"}):
+    for override in ({"selection": "allow_regression"}, {"fitted_grouping": "layer_kv_head"},
+                     {"validation_projection_views": ["fp32"]}):
         with pytest.raises(ValueError, match="frozen"):
             optr_policy({**config, "optr_calibration": override})
 
@@ -121,8 +127,9 @@ def test_frame_aware_default_trains_all_deployment_lengths_without_changing_sche
         "train": [4096, 32768, 65536], "validation": [4096, 32768, 65536],
         "test": [4096, 32768, 65536]}
     assert (current["steps"], current["lr"], current["eval_every"]) == (80, .02, 20)
-    assert current["selection"] == "shared_layer_each_request_frame_and_terminal_nonworse"
-    assert current["policy_version"] == "optr_oscar_shared_train_seed_ascend_v7"
+    assert current["selection"] == "shared_layer_each_query_and_projection_nonworse"
+    assert current["policy_version"] == "optr_oscar_shared_projection_ascend_v8"
+    assert current["validation_projection_views"] == ["fp32", "bf16_output", "bf16_rank_output"]
     assert current["fitted_grouping"] == "layer"
     assert current["fitting_objective"] == "upstream_fp32_independent_gqa_kl_output_k_then_conditional_v"
     for version in ("v1", "v2"):
@@ -132,6 +139,7 @@ def test_frame_aware_default_trains_all_deployment_lengths_without_changing_sche
         assert old["selection"] == "joint_all_heads_each_request_nonworse"
     # Never relabel old seven-request data as the new nine-request plan.
     assert [p["refinement_policy"]["policy_version"] for p in compatible_capture_profiles({}, {})] == [
+        "optr_oscar_shared_train_seed_ascend_v7",
         "optr_oscar_shared_upstream_ascend_v6", "optr_oscar_base_upstream_ascend_v5",
         "optr_joint_gqa_bf16_ascend_v4", "optr_frame_bf16_ascend_v3"]
 
@@ -143,6 +151,7 @@ def test_frame_aware_default_trains_all_deployment_lengths_without_changing_sche
     ("v4", "9b04defcb625bfadcb00b3fdd62da94fc053be61abaa233ebd95355071d034bd"),
     ("v5", "a2a22bd2e117ebb65a3b4dd799f6337ee5dc552a8e730fe060ff61e35dea37ca"),
     ("v6", "9601f02f7b913e9195154fbbd3bf18d694d9d3276134494e534ac4b3e2edc50a"),
+    ("v7", "85ccb9aab6d6d077e99e33c50a1b1f5c23172aa1737278a4b52c100a89c9e8fa"),
 ])
 def test_historical_capture_policy_exactly_preserves_prior_identity(version, expected):
     from oscar_ascend.optr_policy import legacy_capture_policy
@@ -150,7 +159,8 @@ def test_historical_capture_policy_exactly_preserves_prior_identity(version, exp
     policy = legacy_capture_policy({}, version)
     encoded = json.dumps(policy, sort_keys=True, separators=(",", ":")).encode()
     assert hashlib.sha256(encoded).hexdigest() == expected
-    assert (policy.get("fitted_grouping") == "layer") == (version == "v6")
+    assert (policy.get("fitted_grouping") == "layer") == (version in ("v6", "v7"))
+    assert "validation_projection_views" not in policy
 
 
 @pytest.mark.parametrize("version,expected", [
@@ -160,6 +170,7 @@ def test_historical_capture_policy_exactly_preserves_prior_identity(version, exp
     ("v4", "28f3a72d8b9eac5810a50ee04114f5e8fb54437f44f23edd462f4f137f7797da"),
     ("v5", "5ab04164eeb1d2871d4f33d97bdec18d737de15796735838d75ef34bc8086efc"),
     ("v6", "105ae433310b7b64a43d4aa23e87e1e8af8ea7c52d628d1d7bbcfc528073cd26"),
+    ("v7", "39608b941da77323f2c27f392cb63632c101c8575eaa54ab32093adc6790e3b3"),
 ])
 def test_historical_capture_profile_hashes_match_pre_partition_snapshots(version, expected):
     from oscar_ascend.optr_policy import legacy_capture_profile
@@ -185,12 +196,14 @@ def test_historical_capture_profiles_restore_original_seed_and_exact_sampling_pl
     legacy_config = {k: v for k, v in config.items() if k not in ("rotation_refinement", "optr_calibration")}
     original_seed = calibration_cache_identity(legacy_config, "preserved")
     compatible = compatible_capture_profiles(profile, config)
-    assert compatible == [legacy_capture_profile(profile, config, version) for version in ("v6", "v5", "v4", "v3", "v2", "v1")]
+    assert compatible == [legacy_capture_profile(profile, config, version) for version in ("v7", "v6", "v5", "v4", "v3", "v2", "v1")]
     for candidate in compatible:
         policy = candidate["refinement_policy"]
         assert policy["capture_lengths"] == config["optr_calibration"]["capture_lengths"]
         assert policy["decode_tokens"] == 3 and policy["query_samples_per_frame"] == 2
-        if policy["policy_version"] in ("optr_oscar_base_upstream_ascend_v5", "optr_oscar_shared_upstream_ascend_v6"):
+        if policy["policy_version"] == "optr_oscar_shared_train_seed_ascend_v7":
+            assert candidate["base_calibration_profile"] == profile["base_calibration_profile"]
+        elif policy["policy_version"] in ("optr_oscar_base_upstream_ascend_v5", "optr_oscar_shared_upstream_ascend_v6"):
             assert candidate["base_calibration_profile"] == legacy_seed_profile(profile["base_calibration_profile"])
             assert candidate["base_calibration_profile"] != profile["base_calibration_profile"]
             assert candidate["base_calibration_profile"]["recipe_version"] == 6
@@ -204,7 +217,7 @@ def test_historical_capture_profiles_restore_original_seed_and_exact_sampling_pl
     assert legacy_capture_policy(config, "v2")["lr"] == .02
 
 
-@pytest.mark.parametrize("version", ["v1", "v2", "v3", "v4", "v5", "v6"])
+@pytest.mark.parametrize("version", ["v1", "v2", "v3", "v4", "v5", "v6", "v7"])
 def test_completed_older_fit_cannot_bypass_new_objective_via_artifact_cache(tmp_path, version):
     from oscar_ascend.optr_policy import legacy_capture_profile
     config = configuration(tmp_path)
@@ -213,7 +226,7 @@ def test_completed_older_fit_cannot_bypass_new_objective_via_artifact_cache(tmp_
     value["refinement_certificate"]["policy"] = value["calibration_profile"]["refinement_policy"]
     if version == "v5":
         # v5 legitimately fitted distinct heads. Keep it readable as history,
-        # while refusing to load even an internally valid PT as current v7.
+        # while refusing to load even an internally valid PT as current v8.
         value["layers"][NAME]["Rk"][1].neg_()
         digest = matrix_digest(value["layers"])
         value["refinement_certificate"]["matrices_sha256"] = digest
@@ -236,13 +249,14 @@ def test_current_certificate_cannot_relabel_unpartitioned_seed(tmp_path):
         validate_refinement_metadata(value)
 
 
-def test_old_shared_fit_checkpoints_and_default_pt_path_are_isolated(tmp_path, monkeypatch):
+@pytest.mark.parametrize("version", ["v6", "v7"])
+def test_old_shared_fit_checkpoints_and_default_pt_path_are_isolated(tmp_path, monkeypatch, version):
     from oscar_ascend.optr_checkpoint import FitCheckpoints
     from oscar_ascend.optr_policy import legacy_capture_profile
     monkeypatch.delenv("OSCAR_ROTATION_ARTIFACT", raising=False)
     config = configuration(tmp_path)
     profile = calibration_cache_identity(config, "model")
-    old = legacy_capture_profile(profile, config, "v6")
+    old = legacy_capture_profile(profile, config, version)
     old_digest = hashlib.sha256(json.dumps(old, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:20]
     assert rotation_artifact_path(config, "model", root=tmp_path).parent.name != "optr_" + old_digest
     previous = FitCheckpoints(tmp_path / "fits", {"profile": old})
@@ -333,10 +347,13 @@ def test_shared_artifact_rejects_independent_heads_or_false_source_contract(tmp_
 
 def test_small_teacher_energy_has_one_fixed_normalization():
     tiny = metric("validation", 1e-25)
-    tiny["teacher_energy"] = tiny["requests"][0]["teacher_energy"] = 1e-27
-    tiny["normalized_error"] = tiny["requests"][0]["normalized_error"] = 1e-5
-    tiny["requests"][0]["frames"][0].update(teacher_energy=1e-27, normalized_error=1e-5)
-    tiny["requests"][0]["frames"][0]["terminal_query"].update(teacher_energy=1e-27, normalized_error=1e-5)
+    for view in [tiny, *tiny["projection_checks"].values()]:
+        view["teacher_energy"] = view["requests"][0]["teacher_energy"] = 1e-27
+        view["normalized_error"] = view["requests"][0]["normalized_error"] = 1e-5
+        frame = view["requests"][0]["frames"][0]
+        frame.update(teacher_energy=1e-27, normalized_error=1e-5)
+        frame["terminal_query"].update(teacher_energy=1e-27, normalized_error=1e-5)
+        frame["queries"][0].update(teacher_energy=1e-27, normalized_error=1e-5)
     assert nonworse(tiny, copy.deepcopy(tiny))
 
 

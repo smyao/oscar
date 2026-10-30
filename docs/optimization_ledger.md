@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+> 2026-10-30再次精度排查：v8修复非末query退化被帧均值掩盖、FP32投影改善但BF16输出退化两类候选误接受。真实80步反例总SSE下降63.67%仍有位置增加25.68%/290.12%；精确舍入反例FP32改善16倍仍使BF16误差从0变非零。新验证复用既有attention/W_O结果，增加离线CPU指标/证书成本，不改官方loss/共享seed或线上计算。694项本地回归及wheel/启动核对见[详细比较与剩余风险](optr_oscar_base_alignment_20261029.md)、`reports/optr_precision_review_20261030/verification.json`；仅本地提交，无模型分数或性能收益申领。
+
 > 2026-10-30自查续修：确认seed原顺序取样混入held-out来源，改为同trace的train分区并升级v7/seed v2身份；完整prompt足量即停止。共享公式/官方目标/线上路径不变；补大采样有界固定缓存及非有限正交误差拒绝。630项本地回归、包和启动对照见[自查记录](optr_oscar_base_alignment_20261029.md)及`reports/optr_self_review_20261030/verification.json`。仅本地提交，无NPU/模型质量/性能验收。
 
 > 2026-10-30按用户要求保留原OSCAR逻辑：修正seed共享但最终逐头独立并混选的偏离。OptR v6在共享参数可行域内用原官方损失寻优、整层接受，既有采样/线上路径保持。旧PT/fit隔离、认证seed及raw trace复用；线上无新增操作，离线多头固定缓存成本明确记录。源码/数学/CPU/启动与打包见[续修记录](optr_oscar_base_alignment_20261029.md)及`reports/optr_shared_oscar_20261030/verification.json`。不领取质量或性能收益。

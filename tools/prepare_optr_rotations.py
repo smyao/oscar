@@ -85,18 +85,22 @@ def _prepare_base(config, directory, *, testing, import_pair, base_runner):
 def _metrics(constants, samples, policy, *, progress=None):
     """Check both the fitting partition and native-captured frame partition."""
     from oscar_ascend.optr_traces import aggregate_layer_error
-    rows = []
+    rows = {view: [] for view in policy.get("validation_projection_views", ["fp32"])}
     for partition in policy["validation_partitions"]:
         metric = aggregate_layer_error(constants, samples, {**policy, "replay_partition": partition})
         if progress:
             progress(event="partition_checked", partition=partition)
-        for row in metric["requests"]:
-            rows.append({**row, "request_id": row["request_id"] + ":" + partition,
-                         "partition": partition})
-    error = sum(row["squared_error"] for row in rows)
-    energy = sum(row["teacher_energy"] for row in rows)
-    return {"squared_error": error, "teacher_energy": energy,
-            "normalized_error": error / max(energy, 1e-20), "requests": rows}
+        views = {"fp32": metric, **metric.get("projection_checks", {})}
+        if set(views) != set(rows):
+            raise ValueError("OptR replay omitted required projection checks")
+        for view, values in views.items():
+            rows[view].extend({**row, "request_id": row["request_id"] + ":" + partition,
+                              "partition": partition} for row in values["requests"])
+    from oscar_ascend.optr_traces import _aggregate_requests
+    result = _aggregate_requests(rows.pop("fp32"))
+    if rows:
+        result["projection_checks"] = {view: _aggregate_requests(values) for view, values in rows.items()}
+    return result
 
 
 def _validate_shared_result(result, baseline):
@@ -136,6 +140,13 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
              "regressed_metrics": [key for key in compared if selected[key] > baseline[key]]}
     before = {row["request_id"]: row for row in baseline["requests"]}
     regressions = []
+    def query_regressions(previous, selected):
+        old_queries = {query["position"]: query for query in previous.get("queries", [])}
+        return [{"position": query["position"], "baseline": old_queries[query["position"]],
+                 "selected": query, "regressed_metrics": [key for key in compared
+                     if query[key] > old_queries[query["position"]][key]]}
+                for query in selected.get("queries", [])
+                if any(query[key] > old_queries[query["position"]][key] for key in compared)]
     for row in selected["requests"]:
         previous = before[row["request_id"]]
         regressed = [key for key in compared if row[key] > previous[key]]
@@ -146,14 +157,30 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
             fields = [key for key in compared if frame[key] > old[key]]
             terminal_fields = [key for key in compared if frame.get("terminal_query", {}).get(key, 0) >
                                old.get("terminal_query", {}).get(key, 0)]
-            if fields or terminal_fields:
+            queries = query_regressions(old, frame)
+            if fields or terminal_fields or queries:
                 frame_regressions.append({"frame_id": frame["frame_id"], "baseline": old,
                                           "selected": frame, "regressed_metrics": fields,
-                                          "regressed_terminal_metrics": terminal_fields})
+                                          "regressed_terminal_metrics": terminal_fields,
+                                          "regressed_queries": queries})
         if regressed or frame_regressions:
             regressions.append({"request_id": row["request_id"], "partition": row.get("partition"),
                                 "baseline": previous, "selected": row,
                                 "regressed_metrics": regressed, "regressed_frames": frame_regressions})
+    projection_regressions = []
+    for view, view_selected in selected.get("projection_checks", {}).items():
+        previous = baseline["projection_checks"][view]
+        if nonworse(previous, view_selected, require_queries=True):
+            continue
+        previous_requests = {row["request_id"]: row for row in previous["requests"]}
+        queries = []
+        for row in view_selected["requests"]:
+            for old, frame in zip(previous_requests[row["request_id"]]["frames"], row["frames"]):
+                queries.extend({"request_id": row["request_id"], "frame_id": frame["frame_id"], **query}
+                               for query in query_regressions(old, frame))
+        projection_regressions.append({"projection_view": view,
+            "baseline": {key: previous[key] for key in scalar_keys},
+            "selected": {key: view_selected[key] for key in scalar_keys}, "regressed_queries": queries})
     report = {"schema_version": 1, "status": "independent_test_failed", "layer": name,
         "layer_id": layer_id, "identity": copy.deepcopy(checkpoints.identity) if checkpoints else None,
         "policy": copy.deepcopy(policy), "metric": "all_tp_heads_bf16_gate_fp32_wo_output",
@@ -162,7 +189,8 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
         "artifact_publish_allowed": True, "test_used_for_selection": False,
         "experimental": True, "publication_policy": EXPERIMENTAL_PUBLICATION_POLICY,
         "test_policy_unchanged": False,
-        "record": record, "total": total, "regressed_requests": regressions}
+        "record": record, "total": total, "regressed_requests": regressions,
+        "regressed_projection_views": projection_regressions}
     message = f"OptR {name}: independent test report failed; artifact not published"
     reporting_errors = []
     persistence_event = None
@@ -181,9 +209,12 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
     events = [{"layer": name, "phase": "independent_test_failed", "metric": report["metric"],
                "baseline": total["baseline"], "selected": total["selected"],
                "regressed_total_metrics": total["regressed_metrics"], "regressed_requests": len(regressions),
+               "regressed_projection_views": [row["projection_view"] for row in projection_regressions],
                "artifact_publish_allowed": True, "experimental": True,
                "publication_policy": EXPERIMENTAL_PUBLICATION_POLICY, "test_used_for_selection": False}]
     events.extend({"layer": name, "phase": "independent_test_request_regressed", **row} for row in regressions)
+    events.extend({"layer": name, "phase": "independent_test_projection_regressed", **row}
+                  for row in projection_regressions)
     if persistence_event is not None:
         events.append(persistence_event)
     for event in events:
@@ -240,10 +271,13 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
     before = measure(baseline, "validation", "baseline")
     proposal = measure(trial, "validation", "refined")
     strict = policy.get("fitted_grouping") == "layer"
-    accepted = nonworse(before, proposal, require_frames=strict, require_terminal=strict) and (
+    projection = "validation_projection_views" in policy
+    acceptance = {"require_frames": strict, "require_terminal": strict,
+                  "require_queries": projection, "require_projection": projection}
+    accepted = nonworse(before, proposal, **acceptance) and (
         proposal["squared_error"] < before["squared_error"])
     selected, after = (trial, proposal) if accepted else (baseline, before)
-    selection = {"method": "shared_layer_validation_v1", "accepted": accepted,
+    selection = {"method": "shared_layer_projection_validation_v2" if projection else "shared_layer_validation_v1", "accepted": accepted,
                  "test_used_for_selection": False, "proposal": proposal}
     emit(layer=name, phase="joint_output_check", split="validation", event="shared_layer_selected",
          accepted=accepted, fitted_grouping="layer")
@@ -257,7 +291,7 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
               "validation": {"baseline": before, "selected": after},
               "test": {"baseline": test_before, "selected": test_after}}
     record["shared_layer_selection"] = selection
-    test_passed = nonworse(test_before, test_after, require_frames=strict, require_terminal=strict)
+    test_passed = nonworse(test_before, test_after, **acceptance)
     if not test_passed:
         _report_independent_test_failure(name, baseline["layer_id"], record, policy, checkpoints, emit)
     emit(layer=name, phase="checked", accepted=accepted,

@@ -29,6 +29,7 @@ def bounded_cpu_threads():
 
 
 def metrics(split, errors):
+    from test_optr_frame_gate import with_current_evidence
     rows = []
     for index, error in enumerate(errors):
         request_id = split + ("-a" if index < 2 else "-b")
@@ -42,8 +43,8 @@ def metrics(split, errors):
                                                     "teacher_energy": 4., "normalized_error": error / 4.}}]})
     error = sum(row["squared_error"] for row in rows)
     energy = sum(row["teacher_energy"] for row in rows)
-    return {"squared_error": error, "teacher_energy": energy,
-            "normalized_error": error / energy, "requests": rows}
+    return with_current_evidence({"squared_error": error, "teacher_energy": energy,
+            "normalized_error": error / energy, "requests": rows})
 
 
 def test_terminal_only_regression_is_printed_and_persisted(tmp_path):

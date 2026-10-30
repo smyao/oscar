@@ -343,13 +343,60 @@ def load_layer_samples(manifest, layer_id):
     return result
 
 
+def _query_metrics(first, actual, teacher, request_id, identity, *, all_queries):
+    """Reduce the same captured rows; preserve individual prefill errors."""
+    import torch
+    frame_ids = first["frame_ids"]
+    _tensor(frame_ids, torch.int64, (actual.shape[0],), "joint frame IDs")
+    unique = torch.unique_consecutive(frame_ids)
+    if not torch.equal(unique, torch.arange(unique.numel())):
+        raise ValueError("OptR joint metric requires ordered contiguous captured frame IDs")
+    query_errors = (actual - teacher).square().sum(-1)
+    query_energies = teacher.square().sum(-1)
+    if not bool(torch.isfinite(query_errors).all() & torch.isfinite(query_energies).all()):
+        raise ValueError("OptR joint metric is nonfinite")
+    frames = []
+    for frame_id in unique.tolist():
+        selected = frame_ids == frame_id
+        contexts, ends, positions = (first[key][selected] for key in ("contexts", "current_ends", "positions"))
+        if (not bool((contexts == contexts[0]).all()) or not bool((ends == ends[0]).all())
+                or bool((positions[1:] <= positions[:-1]).any())
+                or int(positions[-1]) != int(ends[0]) - 1):
+            raise ValueError("OptR joint metric captured frame extents/positions differ")
+        errors, energies = query_errors[selected], query_energies[selected]
+        error, energy = float(errors.sum()), float(energies.sum())
+        terminal_error, terminal_energy = float(errors[-1]), float(energies[-1])
+        frame = {"frame_id": frame_id, "context": int(contexts[0]), "current_end": int(ends[0]),
+                 "query_positions": positions.tolist(), "squared_error": error, "teacher_energy": energy,
+                 "normalized_error": error / max(energy, 1e-20),
+                 "terminal_query": {"position": int(positions[-1]), "squared_error": terminal_error,
+                     "teacher_energy": terminal_energy,
+                     "normalized_error": terminal_error / max(terminal_energy, 1e-20)}}
+        if all_queries:
+            frame["queries"] = [{"position": position, "squared_error": err, "teacher_energy": eng,
+                "normalized_error": err / max(eng, 1e-20)}
+                for position, err, eng in zip(positions.tolist(), errors.tolist(), energies.tolist())]
+        frames.append(frame)
+    error, energy = (sum(frame[key] for frame in frames) for key in ("squared_error", "teacher_energy"))
+    return {"request_id": request_id, "sample_sha256": identity, "squared_error": error,
+            "teacher_energy": energy, "normalized_error": error / max(energy, 1e-20), "frames": frames}
+
+
+def _aggregate_requests(rows):
+    error, energy = (sum(row[key] for row in rows) for key in ("squared_error", "teacher_energy"))
+    return {"squared_error": error, "teacher_energy": energy,
+            "normalized_error": error / max(energy, 1e-20), "requests": rows}
+
+
 def aggregate_layer_error(layer_matrices, head_samples, policy, *,
                           projected_outputs=None, projected_teachers=None):
     """Sum TP/GQA outputs before SSE and preserve each captured forward.
 
-    Archive #170/#173: a lower request aggregate can conceal worse decode
-    tokens. Frame and terminal-query metrics retain that evidence without another attention
-    replay or counting the same output twice in the request/layer totals.
+    Archive #170/#173/#176: lower aggregates can conceal worse individual
+    queries, and FP32 projection error can conceal BF16 output regressions.
+    Current policies retain every captured query and visible output rounding
+    view without additional attention replay or W_O products. Each view has
+    separate totals; query details do not count an output twice.
     Optional [head][request] FP32 projected tensors let offline head-subset
     selection reuse the same replay. They never enter the serving path.
     """
@@ -376,10 +423,14 @@ def aggregate_layer_error(layer_matrices, head_samples, policy, *,
             if (not isinstance(values, list) or len(values) != heads
                     or any(not isinstance(head, list) or len(head) != len(expected_ids) for head in values)):
                 raise ValueError("OptR cached projections require every head/request on both sides")
-    rows = []
+    projection_views = policy.get("validation_projection_views")
+    if projection_views is not None and projection_views != ["fp32", "bf16_output", "bf16_rank_output"]:
+        raise ValueError("OptR validation projection views differ")
+    rows = {view: [] for view in (projection_views or ["fp32"])}
     with torch.no_grad():
         for request_index, request_id in enumerate(expected_ids):
             actual_sum, teacher_sum, identities = None, None, []
+            rank_actual, rank_teacher = None, None
             first = head_samples[0][request_index]
             for head, samples in enumerate(head_samples):
                 sample = samples[request_index]
@@ -402,44 +453,26 @@ def aggregate_layer_error(layer_matrices, head_samples, policy, *,
                     if actual.shape != actual_sum.shape or teacher.shape != teacher_sum.shape:
                         raise ValueError("OptR joint metric TP output geometry differs")
                     actual_sum += actual.double(); teacher_sum += teacher.double()
-            frame_ids = first["frame_ids"]
-            _tensor(frame_ids, torch.int64, (actual_sum.shape[0],), "joint frame IDs")
-            unique = torch.unique_consecutive(frame_ids)
-            if not torch.equal(unique, torch.arange(unique.numel())):
-                raise ValueError("OptR joint metric requires ordered contiguous captured frame IDs")
-            query_errors = (actual_sum - teacher_sum).square().sum(-1)
-            query_energies = teacher_sum.square().sum(-1)
-            frames = []
-            for frame_id in unique.tolist():
-                selected = frame_ids == frame_id
-                contexts = first["contexts"][selected]
-                ends = first["current_ends"][selected]
-                positions = first["positions"][selected]
-                if (not bool((contexts == contexts[0]).all()) or not bool((ends == ends[0]).all())
-                        or bool((positions[1:] <= positions[:-1]).any())
-                        or int(positions[-1]) != int(ends[0]) - 1):
-                    raise ValueError("OptR joint metric captured frame extents/positions differ")
-                error = float(query_errors[selected].sum())
-                energy = float(query_energies[selected].sum())
-                terminal_error = float(query_errors[selected][-1])
-                terminal_energy = float(query_energies[selected][-1])
-                frames.append({"frame_id": frame_id, "context": int(contexts[0]),
-                               "current_end": int(ends[0]), "query_positions": positions.tolist(),
-                               "squared_error": error, "teacher_energy": energy,
-                               "normalized_error": error / max(energy, 1e-20),
-                               "terminal_query": {"position": int(positions[-1]),
-                                   "squared_error": terminal_error, "teacher_energy": terminal_energy,
-                                   "normalized_error": terminal_error / max(terminal_energy, 1e-20)}})
-            error = sum(frame["squared_error"] for frame in frames)
-            energy = sum(frame["teacher_energy"] for frame in frames)
-            rows.append({"request_id": request_id, "sample_sha256": _digest(identities), "squared_error": error,
-                         "teacher_energy": energy, "normalized_error": error / max(energy, 1e-20),
-                         "frames": frames})
-    error, energy = sum(row["squared_error"] for row in rows), sum(row["teacher_energy"] for row in rows)
-    result = {"squared_error": error, "teacher_energy": energy, "normalized_error": error / max(energy, 1e-20), "requests": rows}
-    frame_rows = [frame for row in rows for frame in row["frames"]]
-    if any(not math.isfinite(value) or value < 0 for row in [result, *rows, *frame_rows,
-                                                          *(frame["terminal_query"] for frame in frame_rows)]
-           for key, value in row.items() if key in {"squared_error", "teacher_energy", "normalized_error"}):
-        raise ValueError("OptR joint metric is nonfinite")
+                if projection_views:
+                    # Native unquantized RowParallelLinear publishes BF16 GEMM
+                    # outputs before TP reduction. Reuse the existing FP32 W_O
+                    # products: these casts add no attention replay/matmul.
+                    rounded_actual, rounded_teacher = actual.bfloat16().double(), teacher.bfloat16().double()
+                    if rank_actual is None:
+                        rank_actual, rank_teacher = rounded_actual, rounded_teacher
+                    else:
+                        rank_actual += rounded_actual; rank_teacher += rounded_teacher
+            views = {"fp32": (actual_sum, teacher_sum)}
+            if projection_views:
+                # Check both final-only and rank+final visible BF16 boundaries.
+                # FP64 summation is an explicit CPU reference, NOT a claim to
+                # reproduce the closed HCCL tree or fused GEMM accumulation.
+                views.update(bf16_output=(actual_sum.bfloat16().double(), teacher_sum.bfloat16().double()),
+                             bf16_rank_output=(rank_actual.bfloat16().double(), rank_teacher.bfloat16().double()))
+            for view, (actual, teacher) in views.items():
+                rows[view].append(_query_metrics(first, actual, teacher, request_id, _digest(identities),
+                                                all_queries=projection_views is not None))
+    result = _aggregate_requests(rows.pop("fp32"))
+    if projection_views:
+        result["projection_checks"] = {view: _aggregate_requests(values) for view, values in rows.items()}
     return result

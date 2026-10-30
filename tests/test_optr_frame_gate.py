@@ -31,6 +31,26 @@ def metric(errors=(4., 1.), *, split="validation"):
     return {key: row[key] for key in ("squared_error", "teacher_energy", "normalized_error")} | {"requests": [row]}
 
 
+def with_current_evidence(value):
+    """Give synthetic historical metrics complete v8 evidence, preserving totals."""
+    value = copy.deepcopy(value)
+    value.pop("projection_checks", None)
+    for row in value["requests"]:
+        for frame in row["frames"]:
+            terminal = frame["terminal_query"]
+            positions = frame["query_positions"]
+            count = len(positions) - 1
+            queries = []
+            for position in positions[:-1]:
+                error = (frame["squared_error"] - terminal["squared_error"]) / count
+                energy = (frame["teacher_energy"] - terminal["teacher_energy"]) / count
+                queries.append({"position": position, "squared_error": error,
+                                "teacher_energy": energy, "normalized_error": error / max(energy, 1e-20)})
+            frame["queries"] = [*queries, copy.deepcopy(terminal)]
+    value["projection_checks"] = {name: copy.deepcopy(value) for name in ("bf16_output", "bf16_rank_output")}
+    return value
+
+
 def test_lower_request_error_cannot_hide_worse_decode_frame():
     before, after = metric(), metric((1., 2.))
     assert after["squared_error"] < before["squared_error"]
@@ -113,7 +133,9 @@ def test_historical_certificates_keep_request_only_interpretation(tmp_path, vers
     certificate["policy"] = value["calibration_profile"]["refinement_policy"]
     for split in ("validation", "test"):
         for choice in ("baseline", "selected"):
-            certificate["layers"][NAME][split][choice]["requests"][0].pop("frames")
+            result = certificate["layers"][NAME][split][choice]
+            result.pop("projection_checks")
+            result["requests"][0].pop("frames")
     assert validate_refinement_metadata(value) is certificate
 
 
@@ -127,8 +149,11 @@ def test_v3_historical_certificate_still_requires_frames_but_not_new_terminal_me
     certificate["policy"] = value["calibration_profile"]["refinement_policy"]
     for split in ("validation", "test"):
         for choice in ("baseline", "selected"):
-            for frame in certificate["layers"][NAME][split][choice]["requests"][0]["frames"]:
+            result = certificate["layers"][NAME][split][choice]
+            result.pop("projection_checks")
+            for frame in result["requests"][0]["frames"]:
                 frame.pop("terminal_query")
+                frame.pop("queries")
     assert validate_refinement_metadata(value) is certificate
     certificate["layers"][NAME]["test"]["selected"]["requests"][0].pop("frames")
     with pytest.raises(ValueError, match="requires per-frame"):
@@ -141,15 +166,17 @@ def test_experimental_frame_regression_is_reported_without_relaxing_validation(t
     certificate = value["refinement_certificate"]
     record = certificate["layers"][NAME]
     record.update(accepted=True, base_constants_sha256="e" * 64,
-                  validation={"baseline": metric(), "selected": metric((2., .5))},
-                  test={"baseline": metric(split="test"), "selected": metric((1., 2.), split="test")})
+                  validation={"baseline": with_current_evidence(metric()),
+                              "selected": with_current_evidence(metric((2., .5)))},
+                  test={"baseline": with_current_evidence(metric(split="test")),
+                        "selected": with_current_evidence(metric((1., 2.), split="test"))})
     certificate["accepted_layers"] = [NAME]
     with pytest.raises(ValueError, match="worsens test"):
         validate_refinement_metadata(value)
     value["refinement_certificate"] = experimental_certificate(certificate)
     checked = validate_refinement_metadata(value)
     assert checked["independent_test"] == {"status": "failed", "regressed_layers": [NAME]}
-    record["validation"]["selected"] = metric((1., 2.))
+    record["validation"]["selected"] = with_current_evidence(metric((1., 2.)))
     with pytest.raises(ValueError, match="worsens validation"):
         validate_refinement_metadata(value)
 
@@ -212,13 +239,13 @@ def test_terminal_teacher_identity_is_preserved_when_frame_teacher_sum_matches()
 
 @pytest.mark.parametrize("split", ["validation", "test"])
 @pytest.mark.parametrize("choice", ["baseline", "selected"])
-@pytest.mark.parametrize("version", ["v4", "v5", "v6", "v7"])
+@pytest.mark.parametrize("version", ["v4", "v5", "v6", "v7", "v8"])
 def test_certificate_requires_terminal_query_for_every_frame(tmp_path, split, choice, version):
     from test_optr_integration import NAME, artifact, configuration
     from oscar_ascend.optr_policy import legacy_capture_profile
     config = configuration(tmp_path)
     value = artifact(config)
-    if version != "v7":
+    if version != "v8":
         value["calibration_profile"] = legacy_capture_profile(value["calibration_profile"], config, version)
     policy = value["calibration_profile"]["refinement_policy"]
     value["refinement_certificate"]["policy"] = copy.deepcopy(policy)
@@ -236,8 +263,9 @@ def test_terminal_only_independent_test_regression_is_report_only(tmp_path):
     before, after = metric(split="test"), metric((3., .5), split="test")
     after["requests"][0]["frames"][0]["terminal_query"].update(squared_error=2.5, normalized_error=1.25)
     record.update(accepted=True, base_constants_sha256="e" * 64,
-                  validation={"baseline": metric(), "selected": metric((2., .5))},
-                  test={"baseline": before, "selected": after})
+                  validation={"baseline": with_current_evidence(metric()),
+                              "selected": with_current_evidence(metric((2., .5)))},
+                  test={"baseline": with_current_evidence(before), "selected": with_current_evidence(after)})
     certificate["accepted_layers"] = [NAME]
     value["refinement_certificate"] = experimental_certificate(certificate)
     assert validate_refinement_metadata(value)["independent_test"] == {
@@ -245,5 +273,127 @@ def test_terminal_only_independent_test_regression_is_report_only(tmp_path):
     record["validation"] = {"baseline": metric(), "selected": metric((3., .5))}
     record["validation"]["selected"]["requests"][0]["frames"][0]["terminal_query"].update(
         squared_error=2.5, normalized_error=1.25)
+    record["validation"] = {key: with_current_evidence(value) for key, value in record["validation"].items()}
     with pytest.raises(ValueError, match="worsens validation"):
         validate_refinement_metadata(value)
+
+
+def test_query_regression_cannot_hide_in_better_frame_and_terminal_metrics():
+    before = with_current_evidence(metric())
+    after = metric((3., .5))
+    after["requests"][0]["frames"][0]["terminal_query"].update(squared_error=.5, normalized_error=.25)
+    after = with_current_evidence(after)
+    assert after["squared_error"] < before["squared_error"]
+    assert not nonworse(before, after)  # Present evidence always applies, even without explicit flags.
+    assert not nonworse(before, after, require_queries=True, require_projection=True)
+    for value in (before, after):
+        for view in [value, *value["projection_checks"].values()]:
+            for frame in view["requests"][0]["frames"]:
+                frame.pop("queries")
+    assert nonworse(before, after, require_terminal=True)
+    with pytest.raises(ValueError, match="requires every captured query"):
+        nonworse(before, after, require_queries=True)
+
+
+@pytest.mark.parametrize("fault", ["missing", "none", "empty", "extra", "position", "bool", "nan",
+                                   "negative", "normalization", "error_total", "energy_total", "terminal"])
+def test_invalid_query_metrics_fail_closed(fault):
+    value = with_current_evidence(metric())
+    frame = value["requests"][0]["frames"][0]
+    query = frame["queries"][0]
+    if fault == "missing": frame.pop("queries")
+    elif fault == "none": frame["queries"] = None
+    elif fault == "empty": frame["queries"] = []
+    elif fault == "extra": frame["queries"].append(copy.deepcopy(query))
+    elif fault == "position": query["position"] = 1
+    elif fault == "bool": query["position"] = False
+    elif fault == "nan": query["squared_error"] = float("nan")
+    elif fault == "negative": query["teacher_energy"] = -1
+    elif fault == "normalization": query["normalized_error"] = 99
+    elif fault == "error_total": query.update(squared_error=1., normalized_error=.5)
+    elif fault == "energy_total": query.update(teacher_energy=1., normalized_error=2.)
+    else: frame["queries"][-1].update(squared_error=1., normalized_error=.5)
+    with pytest.raises(ValueError, match="query"):
+        nonworse(value, copy.deepcopy(value), require_queries=True)
+
+
+def test_query_teacher_identity_cannot_hide_in_unchanged_frame_energy():
+    before = with_current_evidence(metric())
+    after = metric((2., .5))
+    after["requests"][0]["frames"][0]["terminal_query"].update(teacher_energy=3., normalized_error=1. / 3.)
+    after = with_current_evidence(after)
+    with pytest.raises(ValueError, match="per-query position/teacher"):
+        nonworse(before, after)
+
+
+@pytest.mark.parametrize("view", ["fp32", "bf16_output", "bf16_rank_output"])
+@pytest.mark.parametrize("split,choice", [("validation", "baseline"), ("validation", "selected"),
+                                         ("test", "baseline"), ("test", "selected")])
+def test_v8_requires_every_query_in_every_view_and_record(tmp_path, view, split, choice):
+    from test_optr_integration import NAME, artifact, configuration
+    value = artifact(configuration(tmp_path))
+    result = value["refinement_certificate"]["layers"][NAME][split][choice]
+    if view != "fp32": result = result["projection_checks"][view]
+    result["requests"][0]["frames"][0].pop("queries")
+    with pytest.raises(ValueError, match="requires every captured query"):
+        validate_refinement_metadata(value)
+
+
+@pytest.mark.parametrize("fault", ["missing", "none", "one_view", "extra_view", "nested",
+                                   "request", "sample", "frame", "queries"])
+def test_invalid_projection_evidence_fails_closed(fault):
+    value = with_current_evidence(metric())
+    views = value["projection_checks"]
+    view = views["bf16_rank_output"]
+    row = view["requests"][0]
+    if fault == "missing": value.pop("projection_checks")
+    elif fault == "none": value["projection_checks"] = None
+    elif fault == "one_view": views.pop("bf16_output")
+    elif fault == "extra_view": views["unknown"] = copy.deepcopy(view)
+    elif fault == "nested": view["projection_checks"] = {}
+    elif fault == "request": row["request_id"] = "other"
+    elif fault == "sample": row["sample_sha256"] = "c" * 64
+    elif fault == "frame":
+        row["frames"][0]["query_positions"][0] = 1
+        row["frames"][0]["queries"][0]["position"] = 1
+    else: row["frames"][0].pop("queries")
+    with pytest.raises(ValueError, match="projection"):
+        nonworse(value, copy.deepcopy(value), require_projection=True)
+
+
+def test_projection_evidence_cannot_be_dropped_from_only_one_side():
+    before = with_current_evidence(metric())
+    after = copy.deepcopy(before)
+    after.pop("projection_checks")
+    with pytest.raises(ValueError, match="projection coverage"):
+        nonworse(before, after)
+
+
+@pytest.mark.parametrize("split,choice", [("validation", "baseline"), ("validation", "selected"),
+                                         ("test", "baseline"), ("test", "selected")])
+@pytest.mark.parametrize("view", [None, "bf16_output", "bf16_rank_output"])
+def test_v8_certificate_cannot_publish_missing_projection_checks(tmp_path, split, choice, view):
+    from test_optr_integration import NAME, artifact, configuration
+    value = artifact(configuration(tmp_path))
+    result = value["refinement_certificate"]["layers"][NAME][split][choice]
+    if view is None: result.pop("projection_checks")
+    else: result["projection_checks"].pop(view)
+    with pytest.raises(ValueError, match="requires both BF16 projection"):
+        validate_refinement_metadata(value)
+
+
+def test_v7_certificate_keeps_historical_query_and_projection_coverage(tmp_path):
+    from test_optr_integration import NAME, artifact, configuration
+    from oscar_ascend.optr_policy import legacy_capture_profile
+    config = configuration(tmp_path)
+    value = artifact(config)
+    value["calibration_profile"] = legacy_capture_profile(value["calibration_profile"], config, "v7")
+    certificate = value["refinement_certificate"]
+    certificate["policy"] = value["calibration_profile"]["refinement_policy"]
+    for split in ("validation", "test"):
+        for choice in ("baseline", "selected"):
+            result = certificate["layers"][NAME][split][choice]
+            result.pop("projection_checks")
+            for frame in result["requests"][0]["frames"]:
+                frame.pop("queries")
+    assert validate_refinement_metadata(value) is certificate

@@ -143,7 +143,7 @@ def test_loader_streams_one_layer_and_reconstructs_actual_frame_partitions(tmp_p
     assert load(canonical, config)["_root"] == str(path.parent)
 
 
-@pytest.mark.parametrize("version", ["v1", "v2", "v3", "v4", "v5", "v6"])
+@pytest.mark.parametrize("version", ["v1", "v2", "v3", "v4", "v5", "v6", "v7"])
 def test_legacy_capture_reuse_requires_exact_policy_and_sampling_coverage(tmp_path, version):
     from oscar_ascend.optr_policy import legacy_capture_profile
     path, config, top = build_bundle(tmp_path)
@@ -203,6 +203,23 @@ def test_shared_raw_trace_retains_its_old_seed_identity(tmp_path, version):
     with pytest.raises(ValueError, match="policy/calibration profile"):
         load(path, config)
     historical["base_calibration_profile"] = current["base_calibration_profile"]
+    json_save(path, top)
+    with pytest.raises(ValueError, match="policy/calibration profile"):
+        load(path, config)
+
+
+def test_v7_raw_trace_keeps_authenticated_train_seed_without_relabelling(tmp_path):
+    from oscar_ascend.optr_policy import legacy_capture_profile
+    from oscar_ascend.optr_oscar_seed import legacy_seed_profile
+    path, config, top = build_bundle(tmp_path)
+    current = top["calibration_profile"]
+    historical = legacy_capture_profile(current, config, "v7")
+    assert historical["base_calibration_profile"] == current["base_calibration_profile"]
+    assert historical["refinement_policy"] != current["refinement_policy"]
+    top.update(calibration_profile=historical, optr_policy=historical["refinement_policy"])
+    json_save(path, top)
+    assert traces.load_layer_samples(load(path, config), 3)["train"][0]
+    historical["base_calibration_profile"] = legacy_seed_profile(current["base_calibration_profile"])
     json_save(path, top)
     with pytest.raises(ValueError, match="policy/calibration profile"):
         load(path, config)
@@ -324,24 +341,26 @@ def metric_samples():
 def test_joint_output_metric_keeps_cross_rank_cancellation_and_cross_terms(monkeypatch):
     from oscar_ascend import optr_calibration
     constants, heads = metric_samples()
+    policy = optr_policy({})
     def cancel(_rk, _rv, _mean, sample, _policy):
         return torch.tensor([[[2., 0.]]]) if sample["rank"] == 0 else torch.tensor([[[0., 0.]]])
     monkeypatch.setattr(optr_calibration, "replay_sample", cancel)
-    metric = traces.aggregate_layer_error(constants, heads, {})
+    metric = traces.aggregate_layer_error(constants, heads, policy)
     assert metric["squared_error"] == 0 and metric["teacher_energy"] == 4
     assert metric["requests"][0]["frames"] == [{"frame_id": 0, "context": 0,
         "current_end": 1, "query_positions": [0], "squared_error": 0.,
         "teacher_energy": 4., "normalized_error": 0., "terminal_query": {
-            "position": 0, "squared_error": 0., "teacher_energy": 4., "normalized_error": 0.}}]
+            "position": 0, "squared_error": 0., "teacher_energy": 4., "normalized_error": 0.},
+        "queries": [{"position": 0, "squared_error": 0., "teacher_energy": 4., "normalized_error": 0.}]}]
     assert nonworse(metric, metric)
     monkeypatch.setattr(optr_calibration, "replay_sample", lambda *_: torch.tensor([[[2., 0.]]]))
-    aligned = traces.aggregate_layer_error(constants, heads, {})
+    aligned = traces.aggregate_layer_error(constants, heads, policy)
     assert aligned["squared_error"] == 4  # Sum of per-rank SSE would be only 2.
     assert not nonworse(metric, aligned)
     assert aligned["requests"][0]["sample_sha256"] == metric["requests"][0]["sample_sha256"]
     heads[1][0]["token_ids"][0] = 6
     with pytest.raises(ValueError, match="identities"):
-        traces.aggregate_layer_error(constants, heads, {})
+        traces.aggregate_layer_error(constants, heads, policy)
 
 
 def test_joint_metric_exposes_decode_regression_hidden_by_lower_request_error():
@@ -422,6 +441,7 @@ def test_cached_terminal_prefill_metric_blocks_regression_hidden_in_frame_total(
     """#170/#173: final prefill output selects the next token, not its frame mean."""
     from oscar_ascend import optr_calibration
     constants, heads = metric_samples()
+    policy = optr_policy({})
     for head in heads:
         sample = head[0]
         for key in ("q", "k", "v", "gate", "teacher"):
@@ -436,9 +456,9 @@ def test_cached_terminal_prefill_metric_blocks_regression_hidden_in_frame_total(
     teacher = [[torch.ones(2, 1)] for _ in heads]
     baseline = [[torch.tensor([[4.], [1.]])], [torch.ones(2, 1)]]
     selected = [[torch.ones(2, 1)], [torch.tensor([[1.], [2.]])]]
-    before = traces.aggregate_layer_error(constants, heads, {}, projected_outputs=baseline,
+    before = traces.aggregate_layer_error(constants, heads, policy, projected_outputs=baseline,
                                          projected_teachers=teacher)
-    after = traces.aggregate_layer_error(constants, heads, {}, projected_outputs=selected,
+    after = traces.aggregate_layer_error(constants, heads, policy, projected_outputs=selected,
                                         projected_teachers=teacher)
     assert before["squared_error"] == 9. and after["squared_error"] == 1.
     assert before["requests"][0]["frames"][0]["terminal_query"]["squared_error"] == 0.
@@ -447,7 +467,9 @@ def test_cached_terminal_prefill_metric_blocks_regression_hidden_in_frame_total(
     assert not nonworse(before, after, require_terminal=True)
     # Historical frame-only acceptance would allow exactly these outputs.
     for value in (before, after):
+        value.pop("projection_checks")
         value["requests"][0]["frames"][0].pop("terminal_query")
+        value["requests"][0]["frames"][0].pop("queries")
     assert nonworse(before, after, require_frames=True)
 
 

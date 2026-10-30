@@ -8,31 +8,20 @@ sampling is substituted by CPU execution. The later service argv is untouched.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 from pathlib import Path
 import sys
 
 from tools.calibrate_model_rotations import calibration_process_env, load_messages, prompt_ids_sha256
-from tools.calibration_data import calibration_prompt_source
+from tools.calibration_data import calibration_prompt_source, partition_calibration_messages
 
 
 def build_request_plan(tokenizer, messages, policy):
     """Partition complete source records before packing any sequence/chunk."""
-    unique = {}
-    for message in messages:
-        encoded = json.dumps(message, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
-        identity = hashlib.sha256(encoded).hexdigest()
-        unique.setdefault(identity, message)
-    splits = ("train", "validation", "test")
-    if len(unique) < len(splits):
-        raise ValueError("OptR needs at least three distinct complete source records for disjoint splits")
-    partitions = {split: [] for split in splits}
-    for index, item in enumerate(sorted(unique.items())):
-        partitions[splits[index % len(splits)]].append(item)
+    partitions = partition_calibration_messages(messages)
     plan = []
-    for split in splits:
+    for split in partitions:
         records, stream = [], []
         for identity, message in partitions[split]:
             ids = tokenizer.apply_chat_template(message, tokenize=True, add_generation_prompt=True, return_dict=False)

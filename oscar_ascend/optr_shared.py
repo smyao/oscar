@@ -10,7 +10,8 @@ from __future__ import annotations
 import torch
 
 from .optr_calibration import _matrices, _sample
-from .optr_sequential import prepare_samples, phase_loss, _key_probabilities
+from .optr_sequential import phase_loss
+from .optr_shared_cache import prepare_shared_rows
 
 
 def validate_shared_pair(rk, rv, mean):
@@ -27,27 +28,21 @@ def validate_shared_pair(rk, rv, mean):
     return rk.shape[0], rk.shape[-1]
 
 
-def _stage(heads, mean, policy, device, weights, split, emit):
-    rows = []
-    for h, samples in enumerate(heads):
-        staged = prepare_samples(samples, mean[h], policy, device, weights=weights)
-        # Explicit head mean then request mean; no second head divisor later.
-        weight = 1. / (len(heads) * len(samples))
-        rows.extend((row, weight) for row in staged)
-        emit("head_staged", head=h, split=split, samples=len(samples))
-    return rows
-
-
 def _score(rotation, rows, phase, policy, emit):
     total = 0.
     with torch.no_grad():
-        for index, (row, weight) in enumerate(rows):
+        index = 0
+        # enumerate retains its previous result tuple during next(iterator),
+        # keeping a streamed device row alive while the next is allocated.
+        for row, weight in rows:
+            index += 1
             loss = phase_loss(rotation, row, phase, policy)
             if not bool(torch.isfinite(loss)):
                 raise ValueError("nonfinite OptR shared held-out proxy loss")
             total += float(loss) * weight
-            emit("validation_sample_done", phase=phase, sample=index + 1,
+            emit("validation_sample_done", phase=phase, sample=index,
                  samples=len(rows), request_id=row["request_id"])
+            del row, loss  # Release a streamed device row before staging the next.
     return total
 
 
@@ -65,6 +60,7 @@ def backward_shared(rotation, rows, phase, policy):
         if not bool(torch.isfinite(loss)):
             raise ValueError("nonfinite OptR shared training proxy loss")
         (loss * weight).backward()
+        del row, loss
     if leaf.grad is None or not bool(torch.isfinite(leaf.grad).all()):
         raise ValueError("nonfinite or missing OptR shared rotation gradient")
     rotation.backward(leaf.grad)
@@ -93,23 +89,19 @@ def fit_shared(base_k, base_v, mean, train_heads, validation_heads, *, policy,
             progress({"event": event, "fitted_grouping": "layer", **fields})
 
     emit("staging_start", device=str(device), objective=policy["fitting_objective"])
-    weights = {}
-    train = _stage(train_heads, mean, policy, device, weights, "train", emit)
-    held = _stage(validation_heads, mean, policy, device, weights, "validation", emit)
+    train, held, resources = prepare_shared_rows(
+        train_heads, validation_heads, mean, policy, device, emit)
     rk, rv = base_k[0].clone(), base_v[0].clone()
     decisions = []
     for phase, origin in (("k", base_k[0]), ("v", base_v[0])):
         emit("phase_start", phase=phase, steps=policy["steps"])
         if phase == "v":
-            with torch.no_grad():
-                rotation = rk.to(device)
-                for row, _ in (*train, *held):
-                    row["selected_k_quant_p"] = _key_probabilities(rotation, row, policy).masked_fill(row["exact"], 0)
-                    del row["teacher_p"], row["teacher_logp"], row["teacher_logits"]
-                    # V uses only fixed probabilities, V and W_O. Release the
-                    # staged K/query/masks rather than retain all heads twice.
-                    del row["q"], row["k"], row["exact"], row["causal"]
-            emit("fixed_k_probabilities_ready", phase=phase, samples=len(train) + len(held))
+            fixed_k = rk.to(device)
+            train.prepare_value(fixed_k)
+            held.prepare_value(fixed_k)
+            del fixed_k
+            emit("fixed_k_probabilities_ready" if resources["mode"] == "resident"
+                 else "fixed_k_rotation_ready", phase=phase, samples=len(train) + len(held))
         baseline = best = _score(origin.to(device), held, phase, policy, emit)
         best_rotation = origin.clone()
         correction = torch.zeros_like(origin, requires_grad=True)
@@ -153,6 +145,7 @@ def fit_shared(base_k, base_v, mean, train_heads, validation_heads, *, policy,
     return rk, rv, {"accepted": accepted, "phases": decisions, "policy": policy,
         "objective": policy["fitting_objective"], "fit_device": str(device),
         "matrix_exp_device": "cpu", "fitted_grouping": "layer",
+        "staging_resources": resources,
         "selection": "shared_layer_proxy_then_joint_deployment_gate",
         "loss_reduction": "mean_kv_heads_mean_requests_mean_gqa_queries_hidden",
         "model_quality": "not_measured", "npu_equivalence": "not_measured"}

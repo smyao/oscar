@@ -3,8 +3,8 @@
 Archive #86/#97/#170/#173/#175/#176. The user explicitly selected the local
 oscar_base reference at 9cd2429f. Its FP32 qqt/sst statistics, rank-weighted
 shared fit and CPU FP64 U H P_br composition are reproduced here. Reference
-trees are not imported. The current native GPQA calibration source is kept;
-the first 512 aligned rows replace that reference's short Chinese prompt.
+trees are not imported. The current native GPQA train partition is used;
+its first 512 aligned rows replace that reference's short Chinese prompt.
 This sampling adaptation is part of the identity, not a quality guarantee.
 """
 from __future__ import annotations
@@ -16,7 +16,8 @@ import math
 from collections.abc import Mapping
 
 RECIPE_VERSION = 6
-SEED_RECIPE = "oscar_base_shared_v1"
+SEED_RECIPE = "oscar_base_shared_train_v2"
+LEGACY_SEED_RECIPE = "oscar_base_shared_v1"
 SAMPLE_CAP = 512
 SOURCE_COMMIT = "9cd2429fb4fb934889fa6f51da5d54396012b5df"
 OBJECTIVE = "oscar_base_shared_qqt_sst_r_h_pbr"
@@ -26,15 +27,26 @@ SOURCE_FILES = {
 }
 
 
-def source_provenance():
+def _legacy_source_provenance():
+    """Exact historical identity, for authenticating raw traces only."""
     return {"source": "user_selected_local_oscar_base", "commit": SOURCE_COMMIT,
-            "files": dict(SOURCE_FILES), "recipe": SEED_RECIPE,
+            "files": dict(SOURCE_FILES), "recipe": LEGACY_SEED_RECIPE,
             "statistics_dtype": "float32", "eigensolver_dtype": "float64",
             "fitted_grouping": "layer", "key_centering": "none",
             "query_trace_normalization": False, "diagonal_epsilon": 1e-6,
             "sample_cap": SAMPLE_CAP,
             "sampling": "first_512_aligned_rows_complete_gpqa_prompts",
             "sampling_adaptation": "current_GPQA_source_not_reference_short_Chinese_prompt"}
+
+
+def source_provenance():
+    from tools.calibration_data import CALIBRATION_PARTITION
+    result = _legacy_source_provenance()
+    result.update(recipe=SEED_RECIPE,
+                  sampling="first_512_aligned_rows_complete_train_gpqa_prompts",
+                  sampling_adaptation="current_GPQA_train_partition_not_reference_short_Chinese_prompt",
+                  source_partition={"algorithm": CALIBRATION_PARTITION, "split": "train"})
+    return result
 
 
 def seed_profile(base_profile):
@@ -55,10 +67,11 @@ def seed_profile(base_profile):
 
 def legacy_base_profile(profile):
     """Recover only the old sampling identity; never reuse old fitted means."""
-    if not isinstance(profile, Mapping) or profile.get("rotation_seed") != SEED_RECIPE:
+    if (not isinstance(profile, Mapping) or
+            profile.get("rotation_seed") not in (SEED_RECIPE, LEGACY_SEED_RECIPE)):
         return copy.deepcopy(profile)
     from .rotation_calibration import OFFICIAL_COMMIT
-    result = _profile(profile)
+    result = _profile(profile, allow_legacy=True)
     for key in ("rotation_seed", "fitted_grouping", "key_centering", "source_provenance"):
         result.pop(key)
     result.update(recipe_version=3, objective="qqt_sst_r_h_pbr", accumulator_dtype="float64",
@@ -66,21 +79,31 @@ def legacy_base_profile(profile):
     return result
 
 
-def _profile(profile):
+def legacy_seed_profile(profile):
+    """Restore v1 exactly for raw-trace authentication, never current seed use."""
+    result = _profile(profile, allow_legacy=True)
+    result.update(rotation_seed=LEGACY_SEED_RECIPE, source_provenance=_legacy_source_provenance())
+    return result
+
+
+def _profile(profile, *, allow_legacy=False):
+    legacy = (allow_legacy and isinstance(profile, Mapping) and
+              profile.get("rotation_seed") == LEGACY_SEED_RECIPE)
     if (not isinstance(profile, Mapping) or profile.get("recipe_version") != RECIPE_VERSION or
-            profile.get("rotation_seed") != SEED_RECIPE or profile.get("objective") != OBJECTIVE or
+            profile.get("rotation_seed") != (LEGACY_SEED_RECIPE if legacy else SEED_RECIPE) or
+            profile.get("objective") != OBJECTIVE or
             profile.get("accumulator_dtype") != "float32" or
             profile.get("fitted_grouping") != "layer" or profile.get("key_centering") != "none" or
             profile.get("rotation_variant") != "perhead_center" or
-            profile.get("source_provenance") != source_provenance() or
+            profile.get("source_provenance") != (_legacy_source_provenance() if legacy else source_provenance()) or
             "official_commit" in profile or not profile.get("model_fingerprint") or
             type(profile.get("max_tokens")) is not int or profile["max_tokens"] <= 0):
         raise ValueError("OSCAR-base seed profile/source differs")
     return json.loads(json.dumps(profile, sort_keys=True, allow_nan=False))
 
 
-def validate_seed_profile(profile, model_fingerprint):
-    result = _profile(profile)
+def validate_seed_profile(profile, model_fingerprint, allow_legacy=False):
+    result = _profile(profile, allow_legacy=allow_legacy)
     if result["model_fingerprint"] != model_fingerprint:
         raise ValueError("OSCAR-base seed profile model fingerprint differs")
     return result
@@ -358,7 +381,8 @@ def validate_seed_artifact(artifact, *, expected_profile, layer_names=None, head
                     not bool(torch.isfinite(rotation).all()) or
                     not torch.equal(rotation, rotation[:1].expand_as(rotation))):
                 raise ValueError("OSCAR-base requires finite identical shared rotations for all heads")
-            if float((rotation[0].T @ rotation[0] - torch.eye(dim, device="cpu")).abs().max()) > ORTHOGONALITY_ATOL:
+            error = float((rotation[0].T @ rotation[0] - torch.eye(dim, device="cpu")).abs().max())
+            if not math.isfinite(error) or error > ORTHOGONALITY_ATOL:
                 raise ValueError("OSCAR-base rotation is not orthogonal")
         mean = layer.get("k_mean")
         if (not torch.is_tensor(mean) or mean.dtype != torch.float32 or mean.device.type != "cpu" or

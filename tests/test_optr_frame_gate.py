@@ -212,13 +212,13 @@ def test_terminal_teacher_identity_is_preserved_when_frame_teacher_sum_matches()
 
 @pytest.mark.parametrize("split", ["validation", "test"])
 @pytest.mark.parametrize("choice", ["baseline", "selected"])
-@pytest.mark.parametrize("version", ["v4", "v5", "v6"])
+@pytest.mark.parametrize("version", ["v4", "v5", "v6", "v7"])
 def test_certificate_requires_terminal_query_for_every_frame(tmp_path, split, choice, version):
     from test_optr_integration import NAME, artifact, configuration
     from oscar_ascend.optr_policy import legacy_capture_profile
     config = configuration(tmp_path)
     value = artifact(config)
-    if version != "v6":
+    if version != "v7":
         value["calibration_profile"] = legacy_capture_profile(value["calibration_profile"], config, version)
     policy = value["calibration_profile"]["refinement_policy"]
     value["refinement_certificate"]["policy"] = copy.deepcopy(policy)

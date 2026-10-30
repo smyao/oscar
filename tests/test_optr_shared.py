@@ -6,6 +6,7 @@ import torch
 
 from oscar_ascend import optr_shared as shared
 from oscar_ascend import optr_sequential as sequential
+from oscar_ascend import optr_shared_cache as cache
 from test_optr_upstream_parity import inputs, options, source_loss
 
 
@@ -44,7 +45,8 @@ def test_streamed_shared_gradient_matches_official_loss_with_tied_rotations(phas
     torch.testing.assert_close(actual_a.grad, expected_a.grad, rtol=3e-5, atol=3e-6)
 
 
-def test_shared_adam_trajectory_and_final_k_then_v_match_tied_upstream(monkeypatch):
+@pytest.mark.parametrize("streamed", [False, True])
+def test_shared_adam_trajectory_and_final_k_then_v_match_tied_upstream(monkeypatch, streamed):
     heads, dim = 4, 8
     train, source_train, wo = inputs(191, "train", heads=heads, wo_scale=1e-3)
     held, source_held, _ = inputs(197, "held", heads=heads, wo_scale=1e-3)
@@ -53,6 +55,10 @@ def test_shared_adam_trajectory_and_final_k_then_v_match_tied_upstream(monkeypat
     mean = torch.zeros(heads, dim)
     base = torch.eye(dim)
     p = options(steps=3, eval_every=20)
+    if streamed:
+        monkeypatch.setattr(cache, "RESIDENT_CACHE_BYTES", 0)
+        monkeypatch.setattr(cache, "STREAMED_ROW_CACHE_BYTES", max(
+            cache.sample_cache_bytes(sample, queries=1) for sample in (*train, *held)))
     snapshots = []
     original = torch.optim.Adam
 
@@ -101,7 +107,38 @@ def test_shared_adam_trajectory_and_final_k_then_v_match_tied_upstream(monkeypat
         assert torch.equal(actual, actual[:1].expand_as(actual))
         torch.testing.assert_close(actual[0], selected[phase], rtol=5e-5, atol=5e-6)
     assert decision["fitted_grouping"] == "layer"
+    assert decision["staging_resources"]["mode"] == ("streamed" if streamed else "resident")
     assert len([e for e in events if e["event"] == "step_done"]) == 2 * p["steps"]
+
+
+def test_complete_chunked_shared_search_preserves_selection_and_releases_rows(monkeypatch):
+    import weakref
+    from test_optr_shared_cache import capture, force_stream
+
+    train, held, mean, p = capture()
+    p = {**p, "steps": 3, "eval_every": 2}
+    base = torch.eye(mean.shape[-1]).repeat(len(train), 1, 1)
+    expected = shared.fit_shared(base, base, mean, train, held, policy=p)
+    force_stream(monkeypatch, train, held)
+    previous, original = [], cache.prepare_samples
+
+    def stage(*args, **kwargs):
+        assert all(reference() is None for reference in previous)
+        rows = original(*args, **kwargs)
+        previous[:] = [weakref.ref(rows[0][key]) for key in ("q", "k", "v", "teacher_p")]
+        return rows
+
+    monkeypatch.setattr(cache, "prepare_samples", stage)
+    actual = shared.fit_shared(base, base, mean, train, held, policy=p)
+    assert all(reference() is None for reference in previous)
+    for result, reference in zip(actual[:2], expected[:2], strict=True):
+        torch.testing.assert_close(result, reference, rtol=5e-5, atol=5e-6)
+    for result, reference in zip(actual[2]["phases"], expected[2]["phases"], strict=True):
+        assert result["accepted"] == reference["accepted"]
+        for name in ("baseline_proxy_loss", "selected_proxy_loss"):
+            assert result[name] == pytest.approx(reference[name], rel=3e-5, abs=2e-8)
+        assert [row["accepted"] for row in result["candidates"]] == [
+            row["accepted"] for row in reference["candidates"]]
 
 
 def test_v_steps_reuse_selected_shared_k_for_all_heads(monkeypatch):
@@ -109,14 +146,14 @@ def test_v_steps_reuse_selected_shared_k_for_all_heads(monkeypatch):
     train, _, _ = inputs(83, "train", heads=heads)
     held, _, _ = inputs(87, "held", heads=heads)
     events, probabilities = [], []
-    original = shared._key_probabilities
+    original = cache._key_probabilities
 
     def fixed(rotation, row, policy):
         assert events[-1]["event"] == "phase_start" and events[-1]["phase"] == "v"
         probabilities.append(rotation.clone())
         return original(rotation, row, policy)
 
-    monkeypatch.setattr(shared, "_key_probabilities", fixed)
+    monkeypatch.setattr(cache, "_key_probabilities", fixed)
     base = torch.eye(dim).repeat(heads, 1, 1)
     rk, _, _ = shared.fit_shared(base, base, torch.zeros(heads, dim), [[r] for r in train],
         [[r] for r in held], policy=options(steps=2), progress=events.append)

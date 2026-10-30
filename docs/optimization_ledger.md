@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+> 2026-10-30自查续修：确认seed原顺序取样混入held-out来源，改为同trace的train分区并升级v7/seed v2身份；完整prompt足量即停止。共享公式/官方目标/线上路径不变；补大采样有界固定缓存及非有限正交误差拒绝。630项本地回归、包和启动对照见[自查记录](optr_oscar_base_alignment_20261029.md)及`reports/optr_self_review_20261030/verification.json`。仅本地提交，无NPU/模型质量/性能验收。
+
 > 2026-10-30按用户要求保留原OSCAR逻辑：修正seed共享但最终逐头独立并混选的偏离。OptR v6在共享参数可行域内用原官方损失寻优、整层接受，既有采样/线上路径保持。旧PT/fit隔离、认证seed及raw trace复用；线上无新增操作，离线多头固定缓存成本明确记录。源码/数学/CPU/启动与打包见[续修记录](optr_oscar_base_alignment_20261029.md)及`reports/optr_shared_oscar_20261030/verification.json`。不领取质量或性能收益。
 
 > 2026-10-29按用户指定本机OSCAR重对齐：共享零均值source seed替代recipe3逐头中心化基底，拟合恢复官方OptR FP32独立GQA损失与全KV头平均梯度；v4自定义训练目标退出当前candidate，部署输出验证继续保留。新seed/fit/PT身份隔离，认证历史raw trace复用，四卡并行/线上工作量不变。实际参考AST、数学/梯度/Adam、启动接缝及证据见[本轮记录](optr_oscar_base_alignment_20261029.md)。未连接真机，未领取质量/性能收益；旧条目保留其历史状态。

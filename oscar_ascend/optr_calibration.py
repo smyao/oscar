@@ -71,7 +71,8 @@ def _matrices(rk: torch.Tensor, rv: torch.Tensor, mean: torch.Tensor) -> int:
     _tensor("mean", mean, torch.float32, (dim,))
     for name, matrix in (("rk", rk), ("rv", rv)):
         _tensor(name, matrix, torch.float32, (dim, dim))
-        if float((matrix.detach().T @ matrix.detach() - torch.eye(dim)).abs().max()) > 5e-4:
+        error = float((matrix.detach().T @ matrix.detach() - torch.eye(dim)).abs().max())
+        if not math.isfinite(error) or error > 5e-4:
             raise ValueError(f"{name} must be orthogonal before BF16 conversion")
     return dim
 

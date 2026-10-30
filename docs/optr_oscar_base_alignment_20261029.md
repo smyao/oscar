@@ -1,5 +1,36 @@
 # 按用户指定 oscar_base 恢复 OptR 拟合来源
 
+## 2026-10-30：修改后的全面自查与修正
+
+本轮以 `0e3cd5f` 为基底，按“检查 → 可复现问题修正 → 完整复查”执行。固定 candidate 升级为 `optr_oscar_shared_train_seed_ascend_v7`，继续实际执行共享 OptR。下节 v6 的共享数学仍适用；其 seed 直接复用和无界固定缓存描述由本节覆盖。
+
+### 发现并修正
+
+1. **seed 与 held-out 来源交叉。** 原 seed 按 GPQA 原始顺序取前 512 行，而 OptR 按记录 SHA 排序分 train/validation/test。真实 bundled 198 条记录中，原始前三条分别属于 test、test、validation；因此初始化也用到了 held-out 来源。现抽出同一分区函数，seed 只取 66 条 train 记录的有序前缀。统计仍取最多 512 个对齐 Q/K/V 行，FP32 qqt/sst、rank 合并、FP64 eigh+epsilon/UHP、共享和零均值均不变。该遗漏损害验证独立性，不能直接归为 LongBench 40.94 的根因。
+2. **采够 seed 后仍校验无用 prompt。** 原流程先渲染完整 token budget，再截取覆盖 512 行的完整 prompt；后面的超长 prompt 可能阻断本无需使用它的准备。现完整 prompt 达到采样上限就停止，实际参与的 prompt 仍严格执行预算、长度和完整性检查。recipe2/3 行为保持。
+3. **大采样配置的离线固定缓存无界。** 共享搜索同时驻留全头 train/validation，默认形状固定缓存约 3.60 GiB，但合法的四个约 64K 长度、每 forward 64 个 query、decode 64 配置约为 50.47 GiB。现先按 tensor 形状核算：不超过 8 GiB 保持原驻留方式；超过时按 query 分片，一次固定缓存不超过 512 MiB，保留完整 K/V、所有 query、原顺序和步数。chunk 按 query 数加权，保持原均值目标；单个完整历史加一条 query 仍超限时，在设备分配前明确失败。额外搬运和固定概率重算只发生于超预算离线配置；这两个阈值不是包含 autograd、工作张量和 allocator 的实际总峰值保证。
+4. **正交检查对非有限结果显式拒绝。** 三个检查入口补上 Gram 误差的 finite 检查，复用已有标量，无新增矩阵乘法或放宽容差。负例模拟 backend NaN；本地有限极大值反例产生 Inf 已被旧门拒绝，不能把防御性修正写成已复现 NPU 故障。
+
+新 seed 身份为 `oscar_base_shared_train_v2`（仍 recipe6）；最终 PT 仍 recipe5。旧 seed、最终 PT 和拟合断点不能充作当前结果，固定命令自动准备新身份；原生 trace 在 OSCAR 关闭的隔离进程采样，与 seed 数值无关，覆盖一致时仍按 v1–v6 原身份精确认证复用，不将旧 seed 换标签。历史六版 policy/profile 冻结 SHA 均匹配。
+
+### 修正后的复查
+
+| 检查面 | 结果与边界 |
+| --- | --- |
+| 本机 OSCAR 数学 | 只读指定源码 AST 对照、FP32 统计与 rank 合并、FP64 UHP、共享/零均值通过；本轮未更改这些公式 |
+| OptR 核心 | 固定官方独立 GQA K/V loss、共享参数梯度、逐步 Adam、固定选中 K 后的 V 通过，含 D256/GQA6 |
+| 分块等价与生命周期 | loss/gradient/Adam、完整 K→V 搜索和选择与驻留路径匹配预定 FP32 容差；weakref 检查捕获并修正评分 `enumerate` 暂存前一行导致重叠驻留的问题 |
+| 默认准备开销 | 原逐头一次 stage、共享 W_O、teacher 和 V 固定概率缓存保持；选中 K 仍只搬运一次，默认不增加 NPU 重算 |
+| 数据隔离与兼容 | 真实 GPQA seed train-only；trace 全计划逐 token SHA 与修改前一致；recipe2/3 保留；旧 seed/PT 拒绝、历史 raw trace 精确认证 |
+| 接受/发布/加载 | 整层共享候选，validation 每请求/forward/terminal 非劣和整层严格改善保持；test 仍按已授权实验政策记录，不参与矩阵重选；原子发布/中断恢复/四进程清理通过 |
+| 服务与安装包 | candidate 继续 OptR，摘要显示 train seed；前四卡、7878、完整 argv、线上 attention/codec/runtime/timer 保持；wheel 构建、字节核对及隔离导入通过 |
+
+统一回归 **630 passed、0 failed、0 skipped**。证据：`reports/optr_self_review_20261030/verification.json`、`pytest.xml`、`source_package_checks.json`；seed 两项真实红例日志保留。分块开发期间的一项单 query 测试夹具错误和评分引用滞留在统一回归前修正，没有放宽产品质量门。
+
+仍有明确适配差异：参考 OSCAR 用短中文 prompt，这里用固定 GPQA train 前缀；官方 OptR 独立优化各头，这里按用户要求约束为每层共享矩阵；官方 FP32 优化目标与当前 Ascend BF16/FP32 metadata 部署由独立输出验证连接，采样包含稀疏 query、真实 forward 窗口及 Qwen gate。它们没有被宣称为源码逐位等同，也没有证明对任意数据集都改善。独立 test 仍可产生带退化记录的实验 PT。
+
+本轮未连接真机、未做 NPU/图/LongBench/速度测试；不能宣称准确率恢复或实测性能无退化。线上每 token 计算和 KV 格式未变，产物加载仅增加已有标量的有限性判断。只本地提交、暂不推送。原固定命令不变；远端未获得本地提交前，真机 `git pull` 不会取得本轮修复。
+
 ## 2026-10-30：保留 OSCAR 共享结构，只替换寻优过程
 
 本轮基底为 `d08c3d7`，对应用户“尽量保持原有 OSCAR 逻辑，只更换核心 OptR 的拟合寻优”。固定 candidate 现在使用 `optr_oscar_shared_upstream_ascend_v6`，仍实际执行 OptR，不增加开关。下面的 10-29 记录保留为历史；其中逐头独立优化、头子集选择和 v5 身份已被本节覆盖。

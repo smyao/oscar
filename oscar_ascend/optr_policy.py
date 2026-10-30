@@ -11,7 +11,7 @@ import math
 RECIPE_VERSION = 5
 OBJECTIVE = "optr_post_gate_output_v1"
 UPSTREAM_COMMIT = "66d46561b9bdf5d715f591e0f5845a4cbd927dee"
-POLICY_VERSION = "optr_oscar_shared_upstream_ascend_v6"
+POLICY_VERSION = "optr_oscar_shared_train_seed_ascend_v7"
 # User 2026-10-28: publish experimental constants after recording independent
 # test, including regressions. The publication policy is separate from the
 # fitting version: shared-layer fitting invalidates older independent-head fits
@@ -92,10 +92,13 @@ def legacy_capture_policy(config, version="v1"):
     default must not silently describe those seven requests as today's nine.
     Explicit research overrides remain part of the historical identity.
     """
-    if version not in ("v1", "v2", "v3", "v4", "v5"):
+    if version not in ("v1", "v2", "v3", "v4", "v5", "v6"):
         raise ValueError("unknown historical OptR capture policy")
     policy = optr_policy(config)
     overrides = config.get("optr_calibration", {})
+    if version == "v6":
+        policy["policy_version"] = "optr_oscar_shared_upstream_ascend_v6"
+        return policy
     policy.pop("fitted_grouping")
     policy["selection"] = "joint_all_heads_each_request_frame_and_terminal_nonworse"
     if version == "v5":
@@ -125,11 +128,14 @@ def legacy_capture_policy(config, version="v1"):
 
 
 def legacy_capture_profile(profile, config, version="v1"):
-    from .optr_oscar_seed import legacy_base_profile
+    from .optr_oscar_seed import legacy_base_profile, legacy_seed_profile
     previous = copy.deepcopy(profile)
     base = previous.get("base_calibration_profile")
-    if base is not None and version != "v5":
-        previous["base_calibration_profile"] = legacy_base_profile(base)
+    if base is not None:
+        # v5/v6 used the unpartitioned shared seed. Its raw native traces
+        # remain reusable, but must never be relabelled as train-only seed.
+        previous["base_calibration_profile"] = (legacy_seed_profile(base)
+            if version in ("v5", "v6") else legacy_base_profile(base))
     return {**previous, "refinement_policy": legacy_capture_policy(config, version)}
 
 
@@ -142,7 +148,7 @@ def compatible_capture_profiles(profile, config):
     """
     current = optr_policy(config)
     sampling = ("capture_lengths", "decode_tokens", "query_samples_per_frame")
-    candidates = [legacy_capture_profile(profile, config, version) for version in ("v5", "v4", "v3", "v2", "v1")]
+    candidates = [legacy_capture_profile(profile, config, version) for version in ("v6", "v5", "v4", "v3", "v2", "v1")]
     return [candidate for candidate in candidates if all(
         candidate["refinement_policy"][key] == current[key] for key in sampling)]
 

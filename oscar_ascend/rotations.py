@@ -223,9 +223,9 @@ def validate_artifact(artifact: Mapping[str, Any], *, layer_names: Sequence[str]
             matrix = matrix.to(device=selected).contiguous()
             if not bool(torch.isfinite(matrix).all()):
                 raise ValueError(f"{name}/{key}: non-finite rotation")
-            error = (matrix.transpose(-1, -2) @ matrix - identity).abs().amax()
-            if float(error) > ORTHOGONALITY_ATOL:
-                raise ValueError(f"{name}/{key}: non-orthogonal rotation, max_error={float(error)}")
+            error = float((matrix.transpose(-1, -2) @ matrix - identity).abs().amax())
+            if not math.isfinite(error) or error > ORTHOGONALITY_ATOL:
+                raise ValueError(f"{name}/{key}: non-orthogonal rotation, max_error={error}")
             if bool(((matrix - identity) == 0).all(dim=-1).all(dim=-1).any()) and not allow_identity:
                 raise ValueError(f"{name}/{key}: identity requires explicit allow_identity=True")
             entry[key] = matrix

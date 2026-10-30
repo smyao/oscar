@@ -74,7 +74,8 @@ def test_candidate_enables_optr_without_changing_online_bundle_or_extra_flags():
     assert config["port"] == selected["port"] == 7878
     assert runtime_feature_summary(selected, "candidate")["calibration_recipe_version"] == 5
     assert runtime_feature_summary(selected, "candidate")["optr_fitted_grouping"] == "layer"
-    assert runtime_feature_summary(selected, "candidate")["optr_fitting_policy"] == "optr_oscar_shared_upstream_ascend_v6"
+    assert runtime_feature_summary(selected, "candidate")["optr_fitting_policy"] == "optr_oscar_shared_train_seed_ascend_v7"
+    assert runtime_feature_summary(selected, "candidate")["optr_seed_partition"] == "train"
     for variant in ("baseline", "native"):
         assert variant_config(selected, variant).get("rotation_refinement") is None
     calibrated = {**selected, "optr_calibration": {"steps": 8}}
@@ -121,7 +122,7 @@ def test_frame_aware_default_trains_all_deployment_lengths_without_changing_sche
         "test": [4096, 32768, 65536]}
     assert (current["steps"], current["lr"], current["eval_every"]) == (80, .02, 20)
     assert current["selection"] == "shared_layer_each_request_frame_and_terminal_nonworse"
-    assert current["policy_version"] == "optr_oscar_shared_upstream_ascend_v6"
+    assert current["policy_version"] == "optr_oscar_shared_train_seed_ascend_v7"
     assert current["fitted_grouping"] == "layer"
     assert current["fitting_objective"] == "upstream_fp32_independent_gqa_kl_output_k_then_conditional_v"
     for version in ("v1", "v2"):
@@ -131,7 +132,8 @@ def test_frame_aware_default_trains_all_deployment_lengths_without_changing_sche
         assert old["selection"] == "joint_all_heads_each_request_nonworse"
     # Never relabel old seven-request data as the new nine-request plan.
     assert [p["refinement_policy"]["policy_version"] for p in compatible_capture_profiles({}, {})] == [
-        "optr_oscar_base_upstream_ascend_v5", "optr_joint_gqa_bf16_ascend_v4", "optr_frame_bf16_ascend_v3"]
+        "optr_oscar_shared_upstream_ascend_v6", "optr_oscar_base_upstream_ascend_v5",
+        "optr_joint_gqa_bf16_ascend_v4", "optr_frame_bf16_ascend_v3"]
 
 
 @pytest.mark.parametrize("version,expected", [
@@ -140,19 +142,42 @@ def test_frame_aware_default_trains_all_deployment_lengths_without_changing_sche
     ("v3", "68761932277b037026662af26b6485c95937d61702a03653f1bb45a3caab8756"),
     ("v4", "9b04defcb625bfadcb00b3fdd62da94fc053be61abaa233ebd95355071d034bd"),
     ("v5", "a2a22bd2e117ebb65a3b4dd799f6337ee5dc552a8e730fe060ff61e35dea37ca"),
+    ("v6", "9601f02f7b913e9195154fbbd3bf18d694d9d3276134494e534ac4b3e2edc50a"),
 ])
-def test_historical_capture_policy_exactly_preserves_pre_shared_identity(version, expected):
+def test_historical_capture_policy_exactly_preserves_prior_identity(version, expected):
     from oscar_ascend.optr_policy import legacy_capture_policy
-    # Frozen before the shared-layer change, independent of reconstruction.
+    # Frozen before each version change, independent of reconstruction.
     policy = legacy_capture_policy({}, version)
     encoded = json.dumps(policy, sort_keys=True, separators=(",", ":")).encode()
     assert hashlib.sha256(encoded).hexdigest() == expected
-    assert "fitted_grouping" not in policy
+    assert (policy.get("fitted_grouping") == "layer") == (version == "v6")
+
+
+@pytest.mark.parametrize("version,expected", [
+    ("v1", "35168bd8260c391294f82bc28ddd657d77a608f70fdd7082257d4f3af5b193ec"),
+    ("v2", "60257d325117e1d4bce2514ac5327ba00ddc09564d108def4d58eea656bbb66f"),
+    ("v3", "87dbf77b471b1b42255484df26912ee8ad8e8be40fc86c80827e5f765b29aed4"),
+    ("v4", "28f3a72d8b9eac5810a50ee04114f5e8fb54437f44f23edd462f4f137f7797da"),
+    ("v5", "5ab04164eeb1d2871d4f33d97bdec18d737de15796735838d75ef34bc8086efc"),
+    ("v6", "105ae433310b7b64a43d4aa23e87e1e8af8ea7c52d628d1d7bbcfc528073cd26"),
+])
+def test_historical_capture_profile_hashes_match_pre_partition_snapshots(version, expected):
+    from oscar_ascend.optr_policy import legacy_capture_profile
+    config = {"rotation_refinement": "optr", "rotation_variant": "perhead_center",
+        "max_num_batched_tokens": 16384, "experimental_official_math": True,
+        "oscar_dequant_policy": "fp32_metadata", "mamba_cache_dtype": "bfloat16",
+        "mamba_ssm_cache_dtype": "bfloat16"}
+    current = calibration_cache_identity(config, "model")
+    historical = legacy_capture_profile(current, config, version)
+    encoded = json.dumps(historical, sort_keys=True, separators=(",", ":")).encode()
+    assert hashlib.sha256(encoded).hexdigest() == expected
+    assert historical != current
 
 
 def test_historical_capture_profiles_restore_original_seed_and_exact_sampling_plan(tmp_path):
     from oscar_ascend.optr_policy import (compatible_capture_profiles,
         legacy_capture_policy, legacy_capture_profile)
+    from oscar_ascend.optr_oscar_seed import legacy_seed_profile
     config = {**configuration(tmp_path), "optr_calibration": {"capture_lengths": {
         "train": [4, 32, 64], "validation": [4, 32, 64], "test": [4, 32, 64]},
         "decode_tokens": 3, "query_samples_per_frame": 2, "steps": 5}}
@@ -160,13 +185,14 @@ def test_historical_capture_profiles_restore_original_seed_and_exact_sampling_pl
     legacy_config = {k: v for k, v in config.items() if k not in ("rotation_refinement", "optr_calibration")}
     original_seed = calibration_cache_identity(legacy_config, "preserved")
     compatible = compatible_capture_profiles(profile, config)
-    assert compatible == [legacy_capture_profile(profile, config, version) for version in ("v5", "v4", "v3", "v2", "v1")]
+    assert compatible == [legacy_capture_profile(profile, config, version) for version in ("v6", "v5", "v4", "v3", "v2", "v1")]
     for candidate in compatible:
         policy = candidate["refinement_policy"]
         assert policy["capture_lengths"] == config["optr_calibration"]["capture_lengths"]
         assert policy["decode_tokens"] == 3 and policy["query_samples_per_frame"] == 2
-        if policy["policy_version"] == "optr_oscar_base_upstream_ascend_v5":
-            assert candidate["base_calibration_profile"] == profile["base_calibration_profile"]
+        if policy["policy_version"] in ("optr_oscar_base_upstream_ascend_v5", "optr_oscar_shared_upstream_ascend_v6"):
+            assert candidate["base_calibration_profile"] == legacy_seed_profile(profile["base_calibration_profile"])
+            assert candidate["base_calibration_profile"] != profile["base_calibration_profile"]
             assert candidate["base_calibration_profile"]["recipe_version"] == 6
         else:
             assert candidate["base_calibration_profile"] == original_seed
@@ -178,7 +204,7 @@ def test_historical_capture_profiles_restore_original_seed_and_exact_sampling_pl
     assert legacy_capture_policy(config, "v2")["lr"] == .02
 
 
-@pytest.mark.parametrize("version", ["v1", "v2", "v3", "v4", "v5"])
+@pytest.mark.parametrize("version", ["v1", "v2", "v3", "v4", "v5", "v6"])
 def test_completed_older_fit_cannot_bypass_new_objective_via_artifact_cache(tmp_path, version):
     from oscar_ascend.optr_policy import legacy_capture_profile
     config = configuration(tmp_path)
@@ -187,7 +213,7 @@ def test_completed_older_fit_cannot_bypass_new_objective_via_artifact_cache(tmp_
     value["refinement_certificate"]["policy"] = value["calibration_profile"]["refinement_policy"]
     if version == "v5":
         # v5 legitimately fitted distinct heads. Keep it readable as history,
-        # while refusing to load even an internally valid PT as current v6.
+        # while refusing to load even an internally valid PT as current v7.
         value["layers"][NAME]["Rk"][1].neg_()
         digest = matrix_digest(value["layers"])
         value["refinement_certificate"]["matrices_sha256"] = digest
@@ -199,6 +225,32 @@ def test_completed_older_fit_cannot_bypass_new_objective_via_artifact_cache(tmp_
     publish_artifact(value, path)
     with pytest.raises(ValueError, match="profile"):
         load_active_artifact(config, path=path, device="cpu", testing=True)
+
+
+def test_current_certificate_cannot_relabel_unpartitioned_seed(tmp_path):
+    from oscar_ascend.optr_oscar_seed import legacy_seed_profile
+    value = artifact(configuration(tmp_path))
+    profile = value["calibration_profile"]
+    profile["base_calibration_profile"] = legacy_seed_profile(profile["base_calibration_profile"])
+    with pytest.raises(ValueError, match="profile/source"):
+        validate_refinement_metadata(value)
+
+
+def test_old_shared_fit_checkpoints_and_default_pt_path_are_isolated(tmp_path, monkeypatch):
+    from oscar_ascend.optr_checkpoint import FitCheckpoints
+    from oscar_ascend.optr_policy import legacy_capture_profile
+    monkeypatch.delenv("OSCAR_ROTATION_ARTIFACT", raising=False)
+    config = configuration(tmp_path)
+    profile = calibration_cache_identity(config, "model")
+    old = legacy_capture_profile(profile, config, "v6")
+    old_digest = hashlib.sha256(json.dumps(old, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:20]
+    assert rotation_artifact_path(config, "model", root=tmp_path).parent.name != "optr_" + old_digest
+    previous = FitCheckpoints(tmp_path / "fits", {"profile": old})
+    current = FitCheckpoints(tmp_path / "fits", {"profile": profile})
+    previous.save("layer-3", {"completed": True})
+    previous.save("layer-3-shared", {"fitted": True})
+    assert previous.load("layer-3") == {"completed": True}
+    assert current.load("layer-3") is None and current.load("layer-3-shared") is None
 
 
 def test_published_refinement_loads_normal_tp_constants_and_cannot_be_relabelled(tmp_path):

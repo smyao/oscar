@@ -1,9 +1,10 @@
-"""Archive #23-25/#28/#84/#86/#94-97/#127/#128/#166: native post-RoPE QKV sampling.
+"""Archive #23-25/#28/#84/#86/#94-97/#127/#128/#166/#173: native post-RoPE QKV sampling.
 
 Official recipe pinned to OSCAR339368e: seed0 GPQA choice shuffle, chat-template
 prompt IDs, whole-prompt budget30000. Sampling uses native vLLM Ascend in an
 isolated process; no OSCAR cache, performance tests, model weight edits or
-production CPU fallback. The parent fits FP64 moments after this model exits.
+production CPU fallback. Recipe2/3 retain their whole-prompt source; the private
+OSCAR-base seed only takes bounded rows from the fixed OptR train partition.
 """
 from __future__ import annotations
 
@@ -15,7 +16,7 @@ import os
 from pathlib import Path
 import random
 import sys
-from tools.calibration_data import calibration_prompt_source
+from tools.calibration_data import calibration_prompt_source, partition_calibration_messages
 
 ROOT = Path(__file__).resolve().parents[1]
 GPQA_FIELDS = ("Question", "Correct Answer", "Incorrect Answer 1", "Incorrect Answer 2", "Incorrect Answer 3")
@@ -55,11 +56,13 @@ def load_messages(path):
     return result
 
 
-def render_prompt_ids(tokenizer, messages, token_budget, chunk_limit):
+def render_prompt_ids(tokenizer, messages, token_budget, chunk_limit, *, stop_after_tokens=None):
     if type(token_budget) is not int or token_budget <= 0:
         raise ValueError("calibration_tokens must be positive")
     if type(chunk_limit) is not int or chunk_limit<=0:
         raise ValueError('calibration prefill chunk limit must be positive')
+    if stop_after_tokens is not None and (type(stop_after_tokens) is not int or stop_after_tokens <= 0):
+        raise ValueError('calibration prompt stopping extent must be positive')
     prompts, count = [], 0
     for message in messages:
         ids = tokenizer.apply_chat_template(message, tokenize=True, add_generation_prompt=True, return_dict=False)
@@ -79,7 +82,7 @@ def render_prompt_ids(tokenizer, messages, token_budget, chunk_limit):
         if len(ids) > chunk_limit:
             raise ValueError("each calibration prompt must fit one prefill chunk")
         prompts.append(ids); count += len(ids)
-        if count == token_budget:
+        if count == token_budget or (stop_after_tokens is not None and count >= stop_after_tokens):
             break
     if not prompts:
         raise ValueError("no complete prompt fits calibration token budget")
@@ -145,14 +148,21 @@ def collect(config_path, output_dir):
     from transformers import AutoTokenizer
     tokenizer = AutoTokenizer.from_pretrained(config["model"], trust_remote_code=True)
     chunk = int(config.get("max_num_batched_tokens", 16384))
-    prompts = render_prompt_ids(tokenizer, messages, config.get("rotation_calibration_tokens", 30000), chunk)
+    stop_after_tokens = None
     if config.get("rotation_seed") is not None:
         # oscar_base fits at most 512 aligned rows. Stop after the complete
-        # prompt that supplies that cap; no truncation or extra model forward.
-        from oscar_ascend.optr_oscar_seed import SEED_RECIPE
+        # prompt that supplies that cap, before rendering unused records.
+        # The selected prompt must still pass budget/chunk validation.
+        from oscar_ascend.optr_oscar_seed import SEED_RECIPE, SAMPLE_CAP
         if config["rotation_seed"] != SEED_RECIPE:
             raise ValueError("unsupported source OSCAR seed capture")
-        prompts = source_seed_prompt_prefix(prompts)
+        # Initialization is fitted data too: consume the same ordered train
+        # records as OptR, never its validation/test source records. Recipe2/3
+        # keep the original unpartitioned whole-prompt source above.
+        messages = [message for _, message in partition_calibration_messages(messages)["train"]]
+        stop_after_tokens = SAMPLE_CAP
+    prompts = render_prompt_ids(tokenizer, messages, config.get("rotation_calibration_tokens", 30000), chunk,
+                                stop_after_tokens=stop_after_tokens)
     if max(map(len, prompts)) + 1 > min(chunk, config["max_model_len"]):
         raise ValueError("calibration prefill plus one sampled token must fit the explicit native budget")
     layers, dim, fingerprint = model_geometry(Path(config["model"]))

@@ -94,7 +94,7 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if variant == "candidate":
         selected['oscar_dequant_policy'] = 'fp32_metadata'
         # Recipe4's proxy-fitted clip table regressed user model quality.
-        # OptR refines the recipe3 seed with its fixed scalar clips. Explicit
+        # OptR refines the shared OSCAR seed with its fixed scalar clips. Explicit
         # recipe4 research configs may still select it with variant=None.
         selected.pop("rotation_k_clip", None)
         if selected.get("rotation_method", "qqt_sst") == "qqt_sst":
@@ -239,7 +239,8 @@ def runtime_feature_summary(config: dict, variant: str | None) -> dict:
                 "independent_test_blocks_publication": False,
                 "optr_fitting_policy": POLICY_VERSION,
                 "optr_fitted_grouping": "layer",
-                "optr_seed": "oscar_base_shared_zero_mean"}
+                "optr_seed": "oscar_base_shared_zero_mean",
+                "optr_seed_partition": "train"}
                if config.get("rotation_refinement") == "optr" else {}),
             **({"aligned_c16_operator": ("attention_cv_official_cluster16_out" if config.get("experimental_official_math",False) else "attention_cv_aligned_cluster16_out"
                                         if config.get("experimental_c16_tuned", False)

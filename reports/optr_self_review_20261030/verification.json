@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-30",
+  "base_commit": "0e3cd5f5fede5953e8a09d6ee2d4e663fe2aeeb5",
+  "policy_version": "optr_oscar_shared_train_seed_ascend_v7",
+  "seed_recipe": "oscar_base_shared_train_v2",
+  "reference_oscar": "/Users/loki.yao/Documents/workgit/oscar_base@9cd2429fb4fb934889fa6f51da5d54396012b5df",
+  "reference_optr_commit": "66d46561b9bdf5d715f591e0f5845a4cbd927dee",
+  "scope": "Self review of OSCAR shared seed, OptR search, acceptance, publication/loading and candidate launch; fix confirmed seed split leakage and unused-prompt failure; bound large offline caches; reject nonfinite orthogonality error",
+  "pytest": {
+    "tests": 630,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "pytest_seconds": 19.061,
+  "source_and_package_checks": "source_package_checks.json",
+  "red_green_evidence": [
+    "optr-seed-prefix-red.log.gz",
+    "optr-seed-prefix-green.log",
+    "optr-seed-train-split-red.log.gz",
+    "optr-seed-train-split-green.log",
+    "optr-seed-train-split-extended.log"
+  ],
+  "validated": [
+    "Pinned local OSCAR AST, FP32 covariance and rank reduction, FP64 epsilon/UHP, shared zero mean unchanged",
+    "Real bundled GPQA source seed consumes only fixed train records; trace plan unchanged byte/token identity",
+    "No unused prompt rendering after complete prompt covers 512 rows; selected prompt budget/length checks retained; recipe2/3 unchanged",
+    "Tied upstream loss, D256/GQA6 gradients, complete K-then-V Adam trajectory and strict whole-layer selection",
+    "Resident/chunked loss/gradient/Adam/full search agreement under fixed FP32 test tolerances; no truncation of K/V/query coverage",
+    "Weakrefs verify previous streamed row released before next preparation; removed enumerate retained result",
+    "Current v7 PT/seed/fit isolation; six historical policy/profile hashes exact; authenticated v1-v6 raw captures reusable",
+    "Validation per request/frame/terminal and authorized independent test report-only remain; publication/resume/host parallel cleanup covered",
+    "713 protected source files unchanged, candidate config and full argv equal base; 17 wheel entries byte-identical and isolated imports pass"
+  ],
+  "development_failures_resolved": [
+    {
+      "kind": "test_fixture",
+      "detail": "Initial streamed official parity fixture requested two queries from a one-query upstream decode sample; corrected fixture capacity to one. Separate multi-query full fit test retained."
+    },
+    {
+      "kind": "implementation",
+      "detail": "Main scoring enumerate iterator retained previous row tuple despite deleting loop names; weakref test failed. Replaced enumerate with plain iteration and manual index, then all 630 tests passed."
+    },
+    {
+      "kind": "audit_script",
+      "detail": "Initial protected-file list used nonexistent oscar_ascend/official_math.py. Corrected to actual integration tree already included in protected set; final 713-file audit passed."
+    }
+  ],
+  "orthogonality_hardening": "Tests simulate nonfinite backend Gram output; actual finite huge-matrix CPU attempts returned Inf already rejected. Not claimed to reproduce a hardware failure. Same tolerance and matmul count.",
+  "offline_fixed_cache": {
+    "default_shape_estimated_bytes": 3864512512,
+    "four_long_lengths_large_query_estimated_bytes": 54195726336,
+    "resident_budget_bytes": 8589934592,
+    "streamed_row_budget_bytes": 536870912,
+    "default_extra_device_recomputation": false,
+    "streamed_extra_transfers_and_fixed_probability_recomputation": true,
+    "peak_including_autograd_allocator": "not_measured"
+  },
+  "intentional_adaptations": [
+    "GPQA train prefix rather than selected OSCAR short Chinese prompt",
+    "Shared layer R constraint rather than upstream independent-head parameters",
+    "Sparse captured queries and real frame windows; independent deployment checks include Qwen gate and BF16/FP32 metadata chain",
+    "Independent test is recorded but may allow regressed experimental PT as previously authorized"
+  ],
+  "online_per_token_operations_kv_layout_argv_changes": false,
+  "npu": "not_run_user_constraint",
+  "graph": "not_run",
+  "model_quality": "not_measured",
+  "performance": "not_measured",
+  "remote_push": "not_requested_user_requires_local_only",
+  "raw_failure_log_encoding": "Lossless gzip preserves raw pytest whitespace; mtime=0; decompression checked byte-for-byte."
+}

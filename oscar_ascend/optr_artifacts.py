@@ -211,14 +211,15 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
         raise ValueError("OptR calibration profile differs from selected configuration")
     base = profile.get("base_calibration_profile", {})
     policy = profile.get("refinement_policy", {})
-    shared_layer = policy.get("policy_version") == "optr_oscar_shared_upstream_ascend_v6"
+    train_seed = policy.get("policy_version") == "optr_oscar_shared_train_seed_ascend_v7"
+    shared_layer = train_seed or policy.get("policy_version") == "optr_oscar_shared_upstream_ascend_v6"
     source_seed = shared_layer or policy.get("policy_version") == "optr_oscar_base_upstream_ascend_v5"
     if shared_layer and (policy.get("fitted_grouping") != "layer" or
             policy.get("selection") != "shared_layer_each_request_frame_and_terminal_nonworse"):
         raise ValueError("shared-layer OptR requires shared fitting and whole-layer selection")
     if source_seed:
         from .optr_oscar_seed import validate_seed_profile
-        validate_seed_profile(base, artifact.get("model_fingerprint"))
+        validate_seed_profile(base, artifact.get("model_fingerprint"), allow_legacy=not train_seed)
     elif (base.get("recipe_version") != 3 or base.get("rotation_variant") != "perhead_center" or
             base.get("model_fingerprint") != artifact.get("model_fingerprint")):
         raise ValueError("OptR must refine the authenticated recipe3 model")

@@ -1,4 +1,4 @@
-"""Source seed preparation, authentication and automatic candidate handoff."""
+"""Archive #97/#173/#175: source seed authentication and candidate handoff."""
 import copy
 import json
 from pathlib import Path
@@ -7,7 +7,7 @@ import pytest
 import torch
 
 from oscar_ascend.optr_artifacts import file_sha256
-from oscar_ascend.optr_oscar_seed import BaseSeedAccumulator, SEED_RECIPE
+from oscar_ascend.optr_oscar_seed import BaseSeedAccumulator, SEED_RECIPE, legacy_seed_profile
 from oscar_ascend.rotations import calibration_cache_identity, checkpoint_identity
 from tools import prepare_optr_seed as seed
 from tools.prepare_optr_rotations import _base_config, _prepare_base
@@ -87,6 +87,25 @@ def test_seed_rejects_corrupt_or_incomplete_publication(tmp_path, corruption):
     else:
         (destination.parent / ".seed.pending.json").write_text("{}")
     with pytest.raises(ValueError, match="seed manifest|seed publication"):
+        seed.load_seed(base, testing=True)
+
+
+def test_seed_loader_rejects_authenticated_old_full_source_artifact(tmp_path):
+    base, config_path, capture = case(tmp_path)
+    seed.prepare(base, config_path=config_path, testing=True, capture_runner=capture)
+    destination = Path(base["rotation_artifact"])
+    artifact = torch.load(destination, map_location="cpu", weights_only=False)
+    old_profile = legacy_seed_profile(artifact["calibration_profile"])
+    artifact["calibration_profile"] = old_profile
+    artifact["source_provenance"] = old_profile["source_provenance"]
+    torch.save(artifact, destination)
+    manifest_path = destination.parent / ".seed.complete.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest.update(profile=old_profile, sha256=file_sha256(destination))
+    manifest_path.write_text(json.dumps(manifest))
+    # Even a matching file hash cannot make a historical full-source seed a
+    # current train-only seed. Raw trace compatibility is a separate path.
+    with pytest.raises(ValueError, match="seed manifest/hash/profile"):
         seed.load_seed(base, testing=True)
 
 

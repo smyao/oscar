@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-30全面自查续修：修复seed原顺序采样混入held-out来源，candidate升级OptR v7，source seed仅用同一固定train分区，身份oscar_base_shared_train_v2；旧seed/PT/fit隔离，历史v1–v6原生trace严格认证复用。达到512行的完整prompt即停止；共享OSCAR统计/官方OptR目标/整层接受保持。离线固定缓存≤8GiB沿用原驻留，超限按query加权分块（完整K/V不截断），明确额外离线搬运及总峰值未测；默认无额外NPU重算。正交门显式拒绝非有限Gram误差。630项本地回归通过，线上CANN/runtime/timer/argv不改，不升级NPU/质量/性能验收；仅本地提交不推送。见docs/optr_oscar_base_alignment_20261029.md自查节。
+
 > 2026-10-30用户要求尽量保持原OSCAR逻辑：固定candidate使用OptR v6，在指定oscar_base的共享、零均值seed上每层只优化一对Rk/Rv，保留官方FP32独立GQA目标与K→V；撤掉当前逐头独立搜索/头子集混选，最终整层接受。v6发布/加载严格共享，旧PT/fit隔离，seed及认证v1–v5 raw trace复用；不改变采样/clip/窗口/线上CANN/runtime/timer/argv。四卡层并行和已授权实验test政策保持，仅本地提交不推送。CPU对照不代表模型精度恢复；离线全头固定缓存有额外驻留量，线上操作无新增。详见docs/optr_oscar_base_alignment_20261029.md的10-30续修。
 
 > 2026-10-29用户指定本机OSCAR拟合：明确授权只读 `/Users/loki.yao/Documents/workgit/oscar_base`（9cd2429），不扩展到其他禁止参考树。固定candidate继续OptR，改用该源码的FP32共享qqt/sst、CPU FP64 eigh+epsilon/UHP、零K均值作独立recipe6 seed，再运行官方OptR FP32独立GQA K→V目标；撤掉v4自定义训练目标，保留部署验证和已授权实验test政策。policy v5隔离旧PT/fit；同采样覆盖的历史raw trace精确认证复用，旧FP64 Gram不能冒充新seed统计。前4卡、四worker、线上CANN/runtime/timer/argv不改；本轮仅本地commit不推送，不连接真机。详见docs/optr_oscar_base_alignment_20261029.md；数学/CPU通过不能宣称模型精度恢复。本条覆盖下方旧拟合目标及旧拟合断点兼容描述。

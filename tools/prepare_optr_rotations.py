@@ -99,15 +99,15 @@ def _metrics(constants, samples, policy, *, progress=None):
             "normalized_error": error / max(energy, 1e-20), "requests": rows}
 
 
-def _validate_head_result(result, baseline, head):
+def _validate_shared_result(result, baseline):
     import torch
-    from oscar_ascend.optr_calibration import _matrices
+    from oscar_ascend.optr_shared import validate_shared_pair
     if not isinstance(result, dict) or not isinstance(result.get("decision"), dict):
-        raise ValueError("invalid completed OptR head checkpoint")
-    _matrices(result.get("Rk"), result.get("Rv"), baseline["k_mean"][head])
+        raise ValueError("invalid completed OptR shared checkpoint")
+    validate_shared_pair(result.get("Rk"), result.get("Rv"), baseline["k_mean"])
     if result["decision"].get("accepted") is False and any(not torch.equal(
-            result[key], baseline[key][head]) for key in ("Rk", "Rv")):
-        raise ValueError("rejected OptR head checkpoint changed baseline matrices")
+            result[key], baseline[key]) for key in ("Rk", "Rv")):
+        raise ValueError("rejected OptR shared checkpoint changed baseline matrices")
     return result["Rk"], result["Rv"], result["decision"]
 
 
@@ -206,70 +206,58 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
 
 def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=None, progress=None,
                  fit_device="cpu"):
-    """Per-head fitting, then all-TP output selection, then untouched test."""
-    from oscar_ascend.optr_sequential import fit_head
+    """Search one shared pair, accept it as a whole layer, then record test."""
+    from oscar_ascend.optr_shared import fit_shared, validate_shared_pair
+    validate_shared_pair(baseline["Rk"], baseline["Rv"], baseline["k_mean"])
     real_fitter = fitter is None
-    fitter = fit_head if real_fitter else fitter
+    fitter = fit_shared if real_fitter else fitter
     emit = _progress if progress is None else progress
-    trial = {key: value.clone() if hasattr(value, "clone") else value
-             for key, value in baseline.items()}
-    decisions = []
-    for head in range(baseline["Rk"].shape[0]):
-        owner = f"layer-{baseline['layer_id']}-head-{head}"
-        emit(layer=name, head=head, phase="fitting")
-        saved = checkpoints.load(owner) if checkpoints else None
-        if saved is None:
-            options = {"policy": policy}
-            if real_fitter:
-                options["progress"] = lambda row: emit(layer=name, head=head, **row)
-                options["device"] = fit_device
-                options["global_kv_heads"] = baseline["Rk"].shape[0]
-            rk, rv, decision = fitter(baseline["Rk"][head], baseline["Rv"][head],
-                baseline["k_mean"][head], samples["train"][head], samples["validation"][head], **options)
-            saved = {"Rk": rk.detach().cpu().contiguous(), "Rv": rv.detach().cpu().contiguous(),
-                     "decision": decision}
-            _validate_head_result(saved, baseline, head)
-            if checkpoints:
-                checkpoints.save(owner, saved)
-            emit(layer=name, head=head, phase="head_fit_saved")
-        else:
-            rk, rv, decision = _validate_head_result(saved, baseline, head)
-            emit(layer=name, head=head, phase="head_fit_resumed")
-        trial["Rk"][head], trial["Rv"][head] = rk, rv
-        decisions.append(decision)
+    owner = f"layer-{baseline['layer_id']}-shared"
+    emit(layer=name, phase="fitting", fitted_grouping="layer")
+    saved = checkpoints.load(owner) if checkpoints else None
+    if saved is None:
+        options = {"policy": policy}
+        if real_fitter:
+            options["progress"] = lambda row: emit(layer=name, **row)
+            options["device"] = fit_device
+        rk, rv, decision = fitter(baseline["Rk"], baseline["Rv"], baseline["k_mean"],
+            samples["train"], samples["validation"], **options)
+        saved = {"Rk": rk.detach().cpu().contiguous(), "Rv": rv.detach().cpu().contiguous(),
+                 "decision": decision}
+        _validate_shared_result(saved, baseline)
+        if checkpoints:
+            checkpoints.save(owner, saved)
+        emit(layer=name, phase="shared_fit_saved")
+    else:
+        rk, rv, decision = _validate_shared_result(saved, baseline)
+        emit(layer=name, phase="shared_fit_resumed")
+    trial = {**baseline, "Rk": rk, "Rv": rv}
     def measure(constants, split, candidate):
         emit(layer=name, phase="joint_output_check", split=split, candidate=candidate)
         options = {} if progress is None else {"progress": lambda **row: emit(
             layer=name, phase="joint_output_check", split=split, candidate=candidate, **row)}
         return _metrics(constants, samples[split], policy, **options)
-    selection = None
-    if real_fitter:
-        from oscar_ascend.optr_selection import select_head_subset
-        selected, before, after, selection = select_head_subset(
-            baseline, trial, samples["validation"], policy, progress=lambda **row: emit(
-                layer=name, phase="joint_output_check", split="validation", **row))
-        accepted = after["squared_error"] < before["squared_error"]
-    else:
-        # Injected fitters exist only for host orchestration tests; production
-        # always uses the cached joint subset selector above.
-        before = measure(baseline, "validation", "baseline")
-        after = measure(trial, "validation", "refined")
-        accepted = nonworse(before, after) and after["squared_error"] < before["squared_error"]
-        selected = trial if accepted else baseline
-        if not accepted:
-            after = before
+    before = measure(baseline, "validation", "baseline")
+    proposal = measure(trial, "validation", "refined")
+    strict = policy.get("fitted_grouping") == "layer"
+    accepted = nonworse(before, proposal, require_frames=strict, require_terminal=strict) and (
+        proposal["squared_error"] < before["squared_error"])
+    selected, after = (trial, proposal) if accepted else (baseline, before)
+    selection = {"method": "shared_layer_validation_v1", "accepted": accepted,
+                 "test_used_for_selection": False, "proposal": proposal}
+    emit(layer=name, phase="joint_output_check", split="validation", event="shared_layer_selected",
+         accepted=accepted, fitted_grouping="layer")
     # This dataset never chooses a matrix/step/hyperparameter. User 2026-10-28
     # permits experimental publication with failed test explicitly recorded.
     test_before = measure(baseline, "test", "baseline")
     test_after = measure(selected, "test", "selected") if accepted else test_before
-    record = {"accepted": accepted, "head_decisions": decisions,
+    record = {"accepted": accepted, "shared_decision": decision,
               "base_constants_sha256": matrix_digest({name: baseline}),
               "selected_constants_sha256": matrix_digest({name: selected}),
               "validation": {"baseline": before, "selected": after},
               "test": {"baseline": test_before, "selected": test_after}}
-    if selection is not None:
-        record["head_subset_selection"] = selection
-    test_passed = nonworse(test_before, test_after)
+    record["shared_layer_selection"] = selection
+    test_passed = nonworse(test_before, test_after, require_frames=strict, require_terminal=strict)
     if not test_passed:
         _report_independent_test_failure(name, baseline["layer_id"], record, policy, checkpoints, emit)
     emit(layer=name, phase="checked", accepted=accepted,
@@ -431,7 +419,7 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
               steps_per_phase=policy["steps"], progress_timeout_seconds=preparation_progress_timeout(config),
               checkpoints=str(checkpoints.root), fitting_objective=policy["fitting_objective"],
               fitting_device="cpu_test" if testing else "selected_npus_per_layer", matrix_exp_device="cpu",
-              deployment_validation_device="cpu")
+              deployment_validation_device="cpu", fitted_grouping=policy["fitted_grouping"])
     fit_device = None
     with ProgressWatchdog(preparation_progress_timeout(config), output=_progress) as watchdog:
         if not testing or parallel_testing:

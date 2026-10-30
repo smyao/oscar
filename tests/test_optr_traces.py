@@ -143,7 +143,7 @@ def test_loader_streams_one_layer_and_reconstructs_actual_frame_partitions(tmp_p
     assert load(canonical, config)["_root"] == str(path.parent)
 
 
-@pytest.mark.parametrize("version", ["v1", "v2", "v3", "v4"])
+@pytest.mark.parametrize("version", ["v1", "v2", "v3", "v4", "v5"])
 def test_legacy_capture_reuse_requires_exact_policy_and_sampling_coverage(tmp_path, version):
     from oscar_ascend.optr_policy import legacy_capture_profile
     path, config, top = build_bundle(tmp_path)
@@ -180,6 +180,22 @@ def test_old_raw_trace_must_keep_its_real_recipe3_seed_identity(tmp_path):
     assert historical["base_calibration_profile"]["recipe_version"] == 3
     historical["base_calibration_profile"] = current["base_calibration_profile"]
     top.update(calibration_profile=historical, optr_policy=historical["refinement_policy"])
+    json_save(path, top)
+    with pytest.raises(ValueError, match="policy/calibration profile"):
+        load(path, config)
+
+
+def test_v5_raw_trace_retains_source_seed_identity_without_relabelling_as_recipe3(tmp_path):
+    from oscar_ascend.optr_policy import legacy_capture_profile
+    path, config, top = build_bundle(tmp_path)
+    current = top["calibration_profile"]
+    historical = legacy_capture_profile(current, config, "v5")
+    assert historical["base_calibration_profile"] == current["base_calibration_profile"]
+    assert historical["base_calibration_profile"]["recipe_version"] == 6
+    top.update(calibration_profile=historical, optr_policy=historical["refinement_policy"])
+    json_save(path, top)
+    assert traces.load_layer_samples(load(path, config), 3)["train"][0]
+    historical["base_calibration_profile"] = legacy_capture_profile(current, config, "v4")["base_calibration_profile"]
     json_save(path, top)
     with pytest.raises(ValueError, match="policy/calibration profile"):
         load(path, config)
@@ -457,17 +473,18 @@ def test_cached_projection_geometry_and_finiteness_are_checked(fault):
 @pytest.mark.parametrize("interrupt_publication", [False, True])
 def test_full_prepare_load_publish_and_cache_reuse_with_authenticated_traces(tmp_path, monkeypatch, real_fitter, interrupt_publication):
     from tools import prepare_optr_rotations as prepare
-    from oscar_ascend.rotation_calibration import OFFICIAL_COMMIT
+    from oscar_ascend.optr_oscar_seed import SEED_RECIPE, SOURCE_COMMIT, OBJECTIVE as SEED_OBJECTIVE
     from oscar_ascend.rotations import checkpoint_identity, load_active_artifact, prepare_device_rotations
     path, config, top = build_bundle(tmp_path, dim=64, fingerprint=None, steps=1)
     names, dim, fingerprint = checkpoint_identity(config["model"])
     seed_path = tmp_path / "seed.pt"
     base_config = {k: v for k, v in config.items() if k not in ("rotation_refinement", "optr_calibration")}
     base_config["rotation_artifact"] = str(seed_path)
+    base_config["rotation_seed"] = SEED_RECIPE
     baseline = {"format_version": 2, "source_grouping": "layer_kv_head", "rotation_variant": "perhead_center",
                 "global_kv_heads": 2, "head_dim": dim, "model_fingerprint": fingerprint,
-                "pr_fingerprint": OFFICIAL_COMMIT, "objective": "qqt_sst_r_h_pbr", "calibrated": True,
-                "accumulation_dtype": "float64", "test_only": True,
+                "pr_fingerprint": SOURCE_COMMIT, "objective": SEED_OBJECTIVE, "calibrated": True,
+                "accumulation_dtype": "float32", "test_only": True,
                 "calibration_profile": calibration_cache_identity(base_config, fingerprint),
                 "layers": {names[0]: {"layer_id": 3, "Rk": -torch.eye(dim).expand(2, dim, dim).clone(),
                                        "Rv": -torch.eye(dim).expand(2, dim, dim).clone(), "k_mean": torch.zeros(2, dim)}}}
@@ -502,7 +519,10 @@ def test_full_prepare_load_publish_and_cache_reuse_with_authenticated_traces(tmp
         return top
     def retain(rk, rv, mean, train, validation, *, policy):
         fits.append(True)
-        assert train and validation and train[0]["wo"].dtype == torch.float32
+        assert len(train) == len(validation) == rk.shape[0]
+        assert train[0][0]["wo"].dtype == torch.float32
+        assert torch.equal(rk[0], rk[1]) and torch.equal(rv[0], rv[1])
+        assert policy["fitted_grouping"] == "layer"
         return rk.clone(), rv.clone(), {"status": "explicit_test_baseline"}
     def forbidden(*_a, **_kw):
         pytest.fail("authenticated completed work must not resample or refit")
@@ -528,7 +548,7 @@ def test_full_prepare_load_publish_and_cache_reuse_with_authenticated_traces(tmp
     assert not result["reused"] and result["recipe_version"] == 5
     assert len(seed_calls) == 1 + interrupt_publication and len(captures) == 1
     if not real_fitter:
-        assert len(fits) == 2 and not result["accepted_layers"]
+        assert len(fits) == 1 and not result["accepted_layers"]
     artifact = load_active_artifact(config, path=output, device="cpu", testing=True)
     assert artifact["test_only"] and artifact["objective"] == "optr_post_gate_output_v1"
     assert artifact["refinement_certificate"]["performance"] == "not_measured"

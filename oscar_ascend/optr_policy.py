@@ -11,10 +11,11 @@ import math
 RECIPE_VERSION = 5
 OBJECTIVE = "optr_post_gate_output_v1"
 UPSTREAM_COMMIT = "66d46561b9bdf5d715f591e0f5845a4cbd927dee"
-POLICY_VERSION = "optr_oscar_base_upstream_ascend_v5"
+POLICY_VERSION = "optr_oscar_shared_upstream_ascend_v6"
 # User 2026-10-28: publish experimental constants after recording independent
 # test, including regressions. The publication policy is separate from the
-# fitting version: v4 invalidates old fits without changing that authorization.
+# fitting version: shared-layer fitting invalidates older independent-head fits
+# without changing that authorization.
 EXPERIMENTAL_PUBLICATION_POLICY = "validation_gate_independent_test_report_v1"
 
 
@@ -27,6 +28,7 @@ def optr_policy(config):
         "decode_tokens": 8, "query_samples_per_frame": 8,
         "steps": 80, "lr": 0.02, "eval_every": 20, "query_batch_size": 8,
         "fitting_objective": "upstream_fp32_independent_gqa_kl_output_k_then_conditional_v",
+        "fitted_grouping": "layer",
         "lambda_output": 1.0,
         "kv_tile_size": 256, "history_splits": 1,
         "validation_partitions": ["single_split", "captured_runtime_frames"],
@@ -36,7 +38,7 @@ def optr_policy(config):
         "v_clip": float(config.get("v_clip_ratio", .92)),
         "group_size": "head_dim",
         "math_contract": "oscar_bf16_attention_v4_fp32_metadata",
-        "selection": "joint_all_heads_each_request_frame_and_terminal_nonworse",
+        "selection": "shared_layer_each_request_frame_and_terminal_nonworse",
         "test_policy": "independent_accept_or_fail_no_reselection",
         "execution": "npu_fp32_proxy_cpu_orthogonal_and_deployment_validation",
         "source_plan": "disjoint_records_packed_calibration_only_v1",
@@ -90,10 +92,15 @@ def legacy_capture_policy(config, version="v1"):
     default must not silently describe those seven requests as today's nine.
     Explicit research overrides remain part of the historical identity.
     """
-    if version not in ("v1", "v2", "v3", "v4"):
+    if version not in ("v1", "v2", "v3", "v4", "v5"):
         raise ValueError("unknown historical OptR capture policy")
     policy = optr_policy(config)
     overrides = config.get("optr_calibration", {})
+    policy.pop("fitted_grouping")
+    policy["selection"] = "joint_all_heads_each_request_frame_and_terminal_nonworse"
+    if version == "v5":
+        policy["policy_version"] = "optr_oscar_base_upstream_ascend_v5"
+        return policy
     if version == "v4":
         policy.update(policy_version="optr_joint_gqa_bf16_ascend_v4",
                       fitting_objective="sequential_native_k_joint_gqa_bf16_gate_conditional_v_v3")
@@ -121,7 +128,7 @@ def legacy_capture_profile(profile, config, version="v1"):
     from .optr_oscar_seed import legacy_base_profile
     previous = copy.deepcopy(profile)
     base = previous.get("base_calibration_profile")
-    if base is not None:
+    if base is not None and version != "v5":
         previous["base_calibration_profile"] = legacy_base_profile(base)
     return {**previous, "refinement_policy": legacy_capture_policy(config, version)}
 
@@ -135,7 +142,7 @@ def compatible_capture_profiles(profile, config):
     """
     current = optr_policy(config)
     sampling = ("capture_lengths", "decode_tokens", "query_samples_per_frame")
-    candidates = [legacy_capture_profile(profile, config, version) for version in ("v4", "v3", "v2", "v1")]
+    candidates = [legacy_capture_profile(profile, config, version) for version in ("v5", "v4", "v3", "v2", "v1")]
     return [candidate for candidate in candidates if all(
         candidate["refinement_policy"][key] == current[key] for key in sampling)]
 

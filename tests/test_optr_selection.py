@@ -117,7 +117,7 @@ def test_invalid_subset_inputs_fail_closed(monkeypatch, fault):
         selection.select_head_subset(baseline, trial, samples, policy)
 
 
-def test_real_cpu_fitter_and_subset_replay_complete_validation_and_untouched_test(tmp_path):
+def test_real_shared_cpu_fitter_replay_completes_validation_and_untouched_test(tmp_path, monkeypatch):
     from test_optr_traces import build_bundle, load
     from oscar_ascend.optr_policy import optr_policy
     from oscar_ascend.optr_traces import load_layer_samples
@@ -128,6 +128,9 @@ def test_real_cpu_fitter_and_subset_replay_complete_validation_and_untouched_tes
     baseline = {"layer_id": 3, "Rk": torch.eye(4).repeat(2, 1, 1),
                 "Rv": torch.eye(4).repeat(2, 1, 1), "k_mean": torch.zeros(2, 4)}
     policy = {**optr_policy(config), "sink_tokens": 0, "recent_tokens": 1}
+    def forbidden_subset(*args, **kwargs):
+        raise AssertionError("shared fitting must never mix independent head candidates")
+    monkeypatch.setattr(selection, "select_head_subset", forbidden_subset)
     events = []
     previous = torch.get_num_threads()
     torch.set_num_threads(1)
@@ -137,13 +140,14 @@ def test_real_cpu_fitter_and_subset_replay_complete_validation_and_untouched_tes
     finally:
         torch.set_num_threads(previous)
     assert nonworse(record["validation"]["baseline"], record["validation"]["selected"], require_frames=True)
-    assert record["head_subset_selection"]["test_used_for_selection"] is False
+    assert record["shared_layer_selection"]["test_used_for_selection"] is False
     assert all(row["frames"] for split in ("validation", "test")
                for row in record[split]["selected"]["requests"])
     validation_ids = {row["request_id"] for row in record["validation"]["selected"]["requests"]}
     test_ids = {row["request_id"] for row in record["test"]["selected"]["requests"]}
     assert validation_ids.isdisjoint(test_ids)
-    chosen_event = next(i for i, event in enumerate(events) if event.get("event") == "subset_selected")
+    chosen_event = next(i for i, event in enumerate(events) if event.get("event") == "shared_layer_selected")
     test_event = next(i for i, event in enumerate(events) if event.get("split") == "test")
     assert chosen_event < test_event
     assert selected["Rk"].shape == (2, 4, 4) and selected["Rv"].dtype == torch.float32
+    assert all(torch.equal(selected[key], selected[key][:1].expand_as(selected[key])) for key in ("Rk", "Rv"))

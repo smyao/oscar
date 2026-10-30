@@ -238,6 +238,7 @@ def runtime_feature_summary(config: dict, variant: str | None) -> dict:
             **({"optr_publication_policy": EXPERIMENTAL_PUBLICATION_POLICY,
                 "independent_test_blocks_publication": False,
                 "optr_fitting_policy": POLICY_VERSION,
+                "optr_fitted_grouping": "layer",
                 "optr_seed": "oscar_base_shared_zero_mean"}
                if config.get("rotation_refinement") == "optr" else {}),
             **({"aligned_c16_operator": ("attention_cv_official_cluster16_out" if config.get("experimental_official_math",False) else "attention_cv_aligned_cluster16_out"

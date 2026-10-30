@@ -90,7 +90,7 @@ def test_real_stalled_preparer_terminates_and_launcher_cleans_owned_children(tmp
     assert "offline_progress_timeout" in log and '"head": 2' in log
 
 
-def test_completed_head_survives_interruption_but_joint_test_still_runs(tmp_path, monkeypatch):
+def test_completed_shared_fit_survives_interrupted_validation_but_test_still_runs(tmp_path, monkeypatch):
     from tools import prepare_optr_rotations as prep
     baseline = {"layer_id": 3, "Rk": -torch.eye(4).repeat(2, 1, 1),
                 "Rv": -torch.eye(4).repeat(2, 1, 1), "k_mean": torch.zeros(2, 4)}
@@ -98,13 +98,17 @@ def test_completed_head_survives_interruption_but_joint_test_still_runs(tmp_path
     calls = []
     def first(rk, rv, mean, *_args, **_kw):
         calls.append(True)
-        if len(calls) == 2:
-            raise RuntimeError("interrupted during second head")
+        assert rk.shape == (2, 4, 4)
         return rk, rv, {"accepted": False}
     store = FitCheckpoints(tmp_path, {"source": "same-authenticated-traces", "test_only": True})
-    with pytest.raises(RuntimeError, match="second head"):
+    # A partial historical head result cannot act as a shared proposal.
+    store.save("layer-3-head-0", {"Rk": torch.eye(4)})
+    def interrupted(*args, **kwargs):
+        raise RuntimeError("interrupted during joint validation")
+    monkeypatch.setattr(prep, "_metrics", interrupted)
+    with pytest.raises(RuntimeError, match="joint validation"):
         prep.refine_layer("model.layers.3.self_attn.attn", baseline, samples, {}, fitter=first, checkpoints=store)
-    assert store.load("layer-3-head-0") is not None and store.load("layer-3-head-1") is None
+    assert store.load("layer-3-shared") is not None
     checks = []
     def measure(constants, rows, policy):
         split = rows[0][0]["request_id"]
@@ -113,10 +117,7 @@ def test_completed_head_survives_interruption_but_joint_test_still_runs(tmp_path
                "squared_error": 1., "teacher_energy": 2., "normalized_error": .5}
         return {"squared_error": 1., "teacher_energy": 2., "normalized_error": .5, "requests": [row]}
     monkeypatch.setattr(prep, "_metrics", measure)
-    def resumed(rk, rv, *_args, **_kw):
-        calls.append(True)
-        return rk, rv, {"accepted": False}
-    selected, record = prep.refine_layer("model.layers.3.self_attn.attn", baseline, samples, {}, fitter=resumed, checkpoints=store)
-    assert len(calls) == 3  # The completed head was not fitted again.
+    selected, record = prep.refine_layer("model.layers.3.self_attn.attn", baseline, samples, {}, fitter=first, checkpoints=store)
+    assert len(calls) == 1
     assert checks == ["validation", "validation", "test"]
     assert not record["accepted"] and torch.equal(selected["Rk"], baseline["Rk"])

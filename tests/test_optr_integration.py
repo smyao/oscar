@@ -1,5 +1,6 @@
 """Archive #86/#97/#148/#170/#173: artifacts and candidate quality boundaries."""
 import copy
+import hashlib
 import json
 from pathlib import Path
 
@@ -72,6 +73,8 @@ def test_candidate_enables_optr_without_changing_online_bundle_or_extra_flags():
     assert config["devices"] == selected["devices"] == [0, 1, 2, 3]
     assert config["port"] == selected["port"] == 7878
     assert runtime_feature_summary(selected, "candidate")["calibration_recipe_version"] == 5
+    assert runtime_feature_summary(selected, "candidate")["optr_fitted_grouping"] == "layer"
+    assert runtime_feature_summary(selected, "candidate")["optr_fitting_policy"] == "optr_oscar_shared_upstream_ascend_v6"
     for variant in ("baseline", "native"):
         assert variant_config(selected, variant).get("rotation_refinement") is None
     calibrated = {**selected, "optr_calibration": {"steps": 8}}
@@ -105,8 +108,9 @@ def test_refinement_cache_binds_online_math_and_separates_shared_zero_mean_seed(
                        ("v_clip_ratio", .93), ("attention_splits", 2), ("cube_cores", 16),
                        ("max_num_batched_tokens", 8192), ("tensor_parallel_size", 4)):
         assert calibration_cache_identity({**config, key: value}, "model") != profile
-    with pytest.raises(ValueError, match="frozen"):
-        optr_policy({**config, "optr_calibration": {"selection": "allow_regression"}})
+    for override in ({"selection": "allow_regression"}, {"fitted_grouping": "layer_kv_head"}):
+        with pytest.raises(ValueError, match="frozen"):
+            optr_policy({**config, "optr_calibration": override})
 
 
 def test_frame_aware_default_trains_all_deployment_lengths_without_changing_schedule():
@@ -116,8 +120,9 @@ def test_frame_aware_default_trains_all_deployment_lengths_without_changing_sche
         "train": [4096, 32768, 65536], "validation": [4096, 32768, 65536],
         "test": [4096, 32768, 65536]}
     assert (current["steps"], current["lr"], current["eval_every"]) == (80, .02, 20)
-    assert current["selection"] == "joint_all_heads_each_request_frame_and_terminal_nonworse"
-    assert current["policy_version"] == "optr_oscar_base_upstream_ascend_v5"
+    assert current["selection"] == "shared_layer_each_request_frame_and_terminal_nonworse"
+    assert current["policy_version"] == "optr_oscar_shared_upstream_ascend_v6"
+    assert current["fitted_grouping"] == "layer"
     assert current["fitting_objective"] == "upstream_fp32_independent_gqa_kl_output_k_then_conditional_v"
     for version in ("v1", "v2"):
         old = legacy_capture_policy({}, version)
@@ -126,7 +131,23 @@ def test_frame_aware_default_trains_all_deployment_lengths_without_changing_sche
         assert old["selection"] == "joint_all_heads_each_request_nonworse"
     # Never relabel old seven-request data as the new nine-request plan.
     assert [p["refinement_policy"]["policy_version"] for p in compatible_capture_profiles({}, {})] == [
-        "optr_joint_gqa_bf16_ascend_v4", "optr_frame_bf16_ascend_v3"]
+        "optr_oscar_base_upstream_ascend_v5", "optr_joint_gqa_bf16_ascend_v4", "optr_frame_bf16_ascend_v3"]
+
+
+@pytest.mark.parametrize("version,expected", [
+    ("v1", "aa87ff99f250a374a8db465bf4956907df3378515c34b904c08b9b56936cdc09"),
+    ("v2", "a20383a9b66cbf7a85bb73e4cacdcf64d10c62941c5ad41b6b897095856e3886"),
+    ("v3", "68761932277b037026662af26b6485c95937d61702a03653f1bb45a3caab8756"),
+    ("v4", "9b04defcb625bfadcb00b3fdd62da94fc053be61abaa233ebd95355071d034bd"),
+    ("v5", "a2a22bd2e117ebb65a3b4dd799f6337ee5dc552a8e730fe060ff61e35dea37ca"),
+])
+def test_historical_capture_policy_exactly_preserves_pre_shared_identity(version, expected):
+    from oscar_ascend.optr_policy import legacy_capture_policy
+    # Frozen before the shared-layer change, independent of reconstruction.
+    policy = legacy_capture_policy({}, version)
+    encoded = json.dumps(policy, sort_keys=True, separators=(",", ":")).encode()
+    assert hashlib.sha256(encoded).hexdigest() == expected
+    assert "fitted_grouping" not in policy
 
 
 def test_historical_capture_profiles_restore_original_seed_and_exact_sampling_plan(tmp_path):
@@ -139,27 +160,39 @@ def test_historical_capture_profiles_restore_original_seed_and_exact_sampling_pl
     legacy_config = {k: v for k, v in config.items() if k not in ("rotation_refinement", "optr_calibration")}
     original_seed = calibration_cache_identity(legacy_config, "preserved")
     compatible = compatible_capture_profiles(profile, config)
-    assert compatible == [legacy_capture_profile(profile, config, version) for version in ("v4", "v3", "v2", "v1")]
+    assert compatible == [legacy_capture_profile(profile, config, version) for version in ("v5", "v4", "v3", "v2", "v1")]
     for candidate in compatible:
         policy = candidate["refinement_policy"]
         assert policy["capture_lengths"] == config["optr_calibration"]["capture_lengths"]
         assert policy["decode_tokens"] == 3 and policy["query_samples_per_frame"] == 2
-        assert candidate["base_calibration_profile"] == original_seed
-        assert candidate["base_calibration_profile"] != profile["base_calibration_profile"]
-        assert candidate["base_calibration_profile"]["recipe_version"] == 3
+        if policy["policy_version"] == "optr_oscar_base_upstream_ascend_v5":
+            assert candidate["base_calibration_profile"] == profile["base_calibration_profile"]
+            assert candidate["base_calibration_profile"]["recipe_version"] == 6
+        else:
+            assert candidate["base_calibration_profile"] == original_seed
+            assert candidate["base_calibration_profile"] != profile["base_calibration_profile"]
+            assert candidate["base_calibration_profile"]["recipe_version"] == 3
     assert legacy_capture_policy(config, "v1")["steps"] == 5
     assert legacy_capture_policy(config, "v2")["steps"] == 5
     assert legacy_capture_policy(config, "v1")["lr"] == .002
     assert legacy_capture_policy(config, "v2")["lr"] == .02
 
 
-@pytest.mark.parametrize("version", ["v1", "v2", "v3", "v4"])
+@pytest.mark.parametrize("version", ["v1", "v2", "v3", "v4", "v5"])
 def test_completed_older_fit_cannot_bypass_new_objective_via_artifact_cache(tmp_path, version):
     from oscar_ascend.optr_policy import legacy_capture_profile
     config = configuration(tmp_path)
     value = artifact(config)
     value["calibration_profile"] = legacy_capture_profile(value["calibration_profile"], config, version)
     value["refinement_certificate"]["policy"] = value["calibration_profile"]["refinement_policy"]
+    if version == "v5":
+        # v5 legitimately fitted distinct heads. Keep it readable as history,
+        # while refusing to load even an internally valid PT as current v6.
+        value["layers"][NAME]["Rk"][1].neg_()
+        digest = matrix_digest(value["layers"])
+        value["refinement_certificate"]["matrices_sha256"] = digest
+        value["refinement_certificate"]["layers"][NAME].update(
+            base_constants_sha256=digest, selected_constants_sha256=digest)
     path = tmp_path / "old-complete" / "calibrated.pt"
     # This is an internally valid completed historical artifact. Selecting
     # the current candidate must reject it even through an explicit path.
@@ -206,7 +239,7 @@ def test_certificate_rejects_false_acceptance(tmp_path, fault):
 def test_refinement_still_enforces_matrix_orthogonality(tmp_path):
     config = configuration(tmp_path)
     value = artifact(config)
-    value["layers"][NAME]["Rk"][0, 0, 0] += 1
+    value["layers"][NAME]["Rk"][:, 0, 0] += 1
     digest = matrix_digest(value["layers"])
     cert = value["refinement_certificate"]
     cert["matrices_sha256"] = digest
@@ -215,6 +248,35 @@ def test_refinement_still_enforces_matrix_orthogonality(tmp_path):
         validate_artifact(value, layer_names=[NAME], head_dim=64,
             model_fingerprint=value["model_fingerprint"], pr_fingerprint=OFFICIAL_COMMIT,
             device="cpu", testing=True, require_calibrated=True)
+
+
+@pytest.mark.parametrize("fault", ["Rk", "Rv", "mean", "mean_shape", "storage", "subset", "grouping", "selection", "seed"])
+def test_shared_artifact_rejects_independent_heads_or_false_source_contract(tmp_path, fault):
+    value = artifact(configuration(tmp_path))
+    certificate = value["refinement_certificate"]
+    record = certificate["layers"][NAME]
+    if fault in ("Rk", "Rv"):
+        value["layers"][NAME][fault][1].neg_()
+    elif fault == "mean":
+        value["layers"][NAME]["k_mean"][0, 0] = 1.
+    elif fault == "mean_shape":
+        value["layers"][NAME]["k_mean"] = torch.zeros(1, 64)
+    elif fault == "storage":
+        value["source_grouping"] = "layer"
+    elif fault == "subset":
+        record["head_subset_selection"] = {"selected_heads": [0]}
+    elif fault == "grouping":
+        certificate["policy"]["fitted_grouping"] = "layer_kv_head"
+    elif fault == "selection":
+        certificate["policy"]["selection"] = "joint_all_heads_each_request_frame_and_terminal_nonworse"
+    elif fault == "seed":
+        value["calibration_profile"]["base_calibration_profile"]["source_provenance"]["commit"] = "0" * 40
+    # Rebinding hashes cannot authorize a different mathematical contract.
+    digest = matrix_digest(value["layers"])
+    certificate["matrices_sha256"] = digest
+    record.update(base_constants_sha256=digest, selected_constants_sha256=digest)
+    with pytest.raises(ValueError, match="shared|zero key mean|seed profile/source"):
+        validate_refinement_metadata(value)
 
 
 def test_small_teacher_energy_has_one_fixed_normalization():

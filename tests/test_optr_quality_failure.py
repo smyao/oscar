@@ -120,7 +120,7 @@ def test_quality_failure_keeps_exact_metrics_identity_and_rejected_requests(tmp_
     assert not report["test_used_for_selection"]
     record = report["record"]
     assert record["validation"] == values["validation"] and record["test"] == values["test"]
-    assert record["head_decisions"] == [{"accepted": True, "fixture": "validation_candidate"}] * 2
+    assert record["shared_decision"] == {"accepted": True, "fixture": "validation_candidate"}
     assert record["base_constants_sha256"] == matrix_digest({NAME: seed})
     selected = {**seed, "Rk": seed["Rk"].roll(1, dims=-1)}
     assert record["selected_constants_sha256"] == matrix_digest({NAME: selected})
@@ -130,7 +130,7 @@ def test_quality_failure_keeps_exact_metrics_identity_and_rejected_requests(tmp_
     assert checked == [("validation", "baseline"), ("validation", "selected"),
                        ("test", "baseline"), ("test", "selected")]
     assert checkpoints.load("layer-3") is None  # Failure file is never a completed layer pointer.
-    assert checkpoints.load("layer-3-head-0") is not None  # Existing head work is diagnostic/reusable only.
+    assert checkpoints.load("layer-3-shared") is not None  # Proposal still needs full validation/test.
     output = capsys.readouterr().out
     assert "independent_test_failed" in output and "independent_test_request_regressed" in output
     for row in expected_bad:
@@ -200,10 +200,9 @@ def test_report_write_failure_still_raises_quality_gate_value_error(tmp_path, mo
     seed = baseline()
     install_metrics(monkeypatch, seed, [5., 4., 4., 4.])
     checkpoints = FitCheckpoints(tmp_path, {"test_only": True})
-    # Finish head checkpoints first; only diagnostic persistence is failed.
-    for head in range(2):
-        rk, rv, decision = fitter(seed["Rk"][head], seed["Rv"][head], None)
-        checkpoints.save(f"layer-3-head-{head}", {"Rk": rk, "Rv": rv, "decision": decision})
+    # Finish the shared proposal first; only diagnostic persistence is failed.
+    rk, rv, decision = fitter(seed["Rk"], seed["Rv"], None)
+    checkpoints.save("layer-3-shared", {"Rk": rk, "Rv": rv, "decision": decision})
     def unavailable(*_args):
         raise OSError("diagnostic filesystem unavailable")
     monkeypatch.setattr(phase, "atomic_json", unavailable)

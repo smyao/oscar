@@ -1,5 +1,31 @@
 # 按用户指定 oscar_base 恢复 OptR 拟合来源
 
+## 2026-10-30：保留 OSCAR 共享结构，只替换寻优过程
+
+本轮基底为 `d08c3d7`，对应用户“尽量保持原有 OSCAR 逻辑，只更换核心 OptR 的拟合寻优”。固定 candidate 现在使用 `optr_oscar_shared_upstream_ascend_v6`，仍实际执行 OptR，不增加开关。下面的 10-29 记录保留为历史；其中逐头独立优化、头子集选择和 v5 身份已被本节覆盖。
+
+已确认的差异：指定参考 `oscar_base@9cd2429` 的 `tools/gen_rotations.py:207–231` 始终为每层输出一对共享矩阵；d08c3d7 只让初始 seed 共享，随后独立优化每个 KV 头，并允许头子集混选，最终矩阵不再共享。这是源码上的偏离，尚不能归因为用户全部精度损失。
+
+本轮改动限于离线搜索和相应产物认证：
+
+- 每层只学习一个 `A_K` 和一个 `A_V`，`R = R_base @ exp(A−Aᵀ)`，所有 KV 头使用同一 R。仍使用固定官方 FP32 独立 GQA 损失、原 clip/窗口、80 步、lr 0.02 和原验证频率。
+- loss 按 `mean_KV_heads(mean_requests(phase_loss))` 归约。每一步固定同一个 R，逐请求累计 dL/dR，再一次反传到 A、一次 Adam 更新；不逐头轮流更新，不平均已独立拟合的矩阵，不二次除以头数。
+- K 在全头 held-out 均值上选出唯一结果后，所有头固定该 K，再拟合共享 V。最终只允许整个共享候选与整个 OSCAR seed 二选一，保持每请求/forward/terminal query 非劣；不再混选部分头。独立 test 仍只报告实验结果，不重选矩阵。
+- 保持现有 perhead_center 存储与 TP ABI，离线复制同一矩阵；发布、加载和完成层断点要求所有头的 Rk/Rv 严格相等、K mean 为零。共享拟合断点单独保存，不能用旧 head 断点代替。
+- 已认证 recipe6 seed 直接复用；采样覆盖相同的 v1–v5 raw trace 按原身份认证复用。旧逐头 PT/fit 不再加载，固定命令自动准备新 v6 PT。
+
+这称为“在 OSCAR 共享矩阵约束下使用 OptR 目标”，不是宣称官方 OptR 本身使用共享参数。D256、4 个 KV 头时，每层 K/V 的有效正交自由度从 261120 降至 65280；可减少针对少量校准请求的自由度，但不构成泛化或 LongBench 分数改善保证。新可行域仍包含原 OSCAR seed，验证未改善时保留该层 seed 是优化器的接受规则，不是关闭 OptR。
+
+本轮保留的边界：采样仍为当前 GPQA/长序列 trace，没有改成参考短中文 prompt；seed 仍为参考数学的 FP32 共享统计/FP64 eigh+epsilon/UHP、零均值。INT2、K=.96/V=.92、sink/recent、BF16/FP32 metadata 数值链、MTP/GDN、CANN/runtime、timer、argv、前四卡和四 worker 均未变。不声称整套数据采集或线上实现与该参考逐位相同。
+
+成本：线上每 token 没有新增操作、buffer 或 KV 字节。离线仍计算全部头的损失；CPU 正交矩阵/Adam 更新从每头一次变为每层一次。流式反向只保留一个请求的大图，V 阶段缓存选定 K 的概率后释放 Q/K/teacher/mask。固定 train/held 张量会同时驻留所有头，固定缓存约为旧逐头拟合的 H 倍；不能声称离线峰值显存不增或速度实测提升。
+
+验证入口：`reports/optr_shared_oscar_20261030/verification.json`。覆盖固定官方函数在共享参数约束下的 loss/梯度、D256/GQA6、逐步 Adam、条件 V、严格共享、独立 test 报告、旧 PT/trace 身份、断点恢复、真实本机四进程和固定启动接缝。首次回归有一个旧负例同时破坏共享和正交性，因此先触发新共享门；已改为同时破坏各头相同元素以单独验证正交门，原失败记录保留。
+
+无真机连接、NPU/图、模型准确率或性能测试；CPU 通过不能标为质量恢复。仅本地提交，暂不推送。固定命令仍为 `git pull --ff-only && bash scripts/install_serve.sh --variant candidate`，远端尚未包含本地提交时不能据此声称真机已生效。
+
+## 以下为 2026-10-29 历史交付记录
+
 本轮将固定 candidate 改为：**用户指定 OSCAR 的共享、零均值基底 + 官方 OptR 的 FP32 分阶段优化 + 现有部署输出验证**。它继续实际运行 OptR，不增加关闭或绕过开关。修改只涉及离线准备、身份认证和启动摘要，线上 attention、codec、缓存布局、MTP/GDN、timer、服务 argv 均保持。
 
 本轮基底为 `478fe18c850edfdba4505c37c38da44fd25afa58`。用户指定参考 `/Users/loki.yao/Documents/workgit/oscar_base`，明确授权只读该目录；未读取其他被禁止的实现，未修改参考目录。按用户已有指令只做本地提交，不推送，不连接真机、不跑性能实验。

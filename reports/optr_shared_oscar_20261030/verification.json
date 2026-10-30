@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-30",
+  "base_commit": "d08c3d7",
+  "policy_version": "optr_oscar_shared_upstream_ascend_v6",
+  "reference_oscar": "/Users/loki.yao/Documents/workgit/oscar_base@9cd2429fb4fb934889fa6f51da5d54396012b5df",
+  "reference_optr_commit": "66d46561b9bdf5d715f591e0f5845a4cbd927dee",
+  "scope": "Constrain existing upstream FP32 OptR loss to OSCAR shared-layer rotations; whole-layer selection; no online changes",
+  "pytest": {
+    "tests": 576,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "pytest_seconds": 18.248,
+  "initial_pytest": {
+    "tests": 576,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "initial_failure_resolution": "Orthogonality negative fixture now corrupts the same element of every shared head, so it isolates the original orthogonality gate instead of first violating the new sharing contract. No tolerance or production gate relaxed.",
+  "validation": [
+    "Fixed upstream losses with tied R: shared gradient for D8/H4 and D256/GQA6",
+    "Every shared Adam step matches independent tied-upstream reference for K and conditional V",
+    "V uses selected shared K once for all heads; no QK/softmax inside V steps",
+    "Nonshared/nonzero-mean/invalid capture rejection",
+    "Whole-layer deployment validation and independent test report without head subset",
+    "Authenticated shared proposal resume; old head checkpoints not reused",
+    "v1-v5 raw trace profile reconstruction and current PT isolation",
+    "Serial/parallel CPU fit equality, four live host workers, cleanup on failure/signal/stall",
+    "Unchanged original OSCAR calibration and fixed launch seams",
+    "Offline wheel build, 10 modules byte-identical, isolated wheel imports"
+  ],
+  "source_and_package_checks": "source_package_checks.json",
+  "online_extra_operations": false,
+  "online_kernel_runtime_timer_argv_changes": false,
+  "offline_resources": "All-head fixed train/held cache can exceed old single-head cache; backward streams one request graph; releases unused K/query/teacher/masks before V. Device peak memory/time not measured.",
+  "npu": "not_run_user_constraint",
+  "graph": "not_run",
+  "model_quality": "not_measured",
+  "performance": "not_measured",
+  "remote_push": "not_requested_user_requires_local_only"
+}

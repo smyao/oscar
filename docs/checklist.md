@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+> 2026-10-30共享结构收口：candidate使用OptR v6每层共享Rk/Rv，整层接受，严格身份隔离；仅离线拟合/产物校验变化。官方目标共享参数梯度/Adam、恢复/四进程/启动及打包证据见`reports/optr_shared_oscar_20261030/verification.json`。42项编号保持；CANN/NPU/图/模型质量/性能状态不升级。
+
 > 2026-10-29用户指定本机OSCAR对齐：固定candidate改用shared/zero-mean recipe6 seed+官方OptR FP32优化，policy v5；旧v4训练目标不再启用，最终部署验证和实验test政策保持。源码、CPU配对、采样/产物/四卡worker接缝与打包见[记录](optr_oscar_base_alignment_20261029.md)。本轮无CANN改动；NPU/图/模型精度/性能状态不升级，42项编号保持。
 
 > 2026-10-29 LongBenchv2 40.94反馈续修：candidate默认OptR v4，联合GQA/native teacher/BF16 gate离线目标与每帧terminal query校验生效；新PT/fit身份隔离，认证v3原始轨迹复用，四卡并行保持。下方v3串行断点兼容仅为当时并行版本历史行为，v4不复用旧拟合。CPU数学/梯度/证书/恢复与打包见[本轮记录](optr_joint_calibration_20261029.md)，CANN/NPU/图/模型质量/性能状态不升级，42项编号不变。

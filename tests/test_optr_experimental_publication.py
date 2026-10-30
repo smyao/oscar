@@ -58,7 +58,8 @@ def test_experimental_certificate_allows_only_reported_test_regression(tmp_path,
 def test_experimental_publication_keeps_orthogonality_gate(tmp_path):
     from oscar_ascend.rotations import validate_artifact
     _, value = failed_experiment(tmp_path)
-    value["layers"][NAME]["Rk"][0, 0, 0] += 1
+    # Preserve shared-head equality so this still isolates orthogonality.
+    value["layers"][NAME]["Rk"][:, 0, 0] += 1
     digest = matrix_digest(value["layers"])
     value["refinement_certificate"]["matrices_sha256"] = digest
     value["refinement_certificate"]["layers"][NAME]["selected_constants_sha256"] = digest

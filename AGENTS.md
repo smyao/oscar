@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-10-30用户要求尽量保持原OSCAR逻辑：固定candidate使用OptR v6，在指定oscar_base的共享、零均值seed上每层只优化一对Rk/Rv，保留官方FP32独立GQA目标与K→V；撤掉当前逐头独立搜索/头子集混选，最终整层接受。v6发布/加载严格共享，旧PT/fit隔离，seed及认证v1–v5 raw trace复用；不改变采样/clip/窗口/线上CANN/runtime/timer/argv。四卡层并行和已授权实验test政策保持，仅本地提交不推送。CPU对照不代表模型精度恢复；离线全头固定缓存有额外驻留量，线上操作无新增。详见docs/optr_oscar_base_alignment_20261029.md的10-30续修。
+
 > 2026-10-29用户指定本机OSCAR拟合：明确授权只读 `/Users/loki.yao/Documents/workgit/oscar_base`（9cd2429），不扩展到其他禁止参考树。固定candidate继续OptR，改用该源码的FP32共享qqt/sst、CPU FP64 eigh+epsilon/UHP、零K均值作独立recipe6 seed，再运行官方OptR FP32独立GQA K→V目标；撤掉v4自定义训练目标，保留部署验证和已授权实验test政策。policy v5隔离旧PT/fit；同采样覆盖的历史raw trace精确认证复用，旧FP64 Gram不能冒充新seed统计。前4卡、四worker、线上CANN/runtime/timer/argv不改；本轮仅本地commit不推送，不连接真机。详见docs/optr_oscar_base_alignment_20261029.md；数学/CPU通过不能宣称模型精度恢复。本条覆盖下方旧拟合目标及旧拟合断点兼容描述。
 
 > 2026-10-29 OptR离线并行：用户要求缩短2～3小时拟合，固定candidate在采样结束后自动按完整层调度至本次配置的四张NPU，每卡一个spawn进程；先绑定逻辑设备再初始化精度选项。CPU线程有界，单worker无进展独立超时，失败/信号/启动中断清理owned进程，全部退出后才发布。每层K→V、样本/80步/精度/联合选择/test政策和线上代码保持；仅精确认证兼容4204e22的v3串行断点，旧v1/v2不沿用。完整PT及原生trace身份不变，无需新开关。按用户要求本轮仅本地commit、不推送；见docs/optr_parallel_fit_20261029.md，未连接真机或验收设备速度。

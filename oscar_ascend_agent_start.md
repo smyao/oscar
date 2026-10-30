@@ -586,6 +586,8 @@ M_runtime_extra_peak = 旋转常量 + 算子 workspace + MTP 必要暂存
 
 ### 8.2 将历史错误转化为回归检查
 
+2026-10-30继续#176：用户要求保留原OSCAR结构，candidate改为v6共享层参数OptR及整层接受；seed/采样/官方损失/线上链不变。旧PT/fit隔离，认证raw trace复用；仅本地CPU/主机和打包验证，不新增真机记录或升级质量/性能验收。详见[10-30续修](docs/optr_oscar_base_alignment_20261029.md)。
+
 2026-10-29按用户指定本机OSCAR续修#176：共享、零均值FP32 seed及CPU FP64 UHP按只读oscar_base@9cd2429对齐，OptR恢复官方独立GQA FP32损失并补全KV头平均梯度。v5隔离旧PT/fit，历史raw trace保持真实recipe3身份认证复用；旧v4自定义训练目标退出当前默认。此为源码与CPU修正，不新增真机故障记录、不升级质量验收，详见[记录](docs/optr_oscar_base_alignment_20261029.md)。
 
 2026-10-29档案#176：用户LongBenchv2回传40.94并反馈比原OSCAR差，现场SHA/PT未知。v4离线目标修正联合GQA交叉项、原生K teacher与BF16 gate，并增加prefill末query门；严格认证复用v3原始trace，旧PT/fit隔离，四卡并行保持。CPU反例和接缝验证见[记录](docs/optr_joint_calibration_20261029.md)，不把本地通过当作模型质量恢复。

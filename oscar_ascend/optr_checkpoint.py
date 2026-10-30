@@ -23,7 +23,7 @@ def _identity_directory(directory, identity):
 def fitting_implementation_digest():
     root = Path(__file__).resolve().parents[1]
     names = ("oscar_ascend/optr_calibration.py", "oscar_ascend/optr_sequential.py", "oscar_ascend/optr_traces.py",
-             "oscar_ascend/optr_selection.py",
+             "oscar_ascend/optr_selection.py", "oscar_ascend/optr_shared.py",
              "oscar_ascend/optr_artifacts.py", "oscar_ascend/optr_checkpoint.py",
              "oscar_ascend/optr_oscar_seed.py", "tools/prepare_optr_seed.py",
              "tools/prepare_optr_rotations.py", "tools/optr_parallel.py", "tools/optr_fit_worker.py")
@@ -43,7 +43,7 @@ class FitCheckpoints:
         self.root.mkdir(parents=True, exist_ok=True)
 
     def _path(self, key):
-        if not isinstance(key, str) or not re.fullmatch(r"layer-\d+(?:-head-\d+)?", key):
+        if not isinstance(key, str) or not re.fullmatch(r"layer-\d+(?:-head-\d+|-shared)?", key):
             raise ValueError("invalid offline checkpoint owner")
         return self.root / (key + ".json")
 

@@ -210,7 +210,12 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
     if expected_profile is not None and profile != expected_profile:
         raise ValueError("OptR calibration profile differs from selected configuration")
     base = profile.get("base_calibration_profile", {})
-    source_seed = profile.get("refinement_policy", {}).get("policy_version") == "optr_oscar_base_upstream_ascend_v5"
+    policy = profile.get("refinement_policy", {})
+    shared_layer = policy.get("policy_version") == "optr_oscar_shared_upstream_ascend_v6"
+    source_seed = shared_layer or policy.get("policy_version") == "optr_oscar_base_upstream_ascend_v5"
+    if shared_layer and (policy.get("fitted_grouping") != "layer" or
+            policy.get("selection") != "shared_layer_each_request_frame_and_terminal_nonworse"):
+        raise ValueError("shared-layer OptR requires shared fitting and whole-layer selection")
     if source_seed:
         from .optr_oscar_seed import validate_seed_profile
         validate_seed_profile(base, artifact.get("model_fingerprint"))
@@ -239,7 +244,7 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
     layers = artifact.get("layers", {})
     if set(certificate.get("layers", {})) != set(layers) or not layers:
         raise ValueError("OptR certificate FULL layer coverage differs")
-    require_terminal = (certificate["policy"].get("policy_version") == "optr_joint_gqa_bf16_ascend_v4"
+    require_terminal = (shared_layer or certificate["policy"].get("policy_version") == "optr_joint_gqa_bf16_ascend_v4"
                         or certificate["policy"].get("selection") == "joint_all_heads_each_request_frame_and_terminal_nonworse")
     require_frames = (require_terminal or certificate["policy"].get("policy_version") == "optr_frame_bf16_ascend_v3"
                       or certificate["policy"].get("selection") == "joint_all_heads_each_request_and_frame_nonworse")
@@ -249,6 +254,22 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
             mean = layers[name].get("k_mean")
             if not torch.is_tensor(mean) or bool(torch.count_nonzero(mean)):
                 raise ValueError("source OSCAR OptR must retain zero key mean")
+        if shared_layer:
+            heads, dim = artifact.get("global_kv_heads"), artifact.get("head_dim")
+            if type(heads) is not int or heads < 1 or type(dim) is not int or dim < 1:
+                raise ValueError("shared-layer OptR head geometry is invalid")
+            if (artifact.get("format_version") != 2 or artifact.get("source_grouping") != "layer_kv_head" or
+                    artifact.get("rotation_variant") != "perhead_center" or
+                    mean.dtype != torch.float32 or mean.shape != (heads, dim)):
+                raise ValueError("shared-layer OptR requires the existing perhead_center storage ABI")
+            for key in ("Rk", "Rv"):
+                matrix = layers[name].get(key)
+                if (not torch.is_tensor(matrix) or matrix.dtype != torch.float32 or
+                        matrix.shape != (heads, dim, dim) or not bool(torch.isfinite(matrix).all()) or
+                        not torch.equal(matrix, matrix[:1].expand_as(matrix))):
+                    raise ValueError("shared-layer OptR requires identical shared Rk/Rv for every KV head")
+            if "head_subset_selection" in record:
+                raise ValueError("shared-layer OptR cannot use head subset selection")
         selected_digest = matrix_digest({name: layers[name]})
         if record.get("selected_constants_sha256") != selected_digest:
             raise ValueError("OptR layer certificate does not bind selected constants")

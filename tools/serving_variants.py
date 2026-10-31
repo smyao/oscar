@@ -1,4 +1,4 @@
-"""Archive #148-151: one candidate preset for probes and direct serving.
+"""Archive #148-151/#170/#173: one candidate preset for probes and direct serving.
 
 Every delivered optimization flag belongs here so installation and observation
 cannot silently select different numerical paths. Physical placement is separate.
@@ -86,6 +86,8 @@ def variant_config(config: dict, variant: str | None) -> dict:
     # User withdrew the unsuccessful exact-current delivery. A reused
     # generated config must not carry its retired policy into any variant.
     selected.pop('oscar_current_only_policy', None)
+    if selected.get("rotation_refinement") not in (None, "optr"):
+        raise ValueError("rotation_refinement must be omitted or optr")
     if selected.get("rotation_variant") not in (None, "shared_v1", "perhead_center"):
         raise ValueError("rotation_variant must be omitted, shared_v1 or perhead_center")
     if selected.get("rotation_k_clip") not in (None, "per_head_calibrated"):
@@ -95,9 +97,8 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if variant == "candidate":
         selected['oscar_dequant_policy'] = 'fp32_metadata'
         # Recipe4's proxy-fitted clip table regressed user model quality.
-        # The fixed candidate entrypoint restores recipe3 even when its
-        # input config retains the experimental clip policy. Explicit
-        # research configs may still select it with variant=None.
+        # OptR refines the shared OSCAR seed with its fixed scalar clips. Explicit
+        # recipe4 research configs may still select it with variant=None.
         selected.pop("rotation_k_clip", None)
         if selected.get("rotation_method", "qqt_sst") == "qqt_sst":
             selected["rotation_variant"] = "perhead_center"
@@ -107,6 +108,8 @@ def variant_config(config: dict, variant: str | None) -> dict:
         selected.pop('oscar_dequant_policy', None)
         selected.pop("rotation_variant", None)
         selected.pop("rotation_k_clip", None)
+        selected.pop("rotation_refinement", None)
+        selected.pop("optr_calibration", None)
     if selected.get("rotation_variant") == "perhead_center" and selected.get("rotation_method", "qqt_sst") != "qqt_sst":
         raise ValueError("perhead_center requires qqt_sst calibration")
     if selected.get("rotation_k_clip") == "per_head_calibrated" and selected.get("rotation_variant") != "perhead_center":
@@ -213,6 +216,15 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if selected.get('oscar_dequant_policy') == 'fp32_metadata' and not all(selected.get(flag, False)
             for flag in ('experimental_official_math', 'experimental_aligned_math', 'experimental_bf16_attention')):
         raise ValueError('FP32 metadata reconstruction requires the official BF16 reader bundle')
+    # User 2026-10-28: the fixed BF16 candidate must run OptR without another
+    # flag. The later explicit authorization permits reported test regressions
+    # in experimental PTs. Existing Hadamard/W8A8/native-budget modes retain
+    # their supported recipes; an explicitly incompatible OptR request fails.
+    if (variant == "candidate" and selected.get("rotation_variant") == "perhead_center"
+            and selected.get("quantization") is None and not native_budget):
+        selected["rotation_refinement"] = "optr"
+    from oscar_ascend.optr_policy import validate_refinement_config
+    validate_refinement_config(selected)
     return selected
 
 
@@ -224,7 +236,19 @@ def variant_features(config: dict) -> dict:
 
 def runtime_feature_summary(config: dict, variant: str | None) -> dict:
     """One compact startup line shows the actual effective feature selection."""
+    from oscar_ascend.optr_policy import (EXPERIMENTAL_PUBLICATION_POLICY, POLICY_VERSION, PROJECTION_VIEWS,
+                                         DEPLOYMENT_CANDIDATE_SELECTION, MAX_DEPLOYMENT_CANDIDATES)
     return {"variant":variant,"optimizations":variant_features(config),
+            **({"optr_publication_policy": EXPERIMENTAL_PUBLICATION_POLICY,
+                "independent_test_blocks_publication": False,
+                "optr_fitting_policy": POLICY_VERSION,
+                "optr_fitted_grouping": "layer",
+                "optr_validation_projection_views": list(PROJECTION_VIEWS),
+                "optr_deployment_candidate_selection": DEPLOYMENT_CANDIDATE_SELECTION,
+                "optr_max_deployment_candidates": MAX_DEPLOYMENT_CANDIDATES,
+                "optr_seed": "oscar_base_shared_zero_mean",
+                "optr_seed_partition": "train"}
+               if config.get("rotation_refinement") == "optr" else {}),
             **({"aligned_c16_operator": ("attention_cv_official_cluster16_out" if config.get("experimental_official_math",False) else "attention_cv_aligned_cluster16_out"
                                         if config.get("experimental_c16_tuned", False)
                                         else "attention_cv_aligned_cluster16_control_out")}
@@ -238,11 +262,12 @@ def runtime_feature_summary(config: dict, variant: str | None) -> dict:
             "rotation_method":config.get("rotation_method"),
             "rotation_variant":"hadamard_data_free" if config.get("rotation_method")=="hadamard" else config.get("rotation_variant", "shared_v1"),
             "rotation_grouping":"layer_kv_head" if config.get("rotation_variant")=="perhead_center" else "layer",
-            "key_centering":config.get("rotation_variant")=="perhead_center",
+            "key_centering":config.get("rotation_variant")=="perhead_center" and config.get("rotation_refinement")!="optr",
             "clip_policy":config.get("rotation_k_clip", "scalar"),
             "head_clip_experiment_enabled":config.get("rotation_k_clip")=="per_head_calibrated",
+            "rotation_refinement":config.get("rotation_refinement"),
             "calibration_recipe_version":None if config.get("rotation_method")=="hadamard" else
-                (4 if config.get("rotation_k_clip")=="per_head_calibrated" else 3)
+                (5 if config.get("rotation_refinement")=="optr" else 4 if config.get("rotation_k_clip")=="per_head_calibrated" else 3)
                 if config.get("rotation_variant")=="perhead_center" else 2,
             "metadata_dtype":"float32" if config.get("experimental_aligned_math",False) else "float16",
             "dequant_policy":config.get('oscar_dequant_policy', 'native_phase'),

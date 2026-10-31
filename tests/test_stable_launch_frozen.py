@@ -22,6 +22,8 @@ def authorized_model_arguments(argv):
     start = result.index('--quantization')
     result[start:start + 2] = ['--dtype', 'bfloat16']
     result[result.index("--hf-overrides")+1] = "{}"
+    # User-selected port predates this OPTR migration; all other argv remain pinned.
+    result[result.index("--port") + 1] = "7878"
     return result
 
 
@@ -37,4 +39,4 @@ def test_complete_stable_vllm_launch_is_preserved(name, entry, prefix, capsys):
     assert actual['vllm_argv'] == authorized_model_arguments(expected['argv'])
     assert actual.get('target_devices', actual.get('devices')) == expected['devices']
     argv = actual['vllm_argv']
-    assert int(argv[argv.index('--port') + 1]) == expected['port']
+    assert int(argv[argv.index('--port') + 1]) == 7878

@@ -1,6 +1,7 @@
-"""Read-only diagnostic must use the selected sample/PT identity, never an NPU."""
+"""Archive #86/#97/#173: read-only audit binds the selected sample/PT, never an NPU."""
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -83,6 +84,29 @@ def test_explicit_artifact_does_not_inherit_diagnostic_shell(monkeypatch,tmp_pat
     assert artifact_path(config,'fp',{'OSCAR_ROTATION_ARTIFACT':str(tmp_path/'actual.pt')},root=tmp_path)==tmp_path/'actual.pt'
     monkeypatch.setattr('tools.audit_precision_identity.find_active_configs',lambda:[])
     assert main([])==2
+
+
+@pytest.mark.parametrize("refinement", [None, "optr"])
+def test_calibrated_audit_matches_runtime_path_and_preserves_overrides(monkeypatch, tmp_path, refinement):
+    from oscar_ascend.rotations import rotation_artifact_path
+    from tools.audit_precision_identity import artifact_path
+    config = dict(rotation_method="qqt_sst", rotation_variant="perhead_center",
+                  experimental_official_math=True, oscar_dequant_policy="fp32_metadata",
+                  max_num_batched_tokens=16384, tensor_parallel_size=4)
+    if refinement is not None:
+        config["rotation_refinement"] = refinement
+    monkeypatch.delenv("OSCAR_ROTATION_ARTIFACT", raising=False)
+    runtime_path = rotation_artifact_path(config, "fp", root=tmp_path)
+    assert runtime_path.name == ("refined.pt" if refinement == "optr" else "calibrated.pt")
+    before = dict(config)
+    monkeypatch.setenv("OSCAR_ROTATION_ARTIFACT", "/wrong/shell.pt")
+    assert artifact_path(config, "fp", root=tmp_path) == runtime_path
+    process_env = {"OSCAR_ROTATION_ARTIFACT": "service.pt"}
+    assert artifact_path(config, "fp", process_env, root=tmp_path) == tmp_path / "service.pt"
+    assert artifact_path({**config, "rotation_artifact": "explicit.pt"}, "fp", process_env,
+                         root=tmp_path) == tmp_path / "explicit.pt"
+    assert config == before and process_env == {"OSCAR_ROTATION_ARTIFACT": "service.pt"}
+    assert os.environ["OSCAR_ROTATION_ARTIFACT"] == "/wrong/shell.pt"
 
 
 def test_score_proxy_removes_common_logit_offset():

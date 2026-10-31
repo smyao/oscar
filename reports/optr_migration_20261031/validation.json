@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-31",
+  "branch": "oscar-new-6",
+  "base": "ca46f57e0267f15aadba08d6913cef81b46e21b1",
+  "source": "e7dc8a92000e0d9b49800eadda6d1d16f978436f",
+  "scope": "OPTR v9 offline algorithm and required preparation/artifact seams only",
+  "source_modules_identical": [
+    "oscar_ascend/integration/optr_capture.py",
+    "oscar_ascend/optr_artifacts.py",
+    "oscar_ascend/optr_calibration.py",
+    "oscar_ascend/optr_candidates.py",
+    "oscar_ascend/optr_checkpoint.py",
+    "oscar_ascend/optr_oscar_seed.py",
+    "oscar_ascend/optr_policy.py",
+    "oscar_ascend/optr_selection.py",
+    "oscar_ascend/optr_sequential.py",
+    "oscar_ascend/optr_shared.py",
+    "oscar_ascend/optr_shared_cache.py",
+    "oscar_ascend/optr_traces.py",
+    "tools/calibrate_optr_traces.py",
+    "tools/optr_fit_worker.py",
+    "tools/optr_parallel.py",
+    "tools/optr_progress.py",
+    "tools/prepare_optr_rotations.py",
+    "tools/prepare_optr_seed.py",
+    "tools/rotation_preparation_limits.py"
+  ],
+  "existing_production_seams": [
+    "oscar_ascend/integration/rotation_capture.py",
+    "oscar_ascend/rotations.py",
+    "tools/audit_precision_identity.py",
+    "tools/calibrate_model_rotations.py",
+    "tools/calibration_data.py",
+    "tools/deploy.py",
+    "tools/install_serve.py",
+    "tools/observe_serve.py",
+    "tools/phase.py",
+    "tools/prepare_rotations.py",
+    "tools/serving_variants.py"
+  ],
+  "unchanged_production_files": 858,
+  "protected_source_sha256": "protected_source_sha256.json",
+  "host_tests": {
+    "passed": 1217,
+    "skipped": 1,
+    "failures": 0,
+    "errors": 0,
+    "skip_reason": "Optional external source audit disabled; independent pinned AST/math snapshot tests passed. No external old project was read.",
+    "command": ".venv/bin/python -m pytest -q tests/test_optr* tests/test_rotation_preparation_limits.py tests/test_calibration_data.py tests/test_center_prepare.py tests/test_center_rotations.py tests/test_rotations.py tests/test_rotation_pipeline.py tests/test_rotation_capture.py tests/test_official_rotation_calibration.py tests/test_serving_variants.py tests/test_install_serve.py tests/test_deploy_bf16.py tests/test_deploy_launcher.py tests/test_native_token_budget.py tests/test_stable_launch_frozen.py tests/test_precision_diagnostic.py tests/test_gdn_folded_initial_state.py tests/test_prefill_state_contract_hooks.py tests/test_align_prefill_state_contract.py tests/test_prefill_state_numeric.py tests/test_prefill_state_performance_protection.py tests/test_universal_bf16_regression_protection.py tests/test_plugin.py tests/test_prefix_checkpoint_integration.py tests/test_prefix_checkpoint_retention.py tests/test_mtp_logical_slots.py tests/test_mixed_decode_split.py tests/test_prefix_checkpoint_audit.py tests/test_prefix_checkpoint_lifecycle.py tests/test_prefix_caching.py tests/test_workflow.py",
+    "log": "host_tests.log"
+  },
+  "package": {
+    "wheel": "oscar_ascend_external-0.1.0-py3-none-any.whl",
+    "source_and_data_files_verified": 217,
+    "new_modules_imported_from_isolated_unpack": 19,
+    "offline_gpqa_read": true,
+    "log": "wheel_build.log"
+  },
+  "preexisting_failures": {
+    "unchanged_legacy_research_suite": "tests/test_request_window_serving_config.py",
+    "baseline_failed": 4,
+    "migrated_failed": 4,
+    "reason": "Legacy research-window tests expect an incompatible BF16 route; one requires absent site model. Identical failures reproduced on ca46f57; production/tests intentionally unchanged.",
+    "baseline_log": "baseline_research_tests.log",
+    "gdn_fixture_fixed": "One cache-layout fixture was supplied in the wrong native chunk-output orientation; reproduced on ca46f57, corrected fixture only, native assignment unchanged.",
+    "gdn_baseline_log": "baseline_gdn_fixture.log"
+  },
+  "migration_test_isolation_fix": "Restore originally absent ASCEND_RT_VISIBLE_DEVICES after source fitting-device tests; production selector unchanged.",
+  "deployment": {
+    "entry": "bash scripts/install_serve.sh --variant candidate",
+    "policy": "optr_oscar_shared_candidates_ascend_v9",
+    "recipe_version": 5,
+    "devices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "port": 7878,
+    "max_num_batched_tokens": 16384,
+    "argv_and_online_flags_match_base": true,
+    "independent_test_blocks_publication": false
+  },
+  "not_run": [
+    "NPU capture/fitting",
+    "NPU operators",
+    "device graph replay",
+    "model quality",
+    "AISBench",
+    "performance"
+  ],
+  "limits": [
+    "New shared zero-mean seed differs from pre-migration recipe3; nonworse gate compares to that new seed.",
+    "Source and argument identity do not guarantee unchanged end-to-end throughput or MTP acceptance.",
+    "First offline preparation has additional real cost; authenticated matching artifacts are reused.",
+    "Local migration only; no service launch, commit or push performed."
+  ]
+}

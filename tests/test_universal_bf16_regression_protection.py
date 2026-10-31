@@ -9,10 +9,12 @@ from 232b563b, and no source/host check proves device or end-to-end speed.
 """
 from __future__ import annotations
 
+import ast
 import hashlib
 import inspect
 import json
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -47,7 +49,13 @@ def digest(data):
 
 @pytest.mark.parametrize("path,expected", sorted(BASE_232B_SHA256.items()))
 def test_restored_and_unchanged_production_bytes_match_232b(path, expected):
-    assert digest((ROOT / path).read_bytes()) == expected
+    source = (ROOT / path).read_bytes()
+    if path == 'configs/target.json':
+        # User subsequently authorized only the default 8989 -> 7878 port.
+        # Retain the original full-file hash after undoing that exact edit.
+        assert source.count(b'"port": 7878') == 1
+        source = source.replace(b'"port": 7878', b'"port": 8989')
+    assert digest(source) == expected
 
 
 @pytest.mark.parametrize("path,expected", sorted(RETAINED_34BC_SHA256.items()))
@@ -68,23 +76,39 @@ def test_default_and_packaged_generation_cannot_reenable_decode_cast_experiment(
         "csrc/kernels/attention_cv_official_cluster4.cpp"]
 
 
-def test_variant_source_only_adds_retired_policy_cleanup_to_accepted_source():
+def test_variant_source_only_adds_pinned_optr_and_retired_policy_cleanup():
     text = (ROOT / 'tools/serving_variants.py').read_text()
     cleanup = """    # User withdrew the unsuccessful exact-current delivery. A reused
     # generated config must not carry its retired policy into any variant.
     selected.pop('oscar_current_only_policy', None)
 """
-    assert text.count(cleanup) == 1
-    assert text.index(cleanup) == text.index('    selected = dict(config)\n') + len(
+    base = subprocess.check_output(['git', 'show',
+        'ca46f57e0267f15aadba08d6913cef81b46e21b1:tools/serving_variants.py'],
+        cwd=ROOT, text=True)
+    assert base.count(cleanup) == 1
+    assert base.index(cleanup) == base.index('    selected = dict(config)\n') + len(
         '    selected = dict(config)\n')
     # This hash is the accepted 614c source, not a hash of the withdrawal.
-    assert digest(text.replace(cleanup, '')) == '354061eb242f8730ef0326674240b339f4f6539ad563c0924c8c0ceb3e7a5c4f'
+    assert digest(base.replace(cleanup, '')) == '354061eb242f8730ef0326674240b339f4f6539ad563c0924c8c0ceb3e7a5c4f'
+    # The user's requested source commit is an independent, immutable oracle
+    # for the reviewed OptR-only variant delta. Preserve new-6's retirement
+    # immediately after copying the input; do not repin a hash of our edits.
+    source = subprocess.check_output(['git', 'show',
+        'e7dc8a92000e0d9b49800eadda6d1d16f978436f:tools/serving_variants.py'],
+        cwd=ROOT, text=True)
+    anchor = '    selected = dict(config)\n'
+    assert source.count(anchor) == 1
+    expected = source.replace(anchor, anchor + "    selected.pop('oscar_current_only_policy', None)\n")
+    assert ast.dump(ast.parse(text)) == ast.dump(ast.parse(expected))
+    # test_optr_migration_scope additionally executes all four variants,
+    # both APC modes and legacy recipe/budget choices against the base.
 
 
 @pytest.mark.parametrize('prefix', [False, True])
 def test_candidate_configuration_matches_accepted_performance_base(prefix):
     expected = json.loads((ROOT / 'reports/precision_stability_20261028/accepted_candidate_config.json').read_text())
     expected['enable_prefix_caching'] = prefix
+    expected.update(port=7878, rotation_refinement='optr')
     assert candidate_config(prefix) == expected
 
 

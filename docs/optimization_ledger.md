@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-10-31 用户要求严格迁移 OPTR：以 oscar-new-6@ca46f57 为基底，仅接入 oscar-new-4-back@e7dc8a9 的 v9 离线共享旋转拟合及必要准备/加载接缝。全部线上核、生成器、运行时、GDN/PC/MTP、timer、argv与0–3/7878保持；原 native_exact 清理保留。源码/数学/缓存/启动保护与隔离 wheel 验证见[迁移边界及回执](optr_migration_20261031.md)。新共享零均值seed不同于旧recipe3，独立test失败仍发布的实验政策不代表质量验收；未连接真机或测速，不宣称性能零回归。
+
 2026-10-28 当前精度修复：发现此前none-only分类保护遗漏PC align末尾短续块。真实native调度5000→2304/1536/1156/4与2304 prefix命中后续步可复现；fold将accepted1改4并读旧GDN状态，有限值即可造成错误输出。外部插件统一保护none/align真正prefill，纠正图选择与最终提交；正常decode图、CANN/codec/PT/预算/PC/MTP/timer保持。207项主机回归与32K/64K选路/源码门通过；不将局部结果写成四项质量分数。见[完整修复](gdn_prefill_state_20261028.md)。
 
 2026-10-28 后续方案裁决：native_exact撤下提交bcbf4153；MTP query-relative/扩大259窗口、APC发布门及matched-cohort lookup均有明确精度、有效命中或native admission容量反例，未接production。当前无满足质量与性能保护双门的新默认优化，目标未完成。两项协议现象已有本地repro，未归因为全部LongBench分差。见[本轮裁决](precision_followup_20261028.md)。

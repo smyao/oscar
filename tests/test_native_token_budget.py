@@ -150,7 +150,7 @@ def test_every_install_phase_and_service_receive_frozen_stable_config(monkeypatc
         assert not config.get("experimental_bounded_whole_prefill", False)
         assert "scheduler_cls" not in config and "history_token_capacity" not in config
         assert config["devices"] == ([4, 5, 6, 7] if rear else [0, 1, 2, 3])
-        assert config["port"] == (7878 if rear else 8989)
+        assert config["port"] == 7878
         return config
 
     def phase(name, command, *, env, **kwargs):
@@ -198,7 +198,7 @@ def test_fixed_shell_entrypoints_keep_stable_budget_without_extra_option(tmp_pat
     assert not runtime["optimizations"].get("bounded_whole_prefill", False)
     assert runtime["optimizations"]["decode_bundle"] is True
     assert runtime["devices"] == ([4, 5, 6, 7] if placement else [0, 1, 2, 3])
-    assert runtime["port"] == (7878 if placement else 8989)
+    assert runtime["port"] == 7878
     assert not (tmp_path / "unused").exists()
 
 
@@ -236,7 +236,7 @@ def test_observe_candidate_gates_and_service_share_stable_effective_config(monke
         assert not config.get("experimental_whole_prefill", False)
         assert not config.get("experimental_bounded_whole_prefill", False)
         assert config["experimental_decode_bundle"] is True
-        assert config["devices"] == [0, 1, 2, 3] and config["port"] == 8989
+        assert config["devices"] == [0, 1, 2, 3] and config["port"] == 7878
         assert all(config["experimental_" + name] is True for name in
                    ("hybrid_l1_decode", "c16_l1_reuse", "c4_member_pipeline", "prepare_reuse"))
         assert "--scheduler-cls" not in serve_argv(config)
@@ -327,6 +327,13 @@ def test_worker_factory_selects_explicit_or_native_capacity_mode(monkeypatch, tm
     path = tmp_path / "target.json"
     monkeypatch.setenv("OSCAR_TARGET_CONFIG", str(path))
     for config in (target(), selected(), variant_config(target(), "baseline")):
+        if native_budget and config.get("rotation_refinement") == "optr":
+            # A fitted OPTR artifact is tied to an explicit chunk budget.
+            # Reject the conflicting artifact/config instead of silently using it.
+            with pytest.raises(ValueError, match="explicit serving token budget"):
+                variant_config({**config, "use_native_token_budget": True}, None)
+            config = {key: value for key, value in config.items()
+                      if key not in ("rotation_refinement", "optr_calibration")}
         config = variant_config({**config, "use_native_token_budget": native_budget}, None)
         expected = NativeTokenBudgetRuntime if native_budget else AscendRuntimeProvider
         path.write_text(json.dumps(config))

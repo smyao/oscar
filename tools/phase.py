@@ -116,6 +116,11 @@ def _compact_should_mirror(line: str, state: dict[str, int]) -> bool:
     if line.startswith(("[oscar] PERF_", "[oscar] FAILED", "[oscar] REQUEST_ERROR",
                         "[oscar] SYNTHETIC_MIXED done", "[oscar-observe] OBSERVER_READY")):
         return True
+    # Offline completion and artifact status must survive nested launchers.
+    if line.startswith(("[oscar] OPTR_PROGRESS ", '{"optr_capture":')):
+        return True
+    if "[oscar] OPTR_ARTIFACT " in line:
+        return True
     # #158: one host-only bridge receipt per worker may carry its native
     # Worker_TP prefix. Preserve that exact marker without mirroring INFO spam.
     if "[oscar] MTP_DISCARD_BRIDGE " in line:

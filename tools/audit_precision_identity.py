@@ -76,7 +76,10 @@ def artifact_path(config, fingerprint, process_env=None, root=ROOT):
     else:
         profile = calibration_cache_identity(config, fingerprint)
         digest = hashlib.sha256(json.dumps(profile, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:20]
-        selected = Path(root) / "artifacts/rotations" / fingerprint / ("qqt_sst_" + digest) / "calibrated.pt"
+        if config.get("rotation_refinement") == "optr":
+            selected = Path(root) / "artifacts/rotations" / fingerprint / ("optr_" + digest) / "refined.pt"
+        else:
+            selected = Path(root) / "artifacts/rotations" / fingerprint / ("qqt_sst_" + digest) / "calibrated.pt"
     # Explicit copy prevents rotation_artifact_path from consulting our shell's
     # unrelated OSCAR_ROTATION_ARTIFACT. Neither config nor environ is mutated.
     return rotation_artifact_path({**config, "rotation_artifact": str(selected)}, fingerprint)

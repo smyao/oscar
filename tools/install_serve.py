@@ -14,6 +14,7 @@ from .phase import atomic_json, run_phase, terminal_line
 from .target_cli import target_env, serve_argv, diagnose_guard_enabled
 from .serving_variants import variant_config, variant_features, runtime_feature_summary
 from .model_config import add_model_arguments, apply_model_options
+from .rotation_preparation_limits import phase_timeout
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -130,7 +131,7 @@ def main(argv=None) -> int:
     try:
         for name, command in stages:
             result = run_phase(name, command, cwd=ROOT, log_dir=log_dir,
-                               timeout=config["phase_timeout_seconds"], env=env,
+                               timeout=phase_timeout(config, name), env=env,
                                grace=config["shutdown_timeout_seconds"], heartbeat=60)
             status["phases"].append(asdict(result))
             atomic_json(log_dir / "status.json", status)

@@ -1,0 +1,682 @@
+running bdist_wheel
+running build
+running build_py
+creating build/lib/tools
+copying tools/generate_aligned_clusters.py -> build/lib/tools
+copying tools/request_window_reader_gate.py -> build/lib/tools
+copying tools/phase.py -> build/lib/tools
+copying tools/probe_mixed_attention.py -> build/lib/tools
+copying tools/probe_history_reuse.py -> build/lib/tools
+copying tools/generate_bf16_clusters.py -> build/lib/tools
+copying tools/package_request_window_kernels.py -> build/lib/tools
+copying tools/generate_cpu_cases.py -> build/lib/tools
+copying tools/calibrate_optr_traces.py -> build/lib/tools
+copying tools/probe_decode_hotpath.py -> build/lib/tools
+copying tools/prepare_optr_rotations.py -> build/lib/tools
+copying tools/package_c4_member_pipeline.py -> build/lib/tools
+copying tools/official_reference.py -> build/lib/tools
+copying tools/clean_rotation_cache.py -> build/lib/tools
+copying tools/whole_run_model.py -> build/lib/tools
+copying tools/summarize_timer.py -> build/lib/tools
+copying tools/observe_serve.py -> build/lib/tools
+copying tools/probe_native_current_fia.py -> build/lib/tools
+copying tools/optr_parallel.py -> build/lib/tools
+copying tools/analyze_long_context_work.py -> build/lib/tools
+copying tools/service_probe.py -> build/lib/tools
+copying tools/deploy.py -> build/lib/tools
+copying tools/probe_c4_member_pipeline.py -> build/lib/tools
+copying tools/model_config.py -> build/lib/tools
+copying tools/c16_breakdown.py -> build/lib/tools
+copying tools/analyze_64k_evidence.py -> build/lib/tools
+copying tools/package_hybrid_l1_decode.py -> build/lib/tools
+copying tools/run_cpu_debug.py -> build/lib/tools
+copying tools/generate_aligned_codec.py -> build/lib/tools
+copying tools/optr_progress.py -> build/lib/tools
+copying tools/analyze_service_log.py -> build/lib/tools
+copying tools/probe_c16_l1_reuse.py -> build/lib/tools
+copying tools/aligned_fixture.py -> build/lib/tools
+copying tools/package_c16_l1_reuse.py -> build/lib/tools
+copying tools/calibrate_model_rotations.py -> build/lib/tools
+copying tools/rotation_preparation_limits.py -> build/lib/tools
+copying tools/probe_current_only.py -> build/lib/tools
+copying tools/plog.py -> build/lib/tools
+copying tools/install_serve.py -> build/lib/tools
+copying tools/probe_decode_bundle.py -> build/lib/tools
+copying tools/probe_first_mtp_current.py -> build/lib/tools
+copying tools/bf16_runtime_oracle.py -> build/lib/tools
+copying tools/target_cli.py -> build/lib/tools
+copying tools/build_ops.py -> build/lib/tools
+copying tools/npu_resources.py -> build/lib/tools
+copying tools/__init__.py -> build/lib/tools
+copying tools/bf16_reference.py -> build/lib/tools
+copying tools/summarize_profile.py -> build/lib/tools
+copying tools/c16_probe_oracle.py -> build/lib/tools
+copying tools/c16_softmax_transform.py -> build/lib/tools
+copying tools/summarize_timing.py -> build/lib/tools
+copying tools/package_mdl_decode.py -> build/lib/tools
+copying tools/probe_mixed_prepare_reuse.py -> build/lib/tools
+copying tools/export_fast_unpack_cpu_cases.py -> build/lib/tools
+copying tools/forecast_64k_memory.py -> build/lib/tools
+copying tools/run_mixed_cv_cpu_debug.py -> build/lib/tools
+copying tools/probe_mdl_decode.py -> build/lib/tools
+copying tools/build_c16_timer.py -> build/lib/tools
+copying tools/probe_vector_init_rotation.py -> build/lib/tools
+copying tools/generate_c16_tuned.py -> build/lib/tools
+copying tools/analyze_64k_latency_budget.py -> build/lib/tools
+copying tools/probe_bf16_attention.py -> build/lib/tools
+copying tools/aligned_reference.py -> build/lib/tools
+copying tools/generate_rotation_cpu_cases.py -> build/lib/tools
+copying tools/striped_fixture.py -> build/lib/tools
+copying tools/audit_precision_identity.py -> build/lib/tools
+copying tools/vm_validate.py -> build/lib/tools
+copying tools/official_softmax_visibility_transform.py -> build/lib/tools
+copying tools/inspect_run.py -> build/lib/tools
+copying tools/rotation_recipe_diagnostic.py -> build/lib/tools
+copying tools/paired_concurrency_probe.py -> build/lib/tools
+copying tools/probe_official_attention.py -> build/lib/tools
+copying tools/probe_fast_unpack.py -> build/lib/tools
+copying tools/probe_request_windows.py -> build/lib/tools
+copying tools/official_fixture.py -> build/lib/tools
+copying tools/analyze_memory_64k.py -> build/lib/tools
+copying tools/probe_aligned_attention.py -> build/lib/tools
+copying tools/serving_variants.py -> build/lib/tools
+copying tools/environment.py -> build/lib/tools
+copying tools/calibration_data.py -> build/lib/tools
+copying tools/summarize_progress.py -> build/lib/tools
+copying tools/probe_mixed_optimization.py -> build/lib/tools
+copying tools/c16_cast_transform.py -> build/lib/tools
+copying tools/optr_fit_worker.py -> build/lib/tools
+copying tools/prepare_optr_seed.py -> build/lib/tools
+copying tools/probe_mixed_decode_split.py -> build/lib/tools
+copying tools/readiness.py -> build/lib/tools
+copying tools/probe_hybrid_l1_decode.py -> build/lib/tools
+copying tools/generate_bf16_decode.py -> build/lib/tools
+copying tools/export_striped_prefill_cpu_cases.py -> build/lib/tools
+copying tools/package_quantization_bundle.py -> build/lib/tools
+copying tools/official_decode_cast_transform.py -> build/lib/tools
+copying tools/export_mixed_cv_cpu_cases.py -> build/lib/tools
+copying tools/http_request.py -> build/lib/tools
+copying tools/probe_c16_member_pipeline.py -> build/lib/tools
+copying tools/probe_striped_cache.py -> build/lib/tools
+copying tools/official_finite_transform.py -> build/lib/tools
+copying tools/analyse_timer_profiles.py -> build/lib/tools
+copying tools/summarize_c16_breakdown.py -> build/lib/tools
+copying tools/performance_summary.py -> build/lib/tools
+copying tools/probe_cv_hotshape.py -> build/lib/tools
+copying tools/summarize_device_events.py -> build/lib/tools
+copying tools/aligned_runtime_oracle.py -> build/lib/tools
+copying tools/prepare_rotations.py -> build/lib/tools
+copying tools/probe_prefix_cache.py -> build/lib/tools
+copying tools/export_q1_cpu_cases.py -> build/lib/tools
+copying tools/timer32k.py -> build/lib/tools
+copying tools/compile_cache.py -> build/lib/tools
+copying tools/generate_official_attention.py -> build/lib/tools
+copying tools/official_runtime_oracle.py -> build/lib/tools
+copying tools/probe_ops.py -> build/lib/tools
+creating build/lib/oscar_ascend
+copying oscar_ascend/diagnostic_timer.py -> build/lib/oscar_ascend
+copying oscar_ascend/optr_shared_cache.py -> build/lib/oscar_ascend
+copying oscar_ascend/optr_policy.py -> build/lib/oscar_ascend
+copying oscar_ascend/passive_timing.py -> build/lib/oscar_ascend
+copying oscar_ascend/optr_checkpoint.py -> build/lib/oscar_ascend
+copying oscar_ascend/request_windows.py -> build/lib/oscar_ascend
+copying oscar_ascend/dual_region_layout.py -> build/lib/oscar_ascend
+copying oscar_ascend/layout.py -> build/lib/oscar_ascend
+copying oscar_ascend/__init__.py -> build/lib/oscar_ascend
+copying oscar_ascend/telemetry.py -> build/lib/oscar_ascend
+copying oscar_ascend/runtime.py -> build/lib/oscar_ascend
+copying oscar_ascend/rotations.py -> build/lib/oscar_ascend
+copying oscar_ascend/optr_oscar_seed.py -> build/lib/oscar_ascend
+copying oscar_ascend/clip_calibration.py -> build/lib/oscar_ascend
+copying oscar_ascend/timing.py -> build/lib/oscar_ascend
+copying oscar_ascend/lifecycle.py -> build/lib/oscar_ascend
+copying oscar_ascend/optr_sequential.py -> build/lib/oscar_ascend
+copying oscar_ascend/optr_traces.py -> build/lib/oscar_ascend
+copying oscar_ascend/plugin.py -> build/lib/oscar_ascend
+copying oscar_ascend/c16_timer_schema.py -> build/lib/oscar_ascend
+copying oscar_ascend/request_window_storage.py -> build/lib/oscar_ascend
+copying oscar_ascend/optr_selection.py -> build/lib/oscar_ascend
+copying oscar_ascend/optr_artifacts.py -> build/lib/oscar_ascend
+copying oscar_ascend/device_timing.py -> build/lib/oscar_ascend
+copying oscar_ascend/optr_candidates.py -> build/lib/oscar_ascend
+copying oscar_ascend/optr_shared.py -> build/lib/oscar_ascend
+copying oscar_ascend/official_window.py -> build/lib/oscar_ascend
+copying oscar_ascend/optr_calibration.py -> build/lib/oscar_ascend
+copying oscar_ascend/rotation_calibration.py -> build/lib/oscar_ascend
+creating build/lib/benchmarks
+copying benchmarks/measure.py -> build/lib/benchmarks
+copying benchmarks/__init__.py -> build/lib/benchmarks
+copying benchmarks/passive.py -> build/lib/benchmarks
+copying benchmarks/mixed.py -> build/lib/benchmarks
+copying benchmarks/compare.py -> build/lib/benchmarks
+creating build/lib/tools/experiments
+copying tools/experiments/prefill_tile_stress.py -> build/lib/tools/experiments
+copying tools/experiments/affine_bf16_residual_screen.py -> build/lib/tools/experiments
+copying tools/experiments/wide_fp32_fixture.py -> build/lib/tools/experiments
+copying tools/experiments/fp32_block_attention_stress.py -> build/lib/tools/experiments
+copying tools/experiments/replay_shared_fp32.py -> build/lib/tools/experiments
+copying tools/experiments/admission_replay.py -> build/lib/tools/experiments
+copying tools/experiments/export_shared_fp32.py -> build/lib/tools/experiments
+copying tools/experiments/shared_history_work.py -> build/lib/tools/experiments
+copying tools/experiments/affine_cube_counterexample.py -> build/lib/tools/experiments
+copying tools/experiments/package_decode_bundle.py -> build/lib/tools/experiments
+copying tools/experiments/__init__.py -> build/lib/tools/experiments
+copying tools/experiments/int8_planes_counterexample.py -> build/lib/tools/experiments
+copying tools/experiments/active_identity_store_fixture.py -> build/lib/tools/experiments
+copying tools/experiments/prefill_phase_ledger.py -> build/lib/tools/experiments
+copying tools/experiments/affine_cube_reference.py -> build/lib/tools/experiments
+copying tools/experiments/prefill_tile_reference.py -> build/lib/tools/experiments
+copying tools/experiments/run_camodel_arm.py -> build/lib/tools/experiments
+copying tools/experiments/request_window_prefix_protocol.py -> build/lib/tools/experiments
+copying tools/experiments/summarize_decode_critical_chain.py -> build/lib/tools/experiments
+copying tools/experiments/analyze_decode_completion.py -> build/lib/tools/experiments
+copying tools/experiments/dequant_bf16_product_screen.py -> build/lib/tools/experiments
+copying tools/experiments/prefix_checkpoint_audit.py -> build/lib/tools/experiments
+copying tools/experiments/make_decode_pipeline.py -> build/lib/tools/experiments
+copying tools/experiments/stream_camodel_markers.py -> build/lib/tools/experiments
+copying tools/experiments/bf16_final_rv_screen.py -> build/lib/tools/experiments
+copying tools/experiments/decode_completion_probe.py -> build/lib/tools/experiments
+copying tools/experiments/shared_fp32_tile_reference.py -> build/lib/tools/experiments
+copying tools/experiments/striped_direct_nz_address_screen.py -> build/lib/tools/experiments
+copying tools/experiments/striped_metadata_bits.py -> build/lib/tools/experiments
+creating build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/bounded_whole_prefill.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/first_draft_current_only.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/specs.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/current_only_plan.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/backend.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/runtime_api.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/metadata.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/greedy_sampling.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/c16_breakdown.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/native_token_budget.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/model_identity.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/guard_diag.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/__init__.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/prefix_checkpoint.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/dummy_context.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/compact_later_mtp.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/current_only_dispatch.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/rotation_capture.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/optr_capture.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/prefill_state_contract.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/official_math.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/aligned_math.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/whole_prefill_scheduler.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/impl.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/current_attention.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/draft_discard.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/cache_storage_ops.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/mixed_decode_split.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/prepare_reuse.py -> build/lib/oscar_ascend/integration
+copying oscar_ascend/integration/compile_cache.py -> build/lib/oscar_ascend/integration
+creating build/lib/oscar_ascend/ops
+copying oscar_ascend/ops/__init__.py -> build/lib/oscar_ascend/ops
+copying oscar_ascend/ops/cv_dispatch.py -> build/lib/oscar_ascend/ops
+copying oscar_ascend/ops/loader.py -> build/lib/oscar_ascend/ops
+copying oscar_ascend/ops/contracts.py -> build/lib/oscar_ascend/ops
+copying oscar_ascend/ops/reference.py -> build/lib/oscar_ascend/ops
+copying oscar_ascend/ops/hybrid_layout.py -> build/lib/oscar_ascend/ops
+copying oscar_ascend/ops/meta.py -> build/lib/oscar_ascend/ops
+running egg_info
+creating oscar_ascend_external.egg-info
+writing oscar_ascend_external.egg-info/PKG-INFO
+writing dependency_links to oscar_ascend_external.egg-info/dependency_links.txt
+writing entry points to oscar_ascend_external.egg-info/entry_points.txt
+writing requirements to oscar_ascend_external.egg-info/requires.txt
+writing top-level names to oscar_ascend_external.egg-info/top_level.txt
+writing manifest file 'oscar_ascend_external.egg-info/SOURCES.txt'
+reading manifest file 'oscar_ascend_external.egg-info/SOURCES.txt'
+writing manifest file 'oscar_ascend_external.egg-info/SOURCES.txt'
+creating build/lib/tools/data
+copying tools/data/gpqa_diamond.csv.gz -> build/lib/tools/data
+copying tools/data/README.md -> build/lib/tools/data
+installing to build/bdist.macosx-10.15-universal2/wheel
+running install
+running install_lib
+creating build/bdist.macosx-10.15-universal2/wheel
+creating build/bdist.macosx-10.15-universal2/wheel/tools
+copying build/lib/tools/generate_aligned_clusters.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/request_window_reader_gate.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/phase.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_mixed_attention.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_history_reuse.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/generate_bf16_clusters.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/package_request_window_kernels.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/generate_cpu_cases.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/calibrate_optr_traces.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_decode_hotpath.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/prepare_optr_rotations.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/package_c4_member_pipeline.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/official_reference.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/clean_rotation_cache.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/whole_run_model.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/summarize_timer.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/observe_serve.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_native_current_fia.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/optr_parallel.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/analyze_long_context_work.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/service_probe.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/deploy.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_c4_member_pipeline.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/model_config.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/c16_breakdown.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/analyze_64k_evidence.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/package_hybrid_l1_decode.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/run_cpu_debug.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/generate_aligned_codec.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/optr_progress.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/analyze_service_log.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_c16_l1_reuse.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/aligned_fixture.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/package_c16_l1_reuse.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/calibrate_model_rotations.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/rotation_preparation_limits.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+creating build/bdist.macosx-10.15-universal2/wheel/tools/experiments
+copying build/lib/tools/experiments/prefill_tile_stress.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/affine_bf16_residual_screen.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/wide_fp32_fixture.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/fp32_block_attention_stress.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/replay_shared_fp32.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/admission_replay.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/export_shared_fp32.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/shared_history_work.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/affine_cube_counterexample.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/package_decode_bundle.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/__init__.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/int8_planes_counterexample.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/active_identity_store_fixture.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/prefill_phase_ledger.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/affine_cube_reference.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/prefill_tile_reference.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/run_camodel_arm.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/request_window_prefix_protocol.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/summarize_decode_critical_chain.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/analyze_decode_completion.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/dequant_bf16_product_screen.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/prefix_checkpoint_audit.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/make_decode_pipeline.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/stream_camodel_markers.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/bf16_final_rv_screen.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/decode_completion_probe.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/shared_fp32_tile_reference.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/striped_direct_nz_address_screen.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/experiments/striped_metadata_bits.py -> build/bdist.macosx-10.15-universal2/wheel/./tools/experiments
+copying build/lib/tools/probe_current_only.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/plog.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/install_serve.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_decode_bundle.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_first_mtp_current.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/bf16_runtime_oracle.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/target_cli.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/build_ops.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/npu_resources.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/__init__.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/bf16_reference.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/summarize_profile.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/c16_probe_oracle.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/c16_softmax_transform.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/summarize_timing.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/package_mdl_decode.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_mixed_prepare_reuse.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/export_fast_unpack_cpu_cases.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/forecast_64k_memory.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/run_mixed_cv_cpu_debug.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_mdl_decode.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/build_c16_timer.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_vector_init_rotation.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/generate_c16_tuned.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/analyze_64k_latency_budget.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_bf16_attention.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/aligned_reference.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/generate_rotation_cpu_cases.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/striped_fixture.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/audit_precision_identity.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/vm_validate.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/official_softmax_visibility_transform.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/inspect_run.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/rotation_recipe_diagnostic.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/paired_concurrency_probe.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_official_attention.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_fast_unpack.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_request_windows.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/official_fixture.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/analyze_memory_64k.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_aligned_attention.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/serving_variants.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/environment.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/calibration_data.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/summarize_progress.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_mixed_optimization.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/c16_cast_transform.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/optr_fit_worker.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/prepare_optr_seed.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_mixed_decode_split.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/readiness.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_hybrid_l1_decode.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/generate_bf16_decode.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/export_striped_prefill_cpu_cases.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/package_quantization_bundle.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/official_decode_cast_transform.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/export_mixed_cv_cpu_cases.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/http_request.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_c16_member_pipeline.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_striped_cache.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/official_finite_transform.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/analyse_timer_profiles.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+creating build/bdist.macosx-10.15-universal2/wheel/tools/data
+copying build/lib/tools/data/gpqa_diamond.csv.gz -> build/bdist.macosx-10.15-universal2/wheel/./tools/data
+copying build/lib/tools/data/README.md -> build/bdist.macosx-10.15-universal2/wheel/./tools/data
+copying build/lib/tools/summarize_c16_breakdown.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/performance_summary.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_cv_hotshape.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/summarize_device_events.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/aligned_runtime_oracle.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/prepare_rotations.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_prefix_cache.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/export_q1_cpu_cases.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/timer32k.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/compile_cache.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/generate_official_attention.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/official_runtime_oracle.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+copying build/lib/tools/probe_ops.py -> build/bdist.macosx-10.15-universal2/wheel/./tools
+creating build/bdist.macosx-10.15-universal2/wheel/oscar_ascend
+copying build/lib/oscar_ascend/diagnostic_timer.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/optr_shared_cache.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/optr_policy.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/passive_timing.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/optr_checkpoint.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/request_windows.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/dual_region_layout.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/layout.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+creating build/bdist.macosx-10.15-universal2/wheel/oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/bounded_whole_prefill.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/first_draft_current_only.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/specs.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/current_only_plan.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/backend.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/runtime_api.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/metadata.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/greedy_sampling.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/c16_breakdown.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/native_token_budget.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/model_identity.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/guard_diag.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/__init__.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/prefix_checkpoint.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/dummy_context.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/compact_later_mtp.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/current_only_dispatch.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/rotation_capture.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/optr_capture.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/prefill_state_contract.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/official_math.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/aligned_math.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/whole_prefill_scheduler.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/impl.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/current_attention.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/draft_discard.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/cache_storage_ops.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/mixed_decode_split.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/prepare_reuse.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/integration/compile_cache.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/integration
+copying build/lib/oscar_ascend/__init__.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/telemetry.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/runtime.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/rotations.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/optr_oscar_seed.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/clip_calibration.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/timing.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/lifecycle.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/optr_sequential.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/optr_traces.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/plugin.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/c16_timer_schema.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+creating build/bdist.macosx-10.15-universal2/wheel/oscar_ascend/ops
+copying build/lib/oscar_ascend/ops/__init__.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/ops
+copying build/lib/oscar_ascend/ops/cv_dispatch.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/ops
+copying build/lib/oscar_ascend/ops/loader.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/ops
+copying build/lib/oscar_ascend/ops/contracts.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/ops
+copying build/lib/oscar_ascend/ops/reference.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/ops
+copying build/lib/oscar_ascend/ops/hybrid_layout.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/ops
+copying build/lib/oscar_ascend/ops/meta.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend/ops
+copying build/lib/oscar_ascend/request_window_storage.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/optr_selection.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/optr_artifacts.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/device_timing.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/optr_candidates.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/optr_shared.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/official_window.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/optr_calibration.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+copying build/lib/oscar_ascend/rotation_calibration.py -> build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend
+creating build/bdist.macosx-10.15-universal2/wheel/benchmarks
+copying build/lib/benchmarks/measure.py -> build/bdist.macosx-10.15-universal2/wheel/./benchmarks
+copying build/lib/benchmarks/__init__.py -> build/bdist.macosx-10.15-universal2/wheel/./benchmarks
+copying build/lib/benchmarks/passive.py -> build/bdist.macosx-10.15-universal2/wheel/./benchmarks
+copying build/lib/benchmarks/mixed.py -> build/bdist.macosx-10.15-universal2/wheel/./benchmarks
+copying build/lib/benchmarks/compare.py -> build/bdist.macosx-10.15-universal2/wheel/./benchmarks
+running install_egg_info
+Copying oscar_ascend_external.egg-info to build/bdist.macosx-10.15-universal2/wheel/./oscar_ascend_external-0.1.0-py3.14.egg-info
+running install_scripts
+creating build/bdist.macosx-10.15-universal2/wheel/oscar_ascend_external-0.1.0.dist-info/WHEEL
+creating '/tmp/oscar-optr-wheel/.tmp-nw10688r/oscar_ascend_external-0.1.0-py3-none-any.whl' and adding 'build/bdist.macosx-10.15-universal2/wheel' to it
+adding 'benchmarks/__init__.py'
+adding 'benchmarks/compare.py'
+adding 'benchmarks/measure.py'
+adding 'benchmarks/mixed.py'
+adding 'benchmarks/passive.py'
+adding 'oscar_ascend/__init__.py'
+adding 'oscar_ascend/c16_timer_schema.py'
+adding 'oscar_ascend/clip_calibration.py'
+adding 'oscar_ascend/device_timing.py'
+adding 'oscar_ascend/diagnostic_timer.py'
+adding 'oscar_ascend/dual_region_layout.py'
+adding 'oscar_ascend/layout.py'
+adding 'oscar_ascend/lifecycle.py'
+adding 'oscar_ascend/official_window.py'
+adding 'oscar_ascend/optr_artifacts.py'
+adding 'oscar_ascend/optr_calibration.py'
+adding 'oscar_ascend/optr_candidates.py'
+adding 'oscar_ascend/optr_checkpoint.py'
+adding 'oscar_ascend/optr_oscar_seed.py'
+adding 'oscar_ascend/optr_policy.py'
+adding 'oscar_ascend/optr_selection.py'
+adding 'oscar_ascend/optr_sequential.py'
+adding 'oscar_ascend/optr_shared.py'
+adding 'oscar_ascend/optr_shared_cache.py'
+adding 'oscar_ascend/optr_traces.py'
+adding 'oscar_ascend/passive_timing.py'
+adding 'oscar_ascend/plugin.py'
+adding 'oscar_ascend/request_window_storage.py'
+adding 'oscar_ascend/request_windows.py'
+adding 'oscar_ascend/rotation_calibration.py'
+adding 'oscar_ascend/rotations.py'
+adding 'oscar_ascend/runtime.py'
+adding 'oscar_ascend/telemetry.py'
+adding 'oscar_ascend/timing.py'
+adding 'oscar_ascend/integration/__init__.py'
+adding 'oscar_ascend/integration/aligned_math.py'
+adding 'oscar_ascend/integration/backend.py'
+adding 'oscar_ascend/integration/bounded_whole_prefill.py'
+adding 'oscar_ascend/integration/c16_breakdown.py'
+adding 'oscar_ascend/integration/cache_storage_ops.py'
+adding 'oscar_ascend/integration/compact_later_mtp.py'
+adding 'oscar_ascend/integration/compile_cache.py'
+adding 'oscar_ascend/integration/current_attention.py'
+adding 'oscar_ascend/integration/current_only_dispatch.py'
+adding 'oscar_ascend/integration/current_only_plan.py'
+adding 'oscar_ascend/integration/draft_discard.py'
+adding 'oscar_ascend/integration/dummy_context.py'
+adding 'oscar_ascend/integration/first_draft_current_only.py'
+adding 'oscar_ascend/integration/greedy_sampling.py'
+adding 'oscar_ascend/integration/guard_diag.py'
+adding 'oscar_ascend/integration/impl.py'
+adding 'oscar_ascend/integration/metadata.py'
+adding 'oscar_ascend/integration/mixed_decode_split.py'
+adding 'oscar_ascend/integration/model_identity.py'
+adding 'oscar_ascend/integration/native_token_budget.py'
+adding 'oscar_ascend/integration/official_math.py'
+adding 'oscar_ascend/integration/optr_capture.py'
+adding 'oscar_ascend/integration/prefill_state_contract.py'
+adding 'oscar_ascend/integration/prefix_checkpoint.py'
+adding 'oscar_ascend/integration/prepare_reuse.py'
+adding 'oscar_ascend/integration/rotation_capture.py'
+adding 'oscar_ascend/integration/runtime_api.py'
+adding 'oscar_ascend/integration/specs.py'
+adding 'oscar_ascend/integration/whole_prefill_scheduler.py'
+adding 'oscar_ascend/ops/__init__.py'
+adding 'oscar_ascend/ops/contracts.py'
+adding 'oscar_ascend/ops/cv_dispatch.py'
+adding 'oscar_ascend/ops/hybrid_layout.py'
+adding 'oscar_ascend/ops/loader.py'
+adding 'oscar_ascend/ops/meta.py'
+adding 'oscar_ascend/ops/reference.py'
+adding 'tools/__init__.py'
+adding 'tools/aligned_fixture.py'
+adding 'tools/aligned_reference.py'
+adding 'tools/aligned_runtime_oracle.py'
+adding 'tools/analyse_timer_profiles.py'
+adding 'tools/analyze_64k_evidence.py'
+adding 'tools/analyze_64k_latency_budget.py'
+adding 'tools/analyze_long_context_work.py'
+adding 'tools/analyze_memory_64k.py'
+adding 'tools/analyze_service_log.py'
+adding 'tools/audit_precision_identity.py'
+adding 'tools/bf16_reference.py'
+adding 'tools/bf16_runtime_oracle.py'
+adding 'tools/build_c16_timer.py'
+adding 'tools/build_ops.py'
+adding 'tools/c16_breakdown.py'
+adding 'tools/c16_cast_transform.py'
+adding 'tools/c16_probe_oracle.py'
+adding 'tools/c16_softmax_transform.py'
+adding 'tools/calibrate_model_rotations.py'
+adding 'tools/calibrate_optr_traces.py'
+adding 'tools/calibration_data.py'
+adding 'tools/clean_rotation_cache.py'
+adding 'tools/compile_cache.py'
+adding 'tools/deploy.py'
+adding 'tools/environment.py'
+adding 'tools/export_fast_unpack_cpu_cases.py'
+adding 'tools/export_mixed_cv_cpu_cases.py'
+adding 'tools/export_q1_cpu_cases.py'
+adding 'tools/export_striped_prefill_cpu_cases.py'
+adding 'tools/forecast_64k_memory.py'
+adding 'tools/generate_aligned_clusters.py'
+adding 'tools/generate_aligned_codec.py'
+adding 'tools/generate_bf16_clusters.py'
+adding 'tools/generate_bf16_decode.py'
+adding 'tools/generate_c16_tuned.py'
+adding 'tools/generate_cpu_cases.py'
+adding 'tools/generate_official_attention.py'
+adding 'tools/generate_rotation_cpu_cases.py'
+adding 'tools/http_request.py'
+adding 'tools/inspect_run.py'
+adding 'tools/install_serve.py'
+adding 'tools/model_config.py'
+adding 'tools/npu_resources.py'
+adding 'tools/observe_serve.py'
+adding 'tools/official_decode_cast_transform.py'
+adding 'tools/official_finite_transform.py'
+adding 'tools/official_fixture.py'
+adding 'tools/official_reference.py'
+adding 'tools/official_runtime_oracle.py'
+adding 'tools/official_softmax_visibility_transform.py'
+adding 'tools/optr_fit_worker.py'
+adding 'tools/optr_parallel.py'
+adding 'tools/optr_progress.py'
+adding 'tools/package_c16_l1_reuse.py'
+adding 'tools/package_c4_member_pipeline.py'
+adding 'tools/package_hybrid_l1_decode.py'
+adding 'tools/package_mdl_decode.py'
+adding 'tools/package_quantization_bundle.py'
+adding 'tools/package_request_window_kernels.py'
+adding 'tools/paired_concurrency_probe.py'
+adding 'tools/performance_summary.py'
+adding 'tools/phase.py'
+adding 'tools/plog.py'
+adding 'tools/prepare_optr_rotations.py'
+adding 'tools/prepare_optr_seed.py'
+adding 'tools/prepare_rotations.py'
+adding 'tools/probe_aligned_attention.py'
+adding 'tools/probe_bf16_attention.py'
+adding 'tools/probe_c16_l1_reuse.py'
+adding 'tools/probe_c16_member_pipeline.py'
+adding 'tools/probe_c4_member_pipeline.py'
+adding 'tools/probe_current_only.py'
+adding 'tools/probe_cv_hotshape.py'
+adding 'tools/probe_decode_bundle.py'
+adding 'tools/probe_decode_hotpath.py'
+adding 'tools/probe_fast_unpack.py'
+adding 'tools/probe_first_mtp_current.py'
+adding 'tools/probe_history_reuse.py'
+adding 'tools/probe_hybrid_l1_decode.py'
+adding 'tools/probe_mdl_decode.py'
+adding 'tools/probe_mixed_attention.py'
+adding 'tools/probe_mixed_decode_split.py'
+adding 'tools/probe_mixed_optimization.py'
+adding 'tools/probe_mixed_prepare_reuse.py'
+adding 'tools/probe_native_current_fia.py'
+adding 'tools/probe_official_attention.py'
+adding 'tools/probe_ops.py'
+adding 'tools/probe_prefix_cache.py'
+adding 'tools/probe_request_windows.py'
+adding 'tools/probe_striped_cache.py'
+adding 'tools/probe_vector_init_rotation.py'
+adding 'tools/readiness.py'
+adding 'tools/request_window_reader_gate.py'
+adding 'tools/rotation_preparation_limits.py'
+adding 'tools/rotation_recipe_diagnostic.py'
+adding 'tools/run_cpu_debug.py'
+adding 'tools/run_mixed_cv_cpu_debug.py'
+adding 'tools/service_probe.py'
+adding 'tools/serving_variants.py'
+adding 'tools/striped_fixture.py'
+adding 'tools/summarize_c16_breakdown.py'
+adding 'tools/summarize_device_events.py'
+adding 'tools/summarize_profile.py'
+adding 'tools/summarize_progress.py'
+adding 'tools/summarize_timer.py'
+adding 'tools/summarize_timing.py'
+adding 'tools/target_cli.py'
+adding 'tools/timer32k.py'
+adding 'tools/vm_validate.py'
+adding 'tools/whole_run_model.py'
+adding 'tools/data/README.md'
+adding 'tools/data/gpqa_diamond.csv.gz'
+adding 'tools/experiments/__init__.py'
+adding 'tools/experiments/active_identity_store_fixture.py'
+adding 'tools/experiments/admission_replay.py'
+adding 'tools/experiments/affine_bf16_residual_screen.py'
+adding 'tools/experiments/affine_cube_counterexample.py'
+adding 'tools/experiments/affine_cube_reference.py'
+adding 'tools/experiments/analyze_decode_completion.py'
+adding 'tools/experiments/bf16_final_rv_screen.py'
+adding 'tools/experiments/decode_completion_probe.py'
+adding 'tools/experiments/dequant_bf16_product_screen.py'
+adding 'tools/experiments/export_shared_fp32.py'
+adding 'tools/experiments/fp32_block_attention_stress.py'
+adding 'tools/experiments/int8_planes_counterexample.py'
+adding 'tools/experiments/make_decode_pipeline.py'
+adding 'tools/experiments/package_decode_bundle.py'
+adding 'tools/experiments/prefill_phase_ledger.py'
+adding 'tools/experiments/prefill_tile_reference.py'
+adding 'tools/experiments/prefill_tile_stress.py'
+adding 'tools/experiments/prefix_checkpoint_audit.py'
+adding 'tools/experiments/replay_shared_fp32.py'
+adding 'tools/experiments/request_window_prefix_protocol.py'
+adding 'tools/experiments/run_camodel_arm.py'
+adding 'tools/experiments/shared_fp32_tile_reference.py'
+adding 'tools/experiments/shared_history_work.py'
+adding 'tools/experiments/stream_camodel_markers.py'
+adding 'tools/experiments/striped_direct_nz_address_screen.py'
+adding 'tools/experiments/striped_metadata_bits.py'
+adding 'tools/experiments/summarize_decode_critical_chain.py'
+adding 'tools/experiments/wide_fp32_fixture.py'
+adding 'oscar_ascend_external-0.1.0.dist-info/METADATA'
+adding 'oscar_ascend_external-0.1.0.dist-info/WHEEL'
+adding 'oscar_ascend_external-0.1.0.dist-info/entry_points.txt'
+adding 'oscar_ascend_external-0.1.0.dist-info/top_level.txt'
+adding 'oscar_ascend_external-0.1.0.dist-info/RECORD'
+removing build/bdist.macosx-10.15-universal2/wheel
+VERIFIED wheel source/data bytes: 217 files; /tmp/oscar-optr-wheel/oscar_ascend_external-0.1.0-py3-none-any.whl

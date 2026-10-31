@@ -194,7 +194,12 @@ def validate_artifact(artifact: Mapping[str, Any], *, layer_names: Sequence[str]
         raise ValueError("CPU test rotation artifacts cannot enter production")
     if not artifact.get("objective"):
         raise ValueError("rotation objective is required")
-    if require_calibrated and (artifact.get("calibrated") is not True or
+    if artifact.get("objective") == "optr_post_gate_output_v1":
+        # Archive #86/#97: independently authenticated refinement; never
+        # relabel fitted constants as the original FP64 qqt/sst checkpoint.
+        from .optr_artifacts import validate_refinement_metadata
+        validate_refinement_metadata(artifact)
+    elif require_calibrated and (artifact.get("calibrated") is not True or
             artifact.get("objective") != "qqt_sst_r_h_pbr" or
             artifact.get("accumulation_dtype") != "float64"):
         raise ValueError("official FP64 calibrated qqt/sst rotation required; data-free cache is not accepted")
@@ -218,9 +223,9 @@ def validate_artifact(artifact: Mapping[str, Any], *, layer_names: Sequence[str]
             matrix = matrix.to(device=selected).contiguous()
             if not bool(torch.isfinite(matrix).all()):
                 raise ValueError(f"{name}/{key}: non-finite rotation")
-            error = (matrix.transpose(-1, -2) @ matrix - identity).abs().amax()
-            if float(error) > ORTHOGONALITY_ATOL:
-                raise ValueError(f"{name}/{key}: non-orthogonal rotation, max_error={float(error)}")
+            error = float((matrix.transpose(-1, -2) @ matrix - identity).abs().amax())
+            if not math.isfinite(error) or error > ORTHOGONALITY_ATOL:
+                raise ValueError(f"{name}/{key}: non-orthogonal rotation, max_error={error}")
             if bool(((matrix - identity) == 0).all(dim=-1).all(dim=-1).any()) and not allow_identity:
                 raise ValueError(f"{name}/{key}: identity requires explicit allow_identity=True")
             entry[key] = matrix
@@ -441,7 +446,7 @@ def calibration_cache_identity(config: Mapping[str, Any], fingerprint: str) -> d
             'candidate_ratios': [.80, .85, .90, .92, .94, .96, .98, 1.0],
             'max_samples': 1024, 'dequant_modes': [0, 1],
             'criterion': 'both_modes_raw_and_centered_nonworse_minimax_relative'}}
-    return {"official_commit": OFFICIAL_COMMIT,
+    profile = {"official_commit": OFFICIAL_COMMIT,
             "recipe_version": (HEAD_CLIP_CALIBRATION_RECIPE_VERSION if clip_method else
                                CENTER_CALIBRATION_RECIPE_VERSION if center else CALIBRATION_RECIPE_VERSION),
             **({"rotation_variant": "perhead_center"} if center else {}),
@@ -452,6 +457,15 @@ def calibration_cache_identity(config: Mapping[str, Any], fingerprint: str) -> d
             "model_execution": {"dtype": "bfloat16", "quantization": config.get("quantization"),
                                 "revision": config.get("revision"), "hf_overrides": config.get("hf_overrides"),
                                 **resolve_mamba_cache_dtypes(config)}}
+    from .optr_policy import validate_refinement_config, refinement_profile
+    validate_refinement_config(config)
+    if config.get("rotation_seed") is not None:
+        from .optr_oscar_seed import SEED_RECIPE, seed_profile
+        if (config["rotation_seed"] != SEED_RECIPE or not center or clip_method or
+                config.get("rotation_refinement") is not None):
+            raise ValueError("invalid private OptR seed configuration")
+        return seed_profile(profile)
+    return refinement_profile(profile, config) if config.get("rotation_refinement") == "optr" else profile
 
 
 def model_artifact_fingerprint(model: str | Path) -> str:
@@ -534,6 +548,11 @@ def load_active_artifact(config: Mapping[str, Any], *, device="npu", testing=Fal
     destination = Path(path) if path is not None else rotation_artifact_path(config, fingerprint)
     options = dict(layer_names=names, head_dim=dim, model_fingerprint=fingerprint,
                    device=device, testing=testing)
+    from .optr_policy import validate_refinement_config
+    validate_refinement_config(config)
+    if config.get("rotation_refinement") == "optr":
+        from .optr_artifacts import load_refined_artifact
+        return load_refined_artifact(config, destination, **options)
     if config.get("rotation_method", "qqt_sst") == "hadamard":
         return load_artifact(destination, **options)
     if config.get("rotation_method", "qqt_sst") != "qqt_sst":
@@ -580,4 +599,6 @@ def rotation_artifact_path(config: Mapping[str, Any], fingerprint: str, *, root=
         return base / "artifacts/rotations" / fingerprint / "hadamard.pt"
     identity = calibration_cache_identity(config, fingerprint)
     digest = hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:20]
+    if config.get("rotation_refinement") == "optr":
+        return base / "artifacts/rotations" / fingerprint / ("optr_" + digest) / "refined.pt"
     return base / "artifacts/rotations" / fingerprint / ("qqt_sst_" + digest) / "calibrated.pt"

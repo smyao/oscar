@@ -1,0 +1,240 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+____ test_unqualified_research_mdl_combination_is_rejected_by_both_entries _____
+
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-437/test_unqualified_research_mdl_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x10307c050>
+
+    def test_unqualified_research_mdl_combination_is_rejected_by_both_entries(tmp_path,capsys):
+        raw=configured();before=deepcopy(raw)
+        path=tmp_path/'research.json';path.write_text(json.dumps(raw))
+        # The fixed candidate now promises the qualified MDL q4 implementation.
+        # A research-only request-window reader has no matching MDL qualification.
+        for entry in (install_serve, observe_serve):
+>           with pytest.raises(ValueError,match='request-window MDL reader is not qualified'):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'request-window MDL reader is not qualified'
+E             Actual message: 'BF16 attention requires physical-page storage'
+
+tests/test_request_window_serving_config.py:33: AssertionError
+__ test_research_roundtrip_clears_every_owned_change_for_native_and_baseline ___
+
+    def test_research_roundtrip_clears_every_owned_change_for_native_and_baseline():
+        raw=configured()
+        # The current candidate promises MDL; an unfinished request-window MDL
+        # reader must be explicitly rejected, never silently mapped to its old op.
+>       with pytest.raises(ValueError,match='request-window MDL reader is not qualified'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'request-window MDL reader is not qualified'
+E         Actual message: 'BF16 attention requires physical-page storage'
+
+tests/test_request_window_serving_config.py:45: AssertionError
+_ test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x102fb2ea0>
+tmp_path = PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-437/test_explicit_config_without_v0')
+
+    def test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase(monkeypatch,tmp_path):
+        raw=configured()
+        path=tmp_path/'explicit-research.json';path.write_text(json.dumps(raw));before=path.read_bytes()
+        logs=tmp_path/'launch';seen=[]
+        def check(selected_path):
+            assert Path(selected_path)==logs/'effective-target.json'
+            selected=json.loads(Path(selected_path).read_text())
+            assert 'max_num_batched_tokens' not in selected
+            assert 'history_token_capacity' not in selected
+            assert 'scheduler_cls' not in selected
+            assert selected['use_native_token_budget'] is True
+        def phase(name,command,*,env,**kwargs):
+            seen.append(name);check(env['OSCAR_TARGET_CONFIG'])
+            if '--config' in command:assert command[command.index('--config')+1]==env['OSCAR_TARGET_CONFIG']
+            return PhaseResult(name,command,0,0.,False,False,str(logs/name),True)
+        class HostExecIntercept(Exception):pass
+        def launch(executable,command,env):
+            check(command[-1]);assert command[-1]==env['OSCAR_TARGET_CONFIG']
+            assert seen==list(install_serve.BUILD_PHASES)
+            raise HostExecIntercept
+        monkeypatch.setattr(install_serve,'run_phase',phase)
+        monkeypatch.setattr(install_serve.os,'execvpe',launch)
+        with pytest.raises(HostExecIntercept):
+>           install_serve.main(['--config',str(path),'--log-dir',str(logs)])
+
+tests/test_request_window_serving_config.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/install_serve.py:51: in main
+    config = apply_model_options(config, args, require_model=not args.plan)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/models_directory/Qwen3.8-27B', 'served_model_name': 'qwen3.8', 'dtype': 'bfloat16', 'host': '0.0.0.0', ...}
+args = Namespace(config=PosixPath('/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-437/tes...n_budget=False, enable_prefix_caching=None, diagnose_trap=False, model=None, served_model_name=None, quantization=None)
+require_model = True
+
+    def apply_model_options(config: dict, args=None, *, require_model: bool = False) -> dict:
+        """Return effective model options without modifying the input or model.
+    
+        A new --model starts in auto mode unless --quantization is also supplied;
+        this prevents a prior checkpoint's explicit ascend/none choice leaking.
+        ``none`` cannot silently disable native metadata auto-detection: quantized
+        metadata with that choice is rejected instead of loading quantized weights.
+        """
+        result = deepcopy(config)
+        model_override = getattr(args, "model", None)
+        name_override = getattr(args, "served_model_name", None)
+        quant_override = getattr(args, "quantization", None)
+        if model_override is not None:
+            result["model"] = model_override
+        if name_override is not None:
+            result["served_model_name"] = name_override
+        model = _nonempty_string(result.get("model"), "model")
+        _nonempty_string(result.get("served_model_name"), "served_model_name")
+        mode = (quant_override if quant_override is not None else
+                "auto" if model_override is not None else
+                result.get("quantization_mode", result.get("quantization", "auto")))
+        mode = "none" if mode is None else mode
+        if mode not in QUANTIZATION_MODES:
+            raise ValueError(f"quantization must be one of {QUANTIZATION_MODES}, got {mode!r}")
+        if result.get("dtype", "bfloat16") != "bfloat16":
+            raise ValueError("OSCAR Qwen3.8/3.5 requires dtype=bfloat16 activations")
+        result.update(dtype="bfloat16", quantization_mode=mode)
+        model_dir = Path(model).expanduser()
+        model_file = model_dir / "config.json"
+        resolution = {"model": model, "requested_quantization": mode,
+                      "dtype": "bfloat16", "metadata": {}}
+        if not model_file.is_file():
+            if require_model:
+>               raise ValueError(f"model config.json is unavailable: {model_file}; select a local checkpoint with --model")
+E               ValueError: model config.json is unavailable: /softwarePlatform/models_directory/Qwen3.8-27B/config.json; select a local checkpoint with --model
+
+tools/model_config.py:102: ValueError
+----------------------------- Captured stdout call -----------------------------
+[oscar] install → build → rotations → serve (no tests, no probes); logs=/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/pytest-of-loki.yao/pytest-437/test_explicit_config_without_v0/launch
+_______ test_legacy_whole_capacity_cannot_reenter_through_research_flags _______
+
+    def test_legacy_whole_capacity_cannot_reenter_through_research_flags():
+        raw=configured()
+        raw.update(max_num_batched_tokens=66048, history_token_capacity=16896,
+                   scheduler_cls="oscar_ascend.integration.bounded_whole_prefill.BoundedWholePromptAsyncScheduler")
+>       selected=variant_config(raw,None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_request_window_serving_config.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'model': '/softwarePlatform/models_directory/Qwen3.8-27B', 'served_model_name': 'qwen3.8', 'dtype': 'bfloat16', 'host': '0.0.0.0', ...}
+variant = None
+
+    def variant_config(config: dict, variant: str | None) -> dict:
+        if not isinstance(config, dict):
+            raise ValueError("target config must be an object")
+        if variant not in {None, "baseline", "candidate", "native"}:
+            raise ValueError(f"unknown serving variant: {variant}")
+        selected = dict(config)
+        # User withdrew the unsuccessful exact-current delivery. A reused
+        # generated config must not carry its retired policy into any variant.
+        selected.pop('oscar_current_only_policy', None)
+        if selected.get("rotation_variant") not in (None, "shared_v1", "perhead_center"):
+            raise ValueError("rotation_variant must be omitted, shared_v1 or perhead_center")
+        if selected.get("rotation_k_clip") not in (None, "per_head_calibrated"):
+            raise ValueError("rotation_k_clip must be omitted or per_head_calibrated")
+        if selected.get('oscar_dequant_policy', 'native_phase') not in ('native_phase', 'fp32_metadata'):
+            raise ValueError('oscar_dequant_policy must be native_phase or fp32_metadata')
+        if variant == "candidate":
+            selected['oscar_dequant_policy'] = 'fp32_metadata'
+            # Recipe4's proxy-fitted clip table regressed user model quality.
+            # The fixed candidate entrypoint restores recipe3 even when its
+            # input config retains the experimental clip policy. Explicit
+            # research configs may still select it with variant=None.
+            selected.pop("rotation_k_clip", None)
+            if selected.get("rotation_method", "qqt_sst") == "qqt_sst":
+                selected["rotation_variant"] = "perhead_center"
+            else:
+                selected.pop("rotation_variant", None)
+        elif variant in {"baseline", "native"}:
+            selected.pop('oscar_dequant_policy', None)
+            selected.pop("rotation_variant", None)
+            selected.pop("rotation_k_clip", None)
+        if selected.get("rotation_variant") == "perhead_center" and selected.get("rotation_method", "qqt_sst") != "qqt_sst":
+            raise ValueError("perhead_center requires qqt_sst calibration")
+        if selected.get("rotation_k_clip") == "per_head_calibrated" and selected.get("rotation_variant") != "perhead_center":
+            raise ValueError("per_head_calibrated clipping requires perhead_center")
+        # User 2026-10-13: this stable branch defaults to APC disabled.
+        selected.setdefault("enable_prefix_caching", False)
+        selected.setdefault("experimental_c4_member_pipeline", False)
+        if "enable_prefix_caching" in selected and type(selected["enable_prefix_caching"]) is not bool:
+            raise ValueError("enable_prefix_caching must be an explicit boolean")
+        _restore_owned_scheduler(selected)
+        native_budget = selected.get("use_native_token_budget", True)
+        if type(native_budget) is not bool:
+            raise ValueError("use_native_token_budget must be an explicit boolean")
+        for flag in dict.fromkeys(FEATURE_FLAGS.values()):
+            if type(selected.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if variant is not None:
+                # The same complete candidate bundle is used by direct serving
+                # and observation. Baseline/native clear every experimental flag.
+                selected[flag] = variant == "candidate"
+        for flag in RESEARCH_FEATURE_FLAGS.values():
+            if type(selected.get(flag, False)) is not bool:
+                raise ValueError(f"{flag} must be an explicit boolean")
+            if variant in {"baseline", "native"} and flag in selected:
+                selected[flag] = False
+        # Retire owned scheduler variants; stable keeps an explicit token budget
+        # while an explicit native-budget request still omits that argument.
+        # The worker only observes the resulting native capacity for allocation.
+        if selected.get("scheduler_cls") not in (None, WHOLE_PREFILL_SCHEDULER, BOUNDED_PREFILL_SCHEDULER):
+            raise ValueError("native token budget conflicts with an explicit other scheduler")
+        if "max_num_batched_tokens" in selected and (
+                type(selected["max_num_batched_tokens"]) is not int or
+                selected["max_num_batched_tokens"] <= 0):
+            raise ValueError("configured max_num_batched_tokens must be a positive integer")
+        # User 2026-10-13: aisbench-stable explicitly retains its 16384 budget.
+        # Native-budget launches still omit the flag; scheduler remains native.
+        selected["use_native_token_budget"] = native_budget
+        if native_budget:
+            selected.pop("max_num_batched_tokens", None)
+        elif "max_num_batched_tokens" not in selected:
+            raise ValueError("explicit token budget requires max_num_batched_tokens")
+        selected.pop("scheduler_cls", None)
+        selected.pop("history_token_capacity", None)
+        selected["experimental_whole_prefill"] = False
+        if "experimental_bounded_whole_prefill" in selected:
+            selected["experimental_bounded_whole_prefill"] = False
+        if selected.get("experimental_fast_unpack", False) and not selected.get("experimental_history_reuse", False):
+            raise ValueError("fast unpack requires explicit candidate history configuration")
+        if selected.get("experimental_mixed_cv", False) and not (
+                selected.get("experimental_history_reuse", False) and
+                selected.get("experimental_fast_unpack", False)):
+            raise ValueError("mixed CV requires explicit fast/history candidate configuration")
+        if selected.get("experimental_striped_cache", False) and not (
+                selected.get("experimental_history_reuse", False) and
+                selected.get("experimental_fast_unpack", False) and
+                selected.get("experimental_mixed_cv", False)):
+            raise ValueError("striped cache requires explicit mixed/fast/history candidate configuration")
+        if selected.get("experimental_decode_bundle", False) and not selected.get("experimental_striped_cache", False):
+            raise ValueError("decode bundle requires the explicit striped cache bundle")
+        if selected.get("experimental_aligned_math", False) and not selected.get("experimental_bf16_attention", False):
+            raise ValueError("aligned math requires BF16 attention")
+        if selected.get("experimental_official_math", False) and not selected.get("experimental_aligned_math", False):
+            raise ValueError("official math requires the aligned BF16 codec")
+        if selected.get("experimental_c16_tuned", False) and not selected.get("experimental_aligned_math", False):
+            raise ValueError("timer-directed C16 requires aligned BF16 attention")
+        if selected.get("experimental_bf16_attention", False) and not (
+                selected.get("experimental_striped_cache", False) and
+                selected.get("experimental_decode_bundle", False) and
+                selected.get("experimental_c4_member_pipeline", False) and
+                selected.get("experimental_c16_l1_reuse", False)):
+            raise ValueError("BF16 attention requires the complete physical-page candidate bundle")
+        if selected.get("experimental_bf16_attention", False) and selected.get("experimental_request_windows", False):
+>           raise ValueError("BF16 attention requires physical-page storage")
+E           ValueError: BF16 attention requires physical-page storage
+
+tools/serving_variants.py:182: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_request_window_serving_config.py::test_unqualified_research_mdl_combination_is_rejected_by_both_entries
+FAILED tests/test_request_window_serving_config.py::test_research_roundtrip_clears_every_owned_change_for_native_and_baseline
+FAILED tests/test_request_window_serving_config.py::test_explicit_config_without_variant_persists_normalized_capacity_for_every_phase
+FAILED tests/test_request_window_serving_config.py::test_legacy_whole_capacity_cannot_reenter_through_research_flags
+4 failed in 0.31s

@@ -92,7 +92,9 @@ def test_legal_int2_reused_page_exposes_folded_uninitialized_ssm(monkeypatch):
     raw[off:off + encoded.numel()] = encoded
     assert torch.isnan(states[4, 0])
     committed = torch.full((2, states.shape[1]), 0.25, dtype=torch.bfloat16)
-    _native_prefill_store(states, table[:, 0].long(), committed)
+    # The native chunk output is transposed into cache layout by the real
+    # assignment above. Supply that output layout, not the desired cache view.
+    _native_prefill_store(states, table[:, 0].long(), committed.transpose(-1, -2))
     assert torch.isfinite(states[1]).all() and torch.isnan(states[4, 0])
     _, accepted = native_fold(monkeypatch, [True, False], [4, 4], [32768, 32772],
                               [False, True], [1, 2])

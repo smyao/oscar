@@ -135,5 +135,5 @@ def test_fixed_candidate_direct_and_probe_keep_frozen_launch_and_math(entry, cap
     assert report['runtime_selection']['oscar_math_profile'] == 'oscar_bf16_attention_v4'
     assert report['runtime_selection']['rotation_variant'] == 'perhead_center'
     assert report['runtime_selection']['aligned_c16_operator'] == 'attention_cv_official_cluster16_out'
-    assert argv[argv.index('--port') + 1] == '8989'
+    assert argv[argv.index('--port') + 1] == '7878'
     assert report['target_devices' if entry is install_serve.main else 'devices'] == [0, 1, 2, 3]

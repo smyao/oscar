@@ -18,6 +18,7 @@
 # 症状速查表（报错关键字 → 条目编号）
 
 - native_exact交付后质量单轮38.58/44.19/35.71/38.58、API1173.43秒，用户要求弃用：见 #174；仅记录实测反馈，未将局部反例确认为现场全部根因。
+- OPTR迁移后用户反馈42.52，对照为迁移前recipe3 OSCAR平均45+：见 #175；共享零均值基线与失败test发布为本地源码缺陷，模型差距尚未完成归因或验收。
 
 - 32K/64K性能通过，但127条PC质量集十轮top3四项仍落后：见 #173，原无历史精确current路径的额外旋转误差与native_exact政策。
 
@@ -28875,3 +28876,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **根因边界**：#173的旋转往返反例只证明局部有限精度差异，不能证明模型收益；本次反馈不支持继续以它作为默认改动的交付依据。没有逐层激活、设备相位或同轮对照，不将单轮分数与耗时全部归因到某个算子，也不以RPS差异解释结果。后续代码审计与合成协议反例必须单列本地证据，不写成本条已确认的现场根因。
 
 **回归检查**：撤下验证固定current-only完整源码身份、candidate配置与614c快照一致、旧配置残留不能重新启用退役policy；保留原q4/q1/C4/C16源码与原路由门。具体主机结果见本轮withdrawal_validation.json；不将恢复源码或主机通过写成新的NPU/质量/性能验收。
+
+
+## [175] 质量反馈条目（2026-11-02 用户回传）· OPTR 42.52，迁移前recipe3 OSCAR平均45+
+
+**现场事实**：用户明确比较对象是“迁移前的 recipe3 OSCAR”，并给出 LongBenchv2 324293、gen、vllm-api-stream-chat 四项分数42.52/53.49/36.90/42.52，说明“之前 oscar平均能达到 45+”。本次只有OPTR一组汇总和OSCAR平均的文字描述；没有加载SHA、PT证书、accepted_layers、independent_test状态、逐请求结果或两侧配对多轮数据。原文数值与未知字段保存在 `reports/optr_precision_20261102/user_feedback.json`，不将本地7c4a621伪写成已验证的现场部署SHA。
+
+**本地诊断而非现场全因**：7c4a621/v9实质以每层共享零均值recipe6 seed代替原逐头中心化recipe3比较；schema2独立test失败仍可发布并被cache early return复用。真实拟合的合成输入已复现“旧门全部通过但仍比recipe3误差大”和“test失败仍发布/复用”；K候选提前按FP32代理淘汰也有BF16联合门反例。这些足以证明当前门不能保证优于用户所指OSCAR，但不能量化它们对42.52分数的各自贡献。
+
+**本地修复**：新固定candidate v10以原recipe3认证pair和逐头均值为基线，保留既有K/V检查点交给BF16全层门选择；独立test退化明确终止、不重选，全部层无严格改善不发布。从原prompt SHA/token数重建并排除recipe3已用记录，再划分训练/验证/测试；版本化PT/capture和实现摘要阻止旧门结果冒充新门。CANN、线上runtime、KV布局、窗口/clip、PC/GDN/MTP、16384、argv、timer保持。
+
+**验收边界**：完整诊断、主机测试及打包证据见 `docs/optr_precision_20261102.md` 和对应validation。未连接真机、未跑NPU/图/性能/AISBench，未得到修复后的LongBench结果；不能称模型精度已超过OSCAR，也不能把局部SSE降幅写成accuracy收益。#172性能保护和原有模型验收缺口继续保留。

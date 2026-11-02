@@ -278,9 +278,11 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
         raise ValueError("OptR calibration profile differs from selected configuration")
     base = profile.get("base_calibration_profile", {})
     policy = profile.get("refinement_policy", {})
+    from .optr_recipe3_certificate import is_recipe3, PUBLICATION_POLICY
+    recipe3 = is_recipe3(policy)
     candidate_policy = policy.get("policy_version") == "optr_oscar_shared_candidates_ascend_v9"
-    projection_policy = candidate_policy or policy.get("policy_version") == "optr_oscar_shared_projection_ascend_v8"
-    train_seed = projection_policy or policy.get("policy_version") == "optr_oscar_shared_train_seed_ascend_v7"
+    projection_policy = recipe3 or candidate_policy or policy.get("policy_version") == "optr_oscar_shared_projection_ascend_v8"
+    train_seed = (projection_policy and not recipe3) or policy.get("policy_version") == "optr_oscar_shared_train_seed_ascend_v7"
     shared_layer = train_seed or policy.get("policy_version") == "optr_oscar_shared_upstream_ascend_v6"
     source_seed = shared_layer or policy.get("policy_version") == "optr_oscar_base_upstream_ascend_v5"
     selection = ("shared_layer_each_query_and_projection_nonworse" if projection_policy
@@ -293,6 +295,15 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
             type(policy.get("max_deployment_candidates")) is not int or
             policy["max_deployment_candidates"] != MAX_DEPLOYMENT_CANDIDATES):
         raise ValueError("OptR candidate policy requires frozen selection and bounded candidate count")
+    if recipe3:
+        from .optr_policy import RECIPE3_DEPLOYMENT_CANDIDATE_SELECTION
+        if (policy.get("fitted_grouping") != "layer_kv_head" or
+                policy.get("selection") != "recipe3_layer_each_query_and_projection_nonworse" or
+                policy.get("deployment_candidate_selection") != RECIPE3_DEPLOYMENT_CANDIDATE_SELECTION or
+                type(policy.get("max_deployment_candidates")) is not int or
+                policy["max_deployment_candidates"] != 12 or
+                policy.get("source_plan") != "recipe3_excluded_records_independent_buckets_v1"):
+            raise ValueError("recipe3 OptR requires its frozen centered candidate/sampling policy")
     if source_seed:
         from .optr_oscar_seed import validate_seed_profile
         validate_seed_profile(base, artifact.get("model_fingerprint"), allow_legacy=not train_seed)
@@ -301,14 +312,20 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
         raise ValueError("OptR must refine the authenticated recipe3 model")
     certificate = artifact.get("refinement_certificate", {})
     schema = certificate.get("schema_version")
-    if (type(schema) is not int or schema not in (1, 2) or
+    if (type(schema) is not int or schema not in (1, 2, 3) or
             certificate.get("policy") != profile.get("refinement_policy") or
             certificate.get("metric") != "all_tp_heads_bf16_gate_fp32_wo_output" or
             certificate.get("arithmetic_evidence") != "cpu_deployment_reference_not_npu_bitwise" or
             certificate.get("model_quality") != "not_measured" or
             certificate.get("performance") != "not_measured"):
         raise ValueError("OptR certificate policy/evidence boundary differs")
-    if schema == 2:
+    if recipe3 and schema != 3:
+        raise ValueError("recipe3 OptR requires strict independent-test publication")
+    if schema == 3:
+        if (not recipe3 or certificate.get("publication_policy") != PUBLICATION_POLICY or
+                certificate.get("experimental") is not True):
+            raise ValueError("recipe3 OptR strict publication certificate differs")
+    elif schema == 2:
         if (certificate.get("publication_policy") != EXPERIMENTAL_PUBLICATION_POLICY or
                 certificate.get("experimental") is not True):
             raise ValueError("OptR report-only publication requires an explicit experimental certificate")
@@ -321,7 +338,7 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
     layers = artifact.get("layers", {})
     if set(certificate.get("layers", {})) != set(layers) or not layers:
         raise ValueError("OptR certificate FULL layer coverage differs")
-    require_terminal = (shared_layer or certificate["policy"].get("policy_version") == "optr_joint_gqa_bf16_ascend_v4"
+    require_terminal = (recipe3 or shared_layer or certificate["policy"].get("policy_version") == "optr_joint_gqa_bf16_ascend_v4"
                         or certificate["policy"].get("selection") == "joint_all_heads_each_request_frame_and_terminal_nonworse")
     require_frames = (require_terminal or certificate["policy"].get("policy_version") == "optr_frame_bf16_ascend_v3"
                       or certificate["policy"].get("selection") == "joint_all_heads_each_request_and_frame_nonworse")
@@ -358,7 +375,7 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
             passed = nonworse(result.get("baseline"), result.get("selected"), require_frames=require_frames,
                              require_terminal=require_terminal, require_queries=projection_policy,
                              require_projection=projection_policy)
-            if not passed and (split == "validation" or schema == 1):
+            if not passed and (split == "validation" or schema in (1, 3)):
                 raise ValueError(f"OptR {name} worsens {split} output error")
         if type(record.get("accepted")) is not bool:
             raise ValueError("OptR layer decision is missing")
@@ -377,7 +394,7 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
     accepted = sorted(name for name, record in certificate["layers"].items() if record["accepted"])
     if certificate.get("accepted_layers") != accepted:
         raise ValueError("OptR accepted layer list differs")
-    if schema == 2 and certificate.get("independent_test") != independent_test_summary(certificate["layers"]):
+    if schema in (2, 3) and certificate.get("independent_test") != independent_test_summary(certificate["layers"]):
         raise ValueError("OptR independent test status does not match recorded errors")
     if matrix_digest(layers) != certificate["matrices_sha256"]:
         raise ValueError("OptR certificate does not bind the deployed matrices")
@@ -391,6 +408,8 @@ def publish_artifact(artifact, destination):
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
     validate_refinement_metadata(artifact)
+    from .optr_recipe3_certificate import require_publishable
+    require_publishable(artifact)
     pending = destination.parent / ".optr.pending.json"
     complete = destination.parent / ".optr.complete.json"
     with (destination.parent / ".optr.lock").open("a+") as lock:
@@ -435,6 +454,9 @@ def load_refined_artifact(config, destination, *, device, testing, layer_names, 
     if artifact.get("test_only") and not testing:
         raise ValueError("test-only OptR artifacts cannot enter production")
     validate_refinement_metadata(artifact, expected_profile=calibration_cache_identity(config, model_fingerprint))
+    from .optr_recipe3_certificate import require_publishable, validate_baseline_binding
+    require_publishable(artifact)
+    validate_baseline_binding(artifact, config, testing=testing)
     model = json.loads((Path(config["model"]) / "config.json").read_text())
     model = model.get("text_config", model)
     if artifact.get("global_kv_heads") != model.get("num_key_value_heads"):

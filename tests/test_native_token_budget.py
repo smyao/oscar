@@ -333,7 +333,7 @@ def test_worker_factory_selects_explicit_or_native_capacity_mode(monkeypatch, tm
             with pytest.raises(ValueError, match="explicit serving token budget"):
                 variant_config({**config, "use_native_token_budget": True}, None)
             config = {key: value for key, value in config.items()
-                      if key not in ("rotation_refinement", "optr_calibration")}
+                      if key not in ("rotation_refinement", "optr_calibration", "optr_baseline", "optr_seed_capture")}
         config = variant_config({**config, "use_native_token_budget": native_budget}, None)
         expected = NativeTokenBudgetRuntime if native_budget else AscendRuntimeProvider
         path.write_text(json.dumps(config))

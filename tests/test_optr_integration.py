@@ -28,6 +28,9 @@ def configuration(tmp_path):
     selected = variant_config({"model": str(model), "tensor_parallel_size": 2,
         "mamba_cache_dtype": "bfloat16", "mamba_ssm_cache_dtype": "bfloat16",
         "max_num_batched_tokens": 16384, "use_native_token_budget": False}, "candidate")
+    # These certificate/compatibility fixtures exercise the frozen v9 format.
+    # New recipe3 policy and schema3 evidence have independent regression tests.
+    selected.pop("optr_baseline")
     return selected
 
 
@@ -69,21 +72,24 @@ def artifact(config):
 def test_candidate_enables_optr_without_changing_online_bundle_or_extra_flags():
     config = json.loads(Path("configs/target.json").read_text())
     selected = variant_config(config, "candidate")
-    seed = {k: v for k, v in selected.items() if k != "rotation_refinement"}
+    seed = {k: v for k, v in selected.items() if k not in ("rotation_refinement", "optr_baseline")}
     assert serve_argv(selected) == serve_argv(seed)
     assert "rotation_refinement" not in config
     assert selected["rotation_refinement"] == "optr"
+    assert selected["optr_baseline"] == "recipe3"
     assert config["devices"] == selected["devices"] == [0, 1, 2, 3]
     assert config["port"] == selected["port"] == 7878
     assert runtime_feature_summary(selected, "candidate")["calibration_recipe_version"] == 5
-    assert runtime_feature_summary(selected, "candidate")["optr_fitted_grouping"] == "layer"
-    assert runtime_feature_summary(selected, "candidate")["optr_fitting_policy"] == "optr_oscar_shared_candidates_ascend_v9"
+    assert runtime_feature_summary(selected, "candidate")["optr_fitted_grouping"] == "layer_kv_head"
+    assert runtime_feature_summary(selected, "candidate")["optr_fitting_policy"] == "optr_recipe3_centered_candidates_ascend_v10"
+    assert runtime_feature_summary(selected, "candidate")["key_centering"] is True
+    assert runtime_feature_summary(selected, "candidate")["independent_test_blocks_publication"] is True
     assert runtime_feature_summary(selected, "candidate")["optr_validation_projection_views"] == [
         "fp32", "bf16_output", "bf16_rank_output"]
-    assert runtime_feature_summary(selected, "candidate")["optr_seed_partition"] == "train"
+    assert runtime_feature_summary(selected, "candidate")["optr_seed_partition"] == "original_recipe3_calibration"
     assert runtime_feature_summary(selected, "candidate")["optr_deployment_candidate_selection"] == (
-        "fixed_k_existing_v_checkpoints_first_nonworse")
-    assert runtime_feature_summary(selected, "candidate")["optr_max_deployment_candidates"] == 6
+        "perhead_existing_kv_checkpoints_best_nonworse")
+    assert runtime_feature_summary(selected, "candidate")["optr_max_deployment_candidates"] == 12
     for variant in ("baseline", "native"):
         assert variant_config(selected, variant).get("rotation_refinement") is None
     calibrated = {**selected, "optr_calibration": {"steps": 8}}

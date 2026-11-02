@@ -1,0 +1,24 @@
+{
+  "seed": 20261102,
+  "head_dim": 256,
+  "tokens": 1024,
+  "gqa": 6,
+  "rotation_source": "actual recipe3 FP64 qqt/sst fit on synthetic aligned BF16 QKV",
+  "centering": {
+    "fp32_mean_vs_bf16_mean_max_abs": 0.001950383186340332,
+    "changed_centered_elements_fraction": 1.0,
+    "centered_difference_rms": 0.0018711480079218745,
+    "centered_relative_rms": 0.0018724366098625941,
+    "int2_code_changed_from_centering_only_fraction": 0.00116729736328125,
+    "int2_code_changed_from_full_bf16_chain_fraction": 0.001995086669921875
+  },
+  "exact_prefill_proxy_blindness": {
+    "k_proxy": 0.0,
+    "k_grad_max_abs": 0.0,
+    "v_proxy": 0.0,
+    "v_grad_max_abs": 0.0,
+    "bf16_replay_attention_rms_error": 0.00047015768359415233,
+    "bf16_replay_projected_sse": 0.013286063811069004
+  },
+  "claim_boundary": "CPU synthetic numerical mismatch only. Prefill replay models visible BF16 arithmetic, not closed native FIA internals. No model-quality or performance claim."
+}

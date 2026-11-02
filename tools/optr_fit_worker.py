@@ -29,7 +29,11 @@ def fit_worker(spec, index, cpu_threads, pipe):
         config, testing = spec["config"], spec["testing"]
         if file_sha256(spec["base_config"]["rotation_artifact"]) != spec["certificate"]["base_artifact_sha256"]:
             raise ValueError("OptR worker seed file changed")
-        baseline = load_seed(spec["base_config"], testing=testing)
+        if config.get("optr_baseline") == "recipe3":
+            from tools.prepare_optr_recipe3_base import load_base
+            baseline = load_base(spec["base_config"], testing=testing)
+        else:
+            baseline = load_seed(spec["base_config"], testing=testing)
         if baseline.get("test_only") and not testing:
             raise ValueError("test-only seed cannot enter a production OptR worker")
         manifest = load_trace_manifest(spec["trace_manifest"], config, spec["names"],

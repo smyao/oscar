@@ -39,6 +39,9 @@ def _capture(config_path, directory):
 
 def _base_config(config, fingerprint):
     """Source-bound shared OSCAR seed; preserve the existing serving layout."""
+    if config.get("optr_baseline") == "recipe3":
+        from tools.prepare_optr_recipe3_base import base_config
+        return base_config(config, fingerprint)
     from oscar_ascend.rotations import calibration_cache_identity
     from oscar_ascend.optr_oscar_seed import SEED_RECIPE
     base = copy.deepcopy(config)
@@ -55,6 +58,9 @@ def _base_config(config, fingerprint):
 
 
 def _prepare_base(config, directory, *, testing, import_pair, base_runner):
+    if config.get("rotation_seed") is None:
+        from tools.prepare_optr_recipe3_base import prepare_base
+        return prepare_base(config, directory, testing=testing, import_pair=import_pair, base_runner=base_runner)
     from tools.prepare_optr_seed import load_seed
     if import_pair is not None or config.get("rotation_k_path") or config.get("rotation_v_path"):
         raise ValueError("OptR source OSCAR seed must use authenticated native source statistics; old recipe3 imports are incompatible")
@@ -162,7 +168,7 @@ class IndependentTestRegression(ValueError):
         self.reporting_errors = ()
 
 
-def _report_independent_test_failure(name, layer_id, record, policy, checkpoints, emit):
+def _report_independent_test_failure(name, layer_id, record, policy, checkpoints, emit, *, publication_allowed=True):
     """Archive #148/#170/#173: retain the failed test; never use it to reselect.
 
     This filename is deliberately not a completed layer checkpoint. The
@@ -219,14 +225,16 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
         projection_regressions.append({"projection_view": view,
             "baseline": {key: previous[key] for key in scalar_keys},
             "selected": {key: view_selected[key] for key in scalar_keys}, "regressed_queries": queries})
+    from oscar_ascend.optr_recipe3_certificate import PUBLICATION_POLICY
+    publication_policy = EXPERIMENTAL_PUBLICATION_POLICY if publication_allowed else PUBLICATION_POLICY
     report = {"schema_version": 1, "status": "independent_test_failed", "layer": name,
         "layer_id": layer_id, "identity": copy.deepcopy(checkpoints.identity) if checkpoints else None,
         "policy": copy.deepcopy(policy), "metric": "all_tp_heads_bf16_gate_fp32_wo_output",
         "arithmetic_evidence": "cpu_deployment_reference_not_npu_bitwise",
         "model_quality": "not_measured", "performance": "not_measured",
-        "artifact_publish_allowed": True, "test_used_for_selection": False,
-        "experimental": True, "publication_policy": EXPERIMENTAL_PUBLICATION_POLICY,
-        "test_policy_unchanged": False,
+        "artifact_publish_allowed": publication_allowed, "test_used_for_selection": False,
+        "experimental": True, "publication_policy": publication_policy,
+        "test_policy_unchanged": not publication_allowed,
         "record": record, "total": total, "regressed_requests": regressions,
         "regressed_projection_views": projection_regressions}
     message = f"OptR {name}: independent test report failed; artifact not published"
@@ -248,8 +256,8 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
                "baseline": total["baseline"], "selected": total["selected"],
                "regressed_total_metrics": total["regressed_metrics"], "regressed_requests": len(regressions),
                "regressed_projection_views": [row["projection_view"] for row in projection_regressions],
-               "artifact_publish_allowed": True, "experimental": True,
-               "publication_policy": EXPERIMENTAL_PUBLICATION_POLICY, "test_used_for_selection": False}]
+               "artifact_publish_allowed": publication_allowed, "experimental": True,
+               "publication_policy": publication_policy, "test_used_for_selection": False}]
     events.extend({"layer": name, "phase": "independent_test_request_regressed", **row} for row in regressions)
     events.extend({"layer": name, "phase": "independent_test_projection_regressed", **row}
                   for row in projection_regressions)
@@ -276,6 +284,11 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
 def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=None, progress=None,
                  fit_device="cpu"):
     """Search one shared pair, accept it as a whole layer, then record test."""
+    from oscar_ascend.optr_recipe3_certificate import is_recipe3
+    if is_recipe3(policy):
+        from tools.prepare_optr_recipe3 import refine_layer as refine_recipe3
+        return refine_recipe3(name, baseline, samples, policy, fitter=fitter,
+                             checkpoints=checkpoints, progress=progress, fit_device=fit_device)
     from oscar_ascend.optr_shared import fit_shared, validate_shared_pair
     validate_shared_pair(baseline["Rk"], baseline["Rv"], baseline["k_mean"])
     real_fitter = fitter is None
@@ -396,7 +409,9 @@ def _existing_trace_manifest(destination, profile, config):
 
 
 def _layer_artifact(template, certificate, name, selected, record):
-    return {**template, "layers": {name: selected}, "refinement_certificate": experimental_certificate({
+    from oscar_ascend.optr_recipe3_certificate import is_recipe3, strict_certificate
+    certify = strict_certificate if is_recipe3(certificate["policy"]) else experimental_certificate
+    return {**template, "layers": {name: selected}, "refinement_certificate": certify({
         **certificate, "layers": {name: record}, "accepted_layers": [name] if record["accepted"] else [],
         "matrices_sha256": matrix_digest({name: selected})})}
 
@@ -473,13 +488,23 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
     destination = Path(output).expanduser().resolve() if output else rotation_artifact_path(config, fingerprint)
     profile = calibration_cache_identity(config, fingerprint)
     if destination.is_file() and not (destination.parent / ".optr.pending.json").exists():
-        artifact = load_active_artifact(config, path=destination, device="cpu", testing=True)
-        if artifact.get("test_only") and not testing:
-            raise ValueError("test-only refined artifact cannot enter production")
-        return {"artifact": str(destination), "source": "optr_authenticated_cache", "reused": True,
-                "recipe_version": 5, "accepted_layers": artifact["refinement_certificate"]["accepted_layers"],
-                **artifact_test_status(artifact),
-                "quality_acceptance": "not_run", "performance": "not_measured"}
+        from oscar_ascend.optr_recipe3_certificate import RefitRequired
+        try:
+            artifact = load_active_artifact(config, path=destination, device="cpu", testing=True)
+        except RefitRequired as error:
+            _progress(phase="refit_required", reason=str(error), artifact=str(destination))
+        else:
+            if artifact.get("test_only") and not testing:
+                raise ValueError("test-only refined artifact cannot enter production")
+            if not testing:
+                from oscar_ascend.optr_recipe3_certificate import validate_baseline_binding
+                # CPU mathematical validation must not grant production use
+                # to a test-only baseline hidden behind a final PT header.
+                validate_baseline_binding(artifact, config, testing=False)
+            return {"artifact": str(destination), "source": "optr_authenticated_cache", "reused": True,
+                    "recipe_version": 5, "accepted_layers": artifact["refinement_certificate"]["accepted_layers"],
+                    **artifact_test_status(artifact),
+                    "quality_acceptance": "not_run", "performance": "not_measured"}
     if not testing and (base_runner is not None or fitter is not None or capture_runner is not None):
         raise ValueError("injected OptR preparation hooks are test-only")
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -493,10 +518,15 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
     base_hash = file_sha256(base_config["rotation_artifact"])
     trace_dir = destination.parent / "native-traces"
     trace_dir.mkdir(exist_ok=True)
-    trace_manifest = _existing_trace_manifest(destination, profile, config)
+    selected_config = copy.deepcopy(config)
+    if selected_config.get("optr_baseline") == "recipe3":
+        from tools.prepare_optr_recipe3_base import capture_source_metadata
+        selected_config["optr_seed_capture"] = {
+            **capture_source_metadata(baseline), "baseline_artifact_sha256": base_hash}
+    trace_manifest = _existing_trace_manifest(destination, profile, selected_config)
     # The selected config is serialized, never an earlier raw --config file.
     capture_config = destination.parent / "refinement-config.json"
-    capture_config.write_text(json.dumps(config, indent=2) + "\n")
+    capture_config.write_text(json.dumps(selected_config, indent=2) + "\n")
     if not trace_manifest.is_file():
         _progress(phase="native_capture", lengths=policy["capture_lengths"])
         # An interrupted generation remains available for diagnostics and
@@ -505,7 +535,7 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
         captured = (capture_runner or _capture)(capture_config, generation)
         from tools.phase import atomic_json
         atomic_json(trace_manifest, captured)
-    manifest = load_trace_manifest(trace_manifest, config, names, dim, fingerprint, testing=testing)
+    manifest = load_trace_manifest(trace_manifest, selected_config, names, dim, fingerprint, testing=testing)
     if trace_manifest.parent != trace_dir:
         _progress(phase="native_trace_resumed", manifest=str(trace_manifest),
                   fitting="new_sequential_objective_old_fitted_constants_not_reused")
@@ -521,6 +551,10 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
         "base_artifact_sha256": base_hash, "trace_manifest_sha256": file_sha256(trace_manifest),
         "layers": {}}
     from oscar_ascend.optr_checkpoint import FitCheckpoints, fitting_implementation_digest
+    from oscar_ascend.optr_recipe3_certificate import is_recipe3, strict_certificate
+    if is_recipe3(policy):
+        certificate["full_layer_names"] = names
+        certificate["fitting_implementation_sha256"] = fitting_implementation_digest()
     from tools.optr_progress import ProgressWatchdog
     from tools.rotation_preparation_limits import preparation_progress_timeout
     checkpoints = FitCheckpoints(destination.parent / "fit-checkpoints", {
@@ -536,7 +570,7 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
     fit_device = None
     with ProgressWatchdog(preparation_progress_timeout(config), output=_progress) as watchdog:
         if not testing or parallel_testing:
-            _parallel_layers(config, names, baseline, artifact, certificate, base_config,
+            _parallel_layers(selected_config, names, baseline, artifact, certificate, base_config,
                              trace_manifest, checkpoints, watchdog, testing=testing)
         for layer_index, name in enumerate(names if testing and not parallel_testing else []):
             seed = baseline["layers"][name]
@@ -563,7 +597,8 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
             certificate["layers"][name] = record
     certificate["accepted_layers"] = sorted(n for n, row in certificate["layers"].items() if row["accepted"])
     certificate["matrices_sha256"] = matrix_digest(artifact["layers"])
-    artifact["refinement_certificate"] = experimental_certificate(certificate)
+    artifact["refinement_certificate"] = (strict_certificate(certificate) if is_recipe3(policy)
+                                          else experimental_certificate(certificate))
     # CPU math validation here does not permit a CPU test artifact in serving.
     # The existing runtime performs its normal NPU validation on final load.
     validate_artifact(artifact, layer_names=names, head_dim=dim, model_fingerprint=fingerprint,

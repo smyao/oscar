@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-02",
+  "source": "user message; no full paired logs or loaded PT certificate supplied",
+  "dataset": "LongBenchv2",
+  "dataset_version": "324293",
+  "mode": "gen",
+  "model_column": "vllm-api-stream-chat",
+  "optr": {"accuracy": 42.52, "accuracy_easy": 53.49, "accuracy_hard": 36.90, "accuracy_short": 42.52},
+  "oscar_baseline": "pre-migration perhead_center recipe3",
+  "oscar_accuracy_user_description": "之前 oscar平均能达到 45+",
+  "loaded_server_commit": null,
+  "loaded_pt_sha256": null,
+  "accepted_layers": null,
+  "independent_test_status": null,
+  "new_model_quality_evaluation": "not_run"
+}

@@ -1,0 +1,53 @@
+{
+  "kind": "synthetic_certificate_semantics_not_model_accuracy",
+  "failed_independent_test_certificate_validated": {
+    "status": "failed",
+    "regressed_layers": [
+      "model.layers.3.self_attn.attn"
+    ]
+  },
+  "artifact_test_status": {
+    "experimental": true,
+    "refinement_policy_version": "optr_oscar_shared_candidates_ascend_v9",
+    "fitting_objective": "upstream_fp32_independent_gqa_kl_output_k_then_conditional_v",
+    "validation_projection_views": [
+      "fp32",
+      "bf16_output",
+      "bf16_rank_output"
+    ],
+    "publication_policy": "validation_gate_independent_test_report_v1",
+    "independent_test": "failed",
+    "independent_test_regressed_layers": [
+      "model.layers.3.self_attn.attn"
+    ],
+    "model_quality": "not_measured",
+    "performance": "not_measured"
+  },
+  "published_artifact_loaded_and_reused": {
+    "artifact": "/private/var/folders/7j/33nttyqs7ss78clh7tx4gy240000gn/T/optr_diag_cert_cache_p1g_zrbj/artifacts/rotations/0f2f1dc7c81f82b43c111bf16682248c426647b384d0ac59b14a6568c495c2dd/optr_a1d346bab4d19f6e9a7a/refined.pt",
+    "source": "optr_authenticated_cache",
+    "reused": true,
+    "recipe_version": 5,
+    "accepted_layers": [
+      "model.layers.3.self_attn.attn"
+    ],
+    "experimental": true,
+    "refinement_policy_version": "optr_oscar_shared_candidates_ascend_v9",
+    "fitting_objective": "upstream_fp32_independent_gqa_kl_output_k_then_conditional_v",
+    "validation_projection_views": [
+      "fp32",
+      "bf16_output",
+      "bf16_rank_output"
+    ],
+    "publication_policy": "validation_gate_independent_test_report_v1",
+    "independent_test": "failed",
+    "independent_test_regressed_layers": [
+      "model.layers.3.self_attn.attn"
+    ],
+    "model_quality": "not_measured",
+    "performance": "not_measured",
+    "quality_acceptance": "not_run"
+  },
+  "complete_artifact_cache_does_not_consult_fitter_implementation_digest": true,
+  "partial_fit_checkpoint_does_change_identity": true
+}

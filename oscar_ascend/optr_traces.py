@@ -158,6 +158,9 @@ def load_trace_manifest(path, config, layers, dim, fingerprint, testing=False):
         raise ValueError("OptR capture model/rank/head geometry differs")
     _hash(top.get("prompt_sha256")); _hash(top.get("prompt_source_sha256"))
     plan = _plan(top, policy)
+    if config.get("optr_baseline") == "recipe3":
+        from tools.optr_recipe3_sampling import validate_recipe3_trace_manifest
+        validate_recipe3_trace_manifest(top, config, policy)
     if top.get("decode_tokens") != policy["decode_tokens"] or top.get("samples_per_frame") != policy["query_samples_per_frame"]:
         raise ValueError("OptR capture sampling policy differs")
     workspace = _workspace_geometry(config)

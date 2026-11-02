@@ -142,7 +142,7 @@ def _values(rotation, rows, phase, policy, emit):
 
 
 def fit_head(base_k, base_v, mean, train_samples, validation_samples, *, policy,
-             progress=None, device="cpu", global_kv_heads=1):
+             progress=None, device="cpu", global_kv_heads=1, candidate_callback=None):
     """Sequential K/V learning and best held-out selection.
 
     Heads run independently, with the upstream all-KV-head mean retained in
@@ -179,6 +179,9 @@ def fit_head(base_k, base_v, mean, train_samples, validation_samples, *, policy,
                     del row["teacher_p"], row["teacher_logp"], row["teacher_logits"]
             emit("fixed_k_probabilities_ready", phase=phase, samples=len(train) + len(held))
         baseline = best = _values(origin.to(device), held, phase, policy, emit)
+        if candidate_callback is not None:
+            candidate_callback(phase=phase, step=0,
+                               rotation=origin.detach().cpu().clone(), proxy_loss=baseline)
         best_rotation = origin.clone()
         correction = torch.zeros_like(origin, requires_grad=True)  # intentionally CPU
         optimizer = torch.optim.Adam([correction], lr=policy["lr"])
@@ -204,6 +207,9 @@ def fit_head(base_k, base_v, mean, train_samples, validation_samples, *, policy,
                 score = _values(candidate.to(device), held, phase, policy, emit)
                 accepted = score < best
                 candidates.append({"step": step + 1, "proxy_loss": score, "accepted": accepted})
+                if candidate_callback is not None:
+                    candidate_callback(phase=phase, step=step + 1,
+                                       rotation=candidate.detach().cpu().clone(), proxy_loss=score)
                 if accepted:
                     best, best_rotation = score, candidate.clone()
             emit("validation_done", phase=phase, step=step + 1, steps=policy["steps"],

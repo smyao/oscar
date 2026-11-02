@@ -1,0 +1,4704 @@
+{
+  "kind": "synthetic_cpu_baseline_substitution",
+  "dim": 64,
+  "kv_heads": 2,
+  "training_rows_per_head": 512,
+  "window": [
+    64,
+    256
+  ],
+  "no_model_npu_or_speed_claim": true,
+  "splits": {
+    "validation": {
+      "recipe3": {
+        "squared_error": 0.0069865249597639845,
+        "teacher_energy": 0.2750652006935824,
+        "normalized_error": 0.025399523248114706,
+        "requests": [
+          {
+            "request_id": "validation",
+            "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+            "squared_error": 0.0069865249597639845,
+            "teacher_energy": 0.2750652006935824,
+            "normalized_error": 0.025399523248114706,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 3.0093429759488546e-06,
+                "teacher_energy": 0.15970751268329536,
+                "normalized_error": 1.8842839171357386e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 3.0093429759488546e-06,
+                  "teacher_energy": 0.15970751268329536,
+                  "normalized_error": 1.8842839171357386e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 3.0093429759488546e-06,
+                    "teacher_energy": 0.15970751268329536,
+                    "normalized_error": 1.8842839171357386e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.006983515616788036,
+                "teacher_energy": 0.11535768801028706,
+                "normalized_error": 0.06053792978379801,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.006983515616788036,
+                  "teacher_energy": 0.11535768801028706,
+                  "normalized_error": 0.06053792978379801
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.006983515616788036,
+                    "teacher_energy": 0.11535768801028706,
+                    "normalized_error": 0.06053792978379801
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "projection_checks": {
+          "bf16_output": {
+            "squared_error": 0.006980304315220565,
+            "teacher_energy": 0.27510323777096346,
+            "normalized_error": 0.025373399352834954,
+            "requests": [
+              {
+                "request_id": "validation",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.006980304315220565,
+                "teacher_energy": 0.27510323777096346,
+                "normalized_error": 0.025373399352834954,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 3.2790121622383595e-06,
+                    "teacher_energy": 0.15971367177553475,
+                    "normalized_error": 2.0530566518104714e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 3.2790121622383595e-06,
+                      "teacher_energy": 0.15971367177553475,
+                      "normalized_error": 2.0530566518104714e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 3.2790121622383595e-06,
+                        "teacher_energy": 0.15971367177553475,
+                        "normalized_error": 2.0530566518104714e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.006977025303058326,
+                    "teacher_energy": 0.11538956599542871,
+                    "normalized_error": 0.060464958359707575,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.006977025303058326,
+                      "teacher_energy": 0.11538956599542871,
+                      "normalized_error": 0.060464958359707575
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.006977025303058326,
+                        "teacher_energy": 0.11538956599542871,
+                        "normalized_error": 0.060464958359707575
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "bf16_rank_output": {
+            "squared_error": 0.007001936435699463,
+            "teacher_energy": 0.27509747818112373,
+            "normalized_error": 0.025452564967132846,
+            "requests": [
+              {
+                "request_id": "validation",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.007001936435699463,
+                "teacher_energy": 0.27509747818112373,
+                "normalized_error": 0.025452564967132846,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 4.3101608753204346e-06,
+                    "teacher_energy": 0.15977248921990395,
+                    "normalized_error": 2.6976865018283064e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 4.3101608753204346e-06,
+                      "teacher_energy": 0.15977248921990395,
+                      "normalized_error": 2.6976865018283064e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 4.3101608753204346e-06,
+                        "teacher_energy": 0.15977248921990395,
+                        "normalized_error": 2.6976865018283064e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.0069976262748241425,
+                    "teacher_energy": 0.11532498896121979,
+                    "normalized_error": 0.06067745020272429,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.0069976262748241425,
+                      "teacher_energy": 0.11532498896121979,
+                      "normalized_error": 0.06067745020272429
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.0069976262748241425,
+                        "teacher_energy": 0.11532498896121979,
+                        "normalized_error": 0.06067745020272429
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "shared_seed": {
+        "squared_error": 0.03487606818284338,
+        "teacher_energy": 0.2750652006935824,
+        "normalized_error": 0.12679200456801762,
+        "requests": [
+          {
+            "request_id": "validation",
+            "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+            "squared_error": 0.03487606818284338,
+            "teacher_energy": 0.2750652006935824,
+            "normalized_error": 0.12679200456801762,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 1.0203818843207077e-05,
+                "teacher_energy": 0.15970751268329536,
+                "normalized_error": 6.389066282336728e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 1.0203818843207077e-05,
+                  "teacher_energy": 0.15970751268329536,
+                  "normalized_error": 6.389066282336728e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 1.0203818843207077e-05,
+                    "teacher_energy": 0.15970751268329536,
+                    "normalized_error": 6.389066282336728e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.034865864364000174,
+                "teacher_energy": 0.11535768801028706,
+                "normalized_error": 0.302241358728436,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.034865864364000174,
+                  "teacher_energy": 0.11535768801028706,
+                  "normalized_error": 0.302241358728436
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.034865864364000174,
+                    "teacher_energy": 0.11535768801028706,
+                    "normalized_error": 0.302241358728436
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "projection_checks": {
+          "bf16_output": {
+            "squared_error": 0.034957428000780055,
+            "teacher_energy": 0.27510323777096346,
+            "normalized_error": 0.12707021656314993,
+            "requests": [
+              {
+                "request_id": "validation",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.034957428000780055,
+                "teacher_energy": 0.27510323777096346,
+                "normalized_error": 0.12707021656314993,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 9.334005881100893e-06,
+                    "teacher_energy": 0.15971367177553475,
+                    "normalized_error": 5.844212193818397e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 9.334005881100893e-06,
+                      "teacher_energy": 0.15971367177553475,
+                      "normalized_error": 5.844212193818397e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 9.334005881100893e-06,
+                        "teacher_energy": 0.15971367177553475,
+                        "normalized_error": 5.844212193818397e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.034948093994898954,
+                    "teacher_energy": 0.11538956599542871,
+                    "normalized_error": 0.30287048654194143,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.034948093994898954,
+                      "teacher_energy": 0.11538956599542871,
+                      "normalized_error": 0.30287048654194143
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.034948093994898954,
+                        "teacher_energy": 0.11538956599542871,
+                        "normalized_error": 0.30287048654194143
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "bf16_rank_output": {
+            "squared_error": 0.03479939792305231,
+            "teacher_energy": 0.27509747818112373,
+            "normalized_error": 0.12649842576943016,
+            "requests": [
+              {
+                "request_id": "validation",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.03479939792305231,
+                "teacher_energy": 0.27509747818112373,
+                "normalized_error": 0.12649842576943016,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 1.0102987289428711e-05,
+                    "teacher_energy": 0.15977248921990395,
+                    "normalized_error": 6.323358507310602e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 1.0102987289428711e-05,
+                      "teacher_energy": 0.15977248921990395,
+                      "normalized_error": 6.323358507310602e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 1.0102987289428711e-05,
+                        "teacher_energy": 0.15977248921990395,
+                        "normalized_error": 6.323358507310602e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.03478929493576288,
+                    "teacher_energy": 0.11532498896121979,
+                    "normalized_error": 0.3016631109105195,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.03478929493576288,
+                      "teacher_energy": 0.11532498896121979,
+                      "normalized_error": 0.3016631109105195
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.03478929493576288,
+                        "teacher_energy": 0.11532498896121979,
+                        "normalized_error": 0.3016631109105195
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "v9_unchanged_seed_nonworse": true,
+      "shared_to_recipe3_sse_ratio": 4.991904900318505,
+      "actual_refined": {
+        "squared_error": 0.00560720472086216,
+        "teacher_energy": 0.2750652006935824,
+        "normalized_error": 0.020385002198473237,
+        "requests": [
+          {
+            "request_id": "validation",
+            "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+            "squared_error": 0.00560720472086216,
+            "teacher_energy": 0.2750652006935824,
+            "normalized_error": 0.020385002198473237,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 4.68522511813934e-06,
+                "teacher_energy": 0.15970751268329536,
+                "normalized_error": 2.9336285058989537e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 4.68522511813934e-06,
+                  "teacher_energy": 0.15970751268329536,
+                  "normalized_error": 2.9336285058989537e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 4.68522511813934e-06,
+                    "teacher_energy": 0.15970751268329536,
+                    "normalized_error": 2.9336285058989537e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.005602519495744021,
+                "teacher_energy": 0.11535768801028706,
+                "normalized_error": 0.04856650295595742,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.005602519495744021,
+                  "teacher_energy": 0.11535768801028706,
+                  "normalized_error": 0.04856650295595742
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.005602519495744021,
+                    "teacher_energy": 0.11535768801028706,
+                    "normalized_error": 0.04856650295595742
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "projection_checks": {
+          "bf16_output": {
+            "squared_error": 0.0055741645988725,
+            "teacher_energy": 0.27510323777096346,
+            "normalized_error": 0.020262082860374245,
+            "requests": [
+              {
+                "request_id": "validation",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.0055741645988725,
+                "teacher_energy": 0.27510323777096346,
+                "normalized_error": 0.020262082860374245,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 4.105502739548683e-06,
+                    "teacher_energy": 0.15971367177553475,
+                    "normalized_error": 2.570539324472266e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 4.105502739548683e-06,
+                      "teacher_energy": 0.15971367177553475,
+                      "normalized_error": 2.570539324472266e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 4.105502739548683e-06,
+                        "teacher_energy": 0.15971367177553475,
+                        "normalized_error": 2.570539324472266e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.005570059096132951,
+                    "teacher_energy": 0.11538956599542871,
+                    "normalized_error": 0.04827177438516075,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.005570059096132951,
+                      "teacher_energy": 0.11538956599542871,
+                      "normalized_error": 0.04827177438516075
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.005570059096132951,
+                        "teacher_energy": 0.11538956599542871,
+                        "normalized_error": 0.04827177438516075
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "bf16_rank_output": {
+            "squared_error": 0.005586070008575916,
+            "teacher_energy": 0.27509747818112373,
+            "normalized_error": 0.020305784136988914,
+            "requests": [
+              {
+                "request_id": "validation",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.005586070008575916,
+                "teacher_energy": 0.27509747818112373,
+                "normalized_error": 0.020305784136988914,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 6.489455699920654e-06,
+                    "teacher_energy": 0.15977248921990395,
+                    "normalized_error": 4.0616852948875624e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 6.489455699920654e-06,
+                      "teacher_energy": 0.15977248921990395,
+                      "normalized_error": 4.0616852948875624e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 6.489455699920654e-06,
+                        "teacher_energy": 0.15977248921990395,
+                        "normalized_error": 4.0616852948875624e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.005579580552875996,
+                    "teacher_energy": 0.11532498896121979,
+                    "normalized_error": 0.048381366459547076,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.005579580552875996,
+                      "teacher_energy": 0.11532498896121979,
+                      "normalized_error": 0.048381366459547076
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.005579580552875996,
+                        "teacher_energy": 0.11532498896121979,
+                        "normalized_error": 0.048381366459547076
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "refined_to_recipe3_sse_ratio": 0.8025742057968086
+    },
+    "test": {
+      "recipe3": {
+        "squared_error": 0.004555252497798128,
+        "teacher_energy": 0.2054412253395406,
+        "normalized_error": 0.022173020484420727,
+        "requests": [
+          {
+            "request_id": "test",
+            "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+            "squared_error": 0.004555252497798128,
+            "teacher_energy": 0.2054412253395406,
+            "normalized_error": 0.022173020484420727,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 2.091297046954814e-06,
+                "teacher_energy": 0.13038642552895635,
+                "normalized_error": 1.6039223703470394e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 2.091297046954814e-06,
+                  "teacher_energy": 0.13038642552895635,
+                  "normalized_error": 1.6039223703470394e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 2.091297046954814e-06,
+                    "teacher_energy": 0.13038642552895635,
+                    "normalized_error": 1.6039223703470394e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.0045531612007511735,
+                "teacher_energy": 0.07505479981058424,
+                "normalized_error": 0.06066449064206399,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.0045531612007511735,
+                  "teacher_energy": 0.07505479981058424,
+                  "normalized_error": 0.06066449064206399
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.0045531612007511735,
+                    "teacher_energy": 0.07505479981058424,
+                    "normalized_error": 0.06066449064206399
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "projection_checks": {
+          "bf16_output": {
+            "squared_error": 0.0045608467335114256,
+            "teacher_energy": 0.2055342121166177,
+            "normalized_error": 0.022190207102473308,
+            "requests": [
+              {
+                "request_id": "test",
+                "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+                "squared_error": 0.0045608467335114256,
+                "teacher_energy": 0.2055342121166177,
+                "normalized_error": 0.022190207102473308,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 2.2137537598609924e-06,
+                    "teacher_energy": 0.1303774393745698,
+                    "normalized_error": 1.6979576915151368e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 2.2137537598609924e-06,
+                      "teacher_energy": 0.1303774393745698,
+                      "normalized_error": 1.6979576915151368e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 2.2137537598609924e-06,
+                        "teacher_energy": 0.1303774393745698,
+                        "normalized_error": 1.6979576915151368e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.0045586329797515646,
+                    "teacher_energy": 0.0751567727420479,
+                    "normalized_error": 0.06065498575088695,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.0045586329797515646,
+                      "teacher_energy": 0.0751567727420479,
+                      "normalized_error": 0.06065498575088695
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.0045586329797515646,
+                        "teacher_energy": 0.0751567727420479,
+                        "normalized_error": 0.06065498575088695
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "bf16_rank_output": {
+            "squared_error": 0.0045644426718354225,
+            "teacher_energy": 0.20547661371529102,
+            "normalized_error": 0.022213927849521246,
+            "requests": [
+              {
+                "request_id": "test",
+                "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+                "squared_error": 0.0045644426718354225,
+                "teacher_energy": 0.20547661371529102,
+                "normalized_error": 0.022213927849521246,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 2.4959444999694824e-06,
+                    "teacher_energy": 0.1303431550040841,
+                    "normalized_error": 1.9149026275229225e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 2.4959444999694824e-06,
+                      "teacher_energy": 0.1303431550040841,
+                      "normalized_error": 1.9149026275229225e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 2.4959444999694824e-06,
+                        "teacher_energy": 0.1303431550040841,
+                        "normalized_error": 1.9149026275229225e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.004561946727335453,
+                    "teacher_energy": 0.07513345871120691,
+                    "normalized_error": 0.06071791190753465,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.004561946727335453,
+                      "teacher_energy": 0.07513345871120691,
+                      "normalized_error": 0.06071791190753465
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.004561946727335453,
+                        "teacher_energy": 0.07513345871120691,
+                        "normalized_error": 0.06071791190753465
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "shared_seed": {
+        "squared_error": 0.07010698428333936,
+        "teacher_energy": 0.2054412253395406,
+        "normalized_error": 0.3412508086800537,
+        "requests": [
+          {
+            "request_id": "test",
+            "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+            "squared_error": 0.07010698428333936,
+            "teacher_energy": 0.2054412253395406,
+            "normalized_error": 0.3412508086800537,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 6.598466204843197e-06,
+                "teacher_energy": 0.13038642552895635,
+                "normalized_error": 5.06070028231413e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 6.598466204843197e-06,
+                  "teacher_energy": 0.13038642552895635,
+                  "normalized_error": 5.06070028231413e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 6.598466204843197e-06,
+                    "teacher_energy": 0.13038642552895635,
+                    "normalized_error": 5.06070028231413e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.07010038581713451,
+                "teacher_energy": 0.07505479981058424,
+                "normalized_error": 0.9339893783481779,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.07010038581713451,
+                  "teacher_energy": 0.07505479981058424,
+                  "normalized_error": 0.9339893783481779
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.07010038581713451,
+                    "teacher_energy": 0.07505479981058424,
+                    "normalized_error": 0.9339893783481779
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "projection_checks": {
+          "bf16_output": {
+            "squared_error": 0.07023028186813463,
+            "teacher_energy": 0.2055342121166177,
+            "normalized_error": 0.34169631004441625,
+            "requests": [
+              {
+                "request_id": "test",
+                "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+                "squared_error": 0.07023028186813463,
+                "teacher_energy": 0.2055342121166177,
+                "normalized_error": 0.34169631004441625,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 7.537717465311289e-06,
+                    "teacher_energy": 0.1303774393745698,
+                    "normalized_error": 5.7814584344272106e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 7.537717465311289e-06,
+                      "teacher_energy": 0.1303774393745698,
+                      "normalized_error": 5.7814584344272106e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 7.537717465311289e-06,
+                        "teacher_energy": 0.1303774393745698,
+                        "normalized_error": 5.7814584344272106e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.07022274415066931,
+                    "teacher_energy": 0.0751567727420479,
+                    "normalized_error": 0.9343501801452665,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.07022274415066931,
+                      "teacher_energy": 0.0751567727420479,
+                      "normalized_error": 0.9343501801452665
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.07022274415066931,
+                        "teacher_energy": 0.0751567727420479,
+                        "normalized_error": 0.9343501801452665
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "bf16_rank_output": {
+            "squared_error": 0.07013790597920888,
+            "teacher_energy": 0.20547661371529102,
+            "normalized_error": 0.3413425241492064,
+            "requests": [
+              {
+                "request_id": "test",
+                "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+                "squared_error": 0.07013790597920888,
+                "teacher_energy": 0.20547661371529102,
+                "normalized_error": 0.3413425241492064,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 6.989575922489166e-06,
+                    "teacher_energy": 0.1303431550040841,
+                    "normalized_error": 5.362441872969975e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 6.989575922489166e-06,
+                      "teacher_energy": 0.1303431550040841,
+                      "normalized_error": 5.362441872969975e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 6.989575922489166e-06,
+                        "teacher_energy": 0.1303431550040841,
+                        "normalized_error": 5.362441872969975e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.07013091640328639,
+                    "teacher_energy": 0.07513345871120691,
+                    "normalized_error": 0.9334179153504837,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.07013091640328639,
+                      "teacher_energy": 0.07513345871120691,
+                      "normalized_error": 0.9334179153504837
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.07013091640328639,
+                        "teacher_energy": 0.07513345871120691,
+                        "normalized_error": 0.9334179153504837
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "v9_unchanged_seed_nonworse": true,
+      "shared_to_recipe3_sse_ratio": 15.390361855292756,
+      "actual_refined": {
+        "squared_error": 0.006850948428039167,
+        "teacher_energy": 0.2054412253395406,
+        "normalized_error": 0.033347486205440716,
+        "requests": [
+          {
+            "request_id": "test",
+            "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+            "squared_error": 0.006850948428039167,
+            "teacher_energy": 0.2054412253395406,
+            "normalized_error": 0.033347486205440716,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 7.663194286805161e-06,
+                "teacher_energy": 0.13038642552895635,
+                "normalized_error": 5.8772945540280275e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 7.663194286805161e-06,
+                  "teacher_energy": 0.13038642552895635,
+                  "normalized_error": 5.8772945540280275e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 7.663194286805161e-06,
+                    "teacher_energy": 0.13038642552895635,
+                    "normalized_error": 5.8772945540280275e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.006843285233752362,
+                "teacher_energy": 0.07505479981058424,
+                "normalized_error": 0.09117718321843184,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.006843285233752362,
+                  "teacher_energy": 0.07505479981058424,
+                  "normalized_error": 0.09117718321843184
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.006843285233752362,
+                    "teacher_energy": 0.07505479981058424,
+                    "normalized_error": 0.09117718321843184
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "projection_checks": {
+          "bf16_output": {
+            "squared_error": 0.006874260914628394,
+            "teacher_energy": 0.2055342121166177,
+            "normalized_error": 0.03344582317384718,
+            "requests": [
+              {
+                "request_id": "test",
+                "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+                "squared_error": 0.006874260914628394,
+                "teacher_energy": 0.2055342121166177,
+                "normalized_error": 0.03344582317384718,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 9.301351383328438e-06,
+                    "teacher_energy": 0.1303774393745698,
+                    "normalized_error": 7.134172467221099e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 9.301351383328438e-06,
+                      "teacher_energy": 0.1303774393745698,
+                      "normalized_error": 7.134172467221099e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 9.301351383328438e-06,
+                        "teacher_energy": 0.1303774393745698,
+                        "normalized_error": 7.134172467221099e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.0068649595632450655,
+                    "teacher_energy": 0.0751567727420479,
+                    "normalized_error": 0.0913418619876999,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.0068649595632450655,
+                      "teacher_energy": 0.0751567727420479,
+                      "normalized_error": 0.0913418619876999
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.0068649595632450655,
+                        "teacher_energy": 0.0751567727420479,
+                        "normalized_error": 0.0913418619876999
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "bf16_rank_output": {
+            "squared_error": 0.0068703824654221535,
+            "teacher_energy": 0.20547661371529102,
+            "normalized_error": 0.03343632319608778,
+            "requests": [
+              {
+                "request_id": "test",
+                "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+                "squared_error": 0.0068703824654221535,
+                "teacher_energy": 0.20547661371529102,
+                "normalized_error": 0.03343632319608778,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 7.588416337966919e-06,
+                    "teacher_energy": 0.1303431550040841,
+                    "normalized_error": 5.821875600394319e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 7.588416337966919e-06,
+                      "teacher_energy": 0.1303431550040841,
+                      "normalized_error": 5.821875600394319e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 7.588416337966919e-06,
+                        "teacher_energy": 0.1303431550040841,
+                        "normalized_error": 5.821875600394319e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.0068627940490841866,
+                    "teacher_energy": 0.07513345871120691,
+                    "normalized_error": 0.09134138327722868,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.0068627940490841866,
+                      "teacher_energy": 0.07513345871120691,
+                      "normalized_error": 0.09134138327722868
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.0068627940490841866,
+                        "teacher_energy": 0.07513345871120691,
+                        "normalized_error": 0.09134138327722868
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "refined_to_recipe3_sse_ratio": 1.503966779306023
+    }
+  },
+  "actual_default_80_step_refinement": {
+    "accepted": true,
+    "shared_decision": {
+      "accepted": true,
+      "phases": [
+        {
+          "phase": "k",
+          "baseline_proxy_loss": 0.050615344196558,
+          "selected_proxy_loss": 0.0015836270758882165,
+          "accepted": true,
+          "candidates": [
+            {
+              "step": 1,
+              "proxy_loss": 0.05692621320486069,
+              "accepted": false
+            },
+            {
+              "step": 21,
+              "proxy_loss": 0.04815939627587795,
+              "accepted": true
+            },
+            {
+              "step": 41,
+              "proxy_loss": 0.020494223572313786,
+              "accepted": true
+            },
+            {
+              "step": 61,
+              "proxy_loss": 0.004429619060829282,
+              "accepted": true
+            },
+            {
+              "step": 80,
+              "proxy_loss": 0.0015836270758882165,
+              "accepted": true
+            }
+          ]
+        },
+        {
+          "phase": "v",
+          "baseline_proxy_loss": 1.7249270968022756e-05,
+          "selected_proxy_loss": 1.496468667028239e-05,
+          "accepted": true,
+          "candidates": [
+            {
+              "step": 1,
+              "proxy_loss": 1.496468667028239e-05,
+              "accepted": true
+            },
+            {
+              "step": 21,
+              "proxy_loss": 2.2437684492615517e-05,
+              "accepted": false
+            },
+            {
+              "step": 41,
+              "proxy_loss": 3.0375378628377803e-05,
+              "accepted": false
+            },
+            {
+              "step": 61,
+              "proxy_loss": 2.092739214276662e-05,
+              "accepted": false
+            },
+            {
+              "step": 80,
+              "proxy_loss": 1.887393773358781e-05,
+              "accepted": false
+            }
+          ]
+        }
+      ],
+      "policy": {
+        "policy_version": "optr_oscar_shared_candidates_ascend_v9",
+        "capture_lengths": {
+          "train": [
+            4096,
+            32768,
+            65536
+          ],
+          "validation": [
+            4096,
+            32768,
+            65536
+          ],
+          "test": [
+            4096,
+            32768,
+            65536
+          ]
+        },
+        "decode_tokens": 8,
+        "query_samples_per_frame": 8,
+        "steps": 80,
+        "lr": 0.02,
+        "eval_every": 20,
+        "query_batch_size": 8,
+        "fitting_objective": "upstream_fp32_independent_gqa_kl_output_k_then_conditional_v",
+        "fitted_grouping": "layer",
+        "lambda_output": 1.0,
+        "kv_tile_size": 256,
+        "history_splits": 1,
+        "validation_partitions": [
+          "single_split",
+          "captured_runtime_frames"
+        ],
+        "validation_projection_views": [
+          "fp32",
+          "bf16_output",
+          "bf16_rank_output"
+        ],
+        "sink_tokens": 64,
+        "recent_tokens": 256,
+        "k_clip": 0.96,
+        "v_clip": 0.92,
+        "group_size": "head_dim",
+        "math_contract": "oscar_bf16_attention_v4_fp32_metadata",
+        "selection": "shared_layer_each_query_and_projection_nonworse",
+        "deployment_candidate_selection": "fixed_k_existing_v_checkpoints_first_nonworse",
+        "max_deployment_candidates": 6,
+        "test_policy": "independent_accept_or_fail_no_reselection",
+        "execution": "npu_fp32_proxy_cpu_orthogonal_and_deployment_validation",
+        "source_plan": "disjoint_records_packed_calibration_only_v1",
+        "sampling_chunk_tokens": 16384,
+        "tensor_parallel_size": 4,
+        "max_model_len": 262144,
+        "attention_splits": 1,
+        "history_token_capacity": null,
+        "cube_cores": null,
+        "compilation_config": {}
+      },
+      "objective": "upstream_fp32_independent_gqa_kl_output_k_then_conditional_v",
+      "fit_device": "cpu",
+      "matrix_exp_device": "cpu",
+      "fitted_grouping": "layer",
+      "staging_resources": {
+        "mode": "resident",
+        "estimated_resident_fixed_bytes": 1468352,
+        "resident_fixed_budget_bytes": 8589934592,
+        "streamed_row_fixed_budget_bytes": 536870912,
+        "largest_staged_fixed_row_bytes": 367088,
+        "train_rows": 2,
+        "validation_rows": 2,
+        "query_chunk_weighting": "chunk_queries/full_request_queries",
+        "extra_transfers_per_iteration": false,
+        "teacher_recomputed_per_iteration": false,
+        "selected_k_probabilities_recomputed_per_v_iteration": false,
+        "budget_scope": "fixed_tensor_cache_excludes_autograd_working_memory_and_allocator"
+      },
+      "selection": "shared_layer_proxy_then_joint_deployment_gate",
+      "loss_reduction": "mean_kv_heads_mean_requests_mean_gqa_queries_hidden",
+      "model_quality": "not_measured",
+      "npu_equivalence": "not_measured"
+    },
+    "base_constants_sha256": "82539283796b1415085cad2161ed09529e241165001eff3826e7ea0944c6ffba",
+    "selected_constants_sha256": "914e6ae564e4cd0c0783e269263e2a5508824db1061b1b3f82a272332202e4d9",
+    "validation": {
+      "baseline": {
+        "squared_error": 0.06975213636568676,
+        "teacher_energy": 0.5501304013871648,
+        "normalized_error": 0.12679200456801762,
+        "requests": [
+          {
+            "request_id": "validation:single_split",
+            "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+            "squared_error": 0.03487606818284338,
+            "teacher_energy": 0.2750652006935824,
+            "normalized_error": 0.12679200456801762,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 1.0203818843207077e-05,
+                "teacher_energy": 0.15970751268329536,
+                "normalized_error": 6.389066282336728e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 1.0203818843207077e-05,
+                  "teacher_energy": 0.15970751268329536,
+                  "normalized_error": 6.389066282336728e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 1.0203818843207077e-05,
+                    "teacher_energy": 0.15970751268329536,
+                    "normalized_error": 6.389066282336728e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.034865864364000174,
+                "teacher_energy": 0.11535768801028706,
+                "normalized_error": 0.302241358728436,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.034865864364000174,
+                  "teacher_energy": 0.11535768801028706,
+                  "normalized_error": 0.302241358728436
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.034865864364000174,
+                    "teacher_energy": 0.11535768801028706,
+                    "normalized_error": 0.302241358728436
+                  }
+                ]
+              }
+            ],
+            "partition": "single_split"
+          },
+          {
+            "request_id": "validation:captured_runtime_frames",
+            "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+            "squared_error": 0.03487606818284338,
+            "teacher_energy": 0.2750652006935824,
+            "normalized_error": 0.12679200456801762,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 1.0203818843207077e-05,
+                "teacher_energy": 0.15970751268329536,
+                "normalized_error": 6.389066282336728e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 1.0203818843207077e-05,
+                  "teacher_energy": 0.15970751268329536,
+                  "normalized_error": 6.389066282336728e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 1.0203818843207077e-05,
+                    "teacher_energy": 0.15970751268329536,
+                    "normalized_error": 6.389066282336728e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.034865864364000174,
+                "teacher_energy": 0.11535768801028706,
+                "normalized_error": 0.302241358728436,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.034865864364000174,
+                  "teacher_energy": 0.11535768801028706,
+                  "normalized_error": 0.302241358728436
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.034865864364000174,
+                    "teacher_energy": 0.11535768801028706,
+                    "normalized_error": 0.302241358728436
+                  }
+                ]
+              }
+            ],
+            "partition": "captured_runtime_frames"
+          }
+        ],
+        "projection_checks": {
+          "bf16_output": {
+            "squared_error": 0.06991485600156011,
+            "teacher_energy": 0.5502064755419269,
+            "normalized_error": 0.12707021656314993,
+            "requests": [
+              {
+                "request_id": "validation:single_split",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.034957428000780055,
+                "teacher_energy": 0.27510323777096346,
+                "normalized_error": 0.12707021656314993,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 9.334005881100893e-06,
+                    "teacher_energy": 0.15971367177553475,
+                    "normalized_error": 5.844212193818397e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 9.334005881100893e-06,
+                      "teacher_energy": 0.15971367177553475,
+                      "normalized_error": 5.844212193818397e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 9.334005881100893e-06,
+                        "teacher_energy": 0.15971367177553475,
+                        "normalized_error": 5.844212193818397e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.034948093994898954,
+                    "teacher_energy": 0.11538956599542871,
+                    "normalized_error": 0.30287048654194143,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.034948093994898954,
+                      "teacher_energy": 0.11538956599542871,
+                      "normalized_error": 0.30287048654194143
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.034948093994898954,
+                        "teacher_energy": 0.11538956599542871,
+                        "normalized_error": 0.30287048654194143
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "validation:captured_runtime_frames",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.034957428000780055,
+                "teacher_energy": 0.27510323777096346,
+                "normalized_error": 0.12707021656314993,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 9.334005881100893e-06,
+                    "teacher_energy": 0.15971367177553475,
+                    "normalized_error": 5.844212193818397e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 9.334005881100893e-06,
+                      "teacher_energy": 0.15971367177553475,
+                      "normalized_error": 5.844212193818397e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 9.334005881100893e-06,
+                        "teacher_energy": 0.15971367177553475,
+                        "normalized_error": 5.844212193818397e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.034948093994898954,
+                    "teacher_energy": 0.11538956599542871,
+                    "normalized_error": 0.30287048654194143,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.034948093994898954,
+                      "teacher_energy": 0.11538956599542871,
+                      "normalized_error": 0.30287048654194143
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.034948093994898954,
+                        "teacher_energy": 0.11538956599542871,
+                        "normalized_error": 0.30287048654194143
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ]
+          },
+          "bf16_rank_output": {
+            "squared_error": 0.06959879584610462,
+            "teacher_energy": 0.5501949563622475,
+            "normalized_error": 0.12649842576943016,
+            "requests": [
+              {
+                "request_id": "validation:single_split",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.03479939792305231,
+                "teacher_energy": 0.27509747818112373,
+                "normalized_error": 0.12649842576943016,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 1.0102987289428711e-05,
+                    "teacher_energy": 0.15977248921990395,
+                    "normalized_error": 6.323358507310602e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 1.0102987289428711e-05,
+                      "teacher_energy": 0.15977248921990395,
+                      "normalized_error": 6.323358507310602e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 1.0102987289428711e-05,
+                        "teacher_energy": 0.15977248921990395,
+                        "normalized_error": 6.323358507310602e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.03478929493576288,
+                    "teacher_energy": 0.11532498896121979,
+                    "normalized_error": 0.3016631109105195,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.03478929493576288,
+                      "teacher_energy": 0.11532498896121979,
+                      "normalized_error": 0.3016631109105195
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.03478929493576288,
+                        "teacher_energy": 0.11532498896121979,
+                        "normalized_error": 0.3016631109105195
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "validation:captured_runtime_frames",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.03479939792305231,
+                "teacher_energy": 0.27509747818112373,
+                "normalized_error": 0.12649842576943016,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 1.0102987289428711e-05,
+                    "teacher_energy": 0.15977248921990395,
+                    "normalized_error": 6.323358507310602e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 1.0102987289428711e-05,
+                      "teacher_energy": 0.15977248921990395,
+                      "normalized_error": 6.323358507310602e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 1.0102987289428711e-05,
+                        "teacher_energy": 0.15977248921990395,
+                        "normalized_error": 6.323358507310602e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.03478929493576288,
+                    "teacher_energy": 0.11532498896121979,
+                    "normalized_error": 0.3016631109105195,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.03478929493576288,
+                      "teacher_energy": 0.11532498896121979,
+                      "normalized_error": 0.3016631109105195
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.03478929493576288,
+                        "teacher_energy": 0.11532498896121979,
+                        "normalized_error": 0.3016631109105195
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ]
+          }
+        }
+      },
+      "selected": {
+        "squared_error": 0.01121440944172432,
+        "teacher_energy": 0.5501304013871648,
+        "normalized_error": 0.020385002198473237,
+        "requests": [
+          {
+            "request_id": "validation:single_split",
+            "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+            "squared_error": 0.00560720472086216,
+            "teacher_energy": 0.2750652006935824,
+            "normalized_error": 0.020385002198473237,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 4.68522511813934e-06,
+                "teacher_energy": 0.15970751268329536,
+                "normalized_error": 2.9336285058989537e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 4.68522511813934e-06,
+                  "teacher_energy": 0.15970751268329536,
+                  "normalized_error": 2.9336285058989537e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 4.68522511813934e-06,
+                    "teacher_energy": 0.15970751268329536,
+                    "normalized_error": 2.9336285058989537e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.005602519495744021,
+                "teacher_energy": 0.11535768801028706,
+                "normalized_error": 0.04856650295595742,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.005602519495744021,
+                  "teacher_energy": 0.11535768801028706,
+                  "normalized_error": 0.04856650295595742
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.005602519495744021,
+                    "teacher_energy": 0.11535768801028706,
+                    "normalized_error": 0.04856650295595742
+                  }
+                ]
+              }
+            ],
+            "partition": "single_split"
+          },
+          {
+            "request_id": "validation:captured_runtime_frames",
+            "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+            "squared_error": 0.00560720472086216,
+            "teacher_energy": 0.2750652006935824,
+            "normalized_error": 0.020385002198473237,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 4.68522511813934e-06,
+                "teacher_energy": 0.15970751268329536,
+                "normalized_error": 2.9336285058989537e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 4.68522511813934e-06,
+                  "teacher_energy": 0.15970751268329536,
+                  "normalized_error": 2.9336285058989537e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 4.68522511813934e-06,
+                    "teacher_energy": 0.15970751268329536,
+                    "normalized_error": 2.9336285058989537e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.005602519495744021,
+                "teacher_energy": 0.11535768801028706,
+                "normalized_error": 0.04856650295595742,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.005602519495744021,
+                  "teacher_energy": 0.11535768801028706,
+                  "normalized_error": 0.04856650295595742
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.005602519495744021,
+                    "teacher_energy": 0.11535768801028706,
+                    "normalized_error": 0.04856650295595742
+                  }
+                ]
+              }
+            ],
+            "partition": "captured_runtime_frames"
+          }
+        ],
+        "projection_checks": {
+          "bf16_output": {
+            "squared_error": 0.011148329197745,
+            "teacher_energy": 0.5502064755419269,
+            "normalized_error": 0.020262082860374245,
+            "requests": [
+              {
+                "request_id": "validation:single_split",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.0055741645988725,
+                "teacher_energy": 0.27510323777096346,
+                "normalized_error": 0.020262082860374245,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 4.105502739548683e-06,
+                    "teacher_energy": 0.15971367177553475,
+                    "normalized_error": 2.570539324472266e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 4.105502739548683e-06,
+                      "teacher_energy": 0.15971367177553475,
+                      "normalized_error": 2.570539324472266e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 4.105502739548683e-06,
+                        "teacher_energy": 0.15971367177553475,
+                        "normalized_error": 2.570539324472266e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.005570059096132951,
+                    "teacher_energy": 0.11538956599542871,
+                    "normalized_error": 0.04827177438516075,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.005570059096132951,
+                      "teacher_energy": 0.11538956599542871,
+                      "normalized_error": 0.04827177438516075
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.005570059096132951,
+                        "teacher_energy": 0.11538956599542871,
+                        "normalized_error": 0.04827177438516075
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "validation:captured_runtime_frames",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.0055741645988725,
+                "teacher_energy": 0.27510323777096346,
+                "normalized_error": 0.020262082860374245,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 4.105502739548683e-06,
+                    "teacher_energy": 0.15971367177553475,
+                    "normalized_error": 2.570539324472266e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 4.105502739548683e-06,
+                      "teacher_energy": 0.15971367177553475,
+                      "normalized_error": 2.570539324472266e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 4.105502739548683e-06,
+                        "teacher_energy": 0.15971367177553475,
+                        "normalized_error": 2.570539324472266e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.005570059096132951,
+                    "teacher_energy": 0.11538956599542871,
+                    "normalized_error": 0.04827177438516075,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.005570059096132951,
+                      "teacher_energy": 0.11538956599542871,
+                      "normalized_error": 0.04827177438516075
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.005570059096132951,
+                        "teacher_energy": 0.11538956599542871,
+                        "normalized_error": 0.04827177438516075
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ]
+          },
+          "bf16_rank_output": {
+            "squared_error": 0.011172140017151833,
+            "teacher_energy": 0.5501949563622475,
+            "normalized_error": 0.020305784136988914,
+            "requests": [
+              {
+                "request_id": "validation:single_split",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.005586070008575916,
+                "teacher_energy": 0.27509747818112373,
+                "normalized_error": 0.020305784136988914,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 6.489455699920654e-06,
+                    "teacher_energy": 0.15977248921990395,
+                    "normalized_error": 4.0616852948875624e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 6.489455699920654e-06,
+                      "teacher_energy": 0.15977248921990395,
+                      "normalized_error": 4.0616852948875624e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 6.489455699920654e-06,
+                        "teacher_energy": 0.15977248921990395,
+                        "normalized_error": 4.0616852948875624e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.005579580552875996,
+                    "teacher_energy": 0.11532498896121979,
+                    "normalized_error": 0.048381366459547076,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.005579580552875996,
+                      "teacher_energy": 0.11532498896121979,
+                      "normalized_error": 0.048381366459547076
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.005579580552875996,
+                        "teacher_energy": 0.11532498896121979,
+                        "normalized_error": 0.048381366459547076
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "validation:captured_runtime_frames",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.005586070008575916,
+                "teacher_energy": 0.27509747818112373,
+                "normalized_error": 0.020305784136988914,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 6.489455699920654e-06,
+                    "teacher_energy": 0.15977248921990395,
+                    "normalized_error": 4.0616852948875624e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 6.489455699920654e-06,
+                      "teacher_energy": 0.15977248921990395,
+                      "normalized_error": 4.0616852948875624e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 6.489455699920654e-06,
+                        "teacher_energy": 0.15977248921990395,
+                        "normalized_error": 4.0616852948875624e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.005579580552875996,
+                    "teacher_energy": 0.11532498896121979,
+                    "normalized_error": 0.048381366459547076,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.005579580552875996,
+                      "teacher_energy": 0.11532498896121979,
+                      "normalized_error": 0.048381366459547076
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.005579580552875996,
+                        "teacher_energy": 0.11532498896121979,
+                        "normalized_error": 0.048381366459547076
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "test": {
+      "baseline": {
+        "squared_error": 0.14021396856667873,
+        "teacher_energy": 0.4108824506790812,
+        "normalized_error": 0.3412508086800537,
+        "requests": [
+          {
+            "request_id": "test:single_split",
+            "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+            "squared_error": 0.07010698428333936,
+            "teacher_energy": 0.2054412253395406,
+            "normalized_error": 0.3412508086800537,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 6.598466204843197e-06,
+                "teacher_energy": 0.13038642552895635,
+                "normalized_error": 5.06070028231413e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 6.598466204843197e-06,
+                  "teacher_energy": 0.13038642552895635,
+                  "normalized_error": 5.06070028231413e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 6.598466204843197e-06,
+                    "teacher_energy": 0.13038642552895635,
+                    "normalized_error": 5.06070028231413e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.07010038581713451,
+                "teacher_energy": 0.07505479981058424,
+                "normalized_error": 0.9339893783481779,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.07010038581713451,
+                  "teacher_energy": 0.07505479981058424,
+                  "normalized_error": 0.9339893783481779
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.07010038581713451,
+                    "teacher_energy": 0.07505479981058424,
+                    "normalized_error": 0.9339893783481779
+                  }
+                ]
+              }
+            ],
+            "partition": "single_split"
+          },
+          {
+            "request_id": "test:captured_runtime_frames",
+            "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+            "squared_error": 0.07010698428333936,
+            "teacher_energy": 0.2054412253395406,
+            "normalized_error": 0.3412508086800537,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 6.598466204843197e-06,
+                "teacher_energy": 0.13038642552895635,
+                "normalized_error": 5.06070028231413e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 6.598466204843197e-06,
+                  "teacher_energy": 0.13038642552895635,
+                  "normalized_error": 5.06070028231413e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 6.598466204843197e-06,
+                    "teacher_energy": 0.13038642552895635,
+                    "normalized_error": 5.06070028231413e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.07010038581713451,
+                "teacher_energy": 0.07505479981058424,
+                "normalized_error": 0.9339893783481779,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.07010038581713451,
+                  "teacher_energy": 0.07505479981058424,
+                  "normalized_error": 0.9339893783481779
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.07010038581713451,
+                    "teacher_energy": 0.07505479981058424,
+                    "normalized_error": 0.9339893783481779
+                  }
+                ]
+              }
+            ],
+            "partition": "captured_runtime_frames"
+          }
+        ],
+        "projection_checks": {
+          "bf16_output": {
+            "squared_error": 0.14046056373626925,
+            "teacher_energy": 0.4110684242332354,
+            "normalized_error": 0.34169631004441625,
+            "requests": [
+              {
+                "request_id": "test:single_split",
+                "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+                "squared_error": 0.07023028186813463,
+                "teacher_energy": 0.2055342121166177,
+                "normalized_error": 0.34169631004441625,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 7.537717465311289e-06,
+                    "teacher_energy": 0.1303774393745698,
+                    "normalized_error": 5.7814584344272106e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 7.537717465311289e-06,
+                      "teacher_energy": 0.1303774393745698,
+                      "normalized_error": 5.7814584344272106e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 7.537717465311289e-06,
+                        "teacher_energy": 0.1303774393745698,
+                        "normalized_error": 5.7814584344272106e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.07022274415066931,
+                    "teacher_energy": 0.0751567727420479,
+                    "normalized_error": 0.9343501801452665,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.07022274415066931,
+                      "teacher_energy": 0.0751567727420479,
+                      "normalized_error": 0.9343501801452665
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.07022274415066931,
+                        "teacher_energy": 0.0751567727420479,
+                        "normalized_error": 0.9343501801452665
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "test:captured_runtime_frames",
+                "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+                "squared_error": 0.07023028186813463,
+                "teacher_energy": 0.2055342121166177,
+                "normalized_error": 0.34169631004441625,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 7.537717465311289e-06,
+                    "teacher_energy": 0.1303774393745698,
+                    "normalized_error": 5.7814584344272106e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 7.537717465311289e-06,
+                      "teacher_energy": 0.1303774393745698,
+                      "normalized_error": 5.7814584344272106e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 7.537717465311289e-06,
+                        "teacher_energy": 0.1303774393745698,
+                        "normalized_error": 5.7814584344272106e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.07022274415066931,
+                    "teacher_energy": 0.0751567727420479,
+                    "normalized_error": 0.9343501801452665,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.07022274415066931,
+                      "teacher_energy": 0.0751567727420479,
+                      "normalized_error": 0.9343501801452665
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.07022274415066931,
+                        "teacher_energy": 0.0751567727420479,
+                        "normalized_error": 0.9343501801452665
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ]
+          },
+          "bf16_rank_output": {
+            "squared_error": 0.14027581195841776,
+            "teacher_energy": 0.41095322743058205,
+            "normalized_error": 0.3413425241492064,
+            "requests": [
+              {
+                "request_id": "test:single_split",
+                "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+                "squared_error": 0.07013790597920888,
+                "teacher_energy": 0.20547661371529102,
+                "normalized_error": 0.3413425241492064,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 6.989575922489166e-06,
+                    "teacher_energy": 0.1303431550040841,
+                    "normalized_error": 5.362441872969975e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 6.989575922489166e-06,
+                      "teacher_energy": 0.1303431550040841,
+                      "normalized_error": 5.362441872969975e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 6.989575922489166e-06,
+                        "teacher_energy": 0.1303431550040841,
+                        "normalized_error": 5.362441872969975e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.07013091640328639,
+                    "teacher_energy": 0.07513345871120691,
+                    "normalized_error": 0.9334179153504837,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.07013091640328639,
+                      "teacher_energy": 0.07513345871120691,
+                      "normalized_error": 0.9334179153504837
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.07013091640328639,
+                        "teacher_energy": 0.07513345871120691,
+                        "normalized_error": 0.9334179153504837
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "test:captured_runtime_frames",
+                "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+                "squared_error": 0.07013790597920888,
+                "teacher_energy": 0.20547661371529102,
+                "normalized_error": 0.3413425241492064,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 6.989575922489166e-06,
+                    "teacher_energy": 0.1303431550040841,
+                    "normalized_error": 5.362441872969975e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 6.989575922489166e-06,
+                      "teacher_energy": 0.1303431550040841,
+                      "normalized_error": 5.362441872969975e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 6.989575922489166e-06,
+                        "teacher_energy": 0.1303431550040841,
+                        "normalized_error": 5.362441872969975e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.07013091640328639,
+                    "teacher_energy": 0.07513345871120691,
+                    "normalized_error": 0.9334179153504837,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.07013091640328639,
+                      "teacher_energy": 0.07513345871120691,
+                      "normalized_error": 0.9334179153504837
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.07013091640328639,
+                        "teacher_energy": 0.07513345871120691,
+                        "normalized_error": 0.9334179153504837
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ]
+          }
+        }
+      },
+      "selected": {
+        "squared_error": 0.013701896856078335,
+        "teacher_energy": 0.4108824506790812,
+        "normalized_error": 0.033347486205440716,
+        "requests": [
+          {
+            "request_id": "test:single_split",
+            "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+            "squared_error": 0.006850948428039167,
+            "teacher_energy": 0.2054412253395406,
+            "normalized_error": 0.033347486205440716,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 7.663194286805161e-06,
+                "teacher_energy": 0.13038642552895635,
+                "normalized_error": 5.8772945540280275e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 7.663194286805161e-06,
+                  "teacher_energy": 0.13038642552895635,
+                  "normalized_error": 5.8772945540280275e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 7.663194286805161e-06,
+                    "teacher_energy": 0.13038642552895635,
+                    "normalized_error": 5.8772945540280275e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.006843285233752362,
+                "teacher_energy": 0.07505479981058424,
+                "normalized_error": 0.09117718321843184,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.006843285233752362,
+                  "teacher_energy": 0.07505479981058424,
+                  "normalized_error": 0.09117718321843184
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.006843285233752362,
+                    "teacher_energy": 0.07505479981058424,
+                    "normalized_error": 0.09117718321843184
+                  }
+                ]
+              }
+            ],
+            "partition": "single_split"
+          },
+          {
+            "request_id": "test:captured_runtime_frames",
+            "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+            "squared_error": 0.006850948428039167,
+            "teacher_energy": 0.2054412253395406,
+            "normalized_error": 0.033347486205440716,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 7.663194286805161e-06,
+                "teacher_energy": 0.13038642552895635,
+                "normalized_error": 5.8772945540280275e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 7.663194286805161e-06,
+                  "teacher_energy": 0.13038642552895635,
+                  "normalized_error": 5.8772945540280275e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 7.663194286805161e-06,
+                    "teacher_energy": 0.13038642552895635,
+                    "normalized_error": 5.8772945540280275e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.006843285233752362,
+                "teacher_energy": 0.07505479981058424,
+                "normalized_error": 0.09117718321843184,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.006843285233752362,
+                  "teacher_energy": 0.07505479981058424,
+                  "normalized_error": 0.09117718321843184
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.006843285233752362,
+                    "teacher_energy": 0.07505479981058424,
+                    "normalized_error": 0.09117718321843184
+                  }
+                ]
+              }
+            ],
+            "partition": "captured_runtime_frames"
+          }
+        ],
+        "projection_checks": {
+          "bf16_output": {
+            "squared_error": 0.013748521829256788,
+            "teacher_energy": 0.4110684242332354,
+            "normalized_error": 0.03344582317384718,
+            "requests": [
+              {
+                "request_id": "test:single_split",
+                "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+                "squared_error": 0.006874260914628394,
+                "teacher_energy": 0.2055342121166177,
+                "normalized_error": 0.03344582317384718,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 9.301351383328438e-06,
+                    "teacher_energy": 0.1303774393745698,
+                    "normalized_error": 7.134172467221099e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 9.301351383328438e-06,
+                      "teacher_energy": 0.1303774393745698,
+                      "normalized_error": 7.134172467221099e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 9.301351383328438e-06,
+                        "teacher_energy": 0.1303774393745698,
+                        "normalized_error": 7.134172467221099e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.0068649595632450655,
+                    "teacher_energy": 0.0751567727420479,
+                    "normalized_error": 0.0913418619876999,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.0068649595632450655,
+                      "teacher_energy": 0.0751567727420479,
+                      "normalized_error": 0.0913418619876999
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.0068649595632450655,
+                        "teacher_energy": 0.0751567727420479,
+                        "normalized_error": 0.0913418619876999
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "test:captured_runtime_frames",
+                "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+                "squared_error": 0.006874260914628394,
+                "teacher_energy": 0.2055342121166177,
+                "normalized_error": 0.03344582317384718,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 9.301351383328438e-06,
+                    "teacher_energy": 0.1303774393745698,
+                    "normalized_error": 7.134172467221099e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 9.301351383328438e-06,
+                      "teacher_energy": 0.1303774393745698,
+                      "normalized_error": 7.134172467221099e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 9.301351383328438e-06,
+                        "teacher_energy": 0.1303774393745698,
+                        "normalized_error": 7.134172467221099e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.0068649595632450655,
+                    "teacher_energy": 0.0751567727420479,
+                    "normalized_error": 0.0913418619876999,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.0068649595632450655,
+                      "teacher_energy": 0.0751567727420479,
+                      "normalized_error": 0.0913418619876999
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.0068649595632450655,
+                        "teacher_energy": 0.0751567727420479,
+                        "normalized_error": 0.0913418619876999
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ]
+          },
+          "bf16_rank_output": {
+            "squared_error": 0.013740764930844307,
+            "teacher_energy": 0.41095322743058205,
+            "normalized_error": 0.03343632319608778,
+            "requests": [
+              {
+                "request_id": "test:single_split",
+                "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+                "squared_error": 0.0068703824654221535,
+                "teacher_energy": 0.20547661371529102,
+                "normalized_error": 0.03343632319608778,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 7.588416337966919e-06,
+                    "teacher_energy": 0.1303431550040841,
+                    "normalized_error": 5.821875600394319e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 7.588416337966919e-06,
+                      "teacher_energy": 0.1303431550040841,
+                      "normalized_error": 5.821875600394319e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 7.588416337966919e-06,
+                        "teacher_energy": 0.1303431550040841,
+                        "normalized_error": 5.821875600394319e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.0068627940490841866,
+                    "teacher_energy": 0.07513345871120691,
+                    "normalized_error": 0.09134138327722868,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.0068627940490841866,
+                      "teacher_energy": 0.07513345871120691,
+                      "normalized_error": 0.09134138327722868
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.0068627940490841866,
+                        "teacher_energy": 0.07513345871120691,
+                        "normalized_error": 0.09134138327722868
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "test:captured_runtime_frames",
+                "sample_sha256": "54fde7ea3c3a74dea49d2e5865c800dab5ef4da9a4f3b10f1d3fbd789df9cf60",
+                "squared_error": 0.0068703824654221535,
+                "teacher_energy": 0.20547661371529102,
+                "normalized_error": 0.03343632319608778,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 7.588416337966919e-06,
+                    "teacher_energy": 0.1303431550040841,
+                    "normalized_error": 5.821875600394319e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 7.588416337966919e-06,
+                      "teacher_energy": 0.1303431550040841,
+                      "normalized_error": 5.821875600394319e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 7.588416337966919e-06,
+                        "teacher_energy": 0.1303431550040841,
+                        "normalized_error": 5.821875600394319e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.0068627940490841866,
+                    "teacher_energy": 0.07513345871120691,
+                    "normalized_error": 0.09134138327722868,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.0068627940490841866,
+                      "teacher_energy": 0.07513345871120691,
+                      "normalized_error": 0.09134138327722868
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.0068627940490841866,
+                        "teacher_energy": 0.07513345871120691,
+                        "normalized_error": 0.09134138327722868
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "shared_layer_selection": {
+      "method": "shared_existing_v_checkpoints_v1",
+      "accepted": true,
+      "test_used_for_selection": false,
+      "proposal": {
+        "squared_error": 0.00845801332854305,
+        "teacher_energy": 0.5501304013871648,
+        "normalized_error": 0.015374560844512502,
+        "requests": [
+          {
+            "request_id": "validation:single_split",
+            "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+            "squared_error": 0.004229006664271525,
+            "teacher_energy": 0.2750652006935824,
+            "normalized_error": 0.015374560844512502,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 1.2734340773314437e-05,
+                "teacher_energy": 0.15970751268329536,
+                "normalized_error": 7.973538977197024e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 1.2734340773314437e-05,
+                  "teacher_energy": 0.15970751268329536,
+                  "normalized_error": 7.973538977197024e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 1.2734340773314437e-05,
+                    "teacher_energy": 0.15970751268329536,
+                    "normalized_error": 7.973538977197024e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.004216272323498211,
+                "teacher_energy": 0.11535768801028706,
+                "normalized_error": 0.03654955639473481,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.004216272323498211,
+                  "teacher_energy": 0.11535768801028706,
+                  "normalized_error": 0.03654955639473481
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.004216272323498211,
+                    "teacher_energy": 0.11535768801028706,
+                    "normalized_error": 0.03654955639473481
+                  }
+                ]
+              }
+            ],
+            "partition": "single_split"
+          },
+          {
+            "request_id": "validation:captured_runtime_frames",
+            "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+            "squared_error": 0.004229006664271525,
+            "teacher_energy": 0.2750652006935824,
+            "normalized_error": 0.015374560844512502,
+            "frames": [
+              {
+                "frame_id": 0,
+                "context": 0,
+                "current_end": 512,
+                "query_positions": [
+                  511
+                ],
+                "squared_error": 1.2734340773314437e-05,
+                "teacher_energy": 0.15970751268329536,
+                "normalized_error": 7.973538977197024e-05,
+                "terminal_query": {
+                  "position": 511,
+                  "squared_error": 1.2734340773314437e-05,
+                  "teacher_energy": 0.15970751268329536,
+                  "normalized_error": 7.973538977197024e-05
+                },
+                "queries": [
+                  {
+                    "position": 511,
+                    "squared_error": 1.2734340773314437e-05,
+                    "teacher_energy": 0.15970751268329536,
+                    "normalized_error": 7.973538977197024e-05
+                  }
+                ]
+              },
+              {
+                "frame_id": 1,
+                "context": 512,
+                "current_end": 620,
+                "query_positions": [
+                  619
+                ],
+                "squared_error": 0.004216272323498211,
+                "teacher_energy": 0.11535768801028706,
+                "normalized_error": 0.03654955639473481,
+                "terminal_query": {
+                  "position": 619,
+                  "squared_error": 0.004216272323498211,
+                  "teacher_energy": 0.11535768801028706,
+                  "normalized_error": 0.03654955639473481
+                },
+                "queries": [
+                  {
+                    "position": 619,
+                    "squared_error": 0.004216272323498211,
+                    "teacher_energy": 0.11535768801028706,
+                    "normalized_error": 0.03654955639473481
+                  }
+                ]
+              }
+            ],
+            "partition": "captured_runtime_frames"
+          }
+        ],
+        "projection_checks": {
+          "bf16_output": {
+            "squared_error": 0.008462976780720055,
+            "teacher_energy": 0.5502064755419269,
+            "normalized_error": 0.015381456156771747,
+            "requests": [
+              {
+                "request_id": "validation:single_split",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.0042314883903600276,
+                "teacher_energy": 0.27510323777096346,
+                "normalized_error": 0.015381456156771747,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 1.259753480553627e-05,
+                    "teacher_energy": 0.15971367177553475,
+                    "normalized_error": 7.887574473424626e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 1.259753480553627e-05,
+                      "teacher_energy": 0.15971367177553475,
+                      "normalized_error": 7.887574473424626e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 1.259753480553627e-05,
+                        "teacher_energy": 0.15971367177553475,
+                        "normalized_error": 7.887574473424626e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.004218890855554491,
+                    "teacher_energy": 0.11538956599542871,
+                    "normalized_error": 0.03656215203826685,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.004218890855554491,
+                      "teacher_energy": 0.11538956599542871,
+                      "normalized_error": 0.03656215203826685
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.004218890855554491,
+                        "teacher_energy": 0.11538956599542871,
+                        "normalized_error": 0.03656215203826685
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "validation:captured_runtime_frames",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.0042314883903600276,
+                "teacher_energy": 0.27510323777096346,
+                "normalized_error": 0.015381456156771747,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 1.259753480553627e-05,
+                    "teacher_energy": 0.15971367177553475,
+                    "normalized_error": 7.887574473424626e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 1.259753480553627e-05,
+                      "teacher_energy": 0.15971367177553475,
+                      "normalized_error": 7.887574473424626e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 1.259753480553627e-05,
+                        "teacher_energy": 0.15971367177553475,
+                        "normalized_error": 7.887574473424626e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.004218890855554491,
+                    "teacher_energy": 0.11538956599542871,
+                    "normalized_error": 0.03656215203826685,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.004218890855554491,
+                      "teacher_energy": 0.11538956599542871,
+                      "normalized_error": 0.03656215203826685
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.004218890855554491,
+                        "teacher_energy": 0.11538956599542871,
+                        "normalized_error": 0.03656215203826685
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ]
+          },
+          "bf16_rank_output": {
+            "squared_error": 0.008494876325130463,
+            "teacher_energy": 0.5501949563622475,
+            "normalized_error": 0.015439756811470024,
+            "requests": [
+              {
+                "request_id": "validation:single_split",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.004247438162565231,
+                "teacher_energy": 0.27509747818112373,
+                "normalized_error": 0.015439756811470024,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 1.253560185432434e-05,
+                    "teacher_energy": 0.15977248921990395,
+                    "normalized_error": 7.845907587426319e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 1.253560185432434e-05,
+                      "teacher_energy": 0.15977248921990395,
+                      "normalized_error": 7.845907587426319e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 1.253560185432434e-05,
+                        "teacher_energy": 0.15977248921990395,
+                        "normalized_error": 7.845907587426319e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.004234902560710907,
+                    "teacher_energy": 0.11532498896121979,
+                    "normalized_error": 0.036721465129599735,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.004234902560710907,
+                      "teacher_energy": 0.11532498896121979,
+                      "normalized_error": 0.036721465129599735
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.004234902560710907,
+                        "teacher_energy": 0.11532498896121979,
+                        "normalized_error": 0.036721465129599735
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "validation:captured_runtime_frames",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.004247438162565231,
+                "teacher_energy": 0.27509747818112373,
+                "normalized_error": 0.015439756811470024,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 1.253560185432434e-05,
+                    "teacher_energy": 0.15977248921990395,
+                    "normalized_error": 7.845907587426319e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 1.253560185432434e-05,
+                      "teacher_energy": 0.15977248921990395,
+                      "normalized_error": 7.845907587426319e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 1.253560185432434e-05,
+                        "teacher_energy": 0.15977248921990395,
+                        "normalized_error": 7.845907587426319e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.004234902560710907,
+                    "teacher_energy": 0.11532498896121979,
+                    "normalized_error": 0.036721465129599735,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.004234902560710907,
+                      "teacher_energy": 0.11532498896121979,
+                      "normalized_error": 0.036721465129599735
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.004234902560710907,
+                        "teacher_energy": 0.11532498896121979,
+                        "normalized_error": 0.036721465129599735
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ]
+          }
+        }
+      },
+      "candidate_order": "primary_then_proxy_loss_then_step_first_nonworse",
+      "max_candidates": 6,
+      "selected_candidate": "v_step_0",
+      "evaluated_candidates": [
+        {
+          "candidate": "primary",
+          "accepted": false,
+          "constants_sha256": "641a04cac27d38e5c6de4245b1b4e8b79e2b74cbc5f60848cf5753b1a1cea15c",
+          "validation": {
+            "squared_error": 0.00845801332854305,
+            "teacher_energy": 0.5501304013871648,
+            "normalized_error": 0.015374560844512502,
+            "requests": [
+              {
+                "request_id": "validation:single_split",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.004229006664271525,
+                "teacher_energy": 0.2750652006935824,
+                "normalized_error": 0.015374560844512502,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 1.2734340773314437e-05,
+                    "teacher_energy": 0.15970751268329536,
+                    "normalized_error": 7.973538977197024e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 1.2734340773314437e-05,
+                      "teacher_energy": 0.15970751268329536,
+                      "normalized_error": 7.973538977197024e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 1.2734340773314437e-05,
+                        "teacher_energy": 0.15970751268329536,
+                        "normalized_error": 7.973538977197024e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.004216272323498211,
+                    "teacher_energy": 0.11535768801028706,
+                    "normalized_error": 0.03654955639473481,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.004216272323498211,
+                      "teacher_energy": 0.11535768801028706,
+                      "normalized_error": 0.03654955639473481
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.004216272323498211,
+                        "teacher_energy": 0.11535768801028706,
+                        "normalized_error": 0.03654955639473481
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "validation:captured_runtime_frames",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.004229006664271525,
+                "teacher_energy": 0.2750652006935824,
+                "normalized_error": 0.015374560844512502,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 1.2734340773314437e-05,
+                    "teacher_energy": 0.15970751268329536,
+                    "normalized_error": 7.973538977197024e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 1.2734340773314437e-05,
+                      "teacher_energy": 0.15970751268329536,
+                      "normalized_error": 7.973538977197024e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 1.2734340773314437e-05,
+                        "teacher_energy": 0.15970751268329536,
+                        "normalized_error": 7.973538977197024e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.004216272323498211,
+                    "teacher_energy": 0.11535768801028706,
+                    "normalized_error": 0.03654955639473481,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.004216272323498211,
+                      "teacher_energy": 0.11535768801028706,
+                      "normalized_error": 0.03654955639473481
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.004216272323498211,
+                        "teacher_energy": 0.11535768801028706,
+                        "normalized_error": 0.03654955639473481
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ],
+            "projection_checks": {
+              "bf16_output": {
+                "squared_error": 0.008462976780720055,
+                "teacher_energy": 0.5502064755419269,
+                "normalized_error": 0.015381456156771747,
+                "requests": [
+                  {
+                    "request_id": "validation:single_split",
+                    "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                    "squared_error": 0.0042314883903600276,
+                    "teacher_energy": 0.27510323777096346,
+                    "normalized_error": 0.015381456156771747,
+                    "frames": [
+                      {
+                        "frame_id": 0,
+                        "context": 0,
+                        "current_end": 512,
+                        "query_positions": [
+                          511
+                        ],
+                        "squared_error": 1.259753480553627e-05,
+                        "teacher_energy": 0.15971367177553475,
+                        "normalized_error": 7.887574473424626e-05,
+                        "terminal_query": {
+                          "position": 511,
+                          "squared_error": 1.259753480553627e-05,
+                          "teacher_energy": 0.15971367177553475,
+                          "normalized_error": 7.887574473424626e-05
+                        },
+                        "queries": [
+                          {
+                            "position": 511,
+                            "squared_error": 1.259753480553627e-05,
+                            "teacher_energy": 0.15971367177553475,
+                            "normalized_error": 7.887574473424626e-05
+                          }
+                        ]
+                      },
+                      {
+                        "frame_id": 1,
+                        "context": 512,
+                        "current_end": 620,
+                        "query_positions": [
+                          619
+                        ],
+                        "squared_error": 0.004218890855554491,
+                        "teacher_energy": 0.11538956599542871,
+                        "normalized_error": 0.03656215203826685,
+                        "terminal_query": {
+                          "position": 619,
+                          "squared_error": 0.004218890855554491,
+                          "teacher_energy": 0.11538956599542871,
+                          "normalized_error": 0.03656215203826685
+                        },
+                        "queries": [
+                          {
+                            "position": 619,
+                            "squared_error": 0.004218890855554491,
+                            "teacher_energy": 0.11538956599542871,
+                            "normalized_error": 0.03656215203826685
+                          }
+                        ]
+                      }
+                    ],
+                    "partition": "single_split"
+                  },
+                  {
+                    "request_id": "validation:captured_runtime_frames",
+                    "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                    "squared_error": 0.0042314883903600276,
+                    "teacher_energy": 0.27510323777096346,
+                    "normalized_error": 0.015381456156771747,
+                    "frames": [
+                      {
+                        "frame_id": 0,
+                        "context": 0,
+                        "current_end": 512,
+                        "query_positions": [
+                          511
+                        ],
+                        "squared_error": 1.259753480553627e-05,
+                        "teacher_energy": 0.15971367177553475,
+                        "normalized_error": 7.887574473424626e-05,
+                        "terminal_query": {
+                          "position": 511,
+                          "squared_error": 1.259753480553627e-05,
+                          "teacher_energy": 0.15971367177553475,
+                          "normalized_error": 7.887574473424626e-05
+                        },
+                        "queries": [
+                          {
+                            "position": 511,
+                            "squared_error": 1.259753480553627e-05,
+                            "teacher_energy": 0.15971367177553475,
+                            "normalized_error": 7.887574473424626e-05
+                          }
+                        ]
+                      },
+                      {
+                        "frame_id": 1,
+                        "context": 512,
+                        "current_end": 620,
+                        "query_positions": [
+                          619
+                        ],
+                        "squared_error": 0.004218890855554491,
+                        "teacher_energy": 0.11538956599542871,
+                        "normalized_error": 0.03656215203826685,
+                        "terminal_query": {
+                          "position": 619,
+                          "squared_error": 0.004218890855554491,
+                          "teacher_energy": 0.11538956599542871,
+                          "normalized_error": 0.03656215203826685
+                        },
+                        "queries": [
+                          {
+                            "position": 619,
+                            "squared_error": 0.004218890855554491,
+                            "teacher_energy": 0.11538956599542871,
+                            "normalized_error": 0.03656215203826685
+                          }
+                        ]
+                      }
+                    ],
+                    "partition": "captured_runtime_frames"
+                  }
+                ]
+              },
+              "bf16_rank_output": {
+                "squared_error": 0.008494876325130463,
+                "teacher_energy": 0.5501949563622475,
+                "normalized_error": 0.015439756811470024,
+                "requests": [
+                  {
+                    "request_id": "validation:single_split",
+                    "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                    "squared_error": 0.004247438162565231,
+                    "teacher_energy": 0.27509747818112373,
+                    "normalized_error": 0.015439756811470024,
+                    "frames": [
+                      {
+                        "frame_id": 0,
+                        "context": 0,
+                        "current_end": 512,
+                        "query_positions": [
+                          511
+                        ],
+                        "squared_error": 1.253560185432434e-05,
+                        "teacher_energy": 0.15977248921990395,
+                        "normalized_error": 7.845907587426319e-05,
+                        "terminal_query": {
+                          "position": 511,
+                          "squared_error": 1.253560185432434e-05,
+                          "teacher_energy": 0.15977248921990395,
+                          "normalized_error": 7.845907587426319e-05
+                        },
+                        "queries": [
+                          {
+                            "position": 511,
+                            "squared_error": 1.253560185432434e-05,
+                            "teacher_energy": 0.15977248921990395,
+                            "normalized_error": 7.845907587426319e-05
+                          }
+                        ]
+                      },
+                      {
+                        "frame_id": 1,
+                        "context": 512,
+                        "current_end": 620,
+                        "query_positions": [
+                          619
+                        ],
+                        "squared_error": 0.004234902560710907,
+                        "teacher_energy": 0.11532498896121979,
+                        "normalized_error": 0.036721465129599735,
+                        "terminal_query": {
+                          "position": 619,
+                          "squared_error": 0.004234902560710907,
+                          "teacher_energy": 0.11532498896121979,
+                          "normalized_error": 0.036721465129599735
+                        },
+                        "queries": [
+                          {
+                            "position": 619,
+                            "squared_error": 0.004234902560710907,
+                            "teacher_energy": 0.11532498896121979,
+                            "normalized_error": 0.036721465129599735
+                          }
+                        ]
+                      }
+                    ],
+                    "partition": "single_split"
+                  },
+                  {
+                    "request_id": "validation:captured_runtime_frames",
+                    "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                    "squared_error": 0.004247438162565231,
+                    "teacher_energy": 0.27509747818112373,
+                    "normalized_error": 0.015439756811470024,
+                    "frames": [
+                      {
+                        "frame_id": 0,
+                        "context": 0,
+                        "current_end": 512,
+                        "query_positions": [
+                          511
+                        ],
+                        "squared_error": 1.253560185432434e-05,
+                        "teacher_energy": 0.15977248921990395,
+                        "normalized_error": 7.845907587426319e-05,
+                        "terminal_query": {
+                          "position": 511,
+                          "squared_error": 1.253560185432434e-05,
+                          "teacher_energy": 0.15977248921990395,
+                          "normalized_error": 7.845907587426319e-05
+                        },
+                        "queries": [
+                          {
+                            "position": 511,
+                            "squared_error": 1.253560185432434e-05,
+                            "teacher_energy": 0.15977248921990395,
+                            "normalized_error": 7.845907587426319e-05
+                          }
+                        ]
+                      },
+                      {
+                        "frame_id": 1,
+                        "context": 512,
+                        "current_end": 620,
+                        "query_positions": [
+                          619
+                        ],
+                        "squared_error": 0.004234902560710907,
+                        "teacher_energy": 0.11532498896121979,
+                        "normalized_error": 0.036721465129599735,
+                        "terminal_query": {
+                          "position": 619,
+                          "squared_error": 0.004234902560710907,
+                          "teacher_energy": 0.11532498896121979,
+                          "normalized_error": 0.036721465129599735
+                        },
+                        "queries": [
+                          {
+                            "position": 619,
+                            "squared_error": 0.004234902560710907,
+                            "teacher_energy": 0.11532498896121979,
+                            "normalized_error": 0.036721465129599735
+                          }
+                        ]
+                      }
+                    ],
+                    "partition": "captured_runtime_frames"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "candidate": "v_step_0",
+          "step": 0,
+          "proxy_loss": 1.7249270968022756e-05,
+          "constants_sha256": "914e6ae564e4cd0c0783e269263e2a5508824db1061b1b3f82a272332202e4d9",
+          "accepted": true,
+          "validation": {
+            "squared_error": 0.01121440944172432,
+            "teacher_energy": 0.5501304013871648,
+            "normalized_error": 0.020385002198473237,
+            "requests": [
+              {
+                "request_id": "validation:single_split",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.00560720472086216,
+                "teacher_energy": 0.2750652006935824,
+                "normalized_error": 0.020385002198473237,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 4.68522511813934e-06,
+                    "teacher_energy": 0.15970751268329536,
+                    "normalized_error": 2.9336285058989537e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 4.68522511813934e-06,
+                      "teacher_energy": 0.15970751268329536,
+                      "normalized_error": 2.9336285058989537e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 4.68522511813934e-06,
+                        "teacher_energy": 0.15970751268329536,
+                        "normalized_error": 2.9336285058989537e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.005602519495744021,
+                    "teacher_energy": 0.11535768801028706,
+                    "normalized_error": 0.04856650295595742,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.005602519495744021,
+                      "teacher_energy": 0.11535768801028706,
+                      "normalized_error": 0.04856650295595742
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.005602519495744021,
+                        "teacher_energy": 0.11535768801028706,
+                        "normalized_error": 0.04856650295595742
+                      }
+                    ]
+                  }
+                ],
+                "partition": "single_split"
+              },
+              {
+                "request_id": "validation:captured_runtime_frames",
+                "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                "squared_error": 0.00560720472086216,
+                "teacher_energy": 0.2750652006935824,
+                "normalized_error": 0.020385002198473237,
+                "frames": [
+                  {
+                    "frame_id": 0,
+                    "context": 0,
+                    "current_end": 512,
+                    "query_positions": [
+                      511
+                    ],
+                    "squared_error": 4.68522511813934e-06,
+                    "teacher_energy": 0.15970751268329536,
+                    "normalized_error": 2.9336285058989537e-05,
+                    "terminal_query": {
+                      "position": 511,
+                      "squared_error": 4.68522511813934e-06,
+                      "teacher_energy": 0.15970751268329536,
+                      "normalized_error": 2.9336285058989537e-05
+                    },
+                    "queries": [
+                      {
+                        "position": 511,
+                        "squared_error": 4.68522511813934e-06,
+                        "teacher_energy": 0.15970751268329536,
+                        "normalized_error": 2.9336285058989537e-05
+                      }
+                    ]
+                  },
+                  {
+                    "frame_id": 1,
+                    "context": 512,
+                    "current_end": 620,
+                    "query_positions": [
+                      619
+                    ],
+                    "squared_error": 0.005602519495744021,
+                    "teacher_energy": 0.11535768801028706,
+                    "normalized_error": 0.04856650295595742,
+                    "terminal_query": {
+                      "position": 619,
+                      "squared_error": 0.005602519495744021,
+                      "teacher_energy": 0.11535768801028706,
+                      "normalized_error": 0.04856650295595742
+                    },
+                    "queries": [
+                      {
+                        "position": 619,
+                        "squared_error": 0.005602519495744021,
+                        "teacher_energy": 0.11535768801028706,
+                        "normalized_error": 0.04856650295595742
+                      }
+                    ]
+                  }
+                ],
+                "partition": "captured_runtime_frames"
+              }
+            ],
+            "projection_checks": {
+              "bf16_output": {
+                "squared_error": 0.011148329197745,
+                "teacher_energy": 0.5502064755419269,
+                "normalized_error": 0.020262082860374245,
+                "requests": [
+                  {
+                    "request_id": "validation:single_split",
+                    "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                    "squared_error": 0.0055741645988725,
+                    "teacher_energy": 0.27510323777096346,
+                    "normalized_error": 0.020262082860374245,
+                    "frames": [
+                      {
+                        "frame_id": 0,
+                        "context": 0,
+                        "current_end": 512,
+                        "query_positions": [
+                          511
+                        ],
+                        "squared_error": 4.105502739548683e-06,
+                        "teacher_energy": 0.15971367177553475,
+                        "normalized_error": 2.570539324472266e-05,
+                        "terminal_query": {
+                          "position": 511,
+                          "squared_error": 4.105502739548683e-06,
+                          "teacher_energy": 0.15971367177553475,
+                          "normalized_error": 2.570539324472266e-05
+                        },
+                        "queries": [
+                          {
+                            "position": 511,
+                            "squared_error": 4.105502739548683e-06,
+                            "teacher_energy": 0.15971367177553475,
+                            "normalized_error": 2.570539324472266e-05
+                          }
+                        ]
+                      },
+                      {
+                        "frame_id": 1,
+                        "context": 512,
+                        "current_end": 620,
+                        "query_positions": [
+                          619
+                        ],
+                        "squared_error": 0.005570059096132951,
+                        "teacher_energy": 0.11538956599542871,
+                        "normalized_error": 0.04827177438516075,
+                        "terminal_query": {
+                          "position": 619,
+                          "squared_error": 0.005570059096132951,
+                          "teacher_energy": 0.11538956599542871,
+                          "normalized_error": 0.04827177438516075
+                        },
+                        "queries": [
+                          {
+                            "position": 619,
+                            "squared_error": 0.005570059096132951,
+                            "teacher_energy": 0.11538956599542871,
+                            "normalized_error": 0.04827177438516075
+                          }
+                        ]
+                      }
+                    ],
+                    "partition": "single_split"
+                  },
+                  {
+                    "request_id": "validation:captured_runtime_frames",
+                    "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                    "squared_error": 0.0055741645988725,
+                    "teacher_energy": 0.27510323777096346,
+                    "normalized_error": 0.020262082860374245,
+                    "frames": [
+                      {
+                        "frame_id": 0,
+                        "context": 0,
+                        "current_end": 512,
+                        "query_positions": [
+                          511
+                        ],
+                        "squared_error": 4.105502739548683e-06,
+                        "teacher_energy": 0.15971367177553475,
+                        "normalized_error": 2.570539324472266e-05,
+                        "terminal_query": {
+                          "position": 511,
+                          "squared_error": 4.105502739548683e-06,
+                          "teacher_energy": 0.15971367177553475,
+                          "normalized_error": 2.570539324472266e-05
+                        },
+                        "queries": [
+                          {
+                            "position": 511,
+                            "squared_error": 4.105502739548683e-06,
+                            "teacher_energy": 0.15971367177553475,
+                            "normalized_error": 2.570539324472266e-05
+                          }
+                        ]
+                      },
+                      {
+                        "frame_id": 1,
+                        "context": 512,
+                        "current_end": 620,
+                        "query_positions": [
+                          619
+                        ],
+                        "squared_error": 0.005570059096132951,
+                        "teacher_energy": 0.11538956599542871,
+                        "normalized_error": 0.04827177438516075,
+                        "terminal_query": {
+                          "position": 619,
+                          "squared_error": 0.005570059096132951,
+                          "teacher_energy": 0.11538956599542871,
+                          "normalized_error": 0.04827177438516075
+                        },
+                        "queries": [
+                          {
+                            "position": 619,
+                            "squared_error": 0.005570059096132951,
+                            "teacher_energy": 0.11538956599542871,
+                            "normalized_error": 0.04827177438516075
+                          }
+                        ]
+                      }
+                    ],
+                    "partition": "captured_runtime_frames"
+                  }
+                ]
+              },
+              "bf16_rank_output": {
+                "squared_error": 0.011172140017151833,
+                "teacher_energy": 0.5501949563622475,
+                "normalized_error": 0.020305784136988914,
+                "requests": [
+                  {
+                    "request_id": "validation:single_split",
+                    "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                    "squared_error": 0.005586070008575916,
+                    "teacher_energy": 0.27509747818112373,
+                    "normalized_error": 0.020305784136988914,
+                    "frames": [
+                      {
+                        "frame_id": 0,
+                        "context": 0,
+                        "current_end": 512,
+                        "query_positions": [
+                          511
+                        ],
+                        "squared_error": 6.489455699920654e-06,
+                        "teacher_energy": 0.15977248921990395,
+                        "normalized_error": 4.0616852948875624e-05,
+                        "terminal_query": {
+                          "position": 511,
+                          "squared_error": 6.489455699920654e-06,
+                          "teacher_energy": 0.15977248921990395,
+                          "normalized_error": 4.0616852948875624e-05
+                        },
+                        "queries": [
+                          {
+                            "position": 511,
+                            "squared_error": 6.489455699920654e-06,
+                            "teacher_energy": 0.15977248921990395,
+                            "normalized_error": 4.0616852948875624e-05
+                          }
+                        ]
+                      },
+                      {
+                        "frame_id": 1,
+                        "context": 512,
+                        "current_end": 620,
+                        "query_positions": [
+                          619
+                        ],
+                        "squared_error": 0.005579580552875996,
+                        "teacher_energy": 0.11532498896121979,
+                        "normalized_error": 0.048381366459547076,
+                        "terminal_query": {
+                          "position": 619,
+                          "squared_error": 0.005579580552875996,
+                          "teacher_energy": 0.11532498896121979,
+                          "normalized_error": 0.048381366459547076
+                        },
+                        "queries": [
+                          {
+                            "position": 619,
+                            "squared_error": 0.005579580552875996,
+                            "teacher_energy": 0.11532498896121979,
+                            "normalized_error": 0.048381366459547076
+                          }
+                        ]
+                      }
+                    ],
+                    "partition": "single_split"
+                  },
+                  {
+                    "request_id": "validation:captured_runtime_frames",
+                    "sample_sha256": "c169a556ed2e579c1800f1e5fea63b3f38b5ae846a2216de6cc3b9b76de6ea89",
+                    "squared_error": 0.005586070008575916,
+                    "teacher_energy": 0.27509747818112373,
+                    "normalized_error": 0.020305784136988914,
+                    "frames": [
+                      {
+                        "frame_id": 0,
+                        "context": 0,
+                        "current_end": 512,
+                        "query_positions": [
+                          511
+                        ],
+                        "squared_error": 6.489455699920654e-06,
+                        "teacher_energy": 0.15977248921990395,
+                        "normalized_error": 4.0616852948875624e-05,
+                        "terminal_query": {
+                          "position": 511,
+                          "squared_error": 6.489455699920654e-06,
+                          "teacher_energy": 0.15977248921990395,
+                          "normalized_error": 4.0616852948875624e-05
+                        },
+                        "queries": [
+                          {
+                            "position": 511,
+                            "squared_error": 6.489455699920654e-06,
+                            "teacher_energy": 0.15977248921990395,
+                            "normalized_error": 4.0616852948875624e-05
+                          }
+                        ]
+                      },
+                      {
+                        "frame_id": 1,
+                        "context": 512,
+                        "current_end": 620,
+                        "query_positions": [
+                          619
+                        ],
+                        "squared_error": 0.005579580552875996,
+                        "teacher_energy": 0.11532498896121979,
+                        "normalized_error": 0.048381366459547076,
+                        "terminal_query": {
+                          "position": 619,
+                          "squared_error": 0.005579580552875996,
+                          "teacher_energy": 0.11532498896121979,
+                          "normalized_error": 0.048381366459547076
+                        },
+                        "queries": [
+                          {
+                            "position": 619,
+                            "squared_error": 0.005579580552875996,
+                            "teacher_energy": 0.11532498896121979,
+                            "normalized_error": 0.048381366459547076
+                          }
+                        ]
+                      }
+                    ],
+                    "partition": "captured_runtime_frames"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "actual_default_80_step_test_status": {
+    "status": "failed",
+    "regressed_layers": [
+      "model.layers.3.self_attn.attn"
+    ]
+  },
+  "passed_gate_but_worse_than_recipe3": [
+    {
+      "synthetic_seed": 54,
+      "all_v9_nonregression_checks_pass": true,
+      "selected_to_recipe3_sse_ratio": 1.6143099041683502,
+      "metrics": {
+        "recipe3": {
+          "squared_error": 0.007178724830657904,
+          "teacher_energy": 0.34839396640863773,
+          "normalized_error": 0.020605192749629436,
+          "requests": [
+            {
+              "request_id": "diagnostic-test",
+              "sample_sha256": "4c87e86bcb2a1bac58599ffe62495e90e7a7b2049bc9f84c4be8c63cc3bdf647",
+              "squared_error": 0.007178724830657904,
+              "teacher_energy": 0.34839396640863773,
+              "normalized_error": 0.020605192749629436,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 512,
+                  "query_positions": [
+                    511
+                  ],
+                  "squared_error": 1.5207138986117474e-06,
+                  "teacher_energy": 0.2027305475125597,
+                  "normalized_error": 7.501158149427555e-06,
+                  "terminal_query": {
+                    "position": 511,
+                    "squared_error": 1.5207138986117474e-06,
+                    "teacher_energy": 0.2027305475125597,
+                    "normalized_error": 7.501158149427555e-06
+                  },
+                  "queries": [
+                    {
+                      "position": 511,
+                      "squared_error": 1.5207138986117474e-06,
+                      "teacher_energy": 0.2027305475125597,
+                      "normalized_error": 7.501158149427555e-06
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 512,
+                  "current_end": 620,
+                  "query_positions": [
+                    619
+                  ],
+                  "squared_error": 0.007177204116759292,
+                  "teacher_energy": 0.14566341889607803,
+                  "normalized_error": 0.04927252271814236,
+                  "terminal_query": {
+                    "position": 619,
+                    "squared_error": 0.007177204116759292,
+                    "teacher_energy": 0.14566341889607803,
+                    "normalized_error": 0.04927252271814236
+                  },
+                  "queries": [
+                    {
+                      "position": 619,
+                      "squared_error": 0.007177204116759292,
+                      "teacher_energy": 0.14566341889607803,
+                      "normalized_error": 0.04927252271814236
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "projection_checks": {
+            "bf16_output": {
+              "squared_error": 0.007173028149736638,
+              "teacher_energy": 0.34869117977450514,
+              "normalized_error": 0.020571292208696985,
+              "requests": [
+                {
+                  "request_id": "diagnostic-test",
+                  "sample_sha256": "4c87e86bcb2a1bac58599ffe62495e90e7a7b2049bc9f84c4be8c63cc3bdf647",
+                  "squared_error": 0.007173028149736638,
+                  "teacher_energy": 0.34869117977450514,
+                  "normalized_error": 0.020571292208696985,
+                  "frames": [
+                    {
+                      "frame_id": 0,
+                      "context": 0,
+                      "current_end": 512,
+                      "query_positions": [
+                        511
+                      ],
+                      "squared_error": 3.1813979148864746e-06,
+                      "teacher_energy": 0.20306650269776583,
+                      "normalized_error": 1.5666778482030147e-05,
+                      "terminal_query": {
+                        "position": 511,
+                        "squared_error": 3.1813979148864746e-06,
+                        "teacher_energy": 0.20306650269776583,
+                        "normalized_error": 1.5666778482030147e-05
+                      },
+                      "queries": [
+                        {
+                          "position": 511,
+                          "squared_error": 3.1813979148864746e-06,
+                          "teacher_energy": 0.20306650269776583,
+                          "normalized_error": 1.5666778482030147e-05
+                        }
+                      ]
+                    },
+                    {
+                      "frame_id": 1,
+                      "context": 512,
+                      "current_end": 620,
+                      "query_positions": [
+                        619
+                      ],
+                      "squared_error": 0.007169846751821751,
+                      "teacher_energy": 0.14562467707673932,
+                      "normalized_error": 0.04923510833293373,
+                      "terminal_query": {
+                        "position": 619,
+                        "squared_error": 0.007169846751821751,
+                        "teacher_energy": 0.14562467707673932,
+                        "normalized_error": 0.04923510833293373
+                      },
+                      "queries": [
+                        {
+                          "position": 619,
+                          "squared_error": 0.007169846751821751,
+                          "teacher_energy": 0.14562467707673932,
+                          "normalized_error": 0.04923510833293373
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "bf16_rank_output": {
+              "squared_error": 0.007181168533861637,
+              "teacher_energy": 0.34870539978146553,
+              "normalized_error": 0.020593797911824974,
+              "requests": [
+                {
+                  "request_id": "diagnostic-test",
+                  "sample_sha256": "4c87e86bcb2a1bac58599ffe62495e90e7a7b2049bc9f84c4be8c63cc3bdf647",
+                  "squared_error": 0.007181168533861637,
+                  "teacher_energy": 0.34870539978146553,
+                  "normalized_error": 0.020593797911824974,
+                  "frames": [
+                    {
+                      "frame_id": 0,
+                      "context": 0,
+                      "current_end": 512,
+                      "query_positions": [
+                        511
+                      ],
+                      "squared_error": 1.8812716007232666e-06,
+                      "teacher_energy": 0.2029334232211113,
+                      "normalized_error": 9.270388144359438e-06,
+                      "terminal_query": {
+                        "position": 511,
+                        "squared_error": 1.8812716007232666e-06,
+                        "teacher_energy": 0.2029334232211113,
+                        "normalized_error": 9.270388144359438e-06
+                      },
+                      "queries": [
+                        {
+                          "position": 511,
+                          "squared_error": 1.8812716007232666e-06,
+                          "teacher_energy": 0.2029334232211113,
+                          "normalized_error": 9.270388144359438e-06
+                        }
+                      ]
+                    },
+                    {
+                      "frame_id": 1,
+                      "context": 512,
+                      "current_end": 620,
+                      "query_positions": [
+                        619
+                      ],
+                      "squared_error": 0.007179287262260914,
+                      "teacher_energy": 0.14577197656035423,
+                      "normalized_error": 0.04925011947881808,
+                      "terminal_query": {
+                        "position": 619,
+                        "squared_error": 0.007179287262260914,
+                        "teacher_energy": 0.14577197656035423,
+                        "normalized_error": 0.04925011947881808
+                      },
+                      "queries": [
+                        {
+                          "position": 619,
+                          "squared_error": 0.007179287262260914,
+                          "teacher_energy": 0.14577197656035423,
+                          "normalized_error": 0.04925011947881808
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "seed": {
+          "squared_error": 0.05823057737510958,
+          "teacher_energy": 0.34839396640863773,
+          "normalized_error": 0.16714002821394977,
+          "requests": [
+            {
+              "request_id": "diagnostic-test",
+              "sample_sha256": "4c87e86bcb2a1bac58599ffe62495e90e7a7b2049bc9f84c4be8c63cc3bdf647",
+              "squared_error": 0.05823057737510958,
+              "teacher_energy": 0.34839396640863773,
+              "normalized_error": 0.16714002821394977,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 512,
+                  "query_positions": [
+                    511
+                  ],
+                  "squared_error": 1.829408766078084e-05,
+                  "teacher_energy": 0.2027305475125597,
+                  "normalized_error": 9.023843661078e-05,
+                  "terminal_query": {
+                    "position": 511,
+                    "squared_error": 1.829408766078084e-05,
+                    "teacher_energy": 0.2027305475125597,
+                    "normalized_error": 9.023843661078e-05
+                  },
+                  "queries": [
+                    {
+                      "position": 511,
+                      "squared_error": 1.829408766078084e-05,
+                      "teacher_energy": 0.2027305475125597,
+                      "normalized_error": 9.023843661078e-05
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 512,
+                  "current_end": 620,
+                  "query_positions": [
+                    619
+                  ],
+                  "squared_error": 0.0582122832874488,
+                  "teacher_energy": 0.14566341889607803,
+                  "normalized_error": 0.39963556896175634,
+                  "terminal_query": {
+                    "position": 619,
+                    "squared_error": 0.0582122832874488,
+                    "teacher_energy": 0.14566341889607803,
+                    "normalized_error": 0.39963556896175634
+                  },
+                  "queries": [
+                    {
+                      "position": 619,
+                      "squared_error": 0.0582122832874488,
+                      "teacher_energy": 0.14566341889607803,
+                      "normalized_error": 0.39963556896175634
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "projection_checks": {
+            "bf16_output": {
+              "squared_error": 0.05809425662391732,
+              "teacher_energy": 0.34869117977450514,
+              "normalized_error": 0.1666066135125249,
+              "requests": [
+                {
+                  "request_id": "diagnostic-test",
+                  "sample_sha256": "4c87e86bcb2a1bac58599ffe62495e90e7a7b2049bc9f84c4be8c63cc3bdf647",
+                  "squared_error": 0.05809425662391732,
+                  "teacher_energy": 0.34869117977450514,
+                  "normalized_error": 0.1666066135125249,
+                  "frames": [
+                    {
+                      "frame_id": 0,
+                      "context": 0,
+                      "current_end": 512,
+                      "query_positions": [
+                        511
+                      ],
+                      "squared_error": 2.047070302069187e-05,
+                      "teacher_energy": 0.20306650269776583,
+                      "normalized_error": 0.00010080787697003606,
+                      "terminal_query": {
+                        "position": 511,
+                        "squared_error": 2.047070302069187e-05,
+                        "teacher_energy": 0.20306650269776583,
+                        "normalized_error": 0.00010080787697003606
+                      },
+                      "queries": [
+                        {
+                          "position": 511,
+                          "squared_error": 2.047070302069187e-05,
+                          "teacher_energy": 0.20306650269776583,
+                          "normalized_error": 0.00010080787697003606
+                        }
+                      ]
+                    },
+                    {
+                      "frame_id": 1,
+                      "context": 512,
+                      "current_end": 620,
+                      "query_positions": [
+                        619
+                      ],
+                      "squared_error": 0.058073785920896626,
+                      "teacher_energy": 0.14562467707673932,
+                      "normalized_error": 0.39879083055609926,
+                      "terminal_query": {
+                        "position": 619,
+                        "squared_error": 0.058073785920896626,
+                        "teacher_energy": 0.14562467707673932,
+                        "normalized_error": 0.39879083055609926
+                      },
+                      "queries": [
+                        {
+                          "position": 619,
+                          "squared_error": 0.058073785920896626,
+                          "teacher_energy": 0.14562467707673932,
+                          "normalized_error": 0.39879083055609926
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "bf16_rank_output": {
+              "squared_error": 0.05809225142002106,
+              "teacher_energy": 0.34870539978146553,
+              "normalized_error": 0.16659406896603152,
+              "requests": [
+                {
+                  "request_id": "diagnostic-test",
+                  "sample_sha256": "4c87e86bcb2a1bac58599ffe62495e90e7a7b2049bc9f84c4be8c63cc3bdf647",
+                  "squared_error": 0.05809225142002106,
+                  "teacher_energy": 0.34870539978146553,
+                  "normalized_error": 0.16659406896603152,
+                  "frames": [
+                    {
+                      "frame_id": 0,
+                      "context": 0,
+                      "current_end": 512,
+                      "query_positions": [
+                        511
+                      ],
+                      "squared_error": 2.22623348236084e-05,
+                      "teacher_energy": 0.2029334232211113,
+                      "normalized_error": 0.00010970265257562773,
+                      "terminal_query": {
+                        "position": 511,
+                        "squared_error": 2.22623348236084e-05,
+                        "teacher_energy": 0.2029334232211113,
+                        "normalized_error": 0.00010970265257562773
+                      },
+                      "queries": [
+                        {
+                          "position": 511,
+                          "squared_error": 2.22623348236084e-05,
+                          "teacher_energy": 0.2029334232211113,
+                          "normalized_error": 0.00010970265257562773
+                        }
+                      ]
+                    },
+                    {
+                      "frame_id": 1,
+                      "context": 512,
+                      "current_end": 620,
+                      "query_positions": [
+                        619
+                      ],
+                      "squared_error": 0.05806998908519745,
+                      "teacher_energy": 0.14577197656035423,
+                      "normalized_error": 0.398361814495632,
+                      "terminal_query": {
+                        "position": 619,
+                        "squared_error": 0.05806998908519745,
+                        "teacher_energy": 0.14577197656035423,
+                        "normalized_error": 0.398361814495632
+                      },
+                      "queries": [
+                        {
+                          "position": 619,
+                          "squared_error": 0.05806998908519745,
+                          "teacher_energy": 0.14577197656035423,
+                          "normalized_error": 0.398361814495632
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "selected": {
+          "squared_error": 0.011588686593430316,
+          "teacher_energy": 0.34839396640863773,
+          "normalized_error": 0.03326316673302468,
+          "requests": [
+            {
+              "request_id": "diagnostic-test",
+              "sample_sha256": "4c87e86bcb2a1bac58599ffe62495e90e7a7b2049bc9f84c4be8c63cc3bdf647",
+              "squared_error": 0.011588686593430316,
+              "teacher_energy": 0.34839396640863773,
+              "normalized_error": 0.03326316673302468,
+              "frames": [
+                {
+                  "frame_id": 0,
+                  "context": 0,
+                  "current_end": 512,
+                  "query_positions": [
+                    511
+                  ],
+                  "squared_error": 8.212605117072398e-06,
+                  "teacher_energy": 0.2027305475125597,
+                  "normalized_error": 4.0509953817214475e-05,
+                  "terminal_query": {
+                    "position": 511,
+                    "squared_error": 8.212605117072398e-06,
+                    "teacher_energy": 0.2027305475125597,
+                    "normalized_error": 4.0509953817214475e-05
+                  },
+                  "queries": [
+                    {
+                      "position": 511,
+                      "squared_error": 8.212605117072398e-06,
+                      "teacher_energy": 0.2027305475125597,
+                      "normalized_error": 4.0509953817214475e-05
+                    }
+                  ]
+                },
+                {
+                  "frame_id": 1,
+                  "context": 512,
+                  "current_end": 620,
+                  "query_positions": [
+                    619
+                  ],
+                  "squared_error": 0.011580473988313243,
+                  "teacher_energy": 0.14566341889607803,
+                  "normalized_error": 0.07950159399028801,
+                  "terminal_query": {
+                    "position": 619,
+                    "squared_error": 0.011580473988313243,
+                    "teacher_energy": 0.14566341889607803,
+                    "normalized_error": 0.07950159399028801
+                  },
+                  "queries": [
+                    {
+                      "position": 619,
+                      "squared_error": 0.011580473988313243,
+                      "teacher_energy": 0.14566341889607803,
+                      "normalized_error": 0.07950159399028801
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "projection_checks": {
+            "bf16_output": {
+              "squared_error": 0.011636238975370361,
+              "teacher_energy": 0.34869117977450514,
+              "normalized_error": 0.033371188175437626,
+              "requests": [
+                {
+                  "request_id": "diagnostic-test",
+                  "sample_sha256": "4c87e86bcb2a1bac58599ffe62495e90e7a7b2049bc9f84c4be8c63cc3bdf647",
+                  "squared_error": 0.011636238975370361,
+                  "teacher_energy": 0.34869117977450514,
+                  "normalized_error": 0.033371188175437626,
+                  "frames": [
+                    {
+                      "frame_id": 0,
+                      "context": 0,
+                      "current_end": 512,
+                      "query_positions": [
+                        511
+                      ],
+                      "squared_error": 1.1695607099682093e-05,
+                      "teacher_energy": 0.20306650269776583,
+                      "normalized_error": 5.759495999736233e-05,
+                      "terminal_query": {
+                        "position": 511,
+                        "squared_error": 1.1695607099682093e-05,
+                        "teacher_energy": 0.20306650269776583,
+                        "normalized_error": 5.759495999736233e-05
+                      },
+                      "queries": [
+                        {
+                          "position": 511,
+                          "squared_error": 1.1695607099682093e-05,
+                          "teacher_energy": 0.20306650269776583,
+                          "normalized_error": 5.759495999736233e-05
+                        }
+                      ]
+                    },
+                    {
+                      "frame_id": 1,
+                      "context": 512,
+                      "current_end": 620,
+                      "query_positions": [
+                        619
+                      ],
+                      "squared_error": 0.011624543368270679,
+                      "teacher_energy": 0.14562467707673932,
+                      "normalized_error": 0.07982536752438554,
+                      "terminal_query": {
+                        "position": 619,
+                        "squared_error": 0.011624543368270679,
+                        "teacher_energy": 0.14562467707673932,
+                        "normalized_error": 0.07982536752438554
+                      },
+                      "queries": [
+                        {
+                          "position": 619,
+                          "squared_error": 0.011624543368270679,
+                          "teacher_energy": 0.14562467707673932,
+                          "normalized_error": 0.07982536752438554
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "bf16_rank_output": {
+              "squared_error": 0.011535275727510452,
+              "teacher_energy": 0.34870539978146553,
+              "normalized_error": 0.03308028993740744,
+              "requests": [
+                {
+                  "request_id": "diagnostic-test",
+                  "sample_sha256": "4c87e86bcb2a1bac58599ffe62495e90e7a7b2049bc9f84c4be8c63cc3bdf647",
+                  "squared_error": 0.011535275727510452,
+                  "teacher_energy": 0.34870539978146553,
+                  "normalized_error": 0.03308028993740744,
+                  "frames": [
+                    {
+                      "frame_id": 0,
+                      "context": 0,
+                      "current_end": 512,
+                      "query_positions": [
+                        511
+                      ],
+                      "squared_error": 1.082196831703186e-05,
+                      "teacher_energy": 0.2029334232211113,
+                      "normalized_error": 5.332767833537459e-05,
+                      "terminal_query": {
+                        "position": 511,
+                        "squared_error": 1.082196831703186e-05,
+                        "teacher_energy": 0.2029334232211113,
+                        "normalized_error": 5.332767833537459e-05
+                      },
+                      "queries": [
+                        {
+                          "position": 511,
+                          "squared_error": 1.082196831703186e-05,
+                          "teacher_energy": 0.2029334232211113,
+                          "normalized_error": 5.332767833537459e-05
+                        }
+                      ]
+                    },
+                    {
+                      "frame_id": 1,
+                      "context": 512,
+                      "current_end": 620,
+                      "query_positions": [
+                        619
+                      ],
+                      "squared_error": 0.01152445375919342,
+                      "teacher_energy": 0.14577197656035423,
+                      "normalized_error": 0.07905808805728809,
+                      "terminal_query": {
+                        "position": 619,
+                        "squared_error": 0.01152445375919342,
+                        "teacher_energy": 0.14577197656035423,
+                        "normalized_error": 0.07905808805728809
+                      },
+                      "queries": [
+                        {
+                          "position": 619,
+                          "squared_error": 0.01152445375919342,
+                          "teacher_energy": 0.14577197656035423,
+                          "normalized_error": 0.07905808805728809
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "center_mean_absmax": 5.01116943359375,
+  "shared_mean_nonzeros": 0
+}

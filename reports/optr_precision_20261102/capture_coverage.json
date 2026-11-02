@@ -1,0 +1,56 @@
+{
+  "reviewed_commit": "7c4a621",
+  "scope": "source_and_host_fixture_only_no_native_capture",
+  "source_records": 198,
+  "record_partition_counts": {
+    "train": 66,
+    "validation": 66,
+    "test": 66
+  },
+  "default_requests_per_split": 3,
+  "idealized_native_scheduler_assumption": "one request; every prefill step uses min(remaining,16384); 8 single-token decode steps",
+  "per_split_query_counts": [
+    {
+      "prompt_tokens": 4096,
+      "assumed_prefill_frames": [
+        4096
+      ],
+      "sampled_prefill_queries": 8,
+      "sampled_decode_queries": 8,
+      "first_prefill_no_history_queries": 8
+    },
+    {
+      "prompt_tokens": 32768,
+      "assumed_prefill_frames": [
+        16384,
+        16384
+      ],
+      "sampled_prefill_queries": 16,
+      "sampled_decode_queries": 8,
+      "first_prefill_no_history_queries": 8
+    },
+    {
+      "prompt_tokens": 65536,
+      "assumed_prefill_frames": [
+        16384,
+        16384,
+        16384,
+        16384
+      ],
+      "sampled_prefill_queries": 32,
+      "sampled_decode_queries": 8,
+      "first_prefill_no_history_queries": 8
+    }
+  ],
+  "per_split_sampled_queries": 80,
+  "per_split_executed_queries": 102424,
+  "fixture_tokenizer_is_model_tokenizer": false,
+  "strict_prefix_property": {
+    "train": true,
+    "validation": true,
+    "test": true
+  },
+  "model_quality": "not_measured",
+  "npu": "not_run",
+  "performance": "not_measured"
+}

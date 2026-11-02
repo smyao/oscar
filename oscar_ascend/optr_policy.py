@@ -12,18 +12,23 @@ RECIPE_VERSION = 5
 OBJECTIVE = "optr_post_gate_output_v1"
 UPSTREAM_COMMIT = "66d46561b9bdf5d715f591e0f5845a4cbd927dee"
 POLICY_VERSION = "optr_oscar_shared_candidates_ascend_v9"
+RECIPE3_POLICY_VERSION = "optr_recipe3_centered_candidates_ascend_v10"
 PROJECTION_VIEWS = ("fp32", "bf16_output", "bf16_rank_output")
 DEPLOYMENT_CANDIDATE_SELECTION = "fixed_k_existing_v_checkpoints_first_nonworse"
 MAX_DEPLOYMENT_CANDIDATES = 6
-# User 2026-10-28: publish experimental constants after recording independent
-# test, including regressions. The publication policy is separate from the
-# fitting version: shared-layer fitting invalidates older independent-head fits
-# without changing that authorization.
+RECIPE3_DEPLOYMENT_CANDIDATE_SELECTION = "perhead_existing_kv_checkpoints_best_nonworse"
+RECIPE3_MAX_DEPLOYMENT_CANDIDATES = 12
+RECIPE3_PUBLICATION_POLICY = "recipe3_validation_and_independent_test_required_v1"
+# Historical v9 authorization allowed experimental publication after reporting
+# independent-test regressions. The new recipe3 candidate requires both gates;
+# retain this identifier only for explicitly selected legacy artifacts.
 EXPERIMENTAL_PUBLICATION_POLICY = "validation_gate_independent_test_report_v1"
 
 
 def optr_policy(config):
     """Return a portable policy. Research overrides cannot relax acceptance."""
+    if config.get("optr_baseline") not in (None, "recipe3"):
+        raise ValueError("optr_baseline must be omitted or recipe3")
     policy = {
         "policy_version": POLICY_VERSION,
         "capture_lengths": {"train": [4096, 32768, 65536], "validation": [4096, 32768, 65536],
@@ -56,6 +61,14 @@ def optr_policy(config):
         "cube_cores": config.get("cube_cores"),
         "compilation_config": copy.deepcopy(config.get("compilation_config", {})),
     }
+    if config.get("optr_baseline") == "recipe3":
+        policy.update(
+            policy_version=RECIPE3_POLICY_VERSION,
+            fitted_grouping="layer_kv_head",
+            selection="recipe3_layer_each_query_and_projection_nonworse",
+            deployment_candidate_selection=RECIPE3_DEPLOYMENT_CANDIDATE_SELECTION,
+            max_deployment_candidates=RECIPE3_MAX_DEPLOYMENT_CANDIDATES,
+            source_plan="recipe3_excluded_records_independent_buckets_v1")
     overrides = config.get("optr_calibration", {})
     if not isinstance(overrides, dict):
         raise ValueError("optr_calibration must be an object")
@@ -100,7 +113,10 @@ def legacy_capture_policy(config, version="v1"):
     """
     if version not in ("v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8"):
         raise ValueError("unknown historical OptR capture policy")
-    policy = optr_policy(config)
+    # Historical identities always describe their original shared seed. A
+    # recipe3 caller may inspect them, but cannot relabel them as new captures.
+    historical_config = {key: value for key, value in config.items() if key != "optr_baseline"}
+    policy = optr_policy(historical_config)
     overrides = config.get("optr_calibration", {})
     policy.pop("deployment_candidate_selection")
     policy.pop("max_deployment_candidates")
@@ -164,6 +180,10 @@ def compatible_capture_profiles(profile, config):
     and tensor hash. This only enumerates authenticated historical profiles;
     it grants no permission to reuse old rotations or fitted checkpoints.
     """
+    if config.get("optr_baseline") == "recipe3":
+        # Recipe3 calibration records must be excluded before fresh independent
+        # length buckets are captured. Old v9 traces lack that evidence.
+        return []
     current = optr_policy(config)
     sampling = ("capture_lengths", "decode_tokens", "query_samples_per_frame")
     candidates = [legacy_capture_profile(profile, config, version) for version in ("v8", "v7", "v6", "v5", "v4", "v3", "v2", "v1")]
@@ -175,6 +195,10 @@ def validate_refinement_config(config):
     refinement = config.get("rotation_refinement")
     if refinement not in (None, "optr"):
         raise ValueError("rotation_refinement must be omitted or optr")
+    if config.get("optr_baseline") not in (None, "recipe3"):
+        raise ValueError("optr_baseline must be omitted or recipe3")
+    if config.get("optr_baseline") is not None and refinement != "optr":
+        raise ValueError("optr_baseline requires OptR refinement")
     if refinement == "optr":
         if (config.get("use_native_token_budget", False) or
                 type(config.get("max_num_batched_tokens")) is not int or
@@ -199,4 +223,5 @@ def refinement_profile(base_profile, config):
             "accumulator_dtype": "float32",
             "rotation_refinement": "optr", "refinement_upstream_commit": UPSTREAM_COMMIT,
             "refinement_policy": optr_policy(config),
-            "base_calibration_profile": seed_profile(base_profile)}
+            "base_calibration_profile": (copy.deepcopy(base_profile)
+                if config.get("optr_baseline") == "recipe3" else seed_profile(base_profile))}

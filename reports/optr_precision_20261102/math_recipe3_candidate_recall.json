@@ -1,0 +1,122 @@
+{
+  "seed": 12,
+  "base_sse": 0.3172262930602623,
+  "candidates": [
+    {
+      "id": "primary",
+      "phase": "primary",
+      "sse": 0.3369272447476639,
+      "passing": false
+    },
+    {
+      "id": "k_step_0",
+      "phase": "k",
+      "sse": 0.3172262930602623,
+      "passing": false
+    },
+    {
+      "id": "k_step_1",
+      "phase": "k",
+      "sse": 0.16930189719437183,
+      "passing": true
+    },
+    {
+      "id": "k_step_21",
+      "phase": "k",
+      "sse": 0.29354433119586665,
+      "passing": true
+    },
+    {
+      "id": "k_step_41",
+      "phase": "k",
+      "sse": 0.24957958141713887,
+      "passing": true
+    },
+    {
+      "id": "k_step_61",
+      "phase": "k",
+      "sse": 0.3867147441552917,
+      "passing": false
+    },
+    {
+      "id": "k_step_80",
+      "phase": "k",
+      "sse": 1.39017640797437,
+      "passing": false
+    },
+    {
+      "id": "v_step_1",
+      "phase": "v",
+      "sse": 0.6634988446736771,
+      "passing": false
+    },
+    {
+      "id": "v_step_21",
+      "phase": "v",
+      "sse": 0.32877807663237457,
+      "passing": false
+    },
+    {
+      "id": "v_step_41",
+      "phase": "v",
+      "sse": 0.44272042311627313,
+      "passing": false
+    },
+    {
+      "id": "v_step_61",
+      "phase": "v",
+      "sse": 0.5298860651520229,
+      "passing": false
+    },
+    {
+      "id": "v_step_80",
+      "phase": "v",
+      "sse": 0.6772062705297646,
+      "passing": false
+    }
+  ],
+  "geometry": {
+    "head_dim": 8,
+    "kv_heads": 2,
+    "gqa": 2,
+    "tokens": 81,
+    "frames": 2
+  },
+  "fit": {
+    "steps_per_phase": 80,
+    "scored_steps": [
+      1,
+      21,
+      41,
+      61,
+      80
+    ],
+    "seed": "distinct orthogonal per-head rotations and nonzero means",
+    "source": "fixed synthetic BF16 QKV; independent train and validation requests"
+  },
+  "gates": {
+    "partitions": [
+      "single_split",
+      "captured_runtime_frames"
+    ],
+    "projection_views": [
+      "fp32",
+      "bf16_output",
+      "bf16_rank_output"
+    ],
+    "each_query": true,
+    "each_frame": true,
+    "terminal": true,
+    "strict_total_improvement": true
+  },
+  "claim_boundary": "Synthetic CPU candidate-recall evidence only; no NPU equivalence, model quality, or performance acceptance.",
+  "reproduction": ".venv/bin/python -m pytest -q tests/test_optr_recipe3_fit.py -k real_80_step",
+  "independent_synthetic_test": {
+    "baseline_squared_error": 1.9119057461743831,
+    "selected_squared_error": 0.37343135606924893,
+    "selected_candidate": "k_step_1",
+    "all_existing_strict_gates_passed": true,
+    "used_for_selection": false
+  },
+  "wrapper_reproduction": ".venv/bin/python -m pytest -q tests/test_prepare_optr_recipe3.py -k real_80_step"
+}

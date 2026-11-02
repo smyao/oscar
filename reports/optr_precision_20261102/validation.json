@@ -1,0 +1,84 @@
+{
+  "date": "2026-11-02",
+  "branch": "oscar-new-6",
+  "base": "7c4a6212932fd32176164c0a28172b4cafbead6c",
+  "scope": "Recipe3-anchored offline OPTR fitting, source-independent capture, strict certificate/publication; no online numerical changes",
+  "policy": "optr_recipe3_centered_candidates_ascend_v10",
+  "fitting_implementation_sha256": "a30488344d57137d7bfc0623e074716744369eef999ac1827014fd907e02a917",
+  "host_tests": {
+    "command": ".venv/bin/python -m pytest -q tests/test_optr* tests/test_prepare_optr_recipe3.py tests/test_rotation_preparation_limits.py tests/test_calibration_data.py tests/test_center_prepare.py tests/test_center_rotations.py tests/test_rotations.py tests/test_rotation_pipeline.py tests/test_rotation_capture.py tests/test_official_rotation_calibration.py tests/test_serving_variants.py tests/test_install_serve.py tests/test_deploy_bf16.py tests/test_deploy_launcher.py tests/test_native_token_budget.py tests/test_stable_launch_frozen.py tests/test_precision_diagnostic.py tests/test_gdn_folded_initial_state.py tests/test_prefill_state_contract_hooks.py tests/test_align_prefill_state_contract.py tests/test_prefill_state_numeric.py tests/test_prefill_state_performance_protection.py tests/test_universal_bf16_regression_protection.py tests/test_plugin.py tests/test_prefix_checkpoint_integration.py tests/test_prefix_checkpoint_retention.py tests/test_mtp_logical_slots.py tests/test_mixed_decode_split.py tests/test_prefix_checkpoint_audit.py tests/test_prefix_checkpoint_lifecycle.py tests/test_prefix_caching.py tests/test_workflow.py",
+    "passed": 1326,
+    "skipped": 1,
+    "failed": 0,
+    "log": "host_tests.log",
+    "skip_reason": "Optional external local source audit; pinned independent mathematical/source snapshot tests passed"
+  },
+  "supplemental_certificate_tests": {
+    "command": ".venv/bin/python -m pytest -q tests/test_optr_recipe3_certificate.py",
+    "passed": 16,
+    "failed": 0,
+    "new_unique_test_after_joint_run": 1,
+    "log": "certificate_final_tests.log"
+  },
+  "scope_protection": {
+    "existing_production_files_unchanged": 879,
+    "changed_existing_files": [
+      "oscar_ascend/optr_artifacts.py",
+      "oscar_ascend/optr_checkpoint.py",
+      "oscar_ascend/optr_policy.py",
+      "oscar_ascend/optr_sequential.py",
+      "oscar_ascend/optr_traces.py",
+      "tools/calibrate_optr_traces.py",
+      "tools/optr_fit_worker.py",
+      "tools/prepare_optr_rotations.py",
+      "tools/serving_variants.py"
+    ],
+    "hashes": "protected_source_sha256.json",
+    "argv_and_online_flags_match_pre_migration": true
+  },
+  "package": {
+    "wheel": "oscar_ascend_external-0.1.0-py3-none-any.whl",
+    "source_files_match": 211,
+    "new_modules_imported_from_isolated_unpack": 5,
+    "log": "wheel_build.log"
+  },
+  "deployment": {
+    "entry": "bash scripts/install_serve.sh --variant candidate",
+    "devices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "port": 7878,
+    "independent_test_blocks_publication": true,
+    "new_code_committed_or_pushed": false
+  },
+  "evidence": {
+    "user_feedback": "user_feedback.json",
+    "baseline_substitution": "cert_baseline_counterexample.json",
+    "legacy_failed_test_cache": "cert_cache_counterexample.json",
+    "candidate_recall": "math_recipe3_candidate_recall.json",
+    "bf16_centering_difference": "math_centered_bf16_mismatch.json",
+    "capture_limits": "capture_audit.md"
+  },
+  "not_run": [
+    "NPU capture/fitting",
+    "NPU operator execution",
+    "device graph capture/replay",
+    "model quality",
+    "AISBench",
+    "performance"
+  ],
+  "acceptance": {
+    "local_source_and_cpu_functional": "passed within stated coverage",
+    "model_accuracy_exceeds_recipe3_OSCAR": "not_established",
+    "end_to_end_performance_unchanged": "not_measured"
+  },
+  "limits": [
+    "Independent local layer replay cannot certify final model accuracy or MTP acceptance.",
+    "New per-head fitting and up to 12 candidate replays add offline work.",
+    "Original recipe3 PT is retained and authenticated; old v9 captures/artifacts cannot satisfy v10 evidence.",
+    "Sampling remains native BS1 eager PC-off MTP-off, sparse queries and short generation."
+  ]
+}

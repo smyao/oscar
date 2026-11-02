@@ -93,8 +93,10 @@ def test_both_one_key_entries_enable_the_complete_candidate_without_manual_flags
     assert selected['scheduler_cls'] is None
     assert selected['devices']==[0,1,2,3] and selected['port']==7878
     assert selected['rotation_refinement']=='optr' and selected['calibration_recipe_version']==5
-    assert selected['optr_publication_policy']=='validation_gate_independent_test_report_v1'
-    assert selected['independent_test_blocks_publication'] is False
+    assert selected['optr_publication_policy']=='recipe3_validation_and_independent_test_required_v1'
+    assert selected['independent_test_blocks_publication'] is True
+    assert selected['optr_fitted_grouping']=='layer_kv_head'
+    assert selected['key_centering'] is True
     assert direct['probes']=='none'
     assert {'official_rotation_merge_precision_error_graph_gate','current_only_gate','first_mtp_current_gate','mixed_decode_split_gate'}<=set(observed['phases'])
     assert observed['inference_requests_generated']==0

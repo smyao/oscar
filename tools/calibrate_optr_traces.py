@@ -88,7 +88,13 @@ def collect(config_path, output_dir):
     messages = load_messages(source)
     from transformers import AutoTokenizer
     tokenizer = AutoTokenizer.from_pretrained(config["model"], trust_remote_code=True)
-    plan = build_request_plan(tokenizer, messages, policy)
+    recipe3_sampling = None
+    if config.get("optr_baseline") == "recipe3":
+        from tools.optr_recipe3_sampling import build_recipe3_request_plan
+        plan, recipe3_sampling = build_recipe3_request_plan(
+            tokenizer, messages, policy, config.get("optr_seed_capture"), source_sha256=source_hash)
+    else:
+        plan = build_request_plan(tokenizer, messages, policy)
     max_prompt = max(row["length_bucket"] for row in plan)
     max_length = max_prompt + policy["decode_tokens"] + 1
     if max_length > config["max_model_len"]:
@@ -192,6 +198,8 @@ def collect(config_path, output_dir):
               "worker_multiproc_method": "spawn", "mamba_cache_dtypes": state_dtypes,
               "weights_quantization": None, "performance": "not_measured",
               "quality": "calibration_only_not_benchmark"}
+    if recipe3_sampling is not None:
+        report["recipe3_sampling"] = recipe3_sampling
     atomic_json(output_dir / "capture-manifest.json", report)
     print(json.dumps({"optr_capture": report["status"], "requests": len(plan), "ranks": spec["tp_size"],
                       "layers": len(layers)}), flush=True)

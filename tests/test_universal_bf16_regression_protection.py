@@ -99,7 +99,37 @@ def test_variant_source_only_adds_pinned_optr_and_retired_policy_cleanup():
     anchor = '    selected = dict(config)\n'
     assert source.count(anchor) == 1
     expected = source.replace(anchor, anchor + "    selected.pop('oscar_current_only_policy', None)\n")
-    assert ast.dump(ast.parse(text)) == ast.dump(ast.parse(expected))
+    # 2026-11-02: only the offline baseline marker and its control cleanup
+    # are additionally authorized. Compare the remaining executable source
+    # to the independently pinned migration, keeping runtime flags exact.
+    class RemoveRecipe3Marker(ast.NodeTransformer):
+        def visit_If(self, node):
+            allowed = ast.parse('if selected.get("optr_baseline") not in (None, "recipe3"):\n'
+                                '    raise ValueError("optr_baseline must be omitted or recipe3")').body[0]
+            if ast.dump(node) == ast.dump(allowed):
+                return None
+            return self.generic_visit(node)
+
+        def visit_Expr(self, node):
+            for key in ("optr_baseline", "optr_seed_capture"):
+                allowed = ast.parse(f'selected.pop("{key}", None)').body[0]
+                if ast.dump(node) == ast.dump(allowed):
+                    return None
+            return self.generic_visit(node)
+
+        def visit_Assign(self, node):
+            allowed = ast.parse('selected["optr_baseline"] = "recipe3"').body[0]
+            if ast.dump(node) == ast.dump(allowed):
+                return None
+            return self.generic_visit(node)
+
+    current_tree = RemoveRecipe3Marker().visit(ast.parse(text))
+    expected_tree = ast.parse(expected)
+    # Human-readable offline receipt fields are verified by policy tests.
+    for tree in (current_tree, expected_tree):
+        tree.body = [node for node in tree.body if not (
+            isinstance(node, ast.FunctionDef) and node.name == "runtime_feature_summary")]
+    assert ast.dump(current_tree) == ast.dump(expected_tree)
     # test_optr_migration_scope additionally executes all four variants,
     # both APC modes and legacy recipe/budget choices against the base.
 
@@ -108,7 +138,7 @@ def test_variant_source_only_adds_pinned_optr_and_retired_policy_cleanup():
 def test_candidate_configuration_matches_accepted_performance_base(prefix):
     expected = json.loads((ROOT / 'reports/precision_stability_20261028/accepted_candidate_config.json').read_text())
     expected['enable_prefix_caching'] = prefix
-    expected.update(port=7878, rotation_refinement='optr')
+    expected.update(port=7878, rotation_refinement='optr', optr_baseline='recipe3')
     assert candidate_config(prefix) == expected
 
 

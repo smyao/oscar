@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-11-02 OPTR精度诊断：用户当前LongBenchv2为42.52/53.49/36.90/42.52，对照为迁移前recipe3 OSCAR（overall平均45+）。已定位共享零均值基线替换、test失败仍发布、K候选召回和校准记录重叠风险；新candidate保留原recipe3逐头中心化并严格阻断test失败PT。仅离线拟合、采样认证与配置接缝变化，线上/算子/timer保持。详见[诊断与修复](optr_precision_20261102.md)，本地结果不升级42项中的NPU、图、模型质量或性能状态。
+
 2026-10-28 当前修复：PC align的warm spec-width prefill也会被错误fold为decode，读写错误GDN checkpoint。已扩展#163的原生prefill分类与图接缝修复，207项相关主机回归通过，全部生产CANN与614c相同。固定candidate自动启用；四项模型验收状态不据本地反例升级。见[状态修复与范围](gdn_prefill_state_20261028.md)。
 
 2026-10-28 后续裁决：撤下已提交bcbf4153；新MTP/APC方案因精度或命中/容量反例未放行，未新增生产优化或提升任何设备/质量/性能验收状态。四项质量和32K/64K性能保护的共同目标仍未完成，见[本轮裁决与证据](precision_followup_20261028.md)。

@@ -16,7 +16,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 _REFINEMENT_FIELDS = ("rotation_refinement", "optr_baseline", "optr_calibration", "optr_seed_capture",
-                      "rotation_seed", "rotation_artifact")
+                      "rotation_seed", "optr_recipe3_repair", "rotation_artifact")
 
 
 def base_config(config, fingerprint):

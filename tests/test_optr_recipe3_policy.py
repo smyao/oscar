@@ -23,7 +23,10 @@ PRE_RECIPE3 = "7c4a621"
 
 @pytest.fixture
 def candidate():
-    return variant_config(json.loads((ROOT / "configs/target.json").read_text()), "candidate")
+    # Keep v10 independently covered; v11 has its own integration tests.
+    config = variant_config(json.loads((ROOT / "configs/target.json").read_text()), "candidate")
+    config.pop("optr_recipe3_repair")
+    return config
 
 
 def old_policy_module():
@@ -130,4 +133,5 @@ def test_summary_reports_real_baseline_and_strict_publication_without_online_cha
     assert serve_argv(candidate) == serve_argv(legacy)
     assert variant_features(candidate) == variant_features(legacy)
     assert variant_config(legacy, None) == legacy
-    assert variant_config(legacy, "candidate") == candidate
+    assert variant_config(legacy, "candidate") == {**candidate,
+        "optr_recipe3_repair": "single_head_trust_region_v1"}

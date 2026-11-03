@@ -42,7 +42,9 @@ def fit_worker(spec, index, cpu_threads, pipe):
             raise ValueError("OptR worker trace manifest changed")
         checkpoints = FitCheckpoints(spec["checkpoint_directory"], spec["checkpoint_identity"])
         policy = optr_policy(config)
-        device = fitting_device(config, testing=testing, logical_index=index)
+        # Archive #176: authenticated old proposals need CPU replay only.
+        device = ("cpu" if spec.get("source_checkpoint") is not None else
+                  fitting_device(config, testing=testing, logical_index=index))
         emit(phase="fit_worker_ready", fitting_device=device, cpu_threads=cpu_threads)
         pipe.send({"kind": "ready"})
         while True:
@@ -59,7 +61,8 @@ def fit_worker(spec, index, cpu_threads, pipe):
                 samples = load_layer_samples(manifest, seed["layer_id"])
                 emit(layer=name, phase="layer_traces_verified")
                 selected, record = refine_layer(name, seed, samples, policy,
-                    checkpoints=checkpoints, progress=emit, fit_device=device)
+                    checkpoints=checkpoints, progress=emit, fit_device=device,
+                    source_checkpoint=spec.get("source_checkpoint"))
                 saved = {"artifact": _layer_artifact(spec["template"], spec["certificate"], name, selected, record)}
                 _validate_layer_checkpoint(saved, spec["template"], spec["certificate"], name, seed)
                 checkpoints.save(owner, saved)

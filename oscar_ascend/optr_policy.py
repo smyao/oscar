@@ -13,6 +13,8 @@ OBJECTIVE = "optr_post_gate_output_v1"
 UPSTREAM_COMMIT = "66d46561b9bdf5d715f591e0f5845a4cbd927dee"
 POLICY_VERSION = "optr_oscar_shared_candidates_ascend_v9"
 RECIPE3_POLICY_VERSION = "optr_recipe3_centered_candidates_ascend_v10"
+RECIPE3_REPAIR_POLICY_VERSION = "optr_recipe3_trust_region_ascend_v11"
+RECIPE3_REPAIR = "single_head_trust_region_v1"
 PROJECTION_VIEWS = ("fp32", "bf16_output", "bf16_rank_output")
 DEPLOYMENT_CANDIDATE_SELECTION = "fixed_k_existing_v_checkpoints_first_nonworse"
 MAX_DEPLOYMENT_CANDIDATES = 6
@@ -29,6 +31,9 @@ def optr_policy(config):
     """Return a portable policy. Research overrides cannot relax acceptance."""
     if config.get("optr_baseline") not in (None, "recipe3"):
         raise ValueError("optr_baseline must be omitted or recipe3")
+    repair = config.get("optr_recipe3_repair")
+    if repair not in (None, RECIPE3_REPAIR) or (repair is not None and config.get("optr_baseline") != "recipe3"):
+        raise ValueError("optr_recipe3_repair requires recipe3 and its fixed single-head trust-region strategy")
     policy = {
         "policy_version": POLICY_VERSION,
         "capture_lengths": {"train": [4096, 32768, 65536], "validation": [4096, 32768, 65536],
@@ -69,6 +74,12 @@ def optr_policy(config):
             deployment_candidate_selection=RECIPE3_DEPLOYMENT_CANDIDATE_SELECTION,
             max_deployment_candidates=RECIPE3_MAX_DEPLOYMENT_CANDIDATES,
             source_plan="recipe3_excluded_records_independent_buckets_v1")
+    if repair is not None:
+        # Archive #176: reuse fitted directions, with independently versioned
+        # bounded deployment corrections; never relabel an old completed fit.
+        from .optr_trust_region import REPAIR_POLICY
+        policy.update(policy_version=RECIPE3_REPAIR_POLICY_VERSION,
+                      recipe3_repair=copy.deepcopy(REPAIR_POLICY))
     overrides = config.get("optr_calibration", {})
     if not isinstance(overrides, dict):
         raise ValueError("optr_calibration must be an object")
@@ -115,7 +126,8 @@ def legacy_capture_policy(config, version="v1"):
         raise ValueError("unknown historical OptR capture policy")
     # Historical identities always describe their original shared seed. A
     # recipe3 caller may inspect them, but cannot relabel them as new captures.
-    historical_config = {key: value for key, value in config.items() if key != "optr_baseline"}
+    historical_config = {key: value for key, value in config.items()
+                         if key not in ("optr_baseline", "optr_recipe3_repair")}
     policy = optr_policy(historical_config)
     overrides = config.get("optr_calibration", {})
     policy.pop("deployment_candidate_selection")
@@ -183,7 +195,10 @@ def compatible_capture_profiles(profile, config):
     if config.get("optr_baseline") == "recipe3":
         # Recipe3 calibration records must be excluded before fresh independent
         # length buckets are captured. Old v9 traces lack that evidence.
-        return []
+        if config.get("optr_recipe3_repair") is None:
+            return []
+        old_config = {key: value for key, value in config.items() if key != "optr_recipe3_repair"}
+        return [{**copy.deepcopy(profile), "refinement_policy": optr_policy(old_config)}]
     current = optr_policy(config)
     sampling = ("capture_lengths", "decode_tokens", "query_samples_per_frame")
     candidates = [legacy_capture_profile(profile, config, version) for version in ("v8", "v7", "v6", "v5", "v4", "v3", "v2", "v1")]
@@ -199,6 +214,8 @@ def validate_refinement_config(config):
         raise ValueError("optr_baseline must be omitted or recipe3")
     if config.get("optr_baseline") is not None and refinement != "optr":
         raise ValueError("optr_baseline requires OptR refinement")
+    if config.get("optr_recipe3_repair") is not None and refinement != "optr":
+        raise ValueError("optr_recipe3_repair requires OptR refinement")
     if refinement == "optr":
         if (config.get("use_native_token_budget", False) or
                 type(config.get("max_num_batched_tokens")) is not int or

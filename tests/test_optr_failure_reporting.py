@@ -92,7 +92,10 @@ def test_corrupt_diagnostic_evidence_keeps_original_nonzero_failure(setup, monke
     assert "report_failed" in capsys.readouterr().out
 
 
-def test_fitting_implementation_bytes_and_digest_keep_completed_device_work_reusable():
+def test_historical_fitting_digest_is_exactly_the_explicit_v11_source_allowlist():
+    # #176: changed fitting code has a new identity. Authenticate old work
+    # explicitly instead of pretending the new implementation is unchanged.
+    from tools.optr_recipe3_source import LEGACY_FITTING_SHA256
     source = subprocess.check_output(["git", "show", f"{BASE}:oscar_ascend/optr_checkpoint.py"], cwd=ROOT)
     tree = ast.parse(source)
     function = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "fitting_implementation_digest")
@@ -101,9 +104,9 @@ def test_fitting_implementation_bytes_and_digest_keep_completed_device_work_reus
     digest = hashlib.sha256()
     for name in names:
         original = subprocess.check_output(["git", "show", f"{BASE}:{name}"], cwd=ROOT)
-        assert (ROOT / name).read_bytes() == original, name
         digest.update(name.encode() + b"\0" + original)
-    assert fitting_implementation_digest() == digest.hexdigest()
+    assert digest.hexdigest() == LEGACY_FITTING_SHA256
+    assert fitting_implementation_digest() != LEGACY_FITTING_SHA256
 
 
 def test_preparer_source_outside_the_existing_optr_dispatch_is_unchanged():

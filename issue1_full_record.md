@@ -28899,3 +28899,7 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **本地分析**：恢复上一轮合成例的非零首帧gate后，12候选全部失败；一个总SSE下降候选的首帧误差上升约131%。代理在context=0时loss/梯度为零，但BF16部署旋转仍引入误差。这是本地目标盲点反例，不是现场全拒绝的已证实唯一根因。
 
 **本轮处置**：新增只读checkpoint诊断，认证并读取已完成候选矩阵及保存的逐query/投影视图validation指标；固定准备入口在这条特定错误后自动显示拒绝原因并保存报告，原错误和退出码保持。未修改任何拟合digest输入文件，完成层身份可继续复用，不因补日志让已有工作作废；不删除PT、不放宽门、不发布不变模型冒充OPTR。实际零改善与模型超过OSCAR仍未解决，报告和本地验证见 `docs/optr_no_improvement_20261103.md`。无agent真机连接或新质量/性能实验。
+
+**2026-11-03同一故障的后续真实拒绝报告**：原字节存于 `reports/optr_tail_regression_20261103/user_log.txt`，报告包含16层×12候选；每层最低总SSE候选改善1.649%–57.054%，仍有95–236个query检查退化，全部原因fine_grained_regression。16个显示的最差项均context>0，11个有历史多token帧、5个单token帧，三个投影视图均出现。计数不是独立token数，不能继续把首帧当作现场全部失败的已证实根因。RESULT为56.543872秒、退出1、无超时、清理完成，recomputed_fit_or_replay=false；诊断读取成功，候选仍未发布。
+
+**后续本地修正与边界**：v11在原12候选全拒时，从原recipe3按固定最早检查点方向搜索单头/单侧的8个正交微步半径，保持双partition/三视图/逐query/terminal严格门和独立test。旧v10指定实现的完整失败工作经base/trace/矩阵/manifest认证后复用，不重新NPU拟合；新身份独立，选择在test前锁定，test失败不二选。该算法与合成CPU验证不是新的真机通过记录；真实数据是否找到通过者及模型accuracy超过OSCAR尚未确定。详细设计、成本和验证见 `docs/optr_trust_region_20261103.md`；CANN/runtime/PC/GDN/MTP/argv/timer保持。

@@ -31,6 +31,7 @@ def configuration(tmp_path):
     # These certificate/compatibility fixtures exercise the frozen v9 format.
     # New recipe3 policy and schema3 evidence have independent regression tests.
     selected.pop("optr_baseline")
+    selected.pop("optr_recipe3_repair")
     return selected
 
 
@@ -81,7 +82,7 @@ def test_candidate_enables_optr_without_changing_online_bundle_or_extra_flags():
     assert config["port"] == selected["port"] == 7878
     assert runtime_feature_summary(selected, "candidate")["calibration_recipe_version"] == 5
     assert runtime_feature_summary(selected, "candidate")["optr_fitted_grouping"] == "layer_kv_head"
-    assert runtime_feature_summary(selected, "candidate")["optr_fitting_policy"] == "optr_recipe3_centered_candidates_ascend_v10"
+    assert runtime_feature_summary(selected, "candidate")["optr_fitting_policy"] == "optr_recipe3_trust_region_ascend_v11"
     assert runtime_feature_summary(selected, "candidate")["key_centering"] is True
     assert runtime_feature_summary(selected, "candidate")["independent_test_blocks_publication"] is True
     assert runtime_feature_summary(selected, "candidate")["optr_validation_projection_views"] == [

@@ -96,7 +96,8 @@ def test_all_existing_flags_and_native_arguments_match_base(previous_variants, p
     expected = previous_variants.variant_config(original, variant)
     actual = serving_variants.variant_config(original, variant)
     enabled = variant == "candidate" and mode == "default"
-    assert actual == {**expected, **({"rotation_refinement": "optr", "optr_baseline": "recipe3"} if enabled else {})}
+    assert actual == {**expected, **({"rotation_refinement": "optr", "optr_baseline": "recipe3",
+                                    "optr_recipe3_repair": "single_head_trust_region_v1"} if enabled else {})}
     assert serving_variants.variant_features(actual) == previous_variants.variant_features(expected)
     assert serve_argv(actual) == serve_argv(expected)
     assert "oscar_current_only_policy" not in actual

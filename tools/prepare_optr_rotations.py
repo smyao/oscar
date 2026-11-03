@@ -282,13 +282,14 @@ def _report_independent_test_failure(name, layer_id, record, policy, checkpoints
 
 
 def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=None, progress=None,
-                 fit_device="cpu"):
+                 fit_device="cpu", source_checkpoint=None):
     """Search one shared pair, accept it as a whole layer, then record test."""
     from oscar_ascend.optr_recipe3_certificate import is_recipe3
     if is_recipe3(policy):
         from tools.prepare_optr_recipe3 import refine_layer as refine_recipe3
         return refine_recipe3(name, baseline, samples, policy, fitter=fitter,
-                             checkpoints=checkpoints, progress=progress, fit_device=fit_device)
+                             checkpoints=checkpoints, progress=progress, fit_device=fit_device,
+                             source_checkpoint=source_checkpoint)
     from oscar_ascend.optr_shared import fit_shared, validate_shared_pair
     validate_shared_pair(baseline["Rk"], baseline["Rv"], baseline["k_mean"])
     real_fitter = fitter is None
@@ -428,8 +429,8 @@ def _validate_layer_checkpoint(saved, template, certificate, name, baseline):
         model_fingerprint=template["model_fingerprint"], pr_fingerprint=template["pr_fingerprint"],
         device="cpu", testing=True, require_calibrated=True)
     record = got["refinement_certificate"]["layers"][name]
-    for key in ("base_artifact_sha256", "trace_manifest_sha256"):
-        if got["refinement_certificate"][key] != certificate[key]:
+    for key in ("base_artifact_sha256", "trace_manifest_sha256", "source_fit_snapshot_sha256"):
+        if got["refinement_certificate"].get(key) != certificate.get(key):
             raise ValueError("OptR completed layer checkpoint source differs")
     if (record["base_constants_sha256"] != matrix_digest({name: baseline}) or
             not torch.equal(got["layers"][name]["k_mean"], baseline["k_mean"])):
@@ -438,7 +439,7 @@ def _validate_layer_checkpoint(saved, template, certificate, name, baseline):
 
 
 def _parallel_layers(config, names, baseline, artifact, certificate, base_config,
-                     trace_manifest, checkpoints, watchdog, *, testing=False):
+                     trace_manifest, checkpoints, watchdog, *, testing=False, source_checkpoint=None):
     from tools.optr_parallel import run_layer_workers
     from tools.rotation_preparation_limits import preparation_progress_timeout
     pending = []
@@ -464,6 +465,7 @@ def _parallel_layers(config, names, baseline, artifact, certificate, base_config
     # seed once, then only their assigned layer's histories at any one time.
     spec = {"config": config, "base_config": base_config, "testing": testing,
             "names": names, "trace_manifest": str(trace_manifest),
+            "source_checkpoint": source_checkpoint,
             "template": {**artifact, "layers": {}}, "certificate": {**certificate, "layers": {}},
             "checkpoint_directory": str(checkpoints.root.parent), "checkpoint_identity": checkpoints.identity}
     run_layer_workers(spec, pending, progress=watchdog.progress, completed=completed,
@@ -536,9 +538,15 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
         from tools.phase import atomic_json
         atomic_json(trace_manifest, captured)
     manifest = load_trace_manifest(trace_manifest, selected_config, names, dim, fingerprint, testing=testing)
+    source_checkpoint = None
+    if selected_config.get("optr_recipe3_repair") is not None:
+        from tools.optr_recipe3_source import discover_source
+        source_checkpoint = discover_source(selected_config, trace_manifest,
+            {"base_artifact_sha256": base_hash}, names, baseline["global_kv_heads"], dim, testing=testing)
     if trace_manifest.parent != trace_dir:
         _progress(phase="native_trace_resumed", manifest=str(trace_manifest),
-                  fitting="new_sequential_objective_old_fitted_constants_not_reused")
+                  fitting=("authenticated_v10_directions_and_metrics_reused_cpu_repair_required"
+                           if source_checkpoint is not None else "new_fit_from_authenticated_raw_traces"))
     artifact = {"format_version": 2, "source_grouping": "layer_kv_head",
         "rotation_variant": "perhead_center", "global_kv_heads": baseline["global_kv_heads"],
         "head_dim": dim, "model_fingerprint": fingerprint, "pr_fingerprint": OFFICIAL_COMMIT,
@@ -555,23 +563,31 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
     if is_recipe3(policy):
         certificate["full_layer_names"] = names
         certificate["fitting_implementation_sha256"] = fitting_implementation_digest()
+    source_identity = {}
+    if source_checkpoint is not None:
+        from tools.optr_recipe3_source import source_snapshot_digest
+        source_identity["source_fit_snapshot_sha256"] = source_snapshot_digest(source_checkpoint)
+        certificate.update(source_identity)
     from tools.optr_progress import ProgressWatchdog
     from tools.rotation_preparation_limits import preparation_progress_timeout
     checkpoints = FitCheckpoints(destination.parent / "fit-checkpoints", {
         "profile": profile, "base_artifact_sha256": base_hash,
         "trace_manifest_sha256": certificate["trace_manifest_sha256"],
         "full_layers": names, "global_kv_heads": baseline["global_kv_heads"], "head_dim": dim,
-        "fitting_implementation_sha256": fitting_implementation_digest(), "test_only": testing})
+        "fitting_implementation_sha256": fitting_implementation_digest(), "test_only": testing,
+        **source_identity})
     _progress(phase="fit_plan", layers=len(names), heads_per_layer=baseline["global_kv_heads"],
               steps_per_phase=policy["steps"], progress_timeout_seconds=preparation_progress_timeout(config),
               checkpoints=str(checkpoints.root), fitting_objective=policy["fitting_objective"],
-              fitting_device="cpu_test" if testing else "selected_npus_per_layer", matrix_exp_device="cpu",
+              fitting_device=("not_run_authenticated_v10_source" if source_checkpoint is not None else
+                              "cpu_test" if testing else "selected_npus_per_layer"), matrix_exp_device="cpu",
               deployment_validation_device="cpu", fitted_grouping=policy["fitted_grouping"])
     fit_device = None
     with ProgressWatchdog(preparation_progress_timeout(config), output=_progress) as watchdog:
         if not testing or parallel_testing:
             _parallel_layers(selected_config, names, baseline, artifact, certificate, base_config,
-                             trace_manifest, checkpoints, watchdog, testing=testing)
+                             trace_manifest, checkpoints, watchdog, testing=testing,
+                             source_checkpoint=source_checkpoint)
         for layer_index, name in enumerate(names if testing and not parallel_testing else []):
             seed = baseline["layers"][name]
             owner = f"layer-{seed['layer_id']}"
@@ -580,11 +596,12 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
             if saved is None:
                 samples = load_layer_samples(manifest, seed["layer_id"])
                 watchdog.progress(layer=name, phase="layer_traces_verified")
-                if fit_device is None:
+                if fit_device is None and source_checkpoint is None:
                     from oscar_ascend.optr_sequential import fitting_device
                     fit_device = fitting_device(config, testing=testing)
                 selected, record = refine_layer(name, seed, samples, policy, fitter=fitter,
-                    checkpoints=checkpoints, progress=watchdog.progress, fit_device=fit_device)
+                    checkpoints=checkpoints, progress=watchdog.progress, fit_device=fit_device or "cpu",
+                    source_checkpoint=source_checkpoint)
                 saved = {"artifact": _layer_artifact(artifact, certificate, name, selected, record)}
                 _validate_layer_checkpoint(saved, artifact, certificate, name, seed)
                 checkpoints.save(owner, saved)
@@ -609,6 +626,8 @@ def prepare(config, *, config_path=None, output=None, import_pair=None,
             "recipe_version": 5, "accepted_layers": certificate["accepted_layers"],
             **artifact_test_status(artifact),
             "quality_acceptance": "not_run", "performance": "not_measured",
-            "model_forward_device": "cpu_test" if testing else "npu",
-            "optimization_device": "cpu_test" if testing else "parallel_npu_fp32_cpu_matrix_exp",
+            "model_forward_device": ("not_run_authenticated_capture" if source_checkpoint is not None else
+                                     "cpu_test" if testing else "npu"),
+            "optimization_device": ("cpu_trust_region_from_authenticated_v10" if source_checkpoint is not None else
+                                    "cpu_test" if testing else "parallel_npu_fp32_cpu_matrix_exp"),
             "deployment_validation_device": "cpu", "online_operations": "unchanged"}

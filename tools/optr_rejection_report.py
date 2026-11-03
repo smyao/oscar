@@ -144,7 +144,7 @@ def _generation(directory, identity, layer_ids):
     return matches[0]
 
 
-def _load_layer(directory, identity, name, seed, profile):
+def _load_layer(directory, identity, name, seed, profile, source_checkpoint=None):
     import torch
     from oscar_ascend.optr_artifacts import matrix_digest, validate_refinement_metadata
     from oscar_ascend.optr_checkpoint import FitCheckpoints
@@ -161,8 +161,9 @@ def _load_layer(directory, identity, name, seed, profile):
             set(artifact.get("layers", {})) != {name}):
         raise ValueError("OptR diagnostic completed-layer artifact identity differs")
     certificate = validate_refinement_metadata(artifact, expected_profile=profile)
-    for field in ("base_artifact_sha256", "trace_manifest_sha256", "fitting_implementation_sha256"):
-        if certificate.get(field) != identity[field]:
+    for field in ("base_artifact_sha256", "trace_manifest_sha256", "fitting_implementation_sha256",
+                  "source_fit_snapshot_sha256"):
+        if certificate.get(field) != identity.get(field):
             raise ValueError("OptR diagnostic completed-layer source/implementation identity differs")
     if certificate.get("full_layer_names") != identity["full_layers"]:
         raise ValueError("OptR diagnostic completed-layer model coverage differs")
@@ -177,15 +178,30 @@ def _load_layer(directory, identity, name, seed, profile):
     proposal_path = directory / (proposal_key + ".json")
     proposal = FitCheckpoints._load_from(proposal_path, proposal_key, identity)
     policy = profile["refinement_policy"]
+    source_policy = policy
+    source_record = None
+    provenance = None
+    if source_checkpoint is not None:
+        from tools.optr_recipe3_source import load_source_layer
+        source_policy = source_checkpoint["policy"]
+        _, source_record, provenance = load_source_layer(
+            source_checkpoint, name, seed, identity["global_kv_heads"], source_policy)
     binding = {"strategy": policy["deployment_candidate_selection"], "policy": policy,
                "base_constants_sha256": base_digest,
                "fitting_implementation_sha256": identity["fitting_implementation_sha256"]}
+    if provenance is not None:
+        binding["source_fit_provenance"] = provenance
+    if record.get("source_fit_provenance") != provenance:
+        raise ValueError("OptR diagnostic imported fitting provenance differs")
     if proposal.get("recipe3_binding") != binding:
         raise ValueError("OptR diagnostic proposal binding differs")
-    result = _validate_result(proposal.get("result"), seed, policy)
+    result = _validate_result(proposal.get("result"), seed, source_policy)
     if record.get("shared_decision") != result["decision"]:
         raise ValueError("OptR diagnostic completed-layer proposal decision differs")
     selection = record.get("shared_layer_selection", {})
+    if source_record is not None and (selection != source_record["shared_layer_selection"] or
+            record["validation"]["baseline"] != source_record["validation"]["baseline"]):
+        raise ValueError("OptR diagnostic imported candidate measurements differ")
     measured = selection.get("evaluated_candidates")
     if (selection.get("method") != "recipe3_perhead_existing_kv_checkpoints_v1" or
             selection.get("accepted") is not False or selection.get("selected_candidate") != "seed" or
@@ -207,6 +223,35 @@ def _load_layer(directory, identity, name, seed, profile):
         candidates.append({"candidate": matrix["id"], "phase": matrix["phase"], "step": matrix["step"],
                            "constants_sha256": digest, "unchanged_baseline": digest == base_digest,
                            "proxy_losses": matrix.get("proxy_losses"), **detail})
+    repair_candidates = []
+    repair = record.get("recipe3_repair_selection")
+    if policy.get("policy_version") == "optr_recipe3_trust_region_ascend_v11":
+        from oscar_ascend.optr_trust_region import REPAIR_POLICY, _source_digest, _source_directions
+        # validate_refinement_metadata above has checked the frozen policy,
+        # exact strict decisions, selected minimum, budget and independent test.
+        # Describe saved scalar evidence only: no reconstruction or replay.
+        if not isinstance(repair, dict) or repair.get("accepted") is not False:
+            raise ValueError("OptR diagnostic requires completed rejected repair evidence")
+        directions = [{key: value for key, value in row.items() if key != "unit_tangent"}
+                      for row in _source_directions(seed, result)]
+        if (repair.get("source_candidates_sha256") != _source_digest(name, seed, result) or
+                repair.get("directions") != directions or
+                len(repair["evaluated_candidates"]) != len(directions) * len(REPAIR_POLICY["radii"])):
+            raise ValueError("OptR diagnostic repair source/direction coverage differs")
+        expected = [(direction, radius) for direction in directions for radius in REPAIR_POLICY["radii"]]
+        for evaluation, (direction, radius) in zip(repair["evaluated_candidates"], expected):
+            if (evaluation.get("radius") != radius or any(evaluation.get(key) != direction[key]
+                    for key in ("source_id", "source_phase", "source_step", "head", "side"))):
+                raise ValueError("OptR diagnostic repair fixed candidate order differs")
+            detail = metric_rejections(before, evaluation["validation"])
+            if evaluation.get("accepted") is not detail["accepted"] or detail["accepted"]:
+                raise ValueError("OptR diagnostic repair decisions conflict with the unchanged gate")
+            repair_candidates.append({**{key: evaluation[key] for key in
+                ("candidate", "source_id", "source_phase", "source_step", "head", "side", "radius",
+                 "constants_sha256", "same_bf16_operand_as_seed")},
+                "phase": "repair", "unchanged_baseline": evaluation["constants_sha256"] == base_digest,
+                **detail})
+        candidates.extend(repair_candidates)
     changed = [row for row in candidates if not row["unchanged_baseline"]]
     best = min(changed or candidates, key=lambda row: row["views"]["fp32"]["squared_error"]["candidate"])
     return {"layer": name, "layer_id": layer_id, "base_constants_sha256": base_digest,
@@ -217,12 +262,16 @@ def _load_layer(directory, identity, name, seed, profile):
             "checkpoint_manifest_sha256": {
                 "completed": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
                 "proposal": hashlib.sha256(proposal_path.read_bytes()).hexdigest()},
-            "candidates": candidates}, {
+            "candidates": candidates,
+            "original_candidate_count": len(result["candidates"]),
+            "repair_candidate_count": len(repair_candidates),
+            "source_fit_provenance": provenance}, {
                 "layer": name, "candidates": len(candidates), "best_total_candidate": best["candidate"],
                 "ranking_scope": "changed" if changed else "unchanged_only",
                 "total_relative_delta": best["views"]["fp32"]["squared_error"]["relative_delta"],
                 "reason": best["reason"], "regressed_queries": best["regressed_checks"]["query"],
-                "worst_gate": best["top_failures"][:1]}
+                "worst_gate": best["top_failures"][:1],
+                "original_candidates": len(result["candidates"]), "repair_candidates": len(repair_candidates)}
 
 
 def report_no_improvement(config, *, output=None, testing=False):
@@ -234,7 +283,7 @@ def report_no_improvement(config, *, output=None, testing=False):
     """
     from oscar_ascend.optr_artifacts import file_sha256
     from oscar_ascend.optr_checkpoint import fitting_implementation_digest
-    from oscar_ascend.optr_policy import RECIPE3_POLICY_VERSION
+    from oscar_ascend.optr_policy import RECIPE3_POLICY_VERSION, RECIPE3_REPAIR_POLICY_VERSION, compatible_capture_profiles
     from oscar_ascend.rotations import calibration_cache_identity, checkpoint_identity, rotation_artifact_path
     from tools.prepare_optr_recipe3_base import base_config, load_base
     from tools.phase import atomic_json
@@ -243,20 +292,23 @@ def report_no_improvement(config, *, output=None, testing=False):
     names, dim, fingerprint = checkpoint_identity(config["model"])
     profile = calibration_cache_identity(config, fingerprint)
     if (config.get("optr_baseline") != "recipe3" or
-            profile.get("refinement_policy", {}).get("policy_version") != RECIPE3_POLICY_VERSION):
+            profile.get("refinement_policy", {}).get("policy_version") not in
+            (RECIPE3_POLICY_VERSION, RECIPE3_REPAIR_POLICY_VERSION)):
         raise ValueError("OptR diagnostic requires the current recipe3 refinement policy")
     destination = Path(output).expanduser().resolve() if output else rotation_artifact_path(config, fingerprint)
     selected = base_config(config, fingerprint)
     baseline = load_base(selected, testing=testing)
     base_hash = file_sha256(selected["rotation_artifact"])
-    trace_path = destination.parent / "native-traces" / "capture-manifest.json"
+    from tools.prepare_optr_rotations import _existing_trace_manifest
+    trace_path = _existing_trace_manifest(destination, profile, config)
     trace_hash = file_sha256(trace_path)
     trace = _json(trace_path)
     test_only = trace.get("test_only", False)
     if (type(test_only) is not bool or (test_only and not testing) or
             trace.get("status") != "native_optr_capture_complete" or
-            trace.get("model_fingerprint") != fingerprint or trace.get("calibration_profile") != profile or
-            trace.get("optr_policy") != profile["refinement_policy"] or
+            trace.get("model_fingerprint") != fingerprint or
+            trace.get("calibration_profile") not in [profile, *compatible_capture_profiles(profile, config)] or
+            trace.get("optr_policy") != trace.get("calibration_profile", {}).get("refinement_policy") or
             trace.get("recipe3_sampling", {}).get("seed_capture", {}).get("baseline_artifact_sha256") != base_hash):
         raise ValueError("OptR diagnostic capture identity or test-only permission differs")
     identity = {"profile": profile, "base_artifact_sha256": base_hash,
@@ -264,10 +316,17 @@ def report_no_improvement(config, *, output=None, testing=False):
                 "global_kv_heads": baseline["global_kv_heads"], "head_dim": dim,
                 "fitting_implementation_sha256": fitting_implementation_digest(), "test_only": testing}
     ids = [baseline["layers"][name]["layer_id"] for name in names]
+    source_checkpoint = None
+    if profile["refinement_policy"]["policy_version"] == RECIPE3_REPAIR_POLICY_VERSION:
+        from tools.optr_recipe3_source import discover_source, source_snapshot_digest
+        source_checkpoint = discover_source(config, trace_path, {"base_artifact_sha256": base_hash},
+            names, baseline["global_kv_heads"], dim, testing)
+        if source_checkpoint is not None:
+            identity["source_fit_snapshot_sha256"] = source_snapshot_digest(source_checkpoint)
     generation = _generation(destination.parent / "fit-checkpoints", identity, ids)
     layers, compact = [], []
     for name in names:
-        detail, summary = _load_layer(generation, identity, name, baseline["layers"][name], profile)
+        detail, summary = _load_layer(generation, identity, name, baseline["layers"][name], profile, source_checkpoint)
         layers.append(detail)
         compact.append(summary)
     report_path = destination.parent / "no-improvement-report.json"
@@ -279,6 +338,7 @@ def report_no_improvement(config, *, output=None, testing=False):
                   "Saved candidate validation metrics explain rejection; no new replay or fitting was performed.",
                   "Candidate ordering in this report is descriptive only; no selection or publication changed.",
                   "Rejected proposals were not tested independently; test passed compares recipe3 with itself.",
+                  "Repair rows bind saved checkpoint evidence; this report does not reconstruct microstep matrices.",
                   "Frame context zero identifies first prefill; positive context identifies cached-context frames.",
                   "Query counts include projections and partitions; terminal checks duplicate their final query.",
                   "This report does not establish LongBench accuracy, NPU equivalence, or serving performance."]}

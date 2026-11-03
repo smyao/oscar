@@ -149,6 +149,7 @@ def test_explicit_legacy_optr_cache_remains_separate_from_recipe3_and_new_candid
                                 'max_num_batched_tokens': 16384,
                                 'k_clip_ratio': .96, 'v_clip_ratio': .92}, 'candidate')
     candidate.pop('optr_baseline')
+    candidate.pop('optr_recipe3_repair')
     seed = {k: v for k, v in candidate.items() if k != 'rotation_refinement'}
     center_path, _ = publish_old(seed, fingerprint)
     refined_path = rotations.rotation_artifact_path(candidate, fingerprint)

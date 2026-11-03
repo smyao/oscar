@@ -28,6 +28,7 @@ def fitting_implementation_digest():
              "oscar_ascend/optr_artifacts.py", "oscar_ascend/optr_checkpoint.py",
              "oscar_ascend/optr_oscar_seed.py", "tools/prepare_optr_seed.py",
              "oscar_ascend/optr_recipe3_fit.py", "oscar_ascend/optr_recipe3_certificate.py",
+             "oscar_ascend/optr_trust_region.py", "tools/optr_recipe3_source.py",
              "tools/prepare_optr_recipe3.py", "tools/prepare_optr_recipe3_base.py",
              "tools/optr_recipe3_sampling.py", "tools/calibrate_optr_traces.py", "oscar_ascend/optr_policy.py",
              "tools/prepare_optr_rotations.py", "tools/optr_parallel.py", "tools/optr_fit_worker.py")

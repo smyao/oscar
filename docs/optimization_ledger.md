@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-11-03 OPTR v11：现场16层最低总SSE候选均改善但逐query退化，显示的最差项全部有历史context；v10完整候选仍全部拒绝。新增以原recipe3为原点的单头/单侧固定正交微步，认证复用旧v10方向与指标，test前锁定，保持所有非劣门，不再仅加诊断。884个既有生产文件保持，CANN/runtime/argv/timer不变；有额外离线CPU回放与证据校验成本，不计性能收益。设计、真实证据和CPU/缓存/worker/打包验证见[修复与边界](optr_trust_region_20261103.md)，档案#176续记；模型超过OSCAR与现场候选通过仍未验收。
+
 2026-10-31 用户要求严格迁移 OPTR：以 oscar-new-6@ca46f57 为基底，仅接入 oscar-new-4-back@e7dc8a9 的 v9 离线共享旋转拟合及必要准备/加载接缝。全部线上核、生成器、运行时、GDN/PC/MTP、timer、argv与0–3/7878保持；原 native_exact 清理保留。源码/数学/缓存/启动保护与隔离 wheel 验证见[迁移边界及回执](optr_migration_20261031.md)。新共享零均值seed不同于旧recipe3，独立test失败仍发布的实验政策不代表质量验收；未连接真机或测速，不宣称性能零回归。
 
 2026-10-28 当前精度修复：发现此前none-only分类保护遗漏PC align末尾短续块。真实native调度5000→2304/1536/1156/4与2304 prefix命中后续步可复现；fold将accepted1改4并读旧GDN状态，有限值即可造成错误输出。外部插件统一保护none/align真正prefill，纠正图选择与最终提交；正常decode图、CANN/codec/PT/预算/PC/MTP/timer保持。207项主机回归与32K/64K选路/源码门通过；不将局部结果写成四项质量分数。见[完整修复](gdn_prefill_state_20261028.md)。

@@ -297,6 +297,11 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
         raise ValueError("OptR candidate policy requires frozen selection and bounded candidate count")
     if recipe3:
         from .optr_policy import RECIPE3_DEPLOYMENT_CANDIDATE_SELECTION
+        from .optr_recipe3_certificate import REPAIR_POLICY_VERSION
+        if policy.get("policy_version") == REPAIR_POLICY_VERSION:
+            from .optr_trust_region import REPAIR_POLICY
+            if policy.get("recipe3_repair") != REPAIR_POLICY:
+                raise ValueError("recipe3 OptR repair policy differs")
         if (policy.get("fitted_grouping") != "layer_kv_head" or
                 policy.get("selection") != "recipe3_layer_each_query_and_projection_nonworse" or
                 policy.get("deployment_candidate_selection") != RECIPE3_DEPLOYMENT_CANDIDATE_SELECTION or
@@ -385,6 +390,9 @@ def validate_refinement_metadata(artifact, *, expected_profile=None):
         if not record["accepted"] and (base_digest != selected_digest or any(
                 record[split]["selected"] != record[split]["baseline"] for split in ("validation", "test"))):
             raise ValueError("OptR rejected layer must retain baseline constants and metrics")
+        if recipe3:
+            from .optr_recipe3_certificate import validate_repair_record
+            validate_repair_record(record, policy, artifact.get("global_kv_heads"))
         val_ids = {r["request_id"] for r in record["validation"]["baseline"]["requests"]}
         test_ids = {r["request_id"] for r in record["test"]["baseline"]["requests"]}
         val_hashes = {r["sample_sha256"] for r in record["validation"]["baseline"]["requests"]}

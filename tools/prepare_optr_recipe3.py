@@ -1,6 +1,6 @@
 """Recipe3 OptR validation/independent-test gate; offline preparation only.
 
-Archive #86/#148/#170/#172/#174: preserve the actual per-head recipe3 means
+Archive #86/#148/#170/#172/#174/#176: preserve the actual per-head recipe3 means
 and constants as the comparison baseline. All existing candidate checkpoints
 face the same strict BF16 deployment replay; test never selects a candidate.
 A failed independent test is persisted and raised, never published as passed.
@@ -14,7 +14,7 @@ import torch
 
 from oscar_ascend.optr_artifacts import matrix_digest, nonworse
 from oscar_ascend.optr_checkpoint import fitting_implementation_digest
-from oscar_ascend.optr_policy import PROJECTION_VIEWS, RECIPE3_POLICY_VERSION
+from oscar_ascend.optr_policy import PROJECTION_VIEWS, RECIPE3_POLICY_VERSION, RECIPE3_REPAIR_POLICY_VERSION
 from oscar_ascend.optr_recipe3_fit import (
     CANDIDATE_STRATEGY, MAX_CANDIDATES, checkpoint_steps, fit_perhead,
     validate_perhead_pair,
@@ -74,7 +74,7 @@ def _validate_result(result, baseline, policy):
 
 
 def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=None, progress=None,
-                 fit_device="cpu"):
+                 fit_device="cpu", source_checkpoint=None):
     """Select the best validation-passing proposal, then require a passing test.
 
     The signature matches prepare_optr_rotations.refine_layer for dispatch.
@@ -87,7 +87,8 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
     )
 
     validate_perhead_pair(baseline["Rk"], baseline["Rv"], baseline["k_mean"])
-    if (policy.get("policy_version") != RECIPE3_POLICY_VERSION or
+    repair = policy.get("policy_version") == RECIPE3_REPAIR_POLICY_VERSION
+    if (policy.get("policy_version") not in (RECIPE3_POLICY_VERSION, RECIPE3_REPAIR_POLICY_VERSION) or
             policy.get("fitted_grouping") != "layer_kv_head" or
             policy.get("deployment_candidate_selection") != CANDIDATE_STRATEGY or
             type(policy.get("max_deployment_candidates")) is not int or
@@ -96,6 +97,12 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
     if (policy.get("validation_projection_views") != list(PROJECTION_VIEWS) or
             policy.get("validation_partitions") != ["single_split", "captured_runtime_frames"]):
         raise ValueError("OptR recipe3 requires both partitions and all frozen projection views")
+    if repair:
+        from oscar_ascend.optr_trust_region import REPAIR_POLICY
+        if policy.get("recipe3_repair") != REPAIR_POLICY:
+            raise ValueError("OptR recipe3 repair policy differs")
+    elif source_checkpoint is not None:
+        raise ValueError("legacy recipe3 cannot import source checkpoints")
     if set(samples) != {"train", "validation", "test"}:
         raise ValueError("OptR recipe3 requires independent train/validation/test splits")
     split_ids = {split: {sample["request_id"] for head in rows for sample in head}
@@ -109,14 +116,25 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
                "fitting_implementation_sha256": fitting_implementation_digest()}
     owner = f"layer-{baseline['layer_id']}-shared"  # Existing authenticated owner ABI.
     emit(layer=name, phase="fitting", fitted_grouping="layer_kv_head")
+    source_record, source_provenance, source_result = None, None, None
+    source_policy = policy
+    if source_checkpoint is not None:
+        from tools.optr_recipe3_source import load_source_layer
+        source_policy = source_checkpoint["policy"]
+        source_result, source_record, source_provenance = load_source_layer(
+            source_checkpoint, name, baseline, baseline["Rk"].shape[0], source_policy)
+        emit(layer=name, phase="recipe3_source_reused", source_fitting_implementation_sha256=
+             source_provenance["fitting_implementation_sha256"], refit=False)
+        binding["source_fit_provenance"] = source_provenance
     saved = checkpoints.load(owner) if checkpoints else None
     if saved is None:
         options = {"policy": policy}
         if fitter is None:
             options.update(progress=lambda row: emit(layer=name, **row), device=fit_device)
-        result = (fit_perhead if fitter is None else fitter)(baseline["Rk"], baseline["Rv"],
-            baseline["k_mean"], samples["train"], samples["validation"], **options)
-        _validate_result(result, baseline, policy)
+        result = (source_result if source_result is not None else
+            (fit_perhead if fitter is None else fitter)(baseline["Rk"], baseline["Rv"],
+                baseline["k_mean"], samples["train"], samples["validation"], **options))
+        _validate_result(result, baseline, source_policy)
         saved = {"recipe3_binding": binding, "result": result}
         if checkpoints:
             checkpoints.save(owner, saved)
@@ -124,8 +142,13 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
     else:
         if saved.get("recipe3_binding") != binding:
             raise ValueError("OptR recipe3 resumed checkpoint baseline/policy/implementation differs")
-        result = _validate_result(saved.get("result"), baseline, policy)
+        result = _validate_result(saved.get("result"), baseline, source_policy)
         emit(layer=name, phase="perhead_fit_resumed")
+    if source_result is not None:
+        from oscar_ascend.optr_trust_region import _source_digest
+        if (result["decision"] != source_result["decision"] or
+                _source_digest(name, baseline, result) != _source_digest(name, baseline, source_result)):
+            raise ValueError("OptR resumed candidates differ from the authenticated v10 source metrics")
 
     def measure(constants, split, candidate):
         emit(layer=name, phase="joint_output_check", split=split, candidate=candidate)
@@ -134,13 +157,16 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
         return _metrics(constants, samples[split], policy, **options)
 
     acceptance = dict(require_frames=True, require_terminal=True, require_queries=True, require_projection=True)
-    before = measure(baseline, "validation", "baseline")
+    before = (source_record["validation"]["baseline"] if source_record is not None else
+              measure(baseline, "validation", "baseline"))
     selected, after, selected_id = baseline, before, "seed"
     evaluated = []
-    for candidate in result["candidates"]:
+    for index, candidate in enumerate(result["candidates"]):
         constants = {**baseline, "Rk": candidate["Rk"], "Rv": candidate["Rv"]}
         digest = matrix_digest({name: constants})
-        measured = (before if digest == binding["base_constants_sha256"] else
+        measured = (source_record["shared_layer_selection"]["evaluated_candidates"][index]["validation"]
+                    if source_record is not None else
+                    before if digest == binding["base_constants_sha256"] else
                     measure(constants, "validation", candidate["id"]))
         passes = nonworse(before, measured, **acceptance) and measured["squared_error"] < before["squared_error"]
         evaluated.append({"candidate": candidate["id"], "phase": candidate["phase"], "step": candidate["step"],
@@ -155,6 +181,30 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
                  "test_used_for_selection": False, "max_candidates": MAX_CANDIDATES,
                  "selected_candidate": selected_id, "evaluated_candidates": evaluated,
                  "proposal": evaluated[0]["validation"]}
+    repair_selection = None
+    if accepted and saved.get("recipe3_repair_lock") is not None:
+        raise ValueError("OptR original validation changed after repair was locked")
+    if repair and not accepted:
+        from oscar_ascend.optr_trust_region import select_repair, validate_selection
+        locked = saved.get("recipe3_repair_lock")
+        if locked is None:
+            selected, replay_before, after, repair_selection = select_repair(
+                name, baseline, result, samples["validation"], policy, progress=emit)
+        else:
+            selected, replay_before, after, repair_selection = (
+                locked.get(key) for key in ("selected", "before", "after", "decision"))
+        if replay_before != before:
+            raise ValueError("OptR recipe3 baseline replay differs from source validation metrics")
+        validate_selection(name, baseline, result, selected, before, after, repair_selection, policy)
+        if locked is None and checkpoints is not None:
+            saved = {**saved, "recipe3_repair_lock": {"selected": selected, "before": before,
+                                                     "after": after, "decision": repair_selection}}
+            checkpoints.save(owner, saved)
+            emit(layer=name, phase="recipe3_repair_locked_before_test")
+        elif locked is not None:
+            emit(layer=name, phase="recipe3_repair_lock_resumed", test_reselection=False)
+        accepted = matrix_digest({name: selected}) != binding["base_constants_sha256"]
+        selected_id = repair_selection["selected_candidate"]
     emit(layer=name, phase="joint_output_check", split="validation", event="recipe3_layer_selected",
          accepted=accepted, fitted_grouping="layer_kv_head", candidate=selected_id)
     test_before = measure(baseline, "test", "baseline")
@@ -167,6 +217,10 @@ def refine_layer(name, baseline, samples, policy, *, fitter=None, checkpoints=No
               "validation": {"baseline": before, "selected": after},
               "test": {"baseline": test_before, "selected": test_after},
               "shared_layer_selection": selection}
+    if repair:
+        record["recipe3_repair_selection"] = repair_selection
+    if source_provenance is not None:
+        record["source_fit_provenance"] = source_provenance
     if not nonworse(test_before, test_after, **acceptance):
         report = _report_independent_test_failure(name, baseline["layer_id"], record, policy,
             checkpoints, emit, publication_allowed=False)

@@ -90,6 +90,10 @@ def variant_config(config: dict, variant: str | None) -> dict:
         raise ValueError("rotation_refinement must be omitted or optr")
     if selected.get("optr_baseline") not in (None, "recipe3"):
         raise ValueError("optr_baseline must be omitted or recipe3")
+    if selected.get("optr_recipe3_repair") not in (None, "single_head_trust_region_v1"):
+        raise ValueError("optr_recipe3_repair must use its fixed single-head trust-region strategy")
+    if selected.get("optr_recipe3_repair") is not None and selected.get("optr_baseline") != "recipe3":
+        raise ValueError("optr_recipe3_repair requires recipe3")
     if selected.get("rotation_variant") not in (None, "shared_v1", "perhead_center"):
         raise ValueError("rotation_variant must be omitted, shared_v1 or perhead_center")
     if selected.get("rotation_k_clip") not in (None, "per_head_calibrated"):
@@ -113,6 +117,7 @@ def variant_config(config: dict, variant: str | None) -> dict:
         selected.pop("rotation_refinement", None)
         selected.pop("optr_calibration", None)
         selected.pop("optr_baseline", None)
+        selected.pop("optr_recipe3_repair", None)
         selected.pop("optr_seed_capture", None)
     if selected.get("rotation_variant") == "perhead_center" and selected.get("rotation_method", "qqt_sst") != "qqt_sst":
         raise ValueError("perhead_center requires qqt_sst calibration")
@@ -220,6 +225,7 @@ def variant_config(config: dict, variant: str | None) -> dict:
     if selected.get('oscar_dequant_policy') == 'fp32_metadata' and not all(selected.get(flag, False)
             for flag in ('experimental_official_math', 'experimental_aligned_math', 'experimental_bf16_attention')):
         raise ValueError('FP32 metadata reconstruction requires the official BF16 reader bundle')
+    # User 2026-11-03 / archive #176: correct rejected v10 directions offline.
     # User 2026-11-02: improve the pre-migration recipe3 baseline. The fixed
     # candidate retains its per-head matrices/centers and requires independent
     # test non-regression. Existing Hadamard/W8A8/native-budget modes retain
@@ -228,6 +234,7 @@ def variant_config(config: dict, variant: str | None) -> dict:
             and selected.get("quantization") is None and not native_budget):
         selected["rotation_refinement"] = "optr"
         selected["optr_baseline"] = "recipe3"
+        selected["optr_recipe3_repair"] = "single_head_trust_region_v1"
     from oscar_ascend.optr_policy import validate_refinement_config
     validate_refinement_config(selected)
     return selected
@@ -253,6 +260,8 @@ def runtime_feature_summary(config: dict, variant: str | None) -> dict:
                 "optr_validation_projection_views": policy["validation_projection_views"],
                 "optr_deployment_candidate_selection": policy["deployment_candidate_selection"],
                 "optr_max_deployment_candidates": policy["max_deployment_candidates"],
+                **({"optr_recipe3_repair": policy["recipe3_repair"]}
+                   if "recipe3_repair" in policy else {}),
                 "optr_seed": "recipe3_perhead_center" if recipe3 else "oscar_base_shared_zero_mean",
                 "optr_seed_partition": "original_recipe3_calibration" if recipe3 else "train"}
                if policy is not None else {}),

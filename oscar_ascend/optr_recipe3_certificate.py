@@ -6,6 +6,7 @@ is inferred from a certificate. They run during preparation/loading only.
 from __future__ import annotations
 
 POLICY_VERSION = "optr_recipe3_centered_candidates_ascend_v10"
+REPAIR_POLICY_VERSION = "optr_recipe3_trust_region_ascend_v11"
 PUBLICATION_POLICY = "recipe3_validation_and_independent_test_required_v1"
 
 
@@ -14,7 +15,61 @@ class RefitRequired(ValueError):
 
 
 def is_recipe3(policy):
-    return policy.get("policy_version") == POLICY_VERSION
+    return policy.get("policy_version") in (POLICY_VERSION, REPAIR_POLICY_VERSION)
+
+
+def validate_repair_record(record, policy, heads):
+    """Archive #176: a repair certificate cannot bypass the original gates."""
+    from .optr_artifacts import nonworse
+    from .optr_trust_region import REPAIR_POLICY
+    if policy.get("policy_version") != REPAIR_POLICY_VERSION:
+        return
+    if policy.get("recipe3_repair") != REPAIR_POLICY:
+        raise ValueError("recipe3 OptR repair policy differs")
+    original = record.get("shared_layer_selection", {})
+    if "recipe3_repair_selection" not in record:
+        raise ValueError("recipe3 OptR repair selection evidence missing")
+    repair = record["recipe3_repair_selection"]
+    if original.get("accepted") is True:
+        if repair is not None:
+            raise ValueError("recipe3 repair cannot replace a passing original candidate")
+        return
+    if (not isinstance(repair, dict) or repair.get("policy") != REPAIR_POLICY or
+            repair.get("method") != REPAIR_POLICY["version"] or
+            repair.get("test_used_for_selection") is not False or
+            repair.get("accepted") is not record.get("accepted") or
+            repair.get("base_constants_sha256") != record.get("base_constants_sha256") or
+            repair.get("selected_constants_sha256") != record.get("selected_constants_sha256")):
+        raise ValueError("recipe3 OptR repair decision/identity differs")
+    rows = repair.get("evaluated_candidates")
+    if (type(heads) is not int or not 1 <= heads <= REPAIR_POLICY["max_kv_heads"] or
+            not isinstance(rows, list) or len(rows) > heads * 16 or
+            repair.get("max_candidates") != heads * 16 or repair.get("candidate_count") != len(rows)):
+        raise ValueError("recipe3 OptR repair candidate budget differs")
+    before = record["validation"]["baseline"]
+    best_id, best_metric, best_digest = "seed", before, record["base_constants_sha256"]
+    seen = set()
+    for row in rows:
+        head, side, radius = (row.get(key) for key in ("head", "side", "radius"))
+        if (type(head) is not int or not 0 <= head < heads or side not in ("Rk", "Rv") or
+                type(radius) not in (int, float) or radius not in REPAIR_POLICY["radii"]):
+            raise ValueError("recipe3 OptR repair head/side/radius differs")
+        identity = f"repair_h{head}_{side}_r{REPAIR_POLICY['radii'].index(radius)}"
+        if row.get("candidate") != identity or identity in seen:
+            raise ValueError("recipe3 OptR repair candidate identity differs")
+        seen.add(identity)
+        measured = row.get("validation")
+        passes = nonworse(before, measured, require_frames=True, require_terminal=True,
+                          require_queries=True, require_projection=True)
+        passes = passes and measured["squared_error"] < before["squared_error"]
+        if row.get("accepted") is not passes:
+            raise ValueError("recipe3 OptR repair gate differs")
+        if passes and measured["squared_error"] < best_metric["squared_error"]:
+            best_id, best_metric, best_digest = identity, measured, row.get("constants_sha256")
+    if (repair.get("selected_candidate") != best_id or
+            record["selected_constants_sha256"] != best_digest or
+            record["validation"]["selected"] != best_metric):
+        raise ValueError("recipe3 OptR repair selection differs from validation-only minimum")
 
 
 def strict_certificate(certificate):

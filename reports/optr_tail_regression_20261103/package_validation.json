@@ -1,0 +1,7 @@
+{
+  "policy": "optr_recipe3_trust_region_ascend_v11",
+  "fitting_digest": "3ba079f899434f1f859806c799bb9cb9d72424d93ca5d07f738fc55b4ee0d251",
+  "torch_npu_imported": false,
+  "source_files_match": 214,
+  "wheel_sha256": "3194df03e177518e9e96c481d426b739af8b1add85e9b0818d3a9ecd06d9d1c6"
+}

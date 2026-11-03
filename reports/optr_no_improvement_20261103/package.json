@@ -1,0 +1,6 @@
+{
+  "wheel": "oscar_ascend_external-0.1.0-py3-none-any.whl",
+  "new_report_module_isolated_import": "passed",
+  "changed_source_bytes_match": true,
+  "npu_imported": false
+}

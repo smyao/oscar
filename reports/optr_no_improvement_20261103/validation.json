@@ -1,0 +1,66 @@
+{
+  "date": "2026-11-03",
+  "branch": "oscar-new-6",
+  "base": "8c414aa37a7779ea7b9139adc6a64ded42e50660",
+  "user_failure": {
+    "raw_log": "user_log.txt",
+    "sha256": "5d4ebeb9202a40af74eaf4104df329885063ad119dd926baa4276020c00df271",
+    "prepare_seconds": 5488.758832,
+    "timed_out": false,
+    "worker_exit_codes": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "publish_failure": "no strict validation improvement"
+  },
+  "scope": "Authenticated saved-checkpoint rejection report automatically shown by fixed prepare entry; unchanged algorithm and quality gate",
+  "existing_production_files_changed": [
+    "tools/prepare_rotations.py"
+  ],
+  "new_production_files": [
+    "tools/optr_rejection_report.py"
+  ],
+  "fitting_implementation_sha256": "a30488344d57137d7bfc0623e074716744369eef999ac1827014fd907e02a917",
+  "fitting_digest_inputs_byte_identical_to_base": true,
+  "host_regression": {
+    "passed": 256,
+    "failed": 0,
+    "log": "host_tests.log",
+    "coverage": "Recipe3 fitting/certificates/pipeline; original rotation preparation; serving/direct entry and workflow; migration scope"
+  },
+  "final_targeted_regression": {
+    "passed": 39,
+    "failed": 0,
+    "log": "report_tests.log",
+    "overlaps_host_regression": true,
+    "command": ".venv/bin/python -m pytest -q tests/test_optr_failure_reporting.py tests/test_optr_first_prefill_proxy_blindspot.py tests/test_optr_no_improvement_resume.py tests/test_optr_rejection_report.py"
+  },
+  "resume_evidence": {
+    "actual_authenticated_cpu_fixture": true,
+    "native_capture_calls_on_resume": 0,
+    "fit_calls_on_resume": 0,
+    "replay_calls_on_resume": 0,
+    "worker_processes_on_resume": 0,
+    "preexisting_file_bytes_unchanged": true,
+    "original_exception_preserved": true,
+    "refined_pt_published": false,
+    "new_file": "no-improvement-report.json"
+  },
+  "package": {
+    "wheel": "oscar_ascend_external-0.1.0-py3-none-any.whl",
+    "new_report_module_isolated_import": "passed",
+    "changed_source_bytes_match": true,
+    "npu_imported": false
+  },
+  "git_diff_check": "passed",
+  "not_done": [
+    "Actual device candidate metrics unavailable locally",
+    "Real zero-improvement algorithm failure not resolved",
+    "No service launch restored",
+    "No new NPU/model quality/performance evaluation",
+    "No commit or push"
+  ],
+  "inference_boundary": "Nonzero-first-prefill proxy blind spot reproduced on synthetic CPU inputs; not established as sole cause of device rejection."
+}

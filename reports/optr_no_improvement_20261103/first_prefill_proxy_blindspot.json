@@ -1,0 +1,980 @@
+{
+  "schema_version": 1,
+  "source_head": "8c414aa",
+  "evidence_kind": "synthetic_cpu_counterexample",
+  "model_quality": "not_measured",
+  "npu_equivalence": "not_measured",
+  "performance": "not_measured",
+  "claim_boundary": "Demonstrates an upstream FP32 objective blindspot and the correct refusal of existing BF16 gates on synthetic QKV. It does not establish which gate rejected real v10 candidates. No production optimizer, acceptance threshold, test selection, or serving path changed.",
+  "reproduction": ".venv/bin/python -m pytest -q tests/test_optr_first_prefill_proxy_blindspot.py",
+  "nonzero_first_prefill": {
+    "fixture_seed": 12,
+    "synthetic": true,
+    "head_dim": 8,
+    "kv_heads": 2,
+    "gqa": 2,
+    "history_tokens": 81,
+    "sampled_prefill_queries": 1,
+    "sampled_decode_queries": 1,
+    "first_prefill_sigmoid_gate": 0.5,
+    "steps_per_phase": 80,
+    "learning_rate": 0.02,
+    "validation_squared_error": 0.3173715594330846,
+    "first_prefill_squared_error": 7.26331864111529e-05,
+    "decode_squared_error": 0.15861314653013114,
+    "candidates": [
+      {
+        "id": "primary",
+        "validation_squared_error": 0.33708830826416647,
+        "strict_gate_passed": false,
+        "first_prefill_squared_error": 8.053175825128989e-05,
+        "decode_squared_error": 0.16846362237383194,
+        "regressed_frames": [
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 8.053175825128989e-05
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.16846362237383194
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 8.053175825128989e-05
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.16846362237383194
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.1710222363471985
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.1710222363471985
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00010609626770019531
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.17128944396972656
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00010609626770019531
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.17128944396972656
+          }
+        ]
+      },
+      {
+        "id": "k_step_0",
+        "validation_squared_error": 0.3173715594330846,
+        "strict_gate_passed": false,
+        "first_prefill_squared_error": 7.26331864111529e-05,
+        "decode_squared_error": 0.15861314653013114,
+        "regressed_frames": []
+      },
+      {
+        "id": "k_step_1",
+        "validation_squared_error": 0.16963770368685505,
+        "strict_gate_passed": false,
+        "first_prefill_squared_error": 0.00016790324624160746,
+        "decode_squared_error": 0.08465094859718592,
+        "regressed_frames": [
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00016790324624160746
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00016790324624160746
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.00023712217807769775
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.00023712217807769775
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00022029876708984375
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00022029876708984375
+          }
+        ]
+      },
+      {
+        "id": "k_step_21",
+        "validation_squared_error": 0.2939169585753755,
+        "strict_gate_passed": false,
+        "first_prefill_squared_error": 0.00018631368975441376,
+        "decode_squared_error": 0.14677216559793332,
+        "regressed_frames": [
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00018631368975441376
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00018631368975441376
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.00023442506790161133
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.00023442506790161133
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00018644332885742188
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00018644332885742188
+          }
+        ]
+      },
+      {
+        "id": "k_step_41",
+        "validation_squared_error": 0.24999787267028295,
+        "strict_gate_passed": false,
+        "first_prefill_squared_error": 0.00020914562657203817,
+        "decode_squared_error": 0.12478979070856944,
+        "regressed_frames": [
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00020914562657203817
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00020914562657203817
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.00024147331714630127
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.00024147331714630127
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00025278329849243164
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00025278329849243164
+          }
+        ]
+      },
+      {
+        "id": "k_step_61",
+        "validation_squared_error": 0.3869536367077463,
+        "strict_gate_passed": false,
+        "first_prefill_squared_error": 0.00011944627622728632,
+        "decode_squared_error": 0.19335737207764586,
+        "regressed_frames": [
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00011944627622728632
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.19335737207764586
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00011944627622728632
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.19335737207764586
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.00013650953769683838
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.19423508644104004
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.00013650953769683838
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.19423508644104004
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.0001404285430908203
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.1932830810546875
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.0001404285430908203
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.1932830810546875
+          }
+        ]
+      },
+      {
+        "id": "k_step_80",
+        "validation_squared_error": 1.3905096760900413,
+        "strict_gate_passed": false,
+        "first_prefill_squared_error": 0.00016663405783567953,
+        "decode_squared_error": 0.695088203987185,
+        "regressed_frames": [
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00016663405783567953
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.695088203987185
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00016663405783567953
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.695088203987185
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.0001529604196548462
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.6958125233650208
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.0001529604196548462
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.6958125233650208
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00015926361083984375
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.7000868320465088
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00015926361083984375
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.7000868320465088
+          }
+        ]
+      },
+      {
+        "id": "v_step_1",
+        "validation_squared_error": 0.6639474150530835,
+        "strict_gate_passed": false,
+        "first_prefill_squared_error": 0.00022428518970318834,
+        "decode_squared_error": 0.3317494223368386,
+        "regressed_frames": [
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00022428518970318834
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.3317494223368386
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00022428518970318834
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.3317494223368386
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.0002598762512207031
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.33393144607543945
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.0002598762512207031
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.33393144607543945
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00021600723266601562
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.3313112258911133
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00021600723266601562
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.3313112258911133
+          }
+        ]
+      },
+      {
+        "id": "v_step_21",
+        "validation_squared_error": 0.3291246403379745,
+        "strict_gate_passed": false,
+        "first_prefill_squared_error": 0.00017328185279996688,
+        "decode_squared_error": 0.16438903831618729,
+        "regressed_frames": [
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00017328185279996688
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.16438903831618729
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00017328185279996688
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.16438903831618729
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.00020714104175567627
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.16723155975341797
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.00020714104175567627
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.16723155975341797
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00019168853759765625
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.16787433624267578
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00019168853759765625
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.16787433624267578
+          }
+        ]
+      },
+      {
+        "id": "v_step_41",
+        "validation_squared_error": 0.44292568619208783,
+        "strict_gate_passed": false,
+        "first_prefill_squared_error": 0.00010263153790734947,
+        "decode_squared_error": 0.22136021155813657,
+        "regressed_frames": [
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00010263153790734947
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.22136021155813657
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.00010263153790734947
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.22136021155813657
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.0001566559076309204
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.22513069212436676
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.0001566559076309204
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.22513069212436676
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00020599365234375
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.22413063049316406
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00020599365234375
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.22413063049316406
+          }
+        ]
+      },
+      {
+        "id": "v_step_61",
+        "validation_squared_error": 0.5302348034821424,
+        "strict_gate_passed": false,
+        "first_prefill_squared_error": 0.0001743691650597512,
+        "decode_squared_error": 0.26494303257601143,
+        "regressed_frames": [
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.0001743691650597512
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.26494303257601143
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.0001743691650597512
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.26494303257601143
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.00018741190433502197
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.26792380306869745
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.00018741190433502197
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.26792380306869745
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00022268295288085938
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.2612879276275635
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00022268295288085938
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.2612879276275635
+          }
+        ]
+      },
+      {
+        "id": "v_step_80",
+        "validation_squared_error": 0.6775899799488989,
+        "strict_gate_passed": false,
+        "first_prefill_squared_error": 0.0001918547095671741,
+        "decode_squared_error": 0.3386031352648823,
+        "regressed_frames": [
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.0001918547095671741
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.3386031352648823
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 7.26331864111529e-05,
+            "after_squared_error": 0.0001918547095671741
+          },
+          {
+            "view": "fp32",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15861314653013114,
+            "after_squared_error": 0.3386031352648823
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.00014525651931762695
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.3431210517883301
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 8.994340896606445e-05,
+            "after_squared_error": 0.00014525651931762695
+          },
+          {
+            "view": "bf16_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.15913748741149902,
+            "after_squared_error": 0.3431210517883301
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00022125244140625
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:single_split",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.34149932861328125
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 0,
+            "before_squared_error": 9.822845458984375e-05,
+            "after_squared_error": 0.00022125244140625
+          },
+          {
+            "view": "bf16_rank_output",
+            "request_id": "validation:captured_runtime_frames",
+            "frame_id": 1,
+            "before_squared_error": 0.1581430435180664,
+            "after_squared_error": 0.34149932861328125
+          }
+        ]
+      }
+    ]
+  },
+  "d256_exact_prefill": {
+    "synthetic": true,
+    "head_dim": 256,
+    "gqa": 6,
+    "tokens": 337,
+    "query_positions": [
+      0,
+      48,
+      96,
+      144,
+      192,
+      240,
+      288,
+      336
+    ],
+    "sigmoid_gate": 0.5,
+    "k_proxy_loss": 0.0,
+    "v_proxy_loss": 0.0,
+    "k_gradient_max_abs": 0.0,
+    "v_gradient_max_abs": 0.0,
+    "bf16_projected_squared_errors": [
+      0.09407113223446473,
+      0.004314198560380511,
+      0.004138244236493449,
+      0.0011462273652178556,
+      0.002460939975462262,
+      0.0018328758923473742,
+      0.0013434071729623298,
+      0.0018873652568347499
+    ],
+    "bf16_projected_squared_error": 0.11119439069416326
+  },
+  "optional_step_size_observation": {
+    "synthetic": true,
+    "train_seed": 153,
+    "validation_seed": 159,
+    "rotation_seed": 10,
+    "learning_rate": 0.02,
+    "tokens": 541,
+    "gqa": 6,
+    "queries": 3,
+    "global_heads_loss_divisor": 4,
+    "first_key_step": [
+      {
+        "head_dim": 8,
+        "relative_frobenius": 0.10571115463972092,
+        "bf16_changed_fraction": 0.96875
+      },
+      {
+        "head_dim": 64,
+        "relative_frobenius": 0.3128790557384491,
+        "bf16_changed_fraction": 0.99462890625
+      },
+      {
+        "head_dim": 256,
+        "relative_frobenius": 0.580834686756134,
+        "bf16_changed_fraction": 0.997100830078125
+      }
+    ],
+    "interpretation": "First Adam skew updates are coordinatewise normalized; at fixed lr the aggregate matrix step grows with dimension. This does not prove a smaller lr repairs the native rejection."
+  }
+}

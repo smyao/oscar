@@ -1,4 +1,4 @@
-# Archive G19/G20/G23/#23-25/#86/#96/#97/#111/#165/#166: official one-pass
+# Archive G19/G20/G23/#23-25/#86/#96/#97/#111/#165/#166/#176: official one-pass
 # calibration; only reuse/import the exact model and native execution recipe.
 from __future__ import annotations
 import argparse
@@ -108,8 +108,35 @@ def prepare(config, *, config_path=None, output=None, import_pair=None, capture_
     validate_refinement_config(config)
     if config.get("rotation_refinement") == "optr":
         from tools.prepare_optr_rotations import prepare as prepare_refinement
-        return prepare_refinement(config, config_path=config_path, output=output,
-            import_pair=import_pair, capture_runner=capture_runner, testing=testing)
+        try:
+            return prepare_refinement(config, config_path=config_path, output=output,
+                import_pair=import_pair, capture_runner=capture_runner, testing=testing)
+        except ValueError as error:
+            # Archive #176: completed fitting can have zero qualified layers.
+            # Explain existing checkpoint evidence without changing the fit
+            # implementation digest, replaying tensors, or permitting publish.
+            if (config.get("optr_baseline") == "recipe3" and str(error) ==
+                    "recipe3 OptR found no strict validation improvement; no refined PT is published"):
+                try:
+                    from tools.optr_rejection_report import report_no_improvement
+                    report = report_no_improvement(config, output=output, testing=testing)
+                    for layer in report.get("layers", []):
+                        print("[oscar] OPTR_PROGRESS " + json.dumps({**layer,
+                            "rotation_prepare": "optr", "phase": "no_improvement_layer"}), flush=True)
+                    print("[oscar] OPTR_PROGRESS " + json.dumps({
+                        **{key: value for key, value in report.items() if key != "layers"},
+                        "rotation_prepare": "optr", "phase": "no_improvement_report"}), flush=True)
+                except Exception as report_error:
+                    if hasattr(error, "add_note"):
+                        error.add_note("OptR checkpoint report failed: " + str(report_error))
+                    try:
+                        print("[oscar] OPTR_PROGRESS " + json.dumps({
+                            "rotation_prepare": "optr", "phase": "no_improvement_report",
+                            "status": "report_failed", "error": str(report_error),
+                            "original_failure_preserved": True}), flush=True)
+                    except Exception:
+                        pass  # A broken output pipe must not replace the fitting failure.
+            raise
     from oscar_ascend.rotations import (rotation_artifact_path,calibration_cache_identity,
         build_hadamard_artifact,load_artifact,save_artifact,validate_artifact,load_active_artifact)
     from oscar_ascend.rotation_calibration import (OFFICIAL_COMMIT,K_FILENAME,V_FILENAME,

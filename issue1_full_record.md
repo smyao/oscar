@@ -19,6 +19,7 @@
 
 - native_exact交付后质量单轮38.58/44.19/35.71/38.58、API1173.43秒，用户要求弃用：见 #174；仅记录实测反馈，未将局部反例确认为现场全部根因。
 - OPTR迁移后用户反馈42.52，对照为迁移前recipe3 OSCAR平均45+：见 #175；共享零均值基线与失败test发布为本地源码缺陷，模型差距尚未完成归因或验收。
+- OPTR v10准备5488.76秒后零accepted层、拒绝发布：见 #176；worker正常退出且非timeout，需读取已完成checkpoint的候选逐门指标，不以seed自比test通过冒充OPTR改善。
 
 - 32K/64K性能通过，但127条PC质量集十轮top3四项仍落后：见 #173，原无历史精确current路径的额外旋转误差与native_exact政策。
 
@@ -28887,3 +28888,14 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **本地修复**：新固定candidate v10以原recipe3认证pair和逐头均值为基线，保留既有K/V检查点交给BF16全层门选择；独立test退化明确终止、不重选，全部层无严格改善不发布。从原prompt SHA/token数重建并排除recipe3已用记录，再划分训练/验证/测试；版本化PT/capture和实现摘要阻止旧门结果冒充新门。CANN、线上runtime、KV布局、窗口/clip、PC/GDN/MTP、16384、argv、timer保持。
 
 **验收边界**：完整诊断、主机测试及打包证据见 `docs/optr_precision_20261102.md` 和对应validation。未连接真机、未跑NPU/图/性能/AISBench，未得到修复后的LongBench结果；不能称模型精度已超过OSCAR，也不能把局部SSE降幅写成accuracy收益。#172性能保护和原有模型验收缺口继续保留。
+
+
+## [176] 真机准备失败（2026-11-03回传2026-11-02日志）· OPTR v10全部层无严格改善，最终拒绝发布
+
+**现场事实**：附件原字节保存于 `reports/optr_no_improvement_20261103/user_log.txt`（SHA256 `5d4ebeb9202a40af74eaf4104df329885063ad119dd926baa4276020c00df271`）。RESULT给出prepare-rotations退出1、5488.758832秒、timed_out=false、interrupted=false、cleanup_complete=true。四worker均returncode=0。末段可见51/55/59/63层选择seed、accepted=false，before/after相等，completed layer已保存；最终 `require_publishable` 抛 `recipe3 OptR found no strict validation improvement; no refined PT is published`。日志未包含部署SHA、完整早期层记录或各候选数值，不补造这些字段。
+
+**直接原因及边界**：整份证书accepted_layers为空，所以发布被原严格门阻断；不是本片段显示的超时或worker崩溃。被拒候选未进入test，seed自比的independent_test=passed不能解释为候选通过。91.48分钟为整个准备阶段，不能当作推理性能或某一离线相位的耗时。上一轮v10没有在此次现场数据找到有效改善，不能将阻断本身称作精度目标成功。
+
+**本地分析**：恢复上一轮合成例的非零首帧gate后，12候选全部失败；一个总SSE下降候选的首帧误差上升约131%。代理在context=0时loss/梯度为零，但BF16部署旋转仍引入误差。这是本地目标盲点反例，不是现场全拒绝的已证实唯一根因。
+
+**本轮处置**：新增只读checkpoint诊断，认证并读取已完成候选矩阵及保存的逐query/投影视图validation指标；固定准备入口在这条特定错误后自动显示拒绝原因并保存报告，原错误和退出码保持。未修改任何拟合digest输入文件，完成层身份可继续复用，不因补日志让已有工作作废；不删除PT、不放宽门、不发布不变模型冒充OPTR。实际零改善与模型超过OSCAR仍未解决，报告和本地验证见 `docs/optr_no_improvement_20261103.md`。无agent真机连接或新质量/性能实验。

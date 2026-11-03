@@ -1,0 +1,82 @@
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "joint_output_check", "split": "validation", "event": "existing_recipe3_candidate_checked", "candidate": "v_step_41", "accepted": false, "worker": 3, "physical_device": 3}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_61", "worker": 3, "physical_device": 3}
+[oscar] phase=prepare-rotations running seconds=5225.0 log=/workspace/oscar/oscar-new/logs/20261102T122655.396037Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.59.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_61", "event": "partition_checked", "partition": "captured_runtime_frames", "worker": 1, "physical_device": 1}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.59.self_attn.attn", "phase": "joint_output_check", "split": "validation", "event": "existing_recipe3_candidate_checked", "candidate": "v_step_61", "accepted": false, "worker": 1, "physical_device": 1}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.59.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_80", "worker": 1, "physical_device": 1}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.55.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_61", "event": "partition_checked", "partition": "captured_runtime_frames", "worker": 0, "physical_device": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.55.self_attn.attn", "phase": "joint_output_check", "split": "validation", "event": "existing_recipe3_candidate_checked", "candidate": "v_step_61", "accepted": false, "worker": 0, "physical_device": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.55.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_80", "worker": 0, "physical_device": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.51.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_80", "event": "partition_checked", "partition": "captured_runtime_frames", "worker": 2, "physical_device": 2}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.51.self_attn.attn", "phase": "joint_output_check", "split": "validation", "event": "existing_recipe3_candidate_checked", "candidate": "v_step_80", "accepted": false, "worker": 2, "physical_device": 2}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.51.self_attn.attn", "phase": "joint_output_check", "split": "validation", "event": "recipe3_layer_selected", "accepted": false, "fitted_grouping": "layer_kv_head", "candidate": "seed", "worker": 2, "physical_device": 2}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.51.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "baseline", "worker": 2, "physical_device": 2}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_61", "event": "partition_checked", "partition": "single_split", "worker": 3, "physical_device": 3}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.59.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_80", "event": "partition_checked", "partition": "single_split", "worker": 1, "physical_device": 1}
+[oscar] phase=prepare-rotations running seconds=5285.1 log=/workspace/oscar/oscar-new/logs/20261102T122655.396037Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.55.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_80", "event": "partition_checked", "partition": "single_split", "worker": 0, "physical_device": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.51.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "baseline", "event": "partition_checked", "partition": "single_split", "worker": 2, "physical_device": 2}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_61", "event": "partition_checked", "partition": "captured_runtime_frames", "worker": 3, "physical_device": 3}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "joint_output_check", "split": "validation", "event": "existing_recipe3_candidate_checked", "candidate": "v_step_61", "accepted": false, "worker": 3, "physical_device": 3}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_80", "worker": 3, "physical_device": 3}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.59.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_80", "event": "partition_checked", "partition": "captured_runtime_frames", "worker": 1, "physical_device": 1}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.59.self_attn.attn", "phase": "joint_output_check", "split": "validation", "event": "existing_recipe3_candidate_checked", "candidate": "v_step_80", "accepted": false, "worker": 1, "physical_device": 1}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.59.self_attn.attn", "phase": "joint_output_check", "split": "validation", "event": "recipe3_layer_selected", "accepted": false, "fitted_grouping": "layer_kv_head", "candidate": "seed", "worker": 1, "physical_device": 1}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.59.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "baseline", "worker": 1, "physical_device": 1}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.55.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_80", "event": "partition_checked", "partition": "captured_runtime_frames", "worker": 0, "physical_device": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.55.self_attn.attn", "phase": "joint_output_check", "split": "validation", "event": "existing_recipe3_candidate_checked", "candidate": "v_step_80", "accepted": false, "worker": 0, "physical_device": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.55.self_attn.attn", "phase": "joint_output_check", "split": "validation", "event": "recipe3_layer_selected", "accepted": false, "fitted_grouping": "layer_kv_head", "candidate": "seed", "worker": 0, "physical_device": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.55.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "baseline", "worker": 0, "physical_device": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.51.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "baseline", "event": "partition_checked", "partition": "captured_runtime_frames", "worker": 2, "physical_device": 2}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.51.self_attn.attn", "phase": "checked", "accepted": false, "independent_test": "passed", "validation_before": 0.04404272405955484, "validation_after": 0.04404272405955484, "independent_test_before": 0.038415186445917404, "independent_test_after": 0.038415186445917404, "worker": 2, "physical_device": 2}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.51.self_attn.attn", "phase": "layer_checked_saved", "worker": 2, "physical_device": 2}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.51.self_attn.attn", "phase": "layer_checked_collected"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "phase": "fit_worker_exited", "worker": 2, "pid": 1415680, "returncode": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_80", "event": "partition_checked", "partition": "single_split", "worker": 3, "physical_device": 3}
+[oscar] phase=prepare-rotations running seconds=5345.1 log=/workspace/oscar/oscar-new/logs/20261102T122655.396037Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.59.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "baseline", "event": "partition_checked", "partition": "single_split", "worker": 1, "physical_device": 1}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.55.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "baseline", "event": "partition_checked", "partition": "single_split", "worker": 0, "physical_device": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "joint_output_check", "split": "validation", "candidate": "v_step_80", "event": "partition_checked", "partition": "captured_runtime_frames", "worker": 3, "physical_device": 3}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "joint_output_check", "split": "validation", "event": "existing_recipe3_candidate_checked", "candidate": "v_step_80", "accepted": false, "worker": 3, "physical_device": 3}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "joint_output_check", "split": "validation", "event": "recipe3_layer_selected", "accepted": false, "fitted_grouping": "layer_kv_head", "candidate": "seed", "worker": 3, "physical_device": 3}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "baseline", "worker": 3, "physical_device": 3}
+[oscar] phase=prepare-rotations running seconds=5405.2 log=/workspace/oscar/oscar-new/logs/20261102T122655.396037Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.59.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "baseline", "event": "partition_checked", "partition": "captured_runtime_frames", "worker": 1, "physical_device": 1}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.59.self_attn.attn", "phase": "checked", "accepted": false, "independent_test": "passed", "validation_before": 0.045336668918319195, "validation_after": 0.045336668918319195, "independent_test_before": 0.045734101028131774, "independent_test_after": 0.045734101028131774, "worker": 1, "physical_device": 1}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.59.self_attn.attn", "phase": "layer_checked_saved", "worker": 1, "physical_device": 1}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.59.self_attn.attn", "phase": "layer_checked_collected"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.55.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "baseline", "event": "partition_checked", "partition": "captured_runtime_frames", "worker": 0, "physical_device": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "phase": "fit_worker_exited", "worker": 1, "pid": 1415679, "returncode": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.55.self_attn.attn", "phase": "checked", "accepted": false, "independent_test": "passed", "validation_before": 0.05067449495170427, "validation_after": 0.05067449495170427, "independent_test_before": 0.0484711000272689, "independent_test_after": 0.0484711000272689, "worker": 0, "physical_device": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.55.self_attn.attn", "phase": "layer_checked_saved", "worker": 0, "physical_device": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.55.self_attn.attn", "phase": "layer_checked_collected"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "phase": "fit_worker_exited", "worker": 0, "pid": 1415678, "returncode": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "baseline", "event": "partition_checked", "partition": "single_split", "worker": 3, "physical_device": 3}
+[oscar] phase=prepare-rotations running seconds=5465.2 log=/workspace/oscar/oscar-new/logs/20261102T122655.396037Z/prepare-rotations.log
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "joint_output_check", "split": "test", "candidate": "baseline", "event": "partition_checked", "partition": "captured_runtime_frames", "worker": 3, "physical_device": 3}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "checked", "accepted": false, "independent_test": "passed", "validation_before": 0.028962740127220696, "validation_after": 0.028962740127220696, "independent_test_before": 0.021140322868603244, "independent_test_after": 0.021140322868603244, "worker": 3, "physical_device": 3}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "layer_checked_saved", "worker": 3, "physical_device": 3}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "layer": "model.layers.63.self_attn.attn", "phase": "layer_checked_collected"}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "phase": "fit_worker_exited", "worker": 3, "pid": 1415681, "returncode": 0}
+[oscar] OPTR_PROGRESS {"rotation_prepare": "optr", "phase": "fit_workers_cleanup", "cleanup_complete": true, "workers": [{"worker": 0, "pid": 1415678, "returncode": 0}, {"worker": 1, "pid": 1415679, "returncode": 0}, {"worker": 2, "pid": 1415680, "returncode": 0}, {"worker": 3, "pid": 1415681, "returncode": 0}]}
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/oscar/oscar-new/tools/prepare_rotations.py", line 243, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/workspace/oscar/oscar-new/tools/prepare_rotations.py", line 238, in main
+    print(json.dumps(prepare(config,config_path=args.config,output=args.output,import_pair=pair)),flush=True)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/oscar/oscar-new/tools/prepare_rotations.py", line 111, in prepare
+    return prepare_refinement(config, config_path=config_path, output=output,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/oscar/oscar-new/tools/prepare_optr_rotations.py", line 606, in prepare
+    publish_artifact(artifact, destination)
+  File "/workspace/oscar/oscar-new/oscar_ascend/optr_artifacts.py", line 412, in publish_artifact
+    require_publishable(artifact)
+  File "/workspace/oscar/oscar-new/oscar_ascend/optr_recipe3_certificate.py", line 37, in require_publishable
+    raise ValueError("recipe3 OptR found no strict validation improvement; no refined PT is published")
+ValueError: recipe3 OptR found no strict validation improvement; no refined PT is published
+[ERROR] 2026-11-02-13:58:29 (PID:1413816, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception
+RESULT {"phase": "prepare-rotations", "command": ["/usr/local/python3.12.13/bin/python3", "-m", "tools.prepare_rotations", "--config", "/workspace/oscar/oscar-new/logs/20261102T122655.396037Z/effective-target.json"], "returncode": 1, "elapsed_seconds": 5488.758832, "timed_out": false, "interrupted": false, "log": "/workspace/oscar/oscar-new/logs/20261102T122655.396037Z/prepare-rotations.log", "cleanup_complete": true}

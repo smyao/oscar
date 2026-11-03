@@ -11,6 +11,7 @@ OFFLINE_SEAMS = {
     "oscar_ascend/optr_traces.py", "tools/calibrate_optr_traces.py",
     "tools/optr_fit_worker.py", "tools/prepare_optr_rotations.py",
     "tools/serving_variants.py",
+    "tools/prepare_rotations.py",  # #176: explain an existing failed fit; no fitting identity change.
 }
 
 

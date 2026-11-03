@@ -1,5 +1,7 @@
 # 完成状态与证据
 
+2026-11-03 OPTR现场失败：用户回传v10准备5488.76秒、四worker正常退出，最终因全部层没有严格validation改善拒绝发布。新增读取既有checkpoint的自动拒绝原因报告，原拟合digest/缓存可复用，质量门保持；没有完成算法质量修复或恢复服务，不升级NPU/模型质量/性能状态。详见[现场事实与诊断](optr_no_improvement_20261103.md)、档案#176。
+
 2026-11-02 OPTR精度诊断：用户当前LongBenchv2为42.52/53.49/36.90/42.52，对照为迁移前recipe3 OSCAR（overall平均45+）。已定位共享零均值基线替换、test失败仍发布、K候选召回和校准记录重叠风险；新candidate保留原recipe3逐头中心化并严格阻断test失败PT。仅离线拟合、采样认证与配置接缝变化，线上/算子/timer保持。详见[诊断与修复](optr_precision_20261102.md)，本地结果不升级42项中的NPU、图、模型质量或性能状态。
 
 2026-10-28 当前修复：PC align的warm spec-width prefill也会被错误fold为decode，读写错误GDN checkpoint。已扩展#163的原生prefill分类与图接缝修复，207项相关主机回归通过，全部生产CANN与614c相同。固定candidate自动启用；四项模型验收状态不据本地反例升级。见[状态修复与范围](gdn_prefill_state_20261028.md)。

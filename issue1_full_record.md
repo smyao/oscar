@@ -28903,3 +28903,13 @@ FAILED tests/test_cv_contracts.py::test_npu_cv_matches_independent_dense_pr_orac
 **2026-11-03同一故障的后续真实拒绝报告**：原字节存于 `reports/optr_tail_regression_20261103/user_log.txt`，报告包含16层×12候选；每层最低总SSE候选改善1.649%–57.054%，仍有95–236个query检查退化，全部原因fine_grained_regression。16个显示的最差项均context>0，11个有历史多token帧、5个单token帧，三个投影视图均出现。计数不是独立token数，不能继续把首帧当作现场全部失败的已证实根因。RESULT为56.543872秒、退出1、无超时、清理完成，recomputed_fit_or_replay=false；诊断读取成功，候选仍未发布。
 
 **后续本地修正与边界**：v11在原12候选全拒时，从原recipe3按固定最早检查点方向搜索单头/单侧的8个正交微步半径，保持双partition/三视图/逐query/terminal严格门和独立test。旧v10指定实现的完整失败工作经base/trace/矩阵/manifest认证后复用，不重新NPU拟合；新身份独立，选择在test前锁定，test失败不二选。该算法与合成CPU验证不是新的真机通过记录；真实数据是否找到通过者及模型accuracy超过OSCAR尚未确定。详细设计、成本和验证见 `docs/optr_trust_region_20261103.md`；CANN/runtime/PC/GDN/MTP/argv/timer保持。
+
+## [177] 真机准备失败（2026-11-04回传2026-11-03日志）· v11新增1024个小步仍全部拒绝
+
+**现场事实**：原字节附件保存于 `reports/optr_v11_failure_20261104/user_log.txt`（SHA256 `ab2712381fc18819e995307db6630721bde9f1654743d82451c731fa8d00ec1c`）。16层各76候选，原12+新增64，共1216候选；最终仍为no_strict_validation_improvement、artifact_published=false。四worker均退出0；RESULT退出1、6806.486049秒、timed_out=false、interrupted=false、cleanup_complete=true。没有部署Git SHA，不以本地ccdd417代替。layer63 test为未改变recipe3的自比，不是新候选通过；报告的recomputed_fit_or_replay=false不代表整个113.44分钟准备阶段没有计算。
+
+**直接原因与未明信息**：发布被无严格validation改善的原门阻断，不是本段展示的worker崩溃或超时。逐字段对照证明16行best_total_candidate及误差/退化计数/最差项与#176旧报告完全一致，全部是原候选。完整JSON保存了新小步详情，但本次附件只有全局最佳摘要，不能把旧候选95–236个退化检查套给新候选，也不能确定各半径的拒绝模式。新增1024候选无通过者是事实，具体失败分布尚缺已有JSON。
+
+**本地定位与处置**：摘要合并原候选和小步后只显示总SSE最低者，遮住新搜索结果。增加独立repair_search摘要及纯标准库--saved-report读取已生成JSON，原--config仍保留checkpoint认证。固定candidate的错误报告自动接入新摘要；不修改任何拟合摘要输入、严格门、PT发布、在线算子/runtime/PC/GDN/MTP/clip/窗口/argv/timer，不删除PT或checkpoint，不因诊断失效重跑113分钟工作。不以缩半径能成功为保证，也不无证据扩大搜索。
+
+**验收边界**：本轮只修诊断，不称算法已解决；没有新模型分数，OPTR超过迁移前recipe3 OSCAR目标未完成。既有v11/本轮源码与CPU测试不能否定这次现场失败。无agent真机连接或NPU/性能/AISBench测试；详细证据、只读命令与验证见 `docs/optr_v11_failure_20261104.md`。

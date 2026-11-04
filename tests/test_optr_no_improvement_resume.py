@@ -1,4 +1,4 @@
-"""Archive #176: explain a completed rejected fit without repeating its work.
+"""Archive #176/#177: explain a completed rejected fit without repeating its work.
 
 The pair, capture provenance, checkpoint hashes and report authentication are
 real CPU code. Synthetic traces/proposals make no model-quality/NPU claim.
@@ -12,16 +12,21 @@ from tools import optr_parallel, prepare_optr_recipe3, prepare_rotations
 from tools import prepare_optr_rotations
 from tools.phase import _compact_should_mirror
 from test_optr_recipe3_pipeline import case, capture, forbidden, proposal
+from test_optr_trust_region_report import completed_repair
 
 
 MESSAGE = "recipe3 OptR found no strict validation improvement; no refined PT is published"
 
 
+@pytest.mark.parametrize("generation", ["v10", "v11"])
 def test_fixed_preparer_reports_authenticated_completed_work_without_any_recomputation(
-        case, monkeypatch, capsys):
-    with pytest.raises(ValueError, match="no strict validation improvement"):
-        prepare_optr_rotations.prepare(case["config"], output=case["output"], testing=True,
-            capture_runner=capture(case), fitter=proposal(case, unchanged=True), base_runner=forbidden)
+        case, monkeypatch, capsys, generation, request):
+    if generation == "v11":
+        case = request.getfixturevalue("completed_repair")
+    else:
+        with pytest.raises(ValueError, match="no strict validation improvement"):
+            prepare_optr_rotations.prepare(case["config"], output=case["output"], testing=True,
+                capture_runner=capture(case), fitter=proposal(case, unchanged=True), base_runner=forbidden)
     assert case["calls"] == ["capture", "fit"]
     assert not case["output"].exists()
     capsys.readouterr()
@@ -79,10 +84,13 @@ def test_fixed_preparer_reports_authenticated_completed_work_without_any_recompu
     assert summary["status"] == "no_strict_validation_improvement"
     assert summary["recomputed_fit_or_replay"] is False
     assert summary["artifact_published"] is False
-    assert summary["layer_count"] == 1 and summary["candidate_count"] == 1
+    assert summary["layer_count"] == 1
+    assert summary["candidate_count"] == (33 if generation == "v11" else 1)
     layer_summaries = [event for event in events if event.get("phase") == "no_improvement_layer"]
     assert len(layer_summaries) == 1
-    assert layer_summaries[0]["reason"] == "no_strict_total_improvement"
+    assert layer_summaries[0]["repair_candidates"] == (32 if generation == "v11" else 0)
+    if generation == "v10":
+        assert layer_summaries[0]["reason"] == "no_strict_total_improvement"
     assert all(_compact_should_mirror(line, {}) for line in lines
                if any(f'"phase": "{phase}"' in line for phase in (
                    "no_improvement_report", "no_improvement_layer")))
@@ -92,5 +100,5 @@ def test_fixed_preparer_reports_authenticated_completed_work_without_any_recompu
     assert len(report["layers"]) == 1
     layer = report["layers"][0]
     assert layer["independent_test"] == "baseline_compared_with_itself_no_proposal_tested"
-    assert layer["candidates"][0]["unchanged_baseline"] is True
+    assert layer["candidates"][0]["unchanged_baseline"] is (generation == "v10")
     assert layer["candidates"][0]["accepted"] is False

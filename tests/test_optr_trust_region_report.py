@@ -63,8 +63,13 @@ def test_v11_report_authenticates_source_and_all_saved_repair_rejections_without
     assert summary["recomputed_fit_or_replay"] is False
     assert summary["layers"][0]["original_candidates"] == 1
     assert summary["layers"][0]["repair_candidates"] == 32
+    repair_summary = summary["layers"][0]["repair_search"]
+    assert repair_summary["candidate_count"] == 32
+    assert sum(repair_summary["reason_counts"].values()) == 32
     saved = json.loads(Path(summary["report"]).read_text())
     layer = saved["layers"][0]
+    from tools.optr_rejection_summary import summarize_saved_report
+    assert summarize_saved_report(summary["report"])["layers"] == summary["layers"]
     assert len(layer["candidates"]) == 33
     assert all(not row["accepted"] for row in layer["candidates"])
     assert layer["source_fit_provenance"]["fitting_implementation_sha256"] == LEGACY_FITTING_SHA256

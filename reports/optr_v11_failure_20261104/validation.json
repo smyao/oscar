@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-04",
+  "branch": "oscar-new-6",
+  "base": "ccdd41720bb31a167921d20668a76c69a835ec7a",
+  "scope": "Offline rejection diagnostics only; no fitting, gate, cache identity or online implementation change",
+  "host_tests": {
+    "command": ".venv/bin/python -m pytest -q tests/test_optr_rejection_report.py tests/test_optr_rejection_summary.py tests/test_optr_trust_region_report.py tests/test_optr_no_improvement_resume.py tests/test_optr_trust_region_policy.py tests/test_optr_trust_region_pipeline.py tests/test_optr_recipe3_certificate.py tests/test_optr_recipe3_source.py tests/test_serving_variants.py tests/test_install_serve.py tests/test_universal_bf16_regression_protection.py",
+    "passed": 188,
+    "failed": 0,
+    "log": "host_tests.log",
+    "initial_command_correction": "An earlier invocation named nonexistent test_optr_trust_region_certificate.py and collected no tests; corrected to the existing recipe3 certificate test."
+  },
+  "read_only_summary": {
+    "torch_and_model_imports_blocked_in_subprocess": true,
+    "third_party_packages_disabled": true,
+    "input_and_neighbor_files_unchanged": true,
+    "synthetic_16_layer_stdout_lines": 17,
+    "synthetic_16_layer_stdout_under_50KiB": true,
+    "real_server_report_available_locally": false,
+    "evidence_scope": "saved_json_only_checkpoints_not_reauthenticated"
+  },
+  "fixed_entry_resume": {
+    "real_cpu_checkpoint_generations": [
+      "v10",
+      "v11"
+    ],
+    "workers": 0,
+    "capture_fit_replay_subprocess_sentinels": "not_triggered",
+    "original_zero_improvement_exception_preserved": true,
+    "publication": "blocked_as_before"
+  },
+  "source_protection": {
+    "manifest": "protected_source_sha256.json",
+    "existing_production_files_unchanged": 895,
+    "changed_existing_production_files": [
+      "tools/optr_rejection_report.py"
+    ],
+    "new_production_files": [
+      "tools/optr_rejection_summary.py"
+    ],
+    "fitting_implementation_sha256": "3ba079f899434f1f859806c799bb9cb9d72424d93ca5d07f738fc55b4ee0d251",
+    "same_fitting_digest_as_ccdd417": true,
+    "git_diff_check": "passed"
+  },
+  "user_evidence": {
+    "log": "user_log.txt",
+    "analysis": "analysis.json",
+    "original_candidates": 192,
+    "new_repair_candidates": 1024,
+    "accepted_layers": 0,
+    "elapsed_preparation_seconds": 6806.486049,
+    "artifact_published": false,
+    "printed_original_winners_identical_to_prior_report_layers": 16
+  },
+  "acceptance": {
+    "diagnostics_and_resume_functionality": "passed_within_CPU_test_scope",
+    "algorithm_fix": "not_delivered_this_round",
+    "model_accuracy_exceeds_recipe3_OSCAR": "not_established",
+    "inference_performance": "not_measured"
+  },
+  "not_run": [
+    "NPU connection",
+    "NPU fitting or replay",
+    "NPU operators/graphs",
+    "AISBench",
+    "LongBench",
+    "performance experiments"
+  ],
+  "committed_or_pushed": false,
+  "missing_evidence": "Existing full no-improvement-report.json from optr_1f7c086deaddaed2efdd; current attachment is only the terminal excerpt."
+}

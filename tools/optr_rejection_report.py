@@ -1,7 +1,9 @@
-"""Archive #86/#97/#170/#172/#174/#175/#176: explain saved OptR rejection evidence.
+"""Archive #86/#97/#170/#172/#174/#175/#176/#177: explain saved OptR rejection evidence.
 
-Read authenticated completed checkpoints only. No trace tensors, optimizer,
-replay, NPU initialization, selection, publication or acceptance changes occur.
+With --config, read authenticated completed checkpoints. With --saved-report,
+summarize existing diagnostic JSON without reauthenticating checkpoints.
+Neither mode runs an optimizer/replay, initializes NPU, or changes acceptance,
+selection or publication.
 This module deliberately stays outside the fitting implementation digest so
 adding diagnostics cannot invalidate the costly work that it explains.
 """
@@ -254,7 +256,7 @@ def _load_layer(directory, identity, name, seed, profile, source_checkpoint=None
         candidates.extend(repair_candidates)
     changed = [row for row in candidates if not row["unchanged_baseline"]]
     best = min(changed or candidates, key=lambda row: row["views"]["fp32"]["squared_error"]["candidate"])
-    return {"layer": name, "layer_id": layer_id, "base_constants_sha256": base_digest,
+    detail = {"layer": name, "layer_id": layer_id, "base_constants_sha256": base_digest,
             "candidate_count": len(candidates), "best_by_total_error": best["candidate"],
             "best_ranking_scope": "changed_candidates" if changed else "unchanged_candidates_only",
             "independent_test": "baseline_compared_with_itself_no_proposal_tested",
@@ -265,13 +267,9 @@ def _load_layer(directory, identity, name, seed, profile, source_checkpoint=None
             "candidates": candidates,
             "original_candidate_count": len(result["candidates"]),
             "repair_candidate_count": len(repair_candidates),
-            "source_fit_provenance": provenance}, {
-                "layer": name, "candidates": len(candidates), "best_total_candidate": best["candidate"],
-                "ranking_scope": "changed" if changed else "unchanged_only",
-                "total_relative_delta": best["views"]["fp32"]["squared_error"]["relative_delta"],
-                "reason": best["reason"], "regressed_queries": best["regressed_checks"]["query"],
-                "worst_gate": best["top_failures"][:1],
-                "original_candidates": len(result["candidates"]), "repair_candidates": len(repair_candidates)}
+            "source_fit_provenance": provenance}
+    from tools.optr_rejection_summary import summarize_layer
+    return detail, summarize_layer(detail)
 
 
 def report_no_improvement(config, *, output=None, testing=False):
@@ -352,10 +350,19 @@ def report_no_improvement(config, *, output=None, testing=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", type=Path, required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--config", type=Path, help="Authenticate completed checkpoints using this config")
+    source.add_argument("--saved-report", type=Path,
+                        help="Summarize existing diagnostic JSON only; no Torch/model/PT/checkpoint access")
     parser.add_argument("--output", type=Path, help="Original refined-PT destination, if explicitly overridden")
     args = parser.parse_args()
-    result = report_no_improvement(_json(args.config), output=args.output)
+    if args.saved_report:
+        if args.output is not None:
+            parser.error("--output is only valid with --config; saved-report mode never writes files")
+        from tools.optr_rejection_summary import summarize_saved_report
+        result = summarize_saved_report(args.saved_report)
+    else:
+        result = report_no_improvement(_json(args.config), output=args.output)
     for row in result.pop("layers"):
         print("[oscar] OPTR_PROGRESS " + json.dumps({"rotation_prepare": "optr",
             "phase": "no_improvement_layer", **row}, allow_nan=False), flush=True)

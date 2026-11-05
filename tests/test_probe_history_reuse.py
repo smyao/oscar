@@ -5,11 +5,54 @@ accuracy, graph capture or a production performance improvement.
 """
 
 import json
+import os
 from types import SimpleNamespace
 
 import pytest
 
 from tools import probe_history_reuse as reuse
+
+
+@pytest.mark.parametrize("devices", [[0, 1, 2, 3], [4, 5, 6, 7], [7, 5, 4, 6]])
+@pytest.mark.parametrize("inherited", [False, True])
+def test_active_device_uses_explicit_physical_ids_without_reordering(monkeypatch, devices, inherited):
+    selected = ",".join(map(str, devices))
+    if inherited:
+        monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", selected)
+    else:
+        monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "remove-before-probe")
+        monkeypatch.delenv("ASCEND_RT_VISIBLE_DEVICES")
+    target = {"devices": devices, "soc_version": "ascend910b4"}
+    before = json.dumps(target, sort_keys=True)
+    reuse._active_device(target)
+    assert os.environ["ASCEND_RT_VISIBLE_DEVICES"] == selected
+    assert json.dumps(target, sort_keys=True) == before
+
+
+@pytest.mark.parametrize("devices", [None, [], [0, 1, 2], [0, 1, 2, 2],
+    [-1, 1, 2, 3], [False, 1, 2, 3], [4, 5, 6, True], [0, 1, 2, "3"]])
+def test_active_device_rejects_invalid_explicit_selection(monkeypatch, devices):
+    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "4,5,6,7")
+    with pytest.raises(reuse.HistoryReuseProbeError, match="four distinct nonnegative"):
+        reuse._active_device({"devices": devices, "soc_version": "ascend910b4"})
+    assert os.environ["ASCEND_RT_VISIBLE_DEVICES"] == "4,5,6,7"
+
+
+@pytest.mark.parametrize("devices,inherited", [([4, 5, 6, 7], "0,1,2,3"),
+    ([0, 1, 2, 3], "4,5,6,7"), ([4, 5, 6, 7], "7,6,5,4")])
+def test_active_device_rejects_inherited_mismatch(monkeypatch, devices, inherited):
+    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", inherited)
+    with pytest.raises(reuse.HistoryReuseProbeError, match="differs from target"):
+        reuse._active_device({"devices": devices, "soc_version": "ascend910b4"})
+    assert os.environ["ASCEND_RT_VISIBLE_DEVICES"] == inherited
+
+
+@pytest.mark.parametrize("soc", [None, "ascend910b", "ascend910b1"])
+def test_active_device_still_requires_exact_soc(monkeypatch, soc):
+    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "4,5,6,7")
+    with pytest.raises(reuse.HistoryReuseProbeError, match="ascend910b4"):
+        reuse._active_device({"devices": [4, 5, 6, 7], "soc_version": soc})
+    assert os.environ["ASCEND_RT_VISIBLE_DEVICES"] == "4,5,6,7"
 
 
 def test_small_fixture_is_deterministic_and_uses_disjoint_physical_pages():

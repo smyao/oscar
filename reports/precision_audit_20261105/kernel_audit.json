@@ -1,0 +1,227 @@
+{
+  "archive_references": [
+    "#13-22",
+    "#127-128",
+    "#157",
+    "#170",
+    "#172-177",
+    "oscar_ascend_agent_start.md D.4"
+  ],
+  "scope": {
+    "algorithm": "OSCAR recipe3, OPTR disabled",
+    "head": "04db2527e708dc127816249b06cbf9a58168c4d7",
+    "production_modified": false,
+    "native_device_or_performance_run": false,
+    "model_quality_established": false
+  },
+  "reference_limit": {
+    "manifest": "docs/reference_manifest.md:9-12,20-22",
+    "available": [
+      "references/vllm",
+      "references/vllm-ascend"
+    ],
+    "missing": [
+      "references/oscar-vllm-pr46774",
+      "references/oscar-paper",
+      "references/PROVENANCE.md",
+      "references/PROVENANCE.json"
+    ],
+    "local_pinned_torch_extract": "tests/test_official_reference.py:1-182",
+    "meaning": "Local pinned extracts corroborate visible BF16 centering and quantizer formulas; missing complete official snapshots prevent a new full upstream source audit. Native FIA internals remain opaque."
+  },
+  "confirmed_implementation_bugs": [],
+  "inherent_numerical_effects": [
+    {
+      "id": "bf16_centering_not_exact_logit_translation",
+      "source": [
+        "oscar_ascend/integration/official_math.py:15-34,49-51"
+      ],
+      "interpretation": "This direct call to production centering loses a distinguishable BF16 key difference before any INT2, QK accumulation or inverse rotation. It agrees with the declared BF16 subtraction semantics; it is not evidence of a new kernel bug or its frequency in the evaluated model.",
+      "evidence": {
+        "key_before": [
+          1.0,
+          1.0078125
+        ],
+        "key_after_bf16_center": [
+          2.0,
+          2.0
+        ],
+        "mean": -1.0,
+        "original_output": 0.01562372874468565,
+        "exact_centered_output": 0.01562372874468565,
+        "bf16_centered_output": 0.0,
+        "max_abs_output_error": 0.01562372874468565,
+        "int2_used": false,
+        "value_rotation": "identity"
+      }
+    },
+    {
+      "id": "correlated_int2_attention_error_vs_kv256_rounding",
+      "source": [
+        "csrc/kernels/store_aligned_int2.cpp:53-79",
+        "csrc/kernels/attention_aligned_unpack.h:110-155",
+        "csrc/kernels/attention_cv_official_decode.cpp:570-592",
+        "csrc/kernels/merge_lse.cpp:65-94"
+      ],
+      "interpretation": "Constructed rotated BF16 rows with default K=.96/V=.92, FP32 metadata mode0, sink64/recent256 and identity Rv. Dense FP64 attention on decoded operands isolates codec error from the CPU KV256/merge contract. This does not execute AscendC or native FIA. The codec error dominates the extra PV-BF16/FP32-merge error in these examples; it is not a general error bound.",
+      "evidence": [
+        {
+          "context": 1024,
+          "sink": 64,
+          "recent": 256,
+          "quantized_rows": 705,
+          "history_tiles": 3,
+          "dense_original_output": 0.07760423421859741,
+          "dense_quantized_output": 0.12906156480312347,
+          "kv256_three_source_output": 0.12962226569652557,
+          "final_bf16_output": 0.1298828125,
+          "max_key_coordinate_error": 0.06640625,
+          "max_value_coordinate_error": 0.0,
+          "int2_output_error": 0.05145733058452606,
+          "tile_and_merge_output_error": 0.0005607008934020996,
+          "total_output_error": 0.05227857828140259
+        },
+        {
+          "context": 4096,
+          "sink": 64,
+          "recent": 256,
+          "quantized_rows": 3777,
+          "history_tiles": 15,
+          "dense_original_output": 0.09512689709663391,
+          "dense_quantized_output": 0.15723825991153717,
+          "kv256_three_source_output": 0.1579158455133438,
+          "final_bf16_output": 0.158203125,
+          "max_key_coordinate_error": 0.06640625,
+          "max_value_coordinate_error": 0.0,
+          "int2_output_error": 0.06211136281490326,
+          "tile_and_merge_output_error": 0.0006775856018066406,
+          "total_output_error": 0.06307622790336609
+        },
+        {
+          "context": 16384,
+          "sink": 64,
+          "recent": 256,
+          "quantized_rows": 16065,
+          "history_tiles": 63,
+          "dense_original_output": 0.09899759292602539,
+          "dense_quantized_output": 0.16345085203647614,
+          "kv256_three_source_output": 0.16415421664714813,
+          "final_bf16_output": 0.1640625,
+          "max_key_coordinate_error": 0.06640625,
+          "max_value_coordinate_error": 0.0,
+          "int2_output_error": 0.06445325911045074,
+          "tile_and_merge_output_error": 0.0007033646106719971,
+          "total_output_error": 0.06506490707397461
+        }
+      ]
+    },
+    {
+      "id": "q4_vs_four_q1_fixed_window_membership",
+      "source": [
+        "csrc/kernels/attention_official_tasks.cpp:148-152",
+        "csrc/kernels/attention_cv_official_decode.cpp:498-538"
+      ],
+      "interpretation": "Same final logical query and exactly-once visible token coverage, but a fixed per-forward recent cut retains three extra exact historical positions for q4. A deliberately sparse V coordinate is preserved in that exact window and removed by the existing .92 clip once demoted. This is chunk-dependent precision, not missing/duplicated tokens or a q4 indexing bug. It extends the archive #173 example to real recent256/context4096.",
+      "evidence": {
+        "context": 4096,
+        "query_position": 4099,
+        "q4_cut": 3841,
+        "last_q1_cut": 3844,
+        "distinguished_position": 3841,
+        "q4_output": 1.0,
+        "last_q1_output": 0.0,
+        "same_visible_positions_exactly_once": true,
+        "decoded_key_error": 0.0,
+        "decoded_value": 0.0
+      }
+    }
+  ],
+  "audited_without_confirmed_bug": [
+    {
+      "area": "center/rotation/final inverse",
+      "source": [
+        "oscar_ascend/integration/official_math.py:15-92"
+      ],
+      "finding": "One BF16-centered rotated K frame for current and cache; exact window receives pre-clip rotated K/V; one BF16 inverse after FP32 merge."
+    },
+    {
+      "area": "INT2 wire/metadata",
+      "source": [
+        "csrc/kernels/store_aligned_int2.cpp:53-86,134-166",
+        "csrc/kernels/striped_store_pack.h",
+        "csrc/kernels/attention_aligned_unpack.h:41-155"
+      ],
+      "finding": "Eight two-bit planes, little-endian words; K/V code offsets0/64 and FP32 scale/normalized-zero offsets128/132/136/140. Signed shifts followed by &3 preserve codes. Mode0 keeps metadata/subtraction in FP32 until final BF16 publication."
+    },
+    {
+      "area": "QK/PV transpose and FP32 accumulators",
+      "source": [
+        "csrc/kernels/attention_cv_official_decode.cpp:198-213,570-592,607-650",
+        "csrc/kernels/attention_cv_official_cluster16.cpp:934-1018,1026-1100"
+      ],
+      "finding": "Dense BF16 operands in explicitly addressed workspace, QK B transpose and PV nontranspose; alpha/denominator/accumulator remain FP32; probabilities narrow to BF16 per KV256 tile."
+    },
+    {
+      "area": "source boundaries/physical128 addressing",
+      "source": [
+        "csrc/kernels/attention_official_tasks.cpp:148-152",
+        "csrc/kernels/attention_cv_official_decode.cpp:288-315,498-538",
+        "csrc/kernels/attention_cv_official_cluster16.cpp:622-638"
+      ],
+      "finding": "Source0 history below fixed cut; source1 sink+recent; source2 causal current. Per128 physical lookup handles arbitrary virtual-page adjacency."
+    },
+    {
+      "area": "LSE merge",
+      "source": [
+        "csrc/kernels/merge_lse.cpp:42-94"
+      ],
+      "finding": "Normalized FP32 partials receive stable exp(LSE-max) weights; empty zero-weight partials are skipped; final inverse occurs outside merge."
+    }
+  ],
+  "layout": {
+    "dimension": 256,
+    "metadata_dtype": "FP32",
+    "kv_heads_symbol": "Hkv_local",
+    "payload_per_token_per_head_bytes": 144,
+    "k_code_bytes": 64,
+    "v_code_bytes": 64,
+    "metadata_bytes": 16,
+    "gm_head_stride_bytes": 144,
+    "gm_token_stride_formula": "Hkv_local * 144",
+    "ub_row_stride_bytes": 160,
+    "gm_page_stride": "spec.ssm_bytes (not 160 and not necessarily equal to payload_bytes)",
+    "capacity_formula": "A * floor(spec.ssm_bytes / (A * Hkv_local * 144)), A=128 for none, lcm(native_mamba_block_size,128) for align/all",
+    "payload_page_bytes_formula": "block_size * Hkv_local * 144",
+    "unused_ssm_tail_formula": "spec.ssm_bytes - payload_page_bytes",
+    "native_page_bytes": "conv_bytes + ssm_bytes + native_padding_bytes; allocated independently of OSCAR payload capacity",
+    "source": [
+      "csrc/kernels/store_aligned_int2.cpp:134,163-166",
+      "csrc/kernels/attention_cv_official_decode.cpp:68-69,307-315",
+      "oscar_ascend/layout.py:124-152",
+      "csrc/official_attention_bindings.cpp:119-122"
+    ],
+    "legacy_note": "SlotLayout metadata offset accessors describe the older canonical interleaving and have no production readers in oscar_ascend/csrc. Only total slot/token bytes are used for the current striped format. Old 136B comments are not the current GM slot."
+  },
+  "unproven_hypotheses": [
+    "The relative share of centering, Rk/Rv rounding, clipping, INT2 quantization, PV probability narrowing and native-FIA differences in the current model quality gap is not established by synthetic tests.",
+    "No current-run real activation replay or native FIA internal output was supplied to this subtask, so neither absence of all kernel bugs nor model-level accuracy recovery is claimed."
+  ],
+  "verification": {
+    "command": ".venv/bin/python -m pytest -q tests/test_precision_math_audit_20261105.py",
+    "result": "5 passed in 1.07s",
+    "kind": "local CPU only"
+  },
+  "source_sha256": {
+    "oscar_ascend/integration/official_math.py": "b080a6a67f41819a15d3b88807b7e9819367c2d49d84cbe37ab26c5ad1ba6439",
+    "oscar_ascend/layout.py": "8d0504b03367ca982968e3f92b80af3c47c231b0a6a8607c453e3d6e118db96e",
+    "csrc/kernels/store_aligned_int2.cpp": "b9c44ddd1cf6c003173c6470d8596e5d1b8d10d8a51862a22694077d4050e134",
+    "csrc/kernels/striped_store_pack.h": "95c2936c4e2f31bd444bb9126928e7cd270f3eaf38978b0a7801c107a5eb7f3e",
+    "csrc/kernels/attention_aligned_unpack.h": "ad8e7aee0a6521a71e9346fa12eac81f4b4356c01507a4257e5c72c866376e07",
+    "csrc/kernels/attention_official_tasks.cpp": "bfcc571b3917fd7f8ee187fe46aac64b5246acfcba0bb6118e5f71ef723cf06c",
+    "csrc/kernels/attention_cv_official_decode.cpp": "817a5cbb7738e9ad572e39796838cd915a902c98301c452e21caefe6ceaebc22",
+    "csrc/kernels/attention_cv_official_cluster4.cpp": "5069fa48b89a72d78b269b42c50be833007dd24e3bd05eceda0a62ceec722858",
+    "csrc/kernels/attention_cv_official_cluster16.cpp": "1bcf9ccfe0181f3103b255f67589845a9d83b4e232baa9aa11561b61326d8264",
+    "csrc/kernels/merge_lse.cpp": "8b32602f0efa94e5e1ec23ec03471e17b53c94fb4b45b867aca7e4f1c9af1723",
+    "csrc/official_attention_bindings.cpp": "4c708a041f991b0b3373921f71f3e72354af04445140e6df6fbdd716b9cec28b"
+  }
+}

@@ -180,8 +180,8 @@ def test_device_gate_rejects_missing_correctness_or_complete_path_timing(fault):
 def test_probe_requires_real_npu_before_loading_native_or_ops(monkeypatch, tmp_path):
     monkeypatch.setitem(sys.modules, 'torch_npu', SimpleNamespace())
     monkeypatch.setattr(torch, 'npu', SimpleNamespace(is_available=lambda: False), raising=False)
-    monkeypatch.setenv('ASCEND_RT_VISIBLE_DEVICES', '0,1,2,3')
     config = json.loads((probe.ROOT/'configs/target.json').read_text())
+    monkeypatch.setenv('ASCEND_RT_VISIBLE_DEVICES', ','.join(map(str, config['devices'])))
     config['experimental_prepare_reuse'] = True
     path = tmp_path/'config.json'; path.write_text(json.dumps(config))
     with pytest.raises(RuntimeError, match='target NPU required; no CPU substitution'):

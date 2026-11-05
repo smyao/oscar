@@ -325,9 +325,13 @@ def make_fixture(torch, shape: Shape, *, on_request=None, rotation_mode="nontriv
 
 
 def _active_device(target: dict):
-    if target.get("devices") != [0, 1, 2, 3] or target.get("soc_version") != "ascend910b4":
-        raise HistoryReuseProbeError("explicit target devices 0,1,2,3 and ascend910b4 are required")
-    selection = "0,1,2,3"
+    if target.get("soc_version") != "ascend910b4":
+        raise HistoryReuseProbeError("explicit target ascend910b4 is required")
+    from .target_cli import target_env
+    try:
+        selection = target_env(target, base={})["ASCEND_RT_VISIBLE_DEVICES"]
+    except (TypeError, ValueError) as error:
+        raise HistoryReuseProbeError("explicit four distinct nonnegative physical NPU IDs are required") from error
     inherited = os.environ.get("ASCEND_RT_VISIBLE_DEVICES")
     if inherited is not None and inherited != selection:
         raise HistoryReuseProbeError(f"physical device selection {inherited!r} differs from target")

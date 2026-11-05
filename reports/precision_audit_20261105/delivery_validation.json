@@ -1,0 +1,63 @@
+{
+  "date": "2026-11-05",
+  "base": "04db2527e708dc127816249b06cbf9a58168c4d7",
+  "branch": "oscar-new-6",
+  "device_config": {
+    "devices": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "port": 7878,
+    "tensor_parallel_size": 4
+  },
+  "changed_target_keys": [
+    "device_policy",
+    "devices"
+  ],
+  "serve_argv_identical_to_base": true,
+  "inherited_front_cards_overridden": true,
+  "plans": [
+    {
+      "args": [
+        "--plan"
+      ],
+      "devices": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "port": 7878
+    },
+    {
+      "args": [
+        "--plan",
+        "--rear-cards"
+      ],
+      "devices": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "port": 7878
+    }
+  ],
+  "changed_production_files": [
+    "configs/target.json",
+    "tools/probe_history_reuse.py"
+  ],
+  "final_local_suite": {
+    "passed": 189,
+    "failed": 0,
+    "seconds": 3.74,
+    "log": "final_tests.txt",
+    "command": ".venv/bin/python -m pytest -q tests/test_install_serve.py tests/test_serving_variants.py tests/test_optr_migration_scope.py tests/test_universal_bf16_regression_protection.py tests/test_probe_history_reuse.py tests/test_official_runtime.py tests/test_precision_math_audit_20261105.py tests/test_precision_integration_audit_20261105.py tests/test_precision_optimizer_audit_20261105.py"
+  },
+  "device_execution": false,
+  "service_started": false,
+  "performance_measured": false,
+  "model_quality_accepted": false
+}

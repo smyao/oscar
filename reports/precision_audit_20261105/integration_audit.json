@@ -1,0 +1,333 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-05",
+  "head": "04db2527e708dc127816249b06cbf9a58168c4d7",
+  "scope": "Pure recipe3 OSCAR online integration; user explicitly says OPTR is disabled. No attention/math/scheduler source changed by this audit. Follow-up authorization permits the explicit-device selection probe seam.",
+  "archive_basis": [
+    "26",
+    "37-49",
+    "86",
+    "127-128",
+    "157-163",
+    "170-177"
+  ],
+  "reference_manifest": "docs/reference_manifest.md",
+  "authorized_device_change": {
+    "devices": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "port": 7878,
+    "note": "Parent changed target defaults at user request; excluded from any unchanged-production assertion."
+  },
+  "new_confirmed_accuracy_bugs": [],
+  "coverage": [
+    {
+      "id": "native_qwen_outer_math",
+      "status": "source_confirmed_and_cpu_boundary_tested",
+      "condition": "Qwen3.5/3Next FULL attention dispatch on the pinned native Ascend path, including fused qwen3_5 branch and unfused branch.",
+      "sources": [
+        {
+          "path": "references/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py",
+          "lines": [
+            41,
+            87
+          ]
+        },
+        {
+          "path": "references/vllm/vllm/model_executor/models/qwen3_5.py",
+          "lines": [
+            145
+          ]
+        },
+        {
+          "path": "oscar_ascend/plugin.py",
+          "lines": [
+            86,
+            112,
+            611,
+            622
+          ]
+        }
+      ],
+      "result": "Native projection, Q/K norm and RoPE precede self.attn; native sigmoid gate and RowParallel o_proj consume backend output afterward. OSCAR selects AttentionImpl, not a replacement Qwen forward. New test executes native forward AST unchanged and tests gate/projection values and argument ordering.",
+      "test": "tests/test_precision_integration_audit_20261105.py::test_pinned_native_qwen_keeps_rope_gate_and_projection_around_attention",
+      "limit": "QKV fused operation and attention in new test are explicit CPU boundary doubles. Fused NPU arithmetic, full-model logits and HCCL reduction were not executed."
+    },
+    {
+      "id": "tp_head_matrix_mean",
+      "status": "source_confirmed_and_cpu_tested",
+      "condition": "Recipe3 perhead_center, four global KV heads, TP4 with one local KV head per rank.",
+      "sources": [
+        {
+          "path": "references/vllm/vllm/model_executor/layers/linear.py",
+          "lines": [
+            1028,
+            1031,
+            1363
+          ]
+        },
+        {
+          "path": "oscar_ascend/rotations.py",
+          "lines": [
+            85,
+            102,
+            122
+          ]
+        },
+        {
+          "path": "oscar_ascend/runtime.py",
+          "lines": [
+            775,
+            789,
+            804,
+            826
+          ]
+        },
+        {
+          "path": "oscar_ascend/integration/rotation_capture.py",
+          "lines": [
+            54,
+            56
+          ]
+        }
+      ],
+      "result": "CPU executes actual native weight_loader for K and V at ranks0..3; the matching recipe3 Rk/Rv/key_mean is indexed by logical TP rank. Physical devices4..7 do not alter logical rank mapping. TP8 perhead_center is explicitly rejected; no silent replicated-head misassignment.",
+      "test": "tests/test_precision_integration_audit_20261105.py::test_recipe3_head_mean_matches_pinned_native_tp_kv_weight_shard",
+      "limit": "No live model checkpoint was loaded. TP8 native without OSCAR is outside this audit."
+    },
+    {
+      "id": "centering_and_final_projection",
+      "status": "source_confirmed_and_cpu_tested",
+      "condition": "Active official BF16 path, current-only or mixed/history attention.",
+      "sources": [
+        {
+          "path": "oscar_ascend/integration/official_math.py",
+          "lines": [
+            14,
+            32,
+            36,
+            55,
+            81,
+            95
+          ]
+        },
+        {
+          "path": "oscar_ascend/runtime.py",
+          "lines": [
+            804,
+            827
+          ]
+        }
+      ],
+      "result": "Only K subtracts the head-specific BF16 mean; Q and V do not. Both ordinary and current-only inputs center once. Stored current INT2 and exact window consume the same rotated K/V. Final Rv inverse occurs after source merge, and native gate/o_proj occur after backend return. MTP uses explicit identity+zero mean.",
+      "tests": [
+        "tests/test_center_runtime.py",
+        "tests/test_official_runtime.py"
+      ],
+      "limit": "BF16 centering/rotation introduces known finite-precision differences; the existing #173/#174 current-only experiment is not a newly found issue and is not recommended for re-enabling."
+    },
+    {
+      "id": "later_mtp_logical_slot_and_discard",
+      "status": "source_confirmed_and_cpu_native_contract_tested",
+      "condition": "Native MTP later draft, one token per request, within hooked proposer scope; all reject counts0..3 and mRoPE coordinate offsets.",
+      "sources": [
+        {
+          "path": "oscar_ascend/plugin.py",
+          "lines": [
+            493,
+            517
+          ]
+        },
+        {
+          "path": "oscar_ascend/integration/draft_discard.py",
+          "lines": [
+            40,
+            81,
+            137,
+            170
+          ]
+        }
+      ],
+      "result": "Accepted logical KV boundary comes from seq_len minus rejected count, independent of RoPE coordinates. Only explicit native discard mask permits padding; invalid live slots remain errors. Fixed source and length allocations preserve graph address ownership; wrap protection remains in place.",
+      "tests": [
+        "tests/test_mtp_logical_slots.py",
+        "tests/test_native_discard_pipeline.py",
+        "tests/test_native_discard_async_order.py"
+      ],
+      "limit": "These are existing #157-161 repairs. No new bug or explanation of current evaluation score is established."
+    },
+    {
+      "id": "gdn_prefill_protocol",
+      "status": "source_confirmed_and_cpu_native_contract_tested",
+      "condition": "MTP with none or align cache mode, genuine warm speculative-width prompt continuation, including mixed batches and prefix hits.",
+      "sources": [
+        {
+          "path": "oscar_ascend/integration/prefill_state_contract.py",
+          "lines": [
+            21,
+            33,
+            44,
+            73
+          ]
+        },
+        {
+          "path": "oscar_ascend/plugin.py",
+          "lines": [
+            158,
+            181,
+            481,
+            490
+          ]
+        }
+      ],
+      "result": "Existing external hook keeps actual prefill masks/counts and prevents warm qLen4 prompt work entering a decode graph. Normal decode/dummy/capture remain native. Existing reproduction of old uninitialized SSM fold is not reported as a new current bug.",
+      "tests": [
+        "tests/test_gdn_folded_initial_state.py",
+        "tests/test_align_prefill_state_contract.py",
+        "tests/test_prefill_state_contract_hooks.py",
+        "tests/test_prefill_state_numeric.py"
+      ]
+    },
+    {
+      "id": "pc_snapshot_lifecycle",
+      "status": "source_confirmed_and_cpu_native_contract_tested",
+      "condition": "PC enabled explicitly, native align manager with joint FULL/GDN page geometry; normal request completion/abort/preemption.",
+      "sources": [
+        {
+          "path": "oscar_ascend/lifecycle.py",
+          "lines": [
+            15,
+            34,
+            60,
+            69,
+            82
+          ]
+        },
+        {
+          "path": "oscar_ascend/integration/prefix_checkpoint.py",
+          "lines": [
+            54,
+            87,
+            97,
+            135
+          ]
+        },
+        {
+          "path": "oscar_ascend/plugin.py",
+          "lines": [
+            281,
+            346
+          ]
+        }
+      ],
+      "result": "Exact snapshots are owned by physical page IDs in native padding; recent+speculative retention protects rollback. Existing checkpoint hook retains native joint prompt checkpoint refs, releases after native free, and preserves native hashing/lookup and normal decode. Tests execute real native manager/pool contracts, including20-request turnover.",
+      "tests": [
+        "tests/test_lifecycle.py",
+        "tests/test_prefix_caching.py",
+        "tests/test_prefix_checkpoint_retention.py",
+        "tests/test_prefix_checkpoint_lifecycle.py",
+        "tests/test_prefix_checkpoint_audit.py",
+        "tests/test_prefix_checkpoint_integration.py"
+      ],
+      "limit": "Default config has PC disabled. No evidence this local CPU workload reproduces the user evaluation cache/hit schedule."
+    },
+    {
+      "id": "sampling_and_other_native_changes",
+      "status": "source_confirmed_and_cpu_tested",
+      "condition": "OSCAR_ENABLED=1 and native Triton rejection sampling is available.",
+      "sources": [
+        {
+          "path": "oscar_ascend/plugin.py",
+          "lines": [
+            564,
+            594
+          ]
+        },
+        {
+          "path": "oscar_ascend/integration/greedy_sampling.py",
+          "lines": [
+            15,
+            79,
+            82
+          ]
+        }
+      ],
+      "result": "Cannot claim that literally all non-attention code is untouched: existing plugin also protects cumulative-pointer backing and implements native greedy-prefix/first-rejection/bonus semantics. Native random probabilities/argmax writer and non-greedy output rows remain preserved by the audited adapter.",
+      "tests": [
+        "tests/test_greedy_sampling.py"
+      ],
+      "limit": "This is a previously documented #157-160 source-risk repair, not a new precision diagnosis."
+    }
+  ],
+  "test_runs": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_precision_integration_audit_20261105.py tests/test_official_runtime.py tests/test_center_runtime.py tests/test_mtp_logical_slots.py tests/test_prefix_checkpoint_retention.py tests/test_prefix_checkpoint_lifecycle.py tests/test_gdn_folded_initial_state.py tests/test_align_prefill_state_contract.py tests/test_prefix_caching.py tests/test_prefix_checkpoint_audit.py tests/test_prefix_checkpoint_integration.py",
+      "passed": 245,
+      "failed": 0,
+      "seconds": 13.45
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_greedy_sampling.py tests/test_lifecycle.py tests/test_native_discard_pipeline.py tests/test_native_discard_async_order.py tests/test_mixed_decode_split.py tests/test_prepare_reuse.py tests/test_mixed_prepare_reuse.py tests/test_current_only_plan.py tests/test_current_only_dispatch.py tests/test_prefill_state_contract_hooks.py tests/test_prefill_state_numeric.py",
+      "passed": 244,
+      "failed": 2,
+      "seconds": 4.92
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_probe_history_reuse.py tests/test_mixed_prepare_reuse.py::test_probe_requires_real_npu_before_loading_native_or_ops tests/test_official_runtime.py::test_missing_v4_operator_fails_before_npu_availability",
+      "passed": 55,
+      "failed": 0
+    }
+  ],
+  "unresolved_test_failures": [
+    {
+      "test": "tests/test_mixed_prepare_reuse.py::test_legacy_v3_16k_mixed_forward_selects_aligned_decode_and_c16_with_prepare_reuse",
+      "kind": "existing incompatible legacy test config",
+      "detail": "Test forces official_math=False while retaining candidate fp32_metadata; correct readiness guard rejects. Not reachable normal candidate config."
+    },
+    {
+      "test": "tests/test_integration_contracts.py::TargetContracts::test_h14_command_matches_supplied_appendix_a",
+      "kind": "preexisting test/doc drift verified at HEAD04db252",
+      "detail": "Only difference is appendix expected port8989 versus target port7878, both HEAD and working config. Unrelated to new device defaults."
+    }
+  ],
+  "changes_by_this_agent": [
+    "tests/test_precision_integration_audit_20261105.py",
+    "tests/test_official_runtime.py: capability-order test now derives visible devices from config; explicit mismatch protection remains unchanged",
+    "reports/precision_audit_20261105/integration_audit.json",
+    "tools/probe_history_reuse.py::_active_device (explicit parent authorization only)",
+    "tests/test_probe_history_reuse.py (device-selection cases)",
+    "tests/test_mixed_prepare_reuse.py (env fixture only)"
+  ],
+  "zero_online_cost_recommendation": "No new verified online integration accuracy bug warrants a production patch. Keep existing fixes and protected kernels. These CPU contracts add no online work; do not blindly alter scheduler/GDN/PC/MTP based on unexplained quality gaps.",
+  "not_established": [
+    "User run actually loaded local HEAD/PT/policy",
+    "Fused NPU numerical equivalence",
+    "End-to-end model quality recovery or accuracy above OSCAR",
+    "Real service PC hit restoration",
+    "Performance equivalence after unmeasured changes"
+  ],
+  "source_sha256": {
+    "oscar_ascend/plugin.py": "14e7e6f0068a9884e24b0bf3b47c64239bc2e6e477fc0bba916cf86f3e39fbdd",
+    "oscar_ascend/runtime.py": "4660b4a6c60384528a1c238215618ecb12d38926c0ae80a38da0c42b71accd9f",
+    "oscar_ascend/rotations.py": "f1d55ff23e6c241aead3a106b8a16fdd7b13102b473f19eeba2ed20dde6023f4",
+    "oscar_ascend/lifecycle.py": "8791998aabe84dd076e9366b87d0d158722135e5370e2ede09f443c6f67a314d",
+    "oscar_ascend/integration/official_math.py": "b080a6a67f41819a15d3b88807b7e9819367c2d49d84cbe37ab26c5ad1ba6439",
+    "oscar_ascend/integration/metadata.py": "85336e8265d4dc01f4637f3fbf58faa6f26cba6b1af54c5300650fe7e9640dd7",
+    "oscar_ascend/integration/draft_discard.py": "73007f4a84ef7f18d6448182ff20d0941e67bcfe525a6da2a26a702bc8a69889",
+    "oscar_ascend/integration/prefill_state_contract.py": "874e4b149ee2fb42a05b58bd5868da207dd3dbcf454f1f54428a764fb0afa5f4",
+    "oscar_ascend/integration/prefix_checkpoint.py": "7e9eac665bcbaae7366ad53fbc3b0ae88838406bce2e09a7ab0d9aa45f421a9c",
+    "oscar_ascend/integration/greedy_sampling.py": "fa7865bd39df52ad2f9b2c8934eca40f8ff6fdc699dcb40d26e67760c96cf863",
+    "references/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py": "21fc9a2064f9b490ffcf3d61bacc8ddb67806a4c7490895a33128e65438838d3",
+    "references/vllm/vllm/model_executor/models/qwen3_next.py": "8d614ce262ab9340585f9a2ad4ab117228f076e3672fcb5f04930ff0a38223ae",
+    "references/vllm/vllm/model_executor/layers/linear.py": "a5e099997f868a5ce670aa2afe94da90222fceace36aef4e1275f3830ee257ab"
+  },
+  "resolved_followup": {
+    "issue": "Normal observe probes rejected the newly authorized default rear cards because shared _active_device hardcoded front cards.",
+    "fix": "tools/probe_history_reuse.py::_active_device derives the four explicit physical IDs through target_env(base={}), keeps exact ascend910b4 requirement and inherited-env mismatch failure. No probe math/timing/fixtures changed.",
+    "tests": "tests/test_probe_history_reuse.py covers front/rear/non-sorted IDs with env unset/matched; missing/short/duplicate/negative/bool/string IDs; both-direction and order mismatch; wrong SoC. tests/test_mixed_prepare_reuse.py NPU-availability fixture uses config devices.",
+    "scope_check": "All bytes outside _active_device in tools/probe_history_reuse.py equal HEAD."
+  }
+}

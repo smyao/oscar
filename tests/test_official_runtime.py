@@ -166,7 +166,7 @@ def test_missing_v4_operator_fails_before_npu_availability(monkeypatch,missing):
     config=variant_config(json.loads(Path('configs/target.json').read_text()),'candidate')
     config['experimental_current_only']=False
     provider=AscendRuntimeProvider(config)
-    monkeypatch.setenv('ASCEND_RT_VISIBLE_DEVICES','0,1,2,3')
+    monkeypatch.setenv('ASCEND_RT_VISIBLE_DEVICES', ','.join(map(str, config['devices'])))
     monkeypatch.setattr(loader,'require_production_ops',lambda:None)
     def require(names):
         if missing in names:raise loader.OperatorUnavailable(missing)

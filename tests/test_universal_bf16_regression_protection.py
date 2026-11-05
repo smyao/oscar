@@ -51,10 +51,16 @@ def digest(data):
 def test_restored_and_unchanged_production_bytes_match_232b(path, expected):
     source = (ROOT / path).read_bytes()
     if path == 'configs/target.json':
-        # User subsequently authorized only the default 8989 -> 7878 port.
-        # Retain the original full-file hash after undoing that exact edit.
+        # User authorized port 7878, then default rear cards on 2026-11-05.
+        # Undo exactly those placement edits before the original full-file hash.
         assert source.count(b'"port": 7878') == 1
         source = source.replace(b'"port": 7878', b'"port": 8989')
+        rear = b'"devices": [\n    4,\n    5,\n    6,\n    7\n  ]'
+        front = b'"devices": [\n    0,\n    1,\n    2,\n    3\n  ]'
+        new_policy = b'User 2026-11-05: physical NPU 4-7; all child processes use this explicit selection'
+        old_policy = b'Current task Appendix F: physical NPU 0-3; all child processes use this explicit selection'
+        assert source.count(rear) == source.count(new_policy) == 1
+        source = source.replace(rear, front).replace(new_policy, old_policy)
     assert digest(source) == expected
 
 
@@ -167,7 +173,8 @@ def test_candidate_configuration_matches_accepted_performance_base(prefix):
     expected = json.loads((ROOT / 'reports/precision_stability_20261028/accepted_candidate_config.json').read_text())
     expected['enable_prefix_caching'] = prefix
     expected.update(port=7878, rotation_refinement='optr', optr_baseline='recipe3',
-                    optr_recipe3_optimizer='joint_native_residual_v1')
+                    optr_recipe3_optimizer='joint_native_residual_v1', devices=[4, 5, 6, 7],
+                    device_policy='User 2026-11-05: physical NPU 4-7; all child processes use this explicit selection')
     assert candidate_config(prefix) == expected
 
 

@@ -12,6 +12,9 @@ from tools.phase import PhaseResult
 
 def config_file(tmp_path, enabled=False):
     config = json.loads((install_serve.ROOT / "configs/target.json").read_text())
+    # Keep an explicit front-card fixture so --rear-cards exercises an override
+    # even after the user changed the repository default to the rear cards.
+    config["devices"] = [0, 1, 2, 3]
     model = tmp_path / "model"
     model.mkdir(exist_ok=True)
     (model / "config.json").write_text(json.dumps({"architectures": ["Qwen3_5ForConditionalGeneration"]}))

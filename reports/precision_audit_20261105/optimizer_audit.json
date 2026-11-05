@@ -1,0 +1,142 @@
+{
+  "scope": "Pure OSCAR perhead_center recipe3 calibration and loading; OPTR is not enabled or evaluated.",
+  "date": "2026-11-05",
+  "head": "04db2527e708dc127816249b06cbf9a58168c4d7",
+  "archive_references": [
+    "#170",
+    "#172",
+    "#174",
+    "#175",
+    "#176",
+    "#177"
+  ],
+  "production_changes": false,
+  "new_cpu_evidence": {
+    "constant_key_translation": {
+      "synthetic": true,
+      "head_dim": 64,
+      "tokens": 64,
+      "gqa": 1,
+      "seed": 20261105,
+      "key_shift_coordinate": 0,
+      "key_shift_value": 64.0,
+      "norm_preserving": false,
+      "key_squared_norms_equal": false,
+      "Rk_equal": true,
+      "Rv_equal": false,
+      "mean_delta_equals_shift": true,
+      "centered_K_equal": true,
+      "native_attention_equal": true,
+      "centered_K_sha256": "fa3755a3448b326bfef8d2eb444a92615eef33c5599d8e1bfeca1b5912d60993",
+      "teacher_sha256": "6a4b91f720f6ba56d25c1a14680ea3e5a5305ad598423730d652c310ca319416",
+      "Rk_sha256": "ea08fc9398f21acd46c13cdbeece23ee5db87a1e7a9d36a8b45705481ec60c42",
+      "Rv_sha256": [
+        "a37dc6108aa2d30f68b1de4201733c70bd9eacba69cfe7592385f79ea9f6eaec",
+        "879e2e8e38d8d29039ef9dde44d777c779bbfc78a592c1b8a0880356fb0f7cbd"
+      ],
+      "squared_error": [
+        95.17065148171969,
+        107.50314934720518
+      ],
+      "relative_error_increase": 0.12958299300761134,
+      "interpretation": "Raw-key energy used for S_v is not invariant to an exact constant key translation; this is a limitation of the proxy, not evidence of a mismatched official formula or model cause."
+    },
+    "query_order": {
+      "actual_recipe3_fitter": true,
+      "changed": "reverse query token order with fixed K/V",
+      "same_q_gram": true,
+      "same_Rk_Rv_mean": true,
+      "native_attention_changes": true,
+      "interpretation": "Recipe3 second-moment statistics discard query-time correspondence and cannot certify attention output fidelity."
+    },
+    "cache_sampling_identity": {
+      "tp2_tp4_profiles_equal": true,
+      "additional_config_profiles_equal": true,
+      "tp2_tp4_auto_cache_path_equal": true,
+      "real_tp2_recipe3_pair_loaded_under_tp4": true,
+      "all_four_rank_head_slices_correct": true,
+      "interpretation": "Sampling-provenance gap when execution configuration changes; not evidence that current fixed-TP4 quality loss is caused by this gap."
+    },
+    "norm_preserving_key_translation": {
+      "synthetic": true,
+      "head_dim": 64,
+      "tokens": 64,
+      "gqa": 1,
+      "seed": 20261105,
+      "key_shift_coordinate": 0,
+      "key_shift_value": 8.0,
+      "norm_preserving": true,
+      "key_squared_norms_equal": true,
+      "Rk_equal": true,
+      "Rv_equal": false,
+      "mean_delta_equals_shift": true,
+      "centered_K_equal": true,
+      "native_attention_equal": true,
+      "centered_K_sha256": "e55813bbf6eff23973707e59e6505eb0fc65e8113d2a2b01773cb04928468bfe",
+      "teacher_sha256": "8fab639484883e8878f2b7252a67e1b0b76bf65fc1dc6f256a418023d65928fa",
+      "Rk_sha256": "6376ce6b8d7435fd14c032fa18ac8b87f9997310fa002c9af8ed1b9f15550e3d",
+      "Rv_sha256": [
+        "041aff84a966b9593e069b667e079e81c4dec28be3768a950147475e716a7879",
+        "17a9991507c703ed1645bf9599b8d784d807426849d154d7e881eec748dbfcee"
+      ],
+      "squared_error": [
+        2.665028780953662,
+        2.3584961604792625
+      ],
+      "relative_error_increase": -0.11502037901621054,
+      "interpretation": "Every key has the same squared norm before and after translation; native attention and centered K are exactly equal, yet V rotation and quantized replay SSE differ. In this case SSE decreases rather than increases. The two examples establish non-invariance without claiming a uniform benefit from replacing the proxy."
+    }
+  },
+  "source_checks": {
+    "capture": "Native Qwen query/key are RMS-normalized and RoPE-transformed before self.attn; RotationCaptureWorker hooks impl.forward and observes those tensors once before native attention.",
+    "statistics": "FP64 grouped-query Gram per global KV head; raw-K quadratic energy weights V covariance; separate K mean; unit trace/D normalization only for Q covariance.",
+    "loading": "Complete hashed K/V/combined generation, model identity, profile, matrix equality and orthogonality checked; global KV-head index selected by TP rank.",
+    "reference_availability": "Current references directory contains vllm and vllm-ascend only. Official OSCAR source bytes are absent. Prior reports preserve source hashes/comparison evidence; this audit does not claim fresh direct parity with unavailable source."
+  },
+  "strategy_ranking": [
+    {
+      "priority": 1,
+      "direction": "Identify actual active OSCAR/PT and split runtime arithmetic discrepancy from unavoidable quantization error using existing evidence.",
+      "mechanism": "A semantic bug must be fixed before changing calibration.",
+      "cost": "Read-only/source/CPU checks; no model run or serving overhead.",
+      "status": "Parent task owns runtime/config audit."
+    },
+    {
+      "priority": 2,
+      "direction": "Future offline experiment: centered-K energy for V covariance, with unchanged recipe3 baseline and actual held-out attention checks.",
+      "mechanism": "Remove sensitivity of V fitting to a key translation already cancelled by softmax and deployed centering.",
+      "cost": "Same covariance/eigh order; retained K/V/QGram sufficient to propose a matrix, but those statistics alone cannot validate attention quality.",
+      "status": "Not enabled; no proof of model improvement or official recipe mismatch."
+    },
+    {
+      "priority": 3,
+      "direction": "Position/context-representative native calibration and downstream output validation.",
+      "mechanism": "Address short independent prompt statistics and native-only layer-input distributions.",
+      "cost": "Requires newly captured representative activations/model evidence; cannot be replaced by reusing a static Gram.",
+      "status": "Not run or requested from user; no automatic OPTR activation."
+    },
+    {
+      "priority": 4,
+      "direction": "Version future calibration identity with actual TP/software/implementation-relevant execution profile when intentionally generating a new artifact.",
+      "mechanism": "Prevent different sampling executions being silently described by one identity.",
+      "cost": "May invalidate PT and trigger calibration; avoid blanket invalidation of current authenticated PT without a verified mismatch.",
+      "status": "No production identity or PT changed."
+    }
+  ],
+  "limits": [
+    "Synthetic CPU cases are not current model activations or model scores.",
+    "Constant-shift example establishes a proxy limitation, not an authorized replacement default.",
+    "No new direct official source comparison was possible from current local references.",
+    "No NPU, service, performance, or AISBench experiment ran.",
+    "No theorem establishes task accuracy equality to native INT2-free inference."
+  ],
+  "validation": {
+    "command": ".venv/bin/python -m pytest -q tests/test_precision_optimizer_audit_20261105.py tests/test_center_calibration.py tests/test_official_rotation_calibration.py tests/test_center_rotations.py tests/test_rotation_capture.py tests/test_calibration_data.py",
+    "passed": 102,
+    "failed": 0,
+    "elapsed_seconds": null,
+    "scope": "CPU/source/fixture regression only",
+    "new_audit_tests": 4,
+    "elapsed_seconds_note": "Final count from the completed focused regression; timing is recorded separately in the tool output and is not a performance result."
+  }
+}

@@ -61,6 +61,31 @@ def test_existing_production_tree_changes_only_at_named_calibration_seams():
             changed.append(path + " (missing)")
             continue
         data = current.read_bytes()
+        if path == "configs/target.json":
+            # User 2026-11-05 changed only physical placement; all math,
+            # runtime and service arguments remain protected by the old base.
+            target = json.loads(committed(path))
+            target.update(devices=[4, 5, 6, 7], device_policy=
+                "User 2026-11-05: physical NPU 4-7; all child processes use this explicit selection")
+            assert json.loads(data) == target
+            continue
+        if path == "tools/probe_history_reuse.py":
+            # Explicit rear-card selection also applies to shared NPU probes.
+            # Protect every other byte, including measurement and timer code.
+            old = (b'    if target.get("devices") != [0, 1, 2, 3] or target.get("soc_version") != "ascend910b4":\n'
+                   b'        raise HistoryReuseProbeError("explicit target devices 0,1,2,3 and ascend910b4 are required")\n'
+                   b'    selection = "0,1,2,3"\n')
+            new = (b'    if target.get("soc_version") != "ascend910b4":\n'
+                   b'        raise HistoryReuseProbeError("explicit target ascend910b4 is required")\n'
+                   b'    from .target_cli import target_env\n'
+                   b'    try:\n'
+                   b'        selection = target_env(target, base={})["ASCEND_RT_VISIBLE_DEVICES"]\n'
+                   b'    except (TypeError, ValueError) as error:\n'
+                   b'        raise HistoryReuseProbeError("explicit four distinct nonnegative physical NPU IDs are required") from error\n')
+            previous = committed(path)
+            assert previous.count(old) == 1
+            assert data == previous.replace(old, new)
+            continue
         actual = hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
         if actual != expected.decode():
             changed.append(path)
@@ -138,7 +163,7 @@ def test_fixed_entrypoints_keep_base_launch_and_online_selection(
         k: v for k, v in old_selection.items() if k not in offline_summary_keys}
     assert selection["rotation_refinement"] == "optr"
     assert selection["calibration_recipe_version"] == 5
-    assert selection["port"] == 7878 and selection["devices"] == [0, 1, 2, 3]
+    assert selection["port"] == 7878 and selection["devices"] == [4, 5, 6, 7]
 
 
 @pytest.mark.parametrize("path", ["tools/install_serve.py", "tools/deploy.py", "tools/observe_serve.py"])

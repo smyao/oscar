@@ -1,5 +1,7 @@
 # 当前工程约束
 
+> 2026-11-05 最新设备要求：用户要求本地代码默认使用后四卡，`configs/target.json` 的物理设备改为 `4,5,6,7`；端口 `7878`、TP4 及其余启动参数保持。此要求覆盖下文历史默认前四卡的设备约束，`--rear-cards` 显式选项仍可使用。
+
 > 2026-10-28 PC精度续修：已复现align模式仍可形成真正warm spec-width prefill（如5000→2304/1536/1156/4）。原GDN fold把accepted1改4，读未提交SSM第3列/conv偏移3；此前#163仅修none的范围不足。外部插件统一保留none/align MTP的真实prefill mask/count，并阻止该步骤误入decode图；正常decode/dummy/capture不变，不按输入总长度分界。全部OSCAR CANN源、PT/clip、16K、PC hash/lookup/页引用/MTP/timer保持，207项主机回归通过；见docs/gdn_prefill_state_20261028.md。该步骤使用原生prefill已有gather/chunk/store，不声称该步零开销或四项LongBench已达标；旧native_exact与APC cohort实验继续退役/不启用。
 
 > 2026-10-28 精度续修：用户确认614c739的32K/64K性能均达标；127条、PC开启、平均20K的质量集要求两侧各10轮、top3均值，accuracy/easy/hard/short四项与基线差距均小于1个百分点。用户最新单轮仍为38.58/44.19/35.71/38.58、API耗时1173.43秒，明确要求弃用无效改动。fef8f5ba的native_exact默认政策已撤下，current-only与相关probe恢复614c原实现，所有variant清除旧生成配置的oscar_current_only_policy；原数值反例和失败记录保留。撤下不等于质量达标。禁止输入长度/数据集特判；保护已达标性能、recipe3/PT/clip/16K预算/PC/MTP/timer，不以RPS差异归因或调参。见docs/native_exact_current_precision_20261028.md及档案#174。

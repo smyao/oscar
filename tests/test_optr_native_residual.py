@@ -104,9 +104,9 @@ def test_real_candidates_are_bounded_and_verified_with_original_strict_gate(comp
     assert before == _metrics(baseline, validation, policy)
     assert decision["train_baseline"] == _metrics(baseline, train, policy)
     assert after == _metrics(selected, validation, policy)
-    assert decision["train_candidate_count"] == 8
+    assert decision["train_candidate_count"] == 10
     assert decision["gradient_evaluations"] == 4
-    assert decision["validation_candidate_count"] <= 4
+    assert decision["validation_candidate_count"] <= 5
     # This small, disclosed synthetic case has a feasible actual-forward step.
     assert decision["accepted"]
     assert nonworse(before, after, **residual.STRICT)
@@ -167,7 +167,7 @@ def test_all_supported_head_budgets_and_zero_teacher_energy(heads):
     assert before["teacher_energy"] == before["squared_error"] == 0.
     assert before == after and not decision["accepted"]
     assert len(decision["directions"]) == heads * 2
-    assert decision["train_candidate_count"] == heads * 4
+    assert decision["train_candidate_count"] == heads * 4 + 2
     assert decision["validation_candidate_count"] == 0
     assert all(row["zero_gradient"] for row in decision["directions"])
     assert residual.validate_selection("layer", baseline, selected, before, after, decision, proposal, policy)
@@ -316,3 +316,24 @@ def test_independent_head_proxy_and_positive_radius_can_improve_total_while_regr
     for radius in residual.NATIVE_RESIDUAL_POLICY["radii"]:
         errors = ((1 + radius) ** 2, (1 - 2 * radius) ** 2)
         assert sum(errors) < 2 and errors[0] > 1
+
+
+@pytest.mark.parametrize("fault", ["joint_scope", "joint_radius", "joint_hash", "joint_noop", "joint_winner", "joint_missing"])
+def test_joint_candidate_lock_authenticates_fixed_grid_and_full_matrix(completed, fault):
+    baseline, _, _, policy, result = completed
+    selected, before, after, decision, proposal = copy.deepcopy(result)
+    row = decision["evaluated_train_candidates"][-1]
+    if fault == "joint_scope":
+        row["scope"] = "single"
+    elif fault == "joint_radius":
+        row["radius"] *= 2
+    elif fault == "joint_hash":
+        row["constants_sha256"] = "f" * 64
+    elif fault == "joint_noop":
+        row["same_bf16_operand_as_seed"] = not row["same_bf16_operand_as_seed"]
+    elif fault == "joint_winner":
+        decision["joint_train_selected_candidate"] = "invalid"
+    else:
+        decision["evaluated_train_candidates"].pop()
+    with pytest.raises(ValueError):
+        residual.validate_selection("layer", baseline, selected, before, after, decision, proposal, policy)

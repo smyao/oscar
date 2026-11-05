@@ -149,7 +149,8 @@ def test_explicit_legacy_optr_cache_remains_separate_from_recipe3_and_new_candid
                                 'max_num_batched_tokens': 16384,
                                 'k_clip_ratio': .96, 'v_clip_ratio': .92}, 'candidate')
     candidate.pop('optr_baseline')
-    candidate.pop('optr_recipe3_repair')
+    candidate.pop('optr_recipe3_optimizer')
+    candidate.pop('optr_recipe3_repair', None)
     seed = {k: v for k, v in candidate.items() if k != 'rotation_refinement'}
     center_path, _ = publish_old(seed, fingerprint)
     refined_path = rotations.rotation_artifact_path(candidate, fingerprint)
@@ -164,7 +165,11 @@ def test_explicit_legacy_optr_cache_remains_separate_from_recipe3_and_new_candid
     assert selected['k_clip_ratio'] == candidate['k_clip_ratio']
     assert selected['v_clip_ratio'] == candidate['v_clip_ratio']
     assert rotations.rotation_artifact_path(selected, fingerprint) == refined_path != center_path
-    current = variant_config(stale, 'candidate')
+    # Native-residual fitting has a fixed gradient/candidate budget. Legacy
+    # optimizer-step overrides must fail, not be silently reinterpreted.
+    with pytest.raises(ValueError, match='frozen'):
+        variant_config(stale, 'candidate')
+    current = variant_config({k: v for k, v in stale.items() if k != 'optr_calibration'}, 'candidate')
     assert current['optr_baseline'] == 'recipe3'
     assert rotations.rotation_artifact_path(current, fingerprint) not in (center_path, refined_path)
     with pytest.raises(ValueError, match='profile'):

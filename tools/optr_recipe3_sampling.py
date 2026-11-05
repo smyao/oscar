@@ -211,8 +211,10 @@ def validate_recipe3_sampling(provenance, plan, policy, seed_capture, source_sha
             raise ValueError("recipe3 trace bucket offset/actual source coverage differs")
 
 
-def validate_recipe3_trace_manifest(top, config, policy):
+def validate_recipe3_trace_manifest(top, config, policy, *, files=None):
     source = Path(top.get("prompt_source", ""))
+    if files is not None:
+        source = files.resolve(source)
     if not source.is_file():
         raise ValueError("recipe3 trace requires its authenticated source file")
     source_sha = hashlib.sha256(source.read_bytes()).hexdigest()

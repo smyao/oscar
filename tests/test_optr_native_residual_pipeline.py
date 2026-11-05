@@ -194,8 +194,8 @@ def test_native_pipeline_publishes_only_actual_strict_train_validation_and_test_
     decision = record["native_residual_selection"]
     assert certificate["independent_test"]["status"] == "passed"
     assert decision["accepted"] and not decision["test_used_for_selection"]
-    assert len(decision["evaluated_train_candidates"]) == 8
-    assert len(decision["evaluated_validation_candidates"]) == 1
+    assert len(decision["evaluated_train_candidates"]) == 10
+    assert len(decision["evaluated_validation_candidates"]) == 2
     assert all(key not in record for key in ("source_fit_provenance", "shared_layer_selection", "recipe3_repair_selection"))
     for split in ("validation", "test"):
         metric = record[split]
@@ -369,3 +369,38 @@ def test_old_native_capture_reused_but_old_fitting_payload_never_becomes_v12_evi
     assert new_manifest["identity"]["profile"]["refinement_policy"]["policy_version"] == POLICY_VERSION
     old_trace = old_output.parent / "native-traces" / "capture-manifest.json"
     assert new_manifest["identity"]["trace_manifest_sha256"] == hashlib.sha256(old_trace.read_bytes()).hexdigest()
+
+
+def test_v12_authenticated_raw_profile_is_reused_while_previous_fit_payload_is_ignored(case, monkeypatch):
+    from oscar_ascend.optr_policy import compatible_capture_profiles
+    config = _config(case)
+    current = calibration_cache_identity(config, case["fingerprint"])
+    historical = compatible_capture_profiles(current, config)[-1]
+    assert historical["refinement_policy"]["policy_version"] == "optr_recipe3_native_residual_ascend_v12"
+    profile_hash = hashlib.sha256(json.dumps(historical, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:20]
+    pool = case["output"].parent / "generations"
+    old_output = pool / ("optr_" + profile_hash) / "refined.pt"
+    old_case = {**case, "output": old_output,
+                "candidate": copy.deepcopy(case["baseline"]["layers"][NAME])}
+    # Create authentic synthetic raw payload/source hashes, then record the
+    # exact historical policy: v12/v13 capture geometry and teacher are identical.
+    with pytest.raises(ValueError, match=NO_IMPROVEMENT):
+        _prepare(old_case, capture_runner=capture(old_case))
+    manifest = old_output.parent / "native-traces" / "capture-manifest.json"
+    value = json.loads(manifest.read_text())
+    value.update(optr_policy=historical["refinement_policy"], calibration_profile=historical)
+    manifest.write_text(json.dumps(value))
+    pointer, saved_manifest, _, _ = _read_checkpoint(old_output, "layer-3-shared")
+    fitted_payload = pointer.parent / saved_manifest["file"]
+    fitted_payload.write_bytes(fitted_payload.read_bytes() + b"old fit must never be read")
+    before = {path: path.read_bytes() for path in old_output.parent.rglob("*") if path.is_file()}
+    case["output"] = pool / "native-v13" / "refined.pt"
+    monkeypatch.setattr(optr_sequential, "fit_head", forbidden)
+    with pytest.raises(ValueError, match=NO_IMPROVEMENT):
+        _prepare(case)
+    assert case["calls"] == ["capture"]
+    assert all(path.read_bytes() == data for path, data in before.items())
+    _, new_manifest, _, completed = _read_checkpoint(case["output"], "layer-3")
+    assert new_manifest["identity"]["trace_manifest_sha256"] == hashlib.sha256(manifest.read_bytes()).hexdigest()
+    assert completed["artifact"]["refinement_certificate"]["policy"]["policy_version"] == POLICY_VERSION
+    assert completed["artifact"]["refinement_certificate"]["layers"][NAME]["native_residual_selection"]["train_candidate_count"] == 10

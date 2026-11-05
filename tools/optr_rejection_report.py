@@ -180,7 +180,8 @@ def _load_layer(directory, identity, name, seed, profile, source_checkpoint=None
     proposal_path = directory / (proposal_key + ".json")
     proposal = FitCheckpoints._load_from(proposal_path, proposal_key, identity)
     policy = profile["refinement_policy"]
-    if policy.get("policy_version") == "optr_recipe3_native_residual_ascend_v12":
+    from oscar_ascend.optr_native_residual_certificate import POLICY_VERSION
+    if policy.get("policy_version") == POLICY_VERSION:
         if source_checkpoint is not None:
             raise ValueError("native-residual diagnostic cannot consume old fitted proposals")
         return _native_layer(name, seed, record, constants, proposal, policy, identity,
@@ -278,7 +279,7 @@ def _load_layer(directory, identity, name, seed, profile, source_checkpoint=None
 
 
 def _native_layer(name, seed, record, constants, saved, policy, identity, completed_path, lock_path):
-    """Authenticate the locked v12 evidence, keeping train and validation apart.
+    """Authenticate the locked native-residual evidence, keeping train and validation apart.
 
     Small matrix reconstruction authenticates saved tangents and their hashes;
     no captured tensor, gradient, candidate search or attention replay is used.
@@ -307,7 +308,7 @@ def _native_layer(name, seed, record, constants, saved, policy, identity, comple
         detail = metric_rejections(previous, measured)
         if row.get("accepted") is not detail["accepted"]:
             raise ValueError("native-residual diagnostic candidate conflicts with its strict gate")
-        return {**{key: row[key] for key in ("candidate", "head", "side", "radius", "radius_index",
+        return {**{key: row[key] for key in ("candidate", "scope", "head", "side", "radius", "radius_index",
                     "constants_sha256", "same_bf16_operand_as_seed")},
                 "phase": phase, "unchanged_baseline": row["constants_sha256"] == baseline_hash, **detail}
 

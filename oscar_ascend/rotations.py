@@ -416,14 +416,15 @@ def load_artifact(path: str | Path, **validation) -> dict[str, Any]:
     return validate_artifact(artifact, **validation)
 
 
-def calibration_cache_identity(config: Mapping[str, Any], fingerprint: str) -> dict[str, Any]:
+def calibration_cache_identity(config: Mapping[str, Any], fingerprint: str, *, files=None) -> dict[str, Any]:
     """Pure host identity; no model load, tensor operation, or online download."""
     from .rotation_calibration import OFFICIAL_COMMIT
     from tools.calibration_data import GPQA_SHA256
     from tools.model_config import resolve_mamba_cache_dtypes
     prompts = config.get("rotation_calibration_prompts")
-    source = ({"path": str(Path(prompts).expanduser().resolve()),
-               "sha256": hashlib.sha256(Path(prompts).expanduser().read_bytes()).hexdigest()}
+    source = ({"path": str(files.logical_path(prompts) if files is not None else Path(prompts).expanduser().resolve()),
+               "sha256": hashlib.sha256((files.resolve(Path(prompts).expanduser()) if files is not None
+                                         else Path(prompts).expanduser()).read_bytes()).hexdigest()}
               if prompts else {"source": "openai-simple-evals/gpqa_diamond-seed0-v1",
                                "sha256": GPQA_SHA256})
     budget = config.get("rotation_calibration_tokens", 30000)

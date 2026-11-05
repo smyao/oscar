@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-05",
+  "base_commit": "7720e3d",
+  "source_line_reference": "7720e3d; concurrent portable edits may shift current-worktree line numbers",
+  "scope": "OPTR v12 native capture, source partitions, teacher/gate/W_O/TP alignment, runtime-frame reconstruction, and independent-test selection boundary. Read-only production audit; concurrent offline replay edits are outside this report.",
+  "confirmed_new_bugs": [],
+  "confirmed": [
+    {
+      "id": "recipe3_source_exclusion",
+      "evidence": "Original whole-prompt seed tokens are rebuilt and checked against authenticated SHA256/count/optional lengths. Entire used source records are excluded before SHA-ordered train/validation/test partitioning. Different buckets receive deterministic different record offsets; remaining overlap within a split is not described as independent natural documents.",
+      "sources": ["tools/optr_recipe3_sampling.py:70", "tools/optr_recipe3_sampling.py:100", "tools/optr_recipe3_sampling.py:108", "oscar_ascend/optr_traces.py:85"],
+      "level": "source_review_and_existing_CPU_tests"
+    },
+    {
+      "id": "native_teacher_gate_boundary",
+      "evidence": "Capture observes post-normalization/RoPE Q/K, raw V, and the native BF16 attention output before gate multiplication. The QKV hook extracts per-Q-head interleaved gate logits and applies BF16 sigmoid. Pinned native fused split/normalization/RoPE writes gate logits without sigmoid; native Qwen subsequently applies sigmoid and multiplies attention output. No gate-offset or double-gating defect was confirmed.",
+      "sources": ["oscar_ascend/integration/optr_capture.py:106", "oscar_ascend/integration/optr_capture.py:162", "oscar_ascend/integration/optr_capture.py:386", "oscar_ascend/integration/optr_capture.py:401", "references/vllm-ascend/vllm_ascend/patch/worker/patch_qwen3_5.py:41", "references/vllm-ascend/vllm_ascend/ops/triton/linearnorm/split_qkv_rmsnorm_mrope.py:278", "references/vllm-ascend/vllm_ascend/ops/triton/linearnorm/split_qkv_rmsnorm_mrope.py:325"],
+      "level": "source_review_and_existing_CPU_boundary_tests"
+    },
+    {
+      "id": "tp_projection_alignment",
+      "evidence": "Production trace geometry requires TP4/D256 and exactly one disjoint KV head per logical TP rank. Captured RowParallel W_O is authenticated by rank and reshaped from [hidden,hq*D] to [hq,hidden,D]. Actual token IDs, sampled positions, frames and complete source records must agree across ranks. Projection rounds gate multiplication to BF16 and sums Q-head/rank contributions before SSE.",
+      "sources": ["oscar_ascend/integration/optr_capture.py:65", "oscar_ascend/integration/optr_capture.py:245", "oscar_ascend/optr_traces.py:146", "oscar_ascend/optr_traces.py:265", "oscar_ascend/optr_traces.py:394", "oscar_ascend/optr_calibration.py:397"],
+      "level": "source_review_and_existing_CPU_tests"
+    },
+    {
+      "id": "frame_identity",
+      "evidence": "Trace history contains prompt tokens plus generated_output_token_ids[:-1]; capture requests one extra output because the final sampled output has not been forwarded. Captured context/current end/padding shape reconstruct the same split-count formula as WorkspaceGeometry for supported local KV-head count one. Invalid gaps, a second live request, wrong positions, incomplete decode and cross-rank frame differences fail closed.",
+      "sources": ["tools/calibrate_optr_traces.py:144", "oscar_ascend/integration/optr_capture.py:297", "oscar_ascend/optr_traces.py:230", "oscar_ascend/runtime.py:116"],
+      "level": "source_review_and_existing_CPU_tests"
+    },
+    {
+      "id": "test_is_not_selection_input",
+      "evidence": "v12 selection receives train and validation only. The selected matrices and evidence are validated and checkpointed before independent-test replay. Resume authenticates the same lock and does not reselect. Independent-test regression raises and blocks publication. Reading all three authenticated split tensors into the layer container is not use of test for optimization.",
+      "sources": ["tools/prepare_optr_native_residual.py:27", "tools/prepare_optr_native_residual.py:45", "tools/prepare_optr_native_residual.py:62", "oscar_ascend/optr_native_residual.py:217"],
+      "level": "source_review; existing pipeline tests were not rerun in this audit command"
+    }
+  ],
+  "known_coverage_limits_not_new_bugs": [
+    {
+      "id": "native_capture_schedule",
+      "evidence": "Native sampling is BS1, eager, prefix caching off, chunked prefill on and no speculative_config. It therefore does not certify mixed-batch, APC warm-prefill, MTP draft/accept/reject or graph executions. Existing physical snapshot, slot and GDN fixes are not changed by OPTR coefficient fitting.",
+      "sources": ["tools/calibrate_optr_traces.py:129", "tools/calibrate_optr_traces.py:136", "reports/precision_audit_20261105/integration_audit.json"],
+      "previously_documented": "docs/optr_precision_20261102.md"
+    },
+    {
+      "id": "sparse_and_artificial_prompts",
+      "evidence": "With ideal full 16384-token chunks, current default 4K/32K/64K requests contribute respectively 16/24/40 sampled queries per split, including eight decode queries each: 80 total. Eight samples per long prefill frame do not cover all token errors. Packed, truncated and sometimes repeated source records are calibration inputs rather than natural long-dialogue accuracy evidence.",
+      "sources": ["oscar_ascend/optr_policy.py:49", "oscar_ascend/integration/optr_capture.py:54", "tools/optr_recipe3_sampling.py:88"],
+      "previously_documented": "docs/optr_precision_20261102.md"
+    },
+    {
+      "id": "local_teacher_and_projection_reference",
+      "evidence": "Captured teacher is pre-gate per-rank native attention, not actual post-W_O/HCCL output. Three CPU projection views model visible rounding, not closed native GEMM/reduction internals. Native hidden-state inputs also do not include drift caused by simultaneous changes in previous quantized layers. Passing finite local gates cannot guarantee full-model superiority over OSCAR.",
+      "sources": ["oscar_ascend/optr_traces.py:394", "oscar_ascend/optr_calibration.py:397", "docs/optr_native_residual_20261104.md"],
+      "previously_documented": "docs/optr_precision_20261102.md"
+    }
+  ],
+  "recommendation": "Preserve the existing authenticated raw capture and source policy for the present CPU preparation optimization. No new sampling bug was established that justifies forcing another NPU capture. Keep strict validation/test gates and implementation-specific fit cache invalidation; do not relabel sparse local evidence as model-quality acceptance.",
+  "validation": {
+    "command": ".venv/bin/python -m pytest -q tests/test_optr_capture.py tests/test_optr_traces.py tests/test_optr_recipe3_sampling.py tests/test_optr_native_residual_policy.py",
+    "result": "123 passed in 2.80s",
+    "production_files_changed_by_this_audit": [],
+    "NPU": "not_run",
+    "performance": "not_measured",
+    "model_quality": "not_measured"
+  }
+}

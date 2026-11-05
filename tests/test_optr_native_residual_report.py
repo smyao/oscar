@@ -92,8 +92,8 @@ def test_report_separates_train_acceptance_from_validation_and_handles_zero_fina
     summary = report.report_no_improvement(case["config"], output=case["output"], testing=True)
     layer = summary["layers"][0]
     assert summary["recomputed_fit_or_replay"] is False and summary["artifact_published"] is False
-    assert layer["train_candidates"] == summary["candidate_count"] == 8
-    assert layer["strategy"] == "recipe3_native_residual_train_then_validation_v1"
+    assert layer["train_candidates"] == summary["candidate_count"] == 10
+    assert layer["strategy"] == "recipe3_native_residual_train_then_validation_joint_v2"
     if case["kind"] == "no_train_finalist":
         assert layer["train_search"]["accepted_count"] == 0
         assert layer["validation_candidates"] == summary["validation_candidate_count"] == 0
@@ -101,7 +101,7 @@ def test_report_separates_train_acceptance_from_validation_and_handles_zero_fina
         assert layer["reason"] == "no_train_candidate_passed"
     else:
         assert layer["train_search"]["accepted_count"] >= 1
-        assert layer["validation_candidates"] == summary["validation_candidate_count"] == 1
+        assert layer["validation_candidates"] == summary["validation_candidate_count"] == 2
         assert layer["validation_search"]["accepted_count"] == 0
         assert layer["train_search"]["best_total"]["reason"] == "passed"
         assert layer["validation_search"]["best_total"]["reason"] == "aggregate_error_regression"
@@ -161,7 +161,7 @@ def test_fixed_prepare_reports_completed_v12_rejections_without_workers_or_resel
               for line in capsys.readouterr().out.splitlines() if line.startswith("[oscar] OPTR_PROGRESS ")]
     assert next(row for row in events if row.get("phase") == "parallel_fit_plan")["workers"] == 0
     layers = [row for row in events if row.get("phase") == "no_improvement_layer"]
-    assert len(layers) == 1 and layers[0]["train_candidates"] == 8
+    assert len(layers) == 1 and layers[0]["train_candidates"] == 10
     assert any(row.get("phase") == "no_improvement_report" for row in events)
     assert not any(row.get("phase") == "no_improvement_report_failed" for row in events)
 
@@ -194,7 +194,7 @@ runpy.run_module('tools.optr_rejection_report', run_name='__main__')
     assert completed.returncode == 0, completed.stderr
     rows = [json.loads(line.split("OPTR_PROGRESS ", 1)[1]) for line in completed.stdout.splitlines()]
     assert len(rows) == 17 and len(completed.stdout.encode()) < 50 * 1024
-    assert all(row["train_search"]["candidate_count"] == 8 for row in rows[:-1])
+    assert all(row["train_search"]["candidate_count"] == 10 for row in rows[:-1])
     assert rows[-1]["evidence_scope"] == "saved_json_only_checkpoints_not_reauthenticated"
     assert path.read_bytes() == original
     assert {file: file.read_bytes() for file in path.parent.rglob("*") if file.is_file()} == before
@@ -223,3 +223,21 @@ def test_saved_native_summary_does_not_merge_or_relabel_training_and_validation(
     path.write_text(json.dumps(value))
     with pytest.raises(ValueError):
         summarize_saved_report(path)
+
+
+def test_legacy_saved_v12_json_remains_descriptive_and_joint_rows_are_not_backported(completed_native):
+    from tools.optr_rejection_summary import summarize_saved_report
+    current = report.report_no_improvement(completed_native["config"], output=completed_native["output"], testing=True)
+    value = json.loads(Path(current["report"]).read_text())
+    for layer in value["layers"]:
+        layer["strategy"] = "recipe3_native_residual_train_then_validation_v1"
+        for key in ("candidates", "validation_candidates"):
+            layer[key] = [row for row in layer[key] if row.pop("scope") == "single"]
+        layer["candidate_count"] = layer["train_candidate_count"] = len(layer["candidates"])
+        layer["validation_candidate_count"] = len(layer["validation_candidates"])
+    path = Path(current["report"]).with_name("legacy-v12-saved-report.json")
+    path.write_text(json.dumps(value))
+    summary = summarize_saved_report(path)
+    assert summary["layers"][0]["strategy"] == "recipe3_native_residual_train_then_validation_v1"
+    assert summary["layers"][0]["train_candidates"] == 8
+    assert summary["layers"][0]["joint_train_candidates"] == 0

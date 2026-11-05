@@ -57,13 +57,13 @@ def _native_evidence(log_dir):
 
 
 def test_checked_in_target_has_current_task_devices_and_build_soc():
-    # Appendix F declares 0–3 / 910B4 for this checkout; another checkout's
-    # remembered allocation or a parent shell's mask must not take precedence.
+    # User 2026-11-05 explicitly selected rear cards for this checkout; an
+    # inherited allocation must not take precedence over the checked-in target.
     config = json.loads((ROOT / "configs/target.json").read_text())
-    assert config["devices"] == [0, 1, 2, 3]
+    assert config["devices"] == [4, 5, 6, 7]
     assert config["soc_version"] == "ascend910b4"
-    env = target_env(config, {"ASCEND_RT_VISIBLE_DEVICES": "4,5,6,7"})
-    assert env["ASCEND_RT_VISIBLE_DEVICES"] == "0,1,2,3"
+    env = target_env(config, {"ASCEND_RT_VISIBLE_DEVICES": "0,1,2,3"})
+    assert env["ASCEND_RT_VISIBLE_DEVICES"] == "4,5,6,7"
 
 
 def test_install_build_probes_and_formal_serve_share_configured_devices(monkeypatch, tmp_path):

@@ -1,0 +1,302 @@
+{
+  "cases": [
+    {
+      "accepted": false,
+      "all_train_validation_test_metrics_and_decisions_identical": true,
+      "baseline_constants_sha256": "808d5655754aac40af54b79b0223a85002faa0fcebc8e1b4eff11a151328d132",
+      "case": "independent_random_splits",
+      "complete_record_sha256": "8a96800f1e3cbf73477157da632aeb6ee756d56dd7d209b3e6f331e301e2be98",
+      "gradient_evaluations": 8,
+      "ignored_fields_for_equality": [
+        "native_residual_selection.elapsed_seconds"
+      ],
+      "independent_test_gate_passed": true,
+      "independent_test_replays": 1,
+      "measured_arm_order": [
+        "separate_history",
+        "shared_history",
+        "shared_history",
+        "separate_history",
+        "separate_history",
+        "shared_history"
+      ],
+      "median_seconds": {
+        "separate_history": 1.8283837498165667,
+        "shared_history": 1.5401761666871607
+      },
+      "relative_time_reduction": 0.1576297006349573,
+      "seconds": {
+        "separate_history": [
+          1.8283837498165667,
+          1.8464248338714242,
+          1.823344999924302
+        ],
+        "shared_history": [
+          1.5746166673488915,
+          1.5401761666871607,
+          1.5286304173059762
+        ]
+      },
+      "selected_candidate": "seed",
+      "selected_constants_sha256": "808d5655754aac40af54b79b0223a85002faa0fcebc8e1b4eff11a151328d132",
+      "speedup_ratio": 1.1871263751271555,
+      "split_construction": "independent deterministic PRNG seeds 90+h,190+h,290+h",
+      "test_squared_error": {
+        "baseline": 88.05137594396804,
+        "selected": 88.05137594396804
+      },
+      "train_candidates": 18,
+      "validation_candidates": 7,
+      "validation_squared_error": {
+        "baseline": 108.38732681396648,
+        "selected": 108.38732681396648
+      }
+    },
+    {
+      "accepted": true,
+      "all_train_validation_test_metrics_and_decisions_identical": true,
+      "baseline_constants_sha256": "808d5655754aac40af54b79b0223a85002faa0fcebc8e1b4eff11a151328d132",
+      "case": "changed_winner_control",
+      "complete_record_sha256": "3c21badbe8fd85c02bdb84befcb305915c4803815d48f6229937ee5274d71181",
+      "gradient_evaluations": 8,
+      "ignored_fields_for_equality": [
+        "native_residual_selection.elapsed_seconds"
+      ],
+      "independent_test_gate_passed": true,
+      "independent_test_replays": 2,
+      "measured_arm_order": [
+        "separate_history",
+        "shared_history",
+        "shared_history",
+        "separate_history",
+        "separate_history",
+        "shared_history"
+      ],
+      "median_seconds": {
+        "separate_history": 1.8529767501167953,
+        "shared_history": 1.5800341670401394
+      },
+      "relative_time_reduction": 0.14729951849609124,
+      "seconds": {
+        "separate_history": [
+          1.8529767501167953,
+          1.8567152502946556,
+          1.8201201246120036
+        ],
+        "shared_history": [
+          1.5800341670401394,
+          1.5795956668443978,
+          1.6070419996976852
+        ]
+      },
+      "selected_candidate": "native_joint_r1",
+      "selected_constants_sha256": "eb37c924d91e0fad2a49f3ad06b0ad4641cea5ffab4c8cfdff945e80958bc8f7",
+      "speedup_ratio": 1.1727447347470696,
+      "split_construction": "same numeric content copied into distinct train/validation/test objects and IDs; NOT independent quality data",
+      "test_squared_error": {
+        "baseline": 108.78296161704503,
+        "selected": 52.859144650035844
+      },
+      "train_candidates": 18,
+      "validation_candidates": 7,
+      "validation_squared_error": {
+        "baseline": 108.78296161704503,
+        "selected": 52.859144650035844
+      }
+    }
+  ],
+  "comparison": {
+    "algorithm_in_both_arms": "optr_recipe3_native_residual_joint_ascend_v13",
+    "autograd_and_independent_test": "unchanged in both arms",
+    "equivalent_partition_shortcut": "retained identically in both arms",
+    "only_switch": "optr_trust_region._project_head_partitions",
+    "separate_history": "original _project_head independently for each partition",
+    "shared_history": "one request/candidate history shared across its two partition replays",
+    "v12_to_v13_speedup_claimed": false
+  },
+  "environment": {
+    "machine": "arm64",
+    "platform": "macOS-15.7.7-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "torch": "2.14.1",
+    "torch_interop_threads": 8,
+    "torch_threads": 2
+  },
+  "excludes": [
+    "input/capture loading",
+    "recipe3 seed construction",
+    "artifact serialization/publication"
+  ],
+  "fixture": {
+    "captured_history_splits": [
+      1,
+      2,
+      2
+    ],
+    "contexts": [
+      0,
+      515,
+      515
+    ],
+    "gqa_group": 6,
+    "head_dimension": 256,
+    "kv_heads": 4,
+    "partitions": 2,
+    "positions": [
+      514,
+      515,
+      540
+    ],
+    "projection_views": 3,
+    "projection_width": 12,
+    "queries_per_request": 3,
+    "query_microbatch": 2,
+    "requests_per_split": 1,
+    "sample_sha256_values": "synthetic identity labels; not model capture authentication",
+    "tokens_per_request": 541
+  },
+  "functional_verification": {
+    "additional_check": "git diff --check passed",
+    "command": ".venv/bin/python -m pytest -q tests/test_optr_shared_partition_history.py tests/test_optr_calibration.py tests/test_optr_sequential.py tests/test_optr_traces.py tests/test_optr_trust_region.py tests/test_optr_partition_reuse.py tests/test_optr_native_residual.py tests/test_optr_native_residual_pipeline.py tests/test_optr_native_residual_report.py tests/test_optr_query_gate.py tests/test_optr_projection_gate.py tests/test_optr_replay_normalization.py",
+    "coverage": [
+      "full metric equality including both partitions and all query/projection views",
+      "full native selection and independent-test success/rejection equality",
+      "selected matrix byte/hash equality",
+      "independent autograd backward graphs",
+      "inference-tensor fallback",
+      "request/candidate/clip/version cache identity",
+      "multi-head full-replay equivalence and ascending serial head replay",
+      "single-head API equivalence",
+      "undeclared BF16 operand changes rejected",
+      "request history and candidate projection tensors released"
+    ],
+    "result": "283 passed in 20.86s"
+  },
+  "includes": [
+    "baseline train/validation caches",
+    "all eight streamed gradient directions",
+    "all sixteen single train candidates",
+    "both joint train candidates",
+    "all train-admitted validation candidates",
+    "selection certificate reconstruction",
+    "independent test baseline and selected replay if selected differs",
+    "all original gates"
+  ],
+  "not_measured": [
+    "production model captures",
+    "full multi-layer PT generation",
+    "NPU",
+    "online operators",
+    "LongBench accuracy",
+    "serving performance"
+  ],
+  "paired_repetitions": 3,
+  "policy": {
+    "attention_splits": 1,
+    "capture_lengths": {
+      "test": [
+        4096,
+        32768,
+        65536
+      ],
+      "train": [
+        4096,
+        32768,
+        65536
+      ],
+      "validation": [
+        4096,
+        32768,
+        65536
+      ]
+    },
+    "compilation_config": {},
+    "cube_cores": null,
+    "decode_tokens": 8,
+    "deployment_candidate_selection": "recipe3_native_residual_train_then_validation_joint_v2",
+    "eval_every": 1,
+    "execution": "cpu_native_residual_constrained_selection",
+    "fitted_grouping": "layer_kv_head",
+    "fitting_objective": "joint_native_bf16_postgate_query_residual",
+    "group_size": "head_dim",
+    "history_splits": 1,
+    "history_token_capacity": null,
+    "k_clip": 0.96,
+    "kv_tile_size": 256,
+    "lambda_output": 1.0,
+    "lr": 0.02,
+    "math_contract": "oscar_bf16_attention_v4_fp32_metadata",
+    "max_deployment_candidates": 9,
+    "max_model_len": 262144,
+    "native_residual": {
+      "direction": "negative_streamed_train_ste_tangent_at_recipe3",
+      "gradient_evaluations_per_direction": 1,
+      "joint_direction": "all_original_train_head_side_unit_tangents_same_radius",
+      "joint_train_candidates": 2,
+      "joint_validation_candidates": 1,
+      "max_kv_heads": 4,
+      "max_train_candidates": 18,
+      "max_validation_candidates": 9,
+      "objective": "mean_query_teacher_energy_normalized_joint_postgate_three_views",
+      "parameter_scope": "single_rotation_and_all_train_directions_joint_from_recipe3",
+      "radii": [
+        0.01,
+        0.0025
+      ],
+      "selection": "strict_train_then_validation_query_projection_nonworse",
+      "tangent_normalization": "frobenius_over_sqrt_head_dim",
+      "test_used_for_selection": false,
+      "train_candidates_per_direction": 2,
+      "validation_candidates_per_direction": 1,
+      "version": "recipe3_native_layer_residual_joint_candidates_v2"
+    },
+    "policy_version": "optr_recipe3_native_residual_joint_ascend_v13",
+    "query_batch_size": 2,
+    "query_samples_per_frame": 8,
+    "recent_tokens": 4,
+    "sampling_chunk_tokens": 16384,
+    "selection": "recipe3_layer_each_query_and_projection_nonworse",
+    "sink_tokens": 2,
+    "source_plan": "recipe3_excluded_records_independent_buckets_v1",
+    "steps": 1,
+    "tensor_parallel_size": 4,
+    "test_policy": "independent_accept_or_fail_no_reselection",
+    "v_clip": 0.92,
+    "validation_partitions": [
+      "single_split",
+      "captured_runtime_frames"
+    ],
+    "validation_projection_views": [
+      "fp32",
+      "bf16_output",
+      "bf16_rank_output"
+    ]
+  },
+  "reproduction": {
+    "command": ".venv/bin/python /tmp/optr_history_layer_timing_20261105.py",
+    "script": "\"\"\"Synthetic CPU, same-v13 full-layer timing; no model/PT claim.\"\"\"\nimport copy\nimport hashlib\nimport json\nimport platform\nimport statistics\nimport sys\nimport time\nfrom pathlib import Path\n\nROOT = Path.cwd()\nsys.path.insert(0, str(ROOT))\nsys.path.insert(0, str(ROOT / 'tests'))\nimport torch\nfrom test_optr_calibration import trace\nfrom test_optr_trust_region import basic_case\nfrom oscar_ascend import optr_trust_region as repair\nfrom oscar_ascend.optr_artifacts import matrix_digest, nonworse\nfrom oscar_ascend.optr_policy import optr_policy\nfrom tools.prepare_optr_native_residual import refine_layer\n\nNAME = 'model.layers.3.self_attn.attn'\nSTRICT = dict(require_frames=True, require_terminal=True, require_queries=True, require_projection=True)\nSOURCE_FILES = ['oscar_ascend/optr_calibration.py', 'oscar_ascend/optr_trust_region.py',\n                'oscar_ascend/optr_native_residual.py', 'oscar_ascend/optr_native_residual_certificate.py',\n                'oscar_ascend/optr_policy.py', 'oscar_ascend/optr_traces.py',\n                'tools/prepare_optr_native_residual.py', 'tools/prepare_optr_rotations.py']\n\ndef hashes():\n    return {path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest() for path in SOURCE_FILES}\n\ndef encoded(record):\n    return json.dumps(record, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()\n\ndef separate_partitions(constants, head, samples, policy, partitions):\n    return {part: repair._project_head(constants, head, samples, {**policy, 'replay_partition': part})\n            for part in partitions}\n\noriginal_shared = repair._project_head_partitions\ntorch.set_num_threads(2)\nsource_before = hashes()\nbaseline, fixture, _ = basic_case(dim=256, heads=4, splits=2)\npolicy = optr_policy({'optr_baseline': 'recipe3', 'optr_recipe3_optimizer': 'joint_native_residual_v1'})\npolicy.update(sink_tokens=2, recent_tokens=4, query_batch_size=2)\n\ndef build_samples(independent):\n    samples = {}\n    for index, split in enumerate(('train', 'validation', 'test')):\n        heads = []\n        for head in range(4):\n            if independent:\n                row = trace(90 + head + index * 100, f'{split}_synthetic',\n                            length=541, dim=256, queries=3, group=6)\n                for key in ('positions', 'contexts', 'current_ends', 'frame_ids', 'token_ids', 'history_splits'):\n                    row[key] = fixture[head][0][key].clone()\n                scores = torch.einsum('mgd,ld->mgl', row['q'].float(), row['k'].float()) / 16\n                scores.masked_fill_(torch.arange(541)[None, None] > row['positions'][:, None, None], -torch.inf)\n                row['teacher'] = torch.einsum('mgl,ld->mgd', scores.softmax(-1), row['v'].float()).bfloat16()\n            else:\n                row = copy.deepcopy(fixture[head][0])\n            row.update(request_id=f'{split}_synthetic', split=split,\n                       sample_sha256=f'{1000 + index * 100 + head:064x}')\n            heads.append([row])\n        samples[split] = heads\n    return samples\n\nreport = {\n    'scope': 'synthetic_CPU_full_single_layer_OPTR_v13_refine_layer_including_independent_test_gate',\n    'not_measured': ['production model captures', 'full multi-layer PT generation', 'NPU',\n                     'online operators', 'LongBench accuracy', 'serving performance'],\n    'includes': ['baseline train/validation caches', 'all eight streamed gradient directions',\n                 'all sixteen single train candidates', 'both joint train candidates',\n                 'all train-admitted validation candidates', 'selection certificate reconstruction',\n                 'independent test baseline and selected replay if selected differs', 'all original gates'],\n    'excludes': ['input/capture loading', 'recipe3 seed construction', 'artifact serialization/publication'],\n    'environment': {'platform': platform.platform(), 'machine': platform.machine(),\n                    'python': platform.python_version(), 'torch': torch.__version__,\n                    'torch_threads': torch.get_num_threads(), 'torch_interop_threads': torch.get_num_interop_threads()},\n    'comparison': {'algorithm_in_both_arms': policy['policy_version'],\n                   'only_switch': 'optr_trust_region._project_head_partitions',\n                   'separate_history': 'original _project_head independently for each partition',\n                   'shared_history': 'one request/candidate history shared across its two partition replays',\n                   'equivalent_partition_shortcut': 'retained identically in both arms',\n                   'autograd_and_independent_test': 'unchanged in both arms',\n                   'v12_to_v13_speedup_claimed': False},\n    'policy': policy,\n    'fixture': {'head_dimension': 256, 'kv_heads': 4, 'gqa_group': 6,\n                'tokens_per_request': 541, 'queries_per_request': 3, 'requests_per_split': 1,\n                'query_microbatch': 2, 'projection_width': 12,\n                'contexts': [0, 515, 515], 'positions': [514, 515, 540],\n                'captured_history_splits': [1, 2, 2], 'partitions': 2, 'projection_views': 3,\n                'sample_sha256_values': 'synthetic identity labels; not model capture authentication'},\n    'warmups_per_arm_per_fixture': 1, 'paired_repetitions': 3,\n    'source_sha256_before': source_before, 'cases': []}\n\ntry:\n    for independent in (True, False):\n        samples = build_samples(independent)\n        durations = {'separate_history': [], 'shared_history': []}\n        reference_record = reference_hash = None\n        last_record = None\n        run_order = []\n\n        def run(arm, measured):\n            global reference_record, reference_hash, last_record\n            repair._project_head_partitions = separate_partitions if arm == 'separate_history' else original_shared\n            events = []\n            started = time.perf_counter()\n            constants, record = refine_layer(NAME, baseline, samples, policy, progress=lambda **row: events.append(row))\n            duration = time.perf_counter() - started\n            record['native_residual_selection'].pop('elapsed_seconds')\n            content, digest = encoded(record), matrix_digest({NAME: constants})\n            if reference_record is None:\n                reference_record, reference_hash = content, digest\n            assert content == reference_record, 'complete record changed between arms/repetitions'\n            assert digest == reference_hash, 'selected matrix hash changed'\n            assert all(torch.equal(constants[key].view(torch.uint8), baseline[key].view(torch.uint8))\n                       for key in ('k_mean',))\n            assert any(row.get('independent_test') == 'passed' for row in events)\n            assert nonworse(record['test']['baseline'], record['test']['selected'], **STRICT)\n            assert record['native_residual_selection']['test_used_for_selection'] is False\n            assert len(record['native_residual_selection']['evaluated_train_candidates']) == 18\n            if measured:\n                durations[arm].append(duration)\n                run_order.append(arm)\n            last_record = record\n\n        for arm in ('separate_history', 'shared_history'):\n            run(arm, False)\n        for repetition in range(3):\n            order = ('separate_history', 'shared_history') if repetition % 2 == 0 else ('shared_history', 'separate_history')\n            for arm in order:\n                run(arm, True)\n        medians = {key: statistics.median(values) for key, values in durations.items()}\n        decision = last_record['native_residual_selection']\n        report['cases'].append({\n            'case': 'independent_random_splits' if independent else 'changed_winner_control',\n            'split_construction': 'independent deterministic PRNG seeds 90+h,190+h,290+h' if independent else\n                'same numeric content copied into distinct train/validation/test objects and IDs; NOT independent quality data',\n            'seconds': durations, 'median_seconds': medians, 'measured_arm_order': run_order,\n            'relative_time_reduction': 1 - medians['shared_history'] / medians['separate_history'],\n            'speedup_ratio': medians['separate_history'] / medians['shared_history'],\n            'accepted': last_record['accepted'], 'selected_candidate': decision['selected_candidate'],\n            'gradient_evaluations': decision['gradient_evaluations'],\n            'train_candidates': len(decision['evaluated_train_candidates']),\n            'validation_candidates': len(decision['evaluated_validation_candidates']),\n            'independent_test_replays': 2 if last_record['accepted'] else 1,\n            'independent_test_gate_passed': True,\n            'all_train_validation_test_metrics_and_decisions_identical': True,\n            'ignored_fields_for_equality': ['native_residual_selection.elapsed_seconds'],\n            'complete_record_sha256': hashlib.sha256(reference_record).hexdigest(),\n            'selected_constants_sha256': reference_hash,\n            'baseline_constants_sha256': matrix_digest({NAME: baseline}),\n            'test_squared_error': {key: value['squared_error'] for key, value in last_record['test'].items()},\n            'validation_squared_error': {key: value['squared_error'] for key, value in last_record['validation'].items()},\n        })\nfinally:\n    repair._project_head_partitions = original_shared\n\nreport['source_sha256_after'] = hashes()\nassert report['source_sha256_after'] == source_before, 'implementation changed during timing'\nreport['reproduction'] = {'working_directory': str(ROOT),\n                          'command': '.venv/bin/python /tmp/optr_history_layer_timing_20261105.py',\n                          'script': Path(__file__).read_text()}\noutput = ROOT / 'reports/optr_cpu_20261105/history_reuse.json'\noutput.parent.mkdir(parents=True, exist_ok=True)\noutput.write_text(json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + '\\n')\nprint(json.dumps({'report': str(output), 'cases': report['cases']}, indent=2))\n",
+    "working_directory": "/Users/loki.yao/Documents/workgit/gpt_new_oscar_kimi_2"
+  },
+  "scope": "synthetic_CPU_full_single_layer_OPTR_v13_refine_layer_including_independent_test_gate",
+  "source_sha256_after": {
+    "oscar_ascend/optr_calibration.py": "26c41c842e7923e9efc7048fabfcca22f9bc72d229edcd437780b5a404b87400",
+    "oscar_ascend/optr_native_residual.py": "fb93427c4d2ae5c8c0439de122c31cd6ee2399963751b32d08dedb22d8d30936",
+    "oscar_ascend/optr_native_residual_certificate.py": "286ddf6e10489e93b048779fa06c815cf0b0578a684042e29107fa379abc3541",
+    "oscar_ascend/optr_policy.py": "537d7503d7d10a4f053f995c17f5ad2f1df4f5172bc8d42f9742e33ded494c15",
+    "oscar_ascend/optr_traces.py": "02f3dc7512c41f587f94182b47754dcaebb6755d831b49db5dce147026f0573d",
+    "oscar_ascend/optr_trust_region.py": "c0f3e9095a1221ea0f71f0ff30597852701da8cd85232a456bfb77ab1e4423a4",
+    "tools/prepare_optr_native_residual.py": "884e2254d126f93ccc7a44193b14230ac8da84d6b61cf8f28a21fa1273080932",
+    "tools/prepare_optr_rotations.py": "129d330a3c733b3adb6decdacf1558784becb4ce14dd784664337c42b6eb5efd"
+  },
+  "source_sha256_before": {
+    "oscar_ascend/optr_calibration.py": "26c41c842e7923e9efc7048fabfcca22f9bc72d229edcd437780b5a404b87400",
+    "oscar_ascend/optr_native_residual.py": "fb93427c4d2ae5c8c0439de122c31cd6ee2399963751b32d08dedb22d8d30936",
+    "oscar_ascend/optr_native_residual_certificate.py": "286ddf6e10489e93b048779fa06c815cf0b0578a684042e29107fa379abc3541",
+    "oscar_ascend/optr_policy.py": "537d7503d7d10a4f053f995c17f5ad2f1df4f5172bc8d42f9742e33ded494c15",
+    "oscar_ascend/optr_traces.py": "02f3dc7512c41f587f94182b47754dcaebb6755d831b49db5dce147026f0573d",
+    "oscar_ascend/optr_trust_region.py": "c0f3e9095a1221ea0f71f0ff30597852701da8cd85232a456bfb77ab1e4423a4",
+    "tools/prepare_optr_native_residual.py": "884e2254d126f93ccc7a44193b14230ac8da84d6b61cf8f28a21fa1273080932",
+    "tools/prepare_optr_rotations.py": "129d330a3c733b3adb6decdacf1558784becb4ce14dd784664337c42b6eb5efd"
+  },
+  "warmups_per_arm_per_fixture": 1
+}

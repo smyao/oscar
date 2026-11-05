@@ -6,8 +6,8 @@ validation/test rule is introduced, and finite traces do not certify accuracy.
 from __future__ import annotations
 
 
-POLICY_VERSION = "optr_recipe3_native_residual_ascend_v12"
-CANDIDATE_STRATEGY = "recipe3_native_residual_train_then_validation_v1"
+POLICY_VERSION = "optr_recipe3_native_residual_joint_ascend_v13"
+CANDIDATE_STRATEGY = "recipe3_native_residual_train_then_validation_joint_v2"
 
 
 def validate_policy(policy):
@@ -19,7 +19,7 @@ def validate_policy(policy):
             policy.get("execution") != "cpu_native_residual_constrained_selection" or
             policy.get("deployment_candidate_selection") != CANDIDATE_STRATEGY or
             type(policy.get("max_deployment_candidates")) is not int or
-            policy["max_deployment_candidates"] != 8 or
+            policy["max_deployment_candidates"] != 9 or
             policy.get("validation_partitions") != ["single_split", "captured_runtime_frames"] or
             policy.get("validation_projection_views") != ["fp32", "bf16_output", "bf16_rank_output"] or
             policy.get("selection") != "recipe3_layer_each_query_and_projection_nonworse" or

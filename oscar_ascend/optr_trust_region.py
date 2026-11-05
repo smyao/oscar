@@ -1,4 +1,4 @@
-"""Archive #170/#174/#175/#176, G26: bounded offline recipe3 repair.
+"""Archive #170/#174/#175/#176/#177, G26: bounded offline recipe3 repair.
 
 Reuse authenticated existing OptR checkpoints, without another optimizer or
 native capture. Directions are selected by their fixed step order, never by
@@ -210,6 +210,23 @@ def _project_head(constants, head, samples, policy):
             for sample in samples[head]]
 
 
+def _project_head_partitions(constants, head, samples, policy, partitions):
+    from .optr_calibration import project_output, replay_sample_partitions
+
+    if len(partitions) == 1:
+        partition = partitions[0]
+        return {partition: _project_head(constants, head, samples, {**policy, "replay_partition": partition})}
+    outputs = {partition: [] for partition in partitions}
+    rk, rv, mean = constants["Rk"][head], constants["Rv"][head], constants["k_mean"][head]
+    for sample in samples[head]:
+        # Only this request's expanded history exists during the two replays.
+        # Persist projected outputs, never prepared KV or attention graphs.
+        attention = replay_sample_partitions(rk, rv, mean, sample, policy, partitions)
+        for partition in partitions:
+            outputs[partition].append(project_output(attention[partition], sample))
+    return outputs
+
+
 def _combine_partition_metrics(values, partitions):
     """Match prepare_optr_rotations._metrics ordering and scalar reductions."""
     from .optr_traces import _aggregate_requests
@@ -237,6 +254,14 @@ class ProjectionCache:
         self.progress = progress
         self.outputs = {}
         self.teachers = [[project_output(sample["teacher"], sample) for sample in head] for head in samples]
+        active = self.partitions[:1] if self.equivalent else self.partitions
+        self.outputs = {partition: [] for partition in active}
+        for head in range(len(samples)):
+            projected = _project_head_partitions(baseline, head, samples, policy, active)
+            for partition in active:
+                self.outputs[partition].append(projected[partition])
+                if progress is not None:
+                    progress(event="repair_baseline_head_replayed", partition=partition, head=head)
         metrics = []
         for partition in self.partitions:
             if partition == "captured_runtime_frames" and self.equivalent:
@@ -244,11 +269,6 @@ class ProjectionCache:
                 metrics.append(copy.deepcopy(metrics[0]))
                 continue
             replay_policy = {**policy, "replay_partition": partition}
-            self.outputs[partition] = []
-            for head in range(len(samples)):
-                self.outputs[partition].append(_project_head(baseline, head, samples, replay_policy))
-                if progress is not None:
-                    progress(event="repair_baseline_head_replayed", partition=partition, head=head)
             metrics.append(aggregate_layer_error(baseline, samples, replay_policy,
                 projected_outputs=self.outputs[partition], projected_teachers=self.teachers))
         self.before = _combine_partition_metrics(metrics, self.partitions)
@@ -256,6 +276,8 @@ class ProjectionCache:
     def measure(self, constants, head):
         from .optr_traces import aggregate_layer_error
 
+        active = self.partitions[:1] if self.equivalent else self.partitions
+        projected = _project_head_partitions(constants, head, self.samples, self.policy, active)
         metrics = []
         for partition in self.partitions:
             if partition == "captured_runtime_frames" and self.equivalent:
@@ -263,13 +285,65 @@ class ProjectionCache:
                 continue
             replay_policy = {**self.policy, "replay_partition": partition}
             outputs = list(self.outputs[partition])
-            outputs[head] = _project_head(constants, head, self.samples, replay_policy)
+            outputs[head] = projected[partition]
             metrics.append(aggregate_layer_error(constants, self.samples, replay_policy,
                 projected_outputs=outputs, projected_teachers=self.teachers))
             # aggregate_layer_error owns scalar evidence, not these tensors.
             del outputs
             if self.progress is not None:
                 self.progress(event="repair_changed_head_replayed", partition=partition, head=head)
+        return _combine_partition_metrics(metrics, self.partitions)
+
+    def measure_many(self, constants, changed_heads):
+        """Replay an explicit head subset, then apply the unchanged whole-layer metric.
+
+        Archive #175-177: joint candidates may alter multiple heads, but their
+        errors cannot be added independently. Keep the original global head
+        reduction order, all query/view evidence and both source partitions.
+        """
+        from .optr_traces import aggregate_layer_error
+        from .optr_calibration import _matrices
+
+        heads = len(self.samples)
+        if (not isinstance(changed_heads, list) or not changed_heads or
+                any(type(head) is not int or not 0 <= head < heads for head in changed_heads) or
+                changed_heads != sorted(set(changed_heads))):
+            raise ValueError("changed_heads must be a nonempty ascending unique head list")
+        for key in ("Rk", "Rv", "k_mean"):
+            value, baseline = constants.get(key), self.baseline[key]
+            if (not torch.is_tensor(value) or value.shape != baseline.shape or
+                    value.dtype != baseline.dtype or value.device != baseline.device or
+                    not bool(torch.isfinite(value).all())):
+                raise ValueError("multi-head candidate constants differ from baseline geometry/dtype")
+            for head in range(heads):
+                # A tiny FP32 correction may leave this head's deployed BF16
+                # operands unchanged; such heads legitimately reuse baseline.
+                if head not in changed_heads and not torch.equal(value[head].bfloat16(), baseline[head].bfloat16()):
+                    raise ValueError("multi-head candidate changed an undeclared head")
+        for head in range(heads):
+            if head not in changed_heads:
+                _matrices(constants["Rk"][head], constants["Rv"][head], constants["k_mean"][head])
+        if len(changed_heads) == 1:
+            return self.measure(constants, changed_heads[0])
+
+        active = self.partitions[:1] if self.equivalent else self.partitions
+        projected = {head: _project_head_partitions(constants, head, self.samples, self.policy, active)
+                     for head in changed_heads}
+        metrics = []
+        for partition in self.partitions:
+            if partition == "captured_runtime_frames" and self.equivalent:
+                metrics.append(copy.deepcopy(metrics[0]))
+                continue
+            outputs = list(self.outputs[partition])
+            for head in changed_heads:
+                outputs[head] = projected[head][partition]
+            metrics.append(aggregate_layer_error(constants, self.samples,
+                {**self.policy, "replay_partition": partition}, projected_outputs=outputs,
+                projected_teachers=self.teachers))
+            del outputs
+            if self.progress is not None:
+                for head in changed_heads:
+                    self.progress(event="repair_changed_head_replayed", partition=partition, head=head)
         return _combine_partition_metrics(metrics, self.partitions)
 
 

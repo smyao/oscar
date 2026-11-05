@@ -3,6 +3,9 @@ import hashlib
 from pathlib import Path
 import subprocess
 
+from test_optr_cpu_scope_20261105 import OFFLINE, _without_profile
+
+
 ROOT = Path(__file__).resolve().parents[1]
 BASE = "7c4a621"
 OFFLINE_SEAMS = {
@@ -23,13 +26,22 @@ def test_existing_production_bytes_change_only_at_offline_recipe3_seams():
         header, path_bytes = record.split(b"\t", 1)
         _, kind, expected = header.split()
         path = path_bytes.decode()
-        if kind != b"blob" or path in OFFLINE_SEAMS:
+        if kind != b"blob" or path in (OFFLINE_SEAMS | OFFLINE):
             continue
         current = ROOT / path
         if not current.is_file():
             changed.append(path)
             continue
         data = current.read_bytes()
+        if path in ("configs/target.json", "tools/probe_history_reuse.py"):
+            # User-authorized rear-card placement is the sole newer online
+            # exception; every byte is pinned to the committed revision.
+            assert data == subprocess.check_output(["git", "show", f"7720e3d:{path}"], cwd=ROOT)
+            continue
+        if path == "oscar_ascend/rotations.py":
+            previous = subprocess.check_output(["git", "show", f"{BASE}:{path}"], cwd=ROOT)
+            assert _without_profile(data) == _without_profile(previous)
+            continue
         actual = hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
         if actual != expected.decode():
             changed.append(path)

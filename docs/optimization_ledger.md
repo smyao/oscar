@@ -1,5 +1,7 @@
 # OSCAR 优化与失败证据索引
 
+2026-11-05 OPTR CPU准备与精度链：用户指定只优化OPTR。v13保留原严格门，新增复用train既有方向的两个联合候选（最多18 train/9 validation，梯度仍8次）；修复“联合loss但只有单侧候选”的搜索范围缺口，不能据合成train/val通过而test失败的反例宣布质量改善。两partition共用request历史，新增认证export/CPU fit/import，可搬移原路径而不需本机模型/NPU。在线源码、窗口/clip/PC/GDN/MTP/argv/timer保持，真实PT准备耗时和模型质量未测。设计、完整链审计、命令和证据见[本轮交付](optr_cpu_precision_20261105.md)。
+
 2026-11-05 纯OSCAR审计：用户明确未启用OPTR，按recipe3复核在线数学、TP/native接缝、PC/GDN/MTP与校准，未确认新的在线精度bug。新增反例分离BF16中心化、INT2/窗口与静态代理限制，不视为模型分差归因；没有新默认数学优化。随后按用户要求改默认后四卡4–7/7878，并修正常规探针硬编码前四卡；最终189项本地回归通过，服务argv与生产attention保持。证据、改进方向与测试局限见[审计报告](oscar_precision_audit_20261105.md)，无真机/质量/性能新验收。
 
 2026-11-04 OPTR v12：基于最新小步拒绝详情，已用本地反例证明旧代理遗漏原生teacher/gate、联合头交叉项，以及V方向与K条件不配套。固定candidate替换为recipe3原点上的原生联合残差方向，8次梯度/最多16个train和8个validation候选，严格test锁定不变；新增CPU反向成本真实存在，不预报准备提速。原kernel/runtime/argv/timer保持。有限样本门与合成反例不保证LongBench超过45+；完整[设计、收益条件和证据](optr_native_residual_20261104.md)，档案#177续记。

@@ -445,7 +445,8 @@ def _validate_layer_checkpoint(saved, template, certificate, name, baseline):
 
 
 def _parallel_layers(config, names, baseline, artifact, certificate, base_config,
-                     trace_manifest, checkpoints, watchdog, *, testing=False, source_checkpoint=None):
+                     trace_manifest, checkpoints, watchdog, *, testing=False, source_checkpoint=None,
+                     offline_bundle=None, cpu_workers=1, cpu_threads=1):
     from tools.optr_parallel import run_layer_workers
     from tools.rotation_preparation_limits import preparation_progress_timeout
     pending = []
@@ -474,6 +475,8 @@ def _parallel_layers(config, names, baseline, artifact, certificate, base_config
             "source_checkpoint": source_checkpoint,
             "template": {**artifact, "layers": {}}, "certificate": {**certificate, "layers": {}},
             "checkpoint_directory": str(checkpoints.root.parent), "checkpoint_identity": checkpoints.identity}
+    if offline_bundle is not None:
+        spec.update(offline_bundle=str(offline_bundle), cpu_workers=cpu_workers, cpu_threads=cpu_threads)
     run_layer_workers(spec, pending, progress=watchdog.progress, completed=completed,
                       timeout=preparation_progress_timeout(config))
     # Completion order cannot change the serialized layer order or reductions.

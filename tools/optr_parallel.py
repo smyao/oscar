@@ -83,7 +83,15 @@ def run_layer_workers(spec, names, *, progress, completed, timeout, worker_targe
     if worker_target is None:
         from tools.optr_fit_worker import fit_worker
         worker_target = fit_worker
-    plan = worker_plan(spec["config"], len(names))
+    if spec.get("offline_bundle") is not None:
+        workers, threads = spec.get("cpu_workers"), spec.get("cpu_threads")
+        if any(type(n) is not int or not 1 <= n <= 64 for n in (workers, threads)):
+            raise ValueError("offline CPU workers/threads must be integers in [1,64]")
+        count = min(workers, len(names))
+        plan = {"workers": count, "devices": [None] * count, "cpu_threads_per_worker": threads,
+                "start_method": "spawn", "unit": "complete_layer", "fitting_device": "cpu"}
+    else:
+        plan = worker_plan(spec["config"], len(names))
     progress(phase="parallel_fit_plan", **plan)
     if not names:
         return

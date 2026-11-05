@@ -15,10 +15,10 @@ POLICY_VERSION = "optr_oscar_shared_candidates_ascend_v9"
 RECIPE3_POLICY_VERSION = "optr_recipe3_centered_candidates_ascend_v10"
 RECIPE3_REPAIR_POLICY_VERSION = "optr_recipe3_trust_region_ascend_v11"
 RECIPE3_REPAIR = "single_head_trust_region_v1"
-RECIPE3_NATIVE_POLICY_VERSION = "optr_recipe3_native_residual_ascend_v12"
+RECIPE3_NATIVE_POLICY_VERSION = "optr_recipe3_native_residual_joint_ascend_v13"
 RECIPE3_NATIVE_OPTIMIZER = "joint_native_residual_v1"
-RECIPE3_NATIVE_CANDIDATE_SELECTION = "recipe3_native_residual_train_then_validation_v1"
-RECIPE3_NATIVE_MAX_CANDIDATES = 8
+RECIPE3_NATIVE_CANDIDATE_SELECTION = "recipe3_native_residual_train_then_validation_joint_v2"
+RECIPE3_NATIVE_MAX_CANDIDATES = 9
 PROJECTION_VIEWS = ("fp32", "bf16_output", "bf16_rank_output")
 DEPLOYMENT_CANDIDATE_SELECTION = "fixed_k_existing_v_checkpoints_first_nonworse"
 MAX_DEPLOYMENT_CANDIDATES = 6
@@ -224,8 +224,22 @@ def compatible_capture_profiles(profile, config):
             old_config = {key: value for key, value in config.items()
                           if key not in ("optr_recipe3_optimizer", "optr_recipe3_repair")}
             historical = (old_config, {**old_config, "optr_recipe3_repair": RECIPE3_REPAIR})
-            return [{**copy.deepcopy(profile), "refinement_policy": optr_policy(previous)}
-                    for previous in historical]
+            profiles = [{**copy.deepcopy(profile), "refinement_policy": optr_policy(previous)}
+                        for previous in historical]
+            # v13 changes only proposal coverage. Authenticate v12's exact raw
+            # capture profile without admitting any of its fitted checkpoints.
+            v12 = copy.deepcopy(optr_policy(config))
+            v12.update(policy_version="optr_recipe3_native_residual_ascend_v12",
+                       deployment_candidate_selection="recipe3_native_residual_train_then_validation_v1",
+                       max_deployment_candidates=8)
+            native = v12["native_residual"]
+            native.update(version="recipe3_native_layer_residual_v1",
+                          parameter_scope="single_kv_head_single_rotation_from_recipe3",
+                          max_train_candidates=16, max_validation_candidates=8)
+            for key in ("joint_train_candidates", "joint_validation_candidates", "joint_direction"):
+                native.pop(key)
+            profiles.append({**copy.deepcopy(profile), "refinement_policy": v12})
+            return profiles
         if config.get("optr_recipe3_repair") is None:
             return []
         old_config = {key: value for key, value in config.items() if key != "optr_recipe3_repair"}

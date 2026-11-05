@@ -54,7 +54,7 @@ def test_fixed_candidate_changes_only_offline_policy_and_preserves_launch():
     summary = runtime_feature_summary(current, "candidate")
     assert summary["optr_fitting_policy"] == RECIPE3_NATIVE_POLICY_VERSION
     assert summary["optr_steps_per_phase"] == 1
-    assert summary["optr_max_deployment_candidates"] == 8
+    assert summary["optr_max_deployment_candidates"] == 9
     assert summary["optr_fitting_execution"] == "cpu_native_residual_constrained_selection"
     assert summary["independent_test_blocks_publication"] is True
 
@@ -70,8 +70,8 @@ def test_native_policy_preserves_baseline_geometry_and_all_acceptance_views():
         "native_residual": NATIVE_RESIDUAL_POLICY,
         "fitting_objective": "joint_native_bf16_postgate_query_residual",
         "execution": "cpu_native_residual_constrained_selection",
-        "deployment_candidate_selection": "recipe3_native_residual_train_then_validation_v1",
-        "max_deployment_candidates": 8, "steps": 1, "eval_every": 1,
+        "deployment_candidate_selection": "recipe3_native_residual_train_then_validation_joint_v2",
+        "max_deployment_candidates": 9, "steps": 1, "eval_every": 1,
     }
     assert policy == {**old, **changes}
     policy["native_residual"]["test_mutation"] = True
@@ -90,7 +90,21 @@ def test_historical_policies_are_byte_equivalent_and_native_capture_isolated(tmp
     fingerprint = "native-residual-policy-model"
     profile, old10, old11 = [calibration_cache_identity(config, fingerprint)
                              for config in (current, v10, v11)]
-    assert compatible_capture_profiles(profile, current) == [old10, old11]
+    compatible = compatible_capture_profiles(profile, current)
+    assert compatible[:2] == [old10, old11]
+    # Historical v12 is reconstructed byte-for-byte, including its native
+    # proposal policy, while current fitting identity remains v13.
+    old12_native = subprocess.check_output(["git", "show", "7720e3d:oscar_ascend/optr_native_residual.py"], cwd=ROOT).decode()
+    import ast
+    old12_constants = next(node.value for node in ast.parse(old12_native).body
+                          if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and
+                             t.id == "NATIVE_RESIDUAL_POLICY" for t in node.targets))
+    old12 = copy.deepcopy(profile)
+    old12["refinement_policy"].update(policy_version="optr_recipe3_native_residual_ascend_v12",
+        deployment_candidate_selection="recipe3_native_residual_train_then_validation_v1",
+        max_deployment_candidates=8, native_residual=ast.literal_eval(old12_constants))
+    assert compatible == [old10, old11, old12]
+    assert profile != old12
     assert len({rotation_artifact_path(config, fingerprint, root=tmp_path)
                 for config in (current, v10, v11)}) == 3
     assert base_config(current, fingerprint) == base_config(v10, fingerprint) == base_config(v11, fingerprint)

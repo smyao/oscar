@@ -37,12 +37,19 @@ def _schema(payload, testing, label):
         raise ValueError(f"OptR {label} test-only data cannot enter production")
 
 
-def _member(root, value):
+def _member(root, value, files=None):
     if not isinstance(value, str) or not value:
         raise ValueError("OptR trace path is missing")
-    path = Path(value)
-    path = (root / path).resolve() if not path.is_absolute() else path.resolve()
-    if not path.is_relative_to(root) or not path.is_file():
+    if files is not None:
+        path = files.logical_path(value, root=root)
+    else:
+        path = Path(value)
+        path = (root / path).resolve() if not path.is_absolute() else path.resolve()
+    if not path.is_relative_to(root):
+        raise ValueError("OptR trace path escapes its capture directory or is missing")
+    if files is not None:
+        return files.resolve(path)
+    if not path.is_file():
         raise ValueError("OptR trace path escapes its capture directory or is missing")
     return path
 
@@ -113,7 +120,7 @@ def _plan(top, policy):
     return rows
 
 
-def load_trace_manifest(path, config, layers, dim, fingerprint, testing=False):
+def load_trace_manifest(path, config, layers, dim, fingerprint, testing=False, *, files=None):
     """Validate manifests now; each large tensor file is authenticated on load."""
     from .integration.rotation_capture import full_layer_id
     from .rotations import calibration_cache_identity
@@ -122,15 +129,17 @@ def load_trace_manifest(path, config, layers, dim, fingerprint, testing=False):
     validate_refinement_config(config)
     if config.get("rotation_refinement") != "optr":
         raise ValueError("OptR trace loader requires an OptR configuration")
-    path = Path(path).resolve()
-    top = _read_json(path)
+    path = files.logical_path(path) if files is not None else Path(path).resolve()
+    physical_path = files.resolve(path) if files is not None else path
+    top = _read_json(physical_path)
     _schema(top, testing, "capture")
-    root = Path(top.get("output_dir", "")).resolve()
-    if (top.get("status") != "native_optr_capture_complete" or not root.is_dir()
+    root = (files.logical_path(top.get("output_dir", "")) if files is not None
+            else Path(top.get("output_dir", "")).resolve())
+    if (top.get("status") != "native_optr_capture_complete" or (files is None and not root.is_dir())
             or not root.is_relative_to(path.parent)):
         raise ValueError("OptR capture is incomplete or its directory identity differs")
     policy = optr_policy(config)
-    profile = calibration_cache_identity(config, fingerprint)
+    profile = calibration_cache_identity(config, fingerprint, files=files)
     current = top.get("optr_policy") == policy and top.get("calibration_profile") == profile
     legacy = any(top.get("calibration_profile") == candidate and
                  top.get("optr_policy") == candidate["refinement_policy"]
@@ -143,7 +152,8 @@ def load_trace_manifest(path, config, layers, dim, fingerprint, testing=False):
     if any(value is None for value in ids) or len(set(ids)) != len(ids) or not ids or top.get("layer_ids") != ids:
         raise ValueError("OptR target FULL layer identity differs")
     tp = config["tensor_parallel_size"]
-    model_raw = _read_json(Path(config["model"]) / "config.json")
+    model_path = Path(config["model"]) / "config.json"
+    model_raw = _read_json(files.resolve(model_path) if files is not None else model_path)
     model = model_raw.get("text_config", model_raw)
     global_q, global_kv = model.get("num_attention_heads"), model.get("num_key_value_heads")
     hidden_size = model.get("hidden_size")
@@ -160,7 +170,7 @@ def load_trace_manifest(path, config, layers, dim, fingerprint, testing=False):
     plan = _plan(top, policy)
     if config.get("optr_baseline") == "recipe3":
         from tools.optr_recipe3_sampling import validate_recipe3_trace_manifest
-        validate_recipe3_trace_manifest(top, config, policy)
+        validate_recipe3_trace_manifest(top, config, policy, files=files)
     if top.get("decode_tokens") != policy["decode_tokens"] or top.get("samples_per_frame") != policy["query_samples_per_frame"]:
         raise ValueError("OptR capture sampling policy differs")
     workspace = _workspace_geometry(config)
@@ -171,7 +181,7 @@ def load_trace_manifest(path, config, layers, dim, fingerprint, testing=False):
         raise ValueError("OptR capture rank paths/hashes are incomplete")
     ranks, owned = [], set()
     for rank, entry in enumerate(paths):
-        rank_path = _member(root, entry)
+        rank_path = _member(root, entry, files)
         if rank_path in owned or file_sha256(rank_path) != _hash(hashes[entry]):
             raise ValueError("OptR rank manifest changed or is duplicated")
         owned.add(rank_path)
@@ -188,21 +198,21 @@ def load_trace_manifest(path, config, layers, dim, fingerprint, testing=False):
             layer = payload["layers"][str(layer_id)]
             if not isinstance(layer, dict):
                 raise ValueError("OptR layer manifest must be an object")
-            _member(root, layer.get("wo_path")); _hash(layer.get("wo_sha256"))
+            _member(root, layer.get("wo_path"), files); _hash(layer.get("wo_sha256"))
             sequences = layer.get("sequences")
             if not isinstance(sequences, list) or len(sequences) != len(plan):
                 raise ValueError("OptR layer request coverage differs")
             for sequence, row in zip(sequences, plan):
                 if not isinstance(sequence, dict) or any(sequence.get(k) != row[k] for k in ("request_id", "split", "length_bucket")):
                     raise ValueError("OptR layer request identity/order differs")
-                sequence_path = _member(root, sequence.get("path"))
+                sequence_path = _member(root, sequence.get("path"), files)
                 if sequence_path in owned:
                     raise ValueError("OptR sequence file is shared by multiple layer/rank/request owners")
                 owned.add(sequence_path)
                 _hash(sequence.get("sha256"))
         ranks.append(payload)
-    return {**top, "_rank_manifests": ranks, "_manifest_path": str(path), "_manifest_sha256": file_sha256(path),
-            "_testing": testing, "_root": str(root), "_hidden_size": hidden_size}
+    return {**top, "_rank_manifests": ranks, "_manifest_path": str(path), "_manifest_sha256": file_sha256(physical_path),
+            "_testing": testing, "_root": str(root), "_hidden_size": hidden_size, "_files": files}
 
 
 def _tensor(value, dtype, shape, label):
@@ -216,7 +226,7 @@ def _tensor(value, dtype, shape, label):
 
 def _load_payload(manifest, path, expected_hash):
     import torch
-    path = _member(Path(manifest["_root"]), path)
+    path = _member(Path(manifest["_root"]), path, manifest.get("_files"))
     if file_sha256(path) != _hash(expected_hash):
         raise ValueError("OptR tensor file hash differs")
     result = torch.load(path, map_location="cpu", weights_only=True)

@@ -18,11 +18,14 @@ import pytest
 from tools import install_serve, observe_serve, serving_variants
 from tools.target_cli import serve_argv
 
+from test_optr_cpu_scope_20261105 import OFFLINE, _without_profile
+
+
 ROOT = Path(__file__).resolve().parents[1]
 BASE = "ca46f57e0267f15aadba08d6913cef81b46e21b1"
 SOURCE = "e7dc8a92000e0d9b49800eadda6d1d16f978436f"
 EXISTING_CALIBRATION_SEAMS = {
-    "oscar_ascend/rotations.py", "oscar_ascend/integration/rotation_capture.py",
+    "oscar_ascend/integration/rotation_capture.py",
     "tools/calibrate_model_rotations.py", "tools/calibration_data.py",
     "tools/prepare_rotations.py", "tools/serving_variants.py",
     "tools/install_serve.py", "tools/deploy.py", "tools/observe_serve.py",
@@ -54,13 +57,19 @@ def test_existing_production_tree_changes_only_at_named_calibration_seams():
         header, raw_path = record.split(b"\t", 1)
         _, kind, expected = header.split()
         path = raw_path.decode()
-        if kind != b"blob" or path in EXISTING_CALIBRATION_SEAMS:
+        if kind != b"blob" or path in (EXISTING_CALIBRATION_SEAMS | OFFLINE):
             continue
         current = ROOT / path
         if not current.is_file():
             changed.append(path + " (missing)")
             continue
         data = current.read_bytes()
+        if path == "oscar_ascend/rotations.py":
+            # The original migration already added strict OptR loading and
+            # artifact validation. Freeze that accepted implementation; this
+            # round may only extend the offline calibration-profile seam.
+            assert _without_profile(data) == _without_profile(committed(path, "7c4a621"))
+            continue
         if path == "configs/target.json":
             # User 2026-11-05 changed only physical placement; all math,
             # runtime and service arguments remain protected by the old base.

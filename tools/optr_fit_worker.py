@@ -27,9 +27,16 @@ def fit_worker(spec, index, cpu_threads, pipe):
     try:
         emit(phase="fit_worker_initializing", cpu_threads=cpu_threads)
         config, testing = spec["config"], spec["testing"]
-        if file_sha256(spec["base_config"]["rotation_artifact"]) != spec["certificate"]["base_artifact_sha256"]:
+        files = None
+        if spec.get("offline_bundle") is not None:
+            from tools.optr_offline import PortableInputs
+            files = PortableInputs(spec["offline_bundle"], testing=testing)
+        base_path = spec["base_config"]["rotation_artifact"]
+        if file_sha256(files.resolve(base_path) if files is not None else base_path) != spec["certificate"]["base_artifact_sha256"]:
             raise ValueError("OptR worker seed file changed")
-        if config.get("optr_baseline") == "recipe3":
+        if files is not None:
+            baseline = files.load_base()
+        elif config.get("optr_baseline") == "recipe3":
             from tools.prepare_optr_recipe3_base import load_base
             baseline = load_base(spec["base_config"], testing=testing)
         else:
@@ -37,7 +44,7 @@ def fit_worker(spec, index, cpu_threads, pipe):
         if baseline.get("test_only") and not testing:
             raise ValueError("test-only seed cannot enter a production OptR worker")
         manifest = load_trace_manifest(spec["trace_manifest"], config, spec["names"],
-            spec["template"]["head_dim"], spec["template"]["model_fingerprint"], testing=testing)
+            spec["template"]["head_dim"], spec["template"]["model_fingerprint"], testing=testing, files=files)
         if manifest["_manifest_sha256"] != spec["certificate"]["trace_manifest_sha256"]:
             raise ValueError("OptR worker trace manifest changed")
         checkpoints = FitCheckpoints(spec["checkpoint_directory"], spec["checkpoint_identity"])

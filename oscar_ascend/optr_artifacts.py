@@ -448,10 +448,9 @@ def publish_artifact(artifact, destination):
             fcntl.flock(lock, fcntl.LOCK_UN)
 
 
-def load_refined_artifact(config, destination, *, device, testing, layer_names, head_dim, model_fingerprint):
+def read_published_artifact(destination, model_fingerprint):
+    """Authenticate an atomic generation without loading a model or accelerator."""
     import torch
-    from .rotation_calibration import OFFICIAL_COMMIT
-    from .rotations import calibration_cache_identity, validate_artifact
     destination = Path(destination)
     with (destination.parent / ".optr.lock").open("a+") as lock:
         fcntl.flock(lock, fcntl.LOCK_SH)
@@ -466,6 +465,13 @@ def load_refined_artifact(config, destination, *, device, testing, layer_names, 
                 manifest.get("sha256") != file_sha256(destination)):
             raise ValueError("OptR artifact hash or identity mismatch")
         artifact = torch.load(destination, map_location="cpu", weights_only=True)
+    return artifact
+
+
+def load_refined_artifact(config, destination, *, device, testing, layer_names, head_dim, model_fingerprint):
+    from .rotation_calibration import OFFICIAL_COMMIT
+    from .rotations import calibration_cache_identity, validate_artifact
+    artifact = read_published_artifact(destination, model_fingerprint)
     if artifact.get("test_only") and not testing:
         raise ValueError("test-only OptR artifacts cannot enter production")
     validate_refinement_metadata(artifact, expected_profile=calibration_cache_identity(config, model_fingerprint))

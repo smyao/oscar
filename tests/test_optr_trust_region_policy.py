@@ -17,6 +17,9 @@ from tools.serving_variants import runtime_feature_summary, variant_config, vari
 from tools.target_cli import serve_argv, target_env
 
 
+from test_optr_cpu_scope_20261105 import OFFLINE, _without_profile
+
+
 ROOT = Path(__file__).resolve().parents[1]
 BASE = "e62d6d2"
 REPAIR = "single_head_trust_region_v1"
@@ -135,7 +138,7 @@ def test_current_implementation_digest_covers_both_new_algorithm_and_source_read
     assert fitting_implementation_digest() != LEGACY_FITTING_SHA256
 
 
-def test_every_existing_production_file_outside_ten_offline_seams_is_byte_identical():
+def test_every_existing_production_file_outside_named_offline_seams_is_byte_identical():
     records = subprocess.check_output(["git", "ls-tree", "-r", "-z", BASE,
         "csrc", "cmake", "oscar_ascend", "configs", "scripts", "tools"], cwd=ROOT).split(b"\0")
     changed = []
@@ -144,16 +147,27 @@ def test_every_existing_production_file_outside_ten_offline_seams_is_byte_identi
         header, encoded = record.split(b"\t", 1)
         _, kind, expected = header.split()
         name = encoded.decode()
-        if kind != b"blob" or name in OFFLINE_SEAMS:
+        if kind != b"blob" or name in (OFFLINE_SEAMS | OFFLINE):
             continue
         path = ROOT / name
         if not path.is_file():
             changed.append(name)
             continue
         data = path.read_bytes()
+        if name in ("configs/target.json", "tools/probe_history_reuse.py"):
+            # User-authorized rear-card placement is the sole newer online
+            # exception; every byte is pinned to the committed revision.
+            assert data == subprocess.check_output(["git", "show", f"7720e3d:{name}"], cwd=ROOT)
+            checked += 1
+            continue
+        if name == "oscar_ascend/rotations.py":
+            previous = subprocess.check_output(["git", "show", f"{BASE}:{name}"], cwd=ROOT)
+            assert _without_profile(data) == _without_profile(previous)
+            checked += 1
+            continue
         actual = hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
         if actual != expected.decode():
             changed.append(name)
         checked += 1
-    assert checked == 884
+    assert checked == 880  # Four more pre-existing files are named offline CPU seams.
     assert changed == []

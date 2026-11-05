@@ -1,0 +1,41 @@
+{
+  "seed": 114,
+  "radius": 0.0025,
+  "original_single_candidates": 8,
+  "original_accepted": false,
+  "joint_train_candidates": 2,
+  "extra_gradient_evaluations": 0,
+  "test_used_for_selection": false,
+  "train": [
+    1.6427114499367725,
+    1.6099393500356545
+  ],
+  "validation": [
+    0.3293378992000381,
+    0.3156968867139547
+  ],
+  "test": [
+    0.2725189767048608,
+    0.3612117186824202
+  ],
+  "train_strict_passed": true,
+  "validation_strict_passed": true,
+  "test_strict_passed": false,
+  "publication_allowed": false,
+  "nonzero_means": true,
+  "nonzero_gates": true,
+  "archive_references": [
+    "#170",
+    "#175",
+    "#176",
+    "#177"
+  ],
+  "evidence_scope": "synthetic_cpu_recipe3_dense_bf16_teacher",
+  "policy_version": "optr_recipe3_native_residual_joint_ascend_v13",
+  "production_data": false,
+  "model_quality": "not_measured",
+  "performance": "not_measured",
+  "limitation": "Candidate recall improvement only. Independent native-teacher test rejects this candidate; no all-three-splits native-teacher success has been established.",
+  "reproducible_test": "tests/test_optr_v12_joint_candidate_audit.py",
+  "source": "All joint directions come from the original train gradient, with two fixed predeclared radii. No extra gradient or test-based selection."
+}

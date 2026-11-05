@@ -17,18 +17,21 @@ import torch
 
 
 NATIVE_RESIDUAL_POLICY = {
-    "version": "recipe3_native_layer_residual_v1",
+    "version": "recipe3_native_layer_residual_joint_candidates_v2",
     "objective": "mean_query_teacher_energy_normalized_joint_postgate_three_views",
     "direction": "negative_streamed_train_ste_tangent_at_recipe3",
-    "parameter_scope": "single_kv_head_single_rotation_from_recipe3",
+    "parameter_scope": "single_rotation_and_all_train_directions_joint_from_recipe3",
     "tangent_normalization": "frobenius_over_sqrt_head_dim",
     "radii": [.01, .0025],
     "max_kv_heads": 4,
     "gradient_evaluations_per_direction": 1,
     "train_candidates_per_direction": 2,
     "validation_candidates_per_direction": 1,
-    "max_train_candidates": 16,
-    "max_validation_candidates": 8,
+    "joint_train_candidates": 2,
+    "joint_validation_candidates": 1,
+    "joint_direction": "all_original_train_head_side_unit_tangents_same_radius",
+    "max_train_candidates": 18,
+    "max_validation_candidates": 9,
     "selection": "strict_train_then_validation_query_projection_nonworse",
     "test_used_for_selection": False,
 }
@@ -199,6 +202,26 @@ def _proposal(baseline, direction, radius):
     return constants
 
 
+def _joint_proposal(baseline, directions, radius):
+    """Use the original train directions together, without another gradient."""
+    constants = {**baseline, "Rk": baseline["Rk"].clone(), "Rv": baseline["Rv"].clone()}
+    for direction in directions:
+        head, side = direction["head"], direction["side"]
+        constants[side][head] = baseline[side][head] @ torch.matrix_exp(direction["unit_tangent"] * radius)
+    return constants
+
+
+def _same_operands(baseline, constants):
+    return all(torch.equal(constants[side].bfloat16(), baseline[side].bfloat16()) for side in ("Rk", "Rv"))
+
+
+def _measure_joint(cache, baseline, constants):
+    changed = [head for head in range(baseline["Rk"].shape[0]) if any(
+        not torch.equal(constants[side][head].bfloat16(), baseline[side][head].bfloat16())
+        for side in ("Rk", "Rv"))]
+    return cache.before if not changed else cache.measure_many(constants, changed)
+
+
 def _passes(before, after):
     from .optr_artifacts import nonworse
     return nonworse(before, after, **STRICT) and after["squared_error"] < before["squared_error"]
@@ -210,12 +233,17 @@ def _scalar_direction(row):
 
 def _candidate_identity(direction, index):
     head, side = direction["head"], direction["side"]
-    return {"candidate": f"native_h{head}_{side}_r{index}", "head": head, "side": side,
+    return {"candidate": f"native_h{head}_{side}_r{index}", "scope": "single", "head": head, "side": side,
+            "radius_index": index, "radius": NATIVE_RESIDUAL_POLICY["radii"][index]}
+
+
+def _joint_identity(index):
+    return {"candidate": f"native_joint_r{index}", "scope": "joint", "head": None, "side": "Rk_Rv",
             "radius_index": index, "radius": NATIVE_RESIDUAL_POLICY["radii"][index]}
 
 
 def select_native_residual(name, baseline, train_samples, validation_samples, policy, *, progress=None):
-    """One streamed gradient per head/side; at most 16 train and 8 val trials."""
+    """One gradient per head/side; <=18 train/9 val trials, no test selection."""
     from .optr_artifacts import matrix_digest
     from .optr_recipe3_fit import validate_perhead_pair
     from .optr_trust_region import ProjectionCache
@@ -258,15 +286,39 @@ def select_native_residual(name, baseline, train_samples, validation_samples, po
             directions.append(direction)
             if winner is not None:
                 finalists.append(winner)
+    joint_winner = None
+    with torch.no_grad():
+        for index, radius in enumerate(NATIVE_RESIDUAL_POLICY["radii"]):
+            constants = _joint_proposal(baseline, directions, radius)
+            validate_perhead_pair(constants["Rk"], constants["Rv"], constants["k_mean"])
+            same = _same_operands(baseline, constants)
+            measured = _measure_joint(train_cache, baseline, constants)
+            passes = _passes(train_cache.before, measured)
+            row = {**_joint_identity(index), "accepted": passes,
+                   "same_bf16_operand_as_seed": same,
+                   "constants_sha256": matrix_digest({name: constants}), "train": measured}
+            train_rows.append(row)
+            if passes and (joint_winner is None or measured["squared_error"] < joint_winner["train"]["squared_error"]):
+                joint_winner = row
+            if emit is not None:
+                emit(event="native_residual_train_checked", **{key: row[key] for key in
+                     ("candidate", "scope", "head", "side", "radius", "accepted")},
+                     squared_error=measured["squared_error"])
+    if joint_winner is not None:
+        finalists.append(joint_winner)
     with torch.no_grad():
         validation_cache = ProjectionCache(baseline, validation_samples, policy, progress=emit)
         selected, before, after, selected_id = baseline, validation_cache.before, validation_cache.before, "seed"
         validation_rows = []
         for finalist in finalists:
-            direction = next(row for row in directions if (row["head"], row["side"]) ==
-                             (finalist["head"], finalist["side"]))
-            constants = _proposal(baseline, direction, finalist["radius"])
-            measured = validation_cache.measure(constants, direction["head"])
+            if finalist["scope"] == "joint":
+                constants = _joint_proposal(baseline, directions, finalist["radius"])
+                measured = _measure_joint(validation_cache, baseline, constants)
+            else:
+                direction = next(row for row in directions if (row["head"], row["side"]) ==
+                                 (finalist["head"], finalist["side"]))
+                constants = _proposal(baseline, direction, finalist["radius"])
+                measured = validation_cache.measure(constants, direction["head"])
             passes = _passes(before, measured)
             row = {key: value for key, value in finalist.items() if key not in ("train", "accepted")}
             row.update(validation=measured, accepted=passes)
@@ -288,10 +340,11 @@ def select_native_residual(name, baseline, train_samples, validation_samples, po
                 "test_used_for_selection": False, "train_sources": sources,
                 "train_samples_sha256": proposal["train_samples_sha256"],
                 "directions": [_scalar_direction(row) for row in directions],
+                "joint_train_selected_candidate": "seed" if joint_winner is None else joint_winner["candidate"],
                 "train_baseline": train_cache.before, "evaluated_train_candidates": train_rows,
                 "evaluated_validation_candidates": validation_rows,
                 "train_candidate_count": len(train_rows), "validation_candidate_count": len(validation_rows),
-                "max_train_candidates": heads * 4, "max_validation_candidates": heads * 2,
+                "max_train_candidates": heads * 4 + 2, "max_validation_candidates": heads * 2 + 1,
                 "gradient_evaluations": heads * 2, "elapsed_seconds": time.perf_counter() - started,
                 "model_quality": "not_measured", "performance": "not_measured"}
     validate_selection(name, baseline, selected, before, after, decision, proposal, policy)
@@ -341,12 +394,12 @@ def validate_decision(name, before, after, decision, heads, policy):
         raise ValueError("native residual train/validation evidence overlaps")
     train_rows = decision.get("evaluated_train_candidates")
     val_rows = decision.get("evaluated_validation_candidates")
-    if (not isinstance(train_rows, list) or len(train_rows) != heads * 4 or not isinstance(val_rows, list) or
-            len(val_rows) > heads * 2 or any(decision.get(key) != expected or type(decision.get(key)) is not int
+    if (not isinstance(train_rows, list) or len(train_rows) != heads * 4 + 2 or not isinstance(val_rows, list) or
+            len(val_rows) > heads * 2 + 1 or any(decision.get(key) != expected or type(decision.get(key)) is not int
                 for key, expected in (("train_candidate_count", len(train_rows)),
                                       ("validation_candidate_count", len(val_rows)),
-                                      ("max_train_candidates", heads * 4),
-                                      ("max_validation_candidates", heads * 2), ("gradient_evaluations", heads * 2)))):
+                                      ("max_train_candidates", heads * 4 + 2),
+                                      ("max_validation_candidates", heads * 2 + 1), ("gradient_evaluations", heads * 2)))):
         raise ValueError("native residual candidate/gradient budget differs")
     finalists = []
     for direction_index, direction in enumerate(directions):
@@ -385,12 +438,34 @@ def validate_decision(name, before, after, decision, heads, policy):
             raise ValueError("native residual per-direction train winner differs")
         if winner is not None:
             finalists.append(winner)
+    joint_winner = None
+    for index in range(2):
+        row = train_rows[heads * 4 + index]
+        if (not isinstance(row, dict) or type(row.get("radius_index")) is not int or
+                any(row.get(key) != value for key, value in _joint_identity(index).items())):
+            raise ValueError("native residual joint candidate grid differs")
+        _hash(row.get("constants_sha256"))
+        same, measured = row.get("same_bf16_operand_as_seed"), row.get("train")
+        if (type(same) is not bool or (same and measured != train_before) or
+                (all(direction["zero_gradient"] for direction in directions) and not same)):
+            raise ValueError("native residual unchanged joint operand evidence differs")
+        passes = _passes(train_before, measured)
+        _check_sources(measured, sources)
+        if row.get("accepted") is not passes:
+            raise ValueError("native residual joint train acceptance disagrees with strict gate")
+        if passes and (joint_winner is None or measured["squared_error"] < joint_winner["train"]["squared_error"]):
+            joint_winner = row
+    joint_id = "seed" if joint_winner is None else joint_winner["candidate"]
+    if decision.get("joint_train_selected_candidate") != joint_id:
+        raise ValueError("native residual joint train winner differs")
+    if joint_winner is not None:
+        finalists.append(joint_winner)
     if len(val_rows) != len(finalists):
         raise ValueError("native residual validation finalist coverage differs")
     winner_metric, winner_id, winner_hash = before, "seed", decision["base_constants_sha256"]
     for row, source in zip(val_rows, finalists, strict=True):
         if not isinstance(row, dict) or any(row.get(key) != source[key] for key in
-            ("candidate", "head", "side", "radius_index", "radius", "constants_sha256", "same_bf16_operand_as_seed")):
+            ("candidate", "scope", "head", "side", "radius_index", "radius", "constants_sha256", "same_bf16_operand_as_seed")):
             raise ValueError("native residual validation candidate differs from train winner")
         measured = row.get("validation")
         passes = _passes(before, measured)
@@ -443,6 +518,14 @@ def validate_selection(name, baseline, selected, before, after, decision, propos
                     raise ValueError("native residual proposal matrix/operand identity differs")
                 if row["candidate"] == decision["selected_candidate"]:
                     winner = constants
+        for radius_index, radius in enumerate(NATIVE_RESIDUAL_POLICY["radii"]):
+            constants = _joint_proposal(baseline, directions, radius)
+            row = decision["evaluated_train_candidates"][heads * 4 + radius_index]
+            if (row["constants_sha256"] != matrix_digest({name: constants}) or
+                    row["same_bf16_operand_as_seed"] is not _same_operands(baseline, constants)):
+                raise ValueError("native residual joint proposal matrix/operand identity differs")
+            if row["candidate"] == decision["selected_candidate"]:
+                winner = constants
     if not isinstance(selected, dict):
         raise ValueError("native residual selected constants must be an object")
     validate_perhead_pair(selected.get("Rk"), selected.get("Rv"), selected.get("k_mean"))

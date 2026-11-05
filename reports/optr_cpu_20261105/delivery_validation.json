@@ -1,0 +1,115 @@
+{
+  "base_commit": "7720e3d6742dc7b56374d723d355a2434f294985",
+  "branch": "oscar-new-6",
+  "status": "local_source_cpu_validation_passed",
+  "change_state": "uncommitted_local_workspace",
+  "fitting_implementation_sha256": "6860c241c3163085c67cb01bf49b164d61ed9aee2b5543e5c24489af11cf5211",
+  "tests": {
+    "command": ".venv/bin/python -m pytest -q tests/test_optr*.py tests/test_prepare_optr_recipe3.py tests/test_center_prepare.py tests/test_center_rotations.py tests/test_official_rotation_calibration.py tests/test_rotations.py tests/test_serving_variants.py tests/test_deploy_launcher.py tests/test_deploy_bf16.py",
+    "tests": 1101,
+    "passed": 1100,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1,
+    "seconds": 56.337,
+    "skip": "test_optr_oscar_seed optional local source audit; portable CI uses pinned AST snapshot",
+    "log": "delivery_pytest.log",
+    "log_sha256": "a46560097f42c0392282cadfdf11e8dbe817ec1767e24ef0fe534fd032d7a727",
+    "initial_run": "1096 passed, 2 stale test expectations failed, 1 skipped; fixed legacy optimizer fixture and pre-authorized device assertions, no production relaxation"
+  },
+  "policy": {
+    "version": "optr_recipe3_native_residual_joint_ascend_v13",
+    "native_residual": {
+      "version": "recipe3_native_layer_residual_joint_candidates_v2",
+      "objective": "mean_query_teacher_energy_normalized_joint_postgate_three_views",
+      "direction": "negative_streamed_train_ste_tangent_at_recipe3",
+      "parameter_scope": "single_rotation_and_all_train_directions_joint_from_recipe3",
+      "tangent_normalization": "frobenius_over_sqrt_head_dim",
+      "radii": [
+        0.01,
+        0.0025
+      ],
+      "max_kv_heads": 4,
+      "gradient_evaluations_per_direction": 1,
+      "train_candidates_per_direction": 2,
+      "validation_candidates_per_direction": 1,
+      "joint_train_candidates": 2,
+      "joint_validation_candidates": 1,
+      "joint_direction": "all_original_train_head_side_unit_tangents_same_radius",
+      "max_train_candidates": 18,
+      "max_validation_candidates": 9,
+      "selection": "strict_train_then_validation_query_projection_nonworse",
+      "test_used_for_selection": false
+    },
+    "raw_capture_reuse": [
+      "v10",
+      "v11",
+      "v12"
+    ],
+    "old_fit_reuse": false
+  },
+  "source_protection": {
+    "reference": "tests/test_optr_cpu_scope_20261105.py",
+    "online_kernels_runtime_generators_timers_launch_config_unchanged": true,
+    "rotations_only_changed_function": "calibration_cache_identity",
+    "base_fitter_unchanged": true
+  },
+  "candidate_placement": {
+    "devices": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "port": 7878,
+    "selected_environment": {
+      "ASCEND_RT_VISIBLE_DEVICES": "4,5,6,7"
+    },
+    "serve_argv_sha256": "32cedaaf02290c6479584195fec12d0abc50020da729e129affb56db98079ffa"
+  },
+  "production_changed_files": {
+    "oscar_ascend/optr_artifacts.py": "f996f804efa35f6d4295e21fe0e9d2871305e95ed02731a0b21cb3c9c35f500e",
+    "oscar_ascend/optr_calibration.py": "26c41c842e7923e9efc7048fabfcca22f9bc72d229edcd437780b5a404b87400",
+    "oscar_ascend/optr_checkpoint.py": "bfc556810bb1e6749261714b633e4efe0f234fb490d5e81ee628fbc364906681",
+    "oscar_ascend/optr_native_residual.py": "fb93427c4d2ae5c8c0439de122c31cd6ee2399963751b32d08dedb22d8d30936",
+    "oscar_ascend/optr_native_residual_certificate.py": "286ddf6e10489e93b048779fa06c815cf0b0578a684042e29107fa379abc3541",
+    "oscar_ascend/optr_policy.py": "537d7503d7d10a4f053f995c17f5ad2f1df4f5172bc8d42f9742e33ded494c15",
+    "oscar_ascend/optr_traces.py": "02f3dc7512c41f587f94182b47754dcaebb6755d831b49db5dce147026f0573d",
+    "oscar_ascend/optr_trust_region.py": "c0f3e9095a1221ea0f71f0ff30597852701da8cd85232a456bfb77ab1e4423a4",
+    "oscar_ascend/rotations.py": "7508953c74a015ca9cf91a50e40ee3a448c52c4ecd0106fcfccd8ba5167292d6",
+    "tools/optr_fit_worker.py": "a76e665416760e8af064b2290127fc2741e279b9ff7eb946a4dac4100bf7e3b5",
+    "tools/optr_offline.py": "5b8e697e0218dfb9455a5531b1f2a6d882bc3728f6bc1c6169116b2c11d2c89d",
+    "tools/optr_parallel.py": "1a0fb8e354150ec52c62ce06fc83a3ecc67a22b3abfa6b3437a799b3ec8ef8da",
+    "tools/optr_recipe3_sampling.py": "8161f2bca61663c10d4019cb5de90e19f0528b4a29c819d68f7267d999596f97",
+    "tools/optr_rejection_report.py": "87ed730f73d6f70c294566c9f82c75ad8ded0e37c34c8a30e29bf3d49ea48b90",
+    "tools/optr_rejection_summary.py": "08f4efb05a9f60698fbc25fc526cdda184dabc9f34a9a3390ae134fd2a9faf8d",
+    "tools/prepare_optr_rotations.py": "129d330a3c733b3adb6decdacf1558784becb4ce14dd784664337c42b6eb5efd"
+  },
+  "evidence": [
+    "capture_audit.json",
+    "joint_candidate_evidence.json",
+    "history_reuse.json",
+    "offline_validation.json"
+  ],
+  "not_performed": [
+    "real NPU access",
+    "model inference",
+    "AISBench",
+    "real production PT generation (native input files absent locally)",
+    "model quality acceptance",
+    "whole PT generation performance",
+    "inference performance",
+    "git commit or push"
+  ],
+  "accuracy_limitation": "Joint candidate recall improved on a fixed dense-teacher synthetic example but independent test regressed and publication was rejected. No model accuracy improvement is established.",
+  "timing_scope": "Same v13 full single-layer CPU refine+independent test, history reuse on/off. Not v12 versus v13 whole PT performance.",
+  "archive_references": [
+    "#97",
+    "#166",
+    "#170",
+    "#172",
+    "#175",
+    "#176",
+    "#177"
+  ]
+}

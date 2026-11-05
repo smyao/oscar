@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-05",
+  "base_commit": "7720e3d",
+  "scope": "Portable authenticated OPTR CPU export/fit/import, reviewed against current v13 native-residual policy. Synthetic CPU fixtures only; no NPU, live model, deployment or performance experiment.",
+  "files_owned_by_this_review": [
+    "tools/optr_offline.py",
+    "tests/test_optr_offline.py"
+  ],
+  "confirmed_and_fixed": [
+    {
+      "id": "remote_logical_paths_followed_local_symlinks",
+      "impact": "A valid bundle could be rejected when its original source paths resolve differently on the fitting host, including Linux /tmp versus a Mac /tmp symlink or replaced original directories.",
+      "fix": "PortableInputs.logical_path normalizes absolute UNIX identities lexically with posixpath, without resolving destination-host symlinks. The parent agent updated trace/profile resolver seams to use it. Physical bundle files still require resolved containment and size/SHA256 checks.",
+      "test": "test_original_logical_paths_do_not_follow_fitting_host_symlinks"
+    },
+    {
+      "id": "relative_export_configuration_depended_on_source_cwd",
+      "impact": "Relative model/custom-prompt values could resolve under a different fitting-host working directory and lose the original profile identity.",
+      "fix": "Exporter stores canonical absolute source-host model/custom-prompt paths in config and base_config, consistent with the preexisting fingerprint/profile.",
+      "test": "test_export_canonicalizes_relative_model_and_source_before_changing_cwd"
+    },
+    {
+      "id": "completed_cache_implementation_change_aborted_refit",
+      "impact": "A valid old completed result raised RefitRequired instead of continuing from authenticated raw bundle data.",
+      "fix": "Only RefitRequired enters refitting; bad publication hashes, source identity failures, test regressions and other validation errors remain fatal.",
+      "test": "test_finished_fit_reuses_authentication_and_only_refits_implementation_change"
+    },
+    {
+      "id": "malformed_baseline_tensor_comparison",
+      "impact": "Missing or non-tensor combined-artifact fields could trigger an ambiguous tensor boolean error instead of a clear authentication failure.",
+      "fix": "Explicit tensor-type and torch.equal checks; malformed inventory rows and configuration/identity fields also receive explicit validation errors.",
+      "test": "test_portable_semantic_authentication_survives_rehashed_inventory"
+    },
+    {
+      "id": "raw_target_cli_lacked_candidate_selection",
+      "impact": "The raw target configuration does not itself activate OPTR, so export/import would reject the normal config without applying the same candidate variant as serving.",
+      "fix": "CLI export/import apply serving_variants.variant_config, with --variant candidate as default. Fit accepts only the authenticated bundle configuration and exposes no testing or optimizer override.",
+      "test": "test_cli_applies_fixed_candidate_variant_without_changing_fit_bundle"
+    },
+    {
+      "id": "explicit_export_trace_not_selectable_on_import",
+      "impact": "Export could use an explicitly supplied source manifest outside canonical discovery, while import only searched canonical capture locations.",
+      "fix": "Import now accepts the same optional --trace-manifest, runs existing trace authentication and requires its SHA256 to match the returned certificate. Default canonical discovery remains unchanged.",
+      "test": "test_cli_applies_fixed_candidate_variant_without_changing_fit_bundle"
+    }
+  ],
+  "end_to_end_evidence": {
+    "test": "test_real_export_hidden_sources_spawn_cpu_fit_matches_serial_and_resumes",
+    "source": "Real CPU-generated tiny recipe3 pair with authentic completion metadata, whole-record source exclusion, TP manifests and tensor hashes; teachers are explicitly synthetic replay outputs.",
+    "execution": "Original serial preparation uses the real nonzero streamed gradient. Export copies original file bytes. Original model, custom source, baseline artifacts and raw capture directories are renamed away. A real spawned production worker performs CPU fitting with the original paths unavailable.",
+    "assertions": [
+      "Bundle JSON/PT/source bytes equal originals at export; model weight files are not transported.",
+      "Train candidate metrics, validation metrics, test metrics and accept/reject outcomes equal the serial path.",
+      "If rejected, both paths report the same no-improvement error and no refined PT or publication manifest exists.",
+      "Worker exits zero and worker cleanup completes.",
+      "Resume performs no worker spawn.",
+      "Child import guards reject torch_npu, vllm, vllm_ascend and transformers; a call observer rejects source-host model identity reads, capture and NPU fitting_device. None are already imported before or present after the worker."
+    ]
+  },
+  "negative_and_resume_coverage": [
+    "File SHA256 and size changes, including same-size byte corruption after resolver construction.",
+    "Traversal, absolute physical inventory path, physical symlink escape, duplicate mappings, missing members and malformed inventory row.",
+    "Changed source bytes, excluded records, recipe3 seed binding or model identity despite updated transport inventory hashes.",
+    "Test-only header cannot enter production; removing only the header marker still cannot promote synthetic baseline data.",
+    "Actual published synthetic result is rejected by the production import entry.",
+    "CLI rejects --testing; fitting output cannot reside inside the input bundle; invalid CPU worker budgets fail.",
+    "Completed artifact authenticates and reuses; stale implementation invokes refit while bad artifact hashes do not.",
+    "Exact compatible v12 raw profile is authenticated under current v13 export; old fitted checkpoint files are not exported."
+  ],
+  "publication_fixture_disclosure": "The positive completed-cache/import-rejection test injects one disclosed tangent using the existing synthetic pipeline fixture. Replay, validation, independent-test gates, hashes and publication are real. The portable spawn/serial comparison uses the actual optimizer without a prescribed direction.",
+  "validation": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_optr_offline.py tests/test_optr_capture.py tests/test_optr_traces.py tests/test_optr_recipe3_sampling.py",
+      "result": "127 passed in 5.79s",
+      "note": "Run after logical-path fix and v12 raw compatibility test. A final synthetic-import rejection assertion was subsequently added and included in the focused rerun below."
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_optr_offline.py",
+      "result": "23 passed in 4.46s",
+      "note": "Final focused rerun also verifies transported input bytes remain unchanged and documents the baseline authentication lock file."
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_optr_offline.py -k cli_applies",
+      "result": "4 passed, 21 deselected in 0.84s",
+      "note": "Focused final import/export explicit-manifest CLI propagation; the root agent owns the concurrent complete regression run."
+    },
+    {
+      "command": ".venv/bin/python -m tools.optr_offline --help",
+      "result": "passed; documents same-project-revision workflow and no testing switch"
+    }
+  ],
+  "limits": [
+    "Baseline authentication may create/open bundle/base/.oscar.lock and requires a writable directory. Sample/PT bytes are not rewritten; chmod-read-only filesystem operation is not claimed.",
+    "These are host functional and integrity checks, not an actual Linux-to-Mac transfer or proof of bitwise equality across Torch/BLAS implementations.",
+    "No real NPU-captured production bundle or production publication was exercised; synthetic markers remain enforced.",
+    "Checksums detect integrity changes but are not signatures from an external trust authority.",
+    "Source-host import requires the original actual model/base/capture and current fitting implementation. A bundle alone does not authorize serving a result.",
+    "No model accuracy improvement, NPU equivalence, preparation speedup percentage or end-to-end performance result is claimed."
+  ]
+}

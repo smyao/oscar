@@ -12,7 +12,8 @@ import math
 from pathlib import Path
 
 
-NATIVE_STRATEGY = "recipe3_native_residual_train_then_validation_v1"
+NATIVE_STRATEGY = "recipe3_native_residual_train_then_validation_joint_v2"
+NATIVE_STRATEGIES = {NATIVE_STRATEGY, "recipe3_native_residual_train_then_validation_v1"}
 
 
 def _best(rows):
@@ -25,7 +26,7 @@ def _candidate_summary(row):
     # shortened. Counts span projections/partitions, not unique query tokens.
     worst = row["top_failures"][:1]
     return {"candidate": row["candidate"],
-            **{key: row[key] for key in ("head", "side", "radius") if key in row},
+            **{key: row[key] for key in ("scope", "head", "side", "radius") if key in row},
             "total_relative_delta": row["views"]["fp32"]["squared_error"]["relative_delta"],
             "reason": row["reason"], "regressed_checks": row["regressed_checks"],
             "worst_gate": [{**{key: gate[key] for key in
@@ -51,15 +52,18 @@ def summarize_search(rows):
 def summarize_layer(layer):
     """Preserve legacy compact fields; expose repair evidence independently."""
     rows = layer["candidates"]
-    if layer.get("strategy") == NATIVE_STRATEGY:
+    if layer.get("strategy") in NATIVE_STRATEGIES:
         validation = layer["validation_candidates"]
-        return {"layer": layer["layer"], "strategy": NATIVE_STRATEGY,
+        return {"layer": layer["layer"], "strategy": layer["strategy"],
                 "candidates": len(rows), "train_candidates": len(rows),
                 "validation_candidates": len(validation),
                 "candidate_count_scope": "unique_train_candidates_validation_rechecks_counted_separately",
                 "reason": "all_validation_finalists_rejected" if validation else "no_train_candidate_passed",
                 "train_search": {**summarize_search(rows), "accepted_count": sum(row["accepted"] for row in rows)},
-                "validation_search": {**summarize_search(validation), "accepted_count": 0}}
+                "validation_search": {**summarize_search(validation), "accepted_count": 0},
+                "joint_train_candidates": sum(row.get("scope") == "joint" for row in rows),
+                "joint_train_accepted": sum(row.get("scope") == "joint" and row["accepted"] for row in rows),
+                "joint_validation_candidates": sum(row.get("scope") == "joint" for row in validation)}
     best = _best(rows)
     original = [row for row in rows if row["phase"] != "repair"]
     repair = [row for row in rows if row["phase"] == "repair"]
@@ -127,9 +131,11 @@ def _validate_rows(rows, *, phases, allow_accepted=False):
                 row["bf16_only_regression"] is not (views["fp32"]["nonworse"] and not nonworse)):
             raise ValueError("saved OptR report has inconsistent rejection decisions")
         if row["phase"] in ("repair", "native_train", "native_validation"):
-            if (type(row.get("same_bf16_operand_as_seed")) is not bool or
-                    type(row.get("head")) is not int or row["head"] < 0 or
-                    row.get("side") not in ("Rk", "Rv") or
+            joint = row.get("scope") == "joint" and row["phase"] != "repair"
+            coordinates_valid = ((row.get("head") is None and row.get("side") == "Rk_Rv") if joint else
+                (row.get("scope", "single") == "single" and type(row.get("head")) is int and
+                 row["head"] >= 0 and row.get("side") in ("Rk", "Rv")))
+            if (type(row.get("same_bf16_operand_as_seed")) is not bool or not coordinates_valid or
                     type(row.get("radius")) not in (int, float) or
                     not math.isfinite(row["radius"]) or row["radius"] <= 0):
                 raise ValueError("saved OptR report has invalid repair coordinates")
@@ -150,7 +156,7 @@ def _validate_native_layer(layer, rows):
     for row in validation:
         training = by_id.get(row["candidate"])
         if (training is None or not training["accepted"] or any(row.get(key) != training.get(key)
-                for key in ("head", "side", "radius", "radius_index", "constants_sha256",
+                for key in ("scope", "head", "side", "radius", "radius_index", "constants_sha256",
                             "unchanged_baseline", "same_bf16_operand_as_seed"))):
             raise ValueError("saved native-residual validation candidate differs from its training source")
         direction = (row["head"], row["side"])
@@ -169,7 +175,7 @@ def _validate_layer(layer):
     rows = layer.get("candidates")
     if not isinstance(rows, list) or not rows or layer.get("candidate_count") != len(rows):
         raise ValueError("saved OptR report has incomplete candidate coverage")
-    if layer.get("strategy") == NATIVE_STRATEGY:
+    if layer.get("strategy") in NATIVE_STRATEGIES:
         _validate_native_layer(layer, rows)
         return
     _validate_rows(rows, phases=("primary", "k", "v", "repair"))
@@ -201,7 +207,7 @@ def summarize_saved_report(path):
         raise ValueError("saved OptR report has incomplete/invalid diagnostic fields") from error
     native_counts = ({"validation_candidate_count": sum(layer.get("validation_candidate_count", 0)
                                                        for layer in report["layers"])}
-                     if any(layer.get("strategy") == NATIVE_STRATEGY for layer in report["layers"]) else {})
+                     if any(layer.get("strategy") in NATIVE_STRATEGIES for layer in report["layers"]) else {})
     return {"status": report["status"], "report": str(path), **native_counts,
             "report_sha256": hashlib.sha256(data).hexdigest(),
             "evidence_scope": "saved_json_only_checkpoints_not_reauthenticated",

@@ -79,19 +79,19 @@ def test_candidate_enables_optr_without_changing_online_bundle_or_extra_flags():
     assert "rotation_refinement" not in config
     assert selected["rotation_refinement"] == "optr"
     assert selected["optr_baseline"] == "recipe3"
-    assert config["devices"] == selected["devices"] == [0, 1, 2, 3]
+    assert config["devices"] == selected["devices"] == [4, 5, 6, 7]
     assert config["port"] == selected["port"] == 7878
     assert runtime_feature_summary(selected, "candidate")["calibration_recipe_version"] == 5
     assert runtime_feature_summary(selected, "candidate")["optr_fitted_grouping"] == "layer_kv_head"
-    assert runtime_feature_summary(selected, "candidate")["optr_fitting_policy"] == "optr_recipe3_native_residual_ascend_v12"
+    assert runtime_feature_summary(selected, "candidate")["optr_fitting_policy"] == "optr_recipe3_native_residual_joint_ascend_v13"
     assert runtime_feature_summary(selected, "candidate")["key_centering"] is True
     assert runtime_feature_summary(selected, "candidate")["independent_test_blocks_publication"] is True
     assert runtime_feature_summary(selected, "candidate")["optr_validation_projection_views"] == [
         "fp32", "bf16_output", "bf16_rank_output"]
     assert runtime_feature_summary(selected, "candidate")["optr_seed_partition"] == "original_recipe3_calibration"
     assert runtime_feature_summary(selected, "candidate")["optr_deployment_candidate_selection"] == (
-        "recipe3_native_residual_train_then_validation_v1")
-    assert runtime_feature_summary(selected, "candidate")["optr_max_deployment_candidates"] == 8
+        "recipe3_native_residual_train_then_validation_joint_v2")
+    assert runtime_feature_summary(selected, "candidate")["optr_max_deployment_candidates"] == 9
     for variant in ("baseline", "native"):
         assert variant_config(selected, variant).get("rotation_refinement") is None
     legacy = {k: v for k, v in selected.items() if k != "optr_recipe3_optimizer"}

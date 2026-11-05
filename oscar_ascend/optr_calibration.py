@@ -7,6 +7,8 @@ are not NPU execution, model quality, or performance acceptance. This module
 must not be imported by serving. It changes only offline matrix coefficients.
 Archive #94/#95/#97: report real fitting boundaries and completed work through
 an optional callback; never conceal a stalled fitter behind a timer heartbeat.
+Archive #175-177: partition reuse shares only immutable forward history;
+attention partitions, gradients and every acceptance metric remain separate.
 
 The sequential orthogonal correction follows the user-authorized OptR source
 at 66d46561b9bdf5d715f591e0f5845a4cbd927dee. Unlike its separate K/V proxies,
@@ -286,8 +288,82 @@ def _training_batches(samples, phase, rk, rv, mean, policy):
     return batches
 
 
+def _replay_history(rk, rv, mean, sample, policy):
+    key = _bf16(_bf16(sample["k"].float() - _bf16(mean)) @ _bf16(rk))
+    value = _bf16(sample["v"].float() @ _bf16(rv))
+    return {"k": key, "v": value,
+            "k_quant": quantize_dequantize(key, policy["k_clip"]),
+            "v_quant": quantize_dequantize(value, policy["v_clip"])}
+
+
+def _needs_replay_grad(rk, rv, mean, sample):
+    if not isinstance(sample, Mapping):
+        raise ValueError("each trace requires an explicit nonempty request_id")
+    return torch.is_grad_enabled() and any(
+        value.requires_grad for value in (rk, rv, mean, *sample.values())
+        if isinstance(value, torch.Tensor))
+
+
+def _can_prepare_replay_history(rk, rv, mean, sample):
+    # Inference tensors have no version counter. Keep the original independent
+    # replay for those callers rather than constructing an unverifiable cache.
+    return not _needs_replay_grad(rk, rv, mean, sample) and not any(
+        value.is_inference() for value in (rk, rv, mean, *sample.values())
+        if isinstance(value, torch.Tensor))
+
+
+class _PreparedReplayHistory:
+    """One candidate/request only; never retained in a ProjectionCache.
+
+    The public single-partition replay remains differentiable. Sharing its
+    history graph would change backward accumulation and require retain_graph,
+    so only graph-free evaluations may use this short-lived object.
+    """
+
+    def __init__(self, rk, rv, mean, sample, policy):
+        if not _can_prepare_replay_history(rk, rv, mean, sample):
+            raise ValueError("prepared replay history requires graph-free, versioned inputs")
+        _sample(sample, _matrices(rk, rv, mean))
+        self.matrices, self.sample = (rk, rv, mean), sample
+        self.request_id = sample["request_id"]
+        self.clips = (policy["k_clip"], policy["v_clip"])
+        self.inputs = {key: (value, value._version) for key, value in sample.items()
+                       if isinstance(value, torch.Tensor)}
+        self.versions = tuple(value._version for value in self.matrices)
+        self.values = _replay_history(rk, rv, mean, sample, policy)
+
+    def check(self, rk, rv, mean, sample, policy):
+        if (sample is not self.sample or sample.get("request_id") != self.request_id or
+                any(left is not right for left, right in
+                zip((rk, rv, mean), self.matrices)) or
+                self.clips != (policy["k_clip"], policy["v_clip"]) or
+                self.versions != tuple(value._version for value in self.matrices) or
+                set(self.inputs) != {key for key, value in sample.items() if isinstance(value, torch.Tensor)} or
+                any(sample[key] is not value or value._version != version
+                    for key, (value, version) in self.inputs.items()) or
+                _needs_replay_grad(rk, rv, mean, sample)):
+            raise ValueError("prepared replay history candidate/request/clip identity changed")
+
+
+def replay_sample_partitions(rk, rv, mean, sample, policy, partitions):
+    """Evaluate each declared partition with one request-local history pass.
+
+    Query GEMM/microbatch shapes and attention reduction order are unchanged.
+    A differentiable caller gets independent original graphs for each replay.
+    """
+    if (not isinstance(partitions, (list, tuple)) or not 1 <= len(partitions) <= 2 or
+            len(set(partitions)) != len(partitions)):
+        raise ValueError("partition replay requires one or two distinct partitions")
+    policies = {partition: _policy({**policy, "replay_partition": partition}) for partition in partitions}
+    if not _can_prepare_replay_history(rk, rv, mean, sample):
+        return {partition: replay_sample(rk, rv, mean, sample, item) for partition, item in policies.items()}
+    prepared = _PreparedReplayHistory(rk, rv, mean, sample, next(iter(policies.values())))
+    return {partition: replay_sample(rk, rv, mean, sample, item, _history=prepared)
+            for partition, item in policies.items()}
+
+
 def replay_sample(rk: torch.Tensor, rv: torch.Tensor, mean: torch.Tensor,
-                  sample: Mapping[str, Any], policy: Mapping[str, Any]) -> torch.Tensor:
+                  sample: Mapping[str, Any], policy: Mapping[str, Any], *, _history=None) -> torch.Tensor:
     """Offline attention [M,G,D] before gate, BF16 values carried as FP32.
 
     ``sample`` requires request_id, k/v BF16[L,D], q/gate/teacher BF16[M,G,D],
@@ -300,17 +376,20 @@ def replay_sample(rk: torch.Tensor, rv: torch.Tensor, mean: torch.Tensor,
     Fixed fitting uses policy history_splits. Without ends,
     a single-split sample assumes its stored history ends at the forward end.
     """
-    dim = _matrices(rk, rv, mean)
-    _sample(sample, dim)
-    p = _policy(policy)
+    if _history is None:
+        dim = _matrices(rk, rv, mean)
+        _sample(sample, dim)
+        p = _policy(policy)
+        history = _replay_history(rk, rv, mean, sample, p)
+    else:
+        p = _policy(policy)
+        if not isinstance(_history, _PreparedReplayHistory):
+            raise ValueError("prepared replay history must carry candidate/request identity")
+        _history.check(rk, rv, mean, sample, p)
+        history = _history.values
     # Final all-head validation previously rotated/quantized the entire 64K
     # history again for each query microbatch. Shapes and arithmetic stay
     # identical; share only the query-independent history inside this call.
-    key = _bf16(_bf16(sample["k"].float() - _bf16(mean)) @ _bf16(rk))
-    value = _bf16(sample["v"].float() @ _bf16(rv))
-    history = {"k": key, "v": value,
-               "k_quant": quantize_dequantize(key, p["k_clip"]),
-               "v_quant": quantize_dequantize(value, p["v_clip"])}
     return torch.cat([_replay(rk, rv, mean, batch, p, frozen=history)
                       for batch in _batches(sample, p["query_batch_size"])])
 
